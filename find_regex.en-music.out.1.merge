@@ -198,7 +198,7 @@ Page 17 '50s progression: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord progression]], l–vi–IV–V, used in [[Western]] [[popular music]], particularly common in the 1950s and early 1960s.
+# {{lb|en|chord progression}} A [[chord progression]], l–vi–IV–V, used in [[Western]] [[popular music]], particularly common in the 1950s and early 1960s.
 #: {{syn|en|ice cream changes|doo-wop progression}}
 #: {{ux|en|''''50s progression''' in the key of C (C-Am-F-G):<br><score sound>{\set Staff.midiInstrument=#"drawbar organ"<c''e''g''>1<a'c''e''><f'a'c''><g'b'd''>}</score>}}
 #* {{seeCites|en}}
@@ -3191,7 +3191,7 @@ Page 57 accidental chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] containing one or more [[tone]]s [[foreign]] to its proper [[harmony]].
+# {{lb|en|musical chord}} A [[chord]] containing one or more [[tone]]s [[foreign]] to its proper [[harmony]].
 -------- end text --------
 Page 58 accolade: -------- begin text --------
 {{wikipedia}}
@@ -7280,9 +7280,9 @@ Page 94 A-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with [[A-flat]] as its [[tonic]], with the notes A♭, B♭, C, D♭, E♭, F{{,}} and G, the key signature of which has four flats.
+# {{lb|en|musical key}} The [[major key]] with [[A-flat]] as its [[tonic]], with the notes A♭, B♭, C, D♭, E♭, F{{,}} and G, the key signature of which has four flats.
 #: <score sound>{\key aes \major aes' bes' c'' des'' es'' f'' g'' aes''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[A-flat]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[A-flat]].
 #: <score sound><aes' c'' es''>1</score>
 
 ====Coordinate terms====
@@ -7314,9 +7314,9 @@ Page 95 A-flat minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes A♭, B♭, C♭, D♭, E♭, F♭, and G♭.
+# {{lb|en|musical key}} A [[minor key]] with the notes A♭, B♭, C♭, D♭, E♭, F♭, and G♭.
 #: <score sound>{\key aes\minor aes bes ces'des'es'fes'ges'aes'2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[A-flat]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[A-flat]].
 #: <score sound><aes ces'es'>1</score>
 
 ====Coordinate terms====
@@ -10147,9 +10147,9 @@ Page 153 A major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with [[A]] as its [[tonic]], with the notes A, B, C♯, D, E, F♯{{,}} and G♯, the key signature of which has three sharps.
+# {{lb|en|musical key}} The [[major key]] with [[A]] as its [[tonic]], with the notes A, B, C♯, D, E, F♯{{,}} and G♯, the key signature of which has three sharps.
 #: <score sound>{\key a \major a' b' cis'' d'' e'' fis'' gis'' a''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[A]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[A]].
 #: <score sound><a' cis'' e''>1</score>
 
 ====Coordinate terms====
@@ -10414,9 +10414,9 @@ Page 161 A minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[minor key]] with [[A]] as its [[tonic]], consisting of the pitches A, B, C, D, E, F, and G.
+# {{lb|en|musical key}} The [[minor key]] with [[A]] as its [[tonic]], consisting of the pitches A, B, C, D, E, F, and G.
 #: <score sound>{\key a\minor a b c'd'e'f'g'a'2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[A]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[A]].
 #: <score sound><a c'e'>1</score>
 
 ====Coordinate terms====
@@ -10462,8 +10462,8 @@ Page 162 A-minor: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} the [[minor key]] with [[A]] as its [[tonic]]
-# {{lb|en|music}} the [[minor chord]] with a [[root]] of [[A]]
+# {{lb|en|musical key}} the [[minor key]] with [[A]] as its [[tonic]]
+# {{lb|en|musical chord}} the [[minor chord]] with a [[root]] of [[A]]
 
 ====Translations====
 {{trans-top|minor key with A as its tonic}}
@@ -13876,9 +13876,9 @@ Page 234 A-sharp major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[theoretical key|theoretical]] [[major key]] with [[A-sharp]] as its [[tonic]] and the notes A#, B#, C𝄪, D#, E#, F𝄪{{,}} and G𝄪.
+# {{lb|en|musical key}} The [[theoretical key|theoretical]] [[major key]] with [[A-sharp]] as its [[tonic]] and the notes A#, B#, C𝄪, D#, E#, F𝄪{{,}} and G𝄪.
 #: <score sound>{\key ais\major ais' bis' cisis'' dis'' eis'' fisis'' gisis'' ais''}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[A-sharp]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[A-sharp]].
 #: <score sound><ais' cisis'' eis''>1</score>
 
 ====Coordinate terms====
@@ -13908,9 +13908,9 @@ Page 235 A-sharp minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes A♯, B♯, C♯, D♯, E♯, F♯, G♯.
+# {{lb|en|musical key}} A [[minor key]] with the notes A♯, B♯, C♯, D♯, E♯, F♯, G♯.
 #: <score sound>{\key ais\minor ais'bis'cis''dis''eis''fis''gis''ais''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[A-sharp]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[A-sharp]].
 #: <score sound><ais'cis''eis''>1</score>
 
 ====Coordinate terms====
@@ -19829,7 +19829,7 @@ Borrowed from {{bor|en|fr|barre}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[guitar]] [[chord]] played by pressing down multiple [[string]]s on the [[fretboard]].
+# {{lb|en|musical chord|guitar}} A [[guitar]] [[chord]] played by pressing down multiple [[string]]s on the [[fretboard]].
 
 ====Synonyms====
 * {{sense|a guitar chord}} {{l|en|bar chord}}, {{l|en|barr chord}} {{qualifier|rare}}
@@ -21859,7 +21859,7 @@ Page 351 bass clef: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[symbol]] showing that the second line from the top of the [[staff]] represents the [[F]] below [[middle C]].
+# {{lb|en|musical clef}} A [[symbol]] showing that the second line from the top of the [[staff]] represents the [[F]] below [[middle C]].
 
 ====Synonyms====
 * {{l|en|F clef}}
@@ -26605,9 +26605,9 @@ Page 412 B-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with [[B-flat]] as its [[tonic]], with the notes B♭, C, D, E♭, F, G{{,}} and A, the key signature of which has two flats.
+# {{lb|en|musical key}} The [[major key]] with [[B-flat]] as its [[tonic]], with the notes B♭, C, D, E♭, F, G{{,}} and A, the key signature of which has two flats.
 #: <score sound>{\key bes \major bes c' d' es' f' g' a' bes'2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[B-flat]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[B-flat]].
 #: <score sound><bes' d'' f''>1</score>
 
 ====Coordinate terms====
@@ -26642,9 +26642,9 @@ Page 413 B-flat minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes B♭, C, D♭, E♭, F, G♭, A♭.
+# {{lb|en|musical key}} A [[minor key]] with the notes B♭, C, D♭, E♭, F, G♭, A♭.
 #: <score sound>{\key bes\minor bes c'des'es'f'ges'aes'bes'2}</score>
-# {{lb|en|music}} A [[minor chord]] with a root of [[B-flat|B♭]].
+# {{lb|en|musical chord}} A [[minor chord]] with a root of [[B-flat|B♭]].
 #: <score sound><bes'des''f''>1</score>
 
 ====Coordinate terms====
@@ -26720,7 +26720,7 @@ From {{prefix|en|bi|chord}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] of two [[note]]s played at the same time.
+# {{lb|en|musical chord}} A [[chord]] of two [[note]]s played at the same time.
 # The two [[string]]s of a [[note]] on a [[piano]] that are tuned as a [[unison]].
 
 ====Translations====
@@ -26731,7 +26731,7 @@ From {{prefix|en|bi|chord}}.
 ===Adjective===
 {{en-adj|-}}
 
-# {{lb|en|music|of a musical instrument}} Having two strings
+# {{lb|en|music|of a musical instrument}} Having two strings.
 
 ===See also===
 * [[polychord]]
@@ -28670,9 +28670,9 @@ Page 470 B major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with [[B]] as its [[tonic]], with the notes B, C♯, D♯, E, F♯, G♯{{,}} and A♯, the key signature of which has five sharps.
+# {{lb|en|musical key}} The [[major key]] with [[B]] as its [[tonic]], with the notes B, C♯, D♯, E, F♯, G♯{{,}} and A♯, the key signature of which has five sharps.
 #: <score sound>{\key b \major b cis' dis' e' fis' gis' ais' b'2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[B]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[B]].
 #: <score sound><b' dis'' fis''>1</score>
 
 ====Coordinate terms====
@@ -28716,9 +28716,9 @@ Page 471 B minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes B, C♯, D, E, F♯, G, A.
+# {{lb|en|musical key}} A [[minor key]] with the notes B, C♯, D, E, F♯, G, A.
 #: <score sound>{\key b\minor b'cis''d''e''fis''g''a''b''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[B]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[B]].
 #: <score sound><b'd''fis''>1</score>
 
 ====Synonyms====
@@ -33852,7 +33852,7 @@ Page 523 broken chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A chord whose notes are played in sequential [[descending]] or [[ascending]] order
+# {{lb|en|note sequence}} A chord whose notes are played in sequential [[descending]] or [[ascending]] order.
 
 ===See also===
 * {{l|en|arpeggio}}
@@ -33863,7 +33863,7 @@ Page 524 broken consort: -------- begin text --------
 {{en-noun}}
 {{wikipedia}}
 
-# {{lb|en|music}} an instrumental [[ensemble]] that developed in Europe during the [[Renaissance]].
+# {{lb|en|music}} An instrumental [[ensemble]] that developed in Europe during the [[Renaissance]].
 
 ====Synonyms====
 * [[English consort]]
@@ -35358,7 +35358,7 @@ Page 545 C: -------- begin text --------
 # {{lb|en|US|slang}} [[one hundred|One hundred]] [[dollar]]s; a [[c-note]].<ref>{{R:GDoS|id=fpyigci|entry=C|pos=n|sense=2}}</ref>
 #* {{quote-book|en|year=1935|author=Henry Louis Mencken; George Jean Nathan|title=The American Mercury|volume=35|page=227
 |passage=I keep on [[fairbank]]ing the chump until he is between a poop and a sweat. The score is half a '''C''' and he's broke.}}
-# {{lb|en|music}} The first note in the C [[chromatic scale|chromatic]] and [[major scale]]s.
+# {{lb|en|musical pitch}} The first note in the C [[chromatic scale|chromatic]] and [[major scale]]s.
 #: {{hypo|en|high C|middle C}}
 # {{senseid|en|grade}} {{lb|en|education}} An academic grade better than a [[D]] and worse than a [[B]].
 #* {{quote-web
@@ -36007,7 +36007,7 @@ From {{bor|en|it|cambiata}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A pattern in a homophonic or polyphonic (and usually contrapuntal) setting of a melody where a note is skipped from (typically by an interval of a third) in one direction (either going up or down in pitch) followed by the note skipped to, and then by motion in the opposite direction, and where either the note skipped from is distinguished as a dissonance or the note skipped to is distinguished as a non-harmonic or non-chordal tone.
+# {{lb|en|note sequence}} A pattern in a homophonic or polyphonic (and usually contrapuntal) setting of a melody where a note is skipped from (typically by an interval of a third) in one direction (either going up or down in pitch) followed by the note skipped to, and then by motion in the opposite direction, and where either the note skipped from is distinguished as a dissonance or the note skipped to is distinguished as a non-harmonic or non-chordal tone.
 #: {{syn|en|changing note}}
 
 -------- end text --------
@@ -38833,9 +38833,9 @@ Page 616 C-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[major key]] with the notes C♭, D♭, E♭, F♭, G♭, A♭, B♭, the key signature of which has seven flats:
+# {{lb|en|musical key}} A [[major key]] with the notes C♭, D♭, E♭, F♭, G♭, A♭, B♭, the key signature of which has seven flats:
 #: <score sound>{\key ces \major ces' des' es' fes' ges' aes' bes' ces''2}</score>
-# {{lb|en|music}} The [[major chord]] with the notes C♭, E♭, and G♭:
+# {{lb|en|musical chord}} The [[major chord]] with the notes C♭, E♭, and G♭:
 #: <score sound><ces' es' ges'>1</score>
 
 ====Coordinate terms====
@@ -40889,10 +40889,10 @@ Page 662 chop chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[clipped]] [[backbeat]]; a [[muted]] [[chord]] that marks the off-beats or upbeats.
+# {{lb|en|musical chord}} A [[clipped]] [[backbeat]]; a [[muted]] [[chord]] that marks the off-beats or upbeats.
 
 ====See also====
-* {{l|en|chuck}} {{q|verb}}
+* {{l|en|chuck|pos=verb}}
 -------- end text --------
 Page 663 Chopsticks: -------- begin text --------
 
@@ -41047,7 +41047,7 @@ Variant of {{dbt|en|cord|notext=1}}, with spelling alteration due to {{cog|la|ch
 {{en-noun}}
 [[File:Leading-tone_seventh_chord_in_C_minor.png|thumb|Example of a chord in sense 1:<br><br>[[File:Leading-tone_seventh_chord_in_C_minor.mid]] ]]
 
-# {{senseid|en|music}}{{lb|en|music}} A [[harmonic]] set of three or more [[note]]s that is heard as if sounding simultaneously.
+# {{senseid|en|music}}{{lb|en|musical chord}} A [[harmonic]] set of three or more [[note]]s that is heard as if sounding simultaneously.
 #* {{quote-book|en|year=1956|author=w:Delano Ames|title=Crime out of Mind|chapter=14|url=http://openlibrary.org/works/OL5915292W|passage=He struck the opening '''chords''' of the passage; but this time Irene's voice was silent. Victor stopped in the middle of an arpeggio.}}
 # {{lb|en|geometry}} A [[line segment]] between two points of a curve. {{C|en|Shapes}}
 #* {{quote-journal|en|year=1941|month=September|title=The Why and the Wherefore: Curves|journal=Railway Magazine|page=430|text=The simplest method of calculating the radius of a curve ''in situ'' is to measure the versine; in railway practice this is done by extending a tape 66 ft. (1 ch.) long in a straight line or '''chord''' between two points on the periphery of a curve, and then measuring the maximum distance of the rail from the '''chord''' at the centre of the 66 ft. The radius in chains is found by dividing the versine in inches into 99. Thus if a versine measures 3 in., the radius will be  33 ch.}}
@@ -43823,7 +43823,7 @@ Page 720 clef: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{senseid|en|Q181040}}{{lb|en|music}} A symbol found on a musical [[staff]] that indicates the pitches represented by the lines and the spaces on the staff {{century|16}}
+# {{senseid|en|Q181040}}{{lb|en|musical clef}} A symbol found on a musical [[staff]] that indicates the pitches represented by the lines and the spaces on the staff {{century|16}}
 
 ====Derived terms====
 {{col|en|cleffer|cleflike|alto clef|baritone clef|bass clef|{{l|en|C clef}} ({{l|en|C-clef}})|F clef|{{l|en|G clef}} ({{l|en|G-clef}})|neutral clef|octave clef|tenor clef|treble clef|viola clef}}
@@ -45530,9 +45530,9 @@ Page 732 C major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with [[C]] as its [[tonic]], and no [[sharp]]s or [[flat]]s, having the notes C, D, E, F, G, A, and B.
+# {{lb|en|musical key}} The [[major key]] with [[C]] as its [[tonic]], and no [[sharp]]s or [[flat]]s, having the notes C, D, E, F, G, A, and B.
 #: <score sound>{c' d' e' f' g' a' b' c''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[C]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[C]].
 #: <score sound><c' e' g'>1</score>
 
 ====Coordinate terms====
@@ -45578,9 +45578,9 @@ Page 734 C minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes C, D, E♭, F, G, A♭, B♭/B.
+# {{lb|en|musical key}} A [[minor key]] with the notes C, D, E♭, F, G, A♭, B♭/B.
 #: <score sound>{\key c\minor c'd'es'f'g'aes'bes'c''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[C]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[C]].
 #: <score sound><c'es'g'>1</score>
 
 ====Synonyms====
@@ -47461,7 +47461,7 @@ Page 761 common chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} [[major triad]] (''name for'')
+# {{lb|en|musical chord}} {{syn of|en|major triad}}
 -------- end text --------
 Page 762 common practice period: -------- begin text --------
 
@@ -47980,7 +47980,7 @@ From {{inh|en|enm|complement}}, from {{der|en|la|complēmentum||that which fills
 #* {{quote-book|en|year=1988|author=Andrew Radford|title=Transformational grammar: a first course|location=Cambridge, UK|publisher=Cambridge University Press|page=340|chapter=7
 |passage=Why has our grammar broken down at this point? It is not difficult to see why. For, we have failed to make any provision for the fact that only ''some'' Verbs in English (i.e. Verbs like those italicized in (5) (a), traditionally called ''Transitive Verbs'') subcategorize ( = ‘takeʼ) an immediately following NP '''Complement''', whereas others (such as those italicised in (5) (b), traditionally referred to as ''Intransitive Verbs'') do not.}}
 # {{lb|en|paleography|phonetics}} A [[w:phonetic complement|phonetic complement]] is a graphic element that modifies another, such as (in [[Linear B]] script) a small [[syllabogram]] that is attached to a [[logogram]] as an abbreviation of its reading (as opposed to an [[adjunct]] that abbreviates an adjective that modifies that logogram).
-# {{lb|en|music}} An [[interval]] which, together with the given interval, makes an [[octave]]. {{defdate|from 19th c.}}
+# {{lb|en|musical interval}} An [[interval]] which, together with the given interval, makes an [[octave]]. {{defdate|from 19th c.}}
 # {{lb|en|optics}} The [[color]] which, when mixed with the given color, gives black (for mixing pigments) or white (for mixing light). {{defdate|from 19th c.}}
 #: {{ux|en|The '''complement''' of blue is orange.}}
 # {{lb|en|set theory}} Given two sets, the [[set]] containing one set's elements that are not members of the other set (whether a [[relative complement]] or an [[absolute complement]]). {{defdate|from 20th c.}}
@@ -48756,7 +48756,7 @@ Page 775 compound interval: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] that is greater than an [[octave]].
+# {{lb|en|musical interval}} An [[interval]] that is greater than an [[octave]].
 
 ====Translations====
 {{trans-top}}
@@ -49733,7 +49733,7 @@ From {{inh|en|enm|consecucioun||attainment}}, from {{der|en|la|cōnsecūtiō||ef
 #* {{quote-book|en|author=Isaac Newton|title=Memoirs of the life, writings and discoveries of Sir Isaac Newton|volume=1|page=159|year=1664|year_published=1855|editor=David Brewster|passage=there shall be generated such a '''consecution''' of colours, whose order, from the thin end towards the thick, shall be yellow, red, purple, blue, green, and these so often repeated|url=http://books.google.com/books?id=4hY6AAAAcAAJ&pg=PA159&dq=%22consecution%22+repeated+Newton&hl=en&sa=X&ei=qxpjT_unFomLgweVwLHjAg&ved=0CDgQ6AEwAQ#v=onepage&q&f=false}}
 # {{lb|en|archaic}} [[sequence|Sequence]].
 # {{lb|en|logic}} The relation of consequent to antecedent.
-# {{lb|en|music}} A [[succession]] of similar [[interval]]s in [[harmony]].
+# {{lb|en|musical cadence}} A [[succession]] of similar [[interval]]s in [[harmony]].
 
 ====Usage notes====
 * This word is used in logic, linguistics and computing to refer to ''the relation of a consequent to an antecedent''.
@@ -49843,7 +49843,7 @@ From {{bor|en|fr|consécutif}}, from {{der|en|ML.|cōnsecūtīvus}}, from {{der|
 ===Noun===
 {{en-noun|~}}
 
-# {{lb|en|music|countable}} A [[sequence]] of [[note]]s or [[chord]]s that results from [[repeat]]ed [[shift]]s in [[pitch]] of the same [[interval]].
+# {{lb|en|note sequence|countable}} A [[sequence]] of [[note]]s or [[chord]]s that results from [[repeat]]ed [[shift]]s in [[pitch]] of the same [[interval]].
 #* {{quote-book|en|year=1919|title=The Foundations of Music|author=Henry J. Watt|page=88|passage=The theory suggests, but does not state explicitly, that the prohibition of '''consecutives''' is the stricter the nearer the interval in question lies to the fundamental component of a blend.}}
 #* {{quote-book|en|year=2003|title=The Art of Accompaniment from a Thorough-bass|author=Franck Thomas Arnold|page=484|ISBN=0486431959|passage=In the case of discords, the fixed progression of the dissonant interval serves, to a large extent, as a guide to the progression of the remaining intervals of the harmony; in the case of concords this guidance is lacking, and it must be remembered that, in every progression of two parts, by similar motion, to a perfect concord (Fifth or Octave), there are bound to be hidden, if not apparent, '''consecutives'''.}}
 #* {{quote-book|en|year=2004|title=A Student's Guide to Harmony and Counterpoint|author=Hugh Benham|page=86|ISBN=1904226310|passage=Before adding the inner parts, check that there are no '''consecutives''' between S and B – don't forget that these can occur between the last printed notes of the phrase and your added parts, as well as within your own working. Here the risk of '''consecutives''' has been minimised by using mainly contrary motion in the bass.}}
@@ -52074,7 +52074,7 @@ From {{prefix|en|counter|chord}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[counter-dominant]] [[chord]].
+# {{lb|en|musical chord}} A [[counter-dominant]] [[chord]].
 -------- end text --------
 Page 845 counterfugue: -------- begin text --------
 
@@ -53769,7 +53769,7 @@ Page 867 cowboy chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[open]] [[chord]], i.e. one played without pressing the [[string]] against the [[fingerboard]].
+# {{lb|en|musical chord|guitar}} An [[open]] [[chord]], i.e. one played without pressing the [[string]] against the [[fingerboard]].
 -------- end text --------
 Page 868 coworker music: -------- begin text --------
 
@@ -53791,7 +53791,7 @@ From the mistaken medieval notion that crabs move backwards.<ref>{{R:Collins Eng
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[contrapuntal]] [[composition]] in which one [[melody]] is superimposed on the same melody in [[reverse]]
+# {{lb|en|music}} A [[contrapuntal]] [[composition]] in which one [[melody]] is superimposed on the same melody in [[reverse]].
 
 ====Translations====
 {{trans-top|crab canon}}
@@ -53845,7 +53845,7 @@ Evidently from, or at least influenced by {{bor|en|cel-gae|}}; compare {{cog|gd|
 ====Noun====
 {{en-noun}}
 
-# {{lb|en|music}} An [[embellishment]] played on the lowest note of a [[chanter]] of a [[bagpipe]], consisting of a series of [[grace note]]s produced by rapid [[sequential]] lifting of the fingers of the lower hand.
+# {{lb|en|musical ornament}} An [[embellishment]] played on the lowest note of a [[chanter]] of a [[bagpipe]], consisting of a series of [[grace note]]s produced by rapid [[sequential]] lifting of the fingers of the lower hand.
 
 ===Etymology 3===
 
@@ -55339,9 +55339,9 @@ Page 896 C-sharp major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[key]] with the notes C♯, D♯, E♯, F♯, G♯, A♯, and B♯, the key signature of which has seven sharps:
+# {{lb|en|musical key}} A [[key]] with the notes C♯, D♯, E♯, F♯, G♯, A♯, and B♯, the key signature of which has seven sharps:
 #: <score sound>{\key cis \major cis' dis' eis' fis' gis' ais' bis' cis''2}</score>
-# {{lb|en|music}} The [[major chord]] with the notes C♯, E♯, and G♯:
+# {{lb|en|musical chord}} The [[major chord]] with the notes C♯, E♯, and G♯:
 #: <score sound><cis' eis' gis'>1</score>
 
 ====Coordinate terms====
@@ -55368,9 +55368,9 @@ Page 897 C-sharp minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes C♯, D♯, E, F♯, G♯, A, B.
+# {{lb|en|musical key}} A [[minor key]] with the notes C♯, D♯, E, F♯, G♯, A, B.
 #: <score sound>{\key cis\minor cis'dis'e'fis'gis'a'b'cis''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[C-sharp]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[C-sharp]].
 #: <score sound><cis'e'gis'>1</score>
 
 ====Synonyms====
@@ -56688,7 +56688,7 @@ Page 911 cycle of fifths: -------- begin text --------
 ===Noun===
 {{en-noun|cycles of fifths}}
 
-# {{lb|en|music|_|theory}} A sequence of [[bass note|bass notes]] at intervals of one [[perfect fifth]] lower than the previous note. In twelve-tone [[equal temperament]] the sequence repeats every twelve tones, forming a cycle.
+# {{lb|en|note sequence}} A sequence of [[bass note|bass notes]] at intervals of one [[perfect fifth]] lower than the previous note. In twelve-tone [[equal temperament]] the sequence repeats every twelve tones, forming a cycle.
 #: {{ux|en|The composition modulates upwards through the '''cycle of fifths''', eventually returning to the original key.}}
 
 ====Translations====
@@ -57654,7 +57654,7 @@ Page 941 decachord: -------- begin text --------
 
 # {{lb|en|historical|string instruments}} An [[Ancient Greek]] [[musical instrument]] with [[ten]] [[string]]s, resembling the [[harp]].
 #* {{quote-book|en|year=2011| title=Curial and Guelfa|author=| page=236| passage=Apollo himself is depicted with a '''decachord''', that is, an instrument with ten tuned strings, or ten harmonising voices, otherwise a ''cithara''. }}
-# A musical instrument mentioned in the [[Psalms]], having ten strings and thought to resemble a [[lute]] or [[psaltery]].
+# {{lb|en|musical instrument}} A musical instrument mentioned in the [[Psalms]], having ten strings and thought to resemble a [[lute]] or [[psaltery]].
 #* {{quote-book|en|year=1863| title=Psalterium Messianicum Davidis Regis et Prophetae|author=| page=228| passage=It is delightful to praise Jehobah, And to chant the measured lay to Thy name, O Most High; To proclaim Thy mercy in the morning, And Thy faithfulness every night, Upon the '''decachord''', even upon the psaltery, Upon the higgæon, together with the harp.}}
 #* {{quote-book|en|year=1871| title=A Commentary on the Psalms: Psalm LXXXI. to Psalm CXVIII. |author=John Mason Neale, Richard Frederick Littledale | page=185| passage=The first is the view taken by the Syriac and Arabic versions, which make the lute to be the '''decachord''', and the harp the mere accompaniment to a song. }}
 #* {{quote-book|en|year=1884| title=Selections from the Writings of John Mason Neale |author=John Mason Neale| page=31| passage=Thou City of the Lord! Whose everlasting music Is the glorious '''decachord!'''}}
@@ -57662,7 +57662,7 @@ Page 941 decachord: -------- begin text --------
 #* {{quote-book|en|year=1937 | title=Riding the Question Mark Through Life Situations and Progress|author=John Wesley Stockwell | page=269| passage=The last presents the '''''decachord''''' theme in the form of a necklace of ''ten'' pieces of silver, precious and significant only when the pieces were not separated.}}
 #* {{quote-book|en|year=2020| title=A Companion to Religious Minorities in Early Modern Rome |author=Matthew Coneys Wainwright,  Emily Michelson | page=329| passage=This '''decachord''' of 10 books about Christ's life from the Annunciation through his Ascension, culminating in the descent of the Holy Spirit on the apostles and the birth of the Church, was dedicated to Pope Julius II. }}
 #* {{quote-book|en|year=2020| title=A Commentary on the Psalms |author=Rev. J.M. Neale | page=497| passage=Zigabenus sees in this expression the four great hymns of the New Testament: he also sees in the '''decachord''' the ten songs of the Old Testament, those of Miriam, Moses, Deborah, Hannah, David, Solomon, Judith, Hezekiah, Habakkuk, the Three Children, — an adaptation rather than an explanation.}}
-# {{lb|en|music}} A set of ten [[pitch]]es used to create a [[musical]] [[mode]].
+# {{lb|en|note sequence}} A set of ten [[pitch]]es used to create a [[musical]] [[mode]].
 #* {{quote-book|en|year=1999 | title=Systems Research in the Arts|author=George Eric Lasker,  James Rhodes | page=2| passage=Using the logic employed by many subset-based similarity measures, the chromatic trichord apparently has twice the affinity to this '''decachord''' as it does to the chromatic pentachord, despite the fact that the trichord could be seen as the progenitor of the pentachord but not of the '''decachord'''.}}
 #* {{quote-book|en|year=2005| title=The Archaeomusicology of the Ancient Near East |author=Richard J. Dumbrill | page=100| passage=The reduced span of the system either indicates that the system was devised for the octochord or the '''decachord''', or for the octochord with different tunings, in respect of UET VII 74.}}
 #* {{quote-book|en|year=2016| title=Contemplating Shostakovich|author=Andrew Kirkman,  Alexander Ivashkin | page=22| passage=Two pentachords can be combined to create the '''decachord''' discussed by Carpenter.}}
@@ -57719,7 +57719,7 @@ From {{prefix|en|deca|meride}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|obsolete}} An [[interval]] of [[pitch]] equal to 1/10 of a [[heptameride]], or 1/3010 of an [[octave]].
+# {{lb|en|musical interval|obsolete}} An [[interval]] of [[pitch]] equal to 1/10 of a [[heptameride]], or 1/3010 of an [[octave]].
 
 ====Related terms====
 * {{l|en|meride}}
@@ -59140,7 +59140,7 @@ Page 970 devil in music: -------- begin text --------
 ===Noun===
 {{en-noun|?}}
 
-# {{lb|en|informal|music}} The [[tritone]].
+# {{lb|en|informal|musical interval}} The [[tritone]].
 
 ====Synonyms====
 * {{l|en|devil's interval}}
@@ -59150,7 +59150,7 @@ Page 971 devil's interval: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|informal|music}} The [[tritone]].
+# {{lb|en|informal|musical interval}} The [[tritone]].
 
 ====Synonyms====
 * the [[devil in music]]
@@ -59179,9 +59179,9 @@ Page 973 D-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[major key]] with the notes D♭, E♭, F, G♭, A♭, B♭, C, the key signature of which has five [[flat]]s.
+# {{lb|en|musical key}} A [[major key]] with the notes D♭, E♭, F, G♭, A♭, B♭, C, the key signature of which has five [[flat]]s.
 #: <score sound>{\key des \major des' es' f' ges' aes' bes' c'' des''2}</score>
-# {{lb|en|music}} The [[major chord]] with the notes D♭, F, and A♭.
+# {{lb|en|musical chord}} The [[major chord]] with the notes D♭, F, and A♭.
 #: <score sound><des' f' aes'>1</score>
 
 ====Coordinate terms====
@@ -59305,7 +59305,7 @@ From {{bor|en|la|diabolus}}. {{doublet|en|devil|diable|diablo}}.
 ===Noun===
 {{en-noun|es}}
 
-# {{lb|en|music}} {{synonym of|en|tritone}}.
+# {{lb|en|musical interval}} {{synonym of|en|tritone}}.
 
 -------- end text --------
 Page 979 diap.: -------- begin text --------
@@ -59389,7 +59389,7 @@ Page 981 diapente: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|obsolete}} The [[interval]] of the [[fifth]] or the [[harmonic]] [[ratio]] 3:2.
+# {{lb|en|musical interval|obsolete}} The [[interval]] of the [[fifth]] or the [[harmonic]] [[ratio]] 3:2.
 # {{lb|en|medicine|obsolete}} A [[composition]] of [[five]] [[ingredient]]s.
 #* '''1816''', ''Race-horses, method of preparing for running'', entry in ''Encyclopædia Perthensis'', 2nd Edition, Volume 18, [http://books.google.com.au/books?id=J0pQAAAAMAAJ&pg=PA571&dq=%22diapente%22%7C%22diapentes%22&hl=en&sa=X&ei=DcWsUI_tAarMmAXg44GoDw&redir_esc=y#v=onepage&q=%22diapente%22%7C%22diapentes%22&f=false page 571],
 #*: If the horse be in good fleſh and ſpirits when taken up for its month′s preparation, the '''diapente''' muſt be omitted; and the chief buſineſs will be to give him good food, and ſo much exerciſe as will keep him in wind, without overſweating him or exhauſting his ſpirits.
@@ -59446,7 +59446,7 @@ Page 984 diastem: -------- begin text --------
 # Intervening space; [[interval]].
 #* {{quote-text|en|year=1972|author=w:Yusuke Hagihara|title=Celestial Mechanics: Perturbation Theory|publisher=MIT Press
 |passage=A space curve contained between two concentric spheres and with its concave side facing always toward the common center of the two spheres is said to be ''periplegmatic''. The radius vector of a periplegmatic curve is of length between the radii of the two spheres. At the maxima and minima of the radius vector the curve touches respectively the larger or smaller of the two limiting spheres. The radial distance between such a maximum and minimum is called the '''''diastem'''''.}}
-# {{lb|en|obsolete|music}} An [[interval]].
+# {{lb|en|obsolete|musical interval}} An [[interval]].
 # {{lb|en|geology}} A minor [[depositional]] [[break]].
 
 {{Webster 1913}}
@@ -59479,7 +59479,7 @@ From {{uder|en|la|diatessarōn}}, from {{der|en|grc|διά||through, across}} + 
 ===Noun===
 {{en-noun|s|diatessara}}
 
-# {{lb|en|music|obsolete}} The [[interval]] of a [[fourth]] or the harmonic ratio 4:3.
+# {{lb|en|musical interval|obsolete}} The [[interval]] of a [[fourth]] or the harmonic ratio 4:3.
 # {{lb|en|theology}} A [[continuous]] [[narrative]] arranged from the first four books of the [[New Testament]] (the [[canonical]] [[gospel]]s).
 # {{lb|en|obsolete}} An [[electuary]] compounded of four [[medicine]]s.
 
@@ -59649,11 +59649,11 @@ From {{pre|en|di|chord}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] with two [[note]]s.
+# {{lb|en|musical interval|musical chord}} A [[chord]] with two [[note]]s.
 #* {{quote-book|en|title=The Origin of Music: A Theory of the Universal Development of Music|author=Robert Fink|year=1981|passage=This in turn may lead to splitting the final note of the song into a '''dichord''' without the necessary existence of overlapping, but the '''dichord''' may be an interval of any kind, since it is melodically formed.}}
-# A musical instrument that has two sets of strings.
+# {{lb|en|musical instrument}} A musical instrument that has two sets of strings.
 #* {{quote-book|en|title=A trumpet by any other name: a history of the trumpet marine|author=Cecil Adkins|year=1991|passage=Many modern instrument collections contain instruments shaped like eighteenth-century trumpet marines, but which might better be described as '''dichords''' equipped with common string instrument bridges so as to be played as basses.}}
-# An ancient two-stringed [[lute]].
+# {{lb|en|musical instrument}} An ancient two-stringed [[lute]].
 -------- end text --------
 Page 995 diddle: -------- begin text --------
 
@@ -61996,7 +61996,7 @@ From {{prefix|en|dis|diapason}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|Ancient Greece}} An [[interval]] of two [[octave]]s, or a [[fifteenth]].
+# {{lb|en|musical interval|Ancient Greece}} An [[interval]] of two [[octave]]s, or a [[fifteenth]].
 
 ====Synonyms====
 * {{l|en|didiapason}}
@@ -62489,7 +62489,7 @@ The {{glossary|verb}} is derived from the noun.<ref>{{R:OED Online|pos=v|id=1975
 ### {{synonym of|en|length|t=an [[extent#Noun|extent]] measured along the [[long#Adjective|longest]] [[dimension#Noun|dimension]] of an [[object#Noun|object]]}}.
 ### {{lb|en|figurative}} A [[disagreement]], a [[dispute#Noun|dispute]]; also, an [[estrangement]].
 ###: {{synonyms|en|quarrel}}
-### {{lb|en|music}} A difference in [[pitch#Noun|pitch]] between [[sound#Noun|sounds]]; an interval.
+### {{lb|en|musical interval}} A difference in [[pitch#Noun|pitch]] between [[sound#Noun|sounds]]; an interval.
 ###* {{RQ:More Robinson Utopia|subchapter=Of Their Iourneyenge or Trauaylynge abrode, with Dyuers Other Matters Cunnyngly Reasoned & Wittilie Discussed|sig=&#91;M.vj.&#93;|verso=1|page=201|passage=[N]other perceaueth the concordaunt and diſcordante '''diſtaunces''' of ſoundes, and tunes {{...}}}}
 # {{lb|en|uncountable}}
 ## The amount of space between points (often geographical points), usually (but not necessarily) measured along a straight line.
@@ -63001,7 +63001,7 @@ From {{prefix|en|di|tone}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|obsolete|music}} An [[interval]] of two [[tone]]s
+# {{lb|en|obsolete|musical interval}} An [[interval]] of two [[tone]]s.
 
 ====Usage notes====
 * The closest modern interval is the [[major third]] - a major tone plus a minor tone.
@@ -64115,9 +64115,9 @@ Page 1053 D major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with the notes D, E, F♯, G, A, B, and C♯, the key signature of which has two sharps.
+# {{lb|en|musical key}} The [[major key]] with the notes D, E, F♯, G, A, B, and C♯, the key signature of which has two sharps.
 #: <score sound>{\key d \major d' e' fis' g' a' b' cis'' d''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[D]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[D]].
 #: <score sound><d' fis' a'>1</score>
 
 ====Coordinate terms====
@@ -64158,9 +64158,9 @@ Page 1054 D minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes D, E, F, G, A, B♭, C.
+# {{lb|en|musical key}} A [[minor key]] with the notes D, E, F, G, A, B♭, C.
 #: <score sound>{\key d\minor d'e'f'g'a'bes'c''d''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[D]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[D]].
 #: <score sound><d'f'a'>1</score>
 
 ====Coordinate terms====
@@ -65089,7 +65089,7 @@ From {{bor|en|frm|dominant}}.
 #* {{quote-journal|en|date=2023 December 27|author=Richard Foster|title=New rail freight terminal leads the way|journal=RAIL|issue=999|page=38|text=It's the water that makes this area famous. {{...}} That water is still being used to supply Blackford's two '''dominant''' industries, Tullibardine whisky distillery to the south of the village and, more significantly, Highland Spring Group's bottling plant to the north.}}
 # {{lb|en||of a body part}} Preferred and used with greater [[dexterity]] than the other, as the right hand of a [[right-handed]] person or the left hand of a [[left-handed]] one.
 # {{lb|en|medicine}} Designating the [[follicle]] which will survive [[atresia]] and permit [[ovulation]].
-# {{lb|en|music}} Being the [[dominant]]
+# {{lb|en|music}} Being the [[dominant]].
 #: '''''Dominant''' seventh''
 
 ====Synonyms====
@@ -65156,15 +65156,15 @@ Page 1070 dominant seventh: -------- begin text --------
 ===Noun===
 {{en-noun|?}}
 
-# {{lb|en|music}} The chord consisting of the fifth, major seventh, ninth and eleventh of a given scale; a [[seventh chord]] built on the [[dominant]] tone.
-#: {{ux|en|G7, the '''dominant seventh''' chord of a C major scale:<br><score sound><g'b'd''f''>1</score>}}
+# {{lb|en|musical chord}} A [[dominant seventh chord]].
 -------- end text --------
 Page 1071 dominant seventh chord: -------- begin text --------
 
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] with the [[bass note]] and the [[major third]], [[perfect fifth]], and the [[minor seventh]] above it.
+# {{lb|en|musical chord}} A [[chord]] with the [[bass note]] and the [[major third]], [[perfect fifth]], and the [[minor seventh]] above it.
+#: {{ux|en|G7, the '''dominant seventh chord''' of a C major scale:<br><score sound><g'b'd''f''>1</score>}}
 -------- end text --------
 Page 1072 domino: -------- begin text --------
 {{wikipedia|Dominoes}}
@@ -66738,7 +66738,7 @@ Page 1081 double bar: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[symbol]], [[consisting]] of two [[ordinary]] [[bar line]]s or a single [[heavy]] one, that [[mark]]s the end of a [[composition]] or a [[section]] within it.
+# {{lb|en|musical symbol}} A [[symbol]], [[consisting]] of two [[ordinary]] [[bar line]]s or a single [[heavy]] one, that [[mark]]s the end of a [[composition]] or a [[section]] within it.
 
 ====Derived terms====
 * {{l|en|double bar line}}
@@ -69936,9 +69936,9 @@ Page 1128 D-sharp minor: -------- begin text --------
 ===Noun===
 {{en-noun|-|head=D-[[sharp]] [[minor]]}}
 
-# {{lb|en|music}} A [[minor key]] with the notes D♯, E♯, F♯, G♯, A♯, B, C♯.
+# {{lb|en|musical key}} A [[minor key]] with the notes D♯, E♯, F♯, G♯, A♯, B, C♯.
 #: <score sound>{\key dis\minor dis'eis'fis'gis'ais'b'cis''dis''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[D-sharp]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[D-sharp]].
 #: <score sound><dis'fis'ais'>1</score>
 
 ====Coordinate terms====
@@ -71607,7 +71607,7 @@ text=One of the under-reported '''dynamics''' during the coronavirus pandemic ha
 #: {{ux|en|The study of fluid '''dynamics''' quantifies turbulent and laminar flows.}}
 # {{lb|en|music}} The varying [[loudness]] or [[volume]] of a song or the [[markings]] that indicate the loudness.
 #: {{ux|en|If you pay attention to the '''dynamics''' as you play, it's a very moving piece.}}
-# {{lb|en|music}} A symbol in a musical [[score]] that indicates the desired level of [[volume]].
+# {{lb|en|musical symbol}} A symbol in a musical [[score]] that indicates the desired level of [[volume]].
 # {{lb|en|grammar}} A verb [[that]] indicates [[continued]] or [[progressive]] [[action]] on the part of the [[subject]].
 
 ====Synonyms====
@@ -72138,7 +72138,7 @@ Page 1172 E flat major: -------- begin text --------
 ===Noun===
 {{en-noun|head=[[E]]-[[flat]] [[major]]|-}}
 
-# {{lb|en|music}} {{alternative spelling of|en|E-flat major}}.
+# {{lb|en|musical key|musical chord}} {{alternative spelling of|en|E-flat major}}.
 -------- end text --------
 Page 1173 E-flat major: -------- begin text --------
 {{wikipedia}}
@@ -72146,9 +72146,9 @@ Page 1173 E-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with [[E-flat]] as its [[tonic]], with the notes E♭, F, G, A♭, B♭, C, D the key signature of which has three flats:
+# {{lb|en|musical key}} The [[major key]] with [[E-flat]] as its [[tonic]], with the notes E♭, F, G, A♭, B♭, C, D the key signature of which has three flats:
 #: <score sound>{\key es \major es' f' g' aes' bes' c'' d'' es''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[E-flat]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[E-flat]].
 #: <score sound><es' g' bes'>1</score>
 
 ====Coordinate terms====
@@ -72187,7 +72187,7 @@ Page 1174 e-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} {{alternative spelling of|en|E flat major}}.
+# {{lb|en|musical key|musical chord}} {{alternative spelling of|en|E flat major}}.
 -------- end text --------
 Page 1175 E-flat minor: -------- begin text --------
 {{wp}}
@@ -72195,9 +72195,9 @@ Page 1175 E-flat minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes E♭, F, G♭, A♭, B♭, C♭, D♭.
+# {{lb|en|musical key}} A [[minor key]] with the notes E♭, F, G♭, A♭, B♭, C♭, D♭.
 #: <score sound>{\key es\minor es'f'ges'aes'bes'ces''des''es''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[E-flat]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[E-flat]].
 #: <score sound><es'ges'bes'>1</score>
 
 ====Coordinate terms====
@@ -72741,9 +72741,9 @@ Page 1192 E major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with the notes E, F♯, G♯, A, B, C♯, D♯, the key signature of which has four sharps.
+# {{lb|en|musical key}} The [[major key]] with the notes E, F♯, G♯, A, B, C♯, D♯, the key signature of which has four sharps.
 #: <score sound>{\key e \major e' fis' gis' a' b' cis'' dis'' e''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[E]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[E]].
 #: <score sound><e' gis' b'>1</score>
 
 ====Coordinate terms====
@@ -72897,9 +72897,9 @@ Page 1196 E minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes E, F♯, G, A, B, C, and D.
+# {{lb|en|musical key}} A [[minor key]] with the notes E, F♯, G, A, B, C, and D.
 #: <score sound>{\key e\minor e'fis'g'a'b'c''d''e''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[E]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[E]].
 #: <score sound><e'g'b'>1</score>
 
 ====Coordinate terms====
@@ -74698,7 +74698,7 @@ From {{prefix|en|epta|meride}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|obsolete}} {{alternative spelling of|en|heptameride}}.
+# {{lb|en|musical interval|obsolete}} {{alternative spelling of|en|heptameride}}.
 #* '''1963''', ''Scripta Mathematica'', vol. 1, page 296, [http://www.worldcat.org/search?q=n2%3A0036-9713 ISSN 0036-9713].
 #*: Later he spoke of "subdividing each '''Eptameride''' into ten parts, called Decamerides." But he did not use this more subtle division in practice.
 #* {{quote-book|en|year=1964|author=James Woodrow Krehbiel|chapter=Harmonic Principles of Jean-Philippe Rameau and his Contemporaries|page=9|url=http://www.worldcat.org/search?q=no%3A1069357|oclc=1069357
@@ -75041,7 +75041,7 @@ Page 1225 equal-interval chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] characterized by one repeating [[interval]].
+# {{lb|en|musical chord}} A [[chord]] characterized by one repeating [[interval]].
 
 ====Antonyms====
 * {{l|en|mixed-interval chord}}
@@ -79839,9 +79839,9 @@ Page 1296 F-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[theoretical key|theoretical]] [[major key]] with [[F-flat]] as its [[tonic]] and the notes F♭, G♭, A♭, B♭♭, C♭, D♭, and E♭.
+# {{lb|en|musical key}} The [[theoretical key|theoretical]] [[major key]] with [[F-flat]] as its [[tonic]] and the notes F♭, G♭, A♭, B♭♭, C♭, D♭, and E♭.
 #: <score sound>{\key fes \major fes' ges' aes' beses' ces'' des'' es'' fes''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[F-flat]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[F-flat]].
 #: <score sound><fes' aes' ces''>1</score>
 
 ====Coordinate terms====
@@ -80058,7 +80058,7 @@ From {{inh|en|ang|fīftēoþa}}, equivalent to {{af|en|fifteen|-th|id2=ordinal}}
 
 # The person or thing in the fifteenth [[position]].
 # One of fifteen equal parts of a whole.
-# {{lb|en|music}} The interval comprising two octaves.
+# {{lb|en|musical interval}} The interval comprising two octaves.
 
 ====Translations====
 {{trans-top|person or thing in the fifteenth position}}
@@ -80299,7 +80299,7 @@ From {{inh|en|enm|fifthe}}, {{m|enm|fifte}}, {{m|enm|fift}}, from {{inh|en|ang|f
 ## {{lb|en|[[ellipsis]]}} The [[fifth gear]] of a [[transmission]].
 # One of five equal parts of a whole: [[one-fifth]].
 # {{lb|en|US}} A quantity of liquor equal to one-fifth of an American [[gallon]], or, more commonly, 750 milliliters (that is, [[three quarters]] of a liter).
-# {{lb|en|musical interval}} The musical [[interval]] between one note and another five [[scale degree]]s higher (the fifth note in a [[scale]])
+# {{lb|en|musical interval}} The musical [[interval]] between one note and another five [[scale degree]]s higher (the fifth note in a [[scale]]).
 #* {{quote-song|en|year=1984|album=Various Positions|title={{w|Hallelujah (Leonard Cohen song)|Hallelujah}}|author=w:Leonard Cohen|passage=Now I've heard there was a secret chord / That David played, and it pleased the Lord / But you don't really care for music, do ya? / It goes like this, the fourth, the '''fifth'''}}
 # The fifth voice in a [[polyphonic]] melody.
 
@@ -87191,9 +87191,9 @@ Page 1359 F major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with the notes F, G, A, B♭, C, D, E, the key signature of which has one flat.
+# {{lb|en|musical key}} The [[major key]] with the notes F, G, A, B♭, C, D, E, the key signature of which has one flat.
 #: <score sound>{\key f \major f' g' a' bes' c'' d'' e'' f''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[F]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[F]].
 #: <score sound><f' a' c''>1</score>
 
 ====Coordinate terms====
@@ -87232,9 +87232,9 @@ Page 1360 F minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes F, G, A♭, B♭, C, D♭, E♭.
+# {{lb|en|musical key}} A [[minor key]] with the notes F, G, A♭, B♭, C, D♭, E♭.
 #: <score sound>{\key f\minor f'g'aes'bes'c''des''es''f''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[F]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[F]].
 #: <score sound><f'aes'c''>1</score>
 
 ====Coordinate terms====
@@ -89705,7 +89705,7 @@ From {{inh|en|ang|fēowertēoþa}}, equivalent to {{af|en|fourteen|-th|id2=ordin
 
 # The person or thing in the fourteenth position.
 # One of fourteen equal parts of a whole.
-# {{lb|en|music}} The interval comprising an octave and a seventh.
+# {{lb|en|musical interval}} The interval comprising an octave and a seventh.
 
 ====Translations====
 {{trans-top|something in the fourteenth position}}
@@ -89942,7 +89942,7 @@ Abbreviations: {{l|en|4th}}, 4<sup>th</sup>, {{l|en|IVth}}, {{l|en|IIIIth}}; {{q
 # {{lb|en|chiefly|American}} A [[quarter]], one of four equal parts of a whole.
 #: {{syn|en|fourth part|quarter|farthing}}
 # {{lb|en|in the singular}} The fourth [[gear]] of an engine.
-# {{lb|en|music}} A musical [[interval]] which spans four degrees of the [[diatonic scale]], for example C to F (C D E F).
+# {{lb|en|musical interval}} A musical [[interval]] which spans four degrees of the [[diatonic scale]], for example C to F (C D E F).
 #* {{quote-song|en|year=1984|album=Various Positions|title={{w|Hallelujah (Leonard Cohen song)|Hallelujah}}|author=w:Leonard Cohen|passage=Now I've heard there was a secret chord / That David played, and it pleased the Lord / But you don't really care for music, do ya? / It goes like this, the '''fourth''', the fifth}}
 # {{lb|en|astronomy|rare}} One [[sixtieth]] of a [[third]] or [[tierce]].
 #* {{quote-book|en|year=1994|author=John David North|title=The Fontana History of Astronomy and Cosmology|page=xxi
@@ -90154,7 +90154,7 @@ Page 1394 French augmented sixth chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] with the [[tonic]], [[supertonic]], lowered [[submediant]], and raised [[subdominant]] [[scale degree]]s.
+# {{lb|en|musical chord}} A [[chord]] with the [[tonic]], [[supertonic]], lowered [[submediant]], and raised [[subdominant]] [[scale degree]]s.
 #: {{ux|en|C '''French augmented sixth chord''':<br><score sound><c'd'aes fis'>1</score>}}
 
 ====Coordinate terms====
@@ -90747,9 +90747,9 @@ Page 1407 F-sharp major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with the notes F♯, G♯, A♯, B, C♯, D♯, and E♯, the [[key signature]] of which has six sharps.
+# {{lb|en|musical key}} The [[major key]] with the notes F♯, G♯, A♯, B, C♯, D♯, and E♯, the [[key signature]] of which has six sharps.
 #: <score sound>{\key fis \major fis' gis' ais' b' cis'' dis'' eis'' fis''2}</score>
-# {{lb|en|music}} The [[major chord]] with the notes F♯, A♯, and C♯.
+# {{lb|en|musical chord}} The [[major chord]] with the notes F♯, A♯, and C♯.
 #: <score sound><fis' ais' cis''>1</score>
 
 ====Coordinate terms====
@@ -90775,9 +90775,9 @@ Page 1408 F-sharp minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes F♯, G♯, A, B, C♯, D, E.
+# {{lb|en|musical key}} A [[minor key]] with the notes F♯, G♯, A, B, C♯, D, E.
 #: <score sound>{\key fis\minor fis'gis'a'b'cis''d''e''fis''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[F-sharp]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[F-sharp]].
 #: <score sound><fis'a'cis''>1</score>
 
 ====Synonyms====
@@ -92696,7 +92696,7 @@ From {{der|en|la|-}}, from past participle of {{m|la|genero||beget, father}}, eq
 # One who, or that which, [[generate]]s, [[beget]]s, [[cause]]s, or [[produce]]s.
 ## {{lb|en|chemistry}} An [[apparatus]] in which [[vapour]] or [[gas]] is [[form]]ed from a [[liquid]] or [[solid]] by means of [[heat]] or [[chemical]] [[process]], as a steam boiler, gas retort etc.
 ## {{lb|en|music}} The [[principal]] [[sound]] or sounds by which others are produced; the [[fundamental]] [[note]] or root of the common [[chord]]; -- see also [[generating tone]].
-## {{lb|en|music}} An [[interval]] that is repeatedly stacked to obtain other pitches in tuning systems or [[scale]]s.
+## {{lb|en|musical interval}} An [[interval]] that is repeatedly stacked to obtain other pitches in tuning systems or [[scale]]s.
 ## {{lb|en|mathematics}} An [[element]] of a [[group]] that is used in the [[presentation]] of the group: one of the elements from which the others can be [[inferred]] with the given [[relator]]s.
 ## {{lb|en|geometry}} One of the lines of a ruled surface; more generally, an element of some family of linear spaces.
 ## {{lb|en|programming}} A [[subordinate]] piece of [[code]] which, given some initial [[parameter]]s, will [[generate]] multiple output values on request.
@@ -93091,7 +93091,7 @@ Page 1452 German augmented sixth chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A chord with the [[tonic]], lowered [[submediant]], lowered [[mediant]], and raised [[subdominant]] [[scale degree]]s.
+# {{lb|en|musical chord}} A chord with the [[tonic]], lowered [[submediant]], lowered [[mediant]], and raised [[subdominant]] [[scale degree]]s.
 #: {{ux|en|C '''German augmented sixth chord''':<br><score sound><c'ees'aes fis'>1</score>}}
 
 ====Coordinate terms====
@@ -93131,9 +93131,9 @@ Page 1455 G-flat major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[major key]] with the notes G♭, A♭, B♭, C♭, D♭, E♭{{,}} and F, the key signature of which has 6 flats.
+# {{lb|en|musical key}} A [[major key]] with the notes G♭, A♭, B♭, C♭, D♭, E♭{{,}} and F, the key signature of which has 6 flats.
 #: <score sound>{\key ges \major ges'aes'bes'ces''des''ees''f''ges''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[G]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[G]].
 #: <score sound><ges'bes'des''>1</score>
 
 ====Coordinate terms====
@@ -93806,9 +93806,9 @@ Page 1473 G major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with the notes G, A, B, C, D, E, F♯, the key signature of which has one sharp.
+# {{lb|en|musical key}} The [[major key]] with the notes G, A, B, C, D, E, F♯, the key signature of which has one sharp.
 #: <score sound>{\key g \major g' a' b' c'' d'' e'' fis'' g''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[G]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[G]].
 #: <score sound><g' b' d''>1</score>
 # {{lb|en|Internet slang}} A [[video]] [[edit]]ing [[technique]] where audio is [[repitch]]ed across the [[interval]]s of a major chord and the colors are [[inverted]], creating a [[distort]]ed and [[cacophonous]] effect.
 
@@ -93853,9 +93853,9 @@ Page 1474 G minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes G, A, B♭, C, D, E♭, F.
+# {{lb|en|musical key}} A [[minor key]] with the notes G, A, B♭, C, D, E♭, F.
 #: <score sound>{\key g\minor g'a'bes'c''d''es''f''g''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[G]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[G]].
 #: <score sound><g'bes'd''>1</score>
 
 ====Coordinate terms====
@@ -98409,9 +98409,9 @@ Page 1519 G-sharp major: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} The [[major key]] with the notes G♯, A♯, B♯, C♯, D♯, E♯, and F𝄪, the key signature of which has six sharps and one double sharp.
+# {{lb|en|musical key}} The [[major key]] with the notes G♯, A♯, B♯, C♯, D♯, E♯, and F𝄪, the key signature of which has six sharps and one double sharp.
 #: <score sound>{\key gis \major gis' ais' bis' cis'' dis'' eis'' fisis'' gis''2}</score>
-# {{lb|en|music}} The [[major chord]] with a [[root]] of [[G-sharp]].
+# {{lb|en|musical chord}} The [[major chord]] with a [[root]] of [[G-sharp]].
 #: <score sound><gis' bis' dis''>1</score>
 
 ====Coordinate terms====
@@ -98436,9 +98436,9 @@ Page 1520 G-sharp minor: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A [[minor key]] with the notes G♯, A♯, B, C♯, D♯, E, F♯.
+# {{lb|en|musical key}} A [[minor key]] with the notes G♯, A♯, B, C♯, D♯, E, F♯.
 #: <score sound>{\key gis\minor gis'ais'b'cis''dis''e''fis''gis''2}</score>
-# {{lb|en|music}} The [[minor chord]] with a [[root]] of [[G-sharp]].
+# {{lb|en|musical chord}} The [[minor chord]] with a [[root]] of [[G-sharp]].
 #: <score sound><gis'b'dis''>1</score>
 
 ====Coordinate terms====
@@ -98856,7 +98856,7 @@ Page 1535 half-diminished seventh chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] with the [[bass note]] and the [[minor third]], [[diminished fifth]], and [[minor seventh]] above it, often denoted with [[𝆩]].
+# {{lb|en|musical chord}} A [[chord]] with the [[bass note]] and the [[minor third]], [[diminished fifth]], and [[minor seventh]] above it, often denoted with [[𝆩]].
 #: {{ux|en|C '''half-diminished seventh chord''':<br><score sound><c'ees'ges'bes'>1</score>}}
 -------- end text --------
 Page 1536 half note: -------- begin text --------
@@ -98881,11 +98881,10 @@ Page 1537 half rest: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A pause or [[interval]] of silence equal in duration to two [[quarter rest|quarter rests]] or one half of a [[whole rest]]. In common or 4/4 time, its duration is two [[beat|beats]].
-# {{lb|en|music}} A symbol used in musical notation drawn as a solid rectangle directly above the middle line of a [[staff]] whose height is half the distance between lines.
-
-====Synonyms====
-* {{l|en|minim rest}}
+# {{lb|en|musical rest|North America}} A pause or [[interval]] of silence equal in duration to two [[quarter rest|quarter rests]] or one half of a [[whole rest]]. In common or 4/4 time, its duration is two [[beat|beats]].
+#: {{syn|en|minim rest<ll:UK>}}
+# {{lb|en|musical symbol|North America}} A symbol used in musical notation drawn as a solid rectangle directly above the middle line of a [[staff]] whose height is half the distance between lines.
+#: {{syn|en|minim rest<ll:UK>}}
 
 ====Related terms====
 {{col|en|sort=0
@@ -98902,13 +98901,15 @@ Page 1537 half rest: -------- begin text --------
 
 ====Translations====
 {{trans-top|pause or interval of silence equal in duration to two quarter rests or one half of a whole rest}}
+* Icelandic: {{t|is|hálfnótuþögn|f}}
+* Scottish Gaelic: {{t|gd|tost geal|m}}
+* Vietnamese: {{t|vi|lặng trắng}}
 {{trans-bottom}}
 
 {{trans-top|symbol for this pause}}
-{{trans-bottom}}
-
-{{checktrans-top}}
-* Icelandic: {{t|is|hálfnótuþögn}}
+* Icelandic: {{t|is|hálfnótuþögn|f}}
+* Scottish Gaelic: {{t|gd|tost geal|m}}
+* Vietnamese: {{t|vi|[[dấu]] [[lặng trắng]]}}, {{t|vi|lặng trắng}}
 {{trans-bottom}}
 
 ===Anagrams===
@@ -99027,7 +99028,7 @@ From {{prefix|en|half|tone}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} {{synonym of|en|semitone}}, [[half]] the [[interval]] between two [[notes]] on a [[scale]].
+# {{lb|en|musical interval}} {{synonym of|en|semitone}}, [[half]] the [[interval]] between two [[notes]] on a [[scale]].
 #* {{RQ:Darwin Emotions|page=87|passage=That animals utter musical notes is familiar to every one, as we may daily hear in the singing of birds. It is a more remarkable fact that an ape, one of the Gibbons, produces an exact octave of musical sounds, ascending and descending the scale by '''half-tones'''; so that this monkey “alone of brute mammals may be said to sing.”}}
 # {{lb|en|printing}} A picture made by using the process of half-toning.
 #* {{quote-book|en|title=A Journey Through France in War Time|author=w:Joseph G. Butler Jr.|url=https://www.gutenberg.org/cache/epub/20464/pg20464-images.html|year=1917|passage=Before leaving New York a handsome booklet had been prepared and printed. The brochure contained the names of the commissioners, their public records, '''halftone''' portraits and a carefully prepared statement of the objects of the expedition.}}
@@ -103986,7 +103987,7 @@ From {{der|en|grc|ἑπτάχορδος||seven-stringed}}, from {{m|grc|ἑπτ�
 {{en-noun}}
 
 # {{lb|en|music}} A [[system]] of [[seven]] [[sound]]s.
-# {{lb|en|music}} A [[lyre]] with seven [[chord]]s.
+# {{lb|en|musical instrument}} A [[lyre]] with seven [[chord]]s.
 # {{lb|en|poetry}} A [[composition]] sung to the sound of seven chords or [[tone]]s.<ref>'''1852''', John Weeks Moore, ''Complete Encyclopædia of Music''</ref>
 
 ===References===
@@ -104001,7 +104002,7 @@ From {{prefix|en|hepta|decad}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A group of [[seven]] [[decad]]s arranged to produce twenty-four tones
+# {{lb|en|music}} A group of [[seven]] [[decad]]s arranged to produce twenty-four tones.
 
 {{C|en|Seven}}
 -------- end text --------
@@ -104029,7 +104030,7 @@ Page 1595 heptameride: -------- begin text --------
 #*: Fractionation of the liquid polymers gave compounds up to the '''heptameride'''.
 #* '''1939''', ''British Chemical Abstracts: Part A, Pure Chemistry'', page 602, [http://www.worldcat.org/search?q=n2%3A0365-9259 ISSN 0365-9259].
 #*: From available v.d. data the existence of polymerides is shown and the relative amounts of various associated forms up to the '''heptameride''' have been calc.
-# {{lb|en|music|obsolete}} An [[interval]] of [[pitch]] equal to 1/7 of a [[meride]], or 1/301 of an [[octave]].
+# {{lb|en|musical interval|obsolete}} An [[interval]] of [[pitch]] equal to 1/7 of a [[meride]], or 1/301 of an [[octave]].
 #* {{quote-text|en|year=1984|author=Joseph Sauveur (trans. Rudolf Rasch)|title=Collected Writings on Musical Acoustics: (Paris 1700-1713)|page=28|isbn=9070907089|passage=Sauveur divided the '''heptameride''' into two demi-'''heptamerides'''. One demi-'''heptameride''' is 1/602 of an octave, with frequency ratio 1:2<sup>1/602</sup> = 1.001 154 or 1.993 cents, very nearly 1/12 of a ditonic comma.}}
 #* {{quote-text|en|year=2007|author=Translator's notes in: {{w|Hermann von Helmholtz}}|title=On the Sensations of Tone|page=437|isbn=1602066396|passage=As 301 = 7 &times; 43, he called each degree a '''heptameride''', which he made = .03987 of an (equal) Semitone.}}
 #* {{quote-text|en|year=2008|author=Patrizio Barbieri|title=Enharmonic: Instruments and Music 1470-1900|page=378|isbn=8895203143|passage=Sauveur stresses that the difference between the pure 5th (176 '''''heptamerides''''') and the tempered 5th (175) is equal to 1: so the temperaments of all the other intervals will also be multiples of 1:}}
@@ -112267,14 +112268,14 @@ Page 1711 interval class: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] measured by the distance between its two [[pitch class]]es [[order]]ed so they are as close as possible.
+# {{lb|en|musical set theory}} An [[interval]] measured by the distance between its two [[pitch class]]es [[order]]ed so they are as close as possible.
 -------- end text --------
 Page 1712 interval cycle: -------- begin text --------
 
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} That which unfolds a single recurrent [[interval]] in a [[series]] that closes with a return to the initial [[pitch class]].
+# {{lb|en|musical set theory}} That which unfolds a single recurrent [[interval]] in a [[series]] that closes with a return to the initial [[pitch class]].
 
 ====Related terms====
 * {{l|en|interval class}}
@@ -112973,7 +112974,7 @@ From {{der|en|la|inversio|inversiōnem}}.
 
 # The action of [[invert]]ing.
 # The act of being in an [[inverted]] state; being [[upside down]], [[inside out]]{{,}} or in a [[reverse]] [[sequence]].
-# {{lb|en|music}} The reversal of an [[interval]]; the move of one [[pitch]] in an interval up or down an [[octave]].
+# {{lb|en|musical interval}} The reversal of an [[interval]]; the move of one [[pitch]] in an interval up or down an [[octave]].
 # {{lb|en|music}} The [[position]] of a [[chord]] which has a note other than the [[root]] as its [[bass]] note.
 # {{lb|en|music}} The flipping of a [[melody]] or [[contrapuntal]] [[line]] so that high notes become low and vice versa; the reversal of a [[pitch contour]].
 # {{lb|en|genetics}} A segment of [[DNA]] in the context of a [[chromosome]] that is reversed in orientation relative to a reference [[karyotype]] or [[genome]].
@@ -118490,7 +118491,7 @@ From {{der|en|grc|κλεισμένος||closed}}.
 {{wikipedia|lang=en}}
 {{en-noun}}
 
-# {{lb|en|music}} A very small [[interval]] that is the difference between 6 [[just intonation|just]] [[minor third]]s and a [[perfect twelfth]].
+# {{lb|en|musical interval}} A very small [[interval]] that is the difference between 6 [[just intonation|just]] [[minor third]]s and a [[perfect twelfth]].
 
 ===Anagrams===
 * {{anagrams|en|a=aeiklms|Maleski|malkies}}
@@ -121249,7 +121250,7 @@ The choice between {{m|en|leapt}} and {{m|en|leaped}} is often generally a matte
 # [[copulation|Copulation]] with, or [[coverture]] of, a [[female]] [[beast]].
 #* {{quote-text|en|year=1865|title=British Farmer's Magazine|issue=48|page=8
 |passage=Much difference of opinion exists as to the number of bullings a cow should receive. Here, I think, good judgment should be used. If the bull is cool and quiet, and some time has intervened since he had his last cow, one good '''leap''' is better than more {{...}}}}
-# {{lb|en|music}} A passing from one [[note]] to another by an [[interval]], especially by a long one, or by one including several other [[intermediate]] intervals.
+# {{lb|en|note sequence}} A passing from one [[note]] to another by an [[interval]], especially by a long one, or by one including several other [[intermediate]] intervals.
 # A small [[cataract]] over which fish attempt to jump; a [[salmon ladder]]<!--usually "salmon leap"-->.
 #* {{quote-journal|en|year=1837|journal=The New Sporting Magazine|volume=12|page=358
 |passage=He unfortunately persevered, and the cot veered round towards the fall of the '''leap''', and was running fast towards the rapids, when Mr. Craven lost his self-possession, and jumped out to gain a rock within a length of him, but did not succe[e]d, and he sunk in a part of the river over the '''leap''' called the dancing-hole, from which he was never more seen to rise. The cot was dashed with violence against another rock {{...}}}}
@@ -122843,7 +122844,7 @@ Borrowed from {{bor|en|la|limma}}.
 {{wikipedia}}
 {{en-noun}}
 
-# {{lb|en|music}} Any of several small musical [[interval]]s, such as the [[semitone]]. Most commonly referrs to the diatonic semitone or [[minor second]], which has a ratio of approximately 16/15 or 27/25 in [[meantone]] temperaments or 256/243 in Pythagorean tuning.
+# {{lb|en|musical interval}} Any of several small musical [[interval]]s, such as the [[semitone]]. Most commonly referrs to the diatonic semitone or [[minor second]], which has a ratio of approximately 16/15 or 27/25 in [[meantone]] temperaments or 256/243 in Pythagorean tuning.
 
 ===Anagrams===
 * {{anagrams|en|a=ailmm|MAMIL|Mamil|Milam}}
@@ -127575,7 +127576,7 @@ Page 1918 lyrichord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|historical}} A kind of [[vertical]] [[harpsichord]].
+# {{lb|en|musical instrument|historical}} A kind of [[vertical]] [[harpsichord]].
 
 ===References===
 <references/>
@@ -134896,7 +134897,7 @@ From {{prefix|en|micro|melody}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[melody]] based on a [[scale]] whose [[interval]]s are less that a [[semitone]] (used to investigate vocal accuracy)
+# {{lb|en|note sequence}} A [[melody]] based on a [[scale]] whose [[interval]]s are less that a [[semitone]] (used to investigate vocal accuracy)
 -------- end text --------
 Page 2065 microrhythm: -------- begin text --------
 
@@ -134961,7 +134962,7 @@ From {{prefix|en|micro|tone}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} Any [[interval]] smaller than a [[semitone]]
+# {{lb|en|musical interval}} Any [[interval]] smaller than a [[semitone]].
 
 ====Related terms====
 * {{l|en|microtonal}}
@@ -135295,11 +135296,7 @@ Page 2079 minim rest: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A pause or [[interval]] of silence equal in duration to two [[quarter rest|quarter rests]] or one half of a [[whole rest]]. In common or 4/4 time, its duration is two [[beat|beats]].
-# {{lb|en|music}} A symbol used in musical notation drawn as a solid rectangle directly above the middle line of a [[staff]] whose height is half the distance between lines.
-
-====Synonyms====
-* {{l|en|half rest}}
+# {{lb|en|musical rest|musical symbol|UK}} A [[half rest]].
 
 ====Related terms====
 {{col|en|sort=0
@@ -135313,19 +135310,6 @@ Page 2079 minim rest: -------- begin text --------
 |half note
 |minim
 }}
-
-====Translations====
-{{trans-top|pause}}
-* Icelandic: {{t|is|hálfnótuþögn|f}}
-* Scottish Gaelic: {{t|gd|tost geal|m}}
-* Vietnamese: {{t|vi|lặng trắng}}
-{{trans-bottom}}
-
-{{trans-top|symbol}}
-* Icelandic: {{t|is|hálfnótuþögn|f}}
-* Scottish Gaelic: {{t|gd|tost geal|m}}
-* Vietnamese: {{t|vi|[[dấu]] [[lặng trắng]]}}, {{t|vi|lặng trắng}}
-{{trans-bottom}}
 
 ===Anagrams===
 * {{anagrams|en|a=eiimmnrst|terminism}}
@@ -136430,7 +136414,7 @@ Page 2104 mixed-interval chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] that does not have one consistent [[interval]].
+# {{lb|en|musical chord}} A [[chord]] that does not have one consistent [[interval]].
 
 ====Antonyms====
 * {{l|en|equal-interval chord}}
@@ -139920,7 +139904,7 @@ Page 2172 murky bass: -------- begin text --------
 ===Noun===
 {{head|en|noun}}
 
-# {{lb|en|music}} [[intervals|Intervals]], each containing a low [[note]] followed by the [[pitch]] that is one [[octave]] higher, played on a [[keyboard]], especially a [[harpsichord]]
+# {{lb|en|music}} [[intervals|Intervals]], each containing a low [[note]] followed by the [[pitch]] that is one [[octave]] higher, played on a [[keyboard]], especially a [[harpsichord]].
 -------- end text --------
 Page 2173 museme: -------- begin text --------
 {{wikipedia}}
@@ -142567,7 +142551,7 @@ Page 2220 Neapolitan chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[major chord]] with the lowered [[supertonic]] [[scale degree]] as the [[root]], denoted by '''♭II''' in [[Roman numeral]] notation.
+# {{lb|en|musical chord}} A [[major chord]] with the lowered [[supertonic]] [[scale degree]] as the [[root]], denoted by '''♭II''' in [[Roman numeral]] notation.
 
 ====Translations====
 {{trans-top}}
@@ -143641,7 +143625,7 @@ Page 2239 neutral third: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[third]] that is between a [[major third|major]] and a [[minor third]] in size; an [[interval]] of approximately three and a half [[semitone]]s.
+# {{lb|en|musical interval}} A [[third]] that is between a [[major third|major]] and a [[minor third]] in size; an [[interval]] of approximately three and a half [[semitone]]s.
 
 ====Translations====
 {{trans-top|interval of ca. 3½ semitones}}
@@ -143951,7 +143935,7 @@ From {{inh|en|enm|nynthe}}, {{m|enm|nynte}}, from {{inh|en|ang|niġoþa}}, from 
 
 # The person or thing in the ninth position.
 # One of nine equal parts of a whole.
-# {{lb|en|music}}  The compound interval between any tone and the tone represented on the ninth degree of the staff above it, as between one of the scale and two of the octave above; the octave of the second, consisting of 13 or 14 semitones (called minor and major ninth).
+# {{lb|en|musical interval}}  The compound interval between any tone and the tone represented on the ninth degree of the staff above it, as between one of the scale and two of the octave above; the octave of the second, consisting of 13 or 14 semitones (called minor and major ninth).
 
 ====Translations====
 {{trans-top|something in the ninth position}}
@@ -144043,7 +144027,7 @@ Page 2249 ninth chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] with five [[note]]s that are [[third]]s apart.
+# {{lb|en|musical chord}} A [[chord]] with five [[note]]s that are [[third]]s apart.
 -------- end text --------
 Page 2250 nocturne: -------- begin text --------
 {{was wotd|2016|March|1}}
@@ -146559,7 +146543,7 @@ Page 2306 octave species: -------- begin text --------
 ===Noun===
 {{en-noun|octave species}}
 
-# {{lb|en|music}} In Ancient Greek music, a [[specific]] [[sequence]] of [[interval]]s within an [[octave]].
+# {{lb|en|note sequence}} In Ancient Greek music, a [[specific]] [[sequence]] of [[interval]]s within an [[octave]].
 -------- end text --------
 Page 2307 octaviate: -------- begin text --------
 
@@ -154882,7 +154866,7 @@ From {{prefix|en|penta|chord}}.
 {{en-noun}}
 
 # {{lb|en|music}} [[five|Five]] [[note]]s ([[pitch class]]es) in a [[scale]].
-# A [[musical instrument]] with five [[string]]s.
+# {{lb|en|musical instrument}} A [[musical instrument]] with five [[string]]s.
 -------- end text --------
 Page 2447 pentaphonic: -------- begin text --------
 
@@ -154892,7 +154876,7 @@ From {{af|en|penta-|-phonic}}.
 ===Adjective===
 {{en-adj|-}}
 
-# {{lb|en|music}} Composed of [[five]] [[note]]s
+# {{lb|en|music}} Composed of [[five]] [[note]]s.
 
 ====Translations====
 {{trans-top|composed of five notes}}
@@ -155260,7 +155244,7 @@ Displaced native {{ncog|ang|fulfremed}}.
 # {{lb|en|mathematics|of a number}} Equal to the [[sum]] of its [[proper]] [[divisor]]s.
 #: {{ux|en|6 is '''perfect''' because the sum of its proper divisors, 1, 2, and 3, which is 6, is equal to the number itself.}}
 # {{lb|en|analysis|of a [[set]]}} Equal to its set of limit points, i.e. set <math>A</math> is perfect if <math>A =A'</math>.
-# {{lb|en|music}} Describing an [[interval]] or any [[compound interval]] of a [[unison]], [[octave]], or [[fourth]]s and [[fifth]]s that are not [[tritone]]s.
+# {{lb|en|musical interval}} Describing an [[interval]] or any [[compound interval]] of a [[unison]], [[octave]], or [[fourth]]s and [[fifth]]s that are not [[tritone]]s.
 #: {{cot|en|augmented|diminished}}
 #: {{co|en|[[perfect fifth|'''perfect''' fifth]]}}
 # {{lb|en|of a [[cocktail]]}} Made with equal parts of [[sweet]] and [[dry]] [[vermouth]].
@@ -157978,7 +157962,7 @@ Page 2503 Picardy third: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[major third]] in the final [[tonic]] [[chord]] of a [[minor key|minor-key]] passage.
+# {{lb|en|musical interval}} A [[major third]] in the final [[tonic]] [[chord]] of a [[minor key|minor-key]] passage.
 
 ====Synonyms====
 * {{l|en|tierce de Picardie}}
@@ -167210,13 +167194,13 @@ From {{prefix|en|poly|chord}}.
 {{en-noun}}
 
 # {{lb|en|music}} Two or more [[chord]]s, each constructed in a different manner, one on top of the other; multiple chords.
-# {{lb|en|music}} A [[musical instrument]] having ten [[string]]s.
+# {{lb|en|musical instrument}} A [[musical instrument]] having ten [[string]]s.
 # {{lb|en|music}} A [[device]], attached to a [[keyboard]], for [[coupling]] two [[octave]] notes.
 
 ===Adjective===
 {{head|en|adjective}}
 
-# {{lb|en|music}} having many [[string]]s
+# {{lb|en|music}} Having many [[string]]s.
 -------- end text --------
 Page 2564 polychoric: -------- begin text --------
 
@@ -169886,9 +169870,7 @@ Page 2616 power chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] or combination of notes used in [[rock]] music and typically selected to sound good at high [[volume]] and high levels of [[distortion]]. Power chords make extensive use of [[intervals]] such as open [[fourths]] and [[fifths]].
-
-{{C|en|Music}}
+# {{lb|en|musical chord|guitar}} A [[chord]] or combination of notes used in [[rock]] music and typically selected to sound good at high [[volume]] and high levels of [[distortion]]. Power chords make extensive use of [[intervals]] such as open [[fourths]] and [[fifths]].
 -------- end text --------
 Page 2617 power electronics: -------- begin text --------
 
@@ -173363,7 +173345,7 @@ From {{prefix|en|pseudo|octave}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] whose [[frequency]] [[ratio]] is not 2:1 (that of the [[octave]]), but is perceived or treated as [[equivalent]] to this ratio, and whose pitches are considered equivalent to each other as with octave equivalency.
+# {{lb|en|musical interval}} An [[interval]] whose [[frequency]] [[ratio]] is not 2:1 (that of the [[octave]]), but is perceived or treated as [[equivalent]] to this ratio, and whose pitches are considered equivalent to each other as with octave equivalency.
 -------- end text --------
 Page 2674 psybient: -------- begin text --------
 
@@ -174169,7 +174151,7 @@ Page 2698 quadrichord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|obsolete|music}} [[tetrachord]]
+# {{lb|en|obsolete|music}} A [[tetrachord]].
 -------- end text --------
 Page 2699 quadricinium: -------- begin text --------
 
@@ -174417,7 +174399,7 @@ From {{prefix|en|quad|tone}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] of four whole [[tone]]s.
+# {{lb|en|musical interval}} An [[interval]] of four whole [[tone]]s.
 # A [[picture]] [[print]]ed in four [[shade]]s.
 #* {{quote-book|en|author=Adele Droblas Greenberg; Seth Greenberg|chapter=Converting from One Mode to Another|title=Fundamental Photoshop|edition=2nd|publisher=Osborne McGraw-Hill|year=1995|page=380|pageurl=https://archive.org/details/fundamentalphoto0002drob/page/380/mode/1up?view=theater|isbn=0-07-882093-6|passage=In Photoshop’s Duotone mode you can create monotones, duotones, tritones, and '''quadtones'''—grayscale images to which you add one, two, three, or four colors.}}
 #* {{quote-book|en|author=Duncan Evans|chapter=Duotones and Tritones|title=A Comprehensive Guide to Digital Portrait Photography|publisher=AVA Publishing SA|year=2003|page=115|pageurl=https://archive.org/details/comprehensivegui0000evan/page/115/mode/1up?view=theater|isbn=2-88479-030-6|passage=When using tritones or '''quadtones''' (in which three colours are blended together) all the secondary colours are mixed together.}}
@@ -174471,7 +174453,7 @@ From {{suffix|en|lang1=la|quārtus|al}}.<ref>{{R:OED Online|pos=adj|archiveurl=h
 {{en-adj|-}}
 
 # {{lb|en|mathematics}} Of [[base]] four; using only four unique [[digit]]s.
-# {{lb|en|music|of [[harmony]]}} Having a distinct preference for [[interval]]s of [[fourth]]s.
+# {{lb|en|music|of harmony}} Having a distinct preference for [[interval]]s of [[fourth]]s.
 
 ===Etymology 2===
 From {{bor|en|ru|кварта́л}}, from {{der|en|de|Quartal}}, from {{der|en|ML.|quārtālis}}.
@@ -174543,7 +174525,7 @@ Page 2712 quarter tone: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} The musical interval equal to one quarter of a [[tone]] or 1/24 of an [[octave]]; half a [[semitone]].
+# {{lb|en|musical interval}} The musical interval equal to one quarter of a [[tone]] or 1/24 of an [[octave]]; half a [[semitone]].
 
 ===Anagrams===
 * {{anagrams|en|a=aeenoqrrttu|quarter note}}
@@ -175114,7 +175096,7 @@ From {{bor|en|it|quindecima}}, from {{der|en|la|quindecima||[[15th]]}}, from {{m
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} The [[interval]] of a [[fifteenth]], a [[double]] [[octave]].
+# {{lb|en|musical interval}} The [[interval]] of a [[fifteenth]], a [[double]] [[octave]].
 
 {{c|en|Fifteen}}
 
@@ -175173,7 +175155,7 @@ From {{bor|en|frm|quint}}, from {{der|en|la|quīntus}}. {{doublet|en|quintus}}.
 {{wikipedia}}
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] of one [[fifth]].
+# {{lb|en|musical interval}} An [[interval]] of one [[fifth]].
 # {{lb|en|music}} The E string of a violin.
 # {{lb|en|card games}} In [[piquet]], a [[sequence]] of five [[playing card]]s of the same [[suit]]; equivalent to a [[straight flush]] in poker
 # {{lb|en|US|informal}} A [[quin]] or [[quintuplet]].
@@ -175383,7 +175365,7 @@ Page 2731 quintetto: -------- begin text --------
 Page 2732 quintole: -------- begin text --------
 
 ===Etymology===
-From {{der|en|it|quinto||fifth}}.
+From {{der|en|it|quinto||fifth}} or {{der|en|la|quīntus||fifth}}, with an unclear suffix.
 
 ===Noun===
 {{en-noun}}
@@ -182483,7 +182465,7 @@ Page 2824 repercussion: -------- begin text --------
 {{was wotd|2010|February|15}}
 
 ===Etymology===
-From {{uder|en|frm|répercussion}}, from {{uder|en|la|repercussio||rebounding; repercussion}}, from {{m|la|repercutio||cause to rebound, reflect, strike against}}, from {{m|la|re-|}} + {{m|la|percutio||beat, strike}}, from {{m|la|per-||thoroughly}} + {{m|la|quatio||shake}}.
+{{bor+|en|frm|répercussion}}, from {{der|en|la|repercussio|repercussiōnem|rebounding; repercussion}}, from {{m|la|repercutiō||to cause to rebound, reflect, strike against}}, from {{m|la|re-|}} + {{m|la|percutiō||to beat, strike}}, from {{m|la|per-||thoroughly}} + {{m|la|quatiō||to shake}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˌɹiː.pəˈkʌʃ.ən/|a=RP}}
@@ -182556,7 +182538,7 @@ From {{uder|en|frm|répercussion}}, from {{uder|en|la|repercussio||rebounding; r
 Page 2825 repetiteur: -------- begin text --------
 
 ===Etymology===
-{{uder|en|fr|répétiteur}}
+{{ubor|en|fr|répétiteur}}.
 
 ===Noun===
 {{en-noun}}
@@ -185178,7 +185160,7 @@ Page 2841 reveille: -------- begin text --------
 {{was wotd|2010|May|22|2011|May|22}}
 
 ===Etymology===
-From {{uder|en|fr|réveillez}}, imperative form of {{m|fr|réveiller||to wake}} .
+{{ubor|en|fr|réveille}}, imperative form of {{m|fr|réveiller||to wake}} .
 
 ===Pronunciation===
 * {{IPA|en|/ɹɪˈvæ.li/|a=UK}}
@@ -185394,7 +185376,7 @@ Page 2845 rhythmic: -------- begin text --------
 * {{l|en|rhythmick}} {{qualifier|obsolete}}
 
 ===Etymology===
-From {{uder|en|grc|ῥυθμικός}}, from {{suffix|grc|ῥυθμός|ικός|t1=measured flow or movement, [[symmetry]], rhythm|pos2=suffix forming adjectives|nocat=1}}, equivalent to {{af|en|rhythm|-ic}}.
+{{bor+|en|grc|ῥυθμικός}}, from {{suffix|grc|ῥυθμός|ικός|t1=measured flow or movement, [[symmetry]], rhythm|pos2=suffix forming adjectives|nocat=1}}, equivalent to {{af|en|rhythm|-ic}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˈɹɪð.mɪk/|/ˈɹɪð.mək/}}
@@ -186869,7 +186851,7 @@ From {{suffix|en|ripieno|ist}}.
 Page 2867 ripieno: -------- begin text --------
 
 ===Etymology===
-From the {{uder|en|it|ripieno}}.
+{{ubor|en|it|ripieno}}.
 
 ===Pronunciation===
 * {{IPA|en|/ɹiːpiˈeɪnəʊ/}}
@@ -186919,7 +186901,7 @@ Page 2870 ritardando: -------- begin text --------
 * Abbreviation: [[rit]]
 
 ===Etymology===
-Borrowed from {{uder|en|it|ritardando}}, gerund of {{m|it|ritardare||to delay, to slow down}}.
+{{ubor|en|it|ritardando}}, gerund of {{m|it|ritardare||to delay, to slow down}}.
 
 ===Adverb===
 {{en-adv|-}}
@@ -186963,7 +186945,7 @@ Page 2872 ritornello: -------- begin text --------
 * {{alt|en|ritornel|ritornell|ritornelle}}
 
 ===Etymology===
-{{uder|en|it|ritornello}}, diminutive of {{m|it|ritorno|t=return}}, from {{m|it|ritornare|t=to return}}: compare {{cog|fr|ritournelle}}.
+{{ubor|en|it|ritornello}}, diminutive of {{m|it|ritorno|t=return}}, from {{m|it|ritornare|t=to return}}: compare {{cog|fr|ritournelle}}.
 
 ===Noun===
 {{en-noun|s|ritornelli}}
@@ -186982,7 +186964,7 @@ From {{bor|en|ja|律|tr=ritsu}}.
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} An [[anhemitonic]] [[pentatonic scale]] used in a [[Japanese]] [[Buddhist]] [[chant]], and built up by intervals of major second, minor third, major second, major second, minor third.
+# {{lb|en|musical scale}} An [[anhemitonic]] [[pentatonic scale]] used in a [[Japanese]] [[Buddhist]] [[chant]], and built up by intervals of major second, minor third, major second, major second, minor third.
 #: {{cot|en|ryo}}
 
 ===Anagrams===
@@ -187877,7 +187859,7 @@ Page 2899 rondo: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-Borrowed from {{bor|en|it|rondo}}, from {{uder|en|fr|rondeau}}. {{doublet|en|rondeau}}.
+{{ubor|en|it|rondo}}, from {{der|en|fr|rondeau}}. {{doublet|en|rondeau}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˈɹɒn.dəʊ/}}
@@ -189259,7 +189241,7 @@ Page 2910 roundelay: -------- begin text --------
 * {{l|en|rondelay}}
 
 ===Etymology===
-From {{uder|en|frm|rondelet}}, diminutive of {{uder|en|fro|rondel}} (French: {{m|fr|rondeau}}). Ending {{m|en||-lay}} either from {{m|en|lay||ballad or sung poem}}, or from {{m|en|virelay}}.
+{{bor+|en|frm|rondelet}}, diminutive of {{der|en|fro|rondel}} ({cog|fr|rondeau}}). Ending {{m|en||-lay}} either from {{m|en|lay||ballad or sung poem}}, or from {{m|en|virelay}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˈɹaʊndɪˌleɪ/|a=UK}}
@@ -191256,7 +191238,7 @@ Page 2917 Rupavati: -------- begin text --------
 * {{l|en|Roopavati}}
 
 ===Etymology===
-From {{uder|en|sa|रूपवती}}.
+{{ubor|en|sa|रूपवती}}.
 
 ===Proper noun===
 {{en-proper noun}}
@@ -191725,7 +191707,7 @@ From {{bor|en|ja|呂|tr=ryo}}.
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} An [[anhemitonic]] [[pentatonic scale]] used in a [[Japanese]] [[Buddhist]] [[chant]], and built up by intervals of major second, major second, minor third, major second, minor third.
+# {{lb|en|musical scale}} An [[anhemitonic]] [[pentatonic scale]] used in a [[Japanese]] [[Buddhist]] [[chant]], and built up by intervals of major second, major second, minor third, major second, minor third.
 #: {{cot|en|ritsu}}
 
 ===Anagrams===
@@ -191926,7 +191908,7 @@ Page 2926 sackbut: -------- begin text --------
 * {{l|en|sacbut}}, {{l|en|sackbutt}}, {{l|en|sagbut}}, {{l|en|shagbolt}}, {{l|en|shakbusshe}}
 
 ===Etymology===
-From {{uder|en|fr|sacqueboute|}}, from {{uder|en|frm|sacquer||to pull}} + {{m|frm|bouter||to push}}.
+{{bor+|en|fr|sacqueboute}}, from {{der|en|frm|sacquer||to pull}} + {{m|frm|bouter||to push}}.
 
 ===Noun===
 {{en-noun}}
@@ -191965,7 +191947,7 @@ From {{uder|en|fr|sacqueboute|}}, from {{uder|en|frm|sacquer||to pull}} + {{m|fr
 Page 2927 sakpata: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|fon|-}}.
+{{ubor|en|fon|-}}.
 
 ===Noun===
 {{en-noun|-}}
@@ -192783,7 +192765,7 @@ Named after [[w:Félix Savart|Félix Savart]]
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|obsolete}} An [[interval]] of [[pitch]] equal to 1/1000 of a [[decade]], practically identical to a [[heptameride]].
+# {{lb|en|musical interval|obsolete}} An [[interval]] of [[pitch]] equal to 1/1000 of a [[decade]], practically identical to a [[heptameride]].
 
 ===Anagrams===
 * {{anagrams|en|a=aarstv|Vratsa}}
@@ -193986,7 +193968,7 @@ Page 2962 schisma: -------- begin text --------
 {{wikipedia|lang=en}}
 {{en-noun}}
 
-# {{lb|en|music}} A very small [[interval]] equal to half a [[comma]].
+# {{lb|en|musical interval}} A very small [[interval]] equal to half a [[comma]].
 
 ====Derived terms====
 * {{l|en|schismatic temperament}}
@@ -196212,7 +196194,7 @@ From {{inh|en|enm|secunde}}, {{m|enm|second}}, {{m|enm|secound}}, {{m|enm|secund
 #* {{quote-book|en|year=2003|author=Sheila Ryan Wallace|url=http://books.google.com/books?id=_-FT12DfGfoC&pg=PA22&dq=%22That's+what+got+you+in+trouble+the+first+time+around.+You+don't+need+a+second.%22&hl=en&sa=X&ei=1ZM8UpeaEe644AP1r4FA&ved=0CC8Q6AEwAA#v=onepage&q=%22That's%20what%20got%20you%20in%20trouble%20the%20first%20time%20around.%20You%20don't%20need%20a%20second.%22&f=false|title=The Sea Captain and His Ladies|page=22|passage=The policeman smiled, his eyes twinkling. "Now if you'll follow me, I'll escort you to the Victoria."<br/>"Oh, there's no need of that. If you'll just point me in the right direction..."<br/>That's what got you in trouble the first time around. You don't need a '''second'''.}}
 #* {{quote-book|en|year=2009|author=Paulette Jiles|url=http://books.google.com/books?id=Yv4lqGxp1iwC&pg=PT48&dq=%22Maybe+once.+But+you+don't+get+a+second.%22&hl=en&sa=X&ei=B548UurMGM-y4APdmICgCA&ved=0CC8Q6AEwAA#v=onepage&q=%22Maybe%20once.%20But%20you%20don't%20get%20a%20second.%22&f=false|title=Stormy Weather|page=37|passage=Smoky Joe ran against a Houston horse named Cherokee Chief.<br/>“Don't hit him,” Jeanine said to the jockey. “Maybe once. But you don't get a '''second'''.”}}
 #* {{quote-book|en|year=2011|author=Karen Miller|url=http://books.google.com/books?id=fRavxPlf7KIC&pg=PT402&dq=%22one+chance%22+%22get+a+second%22&hl=en&sa=X&ei=YuE9UsDxKqWR2wX2k4GoDw&ved=0CDYQ6AEwAjgU#v=onepage&q=%22one%20chance%22%20%22get%20a%20second%22&f=false|title=The Innocent Mage|passage=I'll have one chance to show them that's no longer true. One chance ... and if I stumble, I'll not get a '''second'''.}}
-# {{lb|en|music}} The interval between two adjacent notes in a [[diatonic]] scale (either or both of them may be raised or lowered from the basic scale via any type of [[accidental]]).
+# {{lb|en|musical interval}} The interval between two adjacent notes in a [[diatonic]] scale (either or both of them may be raised or lowered from the basic scale via any type of [[accidental]]).
 # The [[second gear]] of an engine.
 # {{lb|en|baseball}} [[second base|Second base]].
 # The agent of a party to an honour dispute whose role was to try to resolve the dispute or to make the necessary arrangements for a duel.<ref>https://www.theguardian.com/law/2016/oct/31/appeal-court-upholds-joint-enterprise-guilty-verdicts</ref>
@@ -197385,7 +197367,7 @@ Page 2990 secundal: -------- begin text --------
 Page 2991 secundo: -------- begin text --------
 
 ===Etymology===
-{{uder|en|it|secondo||second}}. {{doublet|en|second|secund}}.
+{{bor+|en|it|secondo||second}}; influenced by {{der|en|la|secundus}}. {{doublet|en|second|secund}}.
 
 ===Noun===
 {{en-noun}}
@@ -197439,7 +197421,7 @@ Page 2994 segno: -------- begin text --------
 
 ===Etymology===
 {{root|en|ine-pro|*sek-}}
-From {{uder|en|it|segno}}, from {{uder|en|la|signum}}. {{doublet|en|sign}}.
+{{ubor|en|it|segno}}, from {{der|en|la|signum}}. {{doublet|en|sign}}.
 
 ===Noun===
 {{en-noun|s|segni}}
@@ -197725,8 +197707,8 @@ Page 3003 semibreve rest: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A semibreve rest is a pause or [[interval]] of silence equal in duration to two [[half rest|half rests]] or one half of a [[breve rest]]. In common or 4/4 time, its duration is four [[beat|beats]].
-# {{lb|en|music}} A symbol used in musical notation drawn as a solid rectangle directly below the line above the middle line of a [[staff]] whose height is half the distance between lines.
+# {{lb|en|musical rest}} A semibreve rest is a pause or [[interval]] of silence equal in duration to two [[half rest|half rests]] or one half of a [[breve rest]]. In common or 4/4 time, its duration is four [[beat|beats]].
+# {{lb|en|music symbol}} A symbol used in musical notation drawn as a solid rectangle directly below the line above the middle line of a [[staff]] whose height is half the distance between lines.
 
 ====Synonyms====
 * {{l|en|whole rest}}
@@ -197900,7 +197882,7 @@ From {{prefix|en|semi|diapente}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|archaic}} A [[diminished fifth]].
+# {{lb|en|musical interval|archaic}} A [[diminished fifth]].
 #* '''2003''', {{w|Vincenzo Galilei}}, ''Dialogue on Ancient and Modern Music'' (translated from Italian by Claude V. Palisca)
 #*: It will have its true ratio from the tritone and the major semitone, but not from that of the '''semidiapente''' and the minor semitone, as the next calculation shows.
 
@@ -198035,11 +198017,11 @@ Page 3020 semiquaver rest: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A pause or [[interval]] of silence equal in duration to half a [[quaver rest]]
-# {{lb|en|music}} The corresponding symbol used in musical notation.
+# {{lb|en|musical rest}} A pause or [[interval]] of silence equal in duration to half a [[quaver rest]].
+# {{lb|en|musical symbol}} The corresponding symbol used in musical notation.
 
 ====Synonyms====
-*{{l|en|sixteenth rest}}
+* {{l|en|sixteenth rest}}
 -------- end text --------
 Page 3021 semitone: -------- begin text --------
 {{swp}}
@@ -198054,8 +198036,8 @@ From {{prefix|en|semi|tone}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A musical [[interval]] equal to an [[augmented unison]] or a [[minor second]], depending on the context and tuning system used
-# {{lb|en|music}} Any of the pitches of the [[chromatic]] [[scale]]
+# {{lb|en|musical interval}} A musical [[interval]] equal to an [[augmented unison]] or a [[minor second]], depending on the context and tuning system used.
+# {{lb|en|music}} Any of the pitches of the [[chromatic]] [[scale]].
 
 ====Synonyms====
 * {{l|en|half step}}
@@ -198160,7 +198142,7 @@ Page 3024 Senavati: -------- begin text --------
 [[Image:Senavati scale.svg|thumb|right|300px|''Senavati'' scale with ''[[shadjam]]'' at C]]
 
 ===Etymology===
-From {{uder|en|sa|सेना|tr=sénā}}.
+From {{der|en|sa|सेना|tr=sénā}}.
 
 ===Proper noun===
 {{en-proper noun}}
@@ -198344,7 +198326,7 @@ Page 3029 septette: -------- begin text --------
 Page 3030 septimole: -------- begin text --------
 
 ===Etymology===
-{{uder|en|la|septem||seven}}.
+From {{der|en|it|septimus||seventh}}, with an unclear suffix; compare {{m|en|quintole}}.
 
 ===Noun===
 {{en-noun}}
@@ -198353,7 +198335,7 @@ Page 3030 septimole: -------- begin text --------
 #: {{syn|en|septuplet|septolet}}
 
 ===References===
-*{{R:1913}}
+* {{R:1913}}
 
 ===Anagrams===
 * {{anagrams|en|a=eeilmopst|Ptolemies|mesoptile}}
@@ -198787,7 +198769,7 @@ Page 3039 serialism: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-From {{suffix|en|serial|ism}}. Calque of the {{uder|en|de|Reihenmusik}}.
+From {{suffix|en|serial|ism}}. {{cal|en|de|Reihenmusik}}.
 
 ===Noun===
 {{en-noun|-|s}}
@@ -198941,7 +198923,7 @@ Page 3046 sesquitertia: -------- begin text --------
 # {{lb|en|obsolete}} A [[ratio]] of 4 to 3.
 #* '''1570''', {{w|John Dee}}, in H. Billingsley (trans.) Euclid, ''Elements of Geometry'', Preface:
 #*: For, what proportion, 100 hath to 75: the same hath 17 1/7 to 12 6/7: Which is '''Sesquitertia''': that is, as 4, to 3. which make 7.
-# {{lb|en|music|obsolete}} A perfect fourth, an interval having the ratio of 1 to 1⅓, or 3 to 4.
+# {{lb|en|musical interval|obsolete}} A perfect fourth, an interval having the ratio of 1 to 1⅓, or 3 to 4.
 -------- end text --------
 Page 3047 sesquitone: -------- begin text --------
 
@@ -198951,7 +198933,7 @@ From {{prefix|en|sesqui|tone}}.
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[minor third]], or [[interval]] of three [[semitone]]s.
+# {{lb|en|musical interval}} A [[minor third]], or [[interval]] of three [[semitone]]s.
 
 ===References===
 *{{R:1913}}
@@ -199184,7 +199166,7 @@ Page 3050 sestet: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-From {{der|en|it|sestetto}}, from {{m|it|sesto||sixth}}, {{uder|en|la|-}} {{lena}} {{m|la|sextus}}, from {{m|la|sex||six}}.
+{{bor+|en|it|sestetto}}, from {{m|it|sesto||sixth}}, from {{der|en|la|sextus}}, from {{m|la|sex||six}}.
 
 ===Pronunciation===
 * {{IPA|en|/sɛsˈtɛt/}}
@@ -199212,21 +199194,21 @@ From {{der|en|it|sestetto}}, from {{m|it|sesto||sixth}}, {{uder|en|la|-}} {{lena
 Page 3051 sestetto: -------- begin text --------
 
 ===Etymology===
-{{uder|en|it|-}}
+{{ubor|en|it|sestetto}}. {{doublet|en|sestet}}.
 
 ===Noun===
 {{en-noun|s|sestetti}}
 
-# {{lb|en|music}} A [[sestet]]/[[sextet]]
+# {{lb|en|music}} A [[sestet]]/[[sextet]].
 
 ===References===
-*{{R:Webster 1913}}
+* {{R:Webster 1913}}
 
 -------- end text --------
 Page 3052 sestina: -------- begin text --------
 
 ===Etymology===
-From {{bor|en|it|sestina}}. {{doublet|en|sextain}}.
+{{ubor|en|it|sestina}}. {{doublet|en|sextain}}.
 
 ===Noun===
 {{en-noun}}
@@ -200862,7 +200844,7 @@ English ordinal numbers may function as either an adjective or as a noun, and al
 
 # {{cln|en|fractional numbers}} One of [[seventeen]] [[equal]] [[part]]s of a whole.
 #: {{ux|en|A '''seventeeth''' of 340 is 20.}}
-# {{lb|en|music}} An [[interval]] of two [[octave]]s and a [[third]].
+# {{lb|en|musical interval}} An [[interval]] of two [[octave]]s and a [[third]].
 
 ====Translations====
 {{trans-top|one of seventeen equal parts of a whole}}
@@ -201038,7 +201020,7 @@ From {{inh|en|enm|seventhe}}, {{m|enm|sefte}}, from {{inh|en|ang|seofoþa}}, fro
 
 # The person or thing in the seventh position.
 # One of seven equal parts of a whole.
-# {{lb|en|music}} A tone of the seventh degree from a given tone, the interval between two such tones, or the two tones sounding in unison.
+# {{lb|en|music interval}} A tone of the seventh degree from a given tone, the interval between two such tones, or the two tones sounding in unison.
 
 ====Derived terms====
 {{col|en|augmented seventh|diminished seventh|dominant seventh|major seventh|minor seventh}}
@@ -201126,7 +201108,7 @@ The [[interval]] between the [[tonic]] and the top note is a [[seventh]].
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] that contains four [[note]]s that make three [[third]]s
+# {{lb|en|musical chord}} A [[chord]] that contains four [[note]]s that make three [[third]]s.
 #: {{ux|en|Four '''seventh chords''' (C7 F7 D7 G7):<br><score sound>{<c'e'g'b'>2<f'a'c''e''><d'f'a'c''><g'b'd''f''>}</score>}}
 
 ====Derived terms====
@@ -201167,7 +201149,7 @@ From {{der|en|la|sexta||[[sixth]]; [[sixth]] [[hour]]}}. {{doublet|en|siesta}}.
 # {{lb|en|historical}} [[noon|Noon]], [[reckon]]ed as the [[sixth]] [[hour]] of [[daylight]].
 #: {{syn|en|midday|noontide|Thesaurus:midday}}
 # {{lb|en|Roman Catholicism}} The [[service]] [[appoint]]ed for [[this]] [[hour]].
-# {{lb|en|music}} A [[sixth]]: an [[interval]] of [[six]] [[diatonic]] [[degree]]s.
+# {{lb|en|musical interval}} A [[sixth]]: an [[interval]] of [[six]] [[diatonic]] [[degree]]s.
 # {{lb|en|music|obsolete}} An [[organ stop]] of [[two]] [[rank]]s of [[pipe]]s an [[interval]] of a [[sixth]] [[apart]].
 
 =====Hypernyms=====
@@ -201240,7 +201222,7 @@ Page 3066 sextet: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-From {{uder|en|fr|sextette}}, from {{uder|en|it|sestetto}}.
+{{bor+|en|fr|sextette}}, from {{der|en|it|sestetto}}.
 
 ===Pronunciation===
 * {{IPA|en|/sɛksˈtɛt/}}
@@ -205231,7 +205213,7 @@ Page 3099 shruti: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} The smallest [[interval]] of [[pitch]] that can be detected or produced.
+# {{lb|en|musical interval}} The smallest [[interval]] of [[pitch]] that can be detected or produced.
 # {{lb|en|religion}} Any of the [[ancient]] [[religious]] [[text]]s comprising the central [[canon]] of [[Hinduism]].
 
 ====Derived terms====
@@ -208256,7 +208238,7 @@ From earlier {{m|en|sixt}}, from {{inh|en|enm|sixte}}, from {{inh|en|ang|siexta}
 
 # {{lb|en|not used in the plural}} The person or thing in the sixth position.
 # One of [[six]] [[equal]] [[parts]] of a [[whole]].
-# {{lb|en|music}} The interval between one note and another, five notes higher in the scale, for example C to A, a major sixth, or C to A flat, a minor sixth. (Note that the interval covers six notes counting inclusively, for example C-D-E-F-G-A.)
+# {{lb|en|musical interval}} The interval between one note and another, five notes higher in the scale, for example C to A, a major sixth, or C to A flat, a minor sixth. (Note that the interval covers six notes counting inclusively, for example C-D-E-F-G-A.)
 
 ====Synonyms====
 * {{sense|one of six equal parts}} {{l|mul|⅙}}
@@ -209291,7 +209273,7 @@ So called from being written with a [[slash]], such as ''Em/G'' (E minor with a 
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] which has a [[bass]] note that is not the [[root]] note.
+# {{lb|en|musical chord}} A [[chord]] which has a [[bass]] note that is not the [[root]] note.
 #* {{quote-book|en|author=Michael Esterowitz|title=How to Play from a Fake Book|year=1986|publisher=Ekay Music|page=34|pageurl=https://books.google.com/books?id=aqe1uwqWwxkC&pg=PA34&dq=fake+books&hl=en&newbks=1&newbks_redir=0&sa=X&ved=2ahUKEwjt58a339-JAxX_rJUCHdaXEHsQ6AF6BAgHEAI#v=onepage&q=fake%20books&f=false|isbn=978-0-943748-19-1|passage=Contemporary popular music tends to be specific in indicating '''slash cords''', while older fake books generally indicate only root chord names.}}
 -------- end text --------
 Page 3152 slendro: -------- begin text --------
@@ -215646,7 +215628,7 @@ Cognate with {{cog|fy|soer}}, {{cog|nl|zuur|t=sour}}, {{cog|nds|suur}}, {{cog|de
 Page 3225 sourdine: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|fr|sourdine}}.
+{{ubor|en|fr|sourdine}}.
 
 ===Pronunciation===
 * {{IPA|en|/sʊəˈdiːn/|a=UK}}
@@ -218947,13 +218929,13 @@ From {{suffix|en|splitter|core|id2=music}}.
 Page 3249 sprechgesang: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|de|Sprechgesang}}.
+{{ubor|en|de|Sprechgesang}}.
 
 ===Noun===
 {{wikipedia}}
 {{en-noun|-}}
 
-# {{lb|en|music}} A form of [[recitative]] between [[speaking]] and [[singing]]
+# {{lb|en|music}} A form of [[recitative]] between [[speaking]] and [[singing]].
 -------- end text --------
 Page 3250 sprezzatura: -------- begin text --------
 
@@ -221455,7 +221437,7 @@ Cognate with {{cog|fy|stappe||to step}}, {{cog|frr|stape||to walk, trudge}}, {{c
 # {{lb|en|nautical}} A framing in wood or iron which is intended to receive an upright shaft; specifically, a block of wood, or a solid platform upon the [[keelson]], supporting the heel of the mast.
 # {{lb|en|machines}} One of a series of offsets, or parts, resembling the steps of stairs, as one of the series of parts of a cone pulley on which the belt runs.
 # {{lb|en|machines}} A bearing in which the lower extremity of a spindle or a vertical shaft revolves.
-# {{senseid|en|music}} {{lb|en|music}} The [[interval]] between two contiguous degrees of the scale.
+# {{senseid|en|music}} {{lb|en|musical interval}} The [[interval]] between two contiguous degrees of the scale.
 #: '''Usage note:''' The word [[tone]] is often used as the name of this interval; but there is evident incongruity in using tone for indicating the interval between tones. As the word scale is derived from the Italian ''[[scala]]'', a ladder, the intervals may well be called steps.
 # {{lb|en|kinematics}} A change of position effected by a motion of translation.
 #* {{quote-text|en|year=1878|author=w:William Kingdon Clifford|title=Elements of Dynamic: An Introduction to the Study of Motion
@@ -224111,7 +224093,7 @@ Page 3293 stride piano: -------- begin text --------
 ===Noun===
 {{en-noun|-}}
 
-# {{lb|en|music}} A style of [[piano]] [[playing]] in which the left hand plays a four-beat harmony involving large [[interval]]s
+# {{lb|en|music}} A style of [[piano]] [[playing]] in which the left hand plays a four-beat harmony involving large [[interval]]s.
 
 ===Anagrams===
 * {{anagrams|en|a=adeiinoprst|raised point}}
@@ -227289,7 +227271,7 @@ From {{prefix|en|sub|minor}}.
 ===Adjective===
 {{en-adj|-}}
 
-# {{lb|en|music}} An interval smaller in size than a minor interval but larger than the major interval preceding it.
+# {{lb|en|musical interval}} An interval smaller in size than a minor interval but larger than the major interval preceding it.
 -------- end text --------
 Page 3327 submix: -------- begin text --------
 
@@ -227382,7 +227364,7 @@ From {{prefix|en|sub|semitone}}.
 Page 3334 subsidiary: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|frm|subsidiaire}}, from {{uder|en|la|subsidiarius||belonging to a reserve}}.
+{{bor+|en|frm|subsidiaire}}, from {{der|en|la|subsidiārius||belonging to a reserve}}.
 
 ===Pronunciation===
 * {{IPA|en|/sʌbˈsɪ.di.əɹ.i/|/sʌbˈsɪ.dəɹ.i/|/sʌbˈsɪ.d͡ʒəɹ.i/}}
@@ -227693,12 +227675,12 @@ From {{suffix|en|suite|like}}.
 Page 3338 sul ponticello: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|it|-}}.
+{{ubor|en|it|[[sul]] [[ponticello]]}}.
 
 ===Adverb===
 {{en-adv|-|nolinkhead=1}}
 
-# {{lb|en|music|chiefly|violin}} Bowed near the [[bridge]] for the duration of a passage
+# {{lb|en|music|chiefly|violin}} Bowed near the [[bridge]] for the duration of a passage.
 -------- end text --------
 Page 3339 sultana: -------- begin text --------
 {{wp}}
@@ -227923,9 +227905,9 @@ Page 3346 superfluous interval: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|archaic|music}} An [[interval]] that exceeds a [[major]] or [[perfect]] interval by a [[semitone]].
+# {{lb|en|archaic|musical interval}} An [[interval]] that exceeds a [[major]] or [[perfect]] interval by a [[semitone]].
 
-{{Webster 1913|superfluous }}
+{{Webster 1913|superfluous}}
 -------- end text --------
 Page 3347 supergroup: -------- begin text --------
 
@@ -227995,7 +227977,7 @@ From {{prefix|en|super-|major}}.
 {{en-adj|-}}
 
 # {{U|very}} [[major]]; of great [[significance]] or [[importance]].
-# {{lb|en|music}} An interval larger in size than a major interval but smaller than the next largest minor interval.
+# {{lb|en|musical interval}} An interval larger in size than a major interval but smaller than the next largest minor interval.
 
 ===Noun===
 {{en-noun}}
@@ -228214,7 +228196,7 @@ Page 3358 sus chord: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music|informal}} {{clipcomp of|en|suspended chord}}.
+# {{lb|en|musical chord|informal}} {{clipcomp of|en|suspended chord}}.
 -------- end text --------
 Page 3359 suspended: -------- begin text --------
 
@@ -230624,7 +230606,7 @@ Page 3390 syntonic comma: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A small [[comma]]-type [[interval]] between two [[musical]] [[note]]s, equal to the [[frequency]] [[ratio]] 81:80 (= 1.0125) or around 21.51 [[cent]]s. It often manifests itself as the difference between the [[Pythagorean]] major third of 81:64 and the classic major third of 5:4, between the Pythagorean minor third of 32:27 and the classic minor third of 6:5, and between the "major [[whole tone]]" of 9:8 and "minor whole tone" of 10:9.
+# {{lb|en|musical interval}} A small [[comma]]-type [[interval]] between two [[musical]] [[note]]s, equal to the [[frequency]] [[ratio]] 81:80 (= 1.0125) or around 21.51 [[cent]]s. It often manifests itself as the difference between the [[Pythagorean]] major third of 81:64 and the classic major third of 5:4, between the Pythagorean minor third of 32:27 and the classic minor third of 6:5, and between the "major [[whole tone]]" of 9:8 and "minor whole tone" of 10:9.
 
 ====Synonyms====
 * {{l|en|comma of Didymus}}
@@ -231450,7 +231432,7 @@ Page 3395 taan: -------- begin text --------
 {{wikipedia|Taan (music)}}
 
 ===Etymology===
-From {{uder|en|hi|तान}}/{{uder|en|ur|تان}}.
+{{ubor|en|hi|तान}} and {{ubor|en|ur|تان|notext=1}}.
 
 ===Noun===
 {{en-noun}}
@@ -234508,7 +234490,7 @@ Page 3411 Tanarupi: -------- begin text --------
 * {{l|en|Tanaroopi}}
 
 ===Etymology===
-From {{uder|en|sa|तान}}.
+From {{der|en|sa|तान}}.
 
 ===Proper noun===
 {{en-proper noun}}
@@ -234529,7 +234511,7 @@ Page 3412 tanbur: -------- begin text --------
 * {{l|en|tambur}}
 
 ===Etymology===
-Borrowed from {{bor|en|fa|تنبور|tr=tanbur}}.
+{{ubor|en|fa|تنبور|tr=tanbur}}.
 
 ===Noun===
 {{en-noun}}
@@ -236298,7 +236280,7 @@ From {{inh|en|enm|tenth|tenth, tenthe}}. {{inh|en|ang|-}} had {{m|ang|tēoþa}} 
 #* {{quote-journal|en|date=2013-08-03|volume=408|issue=8847|magazine=w:The Economist
 |title=[http://www.economist.com/news/finance-and-economics/21582498-america-has-changed-way-it-measures-gdp-boundary-problems Boundary problems]
 |passage=Economics is a messy discipline: too fluid to be a science, too rigorous to be an art. Perhaps it is fitting that economists’ most-used metric, gross domestic product (GDP), is a tangle too. GDP measures the total value of output in an economic territory. Its apparent simplicity explains why it is scrutinised down to '''tenths''' of a percentage point every month.}}
-# {{senseid|en|music}} {{lb|en|music}} The [[interval]] between any [[tone]] and the tone represented on the tenth degree of the [[staff]] above it, as between one of the [[scale]] and three of the [[octave]] above; the octave of the [[third]].
+# {{senseid|en|music}} {{lb|en|musical interval}} The [[interval]] between any [[tone]] and the tone represented on the tenth degree of the [[staff]] above it, as between one of the [[scale]] and three of the [[octave]] above; the octave of the [[third]].
 # {{lb|en|UK|legal|historical|in the plural}} A [[temporary]] [[aid]] issuing out of [[personal]] [[property]], and granted to the [[king]] by [[Parliament]]; formerly, the real tenth part of all the movables belonging to the subject.
 # {{lb|en|machining}} A tenth of a [[mil]]; a [[ten-thousandth]] of an [[inch]].
 
@@ -236603,7 +236585,7 @@ From {{prefix|en|tetra|chord}}.
 {{en-noun}}
 
 # {{lb|en|music}} Any [[set]] of four different [[pitch class]]es.
-# {{lb|en|music}} A series of four sounds, forming a [[scale]] of two-and-a-half tones.
+# {{lb|en|note sequence}} A series of four sounds, forming a [[scale]] of two-and-a-half tones.
 
 ====See also====
 * {{l|en|interval}}
@@ -236802,7 +236784,7 @@ Page 3461 The Lick: -------- begin text --------
 ===Proper noun===
 {{en-proper noun|head=[[the|The]] [[lick|Lick]]}}
 
-# {{lb|en|music}} A seven-note stock musical [[phrase]] in [[jazz]], [[pop]], and [[classical music]].
+# {{lb|en|note sequence}} A seven-note stock musical [[phrase]] in [[jazz]], [[pop]], and [[classical music]].
 #: {{ux|en|'''The Lick''' on saxophone in E minor:<br><score sound="1">\relative c''{\set Staff.midiInstrument=#"soprano sax"e8 fis16. g8 a16.\grace{e16}fis8. d8 e4~e2}</score>}}
 -------- end text --------
 Page 3462 thematic: -------- begin text --------
@@ -237615,7 +237597,7 @@ From {{inh|en|enm|thirde}}, {{m|enm|thridde}}, from {{inh|en|ang|þridda}}, from
 #* {{quote-journal|en|date=2023 December 27|author=Philip Haigh|title=All eyes are on the DfT as rolling stock concerns deepen|journal=RAIL|issue=999|page=19|text=Despite these uncertainties, Clarke told MPs he was convinced of the need to order trains powered by batteries. He said: "We're calling for a 'no regrets' order of battery trains because we see them always having a future. We see them being fundable, financeable, similar cost to diesel trains, and we know that however much electrification we would aspire to do, there's always going to be at least a '''third''' of the network that isn't electrified.}}
 # {{lb|en|uncountable}} The third gear of a [[gearbox]].
 #: {{ux|en|Now put it into '''third'''.}}
-# {{lb|en|music}} An [[interval]] consisting of the first and third [[notes]] in a [[scale]].
+# {{lb|en|musical interval}} An [[interval]] consisting of the first and third [[notes]] in a [[scale]].
 #: {{ux|en|They sing in '''thirds'''.}}
 # {{lb|en|baseball}} [[third base]]
 #: {{ux|en|The play ended with Jones standing on '''third'''.}}
@@ -237939,8 +237921,8 @@ From {{inh|en|ang|þrēottēoþa}}; equivalent to {{af|en|thirteen|-th|id2=ordin
 
 # The person or thing in the thirteenth [[position]].
 # One of thirteen equal parts of a whole.
-# {{lb|en|music}} The [[interval]] comprising an [[octave]] and a [[sixth]].
-# (in dates) The thirteenth day of a month.
+# {{lb|en|musical interval}} The [[interval]] comprising an [[octave]] and a [[sixth]].
+# {{lb|en|calendar}} The thirteenth day of a month.
 #: ''January '''13th'''''
 
 ====Translations====
@@ -241386,7 +241368,7 @@ Page 3506 tintinnabuli: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-From {{uder|en|la|tintinnābulum||a [[small]] [[monastic]] [[bell]]}}.
+{{ubor|en|la||tintinnābulī}}, plural of {{m|la|tintinnābulum||a [[small]] [[monastic]] [[bell]]}}.
 
 ===Noun===
 {{en-noun|-}}
@@ -242888,7 +242870,7 @@ From {{suffix|en|tone|al}}.
 {{trans-bottom}}
 
 ===Etymology 2===
-From {{uder|en|nah|tonalli|tōnalli|day, day sign}}.
+{{bor+|en|nah|tonalli|tōnalli|day, day sign}}.
 
 ====Alternative forms====
 * {{alter|en|tona}}
@@ -242987,8 +242969,8 @@ From {{inh|en|enm|ton}}, {{m|enm|tone}}, from {{der|en|la|tonus||sound, tone}} (
 {{en-noun}}
 
 # {{lb|en|music}} A specific [[pitch]].
-# {{lb|en|music}} (''in the [[diatonic scale]]'') An [[interval]] of a [[major second]].
-# {{lb|en|music}} (''in a [[Gregorian chant]]'') A [[recitational]] [[melody]].
+# {{lb|en|musical interval|in the [[diatonic scale]]}} An [[interval]] of a [[major second]].
+# {{lb|en|music|in a [[Gregorian chant]]}} A [[recitational]] [[melody]].
 # The character of a [[sound]], especially the [[timbre]] of an [[instrument]] or [[voice]].
 # {{senseid|en|in language, the pitch of a word_s sound that distinguishes meaning}} {{lb|en|language|linguistics}} The [[pitch]] of a [[word]]'s sound that [[distinguishes]] a [[difference]] in [[meaning]], as for example in [[Chinese]].
 # {{senseid|en|in language, a strained style of speaking}} {{lb|en|language|dated}} A whining style of speaking; a kind of mournful or artificial strain of voice; an affected speaking with a measured rhythm and a regular rise and fall of the voice.
@@ -243328,7 +243310,7 @@ Page 3524 tone hole: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} an opening in the body of a [[wind instrument]] which, when alternately closed and opened, changes the pitch of the sound produced.
+# {{lb|en|music}} An opening in the body of a [[wind instrument]] which, when alternately closed and opened, changes the pitch of the sound produced.
 
 ====See also====
 * [[register hole]]
@@ -243344,7 +243326,7 @@ Page 3525 tone painting: -------- begin text --------
 Page 3526 tone poem: -------- begin text --------
 
 ===Etymology===
-[[calque|Calque]] of {{uder|en|de|Tondichtung}} ({{m|de|Ton||tone}} + {{m|de|Dichtung||poem}}).
+{{cal|en|de|Tondichtung}}, from {{m|de|Ton||tone}} + {{m|de|Dichtung||poem}}.
 
 ===Noun===
 {{en-noun}}
@@ -244228,7 +244210,7 @@ Page 3529 tonic: -------- begin text --------
 
 ===Etymology 1===
 {{root|en|ine-pro|*ten-}}
-From {{uder|en|grc|τονικός}}, from {{m|grc|τόνος}}. 17th century writers believed health to be derived from firmly stretched muscles, thus ''tonic''; the extension of ''tonic medicine'' appeared in the late 18th century. {{surf|en|tone|-ic|alt1=ton(e)}}.
+{{bor+|en|grc|τονικός}}, from {{m|grc|τόνος}}. 17th century writers believed health to be derived from firmly stretched muscles, thus ''tonic''; the extension of ''tonic medicine'' appeared in the late 18th century. {{surf|en|tone|-ic|alt1=ton(e)}}.
 
 ====Adjective====
 {{en-adj}}
@@ -249211,7 +249193,7 @@ From {{prefix|en|tri|chord}}.
 {{en-noun}}
 
 # {{lb|en|music}} any [[set]] of three different [[pitch class]]es
-# A [[musical instrument]] with three [[string]]s, such as a [[lyre]] or [[harp]].<!--Webster 1913-->
+# {{lb|en|musical instrument}} A [[musical instrument]] with three [[string]]s, such as a [[lyre]] or [[harp]].<!--Webster 1913-->
 # The three [[string]]s of a [[note]] on a [[piano]] that are tuned as a [[unison]].
 
 ====Derived terms====
@@ -250453,7 +250435,7 @@ A reference to the [[chord]] used in the opening phrase of Richard Wagner's [[op
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} A [[chord]] in [[music|musical]] [[composition]] consisting originally of the notes F, B, D♯ and G♯ which can be translated more generally in [[interval|intervalic]] terms as: [[augmented fourth]], [[augmented sixth]] and [[augmented ninth]] above a [[root]]. [[enharmonic|Enharmonically]] it sounds like a [[half-diminished]] [[seventh]] chord (e.g. F-A♭-C♭-E♭), though in terms of musical analysis it can be interpreted in several ways.
+# {{lb|en|musical chord}} A [[chord]] in [[music|musical]] [[composition]] consisting originally of the notes F, B, D♯ and G♯ which can be translated more generally in [[interval|intervalic]] terms as: [[augmented fourth]], [[augmented sixth]] and [[augmented ninth]] above a [[root]]. [[enharmonic|Enharmonically]] it sounds like a [[half-diminished]] [[seventh]] chord (e.g. F-A♭-C♭-E♭), though in terms of musical analysis it can be interpreted in several ways.
 #: {{ux|en|'''Tristan chord''' (D♯ G♯ F B):<br><score sound><f'b'dis gis>1</score>}}
 
 {{cln|en|eponyms}}
@@ -250486,7 +250468,7 @@ Page 3614 tritave: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] with a frequency ratio of 3:1, usually in the context of the {{w|Bohlen–Pierce scale}} where it replaces the [[octave]].
+# {{lb|en|musical interval}} An [[interval]] with a frequency ratio of 3:1, usually in the context of the {{w|Bohlen–Pierce scale}} where it replaces the [[octave]].
 
 ====Synonyms====
 * [[perfect twelfth]]
@@ -250514,7 +250496,7 @@ Page 3616 tritone: -------- begin text --------
 ====Noun====
 {{en-noun}}
 
-# {{lb|en|music}} An interval of three whole [[tone]]s.
+# {{lb|en|musical interval}} An interval of three whole [[tone]]s.
 #: {{syn|en|devil's interval|devil in music|diabolus in musica|diabolus}}
 #: {{nearsyn|en|augmented fourth|diminished fifth}}
 #: {{uxi|en|The '''tritone''' has a pitch ratio close to 17:12.}}
@@ -251153,7 +251135,7 @@ Page 3621 Trompette Militaire: -------- begin text --------
 Page 3622 troparion: -------- begin text --------
 
 ===Etymology===
-{{uder|en|grc|τροπάριον}}
+{{ubor|en|grc|τροπάριον}}.
 
 ===Pronunciation===
 {{rfp|en}}
@@ -251471,7 +251453,7 @@ Borrowed from {{bor|en|el|τσαμπούνα}}. {{doublet|en|sinfonia|symphonia|
 Page 3628 tsimbl: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|yi|צימבל}}. {{doublet|en|cymbal}}.
+{{ubor|en|yi|צימבל}}. {{doublet|en|cymbal}}.
 
 ===Noun===
 {{en-noun}}
@@ -251498,7 +251480,7 @@ Page 3629 TT: -------- begin text --------
 # {{init of|en|therapeutic touch}}.
 # {{init of|en|time trial}}.
 # {{init of|en|time-traveller}}.
-# {{lb|en|music}} {{init of|en|tritone}}.
+# {{lb|en|musical interval}} {{init of|en|tritone}}.
 # {{lb|en|firearms}} {{init of|en|w:TT pistol|Tula Tokarev}}.
 #: {{syn|en|TT pistol|Tokarev|Tokarev pistol|TT-30|TT-33}}
 # {{lb|en|AI}} {{init of|en|Turing test}}.
@@ -251717,7 +251699,7 @@ From {{inh|en|enm|tuken}}, {{m|enm|touken|t=to torment, to stretch (cloth)}}, fr
 * {{l|en|tucker}}
 
 ===Etymology 2===
-From {{uder|en|fro|estoc||rapier}}, from {{uder|en|it|stocco||a truncheon, a short sword}}. {{doublet|en|estoc}}.
+{{bor+|en|fro|estoc||rapier}}, from {{der|en|it|stocco||a truncheon, a short sword}}. {{doublet|en|estoc}}.
 
 ====Noun====
 {{en-noun}}
@@ -252495,7 +252477,7 @@ From {{inh|en|enm|twelfthe}}, {{m|enm|twelfte}}, from {{inh|en|ang|twelfta|t=twe
 # {{cln|en|fractional numbers}} One of [[twelve]] [[equal]] [[part]]s of a whole.
 #: {{ux|en|A '''twelfth''' of 240 is 20.}}
 #: {{ux|en|Five '''twelfths''' of the population voted in support of the proposal.}}
-# {{lb|en|music}} An [[interval]] equal to an [[octave]] plus a [[fifth]].
+# {{lb|en|musical interval}} An [[interval]] equal to an [[octave]] plus a [[fifth]].
 
 ====Synonyms====
 * {{sense|one of twelve equal parts}} {{l|en|dozenth}}; {{l|en|uncia}} {{q|chiefly Greco-Roman contexts}}
@@ -252845,7 +252827,7 @@ From {{prefix|en|un-|accompanied|id1=negative}}.
 Page 3663 una corda: -------- begin text --------
 
 ===Etymology===
-From {{uder|en|it|[[una]] [[corda]]||one string}}.
+{{ubor|en|it|[[una]] [[corda]]||one string}}.
 
 ===Adverb===
 {{en-adv|-|nolinkhead=1}}
@@ -255435,7 +255417,7 @@ Page 3719 variation: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-From {{uder|en|frm|variation}}, from {{uder|en|fro|variacion}}, from {{uder|en|la|variātiō}}, from {{affix|en|vary|-ation}}.
+{{bor+|en|frm|variation}}, from {{der|en|fro|variacion}}, from {{der|en|la|variātiō|variātiōnem}}. {{surf|en|vary|-ation}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˌvɛəɹɪˈeɪʃn̩/|a=RP}}
@@ -255922,7 +255904,7 @@ Page 3726 verse: -------- begin text --------
 
 ===Etymology 1===
 {{root|en|ine-pro|*wert-}}
-From {{inh|en|enm|vers}}, from a mixture of {{inh|en|ang|fers}} and {{der|en|fro|vers}}; both from {{uder|en|la|versus||a line in writing, and in poetry a verse; (originally) row, furrow}}, from {{m|la|vertō||to turn around}}.
+From {{inh|en|enm|vers}}, from a mixture of {{inh|en|ang|fers}} and {{der|en|fro|vers}}; both from {{der|en|la|versus||a line in writing, and in poetry a verse; (originally) row, furrow}}, from {{m|la|vertō||to turn around}}.
 
 ====Noun====
 {{en-noun|~}}
@@ -261476,7 +261458,7 @@ Page 3816 whole step: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} An [[interval]] equal to two [[half step]]s; a [[whole tone]].
+# {{lb|en|musical interval}} An [[interval]] equal to two [[half step]]s; a [[whole tone]].
 
 ===Anagrams===
 * {{anagrams|en|a=eehlopstw|pot wheels}}
@@ -261486,7 +261468,7 @@ Page 3817 whole tone: -------- begin text --------
 ===Noun===
 {{en-noun}}
 
-# {{lb|en|music}} The musical [[interval]] equal (exactly or approximately) to a frequency ratio of 8/7, 9/8, or 10/9, depending on the tuning system used. In [[meantone]] tunings (including twelve-tone equal temperament), there is only one whole tone, though tuning systems that are not meantone have a "major tone" of 9/8 and a "minor tone" of 10/9.
+# {{lb|en|musical interval}} The musical [[interval]] equal (exactly or approximately) to a frequency ratio of 8/7, 9/8, or 10/9, depending on the tuning system used. In [[meantone]] tunings (including twelve-tone equal temperament), there is only one whole tone, though tuning systems that are not meantone have a "major tone" of 9/8 and a "minor tone" of 10/9.
 
 ====Synonyms====
 * {{l|en|tone}}
