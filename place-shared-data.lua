@@ -89,7 +89,7 @@ There are two main types of categories:
 	 counties and second-level municipalities, but since we don't currently have categories for Lithuanian counties,
 	 all municipalities go under [[:Category:Municipalities of Lithuania]] rather than under a category for a specific
 	 county. In addition, even though we do have categories for Japanese prefectures (a first-level division), all
-	 subprefectures (a second-level division) go under [[:Categories:Subprefectures of Japan]] because there aren't very
+	 subprefectures (a second-level division) go under [[:Category:Subprefectures of Japan]] because there aren't very
 	 many of them (see below).
 ## "Generic placetype" categories, both of the immediate and skip-polity type (immediate
    [[:Category:Cities in California, USA]] and [[:Category:Neighborhoods of the Bronx]]; skip-polity
@@ -104,12 +104,12 @@ There are two main types of categories:
 
 The parent categories of a given category depend on its type. Generally, toponym categories have placetype categories
 as their first parent, and vice-versa. Specifically:
-# Top-level country categories have as their parent e.g. [[:Category:Countries of Europe]],
-  [[:Category:Countries of Central America]] or [[:Category:Countries of Polynesia]], using the most specific
+# Top-level country categories have as their parent e.g. [[:Category:Countries in Europe]],
+  [[:Category:Countries in Central America]] or [[:Category:Countries in Polynesia]], using the most specific
   continental-level region the country is contained in.
 # Pseudo-countries are under [[:Category:Country-like entities]] as a neutral designation. There aren't enough of them
   to subcategorize under continent-level regions.
-# Former countries are under [[:Category:Former countries]].
+# Former countries are under [[:Category:Former countries and country-like entities]].
 # Subpolity categories are usually under a placetype category whose placetype is the canonical (first-listed) divtype of
   the subpolity and whose toponym is the immediately containing polity, but there are exceptions. Specifically,
   sometimes if a polity has multiple types of subpolities, they are combined (e.g. [[:Category:States and territories of
@@ -123,9 +123,9 @@ as their first parent, and vice-versa. Specifically:
   other prefectures). Rather than have e.g. [[:Category:en:Subprefectures of Kagoshima Prefecture]] containing at most
   two entries and [[:Category:en:Subprefectures of Miyazaki Prefecture]] containing at most one, they are all grouped
   under the so-called "skip-subpolity category" [[:Category:en:Subprefectures of Japan]].
-# City categories are always under e.g. [[:Category:Cities of the United States]] (e.g. [[:Category:New York City]] is
-  so-placed, even though [[:Category:Cities of New York, USA]] exists). However, they may have a second, more-specific
-  parent (e.g. [[:Category:Cities of New York, USA]] in the case of New York City). The city entries themselves will
+# City categories are always under e.g. [[:Category:Cities in the United States]] (e.g. [[:Category:New York City]] is
+  so-placed, even though [[:Category:Cities in New York, USA]] exists). However, they may have a second, more-specific
+  parent (e.g. [[:Category:Cities in New York, USA]] in the case of New York City). The city entries themselves will
   go under the more specific parent if it exists.
 # Immediate placetype categories for second-level divisions of a country generally have, respectively, a
   "toponym parent" that is the toponym mentioned in the category and a "skip-polity parent" that groups all subpolity
@@ -149,6 +149,34 @@ as their first parent, and vice-versa. Specifically:
   (e.g. [[:Category:Counties of the United States]]) work the same. Placetype categories for countries work likewise
   except they are missing the generic parent.
 ]==]
+
+--[=[
+TODO:
+
+1. Neighborhoods should categorize at the city level. Categories like [[:Category:Places in Los Angeles]] exist but
+   not [[:Category:Neighborhoods in Los Angeles]]; we can refactor the code in generic_cat_handler() to support this
+   use case.
+2. Display handlers should be smarter. For example, 'co/Travis' as a holonym should display as 'Travis County' in the
+   United States, but (I think) display handlers don't currently have the full context of holonyms passed in to allow
+   this to happen.
+3. Connected to this, we have various display handlers that add the name of the holonym after or (sometimes) before the
+   placename if it's not already there. An example is the county_display_handler() in [[Module:place/data]], which adds
+   "County" before Ireland and Northern Ireland counties and after Taiwan and Romania counties. This should be
+   integrated into the polity group for these respective polities through a setting rather than requiring a separate
+   handler that has special casing for various polities.
+4. Placetypes for toponyms should also have display handlers rather than just fixed text. This should allow us to
+   dispense with the need for special types for "fpref" = "French prefecture" (which displays as "prefecture" but links
+   to the appropriate Wikipedia article on Frenc prefectures, which are completely different from the more general
+   concept of prefecture). Similarly for "Polish colony" and "Welsh community". ("Israeli settlement" should probably
+   stay as-is because it displays as "Israeli settlement" not just "settlement".)
+5. Currently, categories for e.g. states and territories of Australia go into
+   [[:Category:States and territories of Australia]] but terms for states and territories of Australia go into
+   (respectively) [[:Category:States of Australia]] and [[:Category:Territories of Australia]]. We should fix this;
+   maybe this is as easy as setting cat_as in the respective poldiv definitions.
+6. Probably cat_as should support raw categories as well as category types; raw categories would be indicated by being
+   prefixed with "Category:".
+7. Update documentation.
+]=]
 
 -----------------------------------------------------------------------------------
 --                              Helper functions                                 --
@@ -501,11 +529,13 @@ end
 --                              Placetype Tables                                 --
 -----------------------------------------------------------------------------------
 
--- Recognized political and misc. (sub)divisions. The key is the plural division and the value is the equivalent
--- description, with links. A value of true means to use the default linking algorithm in link_label() in
--- [[Module:category tree/topic cat]]. A value of "w" is similar but links to Wikipedia. NOTE: This currently used
--- only for category descriptions by [[Module:category tree/topic cat/data/Places]], and overlaps the information
--- in `placetype_links` in [[Module:place/data]]. FIXME: The two should be combined somehow.
+--[==[ object:
+Recognized political and misc. (sub)divisions. The key is the plural division and the value is the equivalent
+description, with links. A value of true means to use the default linking algorithm in link_label() in
+[[Module:category tree/topic cat]]. A value of "w" is similar but links to Wikipedia. NOTE: This currently used
+only for category descriptions by [[Module:category tree/topic cat/data/Places]], and overlaps the information
+in `placetype_links` in [[Module:place/data]]. FIXME: The two should be combined somehow.
+]==]
 export.political_divisions = {
 	["administrative atolls"] = true,
 	["administrative regions"] = true,
@@ -602,10 +632,12 @@ export.political_divisions = {
 	["zones"] = true,
 }
 
--- Place types for which categories can be constructed for all the places listed below other than cities. The key should
--- be the plural place type and the value should be either a string (the description) or an object containing a field
--- `desc` (the description) and `prep` (the preposition following the place type as it occurs in categories, defaulting
--- to "in").
+--[==[ object:
+Place types for which categories can be constructed for all the places listed below other than cities. The key should
+be the plural place type and the value should be either a string (the description) or an object containing a field
+`desc` (the description) and `prep` (the preposition following the place type as it occurs in categories, defaulting
+to "in").
+]==]
 export.generic_placetypes = {
 	["cities"] = "cities",
 	["ghost towns"] = "[[ghost town]]s",
@@ -622,9 +654,11 @@ export.generic_placetypes = {
 	["geographic areas"] = {desc = "[[geographic]] [[area]]s", prep = "of"},
 }
 
--- Place types for which categories can be constructed for cities listed below. The key should be the plural place type
--- and the value should be either a string (the description) or an object containing a field `desc` (the description)
--- and `prep` (the preposition following the place type as it occurs in categories, defaulting to "of").
+--[==[ object:
+Place types for which categories can be constructed for cities listed below. The key should be the plural place type
+and the value should be either a string (the description) or an object containing a field `desc` (the description)
+and `prep` (the preposition following the place type as it occurs in categories, defaulting to "of").
+]==]
 export.generic_placetypes_for_cities = {
 	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions of cities",
 	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions of cities",
@@ -1024,7 +1058,7 @@ export.countries = {
 	["Nauru"] = {parents = {"Micronesia"}, poldiv = {"districts"}, british_spelling = true},
 	["Nepal"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
 	["the Netherlands"] = {divtype = {"constituent country", "country"}, parents = {"Europe"},
-		poldiv = {"provinces", "municipalities", "dependent territories"}, british_spelling = true},
+		poldiv = {"provinces", "municipalities", "dependent territories", "constituent countries"}, british_spelling = true},
 	["New Zealand"] = {parents = {"Polynesia"}, poldiv = {"regions", "dependent territories", "territorial authorities"},
 		british_spelling = true},
 	["Nicaragua"] = {parents = {"Central America"}, poldiv = {"departments", "municipalities"}},
@@ -3323,6 +3357,9 @@ export.cities = {
 			["Pimpri-Chinchwad"] = {"Maharashtra"},
 			["Patna"] = {"Bihar"},
 			["Vadodara"] = {"Gujarat"},
+
+			-- After top 20
+			["Jabalpur"] = {"Madhya Pradesh"},
 		},
 	},
 	{
