@@ -409,6 +409,8 @@ TODO:
 10. Add a polity group for continents and continent-level regions instead of special-casing.
 11. Add better handling of cities that are their own states, like Mexico City.
 12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just "Aguascalientes".
+13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
+    `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]).
 ]=]
 
 -----------------------------------------------------------------------------------
@@ -1235,7 +1237,8 @@ export.pseudo_countries = {
 	-- autonomous territory of Denmark
 	["the Faroe Islands"] = {divtype = {"autonomous territory", "territory"}, parents = {"Denmark", "Europe"}},
 	-- overseas department of France
-	["French Guiana"] = {divtype = {"overseas department", "department"}, parents = {"France", "South America"}},
+	["French Guiana"] = {divtype = {"overseas department", "department", "administrative region", "region"},
+		parents = {"France", "South America"}},
 	-- overseas collectivity of France
 	["French Polynesia"] = {divtype = {"overseas collectivity", "collectivity"}, parents = {"France", "Polynesia"}},
 	-- British Overseas Territory
@@ -1245,7 +1248,8 @@ export.pseudo_countries = {
 	["Greenland"] = {divtype = {"autonomous territory", "territory"}, parents = {"Netherlands", "North America"},
 		poldiv = {"municipalities"}},
 	-- overseas department of France
-	["Guadeloupe"] = {divtype = {"overseas department", "department"}, parents = {"France", "North America"}},
+	["Guadeloupe"] = {divtype = {"overseas department", "department", "administrative region", "region"},
+		parents = {"France", "North America"}},
 	-- unincorporated territory of the United States
 	["Guam"] = {divtype = {"unincorporated territory", "overseas territory", "territory"},
 		parents = {"United States", "Micronesia"}},
@@ -1269,7 +1273,11 @@ export.pseudo_countries = {
 		parents = {"China"}, is_city = true, british_spelling = true
 	},
 	-- overseas department of France
-	["Martinique"] = {divtype = {"overseas department", "department"}, parents = {"France", "North America"}},
+	["Martinique"] = {divtype = {"overseas department", "department", "administrative region", "region"},
+		parents = {"France", "North America"}},
+	-- overseas department of France
+	["Mayotte"] = {divtype = {"overseas department", "department", "administrative region", "region"},
+		parents = {"France", "Africa"}},
 	-- British Overseas Territory
 	["Montserrat"] = {divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "North America"},
 		british_spelling = true},
@@ -1296,8 +1304,11 @@ export.pseudo_countries = {
 		parents = {"United States", "North America"},
 		poldiv = {"municipalities"}
 	},
+	-- overseas department of France
+	["Réunion"] = {divtype = {"overseas department", "department", "administrative region", "region"},
+		parents = {"France", "Africa"}},
 	-- overseas collectivity of France
-	["Saint Barthélemy"] = {divtype = {"overseas collectivity", "collectivity"},parents = {"France", "North America"}},
+	["Saint Barthélemy"] = {divtype = {"overseas collectivity", "collectivity"}, parents = {"France", "North America"}},
 	-- British Overseas Territory
 	["Saint Helena"] = {divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "Atlantic Ocean"},
 		british_spelling = true},
@@ -1403,18 +1414,20 @@ export.former_country_group = {
 -----------------------------------------------------------------------------------
 
 export.australia_states_and_territories = {
-	["the Australian Capital Territory"] = {divtype = "territory"},
-	["New South Wales"] = {},
-	["the Northern Territory"] = {divtype = "territory"},
-	["Queensland"] = {},
-	["South Australia"] = {},
-	["Tasmania"] = {},
-	["Victoria"] = {},
-	["Western Australia"] = {},
+	["the Australian Capital Territory, Australia"] = {divtype = "territory"},
+	["New South Wales, Australia"] = {},
+	["the Northern Territory, Australia"] = {divtype = "territory"},
+	["Queensland, Australia"] = {},
+	["South Australia, Australia"] = {},
+	["Tasmania, Australia"] = {},
+	["Victoria, Australia"] = {},
+	["Western Australia, Australia"] = {},
 }
 
 -- states and territories of Australia
 export.australia_group = {
+	key_to_placename = make_key_to_placename(", Australia$"),
+	placename_to_key = make_placename_to_key(", Australia"),
 	bare_label_setter = subpolity_bare_label_setter("Australia"),
 	value_transformer = subpolity_value_transformer("Australia"),
 	default_divtype = "state",
@@ -1514,32 +1527,34 @@ export.brazil_group = {
 }
 
 export.canada_provinces_and_territories = {
-	["Alberta"] = {poldiv = {
+	["Alberta, Canada"] = {poldiv = {
 		{type = "municipal districts", skip_polity_parent_type = "rural municipalities"},
 	}},
-	["British Columbia"] = {poldiv =
+	["British Columbia, Canada"] = {poldiv =
 		{type = "regional districts", skip_polity_parent_type = false},
 		"regional municipalities",
 	},
-	["Manitoba"] = {poldiv = {"rural municipalities"}},
-	["New Brunswick"] = {poldiv = {"counties"}},
-	["Newfoundland and Labrador"] = {},
-	["the Northwest Territories"] = {divtype = "territory"},
-	["Nova Scotia"] = {poldiv = {"counties", "regional municipalities"}},
-	["Nunavut"] = {divtype = "territory"},
-	["Ontario"] = {poldiv = {"counties", "regional municipalities", {type = "townships", prep = "in"}}},
-	["Prince Edward Island"] = {poldiv = {"counties", "rural municipalities"}},
-	["Saskatchewan"] = {poldiv = {"rural municipalities"}},
-	["Quebec"] = {poldiv = {
+	["Manitoba, Canada"] = {poldiv = {"rural municipalities"}},
+	["New Brunswick, Canada"] = {poldiv = {"counties"}},
+	["Newfoundland and Labrador, Canada"] = {},
+	["the Northwest Territories, Canada"] = {divtype = "territory"},
+	["Nova Scotia, Canada"] = {poldiv = {"counties", "regional municipalities"}},
+	["Nunavut, Canada"] = {divtype = "territory"},
+	["Ontario, Canada"] = {poldiv = {"counties", "regional municipalities", {type = "townships", prep = "in"}}},
+	["Prince Edward Island, Canada"] = {poldiv = {"counties", "rural municipalities"}},
+	["Saskatchewan, Canada"] = {poldiv = {"rural municipalities"}},
+	["Quebec, Canada"] = {poldiv = {
 		"counties",
 		{type = "regional county municipalities", skip_polity_parent_type = "regional municipalities"},
 		{type = "townships", prep = "in"},
 	}},
-	["Yukon"] = {divtype = "territory"},
+	["Yukon, Canada"] = {divtype = "territory"},
 }
 
 -- provinces and territories of Canada
 export.canada_group = {
+	key_to_placename = make_key_to_placename(", Canada$"),
+	placename_to_key = make_placename_to_key(", Canada"),
 	bare_label_setter = subpolity_bare_label_setter("Canada"),
 	value_transformer = subpolity_value_transformer("Canada"),
 	default_divtype = "province",
@@ -1552,37 +1567,39 @@ export.canada_group = {
 -- table of provinces and autonomous regions of China; interpolated into the main 'places' table, but also needed
 -- separately
 export.china_provinces_and_autonomous_regions = {
-	["Anhui"] = {},
-	["Fujian"] = {},
-	["Gansu"] = {},
-	["Guangdong"] = {},
-	["Guangxi"] = {divtype = "autonomous region"},
-	["Guizhou"] = {},
-	["Hainan"] = {},
-	["Hebei"] = {},
-	["Heilongjiang"] = {},
-	["Henan"] = {},
-	["Hubei"] = {},
-	["Hunan"] = {},
-	["Inner Mongolia"] = {divtype = "autonomous region"},
-	["Jiangsu"] = {},
-	["Jiangxi"] = {},
-	["Jilin"] = {},
-	["Liaoning"] = {},
-	["Ningxia"] = {divtype = "autonomous region"},
-	["Qinghai"] = {},
-	["Shaanxi"] = {},
-	["Shandong"] = {},
-	["Shanxi"] = {},
-	["Sichuan"] = {},
-	["Tibet"] = {divtype = "autonomous region"},
-	["Xinjiang"] = {divtype = "autonomous region"},
-	["Yunnan"] = {},
-	["Zhejiang"] = {},
+	["Anhui, China"] = {},
+	["Fujian, China"] = {},
+	["Gansu, China"] = {},
+	["Guangdong, China"] = {},
+	["Guangxi, China"] = {divtype = "autonomous region"},
+	["Guizhou, China"] = {},
+	["Hainan, China"] = {},
+	["Hebei, China"] = {},
+	["Heilongjiang, China"] = {},
+	["Henan, China"] = {},
+	["Hubei, China"] = {},
+	["Hunan, China"] = {},
+	["Inner Mongolia, China"] = {divtype = "autonomous region"},
+	["Jiangsu, China"] = {},
+	["Jiangxi, China"] = {},
+	["Jilin, China"] = {},
+	["Liaoning, China"] = {},
+	["Ningxia, China"] = {divtype = "autonomous region"},
+	["Qinghai, China"] = {},
+	["Shaanxi, China"] = {},
+	["Shandong, China"] = {},
+	["Shanxi, China"] = {},
+	["Sichuan, China"] = {},
+	["Tibet, China"] = {divtype = "autonomous region"},
+	["Xinjiang, China"] = {divtype = "autonomous region"},
+	["Yunnan, China"] = {},
+	["Zhejiang, China"] = {},
 }
 
 -- provinces and autonomous regions of China
 export.china_group = {
+	key_to_placename = make_key_to_placename(", China$"),
+	placename_to_key = make_placename_to_key(", China"),
 	bare_label_setter = subpolity_bare_label_setter("China"),
 	value_transformer = subpolity_value_transformer("China"),
 	default_divtype = "province",
@@ -1625,28 +1642,31 @@ export.finland_group = {
 }
 
 export.france_administrative_regions = {
-	["Auvergne-Rhône-Alpes"] = {},
-	["Bourgogne-Franche-Comté"] = {},
-	["Brittany"] = {},
-	["Centre-Val de Loire"] = {},
-	["Corsica"] = {},
-	["French Guiana"] = {},
-	["Grand Est"] = {},
-	["Guadeloupe"] = {},
-	["Hauts-de-France"] = {},
-	["Île-de-France"] = {},
-	["Martinique"] = {},
-	["Mayotte"] = {},
-	["Normandy"] = {},
-	["Nouvelle-Aquitaine"] = {},
-	["Occitanie"] = {},
-	["Pays de la Loire"] = {},
-	["Provence-Alpes-Côte d'Azur"] = {},
-	["Réunion"] = {},
+	["Auvergne-Rhône-Alpes, France"] = {},
+	["Bourgogne-Franche-Comté, France"] = {},
+	["Brittany, France"] = {},
+	["Centre-Val de Loire, France"] = {},
+	["Corsica, France"] = {},
+	-- overseas departments are handled in `export.pseudo_countries`
+	-- ["French Guiana"] = {},
+	["Grand Est, France"] = {},
+	-- ["Guadeloupe"] = {},
+	["Hauts-de-France, France"] = {},
+	["Île-de-France, France"] = {},
+	-- ["Martinique"] = {},
+	-- ["Mayotte"] = {},
+	["Normandy, France"] = {},
+	["Nouvelle-Aquitaine, France"] = {},
+	["Occitanie, France"] = {},
+	["Pays de la Loire, France"] = {},
+	["Provence-Alpes-Côte d'Azur, France"] = {},
+	-- ["Réunion"] = {},
 }
 
 -- administrative regions of France
 export.france_group = {
+	key_to_placename = make_key_to_placename(", France$"),
+	placename_to_key = make_placename_to_key(", France"),
 	bare_label_setter = subpolity_bare_label_setter("France"),
 	value_transformer = subpolity_value_transformer("France"),
 	-- Canonically these are 'administrative regions' but also categorize if identified as a 'region'.
@@ -1657,28 +1677,30 @@ export.france_group = {
 }
 
 export.germany_states = {
-	["Baden-Württemberg"] = {},
-	["Bavaria"] = {},
+	["Baden-Württemberg, Germany"] = {},
+	["Bavaria, Germany"] = {},
 	-- Berlin, Bremen and Hamburg are effectively city-states and don't have districts ([[Kreise]]), so override
-	-- the default_poldiv setting.
-	["Berlin"] = {poldiv = {}},
-	["Brandenburg"] = {},
-	["Bremen"] = {poldiv = {}},
-	["Hamburg"] = {poldiv = {}},
-	["Hesse"] = {},
-	["Lower Saxony"] = {},
-	["Mecklenburg-Vorpommern"] = {},
-	["North Rhine-Westphalia"] = {},
-	["Rhineland-Palatinate"] = {},
-	["Saarland"] = {},
-	["Saxony"] = {},
-	["Saxony-Anhalt"] = {},
-	["Schleswig-Holstein"] = {},
-	["Thuringia"] = {},
+	-- the default_poldiv setting. Better not to include them at all since they're included as cities down below.
+	-- ["Berlin"] = {poldiv = {}},
+	["Brandenburg, Germany"] = {},
+	-- ["Bremen"] = {poldiv = {}},
+	-- ["Hamburg"] = {poldiv = {}},
+	["Hesse, Germany"] = {},
+	["Lower Saxony, Germany"] = {},
+	["Mecklenburg-Vorpommern, Germany"] = {},
+	["North Rhine-Westphalia, Germany"] = {},
+	["Rhineland-Palatinate, Germany"] = {},
+	["Saarland, Germany"] = {},
+	["Saxony, Germany"] = {},
+	["Saxony-Anhalt, Germany"] = {},
+	["Schleswig-Holstein, Germany"] = {},
+	["Thuringia, Germany"] = {},
 }
 
 -- states of Germany
 export.germany_group = {
+	key_to_placename = make_key_to_placename(", Germany$"),
+	placename_to_key = make_placename_to_key(", Germany"),
 	bare_label_setter = subpolity_bare_label_setter("Germany"),
 	value_transformer = subpolity_value_transformer("Germany"),
 	default_divtype = "state",
