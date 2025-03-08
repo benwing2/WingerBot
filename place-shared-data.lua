@@ -406,11 +406,20 @@ TODO:
 7. Update documentation.
 8. Rename remaining political subdivision categories to include name of country in them.
 9. Add Pakistan provinces and territories.
-10. Add a polity group for continents and continent-level regions instead of special-casing.
+10. Add a polity group for continents and continent-level regions instead of special-casing. This should make it
+    possible e.g. to have Jerusalem as a city under "Asia".
 11. Add better handling of cities that are their own states, like Mexico City.
 12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just "Aguascalientes".
 13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
     `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]).
+14. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
+    from being added due to generically-named divisions like "North Governorate", "Central Region" and
+	"Eastern Province" but (a) this setting seems to do multiple things and should be split, (b) it should be possible
+	to set this at the division level instead of the country level.
+15. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
+16. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
+    them as such) have districts, subdistricts, etc. We need to support poldivs for cities and even named divisions of
+    cities (such as we already have for boroughs of New York City).
 ]=]
 
 -----------------------------------------------------------------------------------
@@ -1709,51 +1718,60 @@ export.germany_group = {
 	data = export.germany_states,
 }
 
+local function india_placename_to_key(placename)
+	if placename == "Delhi" then
+		return placename
+	end
+	return placename .. ", India"
+end
+
 local india_polity_with_divisions = {"divisions", "districts"}
 local india_polity_without_divisions = {"districts"}
 
 -- States and union territories of India. Only some of them are divided into divisions.
 export.india_states_and_union_territories = {
-	["the Andaman and Nicobar Islands"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
-	["Andhra Pradesh"] = {poldiv = india_polity_without_divisions},
-	["Arunachal Pradesh"] = {poldiv = india_polity_with_divisions},
-	["Assam"] = {poldiv = india_polity_with_divisions},
-	["Bihar"] = {poldiv = india_polity_with_divisions},
-	["Chandigarh"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
-	["Chhattisgarh"] = {poldiv = india_polity_with_divisions},
-	["Dadra and Nagar Haveli and Daman and Diu"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
+	["the Andaman and Nicobar Islands, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
+	["Andhra Pradesh, India"] = {poldiv = india_polity_without_divisions},
+	["Arunachal Pradesh, India"] = {poldiv = india_polity_with_divisions},
+	["Assam, India"] = {poldiv = india_polity_with_divisions},
+	["Bihar, India"] = {poldiv = india_polity_with_divisions},
+	["Chandigarh, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
+	["Chhattisgarh, India"] = {poldiv = india_polity_with_divisions},
+	["Dadra and Nagar Haveli and Daman and Diu, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
 	["Delhi"] = {divtype = "union territory", poldiv = india_polity_with_divisions},
-	["Goa"] = {poldiv = india_polity_without_divisions},
-	["Gujarat"] = {poldiv = india_polity_without_divisions},
-	["Haryana"] = {poldiv = india_polity_with_divisions},
-	["Himachal Pradesh"] = {poldiv = india_polity_with_divisions},
-	["Jammu and Kashmir"] = {divtype = "union territory", poldiv = india_polity_with_divisions},
-	["Jharkhand"] = {poldiv = india_polity_with_divisions},
-	["Karnataka"] = {poldiv = india_polity_with_divisions},
-	["Kerala"] = {poldiv = india_polity_without_divisions},
-	["Ladakh"] = {divtype = "union territory", poldiv = india_polity_with_divisions},
-	["Lakshadweep"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
-	["Madhya Pradesh"] = {poldiv = india_polity_with_divisions},
-	["Maharashtra"] = {poldiv = india_polity_with_divisions},
-	["Manipur"] = {poldiv = india_polity_without_divisions},
-	["Meghalaya"] = {poldiv = india_polity_with_divisions},
-	["Mizoram"] = {poldiv = india_polity_without_divisions},
-	["Nagaland"] = {poldiv = india_polity_with_divisions},
-	["Odisha"] = {poldiv = india_polity_with_divisions},
-	["Puducherry"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
-	["Punjab"] = {poldiv = india_polity_with_divisions},
-	["Rajasthan"] = {poldiv = india_polity_with_divisions},
-	["Sikkim"] = {poldiv = india_polity_without_divisions},
-	["Tamil Nadu"] = {poldiv = india_polity_without_divisions},
-	["Telangana"] = {poldiv = india_polity_without_divisions},
-	["Tripura"] = {poldiv = india_polity_without_divisions},
-	["Uttar Pradesh"] = {poldiv = india_polity_with_divisions},
-	["Uttarakhand"] = {poldiv = india_polity_with_divisions},
-	["West Bengal"] = {poldiv = india_polity_with_divisions},
+	["Goa, India"] = {poldiv = india_polity_without_divisions},
+	["Gujarat, India"] = {poldiv = india_polity_without_divisions},
+	["Haryana, India"] = {poldiv = india_polity_with_divisions},
+	["Himachal Pradesh, India"] = {poldiv = india_polity_with_divisions},
+	["Jammu and Kashmir, India"] = {divtype = "union territory", poldiv = india_polity_with_divisions},
+	["Jharkhand, India"] = {poldiv = india_polity_with_divisions},
+	["Karnataka, India"] = {poldiv = india_polity_with_divisions},
+	["Kerala, India"] = {poldiv = india_polity_without_divisions},
+	["Ladakh, India"] = {divtype = "union territory", poldiv = india_polity_with_divisions},
+	["Lakshadweep, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
+	["Madhya Pradesh, India"] = {poldiv = india_polity_with_divisions},
+	["Maharashtra, India"] = {poldiv = india_polity_with_divisions},
+	["Manipur, India"] = {poldiv = india_polity_without_divisions},
+	["Meghalaya, India"] = {poldiv = india_polity_with_divisions},
+	["Mizoram, India"] = {poldiv = india_polity_without_divisions},
+	["Nagaland, India"] = {poldiv = india_polity_with_divisions},
+	["Odisha, India"] = {poldiv = india_polity_with_divisions},
+	["Puducherry, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
+	["Punjab, India"] = {poldiv = india_polity_with_divisions},
+	["Rajasthan, India"] = {poldiv = india_polity_with_divisions},
+	["Sikkim, India"] = {poldiv = india_polity_without_divisions},
+	["Tamil Nadu, India"] = {poldiv = india_polity_without_divisions},
+	["Telangana, India"] = {poldiv = india_polity_without_divisions},
+	["Tripura, India"] = {poldiv = india_polity_without_divisions},
+	["Uttar Pradesh, India"] = {poldiv = india_polity_with_divisions},
+	["Uttarakhand, India"] = {poldiv = india_polity_with_divisions},
+	["West Bengal, India"] = {poldiv = india_polity_with_divisions},
 }
 
 -- states and union territories of India
 export.india_group = {
+	key_to_placename = make_key_to_placename(", India$"),
+	placename_to_key = india_placename_to_key,
 	bare_label_setter = subpolity_bare_label_setter("India"),
 	value_transformer = subpolity_value_transformer("India"),
 	default_divtype = "state",
@@ -1898,30 +1916,32 @@ export.ireland_group = {
 }
 
 export.italy_administrative_regions = {
-	["Abruzzo"] = {},
-	["Aosta Valley"] = {divtype = {"autonomous region", "administrative region", "region"}},
-	["Apulia"] = {},
-	["Basilicata"] = {},
-	["Calabria"] = {},
-	["Campania"] = {},
-	["Emilia-Romagna"] = {},
-	["Friuli-Venezia Giulia"] = {divtype = {"autonomous region", "administrative region", "region"}},
-	["Lazio"] = {},
-	["Liguria"] = {},
-	["Lombardy"] = {},
-	["Marche"] = {},
-	["Molise"] = {},
-	["Piedmont"] = {},
-	["Sardinia"] = {divtype = {"autonomous region", "administrative region", "region"}},
-	["Sicily"] = {divtype = {"autonomous region", "administrative region", "region"}},
-	["Trentino-Alto Adige"] = {divtype = {"autonomous region", "administrative region", "region"}},
-	["Tuscany"] = {},
-	["Umbria"] = {},
-	["Veneto"] = {},
+	["Abruzzo, Italy"] = {},
+	["Aosta Valley, Italy"] = {divtype = {"autonomous region", "administrative region", "region"}},
+	["Apulia, Italy"] = {},
+	["Basilicata, Italy"] = {},
+	["Calabria, Italy"] = {},
+	["Campania, Italy"] = {},
+	["Emilia-Romagna, Italy"] = {},
+	["Friuli-Venezia Giulia, Italy"] = {divtype = {"autonomous region", "administrative region", "region"}},
+	["Lazio, Italy"] = {},
+	["Liguria, Italy"] = {},
+	["Lombardy, Italy"] = {},
+	["Marche, Italy"] = {},
+	["Molise, Italy"] = {},
+	["Piedmont, Italy"] = {},
+	["Sardinia, Italy"] = {divtype = {"autonomous region", "administrative region", "region"}},
+	["Sicily, Italy"] = {divtype = {"autonomous region", "administrative region", "region"}},
+	["Trentino-Alto Adige, Italy"] = {divtype = {"autonomous region", "administrative region", "region"}},
+	["Tuscany, Italy"] = {},
+	["Umbria, Italy"] = {},
+	["Veneto, Italy"] = {},
 }
 
 -- administrative regions of Italy
 export.italy_group = {
+	key_to_placename = make_key_to_placename(", Italy$"),
+	placename_to_key = make_placename_to_key(", Italy"),
 	bare_label_setter = subpolity_bare_label_setter("Italy"),
 	value_transformer = subpolity_value_transformer("Italy"),
 	default_divtype = {"administrative region", "region"},
@@ -1932,68 +1952,73 @@ export.italy_group = {
 
 -- table of Japanese prefectures; interpolated into the main 'places' table, but also needed separately
 export.japan_prefectures = {
-	["Aichi Prefecture"] = {},
-	["Akita Prefecture"] = {},
-	["Aomori Prefecture"] = {},
-	["Chiba Prefecture"] = {},
-	["Ehime Prefecture"] = {},
-	["Fukui Prefecture"] = {},
-	["Fukuoka Prefecture"] = {},
-	["Fukushima Prefecture"] = {},
-	["Gifu Prefecture"] = {},
-	["Gunma Prefecture"] = {},
-	["Hiroshima Prefecture"] = {},
-	["Hokkaido"] = {poldiv = "subprefectures"}, -- just "Hokkaido" not "Hokkaido Prefecture"
-	["Hyōgo Prefecture"] = {},
-	["Ibaraki Prefecture"] = {},
-	["Ishikawa Prefecture"] = {},
-	["Iwate Prefecture"] = {},
-	["Kagawa Prefecture"] = {},
-	["Kagoshima Prefecture"] = {},
-	["Kanagawa Prefecture"] = {},
-	["Kōchi Prefecture"] = {},
-	["Kumamoto Prefecture"] = {},
-	["Kyoto Prefecture"] = {},
-	["Mie Prefecture"] = {},
-	["Miyagi Prefecture"] = {},
-	["Miyazaki Prefecture"] = {},
-	["Nagano Prefecture"] = {},
-	["Nagasaki Prefecture"] = {},
-	["Nara Prefecture"] = {},
-	["Niigata Prefecture"] = {},
-	["Ōita Prefecture"] = {},
-	["Okayama Prefecture"] = {},
-	["Okinawa Prefecture"] = {},
-	["Osaka Prefecture"] = {},
-	["Saga Prefecture"] = {},
-	["Saitama Prefecture"] = {},
-	["Shiga Prefecture"] = {},
-	["Shimane Prefecture"] = {},
-	["Shizuoka Prefecture"] = {},
-	["Tochigi Prefecture"] = {},
-	["Tokushima Prefecture"] = {},
-	-- just "Tokyo" not "Tokyo Prefecture" or "Tokyo Metropolis"; don't list subprefectures here so they don't get
-	-- categorized into [[Category:Subprefectures of Tokyo]] (but rather [[Category:Subprefectures of Japan]]) since
-	-- there are only 4 of them.
+	["Aichi Prefecture, Japan"] = {},
+	["Akita Prefecture, Japan"] = {},
+	["Aomori Prefecture, Japan"] = {},
+	["Chiba Prefecture, Japan"] = {},
+	["Ehime Prefecture, Japan"] = {},
+	["Fukui Prefecture, Japan"] = {},
+	["Fukuoka Prefecture, Japan"] = {},
+	["Fukushima Prefecture, Japan"] = {},
+	["Gifu Prefecture, Japan"] = {},
+	["Gunma Prefecture, Japan"] = {},
+	["Hiroshima Prefecture, Japan"] = {},
+	["Hokkaido Prefecture, Japan"] = {poldiv = "subprefectures"},
+	["Hyōgo Prefecture, Japan"] = {},
+	["Ibaraki Prefecture, Japan"] = {},
+	["Ishikawa Prefecture, Japan"] = {},
+	["Iwate Prefecture, Japan"] = {},
+	["Kagawa Prefecture, Japan"] = {},
+	["Kagoshima Prefecture, Japan"] = {},
+	["Kanagawa Prefecture, Japan"] = {},
+	["Kōchi Prefecture, Japan"] = {},
+	["Kumamoto Prefecture, Japan"] = {},
+	["Kyoto Prefecture, Japan"] = {},
+	["Mie Prefecture, Japan"] = {},
+	["Miyagi Prefecture, Japan"] = {},
+	["Miyazaki Prefecture, Japan"] = {},
+	["Nagano Prefecture, Japan"] = {},
+	["Nagasaki Prefecture, Japan"] = {},
+	["Nara Prefecture, Japan"] = {},
+	["Niigata Prefecture, Japan"] = {},
+	["Ōita Prefecture, Japan"] = {},
+	["Okayama Prefecture, Japan"] = {},
+	["Okinawa Prefecture, Japan"] = {},
+	["Osaka Prefecture, Japan"] = {},
+	["Saga Prefecture, Japan"] = {},
+	["Saitama Prefecture, Japan"] = {},
+	["Shiga Prefecture, Japan"] = {},
+	["Shimane Prefecture, Japan"] = {},
+	["Shizuoka Prefecture, Japan"] = {},
+	["Tochigi Prefecture, Japan"] = {},
+	["Tokushima Prefecture, Japan"] = {},
+	-- FIXME: We also have Tokyo listed below as a city. Probably we only want the listing under cities, but we need
+	-- to support things like special wards of cities.
+	--
+	-- Don't list subprefectures here so they don't get categorized into [[Category:Subprefectures of Tokyo]] (but
+	-- rather [[Category:Subprefectures of Japan]]) since there are only 4 of them.
 	["Tokyo"] = {keydesc = "[[Tokyo]] Metropolis", poldiv = {{type = "special wards", skip_polity_parent_type = false}}},
-	["Tottori Prefecture"] = {},
-	["Toyama Prefecture"] = {},
-	["Wakayama Prefecture"] = {},
-	["Yamagata Prefecture"] = {},
-	["Yamaguchi Prefecture"] = {},
-	["Yamanashi Prefecture"] = {},
+	["Tottori Prefecture, Japan"] = {},
+	["Toyama Prefecture, Japan"] = {},
+	["Wakayama Prefecture, Japan"] = {},
+	["Yamagata Prefecture, Japan"] = {},
+	["Yamaguchi Prefecture, Japan"] = {},
+	["Yamanashi Prefecture, Japan"] = {},
 }
 
 local function japan_placename_to_key(placename)
-	if placename == "Hokkaido" or placename == "Tokyo" or placename:find(" Prefecture$") then
+	if placename == "Tokyo" then
 		return placename
 	end
-	return placename .. " Prefecture"
+	if not placename:find(" Prefecture$") then
+		placename = placename .. " Prefecture"
+	end
+	return placename .. ", Japan"
 end
 
 -- prefectures of Japan
 export.japan_group = {
-	key_to_placename = make_key_to_placename(nil, " Prefecture$"),
+	key_to_placename = make_key_to_placename(", Japan$", " Prefecture$"),
 	placename_to_key = japan_placename_to_key,
 	bare_label_setter = subpolity_bare_label_setter("Japan"),
 	value_transformer = subpolity_value_transformer("Japan"),
@@ -2227,22 +2252,24 @@ export.mexico_group = {
 }
 
 export.morocco_regions = {
-	["Tangier-Tetouan-Al Hoceima"] = {},
-	["Oriental"] = {},
-	["Fez-Meknes"] = {},
-	["Rabat-Sale-Kenitra"] = {},
-	["Beni Mellal-Khenifra"] = {},
-	["Casablanca-Settat"] = {},
-	["Marrakesh-Safi"] = {},
-	["Draa-Tafilalet"] = {},
-	["Souss-Massa"] = {},
-	["Guelmim-Oued Noun"] = {},
-	["Laayoune-Sakia El Hamra"] = {},
-	["Dakhla-Oued Ed-Dahab"] = {},
+	["Tangier-Tetouan-Al Hoceima, Morocco"] = {},
+	["Oriental, Morocco"] = {},
+	["Fez-Meknes, Morocco"] = {},
+	["Rabat-Sale-Kenitra, Morocco"] = {},
+	["Beni Mellal-Khenifra, Morocco"] = {},
+	["Casablanca-Settat, Morocco"] = {},
+	["Marrakesh-Safi, Morocco"] = {},
+	["Draa-Tafilalet, Morocco"] = {},
+	["Souss-Massa, Morocco"] = {},
+	["Guelmim-Oued Noun, Morocco"] = {},
+	["Laayoune-Sakia El Hamra, Morocco"] = {},
+	["Dakhla-Oued Ed-Dahab, Morocco"] = {},
 }
 
 -- regions of Morocco
 export.morocco_group = {
+	key_to_placename = make_key_to_placename(", Morocco$"),
+	placename_to_key = make_placename_to_key(", Morocco"),
 	bare_label_setter = subpolity_bare_label_setter("Morocco"),
 	value_transformer = subpolity_value_transformer("Morocco"),
 	default_divtype = "region",
@@ -2716,27 +2743,29 @@ export.saudi_arabia_group = {
 }
 
 export.spain_autonomous_communities = {
-	["Andalusia"] = {},
-	["Aragon"] = {},
-	["Asturias"] = {},
-	["the Balearic Islands"] = {},
-	["the Basque Country"] = {},
-	["the Canary Islands"] = {},
-	["Cantabria"] = {},
-	["Castile and León"] = {},
-	["Castilla-La Mancha"] = {},
-	["Catalonia"] = {},
-	["the Community of Madrid"] = {},
-	["Extremadura"] = {},
-	["Galicia"] = {},
-	["La Rioja"] = {},
-	["Murcia"] = {},
-	["Navarre"] = {},
-	["Valencia"] = {},
+	["Andalusia, Spain"] = {},
+	["Aragon, Spain"] = {},
+	["Asturias, Spain"] = {},
+	["the Balearic Islands, Spain"] = {},
+	["the Basque Country, Spain"] = {},
+	["the Canary Islands, Spain"] = {},
+	["Cantabria, Spain"] = {},
+	["Castile and León, Spain"] = {},
+	["Castilla-La Mancha, Spain"] = {},
+	["Catalonia, Spain"] = {},
+	["the Community of Madrid, Spain"] = {},
+	["Extremadura, Spain"] = {},
+	["Galicia, Spain"] = {},
+	["La Rioja, Spain"] = {},
+	["Murcia, Spain"] = {},
+	["Navarre, Spain"] = {},
+	["Valencia, Spain"] = {},
 }
 
 -- autonomous communities of Spain
 export.spain_group = {
+	key_to_placename = make_key_to_placename(", Spain$"),
+	placename_to_key = make_placename_to_key(", Spain"),
 	bare_label_setter = subpolity_bare_label_setter("Spain"),
 	value_transformer = subpolity_value_transformer("Spain"),
 	default_divtype = "autonomous community",
