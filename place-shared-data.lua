@@ -409,17 +409,57 @@ TODO:
 10. Add a polity group for continents and continent-level regions instead of special-casing. This should make it
     possible e.g. to have Jerusalem as a city under "Asia".
 11. Add better handling of cities that are their own states, like Mexico City.
-12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just "Aguascalientes".
+12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just
+    "Aguascalientes".
 13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
     `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]).
-14. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
+14. More generally, cities should be unified into the polity grouping system to the extent possible; this would allow
+    for poldivs of cities (see #17 below).
+15. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
     from being added due to generically-named divisions like "North Governorate", "Central Region" and
 	"Eastern Province" but (a) this setting seems to do multiple things and should be split, (b) it should be possible
 	to set this at the division level instead of the country level.
-15. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
-16. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
+16. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
+17. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
     them as such) have districts, subdistricts, etc. We need to support poldivs for cities and even named divisions of
     cities (such as we already have for boroughs of New York City).
+18. It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
+    in [[Module:place]] needs to remove links first.
+19. Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
+    "historic(al)" is ambiguous (cf. "historic counties" in England which are not former, but still have a legal
+	definition).
+20. It should be possible to categorize former subpolities of certain polities; cf. [[:Category:ja:Provinces of Japan]],
+    which contains former provinces.
+21. In subpolity_keydesc(), we need to generate the correct indefinite article and have a huge hack to check
+    specifically for "union territory", which is the only placetype that shows up in this function where the default
+    indefinite article generating function fails. To fix this properly, we need to separate out the non-category
+    placetype data from `cat_data` in [[Module:place/data]] and move it to [[Module:place/shared-data]], because we
+    don't have access to the data in [[Module:place/data]], and that data indicates the correct article for placetypes
+    like "union territory".
+22. Simplify the specs in `cat_data`, eliminating the distinction between "inner" and "outer" matching. There should not
+    be two levels, just one. For example, in "district", instead of
+		["country/Portugal"] = {
+			["itself"] = {"Districts and autonomous regions of +++"},
+		}
+	we should just have
+		["country/Portugal"] = {"Districts and autonomous regions of +++"},
+	And in "dependent territory", instead of
+		["default"] = {
+			["itself"] = {true},
+			["country"] = {true},
+		},
+	we should just have
+		["itself"] = {true},
+		["country/*"] = {true},
+	It appears the only remaining spec that can't be easily converted in this fashion is for "subdistrict":
+		["country/Indonesia"] = {
+			["municipality"] = {true},
+		},
+	This seems to be specifically for Jakarta and doesn't seem to work anyway, as the two entries in
+	[[:Category:en:Subdistricts of Jakarta]] and the one entry in [[:Category:id:Subdistricts of Jakarta]] are manually
+	categorized.
+23. Consolidate the remaining stuff in [[Module:category tree/topic cat/data/Earth]] into
+	[[Module:category tree/topic cat/data/Places]].
 ]=]
 
 -----------------------------------------------------------------------------------
@@ -773,7 +813,7 @@ end
 --                              Placetype Tables                                 --
 -----------------------------------------------------------------------------------
 
---[==[ object:
+--[==[ var:
 Recognized political and misc. (sub)divisions. The key is the plural division and the value is the equivalent
 description, with links. A value of true means to use the default linking algorithm in link_label() in
 [[Module:category tree/topic cat]]. A value of "w" is similar but links to Wikipedia. NOTE: This currently used
@@ -876,7 +916,7 @@ export.political_divisions = {
 	["zones"] = true,
 }
 
---[==[ object:
+--[==[ var:
 Place types for which categories can be constructed for all the places listed below other than cities. The key should
 be the plural place type and the value should be either a string (the description) or an object containing a field
 `desc` (the description) and `prep` (the preposition following the place type as it occurs in categories, defaulting
@@ -898,7 +938,7 @@ export.generic_placetypes = {
 	["geographic areas"] = {desc = "[[geographic]] [[area]]s", prep = "of"},
 }
 
---[==[ object:
+--[==[ var:
 Place types for which categories can be constructed for cities listed below. The key should be the plural place type
 and the value should be either a string (the description) or an object containing a field `desc` (the description)
 and `prep` (the preposition following the place type as it occurs in categories, defaulting to "of").
@@ -1556,6 +1596,9 @@ export.canada_provinces_and_territories = {
 		"counties",
 		{type = "regional county municipalities", skip_polity_parent_type = "regional municipalities"},
 		{type = "townships", prep = "in"},
+		{type = "parish municipalities", cat_as = {{type = "parishes", skip_polity_parent_type = "counties"}, "municipalities"}},
+		{type = "township municipalities", cat_as = {{type = "townships", prep = "in"}, "municipalities"}},
+		{type = "village municipalities", cat_as = {{type = "villages", prep = "in"}, "municipalities"}},
 	}},
 	["Yukon, Canada"] = {divtype = "territory"},
 }
@@ -1666,7 +1709,7 @@ export.france_administrative_regions = {
 	-- ["Mayotte"] = {},
 	["Normandy, France"] = {},
 	["Nouvelle-Aquitaine, France"] = {},
-	["Occitanie, France"] = {},
+	["Occitania, France"] = {},
 	["Pays de la Loire, France"] = {},
 	["Provence-Alpes-Côte d'Azur, France"] = {},
 	-- ["Réunion"] = {},
@@ -3386,7 +3429,7 @@ export.cities = {
 			["Lyons"] = {alias_of="Lyon"},
 			["Marseille"] = {"Provence-Alpes-Côte d'Azur"},
 			["Marseilles"] = {alias_of="Marseille"},
-			["Toulouse"] = {"Occitanie"},
+			["Toulouse"] = {"Occitania"},
 			["Lille"] = {"Hauts-de-France"},
 			["Bordeaux"] = {"Nouvelle-Aquitaine"},
 			["Nice"] = {"Provence-Alpes-Côte d'Azur"},
@@ -3457,7 +3500,7 @@ export.cities = {
 			["Osaka"] = {"Osaka"}, -- 2,668,586
 			["Nagoya"] = {"Aichi"}, -- 2,283,289
 			-- FIXME, Hokkaido is handled specially.
-			["Sapporo"] = {}, -- {"Hokkaido"}, -- 1,918,096
+			["Sapporo"] = {"Hokkaido"}, -- 1,918,096
 			["Fukuoka"] = {"Fukuoka"}, -- 1,581,527
 			["Kobe"] = {"Hyōgo"}, -- 1,530,847
 			["Kyoto"] = {"Kyoto"}, -- 1,474,570
