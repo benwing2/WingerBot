@@ -2592,13 +2592,15 @@ local function make_russia_federal_subject_spec(spectype)
 	return {divtype = spectype, div_parent_type = {"federal subjects", spectype .. "s"}}
 end
 
-local russia_autonomous_okrug = make_russia_federal_subject_spec("autonomous okrug")
+local russia_autonomous_okrug =
+	{divtype = {"autonomous okrug", "okrug"}, div_parent_type = {"federal subjects", "autonomous okrugs"}}
 local russia_krai = make_russia_federal_subject_spec("krai")
 local russia_oblast = make_russia_federal_subject_spec("oblast")
 local russia_republic = make_russia_federal_subject_spec("republic")
 export.russia_federal_subjects = {
 	-- autonomous oblasts
-	["the Jewish Autonomous Oblast"] = make_russia_federal_subject_spec("autonomous oblast"),
+	["the Jewish Autonomous Oblast"] =
+		{divtype = {"autonomous oblast", "oblast"}, div_parent_type = {"federal subjects", "autonomous oblasts"}},
 	-- autonomous okrugs
 	["Chukotka Autonomous Okrug"] = russia_autonomous_okrug,
 	["Khanty-Mansi Autonomous Okrug"] = russia_autonomous_okrug,
