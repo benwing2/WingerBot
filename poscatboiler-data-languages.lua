@@ -1,9 +1,21 @@
+local new_title = mw.title.new
+local ucfirst = require("Module:string utilities").ucfirst
+
 local raw_categories = {}
 local raw_handlers = {}
 
 local m_languages = require("Module:languages")
 local m_sc_getByCode = require("Module:scripts").getByCode
 local m_table = require("Module:table")
+local parse_utilities_module = "Module:parse utilities"
+
+local concat = table.concat
+local insert = table.insert
+local reverse_ipairs = m_table.reverseIpairs
+local serial_comma_join = m_table.serialCommaJoin
+local size = m_table.size
+local sorted_pairs = m_table.sortedPairs
+local to_json = require("Module:JSON").toJSON
 
 local Hang = m_sc_getByCode("Hang")
 local Hani = m_sc_getByCode("Hani")
@@ -12,7 +24,7 @@ local Hrkt = m_sc_getByCode("Hrkt")
 local Kana = m_sc_getByCode("Kana")
 
 local function track(page)
-	-- [[Special:WhatLinksHere/Template:tracking/poscatboiler/languages/PAGE]]
+	-- [[Special:WhatLinksHere/Wiktionary:Tracking/poscatboiler/languages/PAGE]]
 	return require("Module:debug/track")("poscatboiler/languages/" .. page)
 end
 
@@ -74,21 +86,11 @@ raw_categories["Language isolates"] = {
 -----------------------------------------------------------------------------
 
 
-local function ucfirst(text)
-	return mw.getContentLanguage():ucfirst(text)
-end
-
-local function lcfirst(text)
-	return mw.getContentLanguage():lcfirst(text)
-end
-
 local function linkbox(lang, setwiki, setwikt, setsister, entryname)
-	local wiktionarylinks = "''None.''"
+	local wiktionarylinks = {}
 	
 	local canonicalName = lang:getCanonicalName()
 	local wikimediaLanguages = lang:getWikimediaLanguages()
-	local nameWithLanguage = lang:getCategoryName("nocap")
-	local categoryName = lang:getCategoryName()
 	local wikipediaArticle = setwiki or lang:getWikipediaArticle()
 	setsister = setsister and ucfirst(setsister) or nil
 	
@@ -100,52 +102,67 @@ local function linkbox(lang, setwiki, setwikt, setsister, entryname)
 	end
 	
 	if setwikt ~= "-" and wikimediaLanguages and wikimediaLanguages[1] then
-		wiktionarylinks = {}
-		
 		for _, wikimedialang in ipairs(wikimediaLanguages) do
-			table.insert(wiktionarylinks,
-				(wikimedialang:getCanonicalName() ~= canonicalName and "(''" .. wikimedialang:getCanonicalName() .. "'') " or "") ..
-				"'''[[:" .. wikimedialang:getCode() .. ":|" .. wikimedialang:getCode() .. ".wiktionary.org]]'''")
+			local check = new_title(wikimedialang:getCode() .. ":")
+			if check and check.isExternal then
+				insert(wiktionarylinks,
+					(wikimedialang:getCanonicalName() ~= canonicalName and "(''" .. wikimedialang:getCanonicalName() .. "'') " or "") ..
+					"'''[[:" .. wikimedialang:getCode() .. ":|" .. wikimedialang:getCode() .. ".wiktionary.org]]'''")
+			end
 		end
 		
-		wiktionarylinks = table.concat(wiktionarylinks, "<br/>")
+		wiktionarylinks = concat(wiktionarylinks, "<br/>")
 	end
 	
-	local plural = wikimediaLanguages[2] and "s" or ""
+	local wikt_plural = wikimediaLanguages[2] and "s" or ""
 	
-	return table.concat{
-[=[<div style="clear: right; border: solid #aaa 1px; margin: 1 1 1 1; background: #f9f9f9; width: 270px; padding: 5px; margin: 5px; text-align: left; float: right">
-<div style="text-align: center; margin-bottom: 10px; margin-top: 5px">''']=], nameWithLanguage, [=['''</div>
+	if #wiktionarylinks == 0 then
+		wiktionarylinks = "''None.''"
+	end
+	
+	if setsister then
+		track("setsister")
+		if setsister == "-" then
+			track("setsister/hyphen")
+		else
+			setsister = "Category:" .. setsister
+		end
+	else
+		setsister = lang:getCommonsCategory() or "-"
+	end
+	
+	return concat{
+[=[<div class="wikitable" style="float: right; clear: right; margin: 0 0 0.5em 1em; width: 300px; padding: 5px;">
+<div style="text-align: center; margin-bottom: 10px; margin-top: 5px">''']=], canonicalName, [=[ language links'''</div>
 
-{| style="font-size: 90%; background: #f9f9f9;"
+{| style="font-size: 90%"
 |-
-| style="vertical-align: middle; height: 35px; width: 35px;" | [[File:Wiktionary-logo-v2.svg|35px|none|Wiktionary]]
-|| '']=], nameWithLanguage, [=[ edition]=], plural, [=[ of Wiktionary''
-|-
-| colspan="2" style="padding-left: 10px; border-bottom: 1px solid lightgray;" | ]=], wiktionarylinks, [=[
+| style="vertical-align: top; height: 35px; border-bottom: 1px solid lightgray;" | [[File:Wikipedia-logo.png|35px|none|Wikipedia]]
+| style="border-bottom: 1px solid lightgray;" | '''English Wikipedia''' has an article on:
+<div style="padding: 5px 10px">]=], (setwiki == "-" and "''None.''" or "'''[[w:" .. wikipediaArticle .. "|" .. wikipediaArticle .. "]]'''"), [=[</div>
 
 |-
-| style="vertical-align: middle; height: 35px" | [[File:Wikipedia-logo.png|35px|none|Wikipedia]]
-|| ''Wikipedia article about ]=], nameWithLanguage, [=[''
-|-
-| colspan="2" style="padding-left: 10px; border-bottom: 1px solid lightgray;" | ]=], (setwiki == "-" and "''None.''" or "'''[[w:" .. wikipediaArticle .. "|" .. wikipediaArticle .. "]]'''"), [=[
+| style="vertical-align: top; height: 35px; border-bottom: 1px solid lightgray;" | [[File:Wikimedia-logo.svg|35px|none|Wikimedia Commons]]
+| style="border-bottom: 1px solid lightgray;" | '''Wikimedia Commons''' has links to ]=], canonicalName, [=[-related content in sister projects:
+<div style="padding: 5px 10px">]=], (setsister == "-" and "''None.''" or "'''[[commons:" .. setsister .. "|" .. setsister .. "]]'''"), [=[</div>
 
 |-
-| style="vertical-align: middle; height: 35px" | [[File:Wikimedia-logo.svg|35px|none|Wikimedia Commons]]
-|| ''Links related to ]=], nameWithLanguage, [=[ in sister projects at Wikimedia Commons''
-|-
-| colspan="2" style="padding-left: 10px; border-bottom: 1px solid lightgray;" | ]=], (setsister == "-" and "''None.''" or "'''[[commons:Category:" .. (setsister or categoryName) .. "|" .. (setsister or categoryName) .. "]]'''"), [=[
+| style="vertical-align: top; height: 35px; width: 40px; border-bottom: 1px solid lightgray;" | [[File:Wiktionary-logo-v2.svg|35px|none|Wiktionary]]
+|style="border-bottom: 1px solid lightgray;" | '''Wiktionary edition''']=], wikt_plural, [=[ written in ]=], canonicalName, [=[:
+<div style="padding: 5px 10px">]=], wiktionarylinks, [=[</div>
 
 |-
-| style="vertical-align: middle; height: 35px" | [[File:Crystal kfind.png|35px|none|Considerations]]
-|| ]=], nameWithLanguage, [=[ considerations
+| style="vertical-align: top; height: 35px; border-bottom: 1px solid lightgray;" | [[File:Open book nae 02.svg|35px|none|Entry]]
+| style="border-bottom: 1px solid lightgray;" | '''Wiktionary entry''' for the language's English name:
+<div style="padding: 5px 10px">''']=], require("Module:links").full_link({lang = m_languages.getByCode("en"), term = entryname or canonicalName}), [=['''</div>
+
 |-
-| colspan="2" style="padding-left: 10px; border-bottom: 1px solid lightgray;" | '''[[Wiktionary:About ]=], canonicalName, [=[]]'''<br>'''[[:Category:]=], canonicalName, [=[ reference templates|Reference templates]] ({{PAGESINCAT:]=], canonicalName, [=[ reference templates}})'''<br>'''[[Appendix:]=], canonicalName, [=[ bibliography|Bibliography]]'''
-|-
-| style="vertical-align: middle; height: 35px" | [[File:Open book nae 02.svg|35px|none|Entry]]
-|| ]=], nameWithLanguage, [=[ entry
-|-
-| colspan="2" style="padding-left: 10px;" | ''']=], require("Module:links").full_link({lang = m_languages.getByCode("en"), term = entryname or canonicalName}), [=['''
+| style="vertical-align: top; height: 35px;" | [[File:Crystal kfind.png|35px|none|Considerations]]
+|| '''Wiktionary resources''' for editors contributing to ]=], canonicalName, [=[ entries:
+<div style="padding: 5px 0">
+* '''[[Wiktionary:About ]=], canonicalName, [=[]]'''
+* '''[[:Category:]=], canonicalName, [=[ reference templates|Reference templates]] ({{PAGESINCAT:]=], canonicalName, [=[ reference templates}})'''
+* '''[[Appendix:]=], canonicalName, [=[ bibliography|Bibliography]]'''
 |}
 </div>]=]
 }
@@ -161,64 +178,61 @@ end
 local function infobox(lang)
 	local ret = {}
 	
-	table.insert(ret, '<table class="wikitable language-category-info"')
+	insert(ret, '<table class="wikitable language-category-info"')
 	
-	if type(lang.getRawData) == "function" then
-		local raw_data = lang:getRawData()
-		if raw_data then
-			local replacements = {
-				[1] = "canonical-name",
-				[2] = "wikidata-item",
-				[3] = "family",
-			}
-			local function replacer(letter1, letter2)
-				return letter1:lower() .. "-" .. letter2:lower()
-			end
-			-- For each key in the language data modules, returns a descriptive
-			-- kebab-case version (containing ASCII lowercase words separated
-			-- by hyphens).
-			local function kebab_case(key)
-				key = replacements[key] or key
-				key = key:gsub("(%l)(%u)", replacer):gsub("(%l)_(%l)", replacer)
-				return key
-			end
-			local function html_attribute_encode(str)
-				str = mw.text.jsonEncode(str)
-					:gsub('"', "&quot;")
-					-- & in attributes is automatically escaped.
-					-- :gsub("&", "&amp;")
-					:gsub("<", "&lt;")
-					:gsub(">", "&gt;")
-				return str
-			end
-			pcall(function ()
-				table.insert(ret, ' data-code="' .. lang:getCode() .. '"')
-				for k, v in m_table.sortedPairs(lang:getRawData()) do
-					table.insert(ret, " data-" .. kebab_case(k)
-						.. '="'
-						.. html_attribute_encode(v)
-						.. '"')
-				end
-			end)
+	local raw_data = lang:getData("extra")
+	if raw_data then
+		local replacements = {
+			[1] = "canonical-name",
+			[2] = "wikidata-item",
+			[3] = "family",
+			[4] = "scripts",
+		}
+		local function replacer(letter1, letter2)
+			return letter1:lower() .. "-" .. letter2:lower()
+		end
+		-- For each key in the language data modules, returns a descriptive
+		-- kebab-case version (containing ASCII lowercase words separated
+		-- by hyphens).
+		local function kebab_case(key)
+			key = replacements[key] or key
+			key = key:gsub("(%l)(%u)", replacer):gsub("(%l)_(%l)", replacer)
+			return key
+		end
+		local compress = {compress = true}
+		local function html_attribute_encode(str)
+			str = to_json(str, compress)
+				:gsub('"', "&quot;")
+				-- & in attributes is automatically escaped.
+				-- :gsub("&", "&amp;")
+				:gsub("<", "&lt;")
+				:gsub(">", "&gt;")
+			return str
+		end
+		insert(ret, ' data-code="' .. lang:getCode() .. '"')
+		for k, v in sorted_pairs(raw_data) do
+			insert(ret, " data-" .. kebab_case(k)
+			.. '="'
+			.. html_attribute_encode(v)
+			.. '"')
 		end
 	end
-	table.insert(ret, '>\n')
-	table.insert(ret, '<tr class="language-category-data">\n<th colspan="2">'
-		.. edit_link("Module:" .. m_languages.getDataModuleName(lang:getCode()),
-			"Edit language data")
+	insert(ret, '>\n')
+	insert(ret, '<tr class="language-category-data">\n<th colspan="2">'
+		.. edit_link(lang:getDataModuleName(), "Edit language data")
 		.. "</th>\n</tr>\n")
-	table.insert(ret, "<tr>\n<th>Canonical name</th><td>" .. lang:getCanonicalName() .. "</td>\n</tr>\n")
+	insert(ret, "<tr>\n<th>Canonical name</th><td>" .. lang:getCanonicalName() .. "</td>\n</tr>\n")
 
-	local otherNames = lang:getOtherNames(true)
+	local otherNames = lang:getOtherNames()
 	if otherNames then
 		local names = {}
 		
 		for _, name in ipairs(otherNames) do
-			table.insert(names, "<li>" .. name .. "</li>")
+			insert(names, "<li>" .. name .. "</li>")
 		end
 		
 		if #names > 0 then
-			table.insert(ret, "<tr>\n<th>Other names</th><td><ul>" .. table.concat(names, "\n") .. "</ul></td>\n</tr>\n")
+			insert(ret, "<tr>\n<th>Other names</th><td><ul>" .. concat(names, "\n") .. "</ul></td>\n</tr>\n")
 		end
 	end
 	
@@ -227,11 +241,11 @@ local function infobox(lang)
 		local names = {}
 		
 		for _, name in ipairs(aliases) do
-			table.insert(names, "<li>" .. name .. "</li>")
+			insert(names, "<li>" .. name .. "</li>")
 		end
 		
 		if #names > 0 then
-			table.insert(ret, "<tr>\n<th>Aliases</th><td><ul>" .. table.concat(names, "\n") .. "</ul></td>\n</tr>\n")
+			insert(ret, "<tr>\n<th>Aliases</th><td><ul>" .. concat(names, "\n") .. "</ul></td>\n</tr>\n")
 		end
 	end
 
@@ -241,7 +255,7 @@ local function infobox(lang)
 		
 		for _, name in ipairs(varieties) do
 			if type(name) == "string" then
-				table.insert(names, "<li>" .. name .. "</li>")
+				insert(names, "<li>" .. name .. "</li>")
 			else
 				assert(type(name) == "table")
 				local first_var
@@ -250,76 +264,67 @@ local function infobox(lang)
 					if i == 1 then
 						first_var = var
 					else
-						table.insert(subvars, "<li>" .. var .. "</li>")
+						insert(subvars, "<li>" .. var .. "</li>")
 					end
 				end
 				if #subvars > 0 then
-					table.insert(names, "<li><dl><dt>" .. first_var .. "</dt>\n<dd><ul>" .. table.concat(subvars, "\n") .. "</ul></dd></dl></li>")
+					insert(names, "<li><dl><dt>" .. first_var .. "</dt>\n<dd><ul>" .. concat(subvars, "\n") .. "</ul></dd></dl></li>")
 				elseif first_var then
-					table.insert(names, "<li>" .. first_var .. "</li>")
+					insert(names, "<li>" .. first_var .. "</li>")
 				end
 			end
 		end
 		
 		if #names > 0 then
-			table.insert(ret, "<tr>\n<th>Varieties</th><td><ul>" .. table.concat(names, "\n") .. "</ul></td>\n</tr>\n")
+			insert(ret, "<tr>\n<th>Varieties</th><td><ul>" .. concat(names, "\n") .. "</ul></td>\n</tr>\n")
 		end
 	end
 
-	table.insert(ret, "<tr>\n<th>[[Wiktionary:Languages|Language code]]</th><td><code>" .. lang:getCode() .. "</code></td>\n</tr>\n")
-	table.insert(ret, "<tr>\n<th>[[Wiktionary:Families|Language family]]</th>\n")
+	insert(ret, "<tr>\n<th>[[Wiktionary:Languages|Language code]]</th><td><code>" .. lang:getCode() .. "</code></td>\n</tr>\n")
+	insert(ret, "<tr>\n<th>[[Wiktionary:Families|Language family]]</th>\n")
 	
 	local fam = lang:getFamily()
 	local famCode = fam and fam:getCode()
 	
 	if not fam then
-		table.insert(ret, "<td>unclassified</td>")
+		insert(ret, "<td>unclassified</td>")
 	elseif famCode == "qfa-iso" then
-		table.insert(ret, "<td>[[:Category:Language isolates|language isolate]]</td>")
+		insert(ret, "<td>[[:Category:Language isolates|language isolate]]</td>")
 	elseif famCode == "qfa-mix" then
-		table.insert(ret, "<td>[[:Category:Mixed languages|mixed language]]</td>")
+		insert(ret, "<td>[[:Category:Mixed languages|mixed language]]</td>")
 	elseif famCode == "sgn" then
-		table.insert(ret, "<td>[[:Category:Sign languages|sign language]]</td>")
+		insert(ret, "<td>[[:Category:Sign languages|sign language]]</td>")
 	elseif famCode == "crp" then
-		table.insert(ret, "<td>[[:Category:Creole or pidgin languages|creole or pidgin]]</td>")
+		insert(ret, "<td>[[:Category:Creole or pidgin languages|creole or pidgin]]</td>")
 	elseif famCode == "art" then
-		table.insert(ret, "<td>[[:Category:Constructed languages|constructed language]]</td>")
+		insert(ret, "<td>[[:Category:Constructed languages|constructed language]]</td>")
 	else
-		table.insert(ret, "<td>" .. fam:makeCategoryLink() .. "</td>")
+		insert(ret, "<td>" .. fam:makeCategoryLink() .. "</td>")
 	end
 	
-	table.insert(ret, "\n</tr>\n<tr>\n<th>Ancestors</th>\n")
+	insert(ret, "\n</tr>\n<tr>\n<th>Ancestors</th>\n<td>")
 	
-	local ancestors, ancestorChain = lang:getAncestors(), lang:getAncestorChain()
+	local ancestors = lang:getAncestors()
 	if ancestors[2] then
 		local ancestorList = {}
-		
 		for i, anc in ipairs(ancestors) do
 			ancestorList[i] = "<li>" .. anc:makeCategoryLink() .. "</li>"
 		end
-		
-		table.insert(ret, "<td><ul>\n" .. table.concat(ancestorList, "\n") .. "</ul></td>\n")
-	elseif ancestorChain[1] then
-		table.insert(ret, "<td><ul>\n")
-		
-		local chain = {}
-		
-		for i, anc in ipairs(ancestorChain) do
-			chain[i] = "<li>" .. anc:makeCategoryLink() .. "</li>"
-		end
-		
-		table.insert(ret, table.concat(chain, "\n<ul>\n"))
-		
-		for _, _ in ipairs(chain) do
-			table.insert(ret, "</ul>")
-		end
-		
-		table.insert(ret, "</td>\n")
+		insert(ret, "<ul>\n" .. concat(ancestorList, "\n") .. "</ul>")
 	else
-		table.insert(ret, "<td>unknown</td>\n")
+		local ancestorChain = lang:getAncestorChainOld()
+		if ancestorChain[1] then
+			local chain = {}
+			for _, anc in reverse_ipairs(ancestorChain) do
+				insert(chain, "<li>" .. anc:makeCategoryLink() .. "</li>")
+			end
+			insert(ret, "<ul>\n" .. concat(chain, "\n<ul>\n") .. ("</ul>"):rep(#chain))
+		else
+			insert(ret, "unknown")
+		end
 	end
 	
-	table.insert(ret, "</tr>\n")
+	insert(ret, "</td>\n</tr>\n")
 	
 	local scripts = lang:getScripts()
 	
@@ -333,17 +338,17 @@ local function infobox(lang)
 					.. '" insource:/\\.' .. code .. '/',
 				ns8 = '1'
 			}))
-			return makeCategoryLink(sc)
+			return sc:makeCategoryLink()
 				.. ' (<span class="plainlinks" title="Search for stylesheets referencing this script">[' .. url .. ' <code>' .. code .. '</code>]</span>)'
 		end
 		
 		local function add_Hrkt(text)
-			table.insert(text, "<li>" .. makeScriptLine(Hrkt))
-			table.insert(text, "<ul>")
-			table.insert(text, "<li>" .. makeScriptLine(Hira) .. "</li>")
-			table.insert(text, "<li>" .. makeScriptLine(Kana) .. "</li>")
-			table.insert(text, "</ul>")
-			table.insert(text, "</li>")
+			insert(text, "<li>" .. makeScriptLine(Hrkt))
+			insert(text, "<ul>")
+			insert(text, "<li>" .. makeScriptLine(Hira) .. "</li>")
+			insert(text, "<li>" .. makeScriptLine(Kana) .. "</li>")
+			insert(text, "</ul>")
+			insert(text, "</li>")
 		end
 		
 		for _, sc in ipairs(scripts) do
@@ -353,75 +358,71 @@ local function infobox(lang)
 			if code == "Hrkt" then
 				add_Hrkt(text)
 			else
-				table.insert(text, "<li>" .. makeScriptLine(sc))
+				insert(text, "<li>" .. makeScriptLine(sc))
 				if code == "Jpan" then
-					table.insert(text, "<ul>")
-					table.insert(text, "<li>" .. makeScriptLine(Hani) .. "</li>")
+					insert(text, "<ul>")
+					insert(text, "<li>" .. makeScriptLine(Hani) .. "</li>")
 					add_Hrkt(text)
-					table.insert(text, "</ul>")
+					insert(text, "</ul>")
 				elseif code == "Kore" then
-					table.insert(text, "<ul>")
-					table.insert(text, "<li>" .. makeScriptLine(Hang) .. "</li>")
-					table.insert(text, "<li>" .. makeScriptLine(Hani) .. "</li>")
-					table.insert(text, "</ul>")
+					insert(text, "<ul>")
+					insert(text, "<li>" .. makeScriptLine(Hang) .. "</li>")
+					insert(text, "<li>" .. makeScriptLine(Hani) .. "</li>")
+					insert(text, "</ul>")
 				end
-				table.insert(text, "</li>")
+				insert(text, "</li>")
 			end
 			
-			table.insert(script_text, table.concat(text, "\n"))
+			insert(script_text, concat(text, "\n"))
 		end
 		
-		table.insert(ret, "<tr>\n<th>[[Wiktionary:Scripts|Scripts]]</th>\n<td><ul>\n" .. table.concat(script_text, "\n") .. "</ul></td>\n</tr>\n")
+		insert(ret, "<tr>\n<th>[[Wiktionary:Scripts|Scripts]]</th>\n<td><ul>\n" .. concat(script_text, "\n") .. "</ul></td>\n</tr>\n")
 	else
-		table.insert(ret, "<tr>\n<th>[[Wiktionary:Scripts|Scripts]]</th>\n<td>not specified</td>\n</tr>\n")
+		insert(ret, "<tr>\n<th>[[Wiktionary:Scripts|Scripts]]</th>\n<td>not specified</td>\n</tr>\n")
 	end
 	
 	local function add_module_info(raw_data, heading)
 		if raw_data then
 			local scripts = lang:getScriptCodes()
-			local module_info, n, add = {}, 0, false
+			local module_info, add = {}, false
 			if type(raw_data) == "string" then
-				table.insert(module_info,
+				insert(module_info,
 					("[[Module:%s]]"):format(raw_data))
 				add = true
-			elseif type(raw_data) == "table" and m_table.size(scripts) == 1 and type(raw_data[scripts[1]]) == "string" then
-				table.insert(module_info,
-					("[[Module:%s]]"):format(raw_data[scripts[1]]))
-				add = true
-			elseif type(raw_data) == "table" then
-				table.insert(module_info, "<ul>")
-				for script, data in m_table.sortedPairs(raw_data) do
-					local script_info
-					if m_sc_getByCode(script) then
-						if type(data) == "string" then
-							script_info = ("[[Module:%s]]</li>"):format(data)
-						else
-							n = n + 1
-							script_info = "(none)\n"
+			else
+				local raw_data_type = type(raw_data)
+				if raw_data_type == "table" and size(scripts) == 1 and type(raw_data[scripts[1]]) == "string" then
+					insert(module_info,
+						("[[Module:%s]]"):format(raw_data[scripts[1]]))
+					add = true
+				elseif raw_data_type == "table" then
+					insert(module_info, "<ul>")
+					for script, data in sorted_pairs(raw_data) do
+						if type(data) == "string" and m_sc_getByCode(script) then
+							insert(module_info, ("<li><code>%s</code>: [[Module:%s]]</li>"):format(script, data))
 						end
-						table.insert(module_info, ("<li><code>%s</code>: %s"):format(script, script_info))
 					end
+					insert(module_info, "</ul>")
+					add = size(module_info) > 2
 				end
-				table.insert(module_info, "</ul>")
-				if m_table.size(module_info) > 2 and n < (m_table.size(module_info) - 2) then add = true end
 			end
 			
 			if add then
-				table.insert(ret, [=[
+				insert(ret, [=[
 <tr>
 <th>]=] .. heading .. [=[</th>
-<td>]=] .. table.concat(module_info) .. [=[</td>
+<td>]=] .. concat(module_info) .. [=[</td>
 </tr>
 ]=])
 			end
 		end
 	end
 	
-	add_module_info(lang._rawData.generate_forms, "Form-generating<br>module")
-	add_module_info(lang._rawData.translit, "[[Wiktionary:Transliteration and romanization|Transliteration<br>module]]")
-	add_module_info(lang._rawData.display_text, "Display text<br>module")
-	add_module_info(lang._rawData.entry_name, "Entry name<br>module")
-	add_module_info(lang._rawData.sort_key, "[[sortkey|Sortkey]]<br>module")
+	add_module_info(raw_data.generate_forms, "Form-generating<br>module")
+	add_module_info(raw_data.translit, "[[Wiktionary:Transliteration and romanization|Transliteration<br>module]]")
+	add_module_info(raw_data.display_text, "Display text<br>module")
+	add_module_info(raw_data.entry_name, "Entry name<br>module")
+	add_module_info(raw_data.sort_key, "[[sortkey|Sortkey]]<br>module")
 	
 	local wikidataItem = lang:getWikidataItem()
 	if lang:getWikidataItem() and mw.wikibase then
@@ -432,12 +433,12 @@ local function infobox(lang)
 		else
 			link = '<span class="error">Invalid Wikidata item: <code>' .. wikidataItem .. '</code></span>'
 		end
-		table.insert(ret, "<tr><th>Wikidata</th><td>" .. link .. "</td></tr>")
+		insert(ret, "<tr><th>Wikidata</th><td>" .. link .. "</td></tr>")
 	end
 	
-	table.insert(ret, "</table>")
+	insert(ret, "</table>")
 	
-	return table.concat(ret)
+	return concat(ret)
 end
 
 local function NavFrame(content, title)
@@ -471,26 +472,35 @@ local function get_description_topright_additional(lang, countries, extinct, set
 	local description = "This is the main category of " .. the_prefix .. "'''" .. nameWithLanguage .. "'''."
 
 	local country_links = {}
+	local prep
 	for _, country in ipairs(countries) do
-		if country ~= "UNKNOWN" then
+		local this_prep
+		if country == "the world" then
+			this_prep = "across"
+			insert(country_links, country)
+		elseif country ~= "UNKNOWN" then
+			this_prep = "in"
 			local country_without_the = country:match("^the (.*)$")
 			if country_without_the then
-				table.insert(country_links, "the [[" .. country_without_the .. "]]")
+				insert(country_links, "the [[" .. country_without_the .. "]]")
 			else
-				table.insert(country_links, "[[" .. country .. "]]")
+				insert(country_links, "[[" .. country .. "]]")
 			end
+		end
+		if this_prep then
+			if prep and this_prep ~= prep then
+				error("Can't handle country 'the world' along with another country (clashing prepositions)")
+			end
+			prep = this_prep
 		end
 	end
 	local country_desc
 	if #country_links > 0 then
-		local country_link_text = m_table.serialCommaJoin(country_links)
-		if extinct then
-			country_desc = "It is an [[extinct language]] that was formerly spoken in " .. country_link_text .. ".\n\n"
-		else
-			country_desc = "It is spoken in " .. country_link_text .. ".\n\n"
-		end
+		local country_link_text = serial_comma_join(country_links)
+		country_desc = ("It is %s %s %s.\n\n"):format(
+			extinct and "an [[extinct language]] that was formerly spoken" or "spoken", prep, country_link_text)
 	elseif extinct then
-		country_desc = "It is an [[extinct language]]."
+		country_desc = "It is an [[extinct language]].\n\n"
 	else
 		country_desc = ""
 	end
@@ -511,7 +521,7 @@ local function get_description_topright_additional(lang, countries, extinct, set
 			"All terms in this language may be available at [[Appendix:" .. ucfirst(canonicalName) .. "]]."
 	end
 	
-	local about = mw.title.new("Wiktionary:About " .. canonicalName)
+	local about = new_title("Wiktionary:About " .. canonicalName)
 	
 	if about.exists then
 		add = add .. "\n\n" ..
@@ -545,57 +555,61 @@ end
 local function get_parents(lang, countries, extinct)
 	local canonicalName = lang:getCanonicalName()
 	
-	local ret = {{name = "All languages", sort = canonicalName}}
+	local sortkey = {sort_base = canonicalName, lang = "en"}
+	local ret = {{name = "All languages", sort = sortkey}}
 	
 	local fam = lang:getFamily()
 	local famCode = fam and fam:getCode()
 	
 	-- FIXME: Some of the following categories should be added to this module.
 	if not fam then
-		table.insert(ret, {name = "Category:Unclassified languages", sort = canonicalName})
+		insert(ret, {name = "Category:Unclassified languages", sort = sortkey})
 	elseif famCode == "qfa-iso" then
-		table.insert(ret, {name = "Category:Language isolates", sort = canonicalName})
+		insert(ret, {name = "Category:Language isolates", sort = sortkey})
 	elseif famCode == "qfa-mix" then
-		table.insert(ret, {name = "Category:Mixed languages", sort = canonicalName})
+		insert(ret, {name = "Category:Mixed languages", sort = sortkey})
 	elseif famCode == "sgn" then
-		table.insert(ret, {name = "Category:All sign languages", sort = canonicalName})
+		insert(ret, {name = "Category:All sign languages", sort = sortkey})
 	elseif famCode == "crp" then
-		table.insert(ret, {name = "Category:Creole or pidgin languages", sort = canonicalName})
+		insert(ret, {name = "Category:Creole or pidgin languages", sort = sortkey})
 		for _, anc in ipairs(lang:getAncestors()) do
 			-- Avoid Haitian Creole being categorised in [[:Category:Haitian Creole-based creole or pidgin languages]], as one of its ancestors is an etymology-only variety of it.
 			-- Use that ancestor's ancestors instead.
-			if anc:getNonEtymologicalCode() == lang:getCode() then
+			if anc:getFullCode() == lang:getCode() then
 				for _, anc_extra in ipairs(anc:getAncestors()) do
-					table.insert(ret, {name = "Category:" .. ucfirst(anc_extra:getNonEtymologicalName()) .. "-based creole or pidgin languages", sort = canonicalName})
+					insert(ret, {name = "Category:" .. ucfirst(anc_extra:getFullName()) .. "-based creole or pidgin languages", sort = sortkey})
 				end
 			else
-				table.insert(ret, {name = "Category:" .. ucfirst(anc:getNonEtymologicalName()) .. "-based creole or pidgin languages", sort = canonicalName})
+				insert(ret, {name = "Category:" .. ucfirst(anc:getFullName()) .. "-based creole or pidgin languages", sort = sortkey})
 			end
 		end
 	elseif famCode == "art" then
 		if lang:hasType("appendix-constructed") then
-			table.insert(ret, {name = "Category:Appendix-only constructed languages", sort = canonicalName})
+			insert(ret, {name = "Category:Appendix-only constructed languages", sort = sortkey})
 		else
-			table.insert(ret, {name = "Category:Constructed languages", sort = canonicalName})
+			insert(ret, {name = "Category:Constructed languages", sort = sortkey})
 		end
 		for _, anc in ipairs(lang:getAncestors()) do
-			if anc:getNonEtymologicalCode() == lang:getCode() then
+			if anc:getFullCode() == lang:getCode() then
 				for _, anc_extra in ipairs(anc:getAncestors()) do
-					table.insert(ret, {name = "Category:" .. ucfirst(anc_extra:getNonEtymologicalName()) .. "-based constructed languages", sort = canonicalName})
+					insert(ret, {name = "Category:" .. ucfirst(anc_extra:getFullName()) .. "-based constructed languages", sort = sortkey})
 				end
 			else
-				table.insert(ret, {name = "Category:" .. ucfirst(anc:getNonEtymologicalName()) .. "-based constructed languages", sort = canonicalName})
+				insert(ret, {name = "Category:" .. ucfirst(anc:getFullName()) .. "-based constructed languages", sort = sortkey})
 			end
 		end
 	else
-		table.insert(ret, {name = "Category:" .. fam:getCategoryName(), sort = canonicalName})
+		insert(ret, {name = "Category:" .. fam:getCategoryName(), sort = sortkey})
 		if lang:hasType("reconstructed") then
-			table.insert(ret, {name = "Category:Reconstructed languages", sort = (mw.ustring.gsub(canonicalName, "^Proto%-", ""))})
+			insert(ret, {
+				name = "Category:Reconstructed languages",
+				sort = {sort_base = canonicalName:gsub("^Proto%-", ""), lang = "en"}
+			})
 		end
 	end
 	
 	local function add_sc_cat(sc)
-		table.insert(ret, {name = "Category:" .. sc:getCategoryName() .. " languages", sort = canonicalName})
+		insert(ret, {name = "Category:" .. sc:getCategoryName() .. " languages", sort = sortkey})
 	end
 	
 	local function add_Hrkt()
@@ -620,69 +634,72 @@ local function get_parents(lang, countries, extinct)
 	end
 	
 	if lang:hasTranslit() then
-		table.insert(ret, {name = "Category:Languages with automatic transliteration", sort = canonicalName})
+		insert(ret, {name = "Category:Languages with automatic transliteration", sort = sortkey})
 	end
 	
 	local saw_country = false
 	for _, country in ipairs(countries) do
 		if country ~= "UNKNOWN" then
-			table.insert(ret, {name = "Category:Languages of " .. country, sort = canonicalName})
+			insert(ret, {name = "Category:Languages of " .. country, sort = sortkey})
 			saw_country = true
 		end
 	end
 
 	if extinct then
-		table.insert(ret, {name = "Category:All extinct languages", sort = canonicalName})
+		insert(ret, {name = "Category:All extinct languages", sort = sortkey})
 	end
 
 	if not saw_country then
-		table.insert(ret, {name = "Category:Languages not sorted into a country category", sort = canonicalName})
+		insert(ret, {name = "Category:Languages not sorted into a country category", sort = sortkey})
 	end
 
 	return ret
 end
 
 
-local function get_children(lang)
+local function get_children()
 	local ret = {}
 
 	-- FIXME: We should work on the children mechanism so it isn't necessary to manually specify these.
 	for _, label in ipairs({"appendices", "entry maintenance", "lemmas", "names", "phrases", "rhymes", "symbols", "templates", "terms by etymology", "terms by usage"}) do
-		table.insert(ret, {name = label, is_label = true})
+		insert(ret, {name = label, is_label = true})
 	end
 
-	table.insert(ret, {name = "terms derived from {{{langname}}}", is_label = true, lang = false})
-	table.insert(ret, {module = "topic cat", args = {code = "{{{langcode}}}", label = "all topics"}, sort = "all topics"})
-	table.insert(ret, {name = "Varieties of {{{langname}}}"})
-	table.insert(ret, {name = "Requests concerning {{{langname}}}"})
-	table.insert(ret, {name = "Category:Rhymes:{{{langname}}}", description = "Lists of {{{langname}}} words by their rhymes."})
-	table.insert(ret, {name = "Category:User {{{langcode}}}", description = "Wiktionary users categorized by fluency levels in {{{langname}}}."})
+	insert(ret, {name = "terms derived from {{{langname}}}", is_label = true, lang = false})
+	insert(ret, {module = "topic cat", args = {code = "{{{langcode}}}", label = "all topics"}, sort = "all topics"})
+	insert(ret, {name = "Varieties of {{{langname}}}"})
+	insert(ret, {name = "Requests concerning {{{langname}}}"})
+	insert(ret, {name = "Category:Rhymes:{{{langname}}}", description = "Lists of {{{langname}}} words by their rhymes."})
+	insert(ret, {name = "Category:User {{{langcode}}}", description = "Wiktionary users categorized by fluency levels in {{{langname}}}."})
 	return ret
 end
 
 
 -- Handle language categories of the form e.g. [[:Category:French language]] and
 -- [[:Category:British Sign Language]].
-table.insert(raw_handlers, function(data)
-	local lang
-	local langname = data.category:match("^(.*) language$")
-	if langname then
-		lang = m_languages.getByCanonicalName(langname)
-	elseif data.category:find(" Language$") then
-		lang = m_languages.getByCanonicalName(data.category)
-	end
-	if not lang then
+insert(raw_handlers, function(data)
+	local category = data.category
+	if not (category:match("[Ll]anguage$") or category:match("[Ll]ect$")) then
 		return nil
 	end
-	local params = {
+	local lang = m_languages.getByCanonicalName(category)
+	if not lang then
+		local langname = category:match("^(.*) language$")
+		if langname then
+			lang = m_languages.getByCanonicalName(langname)
+		end
+		if not lang then
+			return nil
+		end
+	end
+	local args = require("Module:parameters").process(data.args, {
 		[1] = {list = true},
-		["setwiki"] = {},
-		["setwikt"] = {},
-		["setsister"] = {},
-		["entryname"] = {},
+		["setwiki"] = true,
+		["setwikt"] = true,
+		["setsister"] = true,
+		["entryname"] = true,
 		["extinct"] = {type = "boolean"},
-	}
-	local args = require("Module:parameters").process(data.args, params)
+	})
 	-- If called from inside, don't require any arguments, as they can't be known
 	-- in general and aren't needed just to generate the first parent (used for
 	-- breadcrumbs).
@@ -705,6 +722,7 @@ table.insert(raw_handlers, function(data)
 		)
 	end
 	return {
+		canonical_name = lang:getCategoryName(),
 		description = description,
 		lang = lang:getCode(),
 		topright = topright,
@@ -719,26 +737,31 @@ end)
 
 
 -- Handle categories such as [[:Category:Languages of Indonesia]].
-table.insert(raw_handlers, function(data)
+insert(raw_handlers, function(data)
 	local country = data.category:match("^Languages of (.*)$")
 	if country then
-		local params = {
-			flagfile = {},
-			commonscat = {},
-			wp = {},
-		}
-
+		local args = require("Module:parameters").process(data.args, {
+			["flagfile"] = true,
+			["commonscat"] = true,
+			["wp"] = true,
+			["parent"] = true,
+			["locationcat"] = true,
+		})
 		local topright
-
-		local args = require("Module:parameters").process(data.args, params)
 		if args.flagfile ~= "-" then
-			local flagfile = args.flagfile and "File:" .. args.flagfile or ("File:Flag of %s.svg"):format(country)
-			local flagfile_page = mw.title.new(flagfile)
-			if flagfile_page and flagfile_page.file.exists then
-				topright = ("[[%s|right|100px|border]]"):format(flagfile)
-			elseif args.flagfile then
-				error(("Explicit flagfile '%s' doesn't exist"):format(flagfile))
+			local flagfile_arg = args.flagfile or ("Flag of %s.svg"):format(country)
+			local files = require(parse_utilities_module).split_on_comma(flagfile_arg)
+			local topright_parts = {}
+			for _, file in ipairs(files) do
+				local flagfile = "File:" .. file
+				local flagfile_page = new_title(flagfile)
+				if flagfile_page and flagfile_page.file.exists then
+					insert(topright_parts, ("[[%s|right|100px|border]]"):format(flagfile))
+				elseif args.flagfile then
+					error(("Explicit flagfile '%s' doesn't exist"):format(flagfile))
+				end
 			end
+			topright = concat(topright_parts)
 		end
 
 		if args.wp then
@@ -780,13 +803,34 @@ table.insert(raw_handlers, function(data)
 			country_link = ("[[%s]]"):format(country)
 		end
 
-		local parents = {{name = "Languages by country", sort = base_country}}
-		local country_cat = ("Category:%s"):format(base_country)
-		local country_page = mw.title.new(country_cat)
-		if country_page and country_page.exists then
-			table.insert(parents, {name = country_cat, sort = "Languages"})
+		local parents = {}
+		if args.parent then
+			local explicit_parents = require(parse_utilities_module).split_on_comma(args.parent)
+			for i, parent in ipairs(explicit_parents) do
+				local actual_parent, sort_key = parent:match("^(.-):(.*)$")
+				if actual_parent then
+					parent = actual_parent
+				else
+					sort_key = " " .. base_country
+				end
+				insert(parents, {name = "Languages of " .. parent, sort = sort_key})
+			end
+		else
+			insert(parents, {name = "Languages by country", sort = {sort_base = base_country, lang = "en"}})
 		end
-		local description = (flagdesc or "") .. ("Categories for languages of %s (including sublects)."):format(country_link)
+		if args.locationcat then
+			local explicit_location_cats = require(parse_utilities_module).split_on_comma(args.locationcat)
+			for i, locationcat in ipairs(explicit_location_cats) do
+				insert(parents, {name = "Category:" .. locationcat, sort = " Languages"})
+			end
+		else
+			local country_cat = ("Category:%s"):format(base_country)
+			local country_page = new_title(country_cat)
+			if country_page and country_page.exists then
+				insert(parents, {name = country_cat, sort = "Languages"})
+			end
+		end
+		local description = ("Categories for languages of %s (including sublects)."):format(country_link)
 
 		return {
 			topright = topright,
@@ -800,15 +844,15 @@ end)
 
 
 -- Handle categories such as [[:Category:English-based creole or pidgin languages]].
-table.insert(raw_handlers, function(data)
+insert(raw_handlers, function(data)
 	local langname = data.category:match("(.*)%-based creole or pidgin languages$")
 	if langname then
-		local lang = require("Module:languages").getByCanonicalName(langname)
+		local lang = m_languages.getByCanonicalName(langname)
 		if lang then
 			return {
 				lang = lang:getCode(),
 				description = "Languages which developed as a [[creole]] or [[pidgin]] from " .. lang:makeCategoryLink() .. ".",
-				parents = {{name = "Creole or pidgin languages", sort = "*" .. langname}},
+				parents = {{name = "Creole or pidgin languages", sort = {sort_base = "*" .. langname, lang = "en"}}},
 				breadcrumb = lang:getCanonicalName() .. "-based",
 			}
 		end
@@ -817,15 +861,15 @@ end)
 
 
 -- Handle categories such as [[:Category:English-based constructed languages]].
-table.insert(raw_handlers, function(data)
+insert(raw_handlers, function(data)
 	local langname = data.category:match("(.*)%-based constructed languages$")
 	if langname then
-		local lang = require("Module:languages").getByCanonicalName(langname)
+		local lang = m_languages.getByCanonicalName(langname)
 		if lang then
 			return {
 				lang = lang:getCode(),
 				description = "Constructed languages which are based on " .. lang:makeCategoryLink() .. ".",
-				parents = {{name = "Constructed languages", sort = "*" .. langname}},
+				parents = {{name = "Constructed languages", sort = {sort_base = "*" .. langname, lang = "en"}}},
 				breadcrumb = lang:getCanonicalName() .. "-based",
 			}
 		end
