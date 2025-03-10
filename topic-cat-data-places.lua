@@ -387,6 +387,80 @@ table.insert(handlers, function(label)
 	end
 end)
 
+-- Handler for "state capitals of the United States", "provincial capitals of Canada", etc. Places that begin with "the"
+-- are recognized and handled specially. This must precede the next handler for specific political and misc
+-- (non-political) subdivisions of polities and subpolities, such as "provinces of the Philippines", because
+-- "departmental capitals" is listed in cat_as for French prefectures and so will trigger an error if that handler runs
+-- before this one.
+table.insert(handlers, function(label)
+	label = lcfirst(label)
+	local capital_cat, place = label:match("^([a-z%- ]- capitals) of (.*)$")
+	-- Make sure we recognize the type of capital.
+	if place and m_shared.capital_cat_to_placetype[capital_cat] then
+		local placetype = m_shared.capital_cat_to_placetype[capital_cat]
+		local pl_placetype = require(en_utilities_module).pluralize(placetype)
+		-- Locate the containing polity, fetch its known political subdivisions, and make sure
+		-- the placetype corresponding to the type of capital is among the list.
+		for _, group in ipairs(m_shared.polities) do
+			local placedata = group.data[place]
+			if placedata then
+				placedata = group.value_transformer(group, place, placedata)
+				if placedata.poldiv then
+					local saw_match = false
+					local variant_matches = {}
+					for _, div in ipairs(placedata.poldiv) do
+						if type(div) == "string" then
+							div = {type = div}
+						end
+						-- HACK. Currently if we don't find a match for the placetype, we map e.g.
+						-- 'autonomous region' -> 'regional capitals' and 'union territory' -> 'territorial capitals'.
+						-- When encountering a political subdivision like 'autonomous region' or
+						-- 'union territory', chop off everything up through a space to make things match.
+						-- To make this clearer, we record all such "variant match" cases, and down below we
+						-- insert a note into the category text indicating that such "variant matches"
+						-- are included among the category.
+						if pl_placetype == div.type or pl_placetype == div.type:gsub("^.* ", "") then
+							saw_match = true
+							if pl_placetype ~= div.type then
+								table.insert(variant_matches, div.type)
+							end
+						end
+					end
+					if saw_match then
+						-- Everything checks out, construct the category description.
+						local linkdiv = m_shared.political_divisions[pl_placetype]
+						if not linkdiv then
+							error("Saw unknown place type '" .. pl_placetype .. "' in label '" .. label .. "'")
+						end
+						linkdiv = m_shared.format_description(linkdiv, pl_placetype)
+						local bare_place, linked_place = m_shared.construct_bare_and_linked_version(place)
+						local keydesc = fetch_value(placedata, "keydesc") or linked_place
+						local variant_match_text = ""
+						if #variant_matches > 0 then
+							for i, variant_match in ipairs(variant_matches) do
+								variant_matches[i] = m_shared.political_divisions[variant_match]
+								if not variant_matches[i] then
+									error("Saw unknown place type '" .. variant_match .. "' in label '" .. label .. "'")
+								end
+								variant_matches[i] = m_shared.format_description(variant_matches[i], variant_match)
+							end
+							variant_match_text = " (including " .. require("Module:table").serialCommaJoin(variant_matches) .. ")"
+						end
+						local desc = "{{{langname}}} names of [[capital]]s of " .. linkdiv .. variant_match_text .. " of " .. keydesc .. "."
+						return {
+							type = "name",
+							topic = label,
+							description = desc,
+							breadcrumb = bare_place,
+							parents = {{name = capital_cat, sort = bare_place}, bare_place},
+						}
+					end
+				end
+			end
+		end
+	end
+end)
+
 local overriding_descriptions = {
 	["autonomous cities of Spain"] = "{{{langname}}} names of the [[w:Autonomous communities of Spain#Autonomous_cities|autonomous cities of Spain]].",
 	["regions of Albania"] = "{{{langname}}} names of the regions ([[periphery|peripheries]]) of [[Albania]].",
@@ -436,7 +510,7 @@ table.insert(handlers, function(label)
 									if div_parent == nil then
 										div_parent = placetype
 									end
-									return div_parent, div.prep or "of"
+									return div_parent, pt_cat_as.prep or div.prep or "of"
 								end
 							end
 						end
@@ -506,77 +580,6 @@ for capital_cat, placetype in pairs(m_shared.capital_cat_to_placetype) do
 		parents = {"capital cities"},
 	}
 end
-
--- Handler for "state capitals of the United States", "provincial capitals of Canada", etc.
--- Places that begin with "the" are recognized and handled specially.
-table.insert(handlers, function(label)
-	label = lcfirst(label)
-	local capital_cat, place = label:match("^([a-z%- ]- capitals) of (.*)$")
-	-- Make sure we recognize the type of capital.
-	if place and m_shared.capital_cat_to_placetype[capital_cat] then
-		local placetype = m_shared.capital_cat_to_placetype[capital_cat]
-		local pl_placetype = require(en_utilities_module).pluralize(placetype)
-		-- Locate the containing polity, fetch its known political subdivisions, and make sure
-		-- the placetype corresponding to the type of capital is among the list.
-		for _, group in ipairs(m_shared.polities) do
-			local placedata = group.data[place]
-			if placedata then
-				placedata = group.value_transformer(group, place, placedata)
-				if placedata.poldiv then
-					local saw_match = false
-					local variant_matches = {}
-					for _, div in ipairs(placedata.poldiv) do
-						if type(div) == "string" then
-							div = {type = div}
-						end
-						-- HACK. Currently if we don't find a match for the placetype, we map e.g.
-						-- 'autonomous region' -> 'regional capitals' and 'union territory' -> 'territorial capitals'.
-						-- When encountering a political subdivision like 'autonomous region' or
-						-- 'union territory', chop off everything up through a space to make things match.
-						-- To make this clearer, we record all such "variant match" cases, and down below we
-						-- insert a note into the category text indicating that such "variant matches"
-						-- are included among the category.
-						if pl_placetype == div.type or pl_placetype == div.type:gsub("^.* ", "") then
-							saw_match = true
-							if pl_placetype ~= div.type then
-								table.insert(variant_matches, div.type)
-							end
-						end
-					end
-					if saw_match then
-						-- Everything checks out, construct the category description.
-						local linkdiv = m_shared.political_divisions[pl_placetype]
-						if not linkdiv then
-							error("Saw unknown place type '" .. pl_placetype .. "' in label '" .. label .. "'")
-						end
-						linkdiv = m_shared.format_description(linkdiv, pl_placetype)
-						local bare_place, linked_place = m_shared.construct_bare_and_linked_version(place)
-						local keydesc = fetch_value(placedata, "keydesc") or linked_place
-						local variant_match_text = ""
-						if #variant_matches > 0 then
-							for i, variant_match in ipairs(variant_matches) do
-								variant_matches[i] = m_shared.political_divisions[variant_match]
-								if not variant_matches[i] then
-									error("Saw unknown place type '" .. variant_match .. "' in label '" .. label .. "'")
-								end
-								variant_matches[i] = m_shared.format_description(variant_matches[i], variant_match)
-							end
-							variant_match_text = " (including " .. require("Module:table").serialCommaJoin(variant_matches) .. ")"
-						end
-						local desc = "{{{langname}}} names of [[capital]]s of " .. linkdiv .. variant_match_text .. " of " .. keydesc .. "."
-						return {
-							type = "name",
-							topic = label,
-							description = desc,
-							breadcrumb = bare_place,
-							parents = {{name = capital_cat, sort = bare_place}, bare_place},
-						}
-					end
-				end
-			end
-		end
-	end
-end)
 
 -- "regions in (continent)", esp. for regions that span multiple countries
 
