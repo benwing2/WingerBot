@@ -1,5 +1,6 @@
 local new_title = mw.title.new
 local ucfirst = require("Module:string utilities").ucfirst
+local split = require("Module:string utilities").split
 
 local raw_categories = {}
 local raw_handlers = {}
@@ -84,6 +85,46 @@ raw_categories["Language isolates"] = {
 --                                RAW HANDLERS                             --
 --                                                                         --
 -----------------------------------------------------------------------------
+
+
+-- Given a category (without the "Category:" prefix), look up the page defining the category, find the call to
+-- {{auto cat}} (if any), and return a table of its arguments. If the category page doesn't exist or doesn't have
+-- an {{auto cat}} invocation, return nil.
+--
+-- FIXME: Duplicated in [[Module:category tree/poscatboiler/data/lects]].
+local function scrape_category_for_auto_cat_args(cat)
+	local cat_page = mw.title.new("Category:" .. cat)
+	if cat_page then
+		local contents = cat_page:getContent()
+		if contents then
+			local frame = mw.getCurrentFrame()
+			for template in require("Module:template parser").find_templates(contents) do
+				-- The template parser automatically handles redirects and canonicalizes them, so uses of {{autocat}}
+				-- will also be found.
+				if template:get_name() == "auto cat" then
+					return template:get_arguments()
+				end
+			end
+		end
+	end
+	return nil
+end
+
+
+local function link_location(location)
+	local location_no_the = location:match("^the (.*)$")
+	local bare_location = location_no_the or location
+	local location_link
+	local bare_location_parts = split(bare_location, ", ")
+	for i, part in ipairs(bare_location_parts) do
+		bare_location_parts[i] = ("[[%s]]"):format(part)
+	end
+	location_link = concat(bare_location_parts, ", ")
+	if location_no_the then
+		location_link = "the " .. location_link
+	end
+	return location_link
+end
 
 
 local function linkbox(lang, setwiki, setwikt, setsister, entryname)
@@ -450,7 +491,7 @@ local function NavFrame(content, title)
 end
 
 
-local function get_description_topright_additional(lang, countries, extinct, setwiki, setwikt, setsister, entryname)
+local function get_description_topright_additional(lang, locations, extinct, setwiki, setwikt, setsister, entryname)
 	local nameWithLanguage = lang:getCategoryName("nocap")
 	if lang:getCode() == "und" then
 		local description =
@@ -471,41 +512,45 @@ local function get_description_topright_additional(lang, countries, extinct, set
 	end
 	local description = "This is the main category of " .. the_prefix .. "'''" .. nameWithLanguage .. "'''."
 
-	local country_links = {}
+	local location_links = {}
 	local prep
-	for _, country in ipairs(countries) do
+	local saw_embedded_comma = false
+	for _, location in ipairs(locations) do
 		local this_prep
-		if country == "the world" then
+		if location == "the world" then
 			this_prep = "across"
-			insert(country_links, country)
-		elseif country ~= "UNKNOWN" then
+			insert(location_links, location)
+		elseif location ~= "UNKNOWN" then
 			this_prep = "in"
-			local country_without_the = country:match("^the (.*)$")
-			if country_without_the then
-				insert(country_links, "the [[" .. country_without_the .. "]]")
-			else
-				insert(country_links, "[[" .. country .. "]]")
+			if location:find(",") then
+				saw_embedded_comma = true
 			end
+			insert(location_links, link_location(location))
 		end
 		if this_prep then
 			if prep and this_prep ~= prep then
-				error("Can't handle country 'the world' along with another country (clashing prepositions)")
+				error("Can't handle location 'the world' along with another location (clashing prepositions)")
 			end
 			prep = this_prep
 		end
 	end
-	local country_desc
-	if #country_links > 0 then
-		local country_link_text = serial_comma_join(country_links)
-		country_desc = ("It is %s %s %s.\n\n"):format(
-			extinct and "an [[extinct language]] that was formerly spoken" or "spoken", prep, country_link_text)
+	local location_desc
+	if #location_links > 0 then
+		local location_link_text
+		if saw_embedded_comma and #location_links >= 3 then
+			location_link_text = mw.text.listToText(location_links, "; ", "; and ")
+		else
+			location_link_text = serial_comma_join(location_links)
+		end
+		location_desc = ("It is %s %s %s.\n\n"):format(
+			extinct and "an [[extinct language]] that was formerly spoken" or "spoken", prep, location_link_text)
 	elseif extinct then
-		country_desc = "It is an [[extinct language]].\n\n"
+		location_desc = "It is an [[extinct language]].\n\n"
 	else
-		country_desc = ""
+		location_desc = ""
 	end
 
-	local add = country_desc .. "Information about " .. canonicalName .. ":\n\n" .. infobox(lang)
+	local add = location_desc .. "Information about " .. canonicalName .. ":\n\n" .. infobox(lang)
 	
 	if lang:hasType("reconstructed") then
 		add = add .. "\n\n" ..
@@ -552,7 +597,7 @@ local function get_description_topright_additional(lang, countries, extinct, set
 end
 
 
-local function get_parents(lang, countries, extinct)
+local function get_parents(lang, locations, extinct)
 	local canonicalName = lang:getCanonicalName()
 	
 	local sortkey = {sort_base = canonicalName, lang = "en"}
@@ -636,12 +681,26 @@ local function get_parents(lang, countries, extinct)
 	if lang:hasTranslit() then
 		insert(ret, {name = "Category:Languages with automatic transliteration", sort = sortkey})
 	end
-	
-	local saw_country = false
-	for _, country in ipairs(countries) do
-		if country ~= "UNKNOWN" then
-			insert(ret, {name = "Category:Languages of " .. country, sort = sortkey})
-			saw_country = true
+
+	local function insert_location_language_cat(location)
+		local cat = "Languages of " .. location
+		insert(ret, {name = "Category:" .. cat, sort = sortkey})
+		local auto_cat_args = scrape_category_for_auto_cat_args(cat)
+		local location_parent = auto_cat_args and auto_cat_args.parent
+		if location_parent then
+			local split_parents = require(parse_utilities_module).split_on_comma(location_parent)
+			for _, parent in ipairs(split_parents) do
+				parent = parent:match("^(.-):.*$") or parent
+				insert_location_language_cat(parent)
+			end
+		end
+	end
+
+	local saw_location = false
+	for _, location in ipairs(locations) do
+		if location ~= "UNKNOWN" then
+			saw_location = true
+			insert_location_language_cat(location)
 		end
 	end
 
@@ -649,8 +708,8 @@ local function get_parents(lang, countries, extinct)
 		insert(ret, {name = "Category:All extinct languages", sort = sortkey})
 	end
 
-	if not saw_country then
-		insert(ret, {name = "Category:Languages not sorted into a country category", sort = sortkey})
+	if not saw_location then
+		insert(ret, {name = "Category:Languages not sorted into a location category", sort = sortkey})
 	end
 
 	return ret
@@ -670,7 +729,7 @@ local function get_children()
 	insert(ret, {name = "Varieties of {{{langname}}}"})
 	insert(ret, {name = "Requests concerning {{{langname}}}"})
 	insert(ret, {name = "Category:Rhymes:{{{langname}}}", description = "Lists of {{{langname}}} words by their rhymes."})
-	insert(ret, {name = "Category:User {{{langcode}}}", description = "Wiktionary users categorized by fluency levels in {{{langname}}}."})
+	insert(ret, {name = "Category:User {{{langcode}}}", description = "Wiktionary users categorized by fluency levels in {{{langdisp}}}."})
 	return ret
 end
 
@@ -704,10 +763,10 @@ insert(raw_handlers, function(data)
 	-- in general and aren't needed just to generate the first parent (used for
 	-- breadcrumbs).
 	if #args[1] == 0 and not data.called_from_inside then
-		-- At least one country must be specified unless the language is constructed (e.g. Esperanto) or reconstructed (e.g. Proto-Indo-European).
+		-- At least one location must be specified unless the language is constructed (e.g. Esperanto) or reconstructed (e.g. Proto-Indo-European).
 		local fam = lang:getFamily()
 		if not (lang:hasType("reconstructed") or (fam and fam:getCode() == "art")) then
-			error("At least one country (param 1=) must be specified for language '" .. lang:getCanonicalName() .. "' (code '" .. lang:getCode() .. "'). " ..
+			error("At least one location (param 1=) must be specified for language '" .. lang:getCanonicalName() .. "' (code '" .. lang:getCode() .. "'). " ..
 				"Use the value UNKNOWN if the language's location is truly unknown.")
 		end
 	end
@@ -738,18 +797,21 @@ end)
 
 -- Handle categories such as [[:Category:Languages of Indonesia]].
 insert(raw_handlers, function(data)
-	local country = data.category:match("^Languages of (.*)$")
-	if country then
+	local location = data.category:match("^Languages of (.*)$")
+	if location then
 		local args = require("Module:parameters").process(data.args, {
 			["flagfile"] = true,
 			["commonscat"] = true,
 			["wp"] = true,
+			["basename"] = true,
 			["parent"] = true,
 			["locationcat"] = true,
+			["locationlink"] = true,
 		})
 		local topright
+		local basename = args.basename or location:gsub(", .*", "")
 		if args.flagfile ~= "-" then
-			local flagfile_arg = args.flagfile or ("Flag of %s.svg"):format(country)
+			local flagfile_arg = args.flagfile or ("Flag of %s.svg"):format(basename)
 			local files = require(parse_utilities_module).split_on_comma(flagfile_arg)
 			local topright_parts = {}
 			for _, file in ipairs(files) do
@@ -794,14 +856,9 @@ insert(raw_handlers, function(data)
 			end
 		end
 
-		local country_no_the = country:match("^the (.*)$")
-		local base_country = country_no_the or country
-		local country_link
-		if country_no_the then
-			country_link = ("the [[%s]]"):format(country_no_the)
-		else
-			country_link = ("[[%s]]"):format(country)
-		end
+		local bare_location = location:match("^the (.*)$") or location
+		local location_link = args.locationlink or link_location(location)
+		local bare_basename = basename:match("^the (.*)$") or basename
 
 		local parents = {}
 		if args.parent then
@@ -810,13 +867,14 @@ insert(raw_handlers, function(data)
 				local actual_parent, sort_key = parent:match("^(.-):(.*)$")
 				if actual_parent then
 					parent = actual_parent
+					sort_key = sort_key:gsub("%+", bare_location)
 				else
-					sort_key = " " .. base_country
+					sort_key = " " .. bare_location
 				end
 				insert(parents, {name = "Languages of " .. parent, sort = sort_key})
 			end
 		else
-			insert(parents, {name = "Languages by country", sort = {sort_base = base_country, lang = "en"}})
+			insert(parents, {name = "Languages by country", sort = {sort_base = bare_location, lang = "en"}})
 		end
 		if args.locationcat then
 			local explicit_location_cats = require(parse_utilities_module).split_on_comma(args.locationcat)
@@ -824,19 +882,19 @@ insert(raw_handlers, function(data)
 				insert(parents, {name = "Category:" .. locationcat, sort = " Languages"})
 			end
 		else
-			local country_cat = ("Category:%s"):format(base_country)
-			local country_page = new_title(country_cat)
-			if country_page and country_page.exists then
-				insert(parents, {name = country_cat, sort = "Languages"})
+			local location_cat = ("Category:%s"):format(bare_location)
+			local location_page = new_title(location_cat)
+			if location_page and location_page.exists then
+				insert(parents, {name = location_cat, sort = "Languages"})
 			end
 		end
-		local description = ("Categories for languages of %s (including sublects)."):format(country_link)
+		local description = ("Categories for languages of %s (including sublects)."):format(location_link)
 
 		return {
 			topright = topright,
 			description = description,
 			parents = parents,
-			breadcrumb = country,
+			breadcrumb = bare_basename,
 			additional = "{{{umbrella_msg}}}",
 		}, true
 	end
