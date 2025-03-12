@@ -7,8 +7,12 @@ local m_strutils = require("Module:string utilities")
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
 local languages_module = "Module:languages"
+local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
 local table_module = "Module:table"
+local utilities_module = "Module:utilities"
+
+local enlang = require(languages_module).getByCode("en")
 
 local rmatch = mw.ustring.match
 local rfind = mw.ustring.find
@@ -23,7 +27,7 @@ local namespace = mw.title.getCurrentTitle().nsText
 
 local force_cat = false -- set to true for testing
 
---[=[
+--[==[ intro:
 About the data structures:
 
 * A ''place'' (or ''location'') is a geographic feature (either natural or geopolitical), either on the surface of the
@@ -72,7 +76,7 @@ About the data structures:
   any additional raw text needed to properly explain the place in context. Some places have more than one place
   description. For example, [[Vatican City]] is defined both as a city-state in Southern Europe and as an enclave within
   the city of Rome. This is done as follows:
-  : {{place|en|city-state|r/Southern Europe|;,|an <<enclave>> within the city of <<city/Rome>>, <<c/Italy>>|cat=Cities in Italy|official=Vatican City State}}.
+  : {{tl|place|en|city-state|r/Southern Europe|;,|an <<enclave>> within the city of <<city/Rome>>, <<c/Italy>>|cat=Cities in Italy|official=Vatican City State}}.
   The use of two place descriptions allows for proper categorization. Similar things need to be done for places like
   [[Crimea]] that are claimed by two different countries with different definitions and administrative structures.
 * A ''full place description'' consists of all the information known about the place. It consists of one or more place
@@ -85,7 +89,8 @@ About the data structures:
   holonym can have only one placetype associated with it.
 
 A given place description is defined internally in a table of the following form:
-{
+
+```{
   placetypes = {"STRING", "STRING", ...},
   holonyms = {
 	{ -- holonym object; see below
@@ -107,7 +112,7 @@ A given place description is defined internally in a table of the following form
 	HOLONYM_PLACETYPE = {"PLACENAME", "PLACENAME", ...},
 	...
   },
-}
+}```
 
 Holonym objects have the following fields:
 * `placetype`: The canonicalized placetype of specified as e.g. "c/Australia"; nil if no slash is present.
@@ -128,21 +133,20 @@ Holonym objects have the following fields:
 Note that new-style place descs (those specified as a single argument using <<...>> to denote placetypes, placetype
 qualifiers and holonyms) have an additional `order` field to properly capture the raw text surrounding the items
 denoted in double angle brackets. The ORDER_ITEM items in the `order` field are objects of the following form:
-{
+
+```{
   type = "STRING",
   value = "STRING" or INDEX,
-}
+}```
+
 Here, the `type` field is one of "raw", "qualifier", "placetype" or "holonym":
 * "raw" is used for raw text surrounding <<...>> specs.
 * "qualifier" is used for <<...>> specs without slashes in them that consist only of qualifiers (e.g. the spec
-  <<former>> in '<<former>> French <<colony>>'). 
+  <<former>> in '<<former>> French <<colony>>').
 * "placetype" is used for <<...>> specs without slashes that do not consist only of qualifiers.
 * "holonym" is used for holonyms, i.e. <<...>> specs with a slash in them.
 For all types but "holonym", the value is a string, specifying the text in question. For "holonym", the value is a
-numeric index into the `holonyms` field. Note that if a placetype is given in the form e.g. <<former kingdom:kingdoms>>,
-specifying that "kingdoms" is to be displayed but "former kingdom" used for categorization purposes, the display form
-appears in the `value` field of "placetype" and "qualifier" objects in the `order` field, but the treat-as text to the
-left of the colon appears in the `placetypes` field.
+numeric index into the `holonyms` field.
 
 It should be noted that placetypes and placenames occurring inside the holonyms structure are canonicalized, but
 placetypes inside the placetypes structure are as specified by the user. Stripping off of qualifiers and
@@ -151,8 +155,9 @@ canonicalization of qualifiers and bare placetypes happens later.
 The information under `holonyms_by_placetype` is redundant to the information in holonyms but makes categorization
 easier.
 
-For example, the call {{place|en|city|s/Pennsylvania|c/US}} will result in the return value
-{
+For example, the call {{tl|place|en|city|s/Pennsylvania|c/US}} will result in the return value
+
+```{
   placetypes = {"city"},
   holonyms = {
 	{ placetype = "state", placename = "Pennsylvania" },
@@ -162,10 +167,13 @@ For example, the call {{place|en|city|s/Pennsylvania|c/US}} will result in the r
 	state = {"Pennsylvania"},
 	country = {"United States"},
   },
-}
+}```
+
 Here, the placetype aliases "s" and "c" have been expanded into "state" and "country" respectively, and the placename
 alias "US" has been expanded into "United States". PLACETYPES is a list because there may be more than one. For example,
-the call {{place|en|city/and/county|s/California}} will result in the return value
+the call {{tl|place|en|city/and/county|s/California}} will result in the return value
+
+```
 {
   placetypes = {"city", "and", "county"},
   holonyms = {
@@ -174,8 +182,12 @@ the call {{place|en|city/and/county|s/California}} will result in the return val
   holonyms_by_placetype = {
 	state = {"California"},
   },
-}
-The value in the key/value pairs is likewise a list; e.g. the call {{place|en|city|s/Kansas|and|s/Missouri}} will return
+}```
+
+The value in the key/value pairs is likewise a list; e.g. the call {{tl|place|en|city|s/Kansas|and|s/Missouri}} will
+return
+
+```
 {
   placetypes = {"city"},
   holonyms = {
@@ -187,10 +199,11 @@ The value in the key/value pairs is likewise a list; e.g. the call {{place|en|ci
 	state = {"Kansas", "Missouri"},
   },
 }
-]=]
+```
+]==]
+
 
 ----------- Wikicode utility functions
-
 
 
 -- Return a wikilink link {{l|language|text}}
@@ -208,14 +221,12 @@ end
 
 -- Return the category link for a category, given the language code and the name of the category.
 local function catlink(lang, text, sort_key)
-	return require("Module:utilities").format_categories(lang:getFullCode() .. ":" ..
+	return require(utilities_module).format_categories(lang:getFullCode() .. ":" ..
 		data.remove_links_and_html(text), lang, sort_key, nil, force_cat or data.force_cat)
 end
 
 
-
 ---------- Basic utility functions
-
 
 
 -- Add the page to a tracking "category". To see the pages in the "category",
@@ -285,16 +296,15 @@ local function get_placetype_plural(placetype, ucfirst)
 end
 
 
-
 ---------- Argument parsing functions and utilities
 
 
 -- Split an argument on comma, but not comma followed by whitespace.
 local function split_on_comma(val)
-	if val:find(",%s") then
-		return require(parse_utilities_module).split_on_comma(val)
+	if val:find(",") then
+		return require(parse_interface_module).split_on_comma(val)
 	else
-		return split(val, ",", true)
+		return val
 	end
 end
 
@@ -511,7 +521,7 @@ local function process_excluding_html_and_links(text, fn)
 		end
 		return result
 	end
-	
+
 	local function munge_text_with_html(txt)
 		return do_munge(txt, "<[^<>]->", fn)
 	end
@@ -524,9 +534,11 @@ local function process_excluding_html_and_links(text, fn)
 end
 
 
--- Parse a "new-style" place description, with placetypes and holonyms surrounded by <<...>> amid otherwise raw text.
--- Return value is an object as documented at the top of the file.
-local function parse_new_style_place_desc(text)
+--[==[
+Parse a "new-style" place description, with placetypes and holonyms surrounded by `<<...>>` amid otherwise raw text.
+Return value is an object as documented at the top of the file. Exported for use by [[Module:demonyms]].
+]==]
+function export.parse_new_style_place_desc(text)
 	local placetypes = {}
 	local segments = split(text, "<<(.-)>>")
 	local retval = {holonyms = {}, order = {}}
@@ -636,7 +648,7 @@ local function parse_place_descriptions(numargs)
 					desc_index = desc_index + 1
 					holonym_index = 0
 				end
-				this_desc = parse_new_style_place_desc(arg)
+				this_desc = export.parse_new_style_place_desc(arg)
 				descs[desc_index] = this_desc
 				last_was_new_style = true
 				holonym_index = holonym_index + 1
@@ -834,19 +846,22 @@ local function get_holonym_description(holonym, needs_article, display_form)
 			-- user explicitly called for this (e.g. by using 'r:suf/O'Higgins'). Before adding the affix,
 			-- however, we check to see if the affix is already present (e.g. the placetype is "district"
 			-- and the placename is "Mission District"). The placetype can override the affix to add (by setting
-			-- 'affix') and/or override the strings used for checking if the affix is already presen (by setting
-			-- 'no_affix_strings', which defaults to 'affix' if explicitly given).
-			
-			-- Search through equivalent placetypes for a setting of `affix_type` or `affix`. If we find either,
-			-- use them. If `affix_type` is given, it is overridden by the user's explicitly specified affix type.
-			-- If either an `affix_type` is found or the user explicitly specified an affix type, the affix is displayed
-			-- according to the following:
-			-- 1. If `affix` is given by the placetype or equivalent placetypes, use it (e.g. placetype
-			--    'administrative region' requests affix "region" but doesn't set affix type; if the user explicitly
-			--    specifies 'administrative region' as the placetype for a holonym and specifies an affix type, use
-			--    affix "region"). In this search, we stop looking if we find an explicit `affix_type` setting; if this
-			--    is found without an associated "affix", the assumption is the associated placetype was intended as the
-			--    affix, not some explicit affix setting associated with a fallback placetype.
+			-- `prefix`, `suffix` or `affix`) and/or override the strings used for checking if the affix is already
+			-- present (by setting 'no_affix_strings', which defaults to the affix explicitly given through `prefix`,
+			-- `suffix` or `affix` if any are given). `prefix` and `suffix` take precedence over `affix` if both are
+			-- set, but only when the appropriate type of affix is requested.
+
+			-- Search through equivalent placetypes for a setting of `affix_type`, `affix`, `prefix` or `suffix`. If we
+			-- find any, use them. If `affix_type` is given, it is overridden by the user's explicitly specified affix
+			-- type. If either an `affix_type` is found or the user explicitly specified an affix type, the affix is
+			-- displayed according to the following:
+			-- 1. If `prefix`, `suffix` or `affix` is given by the placetype or equivalent placetypes, use it (e.g.
+			--    placetype `administrative region` requests suffix "region" but doesn't set affix type; if the user
+			--    explicitly specifies `administrative region` as the placetype for a holonym and specifies a suffixal
+			--    affix type, use "region"). In this search, we stop looking if we find an explicit `affix_type`
+			--    setting; if this is found without an associated affix setting, the assumption is the associated
+			--    placetype was intended as the affix, not some explicit affix setting associated with a fallback
+			--    placetype.
 			-- 2. Otherwise, if the user explicitly requested an affix type, use the actual placetype (principle of
 			--    least surprise).
 			-- 3. Finally, fall back to the placetype associated with an explicit `affix_type` setting (which will
@@ -881,8 +896,8 @@ local function get_holonym_description(holonym, needs_article, display_form)
 				need_affix = true
 			end
 			if need_affix then
-				-- At this point the affix_type has been determined and can't change any more, so we can
-				-- figure out whether we need the calculated prefix or suffix.
+				-- At this point the affix_type has been determined and can't change any more, so we can figure out
+				-- whether we need the calculated prefix or suffix.
 				affix_is_prefix = affix_type == "pref" or affix_type == "Pref"
 				if affix_is_prefix then
 					affix = prefix
@@ -971,7 +986,7 @@ local function get_contextual_holonym_description(entry_placetype, prev_holonym,
 				not holonym.suppress_comma then
 				desc = desc .. ","
 			end
-	
+
 			if holonym.placetype or not holonym.placename:find("^,") then
 				desc = desc .. " "
 			end
@@ -1011,7 +1026,7 @@ local function get_placetype_display_form(placetype)
 			end
 		end
 	end
-	
+
 	return nil
 end
 
@@ -1044,7 +1059,7 @@ local function get_qualifier_description(qualifier)
 	local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
 	return prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
 end
-	
+
 
 local term_param_mods = {
 	tr = {},
@@ -1106,7 +1121,7 @@ local function get_extra_info(args, paramname, tag, ucfirst, auto_plural, with_c
 			else
 				obj.term = term
 			end
-			obj.lang = obj.lang or require(languages_module).getByCode("en")
+			obj.lang = obj.lang or enlang
 			return obj
 		end
 
@@ -1239,10 +1254,10 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 		end
 	end
 
-	if args["also"] then
+	if args.also then
 		ins_space()
 		ins("and ")
-		ins(args["also"])
+		ins(args.also)
 	end
 
 	if place_desc.holonyms then
@@ -1258,7 +1273,7 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 	if with_article then
 		local article
 		if desc_index == 1 then
-			article = args["a"]
+			article = args.a
 		else
 			if not place_desc.holonyms then
 				-- there isn't a following holonym; the place type given might be raw text as well, so don't add
@@ -1294,13 +1309,16 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 end
 
 
--- Get the full gloss (English description) of a new-style place description. New-style place descriptions are
--- specified with a single string containing raw text interspersed with placetypes and holonyms surrounded by <<...>>.
-local function get_new_style_gloss(args, place_desc, with_article)
+--[==[
+Get the full gloss (English description) of a new-style place description. New-style place descriptions are
+specified with a single string containing raw text interspersed with placetypes and holonyms surrounded by `<<...>>`.
+Exported for use by [[Module:demonyms]].
+]==]
+function export.get_new_style_gloss(args, place_desc, with_article)
 	local parts = {}
 
-	if with_article and args["a"] then
-		table.insert(parts, args["a"] .. " ")
+	if with_article and args.a then
+		table.insert(parts, args.a .. " ")
 	end
 
 	for _, order in ipairs(place_desc.order) do
@@ -1338,7 +1356,7 @@ local function get_gloss(args, descs, ucfirst, drop_extra_info)
 	local gloss_ucfirst = ucfirst
 	for n, desc in ipairs(descs) do
 		if desc.order then
-			table.insert(glosses, get_new_style_gloss(args, desc, n == 1))
+			table.insert(glosses, export.get_new_style_gloss(args, desc, n == 1))
 		else
 			table.insert(glosses, get_old_style_gloss(args, desc, n, include_article, gloss_ucfirst))
 		end
@@ -1378,9 +1396,9 @@ end
 
 -- Return the definition line.
 local function get_def(args, specs, drop_extra_info)
-	if #args["t"] > 0 then
+	if #args.t > 0 then
 		local gloss = get_gloss(args, specs, false, drop_extra_info)
-		return get_translations(args["t"], args["tid"]) .. (gloss == "" and "" or " (" .. gloss .. ")")
+		return get_translations(args.t, args.tid) .. (gloss == "" and "" or " (" .. gloss .. ")")
 	else
 		return get_gloss(args, specs, true, drop_extra_info)
 	end
@@ -1576,7 +1594,7 @@ local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc,
 		return find_cat_specs(entry_placetype_data.fallback, cat_data[entry_placetype_data.fallback], place_desc,
 			overriding_holonym, override_inner_outer)
 	end
-	
+
 	if not inner_data then
 		return nil, entry_placetype, nil, nil
 	end
@@ -1622,7 +1640,7 @@ local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc,
 		return find_cat_specs(entry_placetype, entry_placetype_data, place_desc, overriding_holonym,
 			override_inner_outer, "ignore cat handler")
 	end
-		
+
 	-- If we didn't find a matching key in the inner data, and there's a fallback, look it up, as above.
 	-- This is used, for example, with "rural municipality", which has special cases for
 	-- some provinces of Canada and otherwise behaves like "municipality".
@@ -1737,8 +1755,11 @@ end
 
 -- Iterate through each type of place given `place_descriptions` (a list of place descriptions, as documented at the
 -- top of the file) and return a string with the links to all categories that need to be added to the entry.
-local function get_cats(lang, args, place_descriptions, additional_cats, sort_key)
+local function get_cats(args, place_descriptions)
 	local cats = {}
+	local lang = args[1]
+	local additional_cats = args.cat
+	local sort_key = args.sort
 
 	handle_implications(place_descriptions, data.cat_implications, true)
 	data.augment_holonyms_with_containing_polity(place_descriptions)
@@ -1771,13 +1792,15 @@ end
 ----------- Main entry point
 
 
--- Meant to be callable from another module (specifically, [[Module:transclude/sense]]). `drop_extra_info` means to
--- not include "extra info" (modern name, capital, largest city, etc.); this is used when transcluding into another
--- language using {{transclude sense}}.
+--[==[
+Implementation of {{tl|place}}. Meant to be callable from another module (specifically, [[Module:transclude/sense]]).
+`drop_extra_info` means to not include "extra info" (modern name, capital, largest city, etc.); this is used when
+transcluding into another language using {{tl|transclude sense}}.
+]==]
 function export.format(template_args, drop_extra_info)
 	local list_param = {list = true}
 	local params = {
-		[1] = {required = true},
+		[1] = {required = true, type = "language", default = "und"},
 		[2] = {required = true, list = true},
 		["t"] = list_param,
 		["tid"] = {list = true, allow_holes = true},
@@ -1812,14 +1835,16 @@ function export.format(template_args, drop_extra_info)
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
-	local lang = require("Module:languages").getByCode(args[1], 1, "allow etym")
 	local place_descriptions = parse_place_descriptions(args[2])
 
-	return get_def(args, place_descriptions, drop_extra_info) .. (args.nocat and "" or
-		get_cats(lang, args, place_descriptions, args["cat"], args["sort"]))
+	return get_def(args, place_descriptions, drop_extra_info) .. (
+		args.nocat and "" or get_cats(args, place_descriptions))
 end
 
 
+--[==[
+Actual entry point of {{tl|place}}.
+]==]
 function export.show(frame)
 	return export.format(frame:getParent().args)
 end
