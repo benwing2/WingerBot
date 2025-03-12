@@ -1,7 +1,7 @@
 local export = {}
 
 local debug_track_module = "Module:debug/track"
-local qualifier_module = "Module:qualifier"
+local pron_qualifier_module = "Module:pron qualifier"
 local parameters_module = "Module:parameters"
 local utilities_module = "Module:utilities"
 
@@ -20,9 +20,9 @@ local function format_categories(...)
 	return format_categories(...)
 end
 
-local function format_qualifier(...)
-	format_qualifier = require(qualifier_module).format_qualifier
-	return format_qualifier(...)
+local function format_pron_qualifiers(...)
+	format_pron_qualifiers = require(pron_qualifier_module).format_qualifiers
+	return format_pron_qualifiers(...)
 end
 
 local function process_params(...)
@@ -85,6 +85,48 @@ local function autoadd_abbr(display)
 	end
 end
 
+
+-- Add qualifiers, labels and references to a formatted gender/number spec. `spec` is the object describing the
+-- gender/number spec, which should optionally contain:
+-- * left qualifiers in `q` or (for compatibility) `qualifiers`, an array of strings;
+-- * right qualifiers in `qq`, an array of strings;
+-- * left labels in `l`, an array of strings;
+-- * right labels in `ll`, an array of strings;
+-- * references in `refs`, an array either of strings (formatted reference text) or objects containing fields `text`
+--   (formatted reference text) and optionally `name` and/or `group`;
+-- `formatted` is the formatted version of the term itself, and `lang` is the optional language object passed into
+-- format_genders().
+local function add_qualifiers_and_refs(formatted, spec, lang)
+	local function field_non_empty(field)
+		local list = spec[field]
+		if not list then
+			return nil
+		end
+		if type(list) ~= "table" then
+			error(("Internal error: Wrong type for `spec.%s`=%s, should be \"table\""):format(
+				field, mw.dumpObject(list)))
+		end
+		return list[1]
+	end
+
+	if field_non_empty("q") or field_non_empty("qq") or field_non_empty("l") or field_non_empty("ll") or
+		field_non_empty("qualifiers") or field_non_empty("refs") then
+		formatted = format_pron_qualifiers {
+			lang = lang,
+			text = formatted,
+			q = spec.q,
+			qq = spec.qq,
+			qualifiers = spec.qualifiers,
+			l = spec.l,
+			ll = spec.ll,
+			refs = spec.refs,
+		}
+	end
+
+	return formatted
+end
+
+
 --[==[
 Format one or more gender/number specifications. Each spec is either a string, e.g. {"f-p"}, or a table of the form
 { {spec = "SPEC", qualifiers = {"QUALIFIER", "QUALIFIER", ...}}} where `.spec` is a gender/number spec such as {"f-p"}
@@ -104,9 +146,7 @@ categories may be returned. If both are omitted, the returned list is empty.
 function export.format_genders(specs, lang, pos_for_cat)
 	local formatted_specs, categories, seen_types = {}
 	local all_is_nounclass = nil
-	-- Currently we only use the language for categories, so fetch the full parent. Change this if we
-	-- use the language for any other purpose.
-	lang = lang and lang:getFull() or nil
+	local full_langname = lang and lang:getFullName() or nil
 
 	local function do_gender_spec(spec, parts)
 		local types = {}
@@ -125,12 +165,7 @@ function export.format_genders(specs, lang, pos_for_cat)
 			end
 			types[typ] = true
 				
-			if key == 1 and spec.qualifiers and #spec.qualifiers > 0 then
-				parts[key] = format_qualifier(spec.qualifiers) .. " " ..
-					autoadd_abbr(codes[code].display)
-			else
-				parts[key] = autoadd_abbr(codes[code].display)
-			end
+			parts[key] = autoadd_abbr(codes[code].display)
 		
 			-- Generate categories if called for.
 			if lang and pos_for_cat then
@@ -139,7 +174,7 @@ function export.format_genders(specs, lang, pos_for_cat)
 					if not categories then
 						categories = {}
 					end
-					insert(categories, lang:getCanonicalName() .. " " .. cat)
+					insert(categories, full_langname .. " " .. cat)
 				end
 				if not seen_types then
 					seen_types = {}
@@ -149,7 +184,7 @@ function export.format_genders(specs, lang, pos_for_cat)
 						if not categories then
 							categories = {}
 						end
-						insert(categories, lang:getCanonicalName() .. " " .. cat)
+						insert(categories, full_langname .. " " .. cat)
 					end
 				end
 				seen_types[typ] = code
@@ -163,15 +198,16 @@ function export.format_genders(specs, lang, pos_for_cat)
 				if not categories then
 					categories = {}
 				end
-				insert(categories, "Requests for " .. type_for_req .. " in " .. lang:getCanonicalName() .. " entries")
+				insert(categories, "Requests for " .. type_for_req .. " in " .. full_langname .. " entries")
 			end
 		end
-		
+
 		-- Add the processed codes together with non-breaking spaces
-		if #parts == 1 then
+		if not parts[2] and parts[1] then
 			return parts[1]
+		else
+			return concat(parts, "&nbsp;")
 		end
-		return concat(parts, "&nbsp;")
 	end
 
 	for _, spec in ipairs(specs) do
@@ -191,7 +227,7 @@ function export.format_genders(specs, lang, pos_for_cat)
 					if not categories then
 						categories = {}
 					end
-					insert(categories, "Requests for noun class in " .. lang:getCanonicalName() .. " entries")
+					insert(categories, "Requests for noun class in " .. full_langname .. " entries")
 				end
 			else
 				text = '<abbr class="noun-class" title="noun class ' .. code .. '">' .. code .. "</abbr>"
@@ -199,15 +235,10 @@ function export.format_genders(specs, lang, pos_for_cat)
 					if not categories then
 						categories = {}
 					end
-					insert(categories, lang:getCanonicalName() .. " class " .. code .. " POS")
+					insert(categories, full_langname .. " class " .. code .. " POS")
 				end
 			end
-			local text_with_qual
-			if spec.qualifiers and #spec.qualifiers > 0 then
-				text_with_qual = format_qualifier(spec.qualifiers) .. " " .. text
-			else
-				text_with_qual = text
-			end
+			local text_with_qual = add_qualifiers_and_refs(text, spec, lang)
 			insert(formatted_specs, text_with_qual)
 		else
 			-- Split the parts and iterate over each part, converting it into its display form
@@ -240,11 +271,12 @@ function export.format_genders(specs, lang, pos_for_cat)
 				if #formatted_specs > 0 then
 					insert(formatted_specs, "or")
 				end
-				insert(formatted_specs, do_gender_spec(spec, parts))
+				insert(formatted_specs, add_qualifiers_and_refs(do_gender_spec(spec, parts), spec, lang))
 			else
 				-- This logic is to handle combined gender specs like 'mf' and 'mfbysense'.
 				local all_parts = {{}}
 				local extra_displays
+				local this_formatted_specs = {}
 
 				for _, code in ipairs(parts) do
 					if combined_codes[code] then
@@ -263,7 +295,7 @@ function export.format_genders(specs, lang, pos_for_cat)
 								if not categories then
 									categories = {}
 								end
-								insert(categories, lang:getCanonicalName() .. " " .. extra_cat)
+								insert(categories, full_langname .. " " .. extra_cat)
 							end
 						end
 						local extra_display = combined_codes[code].display
@@ -284,14 +316,17 @@ function export.format_genders(specs, lang, pos_for_cat)
 					if #formatted_specs > 0 then
 						insert(formatted_specs, "or")
 					end
-					insert(formatted_specs, do_gender_spec(spec, parts))
+					insert(this_formatted_specs, do_gender_spec(spec, parts))
 				end
 
 				if extra_displays then
 					for _, display in ipairs(extra_displays) do
-						insert(formatted_specs, display)
+						insert(this_formatted_specs, display)
 					end
 				end
+
+				insert(this_formatted_specs, add_qualifiers_and_refs(
+					concat(this_formatted_specs, " "), spec, lang))
 			end
 
 			is_nounclass = false
