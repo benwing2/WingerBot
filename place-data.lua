@@ -1519,11 +1519,38 @@ local function capital_city_cat_handler(holonym_placetype, holonym_placename, pl
 	end
 end
 
--- This is used to add pages to base holonym categories like 'en:Places in Merseyside, England'
--- (and 'en:Places in England') for any pages that have 'co/Merseyside' as their holonym.
--- It also handles cities (e.g. 'en:Places in Boston', along with 'en:Places in Massachusetts, USA'
--- and 'en:Places in the United States') for any pages that have 'city/Boston' as their holonym.
-local function generic_cat_handler(holonym_placetype, holonym_placename, place_desc)
+--[==[
+Find the correct holonym key(s) to categorize a given holonym in. This is used in two ways:
+# To add pages to generic holonym categories like [[:Category:en:Places in Merseyside, England]] (and
+  [[:Category:en:Places in England]]) for any pages that have `co/Merseyside` as their holonym.
+# To categorize demonyms in bare placename categories like [[:Category:en:Merseyside, England]] if the demonym
+  description mentions `co/Merseyside` and doesn't mention a more specific placename that also has a category. (In this
+  case there are none, but we can have demonyms at multiple levels, e.g. in France for individual villages, departments,
+  administrative regions, and for the entire country, and for example we only want to categorize a demonym into
+  [[:Category:France]] if no more specific category applies.)
+This code also handles cities; e.g. for the first use case above, it would be used to add a page that has `city/Boston`
+as a holonym to [[:Category:en:Places in Boston]], along with [[:Category:en:Places in Massachusetts, USA]] and
+[[:Category:en:Places in the United States]]. The city handler tries to deal with the possibility of multiple cities
+having the same name. For example, the code in [[Module:place/shared-data]] knows about the city of [[Columbus]],
+[[Ohio]], which has containing polities `Ohio` (a state) and `the United States` (a country). If either containing
+polity is mentioned, the handler proceeds to return the key `Columbus` (along with `Ohio, USA` and `the United States`).
+Otherwise, if any other state or country is mentinoned, the handler returns nothing, and otherwise it assumes the
+mentioned city is the one we're considering and returns `Columbus` etc. (NOTE: I *think* this works correctly if the
+place only mentions Ohio and a holonym for a Columbus in a different country is encountered, because of the function
+`augment_holonyms_with_containing_polity`, which adds the US as a holonym when Ohio is encountered. However, this may
+fail for the UK because I think there's a setting preventing adding the UK as a holonym when counties in England,
+council areas in Scotland, etc. are encountered. FIXME: Investigate this further.)
+
+FIXME: The checks we do for cities to make sure the wrong containing polity isn't mentioned ought to be done for other
+subdivisions as well.
+
+The parameters are `holonym_placetype` and `holonym_placename` (specifying a holonym); and `place_desc` (the full place
+description as found at the top of [[Module:place]], used for checking the containing polities of cities as described
+above). The return value is a list of placename keys, which are in the format used in categories, including the word
+`"the"` (meaning that you need to remove this to construct the bare category, but keep it when constructing a
+`Places in ...` category).
+]==]
+function export.find_holonym_keys_for_categorization(holonym_placetype, holonym_placename, place_desc)
 	for _, group in ipairs(m_shared.polities) do
 		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
 		local key, _ = call_place_cat_handler(group, holonym_placetype, holonym_placename)
@@ -1534,14 +1561,13 @@ local function generic_cat_handler(holonym_placetype, holonym_placename, place_d
 				-- keys are present if they should be.
 				value = group.value_transformer(group, key, value)
 				-- Categorize both in key, and in the larger polity that the key is part of,
-				-- e.g. [[Hirakata]] goes in both "Places in Osaka Prefecture" and "Places in Japan".
-				local retcats = {"Places in " .. key}
+				-- e.g. [[Hirakata]] goes in both [[Category:Places in Osaka Prefecture, Japan]] and
+				-- [[Category:Places in Japan]].
+				local retkeys = {key}
 				if value.containing_polity and not value.no_containing_polity_cat then
-					table.insert(retcats, "Places in " .. value.containing_polity)
+					table.insert(retkeys, value.containing_polity)
 				end
-				return {
-					["itself"] = retcats
-				}
+				return retkeys
 			end
 		end
 	end
@@ -1590,7 +1616,7 @@ local function generic_cat_handler(holonym_placetype, holonym_placename, place_d
 				-- No mismatching containing polities, so add categories for the city and
 				-- its containing polities.
 				if not containing_polities_mismatch then
-					local retcats = {"Places in " .. holonym_placename}
+					local retkeys = {holonym_placename}
 					for _, polity in ipairs(containing_polities) do
 						local divtype = polity.divtype or city_group.default_divtype
 						local drop_dead_now = false
@@ -1604,8 +1630,9 @@ local function generic_cat_handler(holonym_placetype, holonym_placename, place_d
 							if value then
 								value = polity_group.value_transformer(polity_group, key, value)
 								local key_divtype = value.divtype or polity_group.default_divtype
-								if key_divtype == divtype or type(key_divtype) == "table" and key_divtype[1] == divtype then
-									table.insert(retcats, "Places in " .. key)
+								if key_divtype == divtype or (
+									type(key_divtype) == "table" and key_divtype[1] == divtype) then
+									table.insert(retkeys, key)
 									if value.no_containing_polity_cat then
 										-- Stop adding containing polities if no_containing_polity_cat
 										-- is found. (Used for 'United Kingdom'.)
@@ -1619,12 +1646,29 @@ local function generic_cat_handler(holonym_placetype, holonym_placename, place_d
 							break
 						end
 					end
-					return {
-						["itself"] = retcats
-					}
+					return retkeys
 				end
 			end
 		end
+	end
+end
+
+
+-- This is invoked specially for all placetypes (see the `*` placetype key at the bottom of `cat_data`) to add pages to
+-- generic holonym categories like [[:Category:en:Places in Merseyside, England]] (and
+-- [[:Category:en:Places in England]]) for any pages that have `co/Merseyside` as their holonym. It also handles cities
+-- (e.g. [[:Category:en:Places in Boston]], along with [[:Category:en:Places in Massachusetts, USA]] and
+-- [[:Category:en:Places in the United States]]) for any pages that have `city/Boston` as their holonym. For more
+-- information, see `find_holonym_keys_for_categorization`.
+local function generic_cat_handler(holonym_placetype, holonym_placename, place_desc)
+	local retkeys = export.find_holonym_keys_for_categorization(holonym_placetype, holonym_placename, place_desc)
+	if retkeys then
+		for i, retkey in ipairs(retkeys) do
+			retkeys[i] = "Places in " .. retkey
+		end
+		return {
+			["itself"] = retkeys
+		}
 	end
 end
 
