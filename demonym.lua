@@ -56,8 +56,17 @@ end
 
 
 local function format_parts(data)
+	local comma_in_part = false
+
 	for i, part in ipairs(data.parts) do
 		part.lang = part.lang or lang_en
+		local display = part.alt or part.term
+		if display then
+			display = m_links.remove_links(display)
+			if display:find(",") then
+				comma_in_part = true
+			end
+		end
 		if part.gloss then
 			-- move gloss to 'pos' so it doesn't have quotes around it
 			if part.pos then
@@ -67,11 +76,19 @@ local function format_parts(data)
 			end
 			part.gloss = nil
 		end
+		comma_in_part = comma_in_part or (part.pos and part.pos:find(",")) or (part.q and part.q:find(",")) or
+			(part.qq and part.qq:find(","))
 		data.parts[i] = link_with_qualifiers(part)
 	end
 
-	if #data.parts == 1 then
+	local nparts = #data.parts
+	-- FIXME: There should be a generalization of serialCommaJoin in [[Module:table]] for this use case.
+	if nparts == 1 then
 		return data.parts[1]
+	elseif nparts == 2 then
+		return data.parts[1] .. " or " .. data.parts[2]
+	elseif comma_in_part then
+		return table.concat(data.parts, "; ", 1, nparts - 1) .. "; or " .. data.parts[nparts]
 	else
 		return require("Module:table").serialCommaJoin(data.parts, {conj = "or"})
 	end
@@ -147,8 +164,8 @@ function export.format_demonym_noun(data)
 		end
 		local femeq_data = {
 			text = (lang_is_en and not data.nocap and "Female" or "female") .. " equivalent of",
-			terminfos = data.m,
-			terminfo_face = "term",
+			lemmas = data.m,
+			lemma_face = "term",
 		}
 		ins(require("Module:form of").format_form_of(femeq_data))
 		ins("; ")
