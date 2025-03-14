@@ -2,43 +2,8 @@ local export = {}
 
 local m_languages = require("Module:languages")
 local m_demonym = require("Module:demonym")
-local put_module = "Module:parse utilities"
-
-local rsplit = mw.text.split
-local u = mw.ustring.char
--- Assigned to `require("Module:parse utilities")` as necessary.
-local put
-
-
-local param_mods = {
-	t = {
-		-- We need to store the <t:...> inline modifier into the "gloss" key of the parsed part, because that is what
-		-- [[Module:links]] expects.
-		item_dest = "gloss",
-	},
-	gloss = {},
-	tr = {},
-	ts = {},
-	g = {
-		-- We need to store the <g:...> inline modifier into the "genders" key of the parsed part, because that is what
-		-- [[Module:links]] expects.
-		item_dest = "genders",
-		convert = function(arg, parse_err)
-			return rsplit(arg, ",")
-		end,
-	},
-	id = {},
-	alt = {},
-	q = {},
-	qq = {},
-	lit = {},
-	pos = {},
-	sc = {
-		convert = function(arg, parse_err)
-			return require("Module:scripts").getByCode(arg, parse_err)
-		end,
-	}
-}
+local parameter_utilities_module = "Module:parameter utilities"
+local parse_interface_module = "Module:parse interface"
 
 
 local function parse_args(args, hack_params)
@@ -65,40 +30,25 @@ end
 
 
 local function parse_term_with_modifiers(paramname, val)
+	local m_parameter_utilities = require(parameter_utilities_module)
+    local param_mods = m_parameter_utilities.construct_param_mods {
+        {group = {"link", "q", "l", "ref"}},
+    }
+
 	local function generate_obj(term, parse_err)
-		local obj = {}
-		if term:find(":") then
-			if not put then
-				put = require(put_module)
-			end
-			local actual_term, termlang = put.parse_term_with_lang(term, parse_err)
-			obj.term = actual_term
-			obj.lang = termlang
-		else
-			obj.term = term
-		end
-		return obj
-	end
-
-	-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude HTML entry with <span ...>, <i ...>, <br/> or
-	-- similar in it, caused by wrapping an argument in {{l|...}}, {{m|...}} or similar. Basically, all tags of
-	-- the sort we parse here should consist of a less-than sign, plus letters, plus a colon, e.g. <tr:...>, so if
-	-- we see a tag on the outer level that isn't in this format, we don't try to parse it. The restriction to the
-	-- outer level is to allow generated HTML inside of e.g. qualifier tags, such as foo<q:similar to {{m|fr|bar}}>.
-	if val:find("<") and not val:find("^[^<]*<[a-z]*[^a-z:]") then
-		if not put then
-			put = require(put_module)
-		end
-		return put.parse_inline_modifiers(val, {
+		return m_parameter_utilities.generate_obj_maybe_parsing_lang_prefix {
+			term = term,
 			paramname = paramname,
-			param_mods = param_mods,
-			generate_obj = generate_obj,
-		})
-	else
-		return generate_obj(val)
+			parse_lang_prefix = true,
+			parse_err = parse_err,
+		}
 	end
 
-	return part
+	return require(parse_interface_module).parse_inline_modifiers(val, {
+		paramname = paramname,
+		param_mods = param_mods,
+		generate_obj = generate_obj,
+	})
 end
 
 
