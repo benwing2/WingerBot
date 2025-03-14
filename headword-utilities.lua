@@ -16,6 +16,11 @@ local function rsub(term, foo, bar)
 	return retval
 end
 
+local function track(track_id)
+	require("Module:debug/track")("headword utilities/" .. track_id)
+	return true
+end
+
 
 local param_mods = {
 	id = {},
@@ -88,10 +93,12 @@ function export.parse_term_with_modifiers(data)
 		return {term = term}
 	end
 
-	if val:find("<") then
+	-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude top-level HTML entry with <span ...>,
+	-- <sup> or similar in it.
+	if val:find("<") and not require(parse_utilities_module).term_contains_top_level_html(val) then
 		local param_mods = param_mods
 		if data.include_mods or data.exclude_mods then
-			param_mods = require(table).shallowcopy(param_mods)
+			param_mods = require(table).shallowCopy(param_mods)
 			if data.include_mods then
 				for _, mod in ipairs(data.include_mods) do
 					if type(mod) == "table" then
@@ -167,7 +174,7 @@ function export.parse_term_list_with_modifiers(data)
 			exclude_mods = data.exclude_mods,
 		}
 		if qualifiers and qualifiers[i] then
-			terms[i].q = qualifiers[i]
+			terms[i].q = {qualifiers[i]}
 		end
 	end
 	return terms
@@ -264,7 +271,7 @@ significant additional processing) into `headdata.inflections`. `data` is an obj
 function export.parse_and_insert_inflection(data)
 	local forms = data.forms
 	if forms and forms[1] then
-		data = require(table_module).shallowcopy(data)
+		data = require(table_module).shallowCopy(data)
 		data.forms = forms
 		data.terms = export.parse_term_list_with_modifiers(data)
 		export.insert_inflection(data)
@@ -287,7 +294,7 @@ function export.combine_qualifiers_or_labels(quals1, quals2)
 		return quals1
 	end
 	local m_table = require(table_module)
-	local combined = m_table.shallowcopy(quals1)
+	local combined = m_table.shallowCopy(quals1)
 	for _, note in ipairs(quals2) do
 		m_table.insertIfNot(combined, note)
 	end
@@ -439,7 +446,7 @@ local function add_single_word_links(space_word, data, term_has_spaces)
 				else -- custom apostrophe splitter/linker
 					word = data.split_apostrophe(word)
 				end
-			else
+			elseif word ~= "" then -- avoid -[[]]- (e.g. f--k)
 				word = link_hyphen_split_component(word, data)
 			end
 			if j < #words then
@@ -504,12 +511,6 @@ function export.add_links_to_multiword_term(term, data)
 	-- remove the link.
 	local unlinked_retval = rmatch(retval, "^%[%[([^%[%]]*)%]%]$")
 	return unlinked_retval or retval
-end
-
-
--- Badly named older entry point. FIXME: Obsolete me!
-function export.add_lemma_links(lemma, split_hyphen_when_space)
-	return export.add_links_to_multiword_term(lemma, {split_hyphen_when_space = split_hyphen_when_space})
 end
 
 
