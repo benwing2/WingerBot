@@ -16,6 +16,7 @@ local math_module = "Module:math"
 local pages_module = "Module:pages"
 local parse_utilities_module = "Module:parse utilities"
 local references_module = "Module:references"
+local scribunto_module = "Module:Scribunto"
 local scripts_module = "Module:scripts"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
@@ -121,11 +122,6 @@ local function is_callable(...)
 	return is_callable(...)
 end
 
-local function is_finite_real_number(...)
-	is_finite_real_number = require(math_module).is_finite_real_number
-	return is_finite_real_number(...)
-end
-
 local function is_integer(...)
 	is_integer = require(math_module).is_integer
 	return is_integer(...)
@@ -162,13 +158,13 @@ local function pattern_escape(...)
 end
 
 local function php_trim(...)
-	php_trim = require(string_utilities_module).php_trim
+	php_trim = require(scribunto_module).php_trim
 	return php_trim(...)
 end
 
-local function scribunto_param_key(...)
-	scribunto_param_key = require(string_utilities_module).scribunto_param_key
-	return scribunto_param_key(...)
+local function scribunto_parameter_key(...)
+	scribunto_parameter_key = require(scribunto_module).scribunto_parameter_key
+	return scribunto_parameter_key(...)
 end
 
 local function sorted_pairs(...)
@@ -189,6 +185,11 @@ end
 local function split_on_comma(...)
 	split_on_comma = require(parse_utilities_module).split_on_comma
 	return split_on_comma(...)
+end
+
+local function tonumber_extended(...)
+	tonumber_extended = require(math_module).tonumber_extended
+	return tonumber_extended(...)
 end
 
 local function yesno(...)
@@ -536,7 +537,7 @@ end
 
 -- Check that a parameter or argument is in the form form Scribunto normalizes input argument keys into (e.g. 1 not "1", "foo" not " foo "). Otherwise, it won't be possible to normalize inputs in the expected way. Unless is_argument is set, also check that the name only contains one placeholder at most, and that strings don't resolve to numeric keys once the placeholder has been substituted.
 local function validate_name(name, desc, extra_name, is_argument)
-	local normalized = scribunto_param_key(name)
+	local normalized = scribunto_parameter_key(name)
 	if name and name == normalized then
 		if is_argument or type(name) ~= "string" then
 			return
@@ -551,7 +552,7 @@ local function validate_name(name, desc, extra_name, is_argument)
 			))
 		end
 		local first_name = gsub(name, "\1", "1")
-		normalized = scribunto_param_key(first_name)
+		normalized = scribunto_parameter_key(first_name)
 		if first_name == normalized then
 			return
 		end
@@ -761,11 +762,17 @@ local type_handlers = setmetatable({
 		local allow_hex = param.allow_hex
 		if allow_hex and allow_hex ~= true then
 			error(format('Internal error: expected `allow_hex` for type `number` to be of type "boolean" or undefined, but saw %s', dump(allow_hex)))
+		elseif match(val, "[eEpP.]") then -- float
+			track("number not an integer")
 		end
-		local num = tonumber(val)
-		-- Avoid converting inputs like "nan" or "inf", and disallow 0x hex inputs unless explicitly enabled
-		-- with `allow_hex`.
-		if not (num and is_finite_real_number(num) and (allow_hex or not match(val, "^[+-]?0[Xx]%x*%.?%x*$"))) then
+		if find(val, "+", nil, true) then
+			track("number with +")
+		end
+		-- Call tonumber_extended with the `real_finite` flag, which filters out ±infinity and NaN.
+		-- By default, specify base 10, which prevents 0x hex inputs from being converted.
+		-- If `allow_hex` is set, then don't give a base, which means 0x hex inputs will work.
+		local num = tonumber_extended(val, not allow_hex and 10 or nil, "finite_real")
+		if not num then
 			convert_val_error(val, name, (allow_hex and "decimal or hexadecimal " or "") .. "number")
 		-- Track various unusual number inputs to determine if it should be restricted to positive integers by default (possibly including 0).
 		elseif not is_positive_integer(num) then
@@ -785,7 +792,7 @@ local type_handlers = setmetatable({
 
 	["parameter"] = function(val, name, param)
 		-- Use the `no_trim` option, as any trimming will have already been done.
-		return scribunto_param_key(val, true)
+		return scribunto_parameter_key(val, true)
 	end,
 
 	["qualifier"] = function(val, name, param)
