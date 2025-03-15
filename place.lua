@@ -1,15 +1,15 @@
 local export = {}
 
-local data = require("Module:place/data")
+local m_data = require("Module:place/data")
 local m_links = require("Module:links")
 local m_strutils = require("Module:string utilities")
+local m_table = require("Module:table")
 
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
 local languages_module = "Module:languages"
 local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
-local table_module = "Module:table"
 local utilities_module = "Module:utilities"
 
 local enlang = require(languages_module).getByCode("en")
@@ -19,16 +19,20 @@ local rfind = mw.ustring.find
 local ulen = mw.ustring.len
 local split = m_strutils.split
 local dump = mw.dumpObject
+local insert = table.insert
+local concat = table.concat
 local pluralize = require(en_utilities_module).pluralize
+local extend = m_table.extend
 
-local cat_data = data.cat_data
+local placetype_data = m_data.placetype_data
 
 local namespace = mw.title.getCurrentTitle().nsText
 
 local force_cat = false -- set to true for testing
 
 --[==[ intro:
-About the data structures:
+
+===Terminology===
 
 * A ''place'' (or ''location'') is a geographic feature (either natural or geopolitical), either on the surface of the
   Earth or elsewhere. Examples of types of natural places are rivers, mountains, seas and moons; examples of types of
@@ -81,12 +85,14 @@ About the data structures:
   [[Crimea]] that are claimed by two different countries with different definitions and administrative structures.
 * A ''full place description'' consists of all the information known about the place. It consists of one or more place
   descriptions, zero or more English glosses (for foreign-language toponyms) and any attached ''extra information''
-  such as the capital, largest city, official name or modern name.
+  such as the capital, largest city, official name, modern name or full name.
 * Inside a place description, there are two types of placetypes. The ''entry placetypes'' are the placetypes of the
   place being described, while the ''holonym placetypes'' are the placetypes of the holonyms that the place being
   described is located within. Currently, a given place can have multiple placetypes specified (e.g. [[Normandy]] is
   specified as being simultaneously an administrative region, a historic province and a medieval kingdom) while a given
   holonym can have only one placetype associated with it.
+
+===Place descriptions===
 
 A given place description is defined internally in a table of the following form:
 
@@ -200,6 +206,83 @@ return
   },
 }
 ```
+
+===Category determination===
+
+The algorithm to find the categories to which a given place belongs works off of a place description (which specifies
+the entry placetype(s) and holonym(s); see above). Iterating over each entry placetype, it proceeds as follows:
+# Look up the placetype in the `placetype_data`, which comes from [[Module:place/data]]. Note that the entry in
+  `placetype_data` that specifies the category or categories to add may not directly correspond to the entry placetype
+  as specified in the place description. For example, if the entry placetype is `"small town"`, the placetype whose data
+  is fetched will be `"town"` since `"small"` is a recognized qualifier and there is no entry in `placetype_data` for
+  `"small town"`. As another example, if the entry placetype is `"administrative capital"`, the placetype whose data
+  will be fetched will be `"capital city"` because there's no entry in `placetype_data` for `"administrative capital"`
+  but there is an entry in `placetype_equivs` in [[Module:place/data]] that maps `"administrative capital"` to
+  `"capital city"` for categorization purposes.
+# The value in `placetype_data` is a two-level table. The outer table is indexed by the holonym itself (e.g.
+  `"country/Brazil"`) or by `"default"`, and the inner indexed by the holonym's placetype (e.g. `"country"`) or by
+  `"itself"`. Note that most frequently, if the outer table is indexed by a holonym, the inner table will be indexed
+  only by `"itself"`, while if the outer table is indexed by `"default"`, the inner table will be indexed by one or more
+  holonym placetypes, meaning to generate a category for all holonyms of this placetype. But this is not necessarily the
+  case.
+# Iterate through the holonyms, from left to right, finding the first holonym that matches (in both placetype and
+  placename) a key in the outer table. If no holonym matches any key, then if a key `"default"` exists, use that;
+  otherwise, if a key named `"fallback"` exists, specifying a placetype, use that placetype to fetch a new
+  `placetype_data` entry, and start over with step (1); otherwise, don't categorize.
+# Iterate again through the holonyms, from left to right, finding the first holonym whose placetype matches a key in the
+  inner table. If no holonym matches any key, then if a key `"itself"` exists, use that; otherwise, check for a key
+  named `"fallback"` at the top level of the `placetype_data` entry and, if found, proceed as in step (3); otherwise
+  don't categorize.
+# The resulting value found is a list of category specs. Each category spec specifies a category to be added. In order
+  to understand how category specs are processed, you have to understand the concept of the ''triggering holonym''. This
+  is the holonym that matched an inner key in step (4), if any; else, the holonym that matched an outer key in step (3),
+  if any; else, there is no triggering holonym. (The only time this happens when there are category specs is when the
+  outer key is `"default"` and the inner key is `"itself"`.)
+# Iterate through the category specs and construct a category from each one. Each category spec is one of the following:
+## A string, such as `"Seas"`, `"Districts of England"` or `"Cities in +++"`. If `"+++"` is contained in the string, it
+   will be substituted with the placename of the triggering holonym. If there is no triggering holonym, an error is
+   thrown. This is then prefixed with the language code specified in the first argument to the call to {{tl|place}}.
+   For example, if the triggering holonym is `"country/Brazil"`, the category spec is `"Cities in +++"` and the template
+   invocation was {{tl|place|en|...}}, the resulting category will be [[:Category:en:Cities in Brazil]].
+## The value `true`. If there is a triggering holonym, the spec `"``Placetypes`` in +++"` or `"``Placetypes`` of +++"`
+   is constructed. (Here, ``Placetypes`` is the capitalized plural of the entry placetype whose placetype_data is being
+   used, which is not necessarily the same as the entry placetype specified by the user; see the discussion above. The
+   choice of `"in"` or `"of"` is based on the value of the `"preposition"` key at the top level of the entry in
+   `placetype_data`, defaulting to `"in"`.) This spec is then processed as above. If there is no triggering holonym, the
+   simple spec `"``Placetypes``"` is constructed (where ``Placetypes`` is as above).
+
+For example, consider the following entry in placetype_data:
+
+```
+	["municipality"] = {
+		preposition = "of",
+
+		...
+
+		["country/Brazil"] = {
+			["state"] = {"Municipalities of +++, Brazil", "Municipalities of Brazil"},
+			["country"] = {true},
+		},
+
+		...
+	}
+```
+
+If the user uses a template call {{tl|place|pt|municipality|s/Amazonas|c/Brazil}}, the categories
+[[:Category:pt:Municipalities of Amazonas, Brazil]] and [[:Category:pt:Municipalities of Brazil]] will be generated.
+This is because the outer key `"country/Brazil"` matches the second holonym `"c/Brazil"` (by this point, the alias `"c"`
+has been expanded to `"country"`), and the inner key `"state" matches the first holonym `"s/Amazonas"`, which serves as
+the triggering holonym and is used to replace the `+++` in the first category spec.
+
+Now imagine the user uses the template call {{tl|place|en|small municipality|c/Brazil}}. There is no entry in
+`placetype_data` for `"small municipality"`, but `"small"` is a recognized qualifier, and there is an entry in
+`placetype_data` for `"municipality"`, so that entry's data is used. Now, the second holonym `"c/Brazil"` will match the
+outer key `"country/Brazil"` as before, but in this case the second holonym will also match the inner key `"country"`
+and will serve as the triggering holonym.  The cat spec `true` will be expanded to `"Municipalities of +++"`, using the
+placetype `"municipality"` corresponding to the entry in `placetype_data` (not the user-specified placetype `"small
+municipality"`), and the preposition `"of"`, as specified in the `placetype_data` entry. The `+++` will then be expanded
+to `"Brazil"` based on the triggering holonym, the language code `"en"` will be prepended, and the final category will
+be [[:Category:en:Municipalities of Brazil]].
 ]==]
 
 
@@ -216,13 +299,6 @@ local function link(text, langcode, id)
 		{term = text, lang = require(languages_module).getByCode(langcode, true, "allow etym"), id = id},
 		nil, "allow self link"
 	)
-end
-
-
--- Return the category link for a category, given the language code and the name of the category.
-local function catlink(lang, text, sort_key)
-	return require(utilities_module).format_categories(lang:getFullCode() .. ":" ..
-		data.remove_links_and_html(text), lang, sort_key, nil, force_cat or data.force_cat)
 end
 
 
@@ -243,7 +319,7 @@ local function ucfirst_all(text)
 		for i, part in ipairs(parts) do
 			parts[i] = m_strutils.ucfirst(part)
 		end
-		return table.concat(parts, " ")
+		return concat(parts, " ")
 	else
 		return m_strutils.ucfirst(text)
 	end
@@ -255,14 +331,13 @@ local function lc(text)
 end
 
 
--- Return the article that is used with a place type. It is fetched from the cat_data
--- table; if that doesn’t exist, "an" is given for words beginning with a vowel
--- and "a" otherwise.
--- If ucfirst == true, the first letter of the article is made upper-case.
+-- Return the article that is used with a place type. It is fetched from the placetype_data table; if that doesn’t
+-- exist, "an" is given for words beginning with a vowel and "a" otherwise. If `ucfirst` is true, the first letter of
+-- the article is made upper-case.
 local function get_placetype_article(placetype, ucfirst)
 	local art
 
-	local pt_data = data.get_equiv_placetype_prop(placetype, function(pt) return cat_data[pt] end)
+	local pt_data = m_data.get_equiv_placetype_prop(placetype, function(pt) return placetype_data[pt] end)
 	if pt_data and pt_data.article then
 		art = pt_data.article
 	else
@@ -281,8 +356,8 @@ end
 -- up the plural in [[Module:place/data]], falling back to pluralize() in [[Module:en-utilities]], which is almost
 -- always correct.
 local function get_placetype_plural(placetype, ucfirst)
-	local pt_data, equiv_placetype_and_qualifier = data.get_equiv_placetype_prop(placetype,
-		function(pt) return cat_data[pt] end)
+	local pt_data, equiv_placetype_and_qualifier = m_data.get_equiv_placetype_prop(placetype,
+		function(pt) return placetype_data[pt] end)
 	if pt_data then
 		placetype = pt_data.plural or pluralize(equiv_placetype_and_qualifier.placetype)
 	else
@@ -304,7 +379,7 @@ local function split_on_comma(val)
 	if val:find(",") then
 		return require(parse_interface_module).split_on_comma(val)
 	else
-		return val
+		return {val}
 	end
 end
 
@@ -318,7 +393,7 @@ local function split_on_slash(arg)
 		local segments = m_parse_utilities.parse_balanced_segment_run(arg, "<", ">")
 		local slash_separated_groups = m_parse_utilities.split_alternating_runs(segments, "/")
 		for i, group in ipairs(slash_separated_groups) do
-			slash_separated_groups[i] = table.concat(group)
+			slash_separated_groups[i] = concat(group)
 		end
 		return slash_separated_groups
 	else
@@ -327,35 +402,41 @@ local function split_on_slash(arg)
 end
 
 
--- Implement "implications", i.e. where the presence of a given holonym causes additional holonym(s) to be added. There
--- are two types of implications, general implications (which apply to both display and categorization) and category
--- implications (which apply only to categorization). `place_descriptions` is a list of place descriptions (see top of
--- file, collectively describing the data passed to {{place}}. `implication_data` is the data used to implement the
--- implications, i.e. a table indexed by holonym placetype, each value of which is a table indexed by holonym place
--- name, each value of which is a list of "PLACETYPE/PLACENAME" holonyms to be added to the end of the list of holonyms.
--- `should_clone` specifies whether to clone a given place desc before modifying it.
-local function handle_implications(place_descriptions, implication_data, should_clone)
+-- Implement "implications", i.e. where the presence of a given holonym causes additional holonym(s) to be added.
+-- Implications apply only to categorization. There used to be support for "general implications" that applied to both
+-- display and categorization, but there ended up not being any such implications, so we've removed the support. It is
+-- a bad idea in any case to have such implications; the user might purposely leave out a higher-level polity to avoid
+-- redundancy in several successive definitions, and we wouldn't want to override that. Note that in practice the
+-- mechanism implemented by this function is used specifically for non-administrative geographic regions such as
+-- Eastern Europe and the West Bank; there is a similar mechanism for administrative regions handled by
+-- `augment_holonyms_with_containing_polity` in [[Module:place/data]].
+--
+-- `place_descriptions` is a list of place descriptions (see top of file, collectively describing the data passed to
+-- {{place}}). `implication_data` is the data used to implement the implications, i.e. a table indexed by holonym
+-- placetype, each value of which is a table indexed by holonym placename, each value of which is a list of
+-- "PLACETYPE/PLACENAME" holonyms to be added to the end of the list of holonyms.
+local function handle_implications(place_descriptions, implication_data)
 	for i, desc in ipairs(place_descriptions) do
 		if desc.holonyms then
 			local imps_to_add = {}
 
 			for _, holonym in ipairs(desc.holonyms) do
-				local imp_data = data.get_equiv_placetype_prop(holonym.placetype, function(pt)
-					local implication = implication_data[pt] and implication_data[pt][data.remove_links_and_html(holonym.placename)]
+				local imp_data = m_data.get_equiv_placetype_prop(holonym.placetype, function(pt)
+					local implication = implication_data[pt] and implication_data[pt][
+						m_data.remove_links_and_html(holonym.placename)]
 					if implication then
 						return implication
 					end
 				end)
 				if imp_data then
-					table.insert(imps_to_add, imp_data)
+					insert(imps_to_add, imp_data)
 				end
 			end
 
 			if #imps_to_add > 0 then
-				if should_clone and not cloned then
-					desc = mw.clone(desc)
-					place_descriptions[i] = desc
-				end
+				-- FIXME: Formerly we called mw.clone() here on the place description before in-place modifying it. I
+				-- don't see a reason for doing this, so I've removed the code, but if this leads to issues, put it back
+				-- AND DOCUMENT WHY WE ARE CLONING.
 				for _, imp_data in ipairs(imps_to_add) do
 					for _, holonym_to_add in ipairs(imp_data) do
 						local split_holonym = split_on_slash(holonym_to_add)
@@ -364,8 +445,8 @@ local function handle_implications(place_descriptions, implication_data, should_
 						end
 						local holonym_placetype, holonym_placename = unpack(split_holonym, 1, 2)
 						local new_holonym = {placetype = holonym_placetype, placename = holonym_placename}
-						table.insert(desc.holonyms, new_holonym)
-						data.key_holonym_into_place_desc(desc, new_holonym)
+						insert(desc.holonyms, new_holonym)
+						m_data.key_holonym_into_place_desc(desc, new_holonym)
 					end
 				end
 			end
@@ -396,9 +477,9 @@ end
 
 -- If `placename` of type `placetype` is an alias, convert it to its canonical form; otherwise, return unchanged.
 local function resolve_placename_aliases(placetype, placename)
-	return data.get_equiv_placetype_prop(placetype,
-		function(pt) return data.placename_display_aliases[pt] and lookup_placename_in_alias_table(
-			placename, data.placename_display_aliases[pt]) end
+	return m_data.get_equiv_placetype_prop(placetype,
+		function(pt) return m_data.placename_display_aliases[pt] and lookup_placename_in_alias_table(
+			placename, m_data.placename_display_aliases[pt]) end
 	) or placename
 end
 
@@ -413,7 +494,7 @@ local function split_holonym_placename(placename)
 			if i > 1 and placename:find("^ ") then
 				retval[#retval] = retval[#retval] .. "," .. placename
 			else
-				table.insert(retval, placename)
+				insert(retval, placename)
 			end
 		end
 		return retval
@@ -446,7 +527,7 @@ local function split_holonym(raw)
 
 	-- Rejoin further slashes in case of slash in holonym placename, e.g. Admaston/Bromley.
 	local placetype = holonym_parts[1]
-	local placename = table.concat(holonym_parts, "/", 2)
+	local placename = concat(holonym_parts, "/", 2)
 
 	-- Check for modifiers after the holonym placetype.
 	local split_holonym_placetype = split(placetype, ":", true)
@@ -463,7 +544,7 @@ local function split_holonym(raw)
 		end
 	end
 
-	placetype = data.resolve_placetype_aliases(placetype)
+	placetype = m_data.resolve_placetype_aliases(placetype)
 	local holonyms = split_holonym_placename(placename)
 	local pluralize_affix = #holonyms > 1
 	local affix_holonym_index = (affix_type == "pref" or affix_type == "Pref") and 1 or affix_type == "noaff" and 0 or #holonyms
@@ -544,16 +625,16 @@ function export.parse_new_style_place_desc(text)
 	local retval = {holonyms = {}, order = {}}
 	for i, segment in ipairs(segments) do
 		if i % 2 == 1 then
-			table.insert(retval.order, {type = "raw", value = segment})
+			insert(retval.order, {type = "raw", value = segment})
 		elseif segment:find("/") then
 			local holonyms = split_holonym(segment)
 			for j, holonym in ipairs(holonyms) do
 				if j > 1 then
 					if not holonym.no_display then
 						if j == #holonyms then
-							table.insert(retval.order, {type = "raw", value = " and "})
+							insert(retval.order, {type = "raw", value = " and "})
 						else
-							table.insert(retval.order, {type = "raw", value = ", "})
+							insert(retval.order, {type = "raw", value = ", "})
 						end
 					end
 					-- All but the first in a multi-holonym need an article. For the first one, the article is
@@ -562,11 +643,11 @@ function export.parse_new_style_place_desc(text)
 					-- for something else.)
 					holonym.needs_article = true
 				end
-				table.insert(retval.holonyms, holonym)
+				insert(retval.holonyms, holonym)
 				if not holonym.no_display then
-					table.insert(retval.order, {type = "holonym", value = #retval.holonyms})
+					insert(retval.order, {type = "holonym", value = #retval.holonyms})
 				end
-				data.key_holonym_into_place_desc(retval, holonym)
+				m_data.key_holonym_into_place_desc(retval, holonym)
 			end
 		else
 			local treat_as, display = segment:match("^(..-):(.+)$")
@@ -579,16 +660,16 @@ function export.parse_new_style_place_desc(text)
 			local only_qualifiers = true
 			local split_segments = split(segment, " ", true)
 			for _, split_segment in ipairs(split_segments) do
-				if not data.placetype_qualifiers[split_segment] then
+				if not m_data.placetype_qualifiers[split_segment] then
 					only_qualifiers = false
 					break
 				end
 			end
-			table.insert(placetypes, {placetype = segment, only_qualifiers = only_qualifiers})
+			insert(placetypes, {placetype = segment, only_qualifiers = only_qualifiers})
 			if only_qualifiers then
-				table.insert(retval.order, {type = "qualifier", value = display})
+				insert(retval.order, {type = "qualifier", value = display})
 			else
-				table.insert(retval.order, {type = "placetype", value = display})
+				insert(retval.order, {type = "placetype", value = display})
 			end
 		end
 	end
@@ -598,7 +679,7 @@ function export.parse_new_style_place_desc(text)
 		if i > 1 and placetypes[i - 1].only_qualifiers then
 			final_placetypes[#final_placetypes] = final_placetypes[#final_placetypes] .. " " .. placetypes[i].placetype
 		else
-			table.insert(final_placetypes, placetypes[i].placetype)
+			insert(final_placetypes, placetypes[i].placetype)
 		end
 	end
 	retval.placetypes = final_placetypes
@@ -682,15 +763,13 @@ local function parse_place_descriptions(numargs)
 							end
 						end
 						this_desc.holonyms[holonym_index] = holonym
-						data.key_holonym_into_place_desc(this_desc, this_desc.holonyms[holonym_index])
+						m_data.key_holonym_into_place_desc(this_desc, this_desc.holonyms[holonym_index])
 						holonym_index = holonym_index + 1
 					end
 				end
 			end
 		end
 	end
-
-	handle_implications(descs, data.general_implications, false)
 
 	-- Tracking code. This does nothing but add tracking for seen placetypes and qualifiers. The place will be linked to
 	-- [[Wiktionary:Tracking/place/entry-placetype/PLACETYPE]] for all entry placetypes seen; in addition, if PLACETYPE
@@ -710,7 +789,7 @@ local function parse_place_descriptions(numargs)
 	--   [[Special:WhatLinksHere/Wiktionary:Tracking/place/holonym-placetype/country]]
 	for _, desc in ipairs(descs) do
 		for _, entry_placetype in ipairs(desc.placetypes) do
-			local splits = data.split_qualifiers_from_placetype(entry_placetype, "no canon qualifiers")
+			local splits = m_data.split_qualifiers_from_placetype(entry_placetype, "no canon qualifiers")
 			for _, split in ipairs(splits) do
 				local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
 				track("entry-placetype/" .. bare_placetype)
@@ -751,11 +830,11 @@ local function get_translations(transl, ids)
 			end
 		end
 		for j, arg_transl in ipairs(arg_transls) do
-			table.insert(ret, link(arg_transl, "en", arg_ids and arg_ids[j] or nil))
+			insert(ret, link(arg_transl, "en", arg_ids and arg_ids[j] or nil))
 		end
 	end
 
-	return table.concat(ret, ", ")
+	return concat(ret, ", ")
 end
 
 
@@ -764,12 +843,12 @@ end
 local function get_holonym_article(holonym, linked_placename)
 	local placetype = holonym.placetype
 	local placename = holonym.placename
-	placename = data.remove_links_and_html(placename)
-	local unlinked_placename = data.remove_links_and_html(linked_placename)
+	placename = m_data.remove_links_and_html(placename)
+	local unlinked_placename = m_data.remove_links_and_html(linked_placename)
 	if unlinked_placename:find("^the ") then
 		return nil
 	end
-	local art = data.get_equiv_placetype_prop(placetype, function(pt) return data.placename_article[pt] and data.placename_article[pt][placename] end)
+	local art = m_data.get_equiv_placetype_prop(placetype, function(pt) return m_data.placename_article[pt] and m_data.placename_article[pt][placename] end)
 	if art then
 		return art
 	end
@@ -780,19 +859,20 @@ local function get_holonym_article(holonym, linked_placename)
 		-- "dept:pref/Gironde", we'll wrongly get "the department of the Gironde", so in that case we need to ignore the
 		-- holonym article specified along with the placetype. (NOTE: We have since turned off the holonym_article on
 		-- 'department'.)
-		art = data.get_equiv_placetype_prop(placetype, function(pt) return cat_data[pt] and cat_data[pt].holonym_article end)
+		art = m_data.get_equiv_placetype_prop(placetype,
+			function(pt) return placetype_data[pt] and placetype_data[pt].holonym_article end)
 		if art then
 			return art
 		end
 	end
-	local universal_res = data.placename_the_re["*"]
+	local universal_res = m_data.placename_the_re["*"]
 	for _, re in ipairs(universal_res) do
 		if unlinked_placename:find(re) then
 			return "the"
 		end
 	end
-	local matched = data.get_equiv_placetype_prop(placetype, function(pt)
-		local res = data.placename_the_re[pt]
+	local matched = m_data.get_equiv_placetype_prop(placetype, function(pt)
+		local res = m_data.placename_the_re[pt]
 		if not res then
 			return nil
 		end
@@ -835,14 +915,14 @@ local function get_holonym_description(holonym, needs_article, display_form)
 
 	if display_form then
 		-- Implement display handlers.
-		local display_handler = data.get_equiv_placetype_prop(placetype,
-			function(pt) return cat_data[pt] and cat_data[pt].display_handler end)
+		local display_handler = m_data.get_equiv_placetype_prop(placetype,
+			function(pt) return placetype_data[pt] and placetype_data[pt].display_handler end)
 		if display_handler then
 			output = display_handler(placetype, output)
 		end
 		if not holonym.suppress_affix then
 			-- Implement adding an affix (prefix or suffix) based on the holonym's placetype. The affix will be
-			-- added either if the placetype's cat_data spec says so (by setting 'affix_type'), or if the
+			-- added either if the placetype's placetype_data spec says so (by setting 'affix_type'), or if the
 			-- user explicitly called for this (e.g. by using 'r:suf/O'Higgins'). Before adding the affix,
 			-- however, we check to see if the affix is already present (e.g. the placetype is "district"
 			-- and the placename is "Mission District"). The placetype can override the affix to add (by setting
@@ -866,15 +946,15 @@ local function get_holonym_description(holonym, needs_article, display_form)
 			--    least surprise).
 			-- 3. Finally, fall back to the placetype associated with an explicit `affix_type` setting (which will
 			--    always exist if we get this far).
-			affix_type_pt_data, pt_equiv_for_affix_type = data.get_equiv_placetype_prop(placetype,
+			affix_type_pt_data, pt_equiv_for_affix_type = m_data.get_equiv_placetype_prop(placetype,
 				function(pt)
-					local cdpt = cat_data[pt]
+					local cdpt = placetype_data[pt]
 					return cdpt and cdpt.affix_type and cdpt or nil
 				end
 			)
-			affix_pt_data, pt_equiv_for_affix = data.get_equiv_placetype_prop(placetype,
+			affix_pt_data, pt_equiv_for_affix = m_data.get_equiv_placetype_prop(placetype,
 				function(pt)
-					local cdpt = cat_data[pt]
+					local cdpt = placetype_data[pt]
 					return cdpt and (cdpt.affix_type or cdpt.affix or cdpt.prefix or cdpt.suffix) and cdpt or nil
 				end
 			)
@@ -918,7 +998,7 @@ local function get_holonym_description(holonym, needs_article, display_form)
 				if holonym.pluralize_affix then
 					affix = get_placetype_plural(affix)
 				end
-				already_seen_affix = data.check_already_seen_string(output, no_affix_strings)
+				already_seen_affix = m_data.check_already_seen_string(output, no_affix_strings)
 			end
 		end
 		output = link(output, holonym.langcode or placetype and "en" or nil)
@@ -955,7 +1035,7 @@ end
 local function get_in_or_of(placetype)
 	local preposition = "in"
 
-	local pt_data = data.get_equiv_placetype_prop(placetype, function(pt) return cat_data[pt] end)
+	local pt_data = m_data.get_equiv_placetype_prop(placetype, function(pt) return placetype_data[pt] end)
 	if pt_data and pt_data.preposition then
 		preposition = pt_data.preposition
 	end
@@ -1001,7 +1081,7 @@ end
 -- is recognized, or is the plural if a recognized placetype, the corresponding linked display form is returned (with
 -- plural placetypes displaying as plural but linked to the singular form of the placetype). Otherwise, return nil.
 local function get_placetype_display_form(placetype)
-	local linked_version = data.placetype_links[placetype]
+	local linked_version = m_data.placetype_links[placetype]
 	if linked_version then
 		if linked_version == true then
 			return "[[" .. placetype .. "]]"
@@ -1011,9 +1091,9 @@ local function get_placetype_display_form(placetype)
 			return linked_version
 		end
 	end
-	local sg_placetype = data.maybe_singularize(placetype)
+	local sg_placetype = m_data.maybe_singularize(placetype)
 	if sg_placetype then
-		local linked_version = data.placetype_links[sg_placetype]
+		local linked_version = m_data.placetype_links[sg_placetype]
 		if linked_version then
 			if linked_version == true then
 				return "[[" .. sg_placetype .. "|" .. placetype .. "]]"
@@ -1033,7 +1113,7 @@ end
 
 -- Return the linked description of a placetype. This splits off any qualifiers and displays them separately.
 local function get_placetype_description(placetype)
-	local splits = data.split_qualifiers_from_placetype(placetype)
+	local splits = m_data.split_qualifiers_from_placetype(placetype)
 	local prefix = ""
 	for _, split in ipairs(splits) do
 		local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
@@ -1054,7 +1134,7 @@ end
 
 -- Return the linked description of a qualifier (which may be multiple words).
 local function get_qualifier_description(qualifier)
-	local splits = data.split_qualifiers_from_placetype(qualifier .. " foo")
+	local splits = m_data.split_qualifiers_from_placetype(qualifier .. " foo")
 	local split = splits[#splits]
 	local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
 	return prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
@@ -1152,7 +1232,7 @@ local function get_extra_info(args, paramname, tag, ucfirst, auto_plural, with_c
 		end
 
 		for _, term in ipairs(terms) do
-			table.insert(linked_values, m_links.full_link(term, nil, "allow self link", "show qualifiers"))
+			insert(linked_values, m_links.full_link(term, nil, "allow self link", "show qualifiers"))
 		end
 	end
 
@@ -1164,7 +1244,7 @@ local function get_extra_info(args, paramname, tag, ucfirst, auto_plural, with_c
 		s = s .. "; " .. tag
 	end
 
-	return s .. " " .. require(table_module).serialCommaJoin(linked_values)
+	return s .. " " .. m_table.serialCommaJoin(linked_values)
 end
 
 
@@ -1181,7 +1261,7 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 	end
 	local parts = {}
 	local function ins(txt)
-		table.insert(parts, txt)
+		insert(parts, txt)
 	end
 	local function ins_space()
 		if #parts > 0 then
@@ -1202,7 +1282,7 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 		track("multiple-placetypes-with-and")
 		if and_or_pos == #placetypes then
 			error("Conjunctions 'and' and 'or' cannot occur last in a set of slash-separated placetypes: " ..
-				table.concat(placetypes, "/"))
+				concat(placetypes, "/"))
 		end
 		local items = {}
 		for i = 1, and_or_pos + 1 do
@@ -1214,10 +1294,10 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 				items[#items] = items[#items] .. " " .. pt
 			else
 				placetype_for_in_or_of = pt
-				table.insert(items, get_placetype_description(pt))
+				insert(items, get_placetype_description(pt))
 			end
 		end
-		ins(require(table_module).serialCommaJoin(items, {conj = placetypes[and_or_pos]}))
+		ins(m_table.serialCommaJoin(items, {conj = placetypes[and_or_pos]}))
 		remaining_placetype_index = and_or_pos + 2
 	else
 		remaining_placetype_index = 1
@@ -1227,7 +1307,7 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 		local pt = placetypes[i]
 		-- Check for and, or and placetypes beginning with a paren (so that things like
 		-- "{{place|en|county/(one of 254)|s/Texas}}" work).
-		if data.placetype_is_ignorable(pt) then
+		if m_data.placetype_is_ignorable(pt) then
 			ins_space()
 			ins(pt)
 		else
@@ -1268,7 +1348,7 @@ local function get_old_style_gloss(args, place_desc, desc_index, with_article, u
 		end
 	end
 
-	local gloss = table.concat(parts)
+	local gloss = concat(parts)
 
 	if with_article then
 		local article
@@ -1318,25 +1398,25 @@ function export.get_new_style_gloss(args, place_desc, with_article)
 	local parts = {}
 
 	if with_article and args.a then
-		table.insert(parts, args.a .. " ")
+		insert(parts, args.a .. " ")
 	end
 
 	for _, order in ipairs(place_desc.order) do
 		local segment_type, segment = order.type, order.value
 		if segment_type == "raw" then
-			table.insert(parts, segment)
+			insert(parts, segment)
 		elseif segment_type == "placetype" then
-			table.insert(parts, get_placetype_description(segment))
+			insert(parts, get_placetype_description(segment))
 		elseif segment_type == "qualifier" then
-			table.insert(parts, get_qualifier_description(segment))
+			insert(parts, get_qualifier_description(segment))
 		elseif segment_type == "holonym" then
-			table.insert(parts, get_holonym_description(place_desc.holonyms[segment], false, true))
+			insert(parts, get_holonym_description(place_desc.holonyms[segment], false, true))
 		else
 			error("Internal error: Unrecognized segment type '" .. segment_type .. "'")
 		end
 	end
 
-	return table.concat(parts)
+	return concat(parts)
 end
 
 
@@ -1348,7 +1428,12 @@ local function get_gloss(args, descs, ucfirst, drop_extra_info)
 	if args.def == "-" then
 		return ""
 	elseif args.def then
-		return args.def
+		if args.def:find("<<") then
+			local def_desc = export.parse_new_style_place_desc(args.def)
+			return export.get_new_style_gloss({}, def_desc, false)
+		else
+			return args.def
+		end
 	end
 
 	local glosses = {}
@@ -1356,25 +1441,26 @@ local function get_gloss(args, descs, ucfirst, drop_extra_info)
 	local gloss_ucfirst = ucfirst
 	for n, desc in ipairs(descs) do
 		if desc.order then
-			table.insert(glosses, export.get_new_style_gloss(args, desc, n == 1))
+			insert(glosses, export.get_new_style_gloss(args, desc, n == 1))
 		else
-			table.insert(glosses, get_old_style_gloss(args, desc, n, include_article, gloss_ucfirst))
+			insert(glosses, get_old_style_gloss(args, desc, n, include_article, gloss_ucfirst))
 		end
 		if desc.joiner then
-			table.insert(glosses, desc.joiner)
+			insert(glosses, desc.joiner)
 		end
 		include_article = desc.include_following_article
 		gloss_ucfirst = false
 	end
 
-	local ret = {table.concat(glosses)}
+	local ret = {concat(glosses)}
 
 	if not drop_extra_info then
-		table.insert(ret, get_extra_info(args, "modern", "modern", false, false, false))
-		table.insert(ret, get_extra_info(args, "official", "official name", ucfirst, "auto plural", "with colon"))
-		table.insert(ret, get_extra_info(args, "capital", "capital", ucfirst, "auto plural", "with colon"))
-		table.insert(ret, get_extra_info(args, "largest city", "largest city", ucfirst, "auto plural", "with colon"))
-		table.insert(ret, get_extra_info(args, "caplc", "capital and largest city", ucfirst, false, "with colon"))
+		insert(ret, get_extra_info(args, "modern", "modern", false, false, false))
+		insert(ret, get_extra_info(args, "full", "in full,", false, false, false))
+		insert(ret, get_extra_info(args, "official", "official name", ucfirst, "auto plural", "with colon"))
+		insert(ret, get_extra_info(args, "capital", "capital", ucfirst, "auto plural", "with colon"))
+		insert(ret, get_extra_info(args, "largest city", "largest city", ucfirst, "auto plural", "with colon"))
+		insert(ret, get_extra_info(args, "caplc", "capital and largest city", ucfirst, false, "with colon"))
 		local placetype = descs[1].placetypes[1]
 		if placetype == "county" or placetype == "counties" then
 			placetype = "county seat"
@@ -1385,12 +1471,12 @@ local function get_gloss(args, descs, ucfirst, drop_extra_info)
 		else
 			placetype = "seat"
 		end
-		table.insert(ret, get_extra_info(args, "seat", placetype, ucfirst, "auto plural", "with colon"))
-		table.insert(ret, get_extra_info(args, "shire town", "shire town", ucfirst, "auto plural", "with colon"))
-		table.insert(ret, get_extra_info(args, "headquarters", "headquarters", ucfirst, false, "with colon"))
+		insert(ret, get_extra_info(args, "seat", placetype, ucfirst, "auto plural", "with colon"))
+		insert(ret, get_extra_info(args, "shire town", "shire town", ucfirst, "auto plural", "with colon"))
+		insert(ret, get_extra_info(args, "headquarters", "headquarters", ucfirst, false, "with colon"))
 	end
 
-	return table.concat(ret)
+	return concat(ret)
 end
 
 
@@ -1408,81 +1494,7 @@ end
 
 ---------- Functions for the category wikicode
 
---[=[
-
-The code in this section finds the categories to which a given place belongs. The algorithm works off of a place
-description (which specifies the entry placetype(s) and holonym(s); see comment at top of file). Iterating over each
-entry placetype, it proceeds as follows:
-(1) Look up the placetype in the `cat_data`, which comes from [[Module:place/data]]. Note that the entry in `cat_data`
-	that specifies the category or categories to add may directly correspond to the entry placetype as specified in the
-	place description. For example, if the entry placetype is "small town", the placetype whose data is fetched will be
-	"town" since "small" is a recognized qualifier and there is no entry in `cat_data` for "small town". As another
-	example, if the entry placetype is "administrative capital", the placetype whose data will be fetched will be
-	"capital city" because there's no entry in `cat_data` for "administrative capital" but there is an entry in
-	`placetype_equivs` in [[Module:place/data]] that maps "administrative capital" to "capital city" for categorization
-	purposes.
-(2) The value in `cat_data` is a two-level table. The outer table is indexed by the holonym itself (e.g.
-	"country/Brazil") or by "default", and the inner indexed by the holonym's placetype (e.g. "country") or by "itself".
-	Note that most frequently, if the outer table is indexed by a holonym, the inner table will be indexed only by
-	"itself", while if the outer table is indexed by "default", the inner table will be indexed by one or more holonym
-	placetypes, meaning to generate a category for all holonyms of this placetype. But this is not necessarily the case.
-(3) Iterate through the holonyms, from left to right, finding the first holonym that matches (in both placetype and
-	placename) a key in the outer table. If no holonym matches any key, then if a key "default" exists, use that;
-	otherwise, if a key named "fallback" exists, specifying a placetype, use that placetype to fetch a new `cat_data`
-	entry, and start over with step (1); otherwise, don't categorize.
-(4) Iterate again through the holonyms, from left to right, finding the first holonym whose placetype matches a key in
-	the inner table. If no holonym matches any key, then if a key "itself" exists, use that; otherwise, check for a key
-	named "fallback" at the top level of the `cat_data` entry and, if found, proceed as in step (3); otherwise don't
-	categorize.
-(5) The resulting value found is a list of category specs. Each category spec specifies a category to be added. In order
-	to understand how category specs are processed, you have to understand the concept of the 'triggering holonym'. This
-	is the holonym that matched an inner key in step (4), if any; else, the holonym that matched an outer key in step
-	(3), if any; else, there is no triggering holonym. (The only time this happens when there are category specs is
-	when the outer key is "default" and the inner key is "itself".)
-(6) Iterate through the category specs and construct a category from each one. Each category spec is one of the
-	following:
-	(a) A string, such as "Seas", "Districts of England" or "Cities in +++". If "+++" is contained in the string, it
-		will be substituted with the placename of the triggering holonym. If there is no triggering holonym, an error is
-		thrown. This is then prefixed with the language code specified in the first argument to the call to {{place}}.
-		For example, if the triggering holonym is "country/Brazil", the category spec is "Cities in +++" and the
-		template invocation was {{place|en|...}}, the resulting category will be [[:Category:en:Cities in Brazil]].
-	(b) The value 'true'. If there is a triggering holonym, the spec "PLACETYPES in +++" or "PLACETYPES of +++" is
-		constructed. (Here, PLACETYPES is the plural of the entry placetype whose cat_data is being used, which is not
-		necessarily the same as the entry placetype specified by the user; see the discussion above. The choice of "in"
-		or "of" is based on the value of the "preposition" key at the top level of the entry in `cat_data`, defaulting
-		to "in".) This spec is then processed as above. If there is no triggering holonym, the simple spec "PLACETYPES"
-		is constructed (where PLACETYPES is as above).
-
-For example, consider the following entry in cat_data:
-	["municipality"] = {
-		preposition = "of",
-
-		...
-
-		["country/Brazil"] = {
-			["state"] = {"Municipalities of +++, Brazil", "Municipalities of Brazil"},
-			["country"] = {true},
-		},
-
-		...
-	}
-
-If the user uses a template call {{place|pt|municipality|s/Amazonas|c/Brazil}}, the categories
-[[:Category:pt:Municipalities of Amazonas, Brazil]] and [[:Category:pt:Municipalities of Brazil]] will be generated.
-This is because the outer key "country/Brazil" matches the second holonym "c/Brazil" (by this point, the alias "c" has
-been expanded to "country"), and the inner key "state" matches the first holonym "s/Amazonas", which serves as the
-triggering holonym and is used to replace the +++ in the first category spec.
-
-Now imagine the user uses the template call {{place|en|small municipality|c/Brazil}}. There is no entry in `cat_data`
-for "small municipality", but "small" is a recognized qualifier, and there is an entry in `cat_data` for "municipality",
-so that entry's data is used. Now, the second holonym "c/Brazil" will match the outer key "country/Brazil" as before,
-but in this case the second holonym will also match the inner key "country" and will serve as the triggering holonym.
-The cat spec 'true' will be expanded to "Municipalities of +++", using the placetype "municipality" corresponding to the
-entry in `cat_data` (not the user-specified placetype "small municipality"), and the preposition "of", as specified in
-the `cat_data` entry. The +++ will then be expanded to "Brazil" based on the triggering holonym, the language code "en"
-will be prepended, and the final category will be [[:Category:en:Municipalities of Brazil]].
-]=]
-
+-- The code in this section finds the categories to which a given place belongs. See comment at top of file.
 
 -- Apply any category aliases to a holonym, converting the placename to the canonical placename for categorization
 -- purposes. We need to do this as early as possible on each holonym we process and use the resolved holonym for
@@ -1491,9 +1503,9 @@ will be prepended, and the final category will be [[:Category:en:Municipalities 
 -- [[:Category:Provinces of People's Republic of China]] because its definition is
 -- {{place|en|province|c/People's Republic of China}}).
 local function resolve_holonym_cat_aliases(holonym)
-	local new_holonym_placename = data.resolve_cat_aliases(holonym.placetype, holonym.placename)
+	local new_holonym_placename = m_data.resolve_cat_aliases(holonym.placetype, holonym.placename)
 	if new_holonym_placename ~= holonym.placename then
-		local resolved_holonym = require(table_module).shallowCopy(holonym)
+		local resolved_holonym = m_table.shallowCopy(holonym)
 		resolved_holonym.placename = new_holonym_placename
 		return resolved_holonym
 	end
@@ -1514,18 +1526,21 @@ Find the appropriate category specs for a given place description; e.g. for the 
 	country = {"United States"},
   }
 },
-the return value might be be "city", {"Cities in +++, USA"}, {"state", "Pennsylvania"}, "outer"
+the return value might be be `"city", {"Cities in +++, USA"}, {"state", "Pennsylvania"}, "outer"`
 (i.e. four values are returned; see below). See the comment at the top of the section for a description of category
 specs and the overall algorithm.
 
-More specifically, given the following arguments:
-(1) the entry placetype (or equivalent) used to look up the category data in cat_data;
-(2) the value of cat_data[placetype] for this placetype;
-(3) the full place description as documented at the top of the file (used only for its holonyms);
-(4) an optional overriding holonym to use, in place of iterating through the holonyms;
-(5) if an overriding holonym was specified, either "inner" or "outer" to indicate which loop to override;
-(6) a flag to indicate whether to ignore category handlers (used by district_cat_handler);
-find the holonyms that match the outer-level and inner-level keys in the `cat_data` entry
+More specifically, `data` is an object with the following fields:
+* `entry_placetype`: the entry placetype (or equivalent) used to look up the category data in placetype_data,
+  which must have already been resolved to a placetype with an entry in `placetype_data`;
+* `place_desc`: the full place description as documented at the top of the file (used only for its holonyms);
+* `overriding_holonym`: an optional overriding holonym to use, in place of iterating through the holonyms;
+* `override_inner_outer`: if an overriding holonym was specified, either "inner" or "outer" to indicate which loop to
+  override;
+* `ignore_cat_handler`: a flag to indicate whether to ignore category handlers (used by district_cat_handler);
+* `from_demonym`: we are called from {{tl|demonym-noun}} or {{tl|demonym-adj}} instead of {{tl|place}}, and should
+  generate categories appropriate to those templates.
+find the holonyms that match the outer-level and inner-level keys in the `placetype_data` entry
 according to the algorithm described in the top-of-section comment, and return the resulting
 category specs. Four values are actually returned:
 
@@ -1534,17 +1549,23 @@ CATEGORY_SPECS, ENTRY_PLACETYPE, TRIGGERING_HOLONYM, INNER_OR_OUTER
 where
 
 (1) CATEGORY_SPECS is a list of category specs as described above;
-(2) ENTRY_PLACETYPE is the placetype that should be used to construct categories when 'true'
-	is one of the returned category specs (normally the same as the `entry_placetype` passed
-	in, but will be different when a "fallback" key exists and is used);
+(2) ENTRY_PLACETYPE is the placetype that should be used to construct categories when `true` is one of the returned
+    category specs (normally the same as the `entry_placetype` passed in, but will be different when a "fallback" key
+	exists and is used);
 (3) TRIGGERING_HOLONYM is the triggering holonym (see the comment at the top of the section), or nil if there was no
 	triggering holonym;
-(4) INNER_OR_OUTER is "inner" if the triggering holonym matched in the inner loop (whether or not a
-	holonym matched the outer loop), or "outer" if the triggering holonym matched in the outer loop
-	only, or nil if no triggering holonym.
+(4) INNER_OR_OUTER is "inner" if the triggering holonym matched in the inner loop (whether or not a holonym matched the
+    outer loop), or "outer" if the triggering holonym matched in the outer loop only, or nil if no triggering holonym.
 ]=]
-local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc, overriding_holonym,
-	override_inner_outer, ignore_cat_handler)
+local function find_cat_specs(data)
+	local entry_placetype, place_desc, overriding_holonym, override_inner_outer =
+		data.entry_placetype, data.place_desc, data.overriding_holonym, data.override_inner_outer
+	local ignore_cat_handler, from_demonym = data.ignore_cat_handler, data.from_demonym
+	local entry_placetype_data = placetype_data[entry_placetype]
+	if not entry_placetype_data then
+		error(("Internal error: Received entry placetype '%s' without any entry in placetype_data"):format(
+			entry_placetype))
+	end
 	local inner_data = nil
 	local outer_triggering_holonym
 
@@ -1555,14 +1576,20 @@ local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc,
 	local function fetch_inner_data(holonym_to_match)
 		local holonym_placetype = holonym_to_match.placetype
 		local holonym_placename = holonym_to_match.placename
-		local inner_data = data.get_equiv_placetype_prop(holonym_placetype,
+		local inner_data = m_data.get_equiv_placetype_prop(holonym_placetype,
 			function(pt) return entry_placetype_data[(pt or "") .. "/" .. holonym_placename] end)
 		if inner_data then
 			return inner_data
 		end
 		if not ignore_cat_handler and entry_placetype_data.cat_handler then
-			local inner_data = data.get_equiv_placetype_prop(holonym_placetype,
-				function(pt) return entry_placetype_data.cat_handler(pt, holonym_placename, place_desc) end)
+			local inner_data = m_data.get_equiv_placetype_prop(holonym_placetype,
+				function(pt) return entry_placetype_data.cat_handler {
+					entry_placetype = entry_placetype,
+					holonym_placetype = pt,
+					holonym_placename = holonym_placename,
+					place_desc = place_desc,
+					from_demonym = from_demonym
+				} end)
 			if inner_data then
 				return inner_data
 			end
@@ -1591,8 +1618,16 @@ local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc,
 	-- If we didn't find a matching spec, and there's a fallback, look it up. This is used, for example, with "rural
 	-- municipality", which has special cases for some provinces of Canada and otherwise behaves like "municipality".
 	if not inner_data and entry_placetype_data.fallback then
-		return find_cat_specs(entry_placetype_data.fallback, cat_data[entry_placetype_data.fallback], place_desc,
-			overriding_holonym, override_inner_outer)
+		return find_cat_specs {
+			entry_placetype = entry_placetype_data.fallback,
+			place_desc = place_desc,
+			overriding_holonym = overriding_holonym,
+			override_inner_outer = override_inner_outer,
+			-- This is what was here before; it seems a good idea to not ignore cat handlers on fallback as it's a
+			-- different placetype.
+			ignore_cat_handler = false,
+			from_demonym = from_demonym,
+		}
 	end
 
 	if not inner_data then
@@ -1600,7 +1635,7 @@ local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc,
 	end
 
 	local function fetch_cat_specs(holonym_to_match)
-		return data.get_equiv_placetype_prop(holonym_to_match.placetype, function(pt) return inner_data[pt] end)
+		return m_data.get_equiv_placetype_prop(holonym_to_match.placetype, function(pt) return inner_data[pt] end)
 	end
 
 	if overriding_holonym and override_inner_outer == "inner" then
@@ -1637,33 +1672,45 @@ local function find_cat_specs(entry_placetype, entry_placetype_data, place_desc,
 	-- holonym is found matching the city-like entities, the following clause restarts skipping
 	-- `district_cat_handler()`, which eventually categorizes based on the holonym "India".
 	if inner_data.restart_ignoring_cat_handler then
-		return find_cat_specs(entry_placetype, entry_placetype_data, place_desc, overriding_holonym,
-			override_inner_outer, "ignore cat handler")
+		return find_cat_specs {
+			entry_placetype = entry_placetype,
+			place_desc = place_desc,
+			overriding_holonym = overriding_holonym,
+			override_inner_outer = override_inner_outer,
+			ignore_cat_handler = true,
+			from_demonym = from_demonym,
+		}
 	end
 
-	-- If we didn't find a matching key in the inner data, and there's a fallback, look it up, as above.
-	-- This is used, for example, with "rural municipality", which has special cases for
-	-- some provinces of Canada and otherwise behaves like "municipality".
+	-- If we didn't find a matching key in the inner data, and there's a fallback, look it up, as above. This is used,
+	-- for example, with "rural municipality", which has special cases for some provinces of Canada and otherwise
+	-- behaves like "municipality".
 	if entry_placetype_data.fallback then
-		return find_cat_specs(entry_placetype_data.fallback, cat_data[entry_placetype_data.fallback], place_desc,
-			overriding_holonym, override_inner_outer)
+		return find_cat_specs {
+			entry_placetype = entry_placetype_data.fallback,
+			place_desc = place_desc,
+			overriding_holonym = overriding_holonym,
+			override_inner_outer = override_inner_outer,
+			-- See comment above for the other recursive fallback call to find_cat_specs().
+			ignore_cat_handler = false,
+			from_demonym = from_demonym,
+		}
 	end
 
 	return nil, entry_placetype, nil, nil
 end
 
 
--- Turn a list of category specs (see comment at section top) into the corresponding wikicode.
--- It is given the following arguments:
--- (1) the language object (param 1=);
--- (2) the category specs retrieved using find_cat_specs();
--- (3) the entry placetype used to fetch the entry in `cat_data`
--- (4) the triggering holonym (a holonym object; see comment at top of file) used to fetch the category specs
+-- Turn a list of category specs (see comment at section top) into the corresponding categories (minus the language
+-- code prefix). The function is given the following arguments:
+-- (1) the category specs retrieved using find_cat_specs();
+-- (2) the entry placetype used to fetch the entry in `placetype_data`
+-- (3) the triggering holonym (a holonym object; see comment at top of file) used to fetch the category specs
 --     (see top-of-section comment); or nil if no triggering holonym; NOTE: it should already have been passed through
 --     resolve_cat_aliases (which will be the case if it was returned from find_cat_specs()).
 -- The return value is constructed as described in the top-of-section comment.
-local function cat_specs_to_category_wikicode(lang, cat_specs, entry_placetype, holonym, sort_key)
-	local all_cats = ""
+local function cat_specs_to_categories(cat_specs, entry_placetype, holonym)
+	local all_cats = {}
 
 	if holonym then
 		local holonym_placetype, holonym_placename = holonym.placetype, holonym.placename
@@ -1677,11 +1724,11 @@ local function cat_specs_to_category_wikicode(lang, cat_specs, entry_placetype, 
 			end
 
 			if cat:find("%+%+%+") then
-				local equiv_holonym = require(table_module).shallowCopy(holonym)
+				local equiv_holonym = m_table.shallowCopy(holonym)
 				equiv_holonym.placetype = holonym_placetype
 				cat = cat:gsub("%+%+%+", get_holonym_description(equiv_holonym, true, false))
 			end
-			all_cats = all_cats .. catlink(lang, cat, sort_key)
+			insert(all_cats, cat)
 		end
 	else
 		for _, cat_spec in ipairs(cat_specs) do
@@ -1694,7 +1741,7 @@ local function cat_specs_to_category_wikicode(lang, cat_specs, entry_placetype, 
 					error("Category '" .. cat .. "' contains +++ but there is no holonym to substitute")
 				end
 			end
-			all_cats = all_cats .. catlink(lang, cat, sort_key)
+			insert(all_cats, cat)
 		end
 	end
 
@@ -1702,89 +1749,118 @@ local function cat_specs_to_category_wikicode(lang, cat_specs, entry_placetype, 
 end
 
 
--- Return a string containing the category wikicode that should be added to the entry, given the place description
+-- Return the categories (without initial lang code) that should be added to the entry, given the place description
 -- (which specifies the entry placetype(s) and holonym(s); see top of file) and a particular entry placetype (e.g.
 -- "city"). Note that only the holonyms from the place description are looked at, not the entry placetypes in the place
 -- description.
-local function get_cat(lang, place_desc, entry_placetype, sort_key)
-	local entry_pt_data, equiv_entry_placetype_and_qualifier = data.get_equiv_placetype_prop(entry_placetype, function(pt) return cat_data[pt] end)
+local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
+	local entry_pt_data, equiv_entry_placetype_and_qualifier =
+		m_data.get_equiv_placetype_prop(entry_placetype, function(pt) return placetype_data[pt] end)
 
 	-- Check for unrecognized placetype.
 	if not entry_pt_data then
-		return ""
+		return {}
 	end
 
 	local equiv_entry_placetype = equiv_entry_placetype_and_qualifier.placetype
 
 	-- Find the category specs (see top-of-file comment) corresponding to the holonym(s) in the place description.
-	local cat_specs, returned_entry_placetype, triggering_holonym, inner_outer =
-		find_cat_specs(equiv_entry_placetype, entry_pt_data, place_desc)
+	local cat_specs, returned_entry_placetype, triggering_holonym, inner_outer = find_cat_specs {
+		entry_placetype = equiv_entry_placetype,
+		place_desc = place_desc,
+		from_demonym = from_demonym,
+	}
 
 	-- Check if no category spec could be found. This happens if the innermost table in the category data
 	-- doesn't match any holonym's placetype and doesn't have an "itself" entry.
 	if not cat_specs then
-		return ""
+		return {}
 	end
 
 	-- Generate categories for the category specs found.
-	local cat = cat_specs_to_category_wikicode(lang, cat_specs, returned_entry_placetype, triggering_holonym, sort_key)
+	local cats = cat_specs_to_categories(cat_specs, returned_entry_placetype, triggering_holonym)
 
 	-- If there's a triggering holonym (see top-of-file comment), also generate categories for other holonyms
 	-- of the same placetype, so that e.g. {{place|en|city|s/Kansas|and|s/Missouri|c/USA}} generates both
 	-- [[:Category:en:Cities in Kansas, USA]] and [[:Category:en:Cities in Missouri, USA]].
 	if triggering_holonym then
 		for _, other_placename_of_same_type in ipairs(place_desc.holonyms_by_placetype[triggering_holonym.placetype]) do
-			other_placename_of_same_type = data.resolve_cat_aliases(triggering_holonym.placetype, other_placename_of_same_type)
+			other_placename_of_same_type =
+				m_data.resolve_cat_aliases(triggering_holonym.placetype, other_placename_of_same_type)
 			if other_placename_of_same_type ~= triggering_holonym.placename then
 				local overriding_holonym = {
 					placetype = triggering_holonym.placetype, placename = other_placename_of_same_type
 				}
 				local other_cat_specs, other_returned_entry_placetype, other_triggering_holonym, other_inner_outer =
-					find_cat_specs(equiv_entry_placetype, entry_pt_data, place_desc, overriding_holonym, inner_outer)
+					find_cat_specs {
+						entry_placetype = equiv_entry_placetype,
+						place_desc = place_desc,
+						overriding_holonym = overriding_holonym,
+						override_inner_outer = inner_outer,
+						from_demonym = from_demonym,
+					}
 				if other_cat_specs then
-					cat = cat .. cat_specs_to_category_wikicode(lang, other_cat_specs, other_returned_entry_placetype,
-						other_triggering_holonym, sort_key)
+					extend(cats, cat_specs_to_categories(other_cat_specs, other_returned_entry_placetype,
+						other_triggering_holonym))
 				end
 			end
 		end
 	end
 
-	return cat
+	return cats
 end
 
 
--- Iterate through each type of place given `place_descriptions` (a list of place descriptions, as documented at the
--- top of the file) and return a string with the links to all categories that need to be added to the entry.
-local function get_cats(args, place_descriptions)
+--[==[
+Iterate through each type of place given `place_descriptions` (a list of place descriptions, as documented at the
+top of the file) and return a list of the categories that need to be added to the entry. The returned categories need to
+be prefixed with the langcode to get the actual Wiktionary categories, and passed to `format_categories` in
+[[Module:utilities]] to format the categories into strings. `args` is the table of user-specified arguments, used
+primarily to add "bare categories" corresponding to toponyms for known cities and political subdivisions.
+`from_demonym` is true if we're being called from {{tl|demonym-noun}} or {{tl|demonym-adj}}. In this case, we only want
+certain categories added, specifically bare categories corresponding to the most specific specified holonym(s).
+]==]
+function export.get_cats(args, place_descriptions, from_demonym)
 	local cats = {}
-	local lang = args[1]
-	local additional_cats = args.cat
-	local sort_key = args.sort
 
-	handle_implications(place_descriptions, data.cat_implications, true)
-	data.augment_holonyms_with_containing_polity(place_descriptions)
+	handle_implications(place_descriptions, m_data.cat_implications)
+	m_data.augment_holonyms_with_containing_polity(place_descriptions)
 
-	local bare_categories = data.get_bare_categories(args, place_descriptions)
-	for _, bare_cat in ipairs(bare_categories) do
-		table.insert(cats, catlink(lang, bare_cat, sort_key))
+	if not from_demonym then
+		local bare_categories = m_data.get_bare_categories(args, place_descriptions)
+		extend(cats, bare_categories)
 	end
 
 	for _, place_desc in ipairs(place_descriptions) do
-		for _, placetype in ipairs(place_desc.placetypes) do
-			if not data.placetype_is_ignorable(placetype) then
-				table.insert(cats, get_cat(lang, place_desc, placetype, sort_key))
+		if not from_demonym then
+			for _, placetype in ipairs(place_desc.placetypes) do
+				if not m_data.placetype_is_ignorable(placetype) then
+					extend(cats, get_placetype_cats(place_desc, placetype))
+				end
 			end
 		end
 		-- Also add base categories for the holonyms listed (e.g. a category like
-		-- 'en:Places in Merseyside, England'). This is handled through the special placetype "*".
-		table.insert(cats, get_cat(lang, place_desc, "*", sort_key))
+		-- [[Category:Places in Merseyside, England]]). This is handled through the special placetype "*".
+		extend(cats, get_placetype_cats(place_desc, "*", from_demonym))
 	end
 
-	for _, addl_cat in ipairs(additional_cats) do
-		table.insert(cats, catlink(lang, addl_cat, sort_key))
+	if args.cat then -- not necessarily when called from [[Module:demonym]]
+		extend(cats, args.cat)
 	end
 
-	return table.concat(cats)
+	return cats
+end
+
+
+-- Return the category link for a category, given the language code and the name of the category.
+local function format_cats(lang, cats, sort_key)
+	local full_cats = {}
+	local langcode = lang:getFullCode()
+	for _, cat in ipairs(cats) do
+		-- FIXME: Why are we calling remove_links_and_html() here? Why can there be links in the categories?
+		insert(full_cats, langcode .. ":" .. m_data.remove_links_and_html(cat))
+	end
+	return require(utilities_module).format_categories(full_cats, lang, sort_key, nil, force_cat or m_data.force_cat)
 end
 
 
@@ -1821,6 +1897,7 @@ function export.format(template_args, drop_extra_info)
 
 		-- "extra info" that can be included
 		["modern"] = list_param,
+		["full"] = list_param,
 		["official"] = list_param,
 		["capital"] = list_param,
 		["largest city"] = list_param,
@@ -1838,7 +1915,7 @@ function export.format(template_args, drop_extra_info)
 	local place_descriptions = parse_place_descriptions(args[2])
 
 	return get_def(args, place_descriptions, drop_extra_info) .. (
-		args.nocat and "" or get_cats(args, place_descriptions))
+		args.nocat and "" or format_cats(args[1], export.get_cats(args, place_descriptions), args.sort))
 end
 
 
