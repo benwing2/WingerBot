@@ -286,6 +286,119 @@ be [[:Category:en:Municipalities of Brazil]].
 ]==]
 
 
+--[=[
+TODO:
+
+1. Neighborhoods should categorize at the city level. Categories like [[:Category:Places in Los Angeles]] exist but
+   not [[:Category:Neighborhoods in Los Angeles]]; we can refactor the code in generic_cat_handler() to support this
+   use case.
+2. Display handlers should be smarter. For example, 'co/Travis' as a holonym should display as 'Travis County' in the
+   United States, but (I think) display handlers don't currently have the full context of holonyms passed in to allow
+   this to happen.
+3. Connected to this, we have various display handlers that add the name of the holonym after or (sometimes) before the
+   placename if it's not already there. An example is the county_display_handler() in [[Module:place/data]], which adds
+   "County" before Ireland and Northern Ireland counties and after Taiwan and Romania counties. This should be
+   integrated into the polity group for these respective polities through a setting rather than requiring a separate
+   handler that has special casing for various polities.
+4. Placetypes for toponyms should also have display handlers rather than just fixed text. This should allow us to
+   dispense with the need for special types for "fpref" = "French prefecture" (which displays as "prefecture" but links
+   to the appropriate Wikipedia article on Frenc prefectures, which are completely different from the more general
+   concept of prefecture). Similarly for "Polish colony" and "Welsh community". ("Israeli settlement" should probably
+   stay as-is because it displays as "Israeli settlement" not just "settlement".)
+5. Currently, categories for e.g. states and territories of Australia go into
+   [[:Category:States and territories of Australia]] but terms for states and territories of Australia go into
+   (respectively) [[:Category:States of Australia]] and [[:Category:Territories of Australia]]. We should fix this;
+   maybe this is as easy as setting cat_as in the respective poldiv definitions.
+6. Probably cat_as should support raw categories as well as category types; raw categories would be indicated by being
+   prefixed with "Category:".
+7. Update documentation.
+8. Rename remaining political subdivision categories to include name of country in them. [ALMOST DONE; ONLY RUSSIA IS
+   LEFT, WHICH IS TRICKY BECAUSE OF THE PLETHORA OF DIFFERENT TYPES OF FEDERAL SUBJECTS AND ALTERNATIVE NAMES]
+9. Add Pakistan provinces and territories. [DONE]
+10. Add a polity group for continents and continent-level regions instead of special-casing. This should make it
+    possible e.g. to have Jerusalem as a city under "Asia".
+11. Add better handling of cities that are their own states, like Mexico City.
+12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just
+    "Aguascalientes".
+13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
+    `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]).
+14. More generally, cities should be unified into the polity grouping system to the extent possible; this would allow
+    for poldivs of cities (see #17 below).
+15. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
+    from being added due to generically-named divisions like "North Governorate", "Central Region" and
+	"Eastern Province" but (a) this setting seems to do multiple things and should be split, (b) it should be possible
+	to set this at the division level instead of the country level.
+16. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
+17. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
+    them as such) have districts, subdistricts, etc. We need to support poldivs for cities and even named divisions of
+    cities (such as we already have for boroughs of New York City).
+18. It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
+    in [[Module:place]] needs to remove links first.
+19. Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
+    "historic(al)" is ambiguous (cf. "historic counties" in England which are not former, but still have a legal
+	definition).
+20. It should be possible to categorize former subpolities of certain polities; cf. [[:Category:ja:Provinces of Japan]],
+    which contains former provinces.
+21. In subpolity_keydesc(), we need to generate the correct indefinite article and have a huge hack to check
+    specifically for "union territory", which is the only placetype that shows up in this function where the default
+    indefinite article generating function fails. To fix this properly, we need to separate out the non-category
+    placetype data from `cat_data` in [[Module:place/data]] and move it to [[Module:place/shared-data]], because we
+    don't have access to the data in [[Module:place/data]], and that data indicates the correct article for placetypes
+    like "union territory".
+22. Simplify the specs in `cat_data`, eliminating the distinction between "inner" and "outer" matching. There should not
+    be two levels, just one. For example, in "district", instead of
+		["country/Portugal"] = {
+			["itself"] = {"Districts and autonomous regions of +++"},
+		}
+	we should just have
+		["country/Portugal"] = {"Districts and autonomous regions of +++"},
+	And in "dependent territory", instead of
+		["default"] = {
+			["itself"] = {true},
+			["country"] = {true},
+		},
+	we should just have
+		["itself"] = {true},
+		["country/*"] = {true},
+	It appears the only remaining spec that can't be easily converted in this fashion is for "subdistrict":
+		["country/Indonesia"] = {
+			["municipality"] = {true},
+		},
+	This seems to be specifically for Jakarta and doesn't seem to work anyway, as the two entries in
+	[[:Category:en:Subdistricts of Jakarta]] and the one entry in [[:Category:id:Subdistricts of Jakarta]] are manually
+	categorized.
+23. Consolidate the remaining stuff in [[Module:category tree/topic cat/data/Earth]] into
+	[[Module:category tree/topic cat/data/Places]].
+24. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
+    in different polities from the specified containing polity/polities of the city, but doesn't do the same for
+    larger-level subdivisions. Likewise for the `city_type_cat_handler`. There are some sufficiently generically-named
+    subdivisions that this issue can occur; for example, [[Koforidua]], the capital city of Eastern Region, Ghana, is
+    incorrectly categoried under[[:Category:en:Cities in Eastern Region, Malta]] and
+    [[:Category:en:Places in Eastern Region, Malta]]. Note that the function `augment_holonyms_with_containing_polity`
+    ''DOES'' do such checks, so we should be able to refactor the code out of that function and use it elsewhere.
+25. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
+    in different polities from the specified containing polity/polities of the city; but how smart is it? It will
+    successfully avoid categorizing a neighborhood in e.g. [[Columbus]], [[Georgia]] that doesn't explicitly mention the
+    US (only `s/Georgia`) into [[:Category:en:Places in Columbus]], which is for Columbus, Ohio, but will it do the same
+    for a hypothetical neighborhood of Columbus in say Merseyside, England? This should be investigated. It will
+    probably work for a hypothetical Columbus in [[Canada]] because `augment_holonyms_with_containing_polity` would
+    auto-add Canada as an additional holonym once say `p/Ontario` is mentioned, but I think there's a setting preventing
+    this augmentation from happening for the UK. (This relates to FIXME #15. `no_containing_polity_cat` is set on
+    England, Scotland, etc. to prevent the toponyms from being added to [[:Category:en:Places in the United Kingdom]],
+    but this same setting is used to prevent augmentation, which it should not be; there should be different settings.)
+26. The `generic_cat_handler` (or more specifically `find_holonym_keys_for_categorization`) checks for city holonyms
+    by looking specifically for holonym type `city`. But some cities (particularly those in China) can be specified
+    using different holonym types, e.g. `prefecture-level city`, `subprovincial city`, etc. We should allow these when
+    appropriate (which means the cities in China need to have a `divtype` set that indicates their regional-level
+    status as well as just `city`). I'm not sure if cities support specifying a custom `divtype` at the moment; this
+    relates to FIXME #14 above concerning unifying cities and political subdivisions internally.
+27. The bare category handler (`get_bare_categories` in [[Module:place/data]]) is not smart enough to avoid
+    overcategorizing cities or other subdivisions that are of the right placetype but in the wrong containing polity.
+    For example, Asturian [[Llión]] "León (city in Spain)" gets put in [[:Category:ast:León]] even though the latter is
+    supposed to refer to a city in Mexico. We can borrow the check-containing-polity code from `generic_cat_handler`.
+]=]
+
+
 ----------- Wikicode utility functions
 
 
