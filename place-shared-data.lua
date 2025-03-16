@@ -96,14 +96,14 @@ There are two main types of categories:
 	 many of them (see below).
 ## "Generic placetype" categories, both of the immediate and skip-polity type (immediate
    [[:Category:Cities in California, USA]] and [[:Category:Neighborhoods of the Bronx]]; skip-polity
-   [[:Category:Villages in Ivory Coast]], [[:Category:Geographic areas of England]], [[:Category:Rivers in Egypt]] and
-   [[:Category:Places in the Philippines]]). As mentioned above, "generic" placetypes occur in every polity (although
-   the set of generic placetypes allowed for cities is a subset of those allowed for top-level polities and
-   subpolities). Usually these categories use the preposition "in", but sometimes "of". As above, skip-polity categories
-   group immediate categories, and in addition there are various reasons a toponym entry is categorized into a
-   skip-polity category. (For example, as a general rule, geographic areas only categorize at the country level, not
-   the subpolity level, both because there often aren't very many in a given country and because they often span
-   multiple subpolities.)
+   [[:Category:Villages in Ivory Coast]], [[:Category:Geographic and cultural areas of England]],
+   [[:Category:Rivers in Egypt]] and [[:Category:Places in the Philippines]]). As mentioned above, "generic" placetypes
+   occur in every polity (although the set of generic placetypes allowed for cities is a subset of those allowed for
+   top-level polities and subpolities). Usually these categories use the preposition "in", but sometimes "of". As above,
+   skip-polity categories group immediate categories, and in addition there are various reasons a toponym entry is
+   categorized into a skip-polity category. (For example, as a general rule, geographic and cultural areas only
+   categorize at the country level, not the subpolity level, both because there often aren't very many in a given
+   country and because they often span multiple subpolities.)
 
 The parent categories of a given category depend on its type. Generally, toponym categories have placetype categories
 as their first parent, and vice-versa. Specifically:
@@ -377,90 +377,6 @@ the group or derivable from group-specific properties. The following are the pro
   [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
 
 ]==]
-
---[=[
-TODO:
-
-1. Neighborhoods should categorize at the city level. Categories like [[:Category:Places in Los Angeles]] exist but
-   not [[:Category:Neighborhoods in Los Angeles]]; we can refactor the code in generic_cat_handler() to support this
-   use case.
-2. Display handlers should be smarter. For example, 'co/Travis' as a holonym should display as 'Travis County' in the
-   United States, but (I think) display handlers don't currently have the full context of holonyms passed in to allow
-   this to happen.
-3. Connected to this, we have various display handlers that add the name of the holonym after or (sometimes) before the
-   placename if it's not already there. An example is the county_display_handler() in [[Module:place/data]], which adds
-   "County" before Ireland and Northern Ireland counties and after Taiwan and Romania counties. This should be
-   integrated into the polity group for these respective polities through a setting rather than requiring a separate
-   handler that has special casing for various polities.
-4. Placetypes for toponyms should also have display handlers rather than just fixed text. This should allow us to
-   dispense with the need for special types for "fpref" = "French prefecture" (which displays as "prefecture" but links
-   to the appropriate Wikipedia article on Frenc prefectures, which are completely different from the more general
-   concept of prefecture). Similarly for "Polish colony" and "Welsh community". ("Israeli settlement" should probably
-   stay as-is because it displays as "Israeli settlement" not just "settlement".)
-5. Currently, categories for e.g. states and territories of Australia go into
-   [[:Category:States and territories of Australia]] but terms for states and territories of Australia go into
-   (respectively) [[:Category:States of Australia]] and [[:Category:Territories of Australia]]. We should fix this;
-   maybe this is as easy as setting cat_as in the respective poldiv definitions.
-6. Probably cat_as should support raw categories as well as category types; raw categories would be indicated by being
-   prefixed with "Category:".
-7. Update documentation.
-8. Rename remaining political subdivision categories to include name of country in them.
-9. Add Pakistan provinces and territories.
-10. Add a polity group for continents and continent-level regions instead of special-casing. This should make it
-    possible e.g. to have Jerusalem as a city under "Asia".
-11. Add better handling of cities that are their own states, like Mexico City.
-12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just
-    "Aguascalientes".
-13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
-    `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]).
-14. More generally, cities should be unified into the polity grouping system to the extent possible; this would allow
-    for poldivs of cities (see #17 below).
-15. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
-    from being added due to generically-named divisions like "North Governorate", "Central Region" and
-	"Eastern Province" but (a) this setting seems to do multiple things and should be split, (b) it should be possible
-	to set this at the division level instead of the country level.
-16. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
-17. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
-    them as such) have districts, subdistricts, etc. We need to support poldivs for cities and even named divisions of
-    cities (such as we already have for boroughs of New York City).
-18. It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
-    in [[Module:place]] needs to remove links first.
-19. Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
-    "historic(al)" is ambiguous (cf. "historic counties" in England which are not former, but still have a legal
-	definition).
-20. It should be possible to categorize former subpolities of certain polities; cf. [[:Category:ja:Provinces of Japan]],
-    which contains former provinces.
-21. In subpolity_keydesc(), we need to generate the correct indefinite article and have a huge hack to check
-    specifically for "union territory", which is the only placetype that shows up in this function where the default
-    indefinite article generating function fails. To fix this properly, we need to separate out the non-category
-    placetype data from `cat_data` in [[Module:place/data]] and move it to [[Module:place/shared-data]], because we
-    don't have access to the data in [[Module:place/data]], and that data indicates the correct article for placetypes
-    like "union territory".
-22. Simplify the specs in `cat_data`, eliminating the distinction between "inner" and "outer" matching. There should not
-    be two levels, just one. For example, in "district", instead of
-		["country/Portugal"] = {
-			["itself"] = {"Districts and autonomous regions of +++"},
-		}
-	we should just have
-		["country/Portugal"] = {"Districts and autonomous regions of +++"},
-	And in "dependent territory", instead of
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-		},
-	we should just have
-		["itself"] = {true},
-		["country/*"] = {true},
-	It appears the only remaining spec that can't be easily converted in this fashion is for "subdistrict":
-		["country/Indonesia"] = {
-			["municipality"] = {true},
-		},
-	This seems to be specifically for Jakarta and doesn't seem to work anyway, as the two entries in
-	[[:Category:en:Subdistricts of Jakarta]] and the one entry in [[:Category:id:Subdistricts of Jakarta]] are manually
-	categorized.
-23. Consolidate the remaining stuff in [[Module:category tree/topic cat/data/Earth]] into
-	[[Module:category tree/topic cat/data/Places]].
-]=]
 
 -----------------------------------------------------------------------------------
 --                              Helper functions                                 --
@@ -867,6 +783,8 @@ export.political_divisions = {
 	["federal territories"] = true,
 	["gewogs"] = true,
 	["governorates"] = true,
+	["Indian reservations"] = "w",
+	["Indian reserves"] = "w",
 	["krais"] = true,
 	["local councils"] = "w",
 	["local government areas"] = "w",
@@ -935,7 +853,7 @@ export.generic_placetypes = {
 	["census-designated places"] = "[[census-designated place]]s",
 	["unincorporated communities"] = "[[w:unincorporated community|unincorporated communities]]",
 	["places"] = "places of all sorts",
-	["geographic areas"] = {desc = "[[geographic]] [[area]]s", prep = "of"},
+	["geographic and cultural areas"] = {desc = "[[geographic]] and [[cultural]] [[area]]s", prep = "of"},
 }
 
 --[==[ var:
@@ -1010,7 +928,8 @@ export.countries = {
 	["Cambodia"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
 	["Cameroon"] = {parents = {"Africa"}, poldiv = {"regions", "departments"}},
 	["Canada"] = {parents = {"North America"}, poldiv = {
-		"provinces", "territories", "counties", "districts", "municipalities", "regional municipalities", "rural municipalities"},
+		"provinces", "territories", "counties", "districts", "municipalities", "regional municipalities", "rural municipalities",
+		"Indian reserves"},
 		miscdiv = {"regions", "census divisions", {type = "townships", prep = "in"}},
 		addl_poldiv_for_categorization = {"provinces and territories"},
 		british_spelling = true},
@@ -1129,7 +1048,10 @@ export.countries = {
 	["Norway"] = {parents = {"Europe"}, poldiv = {"counties", "municipalities", "dependent territories"},
 		miscdiv = {"districts", "unincorporated areas"}, british_spelling = true},
 	["Oman"] = {parents = {"Asia"}, poldiv = {"governorates", "provinces"}},
-	["Pakistan"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}, british_spelling = true},
+	["Pakistan"] = {parents = {"Asia"}, poldiv = {"provinces", "divisions", "districts",
+		{type = "administrative territories", cat_as = "territories"},
+		{type = "federal territories", cat_as = "territories"}},
+		addl_poldiv_for_categorization = {"provinces and territories"}, british_spelling = true},
 	["Palestine"] = {parents = {"Asia"}, poldiv = {"governorates"}},
 	["Palau"] = {parents = {"Micronesia"}, poldiv = {"states"}},
 	["Panama"] = {parents = {"Central America"}, poldiv = {"provinces", "districts"}},
@@ -1198,6 +1120,7 @@ export.countries = {
 		poldiv = {"counties", "county seats", "states", "territories", "dependent territories",
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
+			"Indian reservations",
 		}, miscdiv = {"regions"}},
 	["Uruguay"] = {parents = {"South America"}, poldiv = {"departments", "municipalities"}},
 	["Uzbekistan"] = {parents = {"Asia"}, poldiv = {"regions", "districts"}},
@@ -2433,6 +2356,36 @@ export.norway_group = {
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.norwegian_counties,
+}
+
+export.pakistan_provinces_and_territories = {
+	["Azad Kashmir, Pakistan"] = { -- Azad Jammu and Kashmir is an accepted alias
+		divtype = {"administrative territory", "territory"},
+	},
+	["Balochistan, Pakistan"] = {},
+	["Gilgit-Baltistan, Pakistan"] = {
+		divtype = {"administrative territory", "territory"},
+	},
+	["Islamabad Capital Territory, Pakistan"] = { -- Islamabad is an accepted alias given the divtypes below
+		poldiv = {}, -- no divisions
+		divtype = {"federal territory", "administrative territory", "territory"},
+	},
+	["Khyber Pakhtunkhwa, Pakistan"] = {},
+	["Punjab, Pakistan"] = {},
+	["Sindh, Pakistan"] = {},
+}
+
+-- provinces and territories of Pakistan
+export.pakistan_group = {
+	key_to_placename = make_key_to_placename(", Pakistan$"),
+	placename_to_key = make_placename_to_key(", Pakistan"),
+	bare_label_setter = subpolity_bare_label_setter("Pakistan"),
+	value_transformer = subpolity_value_transformer("Pakistan"),
+	default_divtype = "province",
+	default_div_parent_type = "provinces and territories",
+	default_poldiv = {"divisions"},
+	british_spelling = true,
+	data = export.pakistan_provinces_and_territories,
 }
 
 export.philippines_provinces = {
@@ -3841,6 +3794,7 @@ export.polities = {
 	export.netherlands_group,
 	export.nigeria_group,
 	export.norway_group,
+	export.pakistan_group,
 	export.philippines_group,
 	export.romania_group,
 	export.russia_group,
