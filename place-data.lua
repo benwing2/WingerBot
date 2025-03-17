@@ -1,5 +1,7 @@
 local export = {}
 
+export.force_cat = false -- set to true for testing
+
 local m_shared = require("Module:place/shared-data")
 local m_links = require("Module:links")
 local en_utilities_module = "Module:en-utilities"
@@ -14,8 +16,6 @@ end
 local function lc(label)
 	return mw.getContentLanguage():lc(label)
 end
-
-export.force_cat = false -- set to true for testing
 
 
 ------------------------------------------------------------------------------------------
@@ -394,7 +394,9 @@ export.placetype_aliases = {
 	["tjarea"] = "tribal jurisdictional area",
 	["twp"] = "township",
 	["twpmun"] = "township municipality",
+	["uauth"] = "unitary territory",
 	["ucomm"] = "unincorporated community",
+	["udist"] = "unitary district",
 	["uterr"] = "union territory",
 	["utwpmun"] = "united township municipality",
 	["val"] = "valley",
@@ -597,6 +599,7 @@ export.placetype_links = {
 	["charter community"] = "w", -- Northwest Territories, Canada
 	["city-state"] = true,
 	["civil parish"] = true,
+	["coal city"] = "[[w:coal town|coal city]]",
 	["coal town"] = "w",
 	["co-capital"] = "[[co-]][[capital]]",
 	["collectivity"] = true,
@@ -796,6 +799,7 @@ export.placetype_links = {
 	["shire"] = true,
 	["shire county"] = "w",
 	["shire town"] = true,
+	["ski resort city"] = "[[ski resort]] city",
 	["ski resort town"] = "[[ski resort]] town",
 	["spa city"] = "[[w:spa town|spa city]]",
 	["spa town"] = "w",
@@ -884,8 +888,8 @@ export.qualifier_to_placetype_equivs = {
 
 --[==[ var:
 In this table, the key placetypes should be treated the same as the value placetypes for categorization purposes.
-Entries here are overridden by placetype_data.  NOTE: 'coal town', 'county town', 'ghost town', 'ski resort town', 'spa town',
-etc. aren't mapped to 'town' because they aren't necessarily towns.
+Entries here are overridden by placetype_data.  NOTE: 'county town' and 'ghost town' aren't mapped to 'town' because
+they aren't necessarily towns.
 --]==]
 export.placetype_equivs = {
 	["administrative capital"] = "capital city",
@@ -918,6 +922,8 @@ export.placetype_equivs = {
 	["ceremonial county"] = "county",
 	["chain of islands"] = "island",
 	["charter community"] = "village",
+	["coal city"] = "city",
+	["coal town"] = "town",
 	["co-capital"] = "capital city",
 	["colony"] = "dependent territory",
 	["commandery"] = "historical political subdivision",
@@ -1113,7 +1119,10 @@ export.placetype_equivs = {
 	["shire"] = "county",
 	["shire county"] = "county",
 	["shire town"] = "county seat",
+	["ski resort city"] = "city",
+	["ski resort town"] = "town",
 	["spa city"] = "city",
+	["spa town"] = "town",
     ["special municipality"] = "city",
 	["spit"] = "peninsula",
 	["state capital"] = "capital city",
@@ -1793,6 +1802,12 @@ function export.get_bare_categories(args, place_descs)
 	for _, modern in ipairs(args.modern) do
 		check_term(modern)
 	end
+	for _, full in ipairs(args.full) do
+		check_term(full)
+	end
+	for _, short in ipairs(args.short) do
+		check_term(short)
+	end
 	
 	return bare_cats
 end
@@ -1810,8 +1825,15 @@ To avoid over-categorizing we need to check to make sure no other countries are 
 function export.augment_holonyms_with_containing_polity(place_descs)
 	for _, place_desc in ipairs(place_descs) do
 		if place_desc.holonyms then
-			local new_holonyms = {}
+			-- This ends up containing a copy of the original holonyms, with the augmented holonyms inserted in their
+			-- appropriate position. We don't just put them at the end because some holonyms have use the `:also`
+			-- modifier, which causes category processing to restart at that point after generating categories for a
+			-- preceding holonym, and we don't want the preceding holonym's augmented holonyms interfering with
+			-- categorization of a later holonym.
+			local augmented_holonyms = {}
+			local inserted_holonyms = {}
 			for _, holonym in ipairs(place_desc.holonyms) do
+				insert(augmented_holonyms, holonym)
 				if holonym.placetype and not export.placetype_is_ignorable(holonym.placetype) then
 					local possible_placetypes = {}
 					local equivs = export.get_placetype_equivs(holonym.placetype)
@@ -1848,8 +1870,8 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 										end
 									end
 									if existing_polities_of_type then
-										-- Don't augment. Either the containing polity is already specified as a holonym,
-										-- or some other polity is, which we consider a conflict.
+										-- Don't augment. Either the containing polity is already specified as a
+										-- holonym, or some other polity is, which we consider a conflict.
 									else
 										if type(containing_type) == "table" then
 											-- If the containing type is a list, use the first element as the canonical
@@ -1857,8 +1879,13 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 											containing_type = containing_type[1]
 										end
 										-- Don't side-effect holonyms while processing them.
-										insert(new_holonyms, {placetype = containing_type,
-											placename = value.containing_polity, no_display = true})
+										local new_holonym = {
+											placetype = containing_type,
+											placename = value.containing_polity,
+											no_display = true,
+										}
+										insert(augmented_holonyms, new_holonym)
+										insert(inserted_holonyms, new_holonym)
 									end
 								end
 							end
@@ -1866,8 +1893,8 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 					end
 				end
 			end
-			for _, new_holonym in ipairs(new_holonyms) do
-				insert(place_desc.holonyms, new_holonym)
+			place_desc.holonyms = augmented_holonyms
+			for _, new_holonym in ipairs(inserted_holonyms) do
 				export.key_holonym_into_place_desc(place_desc, new_holonym)
 			end
 		end
@@ -2174,6 +2201,9 @@ export.placetype_data = {
 
 	["arm"] = {
 		preposition = "of",
+		["default"] = {
+			["itself"] = {"Seas"},
+		},
 	},
 
 	["atoll"] = {
@@ -2209,10 +2239,6 @@ export.placetype_data = {
 		-- "administrative region" sets an affix of "region" but we want to display as "Tibet Autonomous Region"
 		-- if the user writes 'ar:Suf/Tibet'.
 		affix = "autonomous region",
-
-		["country/Portugal"] = {
-			["itself"] = {"Districts and autonomous regions of +++"},
-		},
 	},
 
 	["autonomous republic"] = {
@@ -2339,9 +2365,6 @@ export.placetype_data = {
 		preposition = "of",
 		display_handler = county_display_handler,
 
-		["country/Holy Roman Empire"] = {
-		},
-
 		["default"] = {
 			["itself"] = {"Polities"},
 		},
@@ -2397,10 +2420,6 @@ export.placetype_data = {
 		preposition = "of",
 		affix_type = "suf",
 		cat_handler = district_cat_handler,
-
-		["country/Portugal"] = {
-			["itself"] = {"Districts and autonomous regions of +++"},
-		},
 
 		-- No default. Countries for which districts are political subdivisions will get entries.
 	},
@@ -2468,14 +2487,6 @@ export.placetype_data = {
 		preposition = "of",
 	},
 
-	["ghost town"] = {
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-			["constituent country"] = {true},
-		},
-	},
-
 	["governorate"] = {
 		preposition = "of",
 		affix_type = "suf",
@@ -2523,22 +2534,6 @@ export.placetype_data = {
 
 	["historical county"] = {
 		preposition = "of",
-
-		["constituent country/England"] = {
-			["itself"] = {"Traditional counties of +++"},
-		},
-
-		["constituent country/Northern Ireland"] = {
-			["itself"] = {"Traditional counties of +++"},
-		},
-
-		["constituent country/Scotland"] = {
-			["itself"] = {"Traditional counties of +++"},
-		},
-
-		["constituent country/Wales"] = {
-			["itself"] = {"Traditional counties of +++"},
-		},
 
 		["default"] = {
 			["itself"] = {"Historical political subdivisions"},
@@ -2752,10 +2747,6 @@ export.placetype_data = {
 
 	["periphery"] = {
 		preposition = "of",
-
-		["country/Greece"] = {
-			["itself"] = {"Regions of +++"},
-		},
 	},
 
 	["planned community"] = {
@@ -2767,10 +2758,6 @@ export.placetype_data = {
 		affix_type = "suf",
 		affix = "colony",
 		fallback = "village",
-
-		["country/Poland"] = {
-			["itself"] = {"Villages in +++"},
-		}
 	},
 
 	["polity"] = {
@@ -2809,18 +2796,8 @@ export.placetype_data = {
 
 	["region"] = {
 		preposition = "of",
-
-		["default"] = {
-			["continent"] = {true},
-		},
-
-		["country/Armenia"] = {
-			["country"] = {true},
-		},
-
-		["country/Portugal"] = {
-			["country"] = {true},
-		},
+		-- If 'region' isn't a specific administrative division, fall back to 'geographic and cultural area'
+		fallback = "geographic and cultural area",
 	},
 
 	["regional district"] = {
@@ -2932,9 +2909,10 @@ export.placetype_data = {
 	["subdistrict"] = {
 		preposition = "of",
 
-		["country/Indonesia"] = {
-			["municipality"] = {true},
-		},
+		--FIXME: doesn't work; need customizable poldivs of cities (here, subdistricts of Jakarta)
+		--["country/Indonesia"] = {
+		--	["municipality"] = {true},
+		--},
 
 		["default"] = {
 			["itself"] = {true},
@@ -3016,10 +2994,6 @@ export.placetype_data = {
 				return city_type_cat_handler(data)
 			end
 		end,
-
-		["country/United States"] = {
-			["itself"] = {true},
-		},
 	},
 
 	["union territory"] = {
@@ -3092,10 +3066,6 @@ export.placetype_data = {
 		preposition = "of",
 		affix_type = "suf",
 		affix = "community",
-
-		["constituent country/Wales"] = {
-			["itself"] = {"Communities of +++"},
-		},
 	},
 
 	["*"] = {
@@ -3136,10 +3106,10 @@ for _, group in ipairs(m_shared.polities) do
 				for _, dt in ipairs(divtype) do
 					if not export.placetype_data[sgdiv] then
 						-- If there is an entry in placetype_equivs[], it will be ignored once we insert an entry in
-						-- placetype_data. For example, "traditional county" is listed as a miscdiv of Scotland and Northern
-						-- Ireland but it's also an entry in placetype_equivs[]. Once we insert an entry here for
-						-- "traditional county", it will override placetype_equivs[]. To get around that, simulate the
-						-- effect of placetype_equivs[] using a fallback = "..." entry.
+						-- placetype_data. For example, "traditional county" is listed as a miscdiv of Scotland and
+						-- Northern Ireland but it's also an entry in placetype_equivs[]. Once we insert an entry here
+						-- for "traditional county", it will override placetype_equivs[]. To get around that, simulate
+						-- the effect of placetype_equivs[] using a fallback = "..." entry.
 						if export.placetype_equivs[sgdiv] then
 							export.placetype_data[sgdiv] = {
 								preposition = prep,
@@ -3185,16 +3155,17 @@ for _, group in ipairs(m_shared.polities) do
 						end
 						local cat_data_holonym = dt .. "/" .. placename
 						if export.placetype_data[sgdiv][cat_data_holonym] then
-							-- Make sure there isn't an existing setting in `placetype_data` for this placetype and holonym,
-							-- which we would be overwriting. This clash occurs because there's a political or misc
-							-- division listed in `countries` or one of the other entries in `polities` in
+							-- Make sure there isn't an existing setting in `placetype_data` for this placetype and
+							-- holonym, which we would be overwriting. This clash occurs because there's a political or
+							-- misc division listed in `countries` or one of the other entries in `polities` in
 							-- [[Module:place/shared-data]], and we are trying to add categorization for toponyms that
 							-- are located in that political or misc division in that country/etc., but there's already
 							-- an entry in `placetype_data`. If this occurs, we throw an error rather than overwrite the
 							-- existing entry or do nothing (either of which options may be wrong). Sometimes the
 							-- existing entry is intentional as it does something special like rename the category, e.g.
 							-- 'Counties and regions of England' instead of just 'Counties of England'); in that case
-							-- set `no_error_on_poldiv_clash = true` in the entry in `placetype_data`; see existing examples.
+							-- set `no_error_on_poldiv_clash = true` in the entry in `placetype_data`; see existing
+							-- examples.
 							if not export.placetype_data[sgdiv][cat_data_holonym].no_error_on_poldiv_clash then
 								error(("Would overwrite placetype_data[%s][%s] with %s; if this is intentional, set `no_error_on_poldiv_clash = true` (see comment in [[Module:place/data]])"):format(
 									sgdiv, cat_data_holonym, dump(cat_data_spec)))
