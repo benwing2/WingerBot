@@ -1,11 +1,13 @@
 local labels = {}
 local handlers = {}
 
-local m_shared = require("Module:place/shared-data")
 local en_utilities_module = "Module:en-utilities"
 local table_module = "Module:table"
 
+local m_shared = require("Module:place/shared-data")
+
 local dump = mw.dumpObject
+local is_callable = require("Module:fun").is_callable
 
 --[==[ intro:
 This module contains specifications that are used to create labels that allow {{tl|auto cat}} and to create the
@@ -31,7 +33,7 @@ end
 
 local function fetch_value(obj, key)
 	local val = obj[key]
-	if type(val) == "function" then
+	if is_callable(val) then
 		val = val()
 		obj[key] = val
 	end
@@ -57,7 +59,7 @@ end
 
 --[=[
 General labels. These are intended for places of all sorts that are not qualified by a holonym (e.g. it does not include
-'regions in Africa'). These also do not need to include any political subdivisions listed in 'political_divisions' in
+'rivers in Africa'). These also do not need to include any political subdivisions listed in 'political_divisions' in
 [[Module:place/shared-data]]. Each entry is {LABEL, PARENTS, DESCRIPTION, WPCAT, COMMONSCAT}:
 * PARENTS should not include "list of names", which is added automatically.
 * DESCRIPTION is the linked plural description of label, and is formatted using format_description() in
@@ -76,7 +78,7 @@ local general_labels = {
 	["bays"] = {{"places", "bodies of water"}},
 	["beaches"] = {{"places", "water"}},
 	-- FIXME: This is a type category not a name category. There should be an option for this.
-	["bodies of water"] = {{"landforms", "water"}, "[[body of water|bodies of water]]"},
+	["bodies of water"] = {{"landforms", "ecosystems", "water"}, "[[body of water|bodies of water]]"},
 	["boroughs"] = {{"polities"}},
 	["capital cities"] = {{"cities"}, "[[capital]] [[city|cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[subdivision]] of a country"},
 	["census-designated places"] = {{"places"}},
@@ -87,12 +89,12 @@ local general_labels = {
 	["countries"] = {{"polities"}},
 	["country-like entities"] = {{"polities"}, "[[polity|polities]] not normally considered [[country|countries]] but treated similarly for categorization purposes; typically, [[unrecognized]] [[de-facto]] countries or [[w:dependent territory|dependent territories]]"},
 	["dependent territories"] = {{"polities"}, "w"},
-	["deserts"] = {{"places"}},
-	["forests"] = {{"places"}},
+	["deserts"] = {{"places", "ecosystems"}},
+	["forests"] = {{"places", "ecosystems", "forestry"}},
 	["former countries and country-like entities"] = {{"polities"}, "[[country|countries]] and similar [[polity|polities]] that no longer exist"},
-	["geographic areas"] = {{"places"}},
+	["geographic and cultural areas"] = {{"places"}},
 	["ghost towns"] = {{"historical settlements"}},
-	["gulfs"] = {{"places", "water"}},
+	["gulfs"] = {{"places", "bodies of water"}},
 	["headlands"] = {{"places"}},
 	["historical and traditional regions"] = {{"places"}, "regions that have no administrative significance"},
 	["historical capitals"] = {{"historical settlements"}, "former [[capital]] [[city|cities]] and [[town]]s"},
@@ -100,21 +102,21 @@ local general_labels = {
 	["historical political subdivisions"] = {{"polities"}, "[[political]] [[subdivision]]s (states, provinces, counties, etc.) that no longer exist"},
 	["historical polities"] = {{"polities"}, "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist"},
 	["historical settlements"] = {{"historical polities"}, "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified"},
-	["hills"] = {{"places"}},
-	["islands"] = {{"places"}},
+	["hills"] = {{"places", "landforms"}},
+	["islands"] = {{"places", "landforms"}},
 	["kibbutzim"] = {{"places"}, "[[kibbutz]]im"},
 	["lakes"] = {{"places", "bodies of water"}},
 	["landforms"] = {{"places", "Earth"}},
 	["micronations"] = {{"places"}},
-	["mountain passes"] = {{"places"}, "[[mountain pass]]es"},
-	["mountains"] = {{"places"}},
-	["moors"] = {{"places"}},
+	["mountain passes"] = {{"places", "mountains"}, "[[mountain pass]]es"},
+	["mountains"] = {{"places", "landforms"}},
+	["moors"] = {{"places", "ecosystems"}},
 	["neighborhoods"] = {{"places"}, "[[neighborhood]]s, [[district]]s and other subportions of a [[city]]"},
 	-- FIXME, is the following parent correct?
 	["oceans"] = {{"seas"}},
 	["parks"] = {{"places"}},
-	["peninsulas"] = {{"places"}},
-	["plateaus"] = {{"places"}},
+	["peninsulas"] = {{"places", "landforms"}},
+	["plateaus"] = {{"places", "landforms"}},
 	["political divisions"] = {{"polities"}, "[[political]] [[division]]s and [[subdivision]]s, such as [[countries]], [[province]]s, [[state]]s or [[region]]s"},
 	["polities"] = {{"places"}, "[[polity|polities]] or [[political]] [[division]]s"},
 	["rivers"] = {{"places", "bodies of water"}},
@@ -125,7 +127,7 @@ local general_labels = {
 	["towns"] = {{"polities"}},
 	["townships"] = {{"polities"}},
 	["unincorporated communities"] = {{"places"}},
-	["valleys"] = {{"places", "water"}},
+	["valleys"] = {{"places", "landforms", "water"}},
 	["villages"] = {{"polities"}},
 	["volcanoes"] = {{"landforms"}, "[[volcano]]es"},
 }
@@ -617,11 +619,11 @@ for _, continent in ipairs({"Africa", "Asia", "Central America", "Europe", "Nort
 		breadcrumb = continent,
 		parents = {{name = "rivers", sort = " "}, continent},
 	}
-	labels["regions of " .. continent] = {
+	labels["geographic and cultural areas of " .. continent] = {
 		type = "name",
-		description = "{{{langname}}} names of [[region]]s of [[" .. continent .. "]].",
+		description = "{{{langname}}} names of [[geographic]] and [[cultural]] [[area]]s or [[region]]s of [[" .. continent .. "]].",
 		breadcrumb = continent,
-		parents = {{name = "regions", sort = " "}, continent},
+		parents = {{name = "geographic and cultural areas", sort = " "}, continent},
 	}
 end
 
