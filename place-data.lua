@@ -62,7 +62,7 @@ Look up and resolve any category aliases that need to be applied to a holonym. F
 `"country/Republic of China"` maps to `"Taiwan"` for use in categories like `"Counties in Taiwan"`. This also removes
 any links.
 ]==]
-function export.resolve_cat_aliases(holonym_placetype, holonym_placename)
+function export.resolve_placename_cat_aliases(holonym_placetype, holonym_placename)
 	local retval
 	local cat_aliases = export.get_equiv_placetype_prop(holonym_placetype, function(pt)
 		return export.placename_cat_aliases[pt] end)
@@ -141,13 +141,17 @@ end
 --[==[
 Given a placetype (which may be pluralized), return an ordered list of equivalent placetypes to look under to find the
 placetype's properties (such as the category or categories to be inserted). The return value is actually an ordered list
-of objects of the form { {qualifier=QUALIFIER, placetype=EQUIV_PLACETYPE}} where EQUIV_PLACETYPE is a placetype whose
-properties to look up, derived from the passed-in placetype or from a contiguous subsequence of the words in the
-passed-in placetype (always including the rightmost word in the placetype, i.e. we successively chop off qualifier words
-from the left and use the remainder to find equivalent placetypes). QUALIFIER is the remaining words not part of the
-subsequence used to find EQUIV_PLACETYPE; or nil if all words in the passed-in placetype were used to find
-EQUIV_PLACETYPE. (FIXME: This qualifier is not currently used anywhere.) The placetype passed in always forms the first
-entry.
+of objects of the form `{qualifier=``qualifier``, placetype=``equiv_placetype``}` where ``equiv_placetype`` is a
+placetype whose properties to look up, derived from the passed-in placetype or from a contiguous subsequence of the
+words in the passed-in placetype (always including the rightmost word in the placetype, i.e. we successively chop off
+qualifier words from the left and use the remainder to find equivalent placetypes). ``qualifier`` is the remaining words
+not part of the subsequence used to find ``equiv_placetype``; or nil if all words in the passed-in placetype were used
+to find ``equiv_placetype``. (FIXME: This qualifier is not currently used anywhere.) The placetype passed in always
+forms the first entry.
+
+'''NOTE:''' This currently consults `placetype_equivs` and `qualifier_equivs` to find equivalent placetypes, but doesn't
+look at fallbacks specified in `placetype_data`. FIXME: This should probably be fixed. It's not clear we need the
+distinction between `placetype_equivs` and `fallback`.
 ]==]
 function export.get_placetype_equivs(placetype)
 	local equivs = {}
@@ -173,8 +177,7 @@ function export.get_placetype_equivs(placetype)
 	-- also check to see if `placetype` is plural, and if so, insert the singularized version along with its equivalent
 	-- (if any) in `placetype_equivs`.
 	local function do_placetype(qualifier, placetype)
-		-- FIXME! The qualifier (first arg) is inserted into the table, but isn't
-		-- currently used anywhere.
+		-- FIXME! The qualifier (first arg) is inserted into the table, but isn't currently used anywhere.
 		local function insert_equiv(pt)
 			insert(equivs, {qualifier=qualifier, placetype=pt})
 		end
@@ -243,11 +246,7 @@ function export.get_placetype_equivs(placetype)
 end
 
 
-function export.get_equiv_placetype_prop(placetype, fun)
-	if not placetype then
-		return fun(nil), nil
-	end
-	local equivs = export.get_placetype_equivs(placetype)
+function export.get_equiv_placetype_prop_from_equivs(equivs, fun)
 	for _, equiv in ipairs(equivs) do
 		local retval = fun(equiv.placetype)
 		if retval then
@@ -255,6 +254,23 @@ function export.get_equiv_placetype_prop(placetype, fun)
 		end
 	end
 	return nil, nil
+end
+
+
+--[==[
+Given a placetype `placetype` and a function `fun` of one argument, iteratively call the function on equivalent
+placetypes fetched from `get_placetype_equivs` until the function returns a non-falsy value (i.e. not {nil} or {false}).
+(FIXME: We should make it exit on non-{nil} only; but this requires changing some callers.) When `fun` returns a
+non-falsy value, `get_equiv_placetype_prop` returns two values: the value returned by `fun` and the equivalent placetype
+that triggered the non-falsy return value. If `fun` never returns a non-falsy value, `get_equiv_placetype_prop` returns
+{nil} for both return values. If `placetype` is passed in as {nil}, the return value is the result of calling `fun` on
+{nil} (whatever it is) as {nil} for the second return value.
+]==]
+function export.get_equiv_placetype_prop(placetype, fun)
+	if not placetype then
+		return fun(nil), nil
+	end
+	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype), fun)
 end
 
 
@@ -271,16 +287,16 @@ function export.key_holonym_into_place_desc(place_desc, holonym)
 	end
 
 	local equiv_placetypes = export.get_placetype_equivs(holonym.placetype)
-	local placename = holonym.placename
+	local cat_placename = holonym.cat_placename
 	for _, equiv in ipairs(equiv_placetypes) do
 		local placetype = equiv.placetype
 		if not place_desc.holonyms_by_placetype then
 			place_desc.holonyms_by_placetype = {}
 		end
 		if not place_desc.holonyms_by_placetype[placetype] then
-			place_desc.holonyms_by_placetype[placetype] = {placename}
+			place_desc.holonyms_by_placetype[placetype] = {cat_placename}
 		else
-			insert(place_desc.holonyms_by_placetype[placetype], placename)
+			insert(place_desc.holonyms_by_placetype[placetype], cat_placename)
 		end
 	end
 end
@@ -1023,6 +1039,7 @@ export.placetype_equivs = {
 	["historical parish"] = "historical political subdivision",
 	["historical periphery"] = "historical political subdivision",
 	["historical prefecture"] = "historical political subdivision",
+	["historical principality"] = "historical polity",
 	["historical province"] = "historical political subdivision",
 	["historical regency"] = "historical political subdivision",
 	-- Not strictly necessary, but would become necessary if any polity adds 'historic region' as a poldiv.
@@ -1165,11 +1182,17 @@ displayed as "United States".
 FIXME: Placename display and cat aliases should probably be placed in the (sub)polity definitions themselves, similarly
 to how city aliases are handled, instead of being segregated here.
 
-'''NOTE''': Display aliases should be non-political in nature, as they change what is displayed from what the editor
-wrote in the Wikitext. For example, normalizing `US` and `USA` to `United States` for display purposes is OK but
-normalizing `Burma` to `Myanmar` is not because the terms `Burma` and `Myanmar` have political connotations. Generally,
-display normalizations tend to involve alternative forms (e.g. abbreviations, ellipses, foreign spellings) where the
-normalization improves clarity and consistency.
+'''NOTE''': Display aliases change what is displayed from what the editor wrote in the Wikitext. As a result, they
+should (a) be non-political in nature, and (b) not involve a change where the word `the` needs to be added or removed.
+For example, normalizing `US` and `USA` to `United States` for display purposes is OK but normalizing `Burma` to
+`Myanmar` is not (instead a cat alias should be used) because the terms `Burma` and `Myanmar` have clear political
+connotations. Similarly, we have a display alias that maps the old name of `Macedonia` as a country (but not a region!)
+to `North Macedonia`, but `Republic of Macedonia` is mapped to `North Macedonia` only as a cat alias because the two
+terms differ in their use of `the`. (For example, if we had a display alias mapping `Republic of Macedonia` to
+`North Macedonia`, the call {{tl|place|en|the <<capital city>> of the <<c/Republic of Macedonia>>}} would wrongly
+display as `the [[capital city]] of the [[North Macedonia]]`.) Generally, display normalizations tend to involve
+alternative forms (e.g. abbreviations, ellipses, foreign spellings) where the normalization improves clarity and
+consistency.
 ]==]
 export.placename_display_aliases = {
 	["administrative region"] = {
@@ -1177,10 +1200,6 @@ export.placename_display_aliases = {
 	},
 	["administrative territory"] = {
 		["Azad Jammu and Kashmir"] = "Azad Kashmir",
-		["Islamabad"] = "Islamabad Capital Territory",
-	},
-	["autonomous community"] = {
-		["Valencian Community"] = "Valencia",
 	},
 	["city"] = {
 		["New York"] = "New York City",
@@ -1189,26 +1208,19 @@ export.placename_display_aliases = {
 		["Washington DC"] = "Washington, D.C.",
 	},
 	["country"] = {
-		["Republic of Armenia"] = "Armenia",
 		["Bosnia and Hercegovina"] = "Bosnia and Herzegovina",
-		["Czechia"] = "Czech Republic",
-		["Republic of Ireland"] = "Ireland",
 		["Côte d'Ivoire"] = "Ivory Coast",
 		["Macedonia"] = "North Macedonia",
-		["Republic of North Macedonia"] = "North Macedonia",
-		["Republic of Macedonia"] = "North Macedonia",
         ["Türkiye"] = "Turkey",
 		["UAE"] = "United Arab Emirates",
+		["U.A.E."] = "United Arab Emirates",
 		["UK"] = "United Kingdom",
+		["U.K."] = "United Kingdom",
 		["US"] = "United States",
 		["U.S."] = "United States",
 		["USA"] = "United States",
 		["U.S.A."] = "United States",
 		["United States of America"] = "United States",
-		["Vatican"] = "Vatican City",
-	},
-	["federal territory"] = {
-		["Islamabad"] = "Islamabad Capital Territory",
 	},
 	["province"] = {
 		["Noord-Brabant"] = "North Brabant",
@@ -1223,7 +1235,6 @@ export.placename_display_aliases = {
 		["South Savo"] = "Southern Savonia",
 		["Päijät-Häme"] = "Päijänne Tavastia",
 		["Kanta-Häme"] = "Tavastia Proper",
-		["Åland"] = "Åland Islands",
 		["Occitanie"] = "Occitania",
 	},
 	["republic"] = {
@@ -1232,11 +1243,9 @@ export.placename_display_aliases = {
 	},
 	["state"] = {
 		["Mecklenburg-Western Pomerania"] = "Mecklenburg-Vorpommern",
-		["Mexico"] = "State of Mexico",
 	},
 	["territory"] = {
 		["Azad Jammu and Kashmir"] = "Azad Kashmir",
-		["Islamabad"] = "Islamabad Capital Territory",
 		["U.S. Virgin Islands"] = "United States Virgin Islands",
 		["US Virgin Islands"] = "United States Virgin Islands",
 	},
@@ -1249,6 +1258,12 @@ categories with "Burma" in them (but the displayed form will respect the form as
 should not be taken to imply any political position; it is just this way because it has always been this way.)
 ]==]
 export.placename_cat_aliases = {
+	["administrative territory"] = {
+		["Islamabad"] = "Islamabad Capital Territory", -- differs in the
+	},
+	["autonomous community"] = {
+		["Valencian Community"] = "Valencia", -- differs in "the"
+	},
 	["autonomous okrug"] = {
 		["Nenetsia"] = "Nenets Autonomous Okrug",
 		["Khantia-Mansia"] = "Khanty-Mansi Autonomous Okrug",
@@ -1262,19 +1277,28 @@ export.placename_cat_aliases = {
 		["Western Isles"] = "Na h-Eileanan Siar",
 	},
 	["country"] = {
-		-- will categorize into e.g. "Cities in Myanmar".
+		-- Many of these differ in use of "the"; others have politicla connotations, etc.
 		["Burma"] = "Myanmar",
+		["Czechia"] = "Czech Republic",
 		["Nagorno-Karabakh"] = "Artsakh",
 		["People's Republic of China"] = "China",
+		["Republic of Armenia"] = "Armenia",
 		["Republic of China"] = "Taiwan",
+		["Republic of Ireland"] = "Ireland",
+		["Republic of North Macedonia"] = "North Macedonia",
+		["Republic of Macedonia"] = "North Macedonia",
         ["State of Palestine"] = "Palestine",
 		["Bosnia"] = "Bosnia and Herzegovina",
 		["Congo"] = "Democratic Republic of the Congo",
 		["Congo Republic"] = "Republic of the Congo",
 		["Swaziland"] = "Eswatini",
+		["Vatican"] = "Vatican City",
 	},
 	["county"] = {
 		["Anglesey"] = "Isle of Anglesey",
+	},
+	["federal territory"] = {
+		["Islamabad"] = "Islamabad Capital Territory", -- differs in "the"
 	},
 	["republic"] = {
 		-- Only needs to include cases that aren't just shortened versions of the
@@ -1296,8 +1320,15 @@ export.placename_cat_aliases = {
 		["Tyva"] = "Tuva Republic",
 		["Udmurtia"] = "Udmurt Republic",
 	},
+	["region"] = {
+		["Åland"] = "Åland Islands", -- differs in "the"
+	},
 	["state"] = {
 		["Baja California Norte"] = "Baja California",
+		["Mexico"] = "State of Mexico", -- differs in "the"
+	},
+	["territory"] = {
+		["Islamabad"] = "Islamabad Capital Territory", -- differs in "the"
 	},
 }
 
@@ -1322,6 +1353,9 @@ export.placename_article = {
 		["Bronx"] = "the",
 	},
 	["country"] = {
+		["Holy Roman Empire"] = "the",
+	},
+	["empire"] = {
 		["Holy Roman Empire"] = "the",
 	},
 	["island"] = {
@@ -1486,9 +1520,7 @@ local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containi
 								insert(retcats, cat)
 							end
 						end
-						return {
-							["itself"] = retcats
-						}
+						return retcats
 					end
 				end
 			end
@@ -1505,27 +1537,25 @@ local function capital_city_cat_handler(data, non_city)
 	if holonym_placetype then
 		-- Simulate the loop in find_cat_specs() over holonyms so we get the proper
 		-- 'Cities in ...' categories as well as the capital category/categories we add below.
-		local inner_data
+		local retcats
 		if not non_city and place_desc.holonyms then
 			for _, holonym in ipairs(place_desc.holonyms) do
-				local h_placetype, h_placename = holonym.placetype, holonym.placename
-				h_placename = export.resolve_cat_aliases(h_placetype, h_placename)
-				inner_data = export.get_equiv_placetype_prop(h_placetype,
+				local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
+				h_placename = export.resolve_placename_cat_aliases(h_placetype, h_placename)
+				retcats = export.get_equiv_placetype_prop(h_placetype,
 					function(pt) return city_type_cat_handler {
 						entry_placetype = "city",
 						holonym_placetype = pt,
 						holonym_placename = h_placename,
 						place_desc = place_desc,
 					} end)
-				if inner_data then
+				if retcats then
 					break
 				end
 			end
 		end
-		if not inner_data then
-			inner_data = {
-				["itself"] = {}
-			}
+		if not retcats then
+			retcats = {}
 		end
 		-- Now find the appropriate capital-type category for the placetype of the holonym,
 		-- e.g. 'State capitals'. If we recognize the holonym among the known holonyms in
@@ -1550,7 +1580,7 @@ local function capital_city_cat_handler(data, non_city)
 						-- is present if it should be.
 						value = group.value_transformer(group, key, value)
 						if value.containing_polity and not value.no_containing_polity_cat then
-							insert(inner_data["itself"], capital_cat .. " of " .. value.containing_polity)
+							insert(retcats, capital_cat .. " of " .. value.containing_polity)
 							inserted_specific_variant_cat = true
 							break
 						end
@@ -1558,18 +1588,102 @@ local function capital_city_cat_handler(data, non_city)
 				end
 			end
 			if not inserted_specific_variant_cat then
-				insert(inner_data["itself"], capital_cat)
+				insert(retcats, capital_cat)
 			end
 		else
 			-- We didn't recognize the holonym placetype; just put in 'Capital cities'.
-			insert(inner_data["itself"], "Capital cities")
+			insert(retcats, "Capital cities")
 		end
-		return inner_data
+		return retcats
 	end
 end
 
+local function get_holonyms_to_check(place_desc, holonym_index)
+	local stop_at_also = not not holonym_index
+	return function(place_desc, index)
+		index = index + 1
+		local this_holonym = place_desc.holonyms[index]
+		if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
+			return nil
+		end
+		return index, place_desc.holonyms[index]
+	end, place_desc, holonym_index and holonym_index - 1 or 0
+end
+
+local function find_city_spec(data)
+	local holonym_placetype, holonym_placename, holonym_index, place_desc =
+		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
+	-- Check for placetypes that are equivalent to city, e.g. {{place|zh|neighborhood|preflcity/Wuhan}} should work.
+	local equiv_to_city = export.get_equiv_placetype_prop(holonym_placetype, function(equiv_placetype)
+		return equiv_placetype == "city"
+	end)
+	if not equiv_to_city then
+		return nil
+	end
+	for _, city_group in ipairs(m_shared.cities) do
+		local city_spec = city_group.data[holonym_placename]
+		if city_spec and city_spec.alias_of then
+			local new_city_spec = city_group.data[city_spec.alias_of]
+			if not new_city_spec then
+				error(("Internal error: City '%s' has an entry with non-existent alias_of='%s'"):format(
+					holonym_placename, city_spec.alias_of))
+			end
+			holonym_placename = city_spec.alias_of
+			city_spec = new_city_spec
+		end
+		if city_spec then
+			-- For each level of containing polity, check that there are no mismatches (i.e. other polity of the same
+			-- sort) mentioned. We allow a mismatch at a given level if there's also a match with the containing polity
+			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
+			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
+			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
+			-- Delware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New Jersey
+			-- in [[Module:place/shared-data]]. Just because the containing polity US matches isn't enough, because
+			-- Newark, NJ also has New Jersey as a containing polity and there's a mismatch at that level. If there are
+			-- no mismatches at any level we assume we're dealing with the right city.
+			local containing_polities = m_shared.get_city_containing_polities(city_group, holonym_placename,
+				city_spec)
+			local containing_polities_mismatch = false
+			for _, polity in ipairs(containing_polities) do
+				local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity[1])
+				local divtype = polity.divtype or city_group.default_divtype
+				local divtype_equivs = export.get_placetype_equivs(divtype)
+				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
+					holonym_index and holonym_index + 1 or nil) do
+					local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
+						function(placetype)
+							return holonym.placetype == placetype and holonym.cat_placename == bare_polity
+						end
+					)
+					if this_holonym_matches then
+						containing_polities_match = true
+					else
+						local this_holonym_mismatches = export.get_equiv_placetype_prop_from_equivs(
+							divtype_equivs, function(placetype)
+								return holonym.placetype == placetype
+							end
+						)
+						if this_holonym_mismatches then
+							containing_polities_mismatch = true
+							break
+						end
+					end
+				end
+				if containing_polities_mismatch then
+					break
+				end
+			end
+			if not containing_polities_mismatch then
+				return city_spec, city_group, containing_polities
+			end
+		end
+	end
+end
+
+
 --[=[
-Find the correct holonym key(s) to categorize a given holonym in. This is used in two ways:
+This is invoked specially for all placetypes (see the `*` placetype key at the bottom of `placetype_data`). This is used
+in two ways:
 # To add pages to generic holonym categories like [[:Category:en:Places in Merseyside, England]] (and
   [[:Category:en:Places in England]]) for any pages that have `co/Merseyside` as their holonym.
 # To categorize demonyms in bare placename categories like [[:Category:en:Merseyside, England]] if the demonym
@@ -1579,6 +1693,7 @@ Find the correct holonym key(s) to categorize a given holonym in. This is used i
   [[:Category:France]] if no more specific category applies.) Unlike when invoked from {{tl|place}}, a demonym
   invocation only adds the most specific holonym category and not the category of any containing polity (hence if we
   add [[:Category:en:Merseyside, England]] we won't also add [[:Category:England]]).
+
 This code also handles cities; e.g. for the first use case above, it would be used to add a page that has `city/Boston`
 as a holonym to [[:Category:en:Places in Boston]], along with [[:Category:en:Places in Massachusetts, USA]] and
 [[:Category:en:Places in the United States]]. The city handler tries to deal with the possibility of multiple cities
@@ -1596,9 +1711,9 @@ FIXME: The checks we do for cities to make sure the wrong containing polity isn'
 subdivisions as well.
 
 The single parameter `data` is as in category handlers. The return value is a list of categories (without the preceding
-language code, as is normal for category handlers).
+language code).
 ]=]
-local function find_generic_holonym_cats(data)
+local function generic_cat_handler(data)
 	local holonym_placetype, holonym_placename, place_desc, from_demonym =
 		data.holonym_placetype, data.holonym_placename, data.place_desc, data.from_demonym
 
@@ -1633,104 +1748,44 @@ local function find_generic_holonym_cats(data)
 		end
 	end
 	-- Check for cities mentioned as holonyms.
-	if holonym_placetype == "city" then
-		for _, city_group in ipairs(m_shared.cities) do
-			local value = city_group.data[holonym_placename]
-			if value and value.alias_of then
-				local new_value = city_group.data[value.alias_of]
-				if not new_value then
-					error("City '" .. holonym_placename .. "' has an entry with non-existent alias_of='" .. value.alias_of .. "'")
+	local city_spec, city_group, containing_polities = find_city_spec(data)
+	if city_spec then
+		-- Add categories for the city and its containing polities.
+		insert_retkey(holonym_placename)
+		if from_demonym then
+			-- Don't insert any containing polities if from_demonym; see above.
+			return retcats
+		end
+		for _, polity in ipairs(containing_polities) do
+			local divtype = polity.divtype or city_group.default_divtype
+			local drop_dead_now = false
+			-- Find the group and key corresponding to the polity.
+			for _, polity_group in ipairs(m_shared.polities) do
+				local key = polity[1]
+				if polity_group.placename_to_key then
+					key = polity_group.placename_to_key(key)
 				end
-				holonym_placename = value.alias_of
-				value = new_value
+				local value = polity_group.data[key]
+				if value then
+					value = polity_group.value_transformer(polity_group, key, value)
+					local key_divtype = value.divtype or polity_group.default_divtype
+					if key_divtype == divtype or (
+						type(key_divtype) == "table" and key_divtype[1] == divtype) then
+						insert_retkey(key)
+						if value.no_containing_polity_cat then
+							-- Stop adding containing polities if no_containing_polity_cat
+							-- is found. (Used for 'United Kingdom'.)
+							drop_dead_now = true
+						end
+						break
+					end
+				end
 			end
-			if value then
-				-- Check if any of the city's containing polities are explicitly mentioned. If not, make sure
-				-- that no other polities of the same sort are mentioned.
-				local containing_polities = m_shared.get_city_containing_polities(city_group, holonym_placename, value)
-				local containing_polities_match = false
-				local containing_polities_mismatch = false
-				for _, polity in ipairs(containing_polities) do
-					local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity[1])
-					local divtype = polity.divtype or city_group.default_divtype
-					local function holonym_matches_polity(placetype)
-						if not place_desc.holonyms_by_placetype[placetype] then
-							return false
-						end
-						for _, holonym in ipairs(place_desc.holonyms_by_placetype[placetype]) do
-							if holonym == bare_polity then
-								return true
-							end
-						end
-						return false
-					end
-					containing_polities_match = export.get_equiv_placetype_prop(divtype, holonym_matches_polity)
-					if containing_polities_match then
-						break
-					end
-					containing_polities_mismatch = export.get_equiv_placetype_prop(divtype,
-						function(pt) return not not place_desc.holonyms_by_placetype[pt] end)
-					if containing_polities_mismatch then
-						break
-					end
-				end
-				-- No mismatching containing polities, so add categories for the city and
-				-- its containing polities.
-				if not containing_polities_mismatch then
-					insert_retkey(holonym_placename)
-					if from_demonym then
-						-- Don't insert any containing polities if from_demonym; see above.
-						return retcats
-					end
-					for _, polity in ipairs(containing_polities) do
-						local divtype = polity.divtype or city_group.default_divtype
-						local drop_dead_now = false
-						-- Find the group and key corresponding to the polity.
-						for _, polity_group in ipairs(m_shared.polities) do
-							local key = polity[1]
-							if polity_group.placename_to_key then
-								key = polity_group.placename_to_key(key)
-							end
-							local value = polity_group.data[key]
-							if value then
-								value = polity_group.value_transformer(polity_group, key, value)
-								local key_divtype = value.divtype or polity_group.default_divtype
-								if key_divtype == divtype or (
-									type(key_divtype) == "table" and key_divtype[1] == divtype) then
-									insert_retkey(key)
-									if value.no_containing_polity_cat then
-										-- Stop adding containing polities if no_containing_polity_cat
-										-- is found. (Used for 'United Kingdom'.)
-										drop_dead_now = true
-									end
-									break
-								end
-							end
-						end
-						if drop_dead_now then
-							break
-						end
-					end
-					return retcats
-				end
+			if drop_dead_now then
+				break
 			end
 		end
-	end
-end
-
-
--- This is invoked specially for all placetypes (see the `*` placetype key at the bottom of `placetype_data`) to add
--- pages to generic holonym categories like [[:Category:en:Places in Merseyside, England]] (and
--- [[:Category:en:Places in England]]) for any pages that have `co/Merseyside` as their holonym. It also handles cities
--- (e.g. [[:Category:en:Places in Boston]], along with [[:Category:en:Places in Massachusetts, USA]] and
--- [[:Category:en:Places in the United States]]) for any pages that have `city/Boston` as their holonym. For more
--- information, see `find_generic_holonym_cats`.
-local function generic_cat_handler(data)
-	local retcats = find_generic_holonym_cats(data)
-	if retcats then
-		return {
-			["itself"] = retcats
-		}
+		return retcats
 	end
 end
 
@@ -1843,7 +1898,7 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 
 					for _, group in ipairs(m_shared.polities) do
 						-- Try to find the term among the known polities.
-						local key, _ = call_place_cat_handler(group, possible_placetypes, holonym.placename)
+						local key, _ = call_place_cat_handler(group, possible_placetypes, holonym.cat_placename)
 						if key then
 							local value = group.data[key]
 							if value then
@@ -1880,12 +1935,14 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 										end
 										-- Don't side-effect holonyms while processing them.
 										local new_holonym = {
+											-- By the time we run, the display has already been generated so we don't
+											-- need to set display_placename.
 											placetype = containing_type,
-											placename = value.containing_polity,
-											no_display = true,
+											cat_placename = value.containing_polity,
 										}
 										insert(augmented_holonyms, new_holonym)
-										insert(inserted_holonyms, new_holonym)
+										-- But it is safe to modify other parts of the place_desc.
+										export.key_holonym_into_place_desc(place_desc, new_holonym)
 									end
 								end
 							end
@@ -1894,9 +1951,6 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 				end
 			end
 			place_desc.holonyms = augmented_holonyms
-			for _, new_holonym in ipairs(inserted_holonyms) do
-				export.key_holonym_into_place_desc(place_desc, new_holonym)
-			end
 		end
 	end
 
@@ -1927,34 +1981,28 @@ local function district_inner_data(value, itself_dest)
 end
 
 
--- Cat handler for districts and areas. Districts are tricky because they can
--- either be political subdivisions or city neighborhoods. We handle this as follows:
--- (1) For countries etc. where they can be political subdivisions, an entry under
--- "district" will be inserted for the country with something similar to the following:
---
--- {
---		["itself"] = {"Districts of Foo"},
---		["city"] = {"Neighborhoods in Foo"},
---		["town"] = {"Neighborhoods in Foo"},
---		["borough"] = {"Neighborhoods in Foo"},
---		...
--- }
---
--- This way, a district in a city will categorize under "Neighborhoods in Foo"
--- while some other district will categorize under "Districts of Foo".
--- (2) For the remaining countries, we have a cat_handler that returns the following
--- for all known countries and primary subdivisions:
---
--- {
---		["city"] = {"Neighborhoods in Foo"},
---		["town"] = {"Neighborhoods in Foo"},
---		["borough"] = {"Neighborhoods in Foo"},
---		...
--- }
---
--- This way, a district under a city will still categorize under "Neighborhoods in Foo" while other districts won't
--- categorize.
+-- Cat handler for district, areas and neighborhoods. Districts are tricky because they can either be political
+-- subdivisions or city neighborhoods. Areas similarly can be political subdivisions (rarely; specifically, in Kuwait),
+-- city neighborhoods or larger geographical areas/regions. We handle this as follows:
+-- (1) `placetype_data` cat entries for specific countries or country subdivisions take precedence over cat_handlers,
+--     so if the user says {{tl|place|district|s/Maharashtra|c/India}}, we won't even be called because there is an
+--     entry that categorizes into [[:Category|Districts of Maharashtra, India]].
+-- (2) If we're called, we check the holonym we're called on to see if it is a recognized city, e.g. if we're called
+--     using {{tl|place|district|city/Mumbai|s/Maharashtra|c/India}}. If so, we categorize under e.g.
+--     [[:Category:Neighbourhoods of Mumbai]]. (Choosing the spelling "neighbourhoods" because we're in India.)
+-- (3) If we're called and the holonym is not a recognized city, we check if the placetype has has_neighborhoods set.
+--     If so, it's "city-like" and we categorize under the first containing polity that we recognize. For example, if
+--     we're called using {{tl|place|district|town/Northampton|co/Hampshire|s/Massachusetts|c/US}}, we should recognize
+--     town as "city-like" and categorize under [[:Category:Neighborhoods in Massachusetts]]. (Note "in" not "of", and
+--     note the spelling "neighborhoods" because we're in the US.)
+-- (4) If the holonym is not city-like, we do nothing. If there's a city or city-like placetype farther up (e.g. we're
+--     called as {{tl|place|district|ward/Foo|mun/Bar|...}}), we will handle the city-like entity according to (2) or
+--     (3) when called on that holonym. Otherwise either the categorization in (1) takes place or there's no
+--     categorization.
 local function district_cat_handler(data)
+	local city_spec, city_group, containing_polities = find_city_spec(data)
+	if city_spec then
+
 	local holonym_placetype, holonym_placename = data.holonym_placetype, data.holonym_placename
 	for _, group in ipairs(m_shared.polities) do
 		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
@@ -2130,15 +2178,17 @@ Main placetype data structure. This specifies, for each canonicalized placetype,
   subdivision of Kuwait, meaning if `c/Kuwait` occurs as holonym, the toponym is categorized under
   [[:Category:Areas of Kuwait]]. If none of these categories trigger, the fallback of `geographic and cultural area`
   will take effect, and the toponym will be categorized as e.g. [[:Category:Geographic and cultural areas of England]].
-* `cat_handler`: A function of one argument, `data`, describing the resolve entry placetype and the holonym being
+* `cat_handler`: A function of one argument, `data`, describing the resolved entry placetype and the holonym being
   processed. The cat handler is called on successive holonyms starting with the most immediate one, until it returns
-  non-nil. The return value should be an ''inner spec'', i.e. a table where keys are either placetypes or the string
-  {"itself"} and the corresponding value is a list of either category specs (categories minus the langcode prefix, with
-  `+++` standing for the holonym) or the value `true`, which stands for `Placetypes in/of Holonym`, i.e. the pluralized
-  placetype with the appropriate preposition as specified in the `placetype_data`. `data` contains the following fields:
+  non-nil. The return value should be a list of category specs (categories minus the langcode prefix, with `+++`
+  standing for the holonym, or the value `true`, which stands for `Placetypes in/of Holonym`, i.e. the pluralized
+  placetype with the appropriate preposition as specified in the `placetype_data`). `data` contains the following
+  fields:
 ** `entry_placetype`: the resolved entry placetype for the entry placetype being processed (i.e. it will always have an
    entry in `placetype_data` but may not be the original placetype given by the user);
 ** `holonym_placetype` and `holonym_placename`: the holonym placetype and placename being processed;
+** `holonym_index`: the index of the holonym being processed, or {nil} if we're handling an overriding holonym (FIXME:
+   we will change the overriding holonym algorithm so there won't be {nil} holonym indices);
 ** `place_desc`: a full description of the {{tl|place}} call, as specified at the top of [[Module:place]];
 ** `from_demonym`: If set, we are called from [[Module:demonym]], triggered by {{tl|demonym-adj}} or
    {{tl|demonym-noun}}, instead of being triggered by {{tl|place}}.
@@ -2150,15 +2200,13 @@ Main placetype data structure. This specifies, for each canonicalized placetype,
 export.placetype_data = {
 	["administrative village"] = {
 		preposition = "of",
-
-		["default"] = {
-			["municipality"] = {true},
-		},
+		has_neighborhoods = true,
 	},
 
 	["administrative centre"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["administrative region"] = {
@@ -2174,23 +2222,19 @@ export.placetype_data = {
 	},
 
 	["airport"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["ancient capital"] = {
 		article = "the",
 		preposition = "of",
-		["default"] = {
-			["itself"] = {"Ancient settlements", "Historical capitals"},
-		},
+		default = {"Ancient settlements", "Historical capitals"},
+		has_neighborhoods = true,
 	},
 
 	["ancient settlement"] = {
-		["default"] = {
-			["itself"] = {"Ancient settlements"},
-		},
+		default = {"Ancient settlements"},
+		has_neighborhoods = true,
 	},
 
 	["area"] = {
@@ -2201,23 +2245,21 @@ export.placetype_data = {
 
 	["arm"] = {
 		preposition = "of",
-		["default"] = {
-			["itself"] = {"Seas"},
-		},
+		default = {"Seas"},
 	},
 
 	["atoll"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["autonomous city"] = {
 		preposition = "of",
 		fallback = "city",
+		has_neighborhoods = true,
 	},
 
 	["autonomous community"] = {
+		-- Spain; refers to regional entities, not village-like entities, as might be expected from "community"
 		preposition = "of",
 	},
 
@@ -2247,29 +2289,25 @@ export.placetype_data = {
 
 	["bay"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["beach"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["borough"] = {
 		preposition = "of",
 		display_handler = borough_display_handler,
-		["city/New York City"] = {
-			["itself"] = {"Boroughs of +++"},
-		},
+		["city/New York City"] = {"Boroughs of +++"},
+		-- Grr, some boroughs are city-like but some (e.g. in Britain) may be larger.
+		has_neighborhoods = true,
 	},
 
 	["borough seat"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["branch"] = {
@@ -2286,43 +2324,38 @@ export.placetype_data = {
 		article = "the",
 		preposition = "of",
 		cat_handler = capital_city_cat_handler,
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
+		has_neighborhoods = true,
 	},
 
 	["census area"] = {
 		affix_type = "Suf",
+		has_neighborhoods = true,
 	},
 
 	["city"] = {
 		cat_handler = city_type_cat_handler,
-
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-		},
+		["country/*"] = {true},
+		default = {true},
+		has_neighborhoods = true,
 	},
 
 	["city-state"] = {
-		["default"] = {
-			["continent"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
-			["itself"] = {"City-states", "Cities", "Countries", "National capitals"},
-		},
+		continent = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
+		default = {"City-states", "Cities", "Countries", "National capitals"},
+		has_neighborhoods = true,
 	},
 
 	["civil parish"] = {
+		-- Mostly England; similar to municipalities
 		preposition = "of",
 		affix_type = "suf",
+		has_neighborhoods = true,
 	},
 
 	["collectivity"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {"Polities"},
-		},
+		default = {"Polities"},
 	},
 
 	["commonwealth"] = {
@@ -2330,10 +2363,14 @@ export.placetype_data = {
 	},
 
 	["commune"] = {
+		-- Occur in many countries, similar (per Wikipedia) to municipalities or townships
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["community development block"] = {
+		-- in India; appears to be similar to a rural municipality; groups several villages, unclear if there will be
+		-- neighborhoods so I'm not setting `has_neighborhoods` for now
 		affix_type = "suf",
 		no_affix_strings = "block",
 	},
@@ -2344,37 +2381,36 @@ export.placetype_data = {
 	},
 
 	["continent"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["council area"] = {
+		-- in Scotland; similar to a county
 		preposition = "of",
 		affix_type = "suf",
 	},
 
 	["country"] = {
-		["default"] = {
-			["continent"] = {true, "Countries"},
-			["itself"] = {true},
-		},
+		["continent/*"] = {true, "Countries"},
+		default = {true},
 	},
 
 	["county"] = {
 		preposition = "of",
 		display_handler = county_display_handler,
-
-		["default"] = {
-			["itself"] = {"Polities"},
-		},
+		-- Was here before but seems garbage. A 'former county' could possibly be a former polity but nowadays counties
+		-- are always administrative subdivisions.
+		-- default = {"Polities"},
 	},
 
 	["county-administered city"] = {
+		-- in Taiwan, per Wikipedia similar to a township or district
 		fallback = "city",
+		has_neighborhoods = true,
 	},
 
 	["county borough"] = {
+		-- in Wales; similar to a county
 		preposition = "of",
 		affix_type = "suf",
 		fallback = "borough",
@@ -2383,12 +2419,14 @@ export.placetype_data = {
 	["county seat"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["county town"] = {
 		article = "the",
 		preposition = "of",
 		fallback = "town",
+		has_neighborhoods = true,
 	},
 
 	["department"] = {
@@ -2398,17 +2436,12 @@ export.placetype_data = {
 
 	["dependent territory"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-		},
+		["country/*"] = {true},
+		default = {true},
 	},
 
 	["desert"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["distributary"] = {
@@ -2425,6 +2458,8 @@ export.placetype_data = {
 	},
 
 	["district municipality"] = {
+		-- In Canada, a district municipality is equivalent to a rural municipality and won't have neighborhoods; in
+		-- South Africa, district municipalities group local municipalities and hence won't have neighborhoods.
 		preposition = "of",
 		affix_type = "suf",
 		no_affix_strings = {"district", "municipality"},
@@ -2445,10 +2480,13 @@ export.placetype_data = {
 
 	["federal city"] = {
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["federal district"] = {
+		-- Might have neighborhoods as federal districts are often cities (e.g. Mexico City)
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["federal subject"] = {
@@ -2456,30 +2494,25 @@ export.placetype_data = {
 	},
 
 	["fictional location"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["forest"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["French prefecture"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["geographic and cultural area"] = {
 		preposition = "of",
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-			["constituent country"] = {true},
-			["continent"] = {true},
-		},
+		default = {true},
+		["country/*"] = {true},
+		["constituent country/*"] = {true},
+		["continent/*"] = {true},
 	},
 
 	["geopolitical zone"] = {
@@ -2506,66 +2539,46 @@ export.placetype_data = {
 	["gulf"] = {
 		preposition = "of",
 		holonym_article = "the",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["headland"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["hill"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["historical capital"] = {
 		article = "the",
 		preposition = "of",
-		["default"] = {
-			["itself"] = {"Historical settlements", "Historical capitals"},
-		},
+		default = {"Historical settlements", "Historical capitals"},
+		has_neighborhoods = true,
 	},
 
 	["historical county"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {"Historical political subdivisions"},
-		},
+		default = {"Historical political subdivisions"},
 	},
 
 	["historical dependent territory"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["historical polity"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["historical political subdivision"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["historical settlement"] = {
-		["default"] = {
-			["itself"] = {"Historical settlements"},
-		},
+		default = {true},
+		has_neighborhoods = true,
 	},
 
 	["hromada"] = {
@@ -2574,17 +2587,12 @@ export.placetype_data = {
 	},
 
 	["island"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["kibbutz"] = {
 		plural = "kibbutzim",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["krai"] = {
@@ -2593,14 +2601,13 @@ export.placetype_data = {
 	},
 
 	["lake"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["largest city"] = {
 		article = "the",
 		fallback = "city",
+		has_neighborhoods = true,
 	},
 
 	["local government district"] = {
@@ -2610,6 +2617,7 @@ export.placetype_data = {
 	},
 
 	["local government district with borough status"] = {
+		plural = "local government districts with borough status",
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
@@ -2620,6 +2628,7 @@ export.placetype_data = {
 		affix_type = "pref",
 		affix = "borough",
 		fallback = "local government district with borough status",
+		has_neighborhoods = true,
 	},
 
 	["marginal sea"] = {
@@ -2632,6 +2641,7 @@ export.placetype_data = {
 		affix_type = "Pref",
 		no_affix_strings = {"borough", "city"},
 		fallback = "local government district",
+		has_neighborhoods = true,
 	},
 
 	["metropolitan city"] = {
@@ -2639,27 +2649,24 @@ export.placetype_data = {
 		affix_type = "Pref",
 		no_affix_strings = {"metropolitan", "city"},
 		fallback = "city",
+		has_neighborhoods = true,
 	},
 
 	["moor"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["mountain"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["mountain pass"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["municipal district"] = {
+		-- meaning varies depending on the country; for now, assume no neighborhoods.
+		-- FIXME: has_neighborhoods might have to be a function that looks at the containing holonyms.
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = "district",
@@ -2668,12 +2675,11 @@ export.placetype_data = {
 
 	["municipality"] = {
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["mythological location"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["neighborhood"] = {
@@ -2684,8 +2690,9 @@ export.placetype_data = {
 	},
 
 	["new area"] = {
-		-- China (type of economic development zone)
+		-- China (type of economic development zone, area of a city)
 		preposition = "in",
+		has_neighborhoods = true,
 	},
 
 	["non-city capital"] = {
@@ -2694,10 +2701,8 @@ export.placetype_data = {
 		cat_handler = function(data)
 			return capital_city_cat_handler(data, "non-city")
 		end,
-
-		["default"] = {
-			["itself"] = {"Capital cities"},
-		},
+		default = {true},
+		has_neighborhoods = true,
 	},
 
 	["oblast"] = {
@@ -2707,10 +2712,7 @@ export.placetype_data = {
 
 	["ocean"] = {
 		holonym_article = "the",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["okrug"] = {
@@ -2724,25 +2726,24 @@ export.placetype_data = {
 	},
 
 	["parish municipality"] = {
+		-- in Quebec, often similar to a rural village; the famous [[Saint-Louis-du-Ha! Ha!]] is one of them.
 		preposition = "of",
 		fallback = "municipality",
+		has_neighborhoods = true,
 	},
 
 	["parish seat"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
 	},
 
 	["park"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["peninsula"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["periphery"] = {
@@ -2752,28 +2753,31 @@ export.placetype_data = {
 	["planned community"] = {
 		-- Include this empty so we don't categorize 'planned community' into
 		-- villages, as 'community' does.
+		has_neighborhoods = true,
 	},
 
 	["Polish colony"] = {
 		affix_type = "suf",
 		affix = "colony",
 		fallback = "village",
+		has_neighborhoods = true,
 	},
 
 	["polity"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["prefecture"] = {
+		-- FIXME! `prefecture` is like a county in Japan and elsewhere but a department capital city in France.
+		-- May need `has_neighborhoods` to be a function.
 		preposition = "of",
 		display_handler = prefecture_display_handler,
 	},
 
 	["prefecture-level city"] = {
-		-- China
+		-- China; they are huge entities with central city but could have neighborhoods I suppose.
 		fallback = "city",
+		has_neighborhoods = true, --?
 	},
 
 	["province"] = {
@@ -2832,17 +2836,12 @@ export.placetype_data = {
 	["river"] = {
 		holonym_article = "the",
 		cat_handler = city_type_cat_handler,
-
-		["default"] = {
-			["itself"] = {true},
-			["continent"] = {true},
-		},
+		default = {true},
+		["continent/*"] = {true},
 	},
 
 	["Roman province"] = {
-		["default"] = {
-			["itself"] = {"Provinces of the Roman Empire"},
-		},
+		default = {"Provinces of the Roman Empire"},
 	},
 
 	["royal borough"] = {
@@ -2850,10 +2849,13 @@ export.placetype_data = {
 		affix_type = "Pref",
 		no_affix_strings = {"royal", "borough"},
 		fallback = "local government district with borough status",
+		has_neighborhoods = true,
 	},
 
 	["rural committee"] = {
+		-- Hong Kong; something like a village
 		affix_type = "Suf",
+		has_neighborhoods = true,
 	},
 
 	["rural municipality"] = {
@@ -2861,6 +2863,7 @@ export.placetype_data = {
 		affix_type = "Pref",
 		no_affix_strings = "municipality",
 		fallback = "municipality",
+		has_neighborhoods = true, --?
 	},
 
 	["satrapy"] = {
@@ -2869,26 +2872,21 @@ export.placetype_data = {
 
 	["sea"] = {
 		holonym_article = "the",
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["special administrative region"] = {
+		-- In China; in practice they are city-like (Hong Kong, Shenzhen)
 		preposition = "of",
+		has_neighborhoods = true, --?
 	},
 
 	["spring"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["star"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["state"] = {
@@ -2896,27 +2894,23 @@ export.placetype_data = {
 	},
 
 	["state-level new area"] = {
-		-- China
+		-- China; a special type of 'new area', which is an urban district
 		preposition = "in",
+		has_neighborhoods = true,
 	},
 
 	["strait"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["subdistrict"] = {
 		preposition = "of",
-
 		--FIXME: doesn't work; need customizable poldivs of cities (here, subdistricts of Jakarta)
 		--["country/Indonesia"] = {
 		--	["municipality"] = {true},
 		--},
-
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
+		has_neighborhoods = true, --?
 	},
 
 	["subdivision"] = {
@@ -2936,6 +2930,7 @@ export.placetype_data = {
 	["subprovincial city"] = {
 		-- China
 		fallback = "city",
+		has_neighborhoods = true, --?
 	},
 
 	["subprovincial district"] = {
@@ -2948,6 +2943,7 @@ export.placetype_data = {
 		cat_handler = function(data)
 			return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
 		end,
+		has_neighborhoods = true, --?
 	},
 
 	["tehsil"] = {
@@ -2957,43 +2953,30 @@ export.placetype_data = {
 
 	["territory"] = {
 		preposition = "of",
-
-		["default"] = {
-			["itself"] = {"Polities"},
-		},
+		default = {"Polities"},
 	},
 
 	["town"] = {
 		cat_handler = city_type_cat_handler,
-
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-		},
+		["country/*"] = {true},
+		default = {true},
+		has_neighborhoods = true,
 	},
 
 	["township"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
+		has_neighborhoods = true,
 	},
 
 	["township municipality"] = {
 		preposition = "of",
 		fallback = "municipality",
+		has_neighborhoods = true, --?
 	},
 
 	["tributary"] = {
 		preposition = "of",
 		fallback = "river",
-	},
-
-	["unincorporated community"] = {
-		cat_handler = function(data)
-			if data.holonym_placetype == "state" then
-				return city_type_cat_handler(data)
-			end
-		end,
 	},
 
 	["union territory"] = {
@@ -3014,39 +2997,32 @@ export.placetype_data = {
 	["united township municipality"] = {
 		article = "a",
 		fallback = "township municipality",
+		has_neighborhoods = true, --?
 	},
 
 	["university"] = {
 		article = "a",
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["unrecognized country"] = {
-		["default"] = {
-			["itself"] = {"Countries"},
-		},
+		default = {"Countries"},
 	},
 
 	["valley"] = {
-		["default"] = {
-			["itself"] = {true},
-		},
+		default = {true},
 	},
 
 	["village"] = {
 		cat_handler = city_type_cat_handler,
-
-		["default"] = {
-			["itself"] = {true},
-			["country"] = {true},
-		},
+		["country/*"] = {true},
+		default = {true},
 	},
 
 	["village municipality"] = {
 		preposition = "of",
 		fallback = "municipality",
+		has_neighborhoods = true, --?
 	},
 
 	["voivodeship"] = {
@@ -3056,16 +3032,14 @@ export.placetype_data = {
 
 	["volcano"] = {
 		plural = "volcanoes",
-		
-		["default"] = {
-			["itself"] = {true, "Mountains"},
-		},
+		default = {true, "Mountains"},
 	},
 
 	["Welsh community"] = {
 		preposition = "of",
 		affix_type = "suf",
 		affix = "community",
+		has_neighborhoods = true,
 	},
 
 	["*"] = {
@@ -3110,16 +3084,10 @@ for _, group in ipairs(m_shared.polities) do
 						-- Northern Ireland but it's also an entry in placetype_equivs[]. Once we insert an entry here
 						-- for "traditional county", it will override placetype_equivs[]. To get around that, simulate
 						-- the effect of placetype_equivs[] using a fallback = "..." entry.
-						if export.placetype_equivs[sgdiv] then
-							export.placetype_data[sgdiv] = {
-								preposition = prep,
-								fallback = export.placetype_equivs[sgdiv],
-							}
-						else
-							export.placetype_data[sgdiv] = {
-								preposition = prep,
-							}
-						end
+						export.placetype_data[sgdiv] = {
+							preposition = prep,
+							fallback = export.placetype_equivs[sgdiv],
+						}
 					end
 					-- If there is a difference between full and elliptical placenames, make sure we recognize both
 					-- forms in holonyms.
@@ -3130,16 +3098,16 @@ for _, group in ipairs(m_shared.polities) do
 					local placenames = bare_full_placename == bare_elliptical_placename and {bare_full_placename} or
 						{bare_full_placename, bare_elliptical_placename}
 					for _, placename in ipairs(placenames) do
-						local itself_dest = {}
+						local cat_specs = {}
 						for _, pt_cat in ipairs(cat_as) do
 							if type(pt_cat) == "string" then
 								pt_cat = {type = pt_cat}
 							end
 							local pt_prep = pt_cat.prep or prep
 							if placename == key and require(en_utilities_module).pluralize(sgdiv) == pt_cat.type then
-								insert(itself_dest, true)
+								insert(cat_specs, true)
 							else
-								insert(itself_dest, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " .. key)
+								insert(cat_specs, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " .. key)
 							end
 						end
 						local cat_data_spec
@@ -3147,11 +3115,9 @@ for _, group in ipairs(m_shared.polities) do
 							-- see comment above under district_cat_handler().
 							local neighborhoods_in = value.british_spelling and "Neighbourhoods in " .. key or
 								"Neighborhoods in " .. key
-							cat_data_spec = district_inner_data({neighborhoods_in}, itself_dest)
+							cat_data_spec = district_inner_data({neighborhoods_in}, cat_specs)
 						else
-							cat_data_spec = {
-								["itself"] = itself_dest,
-							}
+							cat_data_spec = cat_specs,
 						end
 						local cat_data_holonym = dt .. "/" .. placename
 						if export.placetype_data[sgdiv][cat_data_holonym] then
