@@ -188,7 +188,7 @@ local function city_description(group, key, value)
 			local pl_divtype = require(en_utilities_module).pluralize(divtype)
 			local pl_linked_divtype = m_shared.political_divisions[pl_divtype]
 			if not pl_linked_divtype then
-				error("When creating city description for " .. key .. ", encountered divtype '" .. divtype .. "' not in m_shared.political_divisions")
+				error("Internal error: When creating city description for " .. key .. ", encountered divtype '" .. divtype .. "' not in m_shared.political_divisions")
 			end
 			pl_linked_divtype = m_shared.format_description(pl_linked_divtype, pl_divtype)
 			local linked_divtype = require(en_utilities_module).singularize(pl_linked_divtype)
@@ -200,14 +200,14 @@ local function city_description(group, key, value)
 end
 
 -- Generate bare labels in 'label' for all cities.
-for _, group in ipairs(m_shared.cities) do
-	for key, value in pairs(group.data) do
+for _, city_group in ipairs(m_shared.cities) do
+	for key, value in pairs(city_group.data) do
 		if not value.alias_of then
-			local desc, label_parent = city_description(group, key, value)
+			local desc, label_parent = city_description(city_group, key, value)
 			desc = "{{{langname}}} terms related to " .. desc .. "."
-			local city_containing_polities = m_shared.get_city_containing_polities(group, key, value)
+			local city_containing_polities = m_shared.get_city_containing_polities(city_group, key, value)
 			if not city_containing_polities or not city_containing_polities[1] then
-				error("When creating city bare label for " .. key .. ", at least one containing polity must be specified or an explicit parent must be given")
+				error("Internal error: When creating city bare label for " .. key .. ", at least one containing polity must be specified or an explicit parent must be given")
 			end
 			local key_parents = {}
 			for _, parent in ipairs(city_containing_polities) do
@@ -215,14 +215,14 @@ for _, group in ipairs(m_shared.cities) do
 				if key_parent then
 					table.insert(key_parents, "cities in " .. key_parent)
 				else
-					error("Couldn't find entry for city '" .. key .."' parent '" .. parent .. "'")
+					error("Internal error: Couldn't find entry for city '" .. key .."' parent '" .. parent .. "'")
 				end
 			end
 
 			-- wp= defaults to group-level wp=, then to true (Wikipedia article matches bare key = label)
 			local wp = value.wp
 			if wp == nil then
-				wp = group.wp or true
+				wp = city_group.wp or true
 			end
 			-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category generally follow)
 			local wpcat = value.wpcat
