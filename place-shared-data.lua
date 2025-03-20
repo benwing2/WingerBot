@@ -382,12 +382,38 @@ the group or derivable from group-specific properties. The following are the pro
 --                              Helper functions                                 --
 -----------------------------------------------------------------------------------
 
--- Format a description that can have the special value of 'true' or 'nil' (use link_label() in
--- [[Module:category tree/topic cat]]) or "w" (use link_label(..., "wikify")). Any other value is returned as-is.
+--[==[
+Throw an error. `fmt` is a format string and the remaining arguments are passed through `mw.dumpObject` and then used to
+format the format string as if `fmt:format(...)` were called. In general, callers should use `internal_error` unless the
+error was due to bad user input rather than a logic error (which usually isn't the case in deep back-end code like
+this).
+]==]
+function export.process_error(fmt, ...)
+	local args = {...}
+	for i, val in ipairs(args) do
+		args[i] = dump(val)
+	end
+	return error(format(fmt, unpack(args)))
+end
+
+--[==[
+Throw an internal error (a logic error that should never happen unless there is a bug in the code, as opposed to a user
+error triggered by bad input or a system error due to something like running out of memory or hitting a time limit).
+`fmt` is a format string and the remaining arguments are passed through `mw.dumpObject` and then used to format the
+format string as if `fmt:format(...)` were called.
+]==]
+function export.internal_error(fmt, ...)
+	export.process_error("Internal error: " .. fmt, ...)
+end
+
+--[==[
+Format a description that can have the special value of `true` or `nil` (use `link_label()` in
+[[Module:category tree/topic cat]]) or `"w"` (use `link_label(..., "wikify"))`. Any other value is returned as-is.
+]==]
 function export.format_description(desc, label)
-	-- TODO: this function is the reason a bunch of place terms are linked by every category. link_label uses mw.title.new,
-	-- which counts as a link. format_description is then called by [[Module:category tree/topic cat/data/Places]].
-	-- this is not ideal.
+	-- FIXME: this function is the reason a bunch of place terms are linked by every category. link_label uses
+	-- mw.title.new, which counts as a link. format_description is then called by
+	-- [[Module:category tree/topic cat/data/Places]]. This is not ideal.
 	if desc == nil then
 		desc = true
 	end
@@ -399,6 +425,17 @@ function export.format_description(desc, label)
 	return desc
 end
 
+--[==[
+Given a non-multipart key (where a multipart key is something like `"Tucson, Arizona"` or `"Atlanta, Georgia, USA"`),
+possibly preceded by `the`, return two values, the ''bare'' and ''linked'' versions of the key. The bare version is
+simply the passed-in `key` minus any preceding `the`. The linked version is the key converted into a raw bracketed link
+(where any preceding `the` is included but is not part of the link). If `display_form` is given and is different from
+the bare key, the resulting link will be a two-part link, linking to the non-`the` part of the key but displaying
+`display_form` in place of the link.
+
+For example, the call `construct_bare_and_linked_version("the United States")` will return `"United States"` and
+`"the <nowiki>[[United States]]</nowiki>"`.
+]==]
 function export.construct_bare_and_linked_version(key, display_form)
 	local bare_key = key:match("^the (.*)$")
 	local linked_prefix
@@ -437,7 +474,7 @@ local function simple_polity_bare_label_setter(overriding_parents)
 			parents = {}
 			local value_parents = value.parents
 			if not value_parents then
-				error(("key '%s' must have `parents` set"):format(key))
+				internal_error("Key %s must have `parents` set", key)
 			end
 			if type(value_parents) ~= "table" then
 				value_parents = {value_parents}
@@ -506,18 +543,20 @@ local function subpolity_keydesc(group, key, value, containing_polity, default_d
 	return linked_placename .. ", " .. divtype .. " of " .. linked_containing_polity
 end
 
--- Call the polity group's key_to_placename function if it exists (see the description of the `key_to_placename`
--- function in the long comment just below the heading "Polities"). If there is no such function (i.e. for this group,
--- keys and placenames are the same), the key is returned unchanged as both the full and elliptical placename. Otherwise
--- two values are returned, the full and elliptical placenames (e.g. full "County Durham" vs. elliptical "Durham").
+--[==[
+Call the polity group's `key_to_placename` function if it exists (see the description of the `key_to_placename`
+function in the long comment just below the heading `"Polities"`). If there is no such function (i.e. for this group,
+keys and placenames are the same), the key is returned unchanged as both the full and elliptical placename. Otherwise
+two values are returned, the full and elliptical placenames (e.g. full `"County Durham"` vs. elliptical `"Durham"`).
+]==]
 function export.call_key_to_placename(group, key)
 	if group.key_to_placename then
 		local full_placename, elliptical_placename = group.key_to_placename(key)
 		if type(full_placename) ~= "string" then
-			error(("Internal error: key '%s' returned a non-string full placename: %s"):format(key, dump(full_placename)))
+			internal_error("Key %s returned a non-string full placename: %s", key, full_placename)
 		end
 		if type(elliptical_placename) ~= "string" then
-			error(("Internal error: key '%s' returned a non-string elliptical placename: %s"):format(key, dump(elliptical_placename)))
+			internal_error("Key %s returned a non-string elliptical placename: %s", key, elliptical_placename)
 		end
 		return full_placename, elliptical_placename
 	end
@@ -543,7 +582,7 @@ local function subpolity_bare_label_setter(containing_polity)
 			local divtype = value.divtype or group.default_divtype
 			divtype = type(divtype) == "table" and divtype[1] or divtype
 			if not divtype then
-				error(("Ended up with nil divtype for key=%s, value=%s"):format(dump(key), dump(value)))
+				internal_error("Ended up with nil divtype for key=%s, value=%s", key, value)
 			end
 			div_parent_type = require(en_utilities_module).pluralize(divtype)
 		end
@@ -579,7 +618,9 @@ local function subpolity_value_transformer(containing_polity)
 	end
 end
 
--- See the documentation for `place_cat_handler` above the definition of `export.polities` below.
+--[==[
+See the documentation for `place_cat_handler` above the definition of `export.polities` below.
+]==]
 function export.default_place_cat_handler(group, placetypes, placename)
 	if group.placename_to_key then
 		placename = group.placename_to_key(placename)
@@ -609,22 +650,47 @@ function export.default_place_cat_handler(group, placetypes, placename)
 	end
 end
 
--- This is typically used to define key_to_placename. It generates a function that chops off
--- part of a string using the regex TO_CHOP. To chop at the end, add $ at the end of the regex;
--- to chop at the beginning, add ^ at the beginning. It is normally used for subpolities (e.g.
--- states of the US or counties of England) when the placename of the polity as found in
--- categories includes the larger containing polity in it (e.g. "Georgia, USA" or
--- "Hampshire, England"). Typical usage is like this:
---
--- ...
--- key_to_placename = make_key_to_placename(", England$"),
--- ...
---
--- or
---
--- ...
--- key_to_placename = make_key_to_placename(", South Korea$", " County$")
--- ...
+
+--[==[
+Call the place cat handler for a given polity `group` for a holonym `placename` with possible holonym placetypes
+`placetypes`. The purpose of this is to check if the holonym exists in the group, and if so, return two values:
+the key as found in the polity tables (which is the form that the holonym would take in a category of the form
+` ``Placetypes`` in/of ``holonym``` e.g. [[:Category:Districts of the West Midlands, England]]) and the ''bare key'',
+which is the same as the key except it removes any occurrence of `the` at the beginning (and hence is suitable for bare
+categories such as [[:Category:West Midlands, England]]). This is sort of a glorified `placename_to_key()` for
+subpolities in the group, but also verifies the correct placetype(s).
+]==]
+function export.call_place_cat_handler(group, placetypes, placename)
+	local handler = group.place_cat_handler or export.default_place_cat_handler
+	return handler(group, placetypes, placename)
+end
+
+
+--[=[
+This is typically used to define `key_to_placename`. It generates a function that chops off parts of a string,
+typically at the end, in order to get the full and elliptical versions of a placename. (See the documentation above
+for `key_to_placename` under "Polity group tables" for the difference between full and elliptical placenames.)
+`polity_patterns` is Lua pattern or a list of possible patterns matching the polity at the end of the key, which
+will be used to remove the polity. If multiple patterns are specified, each one is tried until one matches. If
+`polity_patterns` is omitted, this part of the process is skipped. The reulting string becomes the full placename.
+If `poldiv_patterns` is specified, it is likewise either a Lua pattern or list of possible patterns to match and
+remove the political division affixed onto the end (or possibly the beginning) of the key in the keys of certain
+countries (such as South Korean and North Korean counties, which include the word "County" in the key). The resulting
+chopped string becomes the elliptical placename. If `poldiv_patterns` is omitted, this part of the process is skipped
+and the full adn elliptical placenames are the same.
+
+Typical usage is as follows:
+
+```
+key_to_placename = make_key_to_placename(", England$"),
+```
+
+or (when the poldiv is part of the key)
+
+```
+key_to_placename = make_key_to_placename(", South Korea$", " County$")
+```
+]=]
 local function make_key_to_placename(polity_patterns, poldiv_patterns)
 	if type(polity_patterns) == "string" then
 		polity_patterns = {polity_patterns}
@@ -658,22 +724,27 @@ local function make_key_to_placename(polity_patterns, poldiv_patterns)
 end
 
 
--- This is typically used to define placename_to_key. It generates a function that appends a
--- string to the end of a given string. It does the opposite operation of make_key_to_placename() and is used
--- along with that function. It is normally used for subpolities (e.g. states of the US or
--- counties of England) when the placename of the polity as found in categories includes the
--- larger containing polity in it (e.g. "Georgia, USA" or "Hampshire, England"). Typical usage
--- is like this:
---
--- ...
--- placename_to_key = make_placename_to_key(", England"),
--- ...
---
--- or
---
--- ...
--- placename_to_key = make_placename_to_key(", South Korea", " County"),
--- ...
+--[=[
+This is typically used to define `placename_to_key`. It generates a function that appends a string to the end of a given
+placename to get the key (see the definition of `placename_to_key` above in the documentation under "Polity group
+tables"). Optional `poldiv_suffix` is a raw string (which should not contain hyphens or other characters that have
+special meaning in Lua patterns) to be appended first to the placename; if already present at the end, it is not
+appended. `polity_suffix` is then added in the same fashion if given. Typical usage is like this:
+
+```
+placename_to_key = make_placename_to_key(", England")
+```
+
+(which will convert e.g. `"Hampshire"` into `"Hampshire, England"`)
+
+or
+
+```
+placename_to_key = make_placename_to_key(", South Korea", " County")
+```
+
+(which will convert e.g. `"Gangwon"` or `"Gangwon County"` into `"Gangwon County, South Korea"`).
+]=]
 local function make_placename_to_key(polity_suffix, poldiv_suffix)
 	return function(placename)
 		local key = placename
@@ -689,41 +760,91 @@ local function make_placename_to_key(polity_suffix, poldiv_suffix)
 	end
 end
 
-
---[==[
-
-]==]
-function export.get_city_containing_polities(city_group, city_data)
-	local containing_polities = city_group.containing_polities
-	if type(containing_polities[1]) == "string" then
-		containing_polities = {containing_polities}
-	elseif value[1] then
-		containing_polities = m_table.shallowCopy(containing_polities)
+--[=[
+Normalize the list of city "parents" (containing polities) to standard/full form, which is a list of objects, each with
+`name` and `divtype` fields. `default_divtype` supplies the default if the divtype of a given containing polity is
+unspecified (i.e. it's a string or an object with a `name` but no `divtype` field). An error is thrown if a containing
+polity is missing its divtype and `default_divtype` is omitted. Returns two values, the normalized parents list and a
+boolean which is true if the returned list (but not necessarily the tables inside) were generated afresh, meaning you
+can safely append more items to the end without needing to copy the list.
+]=]
+local function normalize_city_parents(parents, default_divtype)
+	if not parents then
+		return nil
 	end
-	local this_containing_polities = value
-	if type(value[1]) == "string" then
-		this_containing_polities = {this_containing_polities}
+	local outer_copied = false
+	if type(parents) == "string" or parents.name then
+		parents = {parents}
+		outer_copied = true
 	end
-	for n, polity in ipairs(this_containing_polities) do
-		table.insert(containing_polities, n, polity)
+	local need_normalization = false
+	for _, parent in ipairs(parents) do
+		if type(parent) == "string" or not parent.divtype then
+			if not default_divtype then
+				internal_error("Encountered parent %s without divtype, and `default_divtype` is passed in as nil",
+					parent)
+			end
+			need_normalization = true
+			break
+		end
 	end
-	return containing_polities
+	if need_normalization then
+		if not outer_copied then
+			parents = m_table.shallowCopy(parents)
+			outer_copied = true
+		end
+		for i, parent in ipairs(parents) do
+			if type(parent) == "string" then
+				parents[i] = {name = parent, divtype = default_divtype}
+			elseif not parent.divtype then
+				parent = m_table.shallowCopy(parent)
+				parent.divtype = default_divtype
+				parents[i] = parent
+			end
+		end
+	end
+	return parents, outer_copied
 end
 
--- Given a containing polity of a city, possibly with preceding "the" removed,
--- find the group and key in 'export.polities'.
-function export.city_containing_polity_to_group_and_key(polity)
+--[==[
+Return the normalized containing polities for a city, given the city's ''city group'' object and the particular
+''city spec'' for the city (the value in the city group key-value data table corresponding to the city in question).
+This joins the containing polities specified at the city spec level with any additional (outer) containing polities
+specified at the group level. The return value is normalized to always be in a list format where each object contains
+`name` and `divtype` fields, where `divtype` will always be present (defaulted if necessary from the city group level).
+]==]
+function export.get_city_containing_polities(city_group, city_spec)
+	local skip_parents = normalize_city_parents(city_group.skip_parents)
+	local this_parents, this_parents_copied =
+		normalize_city_parents(city_spec.parents, city_group.default_parent_divtype)
+	if not this_parents or not this_parents[1] then
+		return skip_parents or {}
+	end
+	if not skip_parents or not skip_parents[1] then
+		return this_parents or {}
+	end
+	if not this_parents_copied then
+		this_parents = m_table.shallowCopy(this_parents)
+	end
+	m_table.extend(this_parents, skip_parents)
+	return this_parents
+end
+
+
+--[==[
+Given a containing polity of a city, possibly with preceding `the` removed, find the group and key in
+`export.polities`. Return two values, the polity group and key in that group's data to fetch the polity spec.
+`parent_spec` is as in the return value of `get_city_containing_polities`, i.e. it is a table with `name` and `divtype`
+fields, which must both be present. The `divtype` is used to check that we have the right polity; otherwise, for
+example, the city of [[Atlanta]] wrongly ends up in [[:Category:Cities in Georgia]] (the country) in lieu of the correct
+[[:Category:Cities in Georgia, USA]].
+]==]
+function export.city_containing_polity_to_group_and_key(parent_spec)
 	for _, polity_group in ipairs(export.polities) do
-		local key_polity = polity
-		if polity_group.placename_to_key then
-			key_polity = polity_group.placename_to_key(key_polity)
-		end
-		if polity_group.data[key_polity] then
-			return polity_group, key_polity
-		end
-		key_polity = "the " .. key_polity
-		if polity_group.data[key_polity] then
-			return polity_group, key_polity
+		local polity_key, polity_bare_key = export.call_place_cat_handler(polity_group, parent_spec.divtype,
+			parent_spec.name)
+		if polity_key then
+			return polity_group, polity_key
 		end
 	end
 	return nil

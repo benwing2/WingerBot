@@ -1472,19 +1472,6 @@ export.cat_implications = {
 }
 
 
--- Call the place cat handler for a given polity `group` for a holonym `placename` with possible holonym placetypes
--- `placetypes`. The purpose of this is to check if the holonym exists in the group, and if so, return two values:
--- the key as found in the polity tables (which is the form that the holonym would take in a category of the form
--- "PLACETYPES in/of HOLONYM" e.g. [[Category:Districts of the West Midlands, England]]) and the "bare key", which is
--- the same as the key except it removes any occurrence of "the" at the beginning (and hence is suitable for bare
--- categories such as [[Category:West Midlands, England]]). This is sort of a glorified placename_to_key() for
--- subpolities in the group, but also verifies the correct placetype(s).
-local function call_place_cat_handler(group, placetypes, placename)
-	local handler = group.place_cat_handler or m_shared.default_place_cat_handler
-	return handler(group, placetypes, placename)
-end
-
-
 ------------------------------------------------------------------------------------------
 --                              Category and display handlers                           --
 ------------------------------------------------------------------------------------------
@@ -1497,7 +1484,7 @@ local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containi
 	if m_shared.generic_placetypes[plural_entry_placetype] then
 		for _, group in ipairs(m_shared.polities) do
 			-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-			local key, _ = call_place_cat_handler(group, holonym_placetype, holonym_placename)
+			local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
 			if key then
 				local value = group.data[key]
 				if value then
@@ -1572,7 +1559,7 @@ local function capital_city_cat_handler(data, non_city)
 			local inserted_specific_variant_cat = false
 			for _, group in ipairs(m_shared.polities) do
 				-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-				local key, _ = call_place_cat_handler(group, holonym_placetype, holonym_placename)
+				local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
 				if key then
 					local value = group.data[key]
 					if value then
@@ -1610,6 +1597,22 @@ local function get_holonyms_to_check(place_desc, holonym_index)
 	end, place_desc, holonym_index and holonym_index - 1 or 0
 end
 
+
+--[=[
+If the holonym in `data` (in the format as passed to a category handler) refers to a city, find and return the
+corresponding city group, key and spec. This verifies that there is no mismatch between the city's containing polities
+and any of the following holonyms in the {{tl|place}} spec.
+
+Returns four values:
+# The ''city key'' (the key in the data in the city group table; usually the same as the holonym placename passed in,
+  but may be different due to following an alias, and may in rare cases have `the` prefixed);
+# the ''city spec'' (object describing the city, the value corresponding to the city key in the data in the city group
+  table; documented in [[Module:place/shared-data]] under `export.cities`);
+# the ''city group'' (the table listing a group of cities with shared properties);
+# the list of containing polities, ordered from smallest/most immediate to largest/least immediate; each element is
+  a table with `name` and `divtype` properties, the latter of which has been filled out using group-level defaults if
+  necessary.
+]=]
 local function find_city_spec(data)
 	local holonym_placetype, holonym_placename, holonym_index, place_desc =
 		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
@@ -1621,14 +1624,19 @@ local function find_city_spec(data)
 		return nil
 	end
 	for _, city_group in ipairs(m_shared.cities) do
-		local city_spec = city_group.data[holonym_placename]
+		local city_key = holonym_placename
+		local city_spec = city_group.data[city_key]
+		if not city_spec then
+			city_key = "the " .. city_key
+			city_spec = city_group.data[city_key]
+		end
 		if city_spec and city_spec.alias_of then
 			local new_city_spec = city_group.data[city_spec.alias_of]
 			if not new_city_spec then
 				error(("Internal error: City '%s' has an entry with non-existent alias_of='%s'"):format(
-					holonym_placename, city_spec.alias_of))
+					city_key, city_spec.alias_of))
 			end
-			holonym_placename = city_spec.alias_of
+			city_key = city_spec.alias_of
 			city_spec = new_city_spec
 		end
 		if city_spec then
@@ -1641,12 +1649,11 @@ local function find_city_spec(data)
 			-- in [[Module:place/shared-data]]. Just because the containing polity US matches isn't enough, because
 			-- Newark, NJ also has New Jersey as a containing polity and there's a mismatch at that level. If there are
 			-- no mismatches at any level we assume we're dealing with the right city.
-			local containing_polities = m_shared.get_city_containing_polities(city_group, holonym_placename,
-				city_spec)
+			local containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
 			local containing_polities_mismatch = false
 			for _, polity in ipairs(containing_polities) do
-				local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity[1])
-				local divtype = polity.divtype or city_group.default_divtype
+				local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity.name)
+				local divtype = polity.divtype
 				local divtype_equivs = export.get_placetype_equivs(divtype)
 				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
 					holonym_index and holonym_index + 1 or nil) do
@@ -1674,7 +1681,7 @@ local function find_city_spec(data)
 				end
 			end
 			if not containing_polities_mismatch then
-				return city_spec, city_group, containing_polities
+				return city_key, city_spec, city_group, containing_polities
 			end
 		end
 	end
@@ -1729,7 +1736,7 @@ local function generic_cat_handler(data)
 
 	for _, group in ipairs(m_shared.polities) do
 		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local key, _ = call_place_cat_handler(group, holonym_placetype, holonym_placename)
+		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
 		if key then
 			local value = group.data[key]
 			if value then
@@ -1748,42 +1755,25 @@ local function generic_cat_handler(data)
 		end
 	end
 	-- Check for cities mentioned as holonyms.
-	local city_spec, city_group, containing_polities = find_city_spec(data)
+	local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
 	if city_spec then
 		-- Add categories for the city and its containing polities.
-		insert_retkey(holonym_placename)
-		if from_demonym then
-			-- Don't insert any containing polities if from_demonym; see above.
-			return retcats
-		end
+		insert_retkey(city_key)
 		for _, polity in ipairs(containing_polities) do
-			local divtype = polity.divtype or city_group.default_divtype
 			local drop_dead_now = false
 			-- Find the group and key corresponding to the polity.
-			for _, polity_group in ipairs(m_shared.polities) do
-				local key = polity[1]
-				if polity_group.placename_to_key then
-					key = polity_group.placename_to_key(key)
-				end
-				local value = polity_group.data[key]
-				if value then
-					value = polity_group.value_transformer(polity_group, key, value)
-					local key_divtype = value.divtype or polity_group.default_divtype
-					if key_divtype == divtype or (
-						type(key_divtype) == "table" and key_divtype[1] == divtype) then
-						insert_retkey(key)
-						if value.no_containing_polity_cat then
-							-- Stop adding containing polities if no_containing_polity_cat
-							-- is found. (Used for 'United Kingdom'.)
-							drop_dead_now = true
-						end
-						break
-					end
+			local polity_group, polity_key = m_shared.city_containing_polity_to_group_and_key(polity)
+			if polity_key then
+				local polity_value = polity_group.value_transformer(polity_group, polity_key, polity_group[polity_key])
+				insert_retkey(polity_key)
+				if from_demonym or polity_value.no_containing_polity_cat then
+					-- Stop adding containing polities if no_containing_polity_cat is found. (Used for
+					-- 'United Kingdom'.) Also if we're called from from_demonym, only add the first (most immediate)
+					-- containing polity.
+					break
 				end
 			end
-			if drop_dead_now then
-				break
-			end
+			-- FIXME: If we can't locate the containing polity, should we throw an error or allow it?
 		end
 		return retcats
 	end
@@ -1830,7 +1820,7 @@ function export.get_bare_categories(args, place_descs)
 		term = term:gsub("^the ", "")
 		for _, group in ipairs(m_shared.polities) do
 			-- Try to find the term among the known polities.
-			local cat, bare_cat = call_place_cat_handler(group, possible_placetypes, term)
+			local cat, bare_cat = m_shared.call_place_cat_handler(group, possible_placetypes, term)
 			if bare_cat then
 				insert(bare_cats, bare_cat)
 			end
@@ -1898,7 +1888,8 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 
 					for _, group in ipairs(m_shared.polities) do
 						-- Try to find the term among the known polities.
-						local key, _ = call_place_cat_handler(group, possible_placetypes, holonym.cat_placename)
+						local key, _ = m_shared.call_place_cat_handler(group, possible_placetypes,
+							holonym.cat_placename)
 						if key then
 							local value = group.data[key]
 							if value then
@@ -2000,13 +1991,20 @@ end
 --     (3) when called on that holonym. Otherwise either the categorization in (1) takes place or there's no
 --     categorization.
 local function district_cat_handler(data)
-	local city_spec, city_group, containing_polities = find_city_spec(data)
-	if city_spec then
+	local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
+	if city_key then
+					local polity_group, polity_key = m_shared.city_containing_polity_to_group_and_key(
+						containing_polities[1])
+					if not polity_key then
+						internal_error("Can't find polity data for city %s containing polity %s",
+							place, containing_polities[1])
+					end
+
 
 	local holonym_placetype, holonym_placename = data.holonym_placetype, data.holonym_placename
 	for _, group in ipairs(m_shared.polities) do
 		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local key, _ = call_place_cat_handler(group, holonym_placetype, holonym_placename)
+		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
 		if key then
 			local value = group.data[key]
 			if value then

@@ -511,6 +511,8 @@ end
 -- up the plural in [[Module:place/data]], falling back to pluralize() in [[Module:en-utilities]], which is almost
 -- always correct.
 local function get_placetype_plural(placetype, ucfirst)
+	-- FIXME: It seems questionable at best to check equivalent placetypes here. We probably want to split off
+	-- qualifiers and paste them back on, but not canonicalize qualifiers or placetypes.
 	local pt_data, equiv_placetype_and_qualifier = m_data.get_equiv_placetype_prop(placetype,
 		function(pt) return placetype_data[pt] end)
 	if pt_data then
