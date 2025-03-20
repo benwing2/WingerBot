@@ -5,6 +5,7 @@ local en_utilities_module = "Module:en-utilities"
 local table_module = "Module:table"
 
 local m_shared = require("Module:place/shared-data")
+local internal_error = m_shared.internal_error
 
 local dump = mw.dumpObject
 local is_callable = require("Module:fun").is_callable
@@ -29,6 +30,12 @@ how their categorization works.
 
 local function lcfirst(label)
 	return mw.getContentLanguage():lcfirst(label)
+end
+
+local function unknown_poldiv_type(pl_placetype, context_clause, context)
+	internal_error(
+		"Saw unknown place type %s %s %s; not in `political_divisions` in [[Module:place/shared-data]]",
+		pl_placetype, context_clause, context)
 end
 
 local function fetch_value(obj, key)
@@ -166,31 +173,32 @@ for _, group in ipairs(m_shared.polities) do
 	end
 end
 
-local function city_description(group, key, value)
-	-- The purpose of all the following code is to construct the description. It's written in
-	-- a general way to allow any number of containing polities, each larger than the previous one,
-	-- so that e.g. for Birmingham, the description will read "{{{langname}}} terms related to the city of
-	-- [[Birmingham]], in the county of the [[West Midlands]], in the [[constituent country]] of [[England]],
-	-- in the [[United Kingdom]]."
-	local bare_key, linked_key = m_shared.construct_bare_and_linked_version(key)
+local function city_description(city_group, city_key, city_spec)
+	-- The purpose of all the following code is to construct the description. It's written in a general way to allow any
+	-- number of containing polities, each larger than the previous one, so that e.g. for Birmingham, the description
+	-- will read "{{{langname}}} terms related to the city of [[Birmingham]], in the county of the [[West Midlands]], in
+	-- the [[constituent country]] of [[England]], in the [[United Kingdom]]."
+	local bare_key, linked_key = m_shared.construct_bare_and_linked_version(city_key)
 	local descparts = {}
 	table.insert(descparts, "the city of " .. linked_key)
-	local city_containing_polities = m_shared.get_city_containing_polities(group, key, value)
+	local city_containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
 	local label_parent -- parent of the label, from the immediate containing polity
-	for n, polity in ipairs(city_containing_polities) do
-		local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity[1])
-		if n == 1 then
+	for i, polity in ipairs(city_containing_polities) do
+		local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity.name)
+		if i == 1 then
 			label_parent = bare_polity
 		end
 		table.insert(descparts, ", in ")
-		if n < #city_containing_polities then
-			local divtype = polity.divtype or group.default_divtype
+		if i < #city_containing_polities then
+			local divtype = polity.divtype
+			-- FIXME: This should use get_placetype_plural() in [[Module:place]].
 			local pl_divtype = require(en_utilities_module).pluralize(divtype)
 			local pl_linked_divtype = m_shared.political_divisions[pl_divtype]
 			if not pl_linked_divtype then
-				error("Internal error: When creating city description for " .. key .. ", encountered divtype '" .. divtype .. "' not in m_shared.political_divisions")
+				unknown_poldiv_type(pl_divtype, "when creating city description for ", city_key)
 			end
 			pl_linked_divtype = m_shared.format_description(pl_linked_divtype, pl_divtype)
+			-- FIXME: This should use special-case singularization if needed based off of placetype_data.
 			local linked_divtype = require(en_utilities_module).singularize(pl_linked_divtype)
 			table.insert(descparts, "the " .. linked_divtype .. " of ")
 		end
@@ -201,48 +209,49 @@ end
 
 -- Generate bare labels in 'label' for all cities.
 for _, city_group in ipairs(m_shared.cities) do
-	for key, value in pairs(city_group.data) do
-		if not value.alias_of then
-			local desc, label_parent = city_description(city_group, key, value)
+	for city_key, city_spec in pairs(city_group.data) do
+		if not city_spec.alias_of then
+			local desc, label_parent = city_description(city_group, city_key, city_spec)
 			desc = "{{{langname}}} terms related to " .. desc .. "."
-			local city_containing_polities = m_shared.get_city_containing_polities(city_group, key, value)
+			local city_containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
 			if not city_containing_polities or not city_containing_polities[1] then
-				error("Internal error: When creating city bare label for " .. key .. ", at least one containing polity must be specified or an explicit parent must be given")
+				internal_error("When creating city bare label for %s, at least one containing polity must be " ..
+					"specified or an explicit parent must be given", city_key)
 			end
 			local key_parents = {}
 			for _, parent in ipairs(city_containing_polities) do
-				local polity_group, key_parent = m_shared.city_containing_polity_to_group_and_key(parent[1])
+				local polity_group, key_parent = m_shared.city_containing_polity_to_group_and_key(parent)
 				if key_parent then
 					table.insert(key_parents, "cities in " .. key_parent)
 				else
-					error("Internal error: Couldn't find entry for city '" .. key .."' parent '" .. parent .. "'")
+					internal_error("Couldn't find entry for city %s parent %s", city_key, parent)
 				end
 			end
 
-			-- wp= defaults to group-level wp=, then to true (Wikipedia article matches bare key = label)
-			local wp = value.wp
+			-- wp= defaults to group-level wp=, then to true (Wikipedia article matches bare city_key = label)
+			local wp = city_spec.wp
 			if wp == nil then
 				wp = city_group.wp or true
 			end
 			-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category generally follow)
-			local wpcat = value.wpcat
+			local wpcat = city_spec.wpcat
 			if wpcat == nil then
 				wpcat = wp
 			end
 			-- commonscat= defaults to wpcat= (if Wikipedia category has its own name, Commons category generally follows)
-			local commonscat = value.commonscat
+			local commonscat = city_spec.commonscat
 			if commonscat == nil then
 				commonscat = wpcat
 			end
 
 			local function format_boxval(val)
 				if type(val) == "string" then
-					val = val:gsub("%%c", key):gsub("%%d", label_parent)
+					val = val:gsub("%%c", city_key):gsub("%%d", label_parent)
 				end
 				return val
 			end
 
-			labels[key] = {
+			labels[city_key] = {
 				type = "related-to",
 				description = desc,
 				parents = key_parents,
@@ -308,9 +317,9 @@ table.insert(handlers, function(label)
 						else
 							local general_label_spec = general_labels[canon_placetype]
 							if not general_label_spec then
-								error("Saw unknown placetype '" .. placetype .. "' in label '" .. label ..
-									"; not in either `general_labels` or in `political_divisions` in " ..
-									"[[Module:place/shared-data]]")
+								internal_error("Saw unknown placetype %s in label %s; not in either " ..
+									"`general_labels` or in `political_divisions` in [[Module:place/shared-data]]",
+									canon_placetype, label)
 							end
 							local parent_labels = general_label_spec[1]
 							is_poldiv = not not require(table_module).contains(parent_labels, "polities")
@@ -357,10 +366,11 @@ table.insert(handlers, function(label)
 					local polity_group, polity_key = m_shared.city_containing_polity_to_group_and_key(
 						containing_polities[1])
 					if not polity_key then
-						error("Can't find polity data for city '" .. place ..
-							"' containing polity '" .. containing_polities[1] .. "'")
+						internal_error("Can't find polity data for city %s containing polity %s",
+							place, containing_polities[1])
 					end
-					local polity_value = polity_group.value_transformer(polity_group, polity_key, polity_group[polity_key])
+					local polity_value = polity_group.value_transformer(polity_group, polity_key,
+						polity_group[polity_key])
 
 					if placetype == "neighborhoods" and polity_value.british_spelling or
 						placetype == "neighbourhoods" and not polity_value.british_spelling then
@@ -400,6 +410,7 @@ table.insert(handlers, function(label)
 	-- Make sure we recognize the type of capital.
 	if place and m_shared.capital_cat_to_placetype[capital_cat] then
 		local placetype = m_shared.capital_cat_to_placetype[capital_cat]
+		-- FIXME: This should use get_placetype_plural() in [[Module:place]].
 		local pl_placetype = require(en_utilities_module).pluralize(placetype)
 		-- Locate the containing polity, fetch its known political subdivisions, and make sure
 		-- the placetype corresponding to the type of capital is among the list.
@@ -432,7 +443,7 @@ table.insert(handlers, function(label)
 						-- Everything checks out, construct the category description.
 						local linkdiv = m_shared.political_divisions[pl_placetype]
 						if not linkdiv then
-							error("Saw unknown place type '" .. pl_placetype .. "' in label '" .. label .. "'")
+							unknown_poldiv_type(pl_placetype, "in label", label)
 						end
 						linkdiv = m_shared.format_description(linkdiv, pl_placetype)
 						local bare_place, linked_place = m_shared.construct_bare_and_linked_version(place)
@@ -442,7 +453,7 @@ table.insert(handlers, function(label)
 							for i, variant_match in ipairs(variant_matches) do
 								variant_matches[i] = m_shared.political_divisions[variant_match]
 								if not variant_matches[i] then
-									error("Saw unknown place type '" .. variant_match .. "' in label '" .. label .. "'")
+									unknown_poldiv_type(variant_match, "in label", label)
 								end
 								variant_matches[i] = m_shared.format_description(variant_matches[i], variant_match)
 							end
@@ -535,7 +546,7 @@ table.insert(handlers, function(label)
 					end
 					local linkdiv = m_shared.political_divisions[placetype]
 					if not linkdiv then
-						error("Saw unknown place type '" .. placetype .. "' in label '" .. label .. "'")
+						unknown_poldiv_type(placetype, "in label", label)
 					end
 					linkdiv = m_shared.format_description(linkdiv, placetype)
 					local bare_place, linked_place = m_shared.construct_bare_and_linked_version(place)
@@ -570,10 +581,11 @@ end)
 
 -- Generate bare labels in 'label' for all types of capitals.
 for capital_cat, placetype in pairs(m_shared.capital_cat_to_placetype) do
+	-- FIXME: This should use get_placetype_plural() in [[Module:place]].
 	local pl_placetype = require(en_utilities_module).pluralize(placetype)
 	local linkdiv = m_shared.political_divisions[pl_placetype]
 	if not linkdiv then
-		error("Saw unknown place type '" .. pl_placetype .. "' in label '" .. label .. "'")
+		unknown_poldiv_type(pl_placetype, "for capital category", capital_cat)
 	end
 	linkdiv = m_shared.format_description(linkdiv, pl_placetype)
 	labels[capital_cat] = {
