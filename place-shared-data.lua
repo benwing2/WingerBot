@@ -390,10 +390,10 @@ this).
 ]==]
 function export.process_error(fmt, ...)
 	local args = {...}
-	for i, val in ipairs(args) do
-		args[i] = dump(val)
+	for i = 1, select("#", ...) do
+		args[i] = dump(args[i])
 	end
-	return error(format(fmt, unpack(args)))
+	return error(string.format(fmt, unpack(args)))
 end
 
 --[==[
@@ -832,22 +832,27 @@ end
 
 
 --[==[
-Given a containing polity of a city, possibly with preceding `the` removed, find the group and key in
-`export.polities`. Return two values, the polity group and key in that group's data to fetch the polity spec.
+Given a containing polity of a city, possibly with preceding `the` removed, find the polity key, polity spec/value and
+polity group in `export.polities`. Return three values, the key, spec and group. If not found, throw an internal error.
 `parent_spec` is as in the return value of `get_city_containing_polities`, i.e. it is a table with `name` and `divtype`
 fields, which must both be present. The `divtype` is used to check that we have the right polity; otherwise, for
 example, the city of [[Atlanta]] wrongly ends up in [[:Category:Cities in Georgia]] (the country) in lieu of the correct
 [[:Category:Cities in Georgia, USA]].
 ]==]
-function export.city_containing_polity_to_group_and_key(parent_spec)
+function export.find_city_containing_polity(parent_spec)
 	for _, polity_group in ipairs(export.polities) do
-		local polity_key, polity_bare_key = export.call_place_cat_handler(polity_group, parent_spec.divtype,
-			parent_spec.name)
+		local polity_key, _ = export.call_place_cat_handler(polity_group, parent_spec.divtype, parent_spec.name)
 		if polity_key then
-			return polity_group, polity_key
-		end
+			local polity_value = polity_group.data[polity_key]
+			if polity_value then
+				-- Use the group's value_transformer to ensure that default values are copied into the polity spec
+				-- (polity value structure).
+				polity_value = polity_group.value_transformer(polity_group, polity_key, polity_value)
+				return polity_key, polity_value, polity_group
+            end 
+        end
 	end
-	return nil
+	internal_error("Can't find polity spec corresponding to city containing polity %s", parent_spec)
 end
 
 -----------------------------------------------------------------------------------
@@ -940,7 +945,7 @@ export.political_divisions = {
 	["self-administered divisions"] = "w",
 	["self-administered zones"] = "w",
 	["special administrative regions"] = "[[w:Special administrative regions of China|special administrative regions]]",
-	["special municipality"] = "[[w:Special municipality (Taiwan)|special municipality]]",
+	["special municipalities"] = "w", -- formerly referred to the Taiwan article but there are also special municipalities of the Netherlands
 	["special wards"] = true,
 	["states"] = true,
 	["states and territories"] = "[[state]]s and [[territory|territories]]",
@@ -987,8 +992,8 @@ and the value should be either a string (the description) or an object containin
 and `prep` (the preposition following the place type as it occurs in categories, defaulting to "of").
 ]==]
 export.generic_placetypes_for_cities = {
-	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions of cities",
-	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions of cities",
+	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions",
+	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions",
 	["suburbs"] = "[[suburb]]s",
 	["places"] = {desc = "places of all sorts", prep = "in"},
 }
@@ -1101,7 +1106,9 @@ export.countries = {
 		keydesc = "the country of [[Georgia]], in [[Eurasia]]", british_spelling = true},
 	["Germany"] = {parents = {"Europe"}, poldiv = {"states", "municipalities", "districts"}, british_spelling = true},
 	["Ghana"] = {parents = {"Africa"}, poldiv = {"regions", "districts"}, british_spelling = true},
-	["Greece"] = {parents = {"Europe"}, poldiv = {"regions", "regional units", "municipalities"}, british_spelling = true},
+	["Greece"] = {parents = {"Europe"}, poldiv = {"regions", "regional units", "municipalities",
+		{type = "peripheries", cat_as = {"regions"}},
+	}, british_spelling = true},
 	["Grenada"] = {parents = {"North America"}, poldiv = {"parishes"}, british_spelling = true},
 	["Guatemala"] = {parents = {"Central America"}, poldiv = {"departments", "municipalities"}},
 	["Guinea"] = {parents = {"Africa"}, poldiv = {"regions", "prefectures"}},
@@ -1184,8 +1191,13 @@ export.countries = {
 	["Paraguay"] = {parents = {"South America"}, poldiv = {"departments", "districts"}},
 	["Peru"] = {parents = {"South America"}, poldiv = {"regions", "provinces", "districts"}},
 	["the Philippines"] = {parents = {"Asia"}, poldiv = {"regions", "provinces", "districts", "municipalities", "barangays"}},
-	["Poland"] = {poldiv = {"voivodeships", "counties"}, parents = {"Europe"}, british_spelling = true},
-	["Portugal"] = {parents = {"Europe"}, poldiv = {"districts and autonomous regions", "provinces", "municipalities"}, british_spelling = true},
+	["Poland"] = {poldiv = {"voivodeships", "counties",
+		{type = "Polish colonies", cat_as = {{type = "villages", prep = "in"}}},
+	}, parents = {"Europe"}, british_spelling = true},
+	["Portugal"] = {parents = {"Europe"}, poldiv = {
+		{type = "autonomous regions", cat_as = "districts and autonomous regions"},
+		{type = "districts", cat_as = "districts and autonomous regions"},
+		"provinces", "municipalities"}, british_spelling = true},
 	["Qatar"] = {parents = {"Asia"}, poldiv = {"municipalities", "zones"}},
 	["the Republic of the Congo"] = {parents = {"Africa"}, poldiv = {"departments", "districts"}},
 	["Romania"] = {parents = {"Europe"}, poldiv = {"regions", "counties", "communes"}, british_spelling = true},
@@ -1246,7 +1258,7 @@ export.countries = {
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
 			"Indian reservations",
-		}, miscdiv = {"regions"}},
+		}},
 	["Uruguay"] = {parents = {"South America"}, poldiv = {"departments", "municipalities"}},
 	["Uzbekistan"] = {parents = {"Asia"}, poldiv = {"regions", "districts"}},
 	["Vanuatu"] = {parents = {"Melanesia"}, poldiv = {"provinces"}, british_spelling = true},
@@ -1289,6 +1301,10 @@ export.pseudo_countries = {
 		british_spelling = true},
 	-- constituent country of the Netherlands
 	["Aruba"] = {divtype = {"constituent country", "country"}, parents = {"Netherlands", "North America"}},
+	-- special municipality of the Netherlands
+	["Bonaire"] = {divtype = {"special municipality", "municipality", "overseas territory", "territory"},
+		parents = {"Netherlands", "North America"}, is_city = true,
+	},
 	-- British Overseas Territory
 	["Bermuda"] = {divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "North America"},
 		british_spelling = true},
@@ -1355,7 +1371,7 @@ export.pseudo_countries = {
 		parents = {"British Isles", "Europe"}, british_spelling = true},
 	-- special administrative region of China
 	["Hong Kong"] = {
-		divtype = {"special administrative region", "city"}, miscdiv = {{type = "area", cat_as = "neighbourhoods"}},
+		divtype = {"special administrative region", "city"},
 		parents = {"China"}, is_city = true, british_spelling = true
 	},
 	-- self-governing British Crown dependency
@@ -1366,7 +1382,7 @@ export.pseudo_countries = {
 		parents = {"British Isles", "Europe"}, british_spelling = true},
 	-- special administrative region of China
 	["Macau"] = {
-		divtype = {"special administrative region", "city"}, miscdiv = {{type = "area", cat_as = "neighbourhoods"}},
+		divtype = {"special administrative region", "city"},
 		parents = {"China"}, is_city = true, british_spelling = true
 	},
 	-- overseas department of France
@@ -1404,6 +1420,10 @@ export.pseudo_countries = {
 	-- overseas department of France
 	["Réunion"] = {divtype = {"overseas department", "department", "administrative region", "region"},
 		parents = {"France", "Africa"}},
+	-- special municipality of the Netherlands
+	["Saba"] = {divtype = {"special municipality", "municipality", "overseas territory", "territory"},
+		parents = {"Netherlands", "North America"}, is_city = true,
+	},
 	-- overseas collectivity of France
 	["Saint Barthélemy"] = {divtype = {"overseas collectivity", "collectivity"}, parents = {"France", "North America"}},
 	-- British Overseas Territory
@@ -1416,14 +1436,18 @@ export.pseudo_countries = {
 		divtype = {"overseas collectivity", "collectivity"},
 		parents = {"France", "North America"}
 	},
-	-- de-facto independent state, internationally recognized as part of Georgia
-	["South Ossetia"] = {divtype = {"unrecognized state", "country"}, parents = {"Georgia", "Europe", "Asia"},
-		keydesc = "the de-facto independent state of [[South Ossetia]], internationally recognized as part of the country of [[Georgia]]",
-		british_spelling = true},
+	-- special municipality of the Netherlands
+	["Sint Eustatius"] = {divtype = {"special municipality", "municipality", "overseas territory", "territory"},
+		parents = {"Netherlands", "North America"}, is_city = true,
+	},
 	-- constituent country of the Netherlands
 	["Sint Maarten"] = {divtype = {"constituent country", "country"}, parents = {"Netherlands", "North America"}},
 	-- British Overseas Territory
 	["South Georgia"] = {divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "Atlantic Ocean"},
+		british_spelling = true},
+	-- de-facto independent state, internationally recognized as part of Georgia
+	["South Ossetia"] = {divtype = {"unrecognized state", "country"}, parents = {"Georgia", "Europe", "Asia"},
+		keydesc = "the de-facto independent state of [[South Ossetia]], internationally recognized as part of the country of [[Georgia]]",
 		british_spelling = true},
 	-- British Overseas Territory
 	["the South Sandwich Islands"] = {
@@ -1583,42 +1607,41 @@ export.bangladesh_group = {
 }
 
 export.brazil_states = {
-	["Acre"] = {},
-	["Alagoas"] = {},
-	["Amapá"] = {},
-	["Amazonas"] = {},
-	["Bahia"] = {},
-	["Ceará"] = {},
-	["Distrito Federal"] = {},
-	["Espírito Santo"] = {},
-	["Goiás"] = {},
-	["Maranhão"] = {},
-	["Mato Grosso"] = {},
-	["Mato Grosso do Sul"] = {},
-	["Minas Gerais"] = {},
-	["Pará"] = {},
-	["Paraíba"] = {},
-	["Paraná"] = {},
-	["Pernambuco"] = {},
-	["Piauí"] = {},
-	["Rio de Janeiro"] = {},
-	["Rio Grande do Norte"] = {},
-	["Rio Grande do Sul"] = {},
-	["Rondônia"] = {},
-	["Roraima"] = {},
-	["Santa Catarina"] = {},
-	["São Paulo"] = {},
-	["Sergipe"] = {},
-	["Tocantins"] = {},
+	["Acre, Brazil"] = {},
+	["Alagoas, Brazil"] = {},
+	["Amapá, Brazil"] = {},
+	["Amazonas, Brazil"] = {},
+	["Bahia, Brazil"] = {},
+	["Ceará, Brazil"] = {},
+	["Distrito Federal, Brazil"] = {},
+	["Espírito Santo, Brazil"] = {},
+	["Goiás, Brazil"] = {},
+	["Maranhão, Brazil"] = {},
+	["Mato Grosso, Brazil"] = {},
+	["Mato Grosso do Sul, Brazil"] = {},
+	["Minas Gerais, Brazil"] = {},
+	["Pará, Brazil"] = {},
+	["Paraíba, Brazil"] = {},
+	["Paraná, Brazil"] = {},
+	["Pernambuco, Brazil"] = {},
+	["Piauí, Brazil"] = {},
+	["Rio de Janeiro, Brazil"] = {},
+	["Rio Grande do Norte, Brazil"] = {},
+	["Rio Grande do Sul, Brazil"] = {},
+	["Rondônia, Brazil"] = {},
+	["Roraima, Brazil"] = {},
+	["Santa Catarina, Brazil"] = {},
+	["São Paulo, Brazil"] = {},
+	["Sergipe, Brazil"] = {},
+	["Tocantins, Brazil"] = {},
 }
 
 -- states of Brazil
 export.brazil_group = {
-	containing_polity = {name = "Brazil", divtype = "country"},
 	key_to_placename = make_key_to_placename(", Brazil$"),
 	placename_to_key = make_placename_to_key(", Brazil"),
-	bare_label_setter = subpolity_bare_label_setter(),
-	value_transformer = subpolity_value_transformer(),
+	bare_label_setter = subpolity_bare_label_setter("Brazil"),
+	value_transformer = subpolity_value_transformer("Brazil"),
 	default_divtype = "state",
 	default_poldiv = "municipalities",
 	data = export.brazil_states,
@@ -1633,13 +1656,13 @@ export.canada_provinces_and_territories = {
 		"regional municipalities",
 	},
 	["Manitoba, Canada"] = {poldiv = {"rural municipalities"}},
-	["New Brunswick, Canada"] = {poldiv = {"counties"}},
+	["New Brunswick, Canada"] = {poldiv = {"counties", "parishes", {type = "civil parishes", cat_as = "parishes"}}},
 	["Newfoundland and Labrador, Canada"] = {},
 	["the Northwest Territories, Canada"] = {divtype = "territory"},
 	["Nova Scotia, Canada"] = {poldiv = {"counties", "regional municipalities"}},
 	["Nunavut, Canada"] = {divtype = "territory"},
 	["Ontario, Canada"] = {poldiv = {"counties", "regional municipalities", {type = "townships", prep = "in"}}},
-	["Prince Edward Island, Canada"] = {poldiv = {"counties", "rural municipalities"}},
+	["Prince Edward Island, Canada"] = {poldiv = {"counties", "parishes", "rural municipalities"}},
 	["Saskatchewan, Canada"] = {poldiv = {"rural municipalities"}},
 	["Quebec, Canada"] = {poldiv = {
 		"counties",
@@ -3025,7 +3048,7 @@ export.uk_constituent_countries = {
 		},
 		{type = "boroughs", cat_as = {"districts", "boroughs"}},
 		{type = "civil parishes", skip_polity_parent_type = false},
-	}, miscdiv = {"regions", "traditional counties"}},
+	}},
 	["Northern Ireland"] = {
 		divtype = {"province", "constituent country", "country"},
 		div_parent_type = "constituent countries",
@@ -3033,12 +3056,16 @@ export.uk_constituent_countries = {
 	},
 	["Scotland"] = {
 		poldiv = {{type = "council areas", skip_polity_parent_type = false}},
-		miscdiv = {"regions", "districts", "traditional counties"},
-	},
+		miscdiv = {
+			"districts",
+			"traditional counties",
+			{type = "historical counties", cat_as = "traditional counties"},
+		}},
 	["Wales"] = {poldiv = {
 		"counties",
 		{type = "county boroughs", skip_polity_parent_type = false},
 		{type = "communities", skip_polity_parent_type = false},
+		{type = "Welsh communities", cat_as = {{type = "communities", skip_polity_parent_type = false}}},
 	}},
 }
 
@@ -3047,6 +3074,10 @@ export.uk_group = {
 	bare_label_setter = subpolity_bare_label_setter("the United Kingdom"),
 	value_transformer = subpolity_value_transformer("the United Kingdom"),
 	default_divtype = {"constituent country", "country"},
+	default_miscdiv = {
+		"traditional counties",
+		{type = "historical counties", cat_as = "traditional counties"},
+	},
 	british_spelling = true,
 	-- Don't create categories like 'Category:en:Towns in the United Kingdom'
 	-- or 'Category:en:Places in the United Kingdom'.
@@ -3133,6 +3164,7 @@ export.us_group = {
 	},
 	default_miscdiv = {
 		{type = "census-designated places", prep = "in"},
+		{type = "unincorporated communities", prep = "in"},
 		{type = "ghost towns", prep = "in"},
 	},
 	data = export.us_states,
@@ -3574,6 +3606,39 @@ export.cities = {
 		},
 	},
 	{
+		default_parent_divtype = "province",
+		skip_parents = {name = "Indonesia", divtype = "country"},
+		data = { 
+			-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
+			["Jakarta"] = {parents = "the Special Capital Region of Jakarta"},
+			["Surabaya"] = {parents = "East Java"},
+			["Bekasi"] = {parents = "West Java"}, -- part of Jakarta metro area
+			["Bandung"] = {parents = "West Java"},
+			["Medan"] = {parents = "North Sumatra"},
+			["Depok"] = {parents = "West Java"}, -- part of Jakarta metro area
+			["Tangerang"] = {parents = "Banten"}, -- part of Jakarta metro area
+			["Palembang"] = {parents = "South Sumatra"},
+			["Semarang"] = {parents = "Central Java"},
+			["Makassar"] = {parents = "South Sulawesi"},
+			["South Tangerang"] = {parents = "Banten"}, -- part of Jakarta metro area
+			["Batam"] = {parents = "the Riau Islands"},
+			["Bogor"] = {parents = "West Java"}, -- part of Jakarta metro area
+			["Pekanbaru"] = {parents = "Riau"},
+			["Bandar Lampung"] = {parents = "Lampung"},
+			["Pekanbaru"] = {parents = "Riau"},
+			-- other metro areas over 1,000,000 people
+			["Padang"] = {parents = "West Sumatra"},
+			["Samarinda"] = {parents = "East Kalimantan"},
+			["Malang"] = {parents = "East Java"},
+			["Yogyakarta"] = {parents = "the Special Region of Yogyakarta"},
+			["Denpasar"] = {parents = "Bali"},
+			["Cirebon"] = {parents = "West Java"},
+			["Surakarta"] = {parents = "Central Java"},
+			["Banjarmasin"] = {parents = "South Kalimantan"},
+			["Tasikmalaya"] = {parent = "West Java"},
+		},
+	},
+	{
 		default_parent_divtype = "prefecture",
 		skip_parents = {name = "Japan", divtype = "country"},
 		data = {
@@ -3705,8 +3770,7 @@ export.cities = {
 		data = {
 			["Madrid"] = {parents = "the Community of Madrid"},
 			["Barcelona"] = {parents = "Catalonia"},
-			-- this causes recursion errors.
-			-- ["Valencia"] = {parents = "Valencia"},
+			["Valencia"] = {parents = "Valencia"},
 			["Seville"] = {parents = "Andalusia"},
 			["Bilbao"] = {parents = "the Basque Country"},
 		},
@@ -3861,6 +3925,7 @@ export.cities = {
 			["Amsterdam"] = {parents = "the Netherlands"},
 			["Rotterdam"] = {parents = "the Netherlands"},
 			["The Hague"] = {parents = "the Netherlands"},
+			["Auckland"] = {parents = "New Zealand"},
 			["Oslo"] = {parents = "Norway"},
 			["Warsaw"] = {parents = "Poland"},
 			["Katowice"] = {parents = "Poland"},
