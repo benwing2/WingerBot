@@ -8,6 +8,8 @@ local en_utilities_module = "Module:en-utilities"
 
 local dump = mw.dumpObject
 local insert = table.insert
+local internal_error = m_shared.internal_error
+export.internal_error = internal_error
 
 local function ucfirst(label)
 	return mw.getContentLanguage():ucfirst(label)
@@ -246,10 +248,10 @@ function export.get_placetype_equivs(placetype)
 end
 
 
-function export.get_equiv_placetype_prop_from_equivs(equivs, fun)
+function export.get_equiv_placetype_prop_from_equivs(equivs, fun, continue_on_nil_only)
 	for _, equiv in ipairs(equivs) do
 		local retval = fun(equiv.placetype)
-		if retval then
+		if continue_on_nil_only and retval ~= nil or not continue_on_nil_only and retval then
 			return retval, equiv
 		end
 	end
@@ -259,18 +261,20 @@ end
 
 --[==[
 Given a placetype `placetype` and a function `fun` of one argument, iteratively call the function on equivalent
-placetypes fetched from `get_placetype_equivs` until the function returns a non-falsy value (i.e. not {nil} or {false}).
-(FIXME: We should make it exit on non-{nil} only; but this requires changing some callers.) When `fun` returns a
-non-falsy value, `get_equiv_placetype_prop` returns two values: the value returned by `fun` and the equivalent placetype
-that triggered the non-falsy return value. If `fun` never returns a non-falsy value, `get_equiv_placetype_prop` returns
-{nil} for both return values. If `placetype` is passed in as {nil}, the return value is the result of calling `fun` on
-{nil} (whatever it is) as {nil} for the second return value.
+placetypes fetched from `get_placetype_equivs` until the function returns a non-falsy value (i.e. not {nil} or {false});
+but if `continue_on_nil_only` is specified, the iterations continue until the function returns non non-{nil} value.
+FIXME: We should make `continue_on_nil_only` the default; but this requires changing some callers.) When `fun` returns a
+non-falsy or non-{nil} value, `get_equiv_placetype_prop` returns two values: the value returned by `fun` and the
+equivalent placetype that triggered the non-falsy (or non-{nil}) return value. If `fun` never returns a non-falsy (or
+non-{nil}) value, `get_equiv_placetype_prop` returns {nil} for both return values. If `placetype` is passed in as {nil},
+the return value is the result of calling `fun` on {nil} (whatever it is) with {nil} for the second return value.
 ]==]
-function export.get_equiv_placetype_prop(placetype, fun)
+function export.get_equiv_placetype_prop(placetype, fun, continue_on_nil_only)
 	if not placetype then
 		return fun(nil), nil
 	end
-	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype), fun)
+	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype), fun,
+		continue_on_nil_only)
 end
 
 
@@ -821,7 +825,7 @@ export.placetype_links = {
 	["spa town"] = "w",
 	["special administrative region"] = "w", -- China; North Korea; Indonesia; East Timor
     ["special collectivity"] = "w",
-	["special municipality"] = "[[w:Special municipality (Taiwan)|special municipality]]", -- Taiwan
+	["special municipality"] = "w", -- formerly referred to the Taiwan article but there are also special municipalities of the Netherlands
 	["special ward"] = true,
 	["spit"] = true,
 	["spring"] = true,
@@ -1140,7 +1144,7 @@ export.placetype_equivs = {
 	["ski resort town"] = "town",
 	["spa city"] = "city",
 	["spa town"] = "town",
-    ["special municipality"] = "city",
+    ["special municipality"] = "municipality",
 	["spit"] = "peninsula",
 	["state capital"] = "capital city",
 	["state park"] = "park",
@@ -1403,12 +1407,14 @@ export.placename_the_re = {
 -- prefixed.
 for _, group in ipairs(m_shared.polities) do
 	for key, value in pairs(group.data) do
+		local orig_key = key
 		key = key:gsub(", .*$", "") -- Chop off ", England" and such from the end
 		local base = key:match("^the (.*)$")
 		if base then
 			local divtype = value.divtype or group.default_divtype
 			if not divtype then
-				error("Group in [[Module:place/shared-data]] is missing a default_divtype key")
+				internal_error("Group in [[Module:place/shared-data]] is missing a default_divtype key when " ..
+					"processing key %s: %s", orig_key, group)
 			end
 			if type(divtype) ~= "table" then
 				divtype = {divtype}
@@ -1477,6 +1483,37 @@ export.cat_implications = {
 ------------------------------------------------------------------------------------------
 
 
+--[=[
+If the holonym in `data` refers to a known polity or political subdivision, find and return the corresponding polity
+key, spec and group. FIXME: This should verify that there is no mismatch between the polity's containing polities
+and any of the following holonyms in the {{tl|place}} spec, as find_city_spec() does.
+
+Returns three values:
+# The ''polity key'' (the key in the data in the polity group table; often has the name of the containing polity and
+  somtimes the placetype affixed, and may have `the` prefixed);
+# the ''polity spec'' (object describing the polity, the value corresponding to the polity key in the data in the polity
+  group table; documented in [[Module:place/shared-data]] in the intro under `==Polity subdivision tables==`);
+# the ''polity group'' (the table listing a group of polities with shared properties).
+]=]
+local function find_polity_spec(data)
+	local holonym_placetype, holonym_placename, place_desc =
+		data.holonym_placetype, data.holonym_placename, data.place_desc
+	for _, polity_group in ipairs(m_shared.polities) do
+		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
+		local polity_key, _ = m_shared.call_place_cat_handler(polity_group, holonym_placetype, holonym_placename)
+		if polity_key then
+			local polity_value = polity_group.data[polity_key]
+			if polity_value then
+				-- Use the group's value_transformer to ensure that default values are copied into the polity spec
+				-- (polity value structure).
+				polity_value = polity_group.value_transformer(polity_group, polity_key, polity_value)
+				return polity_key, polity_value, polity_group
+			end
+		end
+	end
+end
+
+
 local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containing_polity, extracats)
 	local entry_placetype, holonym_placetype, holonym_placename =
 		data.entry_placetype, data.holonym_placetype, data.holonym_placename
@@ -1526,18 +1563,20 @@ local function capital_city_cat_handler(data, non_city)
 		-- 'Cities in ...' categories as well as the capital category/categories we add below.
 		local retcats
 		if not non_city and place_desc.holonyms then
+			-- FIXME, this should use get_holonyms_to_check()
 			for _, holonym in ipairs(place_desc.holonyms) do
 				local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
-				h_placename = export.resolve_placename_cat_aliases(h_placetype, h_placename)
-				retcats = export.get_equiv_placetype_prop(h_placetype,
-					function(pt) return city_type_cat_handler {
-						entry_placetype = "city",
-						holonym_placetype = pt,
-						holonym_placename = h_placename,
-						place_desc = place_desc,
-					} end)
-				if retcats then
-					break
+				if h_placetype then -- skip raw text among holonyms
+					retcats = export.get_equiv_placetype_prop(h_placetype,
+						function(pt) return city_type_cat_handler {
+							entry_placetype = "city",
+							holonym_placetype = pt,
+							holonym_placename = h_placename,
+							place_desc = place_desc,
+						} end)
+					if retcats then
+						break
+					end
 				end
 			end
 		end
@@ -1585,23 +1624,28 @@ local function capital_city_cat_handler(data, non_city)
 	end
 end
 
-local function get_holonyms_to_check(place_desc, holonym_index)
+local function get_holonyms_to_check(place_desc, holonym_index, include_raw_text_holonyms)
 	local stop_at_also = not not holonym_index
 	return function(place_desc, index)
-		index = index + 1
-		local this_holonym = place_desc.holonyms[index]
-		if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
-			return nil
+		while true do
+			index = index + 1
+			local this_holonym = place_desc.holonyms[index]
+			if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
+				return nil
+			end
+			-- If not placetype, we're processing raw text, which we normally want to skip.
+			if include_raw_text_holonyms or this_holonym.placetype then
+				return index, this_holonym
+			end
 		end
-		return index, place_desc.holonyms[index]
 	end, place_desc, holonym_index and holonym_index - 1 or 0
 end
 
 
 --[=[
 If the holonym in `data` (in the format as passed to a category handler) refers to a city, find and return the
-corresponding city group, key and spec. This verifies that there is no mismatch between the city's containing polities
-and any of the following holonyms in the {{tl|place}} spec.
+corresponding city key, spec and group as well as a list of the containing polities. This verifies that there is no
+mismatch between the city's containing polities and any of the following holonyms in the {{tl|place}} spec.
 
 Returns four values:
 # The ''city key'' (the key in the data in the city group table; usually the same as the holonym placename passed in,
@@ -1633,8 +1677,7 @@ local function find_city_spec(data)
 		if city_spec and city_spec.alias_of then
 			local new_city_spec = city_group.data[city_spec.alias_of]
 			if not new_city_spec then
-				error(("Internal error: City '%s' has an entry with non-existent alias_of='%s'"):format(
-					city_key, city_spec.alias_of))
+				internal_error("City %s has an entry with non-existent alias_of=%s", city_key, city_spec.alias_of)
 			end
 			city_key = city_spec.alias_of
 			city_spec = new_city_spec
@@ -1652,22 +1695,22 @@ local function find_city_spec(data)
 			local containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
 			local containing_polities_mismatch = false
 			for _, polity in ipairs(containing_polities) do
-				local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity.name)
+				local bare_polity, _ = m_shared.construct_bare_and_linked_version(polity.name)
 				local divtype = polity.divtype
 				local divtype_equivs = export.get_placetype_equivs(divtype)
 				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
 					holonym_index and holonym_index + 1 or nil) do
 					local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
 						function(placetype)
-							return holonym.placetype == placetype and holonym.cat_placename == bare_polity
+							return other_holonym.placetype == placetype and other_holonym.cat_placename == bare_polity
 						end
 					)
 					if this_holonym_matches then
-						containing_polities_match = true
+						-- match
 					else
 						local this_holonym_mismatches = export.get_equiv_placetype_prop_from_equivs(
 							divtype_equivs, function(placetype)
-								return holonym.placetype == placetype
+								return other_holonym.placetype == placetype
 							end
 						)
 						if this_holonym_mismatches then
@@ -1762,18 +1805,14 @@ local function generic_cat_handler(data)
 		for _, polity in ipairs(containing_polities) do
 			local drop_dead_now = false
 			-- Find the group and key corresponding to the polity.
-			local polity_group, polity_key = m_shared.city_containing_polity_to_group_and_key(polity)
-			if polity_key then
-				local polity_value = polity_group.value_transformer(polity_group, polity_key, polity_group[polity_key])
-				insert_retkey(polity_key)
-				if from_demonym or polity_value.no_containing_polity_cat then
-					-- Stop adding containing polities if no_containing_polity_cat is found. (Used for
-					-- 'United Kingdom'.) Also if we're called from from_demonym, only add the first (most immediate)
-					-- containing polity.
-					break
-				end
+			local polity_key, polity_value, polity_group = m_shared.find_city_containing_polity(polity)
+			insert_retkey(polity_key)
+			if from_demonym or polity_value.no_containing_polity_cat then
+				-- Stop adding containing polities if no_containing_polity_cat is found. (Used for
+				-- 'United Kingdom'.) Also if we're called from from_demonym, only add the first (most immediate)
+				-- containing polity.
+				break
 			end
-			-- FIXME: If we can't locate the containing polity, should we throw an error or allow it?
 		end
 		return retcats
 	end
@@ -1925,11 +1964,15 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 											containing_type = containing_type[1]
 										end
 										-- Don't side-effect holonyms while processing them.
+										-- The existing placenames, including those in `cat_placname`, will be bare,
+										-- so we need to match that.
+										local bare_containing_polity, _ = m_shared.construct_bare_and_linked_version(
+											value.containing_polity)
 										local new_holonym = {
 											-- By the time we run, the display has already been generated so we don't
 											-- need to set display_placename.
 											placetype = containing_type,
-											cat_placename = value.containing_polity,
+											cat_placename = bare_containing_polity,
 										}
 										insert(augmented_holonyms, new_holonym)
 										-- But it is safe to modify other parts of the place_desc.
@@ -1949,30 +1992,7 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 end
 
 
--- Inner data returned by cat handler for districts, neighborhoods, etc.
-local function district_inner_data(value, itself_dest)
-	local retval = {
-		["city"] = value,
-		["town"] = value,
-		["township"] = value,
-		["municipality"] = value,
-		["borough"] = value,
-		["London borough"] = value,
-		["royal borough"] = value,
-		["census-designated place"] = value,
-		["village"] = value,
-	}
-	if itself_dest then
-		retval["itself"] = itself_dest
-	else
-		-- See explanation for this in find_cat_specs() in [[Module:place]].
-		retval["restart_ignoring_cat_handler"] = true
-	end
-	return retval
-end
-
-
--- Cat handler for district, areas and neighborhoods. Districts are tricky because they can either be political
+-- Cat handler for district, areas, neighborhoods and suburbs. Districts are tricky because they can either be political
 -- subdivisions or city neighborhoods. Areas similarly can be political subdivisions (rarely; specifically, in Kuwait),
 -- city neighborhoods or larger geographical areas/regions. We handle this as follows:
 -- (1) `placetype_data` cat entries for specific countries or country subdivisions take precedence over cat_handlers,
@@ -1990,30 +2010,72 @@ end
 --     called as {{tl|place|district|ward/Foo|mun/Bar|...}}), we will handle the city-like entity according to (2) or
 --     (3) when called on that holonym. Otherwise either the categorization in (1) takes place or there's no
 --     categorization.
-local function district_cat_handler(data)
-	local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
-	if city_key then
-					local polity_group, polity_key = m_shared.city_containing_polity_to_group_and_key(
-						containing_polities[1])
-					if not polity_key then
-						internal_error("Can't find polity data for city %s containing polity %s",
-							place, containing_polities[1])
-					end
+local function district_neighborhood_cat_handler(data)
+	local function get_plural_entry_placetype(polity_spec)
+		if data.entry_placetype == "suburb" then
+			return "Suburbs"
+		else
+			return polity_spec.british_spelling and "Neighbourhoods" or "Neighborhoods"
+		end
+	end
 
+	local function check_for_city_or_city_like_holonym(data)
+		local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
+		
+		if city_key then
+			local polity_key, polity_spec, polity_group = m_shared.find_city_containing_polity(containing_polities[1])
+			return {get_plural_entry_placetype(polity_spec) .. " of " .. city_key}
+		end
+	
+		-- For city-states and special top-level city-like entities like Hong Kong and Bonaire
+		local this_polity_key, this_polity_spec, this_polity_group = find_polity_spec(data)
+		if this_polity_spec and this_polity_spec.is_city then
+			return {get_plural_entry_placetype(this_polity_spec) .. " of " .. this_polity_key}
+		end
+	end
 
-	local holonym_placetype, holonym_placename = data.holonym_placetype, data.holonym_placename
-	for _, group in ipairs(m_shared.polities) do
-		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
-		if key then
-			local value = group.data[key]
-			if value then
-				value = group.value_transformer(group, key, value)
-				if value.british_spelling then
-					return district_inner_data({"Neighbourhoods in " .. key})
-				else
-					return district_inner_data({"Neighborhoods in " .. key})
-				end
+	-- First check the immediate holonym to see if it's a city or a city-like top-level entity (Hong Kong, Bonaire, etc.)
+	local retval = check_for_city_or_city_like_holonym(data)
+	if retval then
+		return retval
+	end
+
+	-- If the entry placetype is neighbo(u)rhood, assume it is a neighborhood even if there isn't a city-like
+	-- entity father up the chain. (E.g. due to a mistaken use of m/ instead of mun/ for municipality.)
+	local has_neighborhoods
+	local entry_placetype = data.entry_placetype
+	if entry_placetype == "neighborhood" or entry_placetype == "neighbourhood" or entry_placetype == "suburb" then
+		has_neighborhoods = true
+	else
+		-- Otherwise, make sure the current holonym is city-like.
+		has_neighborhoods = export.get_equiv_placetype_prop(data.holonym_placetype, function(pt)
+			if export.placetype_data[pt] then
+				return export.placetype_data[pt].has_neighborhoods or false
+			end
+		end, "continue on nil only")
+	end
+	if has_neighborhoods then
+		-- Loop up the holonyms, looking for city and city-like entities in case of e.g. [[Sepulveda]] written
+		-- {{place|en|neighborhood|valley/San Fernando Valley|city/Los Angeles|s/California|c/USA}}
+		-- but also look for a recognizable poldiv, and if so categorize as "Neighborhoods in POLDIV". We need
+		-- to start with the current holonym, which is especially important for neighborhoods and suburbs that
+		-- may have the first holonym be a recognizable province, etc. but can't hurt otherwise. (Previously
+		-- we skipped the first/current holonym.)
+		for other_holonym_index, other_holonym in get_holonyms_to_check(data.place_desc,
+			data.holonym_index) do
+			local other_holonym_data = {
+				holonym_placetype = other_holonym.placetype,
+				holonym_placename = other_holonym.cat_placename,
+				holonym_index = other_holonym_index,
+				place_desc = data.place_desc,
+			}
+			local retval = check_for_city_or_city_like_holonym(other_holonym_data)
+			if retval then
+				return retval
+			end
+			local polity_key, polity_spec, polity_group = find_polity_spec(other_holonym_data)
+			if polity_key then
+				return {get_plural_entry_placetype(polity_spec) .. " in " .. polity_key}
 			end
 		end
 	end
@@ -2237,7 +2299,7 @@ export.placetype_data = {
 
 	["area"] = {
 		preposition = "of",
-		cat_handler = district_cat_handler,
+		cat_handler = district_neighborhood_cat_handler,
 		fallback = "geographic and cultural area",
 	},
 
@@ -2450,7 +2512,7 @@ export.placetype_data = {
 	["district"] = {
 		preposition = "of",
 		affix_type = "suf",
-		cat_handler = district_cat_handler,
+		cat_handler = district_neighborhood_cat_handler,
 
 		-- No default. Countries for which districts are political subdivisions will get entries.
 	},
@@ -2682,9 +2744,10 @@ export.placetype_data = {
 
 	["neighborhood"] = {
 		preposition = "of",
-		cat_handler = function(data)
-			return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
-		end,
+		cat_handler = district_neighborhood_cat_handler,
+		--cat_handler = function(data)
+		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
+		--end,
 	},
 
 	["new area"] = {
@@ -2914,7 +2977,7 @@ export.placetype_data = {
 	["subdivision"] = {
 		preposition = "of",
 		affix_type = "suf",
-		cat_handler = district_cat_handler,
+		cat_handler = district_neighborhood_cat_handler,
 	},
 
 	["subprefecture"] = {
@@ -2938,9 +3001,10 @@ export.placetype_data = {
 
 	["suburb"] = {
 		preposition = "of",
-		cat_handler = function(data)
-			return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
-		end,
+		cat_handler = district_neighborhood_cat_handler,
+		--cat_handler = function(data)
+		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
+		--end,
 		has_neighborhoods = true, --?
 	},
 
@@ -3108,15 +3172,6 @@ for _, group in ipairs(m_shared.polities) do
 								insert(cat_specs, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " .. key)
 							end
 						end
-						local cat_data_spec
-						if sgdiv == "district" then
-							-- see comment above under district_cat_handler().
-							local neighborhoods_in = value.british_spelling and "Neighbourhoods in " .. key or
-								"Neighborhoods in " .. key
-							cat_data_spec = district_inner_data({neighborhoods_in}, cat_specs)
-						else
-							cat_data_spec = cat_specs,
-						end
 						local cat_data_holonym = dt .. "/" .. placename
 						if export.placetype_data[sgdiv][cat_data_holonym] then
 							-- Make sure there isn't an existing setting in `placetype_data` for this placetype and
@@ -3131,11 +3186,12 @@ for _, group in ipairs(m_shared.polities) do
 							-- set `no_error_on_poldiv_clash = true` in the entry in `placetype_data`; see existing
 							-- examples.
 							if not export.placetype_data[sgdiv][cat_data_holonym].no_error_on_poldiv_clash then
-								error(("Would overwrite placetype_data[%s][%s] with %s; if this is intentional, set `no_error_on_poldiv_clash = true` (see comment in [[Module:place/data]])"):format(
-									sgdiv, cat_data_holonym, dump(cat_data_spec)))
+								internal_error("Would overwrite placetype_data[%s][%s] with %s; if this is " ..
+									"intentional, set `no_error_on_poldiv_clash = true` (see comment in " ..
+									"[[Module:place/data]])", sgdiv, cat_data_holonym, cat_specs)
 							end
 						else
-							export.placetype_data[sgdiv][cat_data_holonym] = cat_data_spec
+							export.placetype_data[sgdiv][cat_data_holonym] = cat_specs
 						end
 					end
 				end
