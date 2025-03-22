@@ -26,6 +26,7 @@ local concat = table.concat
 local pluralize = require(en_utilities_module).pluralize
 local extend = m_table.extend
 
+local internal_error = m_data.internal_error
 local placetype_data = m_data.placetype_data
 
 --[==[ intro:
@@ -323,11 +324,11 @@ be [[:Category:en:Municipalities of Brazil]].
 
 
 --[=[
-TODO:
+TODO/FIXME:
 
 1. Neighborhoods should categorize at the city level. Categories like [[:Category:Places in Los Angeles]] exist but
    not [[:Category:Neighborhoods in Los Angeles]]; we can refactor the code in generic_cat_handler() to support this
-   use case.
+   use case. [DONE]
 2. Display handlers should be smarter. For example, 'co/Travis' as a holonym should display as 'Travis County' in the
    United States, but (I think) display handlers don't currently have the full context of holonyms passed in to allow
    this to happen.
@@ -402,7 +403,7 @@ TODO:
 		},
 	This seems to be specifically for Jakarta and doesn't seem to work anyway, as the two entries in
 	[[:Category:en:Subdistricts of Jakarta]] and the one entry in [[:Category:id:Subdistricts of Jakarta]] are manually
-	categorized.
+	categorized. [DONE]
 23. Consolidate the remaining stuff in [[Module:category tree/topic cat/data/Earth]] into
 	[[Module:category tree/topic cat/data/Places]].
 24. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
@@ -438,6 +439,9 @@ TODO:
     between `placetype_equivs` and `fallback`.
 30. `has_neighborhoods` may need to be a function that can look at the containing holonyms to determine whether the
     entity in question is city-like.
+31. Bare placenames as they appear in holonyms (e.g. `Riau Islands`) instead of category keys (e.g.
+	`the Riau Islands, Indonesia`) should appear in the polity data tables. As a first pass, the word "the" should not
+	appear but should instead be a property of the polity.
 ]=]
 
 
@@ -588,7 +592,7 @@ local function handle_category_implications(place_descriptions, implication_data
 					for _, holonym_to_add in ipairs(imp_data) do
 						local split_holonym = split_on_slash(holonym_to_add)
 						if #split_holonym ~= 2 then
-							error("Internal error: Invalid holonym in implications: " .. holonym_to_add)
+							internal_error("Invalid holonym in implications: %s", holonym_to_add)
 						end
 						local holonym_placetype, holonym_placename = unpack(split_holonym, 1, 2)
 						local new_holonym = {
@@ -1163,12 +1167,13 @@ local function format_holonym(holonym, needs_article, display_form)
 				end
 				if not affix then
 					if not pt_equiv_for_affix_type then
-						error("Internal error: Something wrong, `pt_equiv_for_affix_type` not set")
+						internal_error("Something wrong, `pt_equiv_for_affix_type` not set processing holonym: %s",
+							holonym)
 					end
 					affix = pt_equiv_for_affix_type.placetype
 					if not affix then
-						error(("Internal error: Something wrong, no affix could be located in `pt_equiv_for_affix_type`: %s"):
-								format(dump(pt_equiv_for_affix_type)))
+						internal_error("Something wrong, no affix could be located in `pt_equiv_for_affix_type` for " ..
+							"holonym %s: %s", holonym, pt_equiv_for_affix_type)
 					end
 				end
 				no_affix_strings = no_affix_strings or lc(affix)
@@ -1590,7 +1595,7 @@ function export.format_new_style_place_desc_for_display(args, place_desc, with_a
 		elseif segment_type == "holonym" then
 			insert(parts, format_holonym(place_desc.holonyms[segment], false, true))
 		else
-			error("Internal error: Unrecognized segment type '" .. segment_type .. "'")
+			internal_error("Unrecognized segment type %s", segment_type)
 		end
 	end
 
@@ -1736,7 +1741,6 @@ On entry, `data` is an object with the following fields:
 * `overriding_holonym`: an optional overriding holonym to use, in place of iterating through the holonyms (used to
   implement categorizing other holonyms of the same type as the triggering holonym, so that e.g.
   {{place|en|river|s/Kansas,Nebraska}}, or equivalently {{place|en|river|s/Kansas|and|s/Nebraska}}, works);
-* `ignore_cat_handler`: a flag to indicate whether to ignore category handlers (used by district_cat_handler);
 * `from_demonym`: we are called from {{tl|demonym-noun}} or {{tl|demonym-adj}} instead of {{tl|place}}, and should
   generate categories appropriate to those templates.
 
@@ -1748,27 +1752,32 @@ The return value is an object with the following fields:
 * `triggering_holonym`: the triggering holonym (see the comment at the top of the section), or nil if there was no
   triggering holonym;
 * `triggering_holonym_index`: the index of the triggering holonym in the list of holonyms in `place_desc`, or nil if
-  an overriding holonym was passed in or there was no triggering holonym;
+  an overriding holonym was passed in or there was no triggering holonym.
 ]=]
 local function find_placetype_cat_specs(data)
-	local entry_placetype, place_desc, first_holonym_index, overriding_holonym =
-		data.entry_placetype, data.place_desc, data.first_holonym_index, data.overriding_holonym
-	local ignore_cat_handler, from_demonym = data.ignore_cat_handler, data.from_demonym
+	local entry_placetype, place_desc, first_holonym_index, overriding_holonym, from_demonym =
+		data.entry_placetype, data.place_desc, data.first_holonym_index, data.overriding_holonym, data.from_demonym
 	local entry_placetype_data = placetype_data[entry_placetype]
 	if not entry_placetype_data then
-		error(("Internal error: Received entry placetype '%s' without any entry in placetype_data"):format(
-			entry_placetype))
+		internal_error("Received entry placetype %s without any entry in placetype_data", entry_placetype)
 	end
 
 	local function fetch_cat_specs(holonym_to_match, index)
 		local holonym_placetype = holonym_to_match.placetype
+		if not holonym_placetype then
+			-- raw text in place of holonym
+			return nil
+		end
 		local holonym_placename = holonym_to_match.cat_placename
+		if not holonym_placename then
+			internal_error("Missing cat_placename in holonym (index %s): %s", index, holonym_to_match)
+		end
 		local cat_specs = m_data.get_equiv_placetype_prop(holonym_placetype,
 			function(pt) return entry_placetype_data[(pt or "") .. "/" .. holonym_placename] end)
 		if cat_specs then
 			return cat_specs
 		end
-		if not ignore_cat_handler and entry_placetype_data.cat_handler then
+		if entry_placetype_data.cat_handler then
 			local cat_specs = m_data.get_equiv_placetype_prop(holonym_placetype,
 				function(pt) return entry_placetype_data.cat_handler {
 					entry_placetype = entry_placetype,
@@ -1836,9 +1845,6 @@ local function find_placetype_cat_specs(data)
 			place_desc = place_desc,
 			first_holonym_index = first_holonym_index,
 			overriding_holonym = overriding_holonym,
-			-- This is what was here before; it seems a good idea to not ignore cat handlers on fallback as it's a
-			-- different placetype.
-			ignore_cat_handler = false,
 			from_demonym = from_demonym,
 		}
 	end
@@ -1847,32 +1853,6 @@ local function find_placetype_cat_specs(data)
 		entry_placetype = entry_placetype,
 		-- no cat_specs, no triggering_holonym
 	}
---[=[ I don't think this is applicable anymore. When we're sure of this, delete it.
-
-	-- HACK! `district_cat_handler()` needs to handle the fact that "district" can have two meanings, a "local" one
-	-- that's equivalent to a neighborhood and a "non-local" one that's a type of political subdivision (the
-	-- specifics depend on the country). In particular we need to handle both of the following cases:
-	-- {{place|te|t=Kadapa|district|city/Visakhapatnam|s/Andhra Pradesh|c/India}}
-	-- {{place|te|t=Kadapa|district|s/Andhra Pradesh|c/India}}
-	-- The first case needs to categorize into e.g. [[:Category:te:Neighborhoods in Andhra Pradesh]] while the second
-	-- categorizes into e.g. [[:Category:te:Districts of India]]. The categorization into "Districts of India" is
-	-- handled courtesy of the fact that "district" listed in [[Module:place/shared-data]] as a political subdivision
-	-- of India, which happens independently of district_cat_handler() (which is there to take care of the neighborhood
-	-- meaning of "district"). This is taken care of by having `district_cat_handler()` return a spec that handles the
-	-- various types of city-like entities (e.g. boroughs) as well as specifying `restart_ignoring_cat_handler`. If no
-	-- holonym is found matching the city-like entities, the following clause restarts skipping
-	-- `district_cat_handler()`, which eventually categorizes based on the holonym "India".
-	if inner_data.restart_ignoring_cat_handler then
-		return find_placetype_cat_specs {
-			entry_placetype = entry_placetype,
-			place_desc = place_desc,
-			first_holonym_index = first_holonym_index,
-			overriding_holonym = overriding_holonym,
-			ignore_cat_handler = true,
-			from_demonym = from_demonym,
-		}
-	end
-]=]
 end
 
 
@@ -1912,7 +1892,7 @@ local function cat_specs_to_categories(cat_specs, entry_placetype, holonym)
 			else
 				cat = cat_spec
 				if cat:find("%+%+%+") then
-					error("Category '" .. cat .. "' contains +++ but there is no holonym to substitute")
+					internal_error("Category %s contains +++ but there is no holonym to substitute", cat)
 				end
 			end
 			insert(all_cats, cat)
@@ -1971,7 +1951,7 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
 		for _, other_placename_of_same_type in ipairs(place_desc.holonyms_by_placetype[triggering_holonym.placetype]) do
 			if other_placename_of_same_type ~= triggering_holonym.cat_placename then
 				local overriding_holonym = {
-					placetype = triggering_holonym.placetype, placename = other_placename_of_same_type
+					placetype = triggering_holonym.placetype, cat_placename = other_placename_of_same_type
 				}
 				local other_cat_data = find_placetype_cat_specs {
 						entry_placetype = equiv_entry_placetype,
