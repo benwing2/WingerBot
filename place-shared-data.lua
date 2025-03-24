@@ -856,7 +856,7 @@ export.countries = {
 		addl_poldiv_for_categorization = {"states and territories"}, british_spelling = true},
 	["Austria"] = {parents = {"Europe"}, poldiv = {"states", "districts", "municipalities"}, british_spelling = true},
 	["Azerbaijan"] = {parents = {"Europe", "Asia"}, poldiv = {"districts", "municipalities"}, british_spelling = true},
-	["the Bahamas"] = {parents = {"North America"}, poldiv = {"districts"}, british_spelling = true, wp = "The Bahamas"},
+	["Bahamas"] = {the = true, parents = {"North America"}, poldiv = {"districts"}, british_spelling = true, wp = "The Bahamas"},
 	["Bahrain"] = {parents = {"Asia"}, poldiv = {"governorates"}},
 	["Bangladesh"] = {parents = {"Asia"}, poldiv = {"divisions", "districts", "municipalities"}, british_spelling = true},
 	["Barbados"] = {parents = {"North America"}, poldiv = {"parishes"}, british_spelling = true},
@@ -882,7 +882,7 @@ export.countries = {
 		addl_poldiv_for_categorization = {"provinces and territories"},
 		british_spelling = true},
 	["Cape Verde"] = {parents = {"Africa"}, poldiv = {"municipalities", "parishes"}},
-	["the Central African Republic"] = {parents = {"Africa"}, poldiv = {"prefectures", "subprefectures"}},
+	["Central African Republic"] = {the = true, parents = {"Africa"}, poldiv = {"prefectures", "subprefectures"}},
 	["Chad"] = {parents = {"Africa"}, poldiv = {"regions", "departments"}},
 	["Chile"] = {parents = {"South America"}, poldiv = {"regions", "provinces", "communes"}},
 	["China"] = {parents = {"Asia"}, poldiv = {"provinces", "autonomous regions",
@@ -890,17 +890,17 @@ export.countries = {
 		"districts", "municipalities"},
 		addl_poldiv_for_categorization = {"provinces and autonomous regions"}},
 	["Colombia"] = {parents = {"South America"}, poldiv = {"departments", "municipalities"}},
-	["the Comoros"] = {parents = {"Africa"}, poldiv = {"autonomous islands"}},
+	["Comoros"] = {the = true, parents = {"Africa"}, poldiv = {"autonomous islands"}},
 	["Costa Rica"] = {parents = {"Central America"}, poldiv = {"provinces", "cantons"}},
 	["Croatia"] = {parents = {"Europe"}, poldiv = {"counties", "municipalities"}, british_spelling = true},
 	["Cuba"] = {parents = {"North America"}, poldiv = {"provinces", "municipalities"}},
 	["Cyprus"] = {parents = {"Europe", "Asia"}, poldiv = {"districts"}, british_spelling = true},
-	["the Czech Republic"] = {parents = {"Europe"}, poldiv = {"regions", "districts", "municipalities"}, british_spelling = true},
-	["the Democratic Republic of the Congo"] = {parents = {"Africa"}, poldiv = {"provinces", "territories"}},
+	["Czech Republic"] = {the = true, parents = {"Europe"}, poldiv = {"regions", "districts", "municipalities"}, british_spelling = true},
+	["Democratic Republic of the Congo"] = {the = true, parents = {"Africa"}, poldiv = {"provinces", "territories"}},
 	["Denmark"] = {parents = {"Europe"}, poldiv = {"regions", "municipalities", "dependent territories"}, british_spelling = true},
 	["Djibouti"] = {parents = {"Africa"}, poldiv = {"regions", "districts"}},
 	["Dominica"] = {parents = {"North America"}, poldiv = {"parishes"}, british_spelling = true},
-	["the Dominican Republic"] = {parents = {"North America"}, poldiv = {"provinces", "municipalities"},
+	["Dominican Republic"] = {the = true, parents = {"North America"}, poldiv = {"provinces", "municipalities"},
 		keydesc = "the [[Dominican Republic]], the country that shares the [[Caribbean]] island of [[Hispaniola]] with [[Haiti]]"},
 	["East Timor"] = {parents = {"Asia"}, poldiv = {"municipalities"}},
 	["Ecuador"] = {parents = {"South America"}, poldiv = {"provinces", "cantons"}},
@@ -911,7 +911,7 @@ export.countries = {
 	["Estonia"] = {parents = {"Europe"}, poldiv = {"counties", "municipalities"}, british_spelling = true},
 	["Eswatini"] = {parents = {"Africa"}, british_spelling = true},
 	["Ethiopia"] = {parents = {"Africa"}, poldiv = {"regions", "zones"}},
-	["the Federated States of Micronesia"] = {parents = {"Micronesia"}, poldiv = {"states"}},
+	["Federated States of Micronesia"] = {the = true, parents = {"Micronesia"}, poldiv = {"states"}},
 	["Fiji"] = {parents = {"Melanesia"}, poldiv = {"divisions", "provinces"}, british_spelling = true},
 	["Finland"] = {parents = {"Europe"}, poldiv = {"regions", "municipalities"}, british_spelling = true},
 	["France"] = {parents = {"Europe"}, poldiv = {"regions", "cantons", "collectivities", "communes", "departments",
@@ -920,7 +920,7 @@ export.countries = {
 		{type = "French prefectures", cat_as = {"prefectures", "departmental capitals"}},
 	}, miscdiv = {"provinces"}, british_spelling = true},
 	["Gabon"] = {parents = {"Africa"}, poldiv = {"provinces", "departments"}},
-	["the Gambia"] = {parents = {"Africa"}, poldiv = {"divisions", "districts"}, british_spelling = true, wp = "The Gambia"},
+	["Gambia"] = {the = true, parents = {"Africa"}, poldiv = {"divisions", "districts"}, british_spelling = true, wp = "The Gambia"},
 	["Georgia"] = {parents = {"Europe", "Asia"}, poldiv = {"regions", "districts"},
 		keydesc = "the country of [[Georgia]], in [[Eurasia]]", british_spelling = true},
 	["Germany"] = {parents = {"Europe"}, poldiv = {"states", "municipalities", "districts"}, british_spelling = true},
@@ -968,10 +968,10 @@ export.countries = {
 	["Madagascar"] = {parents = {"Africa"}, poldiv = {"regions", "districts"}},
 	["Malawi"] = {parents = {"Africa"}, poldiv = {"regions", "districts"}, british_spelling = true},
 	["Malaysia"] = {parents = {"Asia"}, poldiv = {"states", "federal territories", "districts"}, british_spelling = true},
-	["the Maldives"] = {parents = {"Asia"}, poldiv = {"provinces", "administrative atolls"}, british_spelling = true},
+	["Maldives"] = {the = true, parents = {"Asia"}, poldiv = {"provinces", "administrative atolls"}, british_spelling = true},
 	["Mali"] = {parents = {"Africa"}, poldiv = {"regions", "cercles"}},
 	["Malta"] = {parents = {"Europe"}, poldiv = {"regions", "local councils"}, british_spelling = true},
-	["the Marshall Islands"] = {parents = {"Micronesia"}, poldiv = {"municipalities"}},
+	["Marshall Islands"] = {the = true, parents = {"Micronesia"}, poldiv = {"municipalities"}},
 	["Mauritania"] = {parents = {"Africa"}, poldiv = {"regions", "departments"}},
 	["Mauritius"] = {parents = {"Africa"}, poldiv = {"districts"}, british_spelling = true},
 	["Mexico"] = {parents = {"North America", "Central America"}, poldiv = {"states", "municipalities"}},
@@ -990,7 +990,7 @@ export.countries = {
 	["Namibia"] = {parents = {"Africa"}, poldiv = {"regions", "constituencies"}, british_spelling = true},
 	["Nauru"] = {parents = {"Micronesia"}, poldiv = {"districts"}, british_spelling = true},
 	["Nepal"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
-	["the Netherlands"] = {divtype = {"constituent country", "country"}, parents = {"Europe"},
+	["Netherlands"] = {the = true, divtype = {"constituent country", "country"}, parents = {"Europe"},
 		poldiv = {"provinces", "municipalities",
 			{type = "FORMER municipalities", cat_as = "former municipalities"},
 			"dependent territories", "constituent countries"}, british_spelling = true},
@@ -1014,7 +1014,7 @@ export.countries = {
 	["Papua New Guinea"] = {parents = {"Melanesia"}, poldiv = {"provinces", "districts"}, british_spelling = true},
 	["Paraguay"] = {parents = {"South America"}, poldiv = {"departments", "districts"}},
 	["Peru"] = {parents = {"South America"}, poldiv = {"regions", "provinces", "districts"}},
-	["the Philippines"] = {parents = {"Asia"}, poldiv = {"regions", "provinces", "districts", "municipalities", "barangays"}},
+	["Philippines"] = {the = true, parents = {"Asia"}, poldiv = {"regions", "provinces", "districts", "municipalities", "barangays"}},
 	["Poland"] = {poldiv = {"voivodeships", "counties",
 		{type = "Polish colonies", cat_as = {{type = "villages", prep = "in"}}},
 	}, parents = {"Europe"}, british_spelling = true},
@@ -1023,7 +1023,7 @@ export.countries = {
 		{type = "districts", cat_as = "districts and autonomous regions"},
 		"provinces", "municipalities"}, british_spelling = true},
 	["Qatar"] = {parents = {"Asia"}, poldiv = {"municipalities", "zones"}},
-	["the Republic of the Congo"] = {parents = {"Africa"}, poldiv = {"departments", "districts"}},
+	["Republic of the Congo"] = {the = true, parents = {"Africa"}, poldiv = {"departments", "districts"}},
 	["Romania"] = {parents = {"Europe"}, poldiv = {"regions", "counties", "communes"}, british_spelling = true},
 	["Russia"] = {parents = {"Europe", "Asia"}, poldiv = {
 		"federal subjects", "republics", "autonomous oblasts", "autonomous okrugs", "oblasts", "krais", "federal cities",
@@ -1046,7 +1046,7 @@ export.countries = {
 	["Slovenia"] = {parents = {"Europe"}, poldiv = {"municipalities"}, british_spelling = true},
 	-- Note: the official name does not include "the" at the beginning, but it sounds strange in
 	-- English to leave it out and it's commonly included, so we include it.
-	["the Solomon Islands"] = {parents = {"Melanesia"}, poldiv = {"provinces"}, british_spelling = true},
+	["Solomon Islands"] = {the = true, parents = {"Melanesia"}, poldiv = {"provinces"}, british_spelling = true},
 	["Somalia"] = {parents = {"Africa"}, poldiv = {"regions", "districts"}},
 	["South Africa"] = {parents = {"Africa"}, poldiv = {"provinces", "districts"}, british_spelling = true},
 	["South Korea"] = {parents = {"Asia", {name = "Korea", bare = true}}, poldiv = {"provinces", "counties", "districts"}},
@@ -1072,12 +1072,12 @@ export.countries = {
 	["Tuvalu"] = {parents = {"Polynesia"}, poldiv = {"atolls"}, british_spelling = true},
 	["Uganda"] = {parents = {"Africa"}, poldiv = {"districts", "counties"}, british_spelling = true},
 	["Ukraine"] = {parents = {"Europe"}, poldiv = {"oblasts", "municipalities", "raions"}, british_spelling = true},
-	["the United Arab Emirates"] = {parents = {"Asia"}, poldiv = {"emirates"}},
-	["the United Kingdom"] = {parents = {"Europe", {name = "British Isles", bare = true}},
+	["United Arab Emirates"] = {the = true, parents = {"Asia"}, poldiv = {"emirates"}},
+	["United Kingdom"] = {the = true, parents = {"Europe", {name = "British Isles", bare = true}},
 		poldiv = {"constituent countries", "counties", "districts", "boroughs", "territories", "dependent territories"},
 		miscdiv = {"traditional counties"},
 		keydesc = "the [[United Kingdom]] of Great Britain and Northern Ireland", british_spelling = true},
-	["the United States"] = {parents = {"North America"},
+	["United States"] = {the = true, parents = {"North America"},
 		poldiv = {"counties", "county seats", "states", "territories", "dependent territories",
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
@@ -1103,7 +1103,8 @@ export.pseudo_countries = {
 	-- unincorporated territory of the United States
 	["American Samoa"] = {divtype = {"unincorporated territory", "overseas territory", "territory"},
 		parents = {"Polynesia", "United States"}},
-	["the United States Minor Outlying Islands"] = {
+	["United States Minor Outlying Islands"] = {
+		the = true,
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		parents = {"Islands", "Micronesia", "Polynesia", "United States"}
 	},
@@ -1134,17 +1135,20 @@ export.pseudo_countries = {
 	["Bermuda"] = {divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "North America"},
 		british_spelling = true},
 	-- British Overseas Territory
-	["the British Indian Ocean Territory"] = {
+	["British Indian Ocean Territory"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "North America"},
 		british_spelling = true
 	},
 	-- British Overseas Territory
-	["the British Virgin Islands"] = {
+	["British Virgin Islands"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "North America"},
 		british_spelling = true
 	},
 	-- British Overseas Territory
-	["the Cayman Islands"] = {
+	["Cayman Islands"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"},
 		parents = {"United Kingdom", "North America"},
 		british_spelling = true
@@ -1155,25 +1159,29 @@ export.pseudo_countries = {
 		british_spelling = true
 	},
 	-- Australian external territory; also called the Keeling Islands or (officially) the Cocos (Keeling) Islands
-	["the Cocos Islands"] = {
+	["Cocos Islands"] = {
+		the = true,
 		divtype = {"external territory", "territory"}, parents = {"Australia", "Asia"},
 		british_spelling = true,
 		wp = "Cocos (Keeling) Islands"
 	},
 	-- self-governing but in free association with New Zealand
-	["the Cook Islands"] = {divtype = {"country"}, parents = {"Polynesia", "New Zealand"}, british_spelling = true},
+	["Cook Islands"] = {
+		the = true, divtype = {"country"}, parents = {"Polynesia", "New Zealand"}, british_spelling = true},
 	-- constituent country of the Netherlands
 	["Curaçao"] = {divtype = {"constituent country", "country"}, parents = {"Netherlands", "North America"}},
 	-- special territory of Chile
 	["Easter Island"] = {divtype = {"special territory", "territory"}, parents = {"Chile", "Polynesia"}},
 	-- British Overseas Territory
-	["the Falkland Islands"] = {
+	["Falkland Islands"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"},
 		parents = {"United Kingdom", "South America"},
 		british_spelling = true
 	},
 	-- autonomous territory of Denmark
-	["the Faroe Islands"] = {divtype = {"autonomous territory", "territory"}, parents = {"Denmark", "Europe"}},
+	["Faroe Islands"] = {
+		the = true, divtype = {"autonomous territory", "territory"}, parents = {"Denmark", "Europe"}},
 	-- overseas department of France
 	["French Guiana"] = {divtype = {"overseas department", "department", "administrative region", "region"},
 		parents = {"France", "South America"}},
@@ -1200,7 +1208,7 @@ export.pseudo_countries = {
 		parents = {"China"}, is_city = true, british_spelling = true
 	},
 	-- self-governing British Crown dependency
-	["the Isle of Man"] = {divtype = {"crown dependency", "dependency", "dependent territory", "territory"},
+	["Isle of Man"] = {the = true, divtype = {"crown dependency", "dependency", "dependent territory", "territory"},
 		parents = {"British Isles", "Europe"}, british_spelling = true},
 	-- self-governing British Crown dependency; technically called the Bailiwick of Jersey
 	["Jersey"] = {divtype = {"crown dependency", "dependency", "dependent territory", "bailiwick", "territory"},
@@ -1227,12 +1235,14 @@ export.pseudo_countries = {
 	["Norfolk Island"] = {divtype = {"external territory", "territory"}, parents = {"Australia", "Polynesia"},
 		british_spelling = true},
 	-- commonwealth, unincorporated territory of the United States
-	["the Northern Mariana Islands"] = {
+	["Northern Mariana Islands"] = {
+		the = true,
 		divtype = {"commonwealth", "unincorporated territory", "overseas territory", "territory"},
 		parents = {"United States", "Micronesia"}
 	},
 	-- British Overseas Territory
-	["the Pitcairn Islands"] = {
+	["Pitcairn Islands"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "Polynesia"},
 		british_spelling = true
 	},
@@ -1275,7 +1285,8 @@ export.pseudo_countries = {
 		keydesc = "the de-facto independent state of [[South Ossetia]], internationally recognized as part of the country of [[Georgia]]",
 		british_spelling = true},
 	-- British Overseas Territory
-	["the South Sandwich Islands"] = {
+	["South Sandwich Islands"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"},
 		parents = {"United Kingdom", "Atlantic Ocean"},
 		british_spelling = true,
@@ -1292,13 +1303,16 @@ export.pseudo_countries = {
 	["Tristan da Cunha"] = {divtype = {"overseas territory", "territory"}, parents = {"United Kingdom", "Atlantic Ocean"},
 		british_spelling = true},
 	-- British Overseas Territory
-	["the Turks and Caicos Islands"] = {
+	["Turks and Caicos Islands"] = {
+		the = true,
 		divtype = {"overseas territory", "territory"},
 		parents = {"United Kingdom", "North America"},
 		british_spelling = true
 	},
 	-- unincorporated territory of the United States
-	["the United States Virgin Islands"] = {divtype = {"unincorporated territory", "overseas territory", "territory"},
+	["United States Virgin Islands"] = {
+		the = true,
+		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		parents = {"United States", "North America"}},
 	-- unincorporated territory of the United States
 	["Wake Island"] = {divtype = {"unincorporated territory", "overseas territory", "territory"},
@@ -1312,13 +1326,16 @@ export.former_countries = {
 	["East Germany"] = {parents = {"Europe", "Germany"}, british_spelling = true},
 	["North Vietnam"] = {parents = {"Asia", "Vietnam"}},
 	["Persia"] = {divtype = {"empire", "country"}, parents = {"Asia"}, poldiv = {"provinces"}},
-	["the Roman Empire"] = {divtype = {"empire", "country"}, parents = {"Europe", "Africa", "Asia", "Rome"},
+	["Roman Empire"] = {
+		the = true, divtype = {"empire", "country"}, parents = {"Europe", "Africa", "Asia", "Rome"},
 		poldiv = {
 			"provinces",
 			{type = "FORMER provinces", cat_as = "provinces"},
 		}},
 	["South Vietnam"] = {parents = {"Asia", "Vietnam"}},
-	["the Soviet Union"] = {parents = {"Europe", "Asia"}, poldiv = {"republics", "autonomous republics"}, british_spelling = true},
+	["Soviet Union"] = {
+		the = true, parents = {"Europe", "Asia"}, poldiv = {"republics", "autonomous republics"},
+		british_spelling = true},
 	["West Germany"] = {parents = {"Europe", "Germany"}, british_spelling = true},
 	["Yugoslavia"] = {parents = {"Europe"}, poldiv = {"districts"},
 		keydesc = "the former [[Kingdom of Yugoslavia]] (1918–1943) or the former [[Socialist Federal Republic of Yugoslavia]] (1943–1992)", british_spelling = true},
@@ -1364,9 +1381,9 @@ export.former_country_group = {
 -----------------------------------------------------------------------------------
 
 export.australia_states_and_territories = {
-	["the Australian Capital Territory, Australia"] = {divtype = "territory"},
+	["Australian Capital Territory, Australia"] = {the = true, divtype = "territory"},
 	["New South Wales, Australia"] = {},
-	["the Northern Territory, Australia"] = {divtype = "territory"},
+	["Northern Territory, Australia"] = {the = true, divtype = "territory"},
 	["Queensland, Australia"] = {},
 	["South Australia, Australia"] = {},
 	["Tasmania, Australia"] = {},
@@ -1486,7 +1503,7 @@ export.canada_provinces_and_territories = {
 	["Manitoba, Canada"] = {poldiv = {"rural municipalities"}},
 	["New Brunswick, Canada"] = {poldiv = {"counties", "parishes", {type = "civil parishes", cat_as = "parishes"}}},
 	["Newfoundland and Labrador, Canada"] = {},
-	["the Northwest Territories, Canada"] = {divtype = "territory"},
+	["Northwest Territories, Canada"] = {the = true, divtype = "territory"},
 	["Nova Scotia, Canada"] = {poldiv = {"counties", "regional municipalities"}},
 	["Nunavut, Canada"] = {divtype = "territory"},
 	["Ontario, Canada"] = {poldiv = {"counties", "regional municipalities", {type = "townships", prep = "in"}}},
@@ -1566,6 +1583,134 @@ export.china_group = {
 	data = export.china_provinces_and_autonomous_regions,
 }
 
+export.china_prefecture_level_cities_group = {
+	bare_label_setter = subpolity_bare_label_setter
+	default_parent_divtype = "prefecture-level city",
+	skip_parents = {name = "China", divtype = "country"},
+
+export.china_prefecture_level_cities = {
+	-- In China, a "prefecture-level city" is not a city in any real sense. It is rather a prefecture, which is an
+	-- administrative unit smaller than a province but bigger than a county, which is administratively controlled by
+	-- the chief city of the prefecture (which bears the same name as the prefecture), in a unified government. Prior
+	-- to the mid-1980's, in fact, prefecture-level cities *were* prefectures, and a few of them (especially in the
+	-- western portion of China) have not yet been converted. Generally a given province is entirely tiled by
+	-- prefecture-level cities, another indication that they should be treated as prefectures and not cities per se.
+	-- Yet another indication is that prefecture-level cities can contain counties and county-level cities (which, much
+	-- like prefecture-level cities, are effectively counties surrounding a chief city of the county, again which bears
+	-- the same name as the county-level city).
+	--
+	-- For this reason, we treat prefecture-level cities as non-city political divisions, and separately enumerate the
+	-- most populous so we can separately categorize districts and counties under them instead of lumping them at the
+	-- province level. I chose all prefecture/province-level cities with a total prefecture/province-level population of
+	-- at least 6,000,000 per the 2020 census with data taken from https://www.citypopulation.de/en/china/admin/ (a
+	-- total of 67, including the four direct-administered municipalities), and also chose all prefecture/province-level
+	-- cities whose "urban population" was at least 2,000,000 per the 2020 census with data taken from Wikipedia
+	-- [[w:List of cities in China by population#Cities and towns by population]] (a total of 61 cities; if we cut off
+	-- at 1.5 million we'd have 84 cities, and if we cut off at 1 million we'd have 105 cities). Merging them produces
+	-- 87 cities. Note that this leaves off a few well-known cities (Guilin, Qiqihar, Kashgar, Lhasa, ...) but includes
+	-- a lot of obscure cities.
+	--
+	-- Note also that China separately distinguishes "urban area" from "metro area". Sometimes the two figures are
+	-- identical but sometimes the metro area is larger (and very occasionally smaller, which I assume is an error). I'm
+	-- guessing that the "urban area" is the contiguous urban area over a certain density while the metro area includes
+	-- all urban areas above a certain density; when the latter is greater, it's because of satellite cities in the
+	-- metro area separated by suburban/exurban or rural land. Possibly we should use the metro area in preference to
+	-- the urban area, but I don't have a readily accessible list sorted by metro population (although the figures are
+	-- listed for each city in its respective Wikipedia article).
+	["Chongqing"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 32.1 prefectural, 16.9 urban
+	["Shanghai"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 24.9 prefectural, 29.9 urban
+	["Beijing"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 21.9 prefectural, 21.9 urban
+	["Chengdu"] = {parents = "Sichuan"}, -- 20.9 prefectural, 16.9 urban; sub-provincial city
+	["Guangzhou"] = {parents = "Guangdong"}, -- 18.7 prefectural, 18.8 urban; sub-provincial city
+	["Shenzhen"] = {parents = "Guangdong"}, -- 17.5 prefectural, 14.7 urban; sub-provincial city
+	["Tianjin"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 13.9 prefectural, 13.9 urban
+	-- NOTE: There is also a prefecture-level city Suzhou in Anhui with 5.3 million prefectural inhabitants
+	["Suzhou"] = {parents = "Jiangsu"}, -- 12.8 prefectural, 4.3 urban
+	["Zhengzhou"] = {parents = "Henan"}, -- 12.6 prefectural, 6.7 urban
+	["Wuhan"] = {parents = "Hubei"}, -- 12.4 prefectural, 12.3 urban; sub-provincial city
+	["Xi'an"] = {parents = "Shaanxi"}, -- 12.1 prefectural, 11.9 urban; sub-provincial city
+	["Hangzhou"] = {parents = "Zhejiang"}, -- 11.9 prefectural, 10.7 urban; sub-provincial city
+	-- includes Dìngzhōu city and Xióngān Xīnqū
+	["Baoding"] = {parents = "Hebei"}, -- 11.5 prefectural, 2.0 urban
+	-- includes Xīnjí city
+	["Shijiazhuang"] = {parents = "Hebei"}, -- 11.2 prefectural, 4.1 urban
+	["Linyi"] = {parents = "Shandong"}, -- 11.0 prefectural, 2.3 urban
+	["Dongguan"] = {parents = "Guangdong"}, -- 10.5 prefectural, 10.5 urban
+	["Qingdao"] = {parents = "Shandong"}, -- 10.1 prefectural, 7.1 urban; sub-provincial city
+	["Changsha"] = {parents = "Hunan"}, -- 10.0 prefectural, 6.0 urban
+	["Harbin"] = {parents = "Heilongjiang"}, -- 10.0 prefectural, 7.0 urban; sub-provincial city
+	["Nanyang"] = {parents = "Henan"}, -- 9.7 prefectural, 2.1 urban/metro
+	["Wenzhou"] = {parents = "Zhejiang"}, -- 9.6 prefectural, 3.6 urban
+	["Foshan"] = {parents = "Guangdong"}, -- 9.5 prefectural, 9.5 urban
+	["Handan"] = {parents = "Hebei"}, -- 9.4 prefectural, 2.8 urban
+	["Ningbo"] = {parents = "Zhejiang"}, -- 9.4 prefectural, 5.1 urban; sub-provincial city
+	["Weifang"] = {parents = "Shandong"}, -- 9.4 prefectural, 2.7 urban
+	["Hefei"] = {parents = "Anhui"}, -- 9.4 prefectural, 4.2 urban
+	["Nanjing"] = {parents = "Jiangsu"}, -- 9.3 prefectural, 9.3 urban; sub-provincial city
+	-- includes Láiwú city
+	["Jinan"] = {parents = "Shandong"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city
+	["Xuzhou"] = {parents = "Jiangsu"}, -- 9.1 prefectural, 2.6 urban
+	["Shenyang"] = {parents = "Liaoning"}, -- 9.1 prefectural, 7.9 urban; sub-provincial city
+	["Changchun"] = {parents = "Jilin"}, -- 9.1 prefectural, 5.7 urban; sub-provincial city
+	["Zhoukou"] = {parents = "Henan"}, -- 9.0 prefectural, 721,000 urban (1.6 metro)
+	["Ganzhou"] = {parents = "Jiangxi"}, -- 9.0 prefectural, 1.6 urban
+	["Heze"] = {parents = "Shandong"}, -- 8.8 prefectural, 1.3 urban
+	["Quanzhou"] = {parents = "Fujian"}, -- 8.8 prefectural, 1.7 urban (6.7 metro)
+	["Nanning"] = {parents = {name = "Guangxi", divtype = "autonomous region"}}, -- 8.7 prefectural, 3.8 urban
+	["Kunming"] = {parents = "Yunnan"}, -- 8.5 prefectural, 6.0 urban
+	["Jining"] = {parents = "Shandong"}, -- 8.4 prefectural, 1.5 urban
+	["Fuzhou"] = {parents = "Fujian"}, -- 8.3 prefectural, 4.1 urban
+	["Fuyang"] = {parents = "Anhui"}, -- 8.2 prefectural, 2.1 urban
+	["Shangqiu"] = {parents = "Henan"}, -- 7.8 prefectural, 1.9 urban (2.8 metro)
+	["Nantong"] = {parents = "Jiangsu"}, -- 7.7 prefectural, 2.3 urban
+	["Tangshan"] = {parents = "Hebei"}, -- 7.7 prefectural, 3.4 urban
+	["Wuxi"] = {parents = "Jiangsu"}, -- 7.5 prefectural, 3.3 urban
+	["Dalian"] = {parents = "Liaoning"}, -- 7.5 prefectural, 5.7 urban; sub-provincial city
+	-- NOTE: Not to be confused with Changzhou in Jiangsu
+	["Cangzhou"] = {parents = "Hebei"}, -- 7.3 prefectural, 621,000 urban
+	["Xingtai"] = {parents = "Hebei"}, -- 7.1 prefectural, 971,000 urban
+	["Yantai"] = {parents = "Shandong"}, -- 7.1 prefectural, 2.5 urban
+	["Luoyang"] = {parents = "Henan"}, -- 7.1 prefectural, 2.4 urban
+	["Jinhua"] = {parents = "Zhejiang"}, -- 7.1 prefectural, 1.5 urban
+	["Zhumadian"] = {parents = "Henan"}, -- 7.0 prefectural, 722,000 urban
+	["Zhanjiang"] = {parents = "Guangdong"}, -- 7.0 prefectural, 1.9 urban
+	["Bijie"] = {parents = "Guizhou"}, -- 6.9 prefectural, ? urban, ? metro (not listed in Wikipedia)
+	["Yancheng"] = {parents = "Jiangsu"}, -- 6.7 prefectural, 1.6 urban
+	["Hengyang"] = {parents = "Hunan"}, -- 6.6 prefectural, 1.5 urban
+	["Taizhou"] = {parents = "Zhejiang"}, -- 6.6 prefectural, 1.6 urban
+	["Zunyi"] = {parents = "Guizhou"}, -- 6.6 prefectural, 2.4 urban/metro
+	["Shaoyang"] = {parents = "Hunan"}, -- 6.6 prefectural, 802,000 urban, 1.4 metro
+	["Shangrao"] = {parents = "Jiangxi"}, -- 6.5 prefectural, 2.1 urban, 1.3 metro [sic]
+	["Nanchang"] = {parents = "Jiangxi"}, -- 6.3 prefectural, 3.6 (3.9?) urban, 5.3 metro
+	["Xinxiang"] = {parents = "Henan"}, -- 6.3 prefectural, 1.2 urban, 2.7 metro
+	["Xinyang"] = {parents = "Henan"}, -- 6.2 prefectural, 1.4 urban/metro
+	["Maoming"] = {parents = "Guangdong"}, -- 6.2 prefectural, 2.5 urban
+	["Huizhou"] = {parents = "Guangdong"}, -- 6.0 prefectural, 2.5 urban
+	-- cut off at 6,000,000 prefectural per 2020 census
+	-- Cities below here have at least 2 million in the urban area
+	["Guiyang"] = {parents = "Guizhou"}, -- 5.987 prefectural, 3.5 urban
+	["Shantou"] = {parents = "Guangdong"}, -- 5.502 prefectural, 4.3 urban
+	["Taiyuan"] = {parents = "Shanxi"}, -- 5.304 prefectural, 4.5 urban
+	["Changzhou"] = {parents = "Jiangsu"}, -- 5.278 prefectural, 3.6 urban
+	["Shaoxing"] = {parents = "Zhejiang"}, -- 5.270 prefectural, 2.5 urban
+	["Xiamen"] = {parents = "Fujian"}, -- 5.163 prefectural, 5.2 urban; sub-provincial city
+	["Jiangmen"] = {parents = "Guangdong"}, -- 4.798 prefectural, 2.7 urban
+	["Zibo"] = {parents = "Shandong"}, -- 4.704 prefectural, 2.6 urban
+	["Lianyungang"] = {parents = "Jiangsu"}, -- 4.599 prefectural, 2.0 urban
+	["Huai'an"] = {parents = "Jiangsu"}, -- 4.556 prefectural, 2.6 urban
+	["Zhongshan"] = {parents = "Guangdong"}, -- 4.418 prefectural, 4.4 urban
+	["Lanzhou"] = {parents = "Gansu"}, -- 4.359 prefectural, 3.1 urban
+	["Liuzhou"] = {parents = {name = "Guangxi", divtype = "autonomous region"}}, -- 4.157 prefectural, 2.2 urban
+	["Ürümqi"] = {parents = {name = "Xinjiang", divtype = "autonomous region"}}, -- 4.054 prefectural, 4.3 urban
+	["Urumqi"] = {alias_of = "Ürümqi"},
+	["Hohhot"] = {parents = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 3.446 prefectural, 2.7 urban
+	["Putian"] = {parents = "Fujian"}, -- 3.210 prefectural, 2.0 urban
+	["Datong"] = {parents = "Shanxi"}, -- 3.105 prefectural, 2.0 urban
+	["Haikou"] = {parents = "Hainan"}, -- 2.873 prefectural, 2.3 urban
+	["Baotou"] = {parents = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 2.709 prefectural, 2.2 urban
+	["Zhuhai"] = {parents = "Guangdong"}, -- 2.439 prefectural, 2.4 urban
+},
+
 export.finland_regions = {
 	["Lapland, Finland"] = {},
 	["North Ostrobothnia, Finland"] = {},
@@ -1585,7 +1730,7 @@ export.finland_regions = {
 	["Kymenlaakso, Finland"] = {},
 	["Uusimaa, Finland"] = {},
 	["Southwest Finland, Finland"] = {},
-	["the Åland Islands, Finland"] = {},
+	["Åland Islands, Finland"] = {the = true},
 }
 
 -- regions of Finland
@@ -1680,7 +1825,8 @@ local india_polity_without_divisions = {"districts"}
 
 -- States and union territories of India. Only some of them are divided into divisions.
 export.india_states_and_union_territories = {
-	["the Andaman and Nicobar Islands, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
+	["Andaman and Nicobar Islands, India"] =
+		{the = true, divtype = "union territory", poldiv = india_polity_without_divisions},
 	["Andhra Pradesh, India"] = {poldiv = india_polity_without_divisions},
 	["Arunachal Pradesh, India"] = {poldiv = india_polity_with_divisions},
 	["Assam, India"] = {poldiv = india_polity_with_divisions},
@@ -1733,7 +1879,7 @@ export.india_group = {
 export.indonesia_provinces = {
 	["Aceh, Indonesia"] = {},
 	["Bali, Indonesia"] = {},
-	["the Bangka Belitung Islands, Indonesia"] = {},
+	["Bangka Belitung Islands, Indonesia"] = {the = true},
 	["Banten, Indonesia"] = {},
 	["Bengkulu, Indonesia"] = {},
 	["Central Java, Indonesia"] = {},
@@ -1745,7 +1891,7 @@ export.indonesia_provinces = {
 	["East Nusa Tenggara, Indonesia"] = {},
 	["Gorontalo, Indonesia"] = {},
 	["Highland Papua, Indonesia"] = {},
-	["the Special Capital Region of Jakarta, Indonesia"] = {},
+	["Special Capital Region of Jakarta, Indonesia"] = {the = true},
 	["Jambi, Indonesia"] = {},
 	["Lampung, Indonesia"] = {},
 	["Maluku, Indonesia"] = {},
@@ -1756,7 +1902,7 @@ export.indonesia_provinces = {
 	["North Sumatra, Indonesia"] = {},
 	["Papua, Indonesia"] = {},
 	["Riau, Indonesia"] = {},
-	["the Riau Islands, Indonesia"] = {},
+	["Riau Islands, Indonesia"] = {the = true},
 	["Southeast Sulawesi, Indonesia"] = {},
 	["South Kalimantan, Indonesia"] = {},
 	["South Papua, Indonesia"] = {},
@@ -1769,7 +1915,7 @@ export.indonesia_provinces = {
 	["West Papua, Indonesia"] = {},
 	["West Sulawesi, Indonesia"] = {},
 	["West Sumatra, Indonesia"] = {},
-	["the Special Region of Yogyakarta, Indonesia"] = {},
+	["Special Region of Yogyakarta, Indonesia"] = {the = true},
 }
 
 local function indonesia_key_to_placename(key)
@@ -2149,7 +2295,7 @@ export.mexico_states = {
 	["Guerrero, Mexico"] = {},
 	["Hidalgo, Mexico"] = {},
 	["Jalisco, Mexico"] = {},
-	["the State of Mexico, Mexico"] = {},
+	["State of Mexico, Mexico"] = {the = true},
 	["Michoacán, Mexico"] = {},
 	["Morelos, Mexico"] = {},
 	["Nayarit, Mexico"] = {},
@@ -2171,11 +2317,8 @@ export.mexico_states = {
 
 -- Special handling for the State of Mexico, which we allow the be specified as s/Mexico or s/State of Mexico.
 local function mexico_key_to_placename(key)
-	-- See description of `key_to_placename()`; passed-in placenames *will* have "the" prepended, and the returned
-	-- placenames should also, except for the elliptical variants when they exist (as in the case of the State of
-	-- Mexico, whose elliptial form is just "Mexico").
 	key = key:gsub(", Mexico$", "")
-	if key == "the State of Mexico" then
+	if key == "State of Mexico" then
 		return key, "Mexico"
 	else
 		return key, key
@@ -2183,8 +2326,6 @@ local function mexico_key_to_placename(key)
 end
 
 local function mexico_placename_to_key(placename)
-	-- See description of `placename_to_key()`; passed-in placenames will *not* have "the" prepended, and the returned
-	-- keys should not, either.
 	if placename == "Mexico" then
 		placename = "State of Mexico"
 	end
@@ -2246,8 +2387,8 @@ export.netherlands_provinces = {
 export.netherlands_group = {
 	key_to_placename = make_key_to_placename(", Netherlands$"),
 	placename_to_key = make_placename_to_key(", Netherlands"),
-	bare_label_setter = subpolity_bare_label_setter("the Netherlands"),
-	value_transformer = subpolity_value_transformer("the Netherlands"),
+	bare_label_setter = subpolity_bare_label_setter("Netherlands"),
+	value_transformer = subpolity_value_transformer("Netherlands"),
 	default_divtype = "province",
 	default_poldiv = "municipalities",
 	british_spelling = true,
@@ -2404,7 +2545,7 @@ export.philippines_provinces = {
 	["Davao del Sur, Philippines"] = {},
 	["Davao Occidental, Philippines"] = {},
 	["Davao Oriental, Philippines"] = {},
-	["the Dinagat Islands, Philippines"] = {},
+	["Dinagat Islands, Philippines"] = {the = true},
 	["Eastern Samar, Philippines"] = {},
 	["Guimaras, Philippines"] = {},
 	["Ifugao, Philippines"] = {},
@@ -2525,19 +2666,20 @@ export.romania_group = {
 	data = export.romania_counties,
 }
 
-local function make_russia_federal_subject_spec(spectype)
-	return {divtype = spectype, div_parent_type = {"federal subjects", spectype .. "s"}}
+local function make_russia_federal_subject_spec(spectype, use_the)
+	return {the = not not use_the, divtype = spectype, div_parent_type = {"federal subjects", spectype .. "s"}}
 end
 
 local russia_autonomous_okrug =
 	{divtype = {"autonomous okrug", "okrug"}, div_parent_type = {"federal subjects", "autonomous okrugs"}}
 local russia_krai = make_russia_federal_subject_spec("krai")
 local russia_oblast = make_russia_federal_subject_spec("oblast")
-local russia_republic = make_russia_federal_subject_spec("republic")
+local russia_republic = make_russia_federal_subject_spec("republic", "the")
 export.russia_federal_subjects = {
 	-- autonomous oblasts
-	["the Jewish Autonomous Oblast"] =
-		{divtype = {"autonomous oblast", "oblast"}, div_parent_type = {"federal subjects", "autonomous oblasts"}},
+	["Jewish Autonomous Oblast"] =
+		{the = true, divtype = {"autonomous oblast", "oblast"},
+		 div_parent_type = {"federal subjects", "autonomous oblasts"}},
 	-- autonomous okrugs
 	["Chukotka Autonomous Okrug"] = russia_autonomous_okrug,
 	["Khanty-Mansi Autonomous Okrug"] = russia_autonomous_okrug,
@@ -2601,27 +2743,27 @@ export.russia_federal_subjects = {
 	["Voronezh Oblast"] = russia_oblast,
 	["Yaroslavl Oblast"] = russia_oblast,
 	-- republics
-	["the Republic of Adygea"] = russia_republic,
-	["the Republic of Bashkortostan"] = russia_republic,
-	["the Republic of Buryatia"] = russia_republic,
-	["the Republic of Dagestan"] = russia_republic,
-	["the Republic of Ingushetia"] = russia_republic,
-	["the Republic of Kalmykia"] = russia_republic,
-	["the Republic of Karelia"] = russia_republic,
-	["the Republic of Khakassia"] = russia_republic,
-	["the Republic of Mordovia"] = russia_republic,
-	["the Republic of North Ossetia-Alania"] = russia_republic,
-	["the Republic of Tatarstan"] = russia_republic,
-	["the Altai Republic"] = russia_republic,
-	["the Chechen Republic"] = russia_republic,
-	["the Chuvash Republic"] = russia_republic,
-	["the Kabardino-Balkar Republic"] = russia_republic,
-	["the Karachay-Cherkess Republic"] = russia_republic,
-	["the Komi Republic"] = russia_republic,
-	["the Mari El Republic"] = russia_republic,
-	["the Sakha Republic"] = russia_republic,
-	["the Tuva Republic"] = russia_republic,
-	["the Udmurt Republic"] = russia_republic,
+	["Republic of Adygea"] = russia_republic,
+	["Republic of Bashkortostan"] = russia_republic,
+	["Republic of Buryatia"] = russia_republic,
+	["Republic of Dagestan"] = russia_republic,
+	["Republic of Ingushetia"] = russia_republic,
+	["Republic of Kalmykia"] = russia_republic,
+	["Republic of Karelia"] = russia_republic,
+	["Republic of Khakassia"] = russia_republic,
+	["Republic of Mordovia"] = russia_republic,
+	["Republic of North Ossetia-Alania"] = russia_republic,
+	["Republic of Tatarstan"] = russia_republic,
+	["Altai Republic"] = russia_republic,
+	["Chechen Republic"] = russia_republic,
+	["Chuvash Republic"] = russia_republic,
+	["Kabardino-Balkar Republic"] = russia_republic,
+	["Karachay-Cherkess Republic"] = russia_republic,
+	["Komi Republic"] = russia_republic,
+	["Mari El Republic"] = russia_republic,
+	["Sakha Republic"] = russia_republic,
+	["Tuva Republic"] = russia_republic,
+	["Udmurt Republic"] = russia_republic,
 	-- Not sure what to do about this one from a neutrality perspective
 	-- ["the Republic of Crimea"] = russia_republic,
 	-- There are also federal cities (not included because they're cities):
@@ -2729,14 +2871,14 @@ export.spain_autonomous_communities = {
 	["Andalusia, Spain"] = {},
 	["Aragon, Spain"] = {},
 	["Asturias, Spain"] = {},
-	["the Balearic Islands, Spain"] = {},
-	["the Basque Country, Spain"] = {},
-	["the Canary Islands, Spain"] = {},
+	["Balearic Islands, Spain"] = {the = true},
+	["Basque Country, Spain"] = {the = true},
+	["Canary Islands, Spain"] = {the = true},
 	["Cantabria, Spain"] = {},
 	["Castile and León, Spain"] = {},
 	["Castilla-La Mancha, Spain"] = {},
 	["Catalonia, Spain"] = {},
-	["the Community of Madrid, Spain"] = {},
+	["Community of Madrid, Spain"] = {the = true},
 	["Extremadura, Spain"] = {},
 	["Galicia, Spain"] = {},
 	["La Rioja, Spain"] = {},
@@ -3039,13 +3181,13 @@ export.england_counties = {
 	-- ["Humberside, England"] = {}, -- no longer
 	-- ["Huntingdon and Peterborough, England"] = {}, -- no longer
 	-- ["Huntingdonshire, England"] = {}, -- no longer
-	-- ["the Isle of Ely, England"] = {}, -- no longer
-	["the Isle of Wight, England"] = {},
+	-- ["Isle of Ely, England"] = {the = true}, -- no longer
+	["Isle of Wight, England"] = {the = true},
 	["Kent, England"] = {},
 	["Lancashire, England"] = {},
 	["Leicestershire, England"] = {},
 	["Lincolnshire, England"] = {},
-	-- ["the County of London, England"] = {}, -- no longer
+	-- ["County of London, England"] = {the = true}, -- no longer
 	["Merseyside, England"] = {},
 	-- ["Middlesex, England"] = {}, -- no longer
 	["Norfolk, England"] = {},
@@ -3055,7 +3197,7 @@ export.england_counties = {
 	["North Yorkshire, England"] = {},
 	["Nottinghamshire, England"] = {},
 	["Oxfordshire, England"] = {},
-	-- ["the Soke of Peterborough, England"] = {}, -- no longer
+	-- ["Soke of Peterborough, England"] = {the = true}, -- no longer
 	["Rutland, England"] = {},
 	["Shropshire, England"] = {},
 	["Somerset, England"] = {},
@@ -3067,7 +3209,7 @@ export.england_counties = {
 	-- ["Sussex, England"] = {}, -- no longer
 	["Tyne and Wear, England"] = {},
 	["Warwickshire, England"] = {},
-	["the West Midlands, England"] = {},
+	["West Midlands, England"] = {the = true},
 	-- ["Westmorland, England"] = {}, -- no longer
 	-- ["West Suffolk, England"] = {}, -- no longer
 	["West Sussex, England"] = {},
@@ -3075,9 +3217,9 @@ export.england_counties = {
 	["Wiltshire, England"] = {},
 	["Worcestershire, England"] = {},
 	-- ["Yorkshire, England"] = {}, -- no longer
-	["the East Riding of Yorkshire, England"] = {},
-	-- ["the North Riding of Yorkshire, England"] = {}, -- no longer
-	-- ["the West Riding of Yorkshire, England"] = {}, -- no longer
+	["East Riding of Yorkshire, England"] = {the = true},
+	-- ["North Riding of Yorkshire, England"] = {the = true}, -- no longer
+	-- ["West Riding of Yorkshire, England"] = {the = true}, -- no longer
 }
 
 -- counties of England
@@ -3104,11 +3246,11 @@ export.england_group = {
 export.northern_ireland_counties = {
 	["County Antrim, Northern Ireland"] = {},
 	["County Armagh, Northern Ireland"] = {},
-	["the City of Belfast, Northern Ireland"] = {is_city = true},
+	["City of Belfast, Northern Ireland"] = {the = true, is_city = true},
 	["County Down, Northern Ireland"] = {},
 	["County Fermanagh, Northern Ireland"] = {},
 	["County Londonderry, Northern Ireland"] = {},
-	["the City of Derry, Northern Ireland"] = {is_city = true},
+	["City of Derry, Northern Ireland"] = {the = true, is_city = true},
 	["County Tyrone, Northern Ireland"] = {},
 }
 
@@ -3124,24 +3266,24 @@ export.northern_ireland_group = {
 }
 
 export.scotland_council_areas = {
-	["the City of Glasgow, Scotland"] = {},
-	["the City of Edinburgh, Scotland"] = {},
+	["City of Glasgow, Scotland"] = {the = true},
+	["City of Edinburgh, Scotland"] = {the = true},
 	["Fife, Scotland"] = {},
 	["North Lanarkshire, Scotland"] = {},
 	["South Lanarkshire, Scotland"] = {},
 	["Aberdeenshire, Scotland"] = {},
 	["Highland, Scotland"] = {},
-	["the City of Aberdeen, Scotland"] = {},
+	["City of Aberdeen, Scotland"] = {the = true},
 	["West Lothian, Scotland"] = {},
 	["Renfrewshire, Scotland"] = {},
 	["Falkirk, Scotland"] = {},
 	["Perth and Kinross, Scotland"] = {},
 	["Dumfries and Galloway, Scotland"] = {},
-	["the City of Dundee, Scotland"] = {},
+	["City of Dundee, Scotland"] = {the = true},
 	["North Ayrshire, Scotland"] = {},
 	["East Ayrshire, Scotland"] = {},
 	["Angus, Scotland"] = {},
-	["the Scottish Borders, Scotland"] = {},
+	["Scottish Borders, Scotland"] = {the = true},
 	["South Ayrshire, Scotland"] = {},
 	["East Dunbartonshire, Scotland"] = {},
 	["East Lothian, Scotland"] = {},
@@ -3154,8 +3296,8 @@ export.scotland_council_areas = {
 	["Inverclyde, Scotland"] = {},
 	["Clackmannanshire, Scotland"] = {},
 	["Na h-Eileanan Siar, Scotland"] = {},
-	["the Shetland Islands, Scotland"] = {},
-	["the Orkney Islands, Scotland"] = {},
+	["Shetland Islands, Scotland"] = {the = true},
+	["Orkney Islands, Scotland"] = {the = true},
 }
 
 -- council areas of Scotland
@@ -3180,7 +3322,7 @@ export.wales_principal_areas = {
 	["Denbighshire, Wales"] = {divtype = "county"},
 	["Flintshire, Wales"] = {divtype = "county"},
 	["Gwynedd, Wales"] = {divtype = "county"},
-	["the Isle of Anglesey, Wales"] = {divtype = "county"},
+	["Isle of Anglesey, Wales"] = {the = true, divtype = "county"},
 	["Merthyr Tydfil, Wales"] = {},
 	["Monmouthshire, Wales"] = {divtype = "county"},
 	["Neath Port Talbot, Wales"] = {},
@@ -3190,7 +3332,7 @@ export.wales_principal_areas = {
 	["Rhondda Cynon Taf, Wales"] = {},
 	-- ["Swansea, Wales"] = {divtype = "city"},
 	["Torfaen, Wales"] = {},
-	["the Vale of Glamorgan, Wales"] = {},
+	["Vale of Glamorgan, Wales"] = {the = true},
 	["Wrexham, Wales"] = {},
 }
 
@@ -3261,7 +3403,7 @@ export.cities = {
 		data = {
 			["Adelaide"] = {parents = "South Australia"},
 			["Brisbane"] = {parents = "Queensland"},
-			["Canberra"] = {parents = {name = "the Australian Capital Territory", divtype = "territory"}},
+			["Canberra"] = {parents = {name = "Australian Capital Territory", divtype = "territory"}},
 			["Melbourne"] = {parents = "Victoria"},
 			["Newcastle, New South Wales"] = {parents = "New South Wales"},
 			["Newcastle"] = {alias_of = "Newcastle, New South Wales"},
@@ -3307,66 +3449,6 @@ export.cities = {
 			["Quebec City"] = {parents = "Quebec"},
 			["Hamilton"] = {parents = "Ontario", wp = "%c, %d"},
 			["Kitchener"] = {parents = "Ontario", wp = "%c, %d"},
-		},
-	},
-	{
-		default_parent_divtype = "province",
-		skip_parents = {name = "China", divtype = "country"},
-		data = {
-			-- This only lists the top 50. Per [[w:List of cities in China by population]], there
-			-- are 102 cities over 1,000,000 inhabitants, not to mention metro areas. Our coverage
-			-- of China is fairly sparse; when it increases, add to this list.
-			["Shanghai"] = {},
-			["Beijing"] = {},
-			["Guangzhou"] = {parents = "Guangdong"},
-			["Shenzhen"] = {parents = "Guangdong"},
-			["Tianjin"] = {},
-			["Wuhan"] = {parents = "Hubei"},
-			["Dongguan"] = {parents = "Guangdong"},
-			["Chengdu"] = {parents = "Sichuan"},
-			["Foshan"] = {parents = "Guangdong"},
-			["Chongqing"] = {},
-			["Nanjing"] = {parents = "Jiangsu"},
-			["Shenyang"] = {parents = "Liaoning"},
-			["Hangzhou"] = {parents = "Zhejiang"},
-			["Xi'an"] = {parents = "Shaanxi"},
-			["Harbin"] = {parents = "Heilongjiang"},
-			["Suzhou"] = {parents = "Jiangsu"},
-			["Qingdao"] = {parents = "Shandong"},
-			["Dalian"] = {parents = "Liaoning"},
-			["Zhengzhou"] = {parents = "Henan"},
-			["Shantou"] = {parents = "Guangdong"},
-			["Jinan"] = {parents = "Shandong"},
-			["Changchun"] = {parents = "Jilin"},
-			["Kunming"] = {parents = "Yunnan"},
-			["Changsha"] = {parents = "Hunan"},
-			["Taiyuan"] = {parents = "Shanxi"},
-			["Xiamen"] = {parents = "Fujian"},
-			["Hefei"] = {parents = "Anhui"},
-			["Shijiazhuang"] = {parents = "Hebei"},
-			["Ürümqi"] = {parents = {name = "Xinjiang", divtype = "autonomous region"}},
-			["Urumqi"] = {alias_of = "Ürümqi"},
-			["Fuzhou"] = {parents = "Fujian"},
-			["Wuxi"] = {parents = "Jiangsu"},
-			["Zhongshan"] = {parents = "Guangdong"},
-			["Wenzhou"] = {parents = "Zhejiang"},
-			["Nanning"] = {parents = {name = "Guangxi", divtype = "autonomous region"}},
-			["Nanchang"] = {parents = "Jiangxi"},
-			["Ningbo"] = {parents = "Zhejiang"},
-			["Guiyang"] = {parents = "Guizhou"},
-			["Lanzhou"] = {parents = "Gansu"},
-			["Zibo"] = {parents = "Shandong"},
-			["Changzhou"] = {parents = "Jiangsu"},
-			["Xuzhou"] = {parents = "Jiangsu"},
-			["Tangshan"] = {parents = "Hebei"},
-			["Baotou"] = {parents = {name = "Inner Mongolia", divtype = "autonomous region"}},
-			["Huizhou"] = {parents = "Guangdong"},
-			["Yantai"] = {parents = "Shandong"},
-			["Shaoxing"] = {parents = "Zhejiang"},
-			["Liuzhou"] = {parents = {name = "Guangxi", divtype = "autonomous region"}},
-			["Nantong"] = {parents = "Jiangsu"},
-			["Luoyang"] = {parents = "Henan"},
-			["Yangzhou"] = {parents = "Jiangsu"},
 		},
 	},
 	{
@@ -3443,7 +3525,7 @@ export.cities = {
 		skip_parents = {name = "Indonesia", divtype = "country"},
 		data = { 
 			-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
-			["Jakarta"] = {parents = "the Special Capital Region of Jakarta"},
+			["Jakarta"] = {parents = "Special Capital Region of Jakarta"},
 			["Surabaya"] = {parents = "East Java"},
 			["Bekasi"] = {parents = "West Java"}, -- part of Jakarta metro area
 			["Bandung"] = {parents = "West Java"},
@@ -3454,7 +3536,7 @@ export.cities = {
 			["Semarang"] = {parents = "Central Java"},
 			["Makassar"] = {parents = "South Sulawesi"},
 			["South Tangerang"] = {parents = "Banten"}, -- part of Jakarta metro area
-			["Batam"] = {parents = "the Riau Islands"},
+			["Batam"] = {parents = "Riau Islands"},
 			["Bogor"] = {parents = "West Java"}, -- part of Jakarta metro area
 			["Pekanbaru"] = {parents = "Riau"},
 			["Bandar Lampung"] = {parents = "Lampung"},
@@ -3463,7 +3545,7 @@ export.cities = {
 			["Padang"] = {parents = "West Sumatra"},
 			["Samarinda"] = {parents = "East Kalimantan"},
 			["Malang"] = {parents = "East Java"},
-			["Yogyakarta"] = {parents = "the Special Region of Yogyakarta"},
+			["Yogyakarta"] = {parents = "Special Region of Yogyakarta"},
 			["Denpasar"] = {parents = "Bali"},
 			["Cirebon"] = {parents = "West Java"},
 			["Surakarta"] = {parents = "Central Java"},
@@ -3530,7 +3612,7 @@ export.cities = {
 			["Monterrey"] = {parents = "Nuevo León"},
 			["Guadalajara"] = {parents = "Jalisco"},
 			["Puebla"] = {parents = "Puebla"},
-			["Toluca"] = {parents = "the State of Mexico"},
+			["Toluca"] = {parents = "State of Mexico"},
 			["Tijuana"] = {parents = "Baja California"},
 			["León"] = {parents = "Guanajuato"},
 			["Leon"] = {alias_of = "Leon"},
@@ -3551,7 +3633,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "province",
-		skip_parents = {name = "the Philippines", divtype = "country"},
+		skip_parents = {name = "Philippines", divtype = "country"},
 		data = { 
 			 --some cities listed independent from any province. province listed is for geographical purposes only.
 			 --skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
@@ -3583,11 +3665,11 @@ export.cities = {
 			["Novosibirsk"] = {parents = "Novosibirsk Oblast"},
 			["Yekaterinburg"] = {parents = "Sverdlovsk Oblast"},
 			["Nizhny Novgorod"] = {parents = "Nizhny Novgorod Oblast"},
-			["Kazan"] = {parents = {name = "the Republic of Tatarstan", divtype = "republic"}},
+			["Kazan"] = {parents = {name = "Republic of Tatarstan", divtype = "republic"}},
 			["Chelyabinsk"] = {parents = "Chelyabinsk Oblast"},
 			["Omsk"] = {parents = "Omsk Oblast"},
 			["Samara"] = {parents = "Samara Oblast"},
-			["Ufa"] = {parents = {name = "the Republic of Bashkortostan", divtype = "republic"}},
+			["Ufa"] = {parents = {name = "Republic of Bashkortostan", divtype = "republic"}},
 			["Rostov-on-Don"] = {parents = "Rostov Oblast"},
 			["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don"},
 			["Krasnoyarsk"] = {parents = {name = "Krasnoyarsk Krai", divtype = "krai"}},
@@ -3601,11 +3683,11 @@ export.cities = {
 		default_parent_divtype = "autonomous community",
 		skip_parents = {name = "Spain", divtype = "country"},
 		data = {
-			["Madrid"] = {parents = "the Community of Madrid"},
+			["Madrid"] = {parents = "Community of Madrid"},
 			["Barcelona"] = {parents = "Catalonia"},
 			["Valencia"] = {parents = "Valencia"},
 			["Seville"] = {parents = "Andalusia"},
-			["Bilbao"] = {parents = "the Basque Country"},
+			["Bilbao"] = {parents = "Basque Country"},
 		},
 	},
 	{
@@ -3625,20 +3707,20 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "county",
-		skip_parents = {name = "the United Kingdom", divtype = "country"},
+		skip_parents = {name = "United Kingdom", divtype = "country"},
 		data = {
 			["London"] = {parents = {"Greater London", {name = "England", divtype = "constituent country"}}},
 			["Manchester"] = {parents = {"Greater Manchester", {name = "England", divtype = "constituent country"}}},
-			["Birmingham"] = {parents = {"the West Midlands", {name = "England", divtype = "constituent country"}}},
+			["Birmingham"] = {parents = {"West Midlands", {name = "England", divtype = "constituent country"}}},
 			["Liverpool"] = {parents = {"Merseyside", {name = "England", divtype = "constituent country"}}},
-			["Glasgow"] = {parents = {{name = "the City of Glasgow", divtype = "council area"}, {name = "Scotland", divtype = "constituent country"}}},
+			["Glasgow"] = {parents = {{name = "City of Glasgow", divtype = "council area"}, {name = "Scotland", divtype = "constituent country"}}},
 			["Leeds"] = {parents = {"West Yorkshire", {name = "England", divtype = "constituent country"}}},
 			["Newcastle upon Tyne"] = {parents = {"Tyne and Wear", {name = "England", divtype = "constituent country"}}},
 			["Newcastle"] = {alias_of = "Newcastle upon Tyne"},
 			["Bristol"] = {parents = {name = "England", divtype = "constituent country"}},
 			["Cardiff"] = {parents = {name = "Wales", divtype = "constituent country"}},
 			["Portsmouth"] = {parents = {"Hampshire", {name = "England", divtype = "constituent country"}}},
-			["Edinburgh"] = {parents = {{name = "the City of Edinburgh", divtype = "council area"}, {name = "Scotland", divtype = "constituent country"}}},
+			["Edinburgh"] = {parents = {{name = "City of Edinburgh", divtype = "council area"}, {name = "Scotland", divtype = "constituent country"}}},
 			-- under 1,000,000 people but principal areas of Wales; requested by [[User:Donnanz]]
 			["Swansea"] = {parents = {name = "Wales", divtype = "constituent country"}},
 			["Newport"] = {parents = {name = "Wales", divtype = "constituent country"}, wp = "Newport, Wales"},
@@ -3647,7 +3729,7 @@ export.cities = {
 	-- cities in the US
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "the United States", divtype = "country"},
+		skip_parents = {name = "United States", divtype = "country"},
 		wp = "%c, %d",
 		data = {
 			-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
@@ -3735,8 +3817,8 @@ export.cities = {
 			["Antwerp"] = {parents = "Belgium"},
 			["Sofia"] = {parents = "Bulgaria"},
 			["Zagreb"] = {parents = "Croatia"},
-			["Prague"] = {parents = "the Czech Republic"},
-			["Olomouc"] = {parents = "the Czech Republic"},
+			["Prague"] = {parents = "Czech Republic"},
+			["Olomouc"] = {parents = "Czech Republic"},
 			["Copenhagen"] = {parents = "Denmark"},
 			["Helsinki"] = {parents = {{name = "Uusimaa", divtype = "region"}, "Finland"}},
 			["Athens"] = {parents = "Greece"},
@@ -3755,9 +3837,9 @@ export.cities = {
 			["Naples"] = {parents = {{name = "Campania", divtype = "administrative region"}, "Italy"}},
 			["Turin"] = {parents = {{name = "Piedmont", divtype = "administrative region"}, "Italy"}},
 			["Riga"] = {parents = "Latvia"},
-			["Amsterdam"] = {parents = "the Netherlands"},
-			["Rotterdam"] = {parents = "the Netherlands"},
-			["The Hague"] = {parents = "the Netherlands"},
+			["Amsterdam"] = {parents = "Netherlands"},
+			["Rotterdam"] = {parents = "Netherlands"},
+			["The Hague"] = {parents = "Netherlands"},
 			["Auckland"] = {parents = "New Zealand"},
 			["Oslo"] = {parents = "Norway"},
 			["Warsaw"] = {parents = "Poland"},
