@@ -1325,6 +1325,9 @@ end
 
 
 local term_param_mods = {
+	t = {
+		item_dest = "gloss",
+	},
 	tr = {},
 	ts = {},
 	g = {
@@ -2030,7 +2033,8 @@ local function format_cats(lang, cats, sort_key)
 		-- FIXME: Why are we calling remove_links_and_html() here? Why can there be links in the categories?
 		insert(full_cats, langcode .. ":" .. m_data.remove_links_and_html(cat))
 	end
-	return require(utilities_module).format_categories(full_cats, lang, sort_key, nil, force_cat or m_data.force_cat)
+	return require(utilities_module).format_categories(full_cats, lang, sort_key, nil,
+		force_cat or m_data.get_force_cat())
 end
 
 
