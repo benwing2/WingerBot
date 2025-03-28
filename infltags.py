@@ -164,8 +164,8 @@ def fetch_tag_tables(preferred_tag_variants=set()):
           shortcut_type = tagdata[0]
         tag_to_dimension_table[shortcut] = shortcut_type
 
-  process_data(jsondata["data"])
-  process_data(jsondata["data2"])
+  process_data(jsondata[0])
+  process_data(jsondata[1])
   return tag_to_dimension_table, tag_to_canonical_form_table
 
 
