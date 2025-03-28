@@ -10,6 +10,7 @@ local export = {}
 local debug_track_module = "Module:debug/track"
 local families_module = "Module:families"
 local function_module = "Module:fun"
+local gender_and_number_utilities_module = "Module:gender and number utilities"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local math_module = "Module:math"
@@ -145,6 +146,11 @@ end
 local function num_keys(...)
 	num_keys = require(table_module).numKeys
 	return num_keys(...)
+end
+
+local function parse_gender_and_number_spec(...)
+	parse_gender_and_number_spec = require(gender_and_number_utilities_module).gender_and_number_spec
+	return parse_gender_and_number_spec(...)
 end
 
 local function parse_references(...)
@@ -349,6 +355,10 @@ Possible parameter tags are listed below:
 :: The value is interpreted as one or more references, in the format prescribed by `parse_references()` in
    [[Module:references]], and converted into a list of objects of the form accepted by `format_references()` in the same
    module. If a syntax error is found in the reference format, an error is thrown.
+:; {type = "gendesr"}
+:: The value is interpreted as one or more comma-separated gender/number specs, in the format prescribed by
+   [[Module:gender and number]]. Inline modifiers (`<q:...>`, `<qq:...>`, `<l:...>`, `<ll:...>` or `<ref:...>`) may be
+   attached to a gender/number spec.
 :; {type = function(val) ... end}
 :: `type` may be set to a function (or callable table), which must take the argument value as its sole argument, and must
    output one of the other recognized types. This is particularly useful for lists (see below), where certain values need
@@ -801,6 +811,20 @@ local type_handlers = setmetatable({
 
 	["references"] = function(val, name, param)
 		return parse_references(val, make_parse_err(val, name))
+	end,
+
+	["genders"] = function(val, name, param)
+		if not val:find("[,<]") then
+			return {{spec = val}}
+		end
+
+		-- NOTE: We don't pass in allow_space_after_comma. Consistent with other comma-separated types, there shouldn't
+		-- be a space after the comma.
+		return parse_gender_and_number_spec {
+			spec = val,
+			parse_err = make_parse_err(val, name),
+			allow_multiple = true,
+		}
 	end,
 
 	["script"] = function(val, name, param)
