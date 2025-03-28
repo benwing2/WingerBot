@@ -33,7 +33,7 @@ local param_mods = {
 }
 
 local optional_param_mods = {
-	g = {item_dest = "genders", sublist = true},
+	g = {item_dest = "genders", type= "genders"},
 	alt = {},
 	lang = {type = "language"},
 	sc = {type = "script"},
