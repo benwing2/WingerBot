@@ -13,6 +13,7 @@ local m_links = require("Module:links")
 local m_languages = require("Module:languages")
 local lang_en = m_languages.getByCode("en")
 
+local dump = mw.dumpObject
 local insert = table.insert
 
 
@@ -28,7 +29,7 @@ local insert = table.insert
 -- format_genders().
 local function add_qualifiers_and_refs(formatted, part)
 	local function field_non_empty(field)
-		local list = spec[field]
+		local list = part[field]
 		if not list then
 			return nil
 		end
@@ -44,11 +45,11 @@ local function add_qualifiers_and_refs(formatted, part)
 		formatted = require(pron_qualifier_module).format_qualifiers {
 			lang = part.lang,
 			text = formatted,
-			q = spec.q,
-			qq = spec.qq,
-			l = spec.l,
-			ll = spec.ll,
-			refs = spec.refs,
+			q = part.q,
+			qq = part.qq,
+			l = part.l,
+			ll = part.ll,
+			refs = part.refs,
 		}
 	end
 
@@ -119,15 +120,19 @@ local function format_parts(data)
 			end
 			part.gloss = nil
 		end
-		comma_in_part = comma_in_part or (part.pos and part.pos:find(",")) or (part.q and part.q:find(",")) or
-			(part.qq and part.qq:find(","))
+		local function has_comma_or_multiple(field)
+			return part[field] and (part[field][2] or part[field][1] and part[field][1]:find(","))
+		end
+		comma_in_part = comma_in_part or (part.pos and part.pos:find(",")) or
+			has_comma_or_multiple("q") or has_comma_or_multiple("qq") or
+			has_comma_or_multiple("l") or has_comma_or_multiple("ll")
 		local formatted_desc
 		if part.term and part.term:find("<<") then
 			local m_place = require(place_module)
 			local place_desc = m_place.parse_new_style_place_desc(part.term)
 			formatted_desc = m_place.get_new_style_gloss({}, place_desc, false)
 			if not data.nocat then
-				local this_cats = m_place.get_cats({}, place_desc, "from demonym")
+				local this_cats = m_place.get_cats({}, {place_desc}, "from demonym")
 				for _, cat in ipairs(this_cats) do
 					insert(cats, full_langcode .. ":" .. cat)
 				end
