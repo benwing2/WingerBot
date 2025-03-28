@@ -842,6 +842,9 @@ end
 --                          Country and Country-Like Tables                      --
 -----------------------------------------------------------------------------------
 
+function PolityGroup:()
+end
+
 export.countries = {
 	["Afghanistan"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
 	["Albania"] = {parents = {"Europe"}, poldiv = {"regions", "counties", "municipalities"}, british_spelling = true},
@@ -1395,8 +1398,7 @@ export.australia_states_and_territories = {
 export.australia_group = {
 	key_to_placename = make_key_to_placename(", Australia$"),
 	placename_to_key = make_placename_to_key(", Australia"),
-	bare_label_setter = subpolity_bare_label_setter("Australia"),
-	value_transformer = subpolity_value_transformer("Australia"),
+	skip_parents = {name = "Australia", divtype = "country"},
 	default_divtype = "state",
 	default_div_parent_type = "states and territories",
 	default_poldiv = {"local government areas"},
@@ -1420,8 +1422,7 @@ export.austria_states = {
 export.austria_group = {
 	key_to_placename = make_key_to_placename(", Austria$"),
 	placename_to_key = make_placename_to_key(", Austria"),
-	bare_label_setter = subpolity_bare_label_setter("Austria"),
-	value_transformer = subpolity_value_transformer("Austria"),
+	skip_parents = {name = "Austria", divtype = "country"},
 	default_divtype = "state",
 	british_spelling = true,
 	default_poldiv = "municipalities",
@@ -1443,8 +1444,7 @@ export.bangladesh_divisions = {
 export.bangladesh_group = {
 	key_to_placename = make_key_to_placename(", Bangladesh$", " Division$"),
 	placename_to_key = make_placename_to_key(", Bangladesh", " Division"),
-	bare_label_setter = subpolity_bare_label_setter("Bangladesh"),
-	value_transformer = subpolity_value_transformer("Bangladesh"),
+	skip_parents = {name = "Bangladesh", divtype = "country"},
 	default_divtype = "division",
 	british_spelling = true,
 	default_poldiv = "districts",
@@ -1485,8 +1485,7 @@ export.brazil_states = {
 export.brazil_group = {
 	key_to_placename = make_key_to_placename(", Brazil$"),
 	placename_to_key = make_placename_to_key(", Brazil"),
-	bare_label_setter = subpolity_bare_label_setter("Brazil"),
-	value_transformer = subpolity_value_transformer("Brazil"),
+	skip_parents = {name = "Brazil", divtype = "country"},
 	default_divtype = "state",
 	default_poldiv = "municipalities",
 	data = export.brazil_states,
@@ -1527,16 +1526,13 @@ export.canada_provinces_and_territories = {
 export.canada_group = {
 	key_to_placename = make_key_to_placename(", Canada$"),
 	placename_to_key = make_placename_to_key(", Canada"),
-	bare_label_setter = subpolity_bare_label_setter("Canada"),
-	value_transformer = subpolity_value_transformer("Canada"),
+	skip_parents = {name = "Canada", divtype = "country"},
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
 	british_spelling = true,
 	data = export.canada_provinces_and_territories,
 }
 
--- table of provinces and autonomous regions of China; interpolated into the main 'places' table, but also needed
--- separately
 export.china_provinces_and_autonomous_regions = {
 	["Anhui, China"] = {},
 	["Beijing, China"] = {divtype = {"direct-administered municipality", "municipality"}},
@@ -1575,18 +1571,12 @@ export.china_provinces_and_autonomous_regions = {
 export.china_group = {
 	key_to_placename = make_key_to_placename(", China$"),
 	placename_to_key = make_placename_to_key(", China"),
-	bare_label_setter = subpolity_bare_label_setter("China"),
-	value_transformer = subpolity_value_transformer("China"),
+	skip_parents = {name = "China", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = {"prefecture-level cities", "county-level cities", "districts"},
 	default_div_parent_type = "provinces and autonomous regions",
 	data = export.china_provinces_and_autonomous_regions,
 }
-
-export.china_prefecture_level_cities_group = {
-	bare_label_setter = subpolity_bare_label_setter
-	default_parent_divtype = "prefecture-level city",
-	skip_parents = {name = "China", divtype = "country"},
 
 export.china_prefecture_level_cities = {
 	-- In China, a "prefecture-level city" is not a city in any real sense. It is rather a prefecture, which is an
@@ -1709,7 +1699,20 @@ export.china_prefecture_level_cities = {
 	["Haikou"] = {parents = "Hainan"}, -- 2.873 prefectural, 2.3 urban
 	["Baotou"] = {parents = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 2.709 prefectural, 2.2 urban
 	["Zhuhai"] = {parents = "Guangdong"}, -- 2.439 prefectural, 2.4 urban
-},
+}
+
+export.china_prefecture_level_cities_group = {
+	skip_parents = {name = "China", divtype = "country"},
+	default_divtype = "prefecture-level city",
+	default_poldiv = {
+		"districts",
+		"counties",
+		{type = "county-level cities", cat_as = "counties and county-level cities"},
+	},
+	default_parent_divtype = "province",
+	parent_placename_to_key = make_placename_to_key(", China"),
+	data = export.china_prefecture_level_cities,
+}
 
 export.finland_regions = {
 	["Lapland, Finland"] = {},
@@ -1737,8 +1740,7 @@ export.finland_regions = {
 export.finland_group = {
 	key_to_placename = make_key_to_placename(", Finland$"),
 	placename_to_key = make_placename_to_key(", Finland"),
-	bare_label_setter = subpolity_bare_label_setter("Finland"),
-	value_transformer = subpolity_value_transformer("Finland"),
+	skip_parents = {name = "Finland", divtype = "country"},
 	default_divtype = "region",
 	default_poldiv = "municipalities",
 	british_spelling = true,
@@ -1771,8 +1773,7 @@ export.france_administrative_regions = {
 export.france_group = {
 	key_to_placename = make_key_to_placename(", France$"),
 	placename_to_key = make_placename_to_key(", France"),
-	bare_label_setter = subpolity_bare_label_setter("France"),
-	value_transformer = subpolity_value_transformer("France"),
+	skip_parents = {name = "France", divtype = "country"},
 	-- Canonically these are 'administrative regions' but also categorize if identified as a 'region'.
 	default_divtype = {"administrative region", "region"},
 	default_div_parent_type = "regions",
@@ -1805,8 +1806,7 @@ export.germany_states = {
 export.germany_group = {
 	key_to_placename = make_key_to_placename(", Germany$"),
 	placename_to_key = make_placename_to_key(", Germany"),
-	bare_label_setter = subpolity_bare_label_setter("Germany"),
-	value_transformer = subpolity_value_transformer("Germany"),
+	skip_parents = {name = "Germany", divtype = "country"},
 	default_divtype = "state",
 	default_poldiv = "districts",
 	british_spelling = true,
@@ -1868,8 +1868,7 @@ export.india_states_and_union_territories = {
 export.india_group = {
 	key_to_placename = make_key_to_placename(", India$"),
 	placename_to_key = india_placename_to_key,
-	bare_label_setter = subpolity_bare_label_setter("India"),
-	value_transformer = subpolity_value_transformer("India"),
+	skip_parents = {name = "India", divtype = "country"},
 	default_divtype = "state",
 	default_div_parent_type = "states and union territories",
 	british_spelling = true,
@@ -1946,8 +1945,7 @@ end
 export.indonesia_group = {
 	key_to_placename = indonesia_key_to_placename,
 	placename_to_key = indonesia_placename_to_key,
-	bare_label_setter = subpolity_bare_label_setter("Indonesia"),
-	value_transformer = subpolity_value_transformer("Indonesia"),
+	skip_parents = {name = "Indonesia", divtype = "country"},
 	default_divtype = "province",
 	-- per https://www.quora.com/Does-Indonesia-use-British-or-American-English, Indonesia tends to use American
 	-- spellings.
@@ -2004,8 +2002,7 @@ end
 export.ireland_group = {
 	key_to_placename = make_irish_type_key_to_placename(", Ireland$"),
 	placename_to_key = make_irish_type_placename_to_key(", Ireland"),
-	bare_label_setter = subpolity_bare_label_setter("Ireland"),
-	value_transformer = subpolity_value_transformer("Ireland"),
+	skip_parents = {name = "Ireland", divtype = "country"},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.ireland_counties,
@@ -2038,8 +2035,7 @@ export.italy_administrative_regions = {
 export.italy_group = {
 	key_to_placename = make_key_to_placename(", Italy$"),
 	placename_to_key = make_placename_to_key(", Italy"),
-	bare_label_setter = subpolity_bare_label_setter("Italy"),
-	value_transformer = subpolity_value_transformer("Italy"),
+	skip_parents = {name = "Italy", divtype = "country"},
 	default_divtype = {"administrative region", "region"},
 	default_div_parent_type = "regions",
 	british_spelling = true,
@@ -2116,8 +2112,7 @@ end
 export.japan_group = {
 	key_to_placename = make_key_to_placename(", Japan$", " Prefecture$"),
 	placename_to_key = japan_placename_to_key,
-	bare_label_setter = subpolity_bare_label_setter("Japan"),
-	value_transformer = subpolity_value_transformer("Japan"),
+	skip_parents = {name = "Japan", divtype = "country"},
 	default_divtype = "prefecture",
 	data = export.japan_prefectures,
 }
@@ -2138,8 +2133,7 @@ export.north_korea_provinces = {
 export.north_korea_group = {
 	key_to_placename = make_key_to_placename(", North Korea$", " Province$"),
 	placename_to_key = make_placename_to_key(", North Korea", " Province"),
-	bare_label_setter = subpolity_bare_label_setter("North Korea"),
-	value_transformer = subpolity_value_transformer("North Korea"),
+	skip_parents = {name = "North Korea", divtype = "country"},
 	default_divtype = "province",
 	data = export.north_korea_provinces,
 }
@@ -2160,8 +2154,7 @@ export.south_korea_provinces = {
 export.south_korea_group = {
 	key_to_placename = make_key_to_placename(", South Korea$", " Province$"),
 	placename_to_key = make_placename_to_key(", South Korea", " Province"),
-	bare_label_setter = subpolity_bare_label_setter("South Korea"),
-	value_transformer = subpolity_value_transformer("South Korea"),
+	skip_parents = {name = "South Korea", divtype = "country"},
 	default_divtype = "province",
 	data = export.south_korea_provinces,
 }
@@ -2201,8 +2194,7 @@ end
 export.laos_group = {
 	key_to_placename = make_key_to_placename(", Laos$", {" Province$", " Prefecture$"}),
 	placename_to_key = laos_placename_to_key,
-	bare_label_setter = subpolity_bare_label_setter("Laos"),
-	value_transformer = subpolity_value_transformer("Laos"),
+	skip_parents = {name = "Laos", divtype = "country"},
 	default_divtype = "province",
 	data = export.laos_provinces,
 }
@@ -2223,8 +2215,7 @@ export.lebanon_governorates = {
 export.lebanon_group = {
 	key_to_placename = make_key_to_placename(", Lebanon$", " Governorate$"),
 	placename_to_key = make_placename_to_key(", Lebanon", " Governorate"),
-	bare_label_setter = subpolity_bare_label_setter("Lebanon"),
-	value_transformer = subpolity_value_transformer("Lebanon"),
+	skip_parents = {name = "Lebanon", divtype = "country"},
 	default_divtype = "governorate",
 	-- The governorates are too generic in name. For example, "North Governorate" exists elsewhere.
 	no_containing_polity_cat = true,
@@ -2251,8 +2242,7 @@ export.malaysia_states = {
 export.malaysia_group = {
 	key_to_placename = make_key_to_placename(", Malaysia$"),
 	placename_to_key = make_placename_to_key(", Malaysia"),
-	bare_label_setter = subpolity_bare_label_setter("Malaysia"),
-	value_transformer = subpolity_value_transformer("Malaysia"),
+	skip_parents = {name = "Malaysia", divtype = "country"},
 	default_divtype = "state",
 	british_spelling = true,
 	data = export.malaysia_states,
@@ -2271,8 +2261,7 @@ export.malta_regions = {
 export.malta_group = {
 	key_to_placename = make_key_to_placename(", Malta$", " Region"),
 	placename_to_key = make_placename_to_key(", Malta", " Region"),
-	bare_label_setter = subpolity_bare_label_setter("Malta"),
-	value_transformer = subpolity_value_transformer("Malta"),
+	skip_parents = {name = "Malta", divtype = "country"},
 	default_divtype = "region",
 	british_spelling = true,
 	-- The regions are too generic in name. For example, "Central Region" exists elsewhere, e.g. in South Africa.
@@ -2336,8 +2325,7 @@ end
 export.mexico_group = {
 	key_to_placename = mexico_key_to_placename,
 	placename_to_key = mexico_placename_to_key,
-	bare_label_setter = subpolity_bare_label_setter("Mexico"),
-	value_transformer = subpolity_value_transformer("Mexico"),
+	skip_parents = {name = "Mexico", divtype = "country"},
 	default_divtype = "state",
 	data = export.mexico_states,
 }
@@ -2361,8 +2349,7 @@ export.morocco_regions = {
 export.morocco_group = {
 	key_to_placename = make_key_to_placename(", Morocco$"),
 	placename_to_key = make_placename_to_key(", Morocco"),
-	bare_label_setter = subpolity_bare_label_setter("Morocco"),
-	value_transformer = subpolity_value_transformer("Morocco"),
+	skip_parents = {name = "Morocco", divtype = "country"},
 	default_divtype = "region",
 	british_spelling = true,
 	data = export.morocco_regions,
@@ -2387,8 +2374,7 @@ export.netherlands_provinces = {
 export.netherlands_group = {
 	key_to_placename = make_key_to_placename(", Netherlands$"),
 	placename_to_key = make_placename_to_key(", Netherlands"),
-	bare_label_setter = subpolity_bare_label_setter("Netherlands"),
-	value_transformer = subpolity_value_transformer("Netherlands"),
+	skip_parents = {name = "Netherlands", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = "municipalities",
 	british_spelling = true,
@@ -2438,8 +2424,7 @@ export.nigeria_states = {
 export.nigeria_group = {
 	key_to_placename = make_key_to_placename(", Nigeria$", " State$"),
 	placename_to_key = make_placename_to_key(", Nigeria", " State"),
-	bare_label_setter = subpolity_bare_label_setter("Nigeria"),
-	value_transformer = subpolity_value_transformer("Nigeria"),
+	skip_parents = {name = "Nigeria", divtype = "country"},
 	default_divtype = "state",
 	british_spelling = true,
 	data = export.nigeria_states,
@@ -2476,8 +2461,7 @@ export.norwegian_counties = {
 export.norway_group = {
 	key_to_placename = make_key_to_placename(", Norway$"),
 	placename_to_key = make_placename_to_key(", Norway"),
-	bare_label_setter = subpolity_bare_label_setter("Norway"),
-	value_transformer = subpolity_value_transformer("Norway"),
+	skip_parents = {name = "Norway", divtype = "country"},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.norwegian_counties,
@@ -2504,8 +2488,7 @@ export.pakistan_provinces_and_territories = {
 export.pakistan_group = {
 	key_to_placename = make_key_to_placename(", Pakistan$"),
 	placename_to_key = make_placename_to_key(", Pakistan"),
-	bare_label_setter = subpolity_bare_label_setter("Pakistan"),
-	value_transformer = subpolity_value_transformer("Pakistan"),
+	skip_parents = {name = "Pakistan", divtype = "country"},
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
 	default_poldiv = {"divisions"},
@@ -2604,8 +2587,7 @@ export.philippines_provinces = {
 export.philippines_group = {
 	key_to_placename = make_key_to_placename(", Philippines$"),
 	placename_to_key = make_placename_to_key(", Philippines"),
-	bare_label_setter = subpolity_bare_label_setter("the Philippines"),
-	value_transformer = subpolity_value_transformer("the Philippines"),
+	skip_parents = {name = "Philippines", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = {"municipalities", "barangays"},
 	data = export.philippines_provinces,
@@ -2659,8 +2641,7 @@ export.romania_counties = {
 export.romania_group = {
 	key_to_placename = make_key_to_placename(", Romania$", " County$"),
 	placename_to_key = make_placename_to_key(", Romania", " County"),
-	bare_label_setter = subpolity_bare_label_setter("Romania"),
-	value_transformer = subpolity_value_transformer("Romania"),
+	skip_parents = {name = "Romania", divtype = "country"},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.romania_counties,
@@ -2812,6 +2793,7 @@ export.russia_group = {
 	-- key_to_placename in the category augmentation code at the bottom of [[Module:place/data]], so we should
 	-- define a key_to_placename appropriately.)
 	placename_to_key = russia_placename_to_key,
+	skip_parents = {name = "Russia", divtype = "country"},
 	bare_label_setter = function(group, key, value, m_data)
 		local divtype = value.divtype or group.default_divtype
 		if type(divtype) == "table" then
@@ -2859,8 +2841,7 @@ export.saudi_arabia_provinces = {
 export.saudi_arabia_group = {
 	key_to_placename = make_key_to_placename(", Saudi Arabia$", " Province$"),
 	placename_to_key = make_placename_to_key(", Saudi Arabia", " Province"),
-	bare_label_setter = subpolity_bare_label_setter("Saudi Arabia"),
-	value_transformer = subpolity_value_transformer("Saudi Arabia"),
+	skip_parents = {name = "Saudi Arabia", divtype = "country"},
 	default_divtype = "province",
 	-- The regions are too generic in name. For example, "Eastern Region" exists elsewhere.
 	no_containing_polity_cat = true,
@@ -2891,8 +2872,7 @@ export.spain_autonomous_communities = {
 export.spain_group = {
 	key_to_placename = make_key_to_placename(", Spain$"),
 	placename_to_key = make_placename_to_key(", Spain"),
-	bare_label_setter = subpolity_bare_label_setter("Spain"),
-	value_transformer = subpolity_value_transformer("Spain"),
+	skip_parents = {name = "Spain", divtype = "country"},
 	default_divtype = "autonomous community",
 	british_spelling = true,
 	data = export.spain_autonomous_communities,
@@ -2918,8 +2898,7 @@ export.taiwan_counties = {
 export.taiwan_group = {
 	key_to_placename = make_key_to_placename(", Taiwan$", " County$"),
 	placename_to_key = make_placename_to_key(", Taiwan", " County"),
-	bare_label_setter = subpolity_bare_label_setter("Taiwan"),
-	value_transformer = subpolity_value_transformer("Taiwan"),
+	skip_parents = {name = "Taiwan", divtype = "country"},
 	default_divtype = "county",
 	data = export.taiwan_counties,
 }
@@ -3007,8 +2986,7 @@ export.thailand_provinces = {
 export.thailand_group = {
 	key_to_placename = make_key_to_placename(", Thailand$", " Province$"),
 	placename_to_key = make_placename_to_key(", Thailand", " Province"),
-	bare_label_setter = subpolity_bare_label_setter("Thailand"),
-	value_transformer = subpolity_value_transformer("Thailand"),
+	skip_parents = {name = "Thailand", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = "districts",
 	data = export.thailand_provinces,
@@ -3048,8 +3026,7 @@ export.uk_constituent_countries = {
 
 -- constituent countries and provinces of the United Kingdom
 export.uk_group = {
-	bare_label_setter = subpolity_bare_label_setter("the United Kingdom"),
-	value_transformer = subpolity_value_transformer("the United Kingdom"),
+	skip_parents = {name = "United Kingdom", divtype = "country"},
 	default_divtype = {"constituent country", "country"},
 	default_miscdiv = {
 		"traditional counties",
@@ -3062,7 +3039,6 @@ export.uk_group = {
 	data = export.uk_constituent_countries,
 }
 
--- table of US states; interpolated into the main 'places' table, but also needed separately
 export.us_states = {
 	["Alabama, USA"] = {},
 	["Alaska, USA"] = {poldiv = {
@@ -3077,7 +3053,7 @@ export.us_states = {
 	["Delaware, USA"] = {},
 	["Florida, USA"] = {},
 	["Georgia, USA"] = {},
-	["Hawaii, USA"] = {},
+	["Hawaii, USA"] = {}, -- {addl_parents = {name = "Polynesia", bare = true}},} FIXME: get this to work
 	["Idaho, USA"] = {},
 	["Illinois, USA"] = {},
 	["Indiana, USA"] = {},
@@ -3132,8 +3108,7 @@ export.us_states = {
 export.us_group = {
 	key_to_placename = make_key_to_placename(", USA$"),
 	placename_to_key = make_placename_to_key(", USA"),
-	bare_label_setter = subpolity_bare_label_setter("the United States"),
-	value_transformer = subpolity_value_transformer("the United States"),
+	skip_parents = {name = "United States", divtype = "country"},
 	default_divtype = "state",
 	default_poldiv = {
 		"counties",
@@ -3226,8 +3201,7 @@ export.england_counties = {
 export.england_group = {
 	key_to_placename = make_key_to_placename(", England$"),
 	placename_to_key = make_placename_to_key(", England"),
-	bare_label_setter = subpolity_bare_label_setter("England"),
-	value_transformer = subpolity_value_transformer({"constituent country", "England"}),
+	skip_parents = {{name = "England", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "county",
 	default_poldiv = {
 		"districts",
@@ -3258,8 +3232,7 @@ export.northern_ireland_counties = {
 export.northern_ireland_group = {
 	key_to_placename = make_irish_type_key_to_placename(", Northern Ireland$"),
 	placename_to_key = make_irish_type_placename_to_key(", Northern Ireland"),
-	bare_label_setter = subpolity_bare_label_setter("Northern Ireland"),
-	value_transformer = subpolity_value_transformer({"constituent country", "Northern Ireland"}),
+	skip_parents = {{name = "Northern Ireland", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.northern_ireland_counties,
@@ -3304,8 +3277,7 @@ export.scotland_council_areas = {
 export.scotland_group = {
 	key_to_placename = make_key_to_placename(", Scotland$"),
 	placename_to_key = make_placename_to_key(", Scotland"),
-	bare_label_setter = subpolity_bare_label_setter("Scotland"),
-	value_transformer = subpolity_value_transformer({"constituent country", "Scotland"}),
+	skip_parents = {{name = "Scotland", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "council area",
 	british_spelling = true,
 	data = export.scotland_council_areas,
@@ -3340,8 +3312,7 @@ export.wales_principal_areas = {
 export.wales_group = {
 	key_to_placename = make_key_to_placename(", Wales$"),
 	placename_to_key = make_placename_to_key(", Wales"),
-	bare_label_setter = subpolity_bare_label_setter("Wales"),
-	value_transformer = subpolity_value_transformer({"constituent country", "Wales"}),
+	skip_parents = {{name = "Wales", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "county borough",
 	british_spelling = true,
 	data = export.wales_principal_areas,
