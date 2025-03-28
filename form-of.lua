@@ -299,7 +299,7 @@ local function join_segments(segs, conj)
 	if not segs[2] then
 		return segs[1]
 	else
-		return require(table_module).joinSegments(segs, conj)
+		return require(format).joinSegments(segs, conj)
 	end
 end
 
