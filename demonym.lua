@@ -1,35 +1,76 @@
 local export = {}
 
+local force_cat = false -- set to true for testing
+
+local form_of_module = "Module:form of"
+local place_module = "Module:place"
+local pron_qualifier_module = "Module:pron qualifier"
+local qualifier_module = "Module:qualifier"
+local utilities_module = "Module:utilities"
+local table_module = "Module:table"
+
 local m_links = require("Module:links")
 local m_languages = require("Module:languages")
 local lang_en = m_languages.getByCode("en")
 
-local force_cat = false -- set to true for testing
+local insert = table.insert
 
+
+-- Add qualifiers, labels and references to a formatted part. `part` is the object describing the unformatte part, which
+-- should optionally contain:
+-- * left qualifiers in `q`, an array of strings;
+-- * right qualifiers in `qq`, an array of strings;
+-- * left labels in `l`, an array of strings;
+-- * right labels in `ll`, an array of strings;
+-- * references in `refs`, an array either of strings (formatted reference text) or objects containing fields `text`
+--   (formatted reference text) and optionally `name` and/or `group`;
+-- `formatted` is the formatted version of the term itself, and `lang` is the optional language object passed into
+-- format_genders().
+local function add_qualifiers_and_refs(formatted, part)
+	local function field_non_empty(field)
+		local list = spec[field]
+		if not list then
+			return nil
+		end
+		if type(list) ~= "table" then
+			error(("Internal error: Wrong type for `spec.%s`=%s, should be \"table\""):format(
+				field, mw.dumpObject(list)))
+		end
+		return list[1]
+	end
+
+	if field_non_empty("q") or field_non_empty("qq") or field_non_empty("l") or field_non_empty("ll") or
+		field_non_empty("refs") then
+		formatted = require(pron_qualifier_module).format_qualifiers {
+			lang = part.lang,
+			text = formatted,
+			q = spec.q,
+			qq = spec.qq,
+			l = spec.l,
+			ll = spec.ll,
+			refs = spec.refs,
+		}
+	end
+
+	return formatted
+end
 
 local function link_with_qualifiers(part, face, pretext)
-	local partparts = {}
-	if part.q then
-		table.insert(partparts, require("Module:qualifier").format_qualifier(part.q) .. " ")
-	end
+	local retval = m_links.full_link(part, face, "allow self link")
 	if pretext then
-		table.insert(partparts, pretext)
+		retval = pretext .. retval
 	end
-	table.insert(partparts, m_links.full_link(part, face, "allow self link"))
-	if part.qq then
-		table.insert(partparts, " " .. require("Module:qualifier").format_qualifier(part.qq))
-	end
-	return table.concat(partparts)
+	return add_qualifiers_and_refs(retval, part)
 end
 
 
 local function format_glosses(data, gloss_pretext)
-	local has_gloss = data.gloss and #data.gloss > 0
+	local has_gloss = data.gloss and data.gloss[1]
 
 	if data.lang:getCode() == "en" then
 		if has_gloss then
 			local glosstext
-			if #data.gloss == 1 then
+			if not data.gloss[2] then
 				glosstext = ("an English gloss '%s'"):format(data.gloss[1].term)
 			else
 				for i, term in ipairs(data.gloss) do
@@ -57,6 +98,8 @@ end
 
 local function format_parts(data)
 	local comma_in_part = false
+	local cats = {}
+	local full_langcode = data.lang:getFullCode()
 
 	for i, part in ipairs(data.parts) do
 		part.lang = part.lang or lang_en
@@ -78,33 +121,55 @@ local function format_parts(data)
 		end
 		comma_in_part = comma_in_part or (part.pos and part.pos:find(",")) or (part.q and part.q:find(",")) or
 			(part.qq and part.qq:find(","))
-		data.parts[i] = link_with_qualifiers(part)
+		local formatted_desc
+		if part.term and part.term:find("<<") then
+			local m_place = require(place_module)
+			local place_desc = m_place.parse_new_style_place_desc(part.term)
+			formatted_desc = m_place.get_new_style_gloss({}, place_desc, false)
+			if not data.nocat then
+				local this_cats = m_place.get_cats({}, place_desc, "from demonym")
+				for _, cat in ipairs(this_cats) do
+					insert(cats, full_langcode .. ":" .. cat)
+				end
+			end
+			formatted_desc = add_qualifiers_and_refs(formatted_desc, part)
+		else
+			formatted_desc = link_with_qualifiers(part)
+		end
+		data.parts[i] = formatted_desc
 	end
 
 	local nparts = #data.parts
+	local rettext
 	-- FIXME: There should be a generalization of serialCommaJoin in [[Module:table]] for this use case.
 	if nparts == 1 then
-		return data.parts[1]
+		rettext = data.parts[1]
 	elseif nparts == 2 then
-		return data.parts[1] .. " or " .. data.parts[2]
+		rettext = data.parts[1] .. " or " .. data.parts[2]
 	elseif comma_in_part then
-		return table.concat(data.parts, "; ", 1, nparts - 1) .. "; or " .. data.parts[nparts]
+		rettext = table.concat(data.parts, "; ", 1, nparts - 1) .. "; or " .. data.parts[nparts]
 	else
-		return require("Module:table").serialCommaJoin(data.parts, {conj = "or"})
+		rettext = require(table_module).serialCommaJoin(data.parts, {conj = "or"})
 	end
+	return rettext, cats
 end
 
 
 -- WARNING: This overwrites objects in `data`.
 function export.format_demonym_adj(data)
-	result = {}
+	local result = {}
+	local cats = {}
 
 	local function ins(text)
-		table.insert(result, text)
+		insert(result, text)
 	end
 
-	local langcode = data.lang:getCode()
-	local lang_is_en = langcode == "en"
+	local full_langcode = data.lang:getFullCode()
+	local lang_is_en = full_langcode == "en"
+
+	if not data.nocat then
+		insert(cats, full_langcode .. ":Demonyms")
+	end
 
 	local glosstext = format_glosses(data)
 	ins(glosstext)
@@ -121,7 +186,11 @@ function export.format_demonym_adj(data)
 		ins(", from or relating to ")
 	end
 
-	ins(format_parts(data))
+	local parttext, partcats = format_parts(data)
+	ins(parttext)
+	if partcats[1] then
+		require(table_module).extend(cats, partcats)
+	end
 
 	if glosstext ~= "" then
 		ins(")")
@@ -132,9 +201,7 @@ function export.format_demonym_adj(data)
 	end
 
 	if not data.nocat then
-		local cats = {}
-		table.insert(cats, langcode .. ":Demonyms")
-		ins(require("Module:utilities").format_categories(cats, data.lang, data.sort, nil, force_cat))
+		ins(require(utilities_module).format_categories(cats, data.lang, data.sort, nil, force_cat))
 	end
 
 	return table.concat(result)
@@ -143,17 +210,30 @@ end
 
 -- WARNING: This overwrites objects in `data`.
 function export.format_demonym_noun(data)
-	result = {}
+	local result = {}
+	local cats = {}
 
 	local function ins(text)
-		table.insert(result, text)
+		insert(result, text)
 	end
 
-	local langcode = data.lang:getCode()
-	local lang_is_en = langcode == "en"
+	local full_langcode = data.lang:getFullCode()
+	local lang_is_en = full_langcode == "en"
 
-	local has_femeq = data.m and #data.m > 0
+	local has_femeq = data.m and data.m[1]
 	data.g = data.g or has_femeq and "f" or nil
+
+	if not data.nocat then
+		insert(cats, full_langcode .. ":Demonyms")
+		if data.g == "m" then
+			insert(cats, full_langcode .. ":Male people")
+		elseif data.g == "f" then
+			insert(cats, full_langcode .. ":Female people")
+		end
+		if has_femeq then
+			insert(cats, data.lang:getFullName() .. " female equivalent nouns")
+		end
+	end
 
 	if has_femeq then
 		if data.notext then
@@ -167,7 +247,7 @@ function export.format_demonym_noun(data)
 			lemmas = data.m,
 			lemma_face = "term",
 		}
-		ins(require("Module:form of").format_form_of(femeq_data))
+		ins(require(form_of_module).format_form_of(femeq_data))
 		ins("; ")
 	end
 
@@ -191,7 +271,11 @@ function export.format_demonym_noun(data)
 		ins("[[native]] or [[inhabitant]] of ")
 	end
 
-	ins(format_parts(data))
+	local parttext, partcats = format_parts(data)
+	ins(parttext)
+	if partcats[1] then
+		require(table_module).extend(cats, partcats)
+	end
 
 	if glosstext ~= "" then
 		ins(")")
@@ -199,7 +283,7 @@ function export.format_demonym_noun(data)
 
 	if data.g == "m" and not data.notext then
 		ins(" ")
-		ins(require("Module:qualifier").format_qualifier("male or of unspecified gender"))
+		ins(require(qualifier_module).format_qualifier("male or of unspecified gender"))
 	end
 
 	if lang_is_en and not data.nodot and not data.notext then
@@ -207,17 +291,7 @@ function export.format_demonym_noun(data)
 	end
 
 	if not data.nocat then
-		local cats = {}
-		table.insert(cats, langcode .. ":Demonyms")
-		if data.g == "m" then
-			table.insert(cats, langcode .. ":Male people")
-		elseif data.g == "f" then
-			table.insert(cats, langcode .. ":Female people")
-		end
-		if has_femeq then
-			table.insert(cats, data.lang:getCanonicalName() .. " female equivalent nouns")
-		end
-		ins(require("Module:utilities").format_categories(cats, data.lang, data.sort, nil, force_cat))
+		ins(require(utilities_module).format_categories(cats, data.lang, data.sort, nil, force_cat))
 	end
 
 	return table.concat(result)
