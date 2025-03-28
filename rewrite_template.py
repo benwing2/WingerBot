@@ -368,14 +368,6 @@ def do_process_text_on_page(index, pagetitle, text):
 
 if args.rename_templates:
   templates_to_rename = set(templates)
+
 blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True,
   default_refs=["Template:%s" % template for template in templates])
-
-for index, (template, new_name) in blib.iter_items(zip(templates, new_names), get_name=lambda x: x[0]):
-  if template in templates_to_rename:
-    template_page = pywikibot.Page(site, "Template:%s" % template)
-    rename_comment = comment
-    if not rename_comment:
-      rename_comment = "rename template preparatory to renaming all uses"
-    rename_comment = blib.changelog_to_string(rename_comment, args.comment_tag)
-    rename_page(args, index, template_page, "Template:%s" % new_name, rename_comment, None, None)
