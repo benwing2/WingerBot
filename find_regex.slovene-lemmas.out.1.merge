@@ -1,4 +1,4 @@
-Beginning at Sun Mar 23 14:52:00 2025
+Beginning at Sun Mar 30 17:31:27 2025
 Page 1 A: -------- begin text --------
 {{wikipedia|lang=sl}}
 
@@ -9875,10 +9875,9 @@ Page 481 Bosna: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Bọ̑sna|f}}
 
-# {{place|sl|the short form of [[Bosnia and Herzegovina]], a <<country>> in <<r/Southeast Europe>>|t1=Bosnia}}
-#: {{syn|sl|Bósna in Hercegovína}}
-# {{place|sl|the northern <<region>> of <<c/Bosnia and Herzegovina>>|t=Bosnia}}
-# {{place|sl|a <<major river>> in <<c/Bosnia and Herzegovina>>|t1=Bosna}}
+# {{tcl|sl|Bosnia|id=Q188736}}
+# {{tcl|sl|Bosnia|id=Q225|place_full=Bósna in Hercegovína}}
+# {{tcl|sl|Bosna|id=Q208367}}
 
 ====Inflection====
 {{sl-decl-noun-f|Bósn|n=sg}}
@@ -14371,8 +14370,8 @@ Page 683 Češka: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Čẹ̑ška|f}}
 
-# {{place|sl|country|cont/Europe|t=Czech Republic}}
-# [[Bohemia]], one of the historical regions of the Czech Republic
+# {{tcl|sl|Czech Republic|id=Q213}}
+# {{tcl|sl|Bohemia|id=Q39193}}
 
 ====Inflection====
 {{sl-decl-noun-f|Čéšk|n=sg}}
@@ -22806,7 +22805,7 @@ Page 1039 Epir: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Epȋr|m-in}}
 
-# {{place|sl|historical region|in present-day|c/Greece,Albania|t=Epirus}}
+# {{tcl|sl|Epirus|id=Q565751,Q180484}}
 
 ====Inflection====
 {{sl-decl-noun-m|Epír|n=sg}}
@@ -25959,8 +25958,7 @@ Page 1219 Galicija: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Galícija|f}}
 
-# {{place|sl|historic kingdom|r/Central Europe|t1=Galicia}}
-# {{place|sl|autonomous community|c/Spain|t=Galicia}}
+# {{tcl|sl|Galicia|id=Q3908,Q180086}}
 
 ====Inflection====
 {{sl-decl-noun-f|Galícij|n=sg}}
@@ -25972,8 +25970,6 @@ Page 1219 Galicija: -------- begin text --------
 
 ===Further reading===
 {{R:sl:FR}}
-
-{{C|sl|Historical polities|Poland|Ukraine}}
 -------- end text --------
 Page 1220 galij: -------- begin text --------
 {{elements|sl|Ga|cínk|Zn|germánij|Ge}}
@@ -31716,7 +31712,7 @@ Page 1500 Hercegovina: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Hercegovína|f}}
 
-# {{place|sl|the southern <<region>> of <<c/Bosnia and Herzegovina>>|t1=Herzegovina}}
+# {{tcl|sl|Herzegovina|id=Q189863}}
 
 ====Inflection====
 {{sl-decl-noun-f|Hercegovín|n=sg}}
@@ -36419,7 +36415,7 @@ Page 1689 izuti: -------- begin text --------
 * {{l|sl|sezúti}}
 
 ===Further reading===
-* {{R:sl:Fran}}
+{{R:sl:FR}}
 -------- end text --------
 Page 1690 izvijač: -------- begin text --------
 
@@ -37162,7 +37158,7 @@ Page 1728 Japonska: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Japọ̑nska|f}}
 
-# {{place|sl|country/and/archipelago|r/East Asia|t1=Japan|capital=Tokyo}}
+# {{tcl|sl|Japan|id=Q17}}
 
 ====Inflection====
 {{sl-decl-noun-f|Japónsk|n=sg}}
@@ -37410,7 +37406,7 @@ From {{inh|sl|sla-pro|*aviti}}.
 Page 1739 javor: -------- begin text --------
 
 ===Etymology===
-From {{inh|sl|sla-pro|*avorъ}}.
+{{inh+|sl|sla-pro|*avorъ}}.
 
 ===Pronunciation===
 * {{sl-IPA|jávor}}
@@ -41266,6 +41262,9 @@ Page 1937 Kikelj: -------- begin text --------
 * {{R:sl:Keber:2021|page=324}}
 -------- end text --------
 Page 1938 kikiriki: -------- begin text --------
+
+===Etymology===
+Of {{onomatopoeic|sl|title=imitative}} origin, similar to {{cog|cs|kikirikí}} and {{cog|de|kikeriki}}.
 
 ===Pronunciation===
 * {{sl-IPA|kikirikȋ}}
@@ -45630,7 +45629,8 @@ Page 2194 Koroška: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Korọ̑ška|f}}
 
-# {{place|sl|state|c/Austria|t=Carinthia}}
+# {{tcl|sl|Carinthia|id=Q702224}}:
+## {{tcl|sl|Carinthia|id=Q37985,Q909894|indent=##}}
 
 ====Inflection====
 {{sl-decl-noun-f|Koróšk|n=sg}}
@@ -45638,8 +45638,6 @@ Page 2194 Koroška: -------- begin text --------
 ====Related terms====
 * {{l|sl|Koróšec}} / {{l|sl|Korošíca}}
 * {{l|sl|koróški}}
-
-{{C|sl|Slovenia}}
 -------- end text --------
 Page 2195 Korun: -------- begin text --------
 
@@ -61448,7 +61446,7 @@ Page 2916 nazaj: -------- begin text --------
 Page 2917 ne: -------- begin text --------
 
 ===Etymology===
-From {{inh|sl|sla-pro|*ne}}, from {{inh|sl|ine-pro|*ne}}.
+From {{inh|sl|sla-pro|*ne}}, from {{inh|sl|ine-pro|*né}}.
 
 ===Pronunciation===
 * {{sl-IPA|nȅ|ne}}
@@ -64506,7 +64504,7 @@ Page 3063 obleka: -------- begin text --------
 {{sl-decl-noun-f|oblék}}
 
 ===Further reading===
-* {{R:sl:Fran}}
+{{R:sl:FR}}
 
 {{C|sl|Clothing}}
 -------- end text --------
@@ -64899,7 +64897,7 @@ From {{inh|sl|sla-pro|*obuti}}.
 }}
 
 ===Further reading===
-* {{R:sl:Fran}}
+{{R:sl:FR}}
 -------- end text --------
 Page 3084 obžalovati: -------- begin text --------
 
@@ -70449,7 +70447,8 @@ Page 3330 pet: -------- begin text --------
 {{number box|sl|5}}
 
 ===Etymology 1===
-From {{inh|sl|sla-pro|*pętь}}, from {{inh|sl|ine-pro|*pénkʷe}}.
+{{dercat|sl|ine-bsl-pro|ine-pro|inh=2}}
+From {{inh|sl|sla-pro|*pętь}}
 
 ====Pronunciation====
 * {{sl-IPA|pẹ̑t}}
@@ -83600,7 +83599,7 @@ From {{inh|sl|sla-pro|*roditi}}.
 ===Verb===
 {{sl-verb|rodīti|both}}
 
-# to [[birth]]
+# to [[give birth]]
 # {{lb|sl|reflexive}} to be [[born]]
 
 ====Conjugation====
@@ -87354,7 +87353,7 @@ From {{affix|sl|s-|izúti}}.
 }}
 
 ===Further reading===
-* {{R:sl:Fran}}
+{{R:sl:FR}}
 -------- end text --------
 Page 4101 shizofrenija: -------- begin text --------
 {{wikipedia|lang=sl}}
@@ -90153,26 +90152,55 @@ Page 4230 slovo: -------- begin text --------
 
 ===Etymology===
 {{dercat|sl|ine-bsl-pro|ine-pro|inh=2}}
-{{inh+|sl|sla-pro|*slovo|t=word}}.
+{{inh+|sl|sla-pro|*slȍvo}}.
 
 ===Pronunciation===
-* {{sl-IPA|slovọ̑}}
+* {{sl-IPA|slovọ̑|slȏvo}}
+* {{rhymes|sl|óː|ɔ́ːʋɔ|s=2}}
+* {{hyph|sl|slo|vo}}
 
 ===Noun===
 {{sl-noun|slovọ̑|n}}
 
-# [[farewell]], [[departure]]
-# {{lb|sl|archaic}} [[word]]
-# {{lb|sl|archaic}} [[letter]]
+# [[farewell]] {{gl|greeting when leaving, usually with a handshake}}
+# {{lb|sl|usually|expressive}} [[departure]], [[separation]]
+#: {{syn|sl|ločȋtev|odhȍd}}
+# {{lb|sl|expressive}} [[farewell]] {{gl|expresses the cessation of the existence of something}} {{+obj|sl|:od(gen)<t:from>}}
+# {{lb|sl|Eastern|_|Styrian}} [[stupid]] [[person]]
 
-====Inflection====
-{{sl-decl-noun-n-s|slov}}<!-- slovó, slovésa, slovésa -->
+====Declension====
+{{sl-infl-noun
+|||slovẹ̄s||stemtone=c
+|gender=n
+|declension type=1
+|subtype?=h
+|accent=1
+|infix=s
+|nomsg=slovọ̑
+}}
+
+===Noun===
+{{sl-noun|slȏvo|n}}
+
+# {{lb|sl|obsolete}} [[word]] {{gl|linguistic unit from sounds for marking concepts}}
+#: {{syn|sl|besẹ̑da}}
+# {{lb|sl|obsolete}} [[letter]] {{gl|sign for a sound}}
+#: {{syn|sl|čŕka}}
+
+====Declension====
+{{sl-infl-noun
+|||slȏv||stemtone=c
+|gender=n
+|declension type=1
+|subtype?=h
+|accent=1
+}}
 
 ====Derived terms====
-* {{l|sl|slovnica}}
+{{col|sl|title=nouns|slȏvnica<g:f>}}
 
 ===Further reading===
-* {{R:sl:Fran}}
+* {{R:sl:FR}}
 -------- end text --------
 Page 4231 slušati: -------- begin text --------
 
@@ -98302,7 +98330,7 @@ Page 4597 Tajvan: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Tȃjvan|m-in}}
 
-# {{place|sl|country|r/East Asia|t=Taiwan}}
+# {{tcl|sl|Taiwan|id=Q865,Q22502}}
 
 ====Declension====
 {{sl-decl-noun-m|Tájvan|n=sg}}
@@ -100936,7 +100964,7 @@ Page 4729 Transilvanija: -------- begin text --------
 ===Proper noun===
 {{sl-proper noun|Transilvánija|f}}
 
-# [[Transylvania]]
+# {{tcl|sl|Transylvania|id=Q39473}}
 
 ====Inflection====
 {{sl-decl-noun-f|Transilvánij|n=sg}}
@@ -100944,8 +100972,6 @@ Page 4729 Transilvanija: -------- begin text --------
 ====Related terms====
 * {{l|sl|Transilvánec}} / {{l|sl|Transilvánka}}
 * {{l|sl|transilvánski}}
-
-{{C|sl|Regions of Europe}}
 -------- end text --------
 Page 4730 trava: -------- begin text --------
 {{wp|lang=sl}}
@@ -117583,5 +117609,5 @@ Symbol is sometimes used as a letter to denote pitch in a word, but that is most
 * {{cite-book|sl|last=Toporišič|first=Jože|title=Slovenska slovnica / Jože Toporišič. - 4. prenovljena in razširjena izd.|publisher=Obzorja|year=2000|location=Maribor|isbn=961-230-171-9}}
 
 -------- end text --------
-Elapsed time: 15 mins 18.28 secs
-Ending at Sun Mar 23 15:07:19 2025
+Elapsed time: 15 mins 18.34 secs
+Ending at Sun Mar 30 17:46:45 2025
