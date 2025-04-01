@@ -1,8 +1,8 @@
 local export = {}
 
-local force_cat = true -- set to true for testing
+local force_cat = false -- set to true for testing
 
-local m_data = require("Module:User:Benwing2/place/data")
+local m_data = require("Module:place/data")
 local m_links = require("Module:links")
 local m_strutils = require("Module:string utilities")
 local m_table = require("Module:table")
@@ -365,18 +365,11 @@ set of holonyms):
    e.g. `country/*`, which matches any holonym of placetype `country`. If found, the value is a list of category specs,
    which are processed as above.
 ## If we get this far without generating any categories, move to the next holonym.
-# Once we find a 
-# If no holonyms produce any categories, look for a 
+# [FINISH ME]
 
 
-   m
-</li><li>
-The value in `placetype_data` is a table. It contains several special-purpose keys as well as keys for categorization.
-The relevant keys for categorization are of three types, listed in order of precedence (from highest to lowest):
-# A key matching a specific holonym (e.g. `"country/Brazil"`).
-# A key matching all holonyms of a specific placetype (e.g. `"country/*"`).
-# The key `"default"`.
-Note that 
+FIXME: The following is totally out of date. Finish the above and remove the below.
+
 # Iterate through the holonyms, from left to right. For each holonym:
 ## First look for a key matching the exact holonym. , finding the first holonym that matches (in both placetype and
   placename) a key in the outer table. If no holonym matches any key, then if a key `"default"` exists, use that;
@@ -1332,14 +1325,10 @@ end
 -- Return the preposition that should be used after `placetype` (e.g. "city >in< France." but
 -- "country >of< South America"). The preposition is fetched from the data module, defaulting to "in".
 local function get_in_or_of(placetype)
-	local preposition = "in"
-
-	local pt_data = m_data.get_equiv_placetype_prop(placetype, function(pt) return placetype_data[pt] end)
-	if pt_data and pt_data.preposition then
-		preposition = pt_data.preposition
-	end
-
-	return preposition
+	local pt_prep = m_data.get_equiv_placetype_prop(placetype,
+		function(pt) return placetype_data[pt] and placetype_data[pt].preposition end
+	)
+	return pt_prep or "in"
 end
 
 
@@ -1968,18 +1957,6 @@ local function find_placetype_cat_specs(data)
 			end
 		end
 	end
-
-	-- If we didn't find a matching spec, and there's a fallback, look it up. This is used, for example, with "rural
-	-- municipality", which has special cases for some provinces of Canada and otherwise behaves like "municipality".
-	--if not cat_specs and entry_placetype_data.fallback then
-	--	return find_placetype_cat_specs {
-	--		entry_placetype = entry_placetype_data.fallback,
-	--		place_desc = place_desc,
-	--		first_holonym_index = first_holonym_index,
-	--		overriding_holonym = overriding_holonym,
-	--		from_demonym = from_demonym,
-	--	}
-	--end
 
 	return nil
 end
