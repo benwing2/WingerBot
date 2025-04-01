@@ -123,13 +123,13 @@ From {{inh|sl|sla-pro|*a}}, from {{inh|sl|ine-pro|*ō̃t}}, which is [[ablative]
 * {{IPA|sl|/a/}} <!--{{sl-IPA|a}}-->
 
 ====Conjunction====
-{{head|sl|conjunctions}} <!-- {{sl-con|-}} -->
+{{head|sl|conjunction}} <!-- {{sl-head|conjunction|-}} -->
 
 # [[but]]
 #: {{synonyms|sl|in|pa|toda|vendar}}
 
 ====Particle====
-{{head|sl|particles}} <!-- {{sl-part|-}} -->
+{{head|sl|particle}} <!-- {{sl-head|particle|-}} -->
 
 # {{form of|sl|contracted form|ali}}, particle used to form a yes- no question.
 #: {{synonyms|sl|kaj|ali}}
@@ -196,7 +196,7 @@ From {{der|sl|fr|à}}, from latin {{der|sl|la|ad}} 'to'.
 * {{homophones|sl|A|a}}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[for]], [[per]] (the price, mass etc.) {{+obj|sl|acc}}
 #: {{synonyms|sl|po|za}}
@@ -553,7 +553,7 @@ Page 14 Aberšek: -------- begin text --------
 * {{sl-IPA|Áberšek}}
 
 ===Proper noun===
-{{sl-proper noun|Áberšek|g?}}
+{{sl-proper noun|Áberšek|m-an}}
 
 # {{surname|sl}}
 
@@ -731,7 +731,7 @@ Page 22 absurden: -------- begin text --------
 * {{sl-IPA|absȗrdən}}
 
 ===Adjective===
-{{sl-adj|absȗrdən|bolj|absȗrdnejši}}
+{{sl-adj|absȗrdən|bolj|comp2=absȗrdnejši}}
 
 # [[absurd]]
 
@@ -825,7 +825,7 @@ Borrowed from {{bor|sl|it|addio}}.
 * {{sl-IPA|adȋjo}}
 
 ===Interjection===
-{{sl-interj|adȋjo}}
+{{sl-head|interjection|adȋjo}}
 
 # [[goodbye]]
 
@@ -974,7 +974,7 @@ Page 34 adut: -------- begin text --------
 * {{sl-IPA|adȗt}}
 
 ===Noun===
-{{sl-noun|adȗt|m-in|g2=m-an}}
+{{sl-noun|adȗt|m-in,m-an}}
 
 # [[trump]]
 
@@ -1314,7 +1314,7 @@ Page 51 ahoj: -------- begin text --------
 * {{sl-IPA|ahọ̑j}}
 
 ===Interjection===
-{{sl-interj|ahọ̑j}}
+{{sl-head|interjection|ahọ̑j}}
 
 # [[hey]]
 #: ''Ahoj, kje ste?''
@@ -1331,7 +1331,7 @@ From {{bor|sl|ota|هایده|tr=hayde}}, {{m|ota|هایدی|tr=haydi}}.
 * {{sl-IPA|ȁjd|ájd}}
 
 ====Interjection====
-{{sl-interj|ȁjd|head2=ájd}}
+{{sl-head|interjection|ȁjd|head2=ájd}}
 
 # [[come on]], [[c'mon]]
 
@@ -1411,7 +1411,7 @@ Page 57 ajs: -------- begin text --------
 * {{sl-IPA|ȃjs}}
 
 ===Interjection===
-{{sl-interj|ȃjs}}
+{{sl-head|interjection|ȃjs}}
 
 # An expression of one's own physical [[pain]] if something is hot.
 #: {{l|en|'''ouch'''}}
@@ -2005,7 +2005,7 @@ Page 83 Aleš: -------- begin text --------
 * {{sl-IPA|alèš}}
 
 ===Proper noun===
-{{sl-proper noun|Alèš|m-pr}}
+{{sl-proper noun|Alèš|m-an}}
 
 # {{given name|sl|male}}
 # {{surname|sl|from=given names}}
@@ -2023,7 +2023,7 @@ The second pronunciation is used in the second sense.
 * {{sl-IPA|ȁli|ȃli}}
 
 ====Conjunction====
-{{sl-con|ȁli|head2=ȃli}}
+{{sl-head|conjunction|ȁli|head2=ȃli}}
 
 # [[or]]
 # {{lb|sl|ali ... ali}} [[either]] ... [[or]]
@@ -2034,7 +2034,7 @@ The second pronunciation is used in the second sense.
 * {{sl-IPA|ali}}
 
 ====Particle====
-{{sl-part|-}}
+{{sl-head|particle|-}}
 
 # {{non-gloss|Introduces a yes-no question.}}
 
@@ -2096,7 +2096,7 @@ Page 88 Aljaž: -------- begin text --------
 * {{sl-IPA|aljáš}}
 
 ===Proper noun===
-{{sl-proper noun|Aljáž|m-pr}}
+{{sl-proper noun|Aljáž|m-an}}
 
 # {{surname|sl|from=given names}}
 
@@ -2321,7 +2321,7 @@ Page 102 Ambrož: -------- begin text --------
 * {{sl-IPA|ambróš}}
 
 ===Proper noun===
-{{sl-proper noun|Ambróž|m-pr}}
+{{sl-proper noun|Ambróž|m-an}}
 
 # {{surname|sl|from=given names}}
 
@@ -2456,7 +2456,7 @@ Page 109 ampak: -------- begin text --------
 * {{sl-IPA|ȁmpak}}
 
 ===Conjunction===
-{{sl-con|ȁmpak}}
+{{sl-head|conjunction|ȁmpak}}
 
 # [[but]] (instead)
 -------- end text --------
@@ -3455,7 +3455,7 @@ Page 167 arašid: -------- begin text --------
 {{sl-noun|arašȋd|m-in}}
 
 # {{lb|sl|usually|in the plural}} [[peanut]] {{gl|{{taxfmt|Arachis hypogaea|species}}}}
-#: {{syn|sl|kikirȋki//kikirikȋ}}
+#: {{syn|sl|kikirȋki|kikirikȋ}}
 
 ====Declension====
 {{sl-infl-noun
@@ -3586,7 +3586,7 @@ Page 174 arhitektura: -------- begin text --------
 
 ====Related terms====
 {{col|sl|title=adjectives|arhitektọ̑nski}}
-{{col|sl|title=nouns|arhitẹ̑kt<g:m-pr>}}
+{{col|sl|title=nouns|arhitẹ̑kt}}
 
 ===Further reading===
 * {{R:sl:FR}}
@@ -5909,7 +5909,7 @@ Page 289 Bauer: -------- begin text --------
 * {{sl-IPA|Bauer}}
 
 ===Proper noun===
-{{sl-proper noun|Bauer|m-pr}}
+{{sl-proper noun|Bauer|m-an}}
 
 # {{surname|sl|from=German}}
 
@@ -6273,7 +6273,7 @@ From {{inh|sl|sla-pro|*bělъ}}, from {{der|sl|ine-pro|*bʰēlHs||white surface 
 * {{sl-IPA|bẹ́ł}}
 
 ===Adjective===
-{{sl-adj|bẹ́ł|bolj|belȇjši}}
+{{sl-adj|bẹ́ł|bolj|comp2=belȇjši}}
 
 # [[white]]
 
@@ -7094,7 +7094,7 @@ Page 363 Bevc: -------- begin text --------
 * {{sl-IPA|Bévc}}
 
 ===Proper noun===
-{{sl-proper noun|Bévc|m-pr}}
+{{sl-proper noun|Bévc|m-an}}
 
 # {{surname|sl}}
 
@@ -7968,7 +7968,7 @@ From {{inh|sl|sla-pro|*bolgъ}}.
 * {{sl-IPA|blȃg}}
 
 ===Adjective===
-{{sl-adj|blȃg|blážji|blȃžji}}
+{{sl-adj|blȃg|blážji|comp2=blȃžji}}
 
 # [[mild]], [[gentle]], soft
 
@@ -8164,7 +8164,7 @@ Page 408 bled: -------- begin text --------
 * {{sl-IPA|blẹ̑d}}
 
 ===Adjective===
-{{sl-adj|blẹ̑d|bolj|bledȇjši}}
+{{sl-adj|blẹ̑d|bolj|comp2=bledȇjši}}
 
 # [[pale]] {{gl|[[light]] in [[color]]}}
 # {{lb|sl|of human skin}} [[pale]] {{gl|having a [[pallor]]}}
@@ -8335,13 +8335,13 @@ From {{inh|sl|sla-pro|*blizъ}}.
 * {{sl-IPA|blízu}}
 
 ===Adverb===
-{{sl-adv|blízu|blȋžje|blȋže}}
+{{sl-adv|blízu|blȋžje|comp2=blȋže}}
 
 # [[close]], [[near]] (in space or time)
 #: {{ant|sl|dáleč}}
 
 ===Preposition===
-{{sl-prep|blízu}}
+{{sl-head|preposition|blízu}}
 
 # {{lb|sl|with genitive}} [[near]], [[close to]]
 
@@ -8362,7 +8362,7 @@ Page 413 bliže: -------- begin text --------
 # {{comparative of|sl|POS=adverb|blízu}}
 
 ===Preposition===
-{{sl-prep|blȋže}}
+{{sl-head|preposition|blȋže}}
 
 # {{lb|sl|with genitive}} [[closer]] to
 
@@ -8383,7 +8383,7 @@ Page 414 bližje: -------- begin text --------
 # {{comparative of|sl|POS=adverb|blízu}}
 
 ===Preposition===
-{{sl-prep|blȋžje}}
+{{sl-head|preposition|blȋžje}}
 
 # {{lb|sl|with genitive}} [[closer]] to
 
@@ -8485,7 +8485,7 @@ The dative singular form {{l|sl|bogȗ}} is mostly limited to the phrase {{l|sl|h
 |accdu={{l|sl|bogȏva}}, {{l|sl|bogȃ}}}}
 
 ===Interjection===
-{{sl-interj|bọ̑g}}
+{{sl-head|interjection|bọ̑g}}
 
 # [[god]]
 
@@ -9164,7 +9164,7 @@ Page 446 Bolka: -------- begin text --------
 * {{sl-IPA|bólka}}
 
 ===Proper noun===
-{{sl-proper noun|Bólka|m-pr}}
+{{sl-proper noun|Bólka|m-an}}
 
 # {{surname|sl}}
 
@@ -9254,7 +9254,7 @@ Page 451 Bolta: -------- begin text --------
 * {{sl-IPA|bólta}}
 
 ===Proper noun===
-{{sl-proper noun|Bólta|m-pr}}
+{{sl-proper noun|Bólta|m-an}}
 
 # {{surname|sl}}
 
@@ -9267,7 +9267,7 @@ Page 452 Boltar: -------- begin text --------
 * {{sl-IPA|bóltar}}
 
 ===Proper noun===
-{{sl-proper noun|Bóltar|m-pr}}
+{{sl-proper noun|Bóltar|m-an}}
 
 # {{surname|sl}}
 
@@ -9297,7 +9297,7 @@ Page 454 Bombač: -------- begin text --------
 * {{sl-IPA|bombáč}}
 
 ===Proper noun===
-{{sl-proper noun|Bombáč|m-pr}}
+{{sl-proper noun|Bombáč|m-an}}
 
 # {{surname|sl}}
 
@@ -9370,7 +9370,7 @@ Page 457 Bombek: -------- begin text --------
 * {{sl-IPA|bómbek}}
 
 ===Proper noun===
-{{sl-proper noun|Bómbek|m-pr}}
+{{sl-proper noun|Bómbek|m-an}}
 
 # {{surname|sl}}
 
@@ -9417,7 +9417,7 @@ Page 460 Bonaca: -------- begin text --------
 * {{sl-IPA|bonáca}}
 
 ===Proper noun===
-{{sl-proper noun|Bonáca|m-pr}}
+{{sl-proper noun|Bonáca|m-an}}
 
 # {{surname|sl}}
 
@@ -9431,7 +9431,7 @@ Page 461 Boncelj: -------- begin text --------
 * {{sl-IPA|bóncelj}}
 
 ===Proper noun===
-{{sl-proper noun|Bóncelj|m-pr}}
+{{sl-proper noun|Bóncelj|m-an}}
 
 # {{surname|sl}}
 
@@ -9445,7 +9445,7 @@ Page 462 Bonča: -------- begin text --------
 * {{sl-IPA|bónčá}}
 
 ===Proper noun===
-{{sl-proper noun|Bónča|m-pr}}
+{{sl-proper noun|Bónča|m-an}}
 
 # {{surname|sl}}
 
@@ -9649,7 +9649,7 @@ Page 470 Borko: -------- begin text --------
 * {{sl-IPA|Bórko}}
 
 ===Proper noun===
-{{sl-proper noun|Bórko|m-pr}}
+{{sl-proper noun|Bórko|m-an}}
 
 # {{surname|sl|from=given names}}
 
@@ -9681,7 +9681,7 @@ Page 472 Borovničar: -------- begin text --------
 * {{sl-IPA|Borovníčar}}
 
 ===Proper noun===
-{{sl-proper noun|Borovníčar|m-pr}}
+{{sl-proper noun|Borovníčar|m-an}}
 
 # {{surname|sl|from=occupations}}
 
@@ -10256,7 +10256,7 @@ From {{inh|sl|sla-pro|*bordàtъ}}.
 * {{sl-IPA|bradȁt}}
 
 ===Adjective===
-{{sl-adj|bradȁt|bolj|bradátejši}}
+{{sl-adj|bradȁt|bolj|comp2=bradátejši}}
 
 # [[bearded]]
 
@@ -11152,7 +11152,7 @@ Page 531 brez: -------- begin text --------
 * {{sl-IPA|brez}}
 
 ====Preposition====
-{{sl-prep|brèz}}
+{{sl-head|preposition|brèz}}
 
 # {{lb|sl|with genitive}} [[without]]
 
@@ -13733,7 +13733,7 @@ Borrowed from {{bor|sl|it|ciao}}.
 * {{sl-IPA|čȃo}}
 
 ===Interjection===
-{{sl-interj|čȃo}}
+{{sl-head|interjection|čȃo}}
 
 # [[goodbye]]
 -------- end text --------
@@ -13959,7 +13959,7 @@ Page 664 če: -------- begin text --------
 * {{sl-IPA|če}}
 
 ====Conjunction====
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # [[if]] (supposing that, in the case that)
 
@@ -14230,7 +14230,7 @@ Page 676 čeprav: -------- begin text --------
 * {{hyph|sl|če|prav}}
 
 ===Conjunction===
-{{sl-con|čeprȁv}}
+{{sl-head|conjunction|čeprȁv}}
 
 # [[although]], [[even though]], [[though]] {{gl|to express the fact in spite of which the action of the superordinate clause takes place}}
 #* {{quote-web|1=sl|date=12/27/24|author=Grega Repovž|work=Uvodnik / Nevarni časi|url=https://www.mladina.si/237479/uvodnik-nevarni-casi/|text=Slovenija dobro ve, kaj je populizem. Videli smo, kaj je naredil na območju bivše Jugoslavije. Da, to je bil populizem. '''Čeprav''' spomin bledi, se je koncept slovenskega upora proti populizmu ohranil. In se danes kaže na te inovativne načine. Kar je zelo dobro.|t=Slovenia knows well what populism is. We saw what it did in the former Yugoslavia. Yes, that was populism. '''Although''' memory fades, the concept of Slovenian resistance against populism has been preserved. And it is manifested today in these innovative ways. Which is very good.}}
@@ -14637,7 +14637,7 @@ Page 696 čigar: -------- begin text --------
 * {{sl-IPA|čȋgar}}
 
 ===Determiner===
-{{sl-det|čȋgar}}
+{{sl-head|determiner|čȋgar}}
 
 # [[whose]] (relative)
 
@@ -14655,7 +14655,7 @@ Page 697 čigav: -------- begin text --------
 * {{sl-IPA|čigáv}}
 
 ===Determiner===
-{{sl-det|čigáv}}
+{{sl-head|determiner|čigáv}}
 
 # [[whose]] (interrogative)
 
@@ -15964,7 +15964,7 @@ From {{der|sl|sla-pro|*da}}.
 * {{sl-IPA|dȁ}}
 
 ===Particle===
-{{sl-part|dȁ}}
+{{sl-head|particle|dȁ}}
 
 # [[yes]]
 #: {{syn|sl|jā|q1=informal}}
@@ -17187,7 +17187,7 @@ From {{af|sl|dẹ́kla|-e}}.
 * {{hyph|sl|dek|le}}
 
 ====Noun====
-{{sl-noun|deklȅ|n|g2=f}}
+{{sl-noun|deklȅ|n,f}}
 
 # [[girl]] {{gl|an adult young woman who is not yet married}} 
 #: {{syn|sl|dẹ̑va<q:obsolete>}}
@@ -17549,7 +17549,7 @@ From {{inh|sl|sla-pro|*desętь}}, from {{inh|sl|ine-bsl-pro|*déśimt}}, from {
 * {{hyphenation|sl|de|set}}
 
 ===Numeral===
-{{sl-num|desẹ̑t}}
+{{sl-head|numeral|desẹ̑t}}
 
 # [[ten]]
 
@@ -17771,7 +17771,7 @@ From {{inh|sl|sla-pro|*devętь}}, ultimately from {{der|sl|ine-pro|*h₁néwn̥
 * {{hyphenation|sl|de|vet}}
 
 ===Numeral===
-{{sl-num|devẹ̑t}}
+{{sl-head|numeral|devẹ̑t}}
 
 # [[nine]]
 
@@ -17807,7 +17807,7 @@ Page 829 devetdeset: -------- begin text --------
 * {{sl-IPA|devẹ̑tdeset}}
 
 ===Numeral===
-{{sl-num|devẹ̑tdeset}}
+{{sl-head|numeral|devẹ̑tdeset}}
 
 # [[ninety]]
 
@@ -17829,7 +17829,7 @@ From {{inh|sl|sla-pro|*devętь na desęte||nine on ten}}. Equivalent to {{suffi
 * {{hyphenation|sl|de|vet|najst}}
 
 ===Numeral===
-{{sl-num|devetnájst|head2=devẹ̑tnajst}}
+{{sl-head|numeral|devetnájst|head2=devẹ̑tnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[nineteen]]
 #: {{syn|sl|devetnajstero}}
@@ -17844,7 +17844,7 @@ From {{inh|sl|sla-pro|*devętь na desęte||nine on ten}}. Equivalent to {{suffi
 {{sl-decl-num|devẹ̑tnajst|declension type=2}}
 
 ===Noun===
-{{sl-noun|devetnájst|head2=devẹ̑tnajst|m-an-p|g2=f-p|g3=n-p|g4=n}}
+{{sl-noun|devetnájst|head2=devẹ̑tnajst|m-p,f-p,n-p,n}}
 
 # {{lb|sl|masculine|in the plural}} a group of [[nineteen]] things with [[masculine]] [[grammatical gender]] or a group of people with at least one male.
 #: {{syn|sl|devetnajsterica|devetnajstorica}}
@@ -18743,7 +18743,7 @@ From {{inh|sl|sla-pro|*do}}.
 * {{sl-IPA|do}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{lb|sl|with genitive}} [[by]] (some time before the given time)
 # {{lb|sl|with genitive}} [[till]]
@@ -19000,7 +19000,7 @@ Page 879 dobro: -------- begin text --------
 * {{sl-IPA|dóbro}}
 
 ===Adverb===
-{{sl-adv|dóbro|bọ̑lje|bọ̑ljše}}
+{{sl-adv|dóbro|bọ̑lje|comp2=bọ̑ljše}}
 
 # [[well]], [[good]]
 #: {{ant|sl|slabọ̑}}
@@ -19160,7 +19160,7 @@ Page 888 dokler: -------- begin text --------
 * {{sl-IPA|doklȅr|dọ̑kler|dȍkler}}
 
 ===Conjunction===
-{{sl-con|doklȅr|head2=dọ̑kler|head3=dȍkler}}
+{{sl-head|conjunction|doklȅr|head2=dọ̑kler|head3=dȍkler}}
 
 # [[until]]
 -------- end text --------
@@ -20646,7 +20646,7 @@ From {{inh|sl|sla-pro|*duxъ}}.
 * {{hyphenation|sl|duh}}
 
 ===Noun===
-{{sl-noun|dȗh|m-an|g2=m-in}}
+{{sl-noun|dȗh|m-an,m-in}}
 
 # {{lb|sl|animate}} [[ghost]] (spirit appearing after death)
 # {{lb|sl|animate}} [[soul]]
@@ -20830,7 +20830,7 @@ From {{inh|sl|sla-pro|*dъva}}, from {{inh|sl|ine-bsl-pro|*duwō}}, from {{inh|s
 * {{hyphenation|sl|dva}}
 
 ===Numeral===
-{{sl-num|dvȃ}}
+{{sl-head|numeral|dvȃ}}
 
 # [[two]]
 # {{lb|sl|by extension}} a relatively small number
@@ -20887,7 +20887,7 @@ Page 966 dvajset: -------- begin text --------
 * {{sl-IPA|dvȃjset}}
 
 ===Numeral===
-{{sl-num|dvȃjset}}
+{{sl-head|numeral|dvȃjset}}
 
 # [[twenty]]
 
@@ -20909,7 +20909,7 @@ From {{inh|sl|sla-pro|*dъva na desęte||two on ten}}. Equivalent to {{suffix|sl
 * {{hyphenation|sl|dva|najst}}
 
 ===Numeral===
-{{sl-num|dvanájst|head2=dvȃnajst}}
+{{sl-head|numeral|dvanájst|head2=dvȃnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[twelve]]
 #: {{syn|sl|dvanajstero}}
@@ -21583,7 +21583,7 @@ From Gaj's Latin alphabet {{m|sh|e}}, from {{der|mul|cs|-}} alphabet {{m|cs|e}},
 #: {{syn|sl|ȩ|ɛ}}
 
 ====Noun====
-{{sl-noun|e|m-in|g2=n}}
+{{sl-noun|e|m-in,n}}
 
 # {{n-g|The name of the [[Appendix:Latin script|Latin script]] letter '''''[[E]]''''' / '''''[[e]]'''''.}}
 
@@ -21688,7 +21688,7 @@ From Gaj's Latin alphabet {{m|sh|E}}, from {{der|sl|cs|-}} alphabet {{m|cs|E}}, 
 # {{Latn-def|sl|letter|6|alphabet name=Natisone Valley dialect}}
 
 ===Noun===
-{{sl-noun|E|m-in|g2=n}}
+{{sl-noun|E|m-in,n}}
 
 # {{n-g|The name of the [[Appendix:Latin script|Latin script]] letter '''''[[E]]''''' / '''''[[e]]'''''.}}
 
@@ -22473,7 +22473,7 @@ Contraction of earlier {{m|sl|eden|êden}}, from {{der|sl|sla-pro|*(j)edinъ}}.
 * {{hyphenation|sl|en}}
 
 ====Numeral====
-{{sl-num|ȅn}}
+{{sl-head|numeral|ȅn}}
 
 # [[one]]
 
@@ -22488,7 +22488,7 @@ The form {{m|sl|eden|éden}} is used when the word does not modify a noun direct
 * {{l|sl|enota|enóta}}
 
 ====Determiner====
-{{sl-det|ȅn}}
+{{sl-head|determiner|ȅn}}
 
 # {{lb|sl|colloquial}} [[some]] {{gloss|someone/something – indefinite determiner}}
 #: {{syn|sl|nekȁk|nekȁkšen}}
@@ -22552,7 +22552,7 @@ Page 1026 enaindvajset: -------- begin text --------
 * {{sl-IPA|ēnaindvȃjset}}
 
 ===Numeral===
-{{sl-num|ēnaindvȃjset}}
+{{sl-head|numeral|ēnaindvȃjset}}
 
 # [[twenty-one]]
 
@@ -22573,7 +22573,7 @@ From {{inh|sl|sla-pro|*edinъ na desęte||one on ten}}. Equivalent to {{suffix|s
 * {{hyphenation|sl|en|ajst}}
 
 ===Numeral===
-{{sl-num|enájst}}
+{{sl-head|numeral|enájst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[eleven]]
 #: {{syn|sl|enajstero}}
@@ -23372,7 +23372,7 @@ Page 1076 eto: -------- begin text --------
 * {{sl-IPA|ẹ̑to|ȅto}}
 
 ===Interjection===
-{{sl-interj|ẹ̑to|head2=ȅto}}
+{{sl-head|interjection|ẹ̑to|head2=ȅto}}
 
 # [[look]], [[see]], [[behold]]
 # [[there]], there you go
@@ -23394,7 +23394,7 @@ Page 1078 evo: -------- begin text --------
 * {{sl-IPA|ẹ̑vo|ȅvo}}
 
 ===Interjection===
-{{sl-interj|ẹ̑vo|head2=ȅvo}}
+{{sl-head|interjection|ẹ̑vo|head2=ȅvo}}
 
 # [[look]], [[see]], [[behold]]
 # [[there]], there you go
@@ -23707,7 +23707,7 @@ A dialectal variant of {{l|sl|v}} made by analogy to {{l|sl|s}}/{{l|sl|z}} in di
 }}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{q|dialectal, particularly eastern dialects|with {{glossary|accusative}}}} [[into]], [[in]]
 #* {{quote-web|sl|url=https://www.radio-odeon.com/ruzanc/dejo-pa-kdu-je-ta-branko/|title=Dejo: Pa kdu je ta Branko?|date=2020-7-24|work=Radio Odeon|passage=I ko ne vrjameš več v njega, on še skus vrjame '''f''' tebe.|translation=And when you don't believe in him anymore, he still believes '''in''' you.}}
@@ -26111,7 +26111,7 @@ Page 1228 garnela: -------- begin text --------
 {{sl-noun|garnẹ̑la|f}}
 
 # [[shrimp]]
-#: {{syn|sl|kózica//kozíca}}
+#: {{syn|sl|kózica|kozíca}}
 
 ====Declension====
 {{sl-infl-noun
@@ -29847,7 +29847,7 @@ From {{inh|sl|sla-pro|*gъrdъ}}.
 * {{sl-IPA|gȓd}}
 
 ===Adjective===
-{{sl-adj|gȓd|gȓši|gȓji}}
+{{sl-adj|gȓd|gȓši|comp2=gȓji}}
 
 # [[ugly]]
 #: {{ant|sl|lẹ̑p}}
@@ -31161,7 +31161,7 @@ In Metelko alphabet, the phoneme was written by two different letters whether it
 # {{qualifier|[[wikipedia:Slovene_national_phonetic_transcription|dialectal SNPT]]}} ''[[phonetic|Phonetic]] [[transcription]] of sounds'' [{{IPAlink|h}}, {{IPAlink|ħ}}].
 
 ====Noun====
-{{sl-noun|h|m-in|g2=f}}
+{{sl-noun|h|m-in,f}}
 
 # {{n-g-lite|The name of the [[Appendix:Latin script|Latin script]] letter '''''[[H]]''''' / '''''[[h]]'''''.}}
 # {{lb|sl|linguistics}} {{n-g-lite|The name of the [[phoneme]] ''/{{IPAlink|x}}/''.}}
@@ -31227,7 +31227,7 @@ From {{der|sl|sla-pro|*kъ}} 'to', which is itself probably from {{der|sl|ine-pr
 }}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{q|with dative|see usage notes}} [[to]], [[for]]
 
@@ -31300,7 +31300,7 @@ From Gaj's Latin alphabet {{m|sh|H}}, from {{der|sl|cs|-}} alphabet {{m|cs|H}}, 
 In Metelko alphabet, the phoneme was written by two different letters whether it was pronounced as velar {{IPAchar|/x/}} or glottal {{IPAchar|/h/}}, a distinction irrelevant to nowadays standard and the distinction was also not used by all writers. Phoneme {{IPAchar|/h/}} was written with 〈H〉, while {{IPAchar|/x/}} was written with a yet to be encoded character [[File:Metelko H.gif|frameless]].
 
 ===Noun===
-{{sl-noun|H|m-in|g2=f}}
+{{sl-noun|H|m-in,f}}
 
 # {{n-g|The name of the [[Appendix:Latin script|Latin script]] letter '''''[[H]]''''' / '''''[[h]]'''''.}}
 
@@ -31333,7 +31333,7 @@ Page 1478 ha: -------- begin text --------
 * {{sl-IPA|hȃ|hȁ}}
 
 ===Noun===
-{{sl-interj|hȃ|head2=hȁ}}
+{{sl-head|interjection|hȃ|head2=hȁ}}
 
 # {{n-g|[[express]]es laughter}}
 # {{n-g|[[express]]es [[triumph]] or [[discovery]]}}
@@ -32094,7 +32094,7 @@ Page 1522 hitro: -------- begin text --------
 * {{sl-IPA|hítro}}
 
 ===Adverb===
-{{sl-adv|hítro|hitrȇje|hitrȇjše}}
+{{sl-adv|hítro|hitrȇje|comp2=hitrȇjše}}
 
 # [[fast]], [[quickly]]
 
@@ -33269,7 +33269,7 @@ From {{inh|sl|sla-pro|*xvala}}.
 * {{l|sl|hvaliti}}
 
 ===Interjection===
-{{sl-interj|hvála}}
+{{sl-head|interjection|hvála}}
 
 # [[thank you]], [[thanks]]
 
@@ -33520,7 +33520,7 @@ As opposed to {{l|sl|in}}, '''i''' can be pronounced as stressed or unstressed f
 }}
 
 ====Particle====
-{{sl-part|-}}
+{{sl-head|particle|-}}
 
 # {{lb|sl|obsolete}} [[also]]
 #: {{syn|sl|tudi|prav tako|ravno tako|isto|istotako|še|vključno}}
@@ -34761,7 +34761,7 @@ From {{inh|sl|sla-pro|*i}}.
 * {{audio|sl|LL-Q9063 (slv)-Zupanurska-in.wav}}
 
 ===Conjunction===
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # [[and]]
 
@@ -35088,7 +35088,7 @@ Page 1626 inu: -------- begin text --------
 {{rfp|sl}}
 
 ===Conjunction===
-{{sl-con}}
+{{sl-head|conjunction|?}}
 
 # [[and]]
 
@@ -35620,7 +35620,7 @@ From {{af|sl|Italijȁn//Italijȃn|-ski}}.
 
 ====Related terms====
 {{col|sl|title=adverbs|italijȃnsko}}
-{{col|sl|title=nouns|Italijȁn//Italijȃn<g:m-pr>|Italijȃnka<g:f>|italijȃnščina<g:f>}}
+{{col|sl|title=nouns|Italijȁn//Italijȃn<g:m-an>|Italijȃnka<g:f>|italijȃnščina<g:f>}}
 {{col|sl|title=proper nouns|Itálija<g:f>}}
 
 ===Further reading===
@@ -35785,7 +35785,7 @@ From {{inh|sl|sla-pro|*jьz}}, from {{der|sl|ine-pro|*eǵʰs}}, {{m|ine-pro|*h�
 * {{sl-IPA|iz}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[from]] (with the source or provenance of or at) {{+obj|sl|gen}}
 
@@ -36512,7 +36512,7 @@ Borrowed from {{bor|sl|de|ja}}.
 * {{sl-IPA|jā}}
 
 ====Particle====
-{{sl-part|jā}}
+{{sl-head|particle|jā}}
 
 # {{lb|sl|informal}} [[yes]]
 #: {{syn|sl|dȁ}}
@@ -36521,7 +36521,7 @@ Borrowed from {{bor|sl|de|ja}}.
 ===Etymology 2===
 
 ====Pronoun====
-{{sl-pron}}
+{{sl-head|pronoun|?}}
 
 # {{lb|sl|dialectal}} {{alternative form of|sl|jȁz}}
 #: {{uxi|sl|'''Ja''' sem Slovenec.|'''I''' am Slovenian.}}
@@ -37227,7 +37227,7 @@ From {{inh|sl|sla-pro|*ěsnъ}}.
 * {{sl-IPA|jásən}}
 
 ===Adjective===
-{{sl-adj|jásən|jásnejši|jasnȇjši}}
+{{sl-adj|jásən|jásnejši|comp2=jasnȇjši}}
 
 # [[clear]] (without clouds)
 
@@ -37434,7 +37434,7 @@ From {{inh|sl|sla-pro|*(j)azъ}}, from {{der|sl|ine-pro|*éǵh₂}}.
 * {{sl-IPA|jȁz}}
 
 ===Pronoun===
-{{sl-pron|jȁz}}
+{{sl-head|pronoun|jȁz}}
 
 # [[I]]
 #: {{syn|sl|''see'' [[Thesaurus:jaz]]}}
@@ -37576,7 +37576,7 @@ Borrowed from {{bor|sl|sh|jȅbiga}}.
 [ˈjebiga]
 
 ===Interjection===
-{{sl-interj}}
+{{sl-head|interjection|?}}
 
 # [[fuck it]]
 -------- end text --------
@@ -38231,7 +38231,7 @@ Page 1777 jeza: -------- begin text --------
 # [[anger]] {{gl|a strong, short-lived emotion that causes aggressive tendencies}}
 # {{lb|sl|figuratively}} [[contempt]], [[disdain]]
 # {{lb|sl|figuratively|literary}} [[ferocity]], [[fierceness]]
-#: {{syn|sl|silovȋtost|dívjost//divjọ̑st}}
+#: {{syn|sl|silovȋtost|;|dívjost|divjọ̑st}}
 
 =====Declension=====
 {{sl-infl-noun
@@ -38270,7 +38270,7 @@ From {{af|sl|jeza|-en}}.
 * {{sl-IPA|jẹ́zən}}
 
 ===Adjective===
-{{sl-adj|jẹ́zən|bolj|jẹ́znejši}}
+{{sl-adj|jẹ́zən|bolj|comp2=jẹ́znejši}}
 
 # [[angry]] (displaying anger)
 
@@ -39018,7 +39018,7 @@ From {{af|sl|jug|-njak}}.
 * {{sl-IPA|južnják}}
 
 ===Noun===
-{{sl-noun|južnják|m-pr}}
+{{sl-noun|južnják|m-an}}
 
 # [[southerner]]
 
@@ -39147,7 +39147,7 @@ From {{inh|sl|sla-pro|*kъ̀da že}}.
 * {{sl-IPA|kȁdar}}
 
 ===Conjunction===
-{{sl-con|kȁdar}}
+{{sl-head|conjunction|kȁdar}}
 
 # [[when]]
 
@@ -39240,7 +39240,7 @@ From {{der|sl|sla-pro|*jь}} appended to {{der|sl|sla-pro|*ka}}, from {{der|sl|i
 * {{sl-IPA|káj}}
 
 ====Pronoun====
-{{sl-pron|káj}}
+{{sl-head|pronoun|káj}}
 
 # [[what]] (interrogative)
 
@@ -39253,12 +39253,12 @@ From {{der|sl|sla-pro|*jь}} appended to {{der|sl|sla-pro|*ka}}, from {{der|sl|i
 * {{sl-IPA|kȁj}}
 
 ====Conjunction====
-{{sl-con|kȁj}}
+{{sl-head|conjunction|kȁj}}
 
 # [[what]]
 
 ====Pronoun====
-{{sl-pron|kȁj}}
+{{sl-head|pronoun|kȁj}}
 
 # {{l|en|[[any]], [[anything]], [[something]]}}
 #: {{uxi|sl|Se med vama ''kaj'' plete?|Is there '''anything''' going on between you two?}}
@@ -39405,7 +39405,7 @@ Page 1836 kakor: -------- begin text --------
 * {{sl-IPA|kȁkor}}
 
 ===Conjunction===
-{{sl-con|kȁkor}}
+{{sl-head|conjunction|kȁkor}}
 
 # [[as]] (in the same way that, to the same degree)
 
@@ -39451,7 +39451,7 @@ Page 1839 kakšen: -------- begin text --------
 * {{sl-IPA|kākšən}}
 
 ===Pronoun===
-{{sl-pron|kākšən}}
+{{sl-head|pronoun|kākšən}}
 
 # [[what]] ([[like]])
 #: '''Kakšne''' barve je tvoj avto?
@@ -40813,7 +40813,7 @@ Page 1904 kdo: -------- begin text --------
 * {{sl-IPA|kdọ̄}}
 
 ===Pronoun===
-{{sl-pron|kdọ̄}}
+{{sl-head|pronoun|kdọ̄}}
 
 # [[who]] (interrogative)
 
@@ -40821,7 +40821,7 @@ Page 1904 kdo: -------- begin text --------
 {{sl-decl-pron-kdo+kaj}}
 
 ===Pronoun===
-{{sl-pron|kdọ̄}}
+{{sl-head|pronoun|kdọ̄}}
 
 # [[any]], [[anyone]]
 
@@ -40843,7 +40843,7 @@ From {{der|sl|sla-pro|*kъto}} and {{m|sla-pro|*že}}.
 * {{sl-IPA|kdọ̑r|kdȍr}}
 
 ===Pronoun===
-{{sl-pron|kdọ̑r|head2=kdȍr}}
+{{sl-head|pronoun|kdọ̑r|head2=kdȍr}}
 
 # [[who]], [[that]] (relative)
 -------- end text --------
@@ -41088,7 +41088,7 @@ From the neuter form of {{inh|sl|sla-pro|*jь že}}. The initial ''j-'' in relat
 * {{sl-IPA|ker}}
 
 ===Conjunction===
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # [[because]] (by or for the cause that; on this account that; for the reason that)
 
@@ -41208,7 +41208,7 @@ From {{inh|sl|sla-pro|*kъjь}}, from {{inh|sl|ine-pro|*kʷos}} + relative parti
 * {{sl-IPA|ki}}
 
 ===Pronoun===
-{{sl-pron|-}}
+{{sl-head|pronoun|-}}
 
 # [[who]], [[which]], [[that]] (relative)
 
@@ -41270,7 +41270,7 @@ Of {{onomatopoeic|sl|title=imitative}} origin, similar to {{cog|cs|kikirikí}} a
 * {{sl-IPA|kikirikȋ}}
 
 ===Interjection===
-{{sl-interj|kikirikȋ}}
+{{sl-head|interjection|kikirikȋ}}
 
 # [[cock-a-doodle-doo]]
 
@@ -43311,7 +43311,7 @@ From {{inh|sl|sla-pro|*jako||how, in which way}}. Cognate with {{cog|sh|ako}}.
 * {{sl-IPA|ko}}
 
 ====Conjunction====
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # [[when]] (at the time that)
 #: pride dan, ko nimas energije - there comes a day when you have no energy
@@ -43320,7 +43320,7 @@ From {{inh|sl|sla-pro|*jako||how, in which way}}. Cognate with {{cog|sh|ako}}.
 {{rfe|sl}}
 
 ====Conjunction====
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # {{lb|sl|colloquial}} {{alternative form of|sl|kot}}
 
@@ -43837,7 +43837,7 @@ From {{inh|sl|sla-pro|*kǫdrь}}.
 * {{sl-IPA|kọ́dər}}
 
 ===Noun===
-{{sl-noun|kọ́dər|m-in|g2=m-an}}
+{{sl-noun|kọ́dər|m-in,m-an}}
 
 # [[curl]] (lock of curling hair)
 # [[poodle]] (dog)
@@ -46029,7 +46029,7 @@ Page 2212 kot: -------- begin text --------
 * {{sl-IPA|kot}}
 
 ====Conjunction====
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # (just) [[as]], (just) [[like]]
 
@@ -46381,7 +46381,7 @@ From {{m|sl|kozorọ̑g}}.
 * {{sl-IPA|Kozorọ̑g}}
 
 ===Proper noun===
-{{sl-proper noun|Kozorọ̑g|m-in|g2=m-an}}
+{{sl-proper noun|Kozorọ̑g|m-in,m-an}}
 
 # {{lb|sl|zodiac constellations}} [[Capricornus]]
 # {{lb|sl|astrology}} [[Capricorn]]
@@ -47208,7 +47208,7 @@ From {{inh|sl|sla-pro|*kry}}, from {{inh|sl|ine-bsl-pro|*krū́ˀs}}, from {{inh
 * {{sl-IPA|krȋ}}
 
 ====Interjection====
-{{sl-interj|krȋ}}
+{{sl-head|interjection|krȋ}}
 
 # {{ng|sound of a cricket}}: [[chirp]]
 
@@ -47596,7 +47596,7 @@ From {{inh|sl|sla-pro|*krǫgъ}}.
 * {{sl-IPA|krog}}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{lb|sl|with genitive}} [[around]]
 
@@ -48481,7 +48481,7 @@ From {{inh|sl|sla-pro|*kurьcь}}, diminutive of {{m|sla-pro|*kurъ}}.
 * {{sl-IPA|kȗrəc}}
 
 ===Noun===
-{{sl-noun|kȗrəc|m-in|g2=m-an}}
+{{sl-noun|kȗrəc|m-in,m-an}}
 
 # {{topics|sl|Body parts}} {{lb|sl|vulgar}} [[dick]], [[cock]], [[prick]]
 #: {{syn|sl|lȗlček|pẹ̑nis}}
@@ -49094,7 +49094,7 @@ From {{inh|sl|sla-pro|*volsь}}. Compare with obsolete {{l|sl|vlas}}.
 * {{homophones|sl|laz}}
 
 ===Noun===
-{{sl-noun|lȃs|m-in|g2=f}}
+{{sl-noun|lȃs|m-in,f}}
 
 # {{lb|sl|anatomy}} [[hair]] on top of head
 # {{lb|sl|obsolete|dialectal}} [[hair]] (anywhere){{sl-ref|SSKJ}}
@@ -50191,7 +50191,7 @@ Page 2403 lep pozdrav: -------- begin text --------
 * {{sl-IPA|lẹ̑p pozdrȁv}}
 
 ===Interjection===
-{{sl-interj|[[lẹ̑p]] [[pozdrȁv]]}}
+{{sl-head|interjection|[[lẹ̑p]] [[pozdrȁv]]}}
 
 # [[goodbye]]
 # [[kind regards]] (at the end of a letter) (sometimes abbreviated as: "Lp")
@@ -50948,7 +50948,7 @@ Page 2433 lice: -------- begin text --------
 # {{lb|sl|anatomy|archaic}} [[face]]
 #: {{syn|sl|obrȁz}}
 # {{lb|sl|literary}} [[facade]], [[frontage]]
-#: {{syn|sl|fasȃda|pročȇlje//pročẹ̑lje}}
+#: {{syn|sl|fasȃda|;|pročȇlje|pročẹ̑lje}}
 
 ====Declension====
 {{sl-infl-noun
@@ -51972,7 +51972,7 @@ From {{af|sl|ločīti|-ováti}}.
 * {{hyph|sl|lo|če|va|ti}}
 
 ===Verb===
-{{sl-verb|ločeváti|impf|pf=ločīti//lọ́čiti}}
+{{sl-verb|ločeváti|impf|pf=ločīti|pf2=lọ́čiti}}
 
 # {{lb|sl|transitive}} to [[separate]] {{gl|to make something no longer together with something}} {{+obj|sl|:od(gen)<from>}}
 # {{lb|sl|transitive}} to [[distinguish]] {{gl|to see, to feel the difference between people, things, concepts}} {{+obj|sl|:od(gen)<from>}}
@@ -53508,7 +53508,7 @@ Might be from {{bor|sl|de|gemach|gloss=slowly, easy}}, from {{der|sl|goh|gimah|t
 }}
 
 ====Interjection====
-{{sl-interj|mȃh}}
+{{sl-head|interjection|mȃh}}
 
 # {{lb|sl|obsolete|rare}} [[quiet]], [[shut up]]
 #: {{syn|sl|tiho|tišina|mir|gmah}}
@@ -54983,7 +54983,7 @@ Page 2623 me: -------- begin text --------
 * {{sl-IPA|mẹ̑}}
 
 ===Pronoun===
-{{sl-pron|mẹ̑}}
+{{sl-head|pronoun|mẹ̑}}
 
 # [[we]] {{gloss|feminine and neuter plural, more than two}}
 
@@ -55031,7 +55031,7 @@ From {{inh|sl|sla-pro|*meďu}}.
 * {{sl-IPA|med}}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{lb|sl|with instrumental}} [[between]] (stationary)
 # {{lb|sl|with accusative}} [[between]] (motion towards)
@@ -55329,7 +55329,7 @@ From {{inh|sl|sla-pro|*mękъkъ}}.
 * {{sl-IPA|méhək}}
 
 ===Adjective===
-{{sl-adj|méhək|mehkȇjši|mẹ̑čji}}
+{{sl-adj|méhək|mehkȇjši|comp2=mẹ̑čji}}
 
 # [[soft]] (giving way under pressure)
 
@@ -56335,7 +56335,7 @@ Page 2680 Meterc: -------- begin text --------
 * {{sl-IPA|Metérc}}
 
 ===Proper noun===
-{{sl-proper noun|Metérc|m-pr}}
+{{sl-proper noun|Metérc|m-an}}
 
 # {{surname|sl}}
 
@@ -56544,7 +56544,7 @@ From {{inh|sl|sla-pro|*my}}.
 * {{sl-IPA|mȋ}}
 
 ===Pronoun===
-{{sl-pron|mȋ}}
+{{sl-head|pronoun|mȋ}}
 
 # [[we]] (masculine plural, more than two)
 
@@ -57112,7 +57112,7 @@ From {{inh|sl|sla-pro|*mirъ||peace; world}}.
 }}
 
 ====Interjection====
-{{sl-interj|mȋr}}
+{{sl-head|interjection|mȋr}}
 
 # [[quiet]], [[silent]]
 #: {{syn|sl|tiho|tišina}}
@@ -57253,7 +57253,7 @@ Page 2719 mirna Bosna: -------- begin text --------
 * {{sl-IPA|mīrna Bọ̑sna}}
 
 ===Interjection===
-{{sl-interj|[[miren|mīrna]] [[Bọ̑sna]]}}
+{{sl-head|interjection|[[miren|mīrna]] [[Bọ̑sna]]}}
 
 # {{n-g|a locution used to settle a debate}}
 #: {{usex|sl|Kar pusti vse skupaj, pa '''mirna Bosna'''.|Just leave everything as it is, and we don't bring it up any more.}}
@@ -58184,7 +58184,7 @@ Page 2764 moder: -------- begin text --------
 * {{sl-IPA|mọ́dər}}
 
 ====Adjective====
-{{sl-adj|mọ́dər|modrȇjši|mọ́drejši}}
+{{sl-adj|mọ́dər|modrȇjši|comp2=mọ́drejši}}
 
 # [[wise]]
 
@@ -58396,7 +58396,7 @@ From {{inh|sl|sla-pro|*mojь}}.
 * {{sl-IPA|mọ́j}}
 
 ===Determiner===
-{{sl-det|mọ́j}}
+{{sl-head|determiner|mọ́j}}
 
 # [[my]]
 
@@ -60062,7 +60062,7 @@ From {{inh|sl|sla-pro|*na}}.
 * {{sl-IPA|na}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{lb|sl|with locative}} [[on]] (stationary)
 # {{lb|sl|with accusative}} [[onto]] (motion towards)
@@ -60245,7 +60245,7 @@ Page 2855 nad: -------- begin text --------
 * {{sl-IPA|nad}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[over]], [[above]] (stationary) {{+obj|sl|ins}}
 # [[over]], [[above]] (motion towards) {{+obj|sl|acc}}
@@ -60561,7 +60561,7 @@ Page 2872 najbliže: -------- begin text --------
 * {{l|sl|nȁjblȋžje}}
 
 ===Preposition===
-{{sl-prep|nȁjblȋže}}
+{{sl-head|preposition|nȁjblȋže}}
 
 # [[closest]] to
 
@@ -60582,7 +60582,7 @@ Page 2873 najbližje: -------- begin text --------
 * {{l|sl|nȁjblȋže}}
 
 ===Preposition===
-{{sl-prep|nȁjblȋžje}}
+{{sl-head|preposition|nȁjblȋžje}}
 
 # [[closest]] to
 
@@ -60614,7 +60614,7 @@ Page 2875 najin: -------- begin text --------
 * {{sl-IPA|nȃjin}}
 
 ===Determiner===
-{{sl-det|nȃjin}}
+{{sl-head|determiner|nȃjin}}
 
 # [[our]] (dual), of us two
 
@@ -61324,7 +61324,7 @@ Page 2908 nasvidenje: -------- begin text --------
 * {{sl-IPA|nasvȋdenje}}
 
 ===Interjection===
-{{sl-interj|nasvȋdenje}}
+{{sl-head|interjection|nasvȋdenje}}
 
 # [[goodbye]]
 -------- end text --------
@@ -61337,7 +61337,7 @@ From {{inh|sl|sla-pro|*našь}}.
 * {{sl-IPA|nȁš}}
 
 ===Determiner===
-{{sl-det|nȁš}}
+{{sl-head|determiner|nȁš}}
 
 # {{cln|sl|possessive determiners}} [[our]], [[ours]] (plural, more than two)
 
@@ -61452,7 +61452,7 @@ From {{inh|sl|sla-pro|*ne}}, from {{inh|sl|ine-pro|*né}}.
 * {{sl-IPA|nȅ|ne}}
 
 ===Particle===
-{{sl-part|nȅ}}
+{{sl-head|particle|nȅ}}
 
 # [[not]] (negates meaning of verb)
 # [[no]] (expresses disapproval, disagreement)
@@ -61815,7 +61815,7 @@ From {{inh|sl|sla-pro|*nečьto}}, {{m|sla-pro|*něčьto}}, re-formed by analog
 * {{sl-IPA|nẹ̄kaj}}
 
 ===Pronoun===
-{{sl-pron|nẹ̄kaj}}
+{{sl-head|pronoun|nẹ̄kaj}}
 
 # {{cln|sl|indefinite pronouns}} [[something]]
 
@@ -61858,7 +61858,7 @@ From {{inh|sl|sla-pro|*nekъto}}, {{m|sla-pro|*někъto}}.
 * {{sl-IPA|nekdọ̄|nẹ̑kdo}}
 
 ===Pronoun===
-{{sl-pron|nekdọ̄|head2=nẹ̑kdo}}
+{{sl-head|pronoun|nekdọ̄|head2=nẹ̑kdo}}
 
 # [[someone]], [[somebody]]
 
@@ -62282,7 +62282,7 @@ From {{af|sl|nȅposrẹ̑den|-o}}.
 * {{hyph|sl|ne|pos|red|no}}
 
 ===Adverb===
-{{sl-adv|nȅposrẹ̑dno|nȅposrẹ̑dneje|nȅposrẹ̑dnejše}}
+{{sl-adv|nȅposrẹ̑dno|nȅposrẹ̑dneje|comp2=nȅposrẹ̑dnejše}}
 
 # [[directly]], [[immediately]] {{gl|happening, being done without intervention, without anything in between}}
 #* {{quote-web|1=sl|date=01/14/25|author=STA|work=»Higienski minimum« / V Levici in SD pričakujejo odstop generalnega direktorja policije |url=https://www.mladina.si/237877/higienski-minimum-v-levici-in-sd-pricakujejo-odstop-generalnega-direktorja-policije/|text=Odgovornost šefa policije je namreč po oceni Levice večja in ni '''neposredno''' povezana z interpelacijo, bo pa na njihovo glasovanje vplivalo tudi razreševanje tega problema.|t=According to the Left, the responsibility of the police chief is greater and is not '''directly''' related to the questioning, but their vote will also be influenced by the resolution of this problem.}}
@@ -62299,7 +62299,7 @@ From {{prefix|sl|ne|potrpežljīv}}.
 * {{sl-IPA|nȅpotrpežljīv}}
 
 ===Adjective===
-{{sl-adj|nȅpotrpežljīv|bolj|nȅpotrpežljívejši}}
+{{sl-adj|nȅpotrpežljīv|bolj|comp2=nȅpotrpežljívejši}}
 
 # [[impatient]]
 
@@ -62609,7 +62609,7 @@ From Proto-Slavic {{m|sla-pro|*ničьto}}.
 * {{sl-IPA|nȉč}}
 
 ===Pronoun===
-{{sl-pron|nȉč}}
+{{sl-head|pronoun|nȉč}}
 
 # [[nothing]]
 
@@ -62617,7 +62617,7 @@ From Proto-Slavic {{m|sla-pro|*ničьto}}.
 {{sl-decl-pron-nihče+nič}}
 
 ===Numeral===
-{{sl-num|nȉč}}
+{{sl-head|numeral|nȉč}}
 
 # [[zero]]
 
@@ -62646,7 +62646,7 @@ From {{der|sl|sla-pro|*ni-}} + {{m|sla-pro|*kъto}} + the particle {{m|sla-pro|*
 * {{sl-IPA|nihčȅ|nȋhče}}
 
 ===Pronoun===
-{{sl-pron|nihčȅ|head2=nȋhče}}
+{{sl-head|pronoun|nihčȅ|head2=nȋhče}}
 
 # [[nobody]], [[no one]]
 #: {{synonyms|sl|noben}}
@@ -63018,7 +63018,7 @@ Page 2994 njegov: -------- begin text --------
 * {{sl-IPA|njegóv|njegȍv}}
 
 ===Determiner===
-{{sl-det|njegóv|head2=njegȍv}}
+{{sl-head|determiner|njegóv|head2=njegȍv}}
 
 # [[his]]
 # [[its]] (neuter)
@@ -63041,7 +63041,7 @@ Page 2995 njen: -------- begin text --------
 * {{sl-IPA|njẹ́n}}
 
 ===Determiner===
-{{sl-det|njẹ́n}}
+{{sl-head|determiner|njẹ́n}}
 
 # [[her]], [[hers]]
 
@@ -63062,7 +63062,7 @@ Page 2996 njihov: -------- begin text --------
 * {{sl-IPA|njīhov}}
 
 ===Determiner===
-{{sl-det|njīhov}}
+{{sl-head|determiner|njīhov}}
 
 # [[their]], [[theirs]] (plural, more than two)
 
@@ -63083,7 +63083,7 @@ Page 2997 njun: -------- begin text --------
 * {{sl-IPA|njún}}
 
 ===Determiner===
-{{sl-det|njún}}
+{{sl-head|determiner|njún}}
 
 # [[their]], [[theirs]] (dual), of them two
 
@@ -63142,7 +63142,7 @@ Page 3000 noben: -------- begin text --------
 {{sl-decl-adj|nobèn}}
 
 ===Pronoun===
-{{sl-pron}}
+{{sl-head|pronoun|?}}
 
 # {{lb|sl|informal|colloquial}} {{l|en|nobody}}, {{l|en|no one}}
 #: {{synonyms|sl|nihče}}
@@ -64022,7 +64022,7 @@ From {{inh|sl|sla-pro|*o(b)}}, from {{der|sl|ine-pro|*h₃ebʰi}}.
 * {{sl-IPA|o}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[about]], [[concerning]] {{+obj|sl|loc}}
 
@@ -64914,7 +64914,7 @@ From {{af|sl|ob-|žalováti}}.
 
 # {{lb|sl|intransitive}} to [[regret]]
 # {{lb|sl|intransitive|archaic}} to [[sue]], to [[vilify]]
-#: {{syn|sl|tožīti//tọ́žiti|tȃrnati}}
+#: {{syn|sl|tožīti|tọ́žiti|;|tȃrnati}}
 
 ====Conjugation====
 {{sl-infl-verb-manual
@@ -65044,7 +65044,7 @@ From {{inh|sl|sla-pro|*otъ}}
 * {{sl-IPA|od}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[from]], away from {{+obj|sl|gen}}
 # [[since]] or starting from (place or time) {{+obj|sl|gen}}
@@ -66556,7 +66556,7 @@ From {{inh|sl|sla-pro|*onъ}}, from {{inh|sl|ine-pro|*h₁ónos}}.
 * {{sl-IPA|ȍn}}
 
 ===Pronoun===
-{{sl-pron|ȍn}}
+{{sl-head|pronoun|ȍn}}
 
 # [[he]]
 # {{lb|sl|obsolete}} ''{{l|sl|onkanje}} form''{{sl-ref|SS, p. 389}}
@@ -66591,7 +66591,7 @@ From {{inh|sl|sla-pro|*ona}}.
 * {{sl-IPA|óna}}
 
 ===Pronoun===
-{{sl-pron|óna}}
+{{sl-head|pronoun|óna}}
 
 # [[she]]
 # {{form of|sl|{{glossary|nominative}} {{glossary|plural}}|ono}}
@@ -66615,7 +66615,7 @@ Page 3152 one: -------- begin text --------
 * {{sl-IPA|óne}}
 
 ===Pronoun===
-{{sl-pron|óne}}
+{{sl-head|pronoun|óne}}
 
 # [[they]] {{qual|feminine plural, more than two}}
 
@@ -66637,7 +66637,7 @@ From {{inh|sl|sla-pro|*oni}}.
 * {{sl-IPA|óni}}
 
 ===Pronoun===
-{{sl-pron|óni}}
+{{sl-head|pronoun|óni}}
 
 # [[they]] (masculine plural, more than two)
 
@@ -66660,7 +66660,7 @@ From {{inh|sl|sla-pro|*ono}}.
 * {{lb|sl|archaic}} {{sl-IPA|onọ̑}}
 
 ===Pronoun===
-{{sl-pron|óno}}
+{{sl-head|pronoun|óno}}
 
 # [[it]]
 # {{lb|sl|obsolete}} ''{{l|sl|onokanje}} form''{{sl-ref|SS, p. 389}}
@@ -66875,7 +66875,7 @@ Page 3165 oprostite: -------- begin text --------
 * {{sl-IPA|oprostȋte}}
 
 ===Interjection===
-{{sl-interj|oprostȋte}}
+{{sl-head|interjection|oprostȋte}}
 
 # [[sorry]]!
 # [[excuse me]] (formal)
@@ -67458,7 +67458,7 @@ From {{inh|sl|sla-pro|*osmь}}, from {{der|sl|ine-bsl-pro|*aśtō}}, from {{der|
 * {{hyphenation|sl|os|em}}
 
 ===Numeral===
-{{sl-num|ọ́səm}}
+{{sl-head|numeral|ọ́səm}}
 
 # [[eight]]
 
@@ -67494,7 +67494,7 @@ Page 3198 osemdeset: -------- begin text --------
 * {{sl-IPA|ọ́səmdeset}}
 
 ===Numeral===
-{{sl-num|ọ́səmdeset}}
+{{sl-head|numeral|ọ́səmdeset}}
 
 # [[eighty]]
 
@@ -67516,7 +67516,7 @@ From {{inh|sl|sla-pro|*osmь na desęte||eight on ten}}. Equivalent to {{suffix|
 * {{hyphenation|sl|os|əm|najst}}
 
 ===Numeral===
-{{sl-num|osəmnájst|head2=ọ̄səmnajst}}
+{{sl-head|numeral|osəmnájst|head2=ọ̄səmnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[eighteen]]
 #: {{syn|sl|osemnajstero}}
@@ -67531,7 +67531,7 @@ From {{inh|sl|sla-pro|*osmь na desęte||eight on ten}}. Equivalent to {{suffix|
 {{sl-decl-num|ọ̄səmnajst|3=ọ̑səmnajst|declension type=2}}
 
 ===Noun===
-{{sl-noun|osəmnájst|head2=ọ̄səmnajst|m-an-p|g2=f-p|g3=n-p|g4=n}}
+{{sl-noun|osəmnájst|head2=ọ̄səmnajst|m-p,f-p,n-p,n}}
 
 # {{lb|sl|masculine|in the plural}} a group of [[eighteen]] things with [[masculine]] [[grammatical gender]] or a group of people with at least one male.
 #: {{syn|sl|osemnajsterica|osemnajstorica}}
@@ -68346,7 +68346,7 @@ Page 3233 ovratnik: -------- begin text --------
 Page 3234 oz.: -------- begin text --------
 
 ===Conjunction===
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # {{abbreviation of|sl|ozȋroma}}
 -------- end text --------
@@ -68391,7 +68391,7 @@ From {{m|sl|ozīrati}}.
 * {{sl-IPA|ozȋroma}}
 
 ===Conjunction===
-{{sl-con|ozȋroma}}
+{{sl-head|conjunction|ozȋroma}}
 
 # [[or]], [[and]]
 #: {{ux|sl|Spomenik naj bi postavili na trgu '''oziroma''' v parku.|The monument is to be placed on the square '''or''' in the park.}}
@@ -68637,7 +68637,7 @@ Page 3248 pa: -------- begin text --------
 * {{audio|sl|LL-Q9063 (slv)-Zupanurska-pa.wav}}
 
 ===Conjunction===
-{{sl-con|-}}
+{{sl-head|conjunction|-}}
 
 # [[and]]
 #: {{ux|sl|Jaz pa ti.|Me and you.|inline=1}}
@@ -68656,7 +68656,7 @@ Cognate with Old Church Slavonic and Russian {{l|ru|паче||more}} and {{cog|b
 * {{sl-IPA|pȁč}}
 
 ===Particle===
-{{sl-part|pȁč}}
+{{sl-head|particle|pȁč}}
 
 # [[indeed]], [[certainly]]
 # (''when answering a negative question'') [[on the contrary]]
@@ -70457,7 +70457,7 @@ From {{inh|sl|sla-pro|*pętь}}
 * {{homophones|sl|ped}}
 
 ====Numeral====
-{{sl-num|pẹ̑t}}
+{{sl-head|numeral|pẹ̑t}}
 
 # [[five]]
 
@@ -70550,7 +70550,7 @@ Page 3333 petdeset: -------- begin text --------
 * {{sl-IPA|pẹ̑tdeset}}
 
 ===Numeral===
-{{sl-num|pẹ̑tdeset}}
+{{sl-head|numeral|pẹ̑tdeset}}
 
 # [[fifty]]
 
@@ -70752,7 +70752,7 @@ From {{inh|sl|sla-pro|* pę̑tь na desęte||five on ten}}. Equivalent to {{suff
 * {{hyphenation|sl|pet|najst}}
 
 ===Numeral===
-{{sl-num|petnájst|head2=pẹ̑tnajst}}
+{{sl-head|numeral|petnájst|head2=pẹ̑tnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[fifteen]]
 #: {{syn|sl|petnajstero}}
@@ -72456,7 +72456,7 @@ From {{inh|sl|sla-pro|*po}}.
 * {{sl-IPA|po}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[around]], [[about]] {{+obj|sl|loc}}
 # [[along]], [[through]] (the length of) {{+obj|sl|loc}}
@@ -72525,17 +72525,12 @@ Page 3413 poceni: -------- begin text --------
 * {{sl-IPA|pocẹ́ni}}
 
 ===Adjective===
-{{sl-adj|pocẹ́ni|pocenȇjši}}
+{{sl-adj|pocẹ́ni|pocenȇjši|indecl=1}}
 
 # [[cheap]] (low in price)
 
-====Inflection====
-Not declined. The form {{m|sl||pocéni}} is used for all cases and genders.
-
 ===Further reading===
 * {{R:sl:Fran}}
-
-{{catlangname|sl|indeclinable adjectives}}
 -------- end text --------
 Page 3414 počasi: -------- begin text --------
 
@@ -72556,7 +72551,7 @@ Page 3415 počasno: -------- begin text --------
 * {{sl-IPA|počásno}}
 
 ===Adverb===
-{{sl-adv|počásno|počásneje|počasnȇje}}
+{{sl-adv|počásno|počásneje|comp2=počasnȇje}}
 
 # [[slowly]] {{gloss|at a slow pace}}
 
@@ -73256,7 +73251,7 @@ Page 3449 pogosto: -------- begin text --------
 * {{sl-IPA|pogọ̑sto}}
 
 ===Adverb===
-{{sl-adv|pogọ̑sto|pogọ̑steje|pogọ̑stejše}}
+{{sl-adv|pogọ̑sto|pogọ̑steje|comp2=pogọ̑stejše}}
 
 # [[often]]
 
@@ -76167,7 +76162,7 @@ From {{inh|sl|sla-pro|*pǫtь}}, from {{inh|sl|ine-bsl-pro|*pántis}}, from {{in
 * {{hyphenation|sl|pot}}
 
 ====Noun====
-{{sl-noun|pọ́t|f|g2=m-in|g3=m-an}}
+{{sl-noun|pọ́t|f,m-in,m-an}}
 
 # {{lb|sl|inanimate}} [[way]], [[path]]
 #: {{syn|sl|potka}}
@@ -76187,7 +76182,7 @@ From {{inh|sl|sla-pro|*pǫtь}}, from {{inh|sl|ine-bsl-pro|*pántis}}, from {{in
 #: {{syn|sl|bart|-krat}}
 
 =====Usage notes=====
-The masculine gender is nowadays obsolete, except in some collocations, e.g. {{l|sl|križev pot}}. For animate senses, however, is the only possible.
+The masculine gender is nowadays obsolete, except in some collocations, e.g. {{l|sl|križev pot}}. For animate senses, however, it is the only possible gender.
 
 =====Declension=====
 {{sl-infl-noun
@@ -76960,7 +76955,7 @@ Page 3608 pozno: -------- begin text --------
 * {{sl-IPA|pózno}}
 
 ===Adverb===
-{{sl-adv|pózno|poznȇje|poznȇjše}}
+{{sl-adv|pózno|poznȇje|comp2=poznȇjše}}
 
 # [[late]]
 
@@ -77041,7 +77036,7 @@ From {{af|sl|požérati|-uh}}.
 # {{lb|sl|derogatory}} [[glutton]] {{gl|someone who eats a lot}}
 # {{lb|sl|derogatory}} a [[greedy]] person
 # {{lb|sl|dialectal}} [[swallow hole]], [[sinkhole]] {{gl|an opening in karst soil into which water disappears}}
-#: {{syn|sl|požirȃlnik|ponȍr//ponór}}
+#: {{syn|sl|požirȃlnik|;|ponȍr|ponór}}
 
 ====Declension====
 {{sl-infl-noun
@@ -77578,7 +77573,7 @@ Page 3635 pravilno: -------- begin text --------
 * {{sl-IPA|pravȋlno}}
 
 ===Adverb===
-{{sl-adv|pravȋlno|pravȋlneje|pravȋlnejše}}
+{{sl-adv|pravȋlno|pravȋlneje|comp2=pravȋlnejše}}
 
 # [[correctly]]
 
@@ -77923,7 +77918,7 @@ From {{inh|sl|sla-pro|*perdъ}}.
 * {{sl-IPA|pred}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # [[before]], [[in front of]] (motion to) {{+obj|sl|acc}}
 # [[before]], [[in front of]] (stationary) {{+obj|sl|ins}}
@@ -78969,7 +78964,7 @@ Page 3700 pri: -------- begin text --------
 * {{sl-IPA|pri}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{lb|sl|with locative}} [[by]], [[near]]
 # {{lb|sl|with locative}} [[at]]
@@ -80006,7 +80001,7 @@ Page 3752 prosim: -------- begin text --------
 # {{inflection of|sl|prosīti||1|s|pres}}
 
 ===Interjection===
-{{sl-interj|prọ́sim}}
+{{sl-head|interjection|prọ́sim}}
 
 # [[please]]
 -------- end text --------
@@ -80759,7 +80754,7 @@ From {{inh|sl|sla-pro|*pustъ}}.
 * {{sl-IPA|pȗst}}
 
 ====Adjective====
-{{sl-adj|pȗst|pustȇjši|pústejši}}
+{{sl-adj|pȗst|pustȇjši|comp2=pústejši}}
 
 # [[desolate]], [[bare]] (without vegetation or uninhabited)
 # ''(expressively)'' [[dreary]], [[plain]], [[empty]]
@@ -80994,7 +80989,7 @@ Page 3799 queer: -------- begin text --------
 * {{hyph|sl|queer}}
 
 ===Adjective===
-{{sl-adj|?|-}} {{lb|sl|indeclinable}}
+{{sl-adj|?|-|indecl=1}}
 
 # {{l|en|queer}} {{gl|relating to a person whose sexual orientation is not heterosexual or whose gender identity does not match the gender assigned at birth}}
 #: {{syn|sl|kvȋrovski|queerovski}}
@@ -81806,7 +81801,7 @@ Page 3841 razen: -------- begin text --------
 * {{sl-IPA|rázən}}
 
 ===Preposition===
-{{sl-prep|rázən}}
+{{sl-head|preposition|rázən}}
 
 # [[aside from]] (e.g. at traffic signs)
 #: razen za stanovalce - except for residents 
@@ -82106,7 +82101,7 @@ Page 3858 Rebernak: -------- begin text --------
 * {{sl-IPA|Rebernák}}
 
 ===Proper noun===
-{{sl-proper noun|Rebernák|m-pr}}
+{{sl-proper noun|Rebernák|m-an}}
 
 # {{surname|sl}}
 
@@ -82284,7 +82279,7 @@ From {{inh|sl|sla-pro|*rědъkъ}}.
 * {{sl-IPA|rẹ́dək}}
 
 ===Adjective===
-{{sl-adj|rẹ́dək|redkȇjši|rẹ́dkejši}}
+{{sl-adj|rẹ́dək|redkȇjši|comp2=rẹ́dkejši}}
 
 # [[rare]], [[uncommon]], [[infrequent]]
 
@@ -82324,7 +82319,7 @@ Page 3868 redko: -------- begin text --------
 * {{sl-IPA|rẹ́dko}}
 
 ===Adverb===
-{{sl-adv|rẹ́dko|redkȇje|redkȇjše|rẹ́dkeje|rẹ́dkejše}}
+{{sl-adv|rẹ́dko|redkȇje|comp2=redkȇjše|comp3=rẹ́dkeje|comp4=rẹ́dkejše}}
 
 # [[rarely]], [[uncommonly]], [[infrequently]]
 
@@ -84866,7 +84861,7 @@ Page 3993 s: -------- begin text --------
 # {{Latn-def|sl|letter|20|alphabet name=Natisone Valley dialect}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{alternative form of|sl|z}}, {{n-g|used before a voiceless consonant}}
 
@@ -85747,7 +85742,7 @@ From {{inh|sl|sla-pro|*sę}}.
 * {{sl-IPA|se}}
 
 ===Pronoun===
-{{sl-pron|-}}
+{{sl-head|pronoun|-}}
 
 # [[oneself]]: [[myself]], [[yourself]], [[himself]], [[herself]], [[itself]]
 # [[ourselves]], [[yourselves]], [[themselves]]
@@ -86064,7 +86059,7 @@ From {{inh|sl|sla-pro|*sedmь}}, from {{der|sl|ine-pro|*septḿ̥}}.
 * {{hyphenation|sl|se|dem}}
 
 ===Numeral===
-{{sl-num|sẹ́dəm}}
+{{sl-head|numeral|sẹ́dəm}}
 
 # [[seven]]
 
@@ -86100,7 +86095,7 @@ Page 4050 sedemdeset: -------- begin text --------
 * {{sl-IPA|sẹ́dəmdeset}}
 
 ===Numeral===
-{{sl-num|sẹ́dəmdeset}}
+{{sl-head|numeral|sẹ́dəmdeset}}
 
 # [[seventy]]
 
@@ -86122,7 +86117,7 @@ From {{inh|sl|sla-pro|*sedmь na desęte||seven on ten}}. Equivalent to {{suffix
 * {{hyphenation|sl|se|dem|najst}}
 
 ===Numeral===
-{{sl-num|sedəmnájst|head2=sẹ̄dəmnajst}}
+{{sl-head|numeral|sedəmnájst|head2=sẹ̄dəmnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[seventeen]]
 #: {{syn|sl|sedemnajstero}}
@@ -86137,7 +86132,7 @@ From {{inh|sl|sla-pro|*sedmь na desęte||seven on ten}}. Equivalent to {{suffix
 {{sl-decl-num|sẹ̄dəmnajst|3=sẹ̑dəmnajst|declension type=2}}
 
 ===Noun===
-{{sl-noun|sedəmnájst|head2=sẹ̄dəmnajst|m-an-p|g2=f-p|g3=n-p|g4=n}}
+{{sl-noun|sedəmnájst|head2=sẹ̄dəmnajst|m-p,f-p,n-p,n}}
 
 # {{lb|sl|masculine|in the plural}} a group of [[seventeen]] things with [[masculine]] [[grammatical gender]] or a group of people with at least one male.
 #: {{syn|sl|sedemnajsterica|sedemnajstorica}}
@@ -88723,7 +88718,7 @@ From {{inh|sl|sla-pro|*soldъ||malt}}, from {{inh|sl|ine-bsl-pro|*salˀdus}}, fr
 * {{hyphenation|sl|slad}}
 
 ===Noun===
-{{sl-noun|slȃd|m-in|g2=f}}
+{{sl-noun|slȃd|m-in,f}}
 
 # {{lb|sl|uncountable|masculine}} [[malt]] (grain)
 #: {{syn|sl|malt}}
@@ -88785,7 +88780,7 @@ From {{inh|sl|sla-pro|*soldъkъ}}, from {{der|sl|ine-bsl-pro|*salˀdus}}, ultim
 * {{sl-IPA|sládək}}
 
 ===Adjective===
-{{sl-adj|sládək|slȃjši|sladȇjši}}
+{{sl-adj|sládək|slȃjši|comp2=sladȇjši}}
 
 # [[sweet]]
 
@@ -88865,7 +88860,7 @@ Page 4175 Slak: -------- begin text --------
 * {{sl-IPA|Slák}}
 
 ===Proper noun===
-{{sl-proper noun|Slák|m-pr}}
+{{sl-proper noun|Slák|m-an}}
 
 # {{surname|sl}}
 
@@ -90528,7 +90523,7 @@ Page 4245 smrdokavra: -------- begin text --------
 {{sl-noun|smrdokȃvra|f}}
 
 # [[Eurasian hoopoe]] {{gl|{{taxfmt|Upupa epops|species}}}}
-#: {{syn|sl|hupkáč//hȗpkač|vdȃb|vodẹ̑b}}
+#: {{syn|sl|hupkáč|hȗpkač|;|vdȃb|vodẹ̑b}}
 #* {{quote-web|1=sl|year=2023|author=Rafael Vidal, Julián Gómez|work=Abubilla / Smrdokavra|url=https://www.stoptrik.com/2024competition/abubilla|text='''Smrdokavra''' je ptič, ki živi srečno z vsemi živalmi v gozdu Maravilla. Toda nekega dne njegovo okolje ogrozi človek, zato se pogovori z luno, da bi skupaj zasejala življenje v njegov svet.|t='''Eurasian hoopoe''' is a bird who lives happily with all the animals in the Maravilla forest. But one day his environment is threatened by the hand of man and he talks to the moon so that together they can sow life into his world.}}
 
 ====Declension====
@@ -91716,7 +91711,7 @@ Page 4301 soprog: -------- begin text --------
 * {{hyph|sl|so|prog}}
 
 ===Noun===
-{{sl-noun|soprọ̑g|m-an|f=soprọ́ga//soprọ̑ga}}
+{{sl-noun|soprọ̑g|m-an|f=soprọ́ga|f2=soprọ̑ga}}
 
 # [[husband]]
 
@@ -93141,7 +93136,7 @@ Page 4364 srečen: -------- begin text --------
 * {{sl-IPA|srẹ́čən}}
 
 ===Adjective===
-{{sl-adj|srẹ́čən|srẹ́čnejši|srečnȇjši}}
+{{sl-adj|srẹ́čən|srẹ́čnejši|comp2=srečnȇjši}}
 
 # [[lucky]]
 # [[fortunate]]
@@ -93159,13 +93154,13 @@ Page 4365 srečno: -------- begin text --------
 * {{sl-IPA|srẹ́čno}}
 
 ===Adverb===
-{{sl-adv|srẹ́čno|srẹ́čneje|srẹ́čnejše|srečnȇje|srečnȇjše}}
+{{sl-adv|srẹ́čno|srẹ́čneje|comp2=srẹ́čnejše|comp3=srečnȇje|comp4=srečnȇjše}}
 
 # [[fortunately]]
 # [[happily]]
 
 ===Interjection===
-{{sl-interj|srẹ́čno}}
+{{sl-head|interjection|srẹ́čno}}
 
 # {{lb|sl|formal}} [[goodbye]]
 # [[good luck]]
@@ -94047,7 +94042,7 @@ Page 4407 sto: -------- begin text --------
 * {{sl-IPA|stọ̑}}
 
 ===Numeral===
-{{sl-num|stọ̑}}
+{{sl-head|numeral|stọ̑}}
 
 # [[hundred]]
 
@@ -95933,7 +95928,7 @@ Page 4478 svoj: -------- begin text --------
 * {{sl-IPA|svọ́j}}
 
 ===Determiner===
-{{sl-det|svọ́j}}
+{{sl-head|determiner|svọ́j}}
 
 # [[one]]'s [[own]]
 
@@ -96472,7 +96467,7 @@ From {{inh|sl|sla-pro|*šestь}}, from {{inh|sl|ine-pro|*swéḱs}}.
 * {{hyphenation|sl|šest}}
 
 ===Numeral===
-{{sl-num|šẹ̑st}}
+{{sl-head|numeral|šẹ̑st}}
 
 # [[six]]
 
@@ -96525,7 +96520,7 @@ Page 4508 šestdeset: -------- begin text --------
 * {{sl-IPA|šẹ̑stdeset}}
 
 ===Numeral===
-{{sl-num|šẹ̑stdeset}}
+{{sl-head|numeral|šẹ̑stdeset}}
 
 # [[sixty]]
 
@@ -96573,7 +96568,7 @@ From {{inh|sl|sla-pro|* šestь na desęte||six on ten}}. Equivalent to {{suffix
 * {{hyphenation|sl|šest|najst}}
 
 ===Numeral===
-{{sl-num|šestnájst|head2=šẹ̑stnajst}}
+{{sl-head|numeral|šestnájst|head2=šẹ̑stnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[sixteen]]
 #: {{syn|sl|šestnajstero}}
@@ -96800,7 +96795,7 @@ From {{inh|sl|sla-pro|*širokъ}}.
 * {{sl-IPA|širȍk}}
 
 ===Adjective===
-{{sl-adj|širȍk|šȋrši|šȋrji}}
+{{sl-adj|širȍk|šȋrši|comp2=šȋrji}}
 
 # [[broad]], [[wide]]
 
@@ -97716,7 +97711,7 @@ Page 4568 štirideset: -------- begin text --------
 * {{sl-IPA|štȋrideset}}
 
 ===Numeral===
-{{sl-num|štȋrideset}}
+{{sl-head|numeral|štȋrideset}}
 
 # [[forty]]
 
@@ -97738,7 +97733,7 @@ From {{inh|sl|sla-pro|* četyre na desęte||four on ten}}. Equivalent to {{suffi
 * {{hyphenation|sl|šti|ri|najst}}
 
 ===Numeral===
-{{sl-num|štirinájst|head2=štȋrinajst}}
+{{sl-head|numeral|štirinájst|head2=štȋrinajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[fourteen]]
 #: {{syn|sl|štirinajstero}}
@@ -97796,7 +97791,7 @@ From {{inh|sl|sla-pro|*četyre}}, from {{der|sl|ine-pro|*kʷetwóres}}.
 * {{hyphenation|sl|štir|je}}
 
 ===Numeral===
-{{sl-num|štírje}}
+{{sl-head|numeral|štírje}}
 
 # [[four]]
 
@@ -98184,7 +98179,7 @@ From {{inh|sl|sla-pro|*tъ}}.
 * {{sl-IPA|tȃ}}
 
 ===Determiner===
-{{sl-det|tȃ}}
+{{sl-head|determiner|tȃ}}
 
 # [[this]]
 # {{lb|sl|nonstandard}} [[the]] (definite article)
@@ -98405,7 +98400,7 @@ Page 4601 taksi: -------- begin text --------
 Page 4602 tale: -------- begin text --------
 
 ===Pronoun===
-{{sl-pron}}
+{{sl-head|pronoun|?}}
 
 # {{lb|sl|proximal demonstrative}} [[this]], [[this one]]
 
@@ -99602,7 +99597,7 @@ Page 4665 ti: -------- begin text --------
 * {{sl-IPA|tȋ}}
 
 ====Pronoun====
-{{sl-pron|tȋ}}
+{{sl-head|pronoun|tȋ}}
 
 # {{catlangname|sl|personal pronouns}} [[you]] (singular); [[thou]]
 # {{lb|sl|impersonal}} [[one]]
@@ -99985,7 +99980,7 @@ From {{inh|sl|sla-pro|*tъ ji̋stъjь}}.
 * {{sl-IPA|tȋsti}}
 
 ===Pronoun===
-{{sl-pron|tȋsti}}
+{{sl-head|pronoun|tȋsti}}
 
 # [[that]]
 
@@ -100239,7 +100234,7 @@ Page 4694 toda: -------- begin text --------
 * {{audio|sl|LL-Q9063 (slv)-Zupanurska-toda.wav}}
 
 ===Conjunction===
-{{sl-con|tọ̑da}}
+{{sl-head|conjunction|tọ̑da}}
 
 # [[but]], [[however]]
 
@@ -101482,7 +101477,7 @@ Page 4753 trideset: -------- begin text --------
 * {{sl-IPA|trȋdeset}}
 
 ===Numeral===
-{{sl-num|trȋdeset}}
+{{sl-head|numeral|trȋdeset}}
 
 # [[thirty]]
 
@@ -101500,7 +101495,7 @@ From {{inh|sl|sla-pro|*trьje}}, from {{inh|sl|ine-bsl-pro|*tríjes}}, from {{de
 * {{rhymes|sl|iːjɛ|eː}}
 
 ===Numeral===
-{{sl-num|trȋje}}
+{{sl-head|numeral|trȋje}}
 
 # [[three]]
 
@@ -101567,7 +101562,7 @@ From {{inh|sl|sla-pro|*tri na desęte||three on ten}}. Equivalent to {{suffix|sl
 * {{hyphenation|sl|tri|najst}}
 
 ===Numeral===
-{{sl-num|trinájst|head2=trȋnajst}}
+{{sl-head|numeral|trinájst|head2=trȋnajst}}
 
 # {{lb|sl|for {{glossary|countable}} nouns}} [[thirteen]]
 #: {{syn|sl|trinajstero}}
@@ -102353,7 +102348,7 @@ From {{inh|sl|sla-pro|*tvojь}}.
 * {{sl-IPA|tvọ́j}}
 
 ===Determiner===
-{{sl-det|tvọ́j}}
+{{sl-head|determiner|tvọ́j}}
 
 # [[your]] (singular), [[thy]]
 
@@ -103527,7 +103522,7 @@ From {{inh|sl|sla-pro|*onъ}}.
 {{rfp|sl}}
 
 ===Determiner===
-{{sl-det}}
+{{sl-head|determiner|?}}
 
 # {{lb|sl|regional}} [[that]]
 
@@ -104873,7 +104868,7 @@ From {{inh|sl|sla-pro|*vъ(n)}}.
 * {{sl-IPA|v}}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # (''answering question [[where]]'') (''with [[locative case|locative]]'') [[in]], [[inside]], [[at]]
 # (''answering question [[where]] to'') (''with [[accusative case|accusative]]'') [[to]], [[into]]
@@ -105194,7 +105189,7 @@ Page 4956 vajin: -------- begin text --------
 * {{sl-IPA|vȃjin}}
 
 ===Determiner===
-{{sl-det|vȃjin}}
+{{sl-head|determiner|vȃjin}}
 
 # [[your]] (dual), of you two
 
@@ -105603,7 +105598,7 @@ From {{inh|sl|sla-pro|*vašь}}.
 * {{sl-IPA|vȁš}}
 
 ===Determiner===
-{{sl-det|vȁš}}
+{{sl-head|determiner|vȁš}}
 
 # {{cln|sl|possessive determiners}} [[your]], [[yours]] (plural, more than two)
 # {{cln|sl|possessive determiners}} {{lb|sl|formal}} [[your]], [[yours]] (singular)
@@ -105836,7 +105831,7 @@ Page 4992 ve: -------- begin text --------
 * {{sl-IPA|vẹ̑}}
 
 ===Pronoun===
-{{sl-pron|vẹ̑}}
+{{sl-head|pronoun|vẹ̑}}
 
 # [[you]] (feminine and neuter plural, more than two)
 # {{lb|sl|formal}} [[you]] (feminine and neuter singular)
@@ -106690,7 +106685,7 @@ From {{inh|sl|sla-pro|*vьśь}}.
 * {{sl-IPA|və̏s}}
 
 ===Determiner===
-{{sl-det|və̏s}}
+{{sl-head|determiner|və̏s}}
 
 # [[all]]
 
@@ -107143,7 +107138,7 @@ From {{inh|sl|sla-pro|*vy}}.
 * {{sl-IPA|vȋ}}
 
 ===Pronoun===
-{{sl-pron|vȋ}}
+{{sl-head|pronoun|vȋ}}
 
 # {{catlangname|sl|personal pronouns}} [[you]] (masculine plural, more than two)
 # {{catlangname|sl|personal pronouns}} {{lb|sl|formal}} [[you]] (masculine singular)
@@ -110557,7 +110552,7 @@ From {{suffix|sl|všẹ̑č|en}}.
 * {{sl-IPA|všẹ́čən}}
 
 ===Adjective===
-{{sl-adj|všẹ́čən|bolj|všẹ́čnejši}}
+{{sl-adj|všẹ́čən|bolj|comp2=všẹ́čnejši}}
 
 # [[pleasant]]
 # [[likeable]]
@@ -110916,7 +110911,7 @@ See [[#Translingual|Translingual section]].
 * {{IPA|sl|/z/}}
 
 ====Letter====
-{{sl-letter}}
+{{sl-letter|upper=Z|lower=z}}
 
 # {{Latn-def|sl|letter|24}}
 # {{Latn-def|sl|letter|34|alphabet name=Resian}}
@@ -110929,7 +110924,7 @@ From {{inh|sl|sla-pro|*sъ(n)}}, from {{inh|sl|ine-pro|*ḱom}}.
 * {{IPA|sl|/z/}}
 
 ====Preposition====
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{lb|sl|with instrumental}} [[with]], by means of, [[using]]
 # {{lb|sl|with instrumental}} (together) with, in the company of
@@ -110990,7 +110985,7 @@ From {{inh|sl|sla-pro|*za}}.
 * {{sl-IPA|za}}
 
 ===Preposition===
-{{sl-prep|-}}
+{{sl-head|preposition|-}}
 
 # {{rfdef|sl}} {{+obj|sl|gen}}
 # [[behind]] (stationary) {{+obj|sl|ins}}
@@ -112223,7 +112218,7 @@ From {{af|sl|za-|rȃdi}}.
 #: {{syn|sl|zatọ̑}}
 
 ===Preposition===
-{{sl-prep|zarȃdi}} {{+obj|sl|gen}}
+{{sl-head|preposition|zarȃdi}} {{+obj|sl|gen}}
 
 # [[because of]], [[due to]], [[thanks to]] {{gl|to express the cause or intent}}
 #* {{quote-web|1=sl|date=01/23/23|author=STA|work=Dušan Jelinčič / »O tigrovskem gibanju so pisali zgodovinarji, pisatelji pa še ne«|url=https://www.mladina.si/222094/dusan-jelincic-o-tigrovskem-gibanju-so-pisali-zgodovinarji-pisatelji-pa-se-ne/|text="Na srečo mu, tudi '''zaradi''' različnih amnestij s strani italijanske države - denimo poroka italijanskega kralja - ni bilo treba prestati vseh 20 let predpisane zaporne kazni. Pozneje je bil sicer še tri leta v italijanski konfinaciji. Tudi to je bil zanj zelo žalosten čas, saj mu je tik pred tem na porodu umrla žena, obenem pa ni mogel biti ob hčerkah, za kateri je skrb prevzela svakinja," je še poudrail.|t="Fortunately, also '''thanks to''' various amnesties granted by the Italian state - such as the marriage of the Italian king - he did not have to serve the full 20 years of his sentence. Later, he was in Italian confine for another three years. This was also a very sad time for him, as his wife had died in childbirth shortly before and he was unable to be with his daughters, who were being cared for by his sister-in-law," he stressed.}}
@@ -114347,7 +114342,7 @@ Page 5392 znotraj: -------- begin text --------
 * {{sl-IPA|znọ́traj}}
 
 ===Preposition===
-{{sl-prep|znọ́traj}} {{qualifier|+ genitive}}
+{{sl-head|preposition|znọ́traj}} {{qualifier|+ genitive}}
 
 # [[inside]]
 #: {{ant|sl|zúnaj}}
@@ -114645,7 +114640,7 @@ From {{inh|sl|sla-pro|*zьrělъ}}, from the verb {{m|sla-pro|*zьrěti||to ripe
 * {{sl-IPA|zrȅł|zrẹ̑ł}}
 
 ===Adjective===
-{{sl-adj|zrȅł|head2=zrẹ̑ł|zrẹ́lejši|zrelȇjši}}
+{{sl-adj|zrȅł|head2=zrẹ̑ł|zrẹ́lejši|comp2=zrelȇjši}}
 
 # [[ripe]], [[mature]]
 
@@ -114697,7 +114692,7 @@ Page 5409 zunaj: -------- begin text --------
 * {{sl-IPA|zúnaj}}
 
 ===Preposition===
-{{sl-prep|zúnaj}} {{qualifier|+ genitive}}
+{{sl-head|preposition|zúnaj}} {{+obj|sl|genitive}}
 
 # [[outside]]
 #: {{ant|sl|znọ́traj}}
