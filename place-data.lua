@@ -1244,37 +1244,6 @@ export.cat_implications = {
 ------------------------------------------------------------------------------------------
 
 
---[=[
-If the holonym in `data` refers to a known polity or political division, find and return the corresponding polity
-key, spec and group. FIXME: This should verify that there is no mismatch between the polity's containing polities
-and any of the following holonyms in the {{tl|place}} spec, as find_city_spec() does.
-
-Returns three values:
-# The ''polity key'' (the key in the data in the polity group table; often has the name of the containing polity and
-  somtimes the placetype affixed, and may have `the` prefixed);
-# the ''polity spec'' (object describing the polity, the value corresponding to the polity key in the data in the polity
-  group table; documented in [[Module:place/shared-data]] in the intro under `==Polity division tables==`);
-# the ''polity group'' (the table listing a group of polities with shared properties).
-]=]
-local function find_polity_spec(data)
-	local holonym_placetype, holonym_placename, place_desc =
-		data.holonym_placetype, data.holonym_placename, data.place_desc
-	for _, polity_group in ipairs(m_shared.polities) do
-		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local polity_key, _ = m_shared.call_place_cat_handler(polity_group, holonym_placetype, holonym_placename)
-		if polity_key then
-			local polity_value = polity_group.data[polity_key]
-			if polity_value then
-				-- Use the group's value_transformer to ensure that default values are copied into the polity spec
-				-- (polity value structure).
-				polity_value = polity_group.value_transformer(polity_group, polity_key, polity_value)
-				return polity_key, polity_value, polity_group
-			end
-		end
-	end
-end
-
-
 local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containing_polity, extracats)
 	local entry_placetype, holonym_placetype, holonym_placename =
 		data.entry_placetype, data.holonym_placetype, data.holonym_placename
@@ -1354,21 +1323,11 @@ local function capital_city_cat_handler(data, non_city)
 	if capital_cat then
 		capital_cat = ucfirst(capital_cat)
 		local inserted_specific_variant_cat = false
-		for _, group in ipairs(m_shared.polities) do
-			-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-			local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
-			if key then
-				local value = group.data[key]
-				if value then
-					-- Use the group's value_transformer to ensure that 'containing_polity'
-					-- is present if it should be.
-					value = group.value_transformer(group, key, value)
-					if value.containing_polity and not value.no_containing_polity_cat then
-						insert(retcats, capital_cat .. " of " .. value.containing_polity)
-						inserted_specific_variant_cat = true
-						break
-					end
-				end
+		for group, key, spec in m_shared.iterate_matching_polity(holonym_placetype, holonym_placename) do
+			if spec.containing_polity and not spec.no_containing_polity_cat then
+				insert(retcats, capital_cat .. " of " .. value.containing_polity)
+				inserted_specific_variant_cat = true
+				break
 			end
 		end
 		if not inserted_specific_variant_cat then

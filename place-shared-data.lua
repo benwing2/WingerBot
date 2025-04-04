@@ -254,7 +254,7 @@ Each group consists of a table with the following keys:
   properties of a place; see above) to the final form used by the handlers in
   [[Module:category tree/topic cat/data/Places]] that handle city-type and political-division-type categories. It is
   passed three arguments (the group and the key and value of the data item). Its normal purpose is to add extra
-  properties to the data item value, such as `containing_polity` (see above) and `keydesc` (the appropriate description
+  properties to the data item value, such as `container` (see above) and `keydesc` (the appropriate description
   of the place, which often includes the type of division and the country).  Some groups (in particular, the one for
   former polities, such as Persia and the Roman Empire) also add `is_former_place = true`. The reason these extra
   properties are added by a function like this instead of included directly is that they are typically the same or
@@ -268,22 +268,6 @@ Each group consists of a table with the following keys:
   simple_polity_bare_label_setter() (for top-level polities) and subpolity_bare_label_setter() (for subpolities of
   top-level polities). This function often makes use of the `parents` and/or `description` keys in the data item's
   value (see above).
-
-* `place_cat_handler`: Used in conjunction with {{tl|place}} to properly categorize placenames. It is passed three
-  arguments: GROUP, the spec for a given group; PLACETYPES, the placetype of a place or a list of such placetypes;
-  and PLACENAME, the corresponding placename as found in a holonym, i.e. without any preceding "the". If a place
-  matching PLACENAME is found in GROUP, and the place's placetype is compatible with PLACETYPE, return two arguments:
-  the form of PLACENAME to be used in categories that include a preceding article (usually "the"), and the bare form
-  of PLACENAME, without a preceding article. Otherwise, return nil. Here, "compatible" means that any of the
-  placetypes in PLACETYPES is equal to any of the known placetypes of PLACENAME. (Most placenames in most groups have
-  a single associated placetype, but some have more than one, e.g. Wales, which is associated with both
-  "constituent country" and "country", and will be recognized for categorization purposes if either placetype is used.)
-  For example, given the placename "Bashkortostan", placetype "republic", and group data associated with Russian
-  federal subjects, the first return value will be "the Republic of Bashkortostan" and the second return value will be
-  "Republic of Bashkortostan". Note that the first value is always equal to the key in `group.data` that describes the
-  placename. (Both return values are needed because some categories contain the article, e.g. [[:Category:Places in the
-  Republic of Bashkortostan]], and some don't, in particular the bare topical category
-  [[:Category:Republic of Bashkortostan]].) If omitted, the function default_place_cat_handler() is used.
 
 * `default_divtype`: The default entity type for entities in this group, if not overidden at the entity level. See
   `divtype` above under "Placename Tables".
@@ -337,9 +321,9 @@ the group or derivable from group-specific properties. The following are the pro
   'poldiv = {"provinces", "municipalities"}' will allow categories such as [[:Category:de:Provinces of the Netherlands]]
   and [[:Category:pt:Municipalities of the Netherlands]] to be created. These categories have a primary parent
   [[:Category:LANGCODE:Political divisions]] (i.e. this is the parent that appears in the breadcrumbs at the top of the
-  category page), and have the containing polity, if any (see `containing_polity` below) as an additional parent. Any
-  political division that appears here must also be listed in the `political_divisions` list, which tells how to convert
-  the pluralized political division into the equivalent linked description. (If not listed, an error occurs.)
+  category page), and have the containing polity, if any (see `container` below) as an additional parent. Any political
+  division that appears here must also be listed in the `political_divisions` list, which tells how to convert the
+  pluralized political division into the equivalent linked description. (If not listed, an error occurs.)
 
 - `miscdiv`: List of recognized historical/popular divisions; e.g. for Ireland, a specification of the form
   'miscdiv = {"provinces"}' will allow categories such as [[:Category:pl:Provinces of Ireland]] to be created. These
@@ -362,19 +346,19 @@ the group or derivable from group-specific properties. The following are the pro
   [[:Category:en:Europe]] and [[:Category:en:Asia]]. The first listed category is used for the primary parent (i.e. this
   is the parent that appears in the breadcrumbs at the top of the category page). In this case, for example, "Europe"
   (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level polities (countries and
-  such), not for subpolities (states, provinces, etc.), which use the value of `containing_polity` (see below) as the
+  such), not for subpolities (states, provinces, etc.), which use the value of `container` (see below) as the
   parent.
 
 - `bare_category_desc`: String specifying the description used in the bare topical category. If not given, a default
   description is constructed by the `bare_label_setter` function.
 
-- `containing_polity`: This property does not need to be specified explicitly. It is automatically added by the
+- `container`: This property does not need to be specified explicitly. It is automatically added by the
   `value_transformer` function for subpolities, and left off for top-level polities. It specifies the larger polity in
   which the subpolity is contained, and is used to construct the primary parent of 'Cities in ...', 'Rivers in ...' and
   similar categories. For example, the subpolity Guangdong (a province of China) will have "China" as the
-  `containing_polity`, so that a category of the form [[:Category:en:Cities in Guangdong]] will have its primary parent
+  `container`, so that a category of the form [[:Category:en:Cities in Guangdong]] will have its primary parent
   (i.e. the parent that appears in the breadcrumbs at the top of the category page) as [[:Category:en:Cities in China]].
-  If `containing_polity` is omitted, as in top-level polities, the primary parent will simply be e.g.
+  If `container` is omitted, as in top-level polities, the primary parent will simply be e.g.
   [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
 
 ]==]
@@ -407,7 +391,136 @@ function export.internal_error(fmt, ...)
 	export.process_error("Internal error: " .. fmt, ...)
 end
 
+-- Return whether `list_or_element` (a list of strings, or a single string) "contains" `item` (a string). If
+-- `list_or_element` is a list, this returns true if `item` is in the list; otherwise it returns true if `item`
+-- equals `list_or_element`.
+local function list_or_element_contains(list_or_element, item)
+	if type(list_or_element) == "table" then
+		return m_table.contains(list_or_element, item) and true or false
+	end
+	return list_or_element == item
+end
+
 --[==[
+Given an entity group, key and possible placetypes that the placename must match, check if the key exists in the group
+with at least one of the group's key's placetypes matching one of the passed-in placetypes. If so, return two values:
+the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding value
+structure.
+]==]
+function export.find_matching_key_in_group(group, placetypes, key)
+	-- FIXME: This should handle aliases.
+	local spec = group.data[key]
+	if not spec then
+		return nil
+	end
+	local divtype = spec.divtype or group.default_divtype
+	if type(divtype) == "table" then
+		for _, dt in ipairs(divtype) do
+			if list_or_element_contains(placetypes, dt) then
+				return key, spec
+			end
+		end
+		return nil
+	elseif list_or_element_contains(placetypes, divtype) then
+		return key, spec
+	else
+		return nil
+	end
+end
+
+
+--[==[
+Given an entity group, placename and possible placetypes that the placename must match, check if the placename exists in
+the group with at least one of the placetypes of the key in the group that corresponds to the placename matching one of
+the passed-in placetypes. If so, return two values: the key corrsponding to the passed-in placename and the
+corresponding value structure.
+]==]
+function export.find_matching_placename_in_group(group, placetypes, placename)
+	local key
+	if group.placename_to_key then
+		key = group.placename_to_key(placename)
+	else
+		key = placename
+	end
+	return export.find_matching_key_in_group(group, placetypes, key)
+end
+
+
+function export.iterate_matching_entity(data)
+	local i = 0
+	local n = #export.polities
+	return function()
+		while true do
+			i = i + 1
+			if i > n then
+				break
+			end
+			local group = export.polities[i]
+			local key, spec
+			if data.placename then
+				key, spec = export.find_matching_placename_in_group(group, data.placetypes, data.placename)
+			else
+				if not data.key then
+					internal_error("'.placename' or '.key' must be defined: %s", data)
+				end
+				key, spec = export.find_matching_placename_in_group(group, data.placetypes, data.key)
+			end
+			if key, spec then
+				spec = group.value_transformer(group, key, spec)
+				return group, key, spec
+			end
+		end
+	end
+end
+
+
+function export.get_matching_entity(data)
+	local all_found = {}
+	for group, key, spec in export.iterate_matching_entity(data) do
+		table.insert(all_found, {group, key, spec})
+	end
+	if not all_found[1] then
+		internal_error("Couldn't find matching entity for data %s", data)
+	elseif all_found[2] then
+		internal_error("Found multiple matching entities for data %s: %s", data, all_found)
+	else
+		return unpack(all_found[1])
+	end
+end
+
+--[==[
+If the holonym in `data` refers to a known polity or political division, find and return the corresponding polity key,
+spec and group. FIXME: This should verify that there is no mismatch between the polity's containing polities and any of
+the following holonyms in the {{tl|place}} spec, as find_city_spec() does.
+
+Returns three values:
+# The ''polity key'' (the key in the data in the polity group table; often has the name of the containing polity and
+  somtimes the placetype affixed, and may have `the` prefixed);
+# the ''polity spec'' (object describing the polity, the value corresponding to the polity key in the data in the polity
+  group table; documented in [[Module:place/shared-data]] in the intro under `==Polity division tables==`);
+# the ''polity group'' (the table listing a group of polities with shared properties).
+]==]
+function export.find_polity_spec(data)
+	local holonym_placetype, holonym_placename, place_desc =
+		data.holonym_placetype, data.holonym_placename, data.place_desc
+	for _, polity_group in ipairs(m_shared.polities) do
+		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
+		local polity_key, _ = m_shared.call_place_cat_handler(polity_group, holonym_placetype, holonym_placename)
+		if polity_key then
+			local polity_value = polity_group.data[polity_key]
+			if polity_value then
+				-- Use the group's value_transformer to ensure that default values are copied into the polity spec
+				-- (polity value structure).
+				polity_value = polity_group.value_transformer(polity_group, polity_key, polity_value)
+				return polity_key, polity_value, polity_group
+			end
+		end
+	end
+end
+
+
+--[==[
+>>>>>>> d9656d33 (place-data,place-shared-data: latest work (NOT WORKING OR DONE))
 Given a non-multipart key (where a multipart key is something like `"Tucson, Arizona"` or `"Atlanta, Georgia, USA"`),
 possibly preceded by `the`, return two values, the ''bare'' and ''linked'' versions of the key. The bare version is
 simply the passed-in `key` minus any preceding `the`. The linked version is the key converted into a raw bracketed link
@@ -487,7 +600,7 @@ local function simple_polity_bare_label_setter(overriding_parents)
 end
 
 -- Construct the description of a subpolity key, for use in the description of a category.
-local function subpolity_keydesc(group, key, value, containing_polity, default_divtype)
+local function subpolity_keydesc(group, key, value, container, default_divtype)
 	local divtype = value.divtype or default_divtype
 	divtype = type(divtype) == "table" and divtype[1] or divtype
 	-- FIXME: This is a huge hack. To fix this properly, we need to separate out the non-category placetype data from
@@ -522,8 +635,8 @@ local function subpolity_keydesc(group, key, value, containing_polity, default_d
 		end
 	end
 	linked_placename = linked_placename or linked_full_placename
-	local bare_containing_polity, linked_containing_polity = export.construct_bare_and_linked_version(containing_polity)
-	return linked_placename .. ", " .. divtype .. " of " .. linked_containing_polity
+	local bare_container, linked_container = export.construct_bare_and_linked_version(container)
+	return linked_placename .. ", " .. divtype .. " of " .. linked_container
 end
 
 --[==[
@@ -546,20 +659,10 @@ function export.call_key_to_placename(group, key)
 	return key, key
 end
 
--- Return whether `list_or_element` (a list of strings, or a single string) "contains" `item` (a string). If
--- `list_or_element` is a list, this returns true if `item` is in the list; otherwise it returns true if `item`
--- equals `list_or_element`.
-local function list_or_element_contains(list_or_element, item)
-	if type(list_or_element) == "table" then
-		return m_table.contains(list_or_element, item) and true or false
-	end
-	return list_or_element == item
-end
-
-local function subpolity_bare_label_setter(containing_polity)
+local function subpolity_bare_label_setter(container)
 	return function(group, key, value, m_data)
 		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
-		local bare_containing_polity, linked_containing_polity = export.construct_bare_and_linked_version(containing_polity)
+		local bare_container, linked_container = export.construct_bare_and_linked_version(container)
 		local div_parent_type = value.div_parent_type or group.default_div_parent_type
 		if not div_parent_type then
 			local divtype = value.divtype or group.default_divtype
@@ -575,79 +678,31 @@ local function subpolity_bare_label_setter(containing_polity)
 				if value.bare_category_desc then
 					return value.bare_category_desc
 				else
-					local keydesc = subpolity_keydesc(group, key, value, containing_polity, group.default_divtype)
+					local keydesc = subpolity_keydesc(group, key, value, container, group.default_divtype)
 					return "{{{langname}}} terms related to the people, culture, or territory of " .. keydesc .. "."
 				end
 			end,
-            parents = {div_parent_type .. " of " .. containing_polity},
+            parents = {div_parent_type .. " of " .. container},
         }
 	end
 end
 
-local function subpolity_value_transformer(containing_polity)
-	local containing_polity_type = "country"
-	if type(containing_polity) == "table" then
-		containing_polity_type, containing_polity = containing_polity[1], containing_polity[2]
+local function subpolity_value_transformer(container)
+	local container_type = "country"
+	if type(container) == "table" then
+		container_type, container = container[1], container[2]
 	end
 	return function(group, key, value)
-		value.keydesc = value.keydesc or function() return subpolity_keydesc(group, key, value, containing_polity, group.default_divtype) end
-		value.containing_polity = containing_polity
-		value.containing_polity_type = containing_polity_type
+		value.keydesc = value.keydesc or function() return subpolity_keydesc(group, key, value, container, group.default_divtype) end
+		value.container = container
+		value.container_type = container_type
 		value.poldiv = value.poldiv or group.default_poldiv
 		value.miscdiv = value.miscdiv or group.default_miscdiv
 		value.british_spelling = value.british_spelling or group.british_spelling
-		value.no_containing_polity_cat = value.no_containing_polity_cat or group.no_containing_polity_cat
+		value.no_container_cat = value.no_container_cat or group.no_container_cat
 		return value
 	end
 end
-
---[==[
-See the documentation for `place_cat_handler` above the definition of `export.polities` below.
-]==]
-function export.default_place_cat_handler(group, placetypes, placename)
-	if group.placename_to_key then
-		placename = group.placename_to_key(placename)
-	end
-	local spec = group.data[placename]
-	local article = ""
-	local bare_placename = placename
-	if not spec then
-		placename = "the " .. placename
-		spec = group.data[placename]
-	end
-	if not spec then
-		return nil
-	end
-	local divtype = spec.divtype or group.default_divtype
-	if type(divtype) == "table" then
-		for _, dt in ipairs(divtype) do
-			if list_or_element_contains(placetypes, dt) then
-				return placename, bare_placename
-			end
-		end
-		return nil
-	elseif list_or_element_contains(placetypes, divtype) then
-		return placename, bare_placename
-	else
-		return nil
-	end
-end
-
-
---[==[
-Call the place cat handler for a given polity `group` for a holonym `placename` with possible holonym placetypes
-`placetypes`. The purpose of this is to check if the holonym exists in the group, and if so, return two values:
-the key as found in the polity tables (which is the form that the holonym would take in a category of the form
-` ``Placetypes`` in/of ``holonym``` e.g. [[:Category:Districts of the West Midlands, England]]) and the ''bare key'',
-which is the same as the key except it removes any occurrence of `the` at the beginning (and hence is suitable for bare
-categories such as [[:Category:West Midlands, England]]). This is sort of a glorified `placename_to_key()` for
-subpolities in the group, but also verifies the correct placetype(s).
-]==]
-function export.call_place_cat_handler(group, placetypes, placename)
-	local handler = group.place_cat_handler or export.default_place_cat_handler
-	return handler(group, placetypes, placename)
-end
-
 
 --[=[
 This is typically used to define `key_to_placename`. It generates a function that chops off parts of a string,
@@ -743,6 +798,18 @@ local function make_placename_to_key(polity_suffix, poldiv_suffix)
 	end
 end
 
+
+local function make_canonicalize_key_container(suffix, divtype)
+	return function(container)
+		if type(container) == "string" then
+			return {name = container .. suffix, divtype = divtype}
+		else
+			return container
+		end
+	end
+end
+
+
 --[=[
 Normalize the list of city "parents" (containing polities) to standard/full form, which is a list of objects, each with
 `name` and `divtype` fields. `default_divtype` supplies the default if the divtype of a given containing polity is
@@ -822,7 +889,7 @@ fields, which must both be present. The `divtype` is used to check that we have 
 example, the city of [[Atlanta]] wrongly ends up in [[:Category:Cities in Georgia]] (the country) in lieu of the correct
 [[:Category:Cities in Georgia, USA]].
 ]==]
-function export.find_city_containing_polity(parent_spec)
+function export.find_city_container(parent_spec)
 	for _, polity_group in ipairs(export.polities) do
 		local polity_key, _ = export.call_place_cat_handler(polity_group, parent_spec.divtype, parent_spec.name)
 		if polity_key then
@@ -841,9 +908,6 @@ end
 -----------------------------------------------------------------------------------
 --                          Country and Country-Like Tables                      --
 -----------------------------------------------------------------------------------
-
-function PolityGroup:()
-end
 
 export.countries = {
 	["Afghanistan"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
@@ -1398,7 +1462,7 @@ export.australia_states_and_territories = {
 export.australia_group = {
 	key_to_placename = make_key_to_placename(", Australia$"),
 	placename_to_key = make_placename_to_key(", Australia"),
-	skip_parents = {name = "Australia", divtype = "country"},
+	default_container = {name = "Australia", divtype = "country"},
 	default_divtype = "state",
 	default_div_parent_type = "states and territories",
 	default_poldiv = {"local government areas"},
@@ -1422,7 +1486,7 @@ export.austria_states = {
 export.austria_group = {
 	key_to_placename = make_key_to_placename(", Austria$"),
 	placename_to_key = make_placename_to_key(", Austria"),
-	skip_parents = {name = "Austria", divtype = "country"},
+	default_container = {name = "Austria", divtype = "country"},
 	default_divtype = "state",
 	british_spelling = true,
 	default_poldiv = "municipalities",
@@ -1444,7 +1508,7 @@ export.bangladesh_divisions = {
 export.bangladesh_group = {
 	key_to_placename = make_key_to_placename(", Bangladesh$", " Division$"),
 	placename_to_key = make_placename_to_key(", Bangladesh", " Division"),
-	skip_parents = {name = "Bangladesh", divtype = "country"},
+	default_container = {name = "Bangladesh", divtype = "country"},
 	default_divtype = "division",
 	british_spelling = true,
 	default_poldiv = "districts",
@@ -1485,7 +1549,7 @@ export.brazil_states = {
 export.brazil_group = {
 	key_to_placename = make_key_to_placename(", Brazil$"),
 	placename_to_key = make_placename_to_key(", Brazil"),
-	skip_parents = {name = "Brazil", divtype = "country"},
+	default_container = {name = "Brazil", divtype = "country"},
 	default_divtype = "state",
 	default_poldiv = "municipalities",
 	data = export.brazil_states,
@@ -1526,7 +1590,7 @@ export.canada_provinces_and_territories = {
 export.canada_group = {
 	key_to_placename = make_key_to_placename(", Canada$"),
 	placename_to_key = make_placename_to_key(", Canada"),
-	skip_parents = {name = "Canada", divtype = "country"},
+	default_container = {name = "Canada", divtype = "country"},
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
 	british_spelling = true,
@@ -1571,7 +1635,7 @@ export.china_provinces_and_autonomous_regions = {
 export.china_group = {
 	key_to_placename = make_key_to_placename(", China$"),
 	placename_to_key = make_placename_to_key(", China"),
-	skip_parents = {name = "China", divtype = "country"},
+	default_container = {name = "China", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = {"prefecture-level cities", "county-level cities", "districts"},
 	default_div_parent_type = "provinces and autonomous regions",
@@ -1610,99 +1674,102 @@ export.china_prefecture_level_cities = {
 	["Chongqing"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 32.1 prefectural, 16.9 urban
 	["Shanghai"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 24.9 prefectural, 29.9 urban
 	["Beijing"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 21.9 prefectural, 21.9 urban
-	["Chengdu"] = {parents = "Sichuan"}, -- 20.9 prefectural, 16.9 urban; sub-provincial city
-	["Guangzhou"] = {parents = "Guangdong"}, -- 18.7 prefectural, 18.8 urban; sub-provincial city
-	["Shenzhen"] = {parents = "Guangdong"}, -- 17.5 prefectural, 14.7 urban; sub-provincial city
+	["Chengdu"] = {container = "Sichuan"}, -- 20.9 prefectural, 16.9 urban; sub-provincial city
+	["Guangzhou"] = {container = "Guangdong"}, -- 18.7 prefectural, 18.8 urban; sub-provincial city
+	["Shenzhen"] = {container = "Guangdong"}, -- 17.5 prefectural, 14.7 urban; sub-provincial city
 	["Tianjin"] = {divtype = {"direct-administered municipality", "municipality"}}, -- 13.9 prefectural, 13.9 urban
 	-- NOTE: There is also a prefecture-level city Suzhou in Anhui with 5.3 million prefectural inhabitants
-	["Suzhou"] = {parents = "Jiangsu"}, -- 12.8 prefectural, 4.3 urban
-	["Zhengzhou"] = {parents = "Henan"}, -- 12.6 prefectural, 6.7 urban
-	["Wuhan"] = {parents = "Hubei"}, -- 12.4 prefectural, 12.3 urban; sub-provincial city
-	["Xi'an"] = {parents = "Shaanxi"}, -- 12.1 prefectural, 11.9 urban; sub-provincial city
-	["Hangzhou"] = {parents = "Zhejiang"}, -- 11.9 prefectural, 10.7 urban; sub-provincial city
+	["Suzhou"] = {container = "Jiangsu"}, -- 12.8 prefectural, 4.3 urban
+	["Zhengzhou"] = {container = "Henan"}, -- 12.6 prefectural, 6.7 urban
+	["Wuhan"] = {container = "Hubei"}, -- 12.4 prefectural, 12.3 urban; sub-provincial city
+	["Xi'an"] = {container = "Shaanxi"}, -- 12.1 prefectural, 11.9 urban; sub-provincial city
+	["Hangzhou"] = {container = "Zhejiang"}, -- 11.9 prefectural, 10.7 urban; sub-provincial city
 	-- includes Dìngzhōu city and Xióngān Xīnqū
-	["Baoding"] = {parents = "Hebei"}, -- 11.5 prefectural, 2.0 urban
+	["Baoding"] = {container = "Hebei"}, -- 11.5 prefectural, 2.0 urban
 	-- includes Xīnjí city
-	["Shijiazhuang"] = {parents = "Hebei"}, -- 11.2 prefectural, 4.1 urban
-	["Linyi"] = {parents = "Shandong"}, -- 11.0 prefectural, 2.3 urban
-	["Dongguan"] = {parents = "Guangdong"}, -- 10.5 prefectural, 10.5 urban
-	["Qingdao"] = {parents = "Shandong"}, -- 10.1 prefectural, 7.1 urban; sub-provincial city
-	["Changsha"] = {parents = "Hunan"}, -- 10.0 prefectural, 6.0 urban
-	["Harbin"] = {parents = "Heilongjiang"}, -- 10.0 prefectural, 7.0 urban; sub-provincial city
-	["Nanyang"] = {parents = "Henan"}, -- 9.7 prefectural, 2.1 urban/metro
-	["Wenzhou"] = {parents = "Zhejiang"}, -- 9.6 prefectural, 3.6 urban
-	["Foshan"] = {parents = "Guangdong"}, -- 9.5 prefectural, 9.5 urban
-	["Handan"] = {parents = "Hebei"}, -- 9.4 prefectural, 2.8 urban
-	["Ningbo"] = {parents = "Zhejiang"}, -- 9.4 prefectural, 5.1 urban; sub-provincial city
-	["Weifang"] = {parents = "Shandong"}, -- 9.4 prefectural, 2.7 urban
-	["Hefei"] = {parents = "Anhui"}, -- 9.4 prefectural, 4.2 urban
-	["Nanjing"] = {parents = "Jiangsu"}, -- 9.3 prefectural, 9.3 urban; sub-provincial city
+	["Shijiazhuang"] = {container = "Hebei"}, -- 11.2 prefectural, 4.1 urban
+	["Linyi"] = {container = "Shandong"}, -- 11.0 prefectural, 2.3 urban
+	["Dongguan"] = {container = "Guangdong"}, -- 10.5 prefectural, 10.5 urban
+	["Qingdao"] = {container = "Shandong"}, -- 10.1 prefectural, 7.1 urban; sub-provincial city
+	["Changsha"] = {container = "Hunan"}, -- 10.0 prefectural, 6.0 urban
+	["Harbin"] = {container = "Heilongjiang"}, -- 10.0 prefectural, 7.0 urban; sub-provincial city
+	["Nanyang"] = {container = "Henan"}, -- 9.7 prefectural, 2.1 urban/metro
+	["Wenzhou"] = {container = "Zhejiang"}, -- 9.6 prefectural, 3.6 urban
+	["Foshan"] = {container = "Guangdong"}, -- 9.5 prefectural, 9.5 urban
+	["Handan"] = {container = "Hebei"}, -- 9.4 prefectural, 2.8 urban
+	["Ningbo"] = {container = "Zhejiang"}, -- 9.4 prefectural, 5.1 urban; sub-provincial city
+	["Weifang"] = {container = "Shandong"}, -- 9.4 prefectural, 2.7 urban
+	["Hefei"] = {container = "Anhui"}, -- 9.4 prefectural, 4.2 urban
+	["Nanjing"] = {container = "Jiangsu"}, -- 9.3 prefectural, 9.3 urban; sub-provincial city
 	-- includes Láiwú city
-	["Jinan"] = {parents = "Shandong"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city
-	["Xuzhou"] = {parents = "Jiangsu"}, -- 9.1 prefectural, 2.6 urban
-	["Shenyang"] = {parents = "Liaoning"}, -- 9.1 prefectural, 7.9 urban; sub-provincial city
-	["Changchun"] = {parents = "Jilin"}, -- 9.1 prefectural, 5.7 urban; sub-provincial city
-	["Zhoukou"] = {parents = "Henan"}, -- 9.0 prefectural, 721,000 urban (1.6 metro)
-	["Ganzhou"] = {parents = "Jiangxi"}, -- 9.0 prefectural, 1.6 urban
-	["Heze"] = {parents = "Shandong"}, -- 8.8 prefectural, 1.3 urban
-	["Quanzhou"] = {parents = "Fujian"}, -- 8.8 prefectural, 1.7 urban (6.7 metro)
-	["Nanning"] = {parents = {name = "Guangxi", divtype = "autonomous region"}}, -- 8.7 prefectural, 3.8 urban
-	["Kunming"] = {parents = "Yunnan"}, -- 8.5 prefectural, 6.0 urban
-	["Jining"] = {parents = "Shandong"}, -- 8.4 prefectural, 1.5 urban
-	["Fuzhou"] = {parents = "Fujian"}, -- 8.3 prefectural, 4.1 urban
-	["Fuyang"] = {parents = "Anhui"}, -- 8.2 prefectural, 2.1 urban
-	["Shangqiu"] = {parents = "Henan"}, -- 7.8 prefectural, 1.9 urban (2.8 metro)
-	["Nantong"] = {parents = "Jiangsu"}, -- 7.7 prefectural, 2.3 urban
-	["Tangshan"] = {parents = "Hebei"}, -- 7.7 prefectural, 3.4 urban
-	["Wuxi"] = {parents = "Jiangsu"}, -- 7.5 prefectural, 3.3 urban
-	["Dalian"] = {parents = "Liaoning"}, -- 7.5 prefectural, 5.7 urban; sub-provincial city
+	["Jinan"] = {container = "Shandong"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city
+	["Xuzhou"] = {container = "Jiangsu"}, -- 9.1 prefectural, 2.6 urban
+	["Shenyang"] = {container = "Liaoning"}, -- 9.1 prefectural, 7.9 urban; sub-provincial city
+	["Changchun"] = {container = "Jilin"}, -- 9.1 prefectural, 5.7 urban; sub-provincial city
+	["Zhoukou"] = {container = "Henan"}, -- 9.0 prefectural, 721,000 urban (1.6 metro)
+	["Ganzhou"] = {container = "Jiangxi"}, -- 9.0 prefectural, 1.6 urban
+	["Heze"] = {container = "Shandong"}, -- 8.8 prefectural, 1.3 urban
+	["Quanzhou"] = {container = "Fujian"}, -- 8.8 prefectural, 1.7 urban (6.7 metro)
+	["Nanning"] = {container = {name = "Guangxi", divtype = "autonomous region"}}, -- 8.7 prefectural, 3.8 urban
+	["Kunming"] = {container = "Yunnan"}, -- 8.5 prefectural, 6.0 urban
+	["Jining"] = {container = "Shandong"}, -- 8.4 prefectural, 1.5 urban
+	["Fuzhou"] = {container = "Fujian"}, -- 8.3 prefectural, 4.1 urban
+	["Fuyang"] = {container = "Anhui"}, -- 8.2 prefectural, 2.1 urban
+	["Shangqiu"] = {container = "Henan"}, -- 7.8 prefectural, 1.9 urban (2.8 metro)
+	["Nantong"] = {container = "Jiangsu"}, -- 7.7 prefectural, 2.3 urban
+	["Tangshan"] = {container = "Hebei"}, -- 7.7 prefectural, 3.4 urban
+	["Wuxi"] = {container = "Jiangsu"}, -- 7.5 prefectural, 3.3 urban
+	["Dalian"] = {container = "Liaoning"}, -- 7.5 prefectural, 5.7 urban; sub-provincial city
 	-- NOTE: Not to be confused with Changzhou in Jiangsu
-	["Cangzhou"] = {parents = "Hebei"}, -- 7.3 prefectural, 621,000 urban
-	["Xingtai"] = {parents = "Hebei"}, -- 7.1 prefectural, 971,000 urban
-	["Yantai"] = {parents = "Shandong"}, -- 7.1 prefectural, 2.5 urban
-	["Luoyang"] = {parents = "Henan"}, -- 7.1 prefectural, 2.4 urban
-	["Jinhua"] = {parents = "Zhejiang"}, -- 7.1 prefectural, 1.5 urban
-	["Zhumadian"] = {parents = "Henan"}, -- 7.0 prefectural, 722,000 urban
-	["Zhanjiang"] = {parents = "Guangdong"}, -- 7.0 prefectural, 1.9 urban
-	["Bijie"] = {parents = "Guizhou"}, -- 6.9 prefectural, ? urban, ? metro (not listed in Wikipedia)
-	["Yancheng"] = {parents = "Jiangsu"}, -- 6.7 prefectural, 1.6 urban
-	["Hengyang"] = {parents = "Hunan"}, -- 6.6 prefectural, 1.5 urban
-	["Taizhou"] = {parents = "Zhejiang"}, -- 6.6 prefectural, 1.6 urban
-	["Zunyi"] = {parents = "Guizhou"}, -- 6.6 prefectural, 2.4 urban/metro
-	["Shaoyang"] = {parents = "Hunan"}, -- 6.6 prefectural, 802,000 urban, 1.4 metro
-	["Shangrao"] = {parents = "Jiangxi"}, -- 6.5 prefectural, 2.1 urban, 1.3 metro [sic]
-	["Nanchang"] = {parents = "Jiangxi"}, -- 6.3 prefectural, 3.6 (3.9?) urban, 5.3 metro
-	["Xinxiang"] = {parents = "Henan"}, -- 6.3 prefectural, 1.2 urban, 2.7 metro
-	["Xinyang"] = {parents = "Henan"}, -- 6.2 prefectural, 1.4 urban/metro
-	["Maoming"] = {parents = "Guangdong"}, -- 6.2 prefectural, 2.5 urban
-	["Huizhou"] = {parents = "Guangdong"}, -- 6.0 prefectural, 2.5 urban
+	["Cangzhou"] = {container = "Hebei"}, -- 7.3 prefectural, 621,000 urban
+	["Xingtai"] = {container = "Hebei"}, -- 7.1 prefectural, 971,000 urban
+	["Yantai"] = {container = "Shandong"}, -- 7.1 prefectural, 2.5 urban
+	["Luoyang"] = {container = "Henan"}, -- 7.1 prefectural, 2.4 urban
+	["Jinhua"] = {container = "Zhejiang"}, -- 7.1 prefectural, 1.5 urban
+	["Zhumadian"] = {container = "Henan"}, -- 7.0 prefectural, 722,000 urban
+	["Zhanjiang"] = {container = "Guangdong"}, -- 7.0 prefectural, 1.9 urban
+	["Bijie"] = {container = "Guizhou"}, -- 6.9 prefectural, ? urban, ? metro (not listed in Wikipedia)
+	["Yancheng"] = {container = "Jiangsu"}, -- 6.7 prefectural, 1.6 urban
+	["Hengyang"] = {container = "Hunan"}, -- 6.6 prefectural, 1.5 urban
+	["Taizhou"] = {container = "Zhejiang"}, -- 6.6 prefectural, 1.6 urban
+	["Zunyi"] = {container = "Guizhou"}, -- 6.6 prefectural, 2.4 urban/metro
+	["Shaoyang"] = {container = "Hunan"}, -- 6.6 prefectural, 802,000 urban, 1.4 metro
+	["Shangrao"] = {container = "Jiangxi"}, -- 6.5 prefectural, 2.1 urban, 1.3 metro [sic]
+	["Nanchang"] = {container = "Jiangxi"}, -- 6.3 prefectural, 3.6 (3.9?) urban, 5.3 metro
+	["Xinxiang"] = {container = "Henan"}, -- 6.3 prefectural, 1.2 urban, 2.7 metro
+	["Xinyang"] = {container = "Henan"}, -- 6.2 prefectural, 1.4 urban/metro
+	["Maoming"] = {container = "Guangdong"}, -- 6.2 prefectural, 2.5 urban
+	["Huizhou"] = {container = "Guangdong"}, -- 6.0 prefectural, 2.5 urban
 	-- cut off at 6,000,000 prefectural per 2020 census
 	-- Cities below here have at least 2 million in the urban area
-	["Guiyang"] = {parents = "Guizhou"}, -- 5.987 prefectural, 3.5 urban
-	["Shantou"] = {parents = "Guangdong"}, -- 5.502 prefectural, 4.3 urban
-	["Taiyuan"] = {parents = "Shanxi"}, -- 5.304 prefectural, 4.5 urban
-	["Changzhou"] = {parents = "Jiangsu"}, -- 5.278 prefectural, 3.6 urban
-	["Shaoxing"] = {parents = "Zhejiang"}, -- 5.270 prefectural, 2.5 urban
-	["Xiamen"] = {parents = "Fujian"}, -- 5.163 prefectural, 5.2 urban; sub-provincial city
-	["Jiangmen"] = {parents = "Guangdong"}, -- 4.798 prefectural, 2.7 urban
-	["Zibo"] = {parents = "Shandong"}, -- 4.704 prefectural, 2.6 urban
-	["Lianyungang"] = {parents = "Jiangsu"}, -- 4.599 prefectural, 2.0 urban
-	["Huai'an"] = {parents = "Jiangsu"}, -- 4.556 prefectural, 2.6 urban
-	["Zhongshan"] = {parents = "Guangdong"}, -- 4.418 prefectural, 4.4 urban
-	["Lanzhou"] = {parents = "Gansu"}, -- 4.359 prefectural, 3.1 urban
-	["Liuzhou"] = {parents = {name = "Guangxi", divtype = "autonomous region"}}, -- 4.157 prefectural, 2.2 urban
-	["Ürümqi"] = {parents = {name = "Xinjiang", divtype = "autonomous region"}}, -- 4.054 prefectural, 4.3 urban
+	["Guiyang"] = {container = "Guizhou"}, -- 5.987 prefectural, 3.5 urban
+	["Shantou"] = {container = "Guangdong"}, -- 5.502 prefectural, 4.3 urban
+	["Taiyuan"] = {container = "Shanxi"}, -- 5.304 prefectural, 4.5 urban
+	["Changzhou"] = {container = "Jiangsu"}, -- 5.278 prefectural, 3.6 urban
+	["Shaoxing"] = {container = "Zhejiang"}, -- 5.270 prefectural, 2.5 urban
+	["Xiamen"] = {container = "Fujian"}, -- 5.163 prefectural, 5.2 urban; sub-provincial city
+	["Jiangmen"] = {container = "Guangdong"}, -- 4.798 prefectural, 2.7 urban
+	["Zibo"] = {container = "Shandong"}, -- 4.704 prefectural, 2.6 urban
+	["Lianyungang"] = {container = "Jiangsu"}, -- 4.599 prefectural, 2.0 urban
+	["Huai'an"] = {container = "Jiangsu"}, -- 4.556 prefectural, 2.6 urban
+	["Zhongshan"] = {container = "Guangdong"}, -- 4.418 prefectural, 4.4 urban
+	["Lanzhou"] = {container = "Gansu"}, -- 4.359 prefectural, 3.1 urban
+	["Liuzhou"] = {container = {name = "Guangxi", divtype = "autonomous region"}}, -- 4.157 prefectural, 2.2 urban
+	["Ürümqi"] = {container = {name = "Xinjiang", divtype = "autonomous region"}}, -- 4.054 prefectural, 4.3 urban
 	["Urumqi"] = {alias_of = "Ürümqi"},
-	["Hohhot"] = {parents = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 3.446 prefectural, 2.7 urban
-	["Putian"] = {parents = "Fujian"}, -- 3.210 prefectural, 2.0 urban
-	["Datong"] = {parents = "Shanxi"}, -- 3.105 prefectural, 2.0 urban
-	["Haikou"] = {parents = "Hainan"}, -- 2.873 prefectural, 2.3 urban
-	["Baotou"] = {parents = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 2.709 prefectural, 2.2 urban
-	["Zhuhai"] = {parents = "Guangdong"}, -- 2.439 prefectural, 2.4 urban
+	["Hohhot"] = {container = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 3.446 prefectural, 2.7 urban
+	["Putian"] = {container = "Fujian"}, -- 3.210 prefectural, 2.0 urban
+	["Datong"] = {container = "Shanxi"}, -- 3.105 prefectural, 2.0 urban
+	["Haikou"] = {container = "Hainan"}, -- 2.873 prefectural, 2.3 urban
+	["Baotou"] = {container = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 2.709 prefectural, 2.2 urban
+	["Zhuhai"] = {container = "Guangdong"}, -- 2.439 prefectural, 2.4 urban
 }
 
 export.china_prefecture_level_cities_group = {
-	skip_parents = {name = "China", divtype = "country"},
+	default_container = {name = "China", divtype = "country"},
+	canonicalize_key_container = make_canonicalize_key_container(  function(container)
+		if type(containing) == "string" then
+			return {
 	default_divtype = "prefecture-level city",
 	default_poldiv = {
 		"districts",
@@ -1740,7 +1807,7 @@ export.finland_regions = {
 export.finland_group = {
 	key_to_placename = make_key_to_placename(", Finland$"),
 	placename_to_key = make_placename_to_key(", Finland"),
-	skip_parents = {name = "Finland", divtype = "country"},
+	default_container = {name = "Finland", divtype = "country"},
 	default_divtype = "region",
 	default_poldiv = "municipalities",
 	british_spelling = true,
@@ -1773,7 +1840,7 @@ export.france_administrative_regions = {
 export.france_group = {
 	key_to_placename = make_key_to_placename(", France$"),
 	placename_to_key = make_placename_to_key(", France"),
-	skip_parents = {name = "France", divtype = "country"},
+	default_container = {name = "France", divtype = "country"},
 	-- Canonically these are 'administrative regions' but also categorize if identified as a 'region'.
 	default_divtype = {"administrative region", "region"},
 	default_div_parent_type = "regions",
@@ -1806,7 +1873,7 @@ export.germany_states = {
 export.germany_group = {
 	key_to_placename = make_key_to_placename(", Germany$"),
 	placename_to_key = make_placename_to_key(", Germany"),
-	skip_parents = {name = "Germany", divtype = "country"},
+	default_container = {name = "Germany", divtype = "country"},
 	default_divtype = "state",
 	default_poldiv = "districts",
 	british_spelling = true,
@@ -1868,7 +1935,7 @@ export.india_states_and_union_territories = {
 export.india_group = {
 	key_to_placename = make_key_to_placename(", India$"),
 	placename_to_key = india_placename_to_key,
-	skip_parents = {name = "India", divtype = "country"},
+	default_container = {name = "India", divtype = "country"},
 	default_divtype = "state",
 	default_div_parent_type = "states and union territories",
 	british_spelling = true,
@@ -1945,7 +2012,7 @@ end
 export.indonesia_group = {
 	key_to_placename = indonesia_key_to_placename,
 	placename_to_key = indonesia_placename_to_key,
-	skip_parents = {name = "Indonesia", divtype = "country"},
+	default_container = {name = "Indonesia", divtype = "country"},
 	default_divtype = "province",
 	-- per https://www.quora.com/Does-Indonesia-use-British-or-American-English, Indonesia tends to use American
 	-- spellings.
@@ -2002,7 +2069,7 @@ end
 export.ireland_group = {
 	key_to_placename = make_irish_type_key_to_placename(", Ireland$"),
 	placename_to_key = make_irish_type_placename_to_key(", Ireland"),
-	skip_parents = {name = "Ireland", divtype = "country"},
+	default_container = {name = "Ireland", divtype = "country"},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.ireland_counties,
@@ -2035,7 +2102,7 @@ export.italy_administrative_regions = {
 export.italy_group = {
 	key_to_placename = make_key_to_placename(", Italy$"),
 	placename_to_key = make_placename_to_key(", Italy"),
-	skip_parents = {name = "Italy", divtype = "country"},
+	default_container = {name = "Italy", divtype = "country"},
 	default_divtype = {"administrative region", "region"},
 	default_div_parent_type = "regions",
 	british_spelling = true,
@@ -2112,7 +2179,7 @@ end
 export.japan_group = {
 	key_to_placename = make_key_to_placename(", Japan$", " Prefecture$"),
 	placename_to_key = japan_placename_to_key,
-	skip_parents = {name = "Japan", divtype = "country"},
+	default_container = {name = "Japan", divtype = "country"},
 	default_divtype = "prefecture",
 	data = export.japan_prefectures,
 }
@@ -2133,7 +2200,7 @@ export.north_korea_provinces = {
 export.north_korea_group = {
 	key_to_placename = make_key_to_placename(", North Korea$", " Province$"),
 	placename_to_key = make_placename_to_key(", North Korea", " Province"),
-	skip_parents = {name = "North Korea", divtype = "country"},
+	default_container = {name = "North Korea", divtype = "country"},
 	default_divtype = "province",
 	data = export.north_korea_provinces,
 }
@@ -2154,7 +2221,7 @@ export.south_korea_provinces = {
 export.south_korea_group = {
 	key_to_placename = make_key_to_placename(", South Korea$", " Province$"),
 	placename_to_key = make_placename_to_key(", South Korea", " Province"),
-	skip_parents = {name = "South Korea", divtype = "country"},
+	default_container = {name = "South Korea", divtype = "country"},
 	default_divtype = "province",
 	data = export.south_korea_provinces,
 }
@@ -2194,7 +2261,7 @@ end
 export.laos_group = {
 	key_to_placename = make_key_to_placename(", Laos$", {" Province$", " Prefecture$"}),
 	placename_to_key = laos_placename_to_key,
-	skip_parents = {name = "Laos", divtype = "country"},
+	default_container = {name = "Laos", divtype = "country"},
 	default_divtype = "province",
 	data = export.laos_provinces,
 }
@@ -2215,10 +2282,10 @@ export.lebanon_governorates = {
 export.lebanon_group = {
 	key_to_placename = make_key_to_placename(", Lebanon$", " Governorate$"),
 	placename_to_key = make_placename_to_key(", Lebanon", " Governorate"),
-	skip_parents = {name = "Lebanon", divtype = "country"},
+	default_container = {name = "Lebanon", divtype = "country"},
 	default_divtype = "governorate",
 	-- The governorates are too generic in name. For example, "North Governorate" exists elsewhere.
-	no_containing_polity_cat = true,
+	no_container_cat = true,
 	data = export.lebanon_governorates,
 }
 
@@ -2242,7 +2309,7 @@ export.malaysia_states = {
 export.malaysia_group = {
 	key_to_placename = make_key_to_placename(", Malaysia$"),
 	placename_to_key = make_placename_to_key(", Malaysia"),
-	skip_parents = {name = "Malaysia", divtype = "country"},
+	default_container = {name = "Malaysia", divtype = "country"},
 	default_divtype = "state",
 	british_spelling = true,
 	data = export.malaysia_states,
@@ -2261,11 +2328,11 @@ export.malta_regions = {
 export.malta_group = {
 	key_to_placename = make_key_to_placename(", Malta$", " Region"),
 	placename_to_key = make_placename_to_key(", Malta", " Region"),
-	skip_parents = {name = "Malta", divtype = "country"},
+	default_container = {name = "Malta", divtype = "country"},
 	default_divtype = "region",
 	british_spelling = true,
 	-- The regions are too generic in name. For example, "Central Region" exists elsewhere, e.g. in South Africa.
-	no_containing_polity_cat = true,
+	no_container_cat = true,
 	data = export.malta_regions,
 }
 
@@ -2325,7 +2392,7 @@ end
 export.mexico_group = {
 	key_to_placename = mexico_key_to_placename,
 	placename_to_key = mexico_placename_to_key,
-	skip_parents = {name = "Mexico", divtype = "country"},
+	default_container = {name = "Mexico", divtype = "country"},
 	default_divtype = "state",
 	data = export.mexico_states,
 }
@@ -2349,7 +2416,7 @@ export.morocco_regions = {
 export.morocco_group = {
 	key_to_placename = make_key_to_placename(", Morocco$"),
 	placename_to_key = make_placename_to_key(", Morocco"),
-	skip_parents = {name = "Morocco", divtype = "country"},
+	default_container = {name = "Morocco", divtype = "country"},
 	default_divtype = "region",
 	british_spelling = true,
 	data = export.morocco_regions,
@@ -2374,7 +2441,7 @@ export.netherlands_provinces = {
 export.netherlands_group = {
 	key_to_placename = make_key_to_placename(", Netherlands$"),
 	placename_to_key = make_placename_to_key(", Netherlands"),
-	skip_parents = {name = "Netherlands", divtype = "country"},
+	default_container = {name = "Netherlands", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = "municipalities",
 	british_spelling = true,
@@ -2424,7 +2491,7 @@ export.nigeria_states = {
 export.nigeria_group = {
 	key_to_placename = make_key_to_placename(", Nigeria$", " State$"),
 	placename_to_key = make_placename_to_key(", Nigeria", " State"),
-	skip_parents = {name = "Nigeria", divtype = "country"},
+	default_container = {name = "Nigeria", divtype = "country"},
 	default_divtype = "state",
 	british_spelling = true,
 	data = export.nigeria_states,
@@ -2461,7 +2528,7 @@ export.norwegian_counties = {
 export.norway_group = {
 	key_to_placename = make_key_to_placename(", Norway$"),
 	placename_to_key = make_placename_to_key(", Norway"),
-	skip_parents = {name = "Norway", divtype = "country"},
+	default_container = {name = "Norway", divtype = "country"},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.norwegian_counties,
@@ -2488,7 +2555,7 @@ export.pakistan_provinces_and_territories = {
 export.pakistan_group = {
 	key_to_placename = make_key_to_placename(", Pakistan$"),
 	placename_to_key = make_placename_to_key(", Pakistan"),
-	skip_parents = {name = "Pakistan", divtype = "country"},
+	default_container = {name = "Pakistan", divtype = "country"},
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
 	default_poldiv = {"divisions"},
@@ -2587,7 +2654,7 @@ export.philippines_provinces = {
 export.philippines_group = {
 	key_to_placename = make_key_to_placename(", Philippines$"),
 	placename_to_key = make_placename_to_key(", Philippines"),
-	skip_parents = {name = "Philippines", divtype = "country"},
+	default_container = {name = "Philippines", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = {"municipalities", "barangays"},
 	data = export.philippines_provinces,
@@ -2641,7 +2708,7 @@ export.romania_counties = {
 export.romania_group = {
 	key_to_placename = make_key_to_placename(", Romania$", " County$"),
 	placename_to_key = make_placename_to_key(", Romania", " County"),
-	skip_parents = {name = "Romania", divtype = "country"},
+	default_container = {name = "Romania", divtype = "country"},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.romania_counties,
@@ -2793,7 +2860,7 @@ export.russia_group = {
 	-- key_to_placename in the category augmentation code at the bottom of [[Module:place/data]], so we should
 	-- define a key_to_placename appropriately.)
 	placename_to_key = russia_placename_to_key,
-	skip_parents = {name = "Russia", divtype = "country"},
+	default_container = {name = "Russia", divtype = "country"},
 	bare_label_setter = function(group, key, value, m_data)
 		local divtype = value.divtype or group.default_divtype
 		if type(divtype) == "table" then
@@ -2808,7 +2875,7 @@ export.russia_group = {
 		}
 	end,
 	value_transformer = function(group, key, value)
-		value.containing_polity = "Russia"
+		value.container = "Russia"
 		local divtype = value.divtype or group.default_divtype
 		if type(divtype) == "table" then
 			divtype = divtype[1]
@@ -2841,10 +2908,10 @@ export.saudi_arabia_provinces = {
 export.saudi_arabia_group = {
 	key_to_placename = make_key_to_placename(", Saudi Arabia$", " Province$"),
 	placename_to_key = make_placename_to_key(", Saudi Arabia", " Province"),
-	skip_parents = {name = "Saudi Arabia", divtype = "country"},
+	default_container = {name = "Saudi Arabia", divtype = "country"},
 	default_divtype = "province",
 	-- The regions are too generic in name. For example, "Eastern Region" exists elsewhere.
-	no_containing_polity_cat = true,
+	no_container_cat = true,
 	data = export.saudi_arabia_provinces,
 }
 
@@ -2872,7 +2939,7 @@ export.spain_autonomous_communities = {
 export.spain_group = {
 	key_to_placename = make_key_to_placename(", Spain$"),
 	placename_to_key = make_placename_to_key(", Spain"),
-	skip_parents = {name = "Spain", divtype = "country"},
+	default_container = {name = "Spain", divtype = "country"},
 	default_divtype = "autonomous community",
 	british_spelling = true,
 	data = export.spain_autonomous_communities,
@@ -2898,7 +2965,7 @@ export.taiwan_counties = {
 export.taiwan_group = {
 	key_to_placename = make_key_to_placename(", Taiwan$", " County$"),
 	placename_to_key = make_placename_to_key(", Taiwan", " County"),
-	skip_parents = {name = "Taiwan", divtype = "country"},
+	default_container = {name = "Taiwan", divtype = "country"},
 	default_divtype = "county",
 	data = export.taiwan_counties,
 }
@@ -2986,7 +3053,7 @@ export.thailand_provinces = {
 export.thailand_group = {
 	key_to_placename = make_key_to_placename(", Thailand$", " Province$"),
 	placename_to_key = make_placename_to_key(", Thailand", " Province"),
-	skip_parents = {name = "Thailand", divtype = "country"},
+	default_container = {name = "Thailand", divtype = "country"},
 	default_divtype = "province",
 	default_poldiv = "districts",
 	data = export.thailand_provinces,
@@ -3026,7 +3093,7 @@ export.uk_constituent_countries = {
 
 -- constituent countries and provinces of the United Kingdom
 export.uk_group = {
-	skip_parents = {name = "United Kingdom", divtype = "country"},
+	default_container = {name = "United Kingdom", divtype = "country"},
 	default_divtype = {"constituent country", "country"},
 	default_miscdiv = {
 		"traditional counties",
@@ -3035,7 +3102,7 @@ export.uk_group = {
 	british_spelling = true,
 	-- Don't create categories like 'Category:en:Towns in the United Kingdom'
 	-- or 'Category:en:Places in the United Kingdom'.
-	no_containing_polity_cat = true,
+	no_container_cat = true,
 	data = export.uk_constituent_countries,
 }
 
@@ -3108,7 +3175,7 @@ export.us_states = {
 export.us_group = {
 	key_to_placename = make_key_to_placename(", USA$"),
 	placename_to_key = make_placename_to_key(", USA"),
-	skip_parents = {name = "United States", divtype = "country"},
+	default_container = {name = "United States", divtype = "country"},
 	default_divtype = "state",
 	default_poldiv = {
 		"counties",
@@ -3201,7 +3268,7 @@ export.england_counties = {
 export.england_group = {
 	key_to_placename = make_key_to_placename(", England$"),
 	placename_to_key = make_placename_to_key(", England"),
-	skip_parents = {{name = "England", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
+	default_container = {name = "England", divtype = "constituent country"},
 	default_divtype = "county",
 	default_poldiv = {
 		"districts",
@@ -3232,7 +3299,7 @@ export.northern_ireland_counties = {
 export.northern_ireland_group = {
 	key_to_placename = make_irish_type_key_to_placename(", Northern Ireland$"),
 	placename_to_key = make_irish_type_placename_to_key(", Northern Ireland"),
-	skip_parents = {{name = "Northern Ireland", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
+	default_container = {{name = "Northern Ireland", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "county",
 	british_spelling = true,
 	data = export.northern_ireland_counties,
@@ -3277,7 +3344,7 @@ export.scotland_council_areas = {
 export.scotland_group = {
 	key_to_placename = make_key_to_placename(", Scotland$"),
 	placename_to_key = make_placename_to_key(", Scotland"),
-	skip_parents = {{name = "Scotland", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
+	default_container = {{name = "Scotland", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "council area",
 	british_spelling = true,
 	data = export.scotland_council_areas,
@@ -3312,7 +3379,7 @@ export.wales_principal_areas = {
 export.wales_group = {
 	key_to_placename = make_key_to_placename(", Wales$"),
 	placename_to_key = make_placename_to_key(", Wales"),
-	skip_parents = {{name = "Wales", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
+	default_container = {{name = "Wales", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
 	default_divtype = "county borough",
 	british_spelling = true,
 	data = export.wales_principal_areas,
@@ -3336,7 +3403,7 @@ City data.
 Each entry in `export.cities` is a group of cities under a single overarching containing polity (typically a country).
 Each group contains the following fields:
 
-* `skip_parents`: A containing polity spec or list of such specs, giving the overarching containing polity or
+* `default_container`: A containing polity spec or list of such specs, giving the overarching containing polity or
   polities (normally top-level) that all cities in the group belong to. Containing polity specs are described below
   for the immediate containing polity (under the `data` field below). Generally the overarching `containing_polities`
   field of the group contains a single polity in the table format (so that the divtype can be given), but in some cases
@@ -3370,7 +3437,7 @@ Each group contains the following fields:
 export.cities = {
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "Australia", divtype = "country"},
+		default_container = {name = "Australia", divtype = "country"},
 		data = {
 			["Adelaide"] = {parents = "South Australia"},
 			["Brisbane"] = {parents = "Queensland"},
@@ -3384,7 +3451,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "Brazil", divtype = "country"},
+		default_container = {name = "Brazil", divtype = "country"},
 		data = {
 			-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
 			["São Paulo"] = {parents = "São Paulo"},
@@ -3408,7 +3475,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "province",
-		skip_parents = {name = "Canada", divtype = "country"},
+		default_container = {name = "Canada", divtype = "country"},
 		data = {
 			["Toronto"] = {parents = "Ontario"},
 			["Montreal"] = {parents = "Quebec"},
@@ -3424,7 +3491,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "administrative region",
-		skip_parents = {name = "France", divtype = "country"},
+		default_container = {name = "France", divtype = "country"},
 		data = {
 			["Paris"] = {parents = "Île-de-France"},
 			["Lyon"] = {parents = "Auvergne-Rhône-Alpes"},
@@ -3442,7 +3509,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "Germany", divtype = "country"},
+		default_container = {name = "Germany", divtype = "country"},
 		data = {
 			["Berlin"] = {},
 			["Dortmund"] = {parents = "North Rhine-Westphalia"},
@@ -3461,7 +3528,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "India", divtype = "country"},
+		default_container = {name = "India", divtype = "country"},
 		data = {
 			-- This only lists the top 20. Per [[w:List of cities in India by population]], there
 			-- are 46 cities over 1,000,000 inhabitants, not to mention metro areas. Our coverage
@@ -3493,7 +3560,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "province",
-		skip_parents = {name = "Indonesia", divtype = "country"},
+		default_container = {name = "Indonesia", divtype = "country"},
 		data = { 
 			-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
 			["Jakarta"] = {parents = "Special Capital Region of Jakarta"},
@@ -3526,7 +3593,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "prefecture",
-		skip_parents = {name = "Japan", divtype = "country"},
+		default_container = {name = "Japan", divtype = "country"},
 		data = {
 			-- Population figures from [[w:List of cities in Japan]]. Metro areas from
 			-- [[w:List of metropolitan areas in Japan]].
@@ -3563,7 +3630,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "province",
-		skip_parents = {name = "South Korea", divtype = "country"},
+		default_container = {name = "South Korea", divtype = "country"},
 		data = { 
 			-- all cities listed are not associated with any province.
 			["Seoul"] = {},
@@ -3577,7 +3644,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "Mexico", divtype = "country"},
+		default_container = {name = "Mexico", divtype = "country"},
 		data = {
 			["Mexico City"] = {}, -- its own state
 			["Monterrey"] = {parents = "Nuevo León"},
@@ -3604,7 +3671,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "province",
-		skip_parents = {name = "Philippines", divtype = "country"},
+		default_container = {name = "Philippines", divtype = "country"},
 		data = { 
 			 --some cities listed independent from any province. province listed is for geographical purposes only.
 			 --skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
@@ -3628,7 +3695,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "oblast",
-		skip_parents = {name = "Russia", divtype = "country"},
+		default_container = {name = "Russia", divtype = "country"},
 		data = {
 			-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
 			["Moscow"] = {},
@@ -3652,7 +3719,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "autonomous community",
-		skip_parents = {name = "Spain", divtype = "country"},
+		default_container = {name = "Spain", divtype = "country"},
 		data = {
 			["Madrid"] = {parents = "Community of Madrid"},
 			["Barcelona"] = {parents = "Catalonia"},
@@ -3663,7 +3730,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "county",
-		skip_parents = {name = "Taiwan", divtype = "country"},
+		default_container = {name = "Taiwan", divtype = "country"},
 		data = { 
 			["New Taipei"] = {},
 			["Taichung"] = {},
@@ -3678,7 +3745,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "county",
-		skip_parents = {name = "United Kingdom", divtype = "country"},
+		default_container = {name = "United Kingdom", divtype = "country"},
 		data = {
 			["London"] = {parents = {"Greater London", {name = "England", divtype = "constituent country"}}},
 			["Manchester"] = {parents = {"Greater Manchester", {name = "England", divtype = "constituent country"}}},
@@ -3700,7 +3767,7 @@ export.cities = {
 	-- cities in the US
 	{
 		default_parent_divtype = "state",
-		skip_parents = {name = "United States", divtype = "country"},
+		default_container = {name = "United States", divtype = "country"},
 		wp = "%c, %d",
 		data = {
 			-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
@@ -3779,7 +3846,7 @@ export.cities = {
 	},
 	{
 		default_parent_divtype = "country",
-		skip_parents = {},
+		default_container = {},
 		data = {
 			["Yerevan"] = {parents = "Armenia"},
 			["Vienna"] = {parents = "Austria"},
