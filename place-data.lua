@@ -4,6 +4,7 @@ export.force_cat = false -- set to true for testing
 
 local m_shared = require("Module:place/shared-data")
 local m_links = require("Module:links")
+local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
 
 local dump = mw.dumpObject
@@ -23,6 +24,22 @@ end
 ------------------------------------------------------------------------------------------
 --                                     Basic utilities                                  --
 ------------------------------------------------------------------------------------------
+
+
+--[==[
+Return true if `force_cat` is set either in this module or in [[Module:place/shared-data]].
+]==]
+function export.get_force_cat()
+	return export.force_cat or m_shared.force_cat
+end
+
+
+-- Add the page to a tracking "category". To see the pages in the "category",
+-- go to [[Wiktionary:Tracking/place/PAGE]] and click on "What links here".
+local function track(page)
+	require(debug_track_module)("place/" .. page)
+	return true
+end
 
 
 function export.remove_links_and_html(text)
@@ -151,33 +168,53 @@ not part of the subsequence used to find ``equiv_placetype``; or nil if all word
 to find ``equiv_placetype``. (FIXME: This qualifier is not currently used anywhere.) The placetype passed in always
 forms the first entry.
 
-'''NOTE:''' This currently consults `placetype_equivs` and `qualifier_equivs` to find equivalent placetypes, but doesn't
-look at fallbacks specified in `placetype_data`. FIXME: This should probably be fixed. It's not clear we need the
-distinction between `placetype_equivs` and `fallback`.
+`no_fallback`, if set, disables returning equivalent placetypes based on the `fallback` setting for a placetype. Only
+the placetype itself, and placetype subsets created by chopping off recognized qualifiers at the beginning, are
+returned. (As an exception, if 'historical', 'ancient', 'former' or the like are found, they proceed ignoring
+`no_fallback`, because it seems tricky to handle them correctly in the presence of `no_fallback`. `no_fallback` is used
+in the find_placetype_cat_specs() function in [[Module:place]] to prefer exact matches for placetypes such as barangays
+with later holonyms to matches based on a fallback such as 'neighborhood' with an earlier holonym, and historical/former
+placetypes rarely occur with exact match category specs anyway.
+
+`no_check_for_inherently_former` is necessary to prevent an infinite loop when checking for `inherently_former`.
 ]==]
-function export.get_placetype_equivs(placetype)
+function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inherently_former)
 	local equivs = {}
 
 	-- Look up the equivalent placetype for `placetype` in `placetype_equivs`. If `placetype` is plural, also look up
 	-- the equivalent for the singularized version. Return any equivalent placetype(s) found.
 	local function lookup_placetype_equiv(placetype)
 		local retval = {}
-		-- Check for a mapping in placetype_equivs; add if present.
-		if export.placetype_equivs[placetype] then
-			insert(retval, export.placetype_equivs[placetype])
+		local function insert_placetype_equiv_or_fallback(placetype)
+			local first_placetype = #retval + 1
+			while true do
+				local pt_value = export.placetype_data[placetype]
+				if pt_value and pt_value.fallback then
+					insert(retval, pt_value.fallback)
+					local last_placetype = #retval
+					if last_placetype - first_placetype >= 10 then
+						internal_error("Apparent loop in fallback chain: %s",
+							table.concat(retval, " -> ", first_placetype, last_placetype))
+					end
+					placetype = pt_value.fallback
+				else
+					break
+				end
+			end
 		end
+		insert_placetype_equiv_or_fallback(placetype)
 		local sg_placetype = export.maybe_singularize(placetype)
 		-- Check for a mapping in placetype_equivs for the singularized equivalent.
-		if sg_placetype and export.placetype_equivs[sg_placetype] then
-			insert(retval, export.placetype_equivs[sg_placetype])
+		if sg_placetype then
+			insert_placetype_equiv_or_fallback(sg_placetype)
 		end
 		return retval
 	end
 
-	-- Insert `placetype` into `equivs`, along with any equivalent placetype listed in `placetype_equivs`. `qualifier`
+	-- Insert `placetype` into `equivs`, along with any fallback placetypes listed in `placetype_data`. `qualifier`
 	-- is the preceding qualifier to insert into `equivs` along with the placetype (see comment at top of function). We
-	-- also check to see if `placetype` is plural, and if so, insert the singularized version along with its equivalent
-	-- (if any) in `placetype_equivs`.
+	-- also check to see if `placetype` is plural, and if so, insert the singularized version along with its fallbacks
+	-- (if any) in `placetype_data`.
 	local function do_placetype(qualifier, placetype)
 		-- FIXME! The qualifier (first arg) is inserted into the table, but isn't currently used anywhere.
 		local function insert_equiv(pt)
@@ -191,10 +228,12 @@ function export.get_placetype_equivs(placetype)
 		if sg_placetype then
 			insert_equiv(sg_placetype)
 		end
-		-- Then check for a mapping in placetype_equivs, and a mapping for the singularized equivalent; add if present.
-		local placetype_equiv_list = lookup_placetype_equiv(placetype)
-		for _, placetype_equiv in ipairs(placetype_equiv_list) do
-			insert_equiv(placetype_equiv)
+		if not no_fallback then
+			-- Then check for a mapping in placetype_equivs, and a mapping for the singularized equivalent; add if present.
+			local placetype_equiv_list = lookup_placetype_equiv(placetype)
+			for _, placetype_equiv in ipairs(placetype_equiv_list) do
+				insert_equiv(placetype_equiv)
+			end
 		end
 	end
 
@@ -203,39 +242,49 @@ function export.get_placetype_equivs(placetype)
 
 	for _, split in ipairs(splits) do
 		local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
-		if this_qualifier then
-			-- First see if the rightmost split-off qualifier is in qualifier_equivs (e.g. 'former' -> 'historical').
-			-- If so, create a placetype from the qualifier mapping + the following bare_placetype; then, add
-			-- that placetype, and any mapping for the placetype in placetype_equivs.
-			local equiv_qualifier = export.qualifier_equivs[this_qualifier]
-			if equiv_qualifier then
-				do_placetype(prev_qualifier, equiv_qualifier .. " " .. bare_placetype)
-			end
-			-- Also see if the remaining placetype to the right of the rightmost split-off qualifier has a placetype
-			-- equiv, and if so, create placetypes from the qualifier + placetype equiv and qualifier equiv + placetype
-			-- equiv, inserting them along with any equivalents. This way, if we are given the placetype "former
-			-- alliance", and we have a mapping 'former' -> 'historical' in qualifier_equivs and a mapping 'alliance'
-			-- -> 'confederation' in placetype_equivs, we check for placetypes 'former confederation' and (most
-			-- importantly) 'historical confederation' and their equivalents (if any) in placetype_equivs. This allows
-			-- the user to specify placetypes using any combination of "former/ancient/historical/etc." and
-			-- "league/alliance/confederacy/confederation" and it will correctly map to the placetype 'historical
-			-- confederation' and in turn to the category [[:Category:LANG:Historical polities]]. Similarly, any
-			-- combination of "former/ancient/historical/etc." and "protectorate/autonomous territory/dependent
-			-- territory" will correctly map to placetype 'historical dependent territory' and in turn to the category
-			-- [[:Category:LANG:Historical political subdivisions]].
-			local bare_placetype_equiv_list = lookup_placetype_equiv(bare_placetype)
-			for _, bare_placetype_equiv in ipairs(bare_placetype_equiv_list) do
-				do_placetype(prev_qualifier, this_qualifier .. " " .. bare_placetype_equiv)
-				if equiv_qualifier then
-					do_placetype(prev_qualifier, equiv_qualifier .. " " .. bare_placetype_equiv)
+		-- First see if the rightmost split-off qualifier is in qualifier_equivs (e.g. 'former' -> 'historical').
+		-- If so, create a placetype from the qualifier mapping + the following bare_placetype; then, add
+		-- that placetype, and any mapping for the placetype in placetype_equivs.
+		local former_qualifiers = this_qualifier and export.former_qualifiers[this_qualifier] or nil
+		if not former_qualifiers and not no_check_for_inherently_former then
+			former_qualifiers = export.get_equiv_placetype_prop(bare_placetype,
+				function(pt) return export.placetype_data[pt] and export.placetype_data[pt].inherently_former end,
+				nil, nil, "no_check_for_inherently_former"
+			)
+		end
+		if former_qualifiers then
+			-- FIXME: Should we respect `no_fallback` here? My instinct says no.
+			local bare_placetype_equivs = export.get_placetype_equivs(bare_placetype, nil,
+				"no_check_for_inherently_former")
+			local former_type = export.get_equiv_placetype_prop_from_equivs(bare_placetype_equivs,
+				function(pt) return export.placetype_data[pt] and export.placetype_data[pt].former_type end
+			)
+			if not former_type then
+				local pt_data = export.get_equiv_placetype_prop_from_equivs(bare_placetype_equivs,
+					function(pt) return export.placetype_data[pt] end
+				)
+				if pt_data then
+					internal_error("For placetype '%s', placetype data located but `former_type` missing; placetypes searched are %s",
+						bare_placetype, bare_placetype_equivs)
+				else
+					-- Enable error when we've verified there aren't any examples.
+					track("bad-former-placetype")
+					track("bad-former-placetype/" .. bare_placetype)
+					--error(("For placetype '%s', unrecognized placetype following 'former'-type qualifier; searched placetype(s) %s"):
+					--	format(bare_placetype, dump(bare_placetype_equivs)))
 				end
+			elseif former_type ~= "!" then
+				for _, former_qualifier in ipairs(former_qualifiers) do
+					do_placetype(prev_qualifier, former_qualifier .. " " .. former_type)
+				end
+				break
 			end
+		end
 
-			-- Then see if the rightmost split-off qualifier is in qualifier_to_placetype_equivs
-			-- (e.g. 'fictional *' -> 'fictional location'). If so, add the mapping.
-			if export.qualifier_to_placetype_equivs[this_qualifier] then
-				insert(equivs, {qualifier=prev_qualifier, placetype=export.qualifier_to_placetype_equivs[this_qualifier]})
-			end
+		-- Then see if the rightmost split-off qualifier is in qualifier_to_placetype_equivs
+		-- (e.g. 'fictional *' -> 'fictional location'). If so, add the mapping.
+		if this_qualifier and export.qualifier_to_placetype_equivs[this_qualifier] then
+			insert(equivs, {qualifier=prev_qualifier, placetype=export.qualifier_to_placetype_equivs[this_qualifier]})
 		end
 
 		-- Finally, join the rightmost split-off qualifier to the previously split-off qualifiers to form a
@@ -269,12 +318,13 @@ equivalent placetype that triggered the non-falsy (or non-{nil}) return value. I
 non-{nil}) value, `get_equiv_placetype_prop` returns {nil} for both return values. If `placetype` is passed in as {nil},
 the return value is the result of calling `fun` on {nil} (whatever it is) with {nil} for the second return value.
 ]==]
-function export.get_equiv_placetype_prop(placetype, fun, continue_on_nil_only)
+function export.get_equiv_placetype_prop(placetype, fun, continue_on_nil_only, no_fallback,
+	no_check_for_inherently_former)
 	if not placetype then
 		return fun(nil), nil
 	end
-	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype), fun,
-		continue_on_nil_only)
+	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype, no_fallback,
+		no_check_for_inherently_former), fun, continue_on_nil_only)
 end
 
 
@@ -352,7 +402,10 @@ export.placetype_aliases = {
 	["coll"] = "collectivity",
 	["comm"] = "community",
 	["cont"] = "continent",
+	["contr"] = "continental region",
+	["contregion"] = "continental region",
 	["cpar"] = "civil parish",
+	["damun"] = "direct-administered municipality",
 	["dep"] = "dependency",
 	["departmental capital"] = "department capital",
 	["dept"] = "department",
@@ -360,6 +413,7 @@ export.placetype_aliases = {
 	["dist"] = "district",
 	["distmun"] = "district municipality",
 	["div"] = "division",
+	["emp"] = "empire",
 	["fpref"] = "French prefecture",
 	["gov"] = "governorate",
 	["govnat"] = "governorate",
@@ -393,6 +447,7 @@ export.placetype_aliases = {
 	["prov"] = "province",
 	["r"] = "region",
 	["range"] = "mountain range",
+	["rcm"] = "regional county municipality",
 	["rcomun"] = "regional county municipality",
 	["rdist"] = "regional district",
 	["rep"] = "republic",
@@ -404,6 +459,7 @@ export.placetype_aliases = {
 	["rurmun"] = "rural municipality",
 	["s"] = "state",
 	["sar"] = "special administrative region",
+	["spref"] = "subprefecture",
 	["sprefcity"] = "sub-prefectural city",
 	["sprovcity"] = "subprovincial city",
 	["sub-prefecture-level city"] = "sub-prefectural city",
@@ -411,10 +467,9 @@ export.placetype_aliases = {
 	["sub-provincial district"] = "subprovincial district",
 	["terr"] = "territory",
 	["terrauth"] = "territorial authority",
-	["tjarea"] = "tribal jurisdictional area",
 	["twp"] = "township",
 	["twpmun"] = "township municipality",
-	["uauth"] = "unitary territory",
+	["uauth"] = "unitary authority",
 	["ucomm"] = "unincorporated community",
 	["udist"] = "unitary district",
 	["uterr"] = "union territory",
@@ -530,6 +585,7 @@ export.placetype_qualifiers = {
 	-- qualifiers for nonexistent places
 	-- FIXME: None of these can be set to `true` so they link, because it currently interferes with categorization.
 	-- FIXME!
+	["claimed"] = false,
 	["fictional"] = false,
 	["mythical"] = false,
 	["mythological"] = false,
@@ -607,7 +663,7 @@ export.placetype_links = {
 	["capital"] = true,
 	["capital city"] = true,
 	["caplc"] = "[[capital]] and largest city",
-	["caravan city"] = true,
+	["caravan city"] = "w",
 	["cathedral city"] = true,
 	["cattle station"] = true, -- Australia
 	["census area"] = true,
@@ -622,7 +678,7 @@ export.placetype_links = {
 	["coal city"] = "[[w:coal town|coal city]]",
 	["coal town"] = "w",
 	["co-capital"] = "[[co-]][[capital]]",
-	["collectivity"] = true,
+	["collectivity"] = "w",
 	["commandery"] = true,
 	["commonwealth"] = true,
 	["commune"] = true,
@@ -632,7 +688,7 @@ export.placetype_links = {
 	["confederacy"] = true,
 	["confederation"] = true,
 	["constituent country"] = true,
-	["contregion"] = "[[continental]] region",
+	["continental region"] = "[[continental]] [[region]]",
 	["council area"] = true,
 	["county-administered city"] = "w", -- Taiwan
 	["county-controlled city"] = "w", -- Taiwan
@@ -667,6 +723,7 @@ export.placetype_links = {
 	["empire"] = true,
 	["enclave"] = true,
 	["escarpment"] = true,
+	["ethnographic region"] = "[[w:cultural region|ethnographic region]]", -- used in Lithuania
 	["exclave"] = true,
 	["external territory"] = "[[external]] [[territory]]",
 	["federal city"] = "w",
@@ -718,6 +775,7 @@ export.placetype_links = {
 	["inland sea"] = true, -- note, we also have 'inland' as a qualifier
 	["inner city area"] = "[[inner city]] area",
 	["island country"] = "w",
+	["island group"] = "[[island]] [[group]]",
 	["island municipality"] = "w",
 	["islet"] = "w",
 	["Israeli settlement"] = "w",
@@ -764,6 +822,8 @@ export.placetype_links = {
 	["national park"] = true,
 	["new town"] = true,
 	["non-city capital"] = "[[capital]]",
+	["non-sovereign kingdom"] = "[[w:non-sovereign monarchy|non-sovereign kingdom]]",
+	["non-sovereign monarchy"] = "w",
 	["non-metropolitan county"] = "w",
 	["non-metropolitan district"] = "w",
 	["oblast"] = true,
@@ -824,7 +884,7 @@ export.placetype_links = {
 	["spa city"] = "[[w:spa town|spa city]]",
 	["spa town"] = "w",
 	["special administrative region"] = "w", -- China; North Korea; Indonesia; East Timor
-    ["special collectivity"] = "w",
+	["special collectivity"] = "w",
 	["special municipality"] = "w", -- formerly referred to the Taiwan article but there are also special municipalities of the Netherlands
 	["special ward"] = true,
 	["spit"] = true,
@@ -838,6 +898,8 @@ export.placetype_links = {
 	["subdistrict"] = true,
 	["subdivision"] = true,
 	["submerged ghost town"] = "[[submerged]] [[ghost town]]",
+	["subnational kingdom"] = "[[w:subnational monarchy|subnational kingdom]]",
+	["subnational monarchy"] = "w",
 	["subprefecture"] = true,
 	["subprovince"] = true,
 	["subprovincial city"] = "w",
@@ -856,7 +918,6 @@ export.placetype_links = {
 	["traditional county"] = true,
 	["traditional region"] = "w",
 	["treaty port"] = "w",
-	["tribal jurisdictional area"] = "w",
 	["tributary"] = true,
 	["underground station"] = "w",
 	["unincorporated territory"] = "w",
@@ -881,18 +942,16 @@ export.placetype_links = {
 In this table, the key qualifiers should be treated the same as the value qualifiers for categorization purposes. This
 is overridden by placetype_data, placetype_equivs and qualifier_to_placetype_equivs.
 ]==]
-export.qualifier_equivs = {
-	["abandoned"] = "historical",
-	["ancient"] = "historical",
-	["former"] = "historical",
-	["extinct"] = "historical",
-	["historic"] = "historical",
-	-- This needs to be here. If we take it out, 'historic province' won't properly
-	-- map to 'historical political subdivision'.
-	["historical"] = "historical",
-	["medieval"] = "historical",
-	["mediaeval"] = "historical",
-	["traditional"] = "historical",
+export.former_qualifiers = {
+	["abandoned"] = {"FORMER"},
+	["ancient"] = {"ANCIENT", "FORMER"},
+	["former"] = {"FORMER"},
+	["extinct"] = {"FORMER"},
+	["historic"] = {"FORMER"},
+	["historical"] = {"FORMER"},
+	["medieval"] = {"ANCIENT", "FORMER"},
+	["mediaeval"] = {"ANCIENT", "FORMER"},
+	["traditional"] = {"FORMER"},
 }
 
 --[==[ var:
@@ -904,278 +963,10 @@ export.qualifier_to_placetype_equivs = {
 	["fictional"] = "fictional location",
 	["mythical"] = "mythological location",
 	["mythological"] = "mythological location",
-}
-
---[==[ var:
-In this table, the key placetypes should be treated the same as the value placetypes for categorization purposes.
-Entries here are overridden by placetype_data.  NOTE: 'county town' and 'ghost town' aren't mapped to 'town' because
-they aren't necessarily towns.
---]==]
-export.placetype_equivs = {
-	["administrative capital"] = "capital city",
-	["administrative center"] = "administrative centre",
-	["administrative headquarters"] = "administrative centre",
-	["administrative seat"] = "administrative centre",
-	["alliance"] = "confederation",
-	["ancient city"] = "ancient settlement",
-	["ancient hamlet"] = "ancient settlement",
-	["ancient town"] = "ancient settlement",
-	["ancient village"] = "ancient settlement",
-	["archipelago"] = "island",
-	["associated province"] = "province",
-	["autonomous territory"] = "dependent territory",
-	["bailiwick"] = "polity",
-	["barangay"] = "neighborhood", -- not completely correct, barangays are formal administrative divisions of a city
-	["barrio"] = "neighborhood", -- not completely correct, in some countries barrios are formal administrative divisions of a city
-	["basin"] = "lake",
-	["bishopric"] = "polity",
-	["built-up area"] = "area",
-	["burgh"] = "borough",
-	["caliphate"] = "polity",
-	["cape"] = "headland",
-	["capital"] = "capital city",
-	["caplc"] = "capital city",
-	["caravan city"] = "city", -- should be 'former city' if we distinguish that
-	["cathedral city"] = "city",
-	["census town"] = "town",
-	["central business district"] = "neighborhood",
-	["ceremonial county"] = "county",
-	["chain of islands"] = "island",
-	["charter community"] = "village",
-	["coal city"] = "city",
-	["coal town"] = "town",
-	["co-capital"] = "capital city",
-	["colony"] = "dependent territory",
-	["commandery"] = "historical political subdivision",
-	["commune"] = "municipality",
-	["community"] = "village",
-	["comune"] = "municipality",
-	["confederacy"] = "confederation",
-	["contregion"] = "region",
-	["county-controlled city"] = "county-administered city",
-	["county-level city"] = "prefecture-level city",
-	["crater lake"] = "lake",
-	["crown dependency"] = "dependent territory",
-	["Crown dependency"] = "dependent territory",
-	["cultural area"] = "geographic and cultural area",
-	["cultural region"] = "geographic and cultural area",
-	["department capital"] = "capital city",
-	["dependency"] = "dependent territory",
-	["deserted mediaeval village"] = "ancient settlement",
-	["deserted medieval village"] = "ancient settlement",
-	["direct-administered municipality"] = "municipality",
-	["direct-controlled municipality"] = "municipality",
-	["district capital"] = "capital city",
-	["district headquarters"] = "administrative centre",
-	["division capital"] = "capital city",
-	["dome"] = "mountain",
-	["dormant volcano"] = "volcano",
-	["duchy"] = "polity",
-	["emirate"] = "polity",
-	["empire"] = "polity",
-	["escarpment"] = "mountain",
-	["external territory"] = "dependent territory",
-	["federal territory"] = "territory",
-	["First Nations reserve"] = "Indian reserve",
-	["frazione"] = "village", -- should be "hamlet" but hamlet in turn redirects to village
-	["geographic area"] = "geographic and cultural area",
-	["geographical area"] = "geographic and cultural area",
-	["geographic region"] = "geographic and cultural area",
-	["geographical region"] = "geographic and cultural area",
-	["glen"] = "valley",
-	["group of islands"] = "island",
-	["hamlet"] = "village",
-	["harbor city"] = "city",
-	["harbour city"] = "city",
-	["harbor town"] = "town",
-	["harbour town"] = "town",
-	["headquarters"] = "administrative centre",
-	["heath"] = "moor",
-	["hill station"] = "town",
-	["hill town"] = "town",
-	-- We try to list all top-level polities and political subdivisions here and classify them
-	-- accordingly. (Note that the following entries also apply to anything preceded by "former",
-	-- "ancient", "historic", "medieval", etc., according to qualifier_equivs.) Anything we don't
-	-- list will be categorized as if the qualifier were absent, e.g. "ancient city" will be
-	-- categorized as a city and "former sea" as a sea.
-	["historical administrative region"] = "historical political subdivision",
-	["historical administrative territory"] = "historical political subdivision",
-	["historical autonomous republic"] = "historical political subdivision",
-	["historical borough"] = "historical political subdivision",
-	["historical canton"] = "historical political subdivision",
-	["historical bailiwick"] = "historical polity",
-	["historical barangay"] = "historical political subdivision",
-	["historical bishopric"] = "historical polity",
-	["historical caliphate"] = "historical polity",
-	["historical city"] = "historical settlement",
-	["historical civilisation"] = "historical polity",
-	["historical civilization"] = "historical polity",
-	["historical civil parish"] = "historical political subdivision",
-	["historical commandery"] = "historical political subdivision",
-	["historical commonwealth"] = "historical polity",
-	["historical commune"] = "historical political subdivision",
-	["historical confederation"] = "historical polity",
-	["historical constituent country"] = "historical political subdivision",
-	["historical council area"] = "historical political subdivision",
-	["historical county"] = "historical political subdivision",
-	["historical county borough"] = "historical political subdivision",
-	["historical country"] = "historical polity",
-	["historical department"] = "historical political subdivision",
-	["historical district"] = "historical political subdivision",
-	["historical division"] = "historical political subdivision",
-	["historical duchy"] = "historical polity",
-	["historical emirate"] = "historical polity",
-	["historical empire"] = "historical polity",
-	["historical governorate"] = "historical political subdivision",
-	["historical hamlet"] = "historical settlement",
-	["historical khanate"] = "historical polity",
-	["historical kingdom"] = "historical polity",
-	["historical krai"] = "historical political subdivision",
-	["historical local government area"] = "historical political subdivision", 
-	["historical local government district"] = "historical political subdivision",
-	["historical local government district with borough status"] = "historical political subdivision",
-	["historical locality"] = "historical settlement",
-	["historical maritime republic"] = "historical polity",
-	["historical metropolitan borough"] = "historical political subdivision",
-	["historical municipality"] = "historical political subdivision",
-	["historical oblast"] = "historical political subdivision",
-	["historical okrug"] = "historical political subdivision",
-	["historical parish"] = "historical political subdivision",
-	["historical periphery"] = "historical political subdivision",
-	["historical prefecture"] = "historical political subdivision",
-	["historical principality"] = "historical polity",
-	["historical province"] = "historical political subdivision",
-	["historical regency"] = "historical political subdivision",
-	-- Not strictly necessary, but would become necessary if any polity adds 'historic region' as a poldiv.
-	-- See comment below above "traditional region".
-	["historic region"] = "geographic and cultural area",
-	["historical region"] = "geographic and cultural area",
-	["historical regional unit"] = "historical political subdivision",
-	["historical republic"] = "historical polity",
-	["historical satrapy"] = "historical polity",
-	["historical separatist state"] = "historical polity",
-	-- The following could refer either to a state of a country (a subdivision)
-	-- or a state = sovereign entity. The latter appears more common (e.g. in
-	-- various "ancient states" of East Asia).
-	["historical state"] = "historical polity",
-	["historical subdistrict"] = "historical political subdivision",
-	["historical subdivision"] = "historical political subdivision",
-	["historical subprefecture"] = "historical political subdivision",
-	["historical town"] = "historical settlement",
-	["historical unincorporated community"] = "historical settlement",
-	["historical village"] = "historical settlement",
-	["historical voivodeship"] = "historical political subdivision",
-	["home rule city"] = "city",
-	["home rule municipality"] = "municipality",
-	["hot spring"] = "spring",
-	["inactive volcano"] = "volcano",
-	["independent city"] = "city",
-	["independent town"] = "town",
-	["inland sea"] = "sea",
-	["inner city area"] = "neighborhood",
-	["island country"] = "country",
-	["island municipality"] = "municipality",
-	["islet"] = "island",
-	["judicial capital"] = "capital city",
-	["khanate"] = "polity",
-	["kingdom"] = "polity",
-	["league"] = "confederation",
-	["legislative capital"] = "capital city",
-	["local authority district"] = "local government district",
-	["local urban district"] = "unincorporated community",
-	["locality"] = "village", -- not necessarily true, but usually is the case
-	["macroregion"] = "region",
-	["market city"] = "city",
-	["market town"] = "town",
-	["massif"] = "mountain",
-	["mediaeval capital"] = "ancient capital",
-	["medieval capital"] = "ancient capital",
-	["mediaeval city"] = "ancient settlement",
-	["medieval city"] = "ancient settlement",
-	["mediaeval hamlet"] = "ancient settlement",
-	["medieval hamlet"] = "ancient settlement",
-	["mediaeval town"] = "ancient settlement",
-	["medieval town"] = "ancient settlement",
-	["mediaeval village"] = "ancient settlement",
-	["medieval village"] = "ancient settlement",
-	["megacity"] = "city",
-	["metropolitan county"] = "county",
-	["microdistrict"] = "neighborhood",
-	["microstate"] = "country",
-	["minster town"] = "town",
-	["moorland"] = "moor",
-	["mountain indigenous district"] = "district",
-	["mountain indigenous township"] = "township",
-	["mountain range"] = "mountain",
-	["mountainous region"] = "region",
-	["municipality with city status"] = "municipality",
-	["national capital"] = "capital city",
-	["national park"] = "park",
-	["neighbourhood"] = "neighborhood",
-	["new town"] = "town",
-	["non-metropolitan county"] = "county",
-	["non-metropolitan district"] = "local government district",
-	["overseas collectivity"] = "collectivity",
-	["overseas department"] = "department",
-	["overseas territory"] = "dependent territory",
-	["pass"] = "mountain pass",
-	["peak"] = "mountain",
-	["plateau"] = "geographic and cultural area",
-	["populated place"] = "village", -- not necessarily true, but usually is the case
-	["port city"] = "city",
-	["port town"] = "town",
-	["promontory"] = "headland",
-	["protectorate"] = "dependent territory",
-	["provincial capital"] = "capital city",
-	["regional capital"] = "capital city",
-	["regional municipality"] = "municipality",
-	["reservoir"] = "lake",
-	["resort city"] = "city",
-	["resort town"] = "town",
-	["royal burgh"] = "borough",
-	["royal capital"] = "capital city",
-	["seat"] = "administrative centre",
-	["settlement"] = "village", -- not necessarily true, but usually is the case
-	["sheading"] = "district",
-	["shire"] = "county",
-	["shire county"] = "county",
-	["shire town"] = "county seat",
-	["ski resort city"] = "city",
-	["ski resort town"] = "town",
-	["spa city"] = "city",
-	["spa town"] = "town",
-    ["special municipality"] = "municipality",
-	["spit"] = "peninsula",
-	["state capital"] = "capital city",
-	["state park"] = "park",
-	["statutory city"] = "city",
-	["statutory town"] = "town",
-	["stream"] = "river",
-	["strip"] = "region",
-	["strip of land"] = "region",
-	["submerged ghost town"] = "ghost town",
-	["sub-prefectural city"] = "subprovincial city",
-	["subregion"] = "region",
-	["suburban area"] = "suburb",
-	["subway station"] = "metro station",
-	["supercontinent"] = "continent",
-	["territorial authority"] = "district",
-	["town with bystatus"] = "town",
-	["traditional county"] = "county",
-	-- FIXME: shouldn't be necessary because 'traditional' maps to 'historical' and we have an entry here for
-	-- 'historical region', but Slovenia has 'traditional region' as a miscdiv, which interferes with the mapping from
-	-- 'traditional region' to 'historical region'. We need to set some sort of fallback in the political subdivision
-	-- augmentation code at the bottom of this file to continue processing qualifier_equivs if we don't match the
-	-- specific poldiv in question.
-	["traditional region"] = "geographic and cultural area",
-	["treaty port"] = "city", -- should be 'former city' if we distinguish that
-	["underground station"] = "metro station",
-	["unincorporated territory"] = "territory",
-	["unrecognised country"] = "unrecognized country",
-	["urban area"] = "neighborhood",
-	["urban township"] = "township",
-	["urban-type settlement"] = "town",
-	["ward"] = "neighborhood", -- not completely correct, wards are formal administrative divisions of a city
+	-- For e.g. Taiwan as a "claimed province" of China; parts of Belize as claimed by Guatemala; various islands
+	-- claimed by various parties in East Asia. FIXME: We should conditionalize on what is being claimed
+	-- since there are also claimed capitals, e.g. Israel and Palestine claim Jerusalem as their capital.
+	["claimed"] = "claimed political subdivision",
 }
 
 --[==[ var:
@@ -1215,7 +1006,7 @@ export.placename_display_aliases = {
 		["Bosnia and Hercegovina"] = "Bosnia and Herzegovina",
 		["Côte d'Ivoire"] = "Ivory Coast",
 		["Macedonia"] = "North Macedonia",
-        ["Türkiye"] = "Turkey",
+		["Türkiye"] = "Turkey",
 		["UAE"] = "United Arab Emirates",
 		["U.A.E."] = "United Arab Emirates",
 		["UK"] = "United Kingdom",
@@ -1291,7 +1082,7 @@ export.placename_cat_aliases = {
 		["Republic of Ireland"] = "Ireland",
 		["Republic of North Macedonia"] = "North Macedonia",
 		["Republic of Macedonia"] = "North Macedonia",
-        ["State of Palestine"] = "Palestine",
+		["State of Palestine"] = "Palestine",
 		["Bosnia"] = "Bosnia and Herzegovina",
 		["Congo"] = "Democratic Republic of the Congo",
 		["Congo Republic"] = "Republic of the Congo",
@@ -1456,7 +1247,9 @@ export.cat_implications = {
 		["Southeast Asia"] = {"continent/Asia"},
 		["North Asia"] = {"continent/Asia"},
 		["Northern Asia"] = {"continent/Asia"},
+		["Anatolia"] = {"continent/Asia"},
 		["Asia Minor"] = {"continent/Asia"},
+		["Mesopotamia"] = {"continent/Asia"},
 		["North Africa"] = {"continent/Africa"},
 		["Central Africa"] = {"continent/Africa"},
 		["West Africa"] = {"continent/Africa"},
@@ -1558,70 +1351,68 @@ local function capital_city_cat_handler(data, non_city)
 		data.holonym_placetype, data.holonym_placename, data.place_desc
 	-- The first time we're called we want to return something; otherwise we will be called for later-mentioned
 	-- holonyms, which can result in wrongly classifying into e.g. `National capitals`.
-	if holonym_placetype then
-		-- Simulate the loop in find_cat_specs() over holonyms so we get the proper
-		-- 'Cities in ...' categories as well as the capital category/categories we add below.
-		local retcats
-		if not non_city and place_desc.holonyms then
-			-- FIXME, this should use get_holonyms_to_check()
-			for _, holonym in ipairs(place_desc.holonyms) do
-				local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
-				if h_placetype then -- skip raw text among holonyms
-					retcats = export.get_equiv_placetype_prop(h_placetype,
-						function(pt) return city_type_cat_handler {
-							entry_placetype = "city",
-							holonym_placetype = pt,
-							holonym_placename = h_placename,
-							place_desc = place_desc,
-						} end)
-					if retcats then
+	-- Simulate the loop in find_cat_specs() over holonyms so we get the proper
+	-- 'Cities in ...' categories as well as the capital category/categories we add below.
+	local retcats
+	if not non_city and place_desc.holonyms then
+		-- FIXME, this should use get_holonyms_to_check()
+		for _, holonym in ipairs(place_desc.holonyms) do
+			local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
+			if h_placetype then -- skip raw text among holonyms
+				retcats = export.get_equiv_placetype_prop(h_placetype,
+					function(pt) return city_type_cat_handler {
+						entry_placetype = "city",
+						holonym_placetype = pt,
+						holonym_placename = h_placename,
+						place_desc = place_desc,
+					} end)
+				if retcats then
+					break
+				end
+			end
+		end
+	end
+	if not retcats then
+		retcats = {}
+	end
+	-- Now find the appropriate capital-type category for the placetype of the holonym,
+	-- e.g. 'State capitals'. If we recognize the holonym among the known holonyms in
+	-- [[Module:place/shared-data]], also add a category like 'State capitals of the United States'.
+	-- Truncate e.g. 'autonomous region' to 'region', 'union territory' to 'territory' when looking
+	-- up the type of capital category, if we can't find an entry for the holonym placetype itself
+	-- (there's an entry for 'autonomous community').
+	local capital_cat = m_shared.placetype_to_capital_cat[holonym_placetype]
+	if not capital_cat then
+		capital_cat = m_shared.placetype_to_capital_cat[holonym_placetype:gsub("^.* ", "")]
+	end
+	if capital_cat then
+		capital_cat = ucfirst(capital_cat)
+		local inserted_specific_variant_cat = false
+		for _, group in ipairs(m_shared.polities) do
+			-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
+			local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
+			if key then
+				local value = group.data[key]
+				if value then
+					-- Use the group's value_transformer to ensure that 'containing_polity'
+					-- is present if it should be.
+					value = group.value_transformer(group, key, value)
+					if value.containing_polity and not value.no_containing_polity_cat then
+						insert(retcats, capital_cat .. " of " .. value.containing_polity)
+						inserted_specific_variant_cat = true
 						break
 					end
 				end
 			end
 		end
-		if not retcats then
-			retcats = {}
+		if not inserted_specific_variant_cat then
+			insert(retcats, capital_cat)
 		end
-		-- Now find the appropriate capital-type category for the placetype of the holonym,
-		-- e.g. 'State capitals'. If we recognize the holonym among the known holonyms in
-		-- [[Module:place/shared-data]], also add a category like 'State capitals of the United States'.
-		-- Truncate e.g. 'autonomous region' to 'region', 'union territory' to 'territory' when looking
-		-- up the type of capital category, if we can't find an entry for the holonym placetype itself
-		-- (there's an entry for 'autonomous community').
-		local capital_cat = m_shared.placetype_to_capital_cat[holonym_placetype]
-		if not capital_cat then
-			capital_cat = m_shared.placetype_to_capital_cat[holonym_placetype:gsub("^.* ", "")]
-		end
-		if capital_cat then
-			capital_cat = ucfirst(capital_cat)
-			local inserted_specific_variant_cat = false
-			for _, group in ipairs(m_shared.polities) do
-				-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-				local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
-				if key then
-					local value = group.data[key]
-					if value then
-						-- Use the group's value_transformer to ensure that 'containing_polity'
-						-- is present if it should be.
-						value = group.value_transformer(group, key, value)
-						if value.containing_polity and not value.no_containing_polity_cat then
-							insert(retcats, capital_cat .. " of " .. value.containing_polity)
-							inserted_specific_variant_cat = true
-							break
-						end
-					end
-				end
-			end
-			if not inserted_specific_variant_cat then
-				insert(retcats, capital_cat)
-			end
-		else
-			-- We didn't recognize the holonym placetype; just put in 'Capital cities'.
-			insert(retcats, "Capital cities")
-		end
-		return retcats
+	else
+		-- We didn't recognize the holonym placetype; just put in 'Capital cities'.
+		insert(retcats, "Capital cities")
 	end
+	return retcats
 end
 
 local function get_holonyms_to_check(place_desc, holonym_index, include_raw_text_holonyms)
@@ -2170,8 +1961,8 @@ end
 -- "[[Gyeonggi]] Province". Others are displayed as-is.
 local function province_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
-    if m_shared.north_korea_provinces[unlinked_placename .. " Province, North Korea"] or
-       m_shared.south_korea_provinces[unlinked_placename .. " Province, South Korea"] then
+	if m_shared.north_korea_provinces[unlinked_placename .. " Province, North Korea"] or
+	   m_shared.south_korea_provinces[unlinked_placename .. " Province, South Korea"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	-- Display handler for Laotian provinces. Laotian provinces are displayed as e.g. "[[Vientiane]] Province". Others
@@ -2181,7 +1972,7 @@ local function province_display_handler(holonym_placetype, holonym_placename)
 	end
 	-- Display handler for Thai provinces. Thai provinces are displayed as e.g. "[[Chachoengsao]] Province". Others are
 	-- displayed as-is.
-    if m_shared.thailand_provinces[unlinked_placename .. " Province, Thailand"] then
+	if m_shared.thailand_provinces[unlinked_placename .. " Province, Thailand"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	return holonym_placename
@@ -2201,7 +1992,18 @@ end
 ------------------------------------------------------------------------------------------
 
 --[==[ var:
-Main placetype data structure. This specifies, for each canonicalized placetype, various properties:
+Main placetype data structure. This specifies, for each canonicalized placetype, various properties. The keys are
+placetypes (in the singular), and the value should normally be a table of properties. If the value is a string, it is
+equivalent to having that string as the `fallback` property. The `"*"` key is special and is used for adding "generic"
+categories of the form `Places in ``location`` `; it runs for all entry placetypes. Keys under the value table for a
+given placetype of are two types: ''property keys'' (which specify the value of specific properties) and
+''categorization keys'' (which tell how to categorize certain sorts of holonyms if the placetype in question occurs as
+an entry placetype). Categorization keys are either the special value `default` or are strings with a slash in them,
+such as `"city/New York City"` or `"country/*"`. Note that there are few categorization keys specified in this table
+in the code itself, but the augmentation process (the code directly following the table) adds a lot more. The algorithm
+for how category keys are used to generate categories is described at the top of [[Module:place]].
+
+The following are the recognized property keys:
 * `preposition`: The preposition used after this placetype when it occurs as an entry placetype. Defaults to `"in"`.
 * `article`: Article (normally `"the"` or in some cases `"a"`, specifically for placetypes beginning with u- that don't
   take the indefinite article `"an"`) used before this placetype when it occurs as an entry placetype. Defaults to the
@@ -2239,102 +2041,161 @@ Main placetype data structure. This specifies, for each canonicalized placetype,
   [[:Category:Areas of Kuwait]]. If none of these categories trigger, the fallback of `geographic and cultural area`
   will take effect, and the toponym will be categorized as e.g. [[:Category:Geographic and cultural areas of England]].
 * `cat_handler`: A function of one argument, `data`, describing the resolved entry placetype and the holonym being
-  processed. The cat handler is called on successive holonyms starting with the most immediate one, until it returns
-  non-nil. The return value should be a list of category specs (categories minus the langcode prefix, with `+++`
-  standing for the holonym, or the value `true`, which stands for `Placetypes in/of Holonym`, i.e. the pluralized
-  placetype with the appropriate preposition as specified in the `placetype_data`). `data` contains the following
-  fields:
+  processed. In general, the cat handler is called on successive holonyms starting with the most immediate one, until it
+  returns non-nil. See below for more specifics. The return value should be a list of category specs (categories minus
+  the langcode prefix, with `+++` standing for the holonym, or the value `true`, which stands for `Placetypes in/of
+  Holonym`, i.e. the pluralized placetype with the appropriate preposition as specified in the `placetype_data`). `data`
+  contains the following fields:
 ** `entry_placetype`: the resolved entry placetype for the entry placetype being processed (i.e. it will always have an
    entry in `placetype_data` but may not be the original placetype given by the user);
 ** `holonym_placetype` and `holonym_placename`: the holonym placetype and placename being processed;
 ** `holonym_index`: the index of the holonym being processed, or {nil} if we're handling an overriding holonym (FIXME:
-   we will change the overriding holonym algorithm so there won't be {nil} holonym indices);
+   we will change the overriding holonym algorithm so there will be an index even when processing overriding holonyms);
 ** `place_desc`: a full description of the {{tl|place}} call, as specified at the top of [[Module:place]];
 ** `from_demonym`: If set, we are called from [[Module:demonym]], triggered by {{tl|demonym-adj}} or
    {{tl|demonym-noun}}, instead of being triggered by {{tl|place}}.
 * `display_handler`: A function of two arguments, `holonym_placetype` and `holonym_placename` (specifying a holonym).
   Its return value is a string specifying the display form of the holonym.
-* Other keys are category specs. The algorithm for how these are used to generate categories is described at the top of
-  [[Module:place]].
+* `former_type`: The type/class of this placetype, for use when categorizing placetypes preceded by a qualifier such as
+  `former`, `ancient`, `medieval` or `historical`. (Note that these placetypes are not all treated alike.) The following
+  are the possible values:
+*# `polity`: a more-or-less sovereign/independent polity, such as a country, kingdom or empire.
+*# `subpolity`: a non-sovereign subdivision of polity, above the level of an individual settlement.
+*# `settlement`: a city or smaller equivalent, such as a village or unincorporated community. This also includes
+   divisions of a settlement, such as neighborhoods, wards and barangays.
+*# `capital`: a settlement that is a capital. A former capital is generally still in existence, just not the capital
+   any more.
+*# `natural feature`: any non-man-made feature, such as a lake, mountain, island, ocean, etc.
+*# `man-made structure`: a man-made feature below the level of a neighborhood, such as a house, airport, university,
+   metro station, park or the like.
+*# `geographic region`: a geographic or cultural region or area that has no administrative significance. These may vary
+   greatly in size but typically have some sort of cultural significance (possibly historical). The `former`, `ancient`,
+   etc. qualifier has no effect on the category of these placetypes.
+*# `!`: ignore the historical/former/ancient/etc. qualifier. Used e.g. with `fictional location` and
+   `mythological location`.
+
+'''NOTE:'''
+# It is possible to have multiple levels of fallback (e.g. `frazione` falls back to `hamlet`, which falls back
+  to `village`). Fallback loops will cause an internal error. All placetypes specified as fallbacks must exist in
+  `placetype_data` or an internal error occurs; if necessary, use an empty placeholder table on the right side (but this
+  is usually not a good idea because the `former_type` property should be specified).
+# The `former_type` property should be specified on all placetypes that do not have a fallback (if a placetype has a
+  fallback and omits the `former_type`, it is taken from the fallback). An internal error will result if a placetype
+  has no `former_type` property and no fallback, and an attempt is made to categorize a former/ancient/historical/etc.
+  entity of this placetype.
 ]==]
 export.placetype_data = {
-	["administrative village"] = {
-		preposition = "of",
-		has_neighborhoods = true,
-	},
 
+--[=[
+If you need to sort the following, do this (using Vim):
+1. Make sure all full-line comments are within the { ... } table, or are moved after and on the same line as single-line
+   entries.
+2. Make sure the table uses tabs everywhere for indent, and not spaces.
+3. Mark the top of the table with `ma`, go to the bottom and execute the following two lines in sequence:
+   :'a,.s/\n/\\n/g
+   :s/\\n\(\t\[\)/\r\1/g
+   The first command converts every newline to a literal `\n` sequence, so the whole thing becomes a single line, while
+   the second command restores the newlines before the beginning of each entry. The effect is to convert all entries to
+   a single line while not losing any information. (Potentially a negative lookahead could be used to do it all in one
+   command.)
+4. Execute the following to sort:
+   :'a,.!perl -pe 's/^(\t\[")(.*?)(".*)$/$2 @@@ $1$2$3/' | sort -f | perl -pe 's/.*? @@@ //'
+   Note that a simple `sort -f` (where `-f` means case-insensitive) would almost work, but it would sort "hill station"
+   before "hill" and "county borough" before "county" because the space after e.g. "hill station" sorts before the
+   quotation mark after e.g. "hill". The above command deals with this by extracting the key, prepending it followed by
+   ` @@@ `, sorting, and then removing key (the classic decorate-sort-undecorate pattern). 
+5. Put the table back to multi-line format by marking the top of the table with `ma`, going to the bottom and executing
+   :'a,.s/\\n/\r/g
+   Note that for some reason, in order to get a match a newline in the left side of a replacement, you must use \n, but
+   to insert a newline in the right sode of a replacement you must use \r.
+]=]
+
+	["*"] = {
+		cat_handler = generic_cat_handler,
+	},
+	["administrative capital"] = "capital city",
+	["administrative center"] = "administrative centre",
 	["administrative centre"] = {
 		article = "the",
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "capital",
 	},
-
+	["administrative headquarters"] = "administrative centre",
 	["administrative region"] = {
 		preposition = "of",
 		suffix = "region", -- but prefix is still "administrative region (of)"
 		fallback = "region",
+		former_type = "subpolity",
 	},
-
+	["administrative seat"] = "administrative centre",
 	["administrative territory"] = {
 		preposition = "of",
 		suffix = "territory", -- but prefix is still "administrative territory (of)"
 		fallback = "territory",
+		former_type = "subpolity",
 	},
-
+	["administrative village"] = {
+		preposition = "of",
+		has_neighborhoods = true,
+		former_type = "settlement",
+	},
 	["airport"] = {
+		former_type = "man-made structure",
 		default = {true},
 	},
-
-	["ancient capital"] = {
+	["alliance"] = "confederation",
+	["ANCIENT capital"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
+		former_type = "capital",
 		default = {"Ancient settlements", "Historical capitals"},
-		has_neighborhoods = true,
 	},
-
-	["ancient settlement"] = {
+	["ANCIENT settlement"] = {
+		has_neighborhoods = true,
+		former_type = "settlement",
 		default = {"Ancient settlements"},
-		has_neighborhoods = true,
 	},
-
+	["archipelago"] = "island",
 	["area"] = {
 		preposition = "of",
-		cat_handler = district_neighborhood_cat_handler,
 		fallback = "geographic and cultural area",
+		former_type = "geographic region",
+		cat_handler = district_neighborhood_cat_handler,
 	},
-
 	["arm"] = {
 		preposition = "of",
+		former_type = "natural feature",
 		default = {"Seas"},
 	},
-
+	["associated province"] = "province",
 	["atoll"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["autonomous city"] = {
 		preposition = "of",
 		fallback = "city",
 		has_neighborhoods = true,
 	},
-
 	["autonomous community"] = {
 		-- Spain; refers to regional entities, not village-like entities, as might be expected from "community"
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
 	["autonomous oblast"] = {
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = "oblast",
+		former_type = "subpolity",
 	},
-
 	["autonomous okrug"] = {
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = "okrug",
+		former_type = "subpolity",
 	},
-
 	["autonomous region"] = {
 		preposition = "of",
 		fallback = "administrative region",
@@ -2342,181 +2203,238 @@ export.placetype_data = {
 		-- if the user writes 'ar:Suf/Tibet'.
 		affix = "autonomous region",
 	},
-
 	["autonomous republic"] = {
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["autonomous territory"] = "dependent territory",
+	["bailiwick"] = "polity",
+	["barangay"] = "neighborhood", -- not completely correct, barangays are formal administrative divisions of a city
+	["barrio"] = "neighborhood", -- not completely correct, in some countries barrios are formal administrative divisions of a city
+	["basin"] = "lake",
 	["bay"] = {
 		preposition = "of",
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["beach"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["bishopric"] = "polity",
 	["borough"] = {
 		preposition = "of",
 		display_handler = borough_display_handler,
+		has_neighborhoods = true,
+		-- "former borough" could be a former settlement or a former part of a city but seems more likely to
+		-- be a former subpolity, particularly in England. FIXME, we really need a handler to take care of this
+		-- properly.
+		former_type = "subpolity",
 		["city/New York City"] = {"Boroughs of +++"},
 		-- Grr, some boroughs are city-like but some (e.g. in Britain) may be larger.
-		has_neighborhoods = true,
 	},
-
 	["borough seat"] = {
 		article = "the",
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "capital",
 	},
-
 	["branch"] = {
 		preposition = "of",
 		fallback = "river",
 	},
-
+	["built-up area"] = "area",
+	["burgh"] = "borough",
+	["caliphate"] = "polity",
 	["canton"] = {
 		preposition = "of",
 		affix_type = "suf",
+		former_type = "subpolity",
 	},
-
+	["cape"] = "headland",
+	["capital"] = "capital city",
 	["capital city"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
+		former_type = "capital",
 		cat_handler = capital_city_cat_handler,
 		default = {true},
-		has_neighborhoods = true,
 	},
-
+	["caplc"] = "capital city",
+	["caravan city"] = {
+		fallback = "city",
+		former_type = "settlement",
+		inherently_former = {"ANCIENT", "FORMER"},
+	},
+	["cathedral city"] = "city",
 	["census area"] = {
 		affix_type = "Suf",
 		has_neighborhoods = true,
+		former_type = "settlement",
 	},
-
+	["census-designated place"] = {
+		-- United States
+		former_type = "settlement",
+	},
+	["census town"] = "town",
+	["central business district"] = "neighborhood",
+	["ceremonial county"] = "county",
+	["chain of islands"] = "island",
+	["charter community"] = "village",
 	["city"] = {
+		has_neighborhoods = true,
+		former_type = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
-		has_neighborhoods = true,
 	},
-
 	["city-state"] = {
-		continent = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
-		default = {"City-states", "Cities", "Countries", "National capitals"},
 		has_neighborhoods = true,
+		former_type = "settlement",
+		["continent/*"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
+		default = {"City-states", "Cities", "Countries", "National capitals"},
 	},
-
 	["civil parish"] = {
 		-- Mostly England; similar to municipalities
 		preposition = "of",
 		affix_type = "suf",
 		has_neighborhoods = true,
+		former_type = "subpolity",
 	},
-
+	["claimed political subdivision"] = {
+		former_type = "subpolity",
+		default = {true},
+	},
+	["co-capital"] = "capital city",
+	["coal city"] = "city",
+	["coal town"] = "town",
 	["collectivity"] = {
 		preposition = "of",
-		default = {"Polities"},
+		-- No default; these are weird one-off governmental divisions in France (esp. for overseas collectivities)
+		former_type = "subpolity",
 	},
-
+	["colony"] = "dependent territory",
+	["commandery"] = {
+		preposition = "of",
+		former_type = "subpolity",
+		inherently_former = {"ANCIENT", "FORMER"},
+	},
 	["commonwealth"] = {
 		preposition = "of",
+		-- No default; applies specifically to Puerto Rico
+		former_type = "subpolity",
 	},
-
-	["commune"] = {
-		-- Occur in many countries, similar (per Wikipedia) to municipalities or townships
-		preposition = "of",
-		has_neighborhoods = true,
-	},
-
+	["commune"] = "municipality",
+	["community"] = "village",
 	["community development block"] = {
 		-- in India; appears to be similar to a rural municipality; groups several villages, unclear if there will be
 		-- neighborhoods so I'm not setting `has_neighborhoods` for now
 		affix_type = "suf",
 		no_affix_strings = "block",
+		former_type = "subpolity",
 	},
-
+	["comune"] = "municipality",
+	["confederacy"] = "confederation",
+	["confederation"] = "polity",
 	["constituent country"] = {
 		preposition = "of",
 		fallback = "country",
+		former_type = "subpolity",
 	},
-
 	["continent"] = {
-		default = {true},
+		former_type = "geographic region",
+		default = {true}, -- FIXME: Categorize as "Continents and continental regions"
 	},
-
+	["continental region"] = "continent",
 	["council area"] = {
 		-- in Scotland; similar to a county
 		preposition = "of",
 		affix_type = "suf",
+		former_type = "subpolity",
 	},
-
 	["country"] = {
+		former_type = "polity",
 		["continent/*"] = {true, "Countries"},
 		default = {true},
 	},
-
 	["county"] = {
 		preposition = "of",
 		display_handler = county_display_handler,
-		-- Was here before but seems garbage. A 'former county' could possibly be a former polity but nowadays counties
-		-- are always administrative subdivisions.
-		-- default = {"Polities"},
+		former_type = "subpolity",
 	},
-
-	["county-administered city"] = {
-		-- in Taiwan, per Wikipedia similar to a township or district
-		fallback = "city",
-		has_neighborhoods = true,
-	},
-
 	["county borough"] = {
 		-- in Wales; similar to a county
 		preposition = "of",
 		affix_type = "suf",
 		fallback = "borough",
+		former_type = "subpolity",
 	},
-
 	["county seat"] = {
 		article = "the",
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "capital",
 	},
-
 	["county town"] = {
 		article = "the",
 		preposition = "of",
 		fallback = "town",
 		has_neighborhoods = true,
+		former_type = "capital",
 	},
-
+	["county-administered city"] = {
+		-- In Taiwan, per Wikipedia similar to a Taiwanese township or district, which is a small city.
+		-- NOT anything like a "county-level city" in PR China, which is a county masquerading as a city.
+		fallback = "city",
+		has_neighborhoods = true,
+		former_type = "settlement",
+	},
+	["county-controlled city"] = "county-administered city",
+	["county-level city"] = "prefecture-level city",
+	["crater lake"] = "lake",
+	["Crown dependency"] = "dependent territory",
+	["crown dependency"] = "dependent territory",
+	["cultural area"] = "geographic and cultural area",
+	["cultural region"] = "geographic and cultural area",
 	["department"] = {
 		preposition = "of",
 		affix_type = "suf",
+		former_type = "subpolity",
 	},
-
+	["department capital"] = "capital city",
+	["dependency"] = "dependent territory",
 	["dependent territory"] = {
 		preposition = "of",
+		former_type = "dependent territory",
 		["country/*"] = {true},
 		default = {true},
 	},
-
 	["desert"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["deserted mediaeval village"] = "ANCIENT settlement",
+	["deserted medieval village"] = "ANCIENT settlement",
+	["direct-administered municipality"] = "municipality",
+	["direct-controlled municipality"] = "municipality",
 	["distributary"] = {
 		preposition = "of",
 		fallback = "river",
 	},
-
 	["district"] = {
 		preposition = "of",
 		affix_type = "suf",
+		-- Grrr! FIXME! Here is where we need handlers for former_type. Using similar logic to
+		-- district_neighborhood_cat_handler, we need to check if we're below or above a city to determine if the former
+		-- type is "settlement" or "subpolity".
+		former_type = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 
 		-- No default. Countries for which districts are political subdivisions will get entries.
 	},
-
+	["district capital"] = "capital city",
+	["district headquarters"] = "administrative centre",
 	["district municipality"] = {
 		-- In Canada, a district municipality is equivalent to a rural municipality and won't have neighborhoods; in
 		-- South Africa, district municipalities group local municipalities and hence won't have neighborhoods.
@@ -2524,165 +2442,257 @@ export.placetype_data = {
 		affix_type = "suf",
 		no_affix_strings = {"district", "municipality"},
 		fallback = "municipality",
+		former_type = "subpolity",
 	},
-
 	["division"] = {
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["division capital"] = "capital city",
+	["dome"] = "mountain",
+	["dormant volcano"] = "volcano",
+	["duchy"] = "polity",
+	["emirate"] = "polity",
+	["empire"] = "polity",
 	["enclave"] = {
 		preposition = "of",
+		-- enclaves can theoretically be any size but assume a subpolity.
+		former_type = "subpolity",
 	},
-
+	["escarpment"] = "mountain",
+	["ethnographic region"] = "geographic and cultural area", -- used in Lithuania
 	["exclave"] = {
 		preposition = "of",
+		-- exclaves can theoretically be any size but assume a subpolity.
+		former_type = "subpolity",
 	},
-
+	["external territory"] = "dependent territory",
 	["federal city"] = {
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "settlement",
 	},
-
 	["federal district"] = {
 		-- Might have neighborhoods as federal districts are often cities (e.g. Mexico City)
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "settlement",
 	},
-
 	["federal subject"] = {
+		-- In Russia; a generic term for first-level administrative divisions (republics, oblasts, okrugs, krais,
+		-- autonomous okrugs and autonomous oblasts).
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["federal territory"] = "territory",
 	["fictional location"] = {
+		former_type = "!",
 		default = {true},
 	},
-
+	["First Nations reserve"] = {
+		-- Wikipedia uses "Indian reserve"; presumably that is the legal term
+		fallback = "Indian reserve",
+		former_type = "subpolity",
+	},
 	["forest"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["FORMER capital"] = {
+		article = "the",
+		preposition = "of",
+		has_neighborhoods = true,
+		former_type = "capital",
+		-- FIXME: Here and below, we should use 'Former' in place of 'Historical'.
+		default = {"Historical settlements", "Historical capitals"},
+	},
+	["FORMER dependent territory"] = {
+		preposition = "of",
+		former_type = "dependent territory",
+		default = {"Historical dependent territories"},
+	},
+	["FORMER geographic region"] = "geographic and cultural area",
+	["FORMER man-made structure"] = {
+		former_type = "man-made structure",
+		default = {"Former man-made structures"},
+	},
+	["FORMER natural feature"] = {
+		former_type = "natural feature",
+		default = {"Former natural features"},
+	},
+	["FORMER polity"] = {
+		former_type = "polity",
+		default = {"Historical polities"},
+	},
+	["FORMER settlement"] = {
+		has_neighborhoods = true,
+		former_type = "settlement",
+		default = {"Historical settlements"},
+	},
+	["FORMER subpolity"] = {
+		preposition = "of",
+		former_type = "subpolity",
+		default = {"Historical political subdivisions"},
+	},
+	-- a former region is considered a former political subdivision, but not a 'historical/traditional/etc.
+	-- region.
+	["former region"] = {
+		preposition = "of",
+		inherently_former = {"FORMER"},
+		former_type = "subpolity",
+	},
+	["frazione"] = "hamlet",
 	["French prefecture"] = {
 		article = "the",
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "capital",
 	},
-
 	["geographic and cultural area"] = {
 		preposition = "of",
-		default = {true},
+		former_type = "geographic region",
 		["country/*"] = {true},
 		["constituent country/*"] = {true},
 		["continent/*"] = {true},
+		default = {true},
 	},
-
+	["geographic area"] = "geographic and cultural area",
+	["geographic region"] = "geographic and cultural area",
+	["geographical area"] = "geographic and cultural area",
+	["geographical region"] = "geographic and cultural area",
 	["geopolitical zone"] = {
 		-- Nigeria
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["ghost town"] = {
+		former_type = "settlement",
+	},
+	["glen"] = "valley",
 	["governorate"] = {
 		preposition = "of",
 		affix_type = "suf",
+		former_type = "subpolity",
 	},
-
 	["greater administrative region"] = {
 		-- China (historical subdivision)
 		preposition = "of",
+		former_type = "subpolity",
+		inherently_former = {"FORMER"},
 	},
-
 	["gromada"] = {
 		-- Poland (historical subdivision)
 		preposition = "of",
 		affix_type = "Pref",
+		former_type = "subpolity",
+		inherently_former = {"FORMER"},
 	},
-
+	["group of islands"] = "island",
 	["gulf"] = {
 		preposition = "of",
 		holonym_article = "the",
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["hamlet"] = "village",
+	["harbor city"] = "city",
+	["harbor town"] = "town",
+	["harbour city"] = "city",
+	["harbour town"] = "town",
 	["headland"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["headquarters"] = "administrative centre",
+	["heath"] = "moor",
 	["hill"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
-	["historical capital"] = {
-		article = "the",
-		preposition = "of",
-		default = {"Historical settlements", "Historical capitals"},
-		has_neighborhoods = true,
-	},
-
-	["historical county"] = {
-		preposition = "of",
-		default = {"Historical political subdivisions"},
-	},
-
-	["historical dependent territory"] = {
-		preposition = "of",
-		default = {true},
-	},
-
-	["historical polity"] = {
-		default = {true},
-	},
-
-	["historical political subdivision"] = {
-		preposition = "of",
-		default = {true},
-	},
-
-	["historical settlement"] = {
-		default = {true},
-		has_neighborhoods = true,
-	},
-
+	["hill station"] = "town",
+	["hill town"] = "town",
+	["home rule city"] = "city",
+	["home rule municipality"] = "municipality",
+	["hot spring"] = "spring",
 	["hromada"] = {
 		preposition = "of",
 		affix_type = "Suf",
+		former_type = "subpolity",
 	},
-
-	["island"] = {
+	["inactive volcano"] = "volcano",
+	["independent city"] = "city",
+	["independent town"] = "town",
+	["Indian reservation"] = {
+		-- In the US. Also known as "Native American reservation" or "domestic dependent nation", and the reservations
+		-- themselves often use the term "nation" in their official name (e.g. the "Navajo Nation"). But Wikipedia puts
+		-- the article at [[w:Indian reservation]] and uses that term when describing e.g. what the Navajo Nation is,
+		-- so this must still be the legal term.
+		preposition = "of",
+		former_type = "subpolity",
 		default = {true},
 	},
-
+	["Indian reserve"] = {
+		-- In Canada. "First Nations reserve" sounds more modern/PC but Wikipedia uses "Indian reserve"; presumably that
+		-- is still the legal term.
+		preposition = "of",
+		former_type = "subpolity",
+		default = {true},
+	},
+	["inland sea"] = "sea",
+	["inner city area"] = "neighborhood",
+	["island"] = {
+		former_type = "natural feature",
+		default = {true},
+	},
+	["island country"] = "country", -- FIXME: The following should map to both 'island' and 'country'.
+	["island group"] = "island",
+	["island municipality"] = "municipality",
+	["islet"] = "island",
+	["judicial capital"] = "capital city",
+	["khanate"] = "polity",
 	["kibbutz"] = {
 		plural = "kibbutzim",
+		former_type = "settlement",
 		default = {true},
 	},
-
+	["kingdom"] = "polity",
 	["krai"] = {
 		preposition = "of",
 		affix_type = "Suf",
+		former_type = "subpolity",
 	},
-
 	["lake"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["largest city"] = {
 		article = "the",
 		fallback = "city",
 		has_neighborhoods = true,
 	},
-
+	["league"] = "confederation",
+	["legislative capital"] = "capital city",
+	["local authority district"] = "local government district",
+	["local government area"] = {
+		-- Australia
+		preposition = "of",
+		former_type = "subpolity",
+	},
 	["local government district"] = {
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
+		former_type = "subpolity",
 	},
-
 	["local government district with borough status"] = {
 		plural = "local government districts with borough status",
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
+		former_type = "subpolity",
 	},
-
+	["local urban district"] = "unincorporated community",
+	["locality"] = "village", -- not necessarily true, but usually is the case
 	["London borough"] = {
 		preposition = "of",
 		affix_type = "pref",
@@ -2690,12 +2700,18 @@ export.placetype_data = {
 		fallback = "local government district with borough status",
 		has_neighborhoods = true,
 	},
-
+	["macroregion"] = "region",
 	["marginal sea"] = {
 		preposition = "of",
 		fallback = "sea",
 	},
-
+	["market city"] = "city",
+	["market town"] = "town",
+	["massif"] = "mountain",
+	["megacity"] = "city",
+	["metro station"] = {
+		former_type = "man-made structure",
+	},
 	["metropolitan borough"] = {
 		preposition = "of",
 		affix_type = "Pref",
@@ -2703,7 +2719,6 @@ export.placetype_data = {
 		fallback = "local government district",
 		has_neighborhoods = true,
 	},
-
 	["metropolitan city"] = {
 		preposition = "of",
 		affix_type = "Pref",
@@ -2711,19 +2726,27 @@ export.placetype_data = {
 		fallback = "city",
 		has_neighborhoods = true,
 	},
-
+	["metropolitan county"] = "county",
+	["microdistrict"] = "neighborhood",
+	["microstate"] = "country",
+	["minster town"] = "town",
 	["moor"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["moorland"] = "moor",
 	["mountain"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["mountain indigenous district"] = "district",
+	["mountain indigenous township"] = "township",
 	["mountain pass"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["mountain range"] = "mountain",
+	["mountainous region"] = "region",
 	["municipal district"] = {
 		-- meaning varies depending on the country; for now, assume no neighborhoods.
 		-- FIXME: has_neighborhoods might have to be a function that looks at the containing holonyms.
@@ -2732,179 +2755,204 @@ export.placetype_data = {
 		no_affix_strings = "district",
 		fallback = "municipality",
 	},
-
 	["municipality"] = {
 		preposition = "of",
 		has_neighborhoods = true,
+		former_type = "subpolity",
 	},
-
+	["municipality with city status"] = "municipality",
 	["mythological location"] = {
+		former_type = "!",
 		default = {true},
 	},
-
+	["national capital"] = "capital city",
+	["national park"] = "park",
 	["neighborhood"] = {
 		preposition = "of",
+		former_type = "settlement",
 		cat_handler = district_neighborhood_cat_handler,
 		--cat_handler = function(data)
 		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
 		--end,
 	},
-
+	["neighbourhood"] = "neighborhood",
 	["new area"] = {
-		-- China (type of economic development zone, area of a city)
+		-- China (type of economic development zone, varying greatly in size)
 		preposition = "in",
-		has_neighborhoods = true,
+		former_type = "subpolity", --?
 	},
-
+	["new town"] = "town",
 	["non-city capital"] = {
 		article = "the",
 		preposition = "of",
+		has_neighborhoods = true,
+		former_type = "capital",
 		cat_handler = function(data)
 			return capital_city_cat_handler(data, "non-city")
 		end,
 		default = {true},
-		has_neighborhoods = true,
 	},
-
+	["non-metropolitan county"] = "county",
+	["non-metropolitan district"] = "local government district",
+	["non-sovereign kingdom"] = { -- especially in Africa and Asia
+		former_type = "subpolity",
+		["country/*"] = {true},
+		["continent/*"] = {true},
+	},
+	["non-sovereign monarchy"] = "non-sovereign kingdom",
 	["oblast"] = {
 		preposition = "of",
 		affix_type = "Suf",
+		former_type = "subpolity",
 	},
-
 	["ocean"] = {
 		holonym_article = "the",
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["okrug"] = {
 		preposition = "of",
 		affix_type = "Suf",
+		former_type = "subpolity",
 	},
-
+	["overseas collectivity"] = "collectivity",
+	["overseas department"] = "department",
+	["overseas territory"] = "dependent territory",
 	["parish"] = {
 		preposition = "of",
 		affix_type = "suf",
+		former_type = "subpolity",
 	},
-
 	["parish municipality"] = {
 		-- in Quebec, often similar to a rural village; the famous [[Saint-Louis-du-Ha! Ha!]] is one of them.
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true,
 	},
-
 	["parish seat"] = {
 		article = "the",
 		preposition = "of",
+		former_type = "capital",
 		has_neighborhoods = true,
 	},
-
 	["park"] = {
+		former_type = "man-made structure",
 		default = {true},
 	},
-
+	["pass"] = "mountain pass",
+	["peak"] = "mountain",
 	["peninsula"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["periphery"] = {
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
 	["planned community"] = {
 		-- Include this empty so we don't categorize 'planned community' into
 		-- villages, as 'community' does.
+		former_type = "settlement",
 		has_neighborhoods = true,
 	},
-
+	["plateau"] = "geographic and cultural area",
 	["Polish colony"] = {
 		affix_type = "suf",
 		affix = "colony",
 		fallback = "village",
 		has_neighborhoods = true,
 	},
-
 	["polity"] = {
+		former_type = "polity",
 		default = {true},
 	},
-
+	["populated place"] = "village", -- not necessarily true, but usually is the case
+	["port city"] = "city",
+	["port town"] = "town",
 	["prefecture"] = {
 		-- FIXME! `prefecture` is like a county in Japan and elsewhere but a department capital city in France.
 		-- May need `has_neighborhoods` to be a function.
 		preposition = "of",
 		display_handler = prefecture_display_handler,
+		former_type = "subpolity",
 	},
-
 	["prefecture-level city"] = {
-		-- China; they are huge entities with central city but could have neighborhoods I suppose.
-		fallback = "city",
-		has_neighborhoods = true, --?
+		-- China; they are huge entities with a central city; not cities themselves.
+		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["promontory"] = "headland",
+	["protectorate"] = "dependent territory",
 	["province"] = {
 		preposition = "of",
 		display_handler = province_display_handler,
+		former_type = "subpolity",
 	},
-
+	["provincial capital"] = "capital city",
 	["raion"] = {
 		preposition = "of",
 		affix_type = "Suf",
+		former_type = "subpolity",
 	},
-
 	["range"] = {
 		holonym_article = "the",
+		former_type = "natural feature",
 	},
-
 	["regency"] = {
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
 	["region"] = {
 		preposition = "of",
 		-- If 'region' isn't a specific administrative division, fall back to 'geographic and cultural area'
 		fallback = "geographic and cultural area",
+		-- "former region" is a subpolity but traditional/historic(al)/ancient/medieval/etc. is a geographic region
+		former_type = "geographic region",
 	},
-
-	["regional district"] = {
-		preposition = "of",
-		affix_type = "Pref",
-		no_affix_strings = "district",
-		fallback = "district",
-	},
-
+	["regional capital"] = "capital city",
 	["regional county municipality"] = {
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = {"municipality", "county"},
 		fallback = "municipality",
 	},
-
+	["regional district"] = {
+		preposition = "of",
+		affix_type = "Pref",
+		no_affix_strings = "district",
+		fallback = "district",
+	},
+	["regional municipality"] = "municipality",
 	["regional municipality"] = {
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = "municipality",
 		fallback = "municipality",
 	},
-
 	["regional unit"] = {
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
 	["republic"] = {
+		-- Of Russia. "Republics" in general are sovereign but we use "country" in that case.
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["reservoir"] = "lake",
+	["resort city"] = "city",
+	["resort town"] = "town",
 	["river"] = {
 		holonym_article = "the",
+		former_type = "natural feature",
 		cat_handler = city_type_cat_handler,
-		default = {true},
 		["continent/*"] = {true},
+		default = {true},
 	},
-
 	["Roman province"] = {
+		-- FIXME! Eliminate this in favor of 'former province|emp/Roman Empire'
 		default = {"Provinces of the Roman Empire"},
+		former_type = "subpolity",
 	},
-
 	["royal borough"] = {
 		preposition = "of",
 		affix_type = "Pref",
@@ -2912,13 +2960,14 @@ export.placetype_data = {
 		fallback = "local government district with borough status",
 		has_neighborhoods = true,
 	},
-
+	["royal burgh"] = "borough",
+	["royal capital"] = "capital city",
 	["rural committee"] = {
 		-- Hong Kong; something like a village
 		affix_type = "Suf",
 		has_neighborhoods = true,
+		former_type = "settlement",
 	},
-
 	["rural municipality"] = {
 		preposition = "of",
 		affix_type = "Pref",
@@ -2926,189 +2975,242 @@ export.placetype_data = {
 		fallback = "municipality",
 		has_neighborhoods = true, --?
 	},
-
 	["satrapy"] = {
 		preposition = "of",
+		former_type = "subpolity",
+		inherently_former = {"ANCIENT", "FORMER"},
 	},
-
 	["sea"] = {
 		holonym_article = "the",
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["seat"] = "administrative centre",
+	["separatist state"] = "unrecognized country",
+	["settlement"] = "village", -- not necessarily true, but usually is the case
+	["sheading"] = "district",
+	["shire"] = "county",
+	["shire county"] = "county",
+	["shire town"] = "county seat",
+	["ski resort city"] = "city",
+	["ski resort town"] = "town",
+	["spa city"] = "city",
+	["spa town"] = "town",
 	["special administrative region"] = {
 		-- In China; in practice they are city-like (Hong Kong, Shenzhen)
 		preposition = "of",
+		former_type = "settlement",
 		has_neighborhoods = true, --?
 	},
-
+	["special municipality"] = "municipality",
+	["special ward"] = "municipality", -- of Tokyo
+	["spit"] = "peninsula",
 	["spring"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["star"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["state"] = {
 		preposition = "of",
+		-- 'former/historical state' could refer either to a state of a country (a subdivision) or a state = sovereign
+		-- entity. The latter appears more common (e.g. in various "ancient states" of East Asia).
+		former_type = "polity",
 	},
-
+	["state capital"] = "capital city",
+	["state park"] = "park",
 	["state-level new area"] = {
-		-- China; a special type of 'new area', which is an urban district
+		-- China (type of economic development zone, varying greatly in size)
 		preposition = "in",
-		has_neighborhoods = true,
+		former_type = "subpolity", --?
 	},
-
+	["statutory city"] = "city",
+	["statutory town"] = "town",
 	["strait"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
+	["stream"] = "river",
+	["strip"] = "region",
+	["strip of land"] = "region",
+	["sub-prefectural city"] = "subprovincial city",
 	["subdistrict"] = {
 		preposition = "of",
+		has_neighborhoods = true, --?
+		-- FIXME: subdistricts can be neighborhood-like (of Jakarta) or larger (in China); need a handler
+		former_type = "subpolity",
 		--FIXME: doesn't work; need customizable poldivs of cities (here, subdistricts of Jakarta)
 		--["country/Indonesia"] = {
 		--	["municipality"] = {true},
 		--},
 		default = {true},
-		has_neighborhoods = true, --?
 	},
-
 	["subdivision"] = {
 		preposition = "of",
 		affix_type = "suf",
+		-- FIXME: subdivisions can be neighborhood-like or larger; need a handler
+		former_type = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 	},
-
+	["submerged ghost town"] = "ghost town",
+	["subnational kingdom"] = "non-sovereign kingdom",
+	["subnational monarchy"] = "non-sovereign kingdom",
 	["subprefecture"] = {
+		affix_type = "suf",
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
 	["subprovince"] = {
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
 	["subprovincial city"] = {
-		-- China
-		fallback = "city",
-		has_neighborhoods = true, --?
+		-- China; special status given to certain prefecture-level cities
+		fallback = "prefecture-level city",
 	},
-
 	["subprovincial district"] = {
-		-- China
+		-- China; special status given to Binhai New Area and Pudong New Area, which are county-level districts
 		preposition = "of",
+		former_type = "subpolity",
 	},
-
+	["subregion"] = "region",
 	["suburb"] = {
 		preposition = "of",
+		has_neighborhoods = true, --?
+		former_type = "settlement", --?
 		cat_handler = district_neighborhood_cat_handler,
 		--cat_handler = function(data)
 		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
 		--end,
-		has_neighborhoods = true, --?
 	},
-
+	["suburban area"] = "suburb",
+	["subway station"] = "metro station",
+	["supercontinent"] = "continent",
 	["tehsil"] = {
 		affix_type = "suf",
 		no_affix_strings = {"tehsil", "tahsil"},
+		former_type = "subpolity",
 	},
-
+	["territorial authority"] = "district",
 	["territory"] = {
 		preposition = "of",
-		default = {"Polities"},
+		former_type = "subpolity",
 	},
-
 	["town"] = {
+		has_neighborhoods = true,
+		former_type = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
-		has_neighborhoods = true,
 	},
-
+	["town with bystatus"] = "town",
 	["township"] = {
-		default = {true},
 		has_neighborhoods = true,
+		former_type = "settlement", --?
+		default = {true},
 	},
-
 	["township municipality"] = {
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
 	},
-
+	["traditional county"] = "county",
+	["treaty port"] = {
+		fallback = "city",
+		former_type = "settlement",
+		inherently_former = {"FORMER"},
+	},
 	["tributary"] = {
 		preposition = "of",
 		fallback = "river",
 	},
-
+	["underground station"] = "metro station",
+	["unincorporated community"] = {
+		former_type = "settlement",
+	},
+	["unincorporated territory"] = "territory",
 	["union territory"] = {
 		preposition = "of",
 		article = "a",
+		former_type = "subpolity",
 	},
-
 	["unitary authority"] = {
 		article = "a",
 		fallback = "local government district",
 	},
-
 	["unitary district"] = {
 		article = "a",
 		fallback = "local government district",
 	},
-
 	["united township municipality"] = {
 		article = "a",
 		fallback = "township municipality",
 		has_neighborhoods = true, --?
 	},
-
 	["university"] = {
 		article = "a",
+		former_type = "man-made structure",
 		default = {true},
 	},
-
+	["unrecognised country"] = "unrecognized country",
 	["unrecognized country"] = {
-		default = {"Countries"},
+		former_type = "polity",
+		default = {"Unrecognized and nearly unrecognized countries"},
 	},
-
+	["urban area"] = "neighborhood",
+	["urban township"] = "township",
+	["urban-type settlement"] = "town",
 	["valley"] = {
+		former_type = "natural feature",
 		default = {true},
 	},
-
 	["village"] = {
+		former_type = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
 	},
-
 	["village municipality"] = {
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
 	},
-
 	["voivodeship"] = {
 		preposition = "of",
 		holonym_article = "the",
+		former_type = "subpolity",
 	},
-
 	["volcano"] = {
 		plural = "volcanoes",
+		former_type = "natural feature",
 		default = {true, "Mountains"},
 	},
-
+	["ward"] = "neighborhood", -- not completely correct, wards are formal administrative divisions of a city
 	["Welsh community"] = {
 		preposition = "of",
 		affix_type = "suf",
 		affix = "community",
 		has_neighborhoods = true,
+		former_type = "settlement",
 	},
-
-	["*"] = {
-		cat_handler = generic_cat_handler,
+	["zone"] = {
+		-- Ethiopia, Qatar
+		preposition = "of",
+		former_type = "subpolity",
 	},
 }
 
+
+-- Finalize the placetype_data structure by converting values that are simple strings into fallback structures.
+for placetype, value in pairs(export.placetype_data) do
+	if type(value) == "string" then
+		export.placetype_data[placetype] = {
+			fallback = value
+		}
+	end
+end
 
 -- Now augment the category data with political subdivisions extracted from the shared data.
 for _, group in ipairs(m_shared.polities) do
@@ -3141,14 +3243,8 @@ for _, group in ipairs(m_shared.polities) do
 				end
 				for _, dt in ipairs(divtype) do
 					if not export.placetype_data[sgdiv] then
-						-- If there is an entry in placetype_equivs[], it will be ignored once we insert an entry in
-						-- placetype_data. For example, "traditional county" is listed as a miscdiv of Scotland and
-						-- Northern Ireland but it's also an entry in placetype_equivs[]. Once we insert an entry here
-						-- for "traditional county", it will override placetype_equivs[]. To get around that, simulate
-						-- the effect of placetype_equivs[] using a fallback = "..." entry.
 						export.placetype_data[sgdiv] = {
 							preposition = prep,
-							fallback = export.placetype_equivs[sgdiv],
 						}
 					end
 					-- If there is a difference between full and elliptical placenames, make sure we recognize both
