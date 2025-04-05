@@ -1244,37 +1244,32 @@ export.cat_implications = {
 ------------------------------------------------------------------------------------------
 
 
-local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containing_polity, extracats)
+local function city_type_cat_handler(data, allow_if_holonym_is_city, no_container, extracats)
 	local entry_placetype, holonym_placetype, holonym_placename =
 		data.entry_placetype, data.holonym_placetype, data.holonym_placename
 	local plural_entry_placetype = export.pluralize_placetype(entry_placetype)
-	for _, group in ipairs(m_shared.polities) do
-		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
-		if key then
-			local value = group.data[key]
-			if value then
-				-- Use the group's value_transformer to ensure that 'is_city', 'containing_polity'
-				-- and 'british_spelling' keys are present if they should be.
-				value = group.value_transformer(group, key, value)
-				if not value.is_former_place and (not value.is_city or allow_if_holonym_is_city) then
-					-- Categorize both in key, and in the larger polity that the key is part of,
-					-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
-					-- "Cities in Japan". (But don't do the latter if no_containing_polity_cat is set.)
-					if plural_entry_placetype == "neighborhoods" and value.british_spelling then
-						plural_entry_placetype = "neighbourhoods"
-					end
-					local retcats = {ucfirst(plural_entry_placetype) .. " in " .. key}
-					if value.containing_polity and not value.no_containing_polity_cat and not no_containing_polity then
-						insert(retcats, ucfirst(plural_entry_placetype) .. " in " .. value.containing_polity)
-					end
-					if extracats then
-						for _, cat in ipairs(extracats) do
-							insert(retcats, cat)
-						end
-					end
-					return retcats
+	if m_shared.generic_placetypes[plural_entry_placetype] then
+		for group, key, spec in m_shared.iterate_matching_entity {
+			placetype = holonym_placetype,
+			placename = holonym_placename,
+		} do
+			if not spec.is_former_place and (not spec.is_city or allow_if_holonym_is_city) then
+				-- Categorize both in key, and in the larger polity that the key is part of,
+				-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
+				-- "Cities in Japan". (But don't do the latter if no_container_cat is set.)
+				if plural_entry_placetype == "neighborhoods" and value.british_spelling then
+					plural_entry_placetype = "neighbourhoods"
 				end
+				local retcats = {ucfirst(plural_entry_placetype) .. " in " .. key}
+				if value.container and not value.no_container_cat and not no_container then
+					insert(retcats, ucfirst(plural_entry_placetype) .. " in " .. value.container)
+				end
+				if extracats then
+					for _, cat in ipairs(extracats) do
+						insert(retcats, cat)
+					end
+				end
+				return retcats
 			end
 		end
 	end
@@ -1323,9 +1318,16 @@ local function capital_city_cat_handler(data, non_city)
 	if capital_cat then
 		capital_cat = ucfirst(capital_cat)
 		local inserted_specific_variant_cat = false
-		for group, key, spec in m_shared.iterate_matching_polity(holonym_placetype, holonym_placename) do
-			if spec.containing_polity and not spec.no_containing_polity_cat then
-				insert(retcats, capital_cat .. " of " .. value.containing_polity)
+		for group, key, spec in m_shared.iterate_matching_entity {
+			placetype = holonym_placetype,
+			placename = holonym_placename,
+		} do
+			if spec.container and not spec.no_container_cat then
+				local container_group, container_key, container_spec = m_shared.get_matching_entity {
+					placetype = spec.container.divtype,
+					key = spec.container.name,
+				}
+				insert(retcats, ("%s of %s%s"):format(capital_cat, container_spec.the and "the " or "", container_key))
 				inserted_specific_variant_cat = true
 				break
 			end
@@ -1469,7 +1471,7 @@ polity is mentioned, the handler proceeds to return the key `Columbus` (along wi
 Otherwise, if any other state or country is mentinoned, the handler returns nothing, and otherwise it assumes the
 mentioned city is the one we're considering and returns `Columbus` etc. (NOTE: I *think* this works correctly if the
 place only mentions Ohio and a holonym for a Columbus in a different country is encountered, because of the function
-`augment_holonyms_with_containing_polity`, which adds the US as a holonym when Ohio is encountered. However, this may
+`augment_holonyms_with_container`, which adds the US as a holonym when Ohio is encountered. However, this may
 fail for the UK because I think there's a setting preventing adding the UK as a holonym when counties in England,
 council areas in Scotland, etc. are encountered. FIXME: Investigate this further.)
 
@@ -1499,15 +1501,15 @@ local function generic_cat_handler(data)
 		if key then
 			local value = group.data[key]
 			if value then
-				-- Use the group's value_transformer to ensure that 'containing_polity' and 'no_containing_polity_cat'
+				-- Use the group's value_transformer to ensure that 'container' and 'no_container_cat'
 				-- keys are present if they should be.
 				value = group.value_transformer(group, key, value)
 				-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
 				-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
 				-- from_demonym is given as we only want demonyms in the most specific category.
 				insert_retkey(key)
-				if not from_demonym and value.containing_polity and not value.no_containing_polity_cat then
-					insert_retkey(value.containing_polity)
+				if not from_demonym and value.container and not value.no_container_cat then
+					insert_retkey(value.container)
 				end
 				return retcats
 			end
@@ -1521,10 +1523,10 @@ local function generic_cat_handler(data)
 		for _, polity in ipairs(containing_polities) do
 			local drop_dead_now = false
 			-- Find the group and key corresponding to the polity.
-			local polity_key, polity_value, polity_group = m_shared.find_city_containing_polity(polity)
-			insert_retkey(polity_key)
-			if from_demonym or polity_value.no_containing_polity_cat then
-				-- Stop adding containing polities if no_containing_polity_cat is found. (Used for
+			local entity_key, entity_value, entity_group = m_shared.find_city_container(polity)
+			insert_retkey(entity_key)
+			if from_demonym or entity_value.no_container_cat then
+				-- Stop adding containing polities if no_container_cat is found. (Used for
 				-- 'United Kingdom'.) Also if we're called from from_demonym, only add the first (most immediate)
 				-- containing polity.
 				break
@@ -1622,7 +1624,7 @@ given the following:
 We auto-add Japan as another holonym so that the term gets categorized into [[:Category:Subprefectures of Japan]].
 To avoid over-categorizing we need to check to make sure no other countries are specified as holonyms.
 ]==]
-function export.augment_holonyms_with_containing_polity(place_descs)
+function export.augment_holonyms_with_container(place_descs)
 	for _, place_desc in ipairs(place_descs) do
 		if place_desc.holonyms then
 			-- This ends up containing a copy of the original holonyms, with the augmented holonyms inserted in their
@@ -1649,10 +1651,10 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 							local value = group.data[key]
 							if value then
 								value = group.value_transformer(group, key, value)
-								if not value.no_containing_polity_cat and value.containing_polity and
-										value.containing_polity_type then
+								if not value.no_container_cat and value.container and
+										value.container_type then
 									local existing_polities_of_type
-									local containing_type = value.containing_polity_type
+									local containing_type = value.container_type
 									local function get_existing_polities_of_type(placetype)
 										return export.get_equiv_placetype_prop(placetype,
 											function(pt) return place_desc.holonyms_by_placetype[pt] end
@@ -1682,13 +1684,13 @@ function export.augment_holonyms_with_containing_polity(place_descs)
 										-- Don't side-effect holonyms while processing them.
 										-- The existing placenames, including those in `cat_placname`, will be bare,
 										-- so we need to match that.
-										local bare_containing_polity, _ = m_shared.construct_bare_and_linked_version(
-											value.containing_polity)
+										local bare_container, _ = m_shared.construct_bare_and_linked_version(
+											value.container)
 										local new_holonym = {
 											-- By the time we run, the display has already been generated so we don't
 											-- need to set display_placename.
 											placetype = containing_type,
-											cat_placename = bare_containing_polity,
+											cat_placename = bare_container,
 										}
 										insert(augmented_holonyms, new_holonym)
 										-- But it is safe to modify other parts of the place_desc.
@@ -1727,11 +1729,11 @@ end
 --     (3) when called on that holonym. Otherwise either the categorization in (1) takes place or there's no
 --     categorization.
 local function district_neighborhood_cat_handler(data)
-	local function get_plural_entry_placetype(polity_spec)
+	local function get_plural_entry_placetype(entity_spec)
 		if data.entry_placetype == "suburb" then
 			return "Suburbs"
 		else
-			return polity_spec.british_spelling and "Neighbourhoods" or "Neighborhoods"
+			return entity_spec.british_spelling and "Neighbourhoods" or "Neighborhoods"
 		end
 	end
 
@@ -1739,14 +1741,14 @@ local function district_neighborhood_cat_handler(data)
 		local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
 		
 		if city_key then
-			local polity_key, polity_spec, polity_group = m_shared.find_city_containing_polity(containing_polities[1])
-			return {get_plural_entry_placetype(polity_spec) .. " of " .. city_key}
+			local entity_key, entity_spec, entity_group = m_shared.find_city_container(containing_polities[1])
+			return {get_plural_entry_placetype(entity_spec) .. " of " .. city_key}
 		end
 	
 		-- For city-states and special top-level city-like entities like Hong Kong and Bonaire
-		local this_polity_key, this_polity_spec, this_polity_group = find_polity_spec(data)
-		if this_polity_spec and this_polity_spec.is_city then
-			return {get_plural_entry_placetype(this_polity_spec) .. " of " .. this_polity_key}
+		local this_entity_key, this_entity_spec, this_entity_group = find_entity_spec(data)
+		if this_entity_spec and this_entity_spec.is_city then
+			return {get_plural_entry_placetype(this_entity_spec) .. " of " .. this_entity_key}
 		end
 	end
 
@@ -1787,9 +1789,9 @@ local function district_neighborhood_cat_handler(data)
 			if retval then
 				return retval
 			end
-			local polity_key, polity_spec, polity_group = find_polity_spec(other_holonym_data)
-			if polity_key then
-				return {get_plural_entry_placetype(polity_spec) .. " in " .. polity_key}
+			local entity_key, entity_spec, entity_group = find_entity_spec(other_holonym_data)
+			if entity_key then
+				return {get_plural_entry_placetype(entity_spec) .. " in " .. entity_key}
 			end
 		end
 	end
