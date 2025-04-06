@@ -1162,7 +1162,7 @@ export.placename_the_re = {
 
 -- Now extract from the shared place data all the other places that need "the"
 -- prefixed.
-for _, group in ipairs(m_shared.polities) do
+for _, group in ipairs(m_shared.locations) do
 	for key, value in pairs(group.data) do
 		local orig_key = key
 		key = key:gsub(", .*$", "") -- Chop off ", England" and such from the end
@@ -1244,30 +1244,31 @@ export.cat_implications = {
 ------------------------------------------------------------------------------------------
 
 
-local function city_type_cat_handler(data, allow_if_holonym_is_city, no_container, extracats)
+local function city_type_cat_handler(data)
 	local entry_placetype, holonym_placetype, holonym_placename =
 		data.entry_placetype, data.holonym_placetype, data.holonym_placename
 	local plural_entry_placetype = export.pluralize_placetype(entry_placetype)
 	if m_shared.generic_placetypes[plural_entry_placetype] then
-		for group, key, spec in m_shared.iterate_matching_entity {
-			placetype = holonym_placetype,
+		for group, key, spec in m_shared.iterate_matching_location {
+			placetypes = holonym_placetype,
 			placename = holonym_placename,
 		} do
-			if not spec.is_former_place and (not spec.is_city or allow_if_holonym_is_city) then
+			if not spec.is_former_place and not spec.is_city then
 				-- Categorize both in key, and in the larger polity that the key is part of,
 				-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
 				-- "Cities in Japan". (But don't do the latter if no_container_cat is set.)
 				if plural_entry_placetype == "neighborhoods" and value.british_spelling then
 					plural_entry_placetype = "neighbourhoods"
 				end
-				local retcats = {ucfirst(plural_entry_placetype) .. " in " .. key}
-				if value.container and not value.no_container_cat and not no_container then
-					insert(retcats, ucfirst(plural_entry_placetype) .. " in " .. value.container)
-				end
-				if extracats then
-					for _, cat in ipairs(extracats) do
-						insert(retcats, cat)
-					end
+				local cap_plural_entry_placetype = ucfirst(plural_entry_placetype)
+				local retcats = {("%s in %s%s"):format(cap_plural_entry_placetype, spec.the and "the " or "", key)}
+				if spec.container and not spec.no_container_cat then
+					local container_group, container_key, container_spec = m_shared.get_matching_location {
+						placetypes = spec.container.divtype,
+						key = spec.container.name,
+					}
+					insert(retcats, ("%s in %s%s"):format(cap_plural_entry_placetype,
+						container_spec.the and "the " or "", container_key))
 				end
 				return retcats
 			end
@@ -1318,12 +1319,12 @@ local function capital_city_cat_handler(data, non_city)
 	if capital_cat then
 		capital_cat = ucfirst(capital_cat)
 		local inserted_specific_variant_cat = false
-		for group, key, spec in m_shared.iterate_matching_entity {
-			placetype = holonym_placetype,
+		for group, key, spec in m_shared.iterate_matching_location {
+			placetypes = holonym_placetype,
 			placename = holonym_placename,
 		} do
 			if spec.container and not spec.no_container_cat then
-				local container_group, container_key, container_spec = m_shared.get_matching_entity {
+				local container_group, container_key, container_spec = m_shared.get_matching_location {
 					placetype = spec.container.divtype,
 					key = spec.container.name,
 				}
@@ -1486,35 +1487,32 @@ local function generic_cat_handler(data)
 		data.holonym_placetype, data.holonym_placename, data.place_desc, data.from_demonym
 
 	local retcats = {}
-	local function insert_retkey(key)
+	local function insert_retkey(key, spec)
 		if from_demonym then
-			key = key:gsub("^the ", "")
 			insert(retcats, key)
 		else
-			insert(retcats, "Places in " .. key)
+			insert(retcats, ("Places in %s"):format(m_shared.get_prefixed_key(key, spec)))
 		end
 	end
 
-	for _, group in ipairs(m_shared.polities) do
-		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
-		if key then
-			local value = group.data[key]
-			if value then
-				-- Use the group's value_transformer to ensure that 'container' and 'no_container_cat'
-				-- keys are present if they should be.
-				value = group.value_transformer(group, key, value)
-				-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
-				-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
-				-- from_demonym is given as we only want demonyms in the most specific category.
-				insert_retkey(key)
-				if not from_demonym and value.container and not value.no_container_cat then
-					insert_retkey(value.container)
-				end
-				return retcats
-			end
+	for group, key, spec in m_shared.iterate_matching_location {
+		placetypes = holonym_placetype,
+		placename = holonym_placename,
+	} do
+		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
+		-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
+		-- from_demonym is given as we only want demonyms in the most specific category.
+		insert_retkey(key, spec)
+		if not from_demonym and spec.container and not spec.no_container_cat then
+			local container_group, container_key, container_spec = m_shared.get_matching_location {
+				placetype = spec.container.divtype,
+				key = spec.container.name,
+			}
+			insert_retkey(container_key, container_spec)
 		end
+		return retcats
 	end
+
 	-- Check for cities mentioned as holonyms.
 	local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
 	if city_spec then
@@ -1575,7 +1573,7 @@ function export.get_bare_categories(args, place_descs)
 		term = term:gsub("%[%[w:", "[["):gsub("%[%[wikipedia:", "[[")
 		term = export.remove_links_and_html(term)
 		term = term:gsub("^the ", "")
-		for _, group in ipairs(m_shared.polities) do
+		for _, group in ipairs(m_shared.locations) do
 			-- Try to find the term among the known polities.
 			local cat, bare_cat = m_shared.call_place_cat_handler(group, possible_placetypes, term)
 			if bare_cat then
@@ -1643,7 +1641,7 @@ function export.augment_holonyms_with_container(place_descs)
 						insert(possible_placetypes, equiv.placetype)
 					end
 
-					for _, group in ipairs(m_shared.polities) do
+					for _, group in ipairs(m_shared.locations) do
 						-- Try to find the term among the known polities.
 						local key, _ = m_shared.call_place_cat_handler(group, possible_placetypes,
 							holonym.cat_placename)
@@ -3660,9 +3658,6 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		class = "non-admin settlement",
 		cat_handler = district_neighborhood_cat_handler,
-		--cat_handler = function(data)
-		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
-		--end,
 	},
 	["neighbourhood"] = {
 		link = true,
@@ -4322,9 +4317,6 @@ If you need to sort the following, do this (using Vim):
 		has_neighborhoods = true, --?
 		class = "non-admin settlement", --?
 		cat_handler = district_neighborhood_cat_handler,
-		--cat_handler = function(data)
-		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
-		--end,
 	},
 	["suburban area"] = {
 		link = "w",
@@ -4549,7 +4541,7 @@ end
 
 
 -- Now augment the category data with political divisions extracted from the shared data.
-for _, group in ipairs(m_shared.polities) do
+for _, group in ipairs(m_shared.locations) do
 	for key, value in pairs(group.data) do
 		value = group.value_transformer(group, key, value)
 		local divlists = {}
