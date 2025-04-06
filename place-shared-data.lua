@@ -480,6 +480,17 @@ local function list_or_element_contains(list_or_element, item)
 end
 
 --[==[
+Generate the "prefixed" version of a bare key, i.e. prefix it with `the` if correct for this key.
+]==]
+function export.get_prefixed_key(key, spec)
+	if spec.the then
+		return "the " .. key
+	else
+		return key
+	end
+end
+
+--[==[
 Given a location group, key and possible placetypes that the placename must match, check if the key exists in the group
 with at least one of the group's key's placetypes matching one of the passed-in placetypes. If so, return two values:
 the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding value
@@ -528,7 +539,7 @@ end
 Iterator that returns all locations matching a given description, where the description consists of either a placename
 or a key along with a list of posssible placetypes. Usually there will be at most one such location. The iterator
 returns three values at each iteration: the location group, canonical key by which the location is known and the spec
-object describing the location.
+object describing the location. The value transformer is run on each spec prior to it being returned.
 ]==]
 function export.iterate_matching_location(data)
 	local i = 0
@@ -1865,8 +1876,6 @@ export.china_prefecture_level_cities_group = {
 		"counties",
 		{type = "county-level cities", cat_as = "counties and county-level cities"},
 	},
-	default_parent_divtype = "province",
-	parent_placename_to_key = make_placename_to_key(", China"),
 	data = export.china_prefecture_level_cities,
 }
 
@@ -3478,14 +3487,6 @@ export.wales_group = {
 --                                     City Tables                               --
 -----------------------------------------------------------------------------------
 
-export.new_york_boroughs = {
-	["Bronx"] = true,
-	["Brooklyn"] = true,
-	["Manhattan"] = true,
-	["Queens"] = true,
-	["Staten Island"] = true,
-}
-
 --[==[
 City data.
 
@@ -3523,484 +3524,611 @@ Each group contains the following fields:
   category article, in the same format. It defaults to the computed `wpcat` value, which is usually but not always
   correct.
 ]==]
-export.cities = {
-	{
-		default_parent_divtype = "state",
-		default_container = "Australia",
-		data = {
-			["Adelaide"] = {parents = "South Australia"},
-			["Brisbane"] = {parents = "Queensland"},
-			["Canberra"] = {parents = {name = "Australian Capital Territory", divtype = "territory"}},
-			["Melbourne"] = {parents = "Victoria"},
-			["Newcastle, New South Wales"] = {parents = "New South Wales"},
-			["Newcastle"] = {alias_of = "Newcastle, New South Wales"},
-			["Perth"] = {parents = "Western Australia"},
-			["Sydney"] = {parents = "New South Wales"},
-		},
-	},
-	{
-		default_parent_divtype = "state",
-		default_container = "Brazil",
-		data = {
-			-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
-			["São Paulo"] = {parents = "São Paulo"},
-			["Rio de Janeiro"] = {parents = "Rio de Janeiro"},
-			["Brasília"] = {parents = "Distrito Federal"},
-			["Brasilia"] = {alias_of = "Brasília"},
-			["Salvador"] = {parents = "Bahia", wp = "%c, %d", commonscat = "%c (%d)"},
-			["Fortaleza"] = {parents = "Ceará"},
-			["Belo Horizonte"] = {parents = "Minas Gerais"},
-			["Manaus"] = {parents = "Amazonas"},
-			["Curitiba"] = {parents = "Paraná"},
-			["Recife"] = {parents = "Pernambuco"},
-			["Goiânia"] = {parents = "Goiás"},
-			["Goiania"] = {alias_of = "Goiânia"},
-			["Belém"] = {parents = "Pará"},
-			["Belem"] = {alias_of = "Belém"},
-			["Porto Alegre"] = {parents = "Rio Grande do Sul"},
-			["Guarulhos"] = {parents = "São Paulo"},
-			["Campinas"] = {parents = "São Paulo"},
-		},
-	},
-	{
-		default_parent_divtype = "province",
-		default_container = "Canada",
-		data = {
-			["Toronto"] = {parents = "Ontario"},
-			["Montreal"] = {parents = "Quebec"},
-			["Vancouver"] = {parents = "British Columbia"},
-			["Calgary"] = {parents = "Alberta"},
-			["Edmonton"] = {parents = "Alberta"},
-			["Ottawa"] = {parents = "Ontario"},
-			["Winnipeg"] = {parents = "Manitoba"},
-			["Quebec City"] = {parents = "Quebec"},
-			["Hamilton"] = {parents = "Ontario", wp = "%c, %d"},
-			["Kitchener"] = {parents = "Ontario", wp = "%c, %d"},
-		},
-	},
-	{
-		default_parent_divtype = "administrative region",
-		default_container = "France",
-		data = {
-			["Paris"] = {parents = "Île-de-France"},
-			["Lyon"] = {parents = "Auvergne-Rhône-Alpes"},
-			["Lyons"] = {alias_of = "Lyon"},
-			["Marseille"] = {parents = "Provence-Alpes-Côte d'Azur"},
-			["Marseilles"] = {alias_of = "Marseille"},
-			["Toulouse"] = {parents = "Occitania"},
-			["Lille"] = {parents = "Hauts-de-France"},
-			["Bordeaux"] = {parents = "Nouvelle-Aquitaine"},
-			["Nice"] = {parents = "Provence-Alpes-Côte d'Azur"},
-			["Nantes"] = {parents = "Pays de la Loire"},
-			["Strasbourg"] = {parents = "Grand Est"},
-			["Rennes"] = {parents = "Brittany"},
-		},
-	},
-	{
-		default_parent_divtype = "state",
-		default_container = "Germany",
-		data = {
-			["Berlin"] = {},
-			["Dortmund"] = {parents = "North Rhine-Westphalia"},
-			["Essen"] = {parents = "North Rhine-Westphalia"},
-			["Duisberg"] = {parents = "North Rhine-Westphalia"},
-			["Hamburg"] = {},
-			["Munich"] = {parents = "Bavaria"},
-			["Stuttgart"] = {parents = "Baden-Württemberg"},
-			["Frankfurt"] = {parents = "Hesse"},
-			["Cologne"] = {parents = "North Rhine-Westphalia"},
-			["Düsseldorf"] = {parents = "North Rhine-Westphalia"},
-			["Dusseldorf"] = {alias_of = "Düsseldorf"},
-			["Nuremberg"] = {parents = "Bavaria"},
-			["Bremen"] = {},
-		},
-	},
-	{
-		default_parent_divtype = "state",
-		default_container = "India",
-		data = {
-			-- This only lists the top 20. Per [[w:List of cities in India by population]], there
-			-- are 46 cities over 1,000,000 inhabitants, not to mention metro areas. Our coverage
-			-- of India is fairly sparse; when it increases, add to this list.
-			["Mumbai"] = {parents = "Maharashtra"},
-			["Delhi"] = {},
-			["Bangalore"] = {parents = "Karnataka"},
-			["Hyderabad"] = {parents = "Telangana"},
-			["Ahmedabad"] = {parents = "Gujarat"},
-			["Chennai"] = {parents = "Tamil Nadu"},
-			["Kolkata"] = {parents = "West Bengal"},
-			["Surat"] = {parents = "Gujarat"},
-			["Pune"] = {parents = "Maharashtra"},
-			["Jaipur"] = {parents = "Rajasthan"},
-			["Lucknow"] = {parents = "Uttar Pradesh"},
-			["Kanpur"] = {parents = "Uttar Pradesh"},
-			["Nagpur"] = {parents = "Maharashtra"},
-			["Indore"] = {parents = "Madhya Pradesh"},
-			["Thane"] = {parents = "Maharashtra"},
-			["Bhopal"] = {parents = "Madhya Pradesh"},
-			["Visakhapatnam"] = {parents = "Andhra Pradesh"},
-			["Pimpri-Chinchwad"] = {parents = "Maharashtra"},
-			["Patna"] = {parents = "Bihar"},
-			["Vadodara"] = {parents = "Gujarat"},
-
-			-- After top 20
-			["Jabalpur"] = {parents = "Madhya Pradesh"},
-		},
-	},
-	{
-		default_parent_divtype = "province",
-		default_container = "Indonesia",
-		data = { 
-			-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
-			["Jakarta"] = {parents = "Special Capital Region of Jakarta"},
-			["Surabaya"] = {parents = "East Java"},
-			["Bekasi"] = {parents = "West Java"}, -- part of Jakarta metro area
-			["Bandung"] = {parents = "West Java"},
-			["Medan"] = {parents = "North Sumatra"},
-			["Depok"] = {parents = "West Java"}, -- part of Jakarta metro area
-			["Tangerang"] = {parents = "Banten"}, -- part of Jakarta metro area
-			["Palembang"] = {parents = "South Sumatra"},
-			["Semarang"] = {parents = "Central Java"},
-			["Makassar"] = {parents = "South Sulawesi"},
-			["South Tangerang"] = {parents = "Banten"}, -- part of Jakarta metro area
-			["Batam"] = {parents = "Riau Islands"},
-			["Bogor"] = {parents = "West Java"}, -- part of Jakarta metro area
-			["Pekanbaru"] = {parents = "Riau"},
-			["Bandar Lampung"] = {parents = "Lampung"},
-			["Pekanbaru"] = {parents = "Riau"},
-			-- other metro areas over 1,000,000 people
-			["Padang"] = {parents = "West Sumatra"},
-			["Samarinda"] = {parents = "East Kalimantan"},
-			["Malang"] = {parents = "East Java"},
-			["Yogyakarta"] = {parents = "Special Region of Yogyakarta"},
-			["Denpasar"] = {parents = "Bali"},
-			["Cirebon"] = {parents = "West Java"},
-			["Surakarta"] = {parents = "Central Java"},
-			["Banjarmasin"] = {parents = "South Kalimantan"},
-			["Tasikmalaya"] = {parent = "West Java"},
-		},
-	},
-	{
-		default_parent_divtype = "prefecture",
-		default_container = "Japan",
-		data = {
-			-- Population figures from [[w:List of cities in Japan]]. Metro areas from
-			-- [[w:List of metropolitan areas in Japan]].
-			["Tokyo"] = {}, -- no single figure given for Tokyo as a whole.
-			["Yokohama"] = {parents = "Kanagawa"}, -- 3,697,894
-			["Osaka"] = {parents = "Osaka"}, -- 2,668,586
-			["Nagoya"] = {parents = "Aichi"}, -- 2,283,289
-			-- FIXME, Hokkaido is handled specially.
-			["Sapporo"] = {parents = "Hokkaido"}, -- 1,918,096
-			["Fukuoka"] = {parents = "Fukuoka"}, -- 1,581,527
-			["Kobe"] = {parents = "Hyōgo"}, -- 1,530,847
-			["Kyoto"] = {parents = "Kyoto"}, -- 1,474,570
-			["Kawasaki"] = {parents = "Kanagawa", wp = "%c, %d"}, -- 1,373,630
-			["Saitama"] = {parents = "Saitama", wp = "%c (city)", commonscat = "%c, %d"}, -- 1,192,418
-			["Hiroshima"] = {parents = "Hiroshima"}, -- 1,163,806
-			["Sendai"] = {parents = "Miyagi"}, -- 1,029,552
-			-- the remaining cities are considered "central cities" in a 1,000,000+ metro area
-			-- (sometimes there is more than one central city in the area).
-			["Kitakyushu"] = {parents = "Fukuoka"}, -- 986,998
-			["Chiba"] = {parents = "Chiba", wp = "%c (city)", commonscat = "%c, %d"}, -- 938,695
-			["Sakai"] = {parents = "Osaka"}, -- 835,333
-			["Niigata"] = {parents = "Niigata", wp = "%c (city)", commonscat = "%c, %d"}, -- 813,053
-			["Hamamatsu"] = {parents = "Shizuoka"}, -- 811,431
-			["Shizuoka"] = {parents = "Shizuoka", wp = "%c (city)", commonscat = "%c, %d"}, -- 710,944
-			["Sagamihara"] = {parents = "Kanagawa"}, -- 706,342
-			["Okayama"] = {parents = "Okayama"}, -- 701,293
-			["Kumamoto"] = {parents = "Kumamoto"}, -- 670,348
-			["Kagoshima"] = {parents = "Kagoshima"}, -- 605,196
-			-- skipped 6 cities (Funabashi, Hachiōji, Kawaguchi, Himeji, Matsuyama, Higashiōsaka)
-			-- with population in the range 509k - 587k because not central cities in any
-			-- 1,000,000+ metro area.
-			["Utsunomiya"] = {parents = "Tochigi"}, -- 507,833
-		},
-	},
-	{
-		default_parent_divtype = "province",
-		default_container = "South Korea",
-		data = { 
-			-- all cities listed are not associated with any province.
-			["Seoul"] = {},
-			["Busan"] = {},
-			["Incheon"] = {},
-			["Daegu"] = {},
-			["Daejeon"] = {},
-			["Gwangju"] = {},
-			["Ulsan"] = {},
-		},
-	},
-	{
-		default_parent_divtype = "state",
-		default_container = "Mexico",
-		data = {
-			["Mexico City"] = {}, -- its own state
-			["Monterrey"] = {parents = "Nuevo León"},
-			["Guadalajara"] = {parents = "Jalisco"},
-			["Puebla"] = {parents = "Puebla"},
-			["Toluca"] = {parents = "State of Mexico"},
-			["Tijuana"] = {parents = "Baja California"},
-			["León"] = {parents = "Guanajuato"},
-			["Leon"] = {alias_of = "Leon"},
-			["Querétaro"] = {parents = "Querétaro"},
-			["Queretaro"] = {alias_of = "Querétaro"},
-			["Ciudad Juárez"] = {parents = "Chihuahua"},
-			["Juárez"] = {alias_of = "Ciudad Juárez"},
-			["Juarez"] = {alias_of = "Ciudad Juárez"},
-			["Torreón"] = {parents = "Coahuila"},
-			["Torreon"] = {alias_of = "Torreón"},
-			["Mérida"] = {parents = "Yucatán"},
-			["Merida"] = {alias_of = "Mérida"},
-			["San Luis Potosí"] = {parents = "San Luis Potosí"},
-			["San Luis Potosi"] = {alias_of = "San Luis Potosí"},
-			["Aguascalientes"] = {parents = "Aguascalientes"},
-			["Mexicali"] = {parents = "Baja California"},
-		},
-	},
-	{
-		default_parent_divtype = "province",
-		default_container = "Philippines",
-		data = { 
-			 --some cities listed independent from any province. province listed is for geographical purposes only.
-			 --skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
-			 --other cities outside Metro Manila skipped as not central city in their urban area.
-			["Quezon City"] = {parents = {name = "Metro Manila", divtype = "region"}},
-			["Manila"] = {parents = {name = "Metro Manila", divtype = "region"}},
-			["Davao City"] = {parents = "Davao del Sur"},
-			["Caloocan"] = {parents = {name = "Metro Manila", divtype = "region"}},
-			["Zamboanga City"] = {parents = "Zamboanga del Sur"},
-			["Cebu City"] = {parents = "Cebu"},
-			["Antipolo"] = {parents = "Rizal"},
-			["Cagayan de Oro"] = {parents = "Misamis Oriental"},
-			["Dasmariñas"] = {parents = "Cavite"},
-			["General Santos"] = {parents = "South Cotabato"},
-			["San Jose del Monte"] = {parents = "Bulacan"},
-			["Bacolod"] = {parents = "Negros Occidental"},
-			["Calamba"] = {parents = "Laguna"},
-			["Angeles"] = {parents = "Pampanga"},
-			["Iloilo City"] = {parents = "Iloilo"},
-		},
-	},
-	{
-		default_parent_divtype = "oblast",
-		default_container = "Russia",
-		data = {
-			-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
-			["Moscow"] = {},
-			["Saint Petersburg"] = {},
-			["Novosibirsk"] = {parents = "Novosibirsk Oblast"},
-			["Yekaterinburg"] = {parents = "Sverdlovsk Oblast"},
-			["Nizhny Novgorod"] = {parents = "Nizhny Novgorod Oblast"},
-			["Kazan"] = {parents = {name = "Republic of Tatarstan", divtype = "republic"}},
-			["Chelyabinsk"] = {parents = "Chelyabinsk Oblast"},
-			["Omsk"] = {parents = "Omsk Oblast"},
-			["Samara"] = {parents = "Samara Oblast"},
-			["Ufa"] = {parents = {name = "Republic of Bashkortostan", divtype = "republic"}},
-			["Rostov-on-Don"] = {parents = "Rostov Oblast"},
-			["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don"},
-			["Krasnoyarsk"] = {parents = {name = "Krasnoyarsk Krai", divtype = "krai"}},
-			["Voronezh"] = {parents = "Voronezh Oblast"},
-			["Perm"] = {parents = {name = "Perm Krai", divtype = "krai"}, wp = "Perm, Russia"},
-			["Volgograd"] = {parents = "Volgograd Oblast"},
-			["Krasnodar"] = {parents = {name = "Krasnodar Krai", divtype = "krai"}},
-		},
-	},
-	{
-		default_parent_divtype = "autonomous community",
-		default_container = "Spain",
-		data = {
-			["Madrid"] = {parents = "Community of Madrid"},
-			["Barcelona"] = {parents = "Catalonia"},
-			["Valencia"] = {parents = "Valencia"},
-			["Seville"] = {parents = "Andalusia"},
-			["Bilbao"] = {parents = "Basque Country"},
-		},
-	},
-	{
-		default_parent_divtype = "county",
-		default_container = "Taiwan",
-		data = { 
-			["New Taipei"] = {},
-			["Taichung"] = {},
-			["Kaohsiung"] = {wp = "%c, Taiwan"},
-			["Taipei"] = {},
-			["Taoyuan"] = {},
-			["Tainan"] = {},
-			["Chiayi"] = {},
-			["Hsinchu"] = {},
-			["Keelung"] = {},
-		},
-	},
-	{
-		default_parent_divtype = "county",
-		default_container = "United Kingdom",
-		data = {
-			["London"] = {parents = {"Greater London", {name = "England", divtype = "constituent country"}}},
-			["Manchester"] = {parents = {"Greater Manchester", {name = "England", divtype = "constituent country"}}},
-			["Birmingham"] = {parents = {"West Midlands", {name = "England", divtype = "constituent country"}}},
-			["Liverpool"] = {parents = {"Merseyside", {name = "England", divtype = "constituent country"}}},
-			["Glasgow"] = {parents = {{name = "City of Glasgow", divtype = "council area"}, {name = "Scotland", divtype = "constituent country"}}},
-			["Leeds"] = {parents = {"West Yorkshire", {name = "England", divtype = "constituent country"}}},
-			["Newcastle upon Tyne"] = {parents = {"Tyne and Wear", {name = "England", divtype = "constituent country"}}},
-			["Newcastle"] = {alias_of = "Newcastle upon Tyne"},
-			["Bristol"] = {parents = {name = "England", divtype = "constituent country"}},
-			["Cardiff"] = {parents = {name = "Wales", divtype = "constituent country"}},
-			["Portsmouth"] = {parents = {"Hampshire", {name = "England", divtype = "constituent country"}}},
-			["Edinburgh"] = {parents = {{name = "City of Edinburgh", divtype = "council area"}, {name = "Scotland", divtype = "constituent country"}}},
-			-- under 1,000,000 people but principal areas of Wales; requested by [[User:Donnanz]]
-			["Swansea"] = {parents = {name = "Wales", divtype = "constituent country"}},
-			["Newport"] = {parents = {name = "Wales", divtype = "constituent country"}, wp = "Newport, Wales"},
-		},
-	},
-	-- cities in the US
-	{
-		default_parent_divtype = "state",
-		default_container = "United States",
-		wp = "%c, %d",
-		data = {
-			-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
-			["New York City"] = {parents = "New York", wp = "%c"},
-			["Newark"] = {parents = "New Jersey"},
-			["Los Angeles"] = {parents = "California", wp = "%c"},
-			["Long Beach"] = {parents = "California"},
-			["Riverside"] = {parents = "California"},
-			["Chicago"] = {parents = "Illinois", wp = "%c"},
-			["Washington, D.C."] = {wp = "%c"},
-			["Baltimore"] = {parents = "Maryland", wp = "%c"},
-			["San Jose"] = {parents = "California"},
-			["San Francisco"] = {parents = "California", wp = "%c"},
-			["Oakland"] = {parents = "California"},
-			["Boston"] = {parents = "Massachusetts", wp = "%c"},
-			["Providence"] = {parents = "Rhode Island"},
-			["Dallas"] = {parents = "Texas", wp = "%c", commonscat = "%c, %d"},
-			["Fort Worth"] = {parents = "Texas"},
-			["Philadelphia"] = {parents = "Pennsylvania", wp = "%c"},
-			["Houston"] = {parents = "Texas", wp = "%c"},
-			["Miami"] = {parents = "Florida", wp = "%c", commonscat = "%c, %d"},
-			["Atlanta"] = {parents = "Georgia", wp = "%c"},
-			["Detroit"] = {parents = "Michigan", wp = "%c"},
-			["Phoenix"] = {parents = "Arizona", wp = "%c", commonscat = "%c, %d"},
-			["Mesa"] = {parents = "Arizona"},
-			["Seattle"] = {parents = "Washington", wp = "%c"},
-			["Orlando"] = {parents = "Florida"},
-			["Minneapolis"] = {parents = "Minnesota", wp = "%c"},
-			["Cleveland"] = {parents = "Ohio", wp = "%c", commonscat = "%c, %d"},
-			["Denver"] = {parents = "Colorado", wp = "%c", commonscat = "%c, %d"},
-			["San Diego"] = {parents = "California", wp = "%c", commonscat = "%c, %d"},
-			["Portland"] = {parents = "Oregon"},
-			["Tampa"] = {parents = "Florida"},
-			["St. Louis"] = {parents = "Missouri", wp = "%c", commonscat = "%c, %d"},
-			["Charlotte"] = {parents = "North Carolina"},
-			["Sacramento"] = {parents = "California"},
-			["Pittsburgh"] = {parents = "Pennsylvania", wp = "%c"},
-			["Salt Lake City"] = {parents = "Utah", wp = "%c"},
-			["San Antonio"] = {parents = "Texas", wp = "%c", commonscat = "%c, %d"},
-			["Columbus"] = {parents = "Ohio"},
-			["Kansas City"] = {parents = "Missouri", wp = "%c metropolitan area", commonscat = "%c, %d"},
-			["Indianapolis"] = {parents = "Indiana", wp = "%c"},
-			["Las Vegas"] = {parents = "Nevada", wp = "%c"},
-			["Cincinnati"] = {parents = "Ohio", wp = "%c", commonscat = "%c, %d"},
-			["Austin"] = {parents = "Texas"},
-			["Milwaukee"] = {parents = "Wisconsin", wp = "%c", commonscat = "%c, %d"},
-			["Raleigh"] = {parents = "North Carolina"},
-			["Nashville"] = {parents = "Tennessee"},
-			["Virginia Beach"] = {parents = "Virginia"},
-			["Norfolk"] = {parents = "Virginia"},
-			["Greensboro"] = {parents = "North Carolina"},
-			["Winston-Salem"] = {parents = "North Carolina"},
-			["Jacksonville"] = {parents = "Florida"},
-			["New Orleans"] = {parents = "Louisiana", wp = "%c"},
-			["Louisville"] = {parents = "Kentucky"},
-			["Greenville"] = {parents = "South Carolina"},
-			["Hartford"] = {parents = "Connecticut"},
-			["Oklahoma City"] = {parents = "Oklahoma", wp = "%c"},
-			["Grand Rapids"] = {parents = "Michigan"},
-			["Memphis"] = {parents = "Tennessee"},
-			["Birmingham"] = {parents = "Alabama"},
-			["Fresno"] = {parents = "California"},
-			["Richmond"] = {parents = "Virginia"},
-			["Harrisburg"] = {parents = "Pennsylvania"},
-			-- any major city of top 50 MSA's that's missed by previous
-			["Buffalo"] = {parents = "New York"},
-			-- any of the top 50 city by city population that's missed by previous
-			["El Paso"] = {parents = "Texas"},
-			["Albuquerque"] = {parents = "New Mexico"},
-			["Tucson"] = {parents = "Arizona"},
-			["Colorado Springs"] = {parents = "Colorado"},
-			["Omaha"] = {parents = "Nebraska"},
-			["Tulsa"] = {parents = "Oklahoma"},
-			-- skip Arlington, Texas; too obscure and likely to be interpreted as Arlington, Virginia
-		}
-	},
-	{
-		default_parent_divtype = "country",
-		default_container = {},
-		data = {
-			["Yerevan"] = {parents = "Armenia"},
-			["Vienna"] = {parents = "Austria"},
-			["Minsk"] = {parents = "Belarus"},
-			["Brussels"] = {parents = "Belgium"},
-			["Antwerp"] = {parents = "Belgium"},
-			["Sofia"] = {parents = "Bulgaria"},
-			["Zagreb"] = {parents = "Croatia"},
-			["Prague"] = {parents = "Czech Republic"},
-			["Olomouc"] = {parents = "Czech Republic"},
-			["Copenhagen"] = {parents = "Denmark"},
-			["Helsinki"] = {parents = {{name = "Uusimaa", divtype = "region"}, "Finland"}},
-			["Athens"] = {parents = "Greece"},
-			["Thessaloniki"] = {parents = "Greece"},
-			["Budapest"] = {parents = "Hungary"},
-			["Jakarta"] = {parents = "Indonesia"},
-			-- FIXME, per Wikipedia "County Dublin" is now the "Dublin Region"
-			["Dublin"] = {parents = {{name = "Dublin", divtype = "county"}, "Ireland"}},
-			-- Jerusalem is not recognized internationally as part of either Israel or Palestine, so put the first parent as "Asia"
-			-- grrr; additional support needed to allow "Asia" as a parent
-			-- ["Jerusalem"] = {parents = {name = "Asia", divtype = "continent"}, addl_parents = {"Israel", "Palestine"}},
-			["Tel Aviv"] = {parents = "Israel"},
-			["Venice"] = {parents = {{name = "Veneto", divtype = "administrative region"}, "Italy"}},
-			["Rome"] = {parents = {{name = "Lazio", divtype = "administrative region"}, "Italy"}},
-			["Milan"] = {parents = {{name = "Lombardy", divtype = "administrative region"}, "Italy"}},
-			["Naples"] = {parents = {{name = "Campania", divtype = "administrative region"}, "Italy"}},
-			["Turin"] = {parents = {{name = "Piedmont", divtype = "administrative region"}, "Italy"}},
-			["Riga"] = {parents = "Latvia"},
-			["Amsterdam"] = {parents = "Netherlands"},
-			["Rotterdam"] = {parents = "Netherlands"},
-			["The Hague"] = {parents = "Netherlands"},
-			["Auckland"] = {parents = "New Zealand"},
-			["Oslo"] = {parents = "Norway"},
-			["Warsaw"] = {parents = "Poland"},
-			["Katowice"] = {parents = "Poland"},
-			["Kraków"] = {parents = "Poland"},
-			["Krakow"] = {alias_of = "Kraków"},
-			["Gdańsk"] = {parents = "Poland"},
-			["Gdansk"] = {alias_of = "Gdańsk"},
-			["Poznań"] = {parents = "Poland"},
-			["Poznan"] = {alias_of = "Poznań"},
-			["Łódź"] = {parents = "Poland"},
-			["Lodz"] = {alias_of = "Łódź"},
-			["Lisbon"] = {parents = "Portugal"},
-			["Porto"] = {parents = "Portugal"},
-			["Bucharest"] = {parents = "Romania"},
-			["Belgrade"] = {parents = "Serbia"},
-			["Stockholm"] = {parents = "Sweden"},
-			["Zürich"] = {parents = "Switzerland"},
-			["Zurich"] = {alias_of = "Zürich"},
-			["Istanbul"] = {parents = "Turkey"},
-			["Kyiv"] = {parents = "Ukraine"},
-			["Kiev"] = {alias_of = "Kyiv"},
-			["Kharkiv"] = {parents = "Ukraine"},
-			["Odessa"] = {parents = "Ukraine", wp = "Odesa"},
-			["Odesa"] = {alias_of = "Odessa"},
-		},
-	},
+export.australia_cities = {
+	["Adelaide"] = {container = "South Australia"},
+	["Brisbane"] = {container = "Queensland"},
+	["Canberra"] = {container = {name = "Australian Capital Territory, Australia", divtype = "territory"}},
+	["Melbourne"] = {container = "Victoria"},
+	["Newcastle, New South Wales"] = {container = "New South Wales"},
+	["Newcastle"] = {alias_of = "Newcastle, New South Wales"},
+	["Perth"] = {container = "Western Australia"},
+	["Sydney"] = {container = "New South Wales"},
 }
 
--- List of all top-level polities and their subpolities. The first three groups list the properties of top-level
--- polities: countries, "pseudo-countries" (de-facto/unrecognized/etc. countries) and former countries. The remainder
--- list the first-level subpolities (administrative divisions) of several, mostly large, countries, and their
--- country-specific and subpolity-specific properties. Each group is broken out into its own variable so they can be
--- accessed individually by category handlers and such in [[Module:place/data]].
+export.australia_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Australia", "state"),
+	default_divtype = "city",
+	data = export.australia_cities,
+}
+
+export.brazil_cities = {
+	-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
+	["São Paulo"] = {container = "São Paulo"},
+	["Rio de Janeiro"] = {container = "Rio de Janeiro"},
+	["Brasília"] = {container = "Distrito Federal"},
+	["Brasilia"] = {alias_of = "Brasília"},
+	["Salvador"] = {container = "Bahia", wp = "%c, %d", commonscat = "%c (%d)"},
+	["Fortaleza"] = {container = "Ceará"},
+	["Belo Horizonte"] = {container = "Minas Gerais"},
+	["Manaus"] = {container = "Amazonas"},
+	["Curitiba"] = {container = "Paraná"},
+	["Recife"] = {container = "Pernambuco"},
+	["Goiânia"] = {container = "Goiás"},
+	["Goiania"] = {alias_of = "Goiânia"},
+	["Belém"] = {container = "Pará"},
+	["Belem"] = {alias_of = "Belém"},
+	["Porto Alegre"] = {container = "Rio Grande do Sul"},
+}
+
+export.brazil_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Brazil", "state"),
+	default_divtype = "city",
+	data = export.brazil_cities,
+}
+
+export.canada_cities = {
+	["Toronto"] = {container = "Ontario"},
+	["Montreal"] = {container = "Quebec"},
+	["Vancouver"] = {container = "British Columbia"},
+	["Calgary"] = {container = "Alberta"},
+	["Edmonton"] = {container = "Alberta"},
+	["Ottawa"] = {container = "Ontario"},
+	["Winnipeg"] = {container = "Manitoba"},
+	["Quebec City"] = {container = "Quebec"},
+	["Hamilton"] = {container = "Ontario", wp = "%c, %d"},
+	["Kitchener"] = {container = "Ontario", wp = "%c, %d"},
+}
+
+export.canada_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Canada", "province"),
+	default_divtype = "city",
+	data = export.canada_cities,
+}
+
+export.france_cities = {
+	["Paris"] = {container = "Île-de-France"},
+	["Lyon"] = {container = "Auvergne-Rhône-Alpes"},
+	["Lyons"] = {alias_of = "Lyon"},
+	["Marseille"] = {container = "Provence-Alpes-Côte d'Azur"},
+	["Marseilles"] = {alias_of = "Marseille"},
+	["Toulouse"] = {container = "Occitania"},
+	["Lille"] = {container = "Hauts-de-France"},
+	["Bordeaux"] = {container = "Nouvelle-Aquitaine"},
+	["Nice"] = {container = "Provence-Alpes-Côte d'Azur"},
+	["Nantes"] = {container = "Pays de la Loire"},
+	["Strasbourg"] = {container = "Grand Est"},
+	["Rennes"] = {container = "Brittany"},
+},
+
+export.france_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", France", "administrative region"),
+	default_divtype = "city",
+	data = export.france_cities,
+}
+
+export.germany_cities = {
+	["Berlin"] = {},
+	["Dortmund"] = {container = "North Rhine-Westphalia"},
+	["Essen"] = {container = "North Rhine-Westphalia"},
+	["Duisberg"] = {container = "North Rhine-Westphalia"},
+	["Hamburg"] = {},
+	["Munich"] = {container = "Bavaria"},
+	["Stuttgart"] = {container = "Baden-Württemberg"},
+	["Frankfurt"] = {container = "Hesse"},
+	["Cologne"] = {container = "North Rhine-Westphalia"},
+	["Düsseldorf"] = {container = "North Rhine-Westphalia"},
+	["Dusseldorf"] = {alias_of = "Düsseldorf"},
+	["Nuremberg"] = {container = "Bavaria"},
+	["Bremen"] = {},
+}
+
+export.germany_cities_group = {
+	default_container = "Germany",
+	canonicalize_key_container = make_canonicalize_key_container(", Germany", "state"),
+	default_divtype = "city",
+	data = export.germany_cities,
+}
+
+export.india_cities = {
+	-- This lists the 65 metro areas per Demographia's 2023 estimates, as found in
+	-- [[w:List_of_million-plus_urban_agglomerations_in_India]]. The last census in India (as of April 2025) was
+	-- conducted in 2011, and the results are not accurate any more.
+	["Delhi"] = {container = {name = "Delhi", divtype = "union territory"}}, -- 31,190,000
+	["Mumbai"] = {container = "Maharashtra"}, -- 25,189,000
+	["Kolkata"] = {container = "West Bengal"}, -- 21,747,000
+	["Bangalore"] = {container = "Karnataka"}, -- 15,257,000
+	["Bengaluru"] = {alias_of = "Bangalore"},
+	["Chennai"] = {container = "Tamil Nadu"}, -- 11,570,000
+	["Hyderabad"] = {container = "Telangana"}, -- 9,797,000
+	["Ahmedabad"] = {container = "Gujarat"}, -- 8,006,000
+	["Pune"] = {container = "Maharashtra"}, -- 6,819,000
+	["Surat"] = {container = "Gujarat"}, -- 6,601,000
+	["Lucknow"] = {container = "Uttar Pradesh"}, -- 4,661,000
+	["Jaipur"] = {container = "Rajasthan"}, -- 4,360,000
+	["Kanpur"] = {container = "Uttar Pradesh"}, -- 4,350,000
+	["Indore"] = {container = "Madhya Pradesh"}, -- 3,765,000
+	["Nagpur"] = {container = "Maharashtra"}, -- 3,493,000
+	["Patna"] = {container = "Bihar"}, -- 3,331,000
+	["Varanasi"] = {container = "Uttar Pradesh"}, -- 3,229,000
+	["Kozhikode"] = {container = "Kerala"}, -- 3,049,000
+	["Thiruvananthapuram"] = {container = "Kerala"}, -- 2,851,000
+	["Agra"] = {container = "Uttar Pradesh"}, -- 2,737,000
+	["Bhopal"] = {container = "Madhya Pradesh"}, -- 2,562,000
+	["Coimbatore"] = {container = "Tamil Nadu"}, -- 2,551,000
+	["Allahabad"] = {container = "Uttar Pradesh"}, -- 2,438,000
+	["Prayagraj"] = {alias_of = "Allahabad"},
+	["Kochi"] = {container = "Kerala"}, -- 2,381,000
+	["Ludhiana"] = {container = "Punjab"}, -- 2,205,000
+	["Vadodara"] = {container = "Gujarat"}, -- 2,182,000
+	["Chandigarh"] = {container = {name = "Chandigarh", divtype = "union territory"}}, -- 2,168,000
+	["Madurai"] = {container = "Tamil Nadu"}, -- 2,048,000
+	["Meerut"] = {container = "Uttar Pradesh"}, -- 2,011,000
+	["Visakhapatnam"] = {container = "Andhra Pradesh"}, -- 2,005,000
+	["Jamshedpur"] = {container = "Jharkhand"}, -- 1,925,000
+	["Malappuram"] = {container = "Kerala"}, -- 1,868,000
+	["Nashik"] = {container = "Maharashtra"}, -- 1,810,000
+	["Asansol"] = {container = "West Bengal"}, -- 1,720,000
+	["Aligarh"] = {container = "Uttar Pradesh"}, -- 1,660,000
+	["Ranchi"] = {container = "Jharkhand"}, -- 1,638,000
+	["Thrissur"] = {container = "Kerala"}, -- 1,578,000
+	["Kollam"] = {container = "Kerala"}, -- 1,576,000
+	["Jabalpur"] = {container = "Madhya Pradesh"}, -- 1,533,000
+	["Dhanbad"] = {container = "Jharkhand"}, -- 1,503,000
+	["Jodhpur"] = {container = "Rajasthan"}, -- 1,497,000
+	["Aurangabad"] = {container = "Maharashtra"}, -- 1,490,000
+	["Chhatrapati Sambhajinagar"] = {alias_of = "Aurangabad"},
+	["Rajkot"] = {container = "Gujarat"}, -- 1,487,000
+	["Gwalior"] = {container = "Madhya Pradesh"}, -- 1,477,000
+	["Raipur"] = {container = "Chhattisgarh"}, -- 1,429,000
+	["Gorakhpur"] = {container = "Uttar Pradesh"}, -- 1,410,000
+	["Kannur"] = {container = "Kerala"}, -- 1,360,000
+	["Bareilly"] = {container = "Uttar Pradesh"}, -- 1,355,000
+	["Guwahati"] = {container = "Assam"}, -- 1,355,000
+	["Moradabad"] = {container = "Uttar Pradesh"}, -- 1,345,000
+	["Amritsar"] = {container = "Punjab"}, -- 1,313,000
+	["Mysore"] = {container = "Karnataka"}, -- 1,296,000
+	["Bhilai"] = {container = "Chhattisgarh"}, -- 1,293,000
+	["Durg-Bhilainagar"] = {alias_of = "Bhilai"},
+	["Durg-Bhilai"] = {alias_of = "Bhilai"},
+	["Durg"] = {alias_of = "Bhilai"},
+	["Bhilainagar"] = {alias_of = "Bhilai"},
+	["Vijayawada"] = {container = "Andhra Pradesh"}, -- 1,232,000
+	["Srinagar"] = {container = {name = "Jammu and Kashmir", divtype = "union territory"}}, -- 1,212,000
+	["Salem"] = {container = "Tamil Nadu"}, -- 1,189,000
+	["Kota"] = {container = "Rajasthan"}, -- 1,172,000
+	["Jalandhar"] = {container = "Punjab"}, -- 1,165,000
+	["Saharanpur"] = {container = "Uttar Pradesh"}, -- 1,152,000
+	["Dehradun"] = {container = "Uttarakhand"}, -- 1,136,000
+	["Tiruchirappalli"] = {container = "Tamil Nadu"}, -- 1,131,000
+	["Bhubaneswar"] = {container = "Odisha"}, -- 1,112,000
+	["Jammu"] = {container = {name = "Jammu and Kashmir", divtype = "union territory"}}, -- 1,103,000
+	["Solapur"] = {container = "Maharashtra"}, -- 1,082,000
+	["Hubli-Dharwad"] = {container = "Karnataka"}, -- 1,062,000
+	["Hubli"] = {alias-of = "Hubli-Dharwad"},
+	["Dharwad"] = {alias-of = "Hubli-Dharwad"},
+	["Puducherry"] = {container = {name = "Puducherry", divtype = "union territory"}}, -- 1,024,000
+}
+
+export.india_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", India", "state"),
+	default_divtype = "city",
+	data = export.india_cities,
+}
+
+export.indonesia_cities = {
+	-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
+	["Jakarta"] = {container = "Special Capital Region of Jakarta"},
+	["Surabaya"] = {container = "East Java"},
+	["Bekasi"] = {container = "West Java"}, -- part of Jakarta metro area
+	["Bandung"] = {container = "West Java"},
+	["Medan"] = {container = "North Sumatra"},
+	["Depok"] = {container = "West Java"}, -- part of Jakarta metro area
+	["Tangerang"] = {container = "Banten"}, -- part of Jakarta metro area
+	["Palembang"] = {container = "South Sumatra"},
+	["Semarang"] = {container = "Central Java"},
+	["Makassar"] = {container = "South Sulawesi"},
+	["South Tangerang"] = {container = "Banten"}, -- part of Jakarta metro area
+	["Batam"] = {container = "Riau Islands"},
+	["Bogor"] = {container = "West Java"}, -- part of Jakarta metro area
+	["Pekanbaru"] = {container = "Riau"},
+	["Bandar Lampung"] = {container = "Lampung"},
+	["Pekanbaru"] = {container = "Riau"},
+	-- other metro areas over 1,000,000 people
+	["Padang"] = {container = "West Sumatra"},
+	["Samarinda"] = {container = "East Kalimantan"},
+	["Malang"] = {container = "East Java"},
+	["Yogyakarta"] = {container = "Special Region of Yogyakarta"},
+	["Denpasar"] = {container = "Bali"},
+	["Cirebon"] = {container = "West Java"},
+	["Surakarta"] = {container = "Central Java"},
+	["Banjarmasin"] = {container = "South Kalimantan"},
+	["Tasikmalaya"] = {parent = "West Java"},
+}
+
+export.indonesia_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Indonesia", "province"),
+	default_divtype = "city",
+	data = export.indonesia_cities,
+}
+
+export.japan_cities = {
+	-- Population figures from [[w:List of cities in Japan]]. Metro areas from
+	-- [[w:List of metropolitan areas in Japan]].
+	["Tokyo"] = {}, -- no single figure given for Tokyo as a whole.
+	["Yokohama"] = {container = "Kanagawa"}, -- 3,697,894
+	["Osaka"] = {container = "Osaka"}, -- 2,668,586
+	["Nagoya"] = {container = "Aichi"}, -- 2,283,289
+	-- FIXME, Hokkaido is handled specially.
+	["Sapporo"] = {container = "Hokkaido"}, -- 1,918,096
+	["Fukuoka"] = {container = "Fukuoka"}, -- 1,581,527
+	["Kobe"] = {container = "Hyōgo"}, -- 1,530,847
+	["Kyoto"] = {container = "Kyoto"}, -- 1,474,570
+	["Kawasaki"] = {container = "Kanagawa", wp = "%c, %d"}, -- 1,373,630
+	["Saitama"] = {container = "Saitama", wp = "%c (city)", commonscat = "%c, %d"}, -- 1,192,418
+	["Hiroshima"] = {container = "Hiroshima"}, -- 1,163,806
+	["Sendai"] = {container = "Miyagi"}, -- 1,029,552
+	-- the remaining cities are considered "central cities" in a 1,000,000+ metro area
+	-- (sometimes there is more than one central city in the area).
+	["Kitakyushu"] = {container = "Fukuoka"}, -- 986,998
+	["Chiba"] = {container = "Chiba", wp = "%c (city)", commonscat = "%c, %d"}, -- 938,695
+	["Sakai"] = {container = "Osaka"}, -- 835,333
+	["Niigata"] = {container = "Niigata", wp = "%c (city)", commonscat = "%c, %d"}, -- 813,053
+	["Hamamatsu"] = {container = "Shizuoka"}, -- 811,431
+	["Shizuoka"] = {container = "Shizuoka", wp = "%c (city)", commonscat = "%c, %d"}, -- 710,944
+	["Sagamihara"] = {container = "Kanagawa"}, -- 706,342
+	["Okayama"] = {container = "Okayama"}, -- 701,293
+	["Kumamoto"] = {container = "Kumamoto"}, -- 670,348
+	["Kagoshima"] = {container = "Kagoshima"}, -- 605,196
+	-- skipped 6 cities (Funabashi, Hachiōji, Kawaguchi, Himeji, Matsuyama, Higashiōsaka)
+	-- with population in the range 509k - 587k because not central cities in any
+	-- 1,000,000+ metro area.
+	["Utsunomiya"] = {container = "Tochigi"}, -- 507,833
+}
+
+export.japan_cities_group = {
+	default_container = "Japan",
+	canonicalize_key_container = make_canonicalize_key_container(", Japan", "prefecture"),
+	default_divtype = "city",
+	data = export.japan_cities,
+}
+
+export.south_korea_cities = {
+	-- All cities listed are not associated with any province.
+	["Seoul"] = {},
+	["Busan"] = {},
+	["Incheon"] = {},
+	["Daegu"] = {},
+	["Daejeon"] = {},
+	["Gwangju"] = {},
+	["Ulsan"] = {},
+}
+
+export.south_korea_cities_group = {
+	default_container = "South Korea",
+	canonicalize_key_container = make_canonicalize_key_container(", South Korea", "province"),
+	default_divtype = "city",
+	data = export.south_korea_cities,
+}
+
+export.mexico_cities = {
+	["Mexico City"] = {}, -- its own state
+	["Monterrey"] = {container = "Nuevo León"},
+	["Guadalajara"] = {container = "Jalisco"},
+	["Puebla"] = {container = "Puebla"},
+	["Toluca"] = {container = "State of Mexico"},
+	["Tijuana"] = {container = "Baja California"},
+	-- Include the state in the category for León due to possible confusion with León, Spain.
+	["León, Guanajuato"] = {container = "Guanajuato"},
+	["León"] = {alias_of = "León, Guanajuato"},
+	["Leon"] = {alias_of = "León, Guanajuato"},
+	["Querétaro"] = {container = "Querétaro"},
+	["Queretaro"] = {alias_of = "Querétaro"},
+	["Ciudad Juárez"] = {container = "Chihuahua"},
+	["Juárez"] = {alias_of = "Ciudad Juárez"},
+	["Juarez"] = {alias_of = "Ciudad Juárez"},
+	["Torreón"] = {container = "Coahuila"},
+	["Torreon"] = {alias_of = "Torreón"},
+	["Mérida"] = {container = "Yucatán"},
+	["Merida"] = {alias_of = "Mérida"},
+	["San Luis Potosí"] = {container = "San Luis Potosí"},
+	["San Luis Potosi"] = {alias_of = "San Luis Potosí"},
+	["Aguascalientes"] = {container = "Aguascalientes"},
+	["Mexicali"] = {container = "Baja California"},
+}
+
+export.mexico_cities_group = {
+	default_container = "Mexico",
+	canonicalize_key_container = make_canonicalize_key_container(", Mexico", "state"),
+	default_divtype = "city",
+	data = export.mexico_cities,
+}
+
+export.philippines_cities = {
+	 -- Some cities listed independent from any province. province listed is for geographical purposes only.
+	 -- Skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
+	 -- Other cities outside Metro Manila skipped as not central city in their urban area.
+	["Quezon City"] = {container = {name = "Metro Manila", divtype = "region"}},
+	["Quezon"] = {alias_of = "Quezon City"},
+	["Manila"] = {container = {name = "Metro Manila", divtype = "region"}},
+	["Davao City"] = {container = "Davao del Sur"},
+	["Davao"] = {alias_of = "Davao City"},
+	["Caloocan"] = {container = {name = "Metro Manila", divtype = "region"}},
+	["Zamboanga City"] = {container = "Zamboanga del Sur"},
+	["Zamboanga"] = {alias_of = "Zamboanga City"},
+	["Cebu City"] = {container = "Cebu"},
+	["Cebu"] = {alias_of = "Cebu City"},
+	["Antipolo"] = {container = "Rizal"},
+	["Cagayan de Oro"] = {container = "Misamis Oriental"},
+	["Dasmariñas"] = {container = "Cavite"},
+	["Dasmarinas"] = {alias_of = "Dasmariñas"},
+	["General Santos"] = {container = "South Cotabato"},
+	["San Jose del Monte"] = {container = "Bulacan"},
+	["Bacolod"] = {container = "Negros Occidental"},
+	["Calamba"] = {container = "Laguna"},
+	["Angeles"] = {container = "Pampanga"},
+	["Iloilo City"] = {container = "Iloilo"},
+	["Iloilo"] = {alias_of = "Iloilo City"},
+}
+
+export.philippines_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Philippines", "province"),
+	default_divtype = "city",
+	data = export.philippines_cities,
+}
+
+export.russia_cities = {
+	-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
+	["Moscow"] = {},
+	["Saint Petersburg"] = {},
+	["Novosibirsk"] = {container = "Novosibirsk Oblast"},
+	["Yekaterinburg"] = {container = "Sverdlovsk Oblast"},
+	["Nizhny Novgorod"] = {container = "Nizhny Novgorod Oblast"},
+	["Kazan"] = {container = {name = "Republic of Tatarstan", divtype = "republic"}},
+	["Chelyabinsk"] = {container = "Chelyabinsk Oblast"},
+	["Omsk"] = {container = "Omsk Oblast"},
+	["Samara"] = {container = "Samara Oblast"},
+	["Ufa"] = {container = {name = "Republic of Bashkortostan", divtype = "republic"}},
+	["Rostov-on-Don"] = {container = "Rostov Oblast"},
+	["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don"},
+	["Krasnoyarsk"] = {container = {name = "Krasnoyarsk Krai", divtype = "krai"}},
+	["Voronezh"] = {container = "Voronezh Oblast"},
+	["Perm"] = {container = {name = "Perm Krai", divtype = "krai"}, wp = "Perm, Russia"},
+	["Volgograd"] = {container = "Volgograd Oblast"},
+	["Krasnodar"] = {container = {name = "Krasnodar Krai", divtype = "krai"}},
+}
+
+export.russia_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(nil, "oblast"),
+	default_divtype = "city",
+	data = export.russia_cities,
+}
+
+export.spain_cities = {
+	["Madrid"] = {container = "Community of Madrid"},
+	["Barcelona"] = {container = "Catalonia"},
+	["Valencia"] = {container = "Valencia"},
+	["Seville"] = {container = "Andalusia"},
+	["Bilbao"] = {container = "Basque Country"},
+}
+
+export.spain_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Spain", "autonomous community"),
+	default_divtype = "city",
+	data = export.spain_cities,
+}
+
+export.taiwan_cities = {
+	["New Taipei"] = {},
+	["Taichung"] = {},
+	["Kaohsiung"] = {wp = "%c, Taiwan"},
+	["Taipei"] = {},
+	["Taoyuan"] = {},
+	["Tainan"] = {},
+	["Chiayi"] = {},
+	["Hsinchu"] = {},
+	["Keelung"] = {},
+}
+
+export.taiwan_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Taiwan", "county"),
+	default_divtype = "city",
+	data = export.taiwan_cities,
+}
+
+-- NOTE: It's OK to mix cities from different constituent countries; as long as the immediate container is correct,
+-- everything else will be figured out.
+export.united_kingdom_cities = {
+	["London"] = {container = "Greater London"},
+	["Manchester"] = {container = "Greater Manchester"},
+	["Birmingham"] = {container = "West Midlands"},
+	["Liverpool"] = {container = "Merseyside"},
+	["Glasgow"] = {container = {name = "City of Glasgow, Scotland", divtype = "council area"}},
+	["Leeds"] = {container = "West Yorkshire"},
+	["Newcastle upon Tyne"] = {container = "Tyne and Wear"},
+	["Newcastle"] = {alias_of = "Newcastle upon Tyne"},
+	["Bristol"] = {container = {name = "England", divtype = "constituent country"}},
+	["Cardiff"] = {container = {name = "Wales", divtype = "constituent country"}},
+	["Portsmouth"] = {container = "Hampshire"},
+	["Edinburgh"] = {container = {name = "City of Edinburgh, Scotland", divtype = "council area"}},
+	-- under 1,000,000 people but principal areas of Wales; requested by [[User:Donnanz]]
+	["Swansea"] = {container = {name = "Wales", divtype = "constituent country"}},
+	["Newport"] = {container = {name = "Wales", divtype = "constituent country"}, wp = "Newport, Wales"},
+}
+
+export.united_kingdom_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", England", "county"),
+	default_divtype = "city",
+	data = export.united_kingdom_cities,
+}
+
+export.united_states_cities = {
+	-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
+	["New York City"] = {container = "New York", wp = "%c"},
+	["New York"] = {alias_of = "New York City"},
+	["Newark"] = {container = "New Jersey"},
+	["Los Angeles"] = {container = "California", wp = "%c"},
+	["Long Beach"] = {container = "California"},
+	["Riverside"] = {container = "California"},
+	["Chicago"] = {container = "Illinois", wp = "%c"},
+	["Washington, D.C."] = {wp = "%c"},
+	["Washington"] = {alias_of = "Washington, D.C."},
+	["Baltimore"] = {container = "Maryland", wp = "%c"},
+	["San Jose"] = {container = "California"},
+	["San Francisco"] = {container = "California", wp = "%c"},
+	["Oakland"] = {container = "California"},
+	["Boston"] = {container = "Massachusetts", wp = "%c"},
+	["Providence"] = {container = "Rhode Island"},
+	["Dallas"] = {container = "Texas", wp = "%c", commonscat = "%c, %d"},
+	["Fort Worth"] = {container = "Texas"},
+	["Philadelphia"] = {container = "Pennsylvania", wp = "%c"},
+	["Houston"] = {container = "Texas", wp = "%c"},
+	["Miami"] = {container = "Florida", wp = "%c", commonscat = "%c, %d"},
+	["Atlanta"] = {container = "Georgia", wp = "%c"},
+	["Detroit"] = {container = "Michigan", wp = "%c"},
+	["Phoenix"] = {container = "Arizona", wp = "%c", commonscat = "%c, %d"},
+	["Mesa"] = {container = "Arizona"},
+	["Seattle"] = {container = "Washington", wp = "%c"},
+	["Orlando"] = {container = "Florida"},
+	["Minneapolis"] = {container = "Minnesota", wp = "%c"},
+	["Cleveland"] = {container = "Ohio", wp = "%c", commonscat = "%c, %d"},
+	["Denver"] = {container = "Colorado", wp = "%c", commonscat = "%c, %d"},
+	["San Diego"] = {container = "California", wp = "%c", commonscat = "%c, %d"},
+	["Portland"] = {container = "Oregon"},
+	["Tampa"] = {container = "Florida"},
+	["St. Louis"] = {container = "Missouri", wp = "%c", commonscat = "%c, %d"},
+	["Charlotte"] = {container = "North Carolina"},
+	["Sacramento"] = {container = "California"},
+	["Pittsburgh"] = {container = "Pennsylvania", wp = "%c"},
+	["Salt Lake City"] = {container = "Utah", wp = "%c"},
+	["San Antonio"] = {container = "Texas", wp = "%c", commonscat = "%c, %d"},
+	["Columbus"] = {container = "Ohio"},
+	["Kansas City"] = {container = "Missouri", wp = "%c metropolitan area", commonscat = "%c, %d"},
+	["Indianapolis"] = {container = "Indiana", wp = "%c"},
+	["Las Vegas"] = {container = "Nevada", wp = "%c"},
+	["Cincinnati"] = {container = "Ohio", wp = "%c", commonscat = "%c, %d"},
+	["Austin"] = {container = "Texas"},
+	["Milwaukee"] = {container = "Wisconsin", wp = "%c", commonscat = "%c, %d"},
+	["Raleigh"] = {container = "North Carolina"},
+	["Nashville"] = {container = "Tennessee"},
+	["Virginia Beach"] = {container = "Virginia"},
+	["Norfolk"] = {container = "Virginia"},
+	["Greensboro"] = {container = "North Carolina"},
+	["Winston-Salem"] = {container = "North Carolina"},
+	["Jacksonville"] = {container = "Florida"},
+	["New Orleans"] = {container = "Louisiana", wp = "%c"},
+	["Louisville"] = {container = "Kentucky"},
+	["Greenville"] = {container = "South Carolina"},
+	["Hartford"] = {container = "Connecticut"},
+	["Oklahoma City"] = {container = "Oklahoma", wp = "%c"},
+	["Grand Rapids"] = {container = "Michigan"},
+	["Memphis"] = {container = "Tennessee"},
+	["Birmingham"] = {container = "Alabama"},
+	["Fresno"] = {container = "California"},
+	["Richmond"] = {container = "Virginia"},
+	["Harrisburg"] = {container = "Pennsylvania"},
+	-- any major city of top 50 MSA's that's missed by previous
+	["Buffalo"] = {container = "New York"},
+	-- any of the top 50 city by city population that's missed by previous
+	["El Paso"] = {container = "Texas"},
+	["Albuquerque"] = {container = "New Mexico"},
+	["Tucson"] = {container = "Arizona"},
+	["Colorado Springs"] = {container = "Colorado"},
+	["Omaha"] = {container = "Nebraska"},
+	["Tulsa"] = {container = "Oklahoma"},
+	-- skip Arlington, Texas; too obscure and likely to be interpreted as Arlington, Virginia
+}
+
+export.united_states_cities_group = {
+	default_container = "United States",
+	canonicalize_key_container = make_canonicalize_key_container(", USA", "state"),
+	default_divtype = "city",
+	default_wp = "%c, %d",
+	data = export.united_states_cities,
+}
+
+export.new_york_boroughs = {
+	["Bronx"] = {the = true, wp = "The Bronx"},
+	["Brooklyn"] = {},
+	["Manhattan"] = {},
+	["Queens"] = {},
+	["Staten Island"] = {},
+}
+
+export.new_york_boroughs_group = {
+	default_container = {name = "New York City", divtype = "city"},
+	default_divtype = "borough",
+	data = export.new_york_boroughs,
+}
+
+export.misc_cities = {
+	["Yerevan"] = {container = "Armenia"},
+	["Vienna"] = {container = "Austria"},
+	["Minsk"] = {container = "Belarus"},
+	["Brussels"] = {container = "Belgium"},
+	["Antwerp"] = {container = "Belgium"},
+	["Sofia"] = {container = "Bulgaria"},
+	["Zagreb"] = {container = "Croatia"},
+	["Prague"] = {container = "Czech Republic"},
+	["Olomouc"] = {container = "Czech Republic"},
+	["Copenhagen"] = {container = "Denmark"},
+	["Helsinki"] = {container = {name = "Uusimaa, Finland", divtype = "region"}},
+	["Athens"] = {container = "Greece"},
+	["Thessaloniki"] = {container = "Greece"},
+	["Budapest"] = {container = "Hungary"},
+	-- FIXME, per Wikipedia "County Dublin" is now the "Dublin Region"
+	["Dublin"] = {container = {name = "County Dublin, Ireland", divtype = "county"}},
+	-- Jerusalem is not recognized internationally as part of either Israel or Palestine, so put the first parent as
+	-- "Asia". Grrr; additional support needed to allow "Asia" as a parent.
+	-- ["Jerusalem"] = {container = {name = "Asia", divtype = "continent"},
+	--   addl_parents = {{name = "Israel", divtype = "country"}, {name = "Palestine", divtype = "country"}}},
+	["Tel Aviv"] = {container = "Israel"},
+	["Venice"] = {container = {name = "Veneto, Italy", divtype = "administrative region"}},
+	["Rome"] = {container = {name = "Lazio, Italy", divtype = "administrative region"}},
+	["Milan"] = {container = {name = "Lombardy, Italy", divtype = "administrative region"}},
+	["Naples"] = {container = {name = "Campania, Italy", divtype = "administrative region"}},
+	["Turin"] = {container = {name = "Piedmont, Italy", divtype = "administrative region"}},
+	["Riga"] = {container = "Latvia"},
+	["Amsterdam"] = {container = {name = "North Holland, Netherlands", divtype = "province"}},
+	["Rotterdam"] = {container = {name = "South Holland, Netherlands", divtype = "province"}},
+	["The Hague"] = {container = {name = "South Holland, Netherlands", divtype = "province"}},
+	["Auckland"] = {container = "New Zealand"},
+	["Oslo"] = {container = {name = "Oslo, Norway", divtype = "county"}},
+	["Warsaw"] = {container = "Poland"},
+	["Katowice"] = {container = "Poland"},
+	["Kraków"] = {container = "Poland"},
+	["Krakow"] = {alias_of = "Kraków"},
+	["Gdańsk"] = {container = "Poland"},
+	["Gdansk"] = {alias_of = "Gdańsk"},
+	["Poznań"] = {container = "Poland"},
+	["Poznan"] = {alias_of = "Poznań"},
+	["Łódź"] = {container = "Poland"},
+	["Lodz"] = {alias_of = "Łódź"},
+	["Lisbon"] = {container = "Portugal"},
+	["Porto"] = {container = "Portugal"},
+	["Bucharest"] = {container = "Romania"},
+	["Belgrade"] = {container = "Serbia"},
+	["Stockholm"] = {container = "Sweden"},
+	["Zürich"] = {container = "Switzerland"},
+	["Zurich"] = {alias_of = "Zürich"},
+	["Istanbul"] = {container = "Turkey"},
+	["Kyiv"] = {container = "Ukraine"},
+	["Kiev"] = {alias_of = "Kyiv"},
+	["Kharkiv"] = {container = "Ukraine"},
+	["Odessa"] = {container = "Ukraine", wp = "Odesa"},
+	["Odesa"] = {alias_of = "Odessa"},
+}
+
+export.misc_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
+	default_divtype = "city",
+	data = export.misc_cities,
+}
+
+-- List of all known locations. The first three groups list the properties of top-level polities: countries,
+-- "pseudo-countries" (de-facto/unrecognized/etc. countries) and former countries. Most of the remainder list the
+-- first-level subpolities (administrative divisions) of several, mostly large, countries, and their country-specific
+-- and subpolity-specific properties. After that come groups of cities. China and the United Kingdom include
+-- second-level subpolities (in the case of China, only the largest ones).
 export.locations = {
 	export.country_group,
 	export.pseudo_country_group,
@@ -4011,6 +4139,7 @@ export.locations = {
 	export.brazil_group,
 	export.canada_group,
 	export.china_group,
+	export.china_prefecture_level_cities_group,
 	export.finland_group,
 	export.france_group,
 	export.germany_group,
@@ -4044,6 +4173,24 @@ export.locations = {
 	export.northern_ireland_group,
 	export.scotland_group,
 	export.wales_group,
+	export.australia_cities_group,
+	export.brazil_cities_group,
+	export.canada_cities_group,
+	export.france_cities_group,
+	export.germany_cities_group,
+	export.india_cities_group,
+	export.indonesia_cities_group,
+	export.japan_cities_group,
+	export.south_korea_cities_group,
+	export.mexico_cities_group,
+	export.philippines_cities_group,
+	export.russia_cities_group,
+	export.spain_cities_group,
+	export.taiwan_cities_group,
+	export.united_kingdom_cities_group,
+	export.united_states_cities_group,
+	export.new_york_boroughs_group,
+	export.misc_cities_group,
 }
 
 return export
