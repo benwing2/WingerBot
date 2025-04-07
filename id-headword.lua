@@ -2,193 +2,196 @@ local export = {}
 local pos_functions = {}
 
 local lang = require("Module:languages").getByCode("id")
-local script = require('Module:scripts').getByCode("Latn")
-local PAGENAME = mw.title.getCurrentTitle().text
 
+-- The main entry point.
+-- This is the only function that can be invoked from a template.
 function export.show(frame)
-    -- FIXME: Use [[Module:parameters]].
-    local args = frame:getParent().args
-    local poscat = frame.args[1] or error("Part of speech has not been specified. Please pass parameter 1 to the module invocation.")
+	local iparams = {
+		[1] = {required = true},
+	}
+	local iargs = require("Module:parameters").process(frame.args, iparams)
+	local args = frame:getParent().args
+	local poscat = iargs[1]
 
-    local head = args["head"]; if head == "" then head = nil end
+	local parargs = frame:getParent().args
 
-    local data = {
-        lang = lang,
-        sc = script,
-        pos_category = poscat,
-        categories = {}, -- Ensure initialized as an empty table
-        heads = {head},
-        translits = {"-"},
-        inflections = {}
-    }
+	local params = {
+		["head"] = {list = true, disallow_holes = true},
+		["id"] = true,
+		["sort"] = true,
+		["nolinkhead"] = {type = "boolean"},
+		["json"] = {type = "boolean"},
+		["pagename"] = true, -- for testing
+	}
 
-    if pos_functions[poscat] then
-        pos_functions[poscat](args, data)
+	if pos_functions[poscat] then
+		local posparams = pos_functions[poscat].params
+		if type(posparams) == "function" then
+			posparams = posparams(lang)
+		end
+		for key, val in pairs(posparams) do
+			params[key] = val
+		end
+	end
+
+    local args = require("Module:parameters").process(parargs, params)
+
+	local pagename = args.pagename or mw.title.getCurrentTitle().text
+
+	local user_specified_heads = args.head
+	local heads = user_specified_heads
+	if args.nolinkhead then
+		if #heads == 0 then
+			heads = {pagename}
+		end
+	end
+
+	for i, head in ipairs(heads) do
+		if head == "+" or head == "*" then
+			head = nil
+		end
+		heads[i] = {
+			term = head,
+			tr = "-",
+		}
+	end
+
+	local data = {
+		lang = lang,
+		pos_category = poscat,
+		categories = {},
+		heads = heads,
+		user_specified_heads = user_specified_heads,
+		no_redundant_head_cat = #user_specified_heads == 0,
+		inflections = {},
+		pagename = pagename,
+		id = args.id,
+		sort_key = args.sort,
+		force_cat_output = force_cat,
+		is_suffix = false,
+	}
+
+	if pagename:find("^%-") and poscat ~= "suffix forms" then
+		data.is_suffix = true
+		data.pos_category = "suffixes"
+		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
+	end
+
+    if pos_functions[poscat] and pos_functions[poscat].func then
+        pos_functions[poscat].func(args, data)
     end
 
+    if args.json then
+        return require("Module:JSON").toJSON(data)
+    end
+	
     return require("Module:headword").full_headword(data)
 end
 
 -- Function for nouns (common and proper)
 
+local function make_default_plural(pagename)
+	-- Auto-detect full reduplication
+	if pagename:match("^([a-zA-Z]+)%-%1$") then
+		return "[[" .. pagename .. "]]"
+	end
+
+	local subwords = mw.text.split(pagename, "%s")
+	local firstword = subwords[1]
+	subwords[1] = mw.ustring.gsub("[[" .. firstword .. "]]-[[" .. firstword .. "]]", "([a-z]+%-)%1%1", "banyak %1")
+	return table.concat(subwords, " ")
+end
+
 -- Shortcuts for the plural markings
-pos_functions["nouns"] = function(args, data)
-    
-    -- Auto-detect full reduplication
-    local pagename = mw.title.getCurrentTitle().text -- Get the current page name
-    if pagename:match("^([a-zA-Z]+)%-%1$") then
-        local pl = {label = "plural"}
-        table.insert(pl, mw.ustring.format("[[%s]]", PAGENAME))
-        if args["pl2"] then table.insert(pl, args["pl2"]) end
-        if args["pl3"] then table.insert(pl, args["pl3"]) end
-        table.insert(data.inflections, pl)
-        return -- Stop further processing
-    end
+pos_functions["nouns"] = {
+	params = {
+		[1] = {list = "pl"},
+		["pl"] = {alias_of = 1},
+	},
+	func = function(args, data)
+		-- Main code for noun plurality
 
-    -- Initialize categories and inflections if nil (not specified)
-    data.categories = data.categories or {}
-    data.inflections = data.inflections or {}
+		local pl1 = args[1][1]
+		-- Unknown or uncertain and requests
+		if pl1 == "req" then
+			table.insert(data.categories, "Requests for plural forms in Indonesian entries")
+		elseif pl1 == "?" then
+			table.insert(data.categories, "Indonesian nouns with unknown or uncertain plurals")
+		
+		-- Uncountable and semi-countable
+		elseif pl1 == "-" then
+			table.insert(data.categories, "Indonesian uncountable nouns")
+			table.insert(data.inflections, {label = "[[Appendix:Glossary#uncountable|uncountable]]"})
+		elseif pl1 == "0" then
+			table.insert(data.categories, "Indonesian uncountable nouns")
+		elseif pl1 == "u" then
+			local pl_countable = {label = "usually [[Appendix:Glossary#uncountable|uncountable]]"}
+			local pl_plural = {label = "plural"}
+			table.insert(data.categories, "Indonesian countable nouns")
+			table.insert(data.categories, "Indonesian uncountable nouns")
+			table.insert(pl_plural, make_default_plural(data.pagename))
+			table.insert(data.inflections, pl_countable)
+			table.insert(data.inflections, pl_plural)
+		elseif pl1 == "~" then
+			local pl_countable = {label = "[[Appendix:Glossary#countable|countable]] and [[Appendix:Glossary#uncountable|uncountable]]"}
+			local pl_plural = {label = "plural"}
+			table.insert(data.categories, "Indonesian countable nouns")
+			table.insert(data.categories, "Indonesian uncountable nouns")
+			table.insert(pl_plural, make_default_plural(data.pagename))
+			table.insert(data.inflections, pl_countable)
+			table.insert(data.inflections, pl_plural)
+		elseif pl1 == "pt" or pl1 == "p" then
+			table.insert(data.categories, "Indonesian pluralia tantum")
+			table.insert(data.inflections, {label = "[[Appendix:Glossary#plurale tantum|plurale tantum]]"})
+		elseif pl1 == "st" or pl1 == "s" then
+			table.insert(data.categories, "Indonesian singularia tantum")
+			table.insert(data.inflections, {label = "[[Appendix:Glossary#singulare tantum|singulare tantum]]"})
+		elseif pl1 == "1" then
+			error("The parameter |pl=1 is invalid. Please specify the plurality with an existing value.")
+		else
+			-- Countable
+			local pl = {label = "plural"}
+			if not pl1 or pl1 == "+" then
+				table.insert(pl, make_default_plural(data.pagename))
+			elseif pl1 == "a" then
+				table.insert(pl, make_default_plural(data.pagename))
+				table.insert(pl, "[[para]] " .. data.pagename)
+			elseif pl1 == "*" then
+				table.insert(pl, data.pagename)
+			else
+				table.insert(pl, pl1)
+			end
+			for i = 2, #args[1] do
+				table.insert(pl, args[1][i])
+			end
+			table.insert(data.inflections, pl)
+		end
+		
+		if args[1][2] then -- Only for tracking purpose
+			require("Module:debug/track")("id-noun/pl2")
+		end
+		if args[1][3] then -- Only for tracking purpose
+			require("Module:debug/track")("id-noun/pl3")
+		end
+	end
+}
 
-    -- Main code for noun plurality
-    
-    -- Unknown or uncertain and requests
-    if args[1] == "req" then
-        table.insert(data.categories, "Requests for plural forms in Indonesian entries")
-    elseif args[1] == "?" then
-        table.insert(data.categories, "Indonesian nouns with unknown or uncertain plurals")
-    
-    -- Uncountable and semi-countable
-    elseif args[1] == "-" then
-        table.insert(data.categories, "Indonesian uncountable nouns")
-        table.insert(data.inflections, {label = "[[Appendix:Glossary#uncountable|uncountable]]"})
-    elseif args[1] == "0" then
-    table.insert(data.categories, "Indonesian uncountable nouns")
-    elseif args[1] == "u" then
-        local pl_countable = {label = "usually [[Appendix:Glossary#uncountable|uncountable]]"}
-        local pl_plural = {label = "plural"}
-        table.insert(data.categories, "Indonesian countable nouns")
-        table.insert(data.categories, "Indonesian uncountable nouns")
-        local subwords = mw.text.split(PAGENAME, "%s")
-        local firstword = subwords[1]
-        local plural_form = mw.ustring.gsub("[[" .. firstword .. "]]-[[" .. firstword .. "]]", "([a-z]+%-)%1%1", "banyak %1")
-        table.insert(pl_plural, plural_form)
-        table.insert(data.inflections, pl_countable)
-        table.insert(data.inflections, pl_plural)
-    elseif args[1] == "~" then
-        local pl_countable = {label = "[[Appendix:Glossary#countable|countable]] and [[Appendix:Glossary#uncountable|uncountable]]"}
-        local pl_plural = {label = "plural"}
-        table.insert(data.categories, "Indonesian countable nouns")
-        table.insert(data.categories, "Indonesian uncountable nouns")
-        local subwords = mw.text.split(PAGENAME, "%s")
-        local firstword = subwords[1]
-        local plural_form = mw.ustring.gsub("[[" .. firstword .. "]]-[[" .. firstword .. "]]", "([a-z]+%-)%1%1", "banyak %1")
-       table.insert(pl_plural, plural_form)
-       table.insert(data.inflections, pl_countable)
-        table.insert(data.inflections, pl_plural)
-    elseif args[1] == "pt" or args["pl"] == "p" then
-        table.insert(data.categories, "Indonesian pluralia tantum")
-        table.insert(data.inflections, {label = "[[Appendix:Glossary#plurale tantum|plurale tantum]]"})
-    elseif args[1] == "st" or args["pl"] == "s" then
-        table.insert(data.categories, "Indonesian singularia tantum")
-        table.insert(data.inflections, {label = "[[Appendix:Glossary#singulare tantum|singulare tantum]]"})
-    
-    -- Countable
-    else
-        local pl = {label = "plural"}
-        if not args[1] or args[1] == "+" then
-            local subwords = mw.text.split(PAGENAME, "%s")
-            local firstword = subwords[1]
-            subwords[1] = mw.ustring.gsub("[[" .. firstword .. "]]-[[" .. firstword .. "]]", "([a-z]+%-)%1%1", "banyak %1")
-            if args["pl2"] or args[2] then table.insert(pl, args["pl2"]) end
-            if args["pl3"] or args[3] then table.insert(pl, args["pl3"]) end
-            table.insert(pl, table.concat(subwords, " "))
-        elseif args[1] == "a" then
-        	local subwords = mw.text.split(PAGENAME, "%s")
-            local firstword = subwords[1]
-            local plural_form = "[[" .. firstword .. "]]-[[" .. firstword .. "]]"
-            if #subwords > 1 then
-            	for i = 2, #subwords do
-            		plural_form = plural_form .. " " .. subwords[i]
-            	end
-            end
-            table.insert(pl, plural_form)
-            local para_form = "[[para]] " .. table.concat(subwords, " ")
-            table.insert(pl, para_form)
-            if args["pl2"] then table.insert(pl, args["pl2"]) end
-            if args["pl3"] then table.insert(pl, args["pl3"]) end
-        elseif args[1] == "*" then
-            table.insert(pl, mw.ustring.format(PAGENAME))
-            if args["pl2"] then table.insert(pl, args["pl2"]) end
-            if args["pl3"] then table.insert(pl, args["pl3"]) end
-            table.insert(data.inflections, pl)
-            return -- Stop further processing
-        end
-        table.insert(data.inflections, pl)
-    end
-    
-    -- Detect error and tracking
-    if args["tr"] then
-    error("The parameter |tr= is invalid. Please remove it.")
-    end
-    if args["nolinkhead"] then --Delete this if you have made this function
-    error("The parameter |nolinkhead= does not work for now. Please remove it.")
-    end
-    if args["pl"] == "1" then
-    error("The parameter |pl=1 is invalid. Please specify the plurality with an existing value.")
-    end
-    if args["pl"] == "duplication" then
-    error("Please delete |pl=duplication. The template can create plurals with full reduplication without any parameter.")
-    end
-    if args["pl"] == "-" then
-    error("Please replace |pl=- with |-. Please make sure that the noun is really UNCOUNTABLE not COUNTABLE.")
-    end
-    if args["pl"] then
-    require("Module:debug/track")("id-noun/pl")
-    end
-    if args["pl"] == "0" then
-    require("Module:debug/track")("id-noun/pl0")
-    end
-    if args[1] == "" then
-    error("Please make sure that there is no empty value.")
-    end
-    if args["pl2"] then -- Only for tracking purpose
-    require("Module:debug/track")("id-noun/pl2")
-    end
-    if args["pl3"] then -- Only for tracking purpose
-    require("Module:debug/track")("id-noun/pl3")
-    end
-end
+pos_functions["verbs"] = {
+	params = {
+		active = {list = true},
+		passive = {list = true},
+	},
+	func = function(args, data)
+		if args.active and args.active[1] then
+			args.active.label = "active"
+			table.insert(data.inflections, args.active)
+		end
+		if args.passive and args.passive[1] then
+			args.passive.label = "passive"
+			table.insert(data.inflections, args.passive)
+		end
+	end,
+}
 
-pos_functions["adjectives"] = function(args, data)
-	
-	-- Detect error
-    if args["tr"] then
-    error("The parameter |tr= is invalid. Please remove it.")
-    end
-    if args["nolinkhead"] then  --Delete this if you have made this function
-    error("The parameter |nolinkhead= does not work for now. Please remove it.")
-    end
-    if args["pl"] then
-    error("Indonesian adjectives don't have plurals. Please remove |pl=.")
-    end
-    if args[1] == "" then
-    error("Please make sure that there is no empty value.")
-    end
-end
-pos_functions["verbs"] = function(args, data)
-	
-	-- Detect error
-    if args["tr"] then
-    error("The parameter |tr= is invalid. Please remove it.")
-    end
-    if args["nolinkhead"] then  --Delete this if you have made this function
-    error("The parameter |nolinkhead= does not work for now. Please remove it.")
-    end
-    if args["pl"] then
-    error("Indonesian verbs don't have plurals. Please remove |pl=.")
-    end
-    if args[1] == "" then
-    error("Please make sure that there is no empty value.")
-    end
-end
 return export
