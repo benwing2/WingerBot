@@ -552,6 +552,88 @@ function export.iterate_matching_location(data)
 end
 
 
+--[=[
+If the holonym in `data` (in the format as passed to a category handler) refers to a city, find and return the
+corresponding city key, spec and group as well as a list of the containing polities. This verifies that there is no
+mismatch between the city's containing polities and any of the following holonyms in the {{tl|place}} spec.
+
+Returns four values:
+# The ''city key'' (the key in the data in the city group table; usually the same as the holonym placename passed in,
+  but may be different due to following an alias, and may in rare cases have `the` prefixed);
+# the ''city spec'' (object describing the city, the value corresponding to the city key in the data in the city group
+  table; documented in [[Module:place/shared-data]] under `export.cities`);
+# the ''city group'' (the table listing a group of cities with shared properties);
+# the list of containing polities, ordered from smallest/most immediate to largest/least immediate; each element is
+  a table with `name` and `divtype` properties, the latter of which has been filled out using group-level defaults if
+  necessary.
+]=]
+local function iterate_matching_holonym_location(data)
+	local holonym_placetype, holonym_placename, holonym_index, place_desc =
+		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
+	-- local equiv_to_city = export.get_equiv_placetype_prop(holonym_placetype, function(equiv_placetype)
+	-- 	return equiv_placetype == "city"
+	-- end)
+	-- if not equiv_to_city then
+	-- 	return nil
+	-- end
+	local matching_location_iterator = export.iterate_matching_location {
+		placetypes = holonym_placetype,
+		placename = holonym_placename,
+	}
+	return function()
+		while true do
+			local group, key, spec = next(matching_location_iterator)
+			if not group then
+				return nil
+			end
+			-- For each level of containing polity, check that there are no mismatches (i.e. other polity of the same
+			-- sort) mentioned. We allow a mismatch at a given level if there's also a match with the containing polity
+			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
+			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
+			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
+			-- Delware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New Jersey
+			-- in [[Module:place/shared-data]]. Just because the containing polity US matches isn't enough, because
+			-- Newark, NJ also has New Jersey as a containing polity and there's a mismatch at that level. If there are
+			-- no mismatches at any level we assume we're dealing with the right city.
+			local containing_polities = export.get_city_containing_polities(group, spec)
+			local containing_polities_mismatch = false
+			for _, polity in ipairs(containing_polities) do
+				local bare_polity, _ = m_shared.construct_bare_and_linked_version(polity.name)
+				local divtype = polity.divtype
+				local divtype_equivs = export.get_placetype_equivs(divtype)
+				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
+					holonym_index and holonym_index + 1 or nil) do
+					local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
+						function(placetype)
+							return other_holonym.placetype == placetype and other_holonym.cat_placename == bare_polity
+						end
+					)
+					if this_holonym_matches then
+						-- match
+					else
+						local this_holonym_mismatches = export.get_equiv_placetype_prop_from_equivs(
+							divtype_equivs, function(placetype)
+								return other_holonym.placetype == placetype
+							end
+						)
+						if this_holonym_mismatches then
+							containing_polities_mismatch = true
+							break
+						end
+					end
+				end
+				if containing_polities_mismatch then
+					break
+				end
+			end
+			if not containing_polities_mismatch then
+				return city_key, city_spec, city_group, containing_polities
+			end
+		end
+	end
+end
+
+
 function export.get_matching_location(data)
 	local all_found = {}
 	for group, key, spec in export.iterate_matching_location(data) do
@@ -769,6 +851,11 @@ local function set_spec_defaults(group, key, spec)
 	if type(spec.container) == "string" then
 		spec.container = {name = spec.container, divtype = "country"}
 	end
+	spec.containers = spec.container
+	spec.container = nil
+	if spec.containers and not spec.containers[1] then
+		spec.containers = {spec.containers}
+	end
 	spec.keydesc = spec.keydesc or group.default_keydesc or fallback_keydesc
 	spec.poldiv = spec.poldiv or group.default_poldiv
 	spec.miscdiv = spec.miscdiv or group.default_miscdiv
@@ -941,53 +1028,49 @@ local function normalize_city_parents(parents, default_divtype)
 end
 
 --[==[
-Return the normalized containing polities for a city, given the city's ''city group'' object and the particular
-''city spec'' for the city (the value in the city group key-value data table corresponding to the city in question).
-This joins the containing polities specified at the city spec level with any additional (outer) containing polities
-specified at the group level. The return value is normalized to always be in a list format where each object contains
-`name` and `divtype` fields, where `divtype` will always be present (defaulted if necessary from the city group level).
+Successively iterate over a location's containers, and then the containers of those containers, etc. Keep in mind that
+locations may have multiple containers (e.g. Russia has both Europe and Asia as containers, and both Europe and Asia
+have Eurasia as their container). A given container will never be returned twice (e.g. in the case where a specific
+location A has locations B and C as containers, and B has C as its container, C will not be returned twice). An
+internal error happens if a container loop is detected. The return value is a list of location objects, each of which
+contains `group`, `key` and `spec` fields.
 ]==]
-function export.get_city_containers(city_group, city_spec)
-	local skip_parents = normalize_city_parents(city_group.skip_parents)
-	local this_parents, this_parents_copied =
-		normalize_city_parents(city_spec.parents, city_group.default_parent_divtype)
-	if not this_parents or not this_parents[1] then
-		return skip_parents or {}
+function export.iterate_containers(group, key, spec)
+	local keys_seen = {}
+	keys_seen[key] = true
+	local iterations = 0
+	local last_iteration_containers = {{group = group, key = key, spec = spec}}
+	return function()
+		iterations = iterations + 1
+		if iterations > 10 then
+			internal_error("Probable loop in containers when processing key %s", key)
+		end
+		local next_iteration_containers = {}
+		for _, location in ipairs(last_iteration_containers) do
+			local containers = location.spec.containers
+			if containers then
+				for _, container in ipairs(containers) do
+					local container_group, container_key, container_spec = get_matching_location {
+						placetypes = container.divtype,
+						placename = container.name,
+					}
+					if not keys_seen[container_key] then
+						table.insert(next_iteration_containers, {
+							group = container_group, key = container_key, spec = container_spec
+						})
+						keys_seen[container_key] = true
+					end
+				end
+			end
+		end
+		if not next_iteration_containers[1] then
+			return nil
+		end
+		last_iteration_containers = next_iteration_containers
+		return next_iteration_containers
 	end
-	if not skip_parents or not skip_parents[1] then
-		return this_parents or {}
-	end
-	if not this_parents_copied then
-		this_parents = m_table.shallowCopy(this_parents)
-	end
-	m_table.extend(this_parents, skip_parents)
-	return this_parents
 end
 
-
---[==[
-Given a containing polity of a city, possibly with preceding `the` removed, find the polity key, polity spec/value and
-polity group in `export.locations`. Return three values, the key, spec and group. If not found, throw an internal error.
-`parent_spec` is as in the return value of `get_city_containers`, i.e. it is a table with `name` and `divtype`
-fields, which must both be present. The `divtype` is used to check that we have the right polity; otherwise, for
-example, the city of [[Atlanta]] wrongly ends up in [[:Category:Cities in Georgia]] (the country) in lieu of the correct
-[[:Category:Cities in Georgia, USA]].
-]==]
-function export.find_city_container(parent_spec)
-	for _, polity_group in ipairs(export.locations) do
-		local polity_key, _ = export.call_place_cat_handler(polity_group, parent_spec.divtype, parent_spec.name)
-		if polity_key then
-			local polity_value = polity_group.data[polity_key]
-			if polity_value then
-				-- Use the group's value_transformer to ensure that default values are copied into the polity spec
-				-- (polity value structure).
-				polity_value = polity_group.value_transformer(polity_group, polity_key, polity_value)
-				return polity_key, polity_value, polity_group
-            end 
-        end
-	end
-	internal_error("Can't find polity spec corresponding to city containing polity %s", parent_spec)
-end
 
 -----------------------------------------------------------------------------------
 --                               Top-level tables                                --

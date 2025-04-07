@@ -1257,18 +1257,18 @@ local function city_type_cat_handler(data)
 				-- Categorize both in key, and in the larger polity that the key is part of,
 				-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
 				-- "Cities in Japan". (But don't do the latter if no_container_cat is set.)
-				if plural_entry_placetype == "neighborhoods" and value.british_spelling then
+				if plural_entry_placetype == "neighborhoods" and spec.british_spelling then
 					plural_entry_placetype = "neighbourhoods"
 				end
 				local cap_plural_entry_placetype = ucfirst(plural_entry_placetype)
-				local retcats = {("%s in %s%s"):format(cap_plural_entry_placetype, spec.the and "the " or "", key)}
+				local retcats = {("%s in %s"):format(cap_plural_entry_placetype, m_shared.get_prefixed_key(key, spec))}
 				if spec.container and not spec.no_container_cat then
 					local container_group, container_key, container_spec = m_shared.get_matching_location {
 						placetypes = spec.container.divtype,
 						key = spec.container.name,
 					}
-					insert(retcats, ("%s in %s%s"):format(cap_plural_entry_placetype,
-						container_spec.the and "the " or "", container_key))
+					insert(retcats, ("%s in %s"):format(cap_plural_entry_placetype, m_shared.get_prefixed_key(
+						container_key, container_spec)))
 				end
 				return retcats
 			end
@@ -1325,10 +1325,11 @@ local function capital_city_cat_handler(data, non_city)
 		} do
 			if spec.container and not spec.no_container_cat then
 				local container_group, container_key, container_spec = m_shared.get_matching_location {
-					placetype = spec.container.divtype,
+					placetypes = spec.container.divtype,
 					key = spec.container.name,
 				}
-				insert(retcats, ("%s of %s%s"):format(capital_cat, container_spec.the and "the " or "", container_key))
+				insert(retcats, ("%s of %s"):format(capital_cat, m_shared.get_prefixed_key(
+					container_key, container_spec)))
 				inserted_specific_variant_cat = true
 				break
 			end
@@ -1501,7 +1502,8 @@ local function generic_cat_handler(data)
 	} do
 		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
 		-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
-		-- from_demonym is given as we only want demonyms in the most specific category.
+		-- from_demonym is given as we only want demonyms in the most specific category, and not when no_container_cat
+		-- is set (e.g. for 'United Kingdom').
 		insert_retkey(key, spec)
 		if not from_demonym and spec.container and not spec.no_container_cat then
 			local container_group, container_key, container_spec = m_shared.get_matching_location {
@@ -1509,26 +1511,6 @@ local function generic_cat_handler(data)
 				key = spec.container.name,
 			}
 			insert_retkey(container_key, container_spec)
-		end
-		return retcats
-	end
-
-	-- Check for cities mentioned as holonyms.
-	local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
-	if city_spec then
-		-- Add categories for the city and its containing polities.
-		insert_retkey(city_key)
-		for _, polity in ipairs(containing_polities) do
-			local drop_dead_now = false
-			-- Find the group and key corresponding to the polity.
-			local entity_key, entity_value, entity_group = m_shared.find_city_container(polity)
-			insert_retkey(entity_key)
-			if from_demonym or entity_value.no_container_cat then
-				-- Stop adding containing polities if no_container_cat is found. (Used for
-				-- 'United Kingdom'.) Also if we're called from from_demonym, only add the first (most immediate)
-				-- containing polity.
-				break
-			end
 		end
 		return retcats
 	end
