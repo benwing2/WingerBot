@@ -643,318 +643,6 @@ If the value is true, a simple link will be added around the whole placetype. If
 will be added around the whole placetype.
 ]==]
 export.placetype_links = {
-	["administrative capital"] = "w",
-	["administrative center"] = "w",
-	["administrative centre"] = "w",
-	["administrative county"] = "w",
-	["administrative district"] = "w",
-	["administrative headquarters"] = "[[administrative]] [[headquarters]]",
-	["administrative region"] = true,
-	["administrative seat"] = "w",
-	["administrative territory"] = "[[administrative]] [[territory]]",
-	["administrative village"] = "w",
-	["alliance"] = true,
-	["archipelago"] = true,
-	["arm"] = true,
-	["associated province"] = "[[associated]] [[province]]",
-	["atoll"] = true,
-	["autonomous city"] = "w",
-	["autonomous community"] = true,
-	["autonomous oblast"] = true,
-	["autonomous okrug"] = true,
-	["autonomous prefecture"] = true,
-	["autonomous province"] = "w",
-	["autonomous region"] = "w",
-	["autonomous republic"] = "w",
-	["autonomous territory"] = "w",
-	["bailiwick"] = true,
-	["barangay"] = true, -- Philippines
-	["barrio"] = true, -- Spanish-speaking countries; Philippines
-	["bay"] = true,
-	["beach resort"] = "w",
-	["bishopric"] = true,
-	["borough"] = true,
-	["borough seat"] = true,
-	["branch"] = true,
-	["burgh"] = true,
-	["caliphate"] = true,
-	["canton"] = true,
-	["cape"] = true,
-	["capital"] = true,
-	["capital city"] = true,
-	["caplc"] = "[[capital]] and largest city",
-	["caravan city"] = "w",
-	["cathedral city"] = true,
-	["cattle station"] = true, -- Australia
-	["census area"] = true,
-	["census-designated place"] = true, -- United States
-	["census town"] = "w",
-	["central business district"] = true,
-	["ceremonial county"] = true,
-	["channel"] = true,
-	["charter community"] = "w", -- Northwest Territories, Canada
-	["city-state"] = true,
-	["civil parish"] = true,
-	["coal city"] = "[[w:coal town|coal city]]",
-	["coal town"] = "w",
-	["co-capital"] = "[[co-]][[capital]]",
-	["collectivity"] = "w",
-	["commandery"] = true,
-	["commonwealth"] = true,
-	["commune"] = true,
-	["community"] = true,
-	["community development block"] = "w", -- India
-	["comune"] = true, -- Italy, Switzerland
-	["confederacy"] = true,
-	["confederation"] = true,
-	["constituent country"] = true,
-	["continental region"] = "[[continental]] [[region]]",
-	["council area"] = true,
-	["county-administered city"] = "w", -- Taiwan
-	["county-controlled city"] = "w", -- Taiwan
-	["county-level city"] = "w", -- China
-	["county borough"] = true,
-	["county seat"] = true,
-	["county town"] = true,
-	["crater lake"] = true,
-	["crown dependency"] = true,
-	["Crown dependency"] = true,
-	["cultural area"] = "w",
-	["cultural region"] = "w",
-	["department"] = true,
-	["department capital"] = "[[department]] [[capital]]",
-	["dependency"] = true,
-	["dependent territory"] = "w",
-	["deserted mediaeval village"] = "w",
-	["deserted medieval village"] = "w",
-	["direct-administered municipality"] = "[[w:direct-administered municipalities of China|direct-administered municipality]]",
-	["direct-controlled municipality"] = "w",
-	["distributary"] = true,
-	["district"] = true,
-	["district capital"] = "[[district]] [[capital]]",
-	["district headquarters"] = "[[district]] [[headquarters]]",
-	["district municipality"] = "w",
-	["division"] = true,
-	["division capital"] = "[[division]] [[capital]]",
-	["dome"] = true,
-	["dormant volcano"] = true,
-	["duchy"] = true,
-	["emirate"] = true,
-	["empire"] = true,
-	["enclave"] = true,
-	["escarpment"] = true,
-	["ethnographic region"] = "[[w:cultural region|ethnographic region]]", -- used in Lithuania
-	["exclave"] = true,
-	["external territory"] = "[[external]] [[territory]]",
-	["federal city"] = "w",
-	["federal district"] = true,
-	["federal subject"] = "w",
-	["federal territory"] = "w",
-	["First Nations reserve"] = "[[First Nations]] [[w:Indian reserve|reserve]]", -- Canada
-	["fjord"] = true,
-	["former autonomous territory"] = "former [[w:autonomous territory|autonomous territory]]",
-	["former colony"] = "former [[colony]]",
-	["former maritime republic"] = "former [[maritime republic]]",
-	["former polity"] = "former [[polity]]",
-	["former separatist state"] = "former [[separatist]] [[state]]",
-	["frazione"] = "w", -- Italy
-	["French prefecture"] = "[[w:Prefectures in France|prefecture]]",
-	["geographic area"] = "[[geographic]] [[area]]",
-	["geographical area"] = "[[geographical]] [[area]]",
-	["geographic region"] = "w",
-	["geographical region"] = "w",
-	["geopolitical zone"] = true, -- Nigeria
-	["ghost town"] = true,
-	["glen"] = true,
-	["governorate"] = true,
-	["greater administrative region"] = "w", -- China (historical)
-	["gromada"] = "w", -- Poland (historical)
-	["gulf"] = true,
-	["hamlet"] = true,
-	["harbor city"] = "[[harbor]] [[city]]",
-	["harbour city"] = "[[harbour]] [[city]]",
-	["harbor town"] = "[[harbor]] [[town]]",
-	["harbour town"] = "[[harbour]] [[town]]",
-	["headland"] = true,
-	["headquarters"] = "w",
-	["heath"] = true,
-	["hill station"] = "w",
-	["hill town"] = "w",
-	["historic region"] = "[[w:historical region|historical region]]",
-	["historical region"] = "w",
-	["home rule city"] = "w",
-	["home rule municipality"] = "w",
-	["hot spring"] = true,
-	["housing estate"] = true,
-	["hromada"] = "w", -- Ukraine
-	["independent city"] = true,
-	["independent town"] = "[[independent city|independent town]]",
-	["Indian reservation"] = "w", -- United States
-	["Indian reserve"] = "w", -- Canada
-	["inactive volcano"] = "[[inactive]] [[volcano]]",
-	["inland sea"] = true, -- note, we also have 'inland' as a qualifier
-	["inner city area"] = "[[inner city]] area",
-	["island country"] = "w",
-	["island group"] = "[[island]] [[group]]",
-	["island municipality"] = "w",
-	["islet"] = "w",
-	["Israeli settlement"] = "w",
-	["judicial capital"] = "w",
-	["khanate"] = true,
-	["kibbutz"] = true,
-	["kingdom"] = true,
-	["krai"] = true,
-	["league"] = true,
-	["legislative capital"] = "[[legislative]] [[capital]]",
-	["lieutenancy area"] = "w",
-	["local authority district"] = "w",
-	["local government area"] = "w",
-	["local government district"] = "w",
-	["local government district with borough status"] = "[[w:local government district|local government district]] with [[w:borough status|borough status]]",
-	["local urban district"] = "w",
-	["locality"] = "[[w:locality (settlement)|locality]]",
-	["London borough"] = "w",
-	["macroregion"] = true,
-	["marginal sea"] = true,
-	["market city"] = "[[market town|market city]]",
-	["market town"] = true,
-	["massif"] = true,
-	["megacity"] = true,
-	["metropolitan borough"] = true,
-	["metropolitan city"] = true,
-	["metropolitan county"] = true,
-	["metro station"] = true,
-	["microdistrict"] = true,
-	["microstate"] = true,
-	["minster town"] = "[[minster]] town", -- England
-	["moor"] = true,
-	["moorland"] = true,
-	["mountain"] = true,
-	["mountain indigenous district"] = "[[w:district (Taiwan)|mountain indigenous district]]", -- Taiwan
-	["mountain indigenous township"] = "[[w:township (Taiwan)|mountain indigenous township]]", -- Taiwan
-	["mountain pass"] = true,
-	["mountain range"] = true,
-	["mountainous region"] = "[[mountainous]] [[region]]",
-	["municipal district"] = "w",
-	["municipality"] = true,
-	["municipality with city status"] = "[[municipality]] with [[w:city status|city status]]",
-	["national capital"] = "w",
-	["national park"] = true,
-	["new town"] = true,
-	["non-city capital"] = "[[capital]]",
-	["non-sovereign kingdom"] = "[[w:non-sovereign monarchy|non-sovereign kingdom]]",
-	["non-sovereign monarchy"] = "w",
-	["non-metropolitan county"] = "w",
-	["non-metropolitan district"] = "w",
-	["oblast"] = true,
-	["overseas collectivity"] = "w",
-	["overseas department"] = "w",
-	["overseas territory"] = "w",
-	["parish"] = true,
-	["parish municipality"] = "[[w:parish municipality (Quebec)|parish municipality]]",
-	["parish seat"] = true,
-	["pass"] = "[[mountain pass|pass]]",
-	["peak"] = true,
-	["periphery"] = true,
-	["planned community"] = true,
-	["plateau"] = true,
-	["Polish colony"] = "[[w:Colony (Poland)|colony]]",
-	["populated place"] = "[[w:populated place|locality]]",
-	["port"] = true,
-	["port city"] = true,
-	["port town"] = "w",
-	["prefecture"] = true,
-	["prefecture-level city"] = "w",
-	["promontory"] = true,
-	["protectorate"] = true,
-	["province"] = true,
-	["provincial capital"] = true,
-	["new area"] = "[[w:new areas|new area]]", -- China (type of economic development zone)
-	["raion"] = true,
-	["regency"] = true,
-	["regional capital"] = "[[regional]] [[capital]]",
-	["regional county municipality"] = "w",
-	["regional district"] = "w",
-	["regional municipality"] = "w",
-	["regional unit"] = "w",
-	["registration county"] = true,
-	["research base"] = "[[research]] [[base]]",
-	["reservoir"] = true,
-	["residental area"] = "[[residential]] area",
-	["resort city"] = "w",
-	["resort town"] = "w",
-	["Roman province"] = "w",
-	["royal borough"] = "w",
-	["royal burgh"] = true,
-	["royal capital"] = "w",
-	["rural committee"] = "w", -- Hong Kong
-	["rural community"] = "w",
-	["rural municipality"] = "w",
-	["rural township"] = "[[w:rural township (Taiwan)|rural township]]", -- Taiwan
-	["satrapy"] = true,
-	["seaport"] = true,
-	["settlement"] = true,
-	["sheading"] = true, -- Isle of Man
-	["sheep station"] = true, -- Australia
-	["shire"] = true,
-	["shire county"] = "w",
-	["shire town"] = true,
-	["ski resort city"] = "[[ski resort]] city",
-	["ski resort town"] = "[[ski resort]] town",
-	["spa city"] = "[[w:spa town|spa city]]",
-	["spa town"] = "w",
-	["special administrative region"] = "w", -- China; North Korea; Indonesia; East Timor
-	["special collectivity"] = "w",
-	["special municipality"] = "w", -- formerly referred to the Taiwan article but there are also special municipalities of the Netherlands
-	["special ward"] = true,
-	["spit"] = true,
-	["spring"] = true,
-	["state capital"] = true,
-	["state-level new area"] = "w",
-	["state park"] = true,
-	["statutory city"] = "w",
-	["statutory town"] = "w",
-	["strait"] = true,
-	["subdistrict"] = true,
-	["subdivision"] = true,
-	["submerged ghost town"] = "[[submerged]] [[ghost town]]",
-	["subnational kingdom"] = "[[w:subnational monarchy|subnational kingdom]]",
-	["subnational monarchy"] = "w",
-	["subprefecture"] = true,
-	["subprovince"] = true,
-	["subprovincial city"] = "w",
-	["subprovincial district"] = "w",
-	["sub-prefectural city"] = "w",
-	["subregion"] = true,
-	["suburb"] = true,
-	["subway station"] = "w",
-	["supercontinent"] = true,
-	["tehsil"] = true,
-	["territorial authority"] = "w",
-	["township"] = true,
-	["township municipality"] = "[[w:township municipality (Quebec)|township municipality]]",
-	-- can't use templates in this code
-	["town with bystatus"] = "[[town]] with [[bystatus#Norwegian Bokmål|bystatus]]",
-	["traditional county"] = true,
-	["traditional region"] = "w",
-	["treaty port"] = "w",
-	["tributary"] = true,
-	["underground station"] = "w",
-	["unincorporated territory"] = "w",
-	["unitary authority"] = true,
-	["unitary district"] = "w",
-	["united township municipality"] = "[[w:united township municipality (Quebec)|united township municipality]]",
-	["unrecognised country"] = "w",
-	["unrecognized country"] = "w",
-	["urban area"] = "[[urban]] area",
-	["urban township"] = "w",
-	["urban-type settlement"] = "w",
-	["village municipality"] = "[[w:village municipality (Quebec)|village municipality]]",
-	["voivodeship"] = true, -- Poland
-	["volcano"] = true,
-	["ward"] = true,
-	["watercourse"] = true,
-	["Welsh community"] = "[[w:community (Wales)|community]]",
 }
 
 
@@ -2133,43 +1821,77 @@ If you need to sort the following, do this (using Vim):
    Note that for some reason, in order to get a match a newline in the left side of a replacement, you must use \n, but
    to insert a newline in the right sode of a replacement you must use \r.
 ]=]
-
 	["*"] = {
 		cat_handler = generic_cat_handler,
 	},
-	["administrative capital"] = "capital city",
-	["administrative center"] = "administrative centre",
+	["administrative atoll"] = {
+		-- Maldives
+		link = "[[w:administrative divisions of the Maldives|administrative atoll]]",
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["administrative capital"] = {
+		link = "w",
+		fallback = "capital city",
+	},
+	["administrative center"] = {
+		link = "w",
+		fallback = "administrative centre",
+	},
 	["administrative centre"] = {
+		link = "w",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "capital",
 	},
-	["administrative headquarters"] = "administrative centre",
+	["administrative county"] = {
+		link = "w",
+		fallback = "county",
+	},
+	["administrative district"] = {
+		link = "w",
+		fallback = "district",
+	},
+	["administrative headquarters"] = {
+		link = "separately",
+		fallback = "administrative centre",
+	},
 	["administrative region"] = {
+		link = true,
 		preposition = "of",
 		suffix = "region", -- but prefix is still "administrative region (of)"
 		fallback = "region",
 		former_type = "subpolity",
 	},
-	["administrative seat"] = "administrative centre",
+	["administrative seat"] = {
+		link = "w",
+		fallback = "administrative centre",
+	},
 	["administrative territory"] = {
+		link = "separately",
 		preposition = "of",
 		suffix = "territory", -- but prefix is still "administrative territory (of)"
 		fallback = "territory",
 		former_type = "subpolity",
 	},
 	["administrative village"] = {
+		link = "w",
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "settlement",
 	},
 	["airport"] = {
+		link = true,
 		former_type = "man-made structure",
 		default = {true},
 	},
-	["alliance"] = "confederation",
+	["alliance"] = {
+		link = true,
+		fallback = "confederation",
+	},
 	["ANCIENT capital"] = {
+		link = false,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
@@ -2177,50 +1899,89 @@ If you need to sort the following, do this (using Vim):
 		default = {"Ancient settlements", "Historical capitals"},
 	},
 	["ANCIENT settlement"] = {
+		link = false,
 		has_neighborhoods = true,
 		former_type = "settlement",
 		default = {"Ancient settlements"},
 	},
-	["archipelago"] = "island",
+	["archipelago"] = {
+		link = true,
+		fallback = "island",
+	},
 	["area"] = {
+		link = true,
 		preposition = "of",
 		fallback = "geographic and cultural area",
 		former_type = "geographic region",
 		cat_handler = district_neighborhood_cat_handler,
 	},
 	["arm"] = {
+		link = true,
 		preposition = "of",
 		former_type = "natural feature",
 		default = {"Seas"},
 	},
-	["associated province"] = "province",
+	["arrondissement"] = {
+		link = true,
+		preposition = "of",
+		-- FIXME!!! Grrrrr!!! In some countries, arrondissements are divisions of cities; in others, they are divisions
+		-- of departments or provinces. Need to conditionalize on the country for both of the following.
+		former_type = "subpolity",
+		has_neighborhoods = true,
+	},
+	["associated province"] = {
+		link = "separately",
+		fallback = "province",
+	},
 	["atoll"] = {
+		-- FIXME! Atolls are administrative divisions of the Maldives but natural features elsewhere. Need to
+		-- conditionalize former_type on the country. See also `administrative atoll`.
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["autonomous city"] = {
+		link = "w",
 		preposition = "of",
 		fallback = "city",
 		has_neighborhoods = true,
 	},
 	["autonomous community"] = {
 		-- Spain; refers to regional entities, not village-like entities, as might be expected from "community"
+		link = true,
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["autonomous island"] = {
+		-- Comoros; seems like an administrative atoll of the Maldives.
+		link = "[[w:autonomous islands of Comoros|autonomous island]]",
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["autonomous oblast"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = "oblast",
 		former_type = "subpolity",
 	},
 	["autonomous okrug"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = "okrug",
 		former_type = "subpolity",
 	},
+	["autonomous prefecture"] = {
+		link = true,
+		fallback = "prefecture",
+	},
+	["autonomous province"] = {
+		link = "w",
+		fallback = "province",
+	},
 	["autonomous region"] = {
+		link = "w",
 		preposition = "of",
 		fallback = "administrative region",
 		-- "administrative region" sets an affix of "region" but we want to display as "Tibet Autonomous Region"
@@ -2228,25 +1989,62 @@ If you need to sort the following, do this (using Vim):
 		affix = "autonomous region",
 	},
 	["autonomous republic"] = {
+		link = "w",
 		preposition = "of",
 		former_type = "subpolity",
 	},
-	["autonomous territory"] = "dependent territory",
-	["bailiwick"] = "polity",
-	["barangay"] = "neighborhood", -- not completely correct, barangays are formal administrative divisions of a city
-	["barrio"] = "neighborhood", -- not completely correct, in some countries barrios are formal administrative divisions of a city
-	["basin"] = "lake",
+	["autonomous territorial unit"] = {
+		-- Moldova; only two of them, one for Gagauzia and one for Transnistria.
+		link = "w",
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["autonomous territory"] = {
+		link = "w",
+		fallback = "dependent territory",
+	},
+	["bailiwick"] = {
+		-- Jersey, etc.
+		link = true,
+		fallback = "polity",
+	},
+	["barangay"] = {
+		-- Philippines
+		link = true,
+		-- not completely correct, barangays are formal administrative divisions of a city
+		fallback = "neighborhood",
+	},
+	["barrio"] = {
+		-- Spanish-speaking countries; Philippines
+		link = true,
+		-- not completely correct, in some countries barrios are formal administrative divisions of a city
+		fallback = "neighborhood",
+	},
+	["basin"] = {
+		link = true,
+		fallback = "lake",
+	},
 	["bay"] = {
+		link = true,
 		preposition = "of",
 		former_type = "natural feature",
 		default = {true},
 	},
 	["beach"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["bishopric"] = "polity",
+	["beach resort"] = {
+		link = "w",
+		fallback = "resort town",
+	},
+	["bishopric"] = {
+		link = true,
+		fallback = "polity",
+	},
 	["borough"] = {
+		link = true,
 		preposition = "of",
 		display_handler = borough_display_handler,
 		has_neighborhoods = true,
@@ -2258,26 +2056,45 @@ If you need to sort the following, do this (using Vim):
 		-- Grr, some boroughs are city-like but some (e.g. in Britain) may be larger.
 	},
 	["borough seat"] = {
+		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "capital",
 	},
 	["branch"] = {
+		link = true,
 		preposition = "of",
 		fallback = "river",
 	},
-	["built-up area"] = "area",
-	["burgh"] = "borough",
-	["caliphate"] = "polity",
+	["built-up area"] = {
+		link = "w",
+		fallback = "area",
+	},
+	["burgh"] = {
+		link = true,
+		fallback = "borough",
+	},
+	["caliphate"] = {
+		link = true,
+		fallback = "polity",
+	},
 	["canton"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		former_type = "subpolity",
 	},
-	["cape"] = "headland",
-	["capital"] = "capital city",
+	["cape"] = {
+		link = true,
+		fallback = "headland",
+	},
+	["capital"] = {
+		link = true,
+		fallback = "capital city",
+	},
 	["capital city"] = {
+		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
@@ -2285,28 +2102,78 @@ If you need to sort the following, do this (using Vim):
 		cat_handler = capital_city_cat_handler,
 		default = {true},
 	},
-	["caplc"] = "capital city",
+	["caplc"] = {
+		link = "[[capital]] and [[large]]st [[city]]",
+		plural = false,
+		fallback = "capital city",
+	},
 	["caravan city"] = {
+		link = "w",
 		fallback = "city",
 		former_type = "settlement",
 		inherently_former = {"ANCIENT", "FORMER"},
 	},
-	["cathedral city"] = "city",
+	["cathedral city"] = {
+		link = true,
+		fallback = "city",
+	},
+	["cattle station"] = {
+		-- Australia
+		link = true,
+		fallback = "farm",
+	},
 	["census area"] = {
+		link = true,
 		affix_type = "Suf",
 		has_neighborhoods = true,
 		former_type = "settlement",
 	},
 	["census-designated place"] = {
 		-- United States
+		link = true,
 		former_type = "settlement",
 	},
-	["census town"] = "town",
-	["central business district"] = "neighborhood",
-	["ceremonial county"] = "county",
-	["chain of islands"] = "island",
-	["charter community"] = "village",
+	["census division"] = {
+		-- Canada
+		link = "w",
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["census town"] = {
+		link = "w",
+		fallback = "town",
+	},
+	["central business district"] = {
+		link = true,
+		fallback = "neighborhood",
+	},
+	["cercle"] = {
+		-- Mali
+		link = "[[w:cercles of Mali|cercle]]",
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["ceremonial county"] = {
+		link = true,
+		fallback = "county",
+	},
+	["chain of islands"] = {
+		link = "[[chain]] of [[island]]s",
+		plural = "chains of islands",
+		plural_link = "[[chain]]s of [[island]]s",
+		fallback = "island",
+	},
+	["channel"] = {
+		link = true,
+		fallback = "river",
+	},
+	["charter community"] = {
+		-- Northwest Territories, Canada
+		link = "w",
+		fallback = "village",
+	},
 	["city"] = {
+		link = true,
 		has_neighborhoods = true,
 		former_type = "settlement",
 		cat_handler = city_type_cat_handler,
@@ -2314,6 +2181,7 @@ If you need to sort the following, do this (using Vim):
 		default = {true},
 	},
 	["city-state"] = {
+		link = true,
 		has_neighborhoods = true,
 		former_type = "settlement",
 		["continent/*"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
@@ -2321,73 +2189,122 @@ If you need to sort the following, do this (using Vim):
 	},
 	["civil parish"] = {
 		-- Mostly England; similar to municipalities
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		has_neighborhoods = true,
 		former_type = "subpolity",
 	},
 	["claimed political subdivision"] = {
+		link = "[[claim]]ed [[political]] [[subdivision]]",
 		former_type = "subpolity",
 		default = {true},
 	},
-	["co-capital"] = "capital city",
-	["coal city"] = "city",
-	["coal town"] = "town",
+	["co-capital"] = {
+		link = "[[co-]][[capital]]",
+		fallback = "capital city",
+	},
+	["coal city"] = {
+		link = "[[w:coal town|coal city]]",
+		fallback = "city",
+	},
+	["coal town"] = {
+		link = "w",
+		fallback = "town",
+	},
 	["collectivity"] = {
+		link = "w",
 		preposition = "of",
 		-- No default; these are weird one-off governmental divisions in France (esp. for overseas collectivities)
 		former_type = "subpolity",
 	},
-	["colony"] = "dependent territory",
+	["colony"] = {
+		link = true,
+		fallback = "dependent territory",
+	},
 	["commandery"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 		inherently_former = {"ANCIENT", "FORMER"},
 	},
 	["commonwealth"] = {
+		link = true,
 		preposition = "of",
 		-- No default; applies specifically to Puerto Rico
 		former_type = "subpolity",
 	},
-	["commune"] = "municipality",
-	["community"] = "village",
+	["commune"] = {
+		link = true,
+		fallback = "municipality",
+	},
+	["community"] = {
+		link = true,
+		fallback = "village",
+	},
 	["community development block"] = {
 		-- in India; appears to be similar to a rural municipality; groups several villages, unclear if there will be
 		-- neighborhoods so I'm not setting `has_neighborhoods` for now
+		link = "w",
 		affix_type = "suf",
 		no_affix_strings = "block",
 		former_type = "subpolity",
 	},
-	["comune"] = "municipality",
-	["confederacy"] = "confederation",
-	["confederation"] = "polity",
+	["comune"] = {
+		-- Italy, Switzerland
+		link = true,
+		fallback = "municipality",
+	},
+	["confederacy"] = {
+		link = true,
+		fallback = "confederation",
+	},
+	["confederation"] = {
+		link = true,
+		fallback = "polity",
+	},
+	["constituency"] = {
+		-- currently we have them as political divisions of Namibia but many countries have them
+		link = true,
+		preposition = "of",
+		former_type = "subpolity",
+	},
 	["constituent country"] = {
+		link = true,
 		preposition = "of",
 		fallback = "country",
 		former_type = "subpolity",
 	},
 	["continent"] = {
+		link = true,
 		former_type = "geographic region",
 		default = {true}, -- FIXME: Categorize as "Continents and continental regions"
 	},
-	["continental region"] = "continent",
+	["continental region"] = {
+		link = "separately",
+		fallback = "continent",
+	},
 	["council area"] = {
+		link = true,
 		-- in Scotland; similar to a county
 		preposition = "of",
 		affix_type = "suf",
 		former_type = "subpolity",
 	},
 	["country"] = {
+		link = true,
 		former_type = "polity",
 		["continent/*"] = {true, "Countries"},
 		default = {true},
 	},
 	["county"] = {
+		link = true,
 		preposition = "of",
 		display_handler = county_display_handler,
 		former_type = "subpolity",
 	},
 	["county borough"] = {
+		link = true,
 		-- in Wales; similar to a county
 		preposition = "of",
 		affix_type = "suf",
@@ -2395,12 +2312,14 @@ If you need to sort the following, do this (using Vim):
 		former_type = "subpolity",
 	},
 	["county seat"] = {
+		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "capital",
 	},
 	["county town"] = {
+		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		fallback = "town",
@@ -2410,43 +2329,98 @@ If you need to sort the following, do this (using Vim):
 	["county-administered city"] = {
 		-- In Taiwan, per Wikipedia similar to a Taiwanese township or district, which is a small city.
 		-- NOT anything like a "county-level city" in PR China, which is a county masquerading as a city.
+		link = "w",
 		fallback = "city",
 		has_neighborhoods = true,
 		former_type = "settlement",
 	},
-	["county-controlled city"] = "county-administered city",
-	["county-level city"] = "prefecture-level city",
-	["crater lake"] = "lake",
-	["Crown dependency"] = "dependent territory",
-	["crown dependency"] = "dependent territory",
-	["cultural area"] = "geographic and cultural area",
-	["cultural region"] = "geographic and cultural area",
+	["county-controlled city"] = {
+		-- Taiwan
+		link = "w",
+		fallback = "county-administered city",
+	},
+	["county-level city"] = {
+		-- PR China
+		link = "w",
+		fallback = "prefecture-level city",
+	},
+	["crater lake"] = {
+		link = true,
+		fallback = "lake",
+	},
+	["Crown dependency"] = {
+		link = true,
+		fallback = "dependent territory",
+	},
+	["crown dependency"] = {
+		link = true,
+		fallback = "dependent territory",
+	},
+	["cultural area"] = {
+		link = "w",
+		fallback = "geographic and cultural area",
+	},
+	["cultural region"] = {
+		link = "w",
+		fallback = "geographic and cultural area",
+	},
+	["delegation"] = {
+		-- Tunisia
+		link = "[[w:delegations of Tunisia|delegation]]",
+		preposition = "of",
+		former_type = "subpolity",
+	},
 	["department"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		former_type = "subpolity",
 	},
-	["department capital"] = "capital city",
-	["dependency"] = "dependent territory",
+	["department capital"] = {
+		link = "separately",
+		fallback = "capital city",
+	},
+	["dependency"] = {
+		link = true,
+		fallback = "dependent territory",
+	},
 	["dependent territory"] = {
+		link = "w",
 		preposition = "of",
 		former_type = "dependent territory",
 		["country/*"] = {true},
 		default = {true},
 	},
 	["desert"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["deserted mediaeval village"] = "ANCIENT settlement",
-	["deserted medieval village"] = "ANCIENT settlement",
-	["direct-administered municipality"] = "municipality",
-	["direct-controlled municipality"] = "municipality",
+	["deserted mediaeval village"] = {
+		link = "w",
+		fallback = "deserted medieval village",
+	},
+	["deserted medieval village"] = {
+		link = "w",
+		fallback = "ANCIENT settlement",
+	},
+	["direct-administered municipality"] = {
+		-- China
+		link = "[[w:direct-administered municipalities of China|direct-administered municipality]]",
+		fallback = "municipality",
+	},
+	["direct-controlled municipality"] = {
+		-- several countries
+		link = "w",
+		fallback = "municipality",
+	},
 	["distributary"] = {
+		link = true,
 		preposition = "of",
 		fallback = "river",
 	},
 	["district"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		-- Grrr! FIXME! Here is where we need handlers for former_type. Using similar logic to
@@ -2457,11 +2431,25 @@ If you need to sort the following, do this (using Vim):
 
 		-- No default. Countries for which districts are political subdivisions will get entries.
 	},
-	["district capital"] = "capital city",
-	["district headquarters"] = "administrative centre",
+	["district and autonomous region"] = {
+		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
+		-- administrative regions of certain countries, in this case Portugal.
+		link = false,
+		plural = "districts and autonomous regions",
+		plural_link = "[[district]]s and [[autonomous region]]s",
+	},
+	["district capital"] = {
+		link = "separately",
+		fallback = "capital city",
+	},
+	["district headquarters"] = {
+		link = "separately",
+		fallback = "administrative centre",
+	},
 	["district municipality"] = {
 		-- In Canada, a district municipality is equivalent to a rural municipality and won't have neighborhoods; in
 		-- South Africa, district municipalities group local municipalities and hence won't have neighborhoods.
+		link = "w",
 		preposition = "of",
 		affix_type = "suf",
 		no_affix_strings = {"district", "municipality"},
@@ -2469,60 +2457,120 @@ If you need to sort the following, do this (using Vim):
 		former_type = "subpolity",
 	},
 	["division"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
-	["division capital"] = "capital city",
-	["dome"] = "mountain",
-	["dormant volcano"] = "volcano",
-	["duchy"] = "polity",
-	["emirate"] = "polity",
-	["empire"] = "polity",
+	["division capital"] = {
+		link = "separately",
+		fallback = "capital city",
+	},
+	["dome"] = {
+		link = true,
+		fallback = "mountain",
+	},
+	["dormant volcano"] = {
+		link = true,
+		fallback = "volcano",
+	},
+	["duchy"] = {
+		link = true,
+		fallback = "polity",
+	},
+	["emirate"] = {
+		link = true,
+		preposition = "of",
+		-- FIXME: Can be subpolities (of the United Arab Emirates).
+		fallback = "polity",
+	},
+	["empire"] = {
+		link = true,
+		fallback = "polity",
+	},
 	["enclave"] = {
+		link = true,
 		preposition = "of",
-		-- enclaves can theoretically be any size but assume a subpolity.
+		-- Enclaves can theoretically be any size but assume a subpolity.
 		former_type = "subpolity",
 	},
-	["escarpment"] = "mountain",
-	["ethnographic region"] = "geographic and cultural area", -- used in Lithuania
+	["entity"] = {
+		-- Bosnia and Herzegovina
+		link = "[[w:entities of Bosnia and Herzegovina|entity]]",
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["escarpment"] = {
+		link = true,
+		fallback = "mountain",
+	},
+	["ethnographic region"] = {
+		-- used in Lithuania
+		link = "[[w:ethnographic regions of Lithuania|ethnographic region]]",
+		fallback = "geographic and cultural area",
+	},
 	["exclave"] = {
+		link = true,
 		preposition = "of",
 		-- exclaves can theoretically be any size but assume a subpolity.
 		former_type = "subpolity",
 	},
-	["external territory"] = "dependent territory",
+	["external territory"] = {
+		link = "separately",
+		fallback = "dependent territory",
+	},
+	["farm"] = {
+		link = true,
+		former_type = "settlement",
+		default = {"Farms and ranches"},
+	},
 	["federal city"] = {
+		link = "w",
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "settlement",
 	},
 	["federal district"] = {
-		-- Might have neighborhoods as federal districts are often cities (e.g. Mexico City)
+		link = true,
 		preposition = "of",
+		-- Might have neighborhoods as federal districts are often cities (e.g. Mexico City)
 		has_neighborhoods = true,
 		former_type = "settlement",
 	},
 	["federal subject"] = {
 		-- In Russia; a generic term for first-level administrative divisions (republics, oblasts, okrugs, krais,
 		-- autonomous okrugs and autonomous oblasts).
+		link = "w",
 		preposition = "of",
 		former_type = "subpolity",
 	},
-	["federal territory"] = "territory",
+	["federal territory"] = {
+		link = "w",
+		fallback = "territory",
+	},
 	["fictional location"] = {
+		link = "separately",
 		former_type = "!",
 		default = {true},
 	},
 	["First Nations reserve"] = {
+		-- Canada
+		link = "[[First Nations]] [[w:Indian reserve|reserve]]",
 		-- Wikipedia uses "Indian reserve"; presumably that is the legal term
 		fallback = "Indian reserve",
 		former_type = "subpolity",
 	},
+	["fjord"] = {
+		link = true,
+		former_type = "natural feature",
+		default = {true},
+	},
 	["forest"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["FORMER capital"] = {
+		link = false,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
@@ -2531,29 +2579,38 @@ If you need to sort the following, do this (using Vim):
 		default = {"Historical settlements", "Historical capitals"},
 	},
 	["FORMER dependent territory"] = {
+		link = false,
 		preposition = "of",
 		former_type = "dependent territory",
 		default = {"Historical dependent territories"},
 	},
-	["FORMER geographic region"] = "geographic and cultural area",
+	["FORMER geographic region"] = {
+		link = false,
+		fallback = "geographic and cultural area",
+	},
 	["FORMER man-made structure"] = {
+		link = false,
 		former_type = "man-made structure",
 		default = {"Former man-made structures"},
 	},
 	["FORMER natural feature"] = {
+		link = false,
 		former_type = "natural feature",
 		default = {"Former natural features"},
 	},
 	["FORMER polity"] = {
+		link = false,
 		former_type = "polity",
 		default = {"Historical polities"},
 	},
 	["FORMER settlement"] = {
+		link = false,
 		has_neighborhoods = true,
 		former_type = "settlement",
 		default = {"Historical settlements"},
 	},
 	["FORMER subpolity"] = {
+		link = false,
 		preposition = "of",
 		former_type = "subpolity",
 		default = {"Historical political subdivisions"},
@@ -2561,18 +2618,24 @@ If you need to sort the following, do this (using Vim):
 	-- a former region is considered a former political subdivision, but not a 'historical/traditional/etc.
 	-- region.
 	["former region"] = {
+		link = "separately",
 		preposition = "of",
 		inherently_former = {"FORMER"},
 		former_type = "subpolity",
 	},
-	["frazione"] = "hamlet",
+	["frazione"] = {
+		link = "w",
+		fallback = "hamlet",
+	},
 	["French prefecture"] = {
+		link = "[[w:Prefectures in France|prefecture]]",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "capital",
 	},
 	["geographic and cultural area"] = {
+		link = "[[w:cultural area|geographic and cultural area]]",
 		preposition = "of",
 		former_type = "geographic region",
 		["country/*"] = {true},
@@ -2580,77 +2643,176 @@ If you need to sort the following, do this (using Vim):
 		["continent/*"] = {true},
 		default = {true},
 	},
-	["geographic area"] = "geographic and cultural area",
-	["geographic region"] = "geographic and cultural area",
-	["geographical area"] = "geographic and cultural area",
-	["geographical region"] = "geographic and cultural area",
+	["geographic area"] = {
+		link = "[[w:geographic region|geographic area]]",
+		fallback = "geographic and cultural area",
+	},
+	["geographic region"] = {
+		link = "w",
+		fallback = "geographic and cultural area",
+	},
+	["geographical area"] = {
+		link = "w",
+		fallback = "geographic and cultural area",
+	},
+	["geographical region"] = {
+		link = "w",
+		fallback = "geographic and cultural area",
+	},
 	["geopolitical zone"] = {
 		-- Nigeria
+		link = true,
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["gewog"] = {
+		-- Bhutan
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["ghost town"] = {
+		link = true,
 		former_type = "settlement",
 	},
-	["glen"] = "valley",
+	["glen"] = {
+		link = true,
+		fallback = "valley",
+	},
 	["governorate"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		former_type = "subpolity",
 	},
 	["greater administrative region"] = {
 		-- China (historical subdivision)
+		link = "w",
 		preposition = "of",
 		former_type = "subpolity",
 		inherently_former = {"FORMER"},
 	},
 	["gromada"] = {
 		-- Poland (historical subdivision)
+		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
 		former_type = "subpolity",
 		inherently_former = {"FORMER"},
 	},
-	["group of islands"] = "island",
+	["group of islands"] = {
+		link = "[[group]] of [[island]]s",
+		plural = "groups of islands",
+		plural_link = "[[group]]s of [[island]]s",
+		fallback = "island group",
+	},
 	["gulf"] = {
+		link = true,
 		preposition = "of",
 		holonym_use_the = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["hamlet"] = "village",
-	["harbor city"] = "city",
-	["harbor town"] = "town",
-	["harbour city"] = "city",
-	["harbour town"] = "town",
+	["hamlet"] = {
+		link = true,
+		fallback = "village",
+	},
+	["harbor city"] = {
+		link = "separately",
+		fallback = "city",
+	},
+	["harbor town"] = {
+		link = "separately",
+		fallback = "town",
+	},
+	["harbour city"] = {
+		link = "separately",
+		fallback = "city",
+	},
+	["harbour town"] = {
+		link = "separately",
+		fallback = "town",
+	},
 	["headland"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["headquarters"] = "administrative centre",
-	["heath"] = "moor",
+	["headquarters"] = {
+		link = "w",
+		fallback = "administrative centre",
+	},
+	["heath"] = {
+		link = true,
+		fallback = "moor",
+	},
 	["hill"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["hill station"] = "town",
-	["hill town"] = "town",
-	["home rule city"] = "city",
-	["home rule municipality"] = "municipality",
-	["hot spring"] = "spring",
+	["hill station"] = {
+		link = "w",
+		fallback = "town",
+	},
+	["hill town"] = {
+		link = "w",
+		fallback = "town",
+	},
+	["historic region"] = {
+		-- provided only for the link
+		link = "[[w:historical region|historic region]]",
+		fallback = "FORMER geographic region",
+	},
+	["historical region"] = {
+		-- provided only for the link
+		link = "w",
+		fallback = "FORMER geographic region",
+	},
+	["home rule city"] = {
+		link = "w",
+		fallback = "city",
+	},
+	["home rule municipality"] = {
+		link = "w",
+		fallback = "municipality",
+	},
+	["hot spring"] = {
+		link = true,
+		fallback = "spring",
+	},
 	["house"] = {
+		link = true,
 		former_type = "man-made structure",
 		default = {"Individual buildings"},
 	},
+	["housing estate"] = {
+		-- not the same as a housing project (i.e. public housing)
+		link = true,
+		-- not exactly the case but approximately
+		fallback = "neighborhood",
+	},
 	["hromada"] = {
+		-- Ukraine
+		link = "w",
 		preposition = "of",
 		affix_type = "Suf",
 		former_type = "subpolity",
 	},
-	["inactive volcano"] = "volcano",
-	["independent city"] = "city",
-	["independent town"] = "town",
+	["inactive volcano"] = {
+		link = "w",
+		fallback = "dormant volcano",
+	},
+	["independent city"] = {
+		link = true,
+		fallback = "city",
+	},
+	["independent town"] = {
+		link = "[[independent city|independent town]]",
+		fallback = "town",
+	},
 	["Indian reservation"] = {
+		link = "w",
 		-- In the US. Also known as "Native American reservation" or "domestic dependent nation", and the reservations
 		-- themselves often use the term "nation" in their official name (e.g. the "Navajo Nation"). But Wikipedia puts
 		-- the article at [[w:Indian reservation]] and uses that term when describing e.g. what the Navajo Nation is,
@@ -2660,91 +2822,190 @@ If you need to sort the following, do this (using Vim):
 		default = {true},
 	},
 	["Indian reserve"] = {
+		link = "w",
 		-- In Canada. "First Nations reserve" sounds more modern/PC but Wikipedia uses "Indian reserve"; presumably that
 		-- is still the legal term.
 		preposition = "of",
 		former_type = "subpolity",
 		default = {true},
 	},
-	["inland sea"] = "sea",
-	["inner city area"] = "neighborhood",
+	["inland sea"] = {
+		-- note, we also have 'inland' as a qualifier
+		link = true,
+		fallback = "sea",
+	},
+	["inner city area"] = {
+		link = "[[inner city]] [[area]]",
+		fallback = "neighborhood",
+	},
 	["island"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["island country"] = "country", -- FIXME: The following should map to both 'island' and 'country'.
-	["island group"] = "island",
-	["island municipality"] = "municipality",
-	["islet"] = "island",
-	["judicial capital"] = "capital city",
-	["khanate"] = "polity",
-	["kibbutz"] = {
-		plural = "kibbutzim",
+	["island country"] = {
+		-- FIXME: The following should map to both 'island' and 'country'.
+		link = "w",
+		fallback = "country",
+	},
+	["island group"] = {
+		link = "separately",
+		fallback = "island",
+	},
+	["island municipality"] = {
+		link = "w",
+		fallback = "municipality",
+	},
+	["islet"] = {
+		link = "w",
+		fallback = "island",
+	},
+	["Israeli settlement"] = {
+		link = "w",
 		former_type = "settlement",
 		default = {true},
 	},
-	["kingdom"] = "polity",
+	["judicial capital"] = {
+		link = "w",
+		fallback = "capital city",
+	},
+	["khanate"] = {
+		link = true,
+		fallback = "polity",
+	},
+	["kibbutz"] = {
+		link = true,
+		plural = "kibbutzim",
+		plural_link = "[[kibbutz]]im",
+		former_type = "settlement",
+		default = {true},
+	},
+	["kingdom"] = {
+		link = true,
+		fallback = "polity",
+	},
 	["krai"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		former_type = "subpolity",
 	},
 	["lake"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["largest city"] = {
+		link = "[[large]]st [[city]]",
+		plural_link = "[[large]]st [[city|cities]]",
 		entry_placetype_use_the = true,
 		fallback = "city",
 		has_neighborhoods = true,
 	},
-	["league"] = "confederation",
-	["legislative capital"] = "capital city",
+	["league"] = {
+		link = true,
+		fallback = "confederation",
+	},
+	["legislative capital"] = {
+		link = "separately",
+		fallback = "capital city",
+	},
 	["library"] = {
+		link = true,
 		former_type = "man-made structure",
 		default = {"Individual buildings"},
 	},
-	["local authority district"] = "local government district",
+	["lieutenancy area"] = {
+		-- used in the United Kingdom; per Wikipedia:
+		-- In England, lieutenancy areas are colloquially known as the ceremonial counties, although this phrase does
+		-- not appear in any legislation referring to them. The lieutenancy areas of Scotland are subdivisions of
+		-- Scotland that are more or less based on the counties of Scotland, making use of the major cities as separate
+		-- entities.[2] In Wales, the lieutenancy areas are known as the preserved counties of Wales and are based on
+		-- those used for lieutenancy and local government between 1974 and 1996. The lieutenancy areas of Northern
+		-- Ireland correspond to the six counties and two former county boroughs.[3]
+		link = "w",
+		fallback = "ceremonial county",
+	},
+	["local authority district"] = {
+		link = "w",
+		fallback = "local government district",
+	},
 	["local government area"] = {
 		-- Australia
+		link = "w",
 		preposition = "of",
 		former_type = "subpolity",
 	},
+	["local council"] = {
+		-- Malta; similar to municipalities
+		link = "[[w:local councils of Malta|local council]]",
+		preposition = "of",
+		fallback = "municipality",
+	},
 	["local government district"] = {
+		link = "w",
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
 		former_type = "subpolity",
 	},
 	["local government district with borough status"] = {
+		link = "[[w:local government district|local government district]] with [[w:borough status|borough status]]",
 		plural = "local government districts with borough status",
+		plural_link = "[[w:local government district|local government districts]] with [[w:borough status|borough status]]",
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
 		former_type = "subpolity",
 	},
-	["local urban district"] = "unincorporated community",
-	["locality"] = "village", -- not necessarily true, but usually is the case
+	["local urban district"] = {
+		link = "w",
+		fallback = "unincorporated community",
+	},
+	["locality"] = {
+		link = "[[w:locality (settlement)|locality]]",
+		-- not necessarily true, but usually is the case
+		fallback = "village",
+	},
 	["London borough"] = {
+		link = "w",
 		preposition = "of",
 		affix_type = "pref",
 		affix = "borough",
 		fallback = "local government district with borough status",
 		has_neighborhoods = true,
 	},
-	["macroregion"] = "region",
+	["macroregion"] = {
+		link = true,
+		fallback = "region",
+	},
 	["marginal sea"] = {
+		link = true,
 		preposition = "of",
 		fallback = "sea",
 	},
-	["market city"] = "city",
-	["market town"] = "town",
-	["massif"] = "mountain",
-	["megacity"] = "city",
+	["market city"] = {
+		link = "[[market town|market city]]",
+		fallback = "city",
+	},
+	["market town"] = {
+		link = true,
+		fallback = "town",
+	},
+	["massif"] = {
+		link = true,
+		fallback = "mountain",
+	},
+	["megacity"] = {
+		link = true,
+		fallback = "city",
+	},
 	["metro station"] = {
+		link = true,
 		former_type = "man-made structure",
 	},
 	["metropolitan borough"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = {"borough", "city"},
@@ -2752,34 +3013,80 @@ If you need to sort the following, do this (using Vim):
 		has_neighborhoods = true,
 	},
 	["metropolitan city"] = {
+		-- These exist e.g. in Italy and are more like municipalities or even provinces than cities.
+		link = true,
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = {"metropolitan", "city"},
-		fallback = "city",
-		has_neighborhoods = true,
+		former_type = "subpolity",
 	},
-	["metropolitan county"] = "county",
-	["microdistrict"] = "neighborhood",
-	["microstate"] = "country",
-	["minster town"] = "town",
+	["metropolitan county"] = {
+		link = true,
+		fallback = "county",
+	},
+	["microdistrict"] = {
+		link = true,
+		fallback = "neighborhood",
+	},
+	["microstate"] = {
+		link = true,
+		fallback = "country",
+	},
+	["military base"] = {
+		link = "w",
+		former_type = "settlement", -- or "man-made structure"?
+		default = {true},
+	},
+	["minster town"] = {
+		-- England
+		link = "separately",
+		fallback = "town",
+	},
 	["moor"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["moorland"] = "moor",
+	["moorland"] = {
+		link = true,
+		fallback = "moor",
+	},
 	["mountain"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["mountain indigenous district"] = "district",
-	["mountain indigenous township"] = "township",
+	["mountain indigenous district"] = {
+		-- Taiwan
+		link = "[[w:district (Taiwan)|mountain indigenous district]]",
+		fallback = "district",
+	},
+	["mountain indigenous township"] = {
+		-- Taiwan
+		link = "[[w:township (Taiwan)|mountain indigenous township]]",
+		fallback = "township",
+	},
 	["mountain pass"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["mountain range"] = "mountain",
-	["mountainous region"] = "region",
+	["mountain range"] = {
+		link = true,
+		fallback = "mountain",
+	},
+	["mountainous region"] = {
+		link = "separately",
+		fallback = "region",
+	},
+	["mukim"] = {
+		-- Malaysia, Brunei, Indonesia, Singapore
+		link = true,
+		preposition = "of",
+		former_type = "subpolity",
+	},
 	["municipal district"] = {
+		link = "w",
 		-- meaning varies depending on the country; for now, assume no neighborhoods.
 		-- FIXME: has_neighborhoods might have to be a function that looks at the containing holonyms.
 		preposition = "of",
@@ -2788,18 +3095,32 @@ If you need to sort the following, do this (using Vim):
 		fallback = "municipality",
 	},
 	["municipality"] = {
+		link = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		former_type = "subpolity",
 	},
-	["municipality with city status"] = "municipality",
+	["municipality with city status"] = {
+		link = "[[municipality]] with [[w:city status|city status]]",
+		plural = "municipalities with city status",
+		plural_link = "[[municipality|municipalities]] with [[w:city status|city status]]",
+		fallback = "municipality",
+	},
 	["mythological location"] = {
+		link = "separately",
 		former_type = "!",
 		default = {true},
 	},
-	["national capital"] = "capital city",
-	["national park"] = "park",
+	["national capital"] = {
+		link = "w",
+		fallback = "capital city",
+	},
+	["national park"] = {
+		link = true,
+		fallback = "park",
+	},
 	["neighborhood"] = {
+		link = true,
 		preposition = "of",
 		former_type = "settlement",
 		cat_handler = district_neighborhood_cat_handler,
@@ -2807,14 +3128,22 @@ If you need to sort the following, do this (using Vim):
 		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
 		--end,
 	},
-	["neighbourhood"] = "neighborhood",
+	["neighbourhood"] = {
+		link = true,
+		fallback = "neighborhood",
+	},
 	["new area"] = {
 		-- China (type of economic development zone, varying greatly in size)
+		link = "w",
 		preposition = "in",
 		former_type = "subpolity", --?
 	},
-	["new town"] = "town",
+	["new town"] = {
+		link = true,
+		fallback = "town",
+	},
 	["non-city capital"] = {
+		link = "[[capital]]",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
@@ -2822,158 +3151,289 @@ If you need to sort the following, do this (using Vim):
 		cat_handler = function(data)
 			return capital_city_cat_handler(data, "non-city")
 		end,
+		-- FIXME, do we need the following?
 		default = {true},
 	},
-	["non-metropolitan county"] = "county",
-	["non-metropolitan district"] = "local government district",
-	["non-sovereign kingdom"] = { -- especially in Africa and Asia
+	["non-metropolitan county"] = {
+		link = "w",
+		fallback = "county",
+	},
+	["non-metropolitan district"] = {
+		link = "w",
+		fallback = "local government district",
+	},
+	["non-sovereign kingdom"] = {
+		-- especially in Africa and Asia
+		link = "[[w:non-sovereign monarchy|non-sovereign kingdom]]",
 		former_type = "subpolity",
 		["country/*"] = {true},
 		["continent/*"] = {true},
+		default = {true},
 	},
-	["non-sovereign monarchy"] = "non-sovereign kingdom",
+	["non-sovereign monarchy"] = {
+		link = "w",
+		fallback = "non-sovereign kingdom",
+	},
 	["oblast"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		former_type = "subpolity",
 	},
 	["ocean"] = {
+		link = true,
 		holonym_use_the = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["okrug"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		former_type = "subpolity",
 	},
-	["overseas collectivity"] = "collectivity",
-	["overseas department"] = "department",
-	["overseas territory"] = "dependent territory",
+	["overseas collectivity"] = {
+		link = "w",
+		fallback = "collectivity",
+	},
+	["overseas department"] = {
+		link = "w",
+		fallback = "department",
+	},
+	["overseas territory"] = {
+		link = "w",
+		fallback = "dependent territory",
+	},
 	["parish"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		former_type = "subpolity",
 	},
 	["parish municipality"] = {
 		-- in Quebec, often similar to a rural village; the famous [[Saint-Louis-du-Ha! Ha!]] is one of them.
+		link = "[[w:parish municipality (Quebec)|parish municipality]]",
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true,
 	},
 	["parish seat"] = {
+		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		former_type = "capital",
 		has_neighborhoods = true,
 	},
 	["park"] = {
+		link = true,
 		former_type = "man-made structure",
 		default = {true},
 	},
-	["pass"] = "mountain pass",
-	["peak"] = "mountain",
+	["pass"] = {
+		link = "[[mountain pass|pass]]",
+		fallback = "mountain pass",
+	},
+	["peak"] = {
+		link = true,
+		fallback = "mountain",
+	},
 	["peninsula"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["periphery"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["planned community"] = {
-		-- Include this empty so we don't categorize 'planned community' into
-		-- villages, as 'community' does.
+		-- Include this so we don't categorize 'planned community' into villages, as 'community' does.
+		link = true,
 		former_type = "settlement",
 		has_neighborhoods = true,
 	},
-	["plateau"] = "geographic and cultural area",
+	["plateau"] = {
+		link = true,
+		fallback = "geographic and cultural area",
+	},
 	["Polish colony"] = {
+		link = "[[w:Colony (Poland)|colony]]",
 		affix_type = "suf",
 		affix = "colony",
 		fallback = "village",
 		has_neighborhoods = true,
 	},
 	["polity"] = {
+		link = 
 		former_type = "polity",
 		default = {true},
 	},
-	["populated place"] = "village", -- not necessarily true, but usually is the case
-	["port city"] = "city",
-	["port town"] = "town",
+	["populated place"] = {
+		link = "[[w:populated place|locality]]",
+		-- not necessarily true, but usually is the case
+		fallback = "village",
+	},
+	["port"] = {
+		link = true,
+		former_type = "man-made structure",
+		default = {true},
+	},
+	["port city"] = {
+		-- FIXME: should categorize into "Ports" as well as "Cities"
+		link = true,
+		fallback = "city",
+	},
+	["port town"] = {
+		-- FIXME: should categorize into "Ports" as well as "Towns"
+		link = "w",
+		fallback = "town",
+	},
 	["prefecture"] = {
 		-- FIXME! `prefecture` is like a county in Japan and elsewhere but a department capital city in France.
 		-- May need `has_neighborhoods` to be a function.
+		link = true,
 		preposition = "of",
 		display_handler = prefecture_display_handler,
 		former_type = "subpolity",
 	},
 	["prefecture-level city"] = {
 		-- China; they are huge entities with a central city; not cities themselves.
+		link = "w",
 		preposition = "of",
 		former_type = "subpolity",
 	},
-	["promontory"] = "headland",
-	["protectorate"] = "dependent territory",
+	["promontory"] = {
+		link = true,
+		fallback = "headland",
+	},
+	["protectorate"] = {
+		link = true,
+		fallback = "dependent territory",
+	},
 	["province"] = {
+		link = true,
 		preposition = "of",
 		display_handler = province_display_handler,
 		former_type = "subpolity",
 	},
-	["provincial capital"] = "capital city",
+	["province and autonomous region"] = {
+		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
+		-- administrative regions of certain countries, in this case China.
+		link = false,
+		plural = "provinces and autonomous regions",
+		plural_link = "[[province]]s and [[autonomous region]]s",
+	},
+	["province and territory"] = {
+		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
+		-- administrative regions of certain countries, in this case Canada and Pakistan.
+		link = false,
+		plural = "provinces and territories",
+		plural_link = "[[province]]s and [[territory|territories]]",
+	},
+	["provincial capital"] = {
+		link = true,
+		fallback = "capital city",
+	},
 	["raion"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		former_type = "subpolity",
 	},
+	["ranch"] = {
+		link = true,
+		fallback = "farm",
+	},
 	["range"] = {
+		-- FIXME: Where is this used? Is it a mountain range?
+		link = true,
 		holonym_use_the = true,
 		former_type = "natural feature",
 	},
 	["regency"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["region"] = {
+		link = true,
 		preposition = "of",
 		-- If 'region' isn't a specific administrative division, fall back to 'geographic and cultural area'
 		fallback = "geographic and cultural area",
 		-- "former region" is a subpolity but traditional/historic(al)/ancient/medieval/etc. is a geographic region
 		former_type = "geographic region",
 	},
-	["regional capital"] = "capital city",
+	["regional capital"] = {
+		link = "separately",
+		fallback = "capital city",
+	},
 	["regional county municipality"] = {
+		-- Quebec
+		link = "w",
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = {"municipality", "county"},
 		fallback = "municipality",
 	},
 	["regional district"] = {
+		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = "district",
 		fallback = "district",
 	},
-	["regional municipality"] = "municipality",
 	["regional municipality"] = {
+		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = "municipality",
 		fallback = "municipality",
 	},
 	["regional unit"] = {
+		link = "w",
 		preposition = "of",
 		former_type = "subpolity",
+	},
+	["registration county"] = {
+		-- Used in Scotland for land registration purposes; formerly used in England, Wales and Ireland for statistical
+		-- purposes (registration of births, deaths and marriages, and for the output of census information).
+		link = "w",
+		fallback = "county",
 	},
 	["republic"] = {
 		-- Of Russia. "Republics" in general are sovereign but we use "country" in that case.
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
-	["reservoir"] = "lake",
-	["resort city"] = "city",
-	["resort town"] = "town",
+	["research base"] = {
+		link = "[[w:research station|research base]]",
+		fallback = "research station",
+	},
+	["research station"] = {
+		link = "w",
+		former_type = "settlement", -- or "man-made structure"?
+		default = {true},
+	},
+	["reservoir"] = {
+		link = true,
+		fallback = "lake",
+	},
+	["residential area" = {
+		link = "separately",
+		fallback = "neighborhood",
+	},
+	["resort city"] = {
+		link = "w",
+		fallback = "city",
+	},
+	["resort town"] = {
+		link = "w",
+		fallback = "town",
+	},
 	["river"] = {
+		link = true,
 		holonym_use_the = true,
 		former_type = "natural feature",
 		cat_handler = city_type_cat_handler,
@@ -2982,93 +3442,244 @@ If you need to sort the following, do this (using Vim):
 	},
 	["Roman province"] = {
 		-- FIXME! Eliminate this in favor of 'former province|emp/Roman Empire'
+		link = "w",
 		default = {"Provinces of the Roman Empire"},
 		former_type = "subpolity",
 	},
 	["royal borough"] = {
+		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = {"royal", "borough"},
 		fallback = "local government district with borough status",
 		has_neighborhoods = true,
 	},
-	["royal burgh"] = "borough",
-	["royal capital"] = "capital city",
+	["royal burgh"] = {
+		link = true,
+		fallback = "borough",
+	},
+	["royal capital"] = {
+		link = "w",
+		fallback = "capital city",
+	},
 	["rural committee"] = {
 		-- Hong Kong; something like a village
+		link = "w",
 		affix_type = "Suf",
 		has_neighborhoods = true,
 		former_type = "settlement",
 	},
+	["rural community"] = {
+		-- New Brunswick
+		link = "[[w:List_of_municipalities_in_New_Brunswick#Rural_communities|rural community]]",
+		fallback = "municipality",
+	},
 	["rural municipality"] = {
+		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = "municipality",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
 	},
+	["rural township"] = {
+		-- Taiwan
+		link = "[[w:rural township (Taiwan)|rural township]]",
+		fallback = "township",
+	},
 	["satrapy"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 		inherently_former = {"ANCIENT", "FORMER"},
 	},
 	["sea"] = {
+		link = true,
 		holonym_use_the = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["seat"] = "administrative centre",
-	["separatist state"] = "unrecognized country",
-	["settlement"] = "village", -- not necessarily true, but usually is the case
-	["sheading"] = "district",
-	["shire"] = "county",
-	["shire county"] = "county",
-	["shire town"] = "county seat",
-	["ski resort city"] = "city",
-	["ski resort town"] = "town",
-	["spa city"] = "city",
-	["spa town"] = "town",
+	["seaport"] = {
+		link = true,
+		fallback = "port",
+	},
+	["seat"] = {
+		link = true,
+		fallback = "administrative centre",
+	},
+	["self-administered area"] = {
+		-- Myanmar (groups self-administered divisions and zones)
+		link = "[[w:self-administered zone|self-administered area]]",
+		preposition = "of",
+		former_type = "subpolity",
+	},
+	["self-administered division"] = {
+		-- Myanmar (only one of them: Wa Self-Administered Division)
+		link = "w",
+		fallback = "self-administered area",
+	},
+	["self-administered zone"] = {
+		-- Myanmar (five of them)
+		link = "w",
+		fallback = "self-administered area",
+	},
+	["separatist state"] = {
+		link = "separately",
+		fallback = "unrecognized country",
+	},
+	["settlement"] = {
+		link = true,
+		-- not necessarily true, but usually is the case
+		fallback = "village",
+	},
+	["sheading"] = {
+		-- Isle of Man
+		link = true,
+		fallback = "district",
+	},
+	["sheep station"] = {
+		-- Australia
+		link = true,
+		fallback = "farm",
+	},
+	["shire"] = {
+		link = true,
+		fallback = "county",
+	},
+	["shire county"] = {
+		link = "w",
+		fallback = "county",
+	},
+	["shire town"] = {
+		link = true,
+		fallback = "county seat",
+	},
+	["ski resort city"] = {
+		link = "[[ski resort]] [[city]]",
+		plural_link = "[[ski resort]] [[city|cities]]",
+		fallback = "city",
+	},
+	["ski resort town"] = {
+		link = "[[ski resort]] [[town]]",
+		fallback = "town",
+	},
+	["spa city"] = {
+		link = "[[w:spa town|spa city]]",
+		fallback = "city",
+	},
+	["spa town"] = {
+		link = "w",
+		fallback = "town",
+	},
+	["space station"] = {
+		link = true,
+		fallback = "research station",
+	},
 	["special administrative region"] = {
-		-- In China; in practice they are city-like (Hong Kong, Shenzhen)
+		-- in China; in practice they are city-like (Hong Kong, Shenzhen); also [[Oecusse]] in East Timor is formally a
+		-- "special administrative region"; North Korea had one such region planned (Sinuiju) but abandoned; Indonesia
+		-- has similar "special regions" of Jakarta, Yogyakarta and Aceh; and South Sudan has three "special
+		-- administrative areas"
+		link = "[[w:special administrative regions of China|special administrative region]]",
 		preposition = "of",
 		former_type = "settlement",
 		has_neighborhoods = true, --?
 	},
-	["special municipality"] = "municipality",
-	["special ward"] = "municipality", -- of Tokyo
-	["spit"] = "peninsula",
+	["special collectivity"] = {
+		link = "w",
+		fallback = "collectivity",
+	},
+	["special municipality"] = {
+		-- formerly linked to the Taiwan article but there are also special municipalities of the Netherlands
+		link = "w",
+		fallback = "municipality",
+	},
+	["special ward"] = {
+		-- Tokyo
+		link = true,
+		fallback = "municipality",
+	},
+	["spit"] = {
+		link = true,
+		fallback = "peninsula",
+	},
 	["spring"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["star"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["state"] = {
+		link = true,
 		preposition = "of",
 		-- 'former/historical state' could refer either to a state of a country (a subdivision) or a state = sovereign
 		-- entity. The latter appears more common (e.g. in various "ancient states" of East Asia).
 		former_type = "polity",
 	},
-	["state capital"] = "capital city",
-	["state park"] = "park",
+	["state and territory"] = {
+		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
+		-- administrative regions of certain countries, in this case Australia.
+		link = false,
+		plural = "states and territories",
+		plural_link = "[[state]]s and [[territory|territories]]",
+	},
+	["state and union territory"] = {
+		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
+		-- administrative regions of certain countries, in this case India.
+		link = false,
+		plural = "states and union territories",
+		plural_link = "[[state]]s and [[union territory|union territories]]",
+	},
+	["state capital"] = {
+		link = true,
+		fallback = "capital city",
+	},
+	["state park"] = {
+		link = true,
+		fallback = "park",
+	},
 	["state-level new area"] = {
 		-- China (type of economic development zone, varying greatly in size)
-		preposition = "in",
-		former_type = "subpolity", --?
+		link = "w",
+		fallback = "new area",
 	},
-	["statutory city"] = "city",
-	["statutory town"] = "town",
+	["statutory city"] = {
+		link = "w",
+		fallback = "city",
+	},
+	["statutory town"] = {
+		link = "w",
+		fallback = "town",
+	},
 	["strait"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
-	["stream"] = "river",
-	["strip"] = "region",
-	["strip of land"] = "region",
-	["sub-prefectural city"] = "subprovincial city",
+	["stream"] = {
+		link = true,
+		fallback = "river",
+	},
+	["strip"] = {
+		link = true,
+		fallback = "geographic region",
+	},
+	["strip of land"] = {
+		link = "[[strip]] of [[land]]",
+		plural = "strips of land",
+		plural_link = "[[strip]]s of [[land]]",
+		fallback = "geographic region",
+	},
+	["sub-prefectural city"] = {
+		link = "w",
+		fallback = "subprovincial city",
+	},
 	["subdistrict"] = {
+		link = true,
 		preposition = "of",
 		has_neighborhoods = true, --?
 		-- FIXME: subdistricts can be neighborhood-like (of Jakarta) or larger (in China); need a handler
@@ -3080,35 +3691,54 @@ If you need to sort the following, do this (using Vim):
 		default = {true},
 	},
 	["subdivision"] = {
+		link = true,
 		preposition = "of",
 		affix_type = "suf",
 		-- FIXME: subdivisions can be neighborhood-like or larger; need a handler
 		former_type = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 	},
-	["submerged ghost town"] = "ghost town",
-	["subnational kingdom"] = "non-sovereign kingdom",
-	["subnational monarchy"] = "non-sovereign kingdom",
+	["submerged ghost town"] = {
+		-- FIXME: Consider just having "submerged" as a qualifier.
+		link = "[[submerged]] [[ghost town]]",
+		fallback = "ghost town",
+	},
+	["subnational kingdom"] = {
+		link = "[[w:subnational monarchy|subnational kingdom]]",
+		fallback = "non-sovereign kingdom",
+	},
+	["subnational monarchy"] = {
+		link = "w",
+		fallback = "non-sovereign kingdom",
+	},
 	["subprefecture"] = {
+		link = true,
 		affix_type = "suf",
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["subprovince"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["subprovincial city"] = {
+		link = "w",
 		-- China; special status given to certain prefecture-level cities
 		fallback = "prefecture-level city",
 	},
 	["subprovincial district"] = {
+		link = "w",
 		-- China; special status given to Binhai New Area and Pudong New Area, which are county-level districts
 		preposition = "of",
 		former_type = "subpolity",
 	},
-	["subregion"] = "region",
+	["subregion"] = {
+		link = true,
+		fallback = "geographic region",
+	},
 	["suburb"] = {
+		link = true,
 		preposition = "of",
 		has_neighborhoods = true, --?
 		former_type = "settlement", --?
@@ -3117,110 +3747,190 @@ If you need to sort the following, do this (using Vim):
 		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
 		--end,
 	},
-	["suburban area"] = "suburb",
-	["subway station"] = "metro station",
-	["supercontinent"] = "continent",
+	["suburban area"] = {
+		link = "w",
+		fallback = "suburb",
+	},
+	["subway station"] = {
+		link = "w",
+		fallback = "metro station",
+	},
+	["supercontinent"] = {
+		link = true,
+		fallback = "continent",
+	},
 	["tehsil"] = {
+		link = true,
 		affix_type = "suf",
 		no_affix_strings = {"tehsil", "tahsil"},
 		former_type = "subpolity",
 	},
-	["territorial authority"] = "district",
+	["territorial authority"] = {
+		link = "w",
+		fallback = "district",
+	},
 	["territory"] = {
+		link = true,
 		preposition = "of",
 		former_type = "subpolity",
 	},
 	["town"] = {
+		link = true,
 		has_neighborhoods = true,
 		former_type = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
 	},
-	["town with bystatus"] = "town",
+	["town with bystatus"] = {
+		-- can't use templates in links currently
+		link = "[[town]] with [[bystatus#Norwegian Bokmål|bystatus]]",
+		plural = "towns with bystatus",
+		plural_link = "[[town]]s with [[bystatus#Norwegian Bokmål|bystatus]]",
+		fallback = "town",
+	},
 	["township"] = {
+		link = true,
 		has_neighborhoods = true,
 		former_type = "settlement", --?
 		default = {true},
 	},
 	["township municipality"] = {
+		-- Quebec
+		link = "[[w:township municipality (Quebec)|township municipality]]",
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
 	},
-	["traditional county"] = "county",
+	["traditional county"] = {
+		link = true,
+		fallback = "county",
+	},
+	["traditional region"] = {
+		-- FIXME: Verify this works. Same for 'historic(al) region'.
+		-- provided only for the link
+		link = "w",
+		fallback = "FORMER geographic region",
+	},
 	["treaty port"] = {
+		link = "w",
 		fallback = "city",
 		former_type = "settlement",
 		inherently_former = {"FORMER"},
 	},
 	["tributary"] = {
+		link = true,
 		preposition = "of",
 		fallback = "river",
 	},
-	["underground station"] = "metro station",
+	["underground station"] = {
+		link = "w",
+		fallback = "metro station",
+	},
 	["unincorporated community"] = {
+		link = true,
 		former_type = "settlement",
 	},
-	["unincorporated territory"] = "territory",
+	["unincorporated territory"] = {
+		link = "w",
+		fallback = "territory",
+	},
 	["union territory"] = {
+		-- India
+		link = true,
 		preposition = "of",
 		entry_placetype_indefinite_article = "a",
 		former_type = "subpolity",
 	},
 	["unitary authority"] = {
+		-- UK, New Zealand
+		link = true,
 		entry_placetype_indefinite_article = "a",
 		fallback = "local government district",
 	},
 	["unitary district"] = {
+		link = "w",
 		entry_placetype_indefinite_article = "a",
 		fallback = "local government district",
 	},
 	["united township municipality"] = {
+		-- Quebec
+		link = "[[w:united township municipality (Quebec)|united township municipality]]",
 		entry_placetype_indefinite_article = "a",
 		fallback = "township municipality",
 		has_neighborhoods = true, --?
 	},
 	["university"] = {
+		link = true,
 		entry_placetype_indefinite_article = "a",
 		former_type = "man-made structure",
 		default = {true},
 	},
-	["unrecognised country"] = "unrecognized country",
+	["unrecognised country"] = {
+		link = "w",
+		fallback = "unrecognized country",
+	},
 	["unrecognized country"] = {
+		link = "w",
 		former_type = "polity",
 		default = {"Unrecognized and nearly unrecognized countries"},
 	},
-	["urban area"] = "neighborhood",
-	["urban township"] = "township",
-	["urban-type settlement"] = "town",
+	["urban area"] = {
+		link = "separately",
+		fallback = "neighborhood",
+	},
+	["urban township"] = {
+		link = "w",
+		fallback = "township",
+	},
+	["urban-type settlement"] = {
+		link = "w",
+		fallback = "town",
+	},
 	["valley"] = {
+		link = true,
 		former_type = "natural feature",
 		default = {true},
 	},
 	["village"] = {
+		link = true,
 		former_type = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
 	},
 	["village municipality"] = {
+		-- Quebec
+		link = "[[w:village municipality (Quebec)|village municipality]]",
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
 	},
 	["voivodeship"] = {
+		-- Poland
+		link = true,
 		preposition = "of",
 		holonym_use_the = true,
 		former_type = "subpolity",
 	},
 	["volcano"] = {
+		link = true,
 		plural = "volcanoes",
 		former_type = "natural feature",
 		default = {true, "Mountains"},
 	},
-	["ward"] = "neighborhood", -- not completely correct, wards are formal administrative divisions of a city
+	["ward"] = {
+		link = true,
+		-- not completely correct, wards are formal administrative divisions of a city
+		fallback = "neighborhood",
+	},
+	["watercourse"] = {
+		link = true,
+		fallback = "channel",
+	},
 	["Welsh community"] = {
+		-- Wales
+		link = "[[w:community (Wales)|community]]",
 		preposition = "of",
 		affix_type = "suf",
 		affix = "community",
@@ -3228,7 +3938,8 @@ If you need to sort the following, do this (using Vim):
 		former_type = "settlement",
 	},
 	["zone"] = {
-		-- Ethiopia, Qatar
+		-- administrative division of Ethiopia, Qatar, Nepal, India
+		link = "[[w:Zone#Place names|zone]]",
 		preposition = "of",
 		former_type = "subpolity",
 	},
