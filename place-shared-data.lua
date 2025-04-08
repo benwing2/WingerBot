@@ -541,13 +541,58 @@ function export.iterate_matching_location(data)
 				if not data.key then
 					internal_error("'.placename' or '.key' must be defined: %s", data)
 				end
-				key, spec = export.find_matching_placename_in_group(group, data.placetypes, data.key)
+				key, spec = export.find_matching_key_in_group(group, data.placetypes, data.key)
 			end
 			if key, spec then
 				set_spec_defaults(group, key, spec)
 				return group, key, spec
 			end
 		end
+	end
+end
+
+
+--[==[
+Successively iterate over a location's containers, and then the containers of those containers, etc. Keep in mind that
+locations may have multiple containers (e.g. Russia has both Europe and Asia as containers, and both Europe and Asia
+have Eurasia as their container). A given container will never be returned twice (e.g. in the case where a specific
+location A has locations B and C as containers, and B has C as its container, C will not be returned twice). An
+internal error happens if a container loop is detected. The return value is a list of location objects, each of which
+contains `group`, `key` and `spec` fields.
+]==]
+function export.iterate_containers(group, key, spec)
+	local keys_seen = {}
+	keys_seen[key] = true
+	local iterations = 0
+	local last_iteration_containers = {{group = group, key = key, spec = spec}}
+	return function()
+		iterations = iterations + 1
+		if iterations > 10 then
+			internal_error("Probable loop in containers when processing key %s", key)
+		end
+		local next_iteration_containers = {}
+		for _, location in ipairs(last_iteration_containers) do
+			local containers = location.spec.containers
+			if containers then
+				for _, container in ipairs(containers) do
+					local container_group, container_key, container_spec = get_matching_location {
+						placetypes = container.divtype,
+						placename = container.name,
+					}
+					if not keys_seen[container_key] then
+						table.insert(next_iteration_containers, {
+							group = container_group, key = container_key, spec = container_spec
+						})
+						keys_seen[container_key] = true
+					end
+				end
+			end
+		end
+		if not next_iteration_containers[1] then
+			return nil
+		end
+		last_iteration_containers = next_iteration_containers
+		return next_iteration_containers
 	end
 end
 
@@ -586,15 +631,17 @@ local function iterate_matching_holonym_location(data)
 			if not group then
 				return nil
 			end
-			-- For each level of containing polity, check that there are no mismatches (i.e. other polity of the same
-			-- sort) mentioned. We allow a mismatch at a given level if there's also a match with the containing polity
-			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
-			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
-			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
-			-- Delware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New Jersey
-			-- in [[Module:place/shared-data]]. Just because the containing polity US matches isn't enough, because
-			-- Newark, NJ also has New Jersey as a containing polity and there's a mismatch at that level. If there are
-			-- no mismatches at any level we assume we're dealing with the right city.
+			-- For each level of containing location, check that there are no mismatches (i.e. other location of the
+			-- same sort) mentioned. We allow a mismatch at a given level if there's also a match with the containing
+			-- location at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]]
+			-- as a city in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching
+			-- state of Kansas because the correct state of Missouri was also mentioned. But imagine we are defining
+			-- Newark, Delware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark,
+			-- New Jersey in [[Module:place/shared-data]]. Just because the containing location `US` matches isn't
+			-- enough, because Newark, NJ also has New Jersey as a containing location and there's a mismatch at that
+			-- level. If there are no mismatches at any level we assume we're dealing with the right city.
+			for containers in export.iterate_containers(group, key, spec) do
+
 			local containing_polities = export.get_city_containing_polities(group, spec)
 			local containing_polities_mismatch = false
 			for _, polity in ipairs(containing_polities) do
@@ -1026,51 +1073,6 @@ local function normalize_city_parents(parents, default_divtype)
 	end
 	return parents, outer_copied
 end
-
---[==[
-Successively iterate over a location's containers, and then the containers of those containers, etc. Keep in mind that
-locations may have multiple containers (e.g. Russia has both Europe and Asia as containers, and both Europe and Asia
-have Eurasia as their container). A given container will never be returned twice (e.g. in the case where a specific
-location A has locations B and C as containers, and B has C as its container, C will not be returned twice). An
-internal error happens if a container loop is detected. The return value is a list of location objects, each of which
-contains `group`, `key` and `spec` fields.
-]==]
-function export.iterate_containers(group, key, spec)
-	local keys_seen = {}
-	keys_seen[key] = true
-	local iterations = 0
-	local last_iteration_containers = {{group = group, key = key, spec = spec}}
-	return function()
-		iterations = iterations + 1
-		if iterations > 10 then
-			internal_error("Probable loop in containers when processing key %s", key)
-		end
-		local next_iteration_containers = {}
-		for _, location in ipairs(last_iteration_containers) do
-			local containers = location.spec.containers
-			if containers then
-				for _, container in ipairs(containers) do
-					local container_group, container_key, container_spec = get_matching_location {
-						placetypes = container.divtype,
-						placename = container.name,
-					}
-					if not keys_seen[container_key] then
-						table.insert(next_iteration_containers, {
-							group = container_group, key = container_key, spec = container_spec
-						})
-						keys_seen[container_key] = true
-					end
-				end
-			end
-		end
-		if not next_iteration_containers[1] then
-			return nil
-		end
-		last_iteration_containers = next_iteration_containers
-		return next_iteration_containers
-	end
-end
-
 
 -----------------------------------------------------------------------------------
 --                               Top-level tables                                --
