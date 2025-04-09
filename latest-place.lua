@@ -27,6 +27,7 @@ local pluralize = require(en_utilities_module).pluralize
 local extend = m_table.extend
 
 local internal_error = m_data.internal_error
+local process_error = m_data.process_error
 local placetype_data = m_data.placetype_data
 
 --[==[ intro:
@@ -1374,40 +1375,6 @@ local function format_holonym_in_context(entry_placetype, prev_holonym, holonym,
 end
 
 
--- Get the display form of a placetype by looking it up in `placetype_links` in [[Module:place/data]]. If the placetype
--- is recognized, or is the plural if a recognized placetype, the corresponding linked display form is returned (with
--- plural placetypes displaying as plural but linked to the singular form of the placetype). Otherwise, return nil.
-local function get_placetype_display_form(placetype)
-	local linked_version = m_data.placetype_links[placetype]
-	if linked_version then
-		if linked_version == true then
-			return "[[" .. placetype .. "]]"
-		elseif linked_version == "w" then
-			return "[[w:" .. placetype .. "|" .. placetype .. "]]"
-		else
-			return linked_version
-		end
-	end
-	local sg_placetype = m_data.maybe_singularize(placetype)
-	if sg_placetype then
-		local linked_version = m_data.placetype_links[sg_placetype]
-		if linked_version then
-			if linked_version == true then
-				return "[[" .. sg_placetype .. "|" .. placetype .. "]]"
-			elseif linked_version == "w" then
-				return "[[w:" .. sg_placetype .. "|" .. placetype .. "]]"
-			else
-				-- An explicit display form was specified. It will be singular, so we need to pluralize it to match
-				-- the pluralization of the passed-in placetype.
-				return pluralize(linked_version)
-			end
-		end
-	end
-
-	return nil
-end
-
-
 -- Return the linked description of a placetype. This splits off any qualifiers and displays them separately.
 local function get_placetype_description(placetype)
 	local splits = m_data.split_qualifiers_from_placetype(placetype)
@@ -1419,7 +1386,7 @@ local function get_placetype_description(placetype)
 		else
 			prefix = ""
 		end
-		local display_form = get_placetype_display_form(bare_placetype)
+		local display_form = m_data.get_placetype_display_form(bare_placetype)
 		if display_form then
 			return prefix .. display_form
 		end

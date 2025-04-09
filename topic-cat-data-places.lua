@@ -5,6 +5,7 @@ local en_utilities_module = "Module:en-utilities"
 local table_module = "Module:table"
 
 local m_shared = require("Module:place/shared-data")
+local m_data = require("Module:place/data")
 local internal_error = m_shared.internal_error
 
 local dump = mw.dumpObject
@@ -79,17 +80,6 @@ General labels. These are intended for places of all sorts that are not qualifie
   'nil' links to a category the same as the label.
 ]=]
 local general_labels = {
-	["airports"] = {{"places"}},
-	["ancient settlements"] = {{"historical settlements"}, "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]"},
-	["atolls"] = {{"islands"}},
-	["bays"] = {{"places", "bodies of water"}},
-	["beaches"] = {{"places", "water"}},
-	-- FIXME: This is a type category not a name category. There should be an option for this.
-	["bodies of water"] = {{"landforms", "ecosystems", "water"}, "[[body of water|bodies of water]]"},
-	["boroughs"] = {{"polities"}},
-	["capital cities"] = {{"cities"}, "[[capital]] [[city|cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[subdivision]] of a country"},
-	["census-designated places"] = {{"places"}},
-	["cities"] = {{"polities"}},
 	["city-states"] = {{"polities"}, "[[sovereign]] [[microstate]]s consisting of a single [[city]] and [[w:dependent territory|dependent territories]]"},
 	["communities"] = {{"polities"}, "[[community|communities]] of all sizes"},
 	["continents"] = {{"places"}, "the [[continent]]s of the world"},
@@ -551,6 +541,8 @@ table.insert(handlers, function(label)
 								canon_label, in_of, div_prep))
 							return nil
 						end
+						local linkdesc = m_data.get_placetype_display_form
+
 						local linkdiv = m_shared.political_divisions[placetype]
 						if not linkdiv then
 							unknown_poldiv_type(placetype, "in label", canon_label)

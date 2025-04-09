@@ -11,6 +11,8 @@ local dump = mw.dumpObject
 local insert = table.insert
 local internal_error = m_shared.internal_error
 export.internal_error = internal_error
+local process_error = m_shared.processs_error
+export.process_error = process_error
 
 local function ucfirst(label)
 	return mw.getContentLanguage():ucfirst(label)
@@ -54,6 +56,9 @@ Return the singular version of a maybe-plural placetype, or nil if not plural.
 function export.maybe_singularize(placetype)
 	if not placetype then
 		return nil
+	end
+	if export.plural_placetype_to_singular[placetype] then
+		return export.plural_placetype_to_singular[placetype]
 	end
 	local retval = require(en_utilities_module).singularize(placetype)
 	if retval == placetype then
@@ -187,8 +192,8 @@ rarely occur with exact match category specs anyway.
 function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inherently_former)
 	local equivs = {}
 
-	-- Look up the equivalent placetype for `placetype` in `placetype_equivs`. If `placetype` is plural, also look up
-	-- the equivalent for the singularized version. Return any equivalent placetype(s) found.
+	-- Look up the equivalent placetype for `placetype` in `placetype_data`. If `placetype` is plural, also look up the
+	-- equivalent for the singularized version. Return any equivalent placetype(s) found.
 	local function lookup_placetype_equiv(placetype)
 		local retval = {}
 		local function insert_placetype_equiv_or_fallback(placetype)
@@ -199,8 +204,7 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 					insert(retval, pt_value.fallback)
 					local last_placetype = #retval
 					if last_placetype - first_placetype >= 10 then
-						internal_error("Apparent loop in fallback chain: %s",
-							table.concat(retval, " -> ", first_placetype, last_placetype))
+						internal_error("Apparent loop in fallback chain: %s", table.concat(retval, " -> ", first_placetype, last_placetype))
 					end
 					placetype = pt_value.fallback
 				else
@@ -210,7 +214,7 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 		end
 		insert_placetype_equiv_or_fallback(placetype)
 		local sg_placetype = export.maybe_singularize(placetype)
-		-- Check for a mapping in placetype_equivs for the singularized equivalent.
+		-- Check for a mapping in `placetype_data` for the singularized equivalent.
 		if sg_placetype then
 			insert_placetype_equiv_or_fallback(sg_placetype)
 		end
@@ -235,7 +239,8 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 			insert_equiv(sg_placetype)
 		end
 		if not no_fallback then
-			-- Then check for a mapping in placetype_equivs, and a mapping for the singularized equivalent; add if present.
+			-- Then check for a mapping in `placetype_data`, and a mapping for the singularized equivalent; add if
+			-- present.
 			local placetype_equiv_list = lookup_placetype_equiv(placetype)
 			for _, placetype_equiv in ipairs(placetype_equiv_list) do
 				insert_equiv(placetype_equiv)
@@ -248,9 +253,10 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 
 	for _, split in ipairs(splits) do
 		local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
-		-- First see if the rightmost split-off qualifier is in qualifier_equivs (e.g. 'former' -> 'historical').
-		-- If so, create a placetype from the qualifier mapping + the following bare_placetype; then, add
-		-- that placetype, and any mapping for the placetype in placetype_equivs.
+		-- If a special "former" qualifier like `former`  or `historical` isn't present, and
+		-- `no_check_for_inherently_former` is not given (this flag is used to avoid infinite loops), check for
+		-- "inherently former" placetypes like `satrapy` and `treaty port` that always refer to no-longer-existing
+		-- placetypes, and handle accordingly.
 		local former_qualifiers = this_qualifier and export.former_qualifiers[this_qualifier] or nil
 		if not former_qualifiers and not no_check_for_inherently_former then
 			former_qualifiers = export.get_equiv_placetype_prop(bare_placetype,
@@ -258,6 +264,17 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 				nil, nil, "no_check_for_inherently_former"
 			)
 		end
+
+		-- If a special "former" qualifier like `former` or `historical` is present, map it to the appropriate internal
+		-- qualifiers (`ANCIENT` and/or `FORMER`, which are written in all-caps to distinguish them from user-specified
+		-- qualifiers), fetch the `former_type` property, and treat the placetype as if a concatenation of the mapped
+		-- qualifier(s) and the value of `former_type`. For example, if `medieval village` is given, we map `medieval`
+		-- to `ANCIENT` and `FORMER`, and `village` to its `former_type` of `settlement`, and enter the placetypes
+		-- `ANCIENT settlement` and `FORMER settlement` (in that order) into `equivs`. If the placetype following the
+		-- "former" qualifier is recognized in `placetype_data` but has no `former_type` and no fallback with a
+		-- `former_type` specified, it is an internal error; but if the placetype isn't recognized (e.g. something like
+		-- `former greenhouse` is specified and we don't have an entry for `greenhouse`), just track the occurrence and
+		-- don't enter anything into `equivs`.
 		if former_qualifiers then
 			-- FIXME: Should we respect `no_fallback` here? My instinct says no.
 			local bare_placetype_equivs = export.get_placetype_equivs(bare_placetype, nil,
@@ -270,14 +287,14 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 					function(pt) return export.placetype_data[pt] end
 				)
 				if pt_data then
-					internal_error("For placetype '%s', placetype data located but `former_type` missing; placetypes searched are %s",
-						bare_placetype, bare_placetype_equivs)
+					internal_error("For placetype '%s', placetype data located but `former_type` missing; " ..
+						"placetypes searched are %s", bare_placetype, bare_placetype_equivs)
 				else
 					-- Enable error when we've verified there aren't any examples.
 					track("bad-former-placetype")
 					track("bad-former-placetype/" .. bare_placetype)
-					--error(("For placetype '%s', unrecognized placetype following 'former'-type qualifier; searched placetype(s) %s"):
-					--	format(bare_placetype, dump(bare_placetype_equivs)))
+					--process_error("For placetype '%s', unrecognized placetype following 'former'-type qualifier; " ..
+					--	"searched placetype(s) %s", bare_placetype, dump(bare_placetype_equivs))
 				end
 			elseif former_type ~= "!" then
 				for _, former_qualifier in ipairs(former_qualifiers) do
@@ -293,10 +310,10 @@ function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inhere
 			insert(equivs, {qualifier=prev_qualifier, placetype=export.qualifier_to_placetype_equivs[this_qualifier]})
 		end
 
-		-- Finally, join the rightmost split-off qualifier to the previously split-off qualifiers to form a
-		-- combined qualifier, and add it along with bare_placetype and any mapping in placetype_equivs for
-		-- bare_placetype. NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier`
-		-- are nil, and this inserts the full placetype into `equivs`.
+		-- Finally, join the rightmost split-off qualifier to the previously split-off qualifiers to form a combined
+		-- qualifier, and add it along with bare_placetype and any mapping in placetype_data for bare_placetype.
+		-- NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier` are nil, and this inserts
+		-- the full placetype into `equivs`.
 		local qualifier = prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
 		do_placetype(qualifier, bare_placetype)
 
@@ -375,6 +392,77 @@ function export.key_holonym_into_place_desc(place_desc, holonym)
 end
 
 
+local function make_placetype_link(link, sg_placetype, orig_placetype)
+	if link == nil then
+		internal_error("Placetype data present for placetype %s but no link= setting given", sg_placetype)
+	elseif link == true then
+		if orig_placetype then
+			return ("[[%s|%s]]"):format(sg_placetype, orig_placetype)
+		else
+			return ("[[%s]]"):format(sg_placetype)
+		end
+	elseif link == false then
+		process_error("Placetype %s is not meant to be specified directly, but is only for internal use", sg_placetype)
+	elseif link == "w" then
+		return ("[[w:%s|%s]]"):format(sg_placetype, orig_placetype or sg_placetype)
+	elseif link == "separately" then
+		if orig_placetype then
+			local sg_words = split(sg_placetype, " ")
+			local orig_words = split(orig_placetype, " ")
+			if #sg_words ~= #orig_words then
+				internal_error("Can't construct 'separately' link for plural placetype %s as original placetype %s " ..
+					"has different number of words", orig_placetype, sg_placetype)
+			else
+				for i = 1, #sg_words do
+					if sg_words[i] == orig_words[i] then
+						sg_words[i] = ("[[%s]]"):format(sg_words[i])
+					else
+						sg_words[i] = ("[[%s|%s]]"):format(sg_words[i], orig_words[i])
+					end
+				end
+				return concat(sg_words, " ")
+			end
+		else
+			return (sg_placetype:gsub("([^ ]+)", "[[%1]]"))
+		end
+	elseif link:find("^%+") then
+		link = link:sub(2) -- discard initial +
+		return ("[[%s|%s]]"):format(link, orig_placetype or sg_placetype)
+	elseif not orig_placetype then
+		return link
+	else
+		return require(en_utilities_module).pluralize(link)
+	end
+end
+
+--[==[
+Get the display form of a placetype by looking it up in `placetype_data`. If the placetype is recognized, or is the
+plural of a recognized placetype, the corresponding linked display form is returned (with plural placetypes displaying
+as plural but linked to the singular form of the placetype). Otherwise, return nil.
+]==]
+function export.get_placetype_display_form(placetype)
+	local ptdata = export.placetype_data[placetype]
+	if ptdata then
+		return make_placetype_link(ptdata.link, placetype)
+	end
+	local sg_placetype = export.maybe_singularize(placetype)
+	if sg_placetype then
+		ptdata = export.placetype_data[sg_placetype]
+		if ptdata then
+			if type(ptdata.plural_link) == "string" and ptdata.plural_link:find("%[%[") then
+				return ptdata.plural_link
+			end
+			if ptdata.plural_link == false then
+				process_error("Placetype %s cannot appear plural", placetype)
+			end
+			return make_placetype_link(ptdata.plural_link or ptdata.link, sg_placetype, placetype)
+		end
+	end
+
+	return nil
+end
+
+
 
 ------------------------------------------------------------------------------------------
 --                              Placename and placetype data                            --
@@ -383,8 +471,8 @@ end
 
 --[==[ var:
 This is a map from aliases to their canonical forms. Any placetypes appearing as keys here will be mapped to their
-canonical forms in all respects, including the display form. Contrast 'placetype_equivs', which apply to categorization
-and other processes but not to display.
+canonical forms in all respects, including the display form. Contrast entries in 'placetype_data' with a fallback, which
+applies to categorization and other processes but not to display.
 
 The most important aliases are for holonym placetypes, particularly those that occur often such as "country", "state",
 "province" and the like. Particularly long placetypes that mostly occur as entry placetypes (e.g.
@@ -499,16 +587,13 @@ export.placetype_aliases = {
 }
 
 --[==[ var:
-These qualifiers can be prepended onto any placetype and will be handled correctly. For example, the placetype "large
-city" will be displayed as such but otherwise treated exactly as if "city" were specified. Links will be added to the
-remainder of the placetype as appropriate, e.g. "small voivodeship" will display as "small [[voivoideship]]" because
-"voivoideship" has an entry in placetype_links. If the value is a string, the qualifier will display according to the
-string. If the value is `true`, the qualifier will be linked to its corresponding Wiktionary entry.  If the value is
-`false`, the qualifier will not be linked but will appear as-is. Note that these qualifiers do not override placetypes
-with entries elsewhere that contain those same qualifiers. For example, the entry for "former colony" in
-placetype_equivs will apply in preference to treating "former colony" as equivalent to "colony". Also note that if an
-entry like "former colony" appears in either placetype_equivs or placetype_data, the qualifier and non-qualifier portions
-won't automatically be linked, so it needs to be specifically included in placetype_links if linking is desired.
+These qualifiers can be prepended onto any placetype and will be handled correctly. For example, the placetype
+`large city` will be displayed as `large <nowiki>[[city]]</nowiki>` and categorized as if `city` were specified. If the
+value in the following table is a string, the qualifier will display according to the string. If the value is `true`,
+the qualifier will be linked to its corresponding Wiktionary entry. If the value is `false`, the qualifier will not be
+linked but will appear as-is. Note that these qualifiers do not override placetypes with entries elsewhere that contain
+those same qualifiers. For example, the entry for `inland sea` in `placetype_data` will apply in preference to treating
+`inland sea` as equivalent to `sea`.
 ]==]
 export.placetype_qualifiers = {
 	-- generic qualifiers
@@ -544,7 +629,7 @@ export.placetype_qualifiers = {
 	["traditional"] = false,
 	-- sea qualifiers
 	["coastal"] = true,
-	["inland"] = true, -- note, we also have an entry in placetype_links for 'inland sea' to get a link to [[inland sea]]
+	["inland"] = true, -- note, we also have an entry in placetype_data for 'inland sea' to get a link to [[inland sea]]
 	["maritime"] = true,
 	["overseas"] = true,
 	["seaside"] = "[[coastal]]",
@@ -638,17 +723,8 @@ export.placetype_qualifiers = {
 }
 
 --[==[ var:
-If there's an entry here, the corresponding placetype will use the text of the value, which should be used to add links.
-If the value is true, a simple link will be added around the whole placetype. If the value is "w", a link to Wikipedia
-will be added around the whole placetype.
-]==]
-export.placetype_links = {
-}
-
-
---[==[ var:
 In this table, the key qualifiers should be treated the same as the value qualifiers for categorization purposes. This
-is overridden by placetype_data, placetype_equivs and qualifier_to_placetype_equivs.
+is overridden by `placetype_data` and `qualifier_to_placetype_equivs`.
 ]==]
 export.former_qualifiers = {
 	["abandoned"] = {"FORMER"},
@@ -663,17 +739,16 @@ export.former_qualifiers = {
 }
 
 --[==[ var:
-In this table, any placetypes containing these qualifiers that do not occur in placetype_equivs or placetype_data should be
-mapped to the specified placetypes for categorization purposes. Entries here are overridden by placetype_data and
-placetype_equivs.
+In this table, any placetypes containing these qualifiers that do not occur in `placetype_data` should be mapped to the
+specified placetypes for categorization purposes. Entries here are overridden by `placetype_data`.
 ]==]
 export.qualifier_to_placetype_equivs = {
 	["fictional"] = "fictional location",
 	["mythical"] = "mythological location",
 	["mythological"] = "mythological location",
 	-- For e.g. Taiwan as a "claimed province" of China; parts of Belize as claimed by Guatemala; various islands
-	-- claimed by various parties in East Asia. FIXME: We should conditionalize on what is being claimed
-	-- since there are also claimed capitals, e.g. Israel and Palestine claim Jerusalem as their capital.
+	-- claimed by various parties in East Asia. FIXME: We should conditionalize on what is being claimed since there are
+	-- also claimed capitals, e.g. Israel and Palestine claim Jerusalem as their capital.
 	["claimed"] = "claimed political subdivision",
 }
 
@@ -1712,6 +1787,13 @@ in the code itself, but the augmentation process (the code directly following th
 for how category keys are used to generate categories is described at the top of [[Module:place]].
 
 The following are the recognized property keys:
+* `link`: '''Required'''. How to link the placetype in the formatted description when occurring as an entry placetype.
+  Also used for formatting pluralized placetypes (which may occur in entry placetypes, esp. new-format ones, and may
+  occur in categories). The possible values are:
+*# `true`: Link to the same-named Wiktionary entry. This creates a raw link, e.g. `<nowiki>[[city]]</nowiki>`, which is
+  converted to an English-specific link by JavaScript postprocessing. If the placetype is plural, this creates a
+  two-part raw link.
+*# `false`: 
 * `preposition`: The preposition used after this placetype when it occurs as an entry placetype. Defaults to `"in"`.
 * `entry_placetype_use_the`: Use `"the"` before this placetype when it occurs as an entry placetype.
 * `entry_placetype_indefinite_article`: Indefinite article used before this placetype when it occurs as an entry
@@ -1826,9 +1908,9 @@ If you need to sort the following, do this (using Vim):
 	},
 	["administrative atoll"] = {
 		-- Maldives
-		link = "[[w:administrative divisions of the Maldives|administrative atoll]]",
+		link = "+w:administrative divisions of the Maldives",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["administrative capital"] = {
 		link = "w",
@@ -1843,7 +1925,7 @@ If you need to sort the following, do this (using Vim):
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 	},
 	["administrative county"] = {
 		link = "w",
@@ -1862,7 +1944,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		suffix = "region", -- but prefix is still "administrative region (of)"
 		fallback = "region",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["administrative seat"] = {
 		link = "w",
@@ -1873,17 +1955,17 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		suffix = "territory", -- but prefix is still "administrative territory (of)"
 		fallback = "territory",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["administrative village"] = {
 		link = "w",
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["airport"] = {
 		link = true,
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {true},
 	},
 	["alliance"] = {
@@ -1895,14 +1977,19 @@ If you need to sort the following, do this (using Vim):
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 		default = {"Ancient settlements", "Historical capitals"},
 	},
 	["ANCIENT settlement"] = {
 		link = false,
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 		default = {"Ancient settlements"},
+	},
+	["ancient settlement!"] = {
+		link = false,
+		plural_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
+		parent = "historical settlements",
 	},
 	["archipelago"] = {
 		link = true,
@@ -1912,13 +1999,16 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		fallback = "geographic and cultural area",
+		-- Areas can either be administrative divisions (specifically of Kuwait) or geographic areas. Assume the former
+		-- when categorizing 'Areas' but the latter when handling e.g. 'historical area'.
+		class = "subpolity",
 		former_type = "geographic region",
 		cat_handler = district_neighborhood_cat_handler,
 	},
 	["arm"] = {
 		link = true,
 		preposition = "of",
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {"Seas"},
 	},
 	["arrondissement"] = {
@@ -1926,7 +2016,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		-- FIXME!!! Grrrrr!!! In some countries, arrondissements are divisions of cities; in others, they are divisions
 		-- of departments or provinces. Need to conditionalize on the country for both of the following.
-		former_type = "subpolity",
+		class = "subpolity",
 		has_neighborhoods = true,
 	},
 	["associated province"] = {
@@ -1937,7 +2027,8 @@ If you need to sort the following, do this (using Vim):
 		-- FIXME! Atolls are administrative divisions of the Maldives but natural features elsewhere. Need to
 		-- conditionalize former_type on the country. See also `administrative atoll`.
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
+		parents = "islands",
 		default = {true},
 	},
 	["autonomous city"] = {
@@ -1950,27 +2041,27 @@ If you need to sort the following, do this (using Vim):
 		-- Spain; refers to regional entities, not village-like entities, as might be expected from "community"
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["autonomous island"] = {
 		-- Comoros; seems like an administrative atoll of the Maldives.
-		link = "[[w:autonomous islands of Comoros|autonomous island]]",
+		link = "+w:autonomous islands of Comoros",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["autonomous oblast"] = {
 		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = "oblast",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["autonomous okrug"] = {
 		link = true,
 		preposition = "of",
 		affix_type = "Suf",
 		no_affix_strings = "okrug",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["autonomous prefecture"] = {
 		link = true,
@@ -1991,13 +2082,13 @@ If you need to sort the following, do this (using Vim):
 	["autonomous republic"] = {
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["autonomous territorial unit"] = {
 		-- Moldova; only two of them, one for Gagauzia and one for Transnistria.
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["autonomous territory"] = {
 		link = "w",
@@ -2027,12 +2118,14 @@ If you need to sort the following, do this (using Vim):
 	["bay"] = {
 		link = true,
 		preposition = "of",
-		former_type = "natural feature",
+		class = "natural feature",
+		addl_parents = {"bodies of water"},
 		default = {true},
 	},
 	["beach"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
+		addl_parents = {"water"},
 		default = {true},
 	},
 	["beach resort"] = {
@@ -2043,6 +2136,15 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "polity",
 	},
+	["body of water!"] = {
+		-- FIXME: This is maybe?) a type category not a name category. There should be an option for this. We need to
+		-- straighten out the type vs. name vs. related-to issue.
+		link = false,
+		plural = "bodies of water",
+		plural_link = true,
+		class = "natural feature",
+		addl_parents = {"landforms", "ecosystems", "water"},
+	},
 	["borough"] = {
 		link = true,
 		preposition = "of",
@@ -2051,7 +2153,7 @@ If you need to sort the following, do this (using Vim):
 		-- "former borough" could be a former settlement or a former part of a city but seems more likely to
 		-- be a former subpolity, particularly in England. FIXME, we really need a handler to take care of this
 		-- properly.
-		former_type = "subpolity",
+		class = "subpolity",
 		["city/New York City"] = {"Boroughs of +++"},
 		-- Grr, some boroughs are city-like but some (e.g. in Britain) may be larger.
 	},
@@ -2060,7 +2162,7 @@ If you need to sort the following, do this (using Vim):
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 	},
 	["branch"] = {
 		link = true,
@@ -2083,7 +2185,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["cape"] = {
 		link = true,
@@ -2095,22 +2197,24 @@ If you need to sort the following, do this (using Vim):
 	},
 	["capital city"] = {
 		link = true,
+		category_plural_link = "[[capital city|capital cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[subdivision]] of a country",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
+		parent = "cities",
 		cat_handler = capital_city_cat_handler,
 		default = {true},
 	},
 	["caplc"] = {
 		link = "[[capital]] and [[large]]st [[city]]",
-		plural = false,
+		plural_link = false,
 		fallback = "capital city",
 	},
 	["caravan city"] = {
 		link = "w",
 		fallback = "city",
-		former_type = "settlement",
+		class = "settlement",
 		inherently_former = {"ANCIENT", "FORMER"},
 	},
 	["cathedral city"] = {
@@ -2126,18 +2230,18 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		affix_type = "Suf",
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["census-designated place"] = {
 		-- United States
 		link = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["census division"] = {
 		-- Canada
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["census town"] = {
 		link = "w",
@@ -2149,9 +2253,9 @@ If you need to sort the following, do this (using Vim):
 	},
 	["cercle"] = {
 		-- Mali
-		link = "[[w:cercles of Mali|cercle]]",
+		link = "+w:cercles of Mali",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["ceremonial county"] = {
 		link = true,
@@ -2175,7 +2279,7 @@ If you need to sort the following, do this (using Vim):
 	["city"] = {
 		link = true,
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
@@ -2183,7 +2287,7 @@ If you need to sort the following, do this (using Vim):
 	["city-state"] = {
 		link = true,
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 		["continent/*"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
 		default = {"City-states", "Cities", "Countries", "National capitals"},
 	},
@@ -2193,11 +2297,11 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		affix_type = "suf",
 		has_neighborhoods = true,
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["claimed political subdivision"] = {
 		link = "[[claim]]ed [[political]] [[subdivision]]",
-		former_type = "subpolity",
+		class = "subpolity",
 		default = {true},
 	},
 	["co-capital"] = {
@@ -2205,7 +2309,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "capital city",
 	},
 	["coal city"] = {
-		link = "[[w:coal town|coal city]]",
+		link = "+w:coal town",
 		fallback = "city",
 	},
 	["coal town"] = {
@@ -2216,7 +2320,7 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		preposition = "of",
 		-- No default; these are weird one-off governmental divisions in France (esp. for overseas collectivities)
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["colony"] = {
 		link = true,
@@ -2225,14 +2329,14 @@ If you need to sort the following, do this (using Vim):
 	["commandery"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 		inherently_former = {"ANCIENT", "FORMER"},
 	},
 	["commonwealth"] = {
 		link = true,
 		preposition = "of",
 		-- No default; applies specifically to Puerto Rico
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["commune"] = {
 		link = true,
@@ -2248,7 +2352,7 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		affix_type = "suf",
 		no_affix_strings = "block",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["comune"] = {
 		-- Italy, Switzerland
@@ -2267,17 +2371,17 @@ If you need to sort the following, do this (using Vim):
 		-- currently we have them as political divisions of Namibia but many countries have them
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["constituent country"] = {
 		link = true,
 		preposition = "of",
 		fallback = "country",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["continent"] = {
 		link = true,
-		former_type = "geographic region",
+		class = "geographic region",
 		default = {true}, -- FIXME: Categorize as "Continents and continental regions"
 	},
 	["continental region"] = {
@@ -2289,11 +2393,11 @@ If you need to sort the following, do this (using Vim):
 		-- in Scotland; similar to a county
 		preposition = "of",
 		affix_type = "suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["country"] = {
 		link = true,
-		former_type = "polity",
+		class = "polity",
 		["continent/*"] = {true, "Countries"},
 		default = {true},
 	},
@@ -2301,7 +2405,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		display_handler = county_display_handler,
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["county borough"] = {
 		link = true,
@@ -2309,14 +2413,14 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		affix_type = "suf",
 		fallback = "borough",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["county seat"] = {
 		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 	},
 	["county town"] = {
 		link = true,
@@ -2324,7 +2428,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		fallback = "town",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 	},
 	["county-administered city"] = {
 		-- In Taiwan, per Wikipedia similar to a Taiwanese township or district, which is a small city.
@@ -2332,7 +2436,7 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		fallback = "city",
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["county-controlled city"] = {
 		-- Taiwan
@@ -2366,15 +2470,15 @@ If you need to sort the following, do this (using Vim):
 	},
 	["delegation"] = {
 		-- Tunisia
-		link = "[[w:delegations of Tunisia|delegation]]",
+		link = "+w:delegations of Tunisia",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["department"] = {
 		link = true,
 		preposition = "of",
 		affix_type = "suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["department capital"] = {
 		link = "separately",
@@ -2387,13 +2491,13 @@ If you need to sort the following, do this (using Vim):
 	["dependent territory"] = {
 		link = "w",
 		preposition = "of",
-		former_type = "dependent territory",
+		class = "dependent territory",
 		["country/*"] = {true},
 		default = {true},
 	},
 	["desert"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["deserted mediaeval village"] = {
@@ -2406,7 +2510,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["direct-administered municipality"] = {
 		-- China
-		link = "[[w:direct-administered municipalities of China|direct-administered municipality]]",
+		link = "+w:direct-administered municipalities of China",
 		fallback = "municipality",
 	},
 	["direct-controlled municipality"] = {
@@ -2426,12 +2530,12 @@ If you need to sort the following, do this (using Vim):
 		-- Grrr! FIXME! Here is where we need handlers for former_type. Using similar logic to
 		-- district_neighborhood_cat_handler, we need to check if we're below or above a city to determine if the former
 		-- type is "settlement" or "subpolity".
-		former_type = "subpolity",
+		class = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 
 		-- No default. Countries for which districts are political subdivisions will get entries.
 	},
-	["district and autonomous region"] = {
+	["district and autonomous region!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Portugal.
 		link = false,
@@ -2454,12 +2558,12 @@ If you need to sort the following, do this (using Vim):
 		affix_type = "suf",
 		no_affix_strings = {"district", "municipality"},
 		fallback = "municipality",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["division"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["division capital"] = {
 		link = "separately",
@@ -2491,13 +2595,13 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		-- Enclaves can theoretically be any size but assume a subpolity.
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["entity"] = {
 		-- Bosnia and Herzegovina
-		link = "[[w:entities of Bosnia and Herzegovina|entity]]",
+		link = "+w:entities of Bosnia and Herzegovina",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["escarpment"] = {
 		link = true,
@@ -2505,14 +2609,14 @@ If you need to sort the following, do this (using Vim):
 	},
 	["ethnographic region"] = {
 		-- used in Lithuania
-		link = "[[w:ethnographic regions of Lithuania|ethnographic region]]",
+		link = "+w:ethnographic regions of Lithuania",
 		fallback = "geographic and cultural area",
 	},
 	["exclave"] = {
 		link = true,
 		preposition = "of",
 		-- exclaves can theoretically be any size but assume a subpolity.
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["external territory"] = {
 		link = "separately",
@@ -2520,28 +2624,28 @@ If you need to sort the following, do this (using Vim):
 	},
 	["farm"] = {
 		link = true,
-		former_type = "settlement",
+		class = "settlement",
 		default = {"Farms and ranches"},
 	},
 	["federal city"] = {
 		link = "w",
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["federal district"] = {
 		link = true,
 		preposition = "of",
 		-- Might have neighborhoods as federal districts are often cities (e.g. Mexico City)
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["federal subject"] = {
 		-- In Russia; a generic term for first-level administrative divisions (republics, oblasts, okrugs, krais,
 		-- autonomous okrugs and autonomous oblasts).
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["federal territory"] = {
 		link = "w",
@@ -2549,7 +2653,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["fictional location"] = {
 		link = "separately",
-		former_type = "!",
+		class = "!",
 		default = {true},
 	},
 	["First Nations reserve"] = {
@@ -2557,16 +2661,16 @@ If you need to sort the following, do this (using Vim):
 		link = "[[First Nations]] [[w:Indian reserve|reserve]]",
 		-- Wikipedia uses "Indian reserve"; presumably that is the legal term
 		fallback = "Indian reserve",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["fjord"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["forest"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["FORMER capital"] = {
@@ -2574,14 +2678,14 @@ If you need to sort the following, do this (using Vim):
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 		-- FIXME: Here and below, we should use 'Former' in place of 'Historical'.
 		default = {"Historical settlements", "Historical capitals"},
 	},
 	["FORMER dependent territory"] = {
 		link = false,
 		preposition = "of",
-		former_type = "dependent territory",
+		class = "dependent territory",
 		default = {"Historical dependent territories"},
 	},
 	["FORMER geographic region"] = {
@@ -2590,29 +2694,29 @@ If you need to sort the following, do this (using Vim):
 	},
 	["FORMER man-made structure"] = {
 		link = false,
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {"Former man-made structures"},
 	},
 	["FORMER natural feature"] = {
 		link = false,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {"Former natural features"},
 	},
 	["FORMER polity"] = {
 		link = false,
-		former_type = "polity",
+		class = "polity",
 		default = {"Historical polities"},
 	},
 	["FORMER settlement"] = {
 		link = false,
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 		default = {"Historical settlements"},
 	},
 	["FORMER subpolity"] = {
 		link = false,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 		default = {"Historical political subdivisions"},
 	},
 	-- a former region is considered a former political subdivision, but not a 'historical/traditional/etc.
@@ -2621,30 +2725,30 @@ If you need to sort the following, do this (using Vim):
 		link = "separately",
 		preposition = "of",
 		inherently_former = {"FORMER"},
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["frazione"] = {
 		link = "w",
 		fallback = "hamlet",
 	},
 	["French prefecture"] = {
-		link = "[[w:Prefectures in France|prefecture]]",
+		link = "+w:prefectures in France",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 	},
 	["geographic and cultural area"] = {
-		link = "[[w:cultural area|geographic and cultural area]]",
+		link = "+w:cultural area",
 		preposition = "of",
-		former_type = "geographic region",
+		class = "geographic region",
 		["country/*"] = {true},
 		["constituent country/*"] = {true},
 		["continent/*"] = {true},
 		default = {true},
 	},
 	["geographic area"] = {
-		link = "[[w:geographic region|geographic area]]",
+		link = "+w:geographic region",
 		fallback = "geographic and cultural area",
 	},
 	["geographic region"] = {
@@ -2663,17 +2767,17 @@ If you need to sort the following, do this (using Vim):
 		-- Nigeria
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["gewog"] = {
 		-- Bhutan
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["ghost town"] = {
 		link = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["glen"] = {
 		link = true,
@@ -2683,13 +2787,13 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["greater administrative region"] = {
 		-- China (historical subdivision)
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 		inherently_former = {"FORMER"},
 	},
 	["gromada"] = {
@@ -2697,7 +2801,7 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
-		former_type = "subpolity",
+		class = "subpolity",
 		inherently_former = {"FORMER"},
 	},
 	["group of islands"] = {
@@ -2710,7 +2814,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		holonym_use_the = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["hamlet"] = {
@@ -2735,7 +2839,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["headland"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["headquarters"] = {
@@ -2748,7 +2852,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["hill"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["hill station"] = {
@@ -2761,7 +2865,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["historic region"] = {
 		-- provided only for the link
-		link = "[[w:historical region|historic region]]",
+		link = "+w:historical region",
 		fallback = "FORMER geographic region",
 	},
 	["historical region"] = {
@@ -2783,7 +2887,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["house"] = {
 		link = true,
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {"Individual buildings"},
 	},
 	["housing estate"] = {
@@ -2797,7 +2901,7 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		preposition = "of",
 		affix_type = "Suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["inactive volcano"] = {
 		link = "w",
@@ -2808,7 +2912,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "city",
 	},
 	["independent town"] = {
-		link = "[[independent city|independent town]]",
+		link = "+independent city",
 		fallback = "town",
 	},
 	["Indian reservation"] = {
@@ -2818,7 +2922,7 @@ If you need to sort the following, do this (using Vim):
 		-- the article at [[w:Indian reservation]] and uses that term when describing e.g. what the Navajo Nation is,
 		-- so this must still be the legal term.
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 		default = {true},
 	},
 	["Indian reserve"] = {
@@ -2826,7 +2930,7 @@ If you need to sort the following, do this (using Vim):
 		-- In Canada. "First Nations reserve" sounds more modern/PC but Wikipedia uses "Indian reserve"; presumably that
 		-- is still the legal term.
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 		default = {true},
 	},
 	["inland sea"] = {
@@ -2840,7 +2944,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["island"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["island country"] = {
@@ -2862,7 +2966,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["Israeli settlement"] = {
 		link = "w",
-		former_type = "settlement",
+		class = "settlement",
 		default = {true},
 	},
 	["judicial capital"] = {
@@ -2876,8 +2980,7 @@ If you need to sort the following, do this (using Vim):
 	["kibbutz"] = {
 		link = true,
 		plural = "kibbutzim",
-		plural_link = "[[kibbutz]]im",
-		former_type = "settlement",
+		class = "settlement",
 		default = {true},
 	},
 	["kingdom"] = {
@@ -2888,16 +2991,15 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "Suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["lake"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["largest city"] = {
 		link = "[[large]]st [[city]]",
-		plural_link = "[[large]]st [[city|cities]]",
 		entry_placetype_use_the = true,
 		fallback = "city",
 		has_neighborhoods = true,
@@ -2912,7 +3014,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["library"] = {
 		link = true,
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {"Individual buildings"},
 	},
 	["lieutenancy area"] = {
@@ -2934,11 +3036,11 @@ If you need to sort the following, do this (using Vim):
 		-- Australia
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["local council"] = {
 		-- Malta; similar to municipalities
-		link = "[[w:local councils of Malta|local council]]",
+		link = "+w:local councils of Malta",
 		preposition = "of",
 		fallback = "municipality",
 	},
@@ -2947,7 +3049,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["local government district with borough status"] = {
 		link = "[[w:local government district|local government district]] with [[w:borough status|borough status]]",
@@ -2956,14 +3058,14 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		affix_type = "suf",
 		affix = "district",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["local urban district"] = {
 		link = "w",
 		fallback = "unincorporated community",
 	},
 	["locality"] = {
-		link = "[[w:locality (settlement)|locality]]",
+		link = "+w:locality (settlement)",
 		-- not necessarily true, but usually is the case
 		fallback = "village",
 	},
@@ -2985,7 +3087,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "sea",
 	},
 	["market city"] = {
-		link = "[[market town|market city]]",
+		link = "+market town",
 		fallback = "city",
 	},
 	["market town"] = {
@@ -3002,7 +3104,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["metro station"] = {
 		link = true,
-		former_type = "man-made structure",
+		class = "man-made structure",
 	},
 	["metropolitan borough"] = {
 		link = true,
@@ -3018,7 +3120,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		affix_type = "Pref",
 		no_affix_strings = {"metropolitan", "city"},
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["metropolitan county"] = {
 		link = true,
@@ -3034,7 +3136,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["military base"] = {
 		link = "w",
-		former_type = "settlement", -- or "man-made structure"?
+		class = "settlement", -- or "man-made structure"?
 		default = {true},
 	},
 	["minster town"] = {
@@ -3044,7 +3146,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["moor"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["moorland"] = {
@@ -3053,22 +3155,25 @@ If you need to sort the following, do this (using Vim):
 	},
 	["mountain"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["mountain indigenous district"] = {
 		-- Taiwan
-		link = "[[w:district (Taiwan)|mountain indigenous district]]",
+		link = "+w:district (Taiwan)",
 		fallback = "district",
 	},
 	["mountain indigenous township"] = {
 		-- Taiwan
-		link = "[[w:township (Taiwan)|mountain indigenous township]]",
+		link = "+w:township (Taiwan)",
 		fallback = "township",
 	},
 	["mountain pass"] = {
 		link = true,
-		former_type = "natural feature",
+		-- The default plural algorithm gets this right but the singularization algorithm incorrectly converts
+		-- passes -> passe, so put an entry here to ensure we singularize correctly.
+		plural = "mountain passes",
+		class = "natural feature",
 		default = {true},
 	},
 	["mountain range"] = {
@@ -3083,7 +3188,7 @@ If you need to sort the following, do this (using Vim):
 		-- Malaysia, Brunei, Indonesia, Singapore
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["municipal district"] = {
 		link = "w",
@@ -3098,7 +3203,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["municipality with city status"] = {
 		link = "[[municipality]] with [[w:city status|city status]]",
@@ -3108,7 +3213,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["mythological location"] = {
 		link = "separately",
-		former_type = "!",
+		class = "!",
 		default = {true},
 	},
 	["national capital"] = {
@@ -3122,7 +3227,7 @@ If you need to sort the following, do this (using Vim):
 	["neighborhood"] = {
 		link = true,
 		preposition = "of",
-		former_type = "settlement",
+		class = "settlement",
 		cat_handler = district_neighborhood_cat_handler,
 		--cat_handler = function(data)
 		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
@@ -3136,7 +3241,7 @@ If you need to sort the following, do this (using Vim):
 		-- China (type of economic development zone, varying greatly in size)
 		link = "w",
 		preposition = "in",
-		former_type = "subpolity", --?
+		class = "subpolity", --?
 	},
 	["new town"] = {
 		link = true,
@@ -3147,7 +3252,7 @@ If you need to sort the following, do this (using Vim):
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
-		former_type = "capital",
+		class = "capital",
 		cat_handler = function(data)
 			return capital_city_cat_handler(data, "non-city")
 		end,
@@ -3164,8 +3269,8 @@ If you need to sort the following, do this (using Vim):
 	},
 	["non-sovereign kingdom"] = {
 		-- especially in Africa and Asia
-		link = "[[w:non-sovereign monarchy|non-sovereign kingdom]]",
-		former_type = "subpolity",
+		link = "+w:non-sovereign monarchy",
+		class = "subpolity",
 		["country/*"] = {true},
 		["continent/*"] = {true},
 		default = {true},
@@ -3178,19 +3283,19 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "Suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["ocean"] = {
 		link = true,
 		holonym_use_the = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["okrug"] = {
 		link = true,
 		preposition = "of",
 		affix_type = "Suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["overseas collectivity"] = {
 		link = "w",
@@ -3208,11 +3313,11 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["parish municipality"] = {
 		-- in Quebec, often similar to a rural village; the famous [[Saint-Louis-du-Ha! Ha!]] is one of them.
-		link = "[[w:parish municipality (Quebec)|parish municipality]]",
+		link = "+w:parish municipality (Quebec)",
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true,
@@ -3221,16 +3326,19 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		entry_placetype_use_the = true,
 		preposition = "of",
-		former_type = "capital",
+		class = "capital",
 		has_neighborhoods = true,
 	},
 	["park"] = {
 		link = true,
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {true},
 	},
 	["pass"] = {
-		link = "[[mountain pass|pass]]",
+		link = "+mountain pass",
+		-- The default plural algorithm gets this right but the singularization algorithm incorrectly converts
+		-- passes -> passe, so put an entry here to ensure we singularize correctly.
+		plural = "passes",
 		fallback = "mountain pass",
 	},
 	["peak"] = {
@@ -3239,18 +3347,18 @@ If you need to sort the following, do this (using Vim):
 	},
 	["peninsula"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["periphery"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["planned community"] = {
 		-- Include this so we don't categorize 'planned community' into villages, as 'community' does.
 		link = true,
-		former_type = "settlement",
+		class = "settlement",
 		has_neighborhoods = true,
 	},
 	["plateau"] = {
@@ -3258,25 +3366,25 @@ If you need to sort the following, do this (using Vim):
 		fallback = "geographic and cultural area",
 	},
 	["Polish colony"] = {
-		link = "[[w:Colony (Poland)|colony]]",
+		link = "+w:colony (Poland)",
 		affix_type = "suf",
 		affix = "colony",
 		fallback = "village",
 		has_neighborhoods = true,
 	},
 	["polity"] = {
-		link = 
-		former_type = "polity",
+		link = true,
+		class = "polity",
 		default = {true},
 	},
 	["populated place"] = {
-		link = "[[w:populated place|locality]]",
+		link = "+w:populated place",
 		-- not necessarily true, but usually is the case
 		fallback = "village",
 	},
 	["port"] = {
 		link = true,
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {true},
 	},
 	["port city"] = {
@@ -3295,13 +3403,13 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		display_handler = prefecture_display_handler,
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["prefecture-level city"] = {
 		-- China; they are huge entities with a central city; not cities themselves.
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["promontory"] = {
 		link = true,
@@ -3315,16 +3423,16 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		display_handler = province_display_handler,
-		former_type = "subpolity",
+		class = "subpolity",
 	},
-	["province and autonomous region"] = {
+	["province and autonomous region!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case China.
 		link = false,
 		plural = "provinces and autonomous regions",
 		plural_link = "[[province]]s and [[autonomous region]]s",
 	},
-	["province and territory"] = {
+	["province and territory!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Canada and Pakistan.
 		link = false,
@@ -3339,7 +3447,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "Suf",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["ranch"] = {
 		link = true,
@@ -3349,12 +3457,12 @@ If you need to sort the following, do this (using Vim):
 		-- FIXME: Where is this used? Is it a mountain range?
 		link = true,
 		holonym_use_the = true,
-		former_type = "natural feature",
+		class = "natural feature",
 	},
 	["regency"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["region"] = {
 		link = true,
@@ -3362,7 +3470,7 @@ If you need to sort the following, do this (using Vim):
 		-- If 'region' isn't a specific administrative division, fall back to 'geographic and cultural area'
 		fallback = "geographic and cultural area",
 		-- "former region" is a subpolity but traditional/historic(al)/ancient/medieval/etc. is a geographic region
-		former_type = "geographic region",
+		class = "geographic region",
 	},
 	["regional capital"] = {
 		link = "separately",
@@ -3393,7 +3501,7 @@ If you need to sort the following, do this (using Vim):
 	["regional unit"] = {
 		link = "w",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["registration county"] = {
 		-- Used in Scotland for land registration purposes; formerly used in England, Wales and Ireland for statistical
@@ -3405,15 +3513,15 @@ If you need to sort the following, do this (using Vim):
 		-- Of Russia. "Republics" in general are sovereign but we use "country" in that case.
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["research base"] = {
-		link = "[[w:research station|research base]]",
+		link = "+w:research station",
 		fallback = "research station",
 	},
 	["research station"] = {
 		link = "w",
-		former_type = "settlement", -- or "man-made structure"?
+		class = "settlement", -- or "man-made structure"?
 		default = {true},
 	},
 	["reservoir"] = {
@@ -3435,7 +3543,7 @@ If you need to sort the following, do this (using Vim):
 	["river"] = {
 		link = true,
 		holonym_use_the = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		cat_handler = city_type_cat_handler,
 		["continent/*"] = {true},
 		default = {true},
@@ -3444,7 +3552,7 @@ If you need to sort the following, do this (using Vim):
 		-- FIXME! Eliminate this in favor of 'former province|emp/Roman Empire'
 		link = "w",
 		default = {"Provinces of the Roman Empire"},
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["royal borough"] = {
 		link = "w",
@@ -3467,11 +3575,11 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		affix_type = "Suf",
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["rural community"] = {
 		-- New Brunswick
-		link = "[[w:List_of_municipalities_in_New_Brunswick#Rural_communities|rural community]]",
+		link = "+w:list of municipalities in New_Brunswick#Rural communities",
 		fallback = "municipality",
 	},
 	["rural municipality"] = {
@@ -3484,19 +3592,19 @@ If you need to sort the following, do this (using Vim):
 	},
 	["rural township"] = {
 		-- Taiwan
-		link = "[[w:rural township (Taiwan)|rural township]]",
+		link = "+w:rural township (Taiwan)",
 		fallback = "township",
 	},
 	["satrapy"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 		inherently_former = {"ANCIENT", "FORMER"},
 	},
 	["sea"] = {
 		link = true,
 		holonym_use_the = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["seaport"] = {
@@ -3509,9 +3617,9 @@ If you need to sort the following, do this (using Vim):
 	},
 	["self-administered area"] = {
 		-- Myanmar (groups self-administered divisions and zones)
-		link = "[[w:self-administered zone|self-administered area]]",
+		link = "+w:self-administered zone",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["self-administered division"] = {
 		-- Myanmar (only one of them: Wa Self-Administered Division)
@@ -3556,7 +3664,6 @@ If you need to sort the following, do this (using Vim):
 	},
 	["ski resort city"] = {
 		link = "[[ski resort]] [[city]]",
-		plural_link = "[[ski resort]] [[city|cities]]",
 		fallback = "city",
 	},
 	["ski resort town"] = {
@@ -3564,7 +3671,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "town",
 	},
 	["spa city"] = {
-		link = "[[w:spa town|spa city]]",
+		link = "+w:spa town",
 		fallback = "city",
 	},
 	["spa town"] = {
@@ -3580,9 +3687,9 @@ If you need to sort the following, do this (using Vim):
 		-- "special administrative region"; North Korea had one such region planned (Sinuiju) but abandoned; Indonesia
 		-- has similar "special regions" of Jakarta, Yogyakarta and Aceh; and South Sudan has three "special
 		-- administrative areas"
-		link = "[[w:special administrative regions of China|special administrative region]]",
+		link = "+w:special administrative regions of China",
 		preposition = "of",
-		former_type = "settlement",
+		class = "settlement",
 		has_neighborhoods = true, --?
 	},
 	["special collectivity"] = {
@@ -3605,12 +3712,12 @@ If you need to sort the following, do this (using Vim):
 	},
 	["spring"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["star"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["state"] = {
@@ -3618,16 +3725,16 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		-- 'former/historical state' could refer either to a state of a country (a subdivision) or a state = sovereign
 		-- entity. The latter appears more common (e.g. in various "ancient states" of East Asia).
-		former_type = "polity",
+		class = "polity",
 	},
-	["state and territory"] = {
+	["state and territory!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Australia.
 		link = false,
 		plural = "states and territories",
 		plural_link = "[[state]]s and [[territory|territories]]",
 	},
-	["state and union territory"] = {
+	["state and union territory!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case India.
 		link = false,
@@ -3657,7 +3764,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["strait"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["stream"] = {
@@ -3683,7 +3790,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		has_neighborhoods = true, --?
 		-- FIXME: subdistricts can be neighborhood-like (of Jakarta) or larger (in China); need a handler
-		former_type = "subpolity",
+		class = "subpolity",
 		--FIXME: doesn't work; need customizable poldivs of cities (here, subdistricts of Jakarta)
 		--["country/Indonesia"] = {
 		--	["municipality"] = {true},
@@ -3695,7 +3802,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		affix_type = "suf",
 		-- FIXME: subdivisions can be neighborhood-like or larger; need a handler
-		former_type = "subpolity",
+		class = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 	},
 	["submerged ghost town"] = {
@@ -3704,7 +3811,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "ghost town",
 	},
 	["subnational kingdom"] = {
-		link = "[[w:subnational monarchy|subnational kingdom]]",
+		link = "+w:subnational monarchy",
 		fallback = "non-sovereign kingdom",
 	},
 	["subnational monarchy"] = {
@@ -3715,12 +3822,12 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		affix_type = "suf",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["subprovince"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["subprovincial city"] = {
 		link = "w",
@@ -3731,7 +3838,7 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		-- China; special status given to Binhai New Area and Pudong New Area, which are county-level districts
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["subregion"] = {
 		link = true,
@@ -3741,7 +3848,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		has_neighborhoods = true, --?
-		former_type = "settlement", --?
+		class = "settlement", --?
 		cat_handler = district_neighborhood_cat_handler,
 		--cat_handler = function(data)
 		--	return city_type_cat_handler(data, "allow if holonym is city", "no containing polity")
@@ -3763,7 +3870,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		affix_type = "suf",
 		no_affix_strings = {"tehsil", "tahsil"},
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["territorial authority"] = {
 		link = "w",
@@ -3772,12 +3879,12 @@ If you need to sort the following, do this (using Vim):
 	["territory"] = {
 		link = true,
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["town"] = {
 		link = true,
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
@@ -3792,12 +3899,12 @@ If you need to sort the following, do this (using Vim):
 	["township"] = {
 		link = true,
 		has_neighborhoods = true,
-		former_type = "settlement", --?
+		class = "settlement", --?
 		default = {true},
 	},
 	["township municipality"] = {
 		-- Quebec
-		link = "[[w:township municipality (Quebec)|township municipality]]",
+		link = "+w:township municipality (Quebec)",
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
@@ -3815,7 +3922,7 @@ If you need to sort the following, do this (using Vim):
 	["treaty port"] = {
 		link = "w",
 		fallback = "city",
-		former_type = "settlement",
+		class = "settlement",
 		inherently_former = {"FORMER"},
 	},
 	["tributary"] = {
@@ -3829,7 +3936,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["unincorporated community"] = {
 		link = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["unincorporated territory"] = {
 		link = "w",
@@ -3840,7 +3947,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		entry_placetype_indefinite_article = "a",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["unitary authority"] = {
 		-- UK, New Zealand
@@ -3855,7 +3962,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["united township municipality"] = {
 		-- Quebec
-		link = "[[w:united township municipality (Quebec)|united township municipality]]",
+		link = "+w:united township municipality (Quebec)",
 		entry_placetype_indefinite_article = "a",
 		fallback = "township municipality",
 		has_neighborhoods = true, --?
@@ -3863,7 +3970,7 @@ If you need to sort the following, do this (using Vim):
 	["university"] = {
 		link = true,
 		entry_placetype_indefinite_article = "a",
-		former_type = "man-made structure",
+		class = "man-made structure",
 		default = {true},
 	},
 	["unrecognised country"] = {
@@ -3872,7 +3979,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["unrecognized country"] = {
 		link = "w",
-		former_type = "polity",
+		class = "polity",
 		default = {"Unrecognized and nearly unrecognized countries"},
 	},
 	["urban area"] = {
@@ -3889,19 +3996,19 @@ If you need to sort the following, do this (using Vim):
 	},
 	["valley"] = {
 		link = true,
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true},
 	},
 	["village"] = {
 		link = true,
-		former_type = "settlement",
+		class = "settlement",
 		cat_handler = city_type_cat_handler,
 		["country/*"] = {true},
 		default = {true},
 	},
 	["village municipality"] = {
 		-- Quebec
-		link = "[[w:village municipality (Quebec)|village municipality]]",
+		link = "+w:village municipality (Quebec)",
 		preposition = "of",
 		fallback = "municipality",
 		has_neighborhoods = true, --?
@@ -3911,12 +4018,12 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		holonym_use_the = true,
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 	["volcano"] = {
 		link = true,
 		plural = "volcanoes",
-		former_type = "natural feature",
+		class = "natural feature",
 		default = {true, "Mountains"},
 	},
 	["ward"] = {
@@ -3930,30 +4037,28 @@ If you need to sort the following, do this (using Vim):
 	},
 	["Welsh community"] = {
 		-- Wales
-		link = "[[w:community (Wales)|community]]",
+		link = "+w:community (Wales)",
 		preposition = "of",
 		affix_type = "suf",
 		affix = "community",
 		has_neighborhoods = true,
-		former_type = "settlement",
+		class = "settlement",
 	},
 	["zone"] = {
 		-- administrative division of Ethiopia, Qatar, Nepal, India
-		link = "[[w:Zone#Place names|zone]]",
+		link = "+w:zone#Place names",
 		preposition = "of",
-		former_type = "subpolity",
+		class = "subpolity",
 	},
 }
 
-
--- Finalize the placetype_data structure by converting values that are simple strings into fallback structures.
-for placetype, value in pairs(export.placetype_data) do
-	if type(value) == "string" then
-		export.placetype_data[placetype] = {
-			fallback = value
-		}
+export.plural_placetype_to_singular = {}
+for sg_placetype, spec in pairs(export.placetype_data) do
+	if spec.plural then
+		export.plural_placetype_to_singular[spec.plural] = sg_placetype
 	end
 end
+
 
 -- Now augment the category data with political subdivisions extracted from the shared data.
 for _, group in ipairs(m_shared.polities) do
