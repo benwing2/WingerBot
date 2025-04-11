@@ -225,29 +225,27 @@ local function do_comparative_superlative(pos, data, args)
 			forms = args[3],
 		}
 
-		local saw_bolj = false
+		local comp_copyable_to_sup = true
 		for _, comp in ipairs(comps) do
-			if comp.term == "bolj" then
-				saw_bolj = true
+			if comp.term ~= "+" and comp.term ~= "peri" then
+				comp_copyable_to_sup = false
 				break
 			end
 		end
 
-		if saw_bolj then
-			local new_comps = {}
-			for _, comp in ipairs(comps) do
-				if comp.term == "bolj" then
-					for _, head in ipairs(data.heads) do
-						local new_comp = m_table.deepCopy(comp)
-						new_comp.term = "[[bȍlj]] " .. head
-						table.insert(new_comps, new_comp)
-					end
-				else
-					table.insert(new_comps, comp)
+		local new_comps = {}
+		for _, comp in ipairs(comps) do
+			if comp.term == "+" or comp.term == "peri" then
+				for _, head in ipairs(data.heads) do
+					local new_comp = m_table.deepCopy(comp)
+					new_comp.term = "[[lêbih]] " .. head
+					table.insert(new_comps, new_comp)
 				end
+			else
+				table.insert(new_comps, comp)
 			end
-			comps = new_comps
 		end
+		comps = new_comps
 
 		if not sups[1] then
 			sups = m_table.deepCopy(comps)
