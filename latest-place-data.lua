@@ -1986,10 +1986,9 @@ If you need to sort the following, do this (using Vim):
 		class = "settlement",
 		default = {"Ancient settlements"},
 	},
-	["ancient settlement!"] = {
-		link = false,
-		plural_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
-		parent = "historical settlements",
+	["ancient settlements!"] = {
+		category_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
+		category_parent = "historical settlements",
 	},
 	["archipelago"] = {
 		link = true,
@@ -2028,7 +2027,7 @@ If you need to sort the following, do this (using Vim):
 		-- conditionalize former_type on the country. See also `administrative atoll`.
 		link = true,
 		class = "natural feature",
-		parents = "islands",
+		category_parent = "islands",
 		default = {true},
 	},
 	["autonomous city"] = {
@@ -2197,12 +2196,12 @@ If you need to sort the following, do this (using Vim):
 	},
 	["capital city"] = {
 		link = true,
-		category_plural_link = "[[capital city|capital cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[subdivision]] of a country",
+		category_link = "[[capital city|capital cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[subdivision]] of a country",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		class = "capital",
-		parent = "cities",
+		category_parent = "cities",
 		cat_handler = capital_city_cat_handler,
 		default = {true},
 	},
@@ -2269,7 +2268,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["channel"] = {
 		link = true,
-		fallback = "river",
+		fallback = "strait",
 	},
 	["charter community"] = {
 		-- Northwest Territories, Canada
@@ -2286,6 +2285,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["city-state"] = {
 		link = true,
+		category_link = "[[sovereign]] [[microstate]]s consisting of a single [[city]] and [[w:dependent territory|dependent territories]]",
 		has_neighborhoods = true,
 		class = "settlement",
 		["continent/*"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
@@ -2344,6 +2344,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["community"] = {
 		link = true,
+		category_link = "[[community|communities]] of all sizes",
 		fallback = "village",
 	},
 	["community development block"] = {
@@ -2381,6 +2382,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["continent"] = {
 		link = true,
+		category_link = "the [[continent]]s of the world",
 		class = "geographic region",
 		default = {true}, -- FIXME: Categorize as "Continents and continental regions"
 	},
@@ -2400,6 +2402,11 @@ If you need to sort the following, do this (using Vim):
 		class = "polity",
 		["continent/*"] = {true, "Countries"},
 		default = {true},
+	},
+	["country-like entities!"] = {
+		link = false,
+		category_link = "[[polity|polities]] not normally considered [[country|countries]] but treated similarly for categorization purposes; typically, [[unrecognized]] [[de-facto]] countries or [[w:dependent territory|dependent territories]]",
+		class = "polity",
 	},
 	["county"] = {
 		link = true,
@@ -2492,12 +2499,14 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		preposition = "of",
 		class = "dependent territory",
+		category_parent = "political divisions",
 		["country/*"] = {true},
 		default = {true},
 	},
 	["desert"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"ecosystems"},
 		default = {true},
 	},
 	["deserted mediaeval village"] = {
@@ -2666,11 +2675,13 @@ If you need to sort the following, do this (using Vim):
 	["fjord"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = "bodies of water",
 		default = {true},
 	},
 	["forest"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"ecosystems", "forestry"},
 		default = {true},
 	},
 	["FORMER capital"] = {
@@ -2681,6 +2692,10 @@ If you need to sort the following, do this (using Vim):
 		class = "capital",
 		-- FIXME: Here and below, we should use 'Former' in place of 'Historical'.
 		default = {"Historical settlements", "Historical capitals"},
+	},
+	["former countries and country-like entities!"] = {
+		category_link = "[[country|countries]] and similar [[polity|polities]] that no longer exist",
+		category_parent = "former polities",
 	},
 	["FORMER dependent territory"] = {
 		link = false,
@@ -2697,10 +2712,18 @@ If you need to sort the following, do this (using Vim):
 		class = "man-made structure",
 		default = {"Former man-made structures"},
 	},
+	["former man-made structures!"] = {
+		category_link = "man-made structures such as [[airport]]s and [[park]]s that no longer exist",
+		category_parent = "former places",
+	},
 	["FORMER natural feature"] = {
 		link = false,
 		class = "natural feature",
 		default = {"Former natural features"},
+	},
+	["former natural features!"] = {
+		category_link = "natural features such as [[lake]]s, [[river]]s and [[island]]s that no longer exist",
+		category_parent = "former places",
 	},
 	["FORMER polity"] = {
 		link = false,
@@ -2742,6 +2765,7 @@ If you need to sort the following, do this (using Vim):
 		link = "+w:cultural area",
 		preposition = "of",
 		class = "geographic region",
+		category_parent = "places",
 		["country/*"] = {true},
 		["constituent country/*"] = {true},
 		["continent/*"] = {true},
@@ -2778,6 +2802,7 @@ If you need to sort the following, do this (using Vim):
 	["ghost town"] = {
 		link = true,
 		class = "settlement",
+		category_parent = "historical settlements",
 	},
 	["glen"] = {
 		link = true,
@@ -2815,6 +2840,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		holonym_use_the = true,
 		class = "natural feature",
+		addl_parents = {"bodies of water"},
 		default = {true},
 	},
 	["hamlet"] = {
@@ -2840,6 +2866,7 @@ If you need to sort the following, do this (using Vim):
 	["headland"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms"},
 		default = {true},
 	},
 	["headquarters"] = {
@@ -2853,6 +2880,7 @@ If you need to sort the following, do this (using Vim):
 	["hill"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms"},
 		default = {true},
 	},
 	["hill station"] = {
@@ -2868,10 +2896,35 @@ If you need to sort the following, do this (using Vim):
 		link = "+w:historical region",
 		fallback = "FORMER geographic region",
 	},
+	["historical capitals!"] = {
+		-- FIXME! Rename to 'former capitals'
+		category_link = "former [[capital]] [[city|cities]] and [[town]]s",
+		category_parent = "historical settlements",
+	},
+	["historical dependent territories!"] = {
+		-- FIXME! Rename to 'former dependent territories'
+		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
+		category_parent = "historical political subdivisions",
+	},
+	["historical political subdivisions!"] = {
+		-- FIXME! Rename to 'former political divisions'
+		category_link = "[[political]] [[subdivision]]s (states, provinces, counties, etc.) that no longer exist",
+		category_parent = "former places",
+	},
+	["historical polities!"] = {
+		-- FIXME! Rename to 'former polities'
+		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
+		category_parent = "former places",
+	},
 	["historical region"] = {
 		-- provided only for the link
 		link = "w",
 		fallback = "FORMER geographic region",
+	},
+	["historical settlements!"] = {
+		-- FIXME: Rename to 'former settlements'
+		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
+		category_parent = "historical political subdivisions",
 	},
 	["home rule city"] = {
 		link = "w",
@@ -2933,6 +2986,10 @@ If you need to sort the following, do this (using Vim):
 		class = "subpolity",
 		default = {true},
 	},
+	["individual buildings!"] = {
+		category_link = "[[house]]s, [[library|libraries]] and other notable [[building]]s",
+		category_parent = "man-made structures",
+	},
 	["inland sea"] = {
 		-- note, we also have 'inland' as a qualifier
 		link = true,
@@ -2945,6 +3002,7 @@ If you need to sort the following, do this (using Vim):
 	["island"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms"},
 		default = {true},
 	},
 	["island country"] = {
@@ -2996,7 +3054,13 @@ If you need to sort the following, do this (using Vim):
 	["lake"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"bodes of water"},
 		default = {true},
+	},
+	["landforms!"] = {
+		category_link = "[[landform]]s",
+		category_parent = "places",
+		addl_parents = {"Earth"},
 	},
 	["largest city"] = {
 		link = "[[large]]st [[city]]",
@@ -3130,6 +3194,11 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "neighborhood",
 	},
+	["micronations!"] = {
+		-- FIXME, merge with microstate
+		category_link = "[[micronation]]s",
+		category_parent = "countries",
+	},
 	["microstate"] = {
 		link = true,
 		fallback = "country",
@@ -3147,6 +3216,7 @@ If you need to sort the following, do this (using Vim):
 	["moor"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms", "ecosystems"},
 		default = {true},
 	},
 	["moorland"] = {
@@ -3156,6 +3226,7 @@ If you need to sort the following, do this (using Vim):
 	["mountain"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms"},
 		default = {true},
 	},
 	["mountain indigenous district"] = {
@@ -3174,6 +3245,7 @@ If you need to sort the following, do this (using Vim):
 		-- passes -> passe, so put an entry here to ensure we singularize correctly.
 		plural = "mountain passes",
 		class = "natural feature",
+		addl_parents = {"mountains"},
 		default = {true},
 	},
 	["mountain range"] = {
@@ -3226,6 +3298,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["neighborhood"] = {
 		link = true,
+		category_link = "[[neighborhood]]s, [[district]]s and other subportions of a [[city]]",
 		preposition = "of",
 		class = "settlement",
 		cat_handler = district_neighborhood_cat_handler,
@@ -3289,6 +3362,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
+		addl_parents = {"seas"},
 		default = {true},
 	},
 	["okrug"] = {
@@ -3348,6 +3422,7 @@ If you need to sort the following, do this (using Vim):
 	["peninsula"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms"},
 		default = {true},
 	},
 	["periphery"] = {
@@ -3363,7 +3438,10 @@ If you need to sort the following, do this (using Vim):
 	},
 	["plateau"] = {
 		link = true,
-		fallback = "geographic and cultural area",
+		class = "natural feature",
+		addl_parents = {"landforms"},
+		default = {true},
+		-- FIXME: Should generate both "Plateaus" and the appropriate 'geographic and cultural area' category
 	},
 	["Polish colony"] = {
 		link = "+w:colony (Poland)",
@@ -3372,8 +3450,13 @@ If you need to sort the following, do this (using Vim):
 		fallback = "village",
 		has_neighborhoods = true,
 	},
+	["political divisions!"] = {
+		category_link = "[[political]] [[division]]s and [[subdivision]]s, such as [[countries]], [[province]]s, [[state]]s or [[region]]s",
+		category_parent = "places",
+	},
 	["polity"] = {
 		link = true,
+		category_link = "[[independent]] or [[semi-]][[independent]] [[polity|polities]]",
 		class = "polity",
 		default = {true},
 	},
@@ -3544,6 +3627,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
+		addl_parents = "bodies of water",
 		cat_handler = city_type_cat_handler,
 		["continent/*"] = {true},
 		default = {true},
@@ -3605,6 +3689,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
+		addl_parents = "bodies of water",
 		default = {true},
 	},
 	["seaport"] = {
@@ -3765,6 +3850,7 @@ If you need to sort the following, do this (using Vim):
 	["strait"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = "bodies of water",
 		default = {true},
 	},
 	["stream"] = {
@@ -3846,6 +3932,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["suburb"] = {
 		link = true,
+		category_link = "[[suburb]]s of a [[city]]",
 		preposition = "of",
 		has_neighborhoods = true, --?
 		class = "settlement", --?
@@ -3977,6 +4064,10 @@ If you need to sort the following, do this (using Vim):
 		link = "w",
 		fallback = "unrecognized country",
 	},
+	["unrecognized and nearly unrecognized countries!"] = {
+		category_link = "[[de facto]] [[independent]] [[state]]s with little or no {{w|international recognition}}",
+		category_parent = "country-like entities",
+	},
 	["unrecognized country"] = {
 		link = "w",
 		class = "polity",
@@ -3997,6 +4088,7 @@ If you need to sort the following, do this (using Vim):
 	["valley"] = {
 		link = true,
 		class = "natural feature",
+		addl_parents = {"landforms", "water"},
 		default = {true},
 	},
 	["village"] = {
@@ -4024,6 +4116,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		plural = "volcanoes",
 		class = "natural feature",
+		addl_parents = {"landforms"},
 		default = {true, "Mountains"},
 	},
 	["ward"] = {

@@ -79,58 +79,6 @@ General labels. These are intended for places of all sorts that are not qualifie
 * COMMONSCAT should be the name of a Commons category to link to, or 'false' to disable this. A value of 'true' or
   'nil' links to a category the same as the label.
 ]=]
-local general_labels = {
-	["city-states"] = {{"polities"}, "[[sovereign]] [[microstate]]s consisting of a single [[city]] and [[w:dependent territory|dependent territories]]"},
-	["communities"] = {{"polities"}, "[[community|communities]] of all sizes"},
-	["continents"] = {{"places"}, "the [[continent]]s of the world"},
-	["countries"] = {{"polities"}},
-	["country-like entities"] = {{"polities"}, "[[polity|polities]] not normally considered [[country|countries]] but treated similarly for categorization purposes; typically, [[unrecognized]] [[de-facto]] countries or [[w:dependent territory|dependent territories]]"},
-	["dependent territories"] = {{"polities"}, "w"},
-	["deserts"] = {{"places", "ecosystems"}},
-	["forests"] = {{"places", "ecosystems", "forestry"}},
-	["former countries and country-like entities"] = {{"polities"}, "[[country|countries]] and similar [[polity|polities]] that no longer exist"},
-	["former man-made structures"] = {{"places"}, "man-made structures such as [[airport]]s and [[park]]s that no longer exist"},
-	["former natural features"] = {{"places"}, "natural features such as [[lake]]s, [[river]]s and [[island]]s that no longer exist"},
-	["geographic and cultural areas"] = {{"places"}},
-	["ghost towns"] = {{"historical settlements"}},
-	["gulfs"] = {{"places", "bodies of water"}},
-	["headlands"] = {{"places"}},
-	["historical capitals"] = {{"historical settlements"}, "former [[capital]] [[city|cities]] and [[town]]s"},
-	["historical dependent territories"] = {{"dependent territories"}, "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist"},
-	["historical political subdivisions"] = {{"polities"}, "[[political]] [[subdivision]]s (states, provinces, counties, etc.) that no longer exist"},
-	["historical polities"] = {{"polities"}, "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist"},
-	["historical settlements"] = {{"historical polities"}, "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified"},
-	["hills"] = {{"places", "landforms"}},
-	["individual buildings"] = {{"buildings and structures"}, "[[house]]s, [[library|libraries]] and other notable [[building]]s"},
-	["islands"] = {{"places", "landforms"}},
-	["kibbutzim"] = {{"places"}, "[[kibbutz]]im"},
-	["lakes"] = {{"places", "bodies of water"}},
-	["landforms"] = {{"places", "Earth"}},
-	["micronations"] = {{"places"}},
-	["mountain passes"] = {{"places", "mountains"}, "[[mountain pass]]es"},
-	["mountains"] = {{"places", "landforms"}},
-	["moors"] = {{"places", "ecosystems"}},
-	["neighborhoods"] = {{"places"}, "[[neighborhood]]s, [[district]]s and other subportions of a [[city]]"},
-	-- FIXME, is the following parent correct?
-	["oceans"] = {{"seas"}},
-	["parks"] = {{"places"}},
-	["peninsulas"] = {{"places", "landforms"}},
-	["plateaus"] = {{"places", "landforms"}},
-	["political divisions"] = {{"polities"}, "[[political]] [[division]]s and [[subdivision]]s, such as [[countries]], [[province]]s, [[state]]s or [[region]]s"},
-	["polities"] = {{"places"}, "[[polity|polities]] or [[political]] [[division]]s"},
-	["rivers"] = {{"places", "bodies of water"}},
-	["seas"] = {{"places", "bodies of water"}},
-	["straits"] = {{"places", "bodies of water"}},
-	["subdistricts"] = {{"polities"}},
-	["suburbs"] = {{"places"}, "[[suburb]]s of a [[city]]"},
-	["towns"] = {{"polities"}},
-	["townships"] = {{"polities"}},
-	["unincorporated communities"] = {{"places"}},
-	["unrecognized and nearly unrecognized countries"] = {{"country-like entities"}, "[[de facto]] [[independent]] [[state]]s with little or no {{w|international recognition}}"},
-	["valleys"] = {{"places", "landforms", "water"}},
-	["villages"] = {{"polities"}},
-	["volcanoes"] = {{"landforms"}, "[[volcano]]es"},
-}
 
 -- Generate bare labels in 'label' for all "general labels" (see above).
 for label, label_spec in pairs(general_labels) do
@@ -159,6 +107,11 @@ labels["exonyms"] = {
 	parents = {"places"},
 }
 
+-- Handler for bare labels.
+table.insert(handlers, function(label)
+	for _, canon_label in ipairs { lcfirst(label), label } do
+		local placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (in) (.*)$")
+		if not placetype then
 -- Generate bare labels in 'label' for all polities (countries, states, etc.).
 for _, group in ipairs(m_shared.polities) do
 	for key, value in pairs(group.data) do
