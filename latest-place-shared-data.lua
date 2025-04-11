@@ -878,20 +878,6 @@ be the plural place type and the value should be either a string (the descriptio
 to "in").
 ]==]
 export.generic_placetypes = {
-	["cities"] = "cities",
-	["ghost towns"] = "[[ghost town]]s",
-	["towns"] = "towns",
-	["communes"] = "[[commune]]s",
-	["villages"] = "villages, hamlets, and other small communities and settlements",
-	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions of cities",
-	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions of cities",
-	["non-sovereign kingdoms"] = "[[w:non-sovereign monarchy|non-sovereign kingdoms]]",
-	["suburbs"] = "[[suburb]]s",
-	["rivers"] = "rivers",
-	["census-designated places"] = "[[census-designated place]]s",
-	["unincorporated communities"] = "[[w:unincorporated community|unincorporated communities]]",
-	["places"] = "places of all sorts",
-	["geographic and cultural areas"] = {desc = "[[geographic]] and [[cultural]] [[area]]s", prep = "of"},
 }
 
 --[==[ var:
@@ -900,10 +886,6 @@ and the value should be either a string (the description) or an object containin
 and `prep` (the preposition following the place type as it occurs in categories, defaulting to "of").
 ]==]
 export.generic_placetypes_for_cities = {
-	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions",
-	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions",
-	["suburbs"] = "[[suburb]]s",
-	["places"] = {desc = "places of all sorts", prep = "in"},
 }
 
 export.placetype_to_capital_cat = {
@@ -1473,7 +1455,6 @@ export.australia_group = {
 	default_divtype = "state",
 	default_div_parent_type = "states and territories",
 	default_poldiv = {"local government areas"},
-	default_miscdiv = {{type = "ghost towns", prep = "in"}},
 	british_spelling = true,
 	data = export.australia_states_and_territories,
 }
@@ -1605,7 +1586,6 @@ export.canada_group = {
 	value_transformer = subpolity_value_transformer("Canada"),
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
-	default_miscdiv = {{type = "ghost towns", prep = "in"}},
 	british_spelling = true,
 	data = export.canada_provinces_and_territories,
 }
@@ -3092,7 +3072,6 @@ export.us_group = {
 	default_miscdiv = {
 		{type = "census-designated places", prep = "in"},
 		{type = "unincorporated communities", prep = "in"},
-		{type = "ghost towns", prep = "in"},
 	},
 	data = export.us_states,
 }

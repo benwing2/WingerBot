@@ -6,6 +6,7 @@ local table_module = "Module:table"
 
 local m_shared = require("Module:place/shared-data")
 local m_data = require("Module:place/data")
+local placetype_data = m_data.placetype_data
 local internal_error = m_shared.internal_error
 
 local dump = mw.dumpObject
@@ -215,6 +216,7 @@ table.insert(handlers, function(label)
 		end
 		if placetype then
 			local canon_placetype = placetype == "neighbourhoods" and "neighborhoods" or placetype
+			local ptdata = m_data.placetype_data
 			if (m_shared.generic_placetypes[canon_placetype] or m_shared.generic_placetypes_for_cities[canon_placetype]) then
 				for _, group in ipairs(m_shared.polities) do
 					local group_is_top_level = group.default_divtype == "country"

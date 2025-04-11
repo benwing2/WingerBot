@@ -553,7 +553,27 @@ TODO/FIXME:
 	`the Riau Islands, Indonesia`) should appear in the polity data tables. As a first pass, the word "the" should not
 	appear but should instead be a property of the polity.
 32. `capital_city_cat_handler` should use `get_holonyms_to_check()`.
+33. The code to generate and parse the correct preposition ("in" or "of") is very convoluted, and the actual preposition
+	used is specified in various locations with various defaults, sometimes hardcoded. This should be simplified. It is
+	made more difficult by the fact that the in/of distinction occurs in several places:
+	(a) when generating the {{place}} text in old-style descriptions where the preposition isn't explicitly given, which
+		uses the `preposition` setting in placetype_data, defaulting to "in";
+	(b) when generating categories based on explicit category specs in placetype_data (which are gradually being
+		deprecated), which likewise uses the `preposition` setting in placetype_data, defaulting to "in";
+	(c) when generating categories based on "augmented" category specs originating in the `poldiv` and `miscdiv`
+		placetypes for specific known locations in [[Module:place/shared-data]], which uses the `prep` setting embedded
+		in the `poldiv`/`miscdiv` specifications, defaulting to "of";
+	(d) when generating categories based on category handlers specified using the `cat_handler` property of entries in
+		placetype_data, which tend to hardcode "in" or "of" depending on the specific category handler;
+	(e) when generating category descriptions in [[Module:category tree/topic cat/data/Places]] for `poldiv`/`miscdiv`
+		categories generated in (c), which (correctly) uses the same `prep` setting embedded in the `poldiv`/`miscdiv`
+		settings that is used when generating the categories themselves;
+    (f) when generating category descriptions for categories generated in (b) and (d) above, which relies on the
+		`generic_before_non_cities` and `generic_before_cities` settings in placetype_data, which need to match the
+		corresponding prepositions hardcoded in the category generation handlers. Instead of the hardcoding, the
+		category generation handler should respect the `generic_before_*` settings.
 ]=]
+
 
 
 ----------- Wikicode utility functions

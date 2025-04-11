@@ -51,7 +51,13 @@ end
 
 
 --[==[
-Return the singular version of a maybe-plural placetype, or nil if not plural.
+Return the singular version of a maybe-plural placetype, or nil if not plural. This correctly handles placetypes with
+irregular plurals such as `kibbutzim` plural of `kibbutz` by looking up in a table constructed from the `plural` values
+specified in `placetype_data`. If a special plural value is not found, the regular singularization algorithm in
+[[Module:en-utilities]] is invoked, which reverses the y -> ies change after vowels and the 'es' addition after sh/ch/x,
+and otherwise just subtracts a final 's' (which will incorrectly generate 'passe' for plural 'passes'; FIXME: consider
+changing this for words ending in '-sses'). If the generated singular is the same as the passed-in value, nil is
+returned.
 ]==]
 function export.maybe_singularize(placetype)
 	if not placetype then
@@ -436,15 +442,72 @@ local function make_placetype_link(link, sg_placetype, orig_placetype)
 end
 
 --[==[
-Get the display form of a placetype by looking it up in `placetype_data`. If the placetype is recognized, or is the
-plural of a recognized placetype, the corresponding linked display form is returned (with plural placetypes displaying
-as plural but linked to the singular form of the placetype). Otherwise, return nil.
+Get the data associated with a placetype, which may be in its singular or plural form. If `from_category` is specified,
+we also look for category-only placetypes (generally plural) followed by `!`. Return three values: (a) the canonical
+placetype that should be used for generating links and such (i.e. in its singular form if the passed-in `placetype` is
+plural, and without any following `!`); (b) the placetype data structure; (c) the type of `placetype` match that
+occurred, one of `"direct"` if the canonical placetype is the same as the passed-in `placetype` and also the same as the
+key under which `ptdata` was looked up, or `"direct-category"` if the `ptdata` was looked up under a key formed from the
+passed-in `placetype` by adding `!`, or `"plural"` if the `ptdata` was looked up under the singularized version of the
+plural passed-in `placetype`.
 ]==]
-function export.get_placetype_display_form(placetype)
+function export.get_placetype_data(placetype, from_category)
 	local ptdata = export.placetype_data[placetype]
 	if ptdata then
-		return make_placetype_link(ptdata.link, placetype)
+		return placetype, ptdata, "direct"
 	end
+	if from_category then
+		ptdata = export.placetype_data[placetype .. "!"]
+		return placetype, ptdata, "direct-category"
+	end
+	local sg_placetype = export.maybe_singularize(placetype)
+	if sg_placetype then
+		ptdata = export.placetype_data[sg_placetype]
+		return sg_placetype, ptdata, "plural"
+	end
+	return nil
+end
+
+local function get_placetype_raw_link(ptdata, ptmatch, category_type)
+	if category_type then
+		-- Careful with `false` as possible value.
+		local raw_link
+		if category_type == "top-level" then
+			raw_link = ptdata.category_link_top_level
+		elseif category_type == "noncity" then
+			raw_link = ptdata.category_link_noncity
+		elseif category_type == "city" then
+			raw_link = ptdata.category_link_city
+		end
+		if raw_link ~= nil then
+			return raw_link
+		end
+		raw_link = ptdata.category_link
+		if raw_link ~= nil then
+			return raw_link
+		end
+	end
+	if ptmatch == ... then
+	end
+end
+
+--[==[
+Get the display form of a placetype by looking it up in `placetype_data`. If the placetype is recognized, or is the
+plural of a recognized placetype, the corresponding linked display form is returned (with plural placetypes displaying
+as plural but linked to the singular form of the placetype). Otherwise, return nil. If we're generating the description
+of a category, `category_type` should be set to one of `"top-level"` (for top-level categories like
+[[:Category:Neighborhoods]]), `"noncity"` (for non-city categories like [[:Category:Neighhorhoods in Illinois, USA]]) or
+`"city"` (for city categories like [[:Category:Neighbhorhoods of Chicago]]). Otherwise, we're generating the description
+for use in formatting a {{place}} call, and category-only placetypes ending in `!` will be ignored, along with special
+`category_link*` settings.
+]==]
+function export.get_placetype_display_form(placetype, category_type)
+	local canon_placetype, ptdata, ptmatch = export.placetype_data[placetype]
+	if canon_placetype then
+		return make_placetype_link(from_category and ptdata.link, placetype)
+	end
+	if from_category then
+		ptdata = export.placetype_data[placetype .. "!"]
 	local sg_placetype = export.maybe_singularize(placetype)
 	if sg_placetype then
 		ptdata = export.placetype_data[sg_placetype]
@@ -1094,34 +1157,32 @@ local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containi
 	local entry_placetype, holonym_placetype, holonym_placename =
 		data.entry_placetype, data.holonym_placetype, data.holonym_placename
 	local plural_entry_placetype = require(en_utilities_module).pluralize(entry_placetype)
-	if m_shared.generic_placetypes[plural_entry_placetype] then
-		for _, group in ipairs(m_shared.polities) do
-			-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-			local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
-			if key then
-				local value = group.data[key]
-				if value then
-					-- Use the group's value_transformer to ensure that 'is_city', 'containing_polity'
-					-- and 'british_spelling' keys are present if they should be.
-					value = group.value_transformer(group, key, value)
-					if not value.is_former_place and (not value.is_city or allow_if_holonym_is_city) then
-						-- Categorize both in key, and in the larger polity that the key is part of,
-						-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
-						-- "Cities in Japan". (But don't do the latter if no_containing_polity_cat is set.)
-						if plural_entry_placetype == "neighborhoods" and value.british_spelling then
-							plural_entry_placetype = "neighbourhoods"
-						end
-						local retcats = {ucfirst(plural_entry_placetype) .. " in " .. key}
-						if value.containing_polity and not value.no_containing_polity_cat and not no_containing_polity then
-							insert(retcats, ucfirst(plural_entry_placetype) .. " in " .. value.containing_polity)
-						end
-						if extracats then
-							for _, cat in ipairs(extracats) do
-								insert(retcats, cat)
-							end
-						end
-						return retcats
+	for _, group in ipairs(m_shared.polities) do
+		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
+		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
+		if key then
+			local value = group.data[key]
+			if value then
+				-- Use the group's value_transformer to ensure that 'is_city', 'containing_polity'
+				-- and 'british_spelling' keys are present if they should be.
+				value = group.value_transformer(group, key, value)
+				if not value.is_former_place and (not value.is_city or allow_if_holonym_is_city) then
+					-- Categorize both in key, and in the larger polity that the key is part of,
+					-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
+					-- "Cities in Japan". (But don't do the latter if no_containing_polity_cat is set.)
+					if plural_entry_placetype == "neighborhoods" and value.british_spelling then
+						plural_entry_placetype = "neighbourhoods"
 					end
+					local retcats = {ucfirst(plural_entry_placetype) .. " in " .. key}
+					if value.containing_polity and not value.no_containing_polity_cat and not no_containing_polity then
+						insert(retcats, ucfirst(plural_entry_placetype) .. " in " .. value.containing_polity)
+					end
+					if extracats then
+						for _, cat in ipairs(extracats) do
+							insert(retcats, cat)
+						end
+					end
+					return retcats
 				end
 			end
 		end
@@ -2277,10 +2338,10 @@ If you need to sort the following, do this (using Vim):
 	},
 	["city"] = {
 		link = true,
+		generic_before_non_cities = "in",
 		has_neighborhoods = true,
 		class = "settlement",
 		cat_handler = city_type_cat_handler,
-		["country/*"] = {true},
 		default = {true},
 	},
 	["city-state"] = {
@@ -2763,6 +2824,10 @@ If you need to sort the following, do this (using Vim):
 	},
 	["geographic and cultural area"] = {
 		link = "+w:cultural area",
+		-- `generic_before_non_cities` is used when generating the category description of categories of the format
+		-- `Geographic and cultural areas of PLACE`. `preposition` is used when generating {{place}} description and
+		-- categories for any placetype that falls back to `geographic and cultural area`.
+		generic_before_non_cities = "of",
 		preposition = "of",
 		class = "geographic region",
 		category_parent = "places",
@@ -2801,8 +2866,11 @@ If you need to sort the following, do this (using Vim):
 	},
 	["ghost town"] = {
 		link = true,
+		generic_before_non_cities = "in",
 		class = "settlement",
 		category_parent = "historical settlements",
+		cat_handler = city_type_cat_handler,
+		default = {true},
 	},
 	["glen"] = {
 		link = true,
@@ -3297,8 +3365,27 @@ If you need to sort the following, do this (using Vim):
 		fallback = "park",
 	},
 	["neighborhood"] = {
+		-- The majority of the properties here apply to both `neighborhoods` and `neighbourhoods`; the choice of which
+		-- one to use is made by district_neighborhood_cat_handler() based on the value of `british_spelling` for the
+		-- location (city, political division, etc.) of the holonym that follows the word "neighbo(u)hoods" in the
+		-- category name. It does *NOT* depend on whether the {{place}} call uses "neighborhoods" or "neighbourhoods".
+		-- (In general it can't, because other things like "urban areas", "districts", "subdivisions" and the like also
+		-- categorize as neighbo(u)rhoods.)
 		link = true,
-		category_link = "[[neighborhood]]s, [[district]]s and other subportions of a [[city]]",
+		-- See below. These are used by category handlers in [[Module:category tree/topic cat/data/Places]].
+		generic_before_non_cities = "in",
+		generic_before_cities = "of",
+		-- The following text is suitable for the top-level description of a neighborhood as well as categories of the
+		-- form `Neighborhoods in POLDIV` e.g. `Neighborhoods in Illinois, USA` but not for categories of the form
+		-- `Neighborhoods of Chicago`, where we'd get "... and other subportions of [[city|cities]] of [[Chicago]]".
+		category_link = "[[neighborhood]]s, [[district]]s and other subportions of [[city|cities]]",
+		category_link_before_city = "[[neighborhood]]s, [[district]]s and other subportions",
+		-- NOTE: This setting is needed for administrative divisions like barangays that fall back to `neighborhood`,
+		-- when set in [[Module:place/shared-data]] for a specific country (e.g. the Philippines). The above settings
+		-- for `generic_before_non_cities` and `generic_before_cities` are used by category handlers in
+		-- [[Module:category tree/topic cat/data/Places]] for `Neighborhoods in POLDIV` and `Neighborhoods of CITY`
+		-- categories. In fact, district_neighborhood_cat_handler() does not currently pay attention to them, but
+		-- generates "of" before cities and "in" before non-cities regardless. (FIXME: We should change that.)
 		preposition = "of",
 		class = "settlement",
 		cat_handler = district_neighborhood_cat_handler,
@@ -3308,6 +3395,8 @@ If you need to sort the following, do this (using Vim):
 	},
 	["neighbourhood"] = {
 		link = true,
+		category_link = "[[neighbourhood]]s, [[district]]s and other subportions of [[city|cities]]",
+		category_link_before_city = "[[neighbourhood]]s, [[district]]s and other subportions",
 		fallback = "neighborhood",
 	},
 	["new area"] = {
@@ -3343,6 +3432,7 @@ If you need to sort the following, do this (using Vim):
 	["non-sovereign kingdom"] = {
 		-- especially in Africa and Asia
 		link = "+w:non-sovereign monarchy",
+		generic_before_non_cities = "in",
 		class = "subpolity",
 		["country/*"] = {true},
 		["continent/*"] = {true},
@@ -3429,6 +3519,18 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		class = "subpolity",
+	},
+	["places!"] = {
+		generic_before_non_cities = "in",
+		generic_before_cities = "in",
+		category_link = "[[place]]s of all sorts",
+		-- `category_link_top_level` control the description used in the top-level [[Category:Places]] and
+		-- language-specific variants such as [[Category:en:Places]]. The actual text for a language-spefic variant is
+		-- "{{{langname}}} names of [[geographical]] [[place]]s of all sorts; [[toponym]]s." where the "names of"
+		-- portion is automatically generated by the appropriate handler in
+		-- [[Module:category tree/topic cat/data/Places]].
+		category_link_top_level = "[[geographical]] [[place]]s of all sorts; [[toponym]]s",
+		category_parent = "names",
 	},
 	["planned community"] = {
 		-- Include this so we don't categorize 'planned community' into villages, as 'community' does.
@@ -3625,6 +3727,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["river"] = {
 		link = true,
+		generic_before_non_cities = "in",
 		holonym_use_the = true,
 		class = "natural feature",
 		addl_parents = "bodies of water",
@@ -3932,7 +4035,17 @@ If you need to sort the following, do this (using Vim):
 	},
 	["suburb"] = {
 		link = true,
-		category_link = "[[suburb]]s of a [[city]]",
+		-- The following text is suitable for the top-level description of a suburb as well as categories of the form
+		-- 'Suburbs in POLDIV' e.g. 'Suburbs in Illinois, USA' but not for categories of the form 'Suburbs of Chicago',
+		-- where we'd get "[[suburb]]s of [[city|cities]] of [[Chicago]]".
+		category_link = "[[suburb]]s of [[city|cities]]",
+		category_link_before_city = "[[suburb]]s",
+		-- See comments under "neighborhood" for the following three settings. They are used by
+		-- [[Module:category tree/topic cat/data/Places]] for generating the text of 'Suburbs in/of PLACE' categories
+		-- but currently ignored by district_neighborhood_cat_handler (which actually generates the categories for a
+		-- given page), which hardcodes "in" for non-cities and "of" for cities. (FIXME: Change this.)
+		generic_before_non_cities = "in",
+		generic_before_cities = "of",
 		preposition = "of",
 		has_neighborhoods = true, --?
 		class = "settlement", --?
@@ -3970,10 +4083,10 @@ If you need to sort the following, do this (using Vim):
 	},
 	["town"] = {
 		link = true,
+		generic_before_non_cities = "in",
 		has_neighborhoods = true,
 		class = "settlement",
 		cat_handler = city_type_cat_handler,
-		["country/*"] = {true},
 		default = {true},
 	},
 	["town with bystatus"] = {
@@ -4023,6 +4136,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["unincorporated community"] = {
 		link = true,
+		generic_before_non_cities = "in",
 		class = "settlement",
 	},
 	["unincorporated territory"] = {
@@ -4093,9 +4207,10 @@ If you need to sort the following, do this (using Vim):
 	},
 	["village"] = {
 		link = true,
+		generic_before_non_cities = "in",
+		category_link = "[[village]]s, [[hamlet]]s, and other small [[community|communities]] and [[settlement]]s",
 		class = "settlement",
 		cat_handler = city_type_cat_handler,
-		["country/*"] = {true},
 		default = {true},
 	},
 	["village municipality"] = {
