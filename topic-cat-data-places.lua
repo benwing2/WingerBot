@@ -206,8 +206,13 @@ for _, city_group in ipairs(m_shared.cities) do
 	end
 end
 
--- Handler for "cities in the Bahamas", "rivers in Western Australia, Australia", etc.
--- Places that begin with "the" are recognized and handled specially.
+-- Handler for generic placetypes (those whose categories are added through category generation handlers or through
+-- explicit category specs in the placetype data) for locations listed in `export.polities` in
+-- [[Module:place/shared-data]]. All such placetypes have either a `generic_before_non_cities` setting (meaning they
+-- can occur before non-city locations) or `generic_before_cities` setting (meaning they can occur before cities), or
+-- both. We need to check both types because there are cities mixed into the `export.polities` data. Examples of such
+-- categories are "cities in the Bahamas" or "rivers in Western Australia, Australia", or (for city locations)
+-- "neighbourhoods of Hong Kong".
 table.insert(handlers, function(label)
 	for _, canon_label in ipairs { lcfirst(label), label } do
 		local placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (in) (.*)$")
@@ -215,9 +220,9 @@ table.insert(handlers, function(label)
 			placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (of) (.*)$")
 		end
 		if placetype then
-			local canon_placetype = placetype == "neighbourhoods" and "neighborhoods" or placetype
-			local ptdata = m_data.placetype_data
-			if (m_shared.generic_placetypes[canon_placetype] or m_shared.generic_placetypes_for_cities[canon_placetype]) then
+			local normalized_placetype = placetype == "neighbourhoods" and "neighborhoods" or placetype
+			local canon_placetype, ptdata, ptmatch = m_data.get_placetype_data(placetype, "from category")
+			if canon_placetype and (ptdata.generic_before_non_cities or ptdata.generic_before_cities) then
 				for _, group in ipairs(m_shared.polities) do
 					local group_is_top_level = group.default_divtype == "country"
 					local placedata = group.data[place]
@@ -233,23 +238,19 @@ table.insert(handlers, function(label)
 						if placedata.is_former_place and placetype ~= "places" then
 							allow_cat = false
 						end
-						local placetype_spec
-						local default_prep
+						local expected_prep
 						if placedata.is_city then
-							default_prep = "of"
-							placetype_spec = m_shared.generic_placetypes_for_cities[placetype]
+							expected_prep = ptdata.generic_before_cities
 						else
-							default_prep = "in"
-							placetype_spec = m_shared.generic_placetypes[placetype]
+							expected_prep = ptdata.generic_before_non_cities
 						end
-						if not placetype_spec then
+						if not expected_prep then
 							allow_cat = false
 						end
 						if allow_cat then
-							local should_in_of = type(placetype_spec) == "table" and placetype_spec.prep or default_prep
-							if should_in_of ~= in_of then
+							if expected_prep ~= in_of then
 								mw.log(("Mismatch in category name '%s', has '%s' when it should have '%s'"):format(
-									canon_label, in_of, should_in_of))
+									canon_label, in_of, expected_prep))
 								return nil
 							end
 							local bare_place, linked_place = m_shared.construct_bare_and_linked_version(place)
@@ -263,18 +264,18 @@ table.insert(handlers, function(label)
 								})
 							else -- top-level country
 								table.insert(parents, {
-									name = canon_placetype,
+									name = normalized_placetype,
 									sort = bare_place
 								})
-								local is_poldiv = not not m_shared.political_divisions[canon_placetype]
-								if not is_poldiv and canon_placetype == "places" then
+								local is_poldiv = not not m_shared.political_divisions[normalized_placetype]
+								if not is_poldiv and normalized_placetype == "places" then
 									-- fine, it's not a poldiv
 								elseif not is_poldiv then
-									local general_label_spec = general_labels[canon_placetype]
+									local general_label_spec = general_labels[normalized_placetype]
 									if not general_label_spec then
 										internal_error("Saw unknown placetype %s in label %s; not in either " ..
 											"`general_labels` or in `political_divisions` in [[Module:place/shared-data]]",
-											canon_placetype, canon_label)
+											normalized_placetype, canon_label)
 									end
 									local parent_labels = general_label_spec[1]
 									is_poldiv = not not require(table_module).contains(parent_labels, "polities")

@@ -188,14 +188,16 @@ but we do not return placetype subsets if a containing placetype exists in `plac
 "overseas territory" has a fallback "dependent territory", and "overseas" is also a recognized qualifier. When
 `no_fallback` is in place, without the above proviso, we would return "overseas territory" followed by "territory"
 with the incorrect effect of classifying an "overseas territory" of the United Kingdom such as "Gibraltar" under
-[[:Category:Territories of the United Kingdom]] instead of [[:Category:Dependenet territories of the United Kingdom]].)
+[[:Category:Territories of the United Kingdom]] instead of [[:Category:Dependent territories of the United Kingdom]].)
 As an exception, if 'historical', 'ancient', 'former' or the like are found, they proceed ignoring `no_fallback`,
 because it seems tricky to handle them correctly in the presence of `no_fallback`, and historical/former placetypes
 rarely occur with exact match category specs anyway.
 
 `no_check_for_inherently_former` is necessary to prevent an infinite loop when checking for `inherently_former`.
 ]==]
-function export.get_placetype_equivs(placetype, no_fallback, no_check_for_inherently_former)
+function export.get_placetype_equivs(data)
+	local placetype, no_fallback, no_check_for_inherently_former = data.placetype, data.no_fallback,
+		data.no_check_for_inherently_former
 	local equivs = {}
 
 	-- Look up the equivalent placetype for `placetype` in `placetype_data`. If `placetype` is plural, also look up the
@@ -397,7 +399,12 @@ function export.key_holonym_into_place_desc(place_desc, holonym)
 	end
 end
 
-
+--[=[
+Construct a formatted link from the raw link spec `link` given the canonical singular placetype `sg_placetype`. If the
+placetype was originally plural, `orig_placetype` should contain this plural value; otherwise it should be nil. This
+will construct the appropriate type of link that displays as `orig_placetype` (or otherwise `sg_placetype`) but links to
+whatever the `link` spec specifies (which may be `sg_placetype`, a Wikipedia article, etc.).
+]=]
 local function make_placetype_link(link, sg_placetype, orig_placetype)
 	if link == nil then
 		internal_error("Placetype data present for placetype %s but no link= setting given", sg_placetype)
@@ -468,29 +475,6 @@ function export.get_placetype_data(placetype, from_category)
 	return nil
 end
 
-local function get_placetype_raw_link(ptdata, ptmatch, category_type)
-	if category_type then
-		-- Careful with `false` as possible value.
-		local raw_link
-		if category_type == "top-level" then
-			raw_link = ptdata.category_link_top_level
-		elseif category_type == "noncity" then
-			raw_link = ptdata.category_link_noncity
-		elseif category_type == "city" then
-			raw_link = ptdata.category_link_city
-		end
-		if raw_link ~= nil then
-			return raw_link
-		end
-		raw_link = ptdata.category_link
-		if raw_link ~= nil then
-			return raw_link
-		end
-	end
-	if ptmatch == ... then
-	end
-end
-
 --[==[
 Get the display form of a placetype by looking it up in `placetype_data`. If the placetype is recognized, or is the
 plural of a recognized placetype, the corresponding linked display form is returned (with plural placetypes displaying
@@ -502,24 +486,40 @@ for use in formatting a {{place}} call, and category-only placetypes ending in `
 `category_link*` settings.
 ]==]
 function export.get_placetype_display_form(placetype, category_type)
-	local canon_placetype, ptdata, ptmatch = export.placetype_data[placetype]
+	local canon_placetype, ptdata, ptmatch = export.get_placetype_data(placetype, not not category_type)
 	if canon_placetype then
-		return make_placetype_link(from_category and ptdata.link, placetype)
-	end
-	if from_category then
-		ptdata = export.placetype_data[placetype .. "!"]
-	local sg_placetype = export.maybe_singularize(placetype)
-	if sg_placetype then
-		ptdata = export.placetype_data[sg_placetype]
-		if ptdata then
-			if type(ptdata.plural_link) == "string" and ptdata.plural_link:find("%[%[") then
-				return ptdata.plural_link
+		local raw_link
+		if category_type then
+			-- Careful with `false` as possible value.
+			if category_type == "top-level" then
+				raw_link = ptdata.category_link_top_level
+			elseif category_type == "noncity" then
+				raw_link = ptdata.category_link_noncity
+			elseif category_type == "city" then
+				raw_link = ptdata.category_link_city
 			end
-			if ptdata.plural_link == false then
+			if raw_link ~= nil then
+				return raw_link
+			end
+			raw_link = ptdata.category_link
+			if raw_link == false then
+				internal_error("Placetype %s with category type %s fetched 'false' as value of category link",
+					placetype, category_type)
+			end
+			if type(raw_link) == "string" and raw_link:find("%[%[") then
+				return raw_link
+			end
+		end
+		if ptmatch == "plural" then
+			local raw_link = ptdata.plural_link
+			if raw_link == false then
 				process_error("Placetype %s cannot appear plural", placetype)
 			end
-			return make_placetype_link(ptdata.plural_link or ptdata.link, sg_placetype, placetype)
+			if type(raw_link) == "string" and raw_link:find("%[%[") then
+				return raw_link
+			end
 		end
+		return make_placetype_link(raw_link, canon_placetype, placetype ~= canon_placetype and placetype or nil)
 	end
 
 	return nil
@@ -2605,12 +2605,11 @@ If you need to sort the following, do this (using Vim):
 
 		-- No default. Countries for which districts are political subdivisions will get entries.
 	},
-	["district and autonomous region!"] = {
+	["districts and autonomous regions!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Portugal.
-		link = false,
-		plural = "districts and autonomous regions",
-		plural_link = "[[district]]s and [[autonomous region]]s",
+		category_link = "[[district]]s and [[autonomous region]]s",
+		class = "subpolity",
 	},
 	["district capital"] = {
 		link = "separately",
@@ -3610,19 +3609,17 @@ If you need to sort the following, do this (using Vim):
 		display_handler = province_display_handler,
 		class = "subpolity",
 	},
-	["province and autonomous region!"] = {
+	["provinces and autonomous regions!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case China.
-		link = false,
-		plural = "provinces and autonomous regions",
-		plural_link = "[[province]]s and [[autonomous region]]s",
+		category_link = "[[province]]s and [[autonomous region]]s",
+		class = "subpolity",
 	},
-	["province and territory!"] = {
+	["provinces and territories!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Canada and Pakistan.
-		link = false,
-		plural = "provinces and territories",
-		plural_link = "[[province]]s and [[territory|territories]]",
+		category_link = "[[province]]s and [[territory|territories]]",
+		class = "subpolity",
 	},
 	["provincial capital"] = {
 		link = true,
@@ -3911,23 +3908,22 @@ If you need to sort the following, do this (using Vim):
 	["state"] = {
 		link = true,
 		preposition = "of",
+		class = "subpolity",
 		-- 'former/historical state' could refer either to a state of a country (a subdivision) or a state = sovereign
 		-- entity. The latter appears more common (e.g. in various "ancient states" of East Asia).
-		class = "polity",
+		former_type = "polity",
 	},
-	["state and territory!"] = {
+	["states and territories!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Australia.
-		link = false,
-		plural = "states and territories",
-		plural_link = "[[state]]s and [[territory|territories]]",
+		category_link = "[[state]]s and [[territory|territories]]",
+		class = "subpolity",
 	},
-	["state and union territory!"] = {
+	["states and union territories!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case India.
-		link = false,
-		plural = "states and union territories",
-		plural_link = "[[state]]s and [[union territory|union territories]]",
+		category_link = "[[state]]s and [[union territory|union territories]]",
+		class = "subpolity",
 	},
 	["state capital"] = {
 		link = true,
