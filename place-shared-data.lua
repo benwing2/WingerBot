@@ -16,8 +16,8 @@ local dump = mw.dumpObject
 
 ===Introduction===
 
-This module contains lists of all the toponyms (continents, countries, country subdivisions such as states and
-provinces, and cities) and their properties, along with some information about placetypes (the remainder is found in
+This module contains lists of all the toponyms (continents, countries, country divisions such as states and provinces,
+and cities) and their properties, along with some information about placetypes (the remainder is found in
 [[Module:place/data]]). See [[Module:place]] for a general introduction to the terminology associated with places along
 with a list of all the relevant modules, and the description below for more specific information on types of toponyms
 and placetypes and how their categorization works.
@@ -54,12 +54,12 @@ The objects for which categories exist are as follows:
 ## Cities. Only major cities get categories, with the definition of "major" varying by country but often including
    those where the city population itself (sometimes the metro area) is >= 1,000,000 people.
 # Placetypes. This includes:
-## Political subdivisions (states, provinces, counties, etc.).
-## Non-political or "miscellaneous" subdivisions (such as divisions used for census purposes which are considered
-   important enough to categorize).
+## Political divisions (states, provinces, counties, etc.).
+## Non-political or "miscellaneous" divisions (such as divisions used for census purposes which are considered important
+   enough to categorize).
 ## "Generic" placetypes that are likely to exist in every polity (cities, towns, villages, rivers, etc.).
 ## Meta-placetypes, specifically "place", which exists in every polity and is treated like a generic placetype.
-# Types of toponyms, such as "polity" and "political subdivision".
+# Types of toponyms, such as "polity" and "political division".
 
 There are two main types of categories:
 # Categories for toponyms, divided into:
@@ -149,7 +149,7 @@ as their first parent, and vice-versa. Specifically:
 # Placetype categories for first-level divisions of a country similarly (e.g. [[:Category:States of the United States]])
   have a toponym parent (in this case [[:Category:United States]]), but in place of the skip-polity parent they have two
   other parents: a "bare placetype" parent (in this case [[:Category:States]]) and the "generic" parent
-  [[:Category:Political subdivisions of specific countries]]. (There is also a bare [[:Category:Political divisions]]
+  [[:Category:Political divisions of specific countries]]. (There is also a bare [[:Category:Political divisions]]
   that groups "bare placetype" categories.) Skip-polity placetype categories for second-level divisions of a country
   (e.g. [[:Category:Counties of the United States]]) work the same. Placetype categories for countries work likewise
   except they are missing the generic parent.
@@ -159,7 +159,7 @@ as their first parent, and vice-versa. Specifically:
 
 The bulk of the data in this module (after some helper functions and placetype tables) describes the known polities,
 subpolities and cities and their relationships. The main polity table is called `export.polities` and is a list of
-''polity groups'', each of which describes a single polity or "pseudo-polity" and the top-level subdivisions of that
+''polity groups'', each of which describes a single polity or "pseudo-polity" and the top-level divisions of that
 polity. The first few polity groups are devoted to countries themselves as well as ''country-like entities''
 (unrecognized de-facto countries, dependent territories and other entities that we treat as top-level) and former
 top-level polities. Each of these groups is considered to be collected under a "pseudo-polity" such as the
@@ -170,7 +170,7 @@ FIXME: The following documentation is out of date.
 ====Polity group tables====
 
 The following tables specify the known polities and their properties, where a polity is either a top-level political
-division (e.g. a country) or a subpolity (political subdivision of a top-level polity). Polities are gathered into
+division (e.g. a country) or a subpolity (political division of a top-level polity). Polities are gathered into
 ''groups'', each of which contains several items (places) that are handled similarly. Each group contains a list of all
 the places contained in that group along with their properties, as well as group-specific handlers that specify common
 properties of all items in the group. These items are used to construct the category description objects (i.e. the
@@ -193,18 +193,18 @@ objects that describe how to format the display of a category page, as documente
    such as Persia, East Germany, the Soviet Union and the Roman Empire should have their cities, towns, rivers and such
    listed under the current entities occupying the same area.)
 3. Optionally, one or more categories of the form [[:Category:de:Provinces of the Netherlands]],
-   [[:Category:pt:Counties of Wales]], etc. These are for political subdivisions, and for historic/popular subdivisions
-   that have no current political significance (e.g. [[:Category:nl:Provinces of Ireland]],
-   [[:Category:zh:Regions of the United States]]). These are controlled by the `poldiv` (for political subdivisions) and
-   `miscdiv` (for historic/popular subdivisions) keys in the data for a given item.
+   [[:Category:pt:Counties of Wales]], etc. These are for political divisions, and for historic/popular divisions that
+   have no current political significance (e.g. [[:Category:nl:Provinces of Ireland]],
+   [[:Category:zh:Regions of the United States]]). These are controlled by the `poldiv` (for political divisions) and
+   `miscdiv` (for historic/popular divisions) keys in the data for a given item.
 
-NOTE: Second-level political subdivisions (e.g. counties of states of the US) could be handled here but normally aren't.
+NOTE: Second-level political divisions (e.g. counties of states of the US) could be handled here but normally aren't.
 Instead, there are special handlers below for US counties and Brazilian and Philippine municipalities, and
 manually-created labels for certain other countries (e.g. Canadian counties). The reason for this is that all political
-and historic/popular subdivisions handled here have a category like [[:Category:en:Political subdivisions]] as their
-primary parent, whereas we often want a different primary parent for second-level political subdivisions, such as
+and historic/popular divisions handled here have a category like [[:Category:en:Political divisions]] as their
+primary parent, whereas we often want a different primary parent for second-level political divisions, such as
 [[:Category:en:Counties of the United States]] for US counties. FIXME: We should allow the parents to be specified for
-political subdivisions. This will probably necessitate another type of group-specific handler, similar to
+political divisions. This will probably necessitate another type of group-specific handler, similar to
 `value_transformer` and `bare_label_setter` (see below).
 
 NOTE: Some of the above categories are added automatically to pages that use the {{tl|place}} template with the appropriate
@@ -252,7 +252,7 @@ Each group consists of a table with the following keys:
 
 * `value_transformer`: This function is used to transform the value of an item in `data` (an object containing
   properties of a place; see above) to the final form used by the handlers in
-  [[Module:category tree/topic cat/data/Places]] that handle city-type and political-subdivision-type categories. It is
+  [[Module:category tree/topic cat/data/Places]] that handle city-type and political-division-type categories. It is
   passed three arguments (the group and the key and value of the data item). Its normal purpose is to add extra
   properties to the data item value, such as `containing_polity` (see above) and `keydesc` (the appropriate description
   of the place, which often includes the type of division and the country).  Some groups (in particular, the one for
@@ -288,7 +288,7 @@ Each group consists of a table with the following keys:
 * `default_divtype`: The default entity type for entities in this group, if not overidden at the entity level. See
   `divtype` above under "Placename Tables".
 
-====Polity subdivision tables====
+====Polity division tables====
 
 Each of the following tables specifies a group of polities with common properties (e.g. the states of the US). Each
 table is associated with a polity "group" (an entry in `export.polities`), which contains handlers specifying how to
@@ -302,7 +302,7 @@ process the data tables and also a pointer to the relevant table. The data is us
 2. To generate the text of topical categories for cities/towns/rivers/etc. in a given polity, e.g.
    [[:Category:Cities in Alabama, USA]] for cities in Alabama, and per-language variants such as
    [[:Category:fr:Cities in Alabama, USA]] for French terms for cities in Alabama.
-3. To generate the text of topical categories for political subdivisions of a given polity, e.g.
+3. To generate the text of topical categories for political divisions of a given polity, e.g.
    [[:Category:Provinces of the Netherlands]], [[:Category:Counties of Alabama]] or
    [[:Category:Municipalities of Amazonas, Brazil]], along with per-language variants such as
    [[:Category:de:Provinces of the Netherlands]], [[:Category:es:Counties of Alabama]] or
@@ -333,19 +333,18 @@ the group or derivable from group-specific properties. The following are the pro
   the polity will be recognized (e.g. in {{tl|place}} arguments) when tagged with any of the specified types. This value
   overrides the group-level `default_divtype` value, and only needs to be specified if it disagrees with that value.
 
-- `poldiv`: List of recognized political subdivisions; e.g. for the Netherlands, a specification of the form
+- `poldiv`: List of recognized political divisions; e.g. for the Netherlands, a specification of the form
   'poldiv = {"provinces", "municipalities"}' will allow categories such as [[:Category:de:Provinces of the Netherlands]]
   and [[:Category:pt:Municipalities of the Netherlands]] to be created. These categories have a primary parent
-  [[:Category:LANGCODE:Political subdivisions]] (i.e. this is the parent that appears in the breadcrumbs at the top of
-  the category page), and have the containing polity, if any (see `containing_polity` below) as an additional parent.
-  Any political subdivision that appears here must also be listed in the `political_divisions` list, which tells how
-  to convert the pluralized political subdivision into the equivalent linked description. (If not listed, an error
-  occurs.)
+  [[:Category:LANGCODE:Political divisions]] (i.e. this is the parent that appears in the breadcrumbs at the top of the
+  category page), and have the containing polity, if any (see `containing_polity` below) as an additional parent. Any
+  political division that appears here must also be listed in the `political_divisions` list, which tells how to convert
+  the pluralized political division into the equivalent linked description. (If not listed, an error occurs.)
 
-- `miscdiv`: List of recognized historical/popular subdivisions; e.g. for Ireland, a specification of the form
+- `miscdiv`: List of recognized historical/popular divisions; e.g. for Ireland, a specification of the form
   'miscdiv = {"provinces"}' will allow categories such as [[:Category:pl:Provinces of Ireland]] to be created. These
-  categories differ from political subdivision categories in that their primary parent is the country name rather than
-  [[:Category:LANGCODE:Political subdivisions]].
+  categories differ from political division categories in that their primary parent is the country name rather than
+  [[:Category:LANGCODE:Political divisions]].
 
 - `is_city`: If 'true', don't recognize or generate categories such as [[:Category:en:Cities in Monaco]] (specifically,
   for place types in `generic_placetypes` but not in `generic_placetypes_for_cities`).
@@ -409,25 +408,6 @@ function export.internal_error(fmt, ...)
 end
 
 --[==[
-Format a description that can have the special value of `true` or `nil` (use `link_label()` in
-[[Module:category tree/topic cat]]) or `"w"` (use `link_label(..., "wikify"))`. Any other value is returned as-is.
-]==]
-function export.format_description(desc, label)
-	-- FIXME: this function is the reason a bunch of place terms are linked by every category. link_label uses
-	-- mw.title.new, which counts as a link. format_description is then called by
-	-- [[Module:category tree/topic cat/data/Places]]. This is not ideal.
-	if desc == nil then
-		desc = true
-	end
-	if desc == true then
-		desc = require(topic_cat_utilities_module).link_label(label)
-	elseif desc == "w" then
-		desc = require(topic_cat_utilities_module).link_label(label, nil, "wikify")
-	end
-	return desc
-end
-
---[==[
 Given a non-multipart key (where a multipart key is something like `"Tucson, Arizona"` or `"Atlanta, Georgia, USA"`),
 possibly preceded by `the`, return two values, the ''bare'' and ''linked'' versions of the key. The bare version is
 simply the passed-in `key` minus any preceding `the`. The linked version is the key converted into a raw bracketed link
@@ -454,14 +434,15 @@ function export.construct_bare_and_linked_version(key, display_form)
 end
 
 local function simple_polity_bare_label_setter(overriding_parents)
-	return function(labels, group, key, value)
+	return function(group, key, value)
 		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
 		-- wp= defaults to true (Wikipedia article matches bare key = label)
 		local wp = value.wp
 		if wp == nil then
 			wp = true
 		end
-		-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category generally follow)
+		-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category
+		-- generally follow)
 		local wpcat = value.wpcat
 		if wpcat == nil then
 			wpcat = wp
@@ -493,10 +474,10 @@ local function simple_polity_bare_label_setter(overriding_parents)
 			end
 			table.insert(parents, "countries")
 		end
-		labels[bare_key] = {
+		return {
 			type = "topic",
-			description = value.bare_category_desc or "{{{langname}}} terms related to the people, culture, or territory of "
-				.. (value.keydesc or linked_key) .. ".",
+			description = value.bare_category_desc or "{{{langname}}} terms related to the people, culture, or " ..
+				"territory of " .. (value.keydesc or linked_key) .. ".",
 			parents = parents,
 			wp = wp,
 			wpcat = wpcat,
@@ -576,7 +557,7 @@ local function list_or_element_contains(list_or_element, item)
 end
 
 local function subpolity_bare_label_setter(containing_polity)
-	return function(labels, group, key, value)
+	return function(group, key, value, m_data)
 		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
 		local bare_containing_polity, linked_containing_polity = export.construct_bare_and_linked_version(containing_polity)
 		local div_parent_type = value.div_parent_type or group.default_div_parent_type
@@ -586,9 +567,9 @@ local function subpolity_bare_label_setter(containing_polity)
 			if not divtype then
 				internal_error("Ended up with nil divtype for key=%s, value=%s", key, value)
 			end
-			div_parent_type = require(en_utilities_module).pluralize(divtype)
+			div_parent_type = m_data.pluralize_placetype(divtype)
 		end
-        labels[bare_key] = {
+        return {
             type = "topic",
             description = function()
 				if value.bare_category_desc then
@@ -858,172 +839,6 @@ function export.find_city_containing_polity(parent_spec)
 end
 
 -----------------------------------------------------------------------------------
---                              Placetype Tables                                 --
------------------------------------------------------------------------------------
-
---[==[ var:
-Recognized political and misc. (sub)divisions. The key is the plural division and the value is the equivalent
-description, with links. A value of true means to use the default linking algorithm in link_label() in
-[[Module:category tree/topic cat]]. A value of "w" is similar but links to Wikipedia. NOTE: This currently used
-only for category descriptions by [[Module:category tree/topic cat/data/Places]], and overlaps the information
-in `placetype_links` in [[Module:place/data]]. FIXME: The two should be combined somehow.
-]==]
-export.political_divisions = {
-	["administrative atolls"] = true,
-	["administrative regions"] = true,
-	["areas"] = true,
-	["arrondissements"] = true,
-	["atolls"] = true,
-	["autonomous cities"] = "w",
-	["autonomous communities"] = "w",
-	["autonomous islands"] = true,
-	["autonomous oblasts"] = true,
-	["autonomous okrugs"] = true,
-	["autonomous regions"] = true,
-	["autonomous republics"] = "w",
-	["autonomous territorial units"] = "w", -- of Moldova
-	["barangays"] = true,
-	["boroughs"] = true,
-	["borough seats"] = true,
-	["cantons"] = true,
-	["census divisions"] = "w",
-	["cercles"] = true,
-	["civil parishes"] = true,
-	["collectivities"] = true,
-	["communes"] = true,
-	["communities"] = true,
-	["constituencies"] = true,
-	["constituent countries"] = true,
-	-- the following needed to support Jerusalem, whose first parent is Asia, a continent
-	["continents"] = true,
-	["council areas"] = true,
-	["counties"] = true,
-	["county boroughs"] = true,
-	["county seats"] = true,
-	["county-level cities"] = true,
-	["countries"] = true,
-	["delegations"] = true,
-	["departments"] = true,
-	["dependent territories"] = "w",
-	["districts"] = true,
-	["districts and autonomous regions"] = "[[district]]s and [[autonomous region]]s",
-	["divisions"] = true,
-	["emirates"] = true,
-	["entities"] = true,
-	["federal cities"] = true,
-	["federal districts"] = true,
-	["federal subjects"] = true,
-	["federal territories"] = true,
-	["gewogs"] = true,
-	["governorates"] = true,
-	["Indian reservations"] = "w",
-	["Indian reserves"] = "w",
-	["krais"] = true,
-	["local councils"] = "w",
-	["local government areas"] = "w",
-	["macroregions"] = true,
-	["metropolitan cities"] = true,
-	["mukims"] = true,
-	["municipal districts"] = "w",
-	["municipalities"] = true,
-	["neighborhoods"] = true,
-	["non-sovereign kingdoms"] = "[[w:non-sovereign monarchy|non-sovereign kingdoms]]",
-	["oblasts"] = true,
-	["parishes"] = true,
-	["parish seats"] = true,
-	["prefecture-level cities"] = true,
-	["prefectures"] = true,
-	["provinces"] = true,
-	["provinces and autonomous regions"] = "[[province]]s and [[autonomous region]]s",
-	["provinces and territories"] = "[[province]]s and [[territory|territories]]",
-	["quarters"] = true,
-	["raions"] = true,
-	["regencies"] = true,
-	["regional county municipalities"] = "w",
-	["regional districts"] = "w",
-	["regional municipalities"] = "w",
-	["regions"] = true,
-	["regional units"] = true,
-	["republics"] = true,
-	["rural municipalities"] = "w",
-	["self-administered divisions"] = "w",
-	["self-administered zones"] = "w",
-	["special administrative regions"] = "[[w:Special administrative regions of China|special administrative regions]]",
-	["special municipalities"] = "w", -- formerly referred to the Taiwan article but there are also special municipalities of the Netherlands
-	["special wards"] = true,
-	["states"] = true,
-	["states and territories"] = "[[state]]s and [[territory|territories]]",
-	["states and union territories"] = "[[state]]s and [[union territory|union territories]]",
-	["subdistricts"] = true,
-	["subprefectures"] = true,
-	["subregions"] = true,
-	["territorial authorities"] = "w",
-	["territories"] = true,
-	["townships"] = true,
-	["traditional counties"] = "w",
-	["union territories"] = true,
-	["voivodeships"] = true,
-	["zones"] = true,
-}
-
---[==[ var:
-Place types for which categories can be constructed for all the places listed below other than cities. The key should
-be the plural place type and the value should be either a string (the description) or an object containing a field
-`desc` (the description) and `prep` (the preposition following the place type as it occurs in categories, defaulting
-to "in").
-]==]
-export.generic_placetypes = {
-	["cities"] = "cities",
-	["ghost towns"] = "[[ghost town]]s",
-	["towns"] = "towns",
-	["communes"] = "[[commune]]s",
-	["villages"] = "villages, hamlets, and other small communities and settlements",
-	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions of cities",
-	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions of cities",
-	["non-sovereign kingdoms"] = "[[w:non-sovereign monarchy|non-sovereign kingdoms]]",
-	["suburbs"] = "[[suburb]]s",
-	["rivers"] = "rivers",
-	["census-designated places"] = "[[census-designated place]]s",
-	["unincorporated communities"] = "[[w:unincorporated community|unincorporated communities]]",
-	["places"] = "places of all sorts",
-	["geographic and cultural areas"] = {desc = "[[geographic]] and [[cultural]] [[area]]s", prep = "of"},
-}
-
---[==[ var:
-Place types for which categories can be constructed for cities listed below. The key should be the plural place type
-and the value should be either a string (the description) or an object containing a field `desc` (the description)
-and `prep` (the preposition following the place type as it occurs in categories, defaulting to "of").
-]==]
-export.generic_placetypes_for_cities = {
-	["neighborhoods"] = "[[neighborhood]]s, [[district]]s and other subportions",
-	["neighbourhoods"] = "[[neighbourhood]]s, [[district]]s and other subportions",
-	["suburbs"] = "[[suburb]]s",
-	["places"] = {desc = "places of all sorts", prep = "in"},
-}
-
-export.placetype_to_capital_cat = {
-	["autonomous community"] = "autonomous community capitals",
-	["canton"] = "cantonal capitals",
-	["country"] = "national capitals",
-	["department"] = "departmental capitals",
-	["district"] = "district capitals",
-	["division"] = "division capitals",
-	["emirate"] = "emirate capitals",
-	["prefecture"] = "prefectural capitals",
-	["province"] = "provincial capitals",
-	["region"] = "regional capitals",
-	["republic"] = "republic capitals",
-	["state"] = "state capitals",
-	["territory"] = "territorial capitals",
-	["voivodeship"] = "voivodeship capitals",
-}
-
-export.capital_cat_to_placetype = {}
-for placetype, capital_cat in pairs(export.placetype_to_capital_cat) do
-	export.capital_cat_to_placetype[capital_cat] = placetype
-end
-
------------------------------------------------------------------------------------
 --                          Country and Country-Like Tables                      --
 -----------------------------------------------------------------------------------
 
@@ -1168,7 +983,10 @@ export.countries = {
 	["Morocco"] = {parents = {"Africa"}, poldiv = {"regions", "prefectures", "provinces"}},
 	["Mozambique"] = {parents = {"Africa"}, poldiv = {"provinces", "districts"}},
 	["Myanmar"] = {parents = {"Asia"},
-		poldiv = {"regions", "states", "union territories", "self-administered zones", "self-administered divisions", "districts"}},
+		poldiv = {"regions", "states", "union territories",
+		{type = "self-administered zones", cat_as = "self-administered areas"},
+		{type = "self-administered divisions", cat_as = "self-administered areas"},
+		"districts"}},
 	["Namibia"] = {parents = {"Africa"}, poldiv = {"regions", "constituencies"}, british_spelling = true},
 	["Nauru"] = {parents = {"Micronesia"}, poldiv = {"districts"}, british_spelling = true},
 	["Nepal"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
@@ -1211,7 +1029,7 @@ export.countries = {
 		british_spelling = true},
 	["Rwanda"] = {parents = {"Africa"}, poldiv = {"provinces", "districts"}},
 	["Saint Kitts and Nevis"] = {parents = {"North America"}, poldiv = {"parishes"}, british_spelling = true},
-	["Saint Lucia"] = {parents = {"North America"}, poldiv = {"quarters"}, british_spelling = true},
+	["Saint Lucia"] = {parents = {"North America"}, poldiv = {"districts"}, british_spelling = true},
 	["Saint Vincent and the Grenadines"] = {parents = {"North America"}, poldiv = {"parishes"}, british_spelling = true},
 	["Samoa"] = {parents = {"Polynesia"}, poldiv = {"districts"}, british_spelling = true},
 	["San Marino"] = {parents = {"Europe"}, poldiv = {"municipalities"}, british_spelling = true},
@@ -1494,10 +1312,7 @@ export.former_countries = {
 	["the Roman Empire"] = {divtype = {"empire", "country"}, parents = {"Europe", "Africa", "Asia", "Rome"},
 		poldiv = {
 			"provinces",
-			-- FIXME: Should be possible to specify 'ANCIENT provinces' and have it work.
-			{type = "ancient provinces", cat_as = "provinces"},
-			{type = "former provinces", cat_as = "provinces"},
-			{type = "historical provinces", cat_as = "provinces"},
+			{type = "FORMER provinces", cat_as = "provinces"},
 		}},
 	["South Vietnam"] = {parents = {"Asia", "Vietnam"}},
 	["the Soviet Union"] = {parents = {"Europe", "Asia"}, poldiv = {"republics", "autonomous republics"}, british_spelling = true},
@@ -1565,7 +1380,6 @@ export.australia_group = {
 	default_divtype = "state",
 	default_div_parent_type = "states and territories",
 	default_poldiv = {"local government areas"},
-	default_miscdiv = {{type = "ghost towns", prep = "in"}},
 	british_spelling = true,
 	data = export.australia_states_and_territories,
 }
@@ -1697,7 +1511,6 @@ export.canada_group = {
 	value_transformer = subpolity_value_transformer("Canada"),
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
-	default_miscdiv = {{type = "ghost towns", prep = "in"}},
 	british_spelling = true,
 	data = export.canada_provinces_and_territories,
 }
@@ -2854,16 +2667,17 @@ export.russia_group = {
 	-- key_to_placename in the category augmentation code at the bottom of [[Module:place/data]], so we should
 	-- define a key_to_placename appropriately.)
 	placename_to_key = russia_placename_to_key,
-	bare_label_setter = function(labels, group, key, value)
+	bare_label_setter = function(group, key, value, m_data)
 		local divtype = value.divtype or group.default_divtype
 		if type(divtype) == "table" then
 			divtype = divtype[1]
 		end
 		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
-		labels[bare_key] = {
+		return {
 			type = "topic",
-			description = "{{{langname}}} terms related to " .. construct_russia_federal_subject_keydesc(linked_key, divtype) .. ".",
-			parents = {"federal subjects of Russia", require(en_utilities_module).pluralize(divtype) .. " of Russia"},
+			description = "{{{langname}}} terms related to " ..
+				construct_russia_federal_subject_keydesc(linked_key, divtype) .. ".",
+			parents = {"federal subjects of Russia", m_data.pluralize_placetype(divtype) .. " of Russia"},
 		}
 	end,
 	value_transformer = function(group, key, value)
@@ -3062,7 +2876,6 @@ export.uk_constituent_countries = {
 		{type = "local government districts", cat_as = "districts"},
 		{
 			type = "local government districts with borough status",
-			sgdiv = "local government district with borough status",
 			cat_as = {"districts", "boroughs"},
 		},
 		{type = "boroughs", cat_as = {"districts", "boroughs"}},
@@ -3184,7 +2997,6 @@ export.us_group = {
 	default_miscdiv = {
 		{type = "census-designated places", prep = "in"},
 		{type = "unincorporated communities", prep = "in"},
-		{type = "ghost towns", prep = "in"},
 	},
 	data = export.us_states,
 }
@@ -3277,7 +3089,6 @@ export.england_group = {
 		{type = "local government districts", cat_as = "districts"},
 		{
 			type = "local government districts with borough status",
-			sgdiv = "local government district with borough status",
 			cat_as = {"districts", "boroughs"},
 		},
 		{type = "boroughs", cat_as = {"districts", "boroughs"}},
@@ -3415,7 +3226,7 @@ Each group contains the following fields:
   field of the group contains a single polity in the table format (so that the divtype can be given), but in some cases
   it is an empty list.
 * `default_divtype`: The default divtype (in the singlar) of the immediate containing polity of the city (normally a
-  political subdivision of the overarching containing polity in `containing_polities`).
+  political division of the overarching containing polity in `containing_polities`).
 * `wp`: The default value of the Wikipedia spec describing how to construct the Wikipedia article for the city. Each
   spec is either `true` (use the city key directly) or a string containing formatting directives, indicating how to
   construct the article name. The allowed formatting directives are `%c` (the city key) and `%d` (the immediate
