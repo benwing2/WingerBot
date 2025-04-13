@@ -4,6 +4,7 @@ export.force_cat = false -- set to true for testing
 
 local m_shared = require("Module:place/shared-data")
 local m_links = require("Module:links")
+local m_strutils = require("Module:string utilities")
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
 
@@ -14,13 +15,8 @@ export.internal_error = internal_error
 local process_error = m_shared.processs_error
 export.process_error = process_error
 
-local function ucfirst(label)
-	return mw.getContentLanguage():ucfirst(label)
-end
-
-local function lc(label)
-	return mw.getContentLanguage():lc(label)
-end
+local function ucfirst = m_strutils.ucfirst
+local function ulower = m_strutils.lower
 
 
 ------------------------------------------------------------------------------------------
@@ -59,7 +55,7 @@ and otherwise just subtracts a final 's' (which will incorrectly generate 'passe
 changing this for words ending in '-sses'). If the generated singular is the same as the passed-in value, nil is
 returned.
 ]==]
-function export.maybe_singularize(placetype)
+function export.maybe_singularize_placetype(placetype)
 	if not placetype then
 		return nil
 	end
@@ -71,6 +67,52 @@ function export.maybe_singularize(placetype)
 		return nil
 	end
 	return retval
+end
+
+
+-- Return the correct plural of a placetype, and (if `do_ucfirst` is given) make the first letter uppercase. We first
+-- look up the plural in `placetype_data`, falling back to pluralize() in [[Module:en-utilities]], which is almost
+-- always correct.
+function export.pluralize_placetype(placetype, do_ucfirst)
+	local ptdata = export.placetype_data[placetype]
+	if ptdata and ptdata.plural then
+		placetype = ptdata.plural
+	else
+		placetype = require(en_utilities_module).pluralize(placetype)
+	end
+	if do_ucfirst then
+		return ucfirst(placetype)
+	else
+		return placetype
+	end
+end
+
+
+--[==[
+Get the data associated with a placetype, which may be in its singular or plural form. If `from_category` is specified,
+we also look for category-only placetypes (generally plural) followed by `!`. Return three values: (a) the placetype
+under which the data can be looked up (i.e. in its singular form if the passed-in `placetype` is plural and did not
+match a category-only placetype followed by `!`); (b) the placetype data structure; (c) the type of `placetype` match
+that occurred, one of `"direct"` if the canonical placetype is the same as the passed-in `placetype` and also the same
+as the key under which `ptdata` was looked up, or `"direct-category"` if the `ptdata` was looked up under a key formed
+from the passed-in `placetype` by adding `!`, or `"plural"` if the `ptdata` was looked up under the singularized version
+of the plural passed-in `placetype`.
+]==]
+function export.get_placetype_data(placetype, from_category)
+	local ptdata = export.placetype_data[placetype]
+	if ptdata then
+		return placetype, ptdata, "direct"
+	end
+	if from_category then
+		ptdata = export.placetype_data[placetype .. "!"]
+		return placetype .. "!", ptdata, "direct-category"
+	end
+	local sg_placetype = export.maybe_singularize_placetype(placetype)
+	if sg_placetype then
+		ptdata = export.placetype_data[sg_placetype]
+		return sg_placetype, ptdata, "plural"
+	end
+	return nil
 end
 
 
@@ -104,16 +146,28 @@ function export.resolve_placename_cat_aliases(holonym_placetype, holonym_placena
 end
 
 --[==[
-Given a placetype, split the placetype into one or more potential "splits", each consisting of
-a three-element list { {PREV_QUALIFIERS, THIS_QUALIFIER, BARE_PLACETYPE}}, i.e.
+Return a property from `placetype_data` for a given placetype. If the placetype isn't found in `placetype_data`, or the
+key isn't found in the placetype's entry in `placetype_data`, return nil.
+]==]
+function export.get_placetype_prop(placetype, key)
+	if export.placetype_data[placetype] then
+		return export.placetype_data[placetype][key]
+	else
+		return nil
+	end
+end
+
+--[==[
+Given a placetype, split the placetype into one or more potential ''splits'', each consisting of a three-element list
+{ {``prev_qualifiers``, ``this_qualifier``, ``reduced_placetype``}}, i.e.
 # the concatenation of zero or more previously-recognized qualifiers on the left, normally canonicalized (if there are
   zero such qualifiers, the value will be nil);
 # a single recognized qualifier, normally canonicalized (if there is no qualifier, the value will be nil);
-# the "bare placetype" on the right.
-Splitting between the qualifier in (2) and the bare placetype in (3) happens at each space character, proceeding from
+# the "reduced placetype" on the right.
+Splitting between the qualifier in (2) and the reduced placetype in (3) happens at each space character, proceeding from
 left to right, and stops if a qualifier isn't recognized. All placetypes are canonicalized by checking for aliases
-in `placetype_aliases`, but no other checks are made as to whether the bare placetype is recognized. Canonicalization
-of qualifiers does not happen if NO_CANON_QUALIFIERS is specified.
+in `placetype_aliases`, but no other checks are made as to whether the reduced placetype is recognized. Canonicalization
+of qualifiers does not happen if `no_canon_qualifiers` is specified.
 
 For example, given the placetype `"small beachside unincorporated community"`, the return value will be
 { {
@@ -144,7 +198,7 @@ function export.split_qualifiers_from_placetype(placetype, no_canon_qualifiers)
 	local splits = {{nil, nil, export.resolve_placetype_aliases(placetype)}}
 	local prev_qualifier = nil
 	while true do
-		local qualifier, bare_placetype = placetype:match("^(.-) (.*)$")
+		local qualifier, reduced_placetype = placetype:match("^(.-) (.*)$")
 		if qualifier then
 			local canon = export.placetype_qualifiers[qualifier]
 			if canon == nil then
@@ -158,9 +212,9 @@ function export.split_qualifiers_from_placetype(placetype, no_canon_qualifiers)
 					new_qualifier = canon
 				end
 			end
-			insert(splits, {prev_qualifier, new_qualifier, export.resolve_placetype_aliases(bare_placetype)})
+			insert(splits, {prev_qualifier, new_qualifier, export.resolve_placetype_aliases(reduced_placetype)})
 			prev_qualifier = prev_qualifier and prev_qualifier .. " " .. new_qualifier or new_qualifier
-			placetype = bare_placetype
+			placetype = reduced_placetype
 		else
 			break
 		end
@@ -169,108 +223,154 @@ function export.split_qualifiers_from_placetype(placetype, no_canon_qualifiers)
 end
 
 --[==[
-Given a placetype (which may be pluralized), return an ordered list of equivalent placetypes to look under to find the
+Given a `placetype` (which may be pluralized), return an ordered list of equivalent placetypes to look under to find the
 placetype's properties (such as the category or categories to be inserted). The return value is actually an ordered list
 of objects of the form `{qualifier=``qualifier``, placetype=``equiv_placetype``}` where ``equiv_placetype`` is a
 placetype whose properties to look up, derived from the passed-in placetype or from a contiguous subsequence of the
 words in the passed-in placetype (always including the rightmost word in the placetype, i.e. we successively chop off
 qualifier words from the left and use the remainder to find equivalent placetypes). ``qualifier`` is the remaining words
 not part of the subsequence used to find ``equiv_placetype``; or nil if all words in the passed-in placetype were used
-to find ``equiv_placetype``. (FIXME: This qualifier is not currently used anywhere.) The placetype passed in always
-forms the first entry.
+to find ``equiv_placetype``. (FIXME: This qualifier is not currently used anywhere.) Only placetypes for which there is
+an entry in `placetype_data` are included. The placetype passed in is always checked first, and will form the first
+entry if it exists in `placetype_data`.
+
+For example, given the placetype `left tributary`, the following placetype/qualifier combinations are checked in turn:
+```
+  {qualifier = nil, placetype="left tributary"}
+  {qualifier = "left", placetype="tributary"}
+  {qualifier = "left", placetype="river"}
+```
+and the return value will be
+{ {
+  {qualifier = "left", placetype="tributary"},
+  {qualifier = "left", placetype="river"},
+}}
+
+The algorithm first enters the placetype itself into the list, then checks for `left tributary` as a recognized
+placetype in `placetype_data` and doesn't find it, so it doesn't enter it into the returned list (if it found it, it
+would add it as well as any fallbacks directly after it). It then splits off the recognized qualifier `left` to form the
+''reduced placetype'' `tributary`, which is entered into the list because it is found in `placetype_data`. Then, because
+it has a fallback `river`, which exists in `placetype_data`, the fallback is entered next.
+
+Another example is `small rural fraziones` (where a ''frazione'' is type of subdivision of a ''comune'' or municipality,
+often specifically an outlying hamlet). the placetype/qualifier combinations checked are:
+```
+  {qualifier = nil, placetype="small rural fraziones"}
+  {qualifier = nil, placetype="small rural frazione"}
+  {qualifier = "small", placetype="rural fraziones"}
+  {qualifier = "small", placetype="rural frazione"}
+  {qualifier = "small [[rural]]", placetype="fraziones"}
+  {qualifier = "small [[rural]]", placetype="frazione"}
+  {qualifier = "small [[rural]]", placetype="hamlet"}
+  {qualifier = "small [[rural]]", placetype="village"}
+```
+The return value ends up as
+  {qualifier = "small [[rural]]", placetype="frazione"},
+  {qualifier = "small [[rural]]", placetype="hamlet"},
+  {qualifier = "small [[rural]]", placetype="village"},
+}}
+
+Here, because the result of singularizing `fraziones` returns a different value from the placetype itself, that
+singularized value is checked after the original plural value. Also, in the process of splitting off qualifiers,
+they are canonicalized if the entry in `placetype_qualifiers` says to do so; in this case, links are placed around
+`rural`. Finally, `frazione` has `hamlet` as its fallback, which in turn has `village` as its fallback, so both
+fallbacks end up being returned.
 
 `no_fallback`, if set, disables returning equivalent placetypes based on the `fallback` setting for a placetype. This is
 used in the first of two loops in find_placetype_cat_specs() in [[Module:place]] to prefer exact matches for placetypes
-such as barangays with later holonyms to matches based on a fallback such as 'neighborhood' with an earlier holonym.
+such as barangays with later holonyms to matches based on a fallback such as `neighborhood` with an earlier holonym.
 See the comment in that function in [[Module:place]] for a more detailed explanation of why this is needed. Only the
-placetype itself, and placetype subsets created by chopping off recognized qualifiers at the beginning, are returned;
-but we do not return placetype subsets if a containing placetype exists in `placetype_data`. (For example,
-"overseas territory" has a fallback "dependent territory", and "overseas" is also a recognized qualifier. When
-`no_fallback` is in place, without the above proviso, we would return "overseas territory" followed by "territory"
-with the incorrect effect of classifying an "overseas territory" of the United Kingdom such as "Gibraltar" under
+placetype itself, and any reduced placetypes created by chopping off recognized qualifiers at the beginning, are
+returned; but we do not return reduced placetypes if a containing placetype exists in `placetype_data`. (For example,
+`"overseas territory"` has a fallback `"dependent territory"`, and `"overseas"` is also a recognized qualifier. When
+`no_fallback` is in place, without the above proviso, we would return `"overseas territory"` followed by `"territory"`
+with the incorrect effect of classifying an `"overseas territory"` of the United Kingdom such as `"Gibraltar"` under
 [[:Category:Territories of the United Kingdom]] instead of [[:Category:Dependent territories of the United Kingdom]].)
-As an exception, if 'historical', 'ancient', 'former' or the like are found, they proceed ignoring `no_fallback`,
+As an exception, if `historical`, `ancient`, `former` or the like are found, they proceed ignoring `no_fallback`,
 because it seems tricky to handle them correctly in the presence of `no_fallback`, and historical/former placetypes
 rarely occur with exact match category specs anyway.
 
-`no_check_for_inherently_former` is necessary to prevent an infinite loop when checking for `inherently_former`.
+`no_split_qualifiers` prevents splitting off recognized qualifiers and returning the remainder of the placetype as an
+equivalent placetype. Only the passed-in placetype, and any fallbacks, will be returned. This is used in
+[[Module:category tree/topic cat/data/Places]] when looking up placetypes found in categories. Such placetypes won't
+have qualifiers and so it doesn't make sense to try and look for them.
+
+`from_category`, if set, causes category-only placetypes (those ending in `!`) to also be checked.
+
+`no_check_for_inherently_former` is used internally to prevent an infinite loop when checking for `inherently_former`.
 ]==]
-function export.get_placetype_equivs(data)
-	local placetype, no_fallback, no_check_for_inherently_former = data.placetype, data.no_fallback,
-		data.no_check_for_inherently_former
+function export.get_placetype_equivs(placetype, props)
+	local no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category
+	if props then
+		no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category =
+			props.no_fallback, props.no_split_qualifiers, props.no_check_for_inherently_former, props.from_category
+	end
 	local equivs = {}
 
-	-- Look up the equivalent placetype for `placetype` in `placetype_data`. If `placetype` is plural, also look up the
-	-- equivalent for the singularized version. Return any equivalent placetype(s) found.
-	local function lookup_placetype_equiv(placetype)
-		local retval = {}
-		local function insert_placetype_equiv_or_fallback(placetype)
-			local first_placetype = #retval + 1
+	-- Insert `placetype` into `equivs`, along with any fallback placetypes listed in `placetype_data`. `qualifier`
+	-- is the preceding qualifier to insert into `equivs` along with the placetype (see comment at top of function). If
+	-- `from_category` is given, we also check for a category-specific entry consisting of the placetype followed by
+	-- `!`, and in all cases we also check to see if `placetype` is plural, and if so, insert the singularized version
+	-- along with its fallbacks (if any) in `placetype_data`.
+	local function do_placetype(qualifier, placetype)
+		local function insert_equiv(pt)
+			insert(equivs, {qualifier=qualifier, placetype=pt})
+		end
+
+		-- Insert the placetype, along with any fallbacks.
+		local canon_placetype, ptdata, ptmatch = export.get_placetype_data(placetype, from_category)
+		if ptdata then
+			insert_equiv(canon_placetype)
+			if no_fallback then
+				return
+			end
+			local first_placetype = #equivs + 1
+			local prev_placetype = nil
 			while true do
-				local pt_value = export.placetype_data[placetype]
-				if pt_value and pt_value.fallback then
-					insert(retval, pt_value.fallback)
-					local last_placetype = #retval
+				local pt_value = export.placetype_data[canon_placetype]
+				if not pt_value then
+					internal_error("Fallback value %s specified for placetype %s but is not in `placetype_data`",
+						canon_placetype, prev_placetype)
+				end
+				if pt_value.fallback then
+					insert_equiv(pt_value.fallback)
+					local last_placetype = #equivs
 					if last_placetype - first_placetype >= 10 then
-						internal_error("Apparent loop in fallback chain: %s", table.concat(retval, " -> ", first_placetype, last_placetype))
+						local fallback_loop = {}
+						for i = first_placetype, last_placetype do
+							insert(fallback_loop, equivs[i].placetype)
+						end
+						internal_error("Apparent loop in fallback chain: %s", table.concat(fallback_loop, " -> "))
 					end
-					placetype = pt_value.fallback
+					prev_placetype = canon_placetype
+					canon_placetype = pt_value.fallback
 				else
 					break
 				end
 			end
 		end
-		insert_placetype_equiv_or_fallback(placetype)
-		local sg_placetype = export.maybe_singularize(placetype)
-		-- Check for a mapping in `placetype_data` for the singularized equivalent.
-		if sg_placetype then
-			insert_placetype_equiv_or_fallback(sg_placetype)
-		end
-		return retval
 	end
 
-	-- Insert `placetype` into `equivs`, along with any fallback placetypes listed in `placetype_data`. `qualifier`
-	-- is the preceding qualifier to insert into `equivs` along with the placetype (see comment at top of function). We
-	-- also check to see if `placetype` is plural, and if so, insert the singularized version along with its fallbacks
-	-- (if any) in `placetype_data`.
-	local function do_placetype(qualifier, placetype)
-		-- FIXME! The qualifier (first arg) is inserted into the table, but isn't currently used anywhere.
-		local function insert_equiv(pt)
-			insert(equivs, {qualifier=qualifier, placetype=pt})
-		end
-
-		-- First do the placetype itself.
-		insert_equiv(placetype)
-		-- Then check for a singularized equivalent.
-		local sg_placetype = export.maybe_singularize(placetype)
-		if sg_placetype then
-			insert_equiv(sg_placetype)
-		end
-		if not no_fallback then
-			-- Then check for a mapping in `placetype_data`, and a mapping for the singularized equivalent; add if
-			-- present.
-			local placetype_equiv_list = lookup_placetype_equiv(placetype)
-			for _, placetype_equiv in ipairs(placetype_equiv_list) do
-				insert_equiv(placetype_equiv)
-			end
-		end
+	-- Successively split off recognized qualifiers and loop over successively greater sets of qualifiers from the left
+	-- (unless `no_split_qualifiers` is specified, in which case we don't check for qualifiers).
+	local splits
+	if no_split_qualifiers then
+		splits = {{nil, nil, export.resolve_placetype_aliases(placetype)}}
+	else
+		splits = export.split_qualifiers_from_placetype(placetype)
 	end
-
-	-- Successively split off recognized qualifiers and loop over successively greater sets of qualifiers from the left.
-	local splits = export.split_qualifiers_from_placetype(placetype)
 
 	for _, split in ipairs(splits) do
-		local prev_qualifier, this_qualifier, bare_placetype = unpack(split, 1, 3)
+		local prev_qualifier, this_qualifier, reduced_placetype = unpack(split, 1, 3)
 		-- If a special "former" qualifier like `former`  or `historical` isn't present, and
 		-- `no_check_for_inherently_former` is not given (this flag is used to avoid infinite loops), check for
 		-- "inherently former" placetypes like `satrapy` and `treaty port` that always refer to no-longer-existing
 		-- placetypes, and handle accordingly.
 		local former_qualifiers = this_qualifier and export.former_qualifiers[this_qualifier] or nil
 		if not former_qualifiers and not no_check_for_inherently_former then
-			former_qualifiers = export.get_equiv_placetype_prop(bare_placetype,
-				function(pt) return export.placetype_data[pt] and export.placetype_data[pt].inherently_former end,
-				nil, nil, "no_check_for_inherently_former"
-			)
+			former_qualifiers = export.get_equiv_placetype_prop(reduced_placetype,
+				function(pt) return export.get_placetype_prop(pt, "inherently_former") end,
+				{no_check_for_inherently_former = true})
 		end
 
 		-- If a special "former" qualifier like `former` or `historical` is present, map it to the appropriate internal
@@ -285,24 +385,25 @@ function export.get_placetype_equivs(data)
 		-- don't enter anything into `equivs`.
 		if former_qualifiers then
 			-- FIXME: Should we respect `no_fallback` here? My instinct says no.
-			local bare_placetype_equivs = export.get_placetype_equivs(bare_placetype, nil,
-				"no_check_for_inherently_former")
-			local former_type = export.get_equiv_placetype_prop_from_equivs(bare_placetype_equivs,
-				function(pt) return export.placetype_data[pt] and export.placetype_data[pt].former_type end
+			local reduced_placetype_equivs = export.get_placetype_equivs(reduced_placetype, {
+				no_check_for_inherently_former = true
+			})
+			local former_type = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
+				function(pt) return export.get_placetype_prop(pt, "former_type") end
 			)
 			if not former_type then
-				local pt_data = export.get_equiv_placetype_prop_from_equivs(bare_placetype_equivs,
+				local pt_data = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
 					function(pt) return export.placetype_data[pt] end
 				)
 				if pt_data then
 					internal_error("For placetype '%s', placetype data located but `former_type` missing; " ..
-						"placetypes searched are %s", bare_placetype, bare_placetype_equivs)
+						"placetypes searched are %s", reduced_placetype, reduced_placetype_equivs)
 				else
 					-- Enable error when we've verified there aren't any examples.
 					track("bad-former-placetype")
-					track("bad-former-placetype/" .. bare_placetype)
+					track("bad-former-placetype/" .. reduced_placetype)
 					--process_error("For placetype '%s', unrecognized placetype following 'former'-type qualifier; " ..
-					--	"searched placetype(s) %s", bare_placetype, dump(bare_placetype_equivs))
+					--	"searched placetype(s) %s", reduced_placetype, dump(reduced_placetype_equivs))
 				end
 			elseif former_type ~= "!" then
 				for _, former_qualifier in ipairs(former_qualifiers) do
@@ -319,20 +420,17 @@ function export.get_placetype_equivs(data)
 		end
 
 		-- Finally, join the rightmost split-off qualifier to the previously split-off qualifiers to form a combined
-		-- qualifier, and add it along with bare_placetype and any mapping in placetype_data for bare_placetype.
+		-- qualifier, and add it along with reduced_placetype and any mapping in placetype_data for reduced_placetype.
 		-- NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier` are nil, and this inserts
 		-- the full placetype into `equivs`.
 		local qualifier = prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
-		do_placetype(qualifier, bare_placetype)
+		do_placetype(qualifier, reduced_placetype)
 
-		-- If `no_fallback` and there's an entry in `placetype_data` for this placetype, don't include any placetype
-		-- subsets to avoid the "overseas territory treated as a territory" issue describe above.
+		-- If `no_fallback` and there's an entry in `placetype_data` for this placetype, don't include any reduced
+		-- placetypes to avoid the "overseas territory treated as a territory" issue describe above.
 		if no_fallback then
-			if export.placetype_data[bare_placetype] then
-				break
-			end
-			local sg_bare_placetype = export.maybe_singularize(bare_placetype)
-			if sg_bare_placetype and export.placetype_data[sg_bare_placetype] then
+			local canon_placetype, ptdata, ptmatch = export.get_placetype_data(reduced_placetype, from_category)
+			if canon_placetype then
 				break
 			end
 		end
@@ -362,13 +460,12 @@ equivalent placetype that triggered the non-falsy (or non-{nil}) return value. I
 non-{nil}) value, `get_equiv_placetype_prop` returns {nil} for both return values. If `placetype` is passed in as {nil},
 the return value is the result of calling `fun` on {nil} (whatever it is) with {nil} for the second return value.
 ]==]
-function export.get_equiv_placetype_prop(placetype, fun, continue_on_nil_only, no_fallback,
-	no_check_for_inherently_former)
+function export.get_equiv_placetype_prop(placetype, fun, props)
 	if not placetype then
 		return fun(nil), nil
 	end
-	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype, no_fallback,
-		no_check_for_inherently_former), fun, continue_on_nil_only)
+	return export.get_equiv_placetype_prop_from_equivs(export.get_placetype_equivs(placetype, props), fun,
+		props and props.continue_on_nil_only)
 end
 
 
@@ -449,33 +546,6 @@ local function make_placetype_link(link, sg_placetype, orig_placetype)
 end
 
 --[==[
-Get the data associated with a placetype, which may be in its singular or plural form. If `from_category` is specified,
-we also look for category-only placetypes (generally plural) followed by `!`. Return three values: (a) the canonical
-placetype that should be used for generating links and such (i.e. in its singular form if the passed-in `placetype` is
-plural, and without any following `!`); (b) the placetype data structure; (c) the type of `placetype` match that
-occurred, one of `"direct"` if the canonical placetype is the same as the passed-in `placetype` and also the same as the
-key under which `ptdata` was looked up, or `"direct-category"` if the `ptdata` was looked up under a key formed from the
-passed-in `placetype` by adding `!`, or `"plural"` if the `ptdata` was looked up under the singularized version of the
-plural passed-in `placetype`.
-]==]
-function export.get_placetype_data(placetype, from_category)
-	local ptdata = export.placetype_data[placetype]
-	if ptdata then
-		return placetype, ptdata, "direct"
-	end
-	if from_category then
-		ptdata = export.placetype_data[placetype .. "!"]
-		return placetype, ptdata, "direct-category"
-	end
-	local sg_placetype = export.maybe_singularize(placetype)
-	if sg_placetype then
-		ptdata = export.placetype_data[sg_placetype]
-		return sg_placetype, ptdata, "plural"
-	end
-	return nil
-end
-
---[==[
 Get the display form of a placetype by looking it up in `placetype_data`. If the placetype is recognized, or is the
 plural of a recognized placetype, the corresponding linked display form is returned (with plural placetypes displaying
 as plural but linked to the singular form of the placetype). Otherwise, return nil. If we're generating the description
@@ -494,12 +564,12 @@ function export.get_placetype_display_form(placetype, category_type)
 			if category_type == "top-level" then
 				raw_link = ptdata.category_link_top_level
 			elseif category_type == "noncity" then
-				raw_link = ptdata.category_link_noncity
+				raw_link = ptdata.category_link_before_noncity
 			elseif category_type == "city" then
-				raw_link = ptdata.category_link_city
+				raw_link = ptdata.category_link_before_city
 			end
 			if raw_link ~= nil then
-				return raw_link
+				return raw_link, ptdata
 			end
 			raw_link = ptdata.category_link
 			if raw_link == false then
@@ -507,7 +577,7 @@ function export.get_placetype_display_form(placetype, category_type)
 					placetype, category_type)
 			end
 			if type(raw_link) == "string" and raw_link:find("%[%[") then
-				return raw_link
+				return raw_link, ptdata
 			end
 		end
 		if ptmatch == "plural" then
@@ -516,10 +586,10 @@ function export.get_placetype_display_form(placetype, category_type)
 				process_error("Placetype %s cannot appear plural", placetype)
 			end
 			if type(raw_link) == "string" and raw_link:find("%[%[") then
-				return raw_link
+				return raw_link, ptdata
 			end
 		end
-		return make_placetype_link(raw_link, canon_placetype, placetype ~= canon_placetype and placetype or nil)
+		return make_placetype_link(raw_link, canon_placetype, placetype ~= canon_placetype and placetype or nil), ptdata
 	end
 
 	return nil
@@ -812,7 +882,28 @@ export.qualifier_to_placetype_equivs = {
 	-- For e.g. Taiwan as a "claimed province" of China; parts of Belize as claimed by Guatemala; various islands
 	-- claimed by various parties in East Asia. FIXME: We should conditionalize on what is being claimed since there are
 	-- also claimed capitals, e.g. Israel and Palestine claim Jerusalem as their capital.
-	["claimed"] = "claimed political subdivision",
+	["claimed"] = "claimed political division",
+}
+
+--[==[ var:
+Mapping from placetypes to the corresponding plural category-only placetype for a capital of that placetype. The reverse
+mapping also exists.
+]==]
+export.placetype_to_capital_cat = {
+	["autonomous community"] = "autonomous community capitals",
+	["canton"] = "cantonal capitals",
+	["country"] = "national capitals",
+	["department"] = "departmental capitals",
+	["district"] = "district capitals",
+	["division"] = "division capitals",
+	["emirate"] = "emirate capitals",
+	["prefecture"] = "prefectural capitals",
+	["province"] = "provincial capitals",
+	["region"] = "regional capitals",
+	["republic"] = "republic capitals",
+	["state"] = "state capitals",
+	["territory"] = "territorial capitals",
+	["voivodeship"] = "voivodeship capitals",
 }
 
 --[==[ var:
@@ -1123,7 +1214,7 @@ export.cat_implications = {
 
 
 --[=[
-If the holonym in `data` refers to a known polity or political subdivision, find and return the corresponding polity
+If the holonym in `data` refers to a known polity or political division, find and return the corresponding polity
 key, spec and group. FIXME: This should verify that there is no mismatch between the polity's containing polities
 and any of the following holonyms in the {{tl|place}} spec, as find_city_spec() does.
 
@@ -1131,7 +1222,7 @@ Returns three values:
 # The ''polity key'' (the key in the data in the polity group table; often has the name of the containing polity and
   somtimes the placetype affixed, and may have `the` prefixed);
 # the ''polity spec'' (object describing the polity, the value corresponding to the polity key in the data in the polity
-  group table; documented in [[Module:place/shared-data]] in the intro under `==Polity subdivision tables==`);
+  group table; documented in [[Module:place/shared-data]] in the intro under `==Polity division tables==`);
 # the ''polity group'' (the table listing a group of polities with shared properties).
 ]=]
 local function find_polity_spec(data)
@@ -1156,7 +1247,7 @@ end
 local function city_type_cat_handler(data, allow_if_holonym_is_city, no_containing_polity, extracats)
 	local entry_placetype, holonym_placetype, holonym_placename =
 		data.entry_placetype, data.holonym_placetype, data.holonym_placename
-	local plural_entry_placetype = require(en_utilities_module).pluralize(entry_placetype)
+	local plural_entry_placetype = export.pluralize_placetype(entry_placetype)
 	for _, group in ipairs(m_shared.polities) do
 		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
 		local key, _ = m_shared.call_place_cat_handler(group, holonym_placetype, holonym_placename)
@@ -1225,9 +1316,9 @@ local function capital_city_cat_handler(data, non_city)
 	-- Truncate e.g. 'autonomous region' to 'region', 'union territory' to 'territory' when looking
 	-- up the type of capital category, if we can't find an entry for the holonym placetype itself
 	-- (there's an entry for 'autonomous community').
-	local capital_cat = m_shared.placetype_to_capital_cat[holonym_placetype]
+	local capital_cat = export.placetype_to_capital_cat[holonym_placetype]
 	if not capital_cat then
-		capital_cat = m_shared.placetype_to_capital_cat[holonym_placetype:gsub("^.* ", "")]
+		capital_cat = export.placetype_to_capital_cat[holonym_placetype:gsub("^.* ", "")]
 	end
 	if capital_cat then
 		capital_cat = ucfirst(capital_cat)
@@ -1393,7 +1484,7 @@ fail for the UK because I think there's a setting preventing adding the UK as a 
 council areas in Scotland, etc. are encountered. FIXME: Investigate this further.)
 
 FIXME: The checks we do for cities to make sure the wrong containing polity isn't mentioned ought to be done for other
-subdivisions as well.
+divisions as well.
 
 The single parameter `data` is as in category handlers. The return value is a list of categories (without the preceding
 language code).
@@ -1628,11 +1719,11 @@ end
 
 
 -- Cat handler for district, areas, neighborhoods and suburbs. Districts are tricky because they can either be political
--- subdivisions or city neighborhoods. Areas similarly can be political subdivisions (rarely; specifically, in Kuwait),
--- city neighborhoods or larger geographical areas/regions. We handle this as follows:
--- (1) `placetype_data` cat entries for specific countries or country subdivisions take precedence over cat_handlers,
---     so if the user says {{tl|place|district|s/Maharashtra|c/India}}, we won't even be called because there is an
---     entry that categorizes into [[:Category|Districts of Maharashtra, India]].
+-- divisions or city neighborhoods. Areas similarly can be political divisions (rarely; specifically, in Kuwait), city
+-- neighborhoods or larger geographical areas/regions. We handle this as follows:
+-- (1) `placetype_data` cat entries for specific countries or country divisions take precedence over cat_handlers, so if
+--     the user says {{tl|place|district|s/Maharashtra|c/India}}, we won't even be called because there is an entry that
+--     categorizes into [[:Category|Districts of Maharashtra, India]].
 -- (2) If we're called, we check the holonym we're called on to see if it is a recognized city, e.g. if we're called
 --     using {{tl|place|district|city/Mumbai|s/Maharashtra|c/India}}. If so, we categorize under e.g.
 --     [[:Category:Neighbourhoods of Mumbai]]. (Choosing the spelling "neighbourhoods" because we're in India.)
@@ -1687,7 +1778,8 @@ local function district_neighborhood_cat_handler(data)
 			if export.placetype_data[pt] then
 				return export.placetype_data[pt].has_neighborhoods or false
 			end
-		end, "continue on nil only")
+		end,
+		{continue_on_nil_only = true})
 	end
 	if has_neighborhoods then
 		-- Loop up the holonyms, looking for city and city-like entities in case of e.g. [[Sepulveda]] written
@@ -1718,7 +1810,7 @@ end
 
 
 function export.check_already_seen_string(holonym_placename, already_seen_strings)
-	local canon_placename = lc(m_links.remove_links(holonym_placename))
+	local canon_placename = ulower(m_links.remove_links(holonym_placename))
 	if type(already_seen_strings) ~= "table" then
 		already_seen_strings = {already_seen_strings}
 	end
@@ -1739,7 +1831,7 @@ end
 -- uses the raw form as the link destination but the prefixed form as the display form, unless the
 -- holonym already has a link in it, in which case we just add the prefix.
 local function prefix_display_handler(prefix, holonym_placename, already_seen_strings)
-	if export.check_already_seen_string(holonym_placename, already_seen_strings or lc(prefix)) then
+	if export.check_already_seen_string(holonym_placename, already_seen_strings or ulower(prefix)) then
 		return holonym_placename
 	end
 	if holonym_placename:find("%[%[") then
@@ -1752,7 +1844,7 @@ end
 -- Suffix display handler that adds a suffix such as " parish" to the display form of holonyms.
 -- Works identically to prefix_display_handler but for suffixes instead of prefixes.
 local function suffix_display_handler(suffix, holonym_placename, already_seen_strings)
-	if export.check_already_seen_string(holonym_placename, already_seen_strings or lc(suffix)) then
+	if export.check_already_seen_string(holonym_placename, already_seen_strings or ulower(suffix)) then
 		return holonym_placename
 	end
 	if holonym_placename:find("%[%[") then
@@ -1837,33 +1929,192 @@ end
 
 --[==[ var:
 Main placetype data structure. This specifies, for each canonicalized placetype, various properties. The keys are
-placetypes (in the singular), and the value should normally be a table of properties. If the value is a string, it is
-equivalent to having that string as the `fallback` property. The `"*"` key is special and is used for adding "generic"
-categories of the form `Places in ``location`` `; it runs for all entry placetypes. Keys under the value table for a
-given placetype of are two types: ''property keys'' (which specify the value of specific properties) and
-''categorization keys'' (which tell how to categorize certain sorts of holonyms if the placetype in question occurs as
-an entry placetype). Categorization keys are either the special value `default` or are strings with a slash in them,
-such as `"city/New York City"` or `"country/*"`. Note that there are few categorization keys specified in this table
-in the code itself, but the augmentation process (the code directly following the table) adds a lot more. The algorithm
-for how category keys are used to generate categories is described at the top of [[Module:place]].
+placetypes (in the singular, except for category-only placetypes, which are plural and followed by `!`), and the value
+is a table of properties.  The `"*"` key is special and is used for adding "generic" categories of the form
+`Places in ``location`` `; it runs for all entry placetypes. Keys in the form of plural placetypes followed by `!` are
+used only in [[Module:category tree/topic cat/data/Places]] for specifying the properties of categories containing the
+specified placetype, esp. bare categories like [[:Category:States and territories]] (rather than qualified categories
+like [[:Category:States and territories of Australia]]).
 
-The following are the recognized property keys:
-* `link`: '''Required'''. How to link the placetype in the formatted description when occurring as an entry placetype.
-  Also used for formatting pluralized placetypes (which may occur in entry placetypes, esp. new-format ones, and may
-  occur in categories). The possible values are:
+Keys under the value table for a given placetype of are two types: ''property keys'' (which specify the value of
+specific properties) and ''categorization keys'' (which tell how to categorize certain sorts of holonyms if the
+placetype in question occurs as an entry placetype). Categorization keys are either the special value `default` or are
+strings with a slash in them, such as `"city/New York City"` or `"country/*"`. Note that there are few categorization
+keys specified in this table in the code itself, but the augmentation process (the code directly following the table)
+adds a lot more. The algorithm for how category keys are used to generate categories is described at the top of
+[[Module:place]].
+
+There are several recognized property keys, of various types:
+
+1. The following link-related property keys are recognized:
+* `link`: '''Required''' except in category-only placetypes ending in `!`. Describes how to link and display the
+  placetype in the formatted description when occurring as an entry placetype. Also used for formatting pluralized
+  placetypes (which may occur in entry placetypes, esp. new-format ones, such as `two <<islands>>`) and may occur in
+  categories). The possible values are:
 *# `true`: Link to the same-named Wiktionary entry. This creates a raw link, e.g. `<nowiki>[[city]]</nowiki>`, which is
-  converted to an English-specific link by JavaScript postprocessing. If the placetype is plural, this creates a
-  two-part raw link.
-*# `false`: 
+   converted to an English-specific link by JavaScript postprocessing. If the placetype is plural, this creates a
+   two-part raw link e.g. `<nowiki>[[city|cities]]</nowiki>`.
+*# `"w"`: Link to the same-named Wikipedia entry. This creates a two-part link, e.g.
+   `<nowiki>[[w:census town|census town]]</nowiki>`, or `<nowiki>[[w:census town|census towns]]</nowiki>` if the
+   placetype is given plural.
+*# `"+..."`: Create a two-part link to the entry following the `+` sign. For example, if `cercle` specifies
+   `"+w:cercles of Mali"`, a two-part link `<nowiki>[[w:cercles of Mali|cercle]]</nowiki>` will be generated, or
+   `<nowiki>[[w:cercles of Mali|cercles]]</nowiki>` if plural `cercles` is specified.
+*# `"separately"`: Link each word separately. For example, if `administrative territory` specifies `"separately"`, it
+   will be linked as `<nowiki>[[administrative]] [[territory]]</nowiki>`, or as
+   `<nowiki>[[administrative]] [[territory|territories]]</nowiki>` if plural `administrative territories` is given.
+*# another string: Use that string directly. If the placetype is plural, `pluralize()` in [[Module:en-utilities]] is
+   called on the string, which will correctly pluralize most strings, including those with links in them. (If there
+   are multiple links, the display form of the last link is pluralized.)
+*# `false`: This placetype is not allowed as an entry placetype. An error will be thrown if this placetype is given as
+   an entry placetype. This is specified for internal-use placetypes, especially placetypes used in conjunction with
+   the qualifiers `former`, `ancient`, `historical` and such.
+* `plural_link`: If specified and the placetype is plural, use the value in place of generating a pluralized version of
+  the link spec in `link`. Most commonly, this is either a string with links in it (which is used directly) or the
+  value `false`, indicating that the placetype cannot occur plural. (This is used for example by `caplc`, which displays
+  as `<nowiki>[[capital]] and [[large]]st [[city]]</nowiki>`, where a plural version doesn't make sense.) Generally if
+  this is specified, `plural` also needs to be specified to give a special placetype plural; this situation occurs
+  especially with multiword placetypes where something other than the last word is pluralized. An example is
+  `town with bystatus`, whose plural is `towns with bystatus`, which needs to be explicitly given. This example uses
+  `link = <nowiki>"[[town]] with [[bystatus#Norwegian Bokmål|bystatus]]"</nowiki>` ({{m|nb|bystatus}}) is a Norwegian
+  Bokmål word, and template calls aren't currently permitted in link strings), along with
+  `plural_link = <nowiki>"[[town]]s with [[bystatus#Norwegian Bokmål|bystatus]]"</nowiki>`.
+* `category_link`: Spec indicating how to display the placetype when occurring in category descriptions. Defaults to
+  the value of `link`, and in turn is overridden by more specific `category_link_*` keys; see below. Category-only
+  placetypes (which are plural and end in `!`) usually use `category_link` in preference to `link`. The value of
+  `category_link` can be any of the types of specs given above, but most commonly is a plural string with links in it,
+  spelling out the description; in this case it is used directly. When both `category_link` and `link` are given, the
+  value in `category_link` is typically longer and more descriptive. For example, `polity` uses `link = true`, which
+  just generates a link `<nowiki>[[polity]]</nowiki>` or plural `<nowiki>[[polity|polities]]</nowiki>`, but specifies a
+  separate `category_link = <nowiki>"[[independent]] or [[semi-]][[independent]] [[polity|polities]]"</nowiki>`, which
+  clarifies in the category description what a polity is.
+* `category_link_top_level`: Spec indicating how to display top-level (bare/unqualified) categories, i.e. categories
+  where the placetype is not followed by `in ``location`` ` or `of ``location`` `. If given, this overrides
+  `category_link` for this type of category.
+* `category_link_before_noncity`: Spec indicating how to display qualified categories of the form
+  ` ``placetypes`` in/of ``location`` ` where ``location`` does not refer to a city. If given, this overrides
+  `category_link` for this type of category.
+* `category_link_before_city`: Spec indicating how to display qualified categories of the form
+  ` ``placetypes`` in/of ``location`` ` where ``location`` refer to a city. If given, this overrides `category_link` for
+  this type of category. An example where this is given is `neighborhood`, which uses the following specs:<ol>
+  <li>`link = true`</li>
+  <li>`category_link = <nowiki>"[[neighborhood]]s, [[district]]s and other subportions of [[city|cities]]"<nowiki>`</li>
+  <li>`category_link_before_city = <nowiki>"[[neighborhood]]s, [[district]]s and other subportions"<nowiki>`</li>
+  </ol> This has the effect of making the entry placetype `neighborhood` display as just
+  <nowiki>[[neighborhood]]</nowiki>, while e.g. a category like `Neighborhoods of Chicago` displays as
+  `<nowiki>[[neighborhood]]s, [[district]]s and other subportions of [[Chicago]], ...<nowiki>` and a category like
+  `Neighborhoods in Illinois, USA` displays as
+  `<nowiki>[[neighborhood]]s, [[district]]s and other subportions of [[city|cities]] in [[Illinois]], ...<nowiki>`.
+
+2. There is currently one fallback-related property key recognized:
+* `fallback`: If specified, its value is a placetype which will be used for categorization purposes if no categories
+  get added using the placetype itself. As an example, `branch` sets a fallback of `river` but also sets
+  `preposition = "of"`, meaning that {{tl|place|en|branch|riv/Mississippi}} displays as `a branch of the Mississippi`
+  (whereas `river` itself uses the preposition `in`), but otherwise categorizes the same as `river`. A more complex
+  example is `area`, which sets a fallback of `geographic and cultural area` and also sets a category handler that
+  checks for cities or city-like entities (e.g. boroughs) occurring as holonyms and categorizes the toponym under
+  [[:Category:Neighborhoods of CITY]] (for recognized cities) or otherwise [[:Category:Neighborhoods of POLDIV]] (for
+  the nearest containing recognized political division or polity). In addition, `area` is set as a political division of
+  Kuwait, meaning if `c/Kuwait` occurs as holonym, the toponym is categorized under [[:Category:Areas of Kuwait]]. If
+  none of these categories trigger, the fallback of `geographic and cultural area` will take effect, and the toponym
+  will be categorized as e.g. [[:Category:Geographic and cultural areas of England]].
+
+3. There is currently one property to control irregular plurals of placetypes:
+* `plural`: If specified, its value is the plural of the placetype. Otherwise, the default pluralization algorithm in
+  [[Module:en-utilities]] applies (which correctly pluralizes most words, including those ending in `-y`, `-ch`, `-sh`,
+  `-x`, etc.). The value of `plural` is also used when converting a pluralized placetype into its singular equivalent;
+  for example, since the placetype `kibbutz` has `plural = "kibbutzim"`, the placetype `kibbutzim` will be recognized
+  as a plural and singularized to `kibbutz`. For this reason, it's occasionally necessary to specify a `plural` value
+  even when the default pluralization algorithm works correctly, if the default singularization algorithm won't
+  correctly reverse the pluralization (as with `pass` and other terms ending in `-ss`).
+
+4. The following property keys relate to generating categories for entry placetypes and specifying the parents of those
+   categories:
+* `class`: The general class of placetype. This is used for various purposes: (a) to categorize placetypes preceded by
+  a qualifier such as `former`, `ancient`, `medieval` or `historical` (note that these placetypes are not all treated
+  alike); (b) to determine the parent category of bare placetype categories (e.g. [[:Category:Villages]] for placetype
+  `village`); (c) to determine whether to add a parent category `political divisions of specific countries` to
+  qualified placetype categories (e.g. [[:Category:Villages in Mali]]). The possible values are:
+*# `polity`: a more-or-less sovereign/independent polity, such as a country, kingdom or empire.
+*# `subpolity`: a non-sovereign division of a polity, above the level of an individual settlement.
+*# `settlement`: a city or smaller equivalent, such as a village or unincorporated community. This also includes
+   divisions of a settlement, such as neighborhoods, wards and barangays.
+*# `capital`: a settlement that is a capital. A former capital is generally still in existence, just not the capital
+   any more.
+*# `natural feature`: any non-man-made feature, such as a lake, mountain, island, ocean, etc.
+*# `man-made structure`: a man-made feature below the level of a neighborhood, such as a house, airport, university,
+   metro station, park or the like.
+*# `geographic region`: a geographic or cultural region or area that has no administrative significance. These may vary
+   greatly in size but typically have some sort of cultural significance (possibly historical). The `former`, `ancient`,
+   etc. qualifier has no effect on the category of these placetypes.
+* `former_type`: The class of placetype used for categorizing placetypes preceded by a qualifier such as `former`,
+  `ancient`, `medieval` or `historical`. The possible values are the same as for `class` but with the addition of
+  `dependent territory` (for colonies, protectorates and the like) and `!` (ignore the historical/former/ancient/etc.
+  qualifier; used e.g. with `fictional location` and `mythological location`). If not specified, the value of `class`
+  is used. When a qualifier such as `former`, `ancient`, `medieval` or `historical` is encountered (specifically, those
+  in `former_qualifiers`), it is mapped using `former_qualifiers` to the appropriate internal qualifier or qualifiers
+  (one or both of `ANCIENT` and/or `FORMER`, which are written in all-caps to distinguish them from user-specified
+  qualifiers), which is prepended to the value of `former_type` or `class` to form a placetype whose properties are
+  looked up to determine how to categorize the toponym in question. For example, if `medieval village` is given, we map
+  `medieval` to `ANCIENT` and `FORMER`, and `village` to its `class` of `settlement`, and enter the placetypes
+  `ANCIENT settlement` and `FORMER settlement` (in that order) into the list of equivalent placetypes returned by
+  `get_placetype_equivs`. In this case, there is an entry in `placetype_data` for `ANCIENT settlement`, so its default
+  category spec `Ancient settlements` is used as the category. If on the other hand `medieval kingdom` is given, where
+  `kingdom` has a `class` value `polity`, we first look up `ANCIENT polity`, see there is no entry in `placetype_data`
+  for it, and then look up `FORMER polity`, which exists and has a default category spec `Historical polities`, which
+  is used as the category. Note that if the placetype following the "former" qualifier is recognized in
+  `placetype_data` but has no `former_type` or `class` and no fallback with a `former_type` or `class` specified, it is
+  an internal error; but if the placetype isn't recognized (e.g. something like `former greenhouse` is specified and we
+  don't have an entry for `greenhouse`), we just track the occurrence and end up not categorizing.
+* `bare_category_parent`: This specifies the first parent category of a bare placetype category named according to the
+  placetype in question (e.g. [[:Category:Atolls]] for placetype `atoll`, or [[:Category:Individual buildings]] for
+  placetype `individual buildings!`). If not specified, the first parent category is determined by the value of `class`,
+  using the mapping `class_to_bare_category_parent` in [[Module:category tree/topic cat/data/Places]].
+* `addl_bare_category_parents`: Extra parent categories to add a bare placetype category to (see `bare_category_parent`
+  just above).
+* `inherently_former`: If specified and the given placetype is used as an entry placetype, act as if `former` or
+  `ancient` (depending on the value of `inherently_former`) were prefixed to the placetype. This is for placetypes that
+  always refer to no-longer-existing entities, such as `satrapy` and `treaty port`. The value of `inherently_former` is
+  a list of internal qualifiers (one or more of `ANCIENT` and/or `FORMER`), just as for `former_qualifiers`, and the
+  implementation is the same.
+* `cat_handler`: Handler used to generate the categories to add a given toponym to, if its entry placetype is the
+  placetype in question. Generally the `cat_handler` function checks the holonyms specified in order to determine which
+  category or categories to generate. For example, `district_neighborhood_cat_handler` handles placetypes `district`,
+  `neighborhood`, `subdivision`, `suburb` and the like, and either adds the toponym to a category like
+  `Neighborhoods of ``city`` ` (if a recognized city is given as a holonym), or otherwise a category like
+  `Neighborhoods in ``location`` ` (for the first recognized non-city location given as a holonym, if an unrecognized
+  city or city-like entity is given before the recognized non-city). The algorithm that runs the category handlers
+  iterates over holonyms from left to right, running the `cat_handler` function on each holonym in turn until one or
+  more categories are returned; see below for more specifics. (Note that countries for which e.g. a `district` is a
+  political division do not get the corresponding category added by the `district_neighborhood_cat_handler` function but
+  by an exact-matching categorization key for the country in question.) `cat_handler` functions are called with one
+  argument, `data`, describing the resolved entry placetype (i.e. after resolving placetype aliases and fallbacks) and
+  the holonym being processed. The return value should be a list of category specs (categories minus the langcode
+  prefix, with `+++` standing for the holonym, or the value `true`, which stands for
+  ` ``Placetypes`` in/of ``Holonym`` `, i.e. the pluralized placetype with the appropriate preposition as specified in
+  `placetype_data`). `data` contains the following fields:
+** `entry_placetype`: the resolved entry placetype for the entry placetype being processed (i.e. it will always have an
+   entry in `placetype_data` but may not be the original placetype given by the user);
+** `holonym_placetype` and `holonym_placename`: the holonym placetype and placename being processed;
+** `holonym_index`: the index of the holonym being processed, or {nil} if we're handling an overriding holonym (FIXME:
+   we will change the overriding holonym algorithm so there will be an index even when processing overriding holonyms);
+** `place_desc`: a full description of the {{tl|place}} call, as specified at the top of [[Module:place]];
+** `from_demonym`: If set, we are called from [[Module:demonym]], triggered by {{tl|demonym-adj}} or
+   {{tl|demonym-noun}}, instead of being triggered by {{tl|place}}.
+* `has_neighborhoods`: If `true`, the specified placetype is city-like. This is used in the
+  `district_neighborhood_cat_handler` to determine whether to add a category such as `Neighborhoods in ``location`` `;
+  see the section just above on `cat_handler`.
+
+5. The following preposition-related property keys are recognized:
 * `preposition`: The preposition used after this placetype when it occurs as an entry placetype. Defaults to `"in"`.
-* `entry_placetype_use_the`: Use `"the"` before this placetype when it occurs as an entry placetype.
-* `entry_placetype_indefinite_article`: Indefinite article used before this placetype when it occurs as an entry
-  placetype (usually `"a"`, specifically for placetypes beginning with u- that don't take the indefinite article
-  `"an"`). Defaults to the appropriate indefinite article (`"a"` or `"an"` depending on whether the placetype begins
-  with a vowel). Overridden by `entry_placetype_use_the`, and unlike for most properties, does not apply to equivalent
-  placetypes (i.e. fallbacks or those formed by removing a qualifier from the beginning); only to the exact placetype
-  specified.
-* `holonym_use_the`: Use `"the"` before holonyms of this placetype.
+* `generic_before_non_cities`: If specified, the appropriate category description handler in
+  [[Module:category tree/topic cat/data/Places]] will recognize categories of the form
+  ` ``Placetype`` in/of ``location`` ` for the specified placetype and preposition, if ``location`` is a non-city. This
+  is used to generate descriptions for categories added by category handlers and by explicit category specs in the
+  placetype data.
+* `generic_before_cities`: Like `generic_before_non_cities` but for locations referring to cities.
+
+6. The following property keys control the auto-addition of affixes when formatting holonyms of a particular placetype:
 * `affix_type`: If specified, add the placetype as an affix before or after holonyms of this placetype. Possible values
   are:
 *# `"pref"` (the holonym will display as `(the) placetype of Holonym`, where `the` appears when the holonym directly
@@ -1884,60 +2135,31 @@ The following are the recognized property keys:
   `affix_type = "Suf"` so that `aokr/Nenets` displays as `Nenets Autonomous Okrug`, but also specifies
   `no_affix_strings = "okrug"` so that `aokr/Nenets Okrug` or `aokr/Nenets Autonomous Okrug` displays as specified,
   without a redundant `Autonomous Okrug` added. Matching is case-insensitive but whole-word.
-* `fallback`: If specified, its value is a placetype which will be used for categorization purposes if no categories
-  get added using the placetype itself. As an example, `branch` sets a fallback of `river` but also sets
-  `preposition = "of"`, meaning that {{tl|place|en|branch|riv/Mississippi}} displays as `a branch of the Mississippi`
-  (whereas `river` itself uses the preposition `in`), but otherwise categorizes the same as `river`. A more complex
-  example is `area`, which sets a fallback of `geographic and cultural area` and also sets a category handler that
-  checks for cities or city-like entities (e.g. boroughs) occurring as holonyms and categorizes the toponym under
-  [[:Category:Neighborhoods of CITY]] (for recognized cities) or otherwise [[:Category:Neighborhoods of POLDIV]] (for
-  the nearest containing recognized political subdivision or polity). In addition, `area` is set as a political
-  subdivision of Kuwait, meaning if `c/Kuwait` occurs as holonym, the toponym is categorized under
-  [[:Category:Areas of Kuwait]]. If none of these categories trigger, the fallback of `geographic and cultural area`
-  will take effect, and the toponym will be categorized as e.g. [[:Category:Geographic and cultural areas of England]].
-* `cat_handler`: A function of one argument, `data`, describing the resolved entry placetype and the holonym being
-  processed. In general, the cat handler is called on successive holonyms starting with the most immediate one, until it
-  returns non-nil. See below for more specifics. The return value should be a list of category specs (categories minus
-  the langcode prefix, with `+++` standing for the holonym, or the value `true`, which stands for `Placetypes in/of
-  Holonym`, i.e. the pluralized placetype with the appropriate preposition as specified in the `placetype_data`). `data`
-  contains the following fields:
-** `entry_placetype`: the resolved entry placetype for the entry placetype being processed (i.e. it will always have an
-   entry in `placetype_data` but may not be the original placetype given by the user);
-** `holonym_placetype` and `holonym_placename`: the holonym placetype and placename being processed;
-** `holonym_index`: the index of the holonym being processed, or {nil} if we're handling an overriding holonym (FIXME:
-   we will change the overriding holonym algorithm so there will be an index even when processing overriding holonyms);
-** `place_desc`: a full description of the {{tl|place}} call, as specified at the top of [[Module:place]];
-** `from_demonym`: If set, we are called from [[Module:demonym]], triggered by {{tl|demonym-adj}} or
-   {{tl|demonym-noun}}, instead of being triggered by {{tl|place}}.
 * `display_handler`: A function of two arguments, `holonym_placetype` and `holonym_placename` (specifying a holonym).
   Its return value is a string specifying the display form of the holonym.
-* `former_type`: The type/class of this placetype, for use when categorizing placetypes preceded by a qualifier such as
-  `former`, `ancient`, `medieval` or `historical`. (Note that these placetypes are not all treated alike.) The following
-  are the possible values:
-*# `polity`: a more-or-less sovereign/independent polity, such as a country, kingdom or empire.
-*# `subpolity`: a non-sovereign subdivision of polity, above the level of an individual settlement.
-*# `settlement`: a city or smaller equivalent, such as a village or unincorporated community. This also includes
-   divisions of a settlement, such as neighborhoods, wards and barangays.
-*# `capital`: a settlement that is a capital. A former capital is generally still in existence, just not the capital
-   any more.
-*# `natural feature`: any non-man-made feature, such as a lake, mountain, island, ocean, etc.
-*# `man-made structure`: a man-made feature below the level of a neighborhood, such as a house, airport, university,
-   metro station, park or the like.
-*# `geographic region`: a geographic or cultural region or area that has no administrative significance. These may vary
-   greatly in size but typically have some sort of cultural significance (possibly historical). The `former`, `ancient`,
-   etc. qualifier has no effect on the category of these placetypes.
-*# `!`: ignore the historical/former/ancient/etc. qualifier. Used e.g. with `fictional location` and
-   `mythological location`.
+
+7. The following property keys control the indefinite and definite articles used before entry placetypes and/or holonyms
+   of the specified placetype.
+* `entry_placetype_use_the`: Use `"the"` before this placetype when it occurs as an entry placetype.
+* `entry_placetype_indefinite_article`: Indefinite article used before this placetype when it occurs as an entry
+  placetype (usually `"a"`, specifically for placetypes beginning with u- that don't take the indefinite article
+  `"an"`). Defaults to the appropriate indefinite article (`"a"` or `"an"` depending on whether the placetype begins
+  with a vowel). Overridden by `entry_placetype_use_the`, and unlike for most properties, does not apply to equivalent
+  placetypes (i.e. fallbacks or those formed by removing a qualifier from the beginning); only to the exact placetype
+  specified.
+* `holonym_use_the`: Use `"the"` before holonyms of this placetype.
 
 '''NOTE:'''
+# The `link` property must be specified on all placetypes, except those ending in `!` (category-only placetypes), which
+  must have either `link` or `category_link` specified.
+# Either the `class` or `former_type` property must be specified on all placetypes not ending in `!` that do not have a
+  fallback (if a placetype has a fallback and omits the `class` and `former_type` properties, they are taken from the
+  fallback). An internal error will result if a placetype has no `class` or `former_type` property derivable either
+  directly or through a fallback, if an attempt is made to categorize a former/ancient/historical/etc. entity of this
+  placetype.
 # It is possible to have multiple levels of fallback (e.g. `frazione` falls back to `hamlet`, which falls back
   to `village`). Fallback loops will cause an internal error. All placetypes specified as fallbacks must exist in
-  `placetype_data` or an internal error occurs; if necessary, use an empty placeholder table on the right side (but this
-  is usually not a good idea because the `former_type` property should be specified).
-# The `former_type` property should be specified on all placetypes that do not have a fallback (if a placetype has a
-  fallback and omits the `former_type`, it is taken from the fallback). An internal error will result if a placetype
-  has no `former_type` property and no fallback, and an attempt is made to categorize a former/ancient/historical/etc.
-  entity of this placetype.
+  `placetype_data` or an internal error occurs.
 ]==]
 export.placetype_data = {
 
@@ -2049,7 +2271,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["ancient settlements!"] = {
 		category_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
-		category_parent = "historical settlements",
+		bare_category_parent = "historical settlements",
 	},
 	["archipelago"] = {
 		link = true,
@@ -2088,7 +2310,7 @@ If you need to sort the following, do this (using Vim):
 		-- conditionalize former_type on the country. See also `administrative atoll`.
 		link = true,
 		class = "natural feature",
-		category_parent = "islands",
+		bare_category_parent = "islands",
 		default = {true},
 	},
 	["autonomous city"] = {
@@ -2179,13 +2401,13 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		class = "natural feature",
-		addl_parents = {"bodies of water"},
+		addl_bare_category_parents = {"bodies of water"},
 		default = {true},
 	},
 	["beach"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"water"},
+		addl_bare_category_parents = {"water"},
 		default = {true},
 	},
 	["beach resort"] = {
@@ -2196,14 +2418,12 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "polity",
 	},
-	["body of water!"] = {
+	["bodies of water!"] = {
 		-- FIXME: This is maybe?) a type category not a name category. There should be an option for this. We need to
 		-- straighten out the type vs. name vs. related-to issue.
-		link = false,
-		plural = "bodies of water",
-		plural_link = true,
+		category_link = "[[body of water|bodies of water]]",
 		class = "natural feature",
-		addl_parents = {"landforms", "ecosystems", "water"},
+		addl_bare_category_parents = {"landforms", "ecosystems", "water"},
 	},
 	["borough"] = {
 		link = true,
@@ -2257,12 +2477,12 @@ If you need to sort the following, do this (using Vim):
 	},
 	["capital city"] = {
 		link = true,
-		category_link = "[[capital city|capital cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[subdivision]] of a country",
+		category_link = "[[capital city|capital cities]]: the [[seat of government|seats of government]] for a country or [[political]] [[division]] of a country",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
 		class = "capital",
-		category_parent = "cities",
+		bare_category_parent = "cities",
 		cat_handler = capital_city_cat_handler,
 		default = {true},
 	},
@@ -2360,8 +2580,8 @@ If you need to sort the following, do this (using Vim):
 		has_neighborhoods = true,
 		class = "subpolity",
 	},
-	["claimed political subdivision"] = {
-		link = "[[claim]]ed [[political]] [[subdivision]]",
+	["claimed political division"] = {
+		link = "[[claim]]ed [[political]] [[division]]",
 		class = "subpolity",
 		default = {true},
 	},
@@ -2465,7 +2685,6 @@ If you need to sort the following, do this (using Vim):
 		default = {true},
 	},
 	["country-like entities!"] = {
-		link = false,
 		category_link = "[[polity|polities]] not normally considered [[country|countries]] but treated similarly for categorization purposes; typically, [[unrecognized]] [[de-facto]] countries or [[w:dependent territory|dependent territories]]",
 		class = "polity",
 	},
@@ -2559,15 +2778,15 @@ If you need to sort the following, do this (using Vim):
 	["dependent territory"] = {
 		link = "w",
 		preposition = "of",
-		class = "dependent territory",
-		category_parent = "political divisions",
+		former_type = "dependent territory",
+		bare_category_parent = "political divisions",
 		["country/*"] = {true},
 		default = {true},
 	},
 	["desert"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"ecosystems"},
+		addl_bare_category_parents = {"ecosystems"},
 		default = {true},
 	},
 	["deserted mediaeval village"] = {
@@ -2603,7 +2822,7 @@ If you need to sort the following, do this (using Vim):
 		class = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 
-		-- No default. Countries for which districts are political subdivisions will get entries.
+		-- No default. Countries for which districts are political divisions will get entries.
 	},
 	["districts and autonomous regions!"] = {
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
@@ -2696,6 +2915,10 @@ If you need to sort the following, do this (using Vim):
 		class = "settlement",
 		default = {"Farms and ranches"},
 	},
+	["farms and ranches!"] = {
+		category_link = "[[farm]]s and [[ranch]]es",
+		class = "settlement",
+	},
 	["federal city"] = {
 		link = "w",
 		preposition = "of",
@@ -2722,7 +2945,8 @@ If you need to sort the following, do this (using Vim):
 	},
 	["fictional location"] = {
 		link = "separately",
-		class = "!",
+		former_type = "!",
+		bare_category_parent = "places",
 		default = {true},
 	},
 	["First Nations reserve"] = {
@@ -2735,13 +2959,13 @@ If you need to sort the following, do this (using Vim):
 	["fjord"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = "bodies of water",
+		addl_bare_category_parents = "bodies of water",
 		default = {true},
 	},
 	["forest"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"ecosystems", "forestry"},
+		addl_bare_category_parents = {"ecosystems", "forestry"},
 		default = {true},
 	},
 	["FORMER capital"] = {
@@ -2755,12 +2979,12 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former countries and country-like entities!"] = {
 		category_link = "[[country|countries]] and similar [[polity|polities]] that no longer exist",
-		category_parent = "former polities",
+		bare_category_parent = "former polities",
 	},
 	["FORMER dependent territory"] = {
 		link = false,
 		preposition = "of",
-		class = "dependent territory",
+		class = "subpolity",
 		default = {"Historical dependent territories"},
 	},
 	["FORMER geographic region"] = {
@@ -2774,7 +2998,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former man-made structures!"] = {
 		category_link = "man-made structures such as [[airport]]s and [[park]]s that no longer exist",
-		category_parent = "former places",
+		bare_category_parent = "former places",
 	},
 	["FORMER natural feature"] = {
 		link = false,
@@ -2783,7 +3007,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former natural features!"] = {
 		category_link = "natural features such as [[lake]]s, [[river]]s and [[island]]s that no longer exist",
-		category_parent = "former places",
+		bare_category_parent = "former places",
 	},
 	["FORMER polity"] = {
 		link = false,
@@ -2802,9 +3026,8 @@ If you need to sort the following, do this (using Vim):
 		class = "subpolity",
 		default = {"Historical political subdivisions"},
 	},
-	-- a former region is considered a former political subdivision, but not a 'historical/traditional/etc.
-	-- region.
 	["former region"] = {
+		-- A former region is considered a former political division, but not a 'historical/traditional/etc.' region.
 		link = "separately",
 		preposition = "of",
 		inherently_former = {"FORMER"},
@@ -2829,7 +3052,7 @@ If you need to sort the following, do this (using Vim):
 		generic_before_non_cities = "of",
 		preposition = "of",
 		class = "geographic region",
-		category_parent = "places",
+		bare_category_parent = "places",
 		["country/*"] = {true},
 		["constituent country/*"] = {true},
 		["continent/*"] = {true},
@@ -2867,7 +3090,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		generic_before_non_cities = "in",
 		class = "settlement",
-		category_parent = "historical settlements",
+		bare_category_parent = "historical settlements",
 		cat_handler = city_type_cat_handler,
 		default = {true},
 	},
@@ -2882,14 +3105,14 @@ If you need to sort the following, do this (using Vim):
 		class = "subpolity",
 	},
 	["greater administrative region"] = {
-		-- China (historical subdivision)
+		-- China (historical division)
 		link = "w",
 		preposition = "of",
 		class = "subpolity",
 		inherently_former = {"FORMER"},
 	},
 	["gromada"] = {
-		-- Poland (historical subdivision)
+		-- Poland (historical division)
 		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
@@ -2907,7 +3130,7 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_parents = {"bodies of water"},
+		addl_bare_category_parents = {"bodies of water"},
 		default = {true},
 	},
 	["hamlet"] = {
@@ -2933,7 +3156,7 @@ If you need to sort the following, do this (using Vim):
 	["headland"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true},
 	},
 	["headquarters"] = {
@@ -2947,7 +3170,7 @@ If you need to sort the following, do this (using Vim):
 	["hill"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true},
 	},
 	["hill station"] = {
@@ -2966,22 +3189,22 @@ If you need to sort the following, do this (using Vim):
 	["historical capitals!"] = {
 		-- FIXME! Rename to 'former capitals'
 		category_link = "former [[capital]] [[city|cities]] and [[town]]s",
-		category_parent = "historical settlements",
+		bare_category_parent = "historical settlements",
 	},
 	["historical dependent territories!"] = {
 		-- FIXME! Rename to 'former dependent territories'
 		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
-		category_parent = "historical political subdivisions",
+		bare_category_parent = "historical political subdivisions",
 	},
 	["historical political subdivisions!"] = {
 		-- FIXME! Rename to 'former political divisions'
-		category_link = "[[political]] [[subdivision]]s (states, provinces, counties, etc.) that no longer exist",
-		category_parent = "former places",
+		category_link = "[[political]] [[division]]s (states, provinces, counties, etc.) that no longer exist",
+		bare_category_parent = "former places",
 	},
 	["historical polities!"] = {
 		-- FIXME! Rename to 'former polities'
 		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
-		category_parent = "former places",
+		bare_category_parent = "former places",
 	},
 	["historical region"] = {
 		-- provided only for the link
@@ -2991,7 +3214,7 @@ If you need to sort the following, do this (using Vim):
 	["historical settlements!"] = {
 		-- FIXME: Rename to 'former settlements'
 		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
-		category_parent = "historical political subdivisions",
+		bare_category_parent = "historical political subdivisions",
 	},
 	["home rule city"] = {
 		link = "w",
@@ -3055,7 +3278,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["individual buildings!"] = {
 		category_link = "[[house]]s, [[library|libraries]] and other notable [[building]]s",
-		category_parent = "man-made structures",
+		bare_category_parent = "man-made structures",
 	},
 	["inland sea"] = {
 		-- note, we also have 'inland' as a qualifier
@@ -3069,7 +3292,7 @@ If you need to sort the following, do this (using Vim):
 	["island"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true},
 	},
 	["island country"] = {
@@ -3121,13 +3344,13 @@ If you need to sort the following, do this (using Vim):
 	["lake"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"bodes of water"},
+		addl_bare_category_parents = {"bodes of water"},
 		default = {true},
 	},
 	["landforms!"] = {
 		category_link = "[[landform]]s",
-		category_parent = "places",
-		addl_parents = {"Earth"},
+		bare_category_parent = "places",
+		addl_bare_category_parents = {"Earth"},
 	},
 	["largest city"] = {
 		link = "[[large]]st [[city]]",
@@ -3212,6 +3435,10 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "region",
 	},
+	["man-made structures!"] = {
+		category_link = "[[w:geographical feature#Engineered constructs|man-made structures]] such as [[airport]]s, [[university|universities]] and [[metro station]]s",
+		bare_category_parent = "places",
+	},
 	["marginal sea"] = {
 		link = true,
 		preposition = "of",
@@ -3264,7 +3491,7 @@ If you need to sort the following, do this (using Vim):
 	["micronations!"] = {
 		-- FIXME, merge with microstate
 		category_link = "[[micronation]]s",
-		category_parent = "countries",
+		bare_category_parent = "countries",
 	},
 	["microstate"] = {
 		link = true,
@@ -3283,7 +3510,7 @@ If you need to sort the following, do this (using Vim):
 	["moor"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms", "ecosystems"},
+		addl_bare_category_parents = {"landforms", "ecosystems"},
 		default = {true},
 	},
 	["moorland"] = {
@@ -3293,7 +3520,7 @@ If you need to sort the following, do this (using Vim):
 	["mountain"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true},
 	},
 	["mountain indigenous district"] = {
@@ -3312,7 +3539,7 @@ If you need to sort the following, do this (using Vim):
 		-- passes -> passe, so put an entry here to ensure we singularize correctly.
 		plural = "mountain passes",
 		class = "natural feature",
-		addl_parents = {"mountains"},
+		addl_bare_category_parents = {"mountains"},
 		default = {true},
 	},
 	["mountain range"] = {
@@ -3352,7 +3579,8 @@ If you need to sort the following, do this (using Vim):
 	},
 	["mythological location"] = {
 		link = "separately",
-		class = "!",
+		former_type = "!",
+		bare_category_parent = "places",
 		default = {true},
 	},
 	["national capital"] = {
@@ -3362,6 +3590,10 @@ If you need to sort the following, do this (using Vim):
 	["national park"] = {
 		link = true,
 		fallback = "park",
+	},
+	["natural features!"] = {
+		category_link = "[[w:geographical feature#Natural features|natural features]] such as [[lake]]s, [[mountain]]s, [[island]]s and [[ocean]]s",
+		bare_category_parent = "places",
 	},
 	["neighborhood"] = {
 		-- The majority of the properties here apply to both `neighborhoods` and `neighbourhoods`; the choice of which
@@ -3451,7 +3683,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_parents = {"seas"},
+		addl_bare_category_parents = {"seas"},
 		default = {true},
 	},
 	["okrug"] = {
@@ -3511,7 +3743,7 @@ If you need to sort the following, do this (using Vim):
 	["peninsula"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true},
 	},
 	["periphery"] = {
@@ -3529,7 +3761,7 @@ If you need to sort the following, do this (using Vim):
 		-- portion is automatically generated by the appropriate handler in
 		-- [[Module:category tree/topic cat/data/Places]].
 		category_link_top_level = "[[geographical]] [[place]]s of all sorts; [[toponym]]s",
-		category_parent = "names",
+		bare_category_parent = "names",
 	},
 	["planned community"] = {
 		-- Include this so we don't categorize 'planned community' into villages, as 'community' does.
@@ -3540,7 +3772,7 @@ If you need to sort the following, do this (using Vim):
 	["plateau"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true},
 		-- FIXME: Should generate both "Plateaus" and the appropriate 'geographic and cultural area' category
 	},
@@ -3553,7 +3785,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["political divisions!"] = {
 		category_link = "[[political]] [[division]]s and [[subdivision]]s, such as [[countries]], [[province]]s, [[state]]s or [[region]]s",
-		category_parent = "places",
+		bare_category_parent = "places",
 	},
 	["polity"] = {
 		link = true,
@@ -3727,7 +3959,7 @@ If you need to sort the following, do this (using Vim):
 		generic_before_non_cities = "in",
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_parents = "bodies of water",
+		addl_bare_category_parents = "bodies of water",
 		cat_handler = city_type_cat_handler,
 		["continent/*"] = {true},
 		default = {true},
@@ -3789,7 +4021,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_parents = "bodies of water",
+		addl_bare_category_parents = "bodies of water",
 		default = {true},
 	},
 	["seaport"] = {
@@ -3822,6 +4054,8 @@ If you need to sort the following, do this (using Vim):
 	},
 	["settlement"] = {
 		link = true,
+		category_link = "[[settlement]]s such as [[city|cities]], [[village]]s and [[farm]]s",
+		bare_category_parent = "places",
 		-- not necessarily true, but usually is the case
 		fallback = "village",
 	},
@@ -3909,7 +4143,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		class = "subpolity",
-		-- 'former/historical state' could refer either to a state of a country (a subdivision) or a state = sovereign
+		-- 'former/historical state' could refer either to a state of a country (a division) or a state = sovereign
 		-- entity. The latter appears more common (e.g. in various "ancient states" of East Asia).
 		former_type = "polity",
 	},
@@ -3949,7 +4183,7 @@ If you need to sort the following, do this (using Vim):
 	["strait"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = "bodies of water",
+		addl_bare_category_parents = "bodies of water",
 		default = {true},
 	},
 	["stream"] = {
@@ -4176,7 +4410,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["unrecognized and nearly unrecognized countries!"] = {
 		category_link = "[[de facto]] [[independent]] [[state]]s with little or no {{w|international recognition}}",
-		category_parent = "country-like entities",
+		bare_category_parent = "country-like entities",
 	},
 	["unrecognized country"] = {
 		link = "w",
@@ -4198,7 +4432,7 @@ If you need to sort the following, do this (using Vim):
 	["valley"] = {
 		link = true,
 		class = "natural feature",
-		addl_parents = {"landforms", "water"},
+		addl_bare_category_parents = {"landforms", "water"},
 		default = {true},
 	},
 	["village"] = {
@@ -4227,7 +4461,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		plural = "volcanoes",
 		class = "natural feature",
-		addl_parents = {"landforms"},
+		addl_bare_category_parents = {"landforms"},
 		default = {true, "Mountains"},
 	},
 	["ward"] = {
@@ -4264,7 +4498,7 @@ for sg_placetype, spec in pairs(export.placetype_data) do
 end
 
 
--- Now augment the category data with political subdivisions extracted from the shared data.
+-- Now augment the category data with political divisions extracted from the shared data.
 for _, group in ipairs(m_shared.polities) do
 	for key, value in pairs(group.data) do
 		value = group.value_transformer(group, key, value)
@@ -4287,7 +4521,7 @@ for _, group in ipairs(m_shared.polities) do
 				if type(div) == "string" then
 					div = {type = div}
 				end
-				local sgdiv = div.sgdiv or require(en_utilities_module).singularize(div.type)
+				local sgdiv = export.maybe_singularize_placetype(div.type)
 				local prep = div.prep or "of"
 				local cat_as = div.cat_as or div.type
 				if type(cat_as) ~= "table" then
@@ -4295,9 +4529,8 @@ for _, group in ipairs(m_shared.polities) do
 				end
 				for _, dt in ipairs(divtype) do
 					if not export.placetype_data[sgdiv] then
-						export.placetype_data[sgdiv] = {
-							preposition = prep,
-						}
+						internal_error("Placetype %s associated with key %s and data %s not found in `placetype_data`",
+							sgdiv, key, value)
 					end
 					-- If there is a difference between full and elliptical placenames, make sure we recognize both
 					-- forms in holonyms.
@@ -4314,7 +4547,7 @@ for _, group in ipairs(m_shared.polities) do
 								pt_cat = {type = pt_cat}
 							end
 							local pt_prep = pt_cat.prep or prep
-							if placename == key and require(en_utilities_module).pluralize(sgdiv) == pt_cat.type then
+							if placename == key and export.pluralize_placetype(sgdiv) == pt_cat.type then
 								insert(cat_specs, true)
 							else
 								insert(cat_specs, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " .. key)
