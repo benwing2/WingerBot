@@ -34,12 +34,6 @@ local function lcfirst(label)
 	return mw.getContentLanguage():lcfirst(label)
 end
 
-local function unknown_poldiv_type(pl_placetype, context_clause, context)
-	internal_error(
-		"Saw unknown place type %s %s %s; not in `political_divisions` in [[Module:place/shared-data]]",
-		pl_placetype, context_clause, context)
-end
-
 local function fetch_value(obj, key)
 	local val = obj[key]
 	if is_callable(val) then
@@ -53,6 +47,7 @@ local class_to_bare_category_parent = {
 	["polity"] = "polities",
 	["subpolity"] = "political divisions",
 	["settlement"] = "settlements",
+	["non-admin settlement"] = "settlements",
 	["capital"] = "capital cities",
 	["natural feature"] = "natural features",
 	["man-made structure"] = "man-made structures",
@@ -63,10 +58,12 @@ local class_is_political_division = {
 	["polity"] = true, -- strictly false but there are placetypes ambiguous between polity and subpolity
 	["subpolity"] = true,
 	["settlement"] = true,
+	["non-admin settlement"] = false,
 	["capital"] = true,
 	["natural feature"] = false,
 	["man-made structure"] = false,
 	["geographic region"] = false,
+	["generic place"] = false,
 }
 
 -- Handler for bare placetype categories. FIXME: Add wpcat= and commonscat= info. Previously we had it for various
@@ -76,15 +73,17 @@ table.insert(handlers, function(label)
 		local ptdesc, ptdata = m_data.get_placetype_display_form(canon_label, "top-level")
 		if ptdesc then
 			local bare_category_parent = m_data.get_equiv_placetype_prop(canon_label, function(pt)
-				if pt.bare_category_parent then
-					return pt.bare_category_parent
+				local bare_category_parent = m_data.get_placetype_prop(pt, "bare_category_parent")
+				if bare_category_parent then
+					return bare_category_parent
 				end
-				if pt.class then
-					if class_to_bare_category_parent[pt.class] == nil then
+				local class = m_data.get_placetype_prop(pt, "class")
+				if class then
+					if class_to_bare_category_parent[class] == nil then
 						internal_error("Saw unknown category class %s derived from placetype %s",
-							category_class, canon_label)
+							class, canon_label)
 					end
-					return class_to_bare_category_parent[pt.class]
+					return class_to_bare_category_parent[class]
 				end
 			end, {
 				from_category = true,
@@ -106,6 +105,7 @@ table.insert(handlers, function(label)
 			end
 			return {
 				type = "name",
+				topic = canon_label,
 				description = "{{{langname}}} names of " .. ptdesc .. ".",
 				parents = parents,
 			}
@@ -138,7 +138,8 @@ table.insert(handlers, function(label)
 				key = "the " .. canon_label
 			end
 			if key then
-				return group.bare_label_setter(labels, group, key, group.data[key], m_data)
+				local retval = group.bare_label_setter(group, key, group.data[key], m_data)
+				return retval
 			end
 		end
 	end
@@ -183,7 +184,7 @@ table.insert(handlers, function(label)
 				city_key = "the " .. canon_label
 			end
 			if city_key then
-				local city_spec = city_spec.data[city_key]
+				local city_spec = city_group.data[city_key]
 				if not city_spec.alias_of then
 					local desc, label_parent = city_description(city_group, city_key, city_spec)
 					desc = "{{{langname}}} terms related to " .. desc .. "."
@@ -235,7 +236,7 @@ table.insert(handlers, function(label)
 			end
 		end
 	end
-end
+end)
 
 -- Handler for generic placetypes (those whose categories are added through category generation handlers or through
 -- explicit category specs in the placetype data) for locations listed in `export.polities` in
@@ -299,7 +300,7 @@ table.insert(handlers, function(label)
 									sort = bare_place
 								})
 								local category_class = m_data.get_equiv_placetype_prop(normalized_placetype,
-									function(pt) m_data.get_placetype_prop(pt, "class") end, {
+									function(pt) return m_data.get_placetype_prop(pt, "class") end, {
 										from_category = true,
 										no_split_qualifiers = true,
 									})
@@ -370,7 +371,7 @@ table.insert(handlers, function(label)
 						end
 						if spelling_matches then
 							local parents
-							if placetype == "places" then
+							if placetype == "places" or placetype == "suburbs" then
 								parents = {city_key}
 							else
 								parents = {city_key, "places in " .. city_key}
@@ -594,17 +595,19 @@ table.insert(handlers, function(label)
 	label = lcfirst(label)
 	local capital_placetype = capital_cat_to_placetype[label]
 	if capital_placetype then
-		local linkdesc = m_data.get_placetype_display_form(capital_placetype, "top-level")
+		local pl_placetype = m_data.pluralize_placetype(capital_placetype)
+		local linkdesc = m_data.get_placetype_display_form(pl_placetype, "top-level")
 		if not linkdesc then
 			internal_error("Unrecognized placetype %s when processing label %s", capital_placetype, label)
 		end
 		return {
 			type = "name",
+			topic = label,
 			description = "{{{langname}}} names of [[capital]]s of " .. linkdesc .. ".",
 			parents = {"capital cities"},
 		}
 	end
-end
+end)
 
 labels["political divisions of specific countries"] = {
 	type = "grouping",
