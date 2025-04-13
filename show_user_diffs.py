@@ -24,6 +24,7 @@ def get_diff(file1, file2, pagetitle, reverse=False):
     newlines = file2.splitlines(True)
     diff = difflib.unified_diff(oldlines, newlines)
     newtext = []
+    dangling_newline = False
     for line in diff:
       if args.output_format == "patch-ng":
         line = re.sub(r"\A--- $", "--- a/%s" % pagetitle, line)
