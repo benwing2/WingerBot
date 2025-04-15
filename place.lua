@@ -2014,16 +2014,16 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
 		end
 
 		local triggering_holonym = cat_data.triggering_holonym
+		if not triggering_holonym then
+			internal_error("find_placetype_cat_specs should have returned a triggering holonym: %s", cat_data)
+		end
+
 		-- Generate categories for the category specs found.
 		extend(cats, cat_specs_to_categories(cat_data.cat_specs, cat_data.entry_placetype, triggering_holonym))
 
-		if not triggering_holonym then
-			internal_error("Should be triggering holonym: %s", cat_data)
-		end
-
-		-- If there's a triggering holonym (see top-of-file comment), also generate categories for other holonyms
-		-- of the same placetype, so that e.g. {{place|en|city|s/Kansas|and|s/Missouri|c/USA}} generates both
-		-- [[:Category:en:Cities in Kansas, USA]] and [[:Category:en:Cities in Missouri, USA]].
+		-- Also generate categories for other holonyms of the same placetype, so that e.g.
+		-- {{place|en|city|s/Kansas|and|s/Missouri|c/USA}} generates both [[:Category:en:Cities in Kansas, USA]] and
+		-- [[:Category:en:Cities in Missouri, USA]].
 		first_holonym_index = cat_data.triggering_holonym_index
 
 		-- Loop over non-fallback equivalent placetypes to the triggering holonym's placetype, in case it is

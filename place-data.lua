@@ -1244,108 +1244,16 @@ export.cat_implications = {
 ------------------------------------------------------------------------------------------
 
 
-local function city_type_cat_handler(data)
-	local entry_placetype, holonym_placetype, holonym_placename =
-		data.entry_placetype, data.holonym_placetype, data.holonym_placename
-	local plural_entry_placetype = export.pluralize_placetype(entry_placetype)
-	if m_shared.generic_placetypes[plural_entry_placetype] then
-		for group, key, spec in m_shared.iterate_matching_location {
-			placetypes = holonym_placetype,
-			placename = holonym_placename,
-		} do
-			if not spec.is_former_place and not spec.is_city then
-				-- Categorize both in key, and in the larger polity that the key is part of,
-				-- e.g. [[Hirakata]] goes in both "Cities in Osaka Prefecture" and
-				-- "Cities in Japan". (But don't do the latter if no_container_cat is set.)
-				if plural_entry_placetype == "neighborhoods" and spec.british_spelling then
-					plural_entry_placetype = "neighbourhoods"
-				end
-				local cap_plural_entry_placetype = ucfirst(plural_entry_placetype)
-				local retcats = {("%s in %s"):format(cap_plural_entry_placetype, m_shared.get_prefixed_key(key, spec))}
-				if spec.container and not spec.no_container_cat then
-					local container_group, container_key, container_spec = m_shared.get_matching_location {
-						placetypes = spec.container.divtype,
-						key = spec.container.name,
-					}
-					insert(retcats, ("%s in %s"):format(cap_plural_entry_placetype, m_shared.get_prefixed_key(
-						container_key, container_spec)))
-				end
-				return retcats
-			end
-		end
-	end
-end
-
-
-local function capital_city_cat_handler(data, non_city)
-	local holonym_placetype, holonym_placename, place_desc =
-		data.holonym_placetype, data.holonym_placename, data.place_desc
-	-- The first time we're called we want to return something; otherwise we will be called for later-mentioned
-	-- holonyms, which can result in wrongly classifying into e.g. `National capitals`.
-	-- Simulate the loop in find_cat_specs() over holonyms so we get the proper
-	-- 'Cities in ...' categories as well as the capital category/categories we add below.
-	local retcats
-	if not non_city and place_desc.holonyms then
-		-- FIXME, this should use get_holonyms_to_check()
-		for _, holonym in ipairs(place_desc.holonyms) do
-			local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
-			if h_placetype then -- skip raw text among holonyms
-				retcats = export.get_equiv_placetype_prop(h_placetype,
-					function(pt) return city_type_cat_handler {
-						entry_placetype = "city",
-						holonym_placetype = pt,
-						holonym_placename = h_placename,
-						place_desc = place_desc,
-					} end)
-				if retcats then
-					break
-				end
-			end
-		end
-	end
-	if not retcats then
-		retcats = {}
-	end
-	-- Now find the appropriate capital-type category for the placetype of the holonym,
-	-- e.g. 'State capitals'. If we recognize the holonym among the known holonyms in
-	-- [[Module:place/shared-data]], also add a category like 'State capitals of the United States'.
-	-- Truncate e.g. 'autonomous region' to 'region', 'union territory' to 'territory' when looking
-	-- up the type of capital category, if we can't find an entry for the holonym placetype itself
-	-- (there's an entry for 'autonomous community').
-	local capital_cat = export.placetype_to_capital_cat[holonym_placetype]
-	if not capital_cat then
-		capital_cat = export.placetype_to_capital_cat[holonym_placetype:gsub("^.* ", "")]
-	end
-	if capital_cat then
-		capital_cat = ucfirst(capital_cat)
-		local inserted_specific_variant_cat = false
-		for group, key, spec in m_shared.iterate_matching_location {
-			placetypes = holonym_placetype,
-			placename = holonym_placename,
-		} do
-			if spec.container and not spec.no_container_cat then
-				local container_group, container_key, container_spec = m_shared.get_matching_location {
-					placetypes = spec.container.divtype,
-					key = spec.container.name,
-				}
-				insert(retcats, ("%s of %s"):format(capital_cat, m_shared.get_prefixed_key(
-					container_key, container_spec)))
-				inserted_specific_variant_cat = true
-				break
-			end
-		end
-		if not inserted_specific_variant_cat then
-			insert(retcats, capital_cat)
-		end
-	else
-		-- We didn't recognize the holonym placetype; just put in 'Capital cities'.
-		insert(retcats, "Capital cities")
-	end
-	return retcats
-end
-
-local function get_holonyms_to_check(place_desc, holonym_index, include_raw_text_holonyms)
-	local stop_at_also = not not holonym_index
+--[=[
+Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
+specified holonym and stop either when there are no more holonyms or a holonym with modifier `:also` is found. If
+`first_holonym_index` is nil or omitted, iterate over all holonyms regardless. If `include_raw_text_holonyms` is
+specified, raw text holonyms (those not of the form `placetype/placename`) are returned as well; they can be identified
+by the fact that the `placetype` field in the holonym structure is nil. Two values are returned at each iteration, the
+holonym index and holonym structure, similar to `ipairs()`.
+]=]
+local function get_holonyms_to_check(place_desc, first_holonym_index, include_raw_text_holonyms)
+	local stop_at_also = not not first_holonym_index
 	return function(place_desc, index)
 		while true do
 			index = index + 1
@@ -1358,9 +1266,101 @@ local function get_holonyms_to_check(place_desc, holonym_index, include_raw_text
 				return index, this_holonym
 			end
 		end
-	end, place_desc, holonym_index and holonym_index - 1 or 0
+	end, place_desc, first_holonym_index and first_holonym_index - 1 or 0
 end
 
+
+local function city_type_cat_handler(data)
+	local entry_placetype = data.entry_placetype
+	local generic_before_non_cities = export.get_placetype_prop(entry_placetype, "generic_before_non_cities")
+	if not generic_before_non_cities then
+		internal_error("city_type_cat_handler called on placetype %s that doesn't have a `generic_before_non_cities`" ..
+			" setting", entry_placetype)
+	end
+	local plural_entry_placetype = export.pluralize_placetype(entry_placetype)
+	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	if group and not spec.is_former_place and not spec.is_city then
+		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in both
+		-- "Cities in Osaka Prefecture" and "Cities in Japan". (But don't do the latter if no_container_cat is set.)
+		local cap_plural_entry_placetype = ucfirst(plural_entry_placetype)
+		local retcats = {("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
+			m_shared.get_prefixed_key(key, spec))}
+		if spec.containers and not spec.no_container_cat then
+			for _, container in ipairs(spec.containers) do
+				local container_group, container_key, container_spec = m_shared.get_matching_location {
+					placetypes = container.divtype,
+					key = container.name,
+				}
+				insert(retcats, ("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
+					m_shared.get_prefixed_key(container_key, container_spec)))
+		end
+		return retcats
+	end
+end
+
+
+local function capital_city_cat_handler(data, non_city)
+	local holonym_placetype, holonym_placename, holonym_index, place_desc =
+		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
+	-- The first time we're called we want to return something; otherwise we will be called for later-mentioned
+	-- holonyms, which can result in wrongly classifying into e.g. `National capitals`. Simulate the loop in
+	-- find_placetype_cat_specs() over holonyms so we get the proper `Cities in ...` categories as well as the capital
+	-- category/categories we add below.
+	local retcats
+	if not non_city and place_desc.holonyms then
+		for h_index, holonym in get_holonyms_to_check(place_desc, holonym_index) do
+			local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
+			retcats = city_type_cat_handler {
+				entry_placetype = "city",
+				holonym_placetype = h_placetype,
+				holonym_placename = h_placename,
+				holonym_index = h_index,
+				place_desc = place_desc,
+			}
+			if retcats then
+				break
+			end
+		end
+	end
+	if not retcats then
+		retcats = {}
+	end
+
+	-- Now find the appropriate capital-type category for the placetype of the holonym, e.g. 'State capitals'. If we
+	-- recognize the holonym among the known holonyms in [[Module:place/shared-data]], also add a category like 'State
+	-- capitals of the United States'.  Truncate e.g. 'autonomous region' to 'region', 'union territory' to 'territory'
+	-- when looking up the type of capital category, if we can't find an entry for the holonym placetype itself (there's
+	-- an entry for 'autonomous community').
+	local capital_cat = export.placetype_to_capital_cat[holonym_placetype]
+	if not capital_cat then
+		capital_cat = export.placetype_to_capital_cat[holonym_placetype:gsub("^.* ", "")]
+	end
+	if capital_cat then
+		capital_cat = ucfirst(capital_cat)
+		local inserted_specific_variant_cat = false
+		local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+		if group then
+			if spec.containers and not spec.no_container_cat then
+				for _, container in ipairs(spec.containers) do
+					local container_group, container_key, container_spec = m_shared.get_matching_location {
+						placetypes = container.divtype,
+						key = container.name,
+					}
+					insert(retcats, ("%s of %s"):format(capital_cat, m_shared.get_prefixed_key(container_key,
+						container_spec)))
+					inserted_specific_variant_cat = true
+				end
+			end
+		end
+		if not inserted_specific_variant_cat then
+			insert(retcats, capital_cat)
+		end
+	else
+		-- We didn't recognize the holonym placetype; just put in 'Capital cities'.
+		insert(retcats, "Capital cities")
+	end
+	return retcats
+end
 
 --[=[
 If the holonym in `data` (in the format as passed to a category handler) refers to a city, find and return the

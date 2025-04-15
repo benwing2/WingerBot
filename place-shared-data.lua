@@ -473,56 +473,64 @@ function export.get_prefixed_key(key, spec)
 	end
 end
 
---[==[
+--[=[
 Given a location group, key and possible placetypes that the placename must match, check if the key exists in the group
 with at least one of the group's key's placetypes matching one of the passed-in placetypes. If so, return two values:
-the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding value
-structure.
-]==]
-function export.find_matching_key_in_group(group, placetypes, key)
+the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding spec object,
+which (as with all functions that return spec objects) has been initialized using `set_spec_defaults()`. This is a
+low-level function meant for internal use; external callers should use `iterate_matching_location` or
+`get_matching_location`.
+]=]
+local function find_matching_key_in_group(group, placetypes, key)
 	-- FIXME: This should handle aliases.
 	local spec = group.data[key]
 	if not spec then
 		return nil
 	end
+	-- We could be working with non-initialized/defaulted spec, since we're pulling it directly from the group.
 	local divtype = spec.divtype or group.default_divtype
+	if not divtype then
+		internal_error("No divtype found in key %s for spec %s or in group `default_divtype`", key, spec)
+	end
 	if type(divtype) == "table" then
 		for _, dt in ipairs(divtype) do
 			if list_or_element_contains(placetypes, dt) then
-				return key, spec
+				break
 			end
 		end
 		return nil
-	elseif list_or_element_contains(placetypes, divtype) then
-		return key, spec
-	else
+	elseif not list_or_element_contains(placetypes, divtype) then
 		return nil
 	end
+	set_spec_defaults(group, key, spec)
+	return key, spec
 end
 
 
---[==[
+--[=[
 Given a location group, placename and possible placetypes that the placename must match, check if the placename exists
 in the group with at least one of the placetypes of the key in the group that corresponds to the placename matching one
 of the passed-in placetypes. If so, return two values: the key corrsponding to the passed-in placename and the
-corresponding value structure.
-]==]
-function export.find_matching_placename_in_group(group, placetypes, placename)
+corresponding spec object. This is similar to `find_matching_key_in_group()` but works with placenames rather than keys.
+This is a low-level function meant for internal use; external callers should use `iterate_matching_location` or
+`get_matching_location`.
+]=]
+local function find_matching_placename_in_group(group, placetypes, placename)
 	local key
 	if group.placename_to_key then
 		key = group.placename_to_key(placename)
 	else
 		key = placename
 	end
-	return export.find_matching_key_in_group(group, placetypes, key)
+	return find_matching_key_in_group(group, placetypes, key)
 end
 
 
 --[==[
 Iterator that returns all locations matching a given description, where the description consists of either a placename
-or a key along with a list of posssible placetypes. Usually there will be at most one such location. The iterator
+or a key along with a list of possible placetypes. Usually there will be at most one such location. The iterator
 returns three values at each iteration: the location group, canonical key by which the location is known and the spec
-object describing the location. The value transformer is run on each spec prior to it being returned.
+object describing the location. The spec is initialized using `set_spec_defaults()` prior to it being returned.
 ]==]
 function export.iterate_matching_location(data)
 	local i = 0
@@ -536,21 +544,41 @@ function export.iterate_matching_location(data)
 			local group = export.locations[i]
 			local key, spec
 			if data.placename then
-				key, spec = export.find_matching_placename_in_group(group, data.placetypes, data.placename)
+				key, spec = find_matching_placename_in_group(group, data.placetypes, data.placename)
 			else
 				if not data.key then
 					internal_error("'.placename' or '.key' must be defined: %s", data)
 				end
-				key, spec = export.find_matching_key_in_group(group, data.placetypes, data.key)
+				key, spec = find_matching_key_in_group(group, data.placetypes, data.key)
 			end
 			if key, spec then
-				set_spec_defaults(group, key, spec)
 				return group, key, spec
 			end
 		end
 	end
 end
 
+
+--[==[
+Return the location matching a given description, where the description consists of either a placename or a key along
+with a list of possible placetypes. This is similar to `iterate_matching_location()` but throws an internal error if
+there is not exactly one location found; as such, it is for use with internally specified locations (such as the
+containers of known locations) rather than externally specified locations, which may not match a known location and in
+some cases may match multiple known locations.
+]==]
+function export.get_matching_location(data)
+	local all_found = {}
+	for group, key, spec in export.iterate_matching_location(data) do
+		table.insert(all_found, {group, key, spec})
+	end
+	if not all_found[1] then
+		internal_error("Couldn't find matching location for data %s", data)
+	elseif all_found[2] then
+		internal_error("Found multiple matching locations for data %s: %s", data, all_found)
+	else
+		return unpack(all_found[1])
+	end
+end
 
 --[==[
 Successively iterate over a location's containers, and then the containers of those containers, etc. Keep in mind that
@@ -575,7 +603,7 @@ function export.iterate_containers(group, key, spec)
 			local containers = location.spec.containers
 			if containers then
 				for _, container in ipairs(containers) do
-					local container_group, container_key, container_spec = get_matching_location {
+					local container_group, container_key, container_spec = export.get_matching_location {
 						placetypes = container.divtype,
 						placename = container.name,
 					}
@@ -597,30 +625,19 @@ function export.iterate_containers(group, key, spec)
 end
 
 
---[=[
-If the holonym in `data` (in the format as passed to a category handler) refers to a city, find and return the
-corresponding city key, spec and group as well as a list of the containing polities. This verifies that there is no
-mismatch between the city's containing polities and any of the following holonyms in the {{tl|place}} spec.
+--[==[
+If the holonym in `data` (in the format as passed to a category handler) refers to a known location, iterate over all
+such known locations, returning for each location the corresponding key, spec and group as well as the trail of
+ancestral containers. Unlike `iterate_matching_location()`, this specifically checks that there is no mismatch between
+the location's containers at any level and any of the following holonyms in the {{tl|place}} spec.
 
-Returns four values:
-# The ''city key'' (the key in the data in the city group table; usually the same as the holonym placename passed in,
-  but may be different due to following an alias, and may in rare cases have `the` prefixed);
-# the ''city spec'' (object describing the city, the value corresponding to the city key in the data in the city group
-  table; documented in [[Module:place/shared-data]] under `export.cities`);
-# the ''city group'' (the table listing a group of cities with shared properties);
-# the list of containing polities, ordered from smallest/most immediate to largest/least immediate; each element is
-  a table with `name` and `divtype` properties, the latter of which has been filled out using group-level defaults if
-  necessary.
-]=]
-local function iterate_matching_holonym_location(data)
+Returns four values: the location group, the canonical key by which the location is known, the spec object describing
+the location and the trail of ancestral containers for the location. The first three values are the same as for
+`iterate_matching_location`.
+]==]
+function export.iterate_matching_holonym_location(data)
 	local holonym_placetype, holonym_placename, holonym_index, place_desc =
 		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
-	-- local equiv_to_city = export.get_equiv_placetype_prop(holonym_placetype, function(equiv_placetype)
-	-- 	return equiv_placetype == "city"
-	-- end)
-	-- if not equiv_to_city then
-	-- 	return nil
-	-- end
 	local matching_location_iterator = export.iterate_matching_location {
 		placetypes = holonym_placetype,
 		placename = holonym_placename,
@@ -631,103 +648,99 @@ local function iterate_matching_holonym_location(data)
 			if not group then
 				return nil
 			end
-			-- For each level of containing location, check that there are no mismatches (i.e. other location of the
-			-- same sort) mentioned. We allow a mismatch at a given level if there's also a match with the containing
-			-- location at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]]
-			-- as a city in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching
-			-- state of Kansas because the correct state of Missouri was also mentioned. But imagine we are defining
-			-- Newark, Delware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark,
-			-- New Jersey in [[Module:place/shared-data]]. Just because the containing location `US` matches isn't
-			-- enough, because Newark, NJ also has New Jersey as a containing location and there's a mismatch at that
-			-- level. If there are no mismatches at any level we assume we're dealing with the right city.
+			local container_trail = {}
+			-- For each level of container, check that there are no mismatches (i.e. other location of the same
+			-- placetype) mentioned. We allow a mismatch at a given level if there's also a match with the container
+			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
+			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
+			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
+			-- Delaware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New
+			-- Jersey in [[Module:place/shared-data]]. Just because the containing location `US` matches isn't enough,
+			-- because Newark, NJ also has New Jersey as a containing location and there's a mismatch at that level. If
+			-- there are no mismatches at any level we assume we're dealing with the right known location.
+			--
+			-- If at a given level there are multiple containing locations, we count a match if any holonym matches any
+			-- containing location, and a mismatch only if a holonym exists of the same placetype that doesn't match any
+			-- containing location.
+			local containers_mismatch = false
 			for containers in export.iterate_containers(group, key, spec) do
-
-			local containing_polities = export.get_city_containing_polities(group, spec)
-			local containing_polities_mismatch = false
-			for _, polity in ipairs(containing_polities) do
-				local bare_polity, _ = m_shared.construct_bare_and_linked_version(polity.name)
-				local divtype = polity.divtype
-				local divtype_equivs = export.get_placetype_equivs(divtype)
+				insert(container_trail, containers)
+				local match_at_level = false
+				local mismatch_at_level = false
 				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
 					holonym_index and holonym_index + 1 or nil) do
-					local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
-						function(placetype)
-							return other_holonym.placetype == placetype and other_holonym.cat_placename == bare_polity
+					local holonym_matches_at_level = false
+					local holonym_exists_with_same_placetype = false
+					for _, container in ipairs(containers) do
+						local full_container_placename, elliptical_container_placename = export.call_key_to_placename(
+							container.group, container.key)
+						local divtype = container.spec.divtype
+						local divtype_equivs = export.get_placetype_equivs(divtype)
+						local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
+							function(placetype)
+								return other_holonym.placetype == placetype and
+									(other_holonym.cat_placename == full_container_placename or
+									other_holonym.cat_placename == elliptical_container_placename)
+							end
+						)
+						if this_holonym_matches then
+							holonym_matches_at_level = true
+							break
 						end
-					)
-					if this_holonym_matches then
-						-- match
-					else
-						local this_holonym_mismatches = export.get_equiv_placetype_prop_from_equivs(
+						local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
 							divtype_equivs, function(placetype)
 								return other_holonym.placetype == placetype
 							end
 						)
-						if this_holonym_mismatches then
-							containing_polities_mismatch = true
-							break
+						if this_holonym_exists_with_same_placetype then
+							holonym_exists_with_same_placetype = true
 						end
 					end
+					if holonym_matches_at_level then
+						match_at_level = true
+						break
+					end
+					if holonym_exists_with_same_placetype then
+						mismatch_at_level = true
+					end
 				end
-				if containing_polities_mismatch then
+				if not match_at_level and mismatch_at_level then
+					containers_mismatch = true
 					break
 				end
 			end
-			if not containing_polities_mismatch then
-				return city_key, city_spec, city_group, containing_polities
+			if not containers_mismatch then
+				return group, key, spec, container_trail
 			end
 		end
 	end
 end
 
 
-function export.get_matching_location(data)
+--[==[
+If the holonym in `data` (in the format as passed to a category handler) refers to a known location, find and return the
+corresponding key, spec and group as well as the trail of ancestral containers. This is like
+`iterate_matching_holonym_location()` but throws an errror if more than one location matches. (An example where this
+would happen is {{tl|place|en|neighborhood|city/Newcastle}}, because there are two known locations named Newcastle. To
+fix this, specify additional following disambiguating holonyms, e.g.
+{{tl|place|en|neighborhood|city/Newcastle|s/New South Wales}}.
+]==]
+function export.find_matching_holonym_location(data)
 	local all_found = {}
-	for group, key, spec in export.iterate_matching_location(data) do
-		table.insert(all_found, {group, key, spec})
+	for group, key, spec, container_trail in export.iterate_matching_holonym_location(data) do
+		table.insert(all_found, {group, key, spec, container_trail})
 	end
 	if not all_found[1] then
-		internal_error("Couldn't find matching location for data %s", data)
+		return nil
 	elseif all_found[2] then
-		internal_error("Found multiple matching locations for data %s: %s", data, all_found)
+		error(("Found multiple matching locations for holonym '%s/%s'; specify disambiguating context in the " ..
+			"containing holonyms: %s"):format(data.holonym_placetype, data.holonym_placename, dump(all_found)))
 	else
 		return unpack(all_found[1])
 	end
 end
 
 --[==[
-If the holonym in `data` refers to a known location (i.e. polity or political division), find and return the
-corresponding key, spec and group. FIXME: This should verify that there is no mismatch between the location's containers
-and any of the following holonyms in the {{tl|place}} spec, as find_city_spec() does.
-
-Returns three values:
-# The ''location key'' (the key in the data in the location group table; often has the name of the container and
-  sometimes the placetype affixed, and may have `the` prefixed);
-# the ''location spec'' (object describing the location, the value corresponding to the location key in the data in the
-  location group table; documented in [[Module:place/shared-data]] in the intro under `==Location tables==`);
-# the ''location group'' (the table listing a group of locations with shared properties).
-]==]
-function export.find_location_spec(data)
-	local holonym_placetype, holonym_placename, place_desc =
-		data.holonym_placetype, data.holonym_placename, data.place_desc
-	for _, location_group in ipairs(m_shared.locations) do
-		-- Find the appropriate key format for the holonym (e.g. "pref/Osaka" -> "Osaka Prefecture").
-		local location_key, _ = m_shared.call_place_cat_handler(location_group, holonym_placetype, holonym_placename)
-		if location_key then
-			local location_value = location_group.data[location_key]
-			if location_value then
-				-- Use the group's value_transformer to ensure that default values are copied into the location spec
-				-- (location value structure).
-				location_value = location_group.value_transformer(location_group, location_key, location_value)
-				return location_key, location_value, location_group
-			end
-		end
-	end
-end
-
-
---[==[
->>>>>>> d9656d33 (place-data,place-shared-data: latest work (NOT WORKING OR DONE))
 Given a non-multipart key (where a multipart key is something like `"Tucson, Arizona"` or `"Atlanta, Georgia, USA"`),
 possibly preceded by `the`, return two values, the ''bare'' and ''linked'' versions of the key. The bare version is
 simply the passed-in `key` minus any preceding `the`. The linked version is the key converted into a raw bracketed link
@@ -889,6 +902,9 @@ local function subpolity_bare_label_setter(container)
 end
 
 local function set_spec_defaults(group, key, spec)
+	if spec.initialized then
+		return
+	end
 	if type(spec.container) == "string" and group.canonicalize_key_container then
 		spec.container = group.canonicalize_key_container(spec.container)
 	end
@@ -902,6 +918,10 @@ local function set_spec_defaults(group, key, spec)
 	spec.container = nil
 	if spec.containers and not spec.containers[1] then
 		spec.containers = {spec.containers}
+	end
+	spec.divtype = spec.divtype or group.default_divtype
+	if not spec.divtype then
+		internal_error("No divtype found in key %s for spec %s or in group `default_divtype`", key, spec)
 	end
 	spec.keydesc = spec.keydesc or group.default_keydesc or fallback_keydesc
 	spec.poldiv = spec.poldiv or group.default_poldiv
@@ -920,6 +940,7 @@ local function set_spec_defaults(group, key, spec)
 	spec.is_city = boolean_with_default(spec.is_city, group.default_is_city)
 	spec.is_city = boolean_with_default(spec.is_city, group.default_divtype == "city")
 	spec.is_former_place = boolean_with_default(spec.is_former_place, group.default_is_former_place)
+	spec.initialized = true
 end
 
 --[=[
