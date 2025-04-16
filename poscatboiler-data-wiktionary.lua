@@ -49,7 +49,7 @@ raw_categories["User languages with invalid code"] = {
 	description = "Categories listing Wiktionarians according to their linguistic abilities, where the language code is invalid for Wiktionary.",
 	additional = "Most of these codes are valid ISO 639-3 codes but are invalid in Wiktionary for various reasons, " ..
 	"typically due to different choices made regarding splitting and merging languages.",
-	parents = {"User languages", sort = " "},
+	parents = {name = "User languages", sort = " "},
 }
 
 raw_categories["User scripts"] = {
@@ -63,6 +63,11 @@ raw_categories["User scripts"] = {
 raw_categories["User coders"] = {
 	description = "Categories listing Wiktionarians according to their coding abilities.",
 	parents = "Wiktionary users",
+}
+
+raw_categories["User families"] = {
+	description = "Categories listing Wiktionarians according to their knowledge about a given language family.",
+	parents = "Wiktionary users"
 }
 
 raw_categories["Pages with entries"] = {
@@ -130,6 +135,7 @@ local function get_level_params(data)
 			lang = "These users " .. speak_verb .. " NAME.",
 			script = "These users read NAME.",
 			coder = "These users know how to code in NAME.",
+			family = "These users know NAME.",
 		},
 		["0"] = {
 			leftcolor = "#FFB3B3",
@@ -137,6 +143,7 @@ local function get_level_params(data)
 			lang = "These users do not understand NAME (or understand it with considerable difficulty).",
 			script = "These users '''cannot''' read NAME.",
 			coder = "These users know '''little''' about NAME and just mimic existing usage.",
+			family = "These users '''cannot''' contribute to NAME."
 		},
 		["1"] = {
 			leftcolor = "#C0C8FF",
@@ -144,6 +151,7 @@ local function get_level_params(data)
 			lang = "These users " .. speak_verb .. " NAME at a '''basic''' level.",
 			script = "These users can read NAME at a '''basic''' level.",
 			coder = "These users know the '''basics''' of how to write NAME code and make minor tweaks.",
+			family = "These users know the '''basics''' of contributing to NAME.",
 		},
 		["2"] = {
 			leftcolor = "#77E0E8",
@@ -151,6 +159,7 @@ local function get_level_params(data)
 			lang = "These users " .. speak_verb .. " NAME at an '''intermediate''' level.",
 			script = "These users can read NAME at an '''intermediate''' level.",
 			coder = "These users have a '''fair command''' of NAME, and can understand some scripts written by others.",
+			family = "This user is '''fairly familiar''' with NAME.",
 		},
 		["3"] = {
 			leftcolor = "#99B3FF",
@@ -158,6 +167,7 @@ local function get_level_params(data)
 			lang = "These users " .. speak_verb .. " NAME at an '''advanced''' level.",
 			script = "These users can read NAME at an '''advanced''' level.",
 			coder = "These users can write '''more complex''' NAME code, and can understand and modify most scripts written by others.",
+			family = "This user '''regularly''' contributes to NAME.",
 		},
 		["4"] = {
 			leftcolor = "#CCCC00",
@@ -184,30 +194,39 @@ end
 
 
 local coder_links = {
+	Asm = "w:Assembly language",
 	Bash = "w:Bash (Unix shell)",
 	C = "w:C (programming language)",
 	["C++"] = "w:C++",
 	["C Sharp"] = {link = "w:C Sharp (programming language)", name = "C&#035;"},
 	CSS = "w:CSS",
 	Go = "w:Go (programming language)",
+	Haskell = "w:Haskell",
 	HTML = "w:HTML",
 	Java = "w:Java (programming language)",
 	JavaScript = "w:JavaScript",
 	Julia = "w:Julia (programming language)",
+	Kotlin = "w:Kotlin (programming language)",
 	Lisp = "w:Lisp (programming language)",
 	Lua = "Wiktionary:Scripting",
 	Perl = "w:Perl",
+	PHP = "w:PHP",
 	Python = "w:Python (programming language)",
+	regex = {link = "w:Regular expression", name = "regular expressions"},
 	Ruby = "w:Ruby (programming language)",
+	Rust = "w:Rust (programming language)",
 	Scala = "w:Scala (programming language)",
 	Scheme = "w:Scheme (programming language)",
+	SQL = "w:SQL",
 	template = {link = "Wiktionary:Templates", name = "wiki templates"},
+	Typescript = "w:Typescript",
 	VBScript = "w:VBScript",
 }
 
 
 -- Generic implementation of competency handler for (natural) languages, scripts, and "coders" (= programming languages).
 local function competency_handler(data)
+	local category = data.category
 	local langtext = data.langtext
 	local typ = data.typ
 	local args = data.args
@@ -216,8 +235,10 @@ local function competency_handler(data)
 	local namecat = data.namecat
 	local level = data.level
 	local parents = data.parents
+	local addl_parents = data.addl_parents
 	local topright = data.topright
 	local data_addl = data.additional
+	local inactive = data.inactive
 
 	local parts = {}
 	local function ins(txt)
@@ -240,15 +261,29 @@ local function competency_handler(data)
 		ins(params[typ]:gsub("NAME", ("'''" .. namecat .. "'''"):format(name)))
 	end
 
-	local additional
+	local additional = {}
 	if level then
-		additional = ("To be included on this list, add {{tl|Babel|%s}} to your user page. Complete instructions are " ..
-			"available at [[Wiktionary:Babel]]."):format(level == "N" and code or ("%s-%s"):format(code, level)) ..
-			(data_addl and "\n\n" .. data_addl or "")
+		insert(additional, ("To be included on this list, add {{tl|Babel|%s}} to your user page. Complete instructions are " ..
+			"available at [[Wiktionary:Babel]]."):format(level == "N" and code or ("%s-%s"):format(code, level)))
 	else
-		additional = ("To be included on this list, use {{tl|Babel}} on your user page. Complete instructions are " ..
-			"available at [[Wiktionary:Babel]].") ..
-			(data_addl and "\n\n" .. data_addl or "")
+		insert(additional, "To be included on this list, use {{tl|Babel}} on your user page. Complete instructions are " ..
+			"available at [[Wiktionary:Babel]].")
+	end
+
+	if inactive then
+		insert(additional, "'''NOTE:''' Users in this category have not been active on the English Wiktionary for at " ..
+			"least two years and have been moved into the 'inactive' state due to " ..
+			"[[Wiktionary:Votes/pl-2017-04/Removing inactive editors from user-proficiency categories]].")
+		parents = {{name = category, sort = " "}}
+	end
+	if addl_parents then
+		for _, addl_parent in ipairs(addl_parents) do
+			insert(parents, addl_parent)
+		end
+	end
+	
+	if data_addl then
+		insert(additional, data_addl)
 	end
 
 	if level then
@@ -262,8 +297,8 @@ local function competency_handler(data)
 
 		return {
 			description = concat(parts),
-			additional = additional,
-			breadcrumb = "Level " .. level,
+			additional = concat(additional, "\n\n"),
+			breadcrumb = inactive and "Inactive" or "Level " .. level,
 			parents = parents,
 		}, not not args
 	else
@@ -278,8 +313,8 @@ local function competency_handler(data)
 		return {
 			topright = topright,
 			description = concat(parts),
-			additional = additional,
-			breadcrumb = name,
+			additional = concat(additional, "\n\n"),
+			breadcrumb = inactive and "Inactive" or name,
 			parents = parents,
 		}, not not args
 	end
@@ -287,15 +322,17 @@ end
 
 
 insert(raw_handlers, function(data)
-	local code, level = data.category:match("^User ([a-z][a-z][a-z]?)%-([0-5N])$")
+	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
+	category = category or data.category
+	local code, level = category:match("^User ([a-z][a-z][a-z]?)%-([0-5N])$")
 	if not code then
-		code, level = data.category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([0-5N])$")
+		code, level = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([0-5N])$")
 	end
 	if not code then
-		code = data.category:match("^User ([a-z][a-z][a-z]?)$")
+		code = category:match("^User ([a-z][a-z][a-z]?)$")
 	end
 	if not code then
-		code = data.category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)$")
+		code = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)$")
 	end
 	if not code then
 		return
@@ -360,7 +397,7 @@ insert(raw_handlers, function(data)
 		end
 	end
 
-	local function insert_request_cats(parents)
+	local function get_request_cats()
 		if args.text or code == "en" or code:find("^en%-") then
 			return
 		end
@@ -387,14 +424,16 @@ insert(raw_handlers, function(data)
 			count_sort = "*" .. ("%0" .. #(tostring(uppernum)) .. "d"):format(num_pages)
 		end
 
-		insert(parents, {
+		local addl_parents = {}
+		insert(addl_parents, {
 			name = "Requests for translations in user-competency categories by language",
 			sort = code,
 		})
-		insert(parents, {
+		insert(addl_parents, {
 			name = count_cat,
 			sort = count_sort,
 		})
+		return addl_parents
 	end
 
 	local invalid_lang_warning
@@ -419,7 +458,7 @@ insert(raw_handlers, function(data)
 	else
 		parents = {"User languages with invalid code", sort = code}
 	end
-	insert_request_cats(parents)
+	local addl_parents = get_request_cats()
 
 	local topright
 	if args.commonscat then
@@ -441,18 +480,9 @@ insert(raw_handlers, function(data)
 		namecat = "[[%s]]"
 	end
 
-	local additional
-	if level then
-		additional = ("To be included on this list, add {{tl|Babel|%s}} to your user page. Complete instructions are " ..
-			"available at [[Wiktionary:Babel]]."):format(level == "N" and code or ("%s-%s"):format(code, level)) ..
-			(invalid_lang_warning and "\n\n" .. invalid_lang_warning or "")
-	else
-		additional = ("To be included on this list, use {{tl|Babel}} on your user page. Complete instructions are " ..
-			"available at [[Wiktionary:Babel]].") ..
-			(invalid_lang_warning and "\n\n" .. invalid_lang_warning or "")
-	end
 	return competency_handler {
-		category = data.category,
+		category = category,
+		inactive = inactive,
 		langtext = wrap(args.text),
 		typ = "lang",
 		args = args,
@@ -462,6 +492,7 @@ insert(raw_handlers, function(data)
 		namecat = namecat,
 		level = level,
 		parents = parents,
+		addl_parents = addl_parents,
 		topright = topright,
 		additional = invalid_lang_warning,
 	}
@@ -469,15 +500,17 @@ end)
 
 
 insert(raw_handlers, function(data)
-	local code, level = data.category:match("^User ([A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
+	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
+	category = category or data.category
+	local code, level = category:match("^User ([A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
 	if not code then
-		code = data.category:match("^User ([A-Z][a-z][a-z][a-z][a-z]?)$")
+		code = category:match("^User ([A-Z][a-z][a-z][a-z][a-z]?)$")
 	end
 	if not code then
-		code, level = data.category:match("^User ([a-z][a-z][a-z]?%-[A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
+		code, level = category:match("^User ([a-z][a-z][a-z]?%-[A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
 	end
 	if not code then
-		code = data.category:match("^User ([a-z][a-z][a-z]?%-[A-Z][a-z][a-z][a-z][a-z]?)$")
+		code = category:match("^User ([a-z][a-z][a-z]?%-[A-Z][a-z][a-z][a-z][a-z]?)$")
 	end
 	if not code then
 		return
@@ -506,7 +539,8 @@ insert(raw_handlers, function(data)
 	end
 
 	return competency_handler {
-		category = data.category,
+		category = category,
+		inactive = inactive,
 		typ = "script",
 		obj = sc,
 		code = code,
@@ -519,12 +553,14 @@ end)
 
 
 insert(raw_handlers, function(data)
+	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
+	category = category or data.category
 	local code, level
 	if not code then
-		code, level = data.category:match("^User ([A-Za-z+-]+) coder%-([0-5N])$")
+		code, level = category:match("^User ([A-Za-z+-]+) coder%-([0-5N])$")
 	end
 	if not code then
-		code = data.category:match("^User ([A-Za-z+-]+) coder$")
+		code = category:match("^User ([A-Za-z+-]+) coder$")
 	end
 	if not code or not coder_links[code] then
 		return
@@ -545,10 +581,62 @@ insert(raw_handlers, function(data)
 	local namecat = ("[[%s|%%s]]"):format(langdata.link)
 
 	return competency_handler {
-		category = data.category,
+		category = category,
+		inactive = inactive,
 		typ = "coder",
 		code = code,
 		name = langdata.name or code,
+		namecat = namecat,
+		level = level,
+		parents = parents,
+	}
+end)
+
+insert(raw_handlers, function(data)
+	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
+	category = category or data.category
+	local code, level = category:match("^User ([a-z][a-z][a-z]?)%-([0-5N])$")
+	if not code then
+		code, level = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([0-5N])$")
+	end
+	if not code then
+		code = category:match("^User ([a-z][a-z][a-z]?)$")
+	end
+	if not code then
+		code = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)$")
+	end
+	if not code then
+		return
+	end
+	local fam = require("Module:families").getByCode(code)
+	if not fam then
+		return
+	end
+
+	local parents
+	if level then
+		parents = {("User %s"):format(code), sort = level}
+	else
+		parents = {
+			{name = "User families", sort = code},
+			{name = fam:getCategoryName(), sort = "user"},
+		}
+	end
+
+	local namecat
+	if level then
+		namecat = ("[[:Category:User %s|%s]]"):format(code, fam:getCategoryName())
+	else
+		namecat = ("[[:Category:%s|%s]]"):format(fam:getCategoryName(), fam:getCategoryName())
+	end
+
+	return competency_handler {
+		category = category,
+		inactive = inactive,
+		typ = "family",
+		obj = fam,
+		code = code,
+		name = fam:getCanonicalName(),
 		namecat = namecat,
 		level = level,
 		parents = parents,
