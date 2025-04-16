@@ -625,11 +625,46 @@ function export.iterate_containers(group, key, spec)
 end
 
 
+--[=[
+Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
+specified holonym and stop either when there are no more holonyms or a holonym with modifier `:also` is found. If
+`first_holonym_index` is nil or omitted, iterate over all holonyms regardless. If `include_raw_text_holonyms` is
+specified, raw text holonyms (those not of the form `placetype/placename`) are returned as well; they can be identified
+by the fact that the `placetype` field in the holonym structure is nil. Two values are returned at each iteration, the
+holonym index and holonym structure, similar to `ipairs()`.
+]=]
+function export.get_holonyms_to_check(place_desc, first_holonym_index, include_raw_text_holonyms)
+	local stop_at_also = not not first_holonym_index
+	return function(place_desc, index)
+		while true do
+			index = index + 1
+			local this_holonym = place_desc.holonyms[index]
+			if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
+				return nil
+			end
+			-- If not placetype, we're processing raw text, which we normally want to skip.
+			if include_raw_text_holonyms or this_holonym.placetype then
+				return index, this_holonym
+			end
+		end
+	end, place_desc, first_holonym_index and first_holonym_index - 1 or 0
+end
+
+
 --[==[
 If the holonym in `data` (in the format as passed to a category handler) refers to a known location, iterate over all
 such known locations, returning for each location the corresponding key, spec and group as well as the trail of
 ancestral containers. Unlike `iterate_matching_location()`, this specifically checks that there is no mismatch between
-the location's containers at any level and any of the following holonyms in the {{tl|place}} spec.
+the location's containers at any level and any of the following holonyms in the {{tl|place}} spec. The fields in `data`
+are:
+* `holonym_placetype`: The placetype of the holonym. It can actually be a list of possible placetypes, as with
+  `iterate_matching_location()`.
+* `holonym_placename`: The placename of the holonym.
+* `holonym_index`: The index of the holonym among the holonyms in `place_desc`, or nil if the holonym is not among the
+  holonyms in `place_desc`. (If a holonym index is given, we check for container mismatches among the holonyms
+  following the specified index, stopping either when encountering a holonym marked with modifier `:also` or, if none
+  exist, when we run out of holonyms. If no holonym index is given, we check all holonyms for container mismatches.)
+* `place_desc`: Description of the place; used for the holonyms, to check for container mismatches.
 
 Returns four values: the location group, the canonical key by which the location is known, the spec object describing
 the location and the trail of ancestral containers for the location. The first three values are the same as for

@@ -1244,32 +1244,6 @@ export.cat_implications = {
 ------------------------------------------------------------------------------------------
 
 
---[=[
-Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
-specified holonym and stop either when there are no more holonyms or a holonym with modifier `:also` is found. If
-`first_holonym_index` is nil or omitted, iterate over all holonyms regardless. If `include_raw_text_holonyms` is
-specified, raw text holonyms (those not of the form `placetype/placename`) are returned as well; they can be identified
-by the fact that the `placetype` field in the holonym structure is nil. Two values are returned at each iteration, the
-holonym index and holonym structure, similar to `ipairs()`.
-]=]
-local function get_holonyms_to_check(place_desc, first_holonym_index, include_raw_text_holonyms)
-	local stop_at_also = not not first_holonym_index
-	return function(place_desc, index)
-		while true do
-			index = index + 1
-			local this_holonym = place_desc.holonyms[index]
-			if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
-				return nil
-			end
-			-- If not placetype, we're processing raw text, which we normally want to skip.
-			if include_raw_text_holonyms or this_holonym.placetype then
-				return index, this_holonym
-			end
-		end
-	end, place_desc, first_holonym_index and first_holonym_index - 1 or 0
-end
-
-
 local function city_type_cat_handler(data)
 	local entry_placetype = data.entry_placetype
 	local generic_before_non_cities = export.get_placetype_prop(entry_placetype, "generic_before_non_cities")
@@ -1308,7 +1282,7 @@ local function capital_city_cat_handler(data, non_city)
 	-- category/categories we add below.
 	local retcats
 	if not non_city and place_desc.holonyms then
-		for h_index, holonym in get_holonyms_to_check(place_desc, holonym_index) do
+		for h_index, holonym in m_shared.get_holonyms_to_check(place_desc, holonym_index) do
 			local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
 			retcats = city_type_cat_handler {
 				entry_placetype = "city",
@@ -1418,7 +1392,7 @@ local function find_city_spec(data)
 				local bare_polity, _ = m_shared.construct_bare_and_linked_version(polity.name)
 				local divtype = polity.divtype
 				local divtype_equivs = export.get_placetype_equivs(divtype)
-				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
+				for other_holonym_index, other_holonym in m_shared.get_holonyms_to_check(place_desc,
 					holonym_index and holonym_index + 1 or nil) do
 					local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
 						function(placetype)
@@ -1484,8 +1458,7 @@ The single parameter `data` is as in category handlers. The return value is a li
 language code).
 ]=]
 local function generic_cat_handler(data)
-	local holonym_placetype, holonym_placename, place_desc, from_demonym =
-		data.holonym_placetype, data.holonym_placename, data.place_desc, data.from_demonym
+	local from_demonym = data.from_demonym
 
 	local retcats = {}
 	local function insert_retkey(key, spec)
@@ -1496,21 +1469,20 @@ local function generic_cat_handler(data)
 		end
 	end
 
-	for group, key, spec in m_shared.iterate_matching_location {
-		placetypes = holonym_placetype,
-		placename = holonym_placename,
-	} do
+	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	if group then
+		insert_retkey(key, spec)
 		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
 		-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
-		-- from_demonym is given as we only want demonyms in the most specific category, and not when no_container_cat
-		-- is set (e.g. for 'United Kingdom').
-		insert_retkey(key, spec)
-		if not from_demonym and spec.container and not spec.no_container_cat then
-			local container_group, container_key, container_spec = m_shared.get_matching_location {
-				placetype = spec.container.divtype,
-				key = spec.container.name,
-			}
-			insert_retkey(container_key, container_spec)
+		-- no_container_cat is set (e.g. for 'United Kingdom').
+		if spec.containers and not spec.no_container_cat then
+			for _, container in ipairs(spec.containers) do
+				local container_group, container_key, container_spec = m_shared.get_matching_location {
+					placetypes = container.divtype,
+					key = container.name,
+				}
+				insert_retkey(container_key, container_spec)
+			end
 		end
 		return retcats
 	end
@@ -1540,21 +1512,18 @@ function export.get_bare_categories(args, place_descs)
 		end
 	end
 
-	local city_in_placetypes = false
-	for _, placetype in ipairs(possible_placetypes) do
-		-- Check to see whether any variant of 'city' is in placetypes, e.g. 'capital city', 'subprovincial city',
-		-- 'metropolitan city', 'prefecture-level city', etc.
-		if placetype == "city" or placetype:find(" city$") then
-			city_in_placetypes = true
-			break
-		end
-	end
-
 	local function check_term(term)
 		-- Treat Wikipedia links like local ones.
 		term = term:gsub("%[%[w:", "[["):gsub("%[%[wikipedia:", "[[")
 		term = export.remove_links_and_html(term)
 		term = term:gsub("^the ", "")
+		local group, key, spec, container_trail = m_shared.find_matching_holonym_location {
+			entry_placetype = "city",
+			holonym_placetype = h_placetype,
+			holonym_placename = h_placename,
+			holonym_index = h_index,
+			place_desc = place_desc,
+		}
 		for _, group in ipairs(m_shared.locations) do
 			-- Try to find the term among the known polities.
 			local cat, bare_cat = m_shared.call_place_cat_handler(group, possible_placetypes, term)
@@ -1757,7 +1726,7 @@ local function district_neighborhood_cat_handler(data)
 		-- to start with the current holonym, which is especially important for neighborhoods and suburbs that
 		-- may have the first holonym be a recognizable province, etc. but can't hurt otherwise. (Previously
 		-- we skipped the first/current holonym.)
-		for other_holonym_index, other_holonym in get_holonyms_to_check(data.place_desc,
+		for other_holonym_index, other_holonym in m_shared.get_holonyms_to_check(data.place_desc,
 			data.holonym_index) do
 			local other_holonym_data = {
 				holonym_placetype = other_holonym.placetype,
