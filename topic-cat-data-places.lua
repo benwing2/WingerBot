@@ -66,6 +66,31 @@ local class_is_political_division = {
 	["generic place"] = false,
 }
 
+local capital_cat_to_placetype = {}
+for placetype, capital_cat in pairs(m_data.placetype_to_capital_cat) do
+	capital_cat_to_placetype[capital_cat] = placetype
+end
+
+-- Handler for bare categories for all types of capitals. This needs to precede the handler for bare placetype
+-- categories as some of the types of capitals exist as placetypes as well.
+table.insert(handlers, function(label)
+	label = lcfirst(label)
+	local capital_placetype = capital_cat_to_placetype[label]
+	if capital_placetype then
+		local pl_placetype = m_data.pluralize_placetype(capital_placetype)
+		local linkdesc = m_data.get_placetype_display_form(pl_placetype, "top-level")
+		if not linkdesc then
+			internal_error("Unrecognized placetype %s when processing label %s", capital_placetype, label)
+		end
+		return {
+			type = "name",
+			topic = label,
+			description = "{{{langname}}} names of [[capital]]s of " .. linkdesc .. ".",
+			parents = {"capital cities"},
+		}
+	end
+end)
+
 -- Handler for bare placetype categories. FIXME: Add wpcat= and commonscat= info. Previously we had it for various
 -- so-called "generic" placetypes, but sometimes the categories were wrong.
 table.insert(handlers, function(label)
@@ -253,7 +278,7 @@ table.insert(handlers, function(label)
 		end
 		if placetype then
 			local normalized_placetype = placetype == "neighbourhoods" and "neighborhoods" or placetype
-			local canon_placetype, ptdata, ptmatch = m_data.get_placetype_data(placetype, "from category")
+			local canon_placetype, ptdata, ptmatch = m_data.get_placetype_data(normalized_placetype, "from category")
 			if canon_placetype and (ptdata.generic_before_non_cities or ptdata.generic_before_cities) then
 				for _, group in ipairs(m_shared.polities) do
 					local group_is_top_level = group.default_divtype == "country"
@@ -349,7 +374,8 @@ table.insert(handlers, function(label)
 			placetype, in_of, city_key = canon_label:match("^([A-Za-z%- ]-) (of) (.*)$")
 		end
 		if placetype then
-			local canon_placetype, ptdata, ptmatch = m_data.get_placetype_data(placetype, "from category")
+			local normalized_placetype = placetype == "neighbourhoods" and "neighborhoods" or placetype
+			local canon_placetype, ptdata, ptmatch = m_data.get_placetype_data(normalized_placetype, "from category")
 			if canon_placetype and ptdata.generic_before_cities then
 				local should_in_of = ptdata.generic_before_cities
 				if should_in_of ~= in_of then
@@ -397,11 +423,6 @@ table.insert(handlers, function(label)
 		end
 	end
 end)
-
-local capital_cat_to_placetype = {}
-for placetype, capital_cat in pairs(m_data.placetype_to_capital_cat) do
-	capital_cat_to_placetype[capital_cat] = placetype
-end
 
 -- Handler for "state capitals of the United States", "provincial capitals of Canada", etc. This must precede the next
 -- handler for specific political and misc (non-political) divisions of polities and subpolities, such as
@@ -587,25 +608,6 @@ table.insert(handlers, function(label)
 				end
 			end
 		end
-	end
-end)
-
--- Handler for bare categories for all types of capitals.
-table.insert(handlers, function(label)
-	label = lcfirst(label)
-	local capital_placetype = capital_cat_to_placetype[label]
-	if capital_placetype then
-		local pl_placetype = m_data.pluralize_placetype(capital_placetype)
-		local linkdesc = m_data.get_placetype_display_form(pl_placetype, "top-level")
-		if not linkdesc then
-			internal_error("Unrecognized placetype %s when processing label %s", capital_placetype, label)
-		end
-		return {
-			type = "name",
-			topic = label,
-			description = "{{{langname}}} names of [[capital]]s of " .. linkdesc .. ".",
-			parents = {"capital cities"},
-		}
 	end
 end)
 
