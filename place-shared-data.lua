@@ -7,9 +7,11 @@ You must load this module using require(), not using mw.loadData().
 export.force_cat = false -- set to true to force category generation even on non-mainspace pages
 
 local m_table = require("Module:table")
+local string_utilities_module = "Module:string utilities"
 local en_utilities_module = "Module:en-utilities"
-local topic_cat_utilities_module = "Module:category tree/topic cat/utilities"
 
+local insert = table.insert
+local concat = table.concat
 local dump = mw.dumpObject
 
 --[==[ intro:
@@ -253,7 +255,7 @@ objects that describe how to format the display of a category page, as documente
 [[Module:category tree/topic cat/data/documentation]]) for the following types of categories:
 
 1. A bare topical category, e.g. [[:Category:en:Netherlands]]. Category description objects for these are created by the
-   `bare_label_setter` handler of a given group. (The term "label" is used here because the category system internally
+   `make_bare_label` handler of a given group. (The term "label" is used here because the category system internally
    refers to the category name, without any language prefix, as a "label", and the corresponding per-label category
    description objects are stored in the `labels` table in a `topic cat` submodule, notably
    [[Module:category tree/topic cat/data/Places]].)
@@ -280,7 +282,7 @@ and historic/popular divisions handled here have a category like [[:Category:en:
 primary parent, whereas we often want a different primary parent for second-level political divisions, such as
 [[:Category:en:Counties of the United States]] for US counties. FIXME: We should allow the parents to be specified for
 political divisions. This will probably necessitate another type of group-specific handler, similar to
-`bare_label_setter` (see below).
+`make_bare_label` (see below).
 
 NOTE: Some of the above categories are added automatically to pages that use the {{tl|place}} template with the appropriate
 values. Currently, whether or not such categories are added is controlled by [[Module:place/data]], which is independent
@@ -324,11 +326,11 @@ Each group consists of a table with the following keys:
   "the" in them, and the returned keys should likewise not include "the". Calling code will check for actual keys that
   are either identical to the returned keys or match once "the" is prepended.
 
-* `bare_label_setter`: This function adds an entry in the `labels` table for
+* `make_bare_label`: This function adds an entry in the `labels` table for
   [[Module:category tree/topic cat/data/Places]] for bare topical categories such as [[:Category:en:Netherlands]],
   [[:Category:fr:Alabama, USA]] or [[:Category:ru:Republic of Tatarstan]]. It is passed four arguments (the `labels`
   table, the group and the key and value of the data item). There are preconstructed functions to help here, such as
-  simple_polity_bare_label_setter() (for top-level polities) and subpolity_bare_label_setter() (for subpolities of
+  simple_polity_make_bare_label() (for top-level polities) and subpolity_make_bare_label() (for subpolities of
   top-level polities). This function often makes use of the `parents` and/or `description` keys in the data item's
   value (see above).
 
@@ -365,12 +367,12 @@ The keys of each table are the polity names in the form they will appear in a ca
 [[:Category:de:Provinces of the Netherlands]] or [[:Category:fr:Cities in Alabama, USA]] (hence, they should include
 prefixes such as "the" and suffixes such as ", USA"). Transforming these keys to the form that appears in the bare
 topical category (e.g. [[:Category:de:Netherlands]]), in category parents and/or in descriptions can be done using the
-`bare_label_setter` key (see `export.locations` below).
+`make_bare_label` key (see `export.locations` below).
 	 
 The value of an item in each table is itself a table. This table contains properties describing the polity in question.
 Note that before being used (e.g. to generate the contents of a category page like [[:Category:en:Cities in Ireland]]
 or [[:Category:de:Provinces of the Netherlands]] of to specify how to add the relevant categories to a page with a call
-to {{tl|place}}), the table is passed through `set_spec_defaults`. That function augments the property table with 
+to {{tl|place}}), the table is passed through `initialize_spec`. That function augments the property table with 
 additional properties that are common to the group or derivable from group-specific properties. The following are the
 properties most commonly specified (additional properties are sometimes attached to entries in specific groups):
 
@@ -409,9 +411,6 @@ properties most commonly specified (additional properties are sometimes attached
   (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level polities (countries and
   such), not for subpolities (states, provinces, etc.), which use the value of `container` (see below) as the
   parent.
-
-- `bare_category_desc`: String specifying the description used in the bare topical category. If not given, a default
-  description is constructed by the `bare_label_setter` function.
 
 - `container`: This specifies the larger polity in which the subpolity is contained, and is used to construct the
   primary parent of 'Cities in ...', 'Rivers in ...' and similar categories. For example, the subpolity Guangdong (a
@@ -473,13 +472,94 @@ function export.get_prefixed_key(key, spec)
 	end
 end
 
+--[==[
+Call the polity group's `key_to_placename` function if it exists (see the description of the `key_to_placename`
+function in the long comment just below the heading `"Polities"`). If there is no such function (i.e. for this group,
+keys and placenames are the same), the key is returned unchanged as both the full and elliptical placename. Otherwise
+two values are returned, the full and elliptical placenames (e.g. full `"County Durham"` vs. elliptical `"Durham"`).
+]==]
+function export.call_key_to_placename(group, key)
+	if group.key_to_placename then
+		local full_placename, elliptical_placename = group.key_to_placename(key)
+		if type(full_placename) ~= "string" then
+			internal_error("Key %s returned a non-string full placename: %s", key, full_placename)
+		end
+		if type(elliptical_placename) ~= "string" then
+			internal_error("Key %s returned a non-string elliptical placename: %s", key, elliptical_placename)
+		end
+		return full_placename, elliptical_placename
+	end
+	return key, key
+end
+
+--[==[
+Initialize the location spec `spec`, augmenting it with default values taken from `group` if the spec itself doesn't
+specify values for the properties. This sets `containers` to a canonicalized list of objects, each with `name` and
+`divtype` keys, describing the immediate containers of the location, and erases (sets to nil) the original
+non-canonicalized `container` field. (Most locations have only one immediate container but some, e.g. Russia, have more
+than one. Containers should be carefully distinguished from category parents. Generally the container is the first
+category parent, or the first ``n`` parents if there are ``n`` containers, but there may be additional category parents,
+which indicate some sort of relation between the category parent and the location but not necessarily one of
+containment.)
+
+This function is idempotent in that nothing happens if called more than once on the same spec.
+
+FIXME: Consider reimplementing this in a more standardly object-oriented way using metatables.
+]==]
+function export.initialize_spec(group, key, spec)
+	if spec.initialized then
+		return
+	end
+	if type(spec.container) == "string" and group.canonicalize_key_container then
+		spec.container = group.canonicalize_key_container(spec.container)
+	end
+	if not spec.container then
+		spec.container = group.default_container
+	end
+	if type(spec.container) == "string" then
+		spec.container = {name = spec.container, divtype = "country"}
+	end
+	spec.containers = spec.container
+	spec.container = nil
+	if spec.containers and not spec.containers[1] then
+		spec.containers = {spec.containers}
+	end
+	spec.divtype = spec.divtype or group.default_divtype
+	if not spec.divtype then
+		internal_error("No divtype found in key %s for spec %s or in group `default_divtype`", key, spec)
+	end
+	spec.poldiv = spec.poldiv or group.default_poldiv
+	spec.miscdiv = spec.miscdiv or group.default_miscdiv
+	spec.keydesc = spec.keydesc or group.default_keydesc
+	spec.overriding_bare_label_parents =
+		spec.overriding_bare_label_parents or group.default_overriding_bare_label_parents
+	local function boolean_with_default(val, default_val)
+		if val == nil then
+			return default_val
+		else
+			return val
+		end
+	end
+	spec.british_spelling = boolean_with_default(spec.british_spelling, group.default_british_spelling)
+	spec.no_container_cat = boolean_with_default(spec.no_container_cat, group.default_no_container_cat)
+	spec.no_auto_augment_container = boolean_with_default(spec.no_auto_augment_container,
+		group.default_no_auto_augment_container)
+	spec.is_city = boolean_with_default(spec.is_city, group.default_is_city)
+	spec.is_city = boolean_with_default(spec.is_city, group.default_divtype == "city")
+	spec.is_former_place = boolean_with_default(spec.is_former_place, group.default_is_former_place)
+	spec.no_include_container_in_desc = boolean_with_default(spec.no_include_container_in_desc,
+		group.default_no_include_container_in_desc)
+	spec.initialized = true
+end
+
 --[=[
 Given a location group, key and possible placetypes that the placename must match, check if the key exists in the group
 with at least one of the group's key's placetypes matching one of the passed-in placetypes. If so, return two values:
 the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding spec object,
-which (as with all functions that return spec objects) has been initialized using `set_spec_defaults()`. This is a
-low-level function meant for internal use; external callers should use `iterate_matching_location` or
-`get_matching_location`.
+which (as with all functions that return spec objects) has been initialized using `initialize_spec()`. This is a
+low-level function meant for internal use; external callers should generally use `get_matching_location` (for
+internally-derived locations), `find_matching_holonym_location` (for externally-derived locations) or
+`find_canonical_key` (for known-canonical locations where the placetype isn't known).
 ]=]
 local function find_matching_key_in_group(group, placetypes, key)
 	-- FIXME: This should handle aliases.
@@ -502,18 +582,18 @@ local function find_matching_key_in_group(group, placetypes, key)
 	elseif not list_or_element_contains(placetypes, divtype) then
 		return nil
 	end
-	set_spec_defaults(group, key, spec)
+	export.initialize_spec(group, key, spec)
 	return key, spec
 end
-
 
 --[=[
 Given a location group, placename and possible placetypes that the placename must match, check if the placename exists
 in the group with at least one of the placetypes of the key in the group that corresponds to the placename matching one
 of the passed-in placetypes. If so, return two values: the key corrsponding to the passed-in placename and the
 corresponding spec object. This is similar to `find_matching_key_in_group()` but works with placenames rather than keys.
-This is a low-level function meant for internal use; external callers should use `iterate_matching_location` or
-`get_matching_location`.
+This is a low-level function meant for internal use; external callers should generally use `get_matching_location` (for
+internally-derived locations), `find_matching_holonym_location` (for externally-derived locations) or
+`find_canonical_key` (for known-canonical locations where the placetype isn't known).
 ]=]
 local function find_matching_placename_in_group(group, placetypes, placename)
 	local key
@@ -525,12 +605,39 @@ local function find_matching_placename_in_group(group, placetypes, placename)
 	return find_matching_key_in_group(group, placetypes, key)
 end
 
+--[==[
+If `key` is a canonical known location key (i.e. not an alias), return the corresponding group and initialized spec.
+If no such key exists, return {nil}. This throws an internal error if two locations with the same key are found.
+]==]
+function export.find_canonical_key(key)
+	local found_locations = {}
+	for _, group in ipairs(export.locations) do
+		local spec = group.data[key]
+		if not spec then
+			return nil
+		end
+		if spec.alias_of then
+			mw.log(("Skipping alias '%s' of canonical '%s'"):format(key, spec.alias_of))
+			return nil
+		end
+		insert(found_locations, {group, spec})
+	end
+	if not found_locations[1] then
+		return nil
+	elseif found_locations[2] then
+		internal_error("Found multiple matching locations for canonical key %s: %s", key, found_locations)
+	else
+		local group, spec = unpack(found_locations[1])
+		export.initialize_spec(group, key, spec)
+		return group, spec
+	end
+end
 
 --[==[
 Iterator that returns all locations matching a given description, where the description consists of either a placename
 or a key along with a list of possible placetypes. Usually there will be at most one such location. The iterator
 returns three values at each iteration: the location group, canonical key by which the location is known and the spec
-object describing the location. The spec is initialized using `set_spec_defaults()` prior to it being returned.
+object describing the location. The spec is initialized using `initialize_spec()` prior to it being returned.
 ]==]
 function export.iterate_matching_location(data)
 	local i = 0
@@ -558,18 +665,20 @@ function export.iterate_matching_location(data)
 	end
 end
 
-
 --[==[
 Return the location matching a given description, where the description consists of either a placename or a key along
 with a list of possible placetypes. This is similar to `iterate_matching_location()` but throws an internal error if
 there is not exactly one location found; as such, it is for use with internally specified locations (such as the
 containers of known locations) rather than externally specified locations, which may not match a known location and in
-some cases may match multiple known locations.
+some cases may match multiple known locations. For finding an externally specified location, consider using
+`find_matching_holonym_location`, which returns {nil} rather than throwing an error if the location isn't found, but
+also (more importantly) checks to make sure there are no conflicting holonyms among the user-specified holonyms (e.g.
+{{tl|place|city|s/Delaware|c/USA|t=Newark}} will not match the known location `Newark` (in New Jersey, not Delaware).
 ]==]
 function export.get_matching_location(data)
 	local all_found = {}
 	for group, key, spec in export.iterate_matching_location(data) do
-		table.insert(all_found, {group, key, spec})
+		insert(all_found, {group, key, spec})
 	end
 	if not all_found[1] then
 		internal_error("Couldn't find matching location for data %s", data)
@@ -608,7 +717,7 @@ function export.iterate_containers(group, key, spec)
 						placename = container.name,
 					}
 					if not keys_seen[container_key] then
-						table.insert(next_iteration_containers, {
+						insert(next_iteration_containers, {
 							group = container_group, key = container_key, spec = container_spec
 						})
 						keys_seen[container_key] = true
@@ -623,7 +732,6 @@ function export.iterate_containers(group, key, spec)
 		return next_iteration_containers
 	end
 end
-
 
 --[=[
 Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
@@ -649,7 +757,6 @@ function export.get_holonyms_to_check(place_desc, first_holonym_index, include_r
 		end
 	end, place_desc, first_holonym_index and first_holonym_index - 1 or 0
 end
-
 
 --[==[
 If the holonym in `data` (in the format as passed to a category handler) refers to a known location, iterate over all
@@ -751,11 +858,10 @@ function export.iterate_matching_holonym_location(data)
 	end
 end
 
-
 --[==[
 If the holonym in `data` (in the format as passed to a category handler) refers to a known location, find and return the
 corresponding key, spec and group as well as the trail of ancestral containers. This is like
-`iterate_matching_holonym_location()` but throws an errror if more than one location matches. (An example where this
+`iterate_matching_holonym_location()` but throws an error if more than one location matches. (An example where this
 would happen is {{tl|place|en|neighborhood|city/Newcastle}}, because there are two known locations named Newcastle. To
 fix this, specify additional following disambiguating holonyms, e.g.
 {{tl|place|en|neighborhood|city/Newcastle|s/New South Wales}}.
@@ -763,7 +869,7 @@ fix this, specify additional following disambiguating holonyms, e.g.
 function export.find_matching_holonym_location(data)
 	local all_found = {}
 	for group, key, spec, container_trail in export.iterate_matching_holonym_location(data) do
-		table.insert(all_found, {group, key, spec, container_trail})
+		insert(all_found, {group, key, spec, container_trail})
 	end
 	if not all_found[1] then
 		return nil
@@ -776,220 +882,228 @@ function export.find_matching_holonym_location(data)
 end
 
 --[==[
-Given a non-multipart key (where a multipart key is something like `"Tucson, Arizona"` or `"Atlanta, Georgia, USA"`),
-possibly preceded by `the`, return two values, the ''bare'' and ''linked'' versions of the key. The bare version is
-simply the passed-in `key` minus any preceding `the`. The linked version is the key converted into a raw bracketed link
-(where any preceding `the` is included but is not part of the link). If `display_form` is given and is different from
-the bare key, the resulting link will be a two-part link, linking to the non-`the` part of the key but displaying
-`display_form` in place of the link.
-
-For example, the call `construct_bare_and_linked_version("the United States")` will return `"United States"` and
-`"the <nowiki>[[United States]]</nowiki>"`.
+Given a placename, convert it into a link (two-part if `display_form` is given and differs from `placename`) and add
+`"the "` to the beginning if called for in `spec`.
 ]==]
-function export.construct_linked_key(key, spec, display_form)
-	local linked_key = display_form and key ~= display_form and ("[[%s|%s]]"):format(key, display_form) or
-		("[[%s]]"):format(key)
+function export.construct_linked_placename(spec, placename, display_form)
+	local linked_placename = display_form and placename ~= display_form and ("[[%s|%s]]"):format(placename,
+		display_form) or ("[[%s]]"):format(placename)
 	if spec.the then
-		linked_key = "the " .. linked_key
+		linked_placename = "the " .. linked_placename
 	end
-	return linked_key
-end
-
-local function simple_polity_bare_label_setter(overriding_parents)
-	return function(group, key, value)
-		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
-		-- wp= defaults to true (Wikipedia article matches bare key = label)
-		local wp = value.wp
-		if wp == nil then
-			wp = true
-		end
-		-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category
-		-- generally follow)
-		local wpcat = value.wpcat
-		if wpcat == nil then
-			wpcat = wp
-		end
-		-- commonscat= defaults to wpcat= (if Wikipedia category has its own name, Commons category generally follows)
-		local commonscat = value.commonscat
-		if commonscat == nil then
-			commonscat = wpcat
-		end
-		local parents = overriding_parents
-		if not parents then
-			parents = {}
-			local value_parents = value.parents
-			if not value_parents then
-				internal_error("Key %s must have `parents` set", key)
-			end
-			if type(value_parents) ~= "table" then
-				value_parents = {value_parents}
-			end
-			for _, parent in ipairs(value_parents) do
-				if type(parent) ~= "table" then
-					parent = {name = parent}
-				end
-				if parent.bare then
-					table.insert(parents, parent.name)
-				else
-					table.insert(parents, "countries in " .. parent.name)
-				end
-			end
-			table.insert(parents, "countries")
-		end
-		return {
-			type = "topic",
-			description = value.bare_category_desc or "{{{langname}}} terms related to the people, culture, or " ..
-				"territory of " .. (value.keydesc or linked_key) .. ".",
-			parents = parents,
-			wp = wp,
-			wpcat = wpcat,
-			commonscat = commonscat,
-		}
-	end
-end
-
--- Construct the description of a subpolity key, for use in the description of a category.
-local function fallback_keydesc(group, key, spec)
-	local divtype = spec.divtype or default_divtype
-	divtype = type(divtype) == "table" and divtype[1] or divtype
-	-- FIXME: This is a huge hack. To fix this properly, we need to separate out the non-category placetype data from
-	-- `cat_data` in [[Module:place/data]] and move it here, because we don't have access to the data in
-	-- [[Module:place/data]], and that data indicates the correct article for placetypes like "union territory".
-	if divtype == "union territory" then
-		divtype = "a " .. divtype
-	else
-		divtype = require(en_utilities_module).add_indefinite_article(divtype)
-	end
-
-	-- Fetch the full and elliptical_placenames. If they are the same, just link to the placename directly. Otherwise,
-	-- check if the full placename exists (minus any preceding "the"); if so link to it. Otherwise, if the elliptical
-	-- placename exists, link to it but display it as the full placename. Finally, if neither full placename nor
-	-- elliptical placename exists, fall back to linking to the full placename. That way, we prefer full placenames to
-	-- elliptical placenames if both or neither exist as Wiktionary entries, but if only one exists, we link to that one
-	-- rather than have a red link.
-	local full_placename, elliptical_placename = export.call_key_to_placename(group, key)
-	local bare_full_placename, linked_full_placename = export.construct_bare_and_linked_version(full_placename)
-	local linked_placename
-	if elliptical_placename ~= full_placename then
-		local full_placename_title = mw.title.new(bare_full_placename)
-		if full_placename_title and full_placename_title.exists then
-			linked_placename = linked_full_placename
-		else
-			local bare_elliptical_placename, linked_elliptical_placename =
-				export.construct_bare_and_linked_version(elliptical_placename, bare_full_placename)
-			local elliptical_placename_title = mw.title.new(bare_elliptical_placename)
-			if elliptical_placename_title and elliptical_placename_title.exists then
-				linked_placename = linked_elliptical_placename
-			end
-		end
-	end
-	linked_placename = linked_placename or linked_full_placename
-	local bare_container, linked_container = export.construct_bare_and_linked_version(container)
-	return linked_placename .. ", " .. divtype .. " of " .. linked_container
+	return linked_placename
 end
 
 --[==[
-Call the polity group's `key_to_placename` function if it exists (see the description of the `key_to_placename`
-function in the long comment just below the heading `"Polities"`). If there is no such function (i.e. for this group,
-keys and placenames are the same), the key is returned unchanged as both the full and elliptical placename. Otherwise
-two values are returned, the full and elliptical placenames (e.g. full `"County Durham"` vs. elliptical `"Durham"`).
+Construct an appropriately linked location based on the full or elliptical placename, preceded by `"the "`` if
+appropriate. Specifically:
+
+Fetch the full and elliptical_placenames. If they are the same, just link to the placename directly. Otherwise, check if
+the full placename exists; if so link to it. Otherwise, if the elliptical placename exists, link to it but display it as
+the full placename. Finally, if neither full placename nor elliptical placename exists, fall back to linking to the full
+placename. That way, we prefer full placenames to elliptical placenames if both or neither exist as Wiktionary entries,
+but if only one exists, we link to that one rather than have a red link.
 ]==]
-function export.call_key_to_placename(group, key)
-	if group.key_to_placename then
-		local full_placename, elliptical_placename = group.key_to_placename(key)
-		if type(full_placename) ~= "string" then
-			internal_error("Key %s returned a non-string full placename: %s", key, full_placename)
-		end
-		if type(elliptical_placename) ~= "string" then
-			internal_error("Key %s returned a non-string elliptical placename: %s", key, elliptical_placename)
-		end
-		return full_placename, elliptical_placename
-	end
-	return key, key
-end
-
-local function subpolity_bare_label_setter(container)
-	return function(group, key, value, m_data)
-		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
-		local bare_container, linked_container = export.construct_bare_and_linked_version(container)
-		local div_parent_type = value.div_parent_type or group.default_div_parent_type
-		if not div_parent_type then
-			local divtype = value.divtype or group.default_divtype
-			divtype = type(divtype) == "table" and divtype[1] or divtype
-			if not divtype then
-				internal_error("Ended up with nil divtype for key=%s, value=%s", key, value)
-			end
-			div_parent_type = m_data.pluralize_placetype(divtype)
-		end
-        return {
-            type = "topic",
-            description = function()
-				if value.bare_category_desc then
-					return value.bare_category_desc
-				else
-					local keydesc = subpolity_keydesc(group, key, value, container, group.default_divtype)
-					return "{{{langname}}} terms related to the people, culture, or territory of " .. keydesc .. "."
-				end
-			end,
-            parents = {div_parent_type .. " of " .. container},
-        }
-	end
-end
-
-local function set_spec_defaults(group, key, spec)
-	if spec.initialized then
-		return
-	end
-	if type(spec.container) == "string" and group.canonicalize_key_container then
-		spec.container = group.canonicalize_key_container(spec.container)
-	end
-	if not spec.container then
-		spec.container = group.default_container
-	end
-	if type(spec.container) == "string" then
-		spec.container = {name = spec.container, divtype = "country"}
-	end
-	spec.containers = spec.container
-	spec.container = nil
-	if spec.containers and not spec.containers[1] then
-		spec.containers = {spec.containers}
-	end
-	spec.divtype = spec.divtype or group.default_divtype
-	if not spec.divtype then
-		internal_error("No divtype found in key %s for spec %s or in group `default_divtype`", key, spec)
-	end
-	spec.keydesc = spec.keydesc or group.default_keydesc or fallback_keydesc
-	spec.poldiv = spec.poldiv or group.default_poldiv
-	spec.miscdiv = spec.miscdiv or group.default_miscdiv
-	local function boolean_with_default(val, default_val)
-		if val == nil then
-			return default_val
+function export.construct_linked_location(group, key, spec)
+	local full_placename, elliptical_placename = export.call_key_to_placename(group, key)
+	local linked_placename
+	if elliptical_placename ~= full_placename then
+		local full_placename_title = mw.title.new(full_placename)
+		if full_placename_title and full_placename_title.exists then
+			linked_placename = export.construct_linked_placename(spec, full_placename)
 		else
-			return val
+			local elliptical_placename_title = mw.title.new(elliptical_placename)
+			if elliptical_placename_title and elliptical_placename_title.exists then
+				linked_placename = export.construct_linked_placename(spec, elliptical_placename, full_placename)
+			end
 		end
 	end
-	spec.british_spelling = boolean_with_default(spec.british_spelling, group.default_british_spelling)
-	spec.no_container_cat = boolean_with_default(spec.no_container_cat, group.default_no_container_cat)
-	spec.no_auto_augment_container = boolean_with_default(spec.no_auto_augment_container,
-		group.default_no_auto_augment_container)
-	spec.is_city = boolean_with_default(spec.is_city, group.default_is_city)
-	spec.is_city = boolean_with_default(spec.is_city, group.default_divtype == "city")
-	spec.is_former_place = boolean_with_default(spec.is_former_place, group.default_is_former_place)
-	spec.initialized = true
+	return linked_placename or export.construct_linked_placename(spec, full_placename)
+end
+
+local function fetch_primary_divtype(key, spec)
+	local divtype = spec.divtype
+	if type(divtype) == "table" then
+		divtype = divtype[1]
+	end
+	if not divtype then
+		internal_error("No divtype specified or defaulted for key %s, spec %s", key, spec)
+	end
+	return divtype
+end
+
+--[==[
+Construct the description of a location, including its container trail either to the end or until we encounter a
+`no_include_container_in_desc` setting. For example, for the city of [[Birmingham]], the description will read
+`"[[Birmingham]], a [[city]] in the [[West Midlands]], which is a [[county]] of [[England]], which is a
+[[constituent country]] of the [[United Kingdom]], which is a [[country]] in [[Europe]]"`. FIXME: Possibly we should
+adopt the way city descriptions used to read, which was similar to `"the city of [[Birmingham]], in the county of the
+[[West Midlands]], in the [[constituent country]] of [[England]], in the [[country]] of the [[United Kingdom]], in
+[[Europe]]"`.
+]==]
+function export.construct_location_description(group, key, spec, m_data)
+	local parts = {}
+	local function ins(txt)
+		insert(parts, txt)
+	end
+	ins(export.construct_linked_location(group, key, spec))
+	local first_container = true
+	local containers = {{group = group, key = key, spec = spec}}
+	local container_iterator = export.iterate_containers(group, key, spec)
+	while true do
+		local include_container_in_desc = false
+		for _, container in ipairs(containers) do
+			if not container.spec.no_include_container_in_desc then
+				include_container_in_desc = true
+				break
+			end
+		end
+		if not include_container_in_desc then
+			break
+		end
+		local next_containers = next(container_iterator)
+		if not next_containers then
+			break
+		end
+		local is_former = nil
+		for _, container in ipairs(containers) do
+			local this_is_former = container.spec.is_former_place
+			if is_former == nil then
+				is_former = this_is_former
+			elseif is_former ~= this_is_former then
+				internal_error("When processing container trail of key %s, found a mixture of former and non-former " ..
+					"containers: %s", key, containers)
+			end
+		end
+
+		if #containers > 1 then
+			local divtypes = {}
+			local prepositions = {}
+			for _, container in ipairs(containers) do
+				local container_type = fetch_primary_divtype(container.key, container.spec)
+				m_table.insertIfNot(divtypes, m_data.pluralize_placetype(container_type))
+				m_table.insertIfNot(divtypes, m_data.get_placetype_entry_preposition(container_type))
+			end
+			if first_container then
+				ins(", ")
+			else
+				ins(", which are ")
+			end
+			if is_former then
+				ins("former ")
+			end
+			ins(m_table.serialCommaJoin(divtypes))
+			ins(" ")
+			ins(concat(prepositions, "/"))
+		else
+			if first_container then
+				ins(", ")
+			else
+				ins(", which is ")
+			end
+			local container_type = fetch_primary_divtype(containers[1].key, containers[1].spec)
+			if is_former then
+				ins("a former ")
+			else
+				ins(m_data.get_placetype_article(container_type))
+				ins(" ")
+			end
+			ins(container_type)
+			ins(" ")
+			ins(m_data.get_placetype_entry_preposition(container_type))
+		end
+		first_container = false
+		containers = next_containers
+		local container_locations = {}
+		for _, container in ipairs(containers) do
+			insert(container_locations, export.construct_linked_location(container.group, container.key,
+				container.spec))
+		end
+		ins(m_table.serialCommaJoin(container_locations))
+	end
+
+	return concat(parts)
+end
+
+function export.make_bare_placename_cat_spec(group, key, spec, m_data)
+	-- wp= defaults to true (Wikipedia article matches bare key = label)
+	local wp = spec.wp
+	if wp == nil then
+		wp = true
+	end
+	-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category
+	-- generally follow)
+	local wpcat = spec.wpcat
+	if wpcat == nil then
+		wpcat = wp
+	end
+	-- commonscat= defaults to wpcat= (if Wikipedia category has its own name, Commons category generally follows)
+	local commonscat = spec.commonscat
+	if commonscat == nil then
+		commonscat = wpcat
+	end
+	local parents = {}
+	local bare_label_parents = spec.overriding_bare_label_parents
+	local container_iterator = export.iterate_containers(group, key, spec)
+	local containers = next(container_iterator)
+	if not bare_label_parents then
+		bare_label_parents = {"+++"}
+	end
+	local inserted_containers = false
+	for _, parent in ipairs(bare_label_parents) do
+		if parent = "+++" then
+			local location_type = fetch_primary_divtype(key, spec)
+			div_parent_type = m_data.pluralize_placetype(divtype)
+			parent = ("%s %s CONTAINER"):format(m_data.pluralize_placetype(location_type),
+				m_data.get_placetype_entry_preposition(location_type))
+		end
+		if parent:find("CONTAINER") then
+			for _, container in ipairs(containers) do
+				local prefixed_key = export.get_prefixed_key(container.key, container.spec)
+				m_table.insertIfNot(parents, parent:gsub("CONTAINER",
+					require(string_utilities_module).replacement_escape(prefixed_key)))
+			end
+			inserted_containers = true
+		else
+			m_table.insertIfNot(parents, parent)
+		end
+	end
+	if not inserted_containers then
+		-- If we didn't insert the containers above in some form, insert them now as bare categories. Note that this may
+		-- be different categories from the container categories inserted above.
+		for _, container in ipairs(containers) do
+			m_table.insertIfNot(parents, container.key)
+		end
+	end
+	if spec.addl_parents then
+		for _, parent in ipairs(spec.addl_parents) do
+			m_table.insertIfNot(parents, parent)
+		end
+	end
+	local description = "{{{langname}}} terms related to the people, culture, or territory of " ..
+		(spec.keydesc or export.construct_location_description(group, key, spec, m_data)) .. "."
+	return {
+		type = "topic",
+		description = description,
+		parents = parents,
+		wp = wp,
+		wpcat = wpcat,
+		commonscat = commonscat,
+	}
 end
 
 --[=[
-This is typically used to define `key_to_placename`. It generates a function that chops off parts of a string,
-typically at the end, in order to get the full and elliptical versions of a placename. (See the documentation above
-for `key_to_placename` under "Polity group tables" for the difference between full and elliptical placenames.)
-`polity_patterns` is Lua pattern or a list of possible patterns matching the polity at the end of the key, which
-will be used to remove the polity. If multiple patterns are specified, each one is tried until one matches. If
-`polity_patterns` is omitted, this part of the process is skipped. The reulting string becomes the full placename.
-If `poldiv_patterns` is specified, it is likewise either a Lua pattern or list of possible patterns to match and
-remove the political division affixed onto the end (or possibly the beginning) of the key in the keys of certain
+This is typically used to define `key_to_placename`. It generates a function that chops off parts of a string (a
+location key), typically at the end, in order to get the full and elliptical versions of a placename. (See the
+documentation above for `key_to_placename` under "Location group tables" for the difference between full and elliptical
+placenames.) `container_patterns` is a Lua pattern or a list of possible patterns matching the container at the end of
+the key, which will be used to remove that container. If multiple patterns are specified, each one is tried until one
+matches. If `container_patterns` is omitted, this part of the process is skipped. The reulting string becomes the full
+placename. If `divtype_patterns` is specified, it is likewise either a Lua pattern or list of possible patterns to match
+and remove the political division affixed onto the end (or possibly the beginning) of the key in the keys of certain
 countries (such as South Korean and North Korean counties, which include the word "County" in the key). The resulting
-chopped string becomes the elliptical placename. If `poldiv_patterns` is omitted, this part of the process is skipped
-and the full adn elliptical placenames are the same.
+chopped string becomes the elliptical placename. If `divtype_patterns` is omitted, this part of the process is skipped
+and the full and elliptical placenames are the same.
 
 Typical usage is as follows:
 
@@ -997,35 +1111,35 @@ Typical usage is as follows:
 key_to_placename = make_key_to_placename(", England$"),
 ```
 
-or (when the poldiv is part of the key)
+or (when the political division is part of the key)
 
 ```
 key_to_placename = make_key_to_placename(", South Korea$", " County$")
 ```
 ]=]
-local function make_key_to_placename(polity_patterns, poldiv_patterns)
-	if type(polity_patterns) == "string" then
-		polity_patterns = {polity_patterns}
+local function make_key_to_placename(container_patterns, divtype_patterns)
+	if type(container_patterns) == "string" then
+		container_patterns = {container_patterns}
 	end
-	if type(poldiv_patterns) == "string" then
-		poldiv_patterns = {poldiv_patterns}
+	if type(divtype_patterns) == "string" then
+		divtype_patterns = {divtype_patterns}
 	end
 	return function(key)
 		local full_placename = key
-		if polity_patterns then
-			for _, polity_pattern in ipairs(polity_patterns) do
+		if container_patterns then
+			for _, container_pattern in ipairs(container_patterns) do
 				local nsubs
-				full_placename, nsubs = full_placename:gsub(polity_pattern, "")
+				full_placename, nsubs = full_placename:gsub(container_pattern, "")
 				if nsubs > 0 then
 					break
 				end
 			end
 		end
 		local elliptical_placename = full_placename
-		if poldiv_patterns then
-			for _, poldiv_pattern in ipairs(poldiv_patterns) do
+		if divtype_patterns then
+			for _, divtype_pattern in ipairs(divtype_patterns) do
 				local nsubs
-				elliptical_placename, nsubs = elliptical_placename:gsub(poldiv_pattern, "")
+				elliptical_placename, nsubs = elliptical_placename:gsub(divtype_pattern, "")
 				if nsubs > 0 then
 					break
 				end
@@ -1035,13 +1149,12 @@ local function make_key_to_placename(polity_patterns, poldiv_patterns)
 	end
 end
 
-
 --[=[
 This is typically used to define `placename_to_key`. It generates a function that appends a string to the end of a given
-placename to get the key (see the definition of `placename_to_key` above in the documentation under "Polity group
-tables"). Optional `poldiv_suffix` is a raw string (which should not contain hyphens or other characters that have
+placename to get the key (see the definition of `placename_to_key` above in the documentation under "Location group
+tables"). Optional `divtype_suffix` is a raw string (which should not contain hyphens or other characters that have
 special meaning in Lua patterns) to be appended first to the placename; if already present at the end, it is not
-appended. `polity_suffix` is then added in the same fashion if given. Typical usage is like this:
+appended. `container_suffix` is then added in the same fashion if given. Typical usage is like this:
 
 ```
 placename_to_key = make_placename_to_key(", England")
@@ -1057,77 +1170,42 @@ placename_to_key = make_placename_to_key(", South Korea", " County")
 
 (which will convert e.g. `"Gangwon"` or `"Gangwon County"` into `"Gangwon County, South Korea"`).
 ]=]
-local function make_placename_to_key(polity_suffix, poldiv_suffix)
+local function make_placename_to_key(container_suffix, divtype_suffix)
 	return function(placename)
 		local key = placename
-		if poldiv_suffix then
-			if not key:find(poldiv_suffix .. "$") then
-				key = key .. poldiv_suffix
+		if divtype_suffix then
+			if not key:find(divtype_suffix .. "$") then
+				key = key .. divtype_suffix
 			end
 		end
-		if polity_suffix then
-			key = key .. polity_suffix
+		if container_suffix then
+			key = key .. container_suffix
 		end
 		return key
 	end
 end
 
+--[=[
+This is typically used to define `canonicalize_key_container`, which converts a container as specified in the location
+data into the canonical form containing both the full container key and its political division type. It generates a
+function to do the canonicalization of a given container. If the container is a string, `suffix` is appended onto the
+string (use {nil} or {""} if there is no suffix to append), and the division type is set to `divtype`. Otherwise the
+container is left as-is. Typical usage is like this:
 
+```
+canonicalize_key_container = make_canonicalize_key_container(", Canada", "province")
+```
+
+which will convert e.g. `"Ontario"` into `{name = "Ontario, Canada", divtype = "province"}`.
+]=]
 local function make_canonicalize_key_container(suffix, divtype)
 	return function(container)
 		if type(container) == "string" then
-			return {name = container .. suffix, divtype = divtype}
+			return {name = container .. (suffix or ""), divtype = divtype}
 		else
 			return container
 		end
 	end
-end
-
-
---[=[
-Normalize the list of city "parents" (containing polities) to standard/full form, which is a list of objects, each with
-`name` and `divtype` fields. `default_divtype` supplies the default if the divtype of a given containing polity is
-unspecified (i.e. it's a string or an object with a `name` but no `divtype` field). An error is thrown if a containing
-polity is missing its divtype and `default_divtype` is omitted. Returns two values, the normalized parents list and a
-boolean which is true if the returned list (but not necessarily the tables inside) were generated afresh, meaning you
-can safely append more items to the end without needing to copy the list.
-]=]
-local function normalize_city_parents(parents, default_divtype)
-	if not parents then
-		return nil
-	end
-	local outer_copied = false
-	if type(parents) == "string" or parents.name then
-		parents = {parents}
-		outer_copied = true
-	end
-	local need_normalization = false
-	for _, parent in ipairs(parents) do
-		if type(parent) == "string" or not parent.divtype then
-			if not default_divtype then
-				internal_error("Encountered parent %s without divtype, and `default_divtype` is passed in as nil",
-					parent)
-			end
-			need_normalization = true
-			break
-		end
-	end
-	if need_normalization then
-		if not outer_copied then
-			parents = m_table.shallowCopy(parents)
-			outer_copied = true
-		end
-		for i, parent in ipairs(parents) do
-			if type(parent) == "string" then
-				parents[i] = {name = parent, divtype = default_divtype}
-			elseif not parent.divtype then
-				parent = m_table.shallowCopy(parent)
-				parent.divtype = default_divtype
-				parents[i] = parent
-			end
-		end
-	end
-	return parents, outer_copied
 end
 
 -----------------------------------------------------------------------------------
@@ -1153,10 +1231,12 @@ export.continents = {
 }
 
 export.continents_group = {
-	bare_label_setter = simple_polity_bare_label_setter(),
+	default_overriding_bare_label_parents = {"continents and continental regions"},
+	-- It's enough to mention the first-level continent or continent group. It seems excessive to write e.g.
+	-- "El Salvador, a country in Central America, a continental region in North America, a continent in America, ...".
+	default_no_include_container_in_desc = true,
 	data = export.continents,
 }
-
 
 -- Countries: including those with partial recognition that are normally considered countries (e.g. Kosovo, Taiwan).
 export.countries = {
@@ -1193,8 +1273,12 @@ export.countries = {
 	["Cambodia"] = {container = "Asia", poldiv = {"provinces", "districts"}},
 	["Cameroon"] = {container = "Africa", poldiv = {"regions", "departments"}},
 	["Canada"] = {container = "North America", poldiv = {
-		"provinces", "territories", "counties", "districts", "municipalities", "regional municipalities", "rural municipalities",
-		"Indian reserves", "parishes"},
+		"provinces", "territories", "counties", "districts", "municipalities", "regional municipalities",
+		"rural municipalities", "parishes",
+		-- Don't change the following to something more politically correct (e.g. "First Nations reserves") until/unless
+		-- the Canadian government makes a similar switch (and note that as of Apr 18 2025, the Wikipedia article is
+		-- still at [[w:Indian reserves]]).
+		"Indian reserves"},
 		miscdiv = {"census divisions", {type = "townships", prep = "in"}},
 		addl_poldiv_for_categorization = {"provinces and territories"},
 		british_spelling = true},
@@ -1399,6 +1483,9 @@ export.countries = {
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
 			{type = "census-designated places", prep = "in"},
+			-- Don't change the following to something more politically correct until/unless the US government makes a
+			-- similar switch (and note that as of Apr 18 2025, the Wikipedia article is still at
+			-- [[w:Indian reservations]]).
 			"Indian reservations",
 		}},
 	["Uruguay"] = {container = "South America", poldiv = {"departments", "municipalities"}},
@@ -1425,12 +1512,11 @@ local function canonicalize_continent_container(key)
 end
 
 export.countries_group = {
-	bare_label_setter = simple_polity_bare_label_setter(),
 	canonicalize_key_container = canonicalize_continent_container,
+	default_overriding_bare_label_parents = {"countries", "+++"},
 	default_divtype = "country",
 	data = export.countries,
 }
-
 
 -- Country-like entities: typically overseas territories or de-facto independent countries, which in both cases
 -- are not internationally recognized as sovereign nations but which we treat similarly to countries.
@@ -1439,26 +1525,26 @@ export.country_like_entities = {
 	["Akrotiri and Dhekelia"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"Cyprus", "Europe", "United Kingdom"},
+		addl_parents = {"Cyprus", "Europe"},
 		british_spelling = true,
 	},
 	-- unincorporated territory of the United States
 	["American Samoa"] = {
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"Polynesia", "United States"},
+		addl_parents = {"Polynesia"},
 	},
 	["United States Minor Outlying Islands"] = {
 		the = true,
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"Islands", "Micronesia", "Polynesia", "United States"},
+		addl_parents = {"Islands", "Micronesia", "Polynesia"},
 	},
 	-- British Overseas Territory
 	["Anguilla"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America", "United Kingdom"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- de-facto independent state, internationally recognized as part of Georgia
@@ -1482,21 +1568,21 @@ export.country_like_entities = {
 	["Ascension Island"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "Atlantic Ocean"},
+		addl_parents = {"Atlantic Ocean"},
 		british_spelling = true,
 	},
 	-- constituent country of the Netherlands
 	["Aruba"] = {
 		divtype = {"constituent country", "country"},
 		container = "Netherlands",
-		addl_parents = {"Netherlands", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- special municipality of the Netherlands
 	["Bonaire"] = {
 		divtype = {"special municipality", "municipality", "overseas territory", "territory"},
 		container = "Netherlands",
-		addl_parents = {"Netherlands", "North America"},
+		addl_parents = {"North America"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1504,7 +1590,7 @@ export.country_like_entities = {
 	["Bermuda"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1512,7 +1598,7 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1520,7 +1606,7 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1528,14 +1614,14 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- Australian external territory
 	["Christmas Island"] = {
 		divtype = {"external territory", "territory"},
 		container = "Australia",
-		addl_parents = {"Australia", "Asia"},
+		addl_parents = {"Asia"},
 		british_spelling = true,
 	},
 	-- Australian external territory; also called the Keeling Islands or (officially) the Cocos (Keeling) Islands
@@ -1543,7 +1629,7 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"external territory", "territory"},
 		container = "Australia",
-		addl_parents = {"Australia", "Asia"},
+		addl_parents = {"Asia"},
 		wp = "Cocos (Keeling) Islands",
 		british_spelling = true,
 	},
@@ -1552,28 +1638,28 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"country"},
 		container = "New Zealand",
-		addl_parents = {"Polynesia", "New Zealand"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 	-- constituent country of the Netherlands
 	["Curaçao"] = {
 		divtype = {"constituent country", "country"},
 		container = "Netherlands",
-		addl_parents = {"Netherlands", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- special territory of Chile
 	["Easter Island"] = {
 		divtype = {"special territory", "territory"},
 		container = "Chile",
-		addl_parents = {"Chile", "Polynesia"},
+		addl_parents = {"Polynesia"},
 	},
 	-- British Overseas Territory
 	["Falkland Islands"] = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "South America"},
+		addl_parents = {"South America"},
 		british_spelling = true,
 	},
 	-- autonomous territory of Denmark
@@ -1581,36 +1667,36 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"autonomous territory", "territory"},
 		container = "Denmark",
-		addl_parents = {"Denmark", "Europe"},
+		addl_parents = {"Europe"},
 		british_spelling = true,
 	},
 	-- overseas department of France
 	["French Guiana"] = {
 		divtype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
-		addl_parents = {"France", "South America"},
+		addl_parents = {"South America"},
 		british_spelling = true,
 	},
 	-- overseas collectivity of France
 	["French Polynesia"] = {
 		divtype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"France", "Polynesia"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
 	["Gibraltar"] = {
 		divtype = {"overseas territory", "territory"},
-		addl_parents = {"United Kingdom", "North America"},
 		container = "United Kingdom",
+		addl_parents = {"Europe"},
 		is_city = true,
 		british_spelling = true,
 	},
 	-- autonomous territory of Denmark
 	["Greenland"] = {
 		divtype = {"autonomous territory", "territory"},
-		addl_parents = {"Denmark", "North America"},
 		container = "Denmark",
+		addl_parents = {"North America"},
 		poldiv = {"municipalities"},
 		british_spelling = true,
 	},
@@ -1618,14 +1704,14 @@ export.country_like_entities = {
 	["Guadeloupe"] = {
 		divtype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
-		addl_parents = {"France", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- unincorporated territory of the United States
 	["Guam"] = {
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"United States", "Micronesia"},
+		addl_parents = {"Micronesia"},
 	},
 	-- self-governing British Crown dependency; technically called the Bailiwick of Guernsey
 	["Guernsey"] = {
@@ -1638,7 +1724,6 @@ export.country_like_entities = {
 	["Hong Kong"] = {
 		divtype = {"special administrative region", "city"},
 		container = "China",
-		addl_parents = {"China"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1661,7 +1746,6 @@ export.country_like_entities = {
 	["Macau"] = {
 		divtype = {"special administrative region", "city"},
 		container = "China",
-		addl_parents = {"China"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1669,42 +1753,42 @@ export.country_like_entities = {
 	["Martinique"] = {
 		divtype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
-		addl_parents = {"France", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- overseas department of France
 	["Mayotte"] = {
 		divtype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
-		addl_parents = {"France", "Africa"},
+		addl_parents = {"Africa"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
 	["Montserrat"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- special collectivity of France
 	["New Caledonia"] = {
 		divtype = {"special collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"France", "Melanesia"},
+		addl_parents = {"Melanesia"},
 		british_spelling = true,
 	},
 	-- self-governing but in free association with New Zealand
 	["Niue"] = {
 		divtype = {"country"},
 		container = "New Zealand",
-		addl_parents = {"Polynesia", "New Zealand"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 	-- Australian external territory
 	["Norfolk Island"] = {
 		divtype = {"external territory", "territory"},
 		container = "Australia",
-		addl_parents = {"Australia", "Polynesia"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 	-- commonwealth, unincorporated territory of the United States
@@ -1712,35 +1796,35 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"commonwealth", "unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"United States", "Micronesia"},
+		addl_parents = {"Micronesia"},
 	},
 	-- British Overseas Territory
 	["Pitcairn Islands"] = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "Polynesia"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 	-- commonwealth of the United States
 	["Puerto Rico"] = {
 		divtype = {"commonwealth", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"United States", "North America"},
+		addl_parents = {"North America"},
 		poldiv = {"municipalities"},
 	},
 	-- overseas department of France
 	["Réunion"] = {
 		divtype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
-		addl_parents = {"France", "Africa"},
+		addl_parents = {"Africa"},
 		british_spelling = true,
 	},
 	-- special municipality of the Netherlands
 	["Saba"] = {
 		divtype = {"special municipality", "municipality", "overseas territory", "territory"},
 		container = "Netherlands",
-		addl_parents = {"Netherlands", "North America"},
+		addl_parents = {"North America"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1748,35 +1832,35 @@ export.country_like_entities = {
 	["Saint Barthélemy"] = {
 		divtype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"France", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
 	["Saint Helena"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "Atlantic Ocean"},
+		addl_parents = {"Atlantic Ocean"},
 		british_spelling = true,
 	},
 	-- overseas collectivity of France
 	["Saint Martin"] = {
 		divtype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"France", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- overseas collectivity of France
 	["Saint Pierre and Miquelon"] = {
 		divtype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"France", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- special municipality of the Netherlands
 	["Sint Eustatius"] = {
 		divtype = {"special municipality", "municipality", "overseas territory", "territory"},
 		container = "Netherlands",
-		addl_parents = {"Netherlands", "North America"},
+		addl_parents = {"North America"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1784,14 +1868,14 @@ export.country_like_entities = {
 	["Sint Maarten"] = {
 		divtype = {"constituent country", "country"},
 		container = "Netherlands",
-		addl_parents = {"Netherlands", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
 	["South Georgia"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "Atlantic Ocean"},
+		addl_parents = {"Atlantic Ocean"},
 		british_spelling = true,
 	},
 	-- de-facto independent state, internationally recognized as part of Georgia
@@ -1806,7 +1890,7 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "Atlantic Ocean"},
+		addl_parents = {"Atlantic Ocean"},
 		wp = true,
 		wpcat = "South Georgia and the South Sandwich Islands",
 		british_spelling = true,
@@ -1815,7 +1899,7 @@ export.country_like_entities = {
 	["Tokelau"] = {
 		divtype = {"dependent territory", "territory"},
 		container = "New Zealand",
-		addl_parents = {"New Zealand", "Polynesia"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 	-- de-facto independent state, internationally recognized as part of Moldova
@@ -1829,7 +1913,7 @@ export.country_like_entities = {
 	["Tristan da Cunha"] = {
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "Atlantic Ocean"},
+		addl_parents = {"Atlantic Ocean"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1837,7 +1921,7 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"United Kingdom", "North America"},
+		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- unincorporated territory of the United States
@@ -1845,33 +1929,32 @@ export.country_like_entities = {
 		the = true,
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"United States", "North America"},
+		addl_parents = {"North America"},
 	},
 	-- unincorporated territory of the United States
 	["Wake Island"] = {
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"United States", "North America"},
+		addl_parents = {"North America"},
 	},
 	-- overseas collectivity of France
 	["Wallis and Futuna"] = {
 		divtype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"France", "Polynesia"},
+		addl_parents = {"Polynesia"},
 		british_spelling = true,
 	},
 }
 
-export.country_like_entities_group = {	
-	bare_label_setter = simple_polity_bare_label_setter({"Country-like entities"}),
+export.country_like_entities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
+	default_overriding_bare_label_parents = {"country-like entities"},
 	-- These entities often aren't really part of their container; a village in Wallis and Futuna (an overseas
 	-- collectivity of France in Polynesia), for example, shouldn't be treated as a village in France, nor as a village
 	-- in Europe.
 	default_no_auto_augment_container = true,
 	data = export.country_like_entities,
 }
-
 
 -- Former countries and such; we don't create "Cities in ..." categories because they don't exist anymore
 export.former_countries = {
@@ -1895,7 +1978,7 @@ export.former_countries = {
 }
 
 export.former_countries_group = {
-	bare_label_setter = simple_polity_bare_label_setter({"Former countries and country-like entities"}),
+	default_overriding_bare_label_parents = {"former countries and country-like entities"},
 	default_is_former_place = true,
 	default_divtype = "country",
 	data = export.former_countries,
@@ -2439,11 +2522,8 @@ export.indonesia_provinces = {
 }
 
 local function indonesia_key_to_placename(key)
-	-- See description of `key_to_placename()`; passed-in placenames *will* have "the" prepended, and the returned
-	-- placenames should also, except for the elliptical variants when they exist (as in the case of Jakarta and
-	-- Yogyakarta).
 	key = key:gsub(", Indonesia$", "")
-	local special_region_city = key:match("^the Special.* of (.*)$")
+	local special_region_city = key:match("^Special.* of (.*)$")
 	if special_region_city then
 		return key, special_region_city
 	else
@@ -2452,8 +2532,6 @@ local function indonesia_key_to_placename(key)
 end
 
 local function indonesia_placename_to_key(placename)
-	-- See description of `placename_to_key()`; passed-in placenames will *not* have "the" prepended, and the returned
-	-- keys should not, either.
 	if placename == "Yogyakarta" then
 		placename = "Special Region of Yogyakarta"
 	elseif placename == "Jakarta" then
@@ -2502,20 +2580,20 @@ export.ireland_counties = {
 	["County Wicklow, Ireland"] = {},
 }
 
-local function make_irish_type_key_to_placename(polity_pattern)
+local function make_irish_type_key_to_placename(container_pattern)
 	return function(key)
-		key = key:gsub(polity_pattern, "")
+		key = key:gsub(container_pattern, "")
 		local elliptical_key = key:gsub("^County ", "")
 		return key, elliptical_key
 	end
 end
 
-local function make_irish_type_placename_to_key(polity_suffix)
+local function make_irish_type_placename_to_key(container_suffix)
 	return function(placename)
 		if not placename:find("^County ") and not placename:find("^City ") then
 			placename = "County " .. placename
 		end
-		return placename .. polity_suffix
+		return placename .. container_suffix
 	end
 end
 
@@ -3182,7 +3260,7 @@ local russia_autonomous_okrug =
 	{divtype = {"autonomous okrug", "okrug"}, div_parent_type = {"federal subjects", "autonomous okrugs"}}
 local russia_krai = make_russia_federal_subject_spec("krai")
 local russia_oblast = make_russia_federal_subject_spec("oblast")
-local russia_republic = make_russia_federal_subject_spec("republic", "the")
+local russia_republic = make_russia_federal_subject_spec("republic", "use the")
 export.russia_federal_subjects = {
 	-- autonomous oblasts
 	["Jewish Autonomous Oblast"] =
@@ -3273,17 +3351,52 @@ export.russia_federal_subjects = {
 	["Tuva Republic"] = russia_republic,
 	["Udmurt Republic"] = russia_republic,
 	-- Not sure what to do about this one from a neutrality perspective
-	-- ["the Republic of Crimea"] = russia_republic,
+	-- ["Republic of Crimea"] = russia_republic,
 	-- There are also federal cities (not included because they're cities):
 	-- Moscow, Saint Petersburg, Sevastopol (not sure what to do about the
 	-- last one if we were to include federal cities, see "Republic of Crimea"
 	-- above)
 }
 
+local elliptical_republic_placenames = {
+	["Chechen Republic"] = "Chechnya",
+	["Chuvash Republic"] = "Chuvashia",
+	["Kabardino-Balkar Republic"] = "Kabardino-Balkaria",
+	["Karachay-Cherkess Republic"] = "Karachay-Cherkessia",
+	["Sakha Republic"] = "Yakutia",
+	["Udmurt Republic"] = "Udmurtia",
+}
+
+local function russia_key_to_placename(key)
+	-- FIXME: We probably want to allow more than two variants for placenames to handle the various aliases esp. of
+	-- republics.
+	local full_placename = key
+	local elliptical_placename
+	for _, suffix in ipairs({"Autonomous Okrug", "Krai", "Oblast"}) do
+		elliptical_placename = key:match("^(.*) " .. suffix .. "$")
+		if elliptical_placename then
+			return elliptical_placename, full_placename
+		end
+	end
+	elliptical_placename = key:match("^Republic of (.*)$")
+	if elliptical_placename then
+		return elliptical_placename, full_placename
+	end
+	elliptical_placename = elliptical_republic_placenames[key]
+	if elliptical_placename then
+		return elliptical_placename, full_placename
+	end
+	elliptical_placename = key:match("^(.*) Republic$")
+	if elliptical_placename then
+		return elliptical_placename, full_placename
+	end
+	return full_placename, full_placename
+end
+
 local function russia_placename_to_key(placename)
-	-- We allow the user to say e.g. "obl/Samara" and "rep/Tatarstan" in place of
-	-- "obl/Samara Oblast" and "rep/Republic of Tatarstan".
-	if export.russia_federal_subjects[placename] or export.russia_federal_subjects["the " .. placename] then
+	-- We allow the user to say e.g. "obl/Samara" and "rep/Tatarstan" in place of "obl/Samara Oblast" and
+	-- "rep/Republic of Tatarstan".
+	if export.russia_federal_subjects[placename] then
 		return placename
 	end
 	for _, suffix in ipairs({"Autonomous Okrug", "Krai", "Oblast"}) do
@@ -3293,49 +3406,34 @@ local function russia_placename_to_key(placename)
 		end
 	end
 	local republic_placename = "Republic of " .. placename
-	if export.russia_federal_subjects["the " .. republic_placename] then
+	if export.russia_federal_subjects[republic_placename] then
 		return republic_placename
 	end
 	local republic_placename = placename .. " Republic"
-	if export.russia_federal_subjects["the " .. republic_placename] then
+	if export.russia_federal_subjects[republic_placename] then
 		return republic_placename
 	end
 	return placename
 end
 
 local function construct_russia_federal_subject_keydesc(group, key, spec)
-	local linked_key = export.construct_linked_key(key, spec)
+	local linked_key = export.construct_linked_placename(spec, key)
 	if spec.divtype == "oblast" then
 		-- Hack: Oblasts generally don't have entries under "Foo Oblast"
 		-- but just under "Foo", so fix the linked key appropriately;
 		-- doesn't apply to the Jewish Autonomous Oblast
 		linked_key = linked_key:gsub(" Oblast%]%]", "%]%] Oblast")
 	end
-	return linked_key .. ", a federal subject ([[" .. divtype .. "]]) of [[Russia]]"
+	return linked_key .. ", a [[federal subject]] ([[" .. divtype .. "]]) of [[Russia]]"
 end
 
 -- federal subjects of Russia
 export.russia_group = {
-	-- No current need for key_to_placename because it's only used in subpolity_bare_label_setter and
-	-- subpolity_value_transformer, and we override both handlers. (FIXME: No longer true; we also use
-	-- key_to_placename in the category augmentation code at the bottom of [[Module:place/data]], so we should
-	-- define a key_to_placename appropriately.)
+	key_to_placename = russia_key_to_placename,
 	placename_to_key = russia_placename_to_key,
 	default_container = "Russia",
 	default_keydesc = construct_russia_federal_subject_keydesc,
-	bare_label_setter = function(group, key, value, m_data)
-		local divtype = value.divtype or group.default_divtype
-		if type(divtype) == "table" then
-			divtype = divtype[1]
-		end
-		local bare_key, linked_key = export.construct_bare_and_linked_version(key)
-		return {
-			type = "topic",
-			description = "{{{langname}}} terms related to " ..
-				construct_russia_federal_subject_keydesc(linked_key, divtype) .. ".",
-			parents = {"federal subjects of Russia", m_data.pluralize_placetype(divtype) .. " of Russia"},
-		}
-	end,
+	default_overriding_bare_label_parents = {"federal subjects of Russia", "+++"},
 	default_british_spelling = true,
 	data = export.russia_federal_subjects,
 }
@@ -4141,13 +4239,13 @@ export.japan_cities = {
 
 export.japan_cities_group = {
 	default_container = "Japan",
-	canonicalize_key_container = make_canonicalize_key_container(", Japan", "prefecture"),
+	canonicalize_key_container = make_canonicalize_key_container(" Prefecture, Japan", "prefecture"),
 	default_divtype = "city",
 	data = export.japan_cities,
 }
 
 export.south_korea_cities = {
-	-- All cities listed are not associated with any province.
+	-- All cities listed are not associated with any county.
 	["Seoul"] = {},
 	["Busan"] = {},
 	["Incheon"] = {},
@@ -4159,7 +4257,7 @@ export.south_korea_cities = {
 
 export.south_korea_cities_group = {
 	default_container = "South Korea",
-	canonicalize_key_container = make_canonicalize_key_container(", South Korea", "province"),
+	canonicalize_key_container = make_canonicalize_key_container(" County, South Korea", "province"),
 	default_divtype = "city",
 	data = export.south_korea_cities,
 }
@@ -4486,7 +4584,17 @@ export.misc_cities = {
 	["Stockholm"] = {container = "Sweden"},
 	["Zürich"] = {container = "Switzerland"},
 	["Zurich"] = {alias_of = "Zürich"},
-	["Istanbul"] = {container = "Turkey"},
+	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021
+	["Istanbul"] = {container = "Turkey"}, -- 15.2 million
+	["Ankara"] = {container = "Turkey"}, -- 5.15 million
+	["Izmir"] = {container = "Turkey"}, -- 2.95 million
+	["Bursa"] = {container = "Turkey"}, -- 2.02 million
+	["Adana"] = {container = "Turkey"}, -- 1.77 million
+	["Gaziantep"] = {container = "Turkey"}, -- 1.71 million
+	["Konya"] = {container = "Turkey"}, -- 1.35 million
+	["Antalya"] = {container = "Turkey"}, -- 1.3 million
+	["Diyarbakir"] = {container = "Turkey"}, -- 1.07 million
+	["Mersin"] = {container = "Turkey"}, -- 1.03 million
 	["Kyiv"] = {container = "Ukraine"},
 	["Kiev"] = {alias_of = "Kyiv"},
 	["Kharkiv"] = {container = "Ukraine"},

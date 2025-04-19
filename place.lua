@@ -538,7 +538,7 @@ TODO/FIXME:
     in different polities from the specified containing polity/polities of the city, but doesn't do the same for
     larger-level divisions. Likewise for the `city_type_cat_handler`. There are some sufficiently generically-named
     divisions that this issue can occur; for example, [[Koforidua]], the capital city of Eastern Region, Ghana, is
-    incorrectly categoried under[[:Category:en:Cities in Eastern Region, Malta]] and
+    incorrectly categorized under [[:Category:en:Cities in Eastern Region, Malta]] and
     [[:Category:en:Places in Eastern Region, Malta]]. Note that the function `augment_holonyms_with_containing_polity`
     ''DOES'' do such checks, so we should be able to refactor the code out of that function and use it elsewhere.
 25. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
@@ -590,8 +590,26 @@ TODO/FIXME:
 		`generic_before_non_cities` and `generic_before_cities` settings in placetype_data, which need to match the
 		corresponding prepositions hardcoded in the category generation handlers. Instead of the hardcoding, the
 		category generation handler should respect the `generic_before_*` settings.
+34. [[Krakow]] defined as {{place|en|A <<city>> on the [[Vistula]] River, the <<capital>> of the <<voi/Lesser Poland Voivodeship>> in southern <<c/Poland>>}}
+	categorizes under [[:Category:Voivodeship capitals]] when it should probably instead be under
+	[[:Category:Voivodeship capitals of Poland]]. Possibly this is because the various voivodeships haven't yet been
+	entered as known locations, but this should happen regardless of that.
+35. {{tcl}} bugs:
+    a. Lowercase initial letter in new-style {{place}} descriptions in {{tcl}}. Maybe we can have a setting tcl_nolc=1
+	   to prevent this from happening.
+    b. tcl= and probably new-style {{place}} descriptions in general should recognize ;; to separate distinct {{place}}
+	   descriptions, and similarly ;;and as the equivalent of regular `;and`, etc.
+    c. The value supplied in `modern=` should be displayed in {{tcl}} descriptions regardless of the setting that
+	   normally disables this, so that e.g. the foreign-language equivalent of [[British Honduras]] doesn't just say
+	   it's a former British colony in Central America but specifically identifies it as modern Belize. If the user
+	   gives, place_modern= in {{tcl}}, that should override the modern= value and still display.
+	d. The page supplied to {{tcl}} should be used for generating bare categories even if t= is supplied and overrides
+	   the English term displayed.
+36. County boroughs used as holonyms currently display 'borough county borough' because there's an affix setting for
+	'county borough' and a fallback display handler for 'borough'. We need to rethink this; maybe merge the affix
+	setting and display handlers.
+37. Implement known-location groups and specs in a more standardly object-oriented way using metatables.
 ]=]
-
 
 
 ----------- Wikicode utility functions
@@ -636,35 +654,6 @@ end
 
 local function lc(text)
 	return mw.getContentLanguage():lc(text)
-end
-
-
--- Return the article that is used with an entry placetype. First we check the placetype or any equivalent placetype for
--- the `entry_placetype_use_the` property, indicating that "the" should be used. Otherwise we look to see if the
--- placetype itself (not any equivalents, even those involving deleting a qualifier from the beginning) has an entry in
--- `placetype_data` that specifies the indefinite article using `entry_placetype_use_the` (principally for use with
--- placetypes like "union territory"). Otherwise, we use [[Module:en-utilities]] to apply the standard algorithm to
--- generate "an" for words beginning with a vowel and "a" otherwise. If `ucfirst` is true, the first letter of the
--- article is made upper-case.
-local function get_placetype_article(placetype, ucfirst)
-	local art
-
-	local placetype_use_the = m_data.get_equiv_placetype_prop(placetype,
-		function(pt) return placetype_data[pt] and placetype_data[pt].entry_placetype_use_the end)
-	if placetype_use_the then
-		art = "the"
-	else
-		art = placetype_data[placetype] and placetype_data[placetype].entry_placetype_indefinite_article
-		if not art then
-			art = require(en_utilities_module).get_indefinite_article(placetype)
-		end
-	end
-
-	if ucfirst then
-		art = m_strutils.ucfirst(art)
-	end
-
-	return art
 end
 
 
@@ -1305,16 +1294,6 @@ local function format_holonym(holonym, needs_article, display_form)
 end
 
 
--- Return the preposition that should be used after `placetype` (e.g. "city >in< France." but
--- "country >of< South America"). The preposition is fetched from the data module, defaulting to "in".
-local function get_in_or_of(placetype)
-	local pt_prep = m_data.get_equiv_placetype_prop(placetype,
-		function(pt) return placetype_data[pt] and placetype_data[pt].preposition end
-	)
-	return pt_prep or "in"
-end
-
-
 -- Format a holonym for display, taking into account the entry's placetype (specifically, the last placetype if there
 -- are more than one, excluding conjunctions and parenthetical items); the holonym preceding it in the template's
 -- parameters (`prev_holonym`), and whether it is the first holonym (`first`). This may involve putting a preposition
@@ -1329,7 +1308,7 @@ local function format_holonym_in_context(entry_placetype, prev_holonym, holonym,
 		-- First compute the initial delimiter.
 		if first then
 			if holonym.placetype then
-				desc = desc .. " " .. get_in_or_of(entry_placetype) .. " "
+				desc = desc .. " " .. m_data.get_placetype_entry_preposition(entry_placetype) .. " "
 			elseif not holonym.display_placename:find("^,") then
 				desc = desc .. " "
 			end
@@ -1559,7 +1538,7 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 			-- but "city, the county seat of ...").
 			if i > 1 then
 				ins(", ")
-				local article = get_placetype_article(pt)
+				local article = m_data.get_placetype_article(pt)
 				if article ~= "the" and i > remaining_placetype_index then
 					-- Track cases where we are comma-separating multiple placetypes without the second one starting
 					-- with "the", as they may be mistakes. The occurrence of "the" is usually intentional, e.g.
@@ -1621,7 +1600,7 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 			end
 		end
 		if with_article then
-			article = article or get_placetype_article(place_desc.placetypes[1], ucfirst)
+			article = article or m_data.get_placetype_article(place_desc.placetypes[1], ucfirst)
 			gloss = article .. " " .. gloss
 		end
 	end
@@ -1959,8 +1938,8 @@ local function cat_specs_to_categories(cat_specs, entry_placetype, holonym)
 		for _, cat_spec in ipairs(cat_specs) do
 			local cat
 			if cat_spec == true then
-				cat = m_data.pluralize_placetype(entry_placetype, "ucfirst") .. " " .. get_in_or_of(entry_placetype)
-					.. " +++"
+				cat = m_data.pluralize_placetype(entry_placetype, "ucfirst") .. " " ..
+					m_data.get_placetype_entry_preposition(entry_placetype) .. " +++"
 			else
 				cat = cat_spec
 			end

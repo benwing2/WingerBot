@@ -152,51 +152,15 @@ labels["exonyms"] = {
 	parents = {"places"},
 }
 
--- Handler for bare placename categories for known locations in `polities` in [[Module:place/shared-data]].
+-- Handler for bare placename categories for known locations in `locations` in [[Module:place/shared-data]].
 table.insert(handlers, function(label)
 	for _, canon_label in ipairs { label, lcfirst(label) } do
-		for _, group in ipairs(m_shared.polities) do
-			local key
-			if group.data[canon_label] then
-				key = canon_label
-			elseif group.data["the " .. canon_label] then
-				key = "the " .. canon_label
-			end
-			if key then
-				local retval = group.bare_label_setter(group, key, group.data[key], m_data)
-				return retval
-			end
+		local group, spec = m_shared.find_canonical_key(canon_label)
+		if group then
+			return m_shared.make_bare_placename_cat_spec(group, canon_label, spec, m_data)
 		end
 	end
 end)
-
-local function city_description(city_group, city_key, city_spec)
-	-- The purpose of all the following code is to construct the description. It's written in a general way to allow any
-	-- number of containing polities, each larger than the previous one, so that e.g. for Birmingham, the description
-	-- will read "{{{langname}}} terms related to the city of [[Birmingham]], in the county of the [[West Midlands]], in
-	-- the [[constituent country]] of [[England]], in the [[United Kingdom]]."
-	local bare_key, linked_key = m_shared.construct_bare_and_linked_version(city_key)
-	local descparts = {}
-	table.insert(descparts, "the city of " .. linked_key)
-	local city_containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
-	local label_parent -- parent of the label, from the immediate containing polity
-	for i, polity in ipairs(city_containing_polities) do
-		local bare_polity, linked_polity = m_shared.construct_bare_and_linked_version(polity.name)
-		if i == 1 then
-			label_parent = bare_polity
-		end
-		table.insert(descparts, ", in ")
-		if i < #city_containing_polities then
-			local linked_divtype = m_data.get_placetype_display_form(polity.divtype, "noncity")
-			if not linked_divtype then
-				internal_error("Unrecognized placetype %s in polity spec %s", polity.divtype, polity)
-			end
-			table.insert(descparts, "the " .. linked_divtype .. " of ")
-		end
-		table.insert(descparts, linked_polity)
-	end
-	return table.concat(descparts), label_parent
-end
 
 -- Handler for bare placename categories for known cities in `cities` in [[Module:place/shared-data]].
 table.insert(handlers, function(label)

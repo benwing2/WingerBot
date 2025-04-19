@@ -493,6 +493,49 @@ end
 
 
 --[==[
+Return the article that is used with an entry placetype. First we check the placetype or any equivalent placetype for
+the `entry_placetype_use_the` property, indicating that `"the"` should be used. Otherwise we look to see if the
+placetype itself (not any equivalents, even those involving deleting a qualifier from the beginning) has an entry in
+`placetype_data` that specifies the indefinite article using `entry_placetype_use_the` (principally for use with
+placetypes like `union territory`). Otherwise, we use [[Module:en-utilities]] to apply the standard algorithm to
+generate `"an"` for words beginning with a vowel and `"a"` otherwise. If `ucfirst` is true, the first letter of the
+article is made upper-case.
+]==]
+function export.get_placetype_article(placetype, ucfirst)
+	local art
+
+	local placetype_use_the = export.get_equiv_placetype_prop(placetype,
+		function(pt) return export.get_placetype_prop(pt, "entry_placetype_use_the") end)
+	if placetype_use_the then
+		art = "the"
+	else
+		art = export.get_placetype_prop(placetype, "entry_placetype_indefinite_article")
+		if not art then
+			art = require(en_utilities_module).get_indefinite_article(placetype)
+		end
+	end
+
+	if ucfirst then
+		art = m_strutils.ucfirst(art)
+	end
+
+	return art
+end
+
+
+--[==[
+Return the preposition that should be used after `placetype` when occurring as an entry placetype or in categories
+(e.g. `city >in< France` but `country >of< South America`). The preposition defaults to `"in"` if not specified.
+]==]
+function export.get_placetype_entry_preposition(placetype)
+	local pt_prep = m_data.get_equiv_placetype_prop(placetype,
+		function(pt) return export.get_placetype_prop(pt, "preposition") end
+	)
+	return pt_prep or "in"
+end
+
+
+--[==[
 Given a place desc (see top of file) and a holonym object (see top of file), add a key/value into the place desc's
 `holonyms_by_placetype` field corresponding to the placetype and placename of the holonym. For example, corresponding
 to the holonym "c/Italy", a key "country" with the list value {"Italy"} will be added to the place desc's
@@ -1259,14 +1302,10 @@ local function city_type_cat_handler(data)
 		local cap_plural_entry_placetype = ucfirst(plural_entry_placetype)
 		local retcats = {("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
 			m_shared.get_prefixed_key(key, spec))}
-		if spec.containers and not spec.no_container_cat then
-			for _, container in ipairs(spec.containers) do
-				local container_group, container_key, container_spec = m_shared.get_matching_location {
-					placetypes = container.divtype,
-					key = container.name,
-				}
+		if container_trail[1] and not spec.no_container_cat then
+			for _, container in ipairs(container_trail[1]) do
 				insert(retcats, ("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
-					m_shared.get_prefixed_key(container_key, container_spec)))
+					m_shared.get_prefixed_key(container.key, container.spec)))
 		end
 		return retcats
 	end
@@ -1313,17 +1352,11 @@ local function capital_city_cat_handler(data, non_city)
 		capital_cat = ucfirst(capital_cat)
 		local inserted_specific_variant_cat = false
 		local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
-		if group then
-			if spec.containers and not spec.no_container_cat then
-				for _, container in ipairs(spec.containers) do
-					local container_group, container_key, container_spec = m_shared.get_matching_location {
-						placetypes = container.divtype,
-						key = container.name,
-					}
-					insert(retcats, ("%s of %s"):format(capital_cat, m_shared.get_prefixed_key(container_key,
-						container_spec)))
-					inserted_specific_variant_cat = true
-				end
+		if group and container_trail[1] and not spec.no_container_cat then
+			for _, container in ipairs(container_trail[1]) do
+				insert(retcats, ("%s of %s"):format(capital_cat, m_shared.get_prefixed_key(container.key,
+					container.spec)))
+				inserted_specific_variant_cat = true
 			end
 		end
 		if not inserted_specific_variant_cat then
@@ -1334,94 +1367,6 @@ local function capital_city_cat_handler(data, non_city)
 		insert(retcats, "Capital cities")
 	end
 	return retcats
-end
-
---[=[
-If the holonym in `data` (in the format as passed to a category handler) refers to a city, find and return the
-corresponding city key, spec and group as well as a list of the containing polities. This verifies that there is no
-mismatch between the city's containing polities and any of the following holonyms in the {{tl|place}} spec.
-
-Returns four values:
-# The ''city key'' (the key in the data in the city group table; usually the same as the holonym placename passed in,
-  but may be different due to following an alias, and may in rare cases have `the` prefixed);
-# the ''city spec'' (object describing the city, the value corresponding to the city key in the data in the city group
-  table; documented in [[Module:place/shared-data]] under `export.cities`);
-# the ''city group'' (the table listing a group of cities with shared properties);
-# the list of containing polities, ordered from smallest/most immediate to largest/least immediate; each element is
-  a table with `name` and `divtype` properties, the latter of which has been filled out using group-level defaults if
-  necessary.
-]=]
-local function find_city_spec(data)
-	local holonym_placetype, holonym_placename, holonym_index, place_desc =
-		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
-	-- Check for placetypes that are equivalent to city, e.g. {{place|zh|neighborhood|preflcity/Wuhan}} should work.
-	local equiv_to_city = export.get_equiv_placetype_prop(holonym_placetype, function(equiv_placetype)
-		return equiv_placetype == "city"
-	end)
-	if not equiv_to_city then
-		return nil
-	end
-	for _, city_group in ipairs(m_shared.cities) do
-		local city_key = holonym_placename
-		local city_spec = city_group.data[city_key]
-		if not city_spec then
-			city_key = "the " .. city_key
-			city_spec = city_group.data[city_key]
-		end
-		if city_spec and city_spec.alias_of then
-			local new_city_spec = city_group.data[city_spec.alias_of]
-			if not new_city_spec then
-				internal_error("City %s has an entry with non-existent alias_of=%s", city_key, city_spec.alias_of)
-			end
-			city_key = city_spec.alias_of
-			city_spec = new_city_spec
-		end
-		if city_spec then
-			-- For each level of containing polity, check that there are no mismatches (i.e. other polity of the same
-			-- sort) mentioned. We allow a mismatch at a given level if there's also a match with the containing polity
-			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
-			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
-			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
-			-- Delware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New Jersey
-			-- in [[Module:place/shared-data]]. Just because the containing polity US matches isn't enough, because
-			-- Newark, NJ also has New Jersey as a containing polity and there's a mismatch at that level. If there are
-			-- no mismatches at any level we assume we're dealing with the right city.
-			local containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
-			local containing_polities_mismatch = false
-			for _, polity in ipairs(containing_polities) do
-				local bare_polity, _ = m_shared.construct_bare_and_linked_version(polity.name)
-				local divtype = polity.divtype
-				local divtype_equivs = export.get_placetype_equivs(divtype)
-				for other_holonym_index, other_holonym in m_shared.get_holonyms_to_check(place_desc,
-					holonym_index and holonym_index + 1 or nil) do
-					local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
-						function(placetype)
-							return other_holonym.placetype == placetype and other_holonym.cat_placename == bare_polity
-						end
-					)
-					if this_holonym_matches then
-						-- match
-					else
-						local this_holonym_mismatches = export.get_equiv_placetype_prop_from_equivs(
-							divtype_equivs, function(placetype)
-								return other_holonym.placetype == placetype
-							end
-						)
-						if this_holonym_mismatches then
-							containing_polities_mismatch = true
-							break
-						end
-					end
-				end
-				if containing_polities_mismatch then
-					break
-				end
-			end
-			if not containing_polities_mismatch then
-				return city_key, city_spec, city_group, containing_polities
-			end
-		end
-	end
 end
 
 
@@ -1451,9 +1396,6 @@ place only mentions Ohio and a holonym for a Columbus in a different country is 
 fail for the UK because I think there's a setting preventing adding the UK as a holonym when counties in England,
 council areas in Scotland, etc. are encountered. FIXME: Investigate this further.)
 
-FIXME: The checks we do for cities to make sure the wrong containing polity isn't mentioned ought to be done for other
-divisions as well.
-
 The single parameter `data` is as in category handlers. The return value is a list of categories (without the preceding
 language code).
 ]=]
@@ -1475,13 +1417,9 @@ local function generic_cat_handler(data)
 		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
 		-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
 		-- no_container_cat is set (e.g. for 'United Kingdom').
-		if spec.containers and not spec.no_container_cat then
-			for _, container in ipairs(spec.containers) do
-				local container_group, container_key, container_spec = m_shared.get_matching_location {
-					placetypes = container.divtype,
-					key = container.name,
-				}
-				insert_retkey(container_key, container_spec)
+		if container_trail[1] and not spec.no_container_cat then
+			for _, container in ipairs(container_trail[1]) do
+				insert_retkey(container.key, container.spec)
 			end
 		end
 		return retcats
@@ -1500,13 +1438,14 @@ both Russian terms categorized into both [[:Category:ru:Georgia, USA]] and [[:Ca
 function export.get_bare_categories(args, place_descs)
 	local bare_cats = {}
 
-	local possible_placetypes = {}
-	for _, place_desc in ipairs(place_descs) do
+	local possible_placetypes_by_place_desc = {}
+	for i, place_desc in ipairs(place_descs) do
+		possible_placetypes_by_place_desc[i] = {}
 		for _, placetype in ipairs(place_desc.placetypes) do
 			if not export.placetype_is_ignorable(placetype) then
 				local equivs = export.get_placetype_equivs(placetype, {register_former_as_non_former = true})
 				for _, equiv in ipairs(equivs) do
-					insert(possible_placetypes, equiv.placetype)
+					insert(possible_placetypes_by_place_desc[i], equiv.placetype)
 				end
 			end
 		end
@@ -1517,30 +1456,14 @@ function export.get_bare_categories(args, place_descs)
 		term = term:gsub("%[%[w:", "[["):gsub("%[%[wikipedia:", "[[")
 		term = export.remove_links_and_html(term)
 		term = term:gsub("^the ", "")
-		local group, key, spec, container_trail = m_shared.find_matching_holonym_location {
-			entry_placetype = "city",
-			holonym_placetype = h_placetype,
-			holonym_placename = h_placename,
-			holonym_index = h_index,
-			place_desc = place_desc,
-		}
-		for _, group in ipairs(m_shared.locations) do
-			-- Try to find the term among the known polities.
-			local cat, bare_cat = m_shared.call_place_cat_handler(group, possible_placetypes, term)
-			if bare_cat then
-				insert(bare_cats, bare_cat)
-			end
-		end
-
-		if city_in_placetypes then
-			for _, city_group in ipairs(m_shared.cities) do
-				local value = city_group.data[term]
-				if value then
-					insert(bare_cats, value.alias_of or term)
-					-- No point in looking further as we don't (currently) have categories for two distinct cities with
-					-- the same name.
-					break
-				end
+		for i, place_desc in ipairs(place_descs) do
+			local group, key, spec, container_trail = m_shared.find_matching_holonym_location {
+				holonym_placetype = possible_placetypes_by_place_desc[i],
+				holonym_placename = term,
+				place_desc = place_desc,
+			}
+			if group then
+				insert(bare_cats, key)
 			end
 		end
 	end
@@ -1559,7 +1482,7 @@ function export.get_bare_categories(args, place_descs)
 	for _, short in ipairs(args.short) do
 		check_term(short)
 	end
-	
+
 	return bare_cats
 end
 
@@ -1583,70 +1506,38 @@ function export.augment_holonyms_with_container(place_descs)
 			-- categorization of a later holonym.
 			local augmented_holonyms = {}
 			local inserted_holonyms = {}
-			for _, holonym in ipairs(place_desc.holonyms) do
+			for i, holonym in ipairs(place_desc.holonyms) do
 				insert(augmented_holonyms, holonym)
 				if holonym.placetype and not export.placetype_is_ignorable(holonym.placetype) then
-					local possible_placetypes = {}
-					local equivs = export.get_placetype_equivs(holonym.placetype)
-					for _, equiv in ipairs(equivs) do
-						insert(possible_placetypes, equiv.placetype)
-					end
-
-					for _, group in ipairs(m_shared.locations) do
-						-- Try to find the term among the known polities.
-						local key, _ = m_shared.call_place_cat_handler(group, possible_placetypes,
-							holonym.cat_placename)
-						if key then
-							local value = group.data[key]
-							if value then
-								value = group.value_transformer(group, key, value)
-								if not value.no_container_cat and value.container and
-										value.container_type then
-									local existing_polities_of_type
-									local containing_type = value.container_type
-									local function get_existing_polities_of_type(placetype)
-										return export.get_equiv_placetype_prop(placetype,
-											function(pt) return place_desc.holonyms_by_placetype[pt] end
-										)
-									end
-									-- Usually there's a single containing type but write as if more than one can be
-									-- specified (e.g. {"administrative region", "region"}).
-									if type(containing_type) == "string" then
-										existing_polities_of_type = get_existing_polities_of_type(containing_type)
-									else
-										for _, containing_pt in ipairs(containing_type) do
-											existing_polities_of_type = get_existing_polities_of_type(containing_pt)
-											if existing_polities_of_type then
-												break
-											end
-										end
-									end
-									if existing_polities_of_type then
-										-- Don't augment. Either the containing polity is already specified as a
-										-- holonym, or some other polity is, which we consider a conflict.
-									else
-										if type(containing_type) == "table" then
-											-- If the containing type is a list, use the first element as the canonical
-											-- variant.
-											containing_type = containing_type[1]
-										end
-										-- Don't side-effect holonyms while processing them.
-										-- The existing placenames, including those in `cat_placname`, will be bare,
-										-- so we need to match that.
-										local bare_container, _ = m_shared.construct_bare_and_linked_version(
-											value.container)
-										local new_holonym = {
-											-- By the time we run, the display has already been generated so we don't
-											-- need to set display_placename.
-											placetype = containing_type,
-											cat_placename = bare_container,
-										}
-										insert(augmented_holonyms, new_holonym)
-										-- But it is safe to modify other parts of the place_desc.
-										export.key_holonym_into_place_desc(place_desc, new_holonym)
-									end
-								end
+					local group, key, spec, container_trail = m_shared.find_matching_holonym_location {
+						holonym_placetype = holonym.placetype,
+						holonym_placename = holonym.cat_placename,
+						holonym_index = i,
+						place_desc = place_desc,
+					}
+					if group and container_trail[1] and not spec.no_auto_augment_container then
+						for _, container in ipairs(container_trail[1]) do
+							local containing_type = container.spec.divtype
+							if type(containing_type) == "table" then
+								-- If the containing type is a list, use the first element as the canonical variant.
+								containing_type = containing_type[1]
 							end
+							local full_container_placename, elliptical_container_placename =
+								export.call_key_to_placename(container.group, container.key)
+							-- Don't side-effect holonyms while processing them.
+							local new_holonym = {
+								-- By the time we run, the display has already been generated so we don't need to set
+								-- display_placename.
+								placetype = containing_type,
+								-- placename_to_key() for the group should correctly handle both full and elliptical
+								-- placenames, but the full placename seems less likely to be ambiguous. FIXME: We
+								-- should just store the key directly and use it when available to avoid having to
+								-- convert key to placename and back to key.
+								cat_placename = full_container_placename,
+							}
+							insert(augmented_holonyms, new_holonym)
+							-- But it is safe to modify other parts of the place_desc.
+							export.key_holonym_into_place_desc(place_desc, new_holonym)
 						end
 					end
 				end
@@ -1654,8 +1545,6 @@ function export.augment_holonyms_with_container(place_descs)
 			place_desc.holonyms = augmented_holonyms
 		end
 	end
-
-	-- FIXME, consider doing cities as well.
 end
 
 
@@ -1678,33 +1567,19 @@ end
 --     (3) when called on that holonym. Otherwise either the categorization in (1) takes place or there's no
 --     categorization.
 local function district_neighborhood_cat_handler(data)
-	local function get_plural_entry_placetype(entity_spec)
+	local function get_plural_entry_placetype(location_spec)
 		if data.entry_placetype == "suburb" then
 			return "Suburbs"
 		else
-			return entity_spec.british_spelling and "Neighbourhoods" or "Neighborhoods"
+			return location_spec.british_spelling and "Neighbourhoods" or "Neighborhoods"
 		end
 	end
 
-	local function check_for_city_or_city_like_holonym(data)
-		local city_key, city_spec, city_group, containing_polities = find_city_spec(data)
-		
-		if city_key then
-			local entity_key, entity_spec, entity_group = m_shared.find_city_container(containing_polities[1])
-			return {get_plural_entry_placetype(entity_spec) .. " of " .. city_key}
-		end
-	
-		-- For city-states and special top-level city-like entities like Hong Kong and Bonaire
-		local this_entity_key, this_entity_spec, this_entity_group = find_entity_spec(data)
-		if this_entity_spec and this_entity_spec.is_city then
-			return {get_plural_entry_placetype(this_entity_spec) .. " of " .. this_entity_key}
-		end
-	end
-
-	-- First check the immediate holonym to see if it's a city or a city-like top-level entity (Hong Kong, Bonaire, etc.)
-	local retval = check_for_city_or_city_like_holonym(data)
-	if retval then
-		return retval
+	-- First check the immediate holonym to see if it's a city or a city-like top-level entity (Hong Kong, Bonaire,
+	-- etc.)
+	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	if group and not spec.is_former_place and spec.is_city then
+		return {get_plural_entry_placetype(spec) .. " of " .. m_shared.get_prefixed_key(key, spec)}
 	end
 
 	-- If the entry placetype is neighbo(u)rhood, assume it is a neighborhood even if there isn't a city-like
@@ -1734,13 +1609,10 @@ local function district_neighborhood_cat_handler(data)
 				holonym_index = other_holonym_index,
 				place_desc = data.place_desc,
 			}
-			local retval = check_for_city_or_city_like_holonym(other_holonym_data)
-			if retval then
-				return retval
-			end
-			local entity_key, entity_spec, entity_group = find_entity_spec(other_holonym_data)
-			if entity_key then
-				return {get_plural_entry_placetype(entity_spec) .. " in " .. entity_key}
+			local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+			if group and not spec.is_former_place then
+				return {get_plural_entry_placetype(spec) .. (spec.is_city and " of " or " in ") ..
+					m_shared.get_prefixed_key(key, spec)}
 			end
 		end
 	end
@@ -4493,16 +4365,16 @@ end
 
 -- Now augment the category data with political divisions extracted from the shared data.
 for _, group in ipairs(m_shared.locations) do
-	for key, value in pairs(group.data) do
-		value = group.value_transformer(group, key, value)
+	for key, spec in pairs(group.data) do
+		m_shared.initialize_spec(group, key, spec)
 		local divlists = {}
-		if value.poldiv then
-			insert(divlists, value.poldiv)
+		if spec.poldiv then
+			insert(divlists, spec.poldiv)
 		end
-		if value.miscdiv then
-			insert(divlists, value.miscdiv)
+		if spec.miscdiv then
+			insert(divlists, spec.miscdiv)
 		end
-		local divtype = value.divtype or group.default_divtype
+		local divtype = spec.divtype
 		if type(divtype) ~= "table" then
 			divtype = {divtype}
 		end
@@ -4523,16 +4395,13 @@ for _, group in ipairs(m_shared.locations) do
 				for _, dt in ipairs(divtype) do
 					if not export.placetype_data[sgdiv] then
 						internal_error("Placetype %s associated with key %s and data %s not found in `placetype_data`",
-							sgdiv, key, value)
+							sgdiv, key, spec)
 					end
 					-- If there is a difference between full and elliptical placenames, make sure we recognize both
 					-- forms in holonyms.
 					local full_placename, elliptical_placename = m_shared.call_key_to_placename(group, key)
-					local bare_full_placename, _ = m_shared.construct_bare_and_linked_version(full_placename)
-					local bare_elliptical_placename, _ = m_shared.construct_bare_and_linked_version(
-						elliptical_placename)
-					local placenames = bare_full_placename == bare_elliptical_placename and {bare_full_placename} or
-						{bare_full_placename, bare_elliptical_placename}
+					local placenames = full_placename == elliptical_placename and {full_placename} or
+						{full_placename, elliptical_placename}
 					for _, placename in ipairs(placenames) do
 						local cat_specs = {}
 						for _, pt_cat in ipairs(cat_as) do
@@ -4540,11 +4409,8 @@ for _, group in ipairs(m_shared.locations) do
 								pt_cat = {type = pt_cat}
 							end
 							local pt_prep = pt_cat.prep or prep
-							if placename == key and export.pluralize_placetype(sgdiv) == pt_cat.type then
-								insert(cat_specs, true)
-							else
-								insert(cat_specs, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " .. key)
-							end
+							insert(cat_specs, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " ..
+								m_shared.get_prefixed_key(key, spec))
 						end
 						local cat_data_holonym = dt .. "/" .. placename
 						if export.placetype_data[sgdiv][cat_data_holonym] then
