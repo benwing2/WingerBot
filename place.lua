@@ -50,39 +50,118 @@ template:
   that have not been moved to [[Module:category tree/topic cat/data/Places]].
 * [[Module:place doc]]: A module that generates documentation tables describing known placetypes and locations.
 
-===Terminology===
+===Basic terminology===
 
-* A ''place'' (or ''location'') is a geographic feature (either natural or geopolitical), either on the surface of the
-  Earth or elsewhere. Examples of types of natural places are rivers, mountains, seas and moons; examples of types of
-  geopolitical places are cities, countries, neighborhoods and roads. Specific places are identified by names (referred
-  to as ''toponyms'' or ''placenames'', see below). A given place will often have multiple names, with each language
-  that has an opportunity to refer to the place using its own name and some languages having multiple names for the
-  same place.
-* A ''toponym'' (or ''placename'') is a term that refers to a specific place, i.e. a name for that place. Examples are
-  [[Tucson]] (a city in Arizona); [[New York]] (ambiguous; either a city or a state); [[Georgia]] (ambiguous; either a
-  state of the US or an independent country in the Caucasus Mountains); [[Paris]] (ambiguous; either the capital of
-  France or various small cities and towns in the US); [[Tethys]] (one of the moons of Saturn); [[Pão de Açucar]] (a
-  mountain in Rio de Janeiro); [[Willamette]] (a river in Oregon); etc. Some placenames have display aliases; when
-  encountered, the placenames are mapped to their canonical form before further processing. For example, `US`, `U.S.`,
-  `USA`, `U.S.A.` and `United States of America` are all canonicalized to `United States` (if identified as a country),
-  and display as `United States`. Similarly, the foreign forms `Occitanie` (as a region or administrative region) and
-  `Noord-Brabant` (as a province) are mapped to `Occitania` and `North Brabant` for display purposes. There are also
-  category aliases, so that if e.g. `Republic of Macedonia` is encountered, it will display as such but categorize as
-  `North Macedonia`. (This is because, among other reasons, `Republic of Macedonia` is normally preceded by `"the"`
-  while `North Macedonia` is not, so a call {{tl|place|en|a <<city>> in the <<c/Republic of Macedonia>>}} would look
-  wrong if `Republic of Macedonia` were converted to `North Macedonia` during display, as the result would be
-  `a city in the North Macedonia`.) All of these aliases are sensitive to the placetype specified. For example, `Mexico`
-  as a state is categorized under `State of Mexico` but `Mexico` the country is categorized as just `Mexico`.
-* A ''placetype'' is the (or a) type that a toponym belongs to (e.g. `city`, `state`, `river`, `administrative region`,
-  `[[regional county municipality]]`, etc.). Some placetypes themselves are ambiguous; e.g. a [[prefecture]] in the
-  context of Japan is similar to a province, but a [[prefecture]] in France is the capital of a [[department]] (which
-  is similar to a county). This is generally handled by giving one of the senses a qualifier; e.g. to refer to a
-  French prefecture, use the placetype `French prefecture` instead of just `prefecture`. Placetypes support aliases,
-  like placenames, and the mapping to canonical form happens early on in the processing. For example, `state` can be
-  abbreviated as `s`; `administrative region` as `adr`; `regional county municipality` as `rcomun`; etc. Some placetype
-  aliases handle alternative spellings rather than abbreviations. For example, `departmental capital` maps to
-  `department capital`, and `home-rule city` maps to `home rule city`.
-* A ''placetype qualifier'' is an adjective prepended to the placetype to give additional information about the
+The basic terminology used in this and associated {{tl|place}} modules is:
+* A ''location'' (or equivalently, a ''place'') is any geographic feature (either natural or geopolitical), either on
+  the surface of the Earth or elsewhere. Examples of types of natural places are rivers, mountains, seas and moons;
+  examples of types of geopolitical places are cities, countries, neighborhoods and roads. A ''known location'' is
+  specifically a location whose properties are specified in the {{tl|place}} modules; more on them below.
+* Specific places are identified by names, referred to as ''toponyms'' or ''placenames''. A given place will often have
+  multiple names, and a given toponym may be ambiguous, referring to multiple possible locations. Specifically:
+** There may be names including different amounts of disambiguating information (`Tucson` vs. `Tucson,
+   Arizona` vs. `Tucson, Arizona, USA` or `New York` vs. `New York City` vs. `New York, New York`); abbreviations (`NYC`
+   for `New York City`, `USA` for `United States of America`); ''official'' vs. ''short'' names (e.g. `Union of Soviet
+   Socialist Republics` vs. `Soviet Union`); spelling variations (`Cracow` vs. `Krakow` vs. `Kraków`); current vs
+   former names (`Saint Petersburg` vs. `Leningrad` vs. `Petrograd`); [[exonym]]s vs. [[endonym]]s (e.g. `Tavastia
+   Proper` vs. `Kanta-Häme`, both referring to the same administrative region in Finland); alternative names not due to
+   any of the above reasons (`Bashkiria` vs. `Bashkortostan`); etc. In addition, each language that has an opportunity
+   to refer to the place will have its own name, with the same sorts of variations as exist in English.
+** Examples of ambiguous toponyms are `New York` (either a city or a state); `Georgia` (either a state of the US or an
+   independent country in the Caucasus Mountains); `Paris` (either the capital of France or various small cities and
+   towns in the US); `Mexico` (either a country, a state of that country, or the capital city of that country); and
+   `San Antonio` (besides being a major city in Texas, it is the name of dozens of settlements of all sorts throughout
+   the US and Latin America, and a least 181 distinct [[barangay]]s in the Philippines).
+* A ''placetype'' is the (or a) type that a location belongs to (e.g. `city`, `state`, `river`, `administrative region`,
+  `[[regional county municipality]]`, etc.).
+** It is common for locations to be described using multiple placetypes, and even sometimes known locations have
+  multiple placetypes that they may be identified by (e.g. American Samoa can be identified either as an `unincorporated
+  territory`, an `overseas territory` or just a `territory`). Both the {{tl|place}} template and the known location
+  data allow a given location to be identified by multiple placetypes. When in doubt as to the correct placetype or
+  placetypes for a given location, generally follow how Wikipedia describes the place.
+** Some placetypes themselves are ambiguous; e.g. an ''area'' can variously refer to a top-level administrative division
+   (specifically of Kuwait); a geographic region, generally without unambiguously defined borders; or a section of a
+   city, similar to a neighborhood. The term ''district'' is similarly ambiguous. A ''[[prefecture]]'' in the context of
+   Japan is similar to a province, but a prefecture in France is the capital of a ''[[department]]'' (which is similar
+   to a county). Some of this ambiguity is currently handled automatically; e.g. the ambiguity of areas and districts is
+   handled by looking at the ''holonyms'', or containing locations, specified for a given place. But sometimes it is
+   necessary to use a qualifier before the placetype to disambiguate; for example to refer to a French prefecture, use
+   the placetype `French prefecture` instead of just `prefecture`. (FIXME: Handle this automatically.)
+* A ''holonym'', in the context of a description of a place, is a placename that refers to a larger-sized entity that
+  contains the location being described. For example, `Arizona` and `United States` are holonyms of `Tucson`, and
+  `United States` is a holonym of `Arizona`.
+* A ''place invocation'' consists of the invocation of {{tl|place}}, including all its parameters. Place invocations
+  may contain one or more ''place descriptions'', each of which provides a description of the location, including its
+  placetype or types, any holonyms, and any additional raw text needed to properly explain the place in context. Place
+  invocations may also contain named parameters specifying zero or more English ''glosses'' or translations (for
+  foreign-language toponyms) and any attached ''extra information'' such as the capital, largest city, official name,
+  modern name or full name. Multiple place descriptions in a single invocation are separated by a numbered parameter
+  starting with a semicolon, and are used when it is necessary to provide two or more definitions of a single location
+  for proper categorization. For example, [[Vatican City]] is defined both as a city-state in Southern Europe and as an
+  enclave within the city of Rome, follows:
+  : {{tl|place|en|city-state|r/Southern Europe|;,|an <<enclave>> within the city of <<city/Rome>>, <<c/Italy>>|cat=Cities in Italy|official=Vatican City State}}.
+  Similar things need to be done for places like [[Crimea]] that are claimed by two different countries with different
+  definitions and administrative structures.
+** There are two types of place descriptions, ''new-style'' and ''old-style''. (The use of the terms "new" and "old"
+   indicates chronological precedence in the development of {{tl|place}}, but is not meant to pass any value judgments
+   on the two types, and does not indicate any intent to deprecate old-style descriptions. Both types of descriptions
+   are useful; for example, old-style descriptions are generally more succinct but less flexible.) The above invocation
+   shows both types: an old-style description followed by a new-style description. Old style descriptions use multiple
+   numbered parameters, where the first parameter (after the language code) specifies the placetype or types, and
+   following parameters specify either holonyms (which are always of the form ` ``placetype``/``placename`` `) or raw
+   text (which is identifiable by not having a slash in it). New-style descriptions use a single parameter, where both
+   placetypes and holonyms are surrounded by double angle brackets, and all remaining text is raw (displayed as-is). In
+   both types of descriptions, holonyms include a slash in them to separate the placetype (which is mandatory and often
+   abbreviated) from the placename.
+** In the context of a place description, there are two types of placetypes. The ''entry placetypes'' are the placetypes
+   of the place being described, while the ''holonym placetypes'' are the placetypes of the holonyms that the place
+   being described is located within. Currently, a given place can have multiple placetypes specified (e.g. [[Normandy]]
+   is specified using the ''compound placetype'' `administrative region/former province/and/medieval kingdom`) while a
+   given holonym can have only one placetype associated with it. Holonym placetypes are frequently abbreviated (e.g.
+   `r` for `region`, `s` for `state`, `co` for `county`, etc.), while stylistically it is preferred to spell out the
+   entry placetype (except for some long placetypes with well-known abbreviations, such as `CDP` or `cdp` for
+   `[[census-designated place]]`).
+** All holonyms in place descriptions are automatically linked as if surrounded by {{tl|l|en|...}}; i.e. if double
+   brackets do not occur in the holonym, the entire holonym will be linked to the corresponding Wiktionary article. For
+   this reason, the holonym should generally be in the same format as the canonical Wiktionary article describing the
+   location; see below).
+* A ''known location'' is a location whose properties are specifically defined in the {{tl|place}} modules. Generally
+  each such location has an associated category, and known locations exist in a containment hierarchy, where the
+  immediately containing known location is known as the ''container'' of the location and the chain of successive
+  containing locations is known as the ''container trail''. Generally the location's container corresponds to the first
+  parent of its category. Note that some known locations belong to more than one immediate container; for example,
+  Russia belongs to both Europe and Asia.
+
+===More about placetypes===
+
+# The following general categories of placetypes exist:
+## ''Natural features'' such as lakes, mountains, mountain ranges, islands, archipelagoes, moons, stars, asteroids, etc.
+## ''Continents'', ''supercontinents'' (groupings of continents where it makes sense, such as `America` and `Eurasia`)
+   and ''continent-level regions'' (grouping of countries in a given continent, such as `Central America` and
+   `Polynesia`).
+## ''Political entities'', which are generally classified as either ''polities'' (top-level entities such as countries),
+   ''subpolities'' or ''political divisions'' (non-sovereign divisions, often specifically ''administrative divisions'',
+   of a polity, where an administrative division has a governmental or statistical function and almost always has
+   unambiguously defined boundaries), or ''settlements'' (e.g. cities; towns; villages; and divisions of a city such as
+   neighborhoods, wards, [[barrio]]s and [[barangay]]s, which may or may not be formal administrative divisions and
+   may or may not have unambiguous boundaries).
+## ''Geographic regions'', which refer to recognized areas of the Earth (either with a natural geographic, political or
+   cultural significance, often of a historical nature). Such regions can be of greatly varying size, may exist either
+   within a single country or spanning multiple countries or (more often) parts of multiple countries, and may not have
+   well-defined boundaries. They should be distinguished from ''administrative regions'', which exist within a single
+   country and have well-defined boundaries and a political or administrative function. Geographic regions are
+   categorized using the generic term ''geographic and cultural areas'' to emphasize that (a) they have no
+   administrative significance; (b) they may vary greatly in size; and (c) their cohesion is due either to natural
+   geographic boundaries, such as rivers or mountain ranges, or to sharing some cultural characteristics.
+## ''Man-made structures'' below the level of a settlement or neighborhood, such as airports, roads, individual
+   buildings, and the like. (Note that such structures, even if named, often do not meet the [[WT:CFI]] criteria; this
+   is particularly the case for roads.)
+# Placetypes support aliases, and the mapping to canonical form happens early on in the processing. For example, `state`
+  can be abbreviated as `s`; `administrative region` as `adr`; `regional county municipality` as `rcomun`; etc. Some
+  placetype aliases handle alternative spellings rather than abbreviations. For example, `departmental capital` maps to
+  `department capital`, and `home-rule city` maps to `home rule city`. Placetype abbreviations are particularly useful
+  in holonym specs, because every holonym must be accompanied by its placetype, for disambiguation purposes.
+# A ''placetype qualifier'' is an adjective prepended to the placetype to give additional information about the
   place being described. For example, a given place may be described as a `small city`; logically this is still a city,
   but the qualifier `small` gives additional information about the place. Multiple qualifiers can be stacked, e.g.
   `small affluent beachfront unincorporated community`, where `unincorporated community` is a recognized placetype and
@@ -96,23 +175,201 @@ template:
   `traditional`. Another set of qualifiers that change categorization are `fictional` and `mythological`, which cause
   any term using the qualifier to be categorized respectively into [[:Category:Fictional locations]] and
   [[:Category:Mythological locations]].
-* A ''holonym'' is a placename that refers to a larger-sized entity that contains the toponym being described. For
-  example, `Arizona` and `United States` are holonyms of `Tucson`, and `United States` is a holonym of `Arizona`.
-* A ''place description'' consists of the description of a place, including its placetype or types, any holonyms, and
-  any additional raw text needed to properly explain the place in context. Some places have more than one place
-  description. For example, [[Vatican City]] is defined both as a city-state in Southern Europe and as an enclave within
-  the city of Rome. This is done as follows:
-  : {{tl|place|en|city-state|r/Southern Europe|;,|an <<enclave>> within the city of <<city/Rome>>, <<c/Italy>>|cat=Cities in Italy|official=Vatican City State}}.
-  The use of two place descriptions allows for proper categorization. Similar things need to be done for places like
-  [[Crimea]] that are claimed by two different countries with different definitions and administrative structures.
-* A ''full place description'' consists of all the information known about the place. It consists of one or more place
-  descriptions, zero or more English glosses (for foreign-language toponyms) and any attached ''extra information''
-  such as the capital, largest city, official name, modern name or full name.
-* Inside a place description, there are two types of placetypes. The ''entry placetypes'' are the placetypes of the
-  place being described, while the ''holonym placetypes'' are the placetypes of the holonyms that the place being
-  described is located within. Currently, a given place can have multiple placetypes specified (e.g. [[Normandy]] is
-  specified as being simultaneously an administrative region, a historic province and a medieval kingdom) while a given
-  holonym can have only one placetype associated with it.
+
+===More about toponyms===
+
+# Toponyms may be:
+## ''simple'' (not including any containing location in its name, such as `Tucson`) or ''multipart'' (including one or
+   more containing locations, such as `Tucson, Arizona` or `Tucson, USA` or even `Tucson, Arizona, USA`);
+## ''bare'' (not including the word `the` if the location normally requires this article when following a preposition,
+   such as `United States`, `Gambia` or 'Community of Madrid') or ''prefixed'' (including the word `the` as needed, such
+   as `the United States`, `the Gambia` or `the Community of Madrid`);
+## ''elliptical'' (just the placename without any disambiguating placetype, such as `Durham`, `New York` or `Mexico`) or
+   ''full'' (containing a disambiguating placetype or similar identifier if one is commonly included, such as
+   the city of `Durham` (in England) vs. its containing county `County Durham`; the US city `New York City` vs. its
+   containing state `New York`; or the three-way distinction between `Mexico` (the country), `Mexico City` (the capital
+   of this country) and `(the) State of Mexico` (one of the states of the country Mexico, mostly surrounding but not
+   including Mexico City)).
+# The ''canonical Wiktionary article'' is the main article on Wiktionary where a location is described. Canonical
+  articles, per the above terminology, are generally ''simple'' and ''bare'', but may be either ''full'' or
+  ''elliptical''. The fact that a given article is canonical is often identifiable by the fact that translations are
+  housed there an not somewhere else. For example, most counties of the US and Canada include the word `County` in their
+  canonical article name, but most counties elsewhere do not. `Washington, D.C.` is one of the few cases where a
+  non-simple toponym is used as the canonical article; this is based on common usage, especially by residents of the
+  city in question (who commonly refer to it as "D.C." but rarely just as "Washington").
+
+===More about known locations===
+
+# The following types of known locations are defined in this module:
+## Continents, supercontinents and continent-level regions, into which countries are grouped. Specifically:
+### At the top level below `Earth` are the supercontinents `America` and `Eurasia` and the continents `Africa`,
+	`Oceania` and `Antartica`.
+### `America` is further broken down into the continents `North America` (in turn containing the continental regions
+	`Central America` and `Caribbean`, with the United States, Canada and Mexico directly under North America) and
+	`South America`.
+### `Eurasia` is further broken down into the continents `Europe` and `Asia`.
+### `Oceania` is further broken down into the continental regions `Melanesia`, `Micronesia` and `Polynesia`, with
+	Australia` directly under `Oceania.
+### Under the above-specified divisions are countries. Some countries are placed in more than one continent or
+	continent-level region, either because they actually span two continents (e.g. Russia, Turkey, Kazakhstan, Egypt) or
+	because they are politically considered to belong to a continent different from the one they are geographically in
+	(Cyprus, Georgia, Armenia, etc.).
+## Political entities, including:
+### Top-level political entities, which includes:
+#### Countries, with a fairly liberal definition, notably including all UN-recognized countries plus some others that
+	 are commonly considered countries, even if not all other countries recognize them as such or consider them
+	 completely independent (notably, Kosovo, Palestine, Taiwan, Western Sahara, Niue and the Cook Islands).
+#### Pseudo-countries, which include areas calling themselves countries that are de-facto not under the control of the
+	 country that they are internationally considered part of (e.g. Abkhazia, South Ossetia, Transnistria);
+	 dependent/external/etc. territories of countries (e.g. American Samoa [US], Bermuda [UK], Christmas Island
+	 [Australia], Easter Island [Chile]); constituent countries, autonomous territories and the like (Aruba, Curaçao and
+	 Sint Maarten of the Netherlands; Greenland and the Faroe Islands of Denmark; etc.; but notably not including
+	 England, Scotland, Northern Ireland and Wales, which are treated as regular countries); and a grab bag of other
+	 entities that have a semi-independent existence, such as Hong Kong, Macau, Guadeloupe, Martinique and the like.
+	 Currently, the actual distinction in treatment between "countries" and "country-like entities" is minimal, but in
+	 the future we might restrict the sorts of subcategories of country-like entities more than regular countries.
+#### Former countries, e.g. the Soviet Union, Yugoslavia, West Germany and the Roman Empire. These are much more limited
+	 in the sorts of subcategories allowed, because generally locations, especially cities, should be described from the
+	 perspective of which political entity they are currently located in (e.g. "an ancient Roman town in modern Syria")
+	 and categorized as such.
+### Subpolities. Generally we only list top-level administrative divisions of countries (and only fairly major countries
+	are usually included), but sometimes we list second-level administrative divisions, as in the case of the
+	United Kingdom (where the top-level administrative divisions of the four constituent countries are listed) and China
+	(where major prefecture-level cities are listed, and are considered administrative divisions rather than cities).
+### Cities. Only major cities get categories, with the definition of "major" varying by country but often including
+	those where the city population itself (sometimes the metro area) is >= 1,000,000 people.
+# A distinction should be made in the {{tl|place}} modules between ''keys'' and ''placenames''. Placenames are as the
+  location appears in a holonym, and are generally in the same format as the canonical Wiktionary article describing the
+  location so that when formatted as a link, the link goes to the right article; i.e. they are simple and bare, and may
+  be full or elliptical according to Wiktionary conventions. The ''canonical key'' of a location is how the location's
+  category is named, and always uniquely identifies the location from among the known locations in this module (but
+  not necessarily among all possible locations). In particular, subpolities usually have multipart keys that include the
+  containing location, such as `Anhui, China` (not just `Anhui`); `Arizona, USA` (not just `Arizona`, and also not
+  `Arizona, United States`); and `Herefordshire, England` (not just `Herefordshire`, and also in this case not
+  `Herefordshire, UK` or `Herefordshire, England, UK` or any other possible variation). Cities are normally simple, but
+  some cities are multipart for disambiguation purposes (e.g. `Newcastle, New South Wales` for the city in Australia vs.
+  `Newcastle upon Tyne` for the identically-named city in England). Canonical keys may have ''key aliases'', other
+  ways of referring to the location that are not necessarily unique (e.g. `Newcastle` is a key alias for both of the
+  above-mentioned cities), and city keys with diacritics generally have diacriticless aliases, such as canonical key
+  `Düsseldorf` vs. key alias `Dusseldorf`, or canonical key `Łódź` vs. key alias `Lodz`.
+# Known locations are gathered into ''groups'' with similar properties, such as all the states of the United States;
+  all the (ceremonial) counties of England (see below); and all the "sufficiently major" prefecture-level cities in
+  China (where a prefecture-level city is a prefecture surrounding a major city with a unified government and is more
+  like a prefecture, i.e. a major administrative division just underneath a province, than like a city, and where
+  "sufficiently major" is defined according to the population of either the total prefecture or the urban area of the
+  city). Note that there are multiple types of counties in England, with overlapping but non-identical names and
+  boundaries; there are, in particular, ''ceremonial counties'', ''local government counties'' and ''historic
+  counties''; ''ceremonial counties'' have only ceremonial administrative functionality but unlike local government
+  counties (a) don't frequently change their boundaries or nature, (b) correspond more closely to historic county
+  boundaries and names, and (c) are what Englanders usually identify themselves with, and so they are used as top-level
+  divisions rather than local government counties.
+# Some known locations have ''aliases'' defined, which are of two types. ''Display aliases'' map holonyms to their
+  canonical form near the beginning of processing (in particular before the displayed output is formatted). For example,
+  `US`, `U.S.`, `USA`, `U.S.A.` and `United States of America` are all canonicalized to `United States` (if identified
+  as a country), and display as `United States`. Similarly, the foreign forms `Occitanie` (as a region or administrative
+  region) and `Noord-Brabant` (as a province) are mapped to `Occitania` and `North Brabant` for display purposes. There
+  are also ''category aliases'', so that if e.g. `Republic of Macedonia` is encountered, it will display as such but
+  categorize as `North Macedonia`. (This is because, among other reasons, `Republic of Macedonia` is normally preceded
+  by `"the"` while `North Macedonia` is not, so a call {{tl|place|en|a <<city>> in the <<c/Republic of Macedonia>>}}
+  would look wrong if `Republic of Macedonia` were converted to `North Macedonia` during display, as the result would be
+  `a city in the North Macedonia`. There are also frequently political connotations to different category aliases, e.g.
+  `Burma` vs. `Myanmar`.) All of these aliases are sensitive to the placetype specified. For example, `Mexico` as a
+  state is categorized under `State of Mexico, Mexico` but `Mexico` the country is categorized as just `Mexico`.
+
+===Categories===
+
+There are two main types of categories:
+# Categories for known locations, divided into:
+## Top-level polity categories (e.g. [[:Category:United States]], [[:Category:Taiwan]], [[:Category:South Ossetia]],
+  [[:Category:Bermuda]], [[:Category:Soviet Union]], [[:Category:West Germany]]).
+## Subpolity categories ([[:Category:Arizona, USA]], [[:Category:Hunan]], [[:Category:Kagoshima Prefecture]],
+  [[:Category:Cluj County, Romania]]). For historical reasons, different formats are used for the subpolities of
+  different polities. Increasingly, we are moving towards always including the polity name in the subpolity category,
+  but whether the subpolity type is included and where it is included (cf. [[:Category:Cluj County, Romania]] vs.
+  [[:Category:County Cork, Ireland]] is still inconsistent and will probably remain that way, based on how the
+  subpolity is normally referred to.
+## City categories ([[:Category:Tokyo]], [[:Category:New York City]], [[:Category:Jaipur]]). Normally these do not
+   include the containing subpolity, but may do so in order to disambiguate.
+# Categories for placetypes, divided into:
+## "Immediate" political and miscellaneous division categories ([[:Category:States of the United States]],
+   [[:Category:Municipalities of Tocantins, Brazil]], [[:Category:Ghost towns in Arizona, USA]]). These are name
+   categories, whose purpose is to contain locations of the specified type. "Immediate" here refers to the fact that
+   the location in the category name is the immediately-containing polity. Usually these categories use the preposition
+   "of", but sometimes "in". (Specifically, "of" typically implies that the placetype in question has an official or
+   semi-official status, whereas "in" implies there is no such official status, but common usage may override this.)
+   The form of the toponym appearing in these categories is always the same as that of the corresponding toponym
+   category except that the word "the" may appear (e.g. [[:Category:States of the United States]]), whereas it doesn't
+   appear in the toponym category itself ([[:Category:United States]], no "the").
+## "Skip-polity" categories for second-level political and miscellaneous divisions of a country or other top-level
+   polity (e.g. [[:Category:Counties of the United States]], [[:Category:Municipalities of Brazil]] and
+   [[:Category:Subprefectures of Japan]]). These have several purposes:
+   * They group the immediate division categories mentioned previously.
+   * They categorize "straggler" topoynms that (often improperly) fail to mention the subpolity they belong to, but
+     only the top-level polity.
+   * If categories do not exist for the first-level divisions of a country (and sometimes even when they do), they group
+     all toponyms of the specified type for the specified country. For example, Lithuania is divided into first-level
+	 counties and second-level municipalities, but since we don't currently have categories for Lithuanian counties,
+	 all municipalities go under [[:Category:Municipalities of Lithuania]] rather than under a category for a specific
+	 county. In addition, even though we do have categories for Japanese prefectures (a first-level division), all
+	 subprefectures (a second-level division) go under [[:Category:Subprefectures of Japan]] because there aren't very
+	 many of them (see below).
+## "Generic placetype" categories, both of the immediate and skip-polity type (immediate
+   [[:Category:Cities in California, USA]] and [[:Category:Neighborhoods of the Bronx]]; skip-polity
+   [[:Category:Villages in Ivory Coast]], [[:Category:Geographic and cultural areas of England]],
+   [[:Category:Rivers in Egypt]] and [[:Category:Places in the Philippines]]). As mentioned above, "generic" placetypes
+   occur in every polity (although the set of generic placetypes allowed for cities is a subset of those allowed for
+   top-level polities and subpolities). Usually these categories use the preposition "in", but sometimes "of". As above,
+   skip-polity categories group immediate categories, and in addition there are various reasons a toponym entry is
+   categorized into a skip-polity category. (For example, as a general rule, geographic and cultural areas only
+   categorize at the country level, not the subpolity level, both because there often aren't very many in a given
+   country and because they often span multiple subpolities.)
+
+The parent categories of a given category depend on its type. Generally, location categories have placetype categories
+as their first parent, and vice-versa. Specifically:
+# Top-level country categories have as their parent e.g. [[:Category:Countries in Europe]],
+  [[:Category:Countries in Central America]] or [[:Category:Countries in Polynesia]], using the most specific
+  continental-level region the country is contained in.
+# Pseudo-countries are under [[:Category:Country-like entities]] as a neutral designation. There aren't enough of them
+  to subcategorize under continent-level regions.
+# Former countries are under [[:Category:Former countries and country-like entities]].
+# Subpolity categories are usually under a placetype category whose placetype is the canonical (first-listed) divtype of
+  the subpolity and whose toponym is the immediately containing polity, but there are exceptions. Specifically,
+  sometimes if a polity has multiple types of subpolities, they are combined (e.g. [[:Category:States and territories of
+  Australia]], [[:Category:Federal subjects of Russia]]). In addition, sometimes a less specific but more identifiable
+  divtype is used instead of the canonical one (e.g. [[:Category:Regions of France]] when the canonical divtype is
+  "administrative region"). The same rules and exceptions generally apply when categorizing subpolities themselves; e.g.
+  both the Australian state of Queensland and territory of Northern Territory go under
+  [[:Category:en:States and territories of Australia]] rather than separately under [[:Category:en:States of Australia]]
+  and [[:Category:en:Territories of Australia]]. In addition, sometimes subpolities may "skip a level" if there aren't
+  very many. For example, there are only 26 subprefectures of Japan (14 under Hokkaido and 12 more scattered under five
+  other prefectures). Rather than have e.g. [[:Category:en:Subprefectures of Kagoshima Prefecture]] containing at most
+  two entries and [[:Category:en:Subprefectures of Miyazaki Prefecture]] containing at most one, they are all grouped
+  under the so-called "skip-subpolity category" [[:Category:en:Subprefectures of Japan]].
+# City categories are always under e.g. [[:Category:Cities in the United States]] (e.g. [[:Category:New York City]] is
+  so-placed, even though [[:Category:Cities in New York, USA]] exists). However, they may have a second, more-specific
+  parent (e.g. [[:Category:Cities in New York, USA]] in the case of New York City). The city entries themselves will
+  go under the more specific parent if it exists.
+# Immediate placetype categories for second-level divisions of a country generally have, respectively, a
+  "toponym parent" that is the toponym mentioned in the category and a "skip-polity parent" that groups all subpolity
+  placetype categories of a specific type and containing polity. For example, [[:Category:Counties of Arizona, USA]] has
+  toponym parent [[:Category:en:Arizona, USA]] and skip-polity parent [[:Category:en:Counties of the United States]].
+  Sometimes the default skip-polity parent is overridden or disabled entirely. For example, in the US, most states are
+  divided into counties but Louisiana is divided into parishes and Alaska into boroughs. It would make no sense to put
+  [[:Category:Parishes of Louisiana, USA]] under [[:Category:Parishes of the United States]] (which would only have one
+  subcategory), so we include them under [[:Category:Counties of the United States]]. An alternative would be to name
+  the skip-polity category to explicitly include parishes and boroughs; this would get awkward here but is done in some
+  cases. Similarly, [[:Category:Regional county municipalities of Quebec]] is placed under
+  [[:Category:Regional municipalities of Canada]] since that name is used in other provinces. Meanwhile,
+  [[:Category:Regional districts of British Columbia]] disables its skip-polity category since no other province or
+  territory of Canada has regional districts or comparable subpolities under a different name (an alternative would be
+  to place them under [[:Category:Counties of Canada]], since they are sort of comparable to counties).
+# Placetype categories for first-level divisions of a country similarly (e.g. [[:Category:States of the United States]])
+  have a toponym parent (in this case [[:Category:United States]]), but in place of the skip-polity parent they have two
+  other parents: a "bare placetype" parent (in this case [[:Category:States]]) and the "generic" parent
+  [[:Category:Political divisions of specific countries]]. (There is also a bare [[:Category:Political divisions]]
+  that groups "bare placetype" categories.) Skip-polity placetype categories for second-level divisions of a country
+  (e.g. [[:Category:Counties of the United States]]) work the same. Placetype categories for countries work likewise
+  except they are missing the generic parent.
 
 ===Place descriptions===
 

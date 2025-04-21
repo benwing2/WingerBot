@@ -999,18 +999,6 @@ alternative forms (e.g. abbreviations, ellipses, foreign spellings) where the no
 consistency.
 ]==]
 export.placename_display_aliases = {
-	["administrative region"] = {
-		["Occitanie"] = "Occitania",
-	},
-	["administrative territory"] = {
-		["Azad Jammu and Kashmir"] = "Azad Kashmir",
-	},
-	["city"] = {
-		["New York"] = "New York City",
-		["Washington, DC"] = "Washington, D.C.",
-		["Washington D.C."] = "Washington, D.C.",
-		["Washington DC"] = "Washington, D.C.",
-	},
 	["country"] = {
 		["Bosnia and Hercegovina"] = "Bosnia and Herzegovina",
 		["Côte d'Ivoire"] = "Ivory Coast",
@@ -1039,7 +1027,6 @@ export.placename_display_aliases = {
 		["South Savo"] = "Southern Savonia",
 		["Päijät-Häme"] = "Päijänne Tavastia",
 		["Kanta-Häme"] = "Tavastia Proper",
-		["Occitanie"] = "Occitania",
 	},
 	["republic"] = {
 		["Kabardino-Balkarian Republic"] = "Kabardino-Balkar Republic",
@@ -1049,7 +1036,6 @@ export.placename_display_aliases = {
 		["Mecklenburg-Western Pomerania"] = "Mecklenburg-Vorpommern",
 	},
 	["territory"] = {
-		["Azad Jammu and Kashmir"] = "Azad Kashmir",
 		["U.S. Virgin Islands"] = "United States Virgin Islands",
 		["US Virgin Islands"] = "United States Virgin Islands",
 	},
@@ -1062,9 +1048,6 @@ categories with "Burma" in them (but the displayed form will respect the form as
 should not be taken to imply any political position; it is just this way because it has always been this way.)
 ]==]
 export.placename_cat_aliases = {
-	["administrative territory"] = {
-		["Islamabad"] = "Islamabad Capital Territory", -- differs in the
-	},
 	["autonomous community"] = {
 		["Valencian Community"] = "Valencia", -- differs in "the"
 	},
@@ -1081,7 +1064,7 @@ export.placename_cat_aliases = {
 		["Western Isles"] = "Na h-Eileanan Siar",
 	},
 	["country"] = {
-		-- Many of these differ in use of "the"; others have politicla connotations, etc.
+		-- Many of these differ in use of "the"; others have political connotations, etc.
 		["Burma"] = "Myanmar",
 		["Czechia"] = "Czech Republic",
 		["Nagorno-Karabakh"] = "Artsakh",
@@ -1100,9 +1083,6 @@ export.placename_cat_aliases = {
 	},
 	["county"] = {
 		["Anglesey"] = "Isle of Anglesey",
-	},
-	["federal territory"] = {
-		["Islamabad"] = "Islamabad Capital Territory", -- differs in "the"
 	},
 	["republic"] = {
 		-- Only needs to include cases that aren't just shortened versions of the
@@ -1130,9 +1110,6 @@ export.placename_cat_aliases = {
 	["state"] = {
 		["Baja California Norte"] = "Baja California",
 		["Mexico"] = "State of Mexico", -- differs in "the"
-	},
-	["territory"] = {
-		["Islamabad"] = "Islamabad Capital Territory", -- differs in "the"
 	},
 }
 
@@ -1523,7 +1500,7 @@ function export.augment_holonyms_with_container(place_descs)
 								containing_type = containing_type[1]
 							end
 							local full_container_placename, elliptical_container_placename =
-								export.call_key_to_placename(container.group, container.key)
+								export.key_to_placename(container.group, container.key)
 							-- Don't side-effect holonyms while processing them.
 							local new_holonym = {
 								-- By the time we run, the display has already been generated so we don't need to set
@@ -4399,7 +4376,7 @@ for _, group in ipairs(m_shared.locations) do
 					end
 					-- If there is a difference between full and elliptical placenames, make sure we recognize both
 					-- forms in holonyms.
-					local full_placename, elliptical_placename = m_shared.call_key_to_placename(group, key)
+					local full_placename, elliptical_placename = m_shared.key_to_placename(group, key)
 					local placenames = full_placename == elliptical_placename and {full_placename} or
 						{full_placename, elliptical_placename}
 					for _, placename in ipairs(placenames) do

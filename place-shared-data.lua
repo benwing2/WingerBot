@@ -16,238 +16,16 @@ local dump = mw.dumpObject
 
 --[==[ intro:
 
-===Introduction===
-
-This module contains lists of all the locations (continents, countries, country divisions such as states and provinces,
-and cities) and their properties, along with some information about placetypes (the remainder is found in
-[[Module:place/data]]). See [[Module:place]] for a general introduction to the terminology associated with places along
-with a list of all the relevant modules, and the description below for more specific information on types of locations
-and placetypes and how their categorization works.
-
-The basic terminology used in this and associated {{tl|place}} modules is:
-# A ''location'' (or equivalently, a ''place'') is any geographic feature of the Earth (or more generally the universe,
-  since we are able to describe planets, moons, stars, asteroids and other geographic features outside of the Earth),
-  which can include:
-## ''Natural features'' such as lakes, mountains, mountain ranges, islands, archipelagoes, etc.
-## ''Continents'', ''supercontinents'' (groupings of continents where it makes sense, such as `America` and `Eurasia`)
-   and ''continent-level regions'' (grouping of countries in a given continent, such as `Central America` and
-   `Polynesia`).
-## ''Political entities'', which are generally classified as either ''polities'' (top-level entities such as countries),
-   ''subpolities'' (non-sovereign divisions, generally ''administrative divisions'', of a polity), or ''cities''.
-## ''Geographic regions'', which refer to recognized areas of the Earth (either with a natural geographic, political or
-   cultural significance, often of a historical nature). Such regions can be of greatly varying size, may exist either
-   within a single country or spanning multiple countries or (more often) parts of multiple countries, and may not have
-   well-defined boundaries. They should be distinguished from ''administrative regions'', which exist within a single
-   country and have well-defined boundaries and a political or administrative function. Geographic regions are
-   categorized using the generic term ''geographic and cultural areas'' to emphasize that (a) they have no
-   administrative significance; (b) they may vary greatly in size; and (c) their cohesion is due either to natural
-   geographic boundaries, such as rivers or mountain ranges, or to sharing some cultural characteristics.
-# A ''known location'' is a location whose properties are specifically defined in this module. Generally each such
-  location has an associated category, and known locations exist in a containment hierarchy, where the immediately
-  containing known location is known as the ''container'' of the location. Generally the location's container
-  corresponds to the first parent of its category. The following types of known locations are defined in this module:
-## Continents, supercontinents and continent-level regions, into which countries are grouped. Specifically:
-### At the top level below `Earth` are the supercontinents `America` and `Eurasia` and the continents `Africa`,
-	`Oceania` and `Antartica`.
-### `America` is further broken down into the continents `North America` (in turn containing the continental regions
-	`Central America` and `Caribbean`, with the United States, Canada and Mexico directly under North America) and
-	`South America`.
-### `Eurasia` is further broken down into the continents `Europe` and `Asia`.
-### `Oceania` is further broken down into the continental regions `Melanesia`, `Micronesia` and `Polynesia`, with
-	Australia` directly under `Oceania.
-### Under the above-specified divisions are countries. Some countries are placed in more than one continent or
-	continent-level region, either because they actually span two continents (e.g. Russia, Turkey, Kazakhstan, Egypt) or
-	because they are politically considered to belong to a continent different from the one they are geographically in
-	(Cyprus, Georgia, Armenia, etc.).
-## Political entities, including:
-### Top-level political entities, which includes:
-#### Countries, with a fairly liberal definition, notably including all UN-recognized countries plus some others that
-	 are commonly considered countries, even if not all other countries recognize them as such or consider them
-	 completely independent (notably, Kosovo, Palestine, Taiwan, Western Sahara, Niue and the Cook Islands).
-#### Pseudo-countries, which include areas calling themselves countries that are de-facto not under the control of the
-	 country that they are internationally considered part of (e.g. Abkhazia, South Ossetia, Transnistria);
-	 dependent/external/etc. territories of countries (e.g. American Samoa [US], Bermuda [UK], Christmas Island
-	 [Australia], Easter Island [Chile]); constituent countries, autonomous territories and the like (Aruba, Curaçao and
-	 Sint Maarten of the Netherlands; Greenland and the Faroe Islands of Denmark; etc.; but notably not including
-	 England, Scotland, Northern Ireland and Wales, which are treated as regular countries); and a grab bag of other
-	 entities that have a semi-independent existence, such as Hong Kong, Macau, Guadeloupe, Martinique and the like.
-	 Currently, the actual distinction in treatment between "countries" and "country-like entities" is minimal, but in
-	 the future we might restrict the sorts of subcategories of country-like entities more than regular countries.
-#### Former countries, e.g. the Soviet Union, Yugoslavia, West Germany and the Roman Empire. These are much more limited
-	 in the sorts of subcategories allowed, because generally locations, especially cities, should be described from the
-	 perspective of which political entity they are currently located in (e.g. "an ancient Roman town in modern Syria")
-	 and categorized as such.
-### Subpolities. Generally we only list top-level administrative divisions of countries (and only fairly major countries
-	are usually included), but sometimes we list second-level administrative divisions, as in the case of the
-	United Kingdom (where the top-level administrative divisions of the four constituent countries are listed) and China
-	(where major prefecture-level cities are listed, and are considered administrative divisions rather than cities).
-### Cities. Only major cities get categories, with the definition of "major" varying by country but often including
-	those where the city population itself (sometimes the metro area) is >= 1,000,000 people.
-# A ''placetype'' is the type of any location, generally corresponding to how Wikipedia describes the location. It is
-  common for locations to be described using multiple placetypes, and even sometimes known locations have multiple
-  placetypes that they may be identified by (e.g. American Samoa can be identified either as an "unincorporated
-  territory", an "overseas territory" or just a "territory"). Placetypes can be categorized as:
-## Political divisions (states, provinces, counties, etc.).
-## Non-political or "miscellaneous" divisions (such as divisions used for census purposes which are considered important
-   enough to categorize).
-## "Generic" placetypes that are likely to exist in every polity or subpolity (cities, towns, villages, rivers, etc.).
-## Meta-placetypes, specifically `place`, which exists in every known location and is treated like a generic placetype.
-# A ''toponym'' is a name by which a location may be known. Locations are often known by more than one toponym (such as
-  `United States`, `United States of America`, `the United States`, `USA`, etc.). Cities and subpolities may or may not
-  include the containing location in their name (e.g. `Arizona` or `Arizona, USA`). Toponyms may be:
-## ''simple'' (not including any containing location in its name, such as `Tucson`) or ''multipart'' (including one or
-   more containing locations, such as `Tucson, Arizona` or `Tucson, USA` or even `Tucson, Arizona, USA`);
-## ''bare'' (not including the word `the` if the location normally requires this article when following a preposition,
-   such as `United States`, `Gambia` or 'Community of Madrid') or ''prefixed'' (including the word `the` as needed, such
-   as `the United States`, `the Gambia` or `the Community of Madrid`);
-## ''elliptical'' (just the placename without any disambiguating placetype, such as `Durham`, `New York` or `Mexico`) or
-   ''full'' (containing a disambiguating placetype or similar identifier if one is commonly included, such as
-   the city of `Durham` (in England) vs. its containing county `County Durham`; the US city `New York City` vs. its
-   containing state `New York`; or the three-way distinction between `Mexico` (the country), `Mexico City` (the capital
-   of this country) and `(the) State of Mexico` (one of the states of the country Mexico, mostly surrounding but not
-   including Mexico City)).
-# The ''place description'' containined in an invocation of {{tl|place}} consists, generally, of one or more
-  ''entry placetypes'' (the placetype(s) of the location itself; see the definition of ''placetype'' above); zero or
-  more ''holonyms'' (locations in which the place in question is contained, of the form ` ``placetype``/``placename`` `,
-  e.g. `c/Mexico` for the country of Mexico; they consist of an often-abbreviated placetype and a placename that is
-  usually in the same format as the canonical Wiktionary article describing the location; see below); and
-  ''surrounding text'', which is displayed as-is.
-# The ''canonical Wiktionary article'' is the main article on Wiktionary where a location is described. Canonical
-  articles, per the above terminology, are generally ''simple'' and ''bare'', but may be either ''full'' or
-  ''elliptical''. The fact that a given article is canonical is often identifiable by the fact that translations are
-  housed there an not somewhere else. For example, most counties of the US and Canada include the word `County` in their
-  canonical article name, but most counties elsewhere do not. `Washington, D.C.` is one of the few cases where a
-  non-simple toponym is used as the canonical article; this is based on common usage, especially by residents of the
-  city in question (who commonly refer to it as "D.C." but rarely just as "Washington").
-# A distinction should be made in the {{tl|place}} modules between ''keys'' and ''placenames''. Placenames are as the
-  location appears in a holonym, and are generally in the same format as the canonical Wiktionary article describing the
-  location so that when formatted as a link, the link goes to the right article; i.e. they are simple and bare, and may
-  be full or elliptical according to Wiktionary conventions. The ''canonical key'' of a location is how the location's
-  category is named, and always uniquely identifies the location from among the known locations in this module (but
-  not necessarily among all possible locations). In particular, subpolities usually have multipart keys that include the
-  containing location, such as `Anhui, China` (not just `Anhui`); `Arizona, USA` (not just `Arizona`, and also not
-  `Arizona, United States`); and `Herefordshire, England` (not just `Herefordshire`, and also in this case not
-  `Herefordshire, UK` or `Herefordshire, England, UK` or any other possible variation). Cities are normally simple, but
-  some cities are multipart for disambiguation purposes (e.g. `Newcastle, New South Wales` for the city in Australia vs.
-  `Newcastle upon Tyne` for the identically-named city in England). Canonical keys may have ''key aliases'', other
-  ways of referring to the location that are not necessarily unique (e.g. `Newcastle` is a key alias for both of the
-  above-mentioned cities), and city keys with diacritics generally have diacriticless aliases, such as canonical key
-  `Düsseldorf` vs. key alias `Dusseldorf`, or canonical key `Łódź` vs. key alias `Lodz`.
-# Known locations are gathered into ''groups'' with similar properties, such as all the states of the United States;
-  all the (ceremonial) counties of England (see below); and all the "sufficiently major" prefecture-level cities in
-  China (where a prefecture-level city is a prefecture surrounding a major city with a unified government and is more
-  like a prefecture, i.e. a major administrative division just underneath a province, than like a city, and where
-  "sufficiently major" is defined according to the population of either the total prefecture or the urban area of the
-  city). Note that there are multiple types of counties in England, with overlapping but non-identical names and
-  boundaries; there are, in particular, ''ceremonial counties'', ''local government counties'' and ''historic
-  counties''; ''ceremonial counties'' have only ceremonial administrative functionality but unlike local government
-  counties (a) don't frequently change their boundaries or nature, (b) correspond more closely to historic county
-  boundaries and names, and (c) are what Englanders usually identify themselves with, and so they are used as top-level
-  divisions rather than local government counties.
-
-There are two main types of categories:
-# Categories for known locations, divided into:
-## Top-level polity categories (e.g. [[:Category:United States]], [[:Category:Taiwan]], [[:Category:South Ossetia]],
-  [[:Category:Bermuda]], [[:Category:Soviet Union]], [[:Category:West Germany]]).
-## Subpolity categories ([[:Category:Arizona, USA]], [[:Category:Hunan]], [[:Category:Kagoshima Prefecture]],
-  [[:Category:Cluj County, Romania]]). For historical reasons, different formats are used for the subpolities of
-  different polities. Increasingly, we are moving towards always including the polity name in the subpolity category,
-  but whether the subpolity type is included and where it is included (cf. [[:Category:Cluj County, Romania]] vs.
-  [[:Category:County Cork, Ireland]] is still inconsistent and will probably remain that way, based on how the
-  subpolity is normally referred to.
-## City categories ([[:Category:Tokyo]], [[:Category:New York City]], [[:Category:Jaipur]]). Normally these do not
-   include the containing subpolity, but may do so in order to disambiguate.
-# Categories for placetypes, divided into:
-## "Immediate" political and miscellaneous division categories ([[:Category:States of the United States]],
-   [[:Category:Municipalities of Tocantins, Brazil]], [[:Category:Ghost towns in Arizona, USA]]). These are name
-   categories, whose purpose is to contain locations of the specified type. "Immediate" here refers to the fact that
-   the location in the category name is the immediately-containing polity. Usually these categories use the preposition
-   "of", but sometimes "in". (Specifically, "of" typically implies that the placetype in question has an official or
-   semi-official status, whereas "in" implies there is no such official status, but common usage may override this.)
-   The form of the toponym appearing in these categories is always the same as that of the corresponding toponym
-   category except that the word "the" may appear (e.g. [[:Category:States of the United States]]), whereas it doesn't
-   appear in the toponym category itself ([[:Category:United States]], no "the").
-## "Skip-polity" categories for second-level political and miscellaneous divisions of a country or other top-level
-   polity (e.g. [[:Category:Counties of the United States]], [[:Category:Municipalities of Brazil]] and
-   [[:Category:Subprefectures of Japan]]). These have several purposes:
-   * They group the immediate division categories mentioned previously.
-   * They categorize "straggler" topoynms that (often improperly) fail to mention the subpolity they belong to, but
-     only the top-level polity.
-   * If categories do not exist for the first-level divisions of a country (and sometimes even when they do), they group
-     all toponyms of the specified type for the specified country. For example, Lithuania is divided into first-level
-	 counties and second-level municipalities, but since we don't currently have categories for Lithuanian counties,
-	 all municipalities go under [[:Category:Municipalities of Lithuania]] rather than under a category for a specific
-	 county. In addition, even though we do have categories for Japanese prefectures (a first-level division), all
-	 subprefectures (a second-level division) go under [[:Category:Subprefectures of Japan]] because there aren't very
-	 many of them (see below).
-## "Generic placetype" categories, both of the immediate and skip-polity type (immediate
-   [[:Category:Cities in California, USA]] and [[:Category:Neighborhoods of the Bronx]]; skip-polity
-   [[:Category:Villages in Ivory Coast]], [[:Category:Geographic and cultural areas of England]],
-   [[:Category:Rivers in Egypt]] and [[:Category:Places in the Philippines]]). As mentioned above, "generic" placetypes
-   occur in every polity (although the set of generic placetypes allowed for cities is a subset of those allowed for
-   top-level polities and subpolities). Usually these categories use the preposition "in", but sometimes "of". As above,
-   skip-polity categories group immediate categories, and in addition there are various reasons a toponym entry is
-   categorized into a skip-polity category. (For example, as a general rule, geographic and cultural areas only
-   categorize at the country level, not the subpolity level, both because there often aren't very many in a given
-   country and because they often span multiple subpolities.)
-
-The parent categories of a given category depend on its type. Generally, location categories have placetype categories
-as their first parent, and vice-versa. Specifically:
-# Top-level country categories have as their parent e.g. [[:Category:Countries in Europe]],
-  [[:Category:Countries in Central America]] or [[:Category:Countries in Polynesia]], using the most specific
-  continental-level region the country is contained in.
-# Pseudo-countries are under [[:Category:Country-like entities]] as a neutral designation. There aren't enough of them
-  to subcategorize under continent-level regions.
-# Former countries are under [[:Category:Former countries and country-like entities]].
-# Subpolity categories are usually under a placetype category whose placetype is the canonical (first-listed) divtype of
-  the subpolity and whose toponym is the immediately containing polity, but there are exceptions. Specifically,
-  sometimes if a polity has multiple types of subpolities, they are combined (e.g. [[:Category:States and territories of
-  Australia]], [[:Category:Federal subjects of Russia]]). In addition, sometimes a less specific but more identifiable
-  divtype is used instead of the canonical one (e.g. [[:Category:Regions of France]] when the canonical divtype is
-  "administrative region"). The same rules and exceptions generally apply when categorizing subpolities themselves; e.g.
-  both the Australian state of Queensland and territory of Northern Territory go under
-  [[:Category:en:States and territories of Australia]] rather than separately under [[:Category:en:States of Australia]]
-  and [[:Category:en:Territories of Australia]]. In addition, sometimes subpolities may "skip a level" if there aren't
-  very many. For example, there are only 26 subprefectures of Japan (14 under Hokkaido and 12 more scattered under five
-  other prefectures). Rather than have e.g. [[:Category:en:Subprefectures of Kagoshima Prefecture]] containing at most
-  two entries and [[:Category:en:Subprefectures of Miyazaki Prefecture]] containing at most one, they are all grouped
-  under the so-called "skip-subpolity category" [[:Category:en:Subprefectures of Japan]].
-# City categories are always under e.g. [[:Category:Cities in the United States]] (e.g. [[:Category:New York City]] is
-  so-placed, even though [[:Category:Cities in New York, USA]] exists). However, they may have a second, more-specific
-  parent (e.g. [[:Category:Cities in New York, USA]] in the case of New York City). The city entries themselves will
-  go under the more specific parent if it exists.
-# Immediate placetype categories for second-level divisions of a country generally have, respectively, a
-  "toponym parent" that is the toponym mentioned in the category and a "skip-polity parent" that groups all subpolity
-  placetype categories of a specific type and containing polity. For example, [[:Category:Counties of Arizona, USA]] has
-  toponym parent [[:Category:en:Arizona, USA]] and skip-polity parent [[:Category:en:Counties of the United States]].
-  Sometimes the default skip-polity parent is overridden or disabled entirely. For example, in the US, most states are
-  divided into counties but Louisiana is divided into parishes and Alaska into boroughs. It would make no sense to put
-  [[:Category:Parishes of Louisiana, USA]] under [[:Category:Parishes of the United States]] (which would only have one
-  subcategory), so we include them under [[:Category:Counties of the United States]]. An alternative would be to name
-  the skip-polity category to explicitly include parishes and boroughs; this would get awkward here but is done in some
-  cases. Similarly, [[:Category:Regional county municipalities of Quebec]] is placed under
-  [[:Category:Regional municipalities of Canada]] since that name is used in other provinces. Meanwhile,
-  [[:Category:Regional districts of British Columbia]] disables its skip-polity category since no other province or
-  territory of Canada has regional districts or comparable subpolities under a different name (an alternative would be
-  to place them under [[:Category:Counties of Canada]], since they are sort of comparable to counties).
-# Placetype categories for first-level divisions of a country similarly (e.g. [[:Category:States of the United States]])
-  have a toponym parent (in this case [[:Category:United States]]), but in place of the skip-polity parent they have two
-  other parents: a "bare placetype" parent (in this case [[:Category:States]]) and the "generic" parent
-  [[:Category:Political divisions of specific countries]]. (There is also a bare [[:Category:Political divisions]]
-  that groups "bare placetype" categories.) Skip-polity placetype categories for second-level divisions of a country
-  (e.g. [[:Category:Counties of the United States]]) work the same. Placetype categories for countries work likewise
-  except they are missing the generic parent.
-
 ===Location group tables===
 
 The bulk of the data in this module (after some helper functions and placetype tables) describes the known locations
 and their relationships. The main location table is called `export.locations` and is a list of ''location groups'', each
 of which describes a set of related known locations, as described above.
 
-====OUT OF DATE DOCUMENTATION (polity group tables)====
+====OUT OF DATE DOCUMENTATION (location group tables)====
 
-The following tables specify the known polities and their properties, where a polity is either a top-level political
-division (e.g. a country) or a subpolity (political division of a top-level polity). Polities are gathered into
+The following tables specify the known locations and their properties, where a location is either a top-level polity
+(e.g. a country) or a subpolity (political division of a top-level location). Locations are gathered into
 ''groups'', each of which contains several items (places) that are handled similarly. Each group contains a list of all
 the places contained in that group along with their properties, as well as group-specific handlers that specify common
 properties of all items in the group. These items are used to construct the category description objects (i.e. the
@@ -275,25 +53,12 @@ objects that describe how to format the display of a category page, as documente
    [[:Category:zh:Regions of the United States]]). These are controlled by the `poldiv` (for political divisions) and
    `miscdiv` (for historic/popular divisions) keys in the data for a given item.
 
-NOTE: Second-level political divisions (e.g. counties of states of the US) could be handled here but normally aren't.
-Instead, there are special handlers below for US counties and Brazilian and Philippine municipalities, and
-manually-created labels for certain other countries (e.g. Canadian counties). The reason for this is that all political
-and historic/popular divisions handled here have a category like [[:Category:en:Political divisions]] as their
-primary parent, whereas we often want a different primary parent for second-level political divisions, such as
-[[:Category:en:Counties of the United States]] for US counties. FIXME: We should allow the parents to be specified for
-political divisions. This will probably necessitate another type of group-specific handler, similar to
-`make_bare_label` (see below).
-
-NOTE: Some of the above categories are added automatically to pages that use the {{tl|place}} template with the appropriate
-values. Currently, whether or not such categories are added is controlled by [[Module:place/data]], which is independent
-of the data here but in many ways duplicates it. FIXME: The two should be merged.
-
 NOTE: There is also some duplication in [[Module:category tree/topic cat/data/Earth]], particularly for continents and
 supranational regions (e.g. "the British Isles"). FIXME: Consolidate the data there into here.
 
 Each group consists of a table with the following keys:
 
-* `data`: This is a table listing the polities in the group. The keys are polities in the form that they appear in a
+* `data`: This is a table listing the locations in the group. The keys are locations in the form that they appear in a
   category like [[:Category:de:Provinces of the Netherlands]] or [[:Category:fr:Cities in Alabama, USA]] (hence, they
   should include prefixes such as "the" and suffixes such as ", USA"). The value of a key is a property table. Its
   format is described above under "Placename Tables".
@@ -305,7 +70,7 @@ Each group consists of a table with the following keys:
   "the [[Riau Islands]]", in holonyms as "p/Riau Islands" and as an entry under [[Riau Islands]]). Most commonly, this
   uses the `chop` function to chop off some portion of the key. The return value is either a string (the placename) or a
   two-item list consisting of (respectively) the "full" placename and "elliptical" placename. The distinction between
-  full and elliptical placenames is only used for certain sorts of polities such as counties in Ireland and Northern
+  full and elliptical placenames is only used for certain sorts of locations such as counties in Ireland and Northern
   Ireland, which traditionally have the word "County" before them (e.g. "County Durham") and appear as entries in
   Wiktionary in this form. When there is both a full form and an elliptical form, the full form will be used in the
   category description, while both types of forms will be recognized in holonyms for categorization purposes. If the
@@ -326,99 +91,96 @@ Each group consists of a table with the following keys:
   "the" in them, and the returned keys should likewise not include "the". Calling code will check for actual keys that
   are either identical to the returned keys or match once "the" is prepended.
 
-* `make_bare_label`: This function adds an entry in the `labels` table for
-  [[Module:category tree/topic cat/data/Places]] for bare topical categories such as [[:Category:en:Netherlands]],
-  [[:Category:fr:Alabama, USA]] or [[:Category:ru:Republic of Tatarstan]]. It is passed four arguments (the `labels`
-  table, the group and the key and value of the data item). There are preconstructed functions to help here, such as
-  simple_polity_make_bare_label() (for top-level polities) and subpolity_make_bare_label() (for subpolities of
-  top-level polities). This function often makes use of the `parents` and/or `description` keys in the data item's
-  value (see above).
-
 * `default_divtype`: The default location type for locations in this group, if not overidden at the location level. See
   `divtype` above under "Placename Tables".
 
-====OUT OF DATE DOCUMENTATION (polity division tables)====
+====OUT OF DATE DOCUMENTATION (location division tables)====
 
-Each of the following tables specifies a group of polities with common properties (e.g. the states of the US). Each
-table is associated with a polity "group" (an entry in `export.locations`), which contains handlers specifying how to
+Each of the following tables specifies a group of locations with common properties (e.g. the states of the US). Each
+table is associated with a location "group" (an entry in `export.locations`), which contains handlers specifying how to
 process the data tables and also a pointer to the relevant table. The data is used as follows:
 
-1. To generate the text of the bare topical categories directly associated with each polity, such as
+1. To generate the text of the bare topical categories directly associated with each location, such as
    [[:Category:Netherlands]], [[:Category:Alabama, USA]] or [[:Category:Amazonas, Brazil]], and per-language
    variants such as [[:Category:de:Netherlands]], [[:Category:es:Alabama, USA]] or [[:Category:pt:Amazonas, Brazil]].
    These categories (and all placename categories) are found in the ''topic cat subsystem'' of the category system;
    see [[Module:category tree/topic cat/data]] for more information.
-2. To generate the text of topical categories for cities/towns/rivers/etc. in a given polity, e.g.
+2. To generate the text of topical categories for cities/towns/rivers/etc. in a given location, e.g.
    [[:Category:Cities in Alabama, USA]] for cities in Alabama, and per-language variants such as
    [[:Category:fr:Cities in Alabama, USA]] for French terms for cities in Alabama.
-3. To generate the text of topical categories for political divisions of a given polity, e.g.
+3. To generate the text of topical categories for political divisions of a given location, e.g.
    [[:Category:Provinces of the Netherlands]], [[:Category:Counties of Alabama]] or
    [[:Category:Municipalities of Amazonas, Brazil]], along with per-language variants such as
    [[:Category:de:Provinces of the Netherlands]], [[:Category:es:Counties of Alabama]] or
    [[:Category:pt:Municipalities of Amazonas, Brazil]].
 4. To add pages to all the above types of categories when a call to {{tl|place}} on that page
-   references the polity, such as by a template call {{tl|place|en|city|state/Alabama}} (which will
+   references the location, such as by a template call {{tl|place|en|city|state/Alabama}} (which will
    add the page to [[:Category:en:Cities in Alabama, USA]]).
 
 Uses #1, #2 and #3 are controlled by [[Module:category tree/topic cat/data/Places]].
 Use #4 is controlled by [[Module:place/data]].
 
-The keys of each table are the polity names in the form they will appear in a category like
-[[:Category:de:Provinces of the Netherlands]] or [[:Category:fr:Cities in Alabama, USA]] (hence, they should include
-prefixes such as "the" and suffixes such as ", USA"). Transforming these keys to the form that appears in the bare
-topical category (e.g. [[:Category:de:Netherlands]]), in category parents and/or in descriptions can be done using the
-`make_bare_label` key (see `export.locations` below).
-	 
-The value of an item in each table is itself a table. This table contains properties describing the polity in question.
+The keys of each table are the location names in the form they will appear in bare categories, such as
+[[:Category:de:Netherlands]] or [[:Category:fr:Alabama, USA]]. Hence they should include suffixes such as `, USA`.
+However, they should not include the word `the` beforehand, which appears before some some locations when preceded by a
+placename, but not other locations (e.g. [[:Category:de:Provinces of the Netherlands]] but
+[[:Category:fr:Cities in Alabama, USA]]); this is controlled by the setting `the = true` in the location data.
+
+The value of an item in each table is itself a table. This table contains properties describing the location in question.
 Note that before being used (e.g. to generate the contents of a category page like [[:Category:en:Cities in Ireland]]
 or [[:Category:de:Provinces of the Netherlands]] of to specify how to add the relevant categories to a page with a call
 to {{tl|place}}), the table is passed through `initialize_spec`. That function augments the property table with 
 additional properties that are common to the group or derivable from group-specific properties. The following are the
 properties most commonly specified (additional properties are sometimes attached to entries in specific groups):
 
-- `divtype`: String specifying the type of polity or subpolity (e.g. "country", "state", province"). This can also be a
+* `divtype`: String specifying the type of polity or subpolity (e.g. "country", "state", province"). This can also be a
   table of such types; in this case, the first listed type is the canonical type that will be used in descriptions, but
-  the polity will be recognized (e.g. in {{tl|place}} arguments) when tagged with any of the specified types. This value
+  the location will be recognized (e.g. in {{tl|place}} arguments) when tagged with any of the specified types. This value
   overrides the group-level `default_divtype` value, and only needs to be specified if it disagrees with that value.
-
-- `poldiv`: List of recognized political divisions; e.g. for the Netherlands, a specification of the form
+* `poldiv`: List of recognized political divisions; e.g. for the Netherlands, a specification of the form
   'poldiv = {"provinces", "municipalities"}' will allow categories such as [[:Category:de:Provinces of the Netherlands]]
   and [[:Category:pt:Municipalities of the Netherlands]] to be created. These categories have a primary parent
   [[:Category:LANGCODE:Political divisions]] (i.e. this is the parent that appears in the breadcrumbs at the top of the
-  category page), and have the containing polity, if any (see `container` below) as an additional parent. Any political
+  category page), and have the containing location, if any (see `container` below) as an additional parent. Any political
   division that appears here must also be listed in the `political_divisions` list, which tells how to convert the
   pluralized political division into the equivalent linked description. (If not listed, an error occurs.)
 
-- `miscdiv`: List of recognized historical/popular divisions; e.g. for Ireland, a specification of the form
+* `miscdiv`: List of recognized historical/popular divisions; e.g. for Ireland, a specification of the form
   'miscdiv = {"provinces"}' will allow categories such as [[:Category:pl:Provinces of Ireland]] to be created. These
   categories differ from political division categories in that their primary parent is the country name rather than
   [[:Category:LANGCODE:Political divisions]].
-
-- `is_city`: If 'true', don't recognize or generate categories such as [[:Category:en:Cities in Monaco]] (specifically,
+* `is_city`: If 'true', don't recognize or generate categories such as [[:Category:en:Cities in Monaco]] (specifically,
   for place types in `generic_placetypes` but not in `generic_placetypes_for_cities`).
-
-- `is_former_place`: If 'true', don't recognize or generate categories such as
+* `is_former_place`: If 'true', don't recognize or generate categories such as
   [[:Category:fr:Rivers in the Soviet Union]] (specifically, for any place type in `generic_placetypes` other than
   "places").
-  
-- `keydesc`: String directly specifying a description of the polity, for use in generating the contents of category
-  pages related to the polity. descriptions.
-
-- `parents`: List of parents of the bare topical category. For example, if 'parents = {"Europe", "Asia"}' is specified
+* `keydesc`: String directly specifying a description of the location, for use in generating the contents of category
+  pages related to the location. descriptions.
+* `parents`: List of parents of the bare topical category. For example, if 'parents = {"Europe", "Asia"}' is specified
   for "Turkey", bare topical categories such as [[:Category:en:Turkey]] will have parent categories
   [[:Category:en:Europe]] and [[:Category:en:Asia]]. The first listed category is used for the primary parent (i.e. this
   is the parent that appears in the breadcrumbs at the top of the category page). In this case, for example, "Europe"
-  (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level polities (countries and
+  (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level locations (countries and
   such), not for subpolities (states, provinces, etc.), which use the value of `container` (see below) as the
   parent.
-
-- `container`: This specifies the larger polity in which the subpolity is contained, and is used to construct the
+* `container`: This specifies the larger location in which the subpolity is contained, and is used to construct the
   primary parent of 'Cities in ...', 'Rivers in ...' and similar categories. For example, the subpolity Guangdong (a
   province of China) will have "China" as the `container`, so that a category of the form
   [[:Category:en:Cities in Guangdong]] will have its primary parent (i.e. the parent that appears in the breadcrumbs at
   the top of the category page) as [[:Category:en:Cities in China]]. If `container` is omitted, as in top-level
-  polities, the primary parent will simply be e.g. [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
-
+  locations, the primary parent will simply be e.g. [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
+* `wp`: Spec describing how to construct the Wikipedia article for the city. Each spec is either `true` (equivalent to
+  `"%l"`, i.e. use the full location placename directly) or a string containing formatting directives, indicating how to
+  construct the article name. The allowed formatting directives are `%l` (the full location placename), `%e` (the
+  elliptical location placename) and `%c` (the full placename of the first immediate container). For example, the value
+  of `wp` for the group of United States cities is `"%l, %c"` since the city articles tend to be named e.g.
+  `Austin, Texas` (but with many exceptions, specified using `wp` fields at the city level). The default is `true`.
+* `wpcat`: Spec describing how to construct the Wikipedia category page for the city (i.e. the page listing articles and
+  categories relevant to the city). The format is the same as with `wp`, and it defaults to the value of `wp`. It rarely
+  needs to be specified because the category page and the article page almost always follow the same format.
+* `commonscat`: Spec describing how to construct the Commons category page for the city (i.e. the page on the MediaWiki
+  Commons site listing articles and categories relevant to the city). It has the same format as `wp` and `wpcat` and
+  defaults to `wpcat`, which is usually (but not always) correct.
 ]==]
 
 -----------------------------------------------------------------------------------
@@ -473,12 +235,12 @@ function export.get_prefixed_key(key, spec)
 end
 
 --[==[
-Call the polity group's `key_to_placename` function if it exists (see the description of the `key_to_placename`
-function in the long comment just below the heading `"Polities"`). If there is no such function (i.e. for this group,
-keys and placenames are the same), the key is returned unchanged as both the full and elliptical placename. Otherwise
-two values are returned, the full and elliptical placenames (e.g. full `"County Durham"` vs. elliptical `"Durham"`).
+Call the location group's `key_to_placename` function if it exists (see the comment at the top of [[Module:place]] for
+the distinction between keys and placenames). Two values are returned, the full and elliptical placenames (e.g. full
+`"County Durham"` vs. elliptical `"Durham"`). If the group does not define `key_to_placename`, both full and elliptical
+placenames are computed by chopping off anything starting with a comma.
 ]==]
-function export.call_key_to_placename(group, key)
+function export.key_to_placename(group, key)
 	if group.key_to_placename then
 		local full_placename, elliptical_placename = group.key_to_placename(key)
 		if type(full_placename) ~= "string" then
@@ -489,7 +251,38 @@ function export.call_key_to_placename(group, key)
 		end
 		return full_placename, elliptical_placename
 	end
+	key = key:gsub(",.*", "")
 	return key, key
+end
+
+--[==[
+Call the location group's `placename_to_key` function if it exists (see the comment at the top of [[Module:place]] for
+the distinction between keys and placenames) and return the result. If `placename_to_key` exists with the value `false`,
+return the placename unchanged. If the group does not define `placename_to_key`, and it defines a `default_container`
+whose divtype is either `country` or `constituent country`, the container name is appended to the placename after a
+comma and a space. Otherwise the placename is returned unchanged.
+]==]
+function export.placename_to_key(group, placename)
+	if group.placename_to_key == false then
+		return placename
+	elseif group.placename_to_key then
+		local key = group.placename_to_key(placename)
+		if type(key) ~= "string" then
+			internal_error("Placename %s returned a non-string key: %s", placename, key)
+		end
+		return key
+	else
+		local defcon = group.default_container
+		if not defcon then
+			return placename
+		elseif type(defcon) == "string" then
+			return placename .. ", " .. defcon
+		elseif type(defcon) == "table" and (defcon.divtype == "country" or defcon.divtype == "constituent country") then
+			return placename .. ", " .. defcon.name
+		else
+			return placename
+		end
+	end
 end
 
 --[==[
@@ -533,6 +326,9 @@ function export.initialize_spec(group, key, spec)
 	spec.keydesc = spec.keydesc or group.default_keydesc
 	spec.overriding_bare_label_parents =
 		spec.overriding_bare_label_parents or group.default_overriding_bare_label_parents
+	spec.wp = spec.wp or group.default_wp
+	spec.wpcat = spec.wpcat or group.default_wpcat
+	spec.commonscat = spec.commonscat or group.default_commonscat
 	local function boolean_with_default(val, default_val)
 		if val == nil then
 			return default_val
@@ -541,6 +337,7 @@ function export.initialize_spec(group, key, spec)
 		end
 	end
 	spec.british_spelling = boolean_with_default(spec.british_spelling, group.default_british_spelling)
+	spec.the = boolean_with_default(spec.the, group.default_the)
 	spec.no_container_cat = boolean_with_default(spec.no_container_cat, group.default_no_container_cat)
 	spec.no_auto_augment_container = boolean_with_default(spec.no_auto_augment_container,
 		group.default_no_auto_augment_container)
@@ -556,17 +353,44 @@ end
 Given a location group, key and possible placetypes that the placename must match, check if the key exists in the group
 with at least one of the group's key's placetypes matching one of the passed-in placetypes. If so, return two values:
 the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding spec object,
-which (as with all functions that return spec objects) has been initialized using `initialize_spec()`. This is a
-low-level function meant for internal use; external callers should generally use `get_matching_location` (for
+which (as with all functions that return spec objects) has been initialized using `initialize_spec()`.
+`alias_resolution` specifies whether to resolve aliases. If nil, unspecified or {"all"}, resolve both display and
+category aliases. If {"display"}, resolve only display aliases. If {"none"}, don't resolve aliases.
+
+This is a low-level function meant for internal use; external callers should generally use `get_matching_location` (for
 internally-derived locations), `find_matching_holonym_location` (for externally-derived locations) or
 `find_canonical_key` (for known-canonical locations where the placetype isn't known).
 ]=]
-local function find_matching_key_in_group(group, placetypes, key)
+local function find_matching_key_in_group(group, placetypes, key, alias_resolution)
+	if alias_resolution ~= nil and alias_resolution ~= "none" and alias_resolution ~= "display" and
+		alias_resolution ~= "all" then
+		internal_error("Bad value for 'alias_resolution': %s", alias_resolution)
+	end
 	-- FIXME: This should handle aliases.
 	local spec = group.data[key]
 	if not spec then
 		return nil
 	end
+	if spec.alias_of then
+		if alias_resolution == "none" then
+			mw.log(('Found key %s with alias %s, but alias_resolution == "none"; disallowing resolution'):format(key,
+				spec.alias_of))
+		elseif not spec.display and alias_resolution == "display" then
+			mw.log(('Found key %s with alias %s, but alias_resolution == "display" and `display = true` is not set; ' ..
+				"disallowing resolution"):format(key, spec.alias_of))
+		else
+			local resolved_key = spec.alias_of
+			spec = group.data[resolved_key]
+			if not spec then
+				internal_error("Key %s is an alias of %s, which doesn't exist", key, resolved_key)
+			elseif spec.alias_of then
+				internal_error("Key %s is an alias of %s, which is itself an alias; indirect aliasing not allowed",
+					key, resolved_key)
+			end
+			key = resolved_key
+		end
+	end
+
 	-- We could be working with non-initialized/defaulted spec, since we're pulling it directly from the group.
 	local divtype = spec.divtype or group.default_divtype
 	if not divtype then
@@ -591,18 +415,15 @@ Given a location group, placename and possible placetypes that the placename mus
 in the group with at least one of the placetypes of the key in the group that corresponds to the placename matching one
 of the passed-in placetypes. If so, return two values: the key corrsponding to the passed-in placename and the
 corresponding spec object. This is similar to `find_matching_key_in_group()` but works with placenames rather than keys.
+`alias_resolution` is as in `find_matching_key_in_group()`.
+
 This is a low-level function meant for internal use; external callers should generally use `get_matching_location` (for
 internally-derived locations), `find_matching_holonym_location` (for externally-derived locations) or
 `find_canonical_key` (for known-canonical locations where the placetype isn't known).
 ]=]
-local function find_matching_placename_in_group(group, placetypes, placename)
-	local key
-	if group.placename_to_key then
-		key = group.placename_to_key(placename)
-	else
-		key = placename
-	end
-	return find_matching_key_in_group(group, placetypes, key)
+local function find_matching_placename_in_group(group, placetypes, placename, alias_resolution)
+	local key = export.placename_to_key(group, placename)
+	return find_matching_key_in_group(group, placetypes, key, alias_resolution)
 end
 
 --[==[
@@ -892,204 +713,6 @@ function export.construct_linked_placename(spec, placename, display_form)
 		linked_placename = "the " .. linked_placename
 	end
 	return linked_placename
-end
-
---[==[
-Construct an appropriately linked location based on the full or elliptical placename, preceded by `"the "`` if
-appropriate. Specifically:
-
-Fetch the full and elliptical_placenames. If they are the same, just link to the placename directly. Otherwise, check if
-the full placename exists; if so link to it. Otherwise, if the elliptical placename exists, link to it but display it as
-the full placename. Finally, if neither full placename nor elliptical placename exists, fall back to linking to the full
-placename. That way, we prefer full placenames to elliptical placenames if both or neither exist as Wiktionary entries,
-but if only one exists, we link to that one rather than have a red link.
-]==]
-function export.construct_linked_location(group, key, spec)
-	local full_placename, elliptical_placename = export.call_key_to_placename(group, key)
-	local linked_placename
-	if elliptical_placename ~= full_placename then
-		local full_placename_title = mw.title.new(full_placename)
-		if full_placename_title and full_placename_title.exists then
-			linked_placename = export.construct_linked_placename(spec, full_placename)
-		else
-			local elliptical_placename_title = mw.title.new(elliptical_placename)
-			if elliptical_placename_title and elliptical_placename_title.exists then
-				linked_placename = export.construct_linked_placename(spec, elliptical_placename, full_placename)
-			end
-		end
-	end
-	return linked_placename or export.construct_linked_placename(spec, full_placename)
-end
-
-local function fetch_primary_divtype(key, spec)
-	local divtype = spec.divtype
-	if type(divtype) == "table" then
-		divtype = divtype[1]
-	end
-	if not divtype then
-		internal_error("No divtype specified or defaulted for key %s, spec %s", key, spec)
-	end
-	return divtype
-end
-
---[==[
-Construct the description of a location, including its container trail either to the end or until we encounter a
-`no_include_container_in_desc` setting. For example, for the city of [[Birmingham]], the description will read
-`"[[Birmingham]], a [[city]] in the [[West Midlands]], which is a [[county]] of [[England]], which is a
-[[constituent country]] of the [[United Kingdom]], which is a [[country]] in [[Europe]]"`. FIXME: Possibly we should
-adopt the way city descriptions used to read, which was similar to `"the city of [[Birmingham]], in the county of the
-[[West Midlands]], in the [[constituent country]] of [[England]], in the [[country]] of the [[United Kingdom]], in
-[[Europe]]"`.
-]==]
-function export.construct_location_description(group, key, spec, m_data)
-	local parts = {}
-	local function ins(txt)
-		insert(parts, txt)
-	end
-	ins(export.construct_linked_location(group, key, spec))
-	local first_container = true
-	local containers = {{group = group, key = key, spec = spec}}
-	local container_iterator = export.iterate_containers(group, key, spec)
-	while true do
-		local include_container_in_desc = false
-		for _, container in ipairs(containers) do
-			if not container.spec.no_include_container_in_desc then
-				include_container_in_desc = true
-				break
-			end
-		end
-		if not include_container_in_desc then
-			break
-		end
-		local next_containers = next(container_iterator)
-		if not next_containers then
-			break
-		end
-		local is_former = nil
-		for _, container in ipairs(containers) do
-			local this_is_former = container.spec.is_former_place
-			if is_former == nil then
-				is_former = this_is_former
-			elseif is_former ~= this_is_former then
-				internal_error("When processing container trail of key %s, found a mixture of former and non-former " ..
-					"containers: %s", key, containers)
-			end
-		end
-
-		if #containers > 1 then
-			local divtypes = {}
-			local prepositions = {}
-			for _, container in ipairs(containers) do
-				local container_type = fetch_primary_divtype(container.key, container.spec)
-				m_table.insertIfNot(divtypes, m_data.pluralize_placetype(container_type))
-				m_table.insertIfNot(divtypes, m_data.get_placetype_entry_preposition(container_type))
-			end
-			if first_container then
-				ins(", ")
-			else
-				ins(", which are ")
-			end
-			if is_former then
-				ins("former ")
-			end
-			ins(m_table.serialCommaJoin(divtypes))
-			ins(" ")
-			ins(concat(prepositions, "/"))
-		else
-			if first_container then
-				ins(", ")
-			else
-				ins(", which is ")
-			end
-			local container_type = fetch_primary_divtype(containers[1].key, containers[1].spec)
-			if is_former then
-				ins("a former ")
-			else
-				ins(m_data.get_placetype_article(container_type))
-				ins(" ")
-			end
-			ins(container_type)
-			ins(" ")
-			ins(m_data.get_placetype_entry_preposition(container_type))
-		end
-		first_container = false
-		containers = next_containers
-		local container_locations = {}
-		for _, container in ipairs(containers) do
-			insert(container_locations, export.construct_linked_location(container.group, container.key,
-				container.spec))
-		end
-		ins(m_table.serialCommaJoin(container_locations))
-	end
-
-	return concat(parts)
-end
-
-function export.make_bare_placename_cat_spec(group, key, spec, m_data)
-	-- wp= defaults to true (Wikipedia article matches bare key = label)
-	local wp = spec.wp
-	if wp == nil then
-		wp = true
-	end
-	-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons category
-	-- generally follow)
-	local wpcat = spec.wpcat
-	if wpcat == nil then
-		wpcat = wp
-	end
-	-- commonscat= defaults to wpcat= (if Wikipedia category has its own name, Commons category generally follows)
-	local commonscat = spec.commonscat
-	if commonscat == nil then
-		commonscat = wpcat
-	end
-	local parents = {}
-	local bare_label_parents = spec.overriding_bare_label_parents
-	local container_iterator = export.iterate_containers(group, key, spec)
-	local containers = next(container_iterator)
-	if not bare_label_parents then
-		bare_label_parents = {"+++"}
-	end
-	local inserted_containers = false
-	for _, parent in ipairs(bare_label_parents) do
-		if parent = "+++" then
-			local location_type = fetch_primary_divtype(key, spec)
-			div_parent_type = m_data.pluralize_placetype(divtype)
-			parent = ("%s %s CONTAINER"):format(m_data.pluralize_placetype(location_type),
-				m_data.get_placetype_entry_preposition(location_type))
-		end
-		if parent:find("CONTAINER") then
-			for _, container in ipairs(containers) do
-				local prefixed_key = export.get_prefixed_key(container.key, container.spec)
-				m_table.insertIfNot(parents, parent:gsub("CONTAINER",
-					require(string_utilities_module).replacement_escape(prefixed_key)))
-			end
-			inserted_containers = true
-		else
-			m_table.insertIfNot(parents, parent)
-		end
-	end
-	if not inserted_containers then
-		-- If we didn't insert the containers above in some form, insert them now as bare categories. Note that this may
-		-- be different categories from the container categories inserted above.
-		for _, container in ipairs(containers) do
-			m_table.insertIfNot(parents, container.key)
-		end
-	end
-	if spec.addl_parents then
-		for _, parent in ipairs(spec.addl_parents) do
-			m_table.insertIfNot(parents, parent)
-		end
-	end
-	local description = "{{{langname}}} terms related to the people, culture, or territory of " ..
-		(spec.keydesc or export.construct_location_description(group, key, spec, m_data)) .. "."
-	return {
-		type = "topic",
-		description = description,
-		parents = parents,
-		wp = wp,
-		wpcat = wpcat,
-		commonscat = commonscat,
-	}
 end
 
 --[=[
@@ -2001,8 +1624,6 @@ export.australia_states_and_territories = {
 
 -- states and territories of Australia
 export.australia_group = {
-	key_to_placename = make_key_to_placename(", Australia$"),
-	placename_to_key = make_placename_to_key(", Australia"),
 	default_container = "Australia",
 	default_divtype = "state",
 	default_div_parent_type = "states and territories",
@@ -2016,17 +1637,15 @@ export.austria_states = {
 	["Lower Austria, Austria"] = {},
 	["Upper Austria, Austria"] = {},
 	["Styria, Austria"] = {},
-	["Tyrol, Austria"] = {},
+	["Tyrol, Austria"] = {wp = "Tyrol (state)"},
 	["Carinthia, Austria"] = {},
-	["Salzburg, Austria"] = {},
+	["Salzburg, Austria"] = {wp = "Salzburg (state)"},
 	["Vorarlberg, Austria"] = {},
 	["Burgenland, Austria"] = {},
 }
 
 -- states of Austria
 export.austria_group = {
-	key_to_placename = make_key_to_placename(", Austria$"),
-	placename_to_key = make_placename_to_key(", Austria"),
 	default_container = "Austria",
 	default_divtype = "state",
 	default_british_spelling = true,
@@ -2057,13 +1676,13 @@ export.bangladesh_group = {
 }
 
 export.brazil_states = {
-	["Acre, Brazil"] = {},
+	["Acre, Brazil"] = {wp = "%l (state)"},
 	["Alagoas, Brazil"] = {},
 	["Amapá, Brazil"] = {},
-	["Amazonas, Brazil"] = {},
+	["Amazonas, Brazil"] = {wp = "%l (Brazilian state)"},
 	["Bahia, Brazil"] = {},
 	["Ceará, Brazil"] = {},
-	["Distrito Federal, Brazil"] = {},
+	["Distrito Federal, Brazil"] = {wp = "Federal District (Brazil)"},
 	["Espírito Santo, Brazil"] = {},
 	["Goiás, Brazil"] = {},
 	["Maranhão, Brazil"] = {},
@@ -2072,24 +1691,22 @@ export.brazil_states = {
 	["Minas Gerais, Brazil"] = {},
 	["Pará, Brazil"] = {},
 	["Paraíba, Brazil"] = {},
-	["Paraná, Brazil"] = {},
+	["Paraná, Brazil"] = {wp = "%l (state)"},
 	["Pernambuco, Brazil"] = {},
 	["Piauí, Brazil"] = {},
-	["Rio de Janeiro, Brazil"] = {},
+	["Rio de Janeiro, Brazil"] = {wp = "%l (state)"},
 	["Rio Grande do Norte, Brazil"] = {},
 	["Rio Grande do Sul, Brazil"] = {},
 	["Rondônia, Brazil"] = {},
 	["Roraima, Brazil"] = {},
-	["Santa Catarina, Brazil"] = {},
-	["São Paulo, Brazil"] = {},
+	["Santa Catarina, Brazil"] = {wp = "%l (state)"},
+	["São Paulo, Brazil"] = {wp = "%l (state)"},
 	["Sergipe, Brazil"] = {},
 	["Tocantins, Brazil"] = {},
 }
 
 -- states of Brazil
 export.brazil_group = {
-	key_to_placename = make_key_to_placename(", Brazil$"),
-	placename_to_key = make_placename_to_key(", Brazil"),
 	default_container = "Brazil",
 	default_divtype = "state",
 	default_poldiv = "municipalities",
@@ -2129,8 +1746,6 @@ export.canada_provinces_and_territories = {
 
 -- provinces and territories of Canada
 export.canada_group = {
-	key_to_placename = make_key_to_placename(", Canada$"),
-	placename_to_key = make_placename_to_key(", Canada"),
 	default_container = "Canada",
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
@@ -2166,7 +1781,7 @@ export.china_provinces_and_autonomous_regions = {
 	["Shanxi, China"] = {},
 	["Sichuan, China"] = {},
 	["Tianjin, China"] = {divtype = {"direct-administered municipality", "municipality"}},
-	["Tibet, China"] = {divtype = "autonomous region"},
+	["Tibet, China"] = {divtype = "autonomous region", wp = "Tibet Autonomous Region"},
 	["Xinjiang, China"] = {divtype = "autonomous region"},
 	["Yunnan, China"] = {},
 	["Zhejiang, China"] = {},
@@ -2174,8 +1789,6 @@ export.china_provinces_and_autonomous_regions = {
 
 -- provinces and autonomous regions of China
 export.china_group = {
-	key_to_placename = make_key_to_placename(", China$"),
-	placename_to_key = make_placename_to_key(", China"),
 	default_container = "China",
 	default_divtype = "province",
 	default_poldiv = {"prefecture-level cities", "county-level cities", "districts"},
@@ -2234,7 +1847,7 @@ export.china_prefecture_level_cities = {
 	["Qingdao"] = {container = "Shandong"}, -- 10.1 prefectural, 7.1 urban; sub-provincial city
 	["Changsha"] = {container = "Hunan"}, -- 10.0 prefectural, 6.0 urban
 	["Harbin"] = {container = "Heilongjiang"}, -- 10.0 prefectural, 7.0 urban; sub-provincial city
-	["Nanyang"] = {container = "Henan"}, -- 9.7 prefectural, 2.1 urban/metro
+	["Nanyang"] = {container = "Henan", wp = "%l, %c"}, -- 9.7 prefectural, 2.1 urban/metro
 	["Wenzhou"] = {container = "Zhejiang"}, -- 9.6 prefectural, 3.6 urban
 	["Foshan"] = {container = "Guangdong"}, -- 9.5 prefectural, 9.5 urban
 	["Handan"] = {container = "Hebei"}, -- 9.4 prefectural, 2.8 urban
@@ -2243,7 +1856,7 @@ export.china_prefecture_level_cities = {
 	["Hefei"] = {container = "Anhui"}, -- 9.4 prefectural, 4.2 urban
 	["Nanjing"] = {container = "Jiangsu"}, -- 9.3 prefectural, 9.3 urban; sub-provincial city
 	-- includes Láiwú city
-	["Jinan"] = {container = "Shandong"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city
+	["Jinan"] = {container = "Shandong", wp = "%l, %c"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city
 	["Xuzhou"] = {container = "Jiangsu"}, -- 9.1 prefectural, 2.6 urban
 	["Shenyang"] = {container = "Liaoning"}, -- 9.1 prefectural, 7.9 urban; sub-provincial city
 	["Changchun"] = {container = "Jilin"}, -- 9.1 prefectural, 5.7 urban; sub-provincial city
@@ -2255,7 +1868,7 @@ export.china_prefecture_level_cities = {
 	["Kunming"] = {container = "Yunnan"}, -- 8.5 prefectural, 6.0 urban
 	["Jining"] = {container = "Shandong"}, -- 8.4 prefectural, 1.5 urban
 	["Fuzhou"] = {container = "Fujian"}, -- 8.3 prefectural, 4.1 urban
-	["Fuyang"] = {container = "Anhui"}, -- 8.2 prefectural, 2.1 urban
+	["Fuyang"] = {container = "Anhui", wp = "%l, %c"}, -- 8.2 prefectural, 2.1 urban
 	["Shangqiu"] = {container = "Henan"}, -- 7.8 prefectural, 1.9 urban (2.8 metro)
 	["Nantong"] = {container = "Jiangsu"}, -- 7.7 prefectural, 2.3 urban
 	["Tangshan"] = {container = "Hebei"}, -- 7.7 prefectural, 3.4 urban
@@ -2272,7 +1885,7 @@ export.china_prefecture_level_cities = {
 	["Bijie"] = {container = "Guizhou"}, -- 6.9 prefectural, ? urban, ? metro (not listed in Wikipedia)
 	["Yancheng"] = {container = "Jiangsu"}, -- 6.7 prefectural, 1.6 urban
 	["Hengyang"] = {container = "Hunan"}, -- 6.6 prefectural, 1.5 urban
-	["Taizhou"] = {container = "Zhejiang"}, -- 6.6 prefectural, 1.6 urban
+	["Taizhou"] = {container = "Zhejiang", wp = "%l, %c"}, -- 6.6 prefectural, 1.6 urban
 	["Zunyi"] = {container = "Guizhou"}, -- 6.6 prefectural, 2.4 urban/metro
 	["Shaoyang"] = {container = "Hunan"}, -- 6.6 prefectural, 802,000 urban, 1.4 metro
 	["Shangrao"] = {container = "Jiangxi"}, -- 6.5 prefectural, 2.1 urban, 1.3 metro [sic]
@@ -2297,7 +1910,7 @@ export.china_prefecture_level_cities = {
 	["Lanzhou"] = {container = "Gansu"}, -- 4.359 prefectural, 3.1 urban
 	["Liuzhou"] = {container = {name = "Guangxi", divtype = "autonomous region"}}, -- 4.157 prefectural, 2.2 urban
 	["Ürümqi"] = {container = {name = "Xinjiang", divtype = "autonomous region"}}, -- 4.054 prefectural, 4.3 urban
-	["Urumqi"] = {alias_of = "Ürümqi"},
+	["Urumqi"] = {alias_of = "Ürümqi", display = true},
 	["Hohhot"] = {container = {name = "Inner Mongolia", divtype = "autonomous region"}}, -- 3.446 prefectural, 2.7 urban
 	["Putian"] = {container = "Fujian"}, -- 3.210 prefectural, 2.0 urban
 	["Datong"] = {container = "Shanxi"}, -- 3.105 prefectural, 2.0 urban
@@ -2319,7 +1932,7 @@ export.china_prefecture_level_cities_group = {
 }
 
 export.finland_regions = {
-	["Lapland, Finland"] = {},
+	["Lapland, Finland"] = {wp = "%l (%c)"},
 	["North Ostrobothnia, Finland"] = {},
 	["Kainuu, Finland"] = {},
 	["North Karelia, Finland"] = {},
@@ -2328,7 +1941,7 @@ export.finland_regions = {
 	["South Karelia, Finland"] = {},
 	["Central Finland, Finland"] = {},
 	["South Ostrobothnia, Finland"] = {},
-	["Ostrobothnia, Finland"] = {},
+	["Ostrobothnia, Finland"] = {wp = "%l (region)"},
 	["Central Ostrobothnia, Finland"] = {},
 	["Pirkanmaa, Finland"] = {},
 	["Satakunta, Finland"] = {},
@@ -2342,8 +1955,6 @@ export.finland_regions = {
 
 -- regions of Finland
 export.finland_group = {
-	key_to_placename = make_key_to_placename(", Finland$"),
-	placename_to_key = make_placename_to_key(", Finland"),
 	default_container = "Finland",
 	default_divtype = "region",
 	default_poldiv = "municipalities",
@@ -2354,7 +1965,7 @@ export.finland_group = {
 export.france_administrative_regions = {
 	["Auvergne-Rhône-Alpes, France"] = {},
 	["Bourgogne-Franche-Comté, France"] = {},
-	["Brittany, France"] = {},
+	["Brittany, France"] = {wp = "%l (administrative region)"},
 	["Centre-Val de Loire, France"] = {},
 	["Corsica, France"] = {},
 	-- overseas departments are handled in `export.country_like_entities`
@@ -2365,9 +1976,10 @@ export.france_administrative_regions = {
 	["Île-de-France, France"] = {},
 	-- ["Martinique"] = {},
 	-- ["Mayotte"] = {},
-	["Normandy, France"] = {},
+	["Normandy, France"] = {wp = "%l (administrative region)"},
 	["Nouvelle-Aquitaine, France"] = {},
-	["Occitania, France"] = {},
+	["Occitania, France"] = {wp = "%l (administrative region)"},
+	["Occitanie, France"] = {alias_of = "Occitania, France", display = true},
 	["Pays de la Loire, France"] = {},
 	["Provence-Alpes-Côte d'Azur, France"] = {},
 	-- ["Réunion"] = {},
@@ -2375,8 +1987,6 @@ export.france_administrative_regions = {
 
 -- administrative regions of France
 export.france_group = {
-	key_to_placename = make_key_to_placename(", France$"),
-	placename_to_key = make_placename_to_key(", France"),
 	default_container = "France",
 	-- Canonically these are 'administrative regions' but also categorize if identified as a 'region'.
 	default_divtype = {"administrative region", "region"},
@@ -2408,8 +2018,6 @@ export.germany_states = {
 
 -- states of Germany
 export.germany_group = {
-	key_to_placename = make_key_to_placename(", Germany$"),
-	placename_to_key = make_placename_to_key(", Germany"),
 	default_container = "Germany",
 	default_divtype = "state",
 	default_poldiv = "districts",
@@ -2443,7 +2051,8 @@ export.india_states_and_union_territories = {
 	["Gujarat, India"] = {poldiv = india_polity_without_divisions},
 	["Haryana, India"] = {poldiv = india_polity_with_divisions},
 	["Himachal Pradesh, India"] = {poldiv = india_polity_with_divisions},
-	["Jammu and Kashmir, India"] = {divtype = "union territory", poldiv = india_polity_with_divisions},
+	["Jammu and Kashmir, India"] = {divtype = "union territory", poldiv = india_polity_with_divisions,
+		wp = "%l (union territory)"},
 	["Jharkhand, India"] = {poldiv = india_polity_with_divisions},
 	["Karnataka, India"] = {poldiv = india_polity_with_divisions},
 	["Kerala, India"] = {poldiv = india_polity_without_divisions},
@@ -2456,8 +2065,9 @@ export.india_states_and_union_territories = {
 	["Mizoram, India"] = {poldiv = india_polity_without_divisions},
 	["Nagaland, India"] = {poldiv = india_polity_with_divisions},
 	["Odisha, India"] = {poldiv = india_polity_with_divisions},
-	["Puducherry, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions},
-	["Punjab, India"] = {poldiv = india_polity_with_divisions},
+	["Puducherry, India"] = {divtype = "union territory", poldiv = india_polity_without_divisions,
+		wp = "%l (union territory)"},
+	["Punjab, India"] = {poldiv = india_polity_with_divisions, wp = "%l, %c"},
 	["Rajasthan, India"] = {poldiv = india_polity_with_divisions},
 	["Sikkim, India"] = {poldiv = india_polity_without_divisions},
 	["Tamil Nadu, India"] = {poldiv = india_polity_without_divisions},
@@ -2470,7 +2080,6 @@ export.india_states_and_union_territories = {
 
 -- states and union territories of India
 export.india_group = {
-	key_to_placename = make_key_to_placename(", India$"),
 	placename_to_key = india_placename_to_key,
 	default_container = "India",
 	default_divtype = "state",
@@ -2493,8 +2102,8 @@ export.indonesia_provinces = {
 	["East Kalimantan, Indonesia"] = {},
 	["East Nusa Tenggara, Indonesia"] = {},
 	["Gorontalo, Indonesia"] = {},
-	["Highland Papua, Indonesia"] = {},
-	["Special Capital Region of Jakarta, Indonesia"] = {the = true},
+	["Highland Papua, Indonesia"] = {wp = "%l (province)"},
+	["Special Capital Region of Jakarta, Indonesia"] = {the = true, wp = "Jakarta"},
 	["Jambi, Indonesia"] = {},
 	["Lampung, Indonesia"] = {},
 	["Maluku, Indonesia"] = {},
@@ -2503,7 +2112,7 @@ export.indonesia_provinces = {
 	["North Sulawesi, Indonesia"] = {},
 	["North Papua, Indonesia"] = {},
 	["North Sumatra, Indonesia"] = {},
-	["Papua, Indonesia"] = {},
+	["Papua, Indonesia"] = {wp = "%l (province)"},
 	["Riau, Indonesia"] = {},
 	["Riau Islands, Indonesia"] = {the = true},
 	["Southeast Sulawesi, Indonesia"] = {},
@@ -2515,7 +2124,7 @@ export.indonesia_provinces = {
 	["West Java, Indonesia"] = {},
 	["West Kalimantan, Indonesia"] = {},
 	["West Nusa Tenggara, Indonesia"] = {},
-	["West Papua, Indonesia"] = {},
+	["West Papua, Indonesia"] = {wp = "%l (province)"},
 	["West Sulawesi, Indonesia"] = {},
 	["West Sumatra, Indonesia"] = {},
 	["Special Region of Yogyakarta, Indonesia"] = {the = true},
@@ -2632,8 +2241,6 @@ export.italy_administrative_regions = {
 
 -- administrative regions of Italy
 export.italy_group = {
-	key_to_placename = make_key_to_placename(", Italy$"),
-	placename_to_key = make_placename_to_key(", Italy"),
 	default_container = "Italy",
 	default_divtype = {"administrative region", "region"},
 	default_div_parent_type = "regions",
@@ -2654,8 +2261,9 @@ export.japan_prefectures = {
 	["Gifu Prefecture, Japan"] = {},
 	["Gunma Prefecture, Japan"] = {},
 	["Hiroshima Prefecture, Japan"] = {},
-	["Hokkaido Prefecture, Japan"] = {poldiv = "subprefectures"},
+	["Hokkaido Prefecture, Japan"] = {poldiv = "subprefectures", wp = "Hokkaido"},
 	["Hyōgo Prefecture, Japan"] = {},
+	["Hyogo Prefecture, Japan"] = {alias_of = "Hyōgo Prefecture, Japan", display = true},
 	["Ibaraki Prefecture, Japan"] = {},
 	["Ishikawa Prefecture, Japan"] = {},
 	["Iwate Prefecture, Japan"] = {},
@@ -2663,6 +2271,7 @@ export.japan_prefectures = {
 	["Kagoshima Prefecture, Japan"] = {},
 	["Kanagawa Prefecture, Japan"] = {},
 	["Kōchi Prefecture, Japan"] = {},
+	["Kochi Prefecture, Japan"] = {alias_of = "Kochi Prefecture, Japan", display = true},
 	["Kumamoto Prefecture, Japan"] = {},
 	["Kyoto Prefecture, Japan"] = {},
 	["Mie Prefecture, Japan"] = {},
@@ -2673,6 +2282,7 @@ export.japan_prefectures = {
 	["Nara Prefecture, Japan"] = {},
 	["Niigata Prefecture, Japan"] = {},
 	["Ōita Prefecture, Japan"] = {},
+	["Oita Prefecture, Japan"] = {alias_of = "Ōita Prefecture, Japan", display = true},
 	["Okayama Prefecture, Japan"] = {},
 	["Okinawa Prefecture, Japan"] = {},
 	["Osaka Prefecture, Japan"] = {},
@@ -2688,7 +2298,10 @@ export.japan_prefectures = {
 	--
 	-- Don't list subprefectures here so they don't get categorized into [[Category:Subprefectures of Tokyo]] (but
 	-- rather [[Category:Subprefectures of Japan]]) since there are only 4 of them.
-	["Tokyo"] = {keydesc = "[[Tokyo]] Metropolis", poldiv = {{type = "special wards", skip_polity_parent_type = false}}},
+	["Tokyo"] = {keydesc = "[[Tokyo]] Metropolis",
+		poldiv = {{type = "special wards", skip_polity_parent_type = false}},
+		is_city = true,
+	},
 	["Tottori Prefecture, Japan"] = {},
 	["Toyama Prefecture, Japan"] = {},
 	["Wakayama Prefecture, Japan"] = {},
@@ -2722,7 +2335,7 @@ export.north_korea_provinces = {
 	["South Hamgyong Province, North Korea"] = {},
 	["North Hwanghae Province, North Korea"] = {},
 	["South Hwanghae Province, North Korea"] = {},
-	["Kangwon Province, North Korea"] = {},
+	["Kangwon Province, North Korea"] = {wp = "%l (%c)"},
 	["North Pyongan Province, North Korea"] = {},
 	["South Pyongan Province, North Korea"] = {},
 	["Ryanggang Province, North Korea"] = {},
@@ -2740,7 +2353,7 @@ export.north_korea_group = {
 export.south_korea_provinces = {
 	["North Chungcheong Province, South Korea"] = {},
 	["South Chungcheong Province, South Korea"] = {},
-	["Gangwon Province, South Korea"] = {},
+	["Gangwon Province, South Korea"] = {wp = "%l, %c"},
 	["Gyeonggi Province, South Korea"] = {},
 	["North Gyeongsang Province, South Korea"] = {},
 	["South Gyeongsang Province, South Korea"] = {},
@@ -2772,7 +2385,7 @@ export.laos_provinces = {
 	["Salavan Province, Laos"] = {},
 	["Savannakhet Province, Laos"] = {},
 	["Vientiane Province, Laos"] = {},
-	["Vientiane Prefecture, Laos"] = {divtype = "prefecture"},
+	["Vientiane Prefecture, Laos"] = {divtype = "prefecture", wp = "%l"},
 	["Sainyabuli Province, Laos"] = {},
 	["Sekong Province, Laos"] = {},
 	["Xaisomboun Province, Laos"] = {},
@@ -2795,6 +2408,8 @@ export.laos_group = {
 	placename_to_key = laos_placename_to_key,
 	default_container = "Laos",
 	default_divtype = "province",
+	-- For obscure reasons, provinces of Laos and Thailand use lowercase 'province'
+	default_wp = "%e province",
 	data = export.laos_provinces,
 }
 
@@ -2839,11 +2454,10 @@ export.malaysia_states = {
 
 -- states of Malaysia
 export.malaysia_group = {
-	key_to_placename = make_key_to_placename(", Malaysia$"),
-	placename_to_key = make_placename_to_key(", Malaysia"),
 	default_container = "Malaysia",
 	default_divtype = "state",
 	default_british_spelling = true,
+	default_wp = "%l, %c",
 	data = export.malaysia_states,
 }
 
@@ -2857,7 +2471,7 @@ export.malta_regions = {
 	--   Serbia and Uganda;
 	-- * "Southern Region" also occurs at least in Nigeria, Eritrea, Iceland, Ireland, Malawi and Serbia.
 	["Eastern Region, Malta"] = {no_auto_augment_container = true},
-	["Gozo Region, Malta"] = {},
+	["Gozo Region, Malta"] = {wp = "%l"},
 	["Northern Region, Malta"] = {no_auto_augment_container = true},
 	["Port Region, Malta"] = {},
 	["Southern Region, Malta"] = {no_auto_augment_container = true},
@@ -2871,6 +2485,7 @@ export.malta_group = {
 	default_container = "Malta",
 	default_divtype = "region",
 	default_british_spelling = true,
+	default_the = true,
 	data = export.malta_regions,
 }
 
@@ -2880,25 +2495,29 @@ export.mexico_states = {
 	["Baja California Sur, Mexico"] = {},
 	["Campeche, Mexico"] = {},
 	["Chiapas, Mexico"] = {},
-	-- ["Mexico City, Mexico"] = {}, doesn't belong here because it's a city
-	["Chihuahua, Mexico"] = {},
+	["Chihuahua, Mexico"] = {wp = "%l (state)"},
 	["Coahuila, Mexico"] = {},
 	["Colima, Mexico"] = {},
 	["Durango, Mexico"] = {},
 	["Guanajuato, Mexico"] = {},
 	["Guerrero, Mexico"] = {},
-	["Hidalgo, Mexico"] = {},
+	["Hidalgo, Mexico"] = {wp = "%l (state)"},
 	["Jalisco, Mexico"] = {},
 	["State of Mexico, Mexico"] = {the = true},
+	-- ["Mexico City, Mexico"] = {}, doesn't belong here because it's a city
 	["Michoacán, Mexico"] = {},
+	["Michoacan, Mexico"] = {alias_of = "Michoacán, Mexico", display = true},
 	["Morelos, Mexico"] = {},
 	["Nayarit, Mexico"] = {},
 	["Nuevo León, Mexico"] = {},
+	["Nuevo Leon, Mexico"] = {alias_of = "Nuevo León, Mexico", display = true},
 	["Oaxaca, Mexico"] = {},
 	["Puebla, Mexico"] = {},
 	["Querétaro, Mexico"] = {},
+	["Queretaro, Mexico"] = {alias_of = "Querétaro, Mexico", display = true},
 	["Quintana Roo, Mexico"] = {},
 	["San Luis Potosí, Mexico"] = {},
+	["San Luis Potosi, Mexico"] = {alias_of = "San Luis Potosí, Mexico", display = true},
 	["Sinaloa, Mexico"] = {},
 	["Sonora, Mexico"] = {},
 	["Tabasco, Mexico"] = {},
@@ -2906,6 +2525,7 @@ export.mexico_states = {
 	["Tlaxcala, Mexico"] = {},
 	["Veracruz, Mexico"] = {},
 	["Yucatán, Mexico"] = {},
+	["Yucatan, Mexico"] = {alias_of = "Yucatán, Mexico", display = true},
 	["Zacatecas, Mexico"] = {},
 }
 
@@ -2952,8 +2572,6 @@ export.morocco_regions = {
 
 -- regions of Morocco
 export.morocco_group = {
-	key_to_placename = make_key_to_placename(", Morocco$"),
-	placename_to_key = make_placename_to_key(", Morocco"),
 	default_container = "Morocco",
 	default_divtype = "region",
 	default_british_spelling = true,
@@ -2977,8 +2595,6 @@ export.netherlands_provinces = {
 
 -- provinces of the Netherlands
 export.netherlands_group = {
-	key_to_placename = make_key_to_placename(", Netherlands$"),
-	placename_to_key = make_placename_to_key(", Netherlands"),
 	default_container = "Netherlands",
 	default_divtype = "province",
 	default_poldiv = "municipalities",
@@ -3064,8 +2680,6 @@ export.norwegian_counties = {
 
 -- counties of Norway
 export.norway_group = {
-	key_to_placename = make_key_to_placename(", Norway$"),
-	placename_to_key = make_placename_to_key(", Norway"),
 	default_container = "Norway",
 	default_divtype = "county",
 	default_british_spelling = true,
@@ -3073,17 +2687,21 @@ export.norway_group = {
 }
 
 export.pakistan_provinces_and_territories = {
-	["Azad Kashmir, Pakistan"] = { -- Azad Jammu and Kashmir is an accepted alias
+	["Azad Kashmir, Pakistan"] = {
 		divtype = {"administrative territory", "territory"},
 	},
+	["Azad Jammu and Kashmir, Pakistan"] = {alias_of = "Azad Kashmir, Pakistan", display = true},
 	["Balochistan, Pakistan"] = {},
 	["Gilgit-Baltistan, Pakistan"] = {
 		divtype = {"administrative territory", "territory"},
 	},
-	["Islamabad Capital Territory, Pakistan"] = { -- Islamabad is an accepted alias given the divtypes below
+	["Islamabad Capital Territory, Pakistan"] = {
+		the = true,
 		poldiv = {}, -- no divisions
 		divtype = {"federal territory", "administrative territory", "territory"},
 	},
+	-- Islamabad is an accepted alias for Islamabad Capital Territory given the above divtypes
+	["Islamabad, Pakistan"] = {alias_of = "Islamabad Capital Territory, Pakistan"},
 	["Khyber Pakhtunkhwa, Pakistan"] = {},
 	["Punjab, Pakistan"] = {},
 	["Sindh, Pakistan"] = {},
@@ -3091,8 +2709,6 @@ export.pakistan_provinces_and_territories = {
 
 -- provinces and territories of Pakistan
 export.pakistan_group = {
-	key_to_placename = make_key_to_placename(", Pakistan$"),
-	placename_to_key = make_placename_to_key(", Pakistan"),
 	default_container = "Pakistan",
 	default_divtype = "province",
 	default_div_parent_type = "provinces and territories",
@@ -3190,8 +2806,6 @@ export.philippines_provinces = {
 
 -- provinces of the Philippines
 export.philippines_group = {
-	key_to_placename = make_key_to_placename(", Philippines$"),
-	placename_to_key = make_placename_to_key(", Philippines"),
 	default_container = "Philippines",
 	default_divtype = "province",
 	default_poldiv = {"municipalities", "barangays"},
@@ -3486,8 +3100,6 @@ export.spain_autonomous_communities = {
 
 -- autonomous communities of Spain
 export.spain_group = {
-	key_to_placename = make_key_to_placename(", Spain$"),
-	placename_to_key = make_placename_to_key(", Spain"),
 	default_container = "Spain",
 	default_divtype = "autonomous community",
 	default_british_spelling = true,
@@ -3642,6 +3254,7 @@ export.united_kingdom_constituent_countries = {
 
 -- constituent countries and provinces of the United Kingdom
 export.united_kingdom_group = {
+	placename_to_key = false,
 	default_container = "United Kingdom",
 	default_divtype = {"constituent country", "country"},
 	default_miscdiv = {
@@ -3729,8 +3342,6 @@ export.england_counties = {
 
 -- counties of England
 export.england_group = {
-	key_to_placename = make_key_to_placename(", England$"),
-	placename_to_key = make_placename_to_key(", England"),
 	default_container = {name = "England", divtype = "constituent country"},
 	default_divtype = "county",
 	default_poldiv = {
@@ -3805,8 +3416,6 @@ export.scotland_council_areas = {
 
 -- council areas of Scotland
 export.scotland_group = {
-	key_to_placename = make_key_to_placename(", Scotland$"),
-	placename_to_key = make_placename_to_key(", Scotland"),
 	default_container = {name = "Scotland", divtype = "constituent country"},
 	default_divtype = "council area",
 	default_british_spelling = true,
@@ -3840,8 +3449,6 @@ export.wales_principal_areas = {
 
 -- principal areas (cities, counties and county boroughs) of Wales
 export.wales_group = {
-	key_to_placename = make_key_to_placename(", Wales$"),
-	placename_to_key = make_placename_to_key(", Wales"),
 	default_container = {name = "Wales", divtype = "constituent country"},
 	default_divtype = "county borough",
 	default_british_spelling = true,
@@ -3915,7 +3522,6 @@ export.united_states_states = {
 
 -- states of the United States
 export.united_states_group = {
-	key_to_placename = make_key_to_placename(", USA$"),
 	placename_to_key = make_placename_to_key(", USA"),
 	default_container = "United States",
 	default_divtype = "state",
@@ -3931,46 +3537,9 @@ export.united_states_group = {
 }
 
 -----------------------------------------------------------------------------------
---                                     City tables                               --
+--                                      City data                                --
 -----------------------------------------------------------------------------------
 
---[==[
-City data.
-
-Each entry in `export.cities` is a group of cities under a single overarching containing polity (typically a country).
-Each group contains the following fields:
-
-* `default_container`: A containing polity spec or list of such specs, giving the overarching containing polity or
-  polities (normally top-level) that all cities in the group belong to. Containing polity specs are described below
-  for the immediate containing polity (under the `data` field below). Generally the overarching `containers`
-  field of the group contains a single polity in the table format (so that the divtype can be given), but in some cases
-  it is an empty list.
-* `default_divtype`: The default divtype (in the singlar) of the immediate containing polity of the city (normally a
-  political division of the overarching containing polity in `containers`).
-* `wp`: The default value of the Wikipedia spec describing how to construct the Wikipedia article for the city. Each
-  spec is either `true` (use the city key directly) or a string containing formatting directives, indicating how to
-  construct the article name. The allowed formatting directives are `%c` (the city key) and `%d` (the immediate
-  containing polity). For example, the value of `wp` for the group of United States cities is {"%c, %d"} since the
-  city articles tend to be named e.g. `Austin, Texas` (but with many exceptions, specified using `wp` fields at the
-  city level). The default is `true`.
-* `data`: A tabel specifying the actual cities. This is a key-value table, in which the keys are ''city keys'' as they
-  appear in categories (possibly including the preceding word {"the"} in the same circumstances as when a containing
-  polity like {"the United States"} has it, but there appear to be no such cities; there are a few, such as `The Hague`,
-  but in this case the word {"The"} is capitalized because it is an inherent part of the city name and can never be
-  omitted; a true example is the Gold Coast, Australia). The value is a ''city spec'' describing the city, with the
-  following fields:
-** `parents`: 
-  . in  containing polity spec or list of such specs, where each spec
-  is either a string naming a containing polity or a containing polity table spec. The latter is a table of the format
-  `{"CONTAINING-POLITY", divtype = "DIVTYPE", wp = "WP-SPEC", wpcat = "WP-SPEC", commonscat = "WP-SPEC"}`. In this
-  table, `divtype` is the type of the containing polity (in the singular), defaulting to `default_divtype` at the
-  group level; see above. `wp` is a spec describing how to construct the Wikipedia article for the city in the format
-  described above for the `wp` field at the group level, which supplies its default. `wpcat` similarly describes how to
-  construct the Wikipedia category article. It has the same format but rarely needs to be given because it defaults to
-  the computed `wp` value, which is almost always correct. `commonscat` similarly describes how to construct the Commons
-  category article, in the same format. It defaults to the computed `wpcat` value, which is usually but not always
-  correct.
-]==]
 export.australia_cities = {
 	["Adelaide"] = {container = "South Australia"},
 	["Brisbane"] = {container = "Queensland"},
@@ -3982,7 +3551,15 @@ export.australia_cities = {
 	["Sydney"] = {container = "New South Wales"},
 }
 
+local function australia_cities_placename_to_key(placename)
+	if placename == "Newcastle" then
+		return "Newcastle, New South Wales"
+	end
+	return placename
+end
+
 export.australia_cities_group = {
+	placename_to_key = australia_cities_placename_to_key,
 	canonicalize_key_container = make_canonicalize_key_container(", Australia", "state"),
 	default_divtype = "city",
 	default_british_spelling = true,
@@ -3994,17 +3571,17 @@ export.brazil_cities = {
 	["São Paulo"] = {container = "São Paulo"},
 	["Rio de Janeiro"] = {container = "Rio de Janeiro"},
 	["Brasília"] = {container = "Distrito Federal"},
-	["Brasilia"] = {alias_of = "Brasília"},
-	["Salvador"] = {container = "Bahia", wp = "%c, %d", commonscat = "%c (%d)"},
+	["Brasilia"] = {alias_of = "Brasília", display = true},
+	["Salvador"] = {container = "Bahia", wp = "%l, %c", commonscat = "%l (%c)"},
 	["Fortaleza"] = {container = "Ceará"},
 	["Belo Horizonte"] = {container = "Minas Gerais"},
 	["Manaus"] = {container = "Amazonas"},
 	["Curitiba"] = {container = "Paraná"},
 	["Recife"] = {container = "Pernambuco"},
 	["Goiânia"] = {container = "Goiás"},
-	["Goiania"] = {alias_of = "Goiânia"},
+	["Goiania"] = {alias_of = "Goiânia", display = true},
 	["Belém"] = {container = "Pará"},
-	["Belem"] = {alias_of = "Belém"},
+	["Belem"] = {alias_of = "Belém", display = true},
 	["Porto Alegre"] = {container = "Rio Grande do Sul"},
 }
 
@@ -4023,8 +3600,8 @@ export.canada_cities = {
 	["Ottawa"] = {container = "Ontario"},
 	["Winnipeg"] = {container = "Manitoba"},
 	["Quebec City"] = {container = "Quebec"},
-	["Hamilton"] = {container = "Ontario", wp = "%c, %d"},
-	["Kitchener"] = {container = "Ontario", wp = "%c, %d"},
+	["Hamilton"] = {container = "Ontario", wp = "%l, %c"},
+	["Kitchener"] = {container = "Ontario", wp = "%l, %c"},
 }
 
 export.canada_cities_group = {
@@ -4037,9 +3614,9 @@ export.canada_cities_group = {
 export.france_cities = {
 	["Paris"] = {container = "Île-de-France"},
 	["Lyon"] = {container = "Auvergne-Rhône-Alpes"},
-	["Lyons"] = {alias_of = "Lyon"},
+	["Lyons"] = {alias_of = "Lyon", display = true},
 	["Marseille"] = {container = "Provence-Alpes-Côte d'Azur"},
-	["Marseilles"] = {alias_of = "Marseille"},
+	["Marseilles"] = {alias_of = "Marseille", display = true},
 	["Toulouse"] = {container = "Occitania"},
 	["Lille"] = {container = "Hauts-de-France"},
 	["Bordeaux"] = {container = "Nouvelle-Aquitaine"},
@@ -4067,7 +3644,7 @@ export.germany_cities = {
 	["Frankfurt"] = {container = "Hesse"},
 	["Cologne"] = {container = "North Rhine-Westphalia"},
 	["Düsseldorf"] = {container = "North Rhine-Westphalia"},
-	["Dusseldorf"] = {alias_of = "Düsseldorf"},
+	["Dusseldorf"] = {alias_of = "Düsseldorf", display = true},
 	["Nuremberg"] = {container = "Bavaria"},
 	["Bremen"] = {},
 }
@@ -4155,8 +3732,8 @@ export.india_cities = {
 	["Jammu"] = {container = {name = "Jammu and Kashmir", divtype = "union territory"}}, -- 1,103,000
 	["Solapur"] = {container = "Maharashtra"}, -- 1,082,000
 	["Hubli-Dharwad"] = {container = "Karnataka"}, -- 1,062,000
-	["Hubli"] = {alias-of = "Hubli-Dharwad"},
-	["Dharwad"] = {alias-of = "Hubli-Dharwad"},
+	["Hubli"] = {alias_of = "Hubli-Dharwad"},
+	["Dharwad"] = {alias_of = "Hubli-Dharwad"},
 	["Puducherry"] = {container = {name = "Puducherry", divtype = "union territory"}}, -- 1,024,000
 }
 
@@ -4169,7 +3746,9 @@ export.india_cities_group = {
 
 export.indonesia_cities = {
 	-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
-	["Jakarta"] = {container = "Special Capital Region of Jakarta"},
+	["Jakarta"] = {container = "Special Capital Region of Jakarta", poldiv = {
+		{type = "subdistricts", skip_polity_parent_type = false},
+	}},
 	["Surabaya"] = {container = "East Java"},
 	["Bekasi"] = {container = "West Java"}, -- part of Jakarta metro area
 	["Bandung"] = {container = "West Java"},
@@ -4206,7 +3785,8 @@ export.indonesia_cities_group = {
 export.japan_cities = {
 	-- Population figures from [[w:List of cities in Japan]]. Metro areas from
 	-- [[w:List of metropolitan areas in Japan]].
-	["Tokyo"] = {}, -- no single figure given for Tokyo as a whole.
+	-- Tokyo is treated directly under prefectures of Japan.
+	-- ["Tokyo"] = {}, -- no single figure given for Tokyo as a whole.
 	["Yokohama"] = {container = "Kanagawa"}, -- 3,697,894
 	["Osaka"] = {container = "Osaka"}, -- 2,668,586
 	["Nagoya"] = {container = "Aichi"}, -- 2,283,289
@@ -4215,18 +3795,18 @@ export.japan_cities = {
 	["Fukuoka"] = {container = "Fukuoka"}, -- 1,581,527
 	["Kobe"] = {container = "Hyōgo"}, -- 1,530,847
 	["Kyoto"] = {container = "Kyoto"}, -- 1,474,570
-	["Kawasaki"] = {container = "Kanagawa", wp = "%c, %d"}, -- 1,373,630
-	["Saitama"] = {container = "Saitama", wp = "%c (city)", commonscat = "%c, %d"}, -- 1,192,418
+	["Kawasaki"] = {container = "Kanagawa", wp = "%l, %c"}, -- 1,373,630
+	["Saitama"] = {container = "Saitama", wp = "%l (city)", commonscat = "%l, %c"}, -- 1,192,418
 	["Hiroshima"] = {container = "Hiroshima"}, -- 1,163,806
 	["Sendai"] = {container = "Miyagi"}, -- 1,029,552
 	-- the remaining cities are considered "central cities" in a 1,000,000+ metro area
 	-- (sometimes there is more than one central city in the area).
 	["Kitakyushu"] = {container = "Fukuoka"}, -- 986,998
-	["Chiba"] = {container = "Chiba", wp = "%c (city)", commonscat = "%c, %d"}, -- 938,695
+	["Chiba"] = {container = "Chiba", wp = "%l (city)", commonscat = "%l, %c"}, -- 938,695
 	["Sakai"] = {container = "Osaka"}, -- 835,333
-	["Niigata"] = {container = "Niigata", wp = "%c (city)", commonscat = "%c, %d"}, -- 813,053
+	["Niigata"] = {container = "Niigata", wp = "%l (city)", commonscat = "%l, %c"}, -- 813,053
 	["Hamamatsu"] = {container = "Shizuoka"}, -- 811,431
-	["Shizuoka"] = {container = "Shizuoka", wp = "%c (city)", commonscat = "%c, %d"}, -- 710,944
+	["Shizuoka"] = {container = "Shizuoka", wp = "%l (city)", commonscat = "%l, %c"}, -- 710,944
 	["Sagamihara"] = {container = "Kanagawa"}, -- 706,342
 	["Okayama"] = {container = "Okayama"}, -- 701,293
 	["Kumamoto"] = {container = "Kumamoto"}, -- 670,348
@@ -4272,18 +3852,18 @@ export.mexico_cities = {
 	-- Include the state in the category for León due to possible confusion with León, Spain.
 	["León, Guanajuato"] = {container = "Guanajuato"},
 	["León"] = {alias_of = "León, Guanajuato"},
-	["Leon"] = {alias_of = "León, Guanajuato"},
+	["Leon"] = {alias_of = "León, Guanajuato", display = "León"},
 	["Querétaro"] = {container = "Querétaro"},
-	["Queretaro"] = {alias_of = "Querétaro"},
+	["Queretaro"] = {alias_of = "Querétaro", display = true},
 	["Ciudad Juárez"] = {container = "Chihuahua"},
 	["Juárez"] = {alias_of = "Ciudad Juárez"},
-	["Juarez"] = {alias_of = "Ciudad Juárez"},
+	["Juarez"] = {alias_of = "Ciudad Juárez", display = "Juárez"},
 	["Torreón"] = {container = "Coahuila"},
-	["Torreon"] = {alias_of = "Torreón"},
+	["Torreon"] = {alias_of = "Torreón", display = true},
 	["Mérida"] = {container = "Yucatán"},
-	["Merida"] = {alias_of = "Mérida"},
+	["Merida"] = {alias_of = "Mérida", display = true},
 	["San Luis Potosí"] = {container = "San Luis Potosí"},
-	["San Luis Potosi"] = {alias_of = "San Luis Potosí"},
+	["San Luis Potosi"] = {alias_of = "San Luis Potosí", display = true},
 	["Aguascalientes"] = {container = "Aguascalientes"},
 	["Mexicali"] = {container = "Baja California"},
 }
@@ -4300,6 +3880,7 @@ export.philippines_cities = {
 	 -- Skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
 	 -- Other cities outside Metro Manila skipped as not central city in their urban area.
 	["Quezon City"] = {container = {name = "Metro Manila", divtype = "region"}},
+	-- Don't display-canonicalize Foo to Foo City as it may make the display weird.
 	["Quezon"] = {alias_of = "Quezon City"},
 	["Manila"] = {container = {name = "Metro Manila", divtype = "region"}},
 	["Davao City"] = {container = "Davao del Sur"},
@@ -4312,7 +3893,7 @@ export.philippines_cities = {
 	["Antipolo"] = {container = "Rizal"},
 	["Cagayan de Oro"] = {container = "Misamis Oriental"},
 	["Dasmariñas"] = {container = "Cavite"},
-	["Dasmarinas"] = {alias_of = "Dasmariñas"},
+	["Dasmarinas"] = {alias_of = "Dasmariñas", display = true},
 	["General Santos"] = {container = "South Cotabato"},
 	["San Jose del Monte"] = {container = "Bulacan"},
 	["Bacolod"] = {container = "Negros Occidental"},
@@ -4341,10 +3922,10 @@ export.russia_cities = {
 	["Samara"] = {container = "Samara Oblast"},
 	["Ufa"] = {container = {name = "Republic of Bashkortostan", divtype = "republic"}},
 	["Rostov-on-Don"] = {container = "Rostov Oblast"},
-	["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don"},
+	["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don", display = true},
 	["Krasnoyarsk"] = {container = {name = "Krasnoyarsk Krai", divtype = "krai"}},
 	["Voronezh"] = {container = "Voronezh Oblast"},
-	["Perm"] = {container = {name = "Perm Krai", divtype = "krai"}, wp = "Perm, Russia"},
+	["Perm"] = {container = {name = "Perm Krai", divtype = "krai"}, wp = "%l, Russia"},
 	["Volgograd"] = {container = "Volgograd Oblast"},
 	["Krasnodar"] = {container = {name = "Krasnodar Krai", divtype = "krai"}},
 }
@@ -4398,7 +3979,7 @@ export.spain_cities_group = {
 export.taiwan_cities = {
 	["New Taipei"] = {},
 	["Taichung"] = {},
-	["Kaohsiung"] = {wp = "%c, Taiwan"},
+	["Kaohsiung"] = {wp = "%l, Taiwan"},
 	["Taipei"] = {},
 	["Taoyuan"] = {},
 	["Tainan"] = {},
@@ -4442,51 +4023,59 @@ export.united_kingdom_cities_group = {
 
 export.united_states_cities = {
 	-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
-	["New York City"] = {container = "New York", wp = "%c"},
+	["New York City"] = {container = "New York", wp = "%l", poldiv = {
+		{type = "boroughs", prep = "in", skip_polity_parent_type = false},
+	}},
+	-- Don't display-canonicalize as it may make the display weird (e.g. in the context New York, New York).
 	["New York"] = {alias_of = "New York City"},
 	["Newark"] = {container = "New Jersey"},
-	["Los Angeles"] = {container = "California", wp = "%c"},
+	["Los Angeles"] = {container = "California", wp = "%l"},
 	["Long Beach"] = {container = "California"},
 	["Riverside"] = {container = "California"},
-	["Chicago"] = {container = "Illinois", wp = "%c"},
-	["Washington, D.C."] = {wp = "%c"},
+	["Chicago"] = {container = "Illinois", wp = "%l"},
+	["Washington, D.C."] = {wp = "%l"},
+	["Washington, DC"] = {alias_of = "Washington, D.C.", display = true},
+	["Washington D.C."] = {alias_of = "Washington, D.C.", display = true},
+	["Washington DC"] = {alias_of = "Washington, D.C.", display = true},
+	-- Don't display-canonicalize as it may make the display weird (e.g. if the holonym is followed by a District of
+	-- Columbia holonym).
 	["Washington"] = {alias_of = "Washington, D.C."},
-	["Baltimore"] = {container = "Maryland", wp = "%c"},
+	["Baltimore"] = {container = "Maryland", wp = "%l"},
 	["San Jose"] = {container = "California"},
-	["San Francisco"] = {container = "California", wp = "%c"},
+	["San Francisco"] = {container = "California", wp = "%l"},
 	["Oakland"] = {container = "California"},
-	["Boston"] = {container = "Massachusetts", wp = "%c"},
+	["Boston"] = {container = "Massachusetts", wp = "%l"},
 	["Providence"] = {container = "Rhode Island"},
-	["Dallas"] = {container = "Texas", wp = "%c", commonscat = "%c, %d"},
+	["Dallas"] = {container = "Texas", wp = "%l", commonscat = "%l, %c"},
 	["Fort Worth"] = {container = "Texas"},
-	["Philadelphia"] = {container = "Pennsylvania", wp = "%c"},
-	["Houston"] = {container = "Texas", wp = "%c"},
-	["Miami"] = {container = "Florida", wp = "%c", commonscat = "%c, %d"},
-	["Atlanta"] = {container = "Georgia", wp = "%c"},
-	["Detroit"] = {container = "Michigan", wp = "%c"},
-	["Phoenix"] = {container = "Arizona", wp = "%c", commonscat = "%c, %d"},
+	["Philadelphia"] = {container = "Pennsylvania", wp = "%l"},
+	["Houston"] = {container = "Texas", wp = "%l"},
+	["Miami"] = {container = "Florida", wp = "%l", commonscat = "%l, %c"},
+	["Atlanta"] = {container = "Georgia", wp = "%l"},
+	["Detroit"] = {container = "Michigan", wp = "%l"},
+	["Phoenix"] = {container = "Arizona", wp = "%l", commonscat = "%l, %c"},
 	["Mesa"] = {container = "Arizona"},
-	["Seattle"] = {container = "Washington", wp = "%c"},
+	["Seattle"] = {container = "Washington", wp = "%l"},
 	["Orlando"] = {container = "Florida"},
-	["Minneapolis"] = {container = "Minnesota", wp = "%c"},
-	["Cleveland"] = {container = "Ohio", wp = "%c", commonscat = "%c, %d"},
-	["Denver"] = {container = "Colorado", wp = "%c", commonscat = "%c, %d"},
-	["San Diego"] = {container = "California", wp = "%c", commonscat = "%c, %d"},
+	["Minneapolis"] = {container = "Minnesota", wp = "%l"},
+	["Cleveland"] = {container = "Ohio", wp = "%l", commonscat = "%l, %c"},
+	["Denver"] = {container = "Colorado", wp = "%l", commonscat = "%l, %c"},
+	["San Diego"] = {container = "California", wp = "%l", commonscat = "%l, %c"},
 	["Portland"] = {container = "Oregon"},
 	["Tampa"] = {container = "Florida"},
-	["St. Louis"] = {container = "Missouri", wp = "%c", commonscat = "%c, %d"},
+	["St. Louis"] = {container = "Missouri", wp = "%l", commonscat = "%l, %c"},
 	["Charlotte"] = {container = "North Carolina"},
 	["Sacramento"] = {container = "California"},
-	["Pittsburgh"] = {container = "Pennsylvania", wp = "%c"},
-	["Salt Lake City"] = {container = "Utah", wp = "%c"},
-	["San Antonio"] = {container = "Texas", wp = "%c", commonscat = "%c, %d"},
+	["Pittsburgh"] = {container = "Pennsylvania", wp = "%l"},
+	["Salt Lake City"] = {container = "Utah", wp = "%l"},
+	["San Antonio"] = {container = "Texas", wp = "%l", commonscat = "%l, %c"},
 	["Columbus"] = {container = "Ohio"},
-	["Kansas City"] = {container = "Missouri", wp = "%c metropolitan area", commonscat = "%c, %d"},
-	["Indianapolis"] = {container = "Indiana", wp = "%c"},
-	["Las Vegas"] = {container = "Nevada", wp = "%c"},
-	["Cincinnati"] = {container = "Ohio", wp = "%c", commonscat = "%c, %d"},
+	["Kansas City"] = {container = "Missouri", wp = "%l metropolitan area", commonscat = "%l, %c"},
+	["Indianapolis"] = {container = "Indiana", wp = "%l"},
+	["Las Vegas"] = {container = "Nevada", wp = "%l"},
+	["Cincinnati"] = {container = "Ohio", wp = "%l", commonscat = "%l, %c"},
 	["Austin"] = {container = "Texas"},
-	["Milwaukee"] = {container = "Wisconsin", wp = "%c", commonscat = "%c, %d"},
+	["Milwaukee"] = {container = "Wisconsin", wp = "%l", commonscat = "%l, %c"},
 	["Raleigh"] = {container = "North Carolina"},
 	["Nashville"] = {container = "Tennessee"},
 	["Virginia Beach"] = {container = "Virginia"},
@@ -4494,11 +4083,11 @@ export.united_states_cities = {
 	["Greensboro"] = {container = "North Carolina"},
 	["Winston-Salem"] = {container = "North Carolina"},
 	["Jacksonville"] = {container = "Florida"},
-	["New Orleans"] = {container = "Louisiana", wp = "%c"},
+	["New Orleans"] = {container = "Louisiana", wp = "%l"},
 	["Louisville"] = {container = "Kentucky"},
 	["Greenville"] = {container = "South Carolina"},
 	["Hartford"] = {container = "Connecticut"},
-	["Oklahoma City"] = {container = "Oklahoma", wp = "%c"},
+	["Oklahoma City"] = {container = "Oklahoma", wp = "%l"},
 	["Grand Rapids"] = {container = "Michigan"},
 	["Memphis"] = {container = "Tennessee"},
 	["Birmingham"] = {container = "Alabama"},
@@ -4521,7 +4110,7 @@ export.united_states_cities_group = {
 	default_container = "United States",
 	canonicalize_key_container = make_canonicalize_key_container(", USA", "state"),
 	default_divtype = "city",
-	default_wp = "%c, %d",
+	default_wp = "%l, %c",
 	data = export.united_states_cities,
 }
 
@@ -4569,36 +4158,48 @@ export.misc_cities = {
 	["Oslo"] = {container = {name = "Oslo, Norway", divtype = "county"}},
 	["Warsaw"] = {container = "Poland"},
 	["Katowice"] = {container = "Poland"},
-	["Kraków"] = {container = "Poland"},
-	["Krakow"] = {alias_of = "Kraków"},
+	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Krakow" without accent.
+	["Krakow"] = {container = "Poland"},
+	["Kraków"] = {alias_of = "Krakow", display = true},
+	["Cracow"] = {alias_of = "Krakow", display = true},
+	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirm "Gdańsk" and "Poznań" with accent.
 	["Gdańsk"] = {container = "Poland"},
-	["Gdansk"] = {alias_of = "Gdańsk"},
+	["Gdansk"] = {alias_of = "Gdańsk", display = true},
 	["Poznań"] = {container = "Poland"},
-	["Poznan"] = {alias_of = "Poznań"},
-	["Łódź"] = {container = "Poland"},
-	["Lodz"] = {alias_of = "Łódź"},
+	["Poznan"] = {alias_of = "Poznań", display = true},
+	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Lodz" without accents.
+	["Lodz"] = {container = "Poland"},
+	["Łódź"] = {alias_of = "Lodz", display = true},
 	["Lisbon"] = {container = "Portugal"},
 	["Porto"] = {container = "Portugal"},
 	["Bucharest"] = {container = "Romania"},
 	["Belgrade"] = {container = "Serbia"},
 	["Stockholm"] = {container = "Sweden"},
-	["Zürich"] = {container = "Switzerland"},
-	["Zurich"] = {alias_of = "Zürich"},
+	["Zurich"] = {container = "Switzerland"},
+	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Zurich" without umlaut.
+	["Zürich"] = {alias_of = "Zürich", display = true},
 	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021
 	["Istanbul"] = {container = "Turkey"}, -- 15.2 million
+	["İstanbul"] = {alias_of = "Istanbul", display = true},
 	["Ankara"] = {container = "Turkey"}, -- 5.15 million
 	["Izmir"] = {container = "Turkey"}, -- 2.95 million
+	["İzmir"] = {alias_of = "Izmir", display = true},
 	["Bursa"] = {container = "Turkey"}, -- 2.02 million
 	["Adana"] = {container = "Turkey"}, -- 1.77 million
 	["Gaziantep"] = {container = "Turkey"}, -- 1.71 million
 	["Konya"] = {container = "Turkey"}, -- 1.35 million
 	["Antalya"] = {container = "Turkey"}, -- 1.3 million
-	["Diyarbakir"] = {container = "Turkey"}, -- 1.07 million
+	["Diyarbakır"] = {container = "Turkey"}, -- 1.07 million
+	-- Diyarbakır is more common per Ngrams and Google Scholar, but Diyarbakir is the Kurdish form, so we should not
+	-- display-canonicalize to the Turkish form Diyarbakır.
+	["Diyarbakir"] = {alias_of = "Diyarbakır"},
 	["Mersin"] = {container = "Turkey"}, -- 1.03 million
 	["Kyiv"] = {container = "Ukraine"},
+	-- Don't display-canonicalize Kiev -> Kyiv because in ancient contexts, Kiev is still more common.
 	["Kiev"] = {alias_of = "Kyiv"},
 	["Kharkiv"] = {container = "Ukraine"},
 	["Odessa"] = {container = "Ukraine", wp = "Odesa"},
+	-- Don't display-canonicalize Odesa -> Odessa because it may be interpreted as a political statement.
 	["Odesa"] = {alias_of = "Odessa"},
 }
 
@@ -4608,11 +4209,14 @@ export.misc_cities_group = {
 	data = export.misc_cities,
 }
 
--- List of all known locations. The first three groups list the properties of top-level polities: countries,
--- "country-like entities" (de-facto/unrecognized/etc. countries) and former countries. Most of the remainder list the
--- first-level subpolities (administrative divisions) of several, mostly large, countries, and their country-specific
--- and subpolity-specific properties. After that come groups of cities. China and the United Kingdom include
--- second-level subpolities (in the case of China, only the largest ones).
+--[==[ var:
+List of all known locations, in groups. The first group lists continents and continental regions, followed by three
+groups listing top-level locations: countries, "country-like entities" (de-facto/unrecognized/etc. countries and
+dependent territories) and former polities (countries, empires, etc.). After that come first-level subpolities
+(administrative divisions) of several, mostly large, countries, followed by groups of cities. China and the United
+Kingdom include second-level subpolities (in the case of China, only the largest ones as the full list runs in the
+hundreds).
+]==]
 export.locations = {
 	export.continents_group,
 	export.countries_group,
