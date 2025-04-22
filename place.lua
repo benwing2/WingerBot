@@ -993,37 +993,8 @@ local function handle_category_implications(place_descriptions, implication_data
 end
 
 
--- Look up a placename in an alias table, handling links appropriately. If the alias isn't found, return nil.
-local function lookup_placename_in_alias_table(placename, aliases)
-	-- If the placename is a link, apply the alias inside the link.
-	-- This pattern matches both piped and unpiped links. If the link is not
-	-- piped, the second capture (linktext) will be empty.
-	local link, linktext = rmatch(placename, "^%[%[([^|%]]+)%|?(.-)%]%]$")
-	if link then
-		if linktext ~= "" then
-			local alias = aliases[linktext]
-			return alias and "[[" .. link .. "|" .. alias .. "]]" or nil
-		else
-			local alias = aliases[link]
-			return alias and "[[" .. alias .. "]]" or nil
-		end
-	else
-		return aliases[placename]
-	end
-end
-
-
--- If `placename` of type `placetype` is an alias, convert it to its canonical form; otherwise, return unchanged.
-local function resolve_placename_display_aliases(placetype, placename)
-	return m_data.get_equiv_placetype_prop(placetype,
-		function(pt) return m_data.placename_display_aliases[pt] and lookup_placename_in_alias_table(
-			placename, m_data.placename_display_aliases[pt]) end
-	) or placename
-end
-
-
--- Split a holonym placename on commas but don't split on comma+space. This way, we split on
--- "Poland,Belarus,Ukraine" but keep "Tucson, Arizona" together.
+-- Split a holonym placename on commas but don't split on comma+space. This way, we split on "Poland,Belarus,Ukraine"
+-- but keep "Tucson, Arizona" together.
 local function split_holonym_placename(placename)
 	if placename:find(", ") then
 		local placenames = split(placename, ",", true)
@@ -1105,11 +1076,11 @@ local function split_holonym(raw)
 		if langcode then
 			placename = placename_without_langcode
 		end
-		placename = resolve_placename_display_aliases(placetype, placename)
+		placename = m_data.resolve_placename_display_aliases(placetype, placename)
 		holonyms[i] = {
 			placetype = placetype,
 			display_placename = placename,
-			cat_placename = m_data.resolve_placename_cat_aliases(placetype, placename),
+			cat_placename = export.remove_links_and_html(placename),
 			langcode = langcode,
 			affix_type = i == affix_holonym_index and affix_type or nil,
 			pluralize_affix = i == affix_holonym_index and pluralize_affix,
@@ -2065,12 +2036,15 @@ local function find_placetype_cat_specs(data)
 
 		local cat_specs, equiv_entry_placetype_and_qualifier = m_data.get_equiv_placetype_prop(entry_placetype,
 			function(equiv_entry_pt)
-				local entry_placetype_data = m_data.placetype_data[equiv_entry_pt]
-				if entry_placetype_data then
-					return m_data.get_equiv_placetype_prop(holonym_placetype,
-						function(equiv_holonym_pt)
-							return entry_placetype_data[equiv_holonym_pt .. "/" .. holonym_placename] end)
-				end
+				return m_data.get_equiv_placetype_prop(holonym_placetype,
+					function(equiv_holonym_pt) return m_data.political_division_cat_handler {
+						entry_placetype = equiv_entry_placetype_and_qualifier.placetype,
+						holonym_placetype = equiv_holonym_pt,
+						holonym_placename = holonym_placename,
+						holonym_index = index,
+						place_desc = place_desc,
+						from_demonym = from_demonym,
+					} end)
 			end,
 			{no_fallback = no_fallback}
 		)
@@ -2094,7 +2068,7 @@ local function find_placetype_cat_specs(data)
 					holonym_placename = holonym_placename,
 					holonym_index = index,
 					place_desc = place_desc,
-					from_demonym = from_demonym
+					from_demonym = from_demonym,
 				} end)
 			if cat_specs then
 				return cat_specs, equiv_entry_placetype_and_qualifier.placetype

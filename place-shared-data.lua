@@ -366,46 +366,56 @@ local function find_matching_key_in_group(group, placetypes, key, alias_resoluti
 		alias_resolution ~= "all" then
 		internal_error("Bad value for 'alias_resolution': %s", alias_resolution)
 	end
-	-- FIXME: This should handle aliases.
 	local spec = group.data[key]
 	if not spec then
 		return nil
 	end
-	if spec.alias_of then
-		if alias_resolution == "none" then
-			mw.log(('Found key %s with alias %s, but alias_resolution == "none"; disallowing resolution'):format(key,
-				spec.alias_of))
-		elseif not spec.display and alias_resolution == "display" then
-			mw.log(('Found key %s with alias %s, but alias_resolution == "display" and `display = true` is not set; ' ..
-				"disallowing resolution"):format(key, spec.alias_of))
-		else
-			local resolved_key = spec.alias_of
-			spec = group.data[resolved_key]
-			if not spec then
-				internal_error("Key %s is an alias of %s, which doesn't exist", key, resolved_key)
-			elseif spec.alias_of then
-				internal_error("Key %s is an alias of %s, which is itself an alias; indirect aliasing not allowed",
-					key, resolved_key)
+
+	local function check_correct_divtype(divtype)
+		if type(divtype) == "table" then
+			for _, dt in ipairs(divtype) do
+				if list_or_element_contains(placetypes, dt) then
+					return true
+				end
 			end
-			key = resolved_key
+			return false
+		else
+			return list_or_element_contains(placetypes, divtype)
 		end
 	end
 
-	-- We could be working with non-initialized/defaulted spec, since we're pulling it directly from the group.
-	local divtype = spec.divtype or group.default_divtype
-	if not divtype then
-		internal_error("No divtype found in key %s for spec %s or in group `default_divtype`", key, spec)
-	end
-	if type(divtype) == "table" then
-		for _, dt in ipairs(divtype) do
-			if list_or_element_contains(placetypes, dt) then
-				break
-			end
+	if spec.alias_of then
+		local resolved_key = spec.alias_of
+		local resolved_spec = group.data[resolved_key]
+		if not resolved_spec then
+			internal_error("Key %s is an alias of %s, which doesn't exist", key, resolved_key)
+		elseif resolved_spec.alias_of then
+			internal_error("Key %s is an alias of %s, which is itself an alias; indirect aliasing not allowed",
+				key, resolved_key)
 		end
-		return nil
-	elseif not list_or_element_contains(placetypes, divtype) then
-		return nil
+		if alias_resolution == "none" or alias_resolution == "display" then
+			-- We could be working with non-initialized/defaulted spec, since we're pulling it directly from the group.
+			local divtype = spec.divtype or resolved_spec.divtype or group.default_divtype
+			if not divtype then
+				internal_error("No divtype found for key %s in any of spec %s, alias-resolved spec %s or in group " ..
+					"`default_divtype`", key, spec, resolved_spec)
+			end
+			if not check_correct_divtype(divtype) then
+				return nil
+			end
+			if alias_resolution == "display" then
+				if spec.display == true then
+					key = resolved_key
+				elseif spec.display then
+					key = spec.display
+				end
+			end
+			return key, spec
+		end
+		key = resolved_key
+		spec = resolved_spec
 	end
+
 	export.initialize_spec(group, key, spec)
 	return key, spec
 end
@@ -472,12 +482,13 @@ function export.iterate_matching_location(data)
 			local group = export.locations[i]
 			local key, spec
 			if data.placename then
-				key, spec = find_matching_placename_in_group(group, data.placetypes, data.placename)
+				key, spec = find_matching_placename_in_group(group, data.placetypes, data.placename,
+					data.alias_resolution)
 			else
 				if not data.key then
 					internal_error("'.placename' or '.key' must be defined: %s", data)
 				end
-				key, spec = find_matching_key_in_group(group, data.placetypes, data.key)
+				key, spec = find_matching_key_in_group(group, data.placetypes, data.key, data.alias_resolution)
 			end
 			if key, spec then
 				return group, key, spec
@@ -551,154 +562,6 @@ function export.iterate_containers(group, key, spec)
 		end
 		last_iteration_containers = next_iteration_containers
 		return next_iteration_containers
-	end
-end
-
---[=[
-Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
-specified holonym and stop either when there are no more holonyms or a holonym with modifier `:also` is found. If
-`first_holonym_index` is nil or omitted, iterate over all holonyms regardless. If `include_raw_text_holonyms` is
-specified, raw text holonyms (those not of the form `placetype/placename`) are returned as well; they can be identified
-by the fact that the `placetype` field in the holonym structure is nil. Two values are returned at each iteration, the
-holonym index and holonym structure, similar to `ipairs()`.
-]=]
-function export.get_holonyms_to_check(place_desc, first_holonym_index, include_raw_text_holonyms)
-	local stop_at_also = not not first_holonym_index
-	return function(place_desc, index)
-		while true do
-			index = index + 1
-			local this_holonym = place_desc.holonyms[index]
-			if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
-				return nil
-			end
-			-- If not placetype, we're processing raw text, which we normally want to skip.
-			if include_raw_text_holonyms or this_holonym.placetype then
-				return index, this_holonym
-			end
-		end
-	end, place_desc, first_holonym_index and first_holonym_index - 1 or 0
-end
-
---[==[
-If the holonym in `data` (in the format as passed to a category handler) refers to a known location, iterate over all
-such known locations, returning for each location the corresponding key, spec and group as well as the trail of
-ancestral containers. Unlike `iterate_matching_location()`, this specifically checks that there is no mismatch between
-the location's containers at any level and any of the following holonyms in the {{tl|place}} spec. The fields in `data`
-are:
-* `holonym_placetype`: The placetype of the holonym. It can actually be a list of possible placetypes, as with
-  `iterate_matching_location()`.
-* `holonym_placename`: The placename of the holonym.
-* `holonym_index`: The index of the holonym among the holonyms in `place_desc`, or nil if the holonym is not among the
-  holonyms in `place_desc`. (If a holonym index is given, we check for container mismatches among the holonyms
-  following the specified index, stopping either when encountering a holonym marked with modifier `:also` or, if none
-  exist, when we run out of holonyms. If no holonym index is given, we check all holonyms for container mismatches.)
-* `place_desc`: Description of the place; used for the holonyms, to check for container mismatches.
-
-Returns four values: the location group, the canonical key by which the location is known, the spec object describing
-the location and the trail of ancestral containers for the location. The first three values are the same as for
-`iterate_matching_location`.
-]==]
-function export.iterate_matching_holonym_location(data)
-	local holonym_placetype, holonym_placename, holonym_index, place_desc =
-		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
-	local matching_location_iterator = export.iterate_matching_location {
-		placetypes = holonym_placetype,
-		placename = holonym_placename,
-	}
-	return function()
-		while true do
-			local group, key, spec = next(matching_location_iterator)
-			if not group then
-				return nil
-			end
-			local container_trail = {}
-			-- For each level of container, check that there are no mismatches (i.e. other location of the same
-			-- placetype) mentioned. We allow a mismatch at a given level if there's also a match with the container
-			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
-			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
-			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
-			-- Delaware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New
-			-- Jersey in [[Module:place/shared-data]]. Just because the containing location `US` matches isn't enough,
-			-- because Newark, NJ also has New Jersey as a containing location and there's a mismatch at that level. If
-			-- there are no mismatches at any level we assume we're dealing with the right known location.
-			--
-			-- If at a given level there are multiple containing locations, we count a match if any holonym matches any
-			-- containing location, and a mismatch only if a holonym exists of the same placetype that doesn't match any
-			-- containing location.
-			local containers_mismatch = false
-			for containers in export.iterate_containers(group, key, spec) do
-				insert(container_trail, containers)
-				local match_at_level = false
-				local mismatch_at_level = false
-				for other_holonym_index, other_holonym in get_holonyms_to_check(place_desc,
-					holonym_index and holonym_index + 1 or nil) do
-					local holonym_matches_at_level = false
-					local holonym_exists_with_same_placetype = false
-					for _, container in ipairs(containers) do
-						local full_container_placename, elliptical_container_placename = export.call_key_to_placename(
-							container.group, container.key)
-						local divtype = container.spec.divtype
-						local divtype_equivs = export.get_placetype_equivs(divtype)
-						local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
-							function(placetype)
-								return other_holonym.placetype == placetype and
-									(other_holonym.cat_placename == full_container_placename or
-									other_holonym.cat_placename == elliptical_container_placename)
-							end
-						)
-						if this_holonym_matches then
-							holonym_matches_at_level = true
-							break
-						end
-						local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
-							divtype_equivs, function(placetype)
-								return other_holonym.placetype == placetype
-							end
-						)
-						if this_holonym_exists_with_same_placetype then
-							holonym_exists_with_same_placetype = true
-						end
-					end
-					if holonym_matches_at_level then
-						match_at_level = true
-						break
-					end
-					if holonym_exists_with_same_placetype then
-						mismatch_at_level = true
-					end
-				end
-				if not match_at_level and mismatch_at_level then
-					containers_mismatch = true
-					break
-				end
-			end
-			if not containers_mismatch then
-				return group, key, spec, container_trail
-			end
-		end
-	end
-end
-
---[==[
-If the holonym in `data` (in the format as passed to a category handler) refers to a known location, find and return the
-corresponding key, spec and group as well as the trail of ancestral containers. This is like
-`iterate_matching_holonym_location()` but throws an error if more than one location matches. (An example where this
-would happen is {{tl|place|en|neighborhood|city/Newcastle}}, because there are two known locations named Newcastle. To
-fix this, specify additional following disambiguating holonyms, e.g.
-{{tl|place|en|neighborhood|city/Newcastle|s/New South Wales}}.
-]==]
-function export.find_matching_holonym_location(data)
-	local all_found = {}
-	for group, key, spec, container_trail in export.iterate_matching_holonym_location(data) do
-		insert(all_found, {group, key, spec, container_trail})
-	end
-	if not all_found[1] then
-		return nil
-	elseif all_found[2] then
-		error(("Found multiple matching locations for holonym '%s/%s'; specify disambiguating context in the " ..
-			"containing holonyms: %s"):format(data.holonym_placetype, data.holonym_placename, dump(all_found)))
-	else
-		return unpack(all_found[1])
 	end
 end
 
@@ -871,6 +734,7 @@ export.countries = {
 	["Antigua and Barbuda"] = {container = "North America", poldiv = {"provinces"}, british_spelling = true},
 	["Argentina"] = {container = "South America", poldiv = {"provinces", "departments", "municipalities"}},
 	["Armenia"] = {container = {"Europe", "Asia"}, poldiv = {"provinces", "districts"}, british_spelling = true},
+	["Republic of Armenia"] = {alias_of = "Armenia", the = true}, -- differs in "the"
 	-- Both a country and continent
 	["Australia"] = {container = "Oceania", poldiv = {"states", "territories", "local government areas"},
 		addl_poldiv_for_categorization = {"states and territories"}, british_spelling = true},
@@ -887,6 +751,8 @@ export.countries = {
 	["Bhutan"] = {container = "Asia", poldiv = {"districts", "gewogs"}},
 	["Bolivia"] = {container = "South America", poldiv = {"provinces", "departments", "municipalities"}},
 	["Bosnia and Herzegovina"] = {container = "Europe", poldiv = {"entities", "cantons", "municipalities"}, british_spelling = true},
+	["Bosnia and Hercegovina"] = {alias_of = "Bosnia and Herzegovina", display = true},
+	["Bosnia"] = {alias_of = "Bosnia and Herzegovina", display = true},
 	["Botswana"] = {container = "Africa", poldiv = {"districts", "subdistricts"}, british_spelling = true},
 	["Brazil"] = {container = "South America", poldiv = {"states", "municipalities"}, miscdiv = {"macroregions"}},
 	["Brunei"] = {container = "Asia", poldiv = {"districts", "mukims"}, british_spelling = true},
@@ -913,6 +779,7 @@ export.countries = {
 		"special administrative regions", "prefectures", "prefecture-level cities", "counties", "county-level cities",
 		"districts", "municipalities"},
 		addl_poldiv_for_categorization = {"provinces and autonomous regions"}},
+	["People's Republic of China"] = {alias_of = "China", the = true}, -- differs in "the"
 	["Colombia"] = {container = "South America", poldiv = {"departments", "municipalities"}},
 	["Comoros"] = {the = true, container = "Africa", poldiv = {"autonomous islands"}},
 	["Costa Rica"] = {container = "Central America", poldiv = {"provinces", "cantons"}},
@@ -920,7 +787,9 @@ export.countries = {
 	["Cuba"] = {container = "North America", poldiv = {"provinces", "municipalities"}},
 	["Cyprus"] = {container = {"Europe", "Asia"}, poldiv = {"districts"}, british_spelling = true},
 	["Czech Republic"] = {the = true, container = "Europe", poldiv = {"regions", "districts", "municipalities"}, british_spelling = true},
+	["Czechia"] = {alias_of = "Czech Republic"}, -- differs in "the"
 	["Democratic Republic of the Congo"] = {the = true, container = "Africa", poldiv = {"provinces", "territories"}},
+	["Congo"] = {alias_of = "Democratic Republic of the Congo", display = true, the = true},
 	["Denmark"] = {container = "Europe", poldiv = {"regions", "municipalities", "dependent territories"}, british_spelling = true},
 	["Djibouti"] = {container = "Africa", poldiv = {"regions", "districts"}},
 	["Dominica"] = {container = "North America", poldiv = {"parishes"}, british_spelling = true},
@@ -934,6 +803,7 @@ export.countries = {
 	["Eritrea"] = {container = "Africa", poldiv = {"regions", "subregions"}},
 	["Estonia"] = {container = "Europe", poldiv = {"counties", "municipalities"}, british_spelling = true},
 	["Eswatini"] = {container = "Africa", british_spelling = true},
+	["Swaziland"] = {alias_of = "Eswatini", display = true},
 	["Ethiopia"] = {container = "Africa", poldiv = {"regions", "zones"}},
 	["Federated States of Micronesia"] = {the = true, container = "Micronesia", poldiv = {"states"}},
 	["Fiji"] = {container = "Melanesia", poldiv = {"divisions", "provinces"}, british_spelling = true},
@@ -967,10 +837,14 @@ export.countries = {
 	["Iran"] = {container = "Asia", poldiv = {"provinces", "counties"}},
 	["Iraq"] = {container = "Asia", poldiv = {"governorates", "districts"}},
 	["Ireland"] = {container = "Europe", addl_parents = {"British Isles"}, poldiv = {"counties", "districts"}, miscdiv = {"provinces"}, british_spelling = true},
+	["Republic of Ireland"] = {alias_of = "Ireland", the = true}, -- differs in "the"
 	["Israel"] = {container = "Asia", poldiv = {"districts"}},
 	["Italy"] = {container = "Europe", poldiv = {"regions", "provinces", "metropolitan cities", "municipalities"},
 		british_spelling = true},
 	["Ivory Coast"] = {container = "Africa", poldiv = {"districts", "regions"}},
+	-- We should really be using Ivory Coast (common name) but there are political ramifications to the use of
+	-- Côte d'Ivoire so don't make it a display alias.
+	["Côte d'Ivoire"] = {alias_of = "Ivory Coast"},
 	["Jamaica"] = {container = "North America", poldiv = {"parishes"}, british_spelling = true},
 	["Japan"] = {container = "Asia", poldiv = {"prefectures", "subprefectures", "municipalities"}},
 	["Jordan"] = {container = "Asia", poldiv = {"governorates"}},
@@ -1011,6 +885,7 @@ export.countries = {
 		{type = "self-administered zones", cat_as = "self-administered areas"},
 		{type = "self-administered divisions", cat_as = "self-administered areas"},
 		"districts"}},
+	["Burma"] = {alias_of = "Myanmar"}, -- not display-canonicalizing; has political connotations
 	["Namibia"] = {container = "Africa", poldiv = {"regions", "constituencies"}, british_spelling = true},
 	["Nauru"] = {container = "Micronesia", poldiv = {"districts"}, british_spelling = true},
 	["Nepal"] = {container = "Asia", poldiv = {"provinces", "districts"}},
@@ -1025,6 +900,9 @@ export.countries = {
 	["Nigeria"] = {container = "Africa", poldiv = {"states", "local government areas"}, british_spelling = true},
 	["North Korea"] = {container = "Asia", addl_parents = {"Korea"}, poldiv = {"provinces", "counties"}},
 	["North Macedonia"] = {container = "Europe", poldiv = {"regions", "municipalities"}, british_spelling = true},
+	["Macedonia"] = {alias_of = "North Macedonia", display = true},
+	["Republic of North Macedonia"] = {alias_of = "North Macedonia", the = true}, -- differs in "the"
+	["Republic of Macedonia"] = {alias_of = "North Macedonia", the = true}, -- differs in "the"
 	["Norway"] = {container = "Europe", poldiv = {"counties", "municipalities", "dependent territories"},
 		miscdiv = {"districts"}, british_spelling = true},
 	["Oman"] = {container = "Asia", poldiv = {"governorates", "provinces"}},
@@ -1033,6 +911,7 @@ export.countries = {
 		{type = "federal territories", cat_as = "territories"}},
 		addl_poldiv_for_categorization = {"provinces and territories"}, british_spelling = true},
 	["Palestine"] = {container = "Asia", poldiv = {"governorates"}},
+	["State of Palestine"] = {alias_of = "Palestine", the = true}, -- differs in "the"
 	["Palau"] = {container = "Micronesia", poldiv = {"states"}},
 	["Panama"] = {container = "Central America", poldiv = {"provinces", "districts"}},
 	["Papua New Guinea"] = {container = "Melanesia", poldiv = {"provinces", "districts"}, british_spelling = true},
@@ -1048,6 +927,7 @@ export.countries = {
 		"provinces", "municipalities"}, british_spelling = true},
 	["Qatar"] = {container = "Asia", poldiv = {"municipalities", "zones"}},
 	["Republic of the Congo"] = {the = true, container = "Africa", poldiv = {"departments", "districts"}},
+	["Congo Republic"] = {alias_of = "Republic of the Congo", display = true, the = true},
 	["Romania"] = {container = "Europe", poldiv = {"regions", "counties", "communes"}, british_spelling = true},
 	["Russia"] = {container = {"Europe", "Asia"}, poldiv = {
 		"federal subjects", "republics", "autonomous oblasts", "autonomous okrugs", "oblasts", "krais", "federal cities",
@@ -1084,6 +964,7 @@ export.countries = {
 	["Switzerland"] = {container = "Europe", poldiv = {"cantons", "municipalities", "districts"}, british_spelling = true},
 	["Syria"] = {container = "Asia", poldiv = {"governorates", "districts"}},
 	["Taiwan"] = {container = "Asia", poldiv = {"counties", "districts"}},
+	["Republic of China"] = {alias_of = "Taiwan", the = true}, -- differs in "the", different political connotations
 	["Tajikistan"] = {container = "Asia", poldiv = {"regions", "districts"}},
 	["Tanzania"] = {container = "Africa", poldiv = {"provinces", "districts"}, british_spelling = true},
 	["Thailand"] = {container = "Asia", poldiv = {"provinces", "districts", "subdistricts"}},
@@ -1092,15 +973,23 @@ export.countries = {
 	["Trinidad and Tobago"] = {container = "North America", poldiv = {"regions", "municipalities"}, british_spelling = true},
 	["Tunisia"] = {container = "Africa", poldiv = {"governorates", "delegations"}},
 	["Turkey"] = {container = {"Europe", "Asia"}, poldiv = {"provinces", "districts"}},
+	-- Foreign names generally get display-canonicalized.
+	["Türkiye"] = {alias_of = "Turkey", display = true},
 	["Turkmenistan"] = {container = "Asia", poldiv = {"regions", "districts"}},
 	["Tuvalu"] = {container = "Polynesia", poldiv = {"atolls"}, british_spelling = true},
 	["Uganda"] = {container = "Africa", poldiv = {"districts", "counties"}, british_spelling = true},
 	["Ukraine"] = {container = "Europe", poldiv = {"oblasts", "municipalities", "raions"}, british_spelling = true},
 	["United Arab Emirates"] = {the = true, container = "Asia", poldiv = {"emirates"}},
+	-- Abbreviations get display-canonicalized.
+	["UAE"] = {alias_of = "United Arab Emirates", display = true, the = true},
+	["U.A.E."] = {alias_of = "United Arab Emirates", display = true, the = true},
 	["United Kingdom"] = {the = true, container = "Europe", addl_parents = {"British Isles"},
 		poldiv = {"constituent countries", "counties", "districts", "boroughs", "territories", "dependent territories"},
 		miscdiv = {"traditional counties"},
 		keydesc = "the [[United Kingdom]] of Great Britain and Northern Ireland", british_spelling = true},
+	-- Abbreviations get display-canonicalized.
+	["UK"] = {alias_of = "United Kingdom", display = true, the = true},
+	["U.K."] = {alias_of = "United Kingdom", display = true, the = true},
 	["United States"] = {the = true, container = "North America",
 		poldiv = {"counties", "county seats", "states", "territories", "dependent territories",
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
@@ -1111,11 +1000,18 @@ export.countries = {
 			-- [[w:Indian reservations]]).
 			"Indian reservations",
 		}},
+	-- Abbreviations and long forms (when possible) get display-canonicalized.
+	["US"] = {alias_of = "United States", display = true, the = true},
+	["U.S."] = {alias_of = "United States", display = true, the = true},
+	["USA"] = {alias_of = "United States", display = true, the = true},
+	["U.S.A."] = {alias_of = "United States", display = true, the = true},
+	["United States of America"] = {alias_of = "United States", display = true, the = true},
 	["Uruguay"] = {container = "South America", poldiv = {"departments", "municipalities"}},
 	["Uzbekistan"] = {container = "Asia", poldiv = {"regions", "districts"}},
 	["Vanuatu"] = {container = "Melanesia", poldiv = {"provinces"}, british_spelling = true},
 	["Vatican City"] = {divtype = {"city-state", "country"}, container = "Europe", addl_parents = {"Rome"},
 		is_city = true, british_spelling = true},
+	["Vatican"] = {alias_of = "Vatican City", the = true}, -- differs in "the"
 	["Venezuela"] = {container = "South America", poldiv = {"states", "municipalities"}},
 	["Vietnam"] = {container = "Asia", poldiv = {"provinces", "districts", "municipalities"}},
 	["Western Sahara"] = {divtype = {"territory", "country"}, container = "Africa"},
@@ -1187,6 +1083,7 @@ export.country_like_entities = {
 		keydesc = "the former de-facto independent state of [[Artsakh]], internationally recognized as part of [[Azerbaijan]]",
 		british_spelling = true,
 	},
+	["Nagorno-Karabakh"] = {alias_of = "Artsakh"},
 	-- British Overseas Territory
 	["Ascension Island"] = {
 		divtype = {"overseas territory", "territory"},
@@ -1554,6 +1451,8 @@ export.country_like_entities = {
 		container = "United States",
 		addl_parents = {"North America"},
 	},
+	["U.S. Virgin Islands"] = {alias_of = "United States Virgin Islands", display = true, the = true},
+	["US Virgin Islands"] = {alias_of = "United States Virgin Islands", display = true, the = true},
 	-- unincorporated territory of the United States
 	["Wake Island"] = {
 		divtype = {"unincorporated territory", "overseas territory", "territory"},
@@ -1758,6 +1657,7 @@ export.china_provinces_and_autonomous_regions = {
 	["Beijing, China"] = {divtype = {"direct-administered municipality", "municipality"}},
 	["Chongqing, China"] = {divtype = {"direct-administered municipality", "municipality"}},
 	["Fujian, China"] = {},
+	["Fuchien, China"] = {alias_of = "Fujian, China", display = true},
 	["Gansu, China"] = {},
 	["Guangdong, China"] = {},
 	["Guangxi, China"] = {divtype = "autonomous region"},
@@ -1934,23 +1834,30 @@ export.china_prefecture_level_cities_group = {
 export.finland_regions = {
 	["Lapland, Finland"] = {wp = "%l (%c)"},
 	["North Ostrobothnia, Finland"] = {},
+	["Northern Ostrobothnia, Finland"] = {alias_of = "North Ostrobothnia, Finland", display = true},
 	["Kainuu, Finland"] = {},
 	["North Karelia, Finland"] = {},
 	["Northern Savonia, Finland"] = {},
+	["North Savo, Finland"] = {alias_of = "Northern Savonia, Finland", display = true},
 	["Southern Savonia, Finland"] = {},
+	["South Savo, Finland"] = {alias_of = "Southern Savonia, Finland", display = true},
 	["South Karelia, Finland"] = {},
 	["Central Finland, Finland"] = {},
 	["South Ostrobothnia, Finland"] = {},
+	["Southern Ostrobothnia, Finland"] = {alias_of = "South Ostrobothnia, Finland", display = true},
 	["Ostrobothnia, Finland"] = {wp = "%l (region)"},
 	["Central Ostrobothnia, Finland"] = {},
 	["Pirkanmaa, Finland"] = {},
 	["Satakunta, Finland"] = {},
 	["Päijänne Tavastia, Finland"] = {},
+	["Päijät-Häme, Finland"] = {alias_of = "Päijänne Tavastia, Finland", display = true},
 	["Tavastia Proper, Finland"] = {},
+	["Kanta-Häme, Finland"] = {alias_of = "Tavastia Proper, Finland", display = true},
 	["Kymenlaakso, Finland"] = {},
 	["Uusimaa, Finland"] = {},
 	["Southwest Finland, Finland"] = {},
 	["Åland Islands, Finland"] = {the = true},
+	["Åland, Finland"] = {alias_of = "Åland Islands"}, -- differs in "the"
 }
 
 -- regions of Finland
@@ -2007,6 +1914,7 @@ export.germany_states = {
 	["Hesse, Germany"] = {},
 	["Lower Saxony, Germany"] = {},
 	["Mecklenburg-Vorpommern, Germany"] = {},
+	["Mecklenburg-Western Pomerania, Germany"] = {alias_of = "Mecklenburg-Vorpommern, Germany", display = true},
 	["North Rhine-Westphalia, Germany"] = {},
 	["Rhineland-Palatinate, Germany"] = {},
 	["Saarland, Germany"] = {},
@@ -2492,6 +2400,8 @@ export.malta_group = {
 export.mexico_states = {
 	["Aguascalientes, Mexico"] = {},
 	["Baja California, Mexico"] = {},
+	-- not display-canonicalizing because the "Norte" could be for emphasis
+	["Baja California Norte, Mexico"] = {alias_of = "Baja California, Mexico"},
 	["Baja California Sur, Mexico"] = {},
 	["Campeche, Mexico"] = {},
 	["Chiapas, Mexico"] = {},
@@ -2504,6 +2414,7 @@ export.mexico_states = {
 	["Hidalgo, Mexico"] = {wp = "%l (state)"},
 	["Jalisco, Mexico"] = {},
 	["State of Mexico, Mexico"] = {the = true},
+	["Mexico, Mexico"] = {alias_of = "State of Mexico, Mexico"}, -- differs in "the"
 	-- ["Mexico City, Mexico"] = {}, doesn't belong here because it's a city
 	["Michoacán, Mexico"] = {},
 	["Michoacan, Mexico"] = {alias_of = "Michoacán, Mexico", display = true},
@@ -2586,9 +2497,13 @@ export.netherlands_provinces = {
 	["Groningen, Netherlands"] = {},
 	["Limburg, Netherlands"] = {},
 	["North Brabant, Netherlands"] = {},
+	-- Foreign forms get display-canonicalized.
+	["Noord-Brabant, Netherlands"] = {alias_of = "North Brabant, Netherlands", display = true},
 	["North Holland, Netherlands"] = {},
+	["Noord-Holland, Netherlands"] = {alias_of = "North Holland, Netherlands", display = true},
 	["Overijssel, Netherlands"] = {},
 	["South Holland, Netherlands"] = {},
+	["Zuid-Holland, Netherlands"] = {alias_of = "South Holland, Netherlands", display = true},
 	["Utrecht, Netherlands"] = {},
 	["Zeeland, Netherlands"] = {},
 }
@@ -2883,7 +2798,10 @@ export.russia_federal_subjects = {
 	-- autonomous okrugs
 	["Chukotka Autonomous Okrug"] = russia_autonomous_okrug,
 	["Khanty-Mansi Autonomous Okrug"] = russia_autonomous_okrug,
+	["Khantia-Mansia"] = {alias_of = "Khanty-Mansi Autonomous Okrug"},
+	["Yugra"] = {alias_of = "Khanty-Mansi Autonomous Okrug"},
 	["Nenets Autonomous Okrug"] = russia_autonomous_okrug,
+	["Nenetsia"] = {alias_of = "Nenets Autonomous Okrug"},
 	["Yamalo-Nenets Autonomous Okrug"] = russia_autonomous_okrug,
 	-- krais
 	["Altai Krai"] = russia_krai,
@@ -2943,8 +2861,14 @@ export.russia_federal_subjects = {
 	["Voronezh Oblast"] = russia_oblast,
 	["Yaroslavl Oblast"] = russia_oblast,
 	-- republics
+	--
+	-- We only need to include cases that aren't just shortened versions of the full federal subject name (i.e. where
+	-- words like "Republic" and "Oblast" are omitted but the name is not otherwise modified; these are handled by
+	-- key_to_placename). Non-display-canonicalizing aliases are generally due to differences in the presence or absence
+	-- of "the".
 	["Republic of Adygea"] = russia_republic,
 	["Republic of Bashkortostan"] = russia_republic,
+	["Bashkiria"] = {alias_of = "Republic of Bashkortostan"},
 	["Republic of Buryatia"] = russia_republic,
 	["Republic of Dagestan"] = russia_republic,
 	["Republic of Ingushetia"] = russia_republic,
@@ -2953,23 +2877,36 @@ export.russia_federal_subjects = {
 	["Republic of Khakassia"] = russia_republic,
 	["Republic of Mordovia"] = russia_republic,
 	["Republic of North Ossetia-Alania"] = russia_republic,
+	["North Ossetia"] = {alias_of = "Republic of North Ossetia-Alania"},
+	["Alania"] = {alias_of = "Republic of North Ossetia-Alania"},
 	["Republic of Tatarstan"] = russia_republic,
 	["Altai Republic"] = russia_republic,
 	["Chechen Republic"] = russia_republic,
+	["Chechnya"] = {alias_of = "Chechen Republic"},
 	["Chuvash Republic"] = russia_republic,
+	["Chuvashia"] = {alias_of = "Chuvash Republic"},
 	["Kabardino-Balkar Republic"] = russia_republic,
+	["Kabardino-Balkarian Republic"] = {alias_of = "Kabardino-Balkar Republic", display = true, the = true},
+	["Kabardino-Balkaria"] = {alias_of = "Kabardino-Balkar Republic"},
+	["Kabardino-Balkariya"] = {alias_of = "Kabardino-Balkar Republic"},
 	["Karachay-Cherkess Republic"] = russia_republic,
+	["Karachay-Cherkessia"] = {alias_of = "Karachay-Cherkess Republic"},
 	["Komi Republic"] = russia_republic,
 	["Mari El Republic"] = russia_republic,
 	["Sakha Republic"] = russia_republic,
+	["Yakutia"] = {alias_of = "Sakha Republic"},
+	["Yakutiya"] = {alias_of = "Sakha Republic"},
+	["Republic of Yakutia (Sakha)"] = {alias_of = "Sakha Republic", the = true},
 	["Tuva Republic"] = russia_republic,
+	["Tyva Republic"] = {alias_of = "Tuva Republic", display = true, the = true},
+	["Tyva"] = {alias_of = "Tuva Republic"},
 	["Udmurt Republic"] = russia_republic,
-	-- Not sure what to do about this one from a neutrality perspective
+	["Udmurtia"] = {alias_of = "Udmurt Republic"},
+	-- Not sure what to do about this one from a neutrality perspective:
 	-- ["Republic of Crimea"] = russia_republic,
 	-- There are also federal cities (not included because they're cities):
-	-- Moscow, Saint Petersburg, Sevastopol (not sure what to do about the
-	-- last one if we were to include federal cities, see "Republic of Crimea"
-	-- above)
+	-- Moscow, Saint Petersburg, Sevastopol (not sure what to do about the last one if we were to include federal
+	-- cities, see "Republic of Crimea" above)
 }
 
 local elliptical_republic_placenames = {
@@ -3096,6 +3033,7 @@ export.spain_autonomous_communities = {
 	["Murcia, Spain"] = {},
 	["Navarre, Spain"] = {},
 	["Valencia, Spain"] = {},
+	["Valencian Community, Spain"] = {alias_of = "Valencia, Spain"}, -- differs in "the"
 }
 
 -- autonomous communities of Spain
@@ -3381,19 +3319,23 @@ export.northern_ireland_group = {
 
 export.scotland_council_areas = {
 	["City of Glasgow, Scotland"] = {the = true},
+	["Glasgow"] = {alias_of = "City of Glasgow"},
 	["City of Edinburgh, Scotland"] = {the = true},
+	["Edinburgh"] = {alias_of = "City of Edinburgh"},
 	["Fife, Scotland"] = {},
 	["North Lanarkshire, Scotland"] = {},
 	["South Lanarkshire, Scotland"] = {},
 	["Aberdeenshire, Scotland"] = {},
 	["Highland, Scotland"] = {},
 	["City of Aberdeen, Scotland"] = {the = true},
+	["Aberdeen"] = {alias_of = "City of Aberdeen"},
 	["West Lothian, Scotland"] = {},
 	["Renfrewshire, Scotland"] = {},
 	["Falkirk, Scotland"] = {},
 	["Perth and Kinross, Scotland"] = {},
 	["Dumfries and Galloway, Scotland"] = {},
 	["City of Dundee, Scotland"] = {the = true},
+	["Dundee"] = {alias_of = "City of Dundee"},
 	["North Ayrshire, Scotland"] = {},
 	["East Ayrshire, Scotland"] = {},
 	["Angus, Scotland"] = {},
@@ -3410,6 +3352,7 @@ export.scotland_council_areas = {
 	["Inverclyde, Scotland"] = {},
 	["Clackmannanshire, Scotland"] = {},
 	["Na h-Eileanan Siar, Scotland"] = {},
+	["Western Isles"] = {alias_of = "Na h-Eileanan Siar", the = true},
 	["Shetland Islands, Scotland"] = {the = true},
 	["Orkney Islands, Scotland"] = {the = true},
 }
@@ -3434,6 +3377,7 @@ export.wales_principal_areas = {
 	["Flintshire, Wales"] = {divtype = "county"},
 	["Gwynedd, Wales"] = {divtype = "county"},
 	["Isle of Anglesey, Wales"] = {the = true, divtype = "county"},
+	["Anglesey, Wales"] = {alias_of = "Isle of Anglesey, Wales"}, -- differs in "the"
 	["Merthyr Tydfil, Wales"] = {},
 	["Monmouthshire, Wales"] = {divtype = "county"},
 	["Neath Port Talbot, Wales"] = {},
@@ -3852,7 +3796,7 @@ export.mexico_cities = {
 	-- Include the state in the category for León due to possible confusion with León, Spain.
 	["León, Guanajuato"] = {container = "Guanajuato"},
 	["León"] = {alias_of = "León, Guanajuato"},
-	["Leon"] = {alias_of = "León, Guanajuato", display = "León"},
+	["Leon"] = {alias_of = "León, Guanajuato", display = true},
 	["Querétaro"] = {container = "Querétaro"},
 	["Queretaro"] = {alias_of = "Querétaro", display = true},
 	["Ciudad Juárez"] = {container = "Chihuahua"},

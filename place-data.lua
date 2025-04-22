@@ -136,22 +136,6 @@ end
 
 
 --[==[
-Look up and resolve any category aliases that need to be applied to a holonym. For example,
-`"country/Republic of China"` maps to `"Taiwan"` for use in categories like `"Counties in Taiwan"`. This also removes
-any links.
-]==]
-function export.resolve_placename_cat_aliases(holonym_placetype, holonym_placename)
-	local retval
-	local cat_aliases = export.get_equiv_placetype_prop(holonym_placetype, function(pt)
-		return export.placename_cat_aliases[pt] end)
-	holonym_placename = export.remove_links_and_html(holonym_placename)
-	if cat_aliases then
-		retval = cat_aliases[holonym_placename]
-	end
-	return retval or holonym_placename
-end
-
---[==[
 Return a property from `placetype_data` for a given placetype. If the placetype isn't found in `placetype_data`, or the
 key isn't found in the placetype's entry in `placetype_data`, return nil.
 ]==]
@@ -668,6 +652,223 @@ function export.get_placetype_display_form(placetype, category_type)
 end
 
 
+local function resolve_unlinked_placename_display_aliases(placetype, placename)
+	local equiv_placetypes = m_data.get_placetype_equivs(placetype)
+	for i, equiv in ipairs(equiv_placetypes) do
+		equiv_placetypes[i] = equiv.placetype
+	end
+	local all_display_aliases_found = {}
+	local all_others_found = {}
+	for group, key, spec in export.iterate_matching_location {
+		placetypes = equiv_placetypes,
+		placename = placename,
+		alias_resolution = "display",
+	} do
+		if spec.alias_of and spec.display then
+			insert(all_display_aliases_found, {group, key, spec})
+		else
+			insert(all_found, {group, key, spec})
+		end
+	end
+	if not all_display_aliases_found[1] then
+		return placename
+	elseif all_display_aliases_found[2] then
+		internal_error("Found multiple matching display aliases for data %s: all_display_aliases_found=%s, " ..
+			"all_others_found=%s", data, all_display_aliases_found, all_others_found)
+	elseif all_others_found[1] then
+		internal_error("Found a display alias along with other possible meanings for data %s: " ..
+			"all_display_aliases_found=%s, all_others_found=%s", data, all_display_aliases_found, all_others_found)
+	else
+		local group, key, spec = unpack(all_display_aliases_found[1])
+		local full, elliptical = m_shared.key_to_placename(group, key)
+		return elliptical
+	end
+end
+
+--[==[
+If `placename` of type `placetype` is a display alias, convert it to its canonical form; otherwise, return unchanged.
+Display aliases transform certain placenames into canonical displayed forms. For example, if any of `country/US`,
+`country/USA` or `country/United States of America` (or `c/US`, etc.) are given, the result will be displayed as
+`United States`.
+
+'''NOTE''': Display aliases change what is displayed from what the editor wrote in the Wikitext. As a result, they
+should (a) be non-political in nature, and (b) not involve a change where the word `the` needs to be added or removed.
+For example, normalizing `US` and `USA` to `United States` for display purposes is OK but normalizing `Burma` to
+`Myanmar` is not (instead a cat alias should be used) because the terms `Burma` and `Myanmar` have clear political
+connotations. Similarly, we have a display alias that maps the old name of `Macedonia` as a country (but not a region!)
+to `North Macedonia`, but `Republic of Macedonia` is mapped to `North Macedonia` only as a cat alias because the two
+terms differ in their use of `the`. (For example, if we had a display alias mapping `Republic of Macedonia` to
+`North Macedonia`, the call {{tl|place|en|the <<capital city>> of the <<c/Republic of Macedonia>>}} would wrongly
+display as `the [[capital city]] of the [[North Macedonia]]`.) Generally, display normalizations tend to involve
+alternative forms (e.g. abbreviations, ellipses, foreign spellings) where the normalization improves clarity and
+consistency.
+]==]
+function export.resolve_placename_display_aliases(placetype, placename)
+	-- If the placename is a link, apply the alias inside the link.
+	-- This pattern matches both piped and unpiped links. If the link is not piped, the second capture (linktext) will
+	-- be empty.
+	local link, linktext = rmatch(placename, "^%[%[([^|%]]+)|?(.-)%]%]$")
+	if link then
+		if linktext ~= "" then
+			local alias = resolve_unlinked_placename_display_aliases(placetype, linktext)
+			return "[[" .. link .. "|" .. alias .. "]]"
+		else
+			local alias = resolve_unlinked_placename_display_aliases(placetype, link)
+			return "[[" .. alias .. "]]"
+		end
+	else
+		return resolve_unlinked_placename_display_aliases(placetype, placename)
+	end
+end
+
+--[=[
+Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
+specified holonym and stop either when there are no more holonyms or a holonym with modifier `:also` is found. If
+`first_holonym_index` is nil or omitted, iterate over all holonyms regardless. If `include_raw_text_holonyms` is
+specified, raw text holonyms (those not of the form `placetype/placename`) are returned as well; they can be identified
+by the fact that the `placetype` field in the holonym structure is nil. Two values are returned at each iteration, the
+holonym index and holonym structure, similar to `ipairs()`.
+]=]
+function export.get_holonyms_to_check(place_desc, first_holonym_index, include_raw_text_holonyms)
+	local stop_at_also = not not first_holonym_index
+	return function(place_desc, index)
+		while true do
+			index = index + 1
+			local this_holonym = place_desc.holonyms[index]
+			if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
+				return nil
+			end
+			-- If not placetype, we're processing raw text, which we normally want to skip.
+			if include_raw_text_holonyms or this_holonym.placetype then
+				return index, this_holonym
+			end
+		end
+	end, place_desc, first_holonym_index and first_holonym_index - 1 or 0
+end
+
+--[==[
+If the holonym in `data` (in the format as passed to a category handler) refers to a known location, iterate over all
+such known locations, returning for each location the corresponding key, spec and group as well as the trail of
+ancestral containers. Unlike `iterate_matching_location()`, this specifically checks that there is no mismatch between
+the location's containers at any level and any of the following holonyms in the {{tl|place}} spec. The fields in `data`
+are:
+* `holonym_placetype`: The placetype of the holonym. It can actually be a list of possible placetypes, as with
+  `iterate_matching_location()`.
+* `holonym_placename`: The placename of the holonym.
+* `holonym_index`: The index of the holonym among the holonyms in `place_desc`, or nil if the holonym is not among the
+  holonyms in `place_desc`. (If a holonym index is given, we check for container mismatches among the holonyms
+  following the specified index, stopping either when encountering a holonym marked with modifier `:also` or, if none
+  exist, when we run out of holonyms. If no holonym index is given, we check all holonyms for container mismatches.)
+* `place_desc`: Description of the place; used for the holonyms, to check for container mismatches.
+
+Returns four values: the location group, the canonical key by which the location is known, the spec object describing
+the location and the trail of ancestral containers for the location. The first three values are the same as for
+`iterate_matching_location`.
+]==]
+function export.iterate_matching_holonym_location(data)
+	local holonym_placetype, holonym_placename, holonym_index, place_desc =
+		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
+	local matching_location_iterator = export.iterate_matching_location {
+		placetypes = holonym_placetype,
+		placename = holonym_placename,
+	}
+	return function()
+		while true do
+			local group, key, spec = next(matching_location_iterator)
+			if not group then
+				return nil
+			end
+			local container_trail = {}
+			-- For each level of container, check that there are no mismatches (i.e. other location of the same
+			-- placetype) mentioned. We allow a mismatch at a given level if there's also a match with the container
+			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
+			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
+			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
+			-- Delaware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New
+			-- Jersey in [[Module:place/shared-data]]. Just because the containing location `US` matches isn't enough,
+			-- because Newark, NJ also has New Jersey as a containing location and there's a mismatch at that level. If
+			-- there are no mismatches at any level we assume we're dealing with the right known location.
+			--
+			-- If at a given level there are multiple containing locations, we count a match if any holonym matches any
+			-- containing location, and a mismatch only if a holonym exists of the same placetype that doesn't match any
+			-- containing location.
+			local containers_mismatch = false
+			for containers in export.iterate_containers(group, key, spec) do
+				insert(container_trail, containers)
+				local match_at_level = false
+				local mismatch_at_level = false
+				for other_holonym_index, other_holonym in export.get_holonyms_to_check(place_desc,
+					holonym_index and holonym_index + 1 or nil) do
+					local holonym_matches_at_level = false
+					local holonym_exists_with_same_placetype = false
+					for _, container in ipairs(containers) do
+						local full_container_placename, elliptical_container_placename = export.call_key_to_placename(
+							container.group, container.key)
+						local divtype = container.spec.divtype
+						local divtype_equivs = export.get_placetype_equivs(divtype)
+						local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
+							function(placetype)
+								return other_holonym.placetype == placetype and
+									(other_holonym.cat_placename == full_container_placename or
+									other_holonym.cat_placename == elliptical_container_placename)
+							end
+						)
+						if this_holonym_matches then
+							holonym_matches_at_level = true
+							break
+						end
+						local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
+							divtype_equivs, function(placetype)
+								return other_holonym.placetype == placetype
+							end
+						)
+						if this_holonym_exists_with_same_placetype then
+							holonym_exists_with_same_placetype = true
+						end
+					end
+					if holonym_matches_at_level then
+						match_at_level = true
+						break
+					end
+					if holonym_exists_with_same_placetype then
+						mismatch_at_level = true
+					end
+				end
+				if not match_at_level and mismatch_at_level then
+					containers_mismatch = true
+					break
+				end
+			end
+			if not containers_mismatch then
+				return group, key, spec, container_trail
+			end
+		end
+	end
+end
+
+--[==[
+If the holonym in `data` (in the format as passed to a category handler) refers to a known location, find and return the
+corresponding key, spec and group as well as the trail of ancestral containers. This is like
+`iterate_matching_holonym_location()` but throws an error if more than one location matches. (An example where this
+would happen is {{tl|place|en|neighborhood|city/Newcastle}}, because there are two known locations named Newcastle. To
+fix this, specify additional following disambiguating holonyms, e.g.
+{{tl|place|en|neighborhood|city/Newcastle|s/New South Wales}}.
+]==]
+function export.find_matching_holonym_location(data)
+	local all_found = {}
+	for group, key, spec, container_trail in export.iterate_matching_holonym_location(data) do
+		insert(all_found, {group, key, spec, container_trail})
+	end
+	if not all_found[1] then
+		return nil
+	elseif all_found[2] then
+		error(("Found multiple matching locations for holonym '%s/%s'; specify disambiguating context in the " ..
+			"containing holonyms: %s"):format(data.holonym_placetype, data.holonym_placename, dump(all_found)))
+	else
+		return unpack(all_found[1])
+	end
+end
+
 
 ------------------------------------------------------------------------------------------
 --                              Placename and placetype data                            --
@@ -979,142 +1180,6 @@ export.placetype_to_capital_cat = {
 }
 
 --[==[ var:
-These contain transformations applied to certain placenames to convert them into displayed form. For example, if any of
-"country/US", "country/USA" or "country/United States of America" (or "c/US", etc.) are given, the result will be
-displayed as "United States".
-
-FIXME: Placename display and cat aliases should probably be placed in the (sub)polity definitions themselves, similarly
-to how city aliases are handled, instead of being segregated here.
-
-'''NOTE''': Display aliases change what is displayed from what the editor wrote in the Wikitext. As a result, they
-should (a) be non-political in nature, and (b) not involve a change where the word `the` needs to be added or removed.
-For example, normalizing `US` and `USA` to `United States` for display purposes is OK but normalizing `Burma` to
-`Myanmar` is not (instead a cat alias should be used) because the terms `Burma` and `Myanmar` have clear political
-connotations. Similarly, we have a display alias that maps the old name of `Macedonia` as a country (but not a region!)
-to `North Macedonia`, but `Republic of Macedonia` is mapped to `North Macedonia` only as a cat alias because the two
-terms differ in their use of `the`. (For example, if we had a display alias mapping `Republic of Macedonia` to
-`North Macedonia`, the call {{tl|place|en|the <<capital city>> of the <<c/Republic of Macedonia>>}} would wrongly
-display as `the [[capital city]] of the [[North Macedonia]]`.) Generally, display normalizations tend to involve
-alternative forms (e.g. abbreviations, ellipses, foreign spellings) where the normalization improves clarity and
-consistency.
-]==]
-export.placename_display_aliases = {
-	["country"] = {
-		["Bosnia and Hercegovina"] = "Bosnia and Herzegovina",
-		["Côte d'Ivoire"] = "Ivory Coast",
-		["Macedonia"] = "North Macedonia",
-		["Türkiye"] = "Turkey",
-		["UAE"] = "United Arab Emirates",
-		["U.A.E."] = "United Arab Emirates",
-		["UK"] = "United Kingdom",
-		["U.K."] = "United Kingdom",
-		["US"] = "United States",
-		["U.S."] = "United States",
-		["USA"] = "United States",
-		["U.S.A."] = "United States",
-		["United States of America"] = "United States",
-	},
-	["province"] = {
-		["Noord-Brabant"] = "North Brabant",
-		["Noord-Holland"] = "North Holland",
-		["Zuid-Holland"] = "South Holland",
-		["Fuchien"] = "Fujian",
-	},
-	["region"] = {
-		["Northern Ostrobothnia"] = "North Ostrobothnia",
-		["Southern Ostrobothnia"] = "South Ostrobothnia",
-		["North Savo"] = "Northern Savonia",
-		["South Savo"] = "Southern Savonia",
-		["Päijät-Häme"] = "Päijänne Tavastia",
-		["Kanta-Häme"] = "Tavastia Proper",
-	},
-	["republic"] = {
-		["Kabardino-Balkarian Republic"] = "Kabardino-Balkar Republic",
-		["Tyva Republic"] = "Tuva Republic",
-	},
-	["state"] = {
-		["Mecklenburg-Western Pomerania"] = "Mecklenburg-Vorpommern",
-	},
-	["territory"] = {
-		["U.S. Virgin Islands"] = "United States Virgin Islands",
-		["US Virgin Islands"] = "United States Virgin Islands",
-	},
-}
-
---[==[ var:
-These contain transformations applied to the displayed form of certain placenames to convert them into the form they
-will appear in categories.  For example, either of "country/Myanmar" and "country/Burma" will be categorized into
-categories with "Burma" in them (but the displayed form will respect the form as input). (NOTE, the choice of names here
-should not be taken to imply any political position; it is just this way because it has always been this way.)
-]==]
-export.placename_cat_aliases = {
-	["autonomous community"] = {
-		["Valencian Community"] = "Valencia", -- differs in "the"
-	},
-	["autonomous okrug"] = {
-		["Nenetsia"] = "Nenets Autonomous Okrug",
-		["Khantia-Mansia"] = "Khanty-Mansi Autonomous Okrug",
-		["Yugra"] = "Khanty-Mansi Autonomous Okrug",
-	},
-	["council area"] = {
-		["Glasgow"] = "City of Glasgow",
-		["Edinburgh"] = "City of Edinburgh",
-		["Aberdeen"] = "City of Aberdeen",
-		["Dundee"] = "City of Dundee",
-		["Western Isles"] = "Na h-Eileanan Siar",
-	},
-	["country"] = {
-		-- Many of these differ in use of "the"; others have political connotations, etc.
-		["Burma"] = "Myanmar",
-		["Czechia"] = "Czech Republic",
-		["Nagorno-Karabakh"] = "Artsakh",
-		["People's Republic of China"] = "China",
-		["Republic of Armenia"] = "Armenia",
-		["Republic of China"] = "Taiwan",
-		["Republic of Ireland"] = "Ireland",
-		["Republic of North Macedonia"] = "North Macedonia",
-		["Republic of Macedonia"] = "North Macedonia",
-		["State of Palestine"] = "Palestine",
-		["Bosnia"] = "Bosnia and Herzegovina",
-		["Congo"] = "Democratic Republic of the Congo",
-		["Congo Republic"] = "Republic of the Congo",
-		["Swaziland"] = "Eswatini",
-		["Vatican"] = "Vatican City",
-	},
-	["county"] = {
-		["Anglesey"] = "Isle of Anglesey",
-	},
-	["republic"] = {
-		-- Only needs to include cases that aren't just shortened versions of the
-		-- full federal subject name (i.e. where words like "Republic" and "Oblast"
-		-- are omitted but the name is not otherwise modified). Note that a couple
-		-- of minor variants are recognized as display aliases, meaning that they
-		-- will be canonicalized for display as well as categorization.
-		["Bashkiria"] = "Republic of Bashkortostan",
-		["Chechnya"] = "Chechen Republic",
-		["Chuvashia"] = "Chuvash Republic",
-		["Kabardino-Balkaria"] = "Kabardino-Balkar Republic",
-		["Kabardino-Balkariya"] = "Kabardino-Balkar Republic",
-		["Karachay-Cherkessia"] = "Karachay-Cherkess Republic",
-		["North Ossetia"] = "Republic of North Ossetia-Alania",
-		["Alania"] = "Republic of North Ossetia-Alania",
-		["Yakutia"] = "Sakha Republic",
-		["Yakutiya"] = "Sakha Republic",
-		["Republic of Yakutia (Sakha)"] = "Sakha Republic",
-		["Tyva"] = "Tuva Republic",
-		["Udmurtia"] = "Udmurt Republic",
-	},
-	["region"] = {
-		["Åland"] = "Åland Islands", -- differs in "the"
-	},
-	["state"] = {
-		["Baja California Norte"] = "Baja California",
-		["Mexico"] = "State of Mexico", -- differs in "the"
-	},
-}
-
-
---[==[ var:
 This contains placenames that should be preceded by an article (almost always "the"). '''NOTE''': There are multiple
 ways that placenames can come to be preceded by "the":
 # Listed here.
@@ -1129,9 +1194,6 @@ export.placename_article = {
 	["archipelago"] = {
 		["Cyclades"] = "the",
 		["Dodecanese"] = "the",
-	},
-	["borough"] = {
-		["Bronx"] = "the",
 	},
 	["country"] = {
 		["Holy Roman Empire"] = "the",
@@ -1180,8 +1242,7 @@ export.placename_the_re = {
 	["tribal jurisdictional area"] = {" Reservation", " Nation"},
 }
 
--- Now extract from the shared place data all the other places that need "the"
--- prefixed.
+-- Now extract from the shared place data all the other places that need "the" prefixed.
 for _, group in ipairs(m_shared.locations) do
 	for key, value in pairs(group.data) do
 		local orig_key = key
@@ -1298,7 +1359,7 @@ local function capital_city_cat_handler(data, non_city)
 	-- category/categories we add below.
 	local retcats
 	if not non_city and place_desc.holonyms then
-		for h_index, holonym in m_shared.get_holonyms_to_check(place_desc, holonym_index) do
+		for h_index, holonym in export.get_holonyms_to_check(place_desc, holonym_index) do
 			local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
 			retcats = city_type_cat_handler {
 				entry_placetype = "city",
@@ -1403,6 +1464,55 @@ local function generic_cat_handler(data)
 	end
 end
 
+-- Now augment the category data with political divisions extracted from the shared data.
+function export.political_division_cat_handler(data)
+	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	if group then
+		local divlists = {}
+		if spec.poldiv then
+			insert(divlists, spec.poldiv)
+		end
+		if spec.miscdiv then
+			insert(divlists, spec.miscdiv)
+		end
+		local divtype = spec.divtype
+		if type(divtype) ~= "table" then
+			divtype = {divtype}
+		end
+		for _, divlist in ipairs(divlists) do
+			if type(divlist) ~= "table" then
+				divlist = {divlist}
+			end
+			for _, div in ipairs(divlist) do
+				if type(div) == "string" then
+					div = {type = div}
+				end
+				local sgdiv = export.maybe_singularize_placetype(div.type) or div.type
+				local prep = div.prep or "of"
+				local cat_as = div.cat_as or div.type
+				if type(cat_as) ~= "table" then
+					cat_as = {cat_as}
+				end
+				if not export.placetype_data[sgdiv] then
+					internal_error("Placetype %s associated with known location key %s and data %s not found in " ..
+						"`placetype_data`", sgdiv, key, spec)
+				end
+				if sgdiv == data.entry_placetype then
+					local retcats = {}
+					for _, pt_cat in ipairs(cat_as) do
+						if type(pt_cat) == "string" then
+							pt_cat = {type = pt_cat}
+						end
+						local pt_prep = pt_cat.prep or prep
+						insert(retcats, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " ..
+							m_shared.get_prefixed_key(key, spec))
+					end
+					return retcats
+				end
+			end
+		end
+	end
+end
 
 --[==[
 This is used to add pages to "bare" categories like [[:Category:en:Georgia, USA]] for `[[Georgia]]` and any
@@ -1578,7 +1688,7 @@ local function district_neighborhood_cat_handler(data)
 		-- to start with the current holonym, which is especially important for neighborhoods and suburbs that
 		-- may have the first holonym be a recognizable province, etc. but can't hurt otherwise. (Previously
 		-- we skipped the first/current holonym.)
-		for other_holonym_index, other_holonym in m_shared.get_holonyms_to_check(data.place_desc,
+		for other_holonym_index, other_holonym in export.get_holonyms_to_check(data.place_desc,
 			data.holonym_index) do
 			local other_holonym_data = {
 				holonym_placetype = other_holonym.placetype,
@@ -2236,7 +2346,6 @@ If you need to sort the following, do this (using Vim):
 		-- be a former subpolity, particularly in England. FIXME, we really need a handler to take care of this
 		-- properly.
 		class = "subpolity",
-		["city/New York City"] = {"Boroughs of +++"},
 		-- Grr, some boroughs are city-like but some (e.g. in Britain) may be larger.
 	},
 	["borough seat"] = {
@@ -4047,10 +4156,6 @@ If you need to sort the following, do this (using Vim):
 		has_neighborhoods = true, --?
 		-- FIXME: subdistricts can be neighborhood-like (of Jakarta) or larger (in China); need a handler
 		class = "subpolity",
-		--FIXME: doesn't work; need customizable poldivs of cities (here, subdistricts of Jakarta)
-		--["country/Indonesia"] = {
-		--	["municipality"] = {true},
-		--},
 		default = {true},
 	},
 	["subdivision"] = {
@@ -4339,82 +4444,5 @@ for sg_placetype, spec in pairs(export.placetype_data) do
 	end
 end
 
-
--- Now augment the category data with political divisions extracted from the shared data.
-for _, group in ipairs(m_shared.locations) do
-	for key, spec in pairs(group.data) do
-		m_shared.initialize_spec(group, key, spec)
-		local divlists = {}
-		if spec.poldiv then
-			insert(divlists, spec.poldiv)
-		end
-		if spec.miscdiv then
-			insert(divlists, spec.miscdiv)
-		end
-		local divtype = spec.divtype
-		if type(divtype) ~= "table" then
-			divtype = {divtype}
-		end
-		for _, divlist in ipairs(divlists) do
-			if type(divlist) ~= "table" then
-				divlist = {divlist}
-			end
-			for _, div in ipairs(divlist) do
-				if type(div) == "string" then
-					div = {type = div}
-				end
-				local sgdiv = export.maybe_singularize_placetype(div.type)
-				local prep = div.prep or "of"
-				local cat_as = div.cat_as or div.type
-				if type(cat_as) ~= "table" then
-					cat_as = {cat_as}
-				end
-				for _, dt in ipairs(divtype) do
-					if not export.placetype_data[sgdiv] then
-						internal_error("Placetype %s associated with key %s and data %s not found in `placetype_data`",
-							sgdiv, key, spec)
-					end
-					-- If there is a difference between full and elliptical placenames, make sure we recognize both
-					-- forms in holonyms.
-					local full_placename, elliptical_placename = m_shared.key_to_placename(group, key)
-					local placenames = full_placename == elliptical_placename and {full_placename} or
-						{full_placename, elliptical_placename}
-					for _, placename in ipairs(placenames) do
-						local cat_specs = {}
-						for _, pt_cat in ipairs(cat_as) do
-							if type(pt_cat) == "string" then
-								pt_cat = {type = pt_cat}
-							end
-							local pt_prep = pt_cat.prep or prep
-							insert(cat_specs, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " ..
-								m_shared.get_prefixed_key(key, spec))
-						end
-						local cat_data_holonym = dt .. "/" .. placename
-						if export.placetype_data[sgdiv][cat_data_holonym] then
-							-- Make sure there isn't an existing setting in `placetype_data` for this placetype and
-							-- holonym, which we would be overwriting. This clash occurs because there's a political or
-							-- misc division listed in `countries` or one of the other entries in `polities` in
-							-- [[Module:place/shared-data]], and we are trying to add categorization for toponyms that
-							-- are located in that political or misc division in that country/etc., but there's already
-							-- an entry in `placetype_data`. If this occurs, we throw an error rather than overwrite the
-							-- existing entry or do nothing (either of which options may be wrong). Sometimes the
-							-- existing entry is intentional as it does something special like rename the category, e.g.
-							-- 'Counties and regions of England' instead of just 'Counties of England'); in that case
-							-- set `no_error_on_poldiv_clash = true` in the entry in `placetype_data`; see existing
-							-- examples.
-							if not export.placetype_data[sgdiv][cat_data_holonym].no_error_on_poldiv_clash then
-								internal_error("Would overwrite placetype_data[%s][%s] with %s; if this is " ..
-									"intentional, set `no_error_on_poldiv_clash = true` (see comment in " ..
-									"[[Module:place/data]])", sgdiv, cat_data_holonym, cat_specs)
-							end
-						else
-							export.placetype_data[sgdiv][cat_data_holonym] = cat_specs
-						end
-					end
-				end
-			end
-		end
-	end
-end
 
 return export
