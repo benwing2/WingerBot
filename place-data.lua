@@ -721,6 +721,17 @@ function export.resolve_placename_display_aliases(placetype, placename)
 	end
 end
 
+--[==[
+Generate the "prefixed" version of a bare key, i.e. prefix it with `the` if correct for this key.
+]==]
+function export.get_prefixed_key(key, spec)
+	if spec.the then
+		return "the " .. key
+	else
+		return key
+	end
+end
+
 --[=[
 Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
 specified holonym and stop either when there are no more holonyms or a holonym with modifier `:also` is found. If
@@ -768,7 +779,7 @@ the location and the trail of ancestral containers for the location. The first t
 function export.iterate_matching_holonym_location(data)
 	local holonym_placetype, holonym_placename, holonym_index, place_desc =
 		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
-	local matching_location_iterator = export.iterate_matching_location {
+	local matching_location_iterator = m_shared.iterate_matching_location {
 		placetypes = holonym_placetype,
 		placename = holonym_placename,
 	}
@@ -1333,17 +1344,17 @@ local function city_type_cat_handler(data)
 			" setting", entry_placetype)
 	end
 	local plural_entry_placetype = export.pluralize_placetype(entry_placetype)
-	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group and not spec.is_former_place and not spec.is_city then
 		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in both
 		-- "Cities in Osaka Prefecture" and "Cities in Japan". (But don't do the latter if no_container_cat is set.)
 		local cap_plural_entry_placetype = ucfirst(plural_entry_placetype)
 		local retcats = {("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
-			m_shared.get_prefixed_key(key, spec))}
+			export.get_prefixed_key(key, spec))}
 		if container_trail[1] and not spec.no_container_cat then
 			for _, container in ipairs(container_trail[1]) do
 				insert(retcats, ("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
-					m_shared.get_prefixed_key(container.key, container.spec)))
+					export.get_prefixed_key(container.key, container.spec)))
 		end
 		return retcats
 	end
@@ -1389,10 +1400,10 @@ local function capital_city_cat_handler(data, non_city)
 	if capital_cat then
 		capital_cat = ucfirst(capital_cat)
 		local inserted_specific_variant_cat = false
-		local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+		local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 		if group and container_trail[1] and not spec.no_container_cat then
 			for _, container in ipairs(container_trail[1]) do
-				insert(retcats, ("%s of %s"):format(capital_cat, m_shared.get_prefixed_key(container.key,
+				insert(retcats, ("%s of %s"):format(capital_cat, export.get_prefixed_key(container.key,
 					container.spec)))
 				inserted_specific_variant_cat = true
 			end
@@ -1437,7 +1448,7 @@ council areas in Scotland, etc. are encountered. FIXME: Investigate this further
 The single parameter `data` is as in category handlers. The return value is a list of categories (without the preceding
 language code).
 ]=]
-local function generic_cat_handler(data)
+local function generic_place_cat_handler(data)
 	local from_demonym = data.from_demonym
 
 	local retcats = {}
@@ -1445,11 +1456,11 @@ local function generic_cat_handler(data)
 		if from_demonym then
 			insert(retcats, key)
 		else
-			insert(retcats, ("Places in %s"):format(m_shared.get_prefixed_key(key, spec)))
+			insert(retcats, ("Places in %s"):format(export.get_prefixed_key(key, spec)))
 		end
 	end
 
-	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group then
 		insert_retkey(key, spec)
 		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
@@ -1466,7 +1477,10 @@ end
 
 -- Now augment the category data with political divisions extracted from the shared data.
 function export.political_division_cat_handler(data)
-	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	if data.from_demonym then
+		return
+	end
+	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group then
 		local divlists = {}
 		if spec.poldiv then
@@ -1505,7 +1519,7 @@ function export.political_division_cat_handler(data)
 						end
 						local pt_prep = pt_cat.prep or prep
 						insert(retcats, ucfirst(pt_cat.type) .. " " .. pt_prep .. " " ..
-							m_shared.get_prefixed_key(key, spec))
+							export.get_prefixed_key(key, spec))
 					end
 					return retcats
 				end
@@ -1544,7 +1558,7 @@ function export.get_bare_categories(args, place_descs)
 		term = export.remove_links_and_html(term)
 		term = term:gsub("^the ", "")
 		for i, place_desc in ipairs(place_descs) do
-			local group, key, spec, container_trail = m_shared.find_matching_holonym_location {
+			local group, key, spec, container_trail = export.find_matching_holonym_location {
 				holonym_placetype = possible_placetypes_by_place_desc[i],
 				holonym_placename = term,
 				place_desc = place_desc,
@@ -1596,7 +1610,7 @@ function export.augment_holonyms_with_container(place_descs)
 			for i, holonym in ipairs(place_desc.holonyms) do
 				insert(augmented_holonyms, holonym)
 				if holonym.placetype and not export.placetype_is_ignorable(holonym.placetype) then
-					local group, key, spec, container_trail = m_shared.find_matching_holonym_location {
+					local group, key, spec, container_trail = export.find_matching_holonym_location {
 						holonym_placetype = holonym.placetype,
 						holonym_placename = holonym.cat_placename,
 						holonym_index = i,
@@ -1664,9 +1678,9 @@ local function district_neighborhood_cat_handler(data)
 
 	-- First check the immediate holonym to see if it's a city or a city-like top-level entity (Hong Kong, Bonaire,
 	-- etc.)
-	local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group and not spec.is_former_place and spec.is_city then
-		return {get_plural_entry_placetype(spec) .. " of " .. m_shared.get_prefixed_key(key, spec)}
+		return {get_plural_entry_placetype(spec) .. " of " .. export.get_prefixed_key(key, spec)}
 	end
 
 	-- If the entry placetype is neighbo(u)rhood, assume it is a neighborhood even if there isn't a city-like
@@ -1696,10 +1710,10 @@ local function district_neighborhood_cat_handler(data)
 				holonym_index = other_holonym_index,
 				place_desc = data.place_desc,
 			}
-			local group, key, spec, container_trail = m_shared.find_matching_holonym_location(data)
+			local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 			if group and not spec.is_former_place then
 				return {get_plural_entry_placetype(spec) .. (spec.is_city and " of " or " in ") ..
-					m_shared.get_prefixed_key(key, spec)}
+					export.get_prefixed_key(key, spec)}
 			end
 		end
 	end
@@ -2089,7 +2103,7 @@ If you need to sort the following, do this (using Vim):
 ]=]
 	["*"] = {
 		link = false,
-		cat_handler = generic_cat_handler,
+		cat_handler = generic_place_cat_handler,
 	},
 	["administrative atoll"] = {
 		-- Maldives

@@ -407,7 +407,7 @@ Holonym objects have the following fields:
 			   the placename in `display_placename` refers to raw text).
 * `display_placename`: The placename or raw text, in the format to be displayed. Placename display aliases have already
 					   been resolved. It is raw text if `placetype` is nil.
-* `cat_placename`: The placename or raw text, with links and HTML removed and with placename category aliases applied.
+* `cat_placename`: Same as `display_placename` but with links and HTML removed.
 * `langcode`: The language code prefix if specified as e.g. `c/fr:Australie`; otherwise nil.
 * `no_display`: If true (holonym prefixed with !), don't display the holonym but use it for categorization.
 * `needs_article`: If true, prepend an article if the placename needs one (e.g. `United States`).
@@ -526,10 +526,9 @@ The algorithm to find the categories to which a given place belongs works off of
 the entry placetype(s) and holonym(s); see above). If there are multiple place descriptions, each is processed
 independently to generate categories. Likewise, if there are multiple entry placetypes in a given place description,
 each is processed independently with all the holonyms of the description to generate categories. Furthermore, before
-the category-generation algorithm runs, several earlier steps have modified both the holonyms of the place description
-(inserting containing polities whenever possible; see the description above of `handle_category_implications()` and
-`augment_holonyms_with_containing_polity()`) and the categorization data in `placetype_data`, adding entries for all
-the locations specified in [[Module:place/shared-data]].
+the category-generation algorithm runs, earlier steps have modified the holonyms of the place description (inserting
+containing polities whenever possible; see the description above of `handle_category_implications()` and
+`augment_holonyms_with_containing_polity()`).
 
 Given a single entry placetype and a place description, the algorithm to generate categories processes holonyms from
 left to right until it finds one that "matches" in that it produces one or more categories. At that point it attempts
@@ -552,29 +551,40 @@ holonyms of the same placetype as `c/Poland` (i.e. other countries), which cause
 the category [[:Category:en:Geographic and cultural areas of Ukraine]].
 
 The category generation process works off of the `placetype_data` table, which specifies various properties for
-placetypes, such as how to display a holonym of that placetype as well as how to categorize pages where the {{tl|place}}
-call contains the specified placetype as an entry placetype. For example, the entry for `borough` in
+placetypes, such as how to display a holonym of that placetype as well as how to categorize certain pages where the
+{{tl|place}} call contains the specified placetype as an entry placetype. For example, the entry for `city-state` in
 [[Module:place/data]] might look like
 
 ```
-	["borough"] = {
-		preposition = "of",
-		display_handler = borough_display_handler,
-		["city/New York City"] = {"Boroughs of +++"},
+	["city-state"] = {
+		link = true,
+		category_link = "[[sovereign]] [[microstate]]s consisting of a single [[city]] and [[w:dependent territory|dependent territories]]",
+		has_neighborhoods = true,
+		class = "settlement",
+		["continent/*"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
+		default = {"City-states", "Cities", "Countries", "National capitals"},
 	},
 ```
 
-Here, the three keys specify, respectively:
-# If `borough` occurs as an entry placetype in an old-style place description (e.g.
-  {{tl|place|en|borough|city/New York City}}), use the preposition `of` (instead of `in`) when formatting the
-  description.
-# Use a custom display handler for displaying holonyms whose placetype is `borough`.
-# When the entry placetype `borough` occurs along with a holonym `city/New York City`, categorize into e.g.
-  [[:Category:en:Boroughs of New York City]]. Here, `+++` stands for the holonym in question.
+Here, the keys specify, respectively:
+# If `city-state` occurs as an entry placetype, link it to the corresponding Wiktionary entry (that is what `true` means
+  in `link = true`).
+# Use the specified `category_link` text for categories such as [[:Category:City-states]].
+# City-states are "city-like", i.e. they have neighborhoods; this controls the handling of entry placetypes such as
+  `neighborhood`, `district`, `area`, etc.
+# City-states should be treated as settlements for determining how to handle the placetype `former city-state` and for
+  categorizing the bare category [[:Category:City-states]] and language-specific equivalents such as
+  [[:Category:en:City-states]].
+# When the entry placetype `city-state` occurs along with a continent holonym, categorize into the specified categories
+  under `continent/*`. Here, `+++` stands for the holonym in question.
+# When the entry placetype `city-state` occurs in any other context, categorize into the specified categories under
+  `default`.
 
-It's important to realize that the vast majority of categorization keys under a given placetype entry are not specified
-explicitly in [[Module:place/data]] but are generated based on information given in [[Module:place/shared-data]]. For
-example, [[Module:place/shared-data]] has an "England group" specified similarly to the following:
+It's important to realize that the only categorization keys under a given placetype entry that are specified
+explicitly in [[Module:place/data]] are certain wildcard keys such as `continent/*` above (i.e. containing a slash
+followed by `*`) and under the key `default`. All the remaining categorization happens through category handlers, based
+on the information on known locations in [[Module:place/shared-data]]. For example, [[Module:place/shared-data]] has an
+"England group" specified similarly to the following:
 
 ```
 export.england_group = {
@@ -595,20 +605,9 @@ export.england_group = {
 
 The `default_poldiv` key here specifies the political divisions that exist for each of the counties listed under the
 `data` key (unless the key overrides them). Here, the entry `{type = "boroughs", cat_as = {"districts", "boroughs"}}`
-to categorize boroughs specified under any of the counties listed under `data` as both districts and boroughs. That is,
-it effectively adds a whole set of keys to the `borough` entry in `placetype_data`, like this:
-
-```
-	["borough"] = {
-		preposition = "of",
-		display_handler = borough_display_handler,
-		["city/New York City"] = {"Boroughs of +++"},
-		["county/Bedfordshire"] = {"Districts of Bedfordshire, England", "Boroughs of Bedfordshire, England"},
-		["county/Berkshire"] = {"Districts of Berkshire, England", "Boroughs of Berkshire, England"},
-		["county/Buckinghamshire"] = {"Districts of Buckinghamshire, England", "Boroughs of Buckinghamshire, England"},
-		...
-	},
-```
+directs the category handler `political_division_cat_handler` in [[Module:place/data]] (which is one of two category
+handlers that run for all entry placetypes, along with `generic_place_cat_handler`) to categorize boroughs specified
+under any of the counties listed under `data` as both districts and boroughs.
 
 Now, the categorization process proceeds as follows, given an entry placetype and place description (which specifies a
 set of holonyms):
@@ -621,22 +620,17 @@ set of holonyms):
   `"administrative capital"` but there is an entry in `placetype_equivs` in [[Module:place/data]] that maps
   `"administrative capital"` to `"capital city"` for categorization purposes.
 # Then, iterate over holonyms from left to right, as described above. For each holonym, we proceed as follows:
-## First, look for a key in the `placetype_data` entry that specifically matches the holonym. Note that when doing this,
-   holonyms are canonicalized so that e.g. `co/Bedfordshire` gets mapped to `county/Bedfordshire` (because there is
-   an entry in `placetype_aliases` in [[Module:place/data]] that maps `co` to `county`) and `c/USA` gets mapped to
-   `country/United States` (because there is an entry in `placetype_aliases` that maps `c` to `country` and there is
-   also an entry in `placename_display_aliases` in [[Module:place/data]] that maps `country/USA` to
-   `country/United States` for both display and categorization purposes). If the key is found, its value gives the
-   ''category specs'' used to generate the actual categories for the page in question. The specs can be a string not
-   containing `"+++"` (which is used directly by prepending the language code specified in {{para|1}} of the
-   {{tl|place}} call); a string containing `"+++"` (which is replaced with the holonym placename and then processed as
-   previously); or the special value `true` (which is converted to the string `"``Placetypes`` in/of +++"`, where
-   ``Placetypes`` is the capitalized pluralized entry placetype and the following preposition comes from the
-   `preposition` key under the `placetype_data` entry (defaulting to `in`), and then processed as previously).
-## If no such key is found, check if there is a category handler defined using the `cat_handler` key. If so, call it to
-   generate the categories (if any). The category handler is passed the entry placetype and holonym being processed, but
-   is also passed the entire place description, so it can look at other specified holonyms (particularly those that
-   follow). It either returns {nil} or a list of category specs of the same format as previously specified.
+## First, call `political_division_cat_handler` to check if the entry placetype and holonym match a political-division
+   or misc-division spec in the `locations` data in [[Module:place/shared-data]], as in the example above. Note that
+   when doing this, holonyms are canonicalized so that e.g. `co/Bedfordshire` gets mapped to `county/Bedfordshire`
+   (because there is an entry in `placetype_aliases` in [[Module:place/data]] that maps `co` to `county`) and `c/USA`
+   gets mapped to `country/United States` (because there is an entry in the location data for the list of countries that
+   maps `country/USA` to `country/United States` for both display and categorization purposes). This category handler,
+   as with all such handlers, is passed the entry placetype and holonym being processed, but is also passed the entire
+   place description, so it can look at other specified holonyms (particularly those that follow). It either returns
+   {nil} or a list of category specs (which are the actual categories minus the preceding language code).
+## If `political_division_cat_handler` doesn't generate any categories, check if there is a category handler defined
+   using the `cat_handler` key for the entry placetype. If so, call it to generate the categories (if any).
 ## If the category handler returns {nil}, or there is no category handler, look for a ''wildcard key'' of the format
    e.g. `country/*`, which matches any holonym of placetype `country`. If found, the value is a list of category specs,
    which are processed as above.
@@ -1319,22 +1313,37 @@ local function get_translations(transl, ids)
 end
 
 
--- Prepend the appropriate article if needed to `linked_placename`, where `holonym` is the underlying holonym object
--- that generated `linked_placename`. If `display_form` is true, we are formatting the holonym for display and need to
--- use the `display_placename` in `holonym`. In this case, `linked_placename` is the linked version of the display
--- placename, possibly modified due to a display handler and possibly with a placetype suffixed to the placename.
--- Otherwise, we are formatting the holonym for use in a category and `linked_placename` will be the same as
--- `cat_placename` in `holonym`.
-local function get_holonym_article(holonym, linked_placename, display_form)
+-- Prepend the appropriate article if needed to `linked_placename`, where the underlying holonym object that generated
+-- `linked_placename` can be found at `holonym_index` in the holonyms in `place_desc`. This is only called to format the
+-- holonym for display, and so we use the `display_placename` in the holonym. In this case, `linked_placename` is the
+-- linked version of the display placename, possibly modified due to a display handler and possibly with a placetype
+-- suffixed to the placename.
+local function get_holonym_article(linked_placename, place_desc, holonym_index)
+	local holonym = place_desc.holonyms[holonym_index]
 	local placetype = holonym.placetype
-	local placename = display_form and holonym.display_placename or holonym.cat_placename
+	local placename = holonym.display_placename
 	placename = m_data.remove_links_and_html(placename)
 	local unlinked_placename = m_data.remove_links_and_html(linked_placename)
 	if unlinked_placename:find("^the ") then
 		return nil
 	end
 	local art = m_data.get_equiv_placetype_prop(placetype, function(pt)
-		return m_data.placename_article[pt] and m_data.placename_article[pt][placename] end)
+		local art = m_data.placename_article[pt] and m_data.placename_article[pt][placename]
+		if art then
+			return art
+		end
+		-- FIXME:
+		-- 1. Check known locations for `the`. This should do it without resolving aliases because `the = true` is
+		--    set on the alias itself.
+		-- 2. Implement caching of known location lookup in the holonym. This may have to be keyed by placetype, but we
+		--    can have a special field for when the lookup placetype is the same as the user-specified placetype of the
+		--    holonym. Use this known location in place of looking up known locations and store the appropriate known
+		--    location there in augment_holonyms_with_container() instead of calling key_to_placename.
+		-- 3. Update the documentation in find_matching_key_in_group() to reflect alias handling and the fact that when
+		--    alias_resolution is set, the uninitialized alias itself is returned.
+		-- 4. Remove the code that augments placename_article[] based on known locations.
+	end)
+
 	if art then
 		return art
 	end
@@ -1344,7 +1353,7 @@ local function get_holonym_article(holonym, linked_placename, display_form)
 		-- "dept/Gironde" correctly generates "the Gironde department". But if the user overrode the affix type and e.g.
 		-- specified "dept:pref/Gironde", we'll wrongly get "the department of the Gironde", so in that case we need to
 		-- ignore the holonym article specified along with the placetype. (NOTE: We have since turned off the
-		-- holonym_use_the on 'department'.)
+		-- `holonym_use_the` setting on 'department'.)
 		local holonym_use_the = m_data.get_equiv_placetype_prop(placetype,
 			function(pt) return placetype_data[pt] and placetype_data[pt].holonym_use_the end)
 		if holonym_use_the then
@@ -1376,146 +1385,141 @@ local function get_holonym_article(holonym, linked_placename, display_form)
 end
 
 
--- Convert a holonym into display or category format. If `display_form` is true, add wikilinks to holonyms and pass them
--- through any display handlers, which may (e.g.) add the placetype to the holonym. `display_form` is false if we're
--- formatting a holonym for use in a category name. If `needs_article` is true, prepend the article `"the"` if the
+-- Convert a holonym into display format. This adds wikilinks to holonyms and passes them through any display handlers,
+-- which may (e.g.) add the placetype to the holonym. If `needs_article` is true, prepend the article `"the"` if the
 -- holonym requires it (e.g. if the holonym is `United States`). `needs_article` is set to true we are processing the
 -- first specified holonym in an old-style place description (i.e. the holonym directly following the entry placetype,
--- with no raw-text holonym in between) or if we're generating a category with the formatted holonym following a
--- preposition `of` or `in`.
+-- with no raw-text holonym in between).
 --
 -- Examples:
--- ({placetype = "country", display_placename = "United States", cat_placename = "United States"}, true, true) returns
+-- ({placetype = "country", display_placename = "United States", cat_placename = "United States"}, true) returns
 -- the template-expanded equivalent of "the {{l|en|United States}}".
--- ({placetype = "region", display_placename = "O'Higgins", cat_placename = "O'Higgins", affix_type = "suf"}, false,
---   true) returns the template-expanded equivalent of "{{l|en|O'Higgins}} region".
--- ({display_placename = "in the southern"}, false, true) returns "in the southern" (without wikilinking because
---   .placetype and .langcode are both nil).
-local function format_holonym(holonym, needs_article, display_form)
-	if display_form and holonym.no_display then
+-- ({placetype = "region", display_placename = "O'Higgins", cat_placename = "O'Higgins", affix_type = "suf"}, false)
+--   returns the template-expanded equivalent of "{{l|en|O'Higgins}} region".
+-- ({display_placename = "in the southern"}, false) returns "in the southern" (without wikilinking because .placetype
+--   and .langcode are both nil).
+local function format_holonym(place_desc, holonym_index, needs_article)
+	local holonym = place_desc.holonyms[holonym_index]
+	if holonym.no_display then
 		return ""
 	end
 
 	local orig_needs_article = needs_article
 	needs_article = needs_article or holonym.needs_article or holonym.force_the
 
-	local output = display_form and holonym.display_placename or holonym.cat_placename
+	local output = holonym.display_placename
 	local placetype = holonym.placetype
 	local affix_type_pt_data, affix_type, affix_is_prefix, affix, prefix, suffix, no_affix_strings
 	local pt_equiv_for_affix_type, already_seen_affix, need_affix
 
-	if display_form then
-		-- Implement display handlers.
-		local display_handler = m_data.get_equiv_placetype_prop(placetype,
-			function(pt) return placetype_data[pt] and placetype_data[pt].display_handler end)
-		if display_handler then
-			output = display_handler(placetype, output)
-		end
-		if not holonym.suppress_affix then
-			-- Implement adding an affix (prefix or suffix) based on the holonym's placetype. The affix will be
-			-- added either if the placetype's placetype_data spec says so (by setting 'affix_type'), or if the
-			-- user explicitly called for this (e.g. by using 'r:suf/O'Higgins'). Before adding the affix,
-			-- however, we check to see if the affix is already present (e.g. the placetype is "district"
-			-- and the placename is "Mission District"). The placetype can override the affix to add (by setting
-			-- `prefix`, `suffix` or `affix`) and/or override the strings used for checking if the affix is already
-			-- present (by setting 'no_affix_strings', which defaults to the affix explicitly given through `prefix`,
-			-- `suffix` or `affix` if any are given). `prefix` and `suffix` take precedence over `affix` if both are
-			-- set, but only when the appropriate type of affix is requested.
+	-- Implement display handlers.
+	local display_handler = m_data.get_equiv_placetype_prop(placetype,
+		function(pt) return placetype_data[pt] and placetype_data[pt].display_handler end)
+	if display_handler then
+		output = display_handler(placetype, output)
+	end
+	if not holonym.suppress_affix then
+		-- Implement adding an affix (prefix or suffix) based on the holonym's placetype. The affix will be
+		-- added either if the placetype's placetype_data spec says so (by setting 'affix_type'), or if the
+		-- user explicitly called for this (e.g. by using 'r:suf/O'Higgins'). Before adding the affix,
+		-- however, we check to see if the affix is already present (e.g. the placetype is "district"
+		-- and the placename is "Mission District"). The placetype can override the affix to add (by setting
+		-- `prefix`, `suffix` or `affix`) and/or override the strings used for checking if the affix is already
+		-- present (by setting 'no_affix_strings', which defaults to the affix explicitly given through `prefix`,
+		-- `suffix` or `affix` if any are given). `prefix` and `suffix` take precedence over `affix` if both are
+		-- set, but only when the appropriate type of affix is requested.
 
-			-- Search through equivalent placetypes for a setting of `affix_type`, `affix`, `prefix` or `suffix`. If we
-			-- find any, use them. If `affix_type` is given, it is overridden by the user's explicitly specified affix
-			-- type. If either an `affix_type` is found or the user explicitly specified an affix type, the affix is
-			-- displayed according to the following:
-			-- 1. If `prefix`, `suffix` or `affix` is given by the placetype or equivalent placetypes, use it (e.g.
-			--    placetype `administrative region` requests suffix "region" but doesn't set affix type; if the user
-			--    explicitly specifies `administrative region` as the placetype for a holonym and specifies a suffixal
-			--    affix type, use "region"). In this search, we stop looking if we find an explicit `affix_type`
-			--    setting; if this is found without an associated affix setting, the assumption is the associated
-			--    placetype was intended as the affix, not some explicit affix setting associated with a fallback
-			--    placetype.
-			-- 2. Otherwise, if the user explicitly requested an affix type, use the actual placetype (principle of
-			--    least surprise).
-			-- 3. Finally, fall back to the placetype associated with an explicit `affix_type` setting (which will
-			--    always exist if we get this far).
-			affix_type_pt_data, pt_equiv_for_affix_type = m_data.get_equiv_placetype_prop(placetype,
-				function(pt)
-					local cdpt = placetype_data[pt]
-					return cdpt and cdpt.affix_type and cdpt or nil
-				end
-			)
-			affix_pt_data, pt_equiv_for_affix = m_data.get_equiv_placetype_prop(placetype,
-				function(pt)
-					local cdpt = placetype_data[pt]
-					return cdpt and (cdpt.affix_type or cdpt.affix or cdpt.prefix or cdpt.suffix) and cdpt or nil
-				end
-			)
-			if affix_type_pt_data then
-				affix_type = affix_type_pt_data.affix_type
-				need_affix = true
+		-- Search through equivalent placetypes for a setting of `affix_type`, `affix`, `prefix` or `suffix`. If we
+		-- find any, use them. If `affix_type` is given, it is overridden by the user's explicitly specified affix
+		-- type. If either an `affix_type` is found or the user explicitly specified an affix type, the affix is
+		-- displayed according to the following:
+		-- 1. If `prefix`, `suffix` or `affix` is given by the placetype or equivalent placetypes, use it (e.g.
+		--    placetype `administrative region` requests suffix "region" but doesn't set affix type; if the user
+		--    explicitly specifies `administrative region` as the placetype for a holonym and specifies a suffixal
+		--    affix type, use "region"). In this search, we stop looking if we find an explicit `affix_type`
+		--    setting; if this is found without an associated affix setting, the assumption is the associated
+		--    placetype was intended as the affix, not some explicit affix setting associated with a fallback
+		--    placetype.
+		-- 2. Otherwise, if the user explicitly requested an affix type, use the actual placetype (principle of
+		--    least surprise).
+		-- 3. Finally, fall back to the placetype associated with an explicit `affix_type` setting (which will
+		--    always exist if we get this far).
+		affix_type_pt_data, pt_equiv_for_affix_type = m_data.get_equiv_placetype_prop(placetype,
+			function(pt)
+				local cdpt = placetype_data[pt]
+				return cdpt and cdpt.affix_type and cdpt or nil
 			end
-			if affix_pt_data then
-				prefix = affix_pt_data.prefix or affix_pt_data.affix
-				suffix = affix_pt_data.suffix or affix_pt_data.affix
-				need_affix = true
+		)
+		affix_pt_data, pt_equiv_for_affix = m_data.get_equiv_placetype_prop(placetype,
+			function(pt)
+				local cdpt = placetype_data[pt]
+				return cdpt and (cdpt.affix_type or cdpt.affix or cdpt.prefix or cdpt.suffix) and cdpt or nil
 			end
-			no_affix_strings = affix_pt_data and affix_pt_data.no_affix_strings or
-				affix_type_pt_data and affix_type_pt_data.no_affix_strings
-			if holonym.affix_type and placetype then
-				affix_type = holonym.affix_type
-				prefix = prefix or placetype
-				suffix = suffix or placetype
-				need_affix = true
+		)
+		if affix_type_pt_data then
+			affix_type = affix_type_pt_data.affix_type
+			need_affix = true
+		end
+		if affix_pt_data then
+			prefix = affix_pt_data.prefix or affix_pt_data.affix
+			suffix = affix_pt_data.suffix or affix_pt_data.affix
+			need_affix = true
+		end
+		no_affix_strings = affix_pt_data and affix_pt_data.no_affix_strings or
+			affix_type_pt_data and affix_type_pt_data.no_affix_strings
+		if holonym.affix_type and placetype then
+			affix_type = holonym.affix_type
+			prefix = prefix or placetype
+			suffix = suffix or placetype
+			need_affix = true
+		end
+		if need_affix then
+			-- At this point the affix_type has been determined and can't change any more, so we can figure out
+			-- whether we need the calculated prefix or suffix.
+			affix_is_prefix = affix_type == "pref" or affix_type == "Pref"
+			if affix_is_prefix then
+				affix = prefix
+			else
+				affix = suffix
 			end
-			if need_affix then
-				-- At this point the affix_type has been determined and can't change any more, so we can figure out
-				-- whether we need the calculated prefix or suffix.
-				affix_is_prefix = affix_type == "pref" or affix_type == "Pref"
-				if affix_is_prefix then
-					affix = prefix
-				else
-					affix = suffix
+			if not affix then
+				if not pt_equiv_for_affix_type then
+					internal_error("Something wrong, `pt_equiv_for_affix_type` not set processing holonym: %s",
+						holonym)
 				end
+				affix = pt_equiv_for_affix_type.placetype
 				if not affix then
-					if not pt_equiv_for_affix_type then
-						internal_error("Something wrong, `pt_equiv_for_affix_type` not set processing holonym: %s",
-							holonym)
-					end
-					affix = pt_equiv_for_affix_type.placetype
-					if not affix then
-						internal_error("Something wrong, no affix could be located in `pt_equiv_for_affix_type` for " ..
-							"holonym %s: %s", holonym, pt_equiv_for_affix_type)
-					end
+					internal_error("Something wrong, no affix could be located in `pt_equiv_for_affix_type` for " ..
+						"holonym %s: %s", holonym, pt_equiv_for_affix_type)
 				end
-				no_affix_strings = no_affix_strings or lc(affix)
-				if holonym.pluralize_affix then
-					affix = m_data.pluralize_placetype(affix)
-				end
-				already_seen_affix = m_data.check_already_seen_string(output, no_affix_strings)
 			end
+			no_affix_strings = no_affix_strings or lc(affix)
+			if holonym.pluralize_affix then
+				affix = m_data.pluralize_placetype(affix)
+			end
+			already_seen_affix = m_data.check_already_seen_string(output, no_affix_strings)
 		end
-		output = link(output, holonym.langcode or placetype and "en" or nil)
-		if need_affix and not affix_is_prefix and not already_seen_affix then
-			output = output .. " " .. (affix_type == "Suf" and ucfirst_all(affix) or affix)
-		end
+	end
+	output = link(output, holonym.langcode or placetype and "en" or nil)
+	if need_affix and not affix_is_prefix and not already_seen_affix then
+		output = output .. " " .. (affix_type == "Suf" and ucfirst_all(affix) or affix)
 	end
 
 	if needs_article then
-		local article = holonym.force_the and "the" or get_holonym_article(holonym, output, display_form)
+		local article = holonym.force_the and "the" or get_holonym_article(output, place_desc, holonym_index)
 		if article then
 			output = article .. " " .. output
 		end
 	end
 
-	if display_form then
-		if affix_is_prefix and not already_seen_affix then
-			output = (affix_type == "Pref" and ucfirst_all(affix) or affix) .. " of " .. output
-			if orig_needs_article then
-				-- Put the article before the added affix if we're the first holonym in the place description. This is
-				-- distinct from the article added above for the holonym itself; cf. "c:pref/United States,Canada" ->
-				-- "the countries of the United States and Canada". We need to use the value of `needs_article` passed
-				-- in from the function, which indicates whether we're processing the first holonym.
-				output = "the " .. output
-			end
+	if affix_is_prefix and not already_seen_affix then
+		output = (affix_type == "Pref" and ucfirst_all(affix) or affix) .. " of " .. output
+		if orig_needs_article then
+			-- Put the article before the added affix if we're the first holonym in the place description. This is
+			-- distinct from the article added above for the holonym itself; cf. "c:pref/United States,Canada" ->
+			-- "the countries of the United States and Canada". We need to use the value of `needs_article` passed
+			-- in from the function, which indicates whether we're processing the first holonym.
+			output = "the " .. output
 		end
 	end
 	return output
@@ -1523,24 +1527,27 @@ end
 
 
 -- Format a holonym for display, taking into account the entry's placetype (specifically, the last placetype if there
--- are more than one, excluding conjunctions and parenthetical items); the holonym preceding it in the template's
--- parameters (`prev_holonym`), and whether it is the first holonym (`first`). This may involve putting a preposition
--- ("in" or "of") before the formatted holonym, particularly if it is the first one, and may involve prepending a
--- comma.
-local function format_holonym_in_context(entry_placetype, prev_holonym, holonym, first)
+-- are more than one, excluding conjunctions and parenthetical items); the holonym's index among the holonyms in the
+-- template (which specifies what the previous holonym is and whether it is the first holonym); and the overall place
+-- description (which helps resolve ambiguities in holonyms when looking up known locations). This may involve putting a
+-- preposition ("in" or "of") before the formatted holonym, particularly if it is the first one, and may involve
+-- prepending a comma.
+local function format_holonym_in_context(entry_placetype, place_desc, holonym_index)
 	local desc = ""
 
 	-- If holonym.placetype is nil, the holonym is just raw text, e.g. 'in southern'.
 
+	local holonym = place_desc.holonyms[holonym_index]
 	if not holonym.no_display then
 		-- First compute the initial delimiter.
-		if first then
+		if holonym_index == 1 then
 			if holonym.placetype then
 				desc = desc .. " " .. m_data.get_placetype_entry_preposition(entry_placetype) .. " "
 			elseif not holonym.display_placename:find("^,") then
 				desc = desc .. " "
 			end
 		else
+			local prev_holonym = place_desc.holonyms[holonym_index - 1]
 			if prev_holonym.placetype and holonym.display_placename ~= "and" and holonym.display_placename ~= "in" and
 				not holonym.suppress_comma then
 				desc = desc .. ","
@@ -1552,7 +1559,7 @@ local function format_holonym_in_context(entry_placetype, prev_holonym, holonym,
 		end
 	end
 
-	return desc .. format_holonym(holonym, first, true)
+	return desc .. format_holonym(place_desc, holonym_index, first)
 end
 
 
@@ -1702,7 +1709,7 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 	-- The placetype used to determine whether "in" or "of" follows is the last placetype if there are
 	-- multiple slash-separated placetypes, but ignoring "and", "or" and parenthesized notes
 	-- such as "(one of 254)".
-	local placetype_for_in_or_of = nil
+	local entry_placetype = nil
 	local placetypes = place_desc.placetypes
 	local function is_and_or(item)
 		return item == "and" or item == "or"
@@ -1741,7 +1748,7 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 				-- append placetypes beginning with a paren to previous item
 				items[#items] = items[#items] .. " " .. pt
 			else
-				placetype_for_in_or_of = pt
+				entry_placetype = pt
 				insert(items, get_placetype_description(pt))
 			end
 		end
@@ -1759,7 +1766,7 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 			ins_space()
 			ins(pt)
 		else
-			placetype_for_in_or_of = pt
+			entry_placetype = pt
 			-- Join multiple placetypes with comma unless placetypes are already
 			-- joined with "and". We allow "the" to precede the second placetype
 			-- if they're not joined with "and" (so we get "city and county seat of ..."
@@ -1789,10 +1796,8 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 	end
 
 	if place_desc.holonyms then
-		for i, holonym in ipairs(place_desc.holonyms) do
-			local first = i == 1
-			local prev_desc = first and {} or place_desc.holonyms[i - 1]
-			ins(format_holonym_in_context(placetype_for_in_or_of, prev_desc, place_desc.holonyms[i], first))
+		for holonym_index, _ in ipairs(place_desc.holonyms) do
+			ins(format_holonym_in_context(entry_placetype, place_desc, holonym_index))
 		end
 	end
 
@@ -1858,7 +1863,7 @@ function export.format_new_style_place_desc_for_display(args, place_desc, with_a
 		elseif segment_type == "qualifier" then
 			insert(parts, get_qualifier_description(segment))
 		elseif segment_type == "holonym" then
-			insert(parts, format_holonym(place_desc.holonyms[segment], false, true))
+			insert(parts, format_holonym(place_desc, segment, false))
 		else
 			internal_error("Unrecognized segment type %s", segment_type)
 		end
@@ -2105,19 +2110,20 @@ local function find_placetype_cat_specs(data)
 			}
 		end
 	else
-		-- We loop twice over holonyms, the first time setting `no_fallback` so that we process only
-		-- category specs for the specifically given entry placetype (possibly with preceding qualifiers).
-		-- The reason for this is to correctly handle cases like [[Poblacion IX]]:
+
+		-- We loop twice over holonyms, the first time setting `no_fallback` so that we process only category specs for
+		-- the specifically given entry placetype (possibly with preceding qualifiers).  The reason for this is to
+		-- correctly handle cases like [[Poblacion IX]]:
 		-- {{place|en|barangay|mun/Roxas|p/Capiz|c/Philippines}}.
-		-- For better or worse, "barangay" falls back to "neighborhood", and without the `no_fallback`
-		-- loop, the neighborhood cat_handler run on the mun/Roxas holonym will take precedence over the
-		-- barangay-specific setting for p/Capiz because we check, for each holonym in turn, first for an
-		-- exactly matching spec, then a cat handler, then a wildcard spec like country/*. During the first
-		-- no-fallback loop, we disable checking for wildcard specs because it seems a fallback matching
-		-- exactly or through a cat handler on an earlier holonym would be better than a wildcard match for
-		-- the exact entry placetype at a later holonym. (FIXME: But I don't know for sure; maybe we should
-		-- check wildcard holonyms on the exact entry placetype first, or contrariwise maybe we should check
-		-- only exact-match holonyms on the exact entry placetype first, not even checking cat handlers.)
+		-- "barangay" falls back to "neighborhood", and without the `no_fallback` loop, the neighborhood cat handler run
+		-- on the mun/Roxas holonym will take precedence over the barangay-specific setting for p/Capiz because we
+		-- check, for each holonym in turn, first for a matching spec through political_division_cat_handler, then a cat
+		-- handler, then a wildcard spec like country/*. During the first no-fallback loop, we disable checking for
+		-- wildcard specs because it seems a fallback matching exactly or through a cat handler on an earlier holonym
+		-- would be better than a wildcard match for the exact entry placetype at a later holonym. (FIXME: But I don't
+		-- know for sure; maybe we should check wildcard holonyms on the exact entry placetype first, or contrariwise
+		-- maybe we should check only exact-match holonyms through political_division_cat_handler on the exact entry
+		-- placetype first, not even checking other cat handlers.)
 		for i, holonym in ipairs(place_desc.holonyms) do
 			if first_holonym_index and i < first_holonym_index then
 				-- continue
@@ -2161,11 +2167,12 @@ end
 -- (3) the triggering holonym (a holonym object; see comment at top of file) used to fetch the category specs
 --     (see top-of-section comment); or nil if no triggering holonym.
 -- The return value is constructed as described in the top-of-section comment.
-local function cat_specs_to_categories(cat_specs, entry_placetype, holonym)
+local function cat_specs_to_categories(place_desc, cat_data)
 	local all_cats = {}
 
-	if holonym then
-		local holonym_placetype, holonym_placename = holonym.placetype, holonym.cat_placename
+	local cat_specs, entry_placetype, triggering_holonym, triggering_holonym_index =
+		cat_data.cat_specs, cat_data.entry_placetype, cat_data.triggering_holonym, cat_data.triggering_holonym_index
+	if triggering_holonym then
 		for _, cat_spec in ipairs(cat_specs) do
 			local cat
 			if cat_spec == true then
@@ -2176,11 +2183,23 @@ local function cat_specs_to_categories(cat_specs, entry_placetype, holonym)
 			end
 
 			if cat:find("%+%+%+") then
-				local equiv_holonym = m_table.shallowCopy(holonym)
-				equiv_holonym.placetype = holonym_placetype
-				cat = cat:gsub("%+%+%+", format_holonym(equiv_holonym, true, false))
+				local group, key, spec, container_trail = export.find_matching_holonym_location {
+					holonym_placetype = triggering_holonym.placetype,
+					holonym_placename = triggering_holonym.cat_placename,
+					holonym_index = triggering_holonym_index,
+					place_desc = place_desc,
+				}
+				if group then
+					cat = cat:gsub("%+%+%+", m_strutils.replacement_escape(m_data.get_prefixed_key(key, spec)))
+					insert(all_cats, cat)
+				else
+					mw.log(("Unable to insert category for cat spec '%s' because holonym '%s/%s' did not match a " ..
+						"known location"):format(cat, triggering_holonym.placetype, triggering_holonym.cat_placename))
+					track("cant-match-holonym-for-category-spec")
+				end
+			else
+				insert(all_cats, cat)
 			end
-			insert(all_cats, cat)
 		end
 	else
 		for _, cat_spec in ipairs(cat_specs) do
@@ -2229,7 +2248,7 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
 		end
 
 		-- Generate categories for the category specs found.
-		extend(cats, cat_specs_to_categories(cat_data.cat_specs, cat_data.entry_placetype, triggering_holonym))
+		extend(cats, cat_specs_to_categories(place_desc, cat_data))
 
 		-- Also generate categories for other holonyms of the same placetype, so that e.g.
 		-- {{place|en|city|s/Kansas|and|s/Missouri|c/USA}} generates both [[:Category:en:Cities in Kansas, USA]] and
@@ -2250,14 +2269,13 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
 							placetype = triggering_holonym.placetype, cat_placename = other_placename_of_same_type
 						}
 						local other_cat_data = find_placetype_cat_specs {
-								entry_placetype = entry_placetype,
-								place_desc = place_desc,
-								overriding_holonym = overriding_holonym,
-								from_demonym = from_demonym,
-							}
+							entry_placetype = entry_placetype,
+							place_desc = place_desc,
+							overriding_holonym = overriding_holonym,
+							from_demonym = from_demonym,
+						}
 						if other_cat_data then
-							extend(cats, cat_specs_to_categories(other_cat_data.cat_specs, other_cat_data.entry_placetype,
-								other_cat_data.triggering_holonym))
+							extend(cats, cat_specs_to_categories(place_desc, other_cat_data))
 						end
 					end
 				end
@@ -2285,7 +2303,11 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
 		end)
 
 	if entry_pt_default then
-		return cat_specs_to_categories(entry_pt_default, equiv_entry_placetype_and_qualifier.placetype, nil)
+		return cat_specs_to_categories(place_desc, {
+			cat_specs = entry_pt_default,
+			entry_placetype = equiv_entry_placetype_and_qualifier.placetype,
+			-- no triggering holonym
+		})
 	end
 
 	return {}

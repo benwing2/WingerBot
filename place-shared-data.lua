@@ -224,17 +224,6 @@ local function list_or_element_contains(list_or_element, item)
 end
 
 --[==[
-Generate the "prefixed" version of a bare key, i.e. prefix it with `the` if correct for this key.
-]==]
-function export.get_prefixed_key(key, spec)
-	if spec.the then
-		return "the " .. key
-	else
-		return key
-	end
-end
-
---[==[
 Call the location group's `key_to_placename` function if it exists (see the comment at the top of [[Module:place]] for
 the distinction between keys and placenames). Two values are returned, the full and elliptical placenames (e.g. full
 `"County Durham"` vs. elliptical `"Durham"`). If the group does not define `key_to_placename`, both full and elliptical
