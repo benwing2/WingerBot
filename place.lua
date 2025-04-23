@@ -2,7 +2,7 @@ local export = {}
 
 local force_cat = false -- set to true for testing
 
-local m_data = require("Module:place/data")
+local m_data = require("Module:User:Benwing2/place/data")
 local m_links = require("Module:links")
 local m_strutils = require("Module:string utilities")
 local m_table = require("Module:table")
@@ -291,7 +291,7 @@ There are two main types of categories:
 ## City categories ([[:Category:Tokyo]], [[:Category:New York City]], [[:Category:Jaipur]]). Normally these do not
    include the containing subpolity, but may do so in order to disambiguate.
 # Categories for placetypes, divided into:
-## "Immediate" political and miscellaneous division categories ([[:Category:States of the United States]],
+## "Immediate" political and non-political division categories ([[:Category:States of the United States]],
    [[:Category:Municipalities of Tocantins, Brazil]], [[:Category:Ghost towns in Arizona, USA]]). These are name
    categories, whose purpose is to contain locations of the specified type. "Immediate" here refers to the fact that
    the location in the category name is the immediately-containing polity. Usually these categories use the preposition
@@ -300,7 +300,7 @@ There are two main types of categories:
    The form of the toponym appearing in these categories is always the same as that of the corresponding toponym
    category except that the word "the" may appear (e.g. [[:Category:States of the United States]]), whereas it doesn't
    appear in the toponym category itself ([[:Category:United States]], no "the").
-## "Skip-polity" categories for second-level political and miscellaneous divisions of a country or other top-level
+## "Skip-polity" categories for second-level political and non-political divisions of a country or other top-level
    polity (e.g. [[:Category:Counties of the United States]], [[:Category:Municipalities of Brazil]] and
    [[:Category:Subprefectures of Japan]]). These have several purposes:
    * They group the immediate division categories mentioned previously.
@@ -332,11 +332,11 @@ as their first parent, and vice-versa. Specifically:
 # Pseudo-countries are under [[:Category:Country-like entities]] as a neutral designation. There aren't enough of them
   to subcategorize under continent-level regions.
 # Former countries are under [[:Category:Former countries and country-like entities]].
-# Subpolity categories are usually under a placetype category whose placetype is the canonical (first-listed) divtype of
-  the subpolity and whose toponym is the immediately containing polity, but there are exceptions. Specifically,
+# Subpolity categories are usually under a placetype category whose placetype is the canonical (first-listed) placetype
+  of the subpolity and whose toponym is the immediately containing polity, but there are exceptions. Specifically,
   sometimes if a polity has multiple types of subpolities, they are combined (e.g. [[:Category:States and territories of
   Australia]], [[:Category:Federal subjects of Russia]]). In addition, sometimes a less specific but more identifiable
-  divtype is used instead of the canonical one (e.g. [[:Category:Regions of France]] when the canonical divtype is
+  placetype is used instead of the canonical one (e.g. [[:Category:Regions of France]] when the canonical placetype is
   "administrative region"). The same rules and exceptions generally apply when categorizing subpolities themselves; e.g.
   both the Australian state of Queensland and territory of Northern Territory go under
   [[:Category:en:States and territories of Australia]] rather than separately under [[:Category:en:States of Australia]]
@@ -501,7 +501,7 @@ return
 
 Note that in `get_cats()` (which runs after the display form has been generated), further changes to the holonym
 structure are made to aid in categorization. For example, after `handle_category_implications()` and
-`augment_holonyms_with_containing_polity()` are called, the above structure will look more like
+`augment_holonyms_with_container()` are called, the above structure will look more like
 
 ```
 {
@@ -528,7 +528,7 @@ independently to generate categories. Likewise, if there are multiple entry plac
 each is processed independently with all the holonyms of the description to generate categories. Furthermore, before
 the category-generation algorithm runs, earlier steps have modified the holonyms of the place description (inserting
 containing polities whenever possible; see the description above of `handle_category_implications()` and
-`augment_holonyms_with_containing_polity()`).
+`augment_holonyms_with_container()`).
 
 Given a single entry placetype and a place description, the algorithm to generate categories processes holonyms from
 left to right until it finds one that "matches" in that it produces one or more categories. At that point it attempts
@@ -588,26 +588,28 @@ on the information on known locations in [[Module:place/shared-data]]. For examp
 
 ```
 export.england_group = {
-    key_to_placename = make_key_to_placename(", England$"),
-    placename_to_key = make_placename_to_key(", England"),
-    skip_parents = {{name = "England", divtype = "constituent country"}, {name = "United Kingdom", divtype = "country"}},
-    default_divtype = "county",
-    default_poldiv = {
-        "districts",
-        {type = "local government districts", cat_as = "districts"},
-        {type = "boroughs", cat_as = {"districts", "boroughs"}},
-        "civil parishes",
-    },
-    british_spelling = true,
-    data = export.england_counties,
+	default_container = {key = "England", placetype = "constituent country"},
+	default_placetype = "county",
+	default_divs = {
+		"districts",
+		{type = "local government districts", cat_as = "districts"},
+		{
+			type = "local government districts with borough status",
+			cat_as = {"districts", "boroughs"},
+		},
+		{type = "boroughs", cat_as = {"districts", "boroughs"}},
+		"civil parishes",
+	},
+	default_british_spelling = true,
+	data = export.england_counties,
 }
 ```
 
-The `default_poldiv` key here specifies the political divisions that exist for each of the counties listed under the
-`data` key (unless the key overrides them). Here, the entry `{type = "boroughs", cat_as = {"districts", "boroughs"}}`
-directs the category handler `political_division_cat_handler` in [[Module:place/data]] (which is one of two category
-handlers that run for all entry placetypes, along with `generic_place_cat_handler`) to categorize boroughs specified
-under any of the counties listed under `data` as both districts and boroughs.
+The `default_divs` key here specifies the divisions that exist for each of the counties listed under the `data` key
+(unless the key overrides them). Here, the entry `{type = "boroughs", cat_as = {"districts", "boroughs"}}` directs the
+category handler `political_division_cat_handler` in [[Module:place/data]] (which is one of two category handlers that
+run for all entry placetypes, along with `generic_place_cat_handler`) to categorize boroughs specified under any of the
+counties listed under `data` as both districts and boroughs.
 
 Now, the categorization process proceeds as follows, given an entry placetype and place description, which specifies a
 set of holonyms (the code to do this is in `get_placetype_cats()`):
@@ -620,13 +622,13 @@ set of holonyms (the code to do this is in `get_placetype_cats()`):
   then look up `capital city`, which is where the category handler is found, because `administrative capital` specifies
   `capital city` as its fallback.
 # Then, iterate over holonyms from left to right, as described above. For each holonym, we proceed as follows:
-## First, call `political_division_cat_handler` to check if the entry placetype and holonym match a political-division
-   or misc-division spec in the `locations` data in [[Module:place/shared-data]], as in the example above. Note that
-   when doing this, holonyms are canonicalized so that e.g. `co/Bedfordshire` gets mapped to `county/Bedfordshire`
-   (because there is an entry in `placetype_aliases` in [[Module:place/data]] that maps `co` to `county`) and `c/USA`
-   gets mapped to `country/United States` (because there is an entry in the location data for the list of countries that
-   maps `country/USA` to `country/United States` for both display and categorization purposes). This category handler,
-   as with all such handlers, is passed the entry placetype and holonym being processed, but is also passed the entire
+## First, call `political_division_cat_handler` to check if the entry placetype and holonym match a division in the
+   `locations` data in [[Module:place/shared-data]], as in the example above. Note that when doing this, holonyms are
+   canonicalized so that e.g. `co/Bedfordshire` gets mapped to `county/Bedfordshire` (because there is an entry in
+   `placetype_aliases` in [[Module:place/data]] that maps `co` to `county`) and `c/USA` gets mapped to
+   `country/United States` (because there is an entry in the location data for the list of countries that maps
+   `country/USA` to `country/United States` for both display and categorization purposes). This category handler, as
+   with all such handlers, is passed the entry placetype and holonym being processed, but is also passed the entire
    place description, so it can look at other specified holonyms (particularly those that follow). It either returns
    {nil} or a list of category specs (which are the actual categories minus the preceding language code).
 ## If `political_division_cat_handler` doesn't generate any categories, check if there is a category handler defined
@@ -698,7 +700,7 @@ TODO/FIXME:
 5. Currently, categories for e.g. states and territories of Australia go into
    [[:Category:States and territories of Australia]] but terms for states and territories of Australia go into
    (respectively) [[:Category:States of Australia]] and [[:Category:Territories of Australia]]. We should fix this;
-   maybe this is as easy as setting cat_as in the respective poldiv definitions.
+   maybe this is as easy as setting cat_as in the respective divs definitions.
 6. Probably cat_as should support raw categories as well as category types; raw categories would be indicated by being
    prefixed with "Category:".
 7. Update documentation.
@@ -706,27 +708,27 @@ TODO/FIXME:
    LEFT, WHICH IS TRICKY BECAUSE OF THE PLETHORA OF DIFFERENT TYPES OF FEDERAL SUBJECTS AND ALTERNATIVE NAMES]
 9. Add Pakistan provinces and territories. [DONE]
 10. Add a polity group for continents and continent-level regions instead of special-casing. This should make it
-    possible e.g. to have Jerusalem as a city under "Asia".
+    possible e.g. to have Jerusalem as a city under "Asia". [DONE]
 11. Add better handling of cities that are their own states, like Mexico City.
 12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just
     "Aguascalientes".
 13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
-    `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]).
+    `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/data]]). [DONE]
 14. More generally, cities should be unified into the polity grouping system to the extent possible; this would allow
-    for poldivs of cities (see #17 below).
+    for divs of cities (see #17 below). [DONE]
 15. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
     from being added due to generically-named divisions like "North Governorate", "Central Region" and
 	"Eastern Province" but (a) this setting seems to do multiple things and should be split, (b) it should be possible
-	to set this at the division level instead of the country level.
+	to set this at the division level instead of the country level. [DONE]
 16. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
 17. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
-    them as such) have districts, subdistricts, etc. We need to support poldivs for cities and even named divisions of
-    cities (such as we already have for boroughs of New York City).
+    them as such) have districts, subdistricts, etc. We need to support divs for cities and even named divisions of
+    cities (such as we already have for boroughs of New York City). [DONE]
 18. It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
     in [[Module:place]] needs to remove links first.
 19. Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
     "historic(al)" is ambiguous (cf. "historic counties" in England which are not former, but still have a legal
-	definition).
+	definition). [DONE]
 20. It should be possible to categorize former subpolities of certain polities; cf. [[:Category:ja:Provinces of Japan]],
     which contains former provinces.
 21. In subpolity_keydesc(), we need to generate the correct indefinite article and have a huge hack to check
@@ -734,7 +736,7 @@ TODO/FIXME:
     indefinite article generating function fails. To fix this properly, we need to separate out the non-category
     placetype data from `cat_data` in [[Module:place/data]] and move it to [[Module:place/shared-data]], because we
     don't have access to the data in [[Module:place/data]], and that data indicates the correct article for placetypes
-    like "union territory".
+    like "union territory". [DONE]
 22. Simplify the specs in `cat_data`, eliminating the distinction between "inner" and "outer" matching. There should not
     be two levels, just one. For example, in "district", instead of
 		["country/Portugal"] = {
@@ -764,30 +766,32 @@ TODO/FIXME:
     larger-level divisions. Likewise for the `city_type_cat_handler`. There are some sufficiently generically-named
     divisions that this issue can occur; for example, [[Koforidua]], the capital city of Eastern Region, Ghana, is
     incorrectly categorized under [[:Category:en:Cities in Eastern Region, Malta]] and
-    [[:Category:en:Places in Eastern Region, Malta]]. Note that the function `augment_holonyms_with_containing_polity`
-    ''DOES'' do such checks, so we should be able to refactor the code out of that function and use it elsewhere.
+    [[:Category:en:Places in Eastern Region, Malta]]. Note that the function `augment_holonyms_with_container`
+    ''DOES'' do such checks, so we should be able to refactor the code out of that function and use it elsewhere. [DONE]
 25. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
     in different polities from the specified containing polity/polities of the city; but how smart is it? It will
     successfully avoid categorizing a neighborhood in e.g. [[Columbus]], [[Georgia]] that doesn't explicitly mention the
     US (only `s/Georgia`) into [[:Category:en:Places in Columbus]], which is for Columbus, Ohio, but will it do the same
     for a hypothetical neighborhood of Columbus in say Merseyside, England? This should be investigated. It will
-    probably work for a hypothetical Columbus in [[Canada]] because `augment_holonyms_with_containing_polity` would
+    probably work for a hypothetical Columbus in [[Canada]] because `augment_holonyms_with_container` would
     auto-add Canada as an additional holonym once say `p/Ontario` is mentioned, but I think there's a setting preventing
     this augmentation from happening for the UK. (This relates to FIXME #15. `no_containing_polity_cat` is set on
     England, Scotland, etc. to prevent the toponyms from being added to [[:Category:en:Places in the United Kingdom]],
     but this same setting is used to prevent augmentation, which it should not be; there should be different settings.)
+	[DONE]
 26. The `generic_cat_handler` (or more specifically `find_holonym_keys_for_categorization`) checks for city holonyms
     by looking specifically for holonym type `city`. But some cities (particularly those in China) can be specified
     using different holonym types, e.g. `prefecture-level city`, `subprovincial city`, etc. We should allow these when
-    appropriate (which means the cities in China need to have a `divtype` set that indicates their regional-level
-    status as well as just `city`). I'm not sure if cities support specifying a custom `divtype` at the moment; this
-    relates to FIXME #14 above concerning unifying cities and political divisions internally.
+    appropriate (which means the cities in China need to have a `placetype` set that indicates their regional-level
+    status as well as just `city`). I'm not sure if cities support specifying a custom `placetype` at the moment; this
+    relates to FIXME #14 above concerning unifying cities and political divisions internally. [DONE]
 27. The bare category handler (`get_bare_categories` in [[Module:place/data]]) is not smart enough to avoid
     overcategorizing cities or other divisions that are of the right placetype but in the wrong containing polity. For
 	example, Asturian [[Llión]] "León (city in Spain)" gets put in [[:Category:ast:León]] even though the latter is
     supposed to refer to a city in Mexico. We can borrow the check-containing-polity code from `generic_cat_handler`.
+	[DONE]
 28. Redo handling of singular and plural to respect overrides specified in placetype_data. Check more carefully for
-    things that may not singularize correctly, e.g. 'passes' -> 'passe'? Definitely 'headquarters' and variants.
+    things that may not singularize correctly, e.g. 'passes' -> 'passe'? Definitely 'headquarters' and variants. [DONE]
 29. Combine placetype_equivs and other placetype data into `placetype_data`. Figure out if we need the distinction
     between `placetype_equivs` and `fallback`. [DONE]
 30. `has_neighborhoods` may need to be a function that can look at the containing holonyms to determine whether the
@@ -803,14 +807,14 @@ TODO/FIXME:
 		uses the `preposition` setting in placetype_data, defaulting to "in";
 	(b) when generating categories based on explicit category specs in placetype_data (which are gradually being
 		deprecated), which likewise uses the `preposition` setting in placetype_data, defaulting to "in";
-	(c) when generating categories based on "augmented" category specs originating in the `poldiv` and `miscdiv`
-		placetypes for specific known locations in [[Module:place/shared-data]], which uses the `prep` setting embedded
-		in the `poldiv`/`miscdiv` specifications, defaulting to "of";
+	(c) when generating categories based on political_division_cat_handler, originating in the `divs` placetypes for
+		specific known locations in [[Module:place/shared-data]], which uses the `prep` setting embedded in the `divs`
+		specifications, defaulting to "of";
 	(d) when generating categories based on category handlers specified using the `cat_handler` property of entries in
 		placetype_data, which tend to hardcode "in" or "of" depending on the specific category handler;
-	(e) when generating category descriptions in [[Module:category tree/topic cat/data/Places]] for `poldiv`/`miscdiv`
-		categories generated in (c), which (correctly) uses the same `prep` setting embedded in the `poldiv`/`miscdiv`
-		settings that is used when generating the categories themselves;
+	(e) when generating category descriptions in [[Module:category tree/topic cat/data/Places]] for `divs` categories
+		generated in (c), which (correctly) uses the same `prep` setting embedded in the `divs` settings that is used
+		when generating the categories themselves;
     (f) when generating category descriptions for categories generated in (b) and (d) above, which relies on the
 		`generic_before_non_cities` and `generic_before_cities` settings in placetype_data, which need to match the
 		corresponding prepositions hardcoded in the category generation handlers. Instead of the hardcoding, the
@@ -834,7 +838,8 @@ TODO/FIXME:
 	'county borough' and a fallback display handler for 'borough'. We need to rethink this; maybe merge the affix
 	setting and display handlers.
 37. Implement known-location groups and specs in a more standardly object-oriented way using metatables.
-38. Implement caching of known location lookup in the holonym. This may have to be keyed by placetype, but we can have a	special field for when the lookup placetype is the same as the user-specified placetype of the holonym. Use this
+38. Implement caching of known location lookup in the holonym. This may have to be keyed by placetype, but we can have a
+	special field for when the lookup placetype is the same as the user-specified placetype of the holonym. Use this
 	known location in place of looking up known locations and store the appropriate known location there in
 	`augment_holonyms_with_container()` instead of calling `key_to_placename`.
 ]=]
@@ -1051,7 +1056,7 @@ local function split_holonym(raw)
 		holonyms[i] = {
 			placetype = placetype,
 			display_placename = placename,
-			unlinked_placename = export.remove_links_and_html(placename),
+			unlinked_placename = m_data.remove_links_and_html(placename),
 			langcode = langcode,
 			affix_type = i == affix_holonym_index and affix_type or nil,
 			pluralize_affix = i == affix_holonym_index and pluralize_affix,
@@ -1298,6 +1303,9 @@ end
 local function get_holonym_article(decorated_placename, place_desc, holonym_index)
 	local holonym = place_desc.holonyms[holonym_index]
 	local holonym_placetype = holonym.placetype
+	if not holonym_placetype then
+		return nil
+	end
 	local holonym_placename = holonym.unlinked_placename
 	local unlinked_decorated_placename = m_data.remove_links_and_html(decorated_placename)
 	if unlinked_decorated_placename:find("^the ") then
@@ -1544,7 +1552,7 @@ local function format_holonym_in_context(entry_placetype, place_desc, holonym_in
 		end
 	end
 
-	return desc .. format_holonym(place_desc, holonym_index, first)
+	return desc .. format_holonym(place_desc, holonym_index, holonym_index == 1)
 end
 
 
@@ -2028,7 +2036,7 @@ local function find_placetype_cat_specs(data)
 			function(equiv_entry_pt)
 				return m_data.get_equiv_placetype_prop(holonym_placetype,
 					function(equiv_holonym_pt) return m_data.political_division_cat_handler {
-						entry_placetype = equiv_entry_placetype_and_qualifier.placetype,
+						entry_placetype = equiv_entry_pt,
 						holonym_placetype = equiv_holonym_pt,
 						holonym_placename = holonym_placename,
 						holonym_index = index,
@@ -2168,7 +2176,7 @@ local function cat_specs_to_categories(place_desc, cat_data)
 			end
 
 			if cat:find("%+%+%+") then
-				local group, key, spec, container_trail = export.find_matching_holonym_location {
+				local group, key, spec, container_trail = m_data.find_matching_holonym_location {
 					holonym_placetype = triggering_holonym.placetype,
 					holonym_placename = triggering_holonym.unlinked_placename,
 					holonym_index = triggering_holonym_index,
@@ -2305,15 +2313,15 @@ Iterate through each type of place given `place_descriptions` (a list of place d
 top of the file) and return a list of the categories that need to be added to the entry. The returned categories need to
 be prefixed with the langcode to get the actual Wiktionary categories, and passed to `format_categories` in
 [[Module:utilities]] to format the categories into strings. `args` is the table of user-specified arguments, used
-primarily to add "bare categories" corresponding to toponyms for known cities and political divisions.
-`from_demonym` is true if we're being called from {{tl|demonym-noun}} or {{tl|demonym-adj}}. In this case, we only want
-certain categories added, specifically bare categories corresponding to the most specific specified holonym(s).
+primarily to add "bare categories" corresponding to toponyms for known locations. `from_demonym` is true if we're being
+called from {{tl|demonym-noun}} or {{tl|demonym-adj}}. In this case, we only want certain categories added, specifically
+bare categories corresponding to the most specific specified holonym(s).
 ]==]
 function export.get_cats(args, place_descriptions, from_demonym)
 	local cats = {}
 
 	handle_category_implications(place_descriptions, m_data.cat_implications)
-	m_data.augment_holonyms_with_containing_polity(place_descriptions)
+	m_data.augment_holonyms_with_container(place_descriptions)
 
 	if not from_demonym then
 		local bare_categories = m_data.get_bare_categories(args, place_descriptions)

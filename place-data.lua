@@ -2,8 +2,9 @@ local export = {}
 
 export.force_cat = false -- set to true for testing
 
-local m_shared = require("Module:place/shared-data")
+local m_shared = require("Module:User:Benwing2/place/shared-data")
 local m_links = require("Module:links")
+local m_table = require("Module:table")
 local m_strutils = require("Module:string utilities")
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
@@ -18,6 +19,7 @@ export.process_error = process_error
 
 local ucfirst = m_strutils.ucfirst
 local ulower = m_strutils.lower
+local rmatch = m_strutils.match
 local split = m_strutils.split
 
 
@@ -659,7 +661,7 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 	end
 	local all_display_aliases_found = {}
 	local all_others_found = {}
-	for group, key, spec in export.iterate_matching_location {
+	for group, key, spec in m_shared.iterate_matching_location {
 		placetypes = equiv_placetypes,
 		placename = placename,
 		alias_resolution = "display",
@@ -667,7 +669,7 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 		if spec.alias_of and spec.display then
 			insert(all_display_aliases_found, {group, key, spec})
 		else
-			insert(all_found, {group, key, spec})
+			insert(all_others_found, {group, key, spec})
 		end
 	end
 	if not all_display_aliases_found[1] then
@@ -788,7 +790,7 @@ function export.iterate_matching_holonym_location(data)
 	}
 	return function()
 		while true do
-			local group, key, spec = next(matching_location_iterator)
+			local group, key, spec = matching_location_iterator()
 			if not group then
 				return nil
 			end
@@ -807,7 +809,7 @@ function export.iterate_matching_holonym_location(data)
 			-- containing location, and a mismatch only if a holonym exists of the same placetype that doesn't match any
 			-- containing location.
 			local containers_mismatch = false
-			for containers in export.iterate_containers(group, key, spec) do
+			for containers in m_shared.iterate_containers(group, key, spec) do
 				insert(container_trail, containers)
 				local match_at_level = false
 				local mismatch_at_level = false
@@ -816,28 +818,36 @@ function export.iterate_matching_holonym_location(data)
 					local holonym_matches_at_level = false
 					local holonym_exists_with_same_placetype = false
 					for _, container in ipairs(containers) do
-						local full_container_placename, elliptical_container_placename = export.call_key_to_placename(
-							container.group, container.key)
-						local divtype = container.spec.divtype
-						local divtype_equivs = export.get_placetype_equivs(divtype)
-						local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
-							function(placetype)
-								return other_holonym.placetype == placetype and
-									(other_holonym.unlinked_placename == full_container_placename or
-									other_holonym.unlinked_placename == elliptical_container_placename)
+						if not container.spec.no_check_holonym_mismatch then
+							local full_container_placename, elliptical_container_placename = m_shared.key_to_placename(
+								container.group, container.key)
+							local placetypes = container.spec.placetype
+							if type(placetypes) ~= "table" then
+								placetypes = {placetypes}
 							end
-						)
-						if this_holonym_matches then
-							holonym_matches_at_level = true
-							break
-						end
-						local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
-							divtype_equivs, function(placetype)
-								return other_holonym.placetype == placetype
+							local placetype_equivs = {}
+							for _, pt in ipairs(placetypes) do
+								m_table.extend(placetype_equivs, export.get_placetype_equivs(pt))
 							end
-						)
-						if this_holonym_exists_with_same_placetype then
-							holonym_exists_with_same_placetype = true
+							local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(placetype_equivs,
+								function(placetype)
+									return other_holonym.placetype == placetype and
+										(other_holonym.unlinked_placename == full_container_placename or
+										other_holonym.unlinked_placename == elliptical_container_placename)
+								end
+							)
+							if this_holonym_matches then
+								holonym_matches_at_level = true
+								break
+							end
+							local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
+								placetype_equivs, function(placetype)
+									return other_holonym.placetype == placetype
+								end
+							)
+							if this_holonym_exists_with_same_placetype then
+								holonym_exists_with_same_placetype = true
+							end
 						end
 					end
 					if holonym_matches_at_level then
@@ -876,8 +886,17 @@ function export.find_matching_holonym_location(data)
 	if not all_found[1] then
 		return nil
 	elseif all_found[2] then
+		local holonym_placetype = data.holonym_placetype
+		if type(holonym_placetype) == "table" then
+			holonym_placetype = concat(holonym_placetype, ",")
+		end
+		local found_keys = {}
+		for _, found in ipairs(all_found) do
+			local _, key, _, _ = unpack(found)
+			insert(found_keys, key)
+		end
 		error(("Found multiple matching locations for holonym '%s/%s'; specify disambiguating context in the " ..
-			"containing holonyms: %s"):format(data.holonym_placetype, data.holonym_placename, dump(all_found)))
+			"containing holonyms: %s"):format(holonym_placetype, data.holonym_placename, dump(found_keys)))
 	else
 		return unpack(all_found[1])
 	end
@@ -1332,6 +1351,7 @@ local function city_type_cat_handler(data)
 			for _, container in ipairs(container_trail[1]) do
 				insert(retcats, ("%s %s %s"):format(cap_plural_entry_placetype, generic_before_non_cities,
 					export.get_prefixed_key(container.key, container.spec)))
+			end
 		end
 		return retcats
 	end
@@ -1439,20 +1459,37 @@ local function generic_place_cat_handler(data)
 
 	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group then
-		insert_retkey(key, spec)
-		-- Categorize both in key, and in the larger polity that the key is part of, e.g. [[Hirakata]] goes in
+		if not spec.no_generic_place_cat then
+			-- This applies to continents and continental regions.
+			insert_retkey(key, spec)
+		end
+		-- Categorize both in key, and in the larger location(s) that the key is part of, e.g. [[Hirakata]] goes in
 		-- both [[Category:Places in Osaka Prefecture, Japan]] and [[Category:Places in Japan]]. But not when
 		-- no_container_cat is set (e.g. for 'United Kingdom').
-		if container_trail[1] and not spec.no_container_cat then
-			for _, container in ipairs(container_trail[1]) do
-				insert_retkey(container.key, container.spec)
+		if not spec.no_container_cat then
+			for _, container_set in ipairs(container_trail) do
+				local stop_adding_containers = false
+				for _, container in ipairs(container_set) do
+					if not container.spec.no_generic_place_cat then
+						insert_retkey(container.key, container.spec)
+					end
+					if container.spec.no_container_cat then
+						stop_adding_containers = true
+					end
+				end
+				if stop_adding_containers then
+					break
+				end
 			end
 		end
 		return retcats
 	end
 end
 
--- Now augment the category data with political divisions extracted from the shared data.
+--[==[
+Special category handler run for all placetypes that checks for specified division placetypes of known locations and
+categorizes appropriately.
+]==]
 function export.political_division_cat_handler(data)
 	if data.from_demonym then
 		return
@@ -1460,15 +1497,11 @@ function export.political_division_cat_handler(data)
 	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group then
 		local divlists = {}
-		if spec.poldiv then
-			insert(divlists, spec.poldiv)
+		if spec.divs then
+			insert(divlists, spec.divs)
 		end
-		if spec.miscdiv then
-			insert(divlists, spec.miscdiv)
-		end
-		local divtype = spec.divtype
-		if type(divtype) ~= "table" then
-			divtype = {divtype}
+		if spec.addl_divs then
+			insert(divlists, spec.addl_divs)
 		end
 		for _, divlist in ipairs(divlists) do
 			if type(divlist) ~= "table" then
@@ -1595,13 +1628,13 @@ function export.augment_holonyms_with_container(place_descs)
 					}
 					if group and container_trail[1] and not spec.no_auto_augment_container then
 						for _, container in ipairs(container_trail[1]) do
-							local containing_type = container.spec.divtype
+							local containing_type = container.spec.placetype
 							if type(containing_type) == "table" then
 								-- If the containing type is a list, use the first element as the canonical variant.
 								containing_type = containing_type[1]
 							end
 							local full_container_placename, elliptical_container_placename =
-								export.key_to_placename(container.group, container.key)
+								m_shared.key_to_placename(container.group, container.key)
 							-- Don't side-effect holonyms while processing them.
 							local new_holonym = {
 								-- By the time we run, the display has already been generated so we don't need to set
@@ -1827,10 +1860,10 @@ like [[:Category:States and territories of Australia]]).
 Keys under the value table for a given placetype of are two types: ''property keys'' (which specify the value of
 specific properties) and ''categorization keys'' (which tell how to categorize certain sorts of holonyms if the
 placetype in question occurs as an entry placetype). Categorization keys are either the special value `default` or are
-strings with a slash in them, such as `"city/New York City"` or `"country/*"`. Note that there are few categorization
-keys specified in this table in the code itself, but the augmentation process (the code directly following the table)
-adds a lot more. The algorithm for how category keys are used to generate categories is described at the top of
-[[Module:place]].
+wildcard strings with a slash in them, such as `"country/*"`. Note that only wildcard strings are currently allowed
+directly in the placetype data; everything else is handled through category handlers, either per-placetype or special
+(such as `political_division_cat_handler`). The algorithm for how category keys and handlers are used to generate
+categories is described at the top of [[Module:place]].
 
 There are several recognized property keys, of various types:
 
@@ -1902,10 +1935,10 @@ There are several recognized property keys, of various types:
   example is `area`, which sets a fallback of `geographic and cultural area` and also sets a category handler that
   checks for cities or city-like entities (e.g. boroughs) occurring as holonyms and categorizes the toponym under
   [[:Category:Neighborhoods of CITY]] (for recognized cities) or otherwise [[:Category:Neighborhoods of POLDIV]] (for
-  the nearest containing recognized political division or polity). In addition, `area` is set as a political division of
-  Kuwait, meaning if `c/Kuwait` occurs as holonym, the toponym is categorized under [[:Category:Areas of Kuwait]]. If
-  none of these categories trigger, the fallback of `geographic and cultural area` will take effect, and the toponym
-  will be categorized as e.g. [[:Category:Geographic and cultural areas of England]].
+  the nearest containing recognized location). In addition, `area` is set as a political division of Kuwait, meaning if
+  `c/Kuwait` occurs as holonym, the toponym is categorized under [[:Category:Areas of Kuwait]]. If none of these
+  categories trigger, the fallback of `geographic and cultural area` will take effect, and the toponym will be
+  categorized as e.g. [[:Category:Geographic and cultural areas of England]].
 
 3. There is currently one property to control irregular plurals of placetypes:
 * `plural`: If specified, its value is the plural of the placetype. Otherwise, the default pluralization algorithm in
@@ -1978,12 +2011,11 @@ There are several recognized property keys, of various types:
   iterates over holonyms from left to right, running the `cat_handler` function on each holonym in turn until one or
   more categories are returned; see below for more specifics. (Note that countries for which e.g. a `district` is a
   political division do not get the corresponding category added by the `district_neighborhood_cat_handler` function but
-  by an exact-matching categorization key for the country in question.) `cat_handler` functions are called with one
-  argument, `data`, describing the resolved entry placetype (i.e. after resolving placetype aliases and fallbacks) and
-  the holonym being processed. The return value should be a list of category specs (categories minus the langcode
-  prefix, with `+++` standing for the holonym, or the value `true`, which stands for
-  ` ``Placetypes`` in/of ``Holonym`` `, i.e. the pluralized placetype with the appropriate preposition as specified in
-  `placetype_data`). `data` contains the following fields:
+  by `political_division_cat_handler`.) `cat_handler` functions are called with one argument, `data`, describing the
+  resolved entry placetype (i.e. after resolving placetype aliases and fallbacks) and the holonym being processed. The
+  return value should be a list of category specs (categories minus the langcode prefix, with `+++` standing for the
+  holonym key, or the value `true`, which stands for ` ``Placetypes`` in/of ``Holonym`` `, i.e. the pluralized placetype
+  with the appropriate preposition as specified in `placetype_data`). `data` contains the following fields:
 ** `entry_placetype`: the resolved entry placetype for the entry placetype being processed (i.e. it will always have an
    entry in `placetype_data` but may not be the original placetype given by the user);
 ** `holonym_placetype` and `holonym_placename`: the holonym placetype and placename being processed;
@@ -2387,6 +2419,10 @@ If you need to sort the following, do this (using Vim):
 		bare_category_parent = "cities",
 		cat_handler = capital_city_cat_handler,
 		default = {true},
+		-- The following is necessary so that e.g. [[Melbourne]] defined as {{place|en|capital city|s/Victoria|c/Australia}}
+		-- gets categorized in the bare category [[Category:en:Melbourne]]; otherwise placetype 'capital city' wouldn't
+		-- match against the placetype 'city' of Melbourne.
+		fallback = "city",
 	},
 	["caplc"] = {
 		link = "[[capital]] and [[large]]st [[city]]",
@@ -2836,8 +2872,7 @@ If you need to sort the following, do this (using Vim):
 	["federal city"] = {
 		link = "w",
 		preposition = "of",
-		has_neighborhoods = true,
-		class = "settlement",
+		fallback = "city",
 	},
 	["federal district"] = {
 		link = true,

@@ -1,16 +1,18 @@
 local labels = {}
 local handlers = {}
 
+local m_table = require("Module:table")
 local en_utilities_module = "Module:en-utilities"
 local string_utilities_module = "Module:string utilities"
-local table_module = "Module:table"
 
-local m_shared = require("Module:place/shared-data")
-local m_data = require("Module:place/data")
+local m_shared = require("Module:User:Benwing2/place/shared-data")
+local m_data = require("Module:User:Benwing2/place/data")
 local placetype_data = m_data.placetype_data
 local internal_error = m_shared.internal_error
 
 local dump = mw.dumpObject
+local insert = table.insert
+local concat = table.concat
 local is_callable = require("Module:fun").is_callable
 
 --[==[ intro:
@@ -75,7 +77,7 @@ end
 
 -- Handler for bare categories for all types of capitals. This needs to precede the handler for bare placetype
 -- categories as some of the types of capitals exist as placetypes as well.
-table.insert(handlers, function(label)
+insert(handlers, function(label)
 	label = lcfirst(label)
 	local capital_placetype = capital_cat_to_placetype[label]
 	if capital_placetype then
@@ -95,7 +97,7 @@ end)
 
 -- Handler for bare placetype categories. FIXME: Add wpcat= and commonscat= info. Previously we had it for various
 -- so-called "generic" placetypes, but sometimes the categories were wrong.
-table.insert(handlers, function(label)
+insert(handlers, function(label)
 	for _, canon_label in ipairs { lcfirst(label), label } do
 		local ptdesc, ptdata = m_data.get_placetype_display_form(canon_label, "top-level")
 		if ptdesc then
@@ -128,7 +130,7 @@ table.insert(handlers, function(label)
 			})
 			local parents = {bare_category_parent}
 			if addl_bare_category_parents then
-				require(table_module).extend(parents, addl_bare_category_parents)
+				m_table.extend(parents, addl_bare_category_parents)
 			end
 			return {
 				type = "name",
@@ -140,15 +142,15 @@ table.insert(handlers, function(label)
 	end
 end)
 
-local function fetch_primary_divtype(key, spec)
-	local divtype = spec.divtype
-	if type(divtype) == "table" then
-		divtype = divtype[1]
+local function fetch_primary_placetype(key, spec)
+	local placetype = spec.placetype
+	if type(placetype) == "table" then
+		placetype = placetype[1]
 	end
-	if not divtype then
-		internal_error("No divtype specified or defaulted for key %s, spec %s", key, spec)
+	if not placetype then
+		internal_error("No placetype specified or defaulted for key %s, spec %s", key, spec)
 	end
-	return divtype
+	return placetype
 end
 
 --[==[
@@ -161,7 +163,7 @@ the full placename. Finally, if neither full placename nor elliptical placename 
 placename. That way, we prefer full placenames to elliptical placenames if both or neither exist as Wiktionary entries,
 but if only one exists, we link to that one rather than have a red link.
 ]==]
-function export.construct_linked_location(group, key, spec)
+local function construct_linked_location(group, key, spec)
 	local full_placename, elliptical_placename = m_shared.key_to_placename(group, key)
 	local linked_placename
 	if elliptical_placename ~= full_placename then
@@ -187,12 +189,12 @@ adopt the way city descriptions used to read, which was similar to `"the city of
 [[West Midlands]], in the [[constituent country]] of [[England]], in the [[country]] of the [[United Kingdom]], in
 [[Europe]]"`.
 ]==]
-function export.construct_location_description(group, key, spec, m_data)
+local function construct_location_description(group, key, spec)
 	local parts = {}
 	local function ins(txt)
 		insert(parts, txt)
 	end
-	ins(export.construct_linked_location(group, key, spec))
+	ins(construct_linked_location(group, key, spec))
 	local first_container = true
 	local need_closing_paren = false
 	local containers = {{group = group, key = key, spec = spec}}
@@ -208,7 +210,7 @@ function export.construct_location_description(group, key, spec, m_data)
 		if not include_container_in_desc then
 			break
 		end
-		local next_containers = next(container_iterator)
+		local next_containers = container_iterator()
 		if not next_containers then
 			break
 		end
@@ -224,12 +226,12 @@ function export.construct_location_description(group, key, spec, m_data)
 		end
 
 		if #containers > 1 then
-			local divtypes = {}
+			local placetypes = {}
 			local prepositions = {}
 			for _, container in ipairs(containers) do
-				local container_type = fetch_primary_divtype(container.key, container.spec)
-				m_table.insertIfNot(divtypes, m_data.pluralize_placetype(container_type))
-				m_table.insertIfNot(divtypes, m_data.get_placetype_entry_preposition(container_type))
+				local container_type = fetch_primary_placetype(container.key, container.spec)
+				m_table.insertIfNot(placetypes, m_data.pluralize_placetype(container_type))
+				m_table.insertIfNot(prepositions, m_data.get_placetype_entry_preposition(container_type))
 			end
 			if first_container then
 				ins(", ")
@@ -240,7 +242,7 @@ function export.construct_location_description(group, key, spec, m_data)
 			if is_former then
 				ins("former ")
 			end
-			ins(m_table.serialCommaJoin(divtypes))
+			ins(m_table.serialCommaJoin(placetypes))
 			ins(" ")
 			ins(concat(prepositions, "/"))
 		else
@@ -250,7 +252,7 @@ function export.construct_location_description(group, key, spec, m_data)
 				ins(" (which is ")
 				need_closing_paren = true
 			end
-			local container_type = fetch_primary_divtype(containers[1].key, containers[1].spec)
+			local container_type = fetch_primary_placetype(containers[1].key, containers[1].spec)
 			if is_former then
 				ins("a former ")
 			else
@@ -261,11 +263,12 @@ function export.construct_location_description(group, key, spec, m_data)
 			ins(" ")
 			ins(m_data.get_placetype_entry_preposition(container_type))
 		end
+		ins(" ")
 		first_container = false
 		containers = next_containers
 		local container_locations = {}
 		for _, container in ipairs(containers) do
-			insert(container_locations, export.construct_linked_location(container.group, container.key,
+			insert(container_locations, construct_linked_location(container.group, container.key,
 				container.spec))
 		end
 		ins(m_table.serialCommaJoin(container_locations))
@@ -278,7 +281,7 @@ function export.construct_location_description(group, key, spec, m_data)
 end
 
 -- Handler for bare placename categories for known locations in `locations` in [[Module:place/shared-data]].
-table.insert(handlers, function(label)
+insert(handlers, function(label)
 	for _, canon_label in ipairs { label, lcfirst(label) } do
 		local group, spec = m_shared.find_canonical_key(canon_label)
 		if group then
@@ -301,31 +304,30 @@ table.insert(handlers, function(label)
 			end
 			local parents = {}
 			local bare_label_parents = spec.overriding_bare_label_parents
-			local container_iterator = m_shared.iterate_containers(group, key, spec)
-			local containers = next(container_iterator)
+			local container_iterator = m_shared.iterate_containers(group, canon_label, spec)
+			local containers = container_iterator()
 			if not bare_label_parents then
 				bare_label_parents = {"+++"}
 			end
-			local full_location_placename, elliptical_location_placename = m_shared.key_to_placename(group, key)
+			local full_location_placename, elliptical_location_placename = m_shared.key_to_placename(group, canon_label)
 			local full_container_placename
 			if containers then
 				full_container_placename, _ = m_shared.key_to_placename(containers[1].group, containers[1].key)
 			end
 			local inserted_containers = false
 			for _, parent in ipairs(bare_label_parents) do
-				if parent = "+++" then
-					local location_type = fetch_primary_divtype(key, spec)
-					div_parent_type = m_data.pluralize_placetype(divtype)
+				if parent == "+++" then
+					local location_type = fetch_primary_placetype(canon_label, spec)
 					parent = ("%s %s CONTAINER"):format(m_data.pluralize_placetype(location_type),
 						m_data.get_placetype_entry_preposition(location_type))
 				end
 				if parent:find("CONTAINER") then
 					if not containers then
 						internal_error("Parent category %s needs the container of %s but no containers specified: %s",
-							parent, key, spec)
+							parent, canon_label, spec)
 					end
 					for _, container in ipairs(containers) do
-						local prefixed_key = m_shared.get_prefixed_key(container.key, container.spec)
+						local prefixed_key = m_data.get_prefixed_key(container.key, container.spec)
 						m_table.insertIfNot(parents, parent:gsub("CONTAINER",
 							require(string_utilities_module).replacement_escape(prefixed_key)))
 					end
@@ -357,7 +359,7 @@ table.insert(handlers, function(label)
 					if val:find("%%c") then
 						if not full_container_placename then
 							internal_error("Wikipedia/Commons spec %s = %s has %%c in it but key %s has no " ..
-								"containers: %s", specname, val, key, spec)
+								"containers: %s", specname, val, canon_label, spec)
 						end
 						val = val:gsub("%%c", full_container_placename)
 					end
@@ -366,10 +368,12 @@ table.insert(handlers, function(label)
 			end
 
 			local description = "{{{langname}}} terms related to the people, culture, or territory of " ..
-				(spec.keydesc or export.construct_location_description(group, key, spec, m_data)) .. "."
+				(spec.keydesc or construct_location_description(group, canon_label, spec)) .. "."
+			local full_placename, _ = m_shared.key_to_placename(group, canon_label)
 			return {
 				type = "topic",
 				description = description,
+				breadcrumb = full_placename,
 				parents = parents,
 				wp = format_boxval(wp, "wp"),
 				wpcat = format_boxval(wpcat, "wpcat"),
@@ -379,69 +383,11 @@ table.insert(handlers, function(label)
 	end
 end)
 
--- Handler for bare placename categories for known cities in `cities` in [[Module:place/shared-data]].
-table.insert(handlers, function(label)
-	for _, canon_label in ipairs { label, lcfirst(label) } do
-		for _, city_group in ipairs(m_shared.cities) do
-			local city_key
-			if city_group.data[canon_label] then
-				city_key = canon_label
-			elseif city_group.data["the " .. canon_label] then
-				city_key = "the " .. canon_label
-			end
-			if city_key then
-				local city_spec = city_group.data[city_key]
-				if not city_spec.alias_of then
-					local desc, label_parent = city_description(city_group, city_key, city_spec)
-					desc = "{{{langname}}} terms related to " .. desc .. "."
-					local city_containing_polities = m_shared.get_city_containing_polities(city_group, city_spec)
-					if not city_containing_polities or not city_containing_polities[1] then
-						internal_error("When creating city bare label for %s, at least one containing polity must " ..
-							"be specified or an explicit parent must be given", city_key)
-					end
-					local key_parents = {}
-					for _, parent in ipairs(city_containing_polities) do
-						local polity_key, _, _ = m_shared.find_city_containing_polity(parent)
-						table.insert(key_parents, "cities in " .. polity_key)
-					end
-
-					-- wp= defaults to group-level wp=, then to true (Wikipedia article matches bare city_key = label)
-					local wp = city_spec.wp
-					if wp == nil then
-						wp = city_group.wp or true
-					end
-					-- wpcat= defaults to wp= (if Wikipedia article has its own name, Wikipedia category and Commons
-					-- category generally follow)
-					local wpcat = city_spec.wpcat
-					if wpcat == nil then
-						wpcat = wp
-					end
-					-- commonscat= defaults to wpcat= (if Wikipedia category has its own name, Commons category
-					-- generally follows)
-					local commonscat = city_spec.commonscat
-					if commonscat == nil then
-						commonscat = wpcat
-					end
-
-					return {
-						type = "related-to",
-						description = desc,
-						parents = key_parents,
-						wp = format_boxval(wp),
-						wpcat = format_boxval(wpcat),
-						commonscat = format_boxval(commonscat),
-					}
-				end
-			end
-		end
-	end
-end)
-
 local function find_canonical_key_from_place(place, canon_label)
 	local has_the = false
 	local key
 	if place:find("^the ") then
-		key = place:gub("^the ", "")
+		key = place:gsub("^the ", "")
 		has_the = true
 	else
 		key = place
@@ -459,7 +405,7 @@ local function find_canonical_key_from_place(place, canon_label)
 			end
 			return nil
 		end
-		return group, spec
+		return group, key, spec
 	end
 	return nil
 end
@@ -471,7 +417,7 @@ end
 -- `generic_before_cities` setting (meaning they can occur before cities), or both. Examples of such categories are
 -- "cities in the Bahamas" or "rivers in Western Australia, Australia", or (for city locations)
 -- "neighbourhoods of Hong Kong" or "places in Melbourne".
-table.insert(handlers, function(label)
+insert(handlers, function(label)
 	for _, canon_label in ipairs { lcfirst(label), label } do
 		local placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (in) (.*)$")
 		if not placetype then
@@ -481,7 +427,7 @@ table.insert(handlers, function(label)
 			local normalized_placetype = placetype == "neighbourhoods" and "neighborhoods" or placetype
 			local canon_placetype, ptdata, ptmatch = m_data.get_placetype_data(normalized_placetype, "from category")
 			if canon_placetype and (ptdata.generic_before_non_cities or ptdata.generic_before_cities) then
-				local group, spec = find_canonical_key_from_place(place, canon_label)
+				local group, key, spec = find_canonical_key_from_place(place, canon_label)
 				if group then
 					local allow_cat = true
 					if placetype == "neighborhoods" and spec.british_spelling or
@@ -514,15 +460,15 @@ table.insert(handlers, function(label)
 							internal_error("Unrecognized placetype %s when processing key %s, data %s, label %s",
 								placetype, key, spec, canon_label)
 						end
-						local keydesc = fetch_value(spec, "keydesc") or m_shared.construct_location_description(
-							group, key, spec, m_data)
+						local keydesc = fetch_value(spec, "keydesc") or construct_location_description(
+							group, key, spec)
 						desc = linkdesc .. " " .. in_of .. " " .. keydesc
 						desc = "{{{langname}}} names of " .. desc .. "."
 						local parents = {}
-						table.insert(parents, key)
-						if require(table_module).contains(spec.divtype, "country") then
+						insert(parents, key)
+						if m_table.contains(spec.placetype, "country") then
 							-- top-level country, constituent country or the like
-							table.insert(parents, {name = normalized_placetype, sort = key})
+							insert(parents, {name = normalized_placetype, sort = key})
 							local category_class = m_data.get_equiv_placetype_prop(normalized_placetype,
 								function(pt) return m_data.get_placetype_prop(pt, "class") end, {
 									from_category = true,
@@ -537,29 +483,29 @@ table.insert(handlers, function(label)
 									category_class, normalized_placetype)
 							end
 							if class_is_political_division[category_class] then
-								table.insert(parents, "political divisions of specific countries")
+								insert(parents, "political divisions of specific countries")
 							end
 						else
 							local container_iterator = m_shared.iterate_containers(group, key, spec)
-							local next_containers = next(container_iterator)
+							local next_containers = container_iterator()
 							if next_containers then
 								for _, container in ipairs(next_containers) do
-									table.insert(parents, {
-										name = placetype .. " " .. in_of .. " " .. m_shared.get_prefixed_key(
+									insert(parents, {
+										name = placetype .. " " .. in_of .. " " .. m_data.get_prefixed_key(
 											container.key, container.spec),
 										sort = key
 									})
 								end
 							else
 								-- unrecognized countries or the like
-								table.insert(parents, {name = normalized_placetype, sort = key})
+								insert(parents, {name = normalized_placetype, sort = key})
 							end
 						end
 						return {
 							type = "name",
 							topic = canon_label,
 							description = desc,
-							breadcrumb = key,
+							breadcrumb = placetype,
 							parents = parents,
 						}
 					end
@@ -573,7 +519,7 @@ end)
 -- handler for specific political and misc (non-political) divisions of polities and subpolities, such as
 -- "provinces of the Philippines", because "departmental capitals" is listed in cat_as for French prefectures and so
 -- will trigger an error if that handler runs before this one.
-table.insert(handlers, function(label)
+insert(handlers, function(label)
 	label = lcfirst(label)
 	local capital_cat, place = label:match("^([a-z%- ]- capitals) of (.*)$")
 	-- Make sure we recognize the type of capital.
@@ -582,24 +528,33 @@ table.insert(handlers, function(label)
 		local pl_placetype = m_data.pluralize_placetype(placetype)
 		-- Locate the container, fetch its known political divisions, and make sure the placetype corresponding to the
 		-- type of capital is among the list.
-		local group, spec = find_canonical_key_from_place(place, canon_label)
-		if group and spec.poldiv then
+		local group, key, spec = find_canonical_key_from_place(place, canon_label)
+		if group and (spec.divs or spec.addl_divs) then
 			local saw_match = false
 			local variant_matches = {}
-			for _, div in ipairs(spec.poldiv) do
-				if type(div) == "string" then
-					div = {type = div}
-				end
-				-- HACK. Currently if we don't find a match for the placetype, we map e.g. 'autonomous region'
-				-- -> 'regional capitals' and 'union territory' -> 'territorial capitals'. When encountering a
-				-- political division like 'autonomous region' or 'union territory', chop off everything up
-				-- through a space to make things match. To make this clearer, we record all such
-				-- "variant match" cases, and down below we insert a note into the category text indicating that
-				-- such "variant matches" are included among the category.
-				if pl_placetype == div.type or pl_placetype == div.type:gsub("^.* ", "") then
-					saw_match = true
-					if pl_placetype ~= div.type then
-						table.insert(variant_matches, div.type)
+			local divlists = {}
+			if spec.divs then
+				insert(divlists, spec.divs)
+			end
+			if spec.addl_divs then
+				insert(divlists, spec.addl_divs)
+			end
+			for _, divlist in ipairs(divlists) do
+				for _, div in ipairs(divlist) do
+					if type(div) == "string" then
+						div = {type = div}
+					end
+					-- HACK. Currently if we don't find a match for the placetype, we map e.g. 'autonomous region'
+					-- -> 'regional capitals' and 'union territory' -> 'territorial capitals'. When encountering a
+					-- political division like 'autonomous region' or 'union territory', chop off everything up
+					-- through a space to make things match. To make this clearer, we record all such
+					-- "variant match" cases, and down below we insert a note into the category text indicating that
+					-- such "variant matches" are included among the category.
+					if pl_placetype == div.type or pl_placetype == div.type:gsub("^.* ", "") then
+						saw_match = true
+						if pl_placetype ~= div.type then
+							insert(variant_matches, div.type)
+						end
 					end
 				end
 			end
@@ -612,8 +567,8 @@ table.insert(handlers, function(label)
 						"was found as the placetype of capital placetype %s in label %s", pl_placetype,
 						placetype, capital_cat, label)
 				end
-				local keydesc = fetch_value(spec, "keydesc") or m_shared.construct_location_description(
-					group, key, spec, m_data)
+				local keydesc = fetch_value(spec, "keydesc") or construct_location_description(
+					group, key, spec)
 				local variant_match_text = ""
 				if #variant_matches > 0 then
 					for i, variant_match in ipairs(variant_matches) do
@@ -625,15 +580,16 @@ table.insert(handlers, function(label)
 						end
 						variant_matches[i] = variant_match_desc
 					end
-					variant_match_text = " (including " .. require(table_module).serialCommaJoin(variant_matches) .. ")"
+					variant_match_text = " (including " .. m_table.serialCommaJoin(variant_matches) .. ")"
 				end
 				local desc = "{{{langname}}} names of [[capital]]s of " .. placetype_desc .. variant_match_text ..
 					" of " .. keydesc .. "."
+				local full_placename, _ = m_shared.key_to_placename(group, key)
 				return {
 					type = "name",
 					topic = label,
 					description = desc,
-					breadcrumb = key,
+					breadcrumb = full_placename,
 					parents = {{name = capital_cat, sort = key}, key},
 				}
 			end
@@ -653,7 +609,7 @@ local overriding_category_descriptions = {
 -- such as "provinces of the Philippines", "counties of Wales", "municipalities of Tocantins, Brazil",
 -- "boroughs of New York City", etc. This does not handle categories for generic placetypes (cities, rivers, etc.) of
 -- locations, which are handled by different handlers above.
-table.insert(handlers, function(label)
+insert(handlers, function(label)
 	-- The label comes with an initial capitalization but we have to check both lowercase-initial and capital-initial
 	-- versions of the placetype to handle e.g. [[:Category:en:Indian reserves of Canada]].
 	for _, canon_label in ipairs { label, lcfirst(label) } do
@@ -662,7 +618,7 @@ table.insert(handlers, function(label)
 			placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (in) (.*)$")
 		end
 		if placetype then
-			local group, spec = find_canonical_key_from_place(place, canon_label)
+			local group, key, spec = find_canonical_key_from_place(place, canon_label)
 			if group then
 				local divcat = nil
 				local function find_placetype(divs)
@@ -698,12 +654,12 @@ table.insert(handlers, function(label)
 
 					return nil
 				end
-				local div_parent, div_prep = find_placetype(spec.poldiv)
+				local div_parent, div_prep = find_placetype(spec.divs)
 				if div_parent == nil then -- allow false
-					div_parent, div_prep = find_placetype(spec.miscdiv)
+					div_parent, div_prep = find_placetype(spec.addl_divs)
 				end
 				if div_parent == nil then -- allow false
-					div_parent, div_prep = find_placetype(spec.addl_poldiv_for_categorization)
+					div_parent, div_prep = find_placetype(spec.addl_divs_for_categorization)
 				end
 				if div_parent ~= nil then
 					if div_prep ~= in_of then
@@ -718,32 +674,32 @@ table.insert(handlers, function(label)
 					end
 					local desc = overriding_category_descriptions[canon_label]
 					if not desc then
-						local keydesc = fetch_value(spec, "keydesc") or m_shared.construct_location_description(
-							group, key, spec, m_data)
+						local keydesc = fetch_value(spec, "keydesc") or construct_location_description(
+							group, key, spec)
 						desc = linkdesc .. " " .. in_of .. " " .. keydesc
 					end
 					desc = "{{{langname}}} names of " .. desc .. "."
 					local parents = {}
-					table.insert(parents, key)
+					insert(parents, key)
 					if div_parent then -- div_parent may be `false`
-						if require(table_module).contains(spec.divtype, "country") then
+						if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
 							-- top-level country, constituent country or the like
-							table.insert(parents, {name = placetype, sort = key})
-							table.insert(parents, "political divisions of specific countries")
+							insert(parents, {name = placetype, sort = key})
+							insert(parents, "political divisions of specific countries")
 						else
 							local container_iterator = m_shared.iterate_containers(group, key, spec)
-							local next_containers = next(container_iterator)
+							local next_containers = container_iterator()
 							if next_containers then
 								for _, container in ipairs(next_containers) do
-									table.insert(parents, {
-										name = div_parent .. " " .. in_of .. " " .. m_shared.get_prefixed_key(
+									insert(parents, {
+										name = div_parent .. " " .. in_of .. " " .. m_data.get_prefixed_key(
 											container.key, container.spec),
 										sort = key
 									})
 								end
 							else
 								-- unrecognized countries or the like
-								table.insert(parents, {name = placetype, sort = key})
+								insert(parents, {name = placetype, sort = key})
 							end
 						end
 					end
