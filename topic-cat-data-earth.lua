@@ -52,12 +52,6 @@ labels["Central America"] = {
 	parents = {"Earth", "America"},
 }
 
-labels["Punjab, Pakistan"] = {
-	type = "related-to",
-	description = "{{{langname}}} names of places in {{w|Punjab, Pakistan}}.",
-	parents = {"Pakistan"},
-}
-
 labels["Eurasia"] = {
 	type = "related-to",
 	description = "=[[Eurasia]], that is, [[Europe]] and [[Asia]] together",
@@ -100,18 +94,6 @@ labels["Kashmir"] = {
 	parents = {"Indian subcontinent"},
 }
 
-labels["Azad Kashmir"] = {
-	type = "related-to",
-	description = "{{{langname}}} terms related to the people, culture, or territory of [[Azad Kashmir]].",
-	parents = {"Pakistan", "Kashmir"},
-}
-
-labels["Gilgit-Baltistan"] = {
-	type = "related-to",
-	description = "{{{langname}}} terms related to the people, culture, or territory of [[Gilgit-Baltistan]].",
-	parents = {"Pakistan", "Kashmir"},
-}
-
 labels["Kashmir, India"] = {
 	type = "related-to",
 	description = "{{{langname}}} names of places in {{w|Kashmir, India}}.",
@@ -151,7 +133,7 @@ labels["Micronesia"] = {
 labels["Middle East"] = {
 	type = "related-to",
 	description = "default with the",
-	parents = {"regions of Africa", "regions of Asia"},
+	parents = {"Africa", "Asia"},
 }
 
 labels["Netherlands Antilles"] = {
