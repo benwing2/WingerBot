@@ -26,11 +26,21 @@ def process_text_on_page(index, pagetitle, text):
             trans = re.sub("^:", "", re.sub("#.*", "", m.group(1)))
             if trans and trans not in seen_trans:
               seen_trans.append(trans)
-      for trans in seen_trans:
+      def check_trans(trans):
         def pagemsg_with_trans(txt):
           pagemsg("%s: %s" % (trans, txt))
-        if blib.safe_page_exists(pywikibot.Page(site, trans), pagemsg_with_trans):
-          msg("Page %s %s: Found existing translation for %s" % (index, trans, pagetitle))
+        trans_page = pywikibot.Page(site, trans)
+        trans_text = blib.safe_page_text(trans_page, pagemsg_with_trans, bad_value_ret=None)
+        if trans_text:
+          m = re.search(r"\A#redirect\s*\[\[(.*?)\]\]", trans_text, re.I)
+          if m:
+            redirect_target = m.group(1)
+            msg("Page %s %s: Found existing translation (redirect) for %s" % (index, trans, pagetitle))
+            check_trans(redirect_target)
+          else:
+            msg("Page %s %s: Found existing translation for %s" % (index, trans, pagetitle))
+      for trans in seen_trans:
+        check_trans(trans)
 
 parser = blib.create_argparser("Find page-existing translations for terms", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
