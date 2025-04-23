@@ -10,6 +10,7 @@ local en_utilities_module = "Module:en-utilities"
 
 local dump = mw.dumpObject
 local insert = table.insert
+local concat = table.concat
 local internal_error = m_shared.internal_error
 export.internal_error = internal_error
 local process_error = m_shared.process_error
@@ -17,6 +18,7 @@ export.process_error = process_error
 
 local ucfirst = m_strutils.ucfirst
 local ulower = m_strutils.lower
+local split = m_strutils.split
 
 
 ------------------------------------------------------------------------------------------
@@ -302,12 +304,19 @@ have qualifiers and so it doesn't make sense to try and look for them.
 `from_category`, if set, causes category-only placetypes (those ending in `!`) to also be checked.
 
 `no_check_for_inherently_former` is used internally to prevent an infinite loop when checking for `inherently_former`.
+
+`register_former_as_non_former` is a major hack used in `get_bare_categories` to deal with the mismatch between e.g.
+known location `Yugoslavia` declaring itself a `country` but definitions of it declaring it a `former country`. It
+causes the non-former version of the specified placetype to be included in the returned equivalents along with the
+former placetypes. FIXME: This should apply only to the entries in `former_countries` but it's tricky to do that now;
+fix this in the known-location refactor.
 ]==]
 function export.get_placetype_equivs(placetype, props)
-	local no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category
+	local no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category, register_former_as_non_former
 	if props then
-		no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category =
-			props.no_fallback, props.no_split_qualifiers, props.no_check_for_inherently_former, props.from_category
+		no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category, register_former_as_non_former =
+			props.no_fallback, props.no_split_qualifiers, props.no_check_for_inherently_former, props.from_category,
+			props.register_former_as_non_former
 	end
 	local equivs = {}
 
@@ -366,7 +375,7 @@ function export.get_placetype_equivs(placetype, props)
 
 	for _, split in ipairs(splits) do
 		local prev_qualifier, this_qualifier, reduced_placetype = unpack(split, 1, 3)
-		-- If a special "former" qualifier like `former`  or `historical` isn't present, and
+		-- If a special "former" qualifier like `former` or `historical` isn't present, and
 		-- `no_check_for_inherently_former` is not given (this flag is used to avoid infinite loops), check for
 		-- "inherently former" placetypes like `satrapy` and `treaty port` that always refer to no-longer-existing
 		-- placetypes, and handle accordingly.
@@ -418,6 +427,10 @@ function export.get_placetype_equivs(placetype, props)
 				end
 				for _, former_qualifier in ipairs(former_qualifiers) do
 					do_placetype(prev_qualifier, former_qualifier .. " " .. former_type)
+				end
+				-- HACK! See explanation above for `register_former_as_non_former`.
+				if register_former_as_non_former then
+					do_placetype(prev_qualifier, reduced_placetype)
 				end
 				break
 			end
@@ -663,7 +676,7 @@ export.placetype_aliases = {
 	["cpar"] = "civil parish",
 	["damun"] = "direct-administered municipality",
 	["dep"] = "dependency",
-	["departmental capital"] = "department capital",
+	["department capital"] = "departmental capital",
 	["dept"] = "department",
 	["depterr"] = "dependent territory",
 	["dist"] = "district",
@@ -1186,6 +1199,8 @@ export.cat_implications = {
 		["South Europe"] = {"continent/Europe"},
 		["Southern Europe"] = {"continent/Europe"},
 		["Northern Europe"] = {"continent/Europe"},
+		["Northeast Europe"] = {"continent/Europe"},
+		["Northeastern Europe"] = {"continent/Europe"},
 		["Southeast Europe"] = {"continent/Europe"},
 		["Southeastern Europe"] = {"continent/Europe"},
 		["North Caucasus"] = {"continent/Europe"},
@@ -1576,7 +1591,7 @@ function export.get_bare_categories(args, place_descs)
 	for _, place_desc in ipairs(place_descs) do
 		for _, placetype in ipairs(place_desc.placetypes) do
 			if not export.placetype_is_ignorable(placetype) then
-				local equivs = export.get_placetype_equivs(placetype)
+				local equivs = export.get_placetype_equivs(placetype, {register_former_as_non_former = true})
 				for _, equiv in ipairs(equivs) do
 					insert(possible_placetypes, equiv.placetype)
 				end
@@ -1791,11 +1806,8 @@ local function district_neighborhood_cat_handler(data)
 	else
 		-- Otherwise, make sure the current holonym is city-like.
 		has_neighborhoods = export.get_equiv_placetype_prop(data.holonym_placetype, function(pt)
-			if export.placetype_data[pt] then
-				return export.placetype_data[pt].has_neighborhoods or false
-			end
-		end,
-		{continue_on_nil_only = true})
+			return export.get_placetype_prop(pt, "has_neighborhoods")
+		end, {continue_on_nil_only = true})
 	end
 	if has_neighborhoods then
 		-- Loop up the holonyms, looking for city and city-like entities in case of e.g. [[Sepulveda]] written
@@ -2080,11 +2092,11 @@ There are several recognized property keys, of various types:
   `get_placetype_equivs`. In this case, there is an entry in `placetype_data` for `ANCIENT settlement`, so its default
   category spec `Ancient settlements` is used as the category. If on the other hand `medieval kingdom` is given, where
   `kingdom` has a `class` value `polity`, we first look up `ANCIENT polity`, see there is no entry in `placetype_data`
-  for it, and then look up `FORMER polity`, which exists and has a default category spec `Historical polities`, which
-  is used as the category. Note that if the placetype following the "former" qualifier is recognized in
-  `placetype_data` but has no `former_type` or `class` and no fallback with a `former_type` or `class` specified, it is
-  an internal error; but if the placetype isn't recognized (e.g. something like `former greenhouse` is specified and we
-  don't have an entry for `greenhouse`), we just track the occurrence and end up not categorizing.
+  for it, and then look up `FORMER polity`, which exists and has a default category spec `Former polities`, which is
+  used as the category. Note that if the placetype following the "former" qualifier is recognized in `placetype_data`
+  but has no `former_type` or `class` and no fallback with a `former_type` or `class` specified, it is an internal
+  error; but if the placetype isn't recognized (e.g. something like `former greenhouse` is specified and we don't have
+  an entry for `greenhouse`), we just track the occurrence and end up not categorizing.
 * `bare_category_parent`: This specifies the first parent category of a bare placetype category named according to the
   placetype in question (e.g. [[:Category:Atolls]] for placetype `atoll`, or [[:Category:Individual buildings]] for
   placetype `individual buildings!`). If not specified, the first parent category is determined by the value of `class`,
@@ -2282,7 +2294,9 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		has_neighborhoods = true,
 		class = "capital",
-		default = {"Ancient settlements", "Historical capitals"},
+		-- FIXME: Consider removing 'ancient settlements' here. Ancient capitals, like former capitals, often still
+		-- exist but just aren't the capital any more. Maybe we should have an 'Ancient capitals' category.
+		default = {"Ancient settlements", "Former capitals"},
 	},
 	["ANCIENT non-admin settlement"] = {
 		link = false,
@@ -2297,7 +2311,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["ancient settlements!"] = {
 		category_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
-		bare_category_parent = "historical settlements",
+		bare_category_parent = "former settlements",
 	},
 	["archipelago"] = {
 		link = true,
@@ -2670,6 +2684,10 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "municipality",
 	},
+	["condominium"] = {
+		link = true,
+		fallback = "polity",
+	},
 	["confederacy"] = {
 		link = true,
 		fallback = "confederation",
@@ -2768,6 +2786,14 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "lake",
 	},
+	["Crown colony"] = {
+		link = "+crown colony",
+		fallback = "crown colony",
+	},
+	["crown colony"] = {
+		link = true,
+		fallback = "colony",
+	},
 	["Crown dependency"] = {
 		link = true,
 		fallback = "dependent territory",
@@ -2796,7 +2822,7 @@ If you need to sort the following, do this (using Vim):
 		affix_type = "suf",
 		class = "subpolity",
 	},
-	["department capital"] = {
+	["departmental capital"] = {
 		link = "separately",
 		fallback = "capital city",
 	},
@@ -2988,7 +3014,7 @@ If you need to sort the following, do this (using Vim):
 	["fjord"] = {
 		link = true,
 		class = "natural feature",
-		addl_bare_category_parents = "bodies of water",
+		addl_bare_category_parents = {"bodies of water"},
 		default = {true},
 	},
 	["forest"] = {
@@ -3003,18 +3029,25 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		has_neighborhoods = true,
 		class = "capital",
-		-- FIXME: Here and below, we should use 'Former' in place of 'Historical'.
-		default = {"Historical settlements", "Historical capitals"},
+		default = {"Former capitals"},
+	},
+	["former capitals!"] = {
+		category_link = "former [[capital]] [[city|cities]] and [[town]]s",
+		bare_category_parent = "settlements",
 	},
 	["former countries and country-like entities!"] = {
 		category_link = "[[country|countries]] and similar [[polity|polities]] that no longer exist",
-		bare_category_parent = "historical polities",
+		bare_category_parent = "former polities",
+	},
+	["former dependent territories!"] = {
+		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
+		bare_category_parent = "former political divisions",
 	},
 	["FORMER dependent territory"] = {
 		link = false,
 		preposition = "of",
 		class = "subpolity",
-		default = {"Historical dependent territories"},
+		default = {"Former dependent territories"},
 	},
 	["FORMER geographic region"] = {
 		link = false,
@@ -3028,6 +3061,16 @@ If you need to sort the following, do this (using Vim):
 	["former man-made structures!"] = {
 		category_link = "man-made structures such as [[airport]]s and [[park]]s that no longer exist",
 		bare_category_parent = "former places",
+	},
+	["former municipalities!"] = {
+		-- For categorizing former municipalities of the Netherlands
+		category_link = "no-longer-existing [[municipality|municipalities]]",
+		bare_category_parent = "former political divisions",
+	},
+	["FORMER municipality"] = {
+		-- For categorizing former municipalities of the Netherlands
+		link = false,
+		fallback = "FORMER subpolity",
 	},
 	["FORMER natural feature"] = {
 		link = false,
@@ -3047,10 +3090,18 @@ If you need to sort the following, do this (using Vim):
 		category_link = "[[place]]s of all sorts that no longer exist",
 		bare_category_parent = "places",
 	},
+	["former political divisions!"] = {
+		category_link = "[[political]] [[division]]s (states, provinces, counties, etc.) that no longer exist",
+		bare_category_parent = "former places",
+	},
+	["former polities!"] = {
+		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
+		bare_category_parent = "former places",
+	},
 	["FORMER polity"] = {
 		link = false,
 		class = "polity",
-		default = {"Historical polities"},
+		default = {"Former polities"},
 	},
 	["FORMER province"] = {
 		-- For categorizing ancient/historical/former provinces of the Roman Empire
@@ -3061,13 +3112,17 @@ If you need to sort the following, do this (using Vim):
 		link = false,
 		has_neighborhoods = true,
 		class = "settlement",
-		default = {"Historical settlements"},
+		default = {"Former settlements"},
+	},
+	["former settlements!"] = {
+		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
+		bare_category_parent = "former political divisions",
 	},
 	["FORMER subpolity"] = {
 		link = false,
 		preposition = "of",
 		class = "subpolity",
-		default = {"Historical political subdivisions"},
+		default = {"Former political divisions"},
 	},
 	["former region"] = {
 		-- A former region is considered a former political division, but not a 'historical/traditional/etc.' region.
@@ -3133,7 +3188,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		generic_before_non_cities = "in",
 		class = "non-admin settlement",
-		bare_category_parent = "historical settlements",
+		bare_category_parent = "former settlements",
 		cat_handler = city_type_cat_handler,
 		default = {true},
 	},
@@ -3148,14 +3203,14 @@ If you need to sort the following, do this (using Vim):
 		class = "subpolity",
 	},
 	["greater administrative region"] = {
-		-- China (historical division)
+		-- China (former division)
 		link = "w",
 		preposition = "of",
 		class = "subpolity",
 		inherently_former = {"FORMER"},
 	},
 	["gromada"] = {
-		-- Poland (historical division)
+		-- Poland (former division)
 		link = "w",
 		preposition = "of",
 		affix_type = "Pref",
@@ -3229,40 +3284,15 @@ If you need to sort the following, do this (using Vim):
 		link = "+w:historical region",
 		fallback = "FORMER geographic region",
 	},
-	["historical capitals!"] = {
-		-- FIXME! Rename to 'former capitals'
-		category_link = "former [[capital]] [[city|cities]] and [[town]]s",
-		bare_category_parent = "historical settlements",
-	},
 	["historical county"] = {
 		-- needed for historical counties of England/etc.
 		link = "+w:historic county",
 		fallback = "FORMER subpolity",
 	},
-	["historical dependent territories!"] = {
-		-- FIXME! Rename to 'former dependent territories'
-		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
-		bare_category_parent = "historical political subdivisions",
-	},
-	["historical political subdivisions!"] = {
-		-- FIXME! Rename to 'former political divisions'
-		category_link = "[[political]] [[division]]s (states, provinces, counties, etc.) that no longer exist",
-		bare_category_parent = "former places",
-	},
-	["historical polities!"] = {
-		-- FIXME! Rename to 'former polities'
-		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
-		bare_category_parent = "former places",
-	},
 	["historical region"] = {
 		-- provided only for the link
 		link = "w",
 		fallback = "FORMER geographic region",
-	},
-	["historical settlements!"] = {
-		-- FIXME: Rename to 'former settlements'
-		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
-		bare_category_parent = "historical political subdivisions",
 	},
 	["home rule city"] = {
 		link = "w",
@@ -3732,7 +3762,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_bare_category_parents = {"seas"},
+		addl_bare_category_parents = {"seas", "bodies of water"},
 		default = {true},
 	},
 	["okrug"] = {
@@ -3834,7 +3864,7 @@ If you need to sort the following, do this (using Vim):
 		has_neighborhoods = true,
 	},
 	["political divisions!"] = {
-		category_link = "[[political]] [[division]]s and [[subdivision]]s, such as [[countries]], [[province]]s, [[state]]s or [[region]]s",
+		category_link = "[[political]] [[division]]s and [[subdivision]]s, such as [[state]]s, [[province]]s, [[county|counties]] or [[district]]s",
 		bare_category_parent = "places",
 	},
 	["polity"] = {
@@ -4010,7 +4040,7 @@ If you need to sort the following, do this (using Vim):
 		generic_before_non_cities = "in",
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_bare_category_parents = "bodies of water",
+		addl_bare_category_parents = {"bodies of water"},
 		cat_handler = city_type_cat_handler,
 		["continent/*"] = {true},
 		default = {true},
@@ -4072,7 +4102,7 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		holonym_use_the = true,
 		class = "natural feature",
-		addl_bare_category_parents = "bodies of water",
+		addl_bare_category_parents = {"bodies of water"},
 		default = {true},
 	},
 	["seaport"] = {
@@ -4234,7 +4264,7 @@ If you need to sort the following, do this (using Vim):
 	["strait"] = {
 		link = true,
 		class = "natural feature",
-		addl_bare_category_parents = "bodies of water",
+		addl_bare_category_parents = {"bodies of water"},
 		default = {true},
 	},
 	["stream"] = {
@@ -4487,6 +4517,11 @@ If you need to sort the following, do this (using Vim):
 		class = "natural feature",
 		addl_bare_category_parents = {"landforms", "water"},
 		default = {true},
+	},
+	["viceroyalty"] = {
+		-- in essence, a type of colony
+		link = true,
+		fallback = "dependent territory",
 	},
 	["village"] = {
 		link = true,

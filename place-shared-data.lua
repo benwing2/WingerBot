@@ -991,7 +991,9 @@ export.countries = {
 	["Nauru"] = {parents = {"Micronesia"}, poldiv = {"districts"}, british_spelling = true},
 	["Nepal"] = {parents = {"Asia"}, poldiv = {"provinces", "districts"}},
 	["the Netherlands"] = {divtype = {"constituent country", "country"}, parents = {"Europe"},
-		poldiv = {"provinces", "municipalities", "dependent territories", "constituent countries"}, british_spelling = true},
+		poldiv = {"provinces", "municipalities",
+			{type = "FORMER municipalities", cat_as = "former municipalities"},
+			"dependent territories", "constituent countries"}, british_spelling = true},
 	["New Zealand"] = {parents = {"Polynesia"}, poldiv = {"regions", "dependent territories", "territorial authorities"},
 		british_spelling = true},
 	["Nicaragua"] = {parents = {"Central America"}, poldiv = {"departments", "municipalities"}},
@@ -1079,6 +1081,7 @@ export.countries = {
 		poldiv = {"counties", "county seats", "states", "territories", "dependent territories",
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
+			{type = "census-designated places", prep = "in"},
 			"Indian reservations",
 		}},
 	["Uruguay"] = {parents = {"South America"}, poldiv = {"departments", "municipalities"}},
@@ -1087,7 +1090,7 @@ export.countries = {
 	["Vatican City"] = {divtype = {"city-state", "country"}, parents = {"Europe", {name = "Rome", bare = true}}, is_city = true, british_spelling = true},
 	["Venezuela"] = {parents = {"South America"}, poldiv = {"states", "municipalities"}},
 	["Vietnam"] = {parents = {"Asia"}, poldiv = {"provinces", "districts", "municipalities"}},
-	["Western Sahara"] = {divtype = {"territory"}, parents = {"Africa"}},
+	["Western Sahara"] = {divtype = {"territory", "country"}, parents = {"Africa"}},
 	["Yemen"] = {parents = {"Asia"}, poldiv = {"governorates", "districts"}},
 	["Zambia"] = {parents = {"Africa"}, poldiv = {"provinces", "districts"}, british_spelling = true},
 	["Zimbabwe"] = {parents = {"Africa"}, poldiv = {"provinces", "districts"}, british_spelling = true},
