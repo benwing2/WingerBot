@@ -342,9 +342,19 @@ end
 Given a location group, key and possible placetypes that the placename must match, check if the key exists in the group
 with at least one of the group's key's placetypes matching one of the passed-in placetypes. If so, return two values:
 the group key (which potentially could differ from the passed-in key due to aliases) and the corresponding spec object,
-which (as with all functions that return spec objects) has been initialized using `initialize_spec()`.
-`alias_resolution` specifies whether to resolve aliases. If nil, unspecified or {"all"}, resolve both display and
-category aliases. If {"display"}, resolve only display aliases. If {"none"}, don't resolve aliases.
+which (as with all functions that return spec objects) has been initialized using `initialize_spec()` (i.e. default
+property values have been copied from the group into the spec, if the spec doesn't itself specify a value for the
+property in question).
+
+`alias_resolution` controls how aliases are resolved. Normally, both display and category aliases are followed, and
+the returned key will reflect the canonical location key. However, if `alias_resolution` is {"none"}, no alias following
+happens. In that case, if the key specifies an alias, the spec for the alias rather than the spec for the canonical
+location is returned, and importantly, it is returned uninitialized, meaning that properties from the group are not
+copied into the spec. (If the key specifies a canonical location, its spec is returned initialized, as in the normal
+case where `alias_resolution` is unspecified.) The caller needs to check whether the returned spec is an alias by
+looking for an `alias_of` property. If `alias_resolution` is {"display"}, the behavior is the same as for {"none"}
+except that if the alias contains a setting `display = true`, the returned key will reflect the canonical location key,
+and if the alias contains a setting `display = ``string`` `, the returned key will reflect that string.
 
 This is a low-level function meant for internal use; external callers should generally use `get_matching_location` (for
 internally-derived locations), `find_matching_holonym_location` (for externally-derived locations) or
@@ -457,7 +467,15 @@ end
 Iterator that returns all locations matching a given description, where the description consists of either a placename
 or a key along with a list of possible placetypes. Usually there will be at most one such location. The iterator
 returns three values at each iteration: the location group, canonical key by which the location is known and the spec
-object describing the location. The spec is initialized using `initialize_spec()` prior to it being returned.
+object describing the location. `data` contains the following possible fields:
+* `placetypes`: A list of possible placetypes, one of which must match one of the location's placetypes; or a string
+  specifying a placetype, which must match one of the location's placetypes. This must be specified.
+* `placename`: The placename of the location. Either this or `key` must be specified.
+* `key`: The key of the location. Either this or `placename` must be specified.
+* `alias_resolution`: If specified, it behaves the same as for `find_matching_key_in_group`.
+The spec is normally initialized using `initialize_spec()` prior to it being returned (but may not be if
+`alias_resolution` is given and the specified key or placename is an alias; see the documentation for
+`find_matching_key_in_group`).
 ]==]
 function export.iterate_matching_location(data)
 	local i = 0

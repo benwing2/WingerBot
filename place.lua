@@ -381,7 +381,7 @@ A given place description is defined internally in a table of the following form
 	{ -- holonym object; see below
 	  placetype = "``placetype``" or nil,
 	  display_placename = "``placename``",
-	  cat_placename = "``placename``",
+	  unlinked_placename = "``placename``",
 	  langcode = "``langcode``" or nil,
 	  no_display = BOOLEAN,
 	  needs_article = BOOLEAN,
@@ -407,7 +407,7 @@ Holonym objects have the following fields:
 			   the placename in `display_placename` refers to raw text).
 * `display_placename`: The placename or raw text, in the format to be displayed. Placename display aliases have already
 					   been resolved. It is raw text if `placetype` is nil.
-* `cat_placename`: Same as `display_placename` but with links and HTML removed.
+* `unlinked_placename`: Same as `display_placename` but with links and HTML removed.
 * `langcode`: The language code prefix if specified as e.g. `c/fr:Australie`; otherwise nil.
 * `no_display`: If true (holonym prefixed with !), don't display the holonym but use it for categorization.
 * `needs_article`: If true, prepend an article if the placename needs one (e.g. `United States`).
@@ -455,8 +455,8 @@ For example, the call {{tl|place|en|city|s/Pennsylvania|c/US}} will result in th
 ```{
   placetypes = {"city"},
   holonyms = {
-	{ placetype = "state", display_placename = "Pennsylvania", cat_placename = "Pennsylvania" },
-	{ placetype = "country", display_placename = "United States", cat_placename = "United States" },
+	{ placetype = "state", display_placename = "Pennsylvania", unlinked_placename = "Pennsylvania" },
+	{ placetype = "country", display_placename = "United States", unlinked_placename = "United States" },
   },
   holonyms_by_placetype = {
 	state = {"Pennsylvania"},
@@ -466,21 +466,21 @@ For example, the call {{tl|place|en|city|s/Pennsylvania|c/US}} will result in th
 
 Here, the placetype aliases `s` and `c` have been expanded into `state` and `country` respectively, and the placename
 display alias `US` has been expanded into `United States`. PLACETYPES is a list because there may be more than one. For
-example, the call {{tl|place|en|city/and/municipality|c/Congo}} will result in the return value
+example, the call {{tl|place|en|city/and/municipality|p/[[Kwango]] Province|c/Congo}} will result in the return value
 
 ```
 {
   placetypes = {"city", "and", "municipality"},
   holonyms = {
-	{ placetype = "country", display_placename = "Congo", cat_placename = "Democratic Republic of the Congo" },
+	{ placetype = "province", display_placename = "[[Kwango]] Province", unlinked_placename = "Kwango Province" },
+	{ placetype = "country", display_placename = "Congo", unlinked_placename = "Congo" },
   },
   holonyms_by_placetype = {
-	country = {"Democratic Republic of the Congo"},
+	country = {"Congo"},
   },
 }```
 
-Here, category aliases have converted `Congo` to `Democratic Republic of the Congo` for categorization but not display
-purposes.
+Here, the `unlinked_placename` field has removed links from `display_placename`.
 
 The value in the key/value pairs is likewise a list; e.g. the call {{tl|place|en|city|s/Kansas|and|s/Missouri}} will
 return
@@ -489,9 +489,9 @@ return
 {
   placetypes = {"city"},
   holonyms = {
-	{ placetype = "state", display_placename = "Kansas", cat_placename = "Kansas" },
-	{ display_placename = "and", cat_placename = "and" },
-	{ placetype = "state", display_placename = "Missouri", cat_placename = "Missouri" },
+	{ placetype = "state", display_placename = "Kansas", unlinked_placename = "Kansas" },
+	{ display_placename = "and", unlinked_placename = "and" },
+	{ placetype = "state", display_placename = "Missouri", unlinked_placename = "Missouri" },
   },
   holonyms_by_placetype = {
 	state = {"Kansas", "Missouri"},
@@ -507,11 +507,11 @@ structure are made to aid in categorization. For example, after `handle_category
 {
   placetypes = {"city"},
   holonyms = {
-	{ placetype = "state", display_placename = "Kansas", cat_placename = "Kansas" },
-	{ placetype = "country", cat_placename = "United States" },
-	{ display_placename = "and", cat_placename = "and" },
-	{ placetype = "state", display_placename = "Missouri", cat_placename = "Missouri" },
-	{ placetype = "country", cat_placename = "United States" },
+	{ placetype = "state", display_placename = "Kansas", unlinked_placename = "Kansas" },
+	{ placetype = "country", unlinked_placename = "United States" },
+	{ display_placename = "and", unlinked_placename = "and" },
+	{ placetype = "state", display_placename = "Missouri", unlinked_placename = "Missouri" },
+	{ placetype = "country", unlinked_placename = "United States" },
   },
   holonyms_by_placetype = {
 	state = {"Kansas", "Missouri"},
@@ -609,16 +609,16 @@ directs the category handler `political_division_cat_handler` in [[Module:place/
 handlers that run for all entry placetypes, along with `generic_place_cat_handler`) to categorize boroughs specified
 under any of the counties listed under `data` as both districts and boroughs.
 
-Now, the categorization process proceeds as follows, given an entry placetype and place description (which specifies a
-set of holonyms):
-# First, look up the entry placetype in the `placetype_data`, which comes from [[Module:place/data]]. Note that the
-  entry in `placetype_data` that specifies the category or categories to add may not directly correspond to the entry
-  placetype as specified in the place description. For example, if the entry placetype is `"small town"`, the placetype
-  whose data is fetched will be `"town"` since `"small"` is a recognized qualifier and there is no entry in
-  `placetype_data` for `"small town"`. As another example, if the entry placetype is `"administrative capital"`, the
-  placetype whose data will be fetched will be `"capital city"` because there's no entry in `placetype_data` for
-  `"administrative capital"` but there is an entry in `placetype_equivs` in [[Module:place/data]] that maps
-  `"administrative capital"` to `"capital city"` for categorization purposes.
+Now, the categorization process proceeds as follows, given an entry placetype and place description, which specifies a
+set of holonyms (the code to do this is in `get_placetype_cats()`):
+# First, look up the entry placetype and any equivalent placetypes in `placetype_data`, which is defined in
+  [[Module:place/data]]. Note that the entry in `placetype_data` that specifies the placetype information that is used
+  to determine the category or categories may not directly correspond to the entry placetype as specified in the place
+  description. For example, if the entry placetype is `small town`, the placetype whose data is fetched will be `town`
+  since `small` is a recognized qualifier and there is no entry in `placetype_data` for `small town`. As another
+  example, if the entry placetype is `administrative capital`, the code will first look up `administrative capital` and
+  then look up `capital city`, which is where the category handler is found, because `administrative capital` specifies
+  `capital city` as its fallback.
 # Then, iterate over holonyms from left to right, as described above. For each holonym, we proceed as follows:
 ## First, call `political_division_cat_handler` to check if the entry placetype and holonym match a political-division
    or misc-division spec in the `locations` data in [[Module:place/shared-data]], as in the example above. Note that
@@ -635,72 +635,46 @@ set of holonyms):
    e.g. `country/*`, which matches any holonym of placetype `country`. If found, the value is a list of category specs,
    which are processed as above.
 ## If we get this far without generating any categories, move to the next holonym.
-# [FINISH ME]
-
-
-FIXME: The following is totally out of date. Finish the above and remove the below.
-
-# Iterate through the holonyms, from left to right. For each holonym:
-## First look for a key matching the exact holonym. , finding the first holonym that matches (in both placetype and
-  placename) a key in the outer table. If no holonym matches any key, then if a key `"default"` exists, use that;
-  otherwise, if a key named `"fallback"` exists, specifying a placetype, use that placetype to fetch a new
-  `placetype_data` entry, and start over with step (1); otherwise, don't categorize.
-# Iterate again through the holonyms, from left to right, finding the first holonym whose placetype matches a key in the
-  inner table. If no holonym matches any key, then if a key `"itself"` exists, use that; otherwise, check for a key
-  named `"fallback"` at the top level of the `placetype_data` entry and, if found, proceed as in step (3); otherwise
-  don't categorize.
-# The resulting value found is a list of category specs. Each category spec specifies a category to be added. In order
-  to understand how category specs are processed, you have to understand the concept of the ''triggering holonym''. This
-  is the holonym that matched an inner key in step (4), if any; else, the holonym that matched an outer key in step (3),
-  if any; else, there is no triggering holonym. (The only time this happens when there are category specs is when the
-  outer key is `"default"` and the inner key is `"itself"`.)
-# Iterate through the category specs and construct a category from each one. Each category spec is one of the following:
-## A string, such as `"Seas"`, `"Districts of England"` or `"Cities in +++"`. If `"+++"` is contained in the string, it
-   will be substituted with the placename of the triggering holonym. If there is no triggering holonym, an error is
-   thrown. This is then prefixed with the language code specified in the first argument to the call to {{tl|place}}.
-   For example, if the triggering holonym is `"country/Brazil"`, the category spec is `"Cities in +++"` and the template
-   invocation was {{tl|place|en|...}}, the resulting category will be [[:Category:en:Cities in Brazil]].
-## The value `true`. If there is a triggering holonym, the spec `"``Placetypes`` in +++"` or `"``Placetypes`` of +++"`
-   is constructed. (Here, ``Placetypes`` is the capitalized plural of the entry placetype whose placetype_data is being
-   used, which is not necessarily the same as the entry placetype specified by the user; see the discussion above. The
-   choice of `"in"` or `"of"` is based on the value of the `"preposition"` key at the top level of the entry in
-   `placetype_data`, defaulting to `"in"`.) This spec is then processed as above. If there is no triggering holonym, the
-   simple spec `"``Placetypes``"` is constructed (where ``Placetypes`` is as above).
-
-For example, consider the following entry in placetype_data:
-
-```
-	["municipality"] = {
-		preposition = "of",
-
-		...
-
-		["country/Brazil"] = {
-			["state"] = {"Municipalities of +++, Brazil", "Municipalities of Brazil"},
-			["country"] = {true},
-		},
-
-		...
-	}
-```
-
-If the user uses a template call {{tl|place|pt|municipality|s/Amazonas|c/Brazil}}, the categories
-[[:Category:pt:Municipalities of Amazonas, Brazil]] and [[:Category:pt:Municipalities of Brazil]] will be generated.
-This is because the outer key `"country/Brazil"` matches the second holonym `"c/Brazil"` (by this point, the alias `"c"`
-has been expanded to `"country"`), and the inner key `"state" matches the first holonym `"s/Amazonas"`, which serves as
-the triggering holonym and is used to replace the `+++` in the first category spec.
-
-Now imagine the user uses the template call {{tl|place|en|small municipality|c/Brazil}}. There is no entry in
-`placetype_data` for `"small municipality"`, but `"small"` is a recognized qualifier, and there is an entry in
-`placetype_data` for `"municipality"`, so that entry's data is used. Now, the second holonym `"c/Brazil"` will match the
-outer key `"country/Brazil"` as before, but in this case the second holonym will also match the inner key `"country"`
-and will serve as the triggering holonym.  The cat spec `true` will be expanded to `"Municipalities of +++"`, using the
-placetype `"municipality"` corresponding to the entry in `placetype_data` (not the user-specified placetype `"small
-municipality"`), and the preposition `"of"`, as specified in the `placetype_data` entry. The `+++` will then be expanded
-to `"Brazil"` based on the triggering holonym, the language code `"en"` will be prepended, and the final category will
-be [[:Category:en:Municipalities of Brazil]].
+## If we do generate any categories, process all other holonyms of the same placetype. For example, if the user says
+   {{tl|place|en|city|s/Kansas|and|s/Missouri}}, when we get to the holonym `s/Kansas`, we generate the category
+   [[:Category:en:Cities in Kansas, USA]]. This causes us to look for other holonyms of the same placetype `state`,
+   and process them accordingly, generating a category [[:Category:en:Cities in Missouri, USA]] as well. The same thing
+   happens in an invocation like {{tl|place|pl|river|c/Poland,Ukraine,Belarus}}.
+# Once we generate categories for a holonym and any other holonyms of the same placetype, we normally stop processing
+  holonyms. But if a holonym has the `:also` modifier, we restart the left-to-right loop at that holonym. For example,
+  in the invocation {{tl|place|en|river|flowing through|p/Alberta|p/British Columbia|and the|terr/Northwest Territories}},
+  we will generate a category [[:Category:en:Rivers in Alberta, Canada]] as well as
+  [[:Category:en:Rivers in British Columbia, Canada]] (because British Columbia is of the same placetype as Alberta);
+  but no category will be generated for the Northwest Territories, which is of a different placetype. To fix this, write
+  {{tl|place|en|river|flowing through|p/Alberta|p/British Columbia|and the|terr:also/Northwest Territories}}. The use
+  of `:also` will cause holonym processing to resume at `Northwest Territories` after `Alberta` is processed, leading to
+  an additional category [[:Category:en:Rivers in the Northwest Territories, Canada]]. (The presence of `the` in this
+  last category is because `Northwest Territories` is a known location with a spec indicating that it should be preceded
+  by `the`; it has nothing to do with the raw text `and the` in the invocation.)
+# Finally, if we process all holonyms and don't end up producing any categories, we check the entry placetype's data for
+  a `default` key. If found, it lists category specs, which are processed to generate categories. This is used, for
+  example, in the placetype `city-state`, as described above.
+# It should be noted that the above process runs independently for each combination of entry placetype and place
+  description. Thus, for example, an invocation {{tl|place|en|city/and/county|s/Kansas,Missouri|c/USA}} will generate
+  categories for both cities and counties in both Kansas and Missouri.
+# Two additional sources of categories are ''bare location'' categories and ''generic place'' categories. These
+  categories are added by appropriate calls in the outer function `get_cats`, which iterates over placetypes and place
+  descriptions, calling `get_placetype_cats` on each combination.
+## Bare location categories are categories like [[:Category:Arizona, USA]] that are related-to categories containing
+   terms related to the specified location. The bare location code, for example, adds the term [[Arizona]], and its
+   equivalents in other languages, to [[:Category:Arizona, USA]]. When looking for terms to consider, it checks the
+   pagename, the glosses specified using {{para|t}}, and the terms specified using {{para|modern}}, {{para|short}} and
+   {{para|full}}. It looks to see if any of these parameters match any known locations, but only adds them to a bare
+   location category if (a) the specified entry placetype matches, so that for example Russian `[[Джорджия]]` goes into
+   [[:Category:Georgia, USA]] while `[[Грузия]]` goes into [[:Category:Georgia]] (the country), even though both have a
+   gloss `Georgia`; and (b) there are no conflicting holonyms, so that for example the Old English term [[Munucceaster]]
+   if defined similarly to {{tl|place|ang|city|in modern|cc/England|t=Newcastle}} won't get added to
+   [[:Category:Newcastle, New South Wales]] (even though it is also a city) because the latter city is known to be in
+   Australia, which conflicts with the country `United Kingdom` (added internally to the Old English place description
+   through the holonym augmentation process, based on the holonym `cc/England`).
+## Generic place categories are categories like [[:Category:Places in Kansas, USA]] and [[:Category:Places in England]]    that contain places of arbitrary placetype. These are added through a special category handler that operates like
+   other category handlers but is run for all placetypes, rather than only for the specified one(s).
 ]==]
-
 
 --[=[
 TODO/FIXME:
@@ -815,13 +789,13 @@ TODO/FIXME:
 28. Redo handling of singular and plural to respect overrides specified in placetype_data. Check more carefully for
     things that may not singularize correctly, e.g. 'passes' -> 'passe'? Definitely 'headquarters' and variants.
 29. Combine placetype_equivs and other placetype data into `placetype_data`. Figure out if we need the distinction
-    between `placetype_equivs` and `fallback`.
+    between `placetype_equivs` and `fallback`. [DONE]
 30. `has_neighborhoods` may need to be a function that can look at the containing holonyms to determine whether the
     entity in question is city-like.
 31. Bare placenames as they appear in holonyms (e.g. `Riau Islands`) instead of category keys (e.g.
 	`the Riau Islands, Indonesia`) should appear in the polity data tables. As a first pass, the word "the" should not
-	appear but should instead be a property of the polity.
-32. `capital_city_cat_handler` should use `get_holonyms_to_check()`.
+	appear but should instead be a property of the polity. [DONE]
+32. `capital_city_cat_handler` should use `get_holonyms_to_check()`. [DONE]
 33. The code to generate and parse the correct preposition ("in" or "of") is very convoluted, and the actual preposition
 	used is specified in various locations with various defaults, sometimes hardcoded. This should be simplified. It is
 	made more difficult by the fact that the in/of distinction occurs in several places:
@@ -860,6 +834,9 @@ TODO/FIXME:
 	'county borough' and a fallback display handler for 'borough'. We need to rethink this; maybe merge the affix
 	setting and display handlers.
 37. Implement known-location groups and specs in a more standardly object-oriented way using metatables.
+38. Implement caching of known location lookup in the holonym. This may have to be keyed by placetype, but we can have a	special field for when the lookup placetype is the same as the user-specified placetype of the holonym. Use this
+	known location in place of looking up known locations and store the appropriate known location there in
+	`augment_holonyms_with_container()` instead of calling `key_to_placename`.
 ]=]
 
 
@@ -959,7 +936,7 @@ local function handle_category_implications(place_descriptions, implication_data
 			for _, holonym in ipairs(desc.holonyms) do
 				insert(new_holonyms, holonym)
 				local imp_data = m_data.get_equiv_placetype_prop(holonym.placetype, function(pt)
-					local implication = implication_data[pt] and implication_data[pt][holonym.cat_placename]
+					local implication = implication_data[pt] and implication_data[pt][holonym.unlinked_placename]
 					if implication then
 						return implication
 					end
@@ -974,7 +951,7 @@ local function handle_category_implications(place_descriptions, implication_data
 						local new_holonym = {
 							-- By the time we run, the display has already been generated so we don't need to set
 							-- display_placename.
-							placetype = holonym_placetype, cat_placename = holonym_placename
+							placetype = holonym_placetype, unlinked_placename = holonym_placename
 						}
 						insert(new_holonyms, new_holonym)
 						m_data.key_holonym_into_place_desc(desc, new_holonym)
@@ -1021,7 +998,7 @@ local function split_holonym(raw)
 	combined_holonym = combined_holonym_without_comma or combined_holonym
 	local holonym_parts = split_on_slash(combined_holonym)
 	if #holonym_parts == 1 then
-		-- `cat_placename` should not be used.
+		-- `unlinked_placename` should not be used.
 		return {{display_placename = combined_holonym, no_display = no_display, suppress_comma = suppress_comma}}
 	end
 
@@ -1074,7 +1051,7 @@ local function split_holonym(raw)
 		holonyms[i] = {
 			placetype = placetype,
 			display_placename = placename,
-			cat_placename = export.remove_links_and_html(placename),
+			unlinked_placename = export.remove_links_and_html(placename),
 			langcode = langcode,
 			affix_type = i == affix_holonym_index and affix_type or nil,
 			pluralize_affix = i == affix_holonym_index and pluralize_affix,
@@ -1231,7 +1208,7 @@ local function parse_place_descriptions(numargs)
 							if j == #holonyms then
 								this_desc.holonyms[holonym_index] = {
 									-- Use the no_display value from the first holonym; it should be the same for all
-									-- holonyms. `cat_placename` should not be used.
+									-- holonyms. `unlinked_placename` should not be used.
 									display_placename = "and", no_display = holonyms[1].no_display
 								}
 								holonym_index = holonym_index + 1
@@ -1318,30 +1295,38 @@ end
 -- holonym for display, and so we use the `display_placename` in the holonym. In this case, `linked_placename` is the
 -- linked version of the display placename, possibly modified due to a display handler and possibly with a placetype
 -- suffixed to the placename.
-local function get_holonym_article(linked_placename, place_desc, holonym_index)
+local function get_holonym_article(decorated_placename, place_desc, holonym_index)
 	local holonym = place_desc.holonyms[holonym_index]
-	local placetype = holonym.placetype
-	local placename = holonym.display_placename
-	placename = m_data.remove_links_and_html(placename)
-	local unlinked_placename = m_data.remove_links_and_html(linked_placename)
-	if unlinked_placename:find("^the ") then
+	local holonym_placetype = holonym.placetype
+	local holonym_placename = holonym.unlinked_placename
+	local unlinked_decorated_placename = m_data.remove_links_and_html(decorated_placename)
+	if unlinked_decorated_placename:find("^the ") then
 		return nil
 	end
 	local art = m_data.get_equiv_placetype_prop(placetype, function(pt)
-		local art = m_data.placename_article[pt] and m_data.placename_article[pt][placename]
+		local art = m_data.placename_article[pt] and m_data.placename_article[pt][holonym_placename]
 		if art then
 			return art
 		end
-		-- FIXME:
-		-- 1. Check known locations for `the`. This should do it without resolving aliases because `the = true` is
-		--    set on the alias itself.
-		-- 2. Implement caching of known location lookup in the holonym. This may have to be keyed by placetype, but we
-		--    can have a special field for when the lookup placetype is the same as the user-specified placetype of the
-		--    holonym. Use this known location in place of looking up known locations and store the appropriate known
-		--    location there in augment_holonyms_with_container() instead of calling key_to_placename.
-		-- 3. Update the documentation in find_matching_key_in_group() to reflect alias handling and the fact that when
-		--    alias_resolution is set, the uninitialized alias itself is returned.
-		-- 4. Remove the code that augments placename_article[] based on known locations.
+		-- Look for a known location. We should be using find_matching_holonym_location() but that function doesn't
+		-- currently work without alias resolution. Instead we check if any matching location has `the = true` set.
+		-- In practice there aren't any cases where a given placename matches two locations, only one of which has
+		-- `the = true` set.
+		for group, key, spec in m_data.iterate_matching_location {
+			placetypes = holonym_placetype,
+			placename = holonym_placename,
+			alias_resolution = "none",
+		} do
+			-- `iterate_holonym_location` doesn't initialize the spec if alias resolution is turned off, so check both
+			-- the spec and group. Be careful in case `the = false` is explicitly given by the spec.
+			if spec.the ~= nil then
+				if spec.the then
+					return "the"
+				end
+			elseif group.default_the then
+				return "the"
+			end
+		end
 	end)
 
 	if art then
@@ -1354,7 +1339,7 @@ local function get_holonym_article(linked_placename, place_desc, holonym_index)
 		-- specified "dept:pref/Gironde", we'll wrongly get "the department of the Gironde", so in that case we need to
 		-- ignore the holonym article specified along with the placetype. (NOTE: We have since turned off the
 		-- `holonym_use_the` setting on 'department'.)
-		local holonym_use_the = m_data.get_equiv_placetype_prop(placetype,
+		local holonym_use_the = m_data.get_equiv_placetype_prop(holonym_placetype,
 			function(pt) return placetype_data[pt] and placetype_data[pt].holonym_use_the end)
 		if holonym_use_the then
 			return "the"
@@ -1362,17 +1347,17 @@ local function get_holonym_article(linked_placename, place_desc, holonym_index)
 	end
 	local universal_res = m_data.placename_the_re["*"]
 	for _, re in ipairs(universal_res) do
-		if unlinked_placename:find(re) then
+		if unlinked_decorated_placename:find(re) then
 			return "the"
 		end
 	end
-	local matched = m_data.get_equiv_placetype_prop(placetype, function(pt)
+	local matched = m_data.get_equiv_placetype_prop(holonym_placetype, function(pt)
 		local res = m_data.placename_the_re[pt]
 		if not res then
 			return nil
 		end
 		for _, re in ipairs(res) do
-			if unlinked_placename:find(re) then
+			if unlinked_decorated_placename:find(re) then
 				return true
 			end
 		end
@@ -1392,9 +1377,9 @@ end
 -- with no raw-text holonym in between).
 --
 -- Examples:
--- ({placetype = "country", display_placename = "United States", cat_placename = "United States"}, true) returns
+-- ({placetype = "country", display_placename = "United States", unlinked_placename = "United States"}, true) returns
 -- the template-expanded equivalent of "the {{l|en|United States}}".
--- ({placetype = "region", display_placename = "O'Higgins", cat_placename = "O'Higgins", affix_type = "suf"}, false)
+-- ({placetype = "region", display_placename = "O'Higgins", unlinked_placename = "O'Higgins", affix_type = "suf"}, false)
 --   returns the template-expanded equivalent of "{{l|en|O'Higgins}} region".
 -- ({display_placename = "in the southern"}, false) returns "in the southern" (without wikilinking because .placetype
 --   and .langcode are both nil).
@@ -1954,15 +1939,15 @@ end
 -- The code in this section finds the categories to which a given place belongs. See comment at top of file.
 
 --[=[
-Find the appropriate category specs for a given place description and placetype; e.g. for the call
-{{tl|place|en|city/and/county|s/Pennsylvania|c/US}} which results in the place description
+Find the appropriate category specs for a given place description and placetype. For example, for the template
+invocation {{tl|place|en|city/and/county|s/Pennsylvania|c/US}}, which results in the place description
 
 ```
 {
 	placetypes = {"city", "and", "county"},
 	holonyms = {
-		{placetype = "state", display_placename = "Pennsylvania", cat_placename = "Pennsylvania"},
-		{placetype = "country", display_placename = "United States", cat_placename = "United States"},
+		{placetype = "state", display_placename = "Pennsylvania", unlinked_placename = "Pennsylvania"},
+		{placetype = "country", display_placename = "United States", unlinked_placename = "United States"},
 	},
 	holonyms_by_placetype = {
 		state = {"Pennsylvania"},
@@ -1979,8 +1964,8 @@ find_placetype_cat_specs {
 	place_desc = {
 		placetypes = {"city", "and", "county"},
 		holonyms = {
-			{placetype = "state", display_placename = "Pennsylvania", cat_placename = "Pennsylvania"},
-			{placetype = "country", display_placename = "United States", cat_placename = "United States"},
+			{placetype = "state", display_placename = "Pennsylvania", unlinked_placename = "Pennsylvania"},
+			{placetype = "country", display_placename = "United States", unlinked_placename = "United States"},
 		},
 		holonyms_by_placetype = {
 			state = {"Pennsylvania"},
@@ -1990,13 +1975,13 @@ find_placetype_cat_specs {
 }
 ```
 
-the return value might be
+might produce the return value
 
 ```
 {
 	entry_placetype = "city",
-	cat_specs = {"Cities in +++, USA"},
-	triggering_holonym = {placetype = "state", display_placename = "Pennsylvania", cat_placename = "Pennsylvania"},
+	cat_specs = {"Cities in Pennsylvania, USA"},
+	triggering_holonym = {placetype = "state", display_placename = "Pennsylvania", unlinked_placename = "Pennsylvania"},
 	triggering_holonym_index = 1,
 }
 ```
@@ -2034,9 +2019,9 @@ local function find_placetype_cat_specs(data)
 			-- raw text in place of holonym
 			return nil
 		end
-		local holonym_placename = holonym_to_match.cat_placename
+		local holonym_placename = holonym_to_match.unlinked_placename
 		if not holonym_placename then
-			internal_error("Missing cat_placename in holonym (index %s): %s", index, holonym_to_match)
+			internal_error("Missing unlinked_placename in holonym (index %s): %s", index, holonym_to_match)
 		end
 
 		local cat_specs, equiv_entry_placetype_and_qualifier = m_data.get_equiv_placetype_prop(entry_placetype,
@@ -2185,7 +2170,7 @@ local function cat_specs_to_categories(place_desc, cat_data)
 			if cat:find("%+%+%+") then
 				local group, key, spec, container_trail = export.find_matching_holonym_location {
 					holonym_placetype = triggering_holonym.placetype,
-					holonym_placename = triggering_holonym.cat_placename,
+					holonym_placename = triggering_holonym.unlinked_placename,
 					holonym_index = triggering_holonym_index,
 					place_desc = place_desc,
 				}
@@ -2194,7 +2179,7 @@ local function cat_specs_to_categories(place_desc, cat_data)
 					insert(all_cats, cat)
 				else
 					mw.log(("Unable to insert category for cat spec '%s' because holonym '%s/%s' did not match a " ..
-						"known location"):format(cat, triggering_holonym.placetype, triggering_holonym.cat_placename))
+						"known location"):format(cat, triggering_holonym.placetype, triggering_holonym.unlinked_placename))
 					track("cant-match-holonym-for-category-spec")
 				end
 			else
@@ -2264,9 +2249,10 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym)
 			local other_holonyms_of_same_type = place_desc.holonyms_by_placetype[equiv.placetype]
 			if other_holonyms_of_same_type then
 				for _, other_placename_of_same_type in ipairs(other_holonyms_of_same_type) do
-					if other_placename_of_same_type ~= triggering_holonym.cat_placename then
+					if other_placename_of_same_type ~= triggering_holonym.unlinked_placename then
 						local overriding_holonym = {
-							placetype = triggering_holonym.placetype, cat_placename = other_placename_of_same_type
+							placetype = triggering_holonym.placetype,
+							unlinked_placename = other_placename_of_same_type,
 						}
 						local other_cat_data = find_placetype_cat_specs {
 							entry_placetype = entry_placetype,
@@ -2360,8 +2346,7 @@ local function format_cats(lang, cats, sort_key)
 	local full_cats = {}
 	local langcode = lang:getFullCode()
 	for _, cat in ipairs(cats) do
-		-- FIXME: Why are we calling remove_links_and_html() here? Why can there be links in the categories?
-		insert(full_cats, langcode .. ":" .. m_data.remove_links_and_html(cat))
+		insert(full_cats, langcode .. ":" .. cat)
 	end
 	return require(utilities_module).format_categories(full_cats, lang, sort_key, nil,
 		force_cat or m_data.get_force_cat())

@@ -512,7 +512,7 @@ Return the preposition that should be used after `placetype` when occurring as a
 (e.g. `city >in< France` but `country >of< South America`). The preposition defaults to `"in"` if not specified.
 ]==]
 function export.get_placetype_entry_preposition(placetype)
-	local pt_prep = m_data.get_equiv_placetype_prop(placetype,
+	local pt_prep = export.get_equiv_placetype_prop(placetype,
 		function(pt) return export.get_placetype_prop(pt, "preposition") end
 	)
 	return pt_prep or "in"
@@ -535,16 +535,16 @@ function export.key_holonym_into_place_desc(place_desc, holonym)
 	-- fallbacks, as it doesn't seem correct for the "do other holonyms of the same placetype" algorithm to do holonyms
 	-- of different types just because they have the same fallback.
 	local equiv_placetypes = export.get_placetype_equivs(holonym.placetype, {no_fallback = true})
-	local cat_placename = holonym.cat_placename
+	local unlinked_placename = holonym.unlinked_placename
 	for _, equiv in ipairs(equiv_placetypes) do
 		local placetype = equiv.placetype
 		if not place_desc.holonyms_by_placetype then
 			place_desc.holonyms_by_placetype = {}
 		end
 		if not place_desc.holonyms_by_placetype[placetype] then
-			place_desc.holonyms_by_placetype[placetype] = {cat_placename}
+			place_desc.holonyms_by_placetype[placetype] = {unlinked_placename}
 		else
-			insert(place_desc.holonyms_by_placetype[placetype], cat_placename)
+			insert(place_desc.holonyms_by_placetype[placetype], unlinked_placename)
 		end
 	end
 end
@@ -653,7 +653,7 @@ end
 
 
 local function resolve_unlinked_placename_display_aliases(placetype, placename)
-	local equiv_placetypes = m_data.get_placetype_equivs(placetype)
+	local equiv_placetypes = export.get_placetype_equivs(placetype)
 	for i, equiv in ipairs(equiv_placetypes) do
 		equiv_placetypes[i] = equiv.placetype
 	end
@@ -731,6 +731,9 @@ function export.get_prefixed_key(key, spec)
 		return key
 	end
 end
+
+-- Necessary for use by [[Module:place]]. FIXME: Reorganize the modules so this isn't necessary.
+export.iterate_matching_location = m_shared.iterate_matching_location
 
 --[=[
 Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
@@ -820,8 +823,8 @@ function export.iterate_matching_holonym_location(data)
 						local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(divtype_equivs,
 							function(placetype)
 								return other_holonym.placetype == placetype and
-									(other_holonym.cat_placename == full_container_placename or
-									other_holonym.cat_placename == elliptical_container_placename)
+									(other_holonym.unlinked_placename == full_container_placename or
+									other_holonym.unlinked_placename == elliptical_container_placename)
 							end
 						)
 						if this_holonym_matches then
@@ -1253,32 +1256,6 @@ export.placename_the_re = {
 	["tribal jurisdictional area"] = {" Reservation", " Nation"},
 }
 
--- Now extract from the shared place data all the other places that need "the" prefixed.
-for _, group in ipairs(m_shared.locations) do
-	for key, value in pairs(group.data) do
-		local orig_key = key
-		key = key:gsub(", .*$", "") -- Chop off ", England" and such from the end
-		local base = key:match("^the (.*)$")
-		if base then
-			local divtype = value.divtype or group.default_divtype
-			if not divtype then
-				internal_error("Group in [[Module:place/shared-data]] is missing a default_divtype key when " ..
-					"processing key %s: %s", orig_key, group)
-			end
-			if type(divtype) ~= "table" then
-				divtype = {divtype}
-			end
-			for _, dt in ipairs(divtype) do
-				if not export.placename_article[dt] then
-					export.placename_article[dt] = {}
-				end
-				export.placename_article[dt][base] = "the"
-			end
-		end
-	end
-end
-
-
 --[==[ var:
 If any of the following holonyms are present, the associated holonyms are automatically added to the end of the list of
 holonyms for categorization (but not display) purposes.
@@ -1371,7 +1348,7 @@ local function capital_city_cat_handler(data, non_city)
 	local retcats
 	if not non_city and place_desc.holonyms then
 		for h_index, holonym in export.get_holonyms_to_check(place_desc, holonym_index) do
-			local h_placetype, h_placename = holonym.placetype, holonym.cat_placename
+			local h_placetype, h_placename = holonym.placetype, holonym.unlinked_placename
 			retcats = city_type_cat_handler {
 				entry_placetype = "city",
 				holonym_placetype = h_placetype,
@@ -1612,7 +1589,7 @@ function export.augment_holonyms_with_container(place_descs)
 				if holonym.placetype and not export.placetype_is_ignorable(holonym.placetype) then
 					local group, key, spec, container_trail = export.find_matching_holonym_location {
 						holonym_placetype = holonym.placetype,
-						holonym_placename = holonym.cat_placename,
+						holonym_placename = holonym.unlinked_placename,
 						holonym_index = i,
 						place_desc = place_desc,
 					}
@@ -1634,7 +1611,7 @@ function export.augment_holonyms_with_container(place_descs)
 								-- placenames, but the full placename seems less likely to be ambiguous. FIXME: We
 								-- should just store the key directly and use it when available to avoid having to
 								-- convert key to placename and back to key.
-								cat_placename = full_container_placename,
+								unlinked_placename = full_container_placename,
 							}
 							insert(augmented_holonyms, new_holonym)
 							-- But it is safe to modify other parts of the place_desc.
@@ -1706,7 +1683,7 @@ local function district_neighborhood_cat_handler(data)
 			data.holonym_index) do
 			local other_holonym_data = {
 				holonym_placetype = other_holonym.placetype,
-				holonym_placename = other_holonym.cat_placename,
+				holonym_placename = other_holonym.unlinked_placename,
 				holonym_index = other_holonym_index,
 				place_desc = data.place_desc,
 			}
