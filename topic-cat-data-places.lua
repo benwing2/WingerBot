@@ -280,6 +280,38 @@ local function construct_location_description(group, key, spec)
 	return concat(parts)
 end
 
+-- Find the specified plural placetype among the divs for a given known location. Return a list of cat_as specs, where
+-- each spec is of the form {type = "PLURAL_PLACETYPE", prep = "PREP"} indicating the plural placetype to use when
+-- categorizing and the preposition to follow.
+local function find_placetype_cat_as(divs, pl_placetype)
+	if divs then
+		if type(divs) ~= "table" then
+			divs = {divs}
+		end
+		for _, div in ipairs(divs) do
+			if type(div) == "string" then
+				div = {type = div}
+			end
+			if div.type == pl_placetype then
+				local cat_as = div.cat_as or div.type
+				if type(cat_as) ~= "table" then
+					cat_as = {cat_as}
+				end
+				local ret_cat_as = {}
+				for _, pt_cat_as in ipairs(cat_as) do
+					if type(pt_cat_as) == "string" then
+						pt_cat_as = {type = pt_cat_as}
+					end
+					insert(ret_cat_as, {type = pt_cat_as.type, prep = pt_cat_as.prep or div.prep or "of"})
+				end
+				return ret_cat_as
+			end
+		end
+	end
+
+	return nil
+end
+
 -- Handler for bare placename categories for known locations in `locations` in [[Module:place/shared-data]].
 insert(handlers, function(label)
 	for _, canon_label in ipairs { label, lcfirst(label) } do
@@ -317,19 +349,38 @@ insert(handlers, function(label)
 			local inserted_containers = false
 			for _, parent in ipairs(bare_label_parents) do
 				if parent == "+++" then
-					local location_type = fetch_primary_placetype(canon_label, spec)
-					parent = ("%s %s CONTAINER"):format(m_data.pluralize_placetype(location_type),
-						m_data.get_placetype_entry_preposition(location_type))
+					parent = "PL_PLACETYPE PREP CONTAINER"
 				end
 				if parent:find("CONTAINER") then
 					if not containers then
 						internal_error("Parent category %s needs the container of %s but no containers specified: %s",
 							parent, canon_label, spec)
 					end
+					local location_type = fetch_primary_placetype(canon_label, spec)
+					local pl_location_type = m_data.pluralize_placetype(location_type)
 					for _, container in ipairs(containers) do
+						local cat_as_list
+						if parent:find("PL_PLACETYPE") then
+							cat_as_list = find_placetype_cat_as(container.spec.divs, pl_location_type) or
+								find_placetype_cat_as(container.spec.addl_divs, pl_location_type)
+						else
+							cat_as_list = {{type = pl_location_type, prep =
+								m_data.get_placetype_entry_preposition(location_type)}}
+						end
+						if not cat_as_list then
+							internal_error("Unable to locate plural location type %s among the divs or addl_divs " ..
+								"for container key %s spec %s", pl_location_type, container.key, container.spec)
+						end
 						local prefixed_key = m_data.get_prefixed_key(container.key, container.spec)
-						m_table.insertIfNot(parents, parent:gsub("CONTAINER",
-							require(string_utilities_module).replacement_escape(prefixed_key)))
+						parent = parent:gsub("CONTAINER",
+							require(string_utilities_module).replacement_escape(prefixed_key))
+						for _, cat_as in ipairs(cat_as_list) do
+							parent = parent:gsub("PL_PLACETYPE",
+								require(string_utilities_module).replacement_escape(cat_as.type))
+							parent = parent:gsub("PREP",
+								require(string_utilities_module).replacement_escape(cat_as.prep))
+							m_table.insertIfNot(parents, parent)
+						end
 					end
 					inserted_containers = true
 				else
@@ -466,7 +517,7 @@ insert(handlers, function(label)
 						desc = "{{{langname}}} names of " .. desc .. "."
 						local parents = {}
 						insert(parents, key)
-						if m_table.contains(spec.placetype, "country") then
+						if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
 							-- top-level country, constituent country or the like
 							insert(parents, {name = normalized_placetype, sort = key})
 							local category_class = m_data.get_equiv_placetype_prop(normalized_placetype,
@@ -490,8 +541,20 @@ insert(handlers, function(label)
 							local next_containers = container_iterator()
 							if next_containers then
 								for _, container in ipairs(next_containers) do
+									local container_prep
+									if container.spec.is_city then
+										container_prep = ptdata.generic_before_cities
+									else
+										container_prep = ptdata.generic_before_non_cities
+									end
+									if not container_prep then
+										internal_error("For container key %s spec %s defines is_city = %s but " ..
+											"there is no corresponding `generic_before_*` setting in the " ..
+											"placedata for placetype %s", container.key, container.spec,
+											container.spec.is_city, placetype)
+									end
 									insert(parents, {
-										name = placetype .. " " .. in_of .. " " .. m_data.get_prefixed_key(
+										name = placetype .. " " .. container_prep .. " " .. m_data.get_prefixed_key(
 											container.key, container.spec),
 										sort = key
 									})
@@ -620,7 +683,6 @@ insert(handlers, function(label)
 		if placetype then
 			local group, key, spec = find_canonical_key_from_place(place, canon_label)
 			if group then
-				local divcat = nil
 				local function find_placetype(divs)
 					if divs then
 						if type(divs) ~= "table" then

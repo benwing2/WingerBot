@@ -788,7 +788,9 @@ export.countries = {
 	["Cambodia"] = {container = "Asia", divs = {"provinces", "districts"}},
 	["Cameroon"] = {container = "Africa", divs = {"regions", "departments"}},
 	["Canada"] = {container = "North America", divs = {
-		"provinces", "territories", "counties", "districts", "municipalities", "regional municipalities",
+		{type = "provinces", cat_as = "provinces and territories"},
+		{type = "territories", cat_as = "provinces and territories"},
+		"counties", "districts", "municipalities", "regional municipalities",
 		"rural municipalities", "parishes",
 		-- Don't change the following to something more politically correct (e.g. "First Nations reserves") until/unless
 		-- the Canadian government makes a similar switch (and note that as of Apr 18 2025, the Wikipedia article is
@@ -797,7 +799,6 @@ export.countries = {
 		"census divisions",
 		{type = "townships", prep = "in"},
 	},
-		addl_divs_for_categorization = {"provinces and territories"},
 		british_spelling = true},
 	["Cape Verde"] = {container = "Africa", divs = {"municipalities", "parishes"}},
 	["Central African Republic"] = {the = true, container = "Africa", divs = {"prefectures", "subprefectures"}},
@@ -1677,7 +1678,6 @@ export.canada_provinces_and_territories = {
 export.canada_group = {
 	default_container = "Canada",
 	default_placetype = "province",
-	default_div_parent_type = "provinces and territories",
 	default_british_spelling = true,
 	data = export.canada_provinces_and_territories,
 }
