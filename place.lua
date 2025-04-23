@@ -1699,6 +1699,7 @@ local function get_display_form(args, descs, ucfirst, drop_extra_info)
 		insert(ret, get_extra_info(args, "modern", "modern", false, false, false, "or"))
 		insert(ret, get_extra_info(args, "full", "in full,", false, false, false, "or"))
 		insert(ret, get_extra_info(args, "short", "short form", false, false, false, "or"))
+		insert(ret, get_extra_info(args, "abbr", "abbreviation", false, false, false, "or"))
 		insert(ret, get_extra_info(args, "official", "official name", ucfirst, "auto plural", "with colon"))
 		insert(ret, get_extra_info(args, "capital", "capital", ucfirst, "auto plural", "with colon"))
 		insert(ret, get_extra_info(args, "largest city", "largest city", ucfirst, "auto plural", "with colon"))
@@ -2170,6 +2171,7 @@ function export.format(template_args, drop_extra_info)
 		["modern"] = list_param,
 		["full"] = list_param,
 		["short"] = list_param,
+		["abbr"] = list_param,
 		["official"] = list_param,
 		["capital"] = list_param,
 		["largest city"] = list_param,
