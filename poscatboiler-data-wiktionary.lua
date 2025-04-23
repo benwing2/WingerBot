@@ -132,61 +132,61 @@ local function get_level_params(data)
 		["-"] = {
 			leftcolor = "#99B3FF",
 			rightcolor = "#E0E8FF",
-			lang = "These users " .. speak_verb .. " LANG.",
+			lang = "These users " .. speak_verb .. " LANGFAM.",
 			script = "These users read SCRIPT.",
-			coder = "These users know how to code in LANG.",
-			family = "These users know FAMILY.",
+			coder = "These users know how to code in LANGFAM.",
+			family = "These users know LANGFAM.",
 		},
 		["0"] = {
 			leftcolor = "#FFB3B3",
 			rightcolor = "#FFE0E8",
-			lang = "These users do not understand LANG (or understand it with considerable difficulty).",
+			lang = "These users do not understand LANGFAM (or understand it with considerable difficulty).",
 			script = "These users '''cannot''' read SCRIPT.",
-			coder = "These users know '''little''' about LANG and just mimic existing usage.",
-			family = "These users '''cannot''' contribute to FAMILY."
+			coder = "These users know '''little''' about LANGFAM and just mimic existing usage.",
+			family = "These users '''cannot''' contribute to LANGFAM."
 		},
 		["1"] = {
 			leftcolor = "#C0C8FF",
 			rightcolor = "#F0F8FF",
-			lang = "These users " .. speak_verb .. " LANG at a '''basic''' level.",
+			lang = "These users " .. speak_verb .. " LANGFAM at a '''basic''' level.",
 			script = "These users can read SCRIPT at a '''basic''' level.",
-			coder = "These users know the '''basics''' of how to write LANG code and make minor tweaks.",
-			family = "These users know the '''basics''' of contributing to FAMILY.",
+			coder = "These users know the '''basics''' of how to write LANGFAM code and make minor tweaks.",
+			family = "These users know the '''basics''' of contributing to LANGFAM.",
 		},
 		["2"] = {
 			leftcolor = "#77E0E8",
 			rightcolor = "#D0F8FF",
-			lang = "These users " .. speak_verb .. " LANG at an '''intermediate''' level.",
+			lang = "These users " .. speak_verb .. " LANGFAM at an '''intermediate''' level.",
 			script = "These users can read SCRIPT at an '''intermediate''' level.",
-			coder = "These users have a '''fair command''' of LANG, and can understand some scripts written by others.",
-			family = "These users are '''fairly familiar''' with FAMILY.",
+			coder = "These users have a '''fair command''' of LANGFAM, and can understand some scripts written by others.",
+			family = "These users are '''fairly familiar''' with LANGFAM.",
 		},
 		["3"] = {
 			leftcolor = "#99B3FF",
 			rightcolor = "#E0E8FF",
-			lang = "These users " .. speak_verb .. " LANG at an '''advanced''' level.",
+			lang = "These users " .. speak_verb .. " LANGFAM at an '''advanced''' level.",
 			script = "These users can read SCRIPT at an '''advanced''' level.",
-			coder = "These users can write '''more complex''' LANG code, and can understand and modify most scripts written by others.",
-			family = "These users '''regularly''' contribute to FAMILY.",
+			coder = "These users can write '''more complex''' LANGFAM code, and can understand and modify most scripts written by others.",
+			family = "These users '''regularly''' contribute to LANGFAM.",
 		},
 		["4"] = {
 			leftcolor = "#CCCC00",
 			rightcolor = "#FFFF99",
-			lang = "These users " .. speak_verb .. " LANG at a '''near-native''' level.",
+			lang = "These users " .. speak_verb .. " LANGFAM at a '''near-native''' level.",
 			script = "These users can read SCRIPT at a '''near native''' level.",
-			coder = "These users can write and understand '''very complex''' LANG code.",
+			coder = "These users can write and understand '''very complex''' LANGFAM code.",
 		},
 		["5"] = {
 			leftcolor = "#D6A6F0",
 			rightcolor = "#F3E4FA",
-			lang = "These users " .. speak_verb .. " LANG at a '''professional''' level.",
+			lang = "These users " .. speak_verb .. " LANGFAM at a '''professional''' level.",
 			script = "These users can read SCRIPT at a '''professional''' level.",
-			coder = "These users can write and understand LANG code at a '''professional''' level.",
+			coder = "These users can write and understand LANGFAM code at a '''professional''' level.",
 		},
 		["N"] = {
 			leftcolor = "#6EF7A7",
 			rightcolor = "#C5FCDC",
-			lang = "These users are '''native''' speakers of LANG.",
+			lang = "These users are '''native''' speakers of LANGFAM.",
 			script = "These users' '''native''' script is SCRIPT.",
 		},
 	}
@@ -231,10 +231,10 @@ local function competency_handler(data)
 	local typ = data.typ
 	local args = data.args
 	local code = data.code
-	local lang = data.lang
-	local langcat = data.langcat
-	local sc = data.sc
-	local sccat = data.sccat
+	local langfam = data.langfam
+	local langfamcat = data.langfamcat
+	local script = data.script
+	local scriptcat = data.scriptcat
 	local level = data.level
 	local parents = data.parents
 	local addl_parents = data.addl_parents
@@ -263,12 +263,13 @@ local function competency_handler(data)
 		local pattern, repl
 		if typ == "script" then
 			pattern = "SCRIPT"
-			repl = ("'''" .. sccat .. "'''"):format(sc)
+			repl = ("'''" .. scriptcat .. "'''"):format(script)
 		else
-			pattern = "LANG"
-			repl = ("'''" .. langcat .. "'''"):format(lang)
+			pattern = "LANGFAM"
+			repl = ("'''" .. langfamcat .. "'''"):format(langfam)
 			if sc then
-			repl = repl .. (" written in '''" .. sccat .. "'''"):format(sc)
+				repl = repl .. (" written in '''" .. scriptcat .. "'''"):format(script)
+			end
 		end
 		ins(params[typ]:gsub(pattern, repl))
 	end
@@ -333,42 +334,25 @@ local function competency_handler(data)
 end
 
 
--- Hander for categories named [[Category:User LANG]] e.g. [[Category:en]], [[Category:en-US]], [[Category:ine-pro]] or
--- [[Category:User LANG-#]] where # is a competency level (0 through 5 or N) e.g. [[Category:en-N]] or [[Category:ndl-nl-1]].
-insert(raw_handlers, function(data)
-	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
-	category = category or data.category
-	local code, level = category:match("^User ([a-z][a-z][a-z]?)%-([0-5N])$")
-	if not code then
-		code, level = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([0-5N])$")
-	end
-	if not code then
-		code = category:match("^User ([a-z][a-z][a-z]?)$")
-	end
-	if not code then
-		code = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)$")
-	end
-	if not code then
-		return
-	end
-
-	local args = require("Module:parameters").process(data.args, {
-		text = true,
-		verb = true,
-		langname = true,
-		commonscat = true,
-	})
-	
+local function handle_user_lang_maybe_script(data, category, inactive, code, sccode, level, args)
 	local lang = require("Module:languages").getByCode(code, nil, "allow etym")
 	local langname = args.langname
-	
-	if not lang then
+	local sc, scriptname
+	if sccode then
+		sc = require("Module:scripts").getByCode(sccode)
+		scriptname = args.scriptname
+	end
+	local code_with_script = code .. (sccode and "-" .. sccode or "")
+
+	if not lang or sccode and not sc then
 		-- If unrecognized language and called from inside, we're handling the parents and breadcrumb for a
 		-- higher-level category, so at least return something.
 		if not level and data.called_from_inside then
 			return {
-				breadcrumb = {name = code, nocap = true}, -- FIXME, scrape langname= category?
-				parents = {"User languages with invalid code", sort = code}
+				-- FIXME, scrape langname= category?
+				breadcrumb = {name = code_with_script, nocap = true},
+				parents = {name = lang and "User languages with invalid script code" or
+					"User languages with invalid code", sort = code_with_script}
 			}, true
 		end
 		
@@ -377,19 +361,52 @@ insert(raw_handlers, function(data)
 			-- its canonical name as though it had been given as langname=.
 			local wm_lang = require("Module:wikimedia languages").getByCode(code)
 			if not wm_lang then
+				mw.log(("Skipping category '%s' because lang code '%s' is unrecognized and langname= not given"):
+					format(data.category, code))
 				return
 			end
 			langname = wm_lang:getCanonicalName()
 		end
-	elseif not langname then
+		if sccode and not sc and not scriptname then
+			mw.log(("Skipping category '%s' because script code '%s' is unrecognized and scriptname= not given"):
+				format(data.category, sccode))
+			return
+		end
+	end
+
+	if not langname then
+		if not lang then
+			error("Internal error: Something went wrong, undefined lang= should have been caught above")
+		end
 		langname = lang:getCanonicalName()
+	end
+	if not scriptname and sccode then
+		if not sc then
+			error("Internal error: Something went wrong, undefined sc= should have been caught above")
+		end
+		scriptname = sc:getCanonicalName()
 	end
 
 	-- Insert text, appropriately script-tagged, unless already script-tagged (we check for '<span'), in which case we
-	-- insert it directly. Also handle <<...>> in text and convert to bolded link to parent category.
+	-- insert it directly. Also handle <<...>> and <<<...>>> in text and convert to bolded link to parent category.
 	local function wrap(txt)
 		if not txt then
 			return
+		end
+		if sccode then
+			-- Substitute <<<...>>> (where ... is supposed to be the native rendering of the script) with a link to the
+			-- top-level 'User SCRIPT' category (e.g. [[:Category:User Kore]] if we're in a sublevel category, or to the
+			-- top-level script category (e.g. [[:Category:Korean script]]) if we're in a top-level 'User CODE-SCRIPT'
+			-- category.
+			txt = txt:gsub("<<<(.-)>>>", function(inside)
+				if level then
+					return ("'''[[:Category:User %s|%s]]'''"):format(sccode, inside)
+				elseif sc then
+					return ("'''[[:Category:%s|%s]]'''"):format(sc:getCategoryName(), inside)
+				else
+					return ("'''%s'''"):format(inside)
+				end
+			end)
 		end
 		-- Substitute <<...>> (where ... is supposed to be the native rendering of the language) with a link to the
 		-- top-level 'User CODE' category (e.g. [[:Category:User fr]] or [[:Category:User fr-CA]]) if we're in a
@@ -407,7 +424,7 @@ insert(raw_handlers, function(data)
 		if txt:find("<span") or not lang then
 			return txt
 		else
-			return require("Module:script utilities").tag_text(txt, lang)
+			return require("Module:script utilities").tag_text(txt, lang, sc)
 		end
 	end
 
@@ -419,10 +436,10 @@ insert(raw_handlers, function(data)
 		local count_cat, count_sort
 		if num_pages == 0 then
 			count_cat = "Requests for translations in user-competency categories with 0 users"
-			count_sort = "*" .. code
+			count_sort = "*" .. code_with_script
 		elseif num_pages == 1 then
 			count_cat = "Requests for translations in user-competency categories with 1 user"
-			count_sort = "*" .. code
+			count_sort = "*" .. code_with_script
 		else
 			local lowernum, uppernum
 			lowernum = 2
@@ -441,7 +458,7 @@ insert(raw_handlers, function(data)
 		local addl_parents = {}
 		insert(addl_parents, {
 			name = "Requests for translations in user-competency categories by language",
-			sort = code,
+			sort = code_with_script,
 		})
 		insert(addl_parents, {
 			name = count_cat,
@@ -452,18 +469,23 @@ insert(raw_handlers, function(data)
 
 	local invalid_lang_warning
 	if not lang then
-		invalid_lang_warning = "'''WARNING''': The specified language code is invalid on Wiktionary. Please migrate all " ..
-			"competency ratings to the closest valid code."
+		invalid_lang_warning = "'''WARNING''': The specified language code is invalid on Wiktionary. Please migrate " ..
+			"all competency ratings to the closest valid code."
 	end
 
 	local parents
 	if level then
-		parents = {("User %s"):format(code), sort = level}
+		parents = {("User %s"):format(code_with_script), sort = level}
+	elseif sccode then
+		parents = {}
+		insert(parents, {name = ("User %s"):format(code), sort = sccode})
+		insert(parents, {name = ("User %s"):format(sccode), sort = code})
 	elseif lang then
 		parents = {}
 		if lang:hasType("etymology-only") then
 			local full_code = lang:getFullCode()
-			local sort_key = code:gsub(("^%s%%-"):format(require(string_utilities_module).pattern_escape(full_code)), "")
+			local sort_key = code:gsub(("^%s%%-"):format(require(string_utilities_module).pattern_escape(full_code)),
+				"")
 			insert(parents,	{name = ("User %s"):format(full_code), sort = sort_key})
 		else
 			insert(parents, {name = "User languages", sort = code})
@@ -494,6 +516,15 @@ insert(raw_handlers, function(data)
 		langcat = "[[%s]]"
 	end
 
+	local scriptcat
+	if level then
+		scriptcat = ("[[:Category:User %s|%%s]]"):format(sccode)
+	elseif sc then
+		scriptcat = ("[[:Category:%s|%%s]]"):format(sc:getCategoryName())
+	else
+		scriptcat = "[[%s]]"
+	end
+
 	return competency_handler {
 		category = category,
 		inactive = inactive,
@@ -501,35 +532,41 @@ insert(raw_handlers, function(data)
 		typ = "lang",
 		args = args,
 		obj = lang,
-		code = code,
-		lang = langname,
-		langcat = langcat,
+		code = code_with_script,
+		langfam = langname,
+		langfamcat = langcat,
+		script = scriptname,
+		scriptcat = scriptcat,
 		level = level,
 		parents = parents,
+		addl_parents = addl_parents,
 		topright = topright,
 		additional = invalid_lang_warning,
 	}
-end)
-
+end
 
 -- Hander for categories named [[Category:User LANG-SCRIPT]] or [[Category:User LANG-SCRIPT-#]] where # is a
 -- competency level (0 through 5 or N), e.g. [[Category:zh-Hans]] or [[Category:yue-Hant-N]]. It's a bit tricky because
 -- of the multitude of language formats, e.g. ko-KP is a language code (etym variety) but ko-Kore is a combination
 -- lang + script code. We depend on the fact that all script codes are currently of the form Xxxx or Xxxxx, and check
--- for that first. Note that there are current categories named things like 'zh-Hant-TW' and 'zh-Hant-HK-3', which we
--- don't support. They should be renamed to some supported code, e.g. 'cmn-TW-Hant' and 'yue-HK-Hant-3'.
+-- for that first. We also need to run prior to the lang-only handler (next handler) so it doesn't try to interpret
+-- the script code as an etym variant code.
+--
+-- Note that there are current categories named things like 'zh-Hant-TW' and 'zh-Hant-HK-3', which we don't support.
+-- They should be renamed to some supported code, e.g. 'cmn-TW-Hant' and 'yue-HK-Hant-3'.
 insert(raw_handlers, function(data)
 	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
 	category = category or data.category
-	local code, script, level = category:match("^User ([a-z][a-z][a-z]?)%-([A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
+	local code, sccode, level = category:match("^User ([a-z][a-z][a-z]?)%-([A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
 	if not code then
-		code, script, level = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
+		code, sccode, level =
+			category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([A-Z][a-z][a-z][a-z][a-z]?)%-([0-5N])$")
 	end
 	if not code then
-		code, script = category:match("^User ([a-z][a-z][a-z]?)%-([A-Z][a-z][a-z][a-z][a-z]?)$")
+		code, sccode = category:match("^User ([a-z][a-z][a-z]?)%-([A-Z][a-z][a-z][a-z][a-z]?)$")
 	end
 	if not code then
-		code, script = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([A-Z][a-z][a-z][a-z][a-z]?)$")
+		code, sccode = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([A-Z][a-z][a-z][a-z][a-z]?)$")
 	end
 	if not code then
 		return
@@ -544,168 +581,37 @@ insert(raw_handlers, function(data)
 		commonscat = true,
 	})
 	
-	local sc = require("Module:scripts").getByCode(script)
-	local scname = args.scriptname
-	local langname = args.langname
-	
-	local lang = require("Module:languages").getByCode(code, nil, "allow etym")
-	local langname = args.langname
-	
-	if not lang then
-		-- If unrecognized language and called from inside, we're handling the parents and breadcrumb for a
-		-- higher-level category, so at least return something.
-		if not level and data.called_from_inside then
-			return {
-				breadcrumb = {name = code, nocap = true}, -- FIXME, scrape langname= category?
-				parents = {"User languages with invalid code", sort = code}
-			}, true
-		end
-		
-		if not langname then
-			-- Check if the code matches a Wikimedia language (e.g. "ku" for Kurdish). If it does, treat
-			-- its canonical name as though it had been given as langname=.
-			local wm_lang = require("Module:wikimedia languages").getByCode(code)
-			if not wm_lang then
-				return
-			end
-			langname = wm_lang:getCanonicalName()
-		end
-	elseif not langname then
-		langname = lang:getCanonicalName()
+	return handle_user_lang_maybe_script(data, category, inactive, code, sccode, level, args)
+end)
+
+-- Hander for categories named [[Category:User LANG]] e.g. [[Category:User en]], [[Category:User en-US]],
+-- [[Category:User ine-pro]] or [[Category:User LANG-#]] where # is a competency level (0 through 5 or N) e.g.
+-- [[Category:User en-N]] or [[Category:User ndl-nl-1]].
+insert(raw_handlers, function(data)
+	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
+	category = category or data.category
+	local code, level = category:match("^User ([a-z][a-z][a-z]?)%-([0-5N])$")
+	if not code then
+		code, level = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)%-([0-5N])$")
+	end
+	if not code then
+		code = category:match("^User ([a-z][a-z][a-z]?)$")
+	end
+	if not code then
+		code = category:match("^User ([a-z][a-z][a-z]?%-[a-zA-Z-]+)$")
+	end
+	if not code then
+		return
 	end
 
-	-- Insert text, appropriately script-tagged, unless already script-tagged (we check for '<span'), in which case we
-	-- insert it directly. Also handle <<...>> in text and convert to bolded link to parent category.
-	local function wrap(txt)
-		if not txt then
-			return
-		end
-		-- Substitute <<...>> (where ... is supposed to be the native rendering of the language) with a link to the
-		-- top-level 'User CODE' category (e.g. [[:Category:User fr]] or [[:Category:User fr-CA]]) if we're in a
-		-- sublevel category, or to the top-level language category (e.g. [[:Category:French language]] or
-		-- [[:Category:Canadian English]]) if we're in a top-level 'User CODE' category.
-		txt = txt:gsub("<<(.-)>>", function(inside)
-			if level then
-				return ("'''[[:Category:User %s|%s]]'''"):format(code, inside)
-			elseif lang then
-				return ("'''[[:Category:%s|%s]]'''"):format(lang:getCategoryName(), inside)
-			else
-				return ("'''%s'''"):format(inside)
-			end
-		end)
-		if txt:find("<span") or not lang then
-			return txt
-		else
-			return require("Module:script utilities").tag_text(txt, lang)
-		end
-	end
+	local args = require("Module:parameters").process(data.args, {
+		text = true,
+		verb = true,
+		langname = true,
+		commonscat = true,
+	})
 
-	local function insert_request_cats(parents)
-		if args.text or code == "en" or code:find("^en%-") then
-			return
-		end
-		local num_pages = mw.site.stats.pagesInCategory(data.category, "pages")
-		local count_cat, count_sort
-		if num_pages == 0 then
-			count_cat = "Requests for translations in user-competency categories with 0 users"
-			count_sort = "*" .. code
-		elseif num_pages == 1 then
-			count_cat = "Requests for translations in user-competency categories with 1 user"
-			count_sort = "*" .. code
-		else
-			local lowernum, uppernum
-			lowernum = 2
-			while true do
-				uppernum = lowernum * 2 - 1
-				if num_pages <= uppernum then
-					break
-				end
-				lowernum = lowernum * 2
-			end
-			count_cat = ("Requests for translations in user-competency categories with %s-%s users"):format(
-				lowernum, uppernum)
-			count_sort = "*" .. ("%0" .. #(tostring(uppernum)) .. "d"):format(num_pages)
-		end
-
-		insert(parents, {
-			name = "Requests for translations in user-competency categories by language",
-			sort = code,
-		})
-		insert(parents, {
-			name = count_cat,
-			sort = count_sort,
-		})
-	end
-
-	local invalid_lang_warning
-	if not lang then
-		invalid_lang_warning = "'''WARNING''': The specified language code is invalid on Wiktionary. Please migrate all " ..
-			"competency ratings to the closest valid code."
-	end
-
-	local parents
-	if level then
-		parents = {("User %s"):format(code), sort = level}
-	elseif lang then
-		parents = {}
-		if lang:hasType("etymology-only") then
-			local full_code = lang:getFullCode()
-			local sort_key = code:gsub(("^%s%%-"):format(require(string_utilities_module).pattern_escape(full_code)), "")
-			insert(parents,	{name = ("User %s"):format(full_code), sort = sort_key})
-		else
-			insert(parents, {name = "User languages", sort = code})
-		end
-		insert(parents, {name = lang:getCategoryName(), sort = "user"})
-	else
-		parents = {"User languages with invalid code", sort = code}
-	end
-	insert_request_cats(parents)
-
-	local topright
-	if args.commonscat then
-		local commonscat = require("Module:yesno")(args.commonscat, "+")
-		if commonscat == "+" or commonscat == true then
-			commonscat = data.category
-		end
-		if commonscat then
-			topright = ("{{commonscat|%s}}"):format(commonscat)
-		end
-	end
-
-	local langcat
-	if level then
-		langcat = ("[[:Category:User %s|%%s]]"):format(code)
-	elseif lang then
-		langcat = ("[[:Category:%s|%%s]]"):format(lang:getCategoryName())
-	else
-		langcat = "[[%s]]"
-	end
-
-	local additional
-	if level then
-		additional = ("To be included on this list, add {{tl|Babel|%s}} to your user page. Complete instructions are " ..
-			"available at [[Wiktionary:Babel]]."):format(level == "N" and code or ("%s-%s"):format(code, level)) ..
-			(invalid_lang_warning and "\n\n" .. invalid_lang_warning or "")
-	else
-		additional = ("To be included on this list, use {{tl|Babel}} on your user page. Complete instructions are " ..
-			"available at [[Wiktionary:Babel]].") ..
-			(invalid_lang_warning and "\n\n" .. invalid_lang_warning or "")
-	end
-	return competency_handler {
-		category = data.category,
-		langtext = wrap(args.text),
-		typ = "lang",
-		args = args,
-		obj = lang,
-		code = code,
-		lang = langname,
-		langcat = langcat,
-		level = level,
-		parents = parents,
-		addl_parents = addl_parents,
-		topright = topright,
-		additional = invalid_lang_warning,
-	}
+	return handle_user_lang_maybe_script(data, category, inactive, code, nil, level, args)
 end)
 
 
@@ -740,12 +646,12 @@ insert(raw_handlers, function(data)
 		}
 	end
 
-	local langcat
+	local scriptcat
 	-- Better to display 'Foo script' than just 'Foo', as so many scripts are the same as language names.
 	if level then
-		langcat = ("[[:Category:User %s|%s]]"):format(code, sc:getCategoryName())
+		scriptcat = ("[[:Category:User %s|%s]]"):format(code, sc:getCategoryName())
 	else
-		langcat = ("[[:Category:%s|%s]]"):format(sc:getCategoryName(), sc:getCategoryName())
+		scriptcat = ("[[:Category:%s|%s]]"):format(sc:getCategoryName(), sc:getCategoryName())
 	end
 
 	return competency_handler {
@@ -754,13 +660,12 @@ insert(raw_handlers, function(data)
 		typ = "script",
 		obj = sc,
 		code = code,
-		lang = sc:getCanonicalName(),
-		langcat = langcat,
+		script = sc:getCanonicalName(),
+		scriptcat = scriptcat,
 		level = level,
 		parents = parents,
 	}
 end)
-
 
 insert(raw_handlers, function(data)
 	local category, inactive = data.category:match("^(.*) (%(inactive%))$")
@@ -795,8 +700,8 @@ insert(raw_handlers, function(data)
 		inactive = inactive,
 		typ = "coder",
 		code = code,
-		lang = langdata.lang or code,
-		langcat = langcat,
+		langfam = langdata.lang or code,
+		langfamcat = langcat,
 		level = level,
 		parents = parents,
 	}
@@ -833,11 +738,11 @@ insert(raw_handlers, function(data)
 		}
 	end
 
-	local namecat
+	local famcat
 	if level then
-		namecat = ("[[:Category:User %s|%s]]"):format(code, fam:getCategoryName())
+		famcat = ("[[:Category:User %s|%s]]"):format(code, fam:getCategoryName())
 	else
-		namecat = ("[[:Category:%s|%s]]"):format(fam:getCategoryName(), fam:getCategoryName())
+		famcat = ("[[:Category:%s|%s]]"):format(fam:getCategoryName(), fam:getCategoryName())
 	end
 
 	return competency_handler {
@@ -846,8 +751,8 @@ insert(raw_handlers, function(data)
 		typ = "family",
 		obj = fam,
 		code = code,
-		name = fam:getCanonicalName(),
-		namecat = namecat,
+		langfam = fam:getCanonicalName(),
+		langfamcat = famcat,
 		level = level,
 		parents = parents,
 	}
