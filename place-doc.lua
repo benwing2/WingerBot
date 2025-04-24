@@ -1,12 +1,15 @@
 local export = {}
 
-local data = require("Module:place/data")
+local m_data = require("Module:place/data")
 local m_shared = require("Module:place/shared-data")
+local en_utilities_module = "Module:en-utilities"
+local ulower = require("Module:string utilities").lower
 
 function export.placetype_table()
 	-- We combine all placetype data into objects of the following form:
-	-- {aliases={ALIASES}, categorizes=true, equiv=PLACETYPE_EQUIVALENT,
-	--  display=DISPLAY_FORM, article=ARTICLE, preposition=FOLLOWING_PREPOSITION}
+	-- {aliases={ALIASES}, categorizes=true, fallback=PLACETYPE_FALLBACK,
+	--  display=DISPLAY_FORM, article=ARTICLE, preposition=FOLLOWING_PREPOSITION,
+	--  former_type=FORMER_TYPE}
 	local alldata = {}
 
 	local function ensure_key(key)
@@ -15,55 +18,36 @@ function export.placetype_table()
 		end
 	end
 
-	-- Does it categorize? Yes if there is a key other than "article", "preposition", "synergy"
-	-- or "default", or if there is a non-empty "default" key.
-	for key, value in pairs(data.cat_data) do
+	-- Does it categorize? Yes if there is a non-empty "default" key or key with slash in it.
+	for key, value in pairs(m_data.placetype_data) do
 		ensure_key(key)
 		for k, v in pairs(value) do
-			if k ~= "article" and k ~= "preposition" and k ~= "synergy" and k ~= "default" or
-				k == "default" and next(v) then
+			if (k == "default" or k == "cat_handler" or k:find("/")) and (v and (type(v) ~= "table" or next(v))) then
 				alldata[key].categorizes = true
 				break
 			end
 		end
+		if value.link == false then
+			alldata[key].display = "''(internal use only)''"
+		elseif key:find("!$") then
+			local key_no_exclamation_point = key:sub(1, -2)
+			alldata[key].display = m_data.get_placetype_display_form(key_no_exclamation_point, "top-level")
+		else
+			alldata[key].display = m_data.get_placetype_display_form(key)
+		end
+		alldata[key].fallback = value.fallback
 		alldata[key].article = value.article
 		alldata[key].preposition = value.preposition
-	end
-
-	-- Handle equivalents
-	for key, value in pairs(data.placetype_equivs) do
-		ensure_key(key)
-		alldata[key].equiv = value
-		if alldata[value] and alldata[value].categorizes then
-			alldata[key].categorizes = true
-		end
-		if alldata[value] and alldata[value].article then
-			alldata[key].article = alldata[value].article
-		end
-		if alldata[value] and alldata[value].preposition then
-			alldata[key].preposition = alldata[value].preposition
-		end
+		alldata[key].former_type = value.former_type or value.class
 	end
 
 	-- Handle aliases
-	for key, value in pairs(data.placetype_aliases) do
+	for key, value in pairs(m_data.placetype_aliases) do
 		ensure_key(value)
 		if not alldata[value].aliases then
 			alldata[value].aliases = {key}
 		else
 			table.insert(alldata[value].aliases, key)
-		end
-	end
-
-	-- Handle display forms
-	for key, value in pairs(data.placetype_links) do
-		ensure_key(key)
-		if value == true then
-			alldata[key].display = "[[" .. key .. "]]"
-		elseif value == "w" then
-			alldata[key].display = "[[w:" .. key .. "|" .. key .. "]]"
-		else
-			alldata[key].display = value
 		end
 	end
 
@@ -75,24 +59,25 @@ function export.placetype_table()
 			table.sort(value.aliases)
 		end
 	end
-	table.sort(alldata_list, function(fs1, fs2) return fs1[1] < fs2[1] end)
+	table.sort(alldata_list, function(fs1, fs2) return ulower(fs1[1]) < ulower(fs2[1]) end)
 
 	-- Convert to wikitable
 	local parts = {}
 	table.insert(parts, '{|class="wikitable"')
-	table.insert(parts, "! Placetype !! Article !! Display form !! Following preposition !! Aliases !! Equivalent for categorization !! Categorizes?")
+	table.insert(parts, "! Placetype !! Fallback !! Article !! Display form !! Following preposition !! Aliases !! 'former' type !! Categorizes?")
 	for _, placetype_data in ipairs(alldata_list) do
 		local placetype = placetype_data[1]
 		local data = placetype_data[2]
 		table.insert(parts, "|-")
 		local sparts = {}
 		table.insert(sparts, placetype)
-		table.insert(sparts, data.article or placetype:find("^[aeiou]") and "an" or "a")
+		table.insert(sparts, data.fallback or "")
+		table.insert(sparts, data.article or require(en_utilities_module).get_indefinite_article(placetype))
 		table.insert(sparts, data.display or placetype)
-		table.insert(sparts, data.preposition or "in")
+		table.insert(sparts, data.preposition or "")
 		table.insert(sparts, data.aliases and table.concat(data.aliases, ", ") or "")
-		table.insert(sparts, data.equiv or "")
-		table.insert(sparts, data.categorizes and "yes" or "no")
+		table.insert(sparts, data.former_type or "")
+		table.insert(sparts, data.categorizes and "yes" or "")
 		table.insert(parts, "| " .. table.concat(sparts, " || "))
 	end
 	table.insert(parts, "|}")
@@ -112,7 +97,7 @@ function export.placename_table()
 	end
 
 	-- Handle display aliases
-	for placetype, names in pairs(data.placename_display_aliases) do
+	for placetype, names in pairs(m_data.placename_display_aliases) do
 		for name, alias in pairs(names) do
 			local place = placetype .. "/" .. name
 			ensure_key(place)
@@ -121,7 +106,7 @@ function export.placename_table()
 	end
 
 	-- Handle category aliases
-	for placetype, names in pairs(data.placename_cat_aliases) do
+	for placetype, names in pairs(m_data.placename_cat_aliases) do
 		for name, alias in pairs(names) do
 			local place = placetype .. "/" .. name
 			ensure_key(place)
@@ -130,7 +115,7 @@ function export.placename_table()
 	end
 
 	-- Handle places with article
-	for placetype, names in pairs(data.placename_article) do
+	for placetype, names in pairs(m_data.placename_article) do
 		for name, alias in pairs(names) do
 			local place = placetype .. "/" .. name
 			ensure_key(place)
@@ -202,8 +187,23 @@ function export.placename_table()
 		table.insert(sparts, data.display and data.display or "(same)")
 		table.insert(sparts, data.cat and data.cat or "(same)")
 		table.insert(sparts, data.city_cats and table.concat(data.city_cats, "; ") or "")
-		table.insert(sparts, data.poldiv and table.concat(data.poldiv, ", ") or "")
-		table.insert(sparts, data.miscdiv and table.concat(data.miscdiv, ", ") or "")
+		local function process_divs(divs)
+			local divtypes = {}
+			if divs then
+				if type(divs) ~= "table" then
+					divs = {divs}
+				end
+				for _, div in ipairs(divs) do
+					if type(div) == "string" then
+						div = {type = div}
+					end
+					table.insert(divtypes, div.type)
+				end
+			end
+			table.insert(sparts, table.concat(divtypes, ", "))
+		end
+		process_divs(data.poldiv)
+		process_divs(data.miscdiv)
 		table.insert(parts, "| " .. table.concat(sparts, " || "))
 	end
 	table.insert(parts, "|}")
@@ -215,7 +215,7 @@ function export.qualifier_table()
 	local alldata_list = {}
 
 	-- Create list
-	for qualifier, display in pairs(data.placetype_qualifiers) do
+	for qualifier, display in pairs(m_data.placetype_qualifiers) do
 		table.insert(alldata_list, {qualifier, display})
 	end
 	table.sort(alldata_list, function(fs1, fs2) return fs1[1] < fs2[1] end)
@@ -230,7 +230,10 @@ function export.qualifier_table()
 		table.insert(parts, "|-")
 		local sparts = {}
 		table.insert(sparts, qualifier)
-		table.insert(sparts, display_as == true and qualifier or "'''" .. display_as .. "'''")
+		if display_as == true then
+			display_as = "[[" .. qualifier .. "]]"
+		end
+		table.insert(sparts, display_as == false and qualifier or "'''" .. display_as .. "'''")
 		table.insert(parts, "| " .. table.concat(sparts, " || "))
 	end
 	table.insert(parts, "|}")
