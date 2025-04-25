@@ -718,15 +718,19 @@ end
 -----------------------------------------------------------------------------------
 
 export.continents = {
-	["Earth"] = {the = true, placetype = "planet"},
+	["Earth"] = {the = true, placetype = "planet", addl_parents = {"nature"},
+			fulldesc = "=the planet [[Earth]] and the features found on it"},
 		["Africa"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"}},
-		["America"] = {placetype = "supercontinent", container = {key = "Earth", placetype = "planet"}},
+		["America"] = {placetype = "supercontinent", container = {key = "Earth", placetype = "planet"},
+				keydesc = "[[America]], in the sense of [[North America]] and [[South America]] combined"},
 			["North America"] = {placetype = "continent", container = {key = "America", placetype = "supercontinent"}},
 				["Caribbean"] = {the = true, placetype = "continental region", container = {key = "North America", placetype = "continent"}},
 				["Central America"] = {placetype = "continental region", container = {key = "North America", placetype = "continent"}},
 			["South America"] = {placetype = "continent", container = {key = "America", placetype = "supercontinent"}},
-		["Antartica"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"}},
-		["Eurasia"] = {placetype = "supercontinent", container = {key = "Earth", placetype = "planet"}},
+		["Antarctica"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"},
+				fulldesc = "=the territory of [[Antarctica]]"},
+		["Eurasia"] = {placetype = "supercontinent", container = {key = "Earth", placetype = "planet"},
+				keydesc = "[[Eurasia]], i.e. [[Europe]] and [[Asia]] together"},
 			["Asia"] = {placetype = "continent", container = {key = "Eurasia", placetype = "supercontinent"}},
 			["Europe"] = {placetype = "continent", container = {key = "Eurasia", placetype = "supercontinent"}},
 		["Oceania"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"}},
@@ -762,8 +766,11 @@ export.countries = {
 	["Armenia"] = {container = {"Europe", "Asia"}, divs = {"provinces", "districts"}, british_spelling = true},
 	["Republic of Armenia"] = {alias_of = "Armenia", the = true}, -- differs in "the"
 	-- Both a country and continent
-	["Australia"] = {container = "Oceania", divs = {"states", "territories", "local government areas"},
-		addl_divs_for_categorization = {"states and territories"}, british_spelling = true},
+	["Australia"] = {container = "Oceania", divs = {
+		{type = "states", cat_as = "states and territories"},
+		{type = "territories", cat_as = "states and territories"},
+		"local government areas",
+	}, british_spelling = true},
 	["Austria"] = {container = "Europe", divs = {"states", "districts", "municipalities"}, british_spelling = true},
 	["Azerbaijan"] = {container = {"Europe", "Asia"}, divs = {"districts", "municipalities"}, british_spelling = true},
 	["Bahamas"] = {the = true, container = "North America", divs = {"districts"}, british_spelling = true, wp = "The Bahamas"},
@@ -804,10 +811,12 @@ export.countries = {
 	["Central African Republic"] = {the = true, container = "Africa", divs = {"prefectures", "subprefectures"}},
 	["Chad"] = {container = "Africa", divs = {"regions", "departments"}},
 	["Chile"] = {container = "South America", divs = {"regions", "provinces", "communes"}},
-	["China"] = {container = "Asia", divs = {"provinces", "autonomous regions",
+	["China"] = {container = "Asia", divs = {
+		{type = "provinces", cat_as = "provinces and autonomous regions"},
+		{type = "autonomous regions", cat_as = "provinces and autonomous regions"},
 		"special administrative regions", "prefectures", "prefecture-level cities", "counties", "county-level cities",
 		"districts", "municipalities"},
-		addl_divs_for_categorization = {"provinces and autonomous regions"}},
+	},
 	["People's Republic of China"] = {alias_of = "China", the = true}, -- differs in "the"
 	["Colombia"] = {container = "South America", divs = {"departments", "municipalities"}},
 	["Comoros"] = {the = true, container = "Africa", divs = {"autonomous islands"}},
@@ -861,8 +870,11 @@ export.countries = {
 	["Honduras"] = {container = "Central America", divs = {"departments", "municipalities"}},
 	["Hungary"] = {container = "Europe", divs = {"counties", "districts"}, british_spelling = true},
 	["Iceland"] = {container = "Europe", divs = {"regions", "municipalities", "counties"}, british_spelling = true},
-	["India"] = {container = "Asia", divs = {"states", "union territories", "divisions", "districts", "municipalities"},
-		 addl_divs_for_categorization = {"states and union territories"}, british_spelling = true},
+	["India"] = {container = "Asia", divs = {
+		{type = "states", cat_as = "states and union territories"},
+		{type = "union territories", cat_as = "states and union territories"},
+		"divisions", "districts", "municipalities",
+	}, british_spelling = true},
 	["Indonesia"] = {container = "Asia", divs = {"regencies", "provinces"}},
 	["Iran"] = {container = "Asia", divs = {"provinces", "counties"}},
 	["Iraq"] = {container = "Asia", divs = {"governorates", "districts"}},
@@ -936,10 +948,13 @@ export.countries = {
 	["Norway"] = {container = "Europe", divs = {"counties", "municipalities", "dependent territories", "districts"},
 		british_spelling = true},
 	["Oman"] = {container = "Asia", divs = {"governorates", "provinces"}},
-	["Pakistan"] = {container = "Asia", divs = {"provinces", "divisions", "districts",
-		{type = "administrative territories", cat_as = "territories"},
-		{type = "federal territories", cat_as = "territories"}},
-		addl_divs_for_categorization = {"provinces and territories"}, british_spelling = true},
+	["Pakistan"] = {container = "Asia", divs = {
+		{type = "provinces", cat_as = "provinces and territories"},
+		{type = "administrative territories", cat_as = "provinces and territories"},
+		{type = "federal territories", cat_as = "provinces and territories"},
+		{type = "territories", cat_as = "provinces and territories"},
+		"divisions", "districts",
+	}, british_spelling = true},
 	["Palestine"] = {container = "Asia", divs = {"governorates"}},
 	["State of Palestine"] = {alias_of = "Palestine", the = true}, -- differs in "the"
 	["Palau"] = {container = "Micronesia", divs = {"states"}},
@@ -1556,7 +1571,6 @@ export.australia_states_and_territories = {
 export.australia_group = {
 	default_container = "Australia",
 	default_placetype = "state",
-	default_div_parent_type = "states and territories",
 	default_divs = {"local government areas"},
 	default_british_spelling = true,
 	data = export.australia_states_and_territories,
@@ -1722,7 +1736,6 @@ export.china_group = {
 	default_container = "China",
 	default_placetype = "province",
 	default_divs = {"prefecture-level cities", "county-level cities", "districts"},
-	default_div_parent_type = "provinces and autonomous regions",
 	data = export.china_provinces_and_autonomous_regions,
 }
 
@@ -1925,9 +1938,9 @@ export.france_administrative_regions = {
 -- administrative regions of France
 export.france_group = {
 	default_container = "France",
-	-- Canonically these are 'administrative regions' but also categorize if identified as a 'region'.
-	default_placetype = {"administrative region", "region"},
-	default_div_parent_type = "regions",
+	-- Canonically these are 'administrative regions' but also treat as 'region' ('administrative region' falls back
+	-- to 'region').
+	default_placetype = "region",
 	default_british_spelling = true,
 	data = export.france_administrative_regions,
 }
@@ -2013,7 +2026,6 @@ export.india_states_and_union_territories = {
 export.india_group = {
 	default_container = "India",
 	default_placetype = "state",
-	default_div_parent_type = "states and union territories",
 	default_british_spelling = true,
 	data = export.india_states_and_union_territories,
 }
@@ -2172,8 +2184,7 @@ export.italy_administrative_regions = {
 -- administrative regions of Italy
 export.italy_group = {
 	default_container = "Italy",
-	default_placetype = {"administrative region", "region"},
-	default_div_parent_type = "regions",
+	default_placetype = "region",
 	default_british_spelling = true,
 	data = export.italy_administrative_regions,
 }
@@ -2648,7 +2659,6 @@ export.pakistan_provinces_and_territories = {
 export.pakistan_group = {
 	default_container = "Pakistan",
 	default_placetype = "province",
-	default_div_parent_type = "provinces and territories",
 	default_divs = {"divisions"},
 	default_british_spelling = true,
 	data = export.pakistan_provinces_and_territories,
@@ -2804,11 +2814,14 @@ export.romania_group = {
 }
 
 local function make_russia_federal_subject_spec(spectype, use_the)
-	return {the = not not use_the, placetype = spectype, div_parent_type = {"federal subjects", spectype .. "s"}}
+	return {
+		the = not not use_the, placetype = spectype,
+		bare_category_parent_type = {"federal subjects", spectype .. "s"},
+	}
 end
 
 local russia_autonomous_okrug =
-	{placetype = {"autonomous okrug", "okrug"}, div_parent_type = {"federal subjects", "autonomous okrugs"}}
+	{placetype = {"autonomous okrug", "okrug"}, bare_category_parent_type = {"federal subjects", "autonomous okrugs"}}
 local russia_krai = make_russia_federal_subject_spec("krai")
 local russia_oblast = make_russia_federal_subject_spec("oblast")
 local russia_republic = make_russia_federal_subject_spec("republic", "use the")
@@ -2816,7 +2829,7 @@ export.russia_federal_subjects = {
 	-- autonomous oblasts
 	["Jewish Autonomous Oblast"] =
 		{the = true, placetype = {"autonomous oblast", "oblast"},
-		 div_parent_type = {"federal subjects", "autonomous oblasts"}},
+		 bare_category_parent_type = {"federal subjects", "autonomous oblasts"}},
 	-- autonomous okrugs
 	["Chukotka Autonomous Okrug"] = russia_autonomous_okrug,
 	["Khanty-Mansi Autonomous Okrug"] = russia_autonomous_okrug,
@@ -2944,24 +2957,27 @@ local function russia_key_to_placename(key)
 	-- FIXME: We probably want to allow more than two variants for placenames to handle the various aliases esp. of
 	-- republics.
 	local full_placename = key
+	if key == "Jewish Autonomous Oblast" then
+		return full_placename, full_placename
+	end
 	local elliptical_placename
 	for _, suffix in ipairs({"Autonomous Okrug", "Krai", "Oblast"}) do
 		elliptical_placename = key:match("^(.*) " .. suffix .. "$")
 		if elliptical_placename then
-			return elliptical_placename, full_placename
+			return full_placename, elliptical_placename
 		end
 	end
 	elliptical_placename = key:match("^Republic of (.*)$")
 	if elliptical_placename then
-		return elliptical_placename, full_placename
+		return full_placename, elliptical_placename
 	end
 	elliptical_placename = elliptical_republic_placenames[key]
 	if elliptical_placename then
-		return elliptical_placename, full_placename
+		return full_placename, elliptical_placename
 	end
 	elliptical_placename = key:match("^(.*) Republic$")
 	if elliptical_placename then
-		return elliptical_placename, full_placename
+		return full_placename, elliptical_placename
 	end
 	return full_placename, full_placename
 end
@@ -2991,7 +3007,11 @@ end
 
 local function construct_russia_federal_subject_keydesc(group, key, spec)
 	local linked_key = export.construct_linked_placename(spec, key)
-	if spec.placetype == "oblast" then
+	local placetype = spec.placetype
+	if type(placetype) == "table" then
+		placetype = placetype[1]
+	end
+	if placetype == "oblast" then
 		-- Hack: Oblasts generally don't have entries under "Foo Oblast"
 		-- but just under "Foo", so fix the linked key appropriately;
 		-- doesn't apply to the Jewish Autonomous Oblast
@@ -3193,8 +3213,7 @@ export.united_kingdom_constituent_countries = {
 		{type = "civil parishes", skip_polity_parent_type = false},
 	}},
 	["Northern Ireland"] = {
-		placetype = {"province", "constituent country", "country"},
-		div_parent_type = "constituent countries",
+		placetype = {"constituent country", "province", "country"},
 		divs = {"counties", "districts"},
 	},
 	["Scotland"] = {divs = {
@@ -3590,7 +3609,7 @@ export.france_cities = {
 }
 
 export.france_cities_group = {
-	canonicalize_key_container = make_canonicalize_key_container(", France", "administrative region"),
+	canonicalize_key_container = make_canonicalize_key_container(", France", "region"),
 	default_placetype = "city",
 	default_british_spelling = true,
 	data = export.france_cities,
@@ -3918,7 +3937,7 @@ export.italy_cities = {
 }
 
 export.italy_cities_group = {
-	canonicalize_key_container = make_canonicalize_key_container(", Italy", "administrative region"),
+	canonicalize_key_container = make_canonicalize_key_container(", Italy", "region"),
 	default_placetype = "city",
 	default_british_spelling = true,
 	data = export.italy_cities,

@@ -2,7 +2,7 @@ local export = {}
 
 export.force_cat = false -- set to true for testing
 
-local m_shared = require("Module:User:Benwing2/place/shared-data")
+local m_locations = require("Module:place/locations")
 local m_links = require("Module:links")
 local m_table = require("Module:table")
 local m_strutils = require("Module:string utilities")
@@ -12,9 +12,9 @@ local en_utilities_module = "Module:en-utilities"
 local dump = mw.dumpObject
 local insert = table.insert
 local concat = table.concat
-local internal_error = m_shared.internal_error
+local internal_error = m_locations.internal_error
 export.internal_error = internal_error
-local process_error = m_shared.process_error
+local process_error = m_locations.process_error
 export.process_error = process_error
 
 local ucfirst = m_strutils.ucfirst
@@ -29,10 +29,10 @@ local split = m_strutils.split
 
 
 --[==[
-Return true if `force_cat` is set either in this module or in [[Module:place/shared-data]].
+Return true if `force_cat` is set either in this module or in [[Module:place/locations]].
 ]==]
 function export.get_force_cat()
-	return export.force_cat or m_shared.force_cat
+	return export.force_cat or m_locations.force_cat
 end
 
 
@@ -661,7 +661,7 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 	end
 	local all_display_aliases_found = {}
 	local all_others_found = {}
-	for group, key, spec in m_shared.iterate_matching_location {
+	for group, key, spec in m_locations.iterate_matching_location {
 		placetypes = equiv_placetypes,
 		placename = placename,
 		alias_resolution = "display",
@@ -682,7 +682,7 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 			"all_display_aliases_found=%s, all_others_found=%s", data, all_display_aliases_found, all_others_found)
 	else
 		local group, key, spec = unpack(all_display_aliases_found[1])
-		local full, elliptical = m_shared.key_to_placename(group, key)
+		local full, elliptical = m_locations.key_to_placename(group, key)
 		return elliptical
 	end
 end
@@ -735,7 +735,7 @@ function export.get_prefixed_key(key, spec)
 end
 
 -- Necessary for use by [[Module:place]]. FIXME: Reorganize the modules so this isn't necessary.
-export.iterate_matching_location = m_shared.iterate_matching_location
+export.iterate_matching_location = m_locations.iterate_matching_location
 
 --[=[
 Iterator that iterates over holonyms in `place_desc`. If `first_holonym_index` is given, start iterating at the
@@ -784,7 +784,7 @@ the location and the trail of ancestral containers for the location. The first t
 function export.iterate_matching_holonym_location(data)
 	local holonym_placetype, holonym_placename, holonym_index, place_desc =
 		data.holonym_placetype, data.holonym_placename, data.holonym_index, data.place_desc
-	local matching_location_iterator = m_shared.iterate_matching_location {
+	local matching_location_iterator = m_locations.iterate_matching_location {
 		placetypes = holonym_placetype,
 		placename = holonym_placename,
 	}
@@ -797,11 +797,11 @@ function export.iterate_matching_holonym_location(data)
 			local container_trail = {}
 			-- For each level of container, check that there are no mismatches (i.e. other location of the same
 			-- placetype) mentioned. We allow a mismatch at a given level if there's also a match with the container
-			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/shared-data]] as a city
+			-- at that level. For example, in the case of Kansas City, defined in [[Module:place/locations]] as a city
 			-- in Missouri, if we define it as {{tl|place|city|s/Missouri,Kansas}}, we ignore the mismatching state of
 			-- Kansas because the correct state of Missouri was also mentioned. But imagine we are defining Newark,
 			-- Delaware as {{tl|place|city|s/Delaware|c/US}} and (as is the case) we have an entry for Newark, New
-			-- Jersey in [[Module:place/shared-data]]. Just because the containing location `US` matches isn't enough,
+			-- Jersey in [[Module:place/locations]]. Just because the containing location `US` matches isn't enough,
 			-- because Newark, NJ also has New Jersey as a containing location and there's a mismatch at that level. If
 			-- there are no mismatches at any level we assume we're dealing with the right known location.
 			--
@@ -809,7 +809,7 @@ function export.iterate_matching_holonym_location(data)
 			-- containing location, and a mismatch only if a holonym exists of the same placetype that doesn't match any
 			-- containing location.
 			local containers_mismatch = false
-			for containers in m_shared.iterate_containers(group, key, spec) do
+			for containers in m_locations.iterate_containers(group, key, spec) do
 				insert(container_trail, containers)
 				local match_at_level = false
 				local mismatch_at_level = false
@@ -819,7 +819,7 @@ function export.iterate_matching_holonym_location(data)
 					local holonym_exists_with_same_placetype = false
 					for _, container in ipairs(containers) do
 						if not container.spec.no_check_holonym_mismatch then
-							local full_container_placename, elliptical_container_placename = m_shared.key_to_placename(
+							local full_container_placename, elliptical_container_placename = m_locations.key_to_placename(
 								container.group, container.key)
 							local placetypes = container.spec.placetype
 							if type(placetypes) ~= "table" then
@@ -1216,14 +1216,14 @@ export.placetype_to_capital_cat = {
 This contains placenames that should be preceded by an article (almost always "the"). '''NOTE''': There are multiple
 ways that placenames can come to be preceded by "the":
 # Listed here.
-# Given in [[Module:place/shared-data]] with an initial "the". All such placenames are added to this map by the code
+# Given in [[Module:place/locations]] with an initial "the". All such placenames are added to this map by the code
   just below the map.
 # The placetype of the placename has `holonym_use_the = true` in its placetype_data.
 # A regex in placename_the_re matches the placename.
 Note that "the" is added only before the first holonym in a place description.
 ]==]
 export.placename_article = {
-	-- This should only contain info that can't be inferred from [[Module:place/shared-data]].
+	-- This should only contain info that can't be inferred from [[Module:place/locations]].
 	["archipelago"] = {
 		["Cyclades"] = "the",
 		["Dodecanese"] = "the",
@@ -1386,7 +1386,7 @@ local function capital_city_cat_handler(data, non_city)
 	end
 
 	-- Now find the appropriate capital-type category for the placetype of the holonym, e.g. 'State capitals'. If we
-	-- recognize the holonym among the known holonyms in [[Module:place/shared-data]], also add a category like 'State
+	-- recognize the holonym among the known holonyms in [[Module:place/locations]], also add a category like 'State
 	-- capitals of the United States'.  Truncate e.g. 'autonomous region' to 'region', 'union territory' to 'territory'
 	-- when looking up the type of capital category, if we can't find an entry for the holonym placetype itself (there's
 	-- an entry for 'autonomous community').
@@ -1432,7 +1432,7 @@ in two ways:
 This code also handles cities; e.g. for the first use case above, it would be used to add a page that has `city/Boston`
 as a holonym to [[:Category:en:Places in Boston]], along with [[:Category:en:Places in Massachusetts, USA]] and
 [[:Category:en:Places in the United States]]. The city handler tries to deal with the possibility of multiple cities
-having the same name. For example, the code in [[Module:place/shared-data]] knows about the city of [[Columbus]],
+having the same name. For example, the code in [[Module:place/locations]] knows about the city of [[Columbus]],
 [[Ohio]], which has containing polities `Ohio` (a state) and `the United States` (a country). If either containing
 polity is mentioned, the handler proceeds to return the key `Columbus` (along with `Ohio, USA` and `the United States`).
 Otherwise, if any other state or country is mentinoned, the handler returns nothing, and otherwise it assumes the
@@ -1568,12 +1568,13 @@ function export.get_bare_categories(args, place_descs)
 		term = export.remove_links_and_html(term)
 		term = term:gsub("^the ", "")
 		for i, place_desc in ipairs(place_descs) do
-			local group, key, spec, container_trail = export.find_matching_holonym_location {
+			-- Iterate over all matching locations in case there are multiple, as with Delhi defined as
+			-- {{place|en|megacity/and/union territory|c/India|containing the national capital [[New Delhi]]}}.
+			for group, key, spec, container_trail in export.iterate_matching_holonym_location {
 				holonym_placetype = possible_placetypes_by_place_desc[i],
 				holonym_placename = term,
 				place_desc = place_desc,
-			}
-			if group then
+			} do
 				insert(bare_cats, key)
 			end
 		end
@@ -1614,11 +1615,18 @@ function export.augment_holonyms_with_container(place_descs)
 			-- appropriate position. We don't just put them at the end because some holonyms have use the `:also`
 			-- modifier, which causes category processing to restart at that point after generating categories for a
 			-- preceding holonym, and we don't want the preceding holonym's augmented holonyms interfering with
-			-- categorization of a later holonym.
-			local augmented_holonyms = {}
-			local inserted_holonyms = {}
-			for i, holonym in ipairs(place_desc.holonyms) do
-				insert(augmented_holonyms, holonym)
+			-- categorization of a later holonym. We proceed from right to left, and each time we augment, we copy
+			-- the holonyms with the augmented holonym(s) inserted appropriately and replace the place description's
+			-- holonyms with the augmented ones before the next iteration. The reason for this is so that e.g.
+			-- {{place|neighborhood|city/Birmingham|co/West Midlands|cc/England}} doesn't throw an error during the
+			-- augmentation process due to 'Birmingham' referring to two known locations (in England and Alabama). If
+			-- we go left to right, we will throw an ambiguity error on `city/Birmingham` because code to exclude
+			-- Birmingham, Alabama needs `c/United Kingdom` present (to cause a mismatch with `c/United States`),
+			-- which isn't yet present as the augmentation code hasn't gotten to `cc/England` yet. For similar
+			-- reasons, we need to include the augmented holonyms in the holonyms considered in the next iteration
+			-- rather than modifying the place description once at athe end.
+			for i = #place_desc.holonyms, 1, -1 do
+				local holonym = place_desc.holonyms[i]
 				if holonym.placetype and not export.placetype_is_ignorable(holonym.placetype) then
 					local group, key, spec, container_trail = export.find_matching_holonym_location {
 						holonym_placetype = holonym.placetype,
@@ -1627,33 +1635,48 @@ function export.augment_holonyms_with_container(place_descs)
 						place_desc = place_desc,
 					}
 					if group and container_trail[1] and not spec.no_auto_augment_container then
-						for _, container in ipairs(container_trail[1]) do
-							local containing_type = container.spec.placetype
-							if type(containing_type) == "table" then
-								-- If the containing type is a list, use the first element as the canonical variant.
-								containing_type = containing_type[1]
-							end
-							local full_container_placename, elliptical_container_placename =
-								m_shared.key_to_placename(container.group, container.key)
-							-- Don't side-effect holonyms while processing them.
-							local new_holonym = {
-								-- By the time we run, the display has already been generated so we don't need to set
-								-- display_placename.
-								placetype = containing_type,
-								-- placename_to_key() for the group should correctly handle both full and elliptical
-								-- placenames, but the full placename seems less likely to be ambiguous. FIXME: We
-								-- should just store the key directly and use it when available to avoid having to
-								-- convert key to placename and back to key.
-								unlinked_placename = full_container_placename,
-							}
-							insert(augmented_holonyms, new_holonym)
-							-- But it is safe to modify other parts of the place_desc.
-							export.key_holonym_into_place_desc(place_desc, new_holonym)
+						local augmented_holonyms = {}
+						for j = 1, i do
+							insert(augmented_holonyms, place_desc.holonyms[j])
 						end
+						for _, containers in ipairs(container_trail) do
+							local any_no_auto_augment_container = false
+							for _, container in ipairs(containers) do
+								any_no_auto_augment_container = any_no_auto_augment_container or
+									container.spec.no_auto_augment_container
+								local containing_type = container.spec.placetype
+								if type(containing_type) == "table" then
+									-- If the containing type is a list, use the first element as the canonical variant.
+									containing_type = containing_type[1]
+								end
+								local full_container_placename, elliptical_container_placename =
+									m_locations.key_to_placename(container.group, container.key)
+								-- Don't side-effect holonyms while processing them.
+								local new_holonym = {
+									-- By the time we run, the display has already been generated so we don't need to set
+									-- display_placename.
+									placetype = containing_type,
+									-- placename_to_key() for the group should correctly handle both full and elliptical
+									-- placenames, but the full placename seems less likely to be ambiguous. FIXME: We
+									-- should just store the key directly and use it when available to avoid having to
+									-- convert key to placename and back to key.
+									unlinked_placename = full_container_placename,
+								}
+								insert(augmented_holonyms, new_holonym)
+								-- But it is safe to modify other parts of the place_desc.
+								export.key_holonym_into_place_desc(place_desc, new_holonym)
+							end
+							if any_no_auto_augment_container then
+								break
+							end
+						end
+						for j = i + 1, #place_desc.holonyms do
+							insert(augmented_holonyms, place_desc.holonyms[j])
+						end
+						place_desc.holonyms = augmented_holonyms
 					end
 				end
 			end
-			place_desc.holonyms = augmented_holonyms
 		end
 	end
 end
@@ -1778,7 +1801,7 @@ end
 -- with "borough".
 local function borough_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
-	if m_shared.new_york_boroughs[unlinked_placename] then
+	if m_locations.new_york_boroughs[unlinked_placename] then
 		-- Hack: don't display "borough" after the names of NYC boroughs
 		return holonym_placename
 	end
@@ -1788,16 +1811,16 @@ end
 local function county_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
 	-- Display handler for Irish counties. Irish counties are displayed as e.g. "County [[Cork]]".
-	if m_shared.ireland_counties["County " .. unlinked_placename .. ", Ireland"] or
-		m_shared.northern_ireland_counties["County " .. unlinked_placename .. ", Northern Ireland"] then
+	if m_locations.ireland_counties["County " .. unlinked_placename .. ", Ireland"] or
+		m_locations.northern_ireland_counties["County " .. unlinked_placename .. ", Northern Ireland"] then
 		return prefix_display_handler("County", holonym_placename)
 	end
 	-- Display handler for Taiwanese counties. Taiwanese counties are displayed as e.g. "[[Chiayi]] County".
-	if m_shared.taiwan_counties[unlinked_placename .. " County, Taiwan"] then
+	if m_locations.taiwan_counties[unlinked_placename .. " County, Taiwan"] then
 		return suffix_display_handler("County", holonym_placename)
 	end
 	-- Display handler for Romanian counties. Romanian counties are displayed as e.g. "[[Cluj]] County".
-	if m_shared.romania_counties[unlinked_placename .. " County, Romania"] then
+	if m_locations.romania_counties[unlinked_placename .. " County, Romania"] then
 		return suffix_display_handler("County", holonym_placename)
 	end
 	-- FIXME, we need the same for US counties but need to key off the country, not the specific county.
@@ -1810,7 +1833,7 @@ end
 -- Others are displayed as e.g. "[[Fthiotida]] prefecture".
 local function prefecture_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
-	local suffix = m_shared.japan_prefectures[unlinked_placename .. " Prefecture"] and "Prefecture" or "prefecture"
+	local suffix = m_locations.japan_prefectures[unlinked_placename .. " Prefecture"] and "Prefecture" or "prefecture"
 	return suffix_display_handler(suffix, holonym_placename)
 end
 
@@ -1818,18 +1841,18 @@ end
 -- "[[Gyeonggi]] Province". Others are displayed as-is.
 local function province_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
-	if m_shared.north_korea_provinces[unlinked_placename .. " Province, North Korea"] or
-	   m_shared.south_korea_provinces[unlinked_placename .. " Province, South Korea"] then
+	if m_locations.north_korea_provinces[unlinked_placename .. " Province, North Korea"] or
+	   m_locations.south_korea_provinces[unlinked_placename .. " Province, South Korea"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	-- Display handler for Laotian provinces. Laotian provinces are displayed as e.g. "[[Vientiane]] Province". Others
 	-- are displayed as-is.
-	if m_shared.laos_provinces[unlinked_placename .. " Province, Laos"] then
+	if m_locations.laos_provinces[unlinked_placename .. " Province, Laos"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	-- Display handler for Thai provinces. Thai provinces are displayed as e.g. "[[Chachoengsao]] Province". Others are
 	-- displayed as-is.
-	if m_shared.thailand_provinces[unlinked_placename .. " Province, Thailand"] then
+	if m_locations.thailand_provinces[unlinked_placename .. " Province, Thailand"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	return holonym_placename
@@ -1838,7 +1861,7 @@ end
 -- Display handler for Nigerian states. Nigerian states are display as "[[Kano]] State". Others are displayed as-is.
 local function state_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
-	if m_shared.nigeria_states[unlinked_placename .. " State, Nigeria"] then
+	if m_locations.nigeria_states[unlinked_placename .. " State, Nigeria"] then
 		return suffix_display_handler("State", holonym_placename)
 	end
 	return holonym_placename
@@ -2607,11 +2630,15 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		category_link = "the [[continent]]s of the world",
 		class = "geographic region",
-		default = {true}, -- FIXME: Categorize as "Continents and continental regions"
+		default = {"Continents and continental regions"},
 	},
 	["continental region"] = {
 		link = "separately",
 		fallback = "continent",
+	},
+	["continents and continental regions!"] = {
+		category_link = "[[continent]]s and [[continet]]-[[level]] [[region]]s (e.g. [[Polynesia]])",
+		class = "geographic region",
 	},
 	["council area"] = {
 		link = true,
@@ -3585,7 +3612,7 @@ If you need to sort the following, do this (using Vim):
 		category_link = "[[neighborhood]]s, [[district]]s and other subportions of [[city|cities]]",
 		category_link_before_city = "[[neighborhood]]s, [[district]]s and other subportions",
 		-- NOTE: This setting is needed for administrative divisions like barangays that fall back to `neighborhood`,
-		-- when set in [[Module:place/shared-data]] for a specific country (e.g. the Philippines). The above settings
+		-- when set in [[Module:place/locations]] for a specific country (e.g. the Philippines). The above settings
 		-- for `generic_before_non_cities` and `generic_before_cities` are used by category handlers in
 		-- [[Module:category tree/topic cat/data/Places]] for `Neighborhoods in POLDIV` and `Neighborhoods of CITY`
 		-- categories. In fact, district_neighborhood_cat_handler() does not currently pay attention to them, but
