@@ -16,12 +16,19 @@ local internal_error = m_locations.internal_error
 export.internal_error = internal_error
 local process_error = m_locations.process_error
 export.process_error = process_error
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local ucfirst = m_strutils.ucfirst
 local ulower = m_strutils.lower
 local rmatch = m_strutils.match
 local split = m_strutils.split
 
+--[==[ intro:
+This module contains placetype data used by [[Module:place]] and {{tl|place}}, along with a significant amount of code
+to work with both placetypes and locations, as well as some placename-related info (FIXME: Consider moving it to
+[[Module:place/locations]]). See also [[Module:place/locations]], which has definitions of all known locations. You must
+currently load this module using {{cd|require()}}, not using {{cd|mw.loadData()}}.
+]==]
 
 ------------------------------------------------------------------------------------------
 --                                     Basic utilities                                  --

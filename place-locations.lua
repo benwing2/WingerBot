@@ -1,10 +1,6 @@
 local export = {}
---[=[
-This module contains data shared between [[Module:place/data]] and [[Module:category tree/topic cat/data/Places]].
-You must load this module using require(), not using mw.loadData().
-]=]
 
-export.force_cat = true -- set to true to force category generation even on non-mainspace pages
+export.force_cat = false -- set to true to force category generation even on non-mainspace pages
 
 local m_table = require("Module:table")
 local string_utilities_module = "Module:string utilities"
@@ -13,8 +9,12 @@ local en_utilities_module = "Module:en-utilities"
 local insert = table.insert
 local concat = table.concat
 local dump = mw.dumpObject
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 --[==[ intro:
+This module contains data on all known locations, along with some lower-level code to process them (higher-level
+known-location code is in [[Module:place/placetypes]]). You must load this module using require(), not using
+mw.loadData().
 
 ===Location group tables===
 
@@ -117,7 +117,7 @@ process the data tables and also a pointer to the relevant table. The data is us
    add the page to [[:Category:en:Cities in Alabama, USA]]).
 
 Uses #1, #2 and #3 are controlled by [[Module:category tree/topic cat/data/Places]].
-Use #4 is controlled by [[Module:place/data]].
+Use #4 is controlled by [[Module:place/placetypes]].
 
 The keys of each table are the location names in the form they will appear in bare categories, such as
 [[:Category:de:Netherlands]] or [[:Category:fr:Alabama, USA]]. Hence they should include suffixes such as `, USA`.
@@ -252,6 +252,8 @@ function export.placename_to_key(group, placename)
 			internal_error("Placename %s returned a non-string key: %s", placename, key)
 		end
 		return key
+	elseif group.default_placetype == "city" then
+		return placename
 	else
 		local defcon = group.default_container
 		if not defcon then
@@ -287,8 +289,10 @@ function export.initialize_spec(group, key, spec)
 	end
 	local container = spec.container
 	local containers
+	local container_from_default
 	if not container then
 		container = group.default_container
+		container_from_default = true
 	end
 	if container then
 		if type(container) == "string" or container.key then
@@ -297,7 +301,7 @@ function export.initialize_spec(group, key, spec)
 		containers = {}
 		for _, cont in ipairs(container) do
 			if type(cont) == "string" then
-				if group.canonicalize_key_container then
+				if group.canonicalize_key_container and not container_from_default then
 					cont = group.canonicalize_key_container(cont)
 				else
 					cont = {key = cont, placetype = "country"}
@@ -740,12 +744,13 @@ export.continents = {
 }
 
 export.continents_group = {
-	default_overriding_bare_label_parents = {"continents and continental regions"},
+	default_overriding_bare_label_parents = {}, -- container parents should be used
 	default_divs = {{type = "countries", prep = "in"}},
 	-- It's enough to mention the first-level continent or continent group. It seems excessive to write e.g.
 	-- "El Salvador, a country in Central America, a continental region in North America, a continent in America, ...".
 	default_no_include_container_in_desc = true,
 	default_no_container_cat = true,
+	default_no_auto_augment_container = true,
 	default_no_generic_place_cat = true,
 	-- French Guyana is in France but not in Europe, which should not be an issue, so don't check holonym mismatches at
 	-- this level. We also run into problems with supercontinents, which have "continent" as the fallback and cause
@@ -815,8 +820,9 @@ export.countries = {
 		{type = "provinces", cat_as = "provinces and autonomous regions"},
 		{type = "autonomous regions", cat_as = "provinces and autonomous regions"},
 		"special administrative regions", "prefectures", "prefecture-level cities", "counties", "county-level cities",
-		"districts", "municipalities"},
-	},
+		"districts", "municipalities",
+		{type = "direct-administered municipalities", cat_as = "municipalities"},
+	}},
 	["People's Republic of China"] = {alias_of = "China", the = true}, -- differs in "the"
 	["Colombia"] = {container = "South America", divs = {"departments", "municipalities"}},
 	["Comoros"] = {the = true, container = "Africa", divs = {"autonomous islands"}},
@@ -881,8 +887,10 @@ export.countries = {
 	["Ireland"] = {container = "Europe", addl_parents = {"British Isles"}, divs = {"counties", "districts", "provinces"}, british_spelling = true},
 	["Republic of Ireland"] = {alias_of = "Ireland", the = true}, -- differs in "the"
 	["Israel"] = {container = "Asia", divs = {"districts"}},
-	["Italy"] = {container = "Europe", divs = {"regions", "provinces", "metropolitan cities", "municipalities"},
-		british_spelling = true},
+	["Italy"] = {container = "Europe", divs = {
+		"regions", "provinces", "metropolitan cities", "municipalities",
+		{type = "autonomous regions", cat_as = "regions"},
+	}, british_spelling = true},
 	["Ivory Coast"] = {container = "Africa", divs = {"districts", "regions"}},
 	-- We should really be using Ivory Coast (common name) but there are political ramifications to the use of
 	-- Côte d'Ivoire so don't make it a display alias.
@@ -917,7 +925,11 @@ export.countries = {
 	["Mexico"] = {container = "North America", addl_parents = {"Central America"}, divs = {"states", "municipalities"}},
 	["Moldova"] = {container = "Europe", divs = {"districts", "municipalities", "autonomous territorial units"},
 		british_spelling = true},
-	["Monaco"] = {placetype = {"city-state", "country"}, container = "Europe", is_city = true, british_spelling = true},
+	["Monaco"] = {placetype = {"city-state", "country"}, container = "Europe",
+		-- We want the first placetype to be 'city-state' so the description of Monaco says it's a city-state, but we
+		-- want its parent to be "countries in Europe".
+		bare_category_parent_type = {type = "countries", prep = "in"},
+		is_city = true, british_spelling = true},
 	["Mongolia"] = {container = "Asia", divs = {"provinces", "districts"}},
 	["Montenegro"] = {container = "Europe", divs = {"municipalities"}},
 	["Morocco"] = {container = "Africa", divs = {"regions", "prefectures", "provinces"}},
@@ -931,7 +943,7 @@ export.countries = {
 	["Namibia"] = {container = "Africa", divs = {"regions", "constituencies"}, british_spelling = true},
 	["Nauru"] = {container = "Micronesia", divs = {"districts"}, british_spelling = true},
 	["Nepal"] = {container = "Asia", divs = {"provinces", "districts"}},
-	["Netherlands"] = {the = true, placetype = {"constituent country", "country"}, container = "Europe",
+	["Netherlands"] = {the = true, placetype = {"country", "constituent country"}, container = "Europe",
 		divs = {"provinces", "municipalities",
 			{type = "FORMER municipalities", cat_as = "former municipalities"},
 			"dependent territories", "constituent countries"}, british_spelling = true},
@@ -1054,12 +1066,17 @@ export.countries = {
 	["Uruguay"] = {container = "South America", divs = {"departments", "municipalities"}},
 	["Uzbekistan"] = {container = "Asia", divs = {"regions", "districts"}},
 	["Vanuatu"] = {container = "Melanesia", divs = {"provinces"}, british_spelling = true},
-	["Vatican City"] = {placetype = {"city-state", "country"}, container = "Europe", addl_parents = {"Rome"},
-		is_city = true, british_spelling = true},
+	["Vatican City"] = {placetype = {"city-state", "country"}, container = "Europe",
+		-- We want the first placetype to be 'city-state' so the description of Monaco says it's a city-state, but we
+		-- want its parent to be "countries in Europe".
+		bare_category_parent_type = {type = "countries", prep = "in"},
+		addl_parents = {"Rome"}, is_city = true, british_spelling = true},
 	["Vatican"] = {alias_of = "Vatican City", the = true}, -- differs in "the"
 	["Venezuela"] = {container = "South America", divs = {"states", "municipalities"}},
 	["Vietnam"] = {container = "Asia", divs = {"provinces", "districts", "municipalities"}},
-	["Western Sahara"] = {placetype = {"territory", "country"}, container = "Africa"},
+	["Western Sahara"] = {placetype = {"territory", "country"}, container = "Africa",
+		bare_category_parent_type = {type = "countries", prep = "in"},
+	},
 	["Yemen"] = {container = "Asia", divs = {"governorates", "districts"}},
 	["Zambia"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
 	["Zimbabwe"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
@@ -1077,9 +1094,11 @@ end
 
 export.countries_group = {
 	canonicalize_key_container = canonicalize_continent_container,
-	default_overriding_bare_label_parents = {"countries", "+++"},
+	default_overriding_bare_label_parents = {"+++", "countries"},
 	default_placetype = "country",
 	default_no_container_cat = true,
+	-- No need to augment country holonyms with continents; not needed for disambiguation.
+	default_no_auto_augment_container = true,
 	data = export.countries,
 }
 
@@ -1517,6 +1536,7 @@ export.country_like_entities = {
 export.country_like_entities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
 	default_overriding_bare_label_parents = {"country-like entities"},
+	default_no_container_cat = true,
 	-- These entities often aren't really part of their container; a village in Wallis and Futuna (an overseas
 	-- collectivity of France in Polynesia), for example, shouldn't be treated as a village in France, nor as a village
 	-- in Europe.
@@ -1546,9 +1566,13 @@ export.former_countries = {
 }
 
 export.former_countries_group = {
+	canonicalize_key_container = canonicalize_continent_container,
 	default_overriding_bare_label_parents = {"former countries and country-like entities"},
 	default_is_former_place = true,
 	default_placetype = "country",
+	default_no_container_cat = true,
+	-- No need to augment country holonyms with continents; not needed for disambiguation.
+	default_no_auto_augment_container = true,
 	data = export.former_countries,
 }
 
@@ -1697,9 +1721,8 @@ export.canada_group = {
 }
 
 export.china_provinces_and_autonomous_regions = {
+	-- direct-administered municipalities are not here but below under prefecture-level cities
 	["Anhui, China"] = {},
-	["Beijing, China"] = {placetype = {"direct-administered municipality", "municipality"}},
-	["Chongqing, China"] = {placetype = {"direct-administered municipality", "municipality"}},
 	["Fujian, China"] = {},
 	["Fuchien, China"] = {alias_of = "Fujian, China", display = true},
 	["Gansu, China"] = {},
@@ -1721,10 +1744,8 @@ export.china_provinces_and_autonomous_regions = {
 	["Qinghai, China"] = {},
 	["Shaanxi, China"] = {},
 	["Shandong, China"] = {},
-	["Shanghai, China"] = {placetype = {"direct-administered municipality", "municipality"}},
 	["Shanxi, China"] = {},
 	["Sichuan, China"] = {},
-	["Tianjin, China"] = {placetype = {"direct-administered municipality", "municipality"}},
 	["Tibet, China"] = {placetype = "autonomous region", wp = "Tibet Autonomous Region"},
 	["Xinjiang, China"] = {placetype = "autonomous region"},
 	["Yunnan, China"] = {},
@@ -1863,6 +1884,7 @@ export.china_prefecture_level_cities = {
 }
 
 export.china_prefecture_level_cities_group = {
+	placename_to_key = false, -- don't add ", China" to make the key
 	default_container = "China",
 	canonicalize_key_container = make_canonicalize_key_container(", China", "province"),
 	default_placetype = "prefecture-level city",
@@ -1900,7 +1922,7 @@ export.finland_regions = {
 	["Uusimaa, Finland"] = {},
 	["Southwest Finland, Finland"] = {},
 	["Åland Islands, Finland"] = {the = true},
-	["Åland, Finland"] = {alias_of = "Åland Islands"}, -- differs in "the"
+	["Åland, Finland"] = {alias_of = "Åland Islands, Finland"}, -- differs in "the"
 }
 
 -- regions of Finland
@@ -2212,7 +2234,7 @@ export.japan_prefectures = {
 	["Kagoshima Prefecture, Japan"] = {},
 	["Kanagawa Prefecture, Japan"] = {},
 	["Kōchi Prefecture, Japan"] = {},
-	["Kochi Prefecture, Japan"] = {alias_of = "Kochi Prefecture, Japan", display = true},
+	["Kochi Prefecture, Japan"] = {alias_of = "Kōchi Prefecture, Japan", display = true},
 	["Kumamoto Prefecture, Japan"] = {},
 	["Kyoto Prefecture, Japan"] = {},
 	["Mie Prefecture, Japan"] = {},
@@ -3357,23 +3379,23 @@ export.northern_ireland_group = {
 
 export.scotland_council_areas = {
 	["City of Glasgow, Scotland"] = {the = true},
-	["Glasgow"] = {alias_of = "City of Glasgow"},
+	["Glasgow"] = {alias_of = "City of Glasgow, Scotland"},
 	["City of Edinburgh, Scotland"] = {the = true},
-	["Edinburgh"] = {alias_of = "City of Edinburgh"},
+	["Edinburgh"] = {alias_of = "City of Edinburgh, Scotland"},
 	["Fife, Scotland"] = {},
 	["North Lanarkshire, Scotland"] = {},
 	["South Lanarkshire, Scotland"] = {},
 	["Aberdeenshire, Scotland"] = {},
 	["Highland, Scotland"] = {},
 	["City of Aberdeen, Scotland"] = {the = true},
-	["Aberdeen"] = {alias_of = "City of Aberdeen"},
+	["Aberdeen"] = {alias_of = "City of Aberdeen, Scotland"},
 	["West Lothian, Scotland"] = {},
 	["Renfrewshire, Scotland"] = {},
 	["Falkirk, Scotland"] = {},
 	["Perth and Kinross, Scotland"] = {},
 	["Dumfries and Galloway, Scotland"] = {},
 	["City of Dundee, Scotland"] = {the = true},
-	["Dundee"] = {alias_of = "City of Dundee"},
+	["Dundee"] = {alias_of = "City of Dundee, Scotland"},
 	["North Ayrshire, Scotland"] = {},
 	["East Ayrshire, Scotland"] = {},
 	["Angus, Scotland"] = {},
@@ -3390,7 +3412,7 @@ export.scotland_council_areas = {
 	["Inverclyde, Scotland"] = {},
 	["Clackmannanshire, Scotland"] = {},
 	["Na h-Eileanan Siar, Scotland"] = {},
-	["Western Isles"] = {alias_of = "Na h-Eileanan Siar", the = true},
+	["Western Isles"] = {alias_of = "Na h-Eileanan Siar, Scotland", the = true},
 	["Shetland Islands, Scotland"] = {the = true},
 	["Orkney Islands, Scotland"] = {the = true},
 }
@@ -3451,7 +3473,7 @@ export.united_states_states = {
 	["Delaware, USA"] = {},
 	["Florida, USA"] = {},
 	["Georgia, USA"] = {},
-	["Hawaii, USA"] = {addl_parents = "Polynesia"},
+	["Hawaii, USA"] = {addl_parents = {"Polynesia"}},
 	["Idaho, USA"] = {},
 	["Illinois, USA"] = {},
 	["Indiana, USA"] = {},
@@ -3764,6 +3786,30 @@ export.indonesia_cities_group = {
 	data = export.indonesia_cities,
 }
 
+export.italy_cities = {
+	-- Data per [[w:List_of_metropolitan_areas_of_Italy]]. There are several lists given; the most recent one, used
+	-- here, only gives estimates as of Jan 1, 2014.
+	["Milan"] = {container = "Lombardy"}, -- 6,623,798
+	["Naples"] = {container = "Campania"}, -- 5,294,546
+	["Rome"] = {container = "Lazio"}, -- 4,447,881
+	["Turin"] = {container = "Piedmont"}, -- 1,865,284
+	["Venice"] = {container = "Veneto"}, -- 1,645,900
+	["Florence"] = {container = "Tuscany"}, -- 1,485,030
+	["Bari"] = {container = "Apulia"}, -- 1,257,459
+	["Palermo"] = {container = "Sicily"}, -- 1,183,084
+	-- include a few just below 1,000,000 metro area that may be above it by now (depending on the definition).
+	["Catania"] = {container = "Sicily"}, -- 988,240
+	["Brescia"] = {container = "Lombardy"}, -- 924,090
+	["Genoa"] = {container = "Liguria"}, -- 861,318
+}
+
+export.italy_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Italy", "region"),
+	default_placetype = "city",
+	default_british_spelling = true,
+	data = export.italy_cities,
+}
+
 export.japan_cities = {
 	-- Population figures from [[w:List of cities in Japan]]. Metro areas from
 	-- [[w:List of metropolitan areas in Japan]].
@@ -3914,33 +3960,10 @@ export.russia_cities = {
 
 export.russia_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(nil, "oblast"),
+	default_container = "Russia",
 	default_placetype = "city",
 	default_british_spelling = true,
 	data = export.russia_cities,
-}
-
-export.italy_cities = {
-	-- Data per [[w:List_of_metropolitan_areas_of_Italy]]. There are several lists given; the most recent one, used
-	-- here, only gives estimates as of Jan 1, 2014.
-	["Milan"] = {container = "Lombardy"}, -- 6,623,798
-	["Naples"] = {container = "Campania"}, -- 5,294,546
-	["Rome"] = {container = "Lazio"}, -- 4,447,881
-	["Turin"] = {container = "Piedmont"}, -- 1,865,284
-	["Venice"] = {container = "Veneto"}, -- 1,645,900
-	["Florence"] = {container = "Tuscany"}, -- 1,485,030
-	["Bari"] = {container = "Apulia"}, -- 1,257,459
-	["Palermo"] = {container = "Sicily"}, -- 1,183,084
-	-- include a few just below 1,000,000 metro area that may be above it by now (depending on the definition).
-	["Catania"] = {container = "Sicily"}, -- 988,240
-	["Brescia"] = {container = "Lombardy"}, -- 924,090
-	["Genoa"] = {container = "Liguria"}, -- 861,318
-}
-
-export.italy_cities_group = {
-	canonicalize_key_container = make_canonicalize_key_container(", Italy", "region"),
-	default_placetype = "city",
-	default_british_spelling = true,
-	data = export.italy_cities,
 }
 
 export.spain_cities = {
@@ -3972,6 +3995,7 @@ export.taiwan_cities = {
 
 export.taiwan_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Taiwan", "county"),
+	default_container = "Taiwan",
 	default_placetype = "city",
 	data = export.taiwan_cities,
 }
@@ -4006,7 +4030,7 @@ export.united_kingdom_cities_group = {
 export.united_states_cities = {
 	-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
 	["New York City"] = {container = "New York", wp = "%l", divs = {
-		{type = "boroughs", prep = "in", skip_polity_parent_type = false},
+		{type = "boroughs", skip_polity_parent_type = false},
 	}},
 	-- Don't display-canonicalize as it may make the display weird (e.g. in the context New York, New York).
 	["New York"] = {alias_of = "New York City"},
@@ -4072,7 +4096,8 @@ export.united_states_cities = {
 	["Oklahoma City"] = {container = "Oklahoma", wp = "%l"},
 	["Grand Rapids"] = {container = "Michigan"},
 	["Memphis"] = {container = "Tennessee"},
-	["Birmingham"] = {container = "Alabama"},
+	["Birmingham, Alabama"] = {container = "Alabama"},
+	["Birmingham"] = {alias_of = "Birmingham, Alabama"},
 	["Fresno"] = {container = "California"},
 	["Richmond"] = {container = "Virginia"},
 	["Harrisburg"] = {container = "Pennsylvania"},
@@ -4159,7 +4184,7 @@ export.misc_cities = {
 	["Stockholm"] = {container = "Sweden"},
 	["Zurich"] = {container = "Switzerland"},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Zurich" without umlaut.
-	["Zürich"] = {alias_of = "Zürich", display = true},
+	["Zürich"] = {alias_of = "Zurich", display = true},
 	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021
 	["Istanbul"] = {container = "Turkey"}, -- 15.2 million
 	["İstanbul"] = {alias_of = "Istanbul", display = true},

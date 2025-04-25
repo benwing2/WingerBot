@@ -321,7 +321,7 @@ local function find_placetype_cat_as(divs, pl_placetype)
 	return nil
 end
 
--- Handler for bare placename categories for known locations in `locations` in [[Module:place/shared-data]].
+-- Handler for bare placename categories for known locations in `locations` in [[Module:place/locations]].
 insert(handlers, function(label)
 	for _, canon_label in ipairs { label, lcfirst(label) } do
 		local group, spec = m_locations.find_canonical_key(canon_label)
@@ -483,7 +483,7 @@ end
 
 
 -- Handler for generic placetypes (those whose categories are added through category generation handlers or through
--- explicit category specs in the placetype data) for known locations in [[Module:place/shared-data]]. All such
+-- explicit category specs in the placetype data) for known locations in [[Module:place/locations]]. All such
 -- placetypes have either a `generic_before_non_cities` setting (meaning they can occur before non-city locations) or
 -- `generic_before_cities` setting (meaning they can occur before cities), or both. Examples of such categories are
 -- "cities in the Bahamas" or "rivers in Western Australia, Australia", or (for city locations)
