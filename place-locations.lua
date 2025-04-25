@@ -745,7 +745,7 @@ export.continents = {
 
 export.continents_group = {
 	default_overriding_bare_label_parents = {}, -- container parents should be used
-	default_divs = {{type = "countries", prep = "in"}},
+	default_divs = {{type = "countries", prep = "in", skip_polity_parent_type = false}},
 	-- It's enough to mention the first-level continent or continent group. It seems excessive to write e.g.
 	-- "El Salvador, a country in Central America, a continental region in North America, a continent in America, ...".
 	default_no_include_container_in_desc = true,
@@ -2849,118 +2849,119 @@ local russia_oblast = make_russia_federal_subject_spec("oblast")
 local russia_republic = make_russia_federal_subject_spec("republic", "use the")
 export.russia_federal_subjects = {
 	-- autonomous oblasts
-	["Jewish Autonomous Oblast"] =
+	["Jewish Autonomous Oblast, Russia"] =
 		{the = true, placetype = {"autonomous oblast", "oblast"},
 		 bare_category_parent_type = {"federal subjects", "autonomous oblasts"}},
 	-- autonomous okrugs
-	["Chukotka Autonomous Okrug"] = russia_autonomous_okrug,
-	["Khanty-Mansi Autonomous Okrug"] = russia_autonomous_okrug,
-	["Khantia-Mansia"] = {alias_of = "Khanty-Mansi Autonomous Okrug"},
-	["Yugra"] = {alias_of = "Khanty-Mansi Autonomous Okrug"},
-	["Nenets Autonomous Okrug"] = russia_autonomous_okrug,
-	["Nenetsia"] = {alias_of = "Nenets Autonomous Okrug"},
-	["Yamalo-Nenets Autonomous Okrug"] = russia_autonomous_okrug,
+	["Chukotka Autonomous Okrug, Russia"] = russia_autonomous_okrug,
+	["Khanty-Mansi Autonomous Okrug, Russia"] = russia_autonomous_okrug,
+	["Khantia-Mansia, Russia"] = {alias_of = "Khanty-Mansi Autonomous Okrug, Russia"},
+	["Yugra, Russia"] = {alias_of = "Khanty-Mansi Autonomous Okrug, Russia"},
+	["Nenets Autonomous Okrug, Russia"] = russia_autonomous_okrug,
+	["Nenetsia, Russia"] = {alias_of = "Nenets Autonomous Okrug, Russia"},
+	["Yamalo-Nenets Autonomous Okrug, Russia"] = russia_autonomous_okrug,
 	-- krais
-	["Altai Krai"] = russia_krai,
-	["Kamchatka Krai"] = russia_krai,
-	["Khabarovsk Krai"] = russia_krai,
-	["Krasnodar Krai"] = russia_krai,
-	["Krasnoyarsk Krai"] = russia_krai,
-	["Perm Krai"] = russia_krai,
-	["Primorsky Krai"] = russia_krai,
-	["Stavropol Krai"] = russia_krai,
-	["Zabaykalsky Krai"] = russia_krai,
+	["Altai Krai, Russia"] = russia_krai,
+	["Kamchatka Krai, Russia"] = russia_krai,
+	["Khabarovsk Krai, Russia"] = russia_krai,
+	["Krasnodar Krai, Russia"] = russia_krai,
+	["Krasnoyarsk Krai, Russia"] = russia_krai,
+	["Perm Krai, Russia"] = russia_krai,
+	["Primorsky Krai, Russia"] = russia_krai,
+	["Stavropol Krai, Russia"] = russia_krai,
+	["Zabaykalsky Krai, Russia"] = russia_krai,
 	-- oblasts
-	["Amur Oblast"] = russia_oblast,
-	["Arkhangelsk Oblast"] = russia_oblast,
-	["Astrakhan Oblast"] = russia_oblast,
-	["Belgorod Oblast"] = russia_oblast,
-	["Bryansk Oblast"] = russia_oblast,
-	["Chelyabinsk Oblast"] = russia_oblast,
-	["Irkutsk Oblast"] = russia_oblast,
-	["Ivanovo Oblast"] = russia_oblast,
-	["Kaliningrad Oblast"] = russia_oblast,
-	["Kaluga Oblast"] = russia_oblast,
-	["Kemerovo Oblast"] = russia_oblast,
-	["Kirov Oblast"] = russia_oblast,
-	["Kostroma Oblast"] = russia_oblast,
-	["Kurgan Oblast"] = russia_oblast,
-	["Kursk Oblast"] = russia_oblast,
-	["Leningrad Oblast"] = russia_oblast,
-	["Lipetsk Oblast"] = russia_oblast,
-	["Magadan Oblast"] = russia_oblast,
-	["Moscow Oblast"] = russia_oblast,
-	["Murmansk Oblast"] = russia_oblast,
-	["Nizhny Novgorod Oblast"] = russia_oblast,
-	["Novgorod Oblast"] = russia_oblast,
-	["Novosibirsk Oblast"] = russia_oblast,
-	["Omsk Oblast"] = russia_oblast,
-	["Orenburg Oblast"] = russia_oblast,
-	["Oryol Oblast"] = russia_oblast,
-	["Penza Oblast"] = russia_oblast,
-	["Pskov Oblast"] = russia_oblast,
-	["Rostov Oblast"] = russia_oblast,
-	["Ryazan Oblast"] = russia_oblast,
-	["Sakhalin Oblast"] = russia_oblast,
-	["Samara Oblast"] = russia_oblast,
-	["Saratov Oblast"] = russia_oblast,
-	["Smolensk Oblast"] = russia_oblast,
-	["Sverdlovsk Oblast"] = russia_oblast,
-	["Tambov Oblast"] = russia_oblast,
-	["Tomsk Oblast"] = russia_oblast,
-	["Tula Oblast"] = russia_oblast,
-	["Tver Oblast"] = russia_oblast,
-	["Tyumen Oblast"] = russia_oblast,
-	["Ulyanovsk Oblast"] = russia_oblast,
-	["Vladimir Oblast"] = russia_oblast,
-	["Volgograd Oblast"] = russia_oblast,
-	["Vologda Oblast"] = russia_oblast,
-	["Voronezh Oblast"] = russia_oblast,
-	["Yaroslavl Oblast"] = russia_oblast,
+	["Amur Oblast, Russia"] = russia_oblast,
+	["Arkhangelsk Oblast, Russia"] = russia_oblast,
+	["Astrakhan Oblast, Russia"] = russia_oblast,
+	["Belgorod Oblast, Russia"] = russia_oblast,
+	["Bryansk Oblast, Russia"] = russia_oblast,
+	["Chelyabinsk Oblast, Russia"] = russia_oblast,
+	["Irkutsk Oblast, Russia"] = russia_oblast,
+	["Ivanovo Oblast, Russia"] = russia_oblast,
+	["Kaliningrad Oblast, Russia"] = russia_oblast,
+	["Kaluga Oblast, Russia"] = russia_oblast,
+	["Kemerovo Oblast, Russia"] = russia_oblast,
+	["Kirov Oblast, Russia"] = russia_oblast,
+	["Kostroma Oblast, Russia"] = russia_oblast,
+	["Kurgan Oblast, Russia"] = russia_oblast,
+	["Kursk Oblast, Russia"] = russia_oblast,
+	["Leningrad Oblast, Russia"] = russia_oblast,
+	["Lipetsk Oblast, Russia"] = russia_oblast,
+	["Magadan Oblast, Russia"] = russia_oblast,
+	["Moscow Oblast, Russia"] = russia_oblast,
+	["Murmansk Oblast, Russia"] = russia_oblast,
+	["Nizhny Novgorod Oblast, Russia"] = russia_oblast,
+	["Novgorod Oblast, Russia"] = russia_oblast,
+	["Novosibirsk Oblast, Russia"] = russia_oblast,
+	["Omsk Oblast, Russia"] = russia_oblast,
+	["Orenburg Oblast, Russia"] = russia_oblast,
+	["Oryol Oblast, Russia"] = russia_oblast,
+	["Penza Oblast, Russia"] = russia_oblast,
+	["Pskov Oblast, Russia"] = russia_oblast,
+	["Rostov Oblast, Russia"] = russia_oblast,
+	["Ryazan Oblast, Russia"] = russia_oblast,
+	["Sakhalin Oblast, Russia"] = russia_oblast,
+	["Samara Oblast, Russia"] = russia_oblast,
+	["Saratov Oblast, Russia"] = russia_oblast,
+	["Smolensk Oblast, Russia"] = russia_oblast,
+	["Sverdlovsk Oblast, Russia"] = russia_oblast,
+	["Tambov Oblast, Russia"] = russia_oblast,
+	["Tomsk Oblast, Russia"] = russia_oblast,
+	["Tula Oblast, Russia"] = russia_oblast,
+	["Tver Oblast, Russia"] = russia_oblast,
+	["Tyumen Oblast, Russia"] = russia_oblast,
+	["Ulyanovsk Oblast, Russia"] = russia_oblast,
+	["Vladimir Oblast, Russia"] = russia_oblast,
+	["Volgograd Oblast, Russia"] = russia_oblast,
+	["Vologda Oblast, Russia"] = russia_oblast,
+	["Voronezh Oblast, Russia"] = russia_oblast,
+	["Yaroslavl Oblast, Russia"] = russia_oblast,
 	-- republics
 	--
 	-- We only need to include cases that aren't just shortened versions of the full federal subject name (i.e. where
 	-- words like "Republic" and "Oblast" are omitted but the name is not otherwise modified; these are handled by
 	-- key_to_placename). Non-display-canonicalizing aliases are generally due to differences in the presence or absence
 	-- of "the".
-	["Republic of Adygea"] = russia_republic,
-	["Republic of Bashkortostan"] = russia_republic,
-	["Bashkiria"] = {alias_of = "Republic of Bashkortostan"},
-	["Republic of Buryatia"] = russia_republic,
-	["Republic of Dagestan"] = russia_republic,
-	["Republic of Ingushetia"] = russia_republic,
-	["Republic of Kalmykia"] = russia_republic,
-	["Republic of Karelia"] = russia_republic,
-	["Republic of Khakassia"] = russia_republic,
-	["Republic of Mordovia"] = russia_republic,
-	["Republic of North Ossetia-Alania"] = russia_republic,
-	["North Ossetia"] = {alias_of = "Republic of North Ossetia-Alania"},
-	["Alania"] = {alias_of = "Republic of North Ossetia-Alania"},
-	["Republic of Tatarstan"] = russia_republic,
-	["Altai Republic"] = russia_republic,
-	["Chechen Republic"] = russia_republic,
-	["Chechnya"] = {alias_of = "Chechen Republic"},
-	["Chuvash Republic"] = russia_republic,
-	["Chuvashia"] = {alias_of = "Chuvash Republic"},
-	["Kabardino-Balkar Republic"] = russia_republic,
-	["Kabardino-Balkarian Republic"] = {alias_of = "Kabardino-Balkar Republic", display = true, the = true},
-	["Kabardino-Balkaria"] = {alias_of = "Kabardino-Balkar Republic"},
-	["Kabardino-Balkariya"] = {alias_of = "Kabardino-Balkar Republic"},
-	["Karachay-Cherkess Republic"] = russia_republic,
-	["Karachay-Cherkessia"] = {alias_of = "Karachay-Cherkess Republic"},
-	["Komi Republic"] = russia_republic,
-	["Mari El Republic"] = russia_republic,
-	["Sakha Republic"] = russia_republic,
-	["Yakutia"] = {alias_of = "Sakha Republic"},
-	["Yakutiya"] = {alias_of = "Sakha Republic"},
-	["Republic of Yakutia (Sakha)"] = {alias_of = "Sakha Republic", the = true},
-	["Tuva Republic"] = russia_republic,
-	["Tyva Republic"] = {alias_of = "Tuva Republic", display = true, the = true},
-	["Tyva"] = {alias_of = "Tuva Republic"},
-	["Udmurt Republic"] = russia_republic,
-	["Udmurtia"] = {alias_of = "Udmurt Republic"},
+	["Republic of Adygea, Russia"] = russia_republic,
+	["Republic of Bashkortostan, Russia"] = russia_republic,
+	["Bashkiria, Russia"] = {alias_of = "Republic of Bashkortostan, Russia"},
+	["Republic of Buryatia, Russia"] = russia_republic,
+	["Republic of Dagestan, Russia"] = russia_republic,
+	["Republic of Ingushetia, Russia"] = russia_republic,
+	["Republic of Kalmykia, Russia"] = russia_republic,
+	["Republic of Karelia, Russia"] = russia_republic,
+	["Republic of Khakassia, Russia"] = russia_republic,
+	["Republic of Mordovia, Russia"] = russia_republic,
+	["Republic of North Ossetia-Alania, Russia"] = russia_republic,
+	["North Ossetia, Russia"] = {alias_of = "Republic of North Ossetia-Alania, Russia"},
+	["Alania, Russia"] = {alias_of = "Republic of North Ossetia-Alania, Russia"},
+	["Republic of Tatarstan, Russia"] = russia_republic,
+	["Altai Republic, Russia"] = russia_republic,
+	["Chechen Republic, Russia"] = russia_republic,
+	["Chechnya, Russia"] = {alias_of = "Chechen Republic, Russia"},
+	["Chuvash Republic, Russia"] = russia_republic,
+	["Chuvashia, Russia"] = {alias_of = "Chuvash Republic, Russia"},
+	["Kabardino-Balkar Republic, Russia"] = russia_republic,
+	["Kabardino-Balkarian Republic, Russia"] = {alias_of = "Kabardino-Balkar Republic, Russia", display = true,
+		the = true},
+	["Kabardino-Balkaria, Russia"] = {alias_of = "Kabardino-Balkar Republic, Russia"},
+	["Kabardino-Balkariya, Russia"] = {alias_of = "Kabardino-Balkar Republic, Russia"},
+	["Karachay-Cherkess Republic, Russia"] = russia_republic,
+	["Karachay-Cherkessia, Russia"] = {alias_of = "Karachay-Cherkess Republic, Russia"},
+	["Komi Republic, Russia"] = russia_republic,
+	["Mari El Republic, Russia"] = russia_republic,
+	["Sakha Republic, Russia"] = russia_republic,
+	["Yakutia, Russia"] = {alias_of = "Sakha Republic, Russia"},
+	["Yakutiya, Russia"] = {alias_of = "Sakha Republic, Russia"},
+	["Republic of Yakutia (Sakha), Russia"] = {alias_of = "Sakha Republic, Russia", the = true},
+	["Tuva Republic, Russia"] = russia_republic,
+	["Tyva Republic, Russia"] = {alias_of = "Tuva Republic, Russia", display = true, the = true},
+	["Tyva, Russia"] = {alias_of = "Tuva Republic, Russia"},
+	["Udmurt Republic, Russia"] = russia_republic,
+	["Udmurtia, Russia"] = {alias_of = "Udmurt Republic, Russia"},
 	-- Not sure what to do about this one from a neutrality perspective:
-	-- ["Republic of Crimea"] = russia_republic,
+	-- ["Republic of Crimea, Russia"] = russia_republic,
 	-- There are also federal cities (not included because they're cities):
 	-- Moscow, Saint Petersburg, Sevastopol (not sure what to do about the last one if we were to include federal
 	-- cities, see "Republic of Crimea" above)
@@ -2978,6 +2979,7 @@ local elliptical_republic_placenames = {
 local function russia_key_to_placename(key)
 	-- FIXME: We probably want to allow more than two variants for placenames to handle the various aliases esp. of
 	-- republics.
+	key = key:gsub(",.*", "")
 	local full_placename = key
 	if key == "Jewish Autonomous Oblast" then
 		return full_placename, full_placename
@@ -3005,30 +3007,32 @@ local function russia_key_to_placename(key)
 end
 
 local function russia_placename_to_key(placename)
+	local key = placename .. ", Russia"
 	-- We allow the user to say e.g. "obl/Samara" and "rep/Tatarstan" in place of "obl/Samara Oblast" and
 	-- "rep/Republic of Tatarstan".
-	if export.russia_federal_subjects[placename] then
-		return placename
+	if export.russia_federal_subjects[key] then
+		return key
 	end
 	for _, suffix in ipairs({"Autonomous Okrug", "Krai", "Oblast"}) do
-		local suffixed_placename = placename .. " " .. suffix
-		if export.russia_federal_subjects[suffixed_placename] then
-			return suffixed_placename
+		local suffixed_key = placename .. " " .. suffix .. ", Russia"
+		if export.russia_federal_subjects[suffixed_key] then
+			return suffixed_key
 		end
 	end
-	local republic_placename = "Republic of " .. placename
-	if export.russia_federal_subjects[republic_placename] then
-		return republic_placename
+	local republic_of_key = "Republic of " .. placename .. ", Russia"
+	if export.russia_federal_subjects[republic_of_key] then
+		return republic_of_key
 	end
-	local republic_placename = placename .. " Republic"
-	if export.russia_federal_subjects[republic_placename] then
-		return republic_placename
+	local republic_key = placename .. " Republic" .. ", Russia"
+	if export.russia_federal_subjects[republic_key] then
+		return republic_key
 	end
-	return placename
+	return placename .. ", Russia"
 end
 
 local function construct_russia_federal_subject_keydesc(group, key, spec)
-	local linked_key = export.construct_linked_placename(spec, key)
+	local placename = key:gsub(",.*", "")
+	local linked_placename = export.construct_linked_placename(spec, placename)
 	local placetype = spec.placetype
 	if type(placetype) == "table" then
 		placetype = placetype[1]
@@ -3037,9 +3041,9 @@ local function construct_russia_federal_subject_keydesc(group, key, spec)
 		-- Hack: Oblasts generally don't have entries under "Foo Oblast"
 		-- but just under "Foo", so fix the linked key appropriately;
 		-- doesn't apply to the Jewish Autonomous Oblast
-		linked_key = linked_key:gsub(" Oblast%]%]", "%]%] Oblast")
+		linked_placename = linked_placename:gsub(" Oblast%]%]", "%]%] Oblast")
 	end
-	return linked_key .. ", a [[federal subject]] ([[" .. placetype .. "]]) of [[Russia]]"
+	return linked_placename .. ", a [[federal subject]] ([[" .. placetype .. "]]) of [[Russia]]"
 end
 
 -- federal subjects of Russia
@@ -3944,22 +3948,22 @@ export.russia_cities = {
 	["Novosibirsk"] = {container = "Novosibirsk Oblast"},
 	["Yekaterinburg"] = {container = "Sverdlovsk Oblast"},
 	["Nizhny Novgorod"] = {container = "Nizhny Novgorod Oblast"},
-	["Kazan"] = {container = {key = "Republic of Tatarstan", placetype = "republic"}},
+	["Kazan"] = {container = {key = "Republic of Tatarstan, Russia", placetype = "republic"}},
 	["Chelyabinsk"] = {container = "Chelyabinsk Oblast"},
 	["Omsk"] = {container = "Omsk Oblast"},
 	["Samara"] = {container = "Samara Oblast"},
-	["Ufa"] = {container = {key = "Republic of Bashkortostan", placetype = "republic"}},
+	["Ufa"] = {container = {key = "Republic of Bashkortostan, Russia", placetype = "republic"}},
 	["Rostov-on-Don"] = {container = "Rostov Oblast"},
 	["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don", display = true},
-	["Krasnoyarsk"] = {container = {key = "Krasnoyarsk Krai", placetype = "krai"}},
+	["Krasnoyarsk"] = {container = {key = "Krasnoyarsk Krai, Russia", placetype = "krai"}},
 	["Voronezh"] = {container = "Voronezh Oblast"},
-	["Perm"] = {container = {key = "Perm Krai", placetype = "krai"}, wp = "%l, Russia"},
+	["Perm"] = {container = {key = "Perm Krai, Russia", placetype = "krai"}, wp = "%l, Russia"},
 	["Volgograd"] = {container = "Volgograd Oblast"},
-	["Krasnodar"] = {container = {key = "Krasnodar Krai", placetype = "krai"}},
+	["Krasnodar"] = {container = {key = "Krasnodar Krai, Russia", placetype = "krai"}},
 }
 
 export.russia_cities_group = {
-	canonicalize_key_container = make_canonicalize_key_container(nil, "oblast"),
+	canonicalize_key_container = make_canonicalize_key_container(", Russia", "oblast"),
 	default_container = "Russia",
 	default_placetype = "city",
 	default_british_spelling = true,
