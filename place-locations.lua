@@ -819,7 +819,9 @@ export.countries = {
 	["China"] = {container = "Asia", divs = {
 		{type = "provinces", cat_as = "provinces and autonomous regions"},
 		{type = "autonomous regions", cat_as = "provinces and autonomous regions"},
-		"special administrative regions", "prefectures", "prefecture-level cities", "counties", "county-level cities",
+		"special administrative regions", "prefectures", "prefecture-level cities",
+		{type = "counties", cat_as = "counties and county-level cities"},
+		{type = "county-level cities", cat_as = "counties and county-level cities"},
 		"districts", "municipalities",
 		{type = "direct-administered municipalities", cat_as = "municipalities"},
 	}},
@@ -1757,7 +1759,12 @@ export.china_provinces_and_autonomous_regions = {
 export.china_group = {
 	default_container = "China",
 	default_placetype = "province",
-	default_divs = {"prefecture-level cities", "county-level cities", "districts"},
+	default_divs = {
+		"prefectures", "prefecture-level cities",
+		{type = "counties", cat_as = "counties and county-level cities"},
+		{type = "county-level cities", cat_as = "counties and county-level cities"},
+		"districts",
+	},
 	data = export.china_provinces_and_autonomous_regions,
 }
 
@@ -1891,7 +1898,7 @@ export.china_prefecture_level_cities_group = {
 	default_placetype = "prefecture-level city",
 	default_divs = {
 		"districts",
-		"counties",
+		{type = "counties", cat_as = "counties and county-level cities"},
 		{type = "county-level cities", cat_as = "counties and county-level cities"},
 	},
 	data = export.china_prefecture_level_cities,
@@ -3546,14 +3553,14 @@ export.united_states_group = {
 -----------------------------------------------------------------------------------
 
 export.australia_cities = {
-	["Adelaide"] = {container = "South Australia"},
-	["Brisbane"] = {container = "Queensland"},
-	["Canberra"] = {container = {key = "Australian Capital Territory, Australia", placetype = "territory"}},
-	["Melbourne"] = {container = "Victoria"},
-	["Newcastle, New South Wales"] = {container = "New South Wales"},
+	["Adelaide"] = {container = "South Australia"}, -- 1,450,000 (Agglomeration)
+	["Brisbane"] = {container = "Queensland"}, -- 3,450,000 (Conglomeration; including the Gold Coast [750,997 2024 estiamte])
+	["Canberra"] = {container = {key = "Australian Capital Territory, Australia", placetype = "territory"}}, -- 510,641 (2024 estimate)
+	["Melbourne"] = {container = "Victoria"}, -- 5,200,000 (Agglomeration)
+	["Newcastle, New South Wales"] = {container = "New South Wales"}, -- 534,033 (2024 estimate)
 	["Newcastle"] = {alias_of = "Newcastle, New South Wales"},
-	["Perth"] = {container = "Western Australia"},
-	["Sydney"] = {container = "New South Wales"},
+	["Perth"] = {container = "Western Australia"}, -- 2,350,000 (Agglomeration)
+	["Sydney"] = {container = "New South Wales"}, -- 5,100,000 (Agglomeration)
 }
 
 export.australia_cities_group = {
@@ -3564,22 +3571,40 @@ export.australia_cities_group = {
 }
 
 export.brazil_cities = {
-	-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
-	["São Paulo"] = {container = "São Paulo"},
-	["Rio de Janeiro"] = {container = "Rio de Janeiro"},
-	["Brasília"] = {container = "Distrito Federal"},
+	-- Figures from citypopulation.de; retrieved 2025-04-27; reference date 2025-01-01.
+	["São Paulo"] = {container = "São Paulo"}, -- 22,600,000 (Consolidated Urban Area; including Guarulhos)
+	["Sao Paulo"] = {alias_of = "São Paulo", display = true},
+	["Rio de Janeiro"] = {container = "Rio de Janeiro"}, -- 13,600,000 (Consolidated Urban Area)
+	["Belo Horizonte"] = {container = "Minas Gerais"}, -- 5,300,000
+	["Recife"] = {container = "Pernambuco"}, -- 4,100,000
+	["Porto Alegre"] = {container = "Rio Grande do Sul"}, -- 3,950,000 (Consolidated Urban Area)
+	["Brasília"] = {container = "Distrito Federal"}, -- 3,850,000 
 	["Brasilia"] = {alias_of = "Brasília", display = true},
-	["Salvador"] = {container = "Bahia", wp = "%l, %c", commonscat = "%l (%c)"},
-	["Fortaleza"] = {container = "Ceará"},
-	["Belo Horizonte"] = {container = "Minas Gerais"},
-	["Manaus"] = {container = "Amazonas"},
-	["Curitiba"] = {container = "Paraná"},
-	["Recife"] = {container = "Pernambuco"},
-	["Goiânia"] = {container = "Goiás"},
+	["Fortaleza"] = {container = "Ceará"}, -- 3,825,000
+	["Salvador"] = {container = "Bahia", wp = "%l, %c", commonscat = "%l (%c)"}, -- 3,400,000
+	["Curitiba"] = {container = "Paraná"}, -- 3,375,000
+	["Campinas"] = {container = "São Paulo"}, -- 3,250,000
+	["Goiânia"] = {container = "Goiás"}, -- 2,525,000
 	["Goiania"] = {alias_of = "Goiânia", display = true},
-	["Belém"] = {container = "Pará"},
+	["Manaus"] = {container = "Amazonas"}, -- 2,275,000
+	["Belém"] = {container = "Pará"}, -- 2,200,000
 	["Belem"] = {alias_of = "Belém", display = true},
-	["Porto Alegre"] = {container = "Rio Grande do Sul"},
+	["Vitória"] = {container = "Espírito Santo", wp = "%l, %c"}, -- 1,870,000
+	["Vitoria"] = {alias_of = "Vitória", display = true},
+	["Santos"] = {container = "São Paulo", wp = "%l, %c"}, -- 1,760,000
+	["São Luís"] = {container = "Maranhão", wp = "%l, %c"}, -- 1,530,000
+	["Sao Luis"] = {alias_of = "São Luís", display = true},
+	["Natal"] = {container = "Rio Grande do Norte", wp = "%l, %c"}, -- 1,360,000
+	["Florianópolis"] = {container = "Santa Catarina"}, -- 1,260,000
+	["Florianopolis"] = {alias_of = "Florianópolis", display = true},
+	["Maceió"] = {container = "Alagoas"}, -- 1,220,000
+	["Maceio"] = {alias_of = "Maceió", display = true},
+	["João Pessoa"] = {container = "Paraíba", wp = "%l, %c"}, -- 1,210,000
+	["Joao Pessoa"] = {alias_of = "João Pessoa", display = true},
+	["São José dos Campos"] = {container = "São Paulo"}, -- 1,090,000
+	["Sao Jose dos Campos"] = {alias_of = "São José dos Campos", display = true},
+	["Londrina"] = {container = "Paraná"}, -- 1,050,000
+	["Teresina"] = {container = "Piauí"}, -- 1,040,000
 }
 
 export.brazil_cities_group = {
@@ -3589,16 +3614,17 @@ export.brazil_cities_group = {
 }
 
 export.canada_cities = {
-	["Toronto"] = {container = "Ontario"},
-	["Montreal"] = {container = "Quebec"},
-	["Vancouver"] = {container = "British Columbia"},
-	["Calgary"] = {container = "Alberta"},
-	["Edmonton"] = {container = "Alberta"},
-	["Ottawa"] = {container = "Ontario"},
-	["Winnipeg"] = {container = "Manitoba"},
-	["Quebec City"] = {container = "Quebec"},
-	["Hamilton"] = {container = "Ontario", wp = "%l, %c"},
-	["Kitchener"] = {container = "Ontario", wp = "%l, %c"},
+	-- Figures from citypopulation.de; retrieved 2025-04-27; reference date 2025-01-01.
+	["Toronto"] = {container = "Ontario"}, -- 7,850,000 (Consolidated Urban Area; including Hamilton)
+	["Montreal"] = {container = "Quebec"}, -- 4,500,000 (Consolidated Urban Area)
+	["Vancouver"] = {container = "British Columbia"}, -- 3,175,000 (Consolidated Urban Area)
+	["Calgary"] = {container = "Alberta"}, -- 1,510,000 (Consolidated Urban Area)
+	["Edmonton"] = {container = "Alberta"}, -- 1,460,000 (Consolidated Urban Area)
+	["Ottawa"] = {container = "Ontario"}, -- 1,390,000 (Consolidated Urban Area)
+	["Quebec City"] = {container = "Quebec"}, -- 839,311 metro per Wikipedia (2021 census)
+	["Winnipeg"] = {container = "Manitoba"}, -- 834,678 metro per Wikipedia (2021 census)
+	["Hamilton"] = {container = "Ontario", wp = "%l, %c"}, -- 785,184 metro per Wikipedia (2021 census)
+	["Kitchener"] = {container = "Ontario", wp = "%l, %c"}, -- 575,847 metro per Wikipedia (2021 census)
 }
 
 export.canada_cities_group = {
@@ -3609,14 +3635,15 @@ export.canada_cities_group = {
 }
 
 export.france_cities = {
-	["Paris"] = {container = "Île-de-France"},
-	["Lyon"] = {container = "Auvergne-Rhône-Alpes"},
+	-- Figures from citypopulation.de unless otherwise indicated; retrieved 2025-04-26; reference date 2025-01-01.
+	["Paris"] = {container = "Île-de-France"}, -- 11,500,000 (Conglomeration)
+	["Lyon"] = {container = "Auvergne-Rhône-Alpes"}, -- 2,050,000 (Conglomeration)
 	["Lyons"] = {alias_of = "Lyon", display = true},
-	["Marseille"] = {container = "Provence-Alpes-Côte d'Azur"},
+	["Marseille"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 1,710,000 (Conglomeration)
 	["Marseilles"] = {alias_of = "Marseille", display = true},
-	["Toulouse"] = {container = "Occitania"},
-	["Lille"] = {container = "Hauts-de-France"},
-	["Bordeaux"] = {container = "Nouvelle-Aquitaine"},
+	["Lille"] = {container = "Hauts-de-France"}, -- 1,320,000 (Conglomeration)
+	["Bordeaux"] = {container = "Nouvelle-Aquitaine"}, -- 1,160,000 (Conglomeration)
+	["Toulouse"] = {container = "Occitania"}, -- 1,150,000 (Conglomeration)
 	["Nice"] = {container = "Provence-Alpes-Côte d'Azur"},
 	["Nantes"] = {container = "Pays de la Loire"},
 	["Strasbourg"] = {container = "Grand Est"},
@@ -3631,18 +3658,28 @@ export.france_cities_group = {
 }
 
 export.germany_cities = {
-	["Berlin"] = {},
+	-- Figures from citypopulation.de unless otherwise indicated; retrieved 2025-04-26; reference date 2025-01-01.
+	-- listed under Rhein-Ruhr Area, total population 10,900,000 (Consolidated Urban Area)
+	["Cologne"] = {container = "North Rhine-Westphalia"},
+	["Köln"] = {alias_of = "Cologne", display = true},
+	["Düsseldorf"] = {container = "North Rhine-Westphalia"},
+	["Dusseldorf"] = {alias_of = "Düsseldorf", display = true},
 	["Dortmund"] = {container = "North Rhine-Westphalia"},
 	["Essen"] = {container = "North Rhine-Westphalia"},
 	["Duisberg"] = {container = "North Rhine-Westphalia"},
-	["Hamburg"] = {},
-	["Munich"] = {container = "Bavaria"},
-	["Stuttgart"] = {container = "Baden-Württemberg"},
-	["Frankfurt"] = {container = "Hesse"},
-	["Cologne"] = {container = "North Rhine-Westphalia"},
-	["Düsseldorf"] = {container = "North Rhine-Westphalia"},
-	["Dusseldorf"] = {alias_of = "Düsseldorf", display = true},
-	["Nuremberg"] = {container = "Bavaria"},
+	["Berlin"] = {}, -- 4,700,000
+	["Frankfurt"] = {container = "Hesse"}, -- 3,225,000
+	["Frankfurt am Main"] = {alias_of = "Frankfurt"}, -- not a display alias as it's longer
+	["Hamburg"] = {}, -- 2,900,000
+	["Munich"] = {container = "Bavaria"}, -- 2,300,000
+	["Stuttgart"] = {container = "Baden-Württemberg"}, -- 2,300,000
+	["Mannheim"] = {container = "Baden-Württemberg"}, -- 1,550,000
+	["Nuremberg"] = {container = "Bavaria"}, -- 1,120,000
+	["Hanover"] = {"Lower Saxony"}, -- 1,090,000
+	["Bielefeld"] = {container = "North Rhine-Westphalia"}, -- 1,080,000
+	["Leipzig"] = {container = "Saxony"}, -- 1,080,000
+	["Aachen"] = {container = "North Rhine-Westphalia"}, -- 1,000,000
+	["Aix-la-Chapelle"] = {alias_of = "Aachen"}, -- historical; not a display alias
 	["Bremen"] = {},
 }
 
@@ -3897,8 +3934,7 @@ export.mexico_cities_group = {
 }
 
 export.nigeria_cities = {
-	-- Figures from citypopulation.de unless otherwise indicated; retrieved 2025-04-26; reference date 2025-01-01;
-	-- sometimes combined with figures from [[w:List of urban areas in Africa by population]].
+	-- Figures from citypopulation.de unless otherwise indicated; retrieved 2025-04-26; reference date 2025-01-01.
 	["Lagos"] = {container = "Lagos"}, -- 21,300,000 (unindicated; population of low reliability)
 	["Kano"] = {container = "Kano"}, -- 5,350,000 (unindicated; population of low reliability)
 	["Ibadan"] = {container = "Oyo"}, -- 3,400,000 (unindicated; population of low reliability)
@@ -3982,24 +4018,25 @@ export.philippines_cities_group = {
 }
 
 export.russia_cities = {
-	-- This only lists cities, not metro areas, over 1,000,000 inhabitants.
-	["Moscow"] = {},
-	["Saint Petersburg"] = {},
-	["Novosibirsk"] = {container = "Novosibirsk Oblast"},
-	["Yekaterinburg"] = {container = "Sverdlovsk Oblast"},
-	["Nizhny Novgorod"] = {container = "Nizhny Novgorod Oblast"},
-	["Kazan"] = {container = {key = "Tatarstan, Russia", placetype = "republic"}},
-	["Chelyabinsk"] = {container = "Chelyabinsk Oblast"},
-	["Omsk"] = {container = "Omsk Oblast"},
-	["Samara"] = {container = "Samara Oblast"},
-	["Ufa"] = {container = {key = "Bashkortostan, Russia", placetype = "republic"}},
-	["Rostov-on-Don"] = {container = "Rostov Oblast"},
+	-- Figures from citypopulation.de; retrieved 2025-04-26; reference date 2025-01-01.
+	["Moscow"] = {}, --  18,800,000 (Agglomeration)
+	["Saint Petersburg"] = {}, -- 6,350,000 (Agglomeration)
+	["Novosibirsk"] = {container = "Novosibirsk Oblast"}, -- 1,820,000 (Agglomeration)
+	["Yekaterinburg"] = {container = "Sverdlovsk Oblast"}, -- 1,810,000 (Agglomeration)
+	["Nizhny Novgorod"] = {container = "Nizhny Novgorod Oblast"}, -- 1,620,000 (Agglomeration)
+	["Kazan"] = {container = {key = "Tatarstan, Russia", placetype = "republic"}}, -- 1,560,000 (Agglomeration)
+	["Chelyabinsk"] = {container = "Chelyabinsk Oblast"}, -- 1,430,000 (Agglomeration)
+	["Rostov-on-Don"] = {container = "Rostov Oblast"}, -- 1,390,000 (Agglomeration)
 	["Rostov-na-Donu"] = {alias_of = "Rostov-on-Don", display = true},
-	["Krasnoyarsk"] = {container = {key = "Krasnoyarsk Krai, Russia", placetype = "krai"}},
-	["Voronezh"] = {container = "Voronezh Oblast"},
-	["Perm"] = {container = {key = "Perm Krai, Russia", placetype = "krai"}, wp = "%l, Russia"},
-	["Volgograd"] = {container = "Volgograd Oblast"},
-	["Krasnodar"] = {container = {key = "Krasnodar Krai, Russia", placetype = "krai"}},
+	["Krasnodar"] = {container = {key = "Krasnodar Krai, Russia", placetype = "krai"}}, -- 1,370,000 (Agglomeration)
+	["Samara"] = {container = "Samara Oblast"}, -- 1,350,000 (Agglomeration)
+	["Krasnoyarsk"] = {container = {key = "Krasnoyarsk Krai, Russia", placetype = "krai"}}, -- 1,270,000 (Agglomeration)
+	["Ufa"] = {container = {key = "Bashkortostan, Russia", placetype = "republic"}}, -- 1,230,000 (Agglomeration)
+	["Saratov"] = {container = "Saratov Oblast"}, -- 1,170,000 (Agglomeration)
+	["Omsk"] = {container = "Omsk Oblast"}, -- 1,140,000 (Agglomeration)
+	["Voronezh"] = {container = "Voronezh Oblast"}, -- 1,130,000 (Agglomeration)
+	["Volgograd"] = {container = "Volgograd Oblast"}, -- 1,080,000 (Agglomeration)
+	["Perm"] = {container = {key = "Perm Krai, Russia", placetype = "krai"}, wp = "%l, Russia"}, -- 1,070,000 (Agglomeration)
 }
 
 export.russia_cities_group = {
@@ -4202,17 +4239,18 @@ export.new_york_boroughs_group = {
 
 export.misc_cities_british_spelling = {
 	------------------ Europe or Europe-like (Caucasus etc.) ---------------------
-	["Yerevan"] = {container = "Armenia"},
-	["Vienna"] = {container = "Austria"},
-	["Minsk"] = {container = "Belarus"},
-	["Brussels"] = {container = "Belgium"},
-	["Antwerp"] = {container = "Belgium"},
-	["Sofia"] = {container = "Bulgaria"},
+	["Yerevan"] = {container = "Armenia"}, -- 1,520,000 (Agglomeration)
+	["Vienna"] = {container = "Austria"}, -- 2,375,000 (Agglomeration)
+	["Minsk"] = {container = "Belarus"}, -- 2,100,000 (unindicated)
+	["Brussels"] = {container = "Belgium"}, -- 2,800,000 (Consolidated Urban Area)
+	["Antwerp"] = {container = "Belgium"}, -- 1,270,000 (Consolidated Urban Area)
+	["Sofia"] = {container = "Bulgaria"}, -- 1,260,000 (Agglomeration)
 	["Zagreb"] = {container = "Croatia"},
-	["Prague"] = {container = "Czech Republic"},
-	["Olomouc"] = {container = "Czech Republic"},
-	["Copenhagen"] = {container = "Denmark"},
-	["Helsinki"] = {container = {key = "Uusimaa, Finland", placetype = "region"}},
+	["Prague"] = {container = "Czech Republic"}, -- 1,470,000 (Agglomeration)
+	["Brno"] = {container = "Czech Republic"}, -- 729,405 (metro area per Wikipedia as of 2024-01-01 Czech Statistical Office)
+	["Olomouc"] = {container = "Czech Republic"}, -- 102,293 (city; included only because someone went crazy creating Olomouc-related terms)
+	["Copenhagen"] = {container = "Denmark"}, -- 1,800,000 (Consolidated Urban Area)
+	["Helsinki"] = {container = {key = "Uusimaa, Finland", placetype = "region"}}, -- 1,560,000 (Consolidated Urban Area)
 	["Tbilisi"] = {container = "Georgia"}, -- 1,430,000 (Agglomeration)
 	["Athens"] = {container = "Greece"},
 	["Thessaloniki"] = {container = "Greece"},
@@ -4448,53 +4486,53 @@ export.misc_cities_american_spelling = {
 	["Aden"] = {container = "Yemen"}, -- 1,079,060 (?; 2023 estimate from World Population Review per Wikipedia)
 
 	------------------ North America, South America ---------------------
-	-- from [[w:List of metropolitan areas in the Americas]] based on per-country data
-	["Buenos Aires"] = {container = "Argentina"}, -- 13,985,794
-	["Bogotá"] = {container = "Colombia"}, -- 12,772,828
-	["Bogota"] = {alias_of = "Bogotá", display = true},
-	["Lima"] = {container = "Peru"}, -- 11,283,787
-	["Santiago"] = {container = "Chile"}, -- 6,903,479
-	["Maracaibo"] = {container = "Venezuela"}, -- 5,278,448
-	["Caracas"] = {container = "Venezuela"}, -- 5,243,301
-	["Santo Domingo"] = {container = "Dominican Republic"}, -- 4,274,651
-	["Medellín"] = {container = "Colombia"}, -- 4,068,000
-	["Medellin"] = {alias_of = "Medellín", display = true},
-	-- to avoid conflict with San Jose, California
-	["San Jose, Costa Rica"] = {container = "Costa Rica"}, -- 3,160,000
-	["San Jose"] = {alias_of = "San Jose, Costa Rica"},
-	["Guatemala City"] = {container = "Guatemala"}, -- 3,160,000
-	["Guayaquil"] = {container = "Ecuador"}, -- 3,092,000
-	["Port-au-Prince"] = {container = "Haiti"}, -- 	2,915,000
-	["Quito"] = {container = "Ecuador"}, -- 2,889,703
-	["Cali"] = {container = "Colombia"}, -- 2,837,000
-
-	-- from [[w:List of largest cities in the Americas]] based on per-country data; city limits only; figures from
-	-- citypopulation.de retrieved on 2025-04-26 (reference date 2025-01-01), often referring to some sort of metro area
-	["Havana"] = {container = "Cuba"}, -- 2,137,847; 2,150,000 per citypopulation.de (City)
-	["Santa Cruz de la Sierra"] = {container = "Bolivia"}, -- 1,606,671
-	["Santa Cruz"] = {alias_of = "Santa Cruz de la Sierra"},
-	["Córdoba, Argentina"] = {container = "Argentina"}, -- 1,505,250; 1,810,000 per citypopulation.de (Consolidated Urban Area)
+	-- Primary figures from citypopulation.de retrieved on 2025-04-26 (reference date 2025-01-01);
+	-- Wikipedia metropolitan figures from [[w:List of metropolitan areas in the Americas]] based on per-country data;
+	-- Wikipedia city limits figures from [[w:List of largest cities in the Americas]].
+	["Buenos Aires"] = {container = "Argentina"}, -- 16,800,000 (Consolidated Urban Area; 13,985,794 metropolitan area per Wikipedia)
+	["Córdoba, Argentina"] = {container = "Argentina"}, -- 1,810,000 (Consolidated Urban Area; 1,505,25 city limits per Wikipedia)
 	-- to avoid confusion with Córdoba in Spain
 	["Córdoba"] = {alias_of = "Córdoba, Argentina"},
 	["Cordoba"] = {alias_of = "Córdoba, Argentina", display = "Córdoba"},
-	["Rosario"] = {container = "Argentina"}, -- 1,348,725; 1,510,000 per citypopulation.de (Consolidated Urban Area)
-	["Barranquilla"] = {container = "Colombia"}, -- 1,341,160
-	["Montevideo"] = {container = "Uruguay"}, -- 1,302,954
-	
-	-- Additional from citypopulation.de over 1,000,000; retrieved on 2025-04-26; reference date 2025-01-01.
+	["Rosario"] = {container = "Argentina"}, -- 1,510,000 (Consolidated Urban Area; 1,348,725 metropolitan area per Wikipedia)
 	["Mendoza"] = {container = "Argentina"}, -- 1,180,000 (Consolidated Urban Area)
 	["San Miguel de Tucumán"] = {container = "Argentina"}, -- 1,110,000 (Consolidated Urban Area)
 	["Tucumán"] = {alias_of = "San Miguel de Tucumán"},
 	["Tucuman"] = {alias_of = "San Miguel de Tucumán", display = "Tucumán"},
+	["Santa Cruz de la Sierra"] = {container = "Bolivia"}, -- 1,960,000 (Consolidated Urban Area); 1,606,671 (city limits per Wikipedia)
+	["Santa Cruz"] = {alias_of = "Santa Cruz de la Sierra"},
 	["La Paz"] = {container = "Bolivia"}, -- 1,870,000 (Consolidated Urban Area)
 	["Cochabamba"] = {container = "Bolivia"}, -- 1,280,000 (Consolidated Urban Area)
-	["Valparaíso"] = {container = "Chile"}, -- 1,060,000 (Consolidated Urban Area)
-	["Valparaiso"] = {alias_of = "Valparaíso"}, -- 1,060,000 (Consolidated Urban Area)
+	["Bogotá"] = {container = "Colombia"}, -- 10,600,000 (Agglomeration; 12,772,828 metropolitan area per Wikipedia)
+	["Bogota"] = {alias_of = "Bogotá", display = true},
+	["Medellín"] = {container = "Colombia"}, -- 4,350,000 (Agglomeration; 4,068,000 metropolitan area per Wikipedia)
+	["Medellin"] = {alias_of = "Medellín", display = true},
+	["Cali"] = {container = "Colombia"}, -- 2,975,000 (Agglomeration; 2,837,000 metropolitan area per Wikipedia)
+	["Barranquilla"] = {container = "Colombia"}, -- 2,375,000 (Agglomeration; 1,341,160 city limits per Wikipedia)
 	["Bucaramanga"] = {container = "Colombia"}, -- 1,380,000 (Agglomeration)
 	["Cartagena, Colombia"] = {container = "Colombia"}, -- 1,250,000 (Agglomeration)
 	-- to avoid confusion with Cartagena, Spain
 	["Cartagena"] = {alias_of = "Cartagena, Colombia"},
 	["Cúcuta"] = {container = "Colombia"}, -- 1,130,000 (Agglomeration)
+	-- to avoid conflict with San Jose, California
+	["San Jose, Costa Rica"] = {container = "Costa Rica"}, -- 2,450,000 (Municipality (urban population); 3,160,000 metropolitan area per Wikipedia)
+	["San Jose"] = {alias_of = "San Jose, Costa Rica"},
+	["Havana"] = {container = "Cuba"}, -- 2,150,000 (City; 2,137,847 city limits? per Wikipedia)
+	["Lima"] = {container = "Peru"}, -- 11,283,787
+	["Santiago"] = {container = "Chile"}, -- 6,903,479
+	["Maracaibo"] = {container = "Venezuela"}, -- 5,278,448
+	["Caracas"] = {container = "Venezuela"}, -- 5,243,301
+	["Santo Domingo"] = {container = "Dominican Republic"}, -- 4,274,651
+	["Guatemala City"] = {container = "Guatemala"}, -- 3,160,000
+	["Guayaquil"] = {container = "Ecuador"}, -- 3,092,000
+	["Port-au-Prince"] = {container = "Haiti"}, -- 	2,915,000
+	["Quito"] = {container = "Ecuador"}, -- 2,889,703
+
+	["Montevideo"] = {container = "Uruguay"}, -- 1,302,954
+	
+	-- Additional from citypopulation.de over 1,000,000; retrieved on 2025-04-26; reference date 2025-01-01.
+	["Valparaíso"] = {container = "Chile"}, -- 1,060,000 (Consolidated Urban Area)
+	["Valparaiso"] = {alias_of = "Valparaíso"}, -- 1,060,000 (Consolidated Urban Area)
 	["San Salvador"] = {container = "El Salvador"}, -- 1,580,000 (Municipality (urban population))
 	["San Pedro Sula"] = {container = "Honduras"}, -- 1,330,000 (Consolidated Urban Area)
 	["Tegucigalpa"] = {container = "Honduras"}, -- 1,220,000 (Urban Area)
