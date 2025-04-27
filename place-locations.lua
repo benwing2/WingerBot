@@ -1582,6 +1582,7 @@ export.former_countries_group = {
 
 export.australia_states_and_territories = {
 	["Australian Capital Territory, Australia"] = {the = true, placetype = "territory"},
+	["Jervis Bay Territory, Australia"] = {the = true, placetype = "territory"},
 	["New South Wales, Australia"] = {},
 	["Northern Territory, Australia"] = {the = true, placetype = "territory"},
 	["Queensland, Australia"] = {},
@@ -2850,7 +2851,7 @@ local russia_autonomous_okrug_the =
 local russia_krai = make_russia_federal_subject_spec("krai")
 local russia_oblast = make_russia_federal_subject_spec("oblast")
 local russia_republic_the = make_russia_federal_subject_spec("republic", "use the")
-local russia_republic_no_the = make_russia_federal_subject_spec("republic", "use the")
+local russia_republic_no_the = make_russia_federal_subject_spec("republic")
 export.russia_federal_subjects = {
 	-- autonomous oblasts
 	["Jewish Autonomous Oblast, Russia"] =
@@ -2934,7 +2935,7 @@ export.russia_federal_subjects = {
 	["Republic of Adygea, Russia"] = {alias_of = "Adygea, Russia", the = true},
 	["Bashkortostan, Russia"] = russia_republic_no_the,
 	["Republic of Bashkortostan, Russia"] = {alias_of = "Bashkortostan, Russia", the = true},
-	["Bashkiria, Russia"] = {alias_of = "Republic of Bashkortostan, Russia"},
+	["Bashkiria, Russia"] = {alias_of = "Bashkortostan, Russia"},
 	["Buryatia, Russia"] = russia_republic_no_the,
 	["Republic of Buryatia, Russia"] = {alias_of = "Buryatia, Russia", the = true},
 	["Dagestan, Russia"] = russia_republic_no_the,
@@ -3555,15 +3556,7 @@ export.australia_cities = {
 	["Sydney"] = {container = "New South Wales"},
 }
 
-local function australia_cities_placename_to_key(placename)
-	if placename == "Newcastle" then
-		return "Newcastle, New South Wales"
-	end
-	return placename
-end
-
 export.australia_cities_group = {
-	placename_to_key = australia_cities_placename_to_key,
 	canonicalize_key_container = make_canonicalize_key_container(", Australia", "state"),
 	default_placetype = "city",
 	default_british_spelling = true,
@@ -3903,6 +3896,57 @@ export.mexico_cities_group = {
 	data = export.mexico_cities,
 }
 
+export.nigeria_cities = {
+	-- Figures from citypopulation.de unless otherwise indicated; retrieved 2025-04-26; reference date 2025-01-01;
+	-- sometimes combined with figures from [[w:List of urban areas in Africa by population]].
+	["Lagos"] = {container = "Lagos"}, -- 21,300,000 (unindicated; population of low reliability)
+	["Kano"] = {container = "Kano"}, -- 5,350,000 (unindicated; population of low reliability)
+	["Ibadan"] = {container = "Oyo"}, -- 3,400,000 (unindicated; population of low reliability)
+	["Abuja"] = {}, -- federal capital, not in a state; 3,050,000 (unindicated; population of low reliability)
+	["Port Harcourt"] = {container = "Rivers"}, -- 2,250,000 (unindicated; population of low reliability)
+	["Kaduna"] = {container = "Kaduna"}, -- 1,980,000 (unindicated; population of low reliability)
+	["Benin City"] = {container = "Edo"}, -- 1,790,000 (unindicated; population of low reliability)
+	["Aba"] = {container = "Abia"}, -- 1,280,000 (unindicated; population of low reliability)
+	["Onitsha"] = {container = "Anambra"}, -- 1,230,000 (unindicated; population of low reliability)
+	["Maiduguri"] = {container = "Borno"}, -- 1,190,000 (unindicated; population of low reliability)
+	["Ilorin"] = {container = "Kwara"}, -- 1,160,000 (unindicated; population of low reliability)
+	["Sokoto"] = {container = "Sokoto"}, -- 1,140,000 (unindicated; population of low reliability)
+	["Jos"] = {container = "Plateau"}, -- 1,110,000 (unindicated; population of low reliability)
+	["Zaria"] = {container = "Kaduna"}, -- 1,050,000 (unindicated; population of low reliability)
+	["Enugu"] = {container = "Enugu"}, -- 1,010,000 (unindicated; population of low reliability)
+}
+
+export.nigeria_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(" State, Nigeria", "state"),
+	default_placetype = "city",
+	data = export.nigeria_cities,
+}
+
+export.pakistan_cities = {
+	-- Figures from citypopulation.de; retrieved 2025-04-26; reference date 2025-01-01.
+	["Karachi"] = {container = "Sindh"}, -- 21,000,000 (Consolidated Urban Area)
+	["Lahore"] = {container = "Punjab"}, -- 14,600,000 (Consolidated Urban Area)
+	["Rawalpindi"] = {container = "Punjab"}, -- 5,600,000 (Consolidated Urban Area; including Islamabad)
+	["Islamabad"] = {container = {key = "Islamabad Capital Territory, Pakistan", placetype = "federal territory"}}, -- 5,600,000 (Consolidated Urban Area; including Rawalpindi)
+	["Faisalabad"] = {container = "Punjab"}, -- 4,125,000 (Consolidated Urban Area)
+	["Gujranwala"] = {container = "Punjab"}, -- 3,450,000 (Consolidated Urban Area)
+	-- there is also Hyderabad in India (very confusing)
+	["Hyderabad, Pakistan"] = {container = "Sindh"}, -- 2,475,000 (Consolidated Urban Area)
+	["Hyderabad"] = {alias_of = "Hyderabad, Pakistan"},
+	["Multan"] = {container = "Punjab"}, -- 2,425,000 (Consolidated Urban Area)
+	["Peshawar"] = {container = "Khyber Pakhtunkhwa"}, -- 2,150,000 (Consolidated Urban Area)
+	["Quetta"] = {container = "Balochistan"}, -- 1,720,000 (Urban Area)
+	["Sargodha"] = {container = "Punjab"}, -- 1,080,000 (Urban Area)
+	["Sialkot"] = {container = "Punjab"}, -- 1,050,000 (Consolidated Urban Area)
+}
+
+export.pakistan_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(", Pakistan", "province"),
+	default_placetype = "city",
+	default_british_spelling = true,
+	data = export.pakistan_cities,
+}
+
 export.philippines_cities = {
 	 -- Some cities listed independent from any province. province listed is for geographical purposes only.
 	 -- Skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
@@ -3964,6 +4008,24 @@ export.russia_cities_group = {
 	default_placetype = "city",
 	default_british_spelling = true,
 	data = export.russia_cities,
+}
+
+export.saudi_arabia_cities = {
+	-- Figures for the first five from [[w:List of cities and towns in Saudi Arabia]] as of 2022. Unclear if these are
+	-- metro, urban or city proper figures.
+	["Riyadh"] = {container = "Riyadh"}, -- 7,000,100; 7,700,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Jeddah"] = {container = "Mecca"}, -- 3,751,917; 3,950,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Dammam"] = {container = "Eastern"}, -- 2,638,166; 2,925,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Mecca"] = {container = "Mecca"}, -- 2,385,509; 2,675,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Medina"] = {container = "Medina"}, -- 1,477,023; 1,530,000 per citypopulation.de 2025-01-01 (City)
+	["Hofuf"] = {container = "Eastern"}, -- 1,060,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Khamis Mushait"] = {container = "Aseer"}, -- 1,030,000 per citypopulation.de 2025-01-01 (Agglomeration)
+}
+
+export.saudi_arabia_cities_group = {
+	canonicalize_key_container = make_canonicalize_key_container(" Province, Saudi Arabia", "province"),
+	default_placetype = "city",
+	data = export.saudi_arabia_cities,
 }
 
 export.spain_cities = {
@@ -4047,7 +4109,9 @@ export.united_states_cities = {
 	-- Columbia holonym).
 	["Washington"] = {alias_of = "Washington, D.C."},
 	["Baltimore"] = {container = "Maryland", wp = "%l"},
-	["San Jose"] = {container = "California"},
+	-- to avoid conflict with San Jose in Costa Rica
+	["San Jose, California"] = {container = "California"},
+	["San Jose"] = {alias_of = "San Jose, California"},
 	["San Francisco"] = {container = "California", wp = "%l"},
 	["Oakland"] = {container = "California"},
 	["Boston"] = {container = "Massachusetts", wp = "%l"},
@@ -4132,10 +4196,12 @@ export.new_york_boroughs = {
 export.new_york_boroughs_group = {
 	default_container = {key = "New York City", placetype = "city"},
 	default_placetype = "borough",
+	default_is_city = true,
 	data = export.new_york_boroughs,
 }
 
-export.misc_cities = {
+export.misc_cities_british_spelling = {
+	------------------ Europe or Europe-like (Caucasus etc.) ---------------------
 	["Yerevan"] = {container = "Armenia"},
 	["Vienna"] = {container = "Austria"},
 	["Minsk"] = {container = "Belarus"},
@@ -4147,16 +4213,12 @@ export.misc_cities = {
 	["Olomouc"] = {container = "Czech Republic"},
 	["Copenhagen"] = {container = "Denmark"},
 	["Helsinki"] = {container = {key = "Uusimaa, Finland", placetype = "region"}},
+	["Tbilisi"] = {container = "Georgia"}, -- 1,430,000 (Agglomeration)
 	["Athens"] = {container = "Greece"},
 	["Thessaloniki"] = {container = "Greece"},
 	["Budapest"] = {container = "Hungary"},
 	-- FIXME, per Wikipedia "County Dublin" is now the "Dublin Region"
 	["Dublin"] = {container = {key = "County Dublin, Ireland", placetype = "county"}},
-	-- Jerusalem is not recognized internationally as part of either Israel or Palestine, but as a
-	-- [[w:corpus separatum]], so put the container as "Asia" and list Israel and Palestine as additional parents for
-	-- categorization purposes.
-	["Jerusalem"] = {container = {key = "Asia", placetype = "continent"}, addl_parents = {"Israel", "Palestine"}},
-	["Tel Aviv"] = {container = "Israel"},
 	["Riga"] = {container = "Latvia"},
 	["Amsterdam"] = {container = {key = "North Holland, Netherlands", placetype = "province"}},
 	["Rotterdam"] = {container = {key = "South Holland, Netherlands", placetype = "province"}},
@@ -4185,22 +4247,6 @@ export.misc_cities = {
 	["Zurich"] = {container = "Switzerland"},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Zurich" without umlaut.
 	["Zürich"] = {alias_of = "Zurich", display = true},
-	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021
-	["Istanbul"] = {container = "Turkey"}, -- 15.2 million
-	["İstanbul"] = {alias_of = "Istanbul", display = true},
-	["Ankara"] = {container = "Turkey"}, -- 5.15 million
-	["Izmir"] = {container = "Turkey"}, -- 2.95 million
-	["İzmir"] = {alias_of = "Izmir", display = true},
-	["Bursa"] = {container = "Turkey"}, -- 2.02 million
-	["Adana"] = {container = "Turkey"}, -- 1.77 million
-	["Gaziantep"] = {container = "Turkey"}, -- 1.71 million
-	["Konya"] = {container = "Turkey"}, -- 1.35 million
-	["Antalya"] = {container = "Turkey"}, -- 1.3 million
-	["Diyarbakır"] = {container = "Turkey"}, -- 1.07 million
-	-- Diyarbakır is more common per Ngrams and Google Scholar, but Diyarbakir is the Kurdish form, so we should not
-	-- display-canonicalize to the Turkish form Diyarbakır.
-	["Diyarbakir"] = {alias_of = "Diyarbakır"},
-	["Mersin"] = {container = "Turkey"}, -- 1.03 million
 	["Kyiv"] = {container = "Ukraine"},
 	-- Don't display-canonicalize Kiev -> Kyiv because in ancient contexts, Kiev is still more common.
 	["Kiev"] = {alias_of = "Kyiv"},
@@ -4208,12 +4254,266 @@ export.misc_cities = {
 	["Odessa"] = {container = "Ukraine", wp = "Odesa"},
 	-- Don't display-canonicalize Odesa -> Odessa because it may be interpreted as a political statement.
 	["Odesa"] = {alias_of = "Odessa"},
+	
+	------------------ Africa -------------------
+	["Cairo"] = {container = "Egypt"}, -- 22,800,000 (Agglomeration, including Giza and Subhra El Kheima)
+	["Alexandria"] = {container = "Egypt"}, -- 6,250,000 (Agglomeration)
+	["Giza"] = {container = "Egypt"}, -- 4,458,135 (2023 from citypopulation.de)
+	["Shubra El Kheima"] = {container = "Egypt"}, -- 1,240,239 (2021 from citypopulation.de)
+	["Banjul"] = {container = "Gambia"}, -- 1,170,000 (Agglomeration)
+	["Accra"] = {container = "Ghana"}, -- 6,800,000 (Agglomeration)
+	["Kumasi"] = {container = "Ghana"}, -- 2,900,000 (Agglomeration)
+	["Conakry"] = {container = "Guinea"}, -- 2,975,000 (Consolidated Urban Area)
+	["Nairobi"] = {container = "Kenya"}, -- 6,900,000 (unindicated)
+	["Mombasa"] = {container = "Kenya"}, -- 1,370,000 (City)
+	["Freetown"] = {container = "Sierra Leone"}, -- 1,420,000 (Agglomeration)
+	["Johannesburg"] = {container = "South Africa"}, -- 14,800,000 (Consolidated Urban Area; including Pretoria, Soweto, etc.)
+	["Cape Town"] = {container = "South Africa"}, -- 5,100,000 (Consolidated Urban Area)
+	["Durban"] = {container = "South Africa"}, -- 3,900,000 (Consolidated Urban Area)
+	["Pretoria"] = {container = "South Africa"}, -- 2,921,488 (2011 census)
+	["Port Elizabeth"] = {container = "South Africa"}, -- 1,200,000 (Consolidated Urban Area)
+	["Kampala"] = {container = "Uganda"}, -- 4,300,000 (unindicated)
+	["Lusaka"] = {container = "Zambia"}, -- 3,000,000 (Consolidated Urban Area)
+	["Harare"] = {container = "Zimbabwe"}, -- 2,675,000 (Agglomeration)
+	
+	------------------ Asia ------------------
+	-- Kuala Lumpur is a federal capital city, not in any state
+	["Kuala Lumpur"] = {container = "Malaysia"}, -- 9,550,000 (Agglomeration)
+	-- there are various George Towns and Georgetowns
+	["George Town, Malaysia"] = {container = {key = "Penang, Malaysia", placetype = "state"}}, -- 2,075,000 (Agglomeration)
+	["George Town"] = {alias_of = "George Town, Malaysia"},
+	["Yangon"] = {container = "Myanmar"}, -- 5,650,000 (Municipality (urban population))
+	["Rangoon"] = {alias_of = "Yangon", display = true},
+	["Mandalay"] = {container = "Myanmar"}, -- 1,600,000 (Municipality (urban population))
+	["Colombo"] = {container = "Sri Lanka"}, -- 4,975,000 (unindicated)
 }
 
-export.misc_cities_group = {
+export.misc_cities_british_spelling_group = {
 	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
 	default_placetype = "city",
-	data = export.misc_cities,
+	default_british_spelling = true,
+	data = export.misc_cities_british_spelling,
+}
+
+export.misc_cities_american_spelling = {
+	------------------ Africa -------------------
+	-- Sorted by country and then within the country, by decreasing population; figures from citypopulation.de
+	-- (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated; combined with data from
+	-- [[w:List of urban areas in Africa by population]].
+	["Algiers"] = {container = "Algeria"}, -- 4,325,000 (Consolidated Urban Area)
+	["Oran"] = {container = "Algeria"}, -- 1,640,000 (Consolidated Urban Area)
+	["Luanda"] = {container = "Angola"}, -- 9,650,000 (Urban Area)
+	["Benguela"] = {container = "Angola"}, -- 1,420,000 (Urban Area)
+	["Cotonou"] = {container = "Benin"}, -- 2,150,000 (Agglomeration)
+	["Ouagadougou"] = {container = "Burkina Faso"}, -- 3,425,000 (Agglomeration) 
+	["Ouagadougou"] = {container = "Burkina Faso"}, -- 1,100,000 (Agglomeration)
+	["Bujumbura"] = {container = "Burundi"}, -- 1,143,202 (Urban Area 2023 per PopulationStat, cited in Wikipedia)
+	["Yaoundé"] = {container = "Cameroon"}, -- 3,975,000 (City)
+	["Douala"] = {container = "Cameroon"}, -- 3,900,000 (City)
+	["Bangui"] = {container = "Central African Republic"}, -- 1,680,000 (Agglomeration)
+	["Ndjamena"] = {container = "Chad"}, -- 1,950,000 (City)
+	["Kinshasa"] = {container = "Democratic Republic of the Congo"}, -- 16,300,000 (City; population of low reliability)
+	["Lubumbashi"] = {container = "Democratic Republic of the Congo"}, -- 2,875,000 (City; population of low reliability)
+	["Mbuji-Mayi"] = {container = "Democratic Republic of the Congo"}, -- 2,500,000 (City; population of low reliability)
+	["Kananga"] = {container = "Democratic Republic of the Congo"}, -- 1,370,000 (City; population of low reliability)
+	["Kisangani"] = {container = "Democratic Republic of the Congo"}, -- 1,300,000 (City; population of low reliability)
+	["Bukavu"] = {container = "Democratic Republic of the Congo"}, -- 1,100,000 (City; population of low reliability)
+	["Goma"] = {container = "Democratic Republic of the Congo"}, -- 1,010,000 (City; population of low reliability)
+	["Asmara"] = {container = "Eritrea"}, -- 1,090,000 (City; population of low reliability)
+	["Asmera"] = {alias_of = "Asmara", display = true},
+	["Addis Ababa"] = {container = "Ethiopia"}, -- 4,825,000 (Agglomeration)
+	["Abidjan"] = {container = "Ivory Coast"}, -- 7,050,000 (Agglomeration)
+	["Monrovia"] = {container = "Liberia"}, -- 1,940,000 (Urban Area)
+	["Tripoli"] = {container = "Libya"}, -- 1,870,000 (unindicated)
+	["Antananarivo"] = {container = "Madagascar"}, -- 3,150,000 (Agglomeration)
+	["Lilongwe"] = {container = "Malawi"}, -- 1,210,000 (City)
+	["Bamako"] = {container = "Mali"}, -- 5,700,000 (Agglomeration)
+	["Nouakchott"] = {container = "Mauritania"}, -- 1,500,000 (City)
+	["Casablanca"] = {container = {key = "Casablanca-Settat, Morocco", placetype = "region"}}, -- 4,450,000 (Municipality (urban population))
+	["Rabat"] = {container = {key = "Rabat-Sale-Kenitra, Morocco", placetype = "region"}}, -- 2,125,000 (Municipality (urban population))
+	["Tangier"] = {container = {key = "Tangier-Tetouan-Al Hoceima, Morocco", placetype = "region"}}, -- 1,410,000 (Municipality (urban population))
+	["Tanger"] = {alias_of = "Tangier", display = true},
+	["Tangiers"] = {alias_of = "Tangier", display = true},
+	["Fez"] = {container = {key = "Fez-Meknes, Morocco", placetype = "region"}}, -- 1,310,000 (Municipality (urban population))
+	["Fes"] = {alias_of = "Fez", display = true},
+	["Fès"] = {alias_of = "Fez", display = true},
+	["Agadir"] = {container = {key = "Souss-Massa, Morocco", placetype = "region"}}, -- 1,270,000 (Municipality (urban population))
+	["Marrakesh"] = {container = {key = "Marrakesh-Safi, Morocco", placetype = "region"}}, -- 1,140,000 (Municipality (urban population))
+	["Marrakech"] = {alias_of = "Marrakesh", display = true},
+	["Maputo"] = {container = "Mozambique"}, -- 2,575,000 (Agglomeration)
+	["Niamey"] = {container = "Niger"}, -- 1,530,000 (City)
+	["Brazzaville"] = {container = "Republic of the Congo"}, -- 2,475,000 (Agglomeration)
+	["Pointe-Noire"] = {container = "Republic of the Congo"}, -- 1,480,000 (City)
+	["Kigali"] = {container = "Rwanda"}, -- 1,960,000 (Municipality (urban population))
+	["Dakar"] = {container = "Senegal"}, -- 4,225,000 (Agglomeration)
+	["Touba"] = {container = "Senegal"}, -- 1,320,000 (Agglomeration)
+	["Mogadishu"] = {container = "Somalia"}, -- 2,250,000 (unindicated; population of low reliability)
+	["Khartoum"] = {container = "Sudan"}, -- 7,200,000 (unindicated; population of low reliability)
+	["Dar es Salaam"] = {container = "Tanzania"}, -- 6,650,000 (Agglomeration)
+	["Mwanza"] = {container = "Tanzania"}, -- 1,340,000 (Agglomeration)
+	["Arusha"] = {container = "Tanzania"}, -- 1,190,000 (Agglomeration)
+	["Zanzibar"] = {container = "Tanzania"}, -- 1,030,000 (Agglomeration)
+	["Lomé"] = {container = "Togo"}, -- 2,625,000 (unindicated)
+	["Tunis"] = {container = "Tunisia"}, -- 2,725,000 (Municipality (urban population))
+	["Sousse"] = {container = "Tunisia"}, -- 1,180,000 (Municipality (urban population))
+
+	------------------ Asia -------------------
+	-- sorted by country and then within the country, by decreasing population; figures from citypopulation.de
+	-- (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated.
+	["Kabul"] = {container = "Afghanistan"}, -- 5,250,000 (Agglomeration)
+	["Baku"] = {container = "Azerbaijan"}, -- 3,725,000 (Administrative Area (urban population))
+	["Manama"] = {container = "Bahrain"}, -- 1,560,000 (unindicated)
+	["Dhaka"] = {container = {key = "Dhaka Division, Bangladesh", placetype = "division"}}, -- 23,100,000 (Agglomeration)
+	["Dacca"] = {alias_of = "Dhaka", display = true},
+	["Chittagong"] = {container = {key = "Chittagong Division, Bangladesh", placetype = "division"}}, -- 5,050,000 (Agglomeration)
+	["Khulna"] = {container = {key = "Khulna Division, Bangladesh", placetype = "division"}}, -- 1,210,000 (Agglomeration)
+	["Phnom Penh"] = {container = "Cambodia"}, -- 2,925,000 (Agglomeration)
+	["Tehran"] = {container = "Iran"}, -- 16,800,000 (Agglomeration)
+	["Meshed"] = {container = "Iran"}, -- 3,475,000 (Agglomeration)
+	["Isfahan"] = {container = "Iran"}, -- 3,425,000 (Agglomeration)
+	["Tabriz"] = {container = "Iran"}, -- 1,970,000 (Agglomeration)
+	["Shiraz"] = {container = "Iran"}, -- 1,950,000 (Agglomeration)
+	["Ahvaz"] = {container = "Iran"}, -- 1,550,000 (Agglomeration)
+	["Qom"] = {container = "Iran"}, -- 1,450,000 (City)
+	["Kermanshah"] = {container = "Iran"}, -- 1,130,000 (City)
+	["Baghdad"] = {container = "Iraq"}, -- 7,800,000 (Administrative Area (urban population))
+	["Basra"] = {container = "Iraq"}, -- 1,710,000 (Administrative Area (urban population))
+	["Mosul"] = {container = "Iraq"}, -- 1,550,000 (Administrative Area (urban population))
+	["Erbil"] = {container = "Iraq"}, -- 1,220,000 (Administrative Area (urban population))
+	["Kirkuk"] = {container = "Iraq"}, -- 1,160,000 (Administrative Area (urban population))
+	["Najaf"] = {container = "Iraq"}, -- 1,050,000 (Administrative Area (urban population))
+	["Tel Aviv"] = {container = "Israel"}, -- 3,000,000 (Agglomeration)
+	-- Jerusalem is not recognized internationally as part of either Israel or Palestine, but as a
+	-- [[w:corpus separatum]], so put the container as "Asia" and list Israel and Palestine as additional parents for
+	-- categorization purposes.
+	["Jerusalem"] = {container = {key = "Asia", placetype = "continent"},
+		addl_parents = {"Israel", "Palestine"}}, -- 1,080,000 (Agglomeration)
+	["Amman"] = {container = "Jordan"}, -- 6,150,000 (unindicated)
+	["Irbid"] = {container = "Jordan"}, -- 1,070,000 (unindicated)
+	["Almaty"] = {container = "Kazakhstan"}, -- 2,700,000 (Agglomeration)
+	["Alma-Ata"] = {alias_of = "Almaty"}, -- former name, sometimes still used; don't display-canonicalize
+	["Astana"] = {container = "Kazakhstan"}, -- 1,600,000 (Agglomeration)
+	["Shymkent"] = {container = "Kazakhstan"}, -- 1,370,000 (Agglomeration)
+	["Kuwait City"] = {container = "Kuwait"}, -- 5,050,000 (Agglomeration)
+	["Bishkek"] = {container = "Kyrgyzstan"}, -- 1,540,000 (Agglomeration)
+	["Beirut"] = {container = "Lebanon"}, -- 1,930,000 (unindicated; population of low reliability)
+	["Ulaanbaatar"] = {container = "Mongolia"}, -- 1,610,000 (City)
+	["Ulan Bator"] = {alias_of = "Ulaanbaatar", display = true},
+	["Kathmandu"] = {container = "Nepal"}, -- 3,175,000 (Agglomeration)
+	-- Pyongyang is a directly governed city, not in any province
+	["Pyongyang"] = {container = "North Korea"}, -- 3,025,000 (Administrative Area (urban population))
+	["Muscat"] = {container = "Oman"}, -- 1,620,000 (Agglomeration)
+	["Gaza"] = {container = "Palestine"}, -- 2,275,000 (unindicated)
+	["Gaza City"] = {alias_of = "Gaza"},
+	["Doha"] = {container = "Qatar"}, -- 2,650,000 (Agglomeration)
+	["Damascus"] = {container = "Syria"}, -- 3,975,000 (unindicated; population of low reliability)
+	["Aleppo"] = {container = "Syria"}, -- 1,980,000 (unindicated; population of low reliability)
+	["Dushanbe"] = {container = "Tajikistan"}, -- 1,270,000 (City)
+	["Bangkok"] = {container = "Thailand"}, -- 21,800,000 (Agglomeration)
+	["Chonburi"] = {container = "Thailand"}, -- 1,570,000 (Agglomeration; including Pattaya)
+
+	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021;
+	-- second source is citypopulation.de reference date 2025-01-01.
+	["Istanbul"] = {container = "Turkey"}, -- 15.2 million; 16,000,000 (Agglomeration)
+	["İstanbul"] = {alias_of = "Istanbul", display = true},
+	["Ankara"] = {container = "Turkey"}, -- 5.15 million; 5,200,000 (Agglomeration)
+	["Izmir"] = {container = "Turkey"}, -- 2.95 million; 3,025,000 (Agglomeration)
+	["İzmir"] = {alias_of = "Izmir", display = true},
+	["Bursa"] = {container = "Turkey"}, -- 2.02 million; 2,200,000 (Agglomeration)
+	["Adana"] = {container = "Turkey"}, -- 1.77 million; 1,780,000 (Agglomeration)
+	["Gaziantep"] = {container = "Turkey"}, -- 1.71 million; 1,750,000 (Agglomeration)
+	["Antalya"] = {container = "Turkey"}, -- 1.3 million; 1,400,000 (Agglomeration)
+	["Konya"] = {container = "Turkey"}, -- 1.35 million; 1,390,000 (Agglomeration)
+	["Diyarbakır"] = {container = "Turkey"}, -- 1.07 million; 1,100,000 (Agglomeration)
+	-- Diyarbakır is more common per Ngrams and Google Scholar, but Diyarbakir is the Kurdish form, so we should not
+	-- display-canonicalize to the Turkish form Diyarbakır.
+	["Diyarbakir"] = {alias_of = "Diyarbakır"},
+	["Mersin"] = {container = "Turkey"}, -- 1.03 million; 1,060,000 (Agglomeration)
+
+	["Ashgabat"] = {container = "Turkmenistan"}, -- 1,150,000 (Agglomeration)
+	["Dubai"] = {container = "United Arab Emirates"}, -- 6,050,000 (Agglomeration; including Sharjah)
+	["Abu Dhabi"] = {container = "United Arab Emirates"}, -- 1,850,000 (City)
+	["Sharjah"] = {container = "United Arab Emirates"}, -- 1,800,000 (Metro area 2022-2023 per Wikipedia; separate from Dubai)
+	["Tashkent"] = {container = "Uzbekistan"}, -- 3,850,000 (unindicated)
+	["Ho Chi Minh City"] = {container = "Vietnam"}, -- 14,300,000 (Agglomeration; inclunding Bien Hoa)
+	["Saigon"] = {alias_of = "Ho Chi Minh City"},
+	["Hanoi"] = {container = "Vietnam"}, -- 7,350,000 (Agglomeration)
+	["Da Nang"] = {container = "Vietnam"}, -- 1,500,000 (Agglomeration)
+	["Danang"] = {alias_of = "Da Nang", display = true},
+	["Haiphong"] = {container = "Vietnam"}, -- 1,450,000 (Agglomeration)
+	["Hai Phong"] = {alias_of = "Haiphong", display = true},
+	["Bien Hoa"] = {container = "Vietnam"}, -- 1,272,235 (2022 city population per Wikipedia)
+	["Sanaa"] = {container = "Yemen"}, -- 3,275,000 (City; population of low reliability)
+	["Sana'a"] = {alias_of = "Sanaa", display = true},
+	["Aden"] = {container = "Yemen"}, -- 1,079,060 (?; 2023 estimate from World Population Review per Wikipedia)
+
+	------------------ North America, South America ---------------------
+	-- from [[w:List of metropolitan areas in the Americas]] based on per-country data
+	["Buenos Aires"] = {container = "Argentina"}, -- 13,985,794
+	["Bogotá"] = {container = "Colombia"}, -- 12,772,828
+	["Bogota"] = {alias_of = "Bogotá", display = true},
+	["Lima"] = {container = "Peru"}, -- 11,283,787
+	["Santiago"] = {container = "Chile"}, -- 6,903,479
+	["Maracaibo"] = {container = "Venezuela"}, -- 5,278,448
+	["Caracas"] = {container = "Venezuela"}, -- 5,243,301
+	["Santo Domingo"] = {container = "Dominican Republic"}, -- 4,274,651
+	["Medellín"] = {container = "Colombia"}, -- 4,068,000
+	["Medellin"] = {alias_of = "Medellín", display = true},
+	-- to avoid conflict with San Jose, California
+	["San Jose, Costa Rica"] = {container = "Costa Rica"}, -- 3,160,000
+	["San Jose"] = {alias_of = "San Jose, Costa Rica"},
+	["Guatemala City"] = {container = "Guatemala"}, -- 3,160,000
+	["Guayaquil"] = {container = "Ecuador"}, -- 3,092,000
+	["Port-au-Prince"] = {container = "Haiti"}, -- 	2,915,000
+	["Quito"] = {container = "Ecuador"}, -- 2,889,703
+	["Cali"] = {container = "Colombia"}, -- 2,837,000
+
+	-- from [[w:List of largest cities in the Americas]] based on per-country data; city limits only; figures from
+	-- citypopulation.de retrieved on 2025-04-26 (reference date 2025-01-01), often referring to some sort of metro area
+	["Havana"] = {container = "Cuba"}, -- 2,137,847; 2,150,000 per citypopulation.de (City)
+	["Santa Cruz de la Sierra"] = {container = "Bolivia"}, -- 1,606,671
+	["Santa Cruz"] = {alias_of = "Santa Cruz de la Sierra"},
+	["Córdoba, Argentina"] = {container = "Argentina"}, -- 1,505,250; 1,810,000 per citypopulation.de (Consolidated Urban Area)
+	-- to avoid confusion with Córdoba in Spain
+	["Córdoba"] = {alias_of = "Córdoba, Argentina"},
+	["Cordoba"] = {alias_of = "Córdoba, Argentina", display = "Córdoba"},
+	["Rosario"] = {container = "Argentina"}, -- 1,348,725; 1,510,000 per citypopulation.de (Consolidated Urban Area)
+	["Barranquilla"] = {container = "Colombia"}, -- 1,341,160
+	["Montevideo"] = {container = "Uruguay"}, -- 1,302,954
+	
+	-- Additional from citypopulation.de over 1,000,000; retrieved on 2025-04-26; reference date 2025-01-01.
+	["Mendoza"] = {container = "Argentina"}, -- 1,180,000 (Consolidated Urban Area)
+	["San Miguel de Tucumán"] = {container = "Argentina"}, -- 1,110,000 (Consolidated Urban Area)
+	["Tucumán"] = {alias_of = "San Miguel de Tucumán"},
+	["Tucuman"] = {alias_of = "San Miguel de Tucumán", display = "Tucumán"},
+	["La Paz"] = {container = "Bolivia"}, -- 1,870,000 (Consolidated Urban Area)
+	["Cochabamba"] = {container = "Bolivia"}, -- 1,280,000 (Consolidated Urban Area)
+	["Valparaíso"] = {container = "Chile"}, -- 1,060,000 (Consolidated Urban Area)
+	["Valparaiso"] = {alias_of = "Valparaíso"}, -- 1,060,000 (Consolidated Urban Area)
+	["Bucaramanga"] = {container = "Colombia"}, -- 1,380,000 (Agglomeration)
+	["Cartagena, Colombia"] = {container = "Colombia"}, -- 1,250,000 (Agglomeration)
+	-- to avoid confusion with Cartagena, Spain
+	["Cartagena"] = {alias_of = "Cartagena, Colombia"},
+	["Cúcuta"] = {container = "Colombia"}, -- 1,130,000 (Agglomeration)
+	["San Salvador"] = {container = "El Salvador"}, -- 1,580,000 (Municipality (urban population))
+	["San Pedro Sula"] = {container = "Honduras"}, -- 1,330,000 (Consolidated Urban Area)
+	["Tegucigalpa"] = {container = "Honduras"}, -- 1,220,000 (Urban Area)
+	["Managua"] = {container = "Nicaragua"}, -- 1,400,000 (Consolidated Urban Area)
+	["Panama City"] = {container = "Panama"}, -- 1,430,000 (Urban Area)
+	["Asunción"] = {container = "Paraguay"}, -- 2,350,000 (Municipality (urban population))
+	["Arequipa"] = {container = "Peru"}, -- 1,210,000 (Agglomeration)
+	["San Juan"] = {container = {key = "Puerto Rico", placetype = "commonwealth"}}, -- 1,910,000 (Consolidated Urban Area)
+	-- to avoid confusion with Valencia (city and autonomous community of Spain)
+	["Valencia, Venezuela"] = {container = "Venezuela"}, -- 2,100,000 (Consolidated Urban Area)
+	["Valencia"] = {alias_of = "Valencia, Venezuela"},
+	["Maracay"] = {container = "Venezuela"}, -- 1,480,000 (Consolidated Urban Area)
+	["Barquisimeto"] = {container = "Venezuela"}, -- 1,360,000 (Consolidated Urban Area)
+}
+
+export.misc_cities_american_spelling_group = {
+	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
+	default_placetype = "city",
+	data = export.misc_cities_american_spelling,
 }
 
 --[==[ var:
@@ -4280,14 +4580,18 @@ export.locations = {
 	export.japan_cities_group,
 	export.south_korea_cities_group,
 	export.mexico_cities_group,
+	export.nigeria_cities_group,
+	export.pakistan_cities_group,
 	export.philippines_cities_group,
 	export.russia_cities_group,
+	export.saudi_arabia_cities_group,
 	export.spain_cities_group,
 	export.taiwan_cities_group,
 	export.united_kingdom_cities_group,
 	export.united_states_cities_group,
 	export.new_york_boroughs_group,
-	export.misc_cities_group,
+	export.misc_cities_british_spelling_group,
+	export.misc_cities_american_spelling_group,
 }
 
 return export
