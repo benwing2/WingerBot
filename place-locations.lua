@@ -725,15 +725,16 @@ export.continents = {
 	["Earth"] = {the = true, placetype = "planet", addl_parents = {"nature"},
 			fulldesc = "=the planet [[Earth]] and the features found on it"},
 		["Africa"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"}},
-		["America"] = {placetype = "supercontinent", container = {key = "Earth", placetype = "planet"},
+		["America"] = {placetype = {"supercontinent", "continent"}, container = {key = "Earth", placetype = "planet"},
 				keydesc = "[[America]], in the sense of [[North America]] and [[South America]] combined"},
+		["Americas"] = {alias_of = "America", the = true},
 			["North America"] = {placetype = "continent", container = {key = "America", placetype = "supercontinent"}},
 				["Caribbean"] = {the = true, placetype = "continental region", container = {key = "North America", placetype = "continent"}},
 				["Central America"] = {placetype = "continental region", container = {key = "North America", placetype = "continent"}},
 			["South America"] = {placetype = "continent", container = {key = "America", placetype = "supercontinent"}},
 		["Antarctica"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"},
 				fulldesc = "=the territory of [[Antarctica]]"},
-		["Eurasia"] = {placetype = "supercontinent", container = {key = "Earth", placetype = "planet"},
+		["Eurasia"] = {placetype = {"supercontinent", "continent"}, container = {key = "Earth", placetype = "planet"},
 				keydesc = "[[Eurasia]], i.e. [[Europe]] and [[Asia]] together"},
 			["Asia"] = {placetype = "continent", container = {key = "Eurasia", placetype = "supercontinent"}},
 			["Europe"] = {placetype = "continent", container = {key = "Eurasia", placetype = "supercontinent"}},
@@ -843,7 +844,7 @@ export.countries = {
 		keydesc = "the [[Dominican Republic]], the country that shares the [[Caribbean]] island of [[Hispaniola]] with [[Haiti]]"},
 	["East Timor"] = {container = "Asia", divs = {"municipalities"}},
 	["Ecuador"] = {container = "South America", divs = {"provinces", "cantons"}},
-	["Egypt"] = {container = "Africa", divs = {"governorates", "regions"}},
+	["Egypt"] = {container = "Africa", divs = {"governorates", "regions"}, british_spelling = true},
 	["El Salvador"] = {container = "Central America", divs = {"departments", "municipalities"}},
 	["Equatorial Guinea"] = {container = "Africa", divs = {"provinces"}},
 	["Eritrea"] = {container = "Africa", divs = {"regions", "subregions"}},
@@ -2666,7 +2667,7 @@ export.norway_group = {
 
 export.pakistan_provinces_and_territories = {
 	["Azad Kashmir, Pakistan"] = {
-		placetype = {"administrative territory", "territory"},
+		placetype = {"administrative territory", "autonomous territory", "territory"},
 	},
 	["Azad Jammu and Kashmir, Pakistan"] = {alias_of = "Azad Kashmir, Pakistan", display = true},
 	["Balochistan, Pakistan"] = {},
@@ -4315,6 +4316,10 @@ export.misc_cities_british_spelling = {
 	["Harare"] = {container = "Zimbabwe"}, -- 2,675,000 (Agglomeration)
 	
 	------------------ Asia ------------------
+	["Dhaka"] = {container = {key = "Dhaka Division, Bangladesh", placetype = "division"}}, -- 23,100,000 (Agglomeration)
+	["Dacca"] = {alias_of = "Dhaka", display = true},
+	["Chittagong"] = {container = {key = "Chittagong Division, Bangladesh", placetype = "division"}}, -- 5,050,000 (Agglomeration)
+	["Khulna"] = {container = {key = "Khulna Division, Bangladesh", placetype = "division"}}, -- 1,210,000 (Agglomeration)
 	-- Kuala Lumpur is a federal capital city, not in any state
 	["Kuala Lumpur"] = {container = "Malaysia"}, -- 9,550,000 (Agglomeration)
 	-- there are various George Towns and Georgetowns
@@ -4401,10 +4406,6 @@ export.misc_cities_american_spelling = {
 	["Kabul"] = {container = "Afghanistan"}, -- 5,250,000 (Agglomeration)
 	["Baku"] = {container = "Azerbaijan"}, -- 3,725,000 (Administrative Area (urban population))
 	["Manama"] = {container = "Bahrain"}, -- 1,560,000 (unindicated)
-	["Dhaka"] = {container = {key = "Dhaka Division, Bangladesh", placetype = "division"}}, -- 23,100,000 (Agglomeration)
-	["Dacca"] = {alias_of = "Dhaka", display = true},
-	["Chittagong"] = {container = {key = "Chittagong Division, Bangladesh", placetype = "division"}}, -- 5,050,000 (Agglomeration)
-	["Khulna"] = {container = {key = "Khulna Division, Bangladesh", placetype = "division"}}, -- 1,210,000 (Agglomeration)
 	["Phnom Penh"] = {container = "Cambodia"}, -- 2,925,000 (Agglomeration)
 	["Tehran"] = {container = "Iran"}, -- 16,800,000 (Agglomeration)
 	["Meshed"] = {container = "Iran"}, -- 3,475,000 (Agglomeration)
