@@ -40,7 +40,7 @@ def rename_page(args, index, page, totitle, comment, refrom, reto):
       return False
     elif args.save:
       try:
-        page.move(totitle, reason=this_comment, movetalk=True, noredirect=True)
+        page.move(totitle, reason=this_comment, movetalk=True, noredirect=not args.with_redirect)
         errandpagemsg("Renamed to %s" % totitle)
       except pywikibot.PageRelatedError as error:
         errandpagemsg("Error moving to %s: %s" % (totitle, error))
@@ -80,6 +80,8 @@ if __name__ == "__main__":
   params.add_argument("--delete-comment", help="Specify the change comment to use when deleting")
   params.add_argument("--delete-from-direcfile", action="store_true",
       help="If only a single page given in --direcfile on a line, delete it.")
+  params.add_argument("--with-redirect", action="store_true",
+      help="If specified, redirects are created from the old page to the new page.")
   params.add_argument("--direcfile", help="File containing pairs of from/to pages to rename, separated by ' ||| '.")
   args = params.parse_args()
   start, end = blib.parse_start_end(args.start, args.end)
