@@ -1,11 +1,22 @@
-local export = {}
+local functions_module = "Module:fun"
+local labels_utilities_module = "Module:labels/utilities"
+local patterns_module = "Module:patterns"
+local string_utilities_module = "Module:string utilities"
+local topic_utilities_module = "Module:category tree/topic/utilities"
 
-local label_data = require("Module:category tree/topic cat/data")
-local topic_cat_utilities_module = "Module:category tree/topic cat/utilities"
-local labels_ancillary_module = "Module:labels/ancillary"
-local pattern_utilities_module = "Module:pattern utilities"
+local m_patterns = require(patterns_module)
 
-local rsplit = mw.text.split
+local concat = table.concat
+local insert = table.insert
+local is_callable = require("Module:fun").is_callable
+local pattern_escape = m_patterns.pattern_escape
+local replacement_escape = m_patterns.replacement_escape
+local split = require(string_utilities_module).split
+
+local label_data = require("Module:category tree/topic/data")
+
+local current_frame = mw.getCurrentFrame()
+local current_title = mw.title.getCurrentTitle()
 
 -- Category object
 
@@ -49,18 +60,20 @@ local type_data = {
 	},
 }
 
+
 local function invalid_type(types)
 	local valid_types = {}
 	for typ, _ in pairs(type_data) do
-		table.insert(valid_types, ("'%s'"):format(typ))
+		insert(valid_types, ("'%s'"):format(typ))
 	end
 	error(("Invalid type '%s', should be one or more of %s, comma-separated")
-		:format(types, require("Module:table").serialCommaJoin(valid_types, {dontTag = true})))
+		:format(types, mw.text.listToText(valid_types)))
 end
+
 
 local function split_types(types)
 	types = types or "related-to"
-	local splitvals = rsplit(types, "%s*,%s*")
+	local splitvals = split(types, "%s*,%s*")
 	for i, typ in ipairs(splitvals) do
 		-- FIXME: Temporary
 		if typ == "topic" then
@@ -74,34 +87,25 @@ local function split_types(types)
 	return splitvals
 end
 
+
 local function gsub_escaping_replacement(str, from, to)
-	return (str:gsub(from, require(pattern_utilities_module).replacement_escape(to)))
+	return (str:gsub(pattern_escape(from), replacement_escape(to)))
 end
 
-function Category.new_main(frame)
-	local self = setmetatable({}, Category)
 
-	local params = {
-		[1] = {},
-		[2] = {required = true},
-		["sc"] = {},
-	}
-
-	args = require("Module:parameters").process(frame:getParent().args, params, nil, "category tree/topic cat", "new_main")
-	self._info = {code = args[1], label = args[2]}
-
-	self:initCommon()
-
-	if not self._data then
-		return nil
+local function get_and_cache(obj, key)
+	local val = obj[key]
+	if is_callable(val) then
+		val = val()
+		obj[key] = val
 	end
-
-	return self
+	return val
 end
+
 
 function Category.new(info)
-	for key, val in pairs(info) do
-		if not (key == "code" or key == "label") then
+	for key in pairs(info) do
+		if not (key == "code" or key == "label" or key == "also") then
 			error("The parameter “" .. key .. "” was not recognized.")
 		end
 	end
@@ -122,13 +126,11 @@ function Category.new(info)
 	return self
 end
 
-export.new = Category.new
-export.new_main = Category.new_main
-
 
 function Category:initCommon()
 	if self._info.code then
-		self._lang = require("Module:languages").getByCode(self._info.code, true)
+		self._lang = require("Module:languages").getByCode(self._info.code) or
+			require("Module:languages/errorGetBy").code(self._info.code, true)
 	end
 
 	-- Convert label to lowercase if possible
@@ -161,17 +163,30 @@ function Category:getInfo()
 end
 
 
-function Category:format_displaytitle(include_lang_prefix)
+function ucfirst(txt)
+	local italics, raw_txt = txt:match("^('*)(.-)$")
+	return italics .. mw.getContentLanguage():ucfirst(raw_txt)
+end
+
+
+function Category:uclabel()
+	return ucfirst(self._info.label)
+end
+
+
+function Category:format_displaytitle(include_lang_prefix, upcase)
 	local displaytitle = self._data.displaytitle
 	if not displaytitle then
 		return nil
 	end
-	if type(displaytitle) == "string" then
-		if include_lang_prefix and self._lang then
-			displaytitle = ("%s:%s"):format(self._lang:getCode(), displaytitle)
-		end
-	else
-		displaytitle = displaytitle(self._info.label, lang, include_lang_prefix)
+	if is_callable(displaytitle) then
+		displaytitle = displaytitle(self._info.label, self._lang)
+	end
+	if upcase then
+		displaytitle = ucfirst(displaytitle)
+	end
+	if include_lang_prefix and self._lang then
+		displaytitle = ("%s:%s"):format(self._lang:getCode(), displaytitle)
 	end
 
 	return displaytitle
@@ -182,10 +197,10 @@ function Category:getBreadcrumbName()
 	local ret
 
 	if self._lang then
-		ret = self._data.breadcrumb or self:format_displaytitle(false)
+		ret = self._data.breadcrumb or self:format_displaytitle(false, "upcase")
 	else
 		ret = self._data.umbrella and self._data.umbrella.breadcrumb or
-			self._data.breadcrumb or self:format_displaytitle(false)
+			self._data.breadcrumb or self:format_displaytitle(false, "upcase")
 	end
 	if not ret then
 		ret = self._info.label
@@ -223,9 +238,9 @@ end
 
 function Category:getCategoryName()
 	if self._lang then
-		return self._lang:getCode() .. ":" .. mw.getContentLanguage():ucfirst(self._info.label)
+		return self._lang:getCode() .. ":" .. self:uclabel()
 	else
-		return mw.getContentLanguage():ucfirst(self._info.label)
+		return self:uclabel()
 	end
 end
 
@@ -264,35 +279,53 @@ function Category:process_default(desc)
 end
 
 
+function Category:format_desc(desc)
+	local desc_parts = {}
+	local types = split_types(self._data.type)
+	for _, typ in ipairs(types) do
+		insert(desc_parts, type_data[typ].desc .. " " .. desc)
+	end
+	return "{{{langname}}} " .. require("Module:table").serialCommaJoin(desc_parts) .. "."
+end
+
+
 function Category:replace_special_descriptions(desc)
 	if not desc then
 		return desc
 	end
 
-	local function format_desc(desc)
-		local desc_parts = {}
-		local types = split_types(self._data.type)
-		for _, typ in ipairs(types) do
-			table.insert(desc_parts, type_data[typ].desc .. " " .. desc)
-		end
-		return "{{{langname}}} " .. require("Module:table").serialCommaJoin(desc_parts) .. "."
-	end
-
 	if desc:find("^=") then
 		desc = desc:gsub("^=", "")
-		return format_desc(desc)
+		return self:format_desc(desc)
 	end
 
 	local is_default, no_singularize, wikify, add_the = self:process_default(desc)
 	if is_default then
-		local linked_label = require(topic_cat_utilities_module).link_label(self._info.label, no_singularize, wikify)
+		local linked_label = require(topic_utilities_module).link_label(self._info.label, no_singularize, wikify)
 		if add_the then
 			linked_label = "the " .. linked_label
 		end
-		return format_desc(linked_label)
+		return self:format_desc(linked_label)
 	else
 		return desc
 	end
+end
+
+
+function Category:get_displaytitle_or_label()
+	return self:format_displaytitle(false) or self._info.label
+end
+
+
+function Category:process_default_add_the(topic)
+	local is_default, _, _, add_the = self:process_default(topic)
+	if is_default then
+		topic = self:get_displaytitle_or_label()
+		if add_the then
+			topic = "the " .. topic
+		end
+	end
+	return topic, is_default
 end
 
 
@@ -307,14 +340,14 @@ function Category:substitute_template_specs(desc)
 	if type(desc) ~= "string" then
 		return desc
 	end
-	desc = gsub_escaping_replacement(desc, "{{PAGENAME}}", mw.title.getCurrentTitle().text)
+	desc = gsub_escaping_replacement(desc, "{{PAGENAME}}", current_title.text)
 
 	if desc:find("{{{umbrella_msg}}}") then
 		local eninfo = mw.clone(self._info)
 		eninfo.code = "en"
 		local en = Category.new(eninfo)
 		desc = desc:gsub("{{{umbrella_msg}}}", "This category contains no dictionary entries, only other categories. The subcategories are of two sorts:\n\n" ..
-			"* Subcategories named like \"aa:" .. mw.getContentLanguage():ucfirst(self._info.label) .. 
+			"* Subcategories named like \"aa:" .. self:uclabel() ..
 			"\" (with a prefixed language code) are categories of terms in specific languages. " ..
 			"You may be interested especially in [[:Category:" .. en:getCategoryName() .. "]], for English terms.\n" ..
 			"* Subcategories of this one named without the prefixed language code are further categories just like this one, but devoted to finer topics."
@@ -328,50 +361,31 @@ function Category:substitute_template_specs(desc)
 	end
 
 	if desc:find("{{{topic}}}") then
-		local function get_displaytitle_or_label()
-			return self:format_displaytitle(false) or self._info.label
-		end
-
-		local function process_default_add_the(topic)
-			local is_default, no_singularize, wikify, add_the = self:process_default(topic)
-			if is_default then
-				topic = get_displaytitle_or_label()
-				if add_the then
-					topic = "the " .. topic
-				end
-			end
-			return topic, is_default
-		end
-
 		-- Compute the value for {{{topic}}}. If the user specified `topic`, use it. (If we're an umbrella category,
 		-- allow a separate value for `umbrella.topic`, falling back to `topic`.) Otherwise, see if the description
 		-- was specified as 'default' or a variant; if so, parse it to determine whether to add "the" to the label.
 		-- Otherwise, just use the label directly.
 		local topic = not self._lang and self._data.umbrella and self._data.umbrella.topic or self._data.topic
 		if topic then
-			topic, _ = process_default_add_the(topic)
+			topic = self:process_default_add_the(topic)
 		else
 			local desc
 			if not self._lang then
-				desc = self._data.umbrella and self._data.umbrella.description or self._data.umbrella_description
+				desc = self._data.umbrella and get_and_cache(self._data.umbrella, "description") or get_and_cache(self._data, "umbrella_description")
 			end
-			desc = desc or self._data.description
-			local defaulted_desc, is_default = process_default_add_the(desc)
+			desc = desc or get_and_cache(self._data, "description")
+			local defaulted_desc, is_default = self:process_default_add_the(desc)
 			if is_default then
 				topic = defaulted_desc
 			else
-				topic = get_displaytitle_or_label()
+				topic = self:get_displaytitle_or_label()
 			end
 		end
 
 		desc = gsub_escaping_replacement(desc, "{{{topic}}}", topic)
 	end
-
-	if desc:find("{") then
-		desc = mw.getCurrentFrame():preprocess(desc)
-	end
-
-	return desc
+	
+	return current_frame:preprocess(desc)
 end
 
 
@@ -389,32 +403,33 @@ function Category:substitute_template_specs_in_args(args)
 end
 
 
-function Category:getTopright()
-	local def_topright_parts = {}
-	local function process_box(val, pattern)
-		if not val then
-			return
-		end
-		local defval = mw.getContentLanguage():ucfirst(self._info.label)
-		if type(val) ~= "table" then
-			val = {val}
-		end
-		for _, v in ipairs(val) do
-			if v == true then
-				table.insert(def_topright_parts, pattern:format(defval))
-			else
-				table.insert(def_topright_parts, pattern:format(v))
-			end
+function Category:process_box(def_topright_parts, val, pattern)
+	if not val then
+		return
+	end
+	local defval = self:uclabel()
+	if type(val) ~= "table" then
+		val = {val}
+	end
+	for _, v in ipairs(val) do
+		if v == true then
+			insert(def_topright_parts, pattern:format(defval))
+		else
+			insert(def_topright_parts, pattern:format(v))
 		end
 	end
+end
 
-	process_box(self._data.wp, "{{wikipedia|%s}}")
-	process_box(self._data.wpcat, "{{wikipedia|category=%s}}")
-	process_box(self._data.commonscat, "{{commonscat|%s}}")
+
+function Category:getTopright()
+	local def_topright_parts = {}
+	self:process_box(def_topright_parts, self._data.wp, "{{wikipedia|%s}}")
+	self:process_box(def_topright_parts, self._data.wpcat, "{{wikipedia|category=%s}}")
+	self:process_box(def_topright_parts, self._data.commonscat, "{{commonscat|%s}}")
 
 	local def_topright
 	if #def_topright_parts > 0 then
-		def_topright = table.concat(def_topright_parts, "\n")
+		def_topright = concat(def_topright_parts, "\n")
 	end
 
 	if self._lang then
@@ -435,48 +450,50 @@ local function remove_lang_params(desc)
 end
 
 
+function Category:display_title()
+	local displaytitle = self:format_displaytitle("include lang prefix", "upcase")
+	if displaytitle then
+		displaytitle = self:substitute_template_specs(displaytitle)
+		current_frame:callParserFunction("DISPLAYTITLE", "Category:" .. displaytitle)
+	end
+end
+
+
+function Category:get_additional_msg()
+	local types = split_types(self._data.type)
+	if #types > 1 then
+		local parts = {"'''NOTE''': This is a mixed category. It may contain terms of any of the following category types:"}
+		for i, typ in ipairs(types) do
+			insert(parts, ("* %s {{{topic}}}%s"):format(type_data[typ].desc, i == #types and "." or ";"))
+		end
+		insert(parts, "'''WARNING''': Such categories are strongly dispreferred and should be split into separate per-type categories.")
+		return concat(parts, "\n")
+	elseif self._info.label == "all topics" then
+		return "'''NOTE''': This is the topmost topic category for {{{langname}}}. It should not directly contain " ..
+		"any terms, but only lists of topic categories organized by type."
+	else
+		return type_data[types[1]].additional
+	end
+end
+
+
+function Category:get_labels_categorizing()
+	local m_labels_utilities = require(labels_utilities_module)
+	return m_labels_utilities.format_labels_categorizing(
+		m_labels_utilities.find_labels_for_category(self._info.label, "topic", self._lang), nil, self._lang)
+end
+
+
 function Category:getDescription(isChild)
 	-- Allows different text in the list of a category's children
 	local isChild = isChild == "child"
 
-	local function display_title()
-		local displaytitle = self:format_displaytitle("include lang prefix")
-		if displaytitle then
-			displaytitle = self:substitute_template_specs(displaytitle)
-			mw.getCurrentFrame():callParserFunction("DISPLAYTITLE", "Category:" .. displaytitle)
-		end
-	end
-
 	if not isChild and self._data.displaytitle then
-		display_title()
-	end
-
-	local function get_labels_categorizing()
-		local m_labels_ancillary = require(labels_ancillary_module)
-		return m_labels_ancillary.format_labels_categorizing(
-			m_labels_ancillary.find_labels_for_category(self._info.label, "topic", self._lang), nil, self._lang)
-	end
-
-	local function get_additional_msg()
-		local types = split_types(self._data.type)
-		if #types > 1 then
-			local parts = {}
-			local function ins(txt)
-				table.insert(parts, txt)
-			end
-			ins("'''NOTE''': This is a mixed category. It may contain terms of any of the following category types:")
-			for i, typ in ipairs(types) do
-				ins(("* %s {{{topic}}}%s"):format(type_data[typ].desc, i == #types and "." or ";"))
-			end
-			ins("'''WARNING''': Such categories are strongly dispreferred and should be split into separate per-type categories.")
-			return table.concat(parts, "\n")
-		else
-			return type_data[types[1]].additional
-		end
+		self:display_title()
 	end
 
 	if self._lang then
-		local desc = self._data.description
+		local desc = get_and_cache(self._data, "description")
 
 		desc = self:replace_special_descriptions(desc)
 		if not isChild and desc then
@@ -486,8 +503,8 @@ function Category:getDescription(isChild)
 			if self._data.additional then
 				desc = desc .. "\n\n" .. self._data.additional
 			end
-			desc = desc .. "\n\n" .. get_additional_msg()
-			local labels_msg = get_labels_categorizing()
+			desc = desc .. "\n\n" .. self:get_additional_msg()
+			local labels_msg = self:get_labels_categorizing()
 			if labels_msg then
 				desc = desc .. "\n\n" .. labels_msg
 			end
@@ -499,10 +516,10 @@ function Category:getDescription(isChild)
 			return "This category applies to content and not to meta material about the Wiki."
 		end
 
-		local desc = self._data.umbrella and self._data.umbrella.description or self._data.umbrella_description
+		local desc = self._data.umbrella and get_and_cache(self._data.umbrella, "description") or get_and_cache(self._data, "umbrella_description")
 		local has_umbrella_desc = not not desc
 		if not desc then
-			 desc = self._data.description
+			 desc = get_and_cache(self._data, "description")
 			 if desc then
 		 		desc = self:replace_special_descriptions(desc)
 				desc = remove_lang_params(desc)
@@ -526,8 +543,8 @@ function Category:getDescription(isChild)
 				desc = desc .. "\n\n" .. remove_lang_params(additional)
 			end
 			desc = desc .. "\n\n{{{umbrella_msg}}}"
-			desc = desc .. "\n\n" .. get_additional_msg()
-			local labels_msg = get_labels_categorizing()
+			desc = desc .. "\n\n" .. self:get_additional_msg()
+			local labels_msg = self:get_labels_categorizing()
 			if labels_msg then
 				desc = desc .. "\n\n" .. labels_msg
 			end
@@ -552,7 +569,7 @@ function Category:getParents()
 
 	local ret = {}
 
-	for key, parent in ipairs(parents) do
+	for _, parent in ipairs(parents) do
 		parent = mw.clone(parent)
 
 		if type(parent) ~= "table" then
@@ -608,8 +625,8 @@ function Category:getParents()
 				parent.name = Category.new(pinfo)
 			end
 		end
-
-		table.insert(ret, parent)
+		
+		insert(ret, parent)
 	end
 
 
@@ -618,15 +635,23 @@ function Category:getParents()
 		for _, typ in ipairs(types) do
 			local pinfo = mw.clone(self._info)
 			pinfo.label = ("list of %s categories"):format(typ)
-			table.insert(ret, {name = Category.new(pinfo), sort = (not self._lang and " " or "") .. label})
+			insert(ret, {name = Category.new(pinfo), sort = (not self._lang and " " or "") .. label})
 		end
 		if #types > 1 then
 			local pinfo = mw.clone(self._info)
-			pinfo.label = ("list of mixed categories"):format(typ)
-			table.insert(ret, {name = Category.new(pinfo), sort = (not self._lang and " " or "") .. label})
+			pinfo.label = "list of mixed categories"
+			insert(ret, {name = Category.new(pinfo), sort = (not self._lang and " " or "") .. label})
 		end
 	end
 
+	local self_cat = self:getCategoryName()
+	for _, parent in ipairs(ret) do
+		local parent_cat = parent.name.getCategoryName and parent.name:getCategoryName()
+		if self_cat == parent_cat then
+			error(("Internal error: Infinite loop would occur, as parent category '%s' is the same as the child category"):format(self_cat))
+		end
+	end
+	
 	return ret
 end
 
@@ -641,9 +666,55 @@ function Category:getUmbrella()
 		return nil
 	end
 
+	-- We take advantage of the fact that this function (getUmbrella) is fully overridden in
+	-- [[Module:category tree/thesaurus]]. That code never calls this function. Moreover, this function is only called
+	-- when attempting to display the category boilerplate, not simply when a category object is instantiated. This
+	-- makes it a safe place to throw an error when a user tries to create a thesaurus-only category under a regular
+	-- mainspace title.
+	if self._data and self._data.thesaurusonly then
+		error('This is a thesaurus-only category type; you cannot create non-thesaurus categories with it.')
+	end
+
 	local uinfo = mw.clone(self._info)
 	uinfo.code = nil
 	return Category.new(uinfo)
+end
+
+
+function Category:getCatfixInfo()
+	if self._lang or self._sc then
+		local langcode, sccode, lang, sc = self._data.catfix, self._data.catfix_sc
+		if langcode then
+			langcode = self:substitute_template_specs(langcode)
+			lang = require("Module:languages").getByCode(langcode) or
+				require("Module:languages/errorGetBy").code(langcode, true)
+		elseif langcode == nil then -- not false
+			lang = self._lang
+		end
+		if sccode then
+			sccode = self:substitute_template_specs(sccode)
+			sc = require("Module:scripts").getByCode(sccode) or
+				require("Module:languages/error")(sccode, true, "script code", nil, "not real lang")
+		elseif sccode == nil then -- not false
+			sc = self._sc
+		end
+		return lang, sc
+	elseif not self._data.umbrella then
+		return
+	end
+	-- umbrella
+	local langcode, sccode, lang, sc = self._data.umbrella.catfix, self._data.umbrella.catfix_sc
+	if langcode then
+		langcode = self:substitute_template_specs(langcode)
+		lang = require("Module:languages").getByCode(langcode) or
+			require("Module:languages/errorGetBy").code(langcode, true)
+	end
+	if sccode then
+		sccode = self:substitute_template_specs(sccode)
+		sc = require("Module:scripts").getByCode(sccode) or
+			require("Module:languages/error")(sccode, true, "script code", nil, "not real lang")
+	end
+	return lang, sc
 end
 
 
@@ -653,5 +724,17 @@ function Category:getTOCTemplateName()
 	return "Template:" .. code .. "-categoryTOC"
 end
 
+
+local export = {}
+
+function export.main(info)
+	local self = setmetatable({_info = info}, Category)
+	
+	self:initCommon()
+	
+	return self._data and self or nil
+end
+
+export.new = Category.new
 
 return export
