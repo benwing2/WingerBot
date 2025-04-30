@@ -635,8 +635,7 @@ function export.get_placetype_display_form(placetype, category_type)
 			end
 			raw_link = ptdata.category_link
 			if raw_link == false then
-				internal_error("Placetype %s with category type %s fetched 'false' as value of category link",
-					placetype, category_type)
+				return raw_link, ptdata
 			end
 			if type(raw_link) == "string" and raw_link:find("%[%[") then
 				return raw_link, ptdata
@@ -822,47 +821,56 @@ function export.iterate_matching_holonym_location(data)
 				local mismatch_at_level = false
 				for other_holonym_index, other_holonym in export.get_holonyms_to_check(place_desc,
 					holonym_index and holonym_index + 1 or nil) do
-					local holonym_matches_at_level = false
-					local holonym_exists_with_same_placetype = false
-					for _, container in ipairs(containers) do
-						if not container.spec.no_check_holonym_mismatch then
-							local full_container_placename, elliptical_container_placename = m_locations.key_to_placename(
-								container.group, container.key)
-							local placetypes = container.spec.placetype
-							if type(placetypes) ~= "table" then
-								placetypes = {placetypes}
-							end
-							local placetype_equivs = {}
-							for _, pt in ipairs(placetypes) do
-								m_table.extend(placetype_equivs, export.get_placetype_equivs(pt))
-							end
-							local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(placetype_equivs,
-								function(placetype)
-									return other_holonym.placetype == placetype and
-										(other_holonym.unlinked_placename == full_container_placename or
-										other_holonym.unlinked_placename == elliptical_container_placename)
+					local other_source_holonym = other_holonym.augmented_from_holonym
+					if other_source_holonym and other_source_holonym.placetype == holonym_placetype and
+						other_source_holonym.unlinked_placename ~= holonym_placename then
+							-- Ignore holonyms added during the augmentation process for other holonyms of the same
+							-- placetype as the placetype of the holonym we're considering. See comment in
+							-- augment_holonyms_with_container() for why we do this.
+							-- continue; grrr, no 'continue' in Lua
+					else
+						local holonym_matches_at_level = false
+						local holonym_exists_with_same_placetype = false
+						for _, container in ipairs(containers) do
+							if not container.spec.no_check_holonym_mismatch then
+								local full_container_placename, elliptical_container_placename =
+									m_locations.key_to_placename(container.group, container.key)
+								local placetypes = container.spec.placetype
+								if type(placetypes) ~= "table" then
+									placetypes = {placetypes}
 								end
-							)
-							if this_holonym_matches then
-								holonym_matches_at_level = true
-								break
-							end
-							local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
-								placetype_equivs, function(placetype)
-									return other_holonym.placetype == placetype
+								local placetype_equivs = {}
+								for _, pt in ipairs(placetypes) do
+									m_table.extend(placetype_equivs, export.get_placetype_equivs(pt))
 								end
-							)
-							if this_holonym_exists_with_same_placetype then
-								holonym_exists_with_same_placetype = true
+								local this_holonym_matches = export.get_equiv_placetype_prop_from_equivs(
+									placetype_equivs, function(placetype)
+										return other_holonym.placetype == placetype and
+											(other_holonym.unlinked_placename == full_container_placename or
+											other_holonym.unlinked_placename == elliptical_container_placename)
+									end
+								)
+								if this_holonym_matches then
+									holonym_matches_at_level = true
+									break
+								end
+								local this_holonym_exists_with_same_placetype = export.get_equiv_placetype_prop_from_equivs(
+									placetype_equivs, function(placetype)
+										return other_holonym.placetype == placetype
+									end
+								)
+								if this_holonym_exists_with_same_placetype then
+									holonym_exists_with_same_placetype = true
+								end
 							end
 						end
-					end
-					if holonym_matches_at_level then
-						match_at_level = true
-						break
-					end
-					if holonym_exists_with_same_placetype then
-						mismatch_at_level = true
+						if holonym_matches_at_level then
+							match_at_level = true
+							break
+						end
+						if holonym_exists_with_same_placetype then
+							mismatch_at_level = true
+						end
 					end
 				end
 				if not match_at_level and mismatch_at_level then
@@ -1442,12 +1450,10 @@ as a holonym to [[:Category:en:Places in Boston]], along with [[:Category:en:Pla
 having the same name. For example, the code in [[Module:place/locations]] knows about the city of [[Columbus]],
 [[Ohio]], which has containing polities `Ohio` (a state) and `the United States` (a country). If either containing
 polity is mentioned, the handler proceeds to return the key `Columbus` (along with `Ohio, USA` and `the United States`).
-Otherwise, if any other state or country is mentinoned, the handler returns nothing, and otherwise it assumes the
-mentioned city is the one we're considering and returns `Columbus` etc. (NOTE: I *think* this works correctly if the
-place only mentions Ohio and a holonym for a Columbus in a different country is encountered, because of the function
-`augment_holonyms_with_container`, which adds the US as a holonym when Ohio is encountered. However, this may
-fail for the UK because I think there's a setting preventing adding the UK as a holonym when counties in England,
-council areas in Scotland, etc. are encountered. FIXME: Investigate this further.)
+Otherwise, if any other state or country is mentioned, the handler returns nothing, and otherwise it assumes the
+mentioned city is the one we're considering and returns `Columbus` etc. This works correctly if the place only mentions
+Ohio and a holonym for a Columbus in a different country is encountered, because of the function
+`augment_holonyms_with_container`, which adds the US as a holonym when Ohio is encountered.
 
 The single parameter `data` is as in category handlers. The return value is a list of categories (without the preceding
 language code).
@@ -1660,14 +1666,35 @@ function export.augment_holonyms_with_container(place_descs)
 									m_locations.key_to_placename(container.group, container.key)
 								-- Don't side-effect holonyms while processing them.
 								local new_holonym = {
-									-- By the time we run, the display has already been generated so we don't need to set
-									-- display_placename.
+									-- By the time we run, the display has already been generated so we don't need to
+									-- set display_placename.
 									placetype = containing_type,
 									-- placename_to_key() for the group should correctly handle both full and elliptical
 									-- placenames, but the full placename seems less likely to be ambiguous. FIXME: We
 									-- should just store the key directly and use it when available to avoid having to
 									-- convert key to placename and back to key.
 									unlinked_placename = full_container_placename,
+									-- Indicate that this is an augmented holonym, and was derived from the specified
+									-- holonym. In iterate_matching_holonym_location(), we ignore augmented holonyms
+									-- derived from holonyms that are different from the holonym we're searching for but
+									-- of the same placetype. This is to correctly handle a situation like
+									-- {{place|river|dept/Ardèche,Gard,Vaucluse,Bouches-du-Rhône|c/France}}. Here,
+									-- `Ardèche` is in `r/Auvergne-Rhône-Alpes`, while `Gard` is in `r/Occitania` and
+									-- the other two are in `r/Provence-Alpes-Côte d'Azur`. Augmenting proceeds from
+									-- right to left, so after it adds `r/Provence-Alpes-Côte d'Azur` to
+									-- `Bouches-du-Rhône`, Vaucluse gets augmented correctly but `Gard` fails to match
+									-- in find_matching_holonym_location() because of the mismatch between augmented
+									-- `r/Provence-Alpes-Côte d'Azur` and actual `r/Occitania`. Similarly, all later
+									-- calls to find_matching_holonym_location() fail to match `Gard` (and likewise
+									-- `Ardèche`) against any known location. To deal with this, we mark augmented
+									-- holoynms as being augmented due to a source holonym, and when processing a given
+									-- holonym, ignore augmented holonyms from other holonyms of the same placetype.
+									-- The restriction to the same placetype is so that `Birmingham` still gets
+									-- correctly disambiguated to Birmingham, England in the example given above near
+									-- the top of this function, using the augmented holonym `c/United Kingdom` added by
+									-- the specified `cc/England` (whose placetype `constituent country` differs from
+									-- the placetype `city` of Birmingham).
+									augmented_from_holonym = holonym,
 								}
 								insert(augmented_holonyms, new_holonym)
 								-- But it is safe to modify other parts of the place_desc.
@@ -2633,18 +2660,24 @@ If you need to sort the following, do this (using Vim):
 		fallback = "country",
 		class = "subpolity",
 	},
+	["counties and county-level cities!"] = {
+		-- This is used when grouping counties and county-level cities under prefecture-level cities in China.
+		category_link = "[[county|counties]] and [[county-level city|county-level cities]]",
+		class = "subpolity",
+	},
 	["continent"] = {
 		link = true,
-		category_link = "the [[continent]]s of the world",
+		category_link = false, -- can't occur as a bare category
 		class = "geographic region",
 		default = {"Continents and continental regions"},
 	},
 	["continental region"] = {
 		link = "separately",
+		category_link = false, -- can't occur as a bare category
 		fallback = "continent",
 	},
 	["continents and continental regions!"] = {
-		category_link = "[[continent]]s and [[continet]]-[[level]] [[region]]s (e.g. [[Polynesia]])",
+		category_link = "[[continent]]s and [[continent]]-[[level]] [[region]]s (e.g. [[Polynesia]])",
 		class = "geographic region",
 	},
 	["council area"] = {
@@ -3192,6 +3225,11 @@ If you need to sort the following, do this (using Vim):
 	["heath"] = {
 		link = true,
 		fallback = "moor",
+	},
+	["hemisphere"] = {
+		link = true,
+		entry_placetype_use_the = true,
+		fallback = "continental region",
 	},
 	["hill"] = {
 		link = true,
@@ -3993,7 +4031,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "capital city",
 	},
 	["rural committee"] = {
-		-- Hong Kong; something like a village, specifically for indigenous people
+		-- Hong Kong; a group of villages
 		link = "w",
 		affix_type = "Suf",
 		has_neighborhoods = true,
@@ -4108,14 +4146,17 @@ If you need to sort the following, do this (using Vim):
 		fallback = "research station",
 	},
 	["special administrative region"] = {
-		-- in China; in practice they are city-like (Hong Kong, Shenzhen); also [[Oecusse]] in East Timor is formally a
+		-- in China; in practice they are city-like (Hong Kong, Macau); also [[Oecusse]] in East Timor is formally a
 		-- "special administrative region"; North Korea had one such region planned (Sinuiju) but abandoned; Indonesia
 		-- has similar "special regions" of Jakarta, Yogyakarta and Aceh; and South Sudan has three "special
 		-- administrative areas"
 		link = "+w:special administrative regions of China",
 		preposition = "of",
-		class = "settlement",
+		class = "subpolity",
 		has_neighborhoods = true, --?
+		-- no suffix since places in Hong Kong or Macau are listed without China, except Hong Kong and Macau themselves
+		-- they also contain regions (or areas), e.g. [[Kowloon]], so it would be confusing
+		suffix = "",
 	},
 	["special collectivity"] = {
 		link = "w",
