@@ -1972,8 +1972,128 @@ export.france_group = {
 	-- Canonically these are 'administrative regions' but also treat as 'region' ('administrative region' falls back
 	-- to 'region').
 	default_placetype = "region",
+	default_divs = {
+		"communes",
+		"departments",
+	},
 	default_british_spelling = true,
 	data = export.france_administrative_regions,
+}
+
+export.france_departments = {
+	["Ain, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 01
+	["Aisne, France"] = {container = "Hauts-de-France"}, -- 02
+	["Allier, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 03
+	["Alpes-de-Haute-Provence, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 04
+	["Hautes-Alpes, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 05
+	["Alpes-Maritimes, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 06
+	["Ardèche, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 07
+	["Ardennes, France"] = {container = "Grand Est", wp = "Ardennes (department)"}, -- 08
+	["Ariège, France"] = {container = "Occitania", wp = "Ariège (department)"}, -- 09
+	["Aube, France"] = {container = "Grand Est"}, -- 10
+	["Aude, France"] = {container = "Occitania"}, -- 11
+	["Aveyron, France"] = {container = "Occitania"}, -- 12
+	["Bouches-du-Rhône, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 13
+	["Calvados, France"] = {container = "Normandy", wp = "Calvados (department)"}, -- 14
+	["Cantal, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 15
+	["Charente, France"] = {container = "Nouvelle-Aquitaine"}, -- 16
+	["Charente-Maritime, France"] = {container = "Nouvelle-Aquitaine"}, -- 17
+	["Cher, France"] = {container = "Centre-Val de Loire", wp = "Cher (department)"}, -- 18
+	["Corrèze, France"] = {container = "Nouvelle-Aquitaine"}, -- 19
+	["Corse-du-Sud, France"] = {container = "Corsica"}, -- 2A
+	["Haute-Corse, France"] = {container = "Corsica"}, -- 2B
+	["Côte-d'Or, France"] = {container = "Bourgogne-Franche-Comté"}, -- 21
+	["Côtes-d'Armor, France"] = {container = "Brittany"}, -- 22
+	["Creuse, France"] = {container = "Nouvelle-Aquitaine"}, -- 23
+	["Dordogne, France"] = {container = "Nouvelle-Aquitaine"}, -- 24
+	["Doubs, France"] = {container = "Bourgogne-Franche-Comté"}, -- 25
+	["Drôme, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 26
+	["Eure, France"] = {container = "Normandy"}, -- 27
+	["Eure-et-Loir, France"] = {container = "Centre-Val de Loire"}, -- 28
+	["Finistère, France"] = {container = "Brittany"}, -- 29
+	["Gard, France"] = {container = "Occitania"}, -- 30
+	["Haute-Garonne, France"] = {container = "Occitania"}, -- 31
+	["Gers, France"] = {container = "Occitania"}, -- 32
+	["Gironde, France"] = {container = "Nouvelle-Aquitaine"}, -- 33
+	["Hérault, France"] = {container = "Occitania"}, -- 34
+	["Ille-et-Vilaine, France"] = {container = "Brittany"}, -- 35
+	["Indre, France"] = {container = "Centre-Val de Loire"}, -- 36
+	["Indre-et-Loire, France"] = {container = "Centre-Val de Loire"}, -- 37
+	["Isère, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 38
+	["Jura, France"] = {container = "Bourgogne-Franche-Comté", wp = "Jura (department)"}, -- 39
+	["Landes, France"] = {container = "Nouvelle-Aquitaine", wp = "Landes (department)"}, -- 40
+	["Loir-et-Cher, France"] = {container = "Centre-Val de Loire"}, -- 41
+	["Loire, France"] = {container = "Auvergne-Rhône-Alpes", wp = "Loire (department)"}, -- 42
+	["Haute-Loire, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 43
+	["Loire-Atlantique, France"] = {container = "Pays de la Loire"}, -- 44
+	["Loiret, France"] = {container = "Centre-Val de Loire"}, -- 45
+	["Lot, France"] = {container = "Occitania", wp = "Lot (department)"}, -- 46
+	["Lot-et-Garonne, France"] = {container = "Nouvelle-Aquitaine"}, -- 47
+	["Lozère, France"] = {container = "Occitania"}, -- 48
+	["Maine-et-Loire, France"] = {container = "Pays de la Loire"}, -- 49
+	["Manche, France"] = {container = "Normandy"}, -- 50
+	["Marne, France"] = {container = "Grand Est", wp = "Marne (department)"}, -- 51
+	["Haute-Marne, France"] = {container = "Grand Est"}, -- 52
+	["Mayenne, France"] = {container = "Pays de la Loire"}, -- 53
+	["Meurthe-et-Moselle, France"] = {container = "Grand Est"}, -- 54
+	["Meuse, France"] = {container = "Grand Est", wp = "Meuse (department)"}, -- 55
+	["Morbihan, France"] = {container = "Brittany"}, -- 56
+	["Moselle, France"] = {container = "Grand Est", wp = "Moselle (department)"}, -- 57
+	["Nièvre, France"] = {container = "Bourgogne-Franche-Comté"}, -- 58
+	["Nord, France"] = {container = "Hauts-de-France", wp = "Nord (French department)"}, -- 59
+	["Oise, France"] = {container = "Hauts-de-France"}, -- 60
+	["Orne, France"] = {container = "Normandy"}, -- 61
+	["Pas-de-Calais, France"] = {container = "Hauts-de-France"}, -- 62
+	["Puy-de-Dôme, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 63
+	["Pyrénées-Atlantiques, France"] = {container = "Nouvelle-Aquitaine"}, -- 64
+	["Hautes-Pyrénées, France"] = {container = "Occitania"}, -- 65
+	["Pyrénées-Orientales, France"] = {container = "Occitania"}, -- 66
+	["Bas-Rhin, France"] = {container = "Grand Est"}, -- 67
+	["Haut-Rhin, France"] = {container = "Grand Est"}, -- 68
+	["Rhône, France"] = {container = "Auvergne-Rhône-Alpes", wp = "Rhône (department)"}, -- 69D
+	["Lyon Metropolis, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 69M
+	["Haute-Saône, France"] = {container = "Bourgogne-Franche-Comté"}, -- 70
+	["Saône-et-Loire, France"] = {container = "Bourgogne-Franche-Comté"}, -- 71
+	["Sarthe, France"] = {container = "Pays de la Loire"}, -- 72
+	["Savoie, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 73
+	["Haute-Savoie, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 74
+	["Paris, France"] = {container = "Île-de-France"}, -- 75
+	["Seine-Maritime, France"] = {container = "Normandy"}, -- 76
+	["Seine-et-Marne, France"] = {container = "Île-de-France"}, -- 77
+	["Yvelines, France"] = {container = "Île-de-France"}, -- 78
+	["Deux-Sèvres, France"] = {container = "Nouvelle-Aquitaine"}, -- 79
+	["Somme, France"] = {container = "Hauts-de-France", wp = "Somme (department)"}, -- 80
+	["Tarn, France"] = {container = "Occitania", wp = "Tarn (department)"}, -- 81
+	["Tarn-et-Garonne, France"] = {container = "Occitania"}, -- 82
+	["Var, France"] = {container = "Provence-Alpes-Côte d'Azur", wp = "Var (department)"}, -- 83
+	["Vaucluse, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 84
+	["Vendée, France"] = {container = "Pays de la Loire"}, -- 85
+	["Vienne, France"] = {container = "Nouvelle-Aquitaine", wp = "Vienne (department)"}, -- 86
+	["Haute-Vienne, France"] = {container = "Nouvelle-Aquitaine"}, -- 87
+	["Vosges, France"] = {container = "Grand Est", wp = "Vosges (department)"}, -- 88
+	["Yonne, France"] = {container = "Bourgogne-Franche-Comté"}, -- 89
+	["Territoire de Belfort, France"] = {container = "Bourgogne-Franche-Comté"}, -- 90
+	["Essonne, France"] = {container = "Île-de-France"}, -- 91
+	["Hauts-de-Seine, France"] = {container = "Île-de-France"}, -- 92
+	["Seine-Saint-Denis, France"] = {container = "Île-de-France"}, -- 93
+	["Val-de-Marne, France"] = {container = "Île-de-France"}, -- 94
+	["Val-d'Oise, France"] = {container = "Île-de-France"}, -- 95
+	--["Guadeloupe"] = {container = "Guadeloupe"}, -- 971
+	--["Martinique"] = {container = "Martinique"}, -- 972
+	--["Guyane"] = {container = "French Guiana", wp = "French Guiana"}, -- 973
+	--["La Réunion"] = {container = "Réunion", wp = "Réunion"}, -- 974
+	--["Mayotte"] = {container = "Mayotte"}, -- 976
+}
+
+export.france_departments_group = {
+	placename_to_key = make_placename_to_key(", France"),
+	canonicalize_key_container = make_canonicalize_key_container(", France", "region"),
+	default_placetype = "department",
+	default_british_spelling = true,
+	default_divs = {
+		"communes",
+	},
+	data = export.france_departments,
 }
 
 export.germany_states = {
@@ -4577,6 +4697,7 @@ export.locations = {
 	export.china_prefecture_level_cities_group,
 	export.finland_group,
 	export.france_group,
+	export.france_departments_group,
 	export.germany_group,
 	export.india_group,
 	export.indonesia_group,
