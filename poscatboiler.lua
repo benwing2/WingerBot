@@ -1,13 +1,39 @@
+local lang_independent_data = require("Module:category tree/data")
+local lang_specific_module = "Module:category tree/lang"
+local lang_specific_module_prefix = lang_specific_module .. "/"
+local labels_utilities_module = "Module:labels/utilities"
+local template_parser_module = "Module:template parser"
+
 local concat = table.concat
+local dump = mw.dumpObject
 local insert = table.insert
+local is_callable = require("Module:fun").is_callable
+local lcfirst = require("Module:string utilities").lcfirst
+local list_to_set = require("Module:table").listToSet
+local make_title = mw.title.makeTitle
+local new_title = mw.title.new
+local parse = require(template_parser_module).parse
+local sparse_concat = require("Module:table").sparseConcat
+local tostring = tostring
 local type = type
+local ucfirst = require("Module:string utilities").ucfirst
 local uupper = require("Module:string utilities").upper
 
-local lang_independent_data = require("Module:category tree/poscatboiler/data")
-local lang_specific_module = "Module:category tree/poscatboiler/data/lang-specific"
-local lang_specific_module_prefix = lang_specific_module .. "/"
-local auto_cat_module = "Module:auto cat"
-local labels_utilities_module = "Module:labels/utilities"
+local function get_lang(...)
+	local _get_lang = require("Module:languages").getByCode
+	function get_lang(...)
+		return _get_lang(...) or require("Module:languages/errorGetBy").code(...)
+	end
+	return get_lang(...)
+end
+
+local function get_script(...)
+	local _get_script = require("Module:scripts").getByCode
+	function get_script(code)
+		return _get_script(code) or require("Module:languages/error")(code, true, "script code")
+	end
+	return get_script(...)
+end
 
 -- Category object
 
@@ -23,7 +49,7 @@ function Category:get_originating_info()
 	return originating_info
 end
 
-local valid_keys = require("Module:table").listToSet{"code", "label", "sc", "raw", "args", "called_from_inside", "originating_label", "originating_module"}
+local valid_keys = list_to_set{"code", "label", "sc", "raw", "args", "also", "called_from_inside", "originating_label", "originating_module"}
 
 function Category.new(info)
 	for key in pairs(info) do
@@ -58,11 +84,11 @@ function Category:initCommon()
 
 		if self._data then
 			if self._data.lang then
-				self._lang = require("Module:languages").getByCode(self._data.lang, true, nil, nil, true)
+				self._lang = get_lang(self._data.lang)
 				self._info.code = self._lang:getCode()
 			end
 			if self._data.sc then
-				self._sc = require("Module:scripts").getByCode(self._data.sc, true, nil, true)
+				self._sc = get_script(self._data.sc)
 				self._info.sc = self._sc:getCode()
 			end
 		else
@@ -86,16 +112,16 @@ function Category:initCommon()
 				end
 				if self._data.lang then
 					if type(self._data.lang) ~= "string" then
-						error("Received non-string value " .. mw.dumpObject(self._data.lang) .. " for self._data.lang, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
+						error("Received non-string value " .. dump(self._data.lang) .. " for self._data.lang, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
 					end
-					self._lang = require("Module:languages").getByCode(self._data.lang, true, nil, nil, true)
+					self._lang = get_lang(self._data.lang)
 					self._info.code = self._lang:getCode()
 				end
 				if self._data.sc then
 					if type(self._data.sc) ~= "string" then
-						error("Received non-string value " .. mw.dumpObject(self._data.sc) .. " for self._data.sc, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
+						error("Received non-string value " .. dump(self._data.sc) .. " for self._data.sc, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
 					end
-					self._sc = require("Module:scripts").getByCode(self._data.sc, true, nil, true)
+					self._sc = get_script(self._data.sc)
 					self._info.sc = self._sc:getCode()
 				end
 			end
@@ -103,13 +129,13 @@ function Category:initCommon()
 	else
 		-- Already parsed into language + label
 		if self._info.code then
-			self._lang = require("Module:languages").getByCode(self._info.code, 1, nil, nil, true)
+			self._lang = get_lang(self._info.code)
 		else
 			self._lang = nil
 		end
 
 		if self._info.sc then
-			self._sc = require("Module:scripts").getByCode(self._info.sc, true, nil, true) or error("The script code \"" .. self._info.sc .. "\" is not valid.")
+			self._sc = get_script(self._info.sc)
 		else
 			self._sc = nil
 		end
@@ -121,12 +147,12 @@ function Category:initCommon()
 			-- but [[:Category:Reddit slang by language]] with label 'Reddit slang' with per-language
 			-- [[:Category:English Reddit slang]]). Since the label is almost always lowercase, we lowercase it for umbrella
 			-- categories, storing the original into `orig_label`, and correct it later if needed.
-			self._info.label = mw.getContentLanguage():lcfirst(self._info.label)
+			self._info.label = lcfirst(self._info.label)
 		end
 		
 		-- First, check lang-specific labels and handlers if this is not an umbrella category.
 		if self._lang then
-			local langs_with_modules = mw.loadData(lang_specific_module)
+			local langs_with_modules = require(lang_specific_module)
 			local obj, seen = self._lang, {}
 			repeat
 				if langs_with_modules[obj:getCode()] then
@@ -206,7 +232,7 @@ function Category:initCommon()
 		local module_text = " (handled in [[" .. (self._data.module or "UNKNOWN").. "]])"
 		local args_text = {}
 		for k, v in pairs(self._info.args) do
-			insert(args_text, k .. "=" .. ((type(v) == "string" or type(v) == "number") and v or mw.dumpObject(v)))
+			insert(args_text, k .. "=" .. ((type(v) == "string" or type(v) == "number") and v or dump(v)))
 		end
 		error("poscatboiler label '" .. self._info.label .. "' " .. module_text .. " doesn't accept extra args " ..
 			concat(args_text, ", "))
@@ -221,57 +247,62 @@ end
 function Category:convert_spec_to_string(desc)
 	if not desc then
 		return desc
-	elseif type(desc) == "number" then
-		return tostring(desc)
-	elseif type(desc) == "function" then
-		return desc{
-			lang = self._lang,
-			sc = self._sc,
-			label = self._info.label,
-			raw = self._info.raw,
-		}
 	end
-	return desc
+	local desc_type = type(desc)
+	if desc_type == "string" then
+		return desc
+	elseif desc_type == "number" then
+		return tostring(desc)
+	elseif not is_callable(desc) then
+		error("Internal error: `desc` must be a string, number, function, callable table or nil; received a " .. desc_type)
+	end
+	desc = desc{
+		lang = self._lang,
+		sc = self._sc,
+		label = self._info.label,
+		raw = self._info.raw,
+	}
+	if not desc then
+		return desc
+	end
+	desc_type = type(desc)
+	if desc_type == "string" then
+		return desc
+	end
+	error("Internal error: the value returned by `desc` must be a string or nil; received a " .. desc_type)
 end
 
--- TODO: use the template parser with this, for more sophisticated handling of multiple brackets.
+local function add_obj_args(args, obj, obj_type)
+	if obj then
+		args[obj_type .. "code"] = obj:getCode()
+		args[obj_type .. "name"] = obj:getCanonicalName()
+		args[obj_type .. "disp"] = obj:getDisplayForm()
+		args[obj_type .. "cat"] = obj:getCategoryName()
+		args[obj_type .. "link"] = obj:makeCategoryLink()
+	end
+end
+
+-- Expands `desc` like a template, passing values for specs like {{{langname}}}.
 function Category:substitute_template_specs(desc)
 	-- This may end up happening twice but that's OK as the function is (usually) idempotent.
 		-- FIXME: Not idempotent if a preprocessed template returns wikicode.
 	desc = self:convert_spec_to_string(desc)
-
 	if not desc then
-		return desc
+		return nil
 	end
+	
+	-- Populate the substitution arguments.
+	local args = {}
 
-	desc = desc:gsub("{{PAGENAME}}", mw.title.getCurrentTitle().text)
-	desc = desc:gsub("{{{umbrella_msg}}}", "This is an umbrella category. It contains no dictionary entries, but " ..
-		"only other, language-specific categories, which in turn contain relevant terms in a given language.")
-	desc = desc:gsub("{{{umbrella_meta_msg}}}", "This is an umbrella metacategory, covering a general area such as " ..
-		'"lemmas", "names" or "terms by etymology". It contains no dictionary entries, but holds only umbrella ' ..
-		'("by language") categories covering specific subtopics, which in turn contain language-specific categories ' ..
-		"holding terms in a given language for that same topic.")
-	local lang = self._lang
-	if lang then
-		desc = desc:gsub("{{{langname}}}", lang:getCanonicalName())
-		desc = desc:gsub("{{{langcode}}}", lang:getCode())
-		desc = desc:gsub("{{{langcat}}}", lang:getCategoryName())
-		desc = desc:gsub("{{{langlink}}}", lang:makeCategoryLink())
-	end
-	local sc = self._sc
-	if sc then
-		desc = desc:gsub("{{{scname}}}", sc:getCanonicalName())
-		desc = desc:gsub("{{{sccode}}}", sc:getCode())
-		desc = desc:gsub("{{{sccat}}}", sc:getCategoryName())
-		desc = desc:gsub("{{{scdisp}}}", sc:getDisplayForm())
-		desc = desc:gsub("{{{sclink}}}", sc:makeCategoryLink())
-	end
-	if desc:find("{") then
-		desc = mw.getCurrentFrame():preprocess(desc)
-	end
-	return desc
+	args.umbrella_msg = "This is an umbrella category. It contains no dictionary entries, but only other, language-specific categories, which in turn contain relevant terms in a given language."
+
+	args.umbrella_meta_msg = "This is an umbrella metacategory, covering a general area such as \"lemmas\", \"names\" or \"terms by etymology\". It contains no dictionary entries, but holds only umbrella (\"by language\") categories covering specific subtopics, which in turn contain language-specific categories holding terms in a given language for that same topic."
+
+	add_obj_args(args, self._lang, "lang")
+	add_obj_args(args, self._sc, "sc")
+
+	return parse(desc, true):expand(args)
 end
-
 
 function Category:substitute_template_specs_in_args(args)
 	if not args then
@@ -279,9 +310,7 @@ function Category:substitute_template_specs_in_args(args)
 	end
 	local pinfo = {}
 	for k, v in pairs(args) do
-		k = self:substitute_template_specs(k)
-		v = self:substitute_template_specs(v)
-		pinfo[k] = v
+		pinfo[self:substitute_template_specs(k)] = self:substitute_template_specs(v)
 	end
 	return pinfo
 end
@@ -322,38 +351,39 @@ function Category:getBreadcrumbName()
 end
 
 
+local function expand_toc_template_if(template)
+	local template_obj = new_title(template, 10)
+	if template_obj.exists then
+		return mw.getCurrentFrame():expandTemplate{title = template_obj.text, args = {}}
+	end
+	return nil
+end
+
+
+-- Return the textual expansion of the first existing template among the given templates, first performing
+-- substitutions on the template name such as replacing {{{langcode}}} with the current language's code (if any).
+-- If no templates exist after expansion, or if nil is passed in, return nil. If a single string is passed in,
+-- treat it like a one-element list consisting of that string.
+function Category:get_template_text(templates)
+	if templates == nil then
+		return nil
+	elseif type(templates) ~= "table" then
+		templates = {templates}
+	end
+	for _, template in ipairs(templates) do
+		if template == false then
+			return false
+		end
+		template = self:substitute_template_specs(template)
+		return expand_toc_template_if(template)
+	end
+	return nil
+end
+
+
 function Category:getTOC(toc_type)
 	-- Type "none" means everything fits on a single page; in that case, display nothing.
 	if toc_type == "none" then
-		return nil
-	end
-
-	local function expand_toc_template_if(template)
-		local template_obj = mw.title.new("Template:" .. template)
-		if template_obj.exists then
-			return mw.getCurrentFrame():expandTemplate{title = template_obj.text, args = {}}
-		end
-		return nil
-	end
-
-	-- Return the textual expansion of the first existing template among the given templates, first performing
-	-- substitutions on the template name such as replacing {{{langcode}}} with the current language's code (if any).
-	-- If no templates exist after expansion, or if nil is passed in, return nil. If a single string is passed in,
-	-- treat it like a one-element list consisting of that string.
-	local function get_template_text(templates)
-		if templates == nil then
-			return nil
-		end
-		if type(templates) ~= "table" then
-			templates = {templates}
-		end
-		for _, template in ipairs(templates) do
-			if template == false then
-				return false
-			end
-			template = self:substitute_template_specs(template)
-			return expand_toc_template_if(template)
-		end
 		return nil
 	end
 
@@ -400,18 +430,16 @@ function Category:getTOC(toc_type)
 		end
 	end
 
-	local text = get_template_text(templates)
+	local text = self:get_template_text(templates)
 	if text then
 		return text
-	end
-	if text == false then
+	elseif text == false then
 		return nil
 	end
-	text = get_template_text(fallback_templates)
+	text = self:get_template_text(fallback_templates)
 	if text then
 		return text
-	end
-	if text == false then
+	elseif text == false then
 		return nil
 	end
 	local default_toc_templates_to_check = {}
@@ -422,11 +450,11 @@ function Category:getTOC(toc_type)
 	-- FIXME: What is toctemplateprefix used for?
 	local tocname = (self._data.toctemplateprefix or "") .. "categoryTOC"
 	if toc_type == "full" then
-		table.insert(default_toc_templates_to_check, ("%s-%s/full"):format(langcode, tocname))
-		table.insert(default_toc_templates_to_check, ("%s-%s/full"):format(sccode, tocname))
+		insert(default_toc_templates_to_check, ("%s-%s/full"):format(langcode, tocname))
+		insert(default_toc_templates_to_check, ("%s-%s/full"):format(sccode, tocname))
 	end
-	table.insert(default_toc_templates_to_check, ("%s-%s"):format(langcode, tocname))
-	table.insert(default_toc_templates_to_check, ("%s-%s"):format(sccode, tocname))
+	insert(default_toc_templates_to_check, ("%s-%s"):format(langcode, tocname))
+	insert(default_toc_templates_to_check, ("%s-%s"):format(sccode, tocname))
 
 	for _, toc_template in ipairs(default_toc_templates_to_check) do
 		local toc_template_text = expand_toc_template_if(toc_template)
@@ -434,7 +462,6 @@ function Category:getTOC(toc_type)
 			return toc_template_text
 		end
 	end
-
 	return nil
 end
 
@@ -452,18 +479,16 @@ end
 function Category:canBeEmpty()
 	if self._lang or self._info.raw then
 		return self._data.can_be_empty
-	else
-		return self._data.umbrella and self._data.umbrella.can_be_empty
 	end
+	return self._data.umbrella and self._data.umbrella.can_be_empty
 end
 
 
 function Category:isHidden()
 	if self._lang or self._info.raw then
 		return self._data.hidden
-	else
-		return self._data.umbrella and self._data.umbrella.hidden
 	end
+	return self._data.umbrella and self._data.umbrella.hidden
 end
 
 
@@ -472,170 +497,156 @@ function Category:getCategoryName()
 		return self._info.canonical_name or self._info.label
 	elseif self._lang then
 		local ret = self._lang:getCanonicalName() .. " " .. self._info.label
-
 		if self._sc then
 			ret = ret .. " in " .. self._sc:getDisplayForm()
 		end
-
-		return mw.getContentLanguage():ucfirst(ret)
-	else
-		local ret = mw.getContentLanguage():ucfirst(self._info.label)
-		if not (self._data.no_by_language or self._data.umbrella and self._data.umbrella.no_by_language) then
-			ret = ret .. " by language"
-		end
-		return ret
+		return ucfirst(ret)
 	end
+	local ret = ucfirst(self._info.label)
+	if not (self._data.no_by_language or self._data.umbrella and self._data.umbrella.no_by_language) then
+		ret = ret .. " by language"
+	end
+	return ret
 end
 
 
 function Category:getTopright()
 	if self._lang or self._info.raw then
 		return self:substitute_template_specs(self._data.topright)
-	else
-		return self._data.umbrella and self:substitute_template_specs(self._data.umbrella.topright)
 	end
+	return self._data.umbrella and self:substitute_template_specs(self._data.umbrella.topright)
 end
 
 
+function Category:display_title(displaytitle, lang)
+	if type(displaytitle) == "string" then
+		displaytitle = self:substitute_template_specs(displaytitle)
+	else
+		displaytitle = displaytitle(self:getCategoryName(), lang)
+	end
+	mw.getCurrentFrame():callParserFunction("DISPLAYTITLE", "Category:" .. displaytitle)
+end
+
+
+function Category:get_labels_categorizing()
+	local m_labels_utilities = require(labels_utilities_module)
+	local pos_cat_labels, sense_cat_labels, use_tlb
+	pos_cat_labels = m_labels_utilities.find_labels_for_category(self._info.label, "pos", self._lang)
+	local sense_label = self._info.label:match("^(.*) terms$")
+	if sense_label then
+		use_tlb = true
+	else
+		sense_label = self._info.label:match("^terms with (.*) senses$")
+	end
+	if not sense_label then
+		return nil
+	end
+	sense_cat_labels = m_labels_utilities.find_labels_for_category(sense_label, "sense", self._lang)
+	if use_tlb then
+		return m_labels_utilities.format_labels_categorizing(pos_cat_labels, sense_cat_labels, self._lang)
+	end
+	local all_labels = pos_cat_labels
+	for k, v in pairs(sense_cat_labels) do
+		all_labels[k] = v
+	end
+	return m_labels_utilities.format_labels_categorizing(all_labels, nil, self._lang)
+end
+
+-- FIXME: this is clunky.
 local function remove_lang_params(desc)
 	-- Simply remove a language name/code/category from the beginning of the string, but replace the language name
 	-- in the middle of the string with either "specific languages" or "specific-language" depending on whether the
 	-- language name appears to be an attributive qualifier of another noun or to stand by itself. This may be wrong,
 	-- in which case the category in question should supply its own umbrella description.
 	desc = desc:gsub("^{{{langname}}} ", "")
-	desc = desc:gsub("^{{{langcode}}} ", "")
-	desc = desc:gsub("^{{{langcat}}} ", "")
-	desc = desc:gsub("^{{{langlink}}} ", "")
-	desc = desc:gsub("{{{langname}}} %(", "specific languages (")
-	desc = desc:gsub("{{{langname}}}([.,])", "specific languages%1")
-	desc = desc:gsub("{{{langname}}} ", "specific-language ")
-	desc = desc:gsub("{{{langcode}}} ", "")
-	desc = desc:gsub("{{{langcat}}} ", "")
-	desc = desc:gsub("{{{langlink}}} ", "")
+		:gsub("{{{langname}}} %(", "specific languages (")
+		:gsub("{{{langname}}}([.,])", "specific languages%1")
+		:gsub("{{{langname}}} ", "specific-language ")
+		:gsub("{{{langdisp}}}", "specific languages")
+		:gsub("{{{langlink}}}", "specific languages")
 	return desc
 end
+
 
 function Category:getDescription(isChild)
 	-- Allows different text in the list of a category's children
 	local isChild = isChild == "child"
 
-	local function display_title(displaytitle, lang)
-		if type(displaytitle) == "string" then
-			displaytitle = self:substitute_template_specs(displaytitle)
-		else
-			displaytitle = displaytitle(self:getCategoryName(), lang)
-		end
-		mw.getCurrentFrame():callParserFunction("DISPLAYTITLE", "Category:" .. displaytitle)
-	end
-
-	local function get_labels_categorizing()
-		local m_labels_utilities = require(labels_utilities_module)
-		local pos_cat_labels, sense_cat_labels, use_tlb
-		pos_cat_labels = m_labels_utilities.find_labels_for_category(self._info.label, "pos", self._lang)
-		local sense_label = self._info.label:match("^(.*) terms$")
-		if sense_label then
-			use_tlb = true
-		else
-			sense_label = self._info.label:match("^terms with (.*) senses$")
-		end
-		if sense_label then
-			sense_cat_labels = m_labels_utilities.find_labels_for_category(sense_label, "sense", self._lang)
-			if use_tlb then
-				return m_labels_utilities.format_labels_categorizing(pos_cat_labels, sense_cat_labels, self._lang)
-			else
-				local all_labels = pos_cat_labels
-				for k, v in pairs(sense_cat_labels) do
-					all_labels[k] = v
-				end
-				return m_labels_utilities.format_labels_categorizing(all_labels, nil, self._lang)
-			end
-		end
-	end
-
 	if self._lang or self._info.raw then
 		if not isChild and self._data.displaytitle then
-			display_title(self._data.displaytitle, self._lang)
+			self:display_title(self._data.displaytitle, self._lang)
 		end
-
 		if self._sc then
 			return self:getCategoryName() .. "."
+		end
+		local desc = self:substitute_template_specs(self._data.description)
+		if not desc then
+			return nil
+		elseif isChild then
+			return desc
+		end
+		return sparse_concat({
+			self:substitute_template_specs(self._data.preceding),
+			desc,
+			self:substitute_template_specs(self._data.additional),
+			self:substitute_template_specs(self:get_labels_categorizing()),
+		}, "\n\n")
+	end
+	
+	local umbrella = self._data.umbrella
+	if not isChild and umbrella and umbrella.displaytitle then
+		self:display_title(umbrella.displaytitle)
+	end
+
+	local desc = self:substitute_template_specs(umbrella and umbrella.description)
+	local has_umbrella_desc = not not desc
+	if not desc then
+		desc = self:convert_spec_to_string(self._data.description)
+		if desc then
+			desc = remove_lang_params(desc)
+			desc = lcfirst(desc)
+			desc = desc:gsub("%.$", "")
+			desc = "Categories with " .. desc .. "."
 		else
-			local desc = self:convert_spec_to_string(self._data.description)
-
-			if not isChild and desc then
-				if self._data.preceding then
-					desc = self._data.preceding .. "\n\n" .. desc
-				end
-				if self._data.additional then
-					desc = desc .. "\n\n" .. self._data.additional
-				end
-				local labels_msg = get_labels_categorizing()
-				if labels_msg then
-					desc = desc .. "\n\n" .. labels_msg
-				end
-			end
-
-			return self:substitute_template_specs(desc)
-		end
-	else
-		if not isChild and self._data.umbrella and self._data.umbrella.displaytitle then
-			display_title(self._data.umbrella.displaytitle, nil)
-		end
-
-		local desc = self:convert_spec_to_string(self._data.umbrella and self._data.umbrella.description)
-		local has_umbrella_desc = not not desc
-		if not desc then
-			desc = self:convert_spec_to_string(self._data.description)
-			if desc then
-				desc = remove_lang_params(desc)
-				-- Use the following in preference to mw.getContentLanguage():lcfirst(), which will only lowercase the first
-				-- character, whereas the following will correctly handle links at the beginning of the text.
-				desc = require("Module:string utilities").lcfirst(desc)
-				desc = desc:gsub("%.$", "")
-				desc = "Categories with " .. desc .. "."
-			end
-		end
-		if not desc then
 			desc = "Categories with " .. self._info.label .. " in various specific languages."
 		end
-		if not isChild then
-			local preceding = self:convert_spec_to_string(self._data.umbrella and self._data.umbrella.preceding or
-				not has_umbrella_desc and self._data.preceding)
-			local additional = self:convert_spec_to_string(self._data.umbrella and self._data.umbrella.additional or
-				not has_umbrella_desc and self._data.additional)
-			if preceding then
-				desc = remove_lang_params(preceding) .. "\n\n" .. desc
-			end
-			if additional then
-				desc = desc .. "\n\n" .. remove_lang_params(additional)
-			end
-			desc = desc .. "\n\n{{{umbrella_msg}}}"
-			local labels_msg = get_labels_categorizing()
-			if labels_msg then
-				desc = desc .. "\n\n" .. labels_msg
-			end
-		end
 		desc = self:substitute_template_specs(desc)
+	end
+	if isChild then
 		return desc
 	end
+	return sparse_concat({
+		self:substitute_template_specs(umbrella and umbrella.preceding or not has_umbrella_desc and self._data.preceding),
+		desc,
+		self:substitute_template_specs(umbrella and umbrella.additional or not has_umbrella_desc and self._data.additional),
+		self:substitute_template_specs("{{{umbrella_msg}}}"),
+		self:substitute_template_specs(self:get_labels_categorizing()),
+	}, "\n\n")
 end
 
 function Category:new_sortkey(sortkey)
-	if type(sortkey) == "string" then
+	local sortkey_type = type(sortkey)
+	if sortkey_type == "string" then
 		sortkey = uupper(sortkey)
-	elseif type(sortkey) == "table" then
+	elseif sortkey_type == "table" then
 		function sortkey:makeSortKey()
-			if self.sort_func then
-				return self.sort_func(self.sort_base)
+			local sort_func = self.sort_func
+			if sort_func ~= nil then
+				return sort_func(self.sort_base)
 			end
-			local lang = self.lang and require("Module:languages").getByCode(self.lang, true, true, nil, true) or nil
-			if lang then
-				return lang:makeSortKey(
-					self.sort_base,
-					require("Module:scripts").getByCode(self.sc, true, nil, true)
-				)
+			local lang = self.lang
+			if lang == nil then
+				return self.sort_base
 			end
-			return self.sort_base
+			lang = get_lang(lang, nil, true)
+			if lang == nil then
+				return self.sort_base
+			end
+			local sc = self.sc
+			if sc ~= nil then
+				sc = get_script(sc)
+			end
+			return lang:makeSortKey(self.sort_base, sc)
 		end
 	end
 	
@@ -652,15 +663,14 @@ end
 function Category:canonicalize_parents_children(cats, is_children)
 	if not cats then
 		return nil
-	end
-	if type(cats) ~= "table" then
+	elseif type(cats) == "table" then
+		if cats.name or cats.module then
+			cats = {cats}
+		elseif #cats == 0 then
+			return nil
+		end
+	else
 		cats = {cats}
-	end
-	if cats.name or cats.module then
-		cats = {cats}
-	end
-	if #cats == 0 then
-		return nil
 	end
 
 	local ret = {}
@@ -751,13 +761,12 @@ end
 
 
 function Category:getParents()
-	local is_umbrella = not self._lang and not self._info.raw
-	local retval
+	local is_umbrella, ret = not self._lang and not self._info.raw
 	if self._sc then
 		local parent1 = self:make_new{code = self._info.code, label = "terms in " .. self._sc:getCanonicalName() .. " script"}
 		local parent2 = self:make_new{code = self._info.code, label = self._info.label, raw = self._info.raw, args = self._info.args}
 
-		retval = {
+		ret = {
 			{name = parent1, sort = self._sc:getCanonicalName()},
 			{name = parent2, sort = self._sc:getCanonicalName()},
 		}
@@ -769,23 +778,21 @@ function Category:getParents()
 			parents = self._data.parents
 		end
 
-		retval = self:canonicalize_parents_children(parents)
-	end
-
-	if not retval then
-		return nil
-	end
-
-	local self_cat = self:getCategoryName()
-	for _, parent in ipairs(retval) do
-		local parent_cat = parent.name.getCategoryName and parent.name:getCategoryName()
-		if self_cat == parent_cat then
-			error(("Internal error: Infinite loop would occur, as parent category '%s' is the same as the child category"):
-				format(self_cat))
+		ret = self:canonicalize_parents_children(parents)
+		if not ret then
+			return nil
 		end
 	end
 
-	return retval
+	local self_cat = self:getCategoryName()
+	for _, parent in ipairs(ret) do
+		local parent_cat = parent.name.getCategoryName and parent.name:getCategoryName()
+		if self_cat == parent_cat then
+			error(("Internal error: Infinite loop would occur, as parent category '%s' is the same as the child category"):format(self_cat))
+		end
+	end
+
+	return ret
 end
 
 
@@ -828,10 +835,7 @@ function Category:getChildren()
 		end
 	end
 
-	if #ret == 0 then
-		return nil
-	end
-	return ret
+	return #ret > 0 and ret or nil
 end
 
 
@@ -847,48 +851,45 @@ end
 
 function Category:getAppendix()
 	-- FIXME, this should be customizable.
-	if not self._info.raw and self._info.label and self._lang then
-		local appendixName = "Appendix:" .. self._lang:getCanonicalName() .. " " .. self._info.label
-		local appendix = mw.title.new(appendixName).exists
-		if appendix then
-			return appendixName
-		else
-			return nil
-		end
-	else
+	local lang, label = self._lang, self._info.label
+	if self._info.raw or not (lang and label) then
 		return nil
 	end
+	local appendix = make_title(100, lang:getCanonicalName() .. " " .. label)
+	return appendix.exists and appendix.fullText or nil
 end
 
 
 function Category:getCatfixInfo()
-	if self._lang or self._info.raw then
-		if self._data.catfix == false then
-			return nil
-		end
-		local lang, sc
-		if self._data.catfix then
-			lang = require("Module:languages").getByCode(self:substitute_template_specs(self._data.catfix), true, nil, nil, true)
-		else
+	if self._lang or self._sc or self._info.raw then
+		local langcode, sccode, lang, sc = self._data.catfix, self._data.catfix_sc
+		if langcode then
+			langcode = self:substitute_template_specs(langcode)
+			lang = get_lang(langcode)
+		elseif langcode == nil then -- not false
 			lang = self._lang
 		end
-		if self._data.catfix_sc then
-			sc = require("Module:scripts").getByCode(self:substitute_template_specs(self._data.catfix_sc), true, nil, true)
-		else
+		if sccode then
+			sccode = self:substitute_template_specs(sccode)
+			sc = get_script(sccode)
+		elseif sccode == nil then -- not false
 			sc = self._sc
 		end
 		return lang, sc
-	else -- umbrella
-		if not self._data.umbrella or not self._data.umbrella.catfix then
-			return nil
-		end
-		local lang = require("Module:languages").getByCode(self:substitute_template_specs(self._data.umbrella.catfix), true, nil, nil, true)
-		local sc = self:substitute_template_specs(self._data.umbrella.catfix_sc)
-		if sc then
-			sc = require("Module:scripts").getByCode(sc, true, nil, true)
-		end
-		return lang, sc
+	elseif not self._data.umbrella then
+		return
 	end
+	-- umbrella
+	local langcode, sccode, lang, sc = self._data.umbrella.catfix, self._data.umbrella.catfix_sc
+	if langcode then
+		langcode = self:substitute_template_specs(langcode)
+		lang = get_lang(langcode)
+	end
+	if sccode then
+		sccode = self:substitute_template_specs(sccode)
+		sc = get_script(sccode)
+	end
+	return lang, sc
 end
 
 
