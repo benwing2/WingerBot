@@ -5,6 +5,9 @@ end
 
 local export = {}
 
+local category_tree_submodule_prefix = "Module:category tree/"
+local category_tree_styles_css = "Module:category tree/styles.css"
+
 local m_str_utils = require("Module:string utilities")
 local m_template_parser = require("Module:template parser")
 local m_utilities = require("Module:utilities")
@@ -30,12 +33,9 @@ local yesno = require("Module:yesno")
 
 local current_frame = mw.getCurrentFrame()
 local current_title = mw.title.getCurrentTitle()
-local inFundamental = mw.loadData("Module:category tree/old-data")
 local namespace = current_title.namespace
 
 local poscatboiler_subsystem = "poscatboiler"
-local topic_subsystem = "topic"
-local thesaurus_subsystem = "thesaurus"
 
 local extra_args_error = "Extra arguments to {{((}}auto cat{{))}} are not allowed for this category."
 
@@ -187,12 +187,10 @@ local function show_breadcrumbs(current)
 		
 		if current then
 			current = current[1].name
-		elseif inFundamental[category] then
-			current = "Category:Fundamental"
 		end	
 	end
 	
-	local templateStyles = require("Module:TemplateStyles")("Module:category tree/styles.css")
+	local templateStyles = require("Module:TemplateStyles")(category_tree_styles_css)
 	
 	local ol = mw.html.create("ol")
 	for i, step in ipairs(steps) do
@@ -529,7 +527,7 @@ local handlers = {}
 insert(handlers, function(title)
 	local code, label = title:match("^Thesaurus:(%l[%a-]*%a):(.+)")
 	if code then
-		return thesaurus_subsystem, {label = label, code = code}
+		return poscatboiler_subsystem, {label = title, raw = true}
 	end
 end)
 
@@ -537,7 +535,7 @@ end)
 insert(handlers, function(title)
 	local code, label = title:match("^(%l[%a-]*%a):(.+)")
 	if code then
-		return topic_subsystem, {label = label, code = code}
+		return poscatboiler_subsystem, {label = title, raw = true}
 	end
 end)
 
@@ -572,19 +570,6 @@ insert(handlers, function(title, args)
 		-- The poscatboiler code will appropriately lowercase if needed.
 		return poscatboiler_subsystem, {label = label, args = args}
 	end
-end)
-
--- Thesaurus umbrella category
-insert(handlers, function(title)
-	local label = title:match("^Thesaurus:(.+)")
-	if label then
-		return thesaurus_subsystem, {label = label}
-	end
-end)
-
--- Topic umbrella category
-insert(handlers, function(title)
-	return topic_subsystem, {label = title}
 end)
 
 -- poscatboiler raw handlers
@@ -634,7 +619,7 @@ function export.show(frame)
 			info.also = deep_copy(args.also)
 			require("Module:debug").track("auto cat/" .. submodule)
 			-- `failed` is true if no match was found.
-			submodule = require("Module:category tree/" .. submodule)
+			submodule = require(category_tree_submodule_prefix .. submodule)
 			local cattext, failed = generate_output(submodule.main(info))
 			if failed then
 				if not first_fail_cattext then
