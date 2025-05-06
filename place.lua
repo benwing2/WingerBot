@@ -857,7 +857,7 @@ TODO/FIXME:
 45. Aliases are causing iterate_matching_holonym_location() to fail, e.g. if [[براق]] "Prague" is specified as
     {{place|acw|capital city|c/Czechia|t1=Prague}}, this fails add a bare category [[Category:acw:Prague]] because
     the code in iterate_matching_holonym_location() isn't resolving aliases when comparing the known container
-    'Czech Republic'. Probably we want to build an alias table to speed up these sorts of lookups.
+    'Czech Republic'. Probably we want to build an alias table to speed up these sorts of lookups. [DONE]
 46. The district cat handler is failing to work right, e.g. in [[Saint-Gaudérique]] defined as
 	{{place|fr|district|city/Perpignan|in|dept/Pyrénées-Orientales|r/Occitania|c/France|t=Saint-Gaudérique}},
 	only the 'Places in ...' categories are getting triggered. [DONE; DUE TO TYPO IN HANDLER]
@@ -1176,7 +1176,7 @@ local function parse_place_descriptions(numargs)
 	-- the placetypes that precede the holonyms. 1 means we've seen no holonyms but have already processed the
 	-- placetypes.
 	local holonym_index = 0
-	local last_was_new_style = false
+	local place_desc_style
 
 	for _, arg in ipairs(numargs) do
 		if arg == ";" or arg:find("^;[^ ]") then
@@ -1198,9 +1198,15 @@ local function parse_place_descriptions(numargs)
 			end
 			desc_index = desc_index + 1
 			holonym_index = 0
-			last_was_new_style = false
+			place_desc_style = nil
 		else
 			if arg:find("<<") then
+				if place_desc_style and place_desc_style ~= "new" then
+					-- error("New-style place description cannot directly follow old-style arguments")
+					-- There may be several of these; track and convert before making an error
+					track("new-after-old")
+				end
+				place_desc_style = "new"
 				if holonym_index > 0 then
 					desc_index = desc_index + 1
 					holonym_index = 0
@@ -1210,10 +1216,10 @@ local function parse_place_descriptions(numargs)
 				last_was_new_style = true
 				holonym_index = holonym_index + 1
 			else
-				if last_was_new_style then
+				if place_desc_style and place_desc_style ~= "old" then
 					error("Old-style arguments cannot directly follow new-style place description")
 				end
-				last_was_new_style = false
+				place_desc_style = "old"
 				if holonym_index == 0 then
 					local entry_placetypes = split_on_slash(arg)
 					this_desc = {placetypes = entry_placetypes, holonyms = {}}
