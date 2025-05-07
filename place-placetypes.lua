@@ -681,11 +681,13 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 	if not all_display_aliases_found[1] then
 		return placename
 	elseif all_display_aliases_found[2] then
-		internal_error("Found multiple matching display aliases for data %s: all_display_aliases_found=%s, " ..
-			"all_others_found=%s", data, all_display_aliases_found, all_others_found)
+		internal_error("Found multiple matching display aliases for placename %s, placetype %s: " ..
+			"all_display_aliases_found=%s, all_others_found=%s", placename, placetype, all_display_aliases_found,
+			all_others_found)
 	elseif all_others_found[1] then
-		internal_error("Found a display alias along with other possible meanings for data %s: " ..
-			"all_display_aliases_found=%s, all_others_found=%s", data, all_display_aliases_found, all_others_found)
+		internal_error("Found a display alias along with other possible meanings for placename %s, placetype %s: " ..
+			"all_display_aliases_found=%s, all_others_found=%s", placename, placetype, all_display_aliases_found,
+			all_others_found)
 	else
 		local group, key, spec = unpack(all_display_aliases_found[1])
 		local full, elliptical = m_locations.key_to_placename(group, key)
@@ -860,7 +862,33 @@ function export.iterate_matching_holonym_location(data)
 									end
 								)
 								if this_holonym_exists_with_same_placetype then
-									holonym_exists_with_same_placetype = true
+									-- We seem to have a mismatch at this level. But before we decide conclusively that this
+									-- is the case, check to see whether the putative mismatch is an alias and matches when
+									-- we resolve the alias.
+									for oh_group, oh_key, oh_spec, oh_container_trail in 
+										export.iterate_matching_holonym_location {
+											holonym_placetype = other_holonym.placetype,
+											holonym_placename = other_holonym.unlinked_placename,
+											holonym_index = other_holonym_index,
+											place_desc = place_desc,
+										} do
+										local oh_full_placename, oh_elliptical_placename =
+											m_locations.key_to_placename(oh_group, oh_key)
+										if oh_full_placename == full_container_placename or
+											oh_elliptical_placename == elliptical_container_placename then
+											-- Alias matched when resolved.
+											this_holonym_matches = true
+											break
+										end
+									end
+									if this_holonym_matches then
+										-- Alias matched above when resolved.
+										holonym_matches_at_level = true
+										break
+									else
+										-- Not an alias, or doesn't match when resolved. We have a true mismatch.
+										holonym_exists_with_same_placetype = true
+									end
 								end
 							end
 						end
@@ -990,6 +1018,7 @@ export.placetype_aliases = {
 	["lgdist"] = "local government district",
 	["metbor"] = "metropolitan borough",
 	["metcity"] = "metropolitan city",
+	["metmun"] = "metropolitan municipality",
 	["mtn"] = "mountain",
 	["mun"] = "municipality",
 	["mundist"] = "municipal district",
@@ -1735,11 +1764,29 @@ end
 --     (3) when called on that holonym. Otherwise either the categorization in (1) takes place or there's no
 --     categorization.
 local function district_neighborhood_cat_handler(data)
-	local function get_plural_entry_placetype(location_spec)
+	local function get_plural_entry_placetype(location_spec, container_trail)
 		if data.entry_placetype == "suburb" then
 			return "Suburbs"
 		else
-			return location_spec.british_spelling and "Neighbourhoods" or "Neighborhoods"
+			-- Check for `british_spelling` setting on the spec itself or any container.
+			local uses_british_spelling = location_spec.british_spelling
+			if uses_british_spelling == nil and container_trail then
+				for _, container_set in ipairs(container_trail) do
+					local must_outer_break = false
+					for _, container in ipairs(container_set) do
+						if container.spec.british_spelling ~= nil then
+							uses_british_spelling = container.spec.british_spelling
+							must_outer_break = true
+							break
+						end
+					end
+					if must_outer_break then
+						break
+					end
+				end
+			end
+
+			return uses_british_spelling and "Neighbourhoods" or "Neighborhoods"
 		end
 	end
 
@@ -1747,7 +1794,7 @@ local function district_neighborhood_cat_handler(data)
 	-- etc.)
 	local group, key, spec, container_trail = export.find_matching_holonym_location(data)
 	if group and not spec.is_former_place and spec.is_city then
-		return {get_plural_entry_placetype(spec) .. " of " .. export.get_prefixed_key(key, spec)}
+		return {get_plural_entry_placetype(spec, container_trail) .. " of " .. export.get_prefixed_key(key, spec)}
 	end
 
 	-- If the entry placetype is neighbo(u)rhood, assume it is a neighborhood even if there isn't a city-like
@@ -1777,9 +1824,9 @@ local function district_neighborhood_cat_handler(data)
 				holonym_index = other_holonym_index,
 				place_desc = data.place_desc,
 			}
-			local group, key, spec, container_trail = export.find_matching_holonym_location(data)
+			local group, key, spec, container_trail = export.find_matching_holonym_location(other_holonym_data)
 			if group and not spec.is_former_place then
-				return {get_plural_entry_placetype(spec) .. (spec.is_city and " of " or " in ") ..
+				return {get_plural_entry_placetype(spec, container_trail) .. (spec.is_city and " of " or " in ") ..
 					export.get_prefixed_key(key, spec)}
 			end
 		end
@@ -1887,6 +1934,11 @@ local function province_display_handler(holonym_placetype, holonym_placename)
 	-- Display handler for Thai provinces. Thai provinces are displayed as e.g. "[[Chachoengsao]] Province". Others are
 	-- displayed as-is.
 	if m_locations.thailand_provinces[unlinked_placename .. " Province, Thailand"] then
+		return suffix_display_handler("Province", holonym_placename)
+	end
+	-- Display handler for Turkish provinces. Thai provinces are displayed as e.g. "[[Antalya]] Province". Others are
+	-- displayed as-is.
+	if m_locations.turkey_provinces[unlinked_placename .. " Province, Turkey"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	return holonym_placename
@@ -2440,6 +2492,11 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		fallback = "river",
 	},
+	["building"] = {
+		link = true,
+		class = "man-made structure",
+		default = {"Individual buildings"},
+	},
 	["built-up area"] = {
 		link = "w",
 		fallback = "area",
@@ -2491,6 +2548,10 @@ If you need to sort the following, do this (using Vim):
 		fallback = "city",
 		class = "settlement",
 		inherently_former = {"ANCIENT", "FORMER"},
+	},
+	["castle"] = {
+		link = true,
+		fallback = "building",
 	},
 	["cathedral city"] = {
 		link = true,
@@ -2564,7 +2625,7 @@ If you need to sort the following, do this (using Vim):
 		category_link = "[[sovereign]] [[microstate]]s consisting of a single [[city]] and [[w:dependent territory|dependent territories]]",
 		has_neighborhoods = true,
 		class = "settlement",
-		["continent/*"] = {"City-states", "Cities", "Countries", "Countries in +++", "National capitals"},
+		["continent/*"] = {"City-states", "Cities in +++", "Countries in +++", "National capitals"},
 		default = {"City-states", "Cities", "Countries", "National capitals"},
 	},
 	["civil parish"] = {
@@ -2601,6 +2662,14 @@ If you need to sort the following, do this (using Vim):
 	["colony"] = {
 		link = true,
 		fallback = "dependent territory",
+	},
+	["comarca"] = {
+		-- per Wikipedia: traditional region or local administrative division found in Portugal, Spain, and some of
+		-- their former colonies, like Brazil, Nicaragua, and Panama. In the Valencian Community, for example, it
+		-- sits between municipalities and provinces, something like a county or district.
+		link = true,
+		preposition = "of",
+		class = "subpolity",
 	},
 	["commandery"] = {
 		link = true,
@@ -2660,6 +2729,11 @@ If you need to sort the following, do this (using Vim):
 		fallback = "country",
 		class = "subpolity",
 	},
+	["constituent part"] = {
+		link = "separately",
+		preposition = "of",
+		class = "subpolity",
+	},
 	["counties and county-level cities!"] = {
 		-- This is used when grouping counties and county-level cities under prefecture-level cities in China.
 		category_link = "[[county|counties]] and [[county-level city|county-level cities]]",
@@ -2668,12 +2742,13 @@ If you need to sort the following, do this (using Vim):
 	["continent"] = {
 		link = true,
 		category_link = false, -- can't occur as a bare category
-		class = "geographic region",
+		class = "natural feature",
 		default = {"Continents and continental regions"},
 	},
 	["continental region"] = {
 		link = "separately",
 		category_link = false, -- can't occur as a bare category
+		class = "geographic region",
 		fallback = "continent",
 	},
 	["continents and continental regions!"] = {
@@ -3092,12 +3167,20 @@ If you need to sort the following, do this (using Vim):
 		inherently_former = {"FORMER"},
 		class = "subpolity",
 	},
+	["fort"] = {
+		link = true,
+		fallback = "building",
+	},
+	["fortress"] = {
+		link = true,
+		fallback = "building",
+	},
 	["frazione"] = {
 		link = "w",
 		fallback = "hamlet",
 	},
 	["French prefecture"] = {
-		link = "+w:prefectures in France",
+		link = "[[w:prefectures in France|prefecture]]",
 		entry_placetype_use_the = true,
 		preposition = "of",
 		has_neighborhoods = true,
@@ -3274,8 +3357,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["house"] = {
 		link = true,
-		class = "man-made structure",
-		default = {"Individual buildings"},
+		fallback = "building",
 	},
 	["housing estate"] = {
 		-- not the same as a housing project (i.e. public housing)
@@ -3412,8 +3494,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["library"] = {
 		link = true,
-		class = "man-made structure",
-		default = {"Individual buildings"},
+		fallback = "building",
 	},
 	["lieutenancy area"] = {
 		-- used in the United Kingdom; per Wikipedia:
@@ -3527,6 +3608,17 @@ If you need to sort the following, do this (using Vim):
 	["metropolitan county"] = {
 		link = true,
 		fallback = "county",
+	},
+	["metropolitan municipality"] = {
+		-- In South Africa, metropolitan municipalities group local municipalities and are like districts, between
+		-- provinces and municipalities.
+		-- In Turkey, metropolitan municipalities are provinces-level.
+		link = "w",
+		preposition = "of",
+		affix_type = "Suf",
+		no_affix_strings = {"metropolitan", "municipality"},
+		fallback = "municipality",
+		class = "subpolity",
 	},
 	["microdistrict"] = {
 		-- residential complex in post-Soviet states
@@ -4055,6 +4147,10 @@ If you need to sort the following, do this (using Vim):
 		link = "+w:rural township (Taiwan)",
 		fallback = "township",
 	},
+	["sanctuary"] = {
+		link = true,
+		fallback = "temple",
+	},
 	["satrapy"] = {
 		link = true,
 		preposition = "of",
@@ -4341,6 +4437,10 @@ If you need to sort the following, do this (using Vim):
 		affix_type = "suf",
 		no_affix_strings = {"tehsil", "tahsil"},
 		class = "subpolity",
+	},
+	["temple"] = {
+		link = true,
+		fallback = "building",
 	},
 	["territorial authority"] = {
 		link = "w",
