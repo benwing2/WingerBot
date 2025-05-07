@@ -1,8 +1,5 @@
 local export = {}
 
-local topic_subsystem = require("Module:category tree/topic")
-local poscatboiler_subsystem = require("Module:category tree/poscatboiler")
-
 -- Short-circuit some unnecessarily long category trees by
 -- replacing certain parent categories, when encountered, with other ones
 local parent_substitutions = {}
@@ -24,6 +21,10 @@ parent_substitutions['medical signs and symptoms'] = 'health'
 parent_substitutions['politics'] = 'society'
 parent_substitutions['senses'] = 'perception'
 parent_substitutions['social sciences'] = 'all topics'
+
+export.parent_substitutions = parent_substitutions
+
+return export
 
 -- Makes a "thesaurus" object out of a "topic" object.
 local function convert_topic_to_thesaurus(result)
@@ -84,22 +85,7 @@ local function convert_topic_to_thesaurus(result)
 		return parents
 	end
 
-	function result:getUmbrella()
-		if not result._lang then
-			return nil
-		end
-
-		local uinfo = mw.clone(result._info)
-		uinfo.code = nil
-		return export.new(uinfo)
-	end
-
 	return result
 end
-
-function export.new(info)
-	return convert_topic_to_thesaurus(topic_subsystem.new(info))
-end
-export.main = export.new
 
 return export

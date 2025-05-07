@@ -16,6 +16,7 @@ local table_module = "Module:table"
 
 local topic_data_module = "Module:User:Benwing2/category tree/topic/data"
 local topic_utilities_module = "Module:category tree/topic/utilities"
+local thesaurus_data_module = "Module:User:Benwing2/category tree/topic/thesaurus"
 
 local m_patterns = require(patterns_module)
 
@@ -99,6 +100,12 @@ end
 function ucfirst(txt)
 	local italics, raw_txt = txt:match("^('*)(.-)$")
 	return italics .. mw.getContentLanguage():ucfirst(raw_txt)
+end
+
+
+function lcfirst(txt)
+	local italics, raw_txt = txt:match("^('*)(.-)$")
+	return italics .. mw.getContentLanguage():lcfirst(raw_txt)
 end
 
 
@@ -407,10 +414,23 @@ local function get_description_additional_preceding(data)
 	local topdata, lang, label = data.topdata, data.lang, data.label
 	local desc, additional, preceding
 
+	-- This is kind of hacky, but it works for now.
+	local function postprocess_thesaurus(txt)
+		if not txt then
+			return nil
+		end
+		if not data.thesaurus_data then
+			return txt
+		end
+		txt = txt:gsub(" terms([ .,])", " thesaurus entries%1")
+		txt = txt:gsub("Category:", "Category:Thesaurus:")
+		return txt
+	end
+
 	if lang then
 		desc = function()
-			return substitute_template_specs(data,
-				replace_special_descriptions(data, get_and_cache(data, topdata, "description")))
+			return postprocess_thesaurus(substitute_template_specs(data,
+				replace_special_descriptions(data, get_and_cache(data, topdata, "description"))))
 		end
 		preceding = topdata.preceding
 		additional = function()
@@ -418,12 +438,14 @@ local function get_description_additional_preceding(data)
 			if topdata.additional then
 				insert(additional_parts, topdata.additional)
 			end
-			insert(additional_parts, get_additional_msg(data))
-			local labels_msg = get_labels_categorizing(data)
-			if labels_msg then
-				insert(additional_parts, labels_msg)
+			if not data.thesaurus_data then
+				insert(additional_parts, get_additional_msg(data))
+				local labels_msg = get_labels_categorizing(data)
+				if labels_msg then
+					insert(additional_parts, labels_msg)
+				end
 			end
-			return substitute_template_specs(data, concat(additional_parts, "\n\n"))
+			return postprocess_thesaurus(substitute_template_specs(data, concat(additional_parts, "\n\n")))
 		end
 	else
 		if label == "all topics" then
@@ -462,7 +484,7 @@ local function get_description_additional_preceding(data)
 			if not desc then
 				desc = "Categories concerning " .. label .. " in various specific languages."
 			end
-			return substitute_template_specs(data, desc)
+			return postprocess_thesaurus(substitute_template_specs(data, desc))
 		end
 
 		preceding = topdata.umbrella and topdata.umbrella.preceding or not has_umbrella_desc and topdata.preceding
@@ -478,12 +500,14 @@ local function get_description_additional_preceding(data)
 				insert(additional_parts, remove_lang_params(topdata_additional))
 			end
 			insert(additional_parts, "{{{umbrella_msg}}}")
-			insert(additional_parts, get_additional_msg(data))
-			local labels_msg = get_labels_categorizing(data)
-			if labels_msg then
-				insert(additional_parts, labels_msg)
+			if not data.thesaurus_data then
+				insert(additional_parts, get_additional_msg(data))
+				local labels_msg = get_labels_categorizing(data)
+				if labels_msg then
+					insert(additional_parts, labels_msg)
+				end
 			end
-			return substitute_template_specs(data, concat(additional_parts, "\n\n"))
+			return postprocess_thesaurus(substitute_template_specs(data, concat(additional_parts, "\n\n")))
 		end
 	end
 
@@ -492,11 +516,40 @@ local function get_description_additional_preceding(data)
 end
 
 
-local function get_parents(data)
+local function normalize_sort_key(data, sort)
+	local lang, label = data.lang, data.label
+	if not sort then
+		-- When defaulting sort key to label, strip 'The ' (e.g. in 'The Matrix', 'The Hunger Games')
+		-- and 'A ' (e.g. in 'A Song of Ice and Fire', 'A Christmas Carol') from label.
+		local stripped_sort = label:match("^[Tt]he (.*)$")
+		if stripped_sort then
+			sort = stripped_sort
+		end
+		if not stripped_sort then
+			stripped_sort = label:match("^[Aa] (.*)$")
+			if stripped_sort then
+				sort = stripped_sort
+			end
+		end
+		if not stripped_sort then
+			sort = label
+		end
+	end
+
+	sort = substitute_template_specs(data, sort)
+
+	if not lang then
+		sort = " " .. sort
+	end
+
+	return sort
+end
+
+
+local function get_topic_parents(data)
 	local topdata, lang, label = data.topdata, data.lang, data.label
 	local parents = topdata.parents
 
-	-- mw.log(("label: %s, parents: %s"):format(label, dump(parents)))
 	if not lang and label == "all topics" then
 		return {{ name = "Category:Fundamental", sort = "topics" }}
 	end
@@ -514,29 +567,7 @@ local function get_parents(data)
 			parent = {name = parent}
 		end
 
-		if not parent.sort then
-			-- When defaulting sort key to label, strip 'The ' (e.g. in 'The Matrix', 'The Hunger Games')
-			-- and 'A ' (e.g. in 'A Song of Ice and Fire', 'A Christmas Carol') from label.
-			local stripped_sort = label:match("^[Tt]he (.*)$")
-			if stripped_sort then
-				parent.sort = stripped_sort
-			end
-			if not stripped_sort then
-				stripped_sort = label:match("^[Aa] (.*)$")
-				if stripped_sort then
-					parent.sort = stripped_sort
-				end
-			end
-			if not stripped_sort then
-				parent.sort = label
-			end
-		end
-
-		parent.sort = substitute_template_specs(data, parent.sort)
-
-		if not lang then
-			parent.sort = " " .. parent.sort
-		end
+		parent.sort = normalize_sort_key(data, parent.sort)
 
 		if type(parent.name) ~= "string" then
 			error(("Internal error: parent.name is not a string: parent = %s"):format(dump(parent)))
@@ -551,7 +582,6 @@ local function get_parents(data)
 		
 		insert(ret, parent)
 	end
-
 
 	local function make_list_of_type_parent(typ)
 		return {
@@ -570,33 +600,100 @@ local function get_parents(data)
 		end
 	end
 
+	-- Add umbrella category.
+	if lang then
+		insert(ret, {
+			name = make_category_name(nil, label),
+			sort = lang:getCanonicalName(),
+		})
+	end
+
 	return ret
 end
 
 
-table.insert(raw_handlers, function(data)
-	local code, label = data.category:match("^(%l[%a-]*%a):(.+)")
-	local lang
-	if code then
-		lang = require(languages_module).getByCode(code)
-		if not lang then
-			mw.log(("Category '%s' looks like a language-specific topic category but unable to match language prefix"):
-				format(data.category))
-			return nil
-		end
-	else
-		label = data.category
+local function get_thesaurus_parents(data)
+	local topdata, lang, label = data.topdata, data.lang, data.label
+	local parent_substitutions = data.thesaurus_data.parent_substitutions
+	local parents = topdata.parents
+
+	if not parents or #parents == 0 then
+		return nil
 	end
+
+	local ret = {}
+
+	for _, parent in ipairs(parents) do
+		-- Process parent categories as follows:
+		-- 1. skip non-topic cats and meta-categories that start with "List of"
+		-- 2. map "en:All topics" to "English thesaurus entries" (and same for other languages), but map "All topics" itself to the root "Thesaurus" category
+		-- 3. check if this parent is to be substituted, if so, substitute it
+		-- 4. prepend "Thesaurus:" to all other category names
+		parent = mw.clone(parent)
+
+		if type(parent) ~= "table" then
+			parent = {name = parent}
+		end
+
+		parent.sort = normalize_sort_key(data, parent.sort)
+
+		if type(parent.name) ~= "string" then
+			error(("Internal error: parent.name is not a string: parent = %s"):format(dump(parent)))
+		end
+		if parent.name:find("^Category:") or parent.nontopic then
+			-- skip
+		elseif parent.name == "all topics" or parent_substitutions[parent.name] == "all topics" then
+			if not lang then
+				insert(ret, {
+					name = "Thesaurus",
+					sort = label,
+				})
+			else
+				insert(ret, {
+					name = "thesaurus entries",
+					sort = parent.sort,
+					lang = lang:getCode(),
+					is_label = true,
+				})
+			end
+		else
+			parent.name = "Thesaurus:" .. make_category_name(lang, parent_substitutions[parent.name] or parent.name)
+			parent.name = substitute_template_specs(data, parent.name)
+			insert(ret, parent)
+		end
+	end
+
+	-- Add the non-thesaurus version of this category as a parent, unless it is a thesaurus-only category.
+	if not topdata.thesaurusonly then
+		insert(ret, { name = make_category_name(lang, label), sort = " " })
+	end
+
+	-- Add umbrella category.
+	if lang then
+		insert(ret, {
+			name = "Thesaurus:" .. make_category_name(nil, label),
+			sort = lang:getCanonicalName(),
+		})
+	end
+
+	return ret
+end
+
+
+local function generate_spec(category, lang, upcase_label, thesaurus_data)
 	local label_data = require(topic_data_module)
+	local label
 
 	-- Convert label to lowercase if possible
-	local lowercase_label = mw.getContentLanguage():lcfirst(label)
+	local lowercase_label = mw.getContentLanguage():lcfirst(upcase_label)
 
 	-- Check if the label exists
 	local labels = label_data["LABELS"]
 
 	if labels[lowercase_label] then
 		label = lowercase_label
+	else
+		label = upcase_label
 	end
 
 	local topdata = labels[label]
@@ -616,18 +713,28 @@ table.insert(raw_handlers, function(data)
 		return nil
 	end
 
-	data.topdata = topdata
-	data.label = label
-	data.lang = lang
+	local data = {
+		category = category,
+		lang = lang,
+		label = label,
+		topdata = topdata,
+		thesaurus_data = thesaurus_data,
+	}
 
 	local description, additional, preceding = get_description_additional_preceding(data)
+	local parents
+	if thesaurus_data then
+		parents = get_thesaurus_parents(data)
+	else
+		parents = get_topic_parents(data)
+	end
 
 	return {
 		lang = lang and lang:getCode() or nil,
 		description = description,
 		additional = additional,
 		preceding = preceding,
-		parents = get_parents(data),
+		parents = parents,
 		breadcrumb = get_breadcrumb(data),
 		displaytitle = format_displaytitle(data, "include lang prefix", "upcase"),
 		topright = get_topright(data),
@@ -635,6 +742,77 @@ table.insert(raw_handlers, function(data)
 		can_be_empty = not lang,
 		hidden = false,
 	}
+end
+
+
+-- Handler for `Thesaurus:...` categories.
+table.insert(raw_handlers, function(data)
+	local code, upcase_label = data.category:match("^Thesaurus:(%l[%a-]*%a):(.+)$")
+	local lang
+	if code then
+		lang = require(languages_module).getByCode(code)
+		if not lang then
+			mw.log(("Category '%s' looks like a language-specific thesaurus category but unable to match language prefix"):
+				format(data.category))
+			return nil
+		end
+	else
+		upcase_label = data.category:match("^Thesaurus:(.+)$")
+	end
+
+	if upcase_label then
+		local thesaurus_data = require(thesaurus_data_module)
+		-- substituted category names are not allowed
+		if thesaurus_data.parent_substitutions[lcfirst(upcase_label)] then
+			error(("Category is not allowed as a Thesaurus category: %s (see the list of parent substitutions at " ..
+				"[[Module:category tree/topic/thesaurus]])"):format(data.category))
+		end
+		return generate_spec(lang, upcase_label, thesaurus_data)
+	end
 end)
+
+
+-- Handler for regular topic categories.
+table.insert(raw_handlers, function(data)
+	local code, upcase_label = data.category:match("^(%l[%a-]*%a):(.+)$")
+	local lang
+	if code then
+		lang = require(languages_module).getByCode(code)
+		if not lang then
+			mw.log(("Category '%s' looks like a language-specific topic category but unable to match language prefix"):
+				format(data.category))
+			return nil
+		end
+	else
+		upcase_label = data.category
+	end
+
+	return generate_spec(lang, upcase_label)
+end)
+
+
+-----------------------------------------------------------------------------
+--                                                                         --
+--                              RAW CATEGORIES                             --
+--                                                                         --
+-----------------------------------------------------------------------------
+
+
+raw_categories["Thesaurus"] = {
+	description = "Category for entries of the Wiktionary thesaurus, located in a separate namespace.",
+	additional = [=[
+There are '''three ways to browse''' the thesaurus:
+* Look under '''[[:Category:Thesaurus entries by language]]''' to get started.
+* Use the search box below.
+* Browse the thesaurus by topic using the links under "Subcategories" below.
+
+The main project page is [[Wiktionary:Thesaurus]].
+
+{{ws header|<nowiki/>|link=}}]=],
+	parents = {
+		"Category:Fundamental",
+		"Category:Wiktionary projects",
+	},
+}
 
 return {RAW_CATEGORIES = raw_categories, RAW_HANDLERS = raw_handlers}
