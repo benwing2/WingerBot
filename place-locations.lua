@@ -16,11 +16,70 @@ This module contains data on all known locations, along with some lower-level co
 known-location code is in [[Module:place/placetypes]]). You must load this module using require(), not using
 mw.loadData().
 
-===Location group tables===
+===Location data===
 
-The bulk of the data in this module (after some helper functions and placetype tables) describes the known locations
-and their relationships. The main location table is called `export.locations` and is a list of ''location groups'', each
-of which describes a set of related known locations, as described above.
+'''NOTE: In order to understand the following better, first read the introductory documentation in [[Module:place]],
+especially the section `More about known locations`.'''
+
+The bulk of the code in this module (after some helper functions and placetype tables) describes the known locations
+and their relationships. Locations are grouped into ''location groups'' that share some common properties (examples are
+states of the United States and cities in Brazil). Each location group is associated with two tables, a ''data table''
+that lists the locations and their individual properties, and a ''metatable'' that lists group-level properties and
+defaults for the location properties. Each metatable points to the associated data table (i.e. contains the data table
+as its `data` field), and the `locations` variable holds a list of all group metatables. A given location is generally
+deescribed by three values: (a) the group metatable for the group the location is part of; (b) the location's
+canonical ''key'', which is the actual key in the group's data table and is globally unique across all locations; the
+location's ''spec'', which is the initialized object describing the properties of the location and comes from the value
+in the data table corresponding to the canonical key, transformed by the `initialize_spec()` function. These are
+typically named `group`, `key` and `spec`, respectively and in that order, and are found in the arguments to many
+functions.
+
+The following are the properties of the location spec. Note that for all of these, a default can be given at the group
+level using a property of the same name as the location spec property but preceded by `default_`. For example, to
+specify the default placetype of states of the United States as `"state"`, use `default_placetype = "state"` in the
+location group table.
+* `placetype`: String specifying the placetype the location (e.g. "country", "state", province"). This can also be a
+  table of such types; in this case, the first listed type is the canonical type that will be used in descriptions, but
+  the location will be recognized (e.g. in holonym) when tagged with any of the specified types.
+* `divs`: List of recognized political or historical/popular divisions; e.g. for the Netherlands, a specification of the
+  form `divs = {"provinces", "municipalities"}` will allow categories such as
+  [[:Category:de:Provinces of the Netherlands]] and [[:Category:pt:Municipalities of the Netherlands]] to be created.
+  Any division that appears here must also be found in `placetype_data`, or an error occurs.
+* `is_city`: If 'true', don't recognize or generate categories such as [[:Category:en:Cities in Monaco]] (specifically,
+  for place types in `generic_placetypes` but not in `generic_placetypes_for_cities`).
+* `is_former_place`: If 'true', don't recognize or generate categories such as
+  [[:Category:fr:Rivers in the Soviet Union]] (specifically, for any place type in `generic_placetypes` other than
+  "places").
+* `keydesc`: String directly specifying a description of the location, for use in generating the contents of category
+  pages related to the location. descriptions.
+* `parents`: List of parents of the bare topical category. For example, if 'parents = {"Europe", "Asia"}' is specified
+  for "Turkey", bare topical categories such as [[:Category:en:Turkey]] will have parent categories
+  [[:Category:en:Europe]] and [[:Category:en:Asia]]. The first listed category is used for the primary parent (i.e. this
+  is the parent that appears in the breadcrumbs at the top of the category page). In this case, for example, "Europe"
+  (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level locations (countries and
+  such), not for subpolities (states, provinces, etc.), which use the value of `container` (see below) as the
+  parent.
+* `container`: This specifies the larger location in which the subpolity is contained, and is used to construct the
+  primary parent of 'Cities in ...', 'Rivers in ...' and similar categories. For example, the subpolity Guangdong (a
+  province of China) will have "China" as the `container`, so that a category of the form
+  [[:Category:en:Cities in Guangdong]] will have its primary parent (i.e. the parent that appears in the breadcrumbs at
+  the top of the category page) as [[:Category:en:Cities in China]]. If `container` is omitted, as in top-level
+  locations, the primary parent will simply be e.g. [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
+* `wp`: Spec describing how to construct the Wikipedia article for the city. Each spec is either `true` (equivalent to
+  `"%l"`, i.e. use the full location placename directly) or a string containing formatting directives, indicating how to
+  construct the article name. The allowed formatting directives are `%l` (the full location placename), `%e` (the
+  elliptical location placename) and `%c` (the full placename of the first immediate container). For example, the value
+  of `wp` for the group of United States cities is `"%l, %c"` since the city articles tend to be named e.g.
+  `Austin, Texas` (but with many exceptions, specified using `wp` fields at the city level). The default is `true`.
+* `wpcat`: Spec describing how to construct the Wikipedia category page for the city (i.e. the page listing articles and
+  categories relevant to the city). The format is the same as with `wp`, and it defaults to the value of `wp`. It rarely
+  needs to be specified because the category page and the article page almost always follow the same format.
+* `commonscat`: Spec describing how to construct the Commons category page for the city (i.e. the page on the MediaWiki
+  Commons site listing articles and categories relevant to the city). It has the same format as `wp` and `wpcat` and
+  defaults to `wpcat`, which is usually (but not always) correct.
+* 
+
+
 
 ====OUT OF DATE DOCUMENTATION (location group tables)====
 
@@ -132,47 +191,6 @@ relevant categories to a page with a call to {{tl|place}}), the table is passed 
 augments the property table with additional properties that are common to the group or derivable from group-specific
 properties. The following are the recognized properties:
 
-* `placetype`: String specifying the placetype the location (e.g. "country", "state", province"). This can also be a
-  table of such types; in this case, the first listed type is the canonical type that will be used in descriptions, but
-  the location will be recognized (e.g. in {{tl|place}} arguments) when tagged with any of the specified types. This
-  value overrides the group-level `default_placetype` value, and only needs to be specified if it disagrees with that
-  value.
-* `divs`: List of recognized political or historical/popular divisions; e.g. for the Netherlands, a specification of the
-  form `divs = {"provinces", "municipalities"}` will allow categories such as
-  [[:Category:de:Provinces of the Netherlands]] and [[:Category:pt:Municipalities of the Netherlands]] to be created.
-  Any division that appears here must also be found in `placetype_data`, or an error occurs.
-* `is_city`: If 'true', don't recognize or generate categories such as [[:Category:en:Cities in Monaco]] (specifically,
-  for place types in `generic_placetypes` but not in `generic_placetypes_for_cities`).
-* `is_former_place`: If 'true', don't recognize or generate categories such as
-  [[:Category:fr:Rivers in the Soviet Union]] (specifically, for any place type in `generic_placetypes` other than
-  "places").
-* `keydesc`: String directly specifying a description of the location, for use in generating the contents of category
-  pages related to the location. descriptions.
-* `parents`: List of parents of the bare topical category. For example, if 'parents = {"Europe", "Asia"}' is specified
-  for "Turkey", bare topical categories such as [[:Category:en:Turkey]] will have parent categories
-  [[:Category:en:Europe]] and [[:Category:en:Asia]]. The first listed category is used for the primary parent (i.e. this
-  is the parent that appears in the breadcrumbs at the top of the category page). In this case, for example, "Europe"
-  (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level locations (countries and
-  such), not for subpolities (states, provinces, etc.), which use the value of `container` (see below) as the
-  parent.
-* `container`: This specifies the larger location in which the subpolity is contained, and is used to construct the
-  primary parent of 'Cities in ...', 'Rivers in ...' and similar categories. For example, the subpolity Guangdong (a
-  province of China) will have "China" as the `container`, so that a category of the form
-  [[:Category:en:Cities in Guangdong]] will have its primary parent (i.e. the parent that appears in the breadcrumbs at
-  the top of the category page) as [[:Category:en:Cities in China]]. If `container` is omitted, as in top-level
-  locations, the primary parent will simply be e.g. [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
-* `wp`: Spec describing how to construct the Wikipedia article for the city. Each spec is either `true` (equivalent to
-  `"%l"`, i.e. use the full location placename directly) or a string containing formatting directives, indicating how to
-  construct the article name. The allowed formatting directives are `%l` (the full location placename), `%e` (the
-  elliptical location placename) and `%c` (the full placename of the first immediate container). For example, the value
-  of `wp` for the group of United States cities is `"%l, %c"` since the city articles tend to be named e.g.
-  `Austin, Texas` (but with many exceptions, specified using `wp` fields at the city level). The default is `true`.
-* `wpcat`: Spec describing how to construct the Wikipedia category page for the city (i.e. the page listing articles and
-  categories relevant to the city). The format is the same as with `wp`, and it defaults to the value of `wp`. It rarely
-  needs to be specified because the category page and the article page almost always follow the same format.
-* `commonscat`: Spec describing how to construct the Commons category page for the city (i.e. the page on the MediaWiki
-  Commons site listing articles and categories relevant to the city). It has the same format as `wp` and `wpcat` and
-  defaults to `wpcat`, which is usually (but not always) correct.
 ]==]
 
 -----------------------------------------------------------------------------------
@@ -222,6 +240,9 @@ the distinction between keys and placenames). Two values are returned, the full 
 placenames are computed by chopping off anything starting with a comma.
 ]==]
 function export.key_to_placename(group, key)
+	if group.key_to_placename == false then
+		return key, key
+	end
 	if group.key_to_placename then
 		local full_placename, elliptical_placename = group.key_to_placename(key)
 		if type(full_placename) ~= "string" then
@@ -312,37 +333,41 @@ function export.initialize_spec(group, key, spec)
 	end
 	spec.containers = containers
 	spec.container = nil
-	spec.placetype = spec.placetype or group.default_placetype
-	if not spec.placetype then
-		internal_error("No placetype found in key %s for spec %s or in group `default_placetype`", key, spec)
-	end
-	spec.divs = spec.divs or group.default_divs
-	spec.addl_divs = group.addl_divs
-	spec.keydesc = spec.keydesc or group.default_keydesc
-	spec.overriding_bare_label_parents =
-		spec.overriding_bare_label_parents or group.default_overriding_bare_label_parents
-	spec.wp = spec.wp or group.default_wp
-	spec.wpcat = spec.wpcat or group.default_wpcat
-	spec.commonscat = spec.commonscat or group.default_commonscat
-	local function boolean_with_default(val, default_val)
+	local function value_with_default(val, default_val)
 		if val == nil then
 			return default_val
 		else
 			return val
 		end
 	end
-	spec.british_spelling = boolean_with_default(spec.british_spelling, group.default_british_spelling)
-	spec.the = boolean_with_default(spec.the, group.default_the)
-	spec.no_container_cat = boolean_with_default(spec.no_container_cat, group.default_no_container_cat)
-	spec.no_generic_place_cat = boolean_with_default(spec.no_generic_place_cat, group.default_no_generic_place_cat)
-	spec.no_check_holonym_mismatch = boolean_with_default(spec.no_check_holonym_mismatch,
+	spec.placetype = value_with_default(spec.placetype, group.default_placetype)
+	if not spec.placetype then
+		internal_error("No placetype found in key %s for spec %s or in group `default_placetype`", key, spec)
+	end
+	spec.divs = value_with_default(spec.divs, group.default_divs)
+	spec.addl_divs = group.addl_divs
+	spec.keydesc = value_with_default(spec.keydesc, group.default_keydesc)
+	spec.overriding_bare_label_parents = value_with_default(spec.overriding_bare_label_parents,
+		group.default_overriding_bare_label_parents)
+	spec.wp = value_with_default(spec.wp, group.default_wp)
+	spec.wpcat = value_with_default(spec.wpcat, group.default_wpcat)
+	spec.commonscat = value_with_default(spec.commonscat, group.default_commonscat)
+	spec.british_spelling = value_with_default(spec.british_spelling, group.default_british_spelling)
+	spec.the = value_with_default(spec.the, group.default_the)
+	spec.no_container_cat = value_with_default(spec.no_container_cat, group.default_no_container_cat)
+	spec.no_container_parent = value_with_default(spec.no_container_parent, group.default_no_container_parent)
+	spec.no_generic_place_cat = value_with_default(spec.no_generic_place_cat, group.default_no_generic_place_cat)
+	spec.no_check_holonym_mismatch = value_with_default(spec.no_check_holonym_mismatch,
 		group.default_no_check_holonym_mismatch)
-	spec.no_auto_augment_container = boolean_with_default(spec.no_auto_augment_container,
+	spec.no_auto_augment_container = value_with_default(spec.no_auto_augment_container,
 		group.default_no_auto_augment_container)
-	spec.is_city = boolean_with_default(spec.is_city, group.default_is_city)
-	spec.is_city = boolean_with_default(spec.is_city, group.default_placetype == "city")
-	spec.is_former_place = boolean_with_default(spec.is_former_place, group.default_is_former_place)
-	spec.no_include_container_in_desc = boolean_with_default(spec.no_include_container_in_desc,
+	spec.is_city = value_with_default(spec.is_city, group.default_is_city)
+	-- `default_placetype == "city"` is correct; if `default_placetype` has something else like `prefecture-level city`
+	-- as the canonical placetype but also lists `city` (as Chinese prefecture-level cities do), don't mark as
+	-- is_city.
+	spec.is_city = value_with_default(spec.is_city, group.default_placetype == "city")
+	spec.is_former_place = value_with_default(spec.is_former_place, group.default_is_former_place)
+	spec.no_include_container_in_desc = value_with_default(spec.no_include_container_in_desc,
 		group.default_no_include_container_in_desc)
 	spec.initialized = true
 end
@@ -726,11 +751,12 @@ export.continents = {
 			fulldesc = "=the planet [[Earth]] and the features found on it"},
 		["Africa"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"}},
 		["America"] = {placetype = {"supercontinent", "continent"}, container = {key = "Earth", placetype = "planet"},
-				keydesc = "[[America]], in the sense of [[North America]] and [[South America]] combined"},
+				keydesc = "[[America]], in the sense of [[North America]] and [[South America]] combined",
+				wp = "Americas"},
 		["Americas"] = {alias_of = "America", the = true},
 			["North America"] = {placetype = "continent", container = {key = "America", placetype = "supercontinent"}},
-				["Caribbean"] = {the = true, placetype = "continental region", container = {key = "North America", placetype = "continent"}},
-				["Central America"] = {placetype = "continental region", container = {key = "North America", placetype = "continent"}},
+				["Caribbean"] = {the = true, placetype = {"continental region", "region"}, container = {key = "North America", placetype = "continent"}},
+				["Central America"] = {placetype = {"continental region", "region"}, container = {key = "North America", placetype = "continent"}},
 			["South America"] = {placetype = "continent", container = {key = "America", placetype = "supercontinent"}},
 		["Antarctica"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"},
 				fulldesc = "=the territory of [[Antarctica]]"},
@@ -739,18 +765,19 @@ export.continents = {
 			["Asia"] = {placetype = "continent", container = {key = "Eurasia", placetype = "supercontinent"}},
 			["Europe"] = {placetype = "continent", container = {key = "Eurasia", placetype = "supercontinent"}},
 		["Oceania"] = {placetype = "continent", container = {key = "Earth", placetype = "planet"}},
-			["Melanesia"] = {placetype = "continental region", container = {key = "Oceania", placetype = "continent"}},
-			["Micronesia"] = {placetype = "continental region", container = {key = "Oceania", placetype = "continent"}},
-			["Polynesia"] = {placetype = "continental region", container = {key = "Oceania", placetype = "continent"}},
+			["Melanesia"] = {placetype = {"continental region", "region"}, container = {key = "Oceania", placetype = "continent"}},
+			["Micronesia"] = {placetype = {"continental region", "region"}, container = {key = "Oceania", placetype = "continent"}},
+			["Polynesia"] = {placetype = {"continental region", "region"}, container = {key = "Oceania", placetype = "continent"}},
 }
 
 export.continents_group = {
 	default_overriding_bare_label_parents = {}, -- container parents should be used
-	default_divs = {{type = "countries", prep = "in", skip_polity_parent_type = false}},
+	default_divs = {{type = "countries", prep = "in"}},
 	-- It's enough to mention the first-level continent or continent group. It seems excessive to write e.g.
 	-- "El Salvador, a country in Central America, a continental region in North America, a continent in America, ...".
 	default_no_include_container_in_desc = true,
 	default_no_container_cat = true,
+	default_no_container_parent = true,
 	default_no_auto_augment_container = true,
 	default_no_generic_place_cat = true,
 	-- French Guyana is in France but not in Europe, which should not be an issue, so don't check holonym mismatches at
@@ -775,11 +802,11 @@ export.countries = {
 	["Australia"] = {container = "Oceania", divs = {
 		{type = "states", cat_as = "states and territories"},
 		{type = "territories", cat_as = "states and territories"},
-		"local government areas",
+		"local government areas", "dependent territories",
 	}, british_spelling = true},
 	["Austria"] = {container = "Europe", divs = {"states", "districts", "municipalities"}, british_spelling = true},
 	["Azerbaijan"] = {container = {"Europe", "Asia"}, divs = {"districts", "municipalities"}, british_spelling = true},
-	["Bahamas"] = {the = true, container = "North America", divs = {"districts"}, british_spelling = true, wp = "The Bahamas"},
+	["Bahamas"] = {the = true, container = "North America", divs = {"districts"}, british_spelling = true, wp = "The %l"},
 	["Bahrain"] = {container = "Asia", divs = {"governorates"}},
 	["Bangladesh"] = {container = "Asia", divs = {"divisions", "districts", "municipalities"}, british_spelling = true},
 	["Barbados"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
@@ -837,12 +864,16 @@ export.countries = {
 	["Czechia"] = {alias_of = "Czech Republic"}, -- differs in "the"
 	["Democratic Republic of the Congo"] = {the = true, container = "Africa", divs = {"provinces", "territories"}},
 	["Congo"] = {alias_of = "Democratic Republic of the Congo", display = true, the = true},
-	["Denmark"] = {container = "Europe", divs = {"regions", "municipalities", "dependent territories"}, british_spelling = true},
+	["Denmark"] = {container = "Europe", divs = {"regions", "municipalities", "dependent territories"},
+		british_spelling = true,
+		-- Wikipedia separates [[w:Denmark]] (constituent country) from [[w:Danish Realm]] (country)
+	},
 	["Djibouti"] = {container = "Africa", divs = {"regions", "districts"}},
 	["Dominica"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
 	["Dominican Republic"] = {the = true, container = "North America", divs = {"provinces", "municipalities"},
 		keydesc = "the [[Dominican Republic]], the country that shares the [[Caribbean]] island of [[Hispaniola]] with [[Haiti]]"},
-	["East Timor"] = {container = "Asia", divs = {"municipalities"}},
+	["East Timor"] = {container = "Asia", divs = {"municipalities"}, wp = "Timor-Leste"},
+	["Timor-Leste"] = {alias_of = "East Timor", display = true},
 	["Ecuador"] = {container = "South America", divs = {"provinces", "cantons"}},
 	["Egypt"] = {container = "Africa", divs = {"governorates", "regions"}, british_spelling = true},
 	["El Salvador"] = {container = "Central America", divs = {"departments", "municipalities"}},
@@ -853,18 +884,21 @@ export.countries = {
 	["Swaziland"] = {alias_of = "Eswatini", display = true},
 	["Ethiopia"] = {container = "Africa", divs = {"regions", "zones"}},
 	["Federated States of Micronesia"] = {the = true, container = "Micronesia", divs = {"states"}},
+	["Micronesia"] = {alias_of = "Federated States of Micronesia"},
 	["Fiji"] = {container = "Melanesia", divs = {"divisions", "provinces"}, british_spelling = true},
 	["Finland"] = {container = "Europe", divs = {"regions", "municipalities"}, british_spelling = true},
-	["France"] = {container = "Europe", divs = {"regions", "cantons", "collectivities", "communes", "departments",
-		"municipalities", "dependent territories", "territories",
+	["France"] = {container = "Europe", divs = {"regions", "cantons", "collectivities",
+		"communes",
+		{type = "municipalities", cat_as = "communes"},
+		"departments",
 		{type = "prefectures", cat_as = {"prefectures", "departmental capitals"}},
 		{type = "French prefectures", cat_as = {"prefectures", "departmental capitals"}},
-		"provinces",
+		"dependent territories", "territories", "provinces",
 	}, british_spelling = true},
 	["Gabon"] = {container = "Africa", divs = {"provinces", "departments"}},
-	["Gambia"] = {the = true, container = "Africa", divs = {"divisions", "districts"}, british_spelling = true, wp = "The Gambia"},
+	["Gambia"] = {the = true, container = "Africa", divs = {"divisions", "districts"}, british_spelling = true, wp = "The %l"},
 	["Georgia"] = {container = {"Europe", "Asia"}, divs = {"regions", "districts"},
-		keydesc = "the country of [[Georgia]], in [[Eurasia]]", british_spelling = true},
+		keydesc = "the country of [[Georgia]], in [[Eurasia]]", british_spelling = true, wp = "%l (country)"},
 	["Germany"] = {container = "Europe", divs = {"states", "municipalities", "districts"}, british_spelling = true},
 	["Ghana"] = {container = "Africa", divs = {"regions", "districts"}, british_spelling = true},
 	["Greece"] = {container = "Europe", divs = {"regions", "regional units", "municipalities",
@@ -887,7 +921,8 @@ export.countries = {
 	["Indonesia"] = {container = "Asia", divs = {"regencies", "provinces"}},
 	["Iran"] = {container = "Asia", divs = {"provinces", "counties"}},
 	["Iraq"] = {container = "Asia", divs = {"governorates", "districts"}},
-	["Ireland"] = {container = "Europe", addl_parents = {"British Isles"}, divs = {"counties", "districts", "provinces"}, british_spelling = true},
+	["Ireland"] = {container = "Europe", addl_parents = {"British Isles"},
+		divs = {"counties", "districts", "provinces"}, british_spelling = true, wp = "Republic of %l"},
 	["Republic of Ireland"] = {alias_of = "Ireland", the = true}, -- differs in "the"
 	["Israel"] = {container = "Asia", divs = {"districts"}},
 	["Italy"] = {container = "Europe", divs = {
@@ -949,18 +984,28 @@ export.countries = {
 	["Netherlands"] = {the = true, placetype = {"country", "constituent country"}, container = "Europe",
 		divs = {"provinces", "municipalities",
 			{type = "FORMER municipalities", cat_as = "former municipalities"},
-			"dependent territories", "constituent countries"}, british_spelling = true},
+			"dependent territories", "constituent countries"}, british_spelling = true,
+		-- Wikipedia separates [[w:Netherlands]] (constituent country) from [[w:Kingdom of the Netherlands]]
+		-- (country)
+	},
 	["New Zealand"] = {container = "Polynesia", divs = {"regions", "dependent territories", "territorial authorities"},
 		british_spelling = true},
 	["Nicaragua"] = {container = "Central America", divs = {"departments", "municipalities"}},
 	["Niger"] = {container = "Africa", divs = {"regions", "departments"}},
-	["Nigeria"] = {container = "Africa", divs = {"states", "local government areas"}, british_spelling = true},
+	["Nigeria"] = {container = "Africa", divs = {
+		"states",
+		-- Categorize the Federal Capital Territory as a state because there's only one of it; we could categorize
+		-- everything under 'states and territories' but that seems a bit pointless.
+		{type = "federal territories", cat_as = "states"},
+		"local government areas",
+	}, british_spelling = true},
 	["North Korea"] = {container = "Asia", addl_parents = {"Korea"}, divs = {"provinces", "counties"}},
 	["North Macedonia"] = {container = "Europe", divs = {"regions", "municipalities"}, british_spelling = true},
 	["Macedonia"] = {alias_of = "North Macedonia", display = true},
 	["Republic of North Macedonia"] = {alias_of = "North Macedonia", the = true}, -- differs in "the"
 	["Republic of Macedonia"] = {alias_of = "North Macedonia", the = true}, -- differs in "the"
-	["Norway"] = {container = "Europe", divs = {"counties", "municipalities", "dependent territories", "districts"},
+	["Norway"] = {container = "Europe",
+		divs = {"counties", "municipalities", "dependent territories", "districts", "unincorporated areas"},
 		british_spelling = true},
 	["Oman"] = {container = "Asia", divs = {"governorates", "provinces"}},
 	["Pakistan"] = {container = "Asia", divs = {
@@ -970,9 +1015,9 @@ export.countries = {
 		{type = "territories", cat_as = "provinces and territories"},
 		"divisions", "districts",
 	}, british_spelling = true},
+	["Palau"] = {container = "Micronesia", divs = {"states"}},
 	["Palestine"] = {container = "Asia", divs = {"governorates"}},
 	["State of Palestine"] = {alias_of = "Palestine", the = true}, -- differs in "the"
-	["Palau"] = {container = "Micronesia", divs = {"states"}},
 	["Panama"] = {container = "Central America", divs = {"provinces", "districts"}},
 	["Papua New Guinea"] = {container = "Melanesia", divs = {"provinces", "districts"}, british_spelling = true},
 	["Paraguay"] = {container = "South America", divs = {"departments", "districts"}},
@@ -1012,10 +1057,17 @@ export.countries = {
 	-- English to leave it out and it's commonly included, so we include it.
 	["Solomon Islands"] = {the = true, container = "Melanesia", divs = {"provinces"}, british_spelling = true},
 	["Somalia"] = {container = "Africa", divs = {"regions", "districts"}},
-	["South Africa"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
+	["South Africa"] = {container = "Africa", divs = {
+		"provinces",
+		"districts",
+		{type = "district municipalities", cat_as = "districts"},
+		{type = "metropolitan municipalities", cat_as = "districts"},
+		"municipalities",
+	}, british_spelling = true},
 	["South Korea"] = {container = "Asia", addl_parents = {"Korea"}, divs = {"provinces", "counties", "districts"}},
 	["South Sudan"] = {container = "Africa", divs = {"regions", "states", "counties"}, british_spelling = true},
-	["Spain"] = {container = "Europe", divs = {"autonomous communities", "provinces", "municipalities", "autonomous cities"},
+	["Spain"] = {container = "Europe", divs = {"autonomous communities", "provinces", "municipalities",
+		"comarcas", "autonomous cities"},
 		british_spelling = true},
 	["Sri Lanka"] = {container = "Asia", divs = {"provinces", "districts"}, british_spelling = true},
 	["Sudan"] = {container = "Africa", divs = {"states", "districts"}, british_spelling = true},
@@ -1070,8 +1122,8 @@ export.countries = {
 	["Uzbekistan"] = {container = "Asia", divs = {"regions", "districts"}},
 	["Vanuatu"] = {container = "Melanesia", divs = {"provinces"}, british_spelling = true},
 	["Vatican City"] = {placetype = {"city-state", "country"}, container = "Europe",
-		-- We want the first placetype to be 'city-state' so the description of Monaco says it's a city-state, but we
-		-- want its parent to be "countries in Europe".
+		-- We want the first placetype to be 'city-state' so the description of Vatican City says it's a city-state,
+		-- but we want its parent to be "countries in Europe".
 		bare_category_parent_type = {type = "countries", prep = "in"},
 		addl_parents = {"Rome"}, is_city = true, british_spelling = true},
 	["Vatican"] = {alias_of = "Vatican City", the = true}, -- differs in "the"
@@ -1080,6 +1132,8 @@ export.countries = {
 	["Western Sahara"] = {placetype = {"territory", "country"}, container = "Africa",
 		bare_category_parent_type = {type = "countries", prep = "in"},
 	},
+	-- Not display-canonicalizable both due to differences in 'the' and the sovereignty dispute over Western Sahara
+	["Sahrawi Arab Democratic Republic"] = {alias_of = "Western Sahara", the = true},
 	["Yemen"] = {container = "Asia", divs = {"governorates", "districts"}},
 	["Zambia"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
 	["Zimbabwe"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
@@ -1100,6 +1154,7 @@ export.countries_group = {
 	default_overriding_bare_label_parents = {"+++", "countries"},
 	default_placetype = "country",
 	default_no_container_cat = true,
+	default_no_container_parent = true,
 	-- No need to augment country holonyms with continents; not needed for disambiguation.
 	default_no_auto_augment_container = true,
 	data = export.countries,
@@ -1112,20 +1167,16 @@ export.country_like_entities = {
 	["Akrotiri and Dhekelia"] = {
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"Cyprus", "Europe"},
+		addl_parents = {"Cyprus", "Europe", "Asia"},
 		british_spelling = true,
 	},
+	-- Åland: Listed as a region of Finland. Wikipedia lists this under "dependent territories" in
+	--   [[w:List of sovereign states and dependent territories by continent]].
 	-- unincorporated territory of the United States
 	["American Samoa"] = {
 		placetype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
 		addl_parents = {"Polynesia"},
-	},
-	["United States Minor Outlying Islands"] = {
-		the = true,
-		placetype = {"unincorporated territory", "overseas territory", "territory"},
-		container = "United States",
-		addl_parents = {"Islands", "Micronesia", "Polynesia"},
 	},
 	-- British Overseas Territory
 	["Anguilla"] = {
@@ -1136,33 +1187,30 @@ export.country_like_entities = {
 	},
 	-- de-facto independent state, internationally recognized as part of Georgia
 	["Abkhazia"] = {
-		placetype = {"unrecognized state", "country"},
+		placetype = {"unrecognized country", "country"},
 		addl_parents = {"Georgia", "Europe", "Asia"},
 		divs = {"districts"},
 		keydesc = "the de-facto independent state of [[Abkhazia]], internationally recognized as part of the country of [[Georgia]]",
 		british_spelling = true,
 	},
-	-- de-facto independent state of Armenian ethnicity, internationally recognized as part of Azerbaijan
-	-- (also known as Nagorno-Karabakh)
-	-- NOTE: Formerly listed Armenia as a parent; this seems politically non-neutral so I've taken it out.
-	["Artsakh"] = {
-		placetype = {"unrecognized state", "country"},
-		addl_parents = {"Azerbaijan", "Europe", "Asia"},
-		keydesc = "the former de-facto independent state of [[Artsakh]], internationally recognized as part of [[Azerbaijan]]",
-		british_spelling = true,
-	},
-	["Nagorno-Karabakh"] = {alias_of = "Artsakh"},
-	-- British Overseas Territory
-	["Ascension Island"] = {
-		placetype = {"overseas territory", "territory"},
-		container = "United Kingdom",
-		addl_parents = {"Atlantic Ocean"},
-		british_spelling = true,
+	-- Australian external territory
+	["Ashmore and Cartier Islands"] = {
+		the = true,
+		placetype = {"external territory", "territory"},
+		container = "Australia",
+		addl_parents = {"Asia"},
 	},
 	-- constituent country of the Netherlands
 	["Aruba"] = {
 		placetype = {"constituent country", "country"},
 		container = "Netherlands",
+		addl_parents = {"North America"},
+		british_spelling = true,
+	},
+	-- British Overseas Territory
+	["Bermuda"] = {
+		placetype = {"overseas territory", "territory"},
+		container = "United Kingdom",
 		addl_parents = {"North America"},
 		british_spelling = true,
 	},
@@ -1172,13 +1220,6 @@ export.country_like_entities = {
 		container = "Netherlands",
 		addl_parents = {"North America"},
 		is_city = true,
-		british_spelling = true,
-	},
-	-- British Overseas Territory
-	["Bermuda"] = {
-		placetype = {"overseas territory", "territory"},
-		container = "United Kingdom",
-		addl_parents = {"North America"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1197,6 +1238,13 @@ export.country_like_entities = {
 		addl_parents = {"North America"},
 		british_spelling = true,
 	},
+	-- Norwegian dependent territory
+	["Bouvet Island"] = {
+		placetype = {"dependent territory", "territory"},
+		container = "Norway",
+		addl_parents = {"Africa"},
+		british_spelling = true,
+	},
 	-- British Overseas Territory
 	["Cayman Islands"] = {
 		the = true,
@@ -1212,6 +1260,13 @@ export.country_like_entities = {
 		addl_parents = {"Asia"},
 		british_spelling = true,
 	},
+	-- Sui generis French "state private property" per Wikipedia; classify as overseas territory like the
+	-- French Southern and Antarctic Lands.
+	["Clipperton Island"] = {
+		placetype = {"overseas territory", "territory"},
+		container = "France",
+		addl_parents = {"North America"},
+	},
 	-- Australian external territory; also called the Keeling Islands or (officially) the Cocos (Keeling) Islands
 	["Cocos Islands"] = {
 		the = true,
@@ -1221,6 +1276,8 @@ export.country_like_entities = {
 		wp = "Cocos (Keeling) Islands",
 		british_spelling = true,
 	},
+	["Cocos (Keeling) Islands"] = {alias_of = "Cocos Islands", display = true, the = true},
+	["Keeling Islands"] = {alias_of = "Cocos Islands", display = true, the = true},
 	-- self-governing but in free association with New Zealand
 	["Cook Islands"] = {
 		the = true,
@@ -1258,10 +1315,11 @@ export.country_like_entities = {
 		addl_parents = {"Europe"},
 		british_spelling = true,
 	},
-	-- overseas department of France
+	-- overseas department and region of France
 	["French Guiana"] = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
+		divs = {"communes"},
 		addl_parents = {"South America"},
 		british_spelling = true,
 	},
@@ -1271,6 +1329,13 @@ export.country_like_entities = {
 		container = "France",
 		addl_parents = {"Polynesia"},
 		british_spelling = true,
+	},
+	-- French overseas territory
+	["French Southern and Antarctic Lands"] = {
+		the = true,
+		placetype = {"overseas territory", "territory"},
+		container = "France",
+		addl_parents = {"Africa"},
 	},
 	-- British Overseas Territory
 	["Gibraltar"] = {
@@ -1288,11 +1353,12 @@ export.country_like_entities = {
 		divs = {"municipalities"},
 		british_spelling = true,
 	},
-	-- overseas department of France
+	-- overseas department and region of France
 	["Guadeloupe"] = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
 		addl_parents = {"North America"},
+		divs = {"communes"},
 		british_spelling = true,
 	},
 	-- unincorporated territory of the United States
@@ -1307,6 +1373,15 @@ export.country_like_entities = {
 		container = "United Kingdom",
 		addl_parents = {"British Isles", "Europe"},
 		british_spelling = true,
+		wp = "Bailiwick of %l",
+	},
+	["Bailiwick of Guernsey"] = {alias_of = "Guernsey", the = true},
+	-- Australian external territory
+	["Heard Island and McDonald Islands"] = {
+		the = true,
+		placetype = {"external territory", "territory"},
+		container = "Australia",
+		addl_parents = {"Africa"},
 	},
 	-- special administrative region of China
 	["Hong Kong"] = {
@@ -1323,6 +1398,13 @@ export.country_like_entities = {
 		addl_parents = {"British Isles", "Europe"},
 		british_spelling = true,
 	},
+	-- Norwegian unincorporated area
+	["Jan Mayen"] = {
+		placetype = {"unincorporated area", "dependent territory", "territory", "island"},
+		container = "Norway",
+		addl_parents = {"Europe"},
+		british_spelling = true,
+	},
 	-- self-governing British Crown dependency; technically called the Bailiwick of Jersey
 	["Jersey"] = {
 		placetype = {"crown dependency", "dependency", "dependent territory", "bailiwick", "territory"},
@@ -1330,6 +1412,7 @@ export.country_like_entities = {
 		addl_parents = {"British Isles", "Europe"},
 		british_spelling = true,
 	},
+	["Bailiwick of Jersey"] = {alias_of = "Jersey", the = true},
 	-- special administrative region of China
 	["Macau"] = {
 		placetype = {"special administrative region", "city"},
@@ -1337,17 +1420,19 @@ export.country_like_entities = {
 		is_city = true,
 		british_spelling = true,
 	},
-	-- overseas department of France
+	-- overseas department and region of France
 	["Martinique"] = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
+		divs = {"communes"},
 		addl_parents = {"North America"},
 		british_spelling = true,
 	},
-	-- overseas department of France
+	-- overseas department and region of France
 	["Mayotte"] = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
+		divs = {"communes"},
 		addl_parents = {"Africa"},
 		british_spelling = true,
 	},
@@ -1365,6 +1450,14 @@ export.country_like_entities = {
 		addl_parents = {"Melanesia"},
 		british_spelling = true,
 	},
+	-- dependent territory of New Zealand
+	["New Zealand Subantarctic Islands"] = {
+		the = true,
+		placetype = {"dependent territory", "territory"},
+		container = "New Zealand",
+		addl_parents = {"Antarctica"},
+		british_spelling = true,
+	},
 	-- self-governing but in free association with New Zealand
 	["Niue"] = {
 		placetype = {"country"},
@@ -1377,6 +1470,14 @@ export.country_like_entities = {
 		placetype = {"external territory", "territory"},
 		container = "Australia",
 		addl_parents = {"Polynesia"},
+		british_spelling = true,
+	},
+	-- de-facto independent state, internationally recognized as part of Cyprus
+	["Northern Cyprus"] = {
+		placetype = {"unrecognized country", "country"},
+		addl_parents = {"Cyprus", "Turkey", "Europe", "Asia"},
+		divs = {"districts"},
+		keydesc = "the de-facto independent state of [[Northern Cyprus]], internationally recognized as part of the country of [[Cyprus]]",
 		british_spelling = true,
 	},
 	-- commonwealth, unincorporated territory of the United States
@@ -1401,10 +1502,11 @@ export.country_like_entities = {
 		addl_parents = {"North America"},
 		divs = {"municipalities"},
 	},
-	-- overseas department of France
+	-- overseas department and region of France
 	["Réunion"] = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
+		divs = {"communes"},
 		addl_parents = {"Africa"},
 		british_spelling = true,
 	},
@@ -1424,12 +1526,41 @@ export.country_like_entities = {
 		british_spelling = true,
 	},
 	-- British Overseas Territory
-	["Saint Helena"] = {
+	["Saint Helena, Ascension and Tristan da Cunha"] = {
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"Atlantic Ocean"},
+		divs = {{type = "constituent parts", container_parent_type = false}},
+		addl_parents = {"Atlantic Ocean", "Africa"},
 		british_spelling = true,
 	},
+		-- constituent parts of the combined oveseas territory
+		["Ascension Island"] = {
+			placetype = {"constituent part", "territory", "island"},
+			container = {key = "Saint Helena, Ascension and Tristan da Cunha", placetype = "overseas territory"},
+			addl_parents = {"Atlantic Ocean"},
+			overriding_bare_label_parents = {},
+			no_container_cat = false,
+			no_container_parent = false,
+			no_auto_augment_container = false,
+		},
+		["Saint Helena"] = {
+			placetype = {"constituent part", "territory", "island"},
+			container = {key = "Saint Helena, Ascension and Tristan da Cunha", placetype = "overseas territory"},
+			addl_parents = {"Atlantic Ocean"},
+			overriding_bare_label_parents = {},
+			no_container_cat = false,
+			no_container_parent = false,
+			no_auto_augment_container = false,
+		},
+		["Tristan da Cunha"] = {
+			placetype = {"constituent part", "territory", "archipelago"},
+			container = {key = "Saint Helena, Ascension and Tristan da Cunha", placetype = "overseas territory"},
+			addl_parents = {"Atlantic Ocean"},
+			overriding_bare_label_parents = {},
+			no_container_cat = false,
+			no_container_parent = false,
+			no_auto_augment_container = false,
+		},
 	-- overseas collectivity of France
 	["Saint Martin"] = {
 		placetype = {"overseas collectivity", "collectivity"},
@@ -1441,6 +1572,7 @@ export.country_like_entities = {
 	["Saint Pierre and Miquelon"] = {
 		placetype = {"overseas collectivity", "collectivity"},
 		container = "France",
+		divs = {"communes"},
 		addl_parents = {"North America"},
 		british_spelling = true,
 	},
@@ -1459,7 +1591,16 @@ export.country_like_entities = {
 		addl_parents = {"North America"},
 		british_spelling = true,
 	},
+	-- de-facto independent state, internationally recognized as part of Somalia
+	["Somaliland"] = {
+		placetype = {"unrecognized country", "country"},
+		addl_parents = {"Somalia", "Africa"},
+		keydesc = "the de-facto independent state of [[Somaliland]], internationally recognized as part of the country of [[Somalia]]",
+		british_spelling = true,
+	},
 	-- British Overseas Territory
+	-- FIXME: We should form the group "South Georgia and the South Sandwich Islands" like we did for
+	-- "Saint Helena, Ascension and Tristan da Cunha".
 	["South Georgia"] = {
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
@@ -1468,7 +1609,7 @@ export.country_like_entities = {
 	},
 	-- de-facto independent state, internationally recognized as part of Georgia
 	["South Ossetia"] = {
-		placetype = {"unrecognized state", "country"},
+		placetype = {"unrecognized country", "country"},
 		addl_parents = {"Georgia", "Europe", "Asia"},
 		keydesc = "the de-facto independent state of [[South Ossetia]], internationally recognized as part of the country of [[Georgia]]",
 		british_spelling = true,
@@ -1483,7 +1624,14 @@ export.country_like_entities = {
 		wpcat = "South Georgia and the South Sandwich Islands",
 		british_spelling = true,
 	},
-	-- dependent territory of New Zealnd
+	-- Norwegian unincorporated area
+	["Svalbard"] = {
+		placetype = {"unincorporated area", "dependent territory", "territory", "archipelago"},
+		container = "Norway",
+		addl_parents = {"Europe"},
+		british_spelling = true,
+	},
+	-- dependent territory of New Zealand
 	["Tokelau"] = {
 		placetype = {"dependent territory", "territory"},
 		container = "New Zealand",
@@ -1492,16 +1640,9 @@ export.country_like_entities = {
 	},
 	-- de-facto independent state, internationally recognized as part of Moldova
 	["Transnistria"] = {
-		placetype = {"unrecognized state", "country"},
+		placetype = {"unrecognized country", "country"},
 		addl_parents = {"Moldova", "Europe"},
 		keydesc = "the de-facto independent state of [[Transnistria]], internationally recognized as part of [[Moldova]]",
-		british_spelling = true,
-	},
-	-- British Overseas Territory
-	["Tristan da Cunha"] = {
-		placetype = {"overseas territory", "territory"},
-		container = "United Kingdom",
-		addl_parents = {"Atlantic Ocean"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1513,6 +1654,28 @@ export.country_like_entities = {
 		british_spelling = true,
 	},
 	-- unincorporated territory of the United States
+	["United States Minor Outlying Islands"] = {
+		the = true,
+		placetype = {"unincorporated territory", "overseas territory", "territory"},
+		container = "United States",
+		addl_parents = {"Islands", "Micronesia", "Polynesia", "Caribbean"},
+	},
+		-- FIXME: We should add entries for the other minor outlying islands.
+		-- Baker Island (Oceania)
+		-- Howland Island (Oceania)
+		-- Jarvis Island (Oceania)
+		-- Johnston Atoll (Oceania)
+		-- Kingman Reef (Oceania)
+		-- Midway Atoll (Oceania)
+		-- Navassa Island (Caribbean)
+		-- Palmyra Atoll (Oceania)
+		-- Wake Island (Oceania)
+		["Wake Island"] = {
+			placetype = {"unincorporated territory", "overseas territory", "territory"},
+			container = "United States",
+			addl_parents = {"Micronesia"},
+		},
+	-- unincorporated territory of the United States
 	["United States Virgin Islands"] = {
 		the = true,
 		placetype = {"unincorporated territory", "overseas territory", "territory"},
@@ -1521,12 +1684,6 @@ export.country_like_entities = {
 	},
 	["U.S. Virgin Islands"] = {alias_of = "United States Virgin Islands", display = true, the = true},
 	["US Virgin Islands"] = {alias_of = "United States Virgin Islands", display = true, the = true},
-	-- unincorporated territory of the United States
-	["Wake Island"] = {
-		placetype = {"unincorporated territory", "overseas territory", "territory"},
-		container = "United States",
-		addl_parents = {"North America"},
-	},
 	-- overseas collectivity of France
 	["Wallis and Futuna"] = {
 		placetype = {"overseas collectivity", "collectivity"},
@@ -1537,9 +1694,14 @@ export.country_like_entities = {
 }
 
 export.country_like_entities_group = {
+	-- don't do any transformations between key and placename; in particular, don't chop off anything from
+	-- "Saint Helena, Ascension and Tristan da Cunha".
+	key_to_placename = false,
+	placename_to_key = false,
 	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
 	default_overriding_bare_label_parents = {"country-like entities"},
 	default_no_container_cat = true,
+	default_no_container_parent = true,
 	-- These entities often aren't really part of their container; a village in Wallis and Futuna (an overseas
 	-- collectivity of France in Polynesia), for example, shouldn't be treated as a village in France, nor as a village
 	-- in Europe.
@@ -1549,6 +1711,16 @@ export.country_like_entities_group = {
 
 -- Former countries and such; we don't create "Cities in ..." categories because they don't exist anymore
 export.former_countries = {
+	-- de-facto independent state of Armenian ethnicity, internationally recognized as part of Azerbaijan
+	-- (also known as Nagorno-Karabakh)
+	-- NOTE: Formerly listed Armenia as a parent; this seems politically non-neutral so I've taken it out.
+	["Artsakh"] = {
+		placetype = {"unrecognized country", "country"},
+		addl_parents = {"Azerbaijan", "Europe", "Asia"},
+		keydesc = "the former de-facto independent state of [[Artsakh]], internationally recognized as part of [[Azerbaijan]]",
+		british_spelling = true,
+	},
+	["Nagorno-Karabakh"] = {alias_of = "Artsakh"},
 	["Czechoslovakia"] = {container = "Europe", british_spelling = true},
 	["East Germany"] = {container = "Europe", addl_parents = {"Germany"}, british_spelling = true},
 	["North Vietnam"] = {container = "Asia", addl_parents = {"Vietnam"}},
@@ -1574,6 +1746,7 @@ export.former_countries_group = {
 	default_is_former_place = true,
 	default_placetype = "country",
 	default_no_container_cat = true,
+	default_no_container_parent = true,
 	-- No need to augment country holonyms with continents; not needed for disambiguation.
 	default_no_auto_augment_container = true,
 	data = export.former_countries,
@@ -1600,7 +1773,6 @@ export.australia_group = {
 	default_container = "Australia",
 	default_placetype = "state",
 	default_divs = {"local government areas"},
-	default_british_spelling = true,
 	data = export.australia_states_and_territories,
 }
 
@@ -1620,7 +1792,6 @@ export.austria_states = {
 export.austria_group = {
 	default_container = "Austria",
 	default_placetype = "state",
-	default_british_spelling = true,
 	default_divs = "municipalities",
 	data = export.austria_states,
 }
@@ -1642,7 +1813,6 @@ export.bangladesh_group = {
 	placename_to_key = make_placename_to_key(", Bangladesh", " Division"),
 	default_container = "Bangladesh",
 	default_placetype = "division",
-	default_british_spelling = true,
 	default_divs = "districts",
 	data = export.bangladesh_divisions,
 }
@@ -1687,10 +1857,10 @@ export.brazil_group = {
 
 export.canada_provinces_and_territories = {
 	["Alberta, Canada"] = {divs = {
-		{type = "municipal districts", skip_polity_parent_type = "rural municipalities"},
+		{type = "municipal districts", container_parent_type = "rural municipalities"},
 	}},
 	["British Columbia, Canada"] = {divs =
-		{type = "regional districts", skip_polity_parent_type = false},
+		{type = "regional districts", container_parent_type = false},
 		"regional municipalities",
 	},
 	["Manitoba, Canada"] = {divs = {"rural municipalities"}},
@@ -1704,12 +1874,12 @@ export.canada_provinces_and_territories = {
 	["Saskatchewan, Canada"] = {divs = {"rural municipalities"}},
 	["Quebec, Canada"] = {divs = {
 		"counties",
-		{type = "regional county municipalities", skip_polity_parent_type = "regional municipalities"},
+		{type = "regional county municipalities", container_parent_type = "regional municipalities"},
 		-- administrative regions have an official (but non-governmental) function but there don't appear to be any
 		-- equivalent regions elsewhere in Canada, so disable the [[Category:Regions of Canada]] grouping
-		{type = "regions", skip_polity_parent_type = false},
+		{type = "regions", container_parent_type = false},
 		{type = "townships", prep = "in"},
-		{type = "parish municipalities", cat_as = {{type = "parishes", skip_polity_parent_type = "counties"}, "municipalities"}},
+		{type = "parish municipalities", cat_as = {{type = "parishes", container_parent_type = "counties"}, "municipalities"}},
 		{type = "township municipalities", cat_as = {{type = "townships", prep = "in"}, "municipalities"}},
 		{type = "village municipalities", cat_as = {{type = "villages", prep = "in"}, "municipalities"}},
 	}},
@@ -1720,7 +1890,6 @@ export.canada_provinces_and_territories = {
 export.canada_group = {
 	default_container = "Canada",
 	default_placetype = "province",
-	default_british_spelling = true,
 	data = export.canada_provinces_and_territories,
 }
 
@@ -1798,13 +1967,13 @@ export.china_prefecture_level_cities = {
 	-- metro area separated by suburban/exurban or rural land. Possibly we should use the metro area in preference to
 	-- the urban area, but I don't have a readily accessible list sorted by metro population (although the figures are
 	-- listed for each city in its respective Wikipedia article).
-	["Chongqing"] = {placetype = {"direct-administered municipality", "municipality"}}, -- 32.1 prefectural, 16.9 urban
-	["Shanghai"] = {placetype = {"direct-administered municipality", "municipality"}}, -- 24.9 prefectural, 29.9 urban
-	["Beijing"] = {placetype = {"direct-administered municipality", "municipality"}}, -- 21.9 prefectural, 21.9 urban
+	["Chongqing"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 32.1 prefectural, 16.9 urban
+	["Shanghai"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 24.9 prefectural, 29.9 urban
+	["Beijing"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 21.9 prefectural, 21.9 urban
 	["Chengdu"] = {container = "Sichuan"}, -- 20.9 prefectural, 16.9 urban; sub-provincial city
 	["Guangzhou"] = {container = "Guangdong"}, -- 18.7 prefectural, 18.8 urban; sub-provincial city
 	["Shenzhen"] = {container = "Guangdong"}, -- 17.5 prefectural, 14.7 urban; sub-provincial city
-	["Tianjin"] = {placetype = {"direct-administered municipality", "municipality"}}, -- 13.9 prefectural, 13.9 urban
+	["Tianjin"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 13.9 prefectural, 13.9 urban
 	-- NOTE: There is also a prefecture-level city Suzhou in Anhui with 5.3 million prefectural inhabitants
 	["Suzhou"] = {container = "Jiangsu"}, -- 12.8 prefectural, 4.3 urban
 	["Zhengzhou"] = {container = "Henan"}, -- 12.6 prefectural, 6.7 urban
@@ -1896,7 +2065,9 @@ export.china_prefecture_level_cities_group = {
 	placename_to_key = false, -- don't add ", China" to make the key
 	default_container = "China",
 	canonicalize_key_container = make_canonicalize_key_container(", China", "province"),
-	default_placetype = "prefecture-level city",
+	-- Prefecture-level cities aren't really cities but allow them to be identified that way, as many people
+	-- don't understand how Chinese administrative divisions work. 
+	default_placetype = {"prefecture-level city", "city"},
 	default_divs = {
 		"districts",
 		{type = "counties", cat_as = "counties and county-level cities"},
@@ -1930,7 +2101,7 @@ export.finland_regions = {
 	["Kymenlaakso, Finland"] = {},
 	["Uusimaa, Finland"] = {},
 	["Southwest Finland, Finland"] = {},
-	["Åland Islands, Finland"] = {the = true},
+	["Åland Islands, Finland"] = {the = true, wp = "Åland"},
 	["Åland, Finland"] = {alias_of = "Åland Islands, Finland"}, -- differs in "the"
 }
 
@@ -1939,7 +2110,6 @@ export.finland_group = {
 	default_container = "Finland",
 	default_placetype = "region",
 	default_divs = "municipalities",
-	default_british_spelling = true,
 	data = export.finland_regions,
 }
 
@@ -1974,9 +2144,11 @@ export.france_group = {
 	default_placetype = "region",
 	default_divs = {
 		"communes",
+		{type = "municipalities", cat_as = "communes"},
 		"departments",
+		{type = "prefectures", cat_as = {"prefectures", "departmental capitals"}},
+		{type = "French prefectures", cat_as = {"prefectures", "departmental capitals"}},
 	},
-	default_british_spelling = true,
 	data = export.france_administrative_regions,
 }
 
@@ -1988,22 +2160,24 @@ export.france_departments = {
 	["Hautes-Alpes, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 05
 	["Alpes-Maritimes, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 06
 	["Ardèche, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 07
-	["Ardennes, France"] = {container = "Grand Est", wp = "Ardennes (department)"}, -- 08
-	["Ariège, France"] = {container = "Occitania", wp = "Ariège (department)"}, -- 09
+	["Ardennes, France"] = {container = "Grand Est", wp = "%l (department)"}, -- 08
+	["Ariège, France"] = {container = "Occitania", wp = "%l (department)"}, -- 09
 	["Aube, France"] = {container = "Grand Est"}, -- 10
 	["Aude, France"] = {container = "Occitania"}, -- 11
 	["Aveyron, France"] = {container = "Occitania"}, -- 12
 	["Bouches-du-Rhône, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 13
-	["Calvados, France"] = {container = "Normandy", wp = "Calvados (department)"}, -- 14
+	["Calvados, France"] = {container = "Normandy", wp = "%l (department)"}, -- 14
 	["Cantal, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 15
 	["Charente, France"] = {container = "Nouvelle-Aquitaine"}, -- 16
 	["Charente-Maritime, France"] = {container = "Nouvelle-Aquitaine"}, -- 17
-	["Cher, France"] = {container = "Centre-Val de Loire", wp = "Cher (department)"}, -- 18
+	["Cher, France"] = {container = "Centre-Val de Loire", wp = "%l (department)"}, -- 18
 	["Corrèze, France"] = {container = "Nouvelle-Aquitaine"}, -- 19
 	["Corse-du-Sud, France"] = {container = "Corsica"}, -- 2A
 	["Haute-Corse, France"] = {container = "Corsica"}, -- 2B
 	["Côte-d'Or, France"] = {container = "Bourgogne-Franche-Comté"}, -- 21
+	["Côte d'Or, France"] = {alias_of = "Côte-d'Or, France", display = true},
 	["Côtes-d'Armor, France"] = {container = "Brittany"}, -- 22
+	["Côtes d'Armor, France"] = {alias_of = "Côtes-d'Armor, France", display = true},
 	["Creuse, France"] = {container = "Nouvelle-Aquitaine"}, -- 23
 	["Dordogne, France"] = {container = "Nouvelle-Aquitaine"}, -- 24
 	["Doubs, France"] = {container = "Bourgogne-Franche-Comté"}, -- 25
@@ -2020,27 +2194,27 @@ export.france_departments = {
 	["Indre, France"] = {container = "Centre-Val de Loire"}, -- 36
 	["Indre-et-Loire, France"] = {container = "Centre-Val de Loire"}, -- 37
 	["Isère, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 38
-	["Jura, France"] = {container = "Bourgogne-Franche-Comté", wp = "Jura (department)"}, -- 39
-	["Landes, France"] = {container = "Nouvelle-Aquitaine", wp = "Landes (department)"}, -- 40
+	["Jura, France"] = {container = "Bourgogne-Franche-Comté", wp = "%l (department)"}, -- 39
+	["Landes, France"] = {container = "Nouvelle-Aquitaine", wp = "%l (department)"}, -- 40
 	["Loir-et-Cher, France"] = {container = "Centre-Val de Loire"}, -- 41
-	["Loire, France"] = {container = "Auvergne-Rhône-Alpes", wp = "Loire (department)"}, -- 42
+	["Loire, France"] = {container = "Auvergne-Rhône-Alpes", wp = "%l (department)"}, -- 42
 	["Haute-Loire, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 43
 	["Loire-Atlantique, France"] = {container = "Pays de la Loire"}, -- 44
 	["Loiret, France"] = {container = "Centre-Val de Loire"}, -- 45
-	["Lot, France"] = {container = "Occitania", wp = "Lot (department)"}, -- 46
+	["Lot, France"] = {container = "Occitania", wp = "%l (department)"}, -- 46
 	["Lot-et-Garonne, France"] = {container = "Nouvelle-Aquitaine"}, -- 47
 	["Lozère, France"] = {container = "Occitania"}, -- 48
 	["Maine-et-Loire, France"] = {container = "Pays de la Loire"}, -- 49
 	["Manche, France"] = {container = "Normandy"}, -- 50
-	["Marne, France"] = {container = "Grand Est", wp = "Marne (department)"}, -- 51
+	["Marne, France"] = {container = "Grand Est", wp = "%l (department)"}, -- 51
 	["Haute-Marne, France"] = {container = "Grand Est"}, -- 52
 	["Mayenne, France"] = {container = "Pays de la Loire"}, -- 53
 	["Meurthe-et-Moselle, France"] = {container = "Grand Est"}, -- 54
-	["Meuse, France"] = {container = "Grand Est", wp = "Meuse (department)"}, -- 55
+	["Meuse, France"] = {container = "Grand Est", wp = "%l (department)"}, -- 55
 	["Morbihan, France"] = {container = "Brittany"}, -- 56
-	["Moselle, France"] = {container = "Grand Est", wp = "Moselle (department)"}, -- 57
+	["Moselle, France"] = {container = "Grand Est", wp = "%l (department)"}, -- 57
 	["Nièvre, France"] = {container = "Bourgogne-Franche-Comté"}, -- 58
-	["Nord, France"] = {container = "Hauts-de-France", wp = "Nord (French department)"}, -- 59
+	["Nord, France"] = {container = "Hauts-de-France", wp = "%l (French department)"}, -- 59
 	["Oise, France"] = {container = "Hauts-de-France"}, -- 60
 	["Orne, France"] = {container = "Normandy"}, -- 61
 	["Pas-de-Calais, France"] = {container = "Hauts-de-France"}, -- 62
@@ -2050,8 +2224,10 @@ export.france_departments = {
 	["Pyrénées-Orientales, France"] = {container = "Occitania"}, -- 66
 	["Bas-Rhin, France"] = {container = "Grand Est"}, -- 67
 	["Haut-Rhin, France"] = {container = "Grand Est"}, -- 68
-	["Rhône, France"] = {container = "Auvergne-Rhône-Alpes", wp = "Rhône (department)"}, -- 69D
-	["Lyon Metropolis, France"] = {container = "Auvergne-Rhône-Alpes"}, -- 69M
+	["Rhône, France"] = {container = "Auvergne-Rhône-Alpes", wp = "%l (department)"}, -- 69D
+	["Metropolis of Lyon, France"] = {container = "Auvergne-Rhône-Alpes", the = true}, -- 69M
+	["Lyon Metropolis, France"] = {alias_of = "Metropolis of Lyon, France"},
+	["Lyon, France"] = {alias_of = "Metropolis of Lyon, France"},
 	["Haute-Saône, France"] = {container = "Bourgogne-Franche-Comté"}, -- 70
 	["Saône-et-Loire, France"] = {container = "Bourgogne-Franche-Comté"}, -- 71
 	["Sarthe, France"] = {container = "Pays de la Loire"}, -- 72
@@ -2062,15 +2238,15 @@ export.france_departments = {
 	["Seine-et-Marne, France"] = {container = "Île-de-France"}, -- 77
 	["Yvelines, France"] = {container = "Île-de-France"}, -- 78
 	["Deux-Sèvres, France"] = {container = "Nouvelle-Aquitaine"}, -- 79
-	["Somme, France"] = {container = "Hauts-de-France", wp = "Somme (department)"}, -- 80
-	["Tarn, France"] = {container = "Occitania", wp = "Tarn (department)"}, -- 81
+	["Somme, France"] = {container = "Hauts-de-France", wp = "%l (department)"}, -- 80
+	["Tarn, France"] = {container = "Occitania", wp = "%l (department)"}, -- 81
 	["Tarn-et-Garonne, France"] = {container = "Occitania"}, -- 82
-	["Var, France"] = {container = "Provence-Alpes-Côte d'Azur", wp = "Var (department)"}, -- 83
+	["Var, France"] = {container = "Provence-Alpes-Côte d'Azur", wp = "%l (department)"}, -- 83
 	["Vaucluse, France"] = {container = "Provence-Alpes-Côte d'Azur"}, -- 84
 	["Vendée, France"] = {container = "Pays de la Loire"}, -- 85
-	["Vienne, France"] = {container = "Nouvelle-Aquitaine", wp = "Vienne (department)"}, -- 86
+	["Vienne, France"] = {container = "Nouvelle-Aquitaine", wp = "%l (department)"}, -- 86
 	["Haute-Vienne, France"] = {container = "Nouvelle-Aquitaine"}, -- 87
-	["Vosges, France"] = {container = "Grand Est", wp = "Vosges (department)"}, -- 88
+	["Vosges, France"] = {container = "Grand Est", wp = "%l (department)"}, -- 88
 	["Yonne, France"] = {container = "Bourgogne-Franche-Comté"}, -- 89
 	["Territoire de Belfort, France"] = {container = "Bourgogne-Franche-Comté"}, -- 90
 	["Essonne, France"] = {container = "Île-de-France"}, -- 91
@@ -2089,9 +2265,9 @@ export.france_departments_group = {
 	placename_to_key = make_placename_to_key(", France"),
 	canonicalize_key_container = make_canonicalize_key_container(", France", "region"),
 	default_placetype = "department",
-	default_british_spelling = true,
 	default_divs = {
 		"communes",
+		{type = "municipalities", cat_as = "communes"},
 	},
 	data = export.france_departments,
 }
@@ -2122,9 +2298,36 @@ export.germany_states = {
 export.germany_group = {
 	default_container = "Germany",
 	default_placetype = "state",
-	default_divs = "districts",
-	default_british_spelling = true,
+	default_divs = {"districts", "municipalities"},
 	data = export.germany_states,
+}
+
+export.greece_regions = {
+	["Attica, Greece"] = {wp = "%l (region)"},
+	["Central Greece, Greece"] = {wp = "%l (administrative region)"},
+	["Central Macedonia, Greece"] = {},
+	["Crete, Greece"] = {},
+	["Eastern Macedonia and Thrace, Greece"] = {},
+	["Epirus, Greece"] = {wp = "%l (region)"},
+	["Ionian Islands, Greece"] = {the = true, wp = "%l (region)"},
+	["North Aegean, Greece"] = {the = true},
+	-- I would expect 'the Peloponnese' but Wikipedia mostly has categories like [[w:Category:Geography of Peloponnese (region)]]
+	-- and [[w:Category:Buildings and structures in Peloponnese (region)]]; only [[w:Category:People from the Peloponnese (region)]]
+	-- has "the" in it.
+	["Peloponnese, Greece"] = {wp = "%l (region)"},
+	["South Aegean, Greece"] = {the = true},
+	["Thessaly, Greece"] = {},
+	["Western Greece, Greece"] = {},
+	["Western Macedonia, Greece"] = {},
+	["Mount Athos, Greece"] = {placetype = {"autonomous region", "region"}, wp = "Monastic community of Mount Athos"},
+}
+
+-- regions of Greece
+export.greece_group = {
+	default_container = "Greece",
+	default_placetype = "region",
+	default_divs = {"regional units", "municipalities"},
+	data = export.greece_regions,
 }
 
 local india_polity_with_divisions = {"divisions", "districts"}
@@ -2162,6 +2365,7 @@ export.india_states_and_union_territories = {
 	["Odisha, India"] = {divs = india_polity_with_divisions},
 	["Puducherry, India"] = {placetype = "union territory", divs = india_polity_without_divisions,
 		wp = "%l (union territory)"},
+	["Pondicherry, India"] = {alias_of = "Puducherry, India", display = true},
 	["Punjab, India"] = {divs = india_polity_with_divisions, wp = "%l, %c"},
 	["Rajasthan, India"] = {divs = india_polity_with_divisions},
 	["Sikkim, India"] = {divs = india_polity_without_divisions},
@@ -2177,7 +2381,6 @@ export.india_states_and_union_territories = {
 export.india_group = {
 	default_container = "India",
 	default_placetype = "state",
-	default_british_spelling = true,
 	data = export.india_states_and_union_territories,
 }
 
@@ -2197,6 +2400,7 @@ export.indonesia_provinces = {
 	["Gorontalo, Indonesia"] = {},
 	["Highland Papua, Indonesia"] = {wp = "%l (province)"},
 	["Special Capital Region of Jakarta, Indonesia"] = {the = true, wp = "Jakarta"},
+	["Jakarta, Indonesia"] = {alias_of = "Special Capital Region of Jakarta, Indonesia"},
 	["Jambi, Indonesia"] = {},
 	["Lampung, Indonesia"] = {},
 	["Maluku, Indonesia"] = {},
@@ -2221,36 +2425,66 @@ export.indonesia_provinces = {
 	["West Sulawesi, Indonesia"] = {},
 	["West Sumatra, Indonesia"] = {},
 	["Special Region of Yogyakarta, Indonesia"] = {the = true},
+	["Yogyakarta, Indonesia"] = {alias_of = "Special Region of Yogyakarta, Indonesia"},
 }
-
-local function indonesia_key_to_placename(key)
-	key = key:gsub(", Indonesia$", "")
-	local special_region_city = key:match("^Special.* of (.*)$")
-	if special_region_city then
-		return key, special_region_city
-	else
-		return key, key
-	end
-end
-
-local function indonesia_placename_to_key(placename)
-	if placename == "Yogyakarta" then
-		placename = "Special Region of Yogyakarta"
-	elseif placename == "Jakarta" then
-		placename = "Special Capital Region of Jakarta"
-	end
-	return placename .. ", Indonesia"
-end
 
 -- provinces of Indonesia
 export.indonesia_group = {
-	key_to_placename = indonesia_key_to_placename,
-	placename_to_key = indonesia_placename_to_key,
 	default_container = "Indonesia",
 	default_placetype = "province",
 	-- per https://www.quora.com/Does-Indonesia-use-British-or-American-English, Indonesia tends to use American
 	-- spellings.
 	data = export.indonesia_provinces,
+}
+
+export.iran_provinces = {
+	["Alborz Province, Iran"] = {}, -- abbreviation AL, capital [[w:Karaj]]
+	["Ardabil Province, Iran"] = {}, -- abbreviation AR, capital [[w:Ardabil]]
+	["Bushehr Province, Iran"] = {}, -- abbreviation BU, capital [[w:Bushehr]]
+	["Chaharmahal and Bakhtiari Province, Iran"] = {}, -- abbreviation CB, capital [[w:Shahr-e Kord]]
+	["East Azerbaijan Province, Iran"] = {}, -- abbreviation EA, capital [[w:Tabriz]]
+	["Fars Province, Iran"] = {}, -- abbreviation FA, capital [[w:Shiraz]]
+	["Pars Province, Iran"] = {alias_of = "Fars Province, Iran", display = true},
+	["Gilan Province, Iran"] = {}, -- abbreviation GN, capital [[w:Rasht]]
+	["Golestan Province, Iran"] = {}, -- abbreviation GO, capital [[w:Gorgan]]
+	["Hamadan Province, Iran"] = {}, -- abbreviation HA, capital [[w:Hamadan]]
+	["Hormozgan Province, Iran"] = {}, -- abbreviation HO, capital [[w:Bandar Abbas]]
+	["Ilam Province, Iran"] = {}, -- abbreviation IL, capital [[w:Ilam, Iran|Ilam]]
+	["Isfahan Province, Iran"] = {}, -- abbreviation IS, capital [[w:Isfahan]]
+	["Kerman Province, Iran"] = {}, -- abbreviation KN, capital [[w:Kerman]]
+	["Kermanshah Province, Iran"] = {}, -- abbreviation KE, capital [[w:Kermanshah]]
+	["Khuzestan Province, Iran"] = {}, -- abbreviation KH, capital [[w:Ahvaz]]
+	["Kohgiluyeh and Boyer-Ahmad Province, Iran"] = {}, -- abbreviation KB, capital [[w:Yasuj]]
+	["Kurdistan Province, Iran"] = {}, -- abbreviation KU, capital [[w:Sanandaj]]
+	["Lorestan Province, Iran"] = {}, -- abbreviation LO, capital [[w:Khorramabad]]
+	["Markazi Province, Iran"] = {}, -- abbreviation MA, capital [[w:Arak, Iran|Arak]]
+	["Mazandaran Province, Iran"] = {}, -- abbreviation MN, capital [[w:Sari, Iran|Sari]]
+	["North Khorasan Province, Iran"] = {}, -- abbreviation NK, capital [[w:Bojnord]]
+	["Qazvin Province, Iran"] = {}, -- abbreviation QA, capital [[w:Qazvin]]
+	["Qom Province, Iran"] = {}, -- abbreviation QM, capital [[w:Qom]]
+	["Razavi Khorasan Province, Iran"] = {}, -- abbreviation RK, capital [[w:Mashhad]]
+	["Semnan Province, Iran"] = {}, -- abbreviation SE, capital [[w:Semnan, Iran|Semnan]]
+	["Sistan and Baluchestan Province, Iran"] = {}, -- abbreviation SB, capital [[w:Zahedan]]
+	["South Khorasan Province, Iran"] = {}, -- abbreviation SK, capital [[w:Birjand]]
+	["Tehran Province, Iran"] = {}, -- abbreviation TE, capital [[w:Tehran]]
+	["West Azerbaijan Province, Iran"] = {}, -- abbreviation WA, capital [[w:Urmia]]
+	["Yazd Province, Iran"] = {}, -- abbreviation YA, capital [[w:Yazd]]
+	["Zanjan Province, Iran"] = {}, -- abbreviation ZA, capital [[w:Zanjan, Iran|Zanjan]]
+}
+
+-- provinces of Iran
+export.iran_group = {
+	key_to_placename = make_key_to_placename(", Iran", " Province$"),
+	placename_to_key = make_placename_to_key(", Iran", " Province"),
+	default_container = "Iran",
+	default_placetype = "province",
+	-- There aren't nearly enough counties of Iran currently entered in any language to allow for categorizing them
+	-- per-province. (As of 2025-05-09, there are only 6 counties in each of [[Category:en:Counties of Iran]],
+	-- [[Category:fa:Counties of Iran]] and [[Category:ar:Counties of Iran]].)
+	-- default_divs = "counties",
+	-- For obscure reasons, provinces of Iran (along with Laos and Thailand) use lowercase 'province'
+	default_wp = "%e province",
+	data = export.iran_provinces,
 }
 
 export.ireland_counties = {
@@ -2305,7 +2539,6 @@ export.ireland_group = {
 	placename_to_key = make_irish_type_placename_to_key(", Ireland"),
 	default_container = "Ireland",
 	default_placetype = "county",
-	default_british_spelling = true,
 	data = export.ireland_counties,
 }
 
@@ -2336,7 +2569,6 @@ export.italy_administrative_regions = {
 export.italy_group = {
 	default_container = "Italy",
 	default_placetype = "region",
-	default_british_spelling = true,
 	data = export.italy_administrative_regions,
 }
 
@@ -2385,15 +2617,6 @@ export.japan_prefectures = {
 	["Shizuoka Prefecture, Japan"] = {},
 	["Tochigi Prefecture, Japan"] = {},
 	["Tokushima Prefecture, Japan"] = {},
-	-- FIXME: We also have Tokyo listed below as a city. Probably we only want the listing under cities, but we need
-	-- to support things like special wards of cities.
-	--
-	-- Don't list subprefectures here so they don't get categorized into [[Category:Subprefectures of Tokyo]] (but
-	-- rather [[Category:Subprefectures of Japan]]) since there are only 4 of them.
-	["Tokyo"] = {keydesc = "[[Tokyo]] Metropolis",
-		divs = {{type = "special wards", skip_polity_parent_type = false}},
-		is_city = true,
-	},
 	["Tottori Prefecture, Japan"] = {},
 	["Toyama Prefecture, Japan"] = {},
 	["Wakayama Prefecture, Japan"] = {},
@@ -2402,65 +2625,13 @@ export.japan_prefectures = {
 	["Yamanashi Prefecture, Japan"] = {},
 }
 
-local function japan_placename_to_key(placename)
-	if placename == "Tokyo" then
-		return placename
-	end
-	if not placename:find(" Prefecture$") then
-		placename = placename .. " Prefecture"
-	end
-	return placename .. ", Japan"
-end
-
 -- prefectures of Japan
 export.japan_group = {
 	key_to_placename = make_key_to_placename(", Japan$", " Prefecture$"),
-	placename_to_key = japan_placename_to_key,
+	placename_to_key = make_placename_to_key(", Japan", " Prefecture"),
 	default_container = "Japan",
 	default_placetype = "prefecture",
 	data = export.japan_prefectures,
-}
-
-export.north_korea_provinces = {
-	["Chagang Province, North Korea"] = {},
-	["North Hamgyong Province, North Korea"] = {},
-	["South Hamgyong Province, North Korea"] = {},
-	["North Hwanghae Province, North Korea"] = {},
-	["South Hwanghae Province, North Korea"] = {},
-	["Kangwon Province, North Korea"] = {wp = "%l (%c)"},
-	["North Pyongan Province, North Korea"] = {},
-	["South Pyongan Province, North Korea"] = {},
-	["Ryanggang Province, North Korea"] = {},
-}
-
--- provinces of North Korea
-export.north_korea_group = {
-	key_to_placename = make_key_to_placename(", North Korea$", " Province$"),
-	placename_to_key = make_placename_to_key(", North Korea", " Province"),
-	default_container = "North Korea",
-	default_placetype = "province",
-	data = export.north_korea_provinces,
-}
-
-export.south_korea_provinces = {
-	["North Chungcheong Province, South Korea"] = {},
-	["South Chungcheong Province, South Korea"] = {},
-	["Gangwon Province, South Korea"] = {wp = "%l, %c"},
-	["Gyeonggi Province, South Korea"] = {},
-	["North Gyeongsang Province, South Korea"] = {},
-	["South Gyeongsang Province, South Korea"] = {},
-	["North Jeolla Province, South Korea"] = {},
-	["South Jeolla Province, South Korea"] = {},
-	["Jeju Province, South Korea"] = {},
-}
-
--- provinces of South Korea
-export.south_korea_group = {
-	key_to_placename = make_key_to_placename(", South Korea$", " Province$"),
-	placename_to_key = make_placename_to_key(", South Korea", " Province"),
-	default_container = "South Korea",
-	default_placetype = "province",
-	data = export.south_korea_provinces,
 }
 
 export.laos_provinces = {
@@ -2548,7 +2719,6 @@ export.malaysia_states = {
 export.malaysia_group = {
 	default_container = "Malaysia",
 	default_placetype = "state",
-	default_british_spelling = true,
 	default_wp = "%l, %c",
 	data = export.malaysia_states,
 }
@@ -2576,7 +2746,7 @@ export.malta_group = {
 	placename_to_key = make_placename_to_key(", Malta", " Region"),
 	default_container = "Malta",
 	default_placetype = "region",
-	default_british_spelling = true,
+	default_wp = "%l, %c",
 	default_the = true,
 	data = export.malta_regions,
 }
@@ -2624,27 +2794,8 @@ export.mexico_states = {
 	["Zacatecas, Mexico"] = {},
 }
 
--- Special handling for the State of Mexico, which we allow the be specified as s/Mexico or s/State of Mexico.
-local function mexico_key_to_placename(key)
-	key = key:gsub(", Mexico$", "")
-	if key == "State of Mexico" then
-		return key, "Mexico"
-	else
-		return key, key
-	end
-end
-
-local function mexico_placename_to_key(placename)
-	if placename == "Mexico" then
-		placename = "State of Mexico"
-	end
-	return placename .. ", Mexico"
-end
-
 -- Mexican states
 export.mexico_group = {
-	key_to_placename = mexico_key_to_placename,
-	placename_to_key = mexico_placename_to_key,
 	default_container = "Mexico",
 	default_placetype = "state",
 	data = export.mexico_states,
@@ -2652,24 +2803,36 @@ export.mexico_group = {
 
 export.morocco_regions = {
 	["Tangier-Tetouan-Al Hoceima, Morocco"] = {},
-	["Oriental, Morocco"] = {},
+	["Oriental, Morocco"] = {wp = "%l (%c)"},
+	["L'Oriental, Morocco"] = {alias_of = "Oriental, Morocco", display = true},
 	["Fez-Meknes, Morocco"] = {},
-	["Rabat-Sale-Kenitra, Morocco"] = {},
-	["Beni Mellal-Khenifra, Morocco"] = {},
+	["Rabat-Sale-Kenitra, Morocco"] = {wp = "Rabat-Salé-Kénitra"},
+	["Rabat-Salé-Kénitra, Morocco"] = {alias_of = "Rabat-Sale-Kenitra, Morocco", display = true},
+	["Beni Mellal-Khenifra, Morocco"] = {wp = "Béni Mellal-Khénifra"},
+	["Béni Mellal-Khénifra, Morocco"] = {alias_of = "Beni Mellal-Khenifra, Morocco", display = true},
 	["Casablanca-Settat, Morocco"] = {},
-	["Marrakesh-Safi, Morocco"] = {},
+	["Marrakesh-Safi, Morocco"] = {wp = "Marrakesh–Safi"}, -- WP title has en-dash
+	["Marrakech-Safi, Morocco"] = {alias_of = "Marrakesh-Safi, Morocco", display = true},
 	["Draa-Tafilalet, Morocco"] = {},
+	["Drâa-Tafilalet, Morocco"] = {alias_of = "Draa-Tafilalet, Morocco", display = true},
 	["Souss-Massa, Morocco"] = {},
-	["Guelmim-Oued Noun, Morocco"] = {},
-	["Laayoune-Sakia El Hamra, Morocco"] = {},
-	["Dakhla-Oued Ed-Dahab, Morocco"] = {},
+	["Guelmim-Oued Noun, Morocco"] = {
+		keydesc = "+++. '''NOTE:''' This region lies partly within the disputed territory of [[Western Sahara]]"
+	},
+	["Laayoune-Sakia El Hamra, Morocco"] = {
+		wp = "Laâyoune-Sakia El Hamra",
+		keydesc = "+++. '''NOTE:''' This region lies almost completely within the disputed territory of [[Western Sahara]]",
+	},
+	["Laâyoune-Sakia El Hamra, Morocco"] = {alias_of = "Laayoune-Sakia El Hamra, Morocco", display = true},
+	["Dakhla-Oued Ed-Dahab, Morocco"] = {
+		keydesc = "+++. '''NOTE:''' This region lies completely within the disputed territory of [[Western Sahara]]",
+	},
 }
 
 -- regions of Morocco
 export.morocco_group = {
 	default_container = "Morocco",
 	default_placetype = "region",
-	default_british_spelling = true,
 	data = export.morocco_regions,
 }
 
@@ -2678,8 +2841,8 @@ export.netherlands_provinces = {
 	["Flevoland, Netherlands"] = {},
 	["Friesland, Netherlands"] = {},
 	["Gelderland, Netherlands"] = {},
-	["Groningen, Netherlands"] = {},
-	["Limburg, Netherlands"] = {},
+	["Groningen, Netherlands"] = {wp = "%l (province)"},
+	["Limburg, Netherlands"] = {wp = "%l (%c)"},
 	["North Brabant, Netherlands"] = {},
 	-- Foreign forms get display-canonicalized.
 	["Noord-Brabant, Netherlands"] = {alias_of = "North Brabant, Netherlands", display = true},
@@ -2688,7 +2851,7 @@ export.netherlands_provinces = {
 	["Overijssel, Netherlands"] = {},
 	["South Holland, Netherlands"] = {},
 	["Zuid-Holland, Netherlands"] = {alias_of = "South Holland, Netherlands", display = true},
-	["Utrecht, Netherlands"] = {},
+	["Utrecht, Netherlands"] = {wp = "%l (province)"},
 	["Zeeland, Netherlands"] = {},
 }
 
@@ -2697,7 +2860,6 @@ export.netherlands_group = {
 	default_container = "Netherlands",
 	default_placetype = "province",
 	default_divs = "municipalities",
-	default_british_spelling = true,
 	data = export.netherlands_provinces,
 }
 
@@ -2716,6 +2878,10 @@ export.nigeria_states = {
 	["Edo State, Nigeria"] = {},
 	["Ekiti State, Nigeria"] = {},
 	["Enugu State, Nigeria"] = {},
+	["Federal Capital Territory, Nigeria"] = {
+		-- not a state but allow it to be referenced as one in holonyms
+		placetype = {"federal territory", "territory", "state"}, the = true, wp = "%l (%c)",
+	},
 	["Gombe State, Nigeria"] = {},
 	["Imo State, Nigeria"] = {},
 	["Jigawa State, Nigeria"] = {},
@@ -2746,8 +2912,28 @@ export.nigeria_group = {
 	placename_to_key = make_placename_to_key(", Nigeria", " State"),
 	default_container = "Nigeria",
 	default_placetype = "state",
-	default_british_spelling = true,
 	data = export.nigeria_states,
+}
+
+export.north_korea_provinces = {
+	["Chagang Province, North Korea"] = {},
+	["North Hamgyong Province, North Korea"] = {},
+	["South Hamgyong Province, North Korea"] = {},
+	["North Hwanghae Province, North Korea"] = {},
+	["South Hwanghae Province, North Korea"] = {},
+	["Kangwon Province, North Korea"] = {wp = "%l (%c)"},
+	["North Pyongan Province, North Korea"] = {},
+	["South Pyongan Province, North Korea"] = {},
+	["Ryanggang Province, North Korea"] = {},
+}
+
+-- provinces of North Korea
+export.north_korea_group = {
+	key_to_placename = make_key_to_placename(", North Korea$", " Province$"),
+	placename_to_key = make_placename_to_key(", North Korea", " Province"),
+	default_container = "North Korea",
+	default_placetype = "province",
+	data = export.north_korea_provinces,
 }
 
 export.norwegian_counties = {
@@ -2781,7 +2967,6 @@ export.norwegian_counties = {
 export.norway_group = {
 	default_container = "Norway",
 	default_placetype = "county",
-	default_british_spelling = true,
 	data = export.norwegian_counties,
 }
 
@@ -2790,7 +2975,7 @@ export.pakistan_provinces_and_territories = {
 		placetype = {"administrative territory", "autonomous territory", "territory"},
 	},
 	["Azad Jammu and Kashmir, Pakistan"] = {alias_of = "Azad Kashmir, Pakistan", display = true},
-	["Balochistan, Pakistan"] = {},
+	["Balochistan, Pakistan"] = {wp = "%l, %c"},
 	["Gilgit-Baltistan, Pakistan"] = {
 		placetype = {"administrative territory", "territory"},
 	},
@@ -2802,7 +2987,7 @@ export.pakistan_provinces_and_territories = {
 	-- Islamabad is an accepted alias for Islamabad Capital Territory given the above placetypes
 	["Islamabad, Pakistan"] = {alias_of = "Islamabad Capital Territory, Pakistan"},
 	["Khyber Pakhtunkhwa, Pakistan"] = {},
-	["Punjab, Pakistan"] = {},
+	["Punjab, Pakistan"] = {wp = "%l, %c"},
 	["Sindh, Pakistan"] = {},
 }
 
@@ -2811,19 +2996,18 @@ export.pakistan_group = {
 	default_container = "Pakistan",
 	default_placetype = "province",
 	default_divs = {"divisions"},
-	default_british_spelling = true,
 	data = export.pakistan_provinces_and_territories,
 }
 
 export.philippines_provinces = {
-	["Abra, Philippines"] = {},
+	["Abra, Philippines"] = {wp = "%l (province)"},
 	["Agusan del Norte, Philippines"] = {},
 	["Agusan del Sur, Philippines"] = {},
 	["Aklan, Philippines"] = {},
 	["Albay, Philippines"] = {},
-	["Antique, Philippines"] = {},
+	["Antique, Philippines"] = {wp = "%l (province)"},
 	["Apayao, Philippines"] = {},
-	["Aurora, Philippines"] = {},
+	["Aurora, Philippines"] = {wp = "%l (province)"},
 	["Basilan, Philippines"] = {},
 	["Bataan, Philippines"] = {},
 	["Batanes, Philippines"] = {},
@@ -2854,13 +3038,13 @@ export.philippines_provinces = {
 	["Ilocos Norte, Philippines"] = {},
 	["Ilocos Sur, Philippines"] = {},
 	["Iloilo, Philippines"] = {},
-	["Isabela, Philippines"] = {},
-	["Kalinga, Philippines"] = {},
+	["Isabela, Philippines"] = {wp = "%l (province)"},
+	["Kalinga, Philippines"] = {wp = "%l (province)"},
 	["La Union, Philippines"] = {},
-	["Laguna, Philippines"] = {},
+	["Laguna, Philippines"] = {wp = "%l (province)"},
 	["Lanao del Norte, Philippines"] = {},
 	["Lanao del Sur, Philippines"] = {},
-	["Leyte, Philippines"] = {},
+	["Leyte, Philippines"] = {wp = "%l (province)"},
 	["Maguindanao del Norte, Philippines"] = {},
 	["Maguindanao del Sur, Philippines"] = {},
 	["Marinduque, Philippines"] = {},
@@ -2880,9 +3064,9 @@ export.philippines_provinces = {
 	["Pangasinan, Philippines"] = {},
 	["Quezon, Philippines"] = {},
 	["Quirino, Philippines"] = {},
-	["Rizal, Philippines"] = {},
+	["Rizal, Philippines"] = {wp = "%l (province)"},
 	["Romblon, Philippines"] = {},
-	["Samar, Philippines"] = {},
+	["Samar, Philippines"] = {wp = "%l (province)"},
 	["Sarangani, Philippines"] = {},
 	["Siquijor, Philippines"] = {},
 	["Sorsogon, Philippines"] = {},
@@ -2898,8 +3082,8 @@ export.philippines_provinces = {
 	["Zamboanga del Norte, Philippines"] = {},
 	["Zamboanga del Sur, Philippines"] = {},
 	["Zamboanga Sibugay, Philippines"] = {},
-	--not a province but treated as one
-	["Metro Manila, Philippines"] = {placetype = "region"},
+	-- not a province but treated as one; allow it to be referred to as a province in holonyms
+	["Metro Manila, Philippines"] = {placetype = {"region", "province"}},
 }
 
 -- provinces of the Philippines
@@ -2920,6 +3104,7 @@ export.romania_counties = {
 	["Botoșani County, Romania"] = {},
 	["Brașov County, Romania"] = {},
 	["Brăila County, Romania"] = {},
+	-- Bucharest: not in a county
 	["Buzău County, Romania"] = {},
 	["Caraș-Severin County, Romania"] = {},
 	["Cluj County, Romania"] = {},
@@ -2960,14 +3145,16 @@ export.romania_group = {
 	placename_to_key = make_placename_to_key(", Romania", " County"),
 	default_container = "Romania",
 	default_placetype = "county",
-	default_british_spelling = true,
+	default_divs = {"communes"},
 	data = export.romania_counties,
 }
 
-local function make_russia_federal_subject_spec(spectype, use_the)
+local function make_russia_federal_subject_spec(spectype, use_the, wp)
 	return {
-		the = not not use_the, placetype = spectype,
+		placetype = spectype,
+		the = not not use_the,
 		bare_category_parent_type = {"federal subjects", spectype .. "s"},
+		wp = wp,
 	}
 end
 
@@ -3072,13 +3259,13 @@ export.russia_federal_subjects = {
 	["Republic of Ingushetia, Russia"] = {alias_of = "Ingushetia, Russia", the = true},
 	["Kalmykia, Russia"] = russia_republic_no_the,
 	["Republic of Kalmykia, Russia"] = {alias_of = "Kalmykia, Russia", the = true},
-	["Karelia, Russia"] = russia_republic_no_the,
+	["Karelia, Russia"] = make_russia_federal_subject_spec("republic", nil, "Republic of Karelia"),
 	["Republic of Karelia, Russia"] = {alias_of = "Karelia, Russia", the = true},
 	["Khakassia, Russia"] = russia_republic_no_the,
 	["Republic of Khakassia, Russia"] = {alias_of = "Khakassia, Russia", the = true},
 	["Mordovia, Russia"] = russia_republic_no_the,
 	["Republic of Mordovia, Russia"] = {alias_of = "Mordovia, Russia", the = true},
-	["North Ossetia-Alania, Russia"] = russia_republic_no_the,
+	["North Ossetia-Alania, Russia"] = make_russia_federal_subject_spec("republic", nil, "North Ossetia–Alania"), -- with en-dash
 	["Republic of North Ossetia-Alania, Russia"] = {alias_of = "North Ossetia-Alania, Russia", the = true},
 	["North Ossetia, Russia"] = {alias_of = "North Ossetia-Alania, Russia", display = true},
 	["Alania, Russia"] = {alias_of = "North Ossetia-Alania, Russia", display = true},
@@ -3096,11 +3283,11 @@ export.russia_federal_subjects = {
 		display = "Kabardino-Balkarian Republic, Russia", the = true},
 	["Karachay-Cherkessia, Russia"] = russia_republic_no_the,
 	["Karachay-Cherkess Republic, Russia"] = {alias_of = "Karachay-Cherkessia, Russia"},
-	["Komi, Russia"] = russia_republic_no_the,
+	["Komi, Russia"] = make_russia_federal_subject_spec("republic", nil, "Komi Republic"),
 	["Komi Republic, Russia"] = {alias_of = "Komi, Russia", the = true},
 	["Mari El, Russia"] = russia_republic_no_the,
 	["Mari El Republic, Russia"] = {alias_of = "Mari El, Russia", the = true},
-	["Sakha, Russia"] = russia_republic_no_the,
+	["Sakha, Russia"] = make_russia_federal_subject_spec("republic", nil, "Sakha Republic"),
 	["Sakha Republic, Russia"] = {alias_of = "Sakha, Russia", the = true},
 	["Yakutia, Russia"] = {alias_of = "Sakha, Russia"},
 	["Yakutiya, Russia"] = {alias_of = "Sakha, Russia", display = "Yakutia, Russia"},
@@ -3113,18 +3300,16 @@ export.russia_federal_subjects = {
 	["Udmurtia, Russia"] = russia_republic_no_the,
 	["Udmurt Republic, Russia"] = {alias_of = "Udmurtia, Russia", the = true},
 	-- Not included due to being unrecognized and only partly controlled:
-	-- ["Crimea, Russia"] = russia_republic_no_the,
+	-- ["Crimea, Russia"] = make_russia_federal_subject_spec("republic", nil, "Republic of Crimea (Russia)")
 	-- ["Donetsk People's Republic, Russia"] = russia_republic_the,
 	-- ["Luhansk People's Republic, Russia"] = russia_republic_the,
-	-- ["Zaporozhye Oblast, Russia"] = russia_oblast,
-	-- ["Kherson Oblast, Russia"] = russia_oblast,
+	-- ["Zaporozhye Oblast, Russia"] = make_russia_federal_subject_spec("oblast", nil, "Russian occupation of Zaporizhzhia Oblast"),
+	-- ["Kherson Oblast, Russia"] = make_russia_federal_subject_spec("oblast", nil, "Russian occupation of Kherson Oblast"),
 	-- There are also federal cities (not included because they're cities):
 	-- Moscow, Saint Petersburg; Sevastopol (unrecognized; same status as for "Crimea, Russia" above)
 }
 
 local function russia_key_to_placename(key)
-	-- FIXME: We probably want to allow more than two variants for placenames to handle the various aliases esp. of
-	-- republics.
 	key = key:gsub(",.*", "")
 	local full_placename = key
 	if key == "Jewish Autonomous Oblast" then
@@ -3178,7 +3363,6 @@ export.russia_group = {
 	default_container = "Russia",
 	default_keydesc = construct_russia_federal_subject_keydesc,
 	default_overriding_bare_label_parents = {"federal subjects of Russia", "+++"},
-	default_british_spelling = true,
 	data = export.russia_federal_subjects,
 }
 
@@ -3186,14 +3370,19 @@ export.saudi_arabia_provinces = {
 	["Riyadh Province, Saudi Arabia"] = {},
 	["Mecca Province, Saudi Arabia"] = {},
 	-- Name is too generic to assume it's in Saudi Arabia if not specified.
-	["Eastern Province, Saudi Arabia"] = {no_auto_augment_container = true},
-	["Medina Province, Saudi Arabia"] = {},
-	["Aseer Province, Saudi Arabia"] = {},
+	["Eastern Province, Saudi Arabia"] = {no_auto_augment_container = true, wp = "%l, %c"},
+	["Medina Province, Saudi Arabia"] = {wp = "%l (%c)"},
+	["Aseer Province, Saudi Arabia"] = {wp = "Asir"},
+	["Asir Province, Saudi Arabia"] = {alias_of = "Aseer Province, Saudi Arabia", display = true},
 	["Jazan Province, Saudi Arabia"] = {},
-	["Qassim Province, Saudi Arabia"] = {},
+	["Qassim Province, Saudi Arabia"] = {wp = "Al-Qassim Province"},
+	["Al-Qassim Province, Saudi Arabia"] = {alias_of = "Qassim Province, Saudi Arabia", display = true},
 	["Tabuk Province, Saudi Arabia"] = {},
-	["Hail Province, Saudi Arabia"] = {},
-	["Al-Jouf Province, Saudi Arabia"] = {},
+	["Hail Province, Saudi Arabia"] = {wp = "Ḥa'il Province"},
+	["Ha'il Province, Saudi Arabia"] = {alias_of = "Hail Province, Saudi Arabia", display = true},
+	["Ḥa'il Province, Saudi Arabia"] = {alias_of = "Hail Province, Saudi Arabia", display = true},
+	["Al-Jouf Province, Saudi Arabia"] = {wp = "Al-Jawf Province"},
+	["Al-Jawf Province, Saudi Arabia"] = {alias_of = "Al-Jouf Province, Saudi Arabia", display = true},
 	["Najran Province, Saudi Arabia"] = {},
 	["Northern Borders Province, Saudi Arabia"] = {},
 	["Al-Bahah Province, Saudi Arabia"] = {},
@@ -3208,32 +3397,78 @@ export.saudi_arabia_group = {
 	data = export.saudi_arabia_provinces,
 }
 
+export.south_africa_provinces = {
+	["Eastern Cape, South Africa"] = {the = true},
+	["Free State, South Africa"] = {the = true, wp = "%l (province)"},
+	["Gauteng, South Africa"] = {},
+	["KwaZulu-Natal, South Africa"] = {},
+	["Limpopo, South Africa"] = {},
+	["Mpumalanga, South Africa"] = {},
+	-- per Wikipedia and other sources, `North West` doesn't normally have `the` before it
+	["North West, South Africa"] = {wp = "%l (South African province)"},
+	["Northern Cape, South Africa"] = {the = true},
+	["Western Cape, South Africa"] = {the = true},
+}
+
+-- provinces of South Africa
+export.south_africa_group = {
+	default_container = "South Africa",
+	default_placetype = "province",
+	default_divs = {
+		"municipalities",
+	},
+	data = export.south_africa_provinces,
+}
+
+export.south_korea_provinces = {
+	["North Chungcheong Province, South Korea"] = {},
+	["South Chungcheong Province, South Korea"] = {},
+	["Gangwon Province, South Korea"] = {wp = "%l, %c"},
+	["Gyeonggi Province, South Korea"] = {},
+	["North Gyeongsang Province, South Korea"] = {},
+	["South Gyeongsang Province, South Korea"] = {},
+	["North Jeolla Province, South Korea"] = {},
+	["South Jeolla Province, South Korea"] = {},
+	["Jeju Province, South Korea"] = {},
+}
+
+-- provinces of South Korea
+export.south_korea_group = {
+	key_to_placename = make_key_to_placename(", South Korea$", " Province$"),
+	placename_to_key = make_placename_to_key(", South Korea", " Province"),
+	default_container = "South Korea",
+	default_placetype = "province",
+	data = export.south_korea_provinces,
+}
+
 export.spain_autonomous_communities = {
 	["Andalusia, Spain"] = {},
 	["Aragon, Spain"] = {},
 	["Asturias, Spain"] = {},
 	["Balearic Islands, Spain"] = {the = true},
-	["Basque Country, Spain"] = {the = true},
+	["Basque Country, Spain"] = {the = true, wp = "%l (autonomous community)"},
 	["Canary Islands, Spain"] = {the = true},
 	["Cantabria, Spain"] = {},
 	["Castile and León, Spain"] = {},
-	["Castilla-La Mancha, Spain"] = {},
+	["Castilla-La Mancha, Spain"] = {wp = "Castilla–La Mancha"}, -- with en-dash
 	["Catalonia, Spain"] = {},
 	["Community of Madrid, Spain"] = {the = true},
 	["Extremadura, Spain"] = {},
-	["Galicia, Spain"] = {},
+	["Galicia, Spain"] = {wp = "%l (Spain)"},
 	["La Rioja, Spain"] = {},
-	["Murcia, Spain"] = {},
+	["Murcia, Spain"] = {wp = "Region of %l"},
 	["Navarre, Spain"] = {},
-	["Valencia, Spain"] = {},
-	["Valencian Community, Spain"] = {alias_of = "Valencia, Spain"}, -- differs in "the"
+	["Valencia, Spain"] = {wp = "Valencian Community"},
+	["Valencian Community, Spain"] = {alias_of = "Valencia, Spain", the = true},
 }
 
 -- autonomous communities of Spain
 export.spain_group = {
 	default_container = "Spain",
 	default_placetype = "autonomous community",
-	default_british_spelling = true,
+	default_divs = {
+		"municipalities", "comarcas",
+	},
 	data = export.spain_autonomous_communities,
 }
 
@@ -3242,14 +3477,14 @@ export.taiwan_counties = {
 	["Chiayi County, Taiwan"] = {},
 	["Hsinchu County, Taiwan"] = {},
 	["Hualien County, Taiwan"] = {},
-	["Kinmen County, Taiwan"] = {},
-	["Lienchiang County, Taiwan"] = {},
+	["Kinmen County, Taiwan"] = {wp = "Kinmen"},
+	["Lienchiang County, Taiwan"] = {wp = "Matsu Islands"},
 	["Miaoli County, Taiwan"] = {},
 	["Nantou County, Taiwan"] = {},
-	["Penghu County, Taiwan"] = {},
+	["Penghu County, Taiwan"] = {wp = "Penghu"},
 	["Pingtung County, Taiwan"] = {},
 	["Taitung County, Taiwan"] = {},
-	["Yilan County, Taiwan"] = {},
+	["Yilan County, Taiwan"] = {wp = "%l, %c"},
 	["Yunlin County, Taiwan"] = {},
 }
 
@@ -3263,6 +3498,7 @@ export.taiwan_group = {
 }
 
 export.thailand_provinces = {
+	-- Bangkok (special administrative area)
 	["Amnat Charoen Province, Thailand"] = {},
 	["Ang Thong Province, Thailand"] = {},
 	["Bueng Kan Province, Thailand"] = {},
@@ -3348,7 +3584,106 @@ export.thailand_group = {
 	default_container = "Thailand",
 	default_placetype = "province",
 	default_divs = "districts",
+	-- For obscure reasons, provinces of Laos and Thailand use lowercase 'province'
+	default_wp = "%e province",
 	data = export.thailand_provinces,
+}
+
+export.turkey_provinces = {
+	["Adana Province, Turkey"] = {}, -- code 01
+	["Adıyaman Province, Turkey"] = {}, -- code 02
+	["Afyonkarahisar Province, Turkey"] = {}, -- code 03
+	["Ağrı Province, Turkey"] = {}, -- code 04
+	["Amasya Province, Turkey"] = {}, -- code 05
+	["Ankara Province, Turkey"] = {}, -- code 06
+	["Antalya Province, Turkey"] = {}, -- code 07
+	["Artvin Province, Turkey"] = {}, -- code 08
+	["Aydın Province, Turkey"] = {}, -- code 09
+	["Balıkesir Province, Turkey"] = {}, -- code 10
+	["Bilecik Province, Turkey"] = {}, -- code 11
+	["Bingöl Province, Turkey"] = {}, -- code 12
+	["Bitlis Province, Turkey"] = {}, -- code 13
+	["Bolu Province, Turkey"] = {}, -- code 14
+	["Burdur Province, Turkey"] = {}, -- code 15
+	["Bursa Province, Turkey"] = {}, -- code 16
+	["Çanakkale Province, Turkey"] = {}, -- code 17
+	["Çankırı Province, Turkey"] = {}, -- code 18
+	["Çorum Province, Turkey"] = {}, -- code 19
+	["Denizli Province, Turkey"] = {}, -- code 20
+	["Diyarbakır Province, Turkey"] = {}, -- code 21
+	["Edirne Province, Turkey"] = {}, -- code 22
+	["Elazığ Province, Turkey"] = {}, -- code 23
+	["Elâzığ Province, Turkey"] = {alias_of = "Elazığ Province, Turkey", display = true},
+	["Erzincan Province, Turkey"] = {}, -- code 24
+	["Erzurum Province, Turkey"] = {}, -- code 25
+	["Eskişehir Province, Turkey"] = {}, -- code 26
+	["Gaziantep Province, Turkey"] = {}, -- code 27
+	["Giresun Province, Turkey"] = {}, -- code 28
+	["Gümüşhane Province, Turkey"] = {}, -- code 29
+	["Hakkâri Province, Turkey"] = {}, -- code 30
+	["Hakkari Province, Turkey"] = {alias_of = "Hakkâri Province, Turkey", display = true},
+	["Hatay Province, Turkey"] = {}, -- code 31
+	["Isparta Province, Turkey"] = {}, -- code 32
+	["Mersin Province, Turkey"] = {}, -- code 33
+	-- ["Istanbul Province, Turkey"] = {}, -- code 34; this is coextensive with the city itself
+	["İzmir Province, Turkey"] = {}, -- code 35
+	["Izmir Province, Turkey"] = {alias_of = "İzmir Province, Turkey", display = true},
+	["Kars Province, Turkey"] = {}, -- code 36
+	["Kastamonu Province, Turkey"] = {}, -- code 37
+	["Kayseri Province, Turkey"] = {}, -- code 38
+	["Kırklareli Province, Turkey"] = {}, -- code 39
+	["Kırşehir Province, Turkey"] = {}, -- code 40
+	["Kocaeli Province, Turkey"] = {}, -- code 41
+	["Konya Province, Turkey"] = {}, -- code 42
+	["Kütahya Province, Turkey"] = {}, -- code 43
+	["Malatya Province, Turkey"] = {}, -- code 44
+	["Manisa Province, Turkey"] = {}, -- code 45
+	["Kahramanmaraş Province, Turkey"] = {}, -- code 46
+	["Mardin Province, Turkey"] = {}, -- code 47
+	["Muğla Province, Turkey"] = {}, -- code 48
+	["Muş Province, Turkey"] = {}, -- code 49
+	["Nevşehir Province, Turkey"] = {}, -- code 50
+	["Niğde Province, Turkey"] = {}, -- code 51
+	["Ordu Province, Turkey"] = {}, -- code 52
+	["Rize Province, Turkey"] = {}, -- code 53
+	["Sakarya Province, Turkey"] = {}, -- code 54
+	["Samsun Province, Turkey"] = {}, -- code 55
+	["Siirt Province, Turkey"] = {}, -- code 56
+	["Sinop Province, Turkey"] = {}, -- code 57
+	["Sivas Province, Turkey"] = {}, -- code 58
+	["Tekirdağ Province, Turkey"] = {}, -- code 59
+	["Tokat Province, Turkey"] = {}, -- code 60
+	["Trabzon Province, Turkey"] = {}, -- code 61
+	["Tunceli Province, Turkey"] = {}, -- code 62
+	["Şanlıurfa Province, Turkey"] = {}, -- code 63
+	["Uşak Province, Turkey"] = {}, -- code 64
+	["Van Province, Turkey"] = {}, -- code 65
+	["Yozgat Province, Turkey"] = {}, -- code 66
+	["Zonguldak Province, Turkey"] = {}, -- code 67
+	["Aksaray Province, Turkey"] = {}, -- code 68
+	["Bayburt Province, Turkey"] = {}, -- code 69
+	["Karaman Province, Turkey"] = {}, -- code 70
+	["Kırıkkale Province, Turkey"] = {}, -- code 71
+	["Batman Province, Turkey"] = {}, -- code 72
+	["Şırnak Province, Turkey"] = {}, -- code 73
+	["Bartın Province, Turkey"] = {}, -- code 74
+	["Ardahan Province, Turkey"] = {}, -- code 75
+	["Iğdır Province, Turkey"] = {}, -- code 76
+	["Yalova Province, Turkey"] = {}, -- code 77
+	["Karabük Province, Turkey"] = {}, -- code 78
+	["Kilis Province, Turkey"] = {}, -- code 79
+	["Osmaniye Province, Turkey"] = {}, -- code 80
+	["Düzce Province, Turkey"] = {}, -- code 81
+}
+
+-- provinces of Turkey
+export.turkey_group = {
+	key_to_placename = make_key_to_placename(", Turkey$", " Province$"),
+	placename_to_key = make_placename_to_key(", Turkey", " Province"),
+	default_container = "Turkey",
+	default_placetype = "province",
+	default_divs = "districts",
+	data = export.turkey_provinces,
 }
 
 export.united_kingdom_constituent_countries = {
@@ -3361,21 +3696,21 @@ export.united_kingdom_constituent_countries = {
 			cat_as = {"districts", "boroughs"},
 		},
 		{type = "boroughs", cat_as = {"districts", "boroughs"}},
-		{type = "civil parishes", skip_polity_parent_type = false},
+		{type = "civil parishes", container_parent_type = false},
 	}},
 	["Northern Ireland"] = {
 		placetype = {"constituent country", "province", "country"},
 		divs = {"counties", "districts"},
 	},
 	["Scotland"] = {divs = {
-		{type = "council areas", skip_polity_parent_type = false},
+		{type = "council areas", container_parent_type = false},
 		"districts",
 	}},
 	["Wales"] = {divs = {
 		"counties",
-		{type = "county boroughs", skip_polity_parent_type = false},
-		{type = "communities", skip_polity_parent_type = false},
-		{type = "Welsh communities", cat_as = {{type = "communities", skip_polity_parent_type = false}}},
+		{type = "county boroughs", container_parent_type = false},
+		{type = "communities", container_parent_type = false},
+		{type = "Welsh communities", cat_as = {{type = "communities", container_parent_type = false}}},
 	}},
 }
 
@@ -3388,7 +3723,6 @@ export.united_kingdom_group = {
 		"traditional counties",
 		{type = "historical counties", cat_as = "traditional counties"},
 	},
-	default_british_spelling = true,
 	-- Don't create categories like 'Category:en:Towns in the United Kingdom'
 	-- or 'Category:en:Places in the United Kingdom'.
 	default_no_container_cat = true,
@@ -3396,53 +3730,49 @@ export.united_kingdom_group = {
 }
 
 export.england_counties = {
-	-- ["Avon, England"] = {}, -- no longer
+	-- NOTE: We used to have various other "no longer" counties commented out, which seems to refer to counties that
+	-- existed officially at some point between 1889 and 1974, which I have removed. I have only kept the three
+	-- ceremonial counties that existed from 1974 (when ceremonial counties were created) to 1996, as well as those
+	-- still considered "historic counties" per [[w:Historic counties of England]].
+	-- ["Avon, England"] = {wp = "%l (county)"}, -- no longer (1974 to 1996)
 	["Bedfordshire, England"] = {},
 	["Berkshire, England"] = {},
 	-- ["Brighton and Hove, England"] = {}, -- city
 	-- ["Bristol, England"] = {}, -- city
 	["Buckinghamshire, England"] = {},
 	["Cambridgeshire, England"] = {},
-	-- ["Cambridgeshire and Isle of Ely, England"] = {}, -- no longer
 	["Cheshire, England"] = {},
-	-- ["Cleveland, England"] = {}, -- no longer
+	-- ["Cleveland, England"] = {wp = "%l (county)"}, -- no longer (1974 to 1996)
 	["Cornwall, England"] = {},
-	-- ["Cumberland, England"] = {}, -- no longer
+	-- ["Cumberland, England"] = {}, -- no longer (historic county)
 	["Cumbria, England"] = {},
 	["Derbyshire, England"] = {},
 	["Devon, England"] = {},
 	["Dorset, England"] = {},
 	["County Durham, England"] = {},
-	-- ["East Suffolk, England"] = {}, -- no longer
 	["East Sussex, England"] = {},
 	["Essex, England"] = {},
 	["Gloucestershire, England"] = {},
 	["Greater London, England"] = {},
 	["Greater Manchester, England"] = {},
 	["Hampshire, England"] = {},
-	-- ["Hereford and Worcester, England"] = {}, -- no longer
 	["Herefordshire, England"] = {}, 
 	["Hertfordshire, England"] = {},
-	-- ["Humberside, England"] = {}, -- no longer
-	-- ["Huntingdon and Peterborough, England"] = {}, -- no longer
-	-- ["Huntingdonshire, England"] = {}, -- no longer
-	-- ["Isle of Ely, England"] = {the = true}, -- no longer
+	-- ["Humberside, England"] = {}, -- no longer (1974 to 1996)
+	-- ["Huntingdonshire, England"] = {}, -- no longer (historic county)
 	["Isle of Wight, England"] = {the = true},
 	["Kent, England"] = {},
 	["Lancashire, England"] = {},
 	["Leicestershire, England"] = {},
 	["Lincolnshire, England"] = {},
-	-- ["County of London, England"] = {the = true}, -- no longer
 	["Merseyside, England"] = {},
-	-- ["Middlesex, England"] = {}, -- no longer
+	-- ["Middlesex, England"] = {}, -- no longer (historic county)
 	["Norfolk, England"] = {},
 	["Northamptonshire, England"] = {},
 	["Northumberland, England"] = {},
-	-- ["North Humberside, England"] = {}, -- no longer
 	["North Yorkshire, England"] = {},
 	["Nottinghamshire, England"] = {},
 	["Oxfordshire, England"] = {},
-	-- ["Soke of Peterborough, England"] = {the = true}, -- no longer
 	["Rutland, England"] = {},
 	["Shropshire, England"] = {},
 	["Somerset, England"] = {},
@@ -3451,20 +3781,17 @@ export.england_counties = {
 	["Staffordshire, England"] = {},
 	["Suffolk, England"] = {},
 	["Surrey, England"] = {},
-	-- ["Sussex, England"] = {}, -- no longer
+	-- ["Sussex, England"] = {}, -- no longer (historic county)
 	["Tyne and Wear, England"] = {},
 	["Warwickshire, England"] = {},
-	["West Midlands, England"] = {the = true},
-	-- ["Westmorland, England"] = {}, -- no longer
-	-- ["West Suffolk, England"] = {}, -- no longer
+	["West Midlands, England"] = {the = true, wp = "%l (county)"},
+	-- ["Westmorland, England"] = {}, -- no longer (historic county)
 	["West Sussex, England"] = {},
 	["West Yorkshire, England"] = {},
 	["Wiltshire, England"] = {},
 	["Worcestershire, England"] = {},
-	-- ["Yorkshire, England"] = {}, -- no longer
+	-- ["Yorkshire, England"] = {}, -- no longer (historic county)
 	["East Riding of Yorkshire, England"] = {the = true},
-	-- ["North Riding of Yorkshire, England"] = {the = true}, -- no longer
-	-- ["West Riding of Yorkshire, England"] = {the = true}, -- no longer
 }
 
 -- counties of England
@@ -3481,18 +3808,17 @@ export.england_group = {
 		{type = "boroughs", cat_as = {"districts", "boroughs"}},
 		"civil parishes",
 	},
-	default_british_spelling = true,
 	data = export.england_counties,
 }
 
 export.northern_ireland_counties = {
 	["County Antrim, Northern Ireland"] = {},
 	["County Armagh, Northern Ireland"] = {},
-	["City of Belfast, Northern Ireland"] = {the = true, is_city = true},
+	["City of Belfast, Northern Ireland"] = {the = true, is_city = true, wp = "Belfast"},
 	["County Down, Northern Ireland"] = {},
 	["County Fermanagh, Northern Ireland"] = {},
 	["County Londonderry, Northern Ireland"] = {},
-	["City of Derry, Northern Ireland"] = {the = true, is_city = true},
+	["City of Derry, Northern Ireland"] = {the = true, is_city = true, wp = "Derry"},
 	["County Tyrone, Northern Ireland"] = {},
 }
 
@@ -3502,97 +3828,96 @@ export.northern_ireland_group = {
 	placename_to_key = make_irish_type_placename_to_key(", Northern Ireland"),
 	default_container = {key = "Northern Ireland", placetype = "constituent country"},
 	default_placetype = "county",
-	default_british_spelling = true,
 	data = export.northern_ireland_counties,
 }
 
 export.scotland_council_areas = {
-	["City of Glasgow, Scotland"] = {the = true},
-	["Glasgow"] = {alias_of = "City of Glasgow, Scotland"},
-	["City of Edinburgh, Scotland"] = {the = true},
-	["Edinburgh"] = {alias_of = "City of Edinburgh, Scotland"},
-	["Fife, Scotland"] = {},
-	["North Lanarkshire, Scotland"] = {},
-	["South Lanarkshire, Scotland"] = {},
 	["Aberdeenshire, Scotland"] = {},
-	["Highland, Scotland"] = {},
-	["City of Aberdeen, Scotland"] = {the = true},
+	["Angus, Scotland"] = {wp = "%l, %c"},
+	["Argyll and Bute, Scotland"] = {},
+	["City of Aberdeen, Scotland"] = {the = true, wp = "Aberdeen"},
 	["Aberdeen"] = {alias_of = "City of Aberdeen, Scotland"},
-	["West Lothian, Scotland"] = {},
-	["Renfrewshire, Scotland"] = {},
-	["Falkirk, Scotland"] = {},
-	["Perth and Kinross, Scotland"] = {},
-	["Dumfries and Galloway, Scotland"] = {},
-	["City of Dundee, Scotland"] = {the = true},
+	["Aberdeen City"] = {alias_of = "City of Aberdeen, Scotland"},
+	["City of Dundee, Scotland"] = {the = true, wp = "Dundee"},
 	["Dundee"] = {alias_of = "City of Dundee, Scotland"},
-	["North Ayrshire, Scotland"] = {},
+	["Dundee City"] = {alias_of = "City of Dundee, Scotland"},
+	["City of Edinburgh, Scotland"] = {the = true, wp = "%l council area"},
+	["Edinburgh"] = {alias_of = "City of Edinburgh, Scotland"},
+	["City of Glasgow, Scotland"] = {the = true, wp = "Glasgow"},
+	["Glasgow"] = {alias_of = "City of Glasgow, Scotland"},
+	["Clackmannanshire, Scotland"] = {},
+	["Dumfries and Galloway, Scotland"] = {},
 	["East Ayrshire, Scotland"] = {},
-	["Angus, Scotland"] = {},
-	["Scottish Borders, Scotland"] = {the = true},
-	["South Ayrshire, Scotland"] = {},
 	["East Dunbartonshire, Scotland"] = {},
 	["East Lothian, Scotland"] = {},
-	["Moray, Scotland"] = {},
 	["East Renfrewshire, Scotland"] = {},
-	["Stirling, Scotland"] = {},
-	["Midlothian, Scotland"] = {},
-	["West Dunbartonshire, Scotland"] = {},
-	["Argyll and Bute, Scotland"] = {},
+	["Falkirk, Scotland"] = {wp = "%l council area"},
+	["Fife, Scotland"] = {},
+	["Highland, Scotland"] = {wp = "%l council area"},
 	["Inverclyde, Scotland"] = {},
-	["Clackmannanshire, Scotland"] = {},
-	["Na h-Eileanan Siar, Scotland"] = {},
-	["Western Isles"] = {alias_of = "Na h-Eileanan Siar, Scotland", the = true},
-	["Shetland Islands, Scotland"] = {the = true},
+	["Midlothian, Scotland"] = {},
+	["Moray, Scotland"] = {},
+	["North Ayrshire, Scotland"] = {},
+	["North Lanarkshire, Scotland"] = {},
 	["Orkney Islands, Scotland"] = {the = true},
+	["Perth and Kinross, Scotland"] = {},
+	["Renfrewshire, Scotland"] = {},
+	["Scottish Borders, Scotland"] = {the = true},
+	["Shetland Islands, Scotland"] = {the = true},
+	["South Ayrshire, Scotland"] = {},
+	["South Lanarkshire, Scotland"] = {},
+	["Stirling, Scotland"] = {wp = "%l council area"},
+	["West Dunbartonshire, Scotland"] = {},
+	["West Lothian, Scotland"] = {},
+	["Western Isles, Scotland"] = {the = true, wp = "Outer Hebrides"},
+	["Na h-Eileanan Siar, Scotland"] = {alias_of = "Western Isles, Scotland"},
 }
 
 -- council areas of Scotland
 export.scotland_group = {
 	default_container = {key = "Scotland", placetype = "constituent country"},
 	default_placetype = "council area",
-	default_british_spelling = true,
 	data = export.scotland_council_areas,
 }
 
 export.wales_principal_areas = {
 	["Blaenau Gwent, Wales"] = {},
-	["Bridgend, Wales"] = {},
-	["Caerphilly, Wales"] = {},
+	["Bridgend, Wales"] = {wp = "%l County Borough"},
+	["Caerphilly, Wales"] = {wp = "%l County Borough"},
 	-- ["Cardiff, Wales"] = {placetype = "city"},
 	["Carmarthenshire, Wales"] = {placetype = "county"},
 	["Ceredigion, Wales"] = {placetype = "county"},
-	["Conwy, Wales"] = {},
+	["Conwy, Wales"] = {wp = "%l County Borough"},
 	["Denbighshire, Wales"] = {placetype = "county"},
 	["Flintshire, Wales"] = {placetype = "county"},
 	["Gwynedd, Wales"] = {placetype = "county"},
 	["Isle of Anglesey, Wales"] = {the = true, placetype = "county"},
 	["Anglesey, Wales"] = {alias_of = "Isle of Anglesey, Wales"}, -- differs in "the"
-	["Merthyr Tydfil, Wales"] = {},
+	["Merthyr Tydfil, Wales"] = {wp = "%l County Borough"},
 	["Monmouthshire, Wales"] = {placetype = "county"},
 	["Neath Port Talbot, Wales"] = {},
-	-- ["Newport, Wales"] = {placetype = "city"},
+	-- ["Newport, Wales"] = {placetype = "city", wp = "%l, %c"},
 	["Pembrokeshire, Wales"] = {placetype = "county"},
 	["Powys, Wales"] = {placetype = "county"},
 	["Rhondda Cynon Taf, Wales"] = {},
 	-- ["Swansea, Wales"] = {placetype = "city"},
 	["Torfaen, Wales"] = {},
 	["Vale of Glamorgan, Wales"] = {the = true},
-	["Wrexham, Wales"] = {},
+	["Wrexham, Wales"] = {wp = "%l County Borough"},
 }
 
 -- principal areas (cities, counties and county boroughs) of Wales
 export.wales_group = {
 	default_container = {key = "Wales", placetype = "constituent country"},
 	default_placetype = "county borough",
-	default_british_spelling = true,
 	data = export.wales_principal_areas,
 }
 
 export.united_states_states = {
 	["Alabama, USA"] = {},
 	["Alaska, USA"] = {divs = {
-		{type = "boroughs", skip_polity_parent_type = "counties"},
-		{type = "borough seats", skip_polity_parent_type = "county seats"},
+		{type = "boroughs", container_parent_type = "counties"},
+		{type = "borough seats", container_parent_type = "county seats"},
 	}},
 	["Arizona, USA"] = {},
 	["Arkansas, USA"] = {},
@@ -3601,7 +3926,7 @@ export.united_states_states = {
 	["Connecticut, USA"] = {divs = {"counties", "county seats", "municipalities"}},
 	["Delaware, USA"] = {},
 	["Florida, USA"] = {},
-	["Georgia, USA"] = {},
+	["Georgia, USA"] = {wp = "%l (U.S. state)"},
 	["Hawaii, USA"] = {addl_parents = {"Polynesia"}},
 	["Idaho, USA"] = {},
 	["Illinois, USA"] = {},
@@ -3610,8 +3935,8 @@ export.united_states_states = {
 	["Kansas, USA"] = {},
 	["Kentucky, USA"] = {},
 	["Louisiana, USA"] = {divs = {
-		{type = "parishes", skip_polity_parent_type = "counties"},
-		{type = "parish seats", skip_polity_parent_type = "county seats"},
+		{type = "parishes", container_parent_type = "counties"},
+		{type = "parish seats", container_parent_type = "county seats"},
 	}},
 	["Maine, USA"] = {},
 	["Maryland, USA"] = {},
@@ -3629,7 +3954,7 @@ export.united_states_states = {
 		{type = "boroughs", prep = "in"},
 	}},
 	["New Mexico, USA"] = {},
-	["New York, USA"] = {},
+	["New York, USA"] = {wp = "%l (state)"},
 	["North Carolina, USA"] = {},
 	["North Dakota, USA"] = {},
 	["Ohio, USA"] = {},
@@ -3647,7 +3972,7 @@ export.united_states_states = {
 	["Utah, USA"] = {},
 	["Vermont, USA"] = {},
 	["Virginia, USA"] = {},
-	["Washington, USA"] = {},
+	["Washington, USA"] = {wp = "%l (state)"},
 	["West Virginia, USA"] = {},
 	["Wisconsin, USA"] = {},
 	["Wyoming, USA"] = {},
@@ -3678,7 +4003,7 @@ export.australia_cities = {
 	["Brisbane"] = {container = "Queensland"}, -- 3,450,000 (Conglomeration; including the Gold Coast [750,997 2024 estiamte])
 	["Canberra"] = {container = {key = "Australian Capital Territory, Australia", placetype = "territory"}}, -- 510,641 (2024 estimate)
 	["Melbourne"] = {container = "Victoria"}, -- 5,200,000 (Agglomeration)
-	["Newcastle, New South Wales"] = {container = "New South Wales"}, -- 534,033 (2024 estimate)
+	["Newcastle, New South Wales"] = {container = "New South Wales", wp = "%l, %c"}, -- 534,033 (2024 estimate)
 	["Newcastle"] = {alias_of = "Newcastle, New South Wales"},
 	["Perth"] = {container = "Western Australia"}, -- 2,350,000 (Agglomeration)
 	["Sydney"] = {container = "New South Wales"}, -- 5,100,000 (Agglomeration)
@@ -3687,7 +4012,6 @@ export.australia_cities = {
 export.australia_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Australia", "state"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.australia_cities,
 }
 
@@ -3751,7 +4075,6 @@ export.canada_cities = {
 export.canada_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Canada", "province"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.canada_cities,
 }
 
@@ -3774,7 +4097,6 @@ export.france_cities = {
 export.france_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", France", "region"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.france_cities,
 }
 
@@ -3808,7 +4130,6 @@ export.germany_cities_group = {
 	default_container = "Germany",
 	canonicalize_key_container = make_canonicalize_key_container(", Germany", "state"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.germany_cities,
 }
 
@@ -3819,7 +4140,7 @@ export.india_cities = {
 	["Delhi"] = {container = {key = "Delhi, India", placetype = "union territory"}}, -- 31,190,000
 	["Mumbai"] = {container = "Maharashtra"}, -- 25,189,000
 	["Kolkata"] = {container = "West Bengal"}, -- 21,747,000
-	["Bangalore"] = {container = "Karnataka"}, -- 15,257,000
+	["Bangalore"] = {container = "Karnataka", wp = "Bengaluru"}, -- 15,257,000
 	["Bengaluru"] = {alias_of = "Bangalore"},
 	["Chennai"] = {container = "Tamil Nadu"}, -- 11,570,000
 	["Hyderabad"] = {container = "Telangana"}, -- 9,797,000
@@ -3838,7 +4159,7 @@ export.india_cities = {
 	["Agra"] = {container = "Uttar Pradesh"}, -- 2,737,000
 	["Bhopal"] = {container = "Madhya Pradesh"}, -- 2,562,000
 	["Coimbatore"] = {container = "Tamil Nadu"}, -- 2,551,000
-	["Allahabad"] = {container = "Uttar Pradesh"}, -- 2,438,000
+	["Allahabad"] = {container = "Uttar Pradesh", wp = "Prayagraj"}, -- 2,438,000
 	["Prayagraj"] = {alias_of = "Allahabad"},
 	["Kochi"] = {container = "Kerala"}, -- 2,381,000
 	["Ludhiana"] = {container = "Punjab"}, -- 2,205,000
@@ -3877,7 +4198,7 @@ export.india_cities = {
 	["Bhilainagar"] = {alias_of = "Bhilai"},
 	["Vijayawada"] = {container = "Andhra Pradesh"}, -- 1,232,000
 	["Srinagar"] = {container = {key = "Jammu and Kashmir, India", placetype = "union territory"}}, -- 1,212,000
-	["Salem"] = {container = "Tamil Nadu"}, -- 1,189,000
+	["Salem"] = {container = "Tamil Nadu", wp = "%l, %c"}, -- 1,189,000
 	["Kota"] = {container = "Rajasthan"}, -- 1,172,000
 	["Jalandhar"] = {container = "Punjab"}, -- 1,165,000
 	["Saharanpur"] = {container = "Uttar Pradesh"}, -- 1,152,000
@@ -3886,23 +4207,39 @@ export.india_cities = {
 	["Bhubaneswar"] = {container = "Odisha"}, -- 1,112,000
 	["Jammu"] = {container = {key = "Jammu and Kashmir, India", placetype = "union territory"}}, -- 1,103,000
 	["Solapur"] = {container = "Maharashtra"}, -- 1,082,000
-	["Hubli-Dharwad"] = {container = "Karnataka"}, -- 1,062,000
+	["Hubli-Dharwad"] = {container = "Karnataka", wp = "Hubli–Dharwad"}, -- 1,062,000; wp with en dash
 	["Hubli"] = {alias_of = "Hubli-Dharwad"},
 	["Dharwad"] = {alias_of = "Hubli-Dharwad"},
 	["Puducherry"] = {container = {key = "Puducherry, India", placetype = "union territory"}}, -- 1,024,000
+	["Pondicherry"] = {alias_of = "Puducherry", display = true},
+	-- satellite/secondary cities of metro area (none in citypopulation.de)
+	["Ghaziabad"] = {container = "Uttar Pradesh"}, -- 1,729,000 city, 2,358,525 urban agglomeration per 2011 census; 3,406,061 2025 estimate from official website; part of Delhi metro area
+	["Faridabad"] = {container = "Haryana"}, -- 1,414,050 city per 2011 census; part of Delhi metro area
+	["Thane"] = {container = "Maharashtra"}, -- 1,841,488 city per 2011 census; part of Mumbai metro area
+	["Kalyan-Dombivli"] = {container = "Maharashtra"}, -- 1,246,381 city per 2011 census; part of Mumbai metro area
+	["Kalyan-Dombivali"] = {alias_of = "Kalyan-Dombivli", display = true},
+	["Kalyan"] = {alias_of = "Kalyan-Dombivli"},
+	["Dombivli"] = {alias_of = "Kalyan-Dombivli"},
+	["Dombivali"] = {alias_of = "Kalyan-Dombivli"},
+	["Vasai-Virar"] = {container = "Maharashtra"}, -- 1,221,233 city per 2011 census; part of Mumbai metro area
+	["Vasai"] = {alias_of = "Vasai-Virar"},
+	["Virar"] = {alias_of = "Vasai-Virar"},
+	["Navi Mumbai"] = {container = "Maharashtra"}, -- 1,120,547 city per 2011 census; part of Mumbai metro area
+	["Howrah"] = {container = "West Bengal"}, -- 1,077,075 city ("metropolis"), 2,811,344 "metro" per 2011 census; part of Kolkata metro area
+	["Pimpri-Chinchwad"] = {container = "Maharashtra"}, -- 1,727,692 per 2011 census; part of Pune metro area
+	["Pimpri Chinchwad"] = {alias_of = "Pimpri-Chinchwad", display = true},
 }
 
 export.india_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", India", "state"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.india_cities,
 }
 
 export.indonesia_cities = {
 	-- cities where the city proper has more than 1,000,000 people as of mid-2023 estimate
 	["Jakarta"] = {container = "Special Capital Region of Jakarta", divs = {
-		{type = "subdistricts", skip_polity_parent_type = false},
+		{type = "subdistricts", container_parent_type = false},
 	}},
 	["Surabaya"] = {container = "East Java"},
 	["Bekasi"] = {container = "West Java"}, -- part of Jakarta metro area
@@ -3918,7 +4255,6 @@ export.indonesia_cities = {
 	["Bogor"] = {container = "West Java"}, -- part of Jakarta metro area
 	["Pekanbaru"] = {container = "Riau"},
 	["Bandar Lampung"] = {container = "Lampung"},
-	["Pekanbaru"] = {container = "Riau"},
 	-- other metro areas over 1,000,000 people
 	["Padang"] = {container = "West Sumatra"},
 	["Samarinda"] = {container = "East Kalimantan"},
@@ -3928,7 +4264,7 @@ export.indonesia_cities = {
 	["Cirebon"] = {container = "West Java"},
 	["Surakarta"] = {container = "Central Java"},
 	["Banjarmasin"] = {container = "South Kalimantan"},
-	["Tasikmalaya"] = {parent = "West Java"},
+	["Tasikmalaya"] = {container = "West Java"},
 }
 
 export.indonesia_cities_group = {
@@ -3957,15 +4293,15 @@ export.italy_cities = {
 export.italy_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Italy", "region"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.italy_cities,
 }
 
 export.japan_cities = {
 	-- Population figures from [[w:List of cities in Japan]]. Metro areas from
 	-- [[w:List of metropolitan areas in Japan]].
-	-- Tokyo is treated directly under prefectures of Japan.
-	-- ["Tokyo"] = {}, -- no single figure given for Tokyo as a whole.
+	["Tokyo"] = {keydesc = "[[Tokyo]] Metropolis",
+		divs = {{type = "special wards", container_parent_type = false}},
+	},
 	["Yokohama"] = {container = "Kanagawa"}, -- 3,697,894
 	["Osaka"] = {container = "Osaka"}, -- 2,668,586
 	["Nagoya"] = {container = "Aichi"}, -- 2,283,289
@@ -4003,47 +4339,32 @@ export.japan_cities_group = {
 	data = export.japan_cities,
 }
 
-export.south_korea_cities = {
-	-- All cities listed are not associated with any county.
-	["Seoul"] = {},
-	["Busan"] = {},
-	["Incheon"] = {},
-	["Daegu"] = {},
-	["Daejeon"] = {},
-	["Gwangju"] = {},
-	["Ulsan"] = {},
-}
-
-export.south_korea_cities_group = {
-	default_container = "South Korea",
-	canonicalize_key_container = make_canonicalize_key_container(" County, South Korea", "province"),
-	default_placetype = "city",
-	data = export.south_korea_cities,
-}
-
 export.mexico_cities = {
 	["Mexico City"] = {}, -- its own state
 	["Monterrey"] = {container = "Nuevo León"},
 	["Guadalajara"] = {container = "Jalisco"},
-	["Puebla"] = {container = "Puebla"},
+	["Puebla"] = {container = "Puebla", wp = "%l (city)"},
 	["Toluca"] = {container = "State of Mexico"},
 	["Tijuana"] = {container = "Baja California"},
 	-- Include the state in the category for León due to possible confusion with León, Spain.
-	["León, Guanajuato"] = {container = "Guanajuato"},
+	["León, Guanajuato"] = {container = "Guanajuato", wp = "%l, %c"},
 	["León"] = {alias_of = "León, Guanajuato"},
 	["Leon"] = {alias_of = "León, Guanajuato", display = true},
-	["Querétaro"] = {container = "Querétaro"},
+	["Querétaro"] = {container = "Querétaro", wp = "%l (city)"},
 	["Queretaro"] = {alias_of = "Querétaro", display = true},
 	["Ciudad Juárez"] = {container = "Chihuahua"},
 	["Juárez"] = {alias_of = "Ciudad Juárez"},
 	["Juarez"] = {alias_of = "Ciudad Juárez", display = "Juárez"},
 	["Torreón"] = {container = "Coahuila"},
 	["Torreon"] = {alias_of = "Torreón", display = true},
-	["Mérida"] = {container = "Yucatán"},
-	["Merida"] = {alias_of = "Mérida", display = true},
-	["San Luis Potosí"] = {container = "San Luis Potosí"},
+	-- Include the state in the category for Mérida due to possible confusion with Mérida, Spain or
+	-- Mérida, Venezuela.
+	["Mérida, Yucatán"] = {container = "Yucatán", wp = "%l, %c"},
+	["Mérida"] = {alias_of = "Mérida, Yucatán"},
+	["Merida"] = {alias_of = "Mérida, Yucatán", display = true},
+	["San Luis Potosí"] = {container = "San Luis Potosí", wp = "%l (city)"},
 	["San Luis Potosi"] = {alias_of = "San Luis Potosí", display = true},
-	["Aguascalientes"] = {container = "Aguascalientes"},
+	["Aguascalientes"] = {container = "Aguascalientes", wp = "%l (city)"},
 	["Mexicali"] = {container = "Baja California"},
 }
 
@@ -4057,23 +4378,24 @@ export.mexico_cities_group = {
 export.nigeria_cities = {
 	-- Figures from citypopulation.de unless otherwise indicated; retrieved 2025-04-26; reference date 2025-01-01.
 	["Lagos"] = {container = "Lagos"}, -- 21,300,000 (unindicated; population of low reliability)
-	["Kano"] = {container = "Kano"}, -- 5,350,000 (unindicated; population of low reliability)
+	["Kano"] = {container = "Kano", wp = "%l (city)"}, -- 5,350,000 (unindicated; population of low reliability)
 	["Ibadan"] = {container = "Oyo"}, -- 3,400,000 (unindicated; population of low reliability)
-	["Abuja"] = {}, -- federal capital, not in a state; 3,050,000 (unindicated; population of low reliability)
+	["Abuja"] = {container = {key = "Federal Capital Territory, Nigeria", placetype = "federal territory"}}, -- 3,050,000 (unindicated; population of low reliability)
 	["Port Harcourt"] = {container = "Rivers"}, -- 2,250,000 (unindicated; population of low reliability)
 	["Kaduna"] = {container = "Kaduna"}, -- 1,980,000 (unindicated; population of low reliability)
 	["Benin City"] = {container = "Edo"}, -- 1,790,000 (unindicated; population of low reliability)
-	["Aba"] = {container = "Abia"}, -- 1,280,000 (unindicated; population of low reliability)
+	["Aba"] = {container = "Abia", wp = "%l, Nigeria"}, -- 1,280,000 (unindicated; population of low reliability)
 	["Onitsha"] = {container = "Anambra"}, -- 1,230,000 (unindicated; population of low reliability)
 	["Maiduguri"] = {container = "Borno"}, -- 1,190,000 (unindicated; population of low reliability)
 	["Ilorin"] = {container = "Kwara"}, -- 1,160,000 (unindicated; population of low reliability)
-	["Sokoto"] = {container = "Sokoto"}, -- 1,140,000 (unindicated; population of low reliability)
+	["Sokoto"] = {container = "Sokoto", wp = "%l (city)"}, -- 1,140,000 (unindicated; population of low reliability)
 	["Jos"] = {container = "Plateau"}, -- 1,110,000 (unindicated; population of low reliability)
 	["Zaria"] = {container = "Kaduna"}, -- 1,050,000 (unindicated; population of low reliability)
-	["Enugu"] = {container = "Enugu"}, -- 1,010,000 (unindicated; population of low reliability)
+	["Enugu"] = {container = "Enugu", wp = "%l (city)"}, -- 1,010,000 (unindicated; population of low reliability)
 }
 
 export.nigeria_cities_group = {
+	default_container = "Nigeria",
 	canonicalize_key_container = make_canonicalize_key_container(" State, Nigeria", "state"),
 	default_placetype = "city",
 	data = export.nigeria_cities,
@@ -4088,7 +4410,7 @@ export.pakistan_cities = {
 	["Faisalabad"] = {container = "Punjab"}, -- 4,125,000 (Consolidated Urban Area)
 	["Gujranwala"] = {container = "Punjab"}, -- 3,450,000 (Consolidated Urban Area)
 	-- there is also Hyderabad in India (very confusing)
-	["Hyderabad, Pakistan"] = {container = "Sindh"}, -- 2,475,000 (Consolidated Urban Area)
+	["Hyderabad, Pakistan"] = {container = "Sindh", wp = "%l, %c"}, -- 2,475,000 (Consolidated Urban Area)
 	["Hyderabad"] = {alias_of = "Hyderabad, Pakistan"},
 	["Multan"] = {container = "Punjab"}, -- 2,425,000 (Consolidated Urban Area)
 	["Peshawar"] = {container = "Khyber Pakhtunkhwa"}, -- 2,150,000 (Consolidated Urban Area)
@@ -4100,12 +4422,10 @@ export.pakistan_cities = {
 export.pakistan_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Pakistan", "province"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.pakistan_cities,
 }
 
 export.philippines_cities = {
-	 -- Some cities listed independent from any province. province listed is for geographical purposes only.
 	 -- Skipped some cities in Metro Manila (Taguig, Pasig) which don't have districts.
 	 -- Other cities outside Metro Manila skipped as not central city in their urban area.
 	["Quezon City"] = {container = {key = "Metro Manila, Philippines", placetype = "region"}},
@@ -4126,8 +4446,9 @@ export.philippines_cities = {
 	["General Santos"] = {container = "South Cotabato"},
 	["San Jose del Monte"] = {container = "Bulacan"},
 	["Bacolod"] = {container = "Negros Occidental"},
-	["Calamba"] = {container = "Laguna"},
-	["Angeles"] = {container = "Pampanga"},
+	["Calamba"] = {container = "Laguna", wp = "%l, %c"},
+	["Angeles"] = {container = "Pampanga", wp = "Angeles City"},
+	["Angeles City"] = {alias_of = "Angeles"},
 	["Iloilo City"] = {container = "Iloilo"},
 	["Iloilo"] = {alias_of = "Iloilo City"},
 }
@@ -4164,7 +4485,6 @@ export.russia_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Russia", "oblast"),
 	default_container = "Russia",
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.russia_cities,
 }
 
@@ -4173,17 +4493,40 @@ export.saudi_arabia_cities = {
 	-- metro, urban or city proper figures.
 	["Riyadh"] = {container = "Riyadh"}, -- 7,000,100; 7,700,000 per citypopulation.de 2025-01-01 (Agglomeration)
 	["Jeddah"] = {container = "Mecca"}, -- 3,751,917; 3,950,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Jedda"] = {alias_of = "Jeddah", display = true},
+	["Jiddah"] = {alias_of = "Jeddah", display = true},
+	["Jidda"] = {alias_of = "Jeddah", display = true},
 	["Dammam"] = {container = "Eastern"}, -- 2,638,166; 2,925,000 per citypopulation.de 2025-01-01 (Agglomeration)
 	["Mecca"] = {container = "Mecca"}, -- 2,385,509; 2,675,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Makkah"] = {alias_of = "Mecca", display = true},
 	["Medina"] = {container = "Medina"}, -- 1,477,023; 1,530,000 per citypopulation.de 2025-01-01 (City)
 	["Hofuf"] = {container = "Eastern"}, -- 1,060,000 per citypopulation.de 2025-01-01 (Agglomeration)
 	["Khamis Mushait"] = {container = "Aseer"}, -- 1,030,000 per citypopulation.de 2025-01-01 (Agglomeration)
+	["Khamis Mushayt"] = {alias_of = "Khamis Mushait", display = true},
 }
 
 export.saudi_arabia_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(" Province, Saudi Arabia", "province"),
 	default_placetype = "city",
 	data = export.saudi_arabia_cities,
+}
+
+export.south_korea_cities = {
+	-- All cities listed are not associated with any county.
+	["Seoul"] = {},
+	["Busan"] = {},
+	["Incheon"] = {},
+	["Daegu"] = {},
+	["Daejeon"] = {},
+	["Gwangju"] = {},
+	["Ulsan"] = {},
+}
+
+export.south_korea_cities_group = {
+	default_container = "South Korea",
+	canonicalize_key_container = make_canonicalize_key_container(" County, South Korea", "province"),
+	default_placetype = "city",
+	data = export.south_korea_cities,
 }
 
 export.spain_cities = {
@@ -4197,7 +4540,6 @@ export.spain_cities = {
 export.spain_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Spain", "autonomous community"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.spain_cities,
 }
 
@@ -4243,14 +4585,13 @@ export.united_kingdom_cities = {
 export.united_kingdom_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", England", "county"),
 	default_placetype = "city",
-	default_british_spelling = true,
 	data = export.united_kingdom_cities,
 }
 
 export.united_states_cities = {
 	-- top 50 CSA's by population, with the top and sometimes 2nd or 3rd city listed
 	["New York City"] = {container = "New York", wp = "%l", divs = {
-		{type = "boroughs", skip_polity_parent_type = false},
+		{type = "boroughs", container_parent_type = false},
 	}},
 	-- Don't display-canonicalize as it may make the display weird (e.g. in the context New York, New York).
 	["New York"] = {alias_of = "New York City"},
@@ -4292,6 +4633,7 @@ export.united_states_cities = {
 	["Portland"] = {container = "Oregon"},
 	["Tampa"] = {container = "Florida"},
 	["St. Louis"] = {container = "Missouri", wp = "%l", commonscat = "%l, %c"},
+	["Saint Louis"] = {alias_of = "St. Louis", display = true},
 	["Charlotte"] = {container = "North Carolina"},
 	["Sacramento"] = {container = "California"},
 	["Pittsburgh"] = {container = "Pennsylvania", wp = "%l"},
@@ -4358,7 +4700,203 @@ export.new_york_boroughs_group = {
 	data = export.new_york_boroughs,
 }
 
-export.misc_cities_british_spelling = {
+export.misc_cities = {
+	------------------ Africa -------------------
+	-- Sorted by country and then within the country, by decreasing population; figures from citypopulation.de
+	-- (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated; combined with data from
+	-- [[w:List of urban areas in Africa by population]].
+	["Algiers"] = {container = "Algeria"}, -- 4,325,000 (Consolidated Urban Area)
+	["Oran"] = {container = "Algeria"}, -- 1,640,000 (Consolidated Urban Area)
+	["Luanda"] = {container = "Angola"}, -- 9,650,000 (Urban Area)
+	["Benguela"] = {container = "Angola"}, -- 1,420,000 (Urban Area)
+	["Cotonou"] = {container = "Benin"}, -- 2,150,000 (Agglomeration)
+	["Ouagadougou"] = {container = "Burkina Faso"}, -- 3,425,000 (Agglomeration) 
+	["Bobo-Dioulasso"] = {container = "Burkina Faso"}, -- 1,100,000 (Agglomeration)
+	["Bujumbura"] = {container = "Burundi"}, -- 1,143,202 (Urban Area 2023 per PopulationStat, cited in Wikipedia)
+	["Yaoundé"] = {container = "Cameroon"}, -- 3,975,000 (City)
+	["Yaounde"] = {alias_of = "Yaoundé", display = true},
+	["Douala"] = {container = "Cameroon"}, -- 3,900,000 (City)
+	["Bangui"] = {container = "Central African Republic"}, -- 1,680,000 (Agglomeration)
+	["N'Djamena"] = {container = "Chad"}, -- 1,950,000 (City)
+	["Ndjamena"] = {alias_of = "N'Djamena", display = true},
+	["Kinshasa"] = {container = "Democratic Republic of the Congo"}, -- 16,300,000 (City; population of low reliability)
+	["Lubumbashi"] = {container = "Democratic Republic of the Congo"}, -- 2,875,000 (City; population of low reliability)
+	["Mbuji-Mayi"] = {container = "Democratic Republic of the Congo"}, -- 2,500,000 (City; population of low reliability)
+	["Kananga"] = {container = "Democratic Republic of the Congo"}, -- 1,370,000 (City; population of low reliability)
+	["Kisangani"] = {container = "Democratic Republic of the Congo"}, -- 1,300,000 (City; population of low reliability)
+	["Bukavu"] = {container = "Democratic Republic of the Congo"}, -- 1,100,000 (City; population of low reliability)
+	["Goma"] = {container = "Democratic Republic of the Congo"}, -- 1,010,000 (City; population of low reliability)
+	["Tshikapa"] = {container = "Democratic Republic of the Congo"}, -- 1,020,468 (2023 Wikipedia [[w:List of cities with over one million inhabitants]] from populationstat.com; not in citypopulation.de)
+	["Cairo"] = {container = "Egypt"}, -- 22,800,000 (Agglomeration, including Giza and Subhra El Kheima)
+	["Alexandria"] = {container = "Egypt"}, -- 6,250,000 (Agglomeration)
+	["Giza"] = {container = "Egypt"}, -- 4,458,135 (2023 from citypopulation.de)
+	["Shubra El Kheima"] = {container = "Egypt"}, -- 1,240,239 (2021 from citypopulation.de)
+	["Asmara"] = {container = "Eritrea"}, -- 1,090,000 (City; population of low reliability)
+	["Asmera"] = {alias_of = "Asmara", display = true},
+	["Addis Ababa"] = {container = "Ethiopia"}, -- 4,825,000 (Agglomeration)
+	["Banjul"] = {container = "Gambia"}, -- 1,170,000 (Agglomeration)
+	["Accra"] = {container = "Ghana"}, -- 6,800,000 (Agglomeration)
+	["Kumasi"] = {container = "Ghana"}, -- 2,900,000 (Agglomeration)
+	["Conakry"] = {container = "Guinea"}, -- 2,975,000 (Consolidated Urban Area)
+	["Abidjan"] = {container = "Ivory Coast"}, -- 7,050,000 (Agglomeration)
+	["Nairobi"] = {container = "Kenya"}, -- 6,900,000 (unindicated)
+	["Mombasa"] = {container = "Kenya"}, -- 1,370,000 (City)
+	["Monrovia"] = {container = "Liberia"}, -- 1,940,000 (Urban Area)
+	["Tripoli"] = {container = "Libya", wp = "%l, %c"}, -- 1,870,000 (unindicated)
+	["Antananarivo"] = {container = "Madagascar"}, -- 3,150,000 (Agglomeration)
+	["Lilongwe"] = {container = "Malawi"}, -- 1,210,000 (City)
+	["Bamako"] = {container = "Mali"}, -- 5,700,000 (Agglomeration)
+	["Nouakchott"] = {container = "Mauritania"}, -- 1,500,000 (City)
+	["Casablanca"] = {container = {key = "Casablanca-Settat, Morocco", placetype = "region"}}, -- 4,450,000 (Municipality (urban population))
+	["Rabat"] = {container = {key = "Rabat-Sale-Kenitra, Morocco", placetype = "region"}}, -- 2,125,000 (Municipality (urban population))
+	["Tangier"] = {container = {key = "Tangier-Tetouan-Al Hoceima, Morocco", placetype = "region"}}, -- 1,410,000 (Municipality (urban population))
+	["Tanger"] = {alias_of = "Tangier", display = true},
+	["Tangiers"] = {alias_of = "Tangier", display = true},
+	["Fez"] = {container = {key = "Fez-Meknes, Morocco", placetype = "region"}, wp = "%l, Morocco"}, -- 1,310,000 (Municipality (urban population))
+	["Fes"] = {alias_of = "Fez", display = true},
+	["Fès"] = {alias_of = "Fez", display = true},
+	["Agadir"] = {container = {key = "Souss-Massa, Morocco", placetype = "region"}}, -- 1,270,000 (Municipality (urban population))
+	["Marrakesh"] = {container = {key = "Marrakesh-Safi, Morocco", placetype = "region"}}, -- 1,140,000 (Municipality (urban population))
+	["Marrakech"] = {alias_of = "Marrakesh", display = true},
+	["Maputo"] = {container = "Mozambique"}, -- 2,575,000 (Agglomeration)
+	["Niamey"] = {container = "Niger"}, -- 1,530,000 (City)
+	["Brazzaville"] = {container = "Republic of the Congo"}, -- 2,475,000 (Agglomeration)
+	["Pointe-Noire"] = {container = "Republic of the Congo"}, -- 1,480,000 (City)
+	["Kigali"] = {container = "Rwanda"}, -- 1,960,000 (Municipality (urban population))
+	["Dakar"] = {container = "Senegal"}, -- 4,225,000 (Agglomeration)
+	["Touba"] = {container = "Senegal"}, -- 1,320,000 (Agglomeration)
+	["Freetown"] = {container = "Sierra Leone"}, -- 1,420,000 (Agglomeration)
+	["Mogadishu"] = {container = "Somalia"}, -- 2,250,000 (unindicated; population of low reliability)
+	["Johannesburg"] = {container = {key = "Gauteng, South Africa", placetype = "province"}}, -- 14,800,000 (Consolidated Urban Area; including Pretoria, Soweto, etc.)
+	["Cape Town"] = {container = {key = "Western Cape, South Africa", placetype = "province"}}, -- 5,100,000 (Consolidated Urban Area)
+	["Durban"] = {container = {key = "KwaZulu-Natal, South Africa", placetype = "province"}}, -- 3,900,000 (Consolidated Urban Area)
+	["Pretoria"] = {container = {key = "Gauteng, South Africa", placetype = "province"}}, -- 2,921,488 (2011 census)
+	["Port Elizabeth"] = {container = {key = "Eastern Cape, South Africa", placetype = "province"}, wp = "Gqeberha"}, -- 1,200,000 (Consolidated Urban Area)
+	["Gqeberha"] = {alias_of = "Port Elizabeth"}, -- official name; not a display alias
+	["Khartoum"] = {container = "Sudan"}, -- 7,200,000 (unindicated; population of low reliability)
+	["Dar es Salaam"] = {container = "Tanzania"}, -- 6,650,000 (Agglomeration)
+	["Mwanza"] = {container = "Tanzania"}, -- 1,340,000 (Agglomeration)
+	["Mwanza City"] = {alias_of = "Mwanza", display = true},
+	["Arusha"] = {container = "Tanzania"}, -- 1,190,000 (Agglomeration)
+	["Zanzibar"] = {container = "Tanzania"}, -- 1,030,000 (Agglomeration)
+	["Lomé"] = {container = "Togo"}, -- 2,625,000 (unindicated)
+	["Lome"] = {alias_of = "Lomé", display = true},
+	["Tunis"] = {container = "Tunisia"}, -- 2,725,000 (Municipality (urban population))
+	["Sousse"] = {container = "Tunisia"}, -- 1,180,000 (Municipality (urban population))
+	["Soussa"] = {alias_of = "Sousse", display = true},
+	["Kampala"] = {container = "Uganda"}, -- 4,300,000 (unindicated)
+	["Lusaka"] = {container = "Zambia"}, -- 3,000,000 (Consolidated Urban Area)
+	["Harare"] = {container = "Zimbabwe"}, -- 2,675,000 (Agglomeration)
+
+	------------------ Asia -------------------
+	-- sorted by country and then within the country, by decreasing population; figures from citypopulation.de
+	-- (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated.
+	["Kabul"] = {container = "Afghanistan"}, -- 5,250,000 (Agglomeration)
+	["Baku"] = {container = "Azerbaijan"}, -- 3,725,000 (Administrative Area (urban population))
+	["Manama"] = {container = "Bahrain"}, -- 1,560,000 (unindicated)
+	["Dhaka"] = {container = {key = "Dhaka Division, Bangladesh", placetype = "division"}}, -- 23,100,000 (Agglomeration)
+	["Dacca"] = {alias_of = "Dhaka", display = true},
+	["Chittagong"] = {container = {key = "Chittagong Division, Bangladesh", placetype = "division"}}, -- 5,050,000 (Agglomeration)
+	["Gazipur"] = {container = {key = "Dhaka Division, Bangladesh", placetype = "division"}}, -- 2,674,697 (City per 2022; countied in citypopulation.de as part of Dhaka metro area)
+	["Khulna"] = {container = {key = "Khulna Division, Bangladesh", placetype = "division"}}, -- 1,210,000 (Agglomeration)
+	["Phnom Penh"] = {container = "Cambodia"}, -- 2,925,000 (Agglomeration)
+	["Tehran"] = {container = {key = "Tehran Province, Iran", placetype = "province"}}, -- 16,800,000 (Agglomeration)
+	["Teheran"] = {alias_of = "Tehran", display = true},
+	["Mashhad"] = {container = {key = "Razavi Khorasan Province, Iran", placetype = "province"}}, -- 3,475,000 (Agglomeration)
+	["Mashad"] = {alias_of = "Mashhad", display = true},
+	["Meshhed"] = {alias_of = "Mashhad", display = true},
+	["Meshed"] = {alias_of = "Mashhad", display = true},
+	["Isfahan"] = {container = {key = "Isfahan Province, Iran", placetype = "province"}}, -- 3,425,000 (Agglomeration)
+	["Esfahan"] = {alias_of = "Isfahan", display = true},
+	["Tabriz"] = {container = {key = "East Azerbaijan Province, Iran", placetype = "province"}}, -- 1,970,000 (Agglomeration)
+	["Shiraz"] = {container = {key = "Fars Province, Iran", placetype = "province"}}, -- 1,950,000 (Agglomeration)
+	["Ahvaz"] = {container = {key = "Khuzestan Province, Iran", placetype = "province"}}, -- 1,550,000 (Agglomeration)
+	["Qom"] = {container = {key = "Qom Province, Iran", placetype = "province"}}, -- 1,450,000 (City)
+	["Kermanshah"] = {container = {key = "Kermanshah Province, Iran", placetype = "province"}}, -- 1,130,000 (City)
+	["Baghdad"] = {container = "Iraq"}, -- 7,800,000 (Administrative Area (urban population))
+	["Basra"] = {container = "Iraq"}, -- 1,710,000 (Administrative Area (urban population))
+	["Mosul"] = {container = "Iraq"}, -- 1,550,000 (Administrative Area (urban population))
+	["Erbil"] = {container = "Iraq"}, -- 1,220,000 (Administrative Area (urban population))
+	["Kirkuk"] = {container = "Iraq"}, -- 1,160,000 (Administrative Area (urban population))
+	["Najaf"] = {container = "Iraq"}, -- 1,050,000 (Administrative Area (urban population))
+	["Tel Aviv"] = {container = "Israel"}, -- 3,000,000 (Agglomeration)
+	-- Jerusalem is not recognized internationally as part of either Israel or Palestine, but as a
+	-- [[w:corpus separatum]], so put the container as "Asia" and list Israel and Palestine as additional parents for
+	-- categorization purposes.
+	["Jerusalem"] = {container = {key = "Asia", placetype = "continent"},
+		addl_parents = {"Israel", "Palestine"}}, -- 1,080,000 (Agglomeration)
+	["Amman"] = {container = "Jordan"}, -- 6,150,000 (unindicated)
+	["Irbid"] = {container = "Jordan"}, -- 1,070,000 (unindicated)
+	["Almaty"] = {container = "Kazakhstan"}, -- 2,700,000 (Agglomeration)
+	["Alma-Ata"] = {alias_of = "Almaty"}, -- former name, sometimes still used; don't display-canonicalize
+	["Astana"] = {container = "Kazakhstan"}, -- 1,600,000 (Agglomeration)
+	["Shymkent"] = {container = "Kazakhstan"}, -- 1,370,000 (Agglomeration)
+	["Kuwait City"] = {container = "Kuwait"}, -- 5,050,000 (Agglomeration)
+	["Bishkek"] = {container = "Kyrgyzstan"}, -- 1,540,000 (Agglomeration)
+	["Beirut"] = {container = "Lebanon"}, -- 1,930,000 (unindicated; population of low reliability)
+	-- Kuala Lumpur is a federal capital city, not in any state
+	["Kuala Lumpur"] = {container = "Malaysia"}, -- 9,550,000 (Agglomeration)
+	-- there are various George Towns and Georgetowns
+	["George Town, Malaysia"] = {container = {key = "Penang, Malaysia", placetype = "state"}, wp = "%l, %c"}, -- 2,075,000 (Agglomeration)
+	["George Town"] = {alias_of = "George Town, Malaysia"},
+	["Ulaanbaatar"] = {container = "Mongolia"}, -- 1,610,000 (City)
+	["Ulan Bator"] = {alias_of = "Ulaanbaatar", display = true},
+	["Yangon"] = {container = "Myanmar"}, -- 5,650,000 (Municipality (urban population))
+	["Rangoon"] = {alias_of = "Yangon", display = true},
+	["Mandalay"] = {container = "Myanmar"}, -- 1,600,000 (Municipality (urban population))
+	["Kathmandu"] = {container = "Nepal"}, -- 3,175,000 (Agglomeration)
+	-- Pyongyang is a directly governed city, not in any province
+	["Pyongyang"] = {container = "North Korea"}, -- 3,025,000 (Administrative Area (urban population))
+	["Muscat"] = {container = "Oman"}, -- 1,620,000 (Agglomeration)
+	["Gaza"] = {container = "Palestine", wp = "Gaza City"}, -- 2,275,000 (unindicated)
+	["Gaza City"] = {alias_of = "Gaza"},
+	["Doha"] = {container = "Qatar"}, -- 2,650,000 (Agglomeration)
+	["Colombo"] = {container = "Sri Lanka"}, -- 4,975,000 (unindicated)
+	["Damascus"] = {container = "Syria"}, -- 3,975,000 (unindicated; population of low reliability)
+	["Aleppo"] = {container = "Syria"}, -- 1,980,000 (unindicated; population of low reliability)
+	["Dushanbe"] = {container = "Tajikistan"}, -- 1,270,000 (City)
+	["Bangkok"] = {container = "Thailand"}, -- 21,800,000 (Agglomeration)
+	-- Chiang Mai not in citypopulation.de, but 1,198,000 urban population in 2021 per Wikipedia
+	-- [[w:List_of_municipalities_in_Thailand#Largest_cities_by_urban_population]]
+	["Chiang Mai"] = {container = {key = "Chiang Mai Province, Thailand", placetype = "province"}},
+	["Chonburi"] = {container = {key = "Chonburi Province, Thailand", placetype = "province"}}, -- 1,570,000 (Agglomeration; including Pattaya)
+
+	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021;
+	-- second source is citypopulation.de reference date 2025-01-01.
+	["Istanbul"] = {placetype = {"city", "province"}, divs = {"districts"}, container = "Turkey"}, -- 15.2 million; 16,000,000 (Agglomeration)
+	["İstanbul"] = {alias_of = "Istanbul", display = true},
+	["Ankara"] = {container = {key = "Ankara Province, Turkey", placetype = "province"}}, -- 5.15 million; 5,200,000 (Agglomeration)
+	["Izmir"] = {container = {key = "İzmir Province, Turkey", placetype = "province"}, wp = "İzmir"}, -- 2.95 million; 3,025,000 (Agglomeration)
+	["İzmir"] = {alias_of = "Izmir", display = true},
+	["Bursa"] = {container = {key = "Bursa Province, Turkey", placetype = "province"}}, -- 2.02 million; 2,200,000 (Agglomeration)
+	["Adana"] = {container = {key = "Adana Province, Turkey", placetype = "province"}}, -- 1.77 million; 1,780,000 (Agglomeration)
+	["Gaziantep"] = {container = {key = "Gaziantep Province, Turkey", placetype = "province"}}, -- 1.71 million; 1,750,000 (Agglomeration)
+	["Antalya"] = {container = {key = "Antalya Province, Turkey", placetype = "province"}}, -- 1.3 million; 1,400,000 (Agglomeration)
+	["Konya"] = {container = {key = "Konya Province, Turkey", placetype = "province"}}, -- 1.35 million; 1,390,000 (Agglomeration)
+	["Diyarbakır"] = {container = {key = "Diyarbakır Province, Turkey", placetype = "province"}}, -- 1.07 million; 1,100,000 (Agglomeration)
+	-- Diyarbakır is more common per Ngrams and Google Scholar, but Diyarbakir is the Kurdish form, so we should not
+	-- display-canonicalize to the Turkish form Diyarbakır.
+	["Diyarbakir"] = {alias_of = "Diyarbakır"},
+	["Mersin"] = {container = {key = "Mersin Province, Turkey", placetype = "province"}}, -- 1.03 million; 1,060,000 (Agglomeration)
+
+	["Ashgabat"] = {container = "Turkmenistan"}, -- 1,150,000 (Agglomeration)
+	["Dubai"] = {container = "United Arab Emirates"}, -- 6,050,000 (Agglomeration; including Sharjah)
+	["Abu Dhabi"] = {container = "United Arab Emirates"}, -- 1,850,000 (City)
+	["Sharjah"] = {container = "United Arab Emirates"}, -- 1,800,000 (Metro area 2022-2023 per Wikipedia; separate from Dubai)
+	["Tashkent"] = {container = "Uzbekistan"}, -- 3,850,000 (unindicated)
+	["Ho Chi Minh City"] = {container = "Vietnam"}, -- 14,300,000 (Agglomeration; inclunding Bien Hoa)
+	["Saigon"] = {alias_of = "Ho Chi Minh City"},
+	["Hanoi"] = {container = "Vietnam"}, -- 7,350,000 (Agglomeration)
+	["Da Nang"] = {container = "Vietnam"}, -- 1,500,000 (Agglomeration)
+	["Danang"] = {alias_of = "Da Nang", display = true},
+	["Haiphong"] = {container = "Vietnam"}, -- 1,450,000 (Agglomeration)
+	["Hai Phong"] = {alias_of = "Haiphong", display = true},
+	["Bien Hoa"] = {container = "Vietnam", wp = "Biên Hòa"}, -- 1,272,235 (2022 city population per Wikipedia)
+	["Biên Hòa"] = {alias_of = "Bien Hoa", display = true},
+	["Sanaa"] = {container = "Yemen"}, -- 3,275,000 (City; population of low reliability)
+	["Sana'a"] = {alias_of = "Sanaa", display = true},
+	["Aden"] = {container = "Yemen"}, -- 1,079,060 (?; 2023 estimate from World Population Review per Wikipedia)
+
 	------------------ Europe or Europe-like (Caucasus etc.) ---------------------
 	["Yerevan"] = {container = "Armenia"}, -- 1,520,000 (Agglomeration)
 	["Vienna"] = {container = "Austria"}, -- 2,375,000 (Agglomeration)
@@ -4387,7 +4925,7 @@ export.misc_cities_british_spelling = {
 	["Warsaw"] = {container = "Poland"},
 	["Katowice"] = {container = "Poland"},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Krakow" without accent.
-	["Krakow"] = {container = "Poland"},
+	["Krakow"] = {container = "Poland", wp = "Kraków"},
 	["Kraków"] = {alias_of = "Krakow", display = true},
 	["Cracow"] = {alias_of = "Krakow", display = true},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirm "Gdańsk" and "Poznań" with accent.
@@ -4396,15 +4934,17 @@ export.misc_cities_british_spelling = {
 	["Poznań"] = {container = "Poland"},
 	["Poznan"] = {alias_of = "Poznań", display = true},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Lodz" without accents.
-	["Lodz"] = {container = "Poland"},
+	["Lodz"] = {container = "Poland", wp = "Łódź"},
 	["Łódź"] = {alias_of = "Lodz", display = true},
 	["Lisbon"] = {container = "Portugal"},
 	["Porto"] = {container = "Portugal"},
+	["Oporto"] = {alias_of = "Porto", display = true},
 	["Bucharest"] = {container = "Romania"},
 	["Belgrade"] = {container = "Serbia"},
 	["Stockholm"] = {container = "Sweden"},
 	["Zurich"] = {container = "Switzerland"},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Zurich" without umlaut.
+	--- Even Wikipedia uses the form without umlaut.
 	["Zürich"] = {alias_of = "Zurich", display = true},
 	["Kyiv"] = {container = "Ukraine"},
 	-- Don't display-canonicalize Kiev -> Kyiv because in ancient contexts, Kiev is still more common.
@@ -4414,216 +4954,28 @@ export.misc_cities_british_spelling = {
 	-- Don't display-canonicalize Odesa -> Odessa because it may be interpreted as a political statement.
 	["Odesa"] = {alias_of = "Odessa"},
 	
-	------------------ Africa -------------------
-	["Cairo"] = {container = "Egypt"}, -- 22,800,000 (Agglomeration, including Giza and Subhra El Kheima)
-	["Alexandria"] = {container = "Egypt"}, -- 6,250,000 (Agglomeration)
-	["Giza"] = {container = "Egypt"}, -- 4,458,135 (2023 from citypopulation.de)
-	["Shubra El Kheima"] = {container = "Egypt"}, -- 1,240,239 (2021 from citypopulation.de)
-	["Banjul"] = {container = "Gambia"}, -- 1,170,000 (Agglomeration)
-	["Accra"] = {container = "Ghana"}, -- 6,800,000 (Agglomeration)
-	["Kumasi"] = {container = "Ghana"}, -- 2,900,000 (Agglomeration)
-	["Conakry"] = {container = "Guinea"}, -- 2,975,000 (Consolidated Urban Area)
-	["Nairobi"] = {container = "Kenya"}, -- 6,900,000 (unindicated)
-	["Mombasa"] = {container = "Kenya"}, -- 1,370,000 (City)
-	["Freetown"] = {container = "Sierra Leone"}, -- 1,420,000 (Agglomeration)
-	["Johannesburg"] = {container = "South Africa"}, -- 14,800,000 (Consolidated Urban Area; including Pretoria, Soweto, etc.)
-	["Cape Town"] = {container = "South Africa"}, -- 5,100,000 (Consolidated Urban Area)
-	["Durban"] = {container = "South Africa"}, -- 3,900,000 (Consolidated Urban Area)
-	["Pretoria"] = {container = "South Africa"}, -- 2,921,488 (2011 census)
-	["Port Elizabeth"] = {container = "South Africa"}, -- 1,200,000 (Consolidated Urban Area)
-	["Kampala"] = {container = "Uganda"}, -- 4,300,000 (unindicated)
-	["Lusaka"] = {container = "Zambia"}, -- 3,000,000 (Consolidated Urban Area)
-	["Harare"] = {container = "Zimbabwe"}, -- 2,675,000 (Agglomeration)
-	
-	------------------ Asia ------------------
-	["Dhaka"] = {container = {key = "Dhaka Division, Bangladesh", placetype = "division"}}, -- 23,100,000 (Agglomeration)
-	["Dacca"] = {alias_of = "Dhaka", display = true},
-	["Chittagong"] = {container = {key = "Chittagong Division, Bangladesh", placetype = "division"}}, -- 5,050,000 (Agglomeration)
-	["Khulna"] = {container = {key = "Khulna Division, Bangladesh", placetype = "division"}}, -- 1,210,000 (Agglomeration)
-	-- Kuala Lumpur is a federal capital city, not in any state
-	["Kuala Lumpur"] = {container = "Malaysia"}, -- 9,550,000 (Agglomeration)
-	-- there are various George Towns and Georgetowns
-	["George Town, Malaysia"] = {container = {key = "Penang, Malaysia", placetype = "state"}}, -- 2,075,000 (Agglomeration)
-	["George Town"] = {alias_of = "George Town, Malaysia"},
-	["Yangon"] = {container = "Myanmar"}, -- 5,650,000 (Municipality (urban population))
-	["Rangoon"] = {alias_of = "Yangon", display = true},
-	["Mandalay"] = {container = "Myanmar"}, -- 1,600,000 (Municipality (urban population))
-	["Colombo"] = {container = "Sri Lanka"}, -- 4,975,000 (unindicated)
-}
-
-export.misc_cities_british_spelling_group = {
-	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
-	default_placetype = "city",
-	default_british_spelling = true,
-	data = export.misc_cities_british_spelling,
-}
-
-export.misc_cities_american_spelling = {
-	------------------ Africa -------------------
-	-- Sorted by country and then within the country, by decreasing population; figures from citypopulation.de
-	-- (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated; combined with data from
-	-- [[w:List of urban areas in Africa by population]].
-	["Algiers"] = {container = "Algeria"}, -- 4,325,000 (Consolidated Urban Area)
-	["Oran"] = {container = "Algeria"}, -- 1,640,000 (Consolidated Urban Area)
-	["Luanda"] = {container = "Angola"}, -- 9,650,000 (Urban Area)
-	["Benguela"] = {container = "Angola"}, -- 1,420,000 (Urban Area)
-	["Cotonou"] = {container = "Benin"}, -- 2,150,000 (Agglomeration)
-	["Ouagadougou"] = {container = "Burkina Faso"}, -- 3,425,000 (Agglomeration) 
-	["Ouagadougou"] = {container = "Burkina Faso"}, -- 1,100,000 (Agglomeration)
-	["Bujumbura"] = {container = "Burundi"}, -- 1,143,202 (Urban Area 2023 per PopulationStat, cited in Wikipedia)
-	["Yaoundé"] = {container = "Cameroon"}, -- 3,975,000 (City)
-	["Douala"] = {container = "Cameroon"}, -- 3,900,000 (City)
-	["Bangui"] = {container = "Central African Republic"}, -- 1,680,000 (Agglomeration)
-	["Ndjamena"] = {container = "Chad"}, -- 1,950,000 (City)
-	["Kinshasa"] = {container = "Democratic Republic of the Congo"}, -- 16,300,000 (City; population of low reliability)
-	["Lubumbashi"] = {container = "Democratic Republic of the Congo"}, -- 2,875,000 (City; population of low reliability)
-	["Mbuji-Mayi"] = {container = "Democratic Republic of the Congo"}, -- 2,500,000 (City; population of low reliability)
-	["Kananga"] = {container = "Democratic Republic of the Congo"}, -- 1,370,000 (City; population of low reliability)
-	["Kisangani"] = {container = "Democratic Republic of the Congo"}, -- 1,300,000 (City; population of low reliability)
-	["Bukavu"] = {container = "Democratic Republic of the Congo"}, -- 1,100,000 (City; population of low reliability)
-	["Goma"] = {container = "Democratic Republic of the Congo"}, -- 1,010,000 (City; population of low reliability)
-	["Asmara"] = {container = "Eritrea"}, -- 1,090,000 (City; population of low reliability)
-	["Asmera"] = {alias_of = "Asmara", display = true},
-	["Addis Ababa"] = {container = "Ethiopia"}, -- 4,825,000 (Agglomeration)
-	["Abidjan"] = {container = "Ivory Coast"}, -- 7,050,000 (Agglomeration)
-	["Monrovia"] = {container = "Liberia"}, -- 1,940,000 (Urban Area)
-	["Tripoli"] = {container = "Libya"}, -- 1,870,000 (unindicated)
-	["Antananarivo"] = {container = "Madagascar"}, -- 3,150,000 (Agglomeration)
-	["Lilongwe"] = {container = "Malawi"}, -- 1,210,000 (City)
-	["Bamako"] = {container = "Mali"}, -- 5,700,000 (Agglomeration)
-	["Nouakchott"] = {container = "Mauritania"}, -- 1,500,000 (City)
-	["Casablanca"] = {container = {key = "Casablanca-Settat, Morocco", placetype = "region"}}, -- 4,450,000 (Municipality (urban population))
-	["Rabat"] = {container = {key = "Rabat-Sale-Kenitra, Morocco", placetype = "region"}}, -- 2,125,000 (Municipality (urban population))
-	["Tangier"] = {container = {key = "Tangier-Tetouan-Al Hoceima, Morocco", placetype = "region"}}, -- 1,410,000 (Municipality (urban population))
-	["Tanger"] = {alias_of = "Tangier", display = true},
-	["Tangiers"] = {alias_of = "Tangier", display = true},
-	["Fez"] = {container = {key = "Fez-Meknes, Morocco", placetype = "region"}}, -- 1,310,000 (Municipality (urban population))
-	["Fes"] = {alias_of = "Fez", display = true},
-	["Fès"] = {alias_of = "Fez", display = true},
-	["Agadir"] = {container = {key = "Souss-Massa, Morocco", placetype = "region"}}, -- 1,270,000 (Municipality (urban population))
-	["Marrakesh"] = {container = {key = "Marrakesh-Safi, Morocco", placetype = "region"}}, -- 1,140,000 (Municipality (urban population))
-	["Marrakech"] = {alias_of = "Marrakesh", display = true},
-	["Maputo"] = {container = "Mozambique"}, -- 2,575,000 (Agglomeration)
-	["Niamey"] = {container = "Niger"}, -- 1,530,000 (City)
-	["Brazzaville"] = {container = "Republic of the Congo"}, -- 2,475,000 (Agglomeration)
-	["Pointe-Noire"] = {container = "Republic of the Congo"}, -- 1,480,000 (City)
-	["Kigali"] = {container = "Rwanda"}, -- 1,960,000 (Municipality (urban population))
-	["Dakar"] = {container = "Senegal"}, -- 4,225,000 (Agglomeration)
-	["Touba"] = {container = "Senegal"}, -- 1,320,000 (Agglomeration)
-	["Mogadishu"] = {container = "Somalia"}, -- 2,250,000 (unindicated; population of low reliability)
-	["Khartoum"] = {container = "Sudan"}, -- 7,200,000 (unindicated; population of low reliability)
-	["Dar es Salaam"] = {container = "Tanzania"}, -- 6,650,000 (Agglomeration)
-	["Mwanza"] = {container = "Tanzania"}, -- 1,340,000 (Agglomeration)
-	["Arusha"] = {container = "Tanzania"}, -- 1,190,000 (Agglomeration)
-	["Zanzibar"] = {container = "Tanzania"}, -- 1,030,000 (Agglomeration)
-	["Lomé"] = {container = "Togo"}, -- 2,625,000 (unindicated)
-	["Tunis"] = {container = "Tunisia"}, -- 2,725,000 (Municipality (urban population))
-	["Sousse"] = {container = "Tunisia"}, -- 1,180,000 (Municipality (urban population))
-
-	------------------ Asia -------------------
-	-- sorted by country and then within the country, by decreasing population; figures from citypopulation.de
-	-- (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated.
-	["Kabul"] = {container = "Afghanistan"}, -- 5,250,000 (Agglomeration)
-	["Baku"] = {container = "Azerbaijan"}, -- 3,725,000 (Administrative Area (urban population))
-	["Manama"] = {container = "Bahrain"}, -- 1,560,000 (unindicated)
-	["Phnom Penh"] = {container = "Cambodia"}, -- 2,925,000 (Agglomeration)
-	["Tehran"] = {container = "Iran"}, -- 16,800,000 (Agglomeration)
-	["Meshed"] = {container = "Iran"}, -- 3,475,000 (Agglomeration)
-	["Isfahan"] = {container = "Iran"}, -- 3,425,000 (Agglomeration)
-	["Tabriz"] = {container = "Iran"}, -- 1,970,000 (Agglomeration)
-	["Shiraz"] = {container = "Iran"}, -- 1,950,000 (Agglomeration)
-	["Ahvaz"] = {container = "Iran"}, -- 1,550,000 (Agglomeration)
-	["Qom"] = {container = "Iran"}, -- 1,450,000 (City)
-	["Kermanshah"] = {container = "Iran"}, -- 1,130,000 (City)
-	["Baghdad"] = {container = "Iraq"}, -- 7,800,000 (Administrative Area (urban population))
-	["Basra"] = {container = "Iraq"}, -- 1,710,000 (Administrative Area (urban population))
-	["Mosul"] = {container = "Iraq"}, -- 1,550,000 (Administrative Area (urban population))
-	["Erbil"] = {container = "Iraq"}, -- 1,220,000 (Administrative Area (urban population))
-	["Kirkuk"] = {container = "Iraq"}, -- 1,160,000 (Administrative Area (urban population))
-	["Najaf"] = {container = "Iraq"}, -- 1,050,000 (Administrative Area (urban population))
-	["Tel Aviv"] = {container = "Israel"}, -- 3,000,000 (Agglomeration)
-	-- Jerusalem is not recognized internationally as part of either Israel or Palestine, but as a
-	-- [[w:corpus separatum]], so put the container as "Asia" and list Israel and Palestine as additional parents for
-	-- categorization purposes.
-	["Jerusalem"] = {container = {key = "Asia", placetype = "continent"},
-		addl_parents = {"Israel", "Palestine"}}, -- 1,080,000 (Agglomeration)
-	["Amman"] = {container = "Jordan"}, -- 6,150,000 (unindicated)
-	["Irbid"] = {container = "Jordan"}, -- 1,070,000 (unindicated)
-	["Almaty"] = {container = "Kazakhstan"}, -- 2,700,000 (Agglomeration)
-	["Alma-Ata"] = {alias_of = "Almaty"}, -- former name, sometimes still used; don't display-canonicalize
-	["Astana"] = {container = "Kazakhstan"}, -- 1,600,000 (Agglomeration)
-	["Shymkent"] = {container = "Kazakhstan"}, -- 1,370,000 (Agglomeration)
-	["Kuwait City"] = {container = "Kuwait"}, -- 5,050,000 (Agglomeration)
-	["Bishkek"] = {container = "Kyrgyzstan"}, -- 1,540,000 (Agglomeration)
-	["Beirut"] = {container = "Lebanon"}, -- 1,930,000 (unindicated; population of low reliability)
-	["Ulaanbaatar"] = {container = "Mongolia"}, -- 1,610,000 (City)
-	["Ulan Bator"] = {alias_of = "Ulaanbaatar", display = true},
-	["Kathmandu"] = {container = "Nepal"}, -- 3,175,000 (Agglomeration)
-	-- Pyongyang is a directly governed city, not in any province
-	["Pyongyang"] = {container = "North Korea"}, -- 3,025,000 (Administrative Area (urban population))
-	["Muscat"] = {container = "Oman"}, -- 1,620,000 (Agglomeration)
-	["Gaza"] = {container = "Palestine"}, -- 2,275,000 (unindicated)
-	["Gaza City"] = {alias_of = "Gaza"},
-	["Doha"] = {container = "Qatar"}, -- 2,650,000 (Agglomeration)
-	["Damascus"] = {container = "Syria"}, -- 3,975,000 (unindicated; population of low reliability)
-	["Aleppo"] = {container = "Syria"}, -- 1,980,000 (unindicated; population of low reliability)
-	["Dushanbe"] = {container = "Tajikistan"}, -- 1,270,000 (City)
-	["Bangkok"] = {container = "Thailand"}, -- 21,800,000 (Agglomeration)
-	["Chonburi"] = {container = "Thailand"}, -- 1,570,000 (Agglomeration; including Pattaya)
-
-	-- metro area population stats from https://www.statista.com/statistics/255483/biggest-cities-in-turkey/ as of 2021;
-	-- second source is citypopulation.de reference date 2025-01-01.
-	["Istanbul"] = {container = "Turkey"}, -- 15.2 million; 16,000,000 (Agglomeration)
-	["İstanbul"] = {alias_of = "Istanbul", display = true},
-	["Ankara"] = {container = "Turkey"}, -- 5.15 million; 5,200,000 (Agglomeration)
-	["Izmir"] = {container = "Turkey"}, -- 2.95 million; 3,025,000 (Agglomeration)
-	["İzmir"] = {alias_of = "Izmir", display = true},
-	["Bursa"] = {container = "Turkey"}, -- 2.02 million; 2,200,000 (Agglomeration)
-	["Adana"] = {container = "Turkey"}, -- 1.77 million; 1,780,000 (Agglomeration)
-	["Gaziantep"] = {container = "Turkey"}, -- 1.71 million; 1,750,000 (Agglomeration)
-	["Antalya"] = {container = "Turkey"}, -- 1.3 million; 1,400,000 (Agglomeration)
-	["Konya"] = {container = "Turkey"}, -- 1.35 million; 1,390,000 (Agglomeration)
-	["Diyarbakır"] = {container = "Turkey"}, -- 1.07 million; 1,100,000 (Agglomeration)
-	-- Diyarbakır is more common per Ngrams and Google Scholar, but Diyarbakir is the Kurdish form, so we should not
-	-- display-canonicalize to the Turkish form Diyarbakır.
-	["Diyarbakir"] = {alias_of = "Diyarbakır"},
-	["Mersin"] = {container = "Turkey"}, -- 1.03 million; 1,060,000 (Agglomeration)
-
-	["Ashgabat"] = {container = "Turkmenistan"}, -- 1,150,000 (Agglomeration)
-	["Dubai"] = {container = "United Arab Emirates"}, -- 6,050,000 (Agglomeration; including Sharjah)
-	["Abu Dhabi"] = {container = "United Arab Emirates"}, -- 1,850,000 (City)
-	["Sharjah"] = {container = "United Arab Emirates"}, -- 1,800,000 (Metro area 2022-2023 per Wikipedia; separate from Dubai)
-	["Tashkent"] = {container = "Uzbekistan"}, -- 3,850,000 (unindicated)
-	["Ho Chi Minh City"] = {container = "Vietnam"}, -- 14,300,000 (Agglomeration; inclunding Bien Hoa)
-	["Saigon"] = {alias_of = "Ho Chi Minh City"},
-	["Hanoi"] = {container = "Vietnam"}, -- 7,350,000 (Agglomeration)
-	["Da Nang"] = {container = "Vietnam"}, -- 1,500,000 (Agglomeration)
-	["Danang"] = {alias_of = "Da Nang", display = true},
-	["Haiphong"] = {container = "Vietnam"}, -- 1,450,000 (Agglomeration)
-	["Hai Phong"] = {alias_of = "Haiphong", display = true},
-	["Bien Hoa"] = {container = "Vietnam"}, -- 1,272,235 (2022 city population per Wikipedia)
-	["Sanaa"] = {container = "Yemen"}, -- 3,275,000 (City; population of low reliability)
-	["Sana'a"] = {alias_of = "Sanaa", display = true},
-	["Aden"] = {container = "Yemen"}, -- 1,079,060 (?; 2023 estimate from World Population Review per Wikipedia)
-
 	------------------ North America, South America ---------------------
 	-- Primary figures from citypopulation.de retrieved on 2025-04-26 (reference date 2025-01-01);
 	-- Wikipedia metropolitan figures from [[w:List of metropolitan areas in the Americas]] based on per-country data;
 	-- Wikipedia city limits figures from [[w:List of largest cities in the Americas]].
 	["Buenos Aires"] = {container = "Argentina"}, -- 16,800,000 (Consolidated Urban Area; 13,985,794 metropolitan area per Wikipedia)
-	["Córdoba, Argentina"] = {container = "Argentina"}, -- 1,810,000 (Consolidated Urban Area; 1,505,25 city limits per Wikipedia)
+	["Córdoba, Argentina"] = {container = "Argentina", wp = "%l, %c"}, -- 1,810,000 (Consolidated Urban Area; 1,505,25 city limits per Wikipedia)
 	-- to avoid confusion with Córdoba in Spain
 	["Córdoba"] = {alias_of = "Córdoba, Argentina"},
 	["Cordoba"] = {alias_of = "Córdoba, Argentina", display = "Córdoba"},
-	["Rosario"] = {container = "Argentina"}, -- 1,510,000 (Consolidated Urban Area; 1,348,725 metropolitan area per Wikipedia)
-	["Mendoza"] = {container = "Argentina"}, -- 1,180,000 (Consolidated Urban Area)
+	["Rosario"] = {container = "Argentina", wp = "%l, Santa Fe"}, -- 1,510,000 (Consolidated Urban Area; 1,348,725 metropolitan area per Wikipedia)
+	["Mendoza"] = {container = "Argentina", wp = "%l, %c"}, -- 1,180,000 (Consolidated Urban Area)
 	["San Miguel de Tucumán"] = {container = "Argentina"}, -- 1,110,000 (Consolidated Urban Area)
 	["Tucumán"] = {alias_of = "San Miguel de Tucumán"},
 	["Tucuman"] = {alias_of = "San Miguel de Tucumán", display = "Tucumán"},
 	["Santa Cruz de la Sierra"] = {container = "Bolivia"}, -- 1,960,000 (Consolidated Urban Area); 1,606,671 (city limits per Wikipedia)
 	["Santa Cruz"] = {alias_of = "Santa Cruz de la Sierra"},
-	["La Paz"] = {container = "Bolivia"}, -- 1,870,000 (Consolidated Urban Area)
+	["La Paz"] = {container = "Bolivia"}, -- 1,870,000 (Consolidated Urban Area; composed of El Alto, now slightly larger, and La Paz)
+	["El Alto"] = {container = "Bolivia"},
 	["Cochabamba"] = {container = "Bolivia"}, -- 1,280,000 (Consolidated Urban Area)
+	["Santiago"] = {container = "Chile"}, -- 8,400,000 (Consolidated Urban Area; 6,903,479 city limits? per Wikipedia)
+	["Valparaíso"] = {container = "Chile"}, -- 1,060,000 (Consolidated Urban Area)
+	["Valparaiso"] = {alias_of = "Valparaíso"}, -- 1,060,000 (Consolidated Urban Area)
 	["Bogotá"] = {container = "Colombia"}, -- 10,600,000 (Agglomeration; 12,772,828 metropolitan area per Wikipedia)
 	["Bogota"] = {alias_of = "Bogotá", display = true},
 	["Medellín"] = {container = "Colombia"}, -- 4,350,000 (Agglomeration; 4,068,000 metropolitan area per Wikipedia)
@@ -4631,48 +4983,44 @@ export.misc_cities_american_spelling = {
 	["Cali"] = {container = "Colombia"}, -- 2,975,000 (Agglomeration; 2,837,000 metropolitan area per Wikipedia)
 	["Barranquilla"] = {container = "Colombia"}, -- 2,375,000 (Agglomeration; 1,341,160 city limits per Wikipedia)
 	["Bucaramanga"] = {container = "Colombia"}, -- 1,380,000 (Agglomeration)
-	["Cartagena, Colombia"] = {container = "Colombia"}, -- 1,250,000 (Agglomeration)
+	["Cartagena, Colombia"] = {container = "Colombia", wp = "%l, %c"}, -- 1,250,000 (Agglomeration)
 	-- to avoid confusion with Cartagena, Spain
 	["Cartagena"] = {alias_of = "Cartagena, Colombia"},
 	["Cúcuta"] = {container = "Colombia"}, -- 1,130,000 (Agglomeration)
+	["Cucuta"] = {alias_of = "Cúcuta", display = true},
 	-- to avoid conflict with San Jose, California
-	["San Jose, Costa Rica"] = {container = "Costa Rica"}, -- 2,450,000 (Municipality (urban population); 3,160,000 metropolitan area per Wikipedia)
-	["San Jose"] = {alias_of = "San Jose, Costa Rica"},
+	["San José, Costa Rica"] = {container = "Costa Rica", wp = "%l, %c"}, -- 2,450,000 (Municipality (urban population); 3,160,000 metropolitan area per Wikipedia)
+	["San José"] = {alias_of = "San José, Costa Rica"},
+	["San Jose"] = {alias_of = "San José, Costa Rica"}, -- display = "San José"; causes error due to San Jose alias for California city; FIXME
 	["Havana"] = {container = "Cuba"}, -- 2,150,000 (City; 2,137,847 city limits? per Wikipedia)
-	["Lima"] = {container = "Peru"}, -- 11,283,787
-	["Santiago"] = {container = "Chile"}, -- 6,903,479
-	["Maracaibo"] = {container = "Venezuela"}, -- 5,278,448
-	["Caracas"] = {container = "Venezuela"}, -- 5,243,301
-	["Santo Domingo"] = {container = "Dominican Republic"}, -- 4,274,651
-	["Guatemala City"] = {container = "Guatemala"}, -- 3,160,000
-	["Guayaquil"] = {container = "Ecuador"}, -- 3,092,000
-	["Port-au-Prince"] = {container = "Haiti"}, -- 	2,915,000
-	["Quito"] = {container = "Ecuador"}, -- 2,889,703
-
-	["Montevideo"] = {container = "Uruguay"}, -- 1,302,954
-	
-	-- Additional from citypopulation.de over 1,000,000; retrieved on 2025-04-26; reference date 2025-01-01.
-	["Valparaíso"] = {container = "Chile"}, -- 1,060,000 (Consolidated Urban Area)
-	["Valparaiso"] = {alias_of = "Valparaíso"}, -- 1,060,000 (Consolidated Urban Area)
+	["Santo Domingo"] = {container = "Dominican Republic"}, -- 3,900,000 (Municipality (urban population); 4,274,651 ??? per Wikipedia)
+	["Guayaquil"] = {container = "Ecuador"}, -- 3,350,000 (Agglomeration; 3,092,000 metro area? per Wikipedia)
+	["Quito"] = {container = "Ecuador"}, -- 2,875,000 (Agglomeration; 2,889,703 metro area? per Wikipedia)
 	["San Salvador"] = {container = "El Salvador"}, -- 1,580,000 (Municipality (urban population))
+	["Guatemala City"] = {container = "Guatemala"}, -- 3,375,000 (Municipality (urban population); 3,160,000 metro area? per Wikipedia)
+	["Port-au-Prince"] = {container = "Haiti"}, -- 3,050,000 (Agglomeration; population of low reliability; 2,915,000 metro area? per Wikipedia)
 	["San Pedro Sula"] = {container = "Honduras"}, -- 1,330,000 (Consolidated Urban Area)
 	["Tegucigalpa"] = {container = "Honduras"}, -- 1,220,000 (Urban Area)
 	["Managua"] = {container = "Nicaragua"}, -- 1,400,000 (Consolidated Urban Area)
 	["Panama City"] = {container = "Panama"}, -- 1,430,000 (Urban Area)
 	["Asunción"] = {container = "Paraguay"}, -- 2,350,000 (Municipality (urban population))
+	["Lima"] = {container = "Peru"}, -- 12,000,000 (Agglomeration; 11,283,787 ??? per Wikipedia)
 	["Arequipa"] = {container = "Peru"}, -- 1,210,000 (Agglomeration)
-	["San Juan"] = {container = {key = "Puerto Rico", placetype = "commonwealth"}}, -- 1,910,000 (Consolidated Urban Area)
+	["San Juan"] = {container = {key = "Puerto Rico", placetype = "commonwealth"}, wp = "%l, %c"}, -- 1,910,000 (Consolidated Urban Area)
+	["Montevideo"] = {container = "Uruguay"}, -- 1,810,000 (Agglomeration; 1,302,954 ??? per Wikipedia)
+	["Caracas"] = {container = "Venezuela"}, -- 3,850,000 (Consolidated Urban Area; 5,243,301 ??? per Wikipedia)
+	["Maracaibo"] = {container = "Venezuela"}, -- 2,825,000 (Consolidated Urban Area; 5,278,448 ??? per Wikipedia)
 	-- to avoid confusion with Valencia (city and autonomous community of Spain)
-	["Valencia, Venezuela"] = {container = "Venezuela"}, -- 2,100,000 (Consolidated Urban Area)
+	["Valencia, Venezuela"] = {container = "Venezuela", wp = "%l, %c"}, -- 2,100,000 (Consolidated Urban Area)
 	["Valencia"] = {alias_of = "Valencia, Venezuela"},
 	["Maracay"] = {container = "Venezuela"}, -- 1,480,000 (Consolidated Urban Area)
 	["Barquisimeto"] = {container = "Venezuela"}, -- 1,360,000 (Consolidated Urban Area)
 }
 
-export.misc_cities_american_spelling_group = {
+export.misc_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(nil, "country"),
 	default_placetype = "city",
-	data = export.misc_cities_american_spelling,
+	data = export.misc_cities,
 }
 
 --[==[ var:
@@ -4699,13 +5047,13 @@ export.locations = {
 	export.france_group,
 	export.france_departments_group,
 	export.germany_group,
+	export.greece_group,
 	export.india_group,
 	export.indonesia_group,
+	export.iran_group,
 	export.ireland_group,
 	export.italy_group,
 	export.japan_group,
-	export.north_korea_group,
-	export.south_korea_group,
 	export.laos_group,
 	export.lebanon_group,
 	export.malaysia_group,
@@ -4714,15 +5062,19 @@ export.locations = {
 	export.morocco_group,
 	export.netherlands_group,
 	export.nigeria_group,
+	export.north_korea_group,
 	export.norway_group,
 	export.pakistan_group,
 	export.philippines_group,
 	export.romania_group,
 	export.russia_group,
 	export.saudi_arabia_group,
+	export.south_africa_group,
+	export.south_korea_group,
 	export.spain_group,
 	export.taiwan_group,
 	export.thailand_group,
+	export.turkey_group,
 	export.united_kingdom_group,
 	export.united_states_group,
 	export.england_group,
@@ -4738,20 +5090,19 @@ export.locations = {
 	export.indonesia_cities_group,
 	export.italy_cities_group,
 	export.japan_cities_group,
-	export.south_korea_cities_group,
 	export.mexico_cities_group,
 	export.nigeria_cities_group,
 	export.pakistan_cities_group,
 	export.philippines_cities_group,
 	export.russia_cities_group,
 	export.saudi_arabia_cities_group,
+	export.south_korea_cities_group,
 	export.spain_cities_group,
 	export.taiwan_cities_group,
 	export.united_kingdom_cities_group,
 	export.united_states_cities_group,
 	export.new_york_boroughs_group,
-	export.misc_cities_british_spelling_group,
-	export.misc_cities_american_spelling_group,
+	export.misc_cities_group,
 }
 
 return export
