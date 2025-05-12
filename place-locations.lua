@@ -26,60 +26,200 @@ and their relationships. Locations are grouped into ''location groups'' that sha
 states of the United States and cities in Brazil). Each location group is associated with two tables, a ''data table''
 that lists the locations and their individual properties, and a ''metatable'' that lists group-level properties and
 defaults for the location properties. Each metatable points to the associated data table (i.e. contains the data table
-as its `data` field), and the `locations` variable holds a list of all group metatables. A given location is generally
-deescribed by three values: (a) the group metatable for the group the location is part of; (b) the location's
+as its `data` field), and the global `locations` variable holds a list of all group metatables. A given location is
+generally described by three values: (a) the group metatable for the group the location is part of; (b) the location's
 canonical ''key'', which is the actual key in the group's data table and is globally unique across all locations; the
 location's ''spec'', which is the initialized object describing the properties of the location and comes from the value
 in the data table corresponding to the canonical key, transformed by the `initialize_spec()` function. These are
 typically named `group`, `key` and `spec`, respectively and in that order, and are found in the arguments to many
 functions.
 
-The following are the properties of the location spec. Note that for all of these, a default can be given at the group
-level using a property of the same name as the location spec property but preceded by `default_`. For example, to
-specify the default placetype of states of the United States as `"state"`, use `default_placetype = "state"` in the
-location group table.
-* `placetype`: String specifying the placetype the location (e.g. "country", "state", province"). This can also be a
+In a per-group data table, the keys are either ''canonical keys'' describing locations (which, as mentioned above, must
+be globally unique) or ''alias keys'' specifying an allowed alias for a given location. There may be multiple aliases
+for a given location and the alias keys only need to be unique within a particular group data table, not across all
+groups. It is also possible for the same string to serve as an alias key in one group and a canonical key in another
+group. (For example, `Newcastle` appears as an alias key in two different groups, referring to two different locations,
+canonically known as `Newcastle upon Tyne`, for the city in England, and `Newcastle, New South Wales`, for the city in
+New South Wales, Australia; and `Birmingham` appears both as a canonical key in the group of English cities and an alias
+key for canonical `Birmingham, Alabama` in the group of US cities.) The corresponding value objects are different for
+canonical and alias keys. Corresponding to canonical keys are ''location specs'', describing the properies of the
+location that cannot be derived from default properties of the group or global defaults. Corresponding to alias keys
+are ''alias specs'', which are highly restricted in the properties they can contain, and whose properties do not have
+per-group defaults, but only global defaults.
+
+The canonical key is always the same as the bare category corresponding to the location, which is one of the reasons it
+must be globally unique. For example, the country of Georgia uses the canonical key `Georgia` and corresponding bare
+category [[:Category:Georgia]], while the US state of Georgia uses the canonical key `Georgia, USA` and corresponding
+bare category [[:Category:Georgia, USA]]. The following conventions are followed in naming keys:
+* Countries, ''country-like entities'' (which are a mixture of unrecognized de-facto states and dependent territories)
+  and ''former countries'' (which also includes other types of polities, such as the Roman Empire) use their unqualified
+  placename as the canonical key. (See the documentation for [[Module:place]] for the distinction between keys and
+  placenames, which is critical to understand when working with location data.) This also applies to constituent
+  countries (such as England, Aruba and the Faroe Islands) and constituent parts of grouped dependent territories (such
+  as the island of Saint Helena, which is administratively part of the British overseas territory of Saint Helena,
+  Ascension and Tristan da Cunha).
+* Cities (including prefecture-level cities in China, which behave in most respects more like non-city administrative
+  divisions) also normally use their unqualified placename as the canonical key, but if this causes name conflicts or
+  ambiguities, they use a ''qualified key'' containing either the country name or immediate containing division (if
+  different) following a comma, such as the case of `Newcastle, New South Wales` and `Birmingham, Alabama` above.
+  Examples of name conflicts are the two cities just given; examples of ambiguities are the major cities of León and
+  Mérida in Mexico and city of Cartagena, Colombia, which are given the respective canonical keys of `León, Guanajuato`,
+  `Mérida, Yucatán` and `Cartagena, Colombia` to avoid ambiguity with the well-known respective cities of the same name
+  in Spain, even though none of those cities are large enough to be included as known locations in this module. (The
+  cutoff is generally having a metro area of at least 1,000,000 inhabitants, although there are exceptions.)
+* Administrative divisions of countries, other than the exceptions noted above for constituent countries and dependent
+  territories, use a qualified key that contains the name of the country or constituent country in it, e.g.
+  `Normandy, France` (a region), `Calvados, France` (a department in the region of Normandy), `Herefordshire, England`
+  (a ceremonial county), `Northwest Territories, Canada` (a territory), `Central Finland, Finland` (a region),
+  `Antalya Province, Turkey` (a province), `Cluj County, Romania` (a county), `County Cork, Ireland` (a county) and
+  `New York, USA` (a state). As shown in these various examples, (a) first and second-level divisions are sometimes both
+  included (as in France, the United Kingdom and China); (b) the qualifier after the comma is sometimes a constituent
+  country (England) instead of a country (United Kingdom), and is sometimes abbreviated (USA rather than United States
+  or Unites States of America); (c) the word `the` is not normally included in the key even if the location is normally
+  preceded by `the` when following a preposition (there is a property in the location and alias specs to indicate this),
+  except in a very few cases (most notably `The Hague`); (d) the country is included as a qualifier even if it creates
+  an apparent redundancy, as with `Central Finland, Finland`; and (e) sometimes the placetype is included in the key, as
+  with provinces in Turkey and several other countries; states in Nigeria; and counties in Ireland, Romania and several
+  other countries. Whether the placetype is included, and whether it follows or precedes the placename, depends on
+  per-country conventions. For example, provinces in Turkey, Iran and several other countries (likewise for states in
+  Nigeria, oblasts in Russia, etc.) conventionally include the word "Province", "State", "Oblast" etc. in their name
+  because they are normally named after the largest city in the division, which would otherwise lead to ambiguity; and
+  counties in Ireland and Northern Ireland (and likewise County Durham, England) normally have the word "County"
+  preceding rather than following them in their conventional name, so we follow this practice. The Wikipedia article
+  naming scheme for a given administrative division is a strong clue as to how the division is normally referred to,
+  and we usually follow this practice. (A minor exception is that the Wikipedia articles for provinces in Iran, Laos and
+  Thailand include the word `province` with an initial lowercase letter while provinces elsewhere, e.g. North and South
+  Korea, Saudi Arabia and Turkey, use uppercase `Province`; we normalize to uppercase `Province` in all cases.)
+
+As mentioned above, associated with canonical keys in the group data table are location specs, which are objects
+containing properties. It is important here to distinguish ''initialized specs'' from ''uninitialized specs''.
+Unininitialized specs are as directly specified in [[Module:place/locations]], containing only those properties that
+differ from the per-group or global defaults. Initialized specs result from calling `initialize_spec()` on an
+uninitialized spec (it is idempotent in that it will do nothing if encountering an already-initialized spec). This
+copies all group-level defaults that are not overridden in the location spec itself from the group-level metadata table
+into the location spec, so that in general, no more reference need be made to the group to fetch the correct value of a
+given location property. (The initialization process also does more transformations in a few cases, noted below.) Note
+that the default value of a given property is stored under a key in the group metadata table that is preceded by the
+string `default_`; for example, the default value corresponding to the `placetype` property of a given location is
+specified in the `default_placetype` key in the group metadata table.
+
+The following are the properties of the location spec.
+* `placetype`: String specifying the placetype of the location (e.g. "country", "state", province"). This can also be a
   table of such types; in this case, the first listed type is the canonical type that will be used in descriptions, but
-  the location will be recognized (e.g. in holonym) when tagged with any of the specified types.
-* `divs`: List of recognized political or historical/popular divisions; e.g. for the Netherlands, a specification of the
-  form `divs = {"provinces", "municipalities"}` will allow categories such as
-  [[:Category:de:Provinces of the Netherlands]] and [[:Category:pt:Municipalities of the Netherlands]] to be created.
-  Any division that appears here must also be found in `placetype_data`, or an error occurs.
-* `is_city`: If 'true', don't recognize or generate categories such as [[:Category:en:Cities in Monaco]] (specifically,
-  for place types in `generic_placetypes` but not in `generic_placetypes_for_cities`).
-* `is_former_place`: If 'true', don't recognize or generate categories such as
-  [[:Category:fr:Rivers in the Soviet Union]] (specifically, for any place type in `generic_placetypes` other than
-  "places").
+  the location will be recognized (e.g. in a holonym, or for categorizing into the bare category) when tagged with any
+  of the specified types. The placetype '''must''' be either specified on an individual location or defaulted at the
+  group level, or an error occurs.
+* `container`: Either a string, a ''canonicalized container'' structure or a list of either type, specifying the
+  immediate ''container'' (or containers) of the given location. A container is another location which this location is
+  considered to be directly part of, either politically or (above the country level) geographically. Some locations
+  belong to multiple immediate containers; this applies especially to transcontinental countries such as Russia and
+  Turkey. Containers can themselves have containers, forming a tree (or more correctly, a [[w:directed acyclic graph]])
+  of locations. The list of immediate container(s), followed by the container(s) of the container(s), etc., is termed
+  the ''container trail'', and some functions compute and return this trail as part of their operation. When a location
+  spec is initialized, the given container spec is canonicalized into ''canonical container form'', which consists of a
+  list of canonicalized container structures, each of which is of the form `{key = "''container_key''",
+  placetype = "''container_placetype''"}`, where ''container_key'' is a canonical location key and
+  ''container_placetype'' should be the listed placetype for the location, or the first listed placetype if there are
+  multiple. (FIXME: Since the key uniquely identifies the container location, we should eliminate the placetype from the
+  container structure.) The list of canonicalized container structures is stored into the `.containers` field of the
+  location spec (this happens even if the container value is unset in its uninitialized spec form, causing it to default
+  to the corresponding group-level value), and the `.container` field is set to {nil}. The canonicalization process is
+  described in more detail below.
+* `divs`: List of recognized political divisions; e.g. for the Netherlands, a specification of the form
+  `divs = {"provinces", "municipalities"}` will allow categories such as [[:Category:de:Provinces of the Netherlands]]
+  and [[:Category:pt:Municipalities of the Netherlands]] to be created. Any division that appears here must also be
+  found in `placetype_data`, or an error occurs. The entities appearing in the `divs` list can be structures as well as
+  just strings; this is explained more below. Additional political divisions that apply to all locations in a group can
+  be specified at the group level using the group-only property `addl_divs`, which has the same format as `divs`. This
+  is intended to be used in the situation where some division types are shared among all locations in the group and
+  others differ from location to location. An example where this is used is the United States, where `census-designated
+  places` is specified in the group-level `addl_divs` so that all 50 states have census-designated places categorized as
+  e.g. [[:Category:Census-designated places in Arizona, USA]], but `counties` and `county seats` are specified in the
+  group-level `default_divs` because not all states have counties and county seats (Alaska has boroughs and borough
+  seats and Louisiana has parishes and parish seats), and some states have additional divisions (New Jersey and
+  Pennsylvania also have boroughs, while Colorado and Connecticut have municipalities). Note that under most
+  circumstances (particularly, if `container_parent_type` is not set as a property associated with the division type),
+  any division type specified on a sub-country-level location must also be specified on all containers up through the
+  country. For example, since French departments specify `communes` and `municipalities` in `default_divs`, the same
+  division types must be (and are) specified on French regions and for France itself.
 * `keydesc`: String directly specifying a description of the location, for use in generating the contents of category
-  pages related to the location. descriptions.
-* `parents`: List of parents of the bare topical category. For example, if 'parents = {"Europe", "Asia"}' is specified
-  for "Turkey", bare topical categories such as [[:Category:en:Turkey]] will have parent categories
-  [[:Category:en:Europe]] and [[:Category:en:Asia]]. The first listed category is used for the primary parent (i.e. this
-  is the parent that appears in the breadcrumbs at the top of the category page). In this case, for example, "Europe"
-  (not "Asia") is used as the breadcrumb. This property only needs to be specified for top-level locations (countries and
-  such), not for subpolities (states, provinces, etc.), which use the value of `container` (see below) as the
-  parent.
-* `container`: This specifies the larger location in which the subpolity is contained, and is used to construct the
-  primary parent of 'Cities in ...', 'Rivers in ...' and similar categories. For example, the subpolity Guangdong (a
-  province of China) will have "China" as the `container`, so that a category of the form
-  [[:Category:en:Cities in Guangdong]] will have its primary parent (i.e. the parent that appears in the breadcrumbs at
-  the top of the category page) as [[:Category:en:Cities in China]]. If `container` is omitted, as in top-level
-  locations, the primary parent will simply be e.g. [[:Category:en:Cities]] (or "Towns", "Rivers", etc. as appropriate).
-* `wp`: Spec describing how to construct the Wikipedia article for the city. Each spec is either `true` (equivalent to
-  `"%l"`, i.e. use the full location placename directly) or a string containing formatting directives, indicating how to
-  construct the article name. The allowed formatting directives are `%l` (the full location placename), `%e` (the
-  elliptical location placename) and `%c` (the full placename of the first immediate container). For example, the value
-  of `wp` for the group of United States cities is `"%l, %c"` since the city articles tend to be named e.g.
-  `Austin, Texas` (but with many exceptions, specified using `wp` fields at the city level). The default is `true`.
-* `wpcat`: Spec describing how to construct the Wikipedia category page for the city (i.e. the page listing articles and
-  categories relevant to the city). The format is the same as with `wp`, and it defaults to the value of `wp`. It rarely
-  needs to be specified because the category page and the article page almost always follow the same format.
-* `commonscat`: Spec describing how to construct the Commons category page for the city (i.e. the page on the MediaWiki
-  Commons site listing articles and categories relevant to the city). It has the same format as `wp` and `wpcat` and
-  defaults to `wpcat`, which is usually (but not always) correct.
-* 
-
-
+  pages related to the location. In place of a string, a function of three arguments (`group`, `key`, `spec`, as is
+  normal for locations) that computes the location description can also be given. This is used, for example, for
+  Russian federal subjects; see `construct_russia_federal_subject_keydesc`. The special string `+++` contained in the
+  keydesc is replaced with the default value of the location description, which specifies the location's placename,
+  placetype, and the corresponding values for each container in the container trail, generally up through (but not
+  beyond) the country level; see `no_include_container_in_desc` below. The location description is used to construct
+  the full description of various categories, such as bare location categories, whose description generally reads
+  `"{{(((}}langname}}} terms related to the people, culture, or territory of ``keydesc``."` where ``keydesc`` is the
+  specified or auto-constructed location description.
+* `fulldesc`: String overriding the full description for the bare location category (but not for any other category).
+  This is currently used only for the location `Earth`, at the very top of the tree (because the standard `people,
+  culture or territory of ...` text doesn't make sense here), and for `Antarctica` (because it has no permanent
+  inhabitants). FIXME: This should be renamed `bare_category_fulldesc`.
+* `addl_parents`: Specify additional parents for the bare location category, in addition to the category or categories
+  generated based on the immediate container(s). For example, `Hawaii, USA` specifies `Polynesia` as an additional
+  parent category; both `North Korea` and `South Korea` specify `Korea` (which is a specially handled location category)
+  as an additional parent; and `Earth` specifies `nature` (not a location category, but still a topic category) as an
+  additional parent (which in this case becomes the first parent, as `Earth` has no container). The only restriction on
+  the categories in `addl_parents` is that they must be topic categories, because each language-specific version of the
+  bare location category gets the corresponding language-specific versions of the categories in `addl_parents`. FIXME:
+  This shoudl be renamed `bare_category_addl_parents`.
+* `wp`: Spec describing how to construct the Wikipedia article for the location. Each spec is either `true` (equivalent
+  to `"%l"`, i.e. use the full location placename directly) or a string containing formatting directives, indicating how
+  to construct the article name. The allowed formatting directives are `%l` (the full location placename), `%e` (the
+  elliptical location placename) and `%c` (the full placename of the first immediate container). For example, the
+  default value of `wp` for the group of United States cities is `"%l, %c"` since the city articles tend to be named
+  e.g. `Austin, Texas` (but with many exceptions, specified using `wp` fields at the city level). Another example is
+  Thai provinces, which specify a group-level default of `"%e province"` as the Wikipedia articles have lowercase
+  `province` in their name but the Thai province keys specified in this module have uppercase `Province`. Here we have
+  to use `%e` to get the placename without the word `Province` in it. The default is `true`, which simply uses the full
+  location placename as the article name. Note that the Wikipedia article, along with the Wikipedia and Commons category
+  pages, are shown in the upper right of bare category pages.
+* `wpcat`: Spec describing how to construct the Wikipedia category page for the location (i.e. the page listing articles
+  and categories relevant to the location). The format is the same as with `wp`, and it defaults to the value of `wp`.
+  It rarely needs to be specified because the category page and the article page almost always follow the same format.
+* `commonscat`: Spec describing how to construct the Commons category page for the location (i.e. the page on the
+  MediaWiki Commons site listing articles and categories relevant to the location). It has the same format as `wp` and
+  `wpcat` and defaults to `wpcat`, which is usually (but not always) correct.
+* `the`: Boolean specifying whether a location should be preceded by `the` when following a preposition, e.g. in
+  category names such as [[:Category:Cities in the Northern Territory, Australia]] and in old-style place descriptions
+  when the location occurs as the first holonym, such as the city [[Darwin]] described using
+  {{tl|place|city|terr/Northern Territory|c/Australia}}. Note that the global default for this and all Boolean
+  properties is {nil}, which amounts to the same as {false}.
+* `british_spelling`: Boolean indicating whether the location in question uses British spelling. Currently this only
+  affects whether the spelling `neighborhoods` or `neighbourhoods` is used in categories such as
+  [[:Category:Neighborhoods of New York City]] and [[:Category:Neighbourhoods of Sydney]]. This usually needs to be set
+  only at the top level (i.e. country or country-like entity), because lower-level entities look up the container trail
+  for any container that has `british_spelling = true` set, and if found, assume that British spelling applies. The
+  general principle used in setting this is that all countries in Europe, all dependent territories of any such country,
+  all former British colonies, and any dependent territories of these former colonies, are assumed to use British
+  spelling, while all other countries and associated dependent territories are assumed to use American spelling. This
+  can potentially be modified on a case-by-case basis.
+* `is_city`: Boolean indicating whether the location in question is a city. This is explicitly set to `true` for
+  city-states (e.g. Monaco and Vatican City), dependent territories that are cities (e.g. Hong Kong, Macau, Bonaire,
+  Gibraltar, etc.), certain city-level administrative divisions (such as `City of Belfast, Northern Ireland`) and
+  (through a group-levell setting) New York boroughs. In addition, it is set to `true` in initialize_spec() whenever
+  the group-level `default_placetype == "city"`, so that all cities get it set without explicitly needing to add a
+  group-level setting for this. Note that the condition `default_placetype == "city"` intentionally excludes Chinese
+  prefecture-level cities, which aren't really cities in that (for example) they don't directly contain neighborhoods,
+  but do contain cities within them. This setting is used in various places: (a) to add cities, rivers, etc. to
+  categories like [[:Category:Rivers in Osaka Prefecture, Japan]] and [[:Category:Cities in Wuhan]] for holonyms that
+  are ''not'' cities; (b) to add districts, neighborhoods, and the like to categories like
+  [[:Category:Neighborhoods of Brooklyn]] and [[:Category:Neighborhoods of Monaco]] for holoynms that ''are'' cities;
+  (c) generally, to determine which "generic" placetypes (cities, rivers, neighborhoods, etc.) apply to the location.
+  (Those that can occur with cities have a `generic_before_cities` setting in [[Module:place/placetypes]], and those
+  that can occur with non-cities have a `generic_before_non_cities` setting.)
+* `is_former_place`: Boolean that should be set on former places such as the Soviet Union and the Roman Empire. For such
+  places, categories such as [[:Category:fr:Rivers in the Soviet Union]] are neither generated nor recognized (more
+  generally, no "generic" placetypes apply except for `places`), and category descriptions include the word `former`.
+* `overriding_bare_label_parents`: Document me!
+* `bare_category_parent_type`: Document me!
+* `no_container_cat`: Document me!
+* `no_container_parent`: Document me!
+* `no_generic_place_cat`: Document me!
+* `no_check_holonym_mismatch`: Document me!
+* `no_auto_augment_container`: Document me!
+* `no_include_container_in_desc`: Document me!
 
 ====OUT OF DATE DOCUMENTATION (location group tables)====
 
@@ -110,9 +250,6 @@ objects that describe how to format the display of a category page, as documente
    [[:Category:pt:Counties of Wales]], etc. These are for political divisions, and for historic/popular divisions that
    have no current political significance (e.g. [[:Category:nl:Provinces of Ireland]],
    [[:Category:zh:Regions of the United States]]). These are controlled by the `divs` key in the data for a given item.
-
-NOTE: There is also some duplication in [[Module:category tree/topic cat/data/Earth]], particularly for continents and
-supranational regions (e.g. "the British Isles"). FIXME: Consolidate the data there into here.
 
 Each group consists of a table with the following keys:
 
@@ -151,45 +288,6 @@ Each group consists of a table with the following keys:
 
 * `default_placetype`: The default placetype for locations in this group, if not overidden at the location level. See
   `placetype` above under "Placename Tables".
-
-====OUT OF DATE DOCUMENTATION (location division tables)====
-
-Each of the following tables specifies a group of locations with common properties (e.g. the states of the US). Each
-table is associated with a location "group" (an entry in `export.locations`), which contains handlers specifying how to
-process the data tables and also a pointer to the relevant table. The data is used as follows:
-
-1. To generate the text of the bare topical categories directly associated with each location, such as
-   [[:Category:Netherlands]], [[:Category:Alabama, USA]] or [[:Category:Amazonas, Brazil]], and per-language
-   variants such as [[:Category:de:Netherlands]], [[:Category:es:Alabama, USA]] or [[:Category:pt:Amazonas, Brazil]].
-   These categories (and all placename categories) are found in the ''topic cat subsystem'' of the category system;
-   see [[Module:category tree/topic cat/data]] for more information.
-2. To generate the text of topical categories for cities/towns/rivers/etc. in a given location, e.g.
-   [[:Category:Cities in Alabama, USA]] for cities in Alabama, and per-language variants such as
-   [[:Category:fr:Cities in Alabama, USA]] for French terms for cities in Alabama.
-3. To generate the text of topical categories for political divisions of a given location, e.g.
-   [[:Category:Provinces of the Netherlands]], [[:Category:Counties of Alabama]] or
-   [[:Category:Municipalities of Amazonas, Brazil]], along with per-language variants such as
-   [[:Category:de:Provinces of the Netherlands]], [[:Category:es:Counties of Alabama]] or
-   [[:Category:pt:Municipalities of Amazonas, Brazil]].
-4. To add pages to all the above types of categories when a call to {{tl|place}} on that page
-   references the location, such as by a template call {{tl|place|en|city|state/Alabama}} (which will
-   add the page to [[:Category:en:Cities in Alabama, USA]]).
-
-Uses #1, #2 and #3 are controlled by [[Module:category tree/topic cat/data/Places]].
-Use #4 is controlled by [[Module:place/placetypes]].
-
-The keys of each table are the location names in the form they will appear in bare categories, such as
-[[:Category:de:Netherlands]] or [[:Category:fr:Alabama, USA]]. Hence they should include suffixes such as `, USA`.
-However, they should not include the word `the` beforehand, which appears before some some locations when preceded by a
-placename, but not other locations (e.g. [[:Category:de:Provinces of the Netherlands]] but
-[[:Category:fr:Cities in Alabama, USA]]); this is controlled by the setting `the = true` in the location data.
-
-The value of an item in each table is itself a table. This table contains properties describing the location in
-question. Note that before being used (e.g. to generate the contents of a category page like
-[[:Category:en:Cities in Ireland]] or [[:Category:de:Provinces of the Netherlands]] of to specify how to add the
-relevant categories to a page with a call to {{tl|place}}), the table is passed through `initialize_spec`. That function
-augments the property table with additional properties that are common to the group or derivable from group-specific
-properties. The following are the recognized properties:
 
 ]==]
 
@@ -340,35 +438,41 @@ function export.initialize_spec(group, key, spec)
 			return val
 		end
 	end
-	spec.placetype = value_with_default(spec.placetype, group.default_placetype)
+	local function set_or_default(prop)
+		spec[prop] = value_with_default(spec[prop], group["default_" .. prop])
+	end
+	set_or_default("placetype")
 	if not spec.placetype then
 		internal_error("No placetype found in key %s for spec %s or in group `default_placetype`", key, spec)
 	end
-	spec.divs = value_with_default(spec.divs, group.default_divs)
+	set_or_default("divs")
 	spec.addl_divs = group.addl_divs
-	spec.keydesc = value_with_default(spec.keydesc, group.default_keydesc)
-	spec.overriding_bare_label_parents = value_with_default(spec.overriding_bare_label_parents,
-		group.default_overriding_bare_label_parents)
-	spec.wp = value_with_default(spec.wp, group.default_wp)
-	spec.wpcat = value_with_default(spec.wpcat, group.default_wpcat)
-	spec.commonscat = value_with_default(spec.commonscat, group.default_commonscat)
-	spec.british_spelling = value_with_default(spec.british_spelling, group.default_british_spelling)
-	spec.the = value_with_default(spec.the, group.default_the)
-	spec.no_container_cat = value_with_default(spec.no_container_cat, group.default_no_container_cat)
-	spec.no_container_parent = value_with_default(spec.no_container_parent, group.default_no_container_parent)
-	spec.no_generic_place_cat = value_with_default(spec.no_generic_place_cat, group.default_no_generic_place_cat)
-	spec.no_check_holonym_mismatch = value_with_default(spec.no_check_holonym_mismatch,
-		group.default_no_check_holonym_mismatch)
-	spec.no_auto_augment_container = value_with_default(spec.no_auto_augment_container,
-		group.default_no_auto_augment_container)
-	spec.is_city = value_with_default(spec.is_city, group.default_is_city)
+	for _, prop in ipairs {
+		"keydesc",
+		"fulldesc",
+		"addl_parents",
+		"overriding_bare_label_parents",
+		"bare_category_parent_type",
+		"wp",
+		"wpcat",
+		"commonscat",
+		"british_spelling",
+		"the",
+		"no_container_cat",
+		"no_container_parent",
+		"no_generic_place_cat",
+		"no_check_holonym_mismatch",
+		"no_auto_augment_container",
+		"no_include_container_in_desc",
+		"is_city",
+		"is_former_place",
+	} do
+		set_or_default(prop)
+	end
 	-- `default_placetype == "city"` is correct; if `default_placetype` has something else like `prefecture-level city`
 	-- as the canonical placetype but also lists `city` (as Chinese prefecture-level cities do), don't mark as
 	-- is_city.
 	spec.is_city = value_with_default(spec.is_city, group.default_placetype == "city")
-	spec.is_former_place = value_with_default(spec.is_former_place, group.default_is_former_place)
-	spec.no_include_container_in_desc = value_with_default(spec.no_include_container_in_desc,
-		group.default_no_include_container_in_desc)
 	spec.initialized = true
 end
 
@@ -3989,7 +4093,6 @@ export.united_states_group = {
 	},
 	addl_divs = {
 		{type = "census-designated places", prep = "in"},
-		{type = "unincorporated communities", prep = "in"},
 	},
 	data = export.united_states_states,
 }
