@@ -1589,8 +1589,9 @@ need to pay attention to the entry placetypes specified so we don't overcategori
 `[[Джорджия]]` in Russian but the country of Georgia is `[[Грузия]]`, and if we just looked for matching names, we'd get
 both Russian terms categorized into both [[:Category:ru:Georgia, USA]] and [[:Category:ru:Georgia]].
 ]==]
-function export.get_bare_categories(args, place_descs)
+function export.get_bare_categories(args, overall_place_spec)
 	local bare_cats = {}
+	local place_descs = overall_place_spec.descs
 
 	local possible_placetypes_by_place_desc = {}
 	for i, place_desc in ipairs(place_descs) do
@@ -1636,6 +1637,13 @@ function export.get_bare_categories(args, place_descs)
 	end
 	for _, short in ipairs(args.short) do
 		check_term(short)
+	end
+	for _, directive in ipairs(overall_place_spec.directives) do
+		for _, term in ipairs(directive.terms) do
+			if term.alt or term.term then
+				check_term(term.alt or term.term)
+			end
+		end
 	end
 
 	return bare_cats
@@ -3178,6 +3186,13 @@ If you need to sort the following, do this (using Vim):
 		link = false,
 		fallback = "FORMER subpolity",
 	},
+	["former region"] = {
+		-- A former region is considered a former political division, but not a 'historical/traditional/etc.' region.
+		link = "separately",
+		preposition = "of",
+		inherently_former = {"FORMER"},
+		class = "subpolity",
+	},
 	["FORMER settlement"] = {
 		link = false,
 		has_neighborhoods = true,
@@ -3194,12 +3209,66 @@ If you need to sort the following, do this (using Vim):
 		class = "subpolity",
 		default = {"Former political divisions"},
 	},
-	["former region"] = {
-		-- A former region is considered a former political division, but not a 'historical/traditional/etc.' region.
-		link = "separately",
-		preposition = "of",
-		inherently_former = {"FORMER"},
-		class = "subpolity",
+
+	------------- Categories for former names
+
+	["former names of capitals!"] = {
+		category_link = "[[former]] [[name]]s of [[capital city|capital cities]] that generally still exist but under a different name",
+		bare_category_breadcrumb = "capitals",
+		bare_category_parent = "former names of settlements",
+	},
+	["former names of countries!"] = {
+		category_link = "[[former]] [[name]]s of [[country|countries]] that generally still exist but under a different name",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "former names of places",
+	},
+	["former names of places!"] = {
+		category_link = "[[former]] [[name]]s of [[place]]s that generally still exist but under a different name",
+		bare_category_breadcrumb = "former names",
+		bare_category_parent = "places",
+	},
+	["former names of political divisions!"] = {
+		category_link = "[[former]] [[name]]s of [[political]] [[division]]s (states, provinces, counties, etc.) that generally still exist but under a different name",
+		bare_category_breadcrumb = "political divisions",
+		bare_category_parent = "former names of places",
+	},
+	["former names of polities!"] = {
+		category_link = "[[former]] [[name]]s of [[polity|polities]] (e.g. [[country|countries]]) that generally still exist but under a different name",
+		bare_category_breadcrumb = "polities",
+		bare_category_parent = "former names of places",
+	},
+	["former names of settlements!"] = {
+		category_link = "[[former]] [[name]]s of [[city|cities]], [[town]]s, [[village]]s, etc. that generally still exist but under a different name",
+		bare_category_breadcrumb = "settlements",
+		bare_category_parent = "former names of political divisions",
+	},
+	["FORMER_NAME_OF capital"] = {
+		link = false,
+		default = {"Former names of capitals"},
+	},
+	["FORMER_NAME_OF country"] = {
+		link = false,
+		default = {"Former names of countries"},
+	},
+	["FORMER_NAME_OF place"] = {
+		link = false,
+		default = {"Former names of places"},
+	},
+	["FORMER_NAME_OF polity"] = {
+		link = false,
+		default = {"Former names of polities"},
+	},
+	["FORMER_NAME_OF region"] = {
+		link = false,
+		fallback = "FORMER_NAME_OF subpolity",
+	},
+	["FORMER_NAME_OF settlement"] = {
+		link = false,
+		default = {"Former names of settlements"},
+	},
+	["FORMER_NAME_OF subpolity"] = {
+		link = false,
+		default = {"Former names of political divisions"},
 	},
 	["fort"] = {
 		link = true,
@@ -3207,6 +3276,9 @@ If you need to sort the following, do this (using Vim):
 	},
 	["fortress"] = {
 		link = true,
+		-- The default plural algorithm gets this right but the singularization algorithm incorrectly converts
+		-- fortresses -> fortresse, so put an entry here to ensure we singularize correctly.
+		plural = "fortresses",
 		fallback = "building",
 	},
 	["frazione"] = {

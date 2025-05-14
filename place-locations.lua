@@ -124,24 +124,25 @@ The following are the properties of the location spec.
   container structure.) The list of canonicalized container structures is stored into the `.containers` field of the
   location spec (this happens even if the container value is unset in its uninitialized spec form, causing it to default
   to the corresponding group-level value), and the `.container` field is set to {nil}. The canonicalization process is
-  described in more detail below.
+  described in more detail below under [[#Container spec canonicalization]].
 * `divs`: List of recognized political divisions; e.g. for the Netherlands, a specification of the form
   `divs = {"provinces", "municipalities"}` will allow categories such as [[:Category:de:Provinces of the Netherlands]]
   and [[:Category:pt:Municipalities of the Netherlands]] to be created. Any division that appears here must also be
   found in `placetype_data`, or an error occurs. The entities appearing in the `divs` list can be structures as well as
-  just strings; this is explained more below. Additional political divisions that apply to all locations in a group can
-  be specified at the group level using the group-only property `addl_divs`, which has the same format as `divs`. This
-  is intended to be used in the situation where some division types are shared among all locations in the group and
-  others differ from location to location. An example where this is used is the United States, where `census-designated
-  places` is specified in the group-level `addl_divs` so that all 50 states have census-designated places categorized as
-  e.g. [[:Category:Census-designated places in Arizona, USA]], but `counties` and `county seats` are specified in the
-  group-level `default_divs` because not all states have counties and county seats (Alaska has boroughs and borough
-  seats and Louisiana has parishes and parish seats), and some states have additional divisions (New Jersey and
-  Pennsylvania also have boroughs, while Colorado and Connecticut have municipalities). Note that under most
-  circumstances (particularly, if `container_parent_type` is not set as a property associated with the division type),
-  any division type specified on a sub-country-level location must also be specified on all containers up through the
-  country. For example, since French departments specify `communes` and `municipalities` in `default_divs`, the same
-  division types must be (and are) specified on French regions and for France itself.
+  just strings; this is explained more below under [[#Location divisions]]. Additional political divisions that apply to
+  all locations in a group can be specified at the group level using the group-only property `addl_divs`, which has the
+  same format as `divs`. This is intended to be used in the situation where some division types are shared among all
+  locations in the group and others differ from location to location. An example where this is used is the United
+  States, where `census-designated places` is specified in the group-level `addl_divs` so that all 50 states have
+  census-designated places categorized as e.g. [[:Category:Census-designated places in Arizona, USA]], but `counties`
+  and `county seats` are specified in the group-level `default_divs` because not all states have counties and county
+  seats (Alaska has boroughs and borough seats and Louisiana has parishes and parish seats), and some states have
+  additional divisions (New Jersey and Pennsylvania also have boroughs, while Colorado and Connecticut have
+  municipalities). Note that under most circumstances (particularly, if `container_parent_type` is not set as a property
+  associated with the division type), any division type specified on a sub-country-level location must also be specified
+  on all containers up through the country. For example, since French departments specify `communes` and
+  `municipalities` in `default_divs`, the same division types must be (and are) specified on French regions and for
+  France itself.
 * `keydesc`: String directly specifying a description of the location, for use in generating the contents of category
   pages related to the location. In place of a string, a function of three arguments (`group`, `key`, `spec`, as is
   normal for locations) that computes the location description can also be given. This is used, for example, for
@@ -220,6 +221,99 @@ The following are the properties of the location spec.
 * `no_check_holonym_mismatch`: Document me!
 * `no_auto_augment_container`: Document me!
 * `no_include_container_in_desc`: Document me!
+
+====Location divisions====
+The `divs` field of a location describes the recognized political division types of that location. Specifying a given
+division type will cause places defined as being of the specified division type and with the location as a holonym will
+cause the place to be categorized as ` ``placetypes`` in/of ``location`` `; for example, specifying that the United
+States has `"states"` as a division will cause anything defined as {{tl|place|fr|state|c/US}} to be categorized under
+[[:Category:fr:States of the United States]]. Note that you do not have to explicitly specify division types for
+"generic" placetypes (those that have a `generic_before_non_cities` field if the location is not a city, or that have a
+`generic_before_cities` field if the location is a city); this includes things like cities, towns, villages,
+neighbo(u)rhoods and rivers. A given element in the `divs` list is usually a string naming a plural placetype; the
+placetype is automatically converted to the singular for recognizing the placetype in a {{tl|place}} spec, and irregular
+plurals such as `kibbutzim` are handled correctly as long as the placetype specifies an appropriate `plural` field
+(if the `plural` isn't explicitly given, the default singularization algorithm in [[Module:en-utilities]] is run, which
+gets most things correctly but has problems with `passes` and `fortresses`, which are singularized to `passe` and
+`fortresse`; for this reason, an explicit plural entry is added to terms in ''-ss''). In place of a string, an object
+can be given with the plural placetype in the `type` field; this allows additional properties to be specified along with
+the placetype. An example of this is the `divs` list for Canada:
+
+{
+	["Canada"] = {container = "North America", divs = {
+		{type = "provinces", cat_as = "provinces and territories"},
+		{type = "territories", cat_as = "provinces and territories"},
+		"counties", "districts", "municipalities", "regional municipalities",
+		"rural municipalities", "parishes",
+		"Indian reserves",
+		"census divisions",
+		{type = "townships", prep = "in"},
+	},
+}
+
+Here, both provinces and territories are set to categorize as `provinces and territories`, meaning that there is a
+single category [[:Category:Provinces and territories of Canada]] rather than separate categories for provinces and
+territories. Similar things are done for other countries that have more than one type of first-level administrative
+division (e.g. Australia, China, India and Pakistan). Note that any placetype listed under `cat_as` must exist in the
+table of placetypes in [[Module:place/placetypes]], and in fact there is a category-only entry there for `provinces and
+territories!` (the use of exclamation point following a plural placetype means that the placetype is present only for
+use in categories and won't be recognized as the placetype field in a {{tl|place}} description). In addition, townships
+are declared to use `in` rather than `of` as the preposition in the category; hence the category name will be
+[[:Category:Townships in Canada]] rather than [[:Category:Townships of Canada]]. (The use of `in` vs. `of` is somewhat
+related to whether a given placetype is an official administrative or statistical division of the location in question
+and comes in a defined list, in which case `of` should be used, or is more ill-defined, in which case `in` should be
+used; the default is `of`, and the use of `in` with `townships` is probably by analogy with the use of `in` with cities
+and towns.)
+
+Another more complex example is the divisions given for Quebec:
+
+{
+	["Quebec, Canada"] = {divs = {
+		"counties",
+		{type = "regional county municipalities", container_parent_type = "regional municipalities"},
+		{type = "regions", container_parent_type = false},
+		{type = "townships", prep = "in"},
+		{type = "parish municipalities", cat_as = {{type = "parishes", container_parent_type = "counties"}, "municipalities"}},
+		{type = "township municipalities", cat_as = {{type = "townships", prep = "in"}, "municipalities"}},
+		{type = "village municipalities", cat_as = {{type = "villages", prep = "in"}, "municipalities"}},
+	}},
+}
+
+Here, `container_parent_type` controls the second parent category of the placetype/location category associated with the
+entry. In this case, for example, [[:Category:Counties of Quebec, Canada]] will have [[:Category:Counties of Canada]] as
+its second or ''container-level'' parent. However, this doesn't make sense for `regional county municipalities`, which
+exist only in Quebec (so the parent category [[:Category:Regional county municipalities of Canada]] would have only one
+subcategory); but they are similar to regional municipalities in British Columbia, Nova Scotia and Ontario, so the
+`container_parent_type = "regional municipalities"` spec causes the container-level parent of this category to be
+[[:Category:Regional municipalities of Canada]]. Likewise, `regions` as administrative divisions (as opposed to mere
+geographic regions) exist only in Quebec; they have no equivalent elsewhere, so we disable the container-level parent
+using `container_parent_type = false`. The specs for `parish municipalities`, `township municipalities` and
+`village municipalities` show both that multiple types can be specified under `cat_as` (here, for example, we categorize
+`parish municipalities` as both `parishes` and `municipalities`) and that these types can themselves have properties,
+just as for entries directly under `divs`. Specifically, `{type = "parishes", container_parent_type = "counties"}`
+means that any place defined as a parish municipality in Quebec will be categorized under both [[:Category:Parishes of
+Quebec]] and [[:Category:Municipalities of Quebec]], and that the former will have a container-level parent of
+[[:Category:Counties of Canada]] (rather than the default of [[:Category:Parishes of Canada]]). Similarly, `township
+municipalities` will be categorized under both [[:Category:Townships in Quebec]] (''not'' [[:Category:Townships of
+Quebec]]) and [[:Category:Municipalities of Quebec]].
+
+====Container spec canonicalization====
+A fully canonicalized container spec for a given location consists of a list of ''canonicalized container objects'',
+each with a `key` and `placetype` field. The `key` field should name the canonical key of some other location at a
+higher level (e.g. French cities are contained in French departments, which are contained in French regions, which are
+contained in France, which is contained in Europe, which is contained in Eurasia, which is contained in the Earth). The
+`placetype` field should correspond to the first (canonical) placetype listed for the key in question. The process of
+initializing a locaion spec converts the container spec in `.container` into a canonicalized spec in `.containers` and
+removes the spec from `.container`. It works as follows:
+# If the `container` field is missing, and there is a group-level `default_container` field, it is used in its place.
+  For example, none of the Brazilian states listed in `brazil_states` specifies a container, but the group specifies
+  `default_container = "Brazil"`.
+# A single string or canonicalized container object is allowed and made into a one-element list.
+# If a list element is a string that did ''not'' come from `default_container`, and there is a group-level
+  `canonicalize_key_container` field, it is assumed to be a one-argument function and is called on the string to get
+  a canonicalized container object.
+# Any remaining strings are assumed to be countries and are used directly as the `key`, with `placetype` set to
+  `"country"`.
 
 ====OUT OF DATE DOCUMENTATION (location group tables)====
 
