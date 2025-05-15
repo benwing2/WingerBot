@@ -24,15 +24,15 @@ especially the section `More about known locations`.'''
 The bulk of the code in this module (after some helper functions and placetype tables) describes the known locations
 and their relationships. Locations are grouped into ''location groups'' that share some common properties (examples are
 states of the United States and cities in Brazil). Each location group is associated with two tables, a ''data table''
-that lists the locations and their individual properties, and a ''metatable'' that lists group-level properties and
-defaults for the location properties. Each metatable points to the associated data table (i.e. contains the data table
-as its `data` field), and the global `locations` variable holds a list of all group metatables. A given location is
-generally described by three values: (a) the group metatable for the group the location is part of; (b) the location's
-canonical ''key'', which is the actual key in the group's data table and is globally unique across all locations; the
-location's ''spec'', which is the initialized object describing the properties of the location and comes from the value
-in the data table corresponding to the canonical key, transformed by the `initialize_spec()` function. These are
-typically named `group`, `key` and `spec`, respectively and in that order, and are found in the arguments to many
-functions.
+that lists the locations and their individual properties, and a ''metadata table'' that lists group-level properties and
+defaults for the location properties. Each metadata table points to the associated data table (i.e. contains the data
+table as its `data` field), and the global `locations` variable holds a list of all group metadata tables. A given
+location is generally described by three values: (a) the group metadata table for the group the location is part of; (b)
+the location's canonical ''key'', which is the actual key in the group's data table and is globally unique across all
+locations; and (c) the location's ''spec'', which is the initialized object describing the properties of the location
+and comes from the value in the data table corresponding to the canonical key, transformed by the `initialize_spec()`
+function. These are typically named `group`, `key` and `spec`, respectively and in that order, and are found in the
+arguments to many functions.
 
 In a per-group data table, the keys are either ''canonical keys'' describing locations (which, as mentioned above, must
 be globally unique) or ''alias keys'' specifying an allowed alias for a given location. There may be multiple aliases
@@ -117,14 +117,14 @@ The following are the properties of the location spec.
   of locations. The list of immediate container(s), followed by the container(s) of the container(s), etc., is termed
   the ''container trail'', and some functions compute and return this trail as part of their operation. When a location
   spec is initialized, the given container spec is canonicalized into ''canonical container form'', which consists of a
-  list of canonicalized container structures, each of which is of the form `{key = "''container_key''",
-  placetype = "''container_placetype''"}`, where ''container_key'' is a canonical location key and
-  ''container_placetype'' should be the listed placetype for the location, or the first listed placetype if there are
-  multiple. (FIXME: Since the key uniquely identifies the container location, we should eliminate the placetype from the
-  container structure.) The list of canonicalized container structures is stored into the `.containers` field of the
-  location spec (this happens even if the container value is unset in its uninitialized spec form, causing it to default
-  to the corresponding group-level value), and the `.container` field is set to {nil}. The canonicalization process is
-  described in more detail below under [[#Container spec canonicalization]].
+  list of canonicalized container structures, each of which is of the form
+  `{key = "``container_key``", placetype = "``container_placetype``"}`, where ``container_key`` is a canonical location
+  key and ``container_placetype`` should be the listed placetype for the location, or the first listed placetype if
+  there are multiple. (FIXME: Since the key uniquely identifies the container location, we should eliminate the
+  placetype from the container structure.) The list of canonicalized container structures is stored into the
+  `.containers` field of the location spec (this happens even if the container value is unset in its uninitialized spec
+  form, causing it to default to the corresponding group-level value), and the `.container` field is set to {nil}. The
+  canonicalization process is described in more detail below under [[#Container spec canonicalization]].
 * `divs`: List of recognized political divisions; e.g. for the Netherlands, a specification of the form
   `divs = {"provinces", "municipalities"}` will allow categories such as [[:Category:de:Provinces of the Netherlands]]
   and [[:Category:pt:Municipalities of the Netherlands]] to be created. Any division that appears here must also be
@@ -223,6 +223,7 @@ The following are the properties of the location spec.
 * `no_include_container_in_desc`: Document me!
 
 ====Location divisions====
+
 The `divs` field of a location describes the recognized political division types of that location. Specifying a given
 division type will cause places defined as being of the specified division type and with the location as a holonym will
 cause the place to be categorized as ` ``placetypes`` in/of ``location`` `; for example, specifying that the United
@@ -240,7 +241,7 @@ can be given with the plural placetype in the `type` field; this allows addition
 the placetype. An example of this is the `divs` list for Canada:
 
 {
-	["Canada"] = {container = "North America", divs = {
+	["Canada"] = {divs = {
 		{type = "provinces", cat_as = "provinces and territories"},
 		{type = "territories", cat_as = "provinces and territories"},
 		"counties", "districts", "municipalities", "regional municipalities",
@@ -248,7 +249,7 @@ the placetype. An example of this is the `divs` list for Canada:
 		"Indian reserves",
 		"census divisions",
 		{type = "townships", prep = "in"},
-	},
+	}, ...},
 }
 
 Here, both provinces and territories are set to categorize as `provinces and territories`, meaning that there is a
@@ -276,7 +277,7 @@ Another more complex example is the divisions given for Quebec:
 		{type = "parish municipalities", cat_as = {{type = "parishes", container_parent_type = "counties"}, "municipalities"}},
 		{type = "township municipalities", cat_as = {{type = "townships", prep = "in"}, "municipalities"}},
 		{type = "village municipalities", cat_as = {{type = "villages", prep = "in"}, "municipalities"}},
-	}},
+	}, ...},
 }
 
 Here, `container_parent_type` controls the second parent category of the placetype/location category associated with the
@@ -292,12 +293,13 @@ using `container_parent_type = false`. The specs for `parish municipalities`, `t
 `parish municipalities` as both `parishes` and `municipalities`) and that these types can themselves have properties,
 just as for entries directly under `divs`. Specifically, `{type = "parishes", container_parent_type = "counties"}`
 means that any place defined as a parish municipality in Quebec will be categorized under both [[:Category:Parishes of
-Quebec]] and [[:Category:Municipalities of Quebec]], and that the former will have a container-level parent of
-[[:Category:Counties of Canada]] (rather than the default of [[:Category:Parishes of Canada]]). Similarly, `township
-municipalities` will be categorized under both [[:Category:Townships in Quebec]] (''not'' [[:Category:Townships of
-Quebec]]) and [[:Category:Municipalities of Quebec]].
+Quebec, Canada]] and [[:Category:Municipalities of Quebec, Canada]], and that the former will have a container-level
+parent of [[:Category:Counties of Canada]] (rather than the default of [[:Category:Parishes of Canada]]). Similarly,
+`township municipalities` will be categorized under both [[:Category:Townships in Quebec, Canada]] (''not''
+[[:Category:Townships of Quebec, Canada]]) and [[:Category:Municipalities of Quebec, Canada]].
 
 ====Container spec canonicalization====
+
 A fully canonicalized container spec for a given location consists of a list of ''canonicalized container objects'',
 each with a `key` and `placetype` field. The `key` field should name the canonical key of some other location at a
 higher level (e.g. French cities are contained in French departments, which are contained in French regions, which are
@@ -315,74 +317,69 @@ removes the spec from `.container`. It works as follows:
 # Any remaining strings are assumed to be countries and are used directly as the `key`, with `placetype` set to
   `"country"`.
 
-====OUT OF DATE DOCUMENTATION (location group tables)====
+====Alias keys====
 
-The following tables specify the known locations and their properties, where a location is either a top-level polity
-(e.g. a country) or a subpolity (political division of a top-level location). Locations are gathered into
-''groups'', each of which contains several items (places) that are handled similarly. Each group contains a list of all
-the places contained in that group along with their properties, as well as group-specific handlers that specify common
-properties of all items in the group. These items are used to construct the category description objects (i.e. the
-objects that describe how to format the display of a category page, as documented in
-[[Module:category tree/topic cat/data/documentation]]) for the following types of categories:
+Aliases can be provided for canonical keys using ''alias keys''. Alias keys have a very different location spec
+structure from canonical keys. This structure does not, in general, have defaults at the group level and is not
+initialized using `initialize_spec()`, but is used as-is. The following properties are recognized in an alias location
+spec:
+* `alias_of`: The canonical key of which this key is an alias. Required.
+* `the`: If true, this alias key is preceded by `the` following a preposition. Defaults to the group-level `default_the`
+    but does not pay attention to the value of `the` for the corresponding canonical key.
+* `display`: This is a display alias, meaning that holonyms using the placename corresponding to this alias will be
+    converted to the placename corresponding to the canonical key when formatting the holonym for display. (Otherwise,
+    the aliasing applies only to categorization.) If the value is true, the display canonicalization is to the placename
+    of the canonical key; otherwise, the value should be a key whose corresponding placename is used when display
+    canonicalizing.
+* `placetype`: The placetype of the alias. Rarely needs to be specified as it defaults to the canonical key's placetype,
+    and if that is unspecified, to the group-level default placetype.
 
-1. A bare topical category, e.g. [[:Category:en:Netherlands]]. Category description objects for these are created by the
-   `make_bare_label` handler of a given group. (The term "label" is used here because the category system internally
-   refers to the category name, without any language prefix, as a "label", and the corresponding per-label category
-   description objects are stored in the `labels` table in a `topic cat` submodule, notably
-   [[Module:category tree/topic cat/data/Places]].)
-2. Normally, several categories of the form [[:Category:fr:Cities in the Netherlands]],
-   [[:Category:es:Rivers in New Mexico, USA]], etc., for the place types listed above in `generic_placetypes`.
-   There is a top-level handler that will automatically create category description objects for such categories. It can
-   be disabled for all place types in `generic_placetypes` that aren't in `generic_placetypes_for_cities` by
-   specifying `is_city = true` in the data for a given item. (This is used for city-states such as Monaco and
-   Vatican City.) It can also be disabled for all place types in `generic_placetypes` other than "places" by specifying
-   `is_former_place = true` in the data for a given item. (The group below for former countries and empires has a
-   handler that specifies `is_former_place = true` for all items in the group. The reason for this is that former states
-   such as Persia, East Germany, the Soviet Union and the Roman Empire should have their cities, towns, rivers and such
-   listed under the current entities occupying the same area.)
-3. Optionally, one or more categories of the form [[:Category:de:Provinces of the Netherlands]],
-   [[:Category:pt:Counties of Wales]], etc. These are for political divisions, and for historic/popular divisions that
-   have no current political significance (e.g. [[:Category:nl:Provinces of Ireland]],
-   [[:Category:zh:Regions of the United States]]). These are controlled by the `divs` key in the data for a given item.
+====Location group metadata tables====
 
-Each group consists of a table with the following keys:
-
-* `data`: This is a table listing the locations in the group. The keys are locations in the form that they appear in a
-  category like [[:Category:de:Provinces of the Netherlands]] or [[:Category:fr:Cities in Alabama, USA]] (hence, they
-  should include prefixes such as "the" and suffixes such as ", USA"). The value of a key is a property table. Its
-  format is described above under "Placename Tables".
-
-* `key_to_placename`: A function to transform a key (as it appears in categories, e.g. "Phuket Province, Thailand" or
-  "the Riau Islands, Indonesia") to the placename as it appears in category descriptions and (modulo a preceding "the")
-  in holonym and Wiktionary entries (e.g. "Phuket", which appears in category descriptions as "[[Phuket]]", in holonyms
-  as "p/Phuket" and as an entry under [[Phuket]], and "the Riau Islands", which appears in category descriptions as
-  "the [[Riau Islands]]", in holonyms as "p/Riau Islands" and as an entry under [[Riau Islands]]). Most commonly, this
-  uses the `chop` function to chop off some portion of the key. The return value is either a string (the placename) or a
-  two-item list consisting of (respectively) the "full" placename and "elliptical" placename. The distinction between
-  full and elliptical placenames is only used for certain sorts of locations such as counties in Ireland and Northern
-  Ireland, which traditionally have the word "County" before them (e.g. "County Durham") and appear as entries in
-  Wiktionary in this form. When there is both a full form and an elliptical form, the full form will be used in the
-  category description, while both types of forms will be recognized in holonyms for categorization purposes. If the
-  key contains the word "the" at the beginning, it will be passed as such to `key_to_placename`, and the full (or only)
-  placename should include "the" in it, as the value is used in category descriptions. If there is an elliptical
-  placename, it currently doesn't matter whether it is preceded by "the" as any occurrence will be removed before
-  constructing the entry in `cat_data` against which a holonym is compared; but it is probably best not to include it.
-  For example, the Indonesian province key "the Special Region of Yogyakarta, Indonesia" returns a full placename of
-  "the Special Region of Yogyakarta" and an elliptical placename of "Yogyakarta"; the effect is that categories
-  referencing this province will contain the text "the [[Special Region of Yogyakarta]]" while both holonyms
-  "p/Special Region of Yogyakarta" and "p/Yogyakarta" will be recognized for categorization purposes.
-
-* `placename_to_key`: This is the opposite of `key_to_placename`, converting placenames to keys (see the description
-  above for `key_to_placename` for what the difference is). If a placename comes in both full and elliptical versions
-  (e.g. full "County Durham" and elliptical "Durham"), both should be recognized and appropriately converted to the
-  corresponding key. It should be noted that `key_to_placename` and `placename_to_key` are non-parallel in their
-  handling of keys and placenames beginning with "the". The placenames passed into `placename_to_key` will not include
-  "the" in them, and the returned keys should likewise not include "the". Calling code will check for actual keys that
-  are either identical to the returned keys or match once "the" is prepended.
-
-* `default_placetype`: The default placetype for locations in this group, if not overidden at the location level. See
-  `placetype` above under "Placename Tables".
-
+As mentioned above, associated with each location group is a ''metadata table'' listing group-level properties. The
+metadata table contains two types of keys: group-level defaults (named like the corresponding location-level keys but
+preceded by `default_`, e.g. `default_placetype` corresponding to the location-level `placetype` key) and group-only
+keys, which are mostly functions. The following are the possible group-only keys:
+* `data`: This points to the group data table for the group, as described above.
+* `key_to_placename`: This is a function of one argument to transform the location's key (whether canonical or alias)
+  into the full and elliptical placenames. The difference between full and elliptical placenames is described in the
+  documentation for [[Module:place]], but in essence, it applies for keys that include the placetype in them (e.g.
+  `Phuket Province, Thailand` or `County Mayo, Ireland`), in which case the full placename includes the placetype and
+  the elliptical placename does not. For keys that do not include the placetype in them (e.g. `Arizona, USA` or
+  `Gloucestershire, England`), the full and elliptical placenames are identical. Note that neither the full nor the
+  elliptical placename includes the container in it; hence, for `Phuket Province, Thailand`, the full placename is
+  `Phuket Province` and the elliptical placename is just `Phuket`. (Note that the full vs. elliptical placename
+  distinction is intended only for handling cases where the placetype follows or precedes the raw placename and there
+  is no difference between the two in whether they are normally preceded by `the`. More complex situations, such as
+  `State of Mexico` (which normally takes `the`) vs. just `Mexico` (which doesn't), or `Islamabad Capital Territory` vs.
+  just `Islamabad`, should be handled instead by aliases.) The `key_to_placename` function takes one argument, the key,
+  and returns two arguments, the full and elliptical placenames, respectively. If left undefined, the default is to
+  chop off anything starting with a comma and return the result as both full and elliptical placename, and if
+  specifically set to `false`, the key is used directly as both full and elliptical placename. If it needs to be
+  defined, it is best to use the helper function `make_key_to_placename`, if possible (or
+  `make_irish_type_key_to_placename` in the case of Ireland and Northern Ireland, where `County` precedes), rather than
+  rolling your own. In addition, you should use the global `key_to_placename` function (which takes care of the default
+  implementation and such) rather than directly calling the function in the `key_to_placename` field.
+* `placename_to_key`: This is approximately the inverse of `key_to_placename`, transforming a placename (which can be
+  either in full or elliptical form) into the corresponding key. As with `key_to_placename`, if you need to define this
+  (generally, when the full and elliptical placenames are different), prefer using `make_placename_to_key` (or
+  `make_irish_type_placename_to_key` for Ireland and Northern Ireland) to rolling your own. In addition, similarly to
+  `key_to_placename`, use the global `placename_to_key` function to convert placenames to keys rather than directly
+  invoking the function in the `placename_to_key` field. If the field is set to `false`, the placename is used unchanged
+  as the key. Otherwise, the default algorithm works as follows:
+*# If the group-level `default_placetype == "city"`, use the placename unchanged as the key.
+*# Otherwise, if the group-level `default_container` exists and is a string, append it to the placename after a comma +
+   space and use the result as the key.
+*# Otherwise, if the group-level `default_container` is a canonical container object (an object with `key` and
+   `placetype` fields), and the `placetype` field is either `country` or `constituent country`, append the `key` field
+   to the placename after a comma + space and use the result as the key.
+*# Otherwise, use the placename unchanged as the key.
+* `canonicalize_key_container`: A function of one argument to convert the specified `container` field, when a string,
+  to canonical form. Described in more detail above under [[#Container spec canonicalization]]. It is preferable to
+  construct the function using `make_canonicalize_key_container`, if possible, rather than rolling your own.
+* `addl_divs`: Additional political divisions appended, for all locations in the group, to the list of divisions derived
+  from the location-level `divs` or group-level `default_divs` fields to get the final list of divisions for the
+  location. See [[#Location divisions]] for more details.
 ]==]
 
 -----------------------------------------------------------------------------------
@@ -988,7 +985,9 @@ export.continents_group = {
 -- Countries: including those with partial recognition that are normally considered countries (e.g. Kosovo, Taiwan).
 export.countries = {
 	["Afghanistan"] = {container = "Asia", divs = {"provinces", "districts"}},
-	["Albania"] = {container = "Europe", divs = {"regions", "counties", "municipalities"}, british_spelling = true},
+	["Albania"] = {container = "Europe", divs = {"counties", "municipalities", "communes",
+		{type = "administrative units", cat_as = "communes"},
+	}, british_spelling = true},
 	["Algeria"] = {container = "Africa", divs = {"provinces", "communes", "districts", "municipalities"}},
 	["Andorra"] = {container = "Europe", divs = {"parishes"}, british_spelling = true},
 	["Angola"] = {container = "Africa", divs = {"provinces", "municipalities"}},
@@ -1923,6 +1922,12 @@ export.former_countries = {
 	["East Germany"] = {container = "Europe", addl_parents = {"Germany"}, british_spelling = true},
 	["North Vietnam"] = {container = "Asia", addl_parents = {"Vietnam"}},
 	["Persia"] = {placetype = {"empire", "country"}, container = "Asia", divs = {"provinces"}},
+	["Byzantine Empire"] = {
+		the = true, placetype = {"empire", "country"}, container = {"Europe", "Africa", "Asia"},
+		addl_parents = {"Ancient Europe", "Ancient Near East"},
+		divs = {
+			"provinces", "themes",
+		}},
 	["Roman Empire"] = {
 		the = true, placetype = {"empire", "country"}, container = {"Europe", "Africa", "Asia"}, addl_parents = {"Rome"},
 		divs = {
@@ -3290,6 +3295,40 @@ export.philippines_group = {
 	default_placetype = "province",
 	default_divs = {"municipalities", "barangays"},
 	data = export.philippines_provinces,
+}
+
+export.poland_voivodeships = {
+	["Lower Silesian Voivodeship, Poland"] = {}, -- abbr DS, code 02, capital Wrocław
+	["Kuyavian-Pomeranian Voivodeship, Poland"] = {}, -- abbr KP, code 04, capital Bydgoszcz (seat of voivode), Toruń (seat of sejmik and marshal)
+	["Lublin Voivodeship, Poland"] = {}, -- abbr LU, code 06, capital Lublin
+	["Lubusz Voivodeship, Poland"] = {}, -- abbr LB, code 08, capital Gorzów Wielkopolski (seat of voivode), Zielona Góra (seat of sejmik and marshal)
+	["Lodz Voivodeship, Poland"] = {wp = "Łódź Voivodeship"}, -- abbr LD, code 10, capital Łódź
+	["Łódź Voivodeship, Poland"] = {alias_of = "Lodz Voivodeship, Poland", display = true, display_as_full = true},
+	["Lesser Poland Voivodeship, Poland"] = {}, -- abbr MA, code 12, capital Kraków
+	["Masovian Voivodeship, Poland"] = {}, -- abbr MZ, code 14, capital Warsaw
+	["Opole Voivodeship, Poland"] = {}, -- abbr OP, code 16, capital Opole
+	["Subcarpathian Voivodeship, Poland"] = {}, -- abbr PK, code 18, capital Rzeszów
+	["Podlaskie Voivodeship, Poland"] = {}, -- abbr PD, code 20, capital Białystok
+	["Pomeranian Voivodeship, Poland"] = {}, -- abbr PM, code 22, capital Gdańsk
+	["Silesian Voivodeship, Poland"] = {}, -- abbr SL, code 24, capital Katowice
+	["Holy Cross Voivodeship, Poland"] = {wp = "Świętokrzyskie Voivodeship"}, -- abbr SK, code 26, capital Kielce
+	["Świętokrzyskie Voivodeship, Poland"] = {alias_of = "Holy Cross Voivodeship, Poland", display = true, display_as_full = true},
+	["Warmian-Masurian Voivodeship, Poland"] = {}, -- abbr WN, code 28, capital Olsztyn
+	["Greater Poland Voivodeship, Poland"] = {}, -- abbr WP, code 30, capital Poznań
+	["West Pomeranian Voivodeship, Poland"] = {}, -- abbr ZP, code 32, capital Szczecin
+}
+
+-- voivodeships of Poland
+export.poland_group = {
+	key_to_placename = make_key_to_placename(", Poland$", " Voivodeship$"),
+	placename_to_key = make_placename_to_key(", Poland", " Voivodeship"),
+	default_container = "Poland",
+	default_placetype = "voivodeship",
+	default_divs = {
+		-- "counties", -- not enough of them currently
+		{type = "Polish colonies", cat_as = {{type = "villages", prep = "in"}}},
+	},
+	data = export.poland_voivodeships,
 }
 
 export.romania_counties = {
@@ -5119,19 +5158,19 @@ export.misc_cities = {
 	["The Hague"] = {container = {key = "South Holland, Netherlands", placetype = "province"}},
 	["Auckland"] = {container = "New Zealand"},
 	["Oslo"] = {container = {key = "Oslo, Norway", placetype = "county"}},
-	["Warsaw"] = {container = "Poland"},
-	["Katowice"] = {container = "Poland"},
+	["Warsaw"] = {container = {key = "Masovian Voivodeship, Poland", placetype = "voivodeship"}},
+	["Katowice"] = {container = {key = "Silesian Voivodeship, Poland", placetype = "voivodeship"}},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Krakow" without accent.
-	["Krakow"] = {container = "Poland", wp = "Kraków"},
+	["Krakow"] = {container = {key = "Lesser Poland Voivodeship, Poland", placetype = "voivodeship"}, wp = "Kraków"},
 	["Kraków"] = {alias_of = "Krakow", display = true},
 	["Cracow"] = {alias_of = "Krakow", display = true},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirm "Gdańsk" and "Poznań" with accent.
-	["Gdańsk"] = {container = "Poland"},
+	["Gdańsk"] = {container = {key = "Pomeranian Voivodeship, Poland", placetype = "voivodeship"}},
 	["Gdansk"] = {alias_of = "Gdańsk", display = true},
-	["Poznań"] = {container = "Poland"},
+	["Poznań"] = {container = {key = "Greater Poland Voivodeship, Poland", placetype = "voivodeship"}},
 	["Poznan"] = {alias_of = "Poznań", display = true},
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Lodz" without accents.
-	["Lodz"] = {container = "Poland", wp = "Łódź"},
+	["Lodz"] = {container = {key = "Lodz Voivodeship, Poland", placetype = "voivodeship"}, wp = "Łódź"},
 	["Łódź"] = {alias_of = "Lodz", display = true},
 	["Lisbon"] = {container = "Portugal"},
 	["Porto"] = {container = "Portugal"},
@@ -5263,6 +5302,7 @@ export.locations = {
 	export.norway_group,
 	export.pakistan_group,
 	export.philippines_group,
+	export.poland_group,
 	export.romania_group,
 	export.russia_group,
 	export.saudi_arabia_group,
