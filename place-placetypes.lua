@@ -2,7 +2,7 @@ local export = {}
 
 export.force_cat = false -- set to true for testing
 
-local m_locations = require("Module:place/locations")
+local m_locations = require("Module:User:Benwing2/place/locations")
 local m_links = require("Module:links")
 local m_table = require("Module:table")
 local m_strutils = require("Module:string utilities")
@@ -1690,7 +1690,7 @@ function export.get_bare_categories(args, overall_place_spec)
 		end
 	end
 
-	for _, extra_info_terms in ipairs(overall_place_spec.extra_info_terms) do
+	for _, extra_info_terms in ipairs(overall_place_spec.extra_info) do
 		local arg = extra_info_terms.arg
 		if arg == "modern" or arg == "now" or arg == "full" or arg == "short" then
 			check_termobj_list(extra_info_terms.terms)

@@ -2,7 +2,7 @@ local export = {}
 
 local force_cat = false -- set to true for testing
 
-local m_placetypes = require("Module:place/placetypes")
+local m_placetypes = require("Module:User:Benwing2/place/placetypes")
 local m_links = require("Module:links")
 local memoize = require("Module:memoize")
 local m_strutils = require("Module:string utilities")
@@ -10,7 +10,7 @@ local m_table = require("Module:table")
 
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
-local form_of_module = "Module:form of"
+local form_of_module = "Module:User:Benwing2/form of"
 local languages_module = "Module:languages"
 local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
@@ -1226,7 +1226,7 @@ local function parse_extra_info_arg(args, spec)
 	local conj
 	for i, arg in ipairs(args) do
 		local this_terms = parse_term_with_inline_modifiers(arg, spec.arg .. (i == 1 and "" or i), enlang)
-		local thisconj = terms.conj
+		local thisconj = this_terms.conj
 		if not conj then
 			conj = thisconj
 		elseif thisconj and conj ~= thisconj then
@@ -1319,9 +1319,19 @@ function export.parse_new_style_place_desc(text)
 end
 
 --[=[
-Process numeric args (except for the language code in 1=). `numargs` is a list of the numeric arguments passed to
-{{place}} starting from 2=. The return value is a list of one or more place description objects, as described in the
-long comment at the top of the file.
+Process numeric args. `args` is the parsed argument structure. The return value is an object with the following fields:
+* `lang`: The language object (from 1=).
+* `args`: The value of `args` passed in.
+* `directives`: List of form-of directives (starting with @) parsed from the numeric args beginning with 2=. Each
+	directive contains fields `directive` (the directive as specified by the user, e.g. `"former name of"`); `terms`
+	(list of term objects for the terms specified by the user); `conj` (conjunction specified by the user using inline
+	modifier <conj:...>, or {nil}); `spec` (the corresponding directive spec from `all_form_of_directives`).
+* `descs`: List of one or more place description objects parsed from the numeric args beginning with 2=, as described in
+	the long comment at the top of the file.
+* `extra_info`: List of extra-info objects for extra info specified using arguments such as capital=, modern=, etc.
+	Objects are in the order they should be displayed, and each object contains fields `spec` (the spec for the type of
+	extra info, taken from `export.extra_info_args`), `terms` (list of term objects for the terms specified by the
+	user); `conj` (conjunction specified by the user using inline modifier <conj:...>, or {nil}).
 ]=]
 local function parse_overall_place_spec(args)
 	local descs = {}
@@ -1357,7 +1367,8 @@ local function parse_overall_place_spec(args)
 			local terms = parse_term_with_inline_modifiers(raw_terms, "@" .. form_of_directive, enlang)
 			insert(form_of_directives, {
 				directive = form_of_directive,
-				terms = terms,
+				terms = terms.terms,
+				conj = terms.conj,
 				spec = all_form_of_directives[form_of_directive],
 			})
 		elseif arg == ";" or arg:find("^;[^ ]") then
@@ -1477,6 +1488,8 @@ local function parse_overall_place_spec(args)
 	end
 
 	return {
+		lang = args[1],
+		args = args,
 		directives = form_of_directives,
 		descs = descs,
 		extra_info = extra_info,
@@ -1809,7 +1822,7 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 	local formatted_terms = {}
 
 	for _, termobj in ipairs(directive_terms.terms) do
-		insert(formatted_terms, m_links.full_link(term, nil, nil, "show qualifiers"))
+		insert(formatted_terms, m_links.full_link(termobj, nil, nil, "show qualifiers"))
 	end
 
 	local spec = directive_terms.spec
@@ -1828,6 +1841,7 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 		text = text,
 		lemmas = directive_terms.terms,
 		lemma_face = "term",
+		text_classes = "place-text",
 		-- FIXME: Not yet supported by format_form_of().
 		conj = directive_terms.conj or spec.conjunction or "and",
 	}
@@ -1843,7 +1857,7 @@ local function format_extra_info(overall_place_spec, extra_info_terms, sentence_
 	local formatted_terms = {}
 
 	for _, termobj in ipairs(extra_info_terms.terms) do
-		insert(formatted_terms, m_links.full_link(term, nil, nil, "show qualifiers"))
+		insert(formatted_terms, m_links.full_link(termobj, nil, nil, "show qualifiers"))
 	end
 
 	local spec = extra_info_terms.spec
@@ -2046,12 +2060,13 @@ function export.format_new_style_place_desc_for_display(args, place_desc, with_a
 end
 
 
--- Return a string with the gloss (the description of the place itself, as opposed to translations). If `sentence_style`
--- is given, the "extra info"  (modern name, capital, largest city, etc.) is displayed as separated sentences;
--- otherwise, it is displayed separated from the main definition by semicolons. If `ucfirst` is given, the gloss's first
--- letter is made upper case. If `drop_extra_info` is given, we don't include "extra info"; this is used when
+-- Return a string with the gloss (the description of the place itself, as opposed to translations). If `ucfirst` is
+-- given, the gloss's first letter is made upper case. If `sentence_style` is given, the "extra info" (modern name,
+-- capital, largest city, etc.) is displayed as separated sentences; otherwise, it is displayed separated from the main
+-- definition by semicolons. If `drop_extra_info` is given, we don't include "extra info"; this is used when
 -- transcluding into another language using {{transclude sense}}.
-local function get_display_form(args, overall_place_spec, sentence_style, ucfirst, drop_extra_info)
+local function get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info)
+	local args = overall_place_spec.args
 	local parts = {}
 	local function ins(txt)
 		table.insert(parts, txt)
@@ -2078,18 +2093,17 @@ local function get_display_form(args, overall_place_spec, sentence_style, ucfirs
 		end
 	else
 		local include_article = true
-		local gloss_ucfirst = ucfirst
 		for n, desc in ipairs(overall_place_spec.descs) do
 			if desc.order then
 				ins(export.format_new_style_place_desc_for_display(args, desc, n == 1))
 			else
-				ins(format_old_style_place_desc_for_display(args, desc, n, include_article, gloss_ucfirst))
+				ins(format_old_style_place_desc_for_display(args, desc, n, include_article, ucfirst))
 			end
 			if desc.joiner then
 				ins(desc.joiner)
 			end
 			include_article = desc.include_following_article
-			gloss_ucfirst = false
+			ucfirst = false
 		end
 	end
 
@@ -2106,12 +2120,18 @@ end
 export.get_new_style_gloss = export.format_new_style_place_desc_for_display
 
 -- Return the definition line.
-local function get_def(args, overall_place_spec, drop_extra_info)
+local function get_def(overall_place_spec, from_tcl, drop_extra_info)
+	local args = overall_place_spec.args
+	local sentence_style = overall_place_spec.lang:getCode() == "en"
+	local ucfirst = sentence_style and not args.nocap
 	if #args.t > 0 then
-		local gloss = get_display_form(args, overall_place_spec, false, drop_extra_info)
+		local gloss = get_display_form(overall_place_spec, false, false, drop_extra_info)
+		if not args.tcl_nolc then
+			gloss = m_strutils.lcfirst(gloss)
+		end
 		return get_translations(args.t, args.tid) .. (gloss == "" and "" or " (" .. gloss .. ")")
 	else
-		return get_display_form(args, overall_place_spec, true, drop_extra_info)
+		return get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info)
 	end
 end
 
@@ -2199,6 +2219,7 @@ The return value is {nil} if no category specs could be located, otherwise an ob
 local function find_placetype_cat_specs(data)
 	local entry_placetype, place_desc, first_holonym_index, overriding_holonym, from_demonym =
 		data.entry_placetype, data.place_desc, data.first_holonym_index, data.overriding_holonym, data.from_demonym
+	local form_of_directive = data.form_of_directive
 	local function fetch_cat_specs(holonym_to_match, index, no_fallback)
 		local holonym_placetype = holonym_to_match.placetype
 		if not holonym_placetype then
@@ -2475,7 +2496,8 @@ local function get_placetype_cats(place_desc, entry_placetype, from_demonym, for
 	local entry_pt_default, equiv_entry_placetype_and_qualifier =
 		m_placetypes.get_equiv_placetype_prop(entry_placetype, function(pt)
 			return m_placetypes.placetype_data[pt] and m_placetypes.placetype_data[pt].default
-		end)
+		end,
+		{form_of_directive = form_of_directive})
 
 	if entry_pt_default then
 		return cat_specs_to_categories(place_desc, {
@@ -2565,18 +2587,20 @@ end
 
 --[==[
 Implementation of {{tl|place}}. Meant to be callable from another module (specifically, [[Module:transclude]]).
-`drop_extra_info` means to not include "extra info" (modern name, capital, largest city, etc.); this is used when
-transcluding into another language using {{tl|tcl}}.
+`from_tcl` means we are being called from {{tl|tcl}}; `drop_extra_info` means to not include "extra info" (capital,
+official name, largest city, etc.); this is used when transcluding into another language using {{tl|tcl}}.
 ]==]
-function export.format(template_args, drop_extra_info)
+function export.format(template_args, from_tcl, drop_extra_info)
 	local list_param = {list = true}
+	local boolean_param = {type = "boolean"}
 	local params = {
 		[1] = {required = true, type = "language", default = "und"},
 		[2] = {required = true, list = true},
 		["t"] = list_param,
 		["tid"] = {list = true, allow_holes = true},
 		["cat"] = list_param,
-		["nocat"] = {type = "boolean"},
+		["nocat"] = boolean_param,
+		["nocap"] = boolean_param,
 		["sort"] = true,
 		["pagename"] = true, -- for testing or documentation purposes
 
@@ -2589,7 +2613,8 @@ function export.format(template_args, drop_extra_info)
 		["tcl_t"] = list_param,
 		["tcl_tid"] = list_param,
 		["tcl_nolb"] = true,
-		["tcl_noextratext"] = {type = "boolean"},
+		["tcl_nolc"] = boolean_param,
+		["tcl_noextratext"] = boolean_param,
 	}
 
 	-- add "extra info" parameters
@@ -2603,9 +2628,9 @@ function export.format(template_args, drop_extra_info)
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
-	local overall_place_spec = parse_overall_place_spec(args[2])
+	local overall_place_spec = parse_overall_place_spec(args)
 
-	return get_def(args, overall_place_spec, drop_extra_info) .. (
+	return get_def(overall_place_spec, from_tcl, drop_extra_info) .. (
 		args.nocat and "" or format_cats(args[1], export.get_cats(args, overall_place_spec), args.sort))
 end
 
