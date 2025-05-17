@@ -1158,8 +1158,11 @@ export.countries = {
 	["Mauritania"] = {container = "Africa", divs = {"regions", "departments"}},
 	["Mauritius"] = {container = "Africa", divs = {"districts"}, british_spelling = true},
 	["Mexico"] = {container = "North America", addl_parents = {"Central America"}, divs = {"states", "municipalities"}},
-	["Moldova"] = {container = "Europe", divs = {"districts", "municipalities", "autonomous territorial units"},
-		british_spelling = true},
+	["Moldova"] = {container = "Europe", divs = {
+		{type = "districts", cat_as = "districts and autonomous territorial units"},
+		{type = "autonomous territorial units", cat_as = "districts and autonomous territorial units"},
+		"communes", "municipalities",
+	}, british_spelling = true},
 	["Monaco"] = {placetype = {"city-state", "country"}, container = "Europe",
 		-- We want the first placetype to be 'city-state' so the description of Monaco says it's a city-state, but we
 		-- want its parent to be "countries in Europe".
@@ -1304,6 +1307,7 @@ export.countries = {
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
 			{type = "census-designated places", prep = "in"},
+			{type = "unincorporated communities", prep = "in"},
 			-- Don't change the following to something more politically correct until/unless the US government makes a
 			-- similar switch (and note that as of Apr 18 2025, the Wikipedia article is still at
 			-- [[w:Indian reservations]]).
@@ -3004,6 +3008,71 @@ export.mexico_group = {
 	data = export.mexico_states,
 }
 
+export.moldova_districts_and_autonomous_territorial_units = {
+	["Anenii Noi District, Moldova"] = {}, -- capital [[Anenii Noi]]
+	["Basarabeasca District, Moldova"] = {}, -- capital [[Basarabeasca]]
+	["Briceni District, Moldova"] = {}, -- capital [[Briceni]]
+	["Cahul District, Moldova"] = {}, -- capital [[Cahul]]
+	["Cantemir District, Moldova"] = {}, -- capital [[Cantemir, Moldova|Cantemir]]
+	["Călărași District, Moldova"] = {}, -- capital [[Călărași, Moldova|Călărași]]
+	["Căușeni District, Moldova"] = {}, -- capital [[Căușeni]]
+	["Cimișlia District, Moldova"] = {}, -- capital [[Cimișlia]]
+	["Criuleni District, Moldova"] = {}, -- capital [[Criuleni]]
+	["Dondușeni District, Moldova"] = {}, -- capital [[Dondușeni]]
+	["Drochia District, Moldova"] = {}, -- capital [[Drochia]]
+	["Dubăsari District, Moldova"] = {}, -- capital [[Cocieri]]
+	["Edineț District, Moldova"] = {}, -- capital [[Edineț]]
+	["Fălești District, Moldova"] = {}, -- capital [[Fălești]]
+	["Florești District, Moldova"] = {}, -- capital [[Florești, Moldova|Florești]]
+	["Glodeni District, Moldova"] = {}, -- capital [[Glodeni]]
+	["Hîncești District, Moldova"] = {}, -- capital [[Hîncești]]
+	["Ialoveni District, Moldova"] = {}, -- capital [[Ialoveni]]
+	["Leova District, Moldova"] = {}, -- capital [[Leova]]
+	["Nisporeni District, Moldova"] = {}, -- capital [[Nisporeni]]
+	["Ocnița District, Moldova"] = {}, -- capital [[Ocnița]]
+	["Orhei District, Moldova"] = {}, -- capital [[Orhei]]
+	["Rezina District, Moldova"] = {}, -- capital [[Rezina]]
+	["Rîșcani District, Moldova"] = {}, -- capital [[Rîșcani]]
+	["Sîngerei District, Moldova"] = {}, -- capital [[Sîngerei]]
+	["Soroca District, Moldova"] = {}, -- capital [[Soroca]]
+	["Strășeni District, Moldova"] = {}, -- capital [[Strășeni]]
+	["Șoldănești District, Moldova"] = {}, -- capital [[Șoldănești]]
+	["Ștefan Vodă District, Moldova"] = {}, -- capital [[Ștefan Vodă]]
+	["Taraclia District, Moldova"] = {}, -- capital [[Taraclia]]
+	["Telenești District, Moldova"] = {}, -- capital [[Telenești]]
+	["Ungheni District, Moldova"] = {}, -- capital [[Ungheni]]
+	["Chișinău, Moldova"] = {placetype = "municipality"},
+	["Bălți, Moldova"] = {placetype = "municipality"},
+	["Gagauzia, Moldova"] = {placetype = {"autonomous territorial unit", "autonomous region", "region"}}, -- capital [[Comrat]]
+	-- the remainder are under the de-facto control of the unrecognized state of Transnistria
+	["Bender, Moldova"] = {placetype = "municipality"},
+	["Tighina, Moldova"] = {alias_of = "Bender, Moldova"},
+	["Transnistria, Moldova"] = {placetype = {"autonomous territorial unit", "autonomous region", "region"}}, -- capital [[Tiraspol]]
+	["Left Bank of the Dniester, Moldova"] = {alias_of = "Transnistria, Moldova", the = true},
+	["Administrative-Territorial Units of the Left Bank of the Dniester, Moldova"] = {alias_of = "Transnistria, Moldova", the = true},
+}
+
+local function moldova_placename_to_key(placename)
+	local elliptical_key = placename .. ", Moldova"
+	if export.moldova_districts_and_autonomous_territorial_units[elliptical_key] then
+		return elliptical_key
+	end
+	if placename:find(" District$") then
+		return placename .. ", Moldova"
+	end
+	return placename .. " District, Moldova"
+end
+
+-- Moldovan districts (raions) and autonomous territorial units
+export.moldova_group = {
+	key_to_placename = make_key_to_placename(", Moldova$", " District"),
+	placename_to_key = moldova_placename_to_key,
+	default_container = "Moldova",
+	default_placetype = {"district", "raion"},
+	default_divs = {"communes"},
+	data = export.moldova_districts_and_autonomous_territorial_units,
+}
+
 export.morocco_regions = {
 	["Tangier-Tetouan-Al Hoceima, Morocco"] = {},
 	["Oriental, Morocco"] = {wp = "%l (%c)"},
@@ -3064,6 +3133,36 @@ export.netherlands_group = {
 	default_placetype = "province",
 	default_divs = "municipalities",
 	data = export.netherlands_provinces,
+}
+
+export.new_zealand_regions = {
+	-- North Island regions
+	["Northland, New Zealand"] = {wp = "%l Region"}, -- ISO 3166-2 code NZ-NTL, number 1, capital [[Whangārei]]
+	["Auckland, New Zealand"] = {wp = "%l Region"}, -- ISO 3166-2 code NZ-AUK, number 2, capital [[Auckland]]
+	["Waikato, New Zealand"] = {}, -- ISO 3166-2 code NZ-WKO, number 3, capital [[Hamilton, New Zealand|Hamilton]]
+	["Bay of Plenty, New Zealand"] = {the = true, wp = "%l Region"}, -- ISO 3166-2 code NZ-BOP, number 4, capital [[Whakatāne]]
+	["Gisborne, New Zealand"] = {placetype = {"region", "district"}, wp = "%l District"}, -- ISO 3166-2 code NZ-GIS, number 5, capital [[Gisborne, New Zealand|Gisborne]]
+	["Hawke's Bay, New Zealand"] = {}, -- ISO 3166-2 code NZ-HKB, number 6, capital [[Napier, New Zealand|Napier]]
+	["Taranaki, New Zealand"] = {}, -- ISO 3166-2 code NZ-TKI, number 7, capital [[Stratford, New Zealand|Stratford]]
+	["Manawatū-Whanganui, New Zealand"] = {}, -- ISO 3166-2 code NZ-MWT, number 8, capital [[Palmerston North]]
+	["Manawatu-Whanganui, New Zealand"] = {alias_of = "Manawatū-Whanganui, New Zealand", display = true},
+	["Manawatu-Wanganui, New Zealand"] = {alias_of = "Manawatū-Whanganui, New Zealand", display = true},
+	["Wellington, New Zealand"] = {wp = "%l Region"}, -- ISO 3166-2 code NZ-WGN, number 9, capital [[Wellington]]
+	-- South Island regions
+	["Tasman, New Zealand"] = {placetype = {"region", "district"}, wp = "%l District"}, -- ISO 3166-2 code NZ-TAS, number 10, capital [[Richmond, New Zealand|Richmond]]
+	["Nelson, New Zealand"] = {placetype = {"region", "city"}, wp = "%l, %c", is_city = true}, -- ISO 3166-2 code NZ-NSN, number 11, capital [[Nelson, New Zealand|Nelson]]
+	["Marlborough, New Zealand"] = {placetype = {"region", "district"}, wp = "%l District"}, -- ISO 3166-2 code NZ-MBH, number 12, capital [[Blenheim, New Zealand|Blenheim]]
+	["West Coast, New Zealand"] = {the = true, wp = "%l Region"}, -- ISO 3166-2 code NZ-WTC, number 13, capital [[Greymouth]]
+	["Canterbury, New Zealand"] = {wp = "%l Region"}, -- ISO 3166-2 code NZ-CAN, number 14, capital [[Christchurch]]
+	["Otago, New Zealand"] = {}, -- ISO 3166-2 code NZ-OTA, number 15, capital [[Dunedin]]
+	["Southland, New Zealand"] = {wp = "%l Region"}, -- ISO 3166-2 code NZ-STL, number 16, capital [[Invercargill]]
+}
+
+-- regions of New Zealand
+export.new_zealand_group = {
+	default_container = "New Zealand",
+	default_placetype = "region",
+	data = export.new_zealand_regions,
 }
 
 export.nigeria_states = {
@@ -3329,6 +3428,52 @@ export.poland_group = {
 		{type = "Polish colonies", cat_as = {{type = "villages", prep = "in"}}},
 	},
 	data = export.poland_voivodeships,
+}
+
+export.portugal_districts_and_autonomous_regions = {
+	["Azores, Portugal"] = {the = true, placetype = {"autonomous region", "region"}},
+	["Aveiro District, Portugal"] = {},
+	["Beja District, Portugal"] = {},
+	["Braga District, Portugal"] = {},
+	["Bragança District, Portugal"] = {},
+	["Castelo Branco District, Portugal"] = {},
+	["Coimbra District, Portugal"] = {},
+	["Évora District, Portugal"] = {},
+	["Faro District, Portugal"] = {},
+	["Guarda District, Portugal"] = {},
+	["Leiria District, Portugal"] = {},
+	["Lisbon District, Portugal"] = {},
+	["Lisboa District, Portugal"] = {alias_of = "Lisbon District, Portugal", display = true},
+	["Madeira, Portugal"] = {placetype = {"autonomous region", "region"}},
+	["Portalegre District, Portugal"] = {},
+	["Porto District, Portugal"] = {},
+	["Santarém District, Portugal"] = {},
+	["Setúbal District, Portugal"] = {},
+	["Viana do Castelo District, Portugal"] = {},
+	["Vila Real District, Portugal"] = {},
+	["Viseu District, Portugal"] = {},
+}
+
+local function portugal_placename_to_key(placename)
+	if placename == "Azores" or placename == "Madeira" then
+		return placename .. ", Portugal"
+	end
+	if placename:find(" District$") then
+		return placename .. ", Portugal"
+	end
+	return placename .. " District, Portugal"
+end
+
+-- districts and autonomous regions of Portugal
+export.portugal_group = {
+	key_to_placename = make_key_to_placename(", Portugal$", " District$"),
+	placename_to_key = portugal_placename_to_key,
+	default_container = "Portugal",
+	default_placetype = "district",
+	default_divs = {
+		"municipalities",
+	},
+	data = export.portugal_districts_and_autonomous_regions,
 }
 
 export.romania_counties = {
@@ -4226,6 +4371,7 @@ export.united_states_group = {
 	},
 	addl_divs = {
 		{type = "census-designated places", prep = "in"},
+		{type = "unincorporated communities", prep = "in"},
 	},
 	data = export.united_states_states,
 }
@@ -5156,7 +5302,8 @@ export.misc_cities = {
 	["Amsterdam"] = {container = {key = "North Holland, Netherlands", placetype = "province"}},
 	["Rotterdam"] = {container = {key = "South Holland, Netherlands", placetype = "province"}},
 	["The Hague"] = {container = {key = "South Holland, Netherlands", placetype = "province"}},
-	["Auckland"] = {container = "New Zealand"},
+	-- Christchurch (metro 546,600) and Wellington (metro 439,800) are too small to make it.
+	["Auckland"] = {container = {key = "Auckland, New Zealand", placetype = "region"}},
 	["Oslo"] = {container = {key = "Oslo, Norway", placetype = "county"}},
 	["Warsaw"] = {container = {key = "Masovian Voivodeship, Poland", placetype = "voivodeship"}},
 	["Katowice"] = {container = {key = "Silesian Voivodeship, Poland", placetype = "voivodeship"}},
@@ -5172,8 +5319,8 @@ export.misc_cities = {
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Lodz" without accents.
 	["Lodz"] = {container = {key = "Lodz Voivodeship, Poland", placetype = "voivodeship"}, wp = "Łódź"},
 	["Łódź"] = {alias_of = "Lodz", display = true},
-	["Lisbon"] = {container = "Portugal"},
-	["Porto"] = {container = "Portugal"},
+	["Lisbon"] = {container = {key = "Lisbon District, Portugal", placetype = "district"}},
+	["Porto"] = {container = {key = "Porto District, Portugal", placetype = "district"}},
 	["Oporto"] = {alias_of = "Porto", display = true},
 	["Bucharest"] = {container = "Romania"},
 	["Belgrade"] = {container = "Serbia"},
@@ -5295,14 +5442,17 @@ export.locations = {
 	export.malaysia_group,
 	export.malta_group,
 	export.mexico_group,
+	export.moldova_group,
 	export.morocco_group,
 	export.netherlands_group,
+	export.new_zealand_group,
 	export.nigeria_group,
 	export.north_korea_group,
 	export.norway_group,
 	export.pakistan_group,
 	export.philippines_group,
 	export.poland_group,
+	export.portugal_group,
 	export.romania_group,
 	export.russia_group,
 	export.saudi_arabia_group,
