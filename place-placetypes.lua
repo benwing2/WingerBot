@@ -296,6 +296,11 @@ have qualifiers and so it doesn't make sense to try and look for them.
 
 `from_category`, if set, causes category-only placetypes (those ending in `!`) to also be checked.
 
+`form_of_directive`, if set, causes the specified form-of directive (e.g. `FORMER_NAME_OF`) to be prepended to checked
+placetypes, their directive-specific type (e.g. `FORMER_NAME_OF_type`), and their classes (`class`) to get the
+appropriate placetypes to check for form-of-directive categories. It falls back to the prepended generic `place` as a
+placetype, e.g. `FORMER_NAME_OF place`, if nothing else matches.
+
 `no_check_for_inherently_former` is used internally to prevent an infinite loop when checking for `inherently_former`.
 
 `register_former_as_non_former` is a major hack used in `get_bare_categories` to deal with the mismatch between e.g.
@@ -306,10 +311,12 @@ fix this in the known-location refactor.
 ]==]
 function export.get_placetype_equivs(placetype, props)
 	local no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category, register_former_as_non_former
+	local form_of_directive
 	if props then
 		no_fallback, no_split_qualifiers, no_check_for_inherently_former, from_category, register_former_as_non_former =
 			props.no_fallback, props.no_split_qualifiers, props.no_check_for_inherently_former, props.from_category,
 			props.register_former_as_non_former
+		form_of_directive = props.form_of_directive
 	end
 	local equivs = {}
 
@@ -368,86 +375,123 @@ function export.get_placetype_equivs(placetype, props)
 
 	for _, split in ipairs(splits) do
 		local prev_qualifier, this_qualifier, reduced_placetype = unpack(split, 1, 3)
-		-- If a special "former" qualifier like `former` or `historical` isn't present, and
-		-- `no_check_for_inherently_former` is not given (this flag is used to avoid infinite loops), check for
-		-- "inherently former" placetypes like `satrapy` and `treaty port` that always refer to no-longer-existing
-		-- placetypes, and handle accordingly.
-		local former_qualifiers = this_qualifier and export.former_qualifiers[this_qualifier] or nil
-		if not former_qualifiers and not no_check_for_inherently_former then
-			former_qualifiers = export.get_equiv_placetype_prop(reduced_placetype,
-				function(pt) return export.get_placetype_prop(pt, "inherently_former") end,
-				{no_check_for_inherently_former = true})
-		end
 
-		-- If a special "former" qualifier like `former` or `historical` is present, map it to the appropriate internal
-		-- qualifiers (`ANCIENT` and/or `FORMER`, which are written in all-caps to distinguish them from user-specified
-		-- qualifiers), fetch the `former_type` property, and treat the placetype as if a concatenation of the mapped
-		-- qualifier(s) and the value of `former_type`. For example, if `medieval village` is given, we map `medieval`
-		-- to `ANCIENT` and `FORMER`, and `village` to its `former_type` of `settlement`, and enter the placetypes
-		-- `ANCIENT settlement` and `FORMER settlement` (in that order) into `equivs`. If the placetype following the
-		-- "former" qualifier is recognized in `placetype_data` but has no `former_type` and no fallback with a
-		-- `former_type` specified, it is an internal error; but if the placetype isn't recognized (e.g. something like
-		-- `former greenhouse` is specified and we don't have an entry for `greenhouse`), just track the occurrence and
-		-- don't enter anything into `equivs`.
-		if former_qualifiers then
+		if form_of_directive then
 			-- FIXME: Should we respect `no_fallback` here? My instinct says no.
-			local reduced_placetype_equivs = export.get_placetype_equivs(reduced_placetype, {
-				no_check_for_inherently_former = true
-			})
-			local former_type = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
-				function(pt) return export.get_placetype_prop(pt, "former_type") or
+			local reduced_placetype_equivs = export.get_placetype_equivs(reduced_placetype)
+			local directive_type = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
+				function(pt) return export.get_placetype_prop(pt, form_of_directive .. "_type") or
 					export.get_placetype_prop(pt, "class") end
 			)
-			if not former_type then
+			if not directive_type then
 				local pt_data = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
 					function(pt) return export.placetype_data[pt] end
 				)
 				if pt_data then
-					internal_error("For placetype '%s', placetype data located but `former_type` missing; " ..
-						"placetypes searched are %s", reduced_placetype, reduced_placetype_equivs)
+					internal_error("For placetype %s in conjunction with form-of directive %s, placetype data " ..
+						"located but directive-specific type property `%s_type` missing, and so is `class`; " ..
+						"placetypes searched are %s", reduced_placetype, form_of_directive, form_of_directive,
+						reduced_placetype_equivs)
 				else
-					-- Enable error when we've verified there aren't any examples.
-					track("bad-former-placetype")
-					track("bad-former-placetype/" .. reduced_placetype)
-					--process_error("For placetype '%s', unrecognized placetype following 'former'-type qualifier; " ..
-					--	"searched placetype(s) %s", reduced_placetype, dump(reduced_placetype_equivs))
+					-- This should be allowed, as we allow unrecognized placetypes in general.
 				end
-			elseif former_type ~= "!" then
+			elseif directive_type ~= "!" then
+				-- Join the rightmost split-off qualifier to the previously split-off qualifiers to form a combined
+				-- qualifier. NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier` are
+				-- nil.
+				local qualifier = prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
 				-- First check directly for `ANCIENT/FORMER` + the original following placetype. This makes it possible
 				-- for (e.g.) former provinces of the Roman empire to be categorized specially.
-				for _, former_qualifier in ipairs(former_qualifiers) do
-					do_placetype(prev_qualifier, former_qualifier .. " " .. reduced_placetype)
-				end
-				for _, former_qualifier in ipairs(former_qualifiers) do
-					do_placetype(prev_qualifier, former_qualifier .. " " .. former_type)
-				end
-				-- HACK! See explanation above for `register_former_as_non_former`.
-				if register_former_as_non_former then
-					do_placetype(prev_qualifier, reduced_placetype)
-				end
+				do_placetype(qualifier, form_of_directive .. " " .. reduced_placetype)
+				do_placetype(qualifier, form_of_directive .. " " .. directive_type)
+				do_placetype(qualifier, form_of_directive .. " place")
 				break
 			end
-		end
+		else
+			-- If a special "former" qualifier like `former` or `historical` isn't present, and
+			-- `no_check_for_inherently_former` is not given (this flag is used to avoid infinite loops), check for
+			-- "inherently former" placetypes like `satrapy` and `treaty port` that always refer to no-longer-existing
+			-- placetypes, and handle accordingly.
+			local former_qualifiers = this_qualifier and export.former_qualifiers[this_qualifier] or nil
+			if not former_qualifiers and not no_check_for_inherently_former then
+				former_qualifiers = export.get_equiv_placetype_prop(reduced_placetype,
+					function(pt) return export.get_placetype_prop(pt, "inherently_former") end,
+					{no_check_for_inherently_former = true})
+			end
 
-		-- Then see if the rightmost split-off qualifier is in qualifier_to_placetype_equivs
-		-- (e.g. 'fictional *' -> 'fictional location'). If so, add the mapping.
-		if this_qualifier and export.qualifier_to_placetype_equivs[this_qualifier] then
-			insert(equivs, {qualifier=prev_qualifier, placetype=export.qualifier_to_placetype_equivs[this_qualifier]})
-		end
+			-- If a special "former" qualifier like `former` or `historical` is present, map it to the appropriate
+			-- internal qualifiers (`ANCIENT` and/or `FORMER`, which are written in all-caps to distinguish them from
+			-- user-specified qualifiers), fetch the `former_type` property, and treat the placetype as if a
+			-- concatenation of the mapped qualifier(s) and the value of `former_type`. For example, if `medieval
+			-- village` is given, we map `medieval` to `ANCIENT` and `FORMER`, and `village` to its `former_type` of
+			-- `settlement`, and enter the placetypes `ANCIENT settlement` and `FORMER settlement` (in that order) into
+			-- `equivs`. If the placetype following the "former" qualifier is recognized in `placetype_data` but has no
+			-- `former_type` and no fallback with a `former_type` specified, it is an internal error; but if the
+			-- placetype isn't recognized (e.g. something like `former greenhouse` is specified and we don't have an
+			-- entry for `greenhouse`), just track the occurrence and don't enter anything into `equivs`.
+			if former_qualifiers then
+				-- FIXME: Should we respect `no_fallback` here? My instinct says no.
+				local reduced_placetype_equivs = export.get_placetype_equivs(reduced_placetype, {
+					no_check_for_inherently_former = true
+				})
+				local former_type = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
+					function(pt) return export.get_placetype_prop(pt, "former_type") or
+						export.get_placetype_prop(pt, "class") end
+				)
+				if not former_type then
+					local pt_data = export.get_equiv_placetype_prop_from_equivs(reduced_placetype_equivs,
+						function(pt) return export.placetype_data[pt] end
+					)
+					if pt_data then
+						internal_error("For placetype %s, placetype data located but `former_type` missing; " ..
+							"placetypes searched are %s", reduced_placetype, reduced_placetype_equivs)
+					else
+						-- Enable error when we've verified there aren't any examples.
+						track("bad-former-placetype")
+						track("bad-former-placetype/" .. reduced_placetype)
+						--process_error("For placetype '%s', unrecognized placetype following 'former'-type " ..
+						--	"qualifier; searched placetype(s) %s", reduced_placetype, dump(reduced_placetype_equivs))
+					end
+				elseif former_type ~= "!" then
+					-- First check directly for `ANCIENT/FORMER` + the original following placetype. This makes it
+					-- possible for (e.g.) former provinces of the Roman empire to be categorized specially.
+					for _, former_qualifier in ipairs(former_qualifiers) do
+						do_placetype(prev_qualifier, former_qualifier .. " " .. reduced_placetype)
+					end
+					for _, former_qualifier in ipairs(former_qualifiers) do
+						do_placetype(prev_qualifier, former_qualifier .. " " .. former_type)
+					end
+					-- HACK! See explanation above for `register_former_as_non_former`.
+					if register_former_as_non_former then
+						do_placetype(prev_qualifier, reduced_placetype)
+					end
+					break
+				end
+			end
 
-		-- Finally, join the rightmost split-off qualifier to the previously split-off qualifiers to form a combined
-		-- qualifier, and add it along with reduced_placetype and any mapping in placetype_data for reduced_placetype.
-		-- NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier` are nil, and this inserts
-		-- the full placetype into `equivs`.
-		local qualifier = prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
-		do_placetype(qualifier, reduced_placetype)
+			-- Then see if the rightmost split-off qualifier is in qualifier_to_placetype_equivs
+			-- (e.g. 'fictional *' -> 'fictional location'). If so, add the mapping.
+			if this_qualifier and export.qualifier_to_placetype_equivs[this_qualifier] then
+				insert(equivs, {
+					qualifier=prev_qualifier,
+					placetype=export.qualifier_to_placetype_equivs[this_qualifier]
+				})
+			end
 
-		-- If `no_fallback` and there's an entry in `placetype_data` for this placetype, don't include any reduced
-		-- placetypes to avoid the "overseas territory treated as a territory" issue describe above.
-		if no_fallback then
-			local canon_placetype, ptdata, ptmatch = export.get_placetype_data(reduced_placetype, from_category)
-			if canon_placetype then
-				break
+			-- Finally, join the rightmost split-off qualifier to the previously split-off qualifiers to form a combined
+			-- qualifier, and add it along with reduced_placetype and any mapping in placetype_data for
+			-- reduced_placetype. NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier` are
+			-- nil, and this inserts the full placetype into `equivs`.
+			local qualifier = prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
+			do_placetype(qualifier, reduced_placetype)
+
+			-- If `no_fallback` and there's an entry in `placetype_data` for this placetype, don't include any reduced
+			-- placetypes to avoid the "overseas territory treated as a territory" issue describe above.
+			if no_fallback then
+				local canon_placetype, ptdata, ptmatch = export.get_placetype_data(reduced_placetype, from_category)
+				if canon_placetype then
+					break
+				end
 			end
 		end
 	end
@@ -1584,10 +1628,13 @@ end
 --[==[
 This is used to add pages to "bare" categories like [[:Category:en:Georgia, USA]] for `[[Georgia]]` and any
 foreign-language terms that are translations of the state of Georgia. We look at the page title (or its overridden value
-in {{para|pagename}}) as well as the glosses in {{para|t}}/{{para|t2}} etc. and the modern names in {{para|modern}}. We
-need to pay attention to the entry placetypes specified so we don't overcategorize; e.g. the US state of Georgia is
-`[[Джорджия]]` in Russian but the country of Georgia is `[[Грузия]]`, and if we just looked for matching names, we'd get
-both Russian terms categorized into both [[:Category:ru:Georgia, USA]] and [[:Category:ru:Georgia]].
+in {{para|pagename}}) as well as the glosses in {{para|t}}/{{para|t2}} etc., various extra-info values such as the
+modern names in {{para|modern}}, and any values specified using a form-of directive. We need to pay attention to the
+entry placetypes specified so we don't overcategorize; e.g. the US state of Georgia is `[[Джорджия]]` in Russian but the
+country of Georgia is `[[Грузия]]`, and if we just looked for matching names, we'd get both Russian terms categorized
+into both [[:Category:ru:Georgia, USA]] and [[:Category:ru:Georgia]]. We also need to check the containing holonyms to
+make sure there isn't a mismatch (so we don't e.g. categorize Newark, Delaware in [[:Category:en:Newark]], which is
+intended for Newark, New Jersey).
 ]==]
 function export.get_bare_categories(args, overall_place_spec)
 	local bare_cats = {}
@@ -1625,25 +1672,32 @@ function export.get_bare_categories(args, overall_place_spec)
 	end
 
 	-- FIXME: Should we only do the following if the language is English (requires that the lang is passed in)?
+	-- We should always do it if `pagename` is given (as it is with {{tcl}}) but maybe not otherwise unless 1=en. There
+	-- are cases like [[Ankara]] = English name for capital of Turkey, but also the name in various languages for the
+	-- capital of Ghana (= English [[Accra]]). But this should get caught by mismatching the containing country. The
+	-- advantage of checking when the language isn't English is we catch those places that fail to give an English
+	-- translation but where the translation happens to be the same as the other-language spelling. However, I don't
+	-- know how often this situation occurs.
 	check_term(args.pagename or mw.title.getCurrentTitle().subpageText)
 	for _, t in ipairs(args.t) do
 		check_term(t)
 	end
-	for _, modern in ipairs(args.modern) do
-		check_term(modern)
-	end
-	for _, full in ipairs(args.full) do
-		check_term(full)
-	end
-	for _, short in ipairs(args.short) do
-		check_term(short)
-	end
-	for _, directive in ipairs(overall_place_spec.directives) do
-		for _, term in ipairs(directive.terms) do
+	local function check_termobj_list(terms)
+		for _, term in ipairs(terms) do
 			if term.alt or term.term then
 				check_term(term.alt or term.term)
 			end
 		end
+	end
+
+	for _, extra_info_terms in ipairs(overall_place_spec.extra_info_terms) do
+		local arg = extra_info_terms.arg
+		if arg == "modern" or arg == "now" or arg == "full" or arg == "short" then
+			check_termobj_list(extra_info_terms.terms)
+		end
+	end
+	for _, directive in ipairs(overall_place_spec.directives) do
+		check_termobj_list(directive.terms)
 	end
 
 	return bare_cats
