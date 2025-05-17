@@ -673,7 +673,7 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 		alias_resolution = "display",
 	} do
 		if spec.alias_of and spec.display then
-			insert(all_display_aliases_found, {group, key, spec})
+			insert(all_display_aliases_found, {group, key, spec, spec.display_as_full})
 		else
 			insert(all_others_found, {group, key, spec})
 		end
@@ -689,9 +689,9 @@ local function resolve_unlinked_placename_display_aliases(placetype, placename)
 			"all_display_aliases_found=%s, all_others_found=%s", placename, placetype, all_display_aliases_found,
 			all_others_found)
 	else
-		local group, key, spec = unpack(all_display_aliases_found[1])
+		local group, key, spec, as_full = unpack(all_display_aliases_found[1])
 		local full, elliptical = m_locations.key_to_placename(group, key)
-		return elliptical
+		return as_full and full or elliptical
 	end
 end
 
@@ -975,6 +975,7 @@ export.placetype_aliases = {
 	["arch"] = "archipelago",
 	["arep"] = "autonomous republic",
 	["aterr"] = "autonomous territory",
+	["atu"] = "autonomous territorial unit",
 	["bor"] = "borough",
 	["c"] = "country",
 	["can"] = "canton",
@@ -1868,14 +1869,18 @@ end
 
 -- Suffix display handler that adds a suffix such as " parish" to the display form of holonyms.
 -- Works identically to prefix_display_handler but for suffixes instead of prefixes.
-local function suffix_display_handler(suffix, holonym_placename, already_seen_strings)
+local function suffix_display_handler(suffix, holonym_placename, already_seen_strings, include_suffix_in_link)
 	if export.check_already_seen_string(holonym_placename, already_seen_strings or ulower(suffix)) then
 		return holonym_placename
 	end
 	if holonym_placename:find("%[%[") then
 		return holonym_placename .. " " .. suffix
 	end
-	return "[[" .. holonym_placename .. "]] " .. suffix
+	if include_suffix_in_link then
+		return "[[" .. holonym_placename .. " " .. suffix .. "]]"
+	else
+		return "[[" .. holonym_placename .. "]] " .. suffix
+	end
 end
 
 -- Display handler for boroughs. New York City boroughs are display as-is. Others are suffixed
@@ -1914,7 +1919,7 @@ end
 -- Others are displayed as e.g. "[[Fthiotida]] prefecture".
 local function prefecture_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
-	local suffix = m_locations.japan_prefectures[unlinked_placename .. " Prefecture"] and "Prefecture" or "prefecture"
+	local suffix = m_locations.japan_prefectures[unlinked_placename .. " Prefecture, Japan"] and "Prefecture" or "prefecture"
 	return suffix_display_handler(suffix, holonym_placename)
 end
 
@@ -1924,6 +1929,11 @@ local function province_display_handler(holonym_placetype, holonym_placename)
 	local unlinked_placename = m_links.remove_links(holonym_placename)
 	if m_locations.north_korea_provinces[unlinked_placename .. " Province, North Korea"] or
 	   m_locations.south_korea_provinces[unlinked_placename .. " Province, South Korea"] then
+		return suffix_display_handler("Province", holonym_placename)
+	end
+	-- Display handler for Iranian provinces. Iranian provinces are displayed as e.g. "[[Hormozgan]] Province". Others
+	-- are displayed as-is.
+	if m_locations.iran_provinces[unlinked_placename .. " Province, Iran"] then
 		return suffix_display_handler("Province", holonym_placename)
 	end
 	-- Display handler for Laotian provinces. Laotian provinces are displayed as e.g. "[[Vientiane]] Province". Others
@@ -1951,6 +1961,11 @@ local function state_display_handler(holonym_placetype, holonym_placename)
 		return suffix_display_handler("State", holonym_placename)
 	end
 	return holonym_placename
+end
+
+-- Display handler for voivodeships. Display as e.g. [[Subcarpathian Voivodeship]].
+local function voivodesip_display_handler(holonym_placetype, holonym_placename)
+	return suffix_display_handler("Voivodeship", holonym_placename, nil, "include_suffix_in_link")
 end
 
 ------------------------------------------------------------------------------------------
@@ -2272,6 +2287,16 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		suffix = "territory", -- but prefix is still "administrative territory (of)"
 		fallback = "territory",
+		class = "subpolity",
+	},
+	["administrative unit"] = {
+		-- Grrr, it's difficult to generalize about "administrative units". In Albania, "administrative unit" is an
+		-- official term for a city-level division of municipalities; Wikipedia renders it using the more practical term
+		-- "commune". In Pakistan, "administrative unit" is a collective term used to refer to all the different types
+		-- of first-level divisions (four provinces, one federal territory, and two "disputed territories", i.e. Azad
+		-- Kashmir and Gilgit-Balistan, that are variously described). For this reason, we set no fallback, but we need
+		-- to include this so that it can be used as a placetype for Albania, categorizing as communes.
+		link = "w",
 		class = "subpolity",
 	},
 	["administrative village"] = {
@@ -2726,13 +2751,16 @@ If you need to sort the following, do this (using Vim):
 	["constituent country"] = {
 		link = true,
 		preposition = "of",
-		fallback = "country",
 		class = "subpolity",
 	},
 	["constituent part"] = {
 		link = "separately",
 		preposition = "of",
 		class = "subpolity",
+	},
+	["constituent republic"] = {
+		link = "w",
+		fallback = "constituent country",
 	},
 	["counties and county-level cities!"] = {
 		-- This is used when grouping counties and county-level cities under prefecture-level cities in China.
@@ -2920,6 +2948,12 @@ If you need to sort the following, do this (using Vim):
 		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
 		-- administrative regions of certain countries, in this case Portugal.
 		category_link = "[[district]]s and [[autonomous region]]s",
+		class = "subpolity",
+	},
+	["districts and autonomous territorial units!"] = {
+		-- This and other similar "combined placetypes" are for use in the plural when grouping first-level
+		-- administrative regions of certain countries, in this case Moldova.
+		category_link = "[[district]]s and [[w:autonomous territorial unit|autonomous territorial unit]]s",
 		class = "subpolity",
 	},
 	["district capital"] = {
@@ -4451,6 +4485,11 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		class = "subpolity",
 	},
+	["theme"] = {
+		link = "+w:theme (Byzantine district)",
+		preposition = "of",
+		class = "subpolity",
+	},
 	["town"] = {
 		link = true,
 		generic_before_non_cities = "in",
@@ -4503,6 +4542,11 @@ If you need to sort the following, do this (using Vim):
 	["underground station"] = {
 		link = "w",
 		fallback = "metro station",
+	},
+	["unincorporated area"] = {
+		link = "w",
+		-- I don't know if this fallback makes sense everywhere.
+		fallback = "unincorporated community",
 	},
 	["unincorporated community"] = {
 		link = true,
@@ -4557,6 +4601,14 @@ If you need to sort the following, do this (using Vim):
 		class = "polity",
 		default = {"Unrecognized and nearly unrecognized countries"},
 	},
+	["unrecognised state"] = {
+		link = "w",
+		fallback = "unrecognized country",
+	},
+	["unrecognized state"] = {
+		link = "w",
+		fallback = "unrecognized country",
+	},
 	["urban area"] = {
 		link = "separately",
 		fallback = "neighborhood",
@@ -4600,6 +4652,7 @@ If you need to sort the following, do this (using Vim):
 	["voivodeship"] = {
 		-- Poland
 		link = true,
+		display_handler = voivodeship_display_handler,
 		preposition = "of",
 		holonym_use_the = true,
 		class = "subpolity",
