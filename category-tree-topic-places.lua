@@ -38,13 +38,9 @@ local function lcfirst(label)
 	return mw.getContentLanguage():lcfirst(label)
 end
 
-local function fetch_keydesc(group, key, spec)
-	local val = spec.keydesc
-	if is_callable(val) then
-		val = val(group, key, spec)
-		spec.keydesc = val
-	end
-	return val
+local function gsub_literally(str, from, to)
+	local m_strutils = require(string_utilities_module)
+    return (str:gsub(m_strutils.pattern_escape(from), m_strutils.replacement_escape(to)))
 end
 
 local class_to_bare_category_parent = {
@@ -83,8 +79,12 @@ insert(handlers, function(label)
 	if capital_placetype then
 		local pl_placetype = m_placetypes.pluralize_placetype(capital_placetype)
 		local linkdesc = m_placetypes.get_placetype_display_form(pl_placetype, "top-level")
-		if not linkdesc then
+		if linkdesc == nil then
 			internal_error("Unrecognized placetype %s when processing label %s", capital_placetype, label)
+		end
+		if linkdesc == false then
+			mw.log(("Display form for pl_placetype %s is false, can't categorize"):format(dump(pl_placetype)))
+			return nil
 		end
 		return {
 			type = "name",
@@ -138,6 +138,8 @@ insert(handlers, function(label)
 				description = "{{{langname}}} names of " .. ptdesc .. ".",
 				parents = parents,
 			}
+		elseif ptdesc == false then
+			mw.log(("Display form for canon_label %s is false, can't categorize"):format(dump(canon_label)))
 		end
 	end
 end)
@@ -189,7 +191,7 @@ adopt the way city descriptions used to read, which was similar to `"the city of
 [[West Midlands]], in the [[constituent country]] of [[England]], in the [[country]] of the [[United Kingdom]], in
 [[Europe]]"`.
 ]==]
-local function construct_location_description(group, key, spec)
+local function construct_location_desc(group, key, spec)
 	local parts = {}
 	local function ins(txt)
 		insert(parts, txt)
@@ -283,6 +285,24 @@ local function construct_location_description(group, key, spec)
 	end
 
 	return concat(parts)
+end
+
+-- Fetch or construct the description of the location specified by `key`. If the `keydesc` property is specified,
+-- use it directly but substitute any occurrence of `+++` with the auto-constructed location description, which
+-- mentions the placename corresponding to the key, its placetype and container, and repeats the description up
+-- the container trail until either there are no more containers or (more usually) the `no_include_container_in_desc`
+-- setting is found (which is set on all continents and continent-level regions).
+local function fetch_or_construct_location_desc(group, key, spec)
+	local val = spec.keydesc
+	if is_callable(val) then
+		val = val(group, key, spec)
+		spec.keydesc = val
+	end
+	val = val or "+++"
+	if val:find("%+%+%+") then
+		val = gsub_literally(val, "+++", construct_location_desc(group, key, spec))
+	end
+	return val
 end
 
 local function normalize_cat_as(cat_as, div)
@@ -389,14 +409,13 @@ insert(handlers, function(label)
 								m_placetypes.get_placetype_entry_preposition(location_type)}}
 						end
 						local prefixed_key = m_placetypes.get_prefixed_key(container.key, container.spec)
-						per_container_parent = per_container_parent:gsub("CONTAINER",
-							require(string_utilities_module).replacement_escape(prefixed_key))
+						per_container_parent = gsub_literally(per_container_parent, "CONTAINER", prefixed_key)
 						for _, cat_as in ipairs(cat_as_list) do
 							local per_container_per_placetype_parent = per_container_parent
-							per_container_per_placetype_parent = per_container_per_placetype_parent:gsub("PL_PLACETYPE",
-								require(string_utilities_module).replacement_escape(cat_as.type))
-							per_container_per_placetype_parent = per_container_per_placetype_parent:gsub("PREP",
-								require(string_utilities_module).replacement_escape(cat_as.prep))
+							per_container_per_placetype_parent = gsub_literally(per_container_per_placetype_parent, "PL_PLACETYPE",
+								cat_as.type)
+							per_container_per_placetype_parent = gsub_literally(per_container_per_placetype_parent, "PREP",
+								cat_as.prep)
 							m_table.insertIfNot(parents, per_container_per_placetype_parent)
 						end
 					end
@@ -422,15 +441,14 @@ insert(handlers, function(label)
 					val = "%l"
 				end
 				if type(val) == "string" then
-					val = val:gsub("%%l", require(string_utilities_module).replacement_escape(full_location_placename))
-					val = val:gsub("%%e", require(string_utilities_module).replacement_escape(
-						elliptical_location_placename))
+					val = gsub_literally(val, "%l", full_location_placename)
+					val = gsub_literally(val, "%e", elliptical_location_placename)
 					if val:find("%%c") then
 						if not full_container_placename then
 							internal_error("Wikipedia/Commons spec %s = %s has %%c in it but key %s has no " ..
 								"containers: %s", specname, val, canon_label, spec)
 						end
-						val = val:gsub("%%c", full_container_placename)
+						val = gsub_literally(val, "%c", full_container_placename)
 					end
 				end
 				return val
@@ -438,8 +456,7 @@ insert(handlers, function(label)
 
 			local description = spec.fulldesc or (
 				"{{{langname}}} terms related to the people, culture, or territory of " ..
-				(fetch_keydesc(group, canon_label, spec) or construct_location_description(
-					group, canon_label, spec)) .. ".")
+				fetch_or_construct_location_desc(group, canon_label, spec) .. ".")
 			local full_placename, _ = m_locations.key_to_placename(group, canon_label)
 			return {
 				type = "topic",
@@ -500,11 +517,32 @@ insert(handlers, function(label)
 			if canon_placetype and (ptdata.generic_before_non_cities or ptdata.generic_before_cities) then
 				local group, key, spec = find_canonical_key_from_place(place, canon_label)
 				if group then
+					-- Check whether the location uses British spelling, but also check all containers, because
+					-- it's too hard to keep in sync the `british_spelling` setting for locations at all different
+					-- levels (e.g. cities of various countries, first and second level administrative division, etc.),
+					-- so we just set it at top level on the country.
+					local uses_british_spelling = spec.british_spelling
+					if uses_british_spelling == nil then
+						for containers in m_locations.iterate_containers(group, key, spec) do
+							local must_outer_break = false
+							for _, container in ipairs(containers) do
+								if container.spec.british_spelling ~= nil then
+									uses_british_spelling = container.spec.british_spelling
+									must_outer_break = true
+									break
+								end
+							end
+							if must_outer_break then
+								break
+							end
+						end
+					end
+							
 					local allow_cat = true
-					if placetype == "neighborhoods" and spec.british_spelling or
-						placetype == "neighbourhoods" and not spec.british_spelling then
+					if placetype == "neighborhoods" and uses_british_spelling or
+						placetype == "neighbourhoods" and not uses_british_spelling then
 						mw.log(("Mismatch in spelling of placetype '%s' in category '%s', should be '%s'"):format(
-							placetype, canon_label, spec.british_spelling and "neighbourhoods" or "neighborhoods"))
+							placetype, canon_label, uses_british_spelling and "neighbourhoods" or "neighborhoods"))
 						allow_cat = false
 					end
 					if spec.is_former_place and placetype ~= "places" then
@@ -527,34 +565,38 @@ insert(handlers, function(label)
 						end
 						local linkdesc = m_placetypes.get_placetype_display_form(placetype,
 							spec.is_city and "city" or "noncity")
+						if linkdesc == false then
+							mw.log(("Display form for placetype %s is false, can't categorize"):format(dump(placetype)))
+							return nil
+						end
 						if not linkdesc then
 							internal_error("Unrecognized placetype %s when processing key %s, data %s, label %s",
 								placetype, key, spec, canon_label)
 						end
-						local keydesc = fetch_keydesc(group, key, spec) or
-							construct_location_description(group, key, spec)
-						desc = linkdesc .. " " .. in_of .. " " .. keydesc
+						desc = linkdesc .. " " .. in_of .. " " .. fetch_or_construct_location_desc(group, key, spec)
 						desc = "{{{langname}}} names of " .. desc .. "."
 						local parents = {}
 						insert(parents, key)
-						if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
-							-- top-level country, constituent country or the like
+						if spec.no_container_parent then
+							-- top-level country, constituent country, continent or the like
 							insert(parents, {name = normalized_placetype, sort = key})
-							local category_class = m_placetypes.get_equiv_placetype_prop(normalized_placetype,
-								function(pt) return m_placetypes.get_placetype_prop(pt, "class") end, {
-									from_category = true,
-									no_split_qualifiers = true,
-								})
-							if not category_class then
-								internal_error("Saw placetype %s that is either unknown or has no `class` " ..
-									"setting in `placetype_data`", normalized_placetype)
-							end
-							if class_is_political_division[category_class] == nil then
-								internal_error("Saw unknown category class %s derived from placetype %s",
-									category_class, normalized_placetype)
-							end
-							if class_is_political_division[category_class] then
-								insert(parents, "political divisions of specific countries")
+							if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
+								local category_class = m_placetypes.get_equiv_placetype_prop(normalized_placetype,
+									function(pt) return m_placetypes.get_placetype_prop(pt, "class") end, {
+										from_category = true,
+										no_split_qualifiers = true,
+									})
+								if not category_class then
+									internal_error("Saw placetype %s that is either unknown or has no `class` " ..
+										"setting in `placetype_data`", normalized_placetype)
+								end
+								if class_is_political_division[category_class] == nil then
+									internal_error("Saw unknown category class %s derived from placetype %s",
+										category_class, normalized_placetype)
+								end
+								if class_is_political_division[category_class] then
+									insert(parents, "political divisions of specific countries")
+								end
 							end
 						else
 							local container_iterator = m_locations.iterate_containers(group, key, spec)
@@ -645,17 +687,25 @@ insert(handlers, function(label)
 				-- Everything checks out, construct the category description.
 				local placetype_desc = m_placetypes.get_placetype_display_form(pl_placetype,
 					placetype.is_city and "city" or "noncity")
+				if placetype_desc == false then
+					mw.log(("Display form for pl_placetype %s is false, can't categorize"):format(dump(pl_placetype)))
+					return nil
+				end
 				if not placetype_desc then
 					internal_error("Unrecognized plural placetype %s, generated as the plural of %s, which " ..
 						"was found as the placetype of capital placetype %s in label %s", pl_placetype,
 						placetype, capital_cat, label)
 				end
-				local keydesc = fetch_keydesc(group, key, spec) or construct_location_description(group, key, spec)
 				local variant_match_text = ""
 				if #variant_matches > 0 then
 					for i, variant_match in ipairs(variant_matches) do
 						local variant_match_desc = m_placetypes.get_placetype_display_form(variant_match,
 							placetype.is_city and "city" or "noncity")
+						if variant_match_desc == false then
+							mw.log(("Display form for variant_match %s is false, can't categorize"):format(
+								dump(variant_match)))
+							return nil
+						end
 						if not variant_match_desc then
 							internal_error("Unrecognized variant match plural placetype %s, coming from " ..
 								"place key %s, data %s in label %s", variant_match, key, spec, label)
@@ -665,7 +715,7 @@ insert(handlers, function(label)
 					variant_match_text = " (including " .. m_table.serialCommaJoin(variant_matches) .. ")"
 				end
 				local desc = "{{{langname}}} names of [[capital]]s of " .. placetype_desc .. variant_match_text ..
-					" of " .. keydesc .. "."
+					" of " .. fetch_or_construct_location_desc(group, key, spec) .. "."
 				local full_placename, _ = m_locations.key_to_placename(group, key)
 				return {
 					type = "name",
@@ -681,7 +731,6 @@ end)
 
 local overriding_category_descriptions = {
 	["autonomous cities of Spain"] = "the [[w:Autonomous communities of Spain#Autonomous_cities|autonomous cities of Spain]]",
-	["regions of Albania"] = "the regions ([[periphery|peripheries]]) of [[Albania]]",
 	["regions of Greece"] = "the regions ([[periphery|peripheries]]) of [[Greece]]",
 	["regions of North Macedonia"] = "the regions ([[periphery|peripheries]]) of [[North Macedonia]]",
 	["subprefectures of Japan"] = "[[subprefecture]]s of [[Japan]]ese [[prefecture]]s",
@@ -720,9 +769,9 @@ insert(handlers, function(label)
 									pt_cat_as = {type = pt_cat_as}
 								end
 								if placetype == pt_cat_as.type then
-									local div_parent = pt_cat_as.skip_polity_parent_type
+									local div_parent = pt_cat_as.container_parent_type
 									if div_parent == nil then -- allow false
-										div_parent = div.skip_polity_parent_type
+										div_parent = div.container_parent_type
 									end
 									if div_parent == nil then
 										div_parent = placetype
@@ -749,23 +798,28 @@ insert(handlers, function(label)
 						return nil
 					end
 					local linkdesc = m_placetypes.get_placetype_display_form(placetype, spec.is_city and "city" or "noncity")
+					if linkdesc == false then
+						mw.log(("Display form for placetype %s is false, can't categorize"):format(dump(placetype)))
+						return nil
+					end
 					if not linkdesc then
 						internal_error("Unrecognized placetype %s when processing key %s, data %s, label %s",
 							placetype, key, spec, canon_label)
 					end
 					local desc = overriding_category_descriptions[canon_label]
 					if not desc then
-						local keydesc = fetch_keydesc(group, key, spec) or construct_location_description(group, key, spec)
-						desc = linkdesc .. " " .. in_of .. " " .. keydesc
+						desc = linkdesc .. " " .. in_of .. " " .. fetch_or_construct_location_desc(group, key, spec)
 					end
 					desc = "{{{langname}}} names of " .. desc .. "."
 					local parents = {}
 					insert(parents, key)
 					if div_parent then -- div_parent may be `false`
-						if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
-							-- top-level country, constituent country or the like
-							insert(parents, {name = placetype, sort = key})
-							insert(parents, "political divisions of specific countries")
+						if spec.no_container_parent then
+							-- top-level country, constituent country, continent or the like
+							insert(parents, {name = placetype, sort = " " .. key})
+							if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
+								insert(parents, "political divisions of specific countries")
+							end
 						else
 							local container_iterator = m_locations.iterate_containers(group, key, spec)
 							local next_containers = container_iterator()
@@ -779,7 +833,7 @@ insert(handlers, function(label)
 								end
 							else
 								-- unrecognized countries or the like
-								insert(parents, {name = placetype, sort = key})
+								insert(parents, {name = placetype, sort = " " .. key})
 							end
 						end
 					end
@@ -825,7 +879,7 @@ labels["nomes of Ancient Egypt"] = {
 	parents = {"Ancient Egypt"},
 }
 
--- FIXME: Everything here has been moved from [[Module:category tree/topic cat/data/Earth]]. Most should be removed.
+-- FIXME: Everything here has been moved from [[Module:category tree/topic/Earth]]. Most should be removed.
 
 labels["Atlantic Ocean"] = {
 	type = "related-to",
@@ -903,13 +957,6 @@ labels["Netherlands Antilles"] = {
 	type = "related-to",
 	description = "=the people, culture, or territory of the [[Netherlands Antilles]]",
 	parents = {"Netherlands", "North America"},
-}
-
--- FIXME: Redundant to 'Occitania, France'.
-labels["Occitania"] = {
-	type = "related-to",
-	description = "default",
-	parents = {"Europe", "France"},
 }
 
 labels["Provence"] = {
