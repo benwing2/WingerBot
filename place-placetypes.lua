@@ -2,7 +2,7 @@ local export = {}
 
 export.force_cat = false -- set to true for testing
 
-local m_locations = require("Module:User:Benwing2/place/locations")
+local m_locations = require("Module:place/locations")
 local m_links = require("Module:links")
 local m_table = require("Module:table")
 local m_strutils = require("Module:string utilities")
@@ -656,48 +656,95 @@ Get the display form of a placetype by looking it up in `placetype_data`. If the
 plural of a recognized placetype, the corresponding linked display form is returned (with plural placetypes displaying
 as plural but linked to the singular form of the placetype). Otherwise, return nil. If we're generating the description
 of a category, `category_type` should be set to one of `"top-level"` (for top-level categories like
-[[:Category:Neighborhoods]]), `"noncity"` (for non-city categories like [[:Category:Neighhorhoods in Illinois, USA]]) or
-`"city"` (for city categories like [[:Category:Neighbhorhoods of Chicago]]). Otherwise, we're generating the description
+[[:Category:Neighborhoods]]), `"noncity"` (for non-city categories like [[:Category:Neighborhoods in Illinois, USA]]) or
+`"city"` (for city categories like [[:Category:Neighborhoods of Chicago]]). Otherwise, we're generating the description
 for use in formatting a {{tl|place}} call, and category-only placetypes ending in `!` will be ignored, along with
-special `category_link*` settings.
+special `category_link*` settings. `return_full` is used along with `category_type` and will preferably return the
+"full" variant of category link settings, i.e. `full_category_link*`; if they don't exist, the `category_link*` value is
+prepended with `"names of"`.
 ]==]
-function export.get_placetype_display_form(placetype, category_type)
+function export.get_placetype_display_form(placetype, category_type, return_full)
 	local canon_placetype, ptdata, ptmatch = export.get_placetype_data(placetype, not not category_type)
 	if canon_placetype then
 		local raw_link
+		local function is_linked_string(str)
+			return type(str) == "string" and str:find("%[%[")
+		end
 		if category_type then
+			local fetched_full
+			local function fetch_maybe_full(prop)
+				local retval = ptdata["full_" .. prop]
+				if retval ~= nil then
+					if return_full then
+						return retval, true
+					else
+						internal_error("Saw full_" .. prop .. "=%s but `return_full` not set, can't handle", retval)
+					end
+				end
+				return ptdata[prop], false
+			end
+			local function maybe_prefix(str)
+				if return_full and not fetched_full then
+					return "names of " .. str
+				else
+					return str
+				end
+			end
 			-- Careful with `false` as possible value.
 			if category_type == "top-level" then
-				raw_link = ptdata.category_link_top_level
+				raw_link, fetched_full = fetch_maybe_full("category_link_top_level")
 			elseif category_type == "noncity" then
-				raw_link = ptdata.category_link_before_noncity
+				raw_link, fetched_full = fetch_maybe_full("category_link_before_noncity")
 			elseif category_type == "city" then
-				raw_link = ptdata.category_link_before_city
+				raw_link, fetched_full = fetch_maybe_full("category_link_before_city")
+			else
+				internal_error('Unrecognized value for `category_type` %s, should be "top-level", "noncity" or "city"',
+					category_type)
 			end
-			if raw_link ~= nil then
+			if type(raw_link) == "string" then
+				return maybe_prefix(raw_link), ptdata
+			elseif raw_link ~= nil then
 				return raw_link, ptdata
 			end
-			raw_link = ptdata.category_link
+			raw_link, fetched_full = fetch_maybe_full("category_link")
 			if raw_link == false then
 				return raw_link, ptdata
 			end
-			if type(raw_link) == "string" and raw_link:find("%[%[") then
-				return raw_link, ptdata
+			if is_linked_string(raw_link) then
+				return maybe_prefix(raw_link), ptdata
 			end
-		end
-		if ptmatch == "plural" then
-			local raw_link = ptdata.plural_link
+			if ptmatch == "plural" then
+				raw_link, fetched_full = fetch_maybe_full("plural_link")
+				if raw_link == false then
+					return raw_link, ptdata
+				end
+				if is_linked_string(raw_link) then
+					return maybe_prefix(raw_link), ptdata
+				end
+			end
+			if raw_link == nil then
+				raw_link, fetched_full = fetch_maybe_full("link")
+			end
 			if raw_link == false then
-				process_error("Placetype %s cannot appear plural", placetype)
-			end
-			if type(raw_link) == "string" and raw_link:find("%[%[") then
 				return raw_link, ptdata
 			end
+			return maybe_prefix(make_placetype_link(raw_link, canon_placetype,
+				placetype ~= canon_placetype and placetype or nil)), ptdata
+		else
+			if ptmatch == "plural" then
+				raw_link = ptdata.plural_link
+				if raw_link == false then
+					process_error("Placetype %s cannot appear plural", placetype)
+				end
+				if is_linked_string(raw_link) then
+					return raw_link, ptdata
+				end
+			end
+			if raw_link == nil then
+				raw_link = ptdata.link
+			end
+			return make_placetype_link(raw_link, canon_placetype, placetype ~= canon_placetype and placetype or nil), ptdata
 		end
-		if raw_link == nil then
-			raw_link = ptdata.link
-		end
-		return make_placetype_link(raw_link, canon_placetype, placetype ~= canon_placetype and placetype or nil), ptdata
 	end
 
 	return nil
@@ -2182,6 +2229,8 @@ There are several recognized property keys, of various types:
   using the mapping `class_to_bare_category_parent` in [[Module:category tree/topic cat/data/Places]].
 * `addl_bare_category_parents`: Extra parent categories to add a bare placetype category to (see `bare_category_parent`
   just above).
+* `bare_category_breadcrumb`: Breadcrumb for bare placetype categories. Also used as the sort key of
+  `bare_category_parent` if it is a string.
 * `inherently_former`: If specified and the given placetype is used as an entry placetype, act as if `former` or
   `ancient` (depending on the value of `inherently_former`) were prefixed to the placetype. This is for placetypes that
   always refer to no-longer-existing entities, such as `satrapy` and `treaty port`. The value of `inherently_former` is
@@ -2299,6 +2348,124 @@ If you need to sort the following, do this (using Vim):
 	["*"] = {
 		link = false,
 		cat_handler = generic_place_cat_handler,
+	},
+	["abbreviations of counties!"] = {
+		-- For categorizing abbreviations of counties of e.g. England
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[county|counties]]",
+		bare_category_breadcrumb = "counties",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of countries!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "abbreviations of places",
+	},
+	["abbreviations of departments!"] = {
+		-- For categorizing abbreviations of departments of e.g. France
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[department]]s",
+		bare_category_breadcrumb = "departments",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of districts!"] = {
+		-- For categorizing abbreviations of districts of e.g. ???
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[district]]s",
+		bare_category_breadcrumb = "districts",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of divisions!"] = {
+		-- For categorizing abbreviations of divisions of e.g. Bangladesh
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[division]]s",
+		bare_category_breadcrumb = "divisions",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of places!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "abbreviations",
+		bare_category_parent = "places",
+	},
+	["abbreviations of political divisions!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[political]] [[division]]s",
+		bare_category_breadcrumb = "political divisions",
+		bare_category_parent = "abbreviations of places",
+	},
+	["abbreviations of prefectures!"] = {
+		-- For categorizing abbreviations of prefectures of e.g. Japan
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[prefecture]]s",
+		bare_category_breadcrumb = "prefectures",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of provinces!"] = {
+		-- For categorizing abbreviations of provinces of e.g. Canada
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[province]]s",
+		bare_category_breadcrumb = "provinces",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of regions!"] = {
+		-- For categorizing abbreviations of regions of e.g. Italy
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[administrative region]]s",
+		bare_category_breadcrumb = "regions",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of states!"] = {
+		-- For categorizing abbreviations of states of e.g. the United States
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s",
+		bare_category_breadcrumb = "states",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of territories!"] = {
+		-- FIXME: Instead of this, we should probably have 'abbreviations of provinces and territories' etc.
+		-- For categorizing abbreviations of territories of e.g. Canada
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[territory|territories]]",
+		bare_category_breadcrumb = "territories",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["ABBREVIATION_OF country"] = {
+		link = false,
+		default = {"Abbreviations of countries"},
+	},
+	["ABBREVIATION_OF county"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF department"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF district"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF division"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF place"] = {
+		link = false,
+		default = {"Abbreviations of places"},
+	},
+	["ABBREVIATION_OF prefecture"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF province"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF region"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF state"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF subpolity"] = {
+		link = false,
+		default = {"Abbreviations of political divisions"},
+	},
+	["ABBREVIATION_OF territory"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
 	},
 	["administrative atoll"] = {
 		-- Maldives
@@ -3155,6 +3322,9 @@ If you need to sort the following, do this (using Vim):
 		addl_bare_category_parents = {"ecosystems", "forestry"},
 		default = {true},
 	},
+
+	------------- Categories for former places
+
 	["FORMER capital"] = {
 		link = false,
 		entry_placetype_use_the = true,
@@ -3169,10 +3339,12 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former countries and country-like entities!"] = {
 		category_link = "[[country|countries]] and similar [[polity|polities]] that no longer exist",
+		bare_category_breadcrumb = "countries and country-like entities",
 		bare_category_parent = "former polities",
 	},
 	["former dependent territories!"] = {
 		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
+		bare_category_breadcrumb = "dependent territories",
 		bare_category_parent = "former political divisions",
 	},
 	["FORMER dependent territory"] = {
@@ -3192,11 +3364,13 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former man-made structures!"] = {
 		category_link = "man-made structures such as [[airport]]s and [[park]]s that no longer exist",
+		bare_category_breadcrumb = "man-made structures",
 		bare_category_parent = "former places",
 	},
 	["former municipalities!"] = {
 		-- For categorizing former municipalities of the Netherlands
 		category_link = "no-longer-existing [[municipality|municipalities]]",
+		bare_category_breadcrumb = "municipalities",
 		bare_category_parent = "former political divisions",
 	},
 	["FORMER municipality"] = {
@@ -3211,6 +3385,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former natural features!"] = {
 		category_link = "natural features such as [[lake]]s, [[river]]s and [[island]]s that no longer exist",
+		bare_category_breadcrumb = "natural features",
 		bare_category_parent = "former places",
 	},
 	["FORMER non-admin settlement"] = {
@@ -3220,14 +3395,17 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former places!"] = {
 		category_link = "[[place]]s of all sorts that no longer exist",
+		bare_category_breadcrumb = "former",
 		bare_category_parent = "places",
 	},
 	["former political divisions!"] = {
 		category_link = "[[political]] [[division]]s (states, provinces, counties, etc.) that no longer exist",
+		bare_category_breadcrumb = "political divisions",
 		bare_category_parent = "former places",
 	},
 	["former polities!"] = {
 		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
+		bare_category_breadcrumb = "polities",
 		bare_category_parent = "former places",
 	},
 	["FORMER polity"] = {
@@ -3255,6 +3433,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["former settlements!"] = {
 		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
+		bare_category_breadcrumb = "settlements",
 		bare_category_parent = "former political divisions",
 	},
 	["FORMER subpolity"] = {
@@ -3264,35 +3443,35 @@ If you need to sort the following, do this (using Vim):
 		default = {"Former political divisions"},
 	},
 
-	------------- Categories for former names
+	------------- Categories for former names of places
 
 	["former names of capitals!"] = {
-		category_link = "[[former]] [[name]]s of [[capital city|capital cities]] that generally still exist but under a different name",
+		full_category_link = "[[former]] [[name]]s of [[capital city|capital cities]] that generally still exist but under a different name",
 		bare_category_breadcrumb = "capitals",
 		bare_category_parent = "former names of settlements",
 	},
 	["former names of countries!"] = {
-		category_link = "[[former]] [[name]]s of [[country|countries]] that generally still exist but under a different name",
+		full_category_link = "[[former]] [[name]]s of [[country|countries]] that generally still exist but under a different name",
 		bare_category_breadcrumb = "countries",
 		bare_category_parent = "former names of places",
 	},
 	["former names of places!"] = {
-		category_link = "[[former]] [[name]]s of [[place]]s that generally still exist but under a different name",
+		full_category_link = "[[former]] [[name]]s of [[place]]s that generally still exist but under a different name",
 		bare_category_breadcrumb = "former names",
 		bare_category_parent = "places",
 	},
 	["former names of political divisions!"] = {
-		category_link = "[[former]] [[name]]s of [[political]] [[division]]s (states, provinces, counties, etc.) that generally still exist but under a different name",
+		full_category_link = "[[former]] [[name]]s of [[political]] [[division]]s (states, provinces, counties, etc.) that generally still exist but under a different name",
 		bare_category_breadcrumb = "political divisions",
 		bare_category_parent = "former names of places",
 	},
 	["former names of polities!"] = {
-		category_link = "[[former]] [[name]]s of [[polity|polities]] (e.g. [[country|countries]]) that generally still exist but under a different name",
+		full_category_link = "[[former]] [[name]]s of [[polity|polities]] (e.g. [[country|countries]]) that generally still exist but under a different name",
 		bare_category_breadcrumb = "polities",
 		bare_category_parent = "former names of places",
 	},
 	["former names of settlements!"] = {
-		category_link = "[[former]] [[name]]s of [[city|cities]], [[town]]s, [[village]]s, etc. that generally still exist but under a different name",
+		full_category_link = "[[former]] [[name]]s of [[city|cities]], [[town]]s, [[village]]s, etc. that generally still exist but under a different name",
 		bare_category_breadcrumb = "settlements",
 		bare_category_parent = "former names of political divisions",
 	},
@@ -3324,6 +3503,30 @@ If you need to sort the following, do this (using Vim):
 		link = false,
 		default = {"Former names of political divisions"},
 	},
+
+	-- Categories for former official names of places
+
+	["former official names of countries!"] = {
+		full_category_link = "no-longer-[[use]]d [[official]] [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "former official names of places",
+		addl_bare_category_parents = {{name = "former names of countries", sort = "official"}}
+	},
+	["former official names of places!"] = {
+		full_category_link = "no-longer-[[use]]d [[official]] [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "official",
+		bare_category_parent = "former names of places",
+	},
+	["FORMER_OFFICIAL_NAME_OF country"] = {
+		link = false,
+		default = {"Former official names of countries"},
+	},
+	["FORMER_OFFICIAL_NAME_OF place"] = {
+		link = false,
+		default = {"Former official names of places"},
+	},
+	------------- End categories for former names of places
+
 	["fort"] = {
 		link = true,
 		fallback = "building",
@@ -3716,6 +3919,24 @@ If you need to sort the following, do this (using Vim):
 		fallback = "local government district with borough status",
 		has_neighborhoods = true,
 	},
+	["long-form names of countries!"] = {
+		full_category_link = "[[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "long-form names of places",
+	},
+	["long-form names of places!"] = {
+		full_category_link = "[[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "long-form names",
+		bare_category_parent = "places",
+	},
+	["LONG_FORM_OF country"] = {
+		link = false,
+		default = {"Long-form names of countries"},
+	},
+	["LONG_FORM_OF place"] = {
+		link = false,
+		default = {"Long-form names of places"},
+	},
 	["macroregion"] = {
 		link = true,
 		fallback = "region",
@@ -3979,6 +4200,24 @@ If you need to sort the following, do this (using Vim):
 		class = "natural feature",
 		addl_bare_category_parents = {"seas", "bodies of water"},
 		default = {true},
+	},
+	["official names of countries!"] = {
+		full_category_link = "[[official]] [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "official names of places",
+	},
+	["official names of places!"] = {
+		full_category_link = "[[official]] [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "official names",
+		bare_category_parent = "places",
+	},
+	["OFFICIAL_NAME_OF country"] = {
+		link = false,
+		default = {"Official names of countries"},
+	},
+	["OFFICIAL_NAME_OF place"] = {
+		link = false,
+		default = {"Official names of places"},
 	},
 	["okrug"] = {
 		link = true,
@@ -4780,7 +5019,6 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		display_handler = voivodeship_display_handler,
 		preposition = "of",
-		holonym_use_the = true,
 		class = "subpolity",
 	},
 	["volcano"] = {

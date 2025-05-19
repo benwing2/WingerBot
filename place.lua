@@ -2,7 +2,7 @@ local export = {}
 
 local force_cat = false -- set to true for testing
 
-local m_placetypes = require("Module:User:Benwing2/place/placetypes")
+local m_placetypes = require("Module:place/placetypes")
 local m_links = require("Module:links")
 local memoize = require("Module:memoize")
 local m_strutils = require("Module:string utilities")
@@ -10,7 +10,6 @@ local m_table = require("Module:table")
 
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
-local form_of_module = "Module:User:Benwing2/form of"
 local languages_module = "Module:languages"
 local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
@@ -101,7 +100,7 @@ The basic terminology used in this and associated {{tl|place}} modules is:
   starting with a semicolon, and are used when it is necessary to provide two or more definitions of a single location
   for proper categorization. For example, [[Vatican City]] is defined both as a city-state in Southern Europe and as an
   enclave within the city of Rome, follows:
-  : {{tl|place|en|city-state|r/Southern Europe|;,|an <<enclave>> within the city of <<city/Rome>>, <<c/Italy>>|cat=Cities in Italy|official=Vatican City State}}.
+  : {{tl|place|en|city-state|r/Southern Europe|;,|an <<enclave>> within the city of [[Rome]], [[Italy]]|cat=Places in Rome|official=Vatican City State}}.
   Similar things need to be done for places like [[Crimea]] that are claimed by two different countries with different
   definitions and administrative structures.
 ** There are two types of place descriptions, ''new-style'' and ''old-style''. (The use of the terms "new" and "old"
@@ -874,11 +873,31 @@ TODO/FIXME:
 	value of `display_as_full`.
 ]=]
 
-
+--[=[
+List specifying the allowed form-of directives, used for former names, official names, abbreviations, etc. of places.
+The key is the form-of directive and the value is an object with the following properties:
+* `text`: The actual text displayed before the terms. If the value is `+`, the key is used as the text. If the value is
+	a function, it is passed a single argument, the overall place spec (see the comment above the function
+    `parse_overall_place_spec` for the format of this argument) and should return the text to be displayed.
+* `type_prefix`: The prefix used to generate the placetype for looking up the appropriate category or categories in the
+	placetype data structure.
+* `conjunction`: The conjunction used to join multiple terms, defaulting to `and`.
+* `cat`: Additional category or categories to add the term to, whenever this particular directive is used. Normally the
+	value is a topic-style category minus the langcode prefix, but if prefixed with `cln:`, it is a langname-style
+	category. For example, the value `"Abbreviations"` would correspond to a category [[:Category:en:Abbreviations]]
+	(assuming the language of the {{tl|place}} call is English), while the value `"cln:abbreviations"` corresponds to a
+	category [[:Category:English abbreviations]]. Use a list of such specs for multiple categories.
+]=]
 local all_form_of_directives = {
 	["former name of"] = {text = "+", type_prefix = "FORMER_NAME_OF"},
 	["official name of"] = {text = "+", type_prefix = "OFFICIAL_NAME_OF"},
-	["abbreviation of"] = {text = "+", type_prefix = "ABBREVIATION_OF"},
+	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
+	["former official name of"] = {text = "+", type_prefix = "FORMER_OFFICIAL_NAME_OF"},
+	["abbreviation of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations"},
+	["abbr of"] = {text = "abbreviation of", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations"},
+	["abbrev of"] = {text = "abbreviation of", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations"},
+	["initialism of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:initialisms"},
+	["init of"] = {text = "initialism of", type_prefix = "ABBREVIATION_OF", cat = "cln:initialisms"},
 }
 
 local function get_seat_text(overall_place_spec)
@@ -900,10 +919,11 @@ capital, largest city, modern name, official name, etc., along with associated p
 Each element is an object with the following properties:
 * `arg`: The argument name.
 * `text`: The actual text displayed before the terms. If the value is `+`, the argument name is used as the text. If the
-    value is a function, it is passed a single argument, the overall place spec (see the comment at the top of the file
-	for the format of this argument) and should return the text to be displayed.
+    value is a function, it is passed a single argument, the overall place spec (see the comment above the function
+    `parse_overall_place_spec` for the format of this argument) and should return the text to be displayed.
 * `conjunction`: The conjunction used to join multiple terms, defaulting to `and`.
-* ``display_even_when_dropped`: Display this piece of extra info even when `drop_extra_info` is in effect.
+* `display_even_when_dropped`: Display this piece of extra info even when it would normally be dropped (e.g. in
+	{{tl|tcl}} when the language is other than English).
 * `match_sentence_style`: If true, the text will be capitalized and preceded by a period when ''sentence style'' is
     in effect (essentially, when the language is English and there is no translation specified using {{para|t}} or
 	similar parameter); otherwise, the text will be displayed as-is and preceded by a semicolon. If false, the semicolon
@@ -1210,7 +1230,7 @@ end
 -- such as |capital=, |capital2=, etc.] The return value is a structure containing fields `terms` (a list of term
 -- objects, each of which is in the format expected by full_link() in [[Module:links]]), `conj` (an explicit
 -- conjunction to join multiple terms, or nil if no explicit conjunction was given) and `spec` (the passed-in spec).
-local function parse_extra_info_arg(args, spec)
+local function parse_extra_info_arg(args, spec, default_lang)
 	if not args then
 		return nil
 	end
@@ -1225,7 +1245,7 @@ local function parse_extra_info_arg(args, spec)
 
 	local conj
 	for i, arg in ipairs(args) do
-		local this_terms = parse_term_with_inline_modifiers(arg, spec.arg .. (i == 1 and "" or i), enlang)
+		local this_terms = parse_term_with_inline_modifiers(arg, spec.arg .. (i == 1 and "" or i), default_lang)
 		local thisconj = this_terms.conj
 		if not conj then
 			conj = thisconj
@@ -1333,7 +1353,7 @@ Process numeric args. `args` is the parsed argument structure. The return value 
 	extra info, taken from `export.extra_info_args`), `terms` (list of term objects for the terms specified by the
 	user); `conj` (conjunction specified by the user using inline modifier <conj:...>, or {nil}).
 ]=]
-local function parse_overall_place_spec(args)
+local function parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_info_overridden_set)
 	local descs = {}
 	local this_desc
 	-- Index of separate (semicolon-separated) place descriptions within `descs`.
@@ -1481,7 +1501,12 @@ local function parse_overall_place_spec(args)
 
 	local extra_info = {}
 	for _, extra_info_spec in ipairs(export.extra_info_args) do
-		local extra_info_terms = parse_extra_info_arg(args[extra_info_spec.arg], extra_info_spec)
+		local extra_info_terms = parse_extra_info_arg(args[extra_info_spec.arg], extra_info_spec,
+			-- If called from {{tcl}} and extra info argument was set by {{tcl}}, interpret the argument
+			-- according to the language in 1=; otherwise interpret as English. To override this, prefix
+			-- with the appropriate language.
+			from_tcl and extra_info_overridden_set and extra_info_overridden_set[extra_info_spec.arg] and args[1] or
+				enlang)
 		if extra_info_terms then
 			insert(extra_info, extra_info_terms)
 		end
@@ -1526,62 +1551,60 @@ local function get_translations(transl, ids)
 end
 
 
--- Prepend the appropriate article if needed to `linked_placename`, where the underlying holonym object that generated
--- `linked_placename` can be found at `holonym_index` in the holonyms in `place_desc`. This is only called to format the
--- holonym for display, and so we use the `display_placename` in the holonym. In this case, `linked_placename` is the
--- linked version of the display placename, possibly modified due to a display handler and possibly with a placetype
--- suffixed to the placename.
-local function get_holonym_article(decorated_placename, place_desc, holonym_index)
-	local holonym = place_desc.holonyms[holonym_index]
-	local holonym_placetype = holonym.placetype
-	if not holonym_placetype then
-		return nil
-	end
-	local holonym_placename = holonym.unlinked_placename
+-- Return the article (currently always `"the"`) to be prepended to the given placename, or nil. `decorated_placename`
+-- is the placename as specified by the user along with any affix added to it. `placename` is the raw unlinked
+-- placename, defaulting to the unlinked version of `decorated_placename` if not given. `placetypes` is a placetype or
+-- list of placetypes for the placename. `suppress_holonym_use_the_check` suppresses checking the placetypes for
+-- `holonym_use_the`.
+local function get_placename_article(decorated_placename, placetypes, placename, suppress_holonym_use_the_check)
 	local unlinked_decorated_placename = m_placetypes.remove_links_and_html(decorated_placename)
 	if unlinked_decorated_placename:find("^the ") then
 		return nil
 	end
-	local art = m_placetypes.get_equiv_placetype_prop(placetype, function(pt)
-		local art = m_placetypes.placename_article[pt] and m_placetypes.placename_article[pt][holonym_placename]
+	placename = placename or unlinked_decorated_placename
+	if type(placetypes) == "string" then
+		placetypes = {placetypes}
+	end
+	for _, placetype in ipairs(placetypes) do
+		local art = m_placetypes.get_equiv_placetype_prop(placetype, function(pt)
+			local art = m_placetypes.placename_article[pt] and m_placetypes.placename_article[pt][placename]
+			if art then
+				return art
+			end
+		end)
 		if art then
 			return art
 		end
-		-- Look for a known location. We should be using find_matching_holonym_location() but that function doesn't
-		-- currently work without alias resolution. Instead we check if any matching location has `the = true` set.
-		-- In practice there aren't any cases where a given placename matches two locations, only one of which has
-		-- `the = true` set.
-		for group, key, spec in m_placetypes.iterate_matching_location {
-			placetypes = holonym_placetype,
-			placename = holonym_placename,
-			alias_resolution = "none",
-		} do
-			-- `iterate_holonym_location` doesn't initialize the spec if alias resolution is turned off, so check both
-			-- the spec and group. Be careful in case `the = false` is explicitly given by the spec.
-			if spec.the ~= nil then
-				if spec.the then
-					return "the"
-				end
-			elseif group.default_the then
+	end
+	-- Look for a known location. We should be using find_matching_holonym_location() but that function doesn't
+	-- currently work without alias resolution. Instead we check if any matching location has `the = true` set.
+	-- In practice there aren't any cases where a given placename matches two locations, only one of which has
+	-- `the = true` set.
+	for group, key, spec in m_placetypes.iterate_matching_location {
+		placetypes = placetypes,
+		placename = placename,
+		alias_resolution = "none",
+	} do
+		-- `iterate_holonym_location` doesn't initialize the spec if alias resolution is turned off, so check both
+		-- the spec and group. Be careful in case `the = false` is explicitly given by the spec.
+		if spec.the ~= nil then
+			if spec.the then
 				return "the"
 			end
-		end
-	end)
-
-	if art then
-		return art
-	end
-	if not holonym.affix_type then
-		-- See if the placetype requests an article to be placed before the holonym. This occurs e.g. with 'department',
-		-- which has the setting `affix_type = "suf"` placing the word "department" after the holonym, so that
-		-- "dept/Gironde" correctly generates "the Gironde department". But if the user overrode the affix type and e.g.
-		-- specified "dept:pref/Gironde", we'll wrongly get "the department of the Gironde", so in that case we need to
-		-- ignore the holonym article specified along with the placetype. (NOTE: We have since turned off the
-		-- `holonym_use_the` setting on 'department'.)
-		local holonym_use_the = m_placetypes.get_equiv_placetype_prop(holonym_placetype,
-			function(pt) return placetype_data[pt] and placetype_data[pt].holonym_use_the end)
-		if holonym_use_the then
+		elseif group.default_the then
 			return "the"
+		end
+	end
+	if not suppress_holonym_use_the_check then
+		-- See if the placetype requests an article to be placed before the placename. This occurs e.g. with 'sea'. But
+		-- if the user specifies e.g. "sea:pref/Cortez", we'll wrongly get "the sea of the Cortez", so in that case we
+		-- need to ignore the holonym article specified along with the placetype.
+		for _, placetype in ipairs(placetypes) do
+			local holonym_use_the = m_placetypes.get_equiv_placetype_prop(placetype,
+				function(pt) return placetype_data[pt] and placetype_data[pt].holonym_use_the end)
+			if holonym_use_the then
+				return "the"
+			end
 		end
 	end
 	local universal_res = m_placetypes.placename_the_re["*"]
@@ -1590,22 +1613,38 @@ local function get_holonym_article(decorated_placename, place_desc, holonym_inde
 			return "the"
 		end
 	end
-	local matched = m_placetypes.get_equiv_placetype_prop(holonym_placetype, function(pt)
-		local res = m_placetypes.placename_the_re[pt]
-		if not res then
-			return nil
-		end
-		for _, re in ipairs(res) do
-			if unlinked_decorated_placename:find(re) then
-				return true
+	for _, placetype in ipairs(placetypes) do
+		local matched = m_placetypes.get_equiv_placetype_prop(placetype, function(pt)
+			local res = m_placetypes.placename_the_re[pt]
+			if not res then
+				return nil
 			end
+			for _, re in ipairs(res) do
+				if unlinked_decorated_placename:find(re) then
+					return true
+				end
+			end
+			return nil
+		end)
+		if matched then
+			return "the"
 		end
-		return nil
-	end)
-	if matched then
-		return "the"
 	end
 	return nil
+end
+
+
+-- Prepend the appropriate article if needed to `decorated_placename` (the user-specified placename with any affix
+-- added), where the underlying holonym object that generated `linked_placename` can be found at `holonym_index` in the
+-- holonyms in `place_desc`.
+local function get_holonym_article(decorated_placename, place_desc, holonym_index)
+	local holonym = place_desc.holonyms[holonym_index]
+	local holonym_placetype = holonym.placetype
+	if not holonym_placetype then
+		return nil
+	end
+	return get_placename_article(decorated_placename, holonym_placetype, holonym.unlinked_placename,
+		not not holonym.affix_type)
 end
 
 
@@ -1752,7 +1791,7 @@ end
 
 -- Format a holonym for display, taking into account the entry's placetype (specifically, the last placetype if there
 -- are more than one, excluding conjunctions and parenthetical items); the holonym's index among the holonyms in the
--- template (which specifies what the previous holonym is and whether it is the first holonym); and the overall place
+-- template (which specifies what the previous holonym is and whether it is the first holonym); and the full place
 -- description (which helps resolve ambiguities in holonyms when looking up known locations). This may involve putting a
 -- preposition ("in" or "of") before the formatted holonym, particularly if it is the first one, and may involve
 -- prepending a comma.
@@ -1821,8 +1860,25 @@ end
 local function format_form_of_directive(overall_place_spec, directive_terms, ucfirst)
 	local formatted_terms = {}
 
+	local placetypes
+	if not overall_place_spec.descs[2] then
+		placetypes = overall_place_spec.descs[1].placetypes
+	else
+		placetypes = {}
+		for _, desc in ipairs(overall_place_spec.descs) do
+			m_table.extend(placetypes, desc.placetypes)
+		end
+	end
 	for _, termobj in ipairs(directive_terms.terms) do
-		insert(formatted_terms, m_links.full_link(termobj, nil, nil, "show qualifiers"))
+		local placename_article
+		if not termobj.alt and termobj.term and not termobj.term:find("%[%[") then
+			placename_article = get_placename_article(termobj.term, placetypes)
+		end
+		local linked_term = m_links.full_link(termobj, nil, nil, "show qualifiers")
+		if placename_article then
+			linked_term = placename_article .. " " .. linked_term
+		end
+		insert(formatted_terms, linked_term)
 	end
 
 	local spec = directive_terms.spec
@@ -1836,23 +1892,16 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 	if ucfirst then
 		text = m_strutils.ucfirst(text)
 	end
-
-	return require(form_of_module).format_form_of {
-		text = text,
-		lemmas = directive_terms.terms,
-		lemma_face = "term",
-		text_classes = "place-text",
-		-- FIXME: Not yet supported by format_form_of().
-		conj = directive_terms.conj or spec.conjunction or "and",
-	}
+	return text .. " " .. m_table.serialCommaJoin(formatted_terms,
+		{conj = directive_terms.conj or spec.conjunction or "and"})
 end
 
 
 -- Format a set of extra-info terms for extra information that is sometimes added to a definition, such as the capital,
--- largest city, modern name, official name, etc. `overall_place_spec` is the overall parsed {{tl|place}} spec,
--- `extra_info_terms` is the terms spec for this type of extra-info (as returned by `parse_extra_info_arg`) and
--- `sentence_style` indicates whether we're generating a sentence-style definition (as suitable for an English-language
--- term without a translation specified using t=).
+-- largest city, modern name, official name, etc. `overall_place_spec` is the overall parsed {{tl|place}} spec (see
+-- `parse_overall_place_spec`); `extra_info_terms` is the terms spec for this type of extra-info (as returned by
+-- `parse_extra_info_arg`); and `sentence_style` indicates whether we're generating a sentence-style definition (as
+-- suitable for an English-language term without a translation specified using t=).
 local function format_extra_info(overall_place_spec, extra_info_terms, sentence_style)
 	local formatted_terms = {}
 
@@ -2063,9 +2112,8 @@ end
 -- Return a string with the gloss (the description of the place itself, as opposed to translations). If `ucfirst` is
 -- given, the gloss's first letter is made upper case. If `sentence_style` is given, the "extra info" (modern name,
 -- capital, largest city, etc.) is displayed as separated sentences; otherwise, it is displayed separated from the main
--- definition by semicolons. If `drop_extra_info` is given, we don't include "extra info"; this is used when
--- transcluding into another language using {{transclude sense}}.
-local function get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info)
+-- definition by semicolons.
+local function get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info, extra_info_overridden_set)
 	local args = overall_place_spec.args
 	local parts = {}
 	local function ins(txt)
@@ -2108,7 +2156,13 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 	end
 
 	for _, extra_info_terms in ipairs(overall_place_spec.extra_info) do
-		if not drop_extra_info or extra_info_terms.spec.display_even_when_dropped then
+		-- Include a given extra info term either when
+		-- (1) drop_extra_info not set (it's set by {{tcl}}), or
+		-- (2) the extra info term is marked as "display even when dropped" (e.g. modern= or full=, to help understand
+		--     the term's sense), or
+		-- (3) the term was overridden by a `place_*=` setting in {{tcl}}.
+		if not drop_extra_info or extra_info_terms.spec.display_even_when_dropped or
+			extra_info_overridden_set and extra_info_overridden_set[extra_info_terms.spec.arg] then
 			ins(format_extra_info(overall_place_spec, extra_info_terms, sentence_style))
 		end
 	end
@@ -2116,22 +2170,19 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 	return concat(parts)
 end
 
--- Old entry point. OBSOLETE ME!
-export.get_new_style_gloss = export.format_new_style_place_desc_for_display
-
 -- Return the definition line.
-local function get_def(overall_place_spec, from_tcl, drop_extra_info)
+local function get_def(overall_place_spec, from_tcl, drop_extra_info, extra_info_overridden_set)
 	local args = overall_place_spec.args
 	local sentence_style = overall_place_spec.lang:getCode() == "en"
 	local ucfirst = sentence_style and not args.nocap
 	if #args.t > 0 then
-		local gloss = get_display_form(overall_place_spec, false, false, drop_extra_info)
-		if not args.tcl_nolc then
+		local gloss = get_display_form(overall_place_spec, false, false, drop_extra_info, extra_info_overridden_set)
+		if from_tcl and not args.tcl_nolc then
 			gloss = m_strutils.lcfirst(gloss)
 		end
 		return get_translations(args.t, args.tid) .. (gloss == "" and "" or " (" .. gloss .. ")")
 	else
-		return get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info)
+		return get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info, extra_info_overridden_set)
 	end
 end
 
@@ -2512,13 +2563,14 @@ end
 
 
 --[==[
-Iterate through each type of place given `place_descriptions` (a list of place descriptions, as documented at the
-top of the file) and return a list of the categories that need to be added to the entry. The returned categories need to
-be prefixed with the langcode to get the actual Wiktionary categories, and passed to `format_categories` in
-[[Module:utilities]] to format the categories into strings. `args` is the table of user-specified arguments, used
-primarily to add "bare categories" corresponding to toponyms for known locations. `from_demonym` is true if we're being
-called from {{tl|demonym-noun}} or {{tl|demonym-adj}}. In this case, we only want certain categories added, specifically
-bare categories corresponding to the most specific specified holonym(s).
+Iterate through each type of place and return a list of the categories that need to be added to the entry. The returned
+categories need to be formatted using `format_cats`, as they can be either topic-style categories (by default) or
+langname-style categories (if prefixed with `cln:`). The function is passed the overall place spec, which contains all
+the parsed info on the {{tl|place}} call (see `parse_overall_place_spec`), the parsed arguments (needed for arguments
+not parsed by `parse_overall_place_spec` and used primarily to add "bare categories" corresponding to toponyms for known
+locations), and `from_demonym`, which is true if we're being called from {{tl|demonym-noun}} or {{tl|demonym-adj}} (in
+this case, we only want certain categories added, specifically bare categories corresponding to the specified
+holonym(s)).
 ]==]
 function export.get_cats(args, overall_place_spec, from_demonym)
 	local cats = {}
@@ -2529,6 +2581,15 @@ function export.get_cats(args, overall_place_spec, from_demonym)
 
 	if overall_place_spec.directives then -- not necessarily when called from [[Module:demonym]]
 		for _, directive_terms in ipairs(overall_place_spec.directives) do
+			local spec_cats = directive_terms.spec.cat
+			if spec_cats then
+				if type(spec_cats) == "string" then
+					spec_cats = {spec_cats}
+				end
+				for _, spec_cat in ipairs(spec_cats) do
+					insert(cats, spec_cat)
+				end
+			end
 			for _, place_desc in ipairs(place_descriptions) do
 				for _, placetype in ipairs(place_desc.placetypes) do
 					if not m_placetypes.placetype_is_ignorable(placetype) then
@@ -2574,7 +2635,14 @@ local function format_cats(lang, cats, sort_key)
 	local full_cats = {}
 	local langcode = lang:getFullCode()
 	for _, cat in ipairs(cats) do
-		insert(full_cats, langcode .. ":" .. cat)
+		-- 'cln' corresponds to {{cln}}, which generates lang-name categories like [[:Category:English abbreviations]]
+		-- (as opposed to topic categories like [[:Category:en:Abbreviations of states of the United States]]).
+		local cln_cat = cat:match("^cln:(.*)$")
+		if cln_cat then
+			insert(full_cats, lang:getFullName() .. " " .. cln_cat)
+		else
+			insert(full_cats, langcode .. ":" .. cat)
+		end
 	end
 	return require(utilities_module).format_categories(full_cats, lang, sort_key, nil,
 		force_cat or m_placetypes.get_force_cat())
@@ -2587,10 +2655,9 @@ end
 
 --[==[
 Implementation of {{tl|place}}. Meant to be callable from another module (specifically, [[Module:transclude]]).
-`from_tcl` means we are being called from {{tl|tcl}}; `drop_extra_info` means to not include "extra info" (capital,
-official name, largest city, etc.); this is used when transcluding into another language using {{tl|tcl}}.
+`from_tcl` means we are being called from {{tl|tcl}}.
 ]==]
-function export.format(template_args, from_tcl, drop_extra_info)
+function export.format(template_args, from_tcl, drop_extra_info, extra_info_overridden_set)
 	local list_param = {list = true}
 	local boolean_param = {type = "boolean"}
 	local params = {
@@ -2622,15 +2689,14 @@ function export.format(template_args, from_tcl, drop_extra_info)
 		params[extra_arg_spec.arg] = list_param
 	end
 
-
 	-- FIXME, once we've flushed out any uses, delete the following clause. That will cause def= to be ignored.
 	if template_args.def == "" then
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
-	local overall_place_spec = parse_overall_place_spec(args)
+	local overall_place_spec = parse_overall_place_spec(args, from_tcl)
 
-	return get_def(overall_place_spec, from_tcl, drop_extra_info) .. (
+	return get_def(overall_place_spec, from_tcl, drop_extra_info, extra_info_overridden_set) .. (
 		args.nocat and "" or format_cats(args[1], export.get_cats(args, overall_place_spec), args.sort))
 end
 

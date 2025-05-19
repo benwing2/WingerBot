@@ -1304,6 +1304,7 @@ export.countries = {
 	["U.K."] = {alias_of = "United Kingdom", display = true, the = true},
 	["United States"] = {the = true, container = "North America",
 		divs = {"counties", "county seats", "states", "territories", "dependent territories",
+			{type = "ABBREVIATION_OF states", cat_as = "abbreviations of states"},
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
 			{type = "census-designated places", prep = "in"},

@@ -99,8 +99,12 @@ end)
 -- so-called "generic" placetypes, but sometimes the categories were wrong.
 insert(handlers, function(label)
 	for _, canon_label in ipairs { lcfirst(label), label } do
-		local ptdesc, ptdata = m_placetypes.get_placetype_display_form(canon_label, "top-level")
+		local ptdesc, ptdata = m_placetypes.get_placetype_display_form(canon_label, "top-level", "return full")
 		if ptdesc then
+			local from_category_props = {
+				from_category = true,
+				no_split_qualifiers = true,
+			}
 			local bare_category_parent = m_placetypes.get_equiv_placetype_prop(canon_label, function(pt)
 				local bare_category_parent = m_placetypes.get_placetype_prop(pt, "bare_category_parent")
 				if bare_category_parent then
@@ -114,20 +118,20 @@ insert(handlers, function(label)
 					end
 					return class_to_bare_category_parent[class]
 				end
-			end, {
-				from_category = true,
-				no_split_qualifiers = true,
-			})
+			end, from_category_props)
 			if not bare_category_parent then
 				internal_error("Saw placetype %s without a `class` or `bare_category_parent` setting, either " ..
 					"directly or through a fallback", canon_label)
 			end
 			local addl_bare_category_parents = m_placetypes.get_equiv_placetype_prop(canon_label, function(pt)
 				return m_placetypes.get_placetype_prop(pt, "addl_bare_category_parents")
-			end, {
-				from_category = true,
-				no_split_qualifiers = true,
-			})
+			end, from_category_props)
+			local bare_category_breadcrumb = m_placetypes.get_equiv_placetype_prop(canon_label, function(pt)
+				return m_placetypes.get_placetype_prop(pt, "bare_category_breadcrumb")
+			end, from_category_props)
+			if type(bare_category_parent) == "string" and bare_category_breadcrumb then
+				bare_category_parent = {name = bare_category_parent, sort = bare_category_breadcrumb}
+			end
 			local parents = {bare_category_parent}
 			if addl_bare_category_parents then
 				m_table.extend(parents, addl_bare_category_parents)
@@ -135,7 +139,8 @@ insert(handlers, function(label)
 			return {
 				type = "name",
 				topic = canon_label,
-				description = "{{{langname}}} names of " .. ptdesc .. ".",
+				description = "{{{langname}}} " .. ptdesc .. ".",
+				breadcrumb = bare_category_breadcrumb,
 				parents = parents,
 			}
 		elseif ptdesc == false then
@@ -564,7 +569,7 @@ insert(handlers, function(label)
 							return nil
 						end
 						local linkdesc = m_placetypes.get_placetype_display_form(placetype,
-							spec.is_city and "city" or "noncity")
+							spec.is_city and "city" or "noncity", "return full")
 						if linkdesc == false then
 							mw.log(("Display form for placetype %s is false, can't categorize"):format(dump(placetype)))
 							return nil
@@ -574,7 +579,7 @@ insert(handlers, function(label)
 								placetype, key, spec, canon_label)
 						end
 						desc = linkdesc .. " " .. in_of .. " " .. fetch_or_construct_location_desc(group, key, spec)
-						desc = "{{{langname}}} names of " .. desc .. "."
+						desc = "{{{langname}}} " .. desc .. "."
 						local parents = {}
 						insert(parents, key)
 						if spec.no_container_parent then
@@ -697,22 +702,25 @@ insert(handlers, function(label)
 						placetype, capital_cat, label)
 				end
 				local variant_match_text = ""
-				if #variant_matches > 0 then
+				if variant_matches[1] then
+					local real_variant_match_descs = {}
 					for i, variant_match in ipairs(variant_matches) do
 						local variant_match_desc = m_placetypes.get_placetype_display_form(variant_match,
 							placetype.is_city and "city" or "noncity")
-						if variant_match_desc == false then
-							mw.log(("Display form for variant_match %s is false, can't categorize"):format(
-								dump(variant_match)))
-							return nil
-						end
-						if not variant_match_desc then
+						if variant_match_desc == nil then
 							internal_error("Unrecognized variant match plural placetype %s, coming from " ..
 								"place key %s, data %s in label %s", variant_match, key, spec, label)
 						end
-						variant_matches[i] = variant_match_desc
+						if variant_match_desc then
+							-- skip those for which the description is `false`, like `ABBREVIATION_OF states`
+							-- in the United States divs.
+							insert(real_variant_match_descs, variant_match_desc)
+						end
 					end
-					variant_match_text = " (including " .. m_table.serialCommaJoin(variant_matches) .. ")"
+					if real_variant_match_descs[1] then
+						variant_match_text = " (including " .. m_table.serialCommaJoin(real_variant_match_descs)
+							.. ")"
+					end
 				end
 				local desc = "{{{langname}}} names of [[capital]]s of " .. placetype_desc .. variant_match_text ..
 					" of " .. fetch_or_construct_location_desc(group, key, spec) .. "."
@@ -744,106 +752,116 @@ insert(handlers, function(label)
 	-- The label comes with an initial capitalization but we have to check both lowercase-initial and capital-initial
 	-- versions of the placetype to handle e.g. [[:Category:en:Indian reserves of Canada]].
 	for _, canon_label in ipairs { label, lcfirst(label) } do
-		local placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (of) (.*)$")
-		if not placetype then
-			placetype, in_of, place = canon_label:match("^([A-Za-z%- ]-) (in) (.*)$")
-		end
-		if placetype then
-			local group, key, spec = find_canonical_key_from_place(place, canon_label)
-			if group then
-				local function find_placetype(divs)
-					if divs then
-						if type(divs) ~= "table" then
-							divs = {divs}
-						end
-						for _, div in ipairs(divs) do
-							if type(div) == "string" then
-								div = {type = div}
+		for _, minimal_placetype in ipairs { true, false } do
+			local match_quantifier = minimal_placetype and "-" or "+"
+			-- Some categories have two "of"s in them, and depending on the category, it's correct to do either a greedy
+			-- ([[:Category:en:Abbreviations of states of the United States]], with placetype `abbreviations of states`)
+			-- or non-greedy ([[:Category:en:Provinces of the Democratic Republic of the Congo]], with placetype
+			-- `provinces`) match. We can't know in advance which is correct so we try both possibilities, doing the
+			-- non-greedy one first as it seems more common (there are many locations with "of" in them, but currently
+			-- only `abbreviations of states` occurs with a following location).
+			local placetype, in_of, place = canon_label:match("^([A-Za-z%- ]" .. match_quantifier .. ") (of) (.*)$")
+			if not placetype then
+				placetype, in_of, place = canon_label:match("^([A-Za-z%- ]" .. match_quantifier .. ") (in) (.*)$")
+			end
+			if placetype then
+				local group, key, spec = find_canonical_key_from_place(place, canon_label)
+				if group then
+					local function find_placetype(divs)
+						if divs then
+							if type(divs) ~= "table" then
+								divs = {divs}
 							end
-							local cat_as = div.cat_as or div.type
-							if type(cat_as) ~= "table" then
-								cat_as = {cat_as}
-							end
-							for _, pt_cat_as in ipairs(cat_as) do
-								if type(pt_cat_as) == "string" then
-									pt_cat_as = {type = pt_cat_as}
+							for _, div in ipairs(divs) do
+								if type(div) == "string" then
+									div = {type = div}
 								end
-								if placetype == pt_cat_as.type then
-									local div_parent = pt_cat_as.container_parent_type
-									if div_parent == nil then -- allow false
-										div_parent = div.container_parent_type
+								local cat_as = div.cat_as or div.type
+								if type(cat_as) ~= "table" then
+									cat_as = {cat_as}
+								end
+								for _, pt_cat_as in ipairs(cat_as) do
+									if type(pt_cat_as) == "string" then
+										pt_cat_as = {type = pt_cat_as}
 									end
-									if div_parent == nil then
-										div_parent = placetype
+									if placetype == pt_cat_as.type then
+										local div_parent = pt_cat_as.container_parent_type
+										if div_parent == nil then -- allow false
+											div_parent = div.container_parent_type
+										end
+										if div_parent == nil then
+											div_parent = placetype
+										end
+										return div_parent, pt_cat_as.prep or div.prep or "of"
 									end
-									return div_parent, pt_cat_as.prep or div.prep or "of"
 								end
 							end
 						end
-					end
-
-					return nil
-				end
-				local div_parent, div_prep = find_placetype(spec.divs)
-				if div_parent == nil then -- allow false
-					div_parent, div_prep = find_placetype(spec.addl_divs)
-				end
-				if div_parent == nil then -- allow false
-					div_parent, div_prep = find_placetype(spec.addl_divs_for_categorization)
-				end
-				if div_parent ~= nil then
-					if div_prep ~= in_of then
-						mw.log(("Mismatch in category name '%s', has '%s' when it should have '%s'"):format(
-							canon_label, in_of, div_prep))
+	
 						return nil
 					end
-					local linkdesc = m_placetypes.get_placetype_display_form(placetype, spec.is_city and "city" or "noncity")
-					if linkdesc == false then
-						mw.log(("Display form for placetype %s is false, can't categorize"):format(dump(placetype)))
-						return nil
+					local div_parent, div_prep = find_placetype(spec.divs)
+					if div_parent == nil then -- allow false
+						div_parent, div_prep = find_placetype(spec.addl_divs)
 					end
-					if not linkdesc then
-						internal_error("Unrecognized placetype %s when processing key %s, data %s, label %s",
-							placetype, key, spec, canon_label)
+					if div_parent == nil then -- allow false
+						div_parent, div_prep = find_placetype(spec.addl_divs_for_categorization)
 					end
-					local desc = overriding_category_descriptions[canon_label]
-					if not desc then
-						desc = linkdesc .. " " .. in_of .. " " .. fetch_or_construct_location_desc(group, key, spec)
-					end
-					desc = "{{{langname}}} names of " .. desc .. "."
-					local parents = {}
-					insert(parents, key)
-					if div_parent then -- div_parent may be `false`
-						if spec.no_container_parent then
-							-- top-level country, constituent country, continent or the like
-							insert(parents, {name = placetype, sort = " " .. key})
-							if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
-								insert(parents, "political divisions of specific countries")
-							end
-						else
-							local container_iterator = m_locations.iterate_containers(group, key, spec)
-							local next_containers = container_iterator()
-							if next_containers then
-								for _, container in ipairs(next_containers) do
-									insert(parents, {
-										name = div_parent .. " " .. in_of .. " " .. m_placetypes.get_prefixed_key(
-											container.key, container.spec),
-										sort = key
-									})
+					if div_parent ~= nil then
+						if div_prep ~= in_of then
+							mw.log(("Mismatch in category name '%s', has '%s' when it should have '%s'"):format(
+								canon_label, in_of, div_prep))
+							return nil
+						end
+						local linkdesc = m_placetypes.get_placetype_display_form(placetype, spec.is_city and "city" or "noncity",
+							"return full")
+						if linkdesc == false then
+							mw.log(("Display form for placetype %s is false, can't categorize"):format(dump(placetype)))
+							return nil
+						end
+						if not linkdesc then
+							internal_error("Unrecognized placetype %s when processing key %s, data %s, label %s",
+								placetype, key, spec, canon_label)
+						end
+						local desc = overriding_category_descriptions[canon_label]
+						if not desc then
+							desc = linkdesc .. " " .. in_of .. " " .. fetch_or_construct_location_desc(group, key, spec)
+						end
+						desc = "{{{langname}}} " .. desc .. "."
+						local parents = {}
+						insert(parents, key)
+						if div_parent then -- div_parent may be `false`
+							if spec.no_container_parent then
+								-- top-level country, constituent country, continent or the like
+								insert(parents, {name = placetype, sort = " " .. key})
+								if spec.placetype == "country" or m_table.contains(spec.placetype, "country") then
+									insert(parents, "political divisions of specific countries")
 								end
 							else
-								-- unrecognized countries or the like
-								insert(parents, {name = placetype, sort = " " .. key})
+								local container_iterator = m_locations.iterate_containers(group, key, spec)
+								local next_containers = container_iterator()
+								if next_containers then
+									for _, container in ipairs(next_containers) do
+										insert(parents, {
+											name = div_parent .. " " .. in_of .. " " .. m_placetypes.get_prefixed_key(
+												container.key, container.spec),
+											sort = key
+										})
+									end
+								else
+									-- unrecognized countries or the like
+									insert(parents, {name = placetype, sort = " " .. key})
+								end
 							end
 						end
+						return {
+							type = "name",
+							topic = canon_label,
+							description = desc,
+							breadcrumb = placetype,
+							parents = parents,
+						}
 					end
-					return {
-						type = "name",
-						topic = canon_label,
-						description = desc,
-						breadcrumb = placetype,
-						parents = parents,
-					}
 				end
 			end
 		end
