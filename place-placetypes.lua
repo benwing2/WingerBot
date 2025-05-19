@@ -324,10 +324,23 @@ function export.get_placetype_equivs(placetype, props)
 	-- is the preceding qualifier to insert into `equivs` along with the placetype (see comment at top of function). If
 	-- `from_category` is given, we also check for a category-specific entry consisting of the placetype followed by
 	-- `!`, and in all cases we also check to see if `placetype` is plural, and if so, insert the singularized version
-	-- along with its fallbacks (if any) in `placetype_data`.
-	local function do_placetype(qualifier, placetype)
+	-- along with its fallbacks (if any) in `placetype_data`. `form_of_prefix` is a form-of prefix such as
+	-- `OFFICIAL_NAME_OF`. If specified, we check the fallbacks of `placetype` without the prefix but then insert into
+	-- `equivs` the prefixed placetype. This way, if the user says e.g. {{tl|place|pt|@official name of:Cuba|island country|r/Caribbean}},
+	-- we will correctly categorize into [[:Category:Official names of countries]] (rather than only trying to look up
+	-- `OFFICIAL_NAME_OF island country` and failing, falling back ultimately to [[:Category:Official names of places]]).
+	local function do_placetype(qualifier, placetype, form_of_prefix)
 		local function insert_equiv(pt)
-			insert(equivs, {qualifier=qualifier, placetype=pt})
+			if form_of_prefix then
+				-- Let's say the user says {{tl|place|pt|@official name of:Cuba|island country|r/Caribbean}} and we
+				-- have no entry for `OFFICIAL_NAME_OF island country` but we do for `OFFICIAL_NAME_OF country` (which
+				-- we end up processing because `island country` falls back to `country`), and that entry in turn is
+				-- defined using a fallback. We have to insert that fallback-of-fallback, and the easiest/cleanest way
+				-- of handling this is by calling ourselves recursively.
+				do_placetype(qualifier, form_of_prefix .. " " .. pt)
+			else
+				insert(equivs, {qualifier=qualifier, placetype=pt})
+			end
 		end
 
 		-- Insert the placetype, along with any fallbacks.
@@ -400,11 +413,17 @@ function export.get_placetype_equivs(placetype, props)
 				-- qualifier. NOTE: The first time through this loop, both `prev_qualifier` and `this_qualifier` are
 				-- nil.
 				local qualifier = prev_qualifier and prev_qualifier .. " " .. this_qualifier or this_qualifier
-				-- First check directly for `ANCIENT/FORMER` + the original following placetype. This makes it possible
-				-- for (e.g.) former provinces of the Roman empire to be categorized specially.
-				do_placetype(qualifier, form_of_directive .. " " .. reduced_placetype)
-				do_placetype(qualifier, form_of_directive .. " " .. directive_type)
-				do_placetype(qualifier, form_of_directive .. " place")
+				-- First check for e.g. `OFFICIAL_NAME_OF island country` and its fallbacks; then we look for fallbacks
+				-- of `island country` and check e.g. `OFFICIAL_NAME_OF country` and its fallbacks. All of this is
+				-- handled by `do_placetype()` with appropriate parameters. After that, check the general class of the
+				-- directive (e.g. `subpolity` if something like `district` is given); and finally, check for
+				-- `OFFICIAL_NAME_OF place`. In the last check, we directly prepend the form-of prefix ourselves,
+				-- because `place` isn't a valid placetype (or rather, it's category-only `places!`).
+				do_placetype(qualifier, reduced_placetype, form_of_directive)
+				if not no_fallback then
+					do_placetype(qualifier, directive_type, form_of_directive)
+					do_placetype(qualifier, form_of_directive .. " place")
+				end
 				break
 			end
 		else
