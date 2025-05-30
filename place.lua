@@ -887,17 +887,32 @@ The key is the form-of directive and the value is an object with the following p
 	category. For example, the value `"Abbreviations"` would correspond to a category [[:Category:en:Abbreviations]]
 	(assuming the language of the {{tl|place}} call is English), while the value `"cln:abbreviations"` corresponds to a
 	category [[:Category:English abbreviations]]. Use a list of such specs for multiple categories.
+* `default_foreign`: If specified, the default language of terms given along with this directive is the language in 1=;
+	otherwise it is English.
 ]=]
 local all_form_of_directives = {
 	["former name of"] = {text = "+", type_prefix = "FORMER_NAME_OF"},
 	["official name of"] = {text = "+", type_prefix = "OFFICIAL_NAME_OF"},
-	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
 	["former official name of"] = {text = "+", type_prefix = "FORMER_OFFICIAL_NAME_OF"},
-	["abbreviation of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations"},
-	["abbr of"] = {text = "abbreviation of", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations"},
-	["abbrev of"] = {text = "abbreviation of", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations"},
-	["initialism of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:initialisms"},
-	["init of"] = {text = "initialism of", type_prefix = "ABBREVIATION_OF", cat = "cln:initialisms"},
+	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
+	["former long form of"] = {text = "+", type_prefix = "FORMER_LONG_FORM_OF"},
+	["nickname for"] = {text = "+", type_prefix = "NICKNAME_FOR"},
+	["derogatory name for"] = {text = "+", type_prefix = "DEROGATORY_NAME_FOR"},
+	["abbreviation of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations",
+		default_foreign = true},
+	["abbr of"] = {alias_of = "abbreviation of"},
+	["abbrev of"] = {alias_of = "abbreviation of"},
+	["initialism of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:initialisms",
+		default_foreign = true},
+	["init of"] = {alias_of = "initialism of"},
+	["acronym of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:acronyms",
+		default_foreign = true},
+	["syllabic abbreviation of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:syllabic abbreviations",
+		default_foreign = true},
+	["sylabbr of"] = {alias_of = "syllabic abbreviation of"},
+	["sylabbrev of"] = {alias_of = "syllabic abbreviation of"},
+	["ellipsis of"] = {text = "+", type_prefix = "ELLIPSIS_OF", cat = "cln:ellipses",
+		default_foreign = true},
 }
 
 local function get_seat_text(overall_place_spec)
@@ -1186,9 +1201,10 @@ local get_param_mods = memoize(function()
 	local m_param_utils = require(parameter_utilities_module)
 	return m_param_utils.construct_param_mods {
 		{group = {"link", "q", "l", "ref"}},
+		{param = "eq"},
 		-- FIXME: Finish [[Module:format utilities]].
 		--{param = "conj", set = require(format_utilities_module).allowed_conjs_for_join_segments, overall = true},
-		{param = "conj", set = {"and", "or", "and/or"}, overall = true},
+		{param = "conj", set = {["and"] = true, ["or"] = true, ["and/or"] = true}, overall = true},
 	}
 end)
 
@@ -1384,12 +1400,26 @@ local function parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_i
 				error(("Unrecognized form-of directive %s in @-directive %s; recognized directives are %s"):format(
 					dump(form_of_directive), dump(arg), concat(known_directives, ", ")))
 			end
-			local terms = parse_term_with_inline_modifiers(raw_terms, "@" .. form_of_directive, enlang)
+			local spec = all_form_of_directives[form_of_directive]
+			local canonical_directive = form_of_directive
+			if spec.alias_of then
+				canonical_directive = spec.alias_of
+				spec = all_form_of_directives[canonical_directive]
+				if not spec then
+					internal_error("Form-of directive alias %s points to %s, which is not a directive",
+						"@" .. form_of_directive, canonical_directive)
+				elseif spec.alias_of then
+					internal_error("Form-of directive alias %s points to %s, which is also an alias",
+						"@" .. form_of_directive, canonical_directive)
+				end
+			end
+			local terms = parse_term_with_inline_modifiers(raw_terms, "@" .. form_of_directive,
+				spec.default_foreign and args[1] or enlang)
 			insert(form_of_directives, {
-				directive = form_of_directive,
+				directive = canonical_directive,
 				terms = terms.terms,
 				conj = terms.conj,
-				spec = all_form_of_directives[form_of_directive],
+				spec = spec,
 			})
 		elseif arg == ";" or arg:find("^;[^ ]") then
 			if not this_desc then
@@ -1875,6 +1905,9 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 			placename_article = get_placename_article(termobj.term, placetypes)
 		end
 		local linked_term = m_links.full_link(termobj, nil, nil, "show qualifiers")
+		if termobj.eq then
+			linked_term = linked_term .. " (= " .. m_links.full_link {term = termobj.eq, lang = enlang} .. ")"
+		end
 		if placename_article then
 			linked_term = placename_article .. " " .. linked_term
 		end
@@ -2694,7 +2727,7 @@ function export.format(template_args, from_tcl, drop_extra_info, extra_info_over
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
-	local overall_place_spec = parse_overall_place_spec(args, from_tcl)
+	local overall_place_spec = parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_info_overridden_set)
 
 	return get_def(overall_place_spec, from_tcl, drop_extra_info, extra_info_overridden_set) .. (
 		args.nocat and "" or format_cats(args[1], export.get_cats(args, overall_place_spec), args.sort))
