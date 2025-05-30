@@ -6,12 +6,16 @@ local languages_module = "Module:languages"
 local links_module = "Module:links"
 local pages_module = "Module:pages"
 local parameters_module = "Module:parameters"
-local patterns_module = "Module:patterns"
 local place_module = "Module:place"
 local string_char_module = "Module:string/char"
+local string_pattern_escape_module = "Module:string/patternEscape"
+local string_remove_comments_module = "Module:string/removeComments"
+local string_replacement_escape_module = "Module:string/replacementEscape"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
 local template_parser_module = "Module:template parser"
+
+local m_place = require(place_module)
 
 local concat = table.concat
 local find = string.find
@@ -63,13 +67,8 @@ local function is_preview(...)
 end
 
 local function pattern_escape(...)
-	pattern_escape = require(patterns_module).pattern_escape
+	pattern_escape = require(string_pattern_escape_module)
 	return pattern_escape(...)
-end
-
-local function place_format(...)
-	place_format = require(place_module).format
-	return place_format(...)
 end
 
 local function process_params(...)
@@ -78,12 +77,12 @@ local function process_params(...)
 end
 
 local function remove_comments(...)
-	remove_comments = require(string_utilities_module).remove_comments
+	remove_comments = require(string_remove_comments_module)
 	return remove_comments(...)
 end
 
 local function replacement_escape(...)
-	replacement_escape = require(patterns_module).replacement_escape
+	replacement_escape = require(string_replacement_escape_module)
 	return replacement_escape(...)
 end
 
@@ -110,20 +109,6 @@ end
 -- From [[Template:gloss]]
 local gloss_left = '<span class="mention-gloss-paren">(</span><span class="mention-gloss">'
 local gloss_right = '</span><span class="mention-gloss-paren">)</span>'
-
-local place_extra_info = {
-	["modern"] = true,
-	["full"] = true,
-	["short"] = true,
-	["abbr"] = true,
-	["official"] = true,
-	["capital"] = true,
-	["largest city"] = true,
-	["caplc"] = false,
-	["seat"] = true,
-	["shire town"] = true,
-	["headquarters"] = true,
-}
 
 -- Ensure that Wikicode (template calls, bracketed links, HTML, bold/italics, etc.) displays literally in error messages
 -- by inserting a Unicode word-joiner symbol after all characters that may trigger Wikicode interpretation. Replacing
@@ -197,13 +182,21 @@ local function handle_definition_template(name, args, transclude_args)
 				local place_args = {}
 				local langcode = data.lang:getCode()
 				local include_place_extra_info = transclude_args.include_place_extra_info
-				local drop_extra = include_place_extra_info == false or include_place_extra_info == nil and langcode ~= "en"
+				local drop_extra = not include_place_extra_info -- false or unspecified
+				local extra_info_overrides = {}
+				for _, extra_info_spec in pairs(m_place.extra_info_args) do
+					local overriding_arg = transclude_args["place_" .. extra_info_spec.arg]
+					if overriding_arg and overriding_arg[1] then
+						extra_info_overrides[extra_info_spec.arg] = true
+					end
+				end
 				local saw_tcl_t
 				local saw_t
-				-- Copy the arguments but drop translations, maybe the "extra info", and maybe the numbered args (if tcl= given)
+				-- Copy the arguments but drop translations, maybe the "extra info", and maybe the numbered args
+				-- (if tcl= given)
 				local tcl_arg = ine(args.tcl)
 				for key, val in pairs(args) do
-					local base = tostring(key):match("^(.-)([0-9]*)$")
+					local base = tostring(key):match("^(.-)(%d*)$")
 					if base == "tcl_t" or base == "tcl_tid" then
 						saw_tcl_t = true -- otherwise ignore
 					elseif base == "tcl_nolb" then
@@ -214,8 +207,9 @@ local function handle_definition_template(name, args, transclude_args)
 						else
 							saw_t = true
 						end
-					elseif drop_extra and place_extra_info[base] ~= nil then
-						-- ignore it
+					elseif m_place.extra_info_arg_map[base] and extra_info_overrides[base] then
+						-- don't copy any extra info arguments that we will be overriding, in case there are more original
+						-- values than overrides for this particular argument
 					elseif not tcl_arg or base ~= "" then
 						place_args[key] = val
 					end
@@ -252,7 +246,7 @@ local function handle_definition_template(name, args, transclude_args)
 				elseif langcode ~= "en" then
 					if saw_tcl_t then
 						for key, val in pairs(args) do
-							local base, num = tostring(key):match("^(.-)([0-9]*)$")
+							local base, num = tostring(key):match("^(.-)(%d*)$")
 							if base == "tcl_t" then
 								place_args["t" .. num] = sub_plus(val)
 							elseif base == "tcl_tid" then
@@ -261,7 +255,7 @@ local function handle_definition_template(name, args, transclude_args)
 						end
 					elseif saw_t then
 						for key, val in pairs(args) do
-							local base, num = tostring(key):match("^(.-)([0-9]*)$")
+							local base = tostring(key):match("^(.-)(%d*)$")
 							if base == "t" or base == "tid" then
 								place_args[key] = val
 							end
@@ -280,23 +274,11 @@ local function handle_definition_template(name, args, transclude_args)
 				else
 					local gloss = data.gloss
 
-					-- The whole purpose of place_* arguments is to be in the entry's language, not English,
-					-- so add the appropriate langcode to make sure they're interpreted that way, but not if
-					-- a langcode is already present.
-					local function prefix_with_langcode(val)
-						if val:find("^[a-zA-Z0-9-_]+:[^ ]") then
-							return val
-						end
-						return langcode .. ":" .. val
-					end
-							
-					for extra_info_arg, is_list in pairs(place_extra_info) do
-						if is_list then
-							for i, v in ipairs(transclude_args["place_" .. extra_info_arg]) do
-								place_args[extra_info_arg .. (i == 1 and "" or i)] = prefix_with_langcode(v)
-							end
-						elseif transclude_args["place_" .. extra_info_arg] then
-							place_args[extra_info_arg] = prefix_with_langcode(transclude_args["place_" .. extra_info_arg])
+					-- Copy overriding extra info values. They are in the term language rather than English,
+					-- which we signal through `extra_info_overrides`.
+					for _, extra_info_spec in pairs(m_place.extra_info_args) do
+						for i, v in ipairs(transclude_args["place_" .. extra_info_spec.arg]) do
+							place_args[extra_info_spec.arg .. (i == 1 and "" or i)] = v
 						end
 					end
 					
@@ -317,7 +299,7 @@ local function handle_definition_template(name, args, transclude_args)
 						end
 					end
 				end
-				return place_format(place_args)
+				return m_place.format(place_args, "from tcl", drop_extra, extra_info_overrides)
 			end,
 		}
 	elseif name == "abbreviation of" or name == "abbr of" or name == "abbrev of"
@@ -362,8 +344,8 @@ function export.show(frame)
 		["sort"] = true,
 		["nogloss"] = {default = false, type = "boolean"},
 		["no_truncate_gloss"] = boolean,
-		-- Normally, we ignore extra info (capital, largest city, modern name, etc.) when transcluding {{place}}
-		-- because the given terms are in English and will likely differ from language to language.
+		-- Normally, we ignore most of the extra info (capital, largest city, official name, etc.) when transcluding
+		-- {{place}} because the given terms are in English and will likely differ from language to language.
 		["include_place_extra_info"] = boolean,
 		["lb"] = true, -- can have multiple semicolon-separated labels
 		["nolb"] = true, -- can have multiple semicolon-separated labels
@@ -372,8 +354,8 @@ function export.show(frame)
 		["t"] = list,
 		["indent"] = true,
 	}
-	for k, is_list in pairs(place_extra_info) do
-		params["place_" .. k] = not is_list and true or is_list == true and list or {list = is_list}
+	for _, extra_arg_spec in ipairs(m_place.extra_info_args) do
+		params["place_" .. extra_arg_spec.arg] = list
 	end
 
    	local args = process_params(frame:getParent().args, params)
