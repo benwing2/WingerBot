@@ -181,13 +181,27 @@ local function handle_definition_template(name, args, transclude_args)
 				end
 				local place_args = {}
 				local langcode = data.lang:getCode()
+				local place_translation_follows = transclude_args.place_translation_follows
 				local include_place_extra_info = transclude_args.include_place_extra_info
 				local drop_extra = not include_place_extra_info -- false or unspecified
-				local extra_info_overrides = {}
+				local extra_info_overridden_set = {}
 				for _, extra_info_spec in pairs(m_place.extra_info_args) do
 					local overriding_arg = transclude_args["place_" .. extra_info_spec.arg]
 					if overriding_arg and overriding_arg[1] then
-						extra_info_overrides[extra_info_spec.arg] = true
+						extra_info_overridden_set[extra_info_spec.arg] = true
+					end
+				end
+				local form_of_overridden_args = {}
+				for form_of_directive, directive_spec in pairs(m_place.all_form_of_directives) do
+					if not directive_spec.alias_of then
+						local transclude_key = "place_" .. (form_of_directive:gsub(" ", "_"))
+						local transclude_value = transclude_args[transclude_key]
+						if transclude_value then
+							form_of_overridden_args[form_of_directive] = transclude_value
+							if directive_spec.default_foreign and place_translation_follows == nil then
+								place_translation_follows = true
+							end
+						end
 					end
 				end
 				local saw_tcl_t
@@ -207,7 +221,7 @@ local function handle_definition_template(name, args, transclude_args)
 						else
 							saw_t = true
 						end
-					elseif m_place.extra_info_arg_map[base] and extra_info_overrides[base] then
+					elseif m_place.extra_info_arg_map[base] and extra_info_overridden_set[base] then
 						-- don't copy any extra info arguments that we will be overriding, in case there are more original
 						-- values than overrides for this particular argument
 					elseif not tcl_arg or base ~= "" then
@@ -221,7 +235,7 @@ local function handle_definition_template(name, args, transclude_args)
 					end
 					return t
 				end
-					
+
 				place_args[1] = langcode
 				place_args.pagename = data.source
 
@@ -234,7 +248,7 @@ local function handle_definition_template(name, args, transclude_args)
 					end
 					place_args.a = nil
 				end
-						
+
 				if transclude_args.t[1] then
 					local argno = 1
 					for _, t in ipairs(transclude_args.t) do
@@ -275,13 +289,13 @@ local function handle_definition_template(name, args, transclude_args)
 					local gloss = data.gloss
 
 					-- Copy overriding extra info values. They are in the term language rather than English,
-					-- which we signal through `extra_info_overrides`.
+					-- which we signal through `extra_info_overridden_set`.
 					for _, extra_info_spec in pairs(m_place.extra_info_args) do
 						for i, v in ipairs(transclude_args["place_" .. extra_info_spec.arg]) do
 							place_args[extra_info_spec.arg .. (i == 1 and "" or i)] = v
 						end
 					end
-					
+
 					if not args.tcl_noextratext and not tcl_arg and gloss ~= "" then
 						-- Copy text after {{place}} into {{place}}, unless tcl= or tcl_noextratext= is given.
 						local first_free = 2
@@ -299,7 +313,14 @@ local function handle_definition_template(name, args, transclude_args)
 						end
 					end
 				end
-				return m_place.format(place_args, "from tcl", drop_extra, extra_info_overrides)
+				return m_place.format {
+					template_args = place_args,
+					from_tcl = true,
+					drop_extra_info = drop_extra,
+					extra_info_overridden_set = extra_info_overridden_set,
+					form_of_overridden_args = form_of_overridden_args,
+					translation_follows = place_translation_follows,
+				}
 			end,
 		}
 	elseif name == "abbreviation of" or name == "abbr of" or name == "abbrev of"
@@ -347,6 +368,20 @@ function export.show(frame)
 		-- Normally, we ignore most of the extra info (capital, largest city, official name, etc.) when transcluding
 		-- {{place}} because the given terms are in English and will likely differ from language to language.
 		["include_place_extra_info"] = boolean,
+		-- Normally the translation (the transcluded page or overriding value in t=) comes first with the definition
+		-- following in parens, but that may not produce sensible results in some cases, such as initialisms; e.g. if
+		-- we define [[GDR]] as
+		-- {{place|en|@init of:German Democratic Republic|@official name of:East Germany|former country|r/Central Europe}}
+		-- and then we define Polish [[NRD]] as
+		-- {{tcl|pl|GDR|place_init_of=Niemiecka Republika Demokratyczna<eq:German Democratic Republic>}}, we get
+		-- "GDR (initialism of Niemiecka Republika Demokratyczna (= German Democratic Republic), official name of East Germany, a former country in Central Europe)"
+		-- which makes no sense as GDR is not an initialism of [[Niemiecka Republika Demokratyczna]]. Instead what we
+		-- want is a display more like
+		-- "initialism of Niemiecka Republika Demokratyczna (= German Democratic Republic), official name of East Germany, a former country in Central Europe: [[GDR]]".
+		-- `place_translation_follows=1` causes that to happen, and it also happens by default whenever an argument like
+		-- place_init_of= (or more generally, any of the form-of directives that are marked as `default_foreign`); to
+		-- disable the postposed display in that case, use `place_translation_follows=0`.
+		["place_translation_follows"] = boolean,
 		["lb"] = true, -- can have multiple semicolon-separated labels
 		["nolb"] = true, -- can have multiple semicolon-separated labels
 		["nocat"] = boolean,
@@ -356,6 +391,10 @@ function export.show(frame)
 	}
 	for _, extra_arg_spec in ipairs(m_place.extra_info_args) do
 		params["place_" .. extra_arg_spec.arg] = list
+	end
+	for form_of_directive, directive_spec in pairs(m_place.all_form_of_directives) do
+		params["place_" .. (form_of_directive:gsub(" ", "_"))] = directive_spec.alias_of and
+			{alias_of = "place_" .. (directive_spec.alias_of:gsub(" ", "_"))} or true
 	end
 
    	local args = process_params(frame:getParent().args, params)
@@ -573,20 +612,20 @@ function export.show(frame)
 			-- Substitute a list of known abbreviations that shouldn't mark the end-point of the gloss, which will be reinserted after truncation.
 			local abbrevs = {"A.D.", "B.C.", "B.C.E.", "c[af]?.", "C.E.", "e.g.", "fl.", "i.[ae].", "r.", "sc.", "scil.", "viz.", "vs?."}
 			local substitutes, i = {}, 0
-			
+
 			local function insert_substitute(m)
 				i = i + 1
 				insert(substitutes, m)
 				return u(0x80000 + i)
 			end
-			
+
 			for j, abbrev in ipairs(abbrevs) do
 				abbrev = abbrev:gsub("%.", "%%.")
 					:gsub("%f[^.].", " *%0")
 				abbrevs[j] = abbrev
 				gloss = gloss:gsub("%f[%S]" .. abbrev .. "%f[%s]", insert_substitute)
 			end
-			
+
 			gloss = gloss:gsub("%s*%. .*$", "")
 				:gsub("\242[\128-\191]*", function(m)
 					return substitutes[codepoint(m) - 0x80000]
