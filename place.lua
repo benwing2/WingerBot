@@ -521,6 +521,22 @@ structure are made to aid in categorization. For example, after `handle_category
 }
 ```
 
+===Overall place specs===
+
+The overall place spec parsed by `parse_overall_place_spec` has the following fields:
+* `lang`: The language object (from {{para|1}}).
+* `args`: The parsed arguments from the {{tl|place}} call.
+* `directives`: List of form-of directives (starting with `@`) parsed from the numeric args beginning with {{para|2}}.
+	Each directive contains fields `directive` (the directive as specified by the user, e.g. `"former name of"`);
+	`terms` (list of term objects for the terms specified by the user); `conj` (conjunction specified by the user using
+	inline modifier `<conj:...>`, or {nil}); `spec` (the corresponding directive spec from `all_form_of_directives`).
+* `descs`: List of one or more place description objects parsed from the numeric args beginning with {{para|2}}, as
+	described above.
+* `extra_info`: List of extra-info objects for extra info specified using arguments such as {{para|capital}},
+	{{para|modern}}, etc. Objects are in the order they should be displayed, and each object contains fields `spec` (the
+	spec for the type of extra info, taken from `export.extra_info_args`), `terms` (list of term objects for the terms
+	specified by the user); and `conj` (conjunction specified by the user using inline modifier `<conj:...>`, or {nil}).
+
 ===Category determination===
 
 The algorithm to find the categories to which a given place belongs works off of a place description (which specifies
@@ -873,12 +889,12 @@ TODO/FIXME:
 	value of `display_as_full`.
 ]=]
 
---[=[
+--[==[ var:
 List specifying the allowed form-of directives, used for former names, official names, abbreviations, etc. of places.
 The key is the form-of directive and the value is an object with the following properties:
 * `text`: The actual text displayed before the terms. If the value is `+`, the key is used as the text. If the value is
-	a function, it is passed a single argument, the overall place spec (see the comment above the function
-    `parse_overall_place_spec` for the format of this argument) and should return the text to be displayed.
+	a function, it is passed a single argument, the overall place spec (see comment at top of file) and should return
+	the text to be displayed.
 * `type_prefix`: The prefix used to generate the placetype for looking up the appropriate category or categories in the
 	placetype data structure.
 * `conjunction`: The conjunction used to join multiple terms, defaulting to `and`.
@@ -887,10 +903,10 @@ The key is the form-of directive and the value is an object with the following p
 	category. For example, the value `"Abbreviations"` would correspond to a category [[:Category:en:Abbreviations]]
 	(assuming the language of the {{tl|place}} call is English), while the value `"cln:abbreviations"` corresponds to a
 	category [[:Category:English abbreviations]]. Use a list of such specs for multiple categories.
-* `default_foreign`: If specified, the default language of terms given along with this directive is the language in 1=;
-	otherwise it is English.
-]=]
-local all_form_of_directives = {
+* `default_foreign`: If specified, the default language of terms given along with this directive is the language in
+	{{para|1}}; otherwise it is English.
+]==]
+export.all_form_of_directives = {
 	["former name of"] = {text = "+", type_prefix = "FORMER_NAME_OF"},
 	["official name of"] = {text = "+", type_prefix = "OFFICIAL_NAME_OF"},
 	["former official name of"] = {text = "+", type_prefix = "FORMER_OFFICIAL_NAME_OF"},
@@ -934,8 +950,8 @@ capital, largest city, modern name, official name, etc., along with associated p
 Each element is an object with the following properties:
 * `arg`: The argument name.
 * `text`: The actual text displayed before the terms. If the value is `+`, the argument name is used as the text. If the
-    value is a function, it is passed a single argument, the overall place spec (see the comment above the function
-    `parse_overall_place_spec` for the format of this argument) and should return the text to be displayed.
+    value is a function, it is passed a single argument, the overall place spec (see the comment at the top of the file)
+    and should return the text to be displayed.
 * `conjunction`: The conjunction used to join multiple terms, defaulting to `and`.
 * `display_even_when_dropped`: Display this piece of extra info even when it would normally be dropped (e.g. in
 	{{tl|tcl}} when the language is other than English).
@@ -1355,21 +1371,16 @@ function export.parse_new_style_place_desc(text)
 end
 
 --[=[
-Process numeric args. `args` is the parsed argument structure. The return value is an object with the following fields:
-* `lang`: The language object (from 1=).
-* `args`: The value of `args` passed in.
-* `directives`: List of form-of directives (starting with @) parsed from the numeric args beginning with 2=. Each
-	directive contains fields `directive` (the directive as specified by the user, e.g. `"former name of"`); `terms`
-	(list of term objects for the terms specified by the user); `conj` (conjunction specified by the user using inline
-	modifier <conj:...>, or {nil}); `spec` (the corresponding directive spec from `all_form_of_directives`).
-* `descs`: List of one or more place description objects parsed from the numeric args beginning with 2=, as described in
-	the long comment at the top of the file.
-* `extra_info`: List of extra-info objects for extra info specified using arguments such as capital=, modern=, etc.
-	Objects are in the order they should be displayed, and each object contains fields `spec` (the spec for the type of
-	extra info, taken from `export.extra_info_args`), `terms` (list of term objects for the terms specified by the
-	user); `conj` (conjunction specified by the user using inline modifier <conj:...>, or {nil}).
+Process numeric and "extra info" arguments into an overall place spec, as described at the top of the file. `data` is an
+object with the following fields:
+* `args`: The parsed arguments of {{tl|place}}.
+* `from_tcl`: True if we're being invoked from {{tl|tcl}}.
+* `extra_info_overridden_set`, `form_of_overridden_args`: Same as the corresponding fields in the `data` object passed
+	to `export.format`.
 ]=]
-local function parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_info_overridden_set)
+local function parse_overall_place_spec(data)
+	local args, from_tcl, extra_info_overridden_set, form_of_overridden_args =
+		data.args, data.from_tcl, data.extra_info_overridden_set, data.form_of_overridden_args
 	local descs = {}
 	local this_desc
 	-- Index of separate (semicolon-separated) place descriptions within `descs`.
@@ -1391,20 +1402,20 @@ local function parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_i
 			if not form_of_directive then
 				error("Misformatted @-directive: " .. dump(arg))
 			end
-			if not all_form_of_directives[form_of_directive] then
+			if not export.all_form_of_directives[form_of_directive] then
 				local known_directives = {}
-				for k, _ in pairs(all_form_of_directives) do
+				for k, _ in pairs(export.all_form_of_directives) do
 					insert(known_directives, '"' .. k .. '"')
 				end
 				table.sort(known_directives)
 				error(("Unrecognized form-of directive %s in @-directive %s; recognized directives are %s"):format(
 					dump(form_of_directive), dump(arg), concat(known_directives, ", ")))
 			end
-			local spec = all_form_of_directives[form_of_directive]
+			local spec = export.all_form_of_directives[form_of_directive]
 			local canonical_directive = form_of_directive
 			if spec.alias_of then
 				canonical_directive = spec.alias_of
-				spec = all_form_of_directives[canonical_directive]
+				spec = export.all_form_of_directives[canonical_directive]
 				if not spec then
 					internal_error("Form-of directive alias %s points to %s, which is not a directive",
 						"@" .. form_of_directive, canonical_directive)
@@ -1413,8 +1424,13 @@ local function parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_i
 						"@" .. form_of_directive, canonical_directive)
 				end
 			end
+			local default_foreign = spec.default_foreign
+			if form_of_overridden_args and form_of_overridden_args[canonical_directive] then
+				raw_terms = form_of_overridden_args[canonical_directive]
+				default_foreign = true
+			end
 			local terms = parse_term_with_inline_modifiers(raw_terms, "@" .. form_of_directive,
-				spec.default_foreign and args[1] or enlang)
+				default_foreign and args[1] or enlang)
 			insert(form_of_directives, {
 				directive = canonical_directive,
 				terms = terms.terms,
@@ -1932,7 +1948,7 @@ end
 
 -- Format a set of extra-info terms for extra information that is sometimes added to a definition, such as the capital,
 -- largest city, modern name, official name, etc. `overall_place_spec` is the overall parsed {{tl|place}} spec (see
--- `parse_overall_place_spec`); `extra_info_terms` is the terms spec for this type of extra-info (as returned by
+-- comment at top of file); `extra_info_terms` is the terms spec for this type of extra-info (as returned by
 -- `parse_extra_info_arg`); and `sentence_style` indicates whether we're generating a sentence-style definition (as
 -- suitable for an English-language term without a translation specified using t=).
 local function format_extra_info(overall_place_spec, extra_info_terms, sentence_style)
@@ -2204,7 +2220,10 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 end
 
 -- Return the definition line.
-local function get_def(overall_place_spec, from_tcl, drop_extra_info, extra_info_overridden_set)
+local function get_def(data)
+	local overall_place_spec, from_tcl, drop_extra_info, extra_info_overridden_set, translation_follows =
+		data.overall_place_spec, data.from_tcl, data.drop_extra_info, data.extra_info_overridden_set,
+		data.translation_follows
 	local args = overall_place_spec.args
 	local sentence_style = overall_place_spec.lang:getCode() == "en"
 	local ucfirst = sentence_style and not args.nocap
@@ -2213,7 +2232,11 @@ local function get_def(overall_place_spec, from_tcl, drop_extra_info, extra_info
 		if from_tcl and not args.tcl_nolc then
 			gloss = m_strutils.lcfirst(gloss)
 		end
-		return get_translations(args.t, args.tid) .. (gloss == "" and "" or " (" .. gloss .. ")")
+		if translation_follows then
+			return (gloss == "" and "" or gloss .. ": ") .. get_translations(args.t, args.tid)
+		else
+			return get_translations(args.t, args.tid) .. (gloss == "" and "" or " (" .. gloss .. ")")
+		end
 	else
 		return get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info, extra_info_overridden_set)
 	end
@@ -2599,7 +2622,7 @@ end
 Iterate through each type of place and return a list of the categories that need to be added to the entry. The returned
 categories need to be formatted using `format_cats`, as they can be either topic-style categories (by default) or
 langname-style categories (if prefixed with `cln:`). The function is passed the overall place spec, which contains all
-the parsed info on the {{tl|place}} call (see `parse_overall_place_spec`), the parsed arguments (needed for arguments
+the parsed info on the {{tl|place}} call (see comment at top of file), the parsed arguments (needed for arguments
 not parsed by `parse_overall_place_spec` and used primarily to add "bare categories" corresponding to toponyms for known
 locations), and `from_demonym`, which is true if we're being called from {{tl|demonym-noun}} or {{tl|demonym-adj}} (in
 this case, we only want certain categories added, specifically bare categories corresponding to the specified
@@ -2687,10 +2710,25 @@ end
 
 
 --[==[
-Implementation of {{tl|place}}. Meant to be callable from another module (specifically, [[Module:transclude]]).
-`from_tcl` means we are being called from {{tl|tcl}}.
+Implementation of {{tl|place}}. Meant to be callable from another module (specifically, [[Module:transclude]]). The
+single argument `data` is an object with the following fields:
+* `template_args`: Raw arguments specified by {{tl|place}}, possibly modified by {{tl|tcl}}.
+* `from_tcl`: True if we're being invoked from {{tl|tcl}}.
+* `drop_extra_info`: True if we should drop most of the "extra info" specified using extra info arguments (capital,
+	largest city, etc.). Usually true when invoked from {{tl|tcl}}. Note that some extra info is still displayed even
+	when `drop_extra_info` is set in order to establish the context (e.g. {{para|full}} and {{para|modern}}), and any
+	extra info overridden at the {{tl|tcl}} level is displayed regardless.
+* `extra_info_overridden_set`: Set of booleans specifying, for each extra info arg, whether it was overridden at the
+	{{tl|tcl}} level. This means, for example, that the values are interpreted according to the language in {{para|1}}
+	instead of always defaulting to English, as is the case when {{tl|place}} is called directly.
+* `form_of_overridden_args`: Set of string specifying overriding form-of arguments. This is present so that {{tl|tcl}}
+	can be used on abbreviations like [[GDR]] and [[FYROM]], whose equivalents in a foreign language have
+	language-specific expansions but where the rest of the call should stay the same.
+* `translation_follows`: If true, any translation specified using t= should follow the definition, after a colon,
+	rather than preceding, with the definition in parens.
 ]==]
-function export.format(template_args, from_tcl, drop_extra_info, extra_info_overridden_set)
+function export.format(data)
+	local template_args = data.template_args
 	local list_param = {list = true}
 	local boolean_param = {type = "boolean"}
 	local params = {
@@ -2727,9 +2765,11 @@ function export.format(template_args, from_tcl, drop_extra_info, extra_info_over
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
-	local overall_place_spec = parse_overall_place_spec(args, from_tcl, drop_extra_info, extra_info_overridden_set)
+	data.args = args
+	local overall_place_spec = parse_overall_place_spec(data)
+	data.overall_place_spec = overall_place_spec
 
-	return get_def(overall_place_spec, from_tcl, drop_extra_info, extra_info_overridden_set) .. (
+	return get_def(data) .. (
 		args.nocat and "" or format_cats(args[1], export.get_cats(args, overall_place_spec), args.sort))
 end
 
@@ -2738,7 +2778,9 @@ end
 Actual entry point of {{tl|place}}.
 ]==]
 function export.show(frame)
-	return export.format(frame:getParent().args)
+	return export.format {
+		template_args = frame:getParent().args,
+	}
 end
 
 
