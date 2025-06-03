@@ -603,7 +603,7 @@ local function do_nouns(args, data, pos)
 
 	if plurals[1] == "p" then
 		-- plurale tantum
-		if #plurals > 1 then
+		if plurals[2] then
 			error("With plurale tantum noun, can't specify more than one plural")
 		end
 		data.genders = {"p"} -- this should auto-insert the correct 'pluralia tantum' category
@@ -619,16 +619,25 @@ local function do_nouns(args, data, pos)
 		return
 	end
 
+	local function inscat(cat)
+		insert(data.categories, langname .. " " .. cat)
+	end
+
 	local need_default_plural = pos == "noun"
-	if plurals[1] == "-" then
+	if plurals[1] == "sp" then
+		-- construed as singular or plural
+		remove(plurals, 1)  -- Remove the "sp"
+		inscat("nouns construed as singular or plural")
+		data.genders = {"s", "p"} -- this should auto-insert the correct 'pluralia tantum' category
+		need_default_plural = false
+	elseif plurals[1] == "-" then
 		-- Uncountable noun; may occasionally have a plural
 		remove(plurals, 1)  -- Remove the "-"
-		insert(data.categories, langname .. " uncountable nouns")
+		inscat("uncountable nouns")
 
 		-- If plural forms were given explicitly, then show "usually"
-		if #plurals > 0 then
+		if plurals[1] then
 			insert(data.inflections, {label = "usually " .. glossary_link("uncountable")})
-			insert(data.categories, langname .. " countable nouns")
 		else
 			insert(data.inflections, {label = glossary_link("uncountable")})
 		end
@@ -637,27 +646,21 @@ local function do_nouns(args, data, pos)
 		-- Mixed countable/uncountable noun, always has a plural
 		remove(plurals, 1)  -- Remove the "~"
 		insert(data.inflections, {label = glossary_link("countable") .. " and " .. glossary_link("uncountable")})
-		insert(data.categories, langname .. " uncountable nouns")
-		insert(data.categories, langname .. " countable nouns")
+		inscat("uncountable nouns")
+		inscat("countable nouns")
 
 		-- If no plural was given, add a default one now
-		if #plurals == 0 then
+		if not plurals[1] then
 			plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
 		end
-	elseif pos == "proper noun" then
-		-- For proper nouns, the default is uncountable
-		insert(data.categories, langname .. " uncountable nouns")
-	else
-		-- For common nouns, the default is countable, has a plural
-		insert(data.categories, langname .. " countable nouns")
 	end
 	-- Plural is unknown
 	if plurals[1] == "?" then
 		remove(plurals, 1)  -- Remove the "?"
 		-- Not desired; see [[Wiktionary:Tea_room/2021/August#"Plural unknown or uncertain"]]
 		-- insert(data.inflections, {label = "plural unknown or uncertain"})
-		insert(data.categories, langname .. " nouns with unknown or uncertain plurals")
-		if #plurals > 0 then
+		inscat("nouns with unknown or uncertain plurals")
+		if plurals[1] then
 			error("Can't specify explicit plurals along with '?' for unknown/uncertain plural")
 		end
 		return
@@ -666,21 +669,23 @@ local function do_nouns(args, data, pos)
 	if plurals[1] == "!" then
 		remove(plurals, 1)  -- Remove the "!"
 		insert(data.inflections, {label = "plural not attested"})
-		insert(data.categories, langname .. " nouns with unattested plurals")
-		if #plurals > 0 then
+		inscat("nouns with unattested plurals")
+		if plurals[1] then
 			error("Can't specify explicit plurals along with '!' for unattested plural")
 		end
 		return
 	end
-	-- If no plural was given, maybe add a default one, otherwise (when "-" was given) return.
-	if #plurals == 0 then
+	-- If no plural was given, maybe add a default one, otherwise (when "-" was given or proper noun) return.
+	if not plurals[1] then
 		if not need_default_plural then
+			inscat("uncountable nouns")
 			return
 		end
 		plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
 	end
 
 	-- There are plural forms to show, so show them.
+	inscat("countable nouns")
 	plurals.label = "plural"
 	plurals.accel = {form = "p"}
 	local irregular, indeclinable
@@ -705,10 +710,10 @@ local function do_nouns(args, data, pos)
 		end
 	end
 	if irregular then
-		insert(data.categories, langname .. " nouns with irregular plurals")
+		inscat("nouns with irregular plurals")
 	end
 	if indeclinable then
-		insert(data.categories, langname .. " indeclinable nouns")
+		inscat("indeclinable nouns")
 	end
 	
 	insert(data.inflections, plurals)
