@@ -601,21 +601,25 @@ local function do_nouns(args, data, pos)
 
 	local plurals = gather_inflections_with_quals(args, 1, "plqual")
 
+	local function insert_plurale_tantum_inflections(is_plural_only)
+		if args.sg[1] then
+			insert(data.inflections, {label = "normally plural"})
+			insert(data.inflections, gather_inflections_with_quals(args, "sg", "sgqual", "singular"))
+		elseif is_plural_only then
+			insert(data.inflections, {label = "plural only"})
+		end
+		if args.attr[1] then
+			insert(data.inflections, gather_inflections_with_quals(args, "attr", "attrqual", "attributive"))
+		end
+	end
+		
 	if plurals[1] == "p" then
 		-- plurale tantum
 		if plurals[2] then
 			error("With plurale tantum noun, can't specify more than one plural")
 		end
 		data.genders = {"p"} -- this should auto-insert the correct 'pluralia tantum' category
-		if #args.sg > 0 then
-			insert(data.inflections, {label = "normally plural"})
-			insert(data.inflections, gather_inflections_with_quals(args, "sg", "sgqual", "singular"))
-		else
-			insert(data.inflections, {label = "plural only"})
-		end
-		if #args.attr > 0 then
-			insert(data.inflections, gather_inflections_with_quals(args, "attr", "attrqual", "attributive"))
-		end
+		insert_plurale_tantum_inflections("plural only")
 		return
 	end
 
@@ -629,6 +633,7 @@ local function do_nouns(args, data, pos)
 		remove(plurals, 1)  -- Remove the "sp"
 		inscat("nouns construed as singular or plural")
 		data.genders = {"s", "p"} -- this should auto-insert the correct 'pluralia tantum' category
+		insert_plurale_tantum_inflections()
 		need_default_plural = false
 	elseif plurals[1] == "-" then
 		-- Uncountable noun; may occasionally have a plural
