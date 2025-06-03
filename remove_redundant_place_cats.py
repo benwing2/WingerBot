@@ -96,6 +96,12 @@ def process_text_on_page(index, pagetitle, text):
         m.group(1) + auto_cat_to_manual.get(m.group(3), m.group(3)) # remove 'en:West Yorkshire' if auto-added cat is 'en:Cities in West Yorkshire, England'
       ]:
         return True
+      if m and m.group(2) == "Countries" and m.group(3) in ["Polynesia", "Micronesia", "Melanesia"] and (
+          "Countries in Oceania" in cat):
+        return True
+      if m and m.group(2) == "Countries" and m.group(3) in ["Central America", "Caribbean"] and (
+          "Countries in North America" in cat):
+        return True
     return False
 
   for t in parsed.filter_templates():
@@ -162,12 +168,21 @@ def process_text_on_page(index, pagetitle, text):
         removed_cats.append(m.group(1))
     auto_added_categories.add(cat)
 
+  m = re.search(r"\A(.*?)(\n*)\Z", text, re.S)
+  normtext, final_newlines = m.groups()
+  normtext += "\n\n"
+
   for remove_it in text_to_remove:
-    text, did_replace = blib.replace_in_text(text, remove_it, "", pagemsg, no_found_repl_check=True)
+    if re.search("\n\n" + re.escape(remove_it) + "\n\n", normtext):
+      remove_it = "\n\n" + remove_it
+    elif re.search("\n" + re.escape(remove_it) + "\n", normtext):
+      remove_it = "\n" + remove_it
+    normtext, did_replace = blib.replace_in_text(normtext, remove_it, "", pagemsg, no_found_repl_check=True)
     if not did_replace:
       return
     pagemsg("Removed %s" % remove_it.replace("\n", r"\n"))
 
+  text = normtext.rstrip("\n") + final_newlines
   text = re.sub(r"\n\n+", "\n\n", text)
   if removed_cats:
     notes.append("remove cats redundant to {{place}}: %s" % ",".join(removed_cats))
