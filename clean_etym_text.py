@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# FIXME: This should account for cases where the last thing displayed is a period, e.g.:
+# From {{bor|en|es|Sra.}}
+
 import pywikibot, re, sys, argparse
 
 import blib
