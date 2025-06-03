@@ -29,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
     langcode = blib.languages_byCanonicalName[langname]["code"]
     newsectext = re.sub(r"\b%s\b" % args.langcode_var, langcode, sections[j])
     if newsectext != sections[j]:
-      notes.append("replace %s with %s" % (args.langcode_var, langcode))
+      notes.append(args.comment or "replace %s with %s" % (args.langcode_var, langcode))
       sections[j] = newsectext
 
   newtext = "".join(sections)
@@ -37,8 +37,8 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser("Replace LANGCODE with appropriate language code",
     include_pagefile=True, include_stdin=True)
-parser.add_argument("--langcode-var", help="Metasyntactic variable specifying the language code; default 'LANGCODE'",
-                    default="LANGCODE")
+parser.add_argument("--langcode-var", help="Metasyntactic variable specifying the language code; default 'LANGCODE'", default="LANGCODE")
+parser.add_argument("--comment", help="Changelog comment to use.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
