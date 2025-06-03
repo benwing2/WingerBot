@@ -1795,26 +1795,38 @@ function Language:toJSON(opts)
 		entry_name_remove_diacritics = entry_name.remove_diacritics
 	end
 	-- mainCode should only end up non-nil if dontCanonicalizeAliases is passed to make_object().
-	local ret = {
-		ancestors = self:getAncestorCodes(),
-		canonicalName = self:getCanonicalName(),
-		categoryName = self:getCategoryName("nocap"),
+	-- props should either contain zero-argument functions to compute the value, or the value itself.
+	local props = {
+		ancestors = function() return self:getAncestorCodes() end,
+		canonicalName = function() return self:getCanonicalName() end,
+		categoryName = function() return self:getCategoryName("nocap") end,
 		code = self._code,
 		mainCode = self._mainCode,
-		parent = self:getParentCode(),
-		full = self:getFullCode(),
+		parent = function() return self:getParentCode() end,
+		full = function() return self:getFullCode() end,
 		entryNamePatterns = entry_name_patterns,
 		entryNameRemoveDiacritics = entry_name_remove_diacritics,
-		family = self:getFamilyCode(),
-		aliases = self:getAliases(),
-		varieties = self:getVarieties(),
-		otherNames = self:getOtherNames(),
-		scripts = self:getScriptCodes(),
-		type = keys_to_list(self:getTypes()),
-		wikimediaLanguages = self:getWikimediaLanguageCodes(),
-		wikidataItem = self:getWikidataItem(),
-		wikipediaArticle = self:getWikipediaArticle(true),
+		family = function() return self:getFamilyCode() end,
+		aliases = function() return self:getAliases() end,
+		varieties = function() return self:getVarieties() end,
+		otherNames = function() return self:getOtherNames() end,
+		scripts = function() return self:getScriptCodes() end,
+		type = function() return keys_to_list(self:getTypes()) end,
+		wikimediaLanguages = function() return self:getWikimediaLanguageCodes() end,
+		wikidataItem = function() return self:getWikidataItem() end,
+		wikipediaArticle = function() return self:getWikipediaArticle(true) end,
 	}
+	local ret = {}
+	for prop, val in pairs(props) do
+		if not opts.skip_fields or not opts.skip_fields[prop] then
+			if type(val) == "function" then
+				ret[prop] = val()
+			else
+				ret[prop] = val
+			end
+		end
+	end
+
 	-- Use `deep_copy` when returning a table, so that there are no editing restrictions imposed by `mw.loadData`.
 	return opts and opts.lua_table and deep_copy(ret) or to_json(ret, opts)
 end
