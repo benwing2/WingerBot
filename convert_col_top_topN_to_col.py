@@ -310,7 +310,7 @@ def process_text_on_page(index, pagetitle, text):
         left_re = ""
         right_re = " *(.*?)"
       else:
-        left_re = "(.*?) "
+        left_re = "(.*?) *"
         right_re = ""
       m = None
       if not m and not on_left:
@@ -596,16 +596,47 @@ def process_text_on_page(index, pagetitle, text):
       expected_abbrev = header_to_col_top_abbrev.get(header, None)
       lines = subsections[k].split("\n")
       newlines = []
-      in_col_top = False
-      col_top_tn = None
-      col_elements = None
-      new_notes = []
       raw_col_lines = None
+      col_elements = None
+      if args.do_derived_related:
+        if header.strip() in ["Derived terms", "Related terms"]:
+          in_col_top = True
+          lines.append("\uFFF0") # sentinel line
+          raw_col_lines = []
+          col_elements = []
+        else:
+          in_col_top = False
+      else:
+        in_col_top = False
+      col_top_tn = None
+      new_notes = []
       cant_convert = False
       col_top_header = None
       for line in lines:
         if in_col_top:
           raw_col_lines.append(line)
+          if args.do_derived_related and not line.startswith("*"):
+            if len(col_elements) < args.min_derived_related_lines:
+              pagemsg("Saw only %s element%s in ==%s==, can't convert to {{col}}" % (
+                len(col_elements), "" if len(col_elements) == 1 else "s", header.strip()))
+              cant_convert = True
+              newlines.extend(raw_col_lines)
+              in_col_top = False
+              continue
+            elif cant_convert:
+              newlines.extend(raw_col_lines)
+              in_col_top = False
+              continue
+            else:
+              newlines.append("{{col|%s" % langcode)
+              newlines.extend(col_elements)
+              newlines.append("}}")
+              newlines.append(line)
+              notes.extend(new_notes)
+              notes.append("convert %s raw elements under ==%s== to {{col|%s|...}}" % (
+                len(col_elements), header.strip(), langcode))
+              in_col_top = False
+              continue
           m = re.search("^\{\{ *((?:col-)?bottom) *\|", line.strip())
           if m:
             if not cant_convert:
@@ -723,7 +754,7 @@ def process_text_on_page(index, pagetitle, text):
       if in_col_top:
         pagemsg("WARNING: Saw {{col-top}} without closing {{col-bottom}}")
         newlines.extend(raw_col_lines)
-      subsections[k] = "\n".join(newlines)
+      subsections[k] = "\n".join(x for x in newlines if x != "\uFFF0") # exclude sentinel
     sections[j] = "".join(subsections)
 
   return "".join(sections), notes
@@ -734,6 +765,8 @@ if __name__ == "__main__":
   parser.add_argument("--do-top", action="store_true", help="Do {{top2}} through {{top6}}.")
   parser.add_argument("--do-col-top", action="store_true", help="Do {{col-top}}.")
   parser.add_argument("--do-col", action="store_true", help="Do {{col}} and {{col1}} through {{col6}}.")
+  parser.add_argument("--do-derived-related", action="store_true", help="Do raw lists under ==Derived terms== and ==Related terms==.")
+  parser.add_argument("--min-derived-related-lines", type=int, default=6, help="Only convert raw lists with this many elements or more.")
   args = parser.parse_args()
   start, end = blib.parse_start_end(args.start, args.end)
 
