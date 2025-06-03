@@ -130,9 +130,9 @@ local function format_parts(data)
 		if part.term and part.term:find("<<") then
 			local m_place = require(place_module)
 			local place_desc = m_place.parse_new_style_place_desc(part.term)
-			formatted_desc = m_place.get_new_style_gloss({}, place_desc, false)
+			formatted_desc = m_place.format_new_style_place_desc_for_display({}, place_desc, false)
 			if not data.nocat then
-				local this_cats = m_place.get_cats({}, {place_desc}, "from demonym")
+				local this_cats = m_place.get_cats({}, {lang = data.lang, descs = place_desc}, "from demonym")
 				for _, cat in ipairs(this_cats) do
 					insert(cats, full_langcode .. ":" .. cat)
 				end
@@ -288,7 +288,7 @@ function export.format_demonym_noun(data)
 
 	if data.g == "m" and not data.notext then
 		ins(" ")
-		ins(require(qualifier_module).format_qualifier("male or of unspecified gender"))
+		ins(require(qualifier_module).format_qualifier("usually male"))
 	end
 
 	if lang_is_en and not data.nodot and not data.notext then
