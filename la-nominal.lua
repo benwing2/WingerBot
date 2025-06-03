@@ -54,6 +54,7 @@ TERMINOLOGY:
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
 local headword_data_module = "Module:headword/data"
+local json_module = "Module:JSON"
 local la_adj_data_module = "Module:la-adj/data"
 local la_adj_table_module = "Module:la-adj/table"
 local la_noun_data_module = "Module:la-noun/data"
@@ -763,27 +764,6 @@ local function partial_show_forms(data, is_adj)
 		insert(notes, footnote)
 	end
 	data.footnotes = concat(notes, "<br />")
-end
-
-local function concat_forms(data, is_adj, include_props)
-	local ins_text = {}
-	for slot in iter_slots(is_adj) do
-		local formtext = concat_forms_in_slot(data.forms[slot])
-		if formtext then
-			insert(ins_text, slot .. "=" .. formtext)
-		end
-	end
-	if include_props then
-		if data.gender then
-			insert(ins_text, "g=" .. mw.ustring.lower(data.gender))
-		end
-		local num = data.num
-		if not num or num == "" then
-			num = "both"
-		end
-		insert(ins_text, "num=" .. num)
-	end
-	return concat(ins_text, "|")
 end
 
 -- Given an ending (or possibly a full regex matching the entire lemma, if
@@ -2649,6 +2629,7 @@ function export.do_generate_noun_forms(parent_args, pos, generate_type, def)
 		footnote = true,
 		title = true,
 		num = true,
+		json = {type = "boolean"},
 	}
 	for slot in iter_noun_slots() do
 		params[slot] = true
@@ -2730,6 +2711,9 @@ function export.do_generate_noun_forms(parent_args, pos, generate_type, def)
 
 	process_noun_forms_and_overrides(all_data, args, generate_type)
 
+	if args.json then
+		return require(json_module).toJSON(all_data)
+	end
 	return all_data
 end
 
@@ -2742,6 +2726,7 @@ function export.do_generate_adj_forms(parent_args, pos, generate_type, degree, d
 		num = true,
 		noneut = boolean,
 		nomf = boolean,
+		json = boolean,
 	}
 	for slot in iter_adj_slots() do
 		params[slot] = true
@@ -2848,12 +2833,18 @@ function export.do_generate_adj_forms(parent_args, pos, generate_type, degree, d
 
 	process_adj_forms_and_overrides(all_data, args, generate_type)
 
+	if args.json then
+		return require(json_module).toJSON(all_data)
+	end
 	return all_data
 end
 
 function export.show_noun(frame)
 	local parent_args = frame:getParent().args
 	local data = export.do_generate_noun_forms(parent_args, "nouns")
+	if type(data) == "string" then -- JSON
+		return data
+	end
 
 	show_forms(data, false)
 
@@ -2869,26 +2860,13 @@ end
 function export.show_adj(frame)
 	local parent_args = frame:getParent().args
 	local data = export.do_generate_adj_forms(parent_args, "adjectives")
+	if type(data) == "string" then -- JSON
+		return data
+	end
 
 	partial_show_forms(data, true)
 
 	return make_adj_table(data)
-end
-
-function export.generate_noun_forms(frame)
-	local include_props = frame.args["include_props"]
-	local parent_args = frame:getParent().args
-	local data = export.do_generate_noun_forms(parent_args, "nouns")
-
-	return concat_forms(data, false, include_props)
-end
-
-function export.generate_adj_forms(frame)
-	local include_props = frame.args["include_props"]
-	local parent_args = frame:getParent().args
-	local data = export.do_generate_adj_forms(parent_args, "adjectives")
-
-	return concat_forms(data, true, include_props)
 end
 
 return export
