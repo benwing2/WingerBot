@@ -2139,8 +2139,10 @@ def parse_inline_modifier(value):
 # If INCLUDE_NOTFOREIGN is given, then PROCESS_PARAM will be called on templates referencing one of the languages in
 # LANGS but not containing any foreign-script values. In that case, the first element of the tuple passed in `param`
 # to PROCESS_PARAM will be "notforeign". See below.
-def process_one_page_links(index, pagetitle, text, langs, process_param,
-  templates_seen, templates_changed, split_templates=None, include_notforeign=False):
+def process_one_page_links(
+  index, pagetitle, text, langs, process_param, templates_seen, templates_changed, split_templates=None,
+  include_notforeign=False
+):
 
   def lang_prefix_template(tn):
     return ":" in tn or re.search("^[a-z][a-z][a-z]?-", tn)
@@ -2185,7 +2187,10 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
           tlang = langparam[1]
           langparam = None
         else:
-          tlang = getp(langparam)
+          tlang = getp(langparam).strip()
+          # In some cases, a comma-separated list of languages is allowed. For now, just chop off all but the first.
+          # FIXME: This needs more sophisticated handling.
+          tlang = re.sub(",.*", "", tlang)
         return tlang, langparam
 
       # Create an indexed param suitable for passing to getpm(). If `ind` == 1, a list is returned, without and with the
@@ -2194,7 +2199,7 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
         if ind == 1:
           return [param, param + "1"]
         else:
-          return "param%s" % ind
+          return "%s%s" % (param, ind)
 
       # Call `processfn` on a given foreign-script/Latin combination:
       # * `langparam` is the parameter holding the language of the foreign script param. If the language is not found in
@@ -2411,7 +2416,7 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
           dofaparam("tr")
           doparam(("direct", "fa"), ("separate", "prstem", "tr2"))
           doparam(("direct", "fa"), ("separate", "prstem2", "tr3"))
-        elif tn.startswith("fa-conj") and "head" not in tn:
+        elif (tn.startswith("fa-conj") or tn.startswith("prs-conj")) and "head" not in tn:
           doparam(("direct", "fa"), ("separate", "1", "2"))
           doparam(("direct", "fa"), ("separate", "3", "4"))
           # FIXME! Some fa-conj-* templates use 5= as an alternative translit for 2= in the past,
@@ -2423,6 +2428,8 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
           doparam(("direct", "fa"), ("separate", "7", "8"))
           doparam(("direct", "fa"), ("separate", "pre", "pretr"))
           doparam(("direct", "fa"), ("separate", "pr-part", "pr-part-tr"))
+        elif (tn.startswith("fa-basic") or tn.startswith("fa-poss")) and "head" not in tn:
+          doparam(("direct", "fa"), ("separate-pagetitle", None, "1"))
         elif tn in ["fa-numeral", "fa-number", "fa-interjection", "fa-adv", "fa-conjunction", "fa-preposition",
             "fa-pronoun"]:
           dofaparam("tr")
@@ -2441,6 +2448,10 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
             doparam(("direct", "fa"), ("separate-pagetitle", None, "1"))
             # 4= when it exists often has a stress mark, which this will remove.
             doparam(("direct", "fa"), ("separate-pagetitle", None, "4"))
+        elif tn in ["fa-IPA"]:
+          for respelling in ["1", "cls", "prs", "kbl", "fa", "teh", "tg", "ir", "dari", "haz", "kabul"]:
+            if getp(respelling):
+              doparam(("direct", "fa"), ("separate-pagetitle", None, respelling))
         else:
           did_template = False
       if "ar" in langs:
@@ -2525,7 +2536,7 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
       # Look for {{suffix|LANG|<PAGENAME>|alt1=<FOREIGNTEXT>|<PAGENAME>|alt2=...}}
       # or  {{suffix|LANG|<FOREIGNTEXT>|<FOREIGNTEXT>|...}}
       elif tn in ["suffix", "suf", "prefix", "pre", "affix", "af",
-          "confix", "con", "circumfix", "infix", "compound", "com",
+          "confix", "con", "circumfix", "infix", "compound", "com", "com+",
           "prefixusex", "prefex", "suffixusex", "sufex", "affixusex", "afex",
           "surf", "surface analysis", "blend", "univerbation", "univ", # remove 'blend of'
           "doublet", "dbt"]:
@@ -2566,10 +2577,10 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
             doparam_checking_alt("1", str(i + 1), index_param("alt", termind), index_param("tr", termind),
                 check_inline_modifiers=True)
       elif tn == "form of":
-        if getp("4"):
-          doparam("1", ("separate", "4", "tr"))
-        else:
-          doparam("1", ("separate", "3", "tr"))
+        doparam_checking_alt("1", "3", "4", "tr")
+      elif tn == "FWOTD":
+        doparam_checking_alt("1", "2", "3", "4")
+        doparam_checking_alt("1", "head2", "head2alt", "tr2")
       # Templates where we don't check for alternative text because
       # the following parameter is used for the translation.
       elif tn in ["ux", "usex", "uxi", "quote", "coi"]:
@@ -2604,10 +2615,11 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
           doparam("1", ("separate", "wplink", None))
       elif tn in ["quote-book", "quote-hansard", "quote-journal",
           "quote-newsgroup", "quote-song", "quote-us-patent", "quote-video",
-          "quote-web", "quote-wikipedia"]:
+          "quote-web", "quote-wikipedia", "quote-text"]:
         if getp("passage") or getp("text"):
           doparam("1", ("separate", "passage" if getp("passage") else "text",
             "transliteration" if getp("transliteration") else "tr"))
+        # FIXME: We need to be able to handle things like {{quote-book|fa|title=fa:غرب‌زدگی<tr:ğarbzadegi>|...}}.
       elif tn in ["alter", "alt"]:
         i = 1
         # Dialect specifiers follow a blank param.
@@ -2632,16 +2644,11 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
           # require_index specified in [[Module:definition/templates]]; no translit param currently
           doparam_checking_alt("1", str(i + 1), "alt" + str(i), None)
       elif tn in [
-          "col1", "col2", "col3", "col4", "col5",
+          "col", "col-u", "col1", "col2", "col3", "col4", "col5",
           "col1-u", "col2-u", "col3-u", "col4-u", "col5-u",
           "der2", "der3", "der4",
           "rel2", "rel3", "rel4"]:
         i = 2
-        while getp(str(i)):
-          doparam_checking_alt("1", str(i), None, None, check_inline_modifiers=True)
-          i += 1
-      elif tn in ["col", "col-u"]:
-        i = 3
         while getp(str(i)):
           doparam_checking_alt("1", str(i), None, None, check_inline_modifiers=True)
           i += 1
@@ -2655,13 +2662,15 @@ def process_one_page_links(index, pagetitle, text, langs, process_param,
           "obor", "orthographic borrowing", "ubor", "unadapted borrowing",
           "sl", "semantic loan" "psm", "phono-semantic matching",
           "calque", "cal", "clq", "partial calque", "pcal", "partial translation", "semi-calque"]:
-        if getp("alt"):
-          doparam("2", ("separate", "alt", "tr"))
-        elif getp("4"):
-          doparam("2", ("separate", "4", "tr"))
-        else:
-          doparam("2", ("separate", "3", "tr"))
-        tlang = getp("1")
+        doparam_checking_alt("2", "3", ["alt", "4"], "tr", check_inline_modifiers=True)
+        if include_notforeign:
+          doparam("1", ("notforeign",))
+      elif tn in ["name translit", "foreign name", "name respelling", "name obor"]:
+        i = 1
+        while getp(str(i + 2)):
+          doparam_checking_alt("2", str(i + 2), index_param("alt", i), index_param("tr", i),
+              check_inline_modifiers=True)
+          i += 1
         if include_notforeign:
           doparam("1", ("notforeign",))
       elif tn == "root":

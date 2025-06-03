@@ -193,7 +193,7 @@ def do_canon_param(obj, translit_module):
       if re.search("[\u200E\u200F]", rdforeign):
         msgs.append("L2R/R2L")
       if hasattr(translit_module, 'foreign_diff_msgs'):
-        msg.extend(translit_module.foreign_diff_msgs(rdforeign, rdcanonforeign)
+        msg.extend(translit_module.foreign_diff_msgs(rdforeign, rdcanonforeign))
       pagemsg("NOTE: Without diacritics, old foreign %s different from canon %s%s: %s"
         % (foreign, canonforeign, msgs and " (in old: %s)" % ", ".join(msgs) or "", str(obj.t)))
 

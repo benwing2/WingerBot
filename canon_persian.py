@@ -4,13 +4,15 @@
 import pywikibot, re, sys, argparse
 
 import blib
-from blib import getparam, rmparam, tname, pname, msg, site
+from blib import getparam, rmparam, addparam, tname, pname, msg, site
 import fa_translit
 from canon_foreign import canon_one_page_links, show_failure
 
 parser = blib.create_argparser("Clean up Persian transliterations", include_pagefile=True, include_stdin=True)
 parser.add_argument("--direcfile", help="File containing output from find_regex.py, to process")
 parser.add_argument("--test", help="Test fa_translit.py", action="store_true")
+parser.add_argument("--convert-g-breve", help="Convert ğ and ǧ to ġ", action="store_true")
+parser.add_argument("--overall-comment", help="Overall comment to add to final changelog msg")
 parser.add_argument("--no-vocalize", help="Disable vocalization of Persian script", action="store_true")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
@@ -22,7 +24,68 @@ printed_succeeded_failed = False
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  if args.test:
+  if args.convert_g_breve:
+    def do_convert_g_breve(latin):
+      latin = latin.replace("ğ", "ġ").replace("ǧ", "ġ")
+      latin = latin.replace("Ğ", "Ġ").replace("Ǧ", "Ġ")
+      return latin
+    def process_param(obj):
+      notes = []
+      def getp(param):
+        return getparam(obj.t, param)
+      foreign = None
+      latin = None
+      if obj.param[0] == "separate":
+        _, foreign, latin = obj.param
+        foreign = getp(foreign)
+        latin = getp(latin)
+      elif obj.param[0] == "separate-pagetitle":
+        _, foreign_dest, latin = obj.param
+        foreign = pagetitle
+        latin = getp(latin)
+      elif obj.param[0] == "inline":
+        _, foreign_param, foreign_mod, latin_mod, inline_mod = obj.param
+        foreign = inline_mod.mainval if foreign_mod is None else inline_mod.get_modifier(foreign_mod)
+        latin = inline_mod.get_modifier(latin_mod)
+      else:
+        assert False, "Unrecognized value for obj.param[0]=%s" % obj.param[0]
+      if not foreign or not latin or latin in ["-", "?"]:
+        pagemsg("Skipped: foreign=%s, latin=%s in %s" % (foreign, latin, str(obj.t)))
+      else:
+        newlatin = do_convert_g_breve(latin)
+        if latin == newlatin:
+          pagemsg("Skipped: foreign=%s, latin=%s in %s" % (foreign, latin, str(obj.t)))
+        else:
+          def make_orig_template(foreignparam, foreign):
+            if obj.langparam == "1":
+              return "{{%s|%s|...|%s=%s}}" % (tname(obj.t), obj.tlang, foreignparam, foreign)
+            else:
+              return "{{%s|...|%s|...|%s=%s}}" % (tname(obj.t), obj.tlang, foreignparam, foreign)
+          if obj.param[0] in ["separate", "separate-pagetitle"]:
+            _, foreignparam, latinparam = obj.param
+            origtemp = make_orig_template(foreignparam, foreign)
+            pagemsg("In %s, replacing %s=%s with %s" % (origtemp, latinparam, latin, newlatin))
+            notes.append("replace %s=%s with %s in %s" % (latinparam, latin, newlatin, origtemp))
+            addparam(obj.t, latinparam, newlatin)
+          elif obj.param[0] == "inline":
+            _, foreign_param, foreign_mod, latin_mod, inline_mod = obj.param
+            origtemp = make_orig_template(foreign_param, getp(foreign_param))
+            pagemsg("In %s, replacing <%s:%s> with %s" % (origtemp, latin_mod, latin, newlatin))
+            notes.append("replace <%s:%s> with %s in %s" % (latin_mod, latin, newlatin, origtemp))
+            inline_mod.set_modifier(latin_mod, newlatin)
+            addparam(obj.t, foreign_param, inline_mod.reconstruct_param())
+          return notes
+      return False
+
+    newtext, actions = blib.process_one_page_links(
+      index, pagetitle, text, ["fa", "fa-cls", "fa-ira", "prs"], process_param, templates_seen, templates_changed
+    )
+    if args.overall_comment:
+      overall_comment = "%s: %s" % (args.overall_comment, "; ".join(blib.group_notes(actions)))
+      return newtext, overall_comment
+    else:
+      return newtext, actions
+  elif args.test:
     def process_param(obj):
       def getp(param):
         return getparam(obj.t, param)
