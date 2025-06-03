@@ -104,6 +104,8 @@ def process_text_on_page(index, pagetitle, curtext, contents, prev_comment, orig
     comment = args.comment
   elif not args.comment:
     comment = prev_comment
+  elif args.comment in prev_comment or args.comment_only_when_no_existing:
+    comment = prev_comment
   else:
     comment = "%s; %s" % (prev_comment, args.comment)
   return contents.rstrip("\n"), comment
@@ -114,6 +116,8 @@ if __name__ == "__main__":
   parser.add_argument("--direcfile", help="File containing directives.")
   parser.add_argument("--origfile", help="File containing unchanged directives.")
   parser.add_argument("--comment", help="Comment to use (in addition to any existing comment).")
+  parser.add_argument("--comment-only-when-no-existing", help="Use the comment in --comment only when no existing comment is available.",
+                      action="store_true")
   parser.add_argument("--lang-only", help="Change applies only to the specified language section.")
   parser.add_argument("--subset-of-langs", action="store_true",
     help="find_regex.py output contains a subset of all languages on the page.")
