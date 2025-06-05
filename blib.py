@@ -873,9 +873,11 @@ def prefix_pages(prefix, startprefix=None, endprefix=None, namespace=None, filte
   for i, current in iter_items(pageiter, startprefix, endprefix):
     yield i, current
 
-def query_special_pages(specialpage, startprefix=None, endprefix=None):
+def query_special_pages(specialpage, startprefix=None, endprefix=None, filter_cats_regex=None, prune_cats_regex=None,
+                        verbose=False):
   for i, current in iter_items(site.querypage(specialpage, total=None), startprefix, endprefix):
-    yield i, current
+    if check_cat_filters(current, filter_cats_regex, prune_cats_regex, verbose):
+      yield i, current
 
 def query_usercontribs(username, startprefix=None, endprefix=None, starttime=None, endtime=None):
   for i, current in iter_items(site.usercontribs(user=username, start=starttime, end=endtime), startprefix, endprefix,
@@ -1571,7 +1573,8 @@ def do_pagefile_cats_refs(
           process_pywikibot_page(index, page)
     if args.specials:
       for special in split_arg(args.specials):
-        for index, page in query_special_pages(special, start, end):
+        for index, page in query_special_pages(special, start, end, filter_cats_regex=args_filter_cats,
+                                               prune_cats_regex=args_prune_cats, verbose=args.verbose):
           title = str(page.title())
           if args.do_specials_cat_pages and title.startswith("Category:"):
             for index2, subcat in cat_articles(
