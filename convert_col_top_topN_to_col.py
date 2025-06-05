@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys, argparse, json
 
 import blib
 from blib import getparam, rmparam, msg, site, tname, pname
@@ -69,6 +69,18 @@ header_to_col_top_abbrev = {
 
 seen_quals = defaultdict(int)
 
+char_to_escape_seq = {
+  "%": "%25",
+  "|": "%7C",
+  "{": "%7B",
+  "}": "%7D",
+  "=": "%3D",
+  "&": "%26",
+}
+
+def bot_url_encode(val):
+  return re.sub("[%|{}=&]", lambda m: char_to_escape_seq[m.group(0)], val)
+
 def escape_inline_val(val):
   # If < or > in the value, check if they are balanced. If not, escape them all (safest thing to do).
   if "<" in val or ">" in val:
@@ -98,6 +110,83 @@ def escape_template_delimiters(val, pagemsg):
 
 def make_inline_modifier(key, val, pagemsg):
   return "<%s:%s>" % (key, escape_inline_val(escape_template_delimiters(val, pagemsg)))
+
+# Taken directly from https://en.wikipedia.org/wiki/Cycle_sort, except that when rotating a cycle, count only one write
+# instead of one write per element of cycle.
+def cycle_sort(array) -> int:
+  """Sort an array in place and return the number of writes."""
+  writes = 0
+
+  # Loop through the array to find cycles to rotate.
+  # Note that the last item will already be sorted after the first n-1 cycles.
+  for cycle_start in range(0, len(array) - 1):
+    item = array[cycle_start]
+
+    # Find where to put the item.
+    pos = cycle_start
+    for i in range(cycle_start + 1, len(array)):
+      if array[i] < item:
+        pos += 1
+
+    # If the item is already there, this is not a cycle.
+    if pos == cycle_start:
+      continue
+
+    # Otherwise, put the item there or right after any duplicates.
+    while item == array[pos]:
+      pos += 1
+
+    array[pos], item = item, array[pos]
+    writes += 1
+
+    # Rotate the rest of the cycle.
+    first = True
+    while pos != cycle_start:
+      # Find where to put the item.
+      pos = cycle_start
+      for i in range(cycle_start + 1, len(array)):
+        if array[i] < item:
+          pos += 1
+
+      # Put the item there or right after any duplicates.
+      while item == array[pos]:
+        pos += 1
+      array[pos], item = item, array[pos]
+      if first:
+        writes += 1
+        first = False
+
+  return writes
+
+def see_if_one_swap_can_sort(array):
+  array_sorted = sorted(array)
+  for i in range(len(array) - 1):
+    for j in range(i + 1, len(array)):
+      if array[i] > array[j]:
+        temp = array[i]
+        array[i] = array[j]
+        array[j] = temp
+        if array == array_sorted:
+          return 1
+        else:
+          return 2
+  return 0
+
+def num_inserts_from_insertion_sort(arr):
+  num_inserts = 0
+  n = len(arr)  # Get the length of the array
+  if n <= 1:
+    return  # If the array has 0 or 1 element, it is already sorted, so return
+  for i in range(1, n):  # Iterate over the array starting from the second element
+    key = arr[i]  # Store the current element as the key to be inserted in the right position
+    j = i-1
+    while j >= 0 and key < arr[j]:  # Move elements greater than key one position ahead
+      arr[j+1] = arr[j]  # Shift elements to the right
+      j -= 1
+    if j+1 != i:
+      num_inserts += 1
+    arr[j+1] = key  # Insert the key in the correct position
+  return num_inserts
 
 # Simplify a link `link` that may have an `altval` (display value) specified in |3= or |alt= if the link comes from a
 # templated link. `langcode`, if given, is the language code of the templated link, `sec_langcode` is the language code
@@ -636,6 +725,40 @@ def process_text_on_page(index, pagetitle, text):
               notes.append("convert %s raw elements under ==%s== to {{col|%s|...}}" % (
                 len(col_elements), header.strip(), langcode))
               in_col_top = False
+              if args.output_sorted_closeness:
+                raw_elements = []
+                for elno, col_element in enumerate(col_elements):
+                  raw_element = col_element
+                  if not col_element.startswith("|"):
+                    pagemsg("WARNING: Something wrong, generated column element #%s doesn't start with |: %s" % (
+                      elno + 1, col_element))
+                    break
+                  raw_element = raw_element[1:]
+                  if raw_element.startswith("*"):
+                    pagemsg("Column element #%s contains indented subelements, can't (yet) determine sort closeness: %s" % (
+                      elno + 1, col_element))
+                    break
+                  raw_element = re.sub("<.*?>", "", raw_element)
+                  raw_elements.append(bot_url_encode(raw_element))
+                else: # no break
+                  json_result = expand_text("{{#invoke:columns|make_sortkey|%s|%s}}" % (
+                    langcode, "|".join(raw_elements)))
+                  if type(json_result) is not str:
+                    pagemsg("Error during make_sortkey, can't compute number of sort writes")
+                  else:
+                    sort_keys = json.loads(json_result)
+                    shortened_col = "{{col|%s%s%s}}" % (langcode, "".join(col_elements[0:20]), "|..." if len(col_elements) > 20 else "")
+                    if sort_keys == sorted(sort_keys):
+                      pagemsg("Number of sort writes for %s = 0 (already sorted)" % shortened_col)
+                    else:
+                      num_swaps_from_see_if = see_if_one_swap_can_sort(sort_keys[:])
+                      num_inserts = num_inserts_from_insertion_sort(sort_keys[:])
+                      num_writes = cycle_sort(sort_keys)
+                      pagemsg("For %s, number of sort writes = %s (%s/%s = %02.1f%%); number of inserts = %s (%s/%s = %02.1f%%)%s" % (
+                        shortened_col, num_writes, num_writes, len(sort_keys), 100 * num_writes / len(sort_keys),
+                        num_inserts, num_inserts, len(sort_keys), 100 * num_inserts / len(sort_keys),
+                        "" if num_swaps_from_see_if != 1 else "; num_swaps_from_see_if = 1 (1/%s = %02.1f%%)" % (
+                          len(sort_keys), 100 / len(sort_keys))))
               continue
           m = re.search("^\{\{ *((?:col-)?bottom) *\|", line.strip())
           if m:
@@ -767,6 +890,7 @@ if __name__ == "__main__":
   parser.add_argument("--do-col", action="store_true", help="Do {{col}} and {{col1}} through {{col6}}.")
   parser.add_argument("--do-derived-related", action="store_true", help="Do raw lists under ==Derived terms== and ==Related terms==.")
   parser.add_argument("--min-derived-related-lines", type=int, default=6, help="Only convert raw lists with this many elements or more.")
+  parser.add_argument("--output-sorted-closeness", action="store_true", help="Output how close the list is to already being sorted.")
   args = parser.parse_args()
   start, end = blib.parse_start_end(args.start, args.end)
 
