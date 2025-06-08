@@ -12,7 +12,7 @@ local function parse_args(args)
 		[1] = {required = true, type = "language", default = "und"},
 		[2] = list_allow_holes,
 		["t"] = list_allow_holes,
-		["gloss"] = {list = true, allow_holes = true, alias_of = "t"},
+		["gloss"] = {list = true, alias_of = "t"},
 		["tr"] = list_allow_holes,
 		["ts"] = list_allow_holes,
 		["g"] = list_allow_holes,
