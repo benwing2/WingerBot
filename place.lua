@@ -896,7 +896,7 @@ The key is the form-of directive and the value is an object with the following p
 	a function, it is passed a single argument, the overall place spec (see comment at top of file) and should return
 	the text to be displayed.
 * `type_prefix`: The prefix used to generate the placetype for looking up the appropriate category or categories in the
-	placetype data structure.
+	placetype data structure. Can be omitted if there are no categories associated with the directive.
 * `conjunction`: The conjunction used to join multiple terms, defaulting to `and`.
 * `cat`: Additional category or categories to add the term to, whenever this particular directive is used. Normally the
 	value is a topic-style category minus the langcode prefix, but if prefixed with `cln:`, it is a langname-style
@@ -913,7 +913,10 @@ export.all_form_of_directives = {
 	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
 	["former long form of"] = {text = "+", type_prefix = "FORMER_LONG_FORM_OF"},
 	["nickname for"] = {text = "+", type_prefix = "NICKNAME_FOR"},
+	["former nickname for"] = {text = "+", type_prefix = "FORMER_NICKNAME_FOR"},
 	["derogatory name for"] = {text = "+", type_prefix = "DEROGATORY_NAME_FOR"},
+	["synonym of"] = {text = "+"},
+	["syn of"] = {alias_of = "synonym of"},
 	["abbreviation of"] = {text = "+", type_prefix = "ABBREVIATION_OF", cat = "cln:abbreviations",
 		default_foreign = true},
 	["abbr of"] = {alias_of = "abbreviation of"},
@@ -929,6 +932,11 @@ export.all_form_of_directives = {
 	["sylabbrev of"] = {alias_of = "syllabic abbreviation of"},
 	["ellipsis of"] = {text = "+", type_prefix = "ELLIPSIS_OF", cat = "cln:ellipses",
 		default_foreign = true},
+	["alternative form of"] = {text = "+", default_foreign = true},
+	["alt form"] = {alias_of = "alternative form of"},
+	["alternative spelling of"] = {text = "+", default_foreign = true},
+	["alt spell"] = {alias_of = "alternative spelling of"},
+	["alt sp"] = {alias_of = "alternative spelling of"},
 }
 
 local function get_seat_text(overall_place_spec)
@@ -977,6 +985,8 @@ export.extra_info_args = {
 	{arg = "seat", text = get_seat_text, match_sentence_style = true, auto_plural = true, with_colon = true},
 	{arg = "shire town", text = "+", match_sentence_style = true, auto_plural = true, with_colon = true},
 	{arg = "headquarters", text = "+", match_sentence_style = true, auto_plural = false, with_colon = true},
+	{arg = "center", text = "administrative center", match_sentence_style = true, auto_plural = false, with_colon = true},
+	{arg = "centre", text = "administrative centre", match_sentence_style = true, auto_plural = false, with_colon = true},
 }
 
 export.extra_info_arg_map = {}
@@ -1425,11 +1435,27 @@ local function parse_overall_place_spec(data)
 				end
 			end
 			local default_foreign = spec.default_foreign
+			local directive_param = "@" .. form_of_directive
 			if form_of_overridden_args and form_of_overridden_args[canonical_directive] then
-				raw_terms = form_of_overridden_args[canonical_directive]
+				raw_terms = form_of_overridden_args[canonical_directive].new_value
+				local new_directive = form_of_overridden_args[canonical_directive].new_directive
+				local new_spec = export.all_form_of_directives[new_directive]
+				if not new_spec then
+					error(("Internal error: [[Module:transclude]] passed in unrecognized replacement directive '@%s'"):
+						format(new_directive))
+				end
+				if new_spec.alias_of then
+					error(("Internal error: [[Module:transclude]] passed in replacement directive alias '@%s', " ..
+						"should be canonical"):format(new_directive))
+				end
+				if new_directive ~= canonical_directive then
+					directive_param = directive_param .. (" (replaced with @%s)"):format(new_directive)
+					canonical_directive = new_directive
+					spec = new_spec
+				end
 				default_foreign = true
 			end
-			local terms = parse_term_with_inline_modifiers(raw_terms, "@" .. form_of_directive,
+			local terms = parse_term_with_inline_modifiers(raw_terms, directive_param,
 				default_foreign and args[1] or enlang)
 			insert(form_of_directives, {
 				directive = canonical_directive,
@@ -1622,12 +1648,22 @@ local function get_placename_article(decorated_placename, placetypes, placename,
 			return art
 		end
 	end
+	-- Get equivalent placetypes of the specified placetype so that e.g.
+	-- {{place|en|@official name of:Bahamas|island country|r/Caribbean}} put 'the' before Bahamas ("Bahamas" is just
+	-- specified as a country but "island country" falls back to "country").
+	local all_equiv_placetypes = {}
+	for _, placetype in ipairs(placetypes) do
+		local this_equiv_placetypes = m_placetypes.get_placetype_equivs(placetype)
+		for _, this_equiv_placetype in ipairs(this_equiv_placetypes) do
+			insert(all_equiv_placetypes, this_equiv_placetype.placetype)
+		end
+	end
 	-- Look for a known location. We should be using find_matching_holonym_location() but that function doesn't
 	-- currently work without alias resolution. Instead we check if any matching location has `the = true` set.
 	-- In practice there aren't any cases where a given placename matches two locations, only one of which has
 	-- `the = true` set.
 	for group, key, spec in m_placetypes.iterate_matching_location {
-		placetypes = placetypes,
+		placetypes = all_equiv_placetypes,
 		placename = placename,
 		alias_resolution = "none",
 	} do
@@ -2646,11 +2682,13 @@ function export.get_cats(args, overall_place_spec, from_demonym)
 					insert(cats, spec_cat)
 				end
 			end
-			for _, place_desc in ipairs(place_descriptions) do
-				for _, placetype in ipairs(place_desc.placetypes) do
-					if not m_placetypes.placetype_is_ignorable(placetype) then
-						extend(cats, get_placetype_cats(place_desc, placetype, from_demonym,
-							directive_terms.spec.type_prefix))
+			if directive_terms.spec.type_prefix then
+				for _, place_desc in ipairs(place_descriptions) do
+					for _, placetype in ipairs(place_desc.placetypes) do
+						if not m_placetypes.placetype_is_ignorable(placetype) then
+							extend(cats, get_placetype_cats(place_desc, placetype, from_demonym,
+								directive_terms.spec.type_prefix))
+						end
 					end
 				end
 			end
@@ -2721,9 +2759,13 @@ single argument `data` is an object with the following fields:
 * `extra_info_overridden_set`: Set of booleans specifying, for each extra info arg, whether it was overridden at the
 	{{tl|tcl}} level. This means, for example, that the values are interpreted according to the language in {{para|1}}
 	instead of always defaulting to English, as is the case when {{tl|place}} is called directly.
-* `form_of_overridden_args`: Set of string specifying overriding form-of arguments. This is present so that {{tl|tcl}}
-	can be used on abbreviations like [[GDR]] and [[FYROM]], whose equivalents in a foreign language have
-	language-specific expansions but where the rest of the call should stay the same.
+* `form_of_overridden_args`: Set of objects of the form `{new_directive = ``directive``, new_value = ``value``}` for
+	overriding a given form-of directive (the key) with new directive ``directive`` and new unparsed value ``value``.
+	Both the key and the replacing directive should be canonical. ``value`` will be parsed in the same way as a regular
+	form-of directive except that all specified terms are interpreted in the language specified in {{para|1}}, never in
+	English. This is present so that {{tl|tcl}} can be used on abbreviations like [[GDR]] and [[FYROM]], whose
+	equivalents in a foreign language have language-specific expansions but where the rest of the call should stay the
+	same.
 * `translation_follows`: If true, any translation specified using t= should follow the definition, after a colon,
 	rather than preceding, with the definition in parens.
 ]==]
