@@ -3,12 +3,18 @@ local export = {}
 local labels_module = "Module:labels"
 local links_module = "Module:links"
 local parameter_utilities_module = "Module:parameter utilities"
-local parameters_module = "Module:parameters"
+local parse_utilities_module = "Module:parse utilities"
 local pron_qualifier_module = "Module:pron qualifier"
 
 
 local function wrap_span(text, lang, sc)
 	return '<span class="' .. sc .. '" lang="' .. lang .. '">' .. text .. '</span>'
+end
+
+
+local function term_already_linked(term)
+	-- optimization to avoid unnecessarily loading [[Module:parse utilities]]
+	return term:find("[<{]") and require(parse_utilities_module).term_already_linked(term)
 end
 
 
@@ -25,7 +31,7 @@ function export.nyms(frame)
 	end
 
 	local params = {
-		[1] = {required = true, type = "language", etym_lang = true, default = "und"},
+		[1] = {required = true, type = "language", default = "und"},
 		[2] = {list = true, allow_holes = true, required = true},
 	}
 
@@ -37,8 +43,11 @@ function export.nyms(frame)
 		{group = "q", separate_no_index = false},
 		{param = "lb", alias_of = "ll"},
 	}
+	
+	local special_separators = mw.clone(m_param_utils.default_special_separators)
+	special_separators["<"] = " < "
 
-	local items, args = m_param_utils.process_list_arguments {
+	local items, args = m_param_utils.parse_list_with_inline_modifiers_and_separate_params {
 		params = params,
 		param_mods = param_mods,
 		raw_args = parent_args,
@@ -46,6 +55,7 @@ function export.nyms(frame)
 		parse_lang_prefix = true,
 		track_module = "nyms",
 		lang = 1,
+		special_separators = special_separators,
 		sc = "sc.default",
 	}
 
@@ -94,7 +104,12 @@ function export.nyms(frame)
 			if thesaurus_parts[1] then
 				error("Links to the Thesaurus must follow all non-Thesaurus links")
 			end
-			text = require(links_module).full_link(item)
+			local raw_term = item.alt or item.term
+			if raw_term and term_already_linked(raw_term) then
+				text = raw_term
+			else
+				text = require(links_module).full_link(item)
+			end
 		end
 		local qq = item.qq
 		-- If a separate language code was given for the term, display the language name as a right qualifier.
