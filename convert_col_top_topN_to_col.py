@@ -91,11 +91,18 @@ def escape_inline_val(val):
   return val
 
 def escape_template_delimiters(val, pagemsg):
-  # Escape = and | occurring in raw text that will become a template parameter.
-  # FIXME: Params inside of HTML tags shouldn't be escaped. All occurrences though are in <ref ...> tags except for
-  # a single occurrence in the text between <ref> and </ref> tags, which we don't handle currently.
+  # Escape = and | occurring in raw text that will become a template parameter. This should exclude:
+  # (1) Raw links, where [[foo=bar|baz=bat]] in a param doesn't cause issues.
+  # (2) Template calls, where {{foo=bar|baz=bat}} in a param doesn't cause issues.
+  # (3) <ref>...</ref>, where = and | occurring either in parameters inside the tags or in the text between the tags
+  #     doesn't cause issues.
+  # (4) <ref .../>, where = and | occurring inside the tag doesn't cause issues.
+  # Note that = and | inside of other HTML tags such as <span> *does* cause issues; e.g.
+  # {{col|de|<span class="foo">bar</span>}} causes an error as '<span class' tries to get interpreted as a parameter
+  # name. This is a bit strange because {{col|de|{{l|de|bar}}}} doesn't cause problems even though {{l|de|bar}}
+  # generates HTML of the form '<span class="Latn" lang="de">[[:bar#German|bar]]</span>'.
   try:
-    run = blib.parse_multi_delimiter_balanced_segment_run(val, [(r"\[", r"\]"), (r"\{", r"\}"), ("<[a-z!/]", ">")])
+    run = blib.parse_multi_delimiter_balanced_segment_run(val, [(r"\[\[", r"\]\]"), (r"\{\{", r"\}\}"), ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"), ("<ref ", "/>")])
   except blib.ParseException:
     # FIXME: Do something better in this case. Ideally we should make parse_multi_delimiter_balanced_segment_run()
     # have an `ignore_mismatch` flag.
@@ -713,6 +720,17 @@ def process_text_on_page(index, pagetitle, text):
           in_col_top = True
           lines.append("\uFFF0") # sentinel line
           raw_col_lines = []
+          for line in lines:
+            if line.startswith("*"):
+              raw_col_lines.append(line)
+            else:
+              break
+          total_processable_lines = len(raw_col_lines)
+          if total_processable_lines < args.min_derived_related_lines:
+            pagemsg("Saw only %s element%s in ==%s==, can't convert to {{col}}" % (
+              total_processable_lines, "" if total_processable_lines == 1 else "s", header.strip()))
+            in_col_top = False
+          raw_col_lines = []
           col_elements = []
         else:
           in_col_top = False
@@ -727,8 +745,8 @@ def process_text_on_page(index, pagetitle, text):
           raw_col_lines.append(line)
           if args.do_derived_related and not line.startswith("*"):
             if len(col_elements) < args.min_derived_related_lines:
-              pagemsg("Saw only %s element%s in ==%s==, can't convert to {{col}}" % (
-                len(col_elements), "" if len(col_elements) == 1 else "s", header.strip()))
+              pagemsg("Processed %s element%s out of %s in ==%s== before getting to an unconvertible element" % (
+                len(col_elements), "" if len(col_elements) == 1 else "s", total_processable_lines, header.strip()))
               cant_convert = True
               newlines.extend(raw_col_lines)
               in_col_top = False
@@ -851,7 +869,11 @@ def process_text_on_page(index, pagetitle, text):
           line = line.strip()
           bulleted_line = escape_template_delimiters(bullet_prefix + line, pagemsg)
           if re.search(r"\{\{ *(ja-l|ja-r|ja-r/args|ryu-l|ryu-r|ryu-r/args|ko-l|zh-l|vi-l|he-l) *\|", line):
-            pagemsg("WARNING: Unable to convert Asian specialized linking template to {{col}} format, inserting raw: %s" % origline)
+            pagemsg("WARNING: Unable to convert specialized Asian linking template to {{col}} format, inserting raw: %s" % origline)
+            col_elements.append("|%s" % bulleted_line)
+            continue
+          if re.search(r"\{\{ *(vern|taxfmt|taxlink) *\|", line):
+            pagemsg("WARNING: Unable to convert specialized taxonomy linking template to {{col}} format, inserting raw: %s" % origline)
             col_elements.append("|%s" % bulleted_line)
             continue
 
