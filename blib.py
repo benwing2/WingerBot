@@ -906,11 +906,15 @@ def split_arg(arg, canonicalize=None):
     return pagename
   return [process(x) for x in re.split(r",(?=[^ ])", arg)]
 
-def yield_items_from_file(filename, canonicalize=None, include_original_lineno=False, preserve_blank_lines=False):
+def yield_items_from_file(filename, canonicalize=None, include_original_lineno=False, preserve_blank_lines=False,
+                          no_strip=False):
   lineno = 0
   for line in open(filename, "r", encoding="utf-8"):
     lineno += 1
-    line = line.strip()
+    if no_strip:
+      line = line.rstrip("\n")
+    else:
+      line = line.strip()
     if line.startswith("#"):
       continue
     if not line and not preserve_blank_lines:
@@ -923,9 +927,9 @@ def yield_items_from_file(filename, canonicalize=None, include_original_lineno=F
       yield line
 
 def iter_items_from_file(filename, startprefix=None, endprefix=None, canonicalize=None,
-    preserve_blank_lines=False, skip_ignorable_pages=False):
+    preserve_blank_lines=False, no_strip=False, skip_ignorable_pages=False):
   file_items = yield_items_from_file(filename, canonicalize=canonicalize,
-      include_original_lineno=True, preserve_blank_lines=preserve_blank_lines)
+      include_original_lineno=True, preserve_blank_lines=preserve_blank_lines, no_strip=no_strip)
   for _, (index, line) in iter_items(file_items, startprefix=startprefix, endprefix=endprefix, get_name=lambda x:x[1], get_index=lambda x:x[0],
       skip_ignorable_pages=skip_ignorable_pages):
     yield index, line
@@ -2586,7 +2590,7 @@ def process_one_page_links(
         doparam_checking_alt("1", "head2", "head2alt", "tr2")
       # Templates where we don't check for alternative text because
       # the following parameter is used for the translation.
-      elif tn in ["ux", "usex", "uxi", "quote", "coi"]:
+      elif tn in ["ux", "usex", "uxi", "uxa", "quote", "co", "collocation", "coi", "coa"]:
         doparam("1", ("separate", "2", "tr"))
       elif tn == "Q":
         doparam("1", ("separate", "quote", "tr"))
@@ -2616,8 +2620,8 @@ def process_one_page_links(
           doparam("1", ("separate", "alt", "tr"))
         else:
           doparam("1", ("separate", "wplink", None))
-      elif tn in ["quote-book", "quote-hansard", "quote-journal",
-          "quote-newsgroup", "quote-song", "quote-us-patent", "quote-video",
+      elif tn in ["quote-av", "quote-book", "quote-hansard", "quote-journal", "quote-mailing list",
+          "quote-newsgroup", "quote-song", "quote-us-patent", "quote-video game",
           "quote-web", "quote-wikipedia", "quote-text"]:
         if getp("passage") or getp("text"):
           doparam("1", ("separate", "passage" if getp("passage") else "text",
