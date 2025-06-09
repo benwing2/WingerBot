@@ -431,6 +431,11 @@ def process_text_on_page(index, pagetitle, text):
         m = re.search(r"^%s''([^'{}]*)''%s$" % (left_re, right_re), line)
         if m:
           this_qual, line = m.groups()
+      if not m and not on_left:
+        # check for parenthesized parts of speech on the right
+        m = re.search(r"^%s\((noun|verb|adjective|adverb)\)%s$" % (left_re, right_re), line)
+        if m:
+          this_qual, line = m.groups()
       if this_qual is not None and not on_left:
         this_qual, line = line, this_qual
       if this_qual is not None:
@@ -546,6 +551,15 @@ def process_text_on_page(index, pagetitle, text):
           "place": "toponym",
           "Colloquial": "colloquial",
           "Rare": "rare",
+          "patronym": "patronymic",
+          "Diminutives:": "diminutive",
+          "Endearing forms:": "endearing",
+          "Pejorative forms:": "pejorative",
+          "Patronymics:": "patronymic",
+          "Surnames:": "surname",
+          "New vocatives:": "new vocative",
+          "New vocative:": "new vocative",
+          "factative": "factitive",
         }
         pos_map = {
           "adj.": "adj",
@@ -564,8 +578,9 @@ def process_text_on_page(index, pagetitle, text):
           "figurative", "figuratively", "formal", "learned", "impersonal", "slang", "vulgar", "literary", "historical",
           "humble speech", "jocular", "euphemistic", "derogatory", "expressive", "vernacular", "childish",
           "abbreviation", "initialism", "back-formation", "clipping", "blend", "proverb",
-          "active", "passive", "reflexive",
-          "dialectal", "regional", "poetic", "uncertain", "honorific",
+          "active", "passive", "reflexive", "mediopassive", "iterative", "causative", "causative-iterative",
+          "collective",
+          "dialectal", "regional", "poetic", "uncertain", "honorific", "nickname", "pejorative", "humorous",
           "toponym", "surname", "patronymic", "female patronymic", "male patronymic", "former name",
           "obsolete", "archaic", "dated", "deprecated", "diminutive", "augmentative", "endearing", "semelfactive",
           "US", "American", "North America", "Canada", "Canadian", "UK", "British", "Britain", "British English",
@@ -574,12 +589,16 @@ def process_text_on_page(index, pagetitle, text):
           "Spain", "Argentina", "Venezuela", "Dominican Republic", "Costa Rica", "Mexico", "Puerto Rico", "Paraguay",
           "Uruguay", "Chile", "Bolivia", "Colombia", "Costa Rica", "Cuba", "Panama", "Nicaragua", "Ecuador",
           "El Salvador", "Honduras", "Peru", "Guatemala", "Brazil", "Portugal", "Belize",
-          "Puter", "Sursilvan", "Sutsilvan", "Surmiran", "Vallader",
+          "Puter", "Sursilvan", "Sutsilvan", "Surmiran", "Vallader", "Rumantsch Grischun",
           "sports", "medicine", "law", "logic", "shipping", "theology", "phonology", "music", "grammar", "religion",
           "linguistics", "geology", "botany", "ornithology", "sociology", "psychiatry", "zoology", "anatomy",
-          "chemistry", "architecture", "phonetics", "biology",
+          "chemistry", "architecture", "phonetics", "biology", "astronomy",
           "Sanskritized", "Sanskritised", "Persianized", "Persianised", "Netherlands",
-          "Late Latin", "Classical", "Byzantine", "Vulgar Latin", "Medieval Latin", "New Latin",
+          "Late Latin", "Classical", "Byzantine", "Vulgar Latin", "Medieval Latin", "New Latin", "Katharevousa",
+          "Gheg", "Standard", "Tosk", "Arbërisht", "Arvanitic",
+          "East Slavic", "North Korea", "South Korea", "Münsterländisch", "Kamviri", "Altmärkisch", "North Germanic",
+          "Pulaar", "Pular", # two different languages!
+          "Maasina", "Adamawa", "Kuril Ainu", "Northern Finnic", "Ecclesiastical", "Quebec", "Austria", "Algherese",
         ]:
           labels.append(qual)
         elif not has_pos and qual in pos_map:
@@ -587,7 +606,9 @@ def process_text_on_page(index, pagetitle, text):
           has_pos = True
         elif not has_pos and qual in [
           "noun", "n", "proper noun", "adjective", "adj", "verb", "v", "vb", "adverb", "adv", "preposition", "prep",
-          "conjunction", "conj", "verbal noun", "[[vi]]", "[[vt]]", "participle", "adjective, noun",
+          "conjunction", "conj", "verbal noun", "[[vi]]", "[[vt]]", "participle", "adjective, noun", "agent nouns",
+          "agent noun", "[[na]]", "[[ni]]", "[[vai]]", "[[vii]]", "[[vti]]", "[[vta]]", "na", "ni", "vai", "vii", "vti",
+          "vta", "instrumental nouns", "instrumental noun", "action noun", "gerund",
         ]:
           qualparts.append(make_inline_mod("pos", qual.replace("[[", "").replace("]]", "")))
           has_pos = True
@@ -717,13 +738,22 @@ def process_text_on_page(index, pagetitle, text):
               in_col_top = False
               continue
             else:
-              newlines.append("{{col|%s" % langcode)
+              no_sort_param = ""
+              if pagetitle in no_sort_lists:
+                for no_sort_lang, no_sort_firstel in no_sort_lists[pagetitle]:
+                  if no_sort_lang == langcode:
+                    if no_sort_firstel == col_elements[0][1:]:
+                      no_sort_param = "|sort=0"
+                    else:
+                      pagemsg("WARNING: Found no-sort directive matching langcode '%s' but specified first element '%s' didn't match actual first element '%s'" % (
+                        langcode, no_sort_firstel, col_elements[0][1:]))
+              newlines.append("{{col|%s%s" % (langcode, no_sort_param))
               newlines.extend(col_elements)
               newlines.append("}}")
               newlines.append(line)
               notes.extend(new_notes)
-              notes.append("convert %s raw elements under ==%s== to {{col|%s|...}}" % (
-                len(col_elements), header.strip(), langcode))
+              notes.append("convert %s raw elements under ==%s== to {{col|%s%s|%s|%s|...}}" % (
+                len(col_elements), header.strip(), langcode, no_sort_param, col_elements[0][1:], col_elements[1][1:]))
               in_col_top = False
               if args.output_sorted_closeness:
                 raw_elements = []
@@ -882,6 +912,8 @@ def process_text_on_page(index, pagetitle, text):
 
   return "".join(sections), notes
 
+no_sort_lists = defaultdict(list)
+
 if __name__ == "__main__":
   parser = blib.create_argparser("Convert {{col-top}}/{{col-bottom}} to {{col}} when possible",
                                  include_pagefile=True, include_stdin=True)
@@ -891,8 +923,24 @@ if __name__ == "__main__":
   parser.add_argument("--do-derived-related", action="store_true", help="Do raw lists under ==Derived terms== and ==Related terms==.")
   parser.add_argument("--min-derived-related-lines", type=int, default=6, help="Only convert raw lists with this many elements or more.")
   parser.add_argument("--output-sorted-closeness", action="store_true", help="Output how close the list is to already being sorted.")
+  parser.add_argument("--no-sort-direcfile", help="File containing indications of which lists should not be sorted.")
   args = parser.parse_args()
   start, end = blib.parse_start_end(args.start, args.end)
+
+  if args.no_sort_direcfile:
+    for lineno, line in blib.iter_items_from_file(args.no_sort_direcfile, no_strip=True):
+      def linemsg(txt):
+        msg("Line %s: %s" % (lineno, txt))
+      m = re.search(r"^([ .])Page ([0-9]+) (.*?): For (\{\{.*\}\}), number.*$", line)
+      if not m:
+        linemsg("Unrecognized line in --no-sort-direcfile: %s" % line)
+      else:
+        direc, index, pagename, col_template = m.groups()
+        if direc == ".":
+          colt = list(blib.parse_text(col_template).filter_templates())[0]
+          lang = getparam(colt, "1")
+          first_el = getparam(colt, "2")
+          no_sort_lists[pagename].append((lang, first_el))
 
   blib.do_pagefile_cats_refs(
     args, start, end, process_text_on_page, edit=True, stdin=True)
