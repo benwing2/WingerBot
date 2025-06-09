@@ -529,7 +529,9 @@ The overall place spec parsed by `parse_overall_place_spec` has the following fi
 * `directives`: List of form-of directives (starting with `@`) parsed from the numeric args beginning with {{para|2}}.
 	Each directive contains fields `directive` (the directive as specified by the user, e.g. `"former name of"`);
 	`terms` (list of term objects for the terms specified by the user); `conj` (conjunction specified by the user using
-	inline modifier `<conj:...>`, or {nil}); `spec` (the corresponding directive spec from `all_form_of_directives`).
+	inline modifier `<conj:...>`, or {nil}); `spec` (the corresponding directive spec from `all_form_of_directives`);
+	`pretext` (the text to display directly before the directive); `posttext` (the text to display directly after the
+	directive; {nil} except for the last directive).
 * `descs`: List of one or more place description objects parsed from the numeric args beginning with {{para|2}}, as
 	described above.
 * `extra_info`: List of extra-info objects for extra info specified using arguments such as {{para|capital}},
@@ -1264,6 +1266,66 @@ local function parse_term_with_inline_modifiers(term, paramname, default_lang)
 	})
 end
 
+
+local function parse_form_of_directive(arg, form_of_overridden_args)
+	local form_of_directive, raw_terms = arg:match("^@([a-z -]+):(.*)$")
+	if not form_of_directive then
+		error("Misformatted @-directive: " .. dump(arg))
+	end
+	if not export.all_form_of_directives[form_of_directive] then
+		local known_directives = {}
+		for k, _ in pairs(export.all_form_of_directives) do
+			insert(known_directives, '"' .. k .. '"')
+		end
+		table.sort(known_directives)
+		error(("Unrecognized form-of directive %s in @-directive %s; recognized directives are %s"):format(
+			dump(form_of_directive), dump(arg), concat(known_directives, ", ")))
+	end
+	local spec = export.all_form_of_directives[form_of_directive]
+	local canonical_directive = form_of_directive
+	if spec.alias_of then
+		canonical_directive = spec.alias_of
+		spec = export.all_form_of_directives[canonical_directive]
+		if not spec then
+			internal_error("Form-of directive alias %s points to %s, which is not a directive",
+				"@" .. form_of_directive, canonical_directive)
+		elseif spec.alias_of then
+			internal_error("Form-of directive alias %s points to %s, which is also an alias",
+				"@" .. form_of_directive, canonical_directive)
+		end
+	end
+	local default_foreign = spec.default_foreign
+	local directive_param = "@" .. form_of_directive
+	if form_of_overridden_args and form_of_overridden_args[canonical_directive] then
+		raw_terms = form_of_overridden_args[canonical_directive].new_value
+		local new_directive = form_of_overridden_args[canonical_directive].new_directive
+		local new_spec = export.all_form_of_directives[new_directive]
+		if not new_spec then
+			error(("Internal error: [[Module:transclude]] passed in unrecognized replacement directive '@%s'"):
+				format(new_directive))
+		end
+		if new_spec.alias_of then
+			error(("Internal error: [[Module:transclude]] passed in replacement directive alias '@%s', " ..
+				"should be canonical"):format(new_directive))
+		end
+		if new_directive ~= canonical_directive then
+			directive_param = directive_param .. (" (replaced with @%s)"):format(new_directive)
+			canonical_directive = new_directive
+			spec = new_spec
+		end
+		default_foreign = true
+	end
+	local terms = parse_term_with_inline_modifiers(raw_terms, directive_param,
+		default_foreign and args[1] or enlang)
+	return {
+		directive = canonical_directive,
+		terms = terms.terms,
+		conj = terms.conj,
+		spec = spec,
+	}
+end
+
+
 -- Parse an argument containing extra information that is sometimes added to a definition, such as the capital, largest
 -- city, modern name, official name, etc. `args` is the value from the parsed argument structure and can be either nil,
 -- a string or a list (depending on whether it was declared as a single parameter or a list). `spec` is the extra info
@@ -1309,17 +1371,36 @@ local function parse_extra_info_arg(args, spec, default_lang)
 	}
 end
 
+
 --[==[
 Parse a "new-style" place description, with placetypes and holonyms surrounded by `<<...>>` amid otherwise raw text.
 Return value is an object as documented at the top of the file. Exported for use by [[Module:demonyms]].
 ]==]
-function export.parse_new_style_place_desc(text)
+function export.parse_new_style_place_desc(text, form_of_directives, form_of_overridden_args)
 	local placetypes = {}
 	local segments = split(text, "<<(.-)>>")
 	local retval = {holonyms = {}, order = {}}
+	local form_of_directives_already_present = form_of_directives and not not form_of_directives[1]
 	for i, segment in ipairs(segments) do
 		if i % 2 == 1 then
 			insert(retval.order, {type = "raw", value = segment})
+		elseif segment:find("@") then
+			if not form_of_directives then
+				error(("Form-of directive '%s' not allowed in this context"):format(segment))
+			elseif form_of_directives_already_present then
+				error(("Saw form-of directive '%s' in new-style place desc followed by direct (separate-parameter) form-of directives; not allowed"):format(
+					segment))
+			elseif placetypes[1] or retval.holonyms[1] then
+				error(("Form-of directive '%s' must come first, before placetypes and holonyms"):format(segment))
+			else
+				local form_of_directive = parse_form_of_directive(segment, form_of_overridden_args)
+				if not retval.order[1] or retval.order[1].type ~= "raw" or retval.order[2] then
+					internal_error("`retval.order` should have a single raw element: %s", retval.order)
+				end
+				form_of_directive.pretext = retval.order[1].value
+				retval.order[1] = nil
+				insert(form_of_directives, form_of_directive)
+			end
 		elseif segment:find("/") then
 			local holonyms = split_holonym(segment)
 			for j, holonym in ipairs(holonyms) do
@@ -1368,6 +1449,10 @@ function export.parse_new_style_place_desc(text)
 		end
 	end
 
+	if not form_of_directives_already_present and form_of_directives[1] then
+		form_of_directives[#form_of_directives].posttext = ""
+	end
+
 	local final_placetypes = {}
 	for i, placetype in ipairs(placetypes) do
 		if i > 1 and placetypes[i - 1].only_qualifiers then
@@ -1379,6 +1464,7 @@ function export.parse_new_style_place_desc(text)
 	retval.placetypes = final_placetypes
 	return retval
 end
+
 
 --[=[
 Process numeric and "extra info" arguments into an overall place spec, as described at the top of the file. `data` is an
@@ -1408,61 +1494,12 @@ local function parse_overall_place_spec(data)
 			if not (desc_index == 1 and holonym_index == 0) then
 				error("@-directives cannot follow place descriptions")
 			end
-			local form_of_directive, raw_terms = arg:match("^@([a-z -]+):(.*)$")
-			if not form_of_directive then
-				error("Misformatted @-directive: " .. dump(arg))
+			local form_of_directive = parse_form_of_directive(arg, form_of_overridden_args)
+			if form_of_directives[1] then
+				form_of_directive.pretext = ", "
+			else
+				form_of_directive.pretext = ""
 			end
-			if not export.all_form_of_directives[form_of_directive] then
-				local known_directives = {}
-				for k, _ in pairs(export.all_form_of_directives) do
-					insert(known_directives, '"' .. k .. '"')
-				end
-				table.sort(known_directives)
-				error(("Unrecognized form-of directive %s in @-directive %s; recognized directives are %s"):format(
-					dump(form_of_directive), dump(arg), concat(known_directives, ", ")))
-			end
-			local spec = export.all_form_of_directives[form_of_directive]
-			local canonical_directive = form_of_directive
-			if spec.alias_of then
-				canonical_directive = spec.alias_of
-				spec = export.all_form_of_directives[canonical_directive]
-				if not spec then
-					internal_error("Form-of directive alias %s points to %s, which is not a directive",
-						"@" .. form_of_directive, canonical_directive)
-				elseif spec.alias_of then
-					internal_error("Form-of directive alias %s points to %s, which is also an alias",
-						"@" .. form_of_directive, canonical_directive)
-				end
-			end
-			local default_foreign = spec.default_foreign
-			local directive_param = "@" .. form_of_directive
-			if form_of_overridden_args and form_of_overridden_args[canonical_directive] then
-				raw_terms = form_of_overridden_args[canonical_directive].new_value
-				local new_directive = form_of_overridden_args[canonical_directive].new_directive
-				local new_spec = export.all_form_of_directives[new_directive]
-				if not new_spec then
-					error(("Internal error: [[Module:transclude]] passed in unrecognized replacement directive '@%s'"):
-						format(new_directive))
-				end
-				if new_spec.alias_of then
-					error(("Internal error: [[Module:transclude]] passed in replacement directive alias '@%s', " ..
-						"should be canonical"):format(new_directive))
-				end
-				if new_directive ~= canonical_directive then
-					directive_param = directive_param .. (" (replaced with @%s)"):format(new_directive)
-					canonical_directive = new_directive
-					spec = new_spec
-				end
-				default_foreign = true
-			end
-			local terms = parse_term_with_inline_modifiers(raw_terms, directive_param,
-				default_foreign and args[1] or enlang)
-			insert(form_of_directives, {
-				directive = canonical_directive,
-				terms = terms.terms,
-				conj = terms.conj,
-				spec = spec,
-			})
 		elseif arg == ";" or arg:find("^;[^ ]") then
 			if not this_desc then
 				error("Saw semicolon joiner without preceding place description")
@@ -1495,7 +1532,7 @@ local function parse_overall_place_spec(data)
 					desc_index = desc_index + 1
 					holonym_index = 0
 				end
-				this_desc = export.parse_new_style_place_desc(arg)
+				this_desc = export.parse_new_style_place_desc(arg, form_of_directives, form_of_overridden_args)
 				descs[desc_index] = this_desc
 				last_was_new_style = true
 				holonym_index = holonym_index + 1
@@ -1535,6 +1572,11 @@ local function parse_overall_place_spec(data)
 				end
 			end
 		end
+	end
+
+	if form_of_directives[1] and not form_of_directives[#form_of_directives].posttext then
+		form_of_directives[#form_of_directives].posttext =
+			(args.def and args.def ~= "-" not args.def and descs[1]) and ", " or ""
 	end
 
 	-- Tracking code. This does nothing but add tracking for seen placetypes and qualifiers. The place will be linked to
@@ -2207,10 +2249,14 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 
 	if overall_place_spec.directives and overall_place_spec.directives[1] then
 		for i, directive_terms in ipairs(overall_place_spec.directives) do
+			ins(directive_terms.pretext)
+			if directive_terms.pretext ~= "" then
+				ucfirst = false
+			end
 			ins(format_form_of_directive(overall_place_spec, directive_terms, ucfirst))
 			ucfirst = false
-			if args.def ~= "-" or i < #directive_terms then
-				ins(", ")
+			if i == #directive_terms and directive_terms.posttext then
+				ins(directive_terms.posttext)
 			end
 		end
 	end
