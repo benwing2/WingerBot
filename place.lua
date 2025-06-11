@@ -915,6 +915,7 @@ export.all_form_of_directives = {
 	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
 	["former long form of"] = {text = "+", type_prefix = "FORMER_LONG_FORM_OF"},
 	["nickname for"] = {text = "+", type_prefix = "NICKNAME_FOR"},
+	["official nickname for"] = {text = "+", type_prefix = "OFFICIAL_NICKNAME_FOR"},
 	["former nickname for"] = {text = "+", type_prefix = "FORMER_NICKNAME_FOR"},
 	["derogatory name for"] = {text = "+", type_prefix = "DEROGATORY_NAME_FOR"},
 	["synonym of"] = {text = "+"},
@@ -1267,7 +1268,7 @@ local function parse_term_with_inline_modifiers(term, paramname, default_lang)
 end
 
 
-local function parse_form_of_directive(arg, form_of_overridden_args)
+local function parse_form_of_directive(arg, lang, form_of_overridden_args)
 	local form_of_directive, raw_terms = arg:match("^@([a-z -]+):(.*)$")
 	if not form_of_directive then
 		error("Misformatted @-directive: " .. dump(arg))
@@ -1316,7 +1317,7 @@ local function parse_form_of_directive(arg, form_of_overridden_args)
 		default_foreign = true
 	end
 	local terms = parse_term_with_inline_modifiers(raw_terms, directive_param,
-		default_foreign and args[1] or enlang)
+		default_foreign and lang or enlang)
 	return {
 		directive = canonical_directive,
 		terms = terms.terms,
@@ -1376,7 +1377,7 @@ end
 Parse a "new-style" place description, with placetypes and holonyms surrounded by `<<...>>` amid otherwise raw text.
 Return value is an object as documented at the top of the file. Exported for use by [[Module:demonyms]].
 ]==]
-function export.parse_new_style_place_desc(text, form_of_directives, form_of_overridden_args)
+function export.parse_new_style_place_desc(text, lang, form_of_directives, form_of_overridden_args)
 	local placetypes = {}
 	local segments = split(text, "<<(.-)>>")
 	local retval = {holonyms = {}, order = {}}
@@ -1393,7 +1394,7 @@ function export.parse_new_style_place_desc(text, form_of_directives, form_of_ove
 			elseif placetypes[1] or retval.holonyms[1] then
 				error(("Form-of directive '%s' must come first, before placetypes and holonyms"):format(segment))
 			else
-				local form_of_directive = parse_form_of_directive(segment, form_of_overridden_args)
+				local form_of_directive = parse_form_of_directive(segment, lang, form_of_overridden_args)
 				if not retval.order[1] or retval.order[1].type ~= "raw" or retval.order[2] then
 					internal_error("`retval.order` should have a single raw element: %s", retval.order)
 				end
@@ -1449,7 +1450,7 @@ function export.parse_new_style_place_desc(text, form_of_directives, form_of_ove
 		end
 	end
 
-	if not form_of_directives_already_present and form_of_directives[1] then
+	if not form_of_directives_already_present and form_of_directives and form_of_directives[1] then
 		form_of_directives[#form_of_directives].posttext = ""
 	end
 
@@ -1494,12 +1495,13 @@ local function parse_overall_place_spec(data)
 			if not (desc_index == 1 and holonym_index == 0) then
 				error("@-directives cannot follow place descriptions")
 			end
-			local form_of_directive = parse_form_of_directive(arg, form_of_overridden_args)
+			local form_of_directive = parse_form_of_directive(arg, args[1], form_of_overridden_args)
 			if form_of_directives[1] then
 				form_of_directive.pretext = ", "
 			else
 				form_of_directive.pretext = ""
 			end
+			insert(form_of_directives, form_of_directive)
 		elseif arg == ";" or arg:find("^;[^ ]") then
 			if not this_desc then
 				error("Saw semicolon joiner without preceding place description")
@@ -1532,7 +1534,7 @@ local function parse_overall_place_spec(data)
 					desc_index = desc_index + 1
 					holonym_index = 0
 				end
-				this_desc = export.parse_new_style_place_desc(arg, form_of_directives, form_of_overridden_args)
+				this_desc = export.parse_new_style_place_desc(arg, args[1], form_of_directives, form_of_overridden_args)
 				descs[desc_index] = this_desc
 				last_was_new_style = true
 				holonym_index = holonym_index + 1
@@ -1576,7 +1578,7 @@ local function parse_overall_place_spec(data)
 
 	if form_of_directives[1] and not form_of_directives[#form_of_directives].posttext then
 		form_of_directives[#form_of_directives].posttext =
-			(args.def and args.def ~= "-" not args.def and descs[1]) and ", " or ""
+			(args.def and args.def ~= "-" or not args.def and descs[1]) and ", " or ""
 	end
 
 	-- Tracking code. This does nothing but add tracking for seen placetypes and qualifiers. The place will be linked to
@@ -2255,7 +2257,7 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 			end
 			ins(format_form_of_directive(overall_place_spec, directive_terms, ucfirst))
 			ucfirst = false
-			if i == #directive_terms and directive_terms.posttext then
+			if i == #overall_place_spec.directives and directive_terms.posttext then
 				ins(directive_terms.posttext)
 			end
 		end
@@ -2265,7 +2267,7 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 	end
 	if args.def then
 		if args.def:find("<<") then
-			local def_desc = export.parse_new_style_place_desc(args.def)
+			local def_desc = export.parse_new_style_place_desc(args.def, args[1])
 			ins(export.format_new_style_place_desc_for_display({}, def_desc, false))
 		else
 			ins(args.def)
