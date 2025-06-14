@@ -3,6 +3,8 @@ local export = {}
 local function_module = "Module:fun"
 local load_module = "Module:load"
 local memoize_module = "Module:memoize"
+local string_char_module = "Module:string/char"
+local string_charset_escape_module = "Module:string/charsetEscape"
 
 local mw = mw
 local string = string
@@ -35,7 +37,7 @@ local ugmatch = ustring.gmatch
 local ugsub = ustring.gsub
 local ulower = ustring.lower
 local umatch = ustring.match
-local unpack = unpack
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local upper = string.upper
 local usub = ustring.sub
 local uupper = ustring.upper
@@ -43,7 +45,6 @@ local uupper = ustring.upper
 local memoize = require(memoize_module)
 
 -- Defined below.
-local charset_escape
 local codepoint
 local explode_utf8
 local format_fun
@@ -51,14 +52,19 @@ local get_charset
 local gsplit
 local pattern_escape
 local pattern_simplifier
-local php_trim
 local replacement_escape
+local title_case
 local trim
-local u
+local ucfirst
 local ulen
 
 --[==[
 Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no overhead after the first call, since the target functions are called directly in any subsequent calls.]==]
+local function charset_escape(...)
+	charset_escape = require(string_charset_escape_module)
+	return charset_escape(...)
+end
+
 local function is_callable(...)
 	is_callable = require(function_module).is_callable
 	return is_callable(...)
@@ -67,6 +73,11 @@ end
 local function load_data(...)
 	load_data = require(load_module).load_data
 	return load_data(...)
+end
+
+local function u(...)
+	u = require(string_char_module)
+	return u(...)
 end
 
 local function prepare_iter(str, pattern, str_lib, plain)
@@ -101,7 +112,7 @@ function export.is_not_empty(str, do_trim, quote_delimiters)
 	return quote_delimiters and gsub(str, "^(['\"])(.*)%1$", "%2") or str
 end
 
---[==[Explodes a string into an array of UTF-8 characters. '''Warning''': this function has no safety checks for non-UTF-8 byte sequences, to optimize speed and memory use. Inputs containing them therefore result in undefined behaviour.]==]
+--[==[Explodes a string into an array of UTF-8 characters. '''Warning''': this function assumes that the input is valid UTF-8 in order to optimize speed and memory use. Passing in an input containing non-UTF-8 byte sequences could result in unexpected behaviour.]==]
 function export.explode_utf8(str)
 	local text, i = {}, 0
 	for ch in gmatch(str, ".[\128-\191]*") do
@@ -111,6 +122,51 @@ function export.explode_utf8(str)
 	return text
 end
 explode_utf8 = export.explode_utf8
+
+--[==[Returns {true} if `str` is a valid UTF-8 string. This is true if, for each character, all of the following are true:
+* It has the expected number of bytes, which is determined by value of the leading byte: 1-byte characters are `0x00` to `0x7F`, 2-byte characters start with `0xC2` to `0xDF`, 3-byte characters start with `0xE0` to `0xEF`, and 4-byte characters start with `0xF0` to `0xF4`.
+* The leading byte must not fall outside of the above ranges.
+* The trailing byte(s) (if any), must be between `0x80` to `0xBF`.
+* The character's codepoint must be between U+0000 (`0x00`) and U+10FFFF (`0xF4 0x8F 0xBF 0xBF`).
+* The character cannot have an overlong encoding: for each byte length, the lowest theoretical encoding is equivalent to U+0000 (e.g. `0xE0 0x80 0x80`, the lowest theoretical 3-byte encoding, is exactly equivalent to U+0000). Encodings that use more than the minimum number of bytes are not considered valid, meaning that the first valid 3-byte character is `0xE0 0xA0 0x80` (U+0800), and the first valid 4-byte character is `0xF0 0x90 0x80 0x80` (U+10000). Formally, 2-byte characters have leading bytes ranging from `0xC0` to `0xDF` (rather than `0xC2` to `0xDF`), but `0xC0 0x80` to `0xC1 0xBF` are overlong encodings, so it is simpler to say that the 2-byte range begins at `0xC2`.
+
+If `allow_surrogates` is set, surrogates (U+D800 to U+DFFF) will be treated as valid UTF-8. Surrogates are used in UTF-16, which encodes codepoints U+0000 to U+FFFF with 2 bytes, and codepoints from U+10000 upwards using a pair of surrogates, which are taken together as a 4-byte unit. Since surrogates have no use in UTF-8, as it encodes higher codepoints in a different way, they are not considered valid in UTF-8 text. However, there are limited circumstances where they may be necessary: for instance, JSON escapes characters using the format `\u0000`, which must contain exactly 4 hexadecimal digits; under the scheme, codepoints above U+FFFF must be escaped as the equivalent pair of surrogates, even though the text itself must be encoded in UTF-8 (e.g. U+10000 becomes `\uD800\uDC00`).]==]
+function export.isutf8(str, allow_surrogates)
+	for ch in gmatch(str, "[\128-\255][\128-\191]*") do
+		if #ch > 4 then
+			return false
+		end
+		local b1, b2, b3, b4 = byte(ch, 1, 4)
+		if not (b2 and b2 >= 0x80 and b2 <= 0xBF) then
+			return false -- 1-byte is always invalid, as gmatch excludes 0x00 to 0x7F
+		elseif not b3 then -- 2-byte
+			if not (b1 >= 0xC2 and b1 <= 0xDF) then -- b1 == 0xC0 or b1 == 0xC1 is overlong
+				return false
+			end
+		elseif not (b3 >= 0x80 and b3 <= 0xBF) then -- trailing byte
+			return false
+		elseif not b4 then -- 3-byte
+			if b1 > 0xEF then
+				return false
+			elseif b2 < 0xA0 then
+				if b1 < 0xE1 then -- b1 == 0xE0 and b2 < 0xA0 is overlong
+					return false
+				end
+			elseif b1 < 0xE0 or (b1 == 0xED and not allow_surrogates) then -- b1 == 0xED and b2 >= 0xA0 is a surrogate
+				return false
+			end
+		elseif not (b4 >= 0x80 and b4 <= 0xBF) then -- 4-byte
+			return false
+		elseif b2 < 0x90 then
+			if not (b1 >= 0xF1 and b1 <= 0xF4) then -- b1 == 0xF0 and b2 < 0x90 is overlong
+				return false
+			end
+		elseif not (b1 >= 0xF0 and b1 <= 0xF3) then -- b1 == 0xF4 and b2 >= 0x90 is too high
+			return false
+		end
+	end
+	return true
+end
 
 do
 	local charset_chars = {
@@ -128,12 +184,6 @@ do
 		return (gsub(str, "[%z$%%()*+%-.?[%]^]", chars))
 	end
 	pattern_escape = export.pattern_escape
-
-	--[==[Escapes the magic characters used in [[mw:Extension:Scribunto/Lua reference manual#Patterns|pattern]] character sets: {%-]^}, and converts the null character to {%z}.]==]
-	function export.charset_escape(str)
-		return (gsub(str, "[%z%%%-%]^]", charset_chars))
-	end
-	charset_escape = export.charset_escape
 
 	--[==[Escapes only {%}, which is the only magic character used in replacement [[mw:Extension:Scribunto/Lua reference manual#Patterns|patterns]] with string.gsub and mw.ustring.gsub.]==]
 	function export.replacement_escape(str)
@@ -691,74 +741,44 @@ function export.reverse(str)
 	return reverse((gsub(str, "[\192-\255][\128-\191]*", reverse)))
 end
 
-do
-	local function err(cp)
-		error("Codepoint " .. cp .. " is out of range: codepoints must be between 0x0 and 0x10FFFF.", 2)
-	end
-
-	local function utf8_char(cp)
-		cp = tonumber(cp)
-		if cp < 0 then
-			err(format("-0x%X", -cp))
-		elseif cp < 0x80 then
-			return char(cp)
-		elseif cp < 0x800 then
-			return char(
-				0xC0 + cp / 0x40,
-				0x80 + cp % 0x40
-			)
-		elseif cp < 0x10000 then
-			if cp >= 0xD800 and cp < 0xE000 then
-				return "?" -- mw.ustring.char returns "?" for surrogates.
-			end
-			return char(
-				0xE0 + cp / 0x1000,
-				0x80 + cp / 0x40 % 0x40,
-				0x80 + cp % 0x40
-			)
-		elseif cp < 0x110000 then
-			return char(
-				0xF0 + cp / 0x40000,
-				0x80 + cp / 0x1000 % 0x40,
-				0x80 + cp / 0x40 % 0x40,
-				0x80 + cp % 0x40
-			)
-		end
-		err(format("0x%X", cp))
-	end
-
-	function export.char(cp, ...)
-		if ... == nil then
-			return utf8_char(cp)
-		end
-		local ret = {cp, ...}
-		for i = 1, select("#", cp, ...) do
-			ret[i] = utf8_char(ret[i])
-		end
-		return concat(ret)
-	end
-	u = export.char
+function export.char(...) -- To be moved to [[Module:string/char]].
+	return u(...)
 end
 
 do
-	local function get_codepoint(b1, b2, b3, b4)
-		if b1 < 128 then
+	local function utf8_err(func_name)
+		error(format("bad argument #1 to '%s' (string is not UTF-8)", func_name), 4)
+	end
+
+	local function get_codepoint(func_name, b1, b2, b3, b4)
+		if b1 <= 0x7F then
 			return b1, 1
-		elseif b1 < 224 then
-			return 0x40 * b1 + b2 - 0x3080, 2
-		elseif b1 < 240 then
-			return 0x1000 * b1 + 0x40 * b2 + b3 - 0xE2080, 3
+		elseif not (b2 and b2 >= 0x80 and b2 <= 0xBF) then
+			utf8_err(func_name)
+		elseif b1 <= 0xDF then
+			local cp = 0x40 * b1 + b2 - 0x3080
+			return cp >= 0x80 and cp or utf8_err(func_name), 2
+		elseif not (b3 and b3 >= 0x80 and b3 <= 0xBF) then
+			utf8_err(func_name)
+		elseif b1 <= 0xEF then
+			local cp = 0x1000 * b1 + 0x40 * b2 + b3 - 0xE2080
+			return cp >= 0x800 and cp or utf8_err(func_name), 3
+		elseif not (b4 and b4 >= 0x80 and b4 <= 0xBF) then
+			utf8_err(func_name)
 		end
-		return 0x40000 * b1 + 0x1000 * b2 + 0x40 * b3 + b4 - 0x3C82080, 4
+		local cp = 0x40000 * b1 + 0x1000 * b2 + 0x40 * b3 + b4 - 0x3C82080
+		return cp >= 0x10000 and cp <= 0x10FFFF and cp or utf8_err(func_name), 4
 	end
 
 	function export.codepoint(str, i, j)
-		if type(str) == "number" then
+		if str == "" then
+			return -- return nothing
+		elseif type(str) == "number" then
 			return byte(str, i, j)
 		end
 		i, j = i or 1, j == -1 and #str or i or 1
 		if i == 1 and j == 1 then
-			return (get_codepoint(byte(str, 1, 4)))
+			return (get_codepoint("codepoint", byte(str, 1, 4)))
 		elseif i < 0 or j < 0 then
 			return ucodepoint(str, i, j) -- FIXME
 		end
@@ -775,7 +795,7 @@ do
 				end
 				nr = nr + 1
 				local add
-				ret[nr], add = get_codepoint(b1, b2, b3, b4)
+				ret[nr], add = get_codepoint("codepoint", b1, b2, b3, b4)
 				nb = nb + add
 			end
 		end
@@ -807,21 +827,29 @@ do
 			if not b1 then
 				return nil
 			end
-			local ret, add = get_codepoint(b1, b2, b3, b4)
+			local ret, add = get_codepoint("gcodepoint", b1, b2, b3, b4)
 			nb = nb + add
 			return ret
 		end
 	end
 end
 
---[==[A version of lower which uses string.lower when possible, but otherwise uses mw.ustring.lower.]==]
-function export.lower(str)
-	return (match(str, "^()[^\128-\255]*$") and lower or ulower)(str)
+do
+	local _ulower = ulower
+
+	--[==[A version of lower which uses string.lower when possible, but otherwise uses mw.ustring.lower.]==]
+	function export.lower(str)
+		return (match(str, "^()[^\128-\255]*$") and lower or _ulower)(str)
+	end
 end
 
---[==[A version of upper which uses string.upper when possible, but otherwise uses mw.ustring.upper.]==]
-function export.upper(str)
-	return (match(str, "^()[^\128-\255]*$") and upper or uupper)(str)
+do
+	local _uupper = uupper
+
+	--[==[A version of upper which uses string.upper when possible, but otherwise uses mw.ustring.upper.]==]
+	function export.upper(str)
+		return (match(str, "^()[^\128-\255]*$") and upper or _uupper)(str)
+	end
 end
 
 do
@@ -925,6 +953,17 @@ function export.gsplit(str, pattern_or_func, str_lib, plain)
 end
 gsplit = export.gsplit
 
+function export.count(str, pattern, plain)
+	if plain then
+		return select(2, gsub(str, pattern_escape(pattern), ""))
+	end
+	local simple = pattern_simplifier(pattern)
+	if simple then
+		return select(2, gsub(str, pattern, ""))
+	end
+	return select(2, ugsub(str, pattern, ""))
+end
+
 function export.trim(str, charset, str_lib, plain)
 	if charset == nil then
 		-- "^.*%S" is the fastest trim algorithm except when strings only consist of characters to be trimmed, which are very slow due to catastrophic backtracking. gsub with "^%s*" gets around this by trimming such strings to "" first.
@@ -963,7 +1002,7 @@ do
 		else
 			cp = match(code, "^()%x+$") and tonumber(code, 16)
 		end
-		return cp and cp < 0x110000 and u(cp) or nil
+		return cp and (cp <= 0xD7FF or cp >= 0xE000 and cp <= 0x10FFFF) and u(cp) or nil
 	end
 
 	-- Non-ASCII characters aren't valid in proper HTML named entities, but MediaWiki uses them in some custom aliases which have also been included in [[Module:data/entities]].
@@ -987,16 +1026,18 @@ do
 		}, nil
 		return entities
 	end
-	
+
 	local function encode_entity(ch)
 		local entity = (entities or get_entities())[ch]
 		if entity == nil then
-			entity = "&#" .. codepoint(ch) .. ";"
+			local cp = codepoint(ch)
+			-- U+D800 to U+DFFF are surrogates, so can't be encoded as entities.
+			entity = cp and (cp <= 0xD7FF or cp >= 0xE000) and format("&#%d;", cp) or false
 			entities[ch] = entity
 		end
-		return entity
+		return entity or nil
 	end
-	
+
 	function export.encode_entities(str, charset, str_lib, plain)
 		if charset == nil then
 			return (gsub(str, "[\"&'<>\194]\160?", entities or get_entities()))
@@ -1038,7 +1079,7 @@ do
 		elseif enctype == "WIKI" then
 			return (find(str, "%", nil, true) or find(str, "_", nil, true)) and gsub(str, "([%%_])(%x?%x?)", decode) or str
 		end
-		error("bad argument #2 to \"decode_uri\" (expected QUERY, PATH, or WIKI)", 2)
+		error("bad argument #2 to 'decode_uri' (expected QUERY, PATH, or WIKI)", 2)
 	end
 end
 
@@ -1076,7 +1117,7 @@ do
 		end
 		local processed = stage == "POST" and _remove_comments(str) or
 			stage == "BOTH" and _remove_comments(str, true) or
-			error("bad argument #2 to \"remove_comments\" (expected PRE, POST, or BOTH)", 2)
+			error("bad argument #2 to 'remove_comments' (expected PRE, POST, or BOTH)", 2)
 		while processed ~= str do
 			str = processed
 			processed = _remove_comments(str)
@@ -1085,55 +1126,8 @@ do
 	end
 end
 
---[==[Lua equivalent of PHP's {{code|php|trim($string)}}, which trims {"\0"}, {"\t"}, {"\n"}, {"\v"}, {"\r"} and {" "}. This is useful when dealing with template parameters, since the native parser trims them like this.]==]
-function export.php_trim(str)
-	-- A frontier pattern with a greedy quantifier is faster than the algorithms used by export.trim, but can be only be used if the character set includes \0, since %z matches the start/end of the string, as well as \0. This is also immune to catastrophic backtracking.
-	return match(str, "%f[^%z\t\n\v\r ].*%f[%z\t\n\v\r ]") or ""
-end
-php_trim = export.php_trim
-
---[==[Takes a parameter name as either a string or number, and returns the Scribunto-normalized form (i.e. the key that that parameter would have in a {frame.args} table). For example, {"1"} (a string) is normalized to {1} (a number), {" foo "} is normalized to {"foo"}, and {1.5} (a number) is normalized to {"1.5"} (a string). Inputs which cannot be normalized (e.g. booleans) return {nil}. If the `no_trim` flag is set, string parameters are not trimmed, but strings may still be converted to numbers if they do not contain whitespace; this is necessary when normalizing keys into the form received by PHP during callbacks, before any trimming occurs (e.g. in the table of arguments when calling {frame:expandTemplates()}).
-
-Strings are trimmed with {export.php_trim}, unless the `no_trim` flag is set. They are then converted to numbers if '''all''' of the following are true:
-# They are integers; i.e. no decimals or leading zeroes (e.g. {"2"}, but not {"2.0"} or {"02"}).
-# They are ≤ 2{{sup|53}} and ≥ -2{{sup|53}}.
-# There is no leading sign unless < 0 (e.g. {"2"} or {"-2"}, but not {"+2"} or {"-0"}).
-# They contain no leading or trailing whitespace (which may be present when the `no_trim` flag is set).
-
-Numbers are converted to strings if '''either''':
-# They are not integers (e.g. {1.5}).
-# They are > 2{{sup|53}} or < -2{{sup|53}}.
-
-When converted to strings, integers ≤ 2{{sup|63}} and ≥ -2{{sup|63}} are formatted as integers (i.e. all digits are given), which is the range of PHP's integer precision, though the actual output may be imprecise since Lua's integer precision is > 2{{sup|53}} to < -2{{sup|53}}. All other numbers use the standard formatting output by {tostring()}.]==]
-function export.scribunto_param_key(key, no_trim)
-	local tp = type(key)
-	if tp == "string" then
-		if not no_trim then
-			key = php_trim(key)
-		end
-		if match(key, "^()-?[1-9]%d*$") then
-			local num = tonumber(key)
-			-- Lua integers are only precise to 2^53 - 1, so specifically check for 2^53 and -2^53 as strings, since a numerical comparison won't work as it can't distinguish 2^53 from 2^53 + 1.
-			return (
-				num <= 9007199254740991 and num >= -9007199254740991 or
-				key == "9007199254740992" or
-				key == "-9007199254740992"
-			) and num or key
-		end
-		return key == "0" and 0 or key
-	elseif tp == "number" then
-		-- No special handling needed for inf or NaN.
-		return key % 1 == 0 and (
-			key <= 9007199254740992 and key >= -9007199254740992 and key or
-			key <= 9223372036854775808 and key >= -9223372036854775808 and format("%d", key)
-		) or tostring(key)
-	end
-	return nil
-end
-
 do
 	local byte_escapes
-	
 	local function get_byte_escapes()
 		byte_escapes, get_byte_escapes = load_data("Module:string utilities/data").byte_escapes, nil
 		return byte_escapes
@@ -1178,9 +1172,9 @@ end
 
 do
 	local function do_uclcfirst(str, case_func)
-		-- Actual function to re-case of the first letter.
-		local first_letter = case_func(match(str, "^.[\128-\191]*") or "")
-		return first_letter .. sub(str, #first_letter + 1)
+		-- Re-case the first letter.
+		local first, remainder = match(str, "^(.[\128-\191]*)(.*)")
+		return first and (case_func(first) .. remainder) or ""
 	end
 	
 	local function uclcfirst(str, case_func)
@@ -1197,25 +1191,45 @@ do
 	function export.ucfirst(str)
 		return uclcfirst(str, uupper)
 	end
+	ucfirst = export.ucfirst
 
 	function export.lcfirst(str)
 		return uclcfirst(str, ulower)
 	end
 	
-	local function capitalize(w)
-		return uclcfirst(w, uupper)
-	end
-	
-	--[==[Capitalize each word of a string. WARNING: May be broken in the presence of multiword links.]==]
+	--[==[Capitalizes each word of the input string. WARNING: May be broken in the presence of multiword links.]==]
 	function export.capitalize(str)
-		if type(str) == "table" then
-			-- allow calling from a template
-			str = str.args[1]
-		end
 		-- Capitalize multi-word that is separated by spaces
 		-- by uppercasing the first letter of each part.
-		-- I assume nobody will input all CAP text.
-		return (ugsub(str, "%S+", capitalize))
+		return (ugsub(str, "%w+", ucfirst))
+	end
+
+	local function do_title_case(first, remainder)
+		first = uupper(first)
+		return remainder == "" and first or (first .. ulower(remainder))
+	end
+
+	--[==[Capitalizes each word of the input string, with any further letters in each word being converted to lowercase.]==]
+	function export.title_case(str)
+		return str == "" and "" or ugsub(str, "(%w)(%w*)", do_title_case)
+	end
+	title_case = export.title_case
+
+	--[==[Converts the input string to {{w|Camel case|CamelCase}}. Any non-word characters are treated as breaks between words. If `lower_first` is set, then the first character of the string will be lowercase (e.g. camelCase).]==]
+	function export.camel_case(str, lower_first)
+		str = ugsub(str, "%W*(%w*)", title_case)
+		return lower_first and do_uclcfirst(str, ulower) or str
+	end
+end
+
+do
+	local function do_snake_case(nonword, word)
+		return nonword == "" and word or "_" .. word
+	end
+
+	--[==[Converts the input string to {{w|Snake case|snake_case}}. Any non-word characters are treated as breaks between words.]==]
+	function export.snake_case(str)
+		return (ugsub(str, "(%W*)(%w*)", do_snake_case))
 	end
 end
 
