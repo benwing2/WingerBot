@@ -12,16 +12,18 @@ local m_parameters = require("Module:parameters")
 local m_form_of_doc = require("Module:form of doc")
 
 local function create_introdoc_params()
+	local boolean = {type = "boolean"}
+	local plain = {}
 	return {
-		["lang"] = {},
+		["lang"] = plain,
 		["exlang"] = {list = true},
-		["pldesc"] = {},
-		["primaryentrytext"] = {},
+		["pldesc"] = plain,
+		["primaryentrytext"] = plain,
 		["cat"] = {list = true},
-		["addlintrotext"] = {},
-		["etymtemp"] = {},
-		["withdot"] = {type = "boolean"},
-		["withcap"] = {type = "boolean"},
+		["addlintrotext"] = plain,
+		["etymtemp"] = plain,
+		["withdot"] = boolean,
+		["withcap"] = boolean,
 	}
 end
 
@@ -32,13 +34,15 @@ function export.introdoc_t(frame)
 end
 
 local function create_paramdoc_params()
+	local boolean = {type = "boolean"}
+	local plain = {}
 	return {
-		["lang"] = {},
-		["sgdescof"] = {},
-		["art"] = {},
-		["withfrom"] = {type = "boolean"},
-		["withdot"] = {type = "boolean"},
-		["withcap"] = {type = "boolean"},
+		["lang"] = plain,
+		["sgdescof"] = plain,
+		["art"] = plain,
+		["withfrom"] = boolean,
+		["withdot"] = boolean,
+		["withcap"] = boolean,
 	}
 end
 
@@ -66,7 +70,7 @@ local function create_fulldoc_params()
 	for k, v in pairs(usageparams) do
 		params[k] = v
 	end
-	params["shortcut"] = {list = true}
+	params["shortcut"] = {type = "title", list = true}
 	return params
 end
 
@@ -79,8 +83,9 @@ end
 local function create_infldoc_params()
 	local params = create_fulldoc_params()
 	params["pldesc"] = nil
-	params["sgdesc"] = {}
-	params["form"] = {}
+	local plain = {}
+	params["sgdesc"] = plain
+	params["form"] = plain
 	return params
 end
 
