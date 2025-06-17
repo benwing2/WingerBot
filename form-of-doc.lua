@@ -52,6 +52,7 @@ local table_extend = m_table.extend
 local template_link = require(template_parser_module).templateLink
 local tostring = tostring
 local ucfirst = m_str_utils.ucfirst
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local form_of_lang_data_module_prefix = m_form_of.form_of_lang_data_module_prefix
 local form_of_data1 = require(m_form_of.form_of_data1_module)
