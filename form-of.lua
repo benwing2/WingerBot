@@ -310,7 +310,9 @@ the following fields:
    `.lemmas` can be a string, which is displayed directly, or omitted, to show no lemma links and omit the connecting
    text.
 * `.lemma_face`: "Face" to use when displaying the lemma objects. Usually should be set to {"term"}.
+* `.conj`: Conjunction or separator to use when joining multiple lemma objects. Defaults to {"and"}.
 * `.enclitics`: List of enclitics to display after the lemmas, in parens.
+* `.enclitic_conj`: Conjunction or separator to use when joining multiple enclitics. Defaults to {"and"}.
 * `.base_lemmas`: List of base lemmas to display after the lemmas, in the case where the lemmas in `.lemmas` are
    themselves forms of another lemma (the base lemma), e.g. a comparative, superlative or participle. Each object is of
    the form { { paramobj = PARAM_OBJ, lemmas = {LEMMA_OBJ, LEMMA_OBJ, ...} }} where PARAM_OBJ describes the properties
@@ -345,7 +347,7 @@ function export.format_form_of(data)
 					full_link(lemma, data.lemma_face, nil, "show qualifiers"), lemma_classes
 				))
 			end
-			insert(parts, serial_comma_join(formatted_terms))
+			insert(parts, serial_comma_join(formatted_terms, {conj = data.conj or "and"}))
 		end
 	end
 	if data.enclitics and #data.enclitics > 0 then
@@ -361,7 +363,7 @@ function export.format_form_of(data)
 		end
 		insert(parts, " (")
 		insert(parts, wrap_in_span("with enclitic" .. (#data.enclitics > 1 and "s" or "") .. " ", text_classes))
-		insert(parts, serial_comma_join(formatted_terms))
+		insert(parts, serial_comma_join(formatted_terms, {conj = data.enclitic_conj or "and"}))
 		insert(parts, ")")
 		insert(parts, "<span class='" .. text_classes .. "'>")
 	end
@@ -1246,7 +1248,9 @@ information controlling the display, with the following fields:
 * `.POS`: ('''''recommended''''') Categorizing part-of-speech tag. Comes from the {{para|p}} or {{para|POS}} argument of
   {{tl|inflection of}}.
 * `.pagename`: Page name of "current" page or nil to use the actual page title; for testing purposes.
+* `.conj`: Conjunction or separator to use when joining multiple lemma objects. Defaults to {"and"}.
 * `.enclitics`: List of enclitics to display after the lemmas, in parens.
+* `.enclitic_conj`: Conjunction or separator to use when joining multiple enclitics. Defaults to {"and"}.
 * `.no_format_categories`: If true, don't format the categories derived from the inflection tags; just return them.
 * `.sort`: Sort key for formatted categories. Ignored when `.no_format_categories` = {true}.
 * `.nocat`: Suppress computation of categories (even if `.no_format_categories` is not given).
