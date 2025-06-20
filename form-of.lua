@@ -19,6 +19,7 @@ local load_module = "Module:load"
 local parse_utilities_module = "Module:parse utilities"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
+local table_deep_equals_module = "Module:table/deepEquals"
 local utilities_module = "Module:utilities"
 
 local anchor_encode = mw.uri.anchorEncode
@@ -65,7 +66,7 @@ local function deep_copy(...)
 end
 
 local function deep_equals(...)
-	deep_equals = require(table_module).deepEquals
+	deep_equals = require(table_deep_equals_module)
 	return deep_equals(...)
 end
 
@@ -295,14 +296,6 @@ local function wrap_in_span(text, classes)
 	return ("<span class='%s'>%s</span>"):format(classes, text)
 end
 
-local function join_segments(segs, conj)
-	if not segs[2] then
-		return segs[1]
-	else
-		return require(format).joinSegments(segs, conj)
-	end
-end
-
 --[==[
 Lowest-level implementation of form-of templates, including the general {{tl|form of}} as well as those that deal with
 inflection tags, such as the general {{tl|inflection of}}, semi-specific variants such as {{tl|participle of}}, and
@@ -317,11 +310,7 @@ the following fields:
    `.lemmas` can be a string, which is displayed directly, or omitted, to show no lemma links and omit the connecting
    text.
 * `.lemma_face`: "Face" to use when displaying the lemma objects. Usually should be set to {"term"}.
-* `.conj`: Conjunction or separator to use when joining multiple lemma objects. See `joinSegments()` in
-   [[Module:table]]. Defaults to {"and"}.
 * `.enclitics`: List of enclitics to display after the lemmas, in parens.
-* `.enclitic_conj`: Conjunction or separator to use when joining multiple enclitics. See `joinSegments()` in
-   [[Module:table]]. Defaults to {"and"}.
 * `.base_lemmas`: List of base lemmas to display after the lemmas, in the case where the lemmas in `.lemmas` are
    themselves forms of another lemma (the base lemma), e.g. a comparative, superlative or participle. Each object is of
    the form { { paramobj = PARAM_OBJ, lemmas = {LEMMA_OBJ, LEMMA_OBJ, ...} }} where PARAM_OBJ describes the properties
@@ -330,16 +319,16 @@ the following fields:
    { { param = "PARAM", tags = {"TAG", "TAG", ...} } where PARAM is the name of the parameter to {{tl|inflection of}}
    etc. that holds the base lemma(s) of the specified relationship and the tags describe the relationship, such as
    { {"comd"}} or { {"past", "part"}}.
-* `.text_classes`: CSS classes used to wrap the tag text and lemma links. Default is {"form-of-definition use-with-mention"}
-   for the tag text and lemma links, and additionally {"form-of-definition-link"} specifically for the lemma links.
-   (FIXME: Should separate out the lemma links into their own field.)
+* `.text_classes`: CSS classes used to wrap the tag text and lemma links. Default is
+   {"form-of-definition use-with-mention"}.
+* `.lemma_classes`: Additional CSS classes used to wrap the lemma links. Default is {"form-of-definition-link"}.
 * `.posttext`: Additional text to display after the lemma links.]==]
 function export.format_form_of(data)
 	if type(data) ~= "table" then
 		error("Internal error: First argument must now be a table of arguments")
 	end
 	local text_classes = data.text_classes or "form-of-definition use-with-mention"
-	local lemma_classes = data.text_classes or "form-of-definition-link"
+	local lemma_classes = data.lemma_classes or "form-of-definition-link"
 	local parts = {}
 	insert(parts, "<span class='" .. text_classes .. "'>")
 	insert(parts, data.text)
@@ -356,7 +345,7 @@ function export.format_form_of(data)
 					full_link(lemma, data.lemma_face, nil, "show qualifiers"), lemma_classes
 				))
 			end
-			insert(parts, join_segments(formatted_terms, data.conj or "and"))
+			insert(parts, serial_comma_join(formatted_terms))
 		end
 	end
 	if data.enclitics and #data.enclitics > 0 then
@@ -372,7 +361,7 @@ function export.format_form_of(data)
 		end
 		insert(parts, " (")
 		insert(parts, wrap_in_span("with enclitic" .. (#data.enclitics > 1 and "s" or "") .. " ", text_classes))
-		insert(parts, join_segments(formatted_terms, data.enclitic_conj or "and"))
+		insert(parts, serial_comma_join(formatted_terms))
 		insert(parts, ")")
 		insert(parts, "<span class='" .. text_classes .. "'>")
 	end
@@ -1266,8 +1255,8 @@ information controlling the display, with the following fields:
 * `.pretext`: Additional text to display before the inflection tags, but after any top-level labels.
 * `.posttext`: Additional text to display after the lemma links.
 * `.text_classes`: CSS classes used to wrap the tag text and lemma links. Default is
-  {"form-of-definition use-with-mention"} for the tag text, {"form-of-definition-link"} for the lemma links. (FIXME:
-  Should separate out the lemma links into their own field.)
+   {"form-of-definition use-with-mention"}.
+* `.lemma_classes`: Additional CSS classes used to wrap the lemma links. Default is {"form-of-definition-link"}.
 `.joiner`: Override the joiner (normally a slash) used to join multipart tags. You should normally not specify this.
 
 A typical call might look like this (for {{m+|es|amo}}): {
