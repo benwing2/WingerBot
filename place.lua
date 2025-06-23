@@ -1983,7 +1983,7 @@ end
 
 
 -- Format a set of form-of directive terms.
-local function format_form_of_directive(overall_place_spec, directive_terms, ucfirst)
+local function format_form_of_directive(overall_place_spec, directive_terms, ucfirst, from_tcl)
 	local formatted_terms = {}
 
 	local placetypes
@@ -2020,6 +2020,19 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 	end
 	if ucfirst then
 		text = m_strutils.ucfirst(text)
+	end
+	if not from_tcl then
+		local tracking_prefix = "form-of/" .. directive_terms.directive
+		track(tracking_prefix)
+		local langcode = overall_place_spec.lang:getCode()
+		local full_langcode = overall_place_spec.lang:getFullCode()
+		track(tracking_prefix .. "/" .. langcode)
+		if full_langcode ~= langcode then
+			track(tracking_prefix .. "/" .. full_langcode)
+		end
+		if full_langcode ~= "en" then
+			track(tracking_prefix .. "/non-english")
+		end
 	end
 	return text .. " " .. m_table.serialCommaJoin(formatted_terms,
 		{conj = directive_terms.conj or spec.conjunction or "and"})
@@ -2242,7 +2255,10 @@ end
 -- given, the gloss's first letter is made upper case. If `sentence_style` is given, the "extra info" (modern name,
 -- capital, largest city, etc.) is displayed as separated sentences; otherwise, it is displayed separated from the main
 -- definition by semicolons.
-local function get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info, extra_info_overridden_set)
+local function get_display_form(data)
+	local overall_place_spec, ucfirst, sentence_style, drop_extra_info, extra_info_overridden_set, from_tcl =
+		data.overall_place_spec, data.ucfirst, data.sentence_style, data.drop_extra_info,
+		data.extra_info_overridden_set, data.from_tcl
 	local args = overall_place_spec.args
 	local parts = {}
 	local function ins(txt)
@@ -2255,7 +2271,7 @@ local function get_display_form(overall_place_spec, ucfirst, sentence_style, dro
 			if directive_terms.pretext ~= "" then
 				ucfirst = false
 			end
-			ins(format_form_of_directive(overall_place_spec, directive_terms, ucfirst))
+			ins(format_form_of_directive(overall_place_spec, directive_terms, ucfirst, from_tcl))
 			ucfirst = false
 			if i == #overall_place_spec.directives and directive_terms.posttext then
 				ins(directive_terms.posttext)
@@ -2312,7 +2328,14 @@ local function get_def(data)
 	local sentence_style = overall_place_spec.lang:getCode() == "en"
 	local ucfirst = sentence_style and not args.nocap
 	if #args.t > 0 then
-		local gloss = get_display_form(overall_place_spec, false, false, drop_extra_info, extra_info_overridden_set)
+		local gloss = get_display_form {
+			overall_place_spec = overall_place_spec,
+			ucfirst = false,
+			sentence_style = false,
+			drop_extra_info = drop_extra_info,
+			extra_info_overridden_set = extra_info_overridden_set,
+			from_tcl = from_tcl,
+		}
 		if from_tcl and not args.tcl_nolc then
 			gloss = m_strutils.lcfirst(gloss)
 		end
@@ -2322,7 +2345,14 @@ local function get_def(data)
 			return get_translations(args.t, args.tid) .. (gloss == "" and "" or " (" .. gloss .. ")")
 		end
 	else
-		return get_display_form(overall_place_spec, ucfirst, sentence_style, drop_extra_info, extra_info_overridden_set)
+		return get_display_form {
+			overall_place_spec = overall_place_spec,
+			ucfirst = ucfirst,
+			sentence_style = sentence_style,
+			drop_extra_info = drop_extra_info,
+			extra_info_overridden_set = extra_info_overridden_set,
+			from_tcl = from_tcl,
+		}
 	end
 end
 
