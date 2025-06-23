@@ -10,6 +10,7 @@ local m_table = require("Module:table")
 
 local debug_track_module = "Module:debug/track"
 local en_utilities_module = "Module:en-utilities"
+local form_of_module = "Module:form of"
 local languages_module = "Module:languages"
 local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
@@ -2042,8 +2043,15 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 			track(tracking_prefix .. "/non-english")
 		end
 	end
-	return text .. " " .. m_table.serialCommaJoin(formatted_terms,
-		{conj = directive_terms.conj or spec.conjunction or "and"})
+	return require(form_of_module).format_form_of {
+		text = text,
+		lemmas = directive_terms.terms,
+		lemma_face = "term",
+		-- text_classes = "place-text",
+		conj = directive_terms.conj or spec.conjunction or "and",
+	}
+	--return text .. " " .. m_table.serialCommaJoin(formatted_terms,
+	--	{conj = directive_terms.conj or spec.conjunction or "and"})
 end
 
 
