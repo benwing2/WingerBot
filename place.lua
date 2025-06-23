@@ -701,9 +701,9 @@ set of holonyms (the code to do this is in `get_placetype_cats()`):
 --[=[
 TODO/FIXME:
 
-1. Neighborhoods should categorize at the city level. Categories like [[:Category:Places in Los Angeles]] exist but
-   not [[:Category:Neighborhoods in Los Angeles]]; we can refactor the code in generic_cat_handler() to support this
-   use case. [DONE]
+1. [DONE] Neighborhoods should categorize at the city level. Categories like [[:Category:Places in Los Angeles]] exist
+   but not [[:Category:Neighborhoods in Los Angeles]]; we can refactor the code in generic_cat_handler() to support this
+   use case.
 2. Display handlers should be smarter. For example, 'co/Travis' as a holonym should display as 'Travis County' in the
    United States, but (I think) display handlers don't currently have the full context of holonyms passed in to allow
    this to happen.
@@ -717,47 +717,47 @@ TODO/FIXME:
    to the appropriate Wikipedia article on Frenc prefectures, which are completely different from the more general
    concept of prefecture). Similarly for "Polish colony" and "Welsh community". ("Israeli settlement" should probably
    stay as-is because it displays as "Israeli settlement" not just "settlement".)
-5. Currently, categories for e.g. states and territories of Australia go into
+5. [DONE] Currently, categories for e.g. states and territories of Australia go into
    [[:Category:States and territories of Australia]] but terms for states and territories of Australia go into
    (respectively) [[:Category:States of Australia]] and [[:Category:Territories of Australia]]. We should fix this;
-   maybe this is as easy as setting cat_as in the respective divs definitions. [DONE]
+   maybe this is as easy as setting cat_as in the respective divs definitions.
 6. Probably cat_as should support raw categories as well as category types; raw categories would be indicated by being
    prefixed with "Category:".
-7. Update documentation. [PARTLY DONE]
-8. Rename remaining political division categories to include name of country in them. [DONE]
-9. Add Pakistan provinces and territories. [DONE]
-10. Add a polity group for continents and continent-level regions instead of special-casing. This should make it
-    possible e.g. to have Jerusalem as a city under "Asia". [DONE]
-11. Add better handling of cities that are their own states, like Mexico City. [DONE]
-12. Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just
-    "Aguascalientes". [DONE]
-13. Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities (which use
-    `placename_cat_aliases` and `placename_display_aliases` in [[Module:place/placetypes]]). [DONE]
-14. More generally, cities should be unified into the polity grouping system to the extent possible; this would allow
-    for divs of cities (see #17 below). [DONE]
-15. We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level implications 
-    from being added due to generically-named divisions like "North Governorate", "Central Region" and
+7. [MOSTLY DONE] Update documentation.
+8. [DONE] Rename remaining political division categories to include name of country in them.
+9. [DONE] Add Pakistan provinces and territories.
+10. [DONE] Add a polity group for continents and continent-level regions instead of special-casing. This should make it
+    possible e.g. to have Jerusalem as a city under "Asia".
+11. [DONE] Add better handling of cities that are their own states, like Mexico City.
+12. [DONE] Breadcrumb for e.g. [[Category:Aguascalientes, Mexico]] is "Aguascalientes, Mexico" instead of just
+    "Aguascalientes".
+13. [DONE] Unify aliasing system; cities have a completely different mechanism (alias_of) vs. polities/subpolities
+	(which use`placename_cat_aliases` and `placename_display_aliases` in [[Module:place/placetypes]]).
+14. [DONE] More generally, cities should be unified into the polity grouping system to the extent possible; this would
+	allow for divs of cities (see #17 below).
+15. [DONE] We have `no_containing_polity_cat` set for Lebanon, Malta and Saudi Arabia to prevent country-level
+	implications from being added due to generically-named divisions like "North Governorate", "Central Region" and
 	"Eastern Province" but (a) this setting seems to do multiple things and should be split, (b) it should be possible
-	to set this at the division level instead of the country level. [DONE]
+	to set this at the division level instead of the country level.
 16. Split out the data from the handlers so we can use loadData() on the data because it's becoming very big.
-17. Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we treat
-    them as such) have districts, subdistricts, etc. We need to support divs for cities and even named divisions of
-    cities (such as we already have for boroughs of New York City). [DONE]
+17. [DONE] Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we
+	treat them as such) have districts, subdistricts, etc. We need to support divs for cities and even named divisions
+	of cities (such as we already have for boroughs of New York City).
 18. It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
     in [[Module:place]] needs to remove links first.
-19. Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
+19. [DONE] Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
     "historic(al)" is ambiguous (cf. "historic counties" in England which are not former, but still have a legal
-	definition). [DONE]
-20. It should be possible to categorize former subpolities of certain polities; cf. [[:Category:ja:Provinces of Japan]],
-    which contains former provinces. [PARTLY DONE; SUPPORT IS THERE BUT FORMER PROVINCES NOT YET CATEGORIZED]
-21. In subpolity_keydesc(), we need to generate the correct indefinite article and have a huge hack to check
-    specifically for "union territory", which is the only placetype that shows up in this function where the default
-    indefinite article generating function fails. To fix this properly, we need to separate out the non-category
-    placetype data from `cat_data` in [[Module:place/placetypes]] and move it to [[Module:place/locations]], because we
-    don't have access to the data in [[Module:place/placetypes]], and that data indicates the correct article for
-	placetypes like "union territory". [DONE]
-22. Simplify the specs in `cat_data`, eliminating the distinction between "inner" and "outer" matching. There should not
-    be two levels, just one. For example, in "district", instead of
+	definition).
+20. [PARTLY DONE; SUPPORT IS THERE BUT FORMER PROVINCES NOT YET CATEGORIZED] It should be possible to categorize former
+	subpolities of certain polities; cf. [[:Category:ja:Provinces of Japan]], which contains former provinces.
+21. [DONE] In subpolity_keydesc(), we need to generate the correct indefinite article and have a huge hack to check
+	specifically for "union territory", which is the only placetype that shows up in this function where the default
+	indefinite article generating function fails. To fix this properly, we need to separate out the non-category
+	placetype data from `cat_data` in [[Module:place/placetypes]] and move it to [[Module:place/locations]], because we
+	don't have access to the data in [[Module:place/placetypes]], and that data indicates the correct article for
+	placetypes like "union territory".
+22. [DONE] Simplify the specs in `cat_data`, eliminating the distinction between "inner" and "outer" matching. There
+	should not be two levels, just one. For example, in "district", instead of
 		["country/Portugal"] = {
 			["itself"] = {"Districts and autonomous regions of +++"},
 		}
@@ -777,18 +777,18 @@ TODO/FIXME:
 		},
 	This seems to be specifically for Jakarta and doesn't seem to work anyway, as the two entries in
 	[[:Category:en:Subdistricts of Jakarta]] and the one entry in [[:Category:id:Subdistricts of Jakarta]] are manually
-	categorized. [DONE]
-23. Consolidate the remaining stuff in [[Module:category tree/topic cat/data/Earth]] into
-	[[Module:category tree/topic cat/data/Places]]. [DONE]
-24. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
-    in different polities from the specified containing polity/polities of the city, but doesn't do the same for
+	categorized.
+23. [DONE] Consolidate the remaining stuff in [[Module:category tree/topic cat/data/Earth]] into
+	[[Module:category tree/topic cat/data/Places]].
+24. [DONE] The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that
+	are in different polities from the specified containing polity/polities of the city, but doesn't do the same for
     larger-level divisions. Likewise for the `city_type_cat_handler`. There are some sufficiently generically-named
     divisions that this issue can occur; for example, [[Koforidua]], the capital city of Eastern Region, Ghana, is
     incorrectly categorized under [[:Category:en:Cities in Eastern Region, Malta]] and
     [[:Category:en:Places in Eastern Region, Malta]]. Note that the function `augment_holonyms_with_container`
-    ''DOES'' do such checks, so we should be able to refactor the code out of that function and use it elsewhere. [DONE]
-25. The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that are
-    in different polities from the specified containing polity/polities of the city; but how smart is it? It will
+    ''DOES'' do such checks, so we should be able to refactor the code out of that function and use it elsewhere.
+25. [DONE] The `generic_cat_handler` that categorizes into `Places in FOO` is smart enough not to categorize cities that
+	are in different polities from the specified containing polity/polities of the city; but how smart is it? It will
     successfully avoid categorizing a neighborhood in e.g. [[Columbus]], [[Georgia]] that doesn't explicitly mention the
     US (only `s/Georgia`) into [[:Category:en:Places in Columbus]], which is for Columbus, Ohio, but will it do the same
     for a hypothetical neighborhood of Columbus in say Merseyside, England? This should be investigated. It will
@@ -797,31 +797,29 @@ TODO/FIXME:
     this augmentation from happening for the UK. (This relates to FIXME #15. `no_containing_polity_cat` is set on
     England, Scotland, etc. to prevent the toponyms from being added to [[:Category:en:Places in the United Kingdom]],
     but this same setting is used to prevent augmentation, which it should not be; there should be different settings.)
-	[DONE]
-26. The `generic_cat_handler` (or more specifically `find_holonym_keys_for_categorization`) checks for city holonyms
-    by looking specifically for holonym type `city`. But some cities (particularly those in China) can be specified
-    using different holonym types, e.g. `prefecture-level city`, `subprovincial city`, etc. We should allow these when
-    appropriate (which means the cities in China need to have a `placetype` set that indicates their regional-level
-    status as well as just `city`). I'm not sure if cities support specifying a custom `placetype` at the moment; this
-    relates to FIXME #14 above concerning unifying cities and political divisions internally. [DONE]
-27. The bare category handler (`get_bare_categories` in [[Module:place/placetypes]]) is not smart enough to avoid
+26. [DONE] The `generic_cat_handler` (or more specifically `find_holonym_keys_for_categorization`) checks for city
+	holonyms by looking specifically for holonym type `city`. But some cities (particularly those in China) can be
+	specified using different holonym types, e.g. `prefecture-level city`, `subprovincial city`, etc. We should allow
+	these when appropriate (which means the cities in China need to have a `placetype` set that indicates their
+	regional-level status as well as just `city`). I'm not sure if cities support specifying a custom `placetype` at the
+	moment; this relates to FIXME #14 above concerning unifying cities and political divisions internally.
+27. [DONE] The bare category handler (`get_bare_categories` in [[Module:place/placetypes]]) is not smart enough to avoid
     overcategorizing cities or other divisions that are of the right placetype but in the wrong containing polity. For
 	example, Asturian [[Llión]] "León (city in Spain)" gets put in [[:Category:ast:León]] even though the latter is
     supposed to refer to a city in Mexico. We can borrow the check-containing-polity code from `generic_cat_handler`.
-	[DONE]
-28. Redo handling of singular and plural to respect overrides specified in placetype_data. Check more carefully for
-    things that may not singularize correctly, e.g. 'passes' -> 'passe'? Definitely 'headquarters' and variants. [DONE]
-29. Combine placetype_equivs and other placetype data into `placetype_data`. Figure out if we need the distinction
-    between `placetype_equivs` and `fallback`. [DONE]
+28. [DONE] Redo handling of singular and plural to respect overrides specified in placetype_data. Check more carefully
+	for things that may not singularize correctly, e.g. 'passes' -> 'passe'? Definitely 'headquarters' and variants.
+29. [DONE] Combine placetype_equivs and other placetype data into `placetype_data`. Figure out if we need the
+	distinction between `placetype_equivs` and `fallback`.
 30. `has_neighborhoods` may need to be a function that can look at the containing holonyms to determine whether the
     entity in question is city-like.
-31. Bare placenames as they appear in holonyms (e.g. `Riau Islands`) instead of category keys (e.g.
+31. [DONE] Bare placenames as they appear in holonyms (e.g. `Riau Islands`) instead of category keys (e.g.
 	`the Riau Islands, Indonesia`) should appear in the polity data tables. As a first pass, the word "the" should not
-	appear but should instead be a property of the polity. [DONE]
-32. `capital_city_cat_handler` should use `get_holonyms_to_check()`. [DONE]
-33. The code to generate and parse the correct preposition ("in" or "of") is very convoluted, and the actual preposition
-	used is specified in various locations with various defaults, sometimes hardcoded. This should be simplified. It is
-	made more difficult by the fact that the in/of distinction occurs in several places:
+	appear but should instead be a property of the polity.
+32. [DONE] `capital_city_cat_handler` should use `get_holonyms_to_check()`.
+33. [PARTLY DONE] The code to generate and parse the correct preposition ("in" or "of") is very convoluted, and the
+	actual preposition used is specified in various locations with various defaults, sometimes hardcoded. This should be
+	simplified. It is made more difficult by the fact that the in/of distinction occurs in several places:
 	(a) when generating the {{place}} text in old-style descriptions where the preposition isn't explicitly given, which
 		uses the `preposition` setting in placetype_data, defaulting to "in";
 	(b) when generating categories based on explicit category specs in placetype_data (which are gradually being
@@ -837,22 +835,23 @@ TODO/FIXME:
     (f) when generating category descriptions for categories generated in (b) and (d) above, which relies on the
 		`generic_before_non_cities` and `generic_before_cities` settings in placetype_data, which need to match the
 		corresponding prepositions hardcoded in the category generation handlers. Instead of the hardcoding, the
-		category generation handler should respect the `generic_before_*` settings. [PARTLY DONE]
+		category generation handler should respect the `generic_before_*` settings.
 34. [[Krakow]] defined as {{place|en|A <<city>> on the [[Vistula]] River, the <<capital>> of the <<voi/Lesser Poland Voivodeship>> in southern <<c/Poland>>}}
 	categorizes under [[:Category:Voivodeship capitals]] when it should probably instead be under
 	[[:Category:Voivodeship capitals of Poland]]. Possibly this is because the various voivodeships haven't yet been
 	entered as known locations, but this should happen regardless of that.
 35. {{tcl}} bugs:
-    a. Lowercase initial letter in new-style {{place}} descriptions in {{tcl}}. Maybe we can have a setting tcl_nolc=1
-	   to prevent this from happening.
-    b. tcl= and probably new-style {{place}} descriptions in general should recognize ;; to separate distinct {{place}}
+	a. [DONE] Lowercase initial letter in new-style {{place}} descriptions in {{tcl}}. Maybe we can have a setting
+	   tcl_nolc=1 to prevent this from happening.
+	b. tcl= and probably new-style {{place}} descriptions in general should recognize ;; to separate distinct {{place}}
 	   descriptions, and similarly ;;and as the equivalent of regular `;and`, etc.
-    c. The value supplied in `modern=` should be displayed in {{tcl}} descriptions regardless of the setting that
+    c. [DONE] The value supplied in `modern=` should be displayed in {{tcl}} descriptions regardless of the setting that
 	   normally disables this, so that e.g. the foreign-language equivalent of [[British Honduras]] doesn't just say
 	   it's a former British colony in Central America but specifically identifies it as modern Belize. If the user
-	   gives, place_modern= in {{tcl}}, that should override the modern= value and still display. [DONE]
-	d. The page supplied to {{tcl}} should be used for generating bare categories even if t= is supplied and overrides
-	   the English term displayed. [DONE]
+	   gives, place_modern= in {{tcl}}, that should override the modern= value and still display.
+	d. [DONE] The page supplied to {{tcl}} should be used for generating bare categories even if t= is supplied and
+	   overrides the English term displayed. [DONE]
+	e. If text follows {{place}} and begins with a semicolon, the semicolon isn't copied into {{tcl}}.
 36. County boroughs used as holonyms currently display 'borough county borough' because there's an affix setting for
 	'county borough' and a fallback display handler for 'borough'. We need to rethink this; maybe merge the affix
 	setting and display handlers.
@@ -862,33 +861,35 @@ TODO/FIXME:
 	known location in place of looking up known locations and store the appropriate known location there in
 	`augment_holonyms_with_container()` instead of calling `key_to_placename`.
 39. Bug fixes with 'the':
-	(a) [[Kazaň]] defined as {{place|cs|caplc|rep:Pref/Tatarstan|c/Russia|t1=Kazan}} displays as
-		"Republic of the Tatarstan". [DONE]
+	(a) [DONE] [[Kazaň]] defined as {{place|cs|caplc|rep:Pref/Tatarstan|c/Russia|t1=Kazan}} displays as
+		"Republic of the Tatarstan".
 	(b) [[Valday]] defined as {{place|en|town/administrative center|dist:Suf/Valdaysky|obl/Novgorod|c/Russia}}
 		displays as "a town, the administrative center of the Valdaysky District". Changing to `dist:suf/Valdaysky`
 		displays as "... of Valdaysky district".
-40. Bug fix with 'the': [[Verkhoyansk]] defined as {{place|en|town|rep/Sakha|c/Russia}} displays as "a town in the
-	Sakha". [DONE]
-41. [[Category:Cities in Asia]] has [[Category:Cities in Eurasia]] as a parent, which in turn has
-	[[Category:Cities in the Earth]] as a parent. Continents should not have the second parent like this. [DONE]
-42. When checking `british_spelling`, it should check all containers as well; otherwise it's too hard to keep this in
-	sync across cities, administrative divisions and countries. [DONE]
-43. `skip_polity_parent_type` should be renamed to container_parent_type or similar. [DONE]
+40. [DONE] Bug fix with 'the': [[Verkhoyansk]] defined as {{place|en|town|rep/Sakha|c/Russia}} displays as "a town in
+	the Sakha".
+41. [DONE] [[Category:Cities in Asia]] has [[Category:Cities in Eurasia]] as a parent, which in turn has
+	[[Category:Cities in the Earth]] as a parent. Continents should not have the second parent like this.
+42. [DONE] When checking `british_spelling`, it should check all containers as well; otherwise it's too hard to keep
+	this in sync across cities, administrative divisions and countries.
+43. [DONE] `skip_polity_parent_type` should be renamed to container_parent_type or similar.
 44. There should be a flag to allow e.g. departments of France that are currently categorized as departments of their
 	region to also be categorized as departments of France.
-45. Aliases are causing iterate_matching_holonym_location() to fail, e.g. if [[براق]] "Prague" is specified as
+45. [DONE] Aliases are causing iterate_matching_holonym_location() to fail, e.g. if [[براق]] "Prague" is specified as
     {{place|acw|capital city|c/Czechia|t1=Prague}}, this fails add a bare category [[Category:acw:Prague]] because
     the code in iterate_matching_holonym_location() isn't resolving aliases when comparing the known container
-    'Czech Republic'. Probably we want to build an alias table to speed up these sorts of lookups. [DONE]
-46. The district cat handler is failing to work right, e.g. in [[Saint-Gaudérique]] defined as
-	{{place|fr|district|city/Perpignan|in|dept/Pyrénées-Orientales|r/Occitania|c/France|t=Saint-Gaudérique}},
-	only the 'Places in ...' categories are getting triggered. [DONE; DUE TO TYPO IN HANDLER]
+    'Czech Republic'. Probably we want to build an alias table to speed up these sorts of lookups.
+46. [DONE; DUE TO TYPO IN HANDLER] The district cat handler is failing to work right, e.g. in [[Saint-Gaudérique]]
+	defined as {{place|fr|district|city/Perpignan|in|dept/Pyrénées-Orientales|r/Occitania|c/France|t=Saint-Gaudérique}},
+	only the 'Places in ...' categories are getting triggered.
 47. Suburbs of a given city aren't generally in the city and may not even be in the same country or country division,
 	so they should not categorize as "Places in ..." based on the city and specified country and division. Same goes
 	for "enclave" (within somewhere) and "exclave".
 48. When converting display aliases, we should automatically convert full placenames to full placenames and elliptical
     placenames to elliptical placenames instead of always either doing elliptical or full placenames depending on the
 	value of `display_as_full`.
+49. `@obsolete form of` and `@archaic form of` should automatically trigger nocat=1.
+50. The handler that adds bare categories should pick up values in <eq:...>.
 ]=]
 
 --[==[ var:
@@ -910,6 +911,7 @@ The key is the form-of directive and the value is an object with the following p
 ]==]
 export.all_form_of_directives = {
 	["former name of"] = {text = "+", type_prefix = "FORMER_NAME_OF"},
+	["fmr of"] = {alias_of = "former name of"},
 	["official name of"] = {text = "+", type_prefix = "OFFICIAL_NAME_OF"},
 	["former official name of"] = {text = "+", type_prefix = "FORMER_OFFICIAL_NAME_OF"},
 	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
@@ -935,11 +937,36 @@ export.all_form_of_directives = {
 	["sylabbrev of"] = {alias_of = "syllabic abbreviation of"},
 	["ellipsis of"] = {text = "+", type_prefix = "ELLIPSIS_OF", cat = "cln:ellipses",
 		default_foreign = true},
+	["ellip of"] = {alias_of = "ellipsis of"},
+	["clipping of"] = {text = "+", type_prefix = "CLIPPING_OF", cat = "cln:clippings",
+		default_foreign = true},
+	["clip of"] = {alias_of = "clipping of"},
 	["alternative form of"] = {text = "+", default_foreign = true},
 	["alt form"] = {alias_of = "alternative form of"},
 	["alternative spelling of"] = {text = "+", default_foreign = true},
 	["alt spell"] = {alias_of = "alternative spelling of"},
 	["alt sp"] = {alias_of = "alternative spelling of"},
+	["dated form of"] = {text = "+", type_prefix = "DATED_FORM_OF", cat = "cln:dated forms",
+		default_foreign = true},
+	["dated form"] = {alias_of = "dated form of"},
+	["dated spelling of"] = {text = "+", type_prefix = "DATED_FORM_OF", cat = "cln:dated forms",
+		default_foreign = true},
+	["dated spell"] = {alias_of = "dated spelling of"},
+	["dated sp"] = {alias_of = "dated spelling of"},
+	["archaic form of"] = {text = "+", type_prefix = "ARCHAIC_FORM_OF", cat = "cln:archaic forms",
+		default_foreign = true},
+	["arch form"] = {alias_of = "archaic form of"},
+	["archaic spelling of"] = {text = "+", type_prefix = "ARCHAIC_FORM_OF", cat = "cln:archaic forms",
+		default_foreign = true},
+	["arch spell"] = {alias_of = "archaic spelling of"},
+	["arch sp"] = {alias_of = "archaic spelling of"},
+	["obsolete form of"] = {text = "+", type_prefix = "OBSOLETE_FORM_OF", cat = "cln:obsolete forms",
+		default_foreign = true},
+	["obs form"] = {alias_of = "obsolete form of"},
+	["obsolete spelling of"] = {text = "+", type_prefix = "OBSOLETE_FORM_OF", cat = "cln:obsolete forms",
+		default_foreign = true},
+	["obs spell"] = {alias_of = "obsolete spelling of"},
+	["obs sp"] = {alias_of = "obsolete spelling of"},
 }
 
 local function get_seat_text(overall_place_spec)
@@ -980,6 +1007,7 @@ export.extra_info_args = {
 	{arg = "full", text = "in full,", conjunction = "or", display_even_when_dropped = true},
 	{arg = "short", text = "short form", conjunction = "or"},
 	{arg = "abbr", text = "abbreviation", conjunction = "or"},
+	{arg = "former", text = "formerly,"},
 	{arg = "official", text = "official name", match_sentence_style = true, auto_plural = true, with_colon = true},
 	{arg = "capital", text = "+", match_sentence_style = true, auto_plural = true, with_colon = true},
 	{arg = "largest city", text = "+", match_sentence_style = true, auto_plural = true, with_colon = true},
@@ -1122,26 +1150,6 @@ local function handle_category_implications(place_descriptions, implication_data
 end
 
 
--- Split a holonym placename on commas but don't split on comma+space. This way, we split on "Poland,Belarus,Ukraine"
--- but keep "Tucson, Arizona" together.
-local function split_holonym_placename(placename)
-	if placename:find(", ") then
-		local placenames = split(placename, ",", true)
-		local retval = {}
-		for i, placename in ipairs(placenames) do
-			if i > 1 and placename:find("^ ") then
-				retval[#retval] = retval[#retval] .. "," .. placename
-			else
-				insert(retval, placename)
-			end
-		end
-		return retval
-	else
-		return split(placename, ",", true)
-	end
-end
-
-
 -- Split a holonym (e.g. "continent/Europe" or "country/en:Italy" or "in southern" or "r:suf/O'Higgins" or
 -- "c/Austria,Germany,Czech Republic") into its components. Return a list of holonym objects (see top of file). Note
 -- that if there isn't a slash in the holonym (e.g. "in southern"), the `placetype` field of the holonym will be nil.
@@ -1195,7 +1203,7 @@ local function split_holonym(raw)
 	end
 
 	placetype = m_placetypes.resolve_placetype_aliases(placetype)
-	local holonyms = split_holonym_placename(placename)
+	local holonyms = split_on_comma(placename)
 	local pluralize_affix = #holonyms > 1
 	local affix_holonym_index = (affix_type == "pref" or affix_type == "Pref") and 1 or affix_type == "noaff" and 0 or
 		#holonyms
