@@ -315,9 +315,10 @@ the following fields:
 * `.enclitic_conj`: Conjunction or separator to use when joining multiple enclitics. Defaults to {"and"}.
 * `.base_lemmas`: List of base lemmas to display after the lemmas, in the case where the lemmas in `.lemmas` are
    themselves forms of another lemma (the base lemma), e.g. a comparative, superlative or participle. Each object is of
-   the form { { paramobj = PARAM_OBJ, lemmas = {LEMMA_OBJ, LEMMA_OBJ, ...} }} where PARAM_OBJ describes the properties
-   of the base lemma parameter (i.e. the relationship between the intermediate and base lemmas) and LEMMA_OBJ is an
-   object suitable to be passed to {full_link()} in [[Module:links]]. PARAM_OBJ is of the format
+   the form { { paramobj = PARAM_OBJ, lemmas = {LEMMA_OBJ, LEMMA_OBJ, ...}, conj = "CONJ" }} where PARAM_OBJ describes
+   the properties of the base lemma parameter (i.e. the relationship between the intermediate and base lemmas);
+   LEMMA_OBJ is an object suitable to be passed to {full_link()} in [[Module:links]]; and CONJ is the conjunction to
+   join multiple lemmas with, defaulting to {"and"}. PARAM_OBJ is of the format
    { { param = "PARAM", tags = {"TAG", "TAG", ...} } where PARAM is the name of the parameter to {{tl|inflection of}}
    etc. that holds the base lemma(s) of the specified relationship and the tags describe the relationship, such as
    { {"comd"}} or { {"past", "part"}}.
@@ -374,6 +375,7 @@ function export.format_form_of(data)
 				lang = base_lemma.lemmas[1].lang,
 				tags = base_lemma.paramobj.tags,
 				lemmas = base_lemma.lemmas,
+				conj = base_lemma.conj or "and",
 				lemma_face = data.lemma_face,
 				no_format_categories = true,
 				nocat = true,
