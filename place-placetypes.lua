@@ -891,7 +891,7 @@ function export.resolve_placename_display_aliases(placetype, placename)
 	-- If the placename is a link, apply the alias inside the link.
 	-- This pattern matches both piped and unpiped links. If the link is not piped, the second capture (linktext) will
 	-- be empty.
-	local link, linktext = rmatch(placename, "^%[%[([^|%]]+)|?(.-)%]%]$")
+	local link, linktext = rmatch(placename, "^%[%[([^|%[%]]+)|?([^|%[%]]-)%]%]$")
 	if link then
 		if linktext ~= "" then
 			local alias = resolve_unlinked_placename_display_aliases(placetype, linktext)
@@ -933,7 +933,11 @@ function export.get_holonyms_to_check(place_desc, first_holonym_index, include_r
 		while true do
 			index = index + 1
 			local this_holonym = place_desc.holonyms[index]
-			if not this_holonym or stop_at_also and this_holonym.continue_cat_loop then
+			-- If we were passed in a starting holonym index, go up to but not including a holonym marked with `:also`
+			-- (continue_cat_loop); the categorization code will then restart the loop at that holonym. That holonym
+			-- will have `:also` marked on it, so make sure not to stop immediately if the first holonym is marked with
+			-- `:also`.
+			if not this_holonym or stop_at_also and index > first_holonym_index and this_holonym.continue_cat_loop then
 				return nil
 			end
 			-- If not placetype, we're processing raw text, which we normally want to skip.
@@ -1356,6 +1360,7 @@ export.placetype_qualifiers = {
 	-- FIXME!
 	["claimed"] = false,
 	["fictional"] = false,
+	["legendary"] = false,
 	["mythical"] = false,
 	["mythological"] = false,
 	-- directional qualifiers
@@ -1408,6 +1413,7 @@ specified placetypes for categorization purposes. Entries here are overridden by
 ]==]
 export.qualifier_to_placetype_equivs = {
 	["fictional"] = "fictional location",
+	["legendary"] = "mythological location",
 	["mythical"] = "mythological location",
 	["mythological"] = "mythological location",
 	-- For e.g. Taiwan as a "claimed province" of China; parts of Belize as claimed by Guatemala; various islands
@@ -2434,160 +2440,6 @@ If you need to sort the following, do this (using Vim):
 		link = false,
 		cat_handler = generic_place_cat_handler,
 	},
-	["abbreviations of counties!"] = {
-		-- For categorizing abbreviations of counties of e.g. England
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[county|counties]]",
-		bare_category_breadcrumb = "counties",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of countries!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "abbreviations of places",
-	},
-	["abbreviations of departments!"] = {
-		-- For categorizing abbreviations of departments of e.g. France
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[department]]s",
-		bare_category_breadcrumb = "departments",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of districts!"] = {
-		-- For categorizing abbreviations of districts of e.g. ???
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[district]]s",
-		bare_category_breadcrumb = "districts",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of divisions!"] = {
-		-- For categorizing abbreviations of divisions of e.g. Bangladesh
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[division]]s",
-		bare_category_breadcrumb = "divisions",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of former countries!"] = {
-		full_category_link = "[[abbreviation]]s of [[country|countries]] that no longer [[exist]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "abbreviations of former places",
-	},
-	["abbreviations of former places!"] = {
-		full_category_link = "[[abbreviation]]s of [[place]]s that no longer [[exist]]",
-		bare_category_breadcrumb = "abbreviations",
-		bare_category_parent = "former places",
-		addl_bare_category_parents = {{name = "abbreviations of places", sort = "former"}},
-	},
-	["abbreviations of places!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[place]]s",
-		bare_category_breadcrumb = "abbreviations",
-		bare_category_parent = "places",
-	},
-	["abbreviations of political divisions!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[political]] [[division]]s",
-		bare_category_breadcrumb = "political divisions",
-		bare_category_parent = "abbreviations of places",
-	},
-	["abbreviations of prefectures!"] = {
-		-- For categorizing abbreviations of prefectures of e.g. Japan
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[prefecture]]s",
-		bare_category_breadcrumb = "prefectures",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of provinces!"] = {
-		-- For categorizing abbreviations of provinces of e.g. Canada
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[province]]s",
-		bare_category_breadcrumb = "provinces",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of provinces and territories!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[province]]s and [[territory|territories]]",
-		bare_category_breadcrumb = "provinces and territories",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of regions!"] = {
-		-- For categorizing abbreviations of regions of e.g. Italy
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[administrative region]]s",
-		bare_category_breadcrumb = "regions",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of states!"] = {
-		-- For categorizing abbreviations of states of e.g. the United States
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s",
-		bare_category_breadcrumb = "states",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of states and territories!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s and [[territory|territories]]",
-		bare_category_breadcrumb = "states and territories",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of states and union territories!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s and [[union territory|union territories]]",
-		bare_category_breadcrumb = "states and union territories",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["abbreviations of territories!"] = {
-		full_category_link = "[[abbreviation]]s of [[name]]s of [[territory|territories]]",
-		bare_category_breadcrumb = "territories",
-		bare_category_parent = "abbreviations of political divisions",
-	},
-	["ABBREVIATION_OF country"] = {
-		link = false,
-		default = {"Abbreviations of countries"},
-	},
-	["ABBREVIATION_OF county"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF department"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF district"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF division"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF FORMER country"] = {
-		link = false,
-		default = {"Abbreviations of former countries"},
-	},
-	["ABBREVIATION_OF FORMER place"] = {
-		link = false,
-		default = {"Abbreviations of former places"},
-	},
-	["ABBREVIATION_OF place"] = {
-		link = false,
-		default = {"Abbreviations of places"},
-	},
-	["ABBREVIATION_OF prefecture"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF province"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF region"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF state"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF subpolity"] = {
-		link = false,
-		default = {"Abbreviations of political divisions"},
-	},
-	["ABBREVIATION_OF territory"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
-	["ABBREVIATION_OF union territory"] = {
-		link = false,
-		fallback = "ABBREVIATION_OF subpolity",
-	},
 	["administrative atoll"] = {
 		-- Maldives
 		link = "+w:administrative divisions of the Maldives",
@@ -2661,31 +2513,6 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "confederation",
 	},
-	["ANCIENT capital"] = {
-		link = false,
-		entry_placetype_use_the = true,
-		preposition = "of",
-		has_neighborhoods = true,
-		class = "capital",
-		-- FIXME: Consider removing 'ancient settlements' here. Ancient capitals, like former capitals, often still
-		-- exist but just aren't the capital any more. Maybe we should have an 'Ancient capitals' category.
-		default = {"Ancient settlements", "Former capitals"},
-	},
-	["ANCIENT non-admin settlement"] = {
-		link = false,
-		class = "non-admin settlement",
-		fallback = "ANCIENT settlement",
-	},
-	["ANCIENT settlement"] = {
-		link = false,
-		has_neighborhoods = true,
-		class = "settlement",
-		default = {"Ancient settlements"},
-	},
-	["ancient settlements!"] = {
-		category_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
-		bare_category_parent = "former settlements",
-	},
 	["archipelago"] = {
 		link = true,
 		fallback = "island",
@@ -2720,7 +2547,7 @@ If you need to sort the following, do this (using Vim):
 	},
 	["atoll"] = {
 		-- FIXME! Atolls are administrative divisions of the Maldives but natural features elsewhere. Need to
-		-- conditionalize former_type on the country. See also `administrative atoll`.
+		-- conditionalize `class` on the country. See also `administrative atoll`.
 		link = true,
 		class = "natural feature",
 		bare_category_parent = "islands",
@@ -2835,7 +2662,7 @@ If you need to sort the following, do this (using Vim):
 		fallback = "polity",
 	},
 	["bodies of water!"] = {
-		-- FIXME: This is maybe?) a type category not a name category. There should be an option for this. We need to
+		-- FIXME: This is (maybe?) a type category not a name category. There should be an option for this. We need to
 		-- straighten out the type vs. name vs. related-to issue.
 		category_link = "[[body of water|bodies of water]]",
 		class = "natural feature",
@@ -3200,6 +3027,10 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "lake",
 	},
+	["creek"] = {
+		link = true,
+		fallback = "stream",
+	},
 	["Crown colony"] = {
 		link = "+crown colony",
 		fallback = "crown colony",
@@ -3252,59 +3083,6 @@ If you need to sort the following, do this (using Vim):
 		["country/*"] = {true},
 		default = {true},
 	},
-	["derogatory names for cities!"] = {
-		full_category_link = "[[derogatory]] [[name]]s for [[city|cities]]",
-		bare_category_breadcrumb = "cities",
-		bare_category_parent = "derogatory names for places",
-		addl_bare_category_parents = {"nicknames for cities"},
-	},
-	["derogatory names for continents!"] = {
-		full_category_link = "[[derogatory]] [[name]]s for [[continent]]s",
-		bare_category_breadcrumb = "continents",
-		bare_category_parent = "derogatory names for places",
-		addl_bare_category_parents = {"nicknames for continents"},
-	},
-	["derogatory names for countries!"] = {
-		full_category_link = "[[derogatory]] [[name]]s for [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "derogatory names for places",
-		addl_bare_category_parents = {"nicknames for countries"},
-	},
-	["derogatory names for places!"] = {
-		full_category_link = "[[derogatory]] [[name]]s for [[place]]s",
-		bare_category_breadcrumb = "derogatory names",
-		bare_category_parent = "nicknames for places",
-	},
-	["derogatory names for states!"] = {
-		full_category_link = "[[derogatory]] [[name]]s for [[state]]s",
-		bare_category_breadcrumb = "states",
-		bare_category_parent = "derogatory names for places",
-		addl_bare_category_parents = {"nicknames for states"},
-	},
-	["DEROGATORY_NAME_FOR capital"] = {
-		link = false,
-		default = {"Derogatory names for cities"},
-	},
-	["DEROGATORY_NAME_FOR city"] = {
-		link = false,
-		default = {"Derogatory names for cities"},
-	},
-	["DEROGATORY_NAME_FOR continent"] = {
-		link = false,
-		default = {"Derogatory names for continents"},
-	},
-	["DEROGATORY_NAME_FOR country"] = {
-		link = false,
-		default = {"Derogatory names for countries"},
-	},
-	["DEROGATORY_NAME_FOR place"] = {
-		link = false,
-		default = {"Derogatory names for places"},
-	},
-	["DEROGATORY_NAME_FOR state"] = {
-		link = false,
-		default = {"Derogatory names for states"},
-	},
 	["desert"] = {
 		link = true,
 		class = "natural feature",
@@ -3338,9 +3116,9 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		preposition = "of",
 		affix_type = "suf",
-		-- Grrr! FIXME! Here is where we need handlers for former_type. Using similar logic to
-		-- district_neighborhood_cat_handler, we need to check if we're below or above a city to determine if the former
-		-- type is "settlement" or "subpolity".
+		-- Grrr! FIXME! Here is where we need handlers for `class`. Using similar logic to
+		-- district_neighborhood_cat_handler, we need to check if we're below or above a city to determine if the class
+		-- is "settlement" or "subpolity".
 		class = "subpolity",
 		cat_handler = district_neighborhood_cat_handler,
 
@@ -3396,15 +3174,6 @@ If you need to sort the following, do this (using Vim):
 	["duchy"] = {
 		link = true,
 		fallback = "polity",
-	},
-	["ellipses of places!"] = {
-		full_category_link = "[[ellipsis|ellipses]] of [[name]]s of [[place]]s",
-		bare_category_breadcrumb = "ellipses",
-		bare_category_parent = "places",
-	},
-	["ELLIPSIS_OF place"] = {
-		link = false,
-		default = {"Ellipses of places"},
 	},
 	["emirate"] = {
 		link = true,
@@ -3504,270 +3273,6 @@ If you need to sort the following, do this (using Vim):
 		addl_bare_category_parents = {"ecosystems", "forestry"},
 		default = {true},
 	},
-
-	------------- Categories for former places
-
-	["FORMER capital"] = {
-		link = false,
-		entry_placetype_use_the = true,
-		preposition = "of",
-		has_neighborhoods = true,
-		class = "capital",
-		default = {"Former capitals"},
-	},
-	["former capitals!"] = {
-		category_link = "former [[capital]] [[city|cities]] and [[town]]s",
-		bare_category_parent = "settlements",
-	},
-	["former countries and country-like entities!"] = {
-		category_link = "[[country|countries]] and similar [[polity|polities]] that no longer exist",
-		bare_category_breadcrumb = "countries and country-like entities",
-		bare_category_parent = "former polities",
-	},
-	["FORMER country"] = {
-		link = false,
-		class = "polity",
-		default = {"Former countries and country-like entities"},
-	},
-	["former dependent territories!"] = {
-		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
-		bare_category_breadcrumb = "dependent territories",
-		bare_category_parent = "former political divisions",
-	},
-	["FORMER dependent territory"] = {
-		link = false,
-		preposition = "of",
-		class = "subpolity",
-		default = {"Former dependent territories"},
-	},
-	["FORMER geographic region"] = {
-		link = false,
-		fallback = "geographic and cultural area",
-	},
-	["FORMER man-made structure"] = {
-		link = false,
-		class = "man-made structure",
-		default = {"Former man-made structures"},
-	},
-	["former man-made structures!"] = {
-		category_link = "man-made structures such as [[airport]]s and [[park]]s that no longer exist",
-		bare_category_breadcrumb = "man-made structures",
-		bare_category_parent = "former places",
-	},
-	["former municipalities!"] = {
-		-- For categorizing former municipalities of the Netherlands
-		category_link = "no-longer-existing [[municipality|municipalities]]",
-		bare_category_breadcrumb = "municipalities",
-		bare_category_parent = "former political divisions",
-	},
-	["FORMER municipality"] = {
-		-- For categorizing former municipalities of the Netherlands
-		link = false,
-		fallback = "FORMER subpolity",
-	},
-	["FORMER natural feature"] = {
-		link = false,
-		class = "natural feature",
-		default = {"Former natural features"},
-	},
-	["former natural features!"] = {
-		category_link = "natural features such as [[lake]]s, [[river]]s and [[island]]s that no longer exist",
-		bare_category_breadcrumb = "natural features",
-		bare_category_parent = "former places",
-	},
-	["FORMER non-admin settlement"] = {
-		link = false,
-		class = "non-admin settlement",
-		fallback = "FORMER settlement",
-	},
-	["former places!"] = {
-		category_link = "[[place]]s of all sorts that no longer exist",
-		bare_category_breadcrumb = "former",
-		bare_category_parent = "places",
-	},
-	["former political divisions!"] = {
-		category_link = "[[political]] [[division]]s (states, provinces, counties, etc.) that no longer exist",
-		bare_category_breadcrumb = "political divisions",
-		bare_category_parent = "former places",
-	},
-	["former polities!"] = {
-		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
-		bare_category_breadcrumb = "polities",
-		bare_category_parent = "former places",
-	},
-	["FORMER polity"] = {
-		link = false,
-		class = "polity",
-		default = {"Former polities"},
-	},
-	["FORMER province"] = {
-		-- For categorizing ancient/historical/former provinces of the Roman Empire
-		link = false,
-		fallback = "FORMER subpolity",
-	},
-	["former region"] = {
-		-- A former region is considered a former political division, but not a 'historical/traditional/etc.' region.
-		link = "separately",
-		preposition = "of",
-		inherently_former = {"FORMER"},
-		class = "subpolity",
-	},
-	["FORMER settlement"] = {
-		link = false,
-		has_neighborhoods = true,
-		class = "settlement",
-		default = {"Former settlements"},
-	},
-	["former settlements!"] = {
-		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
-		bare_category_breadcrumb = "settlements",
-		bare_category_parent = "former political divisions",
-	},
-	["FORMER subpolity"] = {
-		link = false,
-		preposition = "of",
-		class = "subpolity",
-		default = {"Former political divisions"},
-	},
-
-	------------- Categories for former names of places
-
-	["former names of capitals!"] = {
-		full_category_link = "[[former]] [[name]]s of [[capital city|capital cities]] that generally still exist but under a different name",
-		bare_category_breadcrumb = "capitals",
-		bare_category_parent = "former names of settlements",
-	},
-	["former names of countries!"] = {
-		full_category_link = "[[former]] [[name]]s of [[country|countries]] that generally still exist but under a different name",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "former names of places",
-	},
-	["former names of places!"] = {
-		full_category_link = "[[former]] [[name]]s of [[place]]s that generally still exist but under a different name",
-		bare_category_breadcrumb = "former names",
-		bare_category_parent = "places",
-	},
-	["former names of political divisions!"] = {
-		full_category_link = "[[former]] [[name]]s of [[political]] [[division]]s (states, provinces, counties, etc.) that generally still exist but under a different name",
-		bare_category_breadcrumb = "political divisions",
-		bare_category_parent = "former names of places",
-	},
-	["former names of polities!"] = {
-		full_category_link = "[[former]] [[name]]s of [[polity|polities]] (e.g. [[country|countries]]) that generally still exist but under a different name",
-		bare_category_breadcrumb = "polities",
-		bare_category_parent = "former names of places",
-	},
-	["former names of settlements!"] = {
-		full_category_link = "[[former]] [[name]]s of [[city|cities]], [[town]]s, [[village]]s, etc. that generally still exist but under a different name",
-		bare_category_breadcrumb = "settlements",
-		bare_category_parent = "former names of political divisions",
-	},
-	["FORMER_NAME_OF capital"] = {
-		link = false,
-		default = {"Former names of capitals"},
-	},
-	["FORMER_NAME_OF country"] = {
-		link = false,
-		default = {"Former names of countries"},
-	},
-	["FORMER_NAME_OF place"] = {
-		link = false,
-		default = {"Former names of places"},
-	},
-	["FORMER_NAME_OF polity"] = {
-		link = false,
-		default = {"Former names of polities"},
-	},
-	["FORMER_NAME_OF region"] = {
-		link = false,
-		fallback = "FORMER_NAME_OF subpolity",
-	},
-	["FORMER_NAME_OF settlement"] = {
-		link = false,
-		default = {"Former names of settlements"},
-	},
-	["FORMER_NAME_OF subpolity"] = {
-		link = false,
-		default = {"Former names of political divisions"},
-	},
-
-	-- Categories for former nicknames of places
-
-	["former nicknames for cities!"] = {
-		full_category_link = "no-longer-used [[nickname]]s for [[city|cities]], e.g. the [[Eternal City]] for [[Kyoto]] during the {{w|Heian period}} (c. 800-1100 {{AD}})",
-		bare_category_breadcrumb = "cities",
-		bare_category_parent = "former nicknames for places",
-		addl_bare_category_parents = {"nicknames for cities"},
-	},
-	["former nicknames for places!"] = {
-		full_category_link = "no-longer-used [[nickname]]s for [[place]]s",
-		bare_category_breadcrumb = "former",
-		bare_category_parent = "nicknames for places",
-		addl_bare_category_parents = {{name = "former names of places", sort = "nicknames"}},
-	},
-	["FORMER_NICKNAME_FOR capital"] = {
-		link = false,
-		default = {"Former nicknames for cities"},
-	},
-	["FORMER_NICKNAME_FOR city"] = {
-		link = false,
-		default = {"Former nicknames for cities"},
-	},
-	["FORMER_NICKNAME_FOR place"] = {
-		link = false,
-		default = {"Former nicknames for places"},
-	},
-	["FORMER_NICKNAME_FOR town"] = {
-		link = false,
-		default = {"Former nicknames for cities"},
-	},
-
-	-- Categories for former long-form names of places
-
-	["former long-form names of countries!"] = {
-		full_category_link = "no-longer-[[use]]d [[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "former long-form names of places",
-		addl_bare_category_parents = {{name = "former names of countries", sort = "long-form"}},
-	},
-	["former long-form names of places!"] = {
-		full_category_link = "no-longer-[[use]]d [[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[place]]s",
-		bare_category_breadcrumb = "long-form",
-		bare_category_parent = "former names of places",
-	},
-	["FORMER_LONG_FORM_OF country"] = {
-		link = false,
-		default = {"Former long-form names of countries"},
-	},
-	["FORMER_LONG_FORM_OF place"] = {
-		link = false,
-		default = {"Former long-form names of places"},
-	},
-
-	-- Categories for former official names of places
-
-	["former official names of countries!"] = {
-		full_category_link = "no-longer-[[use]]d [[official]] [[name]]s of [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "former official names of places",
-		addl_bare_category_parents = {{name = "former names of countries", sort = "official"}},
-	},
-	["former official names of places!"] = {
-		full_category_link = "no-longer-[[use]]d [[official]] [[name]]s of [[place]]s",
-		bare_category_breadcrumb = "official",
-		bare_category_parent = "former names of places",
-	},
-	["FORMER_OFFICIAL_NAME_OF country"] = {
-		link = false,
-		default = {"Former official names of countries"},
-	},
-	["FORMER_OFFICIAL_NAME_OF place"] = {
-		link = false,
-		default = {"Former official names of places"},
-	},
-
-	------------- End categories for former names of places
-
 	["fort"] = {
 		link = true,
 		fallback = "building",
@@ -4162,24 +3667,6 @@ If you need to sort the following, do this (using Vim):
 		fallback = "local government district with borough status",
 		has_neighborhoods = true,
 	},
-	["long-form names of countries!"] = {
-		full_category_link = "[[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "long-form names of places",
-	},
-	["long-form names of places!"] = {
-		full_category_link = "[[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[place]]s",
-		bare_category_breadcrumb = "long-form names",
-		bare_category_parent = "places",
-	},
-	["LONG_FORM_OF country"] = {
-		link = false,
-		default = {"Long-form names of countries"},
-	},
-	["LONG_FORM_OF place"] = {
-		link = false,
-		default = {"Long-form names of places"},
-	},
 	["macroregion"] = {
 		link = true,
 		fallback = "region",
@@ -4406,65 +3893,6 @@ If you need to sort the following, do this (using Vim):
 		link = true,
 		fallback = "town",
 	},
-	["nicknames for cities!"] = {
-		full_category_link = "[[nickname]]s for [[city|cities]], e.g. the [[Big Apple]] for [[New York City]]",
-		bare_category_breadcrumb = "cities",
-		bare_category_parent = "nicknames for places",
-		addl_bare_category_parents = {"cities"},
-	},
-	["nicknames for continents!"] = {
-		full_category_link = "[[nickname]]s for [[continent]]s",
-		bare_category_breadcrumb = "continents",
-		bare_category_parent = "nicknames for places",
-		addl_bare_category_parents = {"continents"},
-	},
-	["nicknames for countries!"] = {
-		full_category_link = "[[nickname]]s for [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "nicknames for places",
-		addl_bare_category_parents = {"countries"},
-	},
-	["nicknames for places!"] = {
-		full_category_link = "[[nickname]]s for [[place]]s",
-		bare_category_breadcrumb = "places",
-		bare_category_parent = "nicknames",
-		addl_bare_category_parents = {"places"},
-	},
-	["nicknames for states!"] = {
-		-- For categorizing nicknames for states of e.g. the United States
-		full_category_link = "[[nicknames]] for [[state]]s",
-		bare_category_breadcrumb = "states",
-		bare_category_parent = "nicknames for places",
-		addl_bare_category_parents = {"states"},
-	},
-	["NICKNAME_FOR capital"] = {
-		link = false,
-		default = {"Nicknames for cities"},
-	},
-	["NICKNAME_FOR city"] = {
-		link = false,
-		default = {"Nicknames for cities"},
-	},
-	["NICKNAME_FOR continent"] = {
-		link = false,
-		default = {"Nicknames for continents"},
-	},
-	["NICKNAME_FOR country"] = {
-		link = false,
-		default = {"Nicknames for countries"},
-	},
-	["NICKNAME_FOR place"] = {
-		link = false,
-		default = {"Nicknames for places"},
-	},
-	["NICKNAME_FOR state"] = {
-		link = false,
-		default = {"Nicknames for states"},
-	},
-	["NICKNAME_FOR town"] = {
-		link = false,
-		default = {"Nicknames for cities"},
-	},
 	["non-city capital"] = {
 		link = "[[capital]]",
 		entry_placetype_use_the = true,
@@ -4516,43 +3944,6 @@ If you need to sort the following, do this (using Vim):
 		class = "natural feature",
 		addl_bare_category_parents = {"seas", "bodies of water"},
 		default = {true},
-	},
-	["official names of countries!"] = {
-		full_category_link = "[[official]] [[name]]s of [[country|countries]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "official names of places",
-	},
-	["official names of former countries!"] = {
-		full_category_link = "[[official]] [[name]]s of [[country|countries]] that no longer [[exist]]",
-		bare_category_breadcrumb = "countries",
-		bare_category_parent = "official names of former places",
-	},
-	["official names of former places!"] = {
-		full_category_link = "[[official]] [[name]]s of [[place]]s that no longer [[exist]]",
-		bare_category_breadcrumb = "official names",
-		bare_category_parent = "former places",
-		addl_bare_category_parents = {{name = "official names of places", sort = "former"}},
-	},
-	["official names of places!"] = {
-		full_category_link = "[[official]] [[name]]s of [[place]]s",
-		bare_category_breadcrumb = "official names",
-		bare_category_parent = "places",
-	},
-	["OFFICIAL_NAME_OF country"] = {
-		link = false,
-		default = {"Official names of countries"},
-	},
-	["OFFICIAL_NAME_OF FORMER country"] = {
-		link = false,
-		default = {"Official names of former countries"},
-	},
-	["OFFICIAL_NAME_OF FORMER place"] = {
-		link = false,
-		default = {"Official names of former places"},
-	},
-	["OFFICIAL_NAME_OF place"] = {
-		link = false,
-		default = {"Official names of places"},
 	},
 	["okrug"] = {
 		link = true,
@@ -5430,6 +4821,755 @@ If you need to sort the following, do this (using Vim):
 		link = "+w:zone#Place names",
 		preposition = "of",
 		class = "subpolity",
+	},
+
+	----------------------------------------------------------------------------------------------
+	--                               Categories for former places                               --
+	----------------------------------------------------------------------------------------------
+
+	["ANCIENT capital"] = {
+		link = false,
+		entry_placetype_use_the = true,
+		preposition = "of",
+		has_neighborhoods = true,
+		class = "capital",
+		-- FIXME: Consider removing 'ancient settlements' here. Ancient capitals, like former capitals, often still
+		-- exist but just aren't the capital any more. Maybe we should have an 'Ancient capitals' category.
+		default = {"Ancient settlements", "Former capitals"},
+	},
+	["ANCIENT non-admin settlement"] = {
+		link = false,
+		class = "non-admin settlement",
+		fallback = "ANCIENT settlement",
+	},
+	["ANCIENT settlement"] = {
+		link = false,
+		has_neighborhoods = true,
+		class = "settlement",
+		default = {"Ancient settlements"},
+	},
+	["ancient settlements!"] = {
+		category_link = "former [[city|cities]], [[town]]s and [[village]]s that existed in [[antiquity]]",
+		bare_category_parent = "former settlements",
+	},
+
+	["FORMER capital"] = {
+		link = false,
+		entry_placetype_use_the = true,
+		preposition = "of",
+		has_neighborhoods = true,
+		class = "capital",
+		default = {"Former capitals"},
+	},
+	["former capitals!"] = {
+		category_link = "former [[capital]] [[city|cities]] and [[town]]s",
+		bare_category_parent = "settlements",
+	},
+	["former countries and country-like entities!"] = {
+		category_link = "[[country|countries]] and similar [[polity|polities]] that no longer exist",
+		bare_category_breadcrumb = "countries and country-like entities",
+		bare_category_parent = "former polities",
+	},
+	["FORMER country"] = {
+		link = false,
+		class = "polity",
+		default = {"Former countries and country-like entities"},
+	},
+	["former dependent territories!"] = {
+		category_link = "[[w:dependent territory|dependent territories]] (colonies, dependencies, protectorates, etc.) that no longer exist",
+		bare_category_breadcrumb = "dependent territories",
+		bare_category_parent = "former political divisions",
+	},
+	["FORMER dependent territory"] = {
+		link = false,
+		preposition = "of",
+		class = "subpolity",
+		default = {"Former dependent territories"},
+	},
+	["FORMER geographic region"] = {
+		link = false,
+		fallback = "geographic and cultural area",
+	},
+	["FORMER man-made structure"] = {
+		link = false,
+		class = "man-made structure",
+		default = {"Former man-made structures"},
+	},
+	["former man-made structures!"] = {
+		category_link = "man-made structures such as [[airport]]s and [[park]]s that no longer exist",
+		bare_category_breadcrumb = "man-made structures",
+		bare_category_parent = "former places",
+	},
+	["former municipalities!"] = {
+		-- For categorizing former municipalities of the Netherlands
+		category_link = "no-longer-existing [[municipality|municipalities]]",
+		bare_category_breadcrumb = "municipalities",
+		bare_category_parent = "former political divisions",
+	},
+	["FORMER municipality"] = {
+		-- For categorizing former municipalities of the Netherlands
+		link = false,
+		fallback = "FORMER subpolity",
+	},
+	["FORMER natural feature"] = {
+		link = false,
+		class = "natural feature",
+		default = {"Former natural features"},
+	},
+	["former natural features!"] = {
+		category_link = "natural features such as [[lake]]s, [[river]]s and [[island]]s that no longer exist",
+		bare_category_breadcrumb = "natural features",
+		bare_category_parent = "former places",
+	},
+	["FORMER non-admin settlement"] = {
+		link = false,
+		class = "non-admin settlement",
+		fallback = "FORMER settlement",
+	},
+	["former places!"] = {
+		category_link = "[[place]]s of all sorts that no longer exist",
+		bare_category_breadcrumb = "former",
+		bare_category_parent = "places",
+	},
+	["former political divisions!"] = {
+		category_link = "[[political]] [[division]]s (states, provinces, counties, etc.) that no longer exist",
+		bare_category_breadcrumb = "political divisions",
+		bare_category_parent = "former places",
+	},
+	["former polities!"] = {
+		category_link = "[[polity|polities]] (countries, kingdoms, empires, etc.) that no longer exist",
+		bare_category_breadcrumb = "polities",
+		bare_category_parent = "former places",
+	},
+	["FORMER polity"] = {
+		link = false,
+		class = "polity",
+		default = {"Former polities"},
+	},
+	["FORMER province"] = {
+		-- For categorizing ancient/historical/former provinces of the Roman Empire
+		link = false,
+		fallback = "FORMER subpolity",
+	},
+	["former region"] = {
+		-- A former region is considered a former political division, but not a 'historical/traditional/etc.' region.
+		link = "separately",
+		preposition = "of",
+		inherently_former = {"FORMER"},
+		class = "subpolity",
+	},
+	["FORMER settlement"] = {
+		link = false,
+		has_neighborhoods = true,
+		class = "settlement",
+		default = {"Former settlements"},
+	},
+	["former settlements!"] = {
+		category_link = "[[city|cities]], [[town]]s and [[village]]s that no longer exist or have been merged or reclassified",
+		bare_category_breadcrumb = "settlements",
+		bare_category_parent = "former political divisions",
+	},
+	["FORMER subpolity"] = {
+		link = false,
+		preposition = "of",
+		class = "subpolity",
+		default = {"Former political divisions"},
+	},
+
+	----------------------------------------------------------------------------------------------
+	--                                      form-of categories                                  --
+	----------------------------------------------------------------------------------------------
+
+	---------- Abbreviations ----------
+
+	["abbreviations of counties!"] = {
+		-- For categorizing abbreviations of counties of e.g. England
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[county|counties]]",
+		bare_category_breadcrumb = "counties",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of countries!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "abbreviations of places",
+	},
+	["abbreviations of departments!"] = {
+		-- For categorizing abbreviations of departments of e.g. France
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[department]]s",
+		bare_category_breadcrumb = "departments",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of districts!"] = {
+		-- For categorizing abbreviations of districts of e.g. ???
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[district]]s",
+		bare_category_breadcrumb = "districts",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of divisions!"] = {
+		-- For categorizing abbreviations of divisions of e.g. Bangladesh
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[division]]s",
+		bare_category_breadcrumb = "divisions",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of former countries!"] = {
+		full_category_link = "[[abbreviation]]s of [[country|countries]] that no longer [[exist]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "abbreviations of former places",
+	},
+	["abbreviations of former places!"] = {
+		full_category_link = "[[abbreviation]]s of [[place]]s that no longer [[exist]]",
+		bare_category_breadcrumb = "abbreviations",
+		bare_category_parent = "former places",
+		addl_bare_category_parents = {{name = "abbreviations of places", sort = "former"}},
+	},
+	["abbreviations of places!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "abbreviations",
+		bare_category_parent = "places",
+	},
+	["abbreviations of political divisions!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[political]] [[division]]s",
+		bare_category_breadcrumb = "political divisions",
+		bare_category_parent = "abbreviations of places",
+	},
+	["abbreviations of prefectures!"] = {
+		-- For categorizing abbreviations of prefectures of e.g. Japan
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[prefecture]]s",
+		bare_category_breadcrumb = "prefectures",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of provinces!"] = {
+		-- For categorizing abbreviations of provinces of e.g. Canada
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[province]]s",
+		bare_category_breadcrumb = "provinces",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of provinces and territories!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[province]]s and [[territory|territories]]",
+		bare_category_breadcrumb = "provinces and territories",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of regions!"] = {
+		-- For categorizing abbreviations of regions of e.g. Italy
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[administrative region]]s",
+		bare_category_breadcrumb = "regions",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of states!"] = {
+		-- For categorizing abbreviations of states of e.g. the United States
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s",
+		bare_category_breadcrumb = "states",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of states and territories!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s and [[territory|territories]]",
+		bare_category_breadcrumb = "states and territories",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of states and union territories!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[state]]s and [[union territory|union territories]]",
+		bare_category_breadcrumb = "states and union territories",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["abbreviations of territories!"] = {
+		full_category_link = "[[abbreviation]]s of [[name]]s of [[territory|territories]]",
+		bare_category_breadcrumb = "territories",
+		bare_category_parent = "abbreviations of political divisions",
+	},
+	["ABBREVIATION_OF country"] = {
+		link = false,
+		default = {"Abbreviations of countries"},
+	},
+	["ABBREVIATION_OF county"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF department"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF district"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF division"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF FORMER country"] = {
+		link = false,
+		default = {"Abbreviations of former countries"},
+	},
+	["ABBREVIATION_OF FORMER place"] = {
+		link = false,
+		default = {"Abbreviations of former places"},
+	},
+	["ABBREVIATION_OF place"] = {
+		link = false,
+		default = {"Abbreviations of places"},
+	},
+	["ABBREVIATION_OF prefecture"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF province"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF region"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF state"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF subpolity"] = {
+		link = false,
+		default = {"Abbreviations of political divisions"},
+	},
+	["ABBREVIATION_OF territory"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+	["ABBREVIATION_OF union territory"] = {
+		link = false,
+		fallback = "ABBREVIATION_OF subpolity",
+	},
+
+	---------- Archaic forms ----------
+
+	["archaic forms of places!"] = {
+		full_category_link = "{{glossary|archaic}} [[form]]s of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "archaic forms",
+		bare_category_parent = "places",
+	},
+	["ARCHAIC_FORM_OF place"] = {
+		link = false,
+		default = {"Archaic forms of places"},
+	},
+
+	---------- Clippings ----------
+
+	["clippings of places!"] = {
+		full_category_link = "{{glossary|clipping|clippings}} of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "clippings",
+		bare_category_parent = "places",
+	},
+	["CLIPPING_OF place"] = {
+		link = false,
+		default = {"Clippings of places"},
+	},
+
+	---------- Dated forms ----------
+
+	["dated forms of places!"] = {
+		full_category_link = "{{glossary|dated}} [[form]]s of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "dated forms",
+		bare_category_parent = "places",
+	},
+	["DATED_FORM_OF place"] = {
+		link = false,
+		default = {"Dated forms of places"},
+	},
+
+	---------- Derogatory names ----------
+
+	["derogatory names for cities!"] = {
+		full_category_link = "[[derogatory]] [[name]]s for [[city|cities]]",
+		bare_category_breadcrumb = "cities",
+		bare_category_parent = "derogatory names for places",
+		addl_bare_category_parents = {"nicknames for cities"},
+	},
+	["derogatory names for continents!"] = {
+		full_category_link = "[[derogatory]] [[name]]s for [[continent]]s",
+		bare_category_breadcrumb = "continents",
+		bare_category_parent = "derogatory names for places",
+		addl_bare_category_parents = {"nicknames for continents"},
+	},
+	["derogatory names for countries!"] = {
+		full_category_link = "[[derogatory]] [[name]]s for [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "derogatory names for places",
+		addl_bare_category_parents = {"nicknames for countries"},
+	},
+	["derogatory names for places!"] = {
+		full_category_link = "[[derogatory]] [[name]]s for [[place]]s",
+		bare_category_breadcrumb = "derogatory names",
+		bare_category_parent = "nicknames for places",
+	},
+	["derogatory names for states!"] = {
+		full_category_link = "[[derogatory]] [[name]]s for [[state]]s",
+		bare_category_breadcrumb = "states",
+		bare_category_parent = "derogatory names for places",
+		addl_bare_category_parents = {"nicknames for states"},
+	},
+	["DEROGATORY_NAME_FOR capital"] = {
+		link = false,
+		default = {"Derogatory names for cities"},
+	},
+	["DEROGATORY_NAME_FOR city"] = {
+		link = false,
+		default = {"Derogatory names for cities"},
+	},
+	["DEROGATORY_NAME_FOR continent"] = {
+		link = false,
+		default = {"Derogatory names for continents"},
+	},
+	["DEROGATORY_NAME_FOR country"] = {
+		link = false,
+		default = {"Derogatory names for countries"},
+	},
+	["DEROGATORY_NAME_FOR metropolitan city"] = {
+		-- "metropolitan city" doesn't fall back to "city"
+		link = false,
+		default = {"Derogatory names for cities"},
+	},
+	["DEROGATORY_NAME_FOR place"] = {
+		link = false,
+		default = {"Derogatory names for places"},
+	},
+	["DEROGATORY_NAME_FOR prefecture-level city"] = {
+		-- "prefecture-level city" doesn't fall back to "city" but things like "county-level city" and
+		-- "subprovincial city" fall back to "prefecture-level city"
+		link = false,
+		default = {"Derogatory names for cities"},
+	},
+	["DEROGATORY_NAME_FOR state"] = {
+		link = false,
+		default = {"Derogatory names for states"},
+	},
+	["DEROGATORY_NAME_FOR town"] = {
+		link = false,
+		default = {"Derogatory names for cities"},
+	},
+
+	---------- Ellipses ----------
+
+	["ellipses of places!"] = {
+		full_category_link = "{{glossary|ellipsis|ellipses}} of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "ellipses",
+		bare_category_parent = "places",
+	},
+	["ELLIPSIS_OF place"] = {
+		link = false,
+		default = {"Ellipses of places"},
+	},
+
+	---------- Former long-form names ----------
+
+	["former long-form names of countries!"] = {
+		full_category_link = "no-longer-[[use]]d [[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "former long-form names of places",
+		addl_bare_category_parents = {{name = "former names of countries", sort = "long-form"}},
+	},
+	["former long-form names of places!"] = {
+		full_category_link = "no-longer-[[use]]d [[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "long-form",
+		bare_category_parent = "former names of places",
+	},
+	["FORMER_LONG_FORM_OF country"] = {
+		link = false,
+		default = {"Former long-form names of countries"},
+	},
+	["FORMER_LONG_FORM_OF place"] = {
+		link = false,
+		default = {"Former long-form names of places"},
+	},
+
+	---------- Former names ----------
+
+	["former names of capitals!"] = {
+		full_category_link = "[[former]] [[name]]s of [[capital city|capital cities]] that generally still exist but under a different name",
+		bare_category_breadcrumb = "capitals",
+		bare_category_parent = "former names of settlements",
+	},
+	["former names of countries!"] = {
+		full_category_link = "[[former]] [[name]]s of [[country|countries]] that generally still exist but under a different name",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "former names of places",
+	},
+	["former names of places!"] = {
+		full_category_link = "[[former]] [[name]]s of [[place]]s that generally still exist but under a different name",
+		bare_category_breadcrumb = "former names",
+		bare_category_parent = "places",
+	},
+	["former names of political divisions!"] = {
+		full_category_link = "[[former]] [[name]]s of [[political]] [[division]]s (states, provinces, counties, etc.) that generally still exist but under a different name",
+		bare_category_breadcrumb = "political divisions",
+		bare_category_parent = "former names of places",
+	},
+	["former names of polities!"] = {
+		full_category_link = "[[former]] [[name]]s of [[polity|polities]] (e.g. [[country|countries]]) that generally still exist but under a different name",
+		bare_category_breadcrumb = "polities",
+		bare_category_parent = "former names of places",
+	},
+	["former names of settlements!"] = {
+		full_category_link = "[[former]] [[name]]s of [[city|cities]], [[town]]s, [[village]]s, etc. that generally still exist but under a different name",
+		bare_category_breadcrumb = "settlements",
+		bare_category_parent = "former names of political divisions",
+	},
+	["FORMER_NAME_OF capital"] = {
+		link = false,
+		default = {"Former names of capitals"},
+	},
+	["FORMER_NAME_OF country"] = {
+		link = false,
+		default = {"Former names of countries"},
+	},
+	["FORMER_NAME_OF place"] = {
+		link = false,
+		default = {"Former names of places"},
+	},
+	["FORMER_NAME_OF polity"] = {
+		link = false,
+		default = {"Former names of polities"},
+	},
+	["FORMER_NAME_OF region"] = {
+		link = false,
+		fallback = "FORMER_NAME_OF subpolity",
+	},
+	["FORMER_NAME_OF settlement"] = {
+		link = false,
+		default = {"Former names of settlements"},
+	},
+	["FORMER_NAME_OF subpolity"] = {
+		link = false,
+		default = {"Former names of political divisions"},
+	},
+
+	---------- Former nicknames ----------
+
+	["former nicknames for cities!"] = {
+		full_category_link = "no-longer-used [[nickname]]s for [[city|cities]], e.g. the [[Eternal City]] for [[Kyoto]] during the {{w|Heian period}} (c. 800-1100 {{AD}})",
+		bare_category_breadcrumb = "cities",
+		bare_category_parent = "former nicknames for places",
+		addl_bare_category_parents = {"nicknames for cities"},
+	},
+	["former nicknames for places!"] = {
+		full_category_link = "no-longer-used [[nickname]]s for [[place]]s",
+		bare_category_breadcrumb = "former",
+		bare_category_parent = "nicknames for places",
+		addl_bare_category_parents = {{name = "former names of places", sort = "nicknames"}},
+	},
+	["FORMER_NICKNAME_FOR capital"] = {
+		link = false,
+		default = {"Former nicknames for cities"},
+	},
+	["FORMER_NICKNAME_FOR city"] = {
+		link = false,
+		default = {"Former nicknames for cities"},
+	},
+	["FORMER_NICKNAME_FOR metropolitan city"] = {
+		-- "metropolitan city" doesn't fall back to "city"
+		link = false,
+		default = {"Former nicknames for cities"},
+	},
+	["FORMER_NICKNAME_FOR place"] = {
+		link = false,
+		default = {"Former nicknames for places"},
+	},
+	["FORMER_NICKNAME_FOR prefecture-level city"] = {
+		-- "prefecture-level city" doesn't fall back to "city" but things like "county-level city" and
+		-- "subprovincial city" fall back to "prefecture-level city"
+		link = false,
+		default = {"Former nicknames for cities"},
+	},
+	["FORMER_NICKNAME_FOR town"] = {
+		link = false,
+		default = {"Former nicknames for cities"},
+	},
+
+	---------- Former official names ----------
+
+	["former official names of countries!"] = {
+		full_category_link = "no-longer-[[use]]d [[official]] [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "former official names of places",
+		addl_bare_category_parents = {{name = "former names of countries", sort = "official"}},
+	},
+	["former official names of places!"] = {
+		full_category_link = "no-longer-[[use]]d [[official]] [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "official",
+		bare_category_parent = "former names of places",
+	},
+	["FORMER_OFFICIAL_NAME_OF country"] = {
+		link = false,
+		default = {"Former official names of countries"},
+	},
+	["FORMER_OFFICIAL_NAME_OF place"] = {
+		link = false,
+		default = {"Former official names of places"},
+	},
+
+	---------- Long-form names ----------
+
+	["long-form names of countries!"] = {
+		full_category_link = "[[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "long-form names of places",
+	},
+	["long-form names of places!"] = {
+		full_category_link = "[[long]]-[[form]] (but typically [[unofficial]]) [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "long-form names",
+		bare_category_parent = "places",
+	},
+	["LONG_FORM_OF country"] = {
+		link = false,
+		default = {"Long-form names of countries"},
+	},
+	["LONG_FORM_OF place"] = {
+		link = false,
+		default = {"Long-form names of places"},
+	},
+
+	---------- Nicknames ----------
+
+	["nicknames for cities!"] = {
+		full_category_link = "[[nickname]]s for [[city|cities]], e.g. the [[Big Apple]] for [[New York City]]",
+		bare_category_breadcrumb = "cities",
+		bare_category_parent = "nicknames for places",
+		addl_bare_category_parents = {"cities"},
+	},
+	["nicknames for continents!"] = {
+		full_category_link = "[[nickname]]s for [[continent]]s",
+		bare_category_breadcrumb = "continents",
+		bare_category_parent = "nicknames for places",
+		addl_bare_category_parents = {"continents"},
+	},
+	["nicknames for countries!"] = {
+		full_category_link = "[[nickname]]s for [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "nicknames for places",
+		addl_bare_category_parents = {"countries"},
+	},
+	["nicknames for places!"] = {
+		full_category_link = "[[nickname]]s for [[place]]s",
+		bare_category_breadcrumb = "places",
+		bare_category_parent = "nicknames",
+		addl_bare_category_parents = {"places"},
+	},
+	["nicknames for states!"] = {
+		-- For categorizing nicknames for states of e.g. the United States
+		full_category_link = "[[nicknames]] for [[state]]s",
+		bare_category_breadcrumb = "states",
+		bare_category_parent = "nicknames for places",
+		addl_bare_category_parents = {"states"},
+	},
+	["NICKNAME_FOR capital"] = {
+		link = false,
+		default = {"Nicknames for cities"},
+	},
+	["NICKNAME_FOR city"] = {
+		link = false,
+		default = {"Nicknames for cities"},
+	},
+	["NICKNAME_FOR continent"] = {
+		link = false,
+		default = {"Nicknames for continents"},
+	},
+	["NICKNAME_FOR country"] = {
+		link = false,
+		default = {"Nicknames for countries"},
+	},
+	["NICKNAME_FOR metropolitan city"] = {
+		-- "metropolitan city" doesn't fall back to "city"
+		link = false,
+		default = {"Nicknames for cities"},
+	},
+	["NICKNAME_FOR place"] = {
+		link = false,
+		default = {"Nicknames for places"},
+	},
+	["NICKNAME_FOR prefecture-level city"] = {
+		-- "prefecture-level city" doesn't fall back to "city" but things like "county-level city" and
+		-- "subprovincial city" fall back to "prefecture-level city"
+		link = false,
+		default = {"Nicknames for cities"},
+	},
+	["NICKNAME_FOR state"] = {
+		link = false,
+		default = {"Nicknames for states"},
+	},
+	["NICKNAME_FOR town"] = {
+		link = false,
+		default = {"Nicknames for cities"},
+	},
+
+	---------- Obsolete forms ----------
+
+	["obsolete forms of places!"] = {
+		full_category_link = "{{glossary|obsolete}} [[form]]s of [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "obsolete forms",
+		bare_category_parent = "places",
+	},
+	["OBSOLETE_FORM_OF place"] = {
+		link = false,
+		default = {"Obsolete forms of places"},
+	},
+
+	---------- Official names ----------
+
+	["official names of countries!"] = {
+		full_category_link = "[[official]] [[name]]s of [[country|countries]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "official names of places",
+	},
+	["official names of former countries!"] = {
+		full_category_link = "[[official]] [[name]]s of [[country|countries]] that no longer [[exist]]",
+		bare_category_breadcrumb = "countries",
+		bare_category_parent = "official names of former places",
+	},
+	["official names of former places!"] = {
+		full_category_link = "[[official]] [[name]]s of [[place]]s that no longer [[exist]]",
+		bare_category_breadcrumb = "official names",
+		bare_category_parent = "former places",
+		addl_bare_category_parents = {{name = "official names of places", sort = "former"}},
+	},
+	["official names of places!"] = {
+		full_category_link = "[[official]] [[name]]s of [[place]]s",
+		bare_category_breadcrumb = "official names",
+		bare_category_parent = "places",
+	},
+	["OFFICIAL_NAME_OF country"] = {
+		link = false,
+		default = {"Official names of countries"},
+	},
+	["OFFICIAL_NAME_OF FORMER country"] = {
+		link = false,
+		default = {"Official names of former countries"},
+	},
+	["OFFICIAL_NAME_OF FORMER place"] = {
+		link = false,
+		default = {"Official names of former places"},
+	},
+	["OFFICIAL_NAME_OF place"] = {
+		link = false,
+		default = {"Official names of places"},
+	},
+
+	---------- Official nicknames ----------
+
+	["official nicknames for places!"] = {
+		full_category_link = "[[official]] [[nickname]]s for [[place]]s",
+		bare_category_breadcrumb = "official",
+		bare_category_parent = "nicknames for places",
+	},
+	["official nicknames for states!"] = {
+		-- For categorizing official nicknames for states of e.g. the United States
+		full_category_link = "[[official]] [[nicknames]] for [[state]]s",
+		bare_category_breadcrumb = "official",
+		bare_category_parent = "nicknames for states",
+		addl_bare_category_parents = {"states"},
+	},
+	["OFFICIAL_NICKNAME_FOR place"] = {
+		link = false,
+		default = {"Official nicknames for places"},
+	},
+	["OFFICIAL_NICKNAME_FOR state"] = {
+		link = false,
+		default = {"Official nicknames for states"},
 	},
 }
 
