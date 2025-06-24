@@ -1,11 +1,13 @@
 local export = {}
 
 local anchors_module = "Module:anchors"
+local debug_track_module = "Module:debug/track"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
 local pages_module = "Module:pages"
 local parameters_module = "Module:parameters"
+local parse_interface_module = "Module:parse interface"
 local place_module = "Module:place"
 local string_char_module = "Module:string/char"
 local string_pattern_escape_module = "Module:string/patternEscape"
@@ -104,6 +106,33 @@ end
 local function u(...)
 	u = require(string_char_module)
 	return u(...)
+end
+
+-- Add the page to a tracking "category". To see the pages in the "category",
+-- go to [[Wiktionary:Tracking/transclude/PAGE]] and click on "What links here".
+local function track(page)
+	require(debug_track_module)("transclude/" .. page)
+	return true
+end
+
+-- Split an argument on comma, but not comma followed by whitespace.
+local function split_on_comma(val)
+	if val:find(",") then
+		return require(parse_interface_module).split_on_comma(val)
+	else
+		return {val}
+	end
+end
+
+-- Split list of labels. For compatibility, we allow splitting on semicolon, but will convert to splitting on
+-- comma not followed by space, for compatibility with other modules/params.
+local function split_labels(val)
+	if val:find(";") then
+		track("label-with-semicolon")
+		return split(val, ";")
+	else
+		return split_on_comma(val)
+	end
 end
 
 -- From [[Template:gloss]]
@@ -413,12 +442,13 @@ function export.show(frame)
 		-- place_init_of= (or more generally, any of the form-of directives that are marked as `default_foreign`); to
 		-- disable the postposed display in that case, use `place_translation_follows=0`.
 		["place_translation_follows"] = boolean,
-		["lb"] = true, -- can have multiple semicolon-separated labels
-		["nolb"] = true, -- can have multiple semicolon-separated labels
+		["lb"] = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
+		["nolb"] = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
 		["nocat"] = boolean,
 		["to"] = boolean,
 		["t"] = list,
 		["indent"] = true,
+		["dot"] = boolean,
 	}
 	for _, extra_arg_spec in ipairs(m_place.extra_info_args) do
 		params["place_" .. extra_arg_spec.arg] = list
@@ -437,13 +467,12 @@ function export.show(frame)
 	local source_lang = get_lang(source_langcode)
 	local source_langname = source_lang:getFullName()
 	local ids = args[3] and split(args[3], ",") or {""}
-	local sort = args["sort"]
+	local sort = args.sort
 	local source_is_current_page = mw.title.getCurrentTitle().text == source
 	local copy_sortkey = (sort == nil) and source_is_current_page
-	local no_gloss = args["nogloss"]
-	local labels = args["lb"] and split(args["lb"], ";") or {}
-	local nolb
-	local to = args["to"]
+	local no_gloss = args.nogloss
+	local labels = args.lb and split_labels(args.lb) or {}
+	local to = args.to
 
 	local function issue_error(msg)
 		if source_is_current_page and is_preview() then
@@ -468,6 +497,7 @@ function export.show(frame)
 	local retlines = {}
 
 	for _, id in ipairs(ids) do
+		local nolb
 		local found_labels = {}
 		local line_start, line
 		if id == "" then
@@ -703,14 +733,14 @@ function export.show(frame)
 			formatted_definition = formatted_to .. formatted_link .. formatted_gloss
 		end
 
-		nolb = args["nolb"] or nolb
+		nolb = args.nolb or nolb
 		local labels_to_ignore = nil
 		local ignore_all_labels = false
 		if nolb then
 			if nolb == "+" or nolb == "1" or nolb == "*" then
 				ignore_all_labels = true
 			else
-				labels_to_ignore = split(nolb, ";")
+				labels_to_ignore = split_labels(nolb)
 			end
 		end
 		local this_labels = deep_copy(labels)
@@ -719,7 +749,8 @@ function export.show(frame)
 		end
 		local formatted_labels = (next(this_labels) == nil) and "" or (show_labels{labels = this_labels, lang = language, sort = sort} .. " ")
 
-		insert(retlines, formatted_senseid .. formatted_categories .. formatted_labels .. formatted_definition .. formatted_senseid_close)
+		insert(retlines, formatted_senseid .. formatted_categories .. formatted_labels .. formatted_definition ..
+			formatted_senseid_close .. (args.dot and "." or ""))
 	end
 
 	return concat(retlines, "\n" .. (args.indent or "#") .. " ")
