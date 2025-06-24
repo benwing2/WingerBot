@@ -1587,7 +1587,7 @@ local function parse_overall_place_spec(data)
 
 	if form_of_directives[1] and not form_of_directives[#form_of_directives].posttext then
 		form_of_directives[#form_of_directives].posttext =
-			(args.def and args.def ~= "-" or not args.def and descs[1]) and ", " or ""
+			(args.def and args.def ~= "-" or not args.def and descs[1]) and ": " or ""
 	end
 
 	-- Tracking code. This does nothing but add tracking for seen placetypes and qualifiers. The place will be linked to
@@ -2009,7 +2009,8 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 		if not termobj.alt and termobj.term and not termobj.term:find("%[%[") then
 			placename_article = get_placename_article(termobj.term, placetypes)
 		end
-		local linked_term = m_links.full_link(termobj, nil, nil, "show qualifiers")
+		local linked_term = m_links.full_link(termobj, "term", nil, "show qualifiers")
+		linked_term = "<span class='form-of-definition-link'>" .. linked_term .. "</span>"
 		if termobj.eq then
 			linked_term = linked_term .. " (= " .. m_links.full_link {term = termobj.eq, lang = enlang} .. ")"
 		end
@@ -2045,13 +2046,10 @@ local function format_form_of_directive(overall_place_spec, directive_terms, ucf
 	end
 	return require(form_of_module).format_form_of {
 		text = text,
-		lemmas = directive_terms.terms,
-		lemma_face = "term",
+		lemmas = m_table.serialCommaJoin(formatted_terms, {conj = directive_terms.conj or spec.conjunction or "and"}),
+		lemma_classes = false,
 		-- text_classes = "place-text",
-		conj = directive_terms.conj or spec.conjunction or "and",
 	}
-	--return text .. " " .. m_table.serialCommaJoin(formatted_terms,
-	--	{conj = directive_terms.conj or spec.conjunction or "and"})
 end
 
 
