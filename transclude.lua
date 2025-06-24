@@ -197,7 +197,38 @@ local function handle_definition_template(name, args, transclude_args)
 						local transclude_key = "place_" .. (form_of_directive:gsub(" ", "_"))
 						local transclude_value = transclude_args[transclude_key]
 						if transclude_value then
-							form_of_overridden_args[form_of_directive] = transclude_value
+							local new_directive, new_value
+							if transclude_value:find("^@") then
+								new_directive, new_value = transclude_value:match("^@([a-z -]+):(.*)$")
+								if not new_directive then
+									error(("Misformatted value %s=%s; should be e.g. 'place_acronym_of=" ..
+										"@init of:ehemalige jugoslawische Republik Mazedonien' to replace " ..
+										"'@acronym of:...' with '@init of:...'"):format(
+											transclude_key, transclude_value))
+								end
+								if not m_place.all_form_of_directives[new_directive] then
+									local known_directives = {}
+									for k, _ in pairs(export.all_form_of_directives) do
+										insert(known_directives, '"' .. k .. '"')
+									end
+									table.sort(known_directives)
+									error(("Unrecognized form-of directive %s in replacement @-directive %s=%s; " ..
+										"recognized directives are %s"):format(
+										dump(new_directive), transclude_key, transclude_value,
+										concat(known_directives, ", ")))
+								else
+									-- canonicalize replacement directive aliases
+									new_directive = m_place.all_form_of_directives[new_directive].alias_of or
+										new_directive
+								end
+							else
+								new_directive = form_of_directive
+								new_value = transclude_value
+							end
+							form_of_overridden_args[form_of_directive] = {
+								new_directive = new_directive,
+								new_value = new_value,
+							}
 							if directive_spec.default_foreign and place_translation_follows == nil then
 								place_translation_follows = true
 							end
