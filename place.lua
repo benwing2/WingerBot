@@ -61,14 +61,14 @@ The basic terminology used in this and associated {{tl|place}} modules is:
   specifically a location whose properties are specified in the {{tl|place}} modules; more on them below.
 * Specific places are identified by names, referred to as ''toponyms'' or ''placenames''. A given place will often have
   multiple names, and a given toponym may be ambiguous, referring to multiple possible locations. Specifically:
-** There may be names including different amounts of disambiguating information (`Tucson` vs. `Tucson,
-   Arizona` vs. `Tucson, Arizona, USA` or `New York` vs. `New York City` vs. `New York, New York`); abbreviations (`NYC`
-   for `New York City`, `USA` for `United States of America`); ''official'' vs. ''short'' names (e.g. `Union of Soviet
-   Socialist Republics` vs. `Soviet Union`); spelling variations (`Cracow` vs. `Krakow` vs. `Kraków`); current vs
-   former names (`Saint Petersburg` vs. `Leningrad` vs. `Petrograd`); [[exonym]]s vs. [[endonym]]s (e.g. `Tavastia
-   Proper` vs. `Kanta-Häme`, both referring to the same administrative region in Finland); alternative names not due to
-   any of the above reasons (`Bashkiria` vs. `Bashkortostan`); etc. In addition, each language that has an opportunity
-   to refer to the place will have its own name, with the same sorts of variations as exist in English.
+** There may be names including different amounts of disambiguating information (`Tucson` vs. `Tucson, Arizona` vs.
+   `Tucson, Arizona, USA` or `New York` vs. `New York City` vs. `New York, New York`); abbreviations (`NYC`
+   for `New York City`, `USA` for `United States of America`); ''official'' vs. ''short'' names (e.g.
+   `Union of Soviet Socialist Republics` vs. `Soviet Union`); spelling variations (`Cracow` vs. `Krakow` vs. `Kraków`);
+   current vs. former names (`Saint Petersburg` vs. `Leningrad` vs. `Petrograd`); [[exonym]]s vs. [[endonym]]s (e.g.
+   `Tavastia Proper` vs. `Kanta-Häme`, both referring to the same administrative region in Finland); alternative names
+   not due to any of the above reasons (`Bashkiria` vs. `Bashkortostan`); etc. In addition, each language that has an
+   opportunity to refer to the place will have its own name, with the same sorts of variations as exist in English.
 ** Examples of ambiguous toponyms are `New York` (either a city or a state); `Georgia` (either a state of the US or an
    independent country in the Caucasus Mountains); `Paris` (either the capital of France or various small cities and
    towns in the US); `Mexico` (either a country, a state of that country, or the capital city of that country); and
@@ -77,10 +77,10 @@ The basic terminology used in this and associated {{tl|place}} modules is:
 * A ''placetype'' is the (or a) type that a location belongs to (e.g. `city`, `state`, `river`, `administrative region`,
   `[[regional county municipality]]`, etc.).
 ** It is common for locations to be described using multiple placetypes, and even sometimes known locations have
-  multiple placetypes that they may be identified by (e.g. American Samoa can be identified either as an `unincorporated
-  territory`, an `overseas territory` or just a `territory`). Both the {{tl|place}} template and the known location
-  data allow a given location to be identified by multiple placetypes. When in doubt as to the correct placetype or
-  placetypes for a given location, generally follow how Wikipedia describes the place.
+  multiple placetypes that they may be identified by (e.g. American Samoa can be identified either as an
+  `unincorporated territory`, an `overseas territory` or just a `territory`). Both the {{tl|place}} template and the
+  known location data allow a given location to be identified by multiple placetypes. When in doubt as to the correct
+  placetype or placetypes for a given location, generally follow how Wikipedia describes the place.
 ** Some placetypes themselves are ambiguous; e.g. an ''area'' can variously refer to a top-level administrative division
    (specifically of Kuwait); a geographic region, generally without unambiguously defined borders; or a section of a
    city, similar to a neighborhood. The term ''district'' is similarly ambiguous. A ''[[prefecture]]'' in the context of
@@ -170,10 +170,10 @@ The basic terminology used in this and associated {{tl|place}} modules is:
   `small`, `affluent` and `beachfront` are qualifiers. (As shown here, it may not always be obvious where the qualifiers
   end and the placetype begins.) For the most part, placetype qualifiers do not affect categorization; a `small city`
   is still a city and an `affluent beachfront unincorporated community` is still an unincorporated community, and both
-  should still be categorized as such. But some qualifiers do change the categorization. In particular, a `former
-  province` is no longer a province and should not be categorized in e.g. [[:Category:Provinces of Italy]], but instead
-  in a different set of categories, e.g. [[:Category:Historical political subdivisions]]. There are several terms
-  treated as equivalent for this purpose: `abandoned` `ancient`, `extinct`, `historic(al)`, `medi(a)eval` and
+  should still be categorized as such. But some qualifiers do change the categorization. In particular, a
+  `former province` is no longer a province and should not be categorized in e.g. [[:Category:Provinces of Italy]], but
+  instead in a different set of categories, e.g. [[:Category:Historical political subdivisions]]. There are several
+  terms treated as equivalent for this purpose: `abandoned` `ancient`, `extinct`, `historic(al)`, `medi(a)eval` and
   `traditional`. Another set of qualifiers that change categorization are `fictional` and `mythological`, which cause
   any term using the qualifier to be categorized respectively into [[:Category:Fictional locations]] and
   [[:Category:Mythological locations]].
