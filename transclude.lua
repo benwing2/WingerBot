@@ -19,6 +19,8 @@ local template_parser_module = "Module:template parser"
 
 local m_place = require(place_module)
 
+local enlang = require(languages_module).getByCode("en")
+
 local concat = table.concat
 local find = string.find
 local insert = table.insert
@@ -51,11 +53,6 @@ end
 local function full_link(...)
 	full_link = require(links_module).full_link
 	return full_link(...)
-end
-
-local function get_lang(...)
-	get_lang = require(languages_module).getByCode
-	return get_lang(...)
 end
 
 local function gsplit(...)
@@ -199,8 +196,45 @@ local function copy_unnamed_args_maybe_except_code(to, from, deny_list, first_ar
 	end
 end
 
-local function handle_definition_template(name, args, transclude_args)
+
+local function parse_form_of_directive(value, param)
+	local new_directive, new_value = value:match("^@([a-z -]+):(.*)$")
+	if not new_directive then
+		if param then
+			error(("Misformatted value %s=%s; should be e.g. 'place_acronym_of=" ..
+				"@init of:ehemalige jugoslawische Republik Mazedonien' to replace " ..
+				"'@acronym of:...' with '@init of:...'"):format(
+					param, value))
+		else
+			error(("Misformatted form-of directive '%s'; should be e.g. '@ellip of:Santiago del Estero'"):format(
+				value))
+		end
+	end
+	if not m_place.all_form_of_directives[new_directive] then
+		local known_directives = {}
+		for k, _ in pairs(export.all_form_of_directives) do
+			insert(known_directives, '"' .. k .. '"')
+		end
+		table.sort(known_directives)
+		known_directives = concat(known_directives, ", ")
+		if param then
+			error(("Unrecognized form-of directive '%s' in replacement @-directive %s=%s; " ..
+				"recognized directives are %s"):format(new_directive, param, value, known_directives))
+		else
+			error(("Unrecognized form-of directive '%s' in '%s'; recognized directives are %s"):format(
+				new_directive, value, known_directives))
+		end
+	else
+		-- canonicalize replacement directive aliases
+		new_directive = m_place.all_form_of_directives[new_directive].alias_of or new_directive
+	end
+	return new_directive, new_value
+end
+
+local function handle_definition_template(data)
+	local name, args, transclude_args = data.name, data.template_args, data.transclude_args
 	if name == "place" then
+		local place_form_of_directives = data.place_form_of_directives
 		return {
 			should_remove = true,
 			must_be_first = true,
@@ -228,28 +262,7 @@ local function handle_definition_template(name, args, transclude_args)
 						if transclude_value then
 							local new_directive, new_value
 							if transclude_value:find("^@") then
-								new_directive, new_value = transclude_value:match("^@([a-z -]+):(.*)$")
-								if not new_directive then
-									error(("Misformatted value %s=%s; should be e.g. 'place_acronym_of=" ..
-										"@init of:ehemalige jugoslawische Republik Mazedonien' to replace " ..
-										"'@acronym of:...' with '@init of:...'"):format(
-											transclude_key, transclude_value))
-								end
-								if not m_place.all_form_of_directives[new_directive] then
-									local known_directives = {}
-									for k, _ in pairs(export.all_form_of_directives) do
-										insert(known_directives, '"' .. k .. '"')
-									end
-									table.sort(known_directives)
-									error(("Unrecognized form-of directive %s in replacement @-directive %s=%s; " ..
-										"recognized directives are %s"):format(
-										dump(new_directive), transclude_key, transclude_value,
-										concat(known_directives, ", ")))
-								else
-									-- canonicalize replacement directive aliases
-									new_directive = m_place.all_form_of_directives[new_directive].alias_of or
-										new_directive
-								end
+								new_directive, new_value = parse_form_of_directive(transclude_value, transclude_key)
 							else
 								new_directive = form_of_directive
 								new_value = transclude_value
@@ -264,6 +277,18 @@ local function handle_definition_template(name, args, transclude_args)
 						end
 					end
 				end
+
+				place_args[1] = langcode
+				place_args.pagename = data.source
+
+				-- If form-of directives specified in the numeric args to {{tcl}}, they get inserted before any
+				-- numeric args taken from {{place}}.
+				local next_numarg = 2
+				for _, form_of_directive in ipairs(place_form_of_directives) do
+					place_args[next_numarg] = ("@%s:%s"):format(form_of_directive.directive, form_of_directive.value)
+					next_numarg = next_numarg + 1
+				end
+
 				local saw_tcl_t
 				local saw_t
 				-- Copy the arguments but drop translations, maybe the "extra info", and maybe the numbered args
@@ -282,9 +307,14 @@ local function handle_definition_template(name, args, transclude_args)
 							saw_t = true
 						end
 					elseif m_place.extra_info_arg_map[base] and extra_info_overridden_set[base] then
-						-- don't copy any extra info arguments that we will be overriding, in case there are more original
-						-- values than overrides for this particular argument
-					elseif not tcl_arg or base ~= "" then
+						-- don't copy any extra info arguments that we will be overriding, in case there are more
+						-- original values than overrides for this particular argument
+					elseif base == "" then
+						if not tcl_arg and key > 1 then
+							-- We want keys starting at 2 to go into positions starting at `next_numarg`.
+							place_args[next_numarg + key - 2] = val
+						end
+					else
 						place_args[key] = val
 					end
 				end
@@ -296,15 +326,11 @@ local function handle_definition_template(name, args, transclude_args)
 					return t
 				end
 
-				place_args[1] = langcode
-				place_args.pagename = data.source
-
 				-- If tcl= given, copy its values into the numeric args.
 				if tcl_arg then
-					local argno = 2
 					for tcl_val in gsplit(tcl_arg, ";;") do
-						place_args[argno] = tcl_val
-						argno = argno + 1
+						place_args[next_numarg] = tcl_val
+						next_numarg = next_numarg + 1
 					end
 					place_args.a = nil
 				end
@@ -365,11 +391,18 @@ local function handle_definition_template(name, args, transclude_args)
 							if not gloss:find("^[,;.]") then
 								gloss = " " .. gloss
 							end
-							place_args[first_free - 1] = args[first_free - 1] .. gloss
+							place_args[first_free - 1] = place_args[first_free - 1] .. gloss
 						else
 							-- old-style argument; add as separate argument
-							gloss = gloss:gsub("^[,;] *", "")
-							place_args[first_free] = gloss
+							if gloss:find("^,") then
+								place_args[first_free] = gloss:gsub("^, *", "")
+							elseif gloss:find("^;") then
+								place_args[first_free] = ";"
+								place_args[first_free + 1] = gloss:gsub("^; *", "")
+							else
+								-- the "*" ensures no extra comma
+								place_args[first_free] = "*" .. gloss:gsub("^ *", "")
+							end
 						end
 					end
 				end
@@ -418,16 +451,15 @@ function export.show(frame)
 	local list = {list = true}
 	local required = {required = true}
    	local params = {
-		[1] = required, -- langcode of target language (the current entry's language)
-		[2] = required, -- source English term to transclude from
-		[3] = true, -- can have multiple comma-separated IDs
-		["id"] = {alias_of = 3}, 
-		["sort"] = true,
-		["nogloss"] = {default = false, type = "boolean"},
-		["no_truncate_gloss"] = boolean,
+		[1] = {required = true, type = "language"}, -- langcode of target language (the current entry's language)
+		[2] = {list = true, required = true}, -- source English term to transclude from and/or form-or directives
+		id = true, -- can have multiple comma-separated IDs
+		sort = true,
+		nogloss = {default = false, type = "boolean"},
+		no_truncate_gloss = boolean,
 		-- Normally, we ignore most of the extra info (capital, largest city, official name, etc.) when transcluding
 		-- {{place}} because the given terms are in English and will likely differ from language to language.
-		["include_place_extra_info"] = boolean,
+		include_place_extra_info = boolean,
 		-- Normally the translation (the transcluded page or overriding value in t=) comes first with the definition
 		-- following in parens, but that may not produce sensible results in some cases, such as initialisms; e.g. if
 		-- we define [[GDR]] as
@@ -441,14 +473,14 @@ function export.show(frame)
 		-- `place_translation_follows=1` causes that to happen, and it also happens by default whenever an argument like
 		-- place_init_of= (or more generally, any of the form-of directives that are marked as `default_foreign`); to
 		-- disable the postposed display in that case, use `place_translation_follows=0`.
-		["place_translation_follows"] = boolean,
-		["lb"] = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
-		["nolb"] = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
-		["nocat"] = boolean,
-		["to"] = boolean,
-		["t"] = list,
-		["indent"] = true,
-		["dot"] = boolean,
+		place_translation_follows = boolean,
+		lb = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
+		nolb = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
+		nocat = boolean,
+		to = boolean,
+		t = list,
+		indent = true,
+		dot = boolean,
 	}
 	for _, extra_arg_spec in ipairs(m_place.extra_info_args) do
 		params["place_" .. extra_arg_spec.arg] = list
@@ -460,13 +492,38 @@ function export.show(frame)
 
    	local args = process_params(frame:getParent().args, params)
 
-	local language_code = args[1]
-	local language = get_lang(language_code)
-	local source = args[2]
-	local source_langcode = "en"
-	local source_lang = get_lang(source_langcode)
+	local language = args[1]
+	local language_code = language:getCode()
+	local source
+	local place_form_of_directives = {}
+	if args[2][1]:find("^@") then
+		-- form-of directives in place of source
+		for i, arg in ipairs(args[2]) do
+			if arg:find("^@") then
+				local directive, value = parse_form_of_directive(arg)
+				insert(place_form_of_directives, {
+					directive = directive,
+					value = value,
+				})
+			elseif i ~= #args[2] then
+				error(("When form-of directives are specified, the source must come last, but saw source %s=%s " ..
+					"when higher-numbered arguments exist"):format(i + 1, arg))
+			else
+				source = arg
+			end
+		end
+		if not source then
+			source = place_form_of_directives[#place_form_of_directives].value:gsub("<.*", "")
+		end
+	elseif args[2][2] then
+		error(("Extraneous argument 3=%s"):format(args[2][2]))
+	else
+		source = args[2][1]
+	end
+	local source_lang = enlang
+	local source_langcode = source_lang:getCode()
 	local source_langname = source_lang:getFullName()
-	local ids = args[3] and split(args[3], ",") or {""}
+	local ids = args.id and split(args.id, ",") or {""}
 	local sort = args.sort
 	local source_is_current_page = mw.title.getCurrentTitle().text == source
 	local copy_sortkey = (sort == nil) and source_is_current_page
@@ -604,7 +661,12 @@ function export.show(frame)
 			local supports_sortkey = false
 			local should_remove = true -- If set, removes the template from the line after processing.
 			local must_be_first = false -- If set, ensures that nothing (except for removed templates) preceeds this template.
-			local definition_template_handler = handle_definition_template(name, tempargs, args)
+			local definition_template_handler = handle_definition_template {
+				name = name,
+				template_args = tempargs,
+				transclude_args = args,
+				place_form_of_directives = place_form_of_directives,
+			}
 			if definition_template_handler ~= nil then
 				if generator ~= nil then
 					error("Encountered {{[[Template:" .. name .. "|" .. name .. "]]}} even though a full definition template has already been processed")
