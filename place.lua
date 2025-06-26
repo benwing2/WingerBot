@@ -1533,10 +1533,9 @@ local function parse_overall_place_spec(data)
 			place_desc_style = nil
 		else
 			if arg:find("<<") then
-				if place_desc_style and place_desc_style ~= "new" then
-					-- error("New-style place description cannot directly follow old-style arguments")
-					-- There may be several of these; track and convert before making an error
-					track("new-after-old")
+				if place_desc_style then
+					-- error("New-style place description must come first and not follow another description without a separator")
+					track("new-not-first")
 				end
 				place_desc_style = "new"
 				if holonym_index > 0 then
@@ -1546,12 +1545,11 @@ local function parse_overall_place_spec(data)
 				this_desc = export.parse_new_style_place_desc(arg, args[1], form_of_directives, form_of_overridden_args)
 				descs[desc_index] = this_desc
 				last_was_new_style = true
-				holonym_index = holonym_index + 1
+				holonym_index = #this_desc.holonyms + 1
 			else
-				if place_desc_style and place_desc_style ~= "old" then
-					error("Old-style arguments cannot directly follow new-style place description")
+				if not place_desc_style then
+					place_desc_style = "old"
 				end
-				place_desc_style = "old"
 				if holonym_index == 0 then
 					local entry_placetypes = split_on_slash(arg)
 					this_desc = {placetypes = entry_placetypes, holonyms = {}}
@@ -1929,30 +1927,35 @@ end
 -- template (which specifies what the previous holonym is and whether it is the first holonym); and the full place
 -- description (which helps resolve ambiguities in holonyms when looking up known locations). This may involve putting a
 -- preposition ("in" or "of") before the formatted holonym, particularly if it is the first one, and may involve
--- prepending a comma.
-local function format_holonym_in_context(entry_placetype, place_desc, holonym_index)
+-- prepending a comma. If `holonym_no_prefix` is specified, nothing except a space is put before the holonym; used
+-- when formatting mixed new/old-style descriptions.
+local function format_holonym_in_context(entry_placetype, place_desc, holonym_index, holonym_no_prefix)
 	local desc = ""
 
 	-- If holonym.placetype is nil, the holonym is just raw text, e.g. 'in southern'.
 
-	local holonym = place_desc.holonyms[holonym_index]
-	if not holonym.no_display then
-		-- First compute the initial delimiter.
-		if holonym_index == 1 then
-			if holonym.placetype then
-				desc = desc .. " " .. m_placetypes.get_placetype_entry_preposition(entry_placetype) .. " "
-			elseif not holonym.display_placename:find("^,") then
-				desc = desc .. " "
-			end
-		else
-			local prev_holonym = place_desc.holonyms[holonym_index - 1]
-			if prev_holonym.placetype and holonym.display_placename ~= "and" and holonym.display_placename ~= "in" and
-				not holonym.suppress_comma then
-				desc = desc .. ","
-			end
+	if holonym_no_prefix then
+		desc = " "
+	else
+		local holonym = place_desc.holonyms[holonym_index]
+		if not holonym.no_display then
+			-- First compute the initial delimiter.
+			if holonym_index == 1 then
+				if holonym.placetype then
+					desc = desc .. " " .. m_placetypes.get_placetype_entry_preposition(entry_placetype) .. " "
+				elseif not holonym.display_placename:find("^,") then
+					desc = desc .. " "
+				end
+			else
+				local prev_holonym = place_desc.holonyms[holonym_index - 1]
+				if prev_holonym.placetype and holonym.display_placename ~= "and" and holonym.display_placename ~= "in"
+					and not holonym.suppress_comma then
+					desc = desc .. ","
+				end
 
-			if holonym.placetype or not holonym.display_placename:find("^,") then
-				desc = desc .. " "
+				if holonym.placetype or not holonym.display_placename:find("^,") then
+					desc = desc .. " "
+				end
 			end
 		end
 	end
@@ -2241,23 +2244,38 @@ Exported for use by [[Module:demonyms]].
 ]==]
 function export.format_new_style_place_desc_for_display(args, place_desc, with_article)
 	local parts = {}
-
-	if with_article and args.a then
-		insert(parts, args.a .. " ")
+	local function ins(txt)
+		insert(parts, txt)
 	end
 
+	if with_article and args.a then
+		ins(args.a .. " ")
+	end
+
+	local max_holonym = 0
 	for _, order in ipairs(place_desc.order) do
 		local segment_type, segment = order.type, order.value
 		if segment_type == "raw" then
-			insert(parts, segment)
+			ins(segment)
 		elseif segment_type == "placetype" then
-			insert(parts, get_placetype_description(segment))
+			ins(get_placetype_description(segment))
 		elseif segment_type == "qualifier" then
-			insert(parts, get_qualifier_description(segment))
+			ins(get_qualifier_description(segment))
 		elseif segment_type == "holonym" then
-			insert(parts, format_holonym(place_desc, segment, false))
+			ins(format_holonym(place_desc, segment, false))
+			if segment > max_holonym then
+				max_holonym = segment
+			end
 		else
 			internal_error("Unrecognized segment type %s", segment_type)
+		end
+	end
+
+	if place_desc.holonyms and max_holonym < #place_desc.holonyms then
+		local holonym_no_prefix = true
+		for holonym_index = max_holonym + 1, #place_desc.holonyms do
+			ins(format_holonym_in_context(nil, place_desc, holonym_index, holonym_no_prefix))
+			holonym_no_prefix = false
 		end
 	end
 
