@@ -2318,6 +2318,18 @@ local function get_display_form(data)
 		end
 	end
 
+	local addl = args.addl
+	if addl then
+		posttext = posttext or ""
+		if addl:find("^[;:]") then
+			ins(addl)
+		elseif addl:find("^_") then
+			ins(" " .. addl:sub(2))
+		else
+			ins(", " .. addl)
+		end
+	end
+
 	for _, extra_info_terms in ipairs(overall_place_spec.extra_info) do
 		-- Include a given extra info term either when
 		-- (1) drop_extra_info not set (it's set by {{tcl}}), or
@@ -2878,6 +2890,7 @@ function export.format(data)
 
 		["a"] = true,
 		["also"] = true,
+		["addl"] = true,
 		["def"] = true,
 
 		-- params that are only used when transcluding using {{tcl}}/{{transclude}}, to transmit information to {{tcl}}.
@@ -2899,6 +2912,17 @@ function export.format(data)
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
+	if args.also then
+		track("also")
+	end
+	if args.a then
+		track("a")
+		if args.a:find("^[Aa]n?$") or args.a:find("^[Tt]he$") then
+			track("a/article")
+		else
+			track("a/non-article")
+		end
+	end
 	data.args = args
 	local overall_place_spec = parse_overall_place_spec(data)
 	data.overall_place_spec = overall_place_spec
