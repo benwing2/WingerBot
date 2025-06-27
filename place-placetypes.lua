@@ -4088,6 +4088,11 @@ If you need to sort the following, do this (using Vim):
 		preposition = "of",
 		class = "subpolity",
 	},
+	["primary area"] = {
+		-- a grouping of "districts" (neighborhoods) in Gothenburg, Sweden
+		link = "+w:sv:primärområde",
+		fallback = "neighborhood",
+	},
 	["principality"] = {
 		link = true,
 		fallback = "monarchy",
