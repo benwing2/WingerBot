@@ -16,19 +16,26 @@ local pos_functions = {}
 
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
 
+local rfind = mw.ustring.find
+local rmatch = mw.ustring.match
+local rsplit = mw.text.split
+local usub = mw.ustring.sub
+local require_when_needed = require("Module:utilities/require when needed")
+
 local m_links = require("Module:links")
 local m_table = require("Module:table")
 local com = require("Module:pt-common")
-local inflection_utilities_module = "Module:User:Benwing2/inflection utilities"
+local en_utilities_module = "Module:en-utilities"
+local headword_utilities_module = "Module:headword utilities"
+local inflection_utilities_module = "Module:inflection utilities"
 local romut_module = "Module:romance utilities"
 local pt_verb_module = "Module:pt-verb"
 local lang = require("Module:languages").getByCode("pt")
 local langname = lang:getCanonicalName()
 
-local rfind = mw.ustring.find
-local rmatch = mw.ustring.match
-local rsplit = mw.text.split
-local usub = mw.ustring.sub
+local m_en_utilities = require_when_needed(en_utilities_module)
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
 -- When followed by a hyphen in a hyphenated compound, the hyphen will be included with the prefix when linked.
 local include_hyphen_prefixes = m_table.listToSet {
@@ -60,15 +67,16 @@ local include_hyphen_prefixes = m_table.listToSet {
 	"vice",
 }
 
+-----------------------------------------------------------------------------------------
+--                                     Utility functions                               --
+-----------------------------------------------------------------------------------------
+
 local function track(page)
 	require("Module:debug/track")("pt-headword/" .. page)
 	return true
 end
 
-local function glossary_link(entry, text)
-	text = text or entry
-	return "[[Appendix:Glossary#" .. entry .. "|" .. text .. "]]"
-end
+local list_param = {list = true, disallow_holes = true}
 
 local metaphonic_label = "[[Appendix:Portuguese pronunciation#Metaphony|metaphonic]]"
 
@@ -79,13 +87,29 @@ local function check_all_missing(forms, plpos, tracking_categories)
 		end
 		if form then
 			local title = mw.title.new(form)
-			if title and not title.exists then
+			if title and not title:getContent() then
 				table.insert(tracking_categories, langname .. " " .. plpos .. " with red links in their headword lines")
 			end
 		end
 	end
 end
 
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- `plpos` is the plural part of speech, used in [[Category:LANGNAME PLPOS with red links in their headword lines]].
+-- `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, label, plpos, accel)
+	m_headword_utilities.parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		paramname = field,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		check_missing = true,
+		lang = lang,
+		plpos = plpos,
+	}
+end
 
 -- The main entry point.
 -- This is the only function that can be invoked from a template.
@@ -95,7 +119,7 @@ function export.show(frame)
 	local parargs = frame:getParent().args
 
 	local params = {
-		["head"] = {list = true},
+		["head"] = list_param,
 		["id"] = {},
 		["splithyph"] = {type = "boolean"},
 		["nolinkhead"] = {type = "boolean"},
@@ -153,7 +177,7 @@ function export.show(frame)
 	if subpage:find("^%-") and poscat ~= "suffix forms" then
 		is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = m_en_utilities.singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -246,7 +270,7 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = m_en_utilities.pluralize(pos)
 
 	data.genders = {}
 	local saw_m = false
@@ -546,6 +570,16 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 		table.insert(data.categories, langname .. " " .. plpos .. " with metaphony")
 	end
 
+	local function parse_and_insert_noun_inflection(field, label, accel)
+		parse_and_insert_inflection(data, args, field, label, plpos, accel)
+	end
+
+	parse_and_insert_noun_inflection("dim", "diminutive")
+	parse_and_insert_noun_inflection("aug", "augmentative")
+	parse_and_insert_noun_inflection("pej", "pejorative")
+	parse_and_insert_noun_inflection("dem", "demonym")
+	parse_and_insert_noun_inflection("fdem", "female demonym")
+
 	-- Maybe add category 'Portuguese nouns with irregular gender' (or similar)
 	local irreg_gender_lemma = com.rsub(lemma, " .*", "") -- only look at first word
 	if (rfind(irreg_gender_lemma, "[^ã]o$") and (gender_for_default_plural == "f" or gender_for_default_plural == "mf"
@@ -556,20 +590,25 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 	end
 end
 
-local function get_noun_params()
+local function get_noun_params(is_proper)
 	return {
-		[1] = {list = "g", required = true, default = "?"},
+		[1] = {list = "g", required = not is_proper, default = "?"},
 		[2] = {list = "pl"},
 		["g_qual"] = {list = "g\1_qual", allow_holes = true},
 		["pl_qual"] = {list = "pl\1_qual", allow_holes = true},
-		["m"] = {list = true},
+		["m"] = list_param,
 		["m_qual"] = {list = "m\1_qual", allow_holes = true},
-		["f"] = {list = true},
+		["f"] = list_param,
 		["f_qual"] = {list = "f\1_qual", allow_holes = true},
-		["mpl"] = {list = true},
+		["mpl"] = list_param,
 		["mpl_qual"] = {list = "mpl\1_qual", allow_holes = true},
-		["fpl"] = {list = true},
+		["fpl"] = list_param,
 		["fpl_qual"] = {list = "fpl\1_qual", allow_holes = true},
+		["dim"] = list_param, --diminutive(s)
+		["aug"] = list_param, --diminutive(s)
+		["pej"] = list_param, --pejorative(s)
+		["dem"] = list_param, --demonym(s)
+		["fdem"] = list_param, --female demonym(s)
 		["meta"] = {type = "boolean"}, -- metaphonic
 		["nometa"] = {type = "boolean"}, -- explicitly not metaphonic
 	}
@@ -583,7 +622,7 @@ pos_functions["nouns"] = {
 }
 
 pos_functions["proper nouns"] = {
-	params = get_noun_params(),
+	params = get_noun_params("is proper"),
 	func = function(args, data, tracking_categories, frame, is_suffix)
 		do_noun(args, data, tracking_categories, "proper noun", is_suffix, "is proper noun")
 	end,
@@ -598,7 +637,7 @@ local function do_pronoun(args, data, tracking_categories, pos, is_suffix)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = m_en_utilities.pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -640,19 +679,19 @@ local function get_pronoun_params()
 	local params = {
 		[1] = {list = "g"}, --gender(s)
 		["g_qual"] = {list = "g\1_qual", allow_holes = true},
-		["m"] = {list = true}, --masculine form(s)
+		["m"] = list_param, --masculine form(s)
 		["m_qual"] = {list = "m\1_qual", allow_holes = true},
-		["f"] = {list = true}, --feminine form(s)
+		["f"] = list_param, --feminine form(s)
 		["f_qual"] = {list = "f\1_qual", allow_holes = true},
-		["sg"] = {list = true}, --singular form(s)
+		["sg"] = list_param, --singular form(s)
 		["sg_qual"] = {list = "sg\1_qual", allow_holes = true},
-		["pl"] = {list = true}, --plural form(s)
+		["pl"] = list_param, --plural form(s)
 		["pl_qual"] = {list = "pl\1_qual", allow_holes = true},
-		["mpl"] = {list = true}, --masculine plural form(s)
+		["mpl"] = list_param, --masculine plural form(s)
 		["mpl_qual"] = {list = "mpl\1_qual", allow_holes = true},
-		["fpl"] = {list = true}, --feminine plural form(s)
+		["fpl"] = list_param, --feminine plural form(s)
 		["fpl_qual"] = {list = "fpl\1_qual", allow_holes = true},
-		["n"] = {list = true}, --neuter form(s)
+		["n"] = list_param, --neuter form(s)
 		["n_qual"] = {list = "n\1_qual", allow_holes = true},
 	}
 	return params
@@ -774,7 +813,7 @@ local function do_adjective(args, data, tracking_categories, pos, is_suffix, is_
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = m_en_utilities.pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -789,7 +828,7 @@ local function do_adjective(args, data, tracking_categories, pos, is_suffix, is_
 			end
 			table.sort(indicators)
 			error("Special inflection indicator beginning can only be " ..
-				m_table.serialCommaJoin(indicators, {dontTag = true}) .. ": " .. args.sp)
+				mw.text.listToText(indicators) .. ": " .. args.sp)
 		end
 	end
 
@@ -988,25 +1027,25 @@ local function get_adjective_params(adjtype)
 	local params = {
 		["inv"] = {type = "boolean"}, --invariable
 		["sp"] = {}, -- special indicator: "first", "first-last", etc.
-		["f"] = {list = true}, --feminine form(s)
+		["f"] = list_param, --feminine form(s)
 		["f_qual"] = {list = "f\1_qual", allow_holes = true},
-		["pl"] = {list = true}, --plural override(s)
+		["pl"] = list_param, --plural override(s)
 		["pl_qual"] = {list = "pl\1_qual", allow_holes = true},
-		["mpl"] = {list = true}, --masculine plural override(s)
+		["mpl"] = list_param, --masculine plural override(s)
 		["mpl_qual"] = {list = "mpl\1_qual", allow_holes = true},
-		["fpl"] = {list = true}, --feminine plural override(s)
+		["fpl"] = list_param, --feminine plural override(s)
 		["fpl_qual"] = {list = "fpl\1_qual", allow_holes = true},
 		["meta"] = {type = "boolean"}, -- metaphonic
 		["nometa"] = {type = "boolean"}, -- explicitly not metaphonic
 	}
 	if adjtype == "base" then
-		params["comp"] = {list = true} --comparative(s)
+		params["comp"] = list_param --comparative(s)
 		params["comp_qual"] = {list = "comp\1_qual", allow_holes = true}
-		params["sup"] = {list = true} --superlative(s)
+		params["sup"] = list_param --superlative(s)
 		params["sup_qual"] = {list = "sup\1_qual", allow_holes = true}
-		params["dim"] = {list = true} --diminutive(s)
+		params["dim"] = list_param --diminutive(s)
 		params["dim_qual"] = {list = "dim\1_qual", allow_holes = true}
-		params["aug"] = {list = true} --augmentative(s)
+		params["aug"] = list_param --augmentative(s)
 		params["aug_qual"] = {list = "aug\1_qual", allow_holes = true}
 		params["fonly"] = {type = "boolean"} -- feminine only
 		params["hascomp"] = {} -- has comparative
@@ -1018,7 +1057,7 @@ local function get_adjective_params(adjtype)
 		params["irreg"] = {type = "boolean"}
 	end
 	if adjtype == "pron" or adjtype == "contr" then
-		params["n"] = {list = true} --neuter form(s)
+		params["n"] = list_param --neuter form(s)
 		params["n_qual"] = {list = "n\1_qual", allow_holes = true}
 	end
 	return params
@@ -1083,7 +1122,7 @@ local function do_adverb(args, data, tracking_categories, pos, is_suffix)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = m_en_utilities.pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -1095,9 +1134,9 @@ end
 local function get_adverb_params(advtype)
 	local params = {}
 	if advtype == "base" then
-		params["comp"] = {list = true} --comparative(s)
+		params["comp"] = list_param --comparative(s)
 		params["comp_qual"] = {list = "comp\1_qual", allow_holes = true}
-		params["sup"] = {list = true} --superlative(s)
+		params["sup"] = list_param --superlative(s)
 		params["sup_qual"] = {list = "sup\1_qual", allow_holes = true}
 		params["hascomp"] = {} -- has comparative
 	end
@@ -1133,15 +1172,15 @@ pos_functions["superlative adverbs"] = {
 pos_functions["verbs"] = {
 	params = {
 		[1] = {},
-		["pres"] = {list = true}, --present
+		["pres"] = list_param, --present
 		["pres_qual"] = {list = "pres\1_qual", allow_holes = true},
-		["pres3s"] = {list = true}, --third-singular present
+		["pres3s"] = list_param, --third-singular present
 		["pres3s_qual"] = {list = "pres3s\1_qual", allow_holes = true},
-		["pret"] = {list = true}, --preterite
+		["pret"] = list_param, --preterite
 		["pret_qual"] = {list = "pret\1_qual", allow_holes = true},
-		["part"] = {list = true}, --participle
+		["part"] = list_param, --participle
 		["part_qual"] = {list = "part\1_qual", allow_holes = true},
-		["short_part"] = {list = true}, --short participle
+		["short_part"] = list_param, --short participle
 		["short_part_qual"] = {list = "short_part\1_qual", allow_holes = true},
 		["noautolinktext"] = {type = "boolean"},
 		["noautolinkverb"] = {type = "boolean"},
@@ -1302,13 +1341,6 @@ pos_functions["verbs"] = {
 			end
 		end
 
-		local function expand_footnotes_and_references(footnotes)
-			if not footnotes then
-				return nil
-			end
-			return require("Module:inflection utilities").fetch_headword_qualifiers_and_references(footnotes)
-		end
-
 		do_verb_form(args.pres, args.pres_qual, preses, skip_pres_if_empty)
 		-- We want to include both the pres_1s and pres_3s if there is a vowel alternation in the present singular. But we
 		-- don't want to redundantly include the pres_3s if we already included it.
@@ -1336,7 +1368,8 @@ pos_functions["verbs"] = {
 		) then
 			data.heads = {}
 			for _, lemma_obj in ipairs(alternant_multiword_spec.forms.infinitive_linked) do
-				local quals, refs = expand_footnotes_and_references(lemma_obj.footnotes)
+				local quals, refs = require(inflection_utilities_module).
+					convert_footnotes_to_qualifiers_and_references(lemma_obj.footnotes)
 				table.insert(data.heads, {term = lemma_obj.form, q = quals, refs = refs})
 			end
 		end
@@ -1350,7 +1383,7 @@ pos_functions["verbs"] = {
 pos_functions["suffix forms"] = {
 	params = {
 		[1] = {required = true, list = true},
-		["g"] = {list = true},
+		["g"] = list_param,
 		["g_qual"] = {list = "g\1_qual", allow_holes = true},
 	},
 	func = function(args, data, is_suffix)
