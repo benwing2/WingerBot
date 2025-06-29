@@ -46,6 +46,11 @@ Loaders for functions in other modules, which overwrite themselves with the targ
 		return encode_entities(...)
 	end
 
+	local function extend(...)
+		extend = require(table_module).extend
+		return extend(...)
+	end
+
 	local function find_best_script_without_lang(...)
 		find_best_script_without_lang = require(scripts_module).findBestScriptWithoutLang
 		return find_best_script_without_lang(...)
@@ -340,7 +345,7 @@ local function format_headword(data)
 	local head_parts = {}
 	local unique_head_parts = {}
 
-	local has_multiple_heads = #data.heads > 1
+	local has_multiple_heads = not not data.heads[2]
 
 	for j, head in ipairs(data.heads) do
 		if head.tr or head.ts then
@@ -388,9 +393,9 @@ local function format_headword(data)
 	end
 
 	if has_manual_translits then
-		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/has-manual-translit]]
-		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/has-manual-translit/LANGCODE]]
-		track("has-manual-translit", data.lang)
+		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/manual-tr]]
+		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/manual-tr/LANGCODE]]
+		track("manual-tr", data.lang)
 	end
 
 	------ Format the transliterations and transcriptions. ------
@@ -454,7 +459,7 @@ end
 
 local function format_headword_genders(data)
 	local retval = ""
-	if data.genders and #data.genders > 0 then
+	if data.genders and data.genders[1] then
 		if data.gloss then
 			retval = ","
 		end
@@ -466,8 +471,8 @@ local function format_headword_genders(data)
 			end
 		end
 		local text, cats = format_genders(data.genders, data.lang, pos_for_cat)
-		for _, cat in ipairs(cats) do
-			insert(data.categories, cat)
+		if cats then
+			extend(data.categories, cats)
 		end
 		retval = retval .. "&nbsp;" .. text
 	end
@@ -540,7 +545,7 @@ local function format_inflection_parts(data, parts)
 
 	local parts_output
 
-	if #parts > 0 then
+	if parts[1] then
 		parts_output = (parts.label and " " or "") .. concat(parts)
 	elseif parts.request then
 		parts_output = " <small>[please provide]</small>"
@@ -550,14 +555,14 @@ local function format_inflection_parts(data, parts)
 	end
 
 	local parts_label = parts.label and ("<i>" .. parts.label .. "</i>") or ""
-	return parts_label .. parts_output, any_part_translit
+	return format_term_with_qualifiers_and_refs(data.lang, parts, parts_label .. parts_output, 1), any_part_translit
 end
 
 
 -- Format the inflections following the headword.
 local function format_inflections(data)
 	local any_part_translit = false
-	if data.inflections and #data.inflections > 0 then
+	if data.inflections and data.inflections[1] then
 		-- Format each inflection individually.
 		for key, infl in ipairs(data.inflections) do
 			local this_any_part_translit
@@ -723,9 +728,7 @@ do
 	end
 
 	function export.maintenance_cats(page, lang, lang_cats, page_cats)
-		for _, cat in ipairs(page.cats) do
-			insert(page_cats, cat)
-		end
+		extend(page_cats, page.cats)
 		lang = lang:getFull() -- since we are just generating categories
 		local canonical = lang:getCanonicalName()
 		local tbl, sortkey = page.wikitext_topic_cat[lang:getCode()]
@@ -835,7 +838,7 @@ function export.full_headword(data)
 	init_and_find_maximum_index(data, "categories")
 	init_and_find_maximum_index(data, "whole_page_categories")
 	local pos_category_already_present = false
-	if #data.categories > 0 then
+	if data.categories[1] then
 		local escaped_langname = pattern_escape(full_langname)
 		local matches_lang_pattern = "^" .. escaped_langname .. " "
 		for _, cat in ipairs(data.categories) do
@@ -1013,9 +1016,7 @@ function export.full_headword(data)
 
 					if not manual_tr then
 						head.tr = automated_tr
-						for _, category in ipairs(tr_categories) do
-							insert(data.categories, category)
-						end
+						extend(data.categories, tr_categories)
 					end
 				end
 
