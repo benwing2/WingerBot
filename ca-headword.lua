@@ -5,15 +5,18 @@ local force_cat = false -- for testing; if true, categories appear in non-mainsp
 
 local m_table = require("Module:table")
 local com = require("Module:ca-common")
-local inflection_utilities_module = "Module:User:Benwing2/inflection utilities"
+
+local ca_IPA_module = "Module:ca-IPA"
+local ca_verb_module = "Module:ca-verb"
+local en_utilities_module = "Module:en-utilities"
+local inflection_utilities_module = "Module:inflection utilities"
 local parse_utilities_module = "Module:parse utilities"
 local romut_module = "Module:romance utilities"
-local ca_verb_module = "Module:ca-verb"
-local ca_IPA_module = "Module:ca-IPA"
 
 local lang = require("Module:languages").getByCode("ca")
 local langname = lang:getCanonicalName()
 
+local list_to_text = mw.text.listToText
 local rfind = mw.ustring.find
 local rmatch = mw.ustring.match
 local rsplit = mw.text.split
@@ -25,6 +28,9 @@ local function track(page)
 	return true
 end
 
+local boolean = {type = "boolean"}
+local list = {list = true}
+
 -----------------------------------------------------------------------------------------
 --                                    Main entry point                                 --
 -----------------------------------------------------------------------------------------
@@ -35,11 +41,11 @@ function export.show(frame)
 	local poscat = frame.args[1] or error("Part of speech has not been specified. Please pass parameter 1 to the module invocation.")
 	
 	local params = {
-		["head"] = {list = true},
+		["head"] = list,
 		["id"] = {},
-		["splithyph"] = {type = "boolean"},
-		["nolinkhead"] = {type = "boolean"},
-		["json"] = {type = "boolean"},
+		["splithyph"] = boolean,
+		["nolinkhead"] = boolean,
+		["json"] = boolean,
 		["pagename"] = {}, -- for testing
 	}
 	
@@ -94,7 +100,7 @@ function export.show(frame)
 	if pagename:find("^%-") and poscat ~= "suffix forms" then
 		is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -190,7 +196,7 @@ local function do_adjective(args, data, pos, is_suffix, is_superlative)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -205,7 +211,7 @@ local function do_adjective(args, data, pos, is_suffix, is_superlative)
 			end
 			table.sort(indicators)
 			error("Special inflection indicator beginning can only be " ..
-				m_table.serialCommaJoin(indicators, {dontTag = true}) .. ": " .. args.sp)
+				list_to_text(indicators) .. ": " .. args.sp)
 		end
 	end
 
@@ -257,7 +263,7 @@ local function do_adjective(args, data, pos, is_suffix, is_superlative)
 					table.insert(feminine_plurals, {term = defpl, q = quals})
 				end
 			else
-				table.insert(feminine_plural, {term = replace_hash_with_lemma(fpl, lemma), q = quals})
+				table.insert(feminine_plurals, {term = replace_hash_with_lemma(fpl, lemma), q = quals})
 			end
 		end
 
@@ -415,30 +421,30 @@ end
 local function get_adjective_params(adjtype)
 	local params = {
 		["sp"] = {}, -- special indicator: "first", "first-last", etc.
-		["f"] = {list = true}, --feminine form(s)
-		[1] = {alias_of = "f"},
+		["f"] = list, --feminine form(s)
+		[1] = {alias_of = "f", list = false},
 		["f_qual"] = {list = "f\1_qual", allow_holes = true},
-		["pl"] = {list = true}, --plural override(s)
+		["pl"] = list, --plural override(s)
 		["pl_qual"] = {list = "pl\1_qual", allow_holes = true},
-		["mpl"] = {list = true}, --masculine plural override(s)
+		["mpl"] = list, --masculine plural override(s)
 		["mpl_qual"] = {list = "mpl\1_qual", allow_holes = true},
-		["fpl"] = {list = true}, --feminine plural override(s)
+		["fpl"] = list, --feminine plural override(s)
 		["fpl_qual"] = {list = "fpl\1_qual", allow_holes = true},
 	}
 	if adjtype == "base" then
-		params["comp"] = {list = true} --comparative(s)
+		params["comp"] = list --comparative(s)
 		params["comp_qual"] = {list = "comp\1_qual", allow_holes = true}
-		params["sup"] = {list = true} --superlative(s)
+		params["sup"] = list --superlative(s)
 		params["sup_qual"] = {list = "sup\1_qual", allow_holes = true}
-		params["dim"] = {list = true} --diminutive(s)
+		params["dim"] = list --diminutive(s)
 		params["dim_qual"] = {list = "dim\1_qual", allow_holes = true}
-		params["aug"] = {list = true} --augmentative(s)
+		params["aug"] = list --augmentative(s)
 		params["aug_qual"] = {list = "aug\1_qual", allow_holes = true}
-		params["fonly"] = {type = "boolean"} -- feminine only
+		params["fonly"] = boolean -- feminine only
 		params["hascomp"] = {} -- has comparative
 	end
 	if adjtype == "sup" then
-		params["irreg"] = {type = "boolean"}
+		params["irreg"] = boolean
 	end
 	return params
 end
@@ -501,7 +507,7 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	data.genders = {}
 	local saw_m = false
@@ -548,8 +554,6 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 
 	-- Plural
 	local plurals = {}
-	local args_mpl = args.mpl
-	local args_fpl = args.fpl
 	local args_pl = args[2]
 
 	if is_plurale_tantum and not has_singular then
@@ -715,13 +719,13 @@ local function get_noun_params()
 		[2] = {list = "pl"},
 		["g_qual"] = {list = "g\1_qual", allow_holes = true},
 		["pl_qual"] = {list = "pl\1_qual", allow_holes = true},
-		["m"] = {list = true},
+		["m"] = list,
 		["m_qual"] = {list = "m\1_qual", allow_holes = true},
-		["f"] = {list = true},
+		["f"] = list,
 		["f_qual"] = {list = "f\1_qual", allow_holes = true},
-		["mpl"] = {list = true},
+		["mpl"] = list,
 		["mpl_qual"] = {list = "mpl\1_qual", allow_holes = true},
-		["fpl"] = {list = true},
+		["fpl"] = list,
 		["fpl_qual"] = {list = "fpl\1_qual", allow_holes = true},
 	}
 end
@@ -747,23 +751,24 @@ pos_functions["proper nouns"] = {
 pos_functions["verbs"] = {
 	params = {
 		[1] = {},
-		["pres"] = {list = true}, --present
+		["pres"] = list, --present
 		["pres_qual"] = {list = "pres\1_qual", allow_holes = true},
-		["pres3s"] = {list = true}, --third-singular present
+		["pres3s"] = list, --third-singular present
 		["pres3s_qual"] = {list = "pres3s\1_qual", allow_holes = true},
-		["pret"] = {list = true}, --preterite
+		["pret"] = list, --preterite
 		["pret_qual"] = {list = "pret\1_qual", allow_holes = true},
-		["part"] = {list = true}, --participle
+		["part"] = list, --participle
 		["part_qual"] = {list = "part\1_qual", allow_holes = true},
-		["short_part"] = {list = true}, --short participle
+		["short_part"] = list, --short participle
 		["short_part_qual"] = {list = "short_part\1_qual", allow_holes = true},
-		["noautolinktext"] = {type = "boolean"},
-		["noautolinkverb"] = {type = "boolean"},
-		["attn"] = {type = "boolean"},
-		["pres_1_sg"] = {}, -- accept any ignore old-style param
-		["past_part"] = {}, -- accept any ignore old-style param
-		["root"] = {}, -- FIXME: Implement root-stressed vowel quality
+		["noautolinktext"] = boolean,
+		["noautolinkverb"] = boolean,
+		["attn"] = boolean,
+		["pres_1_sg"] = true, -- accept any ignore old-style param
+		["past_part"] = true, -- accept any ignore old-style param
+		["root"] = true, -- FIXME: Implement root-stressed vowel quality
 	},
+
 	func = function(args, data, tracking_categories, frame)
 		local preses, preses_3s, prets, parts, short_parts
 
@@ -918,13 +923,6 @@ pos_functions["verbs"] = {
 			end
 		end
 
-		local function expand_footnotes_and_references(footnotes)
-			if not footnotes then
-				return nil
-			end
-			return require("Module:inflection utilities").fetch_headword_qualifiers_and_references(footnotes)
-		end
-
 		do_verb_form(args.pres, args.pres_qual, preses, skip_pres_if_empty)
 		-- We want to include both the pres_1s and pres_3s if there is a vowel alternation in the present singular. But we
 		-- don't want to redundantly include the pres_3s if we already included it.
@@ -952,7 +950,8 @@ pos_functions["verbs"] = {
 		) then
 			data.heads = {}
 			for _, lemma_obj in ipairs(alternant_multiword_spec.forms.infinitive_linked) do
-				local quals, refs = expand_footnotes_and_references(lemma_obj.footnotes)
+				local quals, refs = require(inflection_utilities_module).
+					convert_footnotes_to_qualifiers_and_references(lemma_obj.footnotes)
 				table.insert(data.heads, {term = lemma_obj.form, q = quals, refs = refs})
 			end
 		end
@@ -973,12 +972,12 @@ pos_functions["verbs"] = {
 				if not dialect then
 					for _, dial in ipairs(m_ca_IPA.dialects) do
 						-- Need to clone as we destructively modify each one later with the pronun.
-						parsed_respellings[dial] = m_table.deepcopy(parsed)
+						parsed_respellings[dial] = m_table.deepCopy(parsed)
 					end
 				elseif m_ca_IPA.dialect_groups[dialect] then
 					for _, dial in ipairs(m_ca_IPA.dialect_groups[dialect]) do
 						-- Need to clone as we destructively modify each one later with the pronun.
-						parsed_respellings[dial] = m_table.deepcopy(parsed)
+						parsed_respellings[dial] = m_table.deepCopy(parsed)
 					end
 				else
 					parsed_respellings[dialect] = parsed
@@ -992,13 +991,12 @@ pos_functions["verbs"] = {
 					for _, dial in ipairs(m_ca_IPA.dialects) do
 						table.insert(dialect_list, "'" .. dial .. "'")
 					end
-					dialect_list = m_table.serialCommaJoin(dialect_list, {conj = "or", dontTag = true})
+					dialect_list = list_to_text(dialect_list, nil, " or ")
 					local dialect_group_list = {}
 					for dialect_group, _ in pairs(m_ca_IPA.dialect_groups) do
 						table.insert(dialect_group_list, "'" .. dialect_group .. "'")
 					end
-					dialect_group_list = m_table.serialCommaJoin(dialect_group_list,
-						{conj = "or", dontTag = true})
+					dialect_group_list = list_to_text(dialect_group_list, nil, " or ")
 					error(("Unrecognized dialect '%s': Should be a dialect %s or a dialect group %s"):format(
 						dialect, dialect_list, dialect_group_list))
 				end
@@ -1033,9 +1031,6 @@ pos_functions["verbs"] = {
 					set_parsed_respelling(dialect, outer_container)
 				end
 			else
-				local function parse_err(msg)
-					error(msg .. ": root=" .. args.root)
-				end
 				for _, dialect_spec in ipairs(rsplit(args.root, "%s*;%s*")) do
 					local dialect
 					if dialect_spec:find("^[a-z]+:") then
@@ -1075,7 +1070,7 @@ pos_functions["verbs"] = {
 					local as = pronun.a
 					if j == 1 then
 						if as then
-							as = m_table.deepcopy(as)
+							as = m_table.deepCopy(as)
 						else
 							as = {}
 						end
@@ -1138,9 +1133,10 @@ pos_functions["verbs"] = {
 -- Display additional inflection information for a numeral
 pos_functions["numerals"] = {
 	params = {
-		[1] = {},
-		[2] = {},
-		},
+		[1] = true,
+		[2] = true,
+	},
+
 	func = function(args, data, is_suffix)
 		local feminine = args[1]
 		local noun_form = args[2]
@@ -1165,13 +1161,14 @@ pos_functions["numerals"] = {
 
 pos_functions["phrases"] = {
 	params = {
-		["g"] = {list = true},
+		["g"] = list,
 		["g_qual"] = {list = "g\1_qual", allow_holes = true},
-		["m"] = {list = true},
+		["m"] = list,
 		["m_qual"] = {list = "m\1_qual", allow_holes = true},
-		["f"] = {list = true},
+		["f"] = list,
 		["f_qual"] = {list = "f\1_qual", allow_holes = true},
 	},
+
 	func = function(args, data, is_suffix)
 		data.genders = {}
 		process_genders(data, args.g, args.g_qual)
@@ -1187,9 +1184,10 @@ pos_functions["phrases"] = {
 pos_functions["suffix forms"] = {
 	params = {
 		[1] = {required = true, list = true},
-		["g"] = {list = true},
+		["g"] = list,
 		["g_qual"] = {list = "g\1_qual", allow_holes = true},
 	},
+
 	func = function(args, data, is_suffix)
 		data.genders = {}
 		process_genders(data, args.g, args.g_qual)
