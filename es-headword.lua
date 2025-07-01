@@ -46,11 +46,11 @@ function export.show(frame)
 
 	local params = {
 		["head"] = list_param,
-		["id"] = {},
+		["id"] = true,
 		["splithyph"] = boolean_param,
 		["nolinkhead"] = boolean_param,
 		["json"] = boolean_param,
-		["pagename"] = {}, -- for testing
+		["pagename"] = true, -- for testing
 	}
 
 	if pos_functions[poscat] then
@@ -381,7 +381,7 @@ end
 local function get_adjective_params(adjtype)
 	local params = {
 		["inv"] = boolean_param, --invariable
-		["sp"] = {}, -- special indicator: "first", "first-last", etc.
+		["sp"] = true, -- special indicator: "first", "first-last", etc.
 	}
 	local function ins_infl(field)
 		params[field] = list_param --feminine form(s)
@@ -400,7 +400,7 @@ local function get_adjective_params(adjtype)
 		ins_infl("aug") --augmentative(s)
 		params["fonly"] = boolean_param -- feminine only
 		params["gneut"] = boolean_param -- gender-neutral adjective e.g. [[latine]]
-		params["hascomp"] = {} -- has comparative
+		params["hascomp"] = true -- has comparative
 	end
 	if adjtype == "sup" then
 		params["irreg"] = boolean_param
@@ -491,20 +491,17 @@ pos_functions["cardinal numbers"] = {
 --                                          Nouns                                      --
 -----------------------------------------------------------------------------------------
 
-local allowed_genders = require("Module:table").listToSet(
-	{"m", "f", "mf", "mfbysense", "mfequiv", "gneut", "n", "m-p", "f-p", "mf-p", "mfbysense-p", "mfequiv-p", "gneut-p", "n-p", "?", "?-p"}
+local allowed_genders = m_table.listToSet(
+    {"m", "f", "mf", "mfbysense", "mfequiv", "gneut", "n", "m-p", "f-p", "mf-p", "mfbysense-p", "mfequiv-p", "gneut-p", "n-p", "?", "?-p"}
 )
 
-
-local function process_genders(data, genders, g_qual)
-	for i, g in ipairs(genders) do
+local function validate_genders(genders)
+	for _, g in ipairs(genders) do
+		if type(g) == "table" then
+			g = g.spec
+		end
 		if not allowed_genders[g] then
 			error("Unrecognized gender: " .. g)
-		end
-		if g_qual[i] then
-			table.insert(data.genders, {spec = g, qualifiers = {g_qual[i]}})
-		else
-			table.insert(data.genders, g)
 		end
 	end
 end
@@ -518,14 +515,17 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 	end
 	local plpos = m_en_utilities.pluralize(pos)
 
-	data.genders = {}
+	validate_genders(args[1])
+	data.genders = args[1]
 	local saw_m = false
 	local saw_f = false
 	local saw_gneut = false
 	local gender_for_irreg_ending, gender_for_make_plural
-	process_genders(data, args[1], args.g_qual)
 	-- Check for specific genders and pluralia tantum.
 	for _, g in ipairs(args[1]) do
+		if type(g) == "table" then
+			g = g.spec
+		end
 		if g:find("-p$") then
 			is_plurale_tantum = true
 		else
@@ -800,9 +800,9 @@ end
 
 local function get_noun_params(is_proper)
 	return {
-		[1] = {list = "g", required = not is_proper, default = "?"}, --gender
-		["g_qual"] = {list = "g\1_qual", allow_holes = true},
-		[2] = {list = "pl"}, --plural override(s)
+		[1] = {list = "g", disallow_holes = true, required = not is_proper, default = "?", type = "genders",
+			flatten = true}, -- gender(s)
+		[2] = {list = "pl", disallow_holes = true}, --plural override(s)
 		["f"] = list_param, --feminine form(s)
 		["m"] = list_param, --masculine form(s)
 		["fpl"] = list_param, --feminine plural override(s)
@@ -1018,14 +1018,13 @@ pos_functions["verbs"] = {
 
 pos_functions["phrases"] = {
 	params = {
-		["g"] = list_param,
-		["g_qual"] = {list = "g\1_qual", allow_holes = true},
+		["g"] = {list = true, disallow_holes = true, type = "genders", flatten = true},
 		["m"] = list_param,
 		["f"] = list_param,
 	},
 	func = function(args, data)
-		data.genders = {}
-		process_genders(data, args.g, args.g_qual)
+		validate_genders(args.g)
+		data.genders = args.g
 		local plpos = "phrases"
 		parse_and_insert_inflection(data, args, "m", "masculine", plpos)
 		parse_and_insert_inflection(data, args, "f", "feminine", plpos)
@@ -1039,12 +1038,11 @@ pos_functions["phrases"] = {
 pos_functions["suffix forms"] = {
 	params = {
 		[1] = {required = true, list = true, disallow_holes = true},
-		["g"] = list_param,
-		["g_qual"] = {list = "g\1_qual", allow_holes = true},
+		["g"] = {list = true, disallow_holes = true, type = "genders", flatten = true},
 	},
 	func = function(args, data)
-		data.genders = {}
-		process_genders(data, args.g, args.g_qual)
+		validate_genders(args.g)
+		data.genders = args.g
 		local suffix_type = {}
 		for _, typ in ipairs(args[1]) do
 			table.insert(suffix_type, typ .. "-forming suffix")
