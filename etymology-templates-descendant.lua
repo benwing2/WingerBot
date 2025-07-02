@@ -66,7 +66,13 @@ local misc_list_param_set = listToSet(misc_list_params)
 -- the same thing. `type` if given is the param type (e.g. "boolean") and `alias_of` is used for params that are
 -- aliases of other params.
 local function add_regular_list_param(params, param, type, alias_of)
-	params[param] = {type = type, alias_of = alias_of, list = true, allow_holes = true}
+	local spec = {type = type, list = true}
+	if alias_of == nil then
+		spec.allow_holes = true
+	else
+		spec.alias_of = alias_of
+	end
+	params[param] = spec
 end
 
 -- Add an index-separated list param such as bor=, calq=, qq=, etc. "Index-separated" means that `param` and
@@ -75,8 +81,13 @@ end
 -- "boolean") and `alias_of` is used for params that are aliases of other params.
 local function add_index_separated_list_param(params, param, type, alias_of)
 	params[param] = {alias_of = alias_of, type = type}
-	params["part" .. param] = {alias_of = alias_of and "part" .. alias_of or nil, type = type,
-		list = param, allow_holes = true, require_index = true}
+	local spec = {type = type, list = param, require_index = true}
+	if alias_of == nil then
+		spec.allow_holes = true
+	else
+		spec.alias_of = "part" .. alias_of
+	end
+	params["part" .. param] = spec
 end
 
 -- Convert a raw lb= param (or nil) to a list of label info objects of the format described in get_label_info() in
@@ -212,9 +223,8 @@ local function get_post_qualifiers(args, index, lang)
 	end
 	if #postqs > 0 then
 		return " " .. concat(postqs, " ")
-	else
-		return ""
 	end
+	return ""
 end
 
 local function desc_or_desc_tree(frame, desc_tree)
