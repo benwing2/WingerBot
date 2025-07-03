@@ -21,11 +21,12 @@ local force_cat = false -- for testing; if true, categories appear in non-mainsp
 
 local m_links = require("Module:links")
 local m_table = require("Module:table")
+local en_utilities_module = "Module:en-utilities"
 local headword_module = "Module:headword"
-local romut_module = "Module:romance utilities"
-local it_verb_module = "Module:it-verb"
 local inflection_utilities_module = "Module:inflection utilities"
-local parse_modifiers_interface_module = "Module:parse modifiers interface"
+local it_verb_module = "Module:it-verb"
+local parse_interface_module = "Module:parse interface"
+local romut_module = "Module:romance utilities"
 local string_utilities_module = "Module:string utilities"
 local com = require("Module:it-common")
 local lang = require("Module:languages").getByCode("it")
@@ -33,17 +34,11 @@ local langname = lang:getCanonicalName()
 
 local m_str_utils = require(string_utilities_module)
 
-local rfind = m_str_utils.find
 local rsubn = m_str_utils.gsub
-local rmatch = m_str_utils.match
 local rsplit = m_str_utils.split
 local u = m_str_utils.char
-local ulower = m_str_utils.lower
-local uupper = m_str_utils.upper
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local usub = m_str_utils.sub
-local ulen = m_str_utils.len
-local unfd = mw.ustring.toNFD
-local unfc = mw.ustring.toNFC
 
 local GR = u(0x0300)
 local V = "[aeiou]"
@@ -159,7 +154,7 @@ function export.show(frame)
 	if pagename:find("^%-") and poscat ~= "suffix forms" then
 		is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -176,7 +171,7 @@ function export.show(frame)
 		local pos = data.pos_category
 		if not pos:find(" forms") then
 			-- Apocopated forms are non-lemma forms.
-			local singular_poscat = require("Module:string utilities").singularize(pos)
+			local singular_poscat = require(en_utilities_module).singularize(pos)
 			data.pos_category = singular_poscat .. " forms"
 		end
 		-- If this is a suffix, insert label 'apocopated' after 'FOO-forming suffix', otherwise insert at the beginning.
@@ -284,7 +279,7 @@ local function parse_term_with_modifiers(paramname, val)
 		return {term = term}
 	end
 
-	local retval = require(parse_modifiers_interface_module).parse_inline_modifiers(val, {
+	local retval = require(parse_interface_module).parse_inline_modifiers(val, {
 			paramname = paramname,
 			param_mods = param_mods,
 			generate_obj = generate_obj,
@@ -300,6 +295,7 @@ local function parse_term_with_modifiers(paramname, val)
 		-- default to nil for comma
 		end
 	end
+	return retval
 end
 
 
@@ -351,7 +347,7 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	data.genders = {}
 	local saw_m = false
@@ -386,7 +382,7 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 				end
 			end
 		end
-					
+
 		local infl = {q = qualifiers, accel = accel, genders = genders}
 		if term == lemma and not no_inv then
 			infl.label = glossary_link("invariable")
@@ -515,7 +511,7 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 			end
 		end
 	end
-	
+
 	if #plurals > 1 then
 		table.insert(data.categories, langname .. " " .. plpos .. " with multiple plurals")
 	end
@@ -753,7 +749,7 @@ local function do_adjective(args, data, tracking_categories, pos, is_suffix, is_
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -1049,7 +1045,7 @@ local function do_adverb(args, data, tracking_categories, pos, is_suffix)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -1191,7 +1187,7 @@ pos_functions["verbs"] = {
 			if alternant_multiword_spec.props.thirdonly then
 				table.insert(data.inflections, {label = "third-person only"})
 			end
-			
+
 			local thirdonly = alternant_multiword_spec.props.impers or alternant_multiword_spec.props.thirdonly
 			local sing_label = thirdonly and "third-person singular" or "first-person singular"
 			for _, rowspec in ipairs {
@@ -1237,7 +1233,7 @@ pos_functions["verbs"] = {
 			-- already get "no past participle" displayed. Don't display an auxiliary in any case if the lemma
 			-- consists entirely of reflexive verbs (for which the auxiliary is always [[essere]]).
 			if alternant_multiword_spec.props.is_non_reflexive and (
-				alternant_multiword_spec.forms.aux or alternant_multiword_spec.forms.pp 
+				alternant_multiword_spec.forms.aux or alternant_multiword_spec.forms.pp
 			) then
 				do_verb_form("aux", "auxiliary", "aux", "auxiliary")
 			end
@@ -1305,7 +1301,7 @@ pos_functions["arbitrary part of speech"] = {
 		end
 		data.genders = {}
 		process_genders(data, args.g, args.g_qual)
-		local plpos = require("Module:string utilities").pluralize(args[1])
+		local plpos = require(en_utilities_module).pluralize(args[1])
 		data.pos_category = plpos
 	end,
 }
