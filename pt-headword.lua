@@ -442,6 +442,9 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 			paramname = mfplfield,
 			forms = args[mfplfield],
 		}
+		if is_plurale_tantum then
+			return mfpl
+		end
 		local new_mfpls = {}
 		local saw_plus
 		for i, mfpl in ipairs(mfpl) do
