@@ -20,10 +20,12 @@ local m_links = require("Module:links")
 local m_table = require("Module:table")
 local com_module = "Module:gl-common"
 local reinteg_com_module = "Module:gl-reinteg-common"
-local inflection_utilities_module = "Module:User:Benwing2/inflection utilities"
-local romut_module = "Module:romance utilities"
+local en_utilities_module = "Module:en-utilities"
 local gl_verb_module = "Module:gl-verb"
 local gl_reinteg_verb_module = "Module:gl-reinteg-verb"
+local inflection_utilities_module = "Module:inflection utilities"
+local romut_module = "Module:romance utilities"
+
 local lang = require("Module:languages").getByCode("gl")
 local langname = lang:getCanonicalName()
 
@@ -149,7 +151,7 @@ local function do_headword(parargs, poscat, is_reinteg)
 	if pagename:find("^%-") and poscat ~= "suffix forms" then
 		is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -256,7 +258,7 @@ local function do_noun(args, data, tracking_categories, pos, is_suffix, is_prope
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	data.genders = {}
 	local saw_m = false
@@ -602,7 +604,7 @@ local function do_pronoun(args, data, tracking_categories, pos, is_suffix)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -780,7 +782,7 @@ local function do_adjective(args, data, tracking_categories, pos, is_suffix, is_
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -795,7 +797,7 @@ local function do_adjective(args, data, tracking_categories, pos, is_suffix, is_
 			end
 			table.sort(indicators)
 			error("Special inflection indicator beginning can only be " ..
-				m_table.serialCommaJoin(indicators, {dontTag = true}) .. ": " .. args.sp)
+				mw.text.listToText(indicators) .. ": " .. args.sp)
 		end
 	end
 
@@ -1082,7 +1084,7 @@ local function do_adverb(args, data, tracking_categories, pos, is_suffix)
 	if is_suffix then
 		pos = "suffix"
 	end
-	local plpos = require("Module:string utilities").pluralize(pos)
+	local plpos = require(en_utilities_module).pluralize(pos)
 
 	if not is_suffix then
 		data.pos_category = plpos
@@ -1307,13 +1309,6 @@ pos_functions["verbs"] = {
 			end
 		end
 
-		local function expand_footnotes_and_references(footnotes)
-			if not footnotes then
-				return nil
-			end
-			return require("Module:inflection utilities").fetch_headword_qualifiers_and_references(footnotes)
-		end
-
 		do_verb_form(args.pres, args.pres_qual, preses, skip_pres_if_empty)
 		-- We want to include both the pres_1s and pres_3s if there is a vowel alternation in the present singular. But we
 		-- don't want to redundantly include the pres_3s if we already included it.
@@ -1341,7 +1336,8 @@ pos_functions["verbs"] = {
 		) then
 			data.heads = {}
 			for _, lemma_obj in ipairs(alternant_multiword_spec.forms.infinitive_linked) do
-				local quals, refs = expand_footnotes_and_references(lemma_obj.footnotes)
+				local quals, refs = require(inflection_utilities_module).
+					convert_footnotes_to_qualifiers_and_references(lemma_obj.footnotes)
 				table.insert(data.heads, {term = lemma_obj.form, q = quals, refs = refs})
 			end
 		end
