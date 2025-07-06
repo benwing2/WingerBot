@@ -1,5 +1,6 @@
 local export = {}
 
+local debug_track_module = "Module:debug/track"
 local labels_module = "Module:labels"
 local links_module = "Module:links"
 local parameter_utilities_module = "Module:parameter utilities"
@@ -7,6 +8,11 @@ local parse_utilities_module = "Module:parse utilities"
 local pron_qualifier_module = "Module:pron qualifier"
 
 
+local function track(page)
+	return require(debug_track_module)("nyms/" .. page)
+end
+
+	
 local function wrap_span(text, lang, sc)
 	return '<span class="' .. sc .. '" lang="' .. lang .. '">' .. text .. '</span>'
 end
@@ -21,8 +27,15 @@ end
 function export.nyms(frame)
 	local parent_args = frame:getParent().args
 
-	-- FIXME: Temporary error message.
+	-- FIXME: Temporary error message and tracking.
 	for arg, _ in pairs(parent_args) do
+		if type(arg) == "string" and arg:find("^lb[0-9]*$") then
+			local llarg = arg:gsub("^lb", "ll")
+			error(("%s= is deprecated; use %s= instead, per the documentation"):format(arg, llarg))
+		end
+		if arg == "q" or arg == "qq" then
+			track(arg)
+		end
 		if type(arg) == "string" and arg:find("^tag[0-9]*$") then
 			local larg = arg:gsub("^tag", "l")
 			local llarg = arg:gsub("^tag", "ll")
@@ -41,7 +54,7 @@ function export.nyms(frame)
 		{group = {"link", "ref", "l"}},
 		-- For compatibility, we don't distinguish q= from q1= and qq= from q1=. FIXME: Maybe we should change this.
 		{group = "q", separate_no_index = false},
-		{param = "lb", alias_of = "ll"},
+		{param = "lb", deprecated = true},
 	}
 	
 	local special_separators = mw.clone(m_param_utils.default_special_separators)
@@ -77,6 +90,9 @@ function export.nyms(frame)
 	local parts = {}
 	local thesaurus_parts = {}
 	for i, item in ipairs(data.items) do
+		if item.lb then
+			error("Inline modifier <lb:...> is deprecated; use <ll:...> per the documentation")
+		end
 		local explicit_item_lang = item.lang
 		item.lang = item.lang or data.lang
 		item.sc = item.sc or data.sc
