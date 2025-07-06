@@ -2,6 +2,7 @@ local export = {}
 
 local anchors_module = "Module:anchors"
 local debug_track_module = "Module:debug/track"
+local headword_data_module = "Module:headword/data"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
@@ -53,11 +54,6 @@ end
 local function full_link(...)
 	full_link = require(links_module).full_link
 	return full_link(...)
-end
-
-local function gsplit(...)
-	gsplit = require(string_utilities_module).gsplit
-	return gsplit(...)
 end
 
 local function is_preview(...)
@@ -212,7 +208,7 @@ local function parse_form_of_directive(value, param)
 	end
 	if not m_place.all_form_of_directives[new_directive] then
 		local known_directives = {}
-		for k, _ in pairs(export.all_form_of_directives) do
+		for k, _ in pairs(m_place.all_form_of_directives) do
 			insert(known_directives, '"' .. k .. '"')
 		end
 		table.sort(known_directives)
@@ -326,12 +322,10 @@ local function handle_definition_template(data)
 					return t
 				end
 
-				-- If tcl= given, copy its values into the numeric args.
+				-- If tcl= given, copy its value into the numeric args.
 				if tcl_arg then
-					for tcl_val in gsplit(tcl_arg, ";;") do
-						place_args[next_numarg] = tcl_val
-						next_numarg = next_numarg + 1
-					end
+					place_args[next_numarg] = tcl_arg
+					next_numarg = next_numarg + 1
 					place_args.a = nil
 				end
 
@@ -368,6 +362,9 @@ local function handle_definition_template(data)
 				place_args["sort"] = data.sort
 				if data.nocat then
 					place_args["nocat"] = "1"
+				end
+				if transclude_args.place_addl then
+					place_args.addl = transclude_args.place_addl
 				end
 				if data.no_gloss then
 					place_args["def"] = "-"
@@ -474,6 +471,7 @@ function export.show(frame)
 		-- place_init_of= (or more generally, any of the form-of directives that are marked as `default_foreign`); to
 		-- disable the postposed display in that case, use `place_translation_follows=0`.
 		place_translation_follows = boolean,
+		place_addl = true,
 		lb = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
 		nolb = true, -- can have multiple comma-separated or (for compatibility) semicolon-separated labels
 		nocat = boolean,
@@ -481,6 +479,7 @@ function export.show(frame)
 		t = list,
 		indent = true,
 		dot = boolean,
+		pagename = true,
 	}
 	for _, extra_arg_spec in ipairs(m_place.extra_info_args) do
 		params["place_" .. extra_arg_spec.arg] = list
@@ -491,6 +490,7 @@ function export.show(frame)
 	end
 
    	local args = process_params(frame:getParent().args, params)
+	local pagename = args.pagename or mw.loadData(headword_data_module).pagename
 
 	local language = args[1]
 	local language_code = language:getCode()
@@ -525,7 +525,10 @@ function export.show(frame)
 	local source_langname = source_lang:getFullName()
 	local ids = args.id and split(args.id, ",") or {""}
 	local sort = args.sort
-	local source_is_current_page = mw.title.getCurrentTitle().text == source
+	if source == "+" then
+		source = pagename
+	end
+	local source_is_current_page = source == pagename
 	local copy_sortkey = (sort == nil) and source_is_current_page
 	local no_gloss = args.nogloss
 	local labels = args.lb and split_labels(args.lb) or {}
