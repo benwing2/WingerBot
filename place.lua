@@ -744,7 +744,7 @@ TODO/FIXME:
 17. [DONE] Cities like Tokyo have special wards; "prefecture-level cities" like Wuhan (which aren't really cities but we
 	treat them as such) have districts, subdistricts, etc. We need to support divs for cities and even named divisions
 	of cities (such as we already have for boroughs of New York City).
-18. It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
+18. [DONE] It should be allowed to set 'true' to any qualifier (which links it) and have it work correctly; qualifier lookup
     in [[Module:place]] needs to remove links first.
 19. [DONE] Categories 'Historical polities' and 'Historical political subdivisions' should be renamed 'Former ...' since
     "historic(al)" is ambiguous (cf. "historic counties" in England which are not former, but still have a legal
@@ -844,7 +844,7 @@ TODO/FIXME:
 35. {{tcl}} bugs:
 	a. [DONE] Lowercase initial letter in new-style {{place}} descriptions in {{tcl}}. Maybe we can have a setting
 	   tcl_nolc=1 to prevent this from happening.
-	b. tcl= and probably new-style {{place}} descriptions in general should recognize ;; to separate distinct {{place}}
+	b. [DONE] tcl= and probably new-style {{place}} descriptions in general should recognize ;; to separate distinct {{place}}
 	   descriptions, and similarly ;;and as the equivalent of regular `;and`, etc.
     c. [DONE] The value supplied in `modern=` should be displayed in {{tcl}} descriptions regardless of the setting that
 	   normally disables this, so that e.g. the foreign-language equivalent of [[British Honduras]] doesn't just say
@@ -852,7 +852,7 @@ TODO/FIXME:
 	   gives, place_modern= in {{tcl}}, that should override the modern= value and still display.
 	d. [DONE] The page supplied to {{tcl}} should be used for generating bare categories even if t= is supplied and
 	   overrides the English term displayed. [DONE]
-	e. If text follows {{place}} and begins with a semicolon, the semicolon isn't copied into {{tcl}}.
+	e. [DONE] If text follows {{place}} and begins with a semicolon, the semicolon isn't copied into {{tcl}}.
 36. County boroughs used as holonyms currently display 'borough county borough' because there's an affix setting for
 	'county borough' and a fallback display handler for 'borough'. We need to rethink this; maybe merge the affix
 	setting and display handlers.
@@ -913,6 +913,7 @@ The key is the form-of directive and the value is an object with the following p
 export.all_form_of_directives = {
 	["former name of"] = {text = "+", type_prefix = "FORMER_NAME_OF"},
 	["fmr of"] = {alias_of = "former name of"},
+	["ancient name of"] = {text = "+", type_prefix = "FORMER_NAME_OF"},
 	["official name of"] = {text = "+", type_prefix = "OFFICIAL_NAME_OF"},
 	["former official name of"] = {text = "+", type_prefix = "FORMER_OFFICIAL_NAME_OF"},
 	["long form of"] = {text = "+", type_prefix = "LONG_FORM_OF"},
@@ -1384,7 +1385,8 @@ end
 
 --[==[
 Parse a "new-style" place description, with placetypes and holonyms surrounded by `<<...>>` amid otherwise raw text.
-Return value is an object as documented at the top of the file. Exported for use by [[Module:demonyms]].
+Return value is a place description object as documented at the top of the file. Exported for use by
+[[Module:demonyms]].
 ]==]
 function export.parse_new_style_place_desc(text, lang, form_of_directives, form_of_overridden_args)
 	local placetypes = {}
@@ -1476,6 +1478,27 @@ function export.parse_new_style_place_desc(text, lang, form_of_directives, form_
 end
 
 
+--[==[
+Parse one or more "new-style" place descriptions, with placetypes and holonyms surrounded by `<<...>>` amid otherwise
+raw text. Multiple descriptions are separated by two semicolons in a row. Return value is a list of place description
+objects as documented at the top of the file.
+]==]
+local function parse_conjoined_new_style_place_desc(text, lang, form_of_directives, form_of_overridden_args)
+	local separate_specs = split(text, ";(;[^ ]*)")
+	local descs = {}
+	for i = 1, #separate_specs do
+		if i % 2 == 1 then
+			insert(descs, export.parse_new_style_place_desc(separate_specs[i], lang, form_of_directives,
+				form_of_overridden_args))
+			form_of_directives = nil
+		else
+			descs[#descs].separator = separate_specs[i]
+		end
+	end
+	return descs
+end
+
+
 --[=[
 Process numeric and "extra info" arguments into an overall place spec, as described at the top of the file. `data` is an
 object with the following fields:
@@ -1495,9 +1518,25 @@ local function parse_overall_place_spec(data)
 	-- the placetypes that precede the holonyms. 1 means we've seen no holonyms but have already processed the
 	-- placetypes.
 	local holonym_index = 0
-	local place_desc_style
+	local in_place_desc = false
 
 	local form_of_directives = {}
+
+	local function set_desc_joiner(desc, separator)
+		if separator == ";" then
+			this_desc.joiner = "; "
+			this_desc.include_following_article = true
+		elseif separator == ";;" then
+			this_desc.joiner = " "
+		else
+			local joiner = separator:sub(2)
+			if rfind(joiner, "^%a") then
+				this_desc.joiner = " " .. joiner .. " "
+			else
+				this_desc.joiner = joiner .. " "
+			end
+		end
+	end
 
 	for _, arg in ipairs(args[2]) do
 		if arg:find("^@") then
@@ -1515,41 +1554,36 @@ local function parse_overall_place_spec(data)
 			if not this_desc then
 				error("Saw semicolon joiner without preceding place description")
 			end
-			if arg == ";" then
-				this_desc.joiner = "; "
-				this_desc.include_following_article = true
-			elseif arg == ";;" then
-				this_desc.joiner = " "
-			else
-				local joiner = arg:sub(2)
-				if rfind(joiner, "^%a") then
-					this_desc.joiner = " " .. joiner .. " "
-				else
-					this_desc.joiner = joiner .. " "
-				end
-			end
+			set_desc_joiner(this_desc, arg)
 			desc_index = desc_index + 1
 			holonym_index = 0
-			place_desc_style = nil
+			in_place_desc = false
 		else
 			if arg:find("<<") then
-				if place_desc_style then
-					-- error("New-style place description must come first and not follow another description without a separator")
-					track("new-not-first")
+				if in_place_desc then
+					error("New-style place description must come first or following a separator (semicolon or similar), not directly following another description")
 				end
-				place_desc_style = "new"
-				if holonym_index > 0 then
-					desc_index = desc_index + 1
-					holonym_index = 0
+				in_place_desc = true
+				local this_descs = parse_conjoined_new_style_place_desc(arg, args[1], form_of_directives,
+					form_of_overridden_args)
+				for j, desc in ipairs(this_descs) do
+					this_desc = desc
+					if holonym_index > 0 then
+						desc_index = desc_index + 1
+						holonym_index = 0
+					end
+					if j < #this_descs then
+						set_desc_joiner(this_desc, this_desc.separator)
+					end
+					descs[desc_index] = this_desc
+					last_was_new_style = true
+					holonym_index = #this_desc.holonyms + 1
 				end
-				this_desc = export.parse_new_style_place_desc(arg, args[1], form_of_directives, form_of_overridden_args)
-				descs[desc_index] = this_desc
-				last_was_new_style = true
-				holonym_index = #this_desc.holonyms + 1
 			else
-				if not place_desc_style then
-					place_desc_style = "old"
-				end
+				-- Old-style arguments can directly follow a new-style argument; they become additional holonyms
+				-- tacked onto the end of the holonym list, and are displayed old-style except that there is no
+				-- prefix before the first one following the new-style argument.
+				in_place_desc = true
 				if holonym_index == 0 then
 					local entry_placetypes = split_on_slash(arg)
 					this_desc = {placetypes = entry_placetypes, holonyms = {}}
@@ -1948,9 +1982,11 @@ local function format_holonym_in_context(entry_placetype, place_desc, holonym_in
 				end
 			else
 				local prev_holonym = place_desc.holonyms[holonym_index - 1]
-				if prev_holonym.placetype and holonym.display_placename ~= "and" and holonym.display_placename ~= "in"
-					and not holonym.suppress_comma then
-					desc = desc .. ","
+				if prev_holonym.placetype and not holonym.suppress_comma then
+					local dname = holonym.display_placename
+					if dname ~= "and" and dname ~= "in" and dname ~= "and the" and dname ~= "in the" then
+						desc = desc .. ","
+					end
 				end
 
 				if holonym.placetype or not holonym.display_placename:find("^,") then
@@ -1960,7 +1996,7 @@ local function format_holonym_in_context(entry_placetype, place_desc, holonym_in
 		end
 	end
 
-	return desc .. format_holonym(place_desc, holonym_index, holonym_index == 1)
+	return desc .. format_holonym(place_desc, holonym_index, not holonym_no_prefix and holonym_index == 1)
 end
 
 
@@ -2176,18 +2212,14 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 					-- for the city of [[Rio de Janeiro]], which displays as "a municipality, the state capital of ...".
 					track("multiple-placetypes-without-and-or-the")
 				end
-				ins(article)
-				ins(" ")
+				if article then
+					ins(article)
+					ins(" ")
+				end
 			end
 
 			ins(get_placetype_description(pt))
 		end
-	end
-
-	if args.also then
-		ins_space()
-		ins("and ")
-		ins(args.also)
 	end
 
 	if place_desc.holonyms then
@@ -2229,7 +2261,11 @@ local function format_old_style_place_desc_for_display(args, place_desc, desc_in
 		end
 		if with_article then
 			article = article or m_placetypes.get_placetype_article(place_desc.placetypes[1], ucfirst)
-			gloss = article .. " " .. gloss
+			if article then
+				gloss = article .. " " .. gloss
+			elseif ucfirst then
+				gloss = m_strutils.ucfirst(gloss)
+			end
 		end
 	end
 
@@ -2907,7 +2943,6 @@ function export.format(data)
 		["pagename"] = true, -- for testing or documentation purposes
 
 		["a"] = true,
-		["also"] = true,
 		["addl"] = true,
 		["def"] = true,
 
@@ -2930,15 +2965,12 @@ function export.format(data)
 		error("Cannot currently pass def= as an empty parameter; use def=- if you want to suppress the definition display")
 	end
 	local args = require("Module:parameters").process(template_args, params)
-	if args.also then
-		track("also")
-	end
 	if args.a then
 		track("a")
 		if args.a:find("^[Aa]n?$") or args.a:find("^[Tt]he$") then
 			track("a/article")
 		else
-			track("a/non-article")
+			error("a= can only be used to specify a definite or indefinite article (and preferably use |nocap=1 instead to get the initial letter lowercase); see especially the documentation on the [[Template:place#Mixed format|mixed format]], which can be used to add arbitrary text before the placetype")
 		end
 	end
 	data.args = args
