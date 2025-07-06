@@ -3,12 +3,12 @@ local export = {}
 local collation_module = "Module:collation"
 local debug_track_module = "Module:debug/track"
 local headword_data_module = "Module:headword/data"
+local JSON_module = "Module:JSON"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
 local pages_module = "Module:pages"
 local parameter_utilities_module = "Module:parameter utilities"
 local parameters_module = "Module:parameters"
-local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
 local pron_qualifier_module = "Module:pron qualifier"
 local qualifier_module = "Module:qualifier"
@@ -30,8 +30,6 @@ local trim = m_str_utils.trim
 local u = m_str_utils.char
 local dump = mw.dumpObject
 
-local TEMP_LEFT_DOUBLE_ANGLE = u(0xFFF0)
-local TEMP_RIGHT_DOUBLE_ANGLE = u(0xFFF1)
 
 local function track(page)
     require(debug_track_module)("columns/" .. page)
@@ -44,12 +42,9 @@ local function deepEquals(...)
 end
 
 local function term_already_linked(term)
-	-- FIXME: "<span" is an ugly hack to prevent double-linking of terms already run through {{l|...}}:
-	-- [[Thread:User talk:CodeCat/MewBot adding lang to column templates]]
-	-- Also make sure not to pass uses of {{ja-r/args}}, {{ryu-r/args}} or {{ko-l/args}} through full_link(),
-	-- which will mangle them.
-	return term:find("<span") or term:find("{{ja%-r|") or term:find("{{ryu%-r|") or term:find("{{ko%-l|")
-		or term == "?" -- ? signals an unknown term
+	return term == "?" or -- signals an unknown term
+		-- optimization to avoid unnecessarily loading [[Module:parse utilities]]
+		(term:find("[<{]") and require(parse_utilities_module).term_already_linked(term))
 end
 
 local function convert_delimiter_to_separator(item, itemind, args)
@@ -183,18 +178,22 @@ function export.construct_old_style_header(header, horiz)
 		return tostring(html("span"):addClass("ib-colon"):addClass("ib-content"):wikitext(":"))
 	end
 	if horiz then
-		old_style_header = require(qualifier_module).format_qualifiers({header}, "", "") .. ib_colon() ..  " "
+		old_style_header = require(qualifier_module).format_qualifiers {
+			qualifiers = header,
+			open = false,
+			close = false,
+		} .. ib_colon() ..  " "
 	else
-		old_style_header = require(qualifier_module).format_qualifiers({header}) .. ib_colon()
+		old_style_header = require(qualifier_module).format_qualifiers {
+			qualifiers = header
+		} .. ib_colon()
 		old_style_header = tostring(html("div"):wikitext(old_style_header))
 	end
 	return old_style_header
 end
 
--- Construct the sort base of a single item, using the display form preferentially, otherwise the term itself.
--- As a hack, sort appendices after mainspace items.
-local function item_sortbase(item)
-	local val = item.alt or item.term
+-- Construct the sort base of a single term. As a hack, sort appendices after mainspace items.
+local function term_sortbase(val)
 	if not val then
 		-- This should not normally happen.
 		return u(0x10FFFF)
@@ -203,6 +202,12 @@ local function item_sortbase(item)
 	else
 		return val
 	end
+end
+
+-- Construct the sort base of a single item, using the display form preferentially, otherwise the term itself.
+-- As a hack, sort appendices after mainspace items.
+local function item_sortbase(item)
+	return term_sortbase(item.alt or item.term)
 end
 
 local function make_sortbase(item)
@@ -261,6 +266,40 @@ local function sort_sublist(list, lang, make_sortbase, keepfirst, keeplast)
 			list[i] = sublist[i - keepfirst]
 		end
 	end
+end
+
+-- URL-encode only the characters that serve as template delimiters (left and right brace, vertical bar, equal sign
+-- and percent sign since it's the escape character).
+local function bot_url_encode(txt)
+	return (txt:gsub("[%%|{}=&]",
+		{["%"] = "%25", ["|"] =  "%7C", ["{"] = "%7B", ["}"] = "%7D", ["="] = "%3D", ["&"] = "%26"}))
+end
+
+-- Reverse the action of bot_url_encode().
+local function bot_url_decode(txt)
+	return (txt:gsub("%%7([BCD])", {B = "{", C = "|", D = "}"}):gsub("%%3D", "="):gsub("%%26", "&"):gsub("%%25", "%%"))
+end
+
+--[==[
+Bot-callable function to generate a number of sortkeys simultaneously. {{para|1}} contains the langcode, and remaining
+numeric parameters contain "bot-URL-encoded" strings whose sort keys will be computed and returned as a JSON array.
+Here, "bot-URL-encoded" means that the six characters `{ | } = & %` should be converted to
+their URL-encoded representation (respectively <code>%7B %7C %7D %3D %26 %25</code>), and will be decoded appropriately
+before computing the sortkey.
+]==]
+function export.make_sortkey(frame)
+	local iparams = {
+		[1] = {type = "language"},
+		[2] = {list = true},
+	}
+	local iargs = require(parameters_module).process(frame.args, iparams)
+	local make_sortkey = require(collation_module).make_lang_sortkey_function(iargs[1], term_sortbase)
+	local retval = {}
+	for _, arg in ipairs(iargs[2]) do
+		arg = bot_url_decode(arg)
+		insert(retval, make_sortkey(arg))
+	end
+	return require(JSON_module).toJSON(retval)
 end
 
 
@@ -551,24 +590,24 @@ function export.create_list(args)
 					end
 				end
 			end
+		end
 
-			if args.collapse or args.title_new_style then
-				-- wrap in wrapper to prevent interference from floating elements
-				local list_switcher_wrapper = html("div")
-					:addClass("list-switcher-wrapper")
-					
-				if args.title_new_style then
-					list_switcher_wrapper
-						:node(
-						html("div")
-							:addClass("list-switcher-header")
-							:wikitext(args.header)
-					)
-				end
+		if args.collapse or args.title_new_style then
+			-- wrap in wrapper to prevent interference from floating elements
+			local list_switcher_wrapper = html("div")
+				:addClass("list-switcher-wrapper")
 				
-				list_switcher_wrapper:node(output)
-				output = list_switcher_wrapper
+			if args.title_new_style then
+				list_switcher_wrapper
+					:node(
+					html("div")
+						:addClass("list-switcher-header")
+						:wikitext(args.header)
+				)
 			end
+			
+			list_switcher_wrapper:node(output)
+			output = list_switcher_wrapper
 		end
 
 		output = tostring(output)
@@ -706,7 +745,8 @@ function export.handle_display_from_or_topic_list(iargs, raw_item_args, topic_li
 	-- We can't set these defaults (even regardless of their dependency on horiz=) in `local params` above
 	-- because we want any defaults specified in `default_props` to override these.
 	if not processed_args.tilde_delim then
-		processed_args.tilde_delim = processed_args.horiz and "~" or " ~ "
+		local tilde_with_abbr = '<abbr title="near equivalent">~</abbr>'
+		processed_args.tilde_delim = processed_args.horiz and tilde_with_abbr or " " .. tilde_with_abbr .. " "
 	end
 	if not processed_args.space_delim then
 		processed_args.space_delim = "&nbsp;"
@@ -715,8 +755,9 @@ function export.handle_display_from_or_topic_list(iargs, raw_item_args, topic_li
 		processed_args.comma_delim = processed_args.horiz and "/" or ", "
 	end
 
-	-- Check for extra term indent. Do this before calling process_list_arguments() because sometimes space is a
-	-- delimiter and the space in the indent will confuse things and get interpreted as a delimiter.
+	-- Check for extra term indent. Do this before calling parse_list_with_inline_modifiers_and_separate_params()
+	-- because sometimes space is a delimiter and the space in the indent will confuse things and get interpreted as a
+	-- delimiter.
 	local extra_indent_by_termno = {}
 	local termargs = processed_args[first_content_param]
 	for i = 1, termargs.maxindex do
@@ -730,39 +771,7 @@ function export.handle_display_from_or_topic_list(iargs, raw_item_args, topic_li
 		end
 	end
 
-	local function handle_row_with_double_angle_brackets(data)
-		if data.term:find("<<.*>>") then
-			data.termobj.terms = {}
-			local raw = data.term:gsub("<<", TEMP_LEFT_DOUBLE_ANGLE):gsub(">>", TEMP_RIGHT_DOUBLE_ANGLE)
-			local parsed = require(parse_utilities_module).parse_balanced_segment_run(
-				raw, TEMP_LEFT_DOUBLE_ANGLE, TEMP_RIGHT_DOUBLE_ANGLE)
-			local function generate_obj(term, parse_err)
-				return data.generate_subobj({}, term, parse_err)
-			end
-			for i, term_with_mods in ipairs(parsed) do
-				term_with_mods = term_with_mods:gsub(TEMP_LEFT_DOUBLE_ANGLE, "<<"):gsub(TEMP_RIGHT_DOUBLE_ANGLE, ">>")
-				if i % 2 == 1 then
-					table.insert(data.termobj.terms, {raw_text = term_with_mods})
-				else
-					local inside = term_with_mods:match("^<<(.*)>>$")
-					if not inside then
-						error(("Internal error: Something wrong, couldn't match double angle brackets in term: %s"):
-							format(term_with_mods))
-					end
-					local obj = parse_inline_modifiers(inside, {
-						paramname = data.paramname,
-						param_mods = param_mods,
-						generate_obj = generate_obj,
-					})
-					end
-					table.insert(data.termobj.terms, obj)
-				end
-			end
-			return data.termobj
-		end
-	end
-
-	local groups, args = m_param_utils.process_list_arguments {
+	local groups, args = m_param_utils.parse_list_with_inline_modifiers_and_separate_params {
 		param_mods = param_mods,
 		processed_args = processed_args,
 		termarg = first_content_param,
@@ -823,9 +832,10 @@ function export.handle_display_from_or_topic_list(iargs, raw_item_args, topic_li
 			end
 
 			-- If a separate language code was given for the term, display the language name as a right qualifier.
-			-- Otherwise it may not be obvious that the term is in a separate language (e.g. if the main language is
-			-- 'zh' and the term language is a Chinese lect such as Min Nan). But don't do this for Translingual terms,
-			-- which are often added to the list of English and other-language terms.
+			-- (Briefly we made them labels but this leads to non-obvious behavior e.g. "French" becoming "France" under
+			-- some circumstances.) Otherwise it may not be obvious that the term is in a separate language (e.g. if the
+			-- main language is 'zh' and the term language is a Chinese lect such as Min Nan). But don't do this for
+			-- Translingual terms, which are often added to the list of English and other-language terms.
 			if item.termlangs then
 				local qqs = {}
 				for _, termlang in ipairs(item.termlangs) do
@@ -833,10 +843,10 @@ function export.handle_display_from_or_topic_list(iargs, raw_item_args, topic_li
 					if termlangcode ~= langcode and termlangcode ~= "mul" then
 						insert(qqs, termlang:getCanonicalName())
 					end
-					if item.qq then
-						for _, qq in ipairs(item.qq) do
-							insert(qqs, qq)
-						end
+				end
+				if item.qq then
+					for _, qq in ipairs(item.qq) do
+						insert(qqs, qq)
 					end
 				end
 				item.qq = qqs
@@ -886,7 +896,7 @@ function export.handle_display_from_or_topic_list(iargs, raw_item_args, topic_li
 		content = groups,
 		alphabetize = sort,
 		header = title,
-		title_new_style = not not topic_list_data,
+		title_new_style = (title ~= nil and title ~= ''),
 		collapse = collapse,
 		toggle_category = iargs.toggle_category,
 		-- columns-bg (in [[MediaWiki:Gadget-Site.css]]) provides the background color
