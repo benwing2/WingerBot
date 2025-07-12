@@ -1,6 +1,5 @@
 local export = {}
 
-
 --[=[
 
 Authorship: Ben Wing <benwing2>
@@ -34,15 +33,16 @@ local NAMESPACE = current_title.nsText
 local PAGENAME = current_title.text
 
 local u = require("Module:string/char")
-local rsplit = mw.text.split
-local rfind = mw.ustring.find
-local rmatch = mw.ustring.match
-local rgmatch = mw.ustring.gmatch
-local rsubn = mw.ustring.gsub
-local ulen = mw.ustring.len
-local usub = mw.ustring.sub
-local uupper = mw.ustring.upper
-local ulower = mw.ustring.lower
+local rsplit = m_string_utilities.split
+local rfind = m_string_utilities.find
+local rmatch = m_string_utilities.match
+local rgmatch = m_string_utilities.gmatch
+local rsubn = m_string_utilities.gsub
+local ulen = m_string_utilities.len
+local usub = m_string_utilities.sub
+local uupper = m_string_utilities.upper
+local ulower = m_string_utilities.lower
+local insert = table.insert
 
 -- version of rsubn() that discards all but the first return value
 local function rsub(term, foo, bar)
@@ -58,14 +58,23 @@ local function rsubb(term, foo, bar)
 end
 
 
-local vowel = "аоөүуыэяёюие"
-local vowel_c = "[" .. vowel .. "]"
+local lower_vowel = "аоөүуыэяёюие"
+local upper_vowel = uupper(lower_vowel)
+local vowel = lower_vowel .. upper_vowel
+local V = "[" .. vowel .. "]"
+local C = "[^" .. vowel .. "]"
 
-local jr = "йр"
-local voiced_cons_not_jr = "дмлнңбвгжз"
-local unvoiced_cons = "кпстфхчцшщ"
+local lower_jr = "йр"
+local upper_jr = uupper(lower_jr)
+local jr = lower_jr .. upper_jr
+local lower_voiced_cons_not_jr = "дмлнңбвгжз"
+local upper_voiced_cons_not_jr = uupper(lower_voiced_cons_not_jr)
+local voiced_cons_not_jr = lower_voiced_cons_not_jr .. upper_voiced_cons_not_jr
+local lower_unvoiced_cons = "кпстфхчцшщ"
+local upper_unvoiced_cons = uupper(lower_unvoiced_cons)
+local unvoiced_cons = lower_unvoiced_cons .. upper_unvoiced_cons
 
-letter_classes = {
+local letter_classes = {
 	-- Subclasses of vowels. These are named after the predominant vowel of the associated suffix.
 	a_type_vowel = "аыяюу", -- low or high back vowels
 	e_type_vowel = "эие", -- front unrounded vowels
@@ -73,67 +82,79 @@ letter_classes = {
 	oe_type_vowel = "өү", -- front rounded vowels
 	y_type_vowel = "аыя", -- back unrounded vowels
 	u_type_vowel = "оёюу", -- back rounded vowels
-
-	-- Subclasses of final letters.
-	consonant = unvoiced_cons .. voiced_cons_not_jr .. jr,
-	vowel = vowel,
-	vowel_or_jr = vowel .. jr,
-	voiced_cons_not_jr = voiced_cons_not_jr,
-	voiced_cons = voiced_cons_not_jr .. jr,
-	unvoiced_cons = unvoiced_cons,
 }
 
+local function construct_vowel_harmony_table(spec)
+	local tab = {}
+	for _, triggers_result in ipairs(spec) do
+		local triggers, result = unpack(triggers_result)
+		for trigger in rgmatch(triggers, ".") do
+			tab[trigger] = result
+		end
+	end
+	return tab
+end
 
-local output_noun_slots = {
-	nom_s = "nom|s",
-	gen_s = "gen|s",
-	dat_s = "dat|s",
-	acc_s = "acc|s",
-	loc_s = "loc|s",
-	abl_s = "abl|s",
-	nom_p = "nom|p",
-	gen_p = "gen|p",
-	dat_p = "dat|p",
-	acc_p = "acc|p",
-	loc_p = "loc|p",
-	abl_p = "abl|p",
-	nom_1s_spos = "nom|1s|spos",
-	gen_1s_spos = "gen|1s|spos",
-	dat_1s_spos = "dat|1s|spos",
-	acc_1s_spos = "acc|1s|spos",
-	loc_1s_spos = "loc|1s|spos",
-	abl_1s_spos = "abl|1s|spos",
-	nom_1s_mpos = "nom|1s|mpos",
-	gen_1s_mpos = "gen|1s|mpos",
-	dat_1s_mpos = "dat|1s|mpos",
-	acc_1s_mpos = "acc|1s|mpos",
-	loc_1s_mpos = "loc|1s|mpos",
-	abl_1s_mpos = "abl|1s|mpos",
-	nom_2s_inform_spos = "nom|2s|inform|spos",
-	gen_2s_inform_spos = "gen|2s|inform|spos",
-	dat_2s_inform_spos = "dat|2s|inform|spos",
-	acc_2s_inform_spos = "acc|2s|inform|spos",
-	loc_2s_inform_spos = "loc|2s|inform|spos",
-	abl_2s_inform_spos = "abl|2s|inform|spos",
-	nom_2s_inform_mpos = "nom|2s|inform|mpos",
-	gen_2s_inform_mpos = "gen|2s|inform|mpos",
-	dat_2s_inform_mpos = "dat|2s|inform|mpos",
-	acc_2s_inform_mpos = "acc|2s|inform|mpos",
-	loc_2s_inform_mpos = "loc|2s|inform|mpos",
-	abl_2s_inform_mpos = "abl|2s|inform|mpos",
-	nom_2s_formal_spos = "nom|2s|formal|spos",
-	gen_2s_formal_spos = "gen|2s|formal|spos",
-	dat_2s_formal_spos = "dat|2s|formal|spos",
-	acc_2s_formal_spos = "acc|2s|formal|spos",
-	loc_2s_formal_spos = "loc|2s|formal|spos",
-	abl_2s_formal_spos = "abl|2s|formal|spos",
-	nom_2s_formal_mpos = "nom|2s|formal|spos",
-	gen_2s_formal_mpos = "gen|2s|formal|spos",
-	dat_2s_formal_mpos = "dat|2s|formal|spos",
-	acc_2s_formal_mpos = "acc|2s|formal|spos",
-	loc_2s_formal_mpos = "loc|2s|formal|spos",
-	abl_2s_formal_mpos = "abl|2s|formal|spos",
+local high_harmony_table = construct_vowel_harmony_table {
+	{ "эие", "и" }, -- front unrounded
+	{ "аыя", "ы" }, -- back unrounded
+	{ "өү", "ү" }, -- front rounded
+	{ "оёюу", "у" }, -- back rounded
 }
+local low_harmony_table = construct_vowel_harmony_table {
+	{ "эие", "е" }, -- front unrounded
+	{ "аыяюу", "а" }, -- back unrounded
+	{ "өү", "ө" }, -- front rounded
+	{ "оё", "о" }, -- back rounded
+}
+
+local cases = { "nom", "gen", "dat", "acc", "loc", "abl" }
+local non_possessed_numbers = { "s", "p" }
+local possessed_numbers = { "spos", "mpos" }
+local person_number_possession = { "1s", "2s_inform", "2s_formal", "3", "1p", "2p_inform", "2p_formal" }
+
+local person_number_possession_suffixes = {
+	["1s"] = "им",
+	["2s_inform"] = "иң",
+	["2s_formal"] = "иңиз",
+	["3"] = "Си",
+	["1p"] = "ибиз",
+	["2p_inform"] = "иңар",
+	["2p_formal"] = "иңиздар",
+}
+
+local case_suffixes = {
+	["nom"] = "",
+	["gen"] = "Нин",
+	["dat"] = "га", -- -а after 1s poss and 2s_inform poss, -на after 3 poss
+	["acc"] = "Ни",
+	["loc"] = "да", -- -нда after 3 poss
+	["abl"] = "дан", -- -ндан after 3 poss?
+}
+
+local function make_noun_slots()
+	for _, case in ipairs(cases) do
+		for _, possessed in ipairs { false, true} do
+			if possessed then
+				for _, person_number in ipairs(person_number_possession) do
+					for _, number in ipairs(possessed_numbers) do
+						local tag = ("%s_%s_%s"):format(case, person_number, number)
+						accel = tag:gsub("_", "|")
+						noun_slots[tag] = accel
+					end
+				end
+			else
+				for _, number in ipairs(non_possessed_numbers) do
+					local tag = ("%s_%s"):format(case, number)
+					accel = tag:gsub("_", "|")
+					noun_slots[tag] = accel
+				end
+			end
+		end
+	end
+end
+
+local noun_slots = make_noun_slots()
 
 
 local function skip_slot(decl_spec, slot)
@@ -142,10 +163,107 @@ local function skip_slot(decl_spec, slot)
 end
 
 
+local function combine_stem_ending(stem, ending)
+	if ending == "" then
+		return stem
+	end
+
+	local split_suffix = rsplit(ending, "(" .. V  .. ")")
+	local suffix_syls = {}
+	for i, sufpart in ipairs(split_suffix) do
+		if i == #sufpart and suffix_syls[1] or i % 2 == 0 then
+			suffix_syls[#suffix_syls] = suffix_syls[#suffix_syls] .. sufpart
+		else
+			insert(suffix_syls, sufpart)
+		end
+	end
+
+	for _, endsyl in ipairs(suffix_syls) do
+		local stem_init, stem_last_vowel, stem_final_cons_cluster = rmatch(stem, "^(.*)(" .. V .. ")(.-)$")
+		if not stem_last_vowel then
+			error(("Lemma or stem '%s' has no vowel, not sure how to implement vowel harmony"):format(stem))
+		end
+		local first_endsyl_letter = usub(endsyl, 1)
+		local endsyl_init, endsyl_vowel, endsyl_final = rmatch(endsyl, "^(.-)(" .. V .. ")(.*)$")
+		if not endsyl_init then
+			error(("Internal error: Ending '%s' has no vowel"):format(endsyl))
+		end
+		if endsyl_vowel ~= "и" and endsyl_vowel ~= "а" then
+			error(("Internal error: All endsyl vowels should be high и or low а, but saw %s"):format(endsyl))
+		end
+		local harmony_table
+		if first_endsyl_vowel == "и" then
+			harmony_table = high_harmony_table
+		else
+			harmony_table = low_harmony_table
+		end
+		if endsyl_init == "" and stem_final_cons_cluster == "" then
+			endsyl_vowel = ""
+		else
+			endsyl_vowel = harmony_table[ulower(stem_last_vowel)]
+		end
+		if endsyl_init == "Л" then
+			if stem_final_cons_cluster == "" or rfind(stem_final_cons_cluster, "[" .. jr .. "]$") then
+				endsyl_init = "л"
+			else
+				endsyl_init = "д"
+		elseif endsyl_init == "Н" then
+			if stem_final_cons_cluster == "" then
+				endsyl_init = "н"
+			else
+				endsyl_init = "д"
+			end
+		elseif endsyl_init == "С" then
+			if stem_final_cons_cluster == "" then
+				endsyl_init = "с"
+			else
+				endsyl_init = ""
+			end
+		end
+		if rfind(stem_final_cons_cluster, "[" .. unvoiced_cons .. "]$") then
+			if endsyl_init == "д" then
+				endsyl_init = "т"
+			elseif endsyl_init == "г" then
+				endsyl_init = "к"
+			end
+		end
+		if endsyl_init == "" then
+			stem_final_cons_cluster = rsub(stem_final_cons_cluster, "[пПкК]$", {
+				["п"] = "б",
+				["П"] = "Б",
+				["к"] = "г",
+				["К"] = "Г",
+			})
+		end
+		stem = stem_init .. stem_last_vowel .. stem_final_cons_cluster .. endsyl_init .. endsyl_vowel .. endsyl_final
+	end
+
+	return stem
+end
+
+
 local function decline_noun(decl_spec, lemma)
-	local lowercase_lemma = ulower(lemma)
-	local last_letter = usub(lowercase_lemma, -1)
-	local last_vowel = rsub(lowercase_lemma, "^.*(" .. vowel_c .. ").-$", "%1")
+	local function make_form(stem, number, possession, case)
+		local number_ending, possession_ending, case_ending
+		if number == "s" then
+			number_ending = ""
+		else
+			number_ending = "Лар"
+		end
+		possession_ending = possession and person_number_possession_suffixes[possession] or ""
+		case_ending = case_suffixes[case]
+		if case == "dat" then
+			if possession == "1s" or possession == "2s_inform" then
+				case_ending = "а"
+			elseif possession == "3" then
+				case_ending = "на"
+			end
+		elseif (case == "loc" or case == "abl") and possession == "3" then
+			case_ending == "н" .. case_ending
+		end
+		return combine_stem_ending(combine_stem_ending(
+			combine_stem_ending(stem, number_ending), possession_ending), case_ending)
+	end
 
 	local function add(slot, endings)
 		if skip_slot(decl_spec, slot) then
@@ -171,288 +289,101 @@ local function decline_noun(decl_spec, lemma)
 		iut.insert_form(decl_spec.forms, "nom_s", {form=lemma})
 	end
 
-	add("nom_p", {
-		a_type_vowel = { vowel_or_jr = "лар", voiced_cons_not_jr = "дар", unvoiced_cons = "тар" },
-		e_type_vowel = { vowel_or_jr = "лер", voiced_cons_not_jr = "дер", unvoiced_cons = "тер" },
-		o_type_vowel = { vowel_or_jr = "лор", voiced_cons_not_jr = "дор", unvoiced_cons = "тор" },
-		oe_type_vowel = { vowel_or_jr = "лөр", voiced_cons_not_jr = "дөр", unvoiced_cons = "төр" },
-	})
-	add("gen_s", {
-		y_type_vowel = { vowel = "нын", voiced_cons = "дын", unvoiced_cons = "тын" },
-		e_type_vowel = { vowel = "нин", voiced_cons = "дин", unvoiced_cons = "тин" },
-		u_type_vowel = { vowel = "нун", voiced_cons = "дун", unvoiced_cons = "тун" },
-		oe_type_vowel = { vowel = "нүн", voiced_cons = "дүн", unvoiced_cons = "түн" },
-	})
-    add("gen_p", {
-        a_type_vowel = { vowel_or_jr = "лардын", voiced_cons_not_jr = "дардын", unvoiced_cons = "тардын" },
-        e_type_vowel = { vowel_or_jr = "лердин", voiced_cons_not_jr = "дердин", unvoiced_cons = "тердин" },
-        o_type_vowel = { vowel_or_jr = "лордун", voiced_cons_not_jr = "дордун", unvoiced_cons = "тордун" },
-        oe_type_vowel = { vowel_or_jr = "лөрдүн", voiced_cons_not_jr = "дөрдүн", unvoiced_cons = "төрдүн" },
-    })
-	add("dat_s", {
-		a_type_vowel = { vowel = "га", voiced_cons = "га", unvoiced_cons = "ка" },
-		e_type_vowel = { vowel = "ге", voiced_cons = "ге", unvoiced_cons = "ке" },
-		o_type_vowel = { vowel = "го", voiced_cons = "го", unvoiced_cons = "ко" },
-		oe_type_vowel = { vowel = "гө", voiced_cons = "гө", unvoiced_cons = "кө" },
-	})
-	add("dat_p", {
-		a_type_vowel = { vowel_or_jr = "ларга", voiced_cons_not_jr = "дарга", unvoiced_cons = "тарга" },
-		e_type_vowel = { vowel_or_jr = "лерге", voiced_cons_not_jr = "дерге", unvoiced_cons = "терге" },
-		o_type_vowel = { vowel_or_jr = "лорго", voiced_cons_not_jr = "дорго", unvoiced_cons = "торго" },
-		oe_type_vowel = { vowel_or_jr = "лөргө", voiced_cons_not_jr = "дөргө", unvoiced_cons = "төргө" },
-	})
-	add("acc_s", {
-		y_type_vowel = { vowel = "ны", voiced_cons = "ды", unvoiced_cons = "ты" },
-		e_type_vowel = { vowel = "ни", voiced_cons = "ди", unvoiced_cons = "ти" },
-		u_type_vowel = { vowel = "ну", voiced_cons = "ду", unvoiced_cons = "ту" },
-		oe_type_vowel = { vowel = "нү", voiced_cons = "дү", unvoiced_cons = "тү" },
-	})
-	add("acc_p", {
-		a_type_vowel = { vowel_or_jr = "ларды", voiced_cons_not_jr = "дарды", unvoiced_cons = "тарды" },
-		e_type_vowel = { vowel_or_jr = "лерди", voiced_cons_not_jr = "дерди", unvoiced_cons = "терди" },
-		o_type_vowel = { vowel_or_jr = "лорду", voiced_cons_not_jr = "дорду", unvoiced_cons = "торду" },
-		oe_type_vowel = { vowel_or_jr = "лөрдү", voiced_cons_not_jr = "дөрдү", unvoiced_cons = "төрдү" },
-	})
-	add("loc_s", {
-		a_type_vowel = { vowel = "да", voiced_cons = "да", unvoiced_cons = "та" },
-		e_type_vowel = { vowel = "де", voiced_cons = "де", unvoiced_cons = "те" },
-		o_type_vowel = { vowel = "до", voiced_cons = "до", unvoiced_cons = "то" },
-		oe_type_vowel = { vowel = "дө", voiced_cons = "дө", unvoiced_cons = "тө" },
-	})
-	add("loc_p", {
-		a_type_vowel = { vowel_or_jr = "ларда", voiced_cons_not_jr = "дарда", unvoiced_cons = "тарда" },
-		e_type_vowel = { vowel_or_jr = "лерде", voiced_cons_not_jr = "дерде", unvoiced_cons = "терде" },
-		o_type_vowel = { vowel_or_jr = "лордо", voiced_cons_not_jr = "дордо", unvoiced_cons = "тордо" },
-		oe_type_vowel = { vowel_or_jr = "лөрдө", voiced_cons_not_jr = "дөрдө", unvoiced_cons = "төрдө" },
-	})
-	add("abl_s", {
-		a_type_vowel = { vowel = "дан", voiced_cons = "дан", unvoiced_cons = "тан" },
-		e_type_vowel = { vowel = "ден", voiced_cons = "ден", unvoiced_cons = "тен" },
-		o_type_vowel = { vowel = "дон", voiced_cons = "дон", unvoiced_cons = "тон" },
-		oe_type_vowel = { vowel = "дөн", voiced_cons = "дөн", unvoiced_cons = "төн" },
-	})
-	add("abl_p", {
-		a_type_vowel = { vowel_or_jr = "лардан", voiced_cons_not_jr = "дардан", unvoiced_cons = "тардан" },
-		e_type_vowel = { vowel_or_jr = "лерден", voiced_cons_not_jr = "дерден", unvoiced_cons = "терден" },
-		o_type_vowel = { vowel_or_jr = "лордон", voiced_cons_not_jr = "дордон", unvoiced_cons = "тордон" },
-		oe_type_vowel = { vowel_or_jr = "лөрдөн", voiced_cons_not_jr = "дөрдөн", unvoiced_cons = "төрдөн" },
-	})
-	add("nom_1s_spos", {
-		y_type_vowel = { consonant = "ым", vowel = "м" },
-		e_type_vowel = { consonant = "им", vowel = "м" },
-		u_type_vowel = { consonant = "ум", vowel = "м" },
-		oe_type_vowel = { consonant = "үм", vowel = "м" },
-	})
-	add("nom_1s_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларым", voiced_cons_not_jr = "дарым", unvoiced_cons = "тарым" },
-		e_type_vowel = { vowel_or_jr = "лерим", voiced_cons_not_jr = "дерим", unvoiced_cons = "терим" },
-		o_type_vowel = { vowel_or_jr = "лорум", voiced_cons_not_jr = "дорум", unvoiced_cons = "торум" },
-		oe_type_vowel = { vowel_or_jr = "лөрүм", voiced_cons_not_jr = "дөрүм", unvoiced_cons = "төрүм" },
-	})
-	add("gen_1s_spos", {
-		y_type_vowel = { consonant = "ымдын", vowel = "мдын" },
-		e_type_vowel = { consonant = "имдин", vowel = "мдин" },
-		u_type_vowel = { consonant = "умдун", vowel = "мдун" },
-		oe_type_vowel = { consonant = "үмдүн", vowel = "мдүн" },
-	})
-    add("gen_1s_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларымдын", voiced_cons_not_jr = "дарымдын", unvoiced_cons = "тарымдын" },
-		e_type_vowel = { vowel_or_jr = "леримдин", voiced_cons_not_jr = "деримдин", unvoiced_cons = "теримдин" },
-		o_type_vowel = { vowel_or_jr = "лорумдун", voiced_cons_not_jr = "дорумдун", unvoiced_cons = "торумдун" },
-		oe_type_vowel = { vowel_or_jr = "лөрүмдүн", voiced_cons_not_jr = "дөрүмдүн", unvoiced_cons = "төрүмдүн" },
-    })
-	add("dat_1s_spos", {
-		y_type_vowel = { consonant = "ыма", vowel = "ма" },
-		e_type_vowel = { consonant = "име", vowel = "ме" },
-		u_type_vowel = { consonant = "ума", vowel = "ма" },
-		oe_type_vowel = { consonant = "үмө", vowel = "мө" },
-	})
-	add("dat_1s_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыма", voiced_cons_not_jr = "дарыма", unvoiced_cons = "тарыма" },
-		e_type_vowel = { vowel_or_jr = "лериме", voiced_cons_not_jr = "дериме", unvoiced_cons = "териме" },
-		o_type_vowel = { vowel_or_jr = "лорума", voiced_cons_not_jr = "дорума", unvoiced_cons = "торума" },
-		oe_type_vowel = { vowel_or_jr = "лөрүмө", voiced_cons_not_jr = "дөрүмө", unvoiced_cons = "төрүмө" },
-	})
-	add("acc_1s_spos", {
-		y_type_vowel = { consonant = "ымды", vowel = "мды" },
-		e_type_vowel = { consonant = "имди", vowel = "мди" },
-		u_type_vowel = { consonant = "умду", vowel = "мду" },
-		oe_type_vowel = { consonant = "үмдү", vowel = "мдү" },
-	})
-	add("acc_1s_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларымды", voiced_cons_not_jr = "дарымды", unvoiced_cons = "тарымды" },
-		e_type_vowel = { vowel_or_jr = "леримди", voiced_cons_not_jr = "деримди", unvoiced_cons = "теримди" },
-		o_type_vowel = { vowel_or_jr = "лорумду", voiced_cons_not_jr = "дорумду", unvoiced_cons = "торумду" },
-		oe_type_vowel = { vowel_or_jr = "лөрүмдү", voiced_cons_not_jr = "дөрүмдү", unvoiced_cons = "төрүмдү" },
-	})
-	add("loc_1s_spos", {
-		y_type_vowel = { consonant = "ымда", vowel = "мда" },
-		e_type_vowel = { consonant = "имде", vowel = "мде" },
-		u_type_vowel = { consonant = "умда", vowel = "мда" },
-		oe_type_vowel = { consonant = "үмдө", vowel = "мдө" },
-	})
-	add("loc_1s_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларымда", voiced_cons_not_jr = "дарымда", unvoiced_cons = "тарымда" },
-		e_type_vowel = { vowel_or_jr = "леримде", voiced_cons_not_jr = "деримде", unvoiced_cons = "теримде" },
-		o_type_vowel = { vowel_or_jr = "лорумда", voiced_cons_not_jr = "дорумда", unvoiced_cons = "торумда" },
-		oe_type_vowel = { vowel_or_jr = "лөрүмдө", voiced_cons_not_jr = "дөрүмдө", unvoiced_cons = "төрүмдө" },
-	})
-	add("abl_1s_spos", {
-		y_type_vowel = { consonant = "ымдан", vowel = "мдан" },
-		e_type_vowel = { consonant = "имден", vowel = "мден" },
-		u_type_vowel = { consonant = "умдан", vowel = "мдан" },
-		oe_type_vowel = { consonant = "үмдөн", vowel = "мдөн" },
-	})
-	add("abl_1s_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларымдан", voiced_cons_not_jr = "дарымдан", unvoiced_cons = "тарымдан" },
-		e_type_vowel = { vowel_or_jr = "леримден", voiced_cons_not_jr = "деримден", unvoiced_cons = "теримден" },
-		o_type_vowel = { vowel_or_jr = "лорумдан", voiced_cons_not_jr = "дорумдан", unvoiced_cons = "торумдан" },
-		oe_type_vowel = { vowel_or_jr = "лөрүмдөн", voiced_cons_not_jr = "дөрүмдөн", unvoiced_cons = "төрүмдөн" },
-	})
-	add("nom_2s_inform_spos", {
-		y_type_vowel = { consonant = "ың", vowel = "ң" },
-		e_type_vowel = { consonant = "иң", vowel = "ң" },
-		u_type_vowel = { consonant = "уң", vowel = "ң" },
-		oe_type_vowel = { consonant = "үң", vowel = "ң" },
-	})
-	add("nom_2s_inform_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларың", voiced_cons_not_jr = "дарың", unvoiced_cons = "тарың" },
-		e_type_vowel = { vowel_or_jr = "лериң", voiced_cons_not_jr = "дериң", unvoiced_cons = "териң" },
-		o_type_vowel = { vowel_or_jr = "лоруң", voiced_cons_not_jr = "доруң", unvoiced_cons = "торуң" },
-		oe_type_vowel = { vowel_or_jr = "лөрүң", voiced_cons_not_jr = "дөрүң", unvoiced_cons = "төрүң" },
-	})
-	add("gen_2s_inform_spos", {
-		y_type_vowel = { consonant = "ыңдын", vowel = "ңдын" },
-		e_type_vowel = { consonant = "иңдин", vowel = "ңдин" },
-		u_type_vowel = { consonant = "уңдун", vowel = "ңдун" },
-		oe_type_vowel = { consonant = "үңдүн", vowel = "ңдүн" },
-	})
-    add("gen_2s_inform_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңдын", voiced_cons_not_jr = "дарыңдын", unvoiced_cons = "тарыңдын" },
-		e_type_vowel = { vowel_or_jr = "лериңдин", voiced_cons_not_jr = "дериңдин", unvoiced_cons = "териңдин" },
-		o_type_vowel = { vowel_or_jr = "лоруңдун", voiced_cons_not_jr = "доруңдун", unvoiced_cons = "торуңдун" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңдүн", voiced_cons_not_jr = "дөрүңдүн", unvoiced_cons = "төрүңдүн" },
-    })
-	add("dat_2s_inform_spos", {
-		y_type_vowel = { consonant = "ыңа", vowel = "ңа" },
-		e_type_vowel = { consonant = "иңе", vowel = "ңе" },
-		u_type_vowel = { consonant = "уңа", vowel = "ңа" },
-		oe_type_vowel = { consonant = "үңө", vowel = "ңө" },
-	})
-	add("dat_2s_inform_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңа", voiced_cons_not_jr = "дарыңа", unvoiced_cons = "тарыңа" },
-		e_type_vowel = { vowel_or_jr = "лериңе", voiced_cons_not_jr = "дериңе", unvoiced_cons = "териңе" },
-		o_type_vowel = { vowel_or_jr = "лоруңа", voiced_cons_not_jr = "доруңа", unvoiced_cons = "торуңа" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңө", voiced_cons_not_jr = "дөрүңө", unvoiced_cons = "төрүңө" },
-	})
-	add("acc_2s_inform_spos", {
-		y_type_vowel = { consonant = "ыңды", vowel = "ңды" },
-		e_type_vowel = { consonant = "иңди", vowel = "ңди" },
-		u_type_vowel = { consonant = "уңду", vowel = "ңду" },
-		oe_type_vowel = { consonant = "үңдү", vowel = "ңдү" },
-	})
-	add("acc_2s_inform_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңды", voiced_cons_not_jr = "дарыңды", unvoiced_cons = "тарыңды" },
-		e_type_vowel = { vowel_or_jr = "лериңди", voiced_cons_not_jr = "дериңди", unvoiced_cons = "териңди" },
-		o_type_vowel = { vowel_or_jr = "лоруңду", voiced_cons_not_jr = "доруңду", unvoiced_cons = "торуңду" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңдү", voiced_cons_not_jr = "дөрүңдү", unvoiced_cons = "төрүңдү" },
-	})
-	add("loc_2s_inform_spos", {
-		y_type_vowel = { consonant = "ыңда", vowel = "ңда" },
-		e_type_vowel = { consonant = "иңде", vowel = "ңде" },
-		u_type_vowel = { consonant = "уңда", vowel = "ңда" },
-		oe_type_vowel = { consonant = "үңдө", vowel = "ңдө" },
-	})
-	add("loc_2s_inform_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңда", voiced_cons_not_jr = "дарыңда", unvoiced_cons = "тарыңда" },
-		e_type_vowel = { vowel_or_jr = "лериңде", voiced_cons_not_jr = "дериңде", unvoiced_cons = "териңде" },
-		o_type_vowel = { vowel_or_jr = "лоруңда", voiced_cons_not_jr = "доруңда", unvoiced_cons = "торуңда" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңдө", voiced_cons_not_jr = "дөрүңдө", unvoiced_cons = "төрүңдө" },
-	})
-	add("abl_2s_inform_spos", {
-		y_type_vowel = { consonant = "ыңдан", vowel = "ңдан" },
-		e_type_vowel = { consonant = "иңден", vowel = "ңден" },
-		u_type_vowel = { consonant = "уңдан", vowel = "ңдан" },
-		oe_type_vowel = { consonant = "үңдөн", vowel = "ңдөн" },
-	})
-	add("abl_2s_inform_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңдан", voiced_cons_not_jr = "дарыңдан", unvoiced_cons = "тарыңдан" },
-		e_type_vowel = { vowel_or_jr = "лериңден", voiced_cons_not_jr = "дериңден", unvoiced_cons = "териңден" },
-		o_type_vowel = { vowel_or_jr = "лоруңдан", voiced_cons_not_jr = "доруңдан", unvoiced_cons = "торуңдан" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңдөн", voiced_cons_not_jr = "дөрүңдөн", unvoiced_cons = "төрүңдөн" },
-	})
-	add("nom_2s_formal_spos", {
-		y_type_vowel = { consonant = "ыңыз", vowel = "ңыз" },
-		e_type_vowel = { consonant = "иңиз", vowel = "ңиз" },
-		u_type_vowel = { consonant = "уңуз", vowel = "ңуз" },
-		oe_type_vowel = { consonant = "үңүз", vowel = "ңүз" },
-	})
-	add("nom_2s_formal_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңыз", voiced_cons_not_jr = "дарыңыз", unvoiced_cons = "тарыңыз" },
-		e_type_vowel = { vowel_or_jr = "лериңиз", voiced_cons_not_jr = "дериңиз", unvoiced_cons = "териңиз" },
-		o_type_vowel = { vowel_or_jr = "лоруңуз", voiced_cons_not_jr = "доруңуз", unvoiced_cons = "торуңуз" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңүз", voiced_cons_not_jr = "дөрүңүз", unvoiced_cons = "төрүңүз" },
-	})
-	add("gen_2s_formal_spos", {
-		y_type_vowel = { consonant = "ыңыздын", vowel = "ңыздын" },
-		e_type_vowel = { consonant = "иңиздин", vowel = "ңиздин" },
-		u_type_vowel = { consonant = "уңуздун", vowel = "ңуздун" },
-		oe_type_vowel = { consonant = "үңүздүн", vowel = "ңүздүн" },
-	})
-    add("gen_2s_formal_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңыздын", voiced_cons_not_jr = "дарыңыздын", unvoiced_cons = "тарыңыздын" },
-		e_type_vowel = { vowel_or_jr = "лериңиздин", voiced_cons_not_jr = "дериңиздин", unvoiced_cons = "териңиздин" },
-		o_type_vowel = { vowel_or_jr = "лоруңуздун", voiced_cons_not_jr = "доруңуздун", unvoiced_cons = "торуңуздун" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңүздүн", voiced_cons_not_jr = "дөрүңүздүн", unvoiced_cons = "төрүңүздүн" },
-    })
-	add("dat_2s_formal_spos", {
-		y_type_vowel = { consonant = "ыңызга", vowel = "ңызга" },
-		e_type_vowel = { consonant = "иңизге", vowel = "ңизге" },
-		u_type_vowel = { consonant = "уңузга", vowel = "ңузга" },
-		oe_type_vowel = { consonant = "үңүзгө", vowel = "ңүзгө" },
-	})
-	add("dat_2s_formal_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңызга", voiced_cons_not_jr = "дарыңызга", unvoiced_cons = "тарыңызга" },
-		e_type_vowel = { vowel_or_jr = "лериңизге", voiced_cons_not_jr = "дериңизге", unvoiced_cons = "териңизге" },
-		o_type_vowel = { vowel_or_jr = "лоруңузга", voiced_cons_not_jr = "доруңузга", unvoiced_cons = "торуңузга" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңүзгө", voiced_cons_not_jr = "дөрүңүзгө", unvoiced_cons = "төрүңүзгө" },
-	})
-	add("acc_2s_formal_spos", {
-		y_type_vowel = { consonant = "ыңызды", vowel = "ңызды" },
-		e_type_vowel = { consonant = "иңизди", vowel = "ңизди" },
-		u_type_vowel = { consonant = "уңузду", vowel = "ңузду" },
-		oe_type_vowel = { consonant = "үңүздү", vowel = "ңүздү" },
-	})
-	add("acc_2s_formal_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңызды", voiced_cons_not_jr = "дарыңызды", unvoiced_cons = "тарыңызды" },
-		e_type_vowel = { vowel_or_jr = "лериңизди", voiced_cons_not_jr = "дериңизди", unvoiced_cons = "териңизди" },
-		o_type_vowel = { vowel_or_jr = "лоруңузду", voiced_cons_not_jr = "доруңузду", unvoiced_cons = "торуңузду" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңүздү", voiced_cons_not_jr = "дөрүңүздү", unvoiced_cons = "төрүңүздү" },
-	})
-	add("loc_2s_formal_spos", {
-		y_type_vowel = { consonant = "ыңызда", vowel = "ңызда" },
-		e_type_vowel = { consonant = "иңизде", vowel = "ңизде" },
-		u_type_vowel = { consonant = "уңузда", vowel = "ңузда" },
-		oe_type_vowel = { consonant = "үңүздө", vowel = "ңүздө" },
-	})
-	add("loc_2s_formal_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңызда", voiced_cons_not_jr = "дарыңызда", unvoiced_cons = "тарыңызда" },
-		e_type_vowel = { vowel_or_jr = "лериңизде", voiced_cons_not_jr = "дериңизде", unvoiced_cons = "териңизде" },
-		o_type_vowel = { vowel_or_jr = "лоруңузда", voiced_cons_not_jr = "доруңузда", unvoiced_cons = "торуңузда" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңүздө", voiced_cons_not_jr = "дөрүңүздө", unvoiced_cons = "төрүңүздө" },
-	})
-	add("abl_2s_formal_spos", {
-		y_type_vowel = { consonant = "ыңыздан", vowel = "ңыздан" },
-		e_type_vowel = { consonant = "иңизден", vowel = "ңизден" },
-		u_type_vowel = { consonant = "уңуздан", vowel = "ңуздан" },
-		oe_type_vowel = { consonant = "үңүздөн", vowel = "ңүздөн" },
-	})
-	add("abl_2s_formal_mpos", {
-		a_type_vowel = { vowel_or_jr = "ларыңыздан", voiced_cons_not_jr = "дарыңыздан", unvoiced_cons = "тарыңыздан" },
-		e_type_vowel = { vowel_or_jr = "лериңизден", voiced_cons_not_jr = "дериңизден", unvoiced_cons = "териңизден" },
-		o_type_vowel = { vowel_or_jr = "лоруңуздан", voiced_cons_not_jr = "доруңуздан", unvoiced_cons = "торуңуздан" },
-		oe_type_vowel = { vowel_or_jr = "лөрүңүздөн", voiced_cons_not_jr = "дөрүңүздөн", unvoiced_cons = "төрүңүздөн" },
-	})
+	-- 1. There are two types of stem vowel harmony, based on the last stem vowel: a-e-o-oe (which always occurs when
+	--    the first suffix vowel is low а/е/о/ө) vs. y-e-u-oe (which always occurs when the first suffix vowel is high
+	--    ы/и/у/ү).
+	-- 2. Endings can vary depending on the last sound of the stem in three possible ways:
+	--    (a) vowel_or_jr vs. voiced_cons_not_jr vs. unvoiced_cons;
+	--    (b) vowel vs. voiced_cons vs. unvoiced_cons;
+	--    (c) consonant vs. vowel.
+	-- 3. The following consonant suffix variations are found:
+	--    (a) Ending variation 2(a) is only associated with the plural suffix -лар, where л after vowel_or_jr becomes д
+	--        after voiced_cons_not_jr and т after unvoiced_cons.
+	--    (b) Ending variation 2(b) is associated with endings in н- after a vowel, changing to д after a voiced_cons
+	--        and т after an unvoiced_cons; or д or г after either vowel or voiced_cons, changing to the corresponding
+	--        unvoiced consonant т or к after an unvoiced_cons.
+	--    (c) Ending variation 2(c) is only associated with endings beginning with a high-harmonizing suffix vowel
+	--        ы/и/у/ү, which disappears after a vowel-final stem.
+	-- 4. The following types of vowel suffix variations are found:
+	--    (a) low-harmonizing а/е/о/ө;
+	--    (b) high-harmonizing ы/и/у/ү;
+	--    (c) partial low-harmonizing а/е/а/ө.
+	-- Based on this, we use capital letters in suffixes to indicate varying sounds and lowercase letters to indicate
+	-- fixed sounds. Specifically:
+	-- * Л: л/д/т variation.
+	-- * Н: н/д/т variation.
+	-- * Г: г/к variation.
+	-- * Д: д/т variation.
+	-- * О: low-harmonizing а/е/о/ө;
+	-- * А: partial low-harmonizing а/е/а/ө;
+	-- * У: high-harmonizing ы/и/у/ү.
+	-- We automatically determine which letters should be capitalized: the first letter is always capitalized, as are
+	-- all vowels. We also automatically determine whether to use a-e-o-oe vowel harmony or y-e-u-oe harmony based on
+	-- the first vowel of the suffix.
+	--
+	-- We can analyze the suffixes further:
+	-- 1. nom_s has no ending.
+	-- 2. gen_s uses -нин after a vowel, -дин after a consonant with voicing assimilation.
+	-- 3. dat_s uses -га with voicing assimilation. This drops to -а after 1s possessive -им, 2s informal possessive
+	--    -иң) and changes to -на after 3 possessive -(с)и.
+	-- 4. acc_s uses -ни after a vowel, -ди after a consonant with voicing assimilation.
+	-- 5. loc_s uses -да with voicing assimilation. This changes to -нда after 3 possessive -(с)и.
+	-- 6. abl_s uses -дан with voicing assimilation. FIXME: Does it change to -ндан after 3 possessive?
+	-- 7. plural uses -лар after a vowel or й/р, -дар after a consonant with voicing assimilation.
+	-- 8. 1s possessive uses -им after a consonant, dropping to -м after a vowel.
+	-- 9. 2s informal possessive uses -иң after a consonant, dropping to -ң after a vowel.
+	-- 10. 2s formal possessive uses -иңиз after a consonant, dropping to -ңиз after a vowel.
+	-- 11. 3s/3p possessive uses -и after a consonant, -си after a vowel.
+	-- 12. 1p uses -ибиз after a consonant, dropping to -биз after a vowel.
+	-- 13. 2p informal possessive uses -иңар after a consonant, dropping to -ңар after a vowel.
+	-- 14. 2p formal possessive uses -иңиздар after a consonant, dropping to -ңиздар after a vowel.
+	add("nom_p", "лaр", "aeo", "vowel_or_jr")
+	add("gen_s", "нун", "yeu", "vowel")
+	add("gen_p", "лардун", "aeo", "vowel_or_jr")
+	add("dat_s", "га", "aeo", "vowel")
+	add("dat_p", "ларга", "aeo", "vowel_or_jr")
+	add("acc_s", "ну", "yeu", "vowel")
+	add("acc_p", "ларду", "aeo", "vowel_or_jr")
+	add("loc_s", "да", "aeo", "vowel")
+	add("loc_p", "ларда", "aeo", "vowel_or_jr")
+	add("abl_s", "дан", "aeo", "vowel")
+	add("abl_p", "лардан", "aeo", "vowel_or_jr")
+	add("nom_1s_spos", "ум", "yeu", "consonant")
+	add("nom_1s_mpos", "лорум", "aeo", "vowel_or_jr")
+	add("gen_1s_spos", "умдун", "yeu", "consonant")
+	add("gen_1s_mpos", "лорумдун", "aeo", "vowel_or_jr")
+	add("dat_1s_spos", "ума", "yeu", "consonant")
+	add("dat_1s_mpos", "лорума", "aeo", "vowel_or_jr")
+	add("acc_1s_spos", "умду", "yeu", "consonant")
+	add("acc_1s_mpos", "лорумду", "aeo", "vowel_or_jr")
+	add("loc_1s_spos", "умда", "yeu", "consonant")
+	add("loc_1s_mpos", "лорумда", "aeo", "vowel_or_jr")
+	add("abl_1s_spos", "умдан", "yeu", "consonant")
+	add("abl_1s_mpos", "лорумдан", "aeo", "vowel_or_jr")
+	add("nom_2s_inform_spos", "уң", "yeu", "consonant")
+	add("nom_2s_inform_mpos", "лоруң", "aeo", "vowel_or_jr")
+	add("gen_2s_inform_spos", "уңдун", "yeu", "consonant")
+    add("gen_2s_inform_mpos", "лоруңдун", "aeo", "vowel_or_jr")
+	add("dat_2s_inform_spos", "уңа", "yeu", "consonant")
+	add("dat_2s_inform_mpos", "лоруңа", "aeo", "vowel_or_jr")
+	add("acc_2s_inform_spos", "уңду", "yeu", "consonant")
+	add("acc_2s_inform_mpos", "лоруңду", "aeo", "vowel_or_jr")
+	add("loc_2s_inform_spos", "уңда", "yeu", "consonant")
+	add("loc_2s_inform_mpos", "лоруңда", "aeo", "vowel_or_jr")
+	add("abl_2s_inform_spos", "уңдан", "yeu", "consonant")
+	add("abl_2s_inform_mpos", "лоруңдан", "aeo", "vowel_or_jr")
+	add("nom_2s_formal_spos", "уңуз", "yeu", "consonant")
+	add("nom_2s_formal_mpos", "лоруңуз", "aeo", "vowel_or_jr")
+	add("gen_2s_formal_spos", "уңуздун", "yeu",  "consonant")
+    add("gen_2s_formal_mpos", "лоруңуздун", "aeo", "vowel_or_jr")
+	add("dat_2s_formal_spos", "уңузга", "yeu", "consonant")
+	add("dat_2s_formal_mpos", "лоруңузга", "aeo", "vowel_or_jr")
+	add("acc_2s_formal_spos", "уңузду", "yeu", "consonant")
+	add("acc_2s_formal_mpos", "лоруңузду", "aeo", "vowel_or_jr")
+	add("loc_2s_formal_spos", "уңузда", "yeu", "consonant")
+	add("loc_2s_formal_mpos", "лоруңузда", "aeo", "vowel_or_jr")
+	add("abl_2s_formal_spos", "уңуздан", "yeu", "consonant")
+	add("abl_2s_formal_mpos", "лоруңуздан", "aeo", "vowel_or_jr")
 end
 
 
@@ -490,7 +421,7 @@ local function show_forms(decl_spec)
 	end
 	local props = {
 		lemmas = lemmas,
-		slot_table = output_noun_slots,
+		slot_table = noun_slots,
 		lang = lang,
 		include_translit = true,
 	}
