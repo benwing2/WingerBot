@@ -11,15 +11,13 @@ Authorship: Ben Wing <benwing2>
 TERMINOLOGY:
 
 -- "slot" = A particular combination of case/number.
-	 Example slot names for verbs are "gen_s" (genitive singular) and
-	 "abl_2s_inform_mpos" (ablative 2nd-singular informal multiple-possession).
+	 Example slot names for verbs are "aor_1s" (non-past aorist first-person singular) and
+	 "neg_dist_gen_past_2p_formal" (negative distant general past second-person plural formal).
 	 Each slot is filled with zero or more forms.
 
 -- "form" = The conjugated Kyrgyz form representing the value of a given slot.
 
--- "lemma" = The dictionary form of a given Kyrgyz term. Generally the nominative
-     masculine singular, but may occasionally be another form if the nominative
-	 masculine singular is missing.
+-- "lemma" = The dictionary form of a given Kyrgyz verb, i.e. the infinitive.
 ]=]
 
 local lang = require("Module:languages").getByCode("ky")
