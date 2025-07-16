@@ -102,7 +102,7 @@ local high_round_harmony_table = construct_vowel_harmony_table {
 	{ "аяоёыую", "у" }, -- back
 }
 local tenses = {
-	{ "pres", "aor|pres" }, -- non-past/aorist
+	{ "aor", "aor|non-past" }, -- non-past/aorist
 	{ "rec_past", "recent|past" },
 	{ "gen_past", "general|past" },
 	{ "dist_gen_past", "distant|general|past" },
@@ -164,9 +164,8 @@ local function make_verb_slots()
 	insert(verb_slots_list, { "past_part", "past|part" })
 	insert(verb_slots_list, { "fut_part", "fut|part" })
 	insert(verb_slots_list, { "neg_fut_part", "neg|fut|part" })
-	insert(verb_slots_list, { "trans_past_part", "transitory|past|part" })
-	insert(verb_slots_list, { "pres_pf_part", "pres|pf|part" })
-	insert(verb_slots_list, { "pres_impf_part", "pres|impf|part" })
+	insert(verb_slots_list, { "pres_pfv_part", "pres|pfv|part" })
+	insert(verb_slots_list, { "pres_impfv_part", "pres|impfv|part" })
 	insert(verb_slots_list, { "neg_pres_part", "neg|pres|part" })
 	for _, tense_accel in ipairs(tenses) do
 		for _, pos_neg in ipairs { "", "neg_" } do
@@ -197,7 +196,7 @@ local function combine_stem_ending(stem, ending)
 		return stem
 	end
 
-	local split_suffix = rsplit(ending, "(" .. V  .. ")")
+	local split_suffix = rsplit(ending, "([" .. vowel .. "Й])")
 	local suffix_syls = {}
 	for i, sufpart in ipairs(split_suffix) do
 		if i == #split_suffix and suffix_syls[1] or i % 2 == 0 then
@@ -213,30 +212,15 @@ local function combine_stem_ending(stem, ending)
 			error(("Lemma or stem '%s' has no vowel, not sure how to implement vowel harmony"):format(stem))
 		end
 		local first_endsyl_letter = usub(endsyl, 1)
-		local endsyl_init, endsyl_vowel, endsyl_final = rmatch(endsyl, "^(.-)(" .. V .. ")(.*)$")
+		local endsyl_init, endsyl_vowel, endsyl_final = rmatch(endsyl, "^(.-)([" .. vowel .. "Й])(.*)$")
 		if not endsyl_init then
 			endsyl_init = endsyl
 			endsyl_vowel = ""
 			endsyl_final = ""
-		else
-			if rfind(endsyl_vowel, "^[аиу]$") then
-				local harmony_table
-				if endsyl_vowel == "и" then
-					harmony_table = high_harmony_table
-				elseif endsyl_vowel == "у" then
-					harmony_table = high_round_harmony_table
-				else
-					harmony_table = low_harmony_table
-				end
-				if endsyl_init == "" and stem_final_cons_cluster == "" then
-					endsyl_vowel = ""
-				else
-					endsyl_vowel = harmony_table[ulower(stem_last_vowel)]
-				end
-			end
 		end
+		local endsyl_init_first, endsyl_init_butfirst = "", ""
 		if endsyl_init ~= "" then
-			local endsyl_init_first, endsyl_init_butfirst = rmatch(endsyl_init, "^(.)(.*)$")
+			endsyl_init_first, endsyl_init_butfirst = rmatch(endsyl_init, "^(.)(.*)$")
 			if endsyl_init_first == "Л" then
 				if stem_final_cons_cluster == "" or rfind(stem_final_cons_cluster, "[" .. jr .. "]$") then
 					endsyl_init_first = "л"
@@ -255,35 +239,57 @@ local function combine_stem_ending(stem, ending)
 				else
 					endsyl_init_first = ""
 				end
-			elseif endsyl_init_first == "Й" then
-				if stem_final_cons_cluster == "" then
-					endsyl_init_first = "й"
-				else
-					endsyl_init_first = "а"
-				end
 			elseif endsyl_init_first == "*" then
 				if stem_final_cons_cluster == "" then
 					endsyl_init_first = ulower(stem_last_vowel)
 					if endsyl_init_first == "е" then
 						endsyl_init_first = "э"
 						stem_last_vowel = stem_last_vowel == "Е" and "Э" or "э"
+					elseif endsyl_init_first == "я" then
+						endsyl_init_first = "а"
+					elseif endsyl_init_first == "ё" then
+						endsyl_init_first = "о"
 					end
 				else
 					error(("Internal error: * in ending %s cannot follow a consonant-final stem %s"):format(
 						ending, stem))
 				end
 			end
-			if rfind(stem_final_cons_cluster, "[" .. unvoiced_cons .. "]$") then
-				if endsyl_init_first == "д" then
-					endsyl_init_first = "т"
-				elseif endsyl_init_first == "г" then
-					endsyl_init_first = "к"
-				elseif endsyl_init_first == "б" then
-					endsyl_init_first = "п"
-				end
-			end
-			endsyl_init = endsyl_init_first .. endsyl_init_butfirst
 		end
+		if endsyl_vowel == "Й" then
+			if stem_final_cons_cluster == "" then
+				endsyl_init_first = "й"
+				endsyl_vowel = ""
+			else
+				endsyl_init_first = ""
+				endsyl_vowel = "а"
+			end
+		end
+		if rfind(endsyl_vowel, "^[аиу]$") then
+			local harmony_table
+			if endsyl_vowel == "и" then
+				harmony_table = high_harmony_table
+			elseif endsyl_vowel == "у" then
+				harmony_table = high_round_harmony_table
+			else
+				harmony_table = low_harmony_table
+			end
+			if endsyl_init == "" and stem_final_cons_cluster == "" then
+				endsyl_vowel = ""
+			else
+				endsyl_vowel = harmony_table[ulower(stem_last_vowel)]
+			end
+		end
+		if rfind(stem_final_cons_cluster, "[" .. unvoiced_cons .. "]$") then
+			if endsyl_init_first == "д" then
+				endsyl_init_first = "т"
+			elseif endsyl_init_first == "г" then
+				endsyl_init_first = "к"
+			elseif endsyl_init_first == "б" then
+				endsyl_init_first = "п"
+			end
+		end
+		endsyl_init = endsyl_init_first .. endsyl_init_butfirst
 		if endsyl_init == "" then
 			stem_final_cons_cluster = rsub(stem_final_cons_cluster, "[пПкК]$", {
 				["п"] = "б",
@@ -352,8 +358,10 @@ local function conjugate_verb(conj_spec, lemma)
 			local ending = (person_number == "3s" or person_number == "3p") and spec.ending_3sp or
 				spec["ending_" .. person_number]
 			if not ending then
-				local default_endings = spec.ending_type == "1" and default_person_number_suffixes_type_1 or
-					default_person_number_suffixes_type_2
+				local default_endings =
+					spec.ending_type == "1" and default_person_number_suffixes_type_1 or
+					spec.ending_type == "2" and default_person_number_suffixes_type_2 or
+					default_person_number_suffixes_type_3
 				ending = default_endings[person_number]
 			end
 			ending = resolve_ending(tense_stem, ending)
@@ -379,12 +387,12 @@ local function conjugate_verb(conj_spec, lemma)
 	end
 
 	make_tense { -- non-past/aorist
-		tense = "pres",
+		tense = "aor",
 		tense_ending = "Й",
 		ending_type = "3",
 	}
 	make_tense { -- negative non-past/aorist
-		tense = "neg_pres",
+		tense = "neg_aor",
 		tense_ending = "бай",
 		ending_type = "3",
 	}
@@ -407,7 +415,11 @@ local function conjugate_verb(conj_spec, lemma)
 		tense = "gen_past",
 		tense_ending = "ган",
 		ending_type = "2",
-		ending_1sg = {"ганмиң", "гам"},
+		ending_1s = function(stem)
+			local form1 = "!" .. combine_stem_ending(stem, "мин")
+			local form2 = "!" .. stem:gsub("н$", "м")
+			return {form1, form2}
+		end
 	}
 	make_tense { -- negative remote/general past
 		tense = "neg_gen_past",
@@ -424,23 +436,23 @@ local function conjugate_verb(conj_spec, lemma)
 		tense_ending = "ган эмес эле",
 		ending_type = "1",
 	}
-	make_tense { -- indirect/unwitnessed past, variant #1
+	make_tense { -- indirect/unwitnessed recent past, variant #1
 		tense = "indir_past",
 		tense_ending = "иптир",
 		ending_type = "2",
 	}
-	make_tense { -- indirect/unwitnessed past, variant #2
+	make_tense { -- indirect/unwitnessed recent past, variant #2
 		tense = "indir_past",
 		tense_ending = "ип",
 		ending_type = "2",
 		ending_3sp = {}, -- -тир required, so only one form
 	}
-	make_tense { -- negative indirect/unwitnessed past, variant #1
+	make_tense { -- negative indirect/unwitnessed recent past, variant #1
 		tense = "neg_indir_past",
 		tense_ending = "баптир",
 		ending_type = "2",
 	}
-	make_tense { -- negative indirect/unwitnessed past, variant #2
+	make_tense { -- negative indirect/unwitnessed recent past, variant #2
 		tense = "neg_indir_past",
 		tense_ending = "бап",
 		ending_type = "2",
@@ -521,7 +533,7 @@ local function conjugate_verb(conj_spec, lemma)
 		ending_2s_inform = {"", "гин"},
 		ending_2s_formal = "аңиз",
 		ending_3sp = "син",
-		ending_1p = {"Йлик", "Йли"},
+		ending_1p = {"Йли", "Йлик"},
 		ending_2p_inform = "гила",
 		ending_2p_formal = "аңиздар",
 	}
@@ -533,7 +545,7 @@ local function conjugate_verb(conj_spec, lemma)
 		ending_2s_inform = {"ба", "багин"},
 		ending_2s_formal = "баңиз",
 		ending_3sp = "басин",
-		ending_1p = {"байлик", "байли"},
+		ending_1p = {"байли", "байлик"},
 		ending_2p_inform = "багила",
 		ending_2p_formal = "баңиздар",
 	}
@@ -570,9 +582,8 @@ local function conjugate_verb(conj_spec, lemma)
 	add_single("past_part", "ган")
 	add_single("fut_part", make_future_part_ending)
 	add_single("neg_fut_part", "бас")
-	add_single("trans_past_part", "атир")
-	add_single("pres_pf_part", "ип")
-	add_single("pres_impf_part", "Й")
+	add_single("pres_pfv_part", "ип")
+	add_single("pres_impfv_part", "Й")
 	add_single("neg_pres_part", "бай")
 end
 
@@ -626,15 +637,24 @@ local function make_table(conj_spec)
 | colspan="2" | {inf}
 | colspan="999" rowspan="4" class="blank-end-row" |
 |-
-! rowspan="3" style="min-width:0" | participle
+! rowspan="6" style="min-width:0" | participle
 ! colspan="2" | past
 | colspan="2" | {past_part}
 |-
 ! colspan="2" | future
 | colspan="2" | {fut_part}
 |-
-! colspan="2" | transitory past
-| colspan="2" | {trans_past_part}
+! colspan="2" style="background-color: var(--wikt-palette-blue-3);" | negative future
+| colspan="2" style="background-color: var(--wikt-palette-blue-3);" | {neg_fut_part}
+|-
+! colspan="2" | present perfective
+| colspan="2" | {pres_pfv_part}
+|-
+! colspan="2" | present imperfective
+| colspan="2" | {pres_impfv_part}
+|-
+! colspan="2" style="background-color: var(--wikt-palette-blue-3);" | negative present
+| colspan="2" style="background-color: var(--wikt-palette-blue-3);" | {neg_pres_part}
 |-
 | class="separator" colspan="999" |
 |-
@@ -664,29 +684,7 @@ local function make_table(conj_spec)
 ! {siler}
 ! {sizder}
 ! {alar}
-|-
-! rowspan="2" style="min-width:0" | present
-! rowspan="2" class="secondary" | aorist
-! class="secondary" | positive
-| {pres_1s}
-| {pres_2s_inform}
-| {pres_2s_formal}
-| {pres_3s}
-| {pres_1p}
-| {pres_2p_inform}
-| {pres_2p_formal}
-| {pres_3p}
-|-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_pres_1s}
-| {neg_pres_2s_inform}
-| {neg_pres_2s_formal}
-| {neg_pres_3s}
-| {neg_pres_1p}
-| {neg_pres_2p_inform}
-| {neg_pres_2p_formal}
-| {neg_pres_3p}
-|- style="border-top: 3px solid black;"
+|- style="border-top: 2px solid black;"
 ! rowspan="13" style="min-width:0" | past
 ! rowspan="2" class="secondary" | recent
 ! class="secondary" | positive
@@ -699,16 +697,16 @@ local function make_table(conj_spec)
 | {rec_past_2p_formal}
 | {rec_past_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_rec_past_1s}
-| {neg_rec_past_2s_inform}
-| {neg_rec_past_2s_formal}
-| {neg_rec_past_3s}
-| {neg_rec_past_1p}
-| {neg_rec_past_2p_inform}
-| {neg_rec_past_2p_formal}
-| {neg_rec_past_3p}
-|- style="border-top: 2px solid black;"
+! style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_rec_past_3p}
+|-
 ! rowspan="2" class="secondary" | remote/general
 ! class="secondary" | positive
 | {gen_past_1s}
@@ -720,16 +718,16 @@ local function make_table(conj_spec)
 | {gen_past_2p_formal}
 | {gen_past_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_gen_past_1s}
-| {neg_gen_past_2s_inform}
-| {neg_gen_past_2s_formal}
-| {neg_gen_past_3s}
-| {neg_gen_past_1p}
-| {neg_gen_past_2p_inform}
-| {neg_gen_past_2p_formal}
-| {neg_gen_past_3p}
-|- style="border-top: 2px solid black;"
+! style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_gen_past_3p}
+|-
 ! rowspan="2" class="secondary" | distant remote/general
 ! class="secondary" | positive
 | {dist_gen_past_1s}
@@ -741,17 +739,17 @@ local function make_table(conj_spec)
 | {dist_gen_past_2p_formal}
 | {dist_gen_past_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_dist_gen_past_1s}
-| {neg_dist_gen_past_2s_inform}
-| {neg_dist_gen_past_2s_formal}
-| {neg_dist_gen_past_3s}
-| {neg_dist_gen_past_1p}
-| {neg_dist_gen_past_2p_inform}
-| {neg_dist_gen_past_2p_formal}
-| {neg_dist_gen_past_3p}
-|- style="border-top: 2px solid black;"
-! rowspan="2" class="secondary" | indirect/unwitnessed
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_dist_gen_past_3p}
+|-
+! rowspan="2" class="secondary" | indirect/unwitnessed recent
 ! class="secondary" | positive
 | {indir_past_1s}
 | {indir_past_2s_inform}
@@ -762,16 +760,16 @@ local function make_table(conj_spec)
 | {indir_past_2p_formal}
 | {indir_past_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_indir_past_1s}
-| {neg_indir_past_2s_inform}
-| {neg_indir_past_2s_formal}
-| {neg_indir_past_3s}
-| {neg_indir_past_1p}
-| {neg_indir_past_2p_inform}
-| {neg_indir_past_2p_formal}
-| {neg_indir_past_3p}
-|- style="border-top: 2px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_indir_past_3p}
+|-
 ! rowspan="2" class="secondary" | habitual
 ! class="secondary" | positive
 | {hab_past_1s}
@@ -783,16 +781,16 @@ local function make_table(conj_spec)
 | {hab_past_2p_formal}
 | {hab_past_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_hab_past_1s}
-| {neg_hab_past_2s_inform}
-| {neg_hab_past_2s_formal}
-| {neg_hab_past_3s}
-| {neg_hab_past_1p}
-| {neg_hab_past_2p_inform}
-| {neg_hab_past_2p_formal}
-| {neg_hab_past_3p}
-|- style="border-top: 2px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_past_3p}
+|-
 ! rowspan="2" class="secondary" | remote habitual
 ! class="secondary" | positive
 | {hab_rem_past_1s}
@@ -804,16 +802,16 @@ local function make_table(conj_spec)
 | {hab_rem_past_2p_formal}
 | {hab_rem_past_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_hab_rem_past_1s}
-| {neg_hab_rem_past_2s_inform}
-| {neg_hab_rem_past_2s_formal}
-| {neg_hab_rem_past_3s}
-| {neg_hab_rem_past_1p}
-| {neg_hab_rem_past_2p_inform}
-| {neg_hab_rem_past_2p_formal}
-| {neg_hab_rem_past_3p}
-|- style="border-top: 2px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_hab_rem_past_3p}
+|-
 ! class="secondary" | past unaccomplished
 ! class="secondary" |
 | {unaccomp_past_1s}
@@ -824,9 +822,30 @@ local function make_table(conj_spec)
 | {unaccomp_past_2p_inform}
 | {unaccomp_past_2p_formal}
 | {unaccomp_past_3p}
-|- style="border-top: 3px solid black;"
-! rowspan="2" style="min-width:0" | future
-! rowspan="2" class="secondary" | uncertain
+|- style="border-top: 2px solid black;"
+! rowspan="4" style="min-width:0" | non-past
+! rowspan="2" class="secondary" | aorist
+! class="secondary" | positive
+| {aor_1s}
+| {aor_2s_inform}
+| {aor_2s_formal}
+| {aor_3s}
+| {aor_1p}
+| {aor_2p_inform}
+| {aor_2p_formal}
+| {aor_3p}
+|-
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_aor_3p}
+|-
+! rowspan="2" class="secondary" | future uncertain
 ! class="secondary" | positive
 | {uncert_fut_1s}
 | {uncert_fut_2s_inform}
@@ -837,16 +856,16 @@ local function make_table(conj_spec)
 | {uncert_fut_2p_formal}
 | {uncert_fut_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_uncert_fut_1s}
-| {neg_uncert_fut_2s_inform}
-| {neg_uncert_fut_2s_formal}
-| {neg_uncert_fut_3s}
-| {neg_uncert_fut_1p}
-| {neg_uncert_fut_2p_inform}
-| {neg_uncert_fut_2p_formal}
-| {neg_uncert_fut_3p}
-|- style="border-top: 3px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_uncert_fut_3p}
+|- style="border-top: 2px solid black;"
 ! rowspan="2" style="min-width:0" | imperative/hortative
 ! rowspan="2" class="secondary" |
 ! class="secondary" | positive
@@ -859,16 +878,16 @@ local function make_table(conj_spec)
 | {imp_2p_formal}
 | {imp_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_imp_1s}
-| {neg_imp_2s_inform}
-| {neg_imp_2s_formal}
-| {neg_imp_3s}
-| {neg_imp_1p}
-| {neg_imp_2p_inform}
-| {neg_imp_2p_formal}
-| {neg_imp_3p}
-|- style="border-top: 3px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_imp_3p}
+|- style="border-top: 2px solid black;"
 ! rowspan="8" style="min-width:0" | conditional
 ! rowspan="2" class="secondary" | ''would'' type 1
 ! class="secondary" | positive
@@ -881,16 +900,16 @@ local function make_table(conj_spec)
 | {would_cond_1_2p_formal}
 | {would_cond_1_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_would_cond_1_1s}
-| {neg_would_cond_1_2s_inform}
-| {neg_would_cond_1_2s_formal}
-| {neg_would_cond_1_3s}
-| {neg_would_cond_1_1p}
-| {neg_would_cond_1_2p_inform}
-| {neg_would_cond_1_2p_formal}
-| {neg_would_cond_1_3p}
-|- style="border-top: 2px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_1_3p}
+|-
 ! rowspan="2" class="secondary" | ''would'' type 2
 ! class="secondary" | positive
 | {would_cond_2_1s}
@@ -902,16 +921,16 @@ local function make_table(conj_spec)
 | {would_cond_2_2p_formal}
 | {would_cond_2_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_would_cond_2_1s}
-| {neg_would_cond_2_2s_inform}
-| {neg_would_cond_2_2s_formal}
-| {neg_would_cond_2_3s}
-| {neg_would_cond_2_1p}
-| {neg_would_cond_2_2p_inform}
-| {neg_would_cond_2_2p_formal}
-| {neg_would_cond_2_3p}
-|- style="border-top: 2px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_would_cond_2_3p}
+|-
 ! rowspan="2" class="secondary" | counterfactual
 ! class="secondary" | positive
 | {cfact_cond_1s}
@@ -923,16 +942,16 @@ local function make_table(conj_spec)
 | {cfact_cond_2p_formal}
 | {cfact_cond_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_cfact_cond_1s}
-| {neg_cfact_cond_2s_inform}
-| {neg_cfact_cond_2s_formal}
-| {neg_cfact_cond_3s}
-| {neg_cfact_cond_1p}
-| {neg_cfact_cond_2p_inform}
-| {neg_cfact_cond_2p_formal}
-| {neg_cfact_cond_3p}
-|- style="border-top: 2px solid black;"
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_cfact_cond_3p}
+|-
 ! rowspan="2" class="secondary" | ''if''
 ! class="secondary" | positive
 | {if_cond_1s}
@@ -944,15 +963,15 @@ local function make_table(conj_spec)
 | {if_cond_2p_formal}
 | {if_cond_3p}
 |-
-! class="secondary" style="background-color: var(--wikt-palette-blue-4);" | negative
-| {neg_if_cond_1s}
-| {neg_if_cond_2s_inform}
-| {neg_if_cond_2s_formal}
-| {neg_if_cond_3s}
-| {neg_if_cond_1p}
-| {neg_if_cond_2p_inform}
-| {neg_if_cond_2p_formal}
-| {neg_if_cond_3p}
+! class="secondary" style="background-color: var(--wikt-palette-blue-3);" | negative
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_1s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_2s_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_2s_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_3s}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_1p}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_2p_inform}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_2p_formal}
+| style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_3p}
 ]=]
 
 	local footer = mw.getCurrentFrame():expandTemplate{ title = "inflection-table-bottom" }
