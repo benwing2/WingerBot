@@ -1,24 +1,74 @@
 local export = {}
 
-local table_module = "Module:table"
-local string_utilities_module = "Module:string utilities"
+local fun_is_callable_module = "Module:fun/isCallable"
+local languages_module = "Module:languages"
 local parse_utilities_module = "Module:parse utilities"
+local string_pattern_escape_module = "Module:string/patternEscape"
+local string_replacement_escape_module = "Module:string/replacementEscape"
+local string_utilities_module = "Module:string utilities"
+local table_module = "Module:table"
 
-local rfind = mw.ustring.find
-local rmatch = mw.ustring.match
-local rsplit = mw.text.split
-local rsubn = mw.ustring.gsub
 local dump = mw.dumpObject
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
--- version of rsubn() that discards all but the first return value
-local function rsub(term, foo, bar)
-	local retval = rsubn(term, foo, bar)
-	return retval
+local function escape_wikicode(...)
+	escape_wikicode = require(parse_utilities_module).escape_wikicode
+	return escape_wikicode(...)
 end
 
-local function track(track_id)
-	require("Module:debug/track")("headword utilities/" .. track_id)
-	return true
+local function get_lang(...)
+	get_lang = require(languages_module).getByCode
+	return get_lang(...)
+end
+
+local function insert_if_not(...)
+	insert_if_not = require(table_module).insertIfNot
+	return insert_if_not(...)
+end
+
+local function is_callable(...)
+	is_callable = require(fun_is_callable_module)
+	return is_callable(...)
+end
+
+local function parse_inline_modifiers(...)
+	parse_inline_modifiers = require(parse_utilities_module).parse_inline_modifiers
+	return parse_inline_modifiers(...)
+end
+
+local function pattern_escape(...)
+	pattern_escape = require(string_pattern_escape_module)
+	return pattern_escape(...)
+end
+
+local function replacement_escape(...)
+	replacement_escape = require(string_replacement_escape_module)
+	return replacement_escape(...)
+end
+
+local function shallow_copy(...)
+	shallow_copy = require(table_module).shallowCopy
+	return shallow_copy(...)
+end
+
+local function split(...)
+	split = require(string_utilities_module).split
+	return split(...)
+end
+
+local function term_contains_top_level_html(...)
+	term_contains_top_level_html = require(parse_utilities_module).term_contains_top_level_html
+	return term_contains_top_level_html(...)
+end
+
+local function ugsub(...)
+	ugsub = require(string_utilities_module).gsub
+	return ugsub(...)
+end
+
+local function umatch(...)
+	umatch = require(string_utilities_module).match
+	return umatch(...)
 end
 
 
@@ -29,11 +79,11 @@ local param_mods = {
 	l = {type = "labels"},
 	ll = {type = "labels"},
 	-- [[Module:headword]] expects part references in `.refs`.
-	ref = {item_dest = "refs", type = "references"},
+	ref = {item_dest = "refs", type = "references", store = "insert-flattened"},
 }
 
 local optional_param_mods = {
-	g = {item_dest = "genders", type= "genders"},
+	g = {item_dest = "genders", sublist = true},
 	alt = {},
 	lang = {type = "language"},
 	sc = {type = "script"},
@@ -95,10 +145,10 @@ function export.parse_term_with_modifiers(data)
 
 	-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude top-level HTML entry with <span ...>,
 	-- <sup> or similar in it.
-	if val:find("<") and not require(parse_utilities_module).term_contains_top_level_html(val) then
+	if val:find("<", nil, true) and not term_contains_top_level_html(val) then
 		local param_mods = param_mods
 		if data.include_mods or data.exclude_mods then
-			param_mods = require(table).shallowCopy(param_mods)
+			param_mods = shallow_copy(param_mods)
 			if data.include_mods then
 				for _, mod in ipairs(data.include_mods) do
 					if type(mod) == "table" then
@@ -128,7 +178,7 @@ function export.parse_term_with_modifiers(data)
 			end
 		end
 
-		return require(parse_utilities_module).parse_inline_modifiers(val, {
+		return parse_inline_modifiers(val, {
 			paramname = paramname,
 			param_mods = param_mods,
 			generate_obj = generate_obj,
@@ -167,7 +217,7 @@ function export.parse_term_list_with_modifiers(data)
 	for i, val in ipairs(forms) do
 		terms[i] = export.parse_term_with_modifiers {
 			paramname = i == 1 and first or type(restpref) == "number" and restpref + i - 1 or
-				restpref:find("\1") and restpref:gsub("\1", tostring(i)) or restpref .. i,
+				restpref:find("\1", nil, true) and restpref:gsub("\1", tostring(i)) or restpref .. i,
 			val = val,
 			frob = data.frob,
 			include_mods = data.include_mods,
@@ -233,7 +283,7 @@ glossary. (If the contents of <<...> contain a | in them, they are a two-part li
 function export.insert_inflection(data)
 	local headdata, terms, label = data.headdata, data.terms, data.label
 	if terms and terms[1] then
-		if label:find("<<") then
+		if label:find("<<", nil, true) then
 			label = label:gsub("<<(.-)|(.-)>>", export.glossary_link):gsub("<<(.-)>>", export.glossary_link)
 		end
 		if terms[1].term == "-" then
@@ -271,7 +321,7 @@ significant additional processing) into `headdata.inflections`. `data` is an obj
 function export.parse_and_insert_inflection(data)
 	local forms = data.forms
 	if forms and forms[1] then
-		data = require(table_module).shallowCopy(data)
+		data = shallow_copy(data)
 		data.forms = forms
 		data.terms = export.parse_term_list_with_modifiers(data)
 		export.insert_inflection(data)
@@ -293,10 +343,9 @@ function export.combine_qualifiers_or_labels(quals1, quals2)
 	if not quals2 then
 		return quals1
 	end
-	local m_table = require(table_module)
-	local combined = m_table.shallowCopy(quals1)
+	local combined = shallow_copy(quals1)
 	for _, note in ipairs(quals2) do
-		m_table.insertIfNot(combined, note)
+		insert_if_not(combined, note)
 	end
 	return combined
 end
@@ -329,8 +378,7 @@ end
 -- Default function to split a word on apostrophes. Don't split apostrophes at the beginning or end of a word (e.g.
 -- [['ndrangheta]] or [[po']]). Handle multiple apostrophes correctly, e.g. [[l'altr'ieri]] -> [[l']][altr']][[ieri]].
 function export.default_split_apostrophe(word, data)
-	local begapo, inner_word, endapo = word:match("^('*)(.-)('*)$")
-	local apostrophe_parts = rsplit(word, "'")
+	local apostrophe_parts = split(word, "'", true, true)
 	local linked_apostrophe_parts = {}
 	local apostrophes_at_beginning = ""
 	local i = 1
@@ -360,8 +408,8 @@ function export.default_split_apostrophe(word, data)
 		end
 		i = i + 1
 	end
-	for i, tolink in ipairs(linked_apostrophe_parts) do
-		linked_apostrophe_parts[i] = link_hyphen_split_component(tolink, data)
+	for j, tolink in ipairs(linked_apostrophe_parts) do
+		linked_apostrophe_parts[j] = link_hyphen_split_component(tolink, data)
 	end
 	return table.concat(linked_apostrophe_parts)
 end
@@ -387,18 +435,18 @@ to split, and the return value should be the split and linked word.
 local function add_single_word_links(space_word, data, term_has_spaces)
 	local space_word_no_punct, punct
 	local punct_pattern = data.punctuation
-	if punct_pattern == nil then
-		punct_pattern = "[,;:?!]"
-	end
-	if type(punct_pattern) == "function" then
+	if punct_pattern and is_callable(punct_pattern) then
 		space_word_no_punct, punct = punct_pattern(space_word)
-	elseif type(punct_pattern) == "string" then
-		space_word_no_punct, punct = rmatch(space_word, "^(.*)(" .. punct_pattern .. ")$")
+	else
+		if punct_pattern == nil then
+			punct_pattern = "[,;:?!]"
+		end
+		space_word_no_punct, punct = umatch(space_word, "^(.*)(" .. punct_pattern .. ")$")
 	end
 	space_word_no_punct = space_word_no_punct or space_word
 	punct = punct or ""
 	local words
-	if space_word_no_punct:find("^%-") or space_word_no_punct:find("%-$") then
+	if space_word_no_punct:sub(1, 1) == "-" or space_word_no_punct:sub(-1) == "-" then
 		-- don't split prefixes and suffixes
 		words = {space_word_no_punct}
 	else
@@ -408,7 +456,7 @@ local function add_single_word_links(space_word, data, term_has_spaces)
 		else
 			splitter = data.split_hyphen_when_no_space
 		end
-		if type(splitter) == "function" then
+		if is_callable(splitter) then
 			words = splitter(space_word_no_punct)
 			if type(words) == "string" then
 				return words .. punct
@@ -426,7 +474,7 @@ local function add_single_word_links(space_word, data, term_has_spaces)
 			end
 		end
 		if split_hyphen then
-			words = rsplit(space_word_no_punct, "%-")
+			words = split(space_word_no_punct, "-", true, true)
 		else
 			words = {space_word_no_punct}
 		end
@@ -440,7 +488,7 @@ local function add_single_word_links(space_word, data, term_has_spaces)
 		else
 			-- Don't split on apostrophes if the word is in `no_split_apostrophe_words`.
 			if (not data.no_split_apostrophe_words or not data.no_split_apostrophe_words[word]) and
-				data.split_apostrophe and word:find("'") then
+				data.split_apostrophe and word:find("'", nil, true) then
 				if data.split_apostrophe == true then
 					word = export.default_split_apostrophe(word, data)
 				else -- custom apostrophe splitter/linker
@@ -497,10 +545,10 @@ sense to split on hyphens by `no_split_apostrophe_words` and `include_hyphen_pre
 of particular words and are as described in the comment above add_single_word_links().
 ]=]
 function export.add_links_to_multiword_term(term, data)
-	if rfind(term, "[%[%]]") then
+	if term:match("[%[%]]") then
 		return term
 	end
-	local words = rsplit(term, " ")
+	local words = split(term, " ", true, true)
 	local term_has_spaces = #words > 1
 	local linked_words = {}
 	for _, word in ipairs(words) do
@@ -509,15 +557,7 @@ function export.add_links_to_multiword_term(term, data)
 	local retval = table.concat(linked_words, " ")
 	-- If we ended up with a single link consisting of the entire term,
 	-- remove the link.
-	local unlinked_retval = rmatch(retval, "^%[%[([^%[%]]*)%]%]$")
-	return unlinked_retval or retval
-end
-
-
--- Ensure that brackets display literally in error messages. Replacing with equivalent HTML escapes doesn't work
--- because they are displayed literally; but inserting a Unicode word-joiner symbol works.
-local function escape_wikicode(term)
-	return require(parse_utilities_module).escape_wikicode(term)
+	return retval:match("^%[%[([^%[%]]*)%]%]$") or retval
 end
 
 
@@ -554,7 +594,7 @@ and link multiword subterms using e.g. 'andare a letto:~'. (The code knows how t
 properly, and if the link text and destination are the same, only a single-part link is formed.)
 ]==]
 function export.apply_link_modifiers(linked_term, modifier_spec)
-	local split_modspecs = rsplit(modifier_spec, "%s*;%s*")
+	local split_modspecs = split(modifier_spec, "%s*;%s*")
 	for j, modspec in ipairs(split_modspecs) do
 		local subterm, dest, otherlang
 		local begin_from, begin_to, rest, end_from, end_to = modspec:match("^%[(.-):(.*)%]([^:]*)%[(.-):(.*)%]$")
@@ -592,7 +632,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 					dest = ("%s:%s"):format(otherlang, langdest)
 					otherlang = nil
 				elseif otherlang then
-					otherlang = require("Module:languages").getByCode(otherlang, true, "allow etym")
+					otherlang = get_lang(otherlang, true, "allow etym")
 					dest = langdest
 				end
 			end
@@ -609,16 +649,15 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 		elseif subterm == "$" then
 			linked_term = linked_term .. dest:gsub("_", " ")
 		else
-			if subterm:find("%[") then
+			if subterm:find("[", nil, true) then
 				error(("Subterm '%s' in modifier spec '%s' cannot have brackets in it"):format(
 					escape_wikicode(subterm), escape_wikicode(modspec)))
 			end
-			local strutil = require(string_utilities_module)
-			local escaped_subterm = strutil.pattern_escape(subterm)
+			local escaped_subterm = pattern_escape(subterm)
 			local subterm_re = "%[%[" .. escaped_subterm:gsub("(%%?[ '%-])", "%%]*%1%%[*") .. "%]%]"
 			local expanded_dest
-			if dest:find("~") then
-				expanded_dest = dest:gsub("~", strutil.replacement_escape(subterm))
+			if dest:find("~", nil, true) then
+				expanded_dest = dest:gsub("~", replacement_escape(subterm))
 			else
 				expanded_dest = dest
 			end
@@ -627,7 +666,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 			end
 
 			local subterm_replacement
-			if expanded_dest:find("%[") then
+			if expanded_dest:find("[", nil, true) then
 				-- Use the destination directly if it has brackets in it (e.g. to put brackets around parts of a word).
 				subterm_replacement = expanded_dest
 			elseif expanded_dest == subterm then
@@ -636,7 +675,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 				subterm_replacement = "[[" .. expanded_dest .. "|" .. subterm .. "]]"
 			end
 
-			local replaced_linked_term = rsub(linked_term, subterm_re, strutil.replacement_escape(subterm_replacement))
+			local replaced_linked_term = ugsub(linked_term, subterm_re, replacement_escape(subterm_replacement))
 			if replaced_linked_term == linked_term then
 				error(("Subterm '%s' could not be located in %slinked expression %s, or replacement same as subterm"):format(
 					subterm, j > 1 and "intermediate " or "", escape_wikicode(linked_term)))
