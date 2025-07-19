@@ -25,6 +25,7 @@ local m_table = require("Module:table")
 local m_string_utilities = require("Module:string utilities")
 local m_script_utilities = require("Module:script utilities")
 local iut = require("Module:inflection utilities")
+local parse_utilities_module = "Module:parse utilities"
 local m_para = require("Module:parameters")
 
 local current_title = mw.title.getCurrentTitle()
@@ -95,9 +96,13 @@ local round_harmony_table = construct_vowel_harmony_table {
 	{ "ыую", "у" }, -- high back
 }
 ]==]
-local high_round_harmony_table = construct_vowel_harmony_table {
+local u_harmony_table = construct_vowel_harmony_table {
 	{ "эеөиү", "ү" }, -- front
 	{ "аяоёыую", "у" }, -- back
+}
+local o_harmony_table = construct_vowel_harmony_table {
+	{ "эеөиү", "ө" }, -- front
+	{ "аяоёыую", "о" }, -- back
 }
 local tenses = {
 	{ "aor", "aor|non-past" }, -- non-past/aorist
@@ -156,15 +161,22 @@ local default_person_number_suffixes_type_3 = {
 }
 
 local verb_slots_list = {}
+local participles = {
+	{ "past_part", "past|part" },
+	{ "fut_part", "fut|part" },
+	{ "neg_fut_part", "neg|fut|part" },
+	{ "pres_pfv_part", "pres|pfv|part" },
+	{ "pres_impfv_part", "pres|impfv|part" },
+	{ "neg_pres_part", "neg|pres|part" },
+}
 
 local function make_verb_slots()
 	insert(verb_slots_list, { "inf", "inf" })
-	insert(verb_slots_list, { "past_part", "past|part" })
-	insert(verb_slots_list, { "fut_part", "fut|part" })
-	insert(verb_slots_list, { "neg_fut_part", "neg|fut|part" })
-	insert(verb_slots_list, { "pres_pfv_part", "pres|pfv|part" })
-	insert(verb_slots_list, { "pres_impfv_part", "pres|impfv|part" })
-	insert(verb_slots_list, { "neg_pres_part", "neg|pres|part" })
+	insert(verb_slots_list, { "neg_inf", "neg|inf" })
+	for _, part_accel in ipairs(participles) do
+		local part, accel = unpack(part_accel)
+		insert(verb_slots_list, { part, accel })
+	end
 	for _, tense_accel in ipairs(tenses) do
 		for _, pos_neg in ipairs { "", "neg_" } do
 			local tense, accel_tense = unpack(tense_accel)
@@ -185,7 +197,45 @@ make_verb_slots()
 
 
 local function skip_slot(conj_spec, slot)
-	return false
+	return conj_spec.args[slot]
+end
+
+
+local function fetch_footnotes(separated_group)
+	local footnotes
+	for j = 2, #separated_group - 1, 2 do
+		if separated_group[j + 1] ~= "" then
+			error("Extraneous text after bracketed footnotes: '" .. table.concat(separated_group) .. "'")
+		end
+		if not footnotes then
+			footnotes = {}
+		end
+		table.insert(footnotes, separated_group[j])
+	end
+	return footnotes
+end
+
+
+-- Process override for the participle arguments in `args`, storing the results into `forms`.
+local function process_overrides(forms, args)
+	for _, part_accel in ipairs(participles) do
+		local part, accel = unpack(part_accel)
+		if args[part] then
+			forms[part] = nil
+			if args[part] ~= "-" then
+				local put = require(parse_utilities_module)
+				local segments = put.parse_balanced_segment_run(args[part], "[", "]")
+				local comma_separated_groups = put.split_alternating_runs_on_comma(segments)
+				for i, comma_separated_group in ipairs(comma_separated_groups) do
+					local formobj = {
+						form = comma_separated_group[1],
+						footnotes = fetch_footnotes(comma_separated_group),
+					}
+					iut.insert_form(forms, part, formobj)
+				end
+			end
+		end
+	end
 end
 
 
@@ -197,7 +247,10 @@ local function combine_stem_ending(stem, ending)
 	local split_suffix = rsplit(ending, "([" .. vowel .. "Й])")
 	local suffix_syls = {}
 	for i, sufpart in ipairs(split_suffix) do
-		if i == #split_suffix and suffix_syls[1] or i % 2 == 0 then
+		-- Break into CV sequences but add a final consonant onto the preceding syllable, unless the
+		-- final "consonant" is "*" to repeat the vowel (as in the negative infinitive), in which case
+		-- it needs to be in the onset of the next "syllable".
+		if i == #split_suffix and suffix_syls[1] and sufpart ~= "*" or i % 2 == 0 then
 			suffix_syls[#suffix_syls] = suffix_syls[#suffix_syls] .. sufpart
 		else
 			insert(suffix_syls, sufpart)
@@ -209,7 +262,6 @@ local function combine_stem_ending(stem, ending)
 		if not stem_last_vowel then
 			error(("Lemma or stem '%s' has no vowel, not sure how to implement vowel harmony"):format(stem))
 		end
-		local first_endsyl_letter = usub(endsyl, 1)
 		local endsyl_init, endsyl_vowel, endsyl_final = rmatch(endsyl, "^(.-)([" .. vowel .. "Й])(.*)$")
 		if not endsyl_init then
 			endsyl_init = endsyl
@@ -252,6 +304,10 @@ local function combine_stem_ending(stem, ending)
 					error(("Internal error: * in ending %s cannot follow a consonant-final stem %s"):format(
 						ending, stem))
 				end
+			elseif endsyl_init_first == "#" then
+				endsyl_init_first = ""
+				-- delete preceding final consonant cluster
+				stem_final_cons_cluster = ""
 			end
 		end
 		if endsyl_vowel == "Й" then
@@ -263,12 +319,14 @@ local function combine_stem_ending(stem, ending)
 				endsyl_vowel = "а"
 			end
 		end
-		if rfind(endsyl_vowel, "^[аиу]$") then
+		if rfind(endsyl_vowel, "^[аиуО]$") then
 			local harmony_table
 			if endsyl_vowel == "и" then
 				harmony_table = high_harmony_table
 			elseif endsyl_vowel == "у" then
-				harmony_table = high_round_harmony_table
+				harmony_table = u_harmony_table
+			elseif endsyl_vowel == "О" then
+				harmony_table = o_harmony_table
 			else
 				harmony_table = low_harmony_table
 			end
@@ -348,30 +406,13 @@ local function conjugate_verb(conj_spec, lemma)
 		return form
 	end
 
-	local function make_tense(spec)
-		for _, person_number in ipairs(person_numbers) do
-			local stem_with_infix = person_number == "3p" and not spec.ending_3p and
-				add_stem_ending(conj_spec.stem, "иш") or conj_spec.stem
-			local tense_stem = add_stem_ending(stem_with_infix, spec.tense_ending)
-			local ending = (person_number == "3s" or person_number == "3p") and spec.ending_3sp or
-				spec["ending_" .. person_number]
-			if not ending then
-				local default_endings =
-					spec.ending_type == "1" and default_person_number_suffixes_type_1 or
-					spec.ending_type == "2" and default_person_number_suffixes_type_2 or
-					default_person_number_suffixes_type_3
-				ending = default_endings[person_number]
-			end
-			ending = resolve_ending(tense_stem, ending)
-			local slot = spec.tense .. "_" .. person_number
-			if type(ending) == "table" then
-				for _, e in ipairs(ending) do
-					insert_form(slot, add_stem_final_ending(spec, tense_stem, e))
-				end
-			else
-				insert_form(slot, add_stem_final_ending(spec, tense_stem, ending))
-			end
-		end
+	local function add_single(slot, ending)
+		insert_form(slot, add_stem_ending(conj_spec.stem, ending))
+	end
+
+	local function add_part(slot, ending)
+		add_single(slot, ending)
+		insert_form(slot .. "_3p", add_stem_ending(add_stem_ending(conj_spec.stem, "иш"), ending))
 	end
 
 	local function make_future_part_ending(stem)
@@ -384,14 +425,53 @@ local function conjugate_verb(conj_spec, lemma)
 		end
 	end
 
+	add_single("inf", function(stem)
+		return "!" .. conj_spec.lemma
+	end)
+	add_single("neg_inf", "бО*")
+
+	add_part("past_part", "ган")
+	add_part("fut_part", make_future_part_ending)
+	add_part("neg_fut_part", "бас")
+	add_part("pres_pfv_part", "ип")
+	add_part("pres_impfv_part", "Й")
+	add_part("neg_pres_part", "бай")
+
+	local function make_tense(spec)
+		for _, person_number in ipairs(person_numbers) do
+			local components = {}
+			if spec.part_base then
+				insert(components, conj_spec.forms[person_number == "3p" and spec.part_base .. "_3p" or spec.part_base])
+			else
+				insert(components, person_number == "3p" and not spec.ending_3p and add_stem_ending(conj_spec.stem, "иш") or
+					conj_spec.stem)
+			end
+			insert(components, spec.tense_ending)
+			local ending = (person_number == "3s" or person_number == "3p") and spec.ending_3sp or
+				spec["ending_" .. person_number]
+			if not ending then
+				local default_endings =
+					spec.ending_type == "1" and default_person_number_suffixes_type_1 or
+					spec.ending_type == "2" and default_person_number_suffixes_type_2 or
+					default_person_number_suffixes_type_3
+				ending = default_endings[person_number]
+			end
+			insert(components, ending)
+			local slot = spec.tense .. "_" .. person_number
+			iut.add_multiple_forms(conj_spec.forms, slot, components, combine_stem_ending)
+		end
+	end
+
 	make_tense { -- non-past/aorist
 		tense = "aor",
-		tense_ending = "Й",
+		part_base = "pres_impfv_part",
+		tense_ending = "",
 		ending_type = "3",
 	}
 	make_tense { -- negative non-past/aorist
 		tense = "neg_aor",
-		tense_ending = "бай",
+		part_base = "neg_pres_part",
+		tense_ending = "",
 		ending_type = "3",
 	}
 	make_tense { -- recent past
@@ -401,7 +481,8 @@ local function conjugate_verb(conj_spec, lemma)
 	}
 	make_tense { -- negative recent past, variant #1
 		tense = "neg_rec_past",
-		tense_ending = "ган жок",
+		part_base = "past_part",
+		tense_ending = " жок",
 		ending_type = "2",
 	}
 	make_tense { -- negative recent past, variant #2
@@ -411,37 +492,39 @@ local function conjugate_verb(conj_spec, lemma)
 	}
 	make_tense { -- remote/general past
 		tense = "gen_past",
-		tense_ending = "ган",
+		part_base = "past_part",
+		tense_ending = "",
 		ending_type = "2",
-		ending_1s = function(stem)
-			local form1 = "!" .. combine_stem_ending(stem, "мин")
-			local form2 = "!" .. stem:gsub("н$", "м")
-			return {form1, form2}
-		end
+		ending_1s = {"мин", "#м"},
 	}
 	make_tense { -- negative remote/general past
 		tense = "neg_gen_past",
-		tense_ending = "ган эмес",
+		part_base = "past_part",
+		tense_ending = " эмес",
 		ending_type = "2",
 	}
 	make_tense { -- distant remote/general past
 		tense = "dist_gen_past",
-		tense_ending = "ган эле",
+		part_base = "past_part",
+		tense_ending = " эле",
 		ending_type = "1",
 	}
 	make_tense { -- negative distant remote/general past
 		tense = "neg_dist_gen_past",
-		tense_ending = "ган эмес эле",
+		part_base = "past_part",
+		tense_ending = " эмес эле",
 		ending_type = "1",
 	}
 	make_tense { -- indirect/unwitnessed recent past, variant #1
 		tense = "indir_past",
-		tense_ending = "иптир",
+		part_base = "pres_pfv_part",
+		tense_ending = "тир",
 		ending_type = "2",
 	}
 	make_tense { -- indirect/unwitnessed recent past, variant #2
 		tense = "indir_past",
-		tense_ending = "ип",
+		part_base = "pres_pfv_part",
+		tense_ending = "",
 		ending_type = "2",
 		ending_3sp = {}, -- -тир required, so only one form
 	}
@@ -478,29 +561,32 @@ local function conjugate_verb(conj_spec, lemma)
 	}
 	make_tense { -- past unaccomplished
 		tense = "unaccomp_past",
-		tense_ending = "Й элек",
+		part_base = "pres_impfv_part",
+		tense_ending = " элек",
 		ending_type = "2",
 	}
 	make_tense { -- uncertain future
 		tense = "uncert_fut",
-		tense_ending = make_future_part_ending,
+		part_base = "fut_part",
+		tense_ending = "",
 		ending_type = "2",
 	}
 	make_tense { -- negative uncertain future
 		tense = "neg_uncert_fut",
-		tense_ending = "бас",
+		part_base = "neg_fut_part",
+		tense_ending = "",
 		ending_type = "2",
 	}
 	make_tense { -- "would" conditional 1
 		tense = "would_cond_1",
-		tense_ending = function(stem)
-			return make_future_part_ending(stem) .. " эле"
-		end,
+		part_base = "fut_part",
+		tense_ending = " эле",
 		ending_type = "1",
 	}
 	make_tense { -- negative "would" conditional 1
 		tense = "neg_would_cond_1",
-		tense_ending = "бас эле",
+		part_base = "neg_fut_part",
+		tense_ending = " эле",
 		ending_type = "1",
 	}
 	make_tense { -- "would" conditional 2
@@ -570,19 +656,6 @@ local function conjugate_verb(conj_spec, lemma)
 		tense_ending = "баса",
 		ending_type = "1",
 	}
-	local function add_single(slot, ending)
-		insert_form(slot, add_stem_ending(conj_spec.stem, ending))
-	end
-
-	add_single("inf", function(stem)
-		return "!" .. conj_spec.lemma
-	end)
-	add_single("past_part", "ган")
-	add_single("fut_part", make_future_part_ending)
-	add_single("neg_fut_part", "бас")
-	add_single("pres_pfv_part", "ип")
-	add_single("pres_impfv_part", "Й")
-	add_single("neg_pres_part", "бай")
 end
 
 
@@ -591,10 +664,16 @@ end
 -- title bar contain similar information.
 local function compute_categories_and_annotation(conj_spec)
 	local cats = {}
-	local function insert(cattype)
+	local function inscat(cattype)
 		m_table.insertIfNot(cats, "Kyrgyz " .. cattype)
 	end
-	conj_spec.annotation = rfind(conj_spec.stem, V .. "$") and "vowel-final" or "consonant-final"
+	local vowel_final_stem = rfind(conj_spec.stem, V .. "$")
+	conj_spec.annotation = vowel_final_stem and "vowel-final" or "consonant-final"
+	if vowel_final_stem then
+		inscat("verbs with vowel-final stem")
+	else
+		inscat("verbs with consonant-final stem")
+	end
 	conj_spec.categories = cats
 end
 
@@ -633,7 +712,10 @@ local function make_table(conj_spec)
 	local table_spec = [=[
 ! colspan="3" | infinitive
 | colspan="2" | {inf}
-| colspan="999" rowspan="4" class="blank-end-row" |
+| colspan="999" rowspan="8" class="blank-end-row" |
+|-
+! colspan="3" style="background-color: var(--wikt-palette-blue-3);" | negative infinitive
+| colspan="2" style="background-color: var(--wikt-palette-blue-3);" | {neg_inf}
 |-
 ! rowspan="6" style="min-width:0" | participle
 ! colspan="2" | past
@@ -972,7 +1054,9 @@ local function make_table(conj_spec)
 | style="background-color: var(--wikt-palette-blue-3);" | {neg_if_cond_3p}
 ]=]
 
-	local footer = mw.getCurrentFrame():expandTemplate{ title = "inflection-table-bottom" }
+	local footer = mw.getCurrentFrame():expandTemplate{ title = "inflection-table-bottom",
+		args = {notes = "{footnote}"}
+	}
 
 	if conj_spec.title then
 		forms.title = conj_spec.title
@@ -1031,21 +1115,27 @@ end
 -- objects {form=FORM, footnotes=FOOTNOTES}.
 function export.do_generate_forms(parent_args)
 	local params = {
-		stem = true, -- specify the stem if it ends in a vowel
+		stem = {template_default = "иште"}, -- specify the stem if it ends in a vowel, п or к
 		title = true,
-		pagename = true,
+		pagename = {template_default = "иштөө"},
 	}
+	for _, part_accel in ipairs(participles) do
+		local part, accel = unpack(part_accel)
+		params[part] = true
+		params[part .. "_3p"] = true
+	end
 
 	local args = m_para.process(parent_args, params)
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 	local lemma = pagename
 	local conj_spec = {
+		args = args,
 		lemma = lemma,
 		stem = args.stem or infinitive_to_stem(lemma),
 		title = args.title,
 		forms = {},
-		number = number,
 	}
+	process_overrides(conj_spec.forms, args)
 	conjugate_verb(conj_spec, lemma)
 	compute_categories_and_annotation(conj_spec)
 	return conj_spec
