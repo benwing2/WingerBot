@@ -213,7 +213,7 @@ function export.show(frame)
 	-- unfd (mw.ustring.toNFD) performs decomposition, so letters that decompose to an ASCII vowel and a diacritic,
 	-- such as é, are counted as vowels and do not need to be included in the pattern.
 	if not pagename:find("[ %-]") and not rfind(ulower(unfd(pagename)), "[aeiou]") then
-		table.insert(data.categories, langname .. " words without vowels")
+		table.insert(data.categories, langname .. " words spelled without vowels")
 	end
 
     if args.json then
