@@ -316,6 +316,8 @@ end
 
 local pos_tags
 function export.get_link_page(target, lang, sc, plain)
+	local orig_target = target
+
 	if not target then
 		return nil
 	elseif target:find("\\", nil, true) then
@@ -326,7 +328,8 @@ function export.get_link_page(target, lang, sc, plain)
 	
 	if target:sub(1, 1) == ":" then
 		track("initial colon")
-		return target:sub(2)
+		-- FIXME, the auto_display (second return value) should probably remove the colon
+		return target:sub(2), orig_target
 	end
 	
 	local prefix = target:match("^(.-):")
@@ -339,14 +342,23 @@ function export.get_link_page(target, lang, sc, plain)
 			load_data("Module:data/namespaces")[prefix] or
 			load_data("Module:data/interwikis")[prefix]
 		) then
-			return target
+			return target, orig_target
 		end
 	end
 
 	-- Check if the term is reconstructed and remove any asterisk. Otherwise, handle the escapes.
-	local reconstructed, escaped
+	local reconstructed, escaped, anti_asterisk
 	if not plain then
 		target, reconstructed = target:gsub("^%*(.)", "%1")
+		if reconstructed == 0 then
+			target, anti_asterisk = target:gsub("^!!(.)", "%1")
+			if anti_asterisk == 1 then
+				-- Remove !! from original. FIXME! We do it this way because the call to remove_formatting() above
+				-- may cause non-initial !! to be interpreted as anti-asterisks. We should surely move the
+				-- remove_formatting() call later.
+				orig_target = orig_target:gsub("^!!", "")
+			end
+		end
 	end
 	target, escaped = target:gsub("^(\\-)\\%*", "%1*")
 
@@ -376,7 +388,7 @@ function export.get_link_page(target, lang, sc, plain)
 		end
 		target = "Reconstruction:" .. lang:getFullName() .. "/" .. target
 	-- Reconstructed languages and substrates require an initial *.
-	elseif lang:hasType("reconstructed") or lang:getFamilyCode() == "qfa-sub" then
+	elseif anti_asterisk ~= 1 and (lang:hasType("reconstructed") or lang:getFamilyCode() == "qfa-sub") then
 		error("The specified language " .. lang:getCanonicalName()
 			.. " is unattested, while the given term does not begin with '*' to indicate that it is reconstructed.")
 	elseif lang:hasType("appendix-constructed") then
@@ -385,7 +397,7 @@ function export.get_link_page(target, lang, sc, plain)
 		target = target
 	end
 
-	return target, escaped > 0
+	return target, orig_target, escaped > 0
 end
 
 -- Make a link from a given link's parts
@@ -401,16 +413,14 @@ local function make_link(link, lang, sc, id, isolated, cats, no_alt_ast, plain)
 		link.target, link.fragment = get_fragment(link.target)
 	end
 
+	-- Process the target
+	local new_target, auto_display, escaped = export.get_link_page(link.target, lang, sc, plain)
+
 	-- Create a default display form.
-	local auto_display = link.target
 	-- If the target is "" then it's a link like [[#English]], which refers to the current page.
 	if auto_display == "" then
 		auto_display = load_data("Module:headword/data").pagename
 	end
-	
-	-- Process the target
-	local escaped
-	link.target, escaped = export.get_link_page(link.target, lang, sc, plain)
 
 	-- If the display is the target and the reconstruction * has been escaped, remove the escaping backslash.
 	if escaped then

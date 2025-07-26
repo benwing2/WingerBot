@@ -6,7 +6,7 @@ local en_utilities_module = "Module:en-utilities"
 local gender_and_number_module = "Module:gender and number"
 local headword_data_module = "Module:headword/data"
 local headword_page_module = "Module:headword/page"
-local links_module = "Module:links"
+local links_module = "Module:User:Benwing2/links"
 local load_module = "Module:load"
 local pages_module = "Module:pages"
 local palindromes_module = "Module:palindromes"
@@ -788,18 +788,6 @@ function export.full_headword(data)
 		page = (m_data or get_data()).page
 	end
 
-	-- Check the namespace against the language type.
-	local namespace = page.namespace
-	if namespace == "" then
-		if data.lang:hasType("reconstructed") then
-			error("Entries in " .. langname .. " must be placed in the Reconstruction: namespace")
-		elseif data.lang:hasType("appendix-constructed") then
-			error("Entries in " .. langname .. " must be placed in the Appendix: namespace")
-		end
-	elseif namespace == "Citations" or namespace == "Thesaurus" then
-		error("Headword templates should not be used in the " .. namespace .. ": namespace.")
-	end
-
 	------------ 3. Initialize `data.heads` table; if old-style, convert to new-style. ------------
 
 	if type(data.heads) == "table" and type(data.heads[1]) == "table" then
@@ -898,8 +886,20 @@ function export.full_headword(data)
 
 	------------ 5. Create a default headword, and add links to multiword page names. ------------
 
+	-- Determine if this is an "anti-asterisk" term, i.e. an attested term in a language that must normally be
+	-- reconstructed.
+
+	local is_anti_asterisk = data.heads[1].term and data.heads[1].term:find("^!!")
+	local lang_reconstructed = data.lang:hasType("reconstructed")
+	if is_anti_asterisk then
+		if not lang_reconstructed then
+			error("Anti-asterisk feature (head= beginning with !!) can only be used with reconstructed languages")
+		end
+		lang_reconstructed = false
+	end
+
 	-- Determine if term is reconstructed
-	local is_reconstructed = namespace == "Reconstruction" or data.lang:hasType("reconstructed")
+	local is_reconstructed = namespace == "Reconstruction" or lang_reconstructed
 
 	-- Create a default headword based on the pagename, which is determined in
 	-- advance by the data module so that it only needs to be done once.
@@ -917,7 +917,20 @@ function export.full_headword(data)
 		default_head = "*" .. default_head
 	end
 
-	------------ 6. Fill in missing values in `data.heads`. ------------
+	------------ 6. Check the namespace against the language type. ------------
+
+	local namespace = page.namespace
+	if namespace == "" then
+		if lang_reconstructed then
+			error("Entries in " .. langname .. " must be placed in the Reconstruction: namespace")
+		elseif data.lang:hasType("appendix-constructed") then
+			error("Entries in " .. langname .. " must be placed in the Appendix: namespace")
+		end
+	elseif namespace == "Citations" or namespace == "Thesaurus" then
+		error("Headword templates should not be used in the " .. namespace .. ": namespace.")
+	end
+
+	------------ 7. Fill in missing values in `data.heads`. ------------
 
 	-- True if any script among the headword scripts has spaces in it.
 	local any_script_has_spaces = false
@@ -926,15 +939,19 @@ function export.full_headword(data)
 
 	for _, head in ipairs(data.heads) do
 
-		------ 6a. If missing head, replace with default head.
+		------ 7a. If missing head, replace with default head.
 		if not head.term then
 			head.term = default_head
 		elseif head.term == default_head then
 			has_redundant_head_param = true
+		elseif is_anti_asterisk and head.term == "!!" then
+			-- If explicit head=!! is given, it's an anti-asterisk term and we fill in the default head.
+			head.term = "!!" .. default_head
 		elseif head.term:find("^[!?]$") then
 			-- If explicit head= just consists of ! or ?, add it to the end of the default head.
 			head.term = default_head .. head.term
 		end
+		head.term_no_init_anns = is_anti_asterisk and head.term:sub(3) or head.term
 
 		if is_reconstructed then
 			local head_term = head.term
@@ -946,7 +963,7 @@ function export.full_headword(data)
 			end
 		end
 
-		------ 6b. Try to detect the script(s) if not provided. If a per-head script is provided, that takes precedence,
+		------ 7b. Try to detect the script(s) if not provided. If a per-head script is provided, that takes precedence,
 		------     otherwise fall back to the overall script if given. If neither given, autodetect the script.
 
 		local auto_sc = data.lang:findBestScript(head.term)
@@ -980,7 +997,7 @@ function export.full_headword(data)
 
 		any_script_has_spaces = any_script_has_spaces or head.sc:hasSpaces()
 
-		------ 6c. Create automatic transliterations for any non-Latin headwords without manual translit given
+		------ 7c. Create automatic transliterations for any non-Latin headwords without manual translit given
 		------     (provided automatic translit is available, e.g. not in Persian or Hebrew).
 
 		-- Make transliterations
@@ -995,7 +1012,7 @@ function export.full_headword(data)
 			if not (notranslit[langcode] or notranslit[full_langcode]) and head.sc:isTransliterated() then
 				head.tr_manual = not not head.tr
 
-				local text = head.term
+				local text = head.term_no_init_anns
 				if not data.lang:link_tr(head.sc) then
 					text = remove_links(text)
 				end
@@ -1045,7 +1062,7 @@ function export.full_headword(data)
 		end
 	end
 
-	------------ 7. Maybe tag the title with the appropriate script code, using the `display_title` mechanism. ------------
+	------------ 8. Maybe tag the title with the appropriate script code, using the `display_title` mechanism. ------------
 
 	-- Assumes that the scripts in "toBeTagged" will never occur in the Reconstruction namespace.
 	-- (FIXME: Don't make assumptions like this, and if you need to do so, throw an error if the assumption is violated.)
@@ -1100,7 +1117,7 @@ function export.full_headword(data)
 		)
 	end
 
-	------------ 8. Insert additional categories. ------------
+	------------ 9. Insert additional categories. ------------
 
 	if data.force_cat_output then
 		-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/force cat output]]
@@ -1331,7 +1348,7 @@ function export.full_headword(data)
 		insert(data.categories, full_langname .. " palindromes")
 	end
 
-	if namespace == "" and not data.lang:hasType("reconstructed") then
+	if namespace == "" and not lang_reconstructed then
 		for _, head in ipairs(data.heads) do
 			if page.full_raw_pagename ~= get_link_page(remove_links(head.term), data.lang, head.sc) then
 				-- [[Special:WhatLinksHere/Wiktionary:Tracking/headword/pagename spelling mismatch]]
@@ -1345,7 +1362,7 @@ function export.full_headword(data)
 	-- Add to various maintenance categories.
 	export.maintenance_cats(page, data.lang, data.categories, data.whole_page_categories)
 
-	------------ 9. Format and return headwords, genders, inflections and categories. ------------
+	------------ 10. Format and return headwords, genders, inflections and categories. ------------
 
 	-- Format and return all the gathered information. This may add more categories (e.g. gender/number categories),
 	-- so make sure we do it before evaluating `data.categories`.
