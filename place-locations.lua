@@ -991,7 +991,7 @@ export.countries = {
 	["Algeria"] = {container = "Africa", divs = {"provinces", "communes", "districts", "municipalities"}},
 	["Andorra"] = {container = "Europe", divs = {"parishes"}, british_spelling = true},
 	["Angola"] = {container = "Africa", divs = {"provinces", "municipalities"}},
-	["Antigua and Barbuda"] = {container = "North America", divs = {"provinces"}, british_spelling = true},
+	["Antigua and Barbuda"] = {container = "Caribbean", divs = {"provinces"}, british_spelling = true},
 	["Argentina"] = {container = "South America", divs = {"provinces", "departments", "municipalities"}},
 	["Armenia"] = {container = {"Europe", "Asia"}, divs = {"provinces", "districts"}, british_spelling = true},
 	["Republic of Armenia"] = {alias_of = "Armenia", the = true}, -- differs in "the"
@@ -999,14 +999,16 @@ export.countries = {
 	["Australia"] = {container = "Oceania", divs = {
 		{type = "states", cat_as = "states and territories"},
 		{type = "territories", cat_as = "states and territories"},
+		{type = "ABBREVIATION_OF states", cat_as = "abbreviations of states and territories"},
+		{type = "ABBREVIATION_OF territories", cat_as = "abbreviations of states and territories"},
 		"local government areas", "dependent territories",
 	}, british_spelling = true},
 	["Austria"] = {container = "Europe", divs = {"states", "districts", "municipalities"}, british_spelling = true},
 	["Azerbaijan"] = {container = {"Europe", "Asia"}, divs = {"districts", "municipalities"}, british_spelling = true},
-	["Bahamas"] = {the = true, container = "North America", divs = {"districts"}, british_spelling = true, wp = "The %l"},
+	["Bahamas"] = {the = true, container = "Caribbean", divs = {"districts"}, british_spelling = true, wp = "The %l"},
 	["Bahrain"] = {container = "Asia", divs = {"governorates"}},
 	["Bangladesh"] = {container = "Asia", divs = {"divisions", "districts", "municipalities"}, british_spelling = true},
-	["Barbados"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
+	["Barbados"] = {container = "Caribbean", divs = {"parishes"}, british_spelling = true},
 	["Belarus"] = {container = "Europe", divs = {"regions", "districts"}, british_spelling = true},
 	["Belgium"] = {container = "Europe", divs = {"regions", "provinces", "municipalities"}, british_spelling = true},
 	["Belize"] = {container = "Central America", divs = {"districts"}, british_spelling = true},
@@ -1017,7 +1019,10 @@ export.countries = {
 	["Bosnia and Hercegovina"] = {alias_of = "Bosnia and Herzegovina", display = true},
 	["Bosnia"] = {alias_of = "Bosnia and Herzegovina", display = true},
 	["Botswana"] = {container = "Africa", divs = {"districts", "subdistricts"}, british_spelling = true},
-	["Brazil"] = {container = "South America", divs = {"states", "municipalities", "macroregions"}},
+	["Brazil"] = {container = "South America", divs = {
+		"states", "municipalities", "macroregions",
+		{type = "ABBREVIATION_OF states", cat_as = "abbreviations of states"},
+	}},
 	["Brunei"] = {container = "Asia", divs = {"districts", "mukims"}, british_spelling = true},
 	["Bulgaria"] = {container = "Europe", divs = {"provinces", "municipalities"}, british_spelling = true},
 	["Burkina Faso"] = {container = "Africa", divs = {"regions", "departments", "provinces"}},
@@ -1027,6 +1032,8 @@ export.countries = {
 	["Canada"] = {container = "North America", divs = {
 		{type = "provinces", cat_as = "provinces and territories"},
 		{type = "territories", cat_as = "provinces and territories"},
+		{type = "ABBREVIATION_OF provinces", cat_as = "abbreviations of provinces and territories"},
+		{type = "ABBREVIATION_OF territories", cat_as = "abbreviations of provinces and territories"},
 		"counties", "districts", "municipalities", "regional municipalities",
 		"rural municipalities", "parishes",
 		-- Don't change the following to something more politically correct (e.g. "First Nations reserves") until/unless
@@ -1047,7 +1054,8 @@ export.countries = {
 		"special administrative regions", "prefectures", "prefecture-level cities",
 		{type = "counties", cat_as = "counties and county-level cities"},
 		{type = "county-level cities", cat_as = "counties and county-level cities"},
-		"districts", "municipalities",
+		-- "towns" (but not "townships") are automatically added as they are specified as generic_before_non_cities.
+		"districts", "subdistricts", "townships", "municipalities",
 		{type = "direct-administered municipalities", cat_as = "municipalities"},
 	}},
 	["People's Republic of China"] = {alias_of = "China", the = true}, -- differs in "the"
@@ -1055,7 +1063,7 @@ export.countries = {
 	["Comoros"] = {the = true, container = "Africa", divs = {"autonomous islands"}},
 	["Costa Rica"] = {container = "Central America", divs = {"provinces", "cantons"}},
 	["Croatia"] = {container = "Europe", divs = {"counties", "municipalities"}, british_spelling = true},
-	["Cuba"] = {container = "North America", divs = {"provinces", "municipalities"}},
+	["Cuba"] = {container = "Caribbean", divs = {"provinces", "municipalities"}},
 	["Cyprus"] = {container = {"Europe", "Asia"}, divs = {"districts"}, british_spelling = true},
 	["Czech Republic"] = {the = true, container = "Europe", divs = {"regions", "districts", "municipalities"}, british_spelling = true},
 	["Czechia"] = {alias_of = "Czech Republic"}, -- differs in "the"
@@ -1066,8 +1074,8 @@ export.countries = {
 		-- Wikipedia separates [[w:Denmark]] (constituent country) from [[w:Danish Realm]] (country)
 	},
 	["Djibouti"] = {container = "Africa", divs = {"regions", "districts"}},
-	["Dominica"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
-	["Dominican Republic"] = {the = true, container = "North America", divs = {"provinces", "municipalities"},
+	["Dominica"] = {container = "Caribbean", divs = {"parishes"}, british_spelling = true},
+	["Dominican Republic"] = {the = true, container = "Caribbean", divs = {"provinces", "municipalities"},
 		keydesc = "the [[Dominican Republic]], the country that shares the [[Caribbean]] island of [[Hispaniola]] with [[Haiti]]"},
 	["East Timor"] = {container = "Asia", divs = {"municipalities"}, wp = "Timor-Leste"},
 	["Timor-Leste"] = {alias_of = "East Timor", display = true},
@@ -1101,21 +1109,25 @@ export.countries = {
 	["Greece"] = {container = "Europe", divs = {"regions", "regional units", "municipalities",
 		{type = "peripheries", cat_as = {"regions"}},
 	}, british_spelling = true},
-	["Grenada"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
+	["Grenada"] = {container = "Caribbean", divs = {"parishes"}, british_spelling = true},
 	["Guatemala"] = {container = "Central America", divs = {"departments", "municipalities"}},
 	["Guinea"] = {container = "Africa", divs = {"regions", "prefectures"}},
 	["Guinea-Bissau"] = {container = "Africa", divs = {"regions"}},
 	["Guyana"] = {container = "South America", divs = {"regions"}, british_spelling = true},
-	["Haiti"] = {container = "North America", divs = {"departments", "arrondissements"}},
+	["Haiti"] = {container = "Caribbean", divs = {"departments", "arrondissements"}},
 	["Honduras"] = {container = "Central America", divs = {"departments", "municipalities"}},
 	["Hungary"] = {container = "Europe", divs = {"counties", "districts"}, british_spelling = true},
 	["Iceland"] = {container = "Europe", divs = {"regions", "municipalities", "counties"}, british_spelling = true},
 	["India"] = {container = "Asia", divs = {
 		{type = "states", cat_as = "states and union territories"},
 		{type = "union territories", cat_as = "states and union territories"},
+		{type = "ABBREVIATION_OF states", cat_as = "abbreviations of states and union territories"},
+		{type = "ABBREVIATION_OF union territories", cat_as = "abbreviations of states and union territories"},
 		"divisions", "districts", "municipalities",
 	}, british_spelling = true},
-	["Indonesia"] = {container = "Asia", divs = {"regencies", "provinces"}},
+	["Indonesia"] = {container = "Asia", divs = {"regencies", "provinces",
+		{type = "ABBREVIATION_OF provinces", cat_as = "abbreviations of provinces"},
+	}},
 	["Iran"] = {container = "Asia", divs = {"provinces", "counties"}},
 	["Iraq"] = {container = "Asia", divs = {"governorates", "districts"}},
 	["Ireland"] = {container = "Europe", addl_parents = {"British Isles"},
@@ -1130,7 +1142,7 @@ export.countries = {
 	-- We should really be using Ivory Coast (common name) but there are political ramifications to the use of
 	-- Côte d'Ivoire so don't make it a display alias.
 	["Côte d'Ivoire"] = {alias_of = "Ivory Coast"},
-	["Jamaica"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
+	["Jamaica"] = {container = "Caribbean", divs = {"parishes"}, british_spelling = true},
 	["Japan"] = {container = "Asia", divs = {"prefectures", "subprefectures", "municipalities"}},
 	["Jordan"] = {container = "Asia", divs = {"governorates"}},
 	["Kazakhstan"] = {container = {"Asia", "Europe"}, divs = {"regions", "districts"}},
@@ -1157,7 +1169,10 @@ export.countries = {
 	["Marshall Islands"] = {the = true, container = "Micronesia", divs = {"municipalities"}},
 	["Mauritania"] = {container = "Africa", divs = {"regions", "departments"}},
 	["Mauritius"] = {container = "Africa", divs = {"districts"}, british_spelling = true},
-	["Mexico"] = {container = "North America", addl_parents = {"Central America"}, divs = {"states", "municipalities"}},
+	["Mexico"] = {container = "North America", addl_parents = {"Central America"}, divs = {
+		"states", "municipalities",
+		{type = "ABBREVIATION_OF states", cat_as = "abbreviations of states"},
+	}},
 	["Moldova"] = {container = "Europe", divs = {
 		{type = "districts", cat_as = "districts and autonomous territorial units"},
 		{type = "autonomous territorial units", cat_as = "districts and autonomous territorial units"},
@@ -1233,26 +1248,29 @@ export.countries = {
 	["Qatar"] = {container = "Asia", divs = {"municipalities", "zones"}},
 	["Republic of the Congo"] = {the = true, container = "Africa", divs = {"departments", "districts"}},
 	["Congo Republic"] = {alias_of = "Republic of the Congo", display = true, the = true},
-	["Romania"] = {container = "Europe", divs = {"regions", "counties", "communes"}, british_spelling = true},
+	["Romania"] = {container = "Europe", divs = {
+		"regions", "counties", "communes",
+		{type = "ABBREVIATION_OF counties", cat_as = "abbreviations of counties"},
+	}, british_spelling = true},
 	["Russia"] = {container = {"Europe", "Asia"}, divs = {
 		"federal subjects", "republics", "autonomous oblasts", "autonomous okrugs", "oblasts", "krais", "federal cities",
 		"districts", "federal districts"},
 		british_spelling = true},
 	["Rwanda"] = {container = "Africa", divs = {"provinces", "districts"}},
-	["Saint Kitts and Nevis"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
-	["Saint Lucia"] = {container = "North America", divs = {"districts"}, british_spelling = true},
-	["Saint Vincent and the Grenadines"] = {container = "North America", divs = {"parishes"}, british_spelling = true},
+	["Saint Kitts and Nevis"] = {container = "Caribbean", divs = {"parishes"}, british_spelling = true},
+	["Saint Lucia"] = {container = "Caribbean", divs = {"districts"}, british_spelling = true},
+	["Saint Vincent and the Grenadines"] = {container = "Caribbean", divs = {"parishes"}, british_spelling = true},
 	["Samoa"] = {container = "Polynesia", divs = {"districts"}, british_spelling = true},
 	["San Marino"] = {container = "Europe", divs = {"municipalities"}, british_spelling = true},
 	["São Tomé and Príncipe"] = {container = "Africa", divs = {"districts"}},
 	["Saudi Arabia"] = {container = "Asia", divs = {"provinces", "governorates"}},
 	["Senegal"] = {container = "Africa", divs = {"regions", "departments"}},
-	["Serbia"] = {container = "Europe", divs = {"districts", "municipalities"}}, 
+	["Serbia"] = {container = "Europe", divs = {"districts", "municipalities"}},
 	["Seychelles"] = {container = "Africa", divs = {"districts"}, british_spelling = true},
 	["Sierra Leone"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
 	["Singapore"] = {container = "Asia", divs = {"districts"}, british_spelling = true},
 	["Slovakia"] = {container = "Europe", divs = {"regions", "districts"}, british_spelling = true},
-	["Slovenia"] = {container = "Europe", divs = {"municipalities"}, british_spelling = true},
+	["Slovenia"] = {container = "Europe", divs = {"statistical regions", "municipalities"}, british_spelling = true},
 	-- Note: the official name does not include "the" at the beginning, but it sounds strange in
 	-- English to leave it out and it's commonly included, so we include it.
 	["Solomon Islands"] = {the = true, container = "Melanesia", divs = {"provinces"}, british_spelling = true},
@@ -1275,14 +1293,14 @@ export.countries = {
 	["Sweden"] = {container = "Europe", divs = {"provinces", "counties", "municipalities"}, british_spelling = true},
 	["Switzerland"] = {container = "Europe", divs = {"cantons", "municipalities", "districts"}, british_spelling = true},
 	["Syria"] = {container = "Asia", divs = {"governorates", "districts"}},
-	["Taiwan"] = {container = "Asia", divs = {"counties", "districts"}},
+	["Taiwan"] = {container = "Asia", divs = {"counties", "districts", "townships"}},
 	["Republic of China"] = {alias_of = "Taiwan", the = true}, -- differs in "the", different political connotations
 	["Tajikistan"] = {container = "Asia", divs = {"regions", "districts"}},
 	["Tanzania"] = {container = "Africa", divs = {"provinces", "districts"}, british_spelling = true},
 	["Thailand"] = {container = "Asia", divs = {"provinces", "districts", "subdistricts"}},
 	["Togo"] = {container = "Africa", divs = {"provinces", "prefectures"}},
 	["Tonga"] = {container = "Polynesia", divs = {"divisions"}, british_spelling = true},
-	["Trinidad and Tobago"] = {container = "North America", divs = {"regions", "municipalities"}, british_spelling = true},
+	["Trinidad and Tobago"] = {container = "Caribbean", divs = {"regions", "municipalities"}, british_spelling = true},
 	["Tunisia"] = {container = "Africa", divs = {"governorates", "delegations"}},
 	["Turkey"] = {container = {"Europe", "Asia"}, divs = {"provinces", "districts"}},
 	-- Foreign names generally get display-canonicalized.
@@ -1290,7 +1308,11 @@ export.countries = {
 	["Turkmenistan"] = {container = "Asia", divs = {"regions", "districts"}},
 	["Tuvalu"] = {container = "Polynesia", divs = {"atolls"}, british_spelling = true},
 	["Uganda"] = {container = "Africa", divs = {"districts", "counties"}, british_spelling = true},
-	["Ukraine"] = {container = "Europe", divs = {"oblasts", "municipalities", "raions"}, british_spelling = true},
+	["Ukraine"] = {container = "Europe", divs = {
+		{type = "oblasts", cat_as = "oblasts and autonomous republics"},
+		{type = "autonomous republics", cat_as = "oblasts and autonomous republics"},
+		"raions", "hromadas",
+	}, british_spelling = true},
 	["United Arab Emirates"] = {the = true, container = "Asia", divs = {"emirates"}},
 	-- Abbreviations get display-canonicalized.
 	["UAE"] = {alias_of = "United Arab Emirates", display = true, the = true},
@@ -1305,6 +1327,9 @@ export.countries = {
 	["United States"] = {the = true, container = "North America",
 		divs = {"counties", "county seats", "states", "territories", "dependent territories",
 			{type = "ABBREVIATION_OF states", cat_as = "abbreviations of states"},
+			{type = "DEROGATORY_NAME_FOR states", cat_as = "derogatory names for states"},
+			{type = "NICKNAME_FOR states", cat_as = "nicknames for states"},
+			{type = "OFFICIAL_NICKNAME_FOR states", cat_as = "official nicknames for states"},
 			{type = "boroughs", prep = "in"}, -- exist in Pennsylvania and New Jersey
 			"municipalities", -- these exist politically at least in Colorado and Connecticut
 			{type = "census-designated places", prep = "in"},
@@ -1384,7 +1409,7 @@ export.country_like_entities = {
 	["Anguilla"] = {
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- de-facto independent state, internationally recognized as part of Georgia
@@ -1406,7 +1431,7 @@ export.country_like_entities = {
 	["Aruba"] = {
 		placetype = {"constituent country", "country"},
 		container = "Netherlands",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1420,7 +1445,7 @@ export.country_like_entities = {
 	["Bonaire"] = {
 		placetype = {"special municipality", "municipality", "overseas territory", "territory"},
 		container = "Netherlands",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1429,7 +1454,7 @@ export.country_like_entities = {
 		the = true,
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America"},
+		addl_parents = {"Asia"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1437,7 +1462,7 @@ export.country_like_entities = {
 		the = true,
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- Norwegian dependent territory
@@ -1452,7 +1477,7 @@ export.country_like_entities = {
 		the = true,
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- Australian external territory
@@ -1492,7 +1517,7 @@ export.country_like_entities = {
 	["Curaçao"] = {
 		placetype = {"constituent country", "country"},
 		container = "Netherlands",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- special territory of Chile
@@ -1559,7 +1584,7 @@ export.country_like_entities = {
 	["Guadeloupe"] = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		divs = {"communes"},
 		british_spelling = true,
 	},
@@ -1627,7 +1652,7 @@ export.country_like_entities = {
 		placetype = {"overseas department", "department", "administrative region", "region"},
 		container = "France",
 		divs = {"communes"},
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- overseas department and region of France
@@ -1642,7 +1667,7 @@ export.country_like_entities = {
 	["Montserrat"] = {
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- special collectivity of France
@@ -1701,7 +1726,7 @@ export.country_like_entities = {
 	["Puerto Rico"] = {
 		placetype = {"commonwealth", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		divs = {"municipalities"},
 	},
 	-- overseas department and region of France
@@ -1716,7 +1741,7 @@ export.country_like_entities = {
 	["Saba"] = {
 		placetype = {"special municipality", "municipality", "overseas territory", "territory"},
 		container = "Netherlands",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1724,7 +1749,7 @@ export.country_like_entities = {
 	["Saint Barthélemy"] = {
 		placetype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- British Overseas Territory
@@ -1767,7 +1792,7 @@ export.country_like_entities = {
 	["Saint Martin"] = {
 		placetype = {"overseas collectivity", "collectivity"},
 		container = "France",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- overseas collectivity of France
@@ -1782,7 +1807,7 @@ export.country_like_entities = {
 	["Sint Eustatius"] = {
 		placetype = {"special municipality", "municipality", "overseas territory", "territory"},
 		container = "Netherlands",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		is_city = true,
 		british_spelling = true,
 	},
@@ -1790,7 +1815,7 @@ export.country_like_entities = {
 	["Sint Maarten"] = {
 		placetype = {"constituent country", "country"},
 		container = "Netherlands",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- de-facto independent state, internationally recognized as part of Somalia
@@ -1852,7 +1877,7 @@ export.country_like_entities = {
 		the = true,
 		placetype = {"overseas territory", "territory"},
 		container = "United Kingdom",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 		british_spelling = true,
 	},
 	-- unincorporated territory of the United States
@@ -1882,7 +1907,7 @@ export.country_like_entities = {
 		the = true,
 		placetype = {"unincorporated territory", "overseas territory", "territory"},
 		container = "United States",
-		addl_parents = {"North America"},
+		addl_parents = {"Caribbean"},
 	},
 	["U.S. Virgin Islands"] = {alias_of = "United States Virgin Islands", display = true, the = true},
 	["US Virgin Islands"] = {alias_of = "United States Virgin Islands", display = true, the = true},
@@ -1980,7 +2005,7 @@ export.australia_states_and_territories = {
 export.australia_group = {
 	default_container = "Australia",
 	default_placetype = "state",
-	default_divs = {"local government areas"},
+	default_divs = "local government areas",
 	data = export.australia_states_and_territories,
 }
 
@@ -2092,6 +2117,7 @@ export.canada_provinces_and_territories = {
 		{type = "village municipalities", cat_as = {{type = "villages", prep = "in"}, "municipalities"}},
 	}},
 	["Yukon, Canada"] = {placetype = "territory"},
+	["Yukon Territory, Canada"] = {alias_of = "Yukon, Canada", the = true},
 }
 
 -- provinces and territories of Canada
@@ -2139,9 +2165,9 @@ export.china_group = {
 	default_placetype = "province",
 	default_divs = {
 		"prefectures", "prefecture-level cities",
+		"districts", "subdistricts", "townships",
 		{type = "counties", cat_as = "counties and county-level cities"},
 		{type = "county-level cities", cat_as = "counties and county-level cities"},
-		"districts",
 	},
 	data = export.china_provinces_and_autonomous_regions,
 }
@@ -2159,129 +2185,271 @@ export.china_prefecture_level_cities = {
 	--
 	-- For this reason, we treat prefecture-level cities as non-city political divisions, and separately enumerate the
 	-- most populous so we can separately categorize districts and counties under them instead of lumping them at the
-	-- province level. I chose all prefecture/province-level cities with a total prefecture/province-level population of
-	-- at least 6,000,000 per the 2020 census with data taken from https://www.citypopulation.de/en/china/admin/ (a
-	-- total of 67, including the four direct-administered municipalities), and also chose all prefecture/province-level
+	-- province level.
+	--
+	-- Note also that China separately distinguishes "urban area" from "metro area". Sometimes the two figures are
+	-- identical but sometimes the metro area is larger (and very occasionally smaller, which I assume is an error). I'm
+	-- guessing that the "urban area" is the contiguous urban area over a certain density while the metro area includes
+	-- all urban areas above a certain density; when the latter is greater, it's because of satellite cities in the
+	-- metro area separated by suburban/exurban or rural land.
+
+	-- At first I chose all prefecture/province-level cities with a total prefecture/province-level population of at
+	-- least 6,000,000 per the 2020 census with data taken from https://www.citypopulation.de/en/china/admin/ (a total
+	-- of 67, including the four direct-administered municipalities), and also chose all prefecture/province-level
 	-- cities whose "urban population" was at least 2,000,000 per the 2020 census with data taken from Wikipedia
 	-- [[w:List of cities in China by population#Cities and towns by population]] (a total of 61 cities; if we cut off
 	-- at 1.5 million we'd have 84 cities, and if we cut off at 1 million we'd have 105 cities). Merging them produces
 	-- 87 cities. Note that this leaves off a few well-known cities (Guilin, Qiqihar, Kashgar, Lhasa, ...) but includes
 	-- a lot of obscure cities.
 	--
-	-- Note also that China separately distinguishes "urban area" from "metro area". Sometimes the two figures are
-	-- identical but sometimes the metro area is larger (and very occasionally smaller, which I assume is an error). I'm
-	-- guessing that the "urban area" is the contiguous urban area over a certain density while the metro area includes
-	-- all urban areas above a certain density; when the latter is greater, it's because of satellite cities in the
-	-- metro area separated by suburban/exurban or rural land. Possibly we should use the metro area in preference to
-	-- the urban area, but I don't have a readily accessible list sorted by metro population (although the figures are
-	-- listed for each city in its respective Wikipedia article).
-	["Chongqing"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 32.1 prefectural, 16.9 urban
-	["Shanghai"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 24.9 prefectural, 29.9 urban
-	["Beijing"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 21.9 prefectural, 21.9 urban
-	["Chengdu"] = {container = "Sichuan"}, -- 20.9 prefectural, 16.9 urban; sub-provincial city
-	["Guangzhou"] = {container = "Guangdong"}, -- 18.7 prefectural, 18.8 urban; sub-provincial city
-	["Shenzhen"] = {container = "Guangdong"}, -- 17.5 prefectural, 14.7 urban; sub-provincial city
-	["Tianjin"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 13.9 prefectural, 13.9 urban
+	-- At a later date I added all cities from citypopulation.de whose "urban" population per the 2020 China census was
+	-- >= 1 million, and then finally added all urban agglomerations from citypopulation.de whose 2025-01-01 estimate
+	-- was >= 1 million. These are sorted below by the urban agglomeration value (which is generally of the "adm-urb" =
+	-- "administrative area (urban population)" type) and sometimes groups nearby cities into a single agglomeration
+	-- (most notably in the case of the Pearl River Delta, grouped under Guangzhou with an agglomeration population of
+	-- 72,700,000 but including a large number of nearby large cities in the agglomeration (although for some reason not
+	-- Hong Kong, maybe due to the administrative issues involved). In addition, citypopulation.de includes divisions
+	-- under a prefecture-level city if they are city-like and have an agglomeration population of at least 1 million;
+	-- this includes several county-level cities, one county and one district (Wanzhou, a "district" of Chongqing
+	-- despite being 142 miles away). None of the county-level cities or counties have districts under them, only
+	-- subdistricts, towns and townships.
+
+	["Guangzhou"] = {container = "Guangdong"}, -- 18.7 prefectural, 18.8 urban; sub-provincial city; 16.097 urban (72.700 adm-urb including Dongguan, Foshan, Huizhou, Jiangmen, Shenzhen, Zhongshan) per citypopulation.de
+	["Dongguan"] = {container = "Guangdong"}, -- 10.5 prefectural, 10.5 urban; 9.645 per citypopulation.de; included by citypopulation.de in Guangzhou agglomeration
+	["Foshan"] = {container = "Guangdong"}, -- 9.5 prefectural, 9.5 urban; 9.043 per citypopulation.de; included by citypopulation.de in Guangzhou agglomeration
+	["Huizhou"] = {container = "Guangdong"}, -- 6.0 prefectural, 2.5 urban; 2.900 per citypopulation.de; included by citypopulation.de in Guangzhou agglomeration
+	["Jiangmen"] = {container = "Guangdong"}, -- 4.798 prefectural, 2.7 urban; 1.795 per citypopulation.de; included by citypopulation.de in Guangzhou agglomeration
+	["Shenzhen"] = {container = "Guangdong"}, -- 17.5 prefectural, 14.7 urban; sub-provincial city; 17.445 per citypopulation.de; included by citypopulation.de in Guangzhou agglomeration
+	["Zhongshan"] = {container = "Guangdong"}, -- 4.418 prefectural, 4.4 urban; 3.842 per citypopulation.de; included by citypopulation.de in Guangzhou agglomeration
+	["Shanghai"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 24.9 prefectural, 29.9 urban; 21.910 urban (41.600 adm-urb including Changshu, Changzhou, Suzhou, Wuxi) per citypopulation.de
+	["Changshu"] = {container = "Jiangsu"}, -- 1.231 urban per citypopulation.de; included by citypopulation.de in Shanghai agglomeration
+	-- NOTE: Not to be confused with Cangzhou in Hebei
+	["Changzhou"] = {container = "Jiangsu"}, -- 5.278 prefectural, 3.6 urban; 3.187 urban per citypopulation.de; included by citypopulation.de in Shanghai agglomeration
 	-- NOTE: There is also a prefecture-level city Suzhou in Anhui with 5.3 million prefectural inhabitants
-	["Suzhou"] = {container = "Jiangsu"}, -- 12.8 prefectural, 4.3 urban
-	["Zhengzhou"] = {container = "Henan"}, -- 12.6 prefectural, 6.7 urban
-	["Wuhan"] = {container = "Hubei"}, -- 12.4 prefectural, 12.3 urban; sub-provincial city
-	["Xi'an"] = {container = "Shaanxi"}, -- 12.1 prefectural, 11.9 urban; sub-provincial city
-	["Hangzhou"] = {container = "Zhejiang"}, -- 11.9 prefectural, 10.7 urban; sub-provincial city
-	-- includes Dìngzhōu city and Xióngān Xīnqū
-	["Baoding"] = {container = "Hebei"}, -- 11.5 prefectural, 2.0 urban
-	-- includes Xīnjí city
-	["Shijiazhuang"] = {container = "Hebei"}, -- 11.2 prefectural, 4.1 urban
-	["Linyi"] = {container = "Shandong"}, -- 11.0 prefectural, 2.3 urban
-	["Dongguan"] = {container = "Guangdong"}, -- 10.5 prefectural, 10.5 urban
-	["Qingdao"] = {container = "Shandong"}, -- 10.1 prefectural, 7.1 urban; sub-provincial city
-	["Changsha"] = {container = "Hunan"}, -- 10.0 prefectural, 6.0 urban
-	["Harbin"] = {container = "Heilongjiang"}, -- 10.0 prefectural, 7.0 urban; sub-provincial city
-	["Nanyang"] = {container = "Henan", wp = "%l, %c"}, -- 9.7 prefectural, 2.1 urban/metro
-	["Wenzhou"] = {container = "Zhejiang"}, -- 9.6 prefectural, 3.6 urban
-	["Foshan"] = {container = "Guangdong"}, -- 9.5 prefectural, 9.5 urban
-	["Handan"] = {container = "Hebei"}, -- 9.4 prefectural, 2.8 urban
-	["Ningbo"] = {container = "Zhejiang"}, -- 9.4 prefectural, 5.1 urban; sub-provincial city
-	["Weifang"] = {container = "Shandong"}, -- 9.4 prefectural, 2.7 urban
-	["Hefei"] = {container = "Anhui"}, -- 9.4 prefectural, 4.2 urban
-	["Nanjing"] = {container = "Jiangsu"}, -- 9.3 prefectural, 9.3 urban; sub-provincial city
+	["Suzhou"] = {container = "Jiangsu"}, -- 12.8 prefectural, 4.3 urban; 5.893 urban per citypopulation.de; included by citypopulation.de in Shanghai agglomeration
+	["Wuxi"] = {container = "Jiangsu"}, -- 7.5 prefectural, 3.3 urban; 3.957 per citypopulation.de; included by citypopulation.de in Shanghai agglomeration
+	["Beijing"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 21.9 prefectural, 21.9 urban; 18.961 urban (21.500 adm-urb) per citypopulation.de
+	["Chengdu"] = {container = "Sichuan"}, -- 20.9 prefectural, 16.9 urban; sub-provincial city; 13.568 urban (18.100 adm-urb) per citypopulation.de
+	["Xiamen"] = {container = "Fujian"}, -- 5.163 prefectural, 5.2 urban; sub-provincial city; 4.617 urban (15.400 adm-urb including Jinjiang, Quanzhou, Putian) per citypopulation.de
+	["Jinjiang"] = {container = "Fujian"}, -- 1.416 urban per citypopulation.de; included by citypopulation.de in Xiamen agglomeration
+	["Quanzhou"] = {container = "Fujian"}, -- 8.8 prefectural, 1.7 urban (6.7 metro); 1.469 urban per citypopulation.de; included by citypopulation.de in Xiamen agglomeration
+	["Putian"] = {container = "Fujian"}, -- 3.210 prefectural, 2.0 urban; 1.539 urban per citypopulation.de; included by citypopulation.de in Xiamen agglomeration
+	["Hangzhou"] = {container = "Zhejiang"}, -- 11.9 prefectural, 10.7 urban; sub-provincial city; 9.236 urban (14.600 adm-urb including Shaoxing) per citypopulation.de
+	["Shaoxing"] = {container = "Zhejiang"}, -- 5.270 prefectural, 2.5 urban; 2.333 urban per citypopulation.de; included by citypopulation.de in Hangzhou agglomeration
+	["Xi'an"] = {container = "Shaanxi"}, -- 12.1 prefectural, 11.9 urban; sub-provincial city; 9.393 urban (13.400 adm-urb including Xianyang) per citypopulation.de
+	["Xianyang"] = {container = "Shaanxi"}, -- 1.193 urban per citypopulation.de; included by citypopulation.de in Xi'an agglomeration
+	["Chongqing"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 32.1 prefectural, 16.9 urban; 9.581 urban (12.900 adm-urb) per citypopulation.de
+	["Wuhan"] = {container = "Hubei"}, -- 12.4 prefectural, 12.3 urban; sub-provincial city; 10.495 urban (12.600 adm-urb) per citypopulation.de
+	["Tianjin"] = {placetype = {"direct-administered municipality", "municipality", "city"}}, -- 13.9 prefectural, 13.9 urban; 11.052 urban (11.700 adm-urb) per citypopulation.de
+	["Changsha"] = {container = "Hunan"}, -- 10.0 prefectural, 6.0 urban; 5.630 urban (11.500 adm-urb including Xiangtan, Zhuzhou) per citypopulation.de
+	-- Changsha County -- 1.024 urban per citypopulation.de
+	["Zhuzhou"] = {container = "Hunan"}, -- 1.510 urban per citypopulation.de; included by citypopulation.de in Changsha agglomeration
+	["Zhengzhou"] = {container = "Henan"}, -- 12.6 prefectural, 6.7 urban; 6.461 urban (10.300 adm-urb) per citypopulation.de
+	["Nanjing"] = {container = "Jiangsu"}, -- 9.3 prefectural, 9.3 urban; sub-provincial city; 7.520 urban (9.500 adm-urb including Ma'anshan) per citypopulation.de
+	["Shenyang"] = {container = "Liaoning"}, -- 9.1 prefectural, 7.9 urban; sub-provincial city; 7.026 urban (8.800 adm-urb including Fushun) per citypopulation.de
+	["Fushun"] = {container = "Liaoning"}, -- 1.229 urban per citypopulation.de; included by citypopulation.de in Shenyang agglomeration
+	["Hefei"] = {container = "Anhui"}, -- 9.4 prefectural, 4.2 urban; 5.056 urban (8.200 adm-urb) per citypopulation.de
+	["Shantou"] = {container = "Guangdong"}, -- 5.502 prefectural, 4.3 urban; 3.839 urban (8.050 adm-urb including Chaozhou, Jieyang, Puning) per citypopulation.de
+	["Chaozhou"] = {container = "Guangdong"}, -- 1.254 urban per citypopulation.de; included by citypopulation.de in Shantou agglomeration
+	["Jieyang"] = {container = "Guangdong"}, -- 1.243 urban per citypopulation.de; included by citypopulation.de in Shantou agglomeration
+	["Qingdao"] = {container = "Shandong"}, -- 10.1 prefectural, 7.1 urban; sub-provincial city; 6.165 urban (7.700 adm-urb) per citypopulation.de
+	["Ningbo"] = {container = "Zhejiang"}, -- 9.4 prefectural, 5.1 urban; sub-provincial city; 3.731 urban (7.600 adm-urb including Cixi, Yuyao) per citypopulation.de
+	["Cixi"] = {container = "Zhejiang"}, -- 1.458 urban per citypopulation.de; included by citypopulation.de in Ningbo agglomeration
+	["Yuyao"] = {container = "Zhejiang"}, -- 1.014 urban per citypopulation.de; included by citypopulation.de in Ningbo agglomeration
+	-- Hong Kong 7.500 agglomeration per citypopulation.de 2025-01-01 estimate including Kowloon, Victoria
+	["Wenzhou"] = {container = "Zhejiang"}, -- 9.6 prefectural, 3.6 urban; 2.582 urban (7.000 adm-urb including Rui'an, Cangnan, Pingyang) per citypopulation.de
+	-- Rui'an is a "county-level city" of the "prefecture-level city" of Wenzhou but in fact is 19 miles away from Wenzhou city proper (urban core to urban core).
+	["Rui'an"] = {placetype = "county-level city", container = {key = "Wenzhou", placetype = "prefecture-level city"}, divs = {"subdistricts", "townships"}}, -- 1.013 urban per citypopulation.de; included by citypopulation.de in Wenzhou agglomeration
+	["Kunming"] = {container = "Yunnan"}, -- 8.5 prefectural, 6.0 urban; 5.273 urban (6.800 adm-urb) per citypopulation.de
 	-- includes Láiwú city
-	["Jinan"] = {container = "Shandong", wp = "%l, %c"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city
-	["Xuzhou"] = {container = "Jiangsu"}, -- 9.1 prefectural, 2.6 urban
-	["Shenyang"] = {container = "Liaoning"}, -- 9.1 prefectural, 7.9 urban; sub-provincial city
-	["Changchun"] = {container = "Jilin"}, -- 9.1 prefectural, 5.7 urban; sub-provincial city
-	["Zhoukou"] = {container = "Henan"}, -- 9.0 prefectural, 721,000 urban (1.6 metro)
-	["Ganzhou"] = {container = "Jiangxi"}, -- 9.0 prefectural, 1.6 urban
-	["Heze"] = {container = "Shandong"}, -- 8.8 prefectural, 1.3 urban
-	["Quanzhou"] = {container = "Fujian"}, -- 8.8 prefectural, 1.7 urban (6.7 metro)
-	["Nanning"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- 8.7 prefectural, 3.8 urban
-	["Kunming"] = {container = "Yunnan"}, -- 8.5 prefectural, 6.0 urban
-	["Jining"] = {container = "Shandong"}, -- 8.4 prefectural, 1.5 urban
-	["Fuzhou"] = {container = "Fujian"}, -- 8.3 prefectural, 4.1 urban
-	["Fuyang"] = {container = "Anhui", wp = "%l, %c"}, -- 8.2 prefectural, 2.1 urban
-	["Shangqiu"] = {container = "Henan"}, -- 7.8 prefectural, 1.9 urban (2.8 metro)
-	["Nantong"] = {container = "Jiangsu"}, -- 7.7 prefectural, 2.3 urban
-	["Tangshan"] = {container = "Hebei"}, -- 7.7 prefectural, 3.4 urban
-	["Wuxi"] = {container = "Jiangsu"}, -- 7.5 prefectural, 3.3 urban
-	["Dalian"] = {container = "Liaoning"}, -- 7.5 prefectural, 5.7 urban; sub-provincial city
-	-- NOTE: Not to be confused with Changzhou in Jiangsu
-	["Cangzhou"] = {container = "Hebei"}, -- 7.3 prefectural, 621,000 urban
-	["Xingtai"] = {container = "Hebei"}, -- 7.1 prefectural, 971,000 urban
-	["Yantai"] = {container = "Shandong"}, -- 7.1 prefectural, 2.5 urban
-	["Luoyang"] = {container = "Henan"}, -- 7.1 prefectural, 2.4 urban
-	["Jinhua"] = {container = "Zhejiang"}, -- 7.1 prefectural, 1.5 urban
-	["Zhumadian"] = {container = "Henan"}, -- 7.0 prefectural, 722,000 urban
-	["Zhanjiang"] = {container = "Guangdong"}, -- 7.0 prefectural, 1.9 urban
-	["Bijie"] = {container = "Guizhou"}, -- 6.9 prefectural, ? urban, ? metro (not listed in Wikipedia)
-	["Yancheng"] = {container = "Jiangsu"}, -- 6.7 prefectural, 1.6 urban
-	["Hengyang"] = {container = "Hunan"}, -- 6.6 prefectural, 1.5 urban
-	["Taizhou"] = {container = "Zhejiang", wp = "%l, %c"}, -- 6.6 prefectural, 1.6 urban
-	["Zunyi"] = {container = "Guizhou"}, -- 6.6 prefectural, 2.4 urban/metro
-	["Shaoyang"] = {container = "Hunan"}, -- 6.6 prefectural, 802,000 urban, 1.4 metro
-	["Shangrao"] = {container = "Jiangxi"}, -- 6.5 prefectural, 2.1 urban, 1.3 metro [sic]
-	["Nanchang"] = {container = "Jiangxi"}, -- 6.3 prefectural, 3.6 (3.9?) urban, 5.3 metro
-	["Xinxiang"] = {container = "Henan"}, -- 6.3 prefectural, 1.2 urban, 2.7 metro
-	["Xinyang"] = {container = "Henan"}, -- 6.2 prefectural, 1.4 urban/metro
-	["Maoming"] = {container = "Guangdong"}, -- 6.2 prefectural, 2.5 urban
-	["Huizhou"] = {container = "Guangdong"}, -- 6.0 prefectural, 2.5 urban
-	-- cut off at 6,000,000 prefectural per 2020 census
-	-- Cities below here have at least 2 million in the urban area
-	["Guiyang"] = {container = "Guizhou"}, -- 5.987 prefectural, 3.5 urban
-	["Shantou"] = {container = "Guangdong"}, -- 5.502 prefectural, 4.3 urban
-	["Taiyuan"] = {container = "Shanxi"}, -- 5.304 prefectural, 4.5 urban
-	["Changzhou"] = {container = "Jiangsu"}, -- 5.278 prefectural, 3.6 urban
-	["Shaoxing"] = {container = "Zhejiang"}, -- 5.270 prefectural, 2.5 urban
-	["Xiamen"] = {container = "Fujian"}, -- 5.163 prefectural, 5.2 urban; sub-provincial city
-	["Jiangmen"] = {container = "Guangdong"}, -- 4.798 prefectural, 2.7 urban
-	["Zibo"] = {container = "Shandong"}, -- 4.704 prefectural, 2.6 urban
-	["Lianyungang"] = {container = "Jiangsu"}, -- 4.599 prefectural, 2.0 urban
-	["Huai'an"] = {container = "Jiangsu"}, -- 4.556 prefectural, 2.6 urban
-	["Zhongshan"] = {container = "Guangdong"}, -- 4.418 prefectural, 4.4 urban
-	["Lanzhou"] = {container = "Gansu"}, -- 4.359 prefectural, 3.1 urban
-	["Liuzhou"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- 4.157 prefectural, 2.2 urban
-	["Ürümqi"] = {container = {key = "Xinjiang, China", placetype = "autonomous region"}}, -- 4.054 prefectural, 4.3 urban
+	["Jinan"] = {container = "Shandong", wp = "%l, %c"}, -- 9.2 prefectural, 8.4 urban; sub-provincial city; 5.648 urban (6.750 adm-urb) per citypopulation.de
+	-- includes Xīnjí city
+	["Shijiazhuang"] = {container = "Hebei"}, -- 11.2 prefectural, 4.1 urban; 5.090 urban (6.450 adm-urb) per citypopulation.de
+	["Taiyuan"] = {container = "Shanxi"}, -- 5.304 prefectural, 4.5 urban; 4.304 urban (6.150 adm-urb) per citypopulation.de
+	["Harbin"] = {container = "Heilongjiang"}, -- 10.0 prefectural, 7.0 urban; sub-provincial city; 5.243 urban (5.550 adm-urb) per citypopulation.de
+	["Nanning"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- 8.7 prefectural, 3.8 urban; 4.583 urban (5.550 adm-urb) per citypopulation.de
+	["Dalian"] = {container = "Liaoning"}, -- 7.5 prefectural, 5.7 urban; sub-provincial city; 4.914 urban (5.400 adm-urb) per citypopulation.de
+	["Guiyang"] = {container = "Guizhou"}, -- 5.987 prefectural, 3.5 urban; 4.021 urban (5.300 adm-urb) per citypopulation.de
+	["Changchun"] = {container = "Jilin"}, -- 9.1 prefectural, 5.7 urban; sub-provincial city; 4.557 urban (5.200 adm-urb) per citypopulation.de
+	["Nanchang"] = {container = "Jiangxi"}, -- 6.3 prefectural, 3.6 (3.9?) urban, 5.3 metro; 3.519 urban (5.150 adm-urb) per citypopulation.de
+	["Ürümqi"] = {container = {key = "Xinjiang, China", placetype = "autonomous region"}}, -- 4.054 prefectural, 4.3 urban; 3.843 urban (5.000 adm-urb) per citypopulation.de
 	["Urumqi"] = {alias_of = "Ürümqi", display = true},
-	["Hohhot"] = {container = {key = "Inner Mongolia, China", placetype = "autonomous region"}}, -- 3.446 prefectural, 2.7 urban
-	["Putian"] = {container = "Fujian"}, -- 3.210 prefectural, 2.0 urban
-	["Datong"] = {container = "Shanxi"}, -- 3.105 prefectural, 2.0 urban
-	["Haikou"] = {container = "Hainan"}, -- 2.873 prefectural, 2.3 urban
-	["Baotou"] = {container = {key = "Inner Mongolia, China", placetype = "autonomous region"}}, -- 2.709 prefectural, 2.2 urban
-	["Zhuhai"] = {container = "Guangdong"}, -- 2.439 prefectural, 2.4 urban
+	["Fuzhou"] = {container = "Fujian"}, -- 8.3 prefectural, 4.1 urban; 3.723 urban (4.775 adm-urb) per citypopulation.de
+	["Linyi"] = {container = "Shandong"}, -- 11.0 prefectural, 2.3 urban; 2.744 urban (4.650 adm-urb) per citypopulation.de
+	["Zibo"] = {container = "Shandong"}, -- 4.704 prefectural, 2.6 urban; 2.750 urban (3.975 adm-urb) per citypopulation.de
+	["Luoyang"] = {container = "Henan"}, -- 7.1 prefectural, 2.4 urban; 2.231 urban (3.750 adm-urb) per citypopulation.de
+	["Lanzhou"] = {container = "Gansu"}, -- 4.359 prefectural, 3.1 urban; 3.013 urban (3.575 adm-urb) per citypopulation.de
+	["Nantong"] = {container = "Jiangsu"}, -- 7.7 prefectural, 2.3 urban; 2.988 urban (3.475 adm-urb) citypopulation.de
+	["Weifang"] = {container = "Shandong"}, -- 9.4 prefectural, 2.7 urban; 1.998 urban (3.325 adm-urb) per citypopulation.de
+	["Jiangyin"] = {container = "Jiangsu"}, -- 1.331 urban (3.200 adm-urb including Zhangjiagang) per citypopulation.de
+	["Zhangjiagang"] = {container = "Jiangsu"}, -- 1.056 urban per citypopulation.de; included in Jiangyin figures
+	["Xuzhou"] = {container = "Jiangsu"}, -- 9.1 prefectural, 2.6 urban; 2.846 urban (3.150 adm-urb) per citypopulation.de
+	["Handan"] = {container = "Hebei"}, -- 9.4 prefectural, 2.8 urban; 2.095 urban (2.925 adm-urb) per citypopulation.de
+	["Hohhot"] = {container = {key = "Inner Mongolia, China", placetype = "autonomous region"}}, -- 3.446 prefectural, 2.7 urban; 2.373 urban (2.850 adm-urb) per citypopulation.de
+	["Haikou"] = {container = "Hainan"}, -- 2.873 prefectural, 2.3 urban; 2.349 urban (2.800 adm-urb) per citypopulation.de
+	["Tangshan"] = {container = "Hebei"}, -- 7.7 prefectural, 3.4 urban; 2.550 urban (2.750 adm-urb) per citypopulation.de
+	["Xinxiang"] = {container = "Henan"}, -- 6.3 prefectural, 1.2 urban, 2.7 metro; 1.271 urban (2.700 adm-urb) per citypopulation.de
+	["Yiwu"] = {container = "Zhejiang"}, -- 1.481 urban (2.700 adm-urb) per citypopulation.de
+	["Zhuhai"] = {container = "Guangdong"}, -- 2.439 prefectural, 2.4 urban; 2.207 urban (2.675 adm-urb) per citypopulation.de
+	["Taizhou, Zhejiang"] = {container = "Zhejiang"}, -- 6.6 prefectural, 1.6 urban; 1.486 urban (2.625 adm-urb) per citypopulation.de
+	["Taizhou"] = {alias_of = "Taizhou, Zhejiang"},
+	["Yantai"] = {container = "Shandong"}, -- 7.1 prefectural, 2.5 urban; 2.312 urban (2.550 adm-urb) per citypopulation.de
+	["Yinchuan"] = {container = {key = "Ningxia, China", placetype = "autonomous region"}}, -- 1.663 urban (2.525 adm-urb) per citypopulation.de
+	["Liuzhou"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- 4.157 prefectural, 2.2 urban; 2.205 urban (2.500 adm-urb) per citypopulation.de
+	["Anshan"] = {container = "Liaoning"}, -- 1.480 urban (2.350 adm-urb including Liáoyáng) per citypopulation.de
+	["Yangzhou"] = {container = "Jiangsu"}, -- 2.067 urban (2.300 adm-urb) per citypopulation.de
+	["Jiaxing"] = {container = "Zhejiang"}, -- 1.188 urban (2.275 adm-urb) per citypopulation.de
+	["Xining"] = {container = "Qinghai"}, -- 1.7 urban (2.250 adm-urb) per citypopulation.de
+	-- includes Dìngzhōu city and Xióngān Xīnqū
+	["Baoding"] = {container = "Hebei"}, -- 11.5 prefectural, 2.0 urban; 1.9 urban (2.225 adm-urb) per citypopulation.de
+	["Baotou"] = {container = {key = "Inner Mongolia, China", placetype = "autonomous region"}}, -- 2.709 prefectural, 2.2 urban; 2.1 urban (2.200 adm-urb) per citypopulation.de
+	["Ganzhou"] = {container = "Jiangxi"}, -- 9.0 prefectural, 1.6 urban; 1.8 urban (2.150 adm-urb) per citypopulation.de
+	["Pingdingshan"] = {container = "Henan"}, -- 1.0 urban (2.100 adm-urb) per citypopulation.de
+	["Zunyi"] = {container = "Guizhou"}, -- 6.6 prefectural, 2.4 urban/metro; 1.7 urban (2.025 adm-urb) per citypopulation.de
+	["Bengbu"] = {container = "Anhui"}, -- 1.1 urban (2.000 adm-urb) per citypopulation.de
+	["Datong"] = {container = "Shanxi"}, -- 3.105 prefectural, 2.0 urban; 1.8 urban (2.000 adm-urb) per citypopulation.de
+	["Anyang"] = {container = "Henan"}, -- 1.2 urban (1.960 adm-urb) per citypopulation.de
+	["Huai'an"] = {container = "Jiangsu"}, -- 4.556 prefectural, 2.6 urban; 1.8 urban (1.940 adm-urb) per citypopulation.de
+	["Zaozhuang"] = {container = "Shandong"}, -- 1.3 urban (1.900 adm-urb) per citypopulation.de
+	["Zhanjiang"] = {container = "Guangdong"}, -- 7.0 prefectural, 1.9 urban; 1.4 urban (1.890 adm-urb) per citypopulation.de
+	["Huainan"] = {container = "Anhui"}, -- 1.3 urban (1.880 adm-urb) per citypopulation.de
+	["Jining"] = {container = "Shandong"}, -- 8.4 prefectural, 1.5 urban; 1.7 urban (1.880 adm-urb) per citypopulation.de
+	["Daqing"] = {container = "Heilongjiang"}, -- 1.6 urban (1.860 adm-urb) per citypopulation.de
+	["Wuhu"] = {container = "Anhui"}, -- 1.6 urban (1.850 adm-urb) per citypopulation.de
+	["Guilin"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- 1.4 urban (1.830 adm-urb) per citypopulation.de
+	["Mianyang"] = {container = "Sichuan"}, -- 1.5 urban (1.800 adm-urb) per citypopulation.de
+	["Xiangyang"] = {container = "Hubei"}, -- 1.7 urban (1.800 adm-urb) per citypopulation.de
+	["Huzhou"] = {container = "Zhejiang"}, -- 1.1 urban (1.750 adm-urb) per citypopulation.de
+	["Puyang"] = {container = "Henan"}, -- < 1 urban (1.750 adm-urb) per citypopulation.de
+	["Shangqiu"] = {container = "Henan"}, -- 7.8 prefectural, 1.9 urban (2.8 metro); 1.0 urban (1.750 adm-urb) per citypopulation.de
+	["Qinhuangdao"] = {container = "Hebei"}, -- 1.5 urban (1.740 adm-urb) per citypopulation.de
+	["Xingtai"] = {container = "Hebei"}, -- 7.1 prefectural, 971,000 urban; 1.5 urban (1.700 adm-urb) per citypopulation.de
+	["Nanyang"] = {container = "Henan", wp = "%l, %c"}, -- 9.7 prefectural, 2.1 urban/metro; 1.4 urban (1.680 adm-urb) per citypopulation.de
+	["Jiaozuo"] = {container = "Henan"}, -- < 1 urban (1.640 adm-urb) per citypopulation.de
+	["Jilin City"] = {container = "Jilin"}, -- 1.5 urban (1.610 adm-urb) per citypopulation.de
+	["Jilin"] = {alias_of = "Jilin City"},
+	["Jinhua"] = {container = "Zhejiang"}, -- 7.1 prefectural, 1.5 urban; 1.0 urban (1.590 adm-urb) per citypopulation.de
+	["Shangrao"] = {container = "Jiangxi"}, -- 6.5 prefectural, 2.1 urban, 1.3 metro [sic]; 1.3 urban (1.580 adm-urb) per citypopulation.de
+	["Heze"] = {container = "Shandong"}, -- 8.8 prefectural, 1.3 urban; 1.3 urban (1.570 adm-urb) per citypopulation.de
+	["Yulin"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}, wp = "%l, %c"}, -- < 1 urban (1.570 adm-urb) per citypopulation.de
+	["Tai'an"] = {container = "Shandong"}, -- 1.4 urban (1.560 adm-urb) per citypopulation.de
+	["Weihai"] = {container = "Shandong"}, -- 1.3 urban (1.510 adm-urb) per citypopulation.de
+	-- Taizhou, Jiangsu would be here (1.490 adm-urb) but moved to china_prefecture_level_cities_2 to avoid clash
+	["Yancheng"] = {container = "Jiangsu"}, -- 6.7 prefectural, 1.6 urban; 1.4 urban (1.460 adm-urb) per citypopulation.de
+	["Zhangjiakou"] = {container = "Hebei"}, -- 1.3 urban (1.450 adm-urb) per citypopulation.de
+	["Maoming"] = {container = "Guangdong"}, -- 6.2 prefectural, 2.5 urban; 1.3 urban (1.440 adm-urb) per citypopulation.de
+	["Nanchong"] = {container = "Sichuan"}, -- 1.3 urban (1.440 adm-urb) per citypopulation.de
+	["Fuyang"] = {container = "Anhui", wp = "%l, %c"}, -- 8.2 prefectural, 2.1 urban; 1.2 urban (1.410 adm-urb) per citypopulation.de
+	["Xuchang"] = {container = "Henan"}, -- < 1 urban (1.390 adm-urb) per citypopulation.de
+	["Yichang"] = {container = "Hubei"}, -- 1.3 urban (1.390 adm-urb) per citypopulation.de
+	["Dazhou"] = {container = "Sichuan"}, -- 1.1 urban (1.380 adm-urb) per citypopulation.de
+	["Kaifeng"] = {container = "Henan"}, -- 1.2 urban (1.340 adm-urb) per citypopulation.de
+	["Luzhou"] = {container = "Sichuan"}, -- 1.1 urban (1.340 adm-urb) per citypopulation.de
+	["Qingyuan"] = {container = "Guangdong"}, -- 1.2 urban (1.340 adm-urb) per citypopulation.de
+	["Huaibei"] = {container = "Anhui"}, -- < 1 urban (1.330 adm-urb) per citypopulation.de
+	["Yibin"] = {container = "Sichuan"}, -- 1.1 urban (1.310 adm-urb) per citypopulation.de
+	["Lu'an"] = {container = "Anhui"}, -- 1.1 urban (1.300 adm-urb) per citypopulation.de
+	["Dezhou"] = {container = "Shandong"}, -- < 1 urban (1.290 adm-urb) per citypopulation.de
+	["Rizhao"] = {container = "Shandong"}, -- 1.1 urban (1.270 adm-urb) per citypopulation.de
+	["Changzhi"] = {container = "Shanxi"}, -- 1.0 urban (1.250 adm-urb) per citypopulation.de
+	["Hengyang"] = {container = "Hunan"}, -- 6.6 prefectural, 1.5 urban; 1.2 urban (1.250 adm-urb) per citypopulation.de
+	["Jinzhou"] = {container = "Liaoning"}, -- 1.0 urban (1.240 adm-urb) per citypopulation.de
+	["Liaocheng"] = {container = "Shandong"}, -- 1.0 urban (1.240 adm-urb) per citypopulation.de
+	["Changde"] = {container = "Hunan"}, -- 1.1 urban (1.230 adm-urb) per citypopulation.de
+	["Suqian"] = {container = "Jiangsu"}, -- 1.1 urban (1.230 adm-urb) per citypopulation.de
+	["Xinyang"] = {container = "Henan"}, -- 6.2 prefectural, 1.4 urban/metro; 1.0 urban (1.230 adm-urb) per citypopulation.de
+	["Baoji"] = {container = "Shaanxi"}, -- 1.1 urban (1.220 adm-urb) per citypopulation.de
+	["Yueyang"] = {container = "Hunan"}, -- 1.1 urban (1.220 adm-urb) per citypopulation.de
+	["Zhenjiang"] = {container = "Jiangsu"}, -- 1.1 urban (1.210 adm-urb) per citypopulation.de
+	-- Wanzhou is a "district" of the "direct-administered municipality" of Chongqing but in fact is 142 miles away from Chongqing city proper.
+	["Wanzhou"] = {placetype = "district", container = {key = "Chongqing", placetype = "direct-administered municipality"}, divs = {"subdistricts", "townships"}, wp = "%l, %c"}, -- 1.1 urban (1.190 adm-urb) per citypopulation.de
+	["Ulanhad"] = {container = {key = "Inner Mongolia, China", placetype = "autonomous region"}}, -- 1.1 urban (1.180 adm-urb) per citypopulation.de
+	["Chifeng"] = {alias_of = "Ulanhad"},
+	["Ulankhad"] = {alias_of = "Ulanhad", display = true},
+	["Ezhou"] = {container = "Hubei"}, -- < 1 urban (1.180 adm-urb) per citypopulation.de
+	["Zhaoqing"] = {container = "Guangdong"}, -- 1.0 urban (1.160 adm-urb) per citypopulation.de
+	["Lianyungang"] = {container = "Jiangsu"}, -- 4.599 prefectural, 2.0 urban; 1.1 urban (1.150 adm-urb) per citypopulation.de
+	["Qujing"] = {container = "Yunnan"}, -- < 1 urban (1.150 adm-urb) per citypopulation.de
+	-- Shuyang is a "county" of the "prefecture-level city" of Suqian but in fact is 38 miles away from Suqian city proper (urban core to urban core).
+	-- The county itself is 37 miles by 34 miles.
+	["Shuyang"] = {placetype = "county", container = {key = "Suqian", placetype = "prefecture-level city"}, divs = {"subdistricts", "townships"}, wp = "%l County"}, -- < 1 urban (1.120 adm-urb) per citypopulation.de
+	-- Yongkang is a "county-level city" of the "prefecture-level city" of Jinhua but in fact is 32 miles away from Jinhua city proper (urban core to urban core).
+	["Yongkang"] = {placetype = "county-level city", container = {key = "Jinhua", placetype = "prefecture-level city"}, divs = {"subdistricts", "townships"}, wp = "%l, Zhejiang"}, -- < 1 urban (1.110 adm-urb) per citypopulation.de
+	["Zhoukou"] = {container = "Henan"}, -- 9.0 prefectural, 721,000 urban (1.6 metro); < 1 urban (1.100 adm-urb) per citypopulation.de
+	["Beihai"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- < 1 urban (1.090 adm-urb) per citypopulation.de
+	["Jiujiang"] = {container = "Jiangxi"}, -- < 1 urban (1.080 adm-urb) per citypopulation.de
+	["Shaoyang"] = {container = "Hunan"}, -- 6.6 prefectural, 802,000 urban, 1.4 metro; < 1 urban (1.080 adm-urb) per citypopulation.de
+	["Chuzhou"] = {container = "Anhui"}, -- < 1 urban (1.070 adm-urb) per citypopulation.de
+	["Hengshui"] = {container = "Hebei"}, -- < 1 urban (1.070 adm-urb) per citypopulation.de
+	["Shiyan"] = {container = "Hubei"}, -- < 1 urban (1.070 adm-urb) per citypopulation.de
+	["Huludao"] = {container = "Liaoning"}, -- < 1 urban (1.060 adm-urb) per citypopulation.de
+	["Dongying"] = {container = "Shandong"}, -- < 1 urban (1.050 adm-urb) per citypopulation.de
+	["Guigang"] = {container = {key = "Guangxi, China", placetype = "autonomous region"}}, -- < 1 urban (1.050 adm-urb) per citypopulation.de
+	-- Liuyang is a "county-level city" of the "prefecture-level city" of Changsha but in fact is 47 miles away from Changsha city proper (urban core to urban core).
+	["Liuyang"] = {placetype = "county-level city", container = {key = "Changsha", placetype = "prefecture-level city"}, divs = {"subdistricts", "townships"}}, -- < 1 urban (1.040 adm-urb) per citypopulation.de
+	-- NOTE: Not to be confused with Changzhou in Jiangsu
+	["Cangzhou"] = {container = "Hebei"}, -- 7.3 prefectural, 621,000 urban; < 1 urban (1.030 adm-urb) per citypopulation.de
+	["Liupanshui"] = {container = "Guizhou"}, -- < 1 urban (1.030 adm-urb) per citypopulation.de
+	["Panjin"] = {container = "Liaoning"}, -- < 1 urban (1.030 adm-urb) per citypopulation.de
+	["Qiqihar"] = {container = "Heilongjiang"}, -- 1.0 urban (1.030 adm-urb) per citypopulation.de
+	["Linfen"] = {container = "Shanxi"}, -- < 1 urban (1.010 adm-urb) per citypopulation.de
+	-- Liuyang is a "county-level city" of the "prefecture-level city" of Zaozhuang but in fact is 30 miles away from Zaozhuang city proper (urban core to urban core).
+	["Tengzhou"] = {placetype = "county-level city", container = {key = "Zaozhuang", placetype = "prefecture-level city"}, divs = {"subdistricts", "townships"}}, -- < 1 urban (1.010 adm-urb) per citypopulation.de
+
+	-- 3 extra that got added in earlier incarnations and aren't found in the "major agglomerations of the world" page https://citypopulation.de/en/world/agglomerations/ reference date 2025-01-01
+	["Kunshan"] = {container = "Jiangsu"}, -- 1.7 urban (2020 China census) per citypopulation.de
+	["Zhumadian"] = {container = "Henan"}, -- 7.0 prefectural, 722,000 urban per Wikipedia
+	["Bijie"] = {container = "Guizhou"}, -- 6.9 prefectural, ? urban, ? metro (not listed in Wikipedia)
 }
 
 export.china_prefecture_level_cities_group = {
+	-- don't do any transformations between key and placename; in particular, don't chop off anything from
+	-- "Taizhou, Zhejiang" or "Suzhou, Anhui".
+	key_to_placename = false,
 	placename_to_key = false, -- don't add ", China" to make the key
 	default_container = "China",
 	canonicalize_key_container = make_canonicalize_key_container(", China", "province"),
 	-- Prefecture-level cities aren't really cities but allow them to be identified that way, as many people
-	-- don't understand how Chinese administrative divisions work. 
+	-- don't understand how Chinese administrative divisions work.
 	default_placetype = {"prefecture-level city", "city"},
 	default_divs = {
-		"districts",
+		-- "towns" (but not "townships") are automatically added as they are specified as generic_before_non_cities,
+		-- and prefecture-level cities (as well as county-level cities) are considered non-cities.
+		"districts", "subdistricts", "townships",
 		{type = "counties", cat_as = "counties and county-level cities"},
 		{type = "county-level cities", cat_as = "counties and county-level cities"},
 	},
 	data = export.china_prefecture_level_cities,
+}
+
+-- Needed to avoid problems with two cities called Taizhou and Suzhou.
+export.china_prefecture_level_cities_2 = {
+	-- NOTE: There is also a larger and better-known prefecture-level city Taizhou in Zhejiang.
+	["Taizhou, Jiangsu"] = {container = "Jiangsu"}, -- 1.3 urban (1.490 adm-urb) per citypopulation.de 2020 census
+	["Taizhou"] = {alias_of = "Taizhou, Jiangsu"},
+	-- NOTE: There is also a larger and better-known prefecture-level city Suzhou in Jiangsu.
+	["Suzhou, Anhui"] = {container = "Anhui"}, -- 5.3 prefectural, 1.766 metro and "urban"; < 1 urban (1.010 adm-urb) per citypopulation.de 2020 census
+	-- hopefully this will work because we also have Suzhou as a key by itself for the larger, more-well-known Suzhou in Jiangsu
+	["Suzhou"] = {alias_of = "Suzhou, Anhui"},
+}
+
+export.china_prefecture_level_cities_group_2 = {
+	-- don't do any transformations between key and placename; in particular, don't chop off anything from
+	-- "Taizhou, Jiangsu".
+	placename_to_key = false, -- don't add ", China" to make the key
+	default_container = "China",
+	canonicalize_key_container = make_canonicalize_key_container(", China", "province"),
+	-- Prefecture-level cities aren't really cities but allow them to be identified that way, as many people
+	-- don't understand how Chinese administrative divisions work.
+	default_placetype = {"prefecture-level city", "city"},
+	default_divs = {
+		-- "towns" (but not "townships") are automatically added as they are specified as generic_before_non_cities,
+		-- and prefecture-level cities (as well as county-level cities) are considered non-cities.
+		"districts", "subdistricts", "townships",
+		{type = "counties", cat_as = "counties and county-level cities"},
+		{type = "county-level cities", cat_as = "counties and county-level cities"},
+	},
+	data = export.china_prefecture_level_cities_2,
 }
 
 export.finland_regions = {
@@ -2690,7 +2858,7 @@ export.iran_group = {
 	-- per-province. (As of 2025-05-09, there are only 6 counties in each of [[Category:en:Counties of Iran]],
 	-- [[Category:fa:Counties of Iran]] and [[Category:ar:Counties of Iran]].)
 	-- default_divs = "counties",
-	-- For obscure reasons, provinces of Iran (along with Laos and Thailand) use lowercase 'province'
+	-- For obscure reasons, provinces of Iran, Laos, Thailand and Vietnam use lowercase 'province'
 	default_wp = "%e province",
 	data = export.iran_provinces,
 }
@@ -2879,7 +3047,7 @@ export.laos_group = {
 	placename_to_key = laos_placename_to_key,
 	default_container = "Laos",
 	default_placetype = "province",
-	-- For obscure reasons, provinces of Laos and Thailand use lowercase 'province'
+	-- For obscure reasons, provinces of Iran, Laos, Thailand and Vietnam use lowercase 'province'
 	default_wp = "%e province",
 	data = export.laos_provinces,
 }
@@ -3070,7 +3238,7 @@ export.moldova_group = {
 	placename_to_key = moldova_placename_to_key,
 	default_container = "Moldova",
 	default_placetype = {"district", "raion"},
-	default_divs = {"communes"},
+	default_divs = "communes",
 	data = export.moldova_districts_and_autonomous_territorial_units,
 }
 
@@ -3086,7 +3254,7 @@ export.morocco_regions = {
 	["Casablanca-Settat, Morocco"] = {},
 	["Marrakesh-Safi, Morocco"] = {wp = "Marrakesh–Safi"}, -- WP title has en-dash
 	["Marrakech-Safi, Morocco"] = {alias_of = "Marrakesh-Safi, Morocco", display = true},
-	["Draa-Tafilalet, Morocco"] = {},
+	["Draa-Tafilalet, Morocco"] = {wp = "Drâa-Tafilalet"},
 	["Drâa-Tafilalet, Morocco"] = {alias_of = "Draa-Tafilalet, Morocco", display = true},
 	["Souss-Massa, Morocco"] = {},
 	["Guelmim-Oued Noun, Morocco"] = {
@@ -3298,7 +3466,7 @@ export.pakistan_provinces_and_territories = {
 export.pakistan_group = {
 	default_container = "Pakistan",
 	default_placetype = "province",
-	default_divs = {"divisions"},
+	default_divs = "divisions",
 	data = export.pakistan_provinces_and_territories,
 }
 
@@ -3471,9 +3639,7 @@ export.portugal_group = {
 	placename_to_key = portugal_placename_to_key,
 	default_container = "Portugal",
 	default_placetype = "district",
-	default_divs = {
-		"municipalities",
-	},
+	default_divs = "municipalities",
 	data = export.portugal_districts_and_autonomous_regions,
 }
 
@@ -3528,7 +3694,7 @@ export.romania_group = {
 	placename_to_key = make_placename_to_key(", Romania", " County"),
 	default_container = "Romania",
 	default_placetype = "county",
-	default_divs = {"communes"},
+	default_divs = "communes",
 	data = export.romania_counties,
 }
 
@@ -3797,9 +3963,7 @@ export.south_africa_provinces = {
 export.south_africa_group = {
 	default_container = "South Africa",
 	default_placetype = "province",
-	default_divs = {
-		"municipalities",
-	},
+	default_divs = "municipalities",
 	data = export.south_africa_provinces,
 }
 
@@ -3849,9 +4013,7 @@ export.spain_autonomous_communities = {
 export.spain_group = {
 	default_container = "Spain",
 	default_placetype = "autonomous community",
-	default_divs = {
-		"municipalities", "comarcas",
-	},
+	default_divs = {"municipalities", "comarcas"},
 	data = export.spain_autonomous_communities,
 }
 
@@ -3877,6 +4039,7 @@ export.taiwan_group = {
 	placename_to_key = make_placename_to_key(", Taiwan", " County"),
 	default_container = "Taiwan",
 	default_placetype = "county",
+	default_divs = {"districts", "townships"},
 	data = export.taiwan_counties,
 }
 
@@ -3967,7 +4130,7 @@ export.thailand_group = {
 	default_container = "Thailand",
 	default_placetype = "province",
 	default_divs = "districts",
-	-- For obscure reasons, provinces of Laos and Thailand use lowercase 'province'
+	-- For obscure reasons, provinces of Iran, Laos, Thailand and Vietnam use lowercase 'province'
 	default_wp = "%e province",
 	data = export.thailand_provinces,
 }
@@ -4069,6 +4232,48 @@ export.turkey_group = {
 	data = export.turkey_provinces,
 }
 
+export.ukraine_oblasts = {
+	["Cherkasy Oblast, Ukraine"] = {}, -- capital [[Cherkasy]], license plate prefix CA, IA
+	["Chernihiv Oblast, Ukraine"] = {}, -- capital [[Chernihiv]], license plate prefix CB, IB
+	["Chernivtsi Oblast, Ukraine"] = {}, -- capital [[Chernivtsi]], license plate prefix CE, IE
+	-- apparently will be renamed to 'Dnipro Oblast'
+	["Dnipropetrovsk Oblast, Ukraine"] = {}, -- capital [[Dnipro]], license plate prefix AE, KE
+	["Donetsk Oblast, Ukraine"] = {}, -- capital ''[[Donetsk]] ([[Kramatorsk]])'', license plate prefix AH, KH
+	["Ivano-Frankivsk Oblast, Ukraine"] = {}, -- capital [[Ivano-Frankivsk]], license plate prefix AT, KT
+	["Kharkiv Oblast, Ukraine"] = {}, -- capital [[Kharkiv]], license plate prefix AX, KX
+	["Kherson Oblast, Ukraine"] = {}, -- capital ''[[Kherson]]'', license plate prefix ''BT, HT''
+	["Khmelnytskyi Oblast, Ukraine"] = {}, -- capital [[Khmelnytskyi]], license plate prefix BX, HX
+	-- apparently will be renamed to 'Kropyvnytskyi Oblast'
+	["Kirovohrad Oblast, Ukraine"] = {}, -- capital [[Kropyvnytskyi]], license plate prefix BA, HA
+	["Kyiv Oblast, Ukraine"] = {}, -- capital [[Kyiv]], license plate prefix AI, KI
+	["Kiev Oblast, Ukraine"] = {alias_of = "Kyiv Oblast, Ukraine", display = true},
+	["Luhansk Oblast, Ukraine"] = {}, -- capital ''[[Luhansk]] ([[Sievierodonetsk]])'', license plate prefix BB, HB
+	["Lviv Oblast, Ukraine"] = {}, -- capital [[Lviv]], license plate prefix BC, HC
+	["Mykolaiv Oblast, Ukraine"] = {}, -- capital [[Mykolaiv]], license plate prefix BE, HE
+	["Odesa Oblast, Ukraine"] = {}, -- capital [[Odesa]], license plate prefix BH, HH
+	["Odessa Oblast, Ukraine"] = {alias_of = "Odesa Oblast, Ukraine", display = true},
+	["Poltava Oblast, Ukraine"] = {}, -- capital [[Poltava]], license plate prefix BI, HI
+	["Rivne Oblast, Ukraine"] = {}, -- capital [[Rivne]], license plate prefix BK, HK
+	["Sumy Oblast, Ukraine"] = {}, -- capital [[Sumy]], license plate prefix BM, HM
+	["Ternopil Oblast, Ukraine"] = {}, -- capital [[Ternopil]], license plate prefix BO, HO
+	["Vinnytsia Oblast, Ukraine"] = {}, -- capital [[Vinnytsia]], license plate prefix AB, KB
+	["Volyn Oblast, Ukraine"] = {}, -- capital [[Lutsk]], license plate prefix AC, KC
+	["Zakarpattia Oblast, Ukraine"] = {}, -- capital [[Uzhhorod]], license plate prefix AO, KO
+	["Zaporizhzhia Oblast, Ukraine"] = {}, -- capital ''[[Zaporizhzhia]]'', license plate prefix AP, KP
+	["Zaporizhia Oblast, Ukraine"] = {alias_of = "Zaporizhzhia Oblast, Ukraine", display = true},
+	["Zhytomyr Oblast, Ukraine"] = {}, -- capital [[Zhytomyr]], license plate prefix AM, KM
+}
+
+-- oblasts of Ukraine
+export.ukraine_group = {
+	key_to_placename = make_key_to_placename(", Ukraine$", " Oblast$"),
+	placename_to_key = make_placename_to_key(", Ukraine", " Oblast"),
+	default_container = "Ukraine",
+	default_placetype = "oblast",
+	default_divs = {"raions", "hromadas"},
+	data = export.ukraine_oblasts,
+}
+
 export.united_kingdom_constituent_countries = {
 	["England"] = {divs = {
 		"counties",
@@ -4139,7 +4344,7 @@ export.england_counties = {
 	["Greater London, England"] = {},
 	["Greater Manchester, England"] = {},
 	["Hampshire, England"] = {},
-	["Herefordshire, England"] = {}, 
+	["Herefordshire, England"] = {},
 	["Hertfordshire, England"] = {},
 	-- ["Humberside, England"] = {}, -- no longer (1974 to 1996)
 	-- ["Huntingdonshire, England"] = {}, -- no longer (historic county)
@@ -4366,16 +4571,111 @@ export.united_states_group = {
 	placename_to_key = make_placename_to_key(", USA"),
 	default_container = "United States",
 	default_placetype = "state",
-	default_divs = {
-		"counties",
-		"county seats",
-	},
+	default_divs = {"counties", "county seats"},
 	addl_divs = {
 		{type = "census-designated places", prep = "in"},
 		{type = "unincorporated communities", prep = "in"},
 	},
 	data = export.united_states_states,
 }
+
+export.vietnam_provinces = {
+	-- [[Northeast (Vietnam)|Northeast]] region
+	["Bắc Giang Province, Vietnam"] = {}, -- capital [[Bắc Giang]]
+	["Bắc Kạn Province, Vietnam"] = {}, -- capital [[Bắc Kạn]]
+	["Cao Bằng Province, Vietnam"] = {}, -- capital [[Cao Bằng]]
+	["Hà Giang Province, Vietnam"] = {}, -- capital [[Hà Giang]]
+	["Lạng Sơn Province, Vietnam"] = {}, -- capital [[Lạng Sơn]]
+	["Phú Thọ Province, Vietnam"] = {}, -- capital [[Việt Trì]]
+	["Quảng Ninh Province, Vietnam"] = {}, -- capital [[Hạ Long]]
+	["Thái Nguyên Province, Vietnam"] = {}, -- capital [[Thái Nguyên]]
+	["Tuyên Quang Province, Vietnam"] = {}, -- capital [[Tuyên Quang]]
+
+	-- [[Northwest (Vietnam)|Northwest]] region
+	["Lào Cai Province, Vietnam"] = {}, -- capital [[Lào Cai]]
+	["Yên Bái Province, Vietnam"] = {}, -- capital [[Yên Bái]]
+	["Điện Biên Province, Vietnam"] = {}, -- capital [[Điện Biên Phủ]]
+	["Hoà Bình Province, Vietnam"] = {}, -- capital [[Hoà Bình City|Hoà Bình]]
+	["Hòa Bình Province, Vietnam"] = {alias_of = "Hoà Bình Province, Vietnam", display = true},
+	["Lai Châu Province, Vietnam"] = {}, -- capital [[Lai Châu]]
+	["Sơn La Province, Vietnam"] = {}, -- capital [[Sơn La]]
+
+	-- [[Red River Delta]] region
+	["Bắc Ninh Province, Vietnam"] = {}, -- capital [[Bắc Ninh]]
+	["Hà Nam Province, Vietnam"] = {}, -- capital [[Phủ Lý]]
+	["Hải Dương Province, Vietnam"] = {}, -- capital [[Hải Dương]]
+	["Hưng Yên Province, Vietnam"] = {}, -- capital [[Hưng Yên]]
+	["Nam Định Province, Vietnam"] = {}, -- capital [[Nam Định]]
+	["Ninh Bình Province, Vietnam"] = {}, -- capital [[Ninh Bình|Hoa Lư]]
+	["Thái Bình Province, Vietnam"] = {}, -- capital [[Thái Bình]]
+	["Vĩnh Phúc Province, Vietnam"] = {}, -- capital [[Vĩnh Yên]]
+	-- ["Hanoi"] = {placetype = {"municipality", "city"}}, -- capital [[Hoàn Kiếm district]]
+	-- ["Haiphong"] = {placetype = {"municipality", "city"}}, -- capital [[Hồng Bàng district]]
+
+	-- [[North Central Coast]] region
+	["Hà Tĩnh Province, Vietnam"] = {}, -- capital [[Hà Tĩnh]]
+	["Nghệ An Province, Vietnam"] = {}, -- capital [[Vinh]]
+	["Quảng Bình Province, Vietnam"] = {}, -- capital [[Đồng Hới]]
+	["Quảng Trị Province, Vietnam"] = {}, -- capital [[Đông Hà]]
+	["Thanh Hoá Province, Vietnam"] = {}, -- capital [[Thanh Hoá]]
+	["Thanh Hóa Province, Vietnam"] = {alias_of = "Thanh Hoá Province, Vietnam", display = true},
+	-- ["Hue"] = {placetype = {"municipality", "city"}, wp = "Huế"}, -- capital [[Thuận Hoá district]]
+
+	-- [[Central Highlands (Vietnam)|Central Highlands]] region
+	["Đắk Lắk Province, Vietnam"] = {}, -- capital [[Buôn Ma Thuột]]
+	["Đăk Nông Province, Vietnam"] = {}, -- capital [[Gia Nghĩa]]
+	["Gia Lai Province, Vietnam"] = {}, -- capital [[Pleiku]]
+	["Kon Tum Province, Vietnam"] = {}, -- capital [[Kon Tum]]
+	["Lâm Đồng Province, Vietnam"] = {}, -- capital [[Đà Lạt]]
+
+	-- [[South Central Coast]] region
+	["Bình Định Province, Vietnam"] = {}, -- capital [[Quy Nhon]]
+	["Bình Thuận Province, Vietnam"] = {}, -- capital [[Phan Thiết]]
+	["Khánh Hoà Province, Vietnam"] = {}, -- capital [[Nha Trang]]
+	["Khánh Hòa Province, Vietnam"] = {alias_of = "Khánh Hoà Province, Vietnam", display = true},
+	["Ninh Thuận Province, Vietnam"] = {}, -- capital [[Phan Rang–Tháp Chàm]]
+	["Phú Yên Province, Vietnam"] = {}, -- capital [[Tuy Hoà]]
+	["Quảng Nam Province, Vietnam"] = {}, -- capital [[Tam Kỳ]]
+	["Quảng Ngãi Province, Vietnam"] = {}, -- capital [[Quảng Ngãi]]
+	-- ["Da Nang"] = {placetype = {"municipality", "city"}}, -- capital [[Hải Châu district]]
+
+	-- [[Southeast (Vietnam)|Southeast]] region
+	["Bà Rịa–Vũng Tàu Province, Vietnam"] = {}, -- capital [[Bà Rịa]]
+	["Bình Dương Province, Vietnam"] = {}, -- capital [[Thủ Dầu Một]]
+	["Bình Phước Province, Vietnam"] = {}, -- capital [[Đồng Xoài]]
+	["Đồng Nai Province, Vietnam"] = {}, -- capital [[Biên Hoà]]
+	["Tây Ninh Province, Vietnam"] = {}, -- capital [[Tây Ninh]]
+	-- ["Ho Chi Minh City"] = {placetype = {"municipality", "city"}}, -- capital [[District 1, Ho Chi Minh City|'''District 1''']]
+
+	-- [[Mekong Delta]] region
+	["An Giang Province, Vietnam"] = {}, -- capital [[Long Xuyên]]
+	["Bạc Liêu Province, Vietnam"] = {}, -- capital [[Bạc Liêu]]
+	["Bến Tre Province, Vietnam"] = {}, -- capital [[Bến Tre]]
+	["Cà Mau Province, Vietnam"] = {}, -- capital [[Cà Mau]]
+	["Đồng Tháp Province, Vietnam"] = {}, -- capital [[Cao Lãnh City|Cao Lãnh]]
+	["Hậu Giang Province, Vietnam"] = {}, -- capital [[Vị Thanh]]
+	["Kiên Giang Province, Vietnam"] = {}, -- capital [[Rạch Giá]]
+	["Long An Province, Vietnam"] = {}, -- capital [[Tân An]]
+	["Sóc Trăng Province, Vietnam"] = {}, -- capital [[Sóc Trăng]]
+	["Tiền Giang Province, Vietnam"] = {}, -- capital [[Mỹ Tho]]
+	["Trà Vinh Province, Vietnam"] = {}, -- capital [[Trà Vinh]]
+	["Vĩnh Long Province, Vietnam"] = {}, -- capital [[Vĩnh Long]]
+	-- ["Can Tho"] = {placetype = {"municipality", "city"}, wp = "Cần Thơ"}, -- capital [[Ninh Kiều district]]
+}
+
+-- provinces of Vietnam
+export.vietnam_group = {
+	key_to_placename = make_key_to_placename(", Vietnam$", " Province$"),
+	placename_to_key = make_placename_to_key(", Vietnam", " Province"),
+	default_container = "Vietnam",
+	default_placetype = "province",
+	-- There may not be enough districts to subcategorize like this.
+	-- default_divs = "districts",
+	-- For obscure reasons, provinces of Iran, Laos, Thailand and Vietnam use lowercase 'province'
+	default_wp = "%e province",
+	data = export.vietnam_provinces,
+}
+
 
 -----------------------------------------------------------------------------------
 --                                      City data                                --
@@ -4406,7 +4706,7 @@ export.brazil_cities = {
 	["Belo Horizonte"] = {container = "Minas Gerais"}, -- 5,300,000
 	["Recife"] = {container = "Pernambuco"}, -- 4,100,000
 	["Porto Alegre"] = {container = "Rio Grande do Sul"}, -- 3,950,000 (Consolidated Urban Area)
-	["Brasília"] = {container = "Distrito Federal"}, -- 3,850,000 
+	["Brasília"] = {container = "Distrito Federal"}, -- 3,850,000
 	["Brasilia"] = {alias_of = "Brasília", display = true},
 	["Fortaleza"] = {container = "Ceará"}, -- 3,825,000
 	["Salvador"] = {container = "Bahia", wp = "%l, %c", commonscat = "%l (%c)"}, -- 3,400,000
@@ -4693,7 +4993,7 @@ export.japan_cities = {
 	["Fukuoka"] = {container = "Fukuoka"}, -- 1,581,527
 	["Kobe"] = {container = "Hyōgo"}, -- 1,530,847
 	["Kyoto"] = {container = "Kyoto"}, -- 1,474,570
-	["Kawasaki"] = {container = "Kanagawa", wp = "%l, %c"}, -- 1,373,630
+	["Kawasaki"] = {container = "Kanagawa", wp = "%l, Kanagawa"}, -- 1,373,630
 	["Saitama"] = {container = "Saitama", wp = "%l (city)", commonscat = "%l, %c"}, -- 1,192,418
 	["Hiroshima"] = {container = "Hiroshima"}, -- 1,163,806
 	["Sendai"] = {container = "Miyagi"}, -- 1,029,552
@@ -4942,6 +5242,7 @@ export.taiwan_cities_group = {
 	canonicalize_key_container = make_canonicalize_key_container(", Taiwan", "county"),
 	default_container = "Taiwan",
 	default_placetype = "city",
+	defult_divs = {"districts"},
 	data = export.taiwan_cities,
 }
 
@@ -5083,6 +5384,42 @@ export.new_york_boroughs_group = {
 	data = export.new_york_boroughs,
 }
 
+export.vietnam_cities = {
+	-- Figures from citypopulation.de (retrieved 2025-04-26; reference date 2025-01-01) unless otherwise indicated.
+	["Ho Chi Minh City"] = {}, -- 14,300,000 (Agglomeration; inclunding Bien Hoa)
+	["Saigon"] = {alias_of = "Ho Chi Minh City"},
+	["Hanoi"] = {}, -- 7,350,000 (Agglomeration)
+	["Da Nang"] = {}, -- 1,500,000 (Agglomeration)
+	["Danang"] = {alias_of = "Da Nang", display = true},
+	["Haiphong"] = {}, -- 1,450,000 (Agglomeration)
+	["Hai Phong"] = {alias_of = "Haiphong", display = true},
+	-- This is the one entry in this list that is not a province-level municipality; instead it's a "provincial city"
+	-- meaning it is directly under its province as opposed to being contained in a district.
+	["Bien Hoa"] = {placetype = "city", container = "Đồng Nai", wp = "Biên Hòa"}, -- 1,272,235 (2022 city population per Wikipedia)
+	["Biên Hòa"] = {alias_of = "Bien Hoa", display = true},
+	["Biên Hoà"] = {alias_of = "Bien Hoa", display = true},
+	-- These two not in citypopulation.de because the urban population may be slightly under 1,000,000, but they are
+	-- both province-level municipalities and close to the 1,000,000 mark.
+	["Can Tho"] = {wp = "Cần Thơ"}, -- 1,456,000 municipality (2019 census), 994,704 urban (2022 General Statistics Office of Vietnam estimate); capital [[Ninh Kiều district]]
+	["Cần Thơ"] = {alias_of = "Can Tho", display = true},
+	["Hue"] = {wp = "Huế"}, -- 1,257,000 municipality (2019 census), 840,000 urban (2022 General Statistics Office of Vietnam estimate); -- capital [[Thuận Hóa district]]
+	["Huế"] = {alias_of = "Hue", display = true},
+}
+
+export.vietnam_cities_group = {
+	placename_to_key = false, -- don't add ", Vietnam" to make the key
+	default_container = "Vietnam",
+	canonicalize_key_container = make_canonicalize_key_container(" Province, Vietnam", "province"),
+	-- Most of the cities listed are province-level municipalities in addition, which contain a certain amount of
+	-- rural territory surrounding the city, but not enough to separate the municipality from the city as distinct
+	-- known locations.
+	default_placetype = {"municipality", "city"},
+	default_is_city = true,
+	-- There may not be enough districts to subcategorize like this.
+	-- default_divs = "districts",
+	data = export.vietnam_cities,
+}
+
 export.misc_cities = {
 	------------------ Africa -------------------
 	-- Sorted by country and then within the country, by decreasing population; figures from citypopulation.de
@@ -5093,7 +5430,7 @@ export.misc_cities = {
 	["Luanda"] = {container = "Angola"}, -- 9,650,000 (Urban Area)
 	["Benguela"] = {container = "Angola"}, -- 1,420,000 (Urban Area)
 	["Cotonou"] = {container = "Benin"}, -- 2,150,000 (Agglomeration)
-	["Ouagadougou"] = {container = "Burkina Faso"}, -- 3,425,000 (Agglomeration) 
+	["Ouagadougou"] = {container = "Burkina Faso"}, -- 3,425,000 (Agglomeration)
 	["Bobo-Dioulasso"] = {container = "Burkina Faso"}, -- 1,100,000 (Agglomeration)
 	["Bujumbura"] = {container = "Burundi"}, -- 1,143,202 (Urban Area 2023 per PopulationStat, cited in Wikipedia)
 	["Yaoundé"] = {container = "Cameroon"}, -- 3,975,000 (City)
@@ -5267,15 +5604,6 @@ export.misc_cities = {
 	["Abu Dhabi"] = {container = "United Arab Emirates"}, -- 1,850,000 (City)
 	["Sharjah"] = {container = "United Arab Emirates"}, -- 1,800,000 (Metro area 2022-2023 per Wikipedia; separate from Dubai)
 	["Tashkent"] = {container = "Uzbekistan"}, -- 3,850,000 (unindicated)
-	["Ho Chi Minh City"] = {container = "Vietnam"}, -- 14,300,000 (Agglomeration; inclunding Bien Hoa)
-	["Saigon"] = {alias_of = "Ho Chi Minh City"},
-	["Hanoi"] = {container = "Vietnam"}, -- 7,350,000 (Agglomeration)
-	["Da Nang"] = {container = "Vietnam"}, -- 1,500,000 (Agglomeration)
-	["Danang"] = {alias_of = "Da Nang", display = true},
-	["Haiphong"] = {container = "Vietnam"}, -- 1,450,000 (Agglomeration)
-	["Hai Phong"] = {alias_of = "Haiphong", display = true},
-	["Bien Hoa"] = {container = "Vietnam", wp = "Biên Hòa"}, -- 1,272,235 (2022 city population per Wikipedia)
-	["Biên Hòa"] = {alias_of = "Bien Hoa", display = true},
 	["Sanaa"] = {container = "Yemen"}, -- 3,275,000 (City; population of low reliability)
 	["Sana'a"] = {alias_of = "Sanaa", display = true},
 	["Aden"] = {container = "Yemen"}, -- 1,079,060 (?; 2023 estimate from World Population Review per Wikipedia)
@@ -5330,11 +5658,11 @@ export.misc_cities = {
 	--- Ngrams (up through 2022) and Google Scholar (>= 2024) confirms the common form "Zurich" without umlaut.
 	--- Even Wikipedia uses the form without umlaut.
 	["Zürich"] = {alias_of = "Zurich", display = true},
-	["Kyiv"] = {container = "Ukraine"},
+	["Kyiv"] = {container = "Ukraine"}, -- not in Kyiv Oblast
 	-- Don't display-canonicalize Kiev -> Kyiv because in ancient contexts, Kiev is still more common.
 	["Kiev"] = {alias_of = "Kyiv"},
-	["Kharkiv"] = {container = "Ukraine"},
-	["Odessa"] = {container = "Ukraine", wp = "Odesa"},
+	["Kharkiv"] = {container = {key = "Kharkiv Oblast, Ukraine", placetype = "oblast"}},
+	["Odessa"] = {container = {key = "Odesa Oblast, Ukraine", placetype = "oblast"}, wp = "Odesa"},
 	-- Don't display-canonicalize Odesa -> Odessa because it may be interpreted as a political statement.
 	["Odesa"] = {alias_of = "Odessa"},
 	
@@ -5427,6 +5755,7 @@ export.locations = {
 	export.canada_group,
 	export.china_group,
 	export.china_prefecture_level_cities_group,
+	export.china_prefecture_level_cities_group_2,
 	export.finland_group,
 	export.france_group,
 	export.france_departments_group,
@@ -5463,12 +5792,14 @@ export.locations = {
 	export.taiwan_group,
 	export.thailand_group,
 	export.turkey_group,
+	export.ukraine_group,
 	export.united_kingdom_group,
 	export.united_states_group,
 	export.england_group,
 	export.northern_ireland_group,
 	export.scotland_group,
 	export.wales_group,
+	export.vietnam_group,
 	export.australia_cities_group,
 	export.brazil_cities_group,
 	export.canada_cities_group,
@@ -5490,6 +5821,7 @@ export.locations = {
 	export.united_kingdom_cities_group,
 	export.united_states_cities_group,
 	export.new_york_boroughs_group,
+	export.vietnam_cities_group,
 	export.misc_cities_group,
 }
 
