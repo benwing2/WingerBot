@@ -230,6 +230,9 @@ function export.format_demonym_noun(data)
 
 	if not data.nocat then
 		insert(cats, full_langcode .. ":Demonyms")
+		if data.derogatory then
+			insert(cats, full_langcode .. ":Derogatory demonyms")
+		end
 		if data.g == "m" then
 			insert(cats, full_langcode .. ":Male people")
 		elseif data.g == "f" then
