@@ -1,29 +1,27 @@
---[[
+local export = {}
+--[==[ intro:
 
-Author: Benwing; some very early work by CodeCat and Atitarev
+Author: Benwing; some very early work by Rua and Atitarev
 
-This module holds some commonly used functions for the Russian language.
-It's generally for use from other modules, not #invoke, although some functions
-can be invoked from a template (export.iotation(), export.reduce_stem(),
-export.dereduce_stem() -- this was actually added to support calling from a
-bot script rather than from a user template). There's also export.main(),
-which supposedly can be used to invoke most functions in this module from a
-template, but it may or may not work. There may also be issues when invoking
-such functions from templates when transliteration is present, due to the
-need for the transliteration to be decomposed, as mentioned below (all strings
+This module holds some commonly used functions for the Russian language.  It's generally for use from other modules, not
+#invoke, although some functions can be invoked from a template (export.iotation(), export.reduce_stem(),
+export.dereduce_stem() -- this was actually added to support calling from a bot script rather than from a user
+template). There's also export.main(), which supposedly can be used to invoke most functions in this module from a
+template, but it may or may not work. There may also be issues when invoking such functions from templates when
+transliteration is present, due to the need for the transliteration to be decomposed, as mentioned below (all strings
 from Wiktionary pages are normally in composed form).
 
-NOTE NOTE NOTE: All functions assume that transliteration (but not Russian)
-has had its acute and grave accents decomposed using export.decompose().
-This is the first thing that should be done to all user-specified
+NOTE NOTE NOTE: All functions assume that transliteration (but not Russian) has had its acute and grave accents
+decomposed using `export.decompose()`.  This is the first thing that should be done to all user-specified
 transliteration and any transliteration we compute that we expect to work with.
-]]
-local export = {}
+]==]
 
 local m_str_utils = require("Module:string utilities")
 local m_table_tools = require("Module:table tools")
 -- Prevents an infinite require loop since ru-translit requires a different function in this module.
 local m_ru_translit = require("Module:require when needed")("Module:ru-translit")
+local m_headword_utilities = require("Module:require when needed")("Module:headword utilities")
+local m_table = require("Module:require when needed")("Module:table")
 
 local gsplit = m_str_utils.gsplit
 local split = m_str_utils.split
@@ -88,28 +86,23 @@ local function ine(x)
 	return x ~= "" and x or nil
 end
 
--- this function enables the module to be called from a template;
--- FIXME, does this actually work?
-function export.main(frame)
-	-- FIXME: Only used by [[Template:R:ru:Vasmer]]. Consider deleting.
-	if type(export[frame.args[1]]) == 'function' then
-		return export[frame.args[1]](frame.args[2], frame.args[3])
-	else
-		return export[frame.args[1]][frame.args[2]]
-	end
-end
-
--- Apply Proto-Slavic iotation. This is the change that is affected by a
--- Slavic -j- after a consonant.
+--[==[
+Apply Proto-Slavic iotation. This is the change that is affected by a Slavic -j- after a consonant.
+`stem` is the Cyrillic stem and `tr` its optional manual translit. If `shch` is given, т iotates to щ instead of ч.
+Normally return two values, the iotated Cyrillic stem and corresponding transliteration (which will be {nil} if passed
+in as {nil}). If invoked from a template or bot, however, the return value will be a single string; if manual
+transliteration is present, the return value will be a string of the form `CYRILLIC//TRANSLIT` with two slahes
+separating the Cyrillic from the translit.
+]==]
 function export.iotation(stem, tr, shch)
 	local combine_tr = false
-	
-	-- so this can be called from a template	
-	if type(stem) == 'table' then
+
+	-- so this can be called from a template (or usually, a bot)
+	if type(stem) == "table" then
 		stem, tr, shch = ine(stem.args[1]), ine(stem.args[2]), ine(stem.args[3])
 		combine_tr = true
 	end
-	
+
 	stem = ugsub(stem, "[сх]$", "ш")
 	stem = ugsub(stem, "с[кт]$", "щ")
 	stem = ugsub(stem, "[кц]$", "ч")
@@ -164,12 +157,13 @@ do
 	end
 end
 
--- True if either:
--- (1) A vowel is marked with explicit primary stress.
--- (2) The word has a single jo in it (which doesn't have secondary stress).
--- This is because a word with multiple jos requires explicit stress to be
--- marked, since we can't infer where primary stress lies.
--- Jo can be ё, ѣ̈,  or я̈ (e.g. сѣ̈дла, plural of сѣдло́).
+--[==[
+True if either:
+# A vowel is marked with explicit primary stress.
+# The word has a single jo in it (which doesn't have secondary stress).
+This is because a word with multiple jos requires explicit stress to be marked, since we can't infer where primary
+stress lies. `Jo` can be `ё`, `ѣ̈`, or `я̈` (e.g. `сѣ̈дла`, plural of `сѣдло́`).
+]==]
 function export.is_stressed(word)
 	if word:find(AC) then
 		return true
@@ -181,38 +175,48 @@ function export.is_stressed(word)
 	)
 end
 
--- True if a Cyrillic word requires explicit stress.
+--[==[
+True if a Cyrillic word requires explicit stress.
+]==]
 function export.is_unstressed(word)
 	return not export.is_stressed(word)
 end
 
--- True if Cyrillic word is stressed on the last syllable
+--[==[
+True if Cyrillic word is stressed on the last syllable.
+]==]
 function export.is_ending_stressed(word)
 	return ufind(word, "[ёЁ][^" .. export.vowel .. "]*$") or
 		ufind(word, "[" .. export.vowel .. "][́̈][^" .. export.vowel .. "]*$")
 end
 
--- True if a Cyrillic word has two or more stresses (acute or diaeresis)
+--[==[
+True if a Cyrillic word has two or more stresses (acute or diaeresis).
+]==]
 function export.is_multi_stressed(word)
 	word = ugsub(word, "[ёЁ]", "е́")
 	return ufind(word, "[" .. export.vowel .. "][́̈].*[" .. export.vowel .. "][́̈]")
 end
 
--- True if Cyrillic word is stressed on the first syllable
+--[==[
+True if Cyrillic word is stressed on the first syllable.
+]==]
 function export.is_beginning_stressed(word)
 	return ufind(word, "^[^" .. export.vowel .. "]*[ёЁ]") or
 		ufind(word, "^[^" .. export.vowel .. "]*[" .. export.vowel .. "]́")
 end
 
--- True if Cyrillic word has no vowel. Don't treat suffixes as nonsyllabic
--- even if they have no vowel, as they are generally added onto words with
--- vowels.
+--[==[
+True if Cyrillic word has no vowel. Don't treat suffixes as nonsyllabic even if they have no vowel, as they are
+generally added onto words with vowels.
+]==]
 function export.is_nonsyllabic(word)
 	return not ufind(word, "^%-") and not ufind(word, "[" .. export.vowel .. "]")
 end
 
--- True if Cyrillic word has no more than one vowel; includes non-syllabic
--- stems such as льд-
+--[==[
+True if Cyrillic word has no more than one vowel; includes non-syllabic stems such as `льд-`.
+]==]
 function export.is_monosyllabic(word)
 	return not ufind(word, "[" .. export.vowel .. "].*[" .. export.vowel .. "]")
 end
@@ -251,11 +255,11 @@ local recomposer = {
 	["Ʒ" .. CARON] = "Ǯ",
 }
 
--- Decompose acute, grave, etc. on letters (esp. Latin) into individivual
--- character + combining accent. But recompose Cyrillic and Latin characters
--- that we want to treat as units and get caught in the crossfire. We mostly
--- want acute and grave decomposed; perhaps should just explicitly decompose
--- those and no others.
+--[==[
+Decompose acute, grave, etc. on letters (esp. Latin) into individivual character + combining accent. But recompose
+Cyrillic and Latin characters that we want to treat as units and get caught in the crossfire. We mostly want acute and
+grave decomposed; perhaps should just explicitly decompose those and no others.
+]==]
 function export.decompose(text)
 	return (ugsub(toNFD(text), ".[" .. BREVE .. DIA .. CARON .. OGONEK .. "]", recomposer))
 end
@@ -264,13 +268,17 @@ function export.assert_decomposed(text)
 	assert(not ufind(text, "[áéíóúýàèìòùỳäëïöüÿÁÉÍÓÚÝÀÈÌÒÙỲÄËÏÖÜŸ]"))
 end
 
--- Transliterate text and then apply acute/grave decomposition.
+--[==[
+Transliterate text and then apply acute/grave decomposition.
+]==]
 function export.translit(text, no_include_monosyllabic_jo_accent)
 	local jo_accent = not no_include_monosyllabic_jo_accent and "mono" or nil
 	return export.decompose(m_ru_translit.tr(text, nil, nil, jo_accent))
 end
 
--- Recompose acutes and graves into preceding vowels. Probably not necessary.
+--[==[
+Recompose acutes and graves into preceding vowels. Probably not necessary.
+]==]
 function export.recompose(text)
 	return mw.ustring.toNFC(text)
 end
@@ -282,9 +290,10 @@ local grave_decomposer = {
 	["Ѝ"] = "И" .. GR,
 }
 
--- decompose precomposed Cyrillic chars w/grave accent; not necessary for
--- acute accent as there aren't precomposed Cyrillic chars w/acute accent,
--- and undesirable for precomposed ё and Ё
+--[==[
+Decompose precomposed Cyrillic chars w/grave accent; not necessary for acute accent as there aren't precomposed Cyrillic
+chars w/acute accent, and undesirable for precomposed `ё` and `Ё`.
+]==]
 function export.decompose_grave(word)
 	return (ugsub(word, "[ѐЀѝЍ]", grave_decomposer))
 end
@@ -300,9 +309,10 @@ local grave_deaccenter = {
 local deaccenter = mw.clone(grave_deaccenter)
 deaccenter[AC] = "" -- acute accent
 
--- Remove acute and grave accents; don't affect composed diaeresis in ёЁ or
--- uncomposed diaeresis in -ѣ̈- (as in plural сѣ̈дла of сѣдло́).
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove acute and grave accents; don't affect composed diaeresis in `ёЁ` or uncomposed diaeresis in `-ѣ̈-` (as in plural
+`сѣ̈дла` of `сѣдло́`). NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.remove_accents(word, tr)
 	local ru_removed = ugsub(word, "[́̀ѐЀѝЍ]", deaccenter)
 	if not tr then
@@ -311,9 +321,10 @@ function export.remove_accents(word, tr)
 	return ru_removed, (ugsub(tr, "[" .. AC .. GR .. "]", deaccenter))
 end
 
--- Remove grave accents; don't affect acute or composed diaeresis in ёЁ or
--- uncomposed diaeresis in -ѣ̈- (as in plural сѣ̈дла of сѣдло́).
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove grave accents; don't affect acute or composed diaeresis in `ёЁ` or uncomposed diaeresis in `-ѣ̈-` (as in plural
+`сѣ̈дла` of `сѣдло́`). NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.remove_grave_accents(word, tr)
 	local ru_removed = ugsub(word, "[̀ѐЀѝЍ]", grave_deaccenter)
 	if not tr then
@@ -322,12 +333,12 @@ function export.remove_grave_accents(word, tr)
 	return ru_removed, (ugsub(tr, GR, ""))
 end
 
--- Remove acute and grave accents in monosyllabic words; don't affect
--- diaeresis (composed or uncomposed) because it indicates a change in vowel
--- quality, which still applies to monosyllabic words. Don't change suffixes,
--- where a "monosyllabic" stress is still significant (e.g. -ча́т short
--- masculine of -ча́тый, vs. -́чат short masculine of -́чатый).
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove acute and grave accents in monosyllabic words; don't affect diaeresis (composed or uncomposed) because it
+indicates a change in vowel quality, which still applies to monosyllabic words. Don't change suffixes, where a
+"monosyllabic" stress is still significant (e.g. `-ча́т` short masculine of `-ча́тый`, vs. `-́чат` short masculine of
+`-́чатый`). NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.remove_monosyllabic_accents(word, tr)
 	if export.is_monosyllabic(word) and not ufind(word, "^%-") then
 		return export.remove_accents(word, tr)
@@ -339,13 +350,11 @@ end
 local destresser = mw.clone(deaccenter)
 destresser["ё"] = "е"
 destresser["Ё"] = "Е"
-destresser["̈"] = "" -- diaeresis
+destresser[DIA] = "" -- diaeresis
 
--- Subfunction of split_syllables(). On input we get sections of text
--- consisting of CONSONANT - VOWEL - CONSONANT - VOWEL ... - CONSONANT,
--- where CONSONANT consists of zero or more consonants and VOWEL consists
--- of exactly one vowel plus any following accent(s); we combine these into
--- syllables as required by split_syllables().
+-- Subfunction of split_syllables(). On input we get sections of text consisting of CONSONANT - VOWEL - CONSONANT -
+-- VOWEL ... - CONSONANT, where CONSONANT consists of zero or more consonants and VOWEL consists of exactly one vowel
+-- plus any following accent(s); we combine these into syllables as required by split_syllables().
 local function combine_captures(captures)
 	if #captures == 1 then
 		return captures
@@ -358,10 +367,10 @@ local function combine_captures(captures)
 	return combined
 end
 
--- Split Russian text and transliteration into syllables. Syllables end with
--- vowel + accent(s), except for the last syllable, which includes any
--- trailing consonants.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Split Russian text and transliteration into syllables. Syllables end with vowel + accent(s), except for the last
+syllable, which includes any trailing consonants. NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.split_syllables(ru, tr)
 	-- Split into alternating consonant/vowel sequences, as described in
 	-- combine_captures().
@@ -378,11 +387,10 @@ function export.split_syllables(ru, tr)
 	return rusyllables, trsyllables
 end
 
--- Split Russian word and transliteration into hyphen-separated components.
--- Rejoining with table.concat(..., "-") will recover the original word.
--- If the original word ends in a hyphen, that hyphen gets included with the
--- preceding component (this is the only case when an individual component has
--- a hyphen in it).
+--[==[
+Split Russian word and transliteration into hyphen-separated components.  Rejoining with `table.concat(..., "-")` will
+recover the original word. If the original word ends in a hyphen, that hyphen gets included with the preceding component(this is the only case when an individual component has a hyphen in it).
+]==]
 function export.split_hyphens(ru, tr)
 	local rucomponents = split(ru, "%-")
 	if rucomponents[#rucomponents] == "" and #rucomponents > 1 then
@@ -403,9 +411,10 @@ function export.split_hyphens(ru, tr)
 	return rucomponents, trcomponents
 end
 
--- Apply j correction, converting je to e after consonants, jo to o after
--- a sibilant, ju to u after hard sibilant.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Apply `j` correction, converting `je` to `e` after consonants, `jo` to `o` after a sibilant, `ju` to `u` after hard
+sibilant. NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.j_correction(tr)
 	tr = ugsub(tr, "([" .. export.tr_cons_no_approx .. "]" .. export.opt_accent ..")[Jj]([EeĚě])", "%1%2")
 	tr = ugsub(tr, "([žščŽŠČ])[Jj]([Oo])", "%1%2")
@@ -417,9 +426,15 @@ local function make_unstressed_ru(ru)
 	return (ugsub(ru, "[̀́̈ёЁѐЀѝЍ]", destresser))
 end
 
--- Remove all stress marks (acute, grave, diaeresis).
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove all stress marks (acute, grave, diaeresis). NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.make_unstressed(ru, tr)
+	-- so this can be called from a template (specifically {{R:ru:Vasmer}})
+	if type(stem) == "table" then
+		ru, tr = ine(ru.args[1]), ine(ru.args[2])
+	end
+
 	if not tr then
 		return make_unstressed_ru(ru), nil
 	end
@@ -435,8 +450,7 @@ function export.make_unstressed(ru, tr)
 		trsyl[i] = make_unstressed_ru(trsyl[i])
 	end
 	-- Also need to apply j correction as otherwise we'll have je after cons, etc.
-	return table.concat(rusyl, ""),
-		export.j_correction(table.concat(trsyl, ""))
+	return table.concat(rusyl, ""), export.j_correction(table.concat(trsyl, ""))
 end
 
 local function remove_jo_ru(word)
@@ -448,8 +462,9 @@ local function make_unstressed_once_ru(word)
 	return (ugsub(word, "([́̈ёЁ])([^́̈ёЁ]*)$", function(x, rest) return destresser[x] .. rest; end, 1))
 end
 
--- Remove diaeresis stress marks only.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove diaeresis stress marks only. NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.remove_jo(ru, tr)
 	if not tr then
 		return remove_jo_ru(ru), nil
@@ -489,9 +504,8 @@ local function map_last_hyphenated_component(fn, ru, tr)
 	return fn(ru, tr)
 end
 
--- Make last stressed syllable (acute or diaeresis) unstressed; leave
--- unstressed; leave graves alone; if NOCONCAT, return individual syllables.
--- NOTE: Translit must already be decomposed! See comment at top.
+-- Make last stressed syllable (acute or diaeresis) unstressed; leave unstressed; leave graves alone; if `NOCONCAT`,
+-- return individual syllables. NOTE: Translit must already be decomposed! See comment at top.
 local function make_unstressed_once_after_hyphen_split(ru, tr, noconcat)
 	if not tr then
 		return make_unstressed_once_ru(ru), nil
@@ -519,12 +533,12 @@ local function make_unstressed_once_after_hyphen_split(ru, tr, noconcat)
 		export.j_correction(table.concat(trsyl, ""))
 end
 
--- Make last stressed syllable (acute or diaeresis) to the right of any hyphen
--- unstressed (unless the hyphen is word-final); leave graves alone. We don't
--- destress a syllable to the left of a hyphen unless the hyphen is word-final
--- (i.e. a prefix). Otherwise e.g. the accents in the first part of words like
--- ко́е-како́й and а́льфа-лу́ч won't remain.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Make last stressed syllable (acute or diaeresis) to the right of any hyphen unstressed (unless the hyphen is
+word-final); leave graves alone. We don't destress a syllable to the left of a hyphen unless the hyphen is word-final
+(i.e. a prefix). Otherwise e.g. the accents in the first part of words like ко́е-како́й and а́льфа-лу́ч won't remain. NOTE:
+Translit must already be decomposed! See comment at top.
+]==]
 function export.make_unstressed_once(ru, tr)
 	return map_last_hyphenated_component(make_unstressed_once_after_hyphen_split, ru, tr)
 end
@@ -534,9 +548,10 @@ local function make_unstressed_once_at_beginning_ru(word)
 	return (ugsub(word, "^([^́̈ёЁ]*)([́̈ёЁ])", function(rest, x) return rest .. destresser[x]; end, 1))
 end
 
--- Make first stressed syllable (acute or diaeresis) unstressed; leave
--- graves alone; if NOCONCAT, return individual syllables.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Make first stressed syllable (acute or diaeresis) unstressed; leave graves alone; if `NOCONCAT`, return individual
+syllables. NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.make_unstressed_once_at_beginning(ru, tr, noconcat)
 	if not tr then
 		return make_unstressed_once_at_beginning_ru(ru), nil
@@ -564,10 +579,11 @@ function export.make_unstressed_once_at_beginning(ru, tr, noconcat)
 		export.j_correction(table.concat(trsyl, ""))
 end
 
--- Subfunction of make_ending_stressed(), make_beginning_stressed(), which
--- add an acute accent to a syllable that may already have a grave accent;
--- in such a case, remove the grave.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Subfunction of `make_ending_stressed()`, `make_beginning_stressed()`, which add an acute accent to a syllable that may
+already have a grave accent; in such a case, remove the grave. NOTE: Translit must already be decomposed! See comment at
+top.
+]==]
 function export.correct_grave_acute_clash(word, tr)
 	word = ugsub(word, "([̀ѐЀѝЍ])́", function(x) return grave_deaccenter[x] .. AC; end)
 	word = ugsub(word, AC .. GR, AC)
@@ -593,10 +609,9 @@ local function make_ending_stressed_ru(word)
 	return export.correct_grave_acute_clash(word)
 end
 
--- Remove the last primary stress from the word and put it on the final
--- syllable. Leave grave accents alone except in the last syllable.
--- If final syllable already has primary stress, do nothing.
--- NOTE: Translit must already be decomposed! See comment at top.
+-- Remove the last primary stress from the word and put it on the final syllable. Leave grave accents alone except in
+-- the last syllable.  If final syllable already has primary stress, do nothing.  NOTE: Translit must already be
+-- decomposed! See comment at top.
 local function make_ending_stressed_after_hyphen_split(ru, tr)
 	if not tr then
 		return make_ending_stressed_ru(ru), nil
@@ -622,12 +637,12 @@ local function make_ending_stressed_after_hyphen_split(ru, tr)
 		export.j_correction(table.concat(trsyl, ""))
 end
 
--- Remove the last primary stress from the portion of the word to the right of
--- any hyphen (unless the hyphen is word-final) and put it on the final
--- syllable. Leave grave accents alone except in the last syllable. If final
--- syllable already has primary stress, do nothing. (See make_unstressed_once()
--- for why we don't affect stresses to the left of a hyphen.)
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove the last primary stress from the portion of the word to the right of any hyphen (unless the hyphen is word-final)
+and put it on the final syllable. Leave grave accents alone except in the last syllable. If final syllable already has
+primary stress, do nothing. (See `make_unstressed_once()` for why we don't affect stresses to the left of a hyphen.)
+NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.make_ending_stressed(ru, tr)
 	return map_last_hyphenated_component(make_ending_stressed_after_hyphen_split, ru, tr)
 end
@@ -646,10 +661,11 @@ local function make_beginning_stressed_ru(word)
 	return export.correct_grave_acute_clash(word)
 end
 
--- Remove the first primary stress from the word and put it on the initial
--- syllable. Leave grave accents alone except in the first syllable.
--- If initial syllable already has primary stress, do nothing.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Remove the first primary stress from the word and put it on the initial syllable. Leave grave accents alone except in
+the first syllable.  If initial syllable already has primary stress, do nothing. NOTE: Translit must already be
+decomposed! See comment at top.
+]==]
 function export.make_beginning_stressed(ru, tr)
 	if not tr then
 		return make_beginning_stressed_ru(ru), nil
@@ -717,15 +733,13 @@ function export.get_stem_trailing_letter_type(stem)
 	return trailing_letter_type[ulower(usub(export.remove_accents(stem), -1))] or hard_cons
 end
 
--- Reduce stem by eliminating the "epenthetic" vowel. Applies to
--- nominative singular masculine 2nd-declension hard and soft, and
--- 3rd-declension feminine in -ь (e.g. любовь). STEM should be the
--- result after calling detect_stem_type(), but with final -й if
--- present. Normally returns two arguments (STEM and TR), but can be
--- called from a template using #invoke and will return one argument
--- (STEM, or STEM//TR if TR is present). Returns nil if unable to
--- reduce.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Reduce stem by eliminating the "epenthetic" vowel. Applies to nominative singular masculine 2nd-declension hard and
+soft, and 3rd-declension feminine in -ь (e.g. [[любовь]]). `STEM` should be the result after calling
+`detect_stem_type()`, but with final -й if present. Normally returns two arguments (`STEM` and `TR`), but can be called
+from a template or bot using `#invoke` and will return one argument (`STEM`, or `STEM//TR` if `TR` is present). Returns
+{nil} if unable to reduce.  NOTE: Translit must already be decomposed! See comment at top.
+]==]
 function export.reduce_stem(stem, tr, soft_n)
 	local pre, letter, post
 	local pretr, lettertr, posttr
@@ -745,8 +759,8 @@ function export.reduce_stem(stem, tr, soft_n)
 	-- =p.reduce_stem("фе́ей", "fɛ́jej") -> фе́йй, fɛ́jj
 	-- =p.reduce_stem("феёй", p.decompose("fɛjój")) -> фейй, fɛjj
 
-	-- so this can be called from a template	
-	if type(stem) == 'table' then
+	-- so this can be called from a template (or usually, a bot)
+	if type(stem) == "table" then
 		stem, tr = ine(stem.args[1]), ine(stem.args[2])
 		combine_tr = true
 	end
@@ -808,18 +822,18 @@ function export.reduce_stem(stem, tr, soft_n)
 	end
 end
 
--- Generate the dereduced stem given STEM and EPENTHETIC_STRESS (which
--- indicates whether the epenthetic vowel should be stressed); this is
--- without any terminating non-syllabic ending, which is added if needed by
--- the calling function. Normally returns two arguments (STEM and TR), but
--- can be called from a template using #invoke and will return one argument
--- (STEM, or STEM//TR if TR is present). Returns nil if unable to dereduce.
--- NOTE: Translit must already be decomposed! See comment at top.
+--[==[
+Generate the dereduced stem given `STEM` and `EPENTHETIC_STRESS` (which indicates whether the epenthetic vowel should be
+stressed); this is without any terminating non-syllabic ending, which is added if needed by the calling function.
+Normally returns two arguments (`STEM` and `TR`), but can be called from a template using `#invoke` (or by bot) and will
+return one argument (`STEM`, or `STEM//TR` if `TR` is present). Returns {nil} if unable to dereduce.  NOTE: Translit
+must already be decomposed! See comment at top.
+]==]
 function export.dereduce_stem(stem, tr, epenthetic_stress)
 	local combine_tr = false
-	
-	-- so this can be called from a template	
-	if type(stem) == 'table' then
+
+	-- so this can be called from a template (or usually, a bot)
+	if type(stem) == "table" then
 		stem, tr, epenthetic_stress = ine(stem.args[1]), ine(stem.args[2]), ine(stem.args[3])
 		combine_tr = true
 	end
@@ -831,17 +845,17 @@ function export.dereduce_stem(stem, tr, epenthetic_stress)
 	local pre, letter, post
 	local pretr, lettertr, posttr
 	-- FIXME!!! Deal with this special case
-	--if not (z.stem_type == 'soft' and _.equals(z.stress_type, {'b', 'f'}) -- we should ignore asterix for 2*b and 2*f (so to process it just like 2b or 2f)
-	--		 or _.contains(z.specific, '(2)') and _.equals(z.stem_type, {'velar', 'letter-ц', 'vowel'}))  -- and also the same for (2)-specific and 3,5,6 stem-types
+	--if not (z.stem_type == "soft" and _.equals(z.stress_type, {"b", "f"}) -- we should ignore asterix for 2*b and 2*f (so to process it just like 2b or 2f)
+	--		 or _.contains(z.specific, "(2)") and _.equals(z.stem_type, {"velar", "letter-ц", "vowel"}))  -- and also the same for (2)-specific and 3,5,6 stem-types
 	--then
 
 	-- I think this corresponds to our -ья and -ье types, which we
 	-- handle separately
-	--if z.stem_type == 'vowel' then  -- 1).
-	--	if _.equals(z.stress_type, {'b', 'c', 'e', 'f', "f'", "b'" }) then  -- gen_pl ending stressed  -- TODO: special vars for that
-	--		z.stems['gen_pl'] = _.replace(z.stems['gen_pl'], 'ь$', 'е́')
+	--if z.stem_type == "vowel" then  -- 1).
+	--	if _.equals(z.stress_type, {"b", "c", "e", "f", "f'", "b'" }) then  -- gen_pl ending stressed  -- TODO: special vars for that
+	--		z.stems["gen_pl"] = _.replace(z.stems["gen_pl"], "ь$", "е́")
 	--	else
-	--		z.stems['gen_pl'] = _.replace(z.stems['gen_pl'], 'ь$', 'и')
+	--		z.stems["gen_pl"] = _.replace(z.stems["gen_pl"], "ь$", "и")
 	--	end
 	--end
 
@@ -896,8 +910,10 @@ function export.dereduce_stem(stem, tr, epenthetic_stress)
 	return nil, nil
 end
 
--- Parse an entry that potentially has final footnote symbols and initial *
--- for a hypothetical entry into initial symbols, text and final symbols.
+--[==[
+Parse an entry that potentially has final footnote symbols and initial `*` for a hypothetical entry into initial
+symbols, text and final symbols.
+]==]
 function export.split_symbols(entry, do_subscript)
 	local prefentry, finalnotes = m_table_tools.separate_notes(entry)
 	local initnotes, text = umatch(prefentry, "(%*?)(.*)$")
@@ -908,13 +924,21 @@ end
 --                        Used for manual translit                      --
 --------------------------------------------------------------------------
 
+--[==[
+Transliterate text after removing any links.
+]==]
 function export.translit_no_links(text)
 	return export.translit(require("Module:links").remove_links(text))
 end
 
+--[==[
+Split a combined Cyrillic/translit string (either in the form `CYRILLIC//TRANSLIT` or just `CYRILLIC`) into its
+components, decompose the translit, and either return a two-element list of `CYRILLIC` and `TRANSLIT` (if `dopair` is
+given), or two separate return values (if `dopair` is not specified).
+]==]
 function export.split_russian_tr(term, dopair)
 	local ru, tr
-	if not ufind(term, "//") then
+	if not term:find("//") then
 		ru = term
 	else
 		local splitvals = split(term, "//")
@@ -930,6 +954,11 @@ function export.split_russian_tr(term, dopair)
 	end
 end
 
+--[==[
+Combine Cyrillic and translit into a single string separated by `//`. If translit is {nil}, the return value will be
+the same as the passed-in Cyrillic. `ru` can be a string (which any manual translit in `tr`) or a two-element table of
+`{CYRILLIC, TRANSLIT}`.
+]==]
 function export.combine_russian_tr(ru, tr)
 	if type(ru) == "table" then
 		ru, tr = unpack(ru)
@@ -951,14 +980,13 @@ local function concat_maybe_moving_notes(x, y, movenotes)
 	end
 end
 
--- Concatenate two Russian strings RU1 and RU2 that may have corresponding
--- manual transliteration TR1 and TR2 (which should be nil if there is no
--- manual translit). If DOPAIR, return a two-item list of the combined
--- Russian and manual translit (which will be nil if both TR1 and TR2 are
--- nil); else, return two values, the combined Russian and manual translit.
--- If MOVENOTES, extract any footnote symbols at the end of RU1 and move
--- them to the end of the concatenated string, before any footnote symbols
--- for RU2; same thing goes for TR1 and TR2.
+--[==[
+Concatenate two Cyrillic strings `RU1` and `RU2` that may have corresponding manual transliteration `TR1` and `TR2`
+(which should be {nil} if there is no manual translit). If `DOPAIR`, return a two-item list of the combined Cyrillic and
+manual translit (which will be {nil} if both `TR1` and `TR2` are {nil}); else, return two values, the combined Cyrillic
+and manual translit. If `MOVENOTES`, extract any footnote symbols at the end of `RU1` and move them to the end of the
+concatenated string, before any footnote symbols for `RU2`; same thing goes for `TR1` and `TR2`.
+]==]
 function export.concat_russian_tr(ru1, tr1, ru2, tr2, dopair, movenotes)
 	local ru, tr
 	if not tr1 and not tr2 then
@@ -979,14 +1007,13 @@ function export.concat_russian_tr(ru1, tr1, ru2, tr2, dopair, movenotes)
 	end
 end
 
--- Concatenate two Russian/translit combinations (where each combination is
--- a two-element list of {RUSSIAN, TRANSLIT} where TRANSLIT may be nil) by
--- individually concatenating the Russian and translit portions, and return
--- a concatenated combination as a two-element list. If the manual translit
--- portions of both terms on entry are nil, the result will also have nil
--- manual translit. If MOVENOTES, extract any footnote symbols at the end
--- of TERM1 and move them after the concatenated string and before any
--- footnote symbols at the end of TERM2.
+--[==[
+Concatenate two Cyrillic/translit combinations (where each combination is a two-element list of `{CYRILLIC, TRANSLIT}`
+where `TRANSLIT` may be nil) by individually concatenating the Cyrillic and translit portions, and return a concatenated
+combination as a two-element list. If the manual translit portions of both terms on entry are {nil}, the result will
+also have {nil} manual translit. If `MOVENOTES`, extract any footnote symbols at the end of `TERM1` and move them after
+the concatenated string and before any footnote symbols at the end of `TERM2`.
+]==]
 function export.concat_paired_russian_tr(term1, term2, movenotes)
 	assert(type(term1) == "table")
 	assert(type(term2) == "table")
@@ -1003,8 +1030,10 @@ function export.concat_forms(forms)
 	return table.concat(joined_rutr, ",")
 end
 
--- Given a list of forms, where each form is a two-element list of {RUSSIAN, TRANSLIT}, strip footnote symbols from the
--- end of the Russian and translit.
+--[==[
+Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRANSLIT}`, strip footnote symbols from the
+end of the Cyrillic and translit.
+]==]
 function export.strip_notes_from_forms(forms)
 	local newforms = {}
 	for _, form in ipairs(forms) do
@@ -1018,8 +1047,10 @@ function export.strip_notes_from_forms(forms)
 	return newforms
 end
 
--- Given a list of forms, where each form is a two-element list of {RUSSIAN, TRANSLIT}, unzip into parallel lists of
--- Russian and translit. The latter list may have gaps in it.
+--[==[
+Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRANSLIT}`, unzip into parallel lists of
+Cyrillic and translit. The latter list may have gaps in it.
+]==]
 function export.unzip_forms(forms)
 	local rulist = {}
 	local trlist = {}
@@ -1031,8 +1062,10 @@ function export.unzip_forms(forms)
 	return rulist, trlist
 end
 
--- Given parallel lists of Russian and translit (where the latter list may have gaps in it), return a list of forms,
--- where each form is a two-element list of {RUSSIAN, TRANSLIT}.
+--[==[
+Given parallel lists of Cyrillic and translit (where the latter list may have gaps in it), return a list of forms,
+where each form is a two-element list of `{CYRILLIC, TRANSLIT}`.
+]==]
 function export.zip_forms(rulist, trlist)
 	local forms = {}
 	for i, ru in ipairs(rulist) do
@@ -1050,8 +1083,10 @@ local function any_forms_have_translit(forms)
 	return false
 end
 
--- Given a list of forms, where each form is a two-element list of {RUSSIAN, TRANSLIT}, combine forms with
--- identical Russian, concatenating the translit with a comma in between.
+--[==[
+Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRANSLIT}`, combine forms with identical
+Cyrillic, concatenating the translit with a comma+space in between.
+]==]
 function export.combine_translit_of_duplicate_forms(forms)
 	if #forms == 0 then
 		return forms
@@ -1069,8 +1104,8 @@ function export.combine_translit_of_duplicate_forms(forms)
 		for j = 1, #newforms do
 			-- If the Russian of the next form is the same as that of the last one, combine their translits and modify
 			-- newforms[] in-place. Otherwise add the next form to newforms[]. Make sure to clone the form rather than
-			-- just appending it directly since we may modify it in-place; we don't want to side-effect `forms` as passed
-			-- in.
+			-- just appending it directly since we may modify it in-place; we don't want to side-effect `forms` as
+			-- passed in.
 			if forms[i][1] == newforms[j][1] then
 				local tr1 = newforms[j][2]
 				local tr2 = forms[i][2]
@@ -1096,9 +1131,69 @@ function export.combine_translit_of_duplicate_forms(forms)
 	return newforms
 end
 
--- Given a list of forms, where each form is a two-element list of {RUSSIAN, TRANSLIT}, split cases where two different
--- transliterations have been packed into a single translit field by creating two adjacent term/translit pairs. This is
--- the opposite operation of combine_translit_of_duplicate_forms().
+local function any_termobj_forms_have_translit(forms)
+	for _, form in ipairs(forms) do
+		if form.translit then
+			return true
+		end
+	end
+	return false
+end
+
+--[==[
+Given a list of forms, where each form is a termobj list of `{term = CYRILLIC, translit = TRANSLIT, ...}`,
+combine forms with identical Cyrillic, concatenating the translit with a comma+space in between.
+]==]
+function export.combine_translit_of_duplicate_termobj_forms(forms)
+	if #forms == 0 then
+		return forms
+	end
+
+	-- Optimization to avoid creating a new list in the majority case when no translit exists.
+	if not any_termobj_forms_have_translit(forms) then
+		return forms
+	end
+
+	local newforms = {}
+	table.insert(newforms, m_table.shallowCopy(forms[1]))
+	for i = 2, #forms do
+		local found_duplicate = false
+		for j = 1, #newforms do
+			-- If the Russian of the next form is the same as that of the last one, combine their translits and modify
+			-- newforms[] in-place. Otherwise add the next form to newforms[]. Make sure to clone the form rather than
+			-- just appending it directly since we may modify it in-place; we don't want to side-effect `forms` as
+			-- passed in.
+			if forms[i].term == newforms[j].term then
+				m_headword_utilities.combine_termobj_qualifiers_labels(newforms[j], forms[i])
+				local tr1 = newforms[j].translit
+				local tr2 = forms[i].translit
+				if not tr1 and not tr2 then
+					-- this shouldn't normally happen
+				else
+					tr1 = tr1 or export.translit_no_links(newforms[j].term)
+					tr2 = tr2 or export.translit_no_links(forms[i].term)
+					if tr1 == tr2 then
+						-- this shouldn't normally happen
+					else
+						newforms[j].translit = tr1 .. ", " .. tr2
+					end
+				end
+				found_duplicate = true
+				break
+			end
+		end
+		if not found_duplicate then
+			table.insert(newforms, m_table.shallowCopy(forms[i]))
+		end
+	end
+	return newforms
+end
+
+--[==[
+Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRANSLIT}`, split cases where two different
+transliterations have been packed into a single translit field by creating two adjacent term/translit pairs. This is
+the opposite operation of `combine_translit_of_duplicate_forms()`.
+]==]
 function export.split_translit_of_duplicate_forms(forms)
 	if #forms == 0 then
 		return forms
