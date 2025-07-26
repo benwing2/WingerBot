@@ -15,7 +15,7 @@ local function_module = "Module:fun"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local load_module = "Module:load"
-local shortcut_box_module = "Module:shortcut box"
+local parse_interface_module = "Module:parse interface"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
 local template_parser_module = "Module:template parser"
@@ -29,7 +29,6 @@ local m_str_utils = require(string_utilities_module)
 local m_table = require(table_module)
 
 local concat = table.concat
-local format_shortcuts = require(shortcut_box_module).format_shortcuts
 local get_indefinite_article = require(en_utilities_module).get_indefinite_article
 local get_label_info = require(labels_module).get_label_info
 local get_lang = require(languages_module).getByCode
@@ -49,7 +48,6 @@ local shallow_copy = m_table.shallowCopy
 local sort = table.sort
 local str_utils_format = m_str_utils.format
 local table_extend = m_table.extend
-local template_link = require(template_parser_module).templateLink
 local tostring = tostring
 local ucfirst = m_str_utils.ucfirst
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
@@ -102,20 +100,23 @@ function export.introdoc(args)
 		insert(exlangnames, lang_name(exlang, "exlang"))
 	end
 	local parts = {}
-	insert(parts, mw.getCurrentFrame():expandTemplate {title="uses lua", args={form_of_module .. "/templates"}})
-	insert(parts, "This template creates a definition line for ")
-	insert(parts, args.pldesc or template_name():gsub(" of$", "") .. "s")
-	insert(parts, " ")
-	insert(parts, args.primaryentrytext or "of primary entries")
-	if lang then
-		insert(parts, " in " .. langname)
-	elseif #args.exlang > 0 then
-		insert(parts, ", e.g. in " .. serial_comma_join(exlangnames, {conj = "or"}))
+	local function ins(txt)
+		insert(parts, txt)
 	end
-	insert(parts, ".")
+	ins(("{{uses lua|%s/templates}}"):format(form_of_module))
+	ins("This template creates a definition line for ")
+	ins(args.pldesc or template_name():gsub(" of$", "") .. "s")
+	ins(" ")
+	ins(args.primaryentrytext or "of primary entries")
+	if lang then
+		ins(" in " .. langname)
+	elseif args.exlang[1] then
+		ins(", e.g. in " .. serial_comma_join(exlangnames, {conj = "or"}))
+	end
+	ins(".")
 	local cats = args.cat
-	if #cats > 0 then
-		insert(parts, " It also categorizes the page into ")
+	if cats[1] then
+		ins(" It also categorizes the page into ")
 		local catparts = {}
 		if lang then
 			for _, cat in ipairs(cats) do
@@ -123,39 +124,58 @@ function export.introdoc(args)
 			end
 		else
 			for _, cat in ipairs(cats) do
-				insert(catparts, "the proper language-specific subcategory of [[:Category:" .. ucfirst(cat) .. " by language]] (e.g. [[:Category:" .. (exlangnames[1] or "English") .. " " .. cat .. "]])")
+				insert(catparts, "the proper language-specific subcategory of [[:Category:" .. ucfirst(cat) ..
+				" by language]] (e.g. [[:Category:" .. (exlangnames[1] or "English") .. " " .. cat .. "]])")
 			end
 		end
-		insert(parts, serial_comma_join(catparts))
-		insert(parts, ".")
+		ins(serial_comma_join(catparts))
+		ins(".")
 	end
 	if args.addlintrotext then
-		insert(parts, " ")
-		insert(parts, args.addlintrotext)
+		ins(" ")
+		ins(args.addlintrotext)
 	end
-	insert(parts, "\n")
+	ins("\n")
 	if args.withcap and args.withdot then
-		insert(parts, [===[
+		ins([===[
 
-By default, this template displays its output as a full sentence, with an initial capital letter and a trailing period (full stop). This can be overridden using <code>|nocap=1</code> and/or <code>|nodot=1</code> (see below).
+By default, this template displays its output as a full sentence, with an initial capital letter and a trailing period
+(full stop). This can be overridden using {{para|nocap|1}} and/or {{para|nodot|1}} (see below).
 ]===])
 	elseif args.withcap then
-		insert(parts, [===[
+		ins([===[
 
-By default, this template displays its output with an initial capital letter. This can be overridden using <code>|nocap=1</code> (see below).
+By default, this template displays its output with an initial capital letter. This can be overridden using
+{{para|nocap|1}} (see below).
+]===])
+	elseif args.withencap then
+		ins([===[
+
+By default, this template displays its output with an initial capital letter if the language in {{para|1}} is English
+(but not otherwise). This can be overridden by using {{para|nocap|1}} to make the initial letter lowercase for English,
+or {{para|cap|1}} to make the initial letter capitalized otherwise (but this is not generally recommended, because
+non-English definitions should be lowercase).
+]===])
+	else
+		ins([===[
+
+By default, this template displays its output with an initial lowercase letter. This can be overridden by using
+{{para|cap|1}} to make the initial letter capitalized (but this is not generally recommended for non-English languages,
+as non-English definitions should be lowercase).
 ]===])
 	end
-	insert(parts, [===[
+	ins([===[
 
 This template is '''not''' meant to be used in etymology sections.]===])
 	local etymtemp = args.etymtemp
 	if etymtemp then
-		insert(parts, " For those sections, use <code>{{[[Template:" .. etymtemp .. "|" .. etymtemp .. "]]}}</code> instead.")
+		ins(" For those sections, use {{tl|" .. etymtemp .. "}} instead.")
 	end
-	insert(parts, [===[
+	ins([===[
 
 
-Note that users can customize how the output of this template displays by modifying their Custom CSS files. See [[:Category:Form-of templates|“Form of” templates]] for details.
+Note that users can customize how the output of this template displays by modifying their Custom CSS files. See
+[[:Category:Form-of templates|“Form of” templates]] for details.
 ]===])
 	return concat(parts)
 end
@@ -167,10 +187,10 @@ local function param(params, list, required)
 	end
 	for _, p in ipairs(params) do
 		local listparts = {}
-		insert(listparts, "<code>|" .. p .. "=</code>")
+		insert(listparts, "{{para|" .. p .. "}}")
 		if list then
-			insert(listparts, ", <code>|" .. p .. "2=</code>")
-			insert(listparts, ", <code>|" .. p .. "3=</code>")
+			insert(listparts, ", {{para|" .. p .. "2}}")
+			insert(listparts, ", {{para|" .. p .. "3}}")
 			insert(listparts, ", etc.")
 		end
 		insert(paramparts, concat(listparts))
@@ -179,51 +199,122 @@ local function param(params, list, required)
 	return concat(paramparts, " or ") .. " " .. reqtext
 end
 
-local function param_and_doc(parts, params, list, required, doc)
-	insert(parts, "; ")
-	insert(parts, param(params, list, required))
-	insert(parts, "\n")
-	insert(parts, ": ")
-	insert(parts, doc)
-	insert(parts, "\n")
-end
-
 function export.paramdoc(args)
 	local parts = {}
+	local function ins(txt)
+		insert(parts, txt)
+	end
+
+	local function param_and_doc(params, list, required, doc)
+		ins("; ")
+		ins(param(params, list, required))
+		ins("\n")
+		ins(": ")
+		ins(doc)
+		ins("\n")
+	end
 
 	local tempname = template_name()
 	local art = args.art or get_indefinite_article(tempname)
 	local sgdescof = args.sgdescof or art .. " " .. tempname
-	insert(parts, "''Positional (unnamed) parameters:''\n")
+	ins("''Positional (unnamed) parameters:''\n")
 	local lang = args.lang
 	if args.lang then
-		param_and_doc(parts, "1", false, true, "The term to link to (which this page is " .. sgdescof .. "). This should include any needed diacritics as appropriate to " .. lang_name(lang, "lang") .. ". These diacritics will automatically be stripped out in the appropriate fashion in order to create the link to the page.")
-		param_and_doc(parts, "2", false, false, "The text to be shown in the link to the term. If empty or omitted, the term specified by the first parameter will be used. This parameter is normally not necessary, and should not be used solely to indicate diacritics; instead, put the diacritics in the first parameter.")
+		param_and_doc("1", false, true,
+		"The term to link to (which this page is " .. sgdescof .. "). This should include any needed diacritics as " ..
+		"appropriate to " .. lang_name(lang, "lang") .. ". These diacritics will automatically be stripped out in " ..
+		"the appropriate fashion in order to create the link to the page. This parameter can also include multiple " ..
+		"terms separated by a comma, as long as there is no space after the comma, and each such term can have " ..
+		"inline modifiers specifying transliterations, display forms, qualifiers, labels, genders and other " ..
+        "properties. See below.")
+		param_and_doc("2", false, false,
+		"The text to be shown in the link to the term. If empty or omitted, the term specified by the first " ..
+		"parameter will be used. This parameter is normally not necessary, and should not be used solely to " ..
+		"indicate diacritics; instead, put the diacritics in the first parameter.")
 	else
-		param_and_doc(parts, "1", false, true, "The [[WT:LANGCODE|language code]] of the term linked to (which this page is " .. sgdescof .. "). See [[Wiktionary:List of languages]]. <small>The parameter <code>|lang=</code> is a deprecated synonym; please do not use. If this is used, all numbered parameters move down by one.</small>")
-		param_and_doc(parts, "2", false, true, "The term to link to (which this page is " .. sgdescof .. "). This should include diacritics as appropriate to the language (e.g. accents in Russian to mark the stress, vowel diacritics in Arabic, macrons in Latin to indicate vowel length, etc.). These diacritics will automatically be stripped out in a language-specific fashion in order to create the link to the page.")
-		param_and_doc(parts, "3", false, false, "The text to be shown in the link to the term. If empty or omitted, the term specified by the second parameter will be used. This parameter is normally not necessary, and should not be used solely to indicate diacritics; instead, put the diacritics in the second parameter.")
+		param_and_doc("1", false, true,
+		"The [[WT:LANGCODE|language code]] of the term linked to (which this page is " .. sgdescof .. "). See
+		[[Wiktionary:List of languages]]. <small>The parameter {{para|lang}} is a deprecated synonym; please do not " ..
+		"use. If this is used, all numbered parameters move down by one.</small>")
+		param_and_doc("2", false, true,
+		"The term to link to (which this page is " .. sgdescof .. "). This should include diacritics as appropriate " ..
+		"to the language (e.g. accents in Russian to mark the stress, vowel diacritics in Arabic, macrons in Latin " ..
+		"to indicate vowel length, etc.). These diacritics will automatically be stripped out in a " ..
+		"language-specific fashion in order to create the link to the page. This parameter can also include " ..
+		"multiple terms separated by a comma, as long as there is no space after the comma, and each such term can " ..
+		"have inline modifiers specifying transliterations, display forms, qualifiers, labels, genders and other " ..
+		"properties. See below.")
+		param_and_doc("3", false, false,
+		"The text to be shown in the link to the term. If empty or omitted, the term specified by the second " ..
+		"parameter will be used. This parameter is normally not necessary, and should not be used solely to " ..
+		"indicate diacritics; instead, put the diacritics in the second parameter.")
 	end
-	insert(parts, "''Named parameters:''\n")
+	ins("''Named parameters:''\n")
 	if args.etymtemp == 'contraction' then
-		param_and_doc(parts, "mandatory", false, false, "If <code>|mandatory=1</code>, indicates that the contraction is mandatory.")
-		param_and_doc(parts, "optional", false, false, "If <code>|optional=1</code>, indicates that the contraction is optional.")
+		param_and_doc("mandatory", false, false,
+			"If {{para|mandatory|1}}, indicates that the contraction is mandatory.")
+		param_and_doc("optional", false, false,
+			"If {{para|optional|1}}, indicates that the contraction is optional.")
 	end
-	param_and_doc(parts, {"t", lang and "3" or "4"}, false, false, "A gloss or short translation of the term linked to. <small>The parameter <code>|gloss=</code> is a deprecated synonym; please do not use.</small>")
-	param_and_doc(parts, "tr", false, false, "Transliteration for non-Latin-script terms, if different from the automatically-generated one.")
-	param_and_doc(parts, "ts", false, false, "Transcription for non-Latin-script terms whose transliteration is markedly different from the actual pronunciation. Should not be used for IPA pronunciations.")
-	param_and_doc(parts, "sc", false, false, "Script code to use, if script detection does not work. See [[Wiktionary:Scripts]].")
+	param_and_doc({"t", lang and "3" or "4"}, false, false, "A gloss or short translation of the term linked " ..
+	"to. <small>The parameter {{para|gloss}} s a deprecated synonym; please do not use.</small>")
+	param_and_doc("tr", false, false,
+		"Transliteration for non-Latin-script terms, if different from the automatically-generated one.")
+	param_and_doc("ts", false, false, "Transcription for non-Latin-script terms whose transliteration is " ..
+	"markedly different from the actual pronunciation. Should not be used for IPA pronunciations.")
+	param_and_doc("sc", false, false, "Script code to use, if script detection does not work. See " ..
+	"[[Wiktionary:Scripts]].")
+	param_and_doc("cat", true, false, "Additional categories to place the page into. They are automatically " ..
+	"prepended with the language name. A single parameter can contain multiple comma-separated categories as long " ..
+	"as there is no space after the comma.")
 	if args.withfrom then
-		param_and_doc(parts, "from", true, false, "A label (see " .. template_link("label") .. ") that gives additional information on the dialect that the term belongs to, the place that it originates from, or something similar.")
+		param_and_doc("from", true, false, "A label (see {{tl|label}}) that gives additional information on " ..
+		"the dialect that the term belongs to, the place that it originates from, or something similar.")
 	end
 	if args.withdot then
-		param_and_doc(parts, "dot", false, false, "A character to replace the final dot that is normally shown automatically.")
-		param_and_doc(parts, "nodot", false, false, "If <code>|nodot=1</code>, then no automatic dot will be shown.")
+		param_and_doc("dot", false, false,
+		"A character to replace the final dot that is normally shown automatically.")
+		param_and_doc("nodot", false, false, "If {{para|nodot|1}}, then no automatic dot will be shown.")
 	end
-	if args.withcap then
-		param_and_doc(parts, "nocap", false, false, "If <code>|nocap=1</code>, then the first letter will be in lowercase.")
+	if args.withcap or args.withencap then
+		param_and_doc("nocap", false, false, "If {{para|nocap|1}}, then the first letter will be in lowercase.")
 	end
-	param_and_doc(parts, "id", false, false, "A sense id for the term, which links to anchors on the page set by the " .. template_link("senseid") .. " template.")
+	if not args.withcap then
+		param_and_doc("cap", false, false, "If {{para|cap|1}}, then the first letter will be in capitalized. " ..
+		"Not generally recommended except for English definitions" .. (args.withencap and " (which are already " ..
+		"capitalized by default)" or "") .. ".")
+	end
+	if args.cat and args.cat[1] then
+		param_and_doc("nocat", false, false, "Disable categorization of categories built into the template. " ..
+		"For example, {{tl|ellipsis of|en|...}} normally categories into e.g. [[:Categroy:English ellipses]], but " ..
+		"this can be disabled using {{para|nocat|1}}. This does not affect categories explicitly specified in the " ..
+		"template call itself using {{para|cat}}.")
+	end
+	param_and_doc("id", false, false, "A sense id for the term, which links to anchors on the page set by " ..
+	"the {{tl|senseid}} template.")
+	param_and_doc("addl", false, false, "Additional text to display at the end, before the final closing " ..
+	"&lt;span/> tag. It is normally joined to the preceding text by a comma followed by a space. However, if the " ..
+	"value of {{para|addl}} begins with a colon or semicolon, it is appended directly with no joining punctuation, " ..
+	"and if the value begins with an underscore, the remainder is joined to the preceding text with a space.")
+
+	ins([==[
+
+===Inline modifiers===
+Use a syntax like <code>Изабе́лла<tr:Izabɛ́lla><t:Isabelle></code> to specify modifiers such as transliterations, glosses and qualifiers. In this example, for the Russian name {{m|ru|Изабе́лла|tr=Izabɛ́lla|t=Isabelle}}, the manual transliteration ''Izabɛ́lla'' and gloss "Isabelle" are given. The following modifiers are recognized; see {{temp|link}} for the exact meaning of these modifiers.
+* <code>t</code>: gloss
+* <code>tr</code>: transliteration
+* <code>ts</code>: transcription, for languages where the transliteration and pronunciation are markedly different
+* <code>q</code>: left qualifier, e.g. {{cd|<q:neither sexual nor romantic in nature>}} (in reference to [[platonic love]]); this appears '''before''' the term, parenthesized and italicized
+* <code>qq</code>: right qualifier; this appears '''after''' the term, parenthesized and italicized
+* <code>l</code>: comma-separated left labels, e.g. {{cd|<l:rare>}} or {{cd|<l:UK,Australia>}} or {{cd|<l:archaic,or,dialectal>}}; as shown, there must not be a space after the comma for it to be recognized as a delimiter; the labels appear '''before''' the term, parenthesized, italicized and appropriately linked as if {{tl|lb}} were used (but without categorization); an alternative syntax is to enclose the labels in {{cd|<<...>>}}, e.g. {{cd|<l:<<rare>>, <<archaic>> or <<dialectal>>>}}
+* <code>ll</code>: comma-separated right labels; these appear '''after''' the term, parenthesized, italicized and appropriately linked as for left labels
+* <code>ref</code>: reference or references, using the syntax documented in [[Template:IPA#References]]
+* <code>g</code>: comma-separated list of gender/number specifications; see [[Module:gender and number]] for the complete list
+* <code>alt</code>: alternative display text
+* <code>pos</code>: part of speech
+* <code>lit</code>: literal meaning
+* <code>id</code>: sense ID; see {{temp|senseid}}
+* <code>sc</code>: script code]==])
 	return concat(parts)
 end
 
@@ -265,11 +356,10 @@ where <code><var><langcode></var></code> is the [[Wiktionary:Languages|language 
 end
 
 function export.fulldoc(args)
-	local docsubpage = mw.getCurrentFrame():expandTemplate{title="documentation subpage", args={}}
-	local shortcuts = #args.shortcut > 0 and format_shortcuts(args.shortcut) or ""
+	local shortcuts = args.shortcut[1] and ("{{shortcut|%s}}"):format(concat(args.shortcut, "|")) or ""
 	local introdoc = export.introdoc(args)
 	local usagedoc = export.usagedoc(args)
-	return docsubpage .. "\n" .. shortcuts .. introdoc .. "\n" .. usagedoc
+	return "{{documentation subpage}}\n" .. shortcuts .. introdoc .. "\n" .. usagedoc
 end
 
 function export.infldoc(args)
@@ -446,12 +536,12 @@ function export.non_alias_shortcut_table()
 
 	insert(parts, '{|class="wikitable"')
 	insert(parts, "! Shortcut !! Expansion !! Display form")
-	if #non_alias_shortcuts1 > 0 then
+	if non_alias_shortcuts1[1] then
 		insert(parts, "|-")
 		insert(parts, '! colspan="3" style="text-align: center; background: #dddddd;" | More common:')
 		insert_shortcut_group(parts, non_alias_shortcuts1)
 	end
-	if #non_alias_shortcuts2 > 0 then
+	if non_alias_shortcuts2[1] then
 		insert(parts, "|-")
 		insert(parts, '! colspan="3" style="text-align: center; background: #dddddd;" | Less common:')
 		insert_shortcut_group(parts, non_alias_shortcuts2)
@@ -550,7 +640,7 @@ local function iterate_languages(langcodes_module, data_by_lang)
 			local lang = get_lang(langcode, nil, true)
 			-- First do base-lemma params.
 			local base_lemma_param_table
-			if data_module and data_module.base_lemma_params and #data_module.base_lemma_params > 0 then
+			if data_module and data_module.base_lemma_params and data_module.base_lemma_params[1] then
 				local base_lemma_param_parts = {}
 				insert(base_lemma_param_parts, '{|class="wikitable"')
 				insert(base_lemma_param_parts, "! Parameter !! Display form")
@@ -595,7 +685,7 @@ local function iterate_languages(langcodes_module, data_by_lang)
 			-- Then do non-alias shortcuts.
 			local non_alias_shortcut_table
 			local non_alias_shortcuts = data_module and organize_non_alias_shortcut_data(data_module, lang) or {}
-			if #non_alias_shortcuts > 0 then
+			if non_alias_shortcuts[1] then
 				local non_alias_shortcut_parts = {}
 				insert(non_alias_shortcut_parts, '{|class="wikitable"')
 				insert(non_alias_shortcut_parts, "! Shortcut !! Expansion !! Display form")
@@ -614,10 +704,10 @@ local function iterate_languages(langcodes_module, data_by_lang)
 			local category_table, label_table
 			if m_cats[langcode] then
 				local cats, labels = find_categories_and_labels(m_cats[langcode])
-				if #cats > 0 then
+				if cats[1] then
 					category_table = construct_category_table(cats)
 				end
-				if #labels > 0 then
+				if labels[1] then
 					label_table = construct_label_table(labels, lang)
 				end
 			end
@@ -715,7 +805,7 @@ end
 function export.lang_independent_category_table()
 	if m_cats["und"] then
 		local cats = find_categories_and_labels(m_cats["und"])
-		if #cats > 0 then
+		if cats[1] then
 			return construct_category_table(cats)
 		end
 	end
@@ -725,7 +815,7 @@ end
 function export.lang_independent_label_table()
 	if m_cats["und"] then
 		local labels = select(2, find_categories_and_labels(m_cats["und"]))
-		if #labels > 0 then
+		if labels[1] then
 			return construct_label_table(labels, get_lang("und"), "replace und")
 		end
 	end
