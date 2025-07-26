@@ -15,6 +15,9 @@ Page 185 l: Found match for regex: <begin> # {{abbreviation of|en|la:libra|t=[[p
 Page 894 IMS: Found match for regex: <begin> # {{place|en|<=abbr of:[[w:en:Indianapolis Motor Speedway|Indianapolis Motor Speedway]]<t:The Brickyard>|racetrack|ward/Speedway|city/Indianapolis|twp/Wayne|co/Marion|s/Indiana|c/USA}}. <end>
 Page 1377 ארה״ב: Found match for regex: <begin> # {{place|he|<=abbr of:אַרְצוֹת הַבְּרִית<tr:ar'tsót hab'rít><eq:United States>|country|cont/North America|t=US}} <end>
 Page 11212 UMall: Found match for regex: <begin> # {{place|tl|<=abbr of:en:[[university|University]] [[mall|Mall]]|mall|district/Malate|city/Manila|c/Philippines}} <end>
+Page 11704 cnd.: Found match for regex: <begin> # {{abbreviation of|pl|czego należało dowieść,co należało dowieść}}: [[QED]] {{gl|end of proof}} <end>
+Page 2877 JK: Found match for regex: <begin> # {{abbreviation of|ja|女子高生<tr:joshi kōsei>,[[女子]][[高校生]]<tr:joshi kōkōsei><t:high school girl>}} <end>
+Page 2087 JJ: Found match for regex: <begin> # {{lb|en|law|postnominal}} {{plural of|en|J}}: {{abbreviation of|en|judges,justices|nocap=1}}. <end>
 
 clipping of
 
@@ -38,7 +41,7 @@ Page 2160 meybuz: Found match for regex: <begin> From the [[trademark]] ''Meybuz
 Page 711 D: Found match for regex: <begin> * {{sense|chemistry|deuterium}} {{abbrev|mul|en:deuterium}}. <end>
 Page 711 D: Found match for regex: <begin> * {{sense|Germany}} {{abbrev|mul|de:Deutschland||Germany}}. <end>
 
-initialism:
+initialism of:
 
 Page 3532 mfG: Found match for regex: <begin> # {{lb|de|informal}} {{initialism of|de|mit freundlichen Grüßen<t:with friendly greetings>,mit freundlichem Gruß}} <end>
 Page 4576 TLE: Found match for regex: <begin> # {{lb|en|astronautics}} {{initialism of|en|[[two-line]] [[element]],[[three-line]] [[element]]}}. <end>
@@ -61,6 +64,16 @@ Page 2346 GMA: Found match for regex: <begin> # {{init of|tl|en:{{w|Global Media
 Page 2346 GMA: Found match for regex: <begin> # {{lb|tl|obsolete}} {{init of|tl|en:{{w|Greater Manila Area}} Network|addl=the old form of {{w|Global Media Arts}} Network}}. <end>
 Page 3569 cv: Found match for regex: <begin> # {{m|en|hp}}: {{init of|fr|cheval-vapeur,chevaux-vapeurs||steam horse(s)|addl=the unit symbol for metric {{w|tax horsepower}}, a nominal calculation of horsepower used for taxation purposes; real horsepower is abbreviated {{m|fr|ch}}}} <end>
 Page 6923 ΜΜΕ: Found match for regex: <begin> * {{initialism of|el|[[μέσα|Μέσα]] [[μαζικής|Μαζικής]] [[ενημέρωση|Ενημέρωσης]]<t:medium, mass, information>,μέσο μαζικής ενημέρωσης<g:n><t:mass medium of information>|addl=the '''E''' may also stand for {{l|el|επικοινωνία|Επικοινωνία|g=f|t=communication}}}} <end>
+Page 794 GM: Found match for regex: <begin> # {{senseid|en|game master or game moderator}} {{lb|en|countable|RPG}} {{init of|en|game master,[[game]] [[moderator]]}}. <end>
+Page 4863 HSH: Found match for regex: <begin> # {{init of|en|[[his|His]] [[serene|Serene]] [[Highness]],[[her|Her]] [[serene|Serene]] [[Highness]]|addl=the title of a number of members of the [[royal family]] in various countries}}. <end>
+Page 8477 AYA: Found match for regex: <begin> # {{senseid|en|adolescent or young adult}} {{lb|en|chiefly|sciences|medicine}} {{init of|en|[[adolescent]] or [[young adult]],[[adolescent]] and [[young adult]]}}. <end>
+Page 736 CNC: Found match for regex: <begin> # {{senseid|en|Q190247}} {{lb|en|computing|manufacturing}} {{init of|en|w:computer numerical control,[[computerized]] [[numerical control]]}}. <end>
+Page 2386 SLM: Found match for regex: <begin> # {{senseid|en|single longitudinal-mode laser}} {{init of|en|[[w:longitudinal mode|single–longitudinal-mode]] [laser]<!--"an SLM laser"-->,[[w:longitudinal mode|single–longitudinal-mode laser]]<!--"an SLM"-->}}. <end>
+Page 2842 TIC: Found match for regex: <begin> # {{lb|id|tourism}} {{init of|id|en:[[tourist]] [[information]] [[centre]]}} <end>
+Page 10952 HIS: Found match for regex: <begin> # {{lb|en|medicine|software}} {{init of|en|w:health information system,[[hospital]] [[information]] [[system]]}}. <end>
+Page 4320 mfG: Found match for regex: <begin> # {{lb|de|informal}} {{init of|de|mit freundlichen Grüßen<t:with friendly greetings>,mit freundlichem Gruß<t:with friendly greeting>}} <end>
+Page 0 CTD: <begin> # {{init of|en|[[carboxyl]] tail [[domain]],carboxyl [[terminal]] domain}}. <end>
+Page 0 CTD: <begin> # {{init of|en|[[conductivity]], [[temperature]], [[depth]]}}; {{abbreviation of|en|[[CTD apparatus]]|nocap=1}}. <end>
 
 with place:
 
@@ -75,7 +88,7 @@ Page 2898 EUA: Found match for regex: <begin> # {{place|ca|initof=Emirats Àrabs
 Page 8455 HRD: Found match for regex: <begin> # {{place|en|region|initof=Huanghe River Delta<t:Yellow River Delta>|c/China|on the {{l|en|[[Yellow River]]/[[Huanghe]]}}, at its {{l|en|delta}} regions by the {{l|en|Shandong Peninsula}}, on the {{l|en|Bohai Sea}} and {{l|en|Yellow Sea}}, marginal seas of the {{l|en|Pacific Ocean}}}}. <end>
 Page 478 AQ: Found match for regex: <begin> # {{place|it|capital city|abbrof=Aquila,L'Aquila|adr/Abruzzo|c/Italy}} <end>
 
-abbreviation:
+abbreviation of
 
 Page 1791 JK: Found match for regex: <begin> # {{abbreviation of|ja|女子高生<tr:joshi kōsei>,[[女子]][[高校生]]<tr:joshi kōkōsei>|t=high-school girl}} <end>
 Page 468 v.: Found match for regex: <begin> # {{lb|sv|common}} {{abbreviation of|sv|väg<t:road>,vägen<t:the [...] road>}}. <end>
@@ -105,7 +118,6 @@ short for
 
 Page 79 gone: Found match for regex: <begin> # {{alternative spelling of|en|gon//gon'}}: {{short for|en|gonna,going to|nocap=1}}. <end>
 Page 596 Deutschland: Found match for regex: <begin> ## {{short for|de|[[Heiliges Römisches Reich|Heiliges Römisches Reich Deutscher Nation]],[[Heiliges Römisches Reich|heiliges römisches Reich deutscher Nation]]}} {{defdate|till 1806}} <end>
-Page 1435 maiestas: Found match for regex: <begin> # {{lb|la|law}} {{short for|la|[[crīmen]] maiestātis,[[lēx]] maiestātis|t=[[treason]], [[high treason]]}} <end>
 Page 1486 安全保障理事会: Found match for regex: <begin> # {{short for|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai><t:[[United Nations Security Council]]>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai><t:[[UN Security Council]]>|sort=あんぜんほしょうりじかい}}: the [[Security Council]] <end>
 Page 347 金: Found match for regex: <begin> # {{lb|ja|colloquial}} {{short for|ja|金物<tr:kanamono>,金具<tr:kanagu>}}: [[metal]] [[fittings]] <end>
 Page 1751 五輪: Found match for regex: <begin> ## {{short for|ja|五輪塔<tr:gorintō>,五輪卒塔婆<tr:gorin sotoba>|t=a [[five]]-[[ringed]] [[pagoda]]}} <end>
@@ -130,13 +142,23 @@ Page 884 ledger: Found match for regex: <begin> # {{lb|en|fishing}} {{ellipsis o
 Page 4080 Llanarmon: Found match for regex: <begin> # {{ellipsis of|en|Llanarmon Dyffryn Ceiriog,Llanarmon DC,Llanarmon-yn-Ial}}. <end>
 Page 1442 sắc: Found match for regex: <begin> # {{lb|vi|archaic}} {{ellipsis of|vi|sắc đẹp,nhan sắc||[[womanly]] [[beauty]]}} <end>
 Page 1486 安全保障理事会: Found match for regex: <begin> # {{ellipsis of|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai><t:[[United Nations Security Council]]>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai><t:[[UN Security Council]]>|sort=あんぜんほしょうりじかい}}: the [[Security Council]] <end>
+Page 37 maiestas: Found match for regex: <begin> ## {{lb|la|law}} {{ellipsis of|la|[[crīmen]] [[maiestas|maiestātis]],[[lēx]] [[maiestas|maiestātis]]|t=[[treason]], [[high treason]], [[lèse majesté]]}} <end>
+Page 15 Oregano: Found match for regex: <begin> # {{lb|de|dated}} {{ellipsis of|de|Karibischer Oregano<t:{{w|Lippia micromera}}>,Mexikanischer Oregano<t:{{w|Lippia graveolens}}>}} <end>
+Page 108 فرعی: Found match for regex: <begin> # [[side road]]; {{ellipsis of|fa|جاده فرعی<tr:jâde-ye far'i>,راه فرعی<tr:râh-e far'i>}} <end>
 
 
-syllabic acronym of
+
+acronym of
+
+Page 775 FAT: Found match for regex: <begin> # {{lb|en|computing}} {{acronym of|en|w:File Allocation Table,file allocation table}}. <end>
 
 
-Page 2757 金検: Found match for regex: <begin> # {{syllabic acronym of|ja|金属検出器<tr:kinzoku tanchi-ki>,金属検知器<tr:kinzoku kenshutsu-ki>|t=metal detector}} <end>
-Page 3785 プレコン: Found match for regex: <begin> # {{lb|ja|construction}} {{syllabic acronym of|ja|プレキャスト鉄筋コ>ンクリート<tr:purekyasuto tekkin konkurīto><t:[[precast]] [[reinforced concrete]]>,プレキャストコンクリート<tr:purekyasuto konkurīto><t:[[precast]] [[concrete]]>}} <end>
+syllabic abbreviation of
+
+Page 2757 金検: Found match for regex: <begin> # {{syllabic abbreviation of|ja|金属検出器<tr:kinzoku tanchi-ki>,金属検知器<tr:kinzoku kenshutsu-ki>|t=metal detector}} <end>
+Page 3785 プレコン: Found match for regex: <begin> # {{lb|ja|construction}} {{syllabic abbreviation of|ja|プレキャスト鉄筋コ>ンクリート<tr:purekyasuto tekkin konkurīto><t:[[precast]] [[reinforced concrete]]>,プレキャストコンクリート<tr:purekyasuto konkurīto><t:[[precast]] [[concrete]]>}} <end>
+Page 50 安保: <begin> # {{sylabbr of|ja|日本国とアメリカ合衆国との間の相互協力及び安全保障条約<tr:Nihonkoku to Amerika Gasshūkoku to no Aida no Sōgō Kyōryoku Oyobi Anzen Hoshō Jōyaku>,日米安全保障条約<tr:Nichibei Anzen Hoshō Jōyaku>||{{w|Treaty of Mutual Cooperation and Security between the United States and Japan}}|sort=あんぽ}}; {{ellipsis of|ja|安保条約|tr=Anpo Jōyaku|sort=あんぽ}} <end>
+Page 63 渋ハロ: Found match for regex: <begin> # {{sylabbr of|ja|[[渋谷]]の[[ハロウィン]]<tr:Shibuya no Harowin>,[[渋谷]]の[[ハロウィーン]]<tr:Shibuya no Harowīn>|t=[[Shibuya]] Halloween}} <end>
 
 obsolete form of
 
@@ -192,5 +214,118 @@ Page 2260 Semmering: Found match for regex: <begin> # {{place|de|<=ellip of:{{w|
 
 syllabic abbreviation of
 
-Page 1983 安保: Found match for regex: <begin> # {{sylabbr of|ja|日本国とアメリカ合衆国との間の相互協力及び安全保障条約|<tr:Nihonkoku to Amerika Gasshūkoku to no Aida no Sōgō Kyōryoku Oyobi Anzen Hoshō Jōyaku>,日米安全保障条約<tr:Nichibei Anzen Hoshō Jōyaku>||{{w|Treaty of Mutual Cooperation and Security between the United States and Japan}}|sort=あんぽ}}; {{ellipsis of|ja|安保条約|tr=Anpo Jōyaku|sort=あんぽ}} <end>
+Page 1983 安保: Found match for regex: <begin> # {{sylabbr of|ja|日本国とアメリカ合衆国との間の相互協力及び安全保障条約<tr:Nihonkoku to Amerika Gasshūkoku to no Aida no Sōgō Kyōryoku Oyobi Anzen Hoshō Jōyaku>,日米安全保障条約<tr:Nichibei Anzen Hoshō Jōyaku>||{{w|Treaty of Mutual Cooperation and Security between the United States and Japan}}|sort=あんぽ}}; {{ellipsis of|ja|安保条約|tr=Anpo Jōyaku|sort=あんぽ}} <end>
+
+synonym of
+
+Page 5527 jampan: Found match for regex: <begin> # {{lb|en|India|chiefly|_|historical}} {{synonym of|en|dandy,tonjon|addl=a [[kind]] of [[open]] [[sedan chair]], [[particularly]] one with its main [[pole]] [[suspend]]ed from [[smaller]] [[pole]]s [[borne]] on the [[shoulder]]s of two [[pair]]s of [[porter]]s}}. <end>
+Page 5551 marconi operator: Found match for regex: <begin> # {{synonym of|en|wireless operator,radio operator|addl=a person who operates a wireless set / radio communications device}}. <end>
+Page 5713 elpaterol: Found match for regex: <begin> # {{lb|hu|transitive|colloquial}} {{synonym of|hu|elpakol,elrakosgat,összecsomagol||to [[put away]], [[pack up]]}}<!-- https://wikiszotar.hu/ertelmezo-szotar/Elpaterol --> <end>
+Page 12099 Kehllaut: Found match for regex: <begin> # {{lb|de|phonetics|strictly|less common}} {{synonym of|de|Glottal,Kehlkopflaut<t:glottal>}} <end>
+Page 13338 Serican: Found match for regex: <begin> # {{lb|en|historical|or|archaic}} {{synonym of|en|Chinese,[[northern|Northern]] [[Chinese]]|addl=chiefly in the context of ancient Greco-Roman knowledge of China}}. <end>
+Page 50367 hurtle: Found match for regex: <begin> # {{lb|en|obsolete|rare}} {{synonym of|en|hurtleberry,whortleberry|t=any of several [[shrub#Noun|shrubs]] [[belong]]ing to the [[genus]] ''[[Vaccinium]]''; a [[berry#Noun|berry]] of one of these shrubs}}. <end>
+Page 102166 segelhäst: Found match for regex: <begin> # {{lb|sv|kenning}} {{syn of|sv|skepp<t:ship>,segelskepp<t:sailship>}}. <end>
+Page 57602 yearday: Found match for regex: <begin> ## {{syn of|en|deathday,year's mind<l:Christianity>|addl=the [[anniversary]] of a [[person]]'s [[death]], [[particularly]] as [[observed]] with a [[requiem mass]] or [[other]] [[commemoration]]}}. <end>
+Page 27017 pays du Matin-Calme: Found match for regex: <begin> # {{lb|fr|journalism|periphrasis}} {{synonym of|fr|Corée<t:Korea>,Corée du Sud<t:South Korea>}} <end>
+Page 23469 művi: Found match for regex: <begin> # {{synonym of|hu|mesterséges,mesterkélt,erőltetett,kényszeredett||[[artificial]], [[staged]], [[forced]], {{q|smile}} [[cheesy]]}}. <end>
+Page 568 φυλάσσω: Found match for regex: <begin> # {{lb|el|formal}} to [[guard]], [[protect]], [[watch over]]; {{synonym of|el|φυλάω,φυλώ,φυλάγω}} <end>
+Page 5179 binding agent: Found match for regex: <begin> # {{synonym of|en|binder<qq:chemical or other substance>|addl=: a material or [[substance]] that holds other materials together mechanically, chemically, or as an [[adhesive]], to form a [[cohesive]] whole}}. <end>
+Page 56194 tét: Found match for regex: <begin> # {{lb|hu|obsolete}} {{verbal noun of|hu|tesz||to put, place}}, {{synonym of|hu|tett,tétel<qq:as a verbal noun><conj:and>}} <end>
+Page 7191 landfill site: Found match for regex: <begin> # {{synonym of|en|landfill<qq:noun, sense 1>}}. <end>
+Page 31864 まき: Found match for regex: <begin> # {{syn of|ja|高野槇<tr:kōyamaki><t:{{vern|Japanese umbrella-pine}} ({{taxlink|Sciadopitys verticillata|species}})>,犬槇<tr:inumaki><t:{{vern|yew plum pine}} ({{taxlink|Podocarpus macrophyllus|species}})>}} <end>
+Page 50475 peloton: Found match for regex: <begin> # {{lb|en|military|chiefly|historical}} {{synonym of|en|platoon<t:a small group of [[soldier#Noun|soldiers]],{{w|section (military unit)|section}}<qq:cognate with the former; not invariably synonymous with it, depending on century of use<!--definitions/counts vary by time and place-->>}}. <end>
+Page 50871 summit: Found match for regex: <begin> ### {{lb|en|botany}} {{synonym of|en|anther<t:the [[pollen]]-[[bearing]] part of the [[stamen]] of a flower>,stigma<q:rare><t:the sticky part of a flower that receives [[pollen]] during [[pollination]]>}}. <end>
+Page 51805 blockage: Found match for regex: <begin> ## {{synonym of|en|thrombosis,thromboembolism,embolism}}. <end>
+
+diminutive of
+
+Page 2108 εμποράκος: Found match for regex: <begin> # {{diminutive of|el|έμπορος,έμπορας}} <end>
+Page 11090 Gio: Found match for regex: <begin> ## {{diminutive of|en|Giovanni,Giovani,Giorgi,Giorgio,Giuseppe,Sergio}}. <end>
+Page 17397 Bevo: Found match for regex: <begin> # A nickname, {{diminutive of|en|Beverley,Beverly<qq:a surname>|nocap=1}}. <end>
+Page 20381 Humpy: Found match for regex: <begin> ## {{diminutive of|en|Humphrey,Humphry}}. <end>
+Page 24263 postie: Found match for regex: <begin> # {{lb|en|UK|Ireland|Commonwealth|colloquial}} {{diminutive of|en|postman,postwoman}}. <end>
+
+
+pejorative of
+
+Page 32 одежонка: Found match for regex: <begin> # {{lb|ru|colloquial}} {{pejorative of|ru|одёжа,оде́жда}}: [[nasty]] [[clothing]] <end>
+
+contraction of
+
+Page 9156 u'd: Found match for regex: <begin> # {{lb|en|informal|Internet|text messaging}} {{abbreviation of|en|you'd}}, {{contraction of|en|[[you]] [[had]],[[you]] [[would]]|nocap=1}}. <end>
+
+apocopic form of
+
+Page 36 amig': Found match for regex: <begin> # {{lb|roa-opt|sometimes before a vowel}} {{apocopic form of|roa-opt|amigo,amiga}} <end>
+Page 48 Arman: Found match for regex: <begin> {{apocopic form of|ceb|Armand,Armando}} <end>
+Page 778 tod: Found match for regex: <begin> # {{apocopic form of|osp|todo,toda|t=[[all]]}} <end>
+
+syncopic form of
+
+Page 55 -아야겠-: Found match for regex: <begin> # {{alternative form of|ko|-어야겠-|from=[[Appendix:Korean sound symbolism|Yang-vowel]]}}; {{syncopic form of|ko|[[-아야 하다|-아야 하]][[-겠-]],[[-아야 되다|-아야 되]][[-겠-]]}} <end>
+
+misconstruction of
+
+Page 14 purplely: Found match for regex: <begin> # {{lb|en|rare}} {{misconstruction of|en|purpley,purply}}: somewhat [[purple]]. <end>
+Page 25 bid one's time: Found match for regex: <begin> # {{misconstruction of|en|bide one's time,bode one's time}}. <end>
+Page 327 could of: Found match for regex: <begin> # {{misconstruction of|en|[[could]] [[have]],[[could've]]}}. <end>
+
+alternative form of
+
+Page 24990 wat: Found match for regex: <begin> # {{alternative form of|enm|wait,wath,wet,what,whate,whete,witen,wode,wold,woth,weten,wacche,wacchen,wachet,watchinges,wate,walte,weiten,witien}} <end>
+Page 245742 percaya: Found match for regex: <begin> # {{lb|ms|informal}} {{alternative form of|ms|mempercayai,percayai}} <end>
+Page 39319 elveszejt: Found match for regex: <begin> # {{lb|hu|transitive|dialectal}} {{alternative form of|hu|elveszt,elveszít<t:to lose [something]>}} <end>
+Page 88757 ভালনে: Found match for regex: <begin> # {{alt form|as|আপোনাৰ ভালনে,তোমাৰ ভালনে,তোৰ ভালনে}} <end>
+Page 218742 -- --: Found match for regex: <begin> # {{alternative form of|mul|( ),— —|addl=; these are two sets of {{m|mul|--}} used to enclose [[parenthetical]] text, like two [[em dash]]es, especially when actual em dashes are not [[available]]}} <end>
+Page 287619 admiralle: Found match for regex: <begin> # {{alternative form of|enm|amiral,emir,admiral}} <end>
+
+plural of
+
+Page 82600 náimhde: Found match for regex: <begin> # {{alt form|ga|naimhde}}: {{plural of|ga|námhaid,námha}} <end>
+
+only used in
+
+Page 151049 蓜: Found match for regex: <begin> # {{alt form|ja|配}}; {{only used in|ja|蓜島,蓜嶋}} <end>
+
+ru-initialism of
+
+{| class="wikitable"
+|-
+! Word !! Code !! Result !! Notes
+|-
+| {{m|ru|БТР}} || <code><nowiki>{{initialism of|ru|бронетранспортёр||[[APC]]}}</nowiki></code> || {{initialism of|ru|бронетранспортёр||[[APC]]}} || links to the page named ''бронетранспортёр''
+|-
+| {{m|ru|ДНР}} || <code><nowiki>{{initialism of|ru|Доне́цкая Наро́дная Респу́блика||[[Donetsk People's Republic]]}}</nowiki></code> || {{initialism of|ru|Доне́цкая Наро́дная Респу́блика||[[Donetsk People's Republic]]}} || links to the page named ''Донецкая Народная Республика'' (accents automatically stripped when constructing the link)
+|-
+| {{m|ru|АНБ}} || <code><nowiki>{{initialism of|ru|[[агентство|Аге́нтство]] [[национальный|национа́льной]] [[безопасность|безопа́сности]]||Agency of National Security}}: [[NSA]], {{w|National Security Agency}} {{gloss|US}}</nowiki></code> || {{initialism of|ru|[[агентство|Аге́нтство]] [[национальный|национа́льной]] [[безопасность|безопа́сности]]||Agency of National Security}}: [[NSA]], {{w|National Security Agency}} {{gloss|US}} || link to individual words; note literal meaning using the gloss param, and fluent definition following the template
+|}
+
+ru-abbrev of
+
+{| class="wikitable"
+|-
+! Word !! Code !! Result !! Notes
+|-
+| {{m|ru|а́ва}} || <code><nowiki>{{abbrev of|ru|авата́р||[[avatar]]}}</nowiki></code> || {{abbrev of|ru|авата́р||[[avatar]]}} || links to the page named ''аватар'' (accents automatically stripped)
+|-
+|{{m|ru|Ж}} || <code><nowiki>{{abbrev of|ru|[[женский|же́нская]] [[убо́рная]]||women's restroom}}: [[ladies' room]], women's [[toilet]]</nowiki></code> || {{abbrev of|ru|[[женский|же́нская]] [[убо́рная]]||women's restroom}}: [[ladies' room]], women's [[toilet]] || link to individual words (a bare link like <code><nowiki>[[убо́рная]]</nowiki></code> is automatically accent-stripped to produce a link to the page named ''уборная''); note literal meaning using the gloss param, and fluent definition following the template
+|}
+
+ru-acronym of
+
+{| class="wikitable"
+|-
+! Word !! Code !! Result !! Notes
+|-
+| {{m|ru|ВОВ}} || <code><nowiki>{{acronym of|ru|Вели́кая Оте́чественная война́||[[Great Patriotic War]]}} {{gloss|World War II}}</nowiki></code> || {{acronym of|ru|Вели́кая Оте́чественная война́||[[Great Patriotic War]]}} {{gloss|World War II}} || links to the page named ''Великая Отечественная война'' (accents automatically stripped)
+|-
+| {{m|ru|вуз}} || <code><nowiki>{{acronym of|ru|[[высший|вы́сшее]] [[учебный|уче́бное]] [[заведе́ние]]||higher/highest educational establishment}}: [[university]], [[college]], [[institute]]</nowiki></code> || {{acronym of|ru|[[высший|вы́сшее]] [[учебный|уче́бное]] [[заведе́ние]]||higher/highest educational establishment}}: [[university]], [[college]], [[institute]] || link to individual words (a bare link like <code><nowiki>[[заведе́ние]]</nowiki></code> is automatically accent-stripped to produce a link to the page named ''заведение''); note literal meaning using the gloss param, and fluent definition following the template
+|-
+| {{m|ru|ГЛОНА́СС}} || <code><nowiki>{{acronym of|ru|[[глобальный|ГЛОбальная]] [[навигация|НАвигационная]] [[спутник|Спутниковая]] [[система|Система]]}}: [[GLONASS]], Global Navigation Satellite System ([[GPS]])</nowiki></code> || {{acronym of|ru|[[глобальный|ГЛОбальная]] [[навигация|НАвигационная]] [[спутник|Спутниковая]] [[система|Система]]}}: [[GLONASS]], Global Navigation Satellite System ([[GPS]]) || note that the definition includes the corresponding English acronym for the system
+|}
+
+verbal noun of
+
+Page 11 goil: Found match for regex: <begin> # {{lb|ga|Connacht|Ulster}} {{verbal noun of|ga|gabh<t:go>,téigh}} <end>
+Page 144 danje: Found match for regex: <begin> # {{verbal noun of|dsb|daś<t:give><pos:perfective>}} <end>
 
