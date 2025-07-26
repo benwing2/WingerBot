@@ -17,6 +17,10 @@ local ipairs = ipairs
 local pairs = pairs
 local require = require
 
+-- FIXME: Finish [[Module:format utilities]].
+-- local allowed_conj_set = require(format_utilities_module).allowed_conj_set_for_join_segments
+local allowed_conj_set = {["and"] = true, ["or"] = true, ["and/or"] = true}
+
 --[==[
 Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no overhead after the first call, since the target functions are called directly in any subsequent calls.]==]
 local function debug_track(...)
@@ -149,6 +153,7 @@ local function get_common_template_params()
 		["cat"] = {list = true, sublist = "comma without whitespace", flatten = true},
 		["notext"] = {type = "boolean"},
 		["sort"] = true,
+		["conj"] = {set = allowed_conj_set, default = "and"},
 		["enclitic"] = true,
 		-- FIXME! The following should only be available when withcap=1 in invocation args or when withencap=1 and the
 		-- language is "en". Before doing that, need to remove all uses of nocap= in other circumstances.
@@ -187,6 +192,7 @@ local function parse_terms_with_inline_modifiers(paramname, val, param_mods, lan
 		param_mods = param_mods,
 		generate_obj = generate_obj,
 		splitchar = ",",
+		outer_container = {},
 	})
 end
 
@@ -433,6 +439,7 @@ local function construct_form_of_text(data)
 			m_param_utils = require(parameter_utilities_module)
 			param_mods = m_param_utils.construct_param_mods {
 				{group = {"link", "q", "l", "ref"}},
+				{param = "conj", set = allowed_conj_set, overall = true},
 			}
 		end
 	end
@@ -539,10 +546,12 @@ local function construct_form_of_text(data)
 		lemmas = terms.terms
 	end
 
-	local enclitics
+	local enclitics, enclitic_conj
 	if args.enclitic then
 		init_param_mods()
-		enclitics = parse_terms_with_inline_modifiers("enclitic", args.enclitic, param_mods, lang)
+		local enclitics_obj = parse_terms_with_inline_modifiers("enclitic", args.enclitic, param_mods, lang)
+		enclitics = enclitics_obj.terms
+		enclitic_conj = enclitic_conj.conj
 	end
 	local base_lemmas = {}
 	if base_lemma_params then
@@ -550,9 +559,11 @@ local function construct_form_of_text(data)
 			local param = base_lemma_param_obj.param
 			if args[param] then
 				init_param_mods()
+				local base_lemmas_obj = parse_terms_with_inline_modifiers(param, args[param], param_mods, lang)
 				insert(base_lemmas, {
 					paramobj = base_lemma_param_obj,
-					lemmas = parse_terms_with_inline_modifiers(param, args[param], param_mods, lang),
+					lemmas = base_lemmas_obj.terms,
+					conj = base_lemmas_obj.conj,
 				})
 			end
 		end
@@ -575,6 +586,7 @@ local function construct_form_of_text(data)
 		lang = lang,
 		args = args,
 		lemmas = lemmas,
+		conj = terms and terms.conj or iargs.conj,
 		enclitics = enclitics,
 		base_lemmas = base_lemmas,
 		categories = categories,
@@ -711,7 +723,7 @@ function export.form_of_t(frame)
 				end
 			end
 			return format_form_of {
-				text = text, lemmas = lemma_data.lemmas, enclitics = lemma_data.enclitics,
+				text = text, lemmas = lemma_data.lemmas, conj = lemma_data.conj, enclitics = lemma_data.enclitics,
 				base_lemmas = lemma_data.base_lemmas, lemma_face = "term", posttext = lemma_data.posttext
 			}, {}
 		end
@@ -753,6 +765,7 @@ local function construct_tagged_form_of_text(data)
 				lang = lemma_data.lang,
 				tags = tags,
 				lemmas = lemma_data.lemmas,
+				conj = lemma_data.conj,
 				enclitics = lemma_data.enclitics,
 				base_lemmas = lemma_data.base_lemmas,
 				lemma_face = "term",
