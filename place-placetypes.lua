@@ -223,6 +223,9 @@ function export.split_qualifiers_from_placetype(placetype, no_canon_qualifiers)
 				break
 			end
 			local new_qualifier = qualifier
+			if type(canon) == "table" then
+				canon = canon.link
+			end
 			if not no_canon_qualifiers and canon ~= false then
 				if canon == true then
 					new_qualifier = "[[" .. qualifier .. "]]"
@@ -464,7 +467,13 @@ function export.get_placetype_equivs(placetype, props)
 		-- `no_check_for_inherently_former` is not given (this flag is used to avoid infinite loops), check for
 		-- "inherently former" placetypes like `satrapy` and `treaty port` that always refer to no-longer-existing
 		-- placetypes, and handle accordingly.
-		local former_qualifiers = this_qualifier and export.former_qualifiers[this_qualifier] or nil
+		local unlinked_this_qualifier
+		if this_qualifier and this_qualifier:find("%[") then
+			unlinked_this_qualifier = remove_links_and_html(this_qualifier)
+		else
+			unlinked_this_qualifier = this_qualifier
+		end
+		local former_qualifiers = this_qualifier and export.former_qualifiers[unlinked_this_qualifier] or nil
 		if not former_qualifiers and not no_check_for_inherently_former then
 			former_qualifiers = export.get_equiv_placetype_prop(reduced_placetype,
 				function(pt) return export.get_placetype_prop(pt, "inherently_former") end,
@@ -532,10 +541,10 @@ function export.get_placetype_equivs(placetype, props)
 
 		-- Then see if the rightmost split-off qualifier is in qualifier_to_placetype_equivs
 		-- (e.g. 'fictional *' -> 'fictional location'). If so, add the mapping.
-		if this_qualifier and export.qualifier_to_placetype_equivs[this_qualifier] then
+		if this_qualifier and export.qualifier_to_placetype_equivs[unlinked_this_qualifier] then
 			insert(equivs, {
 				qualifier=prev_qualifier,
-				placetype=export.qualifier_to_placetype_equivs[this_qualifier]
+				placetype=export.qualifier_to_placetype_equivs[unlinked_this_qualifier]
 			})
 		end
 
@@ -601,25 +610,39 @@ end
 
 
 --[==[
-Return the article that is used with an entry placetype. First we check the placetype or any equivalent placetype for
-the `entry_placetype_use_the` property, indicating that `"the"` should be used. Otherwise we look to see if the
-placetype itself (not any equivalents, even those involving deleting a qualifier from the beginning) has an entry in
-`placetype_data` that specifies the indefinite article using `entry_placetype_use_the` (principally for use with
-placetypes like `union territory`). Otherwise, we use [[Module:en-utilities]] to apply the standard algorithm to
-generate `"an"` for words beginning with a vowel and `"a"` otherwise. If `ucfirst` is true, the first letter of the
-article is made upper-case.
+Return the article that is used with an entry placetype. We proceed as follows:
+# See if there is a recognized qualifier at the beginning that specifies an article (including `false` for no article).
+  This takes precedence over anything else, so that e.g. `various capitals` gets no article rather than "`the"`.
+# Then check the placetype or any equivalent placetype for the `entry_placetype_use_the` property, indicating that
+  `"the"` should be used.
+# Otherwise we look to see if the placetype itself (not any equivalents, even those involving deleting a qualifier from
+  the beginning) has an entry in `placetype_data` that specifies the indefinite article using `entry_placetype_use_the`
+  (principally for use with placetypes like `union territory`).
+# Otherwise, we use [[Module:en-utilities]] to apply the standard algorithm to generate `"an"` for words beginning with
+  a vowel and `"a"` otherwise.
+If `ucfirst` is true, the first letter of the article is made upper-case.
 ]==]
 function export.get_placetype_article(placetype, ucfirst)
-	local art
-
-	local placetype_use_the = export.get_equiv_placetype_prop(placetype,
-		function(pt) return export.get_placetype_prop(pt, "entry_placetype_use_the") end)
-	if placetype_use_the then
-		art = "the"
-	else
-		art = export.get_placetype_prop(placetype, "entry_placetype_indefinite_article")
-		if not art then
-			art = require(en_utilities_module).get_indefinite_article(placetype)
+	local qualifier, reduced_placetype = placetype:match("^(.-) (.*)$")
+	if qualifier then
+		local canon = export.placetype_qualifiers[qualifier]
+		if type(canon) == "table" then
+			art = canon.article
+		end
+	end
+	if art == false then
+		return art
+	end
+	if art == nil then
+		local placetype_use_the = export.get_equiv_placetype_prop(placetype,
+			function(pt) return export.get_placetype_prop(pt, "entry_placetype_use_the") end)
+		if placetype_use_the then
+			art = "the"
+		else
+			art = export.get_placetype_prop(placetype, "entry_placetype_indefinite_article")
+			if not art then
+				art = require(en_utilities_module).get_indefinite_article(placetype)
+			end
 		end
 	end
 
@@ -1254,6 +1277,9 @@ export.placetype_aliases = {
 	["wcomm"] = "Welsh community",
 }
 
+local no_link_def_article = {link = false, article = "the"}
+local no_link_no_article = {link = false, article = false}
+
 --[==[ var:
 These qualifiers can be prepended onto any placetype and will be handled correctly. For example, the placetype
 `large city` will be displayed as `large <nowiki>[[city]]</nowiki>` and categorized as if `city` were specified. If the
@@ -1268,6 +1294,7 @@ export.placetype_qualifiers = {
 	["huge"] = false,
 	["tiny"] = false,
 	["large"] = false,
+	["big"] = false,
 	["mid-size"] = false,
 	["mid-sized"] = false,
 	["small"] = false,
@@ -1278,23 +1305,47 @@ export.placetype_qualifiers = {
 	["major"] = false,
 	["minor"] = false,
 	["high"] = false,
+	["tall"] = false,
 	["low"] = false,
 	["left"] = false, -- left tributary
 	["right"] = false, -- right tributary
 	["modern"] = false, -- for use in opposition to "ancient" in another definition
+	-- superlative qualifiers
+	["largest"] = no_link_def_article,
+	["biggest"] = no_link_def_article,
+	["smallest"] = no_link_def_article,
+	["shortest"] = no_link_def_article,
+	["longest"] = no_link_def_article,
+	["tallest"] = no_link_def_article,
+	["highest"] = no_link_def_article,
+	["lowest"] = no_link_def_article,
+	["leftmost"] = no_link_def_article,
+	["rightmost"] = no_link_def_article,
+	["innermost"] = no_link_def_article,
+	["outermost"] = no_link_def_article,
+	["northernmost"] = no_link_def_article,
+	["southernmost"] = no_link_def_article,
+	["westernmost"] = no_link_def_article,
+	["easternmost"] = no_link_def_article,
+	["northwesternmost"] = no_link_def_article,
+	["southwesternmost"] = no_link_def_article,
+	["northeasternmost"] = no_link_def_article,
+	["southeasternmost"] = no_link_def_article,
+	-- several/various
+	["several"] = no_link_no_article,
+	["various"] = no_link_no_article,
+	["many"] = no_link_no_article,
 	-- "former" qualifiers
-	-- FIXME: None of these can be set to `true` so they link, because it currently interferes with categorization.
-	-- FIXME!
-	["abandoned"] = false,
-	["ancient"] = false,
-	["deserted"] = false,
-	["extinct"] = false,
+	["abandoned"] = true,
+	["ancient"] = true,
+	["deserted"] = true,
+	["extinct"] = true,
 	["former"] = false,
 	["historic"] = "historical",
-	["historical"] = false,
-	["medieval"] = false,
-	["mediaeval"] = false,
-	["traditional"] = false,
+	["historical"] = true,
+	["medieval"] = true,
+	["mediaeval"] = true,
+	["traditional"] = true,
 	-- sea qualifiers
 	["coastal"] = true,
 	["inland"] = true, -- note, we also have an entry in placetype_data for 'inland sea' to get a link to [[inland sea]]
@@ -1356,13 +1407,11 @@ export.placetype_qualifiers = {
 	["religious"] = true,
 	["secular"] = true,
 	-- qualifiers for nonexistent places
-	-- FIXME: None of these can be set to `true` so they link, because it currently interferes with categorization.
-	-- FIXME!
 	["claimed"] = false,
-	["fictional"] = false,
-	["legendary"] = false,
-	["mythical"] = false,
-	["mythological"] = false,
+	["fictional"] = true,
+	["legendary"] = true,
+	["mythical"] = true,
+	["mythological"] = true,
 	-- directional qualifiers
 	["northern"] = false,
 	["southern"] = false,
@@ -1388,7 +1437,6 @@ export.placetype_qualifiers = {
 	["chartered"] = true,
 	["landlocked"] = true,
 	["uninhabited"] = true,
-
 }
 
 --[==[ var:
