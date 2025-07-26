@@ -19,18 +19,26 @@ local function create_introdoc_params()
 		["exlang"] = {list = true},
 		["pldesc"] = plain,
 		["primaryentrytext"] = plain,
-		["cat"] = {list = true},
+		["cat"] = {list = true, sublist = "comma without whitespace", flatten = true},
 		["addlintrotext"] = plain,
 		["etymtemp"] = plain,
 		["withdot"] = boolean,
 		["withcap"] = boolean,
+		["withencap"] = boolean,
 	}
+end
+
+local function preprocess(frame, txt)
+	if txt:find("{{") then
+		txt = frame:preprocess(txt)
+	end
+	return txt
 end
 
 function export.introdoc_t(frame)
 	local params = create_introdoc_params()
 	local args = m_parameters.process(frame:getParent().args, params)
-	return m_form_of_doc.introdoc(args)
+	return preprocess(frame, m_form_of_doc.introdoc(args))
 end
 
 local function create_paramdoc_params()
@@ -40,16 +48,18 @@ local function create_paramdoc_params()
 		["lang"] = plain,
 		["sgdescof"] = plain,
 		["art"] = plain,
+		["cat"] = {list = true, sublist = "comma without whitespace", flatten = true},
 		["withfrom"] = boolean,
 		["withdot"] = boolean,
 		["withcap"] = boolean,
+		["withencap"] = boolean,
 	}
 end
 
 function export.paramdoc_t(frame)
 	local params = create_paramdoc_params()
 	local args = m_parameters.process(frame:getParent().args, params)
-	return m_form_of_doc.paramdoc(args)
+	return preprocess(frame, m_form_of_doc.paramdoc(args))
 end
 
 local function create_usagedoc_params()
@@ -61,7 +71,7 @@ end
 function export.usagedoc_t(frame)
 	local params = create_usagedoc_params()
 	local args = m_parameters.process(frame:getParent().args, params)
-	return m_form_of_doc.usagedoc(args)
+	return preprocess(frame, m_form_of_doc.usagedoc(args))
 end
 
 local function create_fulldoc_params()
@@ -70,14 +80,15 @@ local function create_fulldoc_params()
 	for k, v in pairs(usageparams) do
 		params[k] = v
 	end
-	params["shortcut"] = {type = "title", list = true}
+	-- We allow sublists but this is handled by {{shortcut|...}} when we preprocess.
+	params["shortcut"] = {list = true}
 	return params
 end
 
 function export.fulldoc_t(frame)
 	local params = create_fulldoc_params()
 	local args = m_parameters.process(frame:getParent().args, params)
-	return m_form_of_doc.fulldoc(args)
+	return preprocess(frame, m_form_of_doc.fulldoc(args))
 end
 
 local function create_infldoc_params()
@@ -92,7 +103,7 @@ end
 function export.infldoc_t(frame)
 	local params = create_infldoc_params()
 	local args = m_parameters.process(frame:getParent().args, params)
-	return m_form_of_doc.infldoc(args)
+	return preprocess(frame, m_form_of_doc.infldoc(args))
 end
 
 function export.tagtable_t(frame)
