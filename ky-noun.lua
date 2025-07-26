@@ -129,7 +129,7 @@ local case_suffixes = {
 	["dat"] = "га", -- -а after 1s poss and 2s_inform poss, -на after 3 poss
 	["acc"] = "Ни",
 	["loc"] = "да", -- -нда after 3 poss
-	["abl"] = "дан", -- -ндан after 3 poss?
+	["abl"] = "Нан",
 }
 
 local function make_noun_slots()
@@ -138,16 +138,16 @@ local function make_noun_slots()
 			if possessed then
 				for _, person_number in ipairs(person_number_possession) do
 					for _, number in ipairs(possessed_numbers) do
-						local tag = ("%s_%s_%s"):format(case, person_number, number)
-						accel = tag:gsub("_", "|")
-						noun_slots[tag] = accel
+						local slot = ("%s_%s_%s"):format(case, person_number, number)
+						accel = slot:gsub("_", "|")
+						noun_slots[slot] = accel
 					end
 				end
 			else
 				for _, number in ipairs(non_possessed_numbers) do
-					local tag = ("%s_%s"):format(case, number)
-					accel = tag:gsub("_", "|")
-					noun_slots[tag] = accel
+					local slot = ("%s_%s"):format(case, number)
+					accel = slot:gsub("_", "|")
+					noun_slots[slot] = accel
 				end
 			end
 		end
@@ -258,35 +258,38 @@ local function decline_noun(decl_spec, lemma)
 			elseif possession == "3" then
 				case_ending = "на"
 			end
-		elseif (case == "loc" or case == "abl") and possession == "3" then
+		elseif case == "loc" and possession == "3" then
 			case_ending == "н" .. case_ending
 		end
 		return combine_stem_ending(combine_stem_ending(
 			combine_stem_ending(stem, number_ending), possession_ending), case_ending)
 	end
 
-	local function add(slot, endings)
+	local function insert_form(slot, form)
 		if skip_slot(decl_spec, slot) then
 			return
 		end
-		for class, second_endings in pairs(endings) do
-			assert(letter_classes[class], "Unrecognized letter class " .. class)
-			if rmatch(last_vowel, "[" .. letter_classes[class] .. "]") then
-				for class2, ending in pairs(second_endings) do
-					assert(letter_classes[class2], "Unrecognized letter class " .. class2)
-					if rmatch(last_letter, "[" .. letter_classes[class2] .. "]") then
-						iut.insert_form(decl_spec.forms, slot, {form=lemma .. ending})
-						return
-					end
-				end
-				error("Last letter '" .. last_letter .. "' of lemma '" .. lemma .. "' doesn't match any known letter class")
-			end
-		end
-		error("Last vowel '" .. last_vowel .. "' of lemma '" .. lemma .. "' doesn't match any known letter class")
+		iut.insert_form(decl_spec.forms, slot, {form = form})
 	end
 
-	if not skip_slot(decl_spec, "nom_s") then
-		iut.insert_form(decl_spec.forms, "nom_s", {form=lemma})
+	for _, case in ipairs(cases) do
+		for _, possessed in ipairs { false, true} do
+			if possessed then
+				for _, person_number in ipairs(person_number_possession) do
+					for _, number in ipairs(possessed_numbers) do
+						local slot = ("%s_%s_%s"):format(case, person_number, number)
+						local form = make_form(lemma, number == "mpos" and "p" or "s", person_number, case)
+						insert_form(slot, form)
+					end
+				end
+			else
+				for _, number in ipairs(non_possessed_numbers) do
+					local slot = ("%s_%s"):format(case, number)
+					local form = make_form(lemma, number, "", case)
+					insert_form(slot, form)
+				end
+			end
+		end
 	end
 
 	-- 1. There are two types of stem vowel harmony, based on the last stem vowel: a-e-o-oe (which always occurs when
@@ -307,19 +310,13 @@ local function decline_noun(decl_spec, lemma)
 	-- 4. The following types of vowel suffix variations are found:
 	--    (a) low-harmonizing а/е/о/ө;
 	--    (b) high-harmonizing ы/и/у/ү;
-	--    (c) partial low-harmonizing а/е/а/ө.
-	-- Based on this, we use capital letters in suffixes to indicate varying sounds and lowercase letters to indicate
-	-- fixed sounds. Specifically:
-	-- * Л: л/д/т variation.
-	-- * Н: н/д/т variation.
-	-- * Г: г/к variation.
-	-- * Д: д/т variation.
-	-- * О: low-harmonizing а/е/о/ө;
-	-- * А: partial low-harmonizing а/е/а/ө;
-	-- * У: high-harmonizing ы/и/у/ү.
-	-- We automatically determine which letters should be capitalized: the first letter is always capitalized, as are
-	-- all vowels. We also automatically determine whether to use a-e-o-oe vowel harmony or y-e-u-oe harmony based on
-	-- the first vowel of the suffix.
+	--    (c) partial low-harmonizing а/е/а/ө (after у/ю).
+	-- Based on this, we use capital letters in suffixes to indicate varying consonant sounds. We use а for the
+	-- low-harmonizing vowel and и for the high-harmonizing vowel. Specifically:
+	-- * Л: л/д variation.
+	-- * Н: н/д variation.
+	-- * С: с/- variation.
+	-- We automatically handle devoicing of consonants after unvoiced consonants.
 	--
 	-- We can analyze the suffixes further:
 	-- 1. nom_s has no ending.
@@ -337,53 +334,6 @@ local function decline_noun(decl_spec, lemma)
 	-- 12. 1p uses -ибиз after a consonant, dropping to -биз after a vowel.
 	-- 13. 2p informal possessive uses -иңар after a consonant, dropping to -ңар after a vowel.
 	-- 14. 2p formal possessive uses -иңиздар after a consonant, dropping to -ңиздар after a vowel.
-	add("nom_p", "лaр", "aeo", "vowel_or_jr")
-	add("gen_s", "нун", "yeu", "vowel")
-	add("gen_p", "лардун", "aeo", "vowel_or_jr")
-	add("dat_s", "га", "aeo", "vowel")
-	add("dat_p", "ларга", "aeo", "vowel_or_jr")
-	add("acc_s", "ну", "yeu", "vowel")
-	add("acc_p", "ларду", "aeo", "vowel_or_jr")
-	add("loc_s", "да", "aeo", "vowel")
-	add("loc_p", "ларда", "aeo", "vowel_or_jr")
-	add("abl_s", "дан", "aeo", "vowel")
-	add("abl_p", "лардан", "aeo", "vowel_or_jr")
-	add("nom_1s_spos", "ум", "yeu", "consonant")
-	add("nom_1s_mpos", "лорум", "aeo", "vowel_or_jr")
-	add("gen_1s_spos", "умдун", "yeu", "consonant")
-	add("gen_1s_mpos", "лорумдун", "aeo", "vowel_or_jr")
-	add("dat_1s_spos", "ума", "yeu", "consonant")
-	add("dat_1s_mpos", "лорума", "aeo", "vowel_or_jr")
-	add("acc_1s_spos", "умду", "yeu", "consonant")
-	add("acc_1s_mpos", "лорумду", "aeo", "vowel_or_jr")
-	add("loc_1s_spos", "умда", "yeu", "consonant")
-	add("loc_1s_mpos", "лорумда", "aeo", "vowel_or_jr")
-	add("abl_1s_spos", "умдан", "yeu", "consonant")
-	add("abl_1s_mpos", "лорумдан", "aeo", "vowel_or_jr")
-	add("nom_2s_inform_spos", "уң", "yeu", "consonant")
-	add("nom_2s_inform_mpos", "лоруң", "aeo", "vowel_or_jr")
-	add("gen_2s_inform_spos", "уңдун", "yeu", "consonant")
-    add("gen_2s_inform_mpos", "лоруңдун", "aeo", "vowel_or_jr")
-	add("dat_2s_inform_spos", "уңа", "yeu", "consonant")
-	add("dat_2s_inform_mpos", "лоруңа", "aeo", "vowel_or_jr")
-	add("acc_2s_inform_spos", "уңду", "yeu", "consonant")
-	add("acc_2s_inform_mpos", "лоруңду", "aeo", "vowel_or_jr")
-	add("loc_2s_inform_spos", "уңда", "yeu", "consonant")
-	add("loc_2s_inform_mpos", "лоруңда", "aeo", "vowel_or_jr")
-	add("abl_2s_inform_spos", "уңдан", "yeu", "consonant")
-	add("abl_2s_inform_mpos", "лоруңдан", "aeo", "vowel_or_jr")
-	add("nom_2s_formal_spos", "уңуз", "yeu", "consonant")
-	add("nom_2s_formal_mpos", "лоруңуз", "aeo", "vowel_or_jr")
-	add("gen_2s_formal_spos", "уңуздун", "yeu",  "consonant")
-    add("gen_2s_formal_mpos", "лоруңуздун", "aeo", "vowel_or_jr")
-	add("dat_2s_formal_spos", "уңузга", "yeu", "consonant")
-	add("dat_2s_formal_mpos", "лоруңузга", "aeo", "vowel_or_jr")
-	add("acc_2s_formal_spos", "уңузду", "yeu", "consonant")
-	add("acc_2s_formal_mpos", "лоруңузду", "aeo", "vowel_or_jr")
-	add("loc_2s_formal_spos", "уңузда", "yeu", "consonant")
-	add("loc_2s_formal_mpos", "лоруңузда", "aeo", "vowel_or_jr")
-	add("abl_2s_formal_spos", "уңуздан", "yeu", "consonant")
-	add("abl_2s_formal_mpos", "лоруңуздан", "aeo", "vowel_or_jr")
 end
 
 
@@ -442,299 +392,152 @@ local function make_table(decl_spec)
 		}
 	}
 
-	local table_spec_both = [=[
-!
-! singular<br>{jekelik}
-! plural<br>{koeptoegoen}
-|-
-! nominative {atooch}
-| {nom_s}
-| {nom_p}
-|-
-! genitive {ilik}
-| {gen_s}
-| {gen_p}
-|-
-! dative {barysh}
-| {dat_s}
-| {dat_p}
-|-
-! accusative {tabysh}
-| {acc_s}
-| {acc_p}
-|-
-! locative {jatysh}
-| {loc_s}
-| {loc_p}
-|-
-! ablative {chygysh}
-| {abl_s}
-| {abl_p}
-|-
-| class="separator" colspan="999" |
-|-
-! class="outer" colspan="3" | possessive forms
-|-
-! 
-! colspan="2" | first-person singular<br>{menin}
-|-
-! nominative
-| {nom_1s_spos}
-| {nom_1s_mpos}
-|-
-! genitive
-| {gen_1s_spos}
-| {gen_1s_mpos}
-|-
-! dative
-| {dat_1s_spos}
-| {dat_1s_mpos}
-|-
-! accusative
-| {acc_1s_spos}
-| {acc_1s_mpos}
-|-
-! locative
-| {loc_1s_spos}
-| {loc_1s_mpos}
-|-
-! ablative
-| {abl_1s_spos}
-| {abl_1s_mpos}
-|-
-! 
-!colspan="2" | second-person singular informal<br>{senin}
-|-
-! nominative
-| {nom_2s_inform_spos}
-| {nom_2s_inform_mpos}
-|-
-! genitive
-| {gen_2s_inform_spos}
-| {gen_2s_inform_mpos}
-|-
-! dative
-| {dat_2s_inform_spos}
-| {dat_2s_inform_mpos}
-|-
-! accusative
-| {acc_2s_inform_spos}
-| {acc_2s_inform_mpos}
-|-
-! locative
-| {loc_2s_inform_spos}
-| {loc_2s_inform_mpos}
-|-
-! ablative
-| {abl_2s_inform_spos}
-| {abl_2s_inform_mpos}
-|-
-! 
-!colspan="2" | second-person singular formal<br>{sizdin}
-|-
-! nominative
-| {nom_2s_formal_spos}
-| {nom_2s_formal_mpos}
-|-
-! genitive
-| {gen_2s_formal_spos}
-| {gen_2s_formal_mpos}
-|-
-! dative
-| {dat_2s_formal_spos}
-| {dat_2s_formal_mpos}
-|-
-! accusative
-| {acc_2s_formal_spos}
-| {acc_2s_formal_mpos}
-|-
-! locative
-| {loc_2s_formal_spos}
-| {loc_2s_formal_mpos}
-|-
-! ablative
-| {abl_2s_formal_spos}
-| {abl_2s_formal_mpos}
-]=]
-
 	local table_spec_sg = [=[
+! class="outer" colspan="8"| singular<br />{jekelik}
+|-
 !
-! singular<br>{jekelik}
+! —
+! class="separator"| first-person<br />singular<br />{menin}
+! class="separator"| second-person<br />singular informal<br />{senin}
+! class="separator"| second-person<br />singular formal<br />{sizdin}
+! class="separator"| third-person<br />singular/plural<br />{sizdin}
+! class="separator"| first-person<br />plural<br />{sizdin}
+! class="separator"| second-person<br />plural informal<br />{sizdin}
+! class="separator"| second-person<br />plural formal<br />{sizdin}
 |-
 ! nominative {atooch}
 | {nom_s}
+| {nom_1s_spos}
+| {nom_2s_inform_spos}
+| {nom_2s_formal_spos}
+| {nom_3_spos}
+| {nom_1p_spos}
+| {nom_2p_inform_spos}
+| {nom_2p_formal_spos}
 |-
 ! genitive {ilik}
 | {gen_s}
+| {gen_1s_spos}
+| {gen_2s_inform_spos}
+| {gen_2s_formal_spos}
+| {gen_3_spos}
+| {gen_1p_spos}
+| {gen_2p_inform_spos}
+| {gen_2p_formal_spos}
 |-
 ! dative {barysh}
 | {dat_s}
+| {dat_1s_spos}
+| {dat_2s_inform_spos}
+| {dat_2s_formal_spos}
+| {dat_3_spos}
+| {dat_1p_spos}
+| {dat_2p_inform_spos}
+| {dat_2p_formal_spos}
 |-
 ! accusative {tabysh}
 | {acc_s}
+| {acc_1s_spos}
+| {acc_2s_inform_spos}
+| {acc_2s_formal_spos}
+| {acc_3_spos}
+| {acc_1p_spos}
+| {acc_2p_inform_spos}
+| {acc_2p_formal_spos}
 |-
 ! locative {jatysh}
 | {loc_s}
+| {loc_1s_spos}
+| {loc_2s_inform_spos}
+| {loc_2s_formal_spos}
+| {loc_3_spos}
+| {loc_1p_spos}
+| {loc_2p_inform_spos}
+| {loc_2p_formal_spos}
 |-
 ! ablative {chygysh}
 | {abl_s}
-|-
-| class="separator" colspan="999" |
-|-
-! class="outer" colspan="2" | possessive forms
-|-
-! 
-! first-person singular<br>{menin}
-|-
-! nominative
-| {nom_1s_spos}
-|-
-! genitive
-| {gen_1s_spos}
-|-
-! dative
-| {dat_1s_spos}
-|-
-! accusative
-| {acc_1s_spos}
-|-
-! locative
-| {loc_1s_spos}
-|-
-! ablative
 | {abl_1s_spos}
-|-
-! 
-! second-person singular informal<br>{senin}
-|-
-! nominative
-| {nom_2s_inform_spos}
-|-
-! genitive
-| {gen_2s_inform_spos}
-|-
-! dative
-| {dat_2s_inform_spos}
-|-
-! accusative
-| {acc_2s_inform_spos}
-|-
-! locative
-| {loc_2s_inform_spos}
-|-
-! ablative
 | {abl_2s_inform_spos}
-|-
-! 
-! second-person singular formal<br>{sizdin}
-|-
-! nominative
-| {nom_2s_formal_spos}
-|-
-! genitive
-| {gen_2s_formal_spos}
-|-
-! dative
-| {dat_2s_formal_spos}
-|-
-! accusative
-| {acc_2s_formal_spos}
-|-
-! locative
-| {loc_2s_formal_spos}
-|-
-! ablative
 | {abl_2s_formal_spos}
+| {abl_3_spos}
+| {abl_1p_spos}
+| {abl_2p_inform_spos}
+| {abl_2p_formal_spos}
 ]=]
 
 	local table_spec_pl = [=[
+! class="outer" colspan="8" | plural<br />{koeptoegoen}
+|-
 !
-! plural<br>{koeptoegoen}
+! —
+! class="separator"| first-person<br />singular<br />{menin}
+! class="separator"| second-person<br />singular informal<br />{senin}
+! class="separator"| second-person<br />singular formal<br />{sizdin}
+! class="separator"| third-person<br />singular/plural<br />{sizdin}
+! class="separator"| first-person<br />plural<br />{sizdin}
+! class="separator"| second-person<br />plural informal<br />{sizdin}
+! class="separator"| second-person<br />plural formal<br />{sizdin}
 |-
 ! nominative {atooch}
 | {nom_p}
+| {nom_1s_mpos}
+| {nom_2s_inform_mpos}
+| {nom_2s_formal_mpos}
+| {nom_3_mpos}
+| {nom_1p_mpos}
+| {nom_2p_inform_mpos}
+| {nom_2p_formal_mpos}
 |-
 ! genitive {ilik}
 | {gen_p}
+| {gen_1s_mpos}
+| {gen_2s_inform_mpos}
+| {gen_2s_formal_mpos}
+| {gen_3_mpos}
+| {gen_1p_mpos}
+| {gen_2p_inform_mpos}
+| {gen_2p_formal_mpos}
 |-
 ! dative {barysh}
 | {dat_p}
+| {dat_1s_mpos}
+| {dat_2s_inform_mpos}
+| {dat_2s_formal_mpos}
+| {dat_3_mpos}
+| {dat_1p_mpos}
+| {dat_2p_inform_mpos}
+| {dat_2p_formal_mpos}
 |-
 ! accusative {tabysh}
 | {acc_p}
+| {acc_1s_mpos}
+| {acc_2s_inform_mpos}
+| {acc_2s_formal_mpos}
+| {acc_3_mpos}
+| {acc_1p_mpos}
+| {acc_2p_inform_mpos}
+| {acc_2p_formal_mpos}
 |-
 ! locative {jatysh}
 | {loc_p}
+| {loc_1s_mpos}
+| {loc_2s_inform_mpos}
+| {loc_2s_formal_mpos}
+| {loc_3_mpos}
+| {loc_1p_mpos}
+| {loc_2p_inform_mpos}
+| {loc_2p_formal_mpos}
 |-
 ! ablative {chygysh}
 | {abl_p}
-|-
-| class="separator" colspan="999" |
-|-
-! class="outer" colspan="2" | possessive forms
-|-
-! 
-! first-person singular<br>{menin}
-|-
-! nominative
-| {nom_1s_mpos}
-|-
-! genitive
-| {gen_1s_mpos}
-|-
-! dative
-| {dat_1s_mpos}
-|-
-! accusative
-| {acc_1s_mpos}
-|-
-! locative
-| {loc_1s_mpos}
-|-
-! ablative
 | {abl_1s_mpos}
-|-
-! 
-! second-person singular informal<br>{senin}
-|-
-! nominative
-| {nom_2s_inform_mpos}
-|-
-! genitive
-| {gen_2s_inform_mpos}
-|-
-! dative
-| {dat_2s_inform_mpos}
-|-
-! accusative
-| {acc_2s_inform_mpos}
-|-
-! locative
-| {loc_2s_inform_mpos}
-|-
-! ablative
 | {abl_2s_inform_mpos}
-|-
-! 
-! second-person singular formal<br>{sizdin}
-|-
-! nominative
-| {nom_2s_formal_mpos}
-|-
-! genitive
-| {gen_2s_formal_mpos}
-|-
-! dative
-| {dat_2s_formal_mpos}
-|-
-! accusative
-| {acc_2s_formal_mpos}
-|-
-! locative
-| {loc_2s_formal_mpos}
-|-
-! ablative
 | {abl_2s_formal_mpos}
+| {abl_3_mpos}
+| {abl_1p_mpos}
+| {abl_2p_inform_mpos}
+| {abl_2p_formal_mpos}
 ]=]
 
 	local footer = mw.getCurrentFrame():expandTemplate{ title = 'inflection-table-bottom' }
@@ -776,7 +579,7 @@ local function make_table(decl_spec)
 	local table_spec =
 		decl_spec.number == "sg" and table_spec_sg or
 		decl_spec.number == "pl" and table_spec_pl or
-		table_spec_both
+		table_spec_sg .. "|-\n" .. table_spec_pl
 	return m_string_utilities.format(header .. table_spec .. footer, forms)
 end
 
