@@ -10,6 +10,8 @@ local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
 local parse_utilities_module = "Module:parse utilities"
+local qualifier_module = "Module:qualifier"
+local references_module = "Module:references"
 local scripts_module = "Module:scripts"
 local table_module = "Module:table"
 
@@ -45,9 +47,15 @@ local function split_on_comma(term)
 	end
 end
 
+local function term_already_linked(term)
+	-- optimization to avoid unnecessarily loading [[Module:parse utilities]]
+	return term:find("[<{]") and require(parse_utilities_module).term_already_linked(term)
+end
+
+
 -- Params that modify a descendant term (as also supported by {{l}}, {{m}}). Doesn't include gloss=, which we
 -- handle specially.
-local param_term_mods = {"alt", "g", "id", "lit", "pos", "t", "tr", "ts"}
+local param_term_mods = {"alt", "g", "id", "lit", "pos", "t", "tr", "ts", "q", "qq", "l", "ll", "ref"}
 local param_term_mod_set = listToSet(param_term_mods)
 -- Boolean params indicating whether a descendant term (or all terms) are particular sorts of borrowings.
 local bortypes = {"inh", "bor", "lbor", "slb", "obor", "translit", "der", "clq", "pclq", "sml", "unc"}
@@ -58,9 +66,12 @@ local calque_alias_set = listToSet(calque_aliases)
 -- Aliases of pclq=.
 local partial_calque_aliases = {"pcal", "pcalq", "pcalque"}
 local partial_calque_alias_set = listToSet(partial_calque_aliases)
--- Miscellaneous list params.
-local misc_list_params = {"q", "qq", "lb"}
-local misc_list_param_set = listToSet(misc_list_params)
+-- Miscellaneous list params where e.g. q1= and q= are different.
+local misc_index_separated_list_params = {"q", "qq", "l", "ll", "lb"}
+local misc_index_separated_list_param_set = listToSet(misc_index_separated_list_params)
+-- Miscellaneous list params where e.g. ref1= and ref= are the same.
+local misc_non_separated_list_params = {"ref"}
+local misc_non_separated_list_param_set = listToSet(misc_non_separated_list_params)
 
 -- Add a "regular" list param such as g=, gloss=, lit=, etc. "Regular" here means that `param` and `param1` are
 -- the same thing. `type` if given is the param type (e.g. "boolean") and `alias_of` is used for params that are
@@ -160,7 +171,15 @@ local function get_pre_qualifiers(args, index, lang)
 	local quals
 
 	if index > 0 then
-		local labels = split_and_process_raw_labels(val("lb"), lang)
+		local labels_lb = split_and_process_raw_labels(val("lb"), lang)
+		local labels_l = split_and_process_raw_labels(val("l"), lang)
+		local labels
+		if labels_lb and labels_l then
+			labels = labels_lb
+			require(table_module).extend(labels, labels_l)
+		else
+			labels = labels_lb or labels_l
+		end
 		if labels then
 			labels = require(labels_module).format_processed_labels {
 				labels = labels, lang = lang, no_ib_content = true
@@ -175,7 +194,7 @@ local function get_pre_qualifiers(args, index, lang)
 		insert(quals, val("q"))
 	end
 	if quals then
-		return require("Module:qualifier").format_qualifier(quals) .. " "
+		return require(qualifier_module).format_qualifier(quals) .. " "
 	else
 		return ""
 	end
@@ -207,11 +226,37 @@ local function get_post_qualifiers(args, index, lang)
 	if val("sml") then
 		insert(postqs, qualifier("semantic loan"))
 	end
-	if val("qq") then
-		insert(postqs, require("Module:qualifier").format_qualifier(val("qq")))
-	end
-	if index == 0 then
-		local labels = split_and_process_raw_labels(val("lb"), lang)
+	local quals
+	if index > 0 then
+		local labels = split_and_process_raw_labels(val("ll"), lang)
+		if labels then
+			labels = require(labels_module).format_processed_labels {
+				labels = labels, lang = lang
+			}
+			if labels ~= "" then
+				quals = {labels}
+			end
+		end
+		if val("qq") then
+			quals = quals or {}
+			insert(quals, val("qq"))
+		end
+		if quals then
+			insert(postqs, require(qualifier_module).format_qualifier(quals))
+		end
+	else
+		if val("qq") then
+			insert(postqs, require(qualifier_module).format_qualifier(val("qq")))
+		end
+		local labels_lb = split_and_process_raw_labels(val("lb"), lang)
+		local labels_ll = split_and_process_raw_labels(val("ll"), lang)
+		local labels
+		if labels_lb and labels_ll then
+			labels = labels_lb
+			require(table_module).extend(labels, labels_ll)
+		else
+			labels = labels_lb or labels_ll
+		end
 		if labels then
 			labels = require(labels_module).format_processed_labels {
 				labels = labels, lang = lang
@@ -221,10 +266,14 @@ local function get_post_qualifiers(args, index, lang)
 			end
 		end
 	end
-	if #postqs > 0 then
-		return " " .. concat(postqs, " ")
+	local refs_text = ""
+	if index > 0 and val("ref") then
+		 refs_text = require(references_module).format_references(val("ref"))
 	end
-	return ""
+	if #postqs > 0 then
+		refs_text .. return " " .. concat(postqs, " ")
+	end
+	return refs_text
 end
 
 local function desc_or_desc_tree(frame, desc_tree)
@@ -266,8 +315,11 @@ local function desc_or_desc_tree(frame, desc_tree)
 	for _, partial_calque_alias in ipairs(partial_calque_aliases) do
 		add_index_separated_list_param(params, partial_calque_alias, "boolean", "pclq")
 	end
-	for _, misc_list_param in ipairs(misc_list_params) do
-		add_index_separated_list_param(params, misc_list_param)
+	for _, misc_index_separated_list_param in ipairs(misc_index_separated_list_params) do
+		add_index_separated_list_param(params, misc_index_separated_list_param)
+	end
+	for _, misc_non_separated_list_param in ipairs(misc_non_separated_list_params) do
+		add_regular_list_param(params, misc_non_separated_list_params)
 	end
 
 	-- Add other single params.
@@ -306,7 +358,40 @@ local function desc_or_desc_tree(frame, desc_tree)
 			.. "a single term. To do that, put both genders in g=, comma-separated.")
 	end
 
-	local args = require("Module:parameters").process(parent_args, params)
+	local m_param_utils = require(parameter_utilities_module)
+
+	local param_mods = m_param_utils.construct_param_mods {
+		{group = "link", "ref", "l", "q"},
+		{param = bortypes, type = "boolean", overall = true},
+		{param = calque_aliases, alias_of = "clq"},
+		{param = partial_calque_aliases, alias_of = "pclq"},
+	}
+
+	local groups, args = m_param_utils.parse_list_with_inline_modifiers_and_separate_params {
+		params = params,
+		param_mods = param_mods,
+		raw_args = parent_args,
+		termarg = 2,
+		-- Need some work to support this.
+		-- parse_lang_prefix = true,
+		track_module = "descendant",
+		-- Due to allowing families as langs and substituting 'und', it's easier to do this later.
+		-- lang = function() ... end
+		sc = "sc.default",
+		splitchar = ",",
+		pre_normalize_modifiers = function(data)
+			local modtext = data.modtext
+			modtext = modtext:match("^<(.*)>$")
+			if not modtext then
+				error(("Internal error: Passed-in modifier isn't surrounded by angle brackets: %s"):format(
+					data.modtext))
+			end
+			if bortype_set[modtext] or calque_alias_set[modtext] or partial_calque_alias_set[modtext] then
+				modtext = modtext .. ":1"
+			end
+			return "<" .. modtext .. ">"
+		end,
+	}
 
 	local lang = args[1]
 	local terms = args[2]
@@ -384,44 +469,19 @@ local function desc_or_desc_tree(frame, desc_tree)
 	-- two terms that have the same unvocalized spelling.
 	local terms_and_ids_fetched = {}
 	local descendant_terms_seen = {}
-	local use_semicolon = false
+
+	local number_of_groups = 0
+	for i, group in ipairs(groups) do
+		local number_of_items = 0
+		for j, item in ipairs(group.terms) do
+			item.lang = item.lang or proxy_lang
+			item.track_sc = true
+	end
 
 	local ind = 0
 	for i = 1, maxmaxindex do
-		local term = terms[i]
-		if term ~= ";" then
-			ind = ind + 1
-			local alt = args.alt[ind]
-			local id = args.id[ind]
-			local sc = args.sc[ind]
-			local tr = args.tr[ind]
-			local ts = args.ts[ind]
-			local gloss = args.t[ind]
-			local pos = args.pos[ind]
-			local lit = args.lit[ind]
-			local g = args.g[ind] and rsplit(args.g[ind], "%s*,%s*") or {}
-			local link
-			local terms_for_alt_forms = {}
 
-			local termobj =	{
-				lang = proxy_lang,
-			}
-			-- Initialize `termobj` with indexed modifier params such as t1, t2, etc. and alt1, alt2, etc. Inline
-			-- modifiers specified using the <...> notation override these.
-			local function reinit_termobj(term)
-				termobj.term = term
-				termobj.sc = sc
-				termobj.track_sc = true
-				termobj.term = term
-				termobj.alt = alt
-				termobj.id = id
-				termobj.tr = tr
-				termobj.ts = ts
-				termobj.genders = g
-				termobj.gloss = gloss
-				termobj.pos = pos
-				termobj.lit = lit
-			end
+
 			-- Construct a link out of `termobj`. Also add the term to the list of descendant trees and/or alternative
 			-- forms to fetch, if the page+ID combination hasn't already been seen.
 			local function get_link()
@@ -520,14 +580,14 @@ local function desc_or_desc_tree(frame, desc_tree)
 								termobj.sc = arg
 							elseif param_term_mod_set[prefix] then
 								termobj[prefix] = arg
-							elseif misc_list_param_set[prefix] then
+							elseif misc_index_separated_list_param_set[prefix] then
 								if j < #comma_separated_runs then
 									parse_err("Modifier " .. run[k] .. " should come after the last term")
 								end
 								args["part" .. prefix][ind] = arg
 							elseif prefix == "tag" then
-								-- FIXME: Remove support for <tag:...> in favor of <lb:...>
-								error("Use <lb:...> instead of <tag:...>")
+								-- FIXME: Remove support for <tag:...> in favor of <ll:...>
+								error("Use <ll:...> instead of <tag:...>")
 							else
 								parse_err("Unrecognized prefix '" .. prefix .. "' in modifier " .. run[k])
 							end
