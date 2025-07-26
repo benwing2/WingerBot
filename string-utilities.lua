@@ -18,6 +18,7 @@ local find = string.find
 local format = string.format
 local gmatch = string.gmatch
 local gsub = string.gsub
+local insert = table.insert
 local len = string.len
 local lower = string.lower
 local match = string.match
@@ -59,7 +60,10 @@ local ucfirst
 local ulen
 
 --[==[
-Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no overhead after the first call, since the target functions are called directly in any subsequent calls.]==]
+Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures
+modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no
+overhead after the first call, since the target functions are called directly in any subsequent calls.
+]==]
 local function charset_escape(...)
 	charset_escape = require(string_charset_escape_module)
 	return charset_escape(...)
@@ -93,11 +97,17 @@ local function prepare_iter(str, pattern, str_lib, plain)
 	return pattern, ulen(str), ustring, callable
 end
 
---[==[Returns {nil} if the input value is the empty string, or otherwise the same value.
+--[==[
+Returns {nil} if the input value is the empty string, or otherwise the same value.
 
-If the input is a string and `do_trim` is set, the input value will be trimmed before returning; if the trimmed value is the empty string, returns {nil}.
+If the input is a string and `do_trim` is set, the input value will be trimmed before returning; if the trimmed value is
+the empty string, returns {nil}.
 
-If `quote_delimiters` is set, then any outer pair of quotation marks ({' '} or {" "}) surrounding the rest of the input string will be stripped, if present. The string will not be trimmed again, converted to {nil}, or have further quotation marks stripped, as it exists as a way to embed spaces or the empty string in an input. Genuine quotation marks may also be embedded this way (e.g. {"''foo''"} returns {"'foo'"}).]==]
+If `quote_delimiters` is set, then any outer pair of quotation marks ({' '} or {" "}) surrounding the rest of the input
+string will be stripped, if present. The string will not be trimmed again, converted to {nil}, or have further quotation
+marks stripped, as it exists as a way to embed spaces or the empty string in an input. Genuine quotation marks may also
+be embedded this way (e.g. {"''foo''"} returns {"'foo'"}).
+]==]
 function export.is_not_empty(str, do_trim, quote_delimiters)
 	if str == "" then
 		return nil
@@ -112,7 +122,11 @@ function export.is_not_empty(str, do_trim, quote_delimiters)
 	return quote_delimiters and gsub(str, "^(['\"])(.*)%1$", "%2") or str
 end
 
---[==[Explodes a string into an array of UTF-8 characters. '''Warning''': this function assumes that the input is valid UTF-8 in order to optimize speed and memory use. Passing in an input containing non-UTF-8 byte sequences could result in unexpected behaviour.]==]
+--[==[
+Explodes a string into an array of UTF-8 characters. '''Warning''': this function assumes that the input is valid UTF-8
+in order to optimize speed and memory use. Passing in an input containing non-UTF-8 byte sequences could result in
+unexpected behaviour.
+]==]
 function export.explode_utf8(str)
 	local text, i = {}, 0
 	for ch in gmatch(str, ".[\128-\191]*") do
@@ -123,14 +137,29 @@ function export.explode_utf8(str)
 end
 explode_utf8 = export.explode_utf8
 
---[==[Returns {true} if `str` is a valid UTF-8 string. This is true if, for each character, all of the following are true:
-* It has the expected number of bytes, which is determined by value of the leading byte: 1-byte characters are `0x00` to `0x7F`, 2-byte characters start with `0xC2` to `0xDF`, 3-byte characters start with `0xE0` to `0xEF`, and 4-byte characters start with `0xF0` to `0xF4`.
+--[==[
+Returns {true} if `str` is a valid UTF-8 string. This is true if, for each character, all of the following are true:
+* It has the expected number of bytes, which is determined by value of the leading byte: 1-byte characters are `0x00` to
+  `0x7F`, 2-byte characters start with `0xC2` to `0xDF`, 3-byte characters start with `0xE0` to `0xEF`, and 4-byte
+  characters start with `0xF0` to `0xF4`.
 * The leading byte must not fall outside of the above ranges.
 * The trailing byte(s) (if any), must be between `0x80` to `0xBF`.
 * The character's codepoint must be between U+0000 (`0x00`) and U+10FFFF (`0xF4 0x8F 0xBF 0xBF`).
-* The character cannot have an overlong encoding: for each byte length, the lowest theoretical encoding is equivalent to U+0000 (e.g. `0xE0 0x80 0x80`, the lowest theoretical 3-byte encoding, is exactly equivalent to U+0000). Encodings that use more than the minimum number of bytes are not considered valid, meaning that the first valid 3-byte character is `0xE0 0xA0 0x80` (U+0800), and the first valid 4-byte character is `0xF0 0x90 0x80 0x80` (U+10000). Formally, 2-byte characters have leading bytes ranging from `0xC0` to `0xDF` (rather than `0xC2` to `0xDF`), but `0xC0 0x80` to `0xC1 0xBF` are overlong encodings, so it is simpler to say that the 2-byte range begins at `0xC2`.
+* The character cannot have an overlong encoding: for each byte length, the lowest theoretical encoding is equivalent to
+  U+0000 (e.g. `0xE0 0x80 0x80`, the lowest theoretical 3-byte encoding, is exactly equivalent to U+0000). Encodings
+  that use more than the minimum number of bytes are not considered valid, meaning that the first valid 3-byte
+  character is `0xE0 0xA0 0x80` (U+0800), and the first valid 4-byte character is `0xF0 0x90 0x80 0x80` (U+10000).
+  Formally, 2-byte characters have leading bytes ranging from `0xC0` to `0xDF` (rather than `0xC2` to `0xDF`), but
+  `0xC0 0x80` to `0xC1 0xBF` are overlong encodings, so it is simpler to say that the 2-byte range begins at `0xC2`.
 
-If `allow_surrogates` is set, surrogates (U+D800 to U+DFFF) will be treated as valid UTF-8. Surrogates are used in UTF-16, which encodes codepoints U+0000 to U+FFFF with 2 bytes, and codepoints from U+10000 upwards using a pair of surrogates, which are taken together as a 4-byte unit. Since surrogates have no use in UTF-8, as it encodes higher codepoints in a different way, they are not considered valid in UTF-8 text. However, there are limited circumstances where they may be necessary: for instance, JSON escapes characters using the format `\u0000`, which must contain exactly 4 hexadecimal digits; under the scheme, codepoints above U+FFFF must be escaped as the equivalent pair of surrogates, even though the text itself must be encoded in UTF-8 (e.g. U+10000 becomes `\uD800\uDC00`).]==]
+If `allow_surrogates` is set, surrogates (U+D800 to U+DFFF) will be treated as valid UTF-8. Surrogates are used in
+UTF-16, which encodes codepoints U+0000 to U+FFFF with 2 bytes, and codepoints from U+10000 upwards using a pair of
+surrogates, which are taken together as a 4-byte unit. Since surrogates have no use in UTF-8, as it encodes higher
+codepoints in a different way, they are not considered valid in UTF-8 text. However, there are limited circumstances
+where they may be necessary: for instance, JSON escapes characters using the format `\u0000`, which must contain exactly
+4 hexadecimal digits; under the scheme, codepoints above U+FFFF must be escaped as the equivalent pair of surrogates,
+even though the text itself must be encoded in UTF-8 (e.g. U+10000 becomes `\uD800\uDC00`).
+]==]
 function export.isutf8(str, allow_surrogates)
 	for ch in gmatch(str, "[\128-\255][\128-\191]*") do
 		if #ch > 4 then
@@ -179,13 +208,21 @@ do
 		["."] = "%.", ["?"] = "%?", ["["] = "%["
 	}, charset_chars)
 
-	--[==[Escapes the magic characters used in a [[mw:Extension:Scribunto/Lua reference manual#Patterns|pattern]] (Lua's version of regular expressions): {$%()*+-.?[]^}, and converts the null character to {%z}. For example, {"^$()%.[]*+-?\0"} becomes {"%^%$%(%)%%%.%[%]%*%+%-%?%z"}. This is necessary when constructing a pattern involving arbitrary text (e.g. from user input).]==]
+	--[==[
+	Escapes the magic characters used in a [[mw:Extension:Scribunto/Lua reference manual#Patterns|pattern]] (Lua's
+	version of regular expressions): {$%()*+-.?[]^}, and converts the null character to {%z}. For example,
+	{"^$()%.[]*+-?\0"} becomes {"%^%$%(%)%%%.%[%]%*%+%-%?%z"}. This is necessary when constructing a pattern involving
+	arbitrary text (e.g. from user input).
+	]==]
 	function export.pattern_escape(str)
 		return (gsub(str, "[%z$%%()*+%-.?[%]^]", chars))
 	end
 	pattern_escape = export.pattern_escape
 
-	--[==[Escapes only {%}, which is the only magic character used in replacement [[mw:Extension:Scribunto/Lua reference manual#Patterns|patterns]] with string.gsub and mw.ustring.gsub.]==]
+	--[==[
+	Escapes only {%}, which is the only magic character used in replacement
+	[[mw:Extension:Scribunto/Lua reference manual#Patterns|patterns]] with string.gsub and mw.ustring.gsub.
+	]==]
 	function export.replacement_escape(str)
 		return (gsub(str, "%%", "%%%%"))
 	end
@@ -234,7 +271,11 @@ do
 	end
 
 	--[==[
-	Escapes the magic characters used in a [[mw:Extension:Scribunto/Lua reference manual#Patterns|pattern]], and makes all characters case-insensitive. An optional pattern or find function (see {split}) may be supplied as the second argument, the third argument (`str_lib`) forces use of the string library, while the fourth argument (`plain`) turns any pattern matching facilities off in the optional pattern supplied.]==]
+	Escapes the magic characters used in a [[mw:Extension:Scribunto/Lua reference manual#Patterns|pattern]], and makes
+	all characters case-insensitive. An optional pattern or find function (see {split}) may be supplied as the second
+	argument, the third argument (`str_lib`) forces use of the string library, while the fourth argument (`plain`) turns
+	any pattern matching facilities off in the optional pattern supplied.
+	]==]
 	function export.case_insensitive_pattern(str, pattern_or_func, str_lib, plain)
 		if pattern_or_func == nil then
 			return (gsub(str, str_lib and "[^\128-\255]" or ".[\128-\191]*", case_insensitive_char))
@@ -351,7 +392,10 @@ do
 		end
 	end
 	
-	--[==[Parses `pattern`, a ustring library pattern, and attempts to convert it into a string library pattern. If conversion isn't possible, returns false.]==]
+	--[==[
+	Parses `pattern`, a ustring library pattern, and attempts to convert it into a string library pattern. If conversion
+	isn't possible, returns false.
+	]==]
 	function pattern_simplifier(pattern)
 		if type(pattern) == "number" then
 			return tostring(pattern)
@@ -573,9 +617,14 @@ do
 	export.pattern_simplifier = pattern_simplifier
 end
 
---[==[Parses `charset`, the interior of a string or ustring library character set, and normalizes it into a string or ustring library pattern (e.g. {"abcd-g"} becomes {"[abcd-g]"}, and {"[]"} becomes {"[[%]]"}).
+--[==[
+Parses `charset`, the interior of a string or ustring library character set, and normalizes it into a string or ustring
+library pattern (e.g. {"abcd-g"} becomes {"[abcd-g]"}, and {"[]"} becomes {"[[%]]"}).
 
-The negative (`^`), range (`-`) and literal (`%`) magic characters work as normal, and character classes may be used (e.g. `%d` and `%w`), but opening and closing square brackets are sanitized so that they behave like ordinary characters.]==]
+The negative (`^`), range (`-`) and literal (`%`) magic characters work as normal, and character classes may be used
+(e.g. `%d` and `%w`), but opening and closing square brackets are sanitized so that they behave like ordinary
+characters.
+]==]
 function get_charset(charset)
 	if type(charset) == "number" then
 		return tostring(charset)
@@ -617,7 +666,9 @@ function get_charset(charset)
 					output[n] = (ch == "]" and "%]" or ch) .. "%-"
 					start = nxt_pos
 					nxt_pos = nxt_pos + 2
-				-- Since ranges can't contain "%]", since it's escaped, range inputs like "]-z" or "a-]" must be adjusted to the character before or after, plus "%]" (e.g. "%]^-z" or "a-\\%]"). The escaped "%]" is omitted if the range would be empty (i.e. if the first byte is greater than the second).
+				-- Since ranges can't contain "%]", since it's escaped, range inputs like "]-z" or "a-]" must be
+				-- adjusted to the character before or after, plus "%]" (e.g. "%]^-z" or "a-\\%]"). The escaped "%]" is
+				-- omitted if the range would be empty (i.e. if the first byte is greater than the second).
 				else
 					n = n + 1
 					output[n] = (ch == "]" and (byte(nxt) >= 0x5D and "%]^" or "^") or ch) .. "-" ..
@@ -731,12 +782,16 @@ function export.gsub(str, pattern, repl, n)
 	return ugsub(str, pattern, repl, n)
 end
 
---[==[Like gsub, but pattern-matching facilities are turned off, so `pattern` and `repl` (if a string) are treated as literal.]==]
+--[==[
+Like gsub, but pattern-matching facilities are turned off, so `pattern` and `repl` (if a string) are treated as literal.
+]==]
 function export.plain_gsub(str, pattern, repl, n)
 	return gsub(str, pattern_escape(pattern), type(repl) == "string" and replacement_escape(repl) or repl, n)
 end
 
---[==[Reverses a UTF-8 string; equivalent to string.reverse.]==]
+--[==[
+Reverses a UTF-8 string; equivalent to string.reverse.
+]==]
 function export.reverse(str)
 	return reverse((gsub(str, "[\192-\255][\128-\191]*", reverse)))
 end
@@ -867,9 +922,18 @@ do
 		return n
 	end
 	
-	--[==[Reimplementation of mw.text.split() that includes any capturing groups in the splitting pattern. This works like Python's re.split() function, except that it has Lua's behavior when the split pattern is empty (i.e. advancing by one character at a time; Python returns the whole remainder of the string). When possible, it will use the string library, but otherwise uses the ustring library. There are two optional parameters: `str_lib` forces use of the string library, while `plain` turns any pattern matching facilities off, treating `pattern` as literal.
+	--[==[
+	Reimplementation of mw.text.split() that includes any capturing groups in the splitting pattern. This works like
+	Python's re.split() function, except that it has Lua's behavior when the split pattern is empty (i.e. advancing by
+	one character at a time; Python returns the whole remainder of the string). When possible, it will use the string
+	library, but otherwise uses the ustring library. There are two optional parameters: `str_lib` forces use of the
+	string library, while `plain` turns any pattern matching facilities off, treating `pattern` as literal.
 	
-		In addition, `pattern` may be a custom find function (or callable table), which takes the input string and start index as its two arguments, and must return the start and end index of the match, plus any optional captures, or nil if there are no further matches. By default, the start index will be calculated using the ustring library, unless `str_lib` or `plain` is set.]==]
+	In addition, `pattern` may be a custom find function (or callable table), which takes the input string and start
+	index as its two arguments, and must return the start and end index of the match, plus any optional captures, or nil
+	if there are no further matches. By default, the start index will be calculated using the ustring library, unless
+	`str_lib` or `plain` is set.
+	]==]
 	function export.split(str, pattern_or_func, str_lib, plain)
 		local iter, t, n = gsplit(str, pattern_or_func, str_lib, plain), {}, 0
 		repeat
@@ -880,7 +944,10 @@ do
 	export.capturing_split = export.split -- To be removed.
 end
 
---[==[Returns an iterator function, which iterates over the substrings returned by {split}. The first value returned is the string up the splitting pattern, with any capture groups being returned as additional values on that iteration.]==]
+--[==[
+Returns an iterator function, which iterates over the substrings returned by {split}. The first value returned is the
+string up the splitting pattern, with any capture groups being returned as additional values on that iteration.
+]==]
 function export.gsplit(str, pattern_or_func, str_lib, plain)
 	local start, final, str_len, _string, callable = 1
 	pattern_or_func, str_len, _string, callable = prepare_iter(str, pattern_or_func, str_lib, plain)
@@ -966,13 +1033,17 @@ end
 
 function export.trim(str, charset, str_lib, plain)
 	if charset == nil then
-		-- "^.*%S" is the fastest trim algorithm except when strings only consist of characters to be trimmed, which are very slow due to catastrophic backtracking. gsub with "^%s*" gets around this by trimming such strings to "" first.
+		-- "^.*%S" is the fastest trim algorithm except when strings only consist of characters to be trimmed, which are
+		-- very slow due to catastrophic backtracking. gsub with "^%s*" gets around this by trimming such strings to ""
+		-- first.
 		return match(gsub(str, "^%s*", ""), "^.*%S") or ""
 	elseif charset == "" then
 		return str
 	end
 	charset = plain and ("[" .. charset_escape(charset) .. "]") or get_charset(charset)
-	-- The pattern uses a non-greedy quantifier instead of the algorithm used for %s, because negative character sets are non-trivial to compute (e.g. "[^^-z]" becomes "[%^_-z]"). Plus, if the ustring library has to be used, there would be two callbacks into PHP, which is slower.
+	-- The pattern uses a non-greedy quantifier instead of the algorithm used for %s, because negative character sets
+	-- are non-trivial to compute (e.g. "[^^-z]" becomes "[%^_-z]"). Plus, if the ustring library has to be used, there
+	-- would be two callbacks into PHP, which is slower.
 	local pattern = "^" .. charset .. "*(.-)" .. charset .. "*$"
 	if not str_lib then
 		local simple = pattern_simplifier(pattern)
@@ -1005,7 +1076,8 @@ do
 		return cp and (cp <= 0xD7FF or cp >= 0xE000 and cp <= 0x10FFFF) and u(cp) or nil
 	end
 
-	-- Non-ASCII characters aren't valid in proper HTML named entities, but MediaWiki uses them in some custom aliases which have also been included in [[Module:data/entities]].
+	-- Non-ASCII characters aren't valid in proper HTML named entities, but MediaWiki uses them in some custom aliases
+	-- which have also been included in [[Module:data/entities]].
 	function export.decode_entities(str)
 		local amp = find(str, "&", nil, true)
 		return amp and find(str, ";", amp, true) and gsub(str, "&(#?)([xX]?)([%w\128-\255]+);", decode_entity) or str
@@ -1107,10 +1179,21 @@ do
 		end
 	end
 	
-	--[==[Removes any HTML comments from the input text. `stage` can be one of three options:
-	* {"PRE"} (default) applies the method used by MediaWiki's preprocessor: all {{code|html|<nowiki><!-- ... --></nowiki>}} pairs are removed, as well as any text after an unclosed {{code|html|<nowiki><!--</nowiki>}}. This is generally suitable when parsing raw template or [[mw:Parser extension tags|parser extension tag]] code. (Note, however, that the actual method used by the preprocessor is considerably more complex and differs under certain conditions (e.g. comments inside nowiki tags); if full accuracy is absolutely necessary, use [[Module:template parser]] instead).
-	* {"POST"} applies the method used to generate the final page output once all templates have been expanded: it loops over the text, removing any {{code|html|<nowiki><!-- ... --></nowiki>}} pairs until no more are found (e.g. {{code|html|<nowiki><!-<!-- ... -->- ... --></nowiki>}} would be fully removed), but any unclosed {{code|html|<nowiki><!--</nowiki>}} is ignored. This is suitable for handling links embedded in template inputs, where the {"PRE"} method will have already been applied by the native parser.
-	* {"BOTH"} applies {"PRE"} then {"POST"}.]==]
+	--[==[
+	Removes any HTML comments from the input text. `stage` can be one of three options:
+	* {"PRE"} (default) applies the method used by MediaWiki's preprocessor: all
+	  {{code|html|<nowiki><!-- ... --></nowiki>}} pairs are removed, as well as any text after an unclosed
+	  {{code|html|<nowiki><!--</nowiki>}}. This is generally suitable when parsing raw template or
+	  [[mw:Parser extension tags|parser extension tag]] code. (Note, however, that the actual method used by the
+	  preprocessor is considerably more complex and differs under certain conditions (e.g. comments inside nowiki tags);
+	  if full accuracy is absolutely necessary, use [[Module:template parser]] instead).
+	* {"POST"} applies the method used to generate the final page output once all templates have been expanded: it loops
+	  over the text, removing any {{code|html|<nowiki><!-- ... --></nowiki>}} pairs until no more are found (e.g.
+	  {{code|html|<nowiki><!-<!-- ... -->- ... --></nowiki>}} would be fully removed), but any unclosed
+	  {{code|html|<nowiki><!--</nowiki>}} is ignored. This is suitable for handling links embedded in template inputs,
+	  where the {"PRE"} method will have already been applied by the native parser.
+	* {"BOTH"} applies {"PRE"} then {"POST"}.
+	]==]
 	function export.remove_comments(str, stage)
 		if not stage or stage == "PRE" then
 			return _remove_comments(str, true)
@@ -1156,14 +1239,19 @@ function export.format_fun(str, fun)
 end
 format_fun = export.format_fun
 
---[==[This function, unlike {string.format} and {mw.ustring.format}, takes just two parameters—a format string and a table—and replaces all instances of { {param_name} } in the format string with the table's entry for {param_name}. The opening and closing brace characters can be escaped with { {\op} } and { {\cl} }, respectively. A table entry beginning with a slash can be escaped by doubling the initial slash.
+--[==[
+This function, unlike {string.format} and {mw.ustring.format}, takes just two parameters, a format string and a table,
+and replaces all instances of { {param_name} } in the format string with the table's entry for {param_name}. The opening
+and closing brace characters can be escaped with { {\op} } and { {\cl} }, respectively. A table entry beginning with a
+slash can be escaped by doubling the initial slash.
 
 ====Examples====
 * {string_utilities.format("{foo} fish, {bar} fish, {baz} fish, {quux} fish", {["foo"]="one", ["bar"]="two", ["baz"]="red", ["quux"]="blue"}) }
 *: produces: {"one fish, two fish, red fish, blue fish"}
 * {string_utilities.format("The set {\\op}1, 2, 3{\\cl} contains {\\\\hello} elements.", {["\\hello"]="three"})}
 *: produces: {"The set {1, 2, 3} contains three elements."}
-*:* Note that the single and double backslashes should be entered as double and quadruple backslashes when quoted in a literal string.]==]
+*:* Note that the single and double backslashes should be entered as double and quadruple backslashes when quoted in a literal string.
+]==]
 function export.format(str, tbl)
 	return format_fun(str, function(key)
 		return tbl[key]
@@ -1178,6 +1266,24 @@ do
 	end
 	
 	local function uclcfirst(str, case_func)
+		-- Strip off any HTML tags at the beginning. This currently does not handle comments or <ref>...</ref>
+		-- correctly; it's intended for text wrapped in <span> or the like, as happens when passing text through
+		-- [[Module:links]].
+		local html_at_beginning = nil
+		if str:match("^<") then
+			while true do
+				local html_tag, rest = str:match("^(<.->)(.*)$")
+				if not html_tag then
+					break
+				end
+				if not html_at_beginning then
+					html_at_beginning = {}
+				end
+				insert(html_at_beginning, html_tag)
+				str = rest
+			end
+		end
+
 		-- If there's a link at the beginning, re-case the first letter of the
 		-- link text. This pattern matches both piped and unpiped links.
 		-- If the link is not piped, the second capture (linktext) will be empty.
@@ -1185,14 +1291,30 @@ do
 		if link then
 			return "[[" .. link .. "|" .. do_uclcfirst(linktext ~= "" and linktext or link, case_func) .. "]]" .. remainder
 		end
-		return do_uclcfirst(str, case_func)
+		local retval = do_uclcfirst(str, case_func)
+		if html_at_beginning then
+			retval = concat(html_at_beginning) .. retval
+		end
+		return retval
 	end
 	
+	--[==[
+	Uppercase the first character of the input string, correctly handling one-part and two-part links, optionally
+	surrounded by HTML tags such as `<span>...</span>`, possibly nested. Intended to correctly uppercase the first
+	character of text that may include links that have been passed through `full_link()` in [[Module:links]] or a
+	similar function.
+	]==]
 	function export.ucfirst(str)
 		return uclcfirst(str, uupper)
 	end
 	ucfirst = export.ucfirst
 
+	--[==[
+	Lowercase the first character of the input string, correctly handling one-part and two-part links, optionally
+	surrounded by HTML tags such as `<span>...</span>`, possibly nested. Intended to correctly lowercase the first
+	character of text that may include links that have been passed through `full_link()` in [[Module:links]] or a
+	similar function.
+	]==]
 	function export.lcfirst(str)
 		return uclcfirst(str, ulower)
 	end
@@ -1209,13 +1331,18 @@ do
 		return remainder == "" and first or (first .. ulower(remainder))
 	end
 
-	--[==[Capitalizes each word of the input string, with any further letters in each word being converted to lowercase.]==]
+	--[==[
+	Capitalizes each word of the input string, with any further letters in each word being converted to lowercase.
+	]==]
 	function export.title_case(str)
 		return str == "" and "" or ugsub(str, "(%w)(%w*)", do_title_case)
 	end
 	title_case = export.title_case
 
-	--[==[Converts the input string to {{w|Camel case|CamelCase}}. Any non-word characters are treated as breaks between words. If `lower_first` is set, then the first character of the string will be lowercase (e.g. camelCase).]==]
+	--[==[
+	Converts the input string to {{w|Camel case|CamelCase}}. Any non-word characters are treated as breaks between
+	words. If `lower_first` is set, then the first character of the string will be lowercase (e.g. camelCase).
+	]==]
 	function export.camel_case(str, lower_first)
 		str = ugsub(str, "%W*(%w*)", title_case)
 		return lower_first and do_uclcfirst(str, ulower) or str
@@ -1227,7 +1354,10 @@ do
 		return nonword == "" and word or "_" .. word
 	end
 
-	--[==[Converts the input string to {{w|Snake case|snake_case}}. Any non-word characters are treated as breaks between words.]==]
+	--[==[
+	Converts the input string to {{w|Snake case|snake_case}}. Any non-word characters are treated as breaks between
+	words.
+	]==]
 	function export.snake_case(str)
 		return (ugsub(str, "(%W*)(%w*)", do_snake_case))
 	end
