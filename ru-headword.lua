@@ -101,13 +101,27 @@ local function make_qualifier_text(text)
 	return require("Module:qualifier").format_qualifier(text)
 end
 
--- Split a list of "RUSSIAN" or "RUSSIAN/TRANSLIT" strings into a list of {RUSSIAN, TRANSLIT} objects.
+-- Split a list of "RUSSIAN" or "RUSSIAN//TRANSLIT" strings into a list of {RUSSIAN, TRANSLIT} objects.
 local function split_list_into_russian_tr(list)
 	local splitlist = {}
 	for _, item in ipairs(list) do
 		table.insert(splitlist, com.split_russian_tr(item, "dopair"))
 	end
 	return splitlist
+end
+
+-- Convert a termobj list where the terms are either "RUSSIAN" or "RUSSIAN//TRANSLIT" strings into
+-- split Russian/translit in the appopriate slots. NOTE: Conversion is in-place.
+local function split_termobj_list_into_russian_tr(list)
+	for _, termobj in ipairs(list) do
+		local ru, tr = com.split_russian_tr(termobj.term)
+		if tr and termobj.translit then
+			error("Can't specify both translit through <tr:...> and through CYRILLIC//TRANSLIT format")
+		end
+		if tr then
+			termobj.translit = tr
+		end
+	end
 end
 
 -- Convert {RUSSIAN, TR} in `form` into an "inflection object" of the form needed for one of the inflection parts in
@@ -164,6 +178,58 @@ local function russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_p
 	return obj
 end
 
+-- Convert {RUSSIAN, TR} in `form` into an "inflection object" of the form needed for one of the inflection parts in
+-- the inflections passed to [[Module:headword]]. The format of this object is as follows:
+--   {term = "TERM", translit = "TRANSLIT", face = "FACE", accel = ACCELERATOR_OBJECT} where
+-- ACCELERATOR_OBJECT is
+--   {form = "FORM USED IN {{inflection of}} OR SIMILAR", lemma = "TERM" or LIST, lemma_translit = "TRANSLIT" or LIST,
+--    target = "|head= USED IN {{head}} OR SIMILAR", translit = "|tr= USED IN {{head}} OR SIMILAR"}
+-- Normally, `target` in the accelerator object is handled automatically and taken from the displayed text of the link,
+-- but this doesn't work in comparative forms, where the form reads e.g. "([[покраснее|по]])[[краснее|красне́е]]" but we
+-- want the target to be just красне́е. So we always specify the target and translit, but default it to the form and its
+-- translit unless the `target` parameter is passed in. Note also that we don't specify translit="TRANSLIT" in the
+-- outer (inflection) object because then the translit will be displayed in the headword inflection.
+--
+-- `data` is used to fetch the values of `lemma` and `lemma_translit` in the accelerator object and to add a "Requests
+-- for accents" category if the form is missing accents. (FIXME: Consider throwing an error instead.) `pos` is the
+-- part of speech of the lemma and is used for naming the "Requests for accents" category. `accel_form` goes in the
+-- accelerator object; if nil, no accelerator object is specified. `accel_pos` is the part of speech of the inflection,
+-- if different from the lemma, and goes in the accelerator object. `target` is used to populate the `target` and
+-- `translit` fields in the accelerator object and is the form used to check for missing accents; in both cases it
+-- defaults to `form` if omitted.
+local function termobj_to_inflection_obj(data, termobj, pos, accel_form, accel_pos, target)
+	local ru = termobj.term
+	local tr = termobj.translit
+	local sawhyp_ru, sawhyp_tr
+	ru, sawhyp_ru = rsubb(ru, HYPMARKER, "")
+	if tr then
+		tr, sawhyp_tr = rsubb(tr, HYPMARKER, "")
+	end
+	local accel
+	local target_ru, target_tr
+	if target then
+		target_ru, target_tr = unpack(target)
+	else
+		target_ru, target_tr = ru, tr
+	end
+	if accel_form then
+		-- FIXME, consider removing redundant translit
+		-- Stuff in data.heads and data.translits gets destructively modified by [[Module:headword]] (YUCK), so clone it.
+		accel = {form = accel_form, lemma = m_table.deepCopy(data.heads),
+			lemma_translit = m_table.deepCopy(data.translits), pos = accel_pos, target = target_ru, translit = target_tr
+		}
+	end
+	termobj.term = ru
+	termobj.translit = nil
+	termobj.face = (sawhyp_ru or sawhyp_tr) and "hypothetical" or nil
+	termobj.accel = accel
+	--Uncomment to see the manual translit for each inflected part.
+	--local obj = {term=ru, translit=tr, face=(sawhyp_ru or sawhyp_tr) and "hypothetical" or nil, accel=accel}
+	if com.needs_accents(m_links.remove_links(target_ru)) then
+		table.insert(data.categories, "Requests for accents in Russian " .. pos .. " entries")
+	end
+end
+
 -- Add a full inflection (e.g. genitive singular of nouns, abstract noun of adjectives) to `data.inflections`. `label`
 -- is the label of the inflection (e.g. "abstract noun"). `forms` is a list of {RUSSIAN, TRANSLIT} objects specifying
 -- the inflections, or a list of "RUSSIAN//TRANSLIT" strings. `pos` is the part of speech of the lemma, used for adding
@@ -171,18 +237,28 @@ end
 -- inflection, or nil to add no accelerator. `accel_pos` is the part of speech of the inflection, if different from
 -- the lemma.
 local function add_inflection(data, label, forms, pos, accel_form, accel_pos)
-	if #forms == 0 then
+	if not forms[1] then
 		return
 	end
 	local parts = {label = label}
-	if #forms > 0 and type(forms[1]) == "string" then
-		forms = split_list_into_russian_tr(forms)
+	if type(forms[1]) == "string" then
+		local termobjs = m_headword_utilities.parse_term_list_with_modifiers {
+			paramname = {2, "pl"},
+			forms = forms,
+			include_mods = {"tr"},
+		}
+		forms = split_termobj_list_into_russian_tr(forms)
+		forms = com.combine_translit_of_duplicate_termobj_forms(forms)
+		for _, form in ipairs(forms) do
+			m_table.insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_pos))
+		end
+	else
+		forms = com.combine_translit_of_duplicate_forms(forms)
+		for _, form in ipairs(forms) do
+			m_table.insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_pos))
+		end
+		table.insert(data.inflections, parts)
 	end
-	forms = com.combine_translit_of_duplicate_forms(forms)
-	for _, form in ipairs(forms) do
-		m_table.insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_pos))
-	end
-	table.insert(data.inflections, parts)
 end
 
 -- Zip the lemma heads and corresponding translits into a list of {RUSSIAN, TRANSLIT} objects. In the process, split
