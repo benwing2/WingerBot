@@ -1,119 +1,54 @@
 local export = {}
 
 local etymology_module = "Module:etymology"
-
-local rsplit = mw.text.split
-
-
-local function parse_args(args)
-	local boolean = {type = "boolean"}
-	local list_allow_holes = {list = true, allow_holes = true}
-	args = require("Module:parameters").process(args, {
-		[1] = {required = true, type = "language", default = "und"},
-		[2] = list_allow_holes,
-		["t"] = list_allow_holes,
-		["gloss"] = {list = true, alias_of = "t"},
-		["tr"] = list_allow_holes,
-		["ts"] = list_allow_holes,
-		["g"] = list_allow_holes,
-		["id"] = list_allow_holes,
-		["alt"] = list_allow_holes,
-		["q"] = list_allow_holes,
-		["qq"] = list_allow_holes,
-		["lit"] = list_allow_holes,
-		["pos"] = list_allow_holes,
-		-- Note, lang1=, lang2=, ... are different from 1=; the former apply to
-		-- individual arguments, while the latter applies to all arguments
-		["lang"] = {type = "language", list = true, allow_holes = true, require_index = true},
-		["sc"] = {type = "script"},
-		-- Note, sc1=, sc2=, ... are different from sc=; the former apply to
-		-- individual arguments when lang1=, lang2=, ... is specified, while
-		-- the latter applies to all arguments where langN=... isn't specified
-		["partsc"] = {type = "script", list = "sc", allow_holes = true, require_index = true},
-		["noast"] = boolean,
-		["and"] = boolean,
-		["compare"] = boolean,
-		["notes"] = true,
-	})
-	return args, args[1], args["sc"]
-end
+local links_module = "Module:links"
+local parameter_utilities_module = "Module:parameter utilities"
+local parse_utilities_module = "Module:parse utilities"
+local table_module = "Module:table"
 
 
-local function get_parsed_part(args, i)
-	local term_index = 2
-	local term = args[term_index][i]
-	local alt = args["alt"][i]
-	local id = args["id"][i]
-	local lang = args["lang"][i]
-	local sc = args["partsc"][i]
-	
-	local tr = args["tr"][i]
-	local ts = args["ts"][i]
-	local gloss = args["t"][i]
-	local pos = args["pos"][i]
-	local lit = args["lit"][i]
-	local q = args["q"][i]
-	local qq = args["qq"][i]
-	local g = args["g"][i]
-
-	if not (term or alt or tr or ts) then
-		require("Module:debug").track("see/no term or alt or tr")
-		return nil
-	else
-		local termlang, actual_term
-		if term then
-			termlang, actual_term = term:match("^([A-Za-z0-9._-]+):(.*)$")
-			if termlang then
-				termlang = require("Module:languages").getByCode(termlang, nil, "allow etym") or nil
-			end
-			if not termlang then -- If not a valid language code, treat it as part of the term.
-				actual_term = term
-			end
-		end
-		if lang and termlang then
-			error(("Both lang%s= and a language in %s= given; specify one or the other"):format(i, term_index + i - 1))
-		end
-		return { term = actual_term, alt = alt, id = id, lang = lang or termlang, sc = sc, tr = tr,
-			ts = ts, gloss = gloss, pos = pos, lit = lit, q = q, qq = qq,
-			genders = g and rsplit(g, ",") or {}
-		}
-	end
-end
-
-
-local function get_parsed_parts(args)
-	local parts = {}
-
-	-- Find the maximum index among any of the list parameters.
-	local maxmaxindex = 0
-	for _, v in pairs(args) do
-		if type(v) == "table" and v.maxindex and v.maxindex > maxmaxindex then
-			maxmaxindex = v.maxindex
-		end
-	end
-
-	for index = 1, maxmaxindex do
-		local part = get_parsed_part(args, index)
-		parts[index] = part
-	end
-	
-	return parts
+local function term_already_linked(term)
+	-- optimization to avoid unnecessarily loading [[Module:parse utilities]]
+	return term:find("[<{]") and require(parse_utilities_module).term_already_linked(term)
 end
 
 
 function export.see(frame)
-	local args, lang, sc = parse_args(frame:getParent().args)
+	local parent_args = frame:getParent().args
 
-	local nocat = args["nocat"]
-	local notext = args["notext"]
-	local text = not notext and frame.args["text"]
-	local oftext = not notext and (frame.args["oftext"] or text and "of")
-	local cat = not nocat and frame.args["cat"]
+	local boolean = {type = "boolean"}
+	local params = {
+		[1] = {required = true, type = "language", default = "und"},
+		[2] = {list = true, allow_holes = true},
+		["noast"] = boolean,
+		["and"] = boolean,
+		["compare"] = boolean,
+		["notes"] = true,
+	}
 
-	local parts = get_parsed_parts(args)
+    local m_param_utils = require(parameter_utilities_module)
 
-	if not next(parts) and mw.title.getCurrentTitle().nsText == "Template" then
-		parts = { {term = "term"} }
+	local param_mods = m_param_utils.construct_param_mods {
+		{group = {"link", "ref", "l"}},
+		-- For compatibility, we don't distinguish q= from q1= and qq= from q1=. FIXME: Maybe we should change this.
+		{group = "q", separate_no_index = false},
+	}
+	
+	local items, args = m_param_utils.parse_list_with_inline_modifiers_and_separate_params {
+		params = params,
+		param_mods = param_mods,
+		raw_args = parent_args,
+		termarg = 2,
+		parse_lang_prefix = true,
+		track_module = "see",
+		sc = "sc.default",
+	}
+
+	local lang = args[1]
+	local langcode = lang:getCode()
+
+	if not next(items) and mw.title.getCurrentTitle().nsText == "Template" then
+		items = { {term = "term"} }
 	end
 
 	local textparts = {}
@@ -136,25 +71,24 @@ function export.see(frame)
 
 	local termparts = {}
 	-- Make links out of all the parts
-	for _, part in ipairs(parts) do
+	for _, item in ipairs(items) do
 		local result
-		part.sc = part.sc or sc
-		if part.lang then
-			-- format_derived() processes per-part qualifiers, labels and references, but they end up on the wrong side
+		if item.lang then
+			-- format_derived() processes per-item qualifiers, labels and references, but they end up on the wrong side
 			-- of the source (at least on the left), so we need to move them up.
-			local q = part.q
-			local qq = part.qq
-			local l = part.l
-			local ll = part.ll
-			local refs = part.refs
-			part.q = nil
-			part.qq = nil
-			part.l = nil
-			part.ll = nil
-			part.refs = nil
+			local q = item.q
+			local qq = item.qq
+			local l = item.l
+			local ll = item.ll
+			local refs = item.refs
+			item.q = nil
+			item.qq = nil
+			item.l = nil
+			item.ll = nil
+			item.refs = nil
 			result = require(etymology_module).format_derived {
-				terms = {part},
-				sources = {part.lang},
+				terms = {item},
+				sources = {item.lang},
 				nocat = true,
 				template_name = "see",
 				q = q,
@@ -164,8 +98,13 @@ function export.see(frame)
 				refs = refs,
 			}
 		else
-			part.lang = lang
-			result = require("Module:links").full_link(part, nil, false, "show qualifiers")
+			local raw_term = item.alt or item.term
+			if raw_term and term_already_linked(raw_term) then
+				result = raw_term
+			else
+				item.lang = lang
+				result = require(links_module).full_link(item, nil, false, "show qualifiers")
+			end
 		end
 
 		table.insert(termparts, result)
@@ -174,7 +113,7 @@ function export.see(frame)
 	if #termparts == 1 then
 		ins(termparts[1])
 	else
-		ins(require("Module:table").serialCommaJoin(termparts, {conj = "''and''"}))
+		ins(require(table_module).serialCommaJoin(termparts, {conj = "''and''"}))
 	end
 
 	if args.notes then
