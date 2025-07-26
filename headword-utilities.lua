@@ -356,6 +356,7 @@ function export.combine_termobj_qualifiers_labels(destobj, srcobj)
 	destobj.qq = export.combine_qualifiers_or_labels(destobj.qq, srcobj.qq)
 	destobj.l = export.combine_qualifiers_or_labels(destobj.l, srcobj.l)
 	destobj.ll = export.combine_qualifiers_or_labels(destobj.ll, srcobj.ll)
+	destobj.refs = export.combine_qualifiers_or_labels(destobj.refs, srcobj.refs)
 	return destobj
 end
 
