@@ -252,8 +252,12 @@ Comments about axes of variation:
 	  (or "trisyllabic" in the case of some adjectives with -ije-) with fleeting ''a''. According to Vukušić (sec 512,
 	  page 139), many of these, including žédan, have a variant žȇdan in the lemma form and žȇdno in the neuter, but
 	  žédn- elsewhere in the indefinite, and žȇdn- in the definite. Galloglach21 says he's never heard this variant, so
-	  it must be rare. Other examples: bijésan, búdan, dijélan, drijéman, dúžan, gládan, górak, gŕdan, háran, hládan,
-	  hrábar, húdan, húlan, jédar, kádar, krátak, krúpan, kváran, lástan "sposoban", máman, mástan, mázan, míran,
+	  it must be rare. Other examples: bijésan (stem bijesn-) "furious" (bésan stem besn- in Serbia), búdan (stem budn-)
+	  "awake", dijélan, drijéman, dúžan (stem dužn-) "owing, in debt", gládan (stem gladn-) "hungry", górak (stem gork-)
+	  "bitter", gŕdan (stem grdn-) "ugly (colloquial); bad, terrible; many, much", háran, hládan (stem hladn-) "cold",
+	  hrábar (stem hrabr-) "bold, brave", húdan, húlan, jédar (stem jedr-) "strong, big", kádar, krátak (stem kratk-)
+	  "short", krúpan (stem krupn-) "sturdy, bulky; big", kváran (stem kvarn-) "defective, damaged", lástan "sposoban",
+	  máman, mástan (stem masn-) "fatty, greasy; boldface", mázan, míran,
 	  mláčan, mráčan, mísan, mŕtav, múdar, mútan, nágao, njéžan, óran, plítak, prášan, prázan, prijésan, rávan, rijédak,
 	  rúžan, sjájan, slástan, smijéšan, snážan, stálan, stídan, strášan, svijétao, šúpalj, táman, téžak, tijésan,
 	  trijézan, túžan, vjéran, vlástan, vrijédan, zlátan, znójan, zráčan, zvúčan. Only the following have the žȇdan-type
