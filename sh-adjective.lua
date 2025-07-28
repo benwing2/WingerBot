@@ -15,19 +15,19 @@ TERMINOLOGY:
 	 Example slot names for adjectives are "gen_f" (genitive feminine singular) and
 	 "nom_mp_an" (animate nominative masculine plural). Each slot is filled with zero or more forms.
 
--- "form" = The declined Czech form representing the value of a given slot.
+-- "form" = The declined Serbo-Croatian form representing the value of a given slot.
 
--- "lemma" = The dictionary form of a given Czech term. Generally the nominative
+-- "lemma" = The dictionary form of a given Serbo-Croatian term. Generally the nominative
      masculine singular, but may occasionally be another form if the nominative
 	 masculine singular is missing.
 ]=]
 
-local lang = require("Module:languages").getByCode("cs")
+local lang = require("Module:languages").getByCode("sh")
 local m_links = require("Module:links")
 local m_table = require("Module:table")
 local m_string_utilities = require("Module:string utilities")
 local iut = require("Module:inflection utilities")
-local com = require("Module:cs-common")
+local com = require("Module:sh-common")
 
 local current_title = mw.title.getCurrentTitle()
 local NAMESPACE = current_title.nsText
@@ -76,8 +76,8 @@ end
 
 
 -- All slots that are used by any of the different tables. The key is the slot and the value is a list of the tables
--- that use the slot. "" = regular, "plonly" = special=plonly in {{cs-adecl-manual}}, "dva" = special=dva in
--- {{cs-adecl-manual}}.
+-- that use the slot. "" = regular, "plonly" = special=plonly in {{sh-adecl-manual}}, "dva" = special=dva in
+-- {{sh-adecl-manual}}.
 local input_adjective_slots = {
 	nom_m = {""},
 	nom_f = {""},
@@ -118,7 +118,7 @@ local input_adjective_slots = {
 
 local output_adjective_slots = {
 	nom_m = "nom|m|s",
-	nom_m_linked = "nom|m|s", -- used in [[Module:cs-noun]]?
+	nom_m_linked = "nom|m|s", -- used in [[Module:sh-noun]]?
 	nom_f = "nom|f|s",
 	nom_n = "nom|n|s",
 	nom_mp_an = "an|nom|m|p",
@@ -177,8 +177,110 @@ local function add(base, slot, stems, endings, footnote)
 end
 
 
+--[=[
+Comments about axes of variation:
+1. Some adjectives are definite-only. This seems to apply to all adjectives in -skī, -čkī and the like, but it also
+   applies to some other adjectives. Even in otherwise indefinite contexts, the vocative is definite; some authorities
+   consider the indefinite vocative missing, while others copy the definite vocative forms (always the same as the
+   nominative) to the indefinite.
+2. Some adjectives are reducible, meaning that there is a fleeting ''a'' in the indefinite nominative masculine singular
+   that isn't in any other forms. Accompanying the deletion of ''a'' is sometimes consonant cluster simplification, such
+   as kȍrīstan "useful", which becomes definite kȍrīsnī. There is also occasionally compensatory lengthening of the
+   stressed vowel, as in gròzdak "?" -> gróskī, but I don't know how frequent or regular it is; we might just want to
+   handle it manually. Note that not all adjectives in -an are reducible, e.g. lȁgan "light (in weight)" is not.
+3. Some compound adjectives have more than one stress, e.g. rȁnobrònčanodȍbnī "hand-to-hand combat (relational)".
+4. There are hard and soft adjectives. Soft adjectives end in a palatal consonant (FIXME: what are they, and are there
+   "both-ways" consonants, maybe like 'r', that can occur either hard or soft?). Soft adjectives have an -e- instead of
+   an -o- in the masculine and neuter singular endings (but notably not in the feminine singular endings, which still
+   have dat/loc -ōj and ins -ōm); no plural endings have an -o- in them to begin with.
+5. Even outside of reducibility, adjectives can have up to three stem variants. An example with all three is gȏl
+   "naked" (which appears in the lemma form as gȏ in Bosnia and Serbia, but maintains the -l- in all other forms).
+   This adjective has long-falling gȏl in the indefinite lemma form but short-rising gòl- elsewhere in the indefinite,
+   and short-falling gȍl- throughout the definite. The comparative is gòlijī. Note also this means that in general, no
+   definite forms can be merged with any indefinite forms. The following multi-stem variants exist:
+   a. Vukušić's type 18 (sec 509, page 135): e.g. žȗt "yellow": long falling in lemma, indef nom fem sg žúta, indef nom
+      neut sg žúto or less commonly žȗto, etc. elsewhere in the indefinite žút-, definite žȗtī etc. Other examples:
+	  bijȇl "white" (which appears to be bȅo in Serbia, otherwise with the same accents but with -e- replacing -ije-),
+	  blȃg "soft", blijȇd "pale", bȓz "fast", cijȇl "whole" (also cȉo in the lemma form, with other forms the same; cȅo
+	  in Serbia, similarly to bȅo), cȓn "black", čȇst "frequent", čvȓst "fixed; strong", drȃg "dear", fȋn "fine",
+	  glȗh "deaf" (glȗv in Serbia), glȗp "stupid", gnjȉo "rotten" (gnjil- in other forms), gȓd "ugly (regional)",
+	  grȗb "rough; rude", gȗst "dense", hȗd "angry; bad; evil (rare, archaic, regional)", jȃk "strong", krȋv
+	  "guilty; wrong; curved", kȓnj "truncated; incomplete; damaged" (soft declension), krȗt "stiff; strict",
+	  kȗs "too short; incomplete (rare)", lijȇn "lazy" (lȇnj in Serbia, soft declension), lijȇp "nice, pretty" (lȇp in
+	  Serbia), lȗd "crazy", ljȗt "angry; fierce; spicy", mlȃd "young", mlȃk "tepid; irresolute", nȃg "naked",
+	  nijȇm "mute; silent (of a film)" (nȇm in Serbia), plȃh "cowardly", plȃv "blue; blonde",
+	  prijȇk "urgent; (when definite) direct, shortened (of a road, etc.)" (presumably prȇk in Serbia),
+	  pȗst "empty; futile", rȋđ "reddish, red" (soft declension), rȗd "curly; reddish-brown" (two different etymologies
+	  but they appear to have merged completely in inflection), sijȇd "gray" (sȇd in Serbia), sȋv "gray",
+	  skȗp "expensive", slȃn "salty", slijȇp "blind" (slȇp in Serbia), strȃn "foreign; strange", sȗh "dry; thin" (sȗv in
+	  Serbia), sȗr "ash-gray; gloomy (expressive, literary)", svȇt "holy", štȗr "withered; barren",
+	  tȗđ "someone else's; foreign" (soft declension), tȗp "blunt; dull; stupid", tȗst "fat", tvȓd "hard, firm",
+	  vrȃn "black, raven-colored (expressive)", vrȗć "hot; cordial" (soft declension), žȋv "alive".
+   b. Vukušić's type 19 (sec 510, page 136): e.g. zdrȁv "healthy", bȉstar "clear; clean; clever" (stem bistr-).
+      Similarly to type 18, the falling changes to rising elsewhere in the indefinite (optionally in the neuter):
+	  zdràva, zdràvo or zdrȁvo, genitive zdràva, etc.; definite zdrȁvī etc. Likewise bìstra, bìstro or bȉstro, genitive
+	  bìstra etc.; definite bȉstrī etc. Other examples: blȉzak (stem blisk-) "near", bȍdar (stem bodr-)
+	  "alert; vigorous", brȉdak (stem britk-) "sharp; prickly", čȉl/čȉo (stem čil-) "strong, vigorous", čȉst
+	  "clean; pure", čȉtak (stem čitk-) "legible", dȍbar (stem dobr-) "good", drȍban (stem drobn-) "small, tiny",
+	  dȑzak (stem drsk-) "insolent; arrogant", dȕg "long", gȉbak (stem gipk-) "flexible", glȁdak "smooth" (stem glatk-),
+	  grȅz "rough; crude", grȉzak (stem grisk-?) "? (obsolete)", gȑk "bitter (expressive, literary)", hȉtar (stem hitr-)
+	  "fast, speedy", hrȍm "lame, limping", jȅdaki (stem jetk-) "acrid; scathing", kljȁst "lame (in the arm)",
+	  krȅpak (stem krepk-) "strong", kȑhak (stem krhk-) "brittle, fragile", krȍtak (stem krotk-) "tame, gentle",
+	  kȑt "brittle", lȁk "easy, light", lȍš "bad, wicked; inferior" (soft declension), lȍvak (stem lofk- or lovk-?)
+	  "? (obsolete)", ljȕbak (stem ljupk-) "cute, charming", mȅdan (stem medn-) "honey-sweet", mȅk "soft",
+	  mȉo (stem mil-) "dear; kind", mȍćan (stem moćn-) "powerful; influential", mȍdar (stem modr-) "dark blue",
+	  mȍkar (stem mokr-) "wet", mȑčan < mȑk (stem mrčn-?) "? (obsolete), mȑk "brown; grim, gloomy (of a person)",
+	  mȑkao (stem mrkl-?) "? (obsolete)", mȑzak (stem mrsk-) "hateful", mȑzao/mȑzal (stem mrzl-)
+	  "cold (expressive, literary)", nȉzak (stem nisk-) "low; common, vile", nȍv "new; modern", ȍbal/ȍbao (stem obl-)
+	  "round, oval", ȍštar (stem oštr-) "sharp; strict", pȉtak (stem pitk-) "potable", pjȁn
+	  "drunk (regional, rhetorical [?])", plȍdan (stem plodn-) "fertile; prolific", pȍstan (stem posn-) "lean", pȍtan
+	  (stem potn-?) "? (obsolete)", prȁv "straight; right", pȑhak (stem prhk-) "crumbly", prȍst
+	  "common; simple; vulgar", pȕn "full", pȕtak (stem putk-?) "? (obsolete)", rȁd "willing" (maybe no definite
+	  forms?), rȅzak (stem resk-) "cutting", rȍdan (stem rodn-) "fruitful, fertile", rȍsan (stem rosn-)
+	  "dewy; dew (relational)", sȉt "sated, full", sȉtan (stem sitn-) "tiny; trivial", sklȉzak (stem sklisk-)
+	  "slippery", slȁb "weak", slȁdak (stem slatk-) "sweet", spȍr "slow, sluggish", stȁr (definite stȃrī) "old",
+	  stȑm "steep", strȍg "severe; harsh", svjȅž "fresh" (svȅž in Serbia), šȕt "hornless (of a young animal)",
+	  tȁnak (stem tank-) "thin; slender", tmȁst "dark, fuscous", tmȕo (stem tmul-)
+	  "dark, gloomy; muffled, hoarse (of a voice)", tȍpao/tȍpal (stem topl-) "warm", trȍm "sluggish, slow",
+	  trȕo (stem trul-) "rotten, putrid", ȕzak (stem usk-) "narrow; tight", vȅdar (stem vedr-)
+	  "clear (of the sky); cheerful", vȉtak (stem vitk-) "slim, slender", vjȅšt "able, skillful" (vȅšt in Serbia),
+	  vlȁžan (stem vlažn-) "humid", vȍzak (stem vosk-?) "? (obsolete)", vrȅo (stem vrel-) "hot, boiling",
+	  zrȅo (stel zrel-) "ripe; mature", žȉdak (stem žitk-) "somewhat thin (in consistency); flexible (figurative)",
+	  žȕk "bitter (regional), žȕstar (stem žustr-) "frenetic, energetic".
+   c. Vukušić's type 20 (sec 511, page 138): e.g. žédan (stem žedn-) "thirsty". Long rising throughout the indefinite,
+      long falling throughout the definite: žédan, žédna, žédno, def. žȇdnī. All of these adjectives are disyllabic
+	  (or "trisyllabic" in the case of some adjectives with -ije-) with fleeting ''a''. According to Vukušić (sec 512,
+	  page 139), many of these, including žédan, have a variant žȇdan in the lemma form and žȇdno in the neuter, but
+	  žédn- elsewhere in the indefinite, and žȇdn- in the definite. Galloglach21 says he's never heard this variant, so
+	  it must be rare. Other examples: bijésan, búdan, dijélan, drijéman, dúžan, gládan, górak, gŕdan, háran, hládan,
+	  hrábar, húdan, húlan, jédar, kádar, krátak, krúpan, kváran, lástan "sposoban", máman, mástan, mázan, míran,
+	  mláčan, mráčan, mísan, mŕtav, múdar, mútan, nágao, njéžan, óran, plítak, prášan, prázan, prijésan, rávan, rijédak,
+	  rúžan, sjájan, slástan, smijéšan, snážan, stálan, stídan, strášan, svijétao, šúpalj, táman, téžak, tijésan,
+	  trijézan, túžan, vjéran, vlástan, vrijédan, zlátan, znójan, zráčan, zvúčan. Only the following have the žȇdan-type
+	  variation: bȗdan, dijȇlan, drijȇman, glȃdan, gȏrak, gȓdan, hȃran, hlȃdan, hrȃbar, hȗdan, hȗlan, krȃtak, krȗpan,
+	  kvȃran, mȃstan, mlȃčan, mrȃčan, mȓsan, mȗtan, plȋtak, prȃšan, prȃzan, rȃvan, rijȇdak, rȗžan, sjȃjan, slȃstan,
+	  snȃžan, stȋdan, strȃšan, tȃman, težak, tijȇsan, tȗžan, zlȃtan, znȏjan, zrȃčan, zvȗčan.
+   d. Sec 411 page 103 says that some adjectives can change a short or long falling accent in the definite into a short
+      rising accent. Example is krátak, which per (c) would normally have definite krȃtkī but can also have kràtkī. Per
+	  Galloglach21 this is regional, maybe characteristic of the Western areas, e.g. Lika, Dalmatia. Such adjectives
+	  include brȏjnī -> bròjnī, cvjȅtnī -> cvjètnī, čȇstī -> čèstī, dȕgi -> dùgī, krȃtki -> kràtki, krȗpnī -> krùpnī,
+	  lȏvnī -> lòvnī, lȋsnī -> lìsnī, mȅki -> mèkī, mijȇšnī -> mjèšnī (< mijȇh), mȍkrī -> mòkrī, mȑki -> mr̀ki,
+	  mȓsnī -> mr̀snī, nȍćnī -> nòćnī, ȍblī -> òblī, ȍčnī -> òčnī, pȇtnī -> pètnī, plȋtkī -> plìtkī, pȍsnī -> pòsnī,
+	  rijȇtkī -> rjètkī, rijȇčnī (prema rijéka) -> rjèčnī (prema rijȇč), rȕčnī -> rùčnī, rȗdnī -> rùdnī, svȇtī -> svètī,
+	  strȃšnī -> stràšnī, strȏjnī -> stròjnī, tȇškī -> tèškī, tȏvnī -> tòvnī, vȉtkī -> vìtkī, vjȅčnī -> vjèčnī,
+	  zvȗčnī -> zvùčnī, žȉtkī -> žìtkī, žȕčnī -> žùčnī; as well as a similar list of non-reducible adjectives.
+   e. Vukušić's type 21 (sec 513, page 139): three different accent variants; only two examples, gȏl "naked" (gȏ in
+      Bosnia and Serbia) and bȏs "barefoot". In the indefinite, these have gȏl, fem gòla neut gòlo or gȍlo, gòl-
+	  throughout the rest of the indefinite paradigm, and gȍlī in the definite.
+   f. Vukušić's type 22 (sec 514, page 141): zèlen "green; unripe", fem zelèna, neut zelèno, zelèn- throughout the rest
+      of the indefinite paradigm, zèlenī in the definite. Other examples are cr̀ven "red; ruddy", dàlek "far, distant",
+	  dèbeo (stem debel-) "fat, thick", dùbok "deep", màlen "small", pòšten "honest, sincere", rùmen "rosy, reddish",
+	  stùden "cold; frigid", svìlen "silk (relational); silky", šàren "multicolored; diverse", šìrok "wide", vìsok
+	  "high, tall", žèstok "severe; pungent".
+
+]=]
 local function add_normal_decl(base, stems,
-	ind_nom_m, def_nom_m, ind_nom_f, def_nom_f, ind_nom_n, def_nom_n,
+	def_nom_m, ind_nom_f, def_nom_f, ind_nom_n, def_nom_n,
 	ind_nom_mp, def_nom_mp, ind_nom_fp, def_nom_fp, ind_nom_np, def_nom_np,
 	ind_gen_mn, def_gen_mn, gen_f, gen_p,
 	ind_dat_mn, def_dat_mn, dat_f, dat_p,
@@ -189,7 +291,6 @@ local function add_normal_decl(base, stems,
 	if stems then
 		stems = iut.combine_form_and_footnotes(stems, footnote)
 	end
-	add(base, "ind_nom_m", stems, ind_nom_m)
 	add(base, "def_nom_m", stems, def_nom_m)
 	add(base, "ind_nom_f", stems, ind_nom_f)
 	add(base, "def_nom_f", stems, def_nom_f)
@@ -625,7 +726,7 @@ decls["irreg"] = function(base)
 	end
 
 	if base.lemma == "jenž" then
-		local preposition_footnote = "the leading letter ''j-'' is changed to ''n-'' when the pronoun is preceded by a preposition, e.g. {{m|cs|[[s]] [[nímž]]}}, {{m|cs|[[k]] [[němuž]]}}, {{m|cs|[[bez]] [[níž]]}}"
+		local preposition_footnote = "the leading letter ''j-'' is changed to ''n-'' when the pronoun is preceded by a preposition, e.g. {{m|sh|[[s]] [[nímž]]}}, {{m|sh|[[k]] [[němuž]]}}, {{m|sh|[[bez]] [[níž]]}}"
 		preposition_footnote = "[" .. mw.getCurrentFrame():preprocess(preposition_footnote) .. "]"
 		-- Add the non-prepositional forms.
 		add_normal_decl(base, "",
@@ -921,7 +1022,7 @@ local function add_categories(alternant_multiword_spec)
 	local cats = {}
 	local plpos = m_string_utilities.pluralize(alternant_multiword_spec.pos or "adjective")
 	local function insert(cattype)
-		m_table.insertIfNot(cats, "Czech " .. cattype .. " " .. plpos)
+		m_table.insertIfNot(cats, "Serbo-Croatian " .. cattype .. " " .. plpos)
 	end
 	if not alternant_multiword_spec.manual then
 		iut.map_word_specs(alternant_multiword_spec, function(base)
@@ -935,7 +1036,7 @@ local function add_categories(alternant_multiword_spec)
 				insert("possessive")
 			end
 			if base.short then
-				table.insert(cats, "Czech " .. plpos .. " with short forms")
+				table.insert(cats, "Serbo-Croatian " .. plpos .. " with short forms")
 			end
 		end)
 	end
@@ -1112,7 +1213,7 @@ local function make_table(alternant_multiword_spec)
 	if alternant_multiword_spec.title then
 		forms.title = alternant_multiword_spec.title
 	else
-		forms.title = 'Declension of <i lang="cs">' .. forms.lemma .. '</i>'
+		forms.title = 'Declension of <i lang="sh">' .. forms.lemma .. '</i>'
 	end
 
 	if alternant_multiword_spec.manual then
@@ -1170,7 +1271,7 @@ function export.do_generate_forms(parent_args, pos, from_headword, def)
 	local SUBPAGE = mw.title.getCurrentTitle().subpageText
 	local pagename = args.pagename or SUBPAGE
 	if not args[1] then
-		if SUBPAGE == "cs-adecl" then
+		if SUBPAGE == "sh-adecl" then
 			args[1] = "křepký<short:*>"
 		else
 			args[1] = pagename
@@ -1244,7 +1345,7 @@ function export.do_generate_forms_manual(parent_args, pos, from_headword, def)
 end
 
 
--- Entry point for {{cs-adecl}}. Template-callable function to parse and decline 
+-- Entry point for {{sh-adecl}}. Template-callable function to parse and decline 
 -- an adjective given user-specified arguments and generate a displayable table
 -- of the declined forms.
 function export.show(frame)
@@ -1255,7 +1356,7 @@ function export.show(frame)
 end
 
 
--- Entry point for {{cs-adecl-manual}}. Template-callable function to parse and
+-- Entry point for {{sh-adecl-manual}}. Template-callable function to parse and
 -- decline an adjective given manually-specified inflections and generate a
 -- displayable table of the declined forms.
 function export.show_manual(frame)
