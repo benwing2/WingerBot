@@ -226,7 +226,7 @@ Comments about axes of variation:
 	  grȅz "rough; crude", grȉzak (stem grisk-?) "? (obsolete)", gȑk "bitter (expressive, literary)", hȉtar (stem hitr-)
 	  "fast, speedy", hrȍm "lame, limping", jȅdaki (stem jetk-) "acrid; scathing", kljȁst "lame (in the arm)",
 	  krȅpak (stem krepk-) "strong", kȑhak (stem krhk-) "brittle, fragile", krȍtak (stem krotk-) "tame, gentle",
-	  kȑt "brittle", lȁk "easy, light", lȍš "bad, wicked; inferior" (soft declension), lȍvak (stem lofk- or lovk-?)
+	  kȑt "brittle", lȁk "easy, light", lȍš "bad, wicked; inferior" (soft declension), lȍvak (stem lovk-?)
 	  "? (obsolete)", ljȕbak (stem ljupk-) "cute, charming", mȅdan (stem medn-) "honey-sweet", mȅk "soft",
 	  mȉo (stem mil-) "dear; kind", mȍćan (stem moćn-) "powerful; influential", mȍdar (stem modr-) "dark blue",
 	  mȍkar (stem mokr-) "wet", mȑčan < mȑk (stem mrčn-?) "? (obsolete), mȑk "brown; grim, gloomy (of a person)",
