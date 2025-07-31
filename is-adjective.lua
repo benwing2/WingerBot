@@ -26,9 +26,10 @@ local m_table = require("Module:table")
 local m_links = require("Module:links")
 local m_string_utilities = require("Module:string utilities")
 local iut = require("Module:inflection utilities")
+local put = require("Module:parse utilities")
 local m_para = require("Module:parameters")
-local com = require("Module:User:Benwing2/is-common")
-local parse_utilities_module = "Module:parse utilities"
+local com = require("Module:is-common")
+local en_utilities_module = "Module:en-utilities"
 
 local u = mw.ustring.char
 local rsplit = mw.text.split
@@ -38,6 +39,7 @@ local rgmatch = mw.ustring.gmatch
 local rsubn = mw.ustring.gsub
 local ulen = mw.ustring.len
 local ulower = mw.ustring.lower
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local dump = mw.dumpObject
 
 local force_cat = false -- set to true to make categories appear in non-mainspace pages, for testing
@@ -107,9 +109,9 @@ local potential_lemma_slots = {
 }
 
 local compsup_degrees = {
-	{"pos", "positive"},
-	{"comp", "comparative"},
-	{"sup", "superlative"},
+	{"pos", "Positive"},
+	{"comp", "Comparative"},
+	{"sup", "Superlative"},
 }
 
 -- Export some of these below for use by [[Module:is-noun]].
@@ -132,6 +134,10 @@ export.control_specs = {
 }
 
 export.control_spec_set = m_table.listToSet(export.control_specs)
+
+export.boolean_property_set = m_table.listToSet {
+	"builtin", "irreg", "archaic", "article", "indecl", "decl?", "pred", "comp?"
+}
 
 local function slot_to_degfield(slot)
 	local degfield = slot:match("^(comp)_")
@@ -246,6 +252,30 @@ for _, potential_lemma_slot in ipairs(potential_lemma_slots) do
 end
 
 
+-- Get the appropriate slot list for the given degree, removing the state and/or number from the
+-- accelerator form if the state or number are restricted to a single value.
+local function get_slot_list(alternant_multiword_spec, degfield)
+	local source_list = adjective_slot_list_by_degree[degfield]
+	local number = alternant_multiword_spec.number[degfield]
+	local state = alternant_multiword_spec.state[degfield]
+	if number == "both" and state == "bothstates" then
+		return source_list
+	end
+	local dest_list = {}
+	for _, slot_accel in ipairs(source_list) do
+		local slot, accel = unpack(slot_accel)
+		if state ~= "bothstates" then
+			accel = accel:gsub("str|", ""):gsub("wk|", "")
+		end
+		if number ~= "both" then
+			accel = accel:gsub("|s$", ""):gsub("|p$", "")
+		end
+		table.insert(dest_list, {slot, accel})
+	end
+	return dest_list
+end
+
+
 local function skip_slot(number, state, slot)
 	return number == "sg" and slot:find("p$") or
 		number == "pl" and not slot:find("p$") or
@@ -353,7 +383,7 @@ fields later filled out by other functions) is of the form
   -- Superlative specs as given by the user, consisting of a list of form objects.
   supspec = nil or { {form = "FORM", footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...}}, ...},
   -- misc Boolean properties:
-  -- * "irreg" (an irregular term such as a number or determiner);
+  -- * "builtin" (a built-in term such as a number or determiner);
   -- * "decl?" (unknown declension);
   -- * "comp?" (unknown if comparative exists);
   -- * "indecl" (indeclinable);
@@ -849,14 +879,11 @@ decls["comp"] = function(base, degree, props)
 end
 
 
-local function set_irreg_defaults(base)
+local function set_builtin_defaults(base)
 	local number, state
 	local basedeg = base.base_degree
 	local lemma = basedeg.lemma
-	if lemma == "einn" then
-		state = "bothstates"
-		base.sup = {{form = "einastur"}}
-	elseif lemma == "tveir" or lemma == "þrír" or lemma == "fjórir" or lemma == "báðir" or lemma == "fáeinir" then
+	if lemma == "tveir" or lemma == "þrír" or lemma == "fjórir" or lemma == "báðir" or lemma == "fáeinir" then
 		number = "pl"
 	end
 	basedeg.number = number or "both"
@@ -864,7 +891,7 @@ local function set_irreg_defaults(base)
 end
 
 
-decls["irreg"] = function(base, degree, props)
+decls["builtin"] = function(base, degree, props)
 	if degree.lemma == "sá" then
 		add_strong_decl(base, degree, props,
 					"sú", "það",
@@ -952,15 +979,10 @@ decls["irreg"] = function(base, degree, props)
 	end
 
 	local neutstem
-	if degree.lemma == "hver" then
-		stem = "hver"
-		neutstem = ""
-	elseif degree.lemma == "sérhver" then
-		stem = "sérhver"
-		neutstem = "sér"
-	elseif degree.lemma == "einhver" then
-		stem = "einhver"
-		neutstem = "eitt"
+	if degree.lemma == "hver" or degree.lemma == "sérhver" or degree.lemma == "einhver" then
+		stem = degree.lemma
+		-- Neuter stem is eitt- for [[einhver]], otherwise chop off -hver
+		neutstem = degree.lemma == "einhver" and "eitt" or degree.lemma:sub(1, -5)
 	end
 	if stem then
 		add_strong_decl(base, degree, props,
@@ -979,8 +1001,9 @@ decls["irreg"] = function(base, degree, props)
 		return
 	end
 
-	if degree.lemma == "nokkur" then
-		stem = "nokk"
+	if degree.lemma == "nokkur" or degree.lemma == "allnokkur" or degree.lemma == "þónokkur" then
+		-- remove -ur suffix
+		stem = degree.lemma:sub(1, -3)
 		add_strong_decl(base, degree, props,
 					stem .. "ur", {
 						{form = stem .. "urt", footnotes = {"[used with a noun]"}},
@@ -1093,7 +1116,7 @@ decls["irreg"] = function(base, degree, props)
 		return
 	end
 
-	error("Unrecognized irregular lemma '" .. degree.lemma .. "'")
+	error("Unrecognized built-in lemma '" .. degree.lemma .. "'")
 end
 
 
@@ -1209,14 +1232,14 @@ local function map_all_overrides(base, fn)
 end
 
 
--- Like iut.split_alternating_runs_and_strip_spaces(), but ensure that backslash-escaped commas and periods are not
+-- Like put.split_alternating_runs_and_strip_spaces(), but ensure that backslash-escaped commas and periods are not
 -- treated as separators.
 local function split_alternating_runs_with_escapes(segments, splitchar)
 	for i, segment in ipairs(segments) do
 		segment = rsub(segment, "\\,", SUB_ESCAPED_COMMA)
 		segments[i] = rsub(segment, "\\%.", SUB_ESCAPED_PERIOD)
 	end
-	local separated_groups = iut.split_alternating_runs_and_strip_spaces(segments, splitchar)
+	local separated_groups = put.split_alternating_runs_and_strip_spaces(segments, splitchar)
 	for _, separated_group in ipairs(separated_groups) do
 		for i, segment in ipairs(separated_group) do
 			segment = rsub(segment, SUB_ESCAPED_COMMA, ",")
@@ -1278,7 +1301,7 @@ i.e. an object containing 'form' and 'footnotes' fields.
 ]=]
 local function parse_comp_sup_spec(segments, parse_err)
 	local specs = {}
-	local colon_separated_groups = iut.split_alternating_runs_and_strip_spaces(segments, ":")
+	local colon_separated_groups = put.split_alternating_runs_and_strip_spaces(segments, ":")
 	for i, colon_separated_group in ipairs(colon_separated_groups) do
 		if i == 1 then
 			if colon_separated_group[2] then
@@ -1301,7 +1324,7 @@ list of override values. Each override value is a form object, i.e. an object co
 local function parse_override(segments, parse_err)
 	local slots = {}
 	local specs = {}
-	local colon_separated_groups = iut.split_alternating_runs_and_strip_spaces(segments, ":")
+	local colon_separated_groups = put.split_alternating_runs_and_strip_spaces(segments, ":")
 	for i, colon_separated_group in ipairs(colon_separated_groups) do
 		if i == 1 then
 			if colon_separated_group[2] then
@@ -1316,7 +1339,7 @@ local function parse_override(segments, parse_err)
 						"abbreviation %s; or stem %s: %s"):format(slot, make_quoted_slot_list(strong_adjective_slots),
 						make_quoted_slot_list(weak_adjective_slots), make_quoted_keys(adjective_slot_abbrs),
 						make_quoted_list(export.overridable_stems),
-						require(parse_utilities_module).escape_wikicode(table.concat(segments))))
+						put.escape_wikicode(table.concat(segments))))
 				end
 			end
 		else
@@ -1355,7 +1378,7 @@ local function parse_inside(base, inside, is_scraped_noun)
     end
 
 	local base_degree = {}
-	local segments = iut.parse_balanced_segment_run(inside, "[", "]")
+	local segments = put.parse_balanced_segment_run(inside, "[", "]")
 	local dot_separated_groups = split_alternating_runs_with_escapes(segments, "%.")
 	for i, dot_separated_group in ipairs(dot_separated_groups) do
 		-- Parse a control spec such as "umut,uUmut[rare]". This assumes the control spec is contained in
@@ -1546,8 +1569,11 @@ local function parse_inside(base, inside, is_scraped_noun)
 				parse_err("Can't specify a stem spec ('stem:', # or ##) twice")
 			end
 			base_degree.stem = part
-		elseif part == "irreg" or part == "archaic" or part == "article" or part == "indecl" or part == "decl?"
-				or part == "pred" or part == "comp?" then
+		elseif export.boolean_property_set[part] then
+			if part == "irreg" then
+				-- FIXME, remove this
+				part = "builtin"
+			end
 			if base.props[part] then
 				parse_err("Can't specify '" .. part .. "' twice")
 			end
@@ -1583,7 +1609,7 @@ local function parse_inside(base, inside, is_scraped_noun)
 			base.supspec = {{form = "-"}}
 		end
 		if not base.compspec and not base.supspec and not base.props["comp?"] and not base.props.indecl and
-			not base.props["decl?"] and not base.props.irreg and not base.scrape_spec then
+			not base.props["decl?"] and not base.props.builtin and not base.scrape_spec then
 			parse_err("Must either specify a comparative, specify '-comp' to indicate no comparative, or " ..
 				"specify 'comp?' to indicate that the comparative status is unknown")
 		end
@@ -1596,7 +1622,7 @@ end
 -- Set some defaults (e.g. number and state) now, because they (esp. the number) may be needed below when determining
 -- how to merge scraped and user-specified properies.
 local function set_early_base_defaults(base)
-	if not base.props.irreg then
+	if not base.props.builtin then
 		local basedeg = base.base_degree
 		basedeg.number = base.number or "both"
 		basedeg.state = base.state or base.base_degfield == "comp" and "weak" or "bothstates"
@@ -1788,14 +1814,16 @@ local function set_defaults_and_check_bad_indicators(base)
 		error(("Lemma '%s': %s"):format(base.base_degree.lemma, msg))
 	end
 	-- Set default values.
-	if base.props.irreg then
-		set_irreg_defaults(base)
+	if base.props.builtin then
+		set_builtin_defaults(base)
 		for _, control_spec in ipairs(export.control_specs) do
 			if base[control_spec] then
-				check_err(("'%s' can only be specified with regular adjectives"):format(control_spec))
+				check_err(("'%s' cannot be specified with built-in terms"):format(control_spec))
 			end
 		end
-		return
+		if base.compspec or base.supspec or base.posspec then
+			check_err("Comparative/superlative indicators cannot be specified with built-in terms")
+		end
 	end
 end
 
@@ -1891,14 +1919,13 @@ local function determine_positive_declension(base)
 	local default_props = {}
 	local defcomp, defsup
 	-- Determine declension
-	if base.props.indecl then
+	if base.props.builtin then
+		error("Internal error: This function should not be called with built-in terms")
+	elseif base.props.indecl then
 		pos.decl = "indecl"
 		stem = pos.lemma
 	elseif base.props["decl?"] then
 		pos.decl = "decl?"
-		stem = pos.lemma
-	elseif base.props.irreg then
-		pos.decl = "irreg"
 		stem = pos.lemma
 	elseif not stem then
 		-- There must be at least one vowel; lemmas like [[bur]] don't count.
@@ -2352,10 +2379,10 @@ local function detect_indicator_spec(alternant_multiword_spec, base)
 		formobj.form = com.replace_hashvals(formobj.form, basedeg.lemma)
 	end)
 
-	if base.props.irreg then
+	if base.props.builtin then
 		expand_property_sets(basedeg)
 		basedeg.stem = ""
-		basedeg.decl = "irreg"
+		basedeg.decl = "builtin"
 	else
 		if base.base_degfield == "sup" then
 			-- Superlative-only lemmas (like other superlatives) default to uUmut unless explicitly specified otherwise.
@@ -2432,7 +2459,7 @@ local function detect_indicator_spec(alternant_multiword_spec, base)
 	end
 
 	-- Make sure all alternants agree in various properties.
-	for _, prop in ipairs { "decl?", "indecl", "irreg" } do
+	for _, prop in ipairs { "decl?", "indecl", "builtin" } do
 		local val = not not base.props[prop]
 		if alternant_multiword_spec[prop] == nil then
 			alternant_multiword_spec[prop] = val
@@ -2471,12 +2498,12 @@ end
 local function compute_categories_and_annotation(alternant_multiword_spec)
 	local all_cats = {}
 	local function inscat(cattype)
-		-- Don't insert categories with determiners/pronouns; all are irregular in various ways.
-		if not alternant_multiword_spec.irreg then
+		-- Don't insert categories with built-in determiners/pronouns; all are irregular in various ways.
+		if not alternant_multiword_spec.builtin then
 			m_table.insertIfNot(all_cats, "Icelandic " .. cattype)
 		end
 	end
-	local plpos = m_string_utilities.pluralize(alternant_multiword_spec.pos or "adjective")
+	local plpos = require(en_utilities_module).pluralize(alternant_multiword_spec.pos or "adjective")
 	if alternant_multiword_spec.saw_indecl and not alternant_multiword_spec.saw_non_indecl then
 		inscat("indeclinable " .. plpos)
 	end
@@ -2619,7 +2646,7 @@ local function show_forms(alternant_multiword_spec)
 	for _, degspec in ipairs(compsup_degrees) do
 		local degfield, desc = unpack(degspec)
 		if alternant_multiword_spec["has" .. degfield] == "has" then
-			props.slot_list = adjective_slot_list_by_degree[degfield]
+			props.slot_list = get_slot_list(alternant_multiword_spec, degfield)
 			iut.show_forms(alternant_multiword_spec.forms, props)
 			alternant_multiword_spec["footnote_" .. degfield] = alternant_multiword_spec.forms.footnote
 		end
@@ -2633,105 +2660,108 @@ end
 local function make_table(alternant_multiword_spec)
 	local forms = alternant_multiword_spec.forms
 
-	local function template_prelude(min_width)
-		min_width = min_width or "40"
-		return rsub([=[
-<div>
-<div class="NavFrame" style="max-width:MINWIDTHem">
-<div class="NavHead" style="background: var(--wikt-palette-lighterblue, #eff7ff);">{title}{annotation}</div>
-<div class="NavContent" style="overflow:auto">
-{\op}| style="min-width:MINWIDTHem" class="is-inflection-table" data-toggle-category="inflection"
-|-
-]=], "MINWIDTH", min_width)
+	local function template_prelude()
+		return mw.getCurrentFrame():expandTemplate{
+			title = 'inflection-table-top',
+			args = {
+				title = '{title}{annotation}',
+				palette = 'blue',
+				tall = 'yes',
+			}
+		}
 	end
 
 	local function template_postlude()
-		return [=[
-|{\cl}{notes_clause}</div></div></div>]=]
+		return mw.getCurrentFrame():expandTemplate{
+			title = 'inflection-table-bottom',
+			args = {
+				notes = '{footnote}'
+			}
+		}
 	end
 
 	local table_spec_left_rail = [=[
-! class="is-left-rail" style="width:20%;" rowspan=TOTALROWS | STATE declension <br /> (DEFINITENESS)
+! class="is-left-rail" rowspan=TOTALROWS | STATE declension <br /> (DEFINITENESS)
 ]=]
 
 	local table_spec_parts = {
 		strong_sg = [=[
-! class="is-col-header" | singular
-! class="is-col-header" | masculine
-! class="is-col-header" | feminine
-! class="is-col-header" | neuter
+! class="outer" | singular
+! masculine
+! feminine
+! neuter
 |-
-!class="is-row-header"|nominative
+! nominative
 | {COMPSUPstr_nom_m}
 | {COMPSUPstr_nom_f}
 | rowspan=2 | {COMPSUPstr_nom_n}
 |-
-!class="is-row-header"|accusative
+! accusative
 | {COMPSUPstr_acc_m}
 | {COMPSUPstr_acc_f}
 |-
-!class="is-row-header"|dative
+! dative
 | {COMPSUPstr_dat_m}
 | {COMPSUPstr_dat_f}
 | {COMPSUPstr_dat_n}
 |-
-!class="is-row-header"|genitive
+! genitive
 | {COMPSUPstr_gen_m}
 | {COMPSUPstr_gen_f}
 | {COMPSUPstr_gen_n}
 ]=],
 
 		strong_pl = [=[
-! class="is-col-header" | plural
-! class="is-col-header" | masculine
-! class="is-col-header" | feminine
-! class="is-col-header" | neuter
+! class="outer" | plural
+! masculine
+! feminine
+! neuter
 |-
-!class="is-row-header"|nominative
+! nominative
 | {COMPSUPstr_nom_mp}
 | rowspan=2 | {COMPSUPstr_nom_fp}
 | rowspan=2 | {COMPSUPstr_nom_np}
 |-
-!class="is-row-header"|accusative
+! accusative
 | {COMPSUPstr_acc_mp}
 |-
-!class="is-row-header"|dative
+! dative
 | colspan=3 | {COMPSUPstr_dat_p}
 |-
-!class="is-row-header"|genitive
+! genitive
 | colspan=3 | {COMPSUPstr_gen_p}
 ]=],
 
 		comp_weak_sg = [=[
-! class="is-col-header" |
-! class="is-col-header" | masculine
-! class="is-col-header" | feminine
-! class="is-col-header" | neuter
+! class="outer" | 
+! masculine
+! feminine
+! neuter
 |-
-! class="is-col-header" | singular (all-case)
+! class="outer" | singular (all-case)
 | {COMPSUPwk_nom_m}
 | {COMPSUPwk_nom_f}
 | {COMPSUPwk_n}
 ]=],
 
 		weak_sg = [=[
-! class="is-col-header" | singular
-! class="is-col-header" | masculine
-! class="is-col-header" | feminine
-! class="is-col-header" | neuter
+! class="outer" | singular
+! masculine
+! feminine
+! neuter
 |-
-!class="is-row-header"|nominative
+! nominative
 | {COMPSUPwk_nom_m}
 | {COMPSUPwk_nom_f}
 | rowspan=2 | {COMPSUPwk_n}
 |-
-!class="is-row-header"|acc/dat/gen
+! acc/dat/gen
 | {COMPSUPwk_obl_m}
 | {COMPSUPwk_obl_f}
 ]=],
 
 		weak_pl = [=[
-! class="is-col-header" | plural (all-case)
+! class="outer" | plural (all-case)
 | rowspan=4 colspan=3 | {COMPSUPwk_p}
 ]=]
 }
@@ -2774,7 +2804,7 @@ local function make_table(alternant_multiword_spec)
 				ins(format_left_rail(state, 10))
 			end
 			ins(get_table_spec(slot_prefix, "sg", state))
-			ins("|-\n")
+			ins('|-\n')
 			ins(get_table_spec(slot_prefix, "pl", state))
 		end)
 	end
@@ -2783,7 +2813,7 @@ local function make_table(alternant_multiword_spec)
 		return construct_table(slot_prefix, function(ins)
 			ins(format_left_rail("strong", 5))
 			ins(get_table_spec(slot_prefix, number, "strong"))
-			ins("|-\n")
+			ins('|-\n')
 			ins(format_left_rail("weak", 5))
 			ins(get_table_spec(slot_prefix, number, "weak"))
 		end)
@@ -2791,11 +2821,11 @@ local function make_table(alternant_multiword_spec)
 
 	local function get_table_spec_all_number_all_state(slot_prefix)
 		return construct_table(slot_prefix, function(ins)
-			ins(format_left_rail("strong", 10))
+			ins(format_left_rail("strong", 11))
 			ins(get_table_spec(slot_prefix, "sg", "strong"))
-			ins("|-\n")
+			ins('|-\n| class="separator" colspan="999" |\n|-\n')
 			ins(get_table_spec(slot_prefix, "pl", "strong"))
-			ins("|-\n")
+			ins('|-\n| class="separator" colspan="999" |\n|-\n')
 			ins(format_left_rail("weak", 10))
 			ins(get_table_spec(slot_prefix, "sg", "weak"))
 			ins("|-\n")
@@ -2833,14 +2863,13 @@ local function make_table(alternant_multiword_spec)
 					get_table_spec_all_number_all_state(slot_prefix) or
 				alternant_multiword_spec.number[degfield] == "both" and
 					get_table_spec_all_number_one_state(slot_prefix, alternant_multiword_spec.state[degfield],
-						alternant_multiword_spec.irreg) or
+						alternant_multiword_spec.builtin) or
 				alternant_multiword_spec.state[degfield] == "bothstates" and
 					get_table_spec_one_number_all_state(slot_prefix, alternant_multiword_spec.number[degfield]) or
 				get_table_spec_one_number_one_state(slot_prefix, alternant_multiword_spec.number[degfield],
-					alternant_multiword_spec.state[degfield], alternant_multiword_spec.irreg)
+					alternant_multiword_spec.state[degfield], alternant_multiword_spec.builtin)
 			forms.title = ("%s forms of %s"):format(desc, ital_lemma)
 			forms.footnote = alternant_multiword_spec["footnote_" .. degfield]
-			forms.notes_clause = forms.footnote ~= "" and m_string_utilities.format(notes_template, forms) or ""
 			computed_table = m_string_utilities.format(table_spec, forms)
 		end
 		table.insert(computed_tables, computed_table)
