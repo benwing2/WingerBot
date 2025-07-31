@@ -1,0 +1,181 @@
+== words with no tone shift ==
+
+=== non-reducible ===
+
+=== reducible (automatically defaults to reducible) ===
+* {{m|sh|kȍrīstan||useful}}: def. kȍrīsnī, comp ?
+{{User:Benwing2/sh-adecl|kȍrīstan<>}}
+
+=== non-reducible (would default to reducible) ===
+* {{m|sh|lȁgan||light (in weight); easy}}, def lȁganī, comp lagànijī
+{{User:Benwing2/sh-adecl|lȁgan<-*>}}
+
+== words with tone shift ==
+
+=== with two tones, long falling in lemma ==
+* {{m|sh|žȗt||yellow}}: žúta, žúto (less commonly žȗto), def. žȗtī, comp. žȕćī
+* Others:
+** {{m|sh|bijȇl||white}} (bȅo in Serbia, stem bȇl-): comp bjȅljī/bjèlijī
+** {{m|sh|blȃg||soft}}: comp blȁžī
+** {{m|sh|blijȇd||pale}}: comp bljȅđī
+** {{m|sh|bȓz||fast}}: comp bȑžī
+** {{m|sh|cijȇl||whole}} (also cȉo in the lemma form, with other forms the same; cȅo in Serbia, similarly to bȅo): no comp?
+** {{m|sh|cȓn||black}}: comp cȑnjī/cr̀nijī
+** {{m|sh|čȇst||frequent}}: comp čȅšćī
+** {{m|sh|čvȓst||fixed; strong}}: comp čvȑšćī
+** {{m|sh|drȃg||dear}}: comp drȁžī
+** {{m|sh|fȋn||fine}}: comp fìnijī
+** {{m|sh|glȗh||deaf}} (glȗv in Serbia): comp glȕšī
+** {{m|sh|glȗp||stupid}}: comp glȕpljī
+** {{m|sh|gnjȉo||rotten}} (gnjil- in other forms): comp gnjìlijī
+** {{m|sh|gȓd||ugly (regional)}}
+** {{m|sh|grȗb||rough; rude}}: comp grȕbljī
+** {{m|sh|gȗst||dense}}: comp gȕšćī
+** {{m|sh|hȗd||angry; bad; evil (rare, archaic, regional)}}
+** {{m|sh|jȃk||strong}}: comp jȁčī; sup. nȃjjačī
+** {{m|sh|krȋv||guilty; wrong; curved}}: comp krȉvljī
+** {{m|sh|krȗt||stiff; strict}}: comp krȕćī
+** {{m|sh|kȗs||too short; incomplete (rare)}}
+** {{m|sh|lijȇn||lazy}} (lȇnj in Serbia, soft declension): comp ljènijī/ljȅnjī
+** {{m|sh|lijȇp||nice, pretty}} (lȇp in Serbia): comp ljȅpšī
+** {{m|sh|lȗd||crazy}}: comp lȕđī
+** {{m|sh|ljȗt||angry; fierce; spicy}}: comp ljȕćī
+** {{m|sh|mlȃd||young}}: comp mlȁđī
+** {{m|sh|mlȃk||tepid; irresolute}}: comp mlȁčī (HJP)
+** {{m|sh|nȃg||naked (poetic)}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|nijȇm||mute; silent (of a film)}} (nȇm in Serbia): comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|plȃh||cowardly}}: comp plàhijī
+** {{m|sh|plȃv||blue; blonde}}: comp plȁvljī/plàvijī
+** {{m|sh|prijȇk||urgent; (when definite) direct, shortened (of a road, etc.)}} (presumably prȇk in Serbia): comp prȅčī? (HJP; should it be prjȅčī? or is there a rule reducing -rj- to r?)
+** {{m|sh|pȗst||empty; futile}}: comp pùstijī
+** {{m|sh|rȗd||curly; reddish-brown (archaic)}} (two different etymologies but they appear to have merged completely in inflection): comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|sijȇd||gray}} (sȇd in Serbia): comp sjȅđī/sjèdijī
+** {{m|sh|sȋv||gray}}: comp sȉvljī/sìvijī
+** {{m|sh|skȗp||expensive}}: comp skȕpljī
+** {{m|sh|slȃn||salty}}: comp slànijī
+** {{m|sh|slijȇp||blind}} (slȇp in Serbia): comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|strȃn||foreign; strange}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|sȗh||dry; thin}} (sȗv in Serbia): comp sȕšī
+** {{m|sh|sȗr||ash-gray; gloomy (expressive, literary)}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|svȇt||holy}}: comp svètijī
+** {{m|sh|štȗr||withered; barren}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|tȗp||blunt; dull; stupid}}: comp tȕpljī
+** {{m|sh|tȗst||fat}}: comp tùstijī
+** {{m|sh|tvȓd||hard, firm}}: comp tvȑđī
+** {{m|sh|vrȃn||black, raven-colored (expressive)}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|žȋv||alive}}: comp žȉvljī
+{{User:Benwing2/sh-adecl|žȗt<2tone>}}
+* {{m|sh|kȓnj||truncated; incomplete; damaged}} (soft declension): kŕnja, kŕnje (less commonly kȓnje), def kȓnjī: comp ? (not in HJP or Školski Rječnik)
+* Others:
+** {{m|sh|lȇnj||lazy (Serbia)}}
+** {{m|sh|rȋđ||reddish, red}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|tȗđ||someone else's; foreign}}: comp ? (not in HJP or Školski Rječnik)
+** {{m|sh|vrȗć||hot; cordial}}: comp vrȕćī
+{{User:Benwing2/sh-adecl|kȓnj<2tone>}}
+* {{m|sh|bȅo||white}} (Serbia, stem bȇl-): béla, bélo (less commonly bȇlo), def bȇlī, comp ?
+{{User:Benwing2/sh-adecl|bȅo<decllemma:bȇl.2tone>}}
+=== with two tones, short falling in lemma ==
+* {{m|sh|zdrȁv||healthy}}: zdràva, zdràvo or zdrȁvo, gen. zdràva; def zdrȁvī: comp zdràvijī (NOTE: ŠR says def zdràvī)
+* Others:
+** {{m|sh|čȉst||clean; pure}}: comp čìstijī/čȉšćī (NOTE: ŠR def čìstī)
+** {{m|sh|dȕg||long}}: comp dȕžī/dȕljī (NOTE: ŠR def dùgī)
+** {{m|sh|grȅz||rough; crude}}: not in ŠR; no comp in HJP
+** {{m|sh|gȑk||bitter (expressive, literary)}}: not in ŠR; comp gȑčī in HJP
+** {{m|sh|hrȍm||lame, limping}}: comp hròmijī (ŠR def hrȍmī)
+** {{m|sh|kljȁst||lame (in the arm)}}: kljȃst in ŠR, no comp; kljȁst in HJP, no comp
+** {{m|sh|kȑt||brittle}}: comp kr̀tijī (NOTE: ŠR def kr̀tī)
+** {{m|sh|lȁk||easy, light}}: comp lȁkšī (NOTE: ŠR def làkī)
+** {{m|sh|mȅk||soft}}; comp mȅkšī (NOTE: ŠR def mèkī)
+** {{m|sh|mȑk||brown; grim, gloomy (of a person)}}: comp mr̀kijī (NOTE: ŠR def mr̀kī)
+** {{m|sh|nȍv||new; modern}}: comp nòvijī (ŠR def nȍvī)
+** {{m|sh|pjȁn||drunk (regional, rhetorical [?])}}: not in ŠR, no comp in HJP
+** {{m|sh|prȁv||straight; right}}: not in ŠR, no comp in HJP
+** {{m|sh|prȍst||common; simple; vulgar}}: comp pròstijī (NOTE: ŠR def pròstī)
+** {{m|sh|pȕn||full}}: comp pùnijī (NOTE: ŠR def pùnī)
+** {{m|sh|rȁd||willing}} (maybe no definite forms?): not in ŠR, comp ràdijī in HJP
+** {{m|sh|sȉt||sated, full}}: comp sìtijī (NOTE: ŠR def sìtī)
+** {{m|sh|spȍr||slow, sluggish}}; comp spòrijī (NOTE: ŠR def spòrī)
+** {{m|sh|stȑm||steep}}: no comp in ŠR or HJP (ŠR def stȑmī)
+** {{m|sh|strȍg||severe; harsh}}: comp strȍžī (NOTE: ŠR def strògī)
+** {{m|sh|šȕt||hornless (of a young animal)}}: not in ŠR, no comp in HJP
+** {{m|sh|vjȅšt||able, skillful}} (vȅšt in Serbia): comp vjèštijī (NOTE: ŠR def vjèštī)
+** {{m|sh|tmȁst||dark, fuscous}}: not in ŠR, no comp in HJP
+** {{m|sh|trȍm||sluggish, slow}}: comp tròmijī (NOTE: ŠR def tròmī)
+** {{m|sh|žȕk||bitter (regional)}}: not in ŠR, no comp in HJP
+* {{m|sh|stȁr||old}} (definite {{m|sh|stȃrī}}): comp stàrijī
+* {{m|sh|lȍš||bad, wicked; inferior}}: comp lòšijī (NOTE: ŠR def lòšī)
+* Others:
+** {{m|sh|svjȅž||fresh}} (svȅž in Serbia): comp svjèžijī (NOTE: ŠR def svjèžī)
+* {{m|sh|mȉo||dear; kind}} (stem mil-): comp mìlijī (ŠR def mȉlī)
+* Others:
+** {{m|sh|čȉl/čȉo||strong, vigorous}} (stem čil-): not in ŠR, no comp in HJP
+** {{m|sh|tmȕo||dark, gloomy; muffled, hoarse (of a voice) (expressive}} (stem tmul-): not in ŠR, no comp in HJP
+** {{m|sh|trȕo||rotten, putrid}} (stem trul-): comp trùlijī (NOTE: ŠR def trùlī)
+** {{m|sh|vrȅo||hot, boiling}} (stem vrel-): comp vrèlijī (NOTE: ŠR def vrèlī)
+** {{m|sh|zrȅo||ripe; mature}} (stem zrel-) comp zrèlijī (NOTE: ŠR def zrèlī)
+=== with two tones, short falling in lemma, reducible ==
+* {{m|sh|bȉstar||clear; clean; clever}} (stem bistr-): bìstra, bìstro or bȉstro, gen. bìstra; def bȉstrī: comp bìstrijī (NOTE: ŠR says def bìstrī)
+* Other:
+** {{m|sh|blȉzak||near}} (stem blisk-): comp blȉžī (NOTE: ŠR def blìskī)
+** {{m|sh|bȍdar||alert; vigorous}} (stem bodr-): not in ŠR, no comp in HJP
+** {{m|sh|brȉdak||sharp; prickly}} (stem britk-): comp brìtkijī (NOTE: ŠR def brìtkī)
+** {{m|sh|čȉtak||legible}} (stem čitk-): comp čìtkijī (NOTE: ŠR def čìtkī)
+** {{m|sh|dȍbar||good}} (stem dobr-): comp bȍljī (ŠR def dȍbrī)
+** {{m|sh|drȍban||small, tiny}} (stem drobn-): not in ŠR, no comp in HJP
+** {{m|sh|dȑzak||insolent; arrogant}} (stem drsk-): comp dr̀skijī (NOTE: ŠR def dr̀skī)
+** {{m|sh|gȉbak||flexible}} (stem gipk-): comp gìpkijī (NOTE: ŠR def gìpkī)
+** {{m|sh|glȁdak||smooth}} (stem glatk-): comp glȁđī (NOTE: ŠR def glàtkī)
+** {{m|sh|grȉzak||? (obsolete)}} (stem grisk-?): not in ŠR or HJP
+** {{m|sh|hȉtan||urgent}} (stem hitn-): comp hìtnijī (ŠR def hȉtnī) [NOT AMONG VUKUŠIĆ'S EXAMPLES; VUKUŠIĆ says it's like lȁgan in maintaining short falling throughout]
+** {{m|sh|hȉtar||fast, speedy}} (stem hitr-): comp hìtrijī (ŠR def hȉtrī)
+** {{m|sh|jȅdak||acrid; scathing}} (stem jetk-): comp jètkijī; sup najjètkijī (NOTE: ŠR def jètkī)
+** {{m|sh|krȅpak||strong}} (stem krepk-): comp krèpkijī/krȅpčī (NOTE: ŠR def krèpkī)
+** {{m|sh|kȑhak||brittle, fragile}} (stem krhk-): comp kr̀hkijī (ŠR def kȑhkī)
+** {{m|sh|krȍtak||tame, gentle}} (stem krotk-): comp kròtkijī (ŠR def krȍtkī)
+** {{m|sh|lȍvak||? (obsolete)}} (stem lovk-?): not in ŠR or HJP
+** {{m|sh|ljȕbak||cute, charming}} (stem ljupk-): comp ljùpkijī (NOTE: ŠR def ljùpkī)
+** {{m|sh|mȅdan||honey-sweet}} (stem medn-): not in ŠR, no comp in HJP
+** {{m|sh|mȍćan||powerful; influential}} (stem moćn-): mòčan in ŠR, no tonal variation, comp mòćnijī (mȍćan in HJP)
+** {{m|sh|mȍdar||dark blue}} (stem modr-): comp mòdrijī (ŠR def mȍdrī)
+** {{m|sh|mȍkar||wet}} (stem mokr-): comp mòkrijī (NOTE: ŠR def mòkrī)
+** {{m|sh|mȑčan||? (obsolete)}} < {{m|sh|mȑk}} (stem mrčn-?): not in ŠR or HJP
+** {{m|sh|mȑzak||hateful}} (stem mrsk-): comp  (NOTE: ŠR def )
+** {{m|sh|nȉzak||low; common, vile}} (stem nisk-): comp  (NOTE: ŠR def )
+** {{m|sh|ȍštar||sharp; strict}} (stem oštr-): comp  (NOTE: ŠR def )
+** {{m|sh|pȉtak||potable}} (stem pitk-): comp  (NOTE: ŠR def )
+** {{m|sh|plȍdan||fertile; prolific}} (stem plodn-): comp  (NOTE: ŠR def )
+** {{m|sh|pȍstan||lean}} (stem posn-): comp  (NOTE: ŠR def )
+** {{m|sh|pȍtan||? (obsolete)}} (stem potn-?): not in ŠR or HJP
+** {{m|sh|pȑhak||crumbly}} (stem prhk-): comp  (NOTE: ŠR def )
+** {{m|sh|pȕtak||? (obsolete)}} (stem putk-?): not in ŠR or HJP
+** {{m|sh|rȅzak||cutting}} (stem resk-): comp  (NOTE: ŠR def )
+** {{m|sh|rȍdan||fruitful, fertile}} (stem rodn-): comp  (NOTE: ŠR def )
+** {{m|sh|rȍsan||dewy; dew (relational)}} (stem rosn-): comp  (NOTE: ŠR def )
+** {{m|sh|sȉtan||tiny; trivial}} (stem sitn-): comp  (NOTE: ŠR def )
+** {{m|sh|sklȉzak||slippery}} (stem sklisk-), slȁb "weak"
+** {{m|sh|slȁdak||sweet}} (stem slatk-): comp  (NOTE: ŠR def )
+** {{m|sh|tȁnak||thin; slender}} (stem tank-): comp  (NOTE: ŠR def )
+** {{m|sh|ȕzak||narrow; tight}} (stem usk-): comp  (NOTE: ŠR def )
+** {{m|sh|vȅdar||clear (of the sky); cheerful}} (stem vedr-): comp  (NOTE: ŠR def )
+** {{m|sh|vȉtak||slim, slender}} (stem vitk-): comp  (NOTE: ŠR def )
+** {{m|sh|vlȁžan||humid}} (stem vlažn-): comp  (NOTE: ŠR def )
+** {{m|sh|vȍzak||? (obsolete)}} (stem vosk-?): not in ŠR or HJP
+** {{m|sh|žȉdak||somewhat thin (in consistency); flexible (figurative)}} (stem žitk-): comp  (NOTE: ŠR def )
+** {{m|sh|žȕstar||frenetic, energetic}} (stem žustr-).
+* {{m|sh|tȍpao||warm}} (also tȍpal; stem topl-): comp  (NOTE: ŠR def )
+Other examples: {{m|sh|ȍbal/ȍbao||round, oval}} (stem obl-): comp  (NOTE: ŠR def )
+** {{m|sh|mȑkao||? (obsolete)}} (stem mrkl-?): not in ŠR or HJP
+** {{m|sh|mȑzao/mȑzal||cold (expressive, literary)}} (stem mrzl-): comp  (NOTE: ŠR def )
+
+plȃv<2tone> "blue": pláva, plávo, plȃvī
+mlȃd<2tone> "young": mláda, mládo, mlȃdī, comp: mlȁđī, -ā, -ē
+stȁr<2tone.defstem:stȃr> "old"
+cr̀ven<2tone> "red": crvèna, crvèno, cr̀venī
+zèlen<2tone> "green": zelèna, zelèno, zèlenī
+cȓn<2tone> "black": cŕna, cŕno, comp: cȑnjī
+bȅo<decllemma:bȇl.2tone> "white": béla, bélo, bȇlī, comp: bȅljī
+bijȇl<2tone> "white": 
+dȍbar<2tone> "good": dòbra, dòbro, dȍbrī
+sȋv<2tone> "gray": síva, sívo, sȋvī, comp: sȉvljī
+vrȗć<2tone> "hot; cordial"
+krátak<2tone.*.indef_falling_var.def_rising_var>
