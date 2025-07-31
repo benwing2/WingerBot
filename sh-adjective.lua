@@ -33,14 +33,18 @@ local current_title = mw.title.getCurrentTitle()
 local NAMESPACE = current_title.nsText
 local PAGENAME = current_title.text
 
-local u = mw.ustring.char
-local rsplit = mw.text.split
-local rfind = mw.ustring.find
-local rmatch = mw.ustring.match
-local rgmatch = mw.ustring.gmatch
-local rsubn = mw.ustring.gsub
-local ulen = mw.ustring.len
-local uupper = mw.ustring.upper
+local u = m_string_utilities.char
+local rsplit = m_string_utilities.split
+local rfind = m_string_utilities.find
+local rmatch = m_string_utilities.match
+local rgmatch = m_string_utilities.gmatch
+local rsubn = m_string_utilities.gsub
+local ulen = m_string_utilities.len
+local uupper = m_string_utilities.upper
+
+local insert = table.insert
+local concat = table.concat
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 
 -- version of rsubn() that discards all but the first return value
@@ -75,6 +79,7 @@ local function reduce_stem(stem)
 end
 
 
+--[=[
 -- All slots that are used by any of the different tables. The key is the slot and the value is a list of the tables
 -- that use the slot. "" = regular, "plonly" = special=plonly in {{sh-adecl-manual}}, "dva" = special=dva in
 -- {{sh-adecl-manual}}.
@@ -107,56 +112,57 @@ local input_adjective_slots = {
 	loc_mn = {""},
 	loc_f = {""},
 	loc_p = {"", "plonly", "dva"},
-	short_m = {""},
-	short_f = {""},
-	short_n = {""},
-	short_mp_an = {""},
-	short_fp = {""},
-	short_np = {""},
+}
+]=]
+
+
+local input_adjective_slots = {
+	{"nom_m", "nom|m|s"},
+	{"nom_m_linked", "nom|m|s"}, -- used in [[Module:sh-noun]]?
+	{"nom_f", "nom|f|s"},
+	{"nom_n", "nom|n|s"},
+	{"nom_mp", "nom|m|p"},
+	{"nom_fp", "nom|f|p"},
+	{"nom_np", "nom|n|p"},
+	{"gen_m", "gen|m|s"},
+	{"gen_f", "gen|f|s"},
+	{"gen_n", "gen|n|s"},
+	{"gen_p", "gen|p"},
+	{"dat_m", "dat|m|s"},
+	{"dat_f", "dat|f|s"},
+	{"dat_n", "dat|n|s"},
+	{"dat_p", "dat|p"},
+	{"acc_m_an", "an|acc|m|s"},
+	{"acc_m_in", "in|acc|m|s"},
+	{"acc_f", "acc|f|s"},
+	{"acc_n", "acc|n|s"},
+	{"acc_mp", "acc|m|p"},
+	{"acc_fp", "acc|f|p"},
+	{"acc_np", "acc|n|p"},
+	{"voc_m", "voc|m|s"},
+	{"voc_f", "voc|f|s"},
+	{"voc_n", "voc|n|s"},
+	{"voc_mp", "voc|m|p"},
+	{"voc_fp", "voc|f|p"},
+	{"voc_np", "voc|n|p"},
+	{"ins_m", "ins|m|s"},
+	{"ins_f", "ins|f|s"},
+	{"ins_n", "ins|n|s"},
+	{"ins_p", "ins|p"},
+	{"loc_m", "loc|m|s"},
+	{"loc_f", "loc|f|s"},
+	{"loc_n", "loc|n|s"},
+	{"loc_p", "loc|p"},
 }
 
-
-local output_adjective_slots = {
-	nom_m = "nom|m|s",
-	nom_m_linked = "nom|m|s", -- used in [[Module:sh-noun]]?
-	nom_f = "nom|f|s",
-	nom_n = "nom|n|s",
-	nom_mp_an = "an|nom|m|p",
-	nom_fp = "in|nom|m|p|;|nom|f|p",
-	nom_np = "nom|n|p",
-	nom_mp = "nom|m|p",
-	nom_fnp = "nom|f//n|p",
-	gen_mn = "gen|m//n|s",
-	gen_f = "gen|f|s",
-	gen_p = "gen|p",
-	dat_mn = "dat|m//n|s",
-	dat_f = "dat|f|s",
-	dat_p = "dat|p",
-	acc_m_an = "an|acc|m|s",
-	acc_m_in = "in|acc|m|s",
-	acc_f = "acc|f|s",
-	acc_n = "acc|n|s",
-	acc_mfp = "acc|m//f|p",
-	acc_np = "acc|n|p",
-	acc_mp = "acc|m|p",
-	acc_fnp = "acc|f//n|p",
-	ins_mn = "ins|m//n|s",
-	ins_f = "ins|f|s",
-	ins_p = "ins|p",
-	loc_mn = "loc|m//n|s",
-	loc_f = "loc|f|s",
-	loc_p = "loc|p",
-	short_m = "short|m|s",
-	short_f = "short|f|s",
-	short_n = "short|n|s",
-	short_mp_an = "short|an|m|p",
-	short_fp = "short|in|m|p|;|short|f|p",
-	short_np = "short|n|p",
-}
-
-
-local function get_output_adjective_slots(alternant_multiword_spec)
-	return output_adjective_slots
+local adjective_slots = {}
+for _, def in ipairs {"indef", "def"} do
+	for _, slot_accel in ipairs(input_adjective_slots) do
+		local slot_accel = unpack(slot, accel)
+		if def == "def" or not slot:find("^voc_") then
+			insert(adjective_slots, {def .. "_" .. slot, def .. "|" .. accel})
+		end
+	end
 end
 
 
@@ -165,6 +171,203 @@ local function combine_stem_ending(stem, ending)
 		return "?"
 	else
 		return stem .. ending
+	end
+end
+
+
+-- Basic function to combine stem(s) and other properties with ending(s) and insert the result into the appropriate
+-- slot. `base` is the object describing all the properties of the word being inflected for a single alternant (in case
+-- there are multiple alternants specified using `((...))`). `slot` is the slot to add the form(s) to, without the
+-- degree prefix ("", "comp_" or "sup_"). (The degree prefix is separated out because the code below sometimes needs to
+-- conditionalize on the value of `slot` and should not have to worry about the degree variants.) `degree` is an object
+-- describing the particular degree (positive, comparative or superlative) and associated base lemma. `props` is an
+-- object containing computed stems and other information (FIXME, what?). The information found in `props` cannot be
+-- stored in `degree` because there may be more than one set of such properties per `degree` (e.g. FIXME what?; in such
+-- a case, the caller will iterate over all possible combinations, and ultimately invoke add() multiple times, one per
+-- combination). `endings` is the ending or endings added to the appropriate stem to get the form(s) to add to the slot.
+-- Its value can be a single string, a list of strings, or a list of form objects (i.e. in general list form).
+local function add(base, slot, degree, props, endings)
+	if not endings then
+		return
+	end
+	-- Call skip_slot() based on the declined number and state.
+	if skip_slot(degree.number, degree.state, slot) then
+		return
+	end
+	if type(endings) == "string" then
+		endings = {endings}
+	end
+	local slot_prefix = degree.slot_prefix
+	-- Loop over each ending.
+	for _, endingobj in ipairs(endings) do
+		local ending, ending_footnotes
+		if type(endingobj) == "string" then
+			ending = endingobj
+		else
+			ending = endingobj.form
+			ending_footnotes = endingobj.footnotes
+		end
+		-- Ending of "-" means the user used - to indicate there should be no form here.
+		if ending == "-" then
+			return
+		end
+		local function interr(msg)
+			error(("Internal error: For lemma '%s', slot '%s%s', ending '%s', %s: %s"):format(degree.lemma, slot_prefix,
+				slot, ending, msg, dump(base)))
+		end
+
+		-- Compute whether i-mutation or u-mutation is in effect, and compute the "mutation footnotes", which are
+		-- footnotes attached to a mutation-related indicator and which may need to be added even if no mutation is
+		-- in effect (specifically when dealing with an ending that would trigger a mutation if in effect). AFAIK
+		-- you cannot have both mutations in effect at once, and i-mutation overrides u-mutation if both would be in
+		-- effect.
+
+		-- Double ^^ at the beginning indicates that the u-mutated version should apply. (Single ^ would indicate that
+		-- i-mutation should apply, but it doesn't seem relevant to adjectives.)
+		local explicit_umut
+		ending, explicit_umut = rsubb(ending, "^%^%^", "")
+		local is_vowel_ending = rfind(ending, "^" .. com.vowel_c)
+		local mut_in_effect, mut_not_in_effect, mut_footnotes
+		local ending_in_i = not not ending:find("^i")
+		local ending_in_u = not not ending:find("^u")
+		if explicit_umut then
+			mut_in_effect = "u"
+		else
+			if ending_in_u and not mut_in_effect then
+				mut_in_effect = "u"
+				-- umut and uUmut footnotes are incorporated into the appropriate umut_* stems
+			end
+		end
+
+		local ending_was_asterisk = ending == "*"
+
+		-- Now compute the appropriate stem to which the ending is added.
+		local stem_in_effect
+
+		-- Careful with the following logic; it is written carefully and should not be changed without a thorough
+		-- understanding of its functioning.
+		local has_umut = mut_in_effect == "u"
+		-- If the stem is still unset, then use the vowel or non-vowel stem if available. When u-mutation is active, we
+		-- first check for the u-mutated version of the vowel or non-vowel stem before falling back to the regular vowel
+		-- or non-vowel stem. Note that an expression like `has_umut and props.umut_vstem or props.vstem` here is NOT
+		-- equivalent to an if-else or ternary operator expression because if `has_umut` is true and `umut_vstem` is
+		-- missing, it will still fall back to `vstem` (which is what we want).
+		if not stem_in_effect then
+			if is_vowel_ending then
+				stem_in_effect = has_umut and props.umut_vstem or props.vstem
+			else
+				stem_in_effect = has_umut and props.umut_nonvstem or props.nonvstem
+			end
+		end
+		-- Finally, fall back to the basic stem, which is always defined.
+		stem_in_effect = stem_in_effect or props.stem
+
+		-- If the ending is "*", it means to use the lemma as the form directly rather than try to construct the form
+		-- from a stem and ending. We need to do this for the lemma slot and especially for the nominative singular,
+		-- because we don't have the nominative singular ending available and it may vary (e.g. it may be -ur, -l, -n,
+		-- etc. especially in the masculine). Not trying to construct the form from stem + ending also avoids
+		-- complications from the nominative singular in -ur, which exceptionally does not trigger u-mutation.
+
+		-- Finally, if there is a footnote associated with the computed stem in effect, we need to preserve it.
+		if ending == "*" then
+			local stem_in_effect_footnotes
+			if type(stem_in_effect) == "table" then
+				stem_in_effect_footnotes = stem_in_effect.footnotes
+			end
+			stem_in_effect = iut.combine_form_and_footnotes(degree.actual_lemma, stem_in_effect_footnotes)
+			ending = ""
+		end
+
+		local infix, infix_footnotes
+		-- Compute the infix (j, v or nothing) that goes between the stem and ending.
+		if is_vowel_ending then
+			if props.vinfix and props.jinfix then
+				interr("Can't have specifications for both '.vinfix' and '.jinfix'; should have been caught above")
+			end
+			if props.vinfix then
+				infix = props.vinfix
+				infix_footnotes = props.vinfix_footnotes
+			elseif props.jinfix and not ending_in_i then
+				infix = props.jinfix
+				infix_footnotes = props.jinfix_footnotes
+			end
+		end
+
+		-- If base-level footnotes or degree-level footnotes specified, they go before any stem footnotes, so we
+		-- need to extract any footnotes from the stem in effect and insert the base-level footnotes before. In
+		-- general, we want the footnotes to be in the order [base.footnotes, degree.footnotes, stem.footnotes,
+		-- mut_footnotes, infix_footnotes, ending.footnotes].
+		if base.footnotes or degree.footnotes then
+			local stem_in_effect_footnotes
+			if type(stem_in_effect) == "table" then
+				stem_in_effect_footnotes = stem_in_effect.footnotes
+				stem_in_effect = stem_in_effect.form
+			end
+			stem_in_effect = iut.combine_form_and_footnotes(stem_in_effect,
+				iut.combine_footnotes(base.footnotes, iut.combine_footnotes(degree.footnotes,
+					stem_in_effect_footnotes)))
+		end
+
+		local ending_is_full
+		ending, ending_is_full = rsubb(ending, "^!", "")
+
+		local function combine_stem_ending(stem, ending)
+			if stem == "?" then
+				return "?"
+			end
+			local stem_with_infix = ending_is_full and "" or stem .. (infix or "")
+			-- An initial s- of the ending drops after a cluster of cons + s (including written <x>).
+			if ending:find("^s") and (stem_with_infix:find("x$") or rfind(stem_with_infix, com.cons_c .. "s$")) then
+				ending = ending:sub(2)
+			elseif ending:find("^r") then
+				if degree.assimilate_r then
+					local stem_butlast, stem_last = stem_with_infix:match("^(.*)([ln])$")
+					if stem_last then
+						ending = stem_last .. ending:sub(2)
+					end
+				elseif degree.double_r_and_t then
+					ending = "r" .. ending
+				elseif rfind(stem_with_infix, com.cons_c .. "r$") then
+					ending = ending:sub(2)
+				end
+			elseif ending == "t" then
+				if degree.double_r_and_t then
+					ending = "tt"
+				elseif stem_with_infix:find("dd$") then
+					stem_with_infix = stem_with_infix:gsub("dd$", "t")
+				else
+					local stem_butlast, stem_last = rmatch(stem_with_infix, "^(.*" .. com.cons_c .. ")([dðt])$")
+					if stem_butlast then
+						stem_with_infix = stem_butlast
+					else
+						stem_butlast = stem_with_infix:match("^(.*)ð$")
+						if stem_butlast then
+							if props.pp then
+								stem_with_infix = stem_butlast
+								ending = "ð"
+							else
+								stem_with_infix = stem_butlast .. "t"
+							end
+						elseif degree.inn then
+							stem_butlast = stem_with_infix:match("^(.*)n$")
+							if stem_butlast then
+								stem_with_infix = stem_butlast
+								ending = "ð"
+							end
+						end
+					end
+				end
+			end
+			return stem_with_infix .. ending
+		end
+
+		local combined_footnotes = iut.combine_footnotes(iut.combine_footnotes(mut_footnotes, infix_footnotes),
+			ending_footnotes)
+		local ending_with_notes = iut.combine_form_and_footnotes(ending, combined_footnotes)
+		if not stem_in_effect then
+			interr("stem_in_effect is nil")
+		end
+		iut.add_forms(base.forms, slot_prefix .. slot, stem_in_effect, ending_with_notes, combine_stem_ending)
 	end
 end
 
@@ -222,9 +425,9 @@ Comments about axes of variation:
 	  bìstra etc.; definite bȉstrī etc. Other examples: blȉzak (stem blisk-) "near", bȍdar (stem bodr-)
 	  "alert; vigorous", brȉdak (stem britk-) "sharp; prickly", čȉl/čȉo (stem čil-) "strong, vigorous", čȉst
 	  "clean; pure", čȉtak (stem čitk-) "legible", dȍbar (stem dobr-) "good", drȍban (stem drobn-) "small, tiny",
-	  dȑzak (stem drsk-) "insolent; arrogant", dȕg "long", gȉbak (stem gipk-) "flexible", glȁdak "smooth" (stem glatk-),
+	  dȑzak (stem drsk-) "insolent; arrogant", dȕg "long", gȉbak (stem gipk-) "flexible", glȁdak (stem glatk-) "smooth",
 	  grȅz "rough; crude", grȉzak (stem grisk-?) "? (obsolete)", gȑk "bitter (expressive, literary)", hȉtar (stem hitr-)
-	  "fast, speedy", hrȍm "lame, limping", jȅdaki (stem jetk-) "acrid; scathing", kljȁst "lame (in the arm)",
+	  "fast, speedy", hrȍm "lame, limping", jȅdak (stem jetk-) "acrid; scathing", kljȁst "lame (in the arm)",
 	  krȅpak (stem krepk-) "strong", kȑhak (stem krhk-) "brittle, fragile", krȍtak (stem krotk-) "tame, gentle",
 	  kȑt "brittle", lȁk "easy, light", lȍš "bad, wicked; inferior" (soft declension), lȍvak (stem lovk-?)
 	  "? (obsolete)", ljȕbak (stem ljupk-) "cute, charming", mȅdan (stem medn-) "honey-sweet", mȅk "soft",
@@ -245,22 +448,41 @@ Comments about axes of variation:
 	  trȕo (stem trul-) "rotten, putrid", ȕzak (stem usk-) "narrow; tight", vȅdar (stem vedr-)
 	  "clear (of the sky); cheerful", vȉtak (stem vitk-) "slim, slender", vjȅšt "able, skillful" (vȅšt in Serbia),
 	  vlȁžan (stem vlažn-) "humid", vȍzak (stem vosk-?) "? (obsolete)", vrȅo (stem vrel-) "hot, boiling",
-	  zrȅo (stel zrel-) "ripe; mature", žȉdak (stem žitk-) "somewhat thin (in consistency); flexible (figurative)",
+	  zrȅo (stem zrel-) "ripe; mature", žȉdak (stem žitk-) "somewhat thin (in consistency); flexible (figurative)",
 	  žȕk "bitter (regional), žȕstar (stem žustr-) "frenetic, energetic".
    c. Vukušić's type 20 (sec 511, page 138): e.g. žédan (stem žedn-) "thirsty". Long rising throughout the indefinite,
       long falling throughout the definite: žédan, žédna, žédno, def. žȇdnī. All of these adjectives are disyllabic
 	  (or "trisyllabic" in the case of some adjectives with -ije-) with fleeting ''a''. According to Vukušić (sec 512,
 	  page 139), many of these, including žédan, have a variant žȇdan in the lemma form and žȇdno in the neuter, but
 	  žédn- elsewhere in the indefinite, and žȇdn- in the definite. Galloglach21 says he's never heard this variant, so
-	  it must be rare. Other examples: bijésan (stem bijesn-) "furious" (bésan stem besn- in Serbia), búdan (stem budn-)
-	  "awake", dijélan, drijéman, dúžan (stem dužn-) "owing, in debt", gládan (stem gladn-) "hungry", górak (stem gork-)
-	  "bitter", gŕdan (stem grdn-) "ugly (colloquial); bad, terrible; many, much", háran, hládan (stem hladn-) "cold",
-	  hrábar (stem hrabr-) "bold, brave", húdan, húlan, jédar (stem jedr-) "strong, big", kádar, krátak (stem kratk-)
-	  "short", krúpan (stem krupn-) "sturdy, bulky; big", kváran (stem kvarn-) "defective, damaged", lástan "sposoban",
-	  máman, mástan (stem masn-) "fatty, greasy; boldface", mázan, míran,
-	  mláčan, mráčan, mísan, mŕtav, múdar, mútan, nágao, njéžan, óran, plítak, prášan, prázan, prijésan, rávan, rijédak,
-	  rúžan, sjájan, slástan, smijéšan, snážan, stálan, stídan, strášan, svijétao, šúpalj, táman, téžak, tijésan,
-	  trijézan, túžan, vjéran, vlástan, vrijédan, zlátan, znójan, zráčan, zvúčan. Only the following have the žȇdan-type
+	  it must be rare. Other examples: bijésan (stem bijesn-) "furious" (bésan in Serbia), búdan (stem budn-)
+	  "awake", dijélan (stem dijeln-?) "? (obsolete)", drijéman (stem drijemn-?) "? (obsolete; from drijȇm "slumber"),
+	  dúžan (stem dužn-) "owing, in debt", gládan (stem gladn-) "hungry", górak (stem gork-) "bitter",
+	  gŕdan (stem grdn-) "ugly (colloquial); bad, terrible; many, much", háran (stem harn-)
+	  "(archaic) virtuous; modest; (expressive) grateful", hládan (stem hladn-) "cold", hrábar (stem hrabr-)
+	  "bold, brave", húdan (stem hudn-?) "? (obsolete)", húlan (stem huln-?) "? (obsolete)", jédar (stem jedr-)
+	  "strong, big", kádar "capable, able" (claimed indeclinable by HJP and Školski Rječnik), krátak (stem kratk-)
+	  "short", krúpan (stem krupn-) "sturdy, bulky; big", kváran (stem kvarn-) "defective, damaged",
+	  lástan (stem lasn-?) "capable, able ('sposoban') (obsolete)", máman (stem mamn-?) "? (obsolete)",
+	  mástan (stem masn-) "fatty, greasy; boldface", mázan (stem mazn-) "cuddly", míran (stem mirn-)
+	  "calm; quiet; still", mláčan (stem mlačn-) "tepid, lukewarm", mráčan (stem mračn-) "dark, gloomy",
+	  mísan (stem misn-) "? (obsolete)", mŕtav (stem mrtv-) "dead; lifeless", múdar (stem mudr-) "wise",
+	  mútan (stem mutn-) "unclear; blurry; murky", nágao (stem nagl-) "hasty; sudden; fierce", njéžan (stem nježn-)
+	  "tender, soft" (néžan in Serbia), óran (stem orn-) "(colloquial) ready; brave", plítak (stem plitk-) "shallow",
+	  prášan (stem prašn-) "powdery, dusty", prázan (stem prazn-) "empty; blank; frivolous", prijésan (stem prijesn-)
+	  "raw (of food)" (présan in Seria), rávan (stem ravn-) "straight, right; level", rijédak (stem rijetk-)
+	  "rare; sparse; watery (of soup)" (rédak in Serbia), rúžan (stem ružn-) "ugly; unpleasant; dishonest; obscene",
+	  sjájan (stem sjajn-) "radiant; great, awesome", slástan (stem slasn-) "delicious, tasty", smijéšan (stem smiješn-)
+	  "funny" (sméšan in Serbia), snážan (stem snažn-) "strong, powerful", stálan (stem staln-)
+	  "permanent; continuous; stable", stídan (stem stidn-) "shy", strášan (stem strašn-) "dire; terrible",
+	  svijétao (stem svijetl-) "bright; light (in color)" (svétao in Serbia), šúpalj (stem šuplj-) "hollow"
+	  (soft declension), táman (stem tamn-) "dark, dim", téžak (stem tešk-) "heavy; difficult; unpleasant",
+	  tijésan (stem tijesn-) "tight; close, intimate; narrow" (tésan in Serbia), trijézan (stem trijezn-) "sober"
+	  (trézan in Serbia), túžan (stem tužn-) "sad", vjéran (stem vjern-) "faithful, loyal" (véran in Serbia),
+	  vlástan (stem vlasn-) "powerful, with authority", vrijédan (stem vrijedn-) "precious; diligent; worthy" (vrédan in
+	  Serbia), zlátan (stem zlatn-) "golden", znójan (stem znojn-) "sweaty", zráčan (stem zračn-)
+	  "airy; air (relational)", zvúčan (sten zvučn-)
+	  "resonant, loud; well-known; voiced (of a sound); sound (relational)". Only the following have the žȇdan-type
 	  variation: bȗdan, dijȇlan, drijȇman, glȃdan, gȏrak, gȓdan, hȃran, hlȃdan, hrȃbar, hȗdan, hȗlan, krȃtak, krȗpan,
 	  kvȃran, mȃstan, mlȃčan, mrȃčan, mȓsan, mȗtan, plȋtak, prȃšan, prȃzan, rȃvan, rijȇdak, rȗžan, sjȃjan, slȃstan,
 	  snȃžan, stȋdan, strȃšan, tȃman, težak, tijȇsan, tȗžan, zlȃtan, znȏjan, zrȃčan, zvȗčan.
@@ -272,7 +494,12 @@ Comments about axes of variation:
 	  mȓsnī -> mr̀snī, nȍćnī -> nòćnī, ȍblī -> òblī, ȍčnī -> òčnī, pȇtnī -> pètnī, plȋtkī -> plìtkī, pȍsnī -> pòsnī,
 	  rijȇtkī -> rjètkī, rijȇčnī (prema rijéka) -> rjèčnī (prema rijȇč), rȕčnī -> rùčnī, rȗdnī -> rùdnī, svȇtī -> svètī,
 	  strȃšnī -> stràšnī, strȏjnī -> stròjnī, tȇškī -> tèškī, tȏvnī -> tòvnī, vȉtkī -> vìtkī, vjȅčnī -> vjèčnī,
-	  zvȗčnī -> zvùčnī, žȉtkī -> žìtkī, žȕčnī -> žùčnī; as well as a similar list of non-reducible adjectives.
+	  zvȗčnī -> zvùčnī, žȉtkī -> žìtkī, žȕčnī -> žùčnī; as well as a similar list of non-reducible adjectives:
+	  brȁšnenī -> brašnènī, cr̀kvenī -> crkvènī, đȁvoljī -> đavòljī, ìglenī -> iglènī, jȁnjećī -> janjèćī,
+	  kàvenī -> kavènī, kòštanī -> koštànī, làđenī -> lađènī, lȅdenī -> ledènī, nòvčanī -> novčànī,
+	  ȍdrenī -> odrènī < ȍdar, pàklenī -> paklènī, pȉlećī -> pilèćī, pùščanī -> puščànī, sr̀čanī -> srčànī,
+	  svjètovnī -> svjetòvnī, sùnčanī -> sunčànī, ùljanī -> uljànī, vòdenī -> vodènī, zèmljani -> zemljànī,
+	  zòbenī -> zobènī, zvjèzdanī -> zvjezdànī, ždrèbećī -> ždrebèćī.
    e. Vukušić's type 21 (sec 513, page 139): three different accent variants; only two examples, gȏl "naked" (gȏ in
       Bosnia and Serbia) and bȏs "barefoot". In the indefinite, these have gȏl, fem gòla neut gòlo or gȍlo, gòl-
 	  throughout the rest of the indefinite paradigm, and gȍlī in the definite.
@@ -284,154 +511,123 @@ Comments about axes of variation:
 
 ]=]
 local function add_normal_decl(base, stems,
-	def_nom_m, ind_nom_f, def_nom_f, ind_nom_n, def_nom_n,
-	ind_nom_mp, def_nom_mp, ind_nom_fp, def_nom_fp, ind_nom_np, def_nom_np,
-	ind_gen_mn, def_gen_mn, gen_f, gen_p,
-	ind_dat_mn, def_dat_mn, dat_f, dat_p,
-	ind_acc_f, def_acc_f, ind_acc_mp, def_acc_mp,
-	ind_loc_mn, def_loc_mn, loc_f,
+	def_nom_m, indef_nom_f, def_nom_f, indef_nom_n, def_nom_n,
+	indef_nom_mp, def_nom_mp, indef_nom_fp, def_nom_fp, indef_nom_np, def_nom_np,
+	indef_gen_mn, def_gen_mn, gen_f, gen_p,
+	indef_dat_mn, def_dat_mn, dat_f, dat_p,
+	indef_acc_f, def_acc_f, indef_acc_mp, def_acc_mp,
 	ins_mn, ins_f,
+	indef_loc_mn, def_loc_mn, loc_f,
 	footnote)
 	if stems then
 		stems = iut.combine_form_and_footnotes(stems, footnote)
 	end
+	add(base, "indef_nom_m", stems, "*")
 	add(base, "def_nom_m", stems, def_nom_m)
-	add(base, "ind_nom_f", stems, ind_nom_f)
+	add(base, "indef_nom_f", stems, indef_nom_f)
 	add(base, "def_nom_f", stems, def_nom_f)
-	add(base, "ind_nom_n", stems, ind_nom_n)
+	add(base, "indef_nom_n", stems, indef_nom_n)
 	add(base, "def_nom_n", stems, def_nom_n)
-	add(base, "ind_nom_mp", stems, ind_nom_mp)
+	add(base, "indef_nom_mp", stems, indef_nom_mp)
 	add(base, "def_nom_mp", stems, def_nom_mp)
-	add(base, "ind_nom_fp", stems, ind_nom_fp)
+	add(base, "indef_nom_fp", stems, indef_nom_fp)
 	add(base, "def_nom_fp", stems, def_nom_fp)
-	add(base, "ind_nom_np", stems, ind_nom_np)
+	add(base, "indef_nom_np", stems, indef_nom_np)
 	add(base, "def_nom_np", stems, def_nom_np)
-	add(base, "ind_gen_mn", stems, ind_gen_mn)
-	add(base, "def_gen_mn", stems, def_gen_mn)
-	add(base, "gen_f", stems, gen_f)
-	add(base, "gen_p", stems, gen_p)
-	add(base, "ind_dat_mn", stems, ind_dat_mn)
-	add(base, "def_dat_mn", stems, def_dat_mn)
-	add(base, "dat_f", stems, dat_f)
-	add(base, "dat_p", stems, dat_p)
-	add(base, "acc_f", stems, acc_f)
-	add(base, "ind_loc_mn", stems, ind_loc_mn)
-	add(base, "def_loc_mn", stems, def_loc_mn)
-	add(base, "loc_f", stems, loc_f)
-	add(base, "ins_mn", stems, ins_mn)
-	add(base, "ins_f", stems, ins_f)
+	add(base, "indef_gen_m", stems, indef_gen_mn)
+	add(base, "def_gen_m", stems, def_gen_mn)
+	add(base, "indef_gen_f", stems, gen_f)
+	add(base, "def_gen_f", stems, gen_f)
+	add(base, "indef_gen_n", stems, indef_gen_mn)
+	add(base, "def_gen_n", stems, def_gen_mn)
+	add(base, "indef_gen_p", stems, gen_p)
+	add(base, "def_gen_p", stems, gen_p)
+	add(base, "indef_dat_m", stems, indef_dat_mn)
+	add(base, "def_dat_m", stems, def_dat_mn)
+	add(base, "indef_dat_f", stems, dat_f)
+	add(base, "def_dat_f", stems, dat_f)
+	add(base, "indef_dat_n", stems, indef_dat_mn)
+	add(base, "def_dat_n", stems, def_dat_mn)
+	add(base, "indef_dat_p", stems, dat_p)
+	add(base, "def_dat_p", stems, dat_p)
+	add(base, "indef_acc_m_in", stems, "*")
+	add(base, "indef_acc_m_an", stems, indef_gen_mn)
+	add(base, "def_acc_m_in", stems, def_nom_m)
+	add(base, "def_acc_m_an", stems, def_gen_mn)
+	add(base, "indef_acc_f", stems, indef_acc_f)
+	add(base, "def_acc_f", stems, def_acc_f)
+	add(base, "indef_acc_n", stems, indef_nom_n)
+	add(base, "def_acc_n", stems, def_nom_n)
+	add(base, "indef_acc_mp", stems, indef_acc_mp)
+	add(base, "def_acc_mp", stems, def_acc_mp)
+	add(base, "indef_acc_fp", stems, indef_nom_fp)
+	add(base, "def_acc_fp", stems, def_nom_fp)
+	add(base, "indef_acc_np", stems, indef_nom_np)
+	add(base, "def_acc_np", stems, def_nom_np)
+	add(base, "voc_nom_m", stems, def_nom_m)
+	add(base, "voc_nom_f", stems, def_nom_f)
+	add(base, "voc_nom_n", stems, def_nom_n)
+	add(base, "voc_nom_mp", stems, def_nom_mp)
+	add(base, "voc_nom_fp", stems, def_nom_fp)
+	add(base, "voc_nom_np", stems, def_nom_np)
+	add(base, "indef_ins_m", stems, ins_mn)
+	add(base, "def_ins_m", stems, ins_mn)
+	add(base, "indef_ins_f", stems, ins_f)
+	add(base, "def_ins_f", stems, ins_f)
+	add(base, "indef_ins_n", stems, ins_mn)
+	add(base, "def_ins_n", stems, ins_mn)
+	add(base, "indef_ins_p", stems, dat_p)
+	add(base, "def_ins_p", stems, datt_p)
+	add(base, "indef_loc_m", stems, indef_loc_mn)
+	add(base, "def_loc_m", stems, def_loc_mn)
+	add(base, "indef_loc_f", stems, loc_f)
+	add(base, "def_loc_f", stems, loc_f)
+	add(base, "indef_loc_n", stems, indef_loc_mn)
+	add(base, "def_loc_n", stems, def_loc_mn)
+	add(base, "indef_loc_p", stems, dat_p)
+	add(base, "def_loc_p", stems, dat_p)
 end
 
-local decls = {}
+decls["normal-Latn"] = function(base, props)
+	local soft = props.soft
+	add_normal_decl(base, props,
+		-- nom sg
+		     "ī", "a", "ā", soft and "e" or "o", soft and "ē" or "ō",
+		-- nom pl
+		"i", "ī", "e", "ē", "a", "ā",
+		-- gen
+		"a", soft and {"ēg", "ēga"} or {"ōg", "ōga"}, "ē", "īh",
+		-- dat
+		"u", soft and {"ēm", "ēmu"} or {"ōm", "ōmu", {form = "ōme", footnotes = "not usually in Croatia"}}, "ōj", {"īm", "īma"},
+		-- acc
+		"u", "ū",
+		-- ins
+		"īm", "ōm",
+		-- loc
+		"u", {"ōm", "ōmu"}, "ōj",
+	)
+end
 
-		add_normal_decl(base, base.lemma, "")
-		add_normal_decl(base, stem,
-			-- nom sg
-			{}, "ӣ", "а", "а̄", soft and "е" or "о", soft and "е̄" or "о̄",
-			-- nom pl
-			"и", "ӣ", "е", "е̄", "а", "а̄",
-			-- gen
-			"а", soft and {"е̄г", "е̄га"} or {"о̄г", "о̄га"}, "е̄", "ӣх",
-			-- dat
-			"у", soft and {"е̄м", "е̄му"} or {"о̄м", "о̄му", {form = "о̄ме", footnotes = "not usually in Croatia"}}, "о̄ј", {"ӣм", "ӣма"},
-			-- acc
-			"у", "ӯ",
-			-- loc
-			"у", {"о̄м", "о̄му"}, "о̄ј",
-			-- ins
-			"ӣм", "о̄м",
-		)
-{{sh-decl-adj-1
-|title=positive indefinite forms
-|nsm={{PAGENAME}}
-|nsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|nsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}} | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}}}
-|gsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|gsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|gsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|dsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}у | {{{1}}}u}}
-|dsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}у | {{{1}}}u}}
-|dsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}ој | {{{1}}}oj}}
-|asm={{ #ifeq: {{{sc}}} | Cyrl | {{PAGENAME}}<br>{{{1}}}а | {{PAGENAME}}<br>{{{1}}}a}}
-|asn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}} | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}}}
-|asf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}у | {{{1}}}u}}
-|vsm={{PAGENAME}}
-|vsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|vsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}} | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}}}
-|lsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}у | {{{1}}}u}}
-|lsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}у | {{{1}}}u}}
-|lsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}ој | {{{1}}}oj}}
-|ism={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им | {{{1}}}im}}
-|isn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им | {{{1}}}im}}
-|isf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}ом | {{{1}}}om}}
-|npm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и | {{{1}}}i}}
-|npf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|npn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|gpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}их | {{{1}}}ih}}
-|gpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}их | {{{1}}}ih}}
-|gpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}их | {{{1}}}ih}}
-|dpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|dpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|dpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|apm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|apf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|apn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|vpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и | {{{1}}}i}}
-|vpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|vpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|lpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|lpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|lpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|ipm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|ipf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|ipn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|sc={{{sc|Latn}}}
-}}
-{{sh-decl-adj-1
-|title=positive definite forms
-|nsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и | {{{1}}}i}}
-|nsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|nsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}} | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}}}
-|gsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}г(а) | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}g(a)}}
-|gsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}г(а) | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}g(a)}}
-|gsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|dsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}м(у{{#ifeq: {{{2}}}|о|/е|}}) | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}m(u{{#ifeq:{{{2}}}|o|/e|}})}}
-|dsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}м(у{{#ifeq:{{{2}}}|о|/е|}}) | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}m(u{{ #ifeq:{{{2}}}|o|/e|}})}}
-|dsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}ој | {{{1}}}oj}}
-|asm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и<br>{{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}г(а) | {{{1}}}i<br>{{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}g(a)}}
-|asn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}} | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}}}
-|asf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}у | {{{1}}}u}}
-|vsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и | {{{1}}}i}}
-|vsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|vsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}} | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}}}
-|lsm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}м({{#ifeq:{{{2}}}|о|е/|}}у) | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}m({{#ifeq:{{{2}}}|o|e/|}}u)}}
-|lsn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}{{#ifeq: {{{2|о}}}|о|о|е}}м({{#ifeq:{{{2}}}|о|е/|}}у) | {{{1}}}{{#ifeq: {{{2|o}}}|o|o|e}}m({{ #ifeq: {{{2}}} | o | e/ | }}u)}}
-|lsf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}ој | {{{1}}}oj}}
-|ism={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им | {{{1}}}im}}
-|isn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им | {{{1}}}im}}
-|isf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}ом | {{{1}}}om}}
-|npm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и | {{{1}}}i}}
-|npf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|npn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|gpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}их | {{{1}}}ih}}
-|gpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}их | {{{1}}}ih}}
-|gpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}их | {{{1}}}ih}}
-|dpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|dpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|dpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|apm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|apf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|apn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|vpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}и | {{{1}}}i}}
-|vpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}е | {{{1}}}e}}
-|vpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}а | {{{1}}}a}}
-|lpm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|lpf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|lpn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|ipm={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|ipf={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|ipn={{ #ifeq: {{{sc}}} | Cyrl | {{{1}}}им(а) | {{{1}}}im(a)}}
-|sc={{{sc|Latn}}}
+decls["normal-Cyrl"] = function(base, props)
+	local soft = props.soft
+	add_normal_decl(base, props,
+		-- nom sg
+		     "ӣ", "а", "а̄", soft and "е" or "о", soft and "е̄" or "о̄",
+		-- nom pl
+		"и", "ӣ", "е", "е̄", "а", "а̄",
+		-- gen
+		"а", soft and {"е̄г", "е̄га"} or {"о̄г", "о̄га"}, "е̄", "ӣх",
+		-- dat
+		"у", soft and {"е̄м", "е̄му"} or {"о̄м", "о̄му", {form = "о̄ме", footnotes = "not usually in Croatia"}}, "о̄ј", {"ӣм", "ӣма"},
+		-- acc
+		"у", "ӯ",
+		-- ins
+		"ӣм", "о̄м",
+		-- loc
+		"у", {"о̄м", "о̄му"}, "о̄ј",
+	)
+end
+
 }}
 {{sh-decl-adj-1
 |title=comparative forms
