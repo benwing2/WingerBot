@@ -39,11 +39,17 @@ local function rsubb(term, foo, bar)
 	return retval, nsubs > 0
 end
 
-export.TEMP_CH = u(0xFFF0) -- used to substitute ch temporarily in the default-reducible code
-export.TEMP_SOFT_LABIAL = u(0xFFF1) -- used to indicate that a labial consonant is soft and needs ě
+export.TEMP_DZH = u(0xFFF0) -- used to substitute dž temporarily
+export.TEMP_LJ = u(0xFFF1) -- used to substitute lj temporarily
+export.TEMP_NJ = u(0xFFF2) -- used to substitute nj temporarily
+export.TEMP_CAP_DZH = u(0xFFF3) -- used to substitute Dž temporarily
+export.TEMP_CAP_LJ = u(0xFFF4) -- used to substitute Lj temporarily
+export.TEMP_CAP_NJ = u(0xFFF5) -- used to substitute Nj temporarily
 
-local lc_vowel = "aeiouyáéíóúýěů"
-local uc_vowel = uupper(lc_vowel)
+local lc_vowel_lat = "aeiouy"
+local lc_vowel_cyr = "аеиоу"
+local uc_vowel_lat = uupper(lc_vowel_lat)
+local uc_vowel_cyr = uupper(lc_vowel_cyr)
 export.vowel = lc_vowel .. uc_vowel
 export.vowel_c = "[" .. export.vowel .. "]"
 export.non_vowel_c = "[^" .. export.vowel .. "]"
@@ -198,72 +204,66 @@ function export.is_monosyllabic(word)
 end
 
 
-function export.apply_vowel_alternation(alt, stem)
-	local modstem, origvowel
-	if alt == "quant" or alt == "quant-ě" then
-		-- [[sníh]] "snow", gen sg. [[sněhu]]
-		-- [[míra]] "snow", gen pl. [[měr]]
-		-- [[hůl]] "cane", gen sg. [[hole]]
-		-- [[práce]] "work", ins sg. [[prací]]
-		modstem = rsub(stem, "(.)([íůáé])(" .. export.cons_c .. "*)$",
-			function(pre, vowel, post)
-				origvowel = vowel
-				if vowel == "í" then
-					if alt == "quant-ě" then
-						if rfind(pre, "[" .. export.followable_by_e_hacek .. "]$") then
-							return pre .. "ě" .. post
-						else
-							return pre .. "e" .. post
-						end
-					else
-						return pre .. "i" .. post
-					end
-				elseif vowel == "ů" then
-					return pre .. "o" .. post
-				elseif vowel == "é" then
-					return pre .. "e" .. post
-				else
-					return pre .. "a" .. post
-				end
-			end
-		)
-		-- [[houba]] "mushroom", gen pl. [[hub]]
-		modstem = rsub(modstem, "ou(" .. export.cons_c .. "*)$", "u%1")
-		if modstem == stem then
-			error("Indicator '" .. alt .. "' can't be applied because stem '" .. stem .. "' doesn't have an í, ů, ou, á or é as its last vowel")
-		end
-	else
-		return stem, nil
-	end
-	return modstem, origvowel
-end
-
-
 local function make_try(word)
 	return function(from, to)
 		local stem = rmatch(word, "^(.*)" .. from .. "$")
 		if stem then
-			return stem .. to
+			if to:find("%%") then
+				return rsub(stem, from .. "$", to)
+			else
+				return stem .. to
+			end
 		end
 		return nil
 	end
 end
 
-
 function export.iotate(stem)
-	-- FIXME! This is based off of page 14 of Janda and Townsend but needs reviewing with verbs.
 	local try = make_try(word)
 	return
-		try("st", "št") or
-		try("zd", "žd") or
-		try("t", "c") or
-		try("d", "z") or
-		try("s", "š") or
-		try("z", "ž") or
-		try("r", "ř") or
-		try("ch", "š") or
+		-- ukr̀stiti -> ukŕštati, ukrštávati, ukršćívati; upropástiti -> upropaštávati, upropašćívati;
+		-- premòstiti -> premošćívati; ìskati -> ȉštēm/ȉšćēm; čȉstiti -> čȉšćāh; čȇst -> čȅšćī
+		try("s[kt]", "šć") or
+		-- [sl]: ìzmisliti -> izmíšljati; zapòsliti -> zapošljávati, zapošljívati; mȉsliti -> mȉšljāh
+		-- [sn]: zakàsniti -> zakašnjávati; razbjèsniti -> razbješnjívati; zgȕsnuti -> zgušnjávati; kàsniti -> kȁšnjāh;
+		-- kȉsnuti -> kȉšnjāh; bijésan -> bjȅšnjī
+		try("s[ln]", "š%1j") or
+		try("S[ln]", "Š%1j") or
+		-- ubrázditi -> ubražđívati
+		try("zd", "žđ") or
+		-- prázniti -> prȃžnjāh; čȅznuti -> čȅznjāh
+		try("zn", "žnj") or
+		-- pamet -> pȁmećū; zàpamtiti -> zàpāmćen, zapamćívati; obrátiti se -> òbraćati se;
+		-- razgòlititi se -> razgolićávati se; mȅtati -> mȅćēm; mlátiti -> mlȃćāh; šútjeti -> šúćāh; krȗt -> krȕćī
+		try("t", "ć") or
+		-- prèdvidjeti -> predvíđati; prilagòditi se -> prolagođávati se; ugráditi -> ugrađívati; glòdati -> glȍđēm;
+		-- slijéditi -> slijȇđāh; žúdjeti -> žúđāh; lȗd -> lȕđī
+		try("d", "đ") or
+		-- máhati -> mȃšēm; sȗh -> sȕšī
+		-- pokositi -> pòkošen; oglásiti -> oglašávati, oglašívati; písati -> pȋšēm; nòsiti -> nȍšāh
+		try("[sh]", "š") or
+		-- skákati -> skȃčēm; vȗkti -> vúčāh; jȃk -> jȁčī; prijȇk -> prȅčī
+		-- mȉcati -> mȉčēm; novac -> novčànīk; zec -> zèčārnīk
 		try("[kc]", "č") or
-		try("[hg]", "ž") or
+		-- pomagati -> pòmāžēm; vágati -> vȃžēm; drȃg -> drȁžī
+		-- razmaziti -> ràzmāžen; òpaziti -> opážati; súziti -> sužávati; zaráziti se -> zaražívati se;
+		-- kázati -> kȃžēm; vòziti -> vȍžāh; bȓz -> bȑžī
+		try("[gz]", "ž") or
+		-- [l]: ostàkliti -> òstakljen; pomòliti se -> pomáljati se; isèliti -> iseljávati; hváliti -> hvȃljāh;
+		-- bijȇl -> bjȅljī
+		-- [n]: raniti -> rȁnjen; začìniti -> začínjati; usìtniti -> usitnjávati; zastrániti -> zastranjívati;
+		-- zàbrinuti -> zabrinjávati; ròniti -> rȍnjāh; lijȇn -> ljȅnjī
+		try("[lLnN]", "%1j") or
+		-- [b]: rabiti -> rȃbljen; prispodòbiti -> prispodábljati; sukòbiti -> sukobljávati;
+		-- udúbiti se -> udubljívati se; zòbati -> zȍbljēm; trúbiti -> trúbljāh; grúbjeti -> grúbljāh; grȗb -> grȕbljī
+		-- [p]: poklopiti -> pòklopljen; skȕpiti -> skúpljati; začèpiti -> začepljávati; ishlápiti -> ishlapljívati;
+		-- sȉpati -> sȉpljēm; krijépiti -> krijȇpljāh; tŕpjeti -> tŕpljāh; glȗp -> glȕpljī
+		-- [m]: namámiti -> nàmāmljen, namamljívati; pripitòmiti -> pripitomljávati; hrámati -> hrȃmljēm;
+		-- lòmiti -> lȍmljāh; gŕmjeti -> gŕmljāh; nijȇm -> njȅmljī
+		-- [v]: obnoviti -> òbnovljen; pòzdraviti -> pòzdravljati; iskríviti -> iskrivljávati; ugláviti -> uglavljívati;
+		-- pozívati -> pòzīvljēm; lòviti -> lȍvljāh; žívjeti -> žívljāh; žȋv -> žȉvljī
+		-- [f]: zašaráfiti -> zašàrāflen, zašarafljívati; šaráfiti -> šàrāfljāh
+		try("[bpmvfBPMVF]", "%1lj") or
 		word
 end
 
@@ -279,10 +279,8 @@ function export.apply_first_palatalization(word, is_adjective)
 	end
 	local try = make_try(word)
 	return
-		try("ch", "š") or
-		try("[hg]", "ž") or
-		is_adjective and try("sk", "št") or
-		is_adjective and try("ck", "čt") or
+		try("h", "š") or
+		try("g", "ž") or
 		try("[kc]", "č") or
 		word
 end
@@ -302,13 +300,10 @@ function export.apply_second_palatalization(word, is_adjective)
 end
 
 
-function export.reduce(word)
-	local pre, letter, vowel, post = rmatch(word, "^(.*)([" .. export.cons .. "y%-])([eě])(" .. export.cons_c .. "+)$")
+function export.reduce(word, script)
+	local pre, letter, vowel, post = rmatch(word, "^(.*)([" .. export.cons .. "y%-])a(" .. export.cons_c .. "+)$")
 	if not pre then
 		return nil
-	end
-	if vowel == "ě" and rfind(letter, "[" .. export.paired_plain .. "]") then
-		letter = export.paired_plain_to_palatal[letter]
 	end
 	return pre .. letter .. post
 end
