@@ -14,14 +14,28 @@ local en_utilities_module = "Module:en-utilities"
 local headword_module = "Module:headword"
 local headword_data_module = "Module:headword/data"
 local headword_utilities_module = "Module:headword utilities"
-local links_module = "Module:links"
 local m_headword_utilities = require_when_needed(headword_utilities_module)
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
+local links_module = "Module:links"
+local parse_interface_module = "Module:parse interface"
 
 local u = m_str_utils.char
 local rfind = m_str_utils.find
 local ulower = m_str_utils.lower
 local unfd = mw.ustring.toNFD
+local insert = table.insert
+
+local GR = u(0x0300)
+local AC = u(0x0301)
+local TILDE = u(0x0303)
+local MACRON = u(0x0304)
+local DGRAVE = u(0x030F)
+local INVBREVE = u(0x0311)
+
+local tonal_accents = GR .. AC .. TILDE .. DGRAVE .. INVBREVE
+local vowels = "aeiouаеиоу"
+local vowels_that_can_bear_tone = vowels .. "rр"
+local V = "[" .. vowels .. "]"
 
 local list_param = {list = true, disallow_holes = true}
 local boolean_param = {type = "boolean"}
@@ -51,12 +65,20 @@ end
 
 local function track(track_id, pos)
 	local tracking_pages = {}
-	table.insert(tracking_pages, "sh-headword/" .. track_id)
+	insert(tracking_pages, "sh-headword/" .. track_id)
 	if pos then
-		table.insert(tracking_pages, "sh-headword/" .. track_id .. "/" .. pos)
+		insert(tracking_pages, "sh-headword/" .. track_id .. "/" .. pos)
 	end
 	require("Module:debug/track")(tracking_pages)
 	return true
+end
+
+local function split_on_comma(val)
+	if val:find(",") then
+		return require(parse_interface_module).split_on_comma(val)
+	else
+		return {val}
+	end
 end
 
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
@@ -74,33 +96,27 @@ end
 
 -- The main entry point.
 -- This is the only function that can be invoked from a template.
--- FIXME: Remove explicit_pos support.
-function export.show(frame, explicit_pos)
+function export.show(frame)
 	local iparams = {
-		[1] = {},
+		[1] = {required = true},
 		def = {},
 	}
 	local iargs = require("Module:parameters").process(frame.args, iparams)
 	local args = frame:getParent().args
-	local poscat = iargs[1] or explicit_pos
+	local poscat = iargs[1]
 	local def = iargs.def
 
 	local parargs = frame:getParent().args
-	local headarg
-	if poscat then
-		headarg = 1
-	else
-		headarg = 2
-		poscat = ine(parargs[1]) or
+	local actual_poscat
+	if poscat == "head" then
+		actual_poscat = ine(parargs[2]) or
 			mw.title.getCurrentTitle().fullText == "Template:" .. langcode .. "-head" and "interjection" or
-			error("Part of speech must be specified in 1=")
-		poscat = require(headword_module).canonicalize_pos(poscat)
+			error("Part of speech must be specified in 2=")
+		actual_poscat = require(headword_module).canonicalize_pos(actual_poscat)
 	end
 
 	local params = {
-		head = {list = true, disallow_holes = true, template_default = def or "књи̏га"},
-		[headarg] = {alias_of = "head"},
-		-- [headarg] = {list = "head", disallow_holes = true, template_default = def},
+		[1] = {list = "head", disallow_holes = true, template_default = def or "књи̏га"},
 		tr = {list = true, allow_holes = true},
 		id = true,
 		sort = true,
@@ -108,8 +124,8 @@ function export.show(frame, explicit_pos)
 		json = boolean_param,
 		pagename = true, -- for testing
 	}
-	if headarg == 2 then
-		params[1] = {required = true} -- required but ignored as already processed above
+	if actual_poscat then
+		params[2] = {required = true} -- required but ignored as already processed above
 	end
 
 	if pos_functions[poscat] then
@@ -128,9 +144,9 @@ function export.show(frame, explicit_pos)
 
 	local data = {
 		lang = lang,
-		pos_category = poscat,
+		pos_category = actual_poscat or poscat,
 		categories = {},
-		heads = args[headarg],
+		heads = args[1],
 		genders = {},
 		inflections = {},
 		pagename = pagename,
@@ -150,15 +166,15 @@ function export.show(frame, explicit_pos)
 		other_sc = "Latn"
 	end
 	
+	local heads = args[1]
+	if #heads == 0 then
+		heads = {pagename}
+	end
+
 	if other_sc then
 		other_sc = require("Module:scripts").getByCode(other_sc)
 		local inflection = {label = other_sc:getCanonicalName() .. " spelling"}
 
-		local heads = args["head"]
-		if #heads == 0 then
-			heads = {pagename}
-		end
-		
 		if args["tr"][1] == "-" then
 			inflection.label = "not attested in " .. other_sc:getCanonicalName() .. " spelling"
 		else
@@ -169,20 +185,34 @@ function export.show(frame, explicit_pos)
 					tr = require("Module:sh-translit").tr(require("Module:links").remove_links(head), "sh", sc:getCode())
 				end
 				
-				table.insert(inflection, {term = tr, sc = other_sc})
+				insert(inflection, {term = tr, sc = other_sc})
 			end
 		end
 		
-		table.insert(inflections, inflection)
+		insert(data.inflections, inflection)
 	end
 
-	local singular_poscat = require(en_utilities_module).singularize(poscat)
+	local singular_poscat = require(en_utilities_module).singularize(actual_poscat or poscat)
 
-	if pagename:find("^%-") and poscat ~= "suffix forms" then
+	local needs_accents = false
+	for _, head in ipairs(heads) do
+		-- FIXME, should split by space and check each word
+		local lower_nfd_head = ulower(unfd(head))
+		if rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "]") and not
+			rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "][" .. tonal_accents .. "]") then
+			needs_accents = true
+			break
+		end
+	end
+	if needs_accents then
+		insert(data.categories, "Requests for accents in " .. langname .. " " .. singular_poscat .. " entries")
+	end		
+
+	if pagename:find("^%-") and poscat ~= "suffixes" and poscat ~= "suffix forms" then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
-		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
+		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
 	if pos_functions[poscat] then
@@ -191,8 +221,8 @@ function export.show(frame, explicit_pos)
 
 	-- unfd (mw.ustring.toNFD) performs decomposition, so letters that decompose to an ASCII vowel and a diacritic,
 	-- such as é, are counted as vowels and do not need to be included in the pattern.
-	if not pagename:find("[ %-]") and not rfind(ulower(unfd(pagename)), "[aeiouаеиоу]") then
-		table.insert(data.categories, langname .. " words spelled without vowels")
+	if not pagename:find("[ %-]") and not rfind(ulower(unfd(pagename)), V) then
+		insert(data.categories, langname .. " words spelled without vowels")
 	end
 
     if args.json then
@@ -204,8 +234,7 @@ end
 
 local function get_noun_params(is_proper)
 	return {
-		[2] = {alias_of = "g"},
-		g = {type = "genders", list = true, flatten = true, disallow_holes = true, template_default = "?"},
+		[2] = {default = "?", type = "genders"},
 		indecl = boolean_param,
 		m = list_param,
 		f = list_param,
@@ -217,36 +246,42 @@ local function get_noun_params(is_proper)
 		dem = list_param,
 		fdem = list_param,
 		gen = list_param,
+		voc = list_param,
+		loc = list_param,
 		pl = list_param,
+		nompl = {alias_of = "pl", list = true, disallow_holes = true},
 		genpl = list_param,
 	}
 end
 
-local function do_nouns(is_proper, args, data)
-	for _, g in ipairs(args.g) do
+local function validate_genders(data, genders, categorize)
+	for _, g in ipairs(genders) do
 		local canon_g = valid_genders[g.spec]
 		if canon_g then
 			track("gender-" .. g.spec)
 			if canon_g ~= true then
 				g.spec = canon_g
 			end
-			-- Categorize by gender, in addition to what's done already by [[Module:gender and number]].
-			if g.spec == "m-an" then
-				table.insert(data.categories, langname .. " masculine animate nouns")
-			elseif g.spec == "m-in" then
-				table.insert(data.categories, langname .. " masculine inanimate nouns")
+			if categorize then
+				-- Categorize by gender, in addition to what's done already by [[Module:gender and number]].
+				if g.spec == "m-an" then
+					insert(data.categories, langname .. " masculine animate nouns")
+				elseif g.spec == "m-in" then
+					insert(data.categories, langname .. " masculine inanimate nouns")
+				end
 			end
 		else
 			error("Unrecognized gender: '" .. g.spec .. "'")
 		end
 	end
-	data.genders = args.g
-	if #data.genders == 0 then
-		table.insert(data.genders, "?")
-	end
+end
+
+local function do_nouns(is_proper, args, data)
+	validate_genders(data, args[2], true)
+	data.genders = args[2]
 	if args.indecl then
-		table.insert(data.inflections, {label = glossary_link("indeclinable")})
-		table.insert(data.categories, langname .. " indeclinable nouns")
+		insert(data.inflections, {label = glossary_link("indeclinable")})
+		insert(data.categories, langname .. " indeclinable nouns")
 	end
 
 	-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
@@ -257,6 +292,8 @@ local function do_nouns(is_proper, args, data)
 	end
 
 	handle_infl("gen", "<<genitive>> <<singular>>")
+	handle_infl("voc", "<<vocative>> <<singular>>")
+	handle_infl("loc", "<<locative>> <<singular>>")
 	handle_infl("pl", "<<nominative>> <<plural>>")
 	handle_infl("genpl", "<<genitive>> <<plural>>")
 	handle_infl("m", "male equivalent")
@@ -269,12 +306,6 @@ local function do_nouns(is_proper, args, data)
 	handle_infl("dem", "<<demonym>>")
 	handle_infl("fdem", "female <<demonym>>")
 end
-
--- FIXME, rename callers to show()
-function export.basic(frame)
-	return export.show(frame)
-end
-
 
 pos_functions["nouns"] = {
 	 params = get_noun_params(false),
@@ -293,18 +324,36 @@ pos_functions["proper nouns"] = {
 pos_functions["verbs"] = {
 	params = {
 		[2] = {default = "?", type = "genders"},
-		-- FIXME, remove g and a aliases
-		g = {alias_of = 2},
-		a = {alias_of = 2},
 		pf = list_param,
 		impf = list_param,
+		pres = list_param,
+		pres3s = list_param,
+		pres3p = list_param,
+		past = list_param,
+		pastf = list_param,
+		pastn = list_param,
+		impft = list_param,
+		impft3s = list_param,
+		impft3p = list_param,
+		aor = list_param,
+		aor3s = list_param,
+		aor3p = list_param,
+		vn = list_param,
+		pradvp = list_param,
+		padvp = list_param,
+		pap = list_param,
+		papf = list_param,
+		papn = list_param,
+		ppp = list_param,
+		pppf = list_param,
+		pppn = list_param,
 	},
 	func = function(args, data)
 		for _, a in ipairs(args[2]) do
 			if a.spec == "both" then
 				a.spec = "biasp"
 			end
-			if a.spec == "pf-impf" then
+			if a.spec == "pf-impf" or a.spec == "impf-pf" or a.spec == "dual" or a.spec == "ip" then
 				a.spec = "biasp"
 			end
 			if valid_aspects[a.spec] then
@@ -328,6 +377,24 @@ pos_functions["verbs"] = {
 		end
 		handle_infl("pf", "perfective")
 		handle_infl("impf", "imperfective")
+		handle_infl("pres", "first-singular present")
+		handle_infl("pres3s", "third-singular present")
+		handle_infl("pres3p", "third-plural present")
+		handle_infl("impft", "first-singular imperfect")
+		handle_infl("impft3s", "third-singular imperfect")
+		handle_infl("impft3p", "third-plural imperfect")
+		handle_infl("aor", "first-singular aorist")
+		handle_infl("aor3s", "third-singular aorist")
+		handle_infl("aor3p", "third-plural aorist")
+		handle_infl("pap", "masculine singular past active participle")
+		handle_infl("papf", "feminine singular past active participle")
+		handle_infl("papn", "neuter singular past active participle")
+		handle_infl("ppp", "masculine singular past passive participle")
+		handle_infl("pppf", "feminine singular past passive participle")
+		handle_infl("pppn", "neuter singular past passive participle")
+		handle_infl("pradvp", "present adverbial participle")
+		handle_infl("padvp", "past adverbial participle")
+		handle_infl("vn", "verbal noun")
 	end,
 }
 
@@ -341,8 +408,8 @@ pos_functions["adjectives"] = {
 	},
 	func = function(args, data)
 		if args.indecl then
-			table.insert(data.inflections, {label = glossary_link("indeclinable")})
-			table.insert(data.categories, langname .. " indeclinable adjectives")
+			insert(data.inflections, {label = glossary_link("indeclinable")})
+			insert(data.categories, langname .. " indeclinable adjectives")
 		end
 		-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
 		-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
@@ -374,20 +441,62 @@ pos_functions["adverbs"] = {
 	end,
 }
 
-function export.letter(frame)
+pos_functions["letters"] = {
 	params = {
-		["upper"] = true,
-		["lower"] = true
+		upper = true,
+		lower = true,
 	},
 	func = function(args, data)
 		if args.upper then
-			table.insert(data.inflections, {label = "lower case", nil})
-			table.insert(data.inflections, {label = "upper case", args.upper})
+			insert(data.inflections, {label = "lower case", nil})
+			insert(data.inflections, {label = "upper case", args.upper})
 		elseif args.lower then
-			table.insert(data.inflections, {label = "upper case", nil})
-			table.insert(data.inflections, {label = "lower case", args.lower})
+			insert(data.inflections, {label = "upper case", nil})
+			insert(data.inflections, {label = "lower case", args.lower})
 		end
 	end,
-end
+}
+
+-----------------------------------------------------------------------------------------
+--                                      Suffix forms                                   --
+-----------------------------------------------------------------------------------------
+
+pos_functions["suffix forms"] = {
+	params = {
+		[2] = {required = true, template_default = "noun"},
+		[3] = {type = "genders"},
+	},
+	func = function(args, data)
+		if args[3] then
+			validate_genders(data, args[3], false)
+			data.genders = args[3]
+		end
+		local suffix_type = {}
+		for _, typ in ipairs(split_on_comma(args[2])) do
+			insert(suffix_type, typ .. "-forming suffix")
+		end
+		insert(data.inflections, {label = "non-lemma form of " .. m_table.serialCommaJoin(suffix_type, {conj = "or"})})
+	end,
+}
+
+-----------------------------------------------------------------------------------------
+--                                Arbitrary part of speech                             --
+-----------------------------------------------------------------------------------------
+
+pos_functions["head"] = {
+	params = {
+		-- [2] is already processed in show()
+		[3] = {type = "genders"},
+	},
+	func = function(args, data)
+		if data.is_suffix then
+			error("Can't use [[Template:sh-head]] with suffixes")
+		end
+		if args[3] then
+			validate_genders(data, args[3], false)
+			data.genders = args[3]
+		end
+	end,
+}
 
 return export
