@@ -91,6 +91,7 @@ local function parse_and_insert_inflection(pos, data, args, field, label, accel)
 		paramname = field,
 		label = label,
 		accel = accel and {form = accel} or nil,
+		splitchar = ",",
 	}
 end
 
@@ -142,11 +143,18 @@ function export.show(frame)
 
 	local pagename = args.pagename or mw.loadData(headword_data_module).pagename
 
+	local heads = m_headword_utilities.parse_term_list_with_modifiers {
+		forms = args[1],
+		paramname = {1, "head"},
+		is_head = true,
+		include_mods = {"tr"},
+		splitchar = ",",
+	}
+
 	local data = {
 		lang = lang,
 		pos_category = actual_poscat or poscat,
 		categories = {},
-		heads = args[1],
 		genders = {},
 		inflections = {},
 		pagename = pagename,
@@ -154,6 +162,7 @@ function export.show(frame)
 		sort_key = args.sort,
 		force_cat_output = force_cat,
 		is_suffix = false,
+		no_redundant_head_cat = not heads[1],
 	}
 
 	local sc = lang:findBestScript(pagename)
@@ -165,24 +174,37 @@ function export.show(frame)
 	elseif sc:getCode() == "Cyrl" then
 		other_sc = "Latn"
 	end
-	
-	local heads = args[1]
-	if #heads == 0 then
-		heads = {pagename}
+
+	if not heads[1] then
+		heads = {{term = pagename}}
+	end
+	local numheads = #heads
+
+	-- Copy translit in trN= to head structure (it can also be specified using inline modifier <tr:...>).
+	for i, tr in pairs(args.tr) do
+		if type(i) == "number" then
+			if i > numheads then
+				error(("Specified value for tr%s= but only %s head%s available"):format(
+					i, numheads, numheads == 1 and "" or "s"))
+			end
+			heads[i].tr = tr
+		end
 	end
 
+	-- If pagename is Latin or Cyrillic, display the other-script transliteration as an inflection. Use manually
+	-- specified translit if available, otherwise auto-translit.
 	if other_sc then
 		other_sc = require("Module:scripts").getByCode(other_sc)
 		local inflection = {label = other_sc:getCanonicalName() .. " spelling"}
 
-		if args["tr"][1] == "-" then
+		if heads[1].tr == "-" then
 			inflection.label = "not attested in " .. other_sc:getCanonicalName() .. " spelling"
 		else
-			for i, head in ipairs(heads) do
-				local tr = args["tr"][i]
+			for _, head in ipairs(heads) do
+				local tr = head.tr
 				
 				if not tr then
-					tr = require("Module:sh-translit").tr(require("Module:links").remove_links(head), "sh", sc:getCode())
+					tr = require("Module:sh-translit").tr(require("Module:links").remove_links(head.term), "sh", sc:getCode())
 				end
 				
 				insert(inflection, {term = tr, sc = other_sc})
@@ -191,13 +213,23 @@ function export.show(frame)
 		
 		insert(data.inflections, inflection)
 	end
+	-- Now remove the translit from the `heads` structure so it doesn't display in the normal translit slot.
+	for i, head in ipairs(heads) do
+		if head.tr then
+			if not other_sc then
+				error(("Translit specified for head #%s when pagename is neither Latin nor Cyrillic"):format(i))
+			end
+			head.tr = nil
+		end
+	end
+	data.heads = heads
 
 	local singular_poscat = require(en_utilities_module).singularize(actual_poscat or poscat)
 
 	local needs_accents = false
 	for _, head in ipairs(heads) do
 		-- FIXME, should split by space and check each word
-		local lower_nfd_head = ulower(unfd(head))
+		local lower_nfd_head = ulower(unfd(head.term))
 		if rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "]") and not
 			rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "][" .. tonal_accents .. "]") then
 			needs_accents = true
