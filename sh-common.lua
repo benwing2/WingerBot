@@ -54,11 +54,17 @@ export.vowel = lc_vowel .. uc_vowel
 export.vowel_c = "[" .. export.vowel .. "]"
 export.non_vowel_c = "[^" .. export.vowel .. "]"
 -- Consonants that can never form a syllabic nucleus.
-local lc_non_syllabic_cons = "bcdfghjkmnpqstvwxzčňšžďť" .. export.TEMP_CH .. export.TEMP_SOFT_LABIAL
-local uc_non_syllabic_cons = uupper(lc_non_syllabic_cons)
-export.non_syllabic_cons = lc_non_syllabic_cons .. uc_non_syllabic_cons
-export.non_syllabic_cons_c = "[" .. export.non_syllabic_cons .. "]"
-local lc_syllabic_cons = "lrř"
+local lc_non_syllabic_cons_lat_without_temp = "bcdfghjkmnpqstvwxzčšžćđ"
+local lc_non_syllabic_cons_lat = lc_non_syllabic_cons_lat_without_temp .. export.TEMP_DZH .. export.TEMP_LJ ..
+	export.TEMP_NJ
+local uc_non_syllabic_cons_lat_without_temp = uupper(lc_non_syllabic_cons_lat_without_temp)
+local uc_non_syllabic_cons_lat = uc_non_syllabic_cons_lat_without_temp .. export.TEMP_CAP_DZH .. export.TEMP_CAP_LJ ..
+	export.TEMP_CAP_NJ
+local lc_non_syllabic_cons_cyr = "бцдфгхјкмнпствзчшжђћџљњ"
+local uc_non_syllabic_cons_cyr = uupper(lc_non_syllabic_cons_cyr)
+export.non_syllabic_cons_lat = lc_non_syllabic_cons_lat .. uc_non_syllabic_cons_lat
+export.non_syllabic_cons_cyr = lc_non_syllabic_cons_cyr .. uc_non_syllabic_cons_cyr
+export.non_syllabic_cons = export.non_syllabic_cons_lat .. export.non_syllabic_cons_cyr
 local uc_syllabic_cons = uupper(lc_syllabic_cons)
 local lc_cons = lc_non_syllabic_cons .. lc_syllabic_cons
 local uc_cons = uupper(lc_cons)
@@ -85,7 +91,7 @@ export.labial_c = "[" .. export.labial .. "]"
 local lc_voiced_to_unvoiced_lat = {
 	["b"] = "p",
 	["d"] = "t",
-	["dž"] = "č",
+	[TEMP_DZH] = "č",
 	["đ"] = "ć",
 	["g"] = "k",
 	["z"] = "s",
@@ -102,11 +108,23 @@ local lc_voiced_to_unvoiced_cyr = {
 	["ж"] = "ш",
 }
 
+local function ucfirst_with_temp(str)
+	if str == TEMP_DZH then
+		return TEMP_CAP_DZH
+	elseif str == TEMP_LJ then
+		return TEMP_CAP_LJ
+	elseif str == TEMP_NJ then
+		return TEMP_CAP_NJ
+	else
+		return ucfirst(str)
+	end
+end
+
 local function add_uppercase_mappings(mapping)
 	local new_mapping = {}
 	for from, to in pairs(mapping) do
 		new_mapping[from] = to
-		new_mapping[ucfirst(from)] = ucfirst(to)
+		new_mapping[ucfirst_with_temp(from)] = ucfirst_with_temp(to)
 	end
 	return new_mapping
 end
@@ -218,85 +236,179 @@ local function make_try(word)
 	end
 end
 
-function export.iotate(stem)
-	local try = make_try(word)
-	return
-		-- ukr̀stiti -> ukŕštati, ukrštávati, ukršćívati; upropástiti -> upropaštávati, upropašćívati;
-		-- premòstiti -> premošćívati; ìskati -> ȉštēm/ȉšćēm; čȉstiti -> čȉšćāh; čȇst -> čȅšćī
-		try("s[kt]", "šć") or
-		-- [sl]: ìzmisliti -> izmíšljati; zapòsliti -> zapošljávati, zapošljívati; mȉsliti -> mȉšljāh
-		-- [sn]: zakàsniti -> zakašnjávati; razbjèsniti -> razbješnjívati; zgȕsnuti -> zgušnjávati; kàsniti -> kȁšnjāh;
-		-- kȉsnuti -> kȉšnjāh; bijésan -> bjȅšnjī
-		try("s[ln]", "š%1j") or
-		try("S[ln]", "Š%1j") or
-		-- ubrázditi -> ubražđívati
-		try("zd", "žđ") or
-		-- prázniti -> prȃžnjāh; čȅznuti -> čȅznjāh
-		try("zn", "žnj") or
-		-- pamet -> pȁmećū; zàpamtiti -> zàpāmćen, zapamćívati; obrátiti se -> òbraćati se;
-		-- razgòlititi se -> razgolićávati se; mȅtati -> mȅćēm; mlátiti -> mlȃćāh; šútjeti -> šúćāh; krȗt -> krȕćī
-		try("t", "ć") or
-		-- prèdvidjeti -> predvíđati; prilagòditi se -> prolagođávati se; ugráditi -> ugrađívati; glòdati -> glȍđēm;
-		-- slijéditi -> slijȇđāh; žúdjeti -> žúđāh; lȗd -> lȕđī
-		try("d", "đ") or
-		-- máhati -> mȃšēm; sȗh -> sȕšī
-		-- pokositi -> pòkošen; oglásiti -> oglašávati, oglašívati; písati -> pȋšēm; nòsiti -> nȍšāh
-		try("[sh]", "š") or
-		-- skákati -> skȃčēm; vȗkti -> vúčāh; jȃk -> jȁčī; prijȇk -> prȅčī
-		-- mȉcati -> mȉčēm; novac -> novčànīk; zec -> zèčārnīk
-		try("[kc]", "č") or
-		-- pomagati -> pòmāžēm; vágati -> vȃžēm; drȃg -> drȁžī
-		-- razmaziti -> ràzmāžen; òpaziti -> opážati; súziti -> sužávati; zaráziti se -> zaražívati se;
-		-- kázati -> kȃžēm; vòziti -> vȍžāh; bȓz -> bȑžī
-		try("[gz]", "ž") or
-		-- [l]: ostàkliti -> òstakljen; pomòliti se -> pomáljati se; isèliti -> iseljávati; hváliti -> hvȃljāh;
-		-- bijȇl -> bjȅljī
-		-- [n]: raniti -> rȁnjen; začìniti -> začínjati; usìtniti -> usitnjávati; zastrániti -> zastranjívati;
-		-- zàbrinuti -> zabrinjávati; ròniti -> rȍnjāh; lijȇn -> ljȅnjī
-		try("[lLnN]", "%1j") or
-		-- [b]: rabiti -> rȃbljen; prispodòbiti -> prispodábljati; sukòbiti -> sukobljávati;
-		-- udúbiti se -> udubljívati se; zòbati -> zȍbljēm; trúbiti -> trúbljāh; grúbjeti -> grúbljāh; grȗb -> grȕbljī
-		-- [p]: poklopiti -> pòklopljen; skȕpiti -> skúpljati; začèpiti -> začepljávati; ishlápiti -> ishlapljívati;
-		-- sȉpati -> sȉpljēm; krijépiti -> krijȇpljāh; tŕpjeti -> tŕpljāh; glȗp -> glȕpljī
-		-- [m]: namámiti -> nàmāmljen, namamljívati; pripitòmiti -> pripitomljávati; hrámati -> hrȃmljēm;
-		-- lòmiti -> lȍmljāh; gŕmjeti -> gŕmljāh; nijȇm -> njȅmljī
-		-- [v]: obnoviti -> òbnovljen; pòzdraviti -> pòzdravljati; iskríviti -> iskrivljávati; ugláviti -> uglavljívati;
-		-- pozívati -> pòzīvljēm; lòviti -> lȍvljāh; žívjeti -> žívljāh; žȋv -> žȉvljī
-		-- [f]: zašaráfiti -> zašàrāflen, zašarafljívati; šaráfiti -> šàrāfljāh
-		try("[bpmvfBPMVF]", "%1lj") or
-		word
+local lc_sht_map = {
+	-- [st]: see examples below at the top of lc_iotate_map
+	["st"] = "št",
+	["ст"] = "шт",
+}
+
+local lc_iotate_map = {
+	-- [st]: becomes either [št] or [šć]: ukr̀stiti -> ukŕštati, ukrštávati, ukršćívati; upropástiti -> upropaštávati,
+	-- upropašćívati; premòstiti -> premošćívati; ìskati -> ȉštēm/ȉšćēm; čȉstiti -> čȉšćāh; čȇst -> čȅšćī
+	["st"] = "šć",
+	["ст"] = "шћ",
+	-- [sk]: ?? (need examples)
+	["sk"] = "šč",
+	["ск"] = "шч",
+	-- [sl]: ìzmisliti -> izmíšljati; zapòsliti -> zapošljávati, zapošljívati; mȉsliti -> mȉšljāh
+	["sl"] = "šlj",
+	["сл"] = "шљ",
+	-- [sn]: zakàsniti -> zakašnjávati; razbjèsniti -> razbješnjívati; zgȕsnuti -> zgušnjávati; kàsniti -> kȁšnjāh;
+	-- kȉsnuti -> kȉšnjāh; bijésan -> bjȅšnjī
+	["sn"] = "šnj",
+	["сн"] = "шњ",
+	-- [zd]: ubrázditi -> ubražđívati; FIXME: are there cases where the output is [žd], parallel to [st] -> [št]?
+	["zd"] = "žđ",
+	["зд"] = "жђ",
+	-- [zg]: ?? (need examples); the output ždž is a guess, based on the fact that [[mozak]] "brain" with stem mozg-
+	-- has vocative [[moždže]]; this is the first palatalization rather than iotation but they should produce the same
+	-- outputs with velar inputs.
+	["zg"] = "ždž",
+	["зг"] = "жџ",
+	-- [zl]: ?? (need examples)
+	["zl"] = "žlj",
+	["зл"] = "зљ",
+	-- [zn]: prázniti -> prȃžnjāh; čȅznuti -> čȅznjāh
+	["zn"] = "žnj",
+	["зн"] = "жњ",
+	-- [t]: pamet -> pȁmećū; zàpamtiti -> zàpāmćen, zapamćívati; obrátiti se -> òbraćati se;
+	-- razgòlititi se -> razgolićávati se; mȅtati -> mȅćēm; mlátiti -> mlȃćāh; šútjeti -> šúćāh; krȗt -> krȕćī
+	["t"] = "ć",
+	["т"] = "ћ",
+	-- [d]: prèdvidjeti -> predvíđati; prilagòditi se -> prolagođávati se; ugráditi -> ugrađívati; glòdati -> glȍđēm;
+	-- slijéditi -> slijȇđāh; žúdjeti -> žúđāh; lȗd -> lȕđī
+	["d"] = "đ",
+	["д"] = "ђ",
+	-- [h]: máhati -> mȃšēm; sȗh -> sȕšī
+	["h"] = "š",
+	["х"] = "ш",
+	-- [s]: pokositi -> pòkošen; oglásiti -> oglašávati, oglašívati; písati -> pȋšēm; nòsiti -> nȍšāh
+	["s"] = "š",
+	["с"] = "ш",
+	-- [k]: skákati -> skȃčēm; vȗkti -> vúčāh; jȃk -> jȁčī; prijȇk -> prȅčī
+	["k"] = "č",
+	["к"] = "ч",
+	-- [c]: mȉcati -> mȉčēm; novac -> novčànīk; zec -> zèčārnīk
+	["c"] = "č",
+	["ц"] = "ч",
+	-- [g]: pomagati -> pòmāžēm; vágati -> vȃžēm; drȃg -> drȁžī
+	["g"] = "ž",
+	["г"] = "ж",
+	-- [z]: razmaziti -> ràzmāžen; òpaziti -> opážati; súziti -> sužávati; zaráziti se -> zaražívati se;
+	-- kázati -> kȃžēm; vòziti -> vȍžāh; bȓz -> bȑžī
+	["z"] = "ž",
+	["з"] = "ж",
+	-- [l]: ostàkliti -> òstakljen; pomòliti se -> pomáljati se; isèliti -> iseljávati; hváliti -> hvȃljāh;
+	-- bijȇl -> bjȅljī
+	["l"] = "lj",
+	["л"] = "љ",
+	-- [n]: raniti -> rȁnjen; začìniti -> začínjati; usìtniti -> usitnjávati; zastrániti -> zastranjívati;
+	-- zàbrinuti -> zabrinjávati; ròniti -> rȍnjāh; lijȇn -> ljȅnjī
+	["n"] = "nj",
+	["н"] = "њ",
+	-- [b]: rabiti -> rȃbljen; prispodòbiti -> prispodábljati; sukòbiti -> sukobljávati;
+	-- udúbiti se -> udubljívati se; zòbati -> zȍbljēm; trúbiti -> trúbljāh; grúbjeti -> grúbljāh; grȗb -> grȕbljī
+	["b"] = "blj",
+	["б"] = "бљ",
+	-- [p]: poklopiti -> pòklopljen; skȕpiti -> skúpljati; začèpiti -> začepljávati; ishlápiti -> ishlapljívati;
+	-- sȉpati -> sȉpljēm; krijépiti -> krijȇpljāh; tŕpjeti -> tŕpljāh; glȗp -> glȕpljī
+	["p"] = "plj",
+	["п"] = "пљ",
+	-- [m]: namámiti -> nàmāmljen, namamljívati; pripitòmiti -> pripitomljávati; hrámati -> hrȃmljēm;
+	-- lòmiti -> lȍmljāh; gŕmjeti -> gŕmljāh; nijȇm -> njȅmljī
+	["m"] = "mlj",
+	["м"] = "мљ",
+	-- [v]: obnoviti -> òbnovljen; pòzdraviti -> pòzdravljati; iskríviti -> iskrivljávati; ugláviti -> uglavljívati;
+	-- pozívati -> pòzīvljēm; lòviti -> lȍvljāh; žívjeti -> žívljāh; žȋv -> žȉvljī
+	["v"] = "vlj",
+	["в"] = "вљ",
+	-- [f]: zašaráfiti -> zašàrāflen, zašarafljívati; šaráfiti -> šàrāfljāh
+	["f"] = "flj",
+	["ф"] = "фљ",
+}
+
+export.sht_map = add_uppercase_mappings(lc_sht_map)
+export.iotate_map = add_uppercase_mappings(lc_iotate_map)
+
+--[==[
+Iotate `word` according to Serbo-Croatian iotatation rules. There are two possible outputs of [st], either [št] or [šć].
+If `sht_output` is specified, [št] results, otherwise [šć].
+]==]
+function export.iotate(word, sht_output)
+	if sht_output then
+		-- First check the [st] or [ст]. If this occurs, we need to make the substitution and not then apply the regular
+		-- iotation map because it will wrongly convert the resulting [t] into [ć].
+		local changed
+		word, changed = rsubb(word, "(..)$", export.sht_map)
+		if changed then
+			return word
+		end
+	end
+	-- Try to iotate the last two letters, then the last letter. None of the outputs from iotating the last two letters 
+	-- using the first rsub() will be affected by the second rsub().
+	word = rsub(word, "(..)$", export.iotate_map)
+	return rsub(word, "(.)$", export.iotate_map)
 end
 
 
-function export.apply_first_palatalization(word, is_adjective)
-	-- -rr doesn't palatalize (e.g. [[torr]] voc_s 'torre') but otherwise -Cr normally does.
-	if rfind(word, "rr$") then
-		return word
-	end
-	local stem = rmatch(word, "^(.*" .. export.cons_c .. ")r$")
-	if stem then
-		return stem .. "ř"
-	end
-	local try = make_try(word)
-	return
-		try("h", "š") or
-		try("g", "ž") or
-		try("[kc]", "č") or
-		word
+local lc_first_palatalization_map = {
+	-- [sk]: ?? (need examples)
+	["sk"] = "šč",
+	["ск"] = "шч",
+	-- [zg]: mozak "brain", stem mozg- -> vocative moždže
+	["zg"] = "ždž",
+	["зг"] = "жџ",
+	-- [h]: ?? (need examples)
+	["h"] = "š",
+	["х"] = "ш",
+	-- [k]: ?? (need examples)
+	["k"] = "č",
+	["к"] = "ч",
+	-- [c]: ?? (need examples)
+	["c"] = "č",
+	["ц"] = "ч",
+	-- [g]: ?? (need examples)
+	["g"] = "ž",
+	["г"] = "ж",
+}
+export.first_palatalization_map = add_uppercase_mappings(lc_first_palatalization_map)
+
+function export.apply_first_palatalization(word)
+	-- Try to palatalize the last two letters, then the last letter. None of the outputs from the first rsub() will be
+	-- affected by the second rsub().
+	word = rsub(word, "(..)$", export.first_palatalization_map)
+	return rsub(word, "(.)$", export.first_palatalization_map)
 end
 
 
-function export.apply_second_palatalization(word, is_adjective)
-	local try = make_try(word)
-	return
-		try("ch", "š") or
-		try("[hg]", "z") or
-		try("rr", "ř") or
-		try("r", "ř") or
-		is_adjective and try("sk", "št") or
-		is_adjective and try("ck", "čt") or
-		try("k", "c") or
-		word
+local lc_second_palatalization_map = {
+	-- [h]: zloduh -> nom pl (and voc pl?) zlòdusi, dat/loc/ins pl zlòdusima; ovrha -> dat/loc sg ȍvrsi
+	["h"] = "š",
+	["х"] = "ш",
+	-- [k]: junak -> nom pl junáci, voc pl jȕnāci, dat/loc/ins pl junácima; majka -> dat/loc sg mȃjci
+	["k"] = "č",
+	["к"] = "ч",
+	-- [g]: strateg -> nom pl (and voc pl?) stràtezi, dat/loc/ins pl stràtezima; jaruga -> dat/loc sg jàruzi
+	["g"] = "ž",
+	["г"] = "ж",
+}
+export.second_palatalization_map = add_uppercase_mappings(lc_second_palatalization_map)
+
+function export.apply_second_palatalization(word)
+	-- Try to palatalize the last two letters, then the last letter. None of the outputs from the first rsub() will be
+	-- affected by the second rsub().
+	--
+	-- FIXME: With certain clusters, unpalatalized outputs are possible or required:
+	-- čk -> čc or čk: mačka -> mȁčci or mȁčki
+	-- sk -> sc or sk: guska -> gȕsci or gȕski
+	-- šk -> šc or šk: puška -> pȕšci or pȕški
+	-- tk -> c or tc or tk: krletka -> kr̀lēci (kr̀lētci is also allowed) or kr̀lētki
+	-- ck -> ck only: kocka -> kȍcki
+	-- zg -> zg only: mazga -> màzgi
+	-- sh -> sh only: pasha -> pȁshi
+	-- We need to figure out where to handle this.
+	word = rsub(word, "(..)$", export.second_palatalization_map)
+	return rsub(word, "(.)$", export.second_palatalization_map)
 end
 
 
