@@ -16,6 +16,11 @@ local function escape_wikicode(...)
 	return escape_wikicode(...)
 end
 
+local function extend(...)
+	extend = require(table_module).extend
+	return extend(...)
+end
+
 local function get_lang(...)
 	get_lang = require(languages_module).getByCode
 	return get_lang(...)
@@ -91,17 +96,27 @@ local optional_param_mods = {
 	gloss = {},
 	pos = {},
 	lit = {},
+	-- FIXME, these should be renamed in the headword code to `tr` and `ts`.
 	tr = {item_dest = "translit"},
 	ts = {item_dest = "transcription"},
 	face = {},
 	nolinkinfl = {type = "boolean"},
 }
 
+local optional_headword_param_mods = {
+	sc = {type = "script"},
+	tr = {},
+	ts = {},
+}
+
 
 --[==[
-Parse a single inflection form that may have inline modifiers attached. `data` is an object with the following fields:
+Parse a single inflection or headword form or list of such forms. In either case, inline modifiers may be attached.
+`data` is an object with the following fields:
 * `val`: The raw value to parse. Required.
 * `paramname`: The name of the parameter from which the value was taken; used in error messages. Required.
+* `is_head`: We are parsing a headword parameter (a value which goes into the `heads` field of `data`). This changes
+  the allowed modifiers and (in the case of `tr` and `ts`) the names of the destination fields.
 * `frob`: An optional function of one value to apply to the form after inline modifiers have been removed (i.e. to
   apply to the `.term` field of the returned object).
 * `include_mods`: List of extra inline modifiers to include, besides the default ones (see below). Each list item is
@@ -109,8 +124,15 @@ Parse a single inflection form that may have inline modifiers attached. `data` i
   list of modifier name and modifier spec, where the spec should follow the syntax for modifier specs in
   `parse_inline_modifiers` in [[Module:parse utilities]].
 * `exclude_mods`: List of default inline modifiers to not include.
+* `splitchar`: If specified, the value in `val` can be a list of forms to parse, separated by the value of `splitchar`
+  (which is a Lua pattern, as in `parse_inline_modifiers` in [[Module:parse utilities]]). Most commonly, `splitchar` is
+  a single comma and the values are comma-separated (in this case, splitting will not happen if a space follows the
+  comma).
+* `preserve_splitchar`, `delimiter_key`, `escape_fun`, `unescape_fun`, `pre_normalize_modifiers`: As in
+  `parse_inline_modifiers` in [[Module:parse utilities]].
 Returns an object suitable for storing as one element of one of the lists in `headdata.inflections`, where `headdata`
-is the structure passed to [[Module:headword]].
+is the structure passed to [[Module:headword]]. If `splitchar` is specified, howeve, the return value is a list of such
+objects.
 
 The following default inline modifiers are currently recognized:
 * `q`: Left qualifier.
@@ -145,11 +167,19 @@ function export.parse_term_with_modifiers(data)
 
 	-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude top-level HTML entry with <span ...>,
 	-- <sup> or similar in it.
-	if val:find("<", nil, true) and not term_contains_top_level_html(val) then
+	if (val:find("<", nil, true) or data.splitchar) and not term_contains_top_level_html(val) then
 		local param_mods = param_mods
-		if data.include_mods or data.exclude_mods then
+		if data.is_head then
 			param_mods = shallow_copy(param_mods)
+			param_mods.id = nil
+		end
+		if data.include_mods or data.exclude_mods then
+			if not data.is_head then
+				-- already copied when data.is_head
+				param_mods = shallow_copy(param_mods)
+			end
 			if data.include_mods then
+				local optional_mods = data.is_head and optional_headword_param_mods or optional_param_mods
 				for _, mod in ipairs(data.include_mods) do
 					if type(mod) == "table" then
 						if #mod ~= 2 then
@@ -158,11 +188,11 @@ function export.parse_term_with_modifiers(data)
 						end
 						local modkey, modvalue = unpack(mod)
 						param_mods[modkey] = modvalue
-					elseif not optional_param_mods[mod] then
+					elseif not optional_mods[mod] then
 						error(("Internal error: Unrecognized modifier spec %s in `include_mods`"):format(
 							dump(mod)))
 					else
-						param_mods[mod] = optional_param_mods[mod]
+						param_mods[mod] = optional_mods[mod]
 					end
 				end
 			end
@@ -182,9 +212,19 @@ function export.parse_term_with_modifiers(data)
 			paramname = paramname,
 			param_mods = param_mods,
 			generate_obj = generate_obj,
+			splitchar = data.splitchar,
+			preserve_splitchar = data.preserve_splitchar,
+			delimiter_key = data.delimiter_key,
+			escape_fun = data.escape_fun,
+			unescape_fun = data.unescape_fun,
+			pre_normalize_modifiers = data.pre_normalize_modifiers,
 		})
 	else
-		return generate_obj(val)
+		local retval = generate_obj(val)
+		if data.splitchar then
+			retval = {retval}
+		end
+		return retval
 	end
 end
 
@@ -198,7 +238,9 @@ Parse a list of inflection forms that may have inline modifiers attached. `data`
   parameter index goes. Required.
 * `qualifiers`: If specified, a possibly gappy list of left qualifiers to add to the parsed terms (for compatibility
   purposes).
-* `frob`, `include_mods`, `exclude_mods`: As in `parse_term_with_modifiers()`.
+* `splitchar`: As in `parse_term_with_modifiers()`. The resulting per-term lists will be flattened.
+* `frob`, `include_mods`, `exclude_mods`, `is_head`, `preserve_splitchar`, `delimiter_key`, `escape_fun`,
+  `unescape_fun`, `pre_normalize_modifiers`: As in `parse_term_with_modifiers()`.
 Returns a list of objects, suitable for storing as one of the lists in `headdata.inflections` (once a label is added),
 where `headdata` is the structure passed to [[Module:headword]].
 ]==]
@@ -214,17 +256,19 @@ function export.parse_term_list_with_modifiers(data)
 		restpref = paramname
 	end
 	local terms = {}
+	data = shallow_copy(data)
 	for i, val in ipairs(forms) do
-		terms[i] = export.parse_term_with_modifiers {
-			paramname = i == 1 and first or type(restpref) == "number" and restpref + i - 1 or
-				restpref:find("\1", nil, true) and restpref:gsub("\1", tostring(i)) or restpref .. i,
-			val = val,
-			frob = data.frob,
-			include_mods = data.include_mods,
-			exclude_mods = data.exclude_mods,
-		}
+		data.paramname = i == 1 and first or type(restpref) == "number" and restpref + i - 1 or
+			restpref:find("\1", nil, true) and restpref:gsub("\1", tostring(i)) or restpref .. i
+		data.val = val
+		local parsed = export.parse_term_with_modifiers(data)
 		if qualifiers and qualifiers[i] then
-			terms[i].q = {qualifiers[i]}
+			parsed.q = {qualifiers[i]}
+		end
+		if data.splitchar then
+			extend(terms, parsed)
+		else
+			terms[i] = parsed
 		end
 	end
 	return terms
@@ -314,9 +358,10 @@ significant additional processing) into `headdata.inflections`. `data` is an obj
 * `forms`: The list of raw values to parse. If {nil} or omitted, nothing happens.
 * `headdata`: The headword structure passed to [[Module:headword]]. Required.
 * `paramname`: As in `parse_term_list_with_modifiers()`. Required.
-* `qualifiers`, `frob`, `include_mods`, `exclude_mods`: As in `parse_term_list_with_modifiers()`.
 * `label`: As in `insert_inflection()`. Required.
-* `accel`, `check_missing`, `lang, `plpos`: As in `insert_inflection()`.
+* `qualifiers`, `frob`, `include_mods`, `exclude_mods`, `is_head`, `splitchar`, `preserve_splitchar`, `delimiter_key`,
+  `escape_fun`, `unescape_fun`, `pre_normalize_modifiers`: As in `parse_term_list_with_modifiers()`.
+* `accel`, `check_missing`, `lang`, `plpos`: As in `insert_inflection()`.
 ]==]
 function export.parse_and_insert_inflection(data)
 	local forms = data.forms
