@@ -481,7 +481,7 @@ Comments about axes of variation:
 	  (trézan in Serbia), túžan (stem tužn-) "sad", vjéran (stem vjern-) "faithful, loyal" (véran in Serbia),
 	  vlástan (stem vlasn-) "powerful, with authority", vrijédan (stem vrijedn-) "precious; diligent; worthy" (vrédan in
 	  Serbia), zlátan (stem zlatn-) "golden", znójan (stem znojn-) "sweaty", zráčan (stem zračn-)
-	  "airy; air (relational)", zvúčan (sten zvučn-)
+	  "airy; air (relational)", zvúčan (stem zvučn-)
 	  "resonant, loud; well-known; voiced (of a sound); sound (relational)". Only the following have the žȇdan-type
 	  variation: bȗdan, dijȇlan, drijȇman, glȃdan, gȏrak, gȓdan, hȃran, hlȃdan, hrȃbar, hȗdan, hȗlan, krȃtak, krȗpan,
 	  kvȃran, mȃstan, mlȃčan, mrȃčan, mȓsan, mȗtan, plȋtak, prȃšan, prȃzan, rȃvan, rijȇdak, rȗžan, sjȃjan, slȃstan,
