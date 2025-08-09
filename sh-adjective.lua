@@ -28,6 +28,10 @@ local m_table = require("Module:table")
 local m_string_utilities = require("Module:string utilities")
 local iut = require("Module:inflection utilities")
 local com = require("Module:sh-common")
+local AC = com.AC
+local GR = com.GR
+local DOUBLEGR = com.DOUBLEGR
+local INVBREVE = com.INVBREVE
 
 local current_title = mw.title.getCurrentTitle()
 local NAMESPACE = current_title.nsText
@@ -45,39 +49,164 @@ local uupper = m_string_utilities.upper
 local insert = table.insert
 local concat = table.concat
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+local dump = mw.dumpObject
+local format = string.format
+
+
+local force_cat = false -- set to true to make categories appear in non-mainspace pages, for testing
+
+local SUB_ESCAPED_PERIOD = u(0xFFF0)
+local SUB_ESCAPED_COMMA = u(0xFFF1)
 
 
 -- version of rsubn() that discards all but the first return value
-local function rsub(term, foo, bar)
-	local retval = rsubn(term, foo, bar)
-	return retval
+local rsub = com.rsub
+local usererr = com.usererr
+local interr = com.interr
+
+
+local function track(track_id)
+	require("Module:debug/track")("sh-adjective/" .. track_id)
+	return true
 end
 
 
--- version of rsubn() that returns a 2nd argument boolean indicating whether
--- a substitution was made.
-local function rsubb(term, foo, bar)
-	local retval, nsubs = rsubn(term, foo, bar)
-	return retval, nsubs > 0
-end
-
-
--- Construct the "reduced" version of a stem. This removes an е or ъ followed by a word-final
--- consonant, stresses the final syllable of the result if necessary, and converts бое́ц into бо́йц- and бо́як into бо́йк-.
--- An error is thrown if the stem can't be reduced.
-local function reduce_stem(stem)
-	local vowel_ending_stem, final_cons = rmatch(stem, "^(.*" .. com.vowel_c .. AC .. "?)[ея]́?(" .. com.cons_c .. ")$")
-	if vowel_ending_stem then
-		-- бое́ц etc.
-		return com.maybe_stress_final_syllable(vowel_ending_stem .. "й" .. final_cons)
+local function make_quoted_list(list)
+	local quoted_list = {}
+	for _, item in ipairs(list) do
+		table.insert(quoted_list, "'" .. item .. "'")
 	end
-	local initial_stem, final_cons = rmatch(stem, "^(.*)[еъ]́?(" .. com.cons_c .. ")$")
-	if initial_stem then
-		return com.maybe_stress_final_syllable(initial_stem .. final_cons)
-	end
-	error("Unable to reduce stem: '" .. stem .. "'")
+	return mw.text.listToText(quoted_list)
 end
 
+
+local function make_quoted_keys(dict)
+	local quoted_list = {}
+	for key, _ in pairs(dict) do
+		table.insert(quoted_list, "'" .. key .. "'")
+	end
+	table.sort(quoted_list)
+	return mw.text.listToText(quoted_list)
+end
+
+
+local function make_quoted_slot_list(slot_list)
+	local quoted_list = {}
+	for _, slot_accel in ipairs(slot_list) do
+		local slot, accel = unpack(slot_accel)
+		table.insert(quoted_list, "'" .. slot .. "'")
+	end
+	return mw.text.listToText(quoted_list)
+end
+
+
+local potential_lemma_slots = {
+	"str_nom_m",
+	"str_nom_mp", -- for plural-only numerals and such
+	"wk_nom_m", -- for weak-only adjectives
+	"comp_wk_nom_m", -- for adjectives existing only in comparative and superlative forms
+	"sup_str_nom_m", -- for adjectives existing only in superlative forms
+	"sup_wk_nom_m", -- for adjectives existing only in superlative weak forms (e.g. [[einasti]])
+}
+
+local compsup_degrees = {
+	{"pos", "Positive"},
+	{"comp", "Comparative"},
+	{"sup", "Superlative"},
+}
+
+-- Export some of these below for use by [[Module:is-noun]].
+
+export.overridable_stems = {
+	"stem",
+	"vstem",
+	-- "imutval", FIXME: do we need this?
+}
+
+export.overridable_stem_set = m_table.listToSet(export.overridable_stems)
+
+export.control_specs = {
+	"umut",
+	"con",
+	"j",
+	"v",
+	"pp",
+	"ppdent",
+}
+
+export.control_spec_set = m_table.listToSet(export.control_specs)
+
+export.boolean_property_set = m_table.listToSet {
+	"builtin", "2tone", "3tone", "def_vàr", "indef_vȃr", "indecl", "decl?", "pred", "comp?"
+}
+
+local function slot_to_degfield(slot)
+	local degfield = slot:match("^(comp)_")
+	if not degfield then
+		degfield = slot:match("^(sup)_")
+	end
+	return degfield or "pos"
+end
+
+
+local function degfield_to_slot_prefix(degfield)
+	if degfield == "pos" then
+		return ""
+	else
+		return degfield .. "_"
+	end
+end
+
+local strong_adjective_slots = {
+	{"str_nom_m", "str|nom|m|s"},
+	{"str_nom_f", "str|nom|f|s"},
+	{"str_nom_n", "str|nom//acc|n|s"},
+	{"str_acc_m", "str|acc|m|s"},
+	{"str_acc_f", "str|acc|f|s"},
+	{"str_dat_m", "str|dat|m|s"},
+	{"str_dat_f", "str|dat|f|s"},
+	{"str_dat_n", "str|dat|n|s"},
+	{"str_gen_m", "str|gen|m|s"},
+	{"str_gen_f", "str|gen|f|s"},
+	{"str_gen_n", "str|gen|n|s"},
+	{"str_nom_mp", "str|nom|m|p"},
+	{"str_nom_fp", "str|nom//acc|f|p"},
+	{"str_nom_np", "str|nom//acc|n|p"},
+	{"str_acc_mp", "str|acc|m|p"},
+	{"str_gen_p", "str|gen|p"},
+	{"str_dat_p", "str|dat|p"},
+}
+
+local weak_adjective_slots = {
+	{"wk_nom_m", "wk|nom|m|s"},
+	{"wk_nom_f", "wk|nom|f|s"},
+	{"wk_n", "wk|n|s"},
+	{"wk_obl_m", "wk|acc//dat//gen|m|s"},
+	{"wk_obl_f", "wk|acc//dat//gen|f|s"},
+	{"wk_p", "wk|p"},
+}
+
+-- Abbreviations for use in addnote specs and overrides. Key is the abbreviation, value is a Lua pattern matching the
+-- slots to select, or a list of such patterns. Patterns are anchored at both ends.
+local adjective_slot_abbrs = {
+	wk_m = "wk_.*m",
+	wk_f = "wk_.*f",
+	comp_wk_m = "comp_wk_.*m",
+	comp_wk_f = "comp_.*f",
+	sup_wk_m = "sup_wk_.*m",
+	sup_wk_f = "sup_.*_f",
+	str_s = "str_.*[mfn]",
+	wk_s = "wk_.*[mfn]",
+	str_p = "str_.*p",
+	comp_wk_s = "comp_wk_.*[mfn]",
+	sup_str_s = "sup_str_.*[mfn]",
+	sup_wk_s = "sup_wk_.*[mfn]",
+	sup_str_p = "sup_str_.*p",
+	wk = "wk_.*",
+	str = "str_.*",
+	sup_wk = "sup_wk_.*",
+	sup_str = "sup_str_.*",
+}
 
 --[=[
 -- All slots that are used by any of the different tables. The key is the slot and the value is a list of the tables
@@ -190,8 +319,8 @@ local function add(base, slot, degree, props, endings)
 	if not endings then
 		return
 	end
-	-- Call skip_slot() based on the declined number and state.
-	if skip_slot(degree.number, degree.state, slot) then
+	-- Call skip_slot() based on the declined number and definiteness.
+	if skip_slot(degree.number, degree.definiteness, slot) then
 		return
 	end
 	if type(endings) == "string" then
@@ -211,86 +340,21 @@ local function add(base, slot, degree, props, endings)
 		if ending == "-" then
 			return
 		end
-		local function interr(msg)
-			error(("Internal error: For lemma '%s', slot '%s%s', ending '%s', %s: %s"):format(degree.lemma, slot_prefix,
-				slot, ending, msg, dump(base)))
+		local function interr_add(msg)
+			interr("For lemma %s, slot %s, ending %s, %s: %s", degree.lemma, slot_prefix .. slot, ending, msg, base)
 		end
-
-		-- Compute whether i-mutation or u-mutation is in effect, and compute the "mutation footnotes", which are
-		-- footnotes attached to a mutation-related indicator and which may need to be added even if no mutation is
-		-- in effect (specifically when dealing with an ending that would trigger a mutation if in effect). AFAIK
-		-- you cannot have both mutations in effect at once, and i-mutation overrides u-mutation if both would be in
-		-- effect.
-
-		-- Double ^^ at the beginning indicates that the u-mutated version should apply. (Single ^ would indicate that
-		-- i-mutation should apply, but it doesn't seem relevant to adjectives.)
-		local explicit_umut
-		ending, explicit_umut = rsubb(ending, "^%^%^", "")
-		local is_vowel_ending = rfind(ending, "^" .. com.vowel_c)
-		local mut_in_effect, mut_not_in_effect, mut_footnotes
-		local ending_in_i = not not ending:find("^i")
-		local ending_in_u = not not ending:find("^u")
-		if explicit_umut then
-			mut_in_effect = "u"
-		else
-			if ending_in_u and not mut_in_effect then
-				mut_in_effect = "u"
-				-- umut and uUmut footnotes are incorporated into the appropriate umut_* stems
-			end
-		end
-
-		local ending_was_asterisk = ending == "*"
 
 		-- Now compute the appropriate stem to which the ending is added.
 		local stem_in_effect
 
-		-- Careful with the following logic; it is written carefully and should not be changed without a thorough
-		-- understanding of its functioning.
-		local has_umut = mut_in_effect == "u"
-		-- If the stem is still unset, then use the vowel or non-vowel stem if available. When u-mutation is active, we
-		-- first check for the u-mutated version of the vowel or non-vowel stem before falling back to the regular vowel
-		-- or non-vowel stem. Note that an expression like `has_umut and props.umut_vstem or props.vstem` here is NOT
-		-- equivalent to an if-else or ternary operator expression because if `has_umut` is true and `umut_vstem` is
-		-- missing, it will still fall back to `vstem` (which is what we want).
-		if not stem_in_effect then
-			if is_vowel_ending then
-				stem_in_effect = has_umut and props.umut_vstem or props.vstem
-			else
-				stem_in_effect = has_umut and props.umut_nonvstem or props.nonvstem
-			end
-		end
-		-- Finally, fall back to the basic stem, which is always defined.
-		stem_in_effect = stem_in_effect or props.stem
-
-		-- If the ending is "*", it means to use the lemma as the form directly rather than try to construct the form
-		-- from a stem and ending. We need to do this for the lemma slot and especially for the nominative singular,
-		-- because we don't have the nominative singular ending available and it may vary (e.g. it may be -ur, -l, -n,
-		-- etc. especially in the masculine). Not trying to construct the form from stem + ending also avoids
-		-- complications from the nominative singular in -ur, which exceptionally does not trigger u-mutation.
-
-		-- Finally, if there is a footnote associated with the computed stem in effect, we need to preserve it.
-		if ending == "*" then
-			local stem_in_effect_footnotes
-			if type(stem_in_effect) == "table" then
-				stem_in_effect_footnotes = stem_in_effect.footnotes
-			end
-			stem_in_effect = iut.combine_form_and_footnotes(degree.actual_lemma, stem_in_effect_footnotes)
-			ending = ""
-		end
-
-		local infix, infix_footnotes
-		-- Compute the infix (j, v or nothing) that goes between the stem and ending.
-		if is_vowel_ending then
-			if props.vinfix and props.jinfix then
-				interr("Can't have specifications for both '.vinfix' and '.jinfix'; should have been caught above")
-			end
-			if props.vinfix then
-				infix = props.vinfix
-				infix_footnotes = props.vinfix_footnotes
-			elseif props.jinfix and not ending_in_i then
-				infix = props.jinfix
-				infix_footnotes = props.jinfix_footnotes
-			end
+		if slot:find("^def_") then
+			stem_in_effect = props.def_stem
+		elseif slot == "indef_nom_m" or slot == "indef_acc_m_in" then
+			stem_in_effect = props.lemma_stem
+		elseif slot == "indef_nom_n" or slot == "indef_acc_n" then
+			stem_in_effect = props.indef_neut_stem
+		else
+			stem_in_effect = props.indef_stem
 		end
 
 		-- If base-level footnotes or degree-level footnotes specified, they go before any stem footnotes, so we
@@ -311,61 +375,11 @@ local function add(base, slot, degree, props, endings)
 		local ending_is_full
 		ending, ending_is_full = rsubb(ending, "^!", "")
 
-		local function combine_stem_ending(stem, ending)
-			if stem == "?" then
-				return "?"
-			end
-			local stem_with_infix = ending_is_full and "" or stem .. (infix or "")
-			-- An initial s- of the ending drops after a cluster of cons + s (including written <x>).
-			if ending:find("^s") and (stem_with_infix:find("x$") or rfind(stem_with_infix, com.cons_c .. "s$")) then
-				ending = ending:sub(2)
-			elseif ending:find("^r") then
-				if degree.assimilate_r then
-					local stem_butlast, stem_last = stem_with_infix:match("^(.*)([ln])$")
-					if stem_last then
-						ending = stem_last .. ending:sub(2)
-					end
-				elseif degree.double_r_and_t then
-					ending = "r" .. ending
-				elseif rfind(stem_with_infix, com.cons_c .. "r$") then
-					ending = ending:sub(2)
-				end
-			elseif ending == "t" then
-				if degree.double_r_and_t then
-					ending = "tt"
-				elseif stem_with_infix:find("dd$") then
-					stem_with_infix = stem_with_infix:gsub("dd$", "t")
-				else
-					local stem_butlast, stem_last = rmatch(stem_with_infix, "^(.*" .. com.cons_c .. ")([dðt])$")
-					if stem_butlast then
-						stem_with_infix = stem_butlast
-					else
-						stem_butlast = stem_with_infix:match("^(.*)ð$")
-						if stem_butlast then
-							if props.pp then
-								stem_with_infix = stem_butlast
-								ending = "ð"
-							else
-								stem_with_infix = stem_butlast .. "t"
-							end
-						elseif degree.inn then
-							stem_butlast = stem_with_infix:match("^(.*)n$")
-							if stem_butlast then
-								stem_with_infix = stem_butlast
-								ending = "ð"
-							end
-						end
-					end
-				end
-			end
-			return stem_with_infix .. ending
-		end
-
 		local combined_footnotes = iut.combine_footnotes(iut.combine_footnotes(mut_footnotes, infix_footnotes),
 			ending_footnotes)
 		local ending_with_notes = iut.combine_form_and_footnotes(ending, combined_footnotes)
 		if not stem_in_effect then
-			interr("stem_in_effect is nil")
+			interr_add("stem_in_effect is nil")
 		end
 		iut.add_forms(base.forms, slot_prefix .. slot, stem_in_effect, ending_with_notes, combine_stem_ending)
 	end
@@ -522,7 +536,7 @@ local function add_normal_decl(base, stems,
 	if stems then
 		stems = iut.combine_form_and_footnotes(stems, footnote)
 	end
-	add(base, "indef_nom_m", stems, "*")
+	add(base, "indef_nom_m", stems, "")
 	add(base, "def_nom_m", stems, def_nom_m)
 	add(base, "indef_nom_f", stems, indef_nom_f)
 	add(base, "def_nom_f", stems, def_nom_f)
@@ -550,7 +564,7 @@ local function add_normal_decl(base, stems,
 	add(base, "def_dat_n", stems, def_dat_mn)
 	add(base, "indef_dat_p", stems, dat_p)
 	add(base, "def_dat_p", stems, dat_p)
-	add(base, "indef_acc_m_in", stems, "*")
+	add(base, "indef_acc_m_in", stems, "")
 	add(base, "indef_acc_m_an", stems, indef_gen_mn)
 	add(base, "def_acc_m_in", stems, def_nom_m)
 	add(base, "def_acc_m_an", stems, def_gen_mn)
@@ -627,101 +641,6 @@ decls["normal-Cyrl"] = function(base, props)
 		"у", {"о̄м", "о̄му"}, "о̄ј",
 	)
 end
-
-}}
-{{sh-decl-adj-1
-|title=comparative forms
-|nsm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}и | {{{3}}}i}}
-|nsf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}а | {{{3}}}a}}
-|nsn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}} | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}}}
-|gsm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}г(а) | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}g(a)}}
-|gsn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}г(а) | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}g(a)}}
-|gsf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}е | {{{3}}}e}}
-|dsm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м(у{{#ifeq: {{{4}}}|о|/е|}}) | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m(u{{#ifeq:{{{4}}}|o|/e|}})}}
-|dsn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м(у{{#ifeq:{{{4}}}|о|/е|}}) | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m(u{{ #ifeq:{{{4}}}|o|/e|}})}}
-|dsf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}ој | {{{3}}}oj}}
-|asm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}и<br>{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}г(а) | {{{3}}}i<br>{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}g(a)}}
-|asn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}} | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}}}
-|asf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}у | {{{3}}}u}}
-|vsm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}и | {{{3}}}i}}
-|vsf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}а | {{{3}}}a}}
-|vsn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}} | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}}}
-|lsm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м({{#ifeq:{{{4}}}|о|е/|}}у) | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m({{#ifeq:{{{4}}}|o|e/|}}u)}}
-|lsn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м({{#ifeq:{{{4}}}|о|е/|}}у) | {{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m({{ #ifeq: {{{4}}} | o | e/ | }}u)}}
-|lsf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}ој | {{{3}}}oj}}
-|ism={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им | {{{3}}}im}}
-|isn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им | {{{3}}}im}}
-|isf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}ом | {{{3}}}om}}
-|npm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}и | {{{3}}}i}}
-|npf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}е | {{{3}}}e}}
-|npn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}а | {{{3}}}a}}
-|gpm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}их | {{{3}}}ih}}
-|gpf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}их | {{{3}}}ih}}
-|gpn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}их | {{{3}}}ih}}
-|dpm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|dpf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|dpn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|apm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}е | {{{3}}}e}}
-|apf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}е | {{{3}}}e}}
-|apn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}а | {{{3}}}a}}
-|vpm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}и | {{{3}}}i}}
-|vpf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}е | {{{3}}}e}}
-|vpn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}а | {{{3}}}a}}
-|lpm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|lpf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|lpn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|ipm={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|ipf={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|ipn={{ #ifeq: {{{sc}}} | Cyrl | {{{3}}}им(а) | {{{3}}}im(a)}}
-|sc={{{sc|Latn}}}
-}}
-{{sh-decl-adj-1
-|title=superlative forms
-|nsm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}и | naj{{{3}}}i}}
-|nsf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}а | naj{{{3}}}a}}
-|nsn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}} | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}}}
-|gsm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}г(а) | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}g(a)}}
-|gsn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}г(а) | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}g(a)}}
-|gsf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}е | naj{{{3}}}e}}
-|dsm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м(у{{#ifeq: {{{4}}}|о|/е|}}) | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m(u{{#ifeq:{{{4}}}|o|/e|}})}}
-|dsn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м(у{{#ifeq:{{{4}}}|о|/е|}}) | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m(u{{ #ifeq:{{{4}}}|o|/e|}})}}
-|dsf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}ој | naj{{{3}}}oj}}
-|asm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}и<br>нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}г(а) | naj{{{3}}}i<br>naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}g(a)}}
-|asn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}} | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}}}
-|asf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}у | naj{{{3}}}u}}
-|vsm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}и | naj{{{3}}}i}}
-|vsf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}а | naj{{{3}}}a}}
-|vsn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}} | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}}}
-|lsm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м({{#ifeq:{{{4}}}|о|е/|}}у) | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m({{#ifeq:{{{4}}}|o|e/|}}u)}}
-|lsn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}{{#ifeq: {{{4|о}}}|о|о|е}}м({{#ifeq:{{{4}}}|о|е/|}}у) | naj{{{3}}}{{#ifeq: {{{4|o}}}|o|o|e}}m({{ #ifeq: {{{4}}} | o | e/ | }}u)}}
-|lsf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}ој | naj{{{3}}}oj}}
-|ism={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им | naj{{{3}}}im}}
-|isn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им | naj{{{3}}}im}}
-|isf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}ом | naj{{{3}}}om}}
-|npm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}и | naj{{{3}}}i}}
-|npf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}е | naj{{{3}}}e}}
-|npn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}а | naj{{{3}}}a}}
-|gpm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}их | naj{{{3}}}ih}}
-|gpf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}их | naj{{{3}}}ih}}
-|gpn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}их | naj{{{3}}}ih}}
-|dpm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|dpf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|dpn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|apm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}е | naj{{{3}}}e}}
-|apf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}е | naj{{{3}}}e}}
-|apn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}а | naj{{{3}}}a}}
-|vpm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}и | naj{{{3}}}i}}
-|vpf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}е | naj{{{3}}}e}}
-|vpn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}а | naj{{{3}}}a}}
-|lpm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|lpf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|lpn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|ipm={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|ipf={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|ipn={{ #ifeq: {{{sc}}} | Cyrl | нај{{{3}}}им(а) | naj{{{3}}}im(a)}}
-|sc={{{sc|Latn}}}
-}}<noinclude>
-[[Category:Serbo-Croatian adjective inflection-table templates|adj]]</noinclude>
 
 decls["normal"] = function(base)
 	local stem, suffix
@@ -1012,11 +931,141 @@ decls["irreg"] = function(base)
 end
 
 
-local function fetch_footnotes(separated_group)
+-- Return the lemmas for this term. The return value is a list of {form = FORM, footnotes = FOOTNOTES}.
+-- If `linked_variant` is given, return the linked variants (with embedded links if specified that way by the user),
+-- otherwies return variants with any embedded links removed. If `remove_footnotes` is given, remove any
+-- footnotes attached to the lemmas.
+function export.get_lemmas(alternant_multiword_spec, linked_variant, remove_footnotes)
+	local slots_to_fetch = potential_lemma_slots
+	local linked_suf = linked_variant and "_linked" or ""
+	for _, slot in ipairs(slots_to_fetch) do
+		if alternant_multiword_spec.forms[slot .. linked_suf] then
+			local lemmas = alternant_multiword_spec.forms[slot .. linked_suf]
+			if remove_footnotes then
+				local lemmas_no_footnotes = {}
+				for _, lemma in ipairs(lemmas) do
+					table.insert(lemmas_no_footnotes, {form = lemma.form})
+				end
+				return lemmas_no_footnotes
+			else
+				return lemmas
+			end
+		end
+	end
+	return {}
+end
+
+
+local function handle_derived_slots_and_overrides(base)
+	-- Process slot overrides: First slots specified after the gender, then individual slot overrides specified as
+	-- separate indicators.
+	process_slot_overrides(base)
+
+	-- Compute linked versions of potential lemma slots, for use in {{sh-noun}}.  We substitute the original lemma
+	-- (before removing links) for forms that are the same as the lemma, if the original lemma has links.
+	for _, slot in ipairs(potential_lemma_slots) do
+		iut.insert_forms(base.forms, slot .. "_linked", iut.map_forms(base.forms[slot], function(form)
+			if form == base.orig_lemma_no_links and base.orig_lemma:find("%[%[") then
+				return base.orig_lemma
+			else
+				return form
+			end
+		end))
+	end
+end
+
+
+-- Process specs given by the user using 'addnote[SLOTSPEC][FOOTNOTE][FOOTNOTE][...]'.
+local function process_addnote_specs(base)
+	for _, spec in ipairs(base.addnote_specs) do
+		local function do_one(slot_spec)
+			slot_spec = "^" .. slot_spec .. "$"
+			for slot, forms in pairs(base.forms) do
+				if rfind(slot, slot_spec) then
+					-- To save on memory, side-effect the existing forms.
+					for _, form in ipairs(forms) do
+						form.footnotes = iut.combine_footnotes(form.footnotes, spec.footnotes)
+					end
+				end
+			end
+		end
+	
+		for _, slot_spec in ipairs(spec.slot_specs) do
+			slot_spec = adjective_slot_abbrs[slot_spec] or slot_spec
+			if type(slot_spec) == "table" then
+				for _, ss in ipairs(slot_spec) do
+					do_one(ss)
+				end
+			else
+				do_one(slot_spec)
+			end
+		end
+	end
+end
+
+
+-- Map `fn` over all override specs in `override_list`. `fn` is passed two items (the slot and form object of the
+-- override), which it can mutate if needed. If it ever returns non-nil, mapping stops and that value is returned
+-- as the return value of `map_override`; otherwise mapping runs to completion and nil is returned.
+local function map_override(slot, override_list, fn)
+	for _, formobj in ipairs(override_list) do
+		local retval = fn(slot, formobj)
+		if retval ~= nil then
+			return retval
+		end
+	end
+	return nil
+end
+
+
+-- Map `fn` over all override specs in `base.overrides` and the positive/comparative/superlative specs. `fn` is passed
+-- two items (the slot and form object of the override), which it can mutate if needed. If it ever returns non-nil,
+-- mapping stops and that value is returned as the return value of `map_all_overrides`; otherwise mapping runs to
+-- completion and nil is returned.
+local function map_all_overrides(base, fn)
+	for slot, override in pairs(base.overrides) do
+		local retval = map_override(slot, override, fn)
+		if retval ~= nil then
+			return retval
+		end
+	end
+	for _, degspec in ipairs(compsup_degrees) do
+		local degfield, desc = unpack(degspec)
+		local field = degfield .. "spec"
+		if base[field] then
+			local retval = map_override(field, base[field], fn)
+			if retval ~= nil then
+				return retval
+			end
+		end
+	end
+	return nil
+end
+
+
+-- Like put.split_alternating_runs_and_strip_spaces(), but ensure that backslash-escaped commas and periods are not
+-- treated as separators.
+local function split_alternating_runs_with_escapes(segments, splitchar)
+	for i, segment in ipairs(segments) do
+		segment = rsub(segment, "\\,", SUB_ESCAPED_COMMA)
+		segments[i] = rsub(segment, "\\%.", SUB_ESCAPED_PERIOD)
+	end
+	local separated_groups = put.split_alternating_runs_and_strip_spaces(segments, splitchar)
+	for _, separated_group in ipairs(separated_groups) do
+		for i, segment in ipairs(separated_group) do
+			segment = rsub(segment, SUB_ESCAPED_COMMA, ",")
+			separated_group[i] = rsub(segment, SUB_ESCAPED_PERIOD, ".")
+		end
+	end
+	return separated_groups
+end
+
+
+local function fetch_footnotes(separated_group, parse_err)
 	local footnotes
 	for j = 2, #separated_group - 1, 2 do
 		if separated_group[j + 1] ~= "" then
-			error("Extraneous text after bracketed footnotes: '" .. table.concat(separated_group) .. "'")
+			parse_err("Extraneous text after bracketed footnotes: '" .. table.concat(separated_group) .. "'")
 		end
 		if not footnotes then
 			footnotes = {}
@@ -1027,178 +1076,1474 @@ local function fetch_footnotes(separated_group)
 end
 
 
-local function parse_indicator_spec(angle_bracket_spec)
-	local inside = rmatch(angle_bracket_spec, "^<(.*)>$")
-	assert(inside)
-	local base = {forms = {}}
-	if inside ~= "" then
-		local parts = rsplit(inside, ".", true)
-		for _, part in ipairs(parts) do
-			if part == "irreg" then
-				base.irreg = true
-			elseif part == "short" then
-				base.short = {{
-					base = {
-						form = "+",
-					},
-					stem = {
-						form = "+",
-					}
-				}}
-			elseif rfind(part, "^short:") then
-				part = rsub(part, "^short:%s*", "")
-				base.short = {}
-				local segments = iut.parse_balanced_segment_run(part, "[", "]")
-				local comma_separated_groups = iut.split_alternating_runs(segments, "%s*,%s*")
-				for _, comma_separated_group in ipairs(comma_separated_groups) do
-					if comma_separated_group[1] == "*" then
-						-- reducible
-						table.insert(base.short, {
-							base = {
-								form = "*",
-								footnotes = fetch_footnotes(comma_separated_group),
-							},
-							stem = {
-								form = "*",
-								footnotes = fetch_footnotes(comma_separated_group),
-							}
-						})
-					else
-						local slash_separated_groups = iut.split_alternating_runs(comma_separated_group, "%s*/%s*")
-						if #slash_separated_groups > 2 then
-							error("Too many slash-separated stems: '" .. inside .. "'")
-						end
-						local short_base = slash_separated_groups[1]
-						local short_stem = slash_separated_groups[2]
-						local short_base_obj = {
-							form = short_base[1],
-							footnotes = fetch_footnotes(short_base),
-						}
-						local short_stem_obj
-						if short_stem then
-							short_stem_obj = {
-								form = short_stem[1],
-								footnotes = fetch_footnotes(short_stem),
-							}
-						end
-						table.insert(base.short, {
-							base = short_base_obj,
-							stem = short_stem_obj,
-						})
-					end
-					iut.insert_form(forms, slot, formobj)
-				end
-			else
-				error("Unrecognized indicator '" .. part .. "': '" .. inside .. "'")
-			end
+-- Return true if the given spec of one of the degrees (pos/comp/sup) explicitly disabled through -pos, -comp or -sup.
+-- Also return true if `also_if_unspecified` given and the spec was left unspecified (this doesn't make sense for 'pos').
+local function degree_disabled(spec, also_if_unspecified)
+	if not spec then
+		return also_if_unspecified
+	end
+	for _, formval in ipairs(spec) do
+		if formval.form == "-" then
+			return true
 		end
 	end
+	return false
+end
+
+
+local function parse_slot_override_or_comp_spec(colon_separated_group, segments, specs, spectype, parse_err)
+	local form = colon_separated_group[1]
+	if form == "" then
+		parse_err(("Empty overrides not allowed for %s: '%s'"):format(spectype, table.concat(segments)))
+	end
+	local new_spec = {form = form, footnotes = fetch_footnotes(colon_separated_group, parse_err)}
+	for _, existing_spec in ipairs(specs) do
+		if existing_spec.form == new_spec.form then
+			parse_err("Duplicate " .. spectype .. " spec '" .. table.concat(colon_separated_group) .. "'")
+		end
+	end
+	table.insert(specs, new_spec)
+end
+
+
+--[=[
+Parse a comparative spec (e.g. 'comp^^:+' or 'comp:+:dublji) and return the list of lemmas. Each lemma is a form object,
+i.e. an object containing 'form' and 'footnotes' fields.
+]=]
+local function parse_comp_spec(segments, parse_err)
+	local specs = {}
+	local colon_separated_groups = put.split_alternating_runs_and_strip_spaces(segments, ":")
+	for i, colon_separated_group in ipairs(colon_separated_groups) do
+		if i == 1 then
+			if colon_separated_group[2] then
+				parse_err(("Footnotes not allowed directly on comparative spec '%s'; put them on the value " ..
+					"following the colon"):format(colon_separated_group[1]))
+			end
+		else
+			parse_slot_override_or_comp_sup_spec(colon_separated_group, segments, specs, "comparative spec", parse_err)
+		end
+	end
+	return specs
+end
+
+
+--[=[
+Parse a single override spec (e.g. 'str_nom_n:gott') and return two values: the slot(s) the override applies to, and a
+list of override values. Each override value is a form object, i.e. an object containing 'form' and 'footnotes' fields.
+]=]
+local function parse_override(segments, parse_err)
+	local slots = {}
+	local specs = {}
+	local colon_separated_groups = put.split_alternating_runs_and_strip_spaces(segments, ":")
+	for i, colon_separated_group in ipairs(colon_separated_groups) do
+		if i == 1 then
+			if colon_separated_group[2] then
+				parse_err(("Footnotes not allowed directly on slot override '%s'; put them on the value following " ..
+					"the colon"):format(colon_separated_group[1]))
+			end
+			slots = rsplit(colon_separated_group[1], "%+")
+			for _, slot in ipairs(slots) do
+				if not adjective_slot_set[slot] and not adjective_slot_abbrs[slot] then
+					parse_err(("Unrecognized slot '%s' in override; expected strong slot %s; weak slot %s; " ..
+						"comparative slot preceded by 'comp_'; superlative slot preceded by 'sup_'; " ..
+						"abbreviation %s; or stem %s: %s"):format(slot, make_quoted_slot_list(strong_adjective_slots),
+						make_quoted_slot_list(weak_adjective_slots), make_quoted_keys(adjective_slot_abbrs),
+						make_quoted_list(export.overridable_stems),
+						put.escape_wikicode(table.concat(segments))))
+				end
+			end
+		else
+			parse_slot_override_or_comp_sup_spec(colon_separated_group, segments, specs, "slot override", parse_err)
+		end
+	end
+	return slots, specs
+end
+
+
+-- Export for use by [[Module:sh-noun]].
+function export.parse_for_control_specs(part, parse_control_spec)
+	if part:find("^[Uu]+_?mut") then
+		parse_control_spec("umut", com.umut_types)
+	elseif part:find("^%-?con") then
+		parse_control_spec("con", {"con", "-con"})
+	elseif part:find("^%-?ppdent") then
+		parse_control_spec("ppdent", {"ppdent", "-ppdent"})
+	elseif part:find("^%-?pp") then
+		parse_control_spec("pp", {"pp", "-pp"})
+	elseif part:find("^%-?j") then
+		parse_control_spec("j", {"j", "-j"})
+	elseif not part:find("^vstem") and part:find("^%-?v") then
+		parse_control_spec("v", {"v", "-v"})
+	else
+		return false
+	end
+	return true
+end
+
+
+local function parse_inside(base, inside, is_scraped_adj)
+	local function parse_err(msg)
+		error((is_scraped_adj and "Error processing scraped adjective spec: " or "") .. msg .. ": <" ..
+			inside .. ">")
+    end
+
+	local base_degree = {}
+	local segments = put.parse_balanced_segment_run(inside, "[", "]")
+	local dot_separated_groups = split_alternating_runs_with_escapes(segments, "%.")
+	for i, dot_separated_group in ipairs(dot_separated_groups) do
+		-- Parse a control spec such as "umut,uUmut[rare]". This assumes the control spec is contained in
+		-- `dot_separated_group` (already split on brackets) and the result of parsing should go in `base[dest]`.
+		-- `allowed_specs` is a list of the allowed control specs in this group, such as
+		-- {"umut", "Umut", "uumut", "uUmut", "uUUmut", "u_mut"} or {"pp", "-pp"}. The result of parsing is a list of
+		-- structures of the form {
+		--   form = "FORM",
+		--   footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
+		-- }.
+		local function parse_control_spec(dest, allowed_specs)
+			if base_degree[dest] then
+				parse_err(("Can't specify '%s'-type control spec twice; second such spec is '%s'"):format(
+					dest, table.concat(dot_separated_group)))
+			end
+			base_degree[dest] = {}
+			local comma_separated_groups = split_alternating_runs_with_escapes(dot_separated_group, ",")
+			for _, comma_separated_group in ipairs(comma_separated_groups) do
+				local specobj = {}
+				local spec = comma_separated_group[1]
+				if not m_table.contains(allowed_specs, spec) then
+					parse_err(("For '%s'-type control spec, saw unrecognized spec '%s'; valid values are %s"):
+						format(dest, spec, generate_list_of_possibilities_for_err(allowed_specs)))
+				else
+					specobj.form = spec
+				end
+				specobj.footnotes = fetch_footnotes(comma_separated_group, parse_err)
+				table.insert(base_degree[dest], specobj)
+			end
+		end
+
+		local part = dot_separated_group[1]
+		if part == "" then
+			if not dot_separated_group[2] then
+				parse_err("Blank indicator; not allowed without attached footnotes")
+			end
+			base.footnotes = fetch_footnotes(dot_separated_group, parse_err)
+		elseif part == "addnote" then
+			local spec_and_footnotes = fetch_footnotes(dot_separated_group, parse_err)
+			if #spec_and_footnotes < 2 then
+				parse_err("Spec with 'addnote' should be of the form 'addnote[SLOTSPEC][FOOTNOTE][FOOTNOTE][...]'")
+			end
+			local slot_spec = table.remove(spec_and_footnotes, 1)
+			local slot_spec_inside = rmatch(slot_spec, "^%[(.*)%]$")
+			if not slot_spec_inside then
+				parse_err("Internal error: slot_spec " .. slot_spec .. " should be surrounded with brackets")
+			end
+			local slot_specs = rsplit(slot_spec_inside, ",")
+			-- FIXME: Here, [[Module:it-verb]] called strip_spaces(). Generally we don't do this. Should we?
+			table.insert(base.addnote_specs, {slot_specs = slot_specs, footnotes = spec_and_footnotes})
+		elseif export.parse_for_control_specs(part, parse_control_spec) then
+			-- nothing more to do
+		elseif part:find("^decllemma%s*:") then -- or part:find("^decldef%s*:") or part:find("^declnumber%s*:") then
+			local field, value = part:match("^(decl[a-z]+)%s*:%s*(.+)$")
+			if not value then
+				parse_err(("Syntax error in decllemma indicator: '%s'"):format(part))
+			end
+			if #dot_separated_group > 1 then
+				parse_err(
+					("Footnotes not allowed with '%s:' specs: '%s'"):format(field, table.concat(dot_separated_group)))
+			end
+			if base[field] then
+				parse_err(("Can't specify '%s:' twice"):format(field))
+			end
+			base[field] = value
+		elseif part:find("^q%s*:") or part:find("header%s*:") then
+			local field, value = part:match("^(q)%s*:%s*(.+)$")
+			if not value then
+				field, value = part:match("^(header)%s*:%s*(.+)$")
+			end
+			if not value then
+				parse_err(("Syntax error in q/header indicator: '%s'"):format(part))
+			end
+			if #dot_separated_group > 1 then
+				parse_err(
+					("Footnotes not allowed with '%s:' specs: '%s'"):format(field, table.concat(dot_separated_group)))
+			end
+			if base[field] then
+				parse_err(("Can't specify '%s:' twice"):format(field))
+			end
+			base[field] = value
+		elseif part:find("^@") then
+			if #dot_separated_group > 1 then
+				parse_err(
+					("Footnotes not allowed with scrape specs: '%s'"):format(table.concat(dot_separated_group)))
+			end
+			if base.scrape_spec then
+				parse_err("Can't specify scrape directive '@...' twice")
+			end
+			if part:find(":") then
+				base.scrape_is_suffix, base.scrape_spec, base.scrape_id = part:match("^@(%-?)(.-)%s*:%s*(.+)$")
+			else
+				base.scrape_is_suffix, base.scrape_spec = part:match("^@(%-?)(.-)$")
+			end
+			-- If we saw a hyphen, set `scrape_is_suffix` to true, otherwise false
+			base.scrape_is_suffix = base.scrape_is_suffix == "-"
+
+			if not base.scrape_spec or base.scrape_spec == "" then
+				parse_err(("Syntax error in scrape directive '%s"):format(part))
+			end
+			local scrape_init, scrape_rest = rmatch(base.scrape_spec, "^(.)(.*)$")
+			local lower_scrape_init = ulower(scrape_init)
+			if ulower(scrape_init) ~= scrape_init then
+				base.scrape_is_uppercase = true
+				base.scrape_spec = lower_scrape_init .. scrape_rest
+			end
+		elseif part == "-pos" then
+			if base.posspec then
+				parse_err("Can't specify '-pos' twice")
+			end
+			base.posspec = {{form = "-"}}
+		elseif part == "-comp" then
+			if dot_separated_group[2] then
+				parse_err(("Footnotes not allowed directly on '%s'; put them on the value following the colon"):format(
+					part))
+			end
+			base["compspec"] = {{form = "-"}}
+		elseif part:find("^comp") then
+			if part == "comp" then
+				part = "comp+"
+			end
+			if part:find("^comp[+^]") then
+				part = part:gsub("^comp", "comp:")
+			end
+
+		elseif part:find(":") then
+			local spec, value = part:match("^([a-z_+]+)%s*:%s*(.+)$")
+			if not spec then
+				parse_err(("Syntax error in indicator with value, expecting alphabetic slot, stem/lemma override " ..
+					"or comparative/superlative override indicator: '%s'"):format(part))
+			end
+			if export.overridable_stem_set[spec] then
+				if base_degree[spec] then
+					if spec == "stem" then
+						parse_err("Can't specify spec for 'stem:' twice (including using 'stem:' along with # or ##)")
+					else
+						parse_err(("Can't specify '%s:' twice"):format(spec))
+					end
+				end
+				base_degree[spec] = value
+			elseif spec == "comp" then
+				if base[spec .. "spec"] then
+					parse_err(("Two spec sets specified for '%s'"):format(spec))
+				else
+					base[spec .. "spec"] = parse_comp_sup_spec(dot_separated_group, parse_err)
+				end
+			else
+				local slots, override = parse_override(dot_separated_group, parse_err)
+				local function check_duplication(slot)
+					if base.override_slots_seen[slot] then
+						parse_err(("Two overrides specified for slot '%s'"):format(slot))
+					else
+						base.override_slots_seen[slot] = true
+					end
+				end
+				for _, slot in ipairs(slots) do
+					if adjective_slot_abbrs[slot] then
+						do_slot_abbreviation(base, slot, check_duplication)
+					else
+						check_duplication(slot)
+					end
+					base.overrides[slot] = override
+				end
+			end
+		elseif #dot_separated_group > 1 then
+			parse_err(
+				("Footnotes only allowed with slot overrides, negatable indicators and by themselves: '%s'"):
+					format(table.concat(dot_separated_group)))
+		elseif part == "sg" or part == "pl" or part == "both" then
+			if base.number then
+				if base.number ~= part then
+					parse_err("Can't specify '" .. part .. "' along with '" .. base.number .. "'")
+				else
+					parse_err("Can't specify '" .. part .. "' twice")
+				end
+			end
+			base.number = part
+		elseif part == "indef" or part == "def" or part == "bothdefs" then
+			if base.definiteness then
+				if base.definiteness ~= part then
+					parse_err("Can't specify '" .. part .. "' along with '" .. base.definiteness .. "'")
+				else
+					parse_err("Can't specify '" .. part .. "' twice")
+				end
+			end
+			base.definiteness = part
+		elseif export.boolean_property_set[part] then
+			if base.props[part] then
+				parse_err("Can't specify '" .. part .. "' twice")
+			end
+			base.props[part] = true
+		else
+			parse_err("Unrecognized indicator '" .. part .. "'")
+		end
+	end
+
+	local base_degfield
+	if not degree_disabled(base.posspec) then
+		base_degfield = "pos"
+		base_degree.slot_prefix = ""
+	elseif not degree_disabled(base.compspec) then
+		base_degfield = "comp"
+		base_degree.slot_prefix = "comp_"
+	elseif not degree_disabled(base.supspec) then
+		base_degfield = "sup"
+		base_degree.slot_prefix = "sup_"
+	else
+		parse_err("Cannot disable all three degrees (positive/comparative/superlative)")
+	end
+	base.base_degfield = base_degfield
+	base.base_degree = base_degree
+	base.degrees[base_degfield] = {base_degree}
+	if base_degfield ~= "pos" then
+		-- Indicate that the positive degree is explicitly disabled.
+		base.degrees.pos = {}
+	else
+		if degree_disabled(base.compspec) and not base.supspec then
+			-- If we're in the positive degree and the comparative was explicitly disabled, the superlative should be
+			-- explicitly disable if unspecified.
+			base.supspec = {{form = "-"}}
+		end
+		if not base.compspec and not base.supspec and not base.props["comp?"] and not base.props.indecl and
+			not base.props["decl?"] and not base.props.builtin and not base.scrape_spec then
+			parse_err("Must either specify a comparative, specify '-comp' to indicate no comparative, or " ..
+				"specify 'comp?' to indicate that the comparative status is unknown")
+		end
+	end
+
 	return base
 end
 
 
-local function normalize_all_lemmas(alternant_multiword_spec, pagename)
-	iut.map_word_specs(alternant_multiword_spec, function(base)
-		if base.lemma == "" then
-			base.lemma = pagename
+-- Set some defaults (e.g. number and definiteness) now, because they (esp. the number) may be needed below when
+-- determining how to merge scraped and user-specified properies.
+local function set_early_base_defaults(base)
+	if not base.props.builtin then
+		local basedeg = base.base_degree
+		basedeg.number = base.number or "both"
+		basedeg.definiteness = base.definiteness or base.base_degfield == "comp" and "def" or "bothdefs"
+	end
+end
+
+local function parse_inside_and_merge(inside, lemma, scrape_chain)
+	local function parse_err(msg)
+		error(msg .. ": <" .. inside .. ">")
+	end
+
+	if #scrape_chain >= 10 then
+		local linked_scrape_chain = {}
+		for _, element in ipairs(scrape_chain) do
+			table.insert(linked_scrape_chain, "[[" .. element .. "]]")
 		end
-		base.orig_lemma = base.lemma
-		base.orig_lemma_no_links = m_links.remove_links(base.lemma)
-		base.lemma = base.orig_lemma_no_links
+		parse_err(("Probable infinite loop in scraping; scrape chain is [[%s]] -> %s"):format(lemma,
+			table.concat(linked_scrape_chain, " -> ")))
+	end
+
+	local base = create_base()
+	base.scrape_chain = scrape_chain
+	parse_inside(base, inside, #scrape_chain > 0)
+	local basedeg = base.base_degree
+	basedeg.lemma = lemma
+
+	if not base.scrape_spec then
+		-- If we're not scraping the declension from another noun, just return the parsed `base`.
+		-- But don't set early defaults if we're being scraped because it interferes with overriding the number
+		-- and/or definiteness by the noun that is scraping us.
+		if #scrape_chain == 0 then
+			set_early_base_defaults(base)
+		end
+		return base
+	else
+		local prefix, base_adj, declspec
+		prefix, base_adj, declspec = com.find_scraped_infl {
+			lemma = lemma,
+			scrape_spec = base.scrape_spec,
+			scrape_is_suffix = base.scrape_is_suffix,
+			scrape_is_uppercase = base.scrape_is_uppercase,
+			infltemp = "sh-adecl",
+			allow_empty_infl = false,
+			inflid = base.scrape_id,
+			parse_off_ending = com.parse_off_final_nom_ending,
+		}
+		if type(declspec) == "string" then
+			base.prefix = prefix
+			base.base_adj = base_adj
+			base.scrape_error = declspec
+			return base
+		end
+
+		-- Parse the inside spec from the scraped noun (merging any sub-scraping specs), and copy over the
+		-- user-specified properties on top of it.
+		table.insert(scrape_chain, base_adj)
+		local inner_base = parse_inside_and_merge(declspec.infl, base_adj, scrape_chain)
+		local inner_basedeg = inner_base.base_degree
+		inner_basedeg.lemma = lemma
+		inner_base.prefix = prefix
+		inner_base.base_adj = base_adj
+
+		-- Add `prefix` to a full variant of the base noun (e.g. a stem spec or override). We may need
+		-- to adjust the variant to take into account the base noun being a suffix and/or uppercase (e.g. when
+		-- we use [[-dómur]] to generate the inflection of [[vísdómur]] or [[Björn]] to generate the inflection
+		-- of [[Ásbjörn]]).
+		local function add_prefix(form)
+			if base.scrape_is_suffix then
+				form = form:gsub("^%-", "")
+			end
+			if base.scrape_is_uppercase then
+				local first, rest = rmatch(form, "^(.)(.*)$")
+				if first then
+					form = ulower(first) .. rest
+				end
+			end
+			return prefix .. form
+		end
+
+		-- If there's a prefix, add it now to all the overrides in the scraped noun, as well as 'decllemma'
+		-- and all stem overrides.
+		if prefix ~= "" then
+			map_all_overrides(inner_base, function(slot, formobj)
+				local formval = formobj.form
+				-- Not if the override contains # or ##, which expand to the full lemma (possibly minus -r
+				-- or -ur); or if the override begins with ~ or ^, indicating the stem or its i-mutated variant;
+				-- or if the override is + or - (as may happen with positive/comparative/superlative specs).
+				if not formval:find("#") and not formval:find("^[~^]") and formval ~= "+" and formval ~= "-" then
+					formobj.form = add_prefix(formval)
+				end
+			end)
+			if inner_base.decllemma then
+				inner_base.decllemma = add_prefix(inner_base.decllemma)
+			end
+			for _, stem in ipairs(export.overridable_stems) do
+				-- Only actual stems, not imutval; and not if the stem contains # or ##, which
+				-- expand to the full lemma (possibly minus -r or -ur).
+				if inner_basedeg[stem] and stem:find("stem$") and not inner_basedeg[stem]:find("#") then
+					inner_basedeg[stem] = add_prefix(inner_basedeg[stem])
+				end
+			end
+		end
+
+		local function copy_base_properties(plist)
+			for _, prop in ipairs(plist) do
+				if base[prop] ~= nil then
+					inner_base[prop] = base[prop]
+				end
+			end
+		end
+		local function copy_basedeg_properties(plist)
+			for _, prop in ipairs(plist) do
+				if basedeg[prop] ~= nil then
+					inner_basedeg[prop] = basedeg[prop]
+				end
+			end
+		end
+		copy_basedeg_properties(export.control_specs)
+		copy_basedeg_properties(export.overridable_stems)
+		copy_basedeg_properties { "number", "definiteness" }
+		copy_base_properties { "decllemma", "q", "header" }
+		for _, degspec in ipairs(compsup_degrees) do
+			local degfield, desc = unpack(degspec)
+			copy_base_properties { degfield .. "spec" }
+		end
+		inner_base.footnotes = iut.combine_footnotes(inner_base.footnotes, base.footnotes)
+		-- Copy addnote specs.
+		for _, prop_list in ipairs { "addnote_specs" } do
+			for _, prop in ipairs(base[prop_list]) do
+				m_table.insertIfNot(inner_base[prop_list], prop)
+			end
+		end
+		-- Now copy remaining user-specified specs into the scraped noun `base`.
+		for _, prop_table in ipairs { "overrides", "props" } do
+			for slot, prop in pairs(base[prop_table]) do
+				inner_base[prop_table][slot] = prop
+			end
+		end
+		-- Now determine the defaulted number and definiteness (after copying relevant settings
+		-- but before the check just below that relies on `inner_base.number` being set).
+		set_early_base_defaults(inner_base)
+		-- If user specified 'sg', cancel out any pl overrides, otherwise we'll get an error.
+		if inner_basedeg.number == "sg" then
+			for slot, _ in pairs(inner_base.overrides) do
+				if slot:find("p$") then
+					inner_base.overrides[slot] = nil
+				end
+			end
+		end
+		-- If user specified '-comp' or '-sup', cancel out any comparative/superlative overrides,
+		-- otherwise we'll get an error.
+		for _, degfield in ipairs { "comp", "sup" } do
+			if degree_disabled(base[degfield .. "spec"]) then
+				for slot, _ in pairs(inner_base.overrides) do
+					if slot:find("^" .. degfield) then
+						inner_base.overrides[slot] = nil
+					end
+				end
+			end
+		end
+			
+		return inner_base
+	end
+end
+
+
+--[=[
+Parse an indicator spec (text consisting of angle brackets and zero or more dot-separated indicators within them).
+Return value is an object of the form indicated in the comment above create_base().
+]=]
+local function parse_indicator_spec(angle_bracket_spec, lemma, pagename)
+	if lemma == "" then
+		lemma = pagename
+	end
+	local inside = rmatch(angle_bracket_spec, "^<(.*)>$")
+	assert(inside)
+	local orig_lemma = lemma
+	local orig_lemma_no_links = m_links.remove_links(lemma)
+	lemma = orig_lemma_no_links
+	local base = parse_inside_and_merge(inside, lemma, {})
+	base.orig_lemma = orig_lemma
+	base.orig_lemma_no_links = orig_lemma_no_links
+	return base
+end
+
+
+local function set_defaults_and_check_bad_indicators(base)
+	local function check_err(msg)
+		error(("Lemma '%s': %s"):format(base.base_degree.lemma, msg))
+	end
+	-- Set default values.
+	if base.props.builtin then
+		set_builtin_defaults(base)
+		for _, control_spec in ipairs(export.control_specs) do
+			if base[control_spec] then
+				check_err(("'%s' cannot be specified with built-in terms"):format(control_spec))
+			end
+		end
+		if base.compspec or base.supspec or base.posspec then
+			check_err("Comparative/superlative indicators cannot be specified with built-in terms")
+		end
+	end
+end
+
+
+local function set_all_defaults_and_check_bad_indicators(alternant_multiword_spec)
+	local is_multiword = #alternant_multiword_spec.alternant_or_word_specs > 1
+	iut.map_word_specs(alternant_multiword_spec, function(base)
+		set_defaults_and_check_bad_indicators(base)
+		for _, global_prop in ipairs { "q", "header" } do
+			if base[global_prop] then
+				if alternant_multiword_spec[global_prop] == nil then
+					alternant_multiword_spec[global_prop] = base[global_prop]
+				elseif alternant_multiword_spec[global_prop] ~= base[global_prop] then
+					error(("With multiple words or alternants, set '%s' on only one of them or make them all agree"):
+						format(global_prop))
+				end
+			end
+		end
+		if base.props.pred then
+			alternant_multiword_spec.saw_pred = true
+		else
+			alternant_multiword_spec.saw_non_pred = true
+		end
+		if base.props.indecl then
+			alternant_multiword_spec.saw_indecl = true
+		else
+			alternant_multiword_spec.saw_non_indecl = true
+		end
+		if base.props["decl?"] then
+			alternant_multiword_spec.saw_unknown_decl = true
+		else
+			alternant_multiword_spec.saw_non_unknown_decl = true
+		end
+		if base.props["comp?"] then
+			alternant_multiword_spec.saw_unknown_comp = true
+		else
+			alternant_multiword_spec.saw_non_unknown_comp = true
+		end
 	end)
 end
 
 
-local function detect_indicator_spec(base)
-	if base.short then
-		if not base.lemma:find("ý$") then
-			error("Short forms can only be specified for lemmas ending in -ý, but saw '" .. base.lemma .. "'")
+local function expand_property_sets(degree)
+	degree.prop_sets = {{}}
+
+	-- Construct the prop sets from all combinations of control specs, in case any given spec has more than one
+	-- possibility.
+	for _, control_spec in ipairs(export.control_specs) do
+		local specvals = degree[control_spec]
+		-- Handle unspecified control specs.
+		if not specvals then
+			specvals = {false}
 		end
-		local stem = rmatch(base.lemma, "^(.*)ý$")
-		for _, short_spec in ipairs(base.short) do
-			if short_spec.base.form == "+" then
-				short_spec.base.form = stem
-			elseif short_spec.base.form == "*" then
-				short_spec.base.form = com.dereduce(base, stem)
-				if not short_spec.base.form then
-					error("Unable to construct non-reduced variant of stem '" .. stem .. "'")
+		if #specvals == 1 then
+			for _, prop_set in ipairs(degree.prop_sets) do
+				-- Convert 'false' back to nil
+				prop_set[control_spec] = specvals[1] or nil
+			end
+		else
+			local new_prop_sets = {}
+			for _, prop_set in ipairs(degree.prop_sets) do
+				for _, specval in ipairs(specvals) do
+					local new_prop_set = m_table.shallowCopy(prop_set)
+					new_prop_set[control_spec] = specval
+					table.insert(new_prop_sets, new_prop_set)
 				end
 			end
-			if not short_spec.stem then
-				short_spec.stem = {
-					form = short_spec.base.form,
-					footnotes = short_spec.base.footnotes
-				}
+			degree.prop_sets = new_prop_sets
+		end
+	end
+end
+
+
+local function normalize_all_lemmas(alternant_multiword_spec)
+	iut.map_word_specs(alternant_multiword_spec, function(base)
+		local lemma = base.orig_lemma_no_links
+		local basedeg = base.base_degree
+		basedeg.actual_lemma = lemma
+		basedeg.lemma = base.decllemma or lemma
+		base.source_template = alternant_multiword_spec.source_template
+	end)
+end
+
+
+local function form_comparative(stem, method)
+	local is_cyr = com.is_cyrillic(stem)
+	if method == "^^" then
+		local stem_minus_ak_ek_ok = rmatch(stem, "^(.*)[aeo]k$")
+		if not stem_minus_ak_ek_ok then
+			stem_minus_ak_ek_ok = rmatch(stem, "^(.*)[аео]к$") -- Cyrillic аео
+		end
+		if not stem_minus_ak_ek_ok then
+			process_error("Can't form comparative using ^^ method because stem %s doesn't end in -ak, -ek or -ok",
+				stem)
+		end
+		stem = stem_minus_ak_ek_ok
+		method = "^"
+	end
+	local comp
+	if method == "^" then
+		-- Don't use ī because we want to maintain the text decomposed.
+		comp = com.iotate(stem) .. (is_cyr and "и" or "i") .. com.MACRON
+	elseif method == "+" then
+		comp = (is_cyr and "ији" or "iji") .. com.MACRON
+	else
+		interr("Unrecognized comparative-forming method %s", method)
+	end
+	-- Remove the last stress, wherever it is, and replace with comparative stress.
+	local origcomp = comp
+	local orig_syllables = com.split_syllables(origcomp)
+	comp = rsub(comp, "^(.*)" .. com.stress_accent_c, "%1")
+	local syllables = com.split_syllables(comp)
+	if #syllables < 3 then
+		interr("Something wrong with comparative %s; it has %s < 3 components when split into syllables: %s",
+			comp, #syllables, syllables)
+	end
+	local reduce_ije = false
+	local rije_syllable = nil
+	-- Careful here and below to match and preserve both Latin and Cyrillic, and handle initial uppercase letters.
+	-- Essentially what we're doing is this:
+	-- (1) If there are two syllables, the first syllable gets short falling; otherwise the third-from-last syllable
+	--     gets short rising.
+	-- (2) If the syllable receiving the stress is -ije-, it reduces to -je-. We try to avoid false positives by not
+	--     reducing syllables that originally had a diacritic of any sort on the i or a short accent on the e.
+	-- (3) As a special case of (2), if the syllable receiving the stress is -Crije-, there are two outputs, the first
+	--     one -Cre- and the second one -Crje-. Note that this will be wrong is the C is part of a prefix such as
+	--     pod-; those need manually specified comparatives.
+	-- Finally, remember that when splitting syllables, the last "syllable" is the final consonant cluster and not a
+	-- real syllable, so there will be one more split syllable than actual syllables and we have to adjust our counting
+	-- appropriately.
+	if #syllables == 4 and rfind(syllables[1], "[iIиИ]$") and
+		rfind(orig_syllables[2], "[jј][eе][" .. com.AC .. com.INVBREVE .. com.MACRON .. "]?$") then
+		reduce_ije = true
+		rije_syllable = syllables[2]
+		syllables[2] = com.replace_syllable_accent(syllables[2], com.DOUBLEGR)
+	elseif #syllables == 3 then
+		syllables[1] = com.replace_syllable_accent(syllables[1], com.DOUBLEGR)
+	else
+		if #syllables >= 5 and rfind(syllables[#syllables - 4], "[iIиИ]$") and
+			rfind(orig_syllables[#syllables - 3], "[jј][eе][" .. com.AC .. com.INVBREVE .. com.MACRON .. "]?$") then
+			reduce_ije = true
+			rije_syllable = syllables[#syllables - 4]
+		end
+		syllables[#syllables - 3] = com.replace_syllable_accent(syllables[#syllables - 3], com.GR)
+	end
+	comp = concat(syllables)
+	if reduce_ije then
+		if rije_syllable and rfind(rije_syllable, com.cons_c .. "[rр][iи]") then
+			local version_without_j = rsub(comp, "^(.*[RrРр])[iи][jј]([eе])", "%1%2")
+			local version_with_j = rsub(comp, "^(.*[RrРр])([iи])([jј][eе])", "%1%2")
+			return {version_without_j, version_with_j}
+		else
+			return rsub(comp, "^(.*)[IiИи]([jј][eе])", "%1%2")
+		end
+	else
+		return comp
+	end
+end
+
+-- Determine the declension of the positive degree based on the lemma. The declension is set in pos.decl and the stem in
+-- pos.stem (which will come from the user if explicitly set, otherwise computed from the lemma).
+local function determine_positive_declension(base)
+	local stem
+	local pos = base.degrees.pos[1]
+	if not pos then
+		error("Internal error: Positive degree doesn't exist")
+	end
+	local default_props = {}
+	local defcomp, defsup
+	-- Determine declension
+	if base.props.builtin then
+		error("Internal error: This function should not be called with built-in terms")
+	elseif base.props.indecl then
+		pos.decl = "indecl"
+		stem = pos.lemma
+	elseif base.props["decl?"] then
+		pos.decl = "decl?"
+		stem = pos.lemma
+	elseif not stem then
+		-- There must be at least one vowel; lemmas like [[bur]] don't count.
+		stem = rmatch(pos.lemma, "^(.*" .. com.vowel_or_hyphen_c .. ".*)ur$")
+		if stem then
+			if pos.stem == pos.lemma then
+				-- [[dapur]] "sad" etc. where the stem includes the final -r; default vowel stem has contraction and
+				-- so do the default comparatives and superlatives, but many of these have alternative comparatives
+				-- and/or superlatives that need to be given explicitly
+				stem = pos.stem
+				default_props.con = "con"
+				-- defcomp, defsup computed later
+			elseif not pos.stem and (stem:find("leg$") or stem:find("ug$")) then
+				-- [[fallegur]] "beautiful" and others in -legur; [[auðugur]] "rich" and others in -ugur; note that
+				-- this includes words like [[lóugur]] and [[snjóugur]] with a vowel preeding the -ugur (there are no
+				-- adjectives in -augur).
+				defcomp = stem .. "ri"
+				-- defsup computed later
+			elseif rfind(stem, com.vowel_or_hyphen_c .. ".*að$") then
+				-- [[gáfaður]] "gifted", [[saltaður]] "salty", etc.; but beware of compounds of [[glaður]] such as
+				-- [[fjörglaður]] "cheerful"
+				default_props.pp = "pp"
+				default_props.umut = function(base, props)
+					-- PP-type adjectives like [[gáfaður]] and [[saltaður]] and have uUmut, leading to feminine singular
+					-- 'gáfuð' and 'söltuð', but non-PP-type adjectives like [[fjörglaður]] have feminine singular
+					-- 'fjörglöð' with regular umut.
+					local umut_val
+					if props.pp and props.pp.form == "-pp" then
+						umut_val = "umut"
+					else
+						umut_val = "uUmut"
+					end
+					return {form = umut_val, defaulted = true}
+				end
+				defcomp = function(base, props)
+					if props.pp and props.pp.form == "-pp" then
+						-- compounds of [[glaður]] etc.; see above
+						return stem .. "ari"
+					else
+						return stem .. "ri"
+					end
+				end
+				-- defsup computed later
+			else
+				-- [[gulur]] "yellow" and lots of others
+				-- defcomp, defsup computed later
 			end
-			if short_spec.stem.form == "+" or short_spec.stem.form == "*" then
-				short_spec.stem.form = stem
+		end
+	end
+	if not stem then
+		stem = rmatch(pos.lemma, "^(.*" .. com.vowel_c .. ")r$")
+		if stem then
+			-- The default for these lemmas is to include the -r in the stem, except for lemmas ending in -ár and -ær.
+			-- If the user doesn't want the -r in the stem they need to explicitly specify this using e.g. '##' (or
+			-- conversely, for -ár/-ær lemmas, use '#' to include the -r in the stem).
+			if pos.stem == stem or (not pos.stem and rfind(stem, "[ÁáÆæ]$")) then
+				pos.double_r_and_t = true
+				defcomp = stem .. "rri"
+				if rfind(stem, "[ÆæÝý]$") then
+					-- Lemmas like [[nýr]] "new", [[hlýr]] "warm", [[langær]] "long-lasting"
+					default_props.j = "j"
+					defsup = stem .. "jastur"
+				else
+					-- defsup computed later
+				end
+			else
+				-- Process later on in the null-ending arm.
+				stem = nil
+			end
+		end
+	end
+	if not stem and not pos.stem then
+		-- Beware of [[snjall]] "masterly, excellent, clever", where both l's are part of the stem.
+		stem = rmatch(pos.lemma, "^(.*l)l$")
+		if stem then
+			-- [[heill]] "whole; healthy", [[fúll]] "foul", [[þögull]] "taciturn" (with or without contraction), etc.
+			pos.assimilate_r = true
+			defcomp = stem .. "li"
+			-- defsup computed later, depending on the value of 'con'
+		end
+	end
+	if not stem and not pos.stem then
+		stem = rmatch(pos.lemma, "^(.*n)n$")
+		if stem then
+			pos.assimilate_r = true
+			if stem:find("[^e]in$") then
+				-- [[boginn]] "curved, crooked"; [[heiðinn]] "heathen"; [[fyndinn]] "witty"; also [[náinn]] "near" and
+				-- others in -Vinn other than -einn; also [[söngvinn]] "fond of singing, musical" and [[höggvinn]]
+				-- "chopped" where the -v- disappears before contracted -n-. These adjectives have contraction before
+				-- vowel endings where stem -in becomes -n (except in past participles with the 'ppdent' property,
+				-- where the -n is replaced with a dental, either -d- (after l/m/n), -t- (after a voiceless consonant)
+				-- or -ð- (otherwise). They also have a couple of special endings: acc masc sg is in -inn not expected
+				-- #-nan, and nom/acc neut sg is in -ið. We signal this by setting `pos.inn`. In addition, if 'ppdent'
+				-- applies and there is a comparative and superlative, the dental stem applies, as in [[vantalinn]]
+				-- "not included, omitted, understated (of assets/money)" with comparative [[vantaldari]] and
+				-- superlative [[vantaldastur]].
+				pos.inn = true
+				local function compute_vowel_stem(props)
+					local vowel_stem = stem:sub(1, -3) -- chop off final -in
+					-- [[söngvinn]] -> 'söngn-', [[höggvinn]] -> 'höggn-'
+					vowel_stem = vowel_stem:gsub("gv$", "g")
+					if props.ppdent and props.ppdent.form == "ppdent" then
+						vowel_stem = com.add_dental_ending(vowel_stem)
+					else
+						if not rfind(vowel_stem, com.cons_c .. "n$") then
+							vowel_stem = vowel_stem .. "n"
+						end
+					end
+					return vowel_stem
+				end
+				defcomp = function(base, props)
+					-- Save for later stem computation.
+					props.vowel_stem = compute_vowel_stem(props)
+					return props.vowel_stem .. "ari"
+				end
+				defsup = function(base, props)
+					-- props.vowel_stem stored in defcomp
+					return compute_vowel_stem(props) .. "astur"
+				end
+			else
+				defcomp = stem .. "ni"
+				-- defsup computed later
+			end
+		end
+	end
+	if not stem then
+		stem = rmatch(pos.lemma, "^(.*)ī$")
+		if stem then
+			-- definite-only
+			default_props.definiteness = "def"
+			-- defcomp and defsup computed later
+		end
+	end
+	if not stem then
+		-- Miscellaneous terms without ending
+		stem = pos.lemma
+		-- defcomp and defsup computed later
+	end
+
+	-- Set the stem to the computed stem if not explicitly set by the user.
+	pos.stem = pos.stem or stem
+	-- Set the default props in `pos` unless explicitly set by the user; but some default props are specific to each
+	-- property set and need to be set on each one.
+	for k, v in pairs(default_props) do
+		if not pos[k] then
+			if export.control_spec_set[k] then
+				for _, props in ipairs(pos.prop_sets) do
+					if type(v) == "function" then
+						props[k] = v(base, props)
+					else
+						props[k] = {form = v, defaulted = true}
+					end
+				end
+			else
+				pos[k] = v
+			end
+		end
+	end
+	-- Set the default comparative and superlative, which are specific to each property set. Do this after processing
+	-- the other default properties because the default comparative/superlative functions frequently depend on other
+	-- properties (e.g. 'con').
+	local function compute_comp_sup_stem(props)
+		local comp_sup_stem = stem
+		if props.con and props.con.form == "con" then
+			comp_sup_stem = com.apply_contraction(stem)
+		end
+		return comp_sup_stem
+	end
+	defcomp = defcomp or function(base, props)
+		return compute_comp_sup_stem(props) .. "ari"
+	end
+	defsup = defsup or function(base, props)
+		return compute_comp_sup_stem(props) .. "astur"
+	end
+	for k, v in pairs { defcomp = defcomp, defsup = defsup } do
+		for _, props in ipairs(pos.prop_sets) do
+			if type(v) == "function" then
+				props[k] = v(base, props)
+			else
+				props[k] = v
+			end
+		end
+	end
+	pos.decl = pos.decl or "normal"
+	track("decl/" .. pos.decl)
+end
+
+
+-- Initialize the stem and declension of a comparative or superlative degree object given various properties. This is
+-- broken out of insert_forms() for use in initializing the base degree object of comparative/superlative-only lemmas,
+-- which are otherwise already initialized.
+local function initialize_degree_object_stem_and_decl(degree, degfield, lemma)
+	local stem
+	if degfield == "comp" then
+		stem = lemma:match("^(.*)ī$")
+		if not stem then
+			error(("Comparative lemma '%s' doesn't end in -ī, as expected"):format(lemma))
+		end
+	else
+		interr("Unrecognized degree field value %s", degfield)
+	end
+	degree.stem = degree.stem or stem
+	degree.decl = "soft"
+end
+
+
+-- Get the default superlative u-mutation. If the superlative ends in -astur, it should be "one up" from the positive
+-- u-mutation value (umut -> uUmut, uUmut -> uUUmut); else (superlative ends in -stur) it should be the same.
+local function default_superlative_umut(lemma, pos_umut)
+	pos_umut = pos_umut or "umut"
+	if lemma:find("astur$") or lemma:find("asti$") then
+		pos_umut = pos_umut:gsub("mut$", "Umut")
+	end
+	return pos_umut
+end
+
+
+-- Insert a comparative degree object, typically based on a user-specified or defaulted spec.
+local function insert_degree_object(base, degfield, lemma, footnotes, umut)
+	local degree = {
+		lemma = lemma,
+		actual_lemma = lemma,
+		slot_prefix = degfield .. "_",
+		footnotes = footnotes,
+		definiteness = "def",
+		number = "both",
+		prop_sets = {{
+			umut = umut or {form = degfield == "sup" and default_superlative_umut(lemma) or "umut", defaulted = true}
+		}},
+	}
+	initialize_degree_object_stem_and_decl(degree, degfield, lemma)
+	table.insert(base.degrees[degfield], degree)
+end
+
+
+-- Construct appropriate comparative/superlative property sets based on the default comparative/superlative, and insert
+-- into the appropriated degrees structure. `degfield` is "comp" or "sup" and `spec_footnotes` gives the footnotes
+-- specified along with the "+" spec that triggered this function.
+local function insert_default_comp_sup_specs(base, degfield, spec_footnotes)
+	for _, props in ipairs(base.base_degree.prop_sets) do
+		-- This fetches the "defcomp" or "defsup" field.
+		local default = props["def" .. degfield]
+		local umut = m_table.shallowCopy(props.umut) or {form = "umut", defaulted = true}
+		if degfield == "sup" then
+			umut.form = default_superlative_umut(default, umut.form)
+		end
+		insert_degree_object(base, degfield, default, spec_footnotes, umut)
+	end
+end
+
+local function generate_umlauted_comp_sup(stem, spec)
+	if spec == "^" then
+		stem = com.apply_i_mutation(stem)
+	elseif spec == "^!" then
+		stem = com.apply_i_mutation(com.apply_contraction(stem))
+	end
+	local gencomp, gensup
+	if rfind(stem, com.vowel_c .. "$") then
+		gencomp = stem .. "rri"
+	elseif rfind(stem, com.vowel_c .. "[ln]$") then
+		gencomp = stem .. usub(stem, -1) .. "i"
+	elseif rfind(stem, com.cons_c .. "r$") then
+		gencomp = stem .. "i"
+	else
+		gencomp = stem .. "ri"
+	end
+	gensup = stem .. "stur"
+	return gencomp, gensup
+end
+
+-- Process the `comp:...` or `sup:...` spec given by the user and construct the appropriate property sets, one per stem.
+-- `degfield` is either "comp" or "sup", and `specs` gives the user-specified specs. Note that the default u-mutation
+-- for superlatives in -astur is uUmut, but if the spec was given (implicity or explicitly) as "+", we use the default
+-- comparative or superlative, and in that case the u-mutation for superlatives in -astur is constructed from the
+-- corresponding positive-degree u-mutation by adding U to the end, so that umut -> uUmut but uUmut -> uUUmut (cf.
+-- [[saltaður]] "salty" with u-mutation uUmut and feminine singular/neuter plural [[söltuð]], and superlative
+-- [[saltaðastur]] with u-mutation uUUmut and feminine singular/neuter plural [[söltuðust]]).
+local function process_comp_sup_spec(base, degfield, specs)
+	local basedeg = base.base_degree
+	specs = specs or {{form = "+"}}
+	if base.degrees[degfield] then
+		interr("Attempt to create `degrees` list for field %s when it already exists: %s", degfield, base.degrees)
+	end
+	base.degrees[degfield] = {}
+	for _, spec in ipairs(specs) do
+		local forms
+		if spec.form == "-" then
+			-- Skip "-"; effectively, no forms get inserted.
+		elseif spec.form == "+" then
+			insert_default_comp_sup_specs(base, degfield, spec.footnotes)
+		else
+			local formval
+			if spec.form:find("^~!") then
+				formval = com.apply_contraction(basedeg.stem) .. spec.form:sub(3)
+			elseif spec.form:find("^~") then
+				formval = basedeg.stem .. spec.form:sub(2)
+			elseif spec.form == "^" or spec.form == "^!" then
+				local gencomp, gensup = generate_umlauted_comp_sup(basedeg.stem, spec.form)
+				if degfield == "comp" then
+					formval = gencomp
+					spec.gensup = gensup
+				else
+					formval = gensup
+				end
+			else
+				formval = spec.form
+			end
+			spec.resolved_form = formval
+			insert_degree_object(base, degfield, formval, spec.footnotes)
+		end
+	end
+end
+
+
+local function derive_sup_lemma_from_comp_lemma(comp_lemma)
+	local sup_lemma = comp_lemma:gsub("[rln]i$", "stur")
+	if not sup_lemma:find("stur$") then
+		error(("Don't know how to derive superlative lemma from comparative lemma '%s'; specify " ..
+			"superlative lemma explicitly"):format(comp_lemma))
+	end
+	return sup_lemma
+end
+
+
+-- If the `comp:...` spec is given but not the `sup:...` spec, derive the superlative from the comparative.
+local function derive_sup_from_comp(base, compspecs)
+	if base.degrees.sup then
+		interr("Attempt to create `degrees` list for field `sup` when it already exists: %s", base.degrees)
+	end
+	base.degrees.sup = {}
+	for _, spec in ipairs(compspecs) do
+		local forms
+		if spec.form == "-" then
+			-- Skip "-"; effectively, no forms get inserted.
+		elseif spec.form == "+" then
+			insert_default_comp_sup_specs(base, "sup", spec.footnotes)
+		elseif spec.form == "^" or spec.form == "^!" then
+			insert_degree_object(base, "sup", spec.gensup, spec.footnotes)
+		else
+			insert_degree_object(base, "sup", derive_sup_lemma_from_comp_lemma(spec.resolved_form), spec.footnotes)
+		end
+	end
+end
+
+
+-- Determine the stems and other properties to use for each property set for each `degree` structure. The list of such
+-- properties is given in the comment above create_base(), along with the explanation of what a degree structure and
+-- property set is and why we have multiple such degree structures (generally, one per base lemma, where there may be
+-- multiple such comparative and/or superlative base lemmas) and property sets (generally, one per combination of
+-- control specs such as 'con,-con' and 'umut,uUmut').
+local function determine_props(base, degree)
+	-- Now determine all the props for each prop set.
+	for _, props in ipairs(degree.prop_sets) do
+		-- First do all the stems.
+		local normal_lemma = {form = degree.lemma}
+		local lemma_stem = {normal_lemma}
+
+		local base_stem = degree.lemma:gsub("o$", "l"):gsub("о$", "л")
+		local indef_stem, def_stem, neut_stem
+		if props.tone_mod then
+			local before, last_accent, after = rmatch(base_stem, "^(.*)(" .. com.stress_accent_c .. ")(.-)$")
+			if not before then
+				error(("Lemma '%s' doesn't have any tonal accent in it"):format(degree.lemma))
+			end
+			if props.tone_mod == "3tone" then
+				if last_accent ~= INVBREVE then
+					error(("When '3tone' is specified, lemma '%s' must have a long-falling tone"):format(degree.lemma))
+				end
+				indef_stem = before .. GR .. after
+				def_stem = before .. DOUBLEGR .. after
+				neut_stem = {indef_stem, def_stem}
+			elseif props.tone_mod ~= "2tone" then
+				interr("'tone_mod' is %s when it should be \"2tone\": %s", props.tone_mod, props)
+			else
+				if last_accent == INVBREVE then
+					def_stem = base_stem
+					indef_stem = before .. AC .. after
+					neut_stem = {indef_stem, def_stem}
+				elseif last_accent == DOUBLEGR then
+					def_stem = base_stem
+					indef_stem = before .. GR .. after
+					neut_stem = {indef_stem, def_stem}
+				elseif last_accent == AC then
+					local falling_lemma
+					if props.indef_falling_var then
+						falling_lemma = {form = before .. com.INVBREVE .. after, footnotes = {["rare or regional"]}}
+						insert(lemma_stem, falling_lemma)
+					end
+					indef_stem = base_stem
+					if falling_lemma then
+						neut_stem = {indef_stem, falling_lemma}
+					else
+						neut_stem = indef_stem
+					end
+					def_stem = before .. com.INVBREVE .. after
+				elseif last_accent == GR then
+					if not rfind(after, com.vowel_c) then
+						error(("When '2tone' is specified, lemma '%s' with short rising accent must have a " ..
+							"following syllable to move the tone onto"):format(degree.lemma))
+					end
+					indef_stem = before .. rsub(after, "^(.-" .. com.vowel_c .. ")", "%1" .. GR)
+					neut_stem = indef_stem
+					def_stem = base_stem
+				else
+					interr("
+
+							
+		end
+
+		local indef_stem = iut.
+
+		local neut_stem = iut.flatmap_forms(
+		stem = degree.stem
+		if not stem then
+			if props.reducible then
+				if props.reducible.form == "*" then
+					stem = 
+
+		defstem = degree.defstem or stem
+		nonvstem = stem
+		umut_nonvstem = com.apply_u_mutation(nonvstem, props_umut.form, not props_umut.defaulted)
+		-- For -inn adjectives, we already computed the correct vowel stem, so just use it.
+		vstem = props.vowel_stem or degree.vstem or degree.stem
+		local is_contracted = props.con and props.con.form == "con"
+		if is_contracted then
+			if degree.inn then
+				error("Internal error: 'con' cannot be specified for adjectives ending in -inn; it's handled automatically internally and should have been caught earlier")
+			end
+			vstem = com.apply_contraction(vstem)
+		end
+		-- Contracted stems should use regular u-mutation even if the uncontracted stem uses uUmut. Otherwise we either
+		-- get an error because uUmut can't be applied to a single-syllable word (e.g. in [[gamall]]) or we get the
+		-- wrong result (e.g. in [[einsamall]] with strong dative plural #einsumlum). In those same circumstances, we
+		-- should allow the u-mutation to have no effect, necessary e.g. for [[yðar]] with uUmut producing feminine
+		-- 'yður' but contracted stem 'yðr-' not undergoing u-mutation.
+		umut_vstem = com.apply_u_mutation(vstem, is_contracted and "umut" or props_umut.form,
+			not is_contracted and not props_umut.defaulted)
+
+		props.stem = stem
+		if nonvstem ~= stem then
+			props.nonvstem = nonvstem
+		end
+		if umut_nonvstem ~= nonvstem then
+			-- For 'con' and 'ppdent' below, footnotes can be placed on -con or -ppdent so we have to check for those
+			-- footnotes as well as checking for the vstem and such being different, so the -con and -ppdent footnotes
+			-- are still active. However, there's no such thing as -umut, and any time that there's an explicit umut
+			-- variant given, umut_nonvstem will be different from nonvstem (otherwise an error will occur in
+			-- apply_u_mutation), so we don't need this extra check here.
+			if props_umut then
+				umut_nonvstem = iut.combine_form_and_footnotes(umut_nonvstem, props_umut.footnotes)
+			end
+			props.umut_nonvstem = umut_nonvstem
+		end
+		if vstem ~= stem or props.con and props.con.footnotes or props.ppdent and props.ppdent.footnotes then
+			-- See comment above for why we need to check for props.con.footnotes and props.ppdent.footnotes (basically,
+			-- to handle footnotes on -con and -ppdent).
+			local footnotes = iut.combine_footnotes(props.con and props.con.footnotes or nil,
+				props.ppdent and props.ppdent.footnotes or nil)
+			vstem = iut.combine_form_and_footnotes(vstem, footnotes)
+			props.vstem = vstem
+		end
+		if umut_vstem ~= vstem or props.con and props.con.footnotes or props.ppdent and props.ppdent.footnotes then
+			-- See comment above under `umut_nonvstem ~= nonvstem`. There's no -umut so whenever there's a specific
+			-- umut variant with footnote, umut_vstem will be different from vstem so we don't need to check for
+			-- `or props_umut and props_umut.footnotes` above.
+			local footnotes = iut.combine_footnotes(iut.combine_footnotes(props.con and props.con.footnotes or nil,
+				props_umut and props_umut.footnotes or nil), props.ppdent and props.ppdent.footnotes or nil)
+			umut_vstem = iut.combine_form_and_footnotes(umut_vstem, footnotes)
+			props.umut_vstem = umut_vstem
+		end
+
+		-- Do the j-infix, v-infix and pp properties.
+		if props.j then
+			props.jinfix = props.j.form == "j" and "j" or ""
+			props.jinfix_footnotes = props.j.footnotes
+			props.j = nil
+		end
+		if props.v then
+			props.vinfix = props.v.form == "v" and "v" or ""
+			props.vinfix_footnotes = props.v.footnotes
+			props.v = nil
+		end
+		if props.pp then
+			props.pp_footnotes = props.pp.footnotes
+			props.pp = props.pp.form == "pp" and true or false
+		end
+	end
+end
+
+
+local function detect_indicator_spec(alternant_multiword_spec, base)
+	local basedeg = base.base_degree
+	-- Replace # and ## in all overridable stems as well as all overrides.
+	for _, stemkey in ipairs(export.overridable_stems) do
+		basedeg[stemkey] = com.replace_hashvals(basedeg[stemkey], basedeg.lemma)
+	end
+	map_all_overrides(base, function(slot, formobj)
+		formobj.form = com.replace_hashvals(formobj.form, basedeg.lemma)
+	end)
+
+	if base.props.builtin then
+		expand_property_sets(basedeg)
+		basedeg.stem = ""
+		basedeg.decl = "builtin"
+	else
+		if base.base_degfield == "sup" then
+			-- Superlative-only lemmas (like other superlatives) default to uUmut unless explicitly specified otherwise.
+			basedeg.umut = basedeg.umut or {{form = default_superlative_umut(basedeg.lemma), defaulted = true}}
+		end
+		expand_property_sets(basedeg)
+		if base.base_degfield == "pos" then
+			determine_positive_declension(base)
+			-- Next process the superative, if specified. We do this first so that if there is a superative and no
+			-- comparative specified, we add a comparative; but if sup:- is given, we don't add a comparative.
+			if base.supspec then
+				process_comp_sup_spec(base, "sup", base.supspec)
+				if not base.compspec then
+					base.compspec = base.degrees.sup[1] and {{form = "+"}} or {{form = "-"}}
+				end
+			end
+			-- Next process the comparative, if specified (or defaulted because a superlative was specified).
+			if base.compspec then
+				process_comp_sup_spec(base, "comp", base.compspec)
+			end
+			-- Next, if comparative specified but not superlative, derive the superlative(s) from the comparative(s).
+			if base.compspec and not base.supspec then
+				derive_sup_from_comp(base, base.compspec)
+			end
+		else
+			initialize_degree_object_stem_and_decl(basedeg, base.base_degfield, basedeg.lemma)
+			if base.base_degfield == "comp" then
+				for _, prop_set in ipairs(basedeg.prop_sets) do
+					prop_set.defsup = derive_sup_lemma_from_comp_lemma(basedeg.lemma)
+				end
+				process_comp_sup_spec(base, "sup", base.supspec or {{form = "+"}})
 			end
 		end
 	end
 
-	if base.irreg then
-		base.decl = "irreg"
-	else
-		base.decl = "normal"
+	for _, degspec in ipairs(compsup_degrees) do
+		local degfield, desc = unpack(degspec)
+		if base.degrees[degfield] then
+			for _, degree in ipairs(base.degrees[degfield]) do
+				determine_props(base, degree)
+			end
+		end
+	end
+
+	-- Make sure all alternants agree in having a positive, comparative and/or superlative.
+	for _, degspec in ipairs(compsup_degrees) do
+		local degfield, desc = unpack(degspec)
+		local hasprop = "has" .. degfield
+		local has_deg = base.degrees[degfield] and (base.degrees[degfield][1] and "has" or "hasnot") or "unspec"
+		if alternant_multiword_spec[hasprop] == nil then
+			alternant_multiword_spec[hasprop] = has_deg
+		elseif alternant_multiword_spec[hasprop] ~= has_deg then
+			error(("All alternants must agree in whether they have a %s, but saw one alternant with value '%s' " ..
+				"and another with value '%s'"):format(alternant_multiword_spec[hasprop], has_deg))
+		end
+	end
+
+	-- Make sure all alternants agree in 'number' and 'definiteness' for each degree if specified.
+	for _, degspec in ipairs(compsup_degrees) do
+		local degfield, desc = unpack(degspec)
+		if base.degrees[degfield] then
+			for _, degree in ipairs(base.degrees[degfield]) do
+				for _, prop in ipairs { "number", "definiteness" } do
+					local val = degree[prop] or false
+					if alternant_multiword_spec[prop][degfield] == nil then
+						alternant_multiword_spec[prop][degfield] = val
+					elseif alternant_multiword_spec[prop][degfield] ~= val then
+						error(("All %s alternants must agree in the value of '%s', if specified"):format(
+							desc, prop))
+					end
+				end
+			end
+		end
+	end
+
+	-- Make sure all alternants agree in various properties.
+	for _, prop in ipairs { "decl?", "indecl", "builtin" } do
+		local val = not not base.props[prop]
+		if alternant_multiword_spec[prop] == nil then
+			alternant_multiword_spec[prop] = val
+		elseif alternant_multiword_spec[prop] ~= val then
+			error(("If one alternant specifies '%s', all must"):format(prop))
+		end
 	end
 end
 
 
 local function detect_all_indicator_specs(alternant_multiword_spec)
 	iut.map_word_specs(alternant_multiword_spec, function(base)
-		detect_indicator_spec(base)
+		detect_indicator_spec(alternant_multiword_spec, base)
 	end)
 end
 
 
 local function decline_adjective(base)
-	if not decls[base.decl] then
-		error("Internal error: Unrecognized declension type '" .. base.decl .. "'")
-	end
-	decls[base.decl](base)
-	-- handle_derived_slots_and_overrides(base)
-end
-
-
--- Process override for the arguments in `args`, storing the results into `forms`. If `do_acc`, only do accusative
--- slots; otherwise, don't do accusative slots.
-local function process_overrides(forms, args, do_acc)
-	for slot, _ in pairs(input_adjective_slots) do
-		if args[slot] and not not do_acc == not not slot:find("^acc") then
-			forms[slot] = nil
-			if args[slot] ~= "-" and args[slot] ~= "—" then
-				local segments = iut.parse_balanced_segment_run(args[slot], "[", "]")
-				local comma_separated_groups = iut.split_alternating_runs(segments, "%s*,%s*")
-				for _, comma_separated_group in ipairs(comma_separated_groups) do
-					local formobj = {
-						form = comma_separated_group[1],
-						footnotes = fetch_footnotes(comma_separated_group),
-					}
-					iut.insert_form(forms, slot, formobj)
+	for degfield, degree_list in pairs(base.degrees) do
+		for _, degree in ipairs(degree_list) do
+			for _, props in ipairs(degree.prop_sets) do
+				if not decls[degree.decl] then
+					error(("Internal error: Unrecognized declension type '%s': %s"):format(degree.decl or "(nil)", dump(degree)))
 				end
+				decls[degree.decl](base, degree, props)
 			end
 		end
 	end
+	handle_derived_slots_and_overrides(base)
+	process_addnote_specs(base)
 end
 
 
-local function check_allowed_overrides(alternant_multiword_spec, args)
-	local special = alternant_multiword_spec.special or alternant_multiword_spec.surname and "surname" or ""
-	for slot, types in pairs(input_adjective_slots) do
-		if args[slot] then
-			local allowed = false
-			for _, typ in ipairs(types) do
-				if typ == special then
-					allowed = true
-					break
-				end
-			end
-			if not allowed then
-				error(("Override %s= not allowed for %s"):format(slot, special == "" and "regular declension" or
-					"special=" .. special))
-			end
+-- Compute the categories to add the noun to, as well as the annotation to display in the declension title bar. We
+-- combine the code to do these functions as both categories and title bar contain similar information.
+local function compute_categories_and_annotation(alternant_multiword_spec)
+	local all_cats = {}
+	local function inscat(cattype)
+		-- Don't insert categories with built-in determiners/pronouns; all are irregular in various ways.
+		if not alternant_multiword_spec.builtin then
+			m_table.insertIfNot(all_cats, "Icelandic " .. cattype)
 		end
 	end
+	local plpos = require(en_utilities_module).pluralize(alternant_multiword_spec.pos or "adjective")
+	if alternant_multiword_spec.saw_indecl and not alternant_multiword_spec.saw_non_indecl then
+		inscat("indeclinable " .. plpos)
+	end
+	if alternant_multiword_spec.saw_unknown_decl and not alternant_multiword_spec.saw_non_unknown_decl then
+		inscat(plpos .. " with unknown declension")
+	end
+	local annotation
+	local annparts = {}
+	local irregs = {}
+	local stemspecs = {}
+	local scrape_chains = {}
+	local umlauted_comparison = false
+	local function insann(txt, joiner)
+		if joiner and annparts[1] then
+			table.insert(annparts, joiner)
+		end
+		table.insert(annparts, txt)
+	end
+
+	local function do_word_spec(base)
+		-- User-specified 'decllemma:' indicates irregular stem.
+		if base.decllemma then
+			m_table.insertIfNot(irregs, "irreg-stem")
+			if plpos == "adjectives" then
+				inscat("adjectives with irregular stem")
+			end
+		end
+		for _, props in ipairs(base.base_degree.prop_sets) do
+			m_table.insertIfNot(stemspecs, props.stem)
+		end
+	end
+
+	iut.map_word_specs(alternant_multiword_spec, function(base)
+		do_word_spec(base)
+		if base.scrape_chain[1] then
+			local linked_scrape_chain = {}
+			for _, element in ipairs(base.scrape_chain) do
+				table.insert(linked_scrape_chain, ("[[%s]]"):format(element))
+			end
+			m_table.insertIfNot(scrape_chains, table.concat(linked_scrape_chain, " -> "))
+		end
+		local function check_umlauted(spec)
+			if spec then
+				for _, formobj in ipairs(spec) do
+					if formobj.form:find("^%^") then
+						umlauted_comparison = true
+						return
+					end
+				end
+			end
+		end
+		if alternant_multiword_spec.haspos == "has" then
+			check_umlauted(base.compspec)
+			check_umlauted(base.supspec)
+		elseif alternant_multiword_spec.hascomp == "has" then
+			check_umlauted(base.supspec)
+		end
+	end)
+	-- NOTE: Fields `haspos`, `hascomp` and `hassup` are set by generic code that iterates over degree fields; look
+	-- for `"has" .. degfield`.
+	if alternant_multiword_spec.haspos == "has" then
+		if alternant_multiword_spec.number.pos == "sg" or alternant_multiword_spec.number.pos == "pl" then
+			-- not "both" or "none"
+			insann(alternant_multiword_spec.number.pos .. "-only", " ")
+		end
+		if alternant_multiword_spec.definiteness.pos == "indef" or alternant_multiword_spec.definiteness.pos == "def" then
+			-- not "both" or "none"
+			insann(alternant_multiword_spec.definiteness.pos .. "-only", " ")
+		end
+		if plpos == "adjectives" then
+			if alternant_multiword_spec.hascomp == "has" and alternant_multiword_spec.hassup == "has" then
+				inscat("comparable adjectives")
+			elseif alternant_multiword_spec.hascomp == "hasnot" and alternant_multiword_spec.hassup == "hasnot" then
+				inscat("uncomparable adjectives")
+			end
+		end
+		if alternant_multiword_spec.numcomp > 1 then
+			inscat(plpos .. " with multiple comparatives")
+		end
+		if alternant_multiword_spec.numsup > 1 then
+			inscat(plpos .. " with multiple superlatives")
+		end
+	elseif alternant_multiword_spec.hascomp == "has" then
+		insann("comparative-only", " ")
+		if plpos == "adjectives" then
+			inscat("comparative-only adjectives")
+		end
+		if alternant_multiword_spec.numsup > 1 then
+			inscat(plpos .. " with multiple superlatives")
+		end
+	else
+		insann("superlative-only", " ")
+		if plpos == "adjectives" then
+			inscat("superlative-only adjectives")
+		end
+	end
+	if #irregs > 0 then
+		insann(table.concat(irregs, " // "), " ")
+	end
+	if umlauted_comparison then
+		insann("umlauted-comp", " ")
+		inscat(plpos .. " with umlauted comparative or superlative")
+	end
+	if #scrape_chains > 0 then
+		insann(("based on %s"):format(m_table.serialCommaJoin(scrape_chains)), ", ")
+		inscat(plpos .. " declined using scraped base declensions")
+	end
+
+	alternant_multiword_spec.annotation = table.concat(annparts)
+	if #stemspecs > 1 then
+		inscat(plpos .. " with multiple stems")
+	end
+	if alternant_multiword_spec.saw_unknown_comp then
+		inscat(plpos .. " with unknown comparative status")
+	end
+	alternant_multiword_spec.categories = all_cats
 end
 
 
