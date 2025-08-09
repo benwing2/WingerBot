@@ -1371,9 +1371,9 @@ function export.parse_for_control_specs(part, parse_control_spec)
 end
 
 
-local function parse_inside(base, inside, is_scraped_noun)
+local function parse_inside(base, inside, is_scraped_adj)
 	local function parse_err(msg)
-		error((is_scraped_noun and "Error processing scraped noun spec: " or "") .. msg .. ": <" ..
+		error((is_scraped_adj and "Error processing scraped adjective spec: " or "") .. msg .. ": <" ..
 			inside .. ">")
     end
 
@@ -2261,7 +2261,7 @@ end
 local function derive_sup_from_comp(base, compspecs)
 	if base.degrees.sup then
 		error(("Internal error: Attempt to create `degrees` list for field `sup` when it already exists: %s"):format(
-			degfield, dump(base.degrees)))
+			dump(base.degrees)))
 	end
 	base.degrees.sup = {}
 	for _, spec in ipairs(compspecs) do
