@@ -8,11 +8,13 @@ local headword_data_module = "Module:headword/data"
 local script_utilities_module = "Module:script utilities"
 local table_tools_module = "Module:table tools"
 
+local is_callable = require("Module:fun").is_callable
 local split = m_str_utils.split
 local rfind = mw.ustring.find
 local rmatch = mw.ustring.match
 local rsubn = mw.ustring.gsub
 local ucfirst = m_str_utils.ucfirst
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local dump = mw.dumpObject
 
 -- version of rsubn() that discards all but the first return value
@@ -38,52 +40,6 @@ local footnote_abbrevs = {
 	["r"] = "rare",
 }
 
-
-------------------------------------------------------------------------------------------------------------
---                                             PARSING CODE                                               --
-------------------------------------------------------------------------------------------------------------
-
--- FIXME: Callers of this code should call [[Module:parse-utilities]] directly.
-
---[==[
-FIXME: Older entry point. Call `parse_balanced_segment_run()` in [[Module:parse utilities]] directly.
-]==]
-function export.parse_balanced_segment_run(segment_run, open, close)
-	track("parse-balanced-segment-run")
-	return put.parse_balanced_segment_run(segment_run, open, close)
-end
-
---[==[
-FIXME: Older entry point. Call `parse_multi_delimiter_balanced_segment_run()` in [[Module:parse utilities]] directly.
-]==]
-function export.parse_multi_delimiter_balanced_segment_run(segment_run, delimiter_pairs, no_error_on_unmatched)
-	track("parse-multi-delimiter-balanced-segment-run")
-	return put.parse_multi_delimiter_balanced_segment_run(segment_run, delimiter_pairs, no_error_on_unmatched)
-end
-
---[==[
-FIXME: Older entry point. Call `split_alternating_runs()` in [[Module:parse utilities]] directly.
-]==]
-function export.split_alternating_runs(segment_runs, splitchar, preserve_splitchar)
-	track("parse-multi-delimiter-balanced-segment-run")
-	return put.split_alternating_runs(segment_runs, splitchar, preserve_splitchar)
-end
-
---[==[
-FIXME: Older entry point. Call `split_alternating_runs_and_frob_raw_text()` in [[Module:parse utilities]] directly.
-Like `split_alternating_runs()` but strips spaces from both ends of the odd-numbered elements (only in odd-numbered runs
-if `preserve_splitchar` is given). Effectively we leave alone the footnotes and splitchars themselves, but otherwise
-strip extraneous spaces. Spaces in the middle of an element are also left alone.
-]==]
-function export.split_alternating_runs_and_strip_spaces(segment_runs, splitchar, preserve_splitchar)
-	track("split-alternating-runs-and-strip-spaces")
-	return put.split_alternating_runs_and_frob_raw_text(segment_runs, splitchar, put.strip_spaces, preserve_splitchar)
-end
-
-
-------------------------------------------------------------------------------------------------------------
---                                             INFLECTION CODE                                            --
-------------------------------------------------------------------------------------------------------------
 
 --[==[ intro:
 The following code is used in building up the inflection of terms in inflected languages, where a term can potentially
@@ -352,7 +308,7 @@ function export.insert_form_into_list(list, form)
 					if not listform.footnotes then
 						listform.footnotes = {}
 					else
-						listform.footnotes = m_table.shallowcopy(listform.footnotes)
+						listform.footnotes = m_table.shallowCopy(listform.footnotes)
 					end
 					for _, footnote in ipairs(form.footnotes) do
 						local already_seen = false
@@ -548,7 +504,7 @@ function export.combine_footnotes(notes1, notes2)
 	if not notes2 then
 		return notes1
 	end
-	local combined = m_table.shallowcopy(notes1)
+	local combined = m_table.shallowCopy(notes1)
 	for _, note in ipairs(notes2) do
 		m_table.insertIfNot(combined, note)
 	end
@@ -606,16 +562,6 @@ end
 
 
 --[==[
-Older entry point. Equivalent to `expand_footnote_or_references(note, true)`. FIXME: Convert all uses to use
-`expand_footnote_or_references()` instead.
-]==]
-function export.expand_footnote(note)
-	track("expand-footnote")
-	return export.expand_footnote_or_references(note, false, "no parse refs")
-end
-
-
---[==[
 Convert a list of foonotes to qualifiers and references for use in [[Module:headword]] or similar. Returns two values,
 a list of qualifiers (possibly {nil}) and a list of reference structures (possibly {nil}), following the structure
 defined in [[Module:references]]).
@@ -648,15 +594,6 @@ end
 
 
 --[==[
-Older entry point. FIXME: Convert to `export.convert_footnotes_to_qualifiers_and_references`.
-]==]
-function export.fetch_headword_qualifiers_and_references(footnotes)
-	track("fetch-headword-qualifiers-and-references")
-	return export.convert_footnotes_to_qualifiers_and_references(footnotes)
-end
-
-
---[==[
 Combine an abbreviated form object (either a string or a table) with additional footnotes, possibly replacing the form
 value and/or translit in the process. Normally called in one of two ways:
 (1) `combine_form_and_footnotes(``form_obj``, ``addl_footnotes``, ``new_form``, ``new_translit``)` where ``form_obj``
@@ -684,7 +621,7 @@ function export.combine_form_and_footnotes(abform, addl_footnotes, new_formval, 
 		new_formval = new_formval or abform
 		return {form = new_formval, translit = new_translit, footnotes = addl_footnotes}
 	end
-	abform = m_table.shallowcopy(abform)
+	abform = m_table.shallowCopy(abform)
 	if new_formval then
 		abform.form = new_formval
 	end
@@ -788,7 +725,7 @@ function export.add_forms(formtable, slot, stems, endings, combine_stem_ending, 
 		return combine_stem_ending(stem, ending)
 	end
 	local function transliterate(text)
-		return lang_or_func_transliterate(type(lang) == "function" and lang or nil, lang, text)
+		return lang_or_func_transliterate(is_callable(lang) and lang or nil, lang, text)
 	end
 	if type(stems) == "string" and type(endings) == "string" then
 		export.insert_form(formtable, slot, {form = combine(stems, endings), footnotes = footnotes})
@@ -803,7 +740,7 @@ function export.add_forms(formtable, slot, stems, endings, combine_stem_ending, 
 			for _, ending in ipairs(endings) do
 				local footnotes = nil
 				if stem.footnotes and ending.footnotes then
-					footnotes = m_table.shallowcopy(stem.footnotes)
+					footnotes = m_table.shallowCopy(stem.footnotes)
 					for _, footnote in ipairs(ending.footnotes) do
 						m_table.insertIfNot(footnotes, footnote)
 					end
@@ -880,11 +817,11 @@ local function iterate_slot_list_or_table(props, do_slot)
 end
 
 
-function export.default_split_bracketed_runs_into_words(bracketed_runs)
+function export.default_split_bracketed_runs_into_words(bracketed_runs, data)
 	-- If the text begins with a hyphen, include the hyphen in the set of allowed characters
 	-- for an inflected segment. This way, e.g. conjugating "-ir" is treated as a regular
 	-- -ir verb rather than a hyphen + irregular [[ir]].
-	local is_suffix = rfind(bracketed_runs[1], "^%-")
+	local is_suffix = (not data or data.text_index == 1) and rfind(bracketed_runs[1], "^%-")
 	local split_pattern = is_suffix and " " or "[ %-]"
 	return put.split_alternating_runs(bracketed_runs, split_pattern, "preserve splitchar")
 end
@@ -895,7 +832,9 @@ local function props_transliterate(props, text)
 end
 
 
-local function parse_before_or_post_text(props, text, segments, lemma_is_last)
+local function parse_before_or_post_text(data)
+	local props, text, text_index, segments, lemma_is_last = data.props, data.text, data.text_index, data.segments,
+		data.lemma_is_last
 	-- Call parse_balanced_segment_run() to keep multiword links together.
 	local bracketed_runs = put.parse_balanced_segment_run(text, "[", "]")
 	-- Split normally on space or hyphen (but customizable). Use preserve_splitchar so we know whether the separator was
@@ -905,7 +844,7 @@ local function parse_before_or_post_text(props, text, segments, lemma_is_last)
 		space_separated_groups = props.split_bracketed_runs_into_words(bracketed_runs)
 	end
 	if not space_separated_groups then
-		space_separated_groups = export.default_split_bracketed_runs_into_words(bracketed_runs)
+		space_separated_groups = export.default_split_bracketed_runs_into_words(bracketed_runs, data)
 	end
 
 	local parsed_components = {}
@@ -1040,7 +979,13 @@ local function parse_multiword_spec(segments, props, disable_allow_default_indic
 	-- the odd-numbered segments are the text between them.
 	for i = 2, #segments - 1, 2 do
 		local before_text, before_text_translit, lemma =
-			parse_before_or_post_text(props, segments[i - 1], segments, "lemma is last")
+			parse_before_or_post_text {
+				props = props,
+				text = segments[i - 1],
+				text_index = i - 1,
+				segments = segments,
+				lemma_is_last = true
+			}
 		local base = props.parse_indicator_spec(segments[i], lemma)
 		base.before_text = before_text
 		base.before_text_no_links = m_links.remove_links(base.before_text)
@@ -1049,7 +994,13 @@ local function parse_multiword_spec(segments, props, disable_allow_default_indic
 		table.insert(multiword_spec.word_specs, base)
 	end
 	multiword_spec.post_text, multiword_spec.post_text_translit =
-		parse_before_or_post_text(props, segments[#segments], segments)
+		parse_before_or_post_text {
+			props = props,
+			text = segments[#segments],
+			text_index = #segments,
+			segments = segments,
+			lemma_is_last = false
+		}
 	multiword_spec.post_text_no_links = m_links.remove_links(multiword_spec.post_text)
 	return multiword_spec
 end
@@ -1273,7 +1224,7 @@ local function append_forms(props, formtable, slot, forms, before_text, before_t
 				local new_footnotes = export.combine_footnotes(old_form.footnotes, form.footnotes)
 				if new_formval == form.form and new_translit == form.translit then
 					-- Automatically preserve metadata when possible.
-					new_formobj = m_table.shallowcopy(form)
+					new_formobj = m_table.shallowCopy(form)
 					new_formobj.footnotes = new_footnotes
 				else
 					local new_footnotes = export.combine_footnotes(old_form.footnotes, form.footnotes)
@@ -1499,12 +1450,6 @@ function export.get_footnote_text(footnotes, footnote_obj)
 	if not footnotes then
 		return ""
 	end
-	-- FIXME: Compatibility code for old callers that passed in a form object instead of the footnotes directly.
-	-- Convert callers and remove this code.
-	if footnotes.footnotes then
-		track("get-footnote-text-old-calling-convention")
-		footnotes = footnotes.footnotes
-	end
 	local link_indices = {}
 	local all_refs = {}
 	for _, footnote in ipairs(footnotes) do
@@ -1516,7 +1461,7 @@ function export.get_footnote_text(footnotes, footnote_obj)
 				-- Generate a footnote index.
 				this_noteindex = footnote_obj.noteindex
 				footnote_obj.noteindex = footnote_obj.noteindex + 1
-				table.insert(footnote_obj.notes, '<sup style="color: red">' .. this_noteindex .. '</sup>' .. footnote)
+				table.insert(footnote_obj.notes, '<sup style="color: var(--wikt-palette-red, red)">' .. this_noteindex .. '</sup>' .. footnote)
 				footnote_obj.seen_notes[footnote] = this_noteindex
 			end
 			m_table.insertIfNot(link_indices, this_noteindex)
@@ -1563,7 +1508,7 @@ function export.get_footnote_text(footnotes, footnote_obj)
 	end
 	local link_text
 	if #link_indices > 0 then
-		link_text = '<sup style="color: red">' .. table.concat(link_indices, ",") .. '</sup>'
+		link_text = '<sup style="color: var(--wikt-palette-red, red)">' .. table.concat(link_indices, ",") .. '</sup>'
 	else
 		link_text = ""
 	end
@@ -1948,9 +1893,9 @@ function export.show_forms(formtable, props)
 	formtable.lemma = #lemma_formvals > 0 and table.concat(lemma_formvals, ", ") or
 		mw.loadData(headword_data_module).pagename
 	-- For safety, since we in-place modify `lemmas` usually before processing a given slot, make a copy.
-	local props_lemmas = m_table.shallowcopy(props.lemmas)
+	local props_lemmas = m_table.shallowCopy(props.lemmas)
 	for i, lemma in ipairs(props_lemmas) do
-		props_lemmas[i] = m_table.shallowcopy(lemma)
+		props_lemmas[i] = m_table.shallowCopy(lemma)
 	end
 
 	local function do_slot(slot, accel_tag_set)
