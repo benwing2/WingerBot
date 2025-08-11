@@ -514,7 +514,42 @@ function export.apply_second_palatalization(word)
 	return rsub(word, "(.)$", second_palatalization_map)
 end
 
-function export.reduce(word, script)
+--[==[
+Determine whether the lemma is reducible. On input, the lemma should already be decomposed.
+]==]
+function export.determine_default_reducible(lemma)
+	-- FIXME, we should handle lemmas ending in -CV (normally, feminine or neuter) and return whether the lemma can be
+	-- dereduced (or have a separate function for that).
+	-- Convert lj, nj, dž to a single char. Required to get reducible [[šupalj]] correct.
+	lemma = export.apply_temp_sub(lemma)
+	-- [oо] is Latin + Cyrillic; it's OK to always substitute Latin because of the way the algorithm below works.
+	lemma = rsub(lemma, "(" .. vowel_c .. vowel_accent_c .. "*)[oо]$", "%1l")
+	-- In a monosyllable, a short falling accent should not prevent reducibility; remove now.
+	lemma = rsub(lemma, "^(" .. cons_c .. "*[aа])" .. DOUBLEGR .. "(" .. cons_c .. ")$", "%1%2")
+	-- Lemma must end in -CaC with a single C, unstressed and without macron (except for a monosyllabic short falling
+	-- accent as in zȁo, which we already removed and converted the -o to -l).
+	if not rfind(lemma, cons_c .. "[aа]" .. cons_c .. "$") then
+		return false
+	end
+	-- Lemmas in -av are normally non-reducible.
+	if rfind(lemma, "[aа][vв]$") then
+		return false
+	end
+	-- Lemmas in -CraC and -ClaC are non-reducible as the reduction would turn a non-syllabic l/r into a syllabic one,
+	-- which can't happen.
+	if rfind(lemma, cons_c .. "[rрlл][aа]" .. cons_c .. "$") then
+		return false
+	end
+	return true
+end
+
+
+--[==[
+Apply reduction (i.e. remove the fleeting a and apply any required adjustments) to `word`. Return nil if the word can't
+be reduced; otherwise, return a list of outputs, as there may be more than one (as in lȅdac "crystal").
+]==]
+function export.reduce(word)
+	-- FIXME: Handle monosyllabic words (after final o -> l) like zȁo.
 	word = export.apply_temp_sub(word)
 	-- WARNING: [aаAА] contains two Latin chars and two Cyrillic chars, even though the Latin and corresponding
 	-- Cyrillic characters look alike. Similarly with oOоО.

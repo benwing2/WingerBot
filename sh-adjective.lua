@@ -11,15 +11,15 @@ Authorship: Ben Wing <benwing2>
 
 TERMINOLOGY:
 
--- "slot" = A particular combination of case/gender/number.
-	 Example slot names for adjectives are "gen_f" (genitive feminine singular) and
-	 "nom_mp_an" (animate nominative masculine plural). Each slot is filled with zero or more forms.
+-- "slot" = A particular combination of case/gender/number. Example slot names for adjectives are "indef_gen_f"
+	(indefinite genitive feminine singular) and "comp_m_acc_an" (animate accusative masculine singular comparative
+	degree). Each slot is filled with zero or more forms.
 
 -- "form" = The declined Serbo-Croatian form representing the value of a given slot.
 
 -- "lemma" = The dictionary form of a given Serbo-Croatian term. Generally the nominative
-     masculine singular, but may occasionally be another form if the nominative
-	 masculine singular is missing.
+	masculine singular, but may occasionally be another form if the nominative
+	masculine singular is missing.
 ]=]
 
 local lang = require("Module:languages").getByCode("sh")
@@ -32,10 +32,6 @@ local AC = com.AC
 local GR = com.GR
 local DOUBLEGR = com.DOUBLEGR
 local INVBREVE = com.INVBREVE
-
-local current_title = mw.title.getCurrentTitle()
-local NAMESPACE = current_title.nsText
-local PAGENAME = current_title.text
 
 local u = m_string_utilities.char
 local rsplit = m_string_utilities.split
@@ -101,12 +97,12 @@ end
 
 
 local potential_lemma_slots = {
-	"str_nom_m",
-	"str_nom_mp", -- for plural-only numerals and such
-	"wk_nom_m", -- for weak-only adjectives
-	"comp_wk_nom_m", -- for adjectives existing only in comparative and superlative forms
-	"sup_str_nom_m", -- for adjectives existing only in superlative forms
-	"sup_wk_nom_m", -- for adjectives existing only in superlative weak forms (e.g. [[einasti]])
+	"indef_nom_m",
+	"indef_nom_f", -- for feminine-only adjectives
+	"indef_nom_mp", -- for plural-only numerals and such
+	"def_nom_m", -- for definite-only adjectives
+	"def_nom_f", -- for definite-only feminine-only adjectives
+	"comp_nom_m", -- for adjectives existing only in comparative and superlative forms
 }
 
 local compsup_degrees = {
@@ -115,7 +111,12 @@ local compsup_degrees = {
 	{"sup", "Superlative"},
 }
 
--- Export some of these below for use by [[Module:is-noun]].
+local definitenesses = {
+	{"indef", "indefinite"},
+	{"def", "definite"},
+}
+
+-- Export some of these below for use by [[Module:sh-noun]].
 
 export.overridable_stems = {
 	"stem",
@@ -149,105 +150,35 @@ local function slot_to_degfield(slot)
 end
 
 
-local function degfield_to_slot_prefix(degfield)
-	if degfield == "pos" then
-		return ""
-	else
-		return degfield .. "_"
-	end
-end
-
-local strong_adjective_slots = {
-	{"str_nom_m", "str|nom|m|s"},
-	{"str_nom_f", "str|nom|f|s"},
-	{"str_nom_n", "str|nom//acc|n|s"},
-	{"str_acc_m", "str|acc|m|s"},
-	{"str_acc_f", "str|acc|f|s"},
-	{"str_dat_m", "str|dat|m|s"},
-	{"str_dat_f", "str|dat|f|s"},
-	{"str_dat_n", "str|dat|n|s"},
-	{"str_gen_m", "str|gen|m|s"},
-	{"str_gen_f", "str|gen|f|s"},
-	{"str_gen_n", "str|gen|n|s"},
-	{"str_nom_mp", "str|nom|m|p"},
-	{"str_nom_fp", "str|nom//acc|f|p"},
-	{"str_nom_np", "str|nom//acc|n|p"},
-	{"str_acc_mp", "str|acc|m|p"},
-	{"str_gen_p", "str|gen|p"},
-	{"str_dat_p", "str|dat|p"},
-}
-
-local weak_adjective_slots = {
-	{"wk_nom_m", "wk|nom|m|s"},
-	{"wk_nom_f", "wk|nom|f|s"},
-	{"wk_n", "wk|n|s"},
-	{"wk_obl_m", "wk|acc//dat//gen|m|s"},
-	{"wk_obl_f", "wk|acc//dat//gen|f|s"},
-	{"wk_p", "wk|p"},
-}
-
 -- Abbreviations for use in addnote specs and overrides. Key is the abbreviation, value is a Lua pattern matching the
 -- slots to select, or a list of such patterns. Patterns are anchored at both ends.
 local adjective_slot_abbrs = {
-	wk_m = "wk_.*m",
-	wk_f = "wk_.*f",
-	comp_wk_m = "comp_wk_.*m",
-	comp_wk_f = "comp_.*f",
-	sup_wk_m = "sup_wk_.*m",
-	sup_wk_f = "sup_.*_f",
-	str_s = "str_.*[mfn]",
-	wk_s = "wk_.*[mfn]",
-	str_p = "str_.*p",
-	comp_wk_s = "comp_wk_.*[mfn]",
-	sup_str_s = "sup_str_.*[mfn]",
-	sup_wk_s = "sup_wk_.*[mfn]",
-	sup_str_p = "sup_str_.*p",
-	wk = "wk_.*",
-	str = "str_.*",
-	sup_wk = "sup_wk_.*",
-	sup_str = "sup_str_.*",
+	indef = "indef_.*",
+	indef_m = {"indef_.*_m", "indef_.*_m_[ai]n"},
+	indef_f = "indef_.*_f",
+	indef_n = "indef_.*_n",
+	indef_s = {"indef_.*_[mfn]", "indef_.*_m_[ai]n"},
+	indef_p = "indef_.*p",
+	def = "def_.*",
+	def_m = {"def_.*_m", "def_.*_m_[ai]n"},
+	def_f = "def_.*_f",
+	def_n = "def_.*_n",
+	def_s = {"def_.*_[mfn]", "def_.*_m_[ai]n"},
+	def_p = "def_.*p",
+	comp_m = {"comp_.*_m", "comp_.*_m_[ai]n"},
+	comp_f = "comp_.*_f",
+	comp_n = "comp_.*_n",
+	comp_s = {"comp_.*_[mfn]", "comp_.*_m_[ai]n"},
+	comp_p = "comp_.*p",
+	sup_m = {"sup_.*_m", "sup_.*_m_[ai]n"},
+	sup_f = "sup_.*_f",
+	sup_n = "sup_.*_n",
+	sup_s = {"sup_.*_[mfn]", "sup_.*_m_[ai]n"},
+	sup_p = "sup_.*p",
 }
-
---[=[
--- All slots that are used by any of the different tables. The key is the slot and the value is a list of the tables
--- that use the slot. "" = regular, "plonly" = special=plonly in {{sh-adecl-manual}}, "dva" = special=dva in
--- {{sh-adecl-manual}}.
-local input_adjective_slots = {
-	nom_m = {""},
-	nom_f = {""},
-	nom_n = {""},
-	nom_mp_an = {"", "plonly"},
-	nom_fp = {"", "plonly"},
-	nom_np = {"", "plonly"},
-	nom_mp = {"dva"},
-	nom_fnp = {"dva"},
-	gen_mn = {""},
-	gen_f = {""},
-	gen_p = {"", "plonly", "dva"},
-	dat_mn = {""},
-	dat_f = {""},
-	dat_p = {"", "plonly", "dva"},
-	acc_m_an = {""},
-	acc_m_in = {""},
-	acc_f = {""},
-	acc_n = {""},
-	acc_mfp = {"", "plonly"},
-	acc_np = {"", "plonly"},
-	acc_mp = {"dva"},
-	acc_fnp = {"dva"},
-	ins_mn = {""},
-	ins_f = {""},
-	ins_p = {"", "plonly", "dva"},
-	loc_mn = {""},
-	loc_f = {""},
-	loc_p = {"", "plonly", "dva"},
-}
-]=]
-
 
 local input_adjective_slots = {
 	{"nom_m", "nom|m|s"},
-	{"nom_m_linked", "nom|m|s"}, -- used in [[Module:sh-noun]]?
 	{"nom_f", "nom|f|s"},
 	{"nom_n", "nom|n|s"},
 	{"nom_mp", "nom|m|p"},
@@ -284,14 +215,252 @@ local input_adjective_slots = {
 	{"loc_p", "loc|p"},
 }
 
-local adjective_slots = {}
-for _, def in ipairs {"indef", "def"} do
+local adjective_slot_set = {}
+local adjective_slot_list = {}
+
+local adjective_slot_list_by_degree = {}
+local adjective_slot_list_linked_slots = {}
+
+local function add_list_slots(degfield, prefix)
+	-- Initialize by-degree list, but don't overwrite.
+	adjective_slot_list_by_degree[degfield] = adjective_slot_list_by_degree[degfield] or {}
 	for _, slot_accel in ipairs(input_adjective_slots) do
-		local slot_accel = unpack(slot, accel)
-		if def == "def" or not slot:find("^voc_") then
-			insert(adjective_slots, {def .. "_" .. slot, def .. "|" .. accel})
+		local slot, accel = unpack(slot_accel)
+		local accel_suffix = ""
+		if prefix == "comp" then
+			accel = accel .. "|comd"
+		elseif prefix == "sup" then
+			accel = accel .. "|supd"
+		else
+			accel = prefix .. "|" .. accel
 		end
+		slot = prefix .. slot
+		slot_accel = {slot, accel}
+		table.insert(adjective_slot_list, slot_accel)
+		table.insert(adjective_slot_list_by_degree[degfield], slot_accel)
+		adjective_slot_set[slot] = true
 	end
+end
+
+local function add_slots(degfield, prefixes)
+	for _, prefix in ipairs(prefixes) do
+		add_list_slots(degfield, prefix)
+	end
+end
+add_slots("pos", {"indef", "def"})
+add_slots("comp", {"comp"})
+add_slots("sup", {"sup"})
+for _, potential_lemma_slot in ipairs(potential_lemma_slots) do
+	local slot_accel = {potential_lemma_slot .. "_linked", "-"}
+	table.insert(adjective_slot_list, slot_accel)
+	table.insert(adjective_slot_list_linked_slots, slot_accel)
+end
+
+
+-- Get the appropriate slot list for the given degree, removing the definiteness and/or number from the
+-- accelerator form if the definiteness or number are restricted to a single value.
+local function get_slot_list(alternant_multiword_spec, degfield)
+	local source_list = adjective_slot_list_by_degree[degfield]
+	local number = alternant_multiword_spec.number[degfield]
+	local definiteness = alternant_multiword_spec.definiteness[degfield]
+	if number == "both" and definiteness == "bothdefs" then
+		return source_list
+	end
+	local dest_list = {}
+	for _, slot_accel in ipairs(source_list) do
+		local slot, accel = unpack(slot_accel)
+		if definiteness ~= "bothdefs" and alternant_multiword_spec.pos ~= "adjective" then
+			accel = accel:gsub("^indef|", ""):gsub("^def|", "")
+		end
+		if number ~= "both" then
+			accel = accel:gsub("|s$", ""):gsub("|p$", "")
+		end
+		table.insert(dest_list, {slot, accel})
+	end
+	return dest_list
+end
+
+
+local function skip_slot(number, definiteness, slot)
+	return number == "sg" and slot:find("p$") or
+		number == "pl" and not slot:find("p$") or
+		definiteness == "indef" and slot:find("^def_") or
+		definiteness == "def" and slot:find("^indef_")
+end
+
+
+--[=[
+Create an empty `base` object for holding the result of parsing and later the generated forms. The object (including
+fields later filled out by other functions) is of the form
+
+{
+  -- The original lemma as specified by the user in the declension spec, or taken from the pagename. May have
+  -- double-bracket links in it.
+  orig_lemma = "ORIGINAL_LEMMA",
+  -- Same as `orig_lemma` but with double-bracket links removed and two-part links resolved to the right side.
+  orig_lemma_no_links = "ORIGINAL_LEMMA_NO_LINKS",
+  -- Per-degree structures (`pos` = positive, `comp` = comparative, `sup` = superlative). Each slot (`pos`, `comp` or
+  -- `sup`) maps to a list of degree objects, one for each per-degree lemma. There will only be one positive degree
+  -- object (different positive lemmas will be handled as alternants at a higher level), but there may be multiple
+  -- comparative and/or superlative degree objects. (Conversely, there may be multiple property sets per positive-degree
+  -- object, e.g. if the user specifies 'con,-con', but only one property set per comparative and superlative degree
+  -- object.) Multiple degree objects generally happen because the user specifies multiple comparatives or superlatives
+  -- (e.g. for [[fagur]], using the spec '#.comp:^ri:^!i.sup:^stur', which specifies comparative lemmas [[fegurri]] and
+  -- [[fagri]] and superlative [[fegurstur]]), but occasionally the default superlative operation generates more than
+  -- one superlative; e.g. for [[förull]] the spec is 'con,-con.comp:+:~~ari' which explicitly mentions two
+  -- comparatives, and '+' itself generates two superlatives because of the 'con,-con' portion of the spec. There will
+  -- always be a `pos` slot filled, but if the user didn't explicitly either specify that a comparative is present or
+  -- specify no comparative using '-comp', there will be no `comp` slot (likewise for `sup`). If the user specified
+  -- '-comp', there will be a `comp` slot mapping to an empty list.
+  degrees = {
+    pos = {
+	  {
+		-- The actual lemma, without any links. For the positive degree, same as `base.orig_lemma_no_links`. For the
+		-- comparative and superlative degrees, as specified by the user or defaulted.
+		actual_lemma = "ACTUAL_LEMMA",
+		-- The lemma to use for declension. Will differ from `actual_lemma` if `decllemma:...` is given, in which case
+		-- the value of `decllemma` will be here.
+		lemma = "LEMMA",
+		number = "NUMBER", -- "sg", "pl" or "both"; may be missing and if so is defaulted
+		definiteness = "DEFINITENESS", -- "strong", "weak" or "bothdefs"; may be missing and if so is defaulted
+		-- computed stem; after parse_indicator_spec(), either nil or a user-specified stem override, which may have
+		-- # (= lemma) or ## (= lemma minus -ur or -r) as the value; after determine_positive_declension(), filled in
+		-- with the actual stem
+		stem = "STEM",
+		-- override the stem used before vowel-initial endings; after parse_indicator_spec(), either nil or a
+		-- user-specified stem override in the same format as `stem`
+		vstem = nil or "STEM",
+		-- degree-level footnotes, specified using `LEMMA[footnote]`, where `LEMMA` is the comparative or superlative
+		-- lemma, + for the default, or a shortened version using ~, ^ or the like
+		footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
+		-- CONTROL_GROUP is one of "umut", "con", "pp", "ppdent", "j" or "v", and CONTROL_SPEC is {form = "FORM",
+		-- footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...}, defaulted = BOOLEAN}, where FORM is as specified by the
+		-- user (e.g. "uUmut", "-pp") or set as a default by the code (in which case `defaulted` will be set to true for
+		-- control group "umut"); the control groups are as follows:
+		-- * umut (u-mutation);
+		-- * con (stem contraction before vowel-initial endings);
+		-- * j (j-infix before vowel-initial endings not beginning with an i);
+		-- * v (v-infix before vowel-initial endings);
+		-- * pp (past-participle-like inflection, with -ð in the nominative/accusative neuter singular instead of -t);
+		-- * ppdent (dental infix in past participles before vowel-initial endings);
+		CONTROL_GROUP = {
+		  CONTROL_SPEC, CONTROL_SPEC, ...
+		},
+		prop_sets = {
+		  PROPSET, -- see below
+		  ...,
+		},
+	  },
+	  ...
+	},
+	comp = { { ... }, { ... }, ... },
+	sup = { { ... }, { ... }, ... },
+  },
+  -- forms for a single spec alternant
+  forms = {
+	SLOT = {
+	  {
+		form = "FORM",
+		footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
+	  },
+	  ...
+	},
+	...
+  },
+  -- SLOT is the actual name of the slot, such as "str_nom_n", and OVERRIDE is a list of form objects, where a
+  -- form object is {form = FORM, footnotes = FOOTNOTES} as in the `forms` table ("-" means to suppress the slot
+  -- entirely)
+  overrides = {
+	SLOT = OVERRIDE,
+	SLOT = OVERRIDE,
+	...
+  },
+  -- Used to track duplicate slot overrides.
+  override_slots_seen = {
+	SLOT = true,
+	SLOT = true,
+	...
+  },
+  -- Positive specs as given by the user, currently only if the user specifies '-pos'.
+  posspec = nil or { {form = "-"} },
+  -- Comparative specs as given by the user, consisting of a list of form objects.
+  compspec = nil or { {form = "FORM", footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...}}, ...},
+  -- Superlative specs as given by the user, consisting of a list of form objects.
+  supspec = nil or { {form = "FORM", footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...}}, ...},
+  -- misc Boolean properties:
+  -- * "builtin" (a built-in term such as a number or determiner);
+  -- * "decl?" (unknown declension);
+  -- * "comp?" (unknown if comparative exists);
+  -- * "indecl" (indeclinable);
+  -- * "pred" (predicate-only);
+  -- * "article" (requests the article variant of [[hinn]]);
+  -- * "archaic" (requests the archaic variant of [[enginn]]);
+  props = {
+	PROP = true,
+	PROP = true,
+    ...
+  },
+  decllemma = nil or "DECLLEMMA", -- decline like the specified lemma
+  -- alternant-level footnotes, specified using `.[footnote]`, i.e. a footnote by itself; apply to all degrees
+  footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
+  -- ADDNOTE_SPEC is {slot_specs = {"SPEC", "SPEC", ...}, footnotes = {"FOOTNOTE", "FOOTNOTE", ...}}; SPEC is a Lua
+  -- pattern matching slots (anchored on both sides) and FOOTNOTE is a footnote to add to those slots
+  addnote_specs = {
+	ADDNOTE_SPEC, ADDNOTE_SPEC, ...
+  },
+}
+
+There is one PROPSET (property set) for each combination of control specs; in the lower limit, there is a single
+property set. There may be more than one property set e.g. if the user specified 'umut,uUmut' or '-j,j' or some
+combination of these. The properties in a given property set specify the values themselves of each control group, as
+well as stems (derived from the control specs) that are used to construct the various forms and populate the slots in
+`forms` with these values. The information found in the property sets cannot be stored in `base` because it depends on a
+particular combination of control specs, of which there may be more than one (see above). The decline_adjective()
+function iterates over all property sets and calls the appropriate declension function on each one in turn, which adds
+forms to each slot in `base.forms`, automatically deduplicating.
+
+The properties in each property set are:
+* Mutation specs: These are copied from the control specs at the degree object level. The key is one of the possible
+  control groups ("umut", "con", etc.), but the value is a single form object {form = "FORM", footnotes = nil or
+  {"FOOTNOTE", "FOOTNOTE", ...}}. These are set by expand_property_sets() for the positive degree, and by
+  process_comp_sup_spec() or derive_sup_from_comp() for the comparative and superlative degrees.
+* Stems (each stem is either a string or a form object; stems in general may be missing, i.e. nil, unless otherwise
+  specified, and default to more general variants):
+** `stem`: The basic stem. Always set. May be overridden by more specific variants.
+** `nonvstem`: The stem used when the ending is null or starts with a consonant, unless overridden by a more
+   specific variant. Defaults to `stem`. Not currently used, but could be if e.g. a user stem override `nonvstem:...`
+   were supported.
+** `umut_nonvstem`: The stem used when the ending is null or starts with a consonant and u-mutation is in effect,
+   unless overridden by a more specific variant. Defaults to `nonvstem`. Will only be present when the result of
+   u-mutation is different from the stem to which u-mutation is applied. (In this case, it will be present even if
+   `nonvstem` is missing, because there is no generic `umut_stem`.)
+** `vstem`: The stem used when the ending starts with a vowel, unless overridden by a more specific variant. Defaults
+   to `stem`. Will be specified when contraction is in effect or the user specified `vstem:...`.
+** `umut_vstem`: The stem(s) used when the ending starts with a vowel and u-mutation is in effect. Defaults to
+   `vstem`. Note that u-mutation applies to the contracted stem if both u-mutation and contraction are in effect.
+   Will only be present when the result of u-mutation is different from the stem to which u-mutation is applied.
+   (In this case, it will be present even if `vstem` is missing, because there is no generic `umut_stem`.)
+* Other properties:
+** `jinfix`: If present, either "" or "j". Inserted between the stem and ending when the ending begins with a vowel
+   other than "i". Note that j-infixes don't apply to ending overrides.
+** `jinfix_footnotes`: Footnotes to attach to forms where j-infixing is possible (even if it's not present).
+** `vinfix`: If present, either "" or "v". Inserted between the stem and ending when the ending begins with a vowel.
+   Note that v-infixes don't apply to ending overrides. `jinfix` and `vinfix` cannot both be specified.
+** `vinfix_footnotes`: Footnotes to attach to forms where v-infixing is possible (even if it's not present).
+** `pp`: If present, either `true` or `false`. Indicates how to assimilate neuter ending -t to a previous final -ð
+   after a vowel. If true, the result is -ð, as in past participles; otherwise, the result is -tt.
+** `pp_footnotes`: Footnotes to attach to forms where `pp`-influenced assimilation happens.
+}
+]=]
+local function create_base()
+	return {
+		forms = {},
+		overrides = {},
+		override_slots_seen = {},
+		props = {},
+		addnote_specs = {},
+		degrees = {},
+	}
 end
 
 
@@ -352,7 +521,7 @@ local function add(base, slot, degree, props, endings)
 		elseif slot == "indef_nom_m" or slot == "indef_acc_m_in" then
 			stem_in_effect = props.lemma_stem
 		elseif slot == "indef_nom_n" or slot == "indef_acc_n" then
-			stem_in_effect = props.indef_neut_stem
+			stem_in_effect = props.neut_stem
 		else
 			stem_in_effect = props.indef_stem
 		end
@@ -591,7 +760,7 @@ local function add_normal_decl(base, stems,
 	add(base, "indef_ins_n", stems, ins_mn)
 	add(base, "def_ins_n", stems, ins_mn)
 	add(base, "indef_ins_p", stems, dat_p)
-	add(base, "def_ins_p", stems, datt_p)
+	add(base, "def_ins_p", stems, dat_p)
 	add(base, "indef_loc_m", stems, indef_loc_mn)
 	add(base, "def_loc_m", stems, def_loc_mn)
 	add(base, "indef_loc_f", stems, loc_f)
@@ -641,116 +810,6 @@ decls["normal-Cyrl"] = function(base, props)
 		"у", {"о̄м", "о̄му"}, "о̄ј",
 	)
 end
-
-decls["normal"] = function(base)
-	local stem, suffix
-
-	stem, suffix = rmatch(base.lemma, "^(.*)(ý)$")
-	if stem then
-		add_normal_decl(base, stem,
-			"ý", "á", "é", {}, "é", "á",
-			"ého", "é", "ých",
-			"ému", "é", "ým",
-			"ou",
-			"ém", "é", "ých",
-			"ým", "ou", "ými"
-		)
-		-- Do the nominative masculine animate plural separately since it may have a different stem (with the second
-		-- palatalization applied).
-		add_normal_decl(base, com.apply_second_palatalization(stem, "is adj"), nil, nil, nil, "í")
-		if base.short then
-			-- Examples of short adjectives:
-			-- bledý "pale" -> bled
-			-- bosý "barefoot" -> bos
-			-- pilný "hardworking, diligent" -> pilen (reducible)
-			-- veselý "funny, jolly" -> vesel
-			-- jistý "certain, sure" -> jist
-			-- vinný "guilty" -> vinen (reducible)
-			-- živý "alive, living" -> živ
-			-- tichý "quiet" -> tich; mp_an = tiši
-			-- vědomý "conscious, aware" -> vědom
-			-- rád "glad" (short only)
-			-- chudý "poor" -> chud
-			-- nevinný "innocent" -> nevinen (reducible)
-			-- silný "strong" -> silen (reducible)
-			-- známý "known" -> znám
-			-- mladý "young" -> mlád (note length); other forms have mlád- or mlad-
-			-- starý "old" -> stár (note length); other forms have stár- or star-; mp_an = stáři, staři
-			-- slabý "weak" -> sláb (note length); other forms only have sláb- (FIXME: check against a grammar)
-			-- zdravý "healthy" -> zdráv (note length); other forms only have zdráv- (FIXME: check against a grammar)
-			-- nemocný "ill" -> nemocen (reducible)
-			-- plný "full" -> pln
-			-- schopný "able, capable" -> schopen (reducible)
-			-- vděčný "grateful" -> vděčen (reducible)
-			-- věrný "faithful" -> věren (reducible)
-			-- šťastný "happy" -> šťasten (reducible)
-			-- křepký "strong" -> křepek (reducible); mp_an = křepci
-			-- hotový "ready, finished" -> hotov
-			-- němý "mute" -> něma
-			-- smutný "sad" -> smuten (reducible)
-			-- samotný "lonely" -> samoten (reducible)
-			-- bohatý "rich" -> bohat
-			-- chladný "cold" -> chladen (reducible)
-			-- dlužný "necessary?" -> dlužen (reducible)
-			-- povinný "mandatory" -> povinen (reducible)
-			-- zodpovědný "responsible" -> zodpověden (reducible)
-			-- udatný "brave" -> udaten (reducible)
-			-- náchylný "susceptible" -> náchylen (reducible)
-			for _, short_stem_obj in ipairs(base.short) do
-				add_short_decl(base, short_stem_obj.base, "")
-				add_short_decl(base, short_stem_obj.stem, nil, "a", "o", nil, "y", "a")
-				add_short_decl(base, com.apply_second_palatalization(short_stem_obj.stem.form, "is adj"), nil, nil, nil, "i",
-					short_stem_obj.stem.footnotes)
-			end
-		end
-		return
-	end
-
-	-- soft in -í
-	stem, suffix = rmatch(base.lemma, "^(.*)(í)$")
-	if stem then
-		add_normal_decl(base, stem,
-			"í", "í", "í", "í", "í", "í",
-			"ího", "í", "ích",
-			"ímu", "í", "ím",
-			"í",
-			"ím", "í", "ích",
-			"ím", "í", "ími"
-		)
-		return
-	end
-
-	-- possessive in -ův
-	stem, suffix = rmatch(base.lemma, "^(.*)(ův)$")
-	if stem then
-		add_normal_decl(base, stem,
-			"ův", "ova", "ovo", "ovi", "ovy", "ova",
-			"ova", "ovy", "ových",
-			"ovu", "ově", "ovým",
-			"ovu",
-			{"ově", "ovu"}, "ově", "ových",
-			"ovým", "ovou", "ovými"
-		)
-		return
-	end
-
-	-- possessive in -in
-	stem, suffix = rmatch(base.lemma, "^(.*)(in)$")
-	if stem then
-		add_normal_decl(base, stem,
-			"in", "ina", "ino", "ini", "iny", "ina",
-			"ina", "iny", "iných",
-			"inu", "ině", "iným",
-			"inu",
-			{"ině", "inu"}, "ině", "iných",
-			"iným", "inou", "inými"
-		)
-		return
-	end
-
-	error("Unrecognized adjective lemma, should end in '-ý', '-í', '-ův' or '-in': '" .. base.lemma .. "'")
-end
-
 
 decls["irreg"] = function(base)
 	local stem, suffix
@@ -1144,10 +1203,9 @@ local function parse_override(segments, parse_err)
 			slots = rsplit(colon_separated_group[1], "%+")
 			for _, slot in ipairs(slots) do
 				if not adjective_slot_set[slot] and not adjective_slot_abbrs[slot] then
-					parse_err(("Unrecognized slot '%s' in override; expected strong slot %s; weak slot %s; " ..
-						"comparative slot preceded by 'comp_'; superlative slot preceded by 'sup_'; " ..
-						"abbreviation %s; or stem %s: %s"):format(slot, make_quoted_slot_list(strong_adjective_slots),
-						make_quoted_slot_list(weak_adjective_slots), make_quoted_keys(adjective_slot_abbrs),
+					parse_err(("Unrecognized slot '%s' in override; expected slot %s preceded by one of 'indef_'," ..
+						"'def_', 'comp_' or 'sup_'; abbreviation %s; or stem %s: %s"):format(
+						slot, make_quoted_slot_list(input_adjective_slots), make_quoted_keys(adjective_slot_abbrs),
 						make_quoted_list(export.overridable_stems),
 						put.escape_wikicode(table.concat(segments))))
 				end
@@ -1162,18 +1220,8 @@ end
 
 -- Export for use by [[Module:sh-noun]].
 function export.parse_for_control_specs(part, parse_control_spec)
-	if part:find("^[Uu]+_?mut") then
-		parse_control_spec("umut", com.umut_types)
-	elseif part:find("^%-?con") then
-		parse_control_spec("con", {"con", "-con"})
-	elseif part:find("^%-?ppdent") then
-		parse_control_spec("ppdent", {"ppdent", "-ppdent"})
-	elseif part:find("^%-?pp") then
-		parse_control_spec("pp", {"pp", "-pp"})
-	elseif part:find("^%-?j") then
-		parse_control_spec("j", {"j", "-j"})
-	elseif not part:find("^vstem") and part:find("^%-?v") then
-		parse_control_spec("v", {"v", "-v"})
+	if part:find("^%-?%*") then
+		parse_control_spec("*", {"*", "-*"})
 	else
 		return false
 	end
@@ -1191,14 +1239,17 @@ local function parse_inside(base, inside, is_scraped_adj)
 	local segments = put.parse_balanced_segment_run(inside, "[", "]")
 	local dot_separated_groups = split_alternating_runs_with_escapes(segments, "%.")
 	for i, dot_separated_group in ipairs(dot_separated_groups) do
-		-- Parse a control spec such as "umut,uUmut[rare]". This assumes the control spec is contained in
-		-- `dot_separated_group` (already split on brackets) and the result of parsing should go in `base[dest]`.
-		-- `allowed_specs` is a list of the allowed control specs in this group, such as
-		-- {"umut", "Umut", "uumut", "uUmut", "uUUmut", "u_mut"} or {"pp", "-pp"}. The result of parsing is a list of
-		-- structures of the form {
+		-- Parse a control spec such as "-*,*[rare]". This assumes the control spec is contained in
+		-- `dot_separated_group` (already split on brackets) and the result of parsing should go in `base_degree[dest]`.
+		-- `allowed_specs` is a list of the allowed control specs in this group, such as {"*", "-*"}. The result of
+		-- parsing is a list of structures of the form {
 		--   form = "FORM",
 		--   footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
 		-- }.
+		--
+		-- NOTE: This is inherited from [[Module:is-adjective]], where there are several types of control specs.
+		-- Currently we only support one, for reducibility, but we keep this code in case we decide to support more
+		-- (e.g. maybe the Boolean property '2tone' should be made into a control spec).
 		local function parse_control_spec(dest, allowed_specs)
 			if base_degree[dest] then
 				parse_err(("Can't specify '%s'-type control spec twice; second such spec is '%s'"):format(
@@ -2154,9 +2205,25 @@ end
 -- multiple such comparative and/or superlative base lemmas) and property sets (generally, one per combination of
 -- control specs such as 'con,-con' and 'umut,uUmut').
 local function determine_props(base, degree)
+	degree.default_reducible = com.determine_default_reducible(degree.lemma)
+
 	-- Now determine all the props for each prop set.
 	for _, props in ipairs(degree.prop_sets) do
-		-- First do all the stems.
+		-- Determine reducibility.
+		local reducible = degree.default_reducible
+		if props.reducible then
+			if props.reducible.form == "*" then
+				reducible = true
+			elseif props.reducible.form == "-*" then
+				reducible = false
+			else
+				interr("Unrecognized value for props.reducible, should be '*' or '-*': %s", props)
+			end
+			props.reducible_footnotes = props.reducible.footnotes
+		end
+		props.reducible = reducible
+
+		-- Then do all the stems.
 		local normal_lemma = {form = degree.lemma}
 		local lemma_stem = {normal_lemma}
 
@@ -2165,26 +2232,26 @@ local function determine_props(base, degree)
 		if props.tone_mod then
 			local before, last_accent, after = rmatch(base_stem, "^(.*)(" .. com.stress_accent_c .. ")(.-)$")
 			if not before then
-				error(("Lemma '%s' doesn't have any tonal accent in it"):format(degree.lemma))
+				usererr("Lemma '%s' doesn't have any tonal accent in it", degree.lemma)
 			end
 			if props.tone_mod == "3tone" then
 				if last_accent ~= INVBREVE then
-					error(("When '3tone' is specified, lemma '%s' must have a long-falling tone"):format(degree.lemma))
+					usererr("When '3tone' is specified, lemma '%s' must have a long-falling tone", degree.lemma)
 				end
 				indef_stem = before .. GR .. after
 				def_stem = before .. DOUBLEGR .. after
-				neut_stem = {indef_stem, def_stem}
+				neut_stem = {"indef", "def"}
 			elseif props.tone_mod ~= "2tone" then
 				interr("'tone_mod' is %s when it should be \"2tone\": %s", props.tone_mod, props)
 			else
 				if last_accent == INVBREVE then
 					def_stem = base_stem
 					indef_stem = before .. AC .. after
-					neut_stem = {indef_stem, def_stem}
+					neut_stem = {"indef", "def"}
 				elseif last_accent == DOUBLEGR then
 					def_stem = base_stem
 					indef_stem = before .. GR .. after
-					neut_stem = {indef_stem, def_stem}
+					neut_stem = {"indef", "def"}
 				elseif last_accent == AC then
 					local falling_lemma
 					if props.indef_falling_var then
@@ -2193,101 +2260,60 @@ local function determine_props(base, degree)
 					end
 					indef_stem = base_stem
 					if falling_lemma then
-						neut_stem = {indef_stem, falling_lemma}
+						neut_stem = {"indef", falling_lemma}
 					else
-						neut_stem = indef_stem
+						neut_stem = {"indef"}
 					end
 					def_stem = before .. com.INVBREVE .. after
 				elseif last_accent == GR then
 					if not rfind(after, com.vowel_c) then
-						error(("When '2tone' is specified, lemma '%s' with short rising accent must have a " ..
-							"following syllable to move the tone onto"):format(degree.lemma))
+						usererr("When '2tone' is specified, lemma '%s' with short rising accent must have a " ..
+							"following syllable to move the tone onto", degree.lemma)
 					end
 					indef_stem = before .. rsub(after, "^(.-" .. com.vowel_c .. ")", "%1" .. GR)
-					neut_stem = indef_stem
+					neut_stem = {"indef"}
 					def_stem = base_stem
 				else
-					interr("
-
-							
+					interr("Unrecognized accent %s", last_accent)
+				end
+			end
 		end
 
-		local indef_stem = iut.
-
-		local neut_stem = iut.flatmap_forms(
-		stem = degree.stem
-		if not stem then
+		local function do_reduce(stem)
+			local retval = com.reduce(stem)
+			if not retval then
+				usererr("Unable to reduce (i.e. remove fleeting ''a'' from) stem '%s'", stem)
+			end
+			return retval
+		end
+		props.lemma_stem = iut.convert_to_general_list_form(lemma_stem)
+		if degree.indef_stem then
+			indef_stem = degree.indef_stem
+		else
+			indef_stem = iut.convert_to_general_list_form(indef_stem)
 			if props.reducible then
-				if props.reducible.form == "*" then
-					stem = 
-
-		defstem = degree.defstem or stem
-		nonvstem = stem
-		umut_nonvstem = com.apply_u_mutation(nonvstem, props_umut.form, not props_umut.defaulted)
-		-- For -inn adjectives, we already computed the correct vowel stem, so just use it.
-		vstem = props.vowel_stem or degree.vstem or degree.stem
-		local is_contracted = props.con and props.con.form == "con"
-		if is_contracted then
-			if degree.inn then
-				error("Internal error: 'con' cannot be specified for adjectives ending in -inn; it's handled automatically internally and should have been caught earlier")
+				indef_stem = iut.flatmap_forms(indef_stem, do_reduce)
 			end
-			vstem = com.apply_contraction(vstem)
 		end
-		-- Contracted stems should use regular u-mutation even if the uncontracted stem uses uUmut. Otherwise we either
-		-- get an error because uUmut can't be applied to a single-syllable word (e.g. in [[gamall]]) or we get the
-		-- wrong result (e.g. in [[einsamall]] with strong dative plural #einsumlum). In those same circumstances, we
-		-- should allow the u-mutation to have no effect, necessary e.g. for [[yðar]] with uUmut producing feminine
-		-- 'yður' but contracted stem 'yðr-' not undergoing u-mutation.
-		umut_vstem = com.apply_u_mutation(vstem, is_contracted and "umut" or props_umut.form,
-			not is_contracted and not props_umut.defaulted)
-
-		props.stem = stem
-		if nonvstem ~= stem then
-			props.nonvstem = nonvstem
-		end
-		if umut_nonvstem ~= nonvstem then
-			-- For 'con' and 'ppdent' below, footnotes can be placed on -con or -ppdent so we have to check for those
-			-- footnotes as well as checking for the vstem and such being different, so the -con and -ppdent footnotes
-			-- are still active. However, there's no such thing as -umut, and any time that there's an explicit umut
-			-- variant given, umut_nonvstem will be different from nonvstem (otherwise an error will occur in
-			-- apply_u_mutation), so we don't need this extra check here.
-			if props_umut then
-				umut_nonvstem = iut.combine_form_and_footnotes(umut_nonvstem, props_umut.footnotes)
+		props.indef_stem = indef_stem
+		if degree.def_stem then
+			def_stem = degree.def_stem
+		else
+			def_stem = iut.convert_to_general_list_form(def_stem)
+			if props.reducible then
+				def_stem = iut.flatmap_forms(def_stem, do_reduce)
 			end
-			props.umut_nonvstem = umut_nonvstem
 		end
-		if vstem ~= stem or props.con and props.con.footnotes or props.ppdent and props.ppdent.footnotes then
-			-- See comment above for why we need to check for props.con.footnotes and props.ppdent.footnotes (basically,
-			-- to handle footnotes on -con and -ppdent).
-			local footnotes = iut.combine_footnotes(props.con and props.con.footnotes or nil,
-				props.ppdent and props.ppdent.footnotes or nil)
-			vstem = iut.combine_form_and_footnotes(vstem, footnotes)
-			props.vstem = vstem
-		end
-		if umut_vstem ~= vstem or props.con and props.con.footnotes or props.ppdent and props.ppdent.footnotes then
-			-- See comment above under `umut_nonvstem ~= nonvstem`. There's no -umut so whenever there's a specific
-			-- umut variant with footnote, umut_vstem will be different from vstem so we don't need to check for
-			-- `or props_umut and props_umut.footnotes` above.
-			local footnotes = iut.combine_footnotes(iut.combine_footnotes(props.con and props.con.footnotes or nil,
-				props_umut and props_umut.footnotes or nil), props.ppdent and props.ppdent.footnotes or nil)
-			umut_vstem = iut.combine_form_and_footnotes(umut_vstem, footnotes)
-			props.umut_vstem = umut_vstem
-		end
-
-		-- Do the j-infix, v-infix and pp properties.
-		if props.j then
-			props.jinfix = props.j.form == "j" and "j" or ""
-			props.jinfix_footnotes = props.j.footnotes
-			props.j = nil
-		end
-		if props.v then
-			props.vinfix = props.v.form == "v" and "v" or ""
-			props.vinfix_footnotes = props.v.footnotes
-			props.v = nil
-		end
-		if props.pp then
-			props.pp_footnotes = props.pp.footnotes
-			props.pp = props.pp.form == "pp" and true or false
+		props.def_stem = def_stem
+		props.neut_stem = {}
+		for _, ns in ipairs(neut_stem) do
+			if ns == "indef" then
+				iut.insert_forms(props.neut_stem, indef_stem)
+			elseif ns == "def" then
+				iut.insert_forms(props.neut_stem, def_stem)
+			else
+				iut.insert_form(props.neut_stem, ns)
+			end
 		end
 	end
 end
@@ -2424,10 +2450,10 @@ local function compute_categories_and_annotation(alternant_multiword_spec)
 	local function inscat(cattype)
 		-- Don't insert categories with built-in determiners/pronouns; all are irregular in various ways.
 		if not alternant_multiword_spec.builtin then
-			m_table.insertIfNot(all_cats, "Icelandic " .. cattype)
+			m_table.insertIfNot(all_cats, "Serbo-Croatian " .. cattype)
 		end
 	end
-	local plpos = require(en_utilities_module).pluralize(alternant_multiword_spec.pos or "adjective")
+	local plpos = require(en_utilities_module).pluralize(alternant_multiword_spec.pos)
 	if alternant_multiword_spec.saw_indecl and not alternant_multiword_spec.saw_non_indecl then
 		inscat("indeclinable " .. plpos)
 	end
@@ -2493,8 +2519,9 @@ local function compute_categories_and_annotation(alternant_multiword_spec)
 			-- not "both" or "none"
 			insann(alternant_multiword_spec.number.pos .. "-only", " ")
 		end
-		if alternant_multiword_spec.definiteness.pos == "indef" or alternant_multiword_spec.definiteness.pos == "def" then
-			-- not "both" or "none"
+		if alternant_multiword_spec.definiteness.pos == "indef" or
+			alternant_multiword_spec.definiteness.pos == "def" then
+			-- not "bothdefs" or "none"
 			insann(alternant_multiword_spec.definiteness.pos .. "-only", " ")
 		end
 		if plpos == "adjectives" then
@@ -2547,62 +2574,30 @@ local function compute_categories_and_annotation(alternant_multiword_spec)
 end
 
 
-local function set_accusative(alternant_multiword_spec)
-	local forms = alternant_multiword_spec.forms
-	local function copy_if(from_slot, to_slot)
-		if not forms[to_slot] then
-			iut.insert_forms(forms, to_slot, forms[from_slot])
-		end
-	end
-
-	copy_if("nom_n", "acc_n")
-	copy_if("gen_mn", "acc_m_an")
-	copy_if("nom_m", "acc_m_in")
-	copy_if("nom_fp", "acc_mfp")
-	copy_if("nom_np", "acc_np")
-end
-
-
-local function add_categories(alternant_multiword_spec)
-	local cats = {}
-	local plpos = m_string_utilities.pluralize(alternant_multiword_spec.pos or "adjective")
-	local function insert(cattype)
-		m_table.insertIfNot(cats, "Serbo-Croatian " .. cattype .. " " .. plpos)
-	end
-	if not alternant_multiword_spec.manual then
-		iut.map_word_specs(alternant_multiword_spec, function(base)
-			if base.decl == "irreg" then
-				insert("irregular")
-			elseif rfind(base.lemma, "ý$") then
-				insert("hard")
-			elseif rfind(base.lemma, "í$") then
-				insert("soft")
-			else
-				insert("possessive")
-			end
-			if base.short then
-				table.insert(cats, "Serbo-Croatian " .. plpos .. " with short forms")
-			end
-		end)
-	end
-	alternant_multiword_spec.categories = cats
-end
-
-
 local function show_forms(alternant_multiword_spec)
 	local lemmas = {}
-	local lemmaform = alternant_multiword_spec.forms.nom_m or alternant_multiword_spec.forms.nom_mp or
-		alternant_multiword_spec.forms.nom_mp_an
-	if lemmaform then
-		for _, form in ipairs(lemmaform) do
-			table.insert(lemmas, form.form)
+	for _, slot in ipairs(potential_lemma_slots) do
+		if alternant_multiword_spec.forms[slot] then
+			for _, formobj in ipairs(alternant_multiword_spec.forms[slot]) do
+				table.insert(lemmas, formobj)
+			end
+			break
 		end
 	end
 	local props = {
 		lemmas = lemmas,
-		slot_table = get_output_adjective_slots(alternant_multiword_spec),
 		lang = lang,
 	}
+	for _, degspec in ipairs(compsup_degrees) do
+		local degfield, desc = unpack(degspec)
+		if alternant_multiword_spec["has" .. degfield] == "has" then
+			props.slot_list = get_slot_list(alternant_multiword_spec, degfield)
+			iut.show_forms(alternant_multiword_spec.forms, props)
+			alternant_multiword_spec["footnote_" .. degfield] = alternant_multiword_spec.forms.footnote
+		end
+	end
+	-- This isn't strictly necessary but ensures that all slots including the *_linked ones get converted to strings.
+	props.slot_list = adjective_slot_list_linked_slots
 	iut.show_forms(alternant_multiword_spec.forms, props)
 end
 
@@ -2610,305 +2605,295 @@ end
 local function make_table(alternant_multiword_spec)
 	local forms = alternant_multiword_spec.forms
 
-	local function template_prelude(min_width)
-		return rsub([===[
-<div>
-<div class="NavFrame" style="display: inline-block; min-width: MINWIDTHem">
-<div class="NavHead" style="background:#eff7ff">{title}{annotation}</div>
-<div class="NavContent">
-{\op}| border="1px solid #000000" style="border-collapse:collapse;background:#F9F9F9;text-align:center; min-width:MINWIDTHem" class="inflection-table"
-|-
-]===], "MINWIDTH", min_width)
+	local function template_prelude()
+		return mw.getCurrentFrame():expandTemplate{
+			title = 'inflection-table-top',
+			args = {
+				title = '{title}{annotation}',
+				palette = 'blue',
+				tall = 'yes',
+			}
+		}
 	end
 
 	local function template_postlude()
-		return [=[
-|{\cl}{notes_clause}</div></div></div>]=]
+		return mw.getCurrentFrame():expandTemplate{
+			title = 'inflection-table-bottom',
+			args = {
+				notes = '{footnote}'
+			}
+		}
 	end
 
-	local table_spec_sg = [=[
-! style="background:#d9ebff" colspan=5 | singular
+	local table_spec_parts = {
+		full_sg = [=[
+! class="outer" colspan="2"|singular
+! class="outer" | masculine
+! class="outer" | feminine
+! class="outer" | neuter
 |-
-! style="background:#d9ebff" |
-! style="background:#d9ebff" | masculine animate
-! style="background:#d9ebff" | masculine inanimate
-! style="background:#d9ebff" | feminine
-! style="background:#d9ebff" | neuter
+! colspan="2"|nominative
+| {PREF_nom_m}
+| {PREF_nom_f}
+| {PREF_nom_n}
 |-
-! style="background:#eff7ff" | nominative
-| colspan=2 | {nom_m}
-| {nom_f}
-| {nom_n}
+! colspan="2"|genitive
+| {PREF_gen_m}
+| {PREF_gen_f}
+| {PREF_gen_n}
 |-
-! style="background:#eff7ff" | genitive
-| colspan=2 | {gen_mn}
-| {gen_f}
-| {gen_mn}
+! colspan="2"|dative
+| {PREF_dat_m}
+| {PREF_dat_f}
+| {PREF_dat_n}
 |-
-! style="background:#eff7ff" | dative
-| colspan=2 | {dat_mn}
-| {dat_f}
-| {dat_mn}
+! rowspan="2"|accusative
+! class="secondary" | <small>inanimate</small>
+| {PREF_acc_m_in}
+| rowspan="2"|{PREF_acc_f}
+| rowspan="2"|{PREF_acc_n}
 |-
-! style="background:#eff7ff" | accusative
-| {acc_m_an}
-| {acc_m_in}
-| {acc_f}
-| {acc_n}
+! class="secondary" | <small>animate</small>
+| {PREF_acc_m_an}
 |-
-! style="background:#eff7ff" | locative
-| colspan=2 | {loc_mn}
-| {loc_f}
-| {loc_mn}
+! colspan="2"|vocative
+| {PREF_voc_m}
+| {PREF_voc_f}
+| {PREF_voc_n}
 |-
-! style="background:#eff7ff" | instrumental
-| colspan=2 | {ins_mn}
-| {ins_f}
-| {ins_mn}{short_sg_clause}
-]=]
+! colspan="2"|locative
+| {PREF_loc_m}
+| {PREF_loc_f}
+| {PREF_loc_n}
+|-
+! colspan="2"|instrumental
+| {PREF_ins_m}
+| {PREF_ins_f}
+| {PREF_ins_n}
+]=],
+		sg_pl_sep = [=[
+|-
+| class="separator" colspan="999" |
+|-
+]=],
+		full_pl = [=[
+! class="outer" colspan="2"|plural
+! class="outer" | masculine
+! class="outer" | feminine
+! class="outer" | neuter
+|-
+! colspan="2"|nominative
+| {PREF_nom_mp}
+| {PREF_nom_fp}
+| {PREF_nom_np}
+|-
+! colspan="2"|genitive
+| colspan="3"|{PREF_gen_p}
+|-
+! colspan="2"|dative
+| colspan="3"|{PREF_dat_p}
+|-
+! colspan="2"|accusative
+| {PREF_acc_mp}
+| {PREF_acc_fp}
+| {PREF_acc_np}
+|-
+! colspan="2"|vocative
+| {PREF_voc_mp}
+| {PREF_voc_fp}
+| {PREF_voc_np}
+|-
+! colspan="2"|locative
+| colspan="3"|{PREF_loc_p}
+|-
+! colspan="2"|instrumental
+| colspan="3"|{PREF_ins_p}
+]=],
+}
 
-	local table_spec_pl = [=[
-! style="background:#d9ebff" colspan=5 | plural
-|-
-! style="background:#d9ebff" | 
-! style="background:#d9ebff" | masculine animate
-! style="background:#d9ebff" | masculine inanimate
-! style="background:#d9ebff" | feminine
-! style="background:#d9ebff" | neuter
-|-
-! style="background:#eff7ff" | nominative
-| {nom_mp_an}
-| colspan=2 | {nom_fp}
-| {nom_np}
-|-
-! style="background:#eff7ff" | genitive
-| colspan=4 | {gen_p}
-|-
-! style="background:#eff7ff" | dative
-| colspan=4 | {dat_p}
-|-
-! style="background:#eff7ff" | accusative
-| colspan=3 | {acc_mfp}
-| {acc_np}
-|-
-! style="background:#eff7ff" | locative
-| colspan=4 | {loc_p}
-|-
-! style="background:#eff7ff" | instrumental
-| colspan=4 | {ins_p}{short_pl_clause}
-]=]
-
-	local table_spec = template_prelude("55") .. table_spec_sg .. "|-\n" .. table_spec_pl .. template_postlude()
-
-	local table_spec_plonly = template_prelude("55") .. table_spec_pl .. template_postlude()
-
-	local table_spec_dva = template_prelude("40") .. [=[
-! style="width:40%;background:#d9ebff" colspan="2" | 
-! style="background:#d9ebff" colspan="2" | plural
-|-
-! style="width:40%;background:#d9ebff" colspan="2" | 
-! style="background:#d9ebff" | masculine
-! style="background:#d9ebff" | feminine/neuter
-|-
-! style="background:#eff7ff" colspan="2" | nominative
-| {nom_mp}
-| {nom_fnp}
-|-
-! style="background:#eff7ff" colspan="2" | genitive
-| colspan="2" | {gen_p} 
-|-
-! style="background:#eff7ff" colspan="2" | dative
-| colspan="2" | {dat_p} 
-|-
-! style="background:#eff7ff" colspan="2" | accusative
-| {acc_mp}
-| {acc_fnp}
-|-
-! style="background:#eff7ff" colspan="2" | locative
-| colspan="2" | {loc_p} 
-|-
-! style="background:#eff7ff" colspan="2" | instrumental
-| colspan="2" | {ins_p} 
-]=] .. template_postlude()
-
-	local short_sg_template = [=[
-
-|-
-! style="background:#eff7ff" | short
-| colspan=2 | {short_m}
-| {short_f}
-| {short_n}
-]=]
-
-	local short_pl_template = [=[
-
-|-
-! style="background:#eff7ff" | short
-| {short_mp_an}
-| colspan=2 | {short_fp}
-| {short_np}]=]
-
-	local notes_template = [===[
-<div style="width:100%;text-align:left;background:#d9ebff">
-<div style="display:inline-block;text-align:left;padding-left:1em;padding-right:1em">
-{footnote}
-</div></div>
-]===]
-
-	if alternant_multiword_spec.title then
-		forms.title = alternant_multiword_spec.title
-	else
-		forms.title = 'Declension of <i lang="sh">' .. forms.lemma .. '</i>'
+	local function construct_table(slot_prefix, inside)
+		local parts = {}
+		local function ins(txt)
+			table.insert(parts, txt)
+		end
+		ins(template_prelude())
+		inside(ins)
+		ins(template_postlude())
+		return (table.concat(parts):gsub("PREF", slot_prefix))
 	end
 
-	if alternant_multiword_spec.manual then
+	local function get_table_spec_one_number(slot_prefix, number)
+		return construct_table(slot_prefix, function(ins)
+			ins(table_spec_parts["full_" .. number])
+		end)
+	end
+
+	local function get_table_spec_all_number(slot_prefix)
+		return construct_table(slot_prefix, function(ins)
+			ins(table_spec_parts.full_sg)
+			ins(table_spec_parts.sg_pl_sep)
+			ins(table_spec_parts.full_pl)
+		end)
+	end
+
+	local function get_ital_lemma(lemma, script)
+		return ('<i lang="sh" class="%s">%s</i>'):format(script, lemma)
+	end
+
+	local annotation = alternant_multiword_spec.annotation
+	if annotation == "" then
 		forms.annotation = ""
 	else
-		local ann_parts = {}
-		local decls = {}
-		iut.map_word_specs(alternant_multiword_spec, function(base)
-			if base.decl == "irreg" then
-				m_table.insertIfNot(decls, "irregular")
-			elseif rfind(base.lemma, "ý$") then
-				m_table.insertIfNot(decls, "hard")
-			elseif rfind(base.lemma, "í$") then
-				m_table.insertIfNot(decls, "soft")
-			else
-				m_table.insertIfNot(decls, "possessive")
-			end
-		end)
-		table.insert(ann_parts, table.concat(decls, " // "))
-		forms.annotation = " (" .. table.concat(ann_parts, ", ") .. ")"
+		forms.annotation = " (<span style=\"font-size: smaller;\">" .. annotation .. "</span>)"
 	end
 
-	forms.notes_clause = forms.footnote ~= "" and
-		m_string_utilities.format(notes_template, forms) or ""
-	forms.short_sg_clause = forms.short_m and forms.short_m ~= "—" and
-		m_string_utilities.format(short_sg_template, forms) or ""
-	forms.short_pl_clause = forms.short_mp_an and forms.short_mp_an ~= "—" and
-		m_string_utilities.format(short_pl_template, forms) or ""
-	return m_string_utilities.format(
-		alternant_multiword_spec.special == "plonly" and table_spec_plonly or
-		alternant_multiword_spec.special == "dva" and table_spec_dva or
-		table_spec, forms
-	)
+	-- Format the per-degree tables.
+	local computed_tables = {}
+	for _, degspec in ipairs(compsup_degrees) do
+		local degfield, desc = unpack(degspec)
+		local hasprop = "has" .. degfield
+		local function insert_table(slot_prefix, desc)
+			local table_spec = alternant_multiword_spec.number[degfield] == "both" and
+				get_table_spec_all_number(slot_prefix) or
+				get_table_spec_one_number(slot_prefix, alternant_multiword_spec.number[degfield])
+			forms.title = ("%s forms of %s"):format(desc, get_ital_lemma(forms.lemma, alternant_multiword_spec.script))
+			forms.footnote = alternant_multiword_spec["footnote_" .. degfield]
+			computed_table = m_string_utilities.format(table_spec, forms)
+			table.insert(computed_tables, computed_table)
+		end
+		if alternant_multiword_spec[hasprop] == "has" then
+			if degfield == "pos" then
+				local def = alternant_multiword_spec.definiteness[degfield]
+				if def == "bothdefs" or def == "indef" then
+					insert_table("indef", "Positive indefinite")
+				end
+				if def == "bothdefs" or def == "def" then
+					insert_table("def", "Positive definite")
+				end
+			else
+				insert_table(degfield, desc)
+			end
+		end
+	end
+
+	-- Paste them together.
+	return require("Module:TemplateStyles")("Module:sh-adjective/style.css") .. table.concat(computed_tables)
 end
 
--- Externally callable function to parse and decline an adjective given
--- user-specified arguments. Return value is WORD_SPEC, an object where the
--- declined forms are in `WORD_SPEC.forms` for each slot. If there are no values
--- for a slot, the slot key will be missing. The value for a given slot is a
--- list of objects {form=FORM, footnotes=FOOTNOTES}.
-function export.do_generate_forms(parent_args, pos, from_headword, def)
-	local params = {
-		[1] = {},
-		pos = {},
-		json = {type = "boolean"}, -- for use with bots
-		title = {},
-		pagename = {},
-	}
-	for slot, _ in pairs(input_adjective_slots) do
-		params[slot] = {}
-	end
-
-	-- Only default param 1 when displaying the template.
-	local args = require("Module:parameters").process(parent_args, params)
-	local SUBPAGE = mw.title.getCurrentTitle().subpageText
-	local pagename = args.pagename or SUBPAGE
-	if not args[1] then
-		if SUBPAGE == "sh-adecl" then
-			args[1] = "křepký<short:*>"
-		else
-			args[1] = pagename
-		end
-	end		
+-- Externally callable function to parse and decline an adjective given user-specified arguments and the argument spec
+-- `argspec` (specified because the user may give multiple such specs). Return value is ALTERNANT_MULTIWORD_SPEC, an
+-- object where the declined forms are in `ALTERNANT_MULTIWORD_SPEC.forms` for each slot. If there are no values for a
+-- slot, the slot key will be missing. The value for a given slot is a list of objects {form=FORM, footnotes=FOOTNOTES}.
+function export.do_generate_forms(args, argspec, source_template)
+	local from_headword = source_template == "sh-adj"
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 	local parse_props = {
-		parse_indicator_spec = parse_indicator_spec,
-		allow_default_indicator = true,
+		parse_indicator_spec = function(angle_bracket_spec, lemma)
+			return parse_indicator_spec(angle_bracket_spec, lemma, pagename)
+		end,
+		angle_brackets_omittable = true,
 		allow_blank_lemma = true,
 	}
-	local alternant_multiword_spec = iut.parse_inflected_text(args[1], parse_props)
-	alternant_multiword_spec.pos = args.pos
+	local alternant_multiword_spec = iut.parse_inflected_text(argspec, parse_props)
 	alternant_multiword_spec.title = args.title
-	alternant_multiword_spec.forms = {}
-	normalize_all_lemmas(alternant_multiword_spec, pagename)
-	detect_all_indicator_specs(alternant_multiword_spec)
-	check_allowed_overrides(alternant_multiword_spec, args)
-	local inflect_props = {
-		slot_table = get_output_adjective_slots(alternant_multiword_spec),
-		inflect_word_spec = decline_adjective,
-	}
-	iut.inflect_multiword_or_alternant_multiword_spec(alternant_multiword_spec, inflect_props)
-	-- Do non-accusative overrides so they get copied to the accusative forms appropriately.
-	process_overrides(alternant_multiword_spec.forms, args)
-	set_accusative(alternant_multiword_spec)
-	-- Do accusative overrides after copying the accusative forms.
-	process_overrides(alternant_multiword_spec.forms, args, "do acc")
-	add_categories(alternant_multiword_spec)
-	if args.json and not from_headword then
+	alternant_multiword_spec.pos = args.pos or "adjective"
+	alternant_multiword_spec.source_template = source_template
+	alternant_multiword_spec.number = {}
+	alternant_multiword_spec.definiteness = {}
+	alternant_multiword_spec.script = com.is_cyrillic(pagename)
+
+	local scrape_errors = {}
+	iut.map_word_specs(alternant_multiword_spec, function(base)
+		if base.scrape_error then
+			table.insert(scrape_errors, base.scrape_error)
+		end
+	end)
+
+	if scrape_errors[1] then
+		alternant_multiword_spec.scrape_errors = scrape_errors
+	else
+		normalize_all_lemmas(alternant_multiword_spec)
+		set_all_defaults_and_check_bad_indicators(alternant_multiword_spec)
+		detect_all_indicator_specs(alternant_multiword_spec)
+		local inflect_props = {
+			skip_slot = function(slot)
+				local degfield = slot_to_degfield(slot)
+				return skip_slot(alternant_multiword_spec.number[degfield],
+					alternant_multiword_spec.definiteness[degfield], slot)
+			end,
+			slot_list = adjective_slot_list,
+			inflect_word_spec = decline_adjective,
+		}
+		iut.inflect_multiword_or_alternant_multiword_spec(alternant_multiword_spec, inflect_props)
+		local forms = alternant_multiword_spec.forms
+		alternant_multiword_spec.numcomp = forms.comp_nom_m and #forms.comp_nom_m or 0
+		alternant_multiword_spec.numsup = forms.sup_nom_m and #forms.sup_nom_m or 0
+		compute_categories_and_annotation(alternant_multiword_spec)
+	end
+	if args.json then
 		return require("Module:JSON").toJSON(alternant_multiword_spec)
 	end
 	return alternant_multiword_spec
 end
 
 
--- Externally callable function to parse and decline an adjective where all
--- forms are given manually. Return value is WORD_SPEC, an object where the
--- declined forms are in `WORD_SPEC.forms` for each slot. If there are no values
--- for a slot, the slot key will be missing. The value for a given slot is a
--- list of objects {form=FORM, footnotes=FOOTNOTES}.
-function export.do_generate_forms_manual(parent_args, pos, from_headword, def)
-	local params = {
-		pos = {},
-		special = {},
-		json = {type = "boolean"}, -- for use with bots
-		title = {},
-	}
-	for slot, _ in pairs(input_adjective_slots) do
-		params[slot] = {}
-	end
-
-	local args = require("Module:parameters").process(parent_args, params)
-	local alternant_multiword_spec = {
-		pos = args.pos,
-		special = args.special,
-		title = args.title, 
-		forms = {},
-		manual = true,
-	}
-	check_allowed_overrides(alternant_multiword_spec, args)
-	-- Do non-accusative overrides so they get copied to the accusative forms appropriately.
-	process_overrides(alternant_multiword_spec.forms, args)
-	set_accusative(alternant_multiword_spec)
-	-- Do accusative overrides after copying the accusative forms.
-	process_overrides(alternant_multiword_spec.forms, args, "do acc")
-	add_categories(alternant_multiword_spec)
-	if args.json and not from_headword then
-		return require("Module:JSON").toJSON(alternant_multiword_spec)
-	end
-	return alternant_multiword_spec
-end
-
-
--- Entry point for {{sh-adecl}}. Template-callable function to parse and decline 
--- an adjective given user-specified arguments and generate a displayable table
--- of the declined forms.
+-- Entry point for {{sh-adecl}}. Template-callable function to parse and decline an adjective given
+-- user-specified arguments and generate a displayable table of the declined forms.
 function export.show(frame)
 	local parent_args = frame:getParent().args
-	local alternant_multiword_spec = export.do_generate_forms(parent_args)
-	show_forms(alternant_multiword_spec)
-	return make_table(alternant_multiword_spec) .. require("Module:utilities").format_categories(alternant_multiword_spec.categories, lang)
-end
-
-
--- Entry point for {{sh-adecl-manual}}. Template-callable function to parse and
--- decline an adjective given manually-specified inflections and generate a
--- displayable table of the declined forms.
-function export.show_manual(frame)
-	local parent_args = frame:getParent().args
-	local alternant_multiword_spec = export.do_generate_forms_manual(parent_args)
-	show_forms(alternant_multiword_spec)
-	return make_table(alternant_multiword_spec) .. require("Module:utilities").format_categories(alternant_multiword_spec.categories, lang)
+	local params = {
+		[1] = {required = true, list = true, default = "dȍbar<2tone.comp:bȍljī>"},
+		-- deriv = {list = true}, FIXME: what is this used for?
+		id = {},
+		pos = {},
+		title = {},
+ 		pagename = {},
+		json = {type = "boolean"},
+	}
+	local args = m_para.process(parent_args, params)
+	local alternant_multiword_specs = {}
+	for i, argspec in ipairs(args[1]) do
+		alternant_multiword_specs[i] = export.do_generate_forms(args, argspec, "sh-adecl")
+	end
+	if args.json then
+		-- JSON return value
+		if #args[1] == 1 then
+			return alternant_multiword_specs[1]
+		else
+			return alternant_multiword_specs
+		end
+	end
+	local parts = {}
+	local function ins(txt)
+		table.insert(parts, txt)
+	end
+	for _, alternant_multiword_spec in ipairs(alternant_multiword_specs) do
+		if not alternant_multiword_spec.scrape_errors then
+			show_forms(alternant_multiword_spec)
+		end
+		if alternant_multiword_spec.header then
+			ins(("'''%s:'''\n"):format(alternant_multiword_spec.header))
+		end
+		if alternant_multiword_spec.q then
+			ins(("''%s''\n"):format(alternant_multiword_spec.q))
+		end
+		local categories
+		if alternant_multiword_spec.scrape_errors then
+			local errmsgs = {}
+			for _, scrape_error in ipairs(alternant_multiword_spec.scrape_errors) do
+				table.insert(errmsgs, '<span style="font-weight: bold; color: #CC2200;">' .. scrape_error .. "</span>")
+			end
+			-- Surround the messages with a <div> because the table normally does that, and we want to ensure
+			-- similar formatting with respect to newlines.
+			ins("<div>" .. table.concat(errmsgs, "<br />") .. "</div>")
+			categories = {"Serbo-Croatian scraping errors in Template:sh-adecl"}
+		else
+			ins(make_table(alternant_multiword_spec))
+			categories = alternant_multiword_spec.categories
+		end
+		ins(require("Module:utilities").format_categories(categories, lang, nil, nil, force_cat))
+	end
+	return table.concat(parts)
 end
 
 
