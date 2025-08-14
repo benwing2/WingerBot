@@ -154,7 +154,9 @@ local non_syllabic_cons = non_syllabic_cons_lat .. non_syllabic_cons_cyr
 local cons_lat = non_syllabic_cons_lat .. syllabic_cons_lat
 local cons_cyr = non_syllabic_cons_cyr .. syllabic_cons_cyr
 local cons = cons_lat .. cons_cyr
+export.cons = cons
 local cons_c = "[" .. cons .. "]"
+export.cons_c = cons_c
 local lat_letter = vowel_lat .. cons_lat
 local cyr_letter = vowel_cyr .. cons_cyr
 
