@@ -20,10 +20,13 @@ local headword_utilities_module = "Module:headword utilities"
 local m_headword_utilities = require_when_needed(headword_utilities_module)
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 local inflection_utilities_module = "Module:inflection utilities"
+local en_utilities_module = "Module:en-utilities"
+local singularize = require_when_needed(en_utilities_module, "singularize")
+local pluralize = require_when_needed(en_utilities_module, "pluralize")
 local m_inflection_utilities = require_when_needed(inflection_utilities_module)
-local is_adjective_module = "Module:User:Benwing2/is-adjective"
-local is_common_module = "Module:User:Benwing2/is-common"
-local is_noun_module = "Module:User:Benwing2/is-noun"
+local is_adjective_module = "Module:is-adjective"
+local is_common_module = "Module:is-common"
+local is_noun_module = "Module:is-noun"
 local dump = mw.dumpObject
 
 local list_param = {list = true, disallow_holes = true}
@@ -108,7 +111,7 @@ function export.show(frame)
 	if pagename:find("^%-") and poscat ~= "suffix forms" then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -121,7 +124,8 @@ function export.show(frame)
 	-- mw.ustring.toNFD performs decomposition, so letters that decompose
 	-- to an ASCII vowel and a diacritic, such as é, are counted as vowels and
 	-- do not need to be included in the pattern.
-	if not pagename:find("[ %-]") and not rfind(mw.ustring.lower(mw.ustring.toNFD(pagename)), "[aeiouyæœø]") then
+	if not pagename:find("[ %-]") and not rfind(mw.ustring.lower(mw.ustring.toNFD(pagename)), "[aeiouyæœø]")
+		and not pagename:find("%.$") then
 		local cat = langname .. " words without vowels"
 		if multiple_data then
 			table.insert(multiple_data[1].categories, cat)
@@ -144,11 +148,13 @@ function export.show(frame)
 end
 
 -- Parse user-specified arguments in 1=, 2=, etc. for @@ scraping specs. If found, look up the appropriate
--- inflection(s). Returns two values. If there is no scraping error, the first value is a list of declension
--- specs (either directly specified by the user or scraped if an @@ spec was given) and the second value is
--- nil. Otherwise, the first value is nil and the second value is a scraping-error data structure, which the
--- calling function should directly return upstream.
-local function parse_noun_adj_scraping_specs(data, declspecs, infl_template, allow_empty_infl)
+-- inflection(s). Returns three values. If there is no scraping error, the first value is a list of inflection
+-- specs, either directly specified by the user or scraped if an @... spec was given), the second value is the
+-- singular part of speeh (taken from passed-in `args_pos` if given, else from the pos= argument of the scraped
+-- inflection template if found, else nil), and the third value is nil. Otherwise, the first and second values
+-- are nil and the third value is a scraping-error data structure, which the calling function should directly
+-- return upstream.
+local function parse_noun_adj_scraping_specs(data, declspecs, args_pos, infl_template, allow_empty_infl)
 	if not declspecs[2] and declspecs[1]:find("^@@") then
 		local declid
 		if declspecs[1] ~= "@@" then
@@ -157,17 +163,18 @@ local function parse_noun_adj_scraping_specs(data, declspecs, infl_template, all
 				error(("Syntax error in self-scraping spec '%s'"):format(declspecs[1]))
 			end
 		end
-		local decls = require(is_common_module).find_inflection(data.pagename, "is-ndecl", false, false, declid)
+		local decls = require(is_common_module).find_inflection(data.pagename, infl_template, false, false, declid)
 		if type(decls) == "string" then
 			data.alternant_multiword_spec = {scrape_errors = {decls}}
-			return nil, {data}
+			return nil, nil, {data}
 		end
-		for i, declobj in ipairs(decls) do
-			decls[i] = declobj.decl
+		for i, declobj in ipairs(decls.infls) do
+			decls.infls[i] = declobj.infl
 		end
-		declspecs = decls
+		args_pos = args_pos or decls.pos
+		declspecs = decls.infls
 	end
-	return declspecs, nil
+	return declspecs, args_pos, nil
 end
 
 local function do_noun_adj_form(this_data, alternant_multiword_spec, slot, label, label_for_not_present, accel_form)
@@ -189,7 +196,7 @@ local function do_noun_adj_form(this_data, alternant_multiword_spec, slot, label
 			prev_footnotes = form.footnotes
 			local quals, refs
 			if footnotes then
-				quals, refs = m_inflection_utilities.fetch_headword_qualifiers_and_references(footnotes)
+				quals, refs = m_inflection_utilities.convert_footnotes_to_qualifiers_and_references(footnotes)
 			end
 			local term = form.form
 			table.insert(retval, {term = term, q = quals, refs = refs})
@@ -207,10 +214,11 @@ local function insert_noun_adj_linked_lemma_if_needed(this_data, alternant_multi
 		for _, lemma_obj in ipairs(lemmas) do
 			local head = lemma_obj.form
 			--local head = alternant_multiword_spec.args.nolinkhead and lemma_obj.form or
-			--	m_headword_utilities.add_lemma_links(lemma_obj.form, alternant_multiword_spec.args.splithyph)
+			--	require(headword_utilities_module).add_links_to_multiword_term(lemma_obj.form,
+			--		{split_hyphen_when_space = alternant_multiword_spec.args.splithyph})
 			local quals, refs
 			if lemma_obj.footnotes then
-				quals, refs = m_inflection_utilities.fetch_headword_qualifiers_and_references(lemma_obj.footnotes)
+				quals, refs = m_inflection_utilities.convert_footnotes_to_qualifiers_and_references(lemma_obj.footnotes)
 			end
 			table.insert(this_data.heads, {term = head, q = quals, refs = refs})
 		end
@@ -336,17 +344,18 @@ local function do_auto_nouns(is_proper, args, data)
 	if data.lang:getCode() ~= "is" then
 		error("Internal error: Only Icelandic supported at the moment")
 	end
-	if args.pos then
-		data.pos_category = args.pos
-	end
 	local m_is_noun = require(is_noun_module)
 	local alternant_multiword_specs = {}
 	local multiple_data = {}
 	local all_genders = {}
 
-	local declspecs, scrape_error_data = parse_noun_adj_scraping_specs(data, args[1], "is-ndecl", false)
+	local declspecs, pos, scrape_error_data = parse_noun_adj_scraping_specs(data, args[1], args.pos, "is-ndecl", false)
 	if scrape_error_data then
 		return scrape_error_data
+	end
+	if pos then
+		data.pos_category = pluralize(pos)
+		args.pos = pos
 	end
 	for i, declspec in ipairs(declspecs) do
 		local alternant_multiword_spec =
@@ -442,7 +451,8 @@ local function do_auto_nouns(is_proper, args, data)
 	end
 
 	if #all_genders > 1 then
-		table.insert(multiple_data[1].categories, data.langname .. " nouns with multiple genders")
+		table.insert(multiple_data[1].categories, data.langname .. " " .. pluralize(pos or "noun") ..
+			" with multiple genders")
 	end
 
 	return multiple_data
@@ -533,16 +543,18 @@ local function do_auto_adjectives(args, data)
 	if data.lang:getCode() ~= "is" then
 		error("Internal error: Only Icelandic supported at the moment")
 	end
-	if args.pos then
-		data.pos_category = args.pos
-	end
 	local m_is_adjective = require(is_adjective_module)
 	local m_is_common = require(is_common_module)
 	local alternant_multiword_specs = {}
 	local multiple_data = {}
-	local declspecs, scrape_error_data = parse_noun_adj_scraping_specs(data, args[1], "is-adecl", "allow empty infl")
+	local declspecs, pos, scrape_error_data = parse_noun_adj_scraping_specs(data, args[1], args.pos, "is-adecl",
+		"allow empty infl")
 	if scrape_error_data then
 		return scrape_error_data
+	end
+	if pos then
+		data.pos_category = pluralize(pos)
+		args.pos = pos
 	end
 	for i, declspec in ipairs(declspecs) do
 		local alternant_multiword_spec = m_is_adjective.do_generate_forms(args, declspec, "is-adj")
@@ -573,6 +585,9 @@ local function do_auto_adjectives(args, data)
 			elseif alternant_multiword_spec.saw_unknown_decl and not alternant_multiword_spec.saw_non_unknown_decl then
 				insert_label("unknown declension")
 			end
+			if alternant_multiword_spec.saw_pred and not alternant_multiword_spec.saw_non_pred then
+				insert_label("predicate-only")
+			end
 
 			local function do_superlative()
 				do_adjective_form("sup_str_nom_m", glossary_link("superlative"), nil, "superlative")
@@ -584,23 +599,30 @@ local function do_auto_adjectives(args, data)
 				elseif alternant_multiword_spec.number.pos == "pl" then
 					insert_label(glossary_link("plural only"))
 				end
-				if alternant_multiword_spec.state.pos == "strong" or alternant_multiword_spec.state.pos == "weak" then
-					-- not "both" or "none"
-					insert_label(alternant_multiword_spec.state.pos .. " only")
-				end
-				if alternant_multiword_spec.hascomp == "has" then
-					do_adjective_form("comp_wk_nom_m", glossary_link("comparative"), nil, "comparative")
-					if alternant_multiword_spec.hassup == "has" then
-						do_superlative()
-					elseif alternant_multiword_spec.hassup == "hasnot" then
-						insert_label("no " .. glossary_link("superlative"))
+				if alternant_multiword_spec.state.pos == "strong" and alternant_multiword_spec.hascomp ~= "has" and
+					alternant_multiword_spec.hassup ~= "has" then
+					local pl = alternant_multiword_spec.number.pos == "pl" and "p" or ""
+					do_adjective_form("str_nom_f" .. pl, glossary_link("feminine"))
+					do_adjective_form("str_nom_n" .. pl, glossary_link("neuter"))
+				else
+					if alternant_multiword_spec.state.pos == "strong" or alternant_multiword_spec.state.pos == "weak" then
+						-- not "both" or "none"
+						insert_label(alternant_multiword_spec.state.pos .. " only")
 					end
-				elseif alternant_multiword_spec.hascomp == "hasnot" then
-					if alternant_multiword_spec.hassup == "has" then
-						insert_label("no " .. glossary_link("comparative"))
-						do_superlative()
-					else
-						insert_label("not " .. glossary_link("comparable"))
+					if alternant_multiword_spec.hascomp == "has" then
+						do_adjective_form("comp_wk_nom_m", glossary_link("comparative"), nil, "comparative")
+						if alternant_multiword_spec.hassup == "has" then
+							do_superlative()
+						elseif alternant_multiword_spec.hassup == "hasnot" then
+							insert_label("no " .. glossary_link("superlative"))
+						end
+					elseif alternant_multiword_spec.hascomp == "hasnot" then
+						if alternant_multiword_spec.hassup == "has" then
+							insert_label("no " .. glossary_link("comparative"))
+							do_superlative()
+						else
+							insert_label("not " .. glossary_link("comparable"))
+						end
 					end
 				end
 			elseif alternant_multiword_spec.hascomp == "has" then
