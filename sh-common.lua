@@ -15,6 +15,7 @@ local uupper = m_string_utilities.upper
 local ucfirst = m_string_utilities.ucfirst
 local toNFD = mw.ustring.toNFD
 local toNFC = mw.ustring.toNFC
+local format = string.format
 
 -- version of rsubn() that discards all but the first return value
 local function rsub(term, foo, bar)
@@ -54,8 +55,13 @@ end
 local function process_error(fmt, default_dump, ...)
 	local args = {...}
 	for i, val in ipairs(args) do
-		if not default_dump or type(val) == "table" and val.__no_dump_arg__ then
+		if type(val) == "table" and val.__no_dump_arg__ then
 			args[i] = val.__no_dump_arg__
+		elseif not default_dump then
+			-- Any occurrence of 'nil' will terminate the unpack, so convert to a string.
+			if args[i] == nil then
+				args[i] = "nil"
+			end
 		else
 			args[i] = dump(val)
 		end
@@ -124,7 +130,7 @@ local vowel_lat = lc_vowel_lat .. uc_vowel_lat
 local vowel_cyr = lc_vowel_cyr .. uc_vowel_cyr
 local vowel = vowel_lat .. vowel_cyr
 local vowel_c = "[" .. vowel .. "]"
-local non_vowel_c = "[^" .. vowel .. vowel_accent .. "]"
+local non_vowel_c = "[^" .. vowel .. vowel_accent .. SYLDIV .. "]"
 
 local lc_syllabic_cons_lat = "ry"
 local lc_syllabic_cons_cyr = "р"
@@ -237,6 +243,7 @@ local uc_inherently_soft_cyr = uupper(lc_inherently_soft_cyr)
 local inherently_soft_lat = lc_inherently_soft_lat .. uc_inherently_soft_lat
 local inherently_soft_cyr = lc_inherently_soft_cyr .. uc_inherently_soft_cyr
 local inherently_soft = inherently_soft_lat .. inherently_soft_cyr
+export.inherently_soft = inherently_soft
 
 
 --[==[
@@ -335,7 +342,7 @@ be a combining accent.
 ]==]
 function export.replace_syllable_accent(syl, new_accent)
 	-- This works because the syllables output by `split_syllables` end in a vowel.
-	return rsub(syl, com.vowel_accent_c, "") .. new_accent
+	return rsub(syl, vowel_accent_c, "") .. new_accent
 end
 
 
