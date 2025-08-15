@@ -122,6 +122,7 @@ function export.show(frame)
 		id = true,
 		sort = true,
 		-- no nolinkhead= because head in 1= should always be specified
+		altform = boolean_param,
 		json = boolean_param,
 		pagename = true, -- for testing
 	}
@@ -163,6 +164,7 @@ function export.show(frame)
 		force_cat_output = force_cat,
 		is_suffix = false,
 		no_redundant_head_cat = not heads[1],
+		altform = args.altform,
 	}
 
 	local sc = lang:findBestScript(pagename)
@@ -351,6 +353,22 @@ pos_functions["proper nouns"] = {
 	 func = function(args, data)
 	 	return do_nouns("proper noun", args, data)
 	 end,
+}
+
+local function do_gendered_pos(args, data)
+	validate_genders(data, args[2], true)
+	data.genders = args[2]
+end
+
+local function get_gendered_params()
+	return {
+		[2] = {default = "?", type = "genders"},
+	}
+end
+
+pos_functions["pronouns"] = {
+	 params = get_gendered_params(),
+	 func = do_gendered_pos,
 }
 
 pos_functions["verbs"] = {
