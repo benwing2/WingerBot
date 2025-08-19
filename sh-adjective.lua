@@ -471,6 +471,18 @@ end
 local function combine_stem_ending(stem, ending)
 	if stem == "?" then
 		return "?"
+	elseif ending:find("[()]") then
+		-- If the ending contains parens indicating an alternant, convert the resulting form into a two-part link
+		-- with the link consisting of the alternant without the parenthesized (optional) part.
+		--
+		-- FIXME: This may cause issues if the user writes something like `foo((kȍrīstan<comp>))`, in which case
+		-- the links with parens will be of the form `foo[[koristan|kȍrīsnīm(a)]]` rather than incorporating the
+		-- `foo` inside the link. To fix this, we may want to do the two-part link conversion in the canonicalize()
+		-- function property in show_forms(); but doing it that way is more complex. This seems a really edgy
+		-- edge case, but keep this in mind if it comes up.
+		local display = stem .. ending
+		local link = display:gsub("%(.-%)", "")
+		return ("[[%s|%s]]"):format(link, display)
 	else
 		return stem .. ending
 	end
@@ -520,7 +532,11 @@ local function add(base, slot, degree, props, endings)
 		if slot:find("^def_") then
 			stem_in_effect = props.def_stem
 		elseif slot == "indef_nom_m" or slot == "indef_acc_m_in" then
-			stem_in_effect = props.lemma_stem
+			if degree.actual_lemma ~= degree.lemma then
+				stem_in_effect = iut.convert_to_general_list_form(degree.actual_lemma)
+			else
+				stem_in_effect = props.lemma_stem
+			end
 		elseif slot == "indef_nom_n" or slot == "indef_acc_n" then
 			stem_in_effect = props.neut_stem
 		else
@@ -777,14 +793,13 @@ decls["normal-Latn"] = function(base, degree, props)
 		-- nom pl
 		"i", II, "e", EE, "a", AA,
 		-- gen
-		"a", soft and {EE .. "g", EE .. "ga"} or {OO .. "g", OO .. "ga"}, EE, II .. "h",
-		-- dat
-		"u", soft and {EE .. "m", EE .. "mu"} or {OO .. "m", OO .. "mu",
-			{form = OO .. "me", footnotes = "[not usually in Croatia]"}}, OO .. "j", {II .. "m", II .. "ma"},
+		"a", soft and EE .. "g(a)" or OO .. "g(a)", EE, II .. "h",
+		-- dat; preference for u over e in dative but e over u in loc is intentional
+		"u", soft and EE .. "m(u)" or OO .. "m(u,e)", OO .. "j", II .. "m(a)",
 		-- acc
 		"u", UU, "e", EE,
 		-- loc
-		"u", {OO .. "m", OO .. "mu"}, OO .. "j",
+		"u", soft and EE .. "m(u)" or OO .. "m(e,u)", OO .. "j",
 		-- ins
 		II .. "m", OO .. "m"
 	)
@@ -798,14 +813,13 @@ decls["normal-Cyrl"] = function(base, degree, props)
 		-- nom pl
 		"и", CII, "е", CEE, "а", CAA,
 		-- gen
-		"а", soft and {CEE .. "г", CEE .. "га"} or {COO .. "г", COO .. "га"}, CEE, CII .. "х",
+		"а", soft and CEE .. "г(а)" or COO .. "г(а)", CEE, CII .. "х",
 		-- dat
-		"у", soft and {CEE .. "м", CEE .. "му"} or {COO .. "м", COO .. "му",
-			{form = COO .. "ме", footnotes = "[not usually in Croatia]"}}, COO .. "ј", {CII .. "м", CII .. "ма"},
+		"у", soft and CEE .. "м(у)" or COO .. "м(у,е)",	COO .. "ј", CII .. "м(а)",
 		-- acc
 		"у", CUU, "е", CEE,
 		-- loc
-		"у", {COO .. "м", COO .. "му"}, COO .. "ј",
+		"у", soft and EE .. "м(у)" or COO .. "м(e,у)", COO .. "ј",
 		-- ins
 		CII .. "м", COO .. "м"
 	)
@@ -1115,195 +1129,197 @@ local function parse_inside(base, inside, is_scraped_adj)
     end
 
 	local base_degree = {}
-	local segments = put.parse_balanced_segment_run(inside, "[", "]")
-	local dot_separated_groups = split_alternating_runs_with_escapes(segments, "%.")
-	for i, dot_separated_group in ipairs(dot_separated_groups) do
-		-- Parse a control spec such as "-*,*[rare]" or "2tone[per VRH],-2tone[per Vukušić]". This assumes the control
-		-- spec is contained in `dot_separated_group` (already split on brackets) and the result of parsing should go in
-		-- `base_degree[dest]`. `allowed_specs` is a list of the allowed control specs in this group, such as
-		-- {"*", "-*"}. The result of parsing is a list of structures of the form {
-		--   form = "FORM",
-		--   footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
-		-- }.
-		local function parse_control_spec(dest, allowed_specs)
-			if base_degree[dest] then
-				parse_err(("Can't specify '%s'-type control spec twice; second such spec is '%s'"):format(
-					dest, concat(dot_separated_group)))
-			end
-			base_degree[dest] = {}
-			local comma_separated_groups = split_alternating_runs_with_escapes(dot_separated_group, ",")
-			for _, comma_separated_group in ipairs(comma_separated_groups) do
-				local specobj = {}
-				local spec = comma_separated_group[1]
-				if not m_table.contains(allowed_specs, spec) then
-					parse_err(("For '%s'-type control spec, saw unrecognized spec '%s'; valid values are %s"):
-						format(dest, spec, generate_list_of_possibilities_for_err(allowed_specs)))
-				else
-					specobj.form = spec
+	if inside ~= "" then
+		local segments = put.parse_balanced_segment_run(inside, "[", "]")
+		local dot_separated_groups = split_alternating_runs_with_escapes(segments, "%.")
+		for i, dot_separated_group in ipairs(dot_separated_groups) do
+			-- Parse a control spec such as "-*,*[rare]" or "2tone[per VRH],-2tone[per Vukušić]". This assumes the control
+			-- spec is contained in `dot_separated_group` (already split on brackets) and the result of parsing should go in
+			-- `base_degree[dest]`. `allowed_specs` is a list of the allowed control specs in this group, such as
+			-- {"*", "-*"}. The result of parsing is a list of structures of the form {
+			--   form = "FORM",
+			--   footnotes = nil or {"FOOTNOTE", "FOOTNOTE", ...},
+			-- }.
+			local function parse_control_spec(dest, allowed_specs)
+				if base_degree[dest] then
+					parse_err(("Can't specify '%s'-type control spec twice; second such spec is '%s'"):format(
+						dest, concat(dot_separated_group)))
 				end
-				specobj.footnotes = fetch_footnotes(comma_separated_group, parse_err)
-				insert(base_degree[dest], specobj)
-			end
-		end
-
-		local part = dot_separated_group[1]
-		if part == "" then
-			if not dot_separated_group[2] then
-				parse_err("Blank indicator; not allowed without attached footnotes")
-			end
-			base.footnotes = fetch_footnotes(dot_separated_group, parse_err)
-		elseif part == "addnote" then
-			local spec_and_footnotes = fetch_footnotes(dot_separated_group, parse_err)
-			if #spec_and_footnotes < 2 then
-				parse_err("Spec with 'addnote' should be of the form 'addnote[SLOTSPEC][FOOTNOTE][FOOTNOTE][...]'")
-			end
-			local slot_spec = table.remove(spec_and_footnotes, 1)
-			local slot_spec_inside = rmatch(slot_spec, "^%[(.*)%]$")
-			if not slot_spec_inside then
-				parse_err("Internal error: slot_spec " .. slot_spec .. " should be surrounded with brackets")
-			end
-			local slot_specs = rsplit(slot_spec_inside, ",")
-			-- FIXME: Here, [[Module:it-verb]] called strip_spaces(). Generally we don't do this. Should we?
-			insert(base.addnote_specs, {slot_specs = slot_specs, footnotes = spec_and_footnotes})
-		elseif export.parse_for_control_specs(part, parse_control_spec) then
-			-- nothing more to do
-		elseif part:find("^decllemma%s*:") then -- or part:find("^decldef%s*:") or part:find("^declnumber%s*:") then
-			local field, value = part:match("^(decl[a-z]+)%s*:%s*(.+)$")
-			if not value then
-				parse_err(("Syntax error in decllemma indicator: '%s'"):format(part))
-			end
-			if #dot_separated_group > 1 then
-				parse_err(
-					("Footnotes not allowed with '%s:' specs: '%s'"):format(field, concat(dot_separated_group)))
-			end
-			if base[field] then
-				parse_err(("Can't specify '%s:' twice"):format(field))
-			end
-			base[field] = value
-		elseif part:find("^q%s*:") or part:find("header%s*:") then
-			local field, value = part:match("^(q)%s*:%s*(.+)$")
-			if not value then
-				field, value = part:match("^(header)%s*:%s*(.+)$")
-			end
-			if not value then
-				parse_err(("Syntax error in q/header indicator: '%s'"):format(part))
-			end
-			if #dot_separated_group > 1 then
-				parse_err(
-					("Footnotes not allowed with '%s:' specs: '%s'"):format(field, concat(dot_separated_group)))
-			end
-			if base[field] then
-				parse_err(("Can't specify '%s:' twice"):format(field))
-			end
-			base[field] = value
-		elseif part:find("^@") then
-			if #dot_separated_group > 1 then
-				parse_err(
-					("Footnotes not allowed with scrape specs: '%s'"):format(concat(dot_separated_group)))
-			end
-			if base.scrape_spec then
-				parse_err("Can't specify scrape directive '@...' twice")
-			end
-			if part:find(":") then
-				base.scrape_is_suffix, base.scrape_spec, base.scrape_id = part:match("^@(%-?)(.-)%s*:%s*(.+)$")
-			else
-				base.scrape_is_suffix, base.scrape_spec = part:match("^@(%-?)(.-)$")
-			end
-			-- If we saw a hyphen, set `scrape_is_suffix` to true, otherwise false
-			base.scrape_is_suffix = base.scrape_is_suffix == "-"
-
-			if not base.scrape_spec or base.scrape_spec == "" then
-				parse_err(("Syntax error in scrape directive '%s"):format(part))
-			end
-			local scrape_init, scrape_rest = rmatch(base.scrape_spec, "^(.)(.*)$")
-			local lower_scrape_init = ulower(scrape_init)
-			if ulower(scrape_init) ~= scrape_init then
-				base.scrape_is_uppercase = true
-				base.scrape_spec = lower_scrape_init .. scrape_rest
-			end
-		elseif part == "-pos" then
-			if dot_separated_group[2] then
-				parse_err("Footnotes not allowed with '-pos'")
-			end
-			if base.posspec then
-				parse_err("Can't specify '-pos' twice")
-			end
-			base.posspec = {{form = "-"}}
-		elseif part == "-comp" then
-			if dot_separated_group[2] then
-				parse_err("Footnotes not allowed with '-comp'")
-			end
-			if base.compspec then
-				parse_err("Can't specify comparative twice twice")
-			end
-			base.compspec = {{form = "-"}}
-		elseif part:find("^comp") and not part:find("^comp_") then
-			if part == "comp" then
-				part = "comp+"
-			end
-			if part:find("^comp[+^?]") then
-				part = part:gsub("^comp", "comp:")
-			end
-			dot_separated_group[1] = part
-			base.compspec = parse_comp_or_stem_spec(dot_separated_group, "comparative spec", parse_err)
-		elseif part:find(":") then
-			local spec, value = part:match("^([a-z_+]+)%s*:%s*(.+)$")
-			if not spec then
-				parse_err(("Syntax error in indicator with value, expecting alphabetic slot, stem/lemma override " ..
-					"or comparative/superlative override indicator: '%s'"):format(part))
-			end
-			if export.overridable_stem_set[spec] then
-				if base_degree[spec] then
-					parse_err(("Can't specify '%s:' twice"):format(spec))
-				end
-				base_degree[spec] = parse_comp_or_stem_spec(dot_separated_group, "stem spec", parse_err)
-			else
-				local slots, override = parse_override(dot_separated_group, parse_err)
-				local function check_duplication(slot)
-					if base.override_slots_seen[slot] then
-						parse_err(("Two overrides specified for slot '%s'"):format(slot))
+				base_degree[dest] = {}
+				local comma_separated_groups = split_alternating_runs_with_escapes(dot_separated_group, ",")
+				for _, comma_separated_group in ipairs(comma_separated_groups) do
+					local specobj = {}
+					local spec = comma_separated_group[1]
+					if not m_table.contains(allowed_specs, spec) then
+						parse_err(("For '%s'-type control spec, saw unrecognized spec '%s'; valid values are %s"):
+							format(dest, spec, generate_list_of_possibilities_for_err(allowed_specs)))
 					else
-						base.override_slots_seen[slot] = true
+						specobj.form = spec
+					end
+					specobj.footnotes = fetch_footnotes(comma_separated_group, parse_err)
+					insert(base_degree[dest], specobj)
+				end
+			end
+	
+			local part = dot_separated_group[1]
+			if part == "" then
+				if not dot_separated_group[2] then
+					parse_err("Blank indicator; not allowed without attached footnotes")
+				end
+				base.footnotes = fetch_footnotes(dot_separated_group, parse_err)
+			elseif part == "addnote" then
+				local spec_and_footnotes = fetch_footnotes(dot_separated_group, parse_err)
+				if #spec_and_footnotes < 2 then
+					parse_err("Spec with 'addnote' should be of the form 'addnote[SLOTSPEC][FOOTNOTE][FOOTNOTE][...]'")
+				end
+				local slot_spec = table.remove(spec_and_footnotes, 1)
+				local slot_spec_inside = rmatch(slot_spec, "^%[(.*)%]$")
+				if not slot_spec_inside then
+					parse_err("Internal error: slot_spec " .. slot_spec .. " should be surrounded with brackets")
+				end
+				local slot_specs = rsplit(slot_spec_inside, ",")
+				-- FIXME: Here, [[Module:it-verb]] called strip_spaces(). Generally we don't do this. Should we?
+				insert(base.addnote_specs, {slot_specs = slot_specs, footnotes = spec_and_footnotes})
+			elseif export.parse_for_control_specs(part, parse_control_spec) then
+				-- nothing more to do
+			elseif part:find("^decllemma%s*:") then -- or part:find("^decldef%s*:") or part:find("^declnumber%s*:") then
+				local field, value = part:match("^(decl[a-z]+)%s*:%s*(.+)$")
+				if not value then
+					parse_err(("Syntax error in decllemma indicator: '%s'"):format(part))
+				end
+				if #dot_separated_group > 1 then
+					parse_err(
+						("Footnotes not allowed with '%s:' specs: '%s'"):format(field, concat(dot_separated_group)))
+				end
+				if base[field] then
+					parse_err(("Can't specify '%s:' twice"):format(field))
+				end
+				base[field] = value
+			elseif part:find("^q%s*:") or part:find("header%s*:") then
+				local field, value = part:match("^(q)%s*:%s*(.+)$")
+				if not value then
+					field, value = part:match("^(header)%s*:%s*(.+)$")
+				end
+				if not value then
+					parse_err(("Syntax error in q/header indicator: '%s'"):format(part))
+				end
+				if #dot_separated_group > 1 then
+					parse_err(
+						("Footnotes not allowed with '%s:' specs: '%s'"):format(field, concat(dot_separated_group)))
+				end
+				if base[field] then
+					parse_err(("Can't specify '%s:' twice"):format(field))
+				end
+				base[field] = value
+			elseif part:find("^@") then
+				if #dot_separated_group > 1 then
+					parse_err(
+						("Footnotes not allowed with scrape specs: '%s'"):format(concat(dot_separated_group)))
+				end
+				if base.scrape_spec then
+					parse_err("Can't specify scrape directive '@...' twice")
+				end
+				if part:find(":") then
+					base.scrape_is_suffix, base.scrape_spec, base.scrape_id = part:match("^@(%-?)(.-)%s*:%s*(.+)$")
+				else
+					base.scrape_is_suffix, base.scrape_spec = part:match("^@(%-?)(.-)$")
+				end
+				-- If we saw a hyphen, set `scrape_is_suffix` to true, otherwise false
+				base.scrape_is_suffix = base.scrape_is_suffix == "-"
+	
+				if not base.scrape_spec or base.scrape_spec == "" then
+					parse_err(("Syntax error in scrape directive '%s"):format(part))
+				end
+				local scrape_init, scrape_rest = rmatch(base.scrape_spec, "^(.)(.*)$")
+				local lower_scrape_init = ulower(scrape_init)
+				if ulower(scrape_init) ~= scrape_init then
+					base.scrape_is_uppercase = true
+					base.scrape_spec = lower_scrape_init .. scrape_rest
+				end
+			elseif part == "-pos" then
+				if dot_separated_group[2] then
+					parse_err("Footnotes not allowed with '-pos'")
+				end
+				if base.posspec then
+					parse_err("Can't specify '-pos' twice")
+				end
+				base.posspec = {{form = "-"}}
+			elseif part == "-comp" then
+				if dot_separated_group[2] then
+					parse_err("Footnotes not allowed with '-comp'")
+				end
+				if base.compspec then
+					parse_err("Can't specify comparative twice twice")
+				end
+				base.compspec = {{form = "-"}}
+			elseif part:find("^comp") and not part:find("^comp_") then
+				if part == "comp" then
+					part = "comp+"
+				end
+				if part:find("^comp[+^?]") then
+					part = part:gsub("^comp", "comp:")
+				end
+				dot_separated_group[1] = part
+				base.compspec = parse_comp_or_stem_spec(dot_separated_group, "comparative spec", parse_err)
+			elseif part:find(":") then
+				local spec, value = part:match("^([a-z_+]+)%s*:%s*(.+)$")
+				if not spec then
+					parse_err(("Syntax error in indicator with value, expecting alphabetic slot, stem/lemma override " ..
+						"or comparative/superlative override indicator: '%s'"):format(part))
+				end
+				if export.overridable_stem_set[spec] then
+					if base_degree[spec] then
+						parse_err(("Can't specify '%s:' twice"):format(spec))
+					end
+					base_degree[spec] = parse_comp_or_stem_spec(dot_separated_group, "stem spec", parse_err)
+				else
+					local slots, override = parse_override(dot_separated_group, parse_err)
+					local function check_duplication(slot)
+						if base.override_slots_seen[slot] then
+							parse_err(("Two overrides specified for slot '%s'"):format(slot))
+						else
+							base.override_slots_seen[slot] = true
+						end
+					end
+					for _, slot in ipairs(slots) do
+						if adjective_slot_abbrs[slot] then
+							do_slot_abbreviation(base, slot, check_duplication)
+						else
+							check_duplication(slot)
+						end
+						base.overrides[slot] = override
 					end
 				end
-				for _, slot in ipairs(slots) do
-					if adjective_slot_abbrs[slot] then
-						do_slot_abbreviation(base, slot, check_duplication)
+			elseif #dot_separated_group > 1 then
+				parse_err(
+					("Footnotes only allowed with slot overrides, negatable indicators and by themselves: '%s'"):
+						format(concat(dot_separated_group)))
+			elseif part == "sg" or part == "pl" or part == "both" then
+				if base.number then
+					if base.number ~= part then
+						parse_err("Can't specify '" .. part .. "' along with '" .. base.number .. "'")
 					else
-						check_duplication(slot)
+						parse_err("Can't specify '" .. part .. "' twice")
 					end
-					base.overrides[slot] = override
 				end
-			end
-		elseif #dot_separated_group > 1 then
-			parse_err(
-				("Footnotes only allowed with slot overrides, negatable indicators and by themselves: '%s'"):
-					format(concat(dot_separated_group)))
-		elseif part == "sg" or part == "pl" or part == "both" then
-			if base.number then
-				if base.number ~= part then
-					parse_err("Can't specify '" .. part .. "' along with '" .. base.number .. "'")
-				else
+				base.number = part
+			elseif part == "indef" or part == "def" or part == "bothdefs" then
+				if base.definiteness then
+					if base.definiteness ~= part then
+						parse_err("Can't specify '" .. part .. "' along with '" .. base.definiteness .. "'")
+					else
+						parse_err("Can't specify '" .. part .. "' twice")
+					end
+				end
+				base.definiteness = part
+			elseif export.boolean_property_set[part] then
+				if base.props[part] then
 					parse_err("Can't specify '" .. part .. "' twice")
 				end
+				base.props[part] = true
+			else
+				parse_err("Unrecognized indicator '" .. part .. "'")
 			end
-			base.number = part
-		elseif part == "indef" or part == "def" or part == "bothdefs" then
-			if base.definiteness then
-				if base.definiteness ~= part then
-					parse_err("Can't specify '" .. part .. "' along with '" .. base.definiteness .. "'")
-				else
-					parse_err("Can't specify '" .. part .. "' twice")
-				end
-			end
-			base.definiteness = part
-		elseif export.boolean_property_set[part] then
-			if base.props[part] then
-				parse_err("Can't specify '" .. part .. "' twice")
-			end
-			base.props[part] = true
-		else
-			parse_err("Unrecognized indicator '" .. part .. "'")
 		end
 	end
 
@@ -1341,7 +1357,8 @@ local function set_early_base_defaults(base)
 	if not base.props.builtin then
 		local basedeg = base.base_degree
 		basedeg.number = base.number or "both"
-		basedeg.definiteness = base.definiteness or base.base_degfield == "comp" and "def" or "bothdefs"
+		-- FIXME: Does this need to be set?
+		-- basedeg.definiteness = base.definiteness or base.base_degfield == "comp" and "def" or "bothdefs"
 	end
 end
 
@@ -1841,8 +1858,6 @@ end
 -- multiple such comparative and/or superlative base lemmas) and property sets (generally, one per combination of
 -- control specs such as '*,-*').
 local function determine_props(base, degree)
-	degree.default_reducible = com.determine_default_reducible(degree.lemma)
-
 	local lemma_stem = rmatch(degree.lemma, "^(.*)[iи]" .. MACRON .. "$")
 	if lemma_stem then
 		if degree.definiteness then
@@ -1855,6 +1870,7 @@ local function determine_props(base, degree)
 				usererr("Can't specify reducible control spec '*' or '-*' for definite-only lemma '%s'", degree.lemma)
 			end
 			props.reducible = false
+			props.soft = not not rfind(lemma_stem, "[" .. com.inherently_soft .. "]$")
 			local def_stem
 			if degree.defstem then
 				def_stem = degree.defstem
@@ -1864,6 +1880,13 @@ local function determine_props(base, degree)
 			props.def_stem = def_stem
 		end
 		return
+	end
+
+	degree.default_reducible = com.determine_default_reducible(degree.lemma)
+	if degree.definiteness == "def" then
+		usererr("Can't specify 'def' = \"definite-only\" for indefinite-form lemma '%s'", degree.lemma)
+	else
+		degree.definiteness = degree.definiteness or "bothdefs"
 	end
 
 	-- Now determine all the props for each prop set.
@@ -2364,7 +2387,12 @@ local function make_table(alternant_multiword_spec)
 	for _, degdef_spec in ipairs(degdef_degrees) do
 		local degdef_field, degfield, slot_prefix, desc = unpack(degdef_spec)
 		local hasprop = "has" .. degfield
-		if alternant_multiword_spec[hasprop] == "has" then
+		local has_table = alternant_multiword_spec[hasprop] == "has"
+		local definiteness = alternant_multiword_spec.definiteness[degfield]
+		if slot_prefix == "indef" or slot_prefix == "def" then
+			has_table = has_table and (definiteness == slot_prefix or definiteness == "bothdefs")
+		end
+		if has_table then
 			local table_spec = alternant_multiword_spec.number[degfield] == "both" and
 				get_table_spec_all_number(slot_prefix) or
 				get_table_spec_one_number(slot_prefix, alternant_multiword_spec.number[degfield])
@@ -2376,7 +2404,7 @@ local function make_table(alternant_multiword_spec)
 	end
 
 	-- Paste them together.
-	return require("Module:TemplateStyles")("Module:sh-adjective/style.css") .. concat(computed_tables)
+	return concat(computed_tables)
 end
 
 -- Externally callable function to parse and decline an adjective given user-specified arguments and the argument spec
@@ -2393,8 +2421,7 @@ function export.do_generate_forms(args, argspec, source_template)
 		parse_indicator_spec = function(angle_bracket_spec, lemma)
 			return parse_indicator_spec(angle_bracket_spec, lemma, pagename)
 		end,
-		angle_brackets_omittable = true,
-		allow_blank_lemma = true,
+		allow_default_indicator = true,
 	}
 	local alternant_multiword_spec = iut.parse_inflected_text(argspec, parse_props)
 	alternant_multiword_spec.title = args.title
@@ -2425,6 +2452,9 @@ function export.do_generate_forms(args, argspec, source_template)
 			end,
 			slot_list = adjective_slot_list,
 			inflect_word_spec = decline_adjective,
+			-- We add links around the generated forms rather than allow the entire multiword
+			-- expression to be a link, so ensure that user-specified links get included as well.
+			include_user_specified_links = true,
 		}
 		iut.inflect_multiword_or_alternant_multiword_spec(alternant_multiword_spec, inflect_props)
 		local forms = alternant_multiword_spec.forms
