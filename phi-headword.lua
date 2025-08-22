@@ -17,11 +17,13 @@ local pos_functions = {}
 
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
 
-local rmatch = mw.ustring.match
+local list_to_set = require("Module:table").listToSet
 local rsplit = mw.text.split
 local uupper = mw.ustring.upper
-local ulower = mw.ustring.ulower
+local ulower = mw.ustring.lower
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
+local en_utilities_module = "Module:en-utilities"
 local template_parser_module = "Module:template parser"
 
 local tl_conj_type_data = {
@@ -89,15 +91,15 @@ local ilo_conjugation_types = {
 	["object"] = "object trigger", -- -en
 	["object potential"] = "object trigger potential mood", -- ma-
 	["object causative"] = "2nd actor trigger potential mood", -- ipai-
-    ["comitative"] = "comitative trigger", -- ka-
+	["comitative"] = "comitative trigger", -- ka-
 	["comitative potential"] = "comitative trigger potential mood", -- maka-
-    ["comitative causative I"] = "1st comitative trigger causative mood", -- makapa-
-    ["comitative causative II"] = "2nd comitative trigger causative mood", -- makipa-
+	["comitative causative I"] = "1st comitative trigger causative mood", -- makapa-
+	["comitative causative II"] = "2nd comitative trigger causative mood", -- makipa-
 	["locative"] = "locative trigger",-- -an
 	["locative potential"] = "locative trigger potential mood", -- ma- -an
 	["locative causative"] = "locative trigger causative mood", -- pa- -an
-    ["thematic"] = "thematic trigger", -- i-
-    ["thematic potential"] = "thematic trigger potential mood", -- mai-
+	["thematic"] = "thematic trigger", -- i-
+	["thematic potential"] = "thematic trigger potential mood", -- mai-
 	["thematic causative"] = "thematic trigger causative mood", -- ipa-
 	["benefactive"] = "benefactive trigger", -- i- -an
 	["benefactive potential"] = "benefactive trigger potential mood", -- mai- -an
@@ -124,18 +126,18 @@ local pag_conjugation_types = {
 
 -- FIXME: Are these various languages really so different in their verb inflections or is this just a case of
 -- randomly picking a subset of the total inflections?
-local tl_bcl_verb_inflections = {
-	{"comp", {label = "complete", form = "comp", alias = {2}}},
-	{"prog", {label = "progressive", form = "imp", alias = {3}}},
-	{"cont", {label = "contemplative", form = "cont", alias = {4}}},
+local phi_default_verb_inflections = {
+	{"comp", {label = "complete", form = "compl|asp", alias = {2}}},
+	{"prog", {label = "progressive", form = "prog|asp", alias = {3}}},
+	{"cont", {label = "contemplative", form = "contem|asp", alias = {4}}},
 	{"vnoun", {label = "verbal noun", form = "vnoun", alias = {5}}},
 }
 local hil_krj_war_verb_inflections = {
 	{"real", {label = "realis", form = "realis", alias = {2}}},
 	{"imp", {label = "imperative", form = "imp", alias = {3}}},
-	{"dim", {label = "diminutive"}},
-	{"caus", {label = "causative"}},
-	{"freq", {label = "frequentative"}},
+	{"dim", {label = "diminutive", form = "dim"}},
+	{"caus", {label = "causative", form = "caus"}},
+	{"freq", {label = "frequentative", form = "freq"}},
 }
 local ilo_pag_verb_inflections = {
 	{"perf", {label = "perfective", form = "pfv", alias = {2}}},
@@ -144,11 +146,11 @@ local ilo_pag_verb_inflections = {
 	{"fut", {label = "future", form = "fut", alias = {5}}},
 }
 local hil_krj_war_noun_inflections = {
-	{"dim", {label = "diminutive"}},
+	{"dim", {label = "diminutive", form = "dim"}},
 }
 local hil_krj_war_adj_inflections = {
-	{"dim", {label = "diminutive"}},
-	{"caus", {label = "causative"}},
+	{"dim", {label = "diminutive", form = "dim"}},
+	{"caus", {label = "causative", form = "caus"}},
 }
 
 -- NOTE: Here and below, the template names need to be in their canonical form (not shortcuts).
@@ -157,47 +159,75 @@ local langs_supported = {
 		native_script_name = "Basahan",
 		convert_to_native_script = "bcl-basahan script",
 		native_script_def = "bcl-basahan",
-		pronun_templates_to_check = {"bcl-IPA"},
+		pronun_templates_to_check = list_to_set{"bcl-IPA"},
 		has_pl_all_pos = true,
 		has_intens_all_pos = true,
-		verb_inflections = tl_bcl_verb_inflections,
+		verb_inflections = phi_default_verb_inflections,
+	},
+	["bku"] = {
+		native_script_name = "Buhid",
+		convert_to_native_script = "bku-script",
+		native_script_def = "bku-script of",
+		pronun_templates_to_check = list_to_set{"bku-pr"},
+		verb_inflections = phi_default_verb_inflections,
 	},
 	["cbk"] = {
-		pronun_templates_to_check = {"cbk-IPA"},
+		pronun_templates_to_check = list_to_set{"cbk-IPA"},
 	},
 	["ceb"] = {
 		native_script_name = "Badlit",
 		convert_to_native_script = "ceb-badlit script",
 		native_script_def = "ceb-badlit",
-		pronun_templates_to_check = {"ceb-IPA"},
+		pronun_templates_to_check = list_to_set{"ceb-IPA"},
 		verb_inflections = {
-			{"inch", {label = "inchoative", form = "realis", alias = {2}}},
+			{"inch", {label = "inchoative", form = "inchoative", alias = {2}}},
 			{"imp", {label = "imperative", form = "imp", alias = {3}}},
 		},
 	},
 	["hil"] = {
-		pronun_templates_to_check = {"hil-IPA"},
+		pronun_templates_to_check = list_to_set{"hil-IPA"},
 		verb_inflections = hil_krj_war_verb_inflections,
 		noun_inflections = hil_krj_war_noun_inflections,
 		adj_inflections = hil_krj_war_adj_inflections,
+	},
+	["hnn"] = {
+		native_script_name = "Hanunoo",
+		convert_to_native_script = "hnn-script",
+		native_script_def = "hnn-script of",
+		pronun_templates_to_check = list_to_set{"hnn-pr"},
+		verb_inflections =  {
+			{"comp", {label = "complete", form = "compl|asp", alias = {2}}},
+			{"prog", {label = "progressive", form = "prog|asp", alias = {3}}},
+			{"cont", {label = "contemplative", form = "contem|asp", alias = {4}}},
+			{"vnoun", {label = "verbal noun", form = "vnoun", alias = {5}}},
+			{"past", {label = "past", form = "past"}},
+			{"npast", {label = "non-past", form = "npast"}},
+		},
+	},
+	["ibl"] = {
+		verb_inflections = phi_default_verb_inflections,
 	},
 	["ilo"] = {
 		native_script_name = "Kur-itan",
 		convert_to_native_script = "ilo-kur-itan script",
 		native_script_def = "ilo-kur-itan",
-		pronun_templates_to_check = {"ilo-IPA"},
+		pronun_templates_to_check = list_to_set{"ilo-IPA"},
 		conjugation_types = ilo_conjugation_types,
 		verb_inflections = ilo_pag_verb_inflections,
 		adj_inflections = {
-			{"comp", {label = "comparative", form = "comparative", alias = {2}}},
-			{"mod", {label = "moderative", form = "moderative", alias = {3}}},
+			{"comp", {label = "comparative", form = "comp", alias = {2}}},
+			{"mod", {label = "moderative", form = "moder", alias = {3}}},
 			{"comp_sup", {label = "comparative superlative", form = "comp|sup", alias = {4}}},
 			{"abs_sup", {label = "absolutive superlative", form = "abs|sup", alias = {5}}},
-			{"intens", {label = "intensive", alias = {6}}},
+			{"intens", {label = "intensive", form = "inten", alias = {6}}},
 		},
 	},
+	["kne"] = {
+		pronun_templates_to_check = list_to_set{"kne-pr", "kne-IPA"},
+		verb_inflections = phi_default_verb_inflections,
+	},
 	["krj"] = {
-		pronun_templates_to_check = {"krj-IPA"},
+		pronun_templates_to_check = list_to_set{"krj-IPA"},
 		verb_inflections = hil_krj_war_verb_inflections,
 		noun_inflections = hil_krj_war_noun_inflections,
 		adj_inflections = hil_krj_war_adj_inflections,
@@ -205,18 +235,19 @@ local langs_supported = {
 	["mdh"] = {
 		arabic_script_name = "Jawi",
 		native_script_def = "mdh-Jawi",
-		pronun_templates_to_check = {"mdh-IPA"},
+		pronun_templates_to_check = list_to_set{"mdh-pr", "mdh-IPA"},
+		verb_inflections = phi_default_verb_inflections,
 	},
 	["mrw"] = {
 		arabic_script_name = "batang Arab",
 	},
 	["pag"] = {
-		pronun_templates_to_check = {"pag-IPA"},
+		pronun_templates_to_check = list_to_set{"pag-IPA"},
 		conjugation_types = pag_conjugation_types,
 		verb_inflections = ilo_pag_verb_inflections,
 	},
 	["pam"] = {
-		pronun_templates_to_check = {"pam-IPA"},
+		pronun_templates_to_check = list_to_set{"pam-IPA"},
 		verb_inflections = {
 			{"perf", {label = "perfective", form = "pfv", alias = {2}}}, -- Use with affixed verbs only.
 			{"prog", {label = "progressive", form = "prog", alias = {3}}}, -- Use with affixed verbs only.
@@ -226,14 +257,19 @@ local langs_supported = {
 		native_script_name = "Baybayin",
 		convert_to_native_script = "tl-baybayin script",
 		native_script_def = "tl-baybayin",
-		pronun_templates_to_check = {"tl-pr", "tl-IPA"},
+		pronun_templates_to_check = list_to_set{"tl-pr", "tl-IPA"},
 		conjugation_types = tl_conjugation_types,
-		verb_inflections = tl_bcl_verb_inflections,
+		verb_inflections = phi_default_verb_inflections,
 	},
 	["tsg"] = {
+		arabic_script_name = "Sulat Sūg",
+		convert_to_arabic_script = "tsg-jawi sc",
+		arabic_script_def = "tsg-jawi",
+		pronun_templates_to_check = list_to_set{"tsg-pr"},
+		verb_inflections = phi_default_verb_inflections,
 	},
 	["war"] = {
-		pronun_templates_to_check = {"war-IPA"},
+		pronun_templates_to_check = list_to_set{"war-IPA"},
 		verb_inflections = hil_krj_war_verb_inflections,
 		noun_inflections = hil_krj_war_noun_inflections,
 		adj_inflections = hil_krj_war_adj_inflections,
@@ -241,11 +277,6 @@ local langs_supported = {
 }
 
 ----------------------------------------------- Utilities --------------------------------------------
-
-local function track(page)
-	require("Module:debug/track")("phi-headword/" .. page)
-	return true
-end
 
 local function ine(val)
 	if val == "" then return nil else return val end
@@ -270,7 +301,7 @@ local function add_params(params, params_spec)
 		params[arg] = {list = true}
 		if argspecs.alias then
 			for _, al in ipairs(argspecs.alias) do
-				params[al] = {alias_of = arg}
+				params[al] = {alias_of = arg, list = false}
 			end
 		end
 	end
@@ -318,7 +349,7 @@ function export.show(frame)
 		poscat = ine(parargs[1]) or
 			mw.title.getCurrentTitle().fullText == "Template:" .. langcode .. "-head" and "interjection" or
 			error("Part of speech must be specified in 1=")
-		poscat = require("Module:string utilities").pluralize(poscat)
+		poscat = require(en_utilities_module).pluralize(poscat)
 	end
 
 	local langprops = langs_supported[langcode]
@@ -354,6 +385,7 @@ function export.show(frame)
 		end
 	end
 
+	local need_pl_handled
 	if langprops.has_pl_all_pos and not params.pl then
 		-- Yuck, this should be POS-specific but it seems all POS's can be pluralized in Bikol Central?
 		params["pl"] = {list = true}
@@ -369,7 +401,7 @@ function export.show(frame)
 
 	local args = require("Module:parameters").process(parargs, params)
 
-	local pagename = args.pagename or mw.title.getCurrentTitle().subpageText
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
 	if has_alt_script and args.tr.maxindex > #args[headarg] then
 		error("Too many translits specified; use '+' to indicate a default head")
@@ -382,7 +414,7 @@ function export.show(frame)
 			heads = {pagename}
 		end
 	end
-
+	
 	for i, head in ipairs(heads) do
 		if head == "+" then
 			head = nil
@@ -414,7 +446,7 @@ function export.show(frame)
 	) then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 		if args.addlpos then
@@ -439,13 +471,14 @@ function export.show(frame)
 		end
 	end
 
-	local pattern_escape = require("Module:string utilities").pattern_escape
-
 	local script
 	if has_alt_script then
 		script = lang:findBestScript(pagename) -- Latn or Tglg
 		-- Disable native-script spelling parameter if entry is already in native script.
-		if script:getCode() == "Tglg" then
+		if script:getCode() == "Tglg" or 
+			(script:getCode() == "Hano" and langcode == "hnn") or
+			(script:getCode() == "Buhd" and langcode == "bku")
+			then
 			args.b = {}
 		end
 		-- Disable Arabic-script spelling parameter if entry is already in Arabic script.
@@ -458,27 +491,23 @@ function export.show(frame)
 			if not altscript_def then
 				return false
 			end
-			local script_entry_present
 			local title = mw.title.new(altscript)
-			if title then
-				local altscript_content = title:getContent()
-				if altscript_content then
-					for name, args, text, index in require(template_parser_module).findTemplates(altscript_content) do
-						if name == altscript_def then
-							for i = 1, 10 do
-								if args[i] == pagename then
-									script_entry_present = true
-									break
-								end
-							end
-						end
-						if script_entry_present then
-							break
+			if not title then
+				return
+			end
+			local altscript_content = title:getContent()
+			if not altscript_content then
+				return
+			end
+			for template in require(template_parser_module).find_templates(altscript_content) do
+				if template:get_name() == altscript_def then
+					for _, arg in ipairs(template:get_arguments()) do
+						if arg == pagename then
+							return true
 						end
 					end
 				end
 			end
-			return script_entry_present
 		end
 
 		local function handle_alt_script(script_argname, script_code, script_name, convert_to_script, script_def)
@@ -497,7 +526,13 @@ function export.show(frame)
 								script_argname))
 						end
 					end
-					script_arg[i] = {term = alt, sc = require("Module:scripts").getByCode(script_code) }
+					script_arg[i] = {
+						term = alt, 
+						sc = require("Module:scripts").getByCode(script_code),
+						accel = {
+							form = script_name
+						} 
+					}
 
 					if not check_for_alt_script_entry(alt, script_def) then
 						table.insert(data.categories,
@@ -519,7 +554,14 @@ function export.show(frame)
 		end
 
 		if langprops.native_script_name then
-			handle_alt_script("b", "Tglg", langprops.native_script_name, langprops.convert_to_native_script,
+			local native_alt_sc = "Tglg"
+			if langcode == "hnn" then
+				native_alt_sc = "Hano"
+			elseif langcode == "bku" then
+				native_alt_sc = "Buhd"
+			end
+			
+			handle_alt_script("b", native_alt_sc, langprops.native_script_name, langprops.convert_to_native_script,
 				langprops.native_script_def)
 		end
 		if langprops.arabic_script_name then
@@ -535,14 +577,9 @@ function export.show(frame)
 		if this_title then
 			local content = this_title:getContent()
 			if content then
-				for name, args, text, index in require(template_parser_module).findTemplates(content) do
-					for _, pronun_template in ipairs(langprops.pronun_templates_to_check) do
-						if name == pronun_template then
-							template_present = true
-							break
-						end
-					end
-					if template_present then
+				for template in require(template_parser_module).find_templates(content) do
+					if langprops.pronun_templates_to_check[template:get_name()] then
+						template_present = true
 						break
 					end
 				end
@@ -560,9 +597,8 @@ function export.show(frame)
 	return require("Module:headword").full_headword(data)
 end
 
-
 pos_functions["adjectives"] = {
-    params = function(langcode)
+	params = function(langcode)
 		local params = {
 			["f"] = {list = true},
 			["m"] = {list = true},
@@ -583,14 +619,36 @@ pos_functions["adjectives"] = {
 	end,
 }
 
+pos_functions["articles"] = {
+	params = function(langcode)
+		return {
+			["pl"] = {list = true},
+		}
+	end,
+	func = function(args, data)
+		do_inflection(data, args.pl, "plural", {form = "plural"})
+	end,
+}
+
+pos_functions["equative adjectives"] = {
+	params = function(langcode)
+		return {
+			["pl"] = {list = true},
+		}
+	end,
+	func = function(args, data)
+		do_inflection(data, args.pl, "plural", {form = "plural"})
+	end,
+}
 
 pos_functions["nouns"] = {
-    params = function(langcode)
+	params = function(langcode)
 		local params = {
 			["f"] = {list = true},
 			["m"] = {list = true},
 			["pl"] = {list = true},
 			rootword = {type = "boolean"},
+			action = {type = "boolean"},  --if action noun
 		}
 		add_params(params, langs_supported[langcode].noun_inflections)
 		return params
@@ -603,17 +661,21 @@ pos_functions["nouns"] = {
 
 		if args.rootword then
 			table.insert(data.infections, {label = "root word"})
-			table.insert(data.categories, langname .. " roots")
+			table.insert(data.categories, data.langname .. " roots")
+		end
+		
+		if args.action then   --if action noun
+			table.insert(data.categories, data.langname .. " action nouns")
 		end
 	end,
 }
 
+pos_functions["action nouns"] = pos_functions["nouns"]
 pos_functions["proper nouns"] = pos_functions["nouns"]
 
-
 pos_functions["pronouns"] = {
-    params = function(langcode)
-	    return {
+	params = function(langcode)
+		return {
 			["pl"] = {list = true},
 		}
 	end,
@@ -624,8 +686,19 @@ pos_functions["pronouns"] = {
 
 pos_functions["prepositions"] = pos_functions["pronouns"]
 
+pos_functions["superlative adjectives"] = {
+	params = function(langcode)
+		return {
+			["pl"] = {list = true},
+		}
+	end,
+	func = function(args, data)
+		do_inflection(data, args.pl, "plural", {form = "plural"})
+	end,
+}
+
 pos_functions["verbs"] = {
-    params = function(langcode)
+	params = function(langcode)
 		local params = {
 			rootword = {type = "boolean"},
 		}
@@ -646,7 +719,7 @@ pos_functions["verbs"] = {
 		if args.type then
 			-- Tag verb trigger
 			local conjugation_types = langs_supported[data.langcode].conjugation_types
-			for i, typ in ipairs(args.type) do
+			for _, typ in ipairs(args.type) do
 				if not conjugation_types[typ] then
 					error(("Unrecognized %s verb conjugation type '%s'"):format(data.langname, typ))
 				end
@@ -659,14 +732,13 @@ pos_functions["verbs"] = {
 }
 
 pos_functions["letters"] = {
-    params = function(langcode)
-		local params = {
+	params = function(langcode)
+		return {
 			["type"] = {},
 			["upper"] = {},
 			["lower"] = {},
 			["mixed"] = {},
 		}
-		return {}
 	end,
 	func = function(args, data)
 		if args.type then
@@ -685,13 +757,13 @@ pos_functions["letters"] = {
 				error("Can't specify upper=, lower= or mixed= when letter has no case")
 			end
 			table.insert(data.inflections, {label = "no case"})
-		elseif args.type == "upper" or pagename == uppage then
+		elseif args.type == "upper" or data.pagename == uppage then
 			if args.upper then
 				error("Already uppercase; can't specify upper=")
 			end
 			table.insert(data.inflections, {label = "[[Appendix:Capital letter|upper case]]"})
 			table.insert(data.inflections, {args.lower or lopage, label = "lower case"})
-		elseif args.type == "lower" or pagename == lopage then
+		elseif args.type == "lower" or data.pagename == lopage then
 			if args.lower then
 				error("Already uppercase; can't specify upper=")
 			end
