@@ -2,14 +2,19 @@ local export = {}
 
 export.lang_specific_data_list_module = "Module:labels/data/lang"
 export.lang_specific_data_modules_prefix = "Module:labels/data/lang/"
-local m_lang_specific_data = mw.loadData(export.lang_specific_data_list_module)
 
-local require_when_needed = require("Module:utilities/require when needed")
-local m_table = require_when_needed("Module:table")
 local load_module = "Module:load"
 local parse_utilities_module = "Module:parse utilities"
 local string_utilities_module = "Module:string utilities"
 local utilities_module = "Module:utilities"
+
+local insert = table.insert
+local require_when_needed = require("Module:utilities/require when needed")
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+local dump = mw.dumpObject
+
+local m_lang_specific_data = mw.loadData(export.lang_specific_data_list_module)
+local m_table = require_when_needed("Module:table")
 
 --[==[ intro:
 Labels go through several stages of processing to get from the original (raw) label specified in the Wikicode to the
@@ -51,10 +56,13 @@ local pages_where_tracking_is_disabled = {
 	-- pages that sometimes hit timeouts
 	["de"] = true,
 	["i"] = true,
+	["o"] = true,
 	["и"] = true,
 	["山"] = true,
 	["子"] = true,
 	["月"] = true,
+	["一"] = true,
+	["人"] = true,
 }
 
 -- Add tracking category for PAGE. The tracking category linked to is [[Wiktionary:Tracking/labels/PAGE]].
@@ -101,7 +109,7 @@ local function validate_mode(mode)
 	if not mode_to_outer_class[mode] then
 		local allowed_values = {}
 		for key, _ in pairs(mode_to_outer_class) do
-			table.insert(allowed_values, "'" .. key .. "'")
+			insert(allowed_values, "'" .. key .. "'")
 		end
 		table.sort(allowed_values)
 		error(("Invalid value '%s' for `mode`; should be one of %s"):format(mode, table.concat(allowed_values, ", ")))
@@ -112,6 +120,54 @@ end
 local function getprop(labdata, mode, prop)
 	local mode_prefix = mode_to_property_prefix[mode]
 	return mode_prefix and labdata[mode_prefix .. prop] or labdata[prop]
+end
+
+local function check_type(label, lang, prop, value, expected_types)
+	if value == nil or expected_types == nil then
+		return value
+	end
+
+	if type(expected_types) ~= "table" then
+		expected_types = {expected_types}
+	end
+	local valtype = type(value)
+	local matches = false
+	for _, expected_type in ipairs(expected_types) do
+		if type(expected_type) == "string" then
+			if valtype == expected_type then
+				matches = true
+				break
+			end
+		elseif value == expected_type then
+			matches = true
+			break
+		end
+	end
+	if not matches then
+		local function join_untagged_or(elements)
+			return m_table.serialCommaJoin(elements, {conj = "or", dontTag = true})
+		end
+		local quoted_types = {}
+		local quoted_values = {}
+		for _, expected_type in ipairs(expected_types) do
+			if type(expected_type) == "string" then
+				insert(quoted_types, "'" .. expected_type .. "'")
+			else
+				insert(quoted_values, "'" .. dump(expected_type) .. "'")
+			end
+		end
+		local possible_matches = {}
+		if quoted_types[1] then
+			insert(possible_matches, ("be of type%s %s"):format(
+				quoted_types[2] and "s" or "", join_untagged_or(quoted_types)))
+		end
+		if quoted_values[1] then
+			insert(possible_matches, ("have  the value%s %s"):format(
+				quoted_values[2] and "s" or "", join_untagged_or(quoted_values)))
+		end
+		error(("Internal error: For label '%s', langcode '%s', property '%s' should %s but is of type '%s' with value %s"):format(
+			label, lang and lang:getCode() or "UNKNOWN", prop, join_untagged_or(possible_matches), valtype, dump(value)))
+	end
 end
 
 -- HACK! For languages in any of the given families, check the specified-language Wikipedia for appropriate
@@ -132,14 +188,14 @@ list. This is exported because it's also used by [[Module:category tree/poscatbo
 ]==]
 function export.get_langs_to_extract_wikipedia_articles_from_wikidata(lang)
 	local wikipedia_langs = {}
-	table.insert(wikipedia_langs, "en")
+	insert(wikipedia_langs, "en")
 	if lang then
 		local article_lang = lang
 		while article_lang do
 			if article_lang:hasType("language") then
 				local wmcodes = article_lang:getWikimediaLanguageCodes()
 				for _, wmcode in ipairs(wmcodes) do
-					table.insert(wikipedia_langs, wmcode)
+					insert(wikipedia_langs, wmcode)
 				end
 			end
 			article_lang = article_lang:getParent()
@@ -147,7 +203,7 @@ function export.get_langs_to_extract_wikipedia_articles_from_wikidata(lang)
 		for _, family_to_wp_lang in ipairs(families_to_wikipedia_languages) do
 			local family, wp_lang = unpack(family_to_wp_lang)
 			if lang:inFamily(family) then
-				table.insert(wikipedia_langs, wp_lang)
+				insert(wikipedia_langs, wp_lang)
 			end
 		end
 	end
@@ -178,8 +234,10 @@ function export.fetch_categories(canon_label, labdata, lang, mode, for_doc, cate
 		error("Internal error: Must specify `lang` unless `for_doc` is given")
 	end
 
-	local function labprop(prop)
-		return getprop(labdata, mode, prop)
+	local function labprop(prop, expected_types)
+		local retval = getprop(labdata, mode, prop)
+		check_type(canon_label, lang, prop, retval, expected_types)
+		return retval
 	end
 	local empty_list = {}
 	local function get_cats(cat_type)
@@ -215,7 +273,7 @@ function export.fetch_categories(canon_label, labdata, lang, mode, for_doc, cate
 			end
 		end
 
-		table.insert(categories, cat)
+		insert(categories, cat)
 	end
 
 	for _, cat in ipairs(topical_categories) do
@@ -251,19 +309,25 @@ module names, with overriding modules earlier in the list (that is, if a label o
 the earlier-listed module takes precedence). If `lang` is nil, only return non-language-specific submodules.
 ]==]
 function export.get_submodules(lang)
-	local submodules = {}
+	local submodules = {
+		"Module:labels/data",
+		"Module:labels/data/qualifiers",
+		"Module:labels/data/regional",
+		"Module:labels/data/topical",
+	}
+	
+	if not lang then
+		return submodules
+	end
 
 	-- get language-specific labels from data module
-	local langcode = lang and lang:getFullCode() or nil
+	local langcode = lang:getFullCode()
 
-	if langcode and m_lang_specific_data.langs_with_lang_specific_modules[langcode] then
+	if m_lang_specific_data.langs_with_lang_specific_modules[langcode] then
 		-- prefer per-language label in order to pick subvariety labels over regional ones
-		table.insert(submodules, export.lang_specific_data_modules_prefix .. langcode)
+		insert(submodules, 1, export.lang_specific_data_modules_prefix .. langcode)
 	end
-	table.insert(submodules, "Module:labels/data")
-	table.insert(submodules, "Module:labels/data/qualifiers")
-	table.insert(submodules, "Module:labels/data/regional")
-	table.insert(submodules, "Module:labels/data/topical")
+
 	return submodules
 end
 
@@ -283,8 +347,10 @@ function export.format_label(label, labdata, lang, deprecated, override_display,
 	local formatted_label
 
 	mode = validate_mode(mode)
-	local function labprop(prop)
-		return getprop(labdata, mode, prop)
+	local function labprop(prop, expected_types)
+		local retval = getprop(labdata, mode, prop)
+		check_type(label, lang, prop, retval, expected_types)
+		return retval
 	end
 	deprecated = deprecated or labprop("deprecated")
 	if not override_display and labprop("special_display") then
@@ -300,34 +366,35 @@ function export.format_label(label, labdata, lang, deprecated, override_display,
 			end
 		end
 
-		formatted_label = labprop("special_display"):gsub("<(.-)>", add_language_name)
+		formatted_label = labprop("special_display", "string"):gsub("<(.-)>", add_language_name)
 	else
 		--[=[
-			If labdata.glossary or labdata.Wikipedia are set to true, there is a glossary definition
-			with an anchor identical to the label, or a Wikipedia article with a title
-			identical to the label.
-				For example, the code
-					labels["formal"] = {
-						glossary = true,
-					}
-				indicates that there is a glossary entry for "formal".
+			We proceed as follows:
+			1. The display form comes from either (a) the `override_display` variable if set (this happens when
+			   the user uses a label like '!British'); (b) the `display` property, if set; or (c) the label iself.
+			2. If the display form contains a link, use it directly and ignore the other display-related settings.
+			   (NOTE: Settings `Wikipedia` and `Wikidata` may still be used on the category page itself, by the
+			   category tree code.)
+			3. Otherwise, use one of the other display-related settings, in the following order:
+			   `glossary` > `Wiktionary` > `Wikipedia` > `Wikidata`. Specifically:
+			   a. If any of the values is equal to `true`, that is equivalent to specifying a string consisting of
+				  the canonical label.
+			   b. If `glossary` is set, it specifies the anchor in [[Appendix:Glossary]].
+			   c. If `Wiktionary` is set, it specifies an arbitrary Wiktionary page or page + anchor (e.g. a
+				  separate Appendix entry).
+			   d. If `Wikipedia` is set, it specifies an arbitrary Wikipedia article, or a list of such items (in
+				  this case, we select the first one, but the category tree uses all of them).
+			   e. If `Wikidata` is set, it specifies an arbitrary Wikidata item to retrieve a Wikipedia article from,
+				  or a list of such items (in this case, we select the first one, but the category tree uses all of
+				  them). If the item is of the form `wmcode:id`, the Wikipedia article corresponding to `id` in the
+				  `wmcode`-language Wikipedia is fetched if available. Otherwise, the English-language Wikipedia
+				  article corresponding to `id` is retrieved if available, falling back to the Wikimedia language(s)
+				  corresponding to `lang` and then (in certain cases) to the macrolanguage that `lang` is part of.
 
-			Otherwise:
-			* labdata.glossary specifies the anchor in [[Appendix:Glossary]].
-			* labdata.Wiktionary specifies an arbitrary Wiktionary page or page + anchor (e.g. a separate Appendix
-			  entry).
-			* labdata.Wikipedia specifies an arbitrary Wikipedia article.
-			* labdata.Wikidata specifies an arbitrary Wikidata item to retrieve a Wikipedia article from, or a list
-			  of such items (in this case, we select the first one, but other modules using this info might use all
-			  of them). If the item is of the form `wmcode:id`, the Wikipedia article corresponding to `wmcode` is
-			  fetched if available. Otherwise, the English-language Wikipedia article is retrieved if available,
-			  falling back to the Wikimedia language(s) corresponding to `lang` and then (in certain cases) to the
-			  macrolanguage that `lang` is part of.
-
-			Note that if `mode` is specified, prefixed properties (e.g. "accent_display" for `mode` == "accent",
-			"form_display" for `mode` == "form") are checked before the bare equivalent (e.g. "display").
+			Note that if `mode` is specified, prefixed properties (e.g. `accent_display` for `mode` == "accent",
+			`form_display` for `mode` == "form") are checked before the bare equivalent (e.g. `display`).
 		]=]
-		local display = override_display or labprop("display") or label
+		local display = override_display or labprop("display", "string") or label
 
 		-- There are several 'Foo spelling' labels specially designed for use in the |from= param in
 		-- {{alternative form of}}, {{standard spelling of}} and the like. Often the display includes the word
@@ -341,17 +408,25 @@ function export.format_label(label, labdata, lang, deprecated, override_display,
 		if display:find("%[%[") then
 			formatted_label = display
 		else
-			local glossary = labprop("glossary")
-			local Wiktionary = labprop("Wiktionary")
-			local Wikipedia = labprop("Wikipedia")
-			local Wikidata = labprop("Wikidata")
+			local glossary = labprop("glossary", {"string", true})
+			local Wiktionary = labprop("Wiktionary", {"string", true})
+			local Wikipedia = labprop("Wikipedia", {"string", true, "table"})
+			local Wikidata = labprop("Wikidata", {"string", true, "table"})
 			if glossary then
-				local glossary_entry = type(glossary) == "string" and glossary or label
+				local glossary_entry = glossary == true and label or glossary
 				formatted_label = "[[Appendix:Glossary#" .. glossary_entry .. "|" .. display .. "]]"
 			elseif Wiktionary then
-				formatted_label = "[[" .. Wiktionary .. "|" .. display .. "]]"
+				local Wiktionary_entry = Wiktionary == true and label or Wiktionary
+				if Wiktionary == display then
+					formatted_label = "[[" .. display .. "]]"
+				else
+					formatted_label = "[[" .. Wiktionary_entry .. "|" .. display .. "]]"
+				end
 			elseif Wikipedia then
-				local Wikipedia_entry = type(Wikipedia) == "string" and Wikipedia or label
+				if type(Wikipedia) == "table" then
+					Wikipedia = Wikipedia[1]
+				end
+				local Wikipedia_entry = Wikipedia == true and label or Wikipedia
 				formatted_label = "[[w:" .. Wikipedia_entry .. "|" .. display .. "]]"
 			elseif Wikidata then
 				if not mw.wikibase then
@@ -571,7 +646,7 @@ function export.get_label_info(data)
 			if data.for_doc then
 				depcat = "<code>" .. depcat .. "</code>"
 			end
-			table.insert(ret.categories, depcat)
+			insert(ret.categories, depcat)
 		end
 	end
 
@@ -597,7 +672,7 @@ function export.get_label_info(data)
 	else
 		local cats = export.fetch_categories(label, labdata, data.lang, mode, data.for_doc)
 		for _, cat in ipairs(cats) do
-			table.insert(ret.categories, cat)
+			insert(ret.categories, cat)
 		end
 		if not ret.categories[1] or data.for_doc then
 			-- Don't try to format categories if we're doing this for documentation ({{label/doc}}), because there
@@ -690,7 +765,7 @@ function export.process_raw_labels(data)
 	local function get_info_and_insert(label)
 		-- Reuse this structure to save memory.
 		data.label = label
-		table.insert(label_infos, export.get_label_info(data))
+		insert(label_infos, export.get_label_info(data))
 	end
 
 	for _, label in ipairs(data.labels) do
@@ -699,7 +774,7 @@ function export.process_raw_labels(data)
 			for i, segment in ipairs(segments) do
 				if i % 2 == 1 then
 					local raw_text_type = i == 1 and "begin" or i == #segments and "end" or "middle"
-					table.insert(label_infos, {raw_text = raw_text_type, label = segment, categories = {}})
+					insert(label_infos, {raw_text = raw_text_type, label = segment, categories = {}})
 				else
 					local segment_labels = export.split_labels_on_comma(segment)
 					for _, segment_label in ipairs(segment_labels) do
@@ -751,11 +826,6 @@ that support displaying labels along with some other information.
 On input `data` is an object with the following fields:
 * `labels`: List of the label objects to format, in the format returned by {get_label_info()}.
 * `lang`: The language of the labels.
-* `mode`: How the label was invoked; see {get_label_info()} for more information.
-* `sort`: Sort key for categorization.
-* `already_seen`: An object used to track labels already seen, so they aren't displayed twice, as documented in
-  {get_label_info()}. To enable this, set this to an empty object. If `already_seen` is {nil}, this tracking doesn't
-  happen, meaning if the same label appears twice, it will be displayed twice.
 * `open`: Open bracket or parenthesis to display before the concatenated labels. If specified, it is wrapped in the
   {"ib-brac"} and {"label-brac"} CSS classes. If {nil}, no open bracket is displayed.
 * `close`: Close bracket or parenthesis to display after the concatenated labels. If specified, it is wrapped in the
@@ -938,7 +1008,7 @@ function export.split_display_form(label)
 	if link then
 		return link, display
 	end
-	local link = label:match("^%[%[([^%[%]|])+%]%]$")
+	link = label:match("^%[%[([^%[%]|])+%]%]$")
 	if link then
 		return link, link
 	end
