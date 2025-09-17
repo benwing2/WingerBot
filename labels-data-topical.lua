@@ -1,10 +1,5 @@
 local labels = {}
 
--- This file is split into two sections: topical labels and labels for set-type categories.
--- Each section is sorted alphabetically.
-
-
--- Topical labels
 
 labels["3D printing"] = {
 	aliases = {"3D printer", "3D printers"},
@@ -60,7 +55,6 @@ labels["aesthetic"] = {
 	Wiktionary = true,
 	topical_categories = "Aesthetics",
 }
-
 
 labels["agriculture"] = {
 	aliases = {"farming"},
@@ -138,6 +132,11 @@ labels["American football"] = {
 	topical_categories = "Football (American)",
 }
 
+labels["amino acid"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Amino acids",
+}
+
 labels["analytic geometry"] = {
 	Wiktionary = true,
 	topical_categories = "Geometry",
@@ -189,14 +188,14 @@ labels["anthropology"] = {
 	topical_categories = true,
 }
 
-labels["arachnology"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["Arabian god"] = {
 	display = "[[Arabian]] [[mythology]]",
 	topical_categories = "Arabian deities",
+}
+
+labels["arachnology"] = {
+	Wiktionary = true,
+	topical_categories = true,
 }
 
 labels["archaeological culture"] = {
@@ -216,8 +215,20 @@ labels["archery"] = {
 	topical_categories = true,
 }
 
+labels["architectural element"] = {
+	aliases = {"architectural elements"},
+	display = "[[architecture]]",
+	topical_categories = "Architectural elements",
+}
+
 labels["architecture"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["Argentine politics"] = {
+	aliases = {"Argentina politics", "Argentinian politics"},
+	Wikipedia = "Politics of Argentina",
 	topical_categories = true,
 }
 
@@ -247,10 +258,21 @@ labels["artillery"] = {
 	display = "[[weaponry]]",
 	topical_categories = true,
 }
+
 labels["Arthurian legend"] = {
 	aliases = {"Arthurian mythology"},
 	Wikipedia = true,
 	topical_categories = "Arthurian mythology",
+}
+
+labels["artistic work"] = {
+	display = "[[art#Noun|art]]",
+	topical_categories = "Artistic works",
+}
+
+labels["asterism"] = {
+	display = "[[uranography]]",
+	topical_categories = "Asterisms",
 }
 
 labels["astrology"] = {
@@ -290,6 +312,11 @@ labels["Australian Aboriginal mythology"] = {
 	topical_categories = true,
 }
 
+labels["Australian politics"] = {
+	Wikipedia = "Politics of Australia",
+	topical_categories = true,
+}
+
 labels["Australian rules football"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -301,14 +328,14 @@ labels["autism"] = {
 	topical_categories = true,
 }
 
-labels["automotive"] = {
-	aliases = {"automotives"},
-	Wiktionary = true,
+labels["auto parts"] = {
+	display = "[[automotive]]",
 	topical_categories = true,
 }
 
-labels["auto parts"] = {
-	display = "[[automotive]]",
+labels["automotive"] = {
+	aliases = {"automotives"},
+	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -359,6 +386,11 @@ labels["ballistics"] = {
 	topical_categories = true,
 }
 
+labels["Bangladeshi politics"] = {
+	Wikipedia = "Politics of Bangladesh",
+	topical_categories = true,
+}
+
 labels["banking"] = {
 	Wiktionary = "banking#Noun",
 	topical_categories = true,
@@ -395,10 +427,27 @@ labels["betting"] = {
 	topical_categories = true,
 }
 
+labels["biblical character"] = {
+	aliases = {"Biblical character", "biblical figure", "Biblical figure"},
+	display = "[[Bible|biblical]]",
+	topical_categories = "Biblical characters",
+}
+
 labels["biblical"] = {
 	aliases = {"Bible", "bible", "Biblical"},
 	Wiktionary = "Bible",
 	topical_categories = "Bible",
+}
+
+labels["bibliography"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["bicycle parts"] = {
+	aliases = {"bicycle part"},
+	display = "[[w:List of bicycle parts|cycling]]",
+	topical_categories = true,
 }
 
 labels["billiards"] = {
@@ -457,6 +506,16 @@ labels["bodybuilding"] = {
 	topical_categories = true,
 }
 
+labels["book of the bible"] = {
+	display = "[[Bible|biblical]]",
+	topical_categories = "Books of the Bible",
+}
+
+labels["bookbinding"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["botany"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -475,6 +534,17 @@ labels["bowls"] = {
 
 labels["boxing"] = {
 	Wiktionary = "boxing#Noun",
+	topical_categories = true,
+}
+
+labels["brass instruments"] = {
+	aliases = {"brass instrument"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
+labels["Brazilian politics"] = {
+	Wikipedia = "Politics of Brazil",
 	topical_categories = true,
 }
 
@@ -546,9 +616,19 @@ labels["Canadian football"] = {
 	topical_categories = true,
 }
 
+labels["Canadian politics"] = {
+	Wikipedia = "Politics of Canada",
+	topical_categories = true,
+}
+
 labels["Candomblé"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["canid"] = {
+	display = "[[zoology]]",
+	topical_categories = "Canids",
 }
 
 labels["canoeing"] = {
@@ -559,6 +639,16 @@ labels["canoeing"] = {
 labels["capitalism"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["carbohydrate"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Carbohydrates",
+}
+
+labels["carboxylic acid"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Carboxylic acids",
 }
 
 labels["card games"] = {
@@ -653,9 +743,8 @@ labels["children's games"] = {
 	topical_categories = true,
 }
 
-labels["Church of England"] = {
-	aliases = {"C of E", "CofE"},
-	Wikipedia = true,
+labels["Chilean politics"] = {
+	Wikipedia = "Politics of Chile",
 	topical_categories = true,
 }
 
@@ -715,6 +804,12 @@ labels["Christianity"] = {
 	topical_categories = true,
 }
 
+labels["Church of England"] = {
+	aliases = {"C of E", "CofE"},
+	Wikipedia = true,
+	topical_categories = true,
+}
+
 labels["Church of the East"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -741,12 +836,12 @@ labels["classical studies"] = {
 	topical_categories = true,
 }
 
-labels["climatology"] = {
+labels["climate change"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
-labels["climate change"] = {
+labels["climatology"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -777,6 +872,17 @@ labels["cockfighting"] = {
 	topical_categories = true,
 }
 
+labels["coenzyme"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Coenzymes",
+}
+
+labels["coins"] = { -- Do not merge with "numismatics", as the category is different.
+	aliases = {"coin"},
+	display = "[[numismatics]]",
+	topical_categories = true,
+}
+
 labels["collectible card games"] = {
 	aliases = {"trading card games", "collectible cards", "trading cards"},
 	Wikipedia = true,
@@ -793,6 +899,11 @@ labels["comedy"] = {
 	topical_categories = true,
 }
 
+labels["comics"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["commerce"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -800,11 +911,6 @@ labels["commerce"] = {
 
 labels["commercial law"] = {
 	display = "[[commercial#Adjective|commercial]] [[law]]",
-	topical_categories = true,
-}
-
-labels["comics"] = {
-	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -841,6 +947,7 @@ labels["computer chess"] = {
 	topical_categories = true,
 }
 	
+
 labels["computer games"] = {
 	aliases = {"computer game", "computer gaming"},
 	display = "[[computer game]]s",
@@ -874,16 +981,16 @@ labels["computer security"] = {
 	topical_categories = true,
 }
 
-labels["computing"] = {
-	aliases = {"computer", "computers"},
-	Wiktionary = "computing#Noun",
-	topical_categories = true,
-}
-
 labels["computing theory"] = {
 	aliases = {"comptheory", "computability theory"},
 	display = "[[computing#Noun|computing]] [[theory]]",
 	topical_categories = "Theory of computing",
+}
+
+labels["computing"] = {
+	aliases = {"computer", "computers"},
+	Wiktionary = "computing#Noun",
+	topical_categories = true,
 }
 
 labels["conchology"] = {
@@ -907,6 +1014,17 @@ labels["conservatism"] = {
 	topical_categories = true,
 }
 
+labels["conspiracy theories"] = {
+	aliases = {"conspiracy theory", "conspiracy"},
+	Wiktionary = "conspiracy theory#Noun",
+	topical_categories = true,
+}
+
+labels["constellation"] = {
+	display = "[[astronomy]]",
+	topical_categories = "Constellations",
+}
+
 labels["construction"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -923,10 +1041,23 @@ labels["cooking"] = {
 	topical_categories = true,
 }
 
+labels["cookware"] = {
+	aliases = {"bakeware"},
+	display = "[[cooking#Noun|cooking]]",
+	topical_categories = "Cookware and bakeware",
+}
+
 labels["Coptic Orthodoxy"] = {
 	aliases = {"Coptic Orthodox", "Coptic Orthodox Church"},
 	Wikipedia = true,
 	topical_categories = true,
+}
+
+labels["copyright license"] = {
+	aliases = {"copyright licenses", "license", "copyright licence", "copyright licences", "licence"},
+	display = "[[w:Copyright license|copyright law]]",
+	Wikipedia = true,
+	topical_categories = "Copyright licenses",
 }
 
 labels["copyright"] = {
@@ -1025,6 +1156,12 @@ labels["curling"] = {
 	topical_categories = true,
 }
 
+labels["currencies"] = { -- Do not merge with "numismatics", as the category is different.
+	aliases = {"currency"},
+	display = "[[numismatics]]",
+	topical_categories = true,
+}
+
 labels["cybernetics"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1055,6 +1192,11 @@ labels["cytology"] = {
 labels["dance"] = {
 	aliases = {"dancing"},
 	Wiktionary = "dance#Noun",
+	topical_categories = true,
+}
+
+labels["dances"] = {
+	display = "[[dance#Noun|dance]]",
 	topical_categories = true,
 }
 
@@ -1092,6 +1234,11 @@ labels["deltiology"] = {
 labels["demography"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["demonym"] = {
+	Wiktionary = true,
+	topical_categories = "Demonyms",
 }
 
 labels["demoscene"] = {
@@ -1139,6 +1286,12 @@ labels["disc golf"] = {
 	topical_categories = true,
 }
 
+labels["disease"] = {
+	aliases = {"diseases"},
+	display = "[[pathology]]",
+	topical_categories = "Diseases",
+}
+
 labels["divination"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1167,6 +1320,11 @@ labels["drama"] = {
 labels["dressage"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["E number"] = {
+	display = "[[food]] [[manufacture]]",
+	plain_categories = "European food additive numbers",
 }
 
 labels["early Christianity"] = {
@@ -1225,6 +1383,11 @@ labels["Egyptian god"] = {
 	topical_categories = "Egyptian deities",
 }
 
+labels["Egyptian god"] = {
+	display = "[[Egyptian]] [[mythology]]",
+	topical_categories = "Egyptian deities",
+}
+
 labels["Egyptian mythology"] = {
 	display = "[[Egyptian]] [[mythology]]",
 	topical_categories = true,
@@ -1265,17 +1428,23 @@ labels["electronics"] = {
 	topical_categories = true,
 }
 
+labels["element symbol"] = {
+	-- Compare "systematic element symbol" and "obsolete element symbol".
+	display = "[[chemistry]]",
+	plain_categories = "Symbols for chemical elements",
+}
+
 labels["embryology"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
-labels["emergency services"] = {
+labels["emergency medicine"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
-labels["emergency medicine"] = {
+labels["emergency services"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -1298,6 +1467,11 @@ labels["enterprise engineering"] = {
 labels["entomology"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["enzyme"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Enzymes",
 }
 
 labels["epidemiology"] = {
@@ -1336,8 +1510,18 @@ labels["ethology"] = {
 	topical_categories = true,
 }
 
+labels["EU politics"] = {
+	Wikipedia = "Politics of the European Union",
+	topical_categories = true,
+}
+
 labels["European folklore"] = {
 	display = "[[European]] [[folklore]]",
+	topical_categories = true,
+}
+
+labels["European politics"] = {
+	Wikipedia = "Politics of Europe",
 	topical_categories = true,
 }
 
@@ -1364,14 +1548,14 @@ labels["exercise"] = {
 	topical_categories = true,
 }
 
-labels["eyewear"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["eye color"] = {
 	display = "[[eye]] [[color]]",
 	topical_categories = "Eye colors",
+}
+
+labels["eyewear"] = {
+	Wiktionary = true,
+	topical_categories = true,
 }
 
 labels["fairy tale"] = { -- names of fairy tales
@@ -1411,6 +1595,17 @@ labels["fashion"] = {
 	topical_categories = true,
 }
 
+labels["fatty acid"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Fatty acids",
+}
+
+labels["felid"] = {
+	aliases = {"cat"},
+	display = "[[zoology]]",
+	topical_categories = "Felids",
+}
+
 labels["feminism"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1432,9 +1627,19 @@ labels["fiction"] = {
 	topical_categories = true,
 }
 
+labels["fictional character"] = {
+	display = "[[fiction]]",
+	topical_categories = "Fictional characters",
+}
+
 labels["field hockey"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["figure of speech"] = {
+	display = "[[rhetoric]]",
+	topical_categories = "Figures of speech",
 }
 
 labels["figure skating"] = {
@@ -1447,15 +1652,15 @@ labels["file format"] = {
 	topical_categories = "File formats",
 }
 
-labels["film"] = {
-	Wiktionary = "film#Noun",
-	topical_categories = true,
-}
-
 labels["film genre"] = {
 	aliases = {"cinema"},
 	display = "[[film#Noun|film]]",
 	topical_categories = "Film genres",
+}
+
+labels["film"] = {
+	Wiktionary = "film#Noun",
+	topical_categories = true,
 }
 
 labels["finance"] = {
@@ -1477,6 +1682,11 @@ labels["firearms"] = {
 
 labels["firefighting"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["fish"] = {
+	display = "[[zoology]]",
 	topical_categories = true,
 }
 
@@ -1506,6 +1716,11 @@ labels["folklore"] = {
 	topical_categories = true,
 }
 
+labels["footwear"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["forestry"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1522,9 +1737,29 @@ labels["Freemasonry"] = {
 	topical_categories = true,
 }
 
+labels["French politics"] = {
+	Wikipedia = "Politics of France",
+	topical_categories = true,
+}
+
 labels["functional analysis"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["functional group prefix"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Functional group prefixes",
+}
+
+labels["functional group suffix"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Functional group suffixes",
+}
+
+labels["functional programming"] = {
+	Wiktionary = true,
+	topical_categories = "Programming",
 }
 
 labels["furniture"] = {
@@ -1548,6 +1783,11 @@ labels["Gaelic football"] = {
 	topical_categories = true,
 }
 
+labels["galaxy"] = {
+	display = "[[astronomy]]",
+	topical_categories = "Galaxies",
+}
+
 labels["gambling"] = {
 	Wiktionary = "gambling#Noun",
 	topical_categories = true,
@@ -1569,6 +1809,13 @@ labels["gaming"] = {
 	topical_categories = true,
 }
 
+labels["gender critical"] = {
+	aliases = {"gender-critical", "gender critical feminism", "gender-critical feminism", "GC", "GCF", "trans-exclusionary radical feminism", "TERF", "TERFism"},
+	Wiktionary = "gender-critical#Adjective",
+	Wikipedia = "Gender-critical feminism",
+	topical_categories = "Gender-critical feminism",
+}
+
 labels["genealogy"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1577,6 +1824,11 @@ labels["genealogy"] = {
 labels["general semantics"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["genetic disorder"] = {
+	display = "[[medical]] [[genetics]]",
+	topical_categories = "Genetic disorders",
 }
 
 labels["genetics"] = {
@@ -1589,14 +1841,14 @@ labels["geography"] = {
 	topical_categories = true,
 }
 
-labels["geology"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["geological period"] = {
 	Wikipedia = true,
 	topical_categories = "Geological periods",
+}
+
+labels["geology"] = {
+	Wiktionary = true,
+	topical_categories = true,
 }
 
 labels["geometry"] = {
@@ -1612,6 +1864,17 @@ labels["geomorphology"] = {
 
 labels["geopolitics"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["German politics"] = {
+	Wikipedia = "Politics of Germany",
+	topical_categories = true,
+}
+
+labels["Germanic paganism"] = {
+	aliases = {"Asatru", "Ásatrú", "Germanic neopaganism", "Germanic Paganism", "Heathenry", "heathenry", "Norse neopaganism", "Norse paganism"},
+	display = "[[Germanic#Adjective|Germanic]] [[paganism]]",
 	topical_categories = true,
 }
 
@@ -1683,6 +1946,12 @@ labels["graphical user interface"] = {
 	topical_categories = true,
 }
 
+labels["Greek god"] = {
+	aliases = {"Greek goddess"},
+	display = "[[Greek]] [[mythology]]",
+	topical_categories = "Greek deities",
+}
+
 labels["Greek mythology"] = {
 	display = "[[Greek]] [[mythology]]",
 	topical_categories = true,
@@ -1733,6 +2002,12 @@ labels["hairdressing"] = {
 	topical_categories = true,
 }
 
+labels["hand games"] = {
+	aliases = {"hand game"},
+	display = "[[hand]] [[game]]s",
+	topical_categories = true,
+}
+
 labels["handball"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1764,6 +2039,12 @@ labels["hematology"] = {
 	topical_categories = true,
 }
 
+labels["heraldic charge"] = {
+	aliases = {"heraldiccharge"},
+	display = "[[heraldry]]",
+	topical_categories = "Heraldic charges",
+}
+
 labels["heraldry"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1779,6 +2060,11 @@ labels["herpetology"] = {
 	topical_categories = true,
 }
 
+labels["Hindu god"] = {
+	display = "[[Hinduism]]",
+	topical_categories = "Hindu deities",
+}
+
 labels["Hinduism"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1787,6 +2073,24 @@ labels["Hinduism"] = {
 labels["Hindutva"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["historical currencies"] = {
+	aliases = {"historical currency"},
+	display = "[[numismatics]]",
+	sense_categories = "historical",
+	topical_categories = "Historical currencies",
+}
+
+labels["historical linguistics"] = {
+	Wiktionary = true,
+	topical_categories = "Linguistics",
+}
+
+labels["historical period"] = {
+	aliases = {"historical periods"},
+	display = "[[history]]",
+	topical_categories = "Historical periods",
 }
 
 labels["historiography"] = {
@@ -1799,11 +2103,6 @@ labels["history"] = {
 	topical_categories = true,
 }
 
-labels["historical linguistics"] = {
-	Wiktionary = true,
-	topical_categories = "Linguistics",
-}
-
 labels["hockey"] = {
 	display = "[[field hockey]] or [[ice hockey]]",
 	topical_categories = {"Field hockey", "Ice hockey"},
@@ -1812,6 +2111,17 @@ labels["hockey"] = {
 labels["homeopathy"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["Hong Kong politics"] = {
+	aliases = {"HK politics"},
+	Wikipedia = "Politics of Hong Kong",
+	topical_categories = true,
+}
+
+labels["hormone"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Hormones",
 }
 
 labels["horse color"] = {
@@ -1860,6 +2170,16 @@ labels["hydroacoustics"] = {
 	topical_categories = true,
 }
 
+labels["hydrocarbon chain prefix"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Hydrocarbon chain prefixes",
+}
+
+labels["hydrocarbon chain suffix"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Hydrocarbon chain suffixes",
+}
+
 labels["hydrology"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1895,18 +2215,29 @@ labels["import/export"] = {
 	topical_categories = true,
 }
 
+labels["incoterm"] = {
+	display = "[[Incoterm]]",
+	topical_categories = "Incoterms",
+}
+
+labels["Indian politics"] = {
+	Wikipedia = "Politics of India",
+	topical_categories = true,
+}
+
 labels["Indo-European studies"] = {
 	aliases = {"indo-european studies"},
 	Wiktionary = true,
 	topical_categories = true,
 }
 
-labels["information science"] = {
-	Wiktionary = true,
+labels["Indonesian politics"] = {
+	aliases = {"Indonesia politics"},
+	Wikipedia = "Politics of Indonesia",
 	topical_categories = true,
 }
 
-labels["information theory"] = {
+labels["information science"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -1917,6 +2248,11 @@ labels["information technology"] = {
 	topical_categories = "Computing",
 }
 
+labels["information theory"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["inheritance law"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1925,6 +2261,11 @@ labels["inheritance law"] = {
 labels["inorganic chemistry"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["inorganic compound"] = {
+	display = "[[inorganic chemistry]]",
+	topical_categories = "Inorganic compounds",
 }
 
 labels["insurance"] = {
@@ -1963,6 +2304,11 @@ labels["Irish mythology"] = {
 	topical_categories = true,
 }
 
+labels["Irish politics"] = {
+	Wikipedia = "Politics of the Republic of Ireland",
+	topical_categories = true,
+}
+
 labels["Islam"] = {
 	aliases = {"islam", "Islamic", "Muslim"},
 	Wikipedia = true,
@@ -1979,6 +2325,11 @@ labels["Islamic law"] = {
 	aliases = {"Islamic legal", "Sharia"},
 	Wikipedia = true,
 	topical_categories = true,
+}
+
+labels["isotope"] = {
+	display = "[[physics]]",
+	topical_categories = "Isotopes",
 }
 
 labels["Jainism"] = {
@@ -2001,6 +2352,11 @@ labels["Japanese god"] = {
 
 labels["Japanese mythology"] = {
 	display = "[[Japanese#Adjective|Japanese]] [[mythology]]",
+	topical_categories = true,
+}
+
+labels["Japanese politics"] = {
+	Wikipedia = "Politics of Japan",
 	topical_categories = true,
 }
 
@@ -2031,12 +2387,6 @@ labels["jewelry"] = {
 labels["Jewish law"] = {
 	aliases = {"Halacha", "Halachah", "Halakha", "Halakhah", "halacha", "halachah", "halakha", "halakhah", "Jewish Law", "jewish law"},
 	display = "[[Jewish]] [[law]]",
-	topical_categories = true,
-}
-
-labels["Germanic paganism"] = {
-	aliases = {"Asatru", "Ásatrú", "Germanic neopaganism", "Germanic Paganism", "Heathenry", "heathenry", "Norse neopaganism", "Norse paganism"},
-	display = "[[Germanic#Adjective|Germanic]] [[paganism]]",
 	topical_categories = true,
 }
 
@@ -2075,6 +2425,11 @@ labels["knitting"] = {
 	topical_categories = true,
 }
 
+labels["labour law"] = {
+	Wiktionary = true,
+	topical_categories = "Law",
+}
+
 labels["labour"] = {
 	aliases = {"labor", "labour movement", "labor movement"},
 	Wiktionary = true,
@@ -2086,15 +2441,20 @@ labels["lacrosse"] = {
 	topical_categories = true,
 }
 
-labels["law"] = {
-	aliases = {"legal"},
-	Wiktionary = "law#English",
+labels["landforms"] = {
+	display = "[[geography]]",
 	topical_categories = true,
 }
 
 labels["law enforcement"] = {
 	aliases = {"police", "policing"},
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["law"] = {
+	aliases = {"legal"},
+	Wiktionary = "law#English",
 	topical_categories = true,
 }
 
@@ -2145,11 +2505,6 @@ labels["limnology"] = {
 	topical_categories = "Ecology",
 }
 
-labels["lipid"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Lipids",
-}
-
 labels["linear algebra"] = {
 	aliases = {"vector algebra"},
 	Wiktionary = true,
@@ -2167,6 +2522,11 @@ labels["linguistics"] = {
 	topical_categories = true,
 }
 
+labels["lipid"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Lipids",
+}
+
 labels["literature"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -2175,6 +2535,11 @@ labels["literature"] = {
 labels["logic"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["logical fallacy"] = {
+	display = "[[rhetoric]]",
+	topical_categories = "Logical fallacies",
 }
 
 labels["logistics"] = {
@@ -2193,14 +2558,19 @@ labels["Lutheranism"] = {
 	topical_categories = true,
 }
 
-labels["machining"] = {
-	Wiktionary = "machining#Noun",
+labels["lutherie"] = {
+	Wiktionary = true,
 	topical_categories = true,
 }
 
 labels["machine learning"] = {
 	aliases = {"ML"},
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["machining"] = {
+	Wiktionary = "machining#Noun",
 	topical_categories = true,
 }
 
@@ -2216,6 +2586,12 @@ labels["mahjong"] = {
 
 labels["malacology"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["Malaysian politics"] = {
+	aliases = {"Malaysia politics"},
+	Wikipedia = "Politics of Malaysia",
 	topical_categories = true,
 }
 
@@ -2364,6 +2740,11 @@ labels["mental health"] = {
 	topical_categories = true,
 }
 
+labels["Mesopotamian god"] = {
+	display = "[[Mesopotamian]] [[mythology]]",
+	topical_categories = "Mesopotamian deities",
+}
+
 labels["Mesopotamian mythology"] = {
 	display = "[[Mesopotamian]] [[mythology]]",
 	topical_categories = true,
@@ -2382,6 +2763,11 @@ labels["metallurgy"] = {
 labels["metalworking"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["metamaterial"] = {
+	display = "[[physics]]",
+	topical_categories = "Metamaterials",
 }
 
 labels["metaphysics"] = {
@@ -2405,6 +2791,12 @@ labels["metrology"] = {
 	topical_categories = true,
 }
 
+labels["Mexican politics"] = {
+	aliases = {"Mexico politics"},
+	Wikipedia = "Politics of Mexico",
+	topical_categories = true,
+}
+
 labels["microbiology"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -2425,12 +2817,23 @@ labels["microscopy"] = {
 	topical_categories = true,
 }
 
-labels["milling"] = {
+labels["military ranks"] = {
+	aliases = {"military rank"},
+	display = "[[military]]",
+	topical_categories = true,
+}
+
+labels["military unit"] = {
+	display = "[[military]]",
+	topical_categories = "Military units",
+}
+
+labels["military"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
-labels["military"] = {
+labels["milling"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -2440,6 +2843,11 @@ labels["Minecraft"] = {
 	topical_categories = true,
 }
 
+labels["mineral"] = {
+	display = "[[mineralogy]]",
+	topical_categories = "Minerals",
+}
+
 labels["mineralogy"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -2447,6 +2855,12 @@ labels["mineralogy"] = {
 
 labels["mining"] = {
 	Wiktionary = "mining#Noun",
+	topical_categories = true,
+}
+
+labels["mobile phones"] = {
+	aliases = {"cell phone", "cell phones", "mobile phone", "mobile telephony"},
+	display = "[[mobile telephone|mobile telephony]]",
 	topical_categories = true,
 }
 
@@ -2470,17 +2884,17 @@ labels["Mormonism"] = {
 	topical_categories = true,
 }
 
+labels["motor racing"] = {
+	-- There are other types of racing, but 99% of the time "racing" on its own refers to motorsports.
+	aliases = {"motor sport", "motorsport", "motorsports", "racing"},
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["motorcycling"] = {
 	aliases = {"motorcycle", "motorcycles", "motorbike"},
 	Wiktionary = "motorcycling#Noun",
 	topical_categories = "Motorcycles",
-}
-
--- There are other types of racing, but 99% of the time "racing" on its own refers to motorsports
-labels["motor racing"] = {
-	aliases = {"motor sport", "motorsport", "motorsports", "racing"},
-	Wiktionary = true,
-	topical_categories = true,
 }
 
 labels["multiplicity"] = {
@@ -2488,14 +2902,41 @@ labels["multiplicity"] = {
 	topical_categories = "Multiplicity (psychology)",
 }
 
-labels["music"] = {
-	Wiktionary = true,
-	topical_categories = true,
+labels["muscle"] = {
+	display = "[[anatomy]]",
+	topical_categories = "Muscles",
+}
+
+labels["mushroom"] = {
+	aliases = {"mushrooms"},
+	display = "[[mycology]]",
+	topical_categories = "Mushrooms",
+}
+
+labels["music genre"] = {
+	display = "[[music]]",
+	topical_categories = "Musical genres",
 }
 
 labels["music industry"] = {
 	Wikipedia = true,
 	topical_categories = true,
+}
+
+labels["music"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["musical instruments"] = {
+	aliases = {"musical instrument"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
+labels["musician"] = {
+	display = "[[music]]",
+	topical_categories = "Musicians",
 }
 
 labels["musicology"] = {
@@ -2506,6 +2947,17 @@ labels["musicology"] = {
 labels["mycology"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["mysticism"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["mythological creature"] = {
+	aliases = {"mythological creatures"},
+	display = "[[mythology]]",
+	topical_categories = "Mythological creatures",
 }
 
 labels["mythology"] = {
@@ -2585,6 +3037,21 @@ labels["neurosurgery"] = {
 	topical_categories = true,
 }
 
+labels["neurotoxin"] = {
+	display = "[[neurotoxicology]]",
+	topical_categories = "Neurotoxins",
+}
+
+labels["neurotransmitter"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Neurotransmitters",
+}
+
+labels["New Zealand politics"] = {
+	Wikipedia = "Politics of New Zealand",
+	topical_categories = true,
+}
+
 labels["newspapers"] = {
 	display = "[[newspaper]]s",
 	topical_categories = true,
@@ -2630,6 +3097,11 @@ labels["object-oriented programming"] = {
 	aliases = {"object-oriented", "OOP"},
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["obsolete element symbol"] = {
+	display = "[[chemistry]], [[obsolete]]",
+	plain_categories = "Obsolete symbols for chemical elements",
 }
 
 labels["obstetrics"] = {
@@ -2706,6 +3178,11 @@ labels["organic chemistry"] = {
 	topical_categories = true,
 }
 
+labels["organic compound"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Organic compounds",
+}
+
 labels["Oriental Orthodoxy"] = {
 	aliases = {"Oriental Orthodox", "Oriental Orthodox Church"},
 	Wikipedia = true,
@@ -2748,6 +3225,11 @@ labels["painting"] = {
 	topical_categories = true,
 }
 
+labels["Pakistani politics"] = {
+	Wikipedia = "Politics of Pakistan",
+	topical_categories = true,
+}
+
 labels["palaeography"] = {
 	aliases = {"paleography"},
 	Wiktionary = true,
@@ -2757,6 +3239,12 @@ labels["palaeography"] = {
 labels["paleontology"] = {
 	aliases = {"palaeontology"},
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["Palestinian politics"] = {
+	aliases = {"Palestine politics"},
+	Wikipedia = "Politics of the Palestinian National Authority",
 	topical_categories = true,
 }
 
@@ -2791,9 +3279,19 @@ labels["parasitology"] = {
 	topical_categories = true,
 }
 
+labels["part of speech"] = {
+	display = "[[grammar]]",
+	topical_categories = "Parts of speech",
+}
+
 labels["particle physics"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["particle"] = {
+	display = "[[particle physics]]",
+	topical_categories = "Subatomic particles",
 }
 
 labels["pasteurisation"] = {
@@ -2817,8 +3315,19 @@ labels["pensions"] = {
 	topical_categories = true,
 }
 
+labels["percussion instruments"] = {
+	aliases = {"percussion instrument"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
 labels["perfumery"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["Peruvian politics"] = {
+	Wikipedia = "Politics of Peru",
 	topical_categories = true,
 }
 
@@ -2838,6 +3347,16 @@ labels["petrology"] = {
 	topical_categories = true,
 }
 
+labels["pharmaceutical drug"] = {
+	display = "[[pharmacology]]",
+	topical_categories = "Pharmaceutical drugs",
+}
+
+labels["pharmaceutical effect"] = {
+	display = "[[pharmacology]]",
+	topical_categories = "Pharmaceutical effects",
+}
+
 labels["pharmacology"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -2855,6 +3374,18 @@ labels["pharyngology"] = {
 
 labels["philately"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["Philippine politics"] = {
+	aliases = {"Filipino politics"},
+	Wikipedia = "Politics of the Philippines",
+	topical_categories = true,
+}
+
+labels["Philmont Scout Ranch"] = {
+	aliases = {"Philmont"},
+	Wikipedia = true,
 	topical_categories = true,
 }
 
@@ -2913,6 +3444,16 @@ labels["planetology"] = {
 	topical_categories = true,
 }
 
+labels["plant disease"] = {
+	display = "[[phytopathology]]",
+	topical_categories = "Plant diseases",
+}
+
+labels["plant"] = {
+	display = "[[botany]]",
+	topical_categories = "Plants",
+}
+
 labels["playground games"] = {
 	aliases = {"playground game"},
 	display = "[[playground]] [[game]]s",
@@ -2924,15 +3465,15 @@ labels["poetry"] = {
 	topical_categories = true,
 }
 
+labels["poison"] = {
+	display = "[[toxicology]]",
+	topical_categories = "Poisons",
+}
+
 labels["Pokémon"] = {
 	aliases = {"Pokemon"},
 	display = "''[[w:Pokémon|Pokémon]]''",
 	Wikipedia = true,
-	topical_categories = true,
-}
-
-labels["poker"] = {
-	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -2941,173 +3482,24 @@ labels["poker slang"] = {
 	topical_categories = "Poker",
 }
 
+labels["poker"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["political science"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
+labels["political subdivision"] = {
+	display = "[[government]]",
+	topical_categories = "Political subdivisions",
+}
+
 labels["politics"] = {
 	aliases = {"political"},
 	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["Argentine politics"] = {
-	aliases = {"Argentina politics", "Argentinian politics"},
-	Wikipedia = "Politics of Argentina",
-	topical_categories = true,
-}
-
-labels["Australian politics"] = {
-	Wikipedia = "Politics of Australia",
-	topical_categories = true,
-}
-
-labels["Bangladeshi politics"] = {
-	Wikipedia = "Politics of Bangladesh",
-	topical_categories = true,
-}
-
-labels["Brazilian politics"] = {
-	Wikipedia = "Politics of Brazil",
-	topical_categories = true,
-}
-
-labels["Canadian politics"] = {
-	Wikipedia = "Politics of Canada",
-	topical_categories = true,
-}
-
-labels["Chilean politics"] = {
-	Wikipedia = "Politics of Chile",
-	topical_categories = true,
-}
-
-labels["European politics"] = {
-	Wikipedia = "Politics of Europe",
-	topical_categories = true,
-}
-
-labels["EU politics"] = {
-	Wikipedia = "Politics of the European Union",
-	topical_categories = true,
-}
-
-labels["French politics"] = {
-	Wikipedia = "Politics of France",
-	topical_categories = true,
-}
-
-labels["German politics"] = {
-	Wikipedia = "Politics of Germany",
-	topical_categories = true,
-}
-
-labels["Hong Kong politics"] = {
-	aliases = {"HK politics"},
-	Wikipedia = "Politics of Hong Kong",
-	topical_categories = true,
-}
-
-labels["Indian politics"] = {
-	Wikipedia = "Politics of India",
-	topical_categories = true,
-}
-
-labels["Indonesian politics"] = {
-	aliases = {"Indonesia politics"},
-	Wikipedia = "Politics of Indonesia",
-	topical_categories = true,
-}
-
-labels["Irish politics"] = {
-	Wikipedia = "Politics of the Republic of Ireland",
-	topical_categories = true,
-}
-
-labels["Japanese politics"] = {
-	Wikipedia = "Politics of Japan",
-	topical_categories = true,
-}
-
-labels["Malaysian politics"] = {
-	aliases = {"Malaysia politics"},
-	Wikipedia = "Politics of Malaysia",
-	topical_categories = true,
-}
-
-labels["Mexican politics"] = {
-	aliases = {"Mexico politics"},
-	Wikipedia = "Politics of Mexico",
-	topical_categories = true,
-}
-
-labels["New Zealand politics"] = {
-	Wikipedia = "Politics of New Zealand",
-	topical_categories = true,
-}
-
-labels["Pakistani politics"] = {
-	Wikipedia = "Politics of Pakistan",
-	topical_categories = true,
-}
-
-labels["Palestinian politics"] = {
-	aliases = {"Palestine politics"},
-	Wikipedia = "Politics of the Palestinian National Authority",
-	topical_categories = true,
-}
-
-labels["Peruvian politics"] = {
-	Wikipedia = "Politics of Peru",
-	topical_categories = true,
-}
-
-labels["Philippine politics"] = {
-	aliases = {"Filipino politics"},
-	Wikipedia = "Politics of the Philippines",
-	topical_categories = true,
-}
-
-labels["Portuguese politics"] = {
-	Wikipedia = "Politics of Portugal",
-	topical_categories = true,
-}
-
-labels["Singaporean politics"] = {
-	Wikipedia = "Politics of Singapore",
-	topical_categories = true,
-}
-
-labels["Spanish politics"] = {
-	Wikipedia = "Politics of Spain",
-	topical_categories = true,
-}
-
-labels["Swiss politics"] = {
-	Wikipedia = "Politics of Switzerland",
-	topical_categories = true,
-}
-
-labels["UK politics"] = {
-	Wikipedia = "Politics of the United Kingdom",
-	topical_categories = true,
-}
-
-labels["US politics"] = {
-	Wikipedia = "Politics of the United States",
-	topical_categories = true,
-}
-
-labels["Venezuelan politics"] = {
-	aliases = {"Venezuela politics"},
-	Wikipedia = "Politics of Venezuela",
-	topical_categories = true,
-}
-
-labels["Philmont Scout Ranch"] = {
-	aliases = {"Philmont"},
-	Wikipedia = true,
 	topical_categories = true,
 }
 
@@ -3120,6 +3512,11 @@ labels["pornography"] = {
 labels["Portuguese folklore"] = {
 	display = "[[Portuguese#Adjective|Portuguese]] [[folklore]]",
 	topical_categories = "European folklore",
+}
+
+labels["Portuguese politics"] = {
+	Wikipedia = "Politics of Portugal",
+	topical_categories = true,
 }
 
 labels["post"] = {
@@ -3180,6 +3577,12 @@ labels["property law"] = {
 labels["prosody"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["protein"] = {
+	aliases = {"proteins"},
+	display = "[[biochemistry]]",
+	topical_categories = "Proteins",
 }
 
 labels["Protestantism"] = {
@@ -3256,8 +3659,8 @@ labels["Quimbanda"] = {
 	topical_categories = true,
 }
 
--- TODO: What kind of topic is "radiation"? Is it specific kinds of radiation? That would be a set-type category.
 labels["radiation"] = {
+	-- TODO: What kind of topic is "radiation"? Is it specific kinds of radiation? That would be a set-type category.
 	display = "[[physics]]",
 	topical_categories = true,
 }
@@ -3346,6 +3749,11 @@ labels["rock paper scissors"] = {
 	topical_categories = true,
 }
 
+labels["rock"] = {
+	display = "[[petrology]]",
+	topical_categories = "Rocks",
+}
+
 labels["roleplaying games"] = {
 	aliases = {"role playing games", "role-playing games", "RPG", "RPGs"},
 	display = "[[roleplaying game]]s",
@@ -3366,6 +3774,12 @@ labels["Roman Catholicism"] = {
 labels["Roman Empire"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["Roman god"] = {
+	aliases = {"Roman goddess"},
+	display = "[[Roman]] [[mythology]]",
+	topical_categories = "Roman deities",
 }
 
 labels["Roman mythology"] = {
@@ -3399,17 +3813,17 @@ labels["Rubik's Cube"] = {
 	topical_categories = true,
 }
 
-labels["rugby"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["rugby league"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
 labels["rugby union"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["rugby"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -3422,6 +3836,11 @@ labels["Russian Orthodoxy"] = {
 
 labels["sailing"] = {
 	Wiktionary = "sailing#Noun",
+	topical_categories = true,
+}
+
+labels["schools"] = {
+	display = "[[education]]",
 	topical_categories = true,
 }
 
@@ -3442,8 +3861,8 @@ labels["Scientology"] = {
 	topical_categories = true,
 }
 
--- Note: this is the usual term, not "Scottish law".
 labels["Scots law"] = {
+	-- Note: this is the usual term, not "Scottish law".
 	aliases = {"Scottish law", "Scotland law", "Scots Law", "Scottish Law", "Scotland Law"},
 	Wikipedia = true,
 	topical_categories = true,
@@ -3482,8 +3901,19 @@ labels["seismology"] = {
 	topical_categories = true,
 }
 
+labels["self-harm"] = {
+	aliases = {"selfharm", "self harm", "self-harm community"},
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["semantics"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["semiconductors"] = {
+	display = "[[semiconductor]]s",
 	topical_categories = true,
 }
 
@@ -3492,9 +3922,9 @@ labels["semiotics"] = {
 	topical_categories = true,
 }
 
-labels["semiconductors"] = {
-	display = "[[semiconductor]]s",
-	topical_categories = true,
+labels["SEO"] = {
+	Wiktionary = "search engine optimization",
+	topical_categories = {"Internet", "Marketing"},
 }
 
 labels["set theory"] = {
@@ -3507,6 +3937,11 @@ labels["sewing"] = {
 	topical_categories = true,
 }
 
+labels["sex position"] = {
+	display = "[[sex]]",
+	topical_categories = "Sex positions",
+}
+
 labels["sex"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -3515,11 +3950,6 @@ labels["sex"] = {
 labels["sexology"] = {
 	Wiktionary = true,
 	topical_categories = true,
-}
-
-labels["sex position"] = {
-	display = "[[sex]]",
-	topical_categories = "Sex positions",
 }
 
 labels["sexuality"] = {
@@ -3579,6 +4009,11 @@ labels["Sikhism"] = {
 	topical_categories = true,
 }
 
+labels["Singaporean politics"] = {
+	Wikipedia = "Politics of Singapore",
+	topical_categories = true,
+}
+
 labels["singing"] = {
 	Wiktionary = "singing#Noun",
 	topical_categories = true,
@@ -3591,6 +4026,11 @@ labels["skateboarding"] = {
 
 labels["skating"] = {
 	Wiktionary = "skating#Noun",
+	topical_categories = true,
+}
+
+labels["skeleton"] = {
+	display = "[[anatomy]]",
 	topical_categories = true,
 }
 
@@ -3635,6 +4075,11 @@ labels["soccer"] = {
 	topical_categories = "Football (soccer)",
 }
 
+labels["social media"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["social sciences"] = {
 	aliases = {"social science"},
 	display = "[[social science]]s",
@@ -3642,11 +4087,6 @@ labels["social sciences"] = {
 }
 
 labels["socialism"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["social media"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -3666,11 +4106,6 @@ labels["softball"] = {
 	topical_categories = true,
 }
 
-labels["software"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["software architecture"] = {
 	Wiktionary = true,
 	topical_categories = {"Software engineering", "Programming"},
@@ -3682,18 +4117,23 @@ labels["software engineering"] = {
 	topical_categories = true,
 }
 
+labels["software"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["soil science"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["sound engineering"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
 labels["sound"] = {
 	Wiktionary = "sound#Noun",
-	topical_categories = true,
-}
-
-labels["sound engineering"] = {
-	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -3724,6 +4164,11 @@ labels["space science"] = {
 	aliases = {"space"},
 	Wiktionary = true,
 	topical_categories = "Space",
+}
+
+labels["Spanish politics"] = {
+	Wikipedia = "Politics of Spain",
+	topical_categories = true,
 }
 
 labels["spectroscopy"] = {
@@ -3764,6 +4209,21 @@ labels["squash"] = {
 	topical_categories = true,
 }
 
+labels["standard of identity"] = {
+	display = "[[standard of identity|standards of identity]]",
+	topical_categories = "Standards of identity",
+}
+
+labels["Star Wars"] = {
+	display = "''[[Star Wars]]''",
+	topical_categories = true,
+}
+
+labels["star"] = {
+	display = "[[astronomy]]",
+	topical_categories = "Stars",
+}
+
 labels["statistical mechanics"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -3774,9 +4234,15 @@ labels["statistics"] = {
 	topical_categories = true,
 }
 
-labels["Star Wars"] = {
-	display = "''[[Star Wars]]''",
-	topical_categories = true,
+labels["steroid hormone"] = {
+	aliases = {"steroid drug"},
+	display = "[[biochemistry]], [[steroids]]",
+	topical_categories = "Hormones",
+}
+
+labels["steroid"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Steroids",
 }
 
 labels["stock market"] = {
@@ -3790,6 +4256,12 @@ labels["stock ticker symbol"] = {
 	topical_categories = "Stock symbols for companies",
 }
 
+labels["string instruments"] = {
+	aliases = {"string instrument"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
 labels["subculture"] = {
 	Wiktionary = true,
 	topical_categories = "Culture",
@@ -3801,6 +4273,11 @@ labels["Sufism"] = {
 	topical_categories = true,
 }
 
+labels["sugar acid"] = {
+	display = "[[organic chemistry]]",
+	topical_categories = "Sugar acids",
+}
+
 labels["sumo"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -3809,6 +4286,11 @@ labels["sumo"] = {
 labels["supply chain"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["surface feature"] = {
+	display = "[[planetology]]",
+	topical_categories = "Planetary nomenclature",
 }
 
 labels["surfing"] = {
@@ -3836,15 +4318,30 @@ labels["swimming"] = {
 	topical_categories = true,
 }
 
+labels["Swiss politics"] = {
+	Wikipedia = "Politics of Switzerland",
+	topical_categories = true,
+}
+
 labels["swords"] = {
 	display = "[[sword]]s",
 	topical_categories = true,
+}
+
+labels["symptom"] = {
+	display = "[[medicine]]",
+	topical_categories = "Medical signs and symptoms",
 }
 
 labels["Syriac Orthodoxy"] = {
 	aliases = {"Syriac Orthodox", "Syriac Orthodox Church"},
 	Wikipedia = true,
 	topical_categories = true,
+}
+
+labels["systematic element symbol"] = {
+	display = "[[chemistry]]",
+	plain_categories = "Systematic chemical symbols",
 }
 
 labels["systematics"] = {
@@ -3884,6 +4381,11 @@ labels["taxation"] = {
 	topical_categories = true,
 }
 
+labels["taxonomic name"] = {
+	display = "[[taxonomy]]",
+	topical_categories = "Taxonomic names",
+}
+
 labels["taxonomy"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -3915,11 +4417,6 @@ labels["television"] = {
 	aliases = {"TV"},
 	Wiktionary = true,
 	topical_categories = true,
-}
-
-labels["Tumblr aesthetic"] = {
-	display = "[[Tumblr]] aesthetic",
-	topical_categories = "Aesthetics",
 }
 
 labels["tennis"] = {
@@ -3991,6 +4488,11 @@ labels["time"] = {
 	topical_categories = true,
 }
 
+labels["tincture"] = {
+	display = "[[heraldry]]",
+	topical_categories = "Heraldic tinctures",
+}
+
 labels["topology"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -4011,13 +4513,13 @@ labels["toxicology"] = {
 	topical_categories = true,
 }
 
-labels["trading"] = {
-	Wiktionary = "trading#Noun",
+labels["trading cards"] = {
+	display = "[[trading card]]s",
 	topical_categories = true,
 }
 
-labels["trading cards"] = {
-	display = "[[trading card]]s",
+labels["trading"] = {
+	Wiktionary = "trading#Noun",
 	topical_categories = true,
 }
 
@@ -4058,14 +4560,14 @@ labels["travel"] = {
 	topical_categories = true,
 }
 
-labels["trigonometry"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["trigonometric function"] = {
 	display = "[[trigonometry]]",
 	topical_categories = "Trigonometric functions",
+}
+
+labels["trigonometry"] = {
+	Wiktionary = true,
+	topical_categories = true,
 }
 
 labels["trust law"] = {
@@ -4073,14 +4575,19 @@ labels["trust law"] = {
 	topical_categories = "Law",
 }
 
-labels["two-up"] = {
-	Wiktionary = true,
-	topical_categories = true,
+labels["Tumblr aesthetic"] = {
+	display = "[[Tumblr]] aesthetic",
+	topical_categories = "Aesthetics",
 }
 
 labels["Twitter"] = {
 	aliases = {"twitter"},
 	Wiktionary = "Twitter#Proper noun",
+	topical_categories = true,
+}
+
+labels["two-up"] = {
+	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -4095,6 +4602,11 @@ labels["ufology"] = {
 	topical_categories = true,
 }
 
+labels["UK politics"] = {
+	Wikipedia = "Politics of the United Kingdom",
+	topical_categories = true,
+}
+
 labels["Umbanda"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -4106,15 +4618,15 @@ labels["underwater diving"] = {
 	topical_categories = true,
 }
 
-labels["United Nations"] = {
-	aliases = {"UN"},
-	display = "[[United Nations|UN]]",
+labels["Unicode"] = {
+	aliases = {"Unicode standard"},
 	Wikipedia = true,
 	topical_categories = true,
 }
 
-labels["Unicode"] = {
-	aliases = {"Unicode standard"},
+labels["United Nations"] = {
+	aliases = {"UN"},
+	display = "[[United Nations|UN]]",
 	Wikipedia = true,
 	topical_categories = true,
 }
@@ -4127,6 +4639,11 @@ labels["urban studies"] = {
 
 labels["urology"] = {
 	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["US politics"] = {
+	Wikipedia = "Politics of the United States",
 	topical_categories = true,
 }
 
@@ -4159,6 +4676,17 @@ labels["vehicles"] = {
 	topical_categories = true,
 }
 
+labels["Venezuelan politics"] = {
+	aliases = {"Venezuela politics"},
+	Wikipedia = "Politics of Venezuela",
+	topical_categories = true,
+}
+
+labels["veterinary disease"] = {
+	display = "[[veterinary medicine]]",
+	topical_categories = "Veterinary diseases",
+}
+
 labels["veterinary medicine"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -4167,6 +4695,11 @@ labels["veterinary medicine"] = {
 labels["video compression"] = {
 	Wikipedia = true,
 	topical_categories = true,
+}
+
+labels["video game genre"] = {
+	display = "[[video game]]s",
+	topical_categories = "Video game genres",
 }
 
 labels["video games"] = {
@@ -4183,6 +4716,11 @@ labels["virology"] = {
 labels["virus"] = {
 	display = "[[virology]]",
 	topical_categories = "Viruses",
+}
+
+labels["vitamin"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Vitamins",
 }
 
 labels["viticulture"] = {
@@ -4210,6 +4748,17 @@ labels["water sports"] = {
 	aliases = {"watersport", "watersports", "water sport"},
 	Wiktionary = "watersport",
 	topical_categories = true,
+}
+
+labels["watercraft"] = {
+	display = "[[nautical]]",
+	topical_categories = true,
+}
+
+labels["weaponry"] = {
+	aliases = {"weapon", "weapons"},
+	Wiktionary = true,
+	topical_categories = "Weapons",
 }
 
 labels["weather"] = {
@@ -4243,6 +4792,29 @@ labels["white supremacy"] = { -- Often used to indicate Nazi-used jargon; compar
 	topical_categories = "White supremacist ideology",
 }
 
+labels["Wicca"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["wiki jargon"] = {
+	aliases = {"wiki", "wikis"},
+	display = "[[wiki]] [[jargon]]",
+	topical_categories = "Wiki",
+}
+
+labels["Wikimedia jargon"] = {
+	aliases = {"WMF", "WMF jargon", "Wiktionary", "Wiktionary jargon", "Wikipedia", "Wikipedia jargon"},
+	display = "[[w:Wikimedia Foundation|Wikimedia]] [[jargon]]",
+	topical_categories = "Wikimedia",
+}
+
+labels["wind instruments"] = {
+	aliases = {"wind instrument"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
 labels["wine"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -4255,6 +4827,12 @@ labels["winemaking"] = {
 
 labels["winter sports"] = {
 	display = "[[winter sport]]s",
+	topical_categories = true,
+}
+
+labels["woodwind instruments"] = {
+	aliases = {"woodwind instrument"},
+	display = "[[music]]",
 	topical_categories = true,
 }
 
@@ -4285,15 +4863,32 @@ labels["writing"] = {
 	topical_categories = true,
 }
 
+labels["xiangqi"] = {
+	aliases = {"Chinese chess"},
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["Yazidism"] = {
 	aliases = {"Yezidism"},
 	Wiktionary = true,
 	topical_categories = true,
 }
 
+labels["yoga pose"] = {
+	aliases = {"asana"},
+	display = "[[yoga]]",
+	topical_categories = "Yoga poses",
+}
+
 labels["yoga"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["zodiac constellations"] = {
+	display = "[[astronomy]]",
+	topical_categories = "Constellations in the zodiac",
 }
 
 labels["zoology"] = {
@@ -4311,609 +4906,6 @@ labels["Zoroastrianism"] = {
 	topical_categories = true,
 }
 
-
--- Labels with set-type categories
-
--- TODO: These are probably misuses of the label template, and should be deprecated
-
-labels["amino acid"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Amino acids",
-}
-
-labels["architectural element"] = {
-	aliases = {"architectural elements"},
-	display = "[[architecture]]",
-	topical_categories = "Architectural elements",
-}
-
-labels["artistic work"] = {
-	display = "[[art#Noun|art]]",
-	topical_categories = "Artistic works",
-}
-
-labels["asterism"] = {
-	display = "[[uranography]]",
-	topical_categories = "Asterisms",
-}
-
-labels["biblical character"] = {
-	aliases = {"Biblical character", "biblical figure", "Biblical figure"},
-	display = "[[Bible|biblical]]",
-	topical_categories = "Biblical characters",
-}
-
-labels["bibliography"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["bicycle parts"] = {
-	aliases = {"bicycle part"},
-	display = "[[w:List of bicycle parts|cycling]]",
-	topical_categories = true,
-}
-
-labels["book of the bible"] = {
-	display = "[[Bible|biblical]]",
-	topical_categories = "Books of the Bible",
-}
-
-labels["bookbinding"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["brass instruments"] = {
-	aliases = {"brass instrument"},
-	display = "[[music]]",
-	topical_categories = true,
-}
-
-labels["canid"] = {
-	display = "[[zoology]]",
-	topical_categories = "Canids",
-}
-
-labels["carbohydrate"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Carbohydrates",
-}
-
-labels["carboxylic acid"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Carboxylic acids",
-}
-
-labels["coenzyme"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Coenzymes",
-}
-
-labels["conspiracy theories"] = {
-	aliases = {"conspiracy theory", "conspiracy"},
-	Wiktionary = "conspiracy theory#Noun",
-	topical_categories = true,
-}
-
-labels["coins"] = { -- Do not merge with "numismatics", as the category is different.
-	aliases = {"coin"},
-	display = "[[numismatics]]",
-	topical_categories = true,
-}
-
-labels["constellation"] = {
-	display = "[[astronomy]]",
-	topical_categories = "Constellations",
-}
-
-labels["cookware"] = {
-	aliases = {"bakeware"},
-	display = "[[cooking#Noun|cooking]]",
-	topical_categories = "Cookware and bakeware",
-}
-
-labels["copyright license"] = {
-	aliases = {"copyright licenses", "license", "copyright licence", "copyright licences", "licence"},
-	display = "[[w:Copyright license|copyright law]]",
-	Wikipedia = true,
-	topical_categories = "Copyright licenses",
-}
-
-labels["currencies"] = { -- Do not merge with "numismatics", as the category is different.
-	aliases = {"currency"},
-	display = "[[numismatics]]",
-	topical_categories = true,
-}
-
-labels["dances"] = {
-	display = "[[dance#Noun|dance]]",
-	topical_categories = true,
-}
-
-labels["demonym"] = {
-	Wiktionary = true,
-	topical_categories = "Demonyms",
-}
-
-labels["disease"] = {
-	aliases = {"diseases"},
-	display = "[[pathology]]",
-	topical_categories = "Diseases",
-}
-
-labels["E number"] = {
-	display = "[[food]] [[manufacture]]",
-	plain_categories = "European food additive numbers",
-}
-
-labels["Egyptian god"] = {
-	display = "[[Egyptian]] [[mythology]]",
-	topical_categories = "Egyptian deities",
-}
-
--- Compare "systematic element symbol" and "obsolete element symbol"
-labels["element symbol"] = {
-	display = "[[chemistry]]",
-	plain_categories = "Symbols for chemical elements",
-}
-
-labels["enzyme"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Enzymes",
-}
-
-labels["fatty acid"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Fatty acids",
-}
-
-labels["felid"] = {
-	aliases = {"cat"},
-	display = "[[zoology]]",
-	topical_categories = "Felids",
-}
-
-labels["fictional character"] = {
-	display = "[[fiction]]",
-	topical_categories = "Fictional characters",
-}
-
-labels["figure of speech"] = {
-	display = "[[rhetoric]]",
-	topical_categories = "Figures of speech",
-}
-
-labels["fish"] = {
-	display = "[[zoology]]",
-	topical_categories = true,
-}
-
-labels["footwear"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["functional group prefix"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Functional group prefixes",
-}
-
-labels["functional group suffix"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Functional group suffixes",
-}
-
-labels["functional programming"] = {
-	Wiktionary = true,
-	topical_categories = "Programming",
-}
-
-labels["galaxy"] = {
-	display = "[[astronomy]]",
-	topical_categories = "Galaxies",
-}
-
-labels["genetic disorder"] = {
-	display = "[[medical]] [[genetics]]",
-	topical_categories = "Genetic disorders",
-}
-
-labels["gender critical"] = {
-	aliases = {"gender-critical", "gender critical feminism", "gender-critical feminism", "GC", "GCF", "trans-exclusionary radical feminism", "TERF", "TERFism"},
-	Wiktionary = "gender-critical#Adjective",
-	Wikipedia = "Gender-critical feminism",
-	topical_categories = "Gender-critical feminism",
-}
-
-labels["Greek god"] = {
-	aliases = {"Greek goddess"},
-	display = "[[Greek]] [[mythology]]",
-	topical_categories = "Greek deities",
-}
-
-labels["hand games"] = {
-	aliases = {"hand game"},
-	display = "[[hand]] [[game]]s",
-	topical_categories = true,
-}
-
-labels["heraldic charge"] = {
-	aliases = {"heraldiccharge"},
-	display = "[[heraldry]]",
-	topical_categories = "Heraldic charges",
-}
-
-labels["Hindu god"] = {
-	display = "[[Hinduism]]",
-	topical_categories = "Hindu deities",
-}
-
-labels["historical currencies"] = {
-	aliases = {"historical currency"},
-	display = "[[numismatics]]",
-	sense_categories = "historical",
-	topical_categories = "Historical currencies",
-}
-
-labels["historical period"] = {
-	aliases = {"historical periods"},
-	display = "[[history]]",
-	topical_categories = "Historical periods",
-}
-
-labels["hormone"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Hormones",
-}
-
-labels["hydrocarbon chain prefix"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Hydrocarbon chain prefixes",
-}
-
-labels["hydrocarbon chain suffix"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Hydrocarbon chain suffixes",
-}
-
-labels["incoterm"] = {
-	display = "[[Incoterm]]",
-	topical_categories = "Incoterms",
-}
-
-labels["inorganic compound"] = {
-	display = "[[inorganic chemistry]]",
-	topical_categories = "Inorganic compounds",
-}
-
-labels["isotope"] = {
-	display = "[[physics]]",
-	topical_categories = "Isotopes",
-}
-
-labels["labour law"] = {
-	Wiktionary = true,
-	topical_categories = "Law",
-}
-
-labels["landforms"] = {
-	display = "[[geography]]",
-	topical_categories = true,
-}
-
-labels["logical fallacy"] = {
-	display = "[[rhetoric]]",
-	topical_categories = "Logical fallacies",
-}
-
-labels["lutherie"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["Mesopotamian god"] = {
-	display = "[[Mesopotamian]] [[mythology]]",
-	topical_categories = "Mesopotamian deities",
-}
-
-labels["metamaterial"] = {
-	display = "[[physics]]",
-	topical_categories = "Metamaterials",
-}
-
-labels["military ranks"] = {
-	aliases = {"military rank"},
-	display = "[[military]]",
-	topical_categories = true,
-}
-
-labels["military unit"] = {
-	display = "[[military]]",
-	topical_categories = "Military units",
-}
-
-labels["mineral"] = {
-	display = "[[mineralogy]]",
-	topical_categories = "Minerals",
-}
-
-labels["mobile phones"] = {
-	aliases = {"cell phone", "cell phones", "mobile phone", "mobile telephony"},
-	display = "[[mobile telephone|mobile telephony]]",
-	topical_categories = true,
-}
-
-labels["muscle"] = {
-	display = "[[anatomy]]",
-	topical_categories = "Muscles",
-}
-
-labels["mushroom"] = {
-	aliases = {"mushrooms"},
-	display = "[[mycology]]",
-	topical_categories = "Mushrooms",
-}
-
-labels["musical instruments"] = {
-	aliases = {"musical instrument"},
-	display = "[[music]]",
-	topical_categories = true,
-}
-
-labels["music genre"] = {
-	display = "[[music]]",
-	topical_categories = "Musical genres",
-}
-
-labels["musician"] = {
-	display = "[[music]]",
-	topical_categories = "Musicians",
-}
-
-labels["mysticism"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["mythological creature"] = {
-	aliases = {"mythological creatures"},
-	display = "[[mythology]]",
-	topical_categories = "Mythological creatures",
-}
-
-labels["neurotoxin"] = {
-	display = "[[neurotoxicology]]",
-	topical_categories = "Neurotoxins",
-}
-
-labels["neurotransmitter"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Neurotransmitters",
-}
-
-labels["obsolete element symbol"] = {
-	display = "[[chemistry]], [[obsolete]]",
-	plain_categories = "Obsolete symbols for chemical elements",
-}
-
-labels["organic compound"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Organic compounds",
-}
-
-labels["part of speech"] = {
-	display = "[[grammar]]",
-	topical_categories = "Parts of speech",
-}
-
-labels["particle"] = {
-	display = "[[particle physics]]",
-	topical_categories = "Subatomic particles",
-}
-
-labels["percussion instruments"] = {
-	aliases = {"percussion instrument"},
-	display = "[[music]]",
-	topical_categories = true,
-}
-
-labels["pharmaceutical drug"] = {
-	display = "[[pharmacology]]",
-	topical_categories = "Pharmaceutical drugs",
-}
-
-labels["pharmaceutical effect"] = {
-	display = "[[pharmacology]]",
-	topical_categories = "Pharmaceutical effects",
-}
-
-labels["plant"] = {
-	display = "[[botany]]",
-	topical_categories = "Plants",
-}
-
-labels["plant disease"] = {
-	display = "[[phytopathology]]",
-	topical_categories = "Plant diseases",
-}
-
-labels["poison"] = {
-	display = "[[toxicology]]",
-	topical_categories = "Poisons",
-}
-
-labels["political subdivision"] = {
-	display = "[[government]]",
-	topical_categories = "Political subdivisions",
-}
-
-labels["protein"] = {
-	aliases = {"proteins"},
-	display = "[[biochemistry]]",
-	topical_categories = "Proteins",
-}
-
-labels["rock"] = {
-	display = "[[petrology]]",
-	topical_categories = "Rocks",
-}
-
-labels["Roman god"] = {
-	aliases = {"Roman goddess"},
-	display = "[[Roman]] [[mythology]]",
-	topical_categories = "Roman deities",
-}
-
-labels["schools"] = {
-	display = "[[education]]",
-	topical_categories = true,
-}
-
-labels["self-harm"] = {
-	aliases = {"selfharm", "self harm", "self-harm community"},
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["SEO"] = {
-	Wiktionary = "search engine optimization",
-	topical_categories = {"Internet", "Marketing"},
-}
-
-labels["skeleton"] = {
-	display = "[[anatomy]]",
-	topical_categories = true,
-}
-
-labels["standard of identity"] = {
-	display = "[[standard of identity|standards of identity]]",
-	topical_categories = "Standards of identity",
-}
-
-labels["star"] = {
-	display = "[[astronomy]]",
-	topical_categories = "Stars",
-}
-
-labels["steroid"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Steroids",
-}
-
-labels["steroid hormone"] = {
-	aliases = {"steroid drug"},
-	display = "[[biochemistry]], [[steroids]]",
-	topical_categories = "Hormones",
-}
-
-labels["string instruments"] = {
-	aliases = {"string instrument"},
-	display = "[[music]]",
-	topical_categories = true,
-}
-
-labels["surface feature"] = {
-	display = "[[planetology]]",
-	topical_categories = "Planetary nomenclature",
-}
-
-labels["sugar acid"] = {
-	display = "[[organic chemistry]]",
-	topical_categories = "Sugar acids",
-}
-
-labels["symptom"] = {
-	display = "[[medicine]]",
-	topical_categories = "Medical signs and symptoms",
-}
-
-labels["systematic element symbol"] = {
-	display = "[[chemistry]]",
-	plain_categories = "Systematic chemical symbols",
-}
-
-labels["taxonomic name"] = {
-	display = "[[taxonomy]]",
-	topical_categories = "Taxonomic names",
-}
-
-labels["tincture"] = {
-	display = "[[heraldry]]",
-	topical_categories = "Heraldic tinctures",
-}
-
-labels["veterinary disease"] = {
-	display = "[[veterinary medicine]]",
-	topical_categories = "Veterinary diseases",
-}
-
-labels["video game genre"] = {
-	display = "[[video game]]s",
-	topical_categories = "Video game genres",
-}
-
-labels["vitamin"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Vitamins",
-}
-
-labels["watercraft"] = {
-	display = "[[nautical]]",
-	topical_categories = true,
-}
-
-labels["weaponry"] = {
-	aliases = {"weapon", "weapons"},
-	Wiktionary = true,
-	topical_categories = "Weapons",
-}
-
-labels["Wicca"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["wiki jargon"] = {
-	aliases = {"wiki", "wikis"},
-	display = "[[wiki]] [[jargon]]",
-	topical_categories = "Wiki",
-}
-
-labels["Wikimedia jargon"] = {
-	aliases = {"WMF", "WMF jargon", "Wiktionary", "Wiktionary jargon", "Wikipedia", "Wikipedia jargon"},
-	display = "[[w:Wikimedia Foundation|Wikimedia]] [[jargon]]",
-	topical_categories = "Wikimedia",
-}
-
-labels["wind instruments"] = {
-	aliases = {"wind instrument"},
-	display = "[[music]]",
-	topical_categories = true,
-}
-
-labels["woodwind instruments"] = {
-	aliases = {"woodwind instrument"},
-	display = "[[music]]",
-	topical_categories = true,
-}
-
-labels["xiangqi"] = {
-	aliases = {"Chinese chess"},
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["yoga pose"] = {
-	aliases = {"asana"},
-	display = "[[yoga]]",
-	topical_categories = "Yoga poses",
-}
-
-labels["zodiac constellations"] = {
-	display = "[[astronomy]]",
-	topical_categories = "Constellations in the zodiac",
-}
 
 -- Deprecated/do not use warning (ambiguous, unsuitable etc)
 
