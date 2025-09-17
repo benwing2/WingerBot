@@ -151,8 +151,7 @@ export.control_specs = {
 export.control_spec_set = m_table.listToSet(export.control_specs)
 
 export.boolean_property_set = m_table.listToSet {
-	-- The properties are already decomposed when we check against them.
-	"builtin", "def_va" .. GR .. "r", "indef_va" .. INVBREVE .. "r", "indecl", "decl?", "pred",
+	"builtin", "indecl", "decl?", "pred",
 }
 
 local function slot_to_degfield(slot)
@@ -1110,10 +1109,19 @@ end
 
 
 -- Export for use by [[Module:sh-noun]].
-function export.parse_for_control_specs(part, parse_control_spec)
+function export.parse_for_control_specs(dot_separated_group, parse_control_spec, parse_err)
+	local part = dot_separated_group[1]
 	if part:find("^%-?%*") then
-		parse_control_spec("*", {"*", "-*"})
-	elseif part:find("^%-?[23]tone") then
+		parse_control_spec(dot_separated_group, "*", {"*", "-*"})
+	elseif part:find("^[123]") then
+		local slash_separated_groups = split_alternating_runs_with_escapes(dot_separated_group, "/")
+		if slash_separated_groups[3] then
+			parse_err(("At most one slash allowed in indef/def pattern spec: %s"):format(concat(dot_separated_group)))
+		end
+		parse_control_spec(slash_separated_groups[1], "indef_pattern", {"1", "2", "3", "2+3"})
+		if slash_separated_groups[2] then
+			parse_control_spec(slash_separated_groups[1], "def_pattern", true)
+
 		parse_control_spec("2tone", {"2tone", "3tone", "-2tone"})
 	else
 		return false
