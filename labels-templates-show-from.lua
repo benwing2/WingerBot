@@ -1,14 +1,17 @@
 local export = {}
 
 local labels_module = "Module:labels"
+local table_module = "Module:table"
+local insert = table.insert
+local concat = table.concat
 
 --[[	this function is only to be used in
 		{{alternative spelling of}},
 		{{eye dialect of}}
 		and similar templates					]]
 function export.show_from(frame)
-	local froms = {}
-	local categories = {}
+	local formatted_labels = {}
+	local formatted_categories = {}
 
 	local iparams = {
 		["lang"] = {type = "language"},
@@ -17,10 +20,10 @@ function export.show_from(frame)
 	
 	local iargs = require("Module:parameters").process(frame.args, iparams)
 	local parent_args = frame:getParent().args
-	local compat = iargs["lang"] or parent_args["lang"]
+	local compat = iargs.lang or parent_args.lang
 
 	local params = {
-		[compat and "lang" or 1] = {required = not iargs["lang"], type = "language"},
+		[compat and "lang" or 1] = {required = not iargs.lang, type = "language"},
 		["from"] = {list = true},
 		["nocat"] = {type = "boolean"},
 	}
@@ -30,24 +33,39 @@ function export.show_from(frame)
 	-- of them, we just ignore unrecognized params. The main processing for the
 	-- form-of template will catch true unrecognized params.
 	local args = require("Module:parameters").process(parent_args, params, "allow unrecognized params")
-	local lang = args[compat and "lang" or 1] or iargs["lang"] or require("Module:languages").getByCode("und")
-	local nocat = args["nocat"]
+	local lang = args[compat and "lang" or 1] or iargs.lang or require("Module:languages").getByCode("und")
+	local nocat = args.nocat
 
-	for _, k in ipairs(args["from"]) do
-		local ret = require(labels_module).get_label_info { label = k, lang = lang, mode = "form-of", }
-		if ret.label ~= "" then
-			table.insert(froms, ret.label)
+	local already_seen = {}
+	for _, from_label in ipairs(args.from) do
+		local processed_labels = require(labels_module).split_and_process_raw_labels {
+			labels = from_label,
+			lang = lang,
+			mode = "form-of",
+			nocat = nocat,
+			already_seen = already_seen,
+			ok_to_destructively_modify = true,
+		}
+		local this_formatted_labels, this_formatted_categories = require(labels_module).format_processed_labels {
+			labels = processed_labels,
+			lang = lang,
+			mode = "form-of",
+			open = false,
+			close = false,
+			no_ib_content = true,
+			ok_to_destructively_modify = true,
+			split_output = true,
+		}
+		if this_formatted_labels ~= "" then
+			insert(formatted_labels, this_formatted_labels)
 		end
-		if not nocat and ret.formatted_categories and ret.formatted_categories ~= "" then
-			table.insert(categories, ret.formatted_categories)
-		end
-	end
-	
-	if #froms == 0 then
-		return iargs.default
+		insert(formatted_categories, this_formatted_categories)
 	end
 
-	return require("Module:table").serialCommaJoin(froms) .. table.concat(categories)
+	local joined_formatted_labels =
+		#formatted_labels == 0 and iargs.default or require(table_module).serialCommaJoin(formatted_labels)
+
+	return joined_formatted_labels .. concat(formatted_categories)
 end
 
 return export
