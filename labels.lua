@@ -486,7 +486,10 @@ Return information on a label. On input `data` is an object with the following f
 * `for_doc`: Data is being fetched for documentation purposes. This causes the raw categories returned in
   `categories` to be formatted for documentation display.
 * `nocat`: If true, don't add the label to any categories.
+* `force_cat`: Force adding categories even in namespaces that normally exclude them (e.g. userspace and discussion
+   pages).
 * `notrack`: Disable all tracking for this label.
+* `sort`: Sort key for categorization.
 * `already_seen`: An object used to track labels already seen, so they aren't displayed twice. Tracking is according
   to the display form of the label, so if two labels have the same display form, the second one won't be displayed
   (but its categories will still be added). If `already_seen` is {nil}, this tracking doesn't happen.
@@ -519,7 +522,7 @@ The return value is an object with the following fields:
   `<var>label</var>!<var>display</var>` (meaning "display the label in the specified `<var>display</var>` form").
 * `label`: The formatted form of the label. This is what is actually shown to the user. If the label is recognized
   (found in some module), this will typically be in the form of a link.
-* `categories`: A list of the categories to add the label to; an empty list of `nocat` was specified.
+* `categories`: A list of the categories to add the label to; an empty list if `nocat` was specified.
 * `formatted_categories`: A string containing the formatted categories; {nil} if `nocat` or `for_doc` was specified,
   or if `categories` is empty. Currently will be an empty string if there are categories to format but the namespace is
   one that normally excludes categories (e.g. userspace and discussion pages), and `force_cat` isn't specified.
@@ -680,7 +683,7 @@ function export.get_label_info(data)
 			-- do nothing
 		else
 			ret.formatted_categories = require(utilities_module).format_categories(ret.categories, data.lang,
-				data.sort, nil, force_cat)
+				data.sort, nil, force_cat or data.force_cat)
 		end
 	end
 
@@ -746,6 +749,8 @@ objects returned than raw labels passed in.) On input, `data` is an object with 
 * `lang`: The language of the labels. Must be specified.
 * `mode`: How the label was invoked; see {get_label_info()} for more information.
 * `nocat`: If true, don't add the label to any categories.
+* `force_cat`: Force adding categories even in namespaces that normally exclude them (e.g. userspace and discussion
+   pages).
 * `notrack`: Disable all tracking for this label.
 * `sort`: Sort key for categorization.
 * `already_seen`: An object used to track labels already seen, so they aren't displayed twice. Tracking is according
@@ -799,6 +804,8 @@ fields:
 * `lang`: The language of the labels. Must be specified.
 * `mode`: How the label was invoked; see {get_label_info()} for more information.
 * `nocat`: If true, don't add the label to any categories.
+* `force_cat`: Force adding categories even in namespaces that normally exclude them (e.g. userspace and discussion
+   pages).
 * `notrack`: Disable all tracking for this label.
 * `sort`: Sort key for categorization.
 * `already_seen`: An object used to track labels already seen, so they aren't displayed twice. Tracking is according
@@ -827,21 +834,28 @@ On input `data` is an object with the following fields:
 * `labels`: List of the label objects to format, in the format returned by {get_label_info()}.
 * `lang`: The language of the labels.
 * `open`: Open bracket or parenthesis to display before the concatenated labels. If specified, it is wrapped in the
-  {"ib-brac"} and {"label-brac"} CSS classes. If {nil}, no open bracket is displayed.
+  {"ib-brac"} and {"label-brac"} CSS classes. If {nil} or {false}, no open bracket is displayed.
 * `close`: Close bracket or parenthesis to display after the concatenated labels. If specified, it is wrapped in the
-  {"ib-brac"} and {"label-brac"} CSS classes. If {nil}, no close bracket is displayed.
+  {"ib-brac"} and {"label-brac"} CSS classes. If {nil} or {false}, no close bracket is displayed.
 * `no_ib_content`: By default, the concatenated formatted labels inside of the open/close brackets are wrapped in the
   {"ib-content"} and {"label-content"} CSS classes. Specify this to suppress this wrapping.
 * `raw`: Suppress all CSS wrapping of content, including open/close parentheses, content and comma delimiters (which
   are normally wrapped in {"ib-comma"} and {"label-comma"} CSS classes).
 * `ok_to_destructively_modify`: If set, the `data` structure, and the `data.labels` table inside of it, will be
   destructively modified in the process of this function running.
+* `split_output`: If not given, the return value is a concatenation of the formatted concatenated labels and formatted
+  categories. Otherwise, two values are returned: the formatted pronunciation and the categories. If `split_output` is
+  the value {"raw"}, the categories are returned in list form, where the list elements are strings f the form suitable
+  for passing to {format_categories()} in [[Module:utilities]]. If `split_output` is any other value besides {nil}, the
+  categories are returned as a pre-formatted concatenated string.
 
-Return value is a string containing the contenated labels, optionally surrounded by open/close brackets or parentheses.
-Normally, labels are separated by comma-space sequences, but this may be suppressed for certain labels. If `nocat`
-wasn't given to {get_label_info() or process_raw_labels()}, the label objects will contain formatted categories in
-them, which will be inserted into the returned text. The concatenated text inside of the open/close brackets is normally
-wrapped in the {"ib-content"} CSS class, but this can be suppressed, as mentioned above.
+The return value (or the first return value, if `split_output` is given) is a string containing the contenated labels,
+optionally surrounded by open/close brackets or parentheses. Normally, labels are separated by comma-space sequences,
+but this may be suppressed for certain labels. If `nocat` wasn't given to {get_label_info()} or {process_raw_labels()},
+and `split_output` wasn't given, the label objects will contain formatted categories in them, which will be inserted
+into the returned text. (Use `split_output` if you need the categories returned separately.) The concatenated text
+inside of the open/close brackets is normally wrapped in the {"ib-content"} CSS class, but this can be suppressed, as
+mentioned above.
 ]==]
 function export.format_processed_labels(data)
 	if not data.labels then
@@ -892,6 +906,8 @@ function export.format_processed_labels(data)
 		return ("<span class=\"ib-%s label-%s\">%s</span>"):format(suffix, suffix, txt)
 	end
 
+	local categories = nil
+	local formatted_categories = split_output and split_output ~= "raw" and {} or nil
 	for i, labelinfo in ipairs(labels) do
 		local label
 		-- Need to check for 'not raw_text' here because blank labels may legitimately occur as raw text if a double
@@ -906,7 +922,22 @@ function export.format_processed_labels(data)
 					(labelinfo.omit_space and "" or "&#32;") ..
 					labelinfo.label
 		end
-		labels[i] = label .. (labelinfo.formatted_categories or "")
+		if split_output then
+			labels[i] = label
+			if split_output == "raw" then
+				if labelinfo.categories and labelinfo.categories[1] then
+					if categories then
+						m_table.extend(categories, labelinfo.categories)
+					else
+						categories = labelinfo.categories
+					end
+				end
+			elseif labelinfo.formatted_categories then
+				insert(formatted_categories, labelinfo.formatted_categories)
+			end
+		else
+			labels[i] = label .. (labelinfo.formatted_categories or "")
+		end
 	end
 
 	local function wrap_open_close(val)
@@ -922,7 +953,14 @@ function export.format_processed_labels(data)
 		concatenated_labels = wrap_css(concatenated_labels, "content")
 	end
 
-	return wrap_open_close(data.open) .. concatenated_labels .. wrap_open_close(data.close)
+	local ret_labels = wrap_open_close(data.open) .. concatenated_labels .. wrap_open_close(data.close)
+	if split_output == "raw" then
+		return ret_labels, categories
+	elseif split_output then
+		return ret_labels, concat(formatted_categories)
+	else
+		return ret_labels
+	end
 end
 
 --[==[
@@ -934,6 +972,8 @@ input `data` is an object with the following fields:
 * `lang`: The language of the labels.
 * `mode`: How the label was invoked; see {get_label_info()} for more information.
 * `nocat`: If true, don't add the labels to any categories.
+* `force_cat`: Force adding categories even in namespaces that normally exclude them (e.g. userspace and discussion
+   pages).
 * `notrack`: Disable all tracking for these labels.
 * `sort`: Sort key for categorization.
 * `no_track_already_seen`: Don't track already-seen labels. If not specified, already-seen labels are not displayed
