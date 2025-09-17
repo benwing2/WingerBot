@@ -841,6 +841,18 @@ labels["classical mechanics"] = {
 	topical_categories = true,
 }
 
+labels["Classical music form"] = {
+	aliases = {"classical music form"},
+	display = "[[music theory]]",
+	topical_categories = "Classical music forms",
+}
+
+labels["Classical music section"] = {
+	aliases = {"classical music section"},
+	display = "[[music theory]]",
+	topical_categories = "Classical music sections",
+}
+
 labels["classical studies"] = {
 	Wiktionary = true,
 	topical_categories = true,
@@ -1332,6 +1344,12 @@ labels["dressage"] = {
 	topical_categories = true,
 }
 
+labels["drums"] = {
+	aliases = {"drum"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
 labels["E number"] = {
 	display = "[[food]] [[manufacture]]",
 	plain_categories = "European food additive numbers",
@@ -1389,11 +1407,6 @@ labels["education"] = {
 
 labels["Egyptian god"] = {
 	aliases = {"Egyptian goddess", "Egyptian deity"},
-	display = "[[Egyptian]] [[mythology]]",
-	topical_categories = "Egyptian deities",
-}
-
-labels["Egyptian god"] = {
 	display = "[[Egyptian]] [[mythology]]",
 	topical_categories = "Egyptian deities",
 }
@@ -2430,6 +2443,12 @@ labels["kendo"] = {
 	topical_categories = true,
 }
 
+labels["keyboard instruments"] = {
+	aliases = {"keyboard instrument"},
+	display = "[[music]]",
+	topical_categories = true,
+}
+
 labels["knitting"] = {
 	Wiktionary = "knitting#Noun",
 	topical_categories = true,
@@ -2938,10 +2957,113 @@ labels["music industry"] = {
 	topical_categories = true,
 }
 
+labels["music theory"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["musical articulation"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical articulations",
+}
+
+labels["musical cadence"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical cadences",
+}
+
+labels["musical chord"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical chords",
+}
+
+labels["musical clef"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical clefs",
+}
+
+labels["musical directive"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical directives",
+}
+
+labels["musical dynamic"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical dynamics",
+}
+
 labels["musical instruments"] = {
 	aliases = {"musical instrument"},
 	display = "[[music]]",
 	topical_categories = true,
+}
+
+labels["musical interval"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical intervals",
+}
+
+labels["musical key"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical keys",
+}
+
+labels["musical mnemonic"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical mnemonics",
+}
+
+labels["musical mode"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical modes",
+}
+
+labels["musical note duration"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical note durations",
+}
+
+labels["musical ornament"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical ornaments",
+}
+
+labels["musical pitch"] = {
+	aliases = {"solfège note", "solfege note"},
+	display = "[[music theory]]",
+	topical_categories = "Musical pitches",
+}
+
+labels["musical rest"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical rests",
+}
+
+labels["musical scale"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical scales",
+}
+
+labels["musical symbol"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical symbols",
+}
+
+labels["musical tempo"] = {
+	display = "[[music theory]]",
+	topical_categories = "Musical tempos",
+}
+
+labels["musical time signature"] = {
+	aliases = {"musical meter", "musical metre"},
+	display = "[[music theory]]",
+	topical_categories = "Musical time signatures and meters",
+}
+
+labels["musical voice type"] = {
+	aliases = {"musical vocal type", "musical register"},
+	display = "[[music theory]]",
+	topical_categories = "Musical voices and registers",
 }
 
 labels["musician"] = {
@@ -2973,6 +3095,11 @@ labels["mythological creature"] = {
 labels["mythology"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["named musician"] = {
+	display = "[[music]]",
+	topical_categories = "Named musicians",
 }
 
 labels["nanotechnology"] = {
@@ -3511,6 +3638,16 @@ labels["politics"] = {
 	aliases = {"political"},
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["popular music form"] = {
+	display = "[[music]]",
+	topical_categories = "popular music forms",
+}
+
+labels["popular music section"] = {
+	display = "[[music]]",
+	topical_categories = "popular music sections",
 }
 
 labels["pornography"] = {
