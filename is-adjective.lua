@@ -524,8 +524,6 @@ local function add(base, slot, degree, props, endings)
 			end
 		end
 
-		local ending_was_asterisk = ending == "*"
-
 		-- Now compute the appropriate stem to which the ending is added.
 		local stem_in_effect
 
@@ -1150,7 +1148,7 @@ local function handle_derived_slots_and_overrides(base)
 	-- separate indicators.
 	process_slot_overrides(base)
 
-	-- Compute linked versions of potential lemma slots, for use in {{is-noun}}.  We substitute the original lemma
+	-- Compute linked versions of potential lemma slots, for use in {{is-adj}}.  We substitute the original lemma
 	-- (before removing links) for forms that are the same as the lemma, if the original lemma has links.
 	for _, slot in ipairs(potential_lemma_slots) do
 		iut.insert_forms(base.forms, slot .. "_linked", iut.map_forms(base.forms[slot], function(form)
@@ -1266,7 +1264,8 @@ end
 
 
 -- Return true if the given spec of one of the degrees (pos/comp/sup) explicitly disabled through -pos, -comp or -sup.
--- Also return true if `also_if_unspecified` given and the spec was left unspecified (this doesn't make sense for 'pos').
+-- Also return true if `also_if_unspecified` given and the spec was left unspecified (this doesn't make sense for
+-- 'pos').
 local function degree_disabled(spec, also_if_unspecified)
 	if not spec then
 		return also_if_unspecified
@@ -1382,7 +1381,7 @@ local function parse_inside(base, inside, is_scraped_adj)
 	local dot_separated_groups = split_alternating_runs_with_escapes(segments, "%.")
 	for i, dot_separated_group in ipairs(dot_separated_groups) do
 		-- Parse a control spec such as "umut,uUmut[rare]". This assumes the control spec is contained in
-		-- `dot_separated_group` (already split on brackets) and the result of parsing should go in `base[dest]`.
+		-- `dot_separated_group` (already split on brackets) and the result of parsing should go in `base_degree[dest]`.
 		-- `allowed_specs` is a list of the allowed control specs in this group, such as
 		-- {"umut", "Umut", "uumut", "uUmut", "uUUmut", "u_mut"} or {"pp", "-pp"}. The result of parsing is a list of
 		-- structures of the form {
@@ -1650,16 +1649,17 @@ local function parse_inside_and_merge(inside, lemma, scrape_chain)
 	basedeg.lemma = lemma
 
 	if not base.scrape_spec then
-		-- If we're not scraping the declension from another noun, just return the parsed `base`.
+		-- If we're not scraping the declension from another adjective, just return the parsed `base`.
 		-- But don't set early defaults if we're being scraped because it interferes with overriding the number
-		-- and/or state by the noun that is scraping us.
+		-- and/or state by the adjective that is scraping us.
 		if #scrape_chain == 0 then
 			set_early_base_defaults(base)
 		end
 		return base
 	else
 		local prefix, base_adj, declspec
-		prefix, base_adj, declspec = com.find_scraped_infl {
+		prefix, base_adj, declspec = iut.find_scraped_infl {
+			langname = "Icelandic",
 			lemma = lemma,
 			scrape_spec = base.scrape_spec,
 			scrape_is_suffix = base.scrape_is_suffix,
@@ -1676,7 +1676,7 @@ local function parse_inside_and_merge(inside, lemma, scrape_chain)
 			return base
 		end
 
-		-- Parse the inside spec from the scraped noun (merging any sub-scraping specs), and copy over the
+		-- Parse the inside spec from the scraped adjective (merging any sub-scraping specs), and copy over the
 		-- user-specified properties on top of it.
 		table.insert(scrape_chain, base_adj)
 		local inner_base = parse_inside_and_merge(declspec.infl, base_adj, scrape_chain)
@@ -1685,8 +1685,8 @@ local function parse_inside_and_merge(inside, lemma, scrape_chain)
 		inner_base.prefix = prefix
 		inner_base.base_adj = base_adj
 
-		-- Add `prefix` to a full variant of the base noun (e.g. a stem spec or override). We may need
-		-- to adjust the variant to take into account the base noun being a suffix and/or uppercase (e.g. when
+		-- Add `prefix` to a full variant of the base adjective (e.g. a stem spec or override). We may need
+		-- to adjust the variant to take into account the base adjective being a suffix and/or uppercase (e.g. when
 		-- we use [[-dómur]] to generate the inflection of [[vísdómur]] or [[Björn]] to generate the inflection
 		-- of [[Ásbjörn]]).
 		local function add_prefix(form)
@@ -1702,7 +1702,7 @@ local function parse_inside_and_merge(inside, lemma, scrape_chain)
 			return prefix .. form
 		end
 
-		-- If there's a prefix, add it now to all the overrides in the scraped noun, as well as 'decllemma'
+		-- If there's a prefix, add it now to all the overrides in the scraped adjective, as well as 'decllemma'
 		-- and all stem overrides.
 		if prefix ~= "" then
 			map_all_overrides(inner_base, function(slot, formobj)
@@ -1755,7 +1755,7 @@ local function parse_inside_and_merge(inside, lemma, scrape_chain)
 				m_table.insertIfNot(inner_base[prop_list], prop)
 			end
 		end
-		-- Now copy remaining user-specified specs into the scraped noun `base`.
+		-- Now copy remaining user-specified specs into the scraped adjective `base`.
 		for _, prop_table in ipairs { "overrides", "props" } do
 			for slot, prop in pairs(base[prop_table]) do
 				inner_base[prop_table][slot] = prop
@@ -2115,8 +2115,8 @@ end
 
 
 -- Initialize the stem and declension of a comparative or superlative degree object given various properties. This is
--- broken out of insert_forms() for use in initializing the base degree object of comparative/superlative-only lemmas,
--- which are otherwise already initialized.
+-- broken out of insert_degree_object() for use in initializing the base degree object of comparative/superlative-only
+-- lemmas, which are otherwise already initialized.
 local function initialize_degree_object_stem_and_decl(degree, degfield, lemma)
 	local stem
 	if degfield == "sup" then
@@ -2493,7 +2493,7 @@ local function decline_adjective(base)
 end
 
 
--- Compute the categories to add the noun to, as well as the annotation to display in the declension title bar. We
+-- Compute the categories to add the adjective to, as well as the annotation to display in the declension title bar. We
 -- combine the code to do these functions as both categories and title bar contain similar information.
 local function compute_categories_and_annotation(alternant_multiword_spec)
 	local all_cats = {}
@@ -2832,13 +2832,6 @@ local function make_table(alternant_multiword_spec)
 			ins(get_table_spec(slot_prefix, "pl", "weak"))
 		end)
 	end
-
-	local notes_template = [=[
-<div class="is-footnote-outer-div" style="width:100%;">
-<div class="is-footnote-inner-div">
-{footnote}
-</div></div>
-]=]
 
 	local ital_lemma = '<i lang="is" class="Latn">' .. forms.lemma .. "</i>"
 
