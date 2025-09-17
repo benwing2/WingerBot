@@ -1,5 +1,15 @@
 local labels = {}
 
+-- To sort these, you first have to convert each label section into a single line, and then sort the lines, and undo
+-- the single-line conversion. This can be done using Vim commands, something like this:
+-- 1. Mark the first line to be changed using `ma`.
+-- 2. Go to the last line and use `'a,.s/\n/\\n/g` to convert newlines to \n sequences.
+-- 3. Use `'a,.s/\\n\\n/\r/g` to convert sequences of two \n's (marking section divisions) back to newlines.
+-- 4. Go to the last line again and use `'a,.!sort -f -d` to sort. The `-f` makes it case-insensitive and the `-d`
+--    selects "dictionary order", which is needed to get 'yoga' to sort before 'yoga pose' instead of the other way
+--    around.
+-- 5. Go to the last line again and use `'a,.s/\\n/\r/g` to convert \n sequences back to newlines.
+-- 6. Go to the last line again and use `'a,.s/^labels/\rlabels/` to put an extra newline before each section.
 
 labels["3D printing"] = {
 	aliases = {"3D printer", "3D printers"},
@@ -104,12 +114,6 @@ labels["algebraic topology"] = {
 	topical_categories = true,
 }
 
-labels["alt-right"] = {
-	aliases = {"Alt-right", "altright", "Altright"},
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["alternative history"] = {
 	aliases = {"alt hist", "alternate history"},
 	Wikidata = "Q224989",
@@ -117,6 +121,12 @@ labels["alternative history"] = {
 }
 
 labels["alternative medicine"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
+labels["alt-right"] = {
+	aliases = {"Alt-right", "altright", "Altright"},
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -248,6 +258,12 @@ labels["art"] = {
 	topical_categories = true,
 }
 
+labels["Arthurian legend"] = {
+	aliases = {"Arthurian mythology"},
+	Wikipedia = true,
+	topical_categories = "Arthurian mythology",
+}
+
 labels["artificial intelligence"] = {
 	aliases = {"AI"},
 	Wiktionary = true,
@@ -257,12 +273,6 @@ labels["artificial intelligence"] = {
 labels["artillery"] = {
 	display = "[[weaponry]]",
 	topical_categories = true,
-}
-
-labels["Arthurian legend"] = {
-	aliases = {"Arthurian mythology"},
-	Wikipedia = true,
-	topical_categories = "Arthurian mythology",
 }
 
 labels["artistic work"] = {
@@ -427,16 +437,16 @@ labels["betting"] = {
 	topical_categories = true,
 }
 
-labels["biblical character"] = {
-	aliases = {"Biblical character", "biblical figure", "Biblical figure"},
-	display = "[[Bible|biblical]]",
-	topical_categories = "Biblical characters",
-}
-
 labels["biblical"] = {
 	aliases = {"Bible", "bible", "Biblical"},
 	Wiktionary = "Bible",
 	topical_categories = "Bible",
+}
+
+labels["biblical character"] = {
+	aliases = {"Biblical character", "biblical figure", "Biblical figure"},
+	display = "[[Bible|biblical]]",
+	topical_categories = "Biblical characters",
 }
 
 labels["bibliography"] = {
@@ -981,16 +991,16 @@ labels["computer security"] = {
 	topical_categories = true,
 }
 
-labels["computing theory"] = {
-	aliases = {"comptheory", "computability theory"},
-	display = "[[computing#Noun|computing]] [[theory]]",
-	topical_categories = "Theory of computing",
-}
-
 labels["computing"] = {
 	aliases = {"computer", "computers"},
 	Wiktionary = "computing#Noun",
 	topical_categories = true,
+}
+
+labels["computing theory"] = {
+	aliases = {"comptheory", "computability theory"},
+	display = "[[computing#Noun|computing]] [[theory]]",
+	topical_categories = "Theory of computing",
 }
 
 labels["conchology"] = {
@@ -1053,17 +1063,17 @@ labels["Coptic Orthodoxy"] = {
 	topical_categories = true,
 }
 
+labels["copyright"] = {
+	aliases = {"copyright law", "intellectual property", "intellectual property law", "IP law"},
+	display = "[[copyright]] [[law]]",
+	topical_categories = true,
+}
+
 labels["copyright license"] = {
 	aliases = {"copyright licenses", "license", "copyright licence", "copyright licences", "licence"},
 	display = "[[w:Copyright license|copyright law]]",
 	Wikipedia = true,
 	topical_categories = "Copyright licenses",
-}
-
-labels["copyright"] = {
-	aliases = {"copyright law", "intellectual property", "intellectual property law", "IP law"},
-	display = "[[copyright]] [[law]]",
-	topical_categories = true,
 }
 
 labels["cosmetics"] = {
@@ -1652,15 +1662,15 @@ labels["file format"] = {
 	topical_categories = "File formats",
 }
 
+labels["film"] = {
+	Wiktionary = "film#Noun",
+	topical_categories = true,
+}
+
 labels["film genre"] = {
 	aliases = {"cinema"},
 	display = "[[film#Noun|film]]",
 	topical_categories = "Film genres",
-}
-
-labels["film"] = {
-	Wiktionary = "film#Noun",
-	topical_categories = true,
 }
 
 labels["finance"] = {
@@ -2425,15 +2435,15 @@ labels["knitting"] = {
 	topical_categories = true,
 }
 
-labels["labour law"] = {
-	Wiktionary = true,
-	topical_categories = "Law",
-}
-
 labels["labour"] = {
 	aliases = {"labor", "labour movement", "labor movement"},
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["labour law"] = {
+	Wiktionary = true,
+	topical_categories = "Law",
 }
 
 labels["lacrosse"] = {
@@ -2446,15 +2456,15 @@ labels["landforms"] = {
 	topical_categories = true,
 }
 
-labels["law enforcement"] = {
-	aliases = {"police", "policing"},
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["law"] = {
 	aliases = {"legal"},
 	Wiktionary = "law#English",
+	topical_categories = true,
+}
+
+labels["law enforcement"] = {
+	aliases = {"police", "policing"},
+	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -2817,6 +2827,11 @@ labels["microscopy"] = {
 	topical_categories = true,
 }
 
+labels["military"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["military ranks"] = {
 	aliases = {"military rank"},
 	display = "[[military]]",
@@ -2826,11 +2841,6 @@ labels["military ranks"] = {
 labels["military unit"] = {
 	display = "[[military]]",
 	topical_categories = "Military units",
-}
-
-labels["military"] = {
-	Wiktionary = true,
-	topical_categories = true,
 }
 
 labels["milling"] = {
@@ -2913,6 +2923,11 @@ labels["mushroom"] = {
 	topical_categories = "Mushrooms",
 }
 
+labels["music"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["music genre"] = {
 	display = "[[music]]",
 	topical_categories = "Musical genres",
@@ -2920,11 +2935,6 @@ labels["music genre"] = {
 
 labels["music industry"] = {
 	Wikipedia = true,
-	topical_categories = true,
-}
-
-labels["music"] = {
-	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -3284,14 +3294,14 @@ labels["part of speech"] = {
 	topical_categories = "Parts of speech",
 }
 
-labels["particle physics"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["particle"] = {
 	display = "[[particle physics]]",
 	topical_categories = "Subatomic particles",
+}
+
+labels["particle physics"] = {
+	Wiktionary = true,
+	topical_categories = true,
 }
 
 labels["pasteurisation"] = {
@@ -3444,14 +3454,14 @@ labels["planetology"] = {
 	topical_categories = true,
 }
 
-labels["plant disease"] = {
-	display = "[[phytopathology]]",
-	topical_categories = "Plant diseases",
-}
-
 labels["plant"] = {
 	display = "[[botany]]",
 	topical_categories = "Plants",
+}
+
+labels["plant disease"] = {
+	display = "[[phytopathology]]",
+	topical_categories = "Plant diseases",
 }
 
 labels["playground games"] = {
@@ -3477,14 +3487,14 @@ labels["Pokémon"] = {
 	topical_categories = true,
 }
 
-labels["poker slang"] = {
-	display = "[[poker]] [[slang]]",
-	topical_categories = "Poker",
-}
-
 labels["poker"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["poker slang"] = {
+	display = "[[poker]] [[slang]]",
+	topical_categories = "Poker",
 }
 
 labels["political science"] = {
@@ -3745,13 +3755,13 @@ labels["robotics"] = {
 	topical_categories = true,
 }
 
-labels["rock paper scissors"] = {
-	topical_categories = true,
-}
-
 labels["rock"] = {
 	display = "[[petrology]]",
 	topical_categories = "Rocks",
+}
+
+labels["rock paper scissors"] = {
+	topical_categories = true,
 }
 
 labels["roleplaying games"] = {
@@ -3813,17 +3823,17 @@ labels["Rubik's Cube"] = {
 	topical_categories = true,
 }
 
+labels["rugby"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["rugby league"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
 labels["rugby union"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["rugby"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
@@ -3937,14 +3947,14 @@ labels["sewing"] = {
 	topical_categories = true,
 }
 
-labels["sex position"] = {
-	display = "[[sex]]",
-	topical_categories = "Sex positions",
-}
-
 labels["sex"] = {
 	Wiktionary = true,
 	topical_categories = true,
+}
+
+labels["sex position"] = {
+	display = "[[sex]]",
+	topical_categories = "Sex positions",
 }
 
 labels["sexology"] = {
@@ -4106,6 +4116,11 @@ labels["softball"] = {
 	topical_categories = true,
 }
 
+labels["software"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["software architecture"] = {
 	Wiktionary = true,
 	topical_categories = {"Software engineering", "Programming"},
@@ -4117,23 +4132,18 @@ labels["software engineering"] = {
 	topical_categories = true,
 }
 
-labels["software"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
 labels["soil science"] = {
-	Wiktionary = true,
-	topical_categories = true,
-}
-
-labels["sound engineering"] = {
 	Wiktionary = true,
 	topical_categories = true,
 }
 
 labels["sound"] = {
 	Wiktionary = "sound#Noun",
+	topical_categories = true,
+}
+
+labels["sound engineering"] = {
+	Wiktionary = true,
 	topical_categories = true,
 }
 
@@ -4214,14 +4224,14 @@ labels["standard of identity"] = {
 	topical_categories = "Standards of identity",
 }
 
-labels["Star Wars"] = {
-	display = "''[[Star Wars]]''",
-	topical_categories = true,
-}
-
 labels["star"] = {
 	display = "[[astronomy]]",
 	topical_categories = "Stars",
+}
+
+labels["Star Wars"] = {
+	display = "''[[Star Wars]]''",
+	topical_categories = true,
 }
 
 labels["statistical mechanics"] = {
@@ -4234,15 +4244,15 @@ labels["statistics"] = {
 	topical_categories = true,
 }
 
+labels["steroid"] = {
+	display = "[[biochemistry]]",
+	topical_categories = "Steroids",
+}
+
 labels["steroid hormone"] = {
 	aliases = {"steroid drug"},
 	display = "[[biochemistry]], [[steroids]]",
 	topical_categories = "Hormones",
-}
-
-labels["steroid"] = {
-	display = "[[biochemistry]]",
-	topical_categories = "Steroids",
 }
 
 labels["stock market"] = {
@@ -4513,13 +4523,13 @@ labels["toxicology"] = {
 	topical_categories = true,
 }
 
-labels["trading cards"] = {
-	display = "[[trading card]]s",
+labels["trading"] = {
+	Wiktionary = "trading#Noun",
 	topical_categories = true,
 }
 
-labels["trading"] = {
-	Wiktionary = "trading#Noun",
+labels["trading cards"] = {
+	display = "[[trading card]]s",
 	topical_categories = true,
 }
 
@@ -4875,15 +4885,15 @@ labels["Yazidism"] = {
 	topical_categories = true,
 }
 
+labels["yoga"] = {
+	Wiktionary = true,
+	topical_categories = true,
+}
+
 labels["yoga pose"] = {
 	aliases = {"asana"},
 	display = "[[yoga]]",
 	topical_categories = "Yoga poses",
-}
-
-labels["yoga"] = {
-	Wiktionary = true,
-	topical_categories = true,
 }
 
 labels["zodiac constellations"] = {
