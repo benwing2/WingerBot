@@ -493,16 +493,44 @@ pos_functions["adverbs"] = {
 
 pos_functions["letters"] = {
 	params = {
-		upper = true,
-		lower = true,
+		["type"] = true,
+		["upper"] = true,
+		["lower"] = true,
+		["mixed"] = true,
 	},
 	func = function(args, data)
-		if args.upper then
-			insert(data.inflections, {label = "lower case", nil})
-			insert(data.inflections, {label = "upper case", args.upper})
-		elseif args.lower then
-			insert(data.inflections, {label = "upper case", nil})
-			insert(data.inflections, {label = "lower case", args.lower})
+		if args.type then
+			if args.type ~= "upper" and args.type ~= "lower" and args.type ~= "mixed" then
+				error(("Unrecognized value for type '%s'; should be one of 'upper', 'lower' or 'mixed'"):format(
+					args.type))
+			end
+		end
+		local uppage = uupper(data.pagename)
+		local lopage = ulower(data.pagename)
+		if uppage == lopage then
+			if args.type then
+				error("Can't specify type= when letter has no case")
+			end
+			if args.upper or args.lower or args.mixed then
+				error("Can't specify upper=, lower= or mixed= when letter has no case")
+			end
+			table.insert(data.inflections, {label = "no case"})
+		elseif args.type == "upper" or data.pagename == uppage then
+			if args.upper then
+				error("Already uppercase; can't specify upper=")
+			end
+			table.insert(data.inflections, {label = "[[Appendix:Capital letter|upper case]]"})
+			table.insert(data.inflections, {args.lower or lopage, label = "lower case"})
+		elseif args.type == "lower" or data.pagename == lopage then
+			if args.lower then
+				error("Already uppercase; can't specify upper=")
+			end
+			table.insert(data.inflections, {label = "lower case"})
+			table.insert(data.inflections, {args.upper or uppage, label = "upper case"})
+		else
+			table.insert(data.inflections, {label = "mixed case"})
+			table.insert(data.inflections, {args.upper or uppage, label = "upper case"})
+			table.insert(data.inflections, {args.lower or lopage, label = "lower case"})
 		end
 	end,
 }
