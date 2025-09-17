@@ -25,7 +25,6 @@ local singularize = require_when_needed(en_utilities_module, "singularize")
 local pluralize = require_when_needed(en_utilities_module, "pluralize")
 local m_inflection_utilities = require_when_needed(inflection_utilities_module)
 local is_adjective_module = "Module:is-adjective"
-local is_common_module = "Module:is-common"
 local is_noun_module = "Module:is-noun"
 local dump = mw.dumpObject
 
@@ -163,7 +162,12 @@ local function parse_noun_adj_scraping_specs(data, declspecs, args_pos, infl_tem
 				error(("Syntax error in self-scraping spec '%s'"):format(declspecs[1]))
 			end
 		end
-		local decls = require(is_common_module).find_inflection(data.pagename, infl_template, false, false, declid)
+		local decls = require(inflection_utilities_module).find_inflection {
+			langname = "Icelandic",
+			lemma = data.pagename,
+			infltemp = infl_template,
+			inflid = declid
+		}
 		if type(decls) == "string" then
 			data.alternant_multiword_spec = {scrape_errors = {decls}}
 			return nil, nil, {data}
@@ -544,7 +548,6 @@ local function do_auto_adjectives(args, data)
 		error("Internal error: Only Icelandic supported at the moment")
 	end
 	local m_is_adjective = require(is_adjective_module)
-	local m_is_common = require(is_common_module)
 	local alternant_multiword_specs = {}
 	local multiple_data = {}
 	local declspecs, pos, scrape_error_data = parse_noun_adj_scraping_specs(data, args[1], args.pos, "is-adecl",
