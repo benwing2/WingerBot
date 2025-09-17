@@ -55,7 +55,7 @@ def process_page(page, index):
     pagemsg("Won't create page, would lead to errors: <%s>" % result)
   else:
     pagemsg("Creating page, output is <%s>" % result)
-    comment = 'Created page with "%s"' % contents
+    comment = args.comment or 'Created page with "%s"' % contents
     if args.save:
       page.text = contents
       if blib.safe_page_save(page, comment, errandpagemsg):
@@ -66,6 +66,7 @@ def process_page(page, index):
 params = blib.create_argparser("Create wanted categories with {{auto cat}}", include_pagefile=True)
 params.add_argument("--allow-empty", help="Proceed even when category is empty.", action="store_true")
 params.add_argument("--overwrite", help="Overwrite existing text.", action="store_true")
+params.add_argument("--comment", help="Comment in place of 'Created page with \"{{auto cat}}\"'.")
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
