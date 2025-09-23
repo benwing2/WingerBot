@@ -1,31 +1,33 @@
 local raw_handlers = {}
+local raw_categories = {}
 
 
 --[=[
 This module implements the topic category subsystem. It is currently implemented with a single raw handler that
-handlers both language-specific and umbrella topic categories. The topmost category [[:Category:All topics]] is special
-and potentially could be handled as a separate raw category, but currently it's handled as part of the raw handler.
+handlers both language-specific and umbrella topic categories, and a corresponding handler for thesaurus categories.
+The topmost topic category [[:Category:All topics]] is special and potentially could be handled as a separate raw
+category, but currently it's handled as part of the raw topic handler. The topmost thesaurus category
+[[:Category:Thesaurus]] is in fact handled as a raw category.
 ]=]
 
 local functions_module = "Module:fun"
 local labels_utilities_module = "Module:labels/utilities"
 local languages_module = "Module:languages"
-local patterns_module = "Module:patterns"
+local string_pattern_escape_module = "Module:string/patternEscape"
+local string_replacement_escape_module = "Module:string/replacementEscape"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
 
-local topic_data_module = "Module:User:Benwing2/category tree/topic/data"
+local topic_data_module = "Module:category tree/topic/data"
 local topic_utilities_module = "Module:category tree/topic/utilities"
-local thesaurus_data_module = "Module:User:Benwing2/category tree/topic/thesaurus"
-
-local m_patterns = require(patterns_module)
+local thesaurus_data_module = "Module:category tree/topic/thesaurus data"
 
 local concat = table.concat
 local insert = table.insert
 local dump = mw.dumpObject
 local is_callable = require(functions_module).is_callable
-local pattern_escape = m_patterns.pattern_escape
-local replacement_escape = m_patterns.replacement_escape
+local pattern_escape = require(string_pattern_escape_module)
+local replacement_escape = require(string_replacement_escape_module)
 local split = require(string_utilities_module).split
 
 local type_data = {
@@ -214,16 +216,13 @@ local function get_breadcrumb(data)
 	local topdata, lang, label = data.topdata, data.lang, data.label
 	local ret
 
-	if lang then
-		ret = topdata.breadcrumb or format_displaytitle(data, false, "upcase")
-	else
-		ret = topdata.umbrella and topdata.umbrella.breadcrumb or
-			topdata.breadcrumb or format_displaytitle(data, false, "upcase")
+	if not lang and topdata.umbrella then
+		ret = topdata.umbrella.breadcrumb or topdata.umbrella.breadcrumb_and_sort_base
 	end
 	if not ret then
-		ret = label
+		ret = topdata.breadcrumb or topdata.breadcrumb_and_sort_base or format_displaytitle(data, false, "upcase") or
+			label
 	end
-
 	if type(ret) == "string" or type(ret) == "number" then
 		ret = {name = ret}
 	end
@@ -295,9 +294,9 @@ substitute_template_specs = function(data, desc)
 		local catname = ucfirst(label)
 		desc = gsub_escaping_replacement(desc, "{{{umbrella_msg}}}",
 			"This category contains no dictionary entries, only other categories. The subcategories are of two " ..
-			"sorts:\n\n* Subcategories named like \"aa:" .. catname ..
+			"sorts:\n\n* Subcategories named like \"{{{thespref}}}aa:" .. catname ..
 			"\" (with a prefixed language code) are categories of terms in specific languages. " ..
-			"You may be interested especially in [[:Category:en:" .. catname .. "]], for English terms.\n" ..
+			"You may be interested especially in [[:Category:{{{thespref}}}en:" .. catname .. "]], for English terms.\n" ..
 			"* Subcategories of this one named without the prefixed language code are further categories just like " ..
 			"this one, but devoted to finer topics."
 		)
@@ -328,6 +327,8 @@ substitute_template_specs = function(data, desc)
 		desc = gsub_escaping_replacement(desc, "{{{topic}}}", topic)
 	end
 	
+	desc = desc:gsub("{{{thespref}}}", data.thesaurus_data and "Thesaurus:" or "")
+
 	return desc
 end
 
@@ -423,7 +424,6 @@ local function get_description_additional_preceding(data)
 			return txt
 		end
 		txt = txt:gsub(" terms([ .,])", " thesaurus entries%1")
-		txt = txt:gsub("Category:", "Category:Thesaurus:")
 		return txt
 	end
 
@@ -517,7 +517,9 @@ end
 
 
 local function normalize_sort_key(data, sort)
-	local lang, label = data.lang, data.label
+	local topdata, lang, label = data.topdata, data.lang, data.label
+	sort = sort or not lang and topdata.umbrella and topdata.umbrella.breadcrumb_and_sort_base or
+		topdata.breadcrumb_and_sort_base
 	if not sort then
 		-- When defaulting sort key to label, strip 'The ' (e.g. in 'The Matrix', 'The Hunger Games')
 		-- and 'A ' (e.g. in 'A Song of Ice and Fire', 'A Christmas Carol') from label.
@@ -767,7 +769,7 @@ table.insert(raw_handlers, function(data)
 			error(("Category is not allowed as a Thesaurus category: %s (see the list of parent substitutions at " ..
 				"[[Module:category tree/topic/thesaurus]])"):format(data.category))
 		end
-		return generate_spec(lang, upcase_label, thesaurus_data)
+		return generate_spec(data.category, lang, upcase_label, thesaurus_data)
 	end
 end)
 
@@ -787,7 +789,7 @@ table.insert(raw_handlers, function(data)
 		upcase_label = data.category
 	end
 
-	return generate_spec(lang, upcase_label)
+	return generate_spec(data.category, lang, upcase_label)
 end)
 
 
