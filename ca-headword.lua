@@ -156,6 +156,7 @@ local function parse_and_insert_inflection(data, args, field, label, plpos, acce
 		headdata = data,
 		forms = args[field],
 		paramname = field,
+		splitchar = ",",
 		label = label,
 		accel = accel and {form = accel} or nil,
 		check_missing = true,
@@ -221,6 +222,7 @@ local function do_adjective(args, data, pos, is_suffix, is_superlative)
 		local retval = m_headword_utilities.parse_term_list_with_modifiers {
 			paramname = field,
 			forms = args[field],
+			splitchar = ",",
 		}
 		if not retval[1] then
 			return {{term = "+"}}
@@ -421,9 +423,9 @@ local function get_adjective_params(adjtype)
 		["sp"] = true, -- special indicator: "first", "first-last", etc.
 		["f"] = list_param, --feminine form(s)
 		[1] = {alias_of = "f", list = false},
-		["pl"] = list, --plural override(s)
-		["mpl"] = list, --masculine plural override(s)
-		["fpl"] = list, --feminine plural override(s)
+		["pl"] = list_param, --plural override(s)
+		["mpl"] = list_param, --masculine plural override(s)
+		["fpl"] = list_param, --feminine plural override(s)
 	}
 	if adjtype == "base" then
 		params["comp"] = list_param --comparative(s)
@@ -558,6 +560,7 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 		plurals = m_headword_utilities.parse_term_list_with_modifiers {
 			paramname = {2, "pl"},
 			forms = args[2],
+			splitchar = ",",
 		}
 		-- Check for special plural signals
 		local mode = nil
@@ -682,6 +685,7 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 		local mfs = m_headword_utilities.parse_term_list_with_modifiers {
 			paramname = field,
 			forms = args[field],
+			splitchar = ",",
 			frob = function(term)
 				if term == "+" then
 					-- Generate default masculine/feminine.
@@ -723,6 +727,7 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 		local mfpl = m_headword_utilities.parse_term_list_with_modifiers {
 			paramname = mfplfield,
 			forms = args[mfplfield],
+			splitchar = ",",
 		}
 		local new_mfpls = {}
 		local saw_plus
