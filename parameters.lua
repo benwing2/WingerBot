@@ -7,14 +7,16 @@
 
 local export = {}
 
-local debug_track_module = "Module:debug/track"
+local collation_module = "Module:collation"
 local families_module = "Module:families"
-local function_module = "Module:fun"
+local functions_module = "Module:fun"
 local gender_and_number_utilities_module = "Module:gender and number utilities"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local math_module = "Module:math"
 local pages_module = "Module:pages"
+local parameters_finalize_set_module = "Module:parameters/finalizeSet"
+local parameters_track_module = "Module:parameters/track"
 local parse_utilities_module = "Module:parse utilities"
 local references_module = "Module:references"
 local scribunto_module = "Module:Scribunto"
@@ -32,7 +34,6 @@ local table = table
 local dump = mw.dumpObject
 local find = string.find
 local format = string.format
-local gmatch = string.gmatch
 local gsub = string.gsub
 local insert = table.insert
 local ipairs = ipairs
@@ -40,29 +41,21 @@ local list_to_text = mw.text.listToText
 local make_title = mw_title.makeTitle
 local match = string.match
 local max = math.max
-local maxn = table.maxn
 local new_title = mw_title.new
 local next = next
 local pairs = pairs
 local pcall = pcall
-local rawset = rawset
 local require = require
-local sort = table.sort
 local sub = string.sub
 local tonumber = tonumber
-local traceback = debug.traceback
 local type = type
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
-local current_title_text, current_namespace -- Defined when needed.
+local current_title_text, current_namespace, sets -- Defined when needed.
 local namespaces = mw.site.namespaces
 
 --[==[
 Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no overhead after the first call, since the target functions are called directly in any subsequent calls.]==]
-local function debug_track(...)
-	debug_track = require(debug_track_module)
-	return debug_track(...)
-end
-
 local function decode_entities(...)
 	decode_entities = require(string_utilities_module).decode_entities
 	return decode_entities(...)
@@ -71,6 +64,11 @@ end
 local function extend(...)
 	extend = require(table_module).extend
 	return extend(...)
+end
+
+local function finalize_set(...)
+	finalize_set = require(parameters_finalize_set_module)
+	return finalize_set(...)
 end
 
 local function get_family_by_code(...)
@@ -119,7 +117,7 @@ local function gsplit(...)
 end
 
 local function is_callable(...)
-	is_callable = require(function_module).is_callable
+	is_callable = require(functions_module).is_callable
 	return is_callable(...)
 end
 
@@ -149,7 +147,7 @@ local function num_keys(...)
 end
 
 local function parse_gender_and_number_spec(...)
-	parse_gender_and_number_spec = require(gender_and_number_utilities_module).gender_and_number_spec
+	parse_gender_and_number_spec = require(gender_and_number_utilities_module).parse_gender_and_number_spec
 	return parse_gender_and_number_spec(...)
 end
 
@@ -173,14 +171,14 @@ local function scribunto_parameter_key(...)
 	return scribunto_parameter_key(...)
 end
 
+local function sort(...)
+	sort = require(collation_module).sort
+	return sort(...)
+end
+
 local function sorted_pairs(...)
 	sorted_pairs = require(table_module).sortedPairs
 	return sorted_pairs(...)
-end
-
-local function split(...)
-	split = require(string_utilities_module).split
-	return split(...)
 end
 
 local function split_labels_on_comma(...)
@@ -196,6 +194,11 @@ end
 local function tonumber_extended(...)
 	tonumber_extended = require(math_module).tonumber_extended
 	return tonumber_extended(...)
+end
+
+local function track(...)
+	track = require(parameters_track_module)
+	return track(...)
 end
 
 local function yesno(...)
@@ -287,6 +290,9 @@ Possible parameter tags are listed below:
    values in the form {"0x100"} may optionally be used instead, which otherwise have the same syntax restrictions
    (including signs, decimal digits, and leading zeroes after {"0x"}). Hexadecimal inputs are not case-sensitive. Lua's
    special number values (`inf` and `nan`) are not possible inputs.
+:; {type = "range"}
+:: The value is interpreted as a hyphen-separated range of two numbers (e.g. {"2-4"} is interpreted as the range from
+   {2} to {4}). A number input without a hyphen is interpreted as a range from that number to itself (e.g. the input {"1"} is interpreted as the range from {1} to {1}). Any optional flags which are available for numbers will also work for ranges.
 :; {type = "language"}
 :: The value is interpreted as a full or [[Wiktionary:Languages#Etymology-only languages|etymology-only language]] code
    language code (or name, if {method = "name"}) and converted into the corresponding object (see [[Module:languages]]).
@@ -355,7 +361,7 @@ Possible parameter tags are listed below:
 :: The value is interpreted as one or more references, in the format prescribed by `parse_references()` in
    [[Module:references]], and converted into a list of objects of the form accepted by `format_references()` in the same
    module. If a syntax error is found in the reference format, an error is thrown.
-:; {type = "gendesr"}
+:; {type = "genders"}
 :: The value is interpreted as one or more comma-separated gender/number specs, in the format prescribed by
    [[Module:gender and number]]. Inline modifiers (`<q:...>`, `<qq:...>`, `<l:...>`, `<ll:...>` or `<ref:...>`) may be
    attached to a gender/number spec.
@@ -444,6 +450,10 @@ Possible parameter tags are listed below:
   {{para|sc1}} (the script code of the first element, used when the first element is prefixed with a language code to
   indicate that it is in a different language). When this is used, the resulting table will contain an additional named
   value, `default`, which contains the value for the indexless argument.
+; {flatten = true}
+: This is used in conjunction with list-type parameters when `sublist` or a list-generating type such as {"labels"} or
+  {"genders"} is also specified, and causes the resulting list to be flattened. Not currently compatible with
+  {allow_holes = true}.
 ; {demo = true}
 : This is used as a way to ensure that the parameter is only enabled on the template's own page (and its documentation
   page), and in the User: namespace; otherwise, it will be treated as an unknown parameter. This should only be used if
@@ -451,6 +461,9 @@ Possible parameter tags are listed below:
   categorization). In most cases, it should be possible to do this without using demo parameters, but they may be
   required if a template/documentation page also contains real uses of the same template as well (e.g. {{tl|shortcut}}),
   as a way to distinguish them.
+; {deprecated = true}
+: This is for tracking the use of deprecated parameters, including any aliases that are being brought out of use. See
+  [[Wiktionary:Tracking]] for more information.
 ]==]
 
 -- Returns true if the current page is a template or module containing the current {{#invoke}}.
@@ -475,22 +488,6 @@ local function is_own_page(include_documentation)
 	return include_documentation and own_page_or_documentation or own_page
 end
 
-local function track(page)
-	local pages, current = {"parameters/" .. page}
-	-- Check through the traceback to get the calling module and function.
-	for mod, func in gmatch(traceback(), "%f[^%z\n]\tModule:(.-):%d+: in function '(.-)'%f[%z\n]") do
-		if current == nil then
-			current = mod -- Name of this module.
-		elseif mod ~= current then
-			insert(pages, "parameters/" .. page .. "/" .. mod)
-			-- FIXME: if the calling function is the one called by #invoke:, traceback calls it "chunk" instead of its actual name.
-			insert(pages, "parameters/" .. page .. "/" .. mod .. "/" .. func)
-			break
-		end
-	end
-	debug_track(pages)
-end
-
 -------------------------------------- Some helper functions -----------------------------
 
 -- Convert a list in `list` to a string, separating the final element from the preceding one(s) by `conjunction`. If
@@ -504,14 +501,6 @@ local function concat_list(list, conjunction, dump_vals)
 		end
 	end
 	return list_to_text(list, nil, conjunction)
-end
-
--- Split an argument on comma, but not comma followed by whitespace.
-local function split_on_comma_without_whitespace(val)
-	if find(val, "\\", nil, true) or match(val, ",%s") then
-		return split_on_comma(val)
-	end
-	return split(val, ",")
 end
 
 -- A helper function for use with generating error-signaling functions in the presence of raw value conversion. Format a
@@ -580,6 +569,43 @@ local function validate_name(name, desc, extra_name, is_argument)
 		"Internal error: expected %s to be Scribunto-compatible: %s (a %s) should be %s (a %s)",
 		extra_name and (desc .. dump(extra_name)) or desc, dump(name), type(name), dump(normalized), type(normalized)
 	))
+end
+
+local function validate_alias_options(...)
+	local invalid = {
+		required = true,
+		default = true,
+		template_default = true,
+		allow_holes = true,
+		disallow_holes = true,
+		disallow_missing = true,
+	}
+	
+	function validate_alias_options(param, name, main_param, alias_of)
+		for k in pairs(param) do
+			if invalid[k] then
+				track("bad alias option")
+--				internal_process_error(
+--					"parameter %s cannot have the option %s, as it is an alias of parameter %s.",
+--					name, option, alias_of
+--				)
+			end
+		end
+		-- Soon, aliases will inherit options from the main parameter via __index. Track cases where this would happen.
+		if main_param ~= true then
+			for k in pairs(main_param) do
+				if param[k] == nil and not invalid[k] then
+					if k == "list" then -- these need to be changed to list = false to retain current behaviour
+						track("mismatched list alias option")
+					elseif not (k == "type" or k == "set" or k == "sublist") then -- rarely specified on aliases, as they're effectively inherited already
+						track("mismatched alias option")
+					end
+				end
+			end
+		end
+	end
+	
+	validate_alias_options(...)
 end
 
 -- TODO: give ranges instead of long lists, if possible.
@@ -664,8 +690,14 @@ end
 local function split_sublist(val, name, sublist)
 	if sublist == true then
 		return gsplit(val, "%s*,%s*")
+	-- Split an argument on comma, but not comma followed by whitespace.
 	elseif sublist == "comma without whitespace" then
-		sublist = split_on_comma_without_whitespace
+		-- If difficult cases, use split_on_comma.
+		if find(val, "\\", nil, true) or match(val, ",%s") then
+			return iterate_list(split_on_comma(val))
+		end
+		-- Otherwise, use gsplit.
+		return gsplit(val, ",")
 	elseif type(sublist) == "string" then
 		return gsplit(val, sublist)
 	elseif not is_callable(sublist) then
@@ -684,32 +716,44 @@ end
 -- if an alias map is given).
 local function check_set(val, name, param, param_type)
 	if param_type == "boolean" then
-		error(format('Internal error: Cannot use `set` with `type = "%s"`', param_type))
+		error(format('Internal error: cannot use `set` with `type = "%s"`', param_type))
+	-- Needs to be special cased because the check happens after conversion to numbers.
 	elseif param_type == "number" then
-		-- Needs to be special cased because the check happens after conversion to numbers.
 		return val
 	end
-	local newval = param.set[val]
-	if newval == nil then
-		local list = {}
-		for k, v in pairs(param.set) do
-			if v == true then
-				insert(list, dump(k))
-			else
-				insert(list, ("%s (alias of %s)"):format(dump(k), dump(v)))
-			end
+
+	local set, map = param.set
+	if sets == nil then
+		map = finalize_set(set, name)
+		sets = {[set] = map}
+	else
+		map = sets[set]
+		if map == nil then
+			map = finalize_set(set, name)
+			sets[set] = map
 		end
-		sort(list)
-		-- If the parameter is not required then put "or empty" at the end of the list, to avoid implying the parameter is actually required.
-		if not param.required then
-			insert(list, "empty")
-		end
-		convert_val_error(val, name, list)
 	end
+
+	local newval = map[val]
 	if newval == true then
 		return val
+	elseif newval ~= nil then
+		return newval
 	end
-	return newval
+
+	local list = {}
+	for k, v in sorted_pairs(map) do
+		if v == true then
+			insert(list, dump(k))
+		else
+			insert(list, ("%s (alias of %s)"):format(dump(k), dump(v)))
+		end
+	end
+	-- If the parameter is not required then put "or empty" at the end of the list, to avoid implying the parameter is actually required.
+	if not param.required then
+		insert(list, "empty")
+	end
+	convert_val_error(val, name, list)
 end
 
 local function convert_language(val, name, param, allow_etym)
@@ -735,6 +779,32 @@ local function convert_language(val, name, param, allow_etym)
 		insert(links, "[[WT:LOF]]")
 	end
 	convert_val_error(val, name, concat_list(list, " or ") .. " " .. (method == "name" and "name" or "code"), concat_list(links, " and "))
+end
+
+local function convert_number(val, allow_hex)
+	-- Call tonumber_extended with the `real_finite` flag, which filters out ±infinity and NaN.
+	-- By default, specify base 10, which prevents 0x hex inputs from being converted.
+	-- If `allow_hex` is set, then don't give a base, which means 0x hex inputs will work.
+	local num = tonumber_extended(val, not allow_hex and 10 or nil, "finite_real")
+	if not num then
+		return num
+	end
+	if match(val, "[eEpP.]") then -- float
+		track("number not an integer")
+	end
+	if find(val, "+", nil, true) then
+		track("number with +")
+	end
+	-- Track various unusual number inputs to determine if it should be restricted to positive integers by default (possibly including 0).
+	if not is_positive_integer(num) then
+		track("number not a positive integer")
+		if num == 0 then
+			track("number is 0")
+		elseif not is_integer(num) then
+			track("number not an integer")
+		end
+	end
+	return num
 end
 
 -- TODO: validate parameter specs separately, as it's making the handler code really messy at the moment.
@@ -764,40 +834,52 @@ local type_handlers = setmetatable({
 		return convert_language(val, name, param, true)
 	end,
 
-	["full language"] = function(val, name, param)
-		return convert_language(val, name, param)
-	end,
+	["full language"] = convert_language,
 
 	["number"] = function(val, name, param)
 		local allow_hex = param.allow_hex
 		if allow_hex and allow_hex ~= true then
-			error(format('Internal error: expected `allow_hex` for type `number` to be of type "boolean" or undefined, but saw %s', dump(allow_hex)))
-		elseif match(val, "[eEpP.]") then -- float
-			track("number not an integer")
+			error(format(
+				'Internal error: expected `allow_hex` for type `number` to be of type "boolean" or undefined, but saw %s',
+				dump(allow_hex)
+			))
 		end
-		if find(val, "+", nil, true) then
-			track("number with +")
-		end
-		-- Call tonumber_extended with the `real_finite` flag, which filters out ±infinity and NaN.
-		-- By default, specify base 10, which prevents 0x hex inputs from being converted.
-		-- If `allow_hex` is set, then don't give a base, which means 0x hex inputs will work.
-		local num = tonumber_extended(val, not allow_hex and 10 or nil, "finite_real")
-		if not num then
-			convert_val_error(val, name, (allow_hex and "decimal or hexadecimal " or "") .. "number")
-		-- Track various unusual number inputs to determine if it should be restricted to positive integers by default (possibly including 0).
-		elseif not is_positive_integer(num) then
-			track("number not a positive integer")
-			if num == 0 then
-				track("number is 0")
-			elseif not is_integer(num) then
-				track("number not an integer")
-			end
-		end
+		local num = convert_number(val, allow_hex)
 		if param.set then
 			-- Don't pass in "number" here; otherwise no checking will happen.
 			num = check_set(num, name, param)
 		end
-		return num
+		if num then
+			return num
+		end
+		convert_val_error(val, name, (allow_hex and "decimal or hexadecimal " or "") .. "number")
+	end,
+
+	["range"] = function(val, name, param)
+		local allow_hex = param.allow_hex
+		if allow_hex and allow_hex ~= true then
+			error(format(
+				'Internal error: expected `allow_hex` for type `range` to be of type "boolean" or undefined, but saw %s',
+				dump(allow_hex)
+			))
+		end
+		-- Pattern ensures leading minus signs are accounted for.
+		local m1, m2 = match(val, "^(%s*%S.-)%-(%s*%S.*)")
+		if m1 then
+			m1 = convert_number(m1, allow_hex)
+			if m1 then
+				m2 = convert_number(m2, allow_hex)
+				if m2 then
+					return {m1, m2}
+				end
+			end
+		end
+		-- Try `val` if it couldn't be split into a range, and return a range of `val` to `val` if possible.
+		local num = convert_number(val, allow_hex)
+		if num then
+			return {num, num}
+		end
+		convert_val_error(val, name, (allow_hex and "decimal or hexadecimal " or "") .. "number or a hyphen-separated range of two numbers")
 	end,
 
 	["parameter"] = function(val, name, param)
@@ -818,8 +900,8 @@ local type_handlers = setmetatable({
 			return {{spec = val}}
 		end
 
-		-- NOTE: We don't pass in allow_space_after_comma. Consistent with other comma-separated types, there shouldn't
-		-- be a space after the comma.
+		-- NOTE: We don't pass in allow_space_around_comma. Consistent with other comma-separated types, there shouldn't
+		-- be spaces around the comma.
 		return parse_gender_and_number_spec {
 			spec = val,
 			parse_err = make_parse_err(val, name),
@@ -907,15 +989,20 @@ local type_handlers = setmetatable({
 	end,
 }, {
 	-- TODO: decode HTML entities in all input values. Non-trivial to implement, because we need to avoid any downstream functions decoding the output from this module, which would be double-decoding. Note that "title" has this implemented already, and it needs to have both the raw input and the decoded input to avoid double-decoding by me.title.new, so any implementation can't be as simple as decoding in __call then passing the result to the handler.
-	__call = function(self, val, name, param, param_type)
+	__call = function(self, val, name, param, param_type, default)
 		local val_type = type(val)
 		-- TODO: check this for all possible parameter types.
 		if val_type == param_type then
 			return val
-		-- TODO: throw an internal error.
 		elseif val_type ~= "string" then
-			track("input is not string")
-			track("input is not string/type handlers")
+			local expected = "string"
+			if default and (param_type == "boolean" or param_type == "number") then
+				expected = param_type .. " or " .. expected
+			end
+			error(format(
+				"Internal error: %sargument %s has the type %s; expected a %s.",
+				default and (default .. " for ") or "", name, dump(val_type), expected
+			))
 		end
 		local func = self[param_type]
 		if func == nil then
@@ -933,22 +1020,18 @@ Convert a parameter value according to the associated specs listed in the `param
 This function processes all the conversion-related fields in `param`, including `type`, `set`, `sublist`, `convert`,
 etc. It returns the converted value.
 ]==]
-local function convert_val(val, name, param)
+local function convert_val(val, name, param, default)
 	local param_type = param.type or "string"
 	-- If param.type is a function, resolve it to a recognized type.
 	if is_callable(param_type) then
 		param_type = param_type(val)
 	end
-	local sublist = param.sublist
-	if sublist then
-		local retlist = {}
-		if type(val) ~= "string" then
-			error(format("Internal error: %s is not a string.", dump(val)))
-		end
-		if param.convert then
-			local thisval, insval
-			local thisindex = 0
-			local parse_err
+	local convert, sublist = param.convert, param.sublist
+	-- `val` might not be a string if it's the default value.
+	if sublist and type(val) == "string" then
+		local retlist, set = {}, param.set
+		if convert then
+			local thisindex, thisval, insval, parse_err = 0
 			if is_callable(name) then
 				-- We assume the passed-in error function in `name` already shows the parameter name and raw value.
 				function parse_err(msg)
@@ -964,49 +1047,50 @@ local function convert_val(val, name, param)
 				end
 			end
 			for v in split_sublist(val, name, sublist) do
-				thisval = v
-				thisindex = thisindex + 1
-				if param.set then
+				thisindex, thisval = thisindex + 1, v
+				if set then
 					v = check_set(v, name, param, param_type)
 				end
-				insert(retlist, param.convert(type_handlers(v, name, param, param_type), parse_err))
+				insert(retlist, convert(type_handlers(v, name, param, param_type, default), parse_err))
 			end
 		else
 			for v in split_sublist(val, name, sublist) do
-				if param.set then
+				if set then
 					v = check_set(v, name, param, param_type)
 				end
-				insert(retlist, type_handlers(v, name, param, param_type))
+				insert(retlist, type_handlers(v, name, param, param_type, default))
 			end
 		end
 		return retlist
-	else
-		if param.set then
-			val = check_set(val, name, param, param_type)
-		end
-		local retval = type_handlers(val, name, param, param_type)
-		if param.convert then
-			local parse_err
-			if is_callable(name) then
-				-- We assume the passed-in error function in `name` already shows the parameter name and raw value.
-				if retval == val then
-					-- This is an optimization to avoid creating a closure. The second arm works correctly even
-					-- when retval == val.
-					parse_err = name
-				else
-					function parse_err(msg)
-						name(msg_with_processed(msg, val, retval))
-					end
-				end
+	elseif param.set then
+		val = check_set(val, name, param, param_type)
+	end
+	local retval = type_handlers(val, name, param, param_type, default)
+	if convert then
+		local parse_err
+		if is_callable(name) then
+			-- We assume the passed-in error function in `name` already shows the parameter name and raw value.
+			if retval == val then
+				-- This is an optimization to avoid creating a closure. The second arm works correctly even
+				-- when retval == val.
+				parse_err = name
 			else
 				function parse_err(msg)
-					error(format("%s: parameter %s=%s", msg_with_processed(msg, val, retval), name, val))
+					name(msg_with_processed(msg, val, retval))
 				end
 			end
-			retval = param.convert(retval, parse_err)
+		else
+			function parse_err(msg)
+				error(format("%s: parameter %s=%s", msg_with_processed(msg, val, retval), name, val))
+			end
 		end
-		return retval
+		retval = convert(retval, parse_err)
 	end
+	-- If `sublist` is set but the input wasn't a string, return `retval` as a one-item list.
+	if sublist then
+		retval = {retval}
+	end
+	return retval
 end
 export.convert_val = convert_val -- used by [[Module:parameter utilities]]
 
@@ -1017,7 +1101,7 @@ local function unknown_param(name, val, args_unknown)
 end
 
 local function check_string_param_modifier(param_type, name, tag)
-	if param_type and not (param_type == "string" or param_type == "parameter" or type(param_type) == "function") then
+	if param_type and not (param_type == "string" or param_type == "parameter" or is_callable(param_type)) then
 		internal_process_error(
 			"%s cannot be set unless %s is set to %s (the default), %s or a function: parameter %s has the type %s.",
 			tag, "type", "string", "parameter", name, param_type
@@ -1082,7 +1166,7 @@ local function handle_holes(params, val, name)
 		if empty then
 			-- Remove `empty` from `val`, so it doesn't get returned.
 			val.empty = nil
-			for i = 1, max(val.maxindex, maxn(empty)) do
+			for i = 1, max(val.maxindex, empty.maxindex) do
 				if val[i] == nil and not empty[i] then
 					local keys = extend(num_keys(val), num_keys(empty))
 					sort(keys)
@@ -1099,7 +1183,7 @@ local function handle_holes(params, val, name)
 	end
 	-- If `allow_holes` is set, there's nothing left to do.
 	if param.allow_holes then
-		return
+		-- do nothing
 	-- Otherwise, remove any holes: `pairs` won't work, as it's unsorted, and
 	-- iterating from 1 to `maxindex` times out with inputs like |100000000000=,
 	-- so use num_keys to get a list of numerical keys sorted from lowest to
@@ -1108,22 +1192,49 @@ local function handle_holes(params, val, name)
 	-- new table. If `disallow_holes` is specified, then there can't be any
 	-- holes in the list, so there's no reason to check again; this doesn't
 	-- apply to `disallow_missing`, however.
-	elseif not disallow_holes then
-		local keys, i = num_keys(val), 0
-		while true do
-			i = i + 1
-			local key = keys[i]
-			if key == nil then
-				break
-			elseif i ~= key then
-				val[i], val[key] = val[key], nil
+	else
+		if not disallow_holes then
+			local keys, i = num_keys(val), 0
+			while true do
+				i = i + 1
+				local key = keys[i]
+				if key == nil then
+					break
+				elseif i ~= key then
+					track("holes compressed")
+					val[i], val[key] = val[key], nil
+				end
 			end
 		end
+		-- Some code depends on only numeric params being present when no holes are
+		-- allowed (e.g. by checking for the presence of arguments using next()), so
+		-- remove `maxindex`.
+		val.maxindex = nil
 	end
-	-- Some code depends on only numeric params being present when no holes are
-	-- allowed (e.g. by checking for the presence of arguments using next()), so
-	-- remove `maxindex`.
-	val.maxindex = nil
+end
+
+local function maybe_flatten(params, val, name)
+	local param = params[name]
+	if param.flatten then
+		if param.allow_holes then
+			process_error("For parameter %s, can't set both `allow_holes` and `flatten`", name)
+		end
+		if not param.sublist and param.type ~= "genders" and param.type ~= "labels" and
+			param.type ~= "references" and param.type ~= "qualifier" then
+			process_error("For parameter %s, can only set `flatten` along with `sublist` or a list-generating type", name)
+		end
+		-- Do the flattening ourselves rather than calling flatten() in [[Module:table]], which will attempt to
+		-- flatten non-list objects like title objects, and cause an error in the process.
+		-- FIXME: We should do this in-place if possible.
+		local newlist = {}
+		for _, sublist in ipairs(val) do
+			for _, item in ipairs(sublist) do
+				insert(newlist, item)
+			end
+		end
+		val = newlist
+	end
+	return val
 end
 
 -- If both `template_default` and `default` are given, `template_default` takes precedence, but only on the template or
@@ -1131,59 +1242,23 @@ end
 -- `template_default` doesn't apply if any args are set, which helps (somewhat) with examples on documentation pages
 -- transcluded into the template page. HACK: We still run into problems on documentation pages transcluded into the
 -- template page when pagename= is set. Check this on the assumption that pagename= is fairly standard.
-local function convert_default_val(name, param, pagename_set, any_args_set)
+local function convert_default_val(name, param, pagename_set, any_args_set, add_empty_sublist)
 	if not pagename_set then
 		local val = param.template_default
 		if val ~= nil and not any_args_set and is_own_page() then
-			return convert_val(val, name, param)
+			return convert_val(val, name, param, "template default")
 		end
 	end
 	local val = param.default
 	if val ~= nil then
-		return convert_val(val, name, param)
+		return convert_val(val, name, param, "default")
+	-- Sublist parameters should return an empty table if not given, but only do
+	-- this if the parameter isn't also a list (in which case it will already
+	-- be an empty table).
+	-- FIXME: do this once all modules that pass in a sublist parameter treat an empty sublist identically to a nil argument; some currently do things based on the fact an argument exists at all.
+--	elseif add_empty_sublist and param.sublist then
+		--return {}
 	end
-end
-
-
-local function is_string_or_number(item)
-	return type(item) == "string" or type(item) == "number"
-end
-
-local function list_to_alias_map(list)
-	local set, i = {}, 0
-	while true do
-		i = i + 1
-		local item = list[i]
-		if item == nil then
-			return set
-		end
-		if type(item) == "table" then
-			local canon = item[1]
-			if not is_string_or_number(canon) then
-				internal_process_error("First element of list item #%s must be a string or number: %s", i, canon)
-			end
-			set[canon] = true
-			local j = 1
-			while true do
-				j = j + 1
-				local alias = item[j]
-				if alias == nil then
-					break
-				end
-				if not is_string_or_number(alias) then
-					internal_process_error("Alias at position %s of canonical item %s at position %s must be a string or number: %s",
-						j, canon, i, alias)
-				end
-				set[alias] = canon
-			end
-		else
-			if not is_string_or_number(item) then
-				internal_process_error("Alias map element #%s must be a string or number: %s", i, item)
-			end
-			set[item] = true
-		end
-	end
-	return set
 end
 
 --[==[
@@ -1207,76 +1282,64 @@ the remainder to the function that handles a specific inflectional type.
 ]==]
 function export.process(args, params, return_unknown)
 	-- Process parameters for specific properties
-	local args_new, args_unknown, any_args_set, spec_types, required, patterns, list_args, index_list, args_placeholders, placeholders_n = {}
+	local args_new, args_unknown, any_args_set, required, patterns, list_args, index_list, args_placeholders, placeholders_n = {}
 
 	-- TODO: memoize the processing of each unique `param` value, since it's common for the same value to be used for many parameter names.
 	for name, param in pairs(params) do
 		validate_name(name, "parameter names")
-		if spec_types == nil then
-			spec_types = {}
-		end
-		local param_spec_type = type(param)
-		spec_types[param] = param_spec_type
-		if param_spec_type == "table" then
+		if param ~= true then
+			local spec_type = type(param)
+			if type(param) ~= "table" then
+				internal_process_error(
+					"spec for parameter %s must be a table of specs or the value true, but found %s.",
+					name, spec_type ~= "boolean" and spec_type or param
+				)
+			end
 			-- Populate required table, and make sure aliases aren't set to required.
 			if param.required then
-				if param.alias_of then
-					internal_process_error(
-						"Parameter %s is an alias of %s, but is also set as a required parameter. Only %s should be set as required.",
-						name, param.alias_of, name
-					)
-				elseif required == nil then
+				if required == nil then
 					required = {}
 				end
 				required[name] = true
 			end
 
-			-- FIXME: modifying one of the input tables is a bad idea.
-			-- Convert param.set from a list into a set.
-			-- `converted_set` prevents double-conversion if multiple parameter keys share the same param table.
-			-- rawset avoids errors if param has been loaded via mw.loadData; however, it's probably more efficient to preconvert them, and set the `converted_set` key in advance.
-			local set = param.set
-			if set and not param.converted_set then
-				rawset(param, "set", list_to_alias_map(set))
-				rawset(param, "converted_set", true)
-			end
-
-			local listname, alias = param.list, param.alias_of
-			if alias then
-				validate_name(alias, "the alias_of field of parameter ", name)
-				-- Check that the alias_of is set to a valid parameter.
-				if not params[alias] then
+			local listname, alias_of = param.list, param.alias_of
+			if alias_of then
+				validate_name(alias_of, "the alias_of field of parameter ", name)
+				if alias_of == name then
 					internal_process_error(
-						"Parameter %s is an alias of an invalid parameter.",
-						name
-					)
-				elseif alias == name then
-					internal_process_error(
-						"Parameter %s cannot be an alias of itself.",
+						"parameter %s cannot be an alias of itself.",
 						name
 					)
 				end
-				local main_param = params[alias]
-				local main_spec_type = spec_types[main_param] or type(main_param) -- Might not yet be memoized.
-				-- Aliases can't be lists unless the canonical parameter is also a list.
-				if listname and not (main_spec_type == "table" and main_param.list) then
+				local main_param = params[alias_of]
+				-- Check that the alias_of is set to a valid parameter.
+				if not (main_param == true or type(main_param) == "table") then
 					internal_process_error(
-						"The list parameter %s is set as an alias of %s, which is not a list parameter.", name, alias
+						"parameter %s is an alias of an invalid parameter.",
+						name
+					)
+				end
+				validate_alias_options(param, name, main_param, alias_of)
+				-- Aliases can't be lists unless the canonical parameter is also a list.
+				if listname and (main_param == true or not main_param.list) then
+					internal_process_error(
+						"list parameter %s is set as an alias of %s, which is not a list parameter.", name, alias_of
 					)
 				-- Can't be an alias of an alias.
-				elseif main_spec_type == "table" then
+				elseif main_param ~= true then
 					local main_alias_of = main_param.alias_of
 					if main_alias_of ~= nil then
 						internal_process_error(
 							"alias_of cannot be set to another alias: parameter %s is set as an alias of %s, which is in turn an alias of %s. Set alias_of for %s to %s.",
-							name, alias, main_alias_of, name, main_alias_of
+							name, alias_of, main_alias_of, name, main_alias_of
 						)
 					end
 				end
 			end
 
 			if listname then
-				if not alias then
+				if not alias_of then
 					local key = name
 					if type(name) == "string" then
 						key = gsub(name, "\1", "")
@@ -1297,13 +1360,13 @@ function export.process(args, params, return_unknown)
 					patterns = save_pattern(name, listname, patterns or {})
 				elseif listname ~= true then
 					internal_process_error(
-						"The list field for parameter %s must be a boolean, string or undefined, but saw a %s.",
+						"list field for parameter %s must be a boolean, string or undefined, but saw a %s.",
 						name, list_type
 					)
 				elseif type(name) == "number" then
 					if index_list ~= nil then
 						internal_process_error(
-							"Only one numeric parameter can be a list, unless the list property is a string."
+							"only one numeric parameter can be a list, unless the list property is a string."
 						)
 					end
 					-- If the name is a number, then all indexed parameters from
@@ -1321,11 +1384,6 @@ function export.process(args, params, return_unknown)
 					end
 				end
 			end
-		elseif param ~= true then
-			internal_process_error(
-				"Spec for parameter %s must be a table of specs or the value true, but found %s.",
-				name, param_spec_type ~= "boolean" and param_spec_type or param
-			)
 		end
 	end
 
@@ -1341,11 +1399,13 @@ function export.process(args, params, return_unknown)
 	for name, val in pairs(args) do
 		any_args_set = true
 		validate_name(name, "argument names", nil, true)
-		-- Once all of these have been eliminated, throw an internal error.
 		-- Guaranteeing that all values are strings avoids issues with type coercion being inconsistent between functions.
-		if type(val) ~= "string" then
-			track("input is not string")
-			track("input is not string/raw")
+		local val_type = type(val)
+		if val_type ~= "string" then
+			internal_process_error(
+				"argument %s has the type %s; all arguments must be strings.",
+				name, val_type
+			)
 		end
 		
 		local orig_name, raw_type, index, canonical = name, type(name)
@@ -1388,11 +1448,14 @@ function export.process(args, params, return_unknown)
 				args_new[name] = val
 			end
 		else
+			if param.deprecated then
+				track("deprecated parameter", name)
+			end
 			if param.require_index then
 				-- Disallow require_index for numeric parameter names, as this doesn't make sense.
 				if raw_type == "number" then
 					internal_process_error(
-						"Cannot set require_index for numeric parameter %s.",
+						"cannot set require_index for numeric parameter %s.",
 						name
 					)
 				-- If a parameter without the trailing index was found, and
@@ -1407,12 +1470,12 @@ function export.process(args, params, return_unknown)
 			if param.separate_no_index then
 				if raw_type == "number" then
 					internal_process_error(
-						"Cannot set separate_no_index for numeric parameter %s.",
+						"cannot set separate_no_index for numeric parameter %s.",
 						name
 					)
 				elseif type(param.alias_of) == "number" then
 					internal_process_error(
-						"Cannot set separate_no_index for parameter %s, as it is an alias of numeric parameter %s.",
+						"cannot set separate_no_index for parameter %s, as it is an alias of numeric parameter %s.",
 						name, param.alias_of
 					)
 				end
@@ -1432,7 +1495,7 @@ function export.process(args, params, return_unknown)
 				if raw_type == "number" then
 					name = raw_name
 					local main_param = params[raw_name]
-					if spec_types[main_param] == "table" and main_param.list then
+					if main_param ~= true and main_param.list then
 						if not index then
 							index = param.separate_no_index and 0 or 1
 						end
@@ -1443,7 +1506,7 @@ function export.process(args, params, return_unknown)
 				else
 					name = gsub(raw_name, "\1", "")
 					local main_param = params[name]
-					if not index and spec_types and spec_types[main_param] == "table" and main_param.list then
+					if not index and main_param ~= true and main_param.list then
 						index = param.separate_no_index and 0 or 1
 					end
 					if not index or index == 0 then
@@ -1483,10 +1546,13 @@ function export.process(args, params, return_unknown)
 					local arg = args_new[name]
 					local empty = arg.empty
 					if empty == nil then
-						empty = {}
+						empty = {maxindex = 0}
 						arg.empty = empty
 					end
 					empty[index] = true
+					if index > empty.maxindex then
+						empty.maxindex = index
+					end
 				end
 				val = nil
 			end
@@ -1495,7 +1561,7 @@ function export.process(args, params, return_unknown)
 			if val ~= nil then
 				-- Convert to proper type if necessary.
 				local main_param = params[raw_name]
-				if not main_param or (spec_types and spec_types[main_param] == "table") then
+				if main_param ~= true then
 					val = convert_val(val, orig_name, main_param or param)
 				end
 
@@ -1516,10 +1582,13 @@ function export.process(args, params, return_unknown)
 					end
 					arg[index] = val
 					-- Store the highest index we find.
-					local maxindex = max(index, arg.maxindex)
+					local maxindex = arg.maxindex
+					if index > maxindex then
+						maxindex = index
+					end
 					if arg[0] ~= nil then
 						arg.default, arg[0] = arg[0], nil
-						if maxindex == 0 then
+						if maxindex < 1 then
 							maxindex = 1
 						end
 					end
@@ -1543,11 +1612,13 @@ function export.process(args, params, return_unknown)
 						args_new[name] = val
 					else
 						local main_param = params[raw_name]
-						if spec_types[main_param] == "table" and main_param.list then
+						if main_param ~= true and main_param.list then
 							local main_arg = args_new[raw_name]
 							main_arg[1] = val
 							-- Store the highest index we find.
-							main_arg.maxindex = max(1, main_arg.maxindex)
+							if main_arg.maxindex < 1 then
+								main_arg.maxindex = 1
+							end
 						else
 							args_new[raw_name] = val
 						end
@@ -1575,10 +1646,10 @@ function export.process(args, params, return_unknown)
 
 	-- Handle defaults.
 	for name, param in pairs(params) do
-		if spec_types[param] == "table" then
+		if param ~= true then
 			local arg_new = args_new[name]
 			if arg_new == nil then
-				args_new[name] = convert_default_val(name, param, pagename_set, any_args_set)
+				args_new[name] = convert_default_val(name, param, pagename_set, any_args_set, true)
 			elseif param.list and arg_new[1] == nil then
 				local default_val = convert_default_val(name, param, pagename_set, any_args_set)
 				if default_val ~= nil then
@@ -1590,7 +1661,14 @@ function export.process(args, params, return_unknown)
 			end
 		end
 	end
-	
+
+	-- Flatten nested lists if called for. This must come after setting the default.
+	if list_args then
+		for name, val in next, list_args do
+			args_new[name] = maybe_flatten(params, val, name)
+		end
+	end
+
 	-- The required table should now be empty.
 	-- If any parameters remain, throw an error, unless we're on the current template or module's page.
 	if required and next(required) ~= nil and not is_own_page() then
