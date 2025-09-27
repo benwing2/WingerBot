@@ -306,6 +306,7 @@ end
 pos_functions["proper nouns"] = {
 	params = {
 		[1] = {list = "g"},
+		[2] = {list = "pl", disallow_holes = true},
 		["adj"] = {list = true},
 		["mdem"] = {list = true},
 		["fdem"] = {list = true},
@@ -313,12 +314,21 @@ pos_functions["proper nouns"] = {
 	func = function(args, data)
 		noun_gender(args, data)
 
+		local plurals = parse_term_list_with_modifiers({"2", "pl"}, args[2])
 		local adjectives = parse_term_list_with_modifiers("adj", args["adj"])
 		local mdems = parse_term_list_with_modifiers("mdem", args["mdem"])
 		local fdems = parse_term_list_with_modifiers("fdem", args["fdem"])
 		local nm = #mdems
 		local nf = #fdems
 		local demonyms = {label = "demonym"}
+
+		-- plural for certain words like [[Amerika]]
+		if plurals[1] then
+			-- Add the plural forms
+			plurals.label = "plural"
+			plurals.accel = {form = "p"}
+			table.insert(data.inflections, plurals)
+		end
 
 		--adjective for toponyms
 		if adjectives[1] then
