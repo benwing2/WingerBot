@@ -1,10 +1,12 @@
 local export = {}
 local pos_functions = {}
 
+local en_utilities_module = "Module:en-utilities"
 local parse_utilities_module = "Module:parse utilities"
 
 local rfind = mw.ustring.find
 local rsplit = mw.text.split
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local langs_supported = {
 	["pl"] = {
@@ -216,7 +218,7 @@ function export.show(frame)
 	) then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -278,7 +280,7 @@ local function get_noun_pos(is_proper)
 				local param, desc = unpack(spec)
 				params[param] = {list = true, disallow_holes = true}
 			end
-			params["rel"] = {list = true, disallow_holes = true, alias_of = "adj"}
+			params["rel"] = {list = true, alias_of = "adj"}
 			return params
 		end,
 		func = function(args, data)
