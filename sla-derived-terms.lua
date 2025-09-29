@@ -24,6 +24,7 @@ local m_links = require("Module:links")
 
 local rsplit = mw.text.split
 local rsubn = mw.ustring.gsub
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 -- version of rsubn() that discards all but the first return value
 local function rsub(term, foo, bar)
@@ -236,7 +237,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 		-- Error on prefix properties we don't know how to handle.
 		for _, prop in ipairs {"ts", "alt", "genders", "id", "pos", "lit"} do
 			if pair.prefix[prop] then
-				parse_error(
+				parse_err(
 					("Can't handle property '%s' in prefix '%s'"):format(prop, pair.prefix.term))
 			end
 		end
@@ -244,7 +245,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 		local function prefix_template_suffixes(prefix, terms, aspect)
 			local retval = {}
 			for _, term in ipairs(terms) do
-				term = m_table.shallowcopy(term)
+				term = m_table.shallowCopy(term)
 				for _, prop in ipairs {"ts", "alt"} do
 					if term[prop] then
 						parse_err(
@@ -273,9 +274,9 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 		last_term.qq = combine_qualifiers(last_term.qq, pair.prefix.qq)
 		if last_term.gloss and pair.prefix.gloss then
 			parse_err(("Can't override gloss '%s' of term '%s' with gloss '%s' of prefix '%s'"):
-			format(last_term.gloss, last_imp.term, pair.prefix.gloss, prefix.term))
+			format(last_term.gloss, last_term.term, pair.prefix.gloss, pair.prefix.term))
 		elseif pair.prefix.gloss then
-			last_term.gloss = prefix.gloss
+			last_term.gloss = pair.prefix.gloss
 		end
 		local first_term
 		if #pair.firsts > 0 then
@@ -301,7 +302,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 
 						-- Fetch suffix; clone because we are modifying it destructively and may reuse it later for
 						-- another prefix.
-						local newterm = m_table.shallowcopy(template_suffixes[i])
+						local newterm = m_table.shallowCopy(template_suffixes[i])
 
 						-- Don't know how to combine ts= or alt= values.
 						for _, prop in ipairs {"ts", "alt"} do
@@ -447,9 +448,11 @@ local function format_terms_as_list(lang, args, formatted_items)
 	end
 	return require("Module:columns").create_list {
 		header = "verbs",
+		title_new_style = true,
 		format_header = true,
 		content = formatted_items,
 		lang = lang,
+		class = "columns-bg",
 		column_count = args.ncol,
 		collapse = true,
 	}
@@ -468,7 +471,7 @@ local function format_terms_as_table(lang, args, formatted_items)
 	table.insert(lines, '{| class="wikitable vsSwitcher" data-toggle-category="derived terms"\n! ' ..
 		first_aspect_header .. ' !! class="vsToggleElement" | ' .. second_aspect_header)
 
-	for i, formatted_item in ipairs(formatted_items) do
+	for _, formatted_item in ipairs(formatted_items) do
 		table.insert(lines, '|- class="vsHide"\n| ' .. formatted_item.firsts .. " || " ..
 			formatted_item.seconds)
 	end
@@ -477,21 +480,19 @@ local function format_terms_as_table(lang, args, formatted_items)
 end
 
 function export.imperfectives_and_perfectives(frame)
-	local iparams = {
+	local process = require("Module:parameters").process
+	local iargs = process(frame.args, {
+		["lang"] = {required = true, type = "language"},
 		["format"] = {default = "list"},
-		["lang"] = {},
-	}
-	local iargs = require("Module:parameters").process(frame.args, iparams)
-
-	local params = {
-		["format"] = {},
+	})
+	local args = process(frame:getParent().args, {
 		[1] = {list = true},
+		["format"] = true,
 		["ncol"] = {default = 2, type = "number"},
 		["impf_first"] = {type = "boolean"},
-	}
-	local args = require("Module:parameters").process(frame:getParent().args, params)
+	})
 	local format = args.format or iargs.format
-	local lang = require("Module:languages").getByCode(iargs.lang, "lang")
+	local lang = iargs.lang
 	if format ~= "list" and format ~= "table" then
 		error(("Unrecognized format '%s'; possible values are 'list', 'table'"):format(format))
 	end
