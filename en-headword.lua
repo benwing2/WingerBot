@@ -44,6 +44,8 @@ local type = type
 local ulen = require_when_needed(string_utilities_module, "len")
 local ulower = require_when_needed(string_utilities_module, "lower")
 local umatch = require_when_needed(string_utilities_module, "match")
+local u = require_when_needed(string_utilities_module, "char")
+local ugsub = require_when_needed(string_utilities_module, "gsub")
 
 local lang = require("Module:languages").getByCode("en")
 local langname = lang:getCanonicalName()
@@ -295,14 +297,27 @@ function export.show(frame)
 	end
 
 	local extra_categories = {}
-	if pagename:find("[Qq][^Uu]") or pagename:find("[Qq]$") then
-		insert(data.categories, langname .. " words containing Q not followed by U")
+
+	if pagename:find("[Qq]") then
+		-- Check for q not followed by u. We want to exclude things like [[13q deletion syndrome]] and [[BFOQ]] that
+		-- don't have a lowercase letter on either side, as well as things like [[& seq.]] and [[acq.]] that are
+		-- abbreviations for words containing a following u.
+		--
+		-- Approximate range of combining diacritics; we want to remove them so the checks below for
+		-- a lowercase letter next to the q aren't tripped up by diacritics on the letter.
+		local u300 = u(0x0300)
+		local u36F = u(0x036F)
+		local pagename_no_diacritics = ugsub(toNFD(pagename), "[" .. u300 .. "-" .. u36F .. "]", "")
+		if pagename_no_diacritics:find("[Qq][a-tv-z]") or pagename_no_diacritics:find("[a-z]q[^u.]") or
+			pagename_no_diacritics:find("[a-z]q$") then
+			insert(data.categories, langname .. " words containing Q not followed by U")
+		end
 	end
 	-- toNFD performs decomposition, so letters that decompose to an ASCII
-	-- vowel and a diacritic, such as é, are counted as vowels anddo not do not
+	-- vowel and a diacritic, such as é, are counted as vowels and do not do not
 	-- need to be included in the pattern.
 	if not umatch(ulower(toNFD(pagename)), "[aeiouyæœøəªºαεηιουω]") then
-		insert(data.categories, langname .. " words without vowels")
+		insert(data.categories, langname .. " words spelled without vowels")
 	end
 	if pagename:find("yre$") then
 		insert(data.categories, langname .. ' words ending in "-yre"')
@@ -628,14 +643,16 @@ local function do_nouns(args, data, pos)
 	end
 
 	local need_default_plural = pos == "noun"
+	local sp = false
 	if plurals[1] == "sp" then
 		-- construed as singular or plural
 		remove(plurals, 1)  -- Remove the "sp"
 		inscat("nouns construed as singular or plural")
 		data.genders = {"s", "p"} -- this should auto-insert the correct 'pluralia tantum' category
-		insert_plurale_tantum_inflections()
 		need_default_plural = false
-	elseif plurals[1] == "-" then
+		sp = true
+	end
+	if plurals[1] == "-" then
 		-- Uncountable noun; may occasionally have a plural
 		remove(plurals, 1)  -- Remove the "-"
 		inscat("uncountable nouns")
@@ -647,6 +664,17 @@ local function do_nouns(args, data, pos)
 			insert(data.inflections, {label = glossary_link("uncountable")})
 		end
 		need_default_plural = false
+	elseif plurals[1] == "#" then
+		-- Usually countable (e.g., "grilled cheese")
+		remove(plurals, 1)  -- Remove the "#"
+		insert(data.inflections, {label = "usually " .. glossary_link("countable")})
+		inscat("uncountable nouns")
+		inscat("countable nouns")
+		
+		-- If no plural was given, add a default one now
+		if not plurals[1] and need_default_plural then
+			plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
+		end
 	elseif plurals[1] == "~" then
 		-- Mixed countable/uncountable noun, always has a plural
 		remove(plurals, 1)  -- Remove the "~"
@@ -655,7 +683,7 @@ local function do_nouns(args, data, pos)
 		inscat("countable nouns")
 
 		-- If no plural was given, add a default one now
-		if not plurals[1] then
+		if not plurals[1] and need_default_plural then
 			plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
 		end
 	end
@@ -681,12 +709,16 @@ local function do_nouns(args, data, pos)
 		return
 	end
 	-- If no plural was given, maybe add a default one, otherwise (when "-" was given or proper noun) return.
-	if not plurals[1] then
+	if not plurals[1] and not sp then
 		if not need_default_plural then
 			inscat("uncountable nouns")
 			return
 		end
 		plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
+	end
+	if sp then
+		insert_plurale_tantum_inflections()
+		return
 	end
 
 	-- There are plural forms to show, so show them.
@@ -878,8 +910,10 @@ pos_functions["verbs"] = {
 			end
 		end
 		
+		-- FIXME: options should be "+", "*", "++", "++*", "+n", "*n", "++n" and "++*n", but not "n"
 		local function canonicalize_en_form(form)
 			if form == "n" then
+				track("n4")
 				return add_suffix(pagename, "n")
 			end
 			return canonicalize_ed_form(form)
