@@ -1,11 +1,27 @@
 local export = {}
 local pos_functions = {}
 
+local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+
+local require_when_needed = require("Module:utilities/require when needed")
+local m_table = require("Module:table")
+
 local en_utilities_module = "Module:en-utilities"
-local parse_utilities_module = "Module:parse utilities"
+local headword_utilities_module = "Module:headword utilities"
+
+local m_en_utilities = require_when_needed(en_utilities_module)
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+local m_string_utilities = require_when_needed("Module:string utilities")
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
+
+local boolean_param = {type = "boolean"}
+local list_param = {list = true, disallow_holes = true}
+
+local concat = table.concat
+local insert = table.insert
+local remove = table.remove
 
 local rfind = mw.ustring.find
-local rsplit = mw.text.split
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local langs_supported = {
@@ -74,69 +90,69 @@ local function track(page)
 	return true
 end
 
-local function glossary_link(entry, text)
-	text = text or entry
-	return "[[Appendix:Glossary#" .. entry .. "|" .. text .. "]]"
+local function replace_hash_with_lemma(term, lemma)
+	-- If there is a % sign in the lemma, we have to replace it with %% so it doesn't get interpreted as a capture
+	-- replace expression.
+	lemma = m_string_utilities.replacement_escape(lemma)
+	return (term:gsub("#", lemma)) -- discard second retval
 end
 
-local param_mods = {
-	g = {
-		-- We need to store the <g:...> inline modifier into the "genders" key of the parsed part, because that is what
-		-- [[Module:links]] expects.
-		item_dest = "genders",
-		convert = function(arg, parse_err)
-			return rsplit(arg, ",")
+local function frob_term_with_hash(term, lemma)
+	if term:find("#") then
+		term = replace_hash_with_lemma(term, lemma)
+	end
+	return term
+end
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, label, accel)
+	m_headword_utilities.parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		paramname = field,
+		splitchar = ",",
+		include_mods = {"g"},
+		frob = function(term)
+			return frob_term_with_hash(term, data.pagename)
 		end,
-	},
-	id = {},
-	q = {store = "insert"},
-	qq = {store = "insert"},
-}
-
--- Parse the inflections specified by the raw arguments in `infls`. `pagename` is the pagename, used to substitute
--- # in arguments. Parse inline modifiers attached to the raw arguments. Return `infls` if there are any inflections,
--- otherwise nil. WARNING: Destructively modifies `infls`.
-local function parse_inflection(infls, pagename)
-	local function generate_obj(term, parse_err)
-		return {term = term:gsub("#", pagename)}
-	end
-
-	for i, infl in ipairs(infls) do
-		-- Check for inline modifier, e.g. acetylenowo<q:rare>.
-		if infl:find("<") then
-			infl = require(parse_utilities_module).parse_inline_modifiers(infl, {
-				param_mods = param_mods,
-				generate_obj = generate_obj,
-			})
-		else
-			infl = generate_obj(infl)
-		end
-
-		infls[i] = infl
-	end
-	if #infls > 0 then
-		return infls
-	else
-		return nil
-	end
+		label = label,
+		accel = accel and {form = accel} or nil,
+		-- If we want check_missing support, we need to supply the following:
+		-- check_missing = true,
+		-- lang = lang,
+		-- plpos = plpos,
+	}
 end
 
+-- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
+-- is parsed for inline modifiers.
+local function parse_inflection(data, args, field)
+	return m_headword_utilities.parse_term_list_with_modifiers {
+		paramname = field,
+		forms = args[field],
+		splitchar = ",",
+		include_mods = {"g"},
+		frob = function(term)
+			return frob_term_with_hash(term, data.pagename)
+		end,
+	}
+end
 
 -- Insert the parsed inflections in `infls` (as parsed by `parse_inflection`) into `data.inflections`, with label
 -- `label` and optional accelerator spec `accel`.
-local function insert_inflection(data, infls, label, accel)
-	if infls and #infls > 0 then
-		if #infls == 1 and (infls[1] == "-" or infls[1].term == "-") then
-			if infls[1].q then
-				error(("Can't specify qualifiers with the value '-' for %s"):format(label))
-			end
-			table.insert(data.inflections, {label = "no " .. label})
-		else
-			infls.label = label
-			infls.accel = accel
-			table.insert(data.inflections, infls)
-		end
-	end
+local function insert_inflection(data, terms, label, accel)
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		-- If we want check_missing support, we need to supply the following:
+		-- check_missing = true,
+		-- lang = lang,
+		-- plpos = plpos,
+	}
 end
 
 
@@ -154,20 +170,20 @@ function export.show(frame)
 	if not langs_supported[langcode] then
 		local langcodes_supported = {}
 		for lang, _ in pairs(langs_supported) do
-			table.insert(langcodes_supported, lang)
+			insert(langcodes_supported, lang)
 		end
-		error("This module currently only works for lang=" .. table.concat(langcodes_supported, "/"))
+		error("This module currently only works for lang=" .. concat(langcodes_supported, "/"))
 	end
 	local lang = require("Module:languages").getByCode(langcode)
 	local langname = lang:getCanonicalName()
 
 	local params = {
 		["head"] = {list = true},
-		["nolink"] = {type = "boolean"},
+		["nolink"] = boolean_param,
 		["nolinkhead"] = {type = "boolean", alias_of = "nolink"},
-		["suffix"] = {type = "boolean"},
-		["nosuffix"] = {type = "boolean"},
-		["json"] = {type = "boolean"},
+		["suffix"] = boolean_param,
+		["nosuffix"] = boolean_param,
+		["json"] = boolean_param,
 		["abbr"] = {list = true},
 		["pagename"] = {}, -- for testing
 	}
@@ -203,7 +219,7 @@ function export.show(frame)
 		categories = {},
 		heads = heads,
 		user_specified_heads = user_specified_heads,
-		no_redundant_head_cat = #user_specified_heads == 0,
+		no_redundant_head_cat = not user_specified_heads[1],
 		genders = {},
 		inflections = {},
 		categories = {},
@@ -218,17 +234,16 @@ function export.show(frame)
 	) then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require(en_utilities_module).singularize(poscat)
-		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
-		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
+		local singular_poscat = m_en_utilities.singularize(poscat)
+		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
 	if pos_functions[poscat] then
 		pos_functions[poscat].func(args, data)
 	end
 
-	local abbrs = parse_inflection(args.abbr, pagename)
-	insert_inflection(data, abbrs, "abbreviation")
+	parse_and_insert_inflection(data, args, "abbr", "abbreviation")
 
 	if args.json then
 		return require("Module:JSON").toJSON(data)
@@ -245,7 +260,7 @@ local function get_noun_inflection_specs(langcode)
 		{"gen", "genitive singular"},
 	}
 	if langs_supported[langcode].has_dual then
-		table.insert(noun_inflection_specs, {"du", "nominative dual"})
+		insert(noun_inflection_specs, {"du", "nominative dual"})
 	end
 	for _, spec in ipairs {
 		{"pl", "nominative plural"},
@@ -263,7 +278,7 @@ local function get_noun_inflection_specs(langcode)
 		{"dem", "demonym"},
 		{"fdem", "female demonym"},
 	} do
-		table.insert(noun_inflection_specs, spec)
+		insert(noun_inflection_specs, spec)
 	end
 	return noun_inflection_specs
 end
@@ -273,12 +288,12 @@ local function get_noun_pos(is_proper)
 	return {
 		params = function(langcode)
 			local params = {
-				["indecl"] = {type = "boolean"},
-				[1] = {list = "g"},
+				["indecl"] = boolean_param,
+				[1] = {list = "g", disallow_holes = true, type = "genders", flatten = true}, -- gender(s)
 			}
 			for _, spec in ipairs(get_noun_inflection_specs(langcode)) do
 				local param, desc = unpack(spec)
-				params[param] = {list = true, disallow_holes = true}
+				params[param] = list_param
 			end
 			params["rel"] = {list = true, alias_of = "adj"}
 			return params
@@ -297,14 +312,14 @@ local function get_noun_pos(is_proper)
 						local dest_gender_parts = {}
 						local function ins_part(part, partname)
 							if part then
-								table.insert(source_gender_parts, part)
-								table.insert(dest_gender_parts, part)
+								insert(source_gender_parts, part)
+								insert(dest_gender_parts, part)
 							elseif partname == "g" and num == false or
 								partname == "an" and g ~= "f" and g ~= "n" then
 								-- allow incomplete gender plurale tantum nouns; also allow incomplete
 								-- animacy for fem/neut, where it makes no difference for agreement
 								-- purposes; otherwise insert a ? to indicate incomplete gender spec
-								table.insert(dest_gender_parts, "?")
+								insert(dest_gender_parts, "?")
 							end
 						end
 						ins_part(g, "g")
@@ -313,8 +328,8 @@ local function get_noun_pos(is_proper)
 						if #source_gender_parts == 0 then
 							allowed_genders["?"] = "?"
 						else
-							allowed_genders[table.concat(source_gender_parts, "-")] =
-								table.concat(dest_gender_parts, "-")
+							allowed_genders[concat(source_gender_parts, "-")] =
+								concat(dest_gender_parts, "-")
 						end
 						-- "Virile" = masculine personal, allow in the plural and convert appropriately;
 						-- "Nonvirile" = anything but masculine personal, allow in the plural;
@@ -326,27 +341,25 @@ local function get_noun_pos(is_proper)
 				end
 			end
 			
-			-- Gather, validate and canonicalize genders
-			for _, gspec in ipairs(args[1]) do
-				for _, g in ipairs(rsplit(gspec, ",")) do
-					if not allowed_genders[g] then
-						error("Unrecognized " .. data.langname .. " gender: " .. g)
-					else
-						table.insert(data.genders, allowed_genders[g])
-					end
+			-- Validate and canonicalize genders.
+			for _, g in ipairs(args[1]) do
+				if not allowed_genders[g.spec] then
+					error("Unrecognized " .. data.langname .. " gender: " .. g.spec)
+				else
+					g.spec = allowed_genders[g.spec]
 				end
 			end
+			data.genders = args[1]
 
 			if args.indecl then
-				table.insert(data.inflections, {label = glossary_link("indeclinable")})
-				table.insert(data.categories, data.langname .. " indeclinable nouns")
+				insert(data.inflections, {label = glossary_link("indeclinable")})
+				insert(data.categories, data.langname .. " indeclinable nouns")
 			end
 
 			-- Process all inflections.
 			for _, spec in ipairs(get_noun_inflection_specs(data.langcode)) do
 				local param, desc = unpack(spec)
-				local infls = parse_inflection(args[param], data.pagename)
-				insert_inflection(data, infls, desc)
+				parse_and_insert_inflection(data, args, param, desc)
 			end
 		end
 	}
@@ -371,11 +384,11 @@ local function get_verb_pos()
 	
 	local params = {
 		[1] = {default = "?"},
-		["def"] = {type = "boolean"},
+		["def"] = boolean_param,
 	}
 	for _, spec in ipairs(verb_inflection_specs) do
 		local param, desc = unpack(spec)
-		params[param] = {list = true, disallow_holes = true}
+		params[param] = list_param
 	end
 
 	return {
@@ -385,39 +398,45 @@ local function get_verb_pos()
 				"pf", "impf", "biasp", "both", "impf-det", "impf-indet", "impf-freq", "?"
 			}
 
-			-- Gather aspects
-			for _, a in ipairs(rsplit(args[1], ",")) do
-				table.insert(data.genders, a)
-			end
-
 			local impf_allowed = true
 			local pf_allowed = true
 			local indet_allowed = true
 			local det_allowed = true
 			local freq_allowed = true
-			local function insert_label_and_cat(typ)
-				table.insert(data.inflections, {label = glossary_link(typ)})
-				table.insert(data.categories, data.langname .. " " .. typ .. " verbs")
+			local function insert_label_and_cat(aspect, label)
+				-- Preserve qualifiers, labels, references.
+				aspect = aspect and m_table.shallowCopy(aspect) or {}
+				aspect.term = nil
+				aspect.label = label
+				insert(data.inflections, aspect)
+				insert(data.categories, data.langname .. " " .. label .. " verbs")
 			end
 
+			local aspects = m_headword_utilities.parse_term_with_modifiers {
+				paramname = 1,
+				val = args[1],
+				splitchar = ",",
+				exclude_mods = {"id"}, -- doesn't make sense for gender specs
+			}
 			-- Validate and canonicalize aspects.
-			for i, a in ipairs(data.genders) do
+			for i, aspect in ipairs(aspects) do
+				local a = aspect.term
 				if not allowed_aspects[a] then
 					error("Unrecognized " .. data.langname .. " aspect: " .. a)
 				elseif a == "both" then
 					a = "biasp"
 				elseif a == "impf-det" then
 					a = "impf"
-					insert_label_and_cat("determinate")
+					insert_label_and_cat(aspect, "determinate")
 					det_allowed = false
 				elseif a == "impf-indet" then
 					a = "impf"
-					insert_label_and_cat("indeterminate")
+					insert_label_and_cat(aspect, "indeterminate")
 					indet_allowed = false
 				elseif a == "impf-freq" then
 					a = "impf"
-					insert_label_and_cat("indeterminate")
-					insert_label_and_cat("frequentative")
+					insert_label_and_cat(aspect, "indeterminate")
+					insert_label_and_cat(aspect, "frequentative")
 					indet_allowed = false
 					freq_allowed = false
 				elseif a == "pf" then
@@ -425,18 +444,20 @@ local function get_verb_pos()
 				elseif a == "impf" then
 					impf_allowed = false
 				end
-				data.genders[i] = a
+				aspect.spec = a
+				aspect.term = nil
 			end
+			data.genders = aspects
 
 			if args.def then
-				insert_label_and_cat("defective")
+				insert_label_and_cat(nil, "defective")
 			end
 
 			-- Process all inflections.
 			for _, spec in ipairs(verb_inflection_specs) do
 				local param, desc = unpack(spec)
-				local infls = parse_inflection(args[param], data.pagename)
-				if infls then
+				local infls = parse_inflection(data, args, param)
+				if infls[1] then
 					if param == "pf" and not pf_allowed then
 						error("Aspectual-pair perfectives not allowed with perfective-only verb")
 					end
@@ -468,37 +489,40 @@ local function get_adj_adv_pos(pos)
 	return {
 		params = function(langcode)
 			local params = {
-				[1] = {list = true, disallow_holes = true},
-				["dim"] = {list = true, disallow_holes = true},
-				["sup"] = {list = true, disallow_holes = true},
-				["nodefsup"] = {type = "boolean"},
+				[1] = list_param,
+				["dim"] = list_param,
+				["sup"] = list_param,
+				["nodefsup"] = boolean_param,
 			}
 			if pos == "adjective" then
-				params["adv"] = {list = true, disallow_holes = true}
-				params["indecl"] = {type = "boolean"}
+				params["adv"] = list_param
+				params["indecl"] = boolean_param
 			end
 			if langcode == "pl" then
-				params["mpcomp"] = {list = true, disallow_holes = true}
-				params["mpsup"] = {list = true, disallow_holes = true}
+				params["mpcomp"] = list_param
+				params["mpsup"] = list_param
 			end
 			return params
 		end,
 		func = function(args, data)
 			local default_sups = {}
-			local comps = parse_inflection(args[1], data.pagename)
-			if comps then
+			local comps = parse_inflection(data, args, 1)
+			if comps[1] then
 				lang_data = langs_supported[data.langcode]
 				if comps[1].term == "-" then
-					if comps[1].q then
-						error("Can't specify qualifiers with 1=-")
-					end
-					if #comps == 1 then
-						table.insert(data.inflections, {label = "not " .. glossary_link("comparable")})
-						table.insert(data.categories, data.langname .. " uncomparable " .. data.pos_category)
+					if not comps[2] then
+						-- Preserve any qualifiers, labels, etc.
+						comps[1].label = "not " .. glossary_link("comparable")
+						comps[1].term = nil
+						insert(data.inflections, comps[1])
+						insert(data.categories, data.langname .. " uncomparable " .. data.pos_category)
 					else
-						table.insert(data.inflections, {label = "not generally " .. glossary_link("comparable")})
+						-- Preserve any qualifiers, labels, etc.
+						comps[1].label = "not generally " .. glossary_link("comparable")
+						comps[1].term = nil
+						insert(data.inflections, comps[1])
 					end
-					table.remove(comps, 1)
+					remove(comps, 1)
 				end
 				for i, comp in ipairs(comps) do
 					if comp.term == "peri" then
@@ -507,67 +531,49 @@ local function get_adj_adv_pos(pos)
 						end
 						comp.term = ("[[%s]] [[%s]]"):format(lang_data.peri_comp, data.pagename)
 						if lang_data.sup then
-							table.insert(default_sups, {term = ("[[%s%s]] [[%s]]"):format(
-								lang_data.sup, lang_data.peri_comp, data.pagename), q = comp.q, qq = comp.qq, id = comp.id})
+							local default_sup = m_table.shallowCopy(comp)
+							default_sup.term = ("[[%s%s]] [[%s]]"):format(lang_data.sup, lang_data.peri_comp,
+								data.pagename)
+							insert(default_sups, default_sup)
 						end
 					elseif lang_data.sup then
-						table.insert(default_sups, {term = ("%s%s"):format(lang_data.sup, comp.term), q = comp.q, qq = comp.qq,
-							id = comp.id})
+						local default_sup = m_table.shallowCopy(comp)
+						default_sup.term = ("%s%s"):format(lang_data.sup, comp.term)
+						insert(default_sups, default_sup)
 					end
 				end
 			end
-			insert_inflection(data, comps, "comparative", {form = "comparative"})
+			insert_inflection(data, comps, "comparative", "comparative")
 
-			local sups = parse_inflection(args.sup, data.pagename)
-			if not sups then
+			local sups = parse_inflection(data, args, "sup")
+			if not sups[1] then
 				sups = args.nodefsup and {} or {{term = "+"}}
 			end
 			local combined_sups = {}
-			local function combine_qualifiers(q1, q2)
-				if not q1 then
-					return q2
-				end
-				if not q2 then
-					return q1
-				end
-				local combined = {}
-				for _, q in ipairs(q1) do
-					table.insert(combined, q)
-				end
-				for _, q in ipairs(q2) do
-					table.insert(combined, q)
-				end
-				return combined
-			end
 			for _, sup in ipairs(sups) do
 				if sup.term == "+" then
 					for _, def_sup in ipairs(default_sups) do
-						def_sup.q = combine_qualifiers(def_sup.q, sup.q)
-						def_sup.qq = combine_qualifiers(def_sup.qq, sup.qq)
-						def_sup.id = def_sup.id or sup.id
-						table.insert(combined_sups, def_sup)
+						def_sup = m_table.shallowCopy(def_sup)
+						m_headword_utilities.combine_termobj_qualifiers_labels(def_sup, sup)
+						insert(combined_sups, def_sup)
 					end
 				else
-					table.insert(combined_sups, sup)
+					insert(combined_sups, sup)
 				end
 			end
-			insert_inflection(data, combined_sups, "superlative", {form = "superlative"})
+			insert_inflection(data, combined_sups, "superlative", "superlative")
 			if data.langcode == "pl" then
-				local mpcomp = parse_inflection(args.mpcomp, data.pagename)
-				insert_inflection(data, mpcomp, "Middle Polish comparative")
-				local mpsup = parse_inflection(args.mpsup, data.pagename)
-				insert_inflection(data, mpsup, "Middle Polish superlative")
+				parse_and_insert_inflection(data, args, "mpcomp", "Middle Polish comparative")
+				parse_and_insert_inflection(data, args, "mpsup", "Middle Polish superlative")
 			end
 			if pos == "adjective" then
 				if args.indecl then
-					table.insert(data.inflections, {label = glossary_link("indeclinable")})
-					table.insert(data.categories, data.langname .. " indeclinable adjectives")
+					insert(data.inflections, {label = glossary_link("indeclinable")})
+					insert(data.categories, data.langname .. " indeclinable adjectives")
 				end
-				local infls = parse_inflection(args.adv, data.pagename)
-				insert_inflection(data, infls, "derived adverb")
+				parse_and_insert_inflection(data, args, "adv", "derived adverb")
 			end
-			local infls = parse_inflection(args.dim, data.pagename)
-			insert_inflection(data, infls, "diminutive")
+			parse_and_insert_inflection(data, args, "dim", "diminutive")
 		end,
 	}
 end
@@ -581,7 +587,7 @@ pos_functions["adverbs"] = get_adj_adv_pos("adverb")
 local function get_part_pos()
 	local params = {
 		[1] = {},
-		["a"] = {list = true, disallow_holes = true},
+		["a"] = list_param,
 	}
 
 	return {
@@ -598,38 +604,49 @@ local function get_part_pos()
 				"pass", "act", "ant-adv", "cont-adv", "?"
 			}
 
-			-- Gather aspects
-			data.genders = args.a
-
-			local function insert_label_and_cat(label, nolink)
+			local function insert_label_and_cat(aspect, label, nolink)
 				if not nolink then
 					label = glossary_link(label)
 				end
-				table.insert(data.inflections, {label = label})
-				table.insert(data.categories, data.langname .. " " .. label .. " participles")
+				-- Preserve qualifiers, labels, references.
+				aspect = aspect and m_table.shallowCopy(aspect) or {}
+				aspect.term = nil
+				aspect.label = label
+				insert(data.inflections, aspect)
+				insert(data.categories, data.langname .. " " .. label .. " participles")
 			end
 
-			-- Validate and canonicalize aspects
-			for i, g in ipairs(data.genders) do
-				if not allowed_aspects[g] then
-					error("Unrecognized " .. data.langname .. " participle aspect: " .. g)
-				elseif g == "both" then
-					g = "biasp"
-				elseif g == "impf-it" then
-					g = "impf"
-					insert_label_and_cat("iterative")
-				elseif g == "impf-dur" then
-					g = "impf"
-					insert_label_and_cat("durative")
-				elseif g == "pf-it" then
-					g = "pf"
-					insert_label_and_cat("iterative")
-				elseif g == "pf-sem" then
-					g = "pf"
-					insert_label_and_cat("semelfactive")
+			local aspects = m_headword_utilities.parse_term_list_with_modifiers {
+				paramname = "a",
+				forms = args.a,
+				splitchar = ",",
+				exclude_mods = {"id"}, -- doesn't make sense for gender specs
+			}
+
+			-- Validate and canonicalize aspects.
+			for i, aspect in ipairs(aspects) do
+				local a = aspect.term
+				if not allowed_aspects[a] then
+					error("Unrecognized " .. data.langname .. " participle aspect: " .. a)
+				elseif a == "both" then
+					a = "biasp"
+				elseif a == "impf-it" then
+					a = "impf"
+					insert_label_and_cat(aspect, "iterative")
+				elseif a == "impf-dur" then
+					a = "impf"
+					insert_label_and_cat(aspect, "durative")
+				elseif a == "pf-it" then
+					a = "pf"
+					insert_label_and_cat(aspect, "iterative")
+				elseif a == "pf-sem" then
+					a = "pf"
+					insert_label_and_cat(aspect, "semelfactive")
 				end
-				data.genders[i] = g
+				aspect.spec = a
+				aspect.term = nil
 			end
+			data.genders = aspects
 
 			-- Validate or autodetect participle type.
 			local function matches_parttype(typ)
@@ -666,13 +683,13 @@ local function get_part_pos()
 			end
 
 			if ptype == "act" then
-				insert_label_and_cat("active adjectival", true)
+				insert_label_and_cat(nil, "active adjectival", true)
 			elseif ptype == "pass" then
-				insert_label_and_cat("passive adjectival", true)
+				insert_label_and_cat(nil, "passive adjectival", true)
 			elseif ptype == "cont-adv" then
-				insert_label_and_cat("contemporary adverbial", true)
+				insert_label_and_cat(nil, "contemporary adverbial", true)
 			elseif ptype == "ant-adv" then
-				insert_label_and_cat("anterior adverbial", true)
+				insert_label_and_cat(nil, "anterior adverbial", true)
 			end
 		end
 	}
