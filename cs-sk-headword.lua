@@ -7,8 +7,10 @@ local rfind = mw.ustring.find
 
 local require_when_needed = require("Module:utilities/require when needed")
 local m_table = require("Module:table")
-local m_headword_utilities = require_when_needed("Module:headword utilities")
-local glossary_link = require_when_needed("Module:headword utilities", "glossary_link")
+local en_utilities_module = "Module:en-utilities"
+local headword_utilities_module = "Module:headword utilities"
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
 local list_param = {list = true, disallow_holes = true}
 
@@ -137,7 +139,7 @@ function export.show(frame)
 	if pagename:find("^%-") and poscat ~= "suffix forms" then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require("Module:string utilities").singularize(poscat)
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
@@ -150,7 +152,7 @@ function export.show(frame)
 	-- to an ASCII vowel and a diacritic, such as é, are counted as vowels and
 	-- do not need to be included in the pattern.
 	if not pagename:find("[ %-]") and not rfind(mw.ustring.lower(mw.ustring.toNFD(pagename)), "[aeiouyæœø]") then
-		table.insert(data.categories, langname .. " words without vowels")
+		table.insert(data.categories, langname .. " words spelled without vowels")
 	end
 
     if args.json then
@@ -163,13 +165,14 @@ end
 local function get_noun_params(is_proper)
 	return function(lang)
 		params = {
-			[1] = {alias_of = "g"},
+			[1] = {alias_of = "g", list = false},
 			["g"] = list_param,
 			["g_qual"] = {list = "g\1_qual", allow_holes = true},
 			["indecl"] = {type = "boolean"},
 			["m"] = list_param,
 			["f"] = list_param,
 			["adj"] = list_param,
+			["pos"] = list_param,
 			["dim"] = list_param,
 			["aug"] = list_param,
 			["pej"] = list_param,
@@ -245,7 +248,8 @@ local function do_nouns(is_proper, args, data)
 	end)
 	handle_infl("m", "male equivalent")
 	handle_infl("f", "female equivalent")
-	handle_infl("adj", "<<relational adjective|related adjective>>")
+	handle_infl("adj", "<<relational adjective|relational adjective>>")
+	handle_infl("pos", "<<possessive adjective|possessive adjective>>")
 	handle_infl("dim", "<<diminutive>>")
 	handle_infl("aug", "<<augmentative>>")
 	handle_infl("pej", "<<pejorative>>")
@@ -291,14 +295,14 @@ local function do_comparative_superlative(args, data, plpos)
 	elseif args[1][1] then
 		local comp = m_headword_utilities.parse_term_list_with_modifiers {
 			paramname = {1, "comp"},
-			list = args[1],
+			forms = args[1],
 		}
 		local sup = m_headword_utilities.parse_term_list_with_modifiers {
 			paramname = {2, "sup"},
-			list = args[2],
+			forms = args[2],
 		}
 		if not sup[1] then
-			sup = m_table.deepcopy(comp)
+			sup = m_table.deepCopy(comp)
 			for _, s in ipairs(sup) do
 				-- Old Czech has naj-.
 				s.term = (data.lang:getCode() == "cs" and "nej" or "naj") .. s.term
