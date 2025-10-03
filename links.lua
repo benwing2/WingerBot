@@ -498,7 +498,6 @@ local function make_link(link, lang, sc, id, isolated, cats, no_alt_ast, plain)
 	end)
 	
 	link.fragment = link.fragment and encode_entities(remove_formatting(link.fragment), "#%&+/:<=>@[\\]_{|}")
-
 	return "[[" .. link.target:gsub("^[^:]", ":%0") .. (link.fragment and "#" .. link.fragment or "") .. "|" .. link.display .. "]]"
 end
 
@@ -1087,7 +1086,7 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 	
 	-- Create the link
 	local output = {}
-	local id, no_alt_ast, srwc, accel = data.id, data.no_alt_ast, data.suppress_redundant_wikilink_cat, data.accel
+	local id, no_alt_ast, srwc, accel, nevercalltr = data.id, data.no_alt_ast, data.suppress_redundant_wikilink_cat, data.accel, data.never_call_transliteration_module
 
 	for i in ipairs(terms) do
 		local link
@@ -1136,7 +1135,14 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 		end
 		-- simple_link can return nil, so check if a link has been generated.
 		if link then
-			link = tag_text(link, lang, data.sc[i], face, get_class(lang, data.tr[i], accel))
+			-- Add "nowrap" class to prefixes in order to prevent wrapping after the hyphen
+			local nowrap = ""
+			local display_term = data.alt[i] or data.term[i]
+			if display_term and (sub(display_term, 1, 1) == "-" or mw.ustring.sub(display_term, 1, 1) == "־") then -- "sub" does not work for the Hebrew-script hyphen
+				nowrap = " nowrap"
+			end
+			
+			link = tag_text(link, lang, data.sc[i], face, get_class(lang, data.tr[i], accel) .. nowrap)
 		else
 			--[[	No term to show.
 					Is there at least a transliteration we can work from?	]]
@@ -1176,33 +1182,35 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 				track("manual-tr", full_code)
 			end
 
-			-- Try to generate a transliteration.
-			local text = data.alt[1] or data.term[1]
-			if not lang:link_tr(data.sc[1]) then
-				text = export.remove_links(text, true)
-			end
-
-			local automated_tr, tr_categories
-			automated_tr, data.tr_fail, tr_categories = lang:transliterate(text, data.sc[1])
-
-			if automated_tr or data.tr_fail then
-				local manual_tr = data.tr[1]
-
-				if manual_tr then
-					if (export.remove_links(manual_tr) == export.remove_links(automated_tr)) and (not data.tr_fail) then
-						insert(cats, lang:getFullName() .. " terms with redundant transliterations")
-					elseif not data.tr_fail then
-						-- Prevents Arabic root categories from flooding the tracking categories.
-						if NAMESPACE ~= 14 then -- Category:
-							insert(cats, lang:getFullName() .. " terms with non-redundant manual transliterations")
+			if not nevercalltr then
+				-- Try to generate a transliteration.
+				local text = data.alt[1] or data.term[1]
+				if not lang:link_tr(data.sc[1]) then
+					text = export.remove_links(text, true)
+				end
+	
+				local automated_tr, tr_categories
+				automated_tr, data.tr_fail, tr_categories = lang:transliterate(text, data.sc[1])
+	
+				if automated_tr or data.tr_fail then
+					local manual_tr = data.tr[1]
+	
+					if manual_tr then
+						if (export.remove_links(manual_tr) == export.remove_links(automated_tr)) and (not data.tr_fail) then
+							insert(cats, lang:getFullName() .. " terms with redundant transliterations")
+						elseif not data.tr_fail then
+							-- Prevents Arabic root categories from flooding the tracking categories.
+							if NAMESPACE ~= 14 then -- Category:
+								insert(cats, lang:getFullName() .. " terms with non-redundant manual transliterations")
+							end
 						end
 					end
-				end
-				
-				if (not manual_tr) or lang:overrideManualTranslit(data.sc[1]) then
-					data.tr[1] = automated_tr
-					for _, category in ipairs(tr_categories) do
-						insert(cats, category)
+					
+					if (not manual_tr) or lang:overrideManualTranslit(data.sc[1]) then
+						data.tr[1] = automated_tr
+						for _, category in ipairs(tr_categories) do
+							insert(cats, category)
+						end
 					end
 				end
 			end
