@@ -5506,7 +5506,7 @@ Page 69 acoustic: -------- begin text --------
 
 ===Etymology 1===
 {{etymid|en|hearing}}
-Borrowed from {{bor|en|ML.|acousticus}}, {{m|ML.|acūsticus}}, from {{der|en|grc|ἀκουστῐκός||of or for hearing}}, from {{af|grc|ἀκούω|-ῐκός|t1=to hear|pos2=adjectival suffix|nocat=1}}.
+{{bor+|en|ML.|acousticus,acūsticus}}, from {{der|en|grc|ἀκουστῐκός||of or for hearing}}, from {{af|grc|ἀκούω|-ῐκός|t1=to hear|pos2=adjectival suffix|nocat=1}}.
 
 ====Adjective====
 {{en-adj|-}}
@@ -6733,7 +6733,7 @@ Page 81 à deux: -------- begin text --------
 {{wikipedia}}
 
 ===Etymology===
-Borrowed from {{bor|en|fr|[[à]] [[deux]]}}.
+{{ubor|en|fr|[[à]] [[deux]]}}.
 
 ===Pronunciation===
 * {{IPA|en|/ɑː ˈdɜː/|/ə ˈdɜː/}}
@@ -8868,7 +8868,7 @@ Page 116 Ajam: -------- begin text --------
 * {{alt|en|'Ajam}}
 
 ===Etymology===
-Borrowed from {{bor|en|ar|عَجَم||non-Arabs; Persians}}, or via {{der|en|fa|عجم|tr='ajam}}. {{root|en|ar|ع ج م}} {{doublet|en|Ayam}}.
+{{ubor|en|ar|عَجَم||non-Arabs; Persians}}, or via {{der|en|fa|عجم|tr='ajam}}. {{root|en|ar|ع ج م}} {{doublet|en|Ayam}}.
 
 ===Proper noun===
 {{en-proper noun}}
@@ -8931,7 +8931,7 @@ Borrowed from {{bor|en|ar|عَجَم||non-Arabs; Persians}}, or via {{der|en|fa|
 Page 117 alamoth: -------- begin text --------
 
 ===Etymology===
-Borrowed from {{bor|en|he|עֲלָמוֹת|tr=‘ălāmōṯ|t=women of childbearing age}}, feminine plural of {{m|he|עֶלֶם|tr=èlem|t=man of marriageable age}}.
+{{ubor|en|he|עֲלָמוֹת|tr=‘ălāmōṯ|t=women of childbearing age}}, feminine plural of {{m|he|עֶלֶם|tr=èlem|t=man of marriageable age}}.
 
 ===Adjective===
 {{en-adj|-}}
@@ -8949,7 +8949,7 @@ Page 118 alap: -------- begin text --------
 * {{alt|en|alaap|alapa}}
 
 ===Etymology===
-Borrowed from {{bor|en|sa|आलापा}}.
+{{ubor|en|sa|आलापा}}.
 
 ===Noun===
 {{en-noun}}
@@ -8971,14 +8971,14 @@ Named after Domenico Alberti (1710–1740/46), who used it extensively.
 ===Noun===
 {{en-noun|~}}
 
-# {{lb|en|music}} A kind of broken chord or arpeggiated accompaniment, where the notes of the chord are presented in the order lowest, highest, middle, highest.
+# {{lb|en|musical note sequence}} A kind of broken chord or arpeggiated accompaniment, where the notes of the chord are presented in the order lowest, highest, middle, highest.
 
 {{cln|en|eponyms}}
 -------- end text --------
 Page 120 albumblatt: -------- begin text --------
 
 ===Etymology===
-From {{bor|en|de|Albumblatt||album leaf}}.
+{{ubor|en|de|Albumblatt||album leaf}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˈælbəmˌblæt/|/ˈɑːlbəmˌblɑːt/}}
@@ -12054,7 +12054,7 @@ Page 201 arabesque: -------- begin text --------
 [[File:Jocelyn Vollmar.jpg|thumb|right|An arabesque (ballet).]]
 
 ===Etymology===
-{{bor+|en|fr|arabesque}}, from {{der|en|it|arabesco}}, from {{m|it|arabo|t=Arab}}. {{surf|en|Arab|-esque}}.
+{{ubor|en|fr|arabesque}}, from {{der|en|it|arabesco}}, from {{m|it|arabo|t=Arab}}. {{surf|en|Arab|-esque}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˌæɹ.əˈbɛsk/}}
@@ -14076,7 +14076,7 @@ Page 243 attacco: -------- begin text --------
 Page 244 attack: -------- begin text --------
 
 ===Etymology===
-Borrowed from {{bor|en|fr|attaque}}, derived from the verb {{m|fr|attaquer}}, from {{der|en|it|attaccare|t=to join, attach}} (used in {{m|it||attaccare battaglia|t=to join battle}}), from {{der|en|frk|*stakkijan|t=to stick, stick to, attach}}. {{doublet|en|attach}}. Displaced native {{ncog|enm|onresen}}, from {{ncog|ang|onrǣsan|t=to attack}}; and {{ncog|enm|resinge|t=an assault, attack}} (compare {{m+|ang|onrǣs|t=an attack}}).
+{{bor+|en|fr|attaque}}, derived from the verb {{m|fr|attaquer}}, from {{der|en|it|attaccare|t=to join, attach}} (used in {{m|it||attaccare battaglia|t=to join battle}}), from {{der|en|frk|*stakkijan|t=to stick, stick to, attach}}. {{doublet|en|attach}}. Displaced native {{ncog|enm|onresen}}, from {{ncog|ang|onrǣsan|t=to attack}}; and {{ncog|enm|resinge|t=an assault, attack}} (compare {{m+|ang|onrǣs|t=an attack}}).
 
 ===Pronunciation===
 * {{IPA|en|/əˈtæk/|a=RP,GA,AU}}
@@ -16389,7 +16389,7 @@ From {{der|en|de|Bach}}. The surname was brought to the Anglo-Saxon world by imm
 {{trans-bottom}}
 
 ===Etymology 2===
-Borrowed from {{bor|en|vi|Bạch}}. {{doublet|en|Bai}}.
+{{ubor|en|vi|Bạch}}. {{doublet|en|Bai}}.
 
 ====Proper noun====
 {{en-proper noun}}
@@ -16410,7 +16410,7 @@ Page 283 BACH: -------- begin text --------
 {{wikipedia|BACH motif}}
 
 ===Etymology===
-Borrowed from {{bor|en|de|BACH}}.
+{{bor+|en|de|BACH}}.
 
 ===Proper noun===
 {{en-proper noun}}
@@ -17423,7 +17423,7 @@ Page 312 bandish: -------- begin text --------
 # To [[tie]] something.{{attention|en|more clarity please}}
 
 ===Etymology 2===
-Borrowed from {{bor|en|hi|}}, meaning "binding together".
+{{bor+|en|hi|}}, meaning "binding together".
 
 ====Noun====
 {{en-noun}}
@@ -19224,7 +19224,7 @@ Preposition properly imperative of the verb. Compare {{m|en|barring}}.
 ===Etymology 3===
 {{etymid|en|unit}}
 {{root|en|ine-pro|*gʷreh₂-}}
-Borrowed from {{bor|en|grc|βάρος||weight}}, coined circa 1900.
+{{bor+|en|grc|βάρος||weight}}, coined circa 1900.
 {{wikipedia|Bar (unit)}}
 
 ====Noun====
@@ -22305,7 +22305,7 @@ From {{bor|en|fr|bâton}}. {{doublet|en|baston}}.
 Page 367 batterie: -------- begin text --------
 
 ===Etymology===
-Borrowed from {{bor|en|fr|batterie}}, from {{m|fr|battre||to hit}}. {{doublet|en|battery}}.
+{{ubor|en|fr|batterie}}, from {{m|fr|battre||to hit}}. {{doublet|en|battery}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˈbætəɹi/}} {{qualifier|or as French, below}}
@@ -110837,7 +110837,7 @@ Page 1696 inflect: -------- begin text --------
 {{was wotd|2007|May|13}}
 
 ===Etymology===
-{{bor+|en|la|īnflectō}}, from {{m|la|in-||in}} + {{m|la|flectō||to bend}}.
+{{bor+|en|la|īnflectō|īnflectāre|t=to bend inwards}}.
 
 ===Pronunciation===
 * {{IPA|en|/ɪnˈflɛkt/}}
@@ -146006,7 +146006,7 @@ First attested in 1922; probably formed as {{suffix|en|octave|alt1=octav(e)|atio
 Page 2304 octave: -------- begin text --------
 
 ===Etymology===
-{{bor+|en|la|[[octavus|octava]] [[pars]]|lit=eighth part}}. {{doublet|en|octavo|ochava|oitava}}.
+{{bor+|en|la|[[octavus|octāva]] [[pars]]|lit=eighth part}}. {{doublet|en|octavo|ochava|oitava}}.
 
 ===Pronunciation===
 * {{IPA|en|/ˈɒktɪv/|/ˈɒkteɪv/|a=UK}}
@@ -173071,7 +173071,7 @@ From the phrasal verb {{m|en|pull off}}.
 Page 2681 pulsatile: -------- begin text --------
 
 ===Etymology===
-{{bor+|en|ML.|pulsātilis}}, from the participle stem of {{der|en|la|pulsō|t=to pulse}}.
+{{bor+|en|ML.|pulsātilis}}, from the past passive participle stem of {{der|en|la|pulsō|t=to pulse}}.
 
 ===Adjective===
 {{en-adj}}
@@ -236197,7 +236197,7 @@ Page 3458 thaat: -------- begin text --------
 {{wp|lang=en}}
 
 ===Etymology===
-{{bor+|en|hi,mr|थाट}}.
+{{ubor|en|hi,mr|थाट}}.
 
 ===Pronunciation===
 * {{IPA|en|/t̪ʰɑːʈ/|a=Indic}}
