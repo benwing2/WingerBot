@@ -24,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
 
   pagemsg("Processing")
 
-  m = re.search("^Category:(Japanese|Okinawan|Miyako) terms spelled with (.*) read as (.*)$", pagetitle)
+  m = re.search("^Category:(Japanese|Okinawan|Miyako) terms (?:spelled|prefixed|suffixed) with (.*) read as (.*)$", pagetitle)
   if not m:
     pagemsg("Skipped")
     return
@@ -217,7 +217,7 @@ def process_text_on_page(index, pagetitle, text):
     pagemsg_with_spelling("WARNING: Can't find reading %s by looking through category contents" % reading)
 
 
-parser = blib.create_argparser("Create 'Japanese terms spelled with FOO read as BAR' categories",
+parser = blib.create_argparser("Create 'Japanese terms spelled/prefixed/suffixed with FOO read as BAR' categories",
   include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
