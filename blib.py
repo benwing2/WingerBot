@@ -830,8 +830,6 @@ def yield_subcats(page, seen, filter_cats_regex=None, prune_cats_regex=None, do_
     seen.add(pagetitle)
   if not check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose):
     return
-  if do_this_page:
-    yield page
   subcats = page.subcategories()
   if recurse:
     for subcat in subcats:
@@ -847,6 +845,8 @@ def yield_subcats(page, seen, filter_cats_regex=None, prune_cats_regex=None, do_
         if pagetitle not in seen:
           seen.add(pagetitle)
           yield subcat
+  if do_this_page:
+    yield page
 
 def cat_subcats(page, startprefix=None, endprefix=None, seen=None, filter_cats_regex=None, prune_cats_regex=None,
                 do_this_page=False, recurse=False, verbose=False):
@@ -1196,15 +1196,17 @@ def create_argparser(desc, include_pagefile=False, include_stdin=False,
     parser.add_argument("--find-regex-output", help="Output as by find_regex.py.", action="store_true")
     parser.add_argument("--no-output", help="In conjunction with --find-regex, don't output processed text.", action="store_true")
     parser.add_argument("--skip-ignorable-pages", help="Skip 'ignorable' pages (talk pages, user pages, etc.).", action="store_true")
+    parser.add_argument("--suppress-skipped-messages", help="Suppress 'Skipped, no changes' messages.", action="store_true")
     # Not implemented yet.
     #parser.add_argument("--parallel", help="Do in parallel.", action="store_true")
     #parser.add_argument("--num-workers", help="Number of workers for use with --parallel.", type=int, default=5)
   if include_stdin:
     parser.add_argument("--find-regex", help="Read find_regex.py output from stdin.", action="store_true")
+    parser.add_argument("--begin-end", help="Read per-line <begin> ... <end> output from stdin.", action="store_true")
     parser.add_argument("--stdin", help="Read XML dump from stdin.", action="store_true")
     parser.add_argument("--only-lang", help="Only process the section of a page for this language (a canonical language name).")
   if include_pagefile or include_stdin:
-    parser.add_argument("--ignore-embedded-page-indices", help="When processing find_regex.py or other similar output from stdin or '--pages-from-find-regex', ignore associated page indices and increment sequentially.", action="store_true")
+    parser.add_argument("--ignore-embedded-page-indices", help="When processing output from find_regex.py, begin-end output or other similar output from stdin or '--pages-from-find-regex', ignore associated page indices and increment sequentially.", action="store_true")
   return parser
 
 def parse_args(args = sys.argv[1:]):
@@ -1236,7 +1238,7 @@ def args_has_non_default_pages(args):
       or args.cats or args.category_file or args.refs or args.specials or args.contribs or args.prefix_namespace
       or args.pages_and_refs)
 
-def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, is_find_regex, edit):
+def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_format, edit):
   new, this_comment, has_changed = handle_process_page_retval(retval, text, pagemsg, args.verbose, args.diff)
   new = new or text
   if has_changed:
@@ -1264,13 +1266,15 @@ def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, is_find_re
       if type(prev_comment) is list:
         prev_comment = "; ".join(group_notes(prev_comment))
       pagemsg("Skipped, no changes; previous comment = %s" % prev_comment)
-    elif is_find_regex:
+    elif output_format in ["find-regex", "begin-end"] and not args.suppress_skipped_messages:
       pagemsg("Skipped, no changes")
-    if is_find_regex and not args.no_output:
+    if output_format == "find-regex" and not args.no_output:
       final_newline = ""
       if not new.endswith("\n"):
         final_newline = "\n"
       pagemsg("-------- begin text --------\n%s%s-------- end text --------" % (new, final_newline))
+    if output_format == "begin-end" and not args.no_output:
+      pagemsg("<begin> %s <end>" % escape_newline(new))
 
 # Process a run of pages, with the set of pages specified in various possible ways, e.g. from --pagefile, --cats,
 # --refs, or (if --stdin is given) from a Wiktionary dump or find_regex.py output read from stdin. A typical workflow is
@@ -1316,13 +1320,14 @@ def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, is_find_re
 #
 # The pages iterated over will be:
 #
-# 1. Those from find_regex.py output on stdin if stdin=True and --stdin and --find-regex are given.
-# 2. Else, those from a Wiktionary dump on stdin if stdin=True and --stdin is given.
-# 3. Else, the pages in --pages, --pagefile, --cats, --refs, --specials, --contribs and/or --prefix-pages if any of
+# 1. Those from find_regex.py output on stdin if stdin=True and --find-regex is given.
+# 2. Those from per-line <begin> ... <end> formatted output on stdin if stdin=True and --begin-end is given.
+# 3. Else, those from a Wiktionary dump on stdin if stdin=True and --stdin is given.
+# 4. Else, the pages in --pages, --pagefile, --cats, --refs, --specials, --contribs and/or --prefix-pages if any of
 #    those arguments are given.
-# 4. Else, pages in the category/categories in default_cats[] and/or pages referring to the page(s) specified in
+# 5. Else, pages in the category/categories in default_cats[] and/or pages referring to the page(s) specified in
 #    default_refs[], if either argument is given.
-# 5. Else, an error is thrown.
+# 6. Else, an error is thrown.
 #
 # If `only_lang` is given, it should be a canonical name of a language (e.g. "Latin"), and pages not containing this
 # language will be skipped. (This is especially useful in conjunction with dumps on stdin, where it can greatly speed
@@ -1435,10 +1440,10 @@ def do_pagefile_cats_refs(
       return call_process(text)
 
   # Process a page read from Wiktionary using Pywikibot (as opposed to a page read from stdin, either from find_regex
-  # output or from a dump file). `no_check_seen` means to not check the `seen` set to see whether a page has already
-  # been seen. This is set when iterating over categories because the code to do this adds to the `seen` set itself
-  # (necessary because it can recursively process subcategories) so if we check the `seen` set we'll never process any
-  # pages.
+  # output, begin-end output or from a dump file). `no_check_seen` means to not check the `seen` set to see whether a
+  # page has already been seen. This is set when iterating over categories because the code to do this adds to the
+  # `seen` set itself (necessary because it can recursively process subcategories) so if we check the `seen` set we'll
+  # never process any pages.
   def process_pywikibot_page(index, page, no_check_seen=False):
     index = process_index(index)
     pagetitle = str(page.title())
@@ -1470,14 +1475,14 @@ def do_pagefile_cats_refs(
       # We are reading from Wiktionary but asked to output in find_regex format.
       retval = do_process_page(page, index)
       pagetext = safe_page_text(page, errandpagemsg)
-      do_handle_stdin_retval(args, retval, pagetext, None, pagemsg, is_find_regex=True, edit=edit)
+      do_handle_stdin_retval(args, retval, pagetext, None, pagemsg, output_format="find-regex", edit=edit)
     elif edit:
       do_edit(page, index, do_process_page, save=args.save, verbose=args.verbose,
           diff=args.diff)
     else:
       do_process_page(page, index)
 
-  if stdin and (args.stdin or args.find_regex):
+  if stdin and (args.stdin or args.find_regex or args.begin_end):
     pages_to_filter = None
     if args.pages:
       pages_to_filter = set(split_arg(args.pages, canonicalize=canonicalize_pagename))
@@ -1508,13 +1513,21 @@ def do_pagefile_cats_refs(
           msg("Page %s %s: %s" % (process_index(index), pagetitle, txt))
         if prev_comment:
           prev_comment = parse_grouped_notes(prev_comment)
-        do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, is_find_regex=True, edit=edit)
+        do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_format="find-regex", edit=edit)
+    elif args.begin_end:
+      index_pagetitle_text = yield_text_from_begin_end(sys.stdin, args.verbose)
+      for index, (_, pagetitle, text) in iter_items(index_pagetitle_text, start, end,
+          get_name=lambda x:x[1], get_index=None if args.ignore_embedded_page_indices else lambda x:x[0]):
+        retval = do_process_stdin_text_on_page(index, pagetitle, text, None)
+        def pagemsg(txt):
+          msg("Page %s %s: %s" % (process_index(index), pagetitle, txt))
+        do_handle_stdin_retval(args, retval, text, None, pagemsg, output_format="begin-end", edit=edit)
     else:
       def do_process_stdin_dump_text_on_page(index, pagetitle, text):
         retval = do_process_stdin_text_on_page(index, pagetitle, text, None)
         def pagemsg(txt):
           msg("Page %s %s: %s" % (process_index(index), pagetitle, txt))
-        do_handle_stdin_retval(args, retval, text, None, pagemsg, is_find_regex=False, edit=edit)
+        do_handle_stdin_retval(args, retval, text, None, pagemsg, output_format=None, edit=edit)
       parse_dump(sys.stdin, do_process_stdin_dump_text_on_page, start, end)
 
   elif args_has_non_default_pages(args):
@@ -3193,6 +3206,18 @@ def yield_text_from_find_regex(lines, verbose):
         elif verbose:
           msg("Skipping: %s" % line)
 
+def yield_text_from_begin_end(lines, verbose):
+  for lineno, line in enumerate(lines):
+    line = line.rstrip("\n")
+    m = re.match(r"^Page ([^ ]+) (.*?): .*?<begin> (.*?) <end>.*$", line)
+    if not m:
+      msg("Line %s: WARNING: Unable to parse line: [%s]" % (lineno + 1, line))
+      continue
+    pagenum, pagename, text = m.groups()
+    if re.search("^[0-9]+$", pagenum):
+      pagenum = int(pagenum)
+    yield pagenum, pagename, undo_escape_newline(text)
+
 def yield_text_from_diff(lines, verbose):
   in_multiline = False
   while True:
@@ -3206,7 +3231,7 @@ def yield_text_from_diff(lines, verbose):
     elif in_multiline:
       templines.append(line)
     else:
-      line = line.rstrip('\n')
+      line = line.rstrip("\n")
       m = re.search("^Page ([0-9]+) (.*): Diff:$", line)
       if m:
         pagenum = m.group(1)
