@@ -10,6 +10,7 @@ local m_table = require("Module:table")
 local en_utilities_module = "Module:en-utilities"
 local headword_utilities_module = "Module:headword utilities"
 local m_headword_utilities = require_when_needed(headword_utilities_module)
+local m_string_utilities = require_when_needed("Module:string utilities")
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
 local list_param = {list = true, disallow_holes = true}
@@ -40,9 +41,6 @@ for _, lang in ipairs { "cs", "sk", "zlw-ocs", "zlw-osk" } do
 				local spec = gender .. "-" .. animacy .. number
 				dest[spec] = spec
 			end
-			if lang == "cs" and gender == "mfbysense" then -- HACK for Czech; FIXME: remove this
-				dest[gender .. number] = gender .. "-an" .. number
-			end
 		end
 	end
 end
@@ -63,16 +61,51 @@ local function track(track_id)
 	return true
 end
 
+local function replace_hash_with_lemma(term, lemma)
+	-- If there is a % sign in the lemma, we have to replace it with %% so it doesn't get interpreted as a capture
+	-- replace expression.
+	lemma = m_string_utilities.replacement_escape(lemma)
+	return (term:gsub("#", lemma)) -- discard second retval
+end
+
+local function frob_term_with_hash(term, lemma)
+	if term:find("#") then
+		term = replace_hash_with_lemma(term, lemma)
+	end
+	return term
+end
+
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
 -- sections enclosed in <<...>> are linked to the glossary. `accel` is the accelerator form, or nil.
-local function parse_and_insert_inflection(data, args, field, label, accel)
+local function parse_and_insert_inflection(data, args, field, label, accel, frob)
 	m_headword_utilities.parse_and_insert_inflection {
 		headdata = data,
 		forms = args[field],
 		paramname = field,
+		splitchar = ",",
 		label = label,
 		accel = accel and {form = accel} or nil,
+		frob = function(term)
+			term = frob_term_with_hash(term, data.pagename)
+			if frob then
+				term = frob(term)
+			end
+			return term
+		end,
+	}
+end
+
+-- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
+-- is parsed for inline modifiers.
+local function parse_inflection(data, paramname, forms)
+	return m_headword_utilities.parse_term_list_with_modifiers {
+		paramname = paramname,
+		forms = forms,
+		splitchar = ",",
+		frob = function(term)
+			return frob_term_with_hash(term, data.pagename)
+		end,
 	}
 end
 
@@ -165,9 +198,11 @@ end
 local function get_noun_params(is_proper)
 	return function(lang)
 		params = {
-			[1] = {alias_of = "g", list = false},
-			["g"] = list_param,
-			["g_qual"] = {list = "g\1_qual", allow_holes = true},
+			[1] = {type = "genders", required = true, template_default = "?"},
+			["g"] = {list = true, disallow_holes = true, replaced_by = false,
+				instead = "use multiple comma-separated genders in |1="},
+			["g_qual"] = {list = "g\1_qual", allow_holes = true, replaced_by = false,
+				instead = "use inline modifiers on the gender(s) in |1="},
 			["indecl"] = {type = "boolean"},
 			["m"] = list_param,
 			["f"] = list_param,
@@ -190,8 +225,10 @@ local function get_noun_params(is_proper)
 end
 
 local function do_nouns(is_proper, args, data)
+	-- Validate and canonicalize genders.
 	local specs = valid_gender_specs[data.lang:getCode()]
-	for i, g in ipairs(args.g) do
+	for _, gspec in ipairs(args[1]) do
+		local g = gspec.spec
 		local canon_g = specs[g]
 		if canon_g then
 			g = canon_g
@@ -203,49 +240,40 @@ local function do_nouns(is_proper, args, data)
 			error("Unrecognized gender: '" .. g .. "'")
 		end
 		track("gender-" .. g)
-		if args.g_qual[i] then
-			table.insert(data.genders, {spec = g, qualifiers = {args.g_qual[i]}})
-		else
-			table.insert(data.genders, g)
-		end
-	end
-	if #data.genders == 0 then
-		table.insert(data.genders, "?")
+		gspec.spec = g
+		table.insert(data.genders, gspec)
 	end
 	if args.indecl then
 		table.insert(data.inflections, {label = glossary_link("indeclinable")})
 		table.insert(data.categories, data.langname .. " indeclinable nouns")
 	end
+	local decls
 	if data.lang:getCode() == "sk" then
-		-- Validate declension patterns
-		for _, decl in ipairs(args.decl) do
+		-- Validate declension patterns and converto to Appendix links
+		decls = parse_inflection(data, "decl", args.decl)
+		for _, declobj in ipairs(decls) do
+			local decl = declobj.term
 			if not allowed_sk_decl_patterns[decl] then
 				error("Unrecognized " .. data.langname .. " declension pattern: " .. decl)
 			end
+			declobj.term = ("[[Appendix:%s declension pattern %s|%s]]"):format(data.langname, decl, decl)
 		end
 	end
 
-	-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
-	-- from `args[field]`, which is parsed for inline modifiers. If there is a corresponding qualifier field `FIELD_qual`,
-	-- qualifiers may additionally come from there. `label` is the label that the inflections are given, which is linked to
-	-- the glossary if preceded by * (which is removed). `plpos` is the plural part of speech, used in
-	-- [[Category:LANGNAME PLPOS with red links in their headword lines]]. `accel` is the accelerator form, or nil.
-	local function handle_infl(field, label, frob)
-		m_headword_utilities.parse_and_insert_inflection {
-			headdata = data,
-			forms = args[field],
-			paramname = field,
-			label = label,
-			frob = frob,
-		}
+	-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
+	-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
+	-- given, which is linked to the glossary if preceded by * (which is removed).
+	local function handle_infl(field, label)
+		parse_and_insert_inflection(data, args, field, label)
 	end
 
 	handle_infl("gen", "<<genitive>> <<singular>>")
 	handle_infl("pl", "<<nominative>> <<plural>>")
 	handle_infl("genpl", "<<genitive>> <<plural>>")
-	handle_infl("decl", "declension pattern of", function(decl)
-		return ("[[Appendix:%s declension pattern %s|%s]]"):format(data.langname, decl, decl)
-	end)
+	if decls and decls[1] then
+		decls.label = "declension pattern of"
+		table.insert(data.inflections, decls)
+	end
 	handle_infl("m", "male equivalent")
 	handle_infl("f", "female equivalent")
 	handle_infl("adj", "<<relational adjective|relational adjective>>")
@@ -289,32 +317,35 @@ pos_functions["verbs"] = {
 }
 
 local function do_comparative_superlative(args, data, plpos)
-	if args[1][1] == "-" then
-		table.insert(data.inflections, {label = "not comparable"})
-		table.insert(data.categories, data.langname .. " uncomparable " .. plpos)
-	elseif args[1][1] then
-		local comp = m_headword_utilities.parse_term_list_with_modifiers {
-			paramname = {1, "comp"},
-			forms = args[1],
-		}
-		local sup = m_headword_utilities.parse_term_list_with_modifiers {
-			paramname = {2, "sup"},
-			forms = args[2],
-		}
-		if not sup[1] then
-			sup = m_table.deepCopy(comp)
-			for _, s in ipairs(sup) do
-				-- Old Czech has naj-.
-				s.term = (data.lang:getCode() == "cs" and "nej" or "naj") .. s.term
+	if args[1][1] then
+		local comp = parse_inflection(data, {1, "comp"}, args[1])
+		if comp[1] and comp[1].term == "-" then
+			if comp[2] then
+				error("Can't specify comparatives along with '-' indicating an uncomparable adjective or adverb")
 			end
+			m_headword_utilities.insert_fixed_inflection {
+				headdata = data,
+				label = "not <<comparable>>",
+				originating_term = comp[1],
+			}
+			table.insert(data.categories, data.langname .. " uncomparable " .. plpos)
+		else
+			local sup = parse_inflection(data, {2, "sup"}, args[2])
+			if not sup[1] then
+				sup = m_table.deepCopy(comp)
+				for _, s in ipairs(sup) do
+					-- Old Czech has naj-.
+					s.term = (data.lang:getCode() == "cs" and "nej" or "naj") .. s.term
+				end
+			end
+			comp.label = "comparative"
+			comp.accel = {form = "comparative"}
+			sup.label = "superlative"
+			sup.accel = {form = "superlative"}
+			table.insert(data.inflections, comp)
+			table.insert(data.inflections, sup)
+			table.insert(data.categories, data.langname .. " comparable " .. plpos)
 		end
-		comp.label = "comparative"
-		comp.accel = {form = "comparative"}
-		sup.label = "superlative"
-		sup.accel = {form = "superlative"}
-		table.insert(data.inflections, comp)
-		table.insert(data.inflections, sup)
-		table.insert(data.categories, data.langname .. " comparable " .. plpos)
 	end
 end
 
