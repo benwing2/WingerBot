@@ -518,7 +518,12 @@ function export.show(frame)
 						alt = pagename
 					end
 					local altsc = lang:findBestScript(alt)
-					if altsc:getCode() == "Latn" then
+					
+					if alt:find("^raw:") then
+						if alt:sub(1, 4) == "raw:" then
+						    alt = alt:sub(5)
+						end	
+					elseif altsc:getCode() == "Latn" then
 						if convert_to_script then
 							alt = frame:expandTemplate { title = convert_to_script, args = { alt }}
 						else
