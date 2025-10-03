@@ -311,6 +311,33 @@ function export.glossary_link(entry, text)
 end
 
 
+function export.replace_glossary_links_in_label(label)
+	if label:find("<<", nil, true) then
+		label = label:gsub("<<(.-)|(.-)>>", export.glossary_link):gsub("<<(.-)>>", export.glossary_link)
+	end
+	return label
+end
+
+
+function export.insert_fixed_inflection(data)
+	local headdata, origterm, label = data.headdata, data.originating_term, data.label
+	if not origterm then
+		table.insert(headdata.inflections, {
+			label = export.replace_glossary_links_in_label(label)
+		})
+	else
+		if origterm.id then
+			error(("It doesn't make sense to pass in an ID '%s' for label '%s' in conjunction with a term value '%s'"
+				):format(origterm.id, label, origterm.term))
+		end
+		-- Preserve qualifiers, labels, references
+		origterm.term = nil
+		origterm.label = export.replace_glossary_links_in_label(label)
+		table.insert(headdata.inflections, origterm)
+	end
+end
+
+
 --[==[
 Insert previously-parsed terms into `headdata.inflections`. `data` is an object with the following fields:
 * `headdata`: The headword structure passed to [[Module:headword]]. Required.
@@ -327,12 +354,17 @@ glossary. (If the contents of <<...> contain a | in them, they are a two-part li
 function export.insert_inflection(data)
 	local headdata, terms, label = data.headdata, data.terms, data.label
 	if terms and terms[1] then
-		if label:find("<<", nil, true) then
-			label = label:gsub("<<(.-)|(.-)>>", export.glossary_link):gsub("<<(.-)>>", export.glossary_link)
-		end
 		if terms[1].term == "-" then
-			-- FIXME: Generate an error if there is more than one term or qualifiers or labels specified?
-			table.insert(headdata.inflections, {label = "no " .. label})
+			if terms[2] then
+				-- FIXME: We probably want to pass in an error function
+				error(("Don't know how to handle '-' as an inflection for label '%s' along with a second value %s"
+					):format(label, terms[2].term and ("'%s'"):format(terms[2].term) or "(nil)"))
+			end
+			export.insert_fixed_inflection {
+				headdata = headdata,
+				originating_term = terms[1],
+				label = "no " .. label,
+			}
 		else
 			if data.check_missing then
 				export.check_term_list_missing {
@@ -342,7 +374,7 @@ function export.insert_inflection(data)
 					plpos = data.plpos,
 				}
 			end
-			terms.label = label
+			terms.label = export.replace_glossary_links_in_label(label)
 			if data.accel then
 				terms.accel = data.accel
 			end
@@ -402,6 +434,11 @@ function export.combine_termobj_qualifiers_labels(destobj, srcobj)
 	destobj.l = export.combine_qualifiers_or_labels(destobj.l, srcobj.l)
 	destobj.ll = export.combine_qualifiers_or_labels(destobj.ll, srcobj.ll)
 	destobj.refs = export.combine_qualifiers_or_labels(destobj.refs, srcobj.refs)
+	if destobj.id and srcobj.id and destobj.id ~= srcobj.id then
+		-- FIXME: We probably want to pass in an error function
+		error(("Can't specify two different ID's %s and %s when combining objects"):format(srcobj.id, destobj.id))
+	end
+	destobj.id = destobj.id or srcobj.id
 	return destobj
 end
 
