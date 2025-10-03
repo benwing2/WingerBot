@@ -45,6 +45,26 @@ local function check_if_accents_needed(list, data)
 end
 
 
+-- Parse an inflection not requiring additional processing. The raw arguments come from `args[field]`, which is parsed
+-- for inline modifiers. `no_check_accents_needed` disables checking for accents. `no_id` means to disallow the
+-- <id:...> inline modifier.
+local function parse_inflection(data, args, field, no_check_accents_needed, no_id)
+	require(headword_utilities_module).parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		paramname = field,
+		splitchar = ",",
+		exclude_mods = no_id and {"id"} or nil,
+		frob = function(term)
+			if not no_check_accents_needed then
+				check_if_accent_needed(term, data)
+			end
+			return term
+		end,
+	}
+end
+
+
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
 -- sections enclosed in <<...>> are linked to the glossary. `accel` is the accelerator form, or nil.
@@ -53,6 +73,7 @@ local function parse_and_insert_inflection(data, args, field, label, accel)
 		headdata = data,
 		forms = args[field],
 		paramname = field,
+		splitchar = ",",
 		label = label,
 		accel = accel and {form = accel} or nil,
 		frob = function(term)
@@ -94,9 +115,9 @@ function export.show(frame)
 	}
 
 	local params = {
-		[1] = {list = "head"},
-		["tr"] = {list = true, allow_holes = true},
+		[1] = {list = "head", disallow_holes = true},
 		["unknown_stress"] = boolean_param,
+		["pagename"] = true,
 	}
 
 	if pos_functions[poscat] then
@@ -108,13 +129,26 @@ function export.show(frame)
 	local parargs = frame:getParent().args
 	local args = require("Module:parameters").process(parargs, params)
 
-	local heads = args[1]
-	if #heads == 0 then
-		heads = {PAGENAME}
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
+
+	local raw_user_specified_heads = args[1]
+	if not args[1][1] then
+		raw_user_specified_heads = {pagename}
 	end
+	local user_specified_heads = require(headword_utilities_module).parse_term_list_with_modifiers {
+		headdata = data,
+		forms = raw_user_specified_heads,
+		paramname = {1, "head"},
+		splitchar = ",",
+		exclude_mods = {"id"},
+		include_mods = {"tr"},
+		frob = function(term)
+			check_if_accent_needed(term, data)
+			return term
+		end,
+	}
 
 	data.heads = heads
-	data.translits = args.tr
 	data.unknown_stress = args.unknown_stress
 	data.frame = frame
 
