@@ -454,6 +454,19 @@ Possible parameter tags are listed below:
 : This is used in conjunction with list-type parameters when `sublist` or a list-generating type such as {"labels"} or
   {"genders"} is also specified, and causes the resulting list to be flattened. Not currently compatible with
   {allow_holes = true}.
+; {replaced_by =}
+: Specifies that the parameter is no longer valid, and has been replaced by some other mechanism. If the value of
+  `replaced_by` is a string, it is the name of the new parameter to use instead. Use the `reason` tag to specify the
+  reason why this change has been made, e.g.
+  {reason = "for consistency with the corresponding parameter in other Romance-language headword templates"}. If the
+  value of `replaced_by` is {false}, there is no replacement parameter. In this case, `instead` should be supplied
+  with a description of what to do instead, e.g.
+  {instead = "use an inline modifier on |2= such as <q:...>, <qq:...>, <l:...> or <ll:...>"}. You can also supply a
+  justification in `reason` if you feel it is appropriate or necessary to do so.
+; {reason =}
+: When used in conjunction with `replaced_by`, specifies the reason for the parameter replacement.
+; {instead =}
+: When used in conjunction with {replaced_by = false}, specifies what to do instead of using the removed parameter.
 ; {demo = true}
 : This is used as a way to ensure that the parameter is only enabled on the template's own page (and its documentation
   page), and in the User: namespace; otherwise, it will be treated as an unknown parameter. This should only be used if
@@ -1338,6 +1351,53 @@ function export.process(args, params, return_unknown)
 				end
 			end
 
+			local replaced_by = param.replaced_by
+			if replaced_by then -- replaced_by can be `false`, which is OK
+				validate_name(replaced_by, "the replaced_by field of parameter ", name)
+				if replaced_by == name then
+					internal_process_error(
+						"parameter %s cannot be replaced by itself.",
+						name
+					)
+				end
+				local main_param = params[replaced_by]
+				-- Check that the replaced_by is set to a valid parameter.
+				if not (main_param == true or type(main_param) == "table") then
+					internal_process_error(
+						"parameter %s is set to be replaced by an invalid parameter.",
+						name
+					)
+				end
+				-- Can't be a replaced-by of a replaced-by.
+				if main_param ~= true then
+					local main_replaced_by = main_param.replaced_by
+					if main_replaced_by ~= nil then
+						internal_process_error(
+							"replaced_by cannot be set to another replaced-by parameter: parameter %s is set as replaced by %s, which is in turn replaced by %s. Set replaced_by for %s to %s.",
+							name, replaced_by, main_replaced_by, name, main_replaced_by
+						)
+					end
+				end
+				if param.instead ~= nil then
+					internal_process_error("the `instead` tag can only be given when `replaced_by` is set to `false`.")
+				end
+			elseif replaced_by == false then
+				if param.instead ~= nil and type(param.instead) ~= "string" then
+					internal_process_error(
+						"the `instead` tag must be a string, but saw %s.",
+						param.instead
+					)
+				end
+			end
+			if replaced_by ~= nil then
+				if param.reason ~= nil and type(param.reason) ~= "string" then
+					internal_process_error(
+						"the `reason` tag must be a string, but saw %s.",
+						param.reason
+					)
+				end
+			end
+
 			if listname then
 				if not alias_of then
 					local key = name
@@ -1448,6 +1508,21 @@ function export.process(args, params, return_unknown)
 				args_new[name] = val
 			end
 		else
+			if param.replaced_by == false then
+				process_error(
+					("Parameter %%s has been removed and is no longer valid%s.%s"):format(
+						param.reason and ", " .. param.reason or "",
+						param.instead and " Instead, " .. param.instead .. "." or ""),
+					name
+				)
+			elseif param.replaced_by then
+				process_error(
+					("Parameter %%s has been replaced by %%s%s."):format(
+						param.reason and ", " .. param.reason or ""),
+					name, param.replaced_by
+				)
+			end
+
 			if param.deprecated then
 				track("deprecated parameter", name)
 			end
