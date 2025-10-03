@@ -2948,6 +2948,7 @@ labels["music"] = {
 }
 
 labels["music genre"] = {
+	aliases = {"musical genre"},
 	display = "[[music]]",
 	topical_categories = "Musical genres",
 }
