@@ -21,9 +21,19 @@ local export = {}
 
 local m_table = require("Module:table")
 local m_links = require("Module:links")
+local require_when_needed = require("Module:require when needed")
+local parse_utilities_module = "Module:parse utilities"
+local parameter_utilities_module = "Module:parameter utilities"
+local pron_qualifier_module = "Module:pron qualifier"
+local put = require_when_needed(parse_utilities_module)
+local m_pron_qualifier = require_when_needed(pron_qualifier_module)
+local m_parameter_utilities = require_when_needed(parameter_utilities_module)
+local dump = mw.dumpObject
 
 local rsplit = mw.text.split
 local rsubn = mw.ustring.gsub
+local insert = table.insert
+local concat = table.concat
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 -- version of rsubn() that discards all but the first return value
@@ -60,14 +70,23 @@ local function ru_paste_prefix_suffix(lang, prefix, prefix_tr, suffix, suffix_tr
 	return com.remove_monosyllabic_accents(verb, verb_tr)
 end
 
-local function combine_qualifiers(q1, q2)
-	if q1 == nil then
-		return q2
-	elseif q2 == nil then
-		return q1
-	else
-		return q1 .. ", " .. q2
+-- Combine two sets of qualifiers or labels. If either is {nil}, just return the other, and if both are {nil}, return
+-- {nil}.
+local function combine_qualifiers_or_labels(quals1, quals2)
+	if not quals1 and not quals2 then
+		return nil
 	end
+	if not quals1 then
+		return quals2
+	end
+	if not quals2 then
+		return quals1
+	end
+	local combined = m_table.shallowCopy(quals1)
+	for _, note in ipairs(quals2) do
+		m_table.insertIfNot(combined, note)
+	end
+	return combined
 end
 
 local function get_aspects(args)
@@ -82,7 +101,7 @@ local function get_aspects(args)
 	return first_aspect, second_aspect
 end
 
-local modifiers = {"q", "qq", "t", "gloss", "tr", "ts", "g", "id", "alt", "pos", "lit"}
+local param_mods
 
 local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 	local pair = {}
@@ -101,58 +120,38 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 		error(msg .. ": " .. arg_index .. "=" .. origarg)
 	end
 
-	local function parse_term_with_modifiers(run)
+	local function generate_obj(term)
 		local obj
-		local within_brackets = run[1]:match("^%[(.*)%]$")
+		local within_brackets = term:match("^%[(.*)%]$")
 		if within_brackets then
 			obj = {term = within_brackets, brackets = true}
 		else
-			obj = {term = run[1]}
+			obj = {term = term}
 		end
 		if obj.term == "." then
 			obj.term = ""
 		end
-
-		for j = 2, #run - 1, 2 do
-			if run[j + 1] ~= "" then
-				parse_err("Extraneous text '" .. run[j + 1] .. "' after modifier")
-			end
-			local modtext = run[j]:match("^<(.*)>$")
-			if not modtext then
-				parse_err("Internal error: Modifier '" .. modtext .. "' isn't surrounded by angle brackets")
-			end
-			local prefix, value = modtext:match("^([a-z]+):(.*)$")
-			if not prefix then
-				parse_err(("Modifier %s lacks a prefix, should begin with one of %s followed by a colon"):format(
-					run[j], table.concat(modifiers, ",")))
-			end
-			if not m_table.contains(modifiers, prefix) then
-				parse_err(("Unrecognized prefix '%s' in modifier %s, should be one of %s"):format(
-					prefix, run[j], table.concat(modifiers, ",")))
-			end
-			local dest = prefix
-			if prefix == "t" then
-				dest = "gloss"
-			elseif prefix == "g" then
-				dest = "genders"
-			end
-			if obj[dest] then
-				parse_err("Modifier '" .. prefix .. "' occurs twice, second occurrence " .. run[j])
-			end
-			obj[dest] = prefix == "g" and rsplit(value, "%s*,%s*") or value
-		end
-
 		return obj
 	end
 
-	if arg:find("<") then -- and not arg:find("^[^<]*<[a-z]*[^a-z:]") then
-		if not state.put then
-			state.put = require("Module:parse utilities")
-		end
+	local function parse_term_with_modifiers(run)
+		param_mods = param_mods or m_parameter_utilities.construct_param_mods {
+			{group = {"link", "ref", "l", "q"}}
+		}
+		return put.parse_inline_modifiers_from_segments {
+			group = run,
+			props = {
+				generate_obj = generate_obj,
+				parse_err = parse_err,
+				param_mods = param_mods,
+			}
+		}
+	end
 
-		local segments = state.put.parse_balanced_segment_run(arg, "<", ">")
+	if arg:find("<") and not put.term_contains_top_level_html(arg) then
+		local segments = put.parse_balanced_segment_run(arg, "<", ">")
 		local slash_separated_groups =
-			state.put.split_alternating_runs_and_frob_raw_text(segments, "/", state.put.strip_spaces)
+			put.split_alternating_runs_and_frob_raw_text(segments, "/", put.strip_spaces)
 		if #slash_separated_groups == 1 then
 			pair.prefix = parse_term_with_modifiers(slash_separated_groups[1])
 		elseif #slash_separated_groups > 2 then
@@ -161,9 +160,9 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 			local function process_terms(segments)
 				local retval = {}
 				local comma_separated_groups =
-					state.put.split_alternating_runs_and_frob_raw_text(segments, ",", state.put.strip_spaces)
+					put.split_alternating_runs_and_frob_raw_text(segments, ",", put.strip_spaces)
 				for _, comma_separated_group in ipairs(comma_separated_groups) do
-					table.insert(retval, parse_term_with_modifiers(comma_separated_group))
+					insert(retval, parse_term_with_modifiers(comma_separated_group))
 				end
 				return retval
 			end
@@ -175,7 +174,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 	else
 		local split_on_slash = rsplit(arg, "%s*/%s*")
 		if #split_on_slash == 1 then
-			pair.prefix = parse_term_with_modifiers({arg})
+			pair.prefix = generate_obj(arg)
 		elseif #split_on_slash > 2 then
 			parse_err("Saw more than two slashes")
 		else
@@ -183,7 +182,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 				local retval = {}
 				terms = rsplit(terms, "%s*,%s*")
 				for _, term in ipairs(terms) do
-					table.insert(retval, parse_term_with_modifiers({term}))
+					insert(retval, generate_obj(term))
 				end
 				return retval
 			end
@@ -206,7 +205,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 			local retval = {}
 			for _, term in ipairs(terms) do
 				if term.term ~= "-" then
-					table.insert(retval, term)
+					insert(retval, term)
 				end
 			end
 			return retval
@@ -255,7 +254,7 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 				end
 				term.term, term.tr = lang_module.paste_prefix_suffix(lang_module.lang, prefix.term, prefix.tr,
 					term.term, term.tr, aspect)
-				table.insert(retval, term)
+				insert(retval, term)
 			end
 			return retval
 		end
@@ -264,14 +263,17 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 		pair.firsts = prefix_template_suffixes(pair.prefix, state.first_suffixes, first_aspect)
 		pair.seconds = prefix_template_suffixes(pair.prefix, state.second_suffixes, second_aspect)
 
-		-- Now propagate t= (goes into 'gloss') and qq= to the last resulting term, and q= to the first resulting term.
+		-- Now propagate t= (goes into 'gloss') and qq=/ll=/ref= to the last resulting term, and q=/l=/ref= to the
+		-- first resulting term.
 		local last_term
 		if #pair.seconds > 0 then
 			last_term = pair.seconds[#pair.seconds]
 		else
 			last_term = pair.firsts[#pair.firsts]
 		end
-		last_term.qq = combine_qualifiers(last_term.qq, pair.prefix.qq)
+		last_term.qq = combine_qualifiers_or_labels(last_term.qq, pair.prefix.qq)
+		last_term.ll = combine_qualifiers_or_labels(last_term.ll, pair.prefix.ll)
+		last_term.refs = combine_qualifiers_or_labels(last_term.refs, pair.prefix.refs)
 		if last_term.gloss and pair.prefix.gloss then
 			parse_err(("Can't override gloss '%s' of term '%s' with gloss '%s' of prefix '%s'"):
 			format(last_term.gloss, last_term.term, pair.prefix.gloss, pair.prefix.term))
@@ -284,7 +286,10 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 		else
 			first_term = pair.seconds[1]
 		end
-		first_term.q = combine_qualifiers(first_term.q, pair.prefix.q)
+		first_term.q = combine_qualifiers_or_labels(first_term.q, pair.prefix.q)
+		first_term.l = combine_qualifiers_or_labels(first_term.l, pair.prefix.l)
+		-- FIXME: Is this correct?
+		first_term.refs = combine_qualifiers_or_labels(first_term.refs, pair.prefix.refs)
 	else
 		local function handle_aspect_terms(terms, template_suffixes, aspect)
 			local retval = {}
@@ -313,12 +318,15 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 							end
 						end
 
-						-- Combine term and translit, along with qualifiers and brackets.
+						-- Combine term and translit, along with qualifiers, labels, references and brackets.
 						newterm.term, newterm.tr =
 							lang_module.paste_prefix_suffix(lang_module.lang, rsub(term.term, "%-$", ""),
 								term.tr and rsub(term.tr, "%-$", "") or nil, newterm.term, newterm.tr, aspect)
-						newterm.q = combine_qualifiers(newterm.q, term.q)
-						newterm.qq = combine_qualifiers(newterm.qq, term.qq)
+						newterm.q = combine_qualifiers_or_labels(newterm.q, term.q)
+						newterm.qq = combine_qualifiers_or_labels(newterm.qq, term.qq)
+						newterm.l = combine_qualifiers_or_labels(newterm.l, term.l)
+						newterm.ll = combine_qualifiers_or_labels(newterm.ll, term.ll)
+						newterm.refs = combine_qualifiers_or_labels(newterm.refs, term.refs)
 						newterm.brackets = newterm.brackets or term.brackets
 
 						-- Remaining properties are copied from prefix to suffix if not already in suffix.
@@ -333,9 +341,9 @@ local function parse_aspect_pair(arg, arg_index, state, lang_module, args)
 							end
 						end
 
-						table.insert(retval, newterm)
+						insert(retval, newterm)
 					else
-						table.insert(retval, term)
+						insert(retval, term)
 					end
 				end
 			end
@@ -369,14 +377,14 @@ local function parse_args(lang, args)
 			if #group == 0 then
 				error("No items in group terminated by single hyphen in arg #" .. i)
 			end
-			table.insert(groups, group)
+			insert(groups, group)
 			group = {}
 		elseif pair then
-			table.insert(group, pair)
+			insert(group, pair)
 		end
 	end
 	if #group > 0 then
-		table.insert(groups, group)
+		insert(groups, group)
 	end
 	return groups
 end
@@ -392,19 +400,31 @@ local function format_aspect_terms(lang, args, term_groups, include_default_aspe
 				local term_parts = {}
 				for _, term in ipairs(terms) do
 					sort_key = sort_key or (lang:makeSortKey((lang:makeEntryName(term.term))))
-					local preq_text = term.q and require("Module:qualifier").format_qualifier(term.q) .. " " or ""
 					if not term.genders and this_include_default_aspect then
 						term.genders = {aspect}
 					end
 					term.lang = lang
+					-- We could use show_qualifiers except for the brackets that may need to be added.
 					local linked_term = m_links.full_link(term)
 					if term.brackets then
 						linked_term = "[" .. linked_term .. "]"
 					end
-					table.insert(term_parts, preq_text .. linked_term
-						.. (term.qq and " " .. require("Module:qualifier").format_qualifier(term.qq) or ""))
+					if term.q and term.q[1] or term.qq and term.qq[1] or term.l and term.l[1] or
+						term.ll and term.ll[1] or term.refs and term.refs[1] then
+						linked_term = m_pron_qualifier.format_qualifiers {
+							lang = lang,
+							text = linked_term,
+							q = term.q,
+							qq = term.qq,
+							l = term.l,
+							ll = term.ll,
+							refs = term.refs,
+						}
+					end
+
+					insert(term_parts, linked_term)
 				end
-				return table.concat(term_parts, ", ")
+				return concat(term_parts, ", ")
 			end
 			local first_aspect, second_aspect = get_aspects(args)
 			local switch_aspects
@@ -422,7 +442,7 @@ local function format_aspect_terms(lang, args, term_groups, include_default_aspe
 			end
 			local firsts = handle_aspect_terms(items.firsts, first_aspect)
 			local seconds = handle_aspect_terms(items.seconds, second_aspect)
-			table.insert(group_formatted_items, {
+			insert(group_formatted_items, {
 				firsts = firsts,
 				seconds = seconds,
 				sort_key = sort_key
@@ -430,7 +450,7 @@ local function format_aspect_terms(lang, args, term_groups, include_default_aspe
 		end
 		table.sort(group_formatted_items, function(a, b) return a.sort_key < b.sort_key end)
 		for _, formatted_item in ipairs(group_formatted_items) do
-			table.insert(all_formatted_items, formatted_item)
+			insert(all_formatted_items, formatted_item)
 		end
 	end
 	return all_formatted_items
@@ -468,15 +488,15 @@ local function format_terms_as_table(lang, args, formatted_items)
 		first_aspect_header = "perfective"
 		second_aspect_header = "imperfective"
 	end
-	table.insert(lines, '{| class="wikitable vsSwitcher" data-toggle-category="derived terms"\n! ' ..
+	insert(lines, '{| class="wikitable vsSwitcher" data-toggle-category="derived terms"\n! ' ..
 		first_aspect_header .. ' !! class="vsToggleElement" | ' .. second_aspect_header)
 
 	for _, formatted_item in ipairs(formatted_items) do
-		table.insert(lines, '|- class="vsHide"\n| ' .. formatted_item.firsts .. " || " ..
+		insert(lines, '|- class="vsHide"\n| ' .. formatted_item.firsts .. " || " ..
 			formatted_item.seconds)
 	end
-	table.insert(lines, "|}")
-	return table.concat(lines, "\n")
+	insert(lines, "|}")
+	return concat(lines, "\n")
 end
 
 function export.imperfectives_and_perfectives(frame)
