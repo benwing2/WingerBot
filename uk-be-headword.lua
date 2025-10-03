@@ -2,13 +2,17 @@ local export = {}
 
 local lang, langcode, langname
 local com
-local iut = require("Module:User:Benwing2/inflection utilities")
 local m_links = require("Module:links")
-local m_string_utilities = require("Module:string utilities")
 local m_table = require("Module:table")
+local en_utilities_module = "Module:en-utilities"
+local headword_utilities_module = "Module:headword utilities"
 
 local rfind = mw.ustring.find
 
+local boolean_param = {type = "boolean"}
+local list_param = {list = true, disallow_holes = true}
+local list_comp = {list = "comp", disallow_holes = true}
+local list_sup = {list = "sup", disallow_holes = true}
 
 local pos_functions = {}
 
@@ -19,20 +23,43 @@ local function track(page)
 end
 
 
+local function check_if_accent_needed(val, data)
+	val = m_links.remove_links(val)
+	if com.needs_accents(val) then
+		if langcode == "uk" and not data.unknown_stress then
+			error("Stress must be supplied using an acute accent: '" .. val .. "' (use unknown_stress=1 if stress is truly unknown)")
+		end
+		local pos = require(en_utilities_module).singularize(data.pos_category)
+		table.insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
+	end
+	if com.is_multi_stressed(val) then
+		error("Multi-stressed form '" .. val .. "' not allowed")
+	end
+end
+
+
 local function check_if_accents_needed(list, data)
 	for _, val in ipairs(list) do
-		val = m_links.remove_links(val)
-		if com.needs_accents(val) then
-			if langcode == "uk" and not data.unknown_stress then
-				error("Stress must be supplied using an acute accent: '" .. val .. "' (use unknown_stress=1 if stress is truly unknown)")
-			end
-			local pos = m_string_utilities.singularize(data.pos_category)
-			table.insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
-		end
-		if com.is_multi_stressed(val) then
-			error("Multi-stressed form '" .. val .. "' not allowed")
-		end
+		check_if_accent_needed(val, data)
 	end
+end
+
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- sections enclosed in <<...>> are linked to the glossary. `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, label, accel)
+	require(headword_utilities_module).parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		paramname = field,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		frob = function(term)
+			check_if_accent_needed(term, data)
+			return term
+		end,
+	}
 end
 
 
@@ -42,9 +69,10 @@ function export.show(frame)
 	local args = frame:getParent().args
 	local PAGENAME = mw.loadData("Module:headword/data").pagename
 
+	local required = {required = true}
 	local iparams = {
-		[1] = {required = true},
-		["lang"] = {required = true},
+		[1] = required,
+		["lang"] = required,
 	}
 
 	local iargs = require("Module:parameters").process(frame.args, iparams)
@@ -57,12 +85,18 @@ function export.show(frame)
 	langname = langcode == "uk" and "Ukrainian" or "Belarusian"
 	com = langcode == "uk" and require("Module:uk-common") or require("Module:be-common")
 
-	local data = {lang = lang, pos_category = poscat, categories = {}, genders = {}, inflections = {}}
+	local data = {
+		lang = lang,
+		pos_category = poscat,
+		categories = {},
+		genders = {},
+		inflections = {},
+	}
 
 	local params = {
 		[1] = {list = "head"},
 		["tr"] = {list = true, allow_holes = true},
-		["unknown_stress"] = {type = "boolean"},
+		["unknown_stress"] = boolean_param,
 	}
 
 	if pos_functions[poscat] then
@@ -101,38 +135,39 @@ end
 
 
 local function make_gloss_text(text)
-	return '<span class="gloss-brac">(</span>' ..
-		'<span class="gloss-content">' .. text ..
-		'</span><span class="gloss-brac">)</span>'
+	return '<span class="mention-gloss-paren">(</span>' ..
+		'<span class="mention-gloss">' .. text ..
+		'</span><span class="mention-gloss-paren">)</span>'
 end
 
 
 local function get_noun_pos(is_proper)
 	return {
 		params = {
-			[2] = {alias_of = "g"},
+			[2] = {alias_of = "g", list = false},
 			[3] = {list = "gen"},
 			[4] = {list = "pl"},
 			[5] = {list = "genpl"},
-			["lemma"] = {list = true},
-			["g"] = {list = true},
-			["m"] = {list = true},
-			["f"] = {list = true},
-			["adj"] = {list = true},
-			["dim"] = {list = true},
-			["aug"] = {list = true},
-			["pej"] = {list = true},
-			["dem"] = {list = true},
-			["fdem"] = {list = true},
-			["unknown_gender"] = {type = "boolean"},
-			["unknown_animacy"] = {type = "boolean"},
-			["id"] = {},
+			["lemma"] = list_param,
+			["g"] = list_param,
+			["m"] = list_param,
+			["f"] = list_param,
+			["adj"] = list_param,
+			["pos"] = list_param,
+			["dim"] = list_param,
+			["aug"] = list_param,
+			["pej"] = list_param,
+			["dem"] = list_param,
+			["fdem"] = list_param,
+			["unknown_gender"] = boolean_param,
+			["unknown_animacy"] = boolean_param,
+			["id"] = true,
 		},
 		-- set this to avoid problems with cases like {{uk-noun|((ґандж<>,ґандж<F>))}},
 		-- which will otherwise throw an error
 		no_check_head_accents = true,
 		func = function(args, data)
-			local genitives, plurals, genitive_plurals
+			local genitives, plurals, genitive_plurals, usuallysg
 			if rfind(data.heads[1], "<") then
 				local parargs = data.frame:getParent().args
 				local alternant_spec = require("Module:" .. langcode .. "-noun").do_generate_forms(parargs, nil, true)
@@ -147,6 +182,7 @@ local function get_noun_pos(is_proper)
 								langcode == "uk" and com.remove_monosyllabic_stress(form.form) or
 								com.remove_monosyllabic_accents(form.form)
 							if form.footnotes then
+								local iut = require("Module:inflection utilities")
 								if not footnote_obj then
 									footnote_obj = iut.create_footnote_obj()
 								end
@@ -165,7 +201,6 @@ local function get_noun_pos(is_proper)
 					end
 					return raw_forms
 				end
-
 				if alternant_spec.number == "pl" then
 					data.heads = #args.lemma > 0 and args.lemma or get_raw_forms(alternant_spec.forms.nom_p_linked)
 					genitives = get_raw_forms(alternant_spec.forms.gen_p)
@@ -187,6 +222,8 @@ local function get_noun_pos(is_proper)
 				else
 					data.genders = alternant_spec.genders
 				end
+				
+				usuallysg = alternant_spec.usuallysg
 
 				local notes_segments = {}
 				if footnote_obj then
@@ -276,6 +313,10 @@ local function get_noun_pos(is_proper)
 				table.insert(data.inflections, {label = "[[Appendix:Glossary#uncountable|uncountable]]"})
 				table.insert(data.categories, langname .. " uncountable nouns")
 			else
+				if usuallysg then
+					table.insert(data.inflections, {label = "usually [[Appendix:Glossary#uncountable|uncountable]]"})
+					table.insert(data.categories, langname .. " uncountable nouns")
+				end
 				plurals.label = "nominative plural"
 				plurals.request = true
 				check_if_accents_needed(plurals, data)
@@ -294,23 +335,23 @@ local function get_noun_pos(is_proper)
 				end
 			end
 
-			local function handle_infl(arg, label)
-				local vals = args[arg]
-				if #vals > 0 then
-					vals.label = label
-					check_if_accents_needed(vals, data)
-					table.insert(data.inflections, vals)
-				end
+			-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
+			-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
+			-- given; <<..>> ini the label is linked to the glossary). `accel` is the accelerator form, or nil. `frob` is a
+			-- function to apply to the values before storing.
+			local function handle_infl(field, label, frob)
+				parse_and_insert_inflection(data, args, field, label)
 			end
 
-			handle_infl("m", "masculine")
-			handle_infl("f", "feminine")
-			handle_infl("adj", "relational adjective")
-			handle_infl("dim", "diminutive")
-			handle_infl("aug", "augmentative")
-			handle_infl("pej", "pejorative")
-			handle_infl("dem", "demonym")
-			handle_infl("fdem", "female demonym")
+			handle_infl("m", "male equivalent")
+			handle_infl("f", "female equivalent")
+			handle_infl("adj", "<<relational adjective>>")
+			handle_infl("pos", "<<possessive adjective>>")
+			handle_infl("dim", "<<diminutive>>")
+			handle_infl("aug", "<<augmentative>>")
+			handle_infl("pej", "<<pejorative>>")
+			handle_infl("dem", "<<demonym>>")
+			handle_infl("fdem", "female <<demonym>>")
 
 			data.id = args.id
 		end
@@ -325,8 +366,8 @@ pos_functions["nouns"] = get_noun_pos(false)
 pos_functions["verbs"] = {
 	params = {
 		[2] = {default = "?"},
-		["pf"] = {list = true},
-		["impf"] = {list = true},
+		["pf"] = list_param,
+		["impf"] = list_param,
 	},
 	func = function(args, data)
 		-- Aspect
@@ -369,12 +410,12 @@ pos_functions["verbs"] = {
 
 pos_functions["adjectives"] = {
 	params = {
-		[2] = {list = "comp"},
-		[3] = {list = "sup"},
-		["adv"] = {list = true},
-		["absn"] = {list = true},
-		["dim"] = {list = true},
-		["indecl"] = {type = "boolean"},
+		[2] = list_comp,
+		[3] = list_sup,
+		["adv"] = list_param,
+		["absn"] = list_param,
+		["dim"] = list_param,
+		["indecl"] = boolean_param,
 	},
 	func = function(args, data)
 		local comps = args[2]
@@ -427,9 +468,9 @@ pos_functions["adjectives"] = {
 
 pos_functions["adverbs"] = {
 	params = {
-		[2] = {list = "comp"},
-		[3] = {list = "sup"},
-		["dim"] = {list = true},
+		[2] = list_comp,
+		[3] = list_sup,
+		["dim"] = list_param,
 	},
 	func = function(args, data)
 		local comps = args[2]
