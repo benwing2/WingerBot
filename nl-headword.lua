@@ -1,66 +1,45 @@
 local export = {}
 local pos_functions = {}
 
+local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+
+local require_when_needed = require("Module:utilities/require when needed")
+local m_table = require("Module:table")
 local lang = require("Module:languages").getByCode("nl")
-local headword_module = "Module:headword"
+local langname = lang:getCanonicalName()
+
+local en_utilities_module = "Module:en-utilities"
+local headword_utilities_module = "Module:headword utilities"
+-- local romut_module = "Module:romance utilities"
 local nl_common_module = "Module:nl-common"
-local parse_utilities_module = "Module:parse utilities"
 
-local param_mods = {
-	-- [[Module:headword]] expects part genders in `.genders`.
-	g = {item_dest = "genders", sublist = true},
-	id = {},
-	q = {type = "qualifier"},
-	qq = {type = "qualifier"},
-	l = {type = "labels"},
-	ll = {type = "labels"},
-	-- [[Module:headword]] expects part references in `.refs`.
-	ref = {item_dest = "refs", type = "references"},
-}
+local m_en_utilities = require_when_needed(en_utilities_module)
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+local m_string_utilities = require_when_needed("Module:string utilities")
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
-local function parse_term_with_modifiers(paramname, val)
-	local function generate_obj(term, parse_err)
-		return {term = term}
-	end
+local boolean_param = {type = "boolean"}
+local list_param = {list = true, disallow_holes = true}
 
-	if val:find("<") then
-		return require(parse_utilities_module).parse_inline_modifiers(val, {
-			paramname = paramname,
-			param_mods = param_mods,
-			generate_obj = generate_obj,
-		})
-	else
-		return generate_obj(val)
-	end
-end
+local insert = table.insert
 
-local function parse_term_list_with_modifiers(paramname, list)
-	local first, restpref
-	if type(paramname) == "table" then
-		first = paramname[1]
-		restpref = paramname[2]
-	else
-		first = paramname
-		restpref = paramname
-	end
-	for i, val in ipairs(list) do
-		list[i] = parse_term_with_modifiers(i == 1 and first or restpref .. i, val)
-	end
-	return list
+local function track(page)
+	require("Module:debug").track("nl-headword/" .. page)
+	return true
 end
 
 -- The main entry point.
 -- This is the only function that can be invoked from a template.
 function export.show(frame)
-	-- The part of speech. This is also the name of the category that
-	-- entries go in. However, the two are separate (the "cat" parameter)
-	-- because you sometimes want something to behave as an adjective without
-	-- putting it in the adjectives category.
 	local poscat = frame.args[1] or error("Part of speech has not been specified. Please pass parameter 1 to the module invocation.")
 
 	local params = {
-		["head"] = {list = true},
-		["pagename"] = {}, -- for testing
+		["head"] = list_param,
+		["id"] = true,
+		-- ["splithyph"] = boolean_param,
+		["nolinkhead"] = boolean_param,
+		["json"] = boolean_param,
+		["pagename"] = true, -- for testing
 	}
 
 	if pos_functions[poscat] then
@@ -69,89 +48,187 @@ function export.show(frame)
 		end
 	end
 
-	local args = require("Module:parameters").process(frame:getParent().args, params)
+	local parargs = frame:getParent().args
+	local args = require("Module:parameters").process(parargs, params)
 
-	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename -- Accounts for unsupported titles.
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
+
+	local user_specified_heads = args.head
+	local heads = user_specified_heads
+	if args.nolinkhead then
+		if not heads[1] then
+			heads = {pagename}
+		end
+	else
+		--local romut = require(romut_module)
+		--local auto_linked_head = romut.add_links_to_multiword_term(pagename, args.splithyph, no_split_apostrophe_words)
+		--if not heads[1] then
+		--	heads = {auto_linked_head}
+		--else
+			for i, head in ipairs(heads) do
+				--if head:find("^~") then
+				--	head = romut.apply_link_modifiers(auto_linked_head, usub(head, 2))
+				--	heads[i] = head
+				--end
+				if head == auto_linked_head then
+					track("redundant-head")
+				end
+			end
+		--end
+	end
 
 	local data = {
 		lang = lang,
 		pos_category = poscat,
 		categories = {},
-		heads = args["head"],
+		heads = heads,
+		user_specified_heads = user_specified_heads,
+		no_redundant_head_cat = not user_specified_heads[1],
 		genders = {},
 		inflections = {},
-		tracking_categories = {},
-		pagename = args.pagename,
-		-- This is always set, and in the case of unsupported titles, it's the displayed version (e.g. 'C|N>K' instead
-		-- of 'Unsupported titles/C through N to K').
-		displayed_pagename = pagename,
+		pagename = pagename,
+		id = args.id,
+		force_cat_output = force_cat,
 	}
 
-	if pos_functions[poscat] then
-		pos_functions[poscat].func(args, data)
+	local is_suffix = false
+	if pagename:find("^%-") and poscat ~= "suffix forms" then
+		is_suffix = true
+		data.pos_category = "suffixes"
+		local singular_poscat = require(en_utilities_module).singularize(poscat)
+		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
-	return require(headword_module).full_headword(data) ..
-		require("Module:utilities").format_categories(data.tracking_categories, lang, nil)
+	if pos_functions[poscat] then
+		pos_functions[poscat].func(args, data, is_suffix)
+	end
+
+	if args.json then
+		return require("Module:JSON").toJSON(data)
+	end
+
+	return require("Module:headword").full_headword(data)
 end
+
+----------------------------------------------- Utilities --------------------------------------------
+
+local function replace_hash_with_lemma(term, lemma)
+	-- If there is a % sign in the lemma, we have to replace it with %% so it doesn't get interpreted as a capture
+	-- replace expression.
+	lemma = m_string_utilities.replacement_escape(lemma)
+	return (term:gsub("#", lemma)) -- discard second retval
+end
+
+local function frob_term_with_hash(term, lemma)
+	if term:find("#") then
+		term = replace_hash_with_lemma(term, lemma)
+	end
+	return term
+end
+
+local function parse_term_list_with_modifiers(data, paramname, list)
+	return m_headword_utilities.parse_term_list_with_modifiers {
+		paramname = paramname,
+		forms = list,
+		splitchar = ",",
+		include_mods = {"g"},
+		frob = function(term)
+			return frob_term_with_hash(term, data.pagename)
+		end,
+	}
+end
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- `plpos` is the plural part of speech, used in [[Category:LANGNAME PLPOS with red links in their headword lines]].
+-- `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, label, accel, check_missing, plppos)
+	m_headword_utilities.parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		paramname = field,
+		splitchar = ",",
+		include_mods = {"g"},
+		frob = function(term)
+			return frob_term_with_hash(term, data.pagename)
+		end,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		check_missing = check_missing,
+		lang = lang,
+		plpos = plpos,
+	}
+end
+
+-- Insert the parsed inflections in `infls` (as parsed by `parse_inflection`) into `data.inflections`, with label
+-- `label` and optional accelerator spec `accel`.
+local function insert_inflection(data, terms, label, accel, check_missing, plpos)
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		check_missing = check_missing,
+		lang = lang,
+		plpos = plpos,
+	}
+end
+
+
+----------------------------------------------- Adjectives, Adverbs --------------------------------------------
 
 -- Display additional inflection information for an adjective
 pos_functions["adjectives"] = {
 	params = {
-		[1] = {list = "comp"},
-		[2] = {list = "sup"},
-		[3] = {},
-		},
+		inv = boolean_param,
+		pred = boolean_param,
+		[1] = {list = "comp", disallow_holes = true},
+		[2] = {list = "sup", disallow_holes = true},
+	},
 	func = function(args, data)
-		local mode = args[1][1]
-		local pagename = data.displayed_pagename
+		local pagename = data.pagename
+		local mode
 
-		if mode == "inv" then
-			table.insert(data.inflections, {label = "[[Appendix:Glossary#invariable|invariable]]"})
-			table.insert(data.categories, "Dutch indeclinable adjectives")
-			args[1][1] = args[2][1]
-			args[2][1] = args[3]
-		elseif mode == "pred" then
-			table.insert(data.inflections, {label = "used only [[predicative]]ly"})
-			table.insert(data.categories, "Dutch predicative-only adjectives")
-			args[1][1] = args[2][1]
-			args[2][1] = args[3]
+		if args.inv then
+			mode = "inv"
+			insert(data.inflections, {label = glossary_link("invariable")})
+			insert(data.categories, "Dutch indeclinable adjectives")
+		elseif args.pred then
+			mode = "pred"
+			insert(data.inflections, {label = "used only [[predicative]]ly"})
+			insert(data.categories, "Dutch predicative-only adjectives")
 		end
 
-		local comp_mode = args[1][1]
-
-		if comp_mode == "-" then
-			table.insert(data.inflections, {label = "not [[Appendix:Glossary#comparable|comparable]]"})
+		if args[1][1] == "-" then
+			insert(data.inflections, {label = "not " .. glossary_link("comparable")})
 		else
 			-- Gather parameters
-			local comparatives = parse_term_list_with_modifiers({"1", "comp"}, args[1])
-			comparatives.label = "[[Appendix:Glossary#comparative|comparative]]"
-
-			local superlatives = parse_term_list_with_modifiers({"2", "sup"}, args[2])
-			superlatives.label = "[[Appendix:Glossary#superlative|superlative]]"
+			local comparatives = parse_term_list_with_modifiers(data, {"1", "comp"}, args[1])
+			local superlatives = parse_term_list_with_modifiers(data, {"2", "sup"}, args[2])
 
 			-- Generate forms if none were given
-			if #comparatives == 0 then
+			if not comparatives[1] then
 				if mode == "inv" or mode == "pred" then
-					table.insert(comparatives, {term = "peri"})
+					comparatives = {{term = "peri"}}
 				else
-					table.insert(comparatives, {term = require("Module:nl-adjectives").make_comparative(pagename)})
+					comparatives = {{term = require("Module:nl-adjectives").make_comparative(pagename)}}
 				end
 			end
 
-			if #superlatives == 0 then
+			if not superlatives[1] then
 				if mode == "inv" or mode == "pred" then
-					table.insert(superlatives, {term = "peri"})
+					superlatives = {{term = "peri"}}
 				else
 					-- Add preferred periphrastic superlative, if necessary
 					if
 						pagename:find("[iï]de$") or pagename:find("[^eio]e$") or
 						pagename:find("s$") or pagename:find("sch$") or pagename:find("x$") or
 						pagename:find("sd$") or pagename:find("st$") or pagename:find("sk$") then
-						table.insert(superlatives, {term = "peri"})
+						superlatives = {{term = "peri"}}
 					end
 
-					table.insert(superlatives, {term = require("Module:nl-adjectives").make_superlative(pagename)})
+					insert(superlatives, {term = require("Module:nl-adjectives").make_superlative(pagename)})
 				end
 			end
 
@@ -164,8 +241,8 @@ pos_functions["adjectives"] = {
 				if val.term == "peri" then val.term = "[[meest]] " .. pagename end
 			end
 
-			table.insert(data.inflections, comparatives)
-			table.insert(data.inflections, superlatives)
+			insert_inflection(data, comparatives, "<<comparative>>")
+			insert_inflection(data, superlatives, "<<superlative>>")
 		end
 	end
 }
@@ -173,53 +250,72 @@ pos_functions["adjectives"] = {
 -- Display additional inflection information for an adverb
 pos_functions["adverbs"] = {
 	params = {
-		[1] = {list = "comp"},
-		[2] = {list = "sup"},
+		[1] = {list = "comp", disallow_holes = true},
+		[2] = {list = "sup", disallow_holes = true},
 		},
 	func = function(args, data)
-		local pagename = data.displayed_pagename
+		local pagename = data.pagename
 
 		if args[1][1] then
 			-- Gather parameters
-			local comparatives = parse_term_list_with_modifiers({"1", "comp"}, args[1])
-			comparatives.label = "[[Appendix:Glossary#comparative|comparative]]"
-
-			local superlatives = parse_term_list_with_modifiers({"2", "sup"}, args[2])
-			superlatives.label = "[[Appendix:Glossary#superlative|superlative]]"
+			local comparatives = parse_term_list_with_modifiers(data, {"1", "comp"}, args[1])
+			local superlatives = parse_term_list_with_modifiers(data, {"2", "sup"}, args[2])
 
 			if not superlatives[1] then
-				superlatives[1] = {term = pagename .. "st"}
+				superlatives = {{term = pagename .. "st"}}
 			end
 
-			table.insert(data.inflections, comparatives)
-			table.insert(data.inflections, superlatives)
+			insert_inflection(data, comparatives, "<<comparative>>")
+			insert_inflection(data, superlatives, "<<superlative>>")
 		end
 	end
 }
 
+
+----------------------------------------------- Nouns --------------------------------------------
+
+local allowed_genders = m_table.listToSet { "c", "p", "m", "f", "n", "?" }
+
 -- Display information for a noun's gender
 -- This is separate so that it can also be used for proper nouns
 local function noun_gender(args, data)
-	for _, g in ipairs(args[1]) do
-		if g == "c" then
-			table.insert(data.categories, "Dutch nouns with common gender")
-		elseif g == "p" then
-			table.insert(data.categories, "Dutch pluralia tantum")
-		elseif g ~= "m" and g ~= "f" and g ~= "n" then
-			g = nil
+	-- Validate genders.
+	local saw_f, saw_m, saw_f_without_m, saw_m_without_f, saw_p, saw_non_p
+	for _, gspec in ipairs(args[1]) do
+		local g = gspec.spec
+		if not allowed_genders[g] then
+			error("Unrecognized " .. langname .. " gender: " .. g)
 		end
+		if g == "f" then
+			saw_f = true
+			if not saw_m then
+				saw_f_without_m = true
+			end
+		end
+		if g == "m" then
+			saw_m = true
+			if not saw_f then
+				saw_m_without_f = true
+			end
+		end
+		if g == "p" then
+			saw_p = true
+		elseif g ~= "?" then
+			saw_non_p = true
+		end
+	end
+	data.genders = args[1]
 
-		table.insert(data.genders, g)
+	-- Most nouns that are listed as f+m should really have only f.
+	if saw_f_without_m and saw_m then
+		insert(data.categories, langname .. " nouns with f+m gender")
+	end
+	-- Some of these nouns may be like m+f nouns but some are legitimately either masculine or feminine.
+	if saw_m_without_f and saw_f then
+		insert(data.categories, langname .. " nouns with m+f gender")
 	end
 
-	if #data.genders == 0 then
-		table.insert(data.genders, "?")
-	end
-
-	-- Most nouns that are listed as f+m should really have only f
-	if data.genders[1] == "f" and data.genders[2] == "m" then
-		table.insert(data.categories, "Dutch nouns with f+m gender")
-	end
+	return saw_p, saw_non_p
 end
 
 local function generate_plurals(pagename)
@@ -305,36 +401,29 @@ end
 
 pos_functions["proper nouns"] = {
 	params = {
-		[1] = {list = "g"},
+		[1] = {list = "g", type = "genders", flatten = true, default = "?", disallow_holes = true},
 		[2] = {list = "pl", disallow_holes = true},
-		["adj"] = {list = true},
-		["mdem"] = {list = true},
-		["fdem"] = {list = true},
+		adj = list_param,
+		mdem = list_param,
+		fdem = list_param,
 		},
 	func = function(args, data)
-		noun_gender(args, data)
+		local saw_p, saw_non_p = noun_gender(args, data)
 
-		local plurals = parse_term_list_with_modifiers({"2", "pl"}, args[2])
-		local adjectives = parse_term_list_with_modifiers("adj", args["adj"])
-		local mdems = parse_term_list_with_modifiers("mdem", args["mdem"])
-		local fdems = parse_term_list_with_modifiers("fdem", args["fdem"])
+		local plurals = parse_term_list_with_modifiers(data, {"2", "pl"}, args[2])
+		local adjectives = parse_term_list_with_modifiers(data, "adj", args["adj"])
+		local mdems = parse_term_list_with_modifiers(data, "mdem", args["mdem"])
+		local fdems = parse_term_list_with_modifiers(data, "fdem", args["fdem"])
 		local nm = #mdems
 		local nf = #fdems
 		local demonyms = {label = "demonym"}
 
 		-- plural for certain words like [[Amerika]]
-		if plurals[1] then
-			-- Add the plural forms
-			plurals.label = "plural"
-			plurals.accel = {form = "p"}
-			table.insert(data.inflections, plurals)
-		end
+		insert_inflection(data, plurals, "plural", "p")
 
 		--adjective for toponyms
-		if adjectives[1] then
-			adjectives.label = "adjective"
-			table.insert(data.inflections, adjectives)
-		end
+		insert_inflection(data, adjectives, "adjective")
+
 		--demonyms for toponyms
 		if nm + nf > 0 then
 			for i, m in ipairs(mdems) do
@@ -349,127 +438,139 @@ pos_functions["proper nouns"] = {
 				end
 				demonyms[i + nm] = f
 			end
-			table.insert(data.inflections, demonyms)
+			insert(data.inflections, demonyms)
 		end
 	end
 }
 
--- Display additional inflection information for a noun
-pos_functions["nouns"] = {
-	params = {
-		[1] = {list = "g"},
-		[2] = {list = "pl", disallow_holes = true},
-		[3] = {list = "dim"},
+local function process_plurals(data, plurals, plural_only)
+	local pagename = data.pagename
 
-		["f"] = {list = true},
-		["m"] = {list = true},
-		},
-	func = function(args, data, called_from)
-		local pagename = data.displayed_pagename
+	if plural_only then
+		if plurals[1] then
+			error("Can't specify plurals of plurale tantum noun")
+		end
+		insert(data.inflections, {label = glossary_link("plural only")})
+	elseif plurals[1] and plurals[1].term == "-" then
+		insert(data.inflections, {label = glossary_link("uncountable")})
+		insert(data.categories, langname .. " uncountable nouns")
+	else
+		local generated = generate_plurals(pagename)
 
-		noun_gender(args, data)
+		-- Process the plural forms
+		for i, pobj in ipairs(plurals) do
+			local p = pobj.term
+			-- Is this a shortcut form?
+			if p:sub(1,1) == "-" then
+				if not generated[p] then
+					error("The shortcut plural " .. p .. " could not be generated.")
+				end
 
-		local plurals = parse_term_list_with_modifiers({called_from == "dimtant" and "1" or "2", "pl"}, args[2])
-		local diminutives = parse_term_list_with_modifiers({"3", "dim"}, args[3])
-		local feminines = parse_term_list_with_modifiers("f", args["f"])
-		local masculines = parse_term_list_with_modifiers("m", args["m"])
-
-		-- Plural
-		if data.genders[1] == "p" then
-			table.insert(data.inflections, {label = "[[Appendix:Glossary#plural only|plural only]]"})
-		elseif plurals[1] and plurals[1].term == "-" then
-			table.insert(data.inflections, {label = "[[Appendix:Glossary#uncountable|uncountable]]"})
-			table.insert(data.categories, "Dutch uncountable nouns")
-		else
-			local generated = generate_plurals(pagename)
-
-			-- Process the plural forms
-			for i, pobj in ipairs(plurals) do
-				local p = pobj.term
-				-- Is this a shortcut form?
-				if p:sub(1,1) == "-" then
-					if not generated[p] then
-						error("The shortcut plural " .. p .. " could not be generated.")
-					end
-
-					if p:sub(-2) == "es" then
-						table.insert(data.categories, "Dutch nouns with plural in -es")
-					elseif p:sub(-1) == "s" then
-						table.insert(data.categories, "Dutch nouns with plural in -s")
-					elseif p:sub(-4) == "eren" then
-						table.insert(data.categories, "Dutch nouns with plural in -eren")
-					else
-						table.insert(data.categories, "Dutch nouns with plural in -en")
-					end
-
-					if p:sub(2,2) == ":" then
-						table.insert(data.categories, "Dutch nouns with lengthened vowel in the plural")
-					end
-
-					p = generated[p]
-				-- Not a shortcut form, but the plural form specified directly.
+				if p:sub(-2) == "es" then
+					insert(data.categories, "Dutch nouns with plural in -es")
+				elseif p:sub(-1) == "s" then
+					insert(data.categories, "Dutch nouns with plural in -s")
+				elseif p:sub(-4) == "eren" then
+					insert(data.categories, "Dutch nouns with plural in -eren")
 				else
-					local matches = {}
+					insert(data.categories, "Dutch nouns with plural in -en")
+				end
 
-					for pi, g in pairs(generated) do
-						if g == p then
-							table.insert(matches, pi)
-						end
-					end
+				if p:sub(2,2) == ":" then
+					insert(data.categories, "Dutch nouns with lengthened vowel in the plural")
+				end
 
-					if #matches > 0 then
-						table.insert(data.tracking_categories, "nl-noun plural matches generated form")
-					elseif not pagename:find("[ -]") then
-						if p == pagename then
-							table.insert(data.categories, "Dutch indeclinable nouns")
-						elseif
-							p == pagename .. "den" or p == pagename:gsub("ee$", "eden") or
-							p == pagename .. "des" or p == pagename:gsub("ee$", "edes") then
-							table.insert(data.categories, "Dutch nouns with plural in -den")
-						elseif p == pagename:gsub("([ao])$", "%1%1ien") or p == pagename:gsub("oe$", "oeien") then
-							table.insert(data.categories, "Dutch nouns with glide vowel in plural")
-						elseif p == pagename:gsub("y$", "ies") then
-							table.insert(data.categories, "Dutch nouns with English plurals")
-						elseif
-							p == pagename:gsub("a$", "ae") or
-							p == pagename:gsub("[ei]x$", "ices") or
-							p == pagename:gsub("is$", "es") or
-							p == pagename:gsub("men$", "mina") or
-							p == pagename:gsub("ns$", "ntia") or
-							p == pagename:gsub("o$", "ones") or
-							p == pagename:gsub("o$", "onen") or
-							p == pagename:gsub("s$", "tes") or
-							p == pagename:gsub("us$", "era") or
-							p == mw.ustring.gsub(pagename, "[uü]s$", "i") or
-							p == mw.ustring.gsub(pagename, "[uü]m$", "a") or
-							p == pagename:gsub("x$", "ges") then
-							table.insert(data.categories, "Dutch nouns with Latin plurals")
-						elseif
-							p == pagename:gsub("os$", "oi") or
-							p == pagename:gsub("on$", "a") or
-							p == pagename:gsub("a$", "ata") then
-							table.insert(data.categories, "Dutch nouns with Greek plurals")
-						else
-							table.insert(data.categories, "Dutch irregular nouns")
-						end
-
-						if plural and not mw.title.new(plural).exists then
-							table.insert(data.categories, "Dutch nouns with missing plurals")
-						end
+				p = generated[p]
+			-- Not a shortcut form, but the plural form specified directly.
+			else
+				for _, g in pairs(generated) do
+					if g == p then
+						track("plural-matches-generated-form")
+						break
 					end
 				end
 
-				pobj.term = p
+				if not pagename:find("[ -]") then
+					if p == pagename then
+						insert(data.categories, "Dutch indeclinable nouns")
+					elseif
+						p == pagename .. "den" or p == pagename:gsub("ee$", "eden") or
+						p == pagename .. "des" or p == pagename:gsub("ee$", "edes") then
+						insert(data.categories, "Dutch nouns with plural in -den")
+					elseif p == pagename:gsub("([ao])$", "%1%1ien") or p == pagename:gsub("oe$", "oeien") then
+						insert(data.categories, "Dutch nouns with glide vowel in plural")
+					elseif p == pagename:gsub("y$", "ies") then
+						insert(data.categories, "Dutch nouns with English plurals")
+					elseif
+						p == pagename:gsub("a$", "ae") or
+						p == pagename:gsub("[ei]x$", "ices") or
+						p == pagename:gsub("is$", "es") or
+						p == pagename:gsub("men$", "mina") or
+						p == pagename:gsub("ns$", "ntia") or
+						p == pagename:gsub("o$", "ones") or
+						p == pagename:gsub("o$", "onen") or
+						p == pagename:gsub("s$", "tes") or
+						p == pagename:gsub("us$", "era") or
+						p == mw.ustring.gsub(pagename, "[uü]s$", "i") or
+						p == mw.ustring.gsub(pagename, "[uü]m$", "a") or
+						p == pagename:gsub("x$", "ges") then
+						insert(data.categories, "Dutch nouns with Latin plurals")
+					elseif
+						p == pagename:gsub("os$", "oi") or
+						p == pagename:gsub("on$", "a") or
+						p == pagename:gsub("a$", "ata") then
+						insert(data.categories, "Dutch nouns with Greek plurals")
+					else
+						insert(data.categories, "Dutch irregular nouns")
+					end
+				end
 			end
 
-			-- Add the plural forms
-			plurals.label = "plural"
-			plurals.accel = {form = "p"}
-			plurals.request = true
-			table.insert(data.inflections, plurals)
+			pobj.term = p
 		end
 
-		-- Add the diminutive forms
+		-- Add the plural forms
+		m_headword_utilities.insert_inflection {
+			headdata = data,
+			terms = plurals,
+			label = "plural",
+			accel = {form = "p"},
+			check_missing = true,
+			lang = lang,
+			plpos = "nouns",
+			request = true,
+		}
+	end
+end
+
+local function do_noun_ancillary_inflections(data, args)
+	local function parse_and_insert_noun_inflection(field, label, accel)
+		parse_and_insert_inflection(data, args, field, label, accel)
+	end
+
+	parse_and_insert_noun_inflection("f", "feminine")
+	parse_and_insert_noun_inflection("m", "masculine")
+end
+
+-- Display additional inflection information for a noun
+pos_functions["nouns"] = {
+	params = {
+		[1] = {list = "g", type = "genders", flatten = true, default = "?", disallow_holes = true},
+		[2] = {list = "pl", disallow_holes = true},
+		[3] = {list = "dim", disallow_holes = true},
+
+		["f"] = list_param,
+		["m"] = list_param,
+	},
+	func = function(args, data)
+		local pagename = data.pagename
+
+		local saw_p, saw_non_p = noun_gender(args, data)
+		local plurals = parse_term_list_with_modifiers(data, {"2", "pl"}, args[2])
+		local diminutives = parse_term_list_with_modifiers(data, {"3", "dim"}, args[3])
+
+		process_plurals(data, plurals, saw_p and not saw_non_p)
+
 		if diminutives[1] and diminutives[1].term == "-" then
 			-- do nothing
 		else
@@ -480,49 +581,43 @@ pos_functions["nouns"] = {
 					dimobj.genders = {"n"}
 				end
 			end
-
-			diminutives.label = "[[Appendix:Glossary#diminutive|diminutive]]"
-			diminutives.accel = {form = "diminutive"}
-			diminutives.request = true
-			table.insert(data.inflections, diminutives)
 		end
 
-		-- Add the feminine forms
-		if feminines[1] then
-			feminines.label = "feminine"
-			table.insert(data.inflections, feminines)
-		end
+			-- Add the diminutive forms
+		m_headword_utilities.insert_inflection {
+			headdata = data,
+			terms = diminutives,
+			label = "<<diminutive>>",
+			accel = {form = "diminutive"},
+			request = true,
+		}
 
-		-- Add the masculine forms
-		if masculines[1] then
-			masculines.label = "masculine"
-			table.insert(data.inflections, masculines)
-		end
+		do_noun_ancillary_inflections(data, args)
 	end
 }
 
 -- Display additional inflection information for a diminutive noun
 pos_functions["diminutive nouns"] = {
 	params = {
-		[1] = {},
-		[2] = {list = "pl"},
-		},
+		[1] = {list = "pl", disallow_holes = true},
+	},
 	func = function(args, data)
-		if not (args[1] == "n" or args[1] == "p") then
-			args[1] = {"n"}
+		local plurals = parse_term_list_with_modifiers(data, {"1", "pl"}, args[1])
+		if plurals[1] and plurals[1].term == "p" then
+			if m_headword_utilities.termobj_has_qualifiers_or_labels(plurals[1]) then
+				error("Can't specify qualifiers or labels with 'p' for plural-only diminutive noun")
+			elseif plurals[2] then
+				error("Can't specify plurals of plurale tantum noun")
+			end
+			data.genders = {"p"}
+			process_plurals(data, {}, "plural only")
 		else
-			args[1] = {args[1]}
+			data.genders = {"n"}
+			if not plurals[1] then
+				plurals = {{term = "-s"}}
+			end
+			process_plurals(data, plurals)
 		end
-
-		if not args[2][1] then
-			args[2] = {"-s"}
-		end
-
-		args[3] = {"-"}
-		args["f"] = {}
-		args["m"] = {}
-
-		pos_functions["nouns"].func(args, data, "dim")
 	end
 }
 
@@ -530,23 +625,19 @@ pos_functions["diminutive nouns"] = {
 pos_functions["diminutiva tantum nouns"] = {
 	params = {
 		[1] = {list = "pl", disallow_holes = true},
-
 		["f"] = {list = true},
 		["m"] = {list = true},
-		},
+	},
 	func = function(args, data)
 		data.pos_category = "nouns"
-		table.insert(data.categories, "Dutch diminutiva tantum")
-		args[2] = args[1]
-		args[1] = {"n"}
-
-		if not args[2][1] then
-			args[2] = {"-s"}
+		insert(data.categories, "Dutch diminutiva tantum")
+		data.genders = {"n"}
+		local plurals = parse_term_list_with_modifiers(data, {"1", "pl"}, args[1])
+		if not plurals[1] then
+			plurals = {{term = "-s"}}
 		end
-
-		args[3] = {"-"}
-
-		pos_functions["nouns"].func(args, data, "dimtant")
+		process_plurals(data, plurals)
+		do_noun_ancillary_inflections(data, args)
 	end
 }
 
@@ -556,11 +647,14 @@ pos_functions["past participles"] = {
 	},
 	func = function(args, data)
 		if args[1] == "-" then
-			table.insert(data.inflections, {label = "not used adjectivally"})
-			table.insert(data.categories, "Dutch non-adjectival past participles")
+			insert(data.inflections, {label = "not used adjectivally"})
+			insert(data.categories, "Dutch non-adjectival past participles")
 		end
 	end
 }
+
+
+----------------------------------------------- Verbs --------------------------------------------
 
 pos_functions["verbs"] = {
 	params = {
@@ -568,8 +662,8 @@ pos_functions["verbs"] = {
 		},
 	func = function(args, data)
 		if args[1] == "-" then
-			table.insert(data.inflections, {label = "not inflected"})
-			table.insert(data.categories, "Dutch uninflected verbs")
+			insert(data.inflections, {label = "not inflected"})
+			insert(data.categories, "Dutch uninflected verbs")
 		end
 	end
 }
