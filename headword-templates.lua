@@ -1,14 +1,39 @@
-insert = table.insert
-local process_params = require("Module:parameters").process
-
 local export = {}
+
+local debug_track_module = "Module:debug/track"
+local headword_module = "Module:headword"
+local parameters_module = "Module:parameters"
+local string_utilities_module = "Module:string utilities"
+
+local insert = table.insert
+local require = require
+local tostring = tostring
+
+local function debug_track(...)
+	debug_track = require(debug_track_module)
+	return debug_track(...)
+end
+
+local function process_params(...)
+	process_params = require(parameters_module).process
+	return process_params(...)
+end
+
+local function split(...)
+	split = require(string_utilities_module).split
+	return split(...)
+end
+
+local function track(page)
+	debug_track("headword/templates/" .. page)
+	return true
+end
 
 local function get_args(frame)
 	local boolean = {type = "boolean"}
 	local boolean_list_allow_holes = {type = "boolean", list = true, allow_holes = true}
 	local list_allow_holes = {list = true, allow_holes = true}
-	local parent_args = frame:getParent().args
-	local args = {
+	return process_params(frame:getParent().args, {
 		[1] = {required = true, type = "language", default = "und"},
 		["sc"] = {type = "script"},
 		["sort"] = true,
@@ -25,17 +50,18 @@ local function get_args(frame)
 		["cat2"] = true,
 		["cat3"] = true,
 		["cat4"] = true,
-		
+
 		["head"] = list_allow_holes,
+		["image"] = true,
 		["id"] = true,
 		["tr"] = list_allow_holes,
 		["ts"] = list_allow_holes,
 		["gloss"] = true,
 		["g"] = {list = true},
 		["g\1qual"] = list_allow_holes,
-		
+
 		[3] = list_allow_holes,
-		
+
 		["f\1accel-form"] = list_allow_holes,
 		["f\1accel-translit"] = list_allow_holes,
 		["f\1accel-lemma"] = list_allow_holes,
@@ -53,17 +79,11 @@ local function get_args(frame)
 		["f\1qual"] = list_allow_holes,
 		["f\1autotr"] = boolean_list_allow_holes,
 		["f\1nolink"] = boolean_list_allow_holes,
-	}
-	return process_params(parent_args, args)
+	})
 end
 
 function export.head_t(frame)
-	local m_headword = require("Module:headword")
-	
-	local function track(page)
-		require("Module:debug/track")("headword/templates/" .. page)
-		return true
-	end
+	local m_headword = require(headword_module)
 
 	local args = get_args(frame)
 
@@ -74,17 +94,27 @@ function export.head_t(frame)
 	data.sccat = args["sccat"]
 	data.sort_key = args["sort"]
 	data.heads = args["head"]
+	data.image = args["image"]
+
+
 	data.id = args["id"]
 	data.translits = args["tr"]
 	data.transcriptions = args["ts"]
 	data.gloss = args["gloss"]
 	data.genders = args["g"]
+
+	-- TODO should throw an error if data.heads gets overwritten
+	if data.image then
+		data.heads = {"[[File:" .. data.image .. "|class=skin-invert-image]]"}
+	end
+
 	-- This shouldn't really happen.
-	for i = 1,args["head"].maxindex do
+	for i = 1, args["head"].maxindex do
 		if not args["head"][i] then
 			track("head-with-holes")
 		end
 	end
+
 	for k, v in pairs(args["gqual"]) do
 		if k ~= "maxindex" then
 			if data.genders[k] then
@@ -98,32 +128,34 @@ function export.head_t(frame)
 
 	-- EXPERIMENTAL: see [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]]
 	data.altform = args["altform"]
-		
+
 	-- Part-of-speech category
 	local pos_category = args[2]
 	data.noposcat = args["noposcat"]
-	
+
 	-- Check for headword aliases and then pluralize if the POS term does not have an invariable plural.
 	data.pos_category = m_headword.canonicalize_pos(pos_category)
 
 	-- Additional categories.
-	data.categories = {}
+	local categories = {}
 	data.whole_page_categories = {}
 	data.nomultiwordcat = args["nomultiwordcat"]
 	data.nogendercat = args["nogendercat"]
 	data.nopalindromecat = args["nopalindromecat"]
 
+	-- FIXME: add a minimum_index spec to [[Module:parameters]] list specs, so
+	-- that `cat` can be changed to a list parameter starting at index 2.
 	if args["cat2"] then
-		insert(data.categories, data.lang:getFullName() .. " " .. args["cat2"])
+		insert(categories, data.lang:getFullName() .. " " .. args["cat2"])
 	end
-
 	if args["cat3"] then
-		insert(data.categories, data.lang:getFullName() .. " " .. args["cat3"])
+		insert(categories, data.lang:getFullName() .. " " .. args["cat3"])
+	end
+	if args["cat4"] then
+		insert(categories, data.lang:getFullName() .. " " .. args["cat4"])
 	end
 
-	if args["cat4"] then
-		insert(data.categories, data.lang:getFullName() .. " " .. args["cat4"])
-	end
+	data.categories = categories
 
 	-- Headword linking
 	data.nolinkhead = args["nolinkhead"]
@@ -131,9 +163,11 @@ function export.head_t(frame)
 	-- Inflected forms
 	data.inflections = {enable_auto_translit = args["autotrinfl"]}
 
-	for i = 1, math.ceil(args[3].maxindex / 2) do
+	local forms = args[3]
+	local n = forms.maxindex / 2
+	for i = 1, n + n % 1 do
 		local infl_part = {
-			label    = args[3][i * 2 - 1],
+			label    = forms[i * 2 - 1],
 			accel    = args["faccel-form"][i] and {
 				form      = args["faccel-form"][i],
 				translit  = args["faccel-translit"][i],
@@ -145,11 +179,11 @@ function export.head_t(frame)
 			request  = args["frequest"][i],
 			enable_auto_translit = args["fautotr"][i],
 		}
-		
+
 		local form = {
-			term          =  args[3][i * 2],
+			term          =  forms[i * 2],
 			alt           =  args["falt"][i],
-			genders       =  args["fg"][i] and mw.text.split(args["fg"][i], ",") or {},
+			genders       =  args["fg"][i] and split(args["fg"][i], ",") or {},
 			id            =  args["fid"][i],
 			lang          =  args["flang"][i],
 			nolinkinfl    =  args["fnolink"][i],
@@ -158,12 +192,12 @@ function export.head_t(frame)
 			translit      =  args["ftr"][i],
 			transcription =  args["fts"][i],
 		}
-		
+
 		-- If no term or alt is given, then the label is shown alone.
 		if form.term or form.alt then
 			insert(infl_part, form)
 		end
-		
+
 		if infl_part.label == "or" then
 			-- Append to the previous inflection part, if one exists
 			if #infl_part > 0 and data.inflections[1] then
@@ -174,7 +208,7 @@ function export.head_t(frame)
 			insert(data.inflections, infl_part)
 		end
 	end
-	
+
 	return m_headword.full_headword(data)
 end
 
