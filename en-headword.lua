@@ -566,7 +566,62 @@ pos_functions["conjunctions"] = {
 
 pos_functions["interjections"] = pos_functions["conjunctions"]
 
-local function gather_inflections_with_quals(args, infl_field, qual_field, label)
+-- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
+-- is parsed for inline modifiers.
+local function parse_inflection(data, args, field, qual_field)
+	return m_headword_utilities.parse_term_list_with_modifiers {
+		paramname = field,
+		forms = args[field],
+		qualifiers = qual_field and args[qual_field] or nil,
+		splitchar = ",",
+	}
+end
+
+-- Insert the parsed inflections in `terms` (as parsed by `parse_inflection`) into `data.inflections`, with label
+-- `label` and optional accelerator spec `accel`.
+local function insert_inflection(data, terms, label, accel)
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		-- If we want check_missing support, we need to supply the following:
+		-- check_missing = true,
+		-- lang = lang,
+		-- plpos = plpos,
+	}
+end
+
+-- Insert a fixed label `label` into the inflections for `data`. If `originating_term` is supplied, copy the qualifiers,
+-- labels and references from it into the fixed label.
+local function insert_fixed_inflection(data, label, originating_term)
+	m_headword_utilities.insert_fixed_inflection {
+		headdata = data,
+		originating_term = originating_term,
+		label = label,
+	}
+end
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, qual_field, label, accel)
+	m_headword_utilities.parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		qualifiers = qual_field and args[qual_field] or nil,
+		paramname = field,
+		splitchar = ",",
+		label = label,
+		accel = accel and {form = accel} or nil,
+		-- If we want check_missing support, we need to supply the following:
+		-- check_missing = true,
+		-- lang = lang,
+		-- plpos = plpos,
+	}
+end
+
+local function gather_inflections_with_quals(data, args, infl_field, qual_field)
 	-- Gather all the plural parameters from the numbered parameters.
 	local infls = {}
 	if label then
@@ -614,27 +669,27 @@ local function do_nouns(args, data, pos)
 		make_heads_definite(args, data)
 	end
 
-	local plurals = gather_inflections_with_quals(args, 1, "plqual")
+	local plurals = parse_inflection(data, args, 1, "plqual")
 
-	local function insert_plurale_tantum_inflections(is_plural_only)
+	local function insert_plurale_tantum_inflections(is_plural_only, originating_label)
 		if args.sg[1] then
-			insert(data.inflections, {label = "normally plural"})
-			insert(data.inflections, gather_inflections_with_quals(args, "sg", "sgqual", "singular"))
+			insert_fixed_inflection(data, "normally plural", originating_label)
+			parse_and_insert_inflection(data, args, "sg", "sgqual", "singular")
 		elseif is_plural_only then
-			insert(data.inflections, {label = "plural only"})
+			insert_fixed_inflection(data, "plural only", originating_label)
 		end
 		if args.attr[1] then
-			insert(data.inflections, gather_inflections_with_quals(args, "attr", "attrqual", "attributive"))
+			parse_and_insert_inflection(data, args, "attr", "attrqual", "attributive")
 		end
 	end
 		
-	if plurals[1] == "p" then
+	if plurals[1].term == "p" then
 		-- plurale tantum
 		if plurals[2] then
 			error("With plurale tantum noun, can't specify more than one plural")
 		end
 		data.genders = {"p"} -- this should auto-insert the correct 'pluralia tantum' category
-		insert_plurale_tantum_inflections("plural only")
+		insert_plurale_tantum_inflections("plural only", plurals[1])
 		return
 	end
 
@@ -644,54 +699,53 @@ local function do_nouns(args, data, pos)
 
 	local need_default_plural = pos == "noun"
 	local sp = false
-	if plurals[1] == "sp" then
+	if plurals[1].term == "sp" then
 		-- construed as singular or plural
-		remove(plurals, 1)  -- Remove the "sp"
+		sp = remove(plurals, 1)  -- Remove the "sp" but retain it for its qualifiers, labels, references
 		inscat("nouns construed as singular or plural")
 		data.genders = {"s", "p"} -- this should auto-insert the correct 'pluralia tantum' category
 		need_default_plural = false
-		sp = true
 	end
-	if plurals[1] == "-" then
+	if plurals[1].term == "-" then
 		-- Uncountable noun; may occasionally have a plural
-		remove(plurals, 1)  -- Remove the "-"
+		local hyphpl = remove(plurals, 1)  -- Remove the "-" but retain for qualifiers, labels, references
 		inscat("uncountable nouns")
 
 		-- If plural forms were given explicitly, then show "usually"
 		if plurals[1] then
-			insert(data.inflections, {label = "usually " .. glossary_link("uncountable")})
+			insert_fixed_inflection(data, "usually <<uncountable>>", hyphpl)
 		else
-			insert(data.inflections, {label = glossary_link("uncountable")})
+			insert_fixed_inflection(data, "<<uncountable>>", hyphpl)
 		end
 		need_default_plural = false
-	elseif plurals[1] == "#" then
+	elseif plurals[1].term == "#" then
 		-- Usually countable (e.g., "grilled cheese")
-		remove(plurals, 1)  -- Remove the "#"
-		insert(data.inflections, {label = "usually " .. glossary_link("countable")})
+		local hashpl = remove(plurals, 1)  -- Remove the "#" but retain for qualifiers, labels, references
+		insert_fixed_inflection(data, "usually <<countable>>", hashpl)
 		inscat("uncountable nouns")
 		inscat("countable nouns")
 		
 		-- If no plural was given, add a default one now
 		if not plurals[1] and need_default_plural then
-			plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
+			plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
 		end
-	elseif plurals[1] == "~" then
+	elseif plurals[1].term == "~" then
 		-- Mixed countable/uncountable noun, always has a plural
-		remove(plurals, 1)  -- Remove the "~"
-		insert(data.inflections, {label = glossary_link("countable") .. " and " .. glossary_link("uncountable")})
+		local tildepl = remove(plurals, 1)  -- Remove the "~" but retain for qualifiers, labels, references
+		insert_fixed_inflection(data, "<<countable>> and <<uncountable>>", tildepl)
 		inscat("uncountable nouns")
 		inscat("countable nouns")
 
 		-- If no plural was given, add a default one now
 		if not plurals[1] and need_default_plural then
-			plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
+			plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
 		end
 	end
 	-- Plural is unknown
-	if plurals[1] == "?" then
-		remove(plurals, 1)  -- Remove the "?"
+	if plurals[1].term == "?" then
+		local questionpl = remove(plurals, 1)  -- Remove the "?" but retain for qualifiers, labels, references
 		-- Not desired; see [[Wiktionary:Tea_room/2021/August#"Plural unknown or uncertain"]]
-		-- insert(data.inflections, {label = "plural unknown or uncertain"})
+		-- insert_fixed_inflection(data, "plural unknown or uncertain", questionpl)
 		inscat("nouns with unknown or uncertain plurals")
 		if plurals[1] then
 			error("Can't specify explicit plurals along with '?' for unknown/uncertain plural")
@@ -699,9 +753,9 @@ local function do_nouns(args, data, pos)
 		return
 	end
 	-- Plural is not attested
-	if plurals[1] == "!" then
-		remove(plurals, 1)  -- Remove the "!"
-		insert(data.inflections, {label = "plural not attested"})
+	if plurals[1].term == "!" then
+		local exclampl = remove(plurals, 1)  -- Remove the "!" but retain for qualifiers, labels, references
+		insert_fixed_inflection(data, "plural not attested", exclampl)
 		inscat("nouns with unattested plurals")
 		if plurals[1] then
 			error("Can't specify explicit plurals along with '!' for unattested plural")
@@ -714,31 +768,22 @@ local function do_nouns(args, data, pos)
 			inscat("uncountable nouns")
 			return
 		end
-		plurals[1] = escape(add_suffix(pagename, "s.plural", pos))
+		plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
 	end
 	if sp then
-		insert_plurale_tantum_inflections()
+		insert_plurale_tantum_inflections(nil, sp)
 		return
 	end
 
 	-- There are plural forms to show, so show them.
 	inscat("countable nouns")
-	plurals.label = "plural"
-	plurals.accel = {form = "p"}
 	local irregular, indeclinable
 	for i, pl in ipairs(plurals) do
-		local pl_type = type(pl)
-		local pl_term = pl_type == "table" and pl.term or pl
-		local canon_pl = canonicalize_plural(pl_term, pagename, pos)
+		local canon_pl = canonicalize_plural(pl.term, pagename, pos)
 		if canon_pl then
-			pl_term = canon_pl
-			if pl_type == "table" then
-				pl.term = pl_term
-			else
-				plurals[i] = pl_term
-			end
+			pl.term = canon_pl
 		end
-		pl_term = get_link_page(pl_term, lang)
+		local pl_term = get_link_page(pl.term, lang)
 		if not (pagename:find(" ") or is_regular_plural(pl_term, pagename)) then
 			irregular = true
 			if pl_term == pagename then
@@ -752,8 +797,8 @@ local function do_nouns(args, data, pos)
 	if indeclinable then
 		inscat("indeclinable nouns")
 	end
-	
-	insert(data.inflections, plurals)
+
+	insert_inflection(data, plurals, "plural", "p")
 end
 
 
