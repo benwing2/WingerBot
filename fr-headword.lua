@@ -2,6 +2,7 @@ local export = {}
 local pos_functions = {}
 
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+local check_missing = false -- whether to check for missing forms
 
 local require_when_needed = require("Module:utilities/require when needed")
 local m_table = require("Module:table")
@@ -18,7 +19,6 @@ local glossary_link = require_when_needed(headword_utilities_module, "glossary_l
 
 local boolean_param = {type = "boolean"}
 local list_param = {list = true, disallow_holes = true}
-local list_allow_holes = {list = true, allow_holes = true}
 
 local concat = table.concat
 local insert = table.insert
@@ -86,9 +86,6 @@ function export.show(frame)
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
 	local user_specified_heads = args.head
-	if pos_functions[poscat] and pos_functions[poscat].param1_is_head and args[1] then
-		insert(user_specified_heads, 1, args[1])
-	end
 	local heads = user_specified_heads
 	if args.nolinkhead then
 		if not heads[1] then
@@ -102,7 +99,7 @@ function export.show(frame)
 		else
 			for i, head in ipairs(heads) do
 				if head:find("^~") then
-					head = romut.apply_link_modifiers(auto_linked_head, usub(head, 2))
+					head = romut.apply_link_modifiers(auto_linked_head, head:sub(2))
 					heads[i] = head
 				end
 				if head == auto_linked_head then
@@ -172,7 +169,7 @@ local function parse_and_insert_inflection(data, args, field, label, plpos, acce
 		splitchar = ",",
 		label = label,
 		accel = accel and {form = accel} or nil,
-		check_missing = true,
+		check_missing = check_missing,
 		lang = lang,
 		plpos = plpos,
 	}
@@ -290,19 +287,31 @@ local function validate_genders(genders, is_pronoun)
 	end
 end
 
+local function make_qual_replaced_by(replacement)
+	return {list = true, allow_holes = true, replaced_by = false,
+		instead = ("use an inline modifier on |%s= such as <q:...>, <qq:...>, <l:...> or <ll:...>"):format(replacement)
+	}
+end
+
+local function make_alias_replaced_by(replacement, reason)
+	return {list = true, disallow_holes = true, replaced_by = replacement, reason = reason or
+		"for consistency with the corresponding parameter in other Romance-language headword templates"
+	}
+end
+
 local function get_noun_params(is_proper)
 	return {
 		[1] = {list = "g", disallow_holes = true, required = not is_proper, default = "?", type = "genders",
 			flatten = true}, -- gender(s)
-		["g"] = {alias_of = 1}, -- FIXME: delete me
+		["g"] = {replaced_by = 1, reason = "for consistency"},
 		[2] = list_param, --plural override(s)
-		["pqual"] = list_allow_holes, -- FIXME: delete me
+		["pqual"] = make_qual_replaced_by("2"),
 		["f"] = list_param, --feminine form(s)
-		["fqual"] = list_allow_holes, -- FIXME: delete me
+		["fqual"] = make_qual_replaced_by("f"),
 		["m"] = list_param, --masculine form(s)
-		["mqual"] = list_allow_holes, -- FIXME: delete me
+		["fqual"] = make_qual_replaced_by("m"),
 		["dim"] = list_param, --diminutive(s)
-		["dimqual"] = list_allow_holes, -- FIXME: delete me
+		["dimqual"] = make_qual_replaced_by("dim"),
 		["aug"] = list_param, --diminutive(s)
 		["pej"] = list_param, --pejorative(s)
 		["dem"] = list_param, --demonym(s)
@@ -349,7 +358,7 @@ local function do_noun(args, data, pos, is_suffix, is_proper)
 			terms = terms,
 			label = label,
 			accel = accel and {form = accel} or nil,
-			check_missing = true,
+			check_missing = check_missing,
 			lang = lang,
 			plpos = plpos,
 		}
@@ -541,22 +550,22 @@ local function get_pronoun_pos(pos)
 		params = {
 			[1] = {list = "g", disallow_holes = true, required = true, default = "?", type = "genders",
 				flatten = true}, -- gender(s)
-			["g"] = {alias_of = 1}, -- FIXME: delete me
+			["g"] = {replaced_by = 1, reason = "for consistency"},
 			["f"] = list_param,
-			["fqual"] = list_allow_holes, -- FIXME: delete me
+			["fqual"] = make_qual_replaced_by("f"),
 			["m"] = list_param,
-			["mqual"] = list_allow_holes, -- FIXME: delete me
+			["mqual"] = make_qual_replaced_by("m"),
 			["mv"] = list_param,
-			["mvqual"] = list_allow_holes, -- FIXME: delete me
+			["mvqual"] = make_qual_replaced_by("mv"),
 			["fpl"] = list_param,
-			["fp"] = {alias_of = "fpl", list = true, disallow_holes = true}, -- FIXME: delete me
-			["fpqual"] = list_allow_holes, -- FIXME: delete me
+			["fp"] = make_alias_replaced_by("fpl"),
+			["fpqual"] = make_qual_replaced_by("fpl"),
 			["mpl"] = list_param,
-			["mp"] = {alias_of = "mpl", list = true, disallow_holes = true}, -- FIXME: delete me
-			["mpqual"] = list_allow_holes, -- FIXME: delete me
+			["mp"] = make_alias_replaced_by("mpl"),
+			["mpqual"] = make_qual_replaced_by("mpl"),
 			["pl"] = list_param,
-			["p"] = {alias_of = "pl", list = true, disallow_holes = true}, -- FIXME: delete me
-			["pqual"] = list_allow_holes, -- FIXME: delete me
+			["p"] = make_alias_replaced_by("pl"),
+			["pqual"] = make_qual_replaced_by("pl"),
 			["type"] = list_param,
 		},
 
@@ -614,9 +623,8 @@ pos_functions["determiners"] = get_pronoun_pos("determiner")
 
 local function get_misc_pos()
 	return {
-		param1_is_head = true,
 		params = {
-			[1] = true,
+			[1] = {replaced_by = "head", reason = "for consistency with other French headword templates"},
 		},
 
 		func = function(args, data)
@@ -652,26 +660,26 @@ local function do_adjective(pos)
 			["sp"] = true, -- special indicator: "first", "first-last", etc.
 			["onlyg"] = true,
 			["m"] = list_param,
-			["mqual"] = list_param, -- FIXME: delete me
+			["mqual"] = make_qual_replaced_by("m"),
 			["mv"] = list_param,
-			["mvqual"] = list_param, -- FIXME: delete me
+			["mvqual"] = make_qual_replaced_by("mv"),
 			["f"] = list_param,
-			["fqual"] = list_param, -- FIXME: delete me
+			["fqual"] = make_qual_replaced_by("f"),
 			["mpl"] = list_param,
-			["mp"] = {alias_of = "mpl", list = true, disallow_holes = true}, -- FIXME: delete me
-			["mpqual"] = list_param, -- FIXME: delete me
+			["mp"] = make_alias_replaced_by("mpl"),
+			["mpqual"] = make_qual_replaced_by("mpl"),
 			["fpl"] = list_param,
-			["fp"] = {alias_of = "fpl", list = true, disallow_holes = true}, -- FIXME: delete me
-			["fpqual"] = list_param, -- FIXME: delete me
+			["fp"] = make_alias_replaced_by("fpl"),
+			["fpqual"] = make_qual_replaced_by("fpl"),
 			["pl"] = list_param,
-			["p"] = {alias_of = "pl", list = true, disallow_holes = true}, -- FIXME: delete me
-			["pqual"] = list_param, -- FIXME: delete me
+			["p"] = make_alias_replaced_by("pl"),
+			["pqual"] = make_qual_replaced_by("pl"),
 			["base"] = list_param,
-			["current"] = {alias_of = "base", list = true, disallow_holes = true}, -- FIXME: delete me
+			["current"] = make_alias_replaced_by("base", "because the old name was obscure and did not clarify the purpose of the parameter"),
 			["comp"] = list_param,
-			["compqual"] = list_param, -- FIXME: delete me
+			["compqual"] = make_qual_replaced_by("comp"),
 			["sup"] = list_param,
-			["supqual"] = list_param, -- FIXME: delete me
+			["supqual"] = make_qual_replaced_by("sup"),
 			["intr"] = boolean_param,
 		},
 
@@ -704,7 +712,7 @@ local function do_adjective(pos)
 					terms = terms,
 					label = label,
 					accel = accel and {form = accel} or nil,
-					check_missing = true,
+					check_missing = check_missing,
 					lang = lang,
 					plpos = plpos,
 				}
@@ -863,9 +871,7 @@ pos_functions["past participles"] = do_adjective("participle")
 pos_functions["cardinal adjectives"] = do_adjective("cardinal adjective")
 
 pos_functions["verbs"] = {
-	param1_is_head = true,
 	params = {
-		[1] = true,
 		["type"] = list_param,
 	},
 
