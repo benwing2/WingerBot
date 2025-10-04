@@ -311,7 +311,7 @@ local function getargs(args, argpref)
 		local genderlist = (gender or gender2) and { gender, gender2 } or nil
 		-- FIXME, do we need this?
 		track_form(argpref, form, translit)
-		table.insert(forms, { term = form, translit = translit, genders = genderlist })
+		table.insert(forms, { term = form, tr = translit, genders = genderlist })
 	end
 
 	return forms
@@ -469,10 +469,11 @@ local function handle_gender(args, data, nonlemma)
 		return
 	end
 
-	if #args[2] == 1 then
-		local g = args[2][1]
+	local glist = args[2]
+		
+	for _, g in ipairs(glist) do
 		if is_masc_sg(g) or is_fem_sg(g) then
-			local head = args.head
+			local head = args[1][1]
 			if head then
 				head = rsub(reorder_shadda(remove_links(head)), UNU .. "?$", "")
 				local ends_with_tam = rfind(head, "^[^ ]*" .. TAM .. "$") or
@@ -547,7 +548,7 @@ local function make_nisba_default(ending, endingtr)
 		local forms = {}
 		for i = 1, #heads do
 			local tr = heads[i].tr
-			table.insert(forms, {term = heads[i].term .. ending, translit = tr and tr .. endingtr or nil})
+			table.insert(forms, {term = heads[i].term .. ending, tr = tr and tr .. endingtr or nil})
 		end
 		return forms
 	end
@@ -569,6 +570,7 @@ pos_functions["nisba adjectives"] = {
 	end)(),
 	func = function(args, data)
 		data.pos_category = "adjectives"
+		table.insert(data.categories, lang:getCanonicalName() .. " relative adjectives (nisba)")
 		handle_infl_list_args(args, data, nisba_adj_inflections)
 	end
 }
@@ -585,6 +587,7 @@ pos_functions["nisba nouns"] = {
 	end)(),
 	func = function(args, data)
 		data.pos_category = "nouns"
+		table.insert(data.categories, lang:getCanonicalName() .. " relative nouns (nisba)")
 		data.genders = {"m"}
 		handle_infl_list_args(args, data, nisba_noun_inflections)
 	end
@@ -845,8 +848,7 @@ pos_functions["verbs"] = {
 						pos = form.pos,
 						lit = form.lit,
 					}
-					-- Yuck, harmonize these.
-					term[slot_is_headword and "tr" or "translit"] = form.translit
+					term.tr = form.translit
 					if form.footnotes then
 						local quals, refs = require(inflection_utilities_module).
 							convert_footnotes_to_qualifiers_and_references(form.footnotes)
@@ -908,8 +910,7 @@ pos_functions["verbs"] = {
 						ar = formval
 					end
 					local retval = {term = ar, uncertain = uncertain}
-					-- Yuck, harmonize these.
-					retval[slot_is_headword and "tr" or "translit"] = translit
+					retval.tr = translit
 				end
 
 				local terms
