@@ -1,27 +1,39 @@
 local export = {}
 
+local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+
 local lang, langcode, langname
 local com
 local m_links = require("Module:links")
+
+local require_when_needed = require("Module:utilities/require when needed")
 local m_table = require("Module:table")
+
 local en_utilities_module = "Module:en-utilities"
 local headword_utilities_module = "Module:headword utilities"
 
-local rfind = mw.ustring.find
+local m_en_utilities = require_when_needed(en_utilities_module)
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+local m_string_utilities = require_when_needed("Module:string utilities")
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
+
+local boolean_param = {type = "boolean"}
+local list_param = {list = true, disallow_holes = true}
 
 local boolean_param = {type = "boolean"}
 local list_param = {list = true, disallow_holes = true}
 local list_comp = {list = "comp", disallow_holes = true}
 local list_sup = {list = "sup", disallow_holes = true}
 
-local pos_functions = {}
+local concat = table.concat
+local insert = table.insert
 
+local pos_functions = {}
 
 local function track(page)
 	require("Module:debug").track(langcode .. "-headword/" .. page)
 	return true
 end
-
 
 local function check_if_accent_needed(val, data)
 	val = m_links.remove_links(val)
@@ -30,50 +42,57 @@ local function check_if_accent_needed(val, data)
 			error("Stress must be supplied using an acute accent: '" .. val .. "' (use unknown_stress=1 if stress is truly unknown)")
 		end
 		local pos = require(en_utilities_module).singularize(data.pos_category)
-		table.insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
+		insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
 	end
 	if com.is_multi_stressed(val) then
 		error("Multi-stressed form '" .. val .. "' not allowed")
 	end
 end
 
-
 local function check_if_accents_needed(list, data)
 	for _, val in ipairs(list) do
+		if type(val) == "table" then
+			val = val.term
+		end
 		check_if_accent_needed(val, data)
 	end
 end
 
-
--- Parse an inflection not requiring additional processing. The raw arguments come from `args[field]`, which is parsed
--- for inline modifiers. `no_check_accents_needed` disables checking for accents. `no_id` means to disallow the
--- <id:...> inline modifier.
-local function parse_inflection(data, args, field, no_check_accents_needed, no_id)
-	require(headword_utilities_module).parse_and_insert_inflection {
-		headdata = data,
-		forms = args[field],
+-- Parse an inflection. The raw arguments come from `args[field]`, which is parsed for inline modifiers. Multiple
+-- comma-separated values are allowed.
+local function parse_inflection(data, args, field, is_head)
+	local argfield = field
+	if type(argfield) == "table" then
+		argfield = argfield[1]
+	end
+	return require(headword_utilities_module).parse_term_list_with_modifiers {
+		forms = args[argfield],
 		paramname = field,
 		splitchar = ",",
-		exclude_mods = no_id and {"id"} or nil,
+		is_head = is_head,
+		include_mods = {"tr"},
 		frob = function(term)
-			if not no_check_accents_needed then
-				check_if_accent_needed(term, data)
-			end
+			check_if_accent_needed(term, data)
 			return term
 		end,
 	}
 end
 
-
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
--- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
--- sections enclosed in <<...>> are linked to the glossary. `accel` is the accelerator form, or nil.
+-- from `args[field]`, which is parsed for inline modifiers. Multiple comma-separated values are allowed. `label` is the
+-- label that the inflections are given; sections enclosed in <<...>> are linked to the glossary. `accel` is the
+-- accelerator form, or nil.
 local function parse_and_insert_inflection(data, args, field, label, accel)
+	local argfield = field
+	if type(argfield) == "table" then
+		argfield = argfield[1]
+	end
 	require(headword_utilities_module).parse_and_insert_inflection {
 		headdata = data,
-		forms = args[field],
+		forms = args[argfield],
 		paramname = field,
 		splitchar = ",",
+		include_mods = {"tr"},
 		label = label,
 		accel = accel and {form = accel} or nil,
 		frob = function(term)
@@ -108,6 +127,7 @@ function export.show(frame)
 
 	local data = {
 		lang = lang,
+		no_redundant_head_cat = true,
 		pos_category = poscat,
 		categories = {},
 		genders = {},
@@ -131,33 +151,19 @@ function export.show(frame)
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
-	local raw_user_specified_heads = args[1]
-	if not args[1][1] then
-		raw_user_specified_heads = {pagename}
-	end
-	local user_specified_heads = require(headword_utilities_module).parse_term_list_with_modifiers {
-		headdata = data,
-		forms = raw_user_specified_heads,
-		paramname = {1, "head"},
-		splitchar = ",",
-		exclude_mods = {"id"},
-		include_mods = {"tr"},
-		frob = function(term)
-			check_if_accent_needed(term, data)
-			return term
-		end,
-	}
-
-	data.heads = heads
 	data.unknown_stress = args.unknown_stress
 	data.frame = frame
 
-	if args.unknown_stress then
-		table.insert(data.inflections, {label = "unknown stress"})
+	if not pos_functions[poscat] or not pos_functions[poscat].no_parse_heads or
+		not pos_functions[poscat].no_parse_heads(args) then
+		data.heads = parse_inflection(data, args, {1, "head"}, "is_head") 
+		if not data.heads[1] then
+			data.heads = {{term = pagename}}
+		end
 	end
 
-	if pos_functions[poscat] and not pos_functions[poscat].no_check_head_accents then
-		check_if_accents_needed(heads, data)
+	if args.unknown_stress then
+		insert(data.inflections, {label = "unknown stress"})
 	end
 
 	if pos_functions[poscat] then
@@ -175,15 +181,18 @@ local function make_gloss_text(text)
 end
 
 
+local function noun_no_parse_heads(args)
+	return not args[3][1] and not args[4][1] and not args[5][1] and args[1][1] and args[1][1]:find("<")
+end
+
 local function get_noun_pos(is_proper)
 	return {
 		params = {
-			[2] = {alias_of = "g", list = false},
-			[3] = {list = "gen"},
-			[4] = {list = "pl"},
-			[5] = {list = "genpl"},
+			[2] = {list = "g", type = "genders", disallow_holes = true, flatten = true},
+			[3] = {list = "gen", disallow_holes = true},
+			[4] = {list = "pl", disallow_holes = true},
+			[5] = {list = "genpl", disallow_holes = true},
 			["lemma"] = list_param,
-			["g"] = list_param,
 			["m"] = list_param,
 			["f"] = list_param,
 			["adj"] = list_param,
@@ -199,12 +208,27 @@ local function get_noun_pos(is_proper)
 		},
 		-- set this to avoid problems with cases like {{uk-noun|((ґандж<>,ґандж<F>))}},
 		-- which will otherwise throw an error
-		no_check_head_accents = true,
+		no_parse_heads = noun_no_parse_heads,
 		func = function(args, data)
+			-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw
+			-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
+			-- inflections are given; <<..>> in the label is linked to the glossary).
+			local function handle_infl(field, label)
+				parse_and_insert_inflection(data, args, field, label)
+			end
+
+			-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw
+			-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
+			-- inflections are given; <<..>> in the label is linked to the glossary).
+			local function parse_infl(field, label)
+				parse_and_insert_inflection(data, args, field, label)
+			end
+
 			local genitives, plurals, genitive_plurals, usuallysg
-			if rfind(data.heads[1], "<") then
+			if noun_no_parse_heads(args) then
 				local parargs = data.frame:getParent().args
 				local alternant_spec = require("Module:" .. langcode .. "-noun").do_generate_forms(parargs, nil, true)
+				local orig_parsed_args = args
 				args = alternant_spec.args
 				local footnote_obj
 
@@ -221,13 +245,13 @@ local function get_noun_pos(is_proper)
 									footnote_obj = iut.create_footnote_obj()
 								end
 								local footnote_text = iut.get_footnote_text(form.footnotes, footnote_obj)
-								if rfind(text, "%[%[") then
+								if text:find("%[%[") then
 									text = text .. footnote_text
 								else
 									text = "[[" .. text .. "]]" .. footnote_text
 								end
 							end
-							table.insert(raw_forms, text)
+							insert(raw_forms, text)
 						end
 					end
 					if #raw_forms == 0 then
@@ -236,12 +260,14 @@ local function get_noun_pos(is_proper)
 					return raw_forms
 				end
 				if alternant_spec.number == "pl" then
-					data.heads = #args.lemma > 0 and args.lemma or get_raw_forms(alternant_spec.forms.nom_p_linked)
+					data.heads = args.lemma[1] and parse_inflection(data, args, "lemma", "is_head") or
+						get_raw_forms(alternant_spec.forms.nom_p_linked)
 					genitives = get_raw_forms(alternant_spec.forms.gen_p)
 					plurals = {"-"}
 					genitive_plurals = {"-"}
 				else
-					data.heads = #args.lemma > 0 and args.lemma or get_raw_forms(alternant_spec.forms.nom_s_linked)
+					data.heads = args.lemma[1] and parse_inflection(data, args, "lemma", "is_head") or
+						get_raw_forms(alternant_spec.forms.nom_s_linked)
 					genitives = get_raw_forms(alternant_spec.forms.gen_s)
 					if alternant_spec.number == "sg" then
 						plurals = {"-"}
@@ -251,8 +277,8 @@ local function get_noun_pos(is_proper)
 						genitive_plurals = get_raw_forms(alternant_spec.forms.gen_p)
 					end
 				end
-				if #args.g > 0 then
-					data.genders = args.g
+				if orig_parsed_args[2][1] then
+					data.genders = orig_parsed_args[2]
 				else
 					data.genders = alternant_spec.genders
 				end
@@ -262,24 +288,23 @@ local function get_noun_pos(is_proper)
 				local notes_segments = {}
 				if footnote_obj then
 					for _, note in ipairs(footnote_obj.notes) do
-						table.insert(notes_segments, " " .. make_gloss_text(note))
+						insert(notes_segments, " " .. make_gloss_text(note))
 					end
 				end
-				data.extra_text = table.concat(notes_segments, "")
+				data.extra_text = concat(notes_segments, "")
 			else
-				check_if_accents_needed(data.heads, data)
-				data.genders = args.g
-				if #data.genders == 0 then
+				data.genders = args[2]
+				if not data.genders[1] then
 					if mw.title.getCurrentTitle().nsText ~= "Template" then
 						error("Gender must be specified")
 					else
-						table.insert(data.genders, "m-in")
+						insert(data.genders, "m-in")
 					end
 				end
 
-				genitives = args[3]
-				plurals = args[4]
-				genitive_plurals = args[5]
+				genitives = parse_inflection(data, args, {3, "gen"})
+				plurals = parse_inflection(data, args, {4, "pl"})
+				genitive_plurals = parse_inflection(data, args, {5, "genpl"})
 
 				if genitives[1] ~= "-" then
 					-- don't track for indeclinables, which legitimately use the old-style syntax
@@ -287,17 +312,17 @@ local function get_noun_pos(is_proper)
 				end
 			end
 
-			-- Process the genders
+			-- Validate the genders.
 			local singular_genders = {}
 			local plural_genders = {}
 
 			local allowed_genders = {"m", "f", "n", "mf", "mfbysense"}
 			if langcode == "be" or args.unknown_gender then
-				table.insert(allowed_genders, "?")
+				insert(allowed_genders, "?")
 			end
 			local allowed_animacies = {"pr", "anml", "in"}
 			if langcode == "be" or args.unknown_animacy then
-				table.insert(allowed_animacies, "?")
+				insert(allowed_animacies, "?")
 			end
 			
 			for _, gender in ipairs(allowed_genders) do
@@ -315,66 +340,58 @@ local function get_noun_pos(is_proper)
 			local seen_gender = nil
 			local seen_animacy = nil
 
-			for i, g in ipairs(data.genders) do
+			for _, gspec in ipairs(data.genders) do
+				local g = type(gspec) == "string" and gspec or gspec.spec
 				if not singular_genders[g] and not plural_genders[g] then
 					if g:match("%-an%-") or g:match("%-an$") then
 						error("Invalid animacy 'an'; use 'pr' for people, 'anml' for animals: " .. g)
 					end
 					error("Unrecognized gender: " .. g .. " (should be e.g. 'm-pr' for masculine personal, 'f-anml-p' for feminine animal plural, or 'n-in' for neuter inanimate)")
 				end
-
-				data.genders[i] = g
 			end
 
-			-- Add the genitive forms
+			-- Add the genitive forms.
 			if genitives[1] == "-" then
-				table.insert(data.inflections, {label = "[[Appendix:Glossary#indeclinable|indeclinable]]"})
-				table.insert(data.categories, langname .. " indeclinable nouns")
+				insert(data.inflections, {label = glossary_link("indeclinable")})
+				insert(data.categories, langname .. " indeclinable nouns")
 			else
 				genitives.label = "genitive"
 				genitives.request = true
 				check_if_accents_needed(genitives, data)
-				table.insert(data.inflections, genitives)
+				insert(data.inflections, genitives)
 			end
 
-			-- Add the plural forms
-			-- If the noun is plural only, then ignore the 4th and 5th parameters altogether
+			-- Add the plural forms.
 			if genitives[1] == "-" then
-				-- do nothing
+				if plurals[1] or genitive_plurals[1] then
+					error("Can't specify nominative or genitive plurals of a plural-only term")
+				end
 			elseif plural_genders[data.genders[1]] then
-				table.insert(data.inflections, {label = "[[Appendix:Glossary#plural only|plural only]]"})
+				insert(data.inflections, {label = glossary_link("plural only")})
 			elseif plurals[1] == "-" then
-				table.insert(data.inflections, {label = "[[Appendix:Glossary#uncountable|uncountable]]"})
-				table.insert(data.categories, langname .. " uncountable nouns")
+				insert(data.inflections, {label = glossary_link("uncountable")})
+				insert(data.categories, langname .. " uncountable nouns")
 			else
 				if usuallysg then
-					table.insert(data.inflections, {label = "usually [[Appendix:Glossary#uncountable|uncountable]]"})
-					table.insert(data.categories, langname .. " uncountable nouns")
+					insert(data.inflections, {label = "usually " .. glossary_link("uncountable")})
+					insert(data.categories, langname .. " uncountable nouns")
 				end
 				plurals.label = "nominative plural"
 				plurals.request = true
 				check_if_accents_needed(plurals, data)
-				table.insert(data.inflections, plurals)
-				if #genitive_plurals > 0 then
+				insert(data.inflections, plurals)
+				if genitive_plurals[1] then
 					-- allow the genitive plural to be unsupplied; formerly there
 					-- was no genitive plural param
 					if genitive_plurals[1] == "-" then
 						-- handle case where there's no genitive plural (e.g. ага́)
-						table.insert(data.inflections, {label = "no genitive plural"})
+						insert(data.inflections, {label = "no genitive plural"})
 					else
 						genitive_plurals.label = "genitive plural"
 						check_if_accents_needed(genitive_plurals, data)
-						table.insert(data.inflections, genitive_plurals)
+						insert(data.inflections, genitive_plurals)
 					end
 				end
-			end
-
-			-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
-			-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
-			-- given; <<..>> ini the label is linked to the glossary). `accel` is the accelerator form, or nil. `frob` is a
-			-- function to apply to the values before storing.
-			local function handle_infl(field, label, frob)
-				parse_and_insert_inflection(data, args, field, label)
 			end
 
 			handle_infl("m", "male equivalent")
@@ -392,10 +409,8 @@ local function get_noun_pos(is_proper)
 	}
 end
 
-
 pos_functions["proper nouns"] = get_noun_pos(true)
 pos_functions["nouns"] = get_noun_pos(false)
-
 
 pos_functions["verbs"] = {
 	params = {
@@ -412,33 +427,24 @@ pos_functions["verbs"] = {
 		elseif aspect ~= "pf" and aspect ~= "impf" and aspect ~= "biasp" and aspect ~= "?" then
 			error("Unrecognized aspect: '" .. aspect .. "'")
 		end
-		table.insert(data.genders, aspect)
+		insert(data.genders, aspect)
 
-		-- Get the imperfective parameters
-		local imperfectives = args["impf"]
-		-- Get the perfective parameters
-		local perfectives = args["pf"]
-
-		check_if_accents_needed(imperfectives, data)
-		check_if_accents_needed(perfectives, data)
-
-		-- Add the imperfective forms
-		if #imperfectives > 0 then
-			if aspect == "impf" then
-				error("Can't specify imperfective counterparts for an imperfective verb")
-			end
-			imperfectives.label = "imperfective"
-			table.insert(data.inflections, imperfectives)
+		if args.pf[1] and aspect == "pf" then
+			error("Can't specify perfective counterparts for a perfective verb")
+		end
+		if args.impf[1] and aspect == "impf" then
+			error("Can't specify imperfective counterparts for an imperfective verb")
 		end
 
-		-- Add the perfective forms
-		if #perfectives > 0 then
-			if aspect == "pf" then
-				error("Can't specify perfective counterparts for a perfective verb")
-			end
-			perfectives.label = "perfective"
-			table.insert(data.inflections, perfectives)
+		-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw
+		-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
+		-- inflections are given; <<..>> in the label is linked to the glossary).
+		local function handle_infl(field, label)
+			parse_and_insert_inflection(data, args, field, label)
 		end
+
+		handle_infl("impf", "imperfective")
+		handle_infl("pf", "perfective")
 	end
 }
 
@@ -452,51 +458,23 @@ pos_functions["adjectives"] = {
 		["indecl"] = boolean_param,
 	},
 	func = function(args, data)
-		local comps = args[2]
-		local sups = args[3]
-		local adverbs = args["adv"]
-		local abstract_nouns = args["absn"]
-		local diminutives = args["dim"]
-
 		if args.indecl then	
-			table.insert(data.inflections, {label = "indeclinable"})
-			table.insert(data.categories, langname .. " indeclinable adjectives")
-		end
-		
-		if #comps > 0 then
-			if comps[1] == "-" then
-				table.insert(data.inflections, {label = "no comparative"})
-			else
-				check_if_accents_needed(comps, data)
-				comps.label = "comparative"
-				table.insert(data.inflections, comps)
-			end
-			
-		end
-	
-		if #sups > 0 then
-			check_if_accents_needed(sups, data)
-			sups.label = "superlative"
-			table.insert(data.inflections, sups)
+			insert(data.inflections, {label = "indeclinable"})
+			insert(data.categories, langname .. " indeclinable adjectives")
 		end
 
-		if #adverbs > 0 then
-			check_if_accents_needed(adverbs, data)
-			adverbs.label = "adverb"
-			table.insert(data.inflections, adverbs)
-		end
-	
-		if #abstract_nouns > 0 then
-			check_if_accents_needed(abstract_nouns, data)
-			abstract_nouns.label = "abstract noun"
-			table.insert(data.inflections, abstract_nouns)
+		-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw
+		-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
+		-- inflections are given; <<..>> in the label is linked to the glossary).
+		local function handle_infl(field, label)
+			parse_and_insert_inflection(data, args, field, label)
 		end
 
-		if #diminutives > 0 then
-			check_if_accents_needed(diminutives, data)
-			diminutives.label = "diminutive"
-			table.insert(data.inflections, diminutives)
-		end
+		handle_infl({2, "comp"}, "comparative")
+		handle_infl({3, "sup"}, "superlative")
+		handle_infl("adv", "adverb")
+		handle_infl("absn", "abstract noun")
+		handle_infl("dim", "diminutive")
 	end
 }
 
@@ -507,32 +485,16 @@ pos_functions["adverbs"] = {
 		["dim"] = list_param,
 	},
 	func = function(args, data)
-		local comps = args[2]
-		local sups = args[3]
-		local diminutives = args["dim"]
-		
-		if #comps > 0 then
-			if comps[1] == "-" then
-				table.insert(data.inflections, {label = "no comparative"})
-			else
-				check_if_accents_needed(comps, data)
-				comps.label = "comparative"
-				table.insert(data.inflections, comps)
-			end
-			
-		end
-	
-		if #sups > 0 then
-			check_if_accents_needed(sups, data)
-			sups.label = "superlative"
-			table.insert(data.inflections, sups)
+		-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw
+		-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
+		-- inflections are given; <<..>> in the label is linked to the glossary).
+		local function handle_infl(field, label)
+			parse_and_insert_inflection(data, args, field, label)
 		end
 
-		if #diminutives > 0 then
-			check_if_accents_needed(diminutives, data)
-			diminutives.label = "diminutive"
-			table.insert(data.inflections, diminutives)
-		end
+		handle_infl({2, "comp"}, "comparative")
+		handle_infl({3, "sup"}, "superlative")
+		handle_infl("dim", "diminutive")
 	end
 }
 
