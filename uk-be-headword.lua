@@ -11,10 +11,13 @@ local m_table = require("Module:table")
 
 local en_utilities_module = "Module:en-utilities"
 local headword_utilities_module = "Module:headword utilities"
+local inflection_utilities_module = "Module:inflection utilities"
+local string_utilities_module = "Module:string utilities"
 
 local m_en_utilities = require_when_needed(en_utilities_module)
 local m_headword_utilities = require_when_needed(headword_utilities_module)
-local m_string_utilities = require_when_needed("Module:string utilities")
+local m_inflection_utilities = require_when_needed(inflection_utilities_module)
+local m_string_utilities = require_when_needed(string_utilities_module)
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
 local boolean_param = {type = "boolean"}
@@ -49,15 +52,6 @@ local function check_if_accent_needed(val, data)
 	end
 end
 
-local function check_if_accents_needed(list, data)
-	for _, val in ipairs(list) do
-		if type(val) == "table" then
-			val = val.term
-		end
-		check_if_accent_needed(val, data)
-	end
-end
-
 -- Parse an inflection. The raw arguments come from `args[field]`, which is parsed for inline modifiers. Multiple
 -- comma-separated values are allowed.
 local function parse_inflection(data, args, field, is_head)
@@ -65,7 +59,7 @@ local function parse_inflection(data, args, field, is_head)
 	if type(argfield) == "table" then
 		argfield = argfield[1]
 	end
-	return require(headword_utilities_module).parse_term_list_with_modifiers {
+	return m_headword_utilities.parse_term_list_with_modifiers {
 		forms = args[argfield],
 		paramname = field,
 		splitchar = ",",
@@ -80,28 +74,17 @@ end
 
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. Multiple comma-separated values are allowed. `label` is the
--- label that the inflections are given; sections enclosed in <<...>> are linked to the glossary. `accel` is the
+-- label that the inflections are given; sections enclosed in <<...>> are linked to the glossary. `accel_form` is the
 -- accelerator form, or nil.
-local function parse_and_insert_inflection(data, args, field, label, accel)
-	local argfield = field
-	if type(argfield) == "table" then
-		argfield = argfield[1]
-	end
-	require(headword_utilities_module).parse_and_insert_inflection {
+local function parse_and_insert_inflection(data, args, field, label, accel_form)
+	local terms = parse_inflection(data, args, field)
+	m_headword_utilities.insert_inflection {
 		headdata = data,
-		forms = args[argfield],
-		paramname = field,
-		splitchar = ",",
-		include_mods = {"tr"},
+		terms = terms,
 		label = label,
-		accel = accel and {form = accel} or nil,
-		frob = function(term)
-			check_if_accent_needed(term, data)
-			return term
-		end,
+		accel = accel_form and {form = accel_form} or nil,
 	}
 end
-
 
 -- The main entry point.
 -- This is the only function that can be invoked from a template.
@@ -125,19 +108,11 @@ function export.show(frame)
 	langname = langcode == "uk" and "Ukrainian" or "Belarusian"
 	com = langcode == "uk" and require("Module:uk-common") or require("Module:be-common")
 
-	local data = {
-		lang = lang,
-		no_redundant_head_cat = true,
-		pos_category = poscat,
-		categories = {},
-		genders = {},
-		inflections = {},
-	}
-
 	local params = {
 		[1] = {list = "head", disallow_holes = true},
 		["unknown_stress"] = boolean_param,
 		["pagename"] = true,
+		["id"] = true,
 	}
 
 	if pos_functions[poscat] then
@@ -151,8 +126,18 @@ function export.show(frame)
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
-	data.unknown_stress = args.unknown_stress
-	data.frame = frame
+	local data = {
+		lang = lang,
+		no_redundant_head_cat = true,
+		pos_category = poscat,
+		categories = {},
+		genders = {},
+		inflections = {},
+		id = args.id,
+		pagename = pagename,
+		unknown_stress = args.unknown_stress,
+		frame = frame,
+	}
 
 	if not pos_functions[poscat] or not pos_functions[poscat].no_parse_heads or
 		not pos_functions[poscat].no_parse_heads(args) then
@@ -182,7 +167,8 @@ end
 
 
 local function noun_no_parse_heads(args)
-	return not args[3][1] and not args[4][1] and not args[5][1] and args[1][1] and args[1][1]:find("<")
+	return not args[3][1] and not args[4][1] and not args[5][1] and not args[1][2] and
+		args[1][1] and args[1][1]:find("<")
 end
 
 local function get_noun_pos(is_proper)
@@ -196,7 +182,7 @@ local function get_noun_pos(is_proper)
 			["m"] = list_param,
 			["f"] = list_param,
 			["adj"] = list_param,
-			["pos"] = list_param,
+			["poss"] = list_param,
 			["dim"] = list_param,
 			["aug"] = list_param,
 			["pej"] = list_param,
@@ -204,7 +190,6 @@ local function get_noun_pos(is_proper)
 			["fdem"] = list_param,
 			["unknown_gender"] = boolean_param,
 			["unknown_animacy"] = boolean_param,
-			["id"] = true,
 		},
 		-- set this to avoid problems with cases like {{uk-noun|((ґандж<>,ґандж<F>))}},
 		-- which will otherwise throw an error
@@ -226,79 +211,71 @@ local function get_noun_pos(is_proper)
 
 			local genitives, plurals, genitive_plurals, usuallysg
 			if noun_no_parse_heads(args) then
-				local parargs = data.frame:getParent().args
-				local alternant_spec = require("Module:" .. langcode .. "-noun").do_generate_forms(parargs, nil, true)
-				local orig_parsed_args = args
-				args = alternant_spec.args
+				args[1] = args[1][1]
+				local alternant_spec = require("Module:" .. langcode .. "-noun").do_generate_forms(args, nil, true)
 				local footnote_obj
 
-				local function get_raw_forms(forms)
-					local raw_forms = {}
-					if forms then
-						for _, form in ipairs(forms) do
-							local text =
-								langcode == "uk" and com.remove_monosyllabic_stress(form.form) or
-								com.remove_monosyllabic_accents(form.form)
-							if form.footnotes then
-								local iut = require("Module:inflection utilities")
-								if not footnote_obj then
-									footnote_obj = iut.create_footnote_obj()
-								end
-								local footnote_text = iut.get_footnote_text(form.footnotes, footnote_obj)
-								if text:find("%[%[") then
-									text = text .. footnote_text
-								else
-									text = "[[" .. text .. "]]" .. footnote_text
-								end
+				local function convert_formobjs_to_termobjs(formobjs)
+					local termobjs = {}
+					if formobjs then
+						for _, formobj in ipairs(formobjs) do
+							local termobj = {
+								term = langcode == "uk" and com.remove_monosyllabic_stress(formobj.form) or
+									com.remove_monosyllabic_accents(formobj.form)
+							}
+							if formobj.footnotes then
+								-- FIXME, we (or rather, [[Module:inflection utilities]]) should recognize labels like
+								-- "rare" and "archaic" and convert them automatically to labels.
+								local quals, refs =
+									m_inflection_utilities.convert_footnotes_to_qualifiers_and_references(
+										formobj.footnotes)
+								termobj.q = quals
+								termobj.refs = refs
 							end
-							insert(raw_forms, text)
+							insert(termobjs, termobj)
 						end
 					end
-					if #raw_forms == 0 then
-						raw_forms = {"-"}
+					if not termobjs[1] then
+						termobjs = {{term = "-"}}
 					end
-					return raw_forms
+					return termobjs
 				end
 				if alternant_spec.number == "pl" then
 					data.heads = args.lemma[1] and parse_inflection(data, args, "lemma", "is_head") or
-						get_raw_forms(alternant_spec.forms.nom_p_linked)
-					genitives = get_raw_forms(alternant_spec.forms.gen_p)
-					plurals = {"-"}
-					genitive_plurals = {"-"}
+						convert_formobjs_to_termobjs(alternant_spec.forms.nom_p_linked)
+					genitives = convert_formobjs_to_termobjs(alternant_spec.forms.gen_p)
+					plurals = {{term = "-"}}
+					genitive_plurals = {{term = "-"}}
 				else
 					data.heads = args.lemma[1] and parse_inflection(data, args, "lemma", "is_head") or
-						get_raw_forms(alternant_spec.forms.nom_s_linked)
-					genitives = get_raw_forms(alternant_spec.forms.gen_s)
+						convert_formobjs_to_termobjs(alternant_spec.forms.nom_s_linked)
+					genitives = convert_formobjs_to_termobjs(alternant_spec.forms.gen_s)
 					if alternant_spec.number == "sg" then
-						plurals = {"-"}
-						genitive_plurals = {"-"}
+						plurals = {{term = "-"}}
+						genitive_plurals = {{term = "-"}}
 					else
-						plurals = get_raw_forms(alternant_spec.forms.nom_p)
-						genitive_plurals = get_raw_forms(alternant_spec.forms.gen_p)
+						plurals = convert_formobjs_to_termobjs(alternant_spec.forms.nom_p)
+						genitive_plurals = convert_formobjs_to_termobjs(alternant_spec.forms.gen_p)
 					end
 				end
-				if orig_parsed_args[2][1] then
-					data.genders = orig_parsed_args[2]
+				if args[2][1] then
+					data.genders = args[2]
 				else
-					data.genders = alternant_spec.genders
+					local gender_specs = {}
+					for _, g in ipairs(alternant_spec.genders) do
+						insert(gender_specs, {spec = g})
+					end
+					data.genders = gender_specs
 				end
 				
 				usuallysg = alternant_spec.usuallysg
-
-				local notes_segments = {}
-				if footnote_obj then
-					for _, note in ipairs(footnote_obj.notes) do
-						insert(notes_segments, " " .. make_gloss_text(note))
-					end
-				end
-				data.extra_text = concat(notes_segments, "")
 			else
 				data.genders = args[2]
 				if not data.genders[1] then
 					if mw.title.getCurrentTitle().nsText ~= "Template" then
 						error("Gender must be specified")
 					else
-						insert(data.genders, "m-in")
+						data.genders = {{spec = "m-in"}}
 					end
 				end
 
@@ -306,7 +283,7 @@ local function get_noun_pos(is_proper)
 				plurals = parse_inflection(data, args, {4, "pl"})
 				genitive_plurals = parse_inflection(data, args, {5, "genpl"})
 
-				if genitives[1] ~= "-" then
+				if genitives[1] and genitives[1].term ~= "-" then
 					-- don't track for indeclinables, which legitimately use the old-style syntax
 					track(langcode .. "-noun-old-style")
 				end
@@ -341,7 +318,7 @@ local function get_noun_pos(is_proper)
 			local seen_animacy = nil
 
 			for _, gspec in ipairs(data.genders) do
-				local g = type(gspec) == "string" and gspec or gspec.spec
+				local g = gspec.spec
 				if not singular_genders[g] and not plural_genders[g] then
 					if g:match("%-an%-") or g:match("%-an$") then
 						error("Invalid animacy 'an'; use 'pr' for people, 'anml' for animals: " .. g)
@@ -351,24 +328,23 @@ local function get_noun_pos(is_proper)
 			end
 
 			-- Add the genitive forms.
-			if genitives[1] == "-" then
+			if genitives[1] and genitives[1].term == "-" then
 				insert(data.inflections, {label = glossary_link("indeclinable")})
 				insert(data.categories, langname .. " indeclinable nouns")
 			else
 				genitives.label = "genitive"
 				genitives.request = true
-				check_if_accents_needed(genitives, data)
 				insert(data.inflections, genitives)
 			end
 
 			-- Add the plural forms.
-			if genitives[1] == "-" then
+			if genitives[1] and genitives[1].term == "-" then
 				if plurals[1] or genitive_plurals[1] then
 					error("Can't specify nominative or genitive plurals of a plural-only term")
 				end
-			elseif plural_genders[data.genders[1]] then
+			elseif plural_genders[data.genders[1].spec] then
 				insert(data.inflections, {label = glossary_link("plural only")})
-			elseif plurals[1] == "-" then
+			elseif plurals[1] and plurals[1].term == "-" then
 				insert(data.inflections, {label = glossary_link("uncountable")})
 				insert(data.categories, langname .. " uncountable nouns")
 			else
@@ -378,17 +354,15 @@ local function get_noun_pos(is_proper)
 				end
 				plurals.label = "nominative plural"
 				plurals.request = true
-				check_if_accents_needed(plurals, data)
 				insert(data.inflections, plurals)
 				if genitive_plurals[1] then
 					-- allow the genitive plural to be unsupplied; formerly there
 					-- was no genitive plural param
-					if genitive_plurals[1] == "-" then
+					if genitive_plurals[1].term == "-" then
 						-- handle case where there's no genitive plural (e.g. ага́)
 						insert(data.inflections, {label = "no genitive plural"})
 					else
 						genitive_plurals.label = "genitive plural"
-						check_if_accents_needed(genitive_plurals, data)
 						insert(data.inflections, genitive_plurals)
 					end
 				end
@@ -397,14 +371,12 @@ local function get_noun_pos(is_proper)
 			handle_infl("m", "male equivalent")
 			handle_infl("f", "female equivalent")
 			handle_infl("adj", "<<relational adjective>>")
-			handle_infl("pos", "<<possessive adjective>>")
+			handle_infl("poss", "<<possessive adjective>>")
 			handle_infl("dim", "<<diminutive>>")
 			handle_infl("aug", "<<augmentative>>")
 			handle_infl("pej", "<<pejorative>>")
 			handle_infl("dem", "<<demonym>>")
 			handle_infl("fdem", "female <<demonym>>")
-
-			data.id = args.id
 		end
 	}
 end
