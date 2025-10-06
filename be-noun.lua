@@ -32,6 +32,8 @@ local m_para = require("Module:parameters")
 local com = require("Module:be-common")
 local m_be_translit = require("Module:be-translit")
 
+local force_cat = false -- set to true for debugging
+
 local current_title = mw.title.getCurrentTitle()
 local NAMESPACE = current_title.nsText
 local PAGENAME = current_title.text
@@ -2269,29 +2271,7 @@ end
 -- Return value is ALTERNANT_MULTIWORD_SPEC, an object where the declined forms are in `ALTERNANT_MULTIWORD_SPEC.forms`
 -- for each slot. If there are no values for a slot, the slot key will be missing. The value
 -- for a given slot is a list of objects {form=FORM, footnotes=FOOTNOTES}.
-function export.do_generate_forms(parent_args, pos, from_headword, def)
-	local params = {
-		[1] = {required = true, default = "чало́<ao>"},
-		footnote = {list = true},
-		title = {},
-	}
-
-	if from_headword then
-		params["lemma"] = {list = true}
-		params[2] = {list = "g"}
-		params["m"] = {list = true}
-		params["f"] = {list = true}
-		params["adj"] = {list = true}
-		params["dim"] = {list = true}
-		params["aug"] = {list = true}
-		params["pej"] = {list = true}
-		params["dem"] = {list = true}
-		params["fdem"] = {list = true}
-		params["id"] = true
-		params["pagename"] = true
-	end
-
-	local args = m_para.process(parent_args, params)
+function export.do_generate_forms(args, pos, from_headword, def)
 	local parse_props = {
 		parse_indicator_spec = parse_indicator_spec,
 	}
@@ -2318,6 +2298,9 @@ function export.do_generate_forms(parent_args, pos, from_headword, def)
 	iut.inflect_multiword_or_alternant_multiword_spec(alternant_multiword_spec, inflect_props)
 	compute_categories_and_annotation(alternant_multiword_spec)
 	alternant_multiword_spec.genders = compute_headword_genders(alternant_multiword_spec)
+	if args.json and not from_headword then
+        return require("Module:JSON").toJSON(alternant_multiword_spec)
+    end
 	return alternant_multiword_spec
 end
 
@@ -2328,15 +2311,61 @@ end
 -- slot, the slot key will be missing. The value for a given slot is a list of
 -- objects {form=FORM, footnotes=FOOTNOTES}.
 function export.do_generate_forms_manual(parent_args, number, pos, from_headword, def)
-	if number ~= "sg" and number ~= "pl" and number ~= "both" then
-		error("Internal error: number (arg 1) must be 'sg', 'pl' or 'both': '" .. number .. "'")
-	end
+	local alternant_multiword_spec = {
+		title = args.title,
+		footnotes = args.footnote,
+		forms = {},
+		number = number,
+		manual = true,
+	}
+	process_manual_overrides(alternant_multiword_spec.forms, args, alternant_multiword_spec.number, args.unknown_stress)
+	compute_categories_and_annotation(alternant_multiword_spec)
+	return alternant_multiword_spec
+end
 
+
+-- Entry point for {{be-ndecl}}. Template-callable function to parse and decline a noun given
+-- user-specified arguments and generate a displayable table of the declined forms.
+function export.show(frame)
+	local parent_args = frame:getParent().args
+	local params = {
+		[1] = {required = true, default = "віз<c.io>"},
+		footnote = {list = true},
+		title = {},
+		json = {type = "boolean"}, -- for bot use
+	}
+
+	local args = m_para.process(parent_args, params)
+	local alternant_multiword_spec = export.do_generate_forms(args)
+	if type(alternant_multiword_spec) == "string" then
+		-- JSON return value
+		return alternant_multiword_spec
+    end
+	show_forms(alternant_multiword_spec)
+	return make_table(alternant_multiword_spec) ..
+		require("Module:utilities").format_categories(alternant_multiword_spec.categories, lang, nil, nil, force_cat)
+end
+
+
+-- Entry point for {{be-ndecl-manual}}, {{be-ndecl-manual-sg}} and {{be-ndecl-manual-pl}}.
+-- Template-callable function to parse and decline a noun given manually-specified inflections
+-- and generate a displayable table of the declined forms.
+function export.show_manual(frame)
+	local iparams = {
+		[1] = {required = true},
+	}
+	local iargs = m_para.process(frame.args, iparams)
+	local parent_args = frame:getParent().args
 	local params = {
 		footnote = {list = true},
 		title = {},
 		unknown_stress = {type = "boolean"},
 	}
+	local number = iargs[1]
+	if number ~= "sg" and number ~= "pl" and number ~= "both" then
+		error("Internal error: number (arg 1) must be 'sg', 'pl' or 'both': '" .. number .. "'")
+	end
+
 	if number == "both" then
 		params[1] = {required = true, default = "бог"}
 		params[2] = {required = true, default = "багі́"}
@@ -2377,75 +2406,13 @@ function export.do_generate_forms_manual(parent_args, number, pos, from_headword
 		params["count"] = {}
 	end
 
-
 	local args = m_para.process(parent_args, params)
-	local alternant_multiword_spec = {
-		title = args.title,
-		footnotes = args.footnote,
-		forms = {},
-		number = number,
-		manual = true,
-	}
-	process_manual_overrides(alternant_multiword_spec.forms, args, alternant_multiword_spec.number, args.unknown_stress)
-	compute_categories_and_annotation(alternant_multiword_spec)
-	return alternant_multiword_spec
-end
-
-
--- Entry point for {{be-ndecl}}. Template-callable function to parse and decline a noun given
--- user-specified arguments and generate a displayable table of the declined forms.
-function export.show(frame)
-	local parent_args = frame:getParent().args
-	local alternant_multiword_spec = export.do_generate_forms(parent_args)
+	local alternant_multiword_spec = export.do_generate_forms_manual(args, number)
 	show_forms(alternant_multiword_spec)
-	return make_table(alternant_multiword_spec) .. require("Module:utilities").format_categories(alternant_multiword_spec.categories, lang)
+	return make_table(alternant_multiword_spec) ..
+		require("Module:utilities").format_categories(alternant_multiword_spec.categories, lang, nil, nil, force_cat)
 end
 
-
--- Entry point for {{be-ndecl-manual}}, {{be-ndecl-manual-sg}} and {{be-ndecl-manual-pl}}.
--- Template-callable function to parse and decline a noun given manually-specified inflections
--- and generate a displayable table of the declined forms.
-function export.show_manual(frame)
-	local iparams = {
-		[1] = {required = true},
-	}
-	local iargs = m_para.process(frame.args, iparams)
-	local parent_args = frame:getParent().args
-	local alternant_multiword_spec = export.do_generate_forms_manual(parent_args, iargs[1])
-	show_forms(alternant_multiword_spec)
-	return make_table(alternant_multiword_spec) .. require("Module:utilities").format_categories(alternant_multiword_spec.categories, lang)
-end
-
-
--- Concatenate all forms of all slots into a single string of the form
--- "SLOT=FORM,FORM,...|SLOT=FORM,FORM,...|...". Embedded pipe symbols (as might occur
--- in embedded links) are converted to <!>. If INCLUDE_PROPS is given, also include
--- additional properties (currently, g= for headword genders). This is for use by bots.
-local function concat_forms(alternant_multiword_spec, include_props)
-	local ins_text = {}
-	for slot, _ in pairs(output_noun_slots_with_linked) do
-		local formtext = iut.concat_forms_in_slot(alternant_multiword_spec.forms[slot])
-		if formtext then
-			table.insert(ins_text, slot .. "=" .. formtext)
-		end
-	end
-	if include_props then
-		table.insert(ins_text, "g=" .. table.concat(alternant_multiword_spec.genders, ","))
-	end
-	return table.concat(ins_text, "|")
-end
-
-
--- Template-callable function to parse and decline a noun given user-specified arguments and return
--- the forms as a string "SLOT=FORM,FORM,...|SLOT=FORM,FORM,...|...". Embedded pipe symbols (as might
--- occur in embedded links) are converted to <!>. If |include_props=1 is given, also include
--- additional properties (currently, none). This is for use by bots.
-function export.generate_forms(frame)
-	local include_props = frame.args["include_props"]
-	local parent_args = frame:getParent().args
-	local alternant_multiword_spec = export.do_generate_forms(parent_args)
-	return concat_forms(alternant_multiword_spec, include_props)
-end
 
 --[=[
 
