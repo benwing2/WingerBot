@@ -15,6 +15,7 @@ local m_table_tools = require("Module:table tools")
 local u = mw.ustring.char
 local rfind = mw.ustring.find
 local rsubn = mw.ustring.gsub
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local usub = mw.ustring.sub
 
 local HYPMARKER = "⟐"
@@ -71,7 +72,7 @@ function export.combine_stem_and_suffix(stem, tr, suf, rules, old)
 	-- specially; do that now.
 	local is_adj = rfind(suf, "<adj>")
 	suf = rsub(suf, "<adj>", "")
-	local suftr = is_adj and m_ru_translit.tr_adj(suf, "include monosyllabic jo accent")
+	local suftr = is_adj and m_ru_translit.tr_adj(suf, "mono")
 	return com.concat_russian_tr(stem, tr, suf, suftr, "dopair"), suf
 end
 
@@ -99,7 +100,7 @@ function export.show_form(forms, is_lemma, accel_form, lemma_forms, remove_monos
 	-- and more general fashion (see below).
 	local lemmaru, lemmatr
 	if accel_form and lemma_forms and lemma_forms[1] ~= "-" then
-		lemma_forms = com.combine_translit_of_adjacent_heads(com.strip_notes_from_forms(lemma_forms))
+		lemma_forms = com.combine_translit_of_duplicate_forms(com.strip_notes_from_forms(lemma_forms))
 		for i, form in ipairs(lemma_forms) do
 			local ru, tr = unpack(lemma_forms[i])
 			ru, tr = com.remove_monosyllabic_accents(ru, tr)
@@ -216,7 +217,7 @@ function export.show_form(forms, is_lemma, accel_form, lemma_forms, remove_monos
 				objs[i] = scriptutils.tag_text(trspan, lang, require("Module:scripts").getByCode("Latn"),
 					"hypothetical")
 			else
-				objs[i] = scriptutils.tag_translit(trspan, lang, "default", " style=\"color: #888;\"")
+				objs[i] = scriptutils.tag_translit(trspan, lang, "default", " style=\"color: var(--wikt-palette-grey-8,#888);\"")
 			end
 		end
 		return table.concat(objs, ", ")
