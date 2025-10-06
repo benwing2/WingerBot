@@ -10,6 +10,8 @@ local table_module = "Module:table"
 
 local dump = mw.dumpObject
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+local insert = table.insert
+local concat = table.concat
 
 local function escape_wikicode(...)
 	escape_wikicode = require(parse_utilities_module).escape_wikicode
@@ -88,7 +90,7 @@ local param_mods = {
 }
 
 local optional_param_mods = {
-	g = {item_dest = "genders", sublist = true},
+	g = {item_dest = "genders", type = "genders"},
 	alt = {},
 	lang = {type = "language"},
 	sc = {type = "script"},
@@ -96,9 +98,8 @@ local optional_param_mods = {
 	gloss = {},
 	pos = {},
 	lit = {},
-	-- FIXME, these should be renamed in the headword code to `tr` and `ts`.
-	tr = {item_dest = "translit"},
-	ts = {item_dest = "transcription"},
+	tr = {},
+	ts = {},
 	face = {},
 	nolinkinfl = {type = "boolean"},
 }
@@ -116,7 +117,7 @@ Parse a single inflection or headword form or list of such forms. In either case
 * `val`: The raw value to parse. Required.
 * `paramname`: The name of the parameter from which the value was taken; used in error messages. Required.
 * `is_head`: We are parsing a headword parameter (a value which goes into the `heads` field of `data`). This changes
-  the allowed modifiers and (in the case of `tr` and `ts`) the names of the destination fields.
+  the allowed modifiers.
 * `frob`: An optional function of one value to apply to the form after inline modifiers have been removed (i.e. to
   apply to the `.term` field of the returned object).
 * `include_mods`: List of extra inline modifiers to include, besides the default ones (see below). Each list item is
@@ -293,7 +294,7 @@ function export.check_term_list_missing(data)
 		if term then
 			local title = mw.title.new(term)
 			if title and not title:getContent() then
-				table.insert(headdata.categories, lang:getFullName() .. " " .. plpos ..
+				insert(headdata.categories, lang:getFullName() .. " " .. plpos ..
 					" with red links in their headword lines")
 			end
 		end
@@ -322,7 +323,7 @@ end
 function export.insert_fixed_inflection(data)
 	local headdata, origterm, label = data.headdata, data.originating_term, data.label
 	if not origterm then
-		table.insert(headdata.inflections, {
+		insert(headdata.inflections, {
 			label = export.replace_glossary_links_in_label(label)
 		})
 	else
@@ -333,7 +334,7 @@ function export.insert_fixed_inflection(data)
 		-- Preserve qualifiers, labels, references
 		origterm.term = nil
 		origterm.label = export.replace_glossary_links_in_label(label)
-		table.insert(headdata.inflections, origterm)
+		insert(headdata.inflections, origterm)
 	end
 end
 
@@ -378,8 +379,13 @@ function export.insert_inflection(data)
 			if data.accel then
 				terms.accel = data.accel
 			end
-			table.insert(headdata.inflections, terms)
+			insert(headdata.inflections, terms)
 		end
+	elseif data.request then
+		insert(headdata.inflections, {
+			label = export.replace_glossary_links_in_label(label),
+			request = true,
+		})
 	end
 end
 
@@ -485,16 +491,16 @@ function export.default_split_apostrophe(word, data)
 			linked_apostrophe_parts[#linked_apostrophe_parts] =
 				linked_apostrophe_parts[#linked_apostrophe_parts] .. "'"
 		elseif i == #apostrophe_parts then
-			table.insert(linked_apostrophe_parts, apostrophe_part)
+			insert(linked_apostrophe_parts, apostrophe_part)
 		else
-			table.insert(linked_apostrophe_parts, apostrophe_part .. "'")
+			insert(linked_apostrophe_parts, apostrophe_part .. "'")
 		end
 		i = i + 1
 	end
 	for j, tolink in ipairs(linked_apostrophe_parts) do
 		linked_apostrophe_parts[j] = link_hyphen_split_component(tolink, data)
 	end
-	return table.concat(linked_apostrophe_parts)
+	return concat(linked_apostrophe_parts)
 end
 
 
@@ -584,9 +590,9 @@ local function add_single_word_links(space_word, data, term_has_spaces)
 				word = word .. "-"
 			end
 		end
-		table.insert(linked_words, word)
+		insert(linked_words, word)
 	end
-	return table.concat(linked_words) .. punct
+	return concat(linked_words) .. punct
 end
 
 --[=[
@@ -635,9 +641,9 @@ function export.add_links_to_multiword_term(term, data)
 	local term_has_spaces = #words > 1
 	local linked_words = {}
 	for _, word in ipairs(words) do
-		table.insert(linked_words, add_single_word_links(word, data, term_has_spaces))
+		insert(linked_words, add_single_word_links(word, data, term_has_spaces))
 	end
-	local retval = table.concat(linked_words, " ")
+	local retval = concat(linked_words, " ")
 	-- If we ended up with a single link consisting of the entire term,
 	-- remove the link.
 	return retval:match("^%[%[([^%[%]]*)%]%]$") or retval
