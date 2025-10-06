@@ -50,6 +50,10 @@ local ugsub = require_when_needed(string_utilities_module, "gsub")
 local lang = require("Module:languages").getByCode("en")
 local langname = lang:getCanonicalName()
 
+local list_param = {list = true, disallow_holes = true}
+local list_allow_holes = {list = true, allow_holes = true}
+local boolean_param = {type = "boolean"}
+
 local function glossary_link(entry, text)
 	text = text or entry
 	return "[[Appendix:Glossary#" .. entry .. "|" .. text .. "]]"
@@ -61,6 +65,58 @@ local function track(page)
 end
 
 ------------------------------------------- UTILITY FUNCTIONS ------------------------------------------
+
+-- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
+-- is parsed for inline modifiers.
+local function parse_inflection(args, field, qual_field, is_head)
+	return m_headword_utilities.parse_term_list_with_modifiers {
+		paramname = field,
+		forms = args[field],
+		qualifiers = qual_field and args[qual_field] or nil,
+		splitchar = ",",
+		is_head = is_head,
+	}
+end
+
+-- Insert the parsed inflections in `terms` (as parsed by `parse_inflection`) into `data.inflections`, with label
+-- `label` and optional accelerator spec `accel`.
+local function insert_inflection(data, terms, label, accel)
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+		accel = accel and {form = accel} or nil,
+	}
+end
+
+-- Insert a fixed label `label` into the inflections for `data`. If `originating_term` is supplied, copy the qualifiers,
+-- labels and references from it into the fixed label.
+local function insert_fixed_inflection(data, label, originating_term)
+	m_headword_utilities.insert_fixed_inflection {
+		headdata = data,
+		originating_term = originating_term,
+		label = label,
+	}
+end
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, qual_field, label, accel)
+	m_headword_utilities.parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		qualifiers = qual_field and args[qual_field] or nil,
+		paramname = field,
+		splitchar = ",",
+		label = label,
+		accel = accel and {form = accel} or nil,
+		-- If we want check_missing support, we need to supply the following:
+		-- check_missing = true,
+		-- lang = lang,
+		-- plpos = plpos,
+	}
+end
 
 -- These functions are used directly in the <> format as well as in the utility functions #2 below.
 
@@ -87,19 +143,18 @@ end
 function export.show(frame)
 	local poscat = frame.args[1] or error("Part of speech has not been specified. Please pass parameter 1 to the module invocation.")
 	
-	local boolean = {type = "boolean"}
 	local params = {
-		["head"] = {list = true},
+		["head"] = list_param,
 		["id"] = true,
-		["json"] = boolean,
+		["json"] = boolean_param,
 		["sort"] = true,
-		["splithyph"] = boolean,
-		["nosplithyph"] = boolean,
-		["hyphspace"] = boolean,
-		["nolink"] = boolean,
-		["nolinkhead"] = {type = "boolean", alias_of = "nolink"},
-		["nosuffix"] = boolean,
-		["nomultiwordcat"] = boolean,
+		["splithyph"] = boolean_param,
+		["nosplithyph"] = boolean_param,
+		["hyphspace"] = boolean_param,
+		["nolink"] = boolean_param,
+		["nolinkhead"] = {type = "boolean_param", alias_of = "nolink"},
+		["nosuffix"] = boolean_param,
+		["nomultiwordcat"] = boolean_param,
 		["pagename"] = true, -- for testing
 	}
 
@@ -118,13 +173,13 @@ function export.show(frame)
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename -- Accounts for unsupported titles.
 
-	local user_specified_heads = args.head
+	local user_specified_heads = parse_inflection(args, "head", nil, "is_head")
 	local heads = user_specified_heads
 	local autohead
 	if args.nolink or not pagename:find("[ '%-]") then
 		autohead = pagename
 	else
-		local en_no_split_apostrophe_words = list_to_set{
+		local en_no_split_apostrophe_words = list_to_set {
 			"one's",
 			"someone's",
 			"he's",
@@ -132,7 +187,7 @@ function export.show(frame)
 			"it's",
 		}
 
-		local en_include_hyphen_prefixes = list_to_set{
+		local en_include_hyphen_prefixes = list_to_set {
 			-- We don't include things that are also words even though they are often (perhaps mostly) prefixes, e.g.
 			-- "be", "counter", "cross", "extra", "half", "mid", "over", "pan", "under".
 			"acro",
@@ -252,12 +307,13 @@ function export.show(frame)
 	end
 
 	if #heads == 0 then
-		heads = {autohead}
+		heads = {{term = autohead}}
 	else
-		for i, head in ipairs(heads) do
+		for _, headobj in ipairs(heads) do
+			local head = headobj.term
 			if head:find("^~") then
 				head = apply_link_modifiers(autohead, head:sub(2))
-				heads[i] = head
+				headobj.term = head
 			end
 			if head == autohead then
 				track("redundant-head")
@@ -271,7 +327,7 @@ function export.show(frame)
 		categories = {},
 		heads = heads,
 		user_specified_heads = user_specified_heads,
-		no_redundant_head_cat = #user_specified_heads == 0,
+		no_redundant_head_cat = not user_specified_heads[1],
 		inflections = {},
 		nomultiwordcat = args.nomultiwordcat,
 		sort_key = args.sort,
@@ -283,12 +339,16 @@ function export.show(frame)
 		force_cat_output = force_cat,
 	}
 
+	local function inscat(cat)
+		insert(data.categories, langname .. " " .. cat)
+	end
+
 	local is_suffix = false
 	if not args.nosuffix and pagename:find("^%-") and not pagename:find("^%-%-") and poscat ~= "suffix forms" then
 		is_suffix = true
 		data.pos_category = "suffixes"
 		local singular_poscat = singularize(poscat)
-		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		inscat(singular_poscat .. "-forming suffixes")
 		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
@@ -310,23 +370,23 @@ function export.show(frame)
 		local pagename_no_diacritics = ugsub(toNFD(pagename), "[" .. u300 .. "-" .. u36F .. "]", "")
 		if pagename_no_diacritics:find("[Qq][a-tv-z]") or pagename_no_diacritics:find("[a-z]q[^u.]") or
 			pagename_no_diacritics:find("[a-z]q$") then
-			insert(data.categories, langname .. " words containing Q not followed by U")
+			inscat("words containing Q not followed by U")
 		end
 	end
 	-- toNFD performs decomposition, so letters that decompose to an ASCII
 	-- vowel and a diacritic, such as é, are counted as vowels and do not do not
 	-- need to be included in the pattern.
 	if not umatch(ulower(toNFD(pagename)), "[aeiouyæœøəªºαεηιουω]") then
-		insert(data.categories, langname .. " words spelled without vowels")
+		inscat("words spelled without vowels")
 	end
 	if pagename:find("yre$") then
-		insert(data.categories, langname .. ' words ending in "-yre"')
+		inscat('words ending in "-yre"')
 	end
 	if not pagename:find(" ") and ulen(pagename) >= 25 then
-		insert(extra_categories, "Long " .. langname .. ' words')
+		insert(extra_categories, "Long " .. langname .. " words")
 	end
 	if pagename:find("^[^aeiou ]*a[^aeiou ]*e[^aeiou ]*i[^aeiou ]*o[^aeiou ]*u[^aeiou ]*$") then
-		insert(data.categories, langname .. ' words that use all vowels in alphabetical order')
+		inscat("words that use all vowels in alphabetical order")
 	end
 
 	if args.json then
@@ -414,31 +474,28 @@ end
 local function make_heads_definite(args, data)
 	if args.def == "~" then
 		local newheads = {}
-		for _, head in ipairs(data.heads) do
+		for _, headobj in ipairs(data.heads) do
 			insert(newheads, head)
 			insert(newheads, "the " .. head)
 		end
 		data.heads = newheads
 	else
-		for i, head in ipairs(data.heads) do
-			data.heads[i] = "the " .. head
+		for _, headobj in ipairs(data.heads) do
+			headobj.term = "the " .. headobj.term
 		end
 	end
 end
 
 
 pos_functions["adjectives"] = {
-	params = function()
-		local list_allow_holes = {list = true, allow_holes = true}
-		return pairs{
-			[1] = list_allow_holes,
-			["def"] = true,
-			["the"] = {alias_of = "def"},
-			["comp_qual"] = {list = "comp\1_qual", allow_holes = true},
-			["sup"] = list_allow_holes,
-			["sup_qual"] = {list = "sup\1_qual", allow_holes = true},
-		}
-	end,
+	params = {
+		[1] = list_param,
+		["def"] = true,
+		["the"] = {alias_of = "def"},
+		["comp_qual"] = {list = "comp\1_qual", allow_holes = true},
+		["sup"] = list_param,
+		["sup_qual"] = {list = "sup\1_qual", allow_holes = true},
+	},
 
 	func = function(args, data)
 		local shift = 0
@@ -503,15 +560,12 @@ pos_functions["adjectives"] = {
 }
 
 pos_functions["adverbs"] = {
-	params = function()
-		local list_allow_holes = {list = true, allow_holes = true}
-		return pairs{
-			[1] = list_allow_holes,
-			["comp_qual"] = {list = "comp\1_qual", allow_holes = true},
-			["sup"] = list_allow_holes,
-			["sup_qual"] = {list = "sup\1_qual", allow_holes = true},
-		}
-	end,
+	params = {
+		[1] = list_param,
+		["comp_qual"] = {list = "comp\1_qual", allow_holes = true},
+		["sup"] = list_param,
+		["sup_qual"] = {list = "sup\1_qual", allow_holes = true},
+	},
 
 	func = function(args, data)
 		local shift = 0
@@ -557,87 +611,12 @@ pos_functions["adverbs"] = {
 }
 
 pos_functions["conjunctions"] = {
-	params = function()
-		return pairs{
-			[1] = {alias_of = "head", list = false},
-		}
-	end,
+	params = {
+		[1] = {alias_of = "head", list = false},
+	},
 }
 
 pos_functions["interjections"] = pos_functions["conjunctions"]
-
--- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
--- is parsed for inline modifiers.
-local function parse_inflection(data, args, field, qual_field)
-	return m_headword_utilities.parse_term_list_with_modifiers {
-		paramname = field,
-		forms = args[field],
-		qualifiers = qual_field and args[qual_field] or nil,
-		splitchar = ",",
-	}
-end
-
--- Insert the parsed inflections in `terms` (as parsed by `parse_inflection`) into `data.inflections`, with label
--- `label` and optional accelerator spec `accel`.
-local function insert_inflection(data, terms, label, accel)
-	m_headword_utilities.insert_inflection {
-		headdata = data,
-		terms = terms,
-		label = label,
-		accel = accel and {form = accel} or nil,
-		-- If we want check_missing support, we need to supply the following:
-		-- check_missing = true,
-		-- lang = lang,
-		-- plpos = plpos,
-	}
-end
-
--- Insert a fixed label `label` into the inflections for `data`. If `originating_term` is supplied, copy the qualifiers,
--- labels and references from it into the fixed label.
-local function insert_fixed_inflection(data, label, originating_term)
-	m_headword_utilities.insert_fixed_inflection {
-		headdata = data,
-		originating_term = originating_term,
-		label = label,
-	}
-end
-
--- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
--- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
--- `accel` is the accelerator form, or nil.
-local function parse_and_insert_inflection(data, args, field, qual_field, label, accel)
-	m_headword_utilities.parse_and_insert_inflection {
-		headdata = data,
-		forms = args[field],
-		qualifiers = qual_field and args[qual_field] or nil,
-		paramname = field,
-		splitchar = ",",
-		label = label,
-		accel = accel and {form = accel} or nil,
-		-- If we want check_missing support, we need to supply the following:
-		-- check_missing = true,
-		-- lang = lang,
-		-- plpos = plpos,
-	}
-end
-
-local function gather_inflections_with_quals(data, args, infl_field, qual_field)
-	-- Gather all the plural parameters from the numbered parameters.
-	local infls = {}
-	if label then
-		infls.label = label
-	end
-	for i, infl in ipairs(args[infl_field]) do
-		local qual = args[qual_field][i]
-
-		if qual then
-			insert(infls, {term = infl, q = {qual}})
-		else
-			insert(infls, infl)
-		end
-	end
-	return infls
-end
 
 local function escape(str)
 	return (str:gsub("\\([:#])", "\\\\%1")
@@ -669,7 +648,7 @@ local function do_nouns(args, data, pos)
 		make_heads_definite(args, data)
 	end
 
-	local plurals = parse_inflection(data, args, 1, "plqual")
+	local plurals = parse_inflection(args, 1, "plqual")
 
 	local function insert_plurale_tantum_inflections(is_plural_only, originating_label)
 		if args.sg[1] then
@@ -803,30 +782,26 @@ end
 
 
 -- Return the parameters to be used for nouns and proper nouns. Currently the same.
-local function get_noun_params()
-	local list_allow_holes = {list = true, allow_holes = true}
-	local list_disallow_holes = {list = true, disallow_holes = true}
-	return pairs{
-		[1] = list_disallow_holes,
-		["def"] = true,
-		["the"] = {alias_of = "def"},
-		["pl\1qual"] = list_allow_holes,
-		-- The following four only used for pluralia tantum (1=p)
-		["sg"] = list_disallow_holes,
-		["sg\1qual"] = list_allow_holes,
-		["attr"] = list_disallow_holes,
-		["attr\1qual"] = list_allow_holes,
-	}
-end
+local noun_params = {
+	[1] = list_param,
+	["def"] = true,
+	["the"] = {alias_of = "def"},
+	["pl\1qual"] = list_allow_holes,
+	-- The following four only used for pluralia tantum (1=p)
+	["sg"] = list_param,
+	["sg\1qual"] = list_allow_holes,
+	["attr"] = list_param,
+	["attr\1qual"] = list_allow_holes,
+}
 
 
 pos_functions["nouns"] = {
-	params = get_noun_params,
+	params = noun_params,
 	func = do_nouns,
 }
 
 pos_functions["proper nouns"] = {
-	params = get_noun_params,
+	params = noun_params,
 	func = function(args, data)
 		return do_nouns(args, data, "proper noun")
 	end,
@@ -877,19 +852,17 @@ local function sub_tilde(form, pagename)
 end
 
 pos_functions["verbs"] = {
-	params = function()
-		return pairs{
-			[1] = {list = "pres_3sg", allow_holes = true},
-			["pres_3sg_qual"] = {list = "pres_3sg\1_qual", allow_holes = true},
-			[2] = {list = "pres_ptc", allow_holes = true},
-			["pres_ptc_qual"] = {list = "pres_ptc\1_qual", allow_holes = true},
-			[3] = {list = "past", allow_holes = true},
-			["past_qual"] = {list = "past\1_qual", allow_holes = true},
-			[4] = {list = "past_ptc", allow_holes = true},
-			["past_ptc_qual"] = {list = "past_ptc\1_qual", allow_holes = true},
-			["noautolinkverb"] = {type = "boolean"},
-		}
-	end,
+	params = {
+		[1] = {list = "pres_3sg", allow_holes = true},
+		["pres_3sg_qual"] = {list = "pres_3sg\1_qual", allow_holes = true},
+		[2] = {list = "pres_ptc", allow_holes = true},
+		["pres_ptc_qual"] = {list = "pres_ptc\1_qual", allow_holes = true},
+		[3] = {list = "past", allow_holes = true},
+		["past_qual"] = {list = "past\1_qual", allow_holes = true},
+		[4] = {list = "past_ptc", allow_holes = true},
+		["past_ptc_qual"] = {list = "past_ptc\1_qual", allow_holes = true},
+		["noautolinkverb"] = boolean_param,
+	},
 
 	func = function(args, data)
 		-- Get parameters
