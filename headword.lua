@@ -6,7 +6,7 @@ local en_utilities_module = "Module:en-utilities"
 local gender_and_number_module = "Module:gender and number"
 local headword_data_module = "Module:headword/data"
 local headword_page_module = "Module:headword/page"
-local links_module = "Module:User:Benwing2/links"
+local links_module = "Module:links"
 local load_module = "Module:load"
 local pages_module = "Module:pages"
 local palindromes_module = "Module:palindromes"
@@ -516,9 +516,15 @@ local function format_inflection_parts(data, parts)
 			-- multiple terms). The reason for doing this is to avoid clutter in headword lines by default in languages
 			-- where the script is relatively straightforward to read by learners (e.g. Greek, Russian), but allow it
 			-- to be enabled in languages with more complex scripts (e.g. Arabic).
-			local tr = part.translit or (not (parts.enable_auto_translit or data.inflections.enable_auto_translit) and "-" or nil)
+			local tr = part.tr or part.translit or (not (parts.enable_auto_translit or data.inflections.enable_auto_translit) and "-" or nil)
 			if tr ~= "-" then
 				any_part_translit = true
+			end
+			if part.translit then
+				track("old-part-translit", part.lang or data.lang)
+			end
+			if part.transcription then
+				track("old-part-transcription", part.lang or data.lang)
 			end
 			formatted = full_link(
 				{
@@ -532,7 +538,7 @@ local function format_inflection_parts(data, parts)
 					id = part.id,
 					genders = part.genders,
 					tr = tr,
-					ts = part.transcription,
+					ts = part.ts or part.transcription or nil,
 					accel = partaccel or parts.accel,
 				},
 				face
@@ -951,7 +957,7 @@ function export.full_headword(data)
 			-- If explicit head= just consists of ! or ?, add it to the end of the default head.
 			head.term = default_head .. head.term
 		end
-		head.term_no_init_anns = is_anti_asterisk and head.term:sub(3) or head.term
+		head.term_no_initial_bang_bang = is_anti_asterisk and head.term:sub(3) or head.term
 
 		if is_reconstructed then
 			local head_term = head.term
@@ -1012,7 +1018,7 @@ function export.full_headword(data)
 			if not (notranslit[langcode] or notranslit[full_langcode]) and head.sc:isTransliterated() then
 				head.tr_manual = not not head.tr
 
-				local text = head.term_no_init_anns
+				local text = head.term_no_initial_bang_bang
 				if not data.lang:link_tr(head.sc) then
 					text = remove_links(text)
 				end
