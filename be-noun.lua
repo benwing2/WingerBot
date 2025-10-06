@@ -27,6 +27,7 @@ local m_table = require("Module:table")
 local m_links = require("Module:links")
 local m_string_utilities = require("Module:string utilities")
 local iut = require("Module:inflection utilities")
+local put = require("Module:parse utilities")
 local m_para = require("Module:parameters")
 local com = require("Module:be-common")
 local m_be_translit = require("Module:be-translit")
@@ -35,7 +36,7 @@ local current_title = mw.title.getCurrentTitle()
 local NAMESPACE = current_title.nsText
 local PAGENAME = current_title.text
 
-local u = mw.ustring.char
+local u = require("Module:string/char")
 local rsplit = mw.text.split
 local rfind = mw.ustring.find
 local rmatch = mw.ustring.match
@@ -45,6 +46,7 @@ local ulen = mw.ustring.len
 local usub = mw.ustring.sub
 local uupper = mw.ustring.upper
 local ulower = mw.ustring.lower
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local AC = u(0x0301) -- acute =  ́
 local CFLEX = u(0x0302) -- circumflex =  ̂
@@ -83,11 +85,11 @@ local output_noun_slots = {
 	ins_p = "ins|p",
 	loc_p = "loc|p",
 	voc_p = "voc|p",
-	count = "count|form",
+	count = "count form",
 }
 
 
-local output_noun_slots_with_linked = m_table.shallowcopy(output_noun_slots)
+local output_noun_slots_with_linked = m_table.shallowCopy(output_noun_slots)
 output_noun_slots_with_linked["nom_s_linked"] = "nom|s"
 output_noun_slots_with_linked["nom_p_linked"] = "nom|p"
 
@@ -325,6 +327,9 @@ local function process_slot_overrides(base, do_slot)
 				for _, value in ipairs(override.values) do
 					local form = value.form
 					local combined_notes = iut.combine_footnotes(base.footnotes, value.footnotes)
+					if slot == "count" then
+						combined_notes = iut.combine_footnotes(combined_notes, {count_footnote_msg})
+					end
 					if override.full then
 						if form ~= "" then
 							iut.insert_form(base.forms, slot, {form = form, footnotes = combined_notes})
@@ -356,8 +361,7 @@ local function add_decl(base, stress,
 	add(base, "acc_s", stress, acc_s, footnotes)
 	add(base, "ins_s", stress, ins_s, footnotes)
 	add(base, "loc_s", stress, loc_s, footnotes)
-	local count_footnotes = {count_footnote_msg}
-	add(base, "count", stress, count, iut.combine_footnotes(count_footnotes, footnotes))
+	add(base, "count", stress, count, iut.combine_footnotes({count_footnote_msg}, footnotes))
 	add(base, "nom_p", stress, nom_p, footnotes)
 	add(base, "gen_p", stress, gen_p, footnotes)
 	add(base, "dat_p", stress, dat_p, footnotes)
@@ -412,7 +416,7 @@ local decls = {}
 local declprops = {}
 
 local function default_genitive_u(base)
-	return base.number == "sg" and not rfind(base.lemma, "^%u")
+	return (base.number == "sg" or base.usuallysg) and not rfind(base.lemma, "^%u")
 end
 
 local function add_soft_sign(nonvowel_stem)
@@ -932,7 +936,7 @@ local function parse_override(segments)
 		rest = rsub(rest, "^:", "")
 	end
 	segments[1] = rest
-	local colon_separated_groups = iut.split_alternating_runs(segments, ":")
+	local colon_separated_groups = put.split_alternating_runs(segments, ":")
 	for i, colon_separated_group in ipairs(colon_separated_groups) do
 		local value = {}
 		local form = colon_separated_group[1]
@@ -1019,12 +1023,13 @@ local function parse_indicator_spec(angle_bracket_spec)
 	assert(inside)
 	local base = {overrides = {}, forms = {}}
 	if inside ~= "" then
-		local segments = iut.parse_balanced_segment_run(inside, "[", "]")
-		local dot_separated_groups = iut.split_alternating_runs(segments, "%.")
+		local segments = put.parse_balanced_segment_run(inside, "[", "]")
+		local dot_separated_groups = put.split_alternating_runs(segments, "%.")
 		for i, dot_separated_group in ipairs(dot_separated_groups) do
 			local part = dot_separated_group[1]
-			local case_prefix = usub(part, 1, 3)
-			if cases[case_prefix] or accented_cases[case_prefix] then
+			local case_prefix3 = usub(part, 1, 3)
+			local case_prefix5 = usub(part, 1, 5) -- "count", "cóunt"
+			if cases[case_prefix3] or accented_cases[case_prefix3] or cases[case_prefix5] or accented_cases[case_prefix5] then
 				local slot, override = parse_override(dot_separated_group)
 				if base.overrides[slot] then
 					table.insert(base.overrides[slot], override)
@@ -1041,7 +1046,7 @@ local function parse_indicator_spec(angle_bracket_spec)
 				if base.stresses then
 					error("Can't specify stress pattern indicator twice: '" .. inside .. "'")
 				end
-				local comma_separated_groups = iut.split_alternating_runs(dot_separated_group, ",")
+				local comma_separated_groups = put.split_alternating_runs(dot_separated_group, ",")
 				local patterns = {}
 				for i, comma_separated_group in ipairs(comma_separated_groups) do
 					local pattern = comma_separated_group[1]
@@ -1084,11 +1089,15 @@ local function parse_indicator_spec(angle_bracket_spec)
 					error("Can't specify gender twice: '" .. inside .. "'")
 				end
 				base.explicit_gender = part
-			elseif part == "sg" or part == "pl" then
+			elseif part == "sg" or part == "sg+" or part == "pl" or part == "both" then
 				if base.number then
 					error("Can't specify number twice: '" .. inside .. "'")
+				elseif part == "sg+" then
+					base.number = "both"
+					base.usuallysg = true
+				else
+					base.number = part
 				end
-				base.number = part
 			elseif part == "inan" or part == "pr" or part == "anml" then
 				if base.animacy then
 					error("Can't specify animacy twice: '" .. inside .. "'")
@@ -1170,6 +1179,7 @@ local function set_defaults_and_check_bad_indicators(base)
 	-- Set default values.
 	if not base.adj then
 		base.number = base.number or "both"
+		base.usuallysg = base.usuallysg or false
 		base.animacy = base.animacy or base.surname and "pr" or
 			base.neutertype == "t" and "anml" or
 			"inan"
@@ -1727,7 +1737,7 @@ propagate_multiword_properties = function(multiword_spec, property, mixed_value,
 			is_nounal = not not word_specs[i][property]
 		end
 		if is_nounal then
-			if not word_specs[i][property] then
+			if word_specs[i][property] == nil then
 				error("Internal error: noun-type word spec without " .. property .. " set")
 			end
 			for j = last_seen_nounal_pos + 1, i - 1 do
@@ -2057,36 +2067,36 @@ local function make_table(alternant_multiword_spec)
 	local forms = alternant_multiword_spec.forms
 
 	local table_spec_both = [=[
-<div class="NavFrame" style="display: inline-block;min-width: 45em">
-<div class="NavHead" style="background:#eff7ff" >{title}{annotation}</div>
+<div class="NavFrame" style="max-width:45em">
+<div class="NavHead" style="background:var(--wikt-palette-lighterblue, #ebf4ff);" >{title}{annotation}</div>
 <div class="NavContent">
-{\op}| style="background:#F9F9F9;text-align:center;min-width:45em" class="inflection-table"
+{\op}| style="text-align:center;max-width:45em" class="inflection-table inflection"
+|- class="rowgroup"
+! style="width:33%;background:var(--wikt-palette-lightblue, #d9ebff);" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | singular
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | plural
 |-
-! style="width:33%;background:#d9ebff" |
-! style="background:#d9ebff" | singular
-! style="background:#d9ebff" | plural
-|-
-!style="background:#eff7ff"|nominative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|nominative
 | {nom_s}
 | {nom_p}
 |-
-!style="background:#eff7ff"|genitive
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|genitive
 | {gen_s}
 | {gen_p}
 |-
-!style="background:#eff7ff"|dative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|dative
 | {dat_s}
 | {dat_p}
 |-
-!style="background:#eff7ff"|accusative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|accusative
 | {acc_s}
 | {acc_p}
 |-
-!style="background:#eff7ff"|instrumental
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|instrumental
 | {ins_s}
 | {ins_p}
 |-
-!style="background:#eff7ff"|locative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|locative
 | {loc_s}
 | {loc_p}{voc_clause}{count_clause}
 |{\cl}{notes_clause}</div></div>]=]
@@ -2094,93 +2104,93 @@ local function make_table(alternant_multiword_spec)
 	local voc_clause_both = [=[
 
 |-
-!style="background:#eff7ff"|vocative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|vocative
 | {voc_s}
 | {voc_p}]=]
 
 	local count_clause_both = [=[
 
 |-
-!style="background:#eff7ff"|count form
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|count form
 | —
 | {count}]=]
 
 	local table_spec_sg = [=[
-<div class="NavFrame" style="width:30em">
-<div class="NavHead" style="background:#eff7ff">{title}{annotation}</div>
+<div class="NavFrame" style="max-width:30em">
+<div class="NavHead" style="background:var(--wikt-palette-lighterblue, #ebf4ff);">{title}{annotation}</div>
 <div class="NavContent">
-{\op}| style="background:#F9F9F9;text-align:center;width:30em" class="inflection-table"
+{\op}| style="text-align:center;max-width:30em" class="inflection-table inflection"
+|- class="rowgroup"
+! style="width:33%;background:var(--wikt-palette-lightblue, #d9ebff);" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | singular
 |-
-! style="width:33%;background:#d9ebff" |
-! style="background:#d9ebff" | singular
-|-
-!style="background:#eff7ff"|nominative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|nominative
 | {nom_s}
 |-
-!style="background:#eff7ff"|genitive
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|genitive
 | {gen_s}
 |-
-!style="background:#eff7ff"|dative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|dative
 | {dat_s}
 |-
-!style="background:#eff7ff"|accusative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|accusative
 | {acc_s}
 |-
-!style="background:#eff7ff"|instrumental
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|instrumental
 | {ins_s}
 |-
-!style="background:#eff7ff"|locative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|locative
 | {loc_s}{voc_clause}
 |{\cl}{notes_clause}</div></div>]=]
 
 	local voc_clause_sg = [=[
 
 |-
-!style="background:#eff7ff"|vocative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|vocative
 | {voc_s}]=]
 
 	local table_spec_pl = [=[
-<div class="NavFrame" style="width:30em">
-<div class="NavHead" style="background:#eff7ff">{title}{annotation}</div>
+<div class="NavFrame" style="max-width:30em">
+<div class="NavHead" style="background:var(--wikt-palette-lighterblue, #ebf4ff);">{title}{annotation}</div>
 <div class="NavContent">
-{\op}| style="background:#F9F9F9;text-align:center;width:30em" class="inflection-table"
+{\op}| style="text-align:center;max-width:30em" class="inflection-table inflection"
+|- class="rowgroup"
+! style="width:33%;background:var(--wikt-palette-lightblue, #d9ebff);" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | plural
 |-
-! style="width:33%;background:#d9ebff" |
-! style="background:#d9ebff" | plural
-|-
-!style="background:#eff7ff"|nominative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|nominative
 | {nom_p}
 |-
-!style="background:#eff7ff"|genitive
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|genitive
 | {gen_p}
 |-
-!style="background:#eff7ff"|dative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|dative
 | {dat_p}
 |-
-!style="background:#eff7ff"|accusative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|accusative
 | {acc_p}
 |-
-!style="background:#eff7ff"|instrumental
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|instrumental
 | {ins_p}
 |-
-!style="background:#eff7ff"|locative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|locative
 | {loc_p}{voc_clause}{count_clause}
 |{\cl}{notes_clause}</div></div>]=]
 
 	local voc_clause_pl = [=[
 
 |-
-!style="background:#eff7ff"|vocative
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|vocative
 | {voc_p}]=]
 
 	local count_clause_pl = [=[
 
 |-
-!style="background:#eff7ff"|count form
+!style="background:var(--wikt-palette-lighterblue, #ebf4ff);"|count form
 | {count}]=]
 
 	local notes_template = [===[
-<div style="width:100%;text-align:left;background:#d9ebff">
+<div style="width:100%;text-align:left;background:var(--wikt-palette-lightblue, #d9ebff);">
 <div style="display:inline-block;text-align:left;padding-left:1em;padding-right:1em">
 {footnote}
 </div></div>
@@ -2268,12 +2278,17 @@ function export.do_generate_forms(parent_args, pos, from_headword, def)
 
 	if from_headword then
 		params["lemma"] = {list = true}
-		params["g"] = {list = true}
-		params["f"] = {list = true}
+		params[2] = {list = "g"}
 		params["m"] = {list = true}
+		params["f"] = {list = true}
 		params["adj"] = {list = true}
 		params["dim"] = {list = true}
-		params["id"] = {}
+		params["aug"] = {list = true}
+		params["pej"] = {list = true}
+		params["dem"] = {list = true}
+		params["fdem"] = {list = true}
+		params["id"] = true
+		params["pagename"] = true
 	end
 
 	local args = m_para.process(parent_args, params)
@@ -2290,6 +2305,7 @@ function export.do_generate_forms(parent_args, pos, from_headword, def)
 	propagate_properties(alternant_multiword_spec, "number", "both", "both")
 	-- The default of "M" should apply only to plural adjectives, where it doesn't matter.
 	propagate_properties(alternant_multiword_spec, "gender", "M", "mixed")
+	propagate_properties(alternant_multiword_spec, "usuallysg", false, true)
 	determine_noun_status(alternant_multiword_spec)
 	local inflect_props = {
 		skip_slot = function(slot)
@@ -2504,7 +2520,7 @@ function export.nazdecl(frame)
 		sg = process_sg_or_pl(sg)
 		pl = process_sg_or_pl(pl)
 		local parts = {}
-		table.insert(parts, "{{be-decl-noun\n")
+		table.insert(parts, "{{be-ndecl-manual\n")
 		for i=1,6 do
 			if not sg[i] then
 				return "Not enough singular parts; " .. get_orig()
@@ -2522,7 +2538,7 @@ function export.nazdecl(frame)
 				return "Not enough parts; " .. get_orig()
 			end
 		end
-		return "{{be-decl-noun-unc|" .. table.concat(sg, "|") .. "}}"
+		return "{{be-ndecl-manual-sg|" .. table.concat(sg, "|") .. "}}"
 	end
 end
 
