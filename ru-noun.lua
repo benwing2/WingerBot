@@ -163,9 +163,9 @@
 			singular and a different one in the plural, for cases that
 			PLVARIANT and special case (1) below don't cover.
 		Special-case markers:
-			(1) for Zaliznyak-style alternate nominative plural ending:
+			(1) for Zaliznyak-style alternative nominative plural ending:
 				-а or -я for masculine, -и or -ы for neuter
-			(2) for Zaliznyak-style alternate genitive plural ending:
+			(2) for Zaliznyak-style alternative genitive plural ending:
 				-ъ/none for masculine, -ей for feminine, -ов(ъ) for neuter,
 				-ей for plural variant -ья
 			* for reducibles (nom sg or gen pl has an extra vowel before the
@@ -366,8 +366,7 @@ local m_links = require("Module:links")
 local com = require("Module:ru-common")
 local nom = require("Module:ru-nominal")
 local m_ru_adj = require("Module:ru-adjective")
-local m_ru_translit = require("Module:ru-translit")
-local strutils = require("Module:string utilities")
+local m_str_utils = require("Module:string utilities")
 local scriptutils = require("Module:script utilities")
 local m_table_tools = require("Module:table tools")
 local m_debug = require("Module:debug")
@@ -377,14 +376,16 @@ local export = {}
 local lang = require("Module:languages").getByCode("ru")
 local Latn = require("Module:scripts").getByCode("Latn")
 
-local u = mw.ustring.char
-local rfind = mw.ustring.find
-local rsubn = mw.ustring.gsub
-local rmatch = mw.ustring.match
-local rsplit = mw.text.split
-local ulower = mw.ustring.lower
-local usub = mw.ustring.sub
-local ulen = mw.ustring.len
+local format = m_str_utils.format
+local rfind = m_str_utils.find
+local rsubn = m_str_utils.gsub
+local rmatch = m_str_utils.match
+local rsplit = m_str_utils.split
+local u = m_str_utils.char
+local ulower = m_str_utils.lower
+local usub = m_str_utils.sub
+local ulen = m_str_utils.len
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 -- If enabled, compare this module with new version of module to make
 -- sure all declensions are the same. Eventually consider removing this;
@@ -392,7 +393,9 @@ local ulen = mw.ustring.len
 local test_new_ru_noun_module = false
 
 local AC = u(0x0301) -- acute =  ́
+local GR = u(0x0300) -- grave =  ̀
 local CFLEX = u(0x0302) -- circumflex =  ̂
+local DIA = u(0x0308) -- diaeresis =  ̈
 local PSEUDOCONS = u(0xFFF2) -- pseudoconsonant placeholder, matching ru-common
 local IRREGMARKER = "△"
 local HYPMARKER = "⟐"
@@ -446,10 +449,10 @@ local function track(page)
 	return true
 end
 
--- version of m_table.insertIfNot() that makes sure 'false' doesn't get inserted by mistake, and uses deep comparison.
+-- version of m_table.insertIfNot() that makes sure 'false' doesn't get inserted by mistake.
 local function insert_if_not(foo, bar)
 	assert(bar ~= false)
-	m_table.insertIfNot(foo, bar, nil, "deep compare")
+	m_table.insertIfNot(foo, bar)
 end
 
 -- Fancy version of ine() (if-not-empty). Converts empty string to nil,
@@ -679,7 +682,7 @@ local function english_case_description(case)
 		nom="nominative", gen="genitive", dat="dative",
 		acc="accusative", ins="instrumental", pre="prepositional",
 		par="partitive", loc="locative", voc="vocative",
-		count="count form", pauc="paucal",
+		count="count form", pauc="paucal form",
 	})
 	engcase = rsub(engcase, "(_[a-z]*)", {
 		_sg=" singular", _pl=" plural",
@@ -963,14 +966,14 @@ local function categorize_and_init_heading(stress, decl, args, n, islast)
 				insert_if_not(h.gender, gender_to_short[sgdc.g])
 			end
 			if sgdc.possadj then
-				insert_cat(sgdc.decl .. " possessive " .. gendertext .. " accent-" .. stress .. " adjectival ~")
+				insert_cat(sgdc.decl .. " possessive " .. gendertext .. " accent-" .. (stress:gsub("''", "ʺ"):gsub("'", "ʹ")) .. " adjectival ~")
 				insert_if_not(h.stemetc, sgdc.decl .. " poss")
 				insert_if_not(h.stress, stress)
 			elseif stem_type == "soft-stem" or stem_type == "vowel-stem" then
 				insert_cat(stem_type .. " " .. gendertext .. " adjectival ~")
 				insert_if_not(h.stemetc, short_stem_type)
 			else
-				insert_cat(stem_type .. " " .. gendertext .. " accent-" .. stress .. " adjectival ~")
+				insert_cat(stem_type .. " " .. gendertext .. " accent-" .. (stress:gsub("''", "ʺ"):gsub("'", "ʹ")) .. " adjectival ~")
 				insert_if_not(h.stemetc, short_stem_type)
 				insert_if_not(h.stress, stress)
 			end
@@ -990,13 +993,13 @@ local function categorize_and_init_heading(stress, decl, args, n, islast)
 			-- ancillary issues like irregular plurals; this amounts to 67
 			-- actual stem/gender/accent categories, although there are more
 			-- of them in Zaliznyak (FIXME, how many? See generate_cats.py).
-			insert_cat(stem_type .. " " .. gender_to_full[sgdc.g] .. "-form accent-" .. stress .. " ~")
+			insert_cat(stem_type .. " " .. gender_to_full[sgdc.g] .. "-form accent-" .. (stress:gsub("''", "ʺ"):gsub("'", "ʹ")) .. " ~")
 			insert_if_not(h.adjectival, "no")
 			insert_if_not(h.gender, gender_to_short[sgdc.g])
 			insert_if_not(h.stemetc, short_stem_type)
 			insert_if_not(h.stress, stress)
 		end
-		insert_cat("~ with accent pattern " .. stress)
+		insert_cat("~ with accent pattern " .. (stress:gsub("''", "ʺ"):gsub("'", "ʹ")))
 	end
 	local sgsuffix = args.suffixes.nom_sg
 	if sgsuffix then
@@ -1021,7 +1024,7 @@ local function categorize_and_init_heading(stress, decl, args, n, islast)
 	sgsuffix = sgsuffix and rsub(sgsuffix, "ъ$", "")
 	plsuffix = plsuffix and rsub(plsuffix, "ъ$", "")
 	local sgcat = sgsuffix and (resolve_cat(sgdc.singular, sgsuffix) or "ending in " .. (sgsuffix == "" and "a consonant" or (sgdc.suffix and "suffix " or "") .. "-" .. sgsuffix))
-	local plcat = plsuffix and (resolve_cat(pldc.plural, suffix) or "plural -" .. plsuffix)
+	local plcat = plsuffix and (resolve_cat(pldc.plural, plsuffix) or "plural -" .. plsuffix)
 	if sgcat and sgdc.gensg then
 		for _, cat in ipairs(cat_to_list(sgcat)) do
 			insert_cat("~ " .. cat)
@@ -1041,12 +1044,15 @@ local function categorize_and_init_heading(stress, decl, args, n, islast)
 	end
 	if args.reducible and not sgdc.ignore_reduce then
 		insert_cat("~ with reducible stem")
+		if args.soft_n then
+			insert_cat("~ with soft final н in reduced stem")
+		end
 		insert_if_not(h.reducible, "yes")
 	else
 		insert_if_not(h.reducible, "no")
 	end
 	if args.alt_gen_pl then
-		insert_cat("~ with alternate genitive plural")
+		insert_cat("~ with alternative genitive plural")
 	end
 	if sgdc.adj then
 		insert_cat("adjectival ~")
@@ -1069,7 +1075,7 @@ local function compute_heading(args)
 	if #h.stress > 0 then
 		local stresses = {}
 		for _, stress in ipairs(h.stress) do
-			table.insert(stresses, rsub(stress, "'", "&#39;"))
+			table.insert(stresses, (stress:gsub("''", "ʺ"):gsub("'", "ʹ")))
 		end
 		table.insert(headings, "accent-" .. table.concat(stresses, "/"))
 	end
@@ -1401,7 +1407,7 @@ generate_forms_1 = function(args, per_word_info)
 		orig_args = mw.clone(args)
 	end
 
-	local SUBPAGENAME = mw.title.getCurrentTitle().subpageText
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 	local old = args.old
 
 	local function verify_animacy_value(val)
@@ -1539,6 +1545,7 @@ generate_forms_1 = function(args, per_word_info)
 		decl, args.want_sc1 = rsubb(decl, "%(1%)", "")
 		decl, args.alt_gen_pl = rsubb(decl, "%(2%)", "")
 		decl, args.reducible = rsubb(decl, "%*", "")
+		decl, args.soft_n = rsubb(decl, "%(нь%)", "")
 		decl = rsub(decl, ";", "")
 
 		-- Get the lemma.
@@ -1590,7 +1597,7 @@ generate_forms_1 = function(args, per_word_info)
 		-- complains about multisyllabic words without an accent. Don't do this
 		-- if lemma is just -, which is used specially in manual declension
 		-- tables (e.g. сто, три).
-		if lemma ~= "-" and (rfind(lemma, "^%-́") or (com.is_unstressed(lemma) and rfind(lemma, "^%-"))) then
+		if lemma ~= "-" and (rfind(lemma, "^%-" .. AC) or (com.is_unstressed(lemma) and rfind(lemma, "^%-"))) then
 			args.allow_unaccented = true
 		end
 
@@ -1818,7 +1825,7 @@ generate_forms_1 = function(args, per_word_info)
 					else
 						resolved_bare, resolved_baretr = stem, tr
 						stem, tr = export.reduce_nom_sg_stem(stem, tr,
-							sgdecl, "error")
+							sgdecl, args.soft_n, "error")
 						-- Stem will be unstressed if stress was on elided
 						-- vowel; restress stem the way we did above. (This is
 						-- needed in at least one word, сапожо́к 3*d(2), with
@@ -1927,7 +1934,7 @@ generate_forms_1 = function(args, per_word_info)
 			insert_cat("~ with multiple declensions")
 		end
 
-		default_lemma = SUBPAGENAME
+		default_lemma = pagename
 		all_stresses_seen = {}
 
 		-- Loop over all arg sets.
@@ -2297,7 +2304,7 @@ end
 -- VARIANT comes from the declension spec and controls certain declension
 -- variants.
 local function detect_lemma_type(lemma, tr, gender, args, variant)
-	local base, ending = rmatch(lemma, "^(.*)([еЕ]́)$") -- accented
+	local base, ending = rmatch(lemma, "^(.*)([еЕ]" .. AC .. ")$") -- accented
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
@@ -2316,53 +2323,53 @@ local function detect_lemma_type(lemma, tr, gender, args, variant)
 		return base, com.strip_tr_ending(tr, ending), "(ишк)о-и"
 	end
 	if variant == "-ин" then
-		base, ending = rmatch(lemma, "^(.*)([иИ]́?[нН][ъЪ]?)$") -- maybe accented
+		base, ending = rmatch(lemma, "^(.*)([иИ][" .. AC .. GR .. "]?[нН][ъЪ]?)$") -- maybe accented
 		if not base then
 			error("With declension variant -ин, lemma should end in -ин(ъ): " .. lemma)
 		end
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
 	-- Now autodetect -ин; only animate and in -анин/-янин
-	base, ending = rmatch(lemma, "^(.*[аяАЯ]́?[нН])([иИ]́?[нН][ъЪ]?)$")
+	base, ending = rmatch(lemma, "^(.*[аАяЯ][" .. AC .. GR .. "]?[нН])([иИ][" .. AC .. GR .. "]?[нН][ъЪ]?)$")
 	-- Need to check the animacy to avoid nouns like маиганин, цианин,
 	-- меланин, соланин, etc.
 	if base and args.thisa == "a" then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
-	base, ending = rmatch(lemma, "^(.*)([ёЁ]́?[нН][оО][кК][ъЪ]?)$")
+	base, ending = rmatch(lemma, "^(.*)([ёЁ]" .. AC .. "?[нН][оО][кК][ъЪ]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
-	base, ending = rmatch(lemma, "^(.*[" .. com.sib_c .. "])([оО]́[нН][оО][кК][ъЪ]?)$")
+	base, ending = rmatch(lemma, "^(.*[" .. com.sib_c .. "])([оО]" .. AC .. "[нН][оО][кК][ъЪ]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
-	base, ending = rmatch(lemma, "^(.*)([ёЁ]́?[нН][оО][чЧ][еЕ][кК][ъЪ]?)$")
+	base, ending = rmatch(lemma, "^(.*)([ёЁ]" .. AC .. "?[нН][оО][чЧ][еЕ][кК][ъЪ]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
-	base, ending = rmatch(lemma, "^(.*[" .. com.sib_c .. "])([оО]́[нН][оО][чЧ][еЕ][кК][ъЪ]?)$")
+	base, ending = rmatch(lemma, "^(.*[" .. com.sib_c .. "])([оО]" .. AC .. "[нН][оО][чЧ][еЕ][кК][ъЪ]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
-	base, ending = rmatch(lemma, "^(.*)([мМ][яЯ]́?)$")
+	base, ending = rmatch(lemma, "^(.*)([мМ][яЯ][" .. AC .. GR .. "]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
 
 	--recognize plural endings
 	if gender == "n" then
-		base, ending = rmatch(lemma, "^(.*)([ьЬ][яЯ]́?)$")
+		base, ending = rmatch(lemma, "^(.*)([ьЬ][яЯ][" .. AC .. GR .. "]?)$")
 		if base then
 			-- Don't do this; о/-ья is too rare
 			-- error("Ambiguous plural lemma " .. lemma .. " in -ья, singular could be -о or -ье/-ьё; specify the singular")
 			return base, com.strip_tr_ending(tr, ending), "ье", ending
 		end
-		base, ending = rmatch(lemma, "^(.*)([аяАЯ]́?)$")
+		base, ending = rmatch(lemma, "^(.*)([аяАЯ][" .. AC .. GR .. "]?)$")
 		if base then
 			return base, com.strip_tr_ending(tr, ending), rfind(ending, "[аА]") and "о" or "е", ending
 		end
-		base, ending = rmatch(lemma, "^(.*)([ыиЫИ]́?)$")
+		base, ending = rmatch(lemma, "^(.*)([ыиЫИ][" .. AC .. GR .. "]?)$")
 		if base then
 			if rfind(ending, "[ыЫ]") or rfind(base, "[" .. com.sib .. com.velar .. "]$") then
 				return base, com.strip_tr_ending(tr, ending), "о-и", ending
@@ -2373,7 +2380,7 @@ local function detect_lemma_type(lemma, tr, gender, args, variant)
 		end
 	end
 	if gender == "f" then
-		base, ending = rmatch(lemma, "^(.*)([ьЬ][иИ]́?)$")
+		base, ending = rmatch(lemma, "^(.*)([ьЬ][иИ][" .. AC .. GR .. "]?)$")
 		if base then
 			return base, com.strip_tr_ending(tr, ending), "ья", ending
 		end
@@ -2385,19 +2392,19 @@ local function detect_lemma_type(lemma, tr, gender, args, variant)
 	-- like irregular plurals.
 	if gender == "m" then
 		if args.thisn == "p" or variant == "-ья" then
-			base, ending = rmatch(lemma, "^(.*)([ьЬ][яЯ]́?)$")
+			base, ending = rmatch(lemma, "^(.*)([ьЬ][яЯ][" .. AC .. GR .. "]?)$")
 			if base then
 				return base, com.strip_tr_ending(tr, ending), (args.old and "ъ-ья" or "-ья"), ending
 			end
 		end
 		if args.thisn == "p" or args.want_sc1 then
-			base, ending = rmatch(lemma, "^(.*)([аА]́?)$")
+			base, ending = rmatch(lemma, "^(.*)([аА][" .. AC .. GR .. "]?)$")
 			if base then
 				return base, com.strip_tr_ending(tr, ending), (args.old and "ъ-а" or "-а"), ending
 			end
-			base, ending = rmatch(lemma, "^(.*)([яЯ]́?)$")
+			base, ending = rmatch(lemma, "^(.*)([яЯ][" .. AC .. GR .. "]?)$")
 			if base then
-				if rfind(base, "[" .. com.vowel .. "]́?$") then
+				if rfind(base, "[" .. com.vowel .. "][" .. AC .. GR .. "]?$") then
 					return base, com.strip_tr_ending(tr, ending), "й-я", ending
 				else
 					return base, com.strip_tr_ending(tr, ending), "ь-я", ending
@@ -2406,35 +2413,35 @@ local function detect_lemma_type(lemma, tr, gender, args, variant)
 		end
 	end
 	if gender == "m" or gender == "f" then
-		base, ending = rmatch(lemma, "^(.*[" .. com.sib .. com.velar .. "])([иИ]́?)$")
+		base, ending = rmatch(lemma, "^(.*[" .. com.sib .. com.velar .. "])([иИ][" .. AC .. GR .. "]?)$")
 		if not base then
-			base, ending = rmatch(lemma, "^(.*)([ыЫ]́?)$")
+			base, ending = rmatch(lemma, "^(.*)([ыЫ][" .. AC .. GR .. "]?)$")
 		end
 		if base then
 			return base, com.strip_tr_ending(tr, ending), gender == "m" and (args.old and "ъ" or "") or "а", ending
 		end
-		base, ending = rmatch(lemma, "^(.*[" .. com.vowel .. "й]́?)([иИ]́?)$")
+		base, ending = rmatch(lemma, "^(.*[" .. com.vowel .. "й][" .. AC .. GR .. "]?)([иИ][" .. AC .. GR .. "]?)$")
 		if base then
 			return base, com.strip_tr_ending(tr, ending), gender == "m" and "й" or "я", ending
 		end
-		base, ending = rmatch(lemma, "^(.*)([иИ]́?)$")
+		base, ending = rmatch(lemma, "^(.*)([иИ][" .. AC .. GR .. "]?)$")
 		if base then
 			return base, com.strip_tr_ending(tr, ending), gender == "m" and "ь-m" or "я", ending
 		end
 	end
 	if gender == "3f" then
-		base, ending = rmatch(lemma, "^(.*)([иИ]́?)$")
+		base, ending = rmatch(lemma, "^(.*)([иИ][" .. AC .. GR .. "]?)$")
 		if base then
 			return base, com.strip_tr_ending(tr, ending), "ь-f", ending
 		end
 	end
 	-- end of recognize-plurals code
 
-	base, ending = rmatch(lemma, "^(.*)([ьЬ][яеёЯЕЁ]́?)$")
+	base, ending = rmatch(lemma, "^(.*)([ьЬ][яеёЯЕЁ][" .. AC .. GR .. "]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
-	base, ending = rmatch(lemma, "^(.*)([йаяеоёъЙАЯЕОЁЪ]́?)$")
+	base, ending = rmatch(lemma, "^(.*)([йаяеоёъЙАЯЕОЁЪ][" .. AC .. GR .. "]?)$")
 	if base then
 		return base, com.strip_tr_ending(tr, ending), ulower(ending)
 	end
@@ -2448,9 +2455,9 @@ local function detect_lemma_type(lemma, tr, gender, args, variant)
 			error("Need to specify gender m or f with lemma in -ь: ".. lemma)
 		end
 	end
-	if rfind(lemma, "[ыиЫИ]́?$") then
+	if rfind(lemma, "[ыиЫИ][" .. AC .. GR .. "]?$") then
 		error("If this is a plural lemma, gender must be specified: " .. lemma)
-	elseif rfind(lemma, "[уыэюиіѣѵУЫЭЮИІѢѴ]́?$") then
+	elseif rfind(lemma, "[иИіІуУыЫѣѢэЭюЮѵѴ]" .. DIA .. "?[" .. AC .. GR .. "]?$") then
 		error("Don't know how to decline lemma ending in this type of vowel: " .. lemma)
 	end
 	return lemma, tr, ""
@@ -2715,7 +2722,7 @@ end
 -- stem-final consonants. FIXME: We call this in two places, once
 -- to handle auto-detection and once to handle explicit declensions; but
 -- in the former case we end up calling it twice.
-function determine_adj_stem_variant(decl, stem)
+local function determine_adj_stem_variant(decl, stem)
 	local iend = rmatch(decl, "^%+[іи]([йея]?)$")
 	-- Convert ій/ий to ый after velar or sibilant. This is important for
 	-- velars; doesn't really matter one way or the other for sibilants as
@@ -2769,7 +2776,10 @@ detect_adj_type = function(lemma, tr, decl, old)
 	end
 	decl = basedecl or decl
 	if decl == "+" or decl == "+ь" then
-		base, ending = rmatch(lemma, "^(.*)([ыиіьаяое]́?[йея])$")
+		local loc = rfind(lemma, "[аеиіоыя][" .. AC .. GR .. "]?[йея]$") or rfind(lemma, "ь[йея]$")
+		if loc then
+			base, ending = usub(lemma, 1, loc - 1), usub(lemma, loc)
+		end
 		if ending == "ий" and decl == "+ь" then
 			decl = "+ьий"
 		elseif ending == "ій" and decl == "+ь" then
@@ -2777,13 +2787,15 @@ detect_adj_type = function(lemma, tr, decl, old)
 		elseif ending then
 			decl = "+" .. ending
 		else
-			base, ending = rmatch(lemma, "^(.-)([оаыъ]?́?)$")
-			assert(base)
-			local shortmixed = rfind(base, "^[" .. com.uppercase .. "].*[иы]́н$") and "stressed-proper" or -- accented
-				rfind(base, "^[" .. com.uppercase .. "].*[иы]н$") and "proper" or --not accented
-				rlfind(base, "[ёео]́?в$") and "short" or
-				rlfind(base, "[ыи]́н$") and "stressed-short" or -- accented
-				rlfind(base, "[ыи]н$") and "mixed" --not accented
+			local loc, shortmixed = rfind(lemma, "[аоы][" .. AC .. GR .. "]?$") or rfind(lemma, "ъ?$")
+			if loc then
+				base, ending = usub(lemma, 1, loc - 1), usub(lemma, loc)
+				shortmixed = rfind(base, "^[" .. com.uppercase .. "].*[иы]" .. AC .. "н$") and "stressed-proper" or -- accented
+					rfind(base, "^[" .. com.uppercase .. "].*[иы]н$") and "proper" or --not accented
+					rlfind(base, "[ёео][" .. AC .. GR .. "]?в$") and "short" or
+					rlfind(base, "[ыи]" .. AC .. "н$") and "stressed-short" or -- accented
+					rlfind(base, "[ыи]н$") and "mixed" --not accented
+			end
 			if not shortmixed then
 				error("Cannot determine stem type of adjective: " .. lemma)
 			end
@@ -2791,10 +2803,10 @@ detect_adj_type = function(lemma, tr, decl, old)
 		end
 		was_autodetected = true
 	elseif m_table.contains({"+short", "+mixed", "+proper"}, decl) then
-		base, ending = rmatch(lemma, "^(.-)([оаыъ]?́?)$")
+		base, ending = rmatch(lemma, "^(.-)([оаыъ]?[" .. AC .. GR .. "]?)$")
 		assert(base)
 		local shortmixed = usub(decl, 2)
-		if rlfind(base, "[ыи]́н$") then -- accented
+		if rlfind(base, "[ыи]" .. AC .. "н$") then -- accented
 			if shortmixed == "short" then shortmixed = "stressed-short"
 			elseif shortmixed == "proper" then shortmixed = "stressed-proper"
 			end
@@ -2949,10 +2961,10 @@ end
 -- masculine 2nd-declension hard and soft, and 3rd-declension feminine in
 -- -ь. STEM and DECL are after determine_decl(), before converting
 -- outward-facing declensions to inward ones.
-function export.reduce_nom_sg_stem(stem, tr, decl, can_err)
+function export.reduce_nom_sg_stem(stem, tr, decl, soft_n, can_err)
 	local full_stem = stem .. (decl == "й" and decl or "")
 	local full_tr = tr and tr .. (decl == "й" and "j" or "")
-	local ret, rettr = com.reduce_stem(full_stem, full_tr)
+	local ret, rettr = com.reduce_stem(full_stem, full_tr, soft_n)
 	if not ret and can_err then
 		error("Unable to reduce stem " .. stem)
 	end
@@ -2992,7 +3004,7 @@ add_bare_suffix = function(bare, baretr, old, sgdc, dereduced)
 			-- -ъ is added, but this is a guess.
 			-- Final -ъ isn't transliterated
 			return bare .. (old and "ъ" or ""), baretr
-		elseif rfind(bare, "[" .. com.vowel .. "]́?$") then
+		elseif rfind(bare, "[" .. com.vowel .. "][" .. AC .. GR .. "]?$") then
 			return bare .. "й", baretr and (baretr .. "j")
 		else
 			return bare .. "ь", baretr and (baretr .. "ʹ")
@@ -3183,7 +3195,7 @@ declensions_old["й"] = {
 	["acc_sg"] = nil,
 	["ins_sg"] = "ёмъ",
 	["pre_sg"] = function(stem, stress)
-		return rlfind(stem, "[іи]́?$") and not ending_stressed_pre_sg_patterns[stress] and "и" or "ѣ́"
+		return rlfind(stem, "[іи][" .. AC .. GR .. "]?$") and not ending_stressed_pre_sg_patterns[stress] and "и" or "ѣ́"
 	end,
 	["nom_pl"] = "и́",
 	["gen_pl"] = "ёвъ",
@@ -3235,12 +3247,12 @@ declensions_old["я"] = {
 	["nom_sg"] = "я́",
 	["gen_sg"] = "и́",
 	["dat_sg"] = function(stem, stress)
-		return rlfind(stem, "[іи]́?$") and not ending_stressed_dat_sg_patterns[stress] and "и" or "ѣ́"
+		return rlfind(stem, "[іи][" .. AC .. GR .. "]?$") and not ending_stressed_dat_sg_patterns[stress] and "и" or "ѣ́"
 	end,
 	["acc_sg"] = "ю́",
 	["ins_sg"] = {"ёй<insa>", "ёю<insb>"}, -- see concat_word_forms_1()
 	["pre_sg"] = function(stem, stress)
-		return rlfind(stem, "[іи]́?$") and not ending_stressed_pre_sg_patterns[stress] and "и" or "ѣ́"
+		return rlfind(stem, "[іи][" .. AC .. GR .. "]?$") and not ending_stressed_pre_sg_patterns[stress] and "и" or "ѣ́"
 	end,
 	["nom_pl"] = "и́",
 	["gen_pl"] = function(stem, stress)
@@ -3350,11 +3362,11 @@ declensions_old["е"] = {
 	end,
 	["ins_sg"] = "ёмъ",
 	["pre_sg"] = function(stem, stress)
-		return rlfind(stem, "[іи]́?$") and not ending_stressed_pre_sg_patterns[stress] and "и" or "ѣ́"
+		return rlfind(stem, "[іи][" .. AC .. GR .. "]?$") and not ending_stressed_pre_sg_patterns[stress] and "и" or "ѣ́"
 	end,
 	["nom_pl"] = "я́",
 	["gen_pl"] = function(stem, stress)
-		return ending_stressed_gen_pl_patterns[stress] and not rlfind(stem, "[" .. com.vowel .. "]́?$") and "е́й" or "й"
+		return ending_stressed_gen_pl_patterns[stress] and not rlfind(stem, "[" .. com.vowel .. "][" .. AC .. GR .. "]?$") and "е́й" or "й"
 	end,
 	["alt_gen_pl"] = "ёвъ",
 	["dat_pl"] = "я́мъ",
@@ -3390,11 +3402,11 @@ declensions_old["е́"] = {
 		-- FIXME!!! Are we sure about this condition? This is what was
 		-- found in the old template, but the related -е declension has
 		-- -ие prep sg ending -(и)и only when *not* stressed.
-		return rlfind(stem, "[іи]́?$") and "и́" or "ѣ́"
+		return rlfind(stem, "[іи][" .. AC .. GR .. "]?$") and "и́" or "ѣ́"
 	end,
 	["nom_pl"] = "я́",
 	["gen_pl"] = function(stem, stress)
-		return rlfind(stem, "[" .. com.vowel .. "]́?$") and "й" or "е́й"
+		return rlfind(stem, "[" .. com.vowel .. "][" .. AC .. GR .. "]?$") and "й" or "е́й"
 	end,
 	["alt_gen_pl"] = "ёвъ",
 	["dat_pl"] = "я́мъ",
@@ -3732,7 +3744,7 @@ local function attach_unstressed(args, case, suf, was_stressed)
 				if barearg and case == "gen_pl" then
 					-- explicit bare or reducible, don't add -ь
 					suf = ""
-				elseif rfind(barestem, "[" .. com.vowel .. "]́?$") then
+				elseif rfind(barestem, "[" .. com.vowel .. "][" .. AC .. GR .. "]?$") then
 					-- not reducible, do add -ь and correct to -й if necessary
 					suf = "й"
 				else
@@ -3754,8 +3766,8 @@ attach_stressed = function(args, case, suf)
 		return nil, nil
 	end
  	-- circumflex forces stress even when the accent pattern calls for no stress
-	suf = rsub(suf, "̂", "́")
-	if not rfind(suf, "[ё́]") then -- if suf has no "ё" or accent marks
+	suf = rsub(suf, "̂", AC)
+	if com.is_unstressed(suf) then
 		return attach_unstressed(args, case, suf, "was stressed")
 	end
 	local stem, tr
@@ -3833,7 +3845,7 @@ local function gen_form(args, decl, case, stress, fun, is_slash, n, islast)
 		suf = decl_sufs.alt_gen_pl
 		irreg = true
 		if not suf then
-			error("No alternate genitive plural available for this declension class")
+			error("No alternative genitive plural available for this declension class")
 		end
 	end
 	local combineds, realsufs = attach_with(args, case, suf, fun, irreg, n, islast)
@@ -4006,14 +4018,15 @@ canonicalize_override = function(args, case, forms, n)
 	-- clean <br /> that's in many multi-form entries and messes up linking
 	val = rsub(val, "<br%s*/>", "")
 	-- substitute ~ and ~~ and split by commas
-	local stem, tr
+	local stem, manualtr
 	if rfind(case, "_pl") then
-		stem, tr = args.pl, args.pltr
+		stem, manualtr = args.pl, args.pltr
 	end
 	if not stem then
-		stem, tr = args.stem, args.stemtr
+		stem, manualtr = args.stem, args.stemtr
 	end
-	local ustem, utr = com.make_unstressed_once(stem, tr)
+	local ustem, umanualtr = com.make_unstressed_once(stem, manualtr)
+	local stemtr, ustemtr = manualtr, umanualtr
 	local vals = rsplit(val, "%s*,%s*")
 	local retvals = {}
 	for _, val in ipairs(vals) do
@@ -4024,13 +4037,20 @@ canonicalize_override = function(args, case, forms, n)
 			valru = rsub(valru, "^%*", "") .. HYPMARKER
 		end
 		if valtr then
-			tr = tr or com.translit_no_links(stem)
-			utr = utr or com.translit_no_links(ustem)
-			valtr = rsub(valtr, "~~", utr)
-			valtr = rsub(valtr, "~", com.is_stressed(val) and utr or tr)
-			if rfind(valtr, "^%*") then
-				valtr = rsub(valtr, "^%*", "") .. HYPMARKER
+			stemtr = stemtr or com.translit_no_links(stem)
+			ustemtr = ustemtr or com.translit_no_links(ustem)
+			valtr = rsub(valtr, "~~", ustemtr)
+			valtr = rsub(valtr, "~", com.is_stressed(val) and ustemtr or stemtr)
+		elseif val:find("~") and manualtr then
+			valtr = com.translit_no_links(val)
+			valtr = rsub(valtr, "~~", umanualtr)
+			valtr = rsub(valtr, "~", com.is_stressed(val) and umanualtr or manualtr)
+		end
+		if valtr then
+			if valtr:sub(1, 1) == "*" then
+				valtr = valtr:sub(2) .. HYPMARKER
 			end
+			valtr = com.j_correction(valtr)
 		end
 		table.insert(retvals, {valru, valtr})
 	end
@@ -4321,6 +4341,8 @@ handle_forms_and_overrides = function(args, n, islast)
 	f.loc_pl = f.loc_pl or f.pre_pl
 	f.par_pl = f.par_pl or f.gen_pl
 	f.voc_pl = f.voc_pl or f.nom_pl
+	f.count = f.count or f.gen_pl
+	f.pauc = f.pauc or f.gen_sg
 
 	local nu = args.thisn
 	-- If we have a singular-only, set the plural forms to the singular forms,
@@ -4557,7 +4579,7 @@ local accel_forms = {
 	voc_pl = "voc|p",
 	par = "par|s",
 	par_pl = "par|p",
-	count = "count|form",
+	count = "count form",
 	pauc = "pau",
 }
 
@@ -4570,7 +4592,7 @@ make_table = function(args)
 	local lemma_forms = args[args.n == "p" and "nom_pl" or "nom_sg"]
 	data.lemma = nom.show_form(args.explicit_lemma and {{args.explicit_lemma, args.explicit_lemmatr}} or
 		args[args.n == "p" and "nom_pl_linked" or "nom_sg_linked"], "lemma", nil, nil)
-	data.title = args.title or strutils.format(args.old and old_title_temp or title_temp, data)
+	data.title = args.title or format(args.old and old_title_temp or title_temp, data)
 
 	local sg_an_in_equal = m_table.deepEquals(args.acc_sg_an, args.acc_sg_in)
 	local pl_an_in_equal = m_table.deepEquals(args.acc_pl_an, args.acc_pl_in)
@@ -4636,19 +4658,20 @@ make_table = function(args)
 		{"loc", "locative"},
 		{"voc", "vocative"},
 	}) do
-		local case, engcase = unpack(extra_case)
-		local template
+		local case, engcase, template = unpack(extra_case)
+		local a = args.a
+		local colspan = (a == "b" or a == "bi" or a == "both" or a == "ai" or a == "ia") and 2 or 1
 		if args.n ~= "s" and args.n ~= "p" and args.any_overridden[case .. "_pl"] then
 			if not args.any_overridden[case] then
 				data[case] = ""
 			end
 			template = extra_case_template_with_plural
-		elseif args.n == "s" and args.any_overridden[case] or args.n == "p" and args.any_overridden[case .. "_pl"] then
+		elseif args.n ~= "p" and args.any_overridden[case] or args.n == "p" and args.any_overridden[case .. "_pl"] then
 			template = extra_case_template
 		end
 		if template then
-			template = strutils.format(template, {case=case, engcase=engcase})
-			data[case .. "_clause"] = strutils.format(template, data)
+			template = format(template(colspan), {case=case, engcase=engcase})
+			data[case .. "_clause"] = format(template, data)
 		else
 			data[case .. "_clause"] = ""
 		end
@@ -4658,14 +4681,15 @@ make_table = function(args)
 		{"count", "count form"},
 		{"pauc", "paucal"},
 	}) do
-		local case, engcase = unpack(extra_case)
-		local template
+		local case, engcase, template = unpack(extra_case)
+		local a = args.a
+		local colspan = (a == "b" or a == "bi" or a == "both" or a == "ai" or a == "ia") and 2 or 1
 		if args.n ~= "p" and args.any_overridden[case] then
 			template = extra_case_template
 		end
 		if template then
-			template = strutils.format(template, {case=case, engcase=engcase})
-			data[case .. "_clause"] = strutils.format(template, data)
+			template = format(template(colspan), {case=case, engcase=engcase})
+			data[case .. "_clause"] = format(template, data)
 		else
 			data[case .. "_clause"] = ""
 		end
@@ -4685,27 +4709,33 @@ make_table = function(args)
 		table.insert(all_notes, symbol .. entry)
 	end
 	data.notes = table.concat(all_notes, "<br />")
-	data.notes_clause = data.notes ~= "" and strutils.format(notes_template, data) or ""
+	data.notes_clause = data.notes ~= "" and format(notes_template, data) or ""
 
-	return strutils.format(templates[temp], data)
+	return format(templates[temp], data)
 end
 
-local extra_case_template = [===[
+function extra_case_template(colspan)
+	colspan = colspan or 1
+	return ([===[
 
-! style="background:#eff7ff" | {engcase}
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan=%s | {engcase}
 | {\op}{case}{\cl}
 |
-|-]===]
+|-]===]):format(colspan)
+end
 
-local extra_case_template_with_plural = [===[
-
-! style="background:#eff7ff" | {engcase}
-| {\op}{case}{\cl}
-| {\op}{case}_pl{\cl}
-|-]===]
+function extra_case_template_with_plural(colspan)
+	colspan = colspan or 1
+	return ([===[
+	
+	! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan=%s | {engcase}
+	| {\op}{case}{\cl}
+	| {\op}{case}_pl{\cl}
+	|-]===]):format(colspan)
+end
 
 notes_template = [===[
-<div style="width:100%;text-align:left;background:#d9ebff">
+<div style="width:100%;text-align:left;background:var(--wikt-palette-lightblue, #d9ebff);">
 <div style="display:inline-block;text-align:left;padding-left:1em;padding-right:1em">
 {notes}
 </div></div>
@@ -4715,11 +4745,11 @@ local function template_prelude(min_width)
 	min_width = min_width or "70"
 	return rsub([===[
 <div>
-<div class="NavFrame" style="display:inline-block; min-width:MINWIDTHem">
-<div class="NavHead" style="background:#eff7ff;">{title}<span style="font-weight:normal;">{after_title}</span>&nbsp;</div>
+<div class="NavFrame" data-toggle-category="declension" style="max-width:MINWIDTHem">
+<div class="NavHead" style="background:var(--wikt-palette-lighterblue, #ebf4ff);">{title}<span style="font-weight:normal;">{after_title}</span>&nbsp;</div>
 <div class="NavContent">
-{\op}| style="background:#F9F9F9; text-align:center; min-width:MINWIDTHem; width:100%;" class="inflection-table"
-|-
+{\op}| style="table-layout:fixed; text-align:center; max-width:MINWIDTHem; width:100%;" class="inflection inflection-table"
+|- class="rowgroup"
 ]===], "MINWIDTH", min_width)
 end
 
@@ -4729,145 +4759,151 @@ local function template_postlude()
 end
 
 templates["both_numbers"] = template_prelude("45") .. [===[
-! style="width:10em;background:#d9ebff" |
-! style="background:#d9ebff" | singular
-! style="background:#d9ebff" | plural
+! style="width:10em;background:var(--wikt-palette-lightblue, #d9ebff);" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | singular
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | plural
 |-
-! style="background:#eff7ff" | nominative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | nominative
 | {nom_sg}
 | {nom_pl}
 |-
-! style="background:#eff7ff" | genitive
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | genitive
 | {gen_sg}
 | {gen_pl}
 |-
-! style="background:#eff7ff" | dative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | dative
 | {dat_sg}
 | {dat_pl}
 |-
-! style="background:#eff7ff" | accusative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | accusative
 | {acc_sg_an}
 | {acc_pl_an}
 |-
-! style="background:#eff7ff" | instrumental
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | instrumental
 | {ins_sg}
 | {ins_pl}
 |-
-! style="background:#eff7ff" | prepositional
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | prepositional
 | {pre_sg}
 | {pre_pl}
 ]===] .. template_postlude()
 
 templates["both_numbers_split_animacy"] = template_prelude("50") .. [===[
-! style="width:15em;background:#d9ebff" |
-! style="background:#d9ebff" | singular
-! style="background:#d9ebff" | plural
+! style="width:15em;background:var(--wikt-palette-lightblue, #d9ebff);" colspan="2" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | singular
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | plural
 |-
-! style="background:#eff7ff" | nominative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | nominative
 | {nom_sg}
 | {nom_pl}
 |-
-! style="background:#eff7ff" | genitive
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | genitive
 | {gen_sg}
 | {gen_pl}
 |-
-! style="background:#eff7ff" | dative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | dative
 | {dat_sg}
 | {dat_pl}
 |-
-! style="background:#eff7ff" rowspan="2" | accusative <span style="padding-left:1em;display:inline-block;vertical-align:middle">animate<br/><br/>inanimate</span>
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" rowspan="2" | accusative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | animate
 | {acc_sg_an}
 | {acc_pl_an}
 |-
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | inanimate
 | {acc_sg_in}
 | {acc_pl_in}
 |-
-! style="background:#eff7ff" | instrumental
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | instrumental
 | {ins_sg}
 | {ins_pl}
 |-
-! style="background:#eff7ff" | prepositional
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | prepositional
 | {pre_sg}
 | {pre_pl}
 ]===] .. template_postlude()
 
 templates["both_numbers_split_animacy_plural_only"] = template_prelude("50") .. [===[
-! style="width:15em;background:#d9ebff" |
-! style="background:#d9ebff" | singular
-! style="background:#d9ebff" | plural
+! style="width:15em;background:var(--wikt-palette-lightblue, #d9ebff);" colspan="2" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | singular
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | plural
 |-
-! style="background:#eff7ff" | nominative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | nominative
 | {nom_sg}
 | {nom_pl}
 |-
-! style="background:#eff7ff" | genitive
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | genitive
 | {gen_sg}
 | {gen_pl}
 |-
-! style="background:#eff7ff" | dative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | dative
 | {dat_sg}
 | {dat_pl}
 |-
-! style="background:#eff7ff" rowspan="2" | accusative <span style="padding-left:1em;display:inline-block;vertical-align:middle">animate<br/><br/>inanimate</span>
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" rowspan="2" | accusative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | animate
 | rowspan="2" | {acc_sg_an}
 | {acc_pl_an}
 |-
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | inanimate
 | {acc_pl_in}
 |-
-! style="background:#eff7ff" | instrumental
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | instrumental
 | {ins_sg}
 | {ins_pl}
 |-
-! style="background:#eff7ff" | prepositional
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | prepositional
 | {pre_sg}
 | {pre_pl}
 ]===] .. template_postlude()
 
 templates["one_number"] = template_prelude("30") .. [===[
-! style="width:10em;background:#d9ebff" |
-! style="background:#d9ebff" | {number}
+! style="width:10em;background:var(--wikt-palette-lightblue, #d9ebff);" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | {number}
 |-
-! style="background:#eff7ff" | nominative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | nominative
 | {nom_x}
 |-
-! style="background:#eff7ff" | genitive
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | genitive
 | {gen_x}
 |-
-! style="background:#eff7ff" | dative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | dative
 | {dat_x}
 |-
-! style="background:#eff7ff" | accusative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | accusative
 | {acc_x_an}
 |-
-! style="background:#eff7ff" | instrumental
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | instrumental
 | {ins_x}
 |-
-! style="background:#eff7ff" | prepositional
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | prepositional
 | {pre_x}
 ]===] .. template_postlude()
 
 templates["one_number_split_animacy"] = template_prelude("35") .. [===[
-! style="width:15em;background:#d9ebff" |
-! style="background:#d9ebff" | {number}
+! style="width:15em;background:var(--wikt-palette-lightblue, #d9ebff);" colspan="2" |
+! style="background:var(--wikt-palette-lightblue, #d9ebff);" | {number}
 |-
-! style="background:#eff7ff" | nominative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | nominative
 | {nom_x}
 |-
-! style="background:#eff7ff" | genitive
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | genitive
 | {gen_x}
 |-
-! style="background:#eff7ff" | dative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | dative
 | {dat_x}
 |-
-! style="background:#eff7ff" rowspan="2" | accusative <span style="padding-left:1em;display:inline-block;vertical-align:middle">animate<br/><br/>inanimate</span>
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" rowspan="2" | accusative
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | animate
 | {acc_x_an}
 |-
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" | inanimate
 | {acc_x_in}
 |-
-! style="background:#eff7ff" | instrumental
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | instrumental
 | {ins_x}
 |-
-! style="background:#eff7ff" | prepositional
+! style="background:var(--wikt-palette-lighterblue, #ebf4ff);" colspan="2" | prepositional
 | {pre_x}
 ]===] .. template_postlude()
 
