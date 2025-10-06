@@ -46,7 +46,10 @@ def process_text_on_page(
     if tn in templates:
       must_continue = False
       for filt in filters:
-        def filter_matches(paramspec, fn):
+        def filter_matches(paramspec, fn, negate_messages=False):
+          filt_for_message = filt
+          if negate_messages:
+            filt_for_message = re.sub("^!", "", filt_for_message)
           matches = False
           if paramspec[0] == "~": # regex spec for param
             paramspec = paramspec[1:]
@@ -56,18 +59,40 @@ def process_text_on_page(
               if re.search("^" + paramspec + "$", pn):
                 if fn(pv):
                   if args.verbose:
-                    pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt, origt))
+                    if negate_messages:
+                      pagemsg("Skipping because param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
+                    else:
+                      pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
                   return True
           else:
             pn = paramspec
             pv = getp(pn)
             if fn(pv):
               if args.verbose:
-                pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt, origt))
+                if negate_messages:
+                  pagemsg("Skipping because param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
+                else:
+                  pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
               return True
-          pagemsg("Skipping because filter %s doesn't match: %s" % (filt, origt))
+          if negate_messages:
+            pagemsg("Processing because filter %s doesn't match: %s" % (filt_for_message, origt))
+          else:
+            pagemsg("Skipping because filter %s doesn't match: %s" % (filt_for_message, origt))
           return False
 
+        m = re.search("^!(.+?)=(.*)$", filt)
+        if m:
+          if not filter_matches(m.group(1), lambda pv: pv == substitute_in_value(m.group(2)), negate_messages=True):
+            continue
+          must_continue = True
+          break
+        m = re.search("^!(.+?)~(.*)$", filt)
+        if m:
+          if not filter_matches(m.group(1), lambda pv: re.search(substitute_in_value(m.group(2), is_regex=True), pv),
+                                negate_messages=True):
+            continue
+          must_continue = True
+          break
         m = re.search("^(.+?)!=(.*)$", filt)
         if m:
           if filter_matches(m.group(1), lambda pv: pv != substitute_in_value(m.group(2))):
@@ -82,7 +107,7 @@ def process_text_on_page(
           break
         m = re.search("^(.+?)!~(.*)$", filt)
         if m:
-          if filter_matches(m.group(1), lambda pv: re.search(substitute_in_value(m.group(2), is_regex=True), pv)):
+          if filter_matches(m.group(1), lambda pv: not re.search(substitute_in_value(m.group(2), is_regex=True), pv)):
             continue
           must_continue = True
           break
@@ -90,13 +115,13 @@ def process_text_on_page(
         # interpreted as having a parameter named `!`.
         m = re.search("^!(.+)$", filt)
         if m:
-          if filter_matches(m.group(1), lambda pv: not pv):
+          if not filter_matches(m.group(1), lambda pv: pv, negate_messages=True):
             continue
           must_continue = True
           break
         m = re.search("^(.+)~(.*)$", filt)
         if m:
-          if filter_matches(m.group(1), lambda pv: not re.search(substitute_in_value(m.group(2), is_regex=True), pv)):
+          if filter_matches(m.group(1), lambda pv: re.search(substitute_in_value(m.group(2), is_regex=True), pv)):
             continue
           must_continue = True
           break
@@ -290,7 +315,7 @@ pa.add_argument("--add", help="PARAM=VALUE to add at the end, can be specified m
     action="append")
 pa.add_argument("--insert", help="Insert numeric PARAM=VALUE|VALUE|..., moving greater numeric params to the right; can be specified multiple times, works from right to left; VALUE can have {{PAGENAME}} in it to substitute the page title",
     action="append")
-pa.add_argument("--filter", help="Only take action on templates matching the filter, which should be either PARAM meaning the parameter must exist and be non-empty; !PARAM meaning the parameter must not exist or must be empty; PARAM=VALUE meaning the parameter must have the given value; PARAM!=VALUE meaning the parameter must not have the given value; PARAM~REGEX meaning the parameter's value must match the given regular expression (unanchored); or PARAM!~REGEX meaning the parameter's value must not match the given regular expression (unanchored). Can be specified multiple times and all must match. Note that all parameter values have whitespace stripped from both ends before comparison. If PARAM begins with a ~, it is interpreted as a regex (i.e. the regex applies to the parameter's name rather than its value). VALUE and REGEX can have {{PAGENAME}} in them to substitute the page title; when substituting into a regular expression, the page title is properly escaped.",
+pa.add_argument("--filter", help="Only take action on templates matching the filter, which should be either PARAM meaning the parameter must exist and be non-empty; !PARAM meaning the parameter must not exist or must be empty; PARAM=VALUE meaning the parameter must have the given value; PARAM!=VALUE meaning the parameter must not have the given value; PARAM~REGEX meaning the parameter's value must match the given regular expression (unanchored); PARAM!~REGEX meaning the parameter's value must not match the given regular expression (unanchored). In addition, if !PARAM=VALUE is specified, we will not take action if the parameter has the given value, and if !PARAM~REGEX is specified, we will not take action if the parameter's value matches the given regular expression (unanchored). (PARAM!=VALUE and PARAM!~REGEX differ from !PARAM=VALUE and !PARAM~REGEX if PARAM is a regular expression; see below.) Note that all parameter values have whitespace stripped from both ends before comparison. If PARAM begins with a ~, it is interpreted as a regex, anchored on both sides (i.e. the regex applies to the parameter's name rather than its value). VALUE and REGEX can have {{PAGENAME}} in them to substitute the page title; when substituting into a regular expression, the page title is properly escaped. --filter can be specified multiple times; if so, all filters must match.",
     action="append")
 pa.add_argument("--recognized-params", help="Comma-separated list of regexps matching recognized params. Use - to indicate no recognized params. If the template contains any unrecognized params, a warning will be displayed and no action taken. Regexps are auto-anchored on both ends.")
 pa.add_argument("-c", "--comment", help="Comment to use in place of auto-generated ones.")
