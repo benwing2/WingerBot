@@ -189,8 +189,8 @@ function export.head_t(frame)
 			nolinkinfl    =  args["fnolink"][i],
 			q             = {args["fqual"][i]},
 			sc            =  args["fsc"][i],
-			translit      =  args["ftr"][i],
-			transcription =  args["fts"][i],
+			tr            =  args["ftr"][i],
+			ts            =  args["fts"][i],
 		}
 
 		-- If no term or alt is given, then the label is shown alone.
