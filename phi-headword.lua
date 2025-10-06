@@ -17,14 +17,32 @@ local pos_functions = {}
 
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
 
-local list_to_set = require("Module:table").listToSet
+local require_when_needed = require("Module:utilities/require when needed")
+local m_table = require("Module:table")
+
+local list_to_set = m_table.listToSet
 local rsplit = mw.text.split
 local uupper = mw.ustring.upper
 local ulower = mw.ustring.lower
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local en_utilities_module = "Module:en-utilities"
+local headword_utilities_module = "Module:headword utilities"
 local template_parser_module = "Module:template parser"
+
+local m_en_utilities = require_when_needed(en_utilities_module)
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+
+local boolean_param = {type = "boolean"}
+local list_param = {list = true, disallow_holes = true}
+
+local concat = table.concat
+local insert = table.insert
+local remove = table.remove
+
+local rfind = mw.ustring.find
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+
 
 local tl_conj_type_data = {
 	["actor"] = 5,
@@ -282,14 +300,44 @@ local function ine(val)
 	if val == "" then return nil else return val end
 end
 
-local function do_inflection(data, forms, label, accel)
-	if #forms > 0 then
-		forms.label = label
-		if accel then
-			forms.accel = accel
-		end
-		table.insert(data.inflections, forms)
+local function track(page)
+	require("Module:debug").track("phi-headword/" .. page)
+	return true
+end
+
+local function replace_hash_with_lemma(term, lemma)
+	-- If there is a % sign in the lemma, we have to replace it with %% so it doesn't get interpreted as a capture
+	-- replace expression.
+	lemma = m_string_utilities.replacement_escape(lemma)
+	return (term:gsub("#", lemma)) -- discard second retval
+end
+
+local function frob_term_with_hash(term, lemma)
+	if term:find("#") then
+		term = replace_hash_with_lemma(term, lemma)
 	end
+	return term
+end
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
+-- `accel` is the accelerator form, or nil.
+local function parse_and_insert_inflection(data, args, field, label, accel)
+	m_headword_utilities.parse_and_insert_inflection {
+		headdata = data,
+		forms = args[field],
+		paramname = field,
+		splitchar = ",",
+		frob = function(term)
+			return frob_term_with_hash(term, data.pagename)
+		end,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		-- If we want check_missing support, we need to supply the following:
+		-- check_missing = true,
+		-- lang = lang,
+		-- plpos = plpos,
+	}
 end
 
 local function add_params(params, params_spec)
@@ -298,7 +346,7 @@ local function add_params(params, params_spec)
 	end
 	for _, spec in ipairs(params_spec) do
 		local arg, argspecs = unpack(spec)
-		params[arg] = {list = true}
+		params[arg] = list_param
 		if argspecs.alias then
 			for _, al in ipairs(argspecs.alias) do
 				params[al] = {alias_of = arg, list = false}
@@ -307,13 +355,13 @@ local function add_params(params, params_spec)
 	end
 end
 
-local function do_inflections(args, data, params_spec)
+local function parse_and_insert_multiple_inflections(args, data, params_spec)
 	if not params_spec then
 		return
 	end
 	for _, spec in ipairs(params_spec) do
 		local arg, argspecs = unpack(spec)
-		do_inflection(data, args[arg], argspecs.label, argspecs.form and {form = argspecs.form} or nil)
+		parse_and_insert_inflection(data, args, arg, argspecs.label, argspecs.form)
 	end
 end
 
@@ -323,7 +371,7 @@ end
 -- This is the only function that can be invoked from a template.
 function export.show(frame)
 	local iparams = {
-		[1] = {},
+		[1] = true,
 		["lang"] = {required = true},
 	}
 
@@ -349,32 +397,29 @@ function export.show(frame)
 		poscat = ine(parargs[1]) or
 			mw.title.getCurrentTitle().fullText == "Template:" .. langcode .. "-head" and "interjection" or
 			error("Part of speech must be specified in 1=")
-		poscat = require(en_utilities_module).pluralize(poscat)
+		poscat = m_en_utilities.pluralize(poscat)
 	end
 
 	local langprops = langs_supported[langcode]
 
 	local params = {
 		[headarg] = {list = "head", disallow_holes = true},
-		["id"] = {},
-		["nolink"] = {type = "boolean"},
+		["id"] = true,
+		["nolink"] = boolean_param,
 		["nolinkhead"] = {type = "boolean", alias_of = "nolink"},
-		["suffix"] = {type = "boolean"},
-		["nosuffix"] = {type = "boolean"},
-		["addlpos"] = {},
-		["json"] = {type = "boolean"},
-		["pagename"] = {}, -- for testing
+		["suffix"] = boolean_param,
+		["nosuffix"] = boolean_param,
+		["addlpos"] = true,
+		["json"] = boolean_param,
+		["pagename"] = true, -- for testing
 	}
 	if langprops.native_script_name then
-		params["b"] = {list = true}
+		params["b"] = list_param
 	end
 	if langprops.arabic_script_name then
-		params["j"] = {list = true}
+		params["j"] = list_param
 	end
 	local has_alt_script = langprops.native_script_name or langprops.arabic_script_name
-	if has_alt_script then
-		params["tr"] = {list = true, allow_holes = true}
-	end
 	if headarg == 2 then
 		params[1] = {required = true} -- required but ignored as already processed above
 	end
@@ -388,14 +433,14 @@ function export.show(frame)
 	local need_pl_handled
 	if langprops.has_pl_all_pos and not params.pl then
 		-- Yuck, this should be POS-specific but it seems all POS's can be pluralized in Bikol Central?
-		params["pl"] = {list = true}
+		params["pl"] = list_param
 		need_pl_handled = true
 	end
 
 	if langprops.has_intens_all_pos then
-		params["intens"] = {list = true}
+		params["intens"] = list_param
 		if langprops.has_pl_all_pos then
-			params["plintens"] = {list = true}
+			params["plintens"] = list_param
 		end
 	end
 
@@ -403,26 +448,27 @@ function export.show(frame)
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
-	if has_alt_script and args.tr.maxindex > #args[headarg] then
-		error("Too many translits specified; use '+' to indicate a default head")
-	end
+	local user_specified_heads = m_headword_utilities.parse_term_list_with_modifiers {
+		forms = args[headarg],
+		paramname = {headarg, "head"},
+		splitchar = ",",
+		is_head = true,
+		include_mods = langprops.has_alt_script and {"tr"} or nil,
+		-- frob for # doesn't make sense here; we already have +
+	}
 
 	local user_specified_heads = args[headarg]
 	local heads = user_specified_heads
 	if args.nolink then
-		if #heads == 0 then
-			heads = {pagename}
+		if not heads[1] then
+			heads = {{term = pagename}}
 		end
 	end
 	
-	for i, head in ipairs(heads) do
-		if head == "+" then
-			head = nil
+	for _, head in ipairs(heads) do
+		if head.term == "+" then
+			head.term = nil
 		end
-		heads[i] = {
-			term = head,
-			tr = langprops.has_alt_script and args.tr[i] or nil,
-		}
 	end
 
 	local data = {
@@ -433,7 +479,7 @@ function export.show(frame)
 		categories = {},
 		heads = heads,
 		user_specified_heads = user_specified_heads,
-		no_redundant_head_cat = #user_specified_heads == 0,
+		no_redundant_head_cat = not user_specified_heads[1],
 		inflections = {},
 		pagename = pagename,
 		id = args.id,
@@ -446,7 +492,7 @@ function export.show(frame)
 	) then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
-		local singular_poscat = require(en_utilities_module).singularize(poscat)
+		local singular_poscat = m_en_utilities.singularize(poscat)
 		table.insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		table.insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 		if args.addlpos then
@@ -462,12 +508,12 @@ function export.show(frame)
 	end
 
 	if need_pl_handled then
-		do_inflection(data, args.pl, "plural", {form = "plural"})
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
 	end
 	if langprops.has_intens_all_pos then
-		do_inflection(data, args.intens, "intensified")
+		parse_and_insert_inflection(data, args, "intens", "intensified")
 		if langprops.has_pl_all_pos then
-			do_inflection(data, args.plintens, "plural intensified")
+			parse_and_insert_inflection(data, args, "plintens", "plural intensified")
 		end
 	end
 
@@ -479,11 +525,11 @@ function export.show(frame)
 			(script:getCode() == "Hano" and langcode == "hnn") or
 			(script:getCode() == "Buhd" and langcode == "bku")
 			then
-			args.b = {}
+			args.b = nil
 		end
 		-- Disable Arabic-script spelling parameter if entry is already in Arabic script.
 		if script:getCode() == "Arab" then
-			args.j = {}
+			args.j = nil
 		end
 
 		local function check_for_alt_script_entry(altscript, altscript_def)
@@ -511,50 +557,51 @@ function export.show(frame)
 		end
 
 		local function handle_alt_script(script_argname, script_code, script_name, convert_to_script, script_def)
-			local script_arg = args[script_argname]
-			if script_arg then
-				for i, alt in ipairs(script_arg) do
-					if alt == "+" then
-						alt = pagename
+			local script_arg = m_headword_utilities.parse_term_list_with_modifiers {
+				forms = args[script_argname],
+				paramname = script_argname,
+				splitchar = ",",
+				frob = function(term)
+					if term == "+" then
+						term = pagename
 					end
-					local altsc = lang:findBestScript(alt)
-					
-					if alt:find("^raw:") then
-						if alt:sub(1, 4) == "raw:" then
-						    alt = alt:sub(5)
-						end	
-					elseif altsc:getCode() == "Latn" then
-						if convert_to_script then
-							alt = frame:expandTemplate { title = convert_to_script, args = { alt }}
-						else
-							error(("Latin script for %s= not currently supported; supply proper script"):format(
-								script_argname))
+					if term:find("^raw:") then
+						term = term:sub(5)
+					else
+						local termsc = lang:findBestScript(term)
+						if termsc:getCode() == "Latn" then
+							if convert_to_script then
+								term = frame:expandTemplate { title = convert_to_script, args = { term }}
+							else
+								error(("Latin script for %s= not currently supported; supply proper script"):format(
+									script_argname))
+							end
 						end
 					end
-					script_arg[i] = {
-						term = alt, 
-						sc = require("Module:scripts").getByCode(script_code),
-						accel = {
-							form = script_name
-						} 
-					}
+					return term
+				end,
+			}
 
-					if not check_for_alt_script_entry(alt, script_def) then
-						table.insert(data.categories,
-							("%s terms with missing %s script entries"):format(langname, script_name))
-					end
+			for i, altobj in ipairs(script_arg) do
+				altobj.sc = require("Module:scripts").getByCode(script_code),
+				if not check_for_alt_script_entry(altobj.term, script_def) then
+					table.insert(data.categories,
+						("%s terms with missing %s script entries"):format(langname, script_name))
 				end
-				if #script_arg > 0 then
-					script_arg.label = script_name .. " spelling"
-					table.insert(data.inflections, script_arg)
-				end
+			end
 
-				if script:getCode() == "Latn" then
-					table.insert(data.categories, ("%s terms %s %s script"):format(
-						langname, #script_arg > 0 and "with" or "without", script_name))
-				elseif script:getCode() == script_code then
-					table.insert(data.categories, ("%s terms in %s script"):format(langname, script_name))
-				end
+			m_headword_utilities.insert_inflection {
+				headdata = data,
+				terms = script_arg,
+				label = script_name .. " spelling",
+				accel = {form = script_name},
+			}
+
+			if script:getCode() == "Latn" then
+				table.insert(data.categories, ("%s terms %s %s script"):format(
+					langname, #script_arg > 0 and "with" or "without", script_name))
+			elseif script:getCode() == script_code then
+				table.insert(data.categories, ("%s terms in %s script"):format(langname, script_name))
 			end
 		end
 
@@ -605,67 +652,67 @@ end
 pos_functions["adjectives"] = {
 	params = function(langcode)
 		local params = {
-			["f"] = {list = true},
-			["m"] = {list = true},
-			["pl"] = {list = true},
-			["comp"] = {list = true},
-			["sup"] = {list = true},
+			["f"] = list_param,
+			["m"] = list_param,
+			["pl"] = list_param,
+			["comp"] = list_param,
+			["sup"] = list_param,
 		}
 		add_params(params, langs_supported[langcode].adj_inflections)
 		return params
 	end,
 	func = function(args, data)
-		do_inflection(data, args.f, "feminine")
-		do_inflection(data, args.m, "masculine")
-		do_inflection(data, args.pl, "plural", {form = "plural"})
-		do_inflection(data, args.comp, "comparative")
-		do_inflection(data, args.sup, "superlative")
-		do_inflections(args, data, langs_supported[data.langcode].adj_inflections)
+		parse_and_insert_inflection(data, args, "f", "feminine")
+		parse_and_insert_inflection(data, args, "m", "masculine")
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
+		parse_and_insert_inflection(data, args, "comp", "comparative")
+		parse_and_insert_inflection(data, args, "sup", "superlative")
+		parse_and_insert_multiple_inflections(args, data, langs_supported[data.langcode].adj_inflections)
 	end,
 }
 
 pos_functions["articles"] = {
 	params = function(langcode)
 		return {
-			["pl"] = {list = true},
+			["pl"] = list_param,
 		}
 	end,
 	func = function(args, data)
-		do_inflection(data, args.pl, "plural", {form = "plural"})
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
 	end,
 }
 
 pos_functions["equative adjectives"] = {
 	params = function(langcode)
 		return {
-			["pl"] = {list = true},
+			["pl"] = list_param,
 		}
 	end,
 	func = function(args, data)
-		do_inflection(data, args.pl, "plural", {form = "plural"})
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
 	end,
 }
 
 pos_functions["nouns"] = {
 	params = function(langcode)
 		local params = {
-			["f"] = {list = true},
-			["m"] = {list = true},
-			["pl"] = {list = true},
-			rootword = {type = "boolean"},
-			action = {type = "boolean"},  --if action noun
+			["f"] = list_param,
+			["m"] = list_param,
+			["pl"] = list_param,
+			rootword = boolean_param,
+			action = boolean_param,  --if action noun
 		}
 		add_params(params, langs_supported[langcode].noun_inflections)
 		return params
 	end,
 	func = function(args, data)
-		do_inflection(data, args.f, "feminine")
-		do_inflection(data, args.m, "masculine")
-		do_inflection(data, args.pl, "plural", {form = "plural"})
-		do_inflections(args, data, langs_supported[data.langcode].noun_inflections)
+		parse_and_insert_inflection(data, args, "f", "feminine")
+		parse_and_insert_inflection(data, args, "m", "masculine")
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
+		parse_and_insert_multiple_inflections(args, data, langs_supported[data.langcode].noun_inflections)
 
 		if args.rootword then
-			table.insert(data.infections, {label = "root word"})
+			table.insert(data.inflections, {label = "root word"})
 			table.insert(data.categories, data.langname .. " roots")
 		end
 		
@@ -681,11 +728,11 @@ pos_functions["proper nouns"] = pos_functions["nouns"]
 pos_functions["pronouns"] = {
 	params = function(langcode)
 		return {
-			["pl"] = {list = true},
+			["pl"] = list_param,
 		}
 	end,
 	func = function(args, data)
-		do_inflection(data, args.pl, "plural", {form = "plural"})
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
 	end,
 }
 
@@ -694,44 +741,53 @@ pos_functions["prepositions"] = pos_functions["pronouns"]
 pos_functions["superlative adjectives"] = {
 	params = function(langcode)
 		return {
-			["pl"] = {list = true},
+			["pl"] = list_param,
 		}
 	end,
 	func = function(args, data)
-		do_inflection(data, args.pl, "plural", {form = "plural"})
+		parse_and_insert_inflection(data, args, "pl", "plural", "plural")
 	end,
 }
 
 pos_functions["verbs"] = {
 	params = function(langcode)
 		local params = {
-			rootword = {type = "boolean"},
+			rootword = boolean_param,
 		}
 		if langs_supported[langcode].conjugation_types then
-			params.type = {list = true}
+			params.type = list_param
 		end
 		add_params(params, langs_supported[langcode].verb_inflections)
 		return params
 	end,
 	func = function(args, data)
-		do_inflections(args, data, langs_supported[data.langcode].verb_inflections)
+		parse_and_insert_multiple_inflections(args, data, langs_supported[data.langcode].verb_inflections)
 
 		if args.rootword then
-			table.insert(data.infections, {label = "root word"})
+			table.insert(data.inflections, {label = "root word"})
 			table.insert(data.categories, data.langname .. " roots")
 		end
 
-		if args.type then
-			-- Tag verb trigger
-			local conjugation_types = langs_supported[data.langcode].conjugation_types
-			for _, typ in ipairs(args.type) do
-				if not conjugation_types[typ] then
-					error(("Unrecognized %s verb conjugation type '%s'"):format(data.langname, typ))
-				end
-				local label = conjugation_types[typ]
-				table.insert(data.inflections, {label = label})
-				table.insert(data.categories, ("%s %s verbs"):format(data.langname, label))
+		local types = m_headword_utilities.parse_term_list_with_modifiers {
+			forms = args.type,
+			paramname = "type",
+			splitchar = ",",
+		}
+
+		-- Tag verb trigger
+		local conjugation_types = langs_supported[data.langcode].conjugation_types
+		for _, typobj in ipairs(types) do
+			local typ = typobj.term
+			if not conjugation_types[typ] then
+				error(("Unrecognized %s verb conjugation type '%s'"):format(data.langname, typ))
 			end
+			local label = conjugation_types[typ]
+			m_headword_utilities.insert_fixed_inflection {
+				headdata = data,
+				label = label,
+				originating_term = typobj,
+			}
+			table.insert(data.categories, ("%s %s verbs"):format(data.langname, label))
 		end
 	end,
 }
@@ -739,10 +795,10 @@ pos_functions["verbs"] = {
 pos_functions["letters"] = {
 	params = function(langcode)
 		return {
-			["type"] = {},
-			["upper"] = {},
-			["lower"] = {},
-			["mixed"] = {},
+			["type"] = true,
+			["upper"] = true,
+			["lower"] = true,
+			["mixed"] = true,
 		}
 	end,
 	func = function(args, data)
