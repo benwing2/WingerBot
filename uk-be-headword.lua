@@ -136,7 +136,6 @@ function export.show(frame)
 		id = args.id,
 		pagename = pagename,
 		unknown_stress = args.unknown_stress,
-		frame = frame,
 	}
 
 	if not pos_functions[poscat] or not pos_functions[poscat].no_parse_heads or
@@ -147,15 +146,19 @@ function export.show(frame)
 		end
 	end
 
-	if args.unknown_stress then
-		insert(data.inflections, {label = "unknown stress"})
-	end
-
 	if pos_functions[poscat] then
 		pos_functions[poscat].func(args, data)
 	end
 
-	return require("Module:headword").full_headword(data) .. (data.extra_text or "")
+	if args.unknown_stress then
+		track("unknown-stress")
+		if not pos_functions[poscat] or not pos_functions[poscat].no_insert_unknown_stress_label or
+			not pos_functions[poscat].no_insert_unknown_stress_label(args) then
+			insert(data.inflections, {label = "unknown stress"})
+		end
+	end
+
+	return require("Module:headword").full_headword(data)
 end
 
 
@@ -199,13 +202,6 @@ local function get_noun_pos(is_proper)
 			-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
 			-- inflections are given; <<..>> in the label is linked to the glossary).
 			local function handle_infl(field, label)
-				parse_and_insert_inflection(data, args, field, label)
-			end
-
-			-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw
-			-- arguments come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the
-			-- inflections are given; <<..>> in the label is linked to the glossary).
-			local function parse_infl(field, label)
 				parse_and_insert_inflection(data, args, field, label)
 			end
 
@@ -377,7 +373,23 @@ local function get_noun_pos(is_proper)
 			handle_infl("pej", "<<pejorative>>")
 			handle_infl("dem", "<<demonym>>")
 			handle_infl("fdem", "female <<demonym>>")
-		end
+
+			if args.unknown_stress then
+				track("unknown-stress")
+				insert(data.inflections, {label = "unknown stress"})
+			end
+			if args.unknown_gender then
+				track("unknown-gender")
+				insert(data.inflections, {label = "unknown gender"})
+			end
+			if args.unknown_animacy then
+				track("unknown-animacy")
+				insert(data.inflections, {label = "unknown animacy"})
+			end
+		end,
+		no_insert_unknown_stress_label = function(args)
+			return true -- we do it ourselves
+		end,
 	}
 end
 
