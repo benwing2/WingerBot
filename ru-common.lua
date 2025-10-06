@@ -4,12 +4,11 @@ local export = {}
 Author: Benwing; some very early work by Rua and Atitarev
 
 This module holds some commonly used functions for the Russian language.  It's generally for use from other modules, not
-#invoke, although some functions can be invoked from a template (export.iotation(), export.reduce_stem(),
-export.dereduce_stem() -- this was actually added to support calling from a bot script rather than from a user
-template). There's also export.main(), which supposedly can be used to invoke most functions in this module from a
-template, but it may or may not work. There may also be issues when invoking such functions from templates when
-transliteration is present, due to the need for the transliteration to be decomposed, as mentioned below (all strings
-from Wiktionary pages are normally in composed form).
+`#invoke`, although some functions can be invoked from a template (`export.iotation()`, `export.reduce_stem()`,
+`export.dereduce_stem()`, actually added to support calling from a bot script rather than from a user template; and
+`export.make_unstressed()`, called from {{tl|R:ru:Vasmer}}). There may be issues when invoking such functions from
+templates when transliteration is present, due to the need for the transliteration to be decomposed, as mentioned below
+(all strings from Wiktionary pages are normally in composed form).
 
 NOTE NOTE NOTE: All functions assume that transliteration (but not Russian) has had its acute and grave accents
 decomposed using `export.decompose()`.  This is the first thing that should be done to all user-specified
@@ -356,11 +355,11 @@ destresser[DIA] = "" -- diaeresis
 -- VOWEL ... - CONSONANT, where CONSONANT consists of zero or more consonants and VOWEL consists of exactly one vowel
 -- plus any following accent(s); we combine these into syllables as required by split_syllables().
 local function combine_captures(captures)
-	if #captures == 1 then
+	if captures[1] and not captures[2] then
 		return captures
 	end
 	local combined = {}
-	for i = 1,(#captures-1),2 do
+	for i = 1, (#captures - 1), 2 do
 		table.insert(combined, captures[i] .. captures[i+1])
 	end
 	combined[#combined] = combined[#combined] .. captures[#captures]
@@ -1088,7 +1087,7 @@ Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRAN
 Cyrillic, concatenating the translit with a comma+space in between.
 ]==]
 function export.combine_translit_of_duplicate_forms(forms)
-	if #forms == 0 then
+	if not forms[1] then
 		return forms
 	end
 
@@ -1131,9 +1130,9 @@ function export.combine_translit_of_duplicate_forms(forms)
 	return newforms
 end
 
-local function any_termobj_forms_have_translit(forms)
-	for _, form in ipairs(forms) do
-		if form.translit then
+function export.any_termobjs_have_translit(termobj)
+	for _, termobj in ipairs(termobjs) do
+		if termobj.tr then
 			return true
 		end
 	end
@@ -1141,41 +1140,41 @@ local function any_termobj_forms_have_translit(forms)
 end
 
 --[==[
-Given a list of forms, where each form is a termobj list of `{term = CYRILLIC, translit = TRANSLIT, ...}`,
+Given a list of term objects, where each object is a table of `{term = CYRILLIC, tr = TRANSLIT, ...}`,
 combine forms with identical Cyrillic, concatenating the translit with a comma+space in between.
 ]==]
-function export.combine_translit_of_duplicate_termobj_forms(forms)
-	if #forms == 0 then
-		return forms
+function export.combine_translit_of_duplicate_termobjs(termobjs)
+	if not termobjs[1] then
+		return termobjs
 	end
 
 	-- Optimization to avoid creating a new list in the majority case when no translit exists.
-	if not any_termobj_forms_have_translit(forms) then
-		return forms
+	if not export.any_termobjs_have_translit(termobjs) then
+		return termobjs
 	end
 
-	local newforms = {}
-	table.insert(newforms, m_table.shallowCopy(forms[1]))
-	for i = 2, #forms do
+	local newtermobjs = {}
+	table.insert(newtermobjs, m_table.shallowCopy(termobjs[1]))
+	for i = 2, #termobjs do
 		local found_duplicate = false
-		for j = 1, #newforms do
-			-- If the Russian of the next form is the same as that of the last one, combine their translits and modify
-			-- newforms[] in-place. Otherwise add the next form to newforms[]. Make sure to clone the form rather than
-			-- just appending it directly since we may modify it in-place; we don't want to side-effect `forms` as
-			-- passed in.
-			if forms[i].term == newforms[j].term then
-				m_headword_utilities.combine_termobj_qualifiers_labels(newforms[j], forms[i])
-				local tr1 = newforms[j].translit
-				local tr2 = forms[i].translit
+		for j = 1, #newtermobjs do
+			-- If the Russian of the next termobj is the same as that of the last one, combine their translits and
+			-- modify newtermobjs[] in-place. Otherwise add the next form to newtermobjs[]. Make sure to clone the form
+			-- rather than just appending it directly since we may modify it in-place; we don't want to side-effect
+			-- `termobjs` as passed in.
+			if termobjs[i].term == newtermobjs[j].term then
+				m_headword_utilities.combine_termobj_qualifiers_labels(newtermobjs[j], termobjs[i])
+				local tr1 = newtermobjs[j].tr
+				local tr2 = termobjs[i].tr
 				if not tr1 and not tr2 then
 					-- this shouldn't normally happen
 				else
-					tr1 = tr1 or export.translit_no_links(newforms[j].term)
-					tr2 = tr2 or export.translit_no_links(forms[i].term)
+					tr1 = tr1 or export.translit_no_links(newtermobjs[j].term)
+					tr2 = tr2 or export.translit_no_links(termobjs[i].term)
 					if tr1 == tr2 then
 						-- this shouldn't normally happen
 					else
-						newforms[j].translit = tr1 .. ", " .. tr2
+						newtermobjs[j].tr = tr1 .. ", " .. tr2
 					end
 				end
 				found_duplicate = true
@@ -1183,10 +1182,10 @@ function export.combine_translit_of_duplicate_termobj_forms(forms)
 			end
 		end
 		if not found_duplicate then
-			table.insert(newforms, m_table.shallowCopy(forms[i]))
+			table.insert(newtermobjs, m_table.shallowCopy(termobjs[i]))
 		end
 	end
-	return newforms
+	return newtermobjs
 end
 
 --[==[
@@ -1195,7 +1194,7 @@ transliterations have been packed into a single translit field by creating two a
 the opposite operation of `combine_translit_of_duplicate_forms()`.
 ]==]
 function export.split_translit_of_duplicate_forms(forms)
-	if #forms == 0 then
+	if not forms[1] then
 		return forms
 	end
 

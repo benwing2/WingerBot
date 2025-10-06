@@ -1,67 +1,60 @@
 --[=[
-	This module implements the headword templates {{ru-noun}}, {{ru-adj}},
-	{{ru-adv}}, {{ru-noun+}}, etc. The main entry point is show(), which is
-	meant to be called from one of the above templates. However, {{ru-noun+}}
-	uses the entry point noun_plus(), and {{ru-noun-m}} (not currently used)
-	uses the entry point noun_multi(). When calling show(), the first parameter
-	of the #invoke call is the part of speech. Other parameters are taken from
-	the parent template call.
+	This module implements the headword templates {{ru-noun}}, {{ru-adj}}, {{ru-adv}}, {{ru-noun+}}, etc. The main entry
+	point is show(), which is meant to be called from one of the above templates. However, {{ru-noun+}} uses the entry
+	point noun_plus(). When calling show(), the first parameter of the #invoke call is the part of speech. Other
+	parameters are taken from the parent template call.
 
-	The implementations for different types of headwords (different parts of
-	speech) are set in pos_functions[POS] for a given POS (part of speech).
-	The value is a 2-argument function of (ARGS, DATA):
-	-- ARGS on entry is initialized to the parent template call's arguments,
-	   with blank arguments converted to nil.
-	-- DATA on entry is initialized to a table, with entries like this:
-		local data = {lang = lang, pos_category = poscat, categories = {}, heads = {}, translits = {}, genders = {}, inflections = {}}
-	   where:
-	   -- LANG is an object describing the language.
-	   -- POS_CATEGORY is the (plural) part of speech, e.g. "nouns" or "verbs".
-	   -- CATEGORIES on entry is a list of categories. There will be one category
-		  corresponding to the part of speech (e.g. [[Category:Russian adverbs]]),
-		  and possibly additional categories such as [[Category:Requests for accents in Russian entries]]
-		  and [[Category:Russian terms with irregular pronunciations]]. On exit
-		  it may contain additional categories to place the page in.
-	   -- HEADS on entry is a list of the headwords, taken directly from arguments
-		  '1', 'head2', 'head3', ...
-	   -- TRANSLITS on entry is a list of translits, matching one-to-one with
-		  heads in HEADS, or nil if no manual translit was specified.
-	   -- GENDERS on entry is an empty list. On exit it should be the appropriate
-		  gender settings, and will be passed directly to full_headword() in
-		  [[Module:headword]]. See the documentation for that module for info on
-		  the format of this setting.
-	   -- INFLECTIONS on entry is an empty list. On exit it should be the
-		  appropriate inflections to be displayed in the headword, and will be
-		  passed directly to full_headword() in [[Module:headword]]. See the
-		  documentation for that module for info on the format of this setting.
+	The implementations for different types of headwords (different parts of speech) are set in pos_functions[POS] for a
+	given POS (part of speech).
 ]=]--
+
+local export = {}
+
+local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
+
+local lang = require("Module:languages").getByCode("ru")
+local langname = lang:getCanonicalName()
 
 local com = require("Module:ru-common")
 local m_links = require("Module:links")
-local m_headword = require("Module:headword")
-local m_str_utils = require("Module:string utilities")
 local m_table = require("Module:table")
 local m_table_tools = require("Module:table tools")
-local m_debug = require("Module:debug")
 
-local export = {}
-local pos_functions = {}
+local require_when_needed = require("Module:utilities/require when needed")
 
-local lang = require("Module:languages").getByCode("ru")
+local en_utilities_module = "Module:en-utilities"
+local headword_module = "Module:headword"
+local headword_utilities_module = "Module:headword utilities"
+local string_utilities_module = "Module:string utilities"
+
+local m_en_utilities = require_when_needed(en_utilities_module)
+local m_headword_utilities = require_when_needed(headword_utilities_module)
+local m_string_utilities = require_when_needed(string_utilities_module)
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
+
+local boolean_param = {type = "boolean"}
+local list_param = {list = true, disallow_holes = true}
+local list_comp = {list = "comp", disallow_holes = true}
+local list_sup = {list = "sup", disallow_holes = true}
+
+local u = m_string_utilities.char
+local rfind = m_string_utilities.find
+local rsubn = m_string_utilities.gsub
+local rmatch = m_string_utilities.match
+local rsplit = m_string_utilities.split
+
+local concat = table.concat
+local insert = table.insert
+local insertIfNot = m_table.insertIfNot
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local IRREGMARKER = "△"
 local HYPMARKER = "⟐"
 -- Forward references
 local do_noun
-
-local u = m_str_utils.char
-local rfind = m_str_utils.find
-local rsubn = m_str_utils.gsub
-local rmatch = m_str_utils.match
-local rsplit = m_str_utils.split
-local unpack = unpack or table.unpack -- Lua 5.2 compatibility
-
 local AC = u(0x0301) -- acute =  ́
+
+local pos_functions = {}
 
 -- version of rsubn() that discards all but the first return value
 local function rsub(term, foo, bar)
@@ -76,13 +69,8 @@ local function rsubb(term, foo, bar)
 	return retval, nsubs > 0
 end
 
-local function glossary_link(entry, text)
-	text = text or entry
-	return "[[Appendix:Glossary#" .. entry .. "|" .. text .. "]]"
-end
-
 local function track(page)
-	m_debug.track("ru-headword/" .. page)
+	require("Module:debug/track")("ru-headword/" .. page)
 	return true
 end
 
@@ -105,37 +93,36 @@ end
 local function split_list_into_russian_tr(list)
 	local splitlist = {}
 	for _, item in ipairs(list) do
-		table.insert(splitlist, com.split_russian_tr(item, "dopair"))
+		insert(splitlist, com.split_russian_tr(item, "dopair"))
 	end
 	return splitlist
 end
 
--- Convert a termobj list where the terms are either "RUSSIAN" or "RUSSIAN//TRANSLIT" strings into
--- split Russian/translit in the appopriate slots. NOTE: Conversion is in-place.
-local function split_termobj_list_into_russian_tr(list)
-	for _, termobj in ipairs(list) do
-		local ru, tr = com.split_russian_tr(termobj.term)
-		if tr and termobj.translit then
-			error("Can't specify both translit through <tr:...> and through CYRILLIC//TRANSLIT format")
+local function check_if_head_accent_needed(val_no_links, data)
+	if com.needs_accents(val_no_links) then
+		if not data.unknown_stress and not data.noacccat then
+			error("Stress must be supplied using an acute accent: '" .. val_no_links .. "' (use unknown_stress=1 if stress is unknown and noaccat=1 if a multisyllable word really has no stress, as in ''до́ смерти'')")
 		end
-		if tr then
-			termobj.translit = tr
-		end
+		local pos = require(en_utilities_module).singularize(data.pos_category)
+		insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
+	end
+	if com.is_multi_stressed(val_no_links) then
+		error("Multi-stressed form '" .. val_no_links .. "' not allowed")
+	end
+end
+
+local function check_if_accent_needed(val, data)
+	local val_no_links = m_remove_links(val)
+	if com.needs_accents(val_no_links) then
+		local pos = require(en_utilities_module).singularize(data.pos_category)
+		insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
+	end
+	if com.is_multi_stressed(val_no_links) then
+		error("Multi-stressed form '" .. val_no_links .. "' not allowed")
 	end
 end
 
 -- Convert {RUSSIAN, TR} in `form` into an "inflection object" of the form needed for one of the inflection parts in
--- the inflections passed to [[Module:headword]]. The format of this object is as follows:
---   {term = "TERM", translit = "TRANSLIT", face = "FACE", accel = ACCELERATOR_OBJECT} where
--- ACCELERATOR_OBJECT is
---   {form = "FORM USED IN {{inflection of}} OR SIMILAR", lemma = "TERM" or LIST, lemma_translit = "TRANSLIT" or LIST,
---    target = "|head= USED IN {{head}} OR SIMILAR", translit = "|tr= USED IN {{head}} OR SIMILAR"}
--- Normally, `target` in the accelerator object is handled automatically and taken from the displayed text of the link,
--- but this doesn't work in comparative forms, where the form reads e.g. "([[покраснее|по]])[[краснее|красне́е]]" but we
--- want the target to be just красне́е. So we always specify the target and translit, but default it to the form and its
--- translit unless the `target` parameter is passed in. Note also that we don't specify translit="TRANSLIT" in the
--- outer (inflection) object because then the translit will be displayed in the headword inflection.
---
 -- `data` is used to fetch the values of `lemma` and `lemma_translit` in the accelerator object and to add a "Requests
 -- for accents" category if the form is missing accents. (FIXME: Consider throwing an error instead.) `pos` is the
 -- part of speech of the lemma and is used for naming the "Requests for accents" category. `accel_form` goes in the
@@ -173,92 +160,118 @@ local function russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_p
 	--Uncomment to see the manual translit for each inflected part.
 	--local obj = {term=ru, translit=tr, face=(sawhyp_ru or sawhyp_tr) and "hypothetical" or nil, accel=accel}
 	if com.needs_accents(m_links.remove_links(target_ru)) then
-		table.insert(data.categories, "Requests for accents in Russian " .. pos .. " entries")
+		insert(data.categories, "Requests for accents in Russian " .. pos .. " entries")
 	end
 	return obj
 end
 
--- Convert {RUSSIAN, TR} in `form` into an "inflection object" of the form needed for one of the inflection parts in
--- the inflections passed to [[Module:headword]]. The format of this object is as follows:
---   {term = "TERM", translit = "TRANSLIT", face = "FACE", accel = ACCELERATOR_OBJECT} where
--- ACCELERATOR_OBJECT is
---   {form = "FORM USED IN {{inflection of}} OR SIMILAR", lemma = "TERM" or LIST, lemma_translit = "TRANSLIT" or LIST,
---    target = "|head= USED IN {{head}} OR SIMILAR", translit = "|tr= USED IN {{head}} OR SIMILAR"}
--- Normally, `target` in the accelerator object is handled automatically and taken from the displayed text of the link,
--- but this doesn't work in comparative forms, where the form reads e.g. "([[покраснее|по]])[[краснее|красне́е]]" but we
--- want the target to be just красне́е. So we always specify the target and translit, but default it to the form and its
--- translit unless the `target` parameter is passed in. Note also that we don't specify translit="TRANSLIT" in the
--- outer (inflection) object because then the translit will be displayed in the headword inflection.
---
--- `data` is used to fetch the values of `lemma` and `lemma_translit` in the accelerator object and to add a "Requests
--- for accents" category if the form is missing accents. (FIXME: Consider throwing an error instead.) `pos` is the
--- part of speech of the lemma and is used for naming the "Requests for accents" category. `accel_form` goes in the
--- accelerator object; if nil, no accelerator object is specified. `accel_pos` is the part of speech of the inflection,
--- if different from the lemma, and goes in the accelerator object. `target` is used to populate the `target` and
--- `translit` fields in the accelerator object and is the form used to check for missing accents; in both cases it
--- defaults to `form` if omitted.
-local function termobj_to_inflection_obj(data, termobj, pos, accel_form, accel_pos, target)
-	local ru = termobj.term
-	local tr = termobj.translit
-	local sawhyp_ru, sawhyp_tr
-	ru, sawhyp_ru = rsubb(ru, HYPMARKER, "")
-	if tr then
-		tr, sawhyp_tr = rsubb(tr, HYPMARKER, "")
+-- Parse the forms of an inflection. The raw arguments are specified in `forms`, a list of forms which are parsed for
+-- inline modifiers. Multiple comma-separated values are allowed.
+local function parse_inflection_forms(data, forms, field, is_head)
+	return m_headword_utilities.parse_term_list_with_modifiers {
+		forms = forms,
+		paramname = field,
+		splitchar = ",",
+		is_head = is_head,
+		include_mods = {"tr"},
+		frob = function(term)
+			if is_head then
+				local head_no_links = m_links.remove_links(term)
+				check_if_head_accent_needed(head_no_links, data)
+				-- Catch errors in arguments where headword doesn't match page title; for the moment, do only with
+				-- tracking.
+				local head_noaccent = com.remove_accents(head_no_links)
+				if head_noaccent ~= data.pagename then
+					track("bad-headword")
+					--error("Headword " .. term .. " doesn't match pagename " .. data.pagename)
+				end
+			else
+				check_if_accent_needed(term, data)
+			end
+
+			return term
+		end,
+	}
+end
+
+-- Parse an inflection. The raw arguments come from `args[field]`, which is parsed for inline modifiers. Multiple
+-- comma-separated values are allowed.
+local function parse_inflection(data, args, field, is_head)
+	local argfield = field
+	if type(argfield) == "table" then
+		argfield = argfield[1]
 	end
-	local accel
-	local target_ru, target_tr
-	if target then
-		target_ru, target_tr = unpack(target)
-	else
-		target_ru, target_tr = ru, tr
-	end
-	if accel_form then
-		-- FIXME, consider removing redundant translit
-		-- Stuff in data.heads and data.translits gets destructively modified by [[Module:headword]] (YUCK), so clone it.
-		accel = {form = accel_form, lemma = m_table.deepCopy(data.heads),
-			lemma_translit = m_table.deepCopy(data.translits), pos = accel_pos, target = target_ru, translit = target_tr
-		}
-	end
-	termobj.term = ru
-	termobj.translit = nil
-	termobj.face = (sawhyp_ru or sawhyp_tr) and "hypothetical" or nil
-	termobj.accel = accel
-	--Uncomment to see the manual translit for each inflected part.
-	--local obj = {term=ru, translit=tr, face=(sawhyp_ru or sawhyp_tr) and "hypothetical" or nil, accel=accel}
-	if com.needs_accents(m_links.remove_links(target_ru)) then
-		table.insert(data.categories, "Requests for accents in Russian " .. pos .. " entries")
-	end
+	return parse_inflection_forms(data, args[argfield], field, is_head)
 end
 
 -- Add a full inflection (e.g. genitive singular of nouns, abstract noun of adjectives) to `data.inflections`. `label`
--- is the label of the inflection (e.g. "abstract noun"). `forms` is a list of {RUSSIAN, TRANSLIT} objects specifying
--- the inflections, or a list of "RUSSIAN//TRANSLIT" strings. `pos` is the part of speech of the lemma, used for adding
--- a "Request for accents" category. `accel_form` is the accelerator form (e.g. "gen|s" for genitive singular) of the
--- inflection, or nil to add no accelerator. `accel_pos` is the part of speech of the inflection, if different from
--- the lemma.
-local function add_inflection(data, label, forms, pos, accel_form, accel_pos)
-	if not forms[1] then
+-- is the label of the inflection (e.g. "abstract noun"), which can have <<...>> glossary references. `terms` is a list
+-- of term objects. `accel_form` is the accelerator form (e.g. "gen|s" for genitive singular) of the inflection, or nil
+-- to add no accelerator. `accel_pos` is the part of speech of the inflection, if different from the lemma.
+--
+-- This is a wrapper around insert_inflection() in [[Module:headword utilities]], but handles hypothetical markers in
+-- the term (which are converted into the `hypothetical` face) as well as the fact that the accelerator spec may differ
+-- from term to term if we need to specify a target (i.e. the value of |head= used in {{head}} or similar) that's
+-- different from the term itself. This happens in particular in comparative forms, where the term reads e.g.
+-- "([[покраснее|по]])[[краснее|красне́е]]" but we want the target to be just красне́е.
+local function insert_inflection(data, terms, label, accel_form, accel_pos)
+	if not terms[1] then
 		return
 	end
-	local parts = {label = label}
-	if type(forms[1]) == "string" then
-		local termobjs = m_headword_utilities.parse_term_list_with_modifiers {
-			paramname = {2, "pl"},
-			forms = forms,
-			include_mods = {"tr"},
-		}
-		forms = split_termobj_list_into_russian_tr(forms)
-		forms = com.combine_translit_of_duplicate_termobj_forms(forms)
-		for _, form in ipairs(forms) do
-			m_table.insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_pos))
+	for _, termobj in ipairs(terms) do
+		local term = termobj.term
+		local tr = termobj.tr
+		local sawhyp_term, sawhyp_tr
+		term, sawhyp_term = rsubb(term, HYPMARKER, "")
+		if tr then
+			tr, sawhyp_tr = rsubb(tr, HYPMARKER, "")
 		end
-	else
-		forms = com.combine_translit_of_duplicate_forms(forms)
-		for _, form in ipairs(forms) do
-			m_table.insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_pos))
+		local accel
+		local target_term = termobj.target_term or term
+		-- If the target was given without a translit, don't fall back to the term translit because the target itself
+		-- may be different from the term.
+		local target_tr = termobj.target_tr or not termobj.target_term and tr or nil
+		if accel_form then
+			local lemmas = {}
+			local lemma_translits = {}
+			for i, headobj in ipairs(data.heads) do
+				lemmas[i] = headobj.term
+				lemma_translits[i] = headobj.tr
+			end
+			accel = {
+				form = accel_form, lemma = lemmas, lemma_translit = lemma_translits, pos = accel_pos,
+				target = target_term, translit = target_tr
+			}
 		end
-		table.insert(data.inflections, parts)
+		termobj.term = term
+		-- Currently we don't display translits for inflections, so null out any manual translit. If we want to change
+		-- this, we need to set enable_auto_translit on the inflection list or individual inflection term.
+		termobj.tr = nil
+		termobj.face = (sawhyp_term or sawhyp_tr) and "hypothetical" or nil
+		termobj.accel = accel
+		if com.needs_accents(m_links.remove_links(target_term)) then
+			local pos = require(en_utilities_module).singularize(data.pos_category)
+			insert(data.categories, "Requests for accents in " .. langname .. " " .. pos .. " entries")
+		end
 	end
+
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+	}
+end
+
+-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
+-- from `args[field]`, which is parsed for inline modifiers. Multiple comma-separated values are allowed. `label` is the
+-- label that the inflections are given; sections enclosed in <<...>> are linked to the glossary. `accel_form` is the
+-- accelerator form (or nil), and `accel_pos` if specified overrides the accelerator part of speech. Note that
+-- [[Module:headword utilities]] provides a parse_and_insert_inflection() that is usually sufficient, but in our case
+-- we do a bunch of additional processing when inserting inflections, so we do the parsing and inserting separately
+-- using functions defined above.
+local function parse_and_insert_inflection(data, args, field, label, accel_form, accel_pos)
+	local terms = parse_inflection(data, args, field)
+	insert_inflection(data, terms, label, accel_form, accel_pos)
 end
 
 -- Zip the lemma heads and corresponding translits into a list of {RUSSIAN, TRANSLIT} objects. In the process, split
@@ -266,6 +279,15 @@ end
 -- separate objects.
 local function zip_head_and_translit(data)
 	return com.split_translit_of_duplicate_forms(com.zip_forms(data.heads, data.translits))
+end
+
+local function add_common_all_pos_params(params)
+	params["noacccat"] = boolean_param -- don't add missing-accent tracking category
+	params["notrcat"] = boolean_param -- don't add 'irregular pronunciations' tracking category
+	params["unknown_stress"] = boolean_param -- stress position unknown
+	params["pagename"] = true
+	params["id"] = true
+	return params
 end
 
 -- The main entry point.
@@ -276,13 +298,10 @@ function export.show(frame)
 	local iargs = require("Module:parameters").process(frame.args, iparams)
 	local poscat = iargs[1]
 
-	local params = {
-		[1] = {list = "head"}, -- heads
-		["tr"] = {list = true}, -- translits
-		["noposcat"] = {type = "boolean"}, -- don't add part of speech category
-		["noacccat"] = {type = "boolean"}, -- don't add missing-accent tracking category
-		["notrcat"] = {type = "boolean"}, -- don't add 'irregular pronunciations' tracking category
+	local params = add_common_all_pos_params {
+		[1] = {list = "head", disallow_holes = true},
 	}
+
 	if pos_functions[poscat] then
 		for key, val in pairs(pos_functions[poscat].params) do
 			params[key] = val
@@ -292,45 +311,39 @@ function export.show(frame)
 	local parargs = frame:getParent().args
 	local args = require("Module:parameters").process(parargs, params)
 
-	local data = {lang = lang, pos_category = poscat, categories = {}, heads = {},
-		translits = {}, redundant_translits = {}, genders = {}, inflections = {},
-		noposcat = args.noposcat}
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
-	local PAGENAME = mw.loadData("Module:headword/data").pagename
-	local NAMESPACE = mw.title.getCurrentTitle().nsText
+	local data = {
+		lang = lang,
+		no_redundant_head_cat = true,
+		pos_category = poscat,
+		categories = {},
+		genders = {},
+		inflections = {},
+		id = args.id,
+		pagename = pagename,
+		unknown_stress = args.unknown_stress,
+		noacccat = args.noacccat,
+	}
 
-	-- Get the head parameters
-	local heads = args[1]
-	if #heads == 0 then
-		heads = {PAGENAME}
+	if not pos_functions[poscat] or not pos_functions[poscat].no_parse_heads or
+		not pos_functions[poscat].no_parse_heads(args) then
+		data.heads = parse_inflection(data, args, {1, "head"}, "is_head") 
+		if not data.heads[1] then
+			data.heads = {{term = pagename}}
+		end
 	end
-	data.heads = heads
-	for i, head in ipairs(heads) do
-		-- Catch errors in arguments where headword doesn't match page title,
-		-- but only in the main namespace; for the moment, do only with tracking.
-		local head_no_links = m_links.remove_links(head)
-		local head_noaccent = com.remove_accents(head_no_links)
-		if NAMESPACE == "" and head_noaccent ~= PAGENAME then
-			track("bad-headword")
-			--error("Headword " .. head .. " doesn't match pagename " .. PAGENAME)
-		end
 
-		if com.needs_accents(head_no_links) then
-			if not args.noacccat then
-				table.insert(data.categories, "Requests for accents in Russian entries")
-			end
-		end
-
-		local tr = args.tr[i]
+	for _, headobj in ipairs(heads) do
+		local tr = headobj.tr
 		if tr then
 			tr = com.decompose(tr)
-			local tr_gen = com.translit_no_links(head)
+			local tr_gen = com.translit_no_links(headobj.term)
 			if tr == tr_gen then
-				data.redundant_translits[i] = true
+				track("redundant-translit")
 			elseif not args.notrcat then
-				table.insert(data.categories, "Russian terms with irregular pronunciations")
+				insert(data.categories, langname .. " terms with irregular pronunciations")
 			end
-			data.translits[i] = tr
 		end
 	end
 
@@ -338,43 +351,50 @@ function export.show(frame)
 		pos_functions[poscat].func(args, data)
 	end
 
-	return m_headword.full_headword(data) .. (data.extra_text or "")
+	if args.unknown_stress then
+		track("unknown-stress")
+		if not pos_functions[poscat] or not pos_functions[poscat].no_insert_unknown_stress_label or
+			not pos_functions[poscat].no_insert_unknown_stress_label(args) then
+			insert(data.inflections, {label = "unknown stress"})
+		end
+	end
+
+	return require(headword_module).full_headword(data)
 end
 
 -- Common params shared by {{ru-noun}} and {{ru-noun+}}.
 local function add_common_noun_params(params)
-	params["unknown_decl"] = {type = "boolean"} -- declension unknown
-	params["unknown_stress"] = {type = "boolean"} -- stress position unknown
-	params["unknown_pattern"] = {type = "boolean"} -- stress pattern (a, b, b', ...) unknown
-	params["unknown_gender"] = {type = "boolean"} -- gender unknown
-	params["unknown_animacy"] = {type = "boolean"} -- animacy unknown
-	params["f"] = {list = true} -- feminine equivalent(s)
-	params["m"] = {list = true} -- masculine equivalent(s)
-	params["adj"] = {list = true} -- relational adjective(s)
-	params["dim"] = {list = true} -- diminutive(s)
-	params["aug"] = {list = true} -- augmentative(s)
-	params["pej"] = {list = true} -- pejorative(s)
-	params["dem"] = {list = true} -- demonym(s)
-	params["fdem"] = {list = true} -- female demonym(s)
+	params["unknown_decl"] = boolean_param -- declension unknown
+	params["unknown_pattern"] = boolean_param -- stress pattern (a, b, b', ...) unknown
+	params["unknown_gender"] = boolean_param -- gender unknown
+	params["unknown_animacy"] = boolean_param -- animacy unknown
+	params["f"] = list_param -- feminine equivalent(s)
+	params["m"] = list_param -- masculine equivalent(s)
+	params["adj"] = list_param -- relational adjective(s)
+	params["poss"] = list_param -- possessive adjective(s)
+	params["dim"] = list_param -- diminutive(s)
+	params["aug"] = list_param -- augmentative(s)
+	params["pej"] = list_param -- pejorative(s)
+	params["dem"] = list_param -- demonym(s)
+	params["fdem"] = list_param -- female demonym(s)
 	return params
 end
 
--- Implementation of {{ru-noun+}} and never-created {{ru-noun-m}}, an attempt to implement a slightly different
--- interface for nouns. If we plan to add a different noun interface, it should follow the form of {{uk-noun}}; e.g.
+-- Implementation of {{ru-noun+}}. We should redo this implementation along the lines of {{uk-ndecl}}. For example,
 -- instead of existing {{ru-noun-table|[[дви́гатель]]|m|_|[[внутренний|вну́треннего]]|+$|_|[[сгорание|сгора́ния]]|$}}, it
 -- should look more like {{ru-ndecl|дви́гатель<M> [[внутренний|вну́треннего]] [[сгорание|сгора́ния]]}}.
-local function noun_plus_or_multi(frame, multi)
+local function noun_plus(frame)
 	local iparams = {
 		[1] = {required = true, desc = "part of speech"},
-		["old"] = {type = "boolean"},
+		["old"] = boolean_param,
 		["ndef"] = {},
 	}
 	local iargs = require("Module:parameters").process(frame.args, iparams)
 	local poscat = iargs[1]
 
-	local params = add_common_noun_params({
-		["g"] = {list = true}, -- genders
-		["notes"] = {list = true}, -- "footnotes" displayed after headword
+	local params = add_common_noun_params(add_common_all_pos_params {
+		["g"] = {list = true, disallow_holes = true, type = "genders", flatten = true}, -- genders
+		["notes"] = list_param, -- "footnotes" displayed after headword
 	})
 	local parargs = frame:getParent().args
 	local headword_args, args = require("Module:parameters").process(parargs, params, "return unknown")
@@ -383,34 +403,42 @@ local function noun_plus_or_multi(frame, multi)
 	args.ndef = args.ndef or iargs.ndef
 
 	local m_noun = require("Module:ru-noun")
-	if multi then
-		args = m_noun.do_generate_forms_multi(args, iargs.old)
-	else
-		args = m_noun.do_generate_forms(args, iargs.old)
-	end
+	args = m_noun.do_generate_forms(args, iargs.old)
 
-	local data = {lang = lang, pos_category = poscat, categories = {}, inflections = {}}
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
+
+	local data = {
+		lang = lang,
+		no_redundant_head_cat = true,
+		pos_category = poscat,
+		categories = {},
+		genders = {},
+		inflections = {},
+		id = args.id,
+		pagename = pagename,
+		unknown_stress = args.unknown_stress,
+		noacccat = args.noacccat,
+	}
 
 	-- do explicit genders using g=, g2=, etc.
 	data.genders = headword_args.g
 	-- if none, do inferred or explicit genders taken from declension;
-	-- clone because will get destructively modified by do_noun()
-	if #data.genders == 0 then
+	-- clone because will get destructively modified by do_noun() (FIXME: is this necessary?)
+	if not data.genders[1] then
 		data.genders = mw.clone(args.genders)
 	end
 
 	local saw_note = false
 
-	-- Given a list of {RU, TR} pairs, where TR may be nil, separate off the
-	-- footnote symbols from RU and TR, link the remainder if it's not already
-	-- linked, and remove monosyllabic accents (but not from multiword
-	-- expressions).
-	local function prepare_entry(list, ishead)
-		if not list or #list == 0 then
-			return {{"-"}}
+	-- Given a list of {RU, TR} pairs, where TR may be nil, separate off the footnote symbols from RU and TR; link the
+	-- remainder if it's not already linked; remove monosyllabic accents (but not from multiword expressions); and
+	-- return the result in termobj format, i.e. {term = RU, tr = TR}.
+	local function convert_paired_terms_to_termobjs(paired_list, ishead)
+		if not paired_list or not paired_list[1] then
+			return {{term = "-"}}
 		end
-		local newlist = {}
-		for _, x in ipairs(list) do
+		local termobjs = {}
+		for _, x in ipairs(paired_list) do
 			local ru, tr = x[1], x[2]
 			-- separate_notes() just returns the note, but get_notes() adds
 			-- <sup>...</sup>. We want the former for checking whether the
@@ -436,10 +464,12 @@ local function noun_plus_or_multi(frame, multi)
 			end
 			ruentry, trentry = com.remove_monosyllabic_accents(ruentry, trentry)
 			if sawhyp then
-				table.insert(newlist, {ruentry .. runotes .. HYPMARKER,
-					trentry and trentry .. trnotes .. HYPMARKER})
+				insert(termobjs,
+					{term = ruentry .. runotes .. HYPMARKER, tr = trentry and trentry .. trnotes .. HYPMARKER or nil}
+				)
 			elseif ishead then
-				table.insert(newlist, {ruentry .. runotes, trentry and trentry .. trnotes})
+				insert(termobjs,
+					{term = ruentry .. runotes, tr = trentry and trentry .. trnotes or nil})
 			else
 				local ruspan, trspan
 				if ruentry == "-" then
@@ -453,30 +483,29 @@ local function noun_plus_or_multi(frame, multi)
 				if trentry then
 					trspan = trentry .. trnotes
 				end
-				table.insert(newlist, {ruspan, trspan})
+				insert(termobjs, {term = ruspan, tr = trspan})
 			end
 		end
-		return newlist
+		return com.combine_translit_of_duplicate_termobjs(termobjs)
 	end
 
 	local argsn = args.n or args.ndef
 	local heads, genitives, plurals, genpls
 	if argsn == "p" then
-		heads = prepare_entry(args.nom_pl_linked, "ishead")
-		genitives = prepare_entry(args.gen_pl)
-		plurals = {{"-"}}
-		genpls = {{"-"}}
+		heads = convert_paired_terms_to_termobjs(args.nom_pl_linked, "ishead")
+		genitives = convert_paired_terms_to_termobjs(args.gen_pl)
+		plurals = {{term = "-"}}
+		genpls = {{term = "-"}}
 	else
-		heads = prepare_entry(args.nom_sg_linked, "ishead")
-		genitives = prepare_entry(args.gen_sg)
-		plurals = argsn == "s" and {{"-"}} or prepare_entry(args.nom_pl)
-		genpls = argsn == "s" and {{"-"}} or prepare_entry(args.gen_pl)
+		heads = convert_paired_terms_to_termobjs(args.nom_sg_linked, "ishead")
+		genitives = convert_paired_terms_to_termobjs(args.gen_sg)
+		plurals = argsn == "s" and {{term = "-"}} or convert_paired_terms_to_termobjs(args.nom_pl)
+		genpls = argsn == "s" and {{term = "-"}} or convert_paired_terms_to_termobjs(args.gen_pl)
 	end
 
-	heads = com.combine_translit_of_duplicate_forms(heads)
-	data.heads, data.translits = com.unzip_forms(heads)
-	if next(data.translits) and not args.notrcat then
-		table.insert(data.categories, "Russian terms with irregular pronunciations")
+	data.heads = heads
+	if com.any_termobjs_have_translit(data.heads) and not args.notrcat then
+		insert(data.categories, langname .. " terms with irregular pronunciations")
 	end
 
 	do_noun(data, headword_args, argsn == "s", genitives, plurals, genpls, poscat)
@@ -485,51 +514,42 @@ local function noun_plus_or_multi(frame, multi)
 	local notes_segments = {}
 	if saw_note then
 		for _, note in ipairs(notes) do
-			table.insert(notes_segments, " " .. make_qualifier_text(note))
+			insert(notes_segments, " " .. make_qualifier_text(note))
 		end
 	end
-	local notes_text = table.concat(notes_segments, "")
+	local notes_text = concat(notes_segments, "")
 
-	return m_headword.full_headword(data) .. (data.extra_text or "") .. notes_text
-end
-
--- External entry point; implementation of {{ru-noun+}}.
-function export.noun_plus(frame)
-	return noun_plus_or_multi(frame, false)
-end
-
--- External entry point; implementation of never-created {{ru-noun-m}}.
-function export.noun_multi(frame)
-	return noun_plus_or_multi(frame, true)
+	return require(headword_module).full_headword(data) .. notes_text
 end
 
 -- Implementation of {{ru-noun}} and {{ru-proper noun}}.
 local function get_noun_pos(pos)
 	return {
 		params = add_common_noun_params({
-			[2] = {list = "g", required = true, default = "?"}, -- genders
-			[3] = {list = "gen"}, -- genitive singulars, or - for indeclinable
-			[4] = {list = "pl"}, -- nominative plurals
-			[5] = {list = "genpl"}, -- genitive plurals
-			["altyo"] = {type = "boolean"}, -- called from {{ru-noun-alt-ё}} or variants
-			["manual"] = {type = "boolean"}, -- allow manual specification of principal parts
+			[2] = {list = "g", disallow_holes = true, required = true, default = "?", type = "genders",
+				flatten = true}, -- genders
+			[3] = {list = "gen", disallow_holes = true}, -- genitive singulars, or - for indeclinable
+			[4] = {list = "pl", disallow_holes = true}, -- nominative plurals
+			[5] = {list = "genpl", disallow_holes = true}, -- genitive plurals
+			["altyo"] = boolean_param, -- called from {{ru-noun-alt-ё}} or variants
+			["manual"] = boolean_param, -- allow manual specification of principal parts
 		}),
 		func = function(args, data)
 			data.genders = args[2]
-			local genitives = args[3]
-			local plurals = args[4]
-			local genpls = args[5]
-			if not args.altyo and not args.manual and genitives[1] ~= "-" and
+			local genitives = parse_inflection(data, args, {3, "gen"})
+			local plurals = parse_inflection(data, args, {4, "pl"})
+			local genpls = parse_inflection(data, args, {5, "genpl"})
+			if not args.altyo and not args.manual and (not genitives[1] or genitives[1].term ~= "-") and
 				mw.title.getCurrentTitle().nsText == "" and
 				not args.unknown_decl and not args.unknown_stress and
 				not args.unknown_pattern and not args.unknown_gender and
 				not args.unknown_animacy then
 				error("[[Template:ru-noun]] can now only be used with indeclinable and manually-declined nouns; use [[Template:ru-noun+]] instead")
 			end
-			genitives = split_list_into_russian_tr(genitives)
-			plurals = split_list_into_russian_tr(plurals)
-			genpls = split_list_into_russian_tr(genpls)
 			do_noun(data, args, pos == "proper nouns", genitives, plurals, genpls, pos)
+		end,
+		no_insert_unknown_stress_label = function(args)
+			return true -- we do it ourselves
 		end,
 	}
 end
@@ -544,7 +564,7 @@ pos_functions["nouns"] = get_noun_pos("nouns")
 -- Guts of {{ru-noun}} and {{ru-noun+}}.
 do_noun = function(data, args, no_plural, genitives, plurals, genpls, pos)
 	local recognized_genders = {
-		"", -- not allowed when singular; this is needed because some invariant plural only words have no gender to speak of
+		"", -- not allowed when singular; this is needed because some invariant plural-only words have no gender to speak of
 		"m",
 		"f",
 		"n",
@@ -564,7 +584,7 @@ do_noun = function(data, args, no_plural, genitives, plurals, genpls, pos)
 
 	local function insert_if_not_blank(seq, part)
 		if part ~= "" then
-			table.insert(seq, part)
+			insert(seq, part)
 		end
 	end
 
@@ -581,14 +601,15 @@ do_noun = function(data, args, no_plural, genitives, plurals, genpls, pos)
 					insert_if_not_blank(gender_number, gender)
 					insert_if_not_blank(gender_number, animacy)
 					insert_if_not_blank(gender_number, number)
-					local spec = table.concat(gender_number, "-")
+					local spec = concat(gender_number, "-")
 					set[spec] = true
 				end
 			end
 		end
 	end
 
-	for i, g in ipairs(data.genders) do
+	for _, gspec in ipairs(data.genders) do
+		local g = gspec.spec
 		if g == "m" then
 			g = "m-?"
 		elseif g == "m-p" then
@@ -605,105 +626,88 @@ do_noun = function(data, args, no_plural, genitives, plurals, genpls, pos)
 			error("Unrecognized gender: " .. g)
 		end
 
-		data.genders[i] = g
+		gspec.spec = g
 
 		-- Categorize by number
 		if plural_genders[g] then
 			if g == "?-p" or g == "an-p" or g == "in-p" then
-				table.insert(data.categories, "Russian pluralia tantum with incomplete gender")
+				insert(data.categories, langname .. " pluralia tantum with incomplete gender")
 			end
 		end
 	end
 
-	local function add_noun_forms(label, forms, accel_form)
-		add_inflection(data, label, forms, "noun", accel_form)
-	end
-
-	local function form_is_intentionally_missing(forms)
-		return #forms > 0 and forms[1][1] == "-"
-	end
-
 	-- Add the genitive forms
-	if form_is_intentionally_missing(genitives) then
-		table.insert(data.inflections, {label = glossary_link("indeclinable")})
-		table.insert(data.categories, "Russian indeclinable nouns")
+	if genitives[1] and genitives[1].term == "-" then
+		insert(data.inflections, {label = glossary_link("indeclinable")})
+		insert(data.categories, langname .. " indeclinable nouns")
 	else
-		add_noun_forms("genitive", genitives)
+		insert_inflection(data, genitives, "genitive")
 	end
 
-	-- Add the plural forms
-	-- If the noun is plural only, then ignore the 4th parameter altogether
-	if form_is_intentionally_missing(genitives) then
-		-- do nothing
-	elseif plural_genders[data.genders[1]] then
-		table.insert(data.inflections, {label = glossary_link("plural only")})
-	elseif form_is_intentionally_missing(plurals) then
+	local plural_only = not not plural_genders[data.genders[1].spec]
+
+	-- Add the plural forms.
+	if genitives[1] and genitives[1].term == "-" then
+		if plurals[1] or genitive_plurals[1] then
+			error("Can't specify nominative or genitive plurals of a plural-only term")
+		end
+	elseif plural_genders[data.genders[1].spec] then
+		insert(data.inflections, {label = glossary_link("plural only")})
+	elseif plurals[1] and plurals[1].term == "-" then
 		if pos ~= "proper nouns" then
-			table.insert(data.inflections, {label = glossary_link("uncountable")})
-			table.insert(data.categories, "Russian uncountable nouns")
+			insert(data.inflections, {label = glossary_link("uncountable")})
+			insert(data.categories, langname .. " uncountable nouns")
 		end
 	else
-		add_noun_forms("nominative plural", plurals)
-		--This can't work currently because the forms in plurals are already
-		--linked with spans around them, superscripted notes, etc.
-		--for _, form in ipairs(plurals) do
-		--	local ru, tr = unpack(form)
-		--	if not rfind(form, HYPMARKER) and not mw.title.new(form).exists then
-		--		table.insert(categories, "Russian nouns with missing plurals")
-		--	end
-		--end
+		insert_inflection(data, plurals, "nominative plural")
+		insert_inflection(data, genitive_plurals, "genitive plural")
 	end
 
-	-- Add the genitive plural forms
-	if form_is_intentionally_missing(genitives) or plural_genders[data.genders[1]]
-		or form_is_intentionally_missing(plurals) then
-		-- indeclinable, plural only or uncountable; do nothing
-	elseif form_is_intentionally_missing(genpls) then
-		table.insert(data.inflections, {label = "genitive plural missing"})
-	else
-		add_noun_forms("genitive plural", genpls)
+	-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
+	-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
+	-- given; <<..>> in the label is linked to the glossary). `accel_form` is the accelerator form, or nil.
+	local function handle_infl(field, label, accel_form)
+		parse_and_insert_inflection(data, args, field, label, accel_form)
 	end
 
-	-- Add the feminine forms
-	add_noun_forms("feminine", args.f, "f")
 	-- Add the masculine forms; intentionally no accelerator as the masculine forms are lemmas and need manual handling
-	add_noun_forms("masculine", args.m)
+	handle_infl("m", "male equivalent")
+	-- Add the feminine forms
+	handle_infl("f", "female equivalent", "f")
 	-- Add the relational adjective forms; intentionally no accelerator, need manual handling
-	add_noun_forms(glossary_link("relational", "relational adjective"), args.adj)
+	handle_infl("adj", "<<relational adjective>>")
+	-- Add the possessive adjective forms; intentionally no accelerator, need manual handling
+	handle_infl("poss", "<<possessive adjective>>")
 	-- Add the diminutive forms
-	add_noun_forms(glossary_link("diminutive"), args.dim, "diminutive")
+	handle_infl("dim", "<<diminutive>>", "diminutive")
 	-- Add the augmentative forms
-	add_noun_forms(glossary_link("augmentative"), args.aug, "augmentative")
+	handle_infl("aug", "<<augmentative>>", "augmentative")
 	-- Add the pejorative forms
-	add_noun_forms(glossary_link("pejorative"), args.pej, "pejorative")
+	handle_infl("pej", "<<pejorative>>", "pejorative")
 	-- Add the demonyms
-	add_noun_forms(glossary_link("demonym"), args.dem, "demonym")
+	handle_infl("dem", "<<demonym>>", "demonym")
 	-- Add the female demonyms
-	add_noun_forms(glossary_link("female demonym"), args.fdem, "female demonym")		
+	handle_infl("fdem", "female <<demonym>>", "female demonym")
 
-	local extra_notes = {}
 	if args.unknown_decl then
 		track("unknown-decl")
-		table.insert(extra_notes, "unknown declension")
+		insert(data.inflections, {label = "unknown declension"})
 	end
 	if args.unknown_stress then
 		track("unknown-stress")
-		table.insert(extra_notes, "unknown stress")
+		insert(data.inflections, {label = "unknown stress"})
 	end
 	if args.unknown_pattern then
 		track("unknown-pattern")
-		table.insert(extra_notes, "unknown accent pattern")
+		insert(data.inflections, {label = "unknown accent pattern"})
 	end
 	if args.unknown_gender then
 		track("unknown-gender")
-		table.insert(extra_notes, "unknown gender")
+		insert(data.inflections, {label = "unknown gender"})
 	end
 	if args.unknown_animacy then
 		track("unknown-animacy")
-		table.insert(extra_notes, "unknown animacy")
-	end
-	if #extra_notes > 0 then
-		data.extra_text = " " .. make_qualifier_text(table.concat(extra_notes, ", "))
+		insert(data.inflections, {label = "unknown animacy"})
 	end
 end
 
@@ -759,12 +763,13 @@ local velar_to_palatal = {
 	["x"] = "š"
 }
 
--- Generate the comparative(s) given the positive(s). `positives` is a list of {RUSSIAN, TR} forms. `compspec` is the
+-- Generate the comparative(s) given the positive(s). `positives` is a list of term objects. `compspec` is the
 -- comparative spec (either + or a spec giving an adjectival accent pattern, such as +c'). If + is given, the default
--- is +a unless the positive is ending-stressed, in which case the default is +b. Return value is a list of
--- {RUSSIAN, TR} forms. Upon input, transliterations must be decomposed.
-local function generate_comparative(positives, compspec)
+-- is +a unless the positive is ending-stressed, in which case the default is +b. Return value is a list of term
+-- objects.
+local function generate_comparative(positives, compspecobj)
 	local comps = {}
+	local compspec = compspecobj.term
 	if not rfind(compspec, "^%+") then
 		error("Compspec '" .. compspec .. "' must begin with + in this function")
 	end
@@ -773,7 +778,7 @@ local function generate_comparative(positives, compspec)
 	end
 	compspec = rsub(compspec, "^%+", "")
 	for _, positive in ipairs(positives) do
-		local ru, tr = unpack(positive)
+		local ru, tr = positive.term, positive.tr
 		ru = m_links.remove_links(ru)
 		local removed_ending = false
 		for _, allowed_ending in ipairs(allowed_endings) do
@@ -821,7 +826,7 @@ local function generate_comparative(positives, compspec)
 				comptr = comptr .. "e" .. AC .. "e" -- Latin decomposed ée
 			end
 		end
-		m_table.insertIfNot(comps, {comp, comptr})
+		insertIfNot(comps, {comp, comptr})
 	end
 	return comps
 end
@@ -845,69 +850,47 @@ end
 
 -- Handle comparative inflections. If an explicit form is given such as коро́че or красне́е, we add it in a "hacked"
 -- format that notes that e.g. покоро́че or покрасне́е is a possible variant. We also generate an informal form in -ей
--- if possible, e.g. красне́й, with по-hacking applied (but no such variatn is possible for коро́че). We also handle
+-- if possible, e.g. красне́й, with по-hacking applied (but no such variant is possible for коро́че). We also handle
 -- autogenerating comparatives when specified as + or +b, +c'', etc. (All specifications with an accent pattern are
--- equivalent other than +a.) We also allow and handle certain qualifiers such as dated-+b or awkward-нехитре́е.
--- Finally, we allow and handle periphrastic comparatives noted using "peri".
+-- equivalent other than +a.) Finally, we allow and handle periphrastic comparatives noted using "peri".
 local function handle_comparatives(data, comps, catpos, noinf)
-	comps = split_list_into_russian_tr(comps)
-	if #comps == 1 and comps[1][1] == "-" then
-		table.insert(data.inflections, {label = "no comparative"})
+	if comps[1] and comps[1].term == "-" then
+		if comps[2] then
+			insert(data.inflections, {label = "not generally " .. glossary_link("comparable")})
+			table.remove(comps, 1)
+		else
+			insert(data.inflections, {label = "no comparative"})
+		end
 		track("nocomp")
-	elseif #comps > 0 then
-		local normal_comp_parts = {}
-		local rare_comp_parts = {}
-		local dated_comp_parts = {}
-		local awkward_comp_parts = {}
+	end
+	if comps[1] then
+		local comp_parts = {}
 
-		local function get_comp_parts(comptype)
-			return comptype == "rare" and rare_comp_parts or
-				comptype == "dated" and dated_comp_parts or
-				comptype == "awkward" and awkward_comp_parts or
-				normal_comp_parts
-		end
-
-		local function insert_comp_inflection(comptype, comp)
-			local comp_parts = get_comp_parts(comptype)
-			m_table.insertIfNot(comp_parts, comp)
-		end
-
-		local function insert_comp_of_type(comp, comptype)
-			insert_comp_inflection(comptype, generate_po_variant(comp))
+		local function insert_comp(comp)
+			insertIfNot(comp_parts, generate_po_variant(comp))
 			if not noinf then
 				local informal = generate_informal_comp(comp)
 				if informal then
-					insert_comp_inflection(comptype, generate_po_variant(informal))
+					insertIfNot(comp_parts, generate_po_variant(informal))
 				end
 			end
 		end
 
 		for _, comp in ipairs(comps) do
 			local ru, tr = unpack(comp)
-			local comptype = "normal"
-			if rfind(ru, "^rare%-") then
-				comptype = "rare"
-				ru = rsub(ru, "^rare%-", "")
-			elseif rfind(ru, "^dated%-") then
-				comptype = "dated"
-				ru = rsub(ru, "^dated%-", "")
-			elseif rfind(ru, "^awkward%-") then
-				comptype = "awkward"
-				ru = rsub(ru, "^awkward%-", "")
-			end
 			if ru == "peri" then
 				for _, positive in ipairs(zip_head_and_translit(data)) do
 					local comp = generate_periphrastic_comp(positive)
-					insert_comp_inflection(comptype, comp)
+					insertIfNot(comp_parts, comp)
 				end
 				track("pericomp")
 			elseif rfind(ru, "^+") then
 				local autocomps = generate_comparative(zip_head_and_translit(data), ru)
 				for _, autocomp in ipairs(autocomps) do
-					insert_comp_of_type(autocomp, comptype)
+					insert_comp(autocomp)
 				end
 			else
-				insert_comp_of_type({ru, tr}, comptype)
+				insert_comp({ru, tr})
 			end
 		end
 
@@ -926,37 +909,34 @@ local function handle_comparatives(data, comps, catpos, noinf)
 				local un_po_hacked_ru = m_links.remove_links(rsub(ru, "^%[%[.-%]%]", ""))
 				local un_po_hacked_tr = tr and rsub(tr, "^%(po%)", "") or nil
 				local un_po_hacked_form = {un_po_hacked_ru, un_po_hacked_tr}
-				m_table.insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, nil, un_po_hacked_form))
+				insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, nil, un_po_hacked_form))
 			end
-			table.insert(data.inflections, parts)
+			insert(data.inflections, parts)
 		end
 
 		add_comp_inflection("comparative", normal_comp_parts, "comparative")
-		add_comp_inflection("rare comparative", rare_comp_parts)
-		add_comp_inflection("dated comparative", dated_comp_parts)
-		add_comp_inflection("rare/awkward comparative", awkward_comp_parts)
 	end
 end
 
 -- Display additional inflection information for an adjective
 pos_functions["adjectives"] = {
 	 params = {
-		["indecl"] = {type = "boolean"}, --indeclinable
-		["noinf"] = {type = "boolean"}, --suppress informal comparatives
-		[2] = {list = "comp"}, --comparative(s)
-		[3] = {list = "sup"}, --superlative(s)
-		["adv"] = {list = true}, --corresponding adverb(s)
-		["absn"] = {list = true}, --corresponding abstract noun(s)
-		["dim"] = {list = true}, --corresponding diminutive(s)
-		["aug"] = {list = true}, --corresponding augmentative(s)
-		["pej"] = {list = true}, --corresponding pejorative(s)
+		["indecl"] = boolean_param, --indeclinable
+		["noinf"] = boolean_param, --suppress informal comparatives
+		[2] = list_comp, --comparative(s)
+		[3] = list_sup, --superlative(s)
+		["adv"] = list_param, --corresponding adverb(s)
+		["absn"] = list_param, --corresponding abstract noun(s)
+		["dim"] = list_param, --corresponding diminutive(s)
+		["aug"] = list_param, --corresponding augmentative(s)
+		["pej"] = list_param, --corresponding pejorative(s)
 	},
 	func = function(args, data)
-		local comps = args[2]
+		local comps = parse_inflection(data, args, {2, "comp"})
 
 		if args.indecl then
-			table.insert(data.inflections, {label = "indeclinable"})
-			table.insert(data.categories, "Russian indeclinable adjectives")
+			insert(data.inflections, {label = "indeclinable"})
+			insert(data.categories, langname .. " indeclinable adjectives")
 		end
 
 		handle_comparatives(data, comps, "adjective", args.noinf)
@@ -973,10 +953,10 @@ pos_functions["adjectives"] = {
 					local lemmas = zip_head_and_translit(data)
 					for _, lemma in ipairs(lemmas) do
 						local ru, tr = unpack(lemma)
-						m_table.insertIfNot(normalized_sups, com.concat_russian_tr("[[са́мый]] ", nil, ru, tr, "dopair"))
+						insertIfNot(normalized_sups, com.concat_russian_tr("[[са́мый]] ", nil, ru, tr, "dopair"))
 					end
 				else
-					m_table.insertIfNot(normalized_sups, com.split_russian_tr(sup, "dopair"))
+					insertIfNot(normalized_sups, com.split_russian_tr(sup, "dopair"))
 				end
 			end
 			add_adj_forms("superlative", normalized_sups, "superlative")
@@ -1002,10 +982,10 @@ pos_functions["adjectives"] = {
 						else
 							ru, tr = com.strip_ending(ru, tr, "ый")
 						end
-						m_table.insertIfNot(normalized_absn, com.concat_russian_tr(ru, tr, "ость", nil, "dopair"))
+						insertIfNot(normalized_absn, com.concat_russian_tr(ru, tr, "ость", nil, "dopair"))
 					end
 				else
-					m_table.insertIfNot(normalized_absn, com.split_russian_tr(absn, "dopair"))
+					insertIfNot(normalized_absn, com.split_russian_tr(absn, "dopair"))
 				end
 			end
 			add_adj_forms("abstract noun", normalized_absn, "abstract noun", "noun")
@@ -1022,12 +1002,12 @@ pos_functions["adjectives"] = {
 -- Display additional inflection information for an adverb
 pos_functions["adverbs"] = {
 	 params = {
-		["noinf"] = {type = "boolean"}, --suppress informal comparatives
-		[2] = {list = "comp"}, --comparative(s)
-		-- ["3"] = {list = "sup"}, --FIXME: why no superlatives?
-		["dim"] = {list = true}, --corresponding diminutive(s)
-		["aug"] = {list = true}, --corresponding augmentative(s)
-		["pej"] = {list = true}, --corresponding pejorative(s)
+		["noinf"] = boolean_param, --suppress informal comparatives
+		[2] = list_comp, --comparative(s)
+		-- ["3"] = list_sup, --FIXME: why no superlatives?
+		["dim"] = list_param, --corresponding diminutive(s)
+		["aug"] = list_param, --corresponding augmentative(s)
+		["pej"] = list_param, --corresponding pejorative(s)
 	},
 	func = function(args, data)
 		local comps = args[2]
@@ -1052,21 +1032,21 @@ local function get_verb_pos(pos)
 	return {
 		params = {
 			[2] = {required = true, default = "?"}, --aspect
-			["impf"] = {list = true}, -- imperfective(s),
-			["pf"] = {list = true}, -- perfective(s),
-			["vn"] = {list = true}, -- verbal noun(s),
+			["impf"] = list_param, -- imperfective(s),
+			["pf"] = list_param, -- perfective(s),
+			["vn"] = list_param, -- verbal noun(s),
 		},
 		func = function(args, data)
 			local cform = pos == "verbal combining forms"
 			if cform then
-				table.insert(data.categories, "Russian verbs")
+				insert(data.categories, "Russian verbs")
 			end
 			-- Aspect
 			local aspect = args[2]
 			if aspect == "both" then
-				table.insert(data.genders, "biasp")
+				insert(data.genders, "biasp")
 			elseif aspect == "pf" or aspect == "impf" or aspect == "biasp" or aspect == "?" then
-				table.insert(data.genders, aspect)
+				insert(data.genders, aspect)
 			else
 				error("Invalid Russian verb aspect '" .. aspect .. "', should be 'pf', 'impf', 'both', 'biasp' or '?'")
 			end
