@@ -42,7 +42,7 @@ local function get_adj_adv_inflection_spec()
 			generate_default_from_head = function(data)
 				return {
 					term = data.term .. export.ZWNJ(data.term) .. "ت" .. A .. "ر",
-					translit = data.tr and data.tr .. "-tar" or nil,
+					tr = data.tr and data.tr .. "-tar" or nil,
 					accel = {form = "compararative"},
 				}
 			end,
@@ -61,7 +61,7 @@ local function get_adj_adv_inflection_spec()
 			generate_default_from_head = function(data)
 				return {
 					term = data.term .. export.ZWNJ(data.term) .. "ت" .. A .. "رین",
-					translit = data.tr and data.tr .. "-tarin" or nil,
+					tr = data.tr and data.tr .. "-tarin" or nil,
 					accel = {form = "superlative"},
 				}
 			end,
