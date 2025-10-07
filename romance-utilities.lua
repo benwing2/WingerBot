@@ -1,21 +1,53 @@
 local export = {}
 
-local put_module = "Module:parse utilities"
-local strutil_module = "Module:string utilities"
+local languages_module = "Module:languages"
+local parse_utilities_module = "Module:parse utilities"
+local string_pattern_escape_module = "Module:string/patternEscape"
+local string_replacement_escape_module = "Module:string/replacementEscape"
+local string_utilities_module = "Module:string utilities"
 
-local m_str_utils = require(strutil_module)
+local concat = table.concat
+local insert = table.insert
+local ipairs = ipairs
+local pairs = pairs
+local require = require
+local sort = table.sort
+local type = type
 
-local rfind = m_str_utils.find
-local rsubn = m_str_utils.gsub
-local rmatch = m_str_utils.match
-local rsplit = m_str_utils.split
-
--- version of rsubn() that discards all but the first return value
-local function rsub(term, foo, bar)
-	local retval = rsubn(term, foo, bar)
-	return retval
+local function escape_wikicode(...)
+	escape_wikicode = require(parse_utilities_module).escape_wikicode
+	return escape_wikicode(...)
 end
 
+local function get_lang(...)
+	get_lang = require(languages_module).getByCode
+	return get_lang(...)
+end
+
+local function pattern_escape(...)
+	pattern_escape = require(string_pattern_escape_module)
+	return pattern_escape(...)
+end
+
+local function replacement_escape(...)
+	replacement_escape = require(string_replacement_escape_module)
+	return replacement_escape(...)
+end
+
+local function split(...)
+	split = require(string_utilities_module).split
+	return split(...)
+end
+
+local function ugsub(...)
+	ugsub = require(string_utilities_module).gsub
+	return ugsub(...)
+end
+
+local function umatch(...)
+	umatch = require(string_utilities_module).match
+	return umatch(...)
+end
 
 export.allowed_special_indicators = {
 	["first"] = true,
@@ -38,9 +70,9 @@ function export.get_special_indicator(form)
 		if not export.allowed_special_indicators[form] then
 			local indicators = {}
 			for indic, _ in pairs(export.allowed_special_indicators) do
-				table.insert(indicators, "+" .. indic)
+				insert(indicators, "+" .. indic)
 			end
-			table.sort(indicators)
+			sort(indicators)
 			error("Special inflection indicator beginning with '+' can only be " ..
 				mw.text.listToText(indicators) .. ": +" .. form)
 		end
@@ -48,7 +80,6 @@ function export.get_special_indicator(form)
 	end
 	return nil
 end
-
 
 local function add_endings(bases, endings)
 	local retval = {}
@@ -60,12 +91,11 @@ local function add_endings(bases, endings)
 	end
 	for _, base in ipairs(bases) do
 		for _, ending in ipairs(endings) do
-			table.insert(retval, base .. ending)
+			insert(retval, base .. ending)
 		end
 	end
 	return retval
 end
-
 
 --[==[
 Inflect a possibly multiword or hyphenated term `form` using the function `inflect`, which is a function of one
@@ -74,7 +104,7 @@ inflected words. `special` indicates how to inflect the multiword term and shoul
 first word, {"first-last"} to inflect the first and last words, {"each"} to inflect each word, etc. See
 `allowed_special_indicators` above for the possibilities. If `special` is `+`, or is omitted and the term is
 multiword (i.e. containing a space character), the function checks for multiword or hyphenated terms containing the
-prepositions in `prepositions`, e.g. Italian [[senso di marcia]] or [[succo d'arancia]] or Portuguese
+prepositions in `prepositions`, e.g. Italian [[senso di marcia]] or [[medaglia d'oro]] or Portuguese
 [[tartaruga-do-mar]]. If such a term is found, only the first word is inflected. Otherwise, the default is
 {"first-last"}. `prepositions` is a list of regular expressions matching prepositions. The regular expressions will
 automatically have the separator character (space or hyphen) added to the left side but not the right side, so they
@@ -89,37 +119,37 @@ and `form` is not multiword. (If `special` is specified and `form` is not multiw
 function export.handle_multiword(form, special, inflect, prepositions, sep)
 	sep = sep or form:find(" ") and " " or "%-"
 	local raw_sep = sep == " " and " " or "-"
-	-- Used to add regex version of separator in the replacement portion of rsub() or :gsub()
+	-- Used to add regex version of separator in the replacement portion of ugsub() or :gsub()
 	local sep_replacement = sep == " " and " " or "%%-"
-	-- Given a Lua pattern (aka "regex"), replace space with the appropriate separator.
+
+	-- Given a Lua pattern, replace space with the appropriate separator.
 	local function hack_re(re)
 		if sep == " " then
 			return re
-		else
-			return rsub(re, " ", sep_replacement)
 		end
+		return (re:gsub(" ", sep_replacement))
 	end
 
 	if special == "first" then
-		local first, rest = rmatch(form, hack_re("^(.-)( .*)$"))
+		local first, rest = form:match(hack_re("^(.-)( .*)$"))
 		if not first then
 			error("Special indicator 'first' can only be used with a multiword term: " .. form)
 		end
 		return add_endings(inflect(first), rest)
 	elseif special == "second" then
-		local first, second, rest = rmatch(form, hack_re("^([^ ]+ )([^ ]+)( .*)$"))
+		local first, second, rest = form:match(hack_re("^([^ ]+ )([^ ]+)( .*)$"))
 		if not first then
 			error("Special indicator 'second' can only be used with a term with three or more words: " .. form)
 		end
 		return add_endings(add_endings({first}, inflect(second)), rest)
 	elseif special == "first-second" then
-		local first, space, second, rest = rmatch(form, hack_re("^([^ ]+)( )([^ ]+)( .*)$"))
+		local first, space, second, rest = form:match(hack_re("^([^ ]+)( )([^ ]+)( .*)$"))
 		if not first then
 			error("Special indicator 'first-second' can only be used with a term with three or more words: " .. form)
 		end
 		return add_endings(add_endings(add_endings(inflect(first), space), inflect(second)), rest)
 	elseif special == "each" then
-		local terms = rsplit(form, sep)
+		local terms = split(form, sep)
 		if #terms < 2 then
 			error("Special indicator 'each' can only be used with a multiword term: " .. form)
 		end
@@ -135,16 +165,16 @@ function export.handle_multiword(form, special, inflect, prepositions, sep)
 		end
 		return result
 	elseif special == "first-last" then
-		local first, middle, last = rmatch(form, hack_re("^(.-)( .* )(.-)$"))
+		local first, middle, last = form:match(hack_re("^(.-)( .* )(.-)$"))
 		if not first then
-			first, middle, last = rmatch(form, hack_re("^(.-)( )(.*)$"))
+			first, middle, last = form:match(hack_re("^(.-)( )(.*)$"))
 		end
 		if not first then
 			error("Special indicator 'first-last' can only be used with a multiword term: " .. form)
 		end
 		return add_endings(add_endings(inflect(first), middle), inflect(last))
 	elseif special == "last" then
-		local rest, last = rmatch(form, hack_re("^(.* )(.-)$"))
+		local rest, last = form:match(hack_re("^(.* )(.-)$"))
 		if not rest then
 			error("Special indicator 'last' can only be used with a multiword term: " .. form)
 		end
@@ -159,7 +189,7 @@ function export.handle_multiword(form, special, inflect, prepositions, sep)
 		-- check for prepositions in the middle of the word; do it this way so we can handle
 		-- more than one word before the preposition (and usually inflect each word)
 		for _, prep in ipairs(prepositions) do
-			local first, space_prep_rest = rmatch(form, hack_re("^(.-)( " .. prep .. ".*)$"))
+			local first, space_prep_rest = umatch(form, hack_re("^(.-)( " .. prep .. ".*)$"))
 			if first then
 				return add_endings(inflect(first), space_prep_rest)
 			end
@@ -182,7 +212,7 @@ end
 -- [[l'eau]] as [[l']][[eau]]). See `add_links_to_multiword_term()` for the explanation of `no_split_apostrophe_words`
 -- and `include_hyphen_prefixes`.
 local function add_single_word_links(space_word, splithyph, no_split_apostrophe_words, include_hyphen_prefixes)
-	local space_word_no_punct, punct = rmatch(space_word, "^(.*)([,;:?!])$")
+	local space_word_no_punct, punct = space_word:match("^(.*)([,;:?!])$")
 	space_word_no_punct = space_word_no_punct or space_word
 	punct = punct or ""
 	local words
@@ -190,7 +220,7 @@ local function add_single_word_links(space_word, splithyph, no_split_apostrophe_
 	if not splithyph or space_word_no_punct:find("^%-") or space_word_no_punct:find("%-$") then
 		words = {space_word_no_punct}
 	else
-		words = rsplit(space_word_no_punct, "%-")
+		words = split(space_word_no_punct, "%-")
 	end
 	local linked_words = {}
 	for j, word in ipairs(words) do
@@ -201,7 +231,7 @@ local function add_single_word_links(space_word, splithyph, no_split_apostrophe_
 			-- (e.g. [['ndrangheta]] or [[po']]). Handle multiple apostrophes correctly, e.g. [[l'altr'ieri]].
 			if (not no_split_apostrophe_words or not no_split_apostrophe_words[word]) and word:find("'")
 				and not word:find("^'") and not word:find("'$") then
-				local apostrophe_parts = rsplit(word, "'")
+				local apostrophe_parts = split(word, "'")
 				for i, apostrophe_part in ipairs(apostrophe_parts) do
 					if i == #apostrophe_parts then
 						apostrophe_parts[i] = "[[" .. apostrophe_part .. "]]"
@@ -209,7 +239,7 @@ local function add_single_word_links(space_word, splithyph, no_split_apostrophe_
 						apostrophe_parts[i] = "[[" .. apostrophe_part .. "']]"
 					end
 				end
-				word = table.concat(apostrophe_parts)
+				word = concat(apostrophe_parts)
 			else
 				word = "[[" .. word .. "]]"
 			end
@@ -217,9 +247,9 @@ local function add_single_word_links(space_word, splithyph, no_split_apostrophe_
 				word = word .. "-"
 			end
 		end
-		table.insert(linked_words, word)
+		insert(linked_words, word)
 	end
-	return table.concat(linked_words) .. punct
+	return concat(linked_words) .. punct
 end
 
 --[==[
@@ -241,27 +271,19 @@ set, a Portuguese word like [[anti-herói]] "anti-hero" will be split [[anti-]][
 [[código-fonte]] "source code" will be split as [[código]]-[[fonte]]).
 ]==]
 function export.add_links_to_multiword_term(term, splithyph, no_split_apostrophe_words, include_hyphen_prefixes)
-	if not rfind(term, " ") then
+	if not term:find(" ", nil, true) then
 		splithyph = true
 	end
-	local words = rsplit(term, " ")
+	local words = split(term, " ")
 	local linked_words = {}
 	for _, word in ipairs(words) do
-		table.insert(linked_words, add_single_word_links(word, splithyph, no_split_apostrophe_words,
+		insert(linked_words, add_single_word_links(word, splithyph, no_split_apostrophe_words,
 			include_hyphen_prefixes))
 	end
-	local retval = table.concat(linked_words, " ")
+	local retval = concat(linked_words, " ")
 	-- If we ended up with a single link consisting of the entire term,
 	-- remove the link.
-	local unlinked_retval = rmatch(retval, "^%[%[([^%[%]]*)%]%]$")
-	return unlinked_retval or retval
-end
-
-
--- Ensure that brackets display literally in error messages. Replacing with equivalent HTML escapes doesn't work
--- because they are displayed literally; but inserting a Unicode word-joiner symbol works.
-local function escape_wikicode(term)
-	return require(put_module).escape_wikicode(term)
+	return retval:match("^%[%[([^%[%]]*)%]%]$") or retval
 end
 
 
@@ -298,7 +320,7 @@ and link multiword subterms using e.g. `andare a letto:~`. (The code knows how t
 properly, and if the link text and destination are the same, only a single-part link is formed.)
 ]==]
 function export.apply_link_modifiers(linked_term, modifier_spec)
-	local split_modspecs = rsplit(modifier_spec, "%s*;%s*")
+	local split_modspecs = split(modifier_spec, "%s*;%s*")
 	for j, modspec in ipairs(split_modspecs) do
 		local subterm, dest, otherlang
 		local begin_from, begin_to, rest, end_from, end_to = modspec:match("^%[(.-):(.*)%]([^:]*)%[(.-):(.*)%]$")
@@ -336,7 +358,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 					dest = ("%s:%s"):format(otherlang, langdest)
 					otherlang = nil
 				elseif otherlang then
-					otherlang = require("Module:languages").getByCode(otherlang, true, "allow etym")
+					otherlang = get_lang(otherlang, true, "allow etym")
 					dest = langdest
 				end
 			end
@@ -345,8 +367,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 			error(("Single modifier spec %s should be of the form SUBTERM:DEST where SUBTERM is one or more words " ..
 				"a multiword term and DEST is the destination to link the subterm to (possibly prefixed by a " ..
 				"language code); or of the form BEGIN[FROM:TO], which is equivalent to BEGINFROM:BEGINTO; or " ..
-				"similarly [FROM:TO]END, which is equivalent to FROMEND:TOEND"):
-				format(modspec))
+				"similarly [FROM:TO]END, which is equivalent to FROMEND:TOEND"):format(modspec))
 		end
 		if subterm == "^" then
 			linked_term = dest:gsub("_", " ") .. linked_term
@@ -357,12 +378,11 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 				error(("Subterm '%s' in modifier spec '%s' cannot have brackets in it"):format(
 					escape_wikicode(subterm), escape_wikicode(modspec)))
 			end
-			local strutil = require("Module:string utilities")
-			local escaped_subterm = strutil.pattern_escape(subterm)
+			local escaped_subterm = pattern_escape(subterm)
 			local subterm_re = "%[%[" .. escaped_subterm:gsub("(%%?[ '%-])", "%%]*%1%%[*") .. "%]%]"
 			local expanded_dest
 			if dest:find("~") then
-				expanded_dest = dest:gsub("~", strutil.replacement_escape(subterm))
+				expanded_dest = dest:gsub("~", replacement_escape(subterm))
 			else
 				expanded_dest = dest
 			end
@@ -380,7 +400,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 				subterm_replacement = "[[" .. expanded_dest .. "|" .. subterm .. "]]"
 			end
 
-			local replaced_linked_term = rsub(linked_term, subterm_re, strutil.replacement_escape(subterm_replacement))
+			local replaced_linked_term = ugsub(linked_term, subterm_re, replacement_escape(subterm_replacement))
 			if replaced_linked_term == linked_term then
 				error(("Subterm '%s' could not be located in %slinked expression %s, or replacement same as subterm"
 					):format(subterm, j > 1 and "intermediate " or "", escape_wikicode(linked_term)))
