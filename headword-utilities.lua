@@ -80,7 +80,7 @@ end
 
 
 local param_mods = {
-	id = {},
+	id = {}, -- disabled when `is_head = true`
 	q = {type = "qualifier"},
 	qq = {type = "qualifier"},
 	l = {type = "labels"},
@@ -117,7 +117,7 @@ Parse a single inflection or headword form or list of such forms. In either case
 * `val`: The raw value to parse. Required.
 * `paramname`: The name of the parameter from which the value was taken; used in error messages. Required.
 * `is_head`: We are parsing a headword parameter (a value which goes into the `heads` field of `data`). This changes
-  the allowed modifiers.
+  the allowed modifiers, disabling the `id` modifier and only allowing a subset of optional modifiers.
 * `frob`: An optional function of one value to apply to the form after inline modifiers have been removed (i.e. to
   apply to the `.term` field of the returned object).
 * `include_mods`: List of extra inline modifiers to include, besides the default ones (see below). Each list item is
