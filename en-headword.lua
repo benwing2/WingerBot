@@ -21,6 +21,7 @@ local utilities_module = "Module:utilities"
 local iut = require_when_needed(inflection_utilities_module)
 local put = require_when_needed(parse_utilities_module)
 
+local m_headword_utilities = require_when_needed(headword_utilities_module)
 local add_links_to_multiword_term = require_when_needed(headword_utilities_module, "add_links_to_multiword_term")
 local add_suffix = require_when_needed(en_utilities_module, "add_suffix")
 local apply_link_modifiers = require_when_needed(headword_utilities_module, "apply_link_modifiers")
@@ -36,6 +37,8 @@ local pairs = pairs
 local process_params = require_when_needed(parameters_module, "process")
 local remove = table.remove
 local remove_links = require_when_needed(links_module, "remove_links")
+local replacement_escape = require_when_needed(string_utilities_module, "replacement_escape")
+local shallowCopy = require_when_needed(table_module, "shallowCopy")
 local singularize = require_when_needed(en_utilities_module, "singularize")
 local split = require_when_needed(string_utilities_module, "split")
 local toJSON = require_when_needed(JSON_module, "toJSON")
@@ -69,9 +72,13 @@ end
 -- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
 -- is parsed for inline modifiers.
 local function parse_inflection(args, field, qual_field, is_head)
+	local argfield = field
+	if type(argfield) == "table" then
+		argfield = argfield[1]
+	end
 	return m_headword_utilities.parse_term_list_with_modifiers {
 		paramname = field,
-		forms = args[field],
+		forms = args[argfield],
 		qualifiers = qual_field and args[qual_field] or nil,
 		splitchar = ",",
 		is_head = is_head,
@@ -155,14 +162,16 @@ function export.show(frame)
 		["nolinkhead"] = {type = "boolean_param", alias_of = "nolink"},
 		["nosuffix"] = boolean_param,
 		["nomultiwordcat"] = boolean_param,
+		["abbr"] = list_param,
 		["pagename"] = true, -- for testing
 	}
 
-	local pos_data, pos_func = pos_functions[poscat]
+	local pos_data = pos_functions[poscat]
+	local pos_func
 	if pos_data then
 		local pos_params = pos_data.params
 		if pos_params then
-			for key, val in pos_params() do
+			for key, val in pairs(pos_params) do
 				params[key] = val
 			end
 		end
@@ -389,6 +398,8 @@ function export.show(frame)
 		inscat("words that use all vowels in alphabetical order")
 	end
 
+	parse_and_insert_inflection(data, args, "abbr", nil, "abbreviation")
+
 	if args.json then
 		return toJSON(data)
 	end
@@ -400,74 +411,264 @@ function export.show(frame)
 end
 
 
--- This function does the common work between adjectives and adverbs
-local function make_comparatives(params, data)
-	local comp_parts = {label = glossary_link("comparative"), accel = {form = "comparative"}}
-	local sup_parts = {label = glossary_link("superlative"), accel = {form = "superlative"}}
+local function make_default_comparative(word)
+	if word == "good" or word == "well" then
+		return {"better"}
+	elseif word == "bad" or word == "badly" then
+		return {"worse"}
+	elseif word == "far" then
+		return {"further", "farther"}
+	else
+		return {add_suffix(word, "r")}
+	end
+end
+
+local function make_default_superlative(word)
+	if word == "good" or word == "well" then
+		return {"best"}
+	elseif word == "bad" or word == "badly" then
+		return {"worst"}
+	elseif word == "far" then
+		return {"furthest", "farthest"}
+	else
+		return {add_suffix(word, "st.superlative")}
+	end
+end
+
+-- This function does the common work between adjectives and adverbs.
+local function process_comparative_args(data, args, plpos)
 	local pagename = data.displayed_pagename
 
-	if #params == 0 then
-		insert(params, {"more"})
+	local comps = parse_inflection(args, 1)
+	local sups = parse_inflection(args, "sup")
+
+	local outcomps, outsups
+
+	if args.componly then
+		if comps[1] then
+			error("Can't specify comparatives of comparative-only " .. plpos)
+		end
+		insert(data.inflections, {label = glossary_link("comparative") .. " form only"})
+		insert(data.categories, langname .. " comparative-only " .. plpos)
+		-- Set to empty list so we don't get any comparatives output, but process superlatives if specified.
+		outcomps = {}
+		if not sups[1] then
+			-- Set to empty list so we don't get any superlatives output unless explicitly given.
+			outsups = {}
+		end
+	elseif args.suponly then
+		if comps[1] or sups[1] then
+			error("Can't specify comparatives or superlatives of or superlative-only " .. plpos)
+		end
+		insert(data.inflections, {label = glossary_link("superlative") .. " form only"})
+		insert(data.categories, langname .. " superlative-only " .. plpos)
+		return
 	end
 
-	-- Go over each parameter given and create a comparative and superlative
-	-- form.
-	for i, val in ipairs(params) do
-		local comp = val[1]
-		local comp_qual = val[2]
-		local sup = val[3]
-		local sup_qual = val[4]
-		local comp_part, sup_part
-
-		if comp == "more" and pagename ~= "many" and pagename ~= "much" then
-			comp_part = "more [[" .. pagename .. "]]"
-			sup_part = sup or "most [[" .. pagename .. "]]"
-		elseif comp == "further" and pagename ~= "far" then
-			comp_part = "further [[" .. pagename .. "]]"
-			sup_part = sup or "furthest [[" .. pagename .. "]]"
-		elseif comp == "er" then
-			-- Add the "-er" and "-est" suffixes.
-			comp_part = add_suffix(pagename, "r")
-			sup_part = sup or add_suffix(pagename, "st.superlative")
-		elseif comp == "ier" then
-			if pagename:sub(-1) ~= "y" then
-				error("Can't specify 'ier' comparative unless the term ends with 'y'.")
-			end
-			comp_part = pagename:gsub("e?y$", "ier")
-			sup_part = sup or pagename:gsub("e?y$", "iest")
-		elseif comp == "-" or sup == "-" then
-			-- Allowing '-' makes it more flexible to not have some forms
-			if comp ~= "-" then
-				comp_part = comp
-			end
-			if sup ~= "-" then
-				sup_part = sup
-			end
+	-- If the first parameter is ?, then don't show anything, just return.
+	if comps[1] and comps[1].term == "?" then
+		if comps[2] then
+			error("Can't specify additional comparatives along with '?'")
+		end
+		if sups[1] then
+			error("Can't specify superlatives along with '?' for the comparative")
+		end
+		return
+	end
+	if comps[1] and comps[1].term == "-" then
+		local hyphencomp = remove(comps, 1)  -- Remove the "-" but retain for qualifiers, labels, references
+		-- Not (generally) comparable; may occasionally have a comparative
+		if comps[1] then
+			insert_fixed_inflection(data, "not generally <<comparable>>", hyphencomp)
+		elseif not sups[1] then
+			insert_fixed_inflection(data, "not <<comparable>>", hyphencomp)
+			insert(data.categories, langname .. " uncomparable " .. plpos)
+			return
 		else
-			-- If the full comparative was given, but no superlative, then
-			-- create it by replacing the ending -er with -est.
-			if not sup then
-				if comp:sub(-2) == "er" then
-					sup = comp:sub(1, -3) .. "est"
-				else
-					error("The superlative of \"" .. comp .. "\" cannot be generated automatically. Please provide it with the \"sup" .. (i == 1 and "" or i) .. "=\" parameter.")
+			-- No comparative, but a superlative. insert_inflection() will correctly generate 'no comparative' if we
+			-- pass in "-" as the value.
+			outcomps = {hyphencomp}
+		end
+	elseif not comps[1] then
+		comps = {{term = "more"}}
+	end
+
+	if not outcomps then -- not if we set `outcomps` to "-" above or processed a comparative-only term
+		outcomps = {}
+		-- Go over each parameter given and create a comparative and superlative form.
+		for _, compobj in ipairs(comps) do
+			local comp = compobj.term
+			if comp == "-" then
+				error("Comparative of '-' only allowed as first comparative")
+			end
+			if comp == "+" then
+				comp = "+more"
+			elseif comp == "more" and pagename ~= "many" and pagename ~= "much" then
+				comp = "+more"
+			elseif comp == "further" and pagename ~= "far" then
+				comp = "+further"
+			elseif comp == "better" and pagename ~= "good" and pagename ~= "well" then
+				comp = "+better"
+			elseif comp:find("~") then
+				comp = comp:gsub("~", replacement_escape(pagename))
+			end
+			compobj.origterm = comp
+
+			if comp == "+more" then
+				comp = "more [[" .. pagename .. "]]"
+			elseif comp == "+further" then
+				comp = {"further [[" .. pagename .. "]]", "farther [[" .. pagename .. "]]"}
+			elseif comp == "+better" then
+				comp = "better [[" .. pagename .. "]]"
+			elseif comp == "er" then
+				-- Add -er.
+				comp = add_suffix(pagename, "r")
+			elseif comp == "ier" then
+				if pagename:sub(-1) ~= "y" then
+					error("Can't specify 'ier' comparative unless the term ends with 'y': " .. pagename)
+				end
+				comp = pagename:gsub("e?y$", "ier")
+			elseif comp:find("^%+") then
+				local special = m_headword_utilities.get_special_indicator(comp, "noerror")
+				if special then
+					comp = m_headword_utilities.handle_multiword(pagename, special, make_default_comparative)
 				end
 			end
-
-			comp_part = comp
-			sup_part = sup
-		end
-
-		if comp_part then
-			insert(comp_parts, {term = comp_part, q = {comp_qual}})
-		end
-		if sup_part then
-			insert(sup_parts, {term = sup_part, q = {sup_qual}})
+			if type(comp) == "table" and not comp[2] then
+				comp = comp[1]
+			end
+			if type(comp) == "table" then
+				for i = 1, #comp - 1 do
+					local outobj = shallowCopy(compobj)
+					outobj.term = comp[i]
+					insert(outcomps, outobj)
+				end
+				compobj.term = comp[#comp]
+				insert(outcomps, compobj)
+			else
+				compobj.term = comp
+				insert(outcomps, compobj)
+			end
 		end
 	end
 
-	insert(data.inflections, comp_parts)
-	insert(data.inflections, sup_parts)
+	if sups[1] and sups[1].term == "-" then
+		if sups[2] then
+			error("Can't specify '-' as superlative followed by further values")
+		end
+		-- No superlative. insert_inflection() will correctly generate 'no superlative' if we pass in "-" as the value.
+		outsups = sups
+	else
+		if not sups[1] then
+			sups = {{term = "+"}}
+		end
+	end
+
+	-- `outsups` will be set if we set `outsups` to "-" above or processed a comparative-only term without superlatives.
+	if not outsups then
+		outsups = {}
+
+		local function process_sup(sup, special, supobj, compobj)
+			if special then
+				sup = m_headword_utilities.handle_multiword(pagename, special, make_default_superlative)
+			elseif sup == "-" or sup == "+" then
+				error(("Internal error: Superlative value of '%s' should have been handled earlier"):format(sup))
+			elseif sup == "+most" then
+				sup = "most [[" .. pagename .. "]]"
+			elseif sup == "+furthest" then
+				sup = {"furthest [[" .. pagename .. "]]", "farthest [[" .. pagename .. "]]"}
+			elseif sup == "+best" then
+				sup = "best [[" .. pagename .. "]]"
+			elseif sup == "est" then
+				-- Add -est.
+				sup = add_suffix(pagename, "st.superlative")
+			elseif sup == "iest" then
+				if pagename:sub(-1) ~= "y" then
+					error("Can't specify 'iest' superlative unless the term ends with 'y': " .. pagename)
+				end
+				sup = pagename:gsub("e?y$", "iest")
+			end
+			if type(sup) == "table" and not sup[2] then
+				sup = sup[1]
+			end
+			if compobj then
+				supobj = shallowCopy(supobj)
+				supobj = m_headword_utilities.combine_termobj_qualifiers_labels(supobj, compobj)
+			end
+			if type(sup) == "table" then
+				for i = 1, #sup - 1 do
+					local outobj = shallowCopy(supobj)
+					outobj.term = sup[i]
+					insert(outsups, outobj)
+				end
+				supobj.term = sup[#sup]
+				insert(outsups, supobj)
+			else
+				supobj.term = sup
+				insert(outsups, supobj)
+			end
+		end
+
+		for _, supobj in ipairs(sups) do
+			local sup = supobj.term
+			if sup == "-" then
+				error("Superlative of '-' only allowed as first superlative")
+			end
+			if sup == "+" then
+				if not comps[1] then
+					error("Superlative of '+' can't be specified when there are no comparatives")
+				end
+				for _, compobj in ipairs(comps) do
+					local comp = compobj.origterm
+					local special
+					if comp == "+more" then
+						sup = "+most"
+					elseif comp == "+further" then
+						sup = "+furthest"
+					elseif comp == "+better" then
+						sup = "+best"
+					elseif comp == "er" then
+						sup = "est"
+					elseif comp == "ier" then
+						sup = "iest"
+					else
+						if comp:find("^%+") then
+							special = m_headword_utilities.get_special_indicator(comp, "noerror")
+						end
+						if not special then
+							-- If the full comparative was given, then derive the superlative by replacing -er with
+							-- -est.
+							if comp:sub(-2) == "er" then
+								sup = comp:sub(1, -3) .. "est"
+							else
+								error(("The superlative cannot be derived automatically from comparative '%s' because it doesn't end in -er"):format(comp))
+							end
+						end
+					end
+					process_sup(sup, special, supobj, compobj)
+				end
+			else
+				local special = m_headword_utilities.get_special_indicator(sup, "noerror")
+				-- Do some work here rather than in process_sup() so we don't end up double-processing a term with a '~'
+				-- in it or a term that happens to be 'most' or similar after substitution of ~ in the comparative.
+				if not special then
+					if sup == "most" and pagename ~= "many" and pagename ~= "much" then
+						sup = "+most"
+					elseif sup == "furthest" and pagename ~= "far" then
+						sup = "+furthest"
+					elseif sup == "best" and pagename ~= "good" and pagename ~= "well" then
+						sup = "+best"
+					elseif sup:find("~") then
+						sup = sup:gsub("~", replacement_escape(pagename))
+					end
+				end
+				process_sup(sup, special, supobj)
+			end
+		end
+	end
+
+	insert_inflection(data, outcomps, "<<comparative>>", "comparative")
+	insert_inflection(data, outsups, "<<superlative>>", "superlative")
 end
 
 
@@ -475,8 +676,10 @@ local function make_heads_definite(args, data)
 	if args.def == "~" then
 		local newheads = {}
 		for _, headobj in ipairs(data.heads) do
-			insert(newheads, head)
-			insert(newheads, "the " .. head)
+			local barehead = shallowCopy(headobj)
+			insert(newheads, barehead)
+			headobj.term = "the " .. headobj.term
+			insert(newheads, headobj)
 		end
 		data.heads = newheads
 	else
@@ -492,121 +695,44 @@ pos_functions["adjectives"] = {
 		[1] = list_param,
 		["def"] = true,
 		["the"] = {alias_of = "def"},
-		["comp_qual"] = {list = "comp\1_qual", allow_holes = true},
+		["comp_qual"] = {list = "comp\1_qual", allow_holes = true, replaced_by = false,
+			instead = "use <l:...> or <q:...> inline modifier on the comparative value",
+		},
 		["sup"] = list_param,
-		["sup_qual"] = {list = "sup\1_qual", allow_holes = true},
+		["sup_qual"] = {list = "sup\1_qual", allow_holes = true, replaced_by = false,
+			 instead = "use <l:...> or <q:...> inline modifier on the superlative value",
+		},
+		["componly"] = boolean_param,
+		["suponly"] = boolean_param,
 	},
 
 	func = function(args, data)
-		local shift = 0
-		local is_not_comparable = false
-		local is_comparative_only = false
-
 		if args.def then
 			make_heads_definite(args, data)
 		end
 
-		-- If the first parameter is ?, then don't show anything, just return.
-		if args[1][1] == "?" then
-			return
-		-- If the first parameter is -, then move all parameters up one position.
-		elseif args[1][1] == "-" then
-			shift = 1
-			is_not_comparable = true
-		-- If the only argument is +, then remember this and clear parameters
-		elseif args[1][1] == "+" and args[1].maxindex == 1 then
-			shift = 1
-			is_comparative_only = true
-		end
-
-		-- Gather all the comparative and superlative parameters.
-		local params = {}
-
-		for i = 1, args[1].maxindex - shift do
-			local comp = args[1][i + shift]
-			local comp_qual = args["comp_qual"][i + shift]
-			local sup = args["sup"][i]
-			local sup_qual = args["sup_qual"][i + shift]
-
-			if comp or sup then
-				insert(params, {comp, comp_qual, sup, sup_qual})
-			end
-		end
-
-		if shift == 1 then
-			-- If the first parameter is "-" but there are no parameters,
-			-- then show "not comparable" only and return.
-			-- If there are parameters, then show "not generally comparable"
-			-- before the forms.
-			if #params == 0 then
-				if is_not_comparable then
-					insert(data.inflections, {label = "not " .. glossary_link("comparable")})
-					insert(data.categories, langname .. " uncomparable adjectives")
-					return
-				end
-				if is_comparative_only then
-					insert(data.inflections, {label = glossary_link("comparative") .. " form only"})
-					insert(data.categories, langname .. " comparative-only adjectives")
-					return
-				end
-			else
-				insert(data.inflections, {label = "not generally " .. glossary_link("comparable")})
-			end
-		end
-
-		-- Process the parameters
-		make_comparatives(params, data)
+		-- Process the comparatives and superlatives.
+		process_comparative_args(data, args, "adjectives")
 	end,
 }
 
 pos_functions["adverbs"] = {
 	params = {
 		[1] = list_param,
-		["comp_qual"] = {list = "comp\1_qual", allow_holes = true},
+		["comp_qual"] = {list = "comp\1_qual", allow_holes = true, replaced_by = false,
+			instead = "use <l:...> or <q:...> inline modifier on the comparative value",
+		},
 		["sup"] = list_param,
-		["sup_qual"] = {list = "sup\1_qual", allow_holes = true},
+		["sup_qual"] = {list = "sup\1_qual", allow_holes = true, replaced_by = false,
+			 instead = "use <l:...> or <q:...> inline modifier on the superlative value",
+		},
+		["componly"] = boolean_param,
+		["suponly"] = boolean_param,
 	},
 
 	func = function(args, data)
-		local shift = 0
-
-		-- If the first parameter is ?, then don't show anything, just return.
-		if args[1][1] == "?" then
-			return
-		-- If the first parameter is -, then move all parameters up one position.
-		elseif args[1][1] == "-" then
-			shift = 1
-		end
-
-		-- Gather all the comparative and superlative parameters.
-		local params = {}
-
-		for i = 1, args[1].maxindex - shift do
-			local comp = args[1][i + shift]
-			local comp_qual = args["comp_qual"][i + shift]
-			local sup = args["sup"][i]
-			local sup_qual = args["sup_qual"][i + shift]
-
-			if comp or sup then
-				insert(params, {comp, comp_qual, sup, sup_qual})
-			end
-		end
-
-		if shift == 1 then
-			-- If the first parameter is "-" but there are no parameters,
-			-- then show "not comparable" only and return. If there are parameters,
-			-- then show "not generally comparable" before the forms.
-			if #params == 0 then
-				insert(data.inflections, {label = "not " .. glossary_link("comparable")})
-				insert(data.categories, langname .. " uncomparable adverbs")
-				return
-			else
-				insert(data.inflections, {label = "not generally " .. glossary_link("comparable")})
-			end
-		end
-
-		-- Process the parameters
-		make_comparatives(params, data)
+		-- Process the comparatives and superlatives.
+		process_comparative_args(data, args, "adverbs")
 	end,
 }
 
@@ -661,8 +787,12 @@ local function do_nouns(args, data, pos)
 			parse_and_insert_inflection(data, args, "attr", "attrqual", "attributive")
 		end
 	end
-		
-	if plurals[1].term == "p" then
+
+	local function first_pl_term()
+		return plurals[1] and plurals[1].term or nil
+	end
+
+	if first_pl_term() == "p" then
 		-- plurale tantum
 		if plurals[2] then
 			error("With plurale tantum noun, can't specify more than one plural")
@@ -678,14 +808,14 @@ local function do_nouns(args, data, pos)
 
 	local need_default_plural = pos == "noun"
 	local sp = false
-	if plurals[1].term == "sp" then
+	if first_pl_term() == "sp" then
 		-- construed as singular or plural
 		sp = remove(plurals, 1)  -- Remove the "sp" but retain it for its qualifiers, labels, references
 		inscat("nouns construed as singular or plural")
 		data.genders = {"s", "p"} -- this should auto-insert the correct 'pluralia tantum' category
 		need_default_plural = false
 	end
-	if plurals[1].term == "-" then
+	if first_pl_term() == "-" then
 		-- Uncountable noun; may occasionally have a plural
 		local hyphpl = remove(plurals, 1)  -- Remove the "-" but retain for qualifiers, labels, references
 		inscat("uncountable nouns")
@@ -697,7 +827,7 @@ local function do_nouns(args, data, pos)
 			insert_fixed_inflection(data, "<<uncountable>>", hyphpl)
 		end
 		need_default_plural = false
-	elseif plurals[1].term == "#" then
+	elseif first_pl_term() == "#" then
 		-- Usually countable (e.g., "grilled cheese")
 		local hashpl = remove(plurals, 1)  -- Remove the "#" but retain for qualifiers, labels, references
 		insert_fixed_inflection(data, "usually <<countable>>", hashpl)
@@ -708,7 +838,7 @@ local function do_nouns(args, data, pos)
 		if not plurals[1] and need_default_plural then
 			plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
 		end
-	elseif plurals[1].term == "~" then
+	elseif first_pl_term() == "~" then
 		-- Mixed countable/uncountable noun, always has a plural
 		local tildepl = remove(plurals, 1)  -- Remove the "~" but retain for qualifiers, labels, references
 		insert_fixed_inflection(data, "<<countable>> and <<uncountable>>", tildepl)
@@ -721,7 +851,7 @@ local function do_nouns(args, data, pos)
 		end
 	end
 	-- Plural is unknown
-	if plurals[1].term == "?" then
+	if first_pl_term() == "?" then
 		local questionpl = remove(plurals, 1)  -- Remove the "?" but retain for qualifiers, labels, references
 		-- Not desired; see [[Wiktionary:Tea_room/2021/August#"Plural unknown or uncertain"]]
 		-- insert_fixed_inflection(data, "plural unknown or uncertain", questionpl)
@@ -732,7 +862,7 @@ local function do_nouns(args, data, pos)
 		return
 	end
 	-- Plural is not attested
-	if plurals[1].term == "!" then
+	if first_pl_term() == "!" then
 		local exclampl = remove(plurals, 1)  -- Remove the "!" but retain for qualifiers, labels, references
 		insert_fixed_inflection(data, "plural not attested", exclampl)
 		inscat("nouns with unattested plurals")
