@@ -12,6 +12,7 @@ local dump = mw.dumpObject
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local insert = table.insert
 local concat = table.concat
+local sort = table.sort
 
 local function escape_wikicode(...)
 	escape_wikicode = require(parse_utilities_module).escape_wikicode
@@ -452,6 +453,165 @@ end
 function export.termobj_has_qualifiers_or_labels(obj)
 	return obj.q and obj.q[1] or obj.qq and obj.qq[1] or obj.l and obj.l[1] or obj.ll and obj.ll[1] or
 		obj.refs and obj.refs[1]
+end
+
+
+export.allowed_special_indicators = {
+	["first"] = true,
+	["first-second"] = true,
+	["first-last"] = true,
+	["second"] = true,
+	["last"] = true,
+	["each"] = true,
+	["+"] = true, -- requests the default behavior with preposition handling
+}
+
+--[==[
+Check for special indicators (values such as {"+first"} or {"+first-last"} that are used in a `pl`, `f`, etc. argument
+and indicate how to inflect a multiword term). If `form` is such an indicator, the return value is `form` minus
+the initial `+` sign; otherwise, if form begins with a `+` sign, an error is thrown; otherwise the return value is nil.
+]==]
+function export.get_special_indicator(form, noerror)
+	if form:find("^%+") then
+		form = form:gsub("^%+", "")
+		if not export.allowed_special_indicators[form] then
+			if noerror then
+				return nil
+			end
+			local indicators = {}
+			for indic, _ in pairs(export.allowed_special_indicators) do
+				insert(indicators, "+" .. indic)
+			end
+			sort(indicators)
+			error("Special inflection indicator beginning with '+' can only be " ..
+				mw.text.listToText(indicators) .. ": +" .. form)
+		end
+		return form
+	end
+	return nil
+end
+
+local function add_endings(bases, endings)
+	local retval = {}
+	if type(bases) ~= "table" then
+		bases = {bases}
+	end
+	if type(endings) ~= "table" then
+		endings = {endings}
+	end
+	for _, base in ipairs(bases) do
+		for _, ending in ipairs(endings) do
+			insert(retval, base .. ending)
+		end
+	end
+	return retval
+end
+
+--[==[
+Inflect a possibly multiword or hyphenated term `form` using the function `inflect`, which is a function of one argument
+that is called on a single word to inflect and should return either the inflected word or a list of inflected words.
+`special` indicates how to inflect the multiword term and should be e.g. {"first"} to inflect only the first word,
+{"first-last"} to inflect the first and last words, {"each"} to inflect each word, etc. See `allowed_special_indicators`
+above for the possibilities. If `special` is `+`, or is omitted and the term is multiword (i.e. containing a space
+character), and `prepositions` is supplied, the function checks for multiword or hyphenated terms containing the
+prepositions in `prepositions`, e.g. Italian [[senso di marcia]] or [[medaglia d'oro]] or Portuguese
+[[tartaruga-do-mar]]. If such a term is found, only the first word is inflected. Otherwise, the default is
+{"first-last"}. `prepositions` is a list of Lua patterns matching prepositions. The patterns will automatically have the
+separator character (space or hyphen) added to the left side but not the right side, so they should contain a space
+character (which will automatically be converted to the appropriate separator) on the right side unless the preposition
+is joined on the right side with an apostrophe. Examples of preposition patterns for Italian are {"di "}, {"sull'"} and
+{"d?all[oae] "} (which matches {"dallo "}, {"dalle "}, {"alla "}, etc.).
+
+The return value is always either a list of inflected multiword or hyphenated terms, or nil if `special` is omitted
+and `form` is not multiword. (If `special` is specified and `form` is not multiword or hyphenated, an error results.)
+]==]
+function export.handle_multiword(form, special, inflect, prepositions, sep)
+	sep = sep or form:find(" ") and " " or "%-"
+	local raw_sep = sep == " " and " " or "-"
+	-- Used to add regex version of separator in the replacement portion of ugsub() or :gsub()
+	local sep_replacement = sep == " " and " " or "%%-"
+
+	-- Given a Lua pattern, replace space with the appropriate separator.
+	local function hack_re(re)
+		if sep == " " then
+			return re
+		end
+		return (re:gsub(" ", sep_replacement))
+	end
+
+	if special == "first" then
+		local first, rest = form:match(hack_re("^(.-)( .*)$"))
+		if not first then
+			error("Special indicator 'first' can only be used with a multiword term: " .. form)
+		end
+		return add_endings(inflect(first), rest)
+	elseif special == "second" then
+		local first, second, rest = form:match(hack_re("^([^ ]+ )([^ ]+)( .*)$"))
+		if not first then
+			error("Special indicator 'second' can only be used with a term with three or more words: " .. form)
+		end
+		return add_endings(add_endings({first}, inflect(second)), rest)
+	elseif special == "first-second" then
+		local first, space, second, rest = form:match(hack_re("^([^ ]+)( )([^ ]+)( .*)$"))
+		if not first then
+			error("Special indicator 'first-second' can only be used with a term with three or more words: " .. form)
+		end
+		return add_endings(add_endings(add_endings(inflect(first), space), inflect(second)), rest)
+	elseif special == "each" then
+		local terms = split(form, sep)
+		if #terms < 2 then
+			error("Special indicator 'each' can only be used with a multiword term: " .. form)
+		end
+		for i, term in ipairs(terms) do
+			terms[i] = inflect(term)
+			if i > 1 then
+				terms[i] = add_endings(raw_sep, terms[i])
+			end
+		end
+		local result = ""
+		for _, term in ipairs(terms) do
+			result = add_endings(result, term)
+		end
+		return result
+	elseif special == "first-last" then
+		local first, middle, last = form:match(hack_re("^(.-)( .* )(.-)$"))
+		if not first then
+			first, middle, last = form:match(hack_re("^(.-)( )(.*)$"))
+		end
+		if not first then
+			error("Special indicator 'first-last' can only be used with a multiword term: " .. form)
+		end
+		return add_endings(add_endings(inflect(first), middle), inflect(last))
+	elseif special == "last" then
+		local rest, last = form:match(hack_re("^(.* )(.-)$"))
+		if not rest then
+			error("Special indicator 'last' can only be used with a multiword term: " .. form)
+		end
+		return add_endings(rest, inflect(last))
+	elseif special and special ~= "+" then
+		error("Unrecognized special=" .. special)
+	end
+
+	-- Only do default behavior if special indicator '+' explicitly given or separator is space; otherwise we will
+	-- break existing behavior with hyphenated words.
+	if (special == "+" or sep == " ") and form:find(sep) then
+		if prepositions then
+			-- check for prepositions in the middle of the word; do it this way so we can handle
+			-- more than one word before the preposition (and usually inflect each word)
+			for _, prep in ipairs(prepositions) do
+				local first, space_prep_rest = umatch(form, hack_re("^(.-)( " .. prep .. ".*)$"))
+				if first then
+					return add_endings(inflect(first), space_prep_rest)
+				end
+			end
+		end
+
+		-- multiword or hyphenated expressions default to first-last; we need to pass in the separator to avoid
+		-- problems with multiword terms containing hyphens in the individual words
+		return export.handle_multiword(form, "first-last", inflect, prepositions, sep)
+	end
+
+	return nil
 end
 
 
