@@ -71,7 +71,7 @@ end
 
 -- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
 -- is parsed for inline modifiers.
-local function parse_inflection(args, field, qual_field, is_head)
+local function parse_inflection(args, field, is_head)
 	local argfield = field
 	if type(argfield) == "table" then
 		argfield = argfield[1]
@@ -79,7 +79,6 @@ local function parse_inflection(args, field, qual_field, is_head)
 	return m_headword_utilities.parse_term_list_with_modifiers {
 		paramname = field,
 		forms = args[argfield],
-		qualifiers = qual_field and args[qual_field] or nil,
 		splitchar = ",",
 		is_head = is_head,
 	}
@@ -109,11 +108,10 @@ end
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
 -- `accel` is the accelerator form, or nil.
-local function parse_and_insert_inflection(data, args, field, qual_field, label, accel)
+local function parse_and_insert_inflection(data, args, field, label, accel)
 	m_headword_utilities.parse_and_insert_inflection {
 		headdata = data,
 		forms = args[field],
-		qualifiers = qual_field and args[qual_field] or nil,
 		paramname = field,
 		splitchar = ",",
 		label = label,
@@ -182,7 +180,7 @@ function export.show(frame)
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename -- Accounts for unsupported titles.
 
-	local user_specified_heads = parse_inflection(args, "head", nil, "is_head")
+	local user_specified_heads = parse_inflection(args, "head", "is_head")
 	local heads = user_specified_heads
 	local autohead
 	if args.nolink or not pagename:find("[ '%-]") then
@@ -398,7 +396,7 @@ function export.show(frame)
 		inscat("words that use all vowels in alphabetical order")
 	end
 
-	parse_and_insert_inflection(data, args, "abbr", nil, "abbreviation")
+	parse_and_insert_inflection(data, args, "abbr", "abbreviation")
 
 	if args.json then
 		return toJSON(data)
@@ -774,17 +772,17 @@ local function do_nouns(args, data, pos)
 		make_heads_definite(args, data)
 	end
 
-	local plurals = parse_inflection(args, 1, "plqual")
+	local plurals = parse_inflection(args, 1)
 
 	local function insert_plurale_tantum_inflections(is_plural_only, originating_label)
 		if args.sg[1] then
 			insert_fixed_inflection(data, "normally plural", originating_label)
-			parse_and_insert_inflection(data, args, "sg", "sgqual", "singular")
+			parse_and_insert_inflection(data, args, "sg", "singular")
 		elseif is_plural_only then
 			insert_fixed_inflection(data, "plural only", originating_label)
 		end
 		if args.attr[1] then
-			parse_and_insert_inflection(data, args, "attr", "attrqual", "attributive")
+			parse_and_insert_inflection(data, args, "attr", "attributive")
 		end
 	end
 
@@ -807,15 +805,14 @@ local function do_nouns(args, data, pos)
 	end
 
 	local need_default_plural = pos == "noun"
-	local sp = false
 	if first_pl_term() == "sp" then
 		-- construed as singular or plural
 		sp = remove(plurals, 1)  -- Remove the "sp" but retain it for its qualifiers, labels, references
 		inscat("nouns construed as singular or plural")
 		data.genders = {"s", "p"} -- this should auto-insert the correct 'pluralia tantum' category
+		insert_plurale_tantum_inflections(nil, sp)
 		need_default_plural = false
-	end
-	if first_pl_term() == "-" then
+	elseif first_pl_term() == "-" then
 		-- Uncountable noun; may occasionally have a plural
 		local hyphpl = remove(plurals, 1)  -- Remove the "-" but retain for qualifiers, labels, references
 		inscat("uncountable nouns")
@@ -835,7 +832,7 @@ local function do_nouns(args, data, pos)
 		inscat("countable nouns")
 		
 		-- If no plural was given, add a default one now
-		if not plurals[1] and need_default_plural then
+		if not plurals[1] then
 			plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
 		end
 	elseif first_pl_term() == "~" then
@@ -846,7 +843,7 @@ local function do_nouns(args, data, pos)
 		inscat("countable nouns")
 
 		-- If no plural was given, add a default one now
-		if not plurals[1] and need_default_plural then
+		if not plurals[1] then
 			plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
 		end
 	end
@@ -872,16 +869,12 @@ local function do_nouns(args, data, pos)
 		return
 	end
 	-- If no plural was given, maybe add a default one, otherwise (when "-" was given or proper noun) return.
-	if not plurals[1] and not sp then
+	if not plurals[1] then
 		if not need_default_plural then
 			inscat("uncountable nouns")
 			return
 		end
 		plurals[1] = {term = escape(add_suffix(pagename, "s.plural", pos))}
-	end
-	if sp then
-		insert_plurale_tantum_inflections(nil, sp)
-		return
 	end
 
 	-- There are plural forms to show, so show them.
@@ -916,12 +909,12 @@ local noun_params = {
 	[1] = list_param,
 	["def"] = true,
 	["the"] = {alias_of = "def"},
-	["pl\1qual"] = list_allow_holes,
+	["pl\1qual"] = {list = true, allow_holes = true, replaced_by = false,
+		instead = "use <l:...> or <q:...> inline modifier on the plural",
+	},
 	-- The following four only used for pluralia tantum (1=p)
 	["sg"] = list_param,
-	["sg\1qual"] = list_allow_holes,
 	["attr"] = list_param,
-	["attr\1qual"] = list_allow_holes,
 }
 
 
