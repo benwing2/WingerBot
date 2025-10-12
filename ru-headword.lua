@@ -262,6 +262,16 @@ local function insert_inflection(data, terms, label, accel_form, accel_pos)
 	}
 end
 
+-- Insert a fixed label `label` into the inflections for `data`. If `originating_term` is supplied, copy the qualifiers,
+-- labels and references from it into the fixed label.
+local function insert_fixed_inflection(data, label, originating_term)
+	m_headword_utilities.insert_fixed_inflection {
+		headdata = data,
+		originating_term = originating_term,
+		label = label,
+	}
+end
+
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. Multiple comma-separated values are allowed. `label` is the
 -- label that the inflections are given; sections enclosed in <<...>> are linked to the glossary. `accel_form` is the
@@ -733,6 +743,8 @@ local function generate_po_variant(comp)
 end
 
 local function generate_periphrastic_comp(positive)
+	local retobj = m_table.shallowCopy(positive)
+	retobj.
 	local ru, tr = unpack(positive)
 	return com.concat_russian_tr("[[бо́лее]] ", nil, ru, tr, "dopair")
 end
@@ -855,11 +867,11 @@ end
 -- equivalent other than +a.) Finally, we allow and handle periphrastic comparatives noted using "peri".
 local function handle_comparatives(data, comps, catpos, noinf)
 	if comps[1] and comps[1].term == "-" then
-		if comps[2] then
-			insert(data.inflections, {label = "not generally " .. glossary_link("comparable")})
-			table.remove(comps, 1)
+		local nocomp = table.remove(comps, 1)
+		if comps[1] then
+			insert_fixed_inflection(data, "not generally <<comparable>>", nocomp)
 		else
-			insert(data.inflections, {label = "no comparative"})
+			insert_fixed_inflection(data, "no <<comparative>>", nocomp)
 		end
 		track("nocomp")
 	end
@@ -877,9 +889,10 @@ local function handle_comparatives(data, comps, catpos, noinf)
 		end
 
 		for _, comp in ipairs(comps) do
-			local ru, tr = unpack(comp)
-			if ru == "peri" then
-				for _, positive in ipairs(zip_head_and_translit(data)) do
+			local term = comp.term
+			local tr = comp.tr
+			if term == "peri" then
+				for _, positive in ipairs(data.heads) do
 					local comp = generate_periphrastic_comp(positive)
 					insertIfNot(comp_parts, comp)
 				end

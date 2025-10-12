@@ -1199,6 +1199,40 @@ function export.split_translit_of_duplicate_forms(forms)
 	end
 
 	-- Optimization to avoid creating a new list in the majority case when no translit exists.
+	if not export.any_termobjs_have_translit(forms) then
+		return forms
+	end
+
+	local newforms = {}
+	for _, form in ipairs(forms) do
+		local ru, tr = unpack(form)
+		if not tr or not tr:find(",") or ru:find(",") then
+			table.insert(newforms, form)
+		else
+			local split_trs = split(tr, ",%s*")
+			local default_tr = export.translit_no_links(ru)
+			for _, split_tr in ipairs(split_trs) do
+				if split_tr == default_tr then
+					split_tr = nil
+				end
+				table.insert(newforms, {ru, split_tr})
+			end
+		end
+	end
+	return newforms
+end
+
+--[==[
+Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRANSLIT}`, split cases where two different
+transliterations have been packed into a single translit field by creating two adjacent term/translit pairs. This is
+the opposite operation of `combine_translit_of_duplicate_forms()`.
+]==]
+function export.split_translit_of_duplicate_termobjs(termobjs)
+	if not termobjs[1] then
+		return termobjs
+	end
+
+	-- Optimization to avoid creating a new list in the majority case when no translit exists.
 	if not any_forms_have_translit(forms) then
 		return forms
 	end
