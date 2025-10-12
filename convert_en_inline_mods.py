@@ -167,11 +167,10 @@ def process_text_on_page(index, pagetitle, text):
     return
   for t in parsed.filter_templates():
     tn = tname(t)
-    if tn == "en-noun":
+    if tn in ["en-noun", "en-proper noun", "en-proper-noun", "en-prop", "en-propn"] and args.do_nouns:
       def getp(param):
         return getparam(t, param).strip()
       origt = str(t)
-      plurals = []
       for i in range(1, 30):
         pl = getp(str(i))
         if i == 1:
@@ -190,7 +189,26 @@ def process_text_on_page(index, pagetitle, text):
           t.add(str(i), "%s%s" % (pl, inline_mod))
           rmparam(t, qualparam)
           notes.append("move {{en-noun}} qualifier in %s= to inline modifier on %s=" % (qualparam, i))
-    elif tn == "en-verb":
+      if args.comma_separate_plurals:
+        origt = str(t)
+        plurals = []
+        named_params = []
+        for param in t.params:
+          pn = pname(param)
+          pv = str(param.value)
+          if re.search("^[0-9]+$", pn):
+            plurals.append(pv)
+          else:
+            named_params.append((pn, pv))
+        del t.params[:]
+        if plurals:
+          t.add("1", ",".join(plurals))
+          for pn, pv in named_params:
+            t.add(pn, pv, preserve_spacing=False)
+        if origt != str(t):
+          notes.append("join {{en-noun}} plurals with comma and put at beginning")
+
+    elif tn == "en-verb" and args.do_verbs:
       def getp(param):
         return getparam(t, param).strip()
       origt = str(t)
@@ -201,7 +219,102 @@ def process_text_on_page(index, pagetitle, text):
         ("4", "past_ptc"),
       ]
       if "<" in getp("1"):
-        pagemsg("Skipping template already with inline modifier or angle-bracket format: %s" % str(t))
+        if " " in pagetitle:
+          par1 = getp("1")
+          origpar1 = par1
+          m = re.search("^(.*?)( .*)$", pagetitle)
+          first, rest = m.groups()
+          m = re.search("^%s(<.*?>)%s$" % (re.escape(first), re.escape(rest)), par1)
+          if m:
+            pagemsg("Converting multiword {{en-verb}} with angle brackets modifying first word to abbreviated format: 1=%s" %
+                   par1)
+            t.add("1", m.group(1))
+            notes.append("convert multiword {{en-verb}} with angle brackets modifying first word to abbreviated format")
+            continue
+          m = re.search("^%s(<.*?>)%s$" % (re.escape(first), re.escape(rest)), blib.remove_links(par1))
+          if m:
+            if getp("head"):
+              pagemsg("WARNING: Space in page title and apparent angle-bracket format, has head=%s, skipping, convert manually: %s" %
+                      (getp("head"), origpar1))
+              continue
+            angle_bracket = m.group(1)
+            par1 = re.sub("<.*?>", "", par1)
+            headmods = []
+            must_continue = False
+            for mlink in re.finditer(r"(\[\[.*?\]\])([a-zA-Z]*)", par1):
+              link, linkafter = mlink.groups()
+              link = link[2:-2]
+              if "[" in link or "]" in link:
+                pagemsg("WARNING: Space in page title and apparent angle-bracket format, embedded brackets in link, skipping, convert manually: %s" %
+                        origpar1)
+                continue
+              linkparts = link.split("|")
+              if len(linkparts) > 2:
+                pagemsg("WARNING: Space in page title and apparent angle-bracket format, too many parts in link, skipping, convert manually: %s" %
+                        origpar1)
+                continue
+              if len(linkparts) == 1:
+                linkdest = link
+                linkdisp = link
+              else:
+                linkdest, linkdisp = linkparts
+              linkdisp += linkafter
+              if linkdest == linkdisp and " " not in linkdest and "-" not in linkdest:
+                continue
+              if linkdest.endswith("'s"):
+                pagemsg("WARNING: Space in page title and apparent angle-bracket format, link destination '%s' ends in apostrophe-s, may not match correctly, skipping, convert manually: 1=%s" %
+                        (linkdest, origpar1))
+                must_continue = True
+                break
+              elif linkdest == linkdisp:
+                headmods.append("%s:~" % linkdest)
+              else:
+                boundary = 0
+                for i in range(min(len(linkdest), len(linkdisp))):
+                  if linkdest[i] == linkdisp[i]:
+                    boundary = i + 1
+                  else:
+                    break
+                if boundary >= 2:
+                  headmods.append("%s[%s:%s]" % (linkdest[0:boundary], linkdisp[boundary:], linkdest[boundary:]))
+                else:
+                  if len(linkdisp) >= 2 and linkdisp in linkdest:
+                    linkdest = linkdest.replace(linkdisp, "~")
+                  headmods.append("%s:%s" % (linkdisp, linkdest))
+            if must_continue:
+              continue
+            origt = str(t)
+            rmparam(t, "head") # in case it's blank
+            if headmods:
+              headmods = "~" + "; ".join(headmods)
+              t.add("head", headmods, before="1")
+              rmparam(t, "1")
+              t.add("1", angle_bracket, before="head")
+            else:
+              t.add("1", angle_bracket)
+            pagemsg("Replacing multiword verbal expression with single angle-bracket spec after first word %s with %s" %
+                    (origt, str(t)))
+            notes.append("convert multiword {{en-verb}} with angle brackets modifying first word to abbreviated format%s" %
+                         " with head modifiers" if headmods else "")
+
+            pagemsg("Converting multiword {{en-verb}} with angle brackets modifying first word to abbreviated format: 1=%s" %
+                   par1)
+            t.add("1", m.group(1))
+            notes.append("convert multiword {{en-verb}} with angle brackets modifying first word to abbreviated format")
+            continue
+
+          if re.search("^<.*>$", par1):
+            pagemsg("Space in page title and likely already-converted angle-bracket format: 1=%s" % par1)
+          else:
+            pagemsg("WARNING: Space in page title and apparent angle-bracket format not convertible automatically, may be manually convertible to abbreviated format: 1=%s" %
+                    par1)
+        else:
+          pagemsg("Skipping template already with inline modifier or angle-bracket format without space in title: %s" % str(t))
+        for param in t.params:
+          pn = pname(param)
+          if pn not in ["1", "head", "nolink", "nolinkhead"]:
+            pagemsg("WARNING: Saw existing inline modifier or angle-bracket format with other param: %s=%s" % (
+              pn, str(param.value)))
         continue
       misc_named_params = []
       for param in t.params:
@@ -233,6 +346,8 @@ def process_text_on_page(index, pagetitle, text):
             qualparam = formcont + str(i) + "_qual"
             qual = getp(qualparam)
           form = val or "+"
+          if form.startswith(pagetitle):
+            form = "~" + form[len(pagetitle):]
           if qual:
             inline_mod = convert_qual_to_inline_modifier(qual)
             form += inline_mod
@@ -262,6 +377,9 @@ parser = blib.create_argparser("Convert {{en-noun}} and {{en-verb}} to use inlin
   include_pagefile=True, include_stdin=True)
 parser.add_argument('--check-qual-canon', help="Instead of converting, canonicalize and output qualifiers",
                     action="store_true")
+parser.add_argument('--do-nouns', help="Convert nouns", action="store_true")
+parser.add_argument('--comma-separate-plurals', help="Separate plurals by comma instead of in separate params", action="store_true")
+parser.add_argument('--do-verbs', help="Convert verbs", action="store_true")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
