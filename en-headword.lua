@@ -1,6 +1,11 @@
 local export = {}
 local pos_functions = {}
 
+--[==[
+Author from 2020 on: mostly Benwing2, with significant contributions from Theknightwho. Based on a prior version by Rua
+(by now mostly rewritten), with contributions from Erutuon and others (see history for full attribution).
+]==]
+
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
 
 local require = require
@@ -12,6 +17,7 @@ local headword_module = "Module:headword"
 local inflection_utilities_module = "Module:inflection utilities"
 local parse_utilities_module = "Module:parse utilities"
 local JSON_module = "Module:JSON"
+local labels_module = "Module:labels"
 local links_module = "Module:links"
 local parameters_module = "Module:parameters"
 local string_utilities_module = "Module:string utilities"
@@ -26,10 +32,14 @@ local add_links_to_multiword_term = require_when_needed(headword_utilities_modul
 local add_suffix = require_when_needed(en_utilities_module, "add_suffix")
 local apply_link_modifiers = require_when_needed(headword_utilities_module, "apply_link_modifiers")
 local concat = table.concat
+local deepEquals = require_when_needed(table_module, "deepEquals")
+local dump = mw.dumpObject
 local format_categories = require_when_needed(utilities_module, "format_categories")
 local full_headword = require_when_needed(headword_module, "full_headword")
+local get_label_info = require_when_needed(labels_module, "get_label_info")
 local get_link_page = require_when_needed(links_module, "get_link_page")
 local insert = table.insert
+local insertIfNot = require_when_needed(table_module, "insertIfNot")
 local ipairs = ipairs
 local is_regular_plural = require_when_needed(en_utilities_module, "is_regular_plural")
 local list_to_set = require_when_needed(table_module, "listToSet")
@@ -69,6 +79,225 @@ end
 
 ------------------------------------------- UTILITY FUNCTIONS ------------------------------------------
 
+-- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:inflection utilities]]).
+local function convert_termobj_to_formobj(termobj)
+	local formobj = {
+		form = termobj.term,
+		translit = termobj.tr,
+	}
+	local footnotes
+	local function mods_to_footnote(mod_prefix, mod_vals)
+		if mod_vals and mod_vals[1] then
+			footnotes = footnotes or {}
+			for _, val in ipairs(mod_vals) do
+				insert(footnotes, "[" .. mod_prefix .. ":" .. val .. "]")
+			end
+		end
+	end
+	mods_to_footnote("q", termobj.q)
+	mods_to_footnote("qq", termobj.qq)
+	mods_to_footnote("l", termobj.l)
+	mods_to_footnote("ll", termobj.ll)
+	mods_to_footnote("ref", termobj.refs)
+	mods_to_footnote("id", termobj.id and {termobj.id} or nil)
+	formobj.footnotes = footnotes
+	return formobj
+end
+
+local recognized_multi_mods = {
+	q = "q",
+	qq = "qq",
+	l = "l",
+	ll = "ll",
+	ref = "refs",
+}
+local recognized_single_mods = {
+	id = "id",
+}
+
+-- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:inflection utilities]]).
+local function add_footnote_to_termobj(termobj, footnote)
+	local stripped_footnote = footnote:match("^%[(.*)%]$")
+	if not stripped_footnote then
+		error("Internal error: Footnote should be surrounded by brackets at this stage: " .. footnote)
+	end
+	local prefix, rest = stripped_footnote:match("^([a-z]+):(.+)$")
+	local field, is_multi
+	if prefix then
+		if recognized_multi_mods[prefix] then
+			field = recognized_multi_mods[prefix]
+			is_multi = true
+		elseif recognized_single_mods[prefix] then
+			field = recognized_single_mods[prefix]
+			is_multi = false
+		end
+	end
+	if not field then
+		rest = stripped_footnote
+		if rest:find("<<[^<>]*>>") then
+			-- appears to contain a <<...>> notation for labels
+			field = "l"
+		else
+			local labelinfo = get_label_info {
+				label = rest,
+				lang = lang,
+				nocat = true,
+				notrack = true,
+			}
+			if labelinfo.recognized then
+				field = "l"
+			else
+				field = "q"
+			end
+		end
+		is_multi = true
+	end
+	if is_multi then
+		if not termobj[field] then
+			termobj[field] = {}
+		end
+		insert(termobj[field], rest)
+	else
+		if termobj[field] and termobj[field] ~= rest then
+			error(("Can't set two values for '%s': '%s' and '%s'"):format(field, termobj[field], rest))
+		end
+		termobj[field] = rest
+	end
+end
+
+-- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:inflection utilities]]).
+local function convert_formobj_to_termobj(formobj)
+	local termobj = {
+		term = formobj.form,
+		tr = formobj.translit,
+	}
+	if formobj.footnotes then
+		for _, footnote in ipairs(formobj.footnotes) do
+			add_footnote_to_termobj(termobj, footnote)
+		end
+	end
+	return termobj
+end
+
+local function extract_termobj_field_modifiers(fieldval)
+	return fieldval:match("^([*+]?)(.*)$")
+end
+
+-- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:headword utilities]]).
+local function remove_termobj_field_modifiers(termobj)
+	local function remove_field_modifiers(field)
+		if termobj[field] and termobj[field][1] then
+			local any_field_modifiers = false
+			for _, val in ipairs(termobj[field]) do
+				local field_mods, _ = extract_termobj_field_modifiers(val)
+				if field_mods ~= "" then
+					any_field_modifiers = true
+					break
+				end
+			end
+			local new_field = {}
+			if any_field_modifiers then
+				for _, val in ipairs(termobj[field]) do
+					local _, field_without_mods = extract_termobj_field_modifiers(val)
+					insertIfNot(new_field, field_without_mods)
+				end
+				termobj[field] = new_field
+			end
+		end
+	end
+	
+	remove_field_modifiers("q")
+	remove_field_modifiers("qq")
+	remove_field_modifiers("l")
+	remove_field_modifiers("ll")
+	remove_field_modifiers("refs")
+end
+
+-- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:headword utilities]]).
+local function insert_termobj_combining_duplicates(destobjs, termobj)
+	for _, destobj in ipairs(destobjs) do
+		if destobj.term == termobj.term and destobj.tr == termobj.tr then
+			-- Form already present; maybe combine footnotes.
+			local function combine_field_values(field)
+				if termobj[field] and termobj[field][1] then
+					-- Check to see if there are existing values with *; if so, remove them.
+					if destobj[field] and destobj[field][1] then
+						local any_values_with_asterisk = false
+						for _, val in ipairs(destobj[field]) do
+							local field_mods, _ = extract_termobj_field_modifiers(val)
+							if field_mods:find("%*") then
+								any_values_with_asterisk = true
+								break
+							end
+						end
+						if any_values_with_asterisk then
+							local filtered_values = {}
+							for _, val in ipairs(destobj[field]) do
+								local field_mods, _ = extract_termobj_field_modifiers(val)
+								if not val:find("%*") then
+									insert(filtered_values, val)
+								end
+							end
+							if filtered_values[1] then
+								destobj[field] = filtered_values
+							else
+								destobj[field] = nil
+							end
+						end
+					end
+	
+					local any_values_with_plus = false
+					for _, val in ipairs(termobj[field]) do
+						local field_mods, _ = extract_termobj_field_modifiers(val)
+						if val:find("%+") then
+							any_footnotes_with_plus = true
+							break
+						end
+					end
+					if any_footnotes_with_plus then
+						if not destobj[field] then
+							destobj[field] = {}
+						else
+							destobj[field] = m_table.shallowCopy(destobj[field])
+						end
+						for _, val in ipairs(termobj[field]) do
+							local already_seen = false
+							local field_mods, field_without_mods = extract_termobj_field_modifiers(val)
+							if val:find("%+") then
+								for _, existing_val in ipairs(destobj[field]) do
+									local existing_field_mods, existing_field_without_mods =
+										extract_termobj_field_modifiers(existing_val)
+									if existing_field_without_mods == field_without_mods then
+										already_seen = true
+										break
+									end
+								end
+								if not already_seen then
+									insert(destobj[field], val)
+								end
+							end
+						end
+					end
+				end
+			end
+
+			combine_field_values("q")
+			combine_field_values("qq")
+			combine_field_values("l")
+			combine_field_values("ll")
+			combine_field_values("refs")
+			if destobj.id and termobj.id and destobj.id ~= termobj.id then
+			    -- FIXME: We probably want to pass in an error function
+			    error(("Can't specify two different ID's %s and %s when combining objects"):format(termobj.id, destobj.id))
+			end
+			destobj.id = destobj.id or termobj.id
+			return
+		end
+	end
+	insert(destobjs, termobj)
+end
+
+
 -- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
 -- is parsed for inline modifiers.
 local function parse_inflection(args, field, is_head)
@@ -84,13 +313,19 @@ local function parse_inflection(args, field, is_head)
 	}
 end
 
+
+
 -- Insert the parsed inflections in `terms` (as parsed by `parse_inflection`) into `data.inflections`, with label
 -- `label` and optional accelerator spec `accel`.
-local function insert_inflection(data, terms, label, accel)
+local function insert_inflection(data, terms, label, accel, no_label)
+	for _, termobj in ipairs(terms) do
+		remove_termobj_field_modifiers(termobj)
+	end
 	m_headword_utilities.insert_inflection {
 		headdata = data,
 		terms = terms,
 		label = label,
+		no_label = no_label,
 		accel = accel and {form = accel} or nil,
 	}
 end
@@ -134,7 +369,7 @@ local function compute_double_last_cons_stem(term)
 end
 
 local function compute_plusplus_s_form(term, default_s_form)
-	if term:find("[sz]$") then
+	if term:find("[szx]$") then
 		-- regas -> regasses, derez -> derezzes
 		return compute_double_last_cons_stem(term) .. "es"
 	else
@@ -292,7 +527,9 @@ function export.show(frame)
 			if base then
 				return "[[" .. base .. "]][[-'s|'s]]"
 			end
-			base = word:match("^(.*)'$")
+			-- Only treat final apostrophe as possessive if preceded by something that looks like a plural ending in /z/.
+			-- In particular we don't want to do it for words like [[truckin']].
+			base = word:match("^(.*[sxz])'$")
 			if base then
 				if base:find("s$") then
 					local sg = singularize(base)
@@ -941,9 +1178,10 @@ local function default_verb_forms(verb)
 	if verb:find(" ") then
 		local first, rest = verb:match("^(.-)( .*)$")
 		local first_s_form, first_ing_form, first_ed_form = base_default_verb_forms(first)
-		return full_s_form, full_ing_form, full_ed_form, first_s_form .. rest, first_ing_form .. rest, first_ed_form .. rest
+		return full_s_form, full_ing_form, full_ed_form, first_s_form .. rest, first_ing_form .. rest,
+			first_ed_form .. rest, first, rest
 	else
-		return full_s_form, full_ing_form, full_ed_form, nil, nil, nil
+		return full_s_form, full_ing_form, full_ed_form, nil, nil, nil, nil, nil
 	end
 end
 
@@ -951,18 +1189,18 @@ end
 local function compute_double_last_cons_stem_of_split_verb(verb, ending)
 	local first, rest = verb:match("^(.-)( .*)$")
 	if not first then
-		error("Verb '" .. verb .. "' must have a space in it to use ++*")
+		error("Verb '" .. verb .. "' must have a space in it to use **")
 	end
 	local last_cons = first:match("([bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])$")
 	if not last_cons then
-		error("First word '" .. first .. "' must end in a consonant to use ++*")
+		error("First word '" .. first .. "' must end in a consonant to use **")
 	end
 	return first .. last_cons .. ending .. rest
 end
 
 local function check_non_nil_star_form(form, pagename)
 	if form == nil then
-		error("Verb '" .. pagename .. "' must have a space in it to use * or ++*")
+		error("Verb '" .. pagename .. "' must have a space in it to use *, **, *l, *! or *'")
 	end
 	return form
 end
@@ -971,28 +1209,36 @@ local function sub_tilde(form, pagename)
 	if not form then
 		return nil
 	end
-	return (form:gsub("~", pagename))
+	if form:find("~") then
+		form = form:gsub("~", replacement_escape(pagename))
+	end
+	return form
 end
 
+local deprecated_qual_replaced_by_inline_modifier = {
+	list = true, allow_holes = true, replaced_by = false,
+	instead = "use an inline modifier <q:...> or <l:...> on the value"
+}
 pos_functions["verbs"] = {
 	params = {
-		[1] = {list = "pres_3sg", allow_holes = true},
-		["pres_3sg_qual"] = {list = "pres_3sg\1_qual", allow_holes = true},
-		[2] = {list = "pres_ptc", allow_holes = true},
-		["pres_ptc_qual"] = {list = "pres_ptc\1_qual", allow_holes = true},
-		[3] = {list = "past", allow_holes = true},
-		["past_qual"] = {list = "past\1_qual", allow_holes = true},
+		[1] = {list = "pres_3sg", disallow_holes = true},
+		["pres_3sg\1_qual"] = deprecated_qual_replaced_by_inline_modifier,
+		[2] = {list = "pres_ptc", disallow_holes = true},
+		["pres_ptc\1_qual"] = deprecated_qual_replaced_by_inline_modifier,
+		[3] = {list = "past", disallow_holes = true},
+		["past\1_qual"] = deprecated_qual_replaced_by_inline_modifier,
 		[4] = {list = "past_ptc", allow_holes = true},
-		["past_ptc_qual"] = {list = "past_ptc\1_qual", allow_holes = true},
+		["past_ptc\1_qual"] = deprecated_qual_replaced_by_inline_modifier,
 		["noautolinkverb"] = boolean_param,
+		["angle_bracket"] = boolean_param,
 	},
 
 	func = function(args, data)
 		-- Get parameters
-		local par1 = args[1][1]
-		local par2 = args[2][1]
-		local par3 = args[3][1]
-		local par4 = args[4][1]
+		local par1s
+		local par2s = parse_inflection(args, {2, "pres_ptc"})
+		local par3s = parse_inflection(args, {3, "past"})
+		local par4s = parse_inflection(args, {4, "past_ptc"})
 
 		local pres_3sgs, pres_ptcs, pasts, past_ptcs
 
@@ -1002,80 +1248,164 @@ pos_functions["verbs"] = {
 
 		-- These functions are used in both in the separate-parameter format and in the override params such as past_ptc2=. 
 
-		local new_default_s, new_default_ing, new_default_ed, split_default_s, split_default_ing, split_default_ed =
-			default_verb_forms(pagename)
+		local full_default_s, full_default_ing, full_default_ed, split_default_s, split_default_ing, split_default_ed
+		local lemma
+
+		local function set_lemma_and_default_forms(the_lemma)
+			lemma = the_lemma
+			full_default_s, full_default_ing, full_default_ed, split_default_s, split_default_ing, split_default_ed,
+				lemma_first, lemma_rest = default_verb_forms(the_lemma)
+		end
 
 		local function canonicalize_s_form(form)
 			if form == "+" then
-				return new_default_s
+				error("Internal error: Should not see '+' here")
+			elseif form == "^" then
+				return full_default_s
 			elseif form == "*" then
-				return check_non_nil_star_form(split_default_s, pagename)
+				return check_non_nil_star_form(split_default_s, lemma)
 			elseif form == "++" then
-				return compute_plusplus_s_form(pagename, new_default_s)
-			elseif form == "++*" then
-				if pagename:find("^[^ ]*[sz] ") then
-					return compute_double_last_cons_stem_of_split_verb(pagename, "es")
+				return compute_plusplus_s_form(lemma, full_default_s)
+			elseif form == "**" then
+				if lemma:find("^[^ ]*[szx] ") then
+					return compute_double_last_cons_stem_of_split_verb(lemma, "es")
 				else
-					return check_non_nil_star_form(split_default_s, pagename)
+					return check_non_nil_star_form(split_default_s, lemma)
+				end
+			elseif form == "+!" then
+				return lemma .. "s"
+			elseif form == "*!" then
+				return check_non_nil_star_form(lemma_first) .. "s" .. lemma_rest
+			elseif form == "+'" then
+				return lemma .. "'s"
+			elseif form == "*'" then
+				return check_non_nil_star_form(lemma_first) .. "'s" .. lemma_rest
+			elseif form == "+l" then
+				if lemma:find("[szx]$") then
+					return {{term = full_default_s, l = {"US"}},
+							{term = compute_plusplus_s_form(lemma, full_default_s), l = {"UK"}}}
+				else
+					return compute_plusplus_s_form(lemma, full_default_s)
+				end
+			elseif form == "*l" then
+				if lemma:find("^[^ ]*[szx] ") then
+					return {{term = check_non_nil_star_form(split_default_s, lemma), l = {"US"}},
+							{term = compute_double_last_cons_stem_of_split_verb(lemma, "es"), l = {"UK"}}}
+				else
+					return check_non_nil_star_form(split_default_s, lemma)
 				end
 			else
-				return sub_tilde(form, pagename)
+				return sub_tilde(form, lemma)
 			end
 		end
 
 		local function canonicalize_ing_form(form)
 			if form == "+" then
-				return new_default_ing
+				error("Internal error: Should not see '+' here")
+			elseif form == "^" then
+				return full_default_ing
 			elseif form == "*" then
-				return check_non_nil_star_form(split_default_ing, pagename)
+				return check_non_nil_star_form(split_default_ing, lemma)
 			elseif form == "++" then
-				return compute_double_last_cons_stem(pagename) .. "ing"
-			elseif form == "++*" then
-				return compute_double_last_cons_stem_of_split_verb(pagename, "ing")
+				return compute_double_last_cons_stem(lemma) .. "ing"
+			elseif form == "**" then
+				return compute_double_last_cons_stem_of_split_verb(lemma, "ing")
+			elseif form == "+!" then
+				return lemma .. "ing"
+			elseif form == "*!" then
+				return check_non_nil_star_form(lemma_first) .. "ing" .. lemma_rest
+			elseif form == "+'" then
+				return lemma .. "'ing"
+			elseif form == "*'" then
+				return check_non_nil_star_form(lemma_first) .. "'ing" .. lemma_rest
+			elseif form == "+l" then
+				return {{term = full_default_ing, l = {"US"}},
+						{term = compute_double_last_cons_stem(lemma) .. "ing", l = {"UK"}}}
+			elseif form == "*l" then
+				return {{term = check_non_nil_star_form(split_default_ing, lemma), l = {"US"}},
+						{term = compute_double_last_cons_stem_of_split_verb(lemma, "ing"), l = {"UK"}}}
 			else
-				return sub_tilde(form, pagename)
+				return sub_tilde(form, lemma)
 			end
 		end
 
 		local function canonicalize_ed_form(form)
 			if form == "+" then
-				return new_default_ed
+				error("Internal error: Should not see '+' here")
+			elseif form == "^" then
+				return full_default_ed
 			elseif form == "*" then
-				return check_non_nil_star_form(split_default_ed, pagename)
+				return check_non_nil_star_form(split_default_ed, lemma)
 			elseif form == "++" then
-				return compute_double_last_cons_stem(pagename) .. "ed"
-			elseif form == "++*" then
-				return compute_double_last_cons_stem_of_split_verb(pagename, "ed")
+				return compute_double_last_cons_stem(lemma) .. "ed"
+			elseif form == "+!" then
+				return lemma .. "ed"
+			elseif form == "*!" then
+				return check_non_nil_star_form(lemma_first) .. "ed" .. lemma_rest
+			elseif form == "+'" then
+				return {{term = lemma .. "'d"}, {term = lemma .. "'ed"}}
+			elseif form == "*'" then
+				return {{term = check_non_nil_star_form(lemma_first) .. "'d" .. lemma_rest},
+						{term = check_non_nil_star_form(lemma_first) .. "'ed" .. lemma_rest}}
+			elseif form == "**" then
+				return compute_double_last_cons_stem_of_split_verb(lemma, "ed")
+			elseif form == "+l" then
+				return {{term = full_default_ed, l = {"US"}},
+						{term = compute_double_last_cons_stem(lemma) .. "ed", l = {"UK"}}}
+			elseif form == "*l" then
+				return {{term = check_non_nil_star_form(split_default_ed, lemma), l = {"US"}},
+						{term = compute_double_last_cons_stem_of_split_verb(lemma, "ed"), l = {"UK"}}}
 			else
-				return sub_tilde(form, pagename)
+				return sub_tilde(form, lemma)
 			end
 		end
 		
-		-- FIXME: options should be "+", "*", "++", "++*", "+n", "*n", "++n" and "++*n", but not "n"
+		-- FIXME: options should be "+", "*", "++", "**", "+n", "*n", "++n" and "**n", but not "n"
 		local function canonicalize_en_form(form)
 			if form == "n" then
 				track("n4")
-				return add_suffix(pagename, "n")
+				return add_suffix(lemma, "n")
 			end
 			return canonicalize_ed_form(form)
 		end
 
 		--------------------------------- MAIN PARSING/CONJUGATING CODE --------------------------------
 
-		local past_ptcs_given
-
-		if par1 and par1:find("<") then
+		local is_angle_bracket = args.angle_bracket
+		if is_angle_bracket then
+			if par2s[1] or par3s[1] or par4s[1] then
+				error("Can't specify explicit values for 2=, 3= or 4= along with the angle-bracket format")
+			end
+		elseif is_angle_bracket == nil and not par2s[1] and not par3s[1] and not par4s[1] and not args[1][2] and
+			args[1][1] and args[1][1]:find("<") then
+			if put.term_contains_top_level_html(args[1][1]) then
+				-- Often, term_contains_top_level_html() returns true on the angle-bracket format, which would
+				-- make the pcall() below succeed but leave the angle brackets as-is. Check for this and only do the
+				-- pcall() if term_contains_top_level_html() returns false.
+				is_angle_bracket = true
+			else
+				-- If it's ambiguous whether it's an angle-bracket format or separate params with an inline modifier,
+				-- try to parse as the latter. If an error occurs, treat as the former.
+				local ok
+				ok, par1s = pcall(parse_inflection, args, {1, "pres_3sg"})
+				if not ok then
+					par1s = nil
+					is_angle_bracket = true
+				end
+			end
+		end
+		if is_angle_bracket then
 
 			-------------------------- ANGLE-BRACKET FORMAT --------------------------
 
-			if par2 or par3 or par4 then
-				error("Can't specify 2=, 3= or 4= when 1= contains angle brackets: " .. par1)
-			end
-			-- In the angle bracket format, we always copy the full past tense specs to the past participle
-			-- specs if none of the latter are given, so act as if the past participle is always given.
-			-- There is a separate check to see if the past tense and past participle are identical, in any case.
-			past_ptcs_given = true
+			-- (0) Expand multiword term with angle brackets just on the first word.
 
+			local arg11 = args[1][1]
+			if arg11:find("^<.*>$") and pagename:find(" ") then
+				local first, rest = pagename:match("^(.-)( .*)$")
+				arg11 = first .. arg11 .. rest
+			end
+			
 			-- (1) Parse the indicator specs inside of angle brackets.
 
 			local function parse_indicator_spec(angle_bracket_spec)
@@ -1084,39 +1414,49 @@ pos_functions["verbs"] = {
 				local segments = put.parse_balanced_segment_run(inside, "[", "]")
 				local comma_separated_groups = put.split_alternating_runs(segments, ",")
 				if #comma_separated_groups > 4 then
-					error("Too many comma-separated parts in indicator spec: " .. angle_bracket_spec)
+					error("Too many comma-separated parts in indicator spec, expected at most 4: " ..
+						angle_bracket_spec)
 				end
 
-				local function fetch_qualifiers(separated_group)
-					local qualifiers
+				local function fetch_footnotes(separated_group)
+					local footnotes
 					for j = 2, #separated_group - 1, 2 do
 						if separated_group[j + 1] ~= "" then
-							error("Extraneous text after bracketed qualifiers: '" .. concat(separated_group) .. "'")
+							error("Extraneous text after bracketed footnotes: '" .. concat(separated_group) .. "'")
 						end
-						if not qualifiers then
-							qualifiers = {}
+						if not footnotes then
+							footnotes = {}
 						end
-						insert(qualifiers, separated_group[j])
+						insert(footnotes, separated_group[j])
 					end
-					return qualifiers
+					return footnotes
 				end
 
 				local function fetch_specs(comma_separated_group)
 					if not comma_separated_group then
-						return {{}}
+						return {{term = "+"}}
 					end
 					local specs = {}
 
 					local colon_separated_groups = put.split_alternating_runs(comma_separated_group, ":")
 					for _, colon_separated_group in ipairs(colon_separated_groups) do
 						local form = colon_separated_group[1]
-						if form == "*" or form == "++*" then
-							error("* and ++* not allowed inside of indicator specs: " .. angle_bracket_spec)
+						if form == "*" or form == "**" or form == "*l" or form == "*!" or form == "*'" then
+							error("*, **, *l, *! and *' not allowed inside of indicator specs: " .. angle_bracket_spec)
 						end
 						if form == "" then
-							form = nil
+							form = "+"
 						end
-						insert(specs, {form = form, q = fetch_qualifiers(colon_separated_group)})
+						local termobj = {
+							term = form
+						}
+						local footnotes = fetch_footnotes(colon_separated_group)
+						if footnotes then
+							for _, footnote in ipairs(footnotes) do
+								add_footnote_to_termobj(termobj, footnote)
+							end
+						end
+						insert(specs, termobj)
 					end
 					return specs
 				end
@@ -1125,14 +1465,6 @@ pos_functions["verbs"] = {
 				local ing_specs = fetch_specs(comma_separated_groups[2])
 				local ed_specs = fetch_specs(comma_separated_groups[3])
 				local en_specs = fetch_specs(comma_separated_groups[4])
-				for _, spec in ipairs(s_specs) do
-					if spec.form == "++" and #ing_specs == 1 and not ing_specs[1].form and not ing_specs[1].q
-						and #ed_specs == 1 and not ed_specs[1].form and not ed_specs[1].q then
-						ing_specs[1].form = "++"
-						ed_specs[1].form = "++"
-						break
-					end
-				end
 
 				return {
 					forms = {},
@@ -1146,7 +1478,7 @@ pos_functions["verbs"] = {
 			local parse_props = {
 				parse_indicator_spec = parse_indicator_spec,
 			}
-			local alternant_multiword_spec = iut.parse_inflected_text(par1, parse_props)
+			local alternant_multiword_spec = iut.parse_inflected_text(arg11, parse_props)
 
 			-- (2) Check for user-specified brackets; remove any links from the lemma, but remember the original
 			--     form so we can use it below in the 'lemma_linked' form.
@@ -1195,52 +1527,83 @@ pos_functions["verbs"] = {
 				en_form = "past|ptcp",
 			}
 			local function conjugate_verb(base)
-				local def_s_form, def_ing_form, def_ed_form = base_default_verb_forms(base.lemma)
+				local function process_specs(slot, specs, canon_func, default_values, default_already_formobj)
+					local function insert_termobj_into_slot(termobj)
+						local formobj = convert_termobj_to_formobj(termobj)
+						-- If the form is -, don't insert any forms, which will result in there being no overall forms
+						-- (in fact it will be nil). We check for that down below and substitute a single "-" as the
+						-- form, which in turn gets turned into special labels like "no present participle".
+						if formobj.form == "-" then
+							if formobj.footnotes then
+								error("Unable to preserve footnotes specified on missing form '-': FIXME: " ..
+									dump(formobj.footnotes))
+							end
+						else
+							iut.insert_form(base.forms, slot, formobj)
+						end
+					end
 
-				local function process_specs(slot, specs, default_form, canonicalize_plusplus)
-					for _, spec in ipairs(specs) do
-						local form = spec.form
-						if not form or form == "+" then
-							form = default_form
-						elseif form == "++" then
-							form = canonicalize_plusplus()
+					local function canonicalize_and_insert(arg)
+						local canon_arg = canon_func(arg)
+						if type(canon_arg) == "string" then
+							arg.term = canon_arg
+							insert_termobj_into_slot(arg)
+						else
+							for _, canon in ipairs(canon_arg) do
+								m_headword_utilities.combine_termobj_qualifiers_labels(canon, arg)
+								insert_termobj_into_slot(canon)
+							end
 						end
-						-- If there's a ~ in the form, substitute it with the lemma,
-						-- but make sure to first replace % in the lemma with %% so that
-						-- it doesn't get interpreted as a capture replace expression.
-						if form:find("~") then
-							-- Assign to a var because gsub returns multiple values.
-							local subbed_lemma = base.lemma:gsub("%%", "%%%%")
-							form = form:gsub("~", subbed_lemma)
-						end
-						-- If the form is -, don't insert any forms, which will result
-						-- in there being no overall forms (in fact it will be nil).
-						-- We check for that down below and substitute a single "-" as
-						-- the form, which in turn gets turned into special labels like
-						-- "no present participle".
-						if form ~= "-" then
-							iut.insert_form(base.forms, slot, {form = form, footnotes = spec.q})
+					end
+
+					for _, arg in ipairs(specs) do
+						if arg.term == "+" then
+							if default_values then -- will be nil if past tense specified as - and no past ptc given
+								for _, val in ipairs(default_values) do
+									val = shallowCopy(val)
+									if default_already_formobj then
+										local argformobj = convert_termobj_to_formobj(arg)
+										val.footnotes = iut.combine_footnotes(val.footnotes, argformobj.footnotes)
+										iut.insert_form(base.forms, slot, val)
+									else
+										m_headword_utilities.combine_termobj_qualifiers_labels(val, arg)
+										canonicalize_and_insert(val)
+									end
+								end
+							end
+						else
+							canonicalize_and_insert(arg)
 						end
 					end
 				end
 
-				process_specs("s_form", base.s_specs, def_s_form,
-					function() return compute_plusplus_s_form(base.lemma, def_s_form) end)
-				process_specs("ing_form", base.ing_specs, def_ing_form,
-					function() return compute_double_last_cons_stem(base.lemma) .. "ing" end)
-				process_specs("ed_form", base.ed_specs, def_ed_form,
-					function() return compute_double_last_cons_stem(base.lemma) .. "ed" end)
+				set_lemma_and_default_forms(base.lemma)
 
-				-- If the -en spec is completely missing, substitute the -ed spec in its entirely.
-				-- Otherwise, if individual -en forms are missing or use +, we will substitute the
-				-- default -ed form, as with the -ed spec.
-				local en_specs = base.en_specs
-				if #en_specs == 1 and not en_specs[1].form and not en_specs[1].q then
-					en_specs = base.ed_specs
+				local all_part_default_specs = {}
+				local function process_and_canonicalize_s_form(arg)
+					local form = arg.term
+					if form == "+" then
+						error("Internal error: '+' should have been converted to '^' by now")
+					end
+					if form == "*" or form == "**" or form == "*l" or form == "*!" or form == "*'" then
+						error(("Internal error: '%s' should have already thrown an error"):format(form))
+					end
+					if form == "^" or form == "++" or form == "+l" or form == "+!" or form == "+'" then
+						insert(all_part_default_specs, shallowCopy(arg))
+					end
+					return canonicalize_s_form(form)
 				end
 
-				process_specs("en_form", en_specs, def_ed_form,
-					function() return compute_double_last_cons_stem(base.lemma) .. "ed" end)
+				process_specs("s_form", base.s_specs, process_and_canonicalize_s_form, {{term = "^"}})
+				if not all_part_default_specs[1] then
+					all_part_default_specs[1] = {term = "^"}
+				end
+				process_specs("ing_form", base.ing_specs, function(arg) return canonicalize_ing_form(arg.term) end,
+					all_part_default_specs)
+				process_specs("ed_form", base.ed_specs, function(arg) return canonicalize_ed_form(arg.term) end,
+					all_part_default_specs)
+				process_specs("en_form", base.en_specs, function(arg) return canonicalize_en_form(arg.term) end,
+					base.forms.ed_form, "default already formobj")
 
 				iut.insert_form(base.forms, "lemma", {form = base.lemma})
 				-- Add linked version of lemma for use in head=. We write this in a general fashion in case
@@ -1263,218 +1626,123 @@ pos_functions["verbs"] = {
 
 			-- (4) Fetch the forms and put the conjugated lemmas in data.heads if not explicitly given.
 
-			local function fetch_forms(slot)
+			local function fetch_termobjs(slot)
 				local forms = alternant_multiword_spec.forms[slot]
-				-- See above. This should only occur if the user explicitly used -
-				-- for a spec.
-				if not forms or #forms == 0 then
-					forms = {{form = "-"}}
+				-- See above. This should only occur if the user explicitly used - for a spec.
+				if not forms or not forms[1] then
+					return {{term = "-"}}
 				end
-				return forms
+				local termobjs = {}
+				for _, formobj in ipairs(forms) do
+					insert(termobjs, convert_formobj_to_termobj(formobj))
+				end
+				return termobjs
 			end
 
-			pres_3sgs = fetch_forms("s_form")
-			pres_ptcs = fetch_forms("ing_form")
-			pasts = fetch_forms("ed_form")
-			past_ptcs = fetch_forms("en_form")
-			-- Use the "linked" form of the lemma as the head if no head= explicitly given and the user specified brackets
-			-- in one of the lemmas. Otherwise we use the default headword-linking algorithm.
+			pres_3sgs = fetch_termobjs("s_form")
+			pres_ptcs = fetch_termobjs("ing_form")
+			pasts = fetch_termobjs("ed_form")
+			past_ptcs = fetch_termobjs("en_form")
+			-- Use the "linked" form of the lemma as the head if no head= explicitly given and the user specified
+			-- brackets in one of the lemmas. Otherwise we use the default headword-linking algorithm.
 			if #data.user_specified_heads == 0 and alternant_multiword_spec.saw_bracket then
 				data.heads = {}
 				for _, lemma_obj in ipairs(alternant_multiword_spec.forms.lemma_linked) do
-					local quals, refs = iut.convert_footnotes_to_qualifiers_and_references(lemma_obj.footnotes)
-					insert(data.heads, {term = lemma_obj.form, q = quals, refs = refs})
+					insert(data.heads, convert_formobj_to_termobj(lemma_obj))
 				end
 			end
 		else
 			-------------------------- SEPARATE-PARAM FORMAT --------------------------
 
-			local pres_3sg, pres_ptc, past
+			set_lemma_and_default_forms(pagename)
 
-			if par1 and not (par2 or par3) then
-				-- Use of a single parameter other than "++", "*" or "++*" is now the "legacy" format,
-				-- and no longer supported.
-				if par1 == "es" or par1 == "ies" or par1 == "d" then
-					error("Legacy parameter 1=es/ies/d no longer supported, just use 'en-verb' without params")
-				elseif par1 == "++" or par1 == "*" or par1 == "++*" then
-					pres_3sg = canonicalize_s_form(par1)
-					pres_ptc = canonicalize_ing_form(par1)
-					past = canonicalize_ed_form(par1)
-				else
-					error("Legacy parameter 1=STEM no longer supported, just use 'en-verb' without params")
-				end
-			else
-				if par2 then
-					track("xxx2")
-				end
-				if par3 then
-					track("xxx3")
-				end
+			par1s = par1s or parse_inflection(args, {1, "pres_3sg"})
+
+			pres_3sgs = {}
+			pres_ptcs = {}
+			pasts = {}
+			past_ptcs = {}
+
+			if not par1s[1] then
+				par1s = {{term = "+"}}
+			end
+			if not par2s[1] then
+				par2s = {{term = "+"}}
+			end
+			if not par3s[1] then
+				par3s = {{term = "+"}}
+			end
+			if not par4s[1] then
+				par4s = {{term = "+"}}
 			end
 
-			if not pres_3sg or not pres_ptc or not past then
-				-- Either all three should be set above, or none of them.
-				assert(not pres_3sg and not pres_ptc and not past)
-
-				if par1 then
-					pres_3sg = canonicalize_s_form(par1)
-				else
-					pres_3sg = new_default_s
-				end
-
-				if par2 then
-					pres_ptc = canonicalize_ing_form(par2)
-				else
-					pres_ptc = new_default_ing
-				end
-
-				if par3 then
-					past = canonicalize_ed_form(par3)
-				else
-					past = new_default_ed
-				end
-			end
-
-			local past_ptc
-			if par4 then
-				past_ptcs_given = true
-				past_ptc = canonicalize_en_form(par4)
-				track("xxx4")
-			else
-				past_ptc = past
-			end
-
-			pres_3sgs = {{form = pres_3sg}}
-			pres_ptcs = {{form = pres_ptc}}
-			pasts = {{form = past}}
-			past_ptcs = {{form = past_ptc}}
-		end
-
-		------------------------------------------- HANDLE OVERRIDES ------------------------------------------
-
-		local function strip_brackets(qualifiers)
-			if not qualifiers then
-				return nil
-			end
-			local stripped_qualifiers = {}
-			for _, qualifier in ipairs(qualifiers) do
-				local stripped_qualifier = qualifier:match("^%[(.*)%]$")
-				if not stripped_qualifier then
-					error("Internal error: Qualifier should be surrounded by brackets at this stage: " .. qualifier)
-				end
-				insert(stripped_qualifiers, stripped_qualifier)
-			end
-			return stripped_qualifiers
-		end
-
-		local function collect_forms(label, accel_form, defaults, overrides, override_qualifiers, canonicalize)
-			if defaults[1].form == "-" then
-				return {label = "no " .. label}
-			else
-				local into_table = {label = label, accel = {form = accel_form}}
-				local maxindex = math.max(#defaults, overrides.maxindex)
-				local qualifiers = override_qualifiers[1] and {override_qualifiers[1]} or strip_brackets(defaults[1].footnotes)
-				insert(into_table, {term = defaults[1].form, q = qualifiers})
-
-				-- Present 3rd singular
-				for i = 2, maxindex do
-					local override_form = canonicalize(overrides[i])
-
-					if override_form then
-						-- If there is an override such as past_ptc2=..., only use the qualifier specified
-						-- using an override (past_ptc2_qual=...), if any; it doesn't make sense to combine
-						-- an override form with a qualifier specified inside of angle brackets.
-						insert(into_table, {term = override_form, q = {override_qualifiers[i]}})
-					elseif defaults[i] then
-						-- If the form comes from inside angle brackets, allow any override qualifier
-						-- (past_ptc2_qual=...) to override any qualifier specified inside of angle brackets.
-						-- FIXME: Maybe we should throw an error here if both exist.
-						local qualifiers = override_qualifiers[i] and {override_qualifiers[i]} or strip_brackets(defaults[i].footnotes)
-						insert(into_table, {term = defaults[i].form, q = qualifiers})
-					end
-				end
-
-				return into_table
-			end
-		end
-
-		local pres_3sg_infls = collect_forms("third-person singular simple present", "s-verb-form",
-			pres_3sgs, args[1], args.pres_3sg_qual, canonicalize_s_form)
-		local pres_ptc_infls = collect_forms("present participle", "ing-form",
-			pres_ptcs, args[2], args.pres_ptc_qual, canonicalize_ing_form)
-		local past_infls = collect_forms("simple past", "spast",
-			pasts, args[3], args.past_qual, canonicalize_ed_form)
-		local past_ptc_infls = collect_forms("past participle", "past|part",
-			past_ptcs, args[4], args.past_ptc_qual, canonicalize_en_form)
-
-		-- Are the past forms identical to the past participle forms? If so, we use a single
-		-- combined "simple past and past participle" label on the past tense forms.
-		-- We check for two conditions: Either no past participle forms were given at all, or
-		-- they were given but are identical in every way (all forms and qualifiers) to the past
-		-- tense forms. The former "no explicit past participle forms" check is important in the
-		-- "separate-parameter" format; if past tense overrides are given and no past participle
-		-- forms given, the past tense overrides should apply to the past participle as well.
-		-- In the angle-bracket format, it's expected that all forms and qualifiers are specified
-		-- using that format, and we explicitly copy past tense forms and qualifiers to past
-		-- participle ones if the latter are omitted, so we disable to "no explicit past participle
-		-- forms" check.
-		if args[4].maxindex > 0 or args.past_ptc_qual.maxindex > 0 then
-			past_ptcs_given = true
-		end
-
-		local identical = true
-
-		-- For the past and past participle to be identical, there must be
-		-- the same number of inflections, and each inflection must match
-		-- in term and qualifiers.
-		if #past_infls ~= #past_ptc_infls then
-			identical = false
-		else
-			for key, val in ipairs(past_infls) do
-				if past_ptc_infls[key].term ~= val.term then
-					identical = false
-					break
-				else
-					local quals1 = past_ptc_infls[key].q
-					local quals2 = val.q
-					if (not not quals1) ~= (not not quals2) then
-						-- one is nil, the other is not
-						identical = false
-					elseif quals1 and quals2 then
-						-- qualifiers present in both; each qualifier must match
-						if #quals1 ~= #quals2 then
-							identical = false
-						else
-							for k, v in ipairs(quals1) do
-								if v ~= quals2[k] then
-									identical = false
-									break
-								end
-							end
+			local function process_argument(args, dest, canon_func, default_values, default_already_canonicalized)
+				local function canonicalize_and_insert(arg)
+					local canon_arg = canon_func(arg)
+					if type(canon_arg) == "string" then
+						arg.term = canon_arg
+						insert_termobj_combining_duplicates(dest, arg)
+					else
+						for _, canon in ipairs(canon_arg) do
+							m_headword_utilities.combine_termobj_qualifiers_labels(canon, arg)
+							insert_termobj_combining_duplicates(dest, canon)
 						end
 					end
-					if not identical then
-						break
+				end
+
+				for _, arg in ipairs(args) do
+					if arg.term == "+" then
+						for _, val in ipairs(default_values) do
+							val = shallowCopy(val)
+							m_headword_utilities.combine_termobj_qualifiers_labels(val, arg)
+							if default_already_canonicalized then
+								insert_termobj_combining_duplicates(dest, val)
+							else
+								canonicalize_and_insert(val)
+							end
+						end
+					else
+						canonicalize_and_insert(arg)
 					end
 				end
 			end
+
+			local all_part_default_specs = {}
+			local function process_and_canonicalize_s_form(arg)
+				local form = arg.term
+				if form == "+" then
+					error("Internal error: '+' should have been converted to '^' by now")
+				end
+				if form == "^" or form == "++" or form == "+l" or form == "+!" or form == "+'" or
+					form == "*" or form == "**" or form == "*l" or form == "*!" or form == "*'" then
+					insert(all_part_default_specs, shallowCopy(arg))
+				end
+				return canonicalize_s_form(form)
+			end
+
+			process_argument(par1s, pres_3sgs, process_and_canonicalize_s_form, {{term = "^"}})
+			if not all_part_default_specs[1] then
+				all_part_default_specs[1] = {term = "^"}
+			end
+
+			process_argument(par2s, pres_ptcs, function(arg) return canonicalize_ing_form(arg.term) end,
+				all_part_default_specs)
+			process_argument(par3s, pasts, function(arg) return canonicalize_ed_form(arg.term) end,
+				all_part_default_specs)
+			process_argument(par4s, past_ptcs, function(arg) return canonicalize_en_form(arg.term) end,
+				pasts, "default already canonicalized")
 		end
 
-		-- Insert the forms
-		insert(data.inflections, pres_3sg_infls)
-		insert(data.inflections, pres_ptc_infls)
+		------------------------------------------- INSERT INFLECTIONS ------------------------------------------
 
-		if not past_ptcs_given or identical then
-			if past_ptcs[1].form == "-" then
-				past_infls.label = "no simple past or past participle"
-			else
-				past_infls.label = "simple past and past participle"
-				past_infls.accel = {form = "ed-form"}
-			end
-			insert(data.inflections, past_infls)
+		insert_inflection(data, pres_3sgs, "third-person singular simple present", "s-verb-form")
+		insert_inflection(data, pres_ptcs, "present participle", "ing-form")
+		if deepEquals(pasts, past_ptcs) then
+			insert_inflection(data, pasts, "simple past and past participle", "ed-form",
+				"no simple past or past participle")
 		else
-			insert(data.inflections, past_infls)
-			insert(data.inflections, past_ptc_infls)
+			insert_inflection(data, pasts, "simple past", "spast")
+			insert_inflection(data, past_ptcs, "past participle", "past|part")
 		end
 
 		if pagename:find(" ") then
