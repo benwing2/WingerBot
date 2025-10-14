@@ -352,6 +352,7 @@ Insert previously-parsed terms into `headdata.inflections`. `data` is an object 
 * `terms`: The list of parsed terms. If {nil} or omitted, nothing happens.
 * `label`: The label that the inflections are given; any parts of the label surrounded in <<...>> are linked to the
 glossary. (If the contents of <<...> contain a | in them, they are a two-part link.) Required.
+* `no_label`: If the inflection is {"-"}, insert a fixed label with this value. Defaults to {"no "} plus the label.
 * `accel`: If specified, a full accelerator object to add to the inflections.
 * `check_missing`: If specified, check the parsed terms for red links, and if so, add a category such as
   [[Category:Spanish nouns with red links in their headword lines]] to `headdata.categories`. If this is given, so must
@@ -371,7 +372,7 @@ function export.insert_inflection(data)
 			export.insert_fixed_inflection {
 				headdata = headdata,
 				originating_term = terms[1],
-				label = "no " .. label,
+				label = data.no_label or "no " .. label,
 			}
 		else
 			if data.check_missing then
@@ -441,6 +442,17 @@ function export.combine_qualifiers_or_labels(quals1, quals2)
 end
 
 
+--[==[
+Combine the qualifiers, labels, references and ID's of two term objects. `destobj` is the "destination term object" into
+which the combined properties are written, and `srcobj` is the "source object" into which the properties are merged.
+`destobj` is side-effected (but the lists inside of `destobj` are not); if this is undesirable, make sure to
+shallow-copy `destobj` first. If both objects have values for a given qualifier, label or reference, the values of
+`destobj` come first. If both objects have a value for `id`, the values must match or an error is thrown; otherwise,
+the resulting value of `id` comes from whichever one is defined.
+
+'''NOTE:''' This may not be the correct behavior when deduplicating a list of term objects. See
+`insert_termobj_combining_duplicates` for a different approach.
+]==]
 function export.combine_termobj_qualifiers_labels(destobj, srcobj)
 	destobj.q = export.combine_qualifiers_or_labels(destobj.q, srcobj.q)
 	destobj.qq = export.combine_qualifiers_or_labels(destobj.qq, srcobj.qq)
@@ -459,6 +471,205 @@ end
 function export.termobj_has_qualifiers_or_labels(obj)
 	return obj.q and obj.q[1] or obj.qq and obj.qq[1] or obj.l and obj.l[1] or obj.ll and obj.ll[1] or
 		obj.refs and obj.refs[1]
+end
+
+
+function export.convert_termobj_to_formobj(termobj)
+	local formobj = {
+		form = termobj.term,
+		translit = termobj.tr,
+	}
+	local footnotes
+	local function mods_to_footnote(mod_prefix, mod_vals)
+		if mod_vals and mod_vals[1] then
+			footnotes = footnotes or {}
+			for _, val in ipairs(mod_vals) do
+				insert(footnotes, "[" .. mod_prefix .. ":" .. val .. "]")
+			end
+		end
+	end
+	mods_to_footnote("q", termobj.q)
+	mods_to_footnote("qq", termobj.qq)
+	mods_to_footnote("l", termobj.l)
+	mods_to_footnote("ll", termobj.ll)
+	mods_to_footnote("ref", termobj.refs)
+	mods_to_footnote("id", termobj.id and {termobj.id} or nil)
+	formobj.footnotes = footnotes
+	return formobj
+end
+
+local recognized_multi_mods = {
+	q = "q",
+	qq = "qq",
+	l = "l",
+	ll = "ll",
+	ref = "refs",
+}
+local recognized_single_mods = {
+	id = "id",
+}
+
+function export.add_footnote_to_termobj(termobj, footnote)
+	local stripped_footnote = footnote:match("^%[(.*)%]$")
+	if not stripped_footnote then
+		error("Internal error: Footnote should be surrounded by brackets at this stage: " .. footnote)
+	end
+	local prefix, rest = stripped_footnote:match("^([a-z]+):(.+)$")
+	local field, is_multi
+	if prefix then
+		if recognized_multi_mods[prefix] then
+			field = recognized_multi_mods[prefix]
+			is_multi = true
+		elseif recognized_single_mods[prefix] then
+			field = recognized_single_mods[prefix]
+			is_multi = false
+		end
+	end
+	if not field then
+		rest = stripped_footnote
+		field = "l"
+		is_multi = true
+	end
+	if is_multi then
+		if not termobj[field] then
+			termobj[field] = {}
+		end
+		insert(termobj[field], rest)
+	else
+		if termobj[field] and termobj[field] ~= rest then
+			error(("Can't set two values for '%s': '%s' and '%s'"):format(field, termobj[field], rest))
+		end
+		termobj[field] = rest
+	end
+end
+
+function export.convert_formobj_to_termobj(formobj)
+	local termobj = {
+		term = formobj.form,
+		tr = formobj.translit,
+	}
+	if formobj.footnotes then
+		for _, footnote in ipairs(formobj.footnotes) do
+			export.add_footnote_to_termobj(termobj, footnote)
+		end
+	end
+	return termobj
+end
+
+local function extract_termobj_field_modifiers(fieldval)
+	return fieldval:match("^([*+]?)(.*)$")
+end
+
+function export.remove_termobj_field_modifiers(termobj)
+	local function remove_field_modifiers(field)
+		if termobj[field] and termobj[field][1] then
+			local any_field_modifiers = false
+			for _, val in ipairs(termobj[field]) do
+				local field_mods, _ = extract_termobj_field_modifiers(val)
+				if field_mods ~= "" then
+					any_field_modifiers = true
+					break
+				end
+			end
+			local new_field = {}
+			if any_field_modifiers then
+				for _, val in ipairs(termobj[field]) do
+					local _, field_without_mods = extract_termobj_field_modifiers(val)
+					insert_if_not(new_field, field_without_mods)
+				end
+				termobj[field] = new_field
+			end
+		end
+	end
+	
+	remove_field_modifiers("q")
+	remove_field_modifiers("qq")
+	remove_field_modifiers("l")
+	remove_field_modifiers("ll")
+	remove_field_modifiers("refs")
+end
+
+function export.insert_termobj_combining_duplicates(destobjs, termobj)
+	for _, destobj in ipairs(destobjs) do
+		if destobj.term == termobj.term and destobj.tr == termobj.tr then
+			-- Form already present; maybe combine footnotes.
+			local function combine_field_values(field)
+				if termobj[field] and termobj[field][1] then
+					-- Check to see if there are existing values with *; if so, remove them.
+					if destobj[field] and destobj[field][1] then
+						local any_values_with_asterisk = false
+						for _, val in ipairs(destobj[field]) do
+							local field_mods, _ = extract_termobj_field_modifiers(val)
+							if field_mods:find("%*") then
+								any_values_with_asterisk = true
+								break
+							end
+						end
+						if any_values_with_asterisk then
+							local filtered_values = {}
+							for _, val in ipairs(destobj[field]) do
+								local field_mods, _ = extract_termobj_field_modifiers(val)
+								if not val:find("%*") then
+									insert(filtered_values, val)
+								end
+							end
+							if filtered_values[1] then
+								destobj[field] = filtered_values
+							else
+								destobj[field] = nil
+							end
+						end
+					end
+	
+					local any_values_with_plus = false
+					for _, val in ipairs(termobj[field]) do
+						local field_mods, _ = extract_termobj_field_modifiers(val)
+						if val:find("%+") then
+							any_footnotes_with_plus = true
+							break
+						end
+					end
+					if any_footnotes_with_plus then
+						if not destobj[field] then
+							destobj[field] = {}
+						else
+							destobj[field] = shallow_copy(destobj[field])
+						end
+						for _, val in ipairs(termobj[field]) do
+							local already_seen = false
+							local field_mods, field_without_mods = extract_termobj_field_modifiers(val)
+							if val:find("%+") then
+								for _, existing_val in ipairs(destobj[field]) do
+									local existing_field_mods, existing_field_without_mods =
+										extract_termobj_field_modifiers(existing_val)
+									if existing_field_without_mods == field_without_mods then
+										already_seen = true
+										break
+									end
+								end
+								if not already_seen then
+									insert(destobj[field], val)
+								end
+							end
+						end
+					end
+				end
+			end
+
+			combine_field_values("q")
+			combine_field_values("qq")
+			combine_field_values("l")
+			combine_field_values("ll")
+			combine_field_values("refs")
+			if destobj.id and termobj.id and destobj.id ~= termobj.id then
+			    -- FIXME: We probably want to pass in an error function
+			    error(("Can't specify two different ID's %s and %s when combining objects"):format(termobj.id, destobj.id))
+			end
+			destobj.id = destobj.id or termobj.id
+			return
+		end
+	end
+	insert(destobjs, termobj)
 end
 
 

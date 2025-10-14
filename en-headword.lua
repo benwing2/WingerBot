@@ -79,225 +79,6 @@ end
 
 ------------------------------------------- UTILITY FUNCTIONS ------------------------------------------
 
--- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:inflection utilities]]).
-local function convert_termobj_to_formobj(termobj)
-	local formobj = {
-		form = termobj.term,
-		translit = termobj.tr,
-	}
-	local footnotes
-	local function mods_to_footnote(mod_prefix, mod_vals)
-		if mod_vals and mod_vals[1] then
-			footnotes = footnotes or {}
-			for _, val in ipairs(mod_vals) do
-				insert(footnotes, "[" .. mod_prefix .. ":" .. val .. "]")
-			end
-		end
-	end
-	mods_to_footnote("q", termobj.q)
-	mods_to_footnote("qq", termobj.qq)
-	mods_to_footnote("l", termobj.l)
-	mods_to_footnote("ll", termobj.ll)
-	mods_to_footnote("ref", termobj.refs)
-	mods_to_footnote("id", termobj.id and {termobj.id} or nil)
-	formobj.footnotes = footnotes
-	return formobj
-end
-
-local recognized_multi_mods = {
-	q = "q",
-	qq = "qq",
-	l = "l",
-	ll = "ll",
-	ref = "refs",
-}
-local recognized_single_mods = {
-	id = "id",
-}
-
--- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:inflection utilities]]).
-local function add_footnote_to_termobj(termobj, footnote)
-	local stripped_footnote = footnote:match("^%[(.*)%]$")
-	if not stripped_footnote then
-		error("Internal error: Footnote should be surrounded by brackets at this stage: " .. footnote)
-	end
-	local prefix, rest = stripped_footnote:match("^([a-z]+):(.+)$")
-	local field, is_multi
-	if prefix then
-		if recognized_multi_mods[prefix] then
-			field = recognized_multi_mods[prefix]
-			is_multi = true
-		elseif recognized_single_mods[prefix] then
-			field = recognized_single_mods[prefix]
-			is_multi = false
-		end
-	end
-	if not field then
-		rest = stripped_footnote
-		if rest:find("<<[^<>]*>>") then
-			-- appears to contain a <<...>> notation for labels
-			field = "l"
-		else
-			local labelinfo = get_label_info {
-				label = rest,
-				lang = lang,
-				nocat = true,
-				notrack = true,
-			}
-			if labelinfo.recognized then
-				field = "l"
-			else
-				field = "q"
-			end
-		end
-		is_multi = true
-	end
-	if is_multi then
-		if not termobj[field] then
-			termobj[field] = {}
-		end
-		insert(termobj[field], rest)
-	else
-		if termobj[field] and termobj[field] ~= rest then
-			error(("Can't set two values for '%s': '%s' and '%s'"):format(field, termobj[field], rest))
-		end
-		termobj[field] = rest
-	end
-end
-
--- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:inflection utilities]]).
-local function convert_formobj_to_termobj(formobj)
-	local termobj = {
-		term = formobj.form,
-		tr = formobj.translit,
-	}
-	if formobj.footnotes then
-		for _, footnote in ipairs(formobj.footnotes) do
-			add_footnote_to_termobj(termobj, footnote)
-		end
-	end
-	return termobj
-end
-
-local function extract_termobj_field_modifiers(fieldval)
-	return fieldval:match("^([*+]?)(.*)$")
-end
-
--- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:headword utilities]]).
-local function remove_termobj_field_modifiers(termobj)
-	local function remove_field_modifiers(field)
-		if termobj[field] and termobj[field][1] then
-			local any_field_modifiers = false
-			for _, val in ipairs(termobj[field]) do
-				local field_mods, _ = extract_termobj_field_modifiers(val)
-				if field_mods ~= "" then
-					any_field_modifiers = true
-					break
-				end
-			end
-			local new_field = {}
-			if any_field_modifiers then
-				for _, val in ipairs(termobj[field]) do
-					local _, field_without_mods = extract_termobj_field_modifiers(val)
-					insertIfNot(new_field, field_without_mods)
-				end
-				termobj[field] = new_field
-			end
-		end
-	end
-	
-	remove_field_modifiers("q")
-	remove_field_modifiers("qq")
-	remove_field_modifiers("l")
-	remove_field_modifiers("ll")
-	remove_field_modifiers("refs")
-end
-
--- FIXME: This is a general utility function and should be elsewhere (e.g. in [[Module:headword utilities]]).
-local function insert_termobj_combining_duplicates(destobjs, termobj)
-	for _, destobj in ipairs(destobjs) do
-		if destobj.term == termobj.term and destobj.tr == termobj.tr then
-			-- Form already present; maybe combine footnotes.
-			local function combine_field_values(field)
-				if termobj[field] and termobj[field][1] then
-					-- Check to see if there are existing values with *; if so, remove them.
-					if destobj[field] and destobj[field][1] then
-						local any_values_with_asterisk = false
-						for _, val in ipairs(destobj[field]) do
-							local field_mods, _ = extract_termobj_field_modifiers(val)
-							if field_mods:find("%*") then
-								any_values_with_asterisk = true
-								break
-							end
-						end
-						if any_values_with_asterisk then
-							local filtered_values = {}
-							for _, val in ipairs(destobj[field]) do
-								local field_mods, _ = extract_termobj_field_modifiers(val)
-								if not val:find("%*") then
-									insert(filtered_values, val)
-								end
-							end
-							if filtered_values[1] then
-								destobj[field] = filtered_values
-							else
-								destobj[field] = nil
-							end
-						end
-					end
-	
-					local any_values_with_plus = false
-					for _, val in ipairs(termobj[field]) do
-						local field_mods, _ = extract_termobj_field_modifiers(val)
-						if val:find("%+") then
-							any_footnotes_with_plus = true
-							break
-						end
-					end
-					if any_footnotes_with_plus then
-						if not destobj[field] then
-							destobj[field] = {}
-						else
-							destobj[field] = m_table.shallowCopy(destobj[field])
-						end
-						for _, val in ipairs(termobj[field]) do
-							local already_seen = false
-							local field_mods, field_without_mods = extract_termobj_field_modifiers(val)
-							if val:find("%+") then
-								for _, existing_val in ipairs(destobj[field]) do
-									local existing_field_mods, existing_field_without_mods =
-										extract_termobj_field_modifiers(existing_val)
-									if existing_field_without_mods == field_without_mods then
-										already_seen = true
-										break
-									end
-								end
-								if not already_seen then
-									insert(destobj[field], val)
-								end
-							end
-						end
-					end
-				end
-			end
-
-			combine_field_values("q")
-			combine_field_values("qq")
-			combine_field_values("l")
-			combine_field_values("ll")
-			combine_field_values("refs")
-			if destobj.id and termobj.id and destobj.id ~= termobj.id then
-			    -- FIXME: We probably want to pass in an error function
-			    error(("Can't specify two different ID's %s and %s when combining objects"):format(termobj.id, destobj.id))
-			end
-			destobj.id = destobj.id or termobj.id
-			return
-		end
-	end
-	insert(destobjs, termobj)
-end
-
-
 -- Parse and return an inflection not requiring additional processing. The raw arguments come from `args[field]`, which
 -- is parsed for inline modifiers.
 local function parse_inflection(args, field, is_head)
@@ -319,7 +100,7 @@ end
 -- `label` and optional accelerator spec `accel`.
 local function insert_inflection(data, terms, label, accel, no_label)
 	for _, termobj in ipairs(terms) do
-		remove_termobj_field_modifiers(termobj)
+		m_headword_utilities.remove_termobj_field_modifiers(termobj)
 	end
 	m_headword_utilities.insert_inflection {
 		headdata = data,
@@ -1453,7 +1234,7 @@ pos_functions["verbs"] = {
 						local footnotes = fetch_footnotes(colon_separated_group)
 						if footnotes then
 							for _, footnote in ipairs(footnotes) do
-								add_footnote_to_termobj(termobj, footnote)
+								m_headword_utilities.add_footnote_to_termobj(termobj, footnote)
 							end
 						end
 						insert(specs, termobj)
@@ -1529,7 +1310,7 @@ pos_functions["verbs"] = {
 			local function conjugate_verb(base)
 				local function process_specs(slot, specs, canon_func, default_values, default_already_formobj)
 					local function insert_termobj_into_slot(termobj)
-						local formobj = convert_termobj_to_formobj(termobj)
+						local formobj = m_headword_utilities.convert_termobj_to_formobj(termobj)
 						-- If the form is -, don't insert any forms, which will result in there being no overall forms
 						-- (in fact it will be nil). We check for that down below and substitute a single "-" as the
 						-- form, which in turn gets turned into special labels like "no present participle".
@@ -1562,7 +1343,7 @@ pos_functions["verbs"] = {
 								for _, val in ipairs(default_values) do
 									val = shallowCopy(val)
 									if default_already_formobj then
-										local argformobj = convert_termobj_to_formobj(arg)
+										local argformobj = m_headword_utilities.convert_termobj_to_formobj(arg)
 										val.footnotes = iut.combine_footnotes(val.footnotes, argformobj.footnotes)
 										iut.insert_form(base.forms, slot, val)
 									else
@@ -1634,7 +1415,7 @@ pos_functions["verbs"] = {
 				end
 				local termobjs = {}
 				for _, formobj in ipairs(forms) do
-					insert(termobjs, convert_formobj_to_termobj(formobj))
+					insert(termobjs, m_headword_utilities.convert_formobj_to_termobj(formobj))
 				end
 				return termobjs
 			end
@@ -1648,7 +1429,7 @@ pos_functions["verbs"] = {
 			if #data.user_specified_heads == 0 and alternant_multiword_spec.saw_bracket then
 				data.heads = {}
 				for _, lemma_obj in ipairs(alternant_multiword_spec.forms.lemma_linked) do
-					insert(data.heads, convert_formobj_to_termobj(lemma_obj))
+					insert(data.heads, m_headword_utilities.convert_formobj_to_termobj(lemma_obj))
 				end
 			end
 		else
@@ -1681,11 +1462,11 @@ pos_functions["verbs"] = {
 					local canon_arg = canon_func(arg)
 					if type(canon_arg) == "string" then
 						arg.term = canon_arg
-						insert_termobj_combining_duplicates(dest, arg)
+						m_headword_utilities.insert_termobj_combining_duplicates(dest, arg)
 					else
 						for _, canon in ipairs(canon_arg) do
 							m_headword_utilities.combine_termobj_qualifiers_labels(canon, arg)
-							insert_termobj_combining_duplicates(dest, canon)
+							m_headword_utilities.insert_termobj_combining_duplicates(dest, canon)
 						end
 					end
 				end
@@ -1696,7 +1477,7 @@ pos_functions["verbs"] = {
 							val = shallowCopy(val)
 							m_headword_utilities.combine_termobj_qualifiers_labels(val, arg)
 							if default_already_canonicalized then
-								insert_termobj_combining_duplicates(dest, val)
+								m_headword_utilities.insert_termobj_combining_duplicates(dest, val)
 							else
 								canonicalize_and_insert(val)
 							end
