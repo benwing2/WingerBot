@@ -265,7 +265,13 @@ function export.parse_term_list_with_modifiers(data)
 		data.val = val
 		local parsed = export.parse_term_with_modifiers(data)
 		if qualifiers and qualifiers[i] then
-			parsed.q = {qualifiers[i]}
+			if data.splitchar then
+				for _, term in ipairs(parsed) do
+					term.q = {qualifiers[i]}
+				end
+			else
+				parsed.q = {qualifiers[i]}
+			end
 		end
 		if data.splitchar then
 			extend(terms, parsed)
