@@ -34,6 +34,9 @@ local umatch = mw.ustring.match
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local usub = m_str_utils.sub
 
+local insert = table.insert
+local concat = table.concat
+
 local AC = u(0x0301) -- acute =  ́
 local GR = u(0x0300) -- grave =  ̀
 local CFLEX = u(0x0302) -- circumflex =  ̂
@@ -360,7 +363,7 @@ local function combine_captures(captures)
 	end
 	local combined = {}
 	for i = 1, (#captures - 1), 2 do
-		table.insert(combined, captures[i] .. captures[i+1])
+		insert(combined, captures[i] .. captures[i+1])
 	end
 	combined[#combined] = combined[#combined] .. captures[#captures]
 	return combined
@@ -382,12 +385,12 @@ function export.split_syllables(ru, tr)
 			error("Russian " .. ru .. " doesn't have same number of syllables as translit " .. tr)
 		end
 	end
-	--error(table.concat(rusyllables, "/") .. "(" .. #rusyllables .. (trsyllables and (") || " .. table.concat(trsyllables, "/") .. "(" .. #trsyllables .. ")") or ""))
+	--error(concat(rusyllables, "/") .. "(" .. #rusyllables .. (trsyllables and (") || " .. concat(trsyllables, "/") .. "(" .. #trsyllables .. ")") or ""))
 	return rusyllables, trsyllables
 end
 
 --[==[
-Split Russian word and transliteration into hyphen-separated components.  Rejoining with `table.concat(..., "-")` will
+Split Russian word and transliteration into hyphen-separated components.  Rejoining with `concat(..., "-")` will
 recover the original word. If the original word ends in a hyphen, that hyphen gets included with the preceding component(this is the only case when an individual component has a hyphen in it).
 ]==]
 function export.split_hyphens(ru, tr)
@@ -449,7 +452,7 @@ function export.make_unstressed(ru, tr)
 		trsyl[i] = make_unstressed_ru(trsyl[i])
 	end
 	-- Also need to apply j correction as otherwise we'll have je after cons, etc.
-	return table.concat(rusyl, ""), export.j_correction(table.concat(trsyl, ""))
+	return concat(rusyl, ""), export.j_correction(concat(trsyl, ""))
 end
 
 local function remove_jo_ru(word)
@@ -480,8 +483,8 @@ function export.remove_jo(ru, tr)
 		trsyl[i] = make_unstressed_once_ru(trsyl[i])
 	end
 	-- Also need to apply j correction as otherwise we'll have je after cons, etc.
-	return table.concat(rusyl, ""),
-		export.j_correction(table.concat(trsyl, ""))
+	return concat(rusyl, ""),
+		export.j_correction(concat(trsyl, ""))
 end
 
 local function map_last_hyphenated_component(fn, ru, tr)
@@ -493,10 +496,10 @@ local function map_last_hyphenated_component(fn, ru, tr)
 		local lastru, lasttr = fn(rucomponents[#rucomponents],
 			trcomponents and trcomponents[#trcomponents] or nil)
 		rucomponents[#rucomponents] = lastru
-		ru = table.concat(rucomponents, "-")
+		ru = concat(rucomponents, "-")
 		if trcomponents then
 			trcomponents[#trcomponents] = lasttr
-			tr = table.concat(trcomponents, "-")
+			tr = concat(trcomponents, "-")
 		end
 		return ru, tr
 	end
@@ -528,8 +531,8 @@ local function make_unstressed_once_after_hyphen_split(ru, tr, noconcat)
 		return rusyl, trsyl
 	end
 	-- Also need to apply j correction as otherwise we'll have je after cons
-	return table.concat(rusyl, ""),
-		export.j_correction(table.concat(trsyl, ""))
+	return concat(rusyl, ""),
+		export.j_correction(concat(trsyl, ""))
 end
 
 --[==[
@@ -574,8 +577,8 @@ function export.make_unstressed_once_at_beginning(ru, tr, noconcat)
 		return rusyl, trsyl
 	end
 	-- Also need to apply j correction as otherwise we'll have je after cons
-	return table.concat(rusyl, ""),
-		export.j_correction(table.concat(trsyl, ""))
+	return concat(rusyl, ""),
+		export.j_correction(concat(trsyl, ""))
 end
 
 --[==[
@@ -632,8 +635,8 @@ local function make_ending_stressed_after_hyphen_split(ru, tr)
 		export.correct_grave_acute_clash(rusyl[#rusyl], trsyl[#trsyl])
 	-- j correction didn't get applied in make_unstressed_once because
 	-- we short-circuited it and made it return lists of syllables
-	return table.concat(rusyl, ""),
-		export.j_correction(table.concat(trsyl, ""))
+	return concat(rusyl, ""),
+		export.j_correction(concat(trsyl, ""))
 end
 
 --[==[
@@ -685,8 +688,8 @@ function export.make_beginning_stressed(ru, tr)
 	rusyl[1], trsyl[1] = export.correct_grave_acute_clash(rusyl[1], trsyl[1])
 	-- j correction didn't get applied in make_unstressed_once_at_beginning
 	-- because we short-circuited it and made it return lists of syllables
-	return table.concat(rusyl, ""),
-		export.j_correction(table.concat(trsyl, ""))
+	return concat(rusyl, ""),
+		export.j_correction(concat(trsyl, ""))
 end
 
 -- used for tracking and categorization
@@ -924,7 +927,7 @@ end
 --------------------------------------------------------------------------
 
 --[==[
-Transliterate text after removing any links.
+Transliterate text after removing any links. The translit is decomposed in the process.
 ]==]
 function export.translit_no_links(text)
 	return export.translit(require("Module:links").remove_links(text))
@@ -981,10 +984,11 @@ end
 
 --[==[
 Concatenate two Cyrillic strings `RU1` and `RU2` that may have corresponding manual transliteration `TR1` and `TR2`
-(which should be {nil} if there is no manual translit). If `DOPAIR`, return a two-item list of the combined Cyrillic and
-manual translit (which will be {nil} if both `TR1` and `TR2` are {nil}); else, return two values, the combined Cyrillic
-and manual translit. If `MOVENOTES`, extract any footnote symbols at the end of `RU1` and move them to the end of the
-concatenated string, before any footnote symbols for `RU2`; same thing goes for `TR1` and `TR2`.
+(which should be {nil} if there is no manual translit, and otherwise should be decomposed). If `DOPAIR`, return a
+two-item list of the combined Cyrillic and manual translit (which will be {nil} if both `TR1` and `TR2` are {nil});
+else, return two values, the combined Cyrillic and manual translit. If `MOVENOTES`, extract any footnote symbols at the
+end of `RU1` and move them to the end of the concatenated string, before any footnote symbols for `RU2`; same thing goes
+for `TR1` and `TR2`.
 ]==]
 function export.concat_russian_tr(ru1, tr1, ru2, tr2, dopair, movenotes)
 	local ru, tr
@@ -1024,9 +1028,9 @@ end
 function export.concat_forms(forms)
 	local joined_rutr = {}
 	for _, form in ipairs(forms) do
-		table.insert(joined_rutr, export.combine_russian_tr(form))
+		insert(joined_rutr, export.combine_russian_tr(form))
 	end
-	return table.concat(joined_rutr, ",")
+	return concat(joined_rutr, ",")
 end
 
 --[==[
@@ -1041,7 +1045,7 @@ function export.strip_notes_from_forms(forms)
 		if tr then
 			tr, _ = m_table_tools.separate_notes(tr)
 		end
-		table.insert(newforms, {ru, tr})
+		insert(newforms, {ru, tr})
 	end
 	return newforms
 end
@@ -1068,7 +1072,7 @@ where each form is a two-element list of `{CYRILLIC, TRANSLIT}`.
 function export.zip_forms(rulist, trlist)
 	local forms = {}
 	for i, ru in ipairs(rulist) do
-		table.insert(forms, {ru, trlist[i]})
+		insert(forms, {ru, trlist[i]})
 	end
 	return forms
 end
@@ -1097,7 +1101,7 @@ function export.combine_translit_of_duplicate_forms(forms)
 	end
 
 	local newforms = {}
-	table.insert(newforms, {forms[1][1], forms[1][2]})
+	insert(newforms, {forms[1][1], forms[1][2]})
 	for i = 2, #forms do
 		local found_duplicate = false
 		for j = 1, #newforms do
@@ -1124,7 +1128,7 @@ function export.combine_translit_of_duplicate_forms(forms)
 			end
 		end
 		if not found_duplicate then
-			table.insert(newforms, {forms[i][1], forms[i][2]})
+			insert(newforms, {forms[i][1], forms[i][2]})
 		end
 	end
 	return newforms
@@ -1140,10 +1144,11 @@ function export.any_termobjs_have_translit(termobj)
 end
 
 --[==[
-Given a list of term objects, where each object is a table of `{term = CYRILLIC, tr = TRANSLIT, ...}`,
-combine forms with identical Cyrillic, concatenating the translit with a comma+space in between.
+Given a list of term objects, where each object is a table of `{term = CYRILLIC, tr = TRANSLIT, ...}`, combine forms
+with identical Cyrillic and identical ancillary properties, concatenating the translit with a comma+space in between.
+Also recompose all transliteration.
 ]==]
-function export.combine_translit_of_duplicate_termobjs(termobjs)
+function export.combine_translit_of_duplicate_termobjs_and_recompose(termobjs)
 	if not termobjs[1] then
 		return termobjs
 	end
@@ -1154,16 +1159,16 @@ function export.combine_translit_of_duplicate_termobjs(termobjs)
 	end
 
 	local newtermobjs = {}
-	table.insert(newtermobjs, m_table.shallowCopy(termobjs[1]))
+	insert(newtermobjs, m_table.shallowCopy(termobjs[1]))
 	for i = 2, #termobjs do
 		local found_duplicate = false
 		for j = 1, #newtermobjs do
 			-- If the Russian of the next termobj is the same as that of the last one, combine their translits and
-			-- modify newtermobjs[] in-place. Otherwise add the next form to newtermobjs[]. Make sure to clone the form
-			-- rather than just appending it directly since we may modify it in-place; we don't want to side-effect
-			-- `termobjs` as passed in.
-			if termobjs[i].term == newtermobjs[j].term then
-				m_headword_utilities.combine_termobj_qualifiers_labels(newtermobjs[j], termobjs[i])
+			-- modify newtermobjs[] in-place. Otherwise add the next termobj to newtermobjs[]. Make sure to clone the
+			-- termobj rather than just appending it directly since we may modify it in-place; we don't want to
+			-- side-effect `termobjs` as passed in.
+			if termobjs[i].term == newtermobjs[j].term and
+				m_headword_utilities.termobj_ancillary_properties_equal(termobjs[i], newtermobjs[j]) then
 				local tr1 = newtermobjs[j].tr
 				local tr2 = termobjs[i].tr
 				if not tr1 and not tr2 then
@@ -1182,9 +1187,16 @@ function export.combine_translit_of_duplicate_termobjs(termobjs)
 			end
 		end
 		if not found_duplicate then
-			table.insert(newtermobjs, m_table.shallowCopy(termobjs[i]))
+			insert(newtermobjs, m_table.shallowCopy(termobjs[i]))
 		end
 	end
+
+	for _, newtermobj in ipairs(newtermobjs) do
+		if newtermobj.tr then
+			newtermobj.tr = export.recompose(newtermobj.tr)
+		end
+	end
+
 	return newtermobjs
 end
 
@@ -1199,7 +1211,7 @@ function export.split_translit_of_duplicate_forms(forms)
 	end
 
 	-- Optimization to avoid creating a new list in the majority case when no translit exists.
-	if not export.any_termobjs_have_translit(forms) then
+	if not export.any_forms_have_translit(forms) then
 		return forms
 	end
 
@@ -1207,7 +1219,7 @@ function export.split_translit_of_duplicate_forms(forms)
 	for _, form in ipairs(forms) do
 		local ru, tr = unpack(form)
 		if not tr or not tr:find(",") or ru:find(",") then
-			table.insert(newforms, form)
+			insert(newforms, form)
 		else
 			local split_trs = split(tr, ",%s*")
 			local default_tr = export.translit_no_links(ru)
@@ -1215,7 +1227,7 @@ function export.split_translit_of_duplicate_forms(forms)
 				if split_tr == default_tr then
 					split_tr = nil
 				end
-				table.insert(newforms, {ru, split_tr})
+				insert(newforms, {ru, split_tr})
 			end
 		end
 	end
@@ -1227,29 +1239,48 @@ Given a list of forms, where each form is a two-element list of `{CYRILLIC, TRAN
 transliterations have been packed into a single translit field by creating two adjacent term/translit pairs. This is
 the opposite operation of `combine_translit_of_duplicate_forms()`.
 ]==]
-function export.split_translit_of_duplicate_termobjs(termobjs)
+function export.split_translit_of_duplicate_termobjs_and_decompose(termobjs)
 	if not termobjs[1] then
 		return termobjs
 	end
 
 	-- Optimization to avoid creating a new list in the majority case when no translit exists.
-	if not any_forms_have_translit(forms) then
+	if not any_termobjs_have_translit(termobjs) then
 		return forms
 	end
 
-	local newforms = {}
-	for _, form in ipairs(forms) do
-		local ru, tr = unpack(form)
-		if not tr or not tr:find(",") or ru:find(",") then
-			table.insert(newforms, form)
+	local newobjs = {}
+	for _, obj in ipairs(termobjs) do
+		local tr = obj.tr
+		if tr then
+			tr = export.decompose(tr)
+		end
+		if not or not tr:find(",") or obj.term:find(",[^%s]") then
+			if not tr or tr == obj.tr then
+				insert(newobjs, obj)
+			else
+				obj = m_table.shallowCopy(obj)
+				obj.tr = tr
+				insert(newobjs, obj)
+			end
 		else
-			local split_trs = split(tr, ",%s*")
-			local default_tr = export.translit_no_links(ru)
+			local term = obj.term
+			local embedded_comma_in_term = not not term:find(",")
+			-- If there's an embedded comma in the term, we want to split on commas not followed by a space; otherwise,
+			-- we split on commas whether or not followed by a space. To implement "comma not followed by space", we
+			-- can use a "frontier pattern"; the one below matches if the character after the comma is in the specified
+			-- set (which is anything but a comma or space) and the comma itself is not in the specified set (in other
+			-- words, it is a comma or space, which matches because it's a comma). This doesn't work correctly if there
+			-- are two commas in a row, but that should not happen as there should not be an empty translit.
+			local split_trs = split(tr, embedded_comma_in_term and ",%f[^,%s]" or ",%s*")
+			local default_tr = export.translit_no_links(term)
 			for _, split_tr in ipairs(split_trs) do
 				if split_tr == default_tr then
 					split_tr = nil
 				end
-				table.insert(newforms, {ru, split_tr})
+				local newobj = m_table.shallowCopy(obj)
+				obj.tr = split_tr
+				insert(newobjs, obj)
 			end
 		end
 	end

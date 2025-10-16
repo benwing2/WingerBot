@@ -17,20 +17,24 @@ local langname = lang:getCanonicalName()
 
 local com = require("Module:ru-common")
 local m_links = require("Module:links")
-local m_table = require("Module:table")
 local m_table_tools = require("Module:table tools")
 
 local require_when_needed = require("Module:utilities/require when needed")
 
 local en_utilities_module = "Module:en-utilities"
+local json_module = "Module:JSON"
 local headword_module = "Module:headword"
 local headword_utilities_module = "Module:headword utilities"
 local string_utilities_module = "Module:string utilities"
+local table_module = "Module:table"
 
 local m_en_utilities = require_when_needed(en_utilities_module)
 local m_headword_utilities = require_when_needed(headword_utilities_module)
 local m_string_utilities = require_when_needed(string_utilities_module)
+local m_table = require_when_needed(table_module)
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
+local shallowCopy = require_when_needed(table_module, "shallowCopy")
+local insertIfNot = require_when_needed(table_module, "insertIfNot")
 
 local boolean_param = {type = "boolean"}
 local list_param = {list = true, disallow_holes = true}
@@ -45,7 +49,6 @@ local rsplit = m_string_utilities.split
 
 local concat = table.concat
 local insert = table.insert
-local insertIfNot = m_table.insertIfNot
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
 local IRREGMARKER = "△"
@@ -282,6 +285,13 @@ end
 local function parse_and_insert_inflection(data, args, field, label, accel_form, accel_pos)
 	local terms = parse_inflection(data, args, field)
 	insert_inflection(data, terms, label, accel_form, accel_pos)
+end
+
+local function get_split_decomposed_heads(data)
+	if not data.heads then
+		data.split_decomposed_heads = com.split_translit_of_duplicate_termobjs_and_decompose(data.heads)
+	end
+	return data.split_decomposed_heads
 end
 
 -- Zip the lemma heads and corresponding translits into a list of {RUSSIAN, TRANSLIT} objects. In the process, split
@@ -721,32 +731,25 @@ do_noun = function(data, args, no_plural, genitives, plurals, genpls, pos)
 	end
 end
 
-local function generate_informal_comp(comp)
-	local ru, tr = unpack(comp)
+local function generate_informal_comp(compobj)
+	local ru, tr = compobj.term, compobj.tr
 	if rfind(ru, "е́?е$") then
 		ru, tr = com.strip_ending(ru, tr, "е") -- Cyrillic е
-		return com.concat_russian_tr(ru, tr, "й", nil, "dopair")
+		compobj = shallowCopy(compobj)
+		compobj.term, compobj.tr = com.concat_russian_tr(ru, tr, "й", nil)
+		return compobj
 	else
 		return nil
 	end
 end
 
-local function generate_po_variant(comp)
-	local ru, tr = unpack(comp)
+local function convert_to_po_variant(compobj)
+	local ru, tr = compobj.term, compobj.tr
 	if rfind(ru, "е$") or rfind(ru, "е́?й$") then
 		ru = "[[по" .. ru .. "|(по)]][[" .. ru .. "]]"
 		tr = tr and "(po)" .. tr or nil
-		return {ru, tr}
-	else
-		return comp
+		compobj.term, compobj.tr = ru, tr
 	end
-end
-
-local function generate_periphrastic_comp(positive)
-	local retobj = m_table.shallowCopy(positive)
-	retobj.
-	local ru, tr = unpack(positive)
-	return com.concat_russian_tr("[[бо́лее]] ", nil, ru, tr, "dopair")
 end
 
 local allowed_endings = {
@@ -775,18 +778,21 @@ local velar_to_palatal = {
 	["x"] = "š"
 }
 
--- Generate the comparative(s) given the positive(s). `positives` is a list of term objects. `compspec` is the
--- comparative spec (either + or a spec giving an adjectival accent pattern, such as +c'). If + is given, the default
--- is +a unless the positive is ending-stressed, in which case the default is +b. Return value is a list of term
--- objects.
+-- Generate the comparative(s) given the positive(s). `positives` is a list of term objects, with the translit already
+-- split and decomposed. `compspecobj` is the term object containing the comparative spec (either + or a spec giving an
+-- adjectival accent pattern, such as +c'). If + is given, the default is +a unless the positive is ending-stressed, in
+-- which case the default is +b. Return value is a list of term objects.
 local function generate_comparative(positives, compspecobj)
 	local comps = {}
 	local compspec = compspecobj.term
+	if compspecobj.tr then
+		error("Can't specify manual translit with a '+...' comparative spec")
+	end
 	if not rfind(compspec, "^%+") then
 		error("Compspec '" .. compspec .. "' must begin with + in this function")
 	end
 	if compspec ~= "+" and not rfind(compspec, "^%+[abc]'*$") then
-		error("Compsec '" .. compspec .. "' has illegal format, should be e.g. + or +c''")
+		error("Compspec '" .. compspec .. "' has an illegal format, should be e.g. + or +c''")
 	end
 	compspec = rsub(compspec, "^%+", "")
 	for _, positive in ipairs(positives) do
@@ -838,7 +844,11 @@ local function generate_comparative(positives, compspecobj)
 				comptr = comptr .. "e" .. AC .. "e" -- Latin decomposed ée
 			end
 		end
-		insertIfNot(comps, {comp, comptr})
+		local compobj = shallowCopy(positive)
+		compobj.term = comp
+		compobj.tr = comptr
+		m_headword_utilities.combine_termobj_qualifiers_labels(compobj, compspecobj)
+		insert(comps, compobj)
 	end
 	return comps
 end
@@ -847,17 +857,19 @@ end
 function export.generate_comparative(frame)
 	local iparams = {
 		[1] = {required = true, desc = "comparative"},
-		[2] = {},
+		[2] = {default = "+"},
 	}
 	local iargs = require("Module:parameters").process(frame.args, iparams)
 	local comps = iargs[1]
-	local compspec = iargs[2] or ""
+	local compspec = iargs[2]
 	comps = rsplit(comps, ",")
 	for i, comp in ipairs(comps) do
-		comps[i] = com.split_russian_tr(comp, "dopair")
+		local ru, tr = com.split_russian_tr(comp)
+		comps[i] = {term = ru, tr = tr}
 	end
-	comps = generate_comparative(comps, compspec)
-	return com.recompose(com.concat_forms(comps))
+	comps = generate_comparative(comps, {term = compspec})
+	comps = com.combine_translit_of_duplicate_termobjs_and_recompose(comps)
+	return require(json_module).toJSON(comps)
 end
 
 -- Handle comparative inflections. If an explicit form is given such as коро́че or красне́е, we add it in a "hacked"
@@ -865,7 +877,10 @@ end
 -- if possible, e.g. красне́й, with по-hacking applied (but no such variant is possible for коро́че). We also handle
 -- autogenerating comparatives when specified as + or +b, +c'', etc. (All specifications with an accent pattern are
 -- equivalent other than +a.) Finally, we allow and handle periphrastic comparatives noted using "peri".
-local function handle_comparatives(data, comps, catpos, noinf)
+local function handle_comparatives(data, args)
+	local noinf = args.noinf
+	local comps = parse_inflection(data, args, {2, "comp"})
+	comps = com.split_translit_of_duplicate_termobjs_and_decompose(comps)
 	if comps[1] and comps[1].term == "-" then
 		local nocomp = table.remove(comps, 1)
 		if comps[1] then
@@ -878,56 +893,57 @@ local function handle_comparatives(data, comps, catpos, noinf)
 	if comps[1] then
 		local comp_parts = {}
 
-		local function insert_comp(comp)
-			insertIfNot(comp_parts, generate_po_variant(comp))
+		local function insert_comp(compobj)
+			local informal
 			if not noinf then
-				local informal = generate_informal_comp(comp)
+				informal = generate_informal_comp(compobj)
 				if informal then
-					insertIfNot(comp_parts, generate_po_variant(informal))
+					convert_to_po_variant(informal)
 				end
+			end
+			convert_to_po_variant(compobj)
+			m_headword_utilities.insert_termobj_combining_duplicates(comp_parts, compobj)
+			if informal then
+				m_headword_utilities.insert_termobj_combining_duplicates(comp_parts, informal)
 			end
 		end
 
-		for _, comp in ipairs(comps) do
-			local term = comp.term
-			local tr = comp.tr
+		for _, compobj in ipairs(comps) do
+			local term = compobj.term
 			if term == "peri" then
-				for _, positive in ipairs(data.heads) do
-					local comp = generate_periphrastic_comp(positive)
-					insertIfNot(comp_parts, comp)
+				if compobj.tr then
+					error("Can't specify manual translit with 'peri' comparative spec")
+				end
+				for _, positive in ipairs(get_split_decomposed_heads(data)) do
+					local pericomp = shallowCopy(positive)
+					pericomp.term, pericomp.tr = com.concat_russian_tr("[[бо́лее]] ", nil, pericomp.term, pericomp.tr)
+					m_headword_utilities.combine_termobj_qualifiers_labels(pericomp, compobj)
+					m_headword_utilities.insert_termobj_combining_duplicates(comp_parts, pericomp)
 				end
 				track("pericomp")
-			elseif rfind(ru, "^+") then
-				local autocomps = generate_comparative(zip_head_and_translit(data), ru)
+			elseif rfind(term, "^+") then
+				local autocomps = generate_comparative(get_split_decomposed_heads(data), compobj)
 				for _, autocomp in ipairs(autocomps) do
 					insert_comp(autocomp)
 				end
 			else
-				insert_comp({ru, tr})
+				insert_comp(compobj)
 			end
 		end
 
-		local function add_comp_inflection(label, comp_parts, accel_form)
-			if #comp_parts == 0 then
-				return
-			end
-			local parts = {label = label}
-			comp_parts = com.combine_translit_of_duplicate_forms(comp_parts)
-			for _, form in ipairs(comp_parts) do
-				local ru, tr = unpack(form)
-				-- WARNING: This has intimate knowledge of how generate_po_variant() works. To avoid this, we could
-				-- maintain the un-po-hacked target in each form in comp_parts, but then we'd have to modify
-				-- com.combine_translit_of_duplicate_forms() to preserve the extra target info when combining
-				-- duplicate forms, or use a map from hacked Russian form to target.
-				local un_po_hacked_ru = m_links.remove_links(rsub(ru, "^%[%[.-%]%]", ""))
-				local un_po_hacked_tr = tr and rsub(tr, "^%(po%)", "") or nil
-				local un_po_hacked_form = {un_po_hacked_ru, un_po_hacked_tr}
-				insertIfNot(parts, russian_tr_to_inflection_obj(data, form, pos, accel_form, nil, un_po_hacked_form))
-			end
-			insert(data.inflections, parts)
+		comp_parts = com.combine_translit_of_duplicate_termobjs_and_recompose(comp_parts)
+		for _, compobj in ipairs(compobjs) do
+			local ru, tr = compobj.term, compobj.tr
+			-- WARNING: This has intimate knowledge of how convert_to_po_variant() works. To avoid this, we could
+			-- maintain the un-po-hacked target in each form in comp_parts, but then we'd have to modify
+			-- com.combine_translit_of_duplicate_forms() to preserve the extra target info when combining
+			-- duplicate forms, or use a map from hacked Russian form to target.
+			local un_po_hacked_ru = m_links.remove_links(rsub(ru, "^%[%[.-%]%]", ""))
+			local un_po_hacked_tr = tr and rsub(tr, rsub(tr, "^%(po%)", ""), ", %(po%)", ", ") or nil
+			compobj.target_term = un_po_hacked_ru
+			compobj.target_tr = un_po_hacked_tr
 		end
-
-		add_comp_inflection("comparative", normal_comp_parts, "comparative")
+		insert_inflection(data, comp_parts, "<<comparative>>", "comparative")
 	end
 end
 
@@ -945,17 +961,16 @@ pos_functions["adjectives"] = {
 		["pej"] = list_param, --corresponding pejorative(s)
 	},
 	func = function(args, data)
-		local comps = parse_inflection(data, args, {2, "comp"})
 
 		if args.indecl then
 			insert(data.inflections, {label = "indeclinable"})
 			insert(data.categories, langname .. " indeclinable adjectives")
 		end
 
-		handle_comparatives(data, comps, "adjective", args.noinf)
+		handle_comparatives(data, args)
 
-		local function add_adj_forms(label, forms, accel_form, accel_pos)
-			add_inflection(data, label, forms, "adjective", accel_form, accel_pos)
+		local function parse_and_insert_adj_inflection(field, label, accel_form, accel_pos)
+			parse_and_insert_inflection(data, args, field, label, accel_form, accel_pos)
 		end
 
 		-- Add the superlatives
@@ -976,15 +991,27 @@ pos_functions["adjectives"] = {
 		end
 
 		-- Add the adverbs
-		add_adj_forms("adverb", args.adv)
+		parse_and_insert_adj_inflection("adv", "adverb")
 		-- Add the abstract nouns
-		if #args.absn > 0 then
-			local normalized_absn = {}
-			for _, absn in ipairs(args.absn) do
-				if absn == "+" then
-					local lemmas = zip_head_and_translit(data)
+		local absn_objs = parse_inflection(data, args, "absn")
+		local saw_plus = false
+		for _, absnobj in ipairs(absn_objs) do
+			if absnobj.term == "+" then
+				saw_plus = true
+				break
+			end
+		end
+		if saw_plus then
+			local normalized_absn_objs = {}
+			absn_objs = com.split_translit_of_duplicate_termobjs_and_decompose(absn_objs) 
+			for _, absnobj in ipairs(absn_objs) do
+				if absnobj.term == "+" then
+					if absnobj.tr then
+						error("Can't specify manual translit with '+' default abstract noun spec")
+					end
+					local lemmas = get_split_decomposed_heads(data)
 					for _, lemma in ipairs(lemmas) do
-						local ru, tr = unpack(lemma)
+						local ru, tr = lemma.term, lemma.tr
 						if rfind(ru, "о́?й$") then
 							error("Can't form default abstract noun of ending-stressed adjective " .. ru)
 						end
@@ -995,20 +1022,25 @@ pos_functions["adjectives"] = {
 						else
 							ru, tr = com.strip_ending(ru, tr, "ый")
 						end
-						insertIfNot(normalized_absn, com.concat_russian_tr(ru, tr, "ость", nil, "dopair"))
+						ru, tr = com.concat_russian_tr(ru, tr, "ость", nil)
+						local lemma_absn = shallowCopy(lemma)
+						lemma_absn.term, lemma_absn.tr = ru, tr
+						m_headword_utilities.combine_termobj_qualifiers_labels(lemma_absn, absnobj)
+						m_headword_utilities.insert_termobj_combining_duplicates(normalized_absn_objs, lemma_absn)
 					end
 				else
-					insertIfNot(normalized_absn, com.split_russian_tr(absn, "dopair"))
+					m_headword_utilities.insert_termobj_combining_duplicates(normalized_absn_objs, absnobj)
 				end
 			end
-			add_adj_forms("abstract noun", normalized_absn, "abstract noun", "noun")
+			normalized_absn_objs = com.combine_translit_of_duplicate_termobjs_and_recompose(normalized_absn_objs)
+			insert_inflection(data, normalized_absn_objs, "abstract noun", "abstract noun", "noun")
 		end
 		-- Add the diminutives
-		add_adj_forms(glossary_link("diminutive"), args.dim, "diminutive")
+		parse_and_insert_adj_inflection("dim", "<<diminutive>>", "diminutive")
 		-- Add the augmentatives
-		add_adj_forms(glossary_link("augmentative"), args.aug, "augmentative")
+		parse_and_insert_adj_inflection("aug", "<<augmentative>>", "augmentative")
 		-- Add the pejoratives
-		add_adj_forms(glossary_link("pejorative"), args.pej, "pejorative")
+		parse_and_insert_adj_inflection("pej", "<<pejorative>>", "pejorative")
 	end
 }
 
@@ -1025,18 +1057,18 @@ pos_functions["adverbs"] = {
 	func = function(args, data)
 		local comps = args[2]
 
-		handle_comparatives(data, comps, "adverb", args.noinf)
+		handle_comparatives(data, args)
 
-		local function add_adv_forms(label, forms, accel_form)
-			add_inflection(data, label, forms, "adverb", accel_form)
+		local function parse_and_insert_adv_inflection(field, label, accel_form)
+			parse_and_insert_inflection(data, args, field, label, accel_form)
 		end
 
 		-- Add the diminutives
-		add_adv_forms(glossary_link("diminutive"), args.dim, "diminutive")
+		parse_and_insert_adv_inflection("dim", "<<diminutive>>", "diminutive")
 		-- Add the augmentatives
-		add_adv_forms(glossary_link("augmentative"), args.aug, "augmentative")
+		parse_and_insert_adv_inflection("aug", "<<augmentative>>", "augmentative")
 		-- Add the pejoratives
-		add_adv_forms(glossary_link("pejorative"), args.pej, "pejorative")
+		parse_and_insert_adv_inflection("pej", "<<pejorative>>", "pejorative")
 	end
 }
 
