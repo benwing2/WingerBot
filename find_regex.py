@@ -9,19 +9,18 @@ import pywikibot
 import blib
 from blib import getparam, rmparam, msg, site
 
-def process_text_on_page(index, pagetitle, text, prev_comment, regex, invert, verbose,
-                         include_text, all_matches, lang, output_from_to, output_begin_end, encode_embedded_newlines):
+def process_text_on_page(index, pagetitle, text, prev_comment):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  if verbose:
+  if args.verbose:
     pagemsg("Processing")
 
-  if not lang:
+  if not args.lang:
     text_to_search = text
   else:
     text_to_search = []
-    langs = set(re.split(",(?!= )", lang))
+    langs = set(re.split(",(?!= )", args.lang))
     sections, sections_by_lang, _ = blib.split_text_into_sections(text, pagemsg)
 
     for seclang, secind in sections_by_lang.items():
@@ -33,57 +32,53 @@ def process_text_on_page(index, pagetitle, text, prev_comment, regex, invert, ve
     text_to_search = "".join(text_to_search)
 
   def encode(txt):
-    if encode_embedded_newlines:
+    if not args.no_encode_embedded_newlines:
       return txt.replace("\n", r"\n")
     else:
       return txt
   def output_match(m):
-    if output_from_to:
+    if args.output_from_to:
       pagemsg("Found match for regex: <from> %s <to> %s <end>" % (encode(m.group(0)), encode(m.group(0))))
-    elif output_begin_end:
+    elif args.output_begin_end:
       pagemsg("Found match for regex: <begin> %s <end>" % encode(m.group(0)))
     else:
       pagemsg("Found match for regex: %s" % encode(m.group(0)))
 
   if text_to_search:
     found_match = False
-    if regex is None:
+    if args.regex is None:
       found_match = True
-    elif all_matches:
-      for m in re.finditer(regex, text_to_search, re.M):
+    elif args.all:
+      for m in re.finditer(args.regex, text_to_search, re.M):
         found_match = True
         output_match(m)
     else:
-      m = re.search(regex, text_to_search, re.M)
+      m = re.search(args.regex, text_to_search, re.M)
       if m:
         found_match = True
-        if not invert:
+        if not args.not_:
           output_match(m)
-    if not found_match and invert:
-      pagemsg("Didn't find match for regex: %s" % regex)
-    if include_text:
+    if not found_match and args.not_:
+      pagemsg("Didn't find match for regex: %s" % args.regex)
+    if args.text:
       if not text_to_search.endswith("\n"):
         text_to_search += "\n"
-      if found_match == (not invert):
+      if found_match == (not args.not_):
         if prev_comment:
           pagemsg("Skipped, no changes; previous comment = %s" % prev_comment)
         pagemsg("-------- begin text --------\n%s-------- end text --------" % text_to_search)
 
-def search_pages(args, regex, invert, input_from_diff, start, end, lang):
+def search_pages(start, end):
 
-  def do_process_text_on_page(index, title, text, prev_comment):
-    process_text_on_page(index, title, text, prev_comment, regex, invert, args.verbose,
-        args.text, args.all, lang, args.output_from_to, args.output_begin_end, args.encode_embedded_newlines)
-
-  if input_from_diff:
-    lines = open(input_from_diff, "r", encoding="utf-8")
+  if args.input_from_diff:
+    lines = open(args.input_from_diff, "r", encoding="utf-8")
     index_pagename_and_text = blib.yield_text_from_diff(lines, args.verbose)
     for _, (index, pagename, text) in blib.iter_items(index_pagename_and_text, start, end,
         get_name=lambda x:x[1], get_index=lambda x:x[0]):
-      do_process_text_on_page(index, pagename, text, None)
+      process_text_on_page(index, pagename, text, None)
     return
 
-  blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, stdin=True, include_comment=True)
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, include_comment=True)
 
 if __name__ == "__main__":
   parser = blib.create_argparser("Search on pages", include_pagefile=True,
@@ -95,7 +90,7 @@ if __name__ == "__main__":
   parser.add_argument('--all', help="Include all matches.", action="store_true")
   parser.add_argument('--output-from-to', help="Output in from-to format (single file for original and changes), for ease in pushing changes.", action="store_true")
   parser.add_argument('--output-begin-end', help="Output in split begin-end format (separate files for original and changes), for ease in pushing changes.", action="store_true")
-  parser.add_argument('--encode-embedded-newlines', help="Convert embedded newlines to '\\n', to keep everything on one line.", action="store_true")
+  parser.add_argument('--no-encode-embedded-newlines', help="Don't convert embedded newlines to '\\n' (normally done to keep everything on one line).", action="store_true")
   parser.add_argument('--text', help="Include full text of page or language section.", action="store_true")
   parser.add_argument('--lang', help="Only search the specified language section(s) (comma-separated).")
   args = parser.parse_args()
@@ -105,4 +100,4 @@ if __name__ == "__main__":
     raise ValueError("-e (--regex) must be given unless --text is given")
   if args.not_ and args.all:
     raise ValueError("Can't combine --not with --all")
-  search_pages(args, args.regex, args.not_, args.input_from_diff, start, end, args.lang)
+  search_pages(start, end)
