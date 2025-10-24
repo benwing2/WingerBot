@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import re
+import re, unicodedata
 
 # hamza
 HAMZA = "ء"
+HAMZA_ON_ALIF = "أ"
+HAMZA_UNDER_ALIF = "إ"
+HAMZA_ON_WAW = "ؤ"
+HAMZA_ON_YAA = "ئ"
 
 # diacritics
 A  = "\u064E" # fatḥa
@@ -66,6 +70,9 @@ def reorder_shadda(text):
   # MediaWiki does for all Unicode strings; however, it makes
   # detection and replacement processes inconvenient, so undo it.
   return re.sub("(" + DIACRITIC_ANY_BUT_SH + ")" + SH, SH + r"\1", text)
+
+def undo_reorder_shadda(text):
+  return unicodedata.normalize("NFC", text)
 
 arabic_adj_headword_templates = [
   "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an", "ar-nisba",
