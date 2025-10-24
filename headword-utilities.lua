@@ -474,6 +474,27 @@ function export.termobj_has_qualifiers_or_labels(obj)
 end
 
 
+local function one_ancillary_property_equal(prop1, prop2)
+	local prop1_is_nil = not prop1 or not prop1[1]
+	local prop2_is_nil = not prop2 or not prop2[1]
+	if prop1_is_nil and prop2_is_nil then
+		return true
+	end
+	if prop1_is_nil or prop2_is_nil then
+		return false
+	end
+	return m_table.deepEquals(prop1, prop2)
+end
+
+function export.termobj_ancillary_properties_equal(obj1, obj2)
+	return one_ancillary_property_equal(obj1.q, obj2.q) and
+		one_ancillary_property_equal(obj1.qq, obj2.qq) and
+		one_ancillary_property_equal(obj1.l, obj2.l) and
+		one_ancillary_property_equal(obj1.ll, obj2.ll) and
+		one_ancillary_property_equal(obj1.refs, obj2.refs) and
+		obj1.id == obj2.id
+end
+
 function export.convert_termobj_to_formobj(termobj)
 	local formobj = {
 		form = termobj.term,
