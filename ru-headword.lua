@@ -125,49 +125,6 @@ local function check_if_accent_needed(val, data)
 	end
 end
 
--- Convert {RUSSIAN, TR} in `form` into an "inflection object" of the form needed for one of the inflection parts in
--- `data` is used to fetch the values of `lemma` and `lemma_translit` in the accelerator object and to add a "Requests
--- for accents" category if the form is missing accents. (FIXME: Consider throwing an error instead.) `pos` is the
--- part of speech of the lemma and is used for naming the "Requests for accents" category. `accel_form` goes in the
--- accelerator object; if nil, no accelerator object is specified. `accel_pos` is the part of speech of the inflection,
--- if different from the lemma, and goes in the accelerator object. `target` is used to populate the `target` and
--- `translit` fields in the accelerator object and is the form used to check for missing accents; in both cases it
--- defaults to `form` if omitted.
-local function russian_tr_to_inflection_obj(data, form, pos, accel_form, accel_pos, target)
-	local ru, tr
-	if type(form) == "string" then
-		ru, tr = com.split_russian_tr(form)
-	else
-		ru, tr = unpack(form)
-	end
-	local sawhyp_ru, sawhyp_tr
-	ru, sawhyp_ru = rsubb(ru, HYPMARKER, "")
-	if tr then
-		tr, sawhyp_tr = rsubb(tr, HYPMARKER, "")
-	end
-	local accel
-	local target_ru, target_tr
-	if target then
-		target_ru, target_tr = unpack(target)
-	else
-		target_ru, target_tr = ru, tr
-	end
-	if accel_form then
-		-- FIXME, consider removing redundant translit
-		-- Stuff in data.heads and data.translits gets destructively modified by [[Module:headword]] (YUCK), so clone it.
-		accel = {form = accel_form, lemma = m_table.deepCopy(data.heads),
-			lemma_translit = m_table.deepCopy(data.translits), pos = accel_pos, target = target_ru, translit = target_tr
-		}
-	end
-	local obj = {term=ru, face=(sawhyp_ru or sawhyp_tr) and "hypothetical" or nil, accel=accel}
-	--Uncomment to see the manual translit for each inflected part.
-	--local obj = {term=ru, translit=tr, face=(sawhyp_ru or sawhyp_tr) and "hypothetical" or nil, accel=accel}
-	if com.needs_accents(m_links.remove_links(target_ru)) then
-		insert(data.categories, "Requests for accents in Russian " .. pos .. " entries")
-	end
-	return obj
-end
-
 -- Parse the forms of an inflection. The raw arguments are specified in `forms`, a list of forms which are parsed for
 -- inline modifiers. Multiple comma-separated values are allowed.
 local function parse_inflection_forms(data, forms, field, is_head)
@@ -292,13 +249,6 @@ local function get_split_decomposed_heads(data)
 		data.split_decomposed_heads = com.split_translit_of_duplicate_termobjs_and_decompose(data.heads)
 	end
 	return data.split_decomposed_heads
-end
-
--- Zip the lemma heads and corresponding translits into a list of {RUSSIAN, TRANSLIT} objects. In the process, split
--- any combined translits (e.g. "azerbajdžánskij, azɛrbajdžánskij" with corresponding head "азербайджа́нский") into two
--- separate objects.
-local function zip_head_and_translit(data)
-	return com.split_translit_of_duplicate_forms(com.zip_forms(data.heads, data.translits))
 end
 
 local function add_common_all_pos_params(params)
@@ -506,7 +456,7 @@ local function noun_plus(frame)
 				insert(termobjs, {term = ruspan, tr = trspan})
 			end
 		end
-		return com.combine_translit_of_duplicate_termobjs(termobjs)
+		return com.combine_translit_of_duplicate_termobjs_and_recompose(termobjs)
 	end
 
 	local argsn = args.n or args.ndef
@@ -752,6 +702,13 @@ local function convert_to_po_variant(compobj)
 	end
 end
 
+local function convert_to_naj_variant(compobj)
+	local ru, tr = compobj.term, compobj.tr
+	ru = "[[най" .. ru .. "|(най)]][[" .. ru .. "]]"
+	tr = tr and "(naj)" .. tr or nil
+	compobj.term, compobj.tr = ru, tr
+end
+
 local allowed_endings = {
 	"ый",
 	"ий",
@@ -936,8 +893,8 @@ local function handle_comparatives(data, args)
 			local ru, tr = compobj.term, compobj.tr
 			-- WARNING: This has intimate knowledge of how convert_to_po_variant() works. To avoid this, we could
 			-- maintain the un-po-hacked target in each form in comp_parts, but then we'd have to modify
-			-- com.combine_translit_of_duplicate_forms() to preserve the extra target info when combining
-			-- duplicate forms, or use a map from hacked Russian form to target.
+			-- com.combine_translit_of_duplicate_termobjs_and_recompose() to preserve the extra target info when
+			-- combining duplicate forms, or use a map from hacked Russian form to target.
 			local un_po_hacked_ru = m_links.remove_links(rsub(ru, "^%[%[.-%]%]", ""))
 			local un_po_hacked_tr = tr and rsub(tr, rsub(tr, "^%(po%)", ""), ", %(po%)", ", ") or nil
 			compobj.target_term = un_po_hacked_ru
@@ -961,7 +918,6 @@ pos_functions["adjectives"] = {
 		["pej"] = list_param, --corresponding pejorative(s)
 	},
 	func = function(args, data)
-
 		if args.indecl then
 			insert(data.inflections, {label = "indeclinable"})
 			insert(data.categories, langname .. " indeclinable adjectives")
@@ -974,20 +930,43 @@ pos_functions["adjectives"] = {
 		end
 
 		-- Add the superlatives
-		if #args[3] > 0 then
-			local normalized_sups = {}
-			for _, sup in ipairs(args[3]) do
-				if sup == "peri" then
-					local lemmas = zip_head_and_translit(data)
-					for _, lemma in ipairs(lemmas) do
-						local ru, tr = unpack(lemma)
-						insertIfNot(normalized_sups, com.concat_russian_tr("[[са́мый]] ", nil, ru, tr, "dopair"))
+		local sups = parse_inflection(data, args, {3, "sup"})
+		sups = com.split_translit_of_duplicate_termobjs_and_decompose(sups)
+		if sups[1] then
+			local sup_parts = {}
+
+			for _, supobj in ipairs(sups) do
+				local term = supobj.term
+				if term == "peri" then
+					if supobj.tr then
+						error("Can't specify manual translit with 'peri' superlative spec")
 					end
+					for _, positive in ipairs(get_split_decomposed_heads(data)) do
+						local perisup = shallowCopy(positive)
+						perisup.term, perisup.tr = com.concat_russian_tr("[[са́мый]] ", nil, perisup.term, perisup.tr)
+						m_headword_utilities.combine_termobj_qualifiers_labels(perisup, supobj)
+						m_headword_utilities.insert_termobj_combining_duplicates(sup_parts, perisup)
+					end
+					track("perisup")
 				else
-					insertIfNot(normalized_sups, com.split_russian_tr(sup, "dopair"))
+					convert_to_naj_variant(supobj)
+					m_headword_utilities.insert_termobj_combining_duplicates(sup_parts, supobj)
 				end
 			end
-			add_adj_forms("superlative", normalized_sups, "superlative")
+
+			sup_parts = com.combine_translit_of_duplicate_termobjs_and_recompose(sup_parts)
+			for _, supobj in ipairs(supobjs) do
+				local ru, tr = supobj.term, supobj.tr
+				-- WARNING: This has intimate knowledge of how convert_to_naj_variant() works. To avoid this, we could
+				-- maintain the un-naj-hacked target in each form in sup_parts, but then we'd have to modify
+				-- com.combine_translit_of_duplicate_termobjs_and_recompose() to preserve the extra target info when
+				-- combining duplicate forms, or use a map from hacked Russian form to target.
+				local un_naj_hacked_ru = m_links.remove_links(rsub(ru, "^%[%[.-%]%]", ""))
+				local un_naj_hacked_tr = tr and rsub(tr, rsub(tr, "^%(naj%)", ""), ", %(naj%)", ", ") or nil
+				supobj.target_term = un_naj_hacked_ru
+				supobj.target_tr = un_naj_hacked_tr
+			end
+			insert_inflection(data, sup_parts, "<<superlative>>", "superlative")
 		end
 
 		-- Add the adverbs
@@ -1034,6 +1013,8 @@ pos_functions["adjectives"] = {
 			end
 			normalized_absn_objs = com.combine_translit_of_duplicate_termobjs_and_recompose(normalized_absn_objs)
 			insert_inflection(data, normalized_absn_objs, "abstract noun", "abstract noun", "noun")
+		else
+			insert_inflection(data, absn_objs, "abstract noun", "abstract noun", "noun")
 		end
 		-- Add the diminutives
 		parse_and_insert_adj_inflection("dim", "<<diminutive>>", "diminutive")
@@ -1096,24 +1077,24 @@ local function get_verb_pos(pos)
 				error("Invalid Russian verb aspect '" .. aspect .. "', should be 'pf', 'impf', 'both', 'biasp' or '?'")
 			end
 
-			local function add_verb_forms(label, forms, accel_form, accel_pos)
-				add_inflection(data, label, forms, "verb", accel_form, accel_pos)
+			local function add_verb_forms(field, label, accel_form, accel_pos)
+				parse_and_insert_inflection(data, args, field, label, accel_form, accel_pos)
 			end
 
 			-- Add the imperfective forms; intentionally no accelerator, need manual handling
-			if #args.impf > 0 and aspect == "impf" then
+			if args.impf[1] and aspect == "impf" then
 				error("Can't specify imperfective counterparts for an imperfective verb")
 			end
-			add_verb_forms("imperfective", args.impf)
+			add_verb_forms("impf", "imperfective")
 
 			-- Add the perfective forms; intentionally no accelerator, need manual handling
-			if #args.pf > 0 and aspect == "pf" then
+			if args.pf[1] and aspect == "pf" then
 				error("Can't specify perfective counterparts for a perfective verb")
 			end
-			add_verb_forms("perfective", args.pf)
+			add_verb_forms("pf", "perfective")
 
 			-- Add the verbal nouns
-			add_verb_forms("verbal noun", args.vn, "verbal noun", "noun")
+			add_verb_forms("vn", "verbal noun", "verbal noun", "noun")
 		end,
 	}
 end
