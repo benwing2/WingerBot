@@ -14,6 +14,11 @@ local insert = table.insert
 local concat = table.concat
 local sort = table.sort
 
+local function deepEquals(...)
+	deepEquals = require(table_module).deepEquals
+	return deepEquals(...)
+end
+
 local function escape_wikicode(...)
 	escape_wikicode = require(parse_utilities_module).escape_wikicode
 	return escape_wikicode(...)
@@ -349,11 +354,13 @@ end
 --[==[
 Insert previously-parsed terms into `headdata.inflections`. `data` is an object with the following fields:
 * `headdata`: The headword structure passed to [[Module:headword]]. Required.
-* `terms`: The list of parsed terms. If {nil} or omitted, nothing happens.
+* `terms`: The list of parsed terms. If {nil} or omitted, nothing happens unless `request` is set.
 * `label`: The label that the inflections are given; any parts of the label surrounded in <<...>> are linked to the
 glossary. (If the contents of <<...> contain a | in them, they are a two-part link.) Required.
 * `no_label`: If the inflection is {"-"}, insert a fixed label with this value. Defaults to {"no "} plus the label.
 * `accel`: If specified, a full accelerator object to add to the inflections.
+* `request`: If specified and no terms are given, insert a label with a request for inflections to be given.
+* `enable_auto_translit`: If specified and terms are given, display automatic transliteration of the terms.
 * `check_missing`: If specified, check the parsed terms for red links, and if so, add a category such as
   [[Category:Spanish nouns with red links in their headword lines]] to `headdata.categories`. If this is given, so must
   `lang` and `plpos`.
@@ -387,6 +394,7 @@ function export.insert_inflection(data)
 			if data.accel then
 				terms.accel = data.accel
 			end
+			terms.enable_auto_translit = data.enable_auto_translit
 			insert(headdata.inflections, terms)
 		end
 	elseif data.request then
@@ -483,7 +491,7 @@ local function one_ancillary_property_equal(prop1, prop2)
 	if prop1_is_nil or prop2_is_nil then
 		return false
 	end
-	return m_table.deepEquals(prop1, prop2)
+	return deepEquals(prop1, prop2)
 end
 
 function export.termobj_ancillary_properties_equal(obj1, obj2)
@@ -494,6 +502,7 @@ function export.termobj_ancillary_properties_equal(obj1, obj2)
 		one_ancillary_property_equal(obj1.refs, obj2.refs) and
 		obj1.id == obj2.id
 end
+
 
 function export.convert_termobj_to_formobj(termobj)
 	local formobj = {
