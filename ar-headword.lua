@@ -7,12 +7,16 @@ local force_cat = false -- for testing; if true, categories appear in non-mainsp
 
 local ar_translit = require("Module:ar-translit")
 local ar_verb_module = "Module:ar-verb"
+local ar_utilities_module = "Module:ar-utilities"
+local ar = require(ar_utilities_module)
 local en_utilities_module = "Module:en-utilities"
 local headword_utilities_module = "Module:headword utilities"
+local links_module = "Module:links"
 local inflection_utilities_module = "Module:inflection utilities"
 local parse_utilities_module = "Module:parse utilities"
 
 local require_when_needed = require("Module:utilities/require when needed")
+local remove_links = require_when_needed(links_module, "remove_links")
 local m_table = require("Module:table")
 local m_str_utils = require("Module:string utilities")
 
@@ -28,27 +32,6 @@ local rsplit = m_str_utils.split
 
 local lang = require("Module:languages").getByCode("ar")
 local langname = lang:getCanonicalName()
-
--- diacritics
-local A = u(0x064E) -- fatḥa
-local AN = u(0x064B) -- fatḥatān (fatḥa tanwīn)
-local U = u(0x064F) -- ḍamma
-local UN = u(0x064C) -- ḍammatān (ḍamma tanwīn)
-local I = u(0x0650) -- kasra
-local IN = u(0x064D) -- kasratān (kasra tanwīn)
-local SK = u(0x0652) -- sukūn = no vowel
-local SH = u(0x0651) -- šadda = gemination of consonants
-local DAGGER_ALIF = u(0x0670)
-local DIACRITIC_ANY_BUT_SH = "[" .. A .. I .. U .. AN .. IN .. UN .. SK .. DAGGER_ALIF .. "]"
-
--- various letters and signs
-local HAMZA = u(0x0621) -- hamza on the line (stand-alone hamza) = ء
-local ALIF = u(0x0627) -- ʾalif = ا
-local AMAQ = u(0x0649) -- ʾalif maqṣūra = ى
-local TAM = u(0x0629) -- tāʾ marbūṭa = ة
-
--- common combinations
-local UNU = "[" .. UN .. U .. "]"
 
 local TEMPCOMMA = u(0xFFF0)
 local TEMPARCOMMA = u(0xFFF1)
@@ -102,23 +85,31 @@ local function split_on_comma(val)
 	end
 end
 
-
-local function remove_links(text)
-	text = rsub(text, "%[%[[^|%]]*|", "")
-	text = rsub(text, "%[%[", "")
-	text = rsub(text, "%]%]", "")
-	return text
-end
-
-local function reorder_shadda(text)
-	-- shadda+short-vowel (including tanwīn vowels, i.e. -an -in -un) gets
-	-- replaced with short-vowel+shadda during NFC normalisation, which
-	-- MediaWiki does for all Unicode strings; however, it makes the
-	-- detection process inconvenient, so undo it. (For example, the tracking
-	-- code below would fail to detect the -un in سِتٌّ because the shadda
-	-- would come after the -un.)
-	text = rsub(text, "(" .. DIACRITIC_ANY_BUT_SH .. ")" .. SH, SH .. "%1")
-	return text
+-- Construct the default construct state of a term in lemma format. Usually this is the same as the lemma but is
+-- different for final-weak nouns ending in -n in their lemma. NOTE: Input must be shadda-reordered for this to work
+-- properly.
+local function default_construct_state(term)
+	local pref = term:match("^(.*)" .. ar.HAMZA .. ar.IN .."$")
+	-- Hamza on the line with -in changes to hamza-on-yā with -ī.
+	if pref then
+		return pref .. ar.HAMZA_ON_YA .. ar.II
+	end
+	-- Otherwise just change -in to -ī.
+	pref = term:match("^(.*)" .. ar.IN .. "$")
+	if pref then
+		return pref .. ar.II
+	end
+	-- Change -an with alif maqṣūra to -ā with alif maqṣūra.
+	pref = term:match("^(.*)" .. ar.AN .. ar.AMAQ .. "$")
+	if pref then
+		return pref .. ar.AAMAQ
+	end
+	-- Change -an with tall alif (e.g. عَصًا) to -ā with tall alif.
+	pref = term:match("^(.*)" .. ar.AN .. ar.ALIF .. "$")
+	if pref then
+		return pref .. ar.AA
+	end
+	return term
 end
 
 -- Tracking functions
@@ -195,7 +186,7 @@ POS is a part of speech, lowercase and singular, e.g. "noun",
 ]==]
 
 local function track_form(argname, form, translit, pos)
-	form = reorder_shadda(remove_links(form))
+	form = ar.reorder_shadda(remove_links(form))
 	function dotrack(page)
 		track(page)
 		track(page .. "/" .. argname)
@@ -214,10 +205,10 @@ local function track_form(argname, form, translit, pos)
 			dotrack("i3rab-" .. tr)
 		end
 	end
-	track_i3rab(UN, "un")
-	track_i3rab(U, "u")
-	track_i3rab(A, "a")
-	track_i3rab(I, "i")
+	track_i3rab(ar.UN, "un")
+	track_i3rab(ar.U, "u")
+	track_i3rab(ar.A, "a")
+	track_i3rab(ar.I, "i")
 	if form == "" or not (lang:transliterate(form)) then
 		dotrack("unvocalized")
 		if form == "" then
@@ -349,24 +340,33 @@ local function parse_inflection(args, field, is_head, pos)
 		}
 	}
 	for _, termobj in ipairs(termobjs) do
-		-- FIXME: Delete this compatibility code
-		local translit = args[argpref .. "tr"][i]
-		local gender = args[argpref .. "g"][i]
-		local gender2 = args[argpref .. "g2"][i]
-		gender = gender and {spec = gender} or nil
-		gender2 = gender2 and {spec = gender2} or nil
-		if gender or gender2 then
-			local genderlist = {}
-			if gender then
-				insert(genderlist, gender)
+		-- If the user supplied a construct state for the term with a value of "+", substitute the default construct
+		-- state of the term. If the user supplied a value of "-", they want no construct state displayed, unless they
+		-- supplied "-" along with another value, in which case they want "usually no construct state" followed by the
+		-- value. (FIXME: There's no current way to display simply "no construct state".) Otherwise, if the user didn't
+		-- supply any construct state, we check to see if the default construct state is different from the lemma and
+		-- display it if so; this applies particularly to terms in '-in' and '-an', where the default construct state
+		-- is almost always correct.
+		if not termobj.cons then
+			local defcons = default_construct_state(termobj.term)
+			if termobj.term ~= defcons then
+				termobj.cons = {{term = defcons}}
 			end
-			if gender2 then
-				insert(genderlist, gender2)
+		else
+			for i, consobj in ipairs(termobj.cons) do
+				if consobj.term == "+" then
+					consobj.term = default_construct_state(termobj.term)
+				elseif consobj.term == "-" then
+					if i ~= 1 then
+						error("Can't supply '-' for construct state other than as the first term")
+					elseif not termobj.cons[2] then
+						termobj.cons = nil
+						break
+					end
+				end
 			end
 		end
-		termobj.tr = termobj.tr or translit
-		termobj.genders = termobj.genders or genderlist
-		-- FIXME, do we need this?
+
 		track_form(argpref, termobj.term, termobj.tr, pos)
 	end
 
@@ -546,14 +546,14 @@ local function handle_gender(data, args, nonlemma)
 		if is_masc_sg(g) or is_fem_sg(g) then
 			local head = args[1][1]
 			if head then
-				head = rsub(reorder_shadda(remove_links(head)), UNU .. "?$", "")
-				local ends_with_tam = rfind(head, "^[^ ]*" .. TAM .. "$") or
-						rfind(head, "^[^ ]*" .. TAM .. " ")
+				head = rsub(ar.reorder_shadda(remove_links(head)), ar.UNUOPT .. "$", "")
+				local ends_with_tam = rfind(head, "^[^ ]*" .. ar.TAM .. "$") or
+						rfind(head, "^[^ ]*" .. ar.TAM .. " ")
 				if is_masc_sg(g) and ends_with_tam then
 					table.insert(data.categories, langname .. " masculine terms with feminine ending")
 				elseif is_fem_sg(g) and not ends_with_tam and
-						not rfind(head, "[" .. ALIF .. AMAQ .. "]$") and
-						not rfind(head, ALIF .. HAMZA .. "$") then
+						not rfind(head, "[" .. ar.ALIF .. ar.AMAQ .. "]$") and
+						not rfind(head, ar.ALIF .. ar.HAMZA .. "$") then
 					table.insert(data.categories, langname .. " feminine terms lacking feminine ending")
 				end
 			end
@@ -627,12 +627,12 @@ end
 
 local nisba_adj_inflections = {
 	{pref = "", label = ""}, -- handle cons, def, obl, inf
-	{pref = "f", label = "feminine", generate_default = make_nisba_default(A .. "ة", "a")},
+	{pref = "f", label = "feminine", generate_default = make_nisba_default(ar.AH, "a")},
 	{pref = "d", label = "masculine dual"},
 	{pref = "fd", label = "feminine dual"},
 	{pref = "cpl", label = "common plural"},
-	{pref = "pl", label = "masculine plural", generate_default = make_nisba_default(U .. "ونَ", "ūna")},
-	{pref = "fpl", label = "feminine plural", generate_default = make_nisba_default(A .. "ات", "āt")},
+	{pref = "pl", label = "masculine plural", generate_default = make_nisba_default(ar.UUNA, "ūna")},
+	{pref = "fpl", label = "feminine plural", generate_default = make_nisba_default(ar.AAT, "āt")},
 }
 
 pos_functions["nisba adjectives"] = {
@@ -648,8 +648,8 @@ pos_functions["nisba adjectives"] = {
 
 local nisba_noun_inflections = {
 	{pref = "", label = ""}, -- handle cons, def, obl, inf
-	{pref = "pl", label = "plural", generate_default = make_nisba_default(U .. "ونَ", "ūna")},
-	{pref = "f", label = "feminine", generate_default = make_nisba_default(A .. "ة", "a")},
+	{pref = "pl", label = "plural", generate_default = make_nisba_default(ar.UUNA, "ūna")},
+	{pref = "f", label = "feminine", generate_default = make_nisba_default(ar.AH, "a")},
 }
 
 pos_functions["nisba nouns"] = {
@@ -941,10 +941,9 @@ pos_functions["verbs"] = {
 					},
 					gloss = {},
 					g = {
-						-- [[Module:headword]] expects the genders in "genders". `sublist = true` automatically splits
-						-- on comma (optionally with surrounding whitespace).
+						-- [[Module:headword]] expects the genders in "genders".
 						item_dest = "genders",
-						sublist = true,
+						type = "genders",
 					},
 					pos = {},
 					lit = {},
@@ -1113,7 +1112,7 @@ pos_functions["verbs"] = {
 								end
 								local past_vowel = ar_verb.rget(vowel_spec.past)
 								local nonpast_vowel = ar_verb.rget(vowel_spec.nonpast)
-								if not (past_vowel == A and (nonpast_vowel == U or nonpast_vowel == I)) then
+								if not (past_vowel == ar.A and (nonpast_vowel == ar.U or nonpast_vowel == ar.I)) then
 									should_do_past1s = true
 									break
 								end
