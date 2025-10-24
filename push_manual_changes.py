@@ -172,7 +172,7 @@ def push_one_set_of_manual_changes(pagetitle, index, text, repl_curr_changes, co
   return text, changelogs
 
 def undo_slash_newline(txt, repl=False):
-  if args.undo_slash_newline or repl and args.undo_slash_newline_in_repl_only:
+  if not args.no_undo_slash_newline and (repl or not args.undo_slash_newline_in_repl_only):
     return blib.undo_escape_newline(txt)
   return txt
 
@@ -223,7 +223,7 @@ params = blib.create_argparser("Push manual changes to Wiktionary",
 params.add_argument("--direcfile", help="File containing templates to change, as output by various scripts with --from-to",
     required=True)
 params.add_argument("--origfile", help="File containing original templates, in the split-file format")
-params.add_argument("--undo-slash-newline", action="store_true", help=r"Undo replacement of newlines with \n")
+params.add_argument("--no-undo-slash-newline", action="store_true", help=r"Don't undo replacement of newlines with \n")
 params.add_argument("--undo-slash-newline-in-repl-only", action="store_true", help=r"Undo replacement of newlines with \n in replacement text only")
 params.add_argument("--comment", help="Comment of change log message (included in addition to any comments embedded in the manual changes)")
 params.add_argument("--include-what-changed", action="store_true", help="If no comment embedded in manual changes, include what changed in the changelog")
