@@ -55,10 +55,15 @@ UNUOPT = UNU + "?"
 AH = A + TAM
 AAH = AA + TAM
 AAT = AA + T
+AAN = AA + N
+ATAAN = A + T + AAN
+AATAAN = AAT + AAN
 AATUN = AAT + UN
 IYAH = I + Y + AH
 AYAAT = AY + AAT
+AYAAN = AY + AAN
 IYAAT = IY + AAT
+IYAAN = IY + AAN
 IYYAH = IY + SH + AH
 
 def remove_diacritics(word):
