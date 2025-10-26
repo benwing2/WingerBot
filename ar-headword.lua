@@ -100,10 +100,10 @@ local function replace_tr_ending(tr, from, to)
 	return pref .. to
 end
 
--- Construct the default construct state of a term in lemma format. Usually this is the same as the lemma but is
--- different for final-weak nouns ending in -n in their lemma. NOTE: Input must be shadda-reordered for this to work
--- properly.
-local function default_construct_state(term, tr)
+-- Construct the default construct state or informal form of a term in lemma format. Usually this is the same as the
+-- lemma but is different for final-weak nouns and adjectives ending in -n in their lemma. NOTE: Input must be
+-- shadda-reordered for this to work properly.
+local function default_construct_state_or_informal(term, tr)
 	local pref = term:match("^(.*)" .. ar.HAMZA .. ar.IN .."$")
 	-- Hamza on the line with -in changes to hamza-on-yā with -ī.
 	if pref then
@@ -239,12 +239,12 @@ local function track_form(argname, form, translit, pos)
 	end
 end
 
-local function generate_construct_state_default(data, args)
+local function generate_construct_state_or_informal_default(data, args)
 	local heads = data.heads
 	local consobjs = {}
 	local different_cons = false
 	for _, headobj in ipairs(data.heads) do
-		local consterm, constr = default_construct_state(headobj.term, headobj.tr)
+		local consterm, constr = default_construct_state_or_informal(headobj.term, headobj.tr)
 		different_cons = different_cons or consterm ~= headobj.term or constr ~= headobj.tr
 		local consobj = m_table.shallowCopy(headobj)
 		consobj.term = consterm
@@ -258,11 +258,21 @@ local function generate_construct_state_default(data, args)
 	end
 end
 
-local nominal_inflections = {
-	{field = "cons", label = "<<construct state>>", generate_default = generate_construct_state_default},
+local function has_construct_state(data)
+	return data.pos_category ~= "adjectives"
+end
+
+local noun_inflections = {
+	{field = "cons", label = "<<construct state>>", generate_default = generate_construct_state_or_informal_default},
 	{field = "def", label = "<<definite state>>"},
 	{field = "obl", label = "<<oblique>>"},
 	{field = "inf", label = "informal"},
+}
+
+local adjective_inflections = {
+	{field = "def", label = "<<definite state>>"},
+	{field = "obl", label = "<<oblique>>"},
+	{field = "inf", label = "informal", generate_default = generate_construct_state_or_informal_default},
 }
 
 local function parse_nominal_inflection(paramname, val, parse_err)
@@ -294,7 +304,7 @@ local function parse_inflection(data, args, field, is_head)
 		include_mods = {"tr"}
 	else
 		include_mods = {"tr", "g"}
-		for _, spec in ipairs(nominal_inflections) do
+		for _, spec in ipairs(has_construct_state(data) and noun_inflections or adjective_inflections) do
 			insert(include_mods, {spec.field, make_nominal_inflection_param_mod_spec(argpref .. "." .. spec.field)})
 		end
 	end
@@ -325,30 +335,31 @@ local function insert_inflection(data, terms, label, accel, defgender, track_fie
 	local track_pos = m_en_utilities.singularize(data.pos_category)
 
 	for _, termobj in ipairs(terms) do
-		-- If the user supplied a construct state for the term with a value of "+", substitute the default construct
-		-- state of the term. If the user supplied a value of "--", they want no construct state displayed. Otherwise,
-		-- if the user didn't supply any construct state, we check to see if the default construct state is different
-		-- from the lemma and display it if so; this applies particularly to terms in '-in' and '-an', where the default
-		-- construct state is almost always correct.
-		if not termobj.cons then
-			local defcons, defconstr = default_construct_state(termobj.term, termobj.tr)
+		-- If the user supplied a construct state or informal form for the term with a value of "+", substitute the
+		-- default value for the term. If the user supplied a value of "--", they want no value displayed. Otherwise,
+		-- if the user didn't supply any value, we check to see if the default construct state or informal form is
+		-- different from the lemma and display it if so; this applies particularly to terms in '-in' and '-an', where
+		-- the default construct state or informal form is almost always correct.
+		local field = has_construct_state(data) and "cons" or "inf"
+		if not termobj[field] then
+			local defcons, defconstr = default_construct_state_or_informal(termobj.term, termobj.tr)
 			if termobj.term ~= defcons or termobj.tr ~= defconstr then
 				-- We don't want to copy qualifiers, labels, etc. from the term object because we're a subinflection of
 				-- the term object.
-				termobj.cons = {{term = defcons, tr = defconstr}}
+				termobj[field] = {{term = defcons, tr = defconstr}}
 			end
-		elseif termobj.cons[1].term == "--" then
-			if termobj.cons[2] then
-				error("Can't specify more than one value for <cons:...> if first value is '--', meaning \"don't insert anything\"")
+		elseif termobj[field][1].term == "--" then
+			if termobj[field][2] then
+				error("Can't specify more than one value for <" .. field .. ":...> if first value is '--', meaning \"don't insert anything\"")
 			end
-			termobj.cons = nil
+			termobj[field] = nil
 		else
-			for i, consobj in ipairs(termobj.cons) do
+			for i, consobj in ipairs(termobj[field]) do
 				if consobj.term == "+" then
 					if consobj.tr then
 						error("Can't specify translit for default value '+'")
 					end
-					consobj.term, consobj.tr = default_construct_state(termobj.term, termobj.tr)
+					consobj.term, consobj.tr = default_construct_state_or_informal(termobj.term, termobj.tr)
 				end
 			end
 		end
@@ -394,7 +405,6 @@ function export.show(frame)
 
 	local params = {
 		["id"] = {},
-		["nolinkhead"] = {type = "boolean"},
 		["json"] = {type = "boolean"},
 		["pagename"] = {}, -- for testing
 	}
@@ -611,7 +621,7 @@ end
 -- Part-of-speech functions
 
 local adj_inflections = {
-	{field = "*"}, -- handle cons, def, obl, inf
+	{field = "*"}, -- handle def, obl, inf
 	{field = "f", label = "feminine"},
 	{field = "d", label = "masculine dual"},
 	{field = "fd", label = "feminine dual"},
@@ -675,8 +685,59 @@ local function make_default_with_ending(ending, endingtr)
 	end
 end
 
+local function make_conditional_default(specs)
+	return function(data, args)
+		local heads = data.heads
+		if not heads[1] then
+			heads = {{term = data.pagename}}
+		end
+		local forms = {}
+		for i = 1, #heads do
+			local tr = heads[i].tr
+			insert(forms, {term = heads[i].term .. ending, tr = tr and tr .. endingtr or nil})
+		end
+		return forms
+	end
+end
+
+local default_feminine = make_conditional_default {
+	{ar.AN .. AMAQ, "an", ar.AAH, "āh"},
+	{ar.AN .. ALIF, "an", ar.AAH, "āh"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "ʔin", ar.HAMZA_ON_YA .. ar.IYAH, "ʔiya"},
+	{ar.IN, "in", ar.IYAH, "iya"},
+	{"", "", ar.AH, "a"},
+}
+
+local default_masculine_plural = make_conditional_default {
+	{ar.AN .. AMAQ, "an", ar.AWN, "awn"},
+	{ar.AN .. ALIF, "an", ar.AWN, "awn"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "ʔin", ar.HAMZA_ON_WAW .. ar.UUN, "ʔūn"},
+	{ar.IN, "in", ar.UUN, "ūn"},
+	{"", "", ar.UUN, "ūn"},
+}
+
+local regular_adj_inflections = {
+	{field = "*"}, -- handle def, obl, inf
+	{field = "f", label = "feminine", generate_default =
+	},
+	{field = "d", label = "masculine dual"},
+	{field = "fd", label = "feminine dual"},
+	{field = "cpl", label = "common plural"},
+	{field = "pl", label = "masculine plural", generate_default =
+	},
+	{field = "fpl", label = "feminine plural", generate_default =
+		make_default_with_ending {
+			{ar.AN .. AMAQ, "an", ar.AYAAT, "ayāt"},
+			{ar.AN .. ALIF, "an", ar.AYAAT, "ayāt"}, -- e.g. مُحْيًا
+			{ar.HAMZA .. ar.IN, "ʔin", ar.HAMZA_ON_YA .. ar.IYAAT, "ʔiyāt"},
+			{ar.IN, "in", ar.HAMZA_ON_YA .. ar.IYAAT, "ʔiyāt"},
+			{"", "", ar.AAT, "āt"},
+		}
+	},
+}
+
 local sound_adj_inflections = {
-	{field = "*"}, -- handle cons, def, obl, inf
+	{field = "*"}, -- handle def, obl, inf
 	{field = "f", label = "feminine", generate_default = make_default_with_ending(ar.AH, "a")},
 	{field = "d", label = "masculine dual"},
 	{field = "fd", label = "feminine dual"},
