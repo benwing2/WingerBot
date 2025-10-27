@@ -25,8 +25,11 @@ local m_en_utilities = require_when_needed(en_utilities_module)
 local m_headword_utilities = require_when_needed(headword_utilities_module)
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 
+local boolean_param = {type = "boolean"}
+
 local list_to_set = m_table.listToSet
 local rfind = m_str_utils.find
+local rmatch = m_str_utils.match
 local rsubn = m_str_utils.gsub
 local u = m_str_utils.char
 local rsplit = m_str_utils.split
@@ -34,15 +37,25 @@ local rsplit = m_str_utils.split
 local insert = table.insert
 local concat = table.concat
 
-local lang = require("Module:languages").getByCode("ar")
+local langcode = "ar"
+local lang = require("Module:languages").getByCode(langcode)
 local langname = lang:getCanonicalName()
 
 local TEMPCOMMA = u(0xFFF0)
 local TEMPARCOMMA = u(0xFFF1)
 
------------------------
--- Utility functions --
------------------------
+local misc_pos_with_gender = list_to_set {
+	"suffixes",
+	"adjective forms",
+	"noun forms",
+	"proper noun forms",
+	"pronoun forms",
+	"determiner forms",
+}
+
+-----------------------------------------------------------------------------------------
+--                                   Utility functions                                 --
+-----------------------------------------------------------------------------------------
 
 local dump = mw.dumpObject
 
@@ -50,6 +63,10 @@ local dump = mw.dumpObject
 local function rsub(term, foo, bar)
 	local retval = rsubn(term, foo, bar)
 	return retval
+end
+
+local function ine(val)
+	if val == "" then return nil else return val end
 end
 
 -- Replace comma with a temporary char in comma + whitespace.
@@ -100,38 +117,13 @@ local function replace_tr_ending(tr, from, to)
 	return pref .. to
 end
 
--- Construct the default construct state or informal form of a term in lemma format. Usually this is the same as the
--- lemma but is different for final-weak nouns and adjectives ending in -n in their lemma. NOTE: Input must be
--- shadda-reordered for this to work properly.
-local function default_construct_state_or_informal(term, tr)
-	local pref = term:match("^(.*)" .. ar.HAMZA .. ar.IN .."$")
-	-- Hamza on the line with -in changes to hamza-on-yā with -ī.
-	if pref then
-		return pref .. ar.HAMZA_ON_YA .. ar.II, replace_tr_ending(tr, "in", "ī")
-	end
-	-- Otherwise just change -in to -ī.
-	pref = term:match("^(.*)" .. ar.IN .. "$")
-	if pref then
-		return pref .. ar.II, replace_tr_ending(tr, "in", "ī")
-	end
-	-- Change -an with alif maqṣūra to -ā with alif maqṣūra.
-	pref = term:match("^(.*)" .. ar.AN .. ar.AMAQ .. "$")
-	if pref then
-		return pref .. ar.AAMAQ, replace_tr_ending(tr, "an", "ā")
-	end
-	-- Change -an with tall alif (e.g. عَصًا) to -ā with tall alif.
-	pref = term:match("^(.*)" .. ar.AN .. ar.ALIF .. "$")
-	if pref then
-		return pref .. ar.AA, replace_tr_ending(tr, "an", "ā")
-	end
-	return term, tr
-end
-
--- Tracking functions
+-----------------------------------------------------------------------------------------
+--                                   Tracking functions                                --
+-----------------------------------------------------------------------------------------
 
 local trackfn = require("Module:debug/track")
 local function track(page)
-	trackfn("ar-headword/" .. page)
+	trackfn(langcode .. "-headword/" .. page)
 	return true
 end
 
@@ -239,6 +231,37 @@ local function track_form(argname, form, translit, pos)
 	end
 end
 
+-----------------------------------------------------------------------------------------
+--                              Inflection-parsing functions                           --
+-----------------------------------------------------------------------------------------
+
+-- Construct the default construct state or informal form of a term in lemma format. Usually this is the same as the
+-- lemma but is different for final-weak nouns and adjectives ending in -n in their lemma. NOTE: Input must be
+-- shadda-reordered for this to work properly.
+local function default_construct_state_or_informal(term, tr)
+	local pref = term:match("^(.*)" .. ar.HAMZA .. ar.IN .."$")
+	-- Hamza on the line with -in changes to hamza-on-yā with -ī.
+	if pref then
+		return pref .. ar.HAMZA_ON_YA .. ar.II, replace_tr_ending(tr, "in", "ī")
+	end
+	-- Otherwise just change -in to -ī.
+	pref = term:match("^(.*)" .. ar.IN .. "$")
+	if pref then
+		return pref .. ar.II, replace_tr_ending(tr, "in", "ī")
+	end
+	-- Change -an with alif maqṣūra to -ā with alif maqṣūra.
+	pref = term:match("^(.*)" .. ar.AN .. ar.AMAQ .. "$")
+	if pref then
+		return pref .. ar.AAMAQ, replace_tr_ending(tr, "an", "ā")
+	end
+	-- Change -an with tall alif (e.g. عَصًا) to -ā with tall alif.
+	pref = term:match("^(.*)" .. ar.AN .. ar.ALIF .. "$")
+	if pref then
+		return pref .. ar.AA, replace_tr_ending(tr, "an", "ā")
+	end
+	return term, tr
+end
+
 local function generate_construct_state_or_informal_default(data, args)
 	local heads = data.heads
 	local consobjs = {}
@@ -258,22 +281,37 @@ local function generate_construct_state_or_informal_default(data, args)
 	end
 end
 
+local noun_field_cons = {
+	field = "cons", label = "<<construct state>>", generate_default = generate_construct_state_or_informal_default,
+	default_when_not_explicit = function(args, data) return true end,
+}
+local noun_field_inf = {field = "inf", label = "informal"}
+local noun_field_obl = {field = "obl", label = "<<oblique>>"}
+local noun_field_def = {field = "def", label = "<<definite>> state"}
+
+local noun_inflections = {
+	noun_field_cons,
+	noun_field_inf,
+	noun_field_obl,
+	noun_field_def,
+}
+
+local adj_field_inf = {
+	field = "inf", label = "informal", generate_default = generate_construct_state_or_informal_default,
+	default_when_not_explicit = function(args, data) return true end,
+}
+local adj_field_obl = noun_field_obl
+local adj_field_def = noun_field_def
+
+local adjective_inflections = {
+	adj_field_inf,
+	adj_field_obl,
+	adj_field_def,
+}
+
 local function has_construct_state(data)
 	return data.pos_category ~= "adjectives"
 end
-
-local noun_inflections = {
-	{field = "cons", label = "<<construct state>>", generate_default = generate_construct_state_or_informal_default},
-	{field = "def", label = "<<definite state>>"},
-	{field = "obl", label = "<<oblique>>"},
-	{field = "inf", label = "informal"},
-}
-
-local adjective_inflections = {
-	{field = "def", label = "<<definite state>>"},
-	{field = "obl", label = "<<oblique>>"},
-	{field = "inf", label = "informal", generate_default = generate_construct_state_or_informal_default},
-}
 
 local function parse_nominal_inflection(paramname, val, parse_err)
 	return m_headword_utilities.parse_term_with_modifiers {
@@ -360,6 +398,11 @@ local function insert_inflection(data, terms, label, accel, defgender, track_fie
 						error("Can't specify translit for default value '+'")
 					end
 					consobj.term, consobj.tr = default_construct_state_or_informal(termobj.term, termobj.tr)
+				elseif consobj.term == "~" then
+					if consobj.tr then
+						error("Can't specify translit for term-requesting value '~'")
+					end
+					consobj.term, consobj.tr = termobj.term, termobj.tr
 				end
 			end
 		end
@@ -379,7 +422,7 @@ local function insert_inflection(data, terms, label, accel, defgender, track_fie
 			end
 		end
 
-		for _, spec in ipairs(nominal_inflections) do
+		for _, spec in ipairs(has_construct_state(data) and noun_inflections or adjective_inflections) do
 			insert_nested_inflection(spec.field, spec.label)
 		end
 
@@ -396,37 +439,57 @@ local function insert_inflection(data, terms, label, accel, defgender, track_fie
 	}
 end
 
--- The main entry point.
+-----------------------------------------------------------------------------------------
+--                                    Main entry point                                 --
+-----------------------------------------------------------------------------------------
+
 function export.show(frame)
-	local poscat = frame.args[1]
-		or error("Part of speech has not been specified. Please pass parameter 1 to the module invocation.")
+	local iparams = {
+		[1] = true,
+	}
+
+	local iargs = require("Module:parameters").process(frame.args, iparams)
 
 	local parargs = frame:getParent().args
+	local poscat = iargs[1]
+
+	local pos_in_1 = not poscat
+	if pos_in_1 then
+		poscat = ine(parargs[1]) or
+			mw.title.getCurrentTitle().fullText == "Template:" .. langcode .. "-head" and "interjection" or
+			error("Part of speech must be specified in 1=")
+		poscat = require(headword_module).canonicalize_pos(poscat)
+	end
+
+	local indexing_poscat = pos_in_1 and (misc_pos_with_gender[poscat] and "head_with_gender" or "head") or poscat
 
 	local params = {
-		["id"] = {},
-		["json"] = {type = "boolean"},
+		["suffix"] = boolean_param,
+		["nosuffix"] = boolean_param,
+		["id"] = true,
+		["json"] = boolean_param,
 		["pagename"] = {}, -- for testing
 	}
 
-	local head_is_head = pos_functions[poscat] and pos_functions[poscat].head_is_not_1
-	if head_is_head then
-		params.head = true
-	else
-		params[1] = {default = "+"}
+	if pos_in_1 then
+		params[1] = {required = true} -- required but ignored as already processed above
 	end
-	local headfield = head_is_head and "head" or 1
+
+	local head_is_head = pos_functions[indexing_poscat] and pos_functions[indexing_poscat].head_is_not_1
+	local headfield = head_is_head and "head" or pos_in_1 and 2 or 1
+	params[headfield] = head_is_head and true or {default = "+"}
 	params.head2 = {replaced_by = false, instead = "use multiple comma-separated values in |" .. headfield .. "="}
 	local tr_replaced_by = {replaced_by = false, instead = "use <tr:...> inline modifier on |" .. headfield .. "="}
 	params.tr = tr_replaced_by
 	params.tr2 = tr_replaced_by
 
-	if pos_functions[poscat] then
-		for key, val in pairs(pos_functions[poscat].params) do
+	if pos_functions[indexing_poscat] then
+		for key, val in pairs(pos_functions[indexing_poscat].params()) do
 			params[key] = val
 		end
 	end
 
+	local parargs = frame:getParent().args
 	local args = require("Module:parameters").process(parargs, params)
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
@@ -434,6 +497,7 @@ function export.show(frame)
 	local data = {
 		lang = lang,
 		pos_category = poscat,
+		orig_pos_category = poscat,
 		categories = {},
 		heads = {},
 		genders = {},
@@ -442,17 +506,30 @@ function export.show(frame)
 		id = args.id,
 		sort_key = args.sort,
 		force_cat_output = force_cat,
+		-- We expect a head always so the redundant head cat will be inaccurate.
+		no_redundant_head_cat = true,
 	}
 
-	data.heads = parse_inflection(data, args, head_is_head and "head" or 1, "is_head") 
+	data.heads = parse_inflection(data, args, headfield, "is_head") 
 	for _, headobj in ipairs(data.heads) do
 		if headobj.term == "+" then
 			headobj.term = pagename
 		end
 	end
 
-	if pos_functions[poscat] then
-		pos_functions[poscat].func(data, args)
+	data.is_suffix = false
+	if args.suffix or (
+		not args.nosuffix and pagename:find("^%-") and poscat ~= "suffixes" and poscat ~= "suffix forms"
+	) then
+		data.is_suffix = true
+		data.pos_category = "suffixes"
+		local singular_poscat = m_en_utilities.singularize(poscat)
+		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
+		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
+	end
+
+	if pos_functions[indexing_poscat] then
+		pos_functions[indexing_poscat].func(data, args)
 	end
 
 	-- Do this after calling pos_functions[poscat].func() as it may modify data.heads (as verbs do).
@@ -475,77 +552,9 @@ function export.show(frame)
 	return require(headword_module).full_headword(data)
 end
 
--- Add list parameters to `params` (a structure as passed to [[Module:parameters]]) for a parameter named `argpref`.
--- If `argpref` is "*", add the nominal inflection parameters for construct state, definite state, etc. Related
--- transliteration and gender parameters are no longer supported in favor of inline modifiers, and error messages are
--- output if these parameters are used.
-local function add_infl_params(params, argpref)
-	params[argpref] = {list = true, disallow_holes = true}
-	params[argpref .. "tr"] = {replaced_by = false, instead = "use <tr:...> inline modifier on |" .. argpref .. "="}
-	params[argpref .. "g"] = {replaced_by = false, instead = "use <g:...> inline modifier on |" .. argpref .. "="}
-end
-
---[=[
-Fetch a list of inflections from the arguments in `args` based on argument `field` (e.g. "pl"). Label with `label`
-(e.g. "plural"), which will appear in the headword. Insert into `data.inflections`, where `data` is the structure
-passed to [[Module:headword]]. If `generate_default` is specified, it should be a function of two arguments
-(`data`, `args`), which should generate the default value if no values are specified or if "+" is explicitly given.
-If `generate_default` isn't specified and the user gave no values, no inflection will be inserted.
-]=]
-local function handle_infl(data, args, field, label, generate_default, defgender, no_label, usually_no_label)
-	local newinfls = parse_inflection(data, args, field, false)
-	if not newinfls[1] and generate_default then
-		newinfls = {{term = "+"}}
-	end
-	if generate_default then
-		local saw_plus = false
-		for _, newinfl in ipairs(newinfls) do
-			if newinfl.term == "+" then
-				saw_plus = true
-				break
-			end
-		end
-		if saw_plus then
-			local newnewinfls = {}
-			for _, newinfl in ipairs(newinfls) do
-				if newinfl.term == "+" then
-					if newinfl.tr then
-						error("Can't specify translit for default value '+'")
-					end
-					local definfls = generate_default(data, args)
-					for _, definfl in ipairs(definfls) do
-						m_headword_utilities.combine_termobj_qualifiers_labels(definfl, newinfl)
-						insert(newnewinfls, definfl)
-					end
-				else
-					insert(newnewinfls, newinfl)
-				end
-			end
-			newinfls = newnewinfls
-		end
-	end
-	if newinfls[1] then
-		if newinfls[1].term == "--" then
-			if newinfls[2] then
-				error("Can't specify more than one term if first term is '--', meaning \"don't insert anything\"")
-			end
-		else
-			insert_inflection(data, newinfls, label, nil, defgender, field, no_label, usually_no_label)
-		end
-	end
-end
-
-
--- Handle the case where pl=-, indicating an uncountable noun.
-local function handle_noun_plural(data, args)
-	if args.pl[1] and (args.pl[1] == "-" or args.pl[1]:find("^%-<")) then
-		insert(data.categories, langname .. " uncountable nouns")
-		if args.pauc and args.pauc[1] then
-			error("Can't specify paucals when pl=-")
-		end
-	end
-	handle_infl(data, args, "pl", "plural", nil, nil, "<<uncountable>>", "usually <<uncountable>>")
-end
+-----------------------------------------------------------------------------------------
+--                                    Gender handling                                  --
+-----------------------------------------------------------------------------------------
 
 local valid_bare_genders = {false, "m", "f", "mf", "mfbysense", "mfequiv"}
 local valid_bare_numbers = {false, "d", "p"}
@@ -576,23 +585,30 @@ end
 local function is_fem_sg(g)
 	return g == "f" or g == "f-pr" or g == "f-np"
 end
+local function is_masc_fem_sg(g)
+	g = g:gsub("%-pr", ""):gsub("%-np", "")
+	return g == "mf" or g == "mfequiv" or g == "mfbysense"
+end
 
 local function add_gender_params(params, default)
 	params[2] = {type = "genders", default = default or "?"}
 	params["g2"] = {replaced_by = false, instead = "use comma-separated values in |g="}
 end
 
--- Handle gender in params 2=, g2=, etc., inserting into `data.genders`. Also, if a lemma, insert categories into
--- `data.categories` if the gender is unexpected for the form of the noun. (Note: If there are multiple genders,
+-- Handle gender in params 2=, inserting into `data.genders`. Also, if a lemma, insert categories into `data.categories`
+-- if the gender is unexpected for the form of the noun. (Note: If there are multiple genders,
 -- [[Module:gender and number]] will automatically insert 'Arabic POS with multiple genders'.)
-local function handle_gender(data, args, nonlemma)
-	for _, gspec in ipairs(args[2]) do
+local function handle_gender(data, args, nonlemma, field)
+	if not args[field or 2] then
+		return
+	end
+	for _, gspec in ipairs(args[field or 2]) do
 		if not valid_genders[gspec.spec] then
 			error("Unrecognized gender: " .. gspec.spec)
 		end
 	end
 
-	data.genders = args[2]
+	data.genders = args[field or 2]
 
 	if nonlemma then
 		return
@@ -600,15 +616,15 @@ local function handle_gender(data, args, nonlemma)
 
 	for _, gspec in ipairs(data.genders) do
 		local g = gspec.spec
-		if is_masc_sg(g) or is_fem_sg(g) then
-			local head = args[1][1]
+		if is_masc_sg(g) or is_fem_sg(g) or is_masc_fem_sg(g) then
+			local head = data.heads[1]
 			if head then
-				head = rsub(ar.reorder_shadda(remove_links(head)), ar.UNUOPT .. "$", "")
+				head = rsub(ar.reorder_shadda(remove_links(head.term)), ar.UNUOPT .. "$", "")
 				local ends_with_tam = rfind(head, "^[^ ]*" .. ar.TAM .. "$") or
 						rfind(head, "^[^ ]*" .. ar.TAM .. " ")
-				if is_masc_sg(g) and ends_with_tam then
+				if (is_masc_sg(g) or is_masc_fem_sg(g)) and ends_with_tam then
 					insert(data.categories, langname .. " masculine terms with feminine ending")
-				elseif is_fem_sg(g) and not ends_with_tam and
+				elseif (is_fem_sg(g) or is_masc_fem_sg(g)) and not ends_with_tam and
 						not rfind(head, "[" .. ar.ALIF .. ar.AMAQ .. "]$") and
 						not rfind(head, ar.ALIF .. ar.HAMZA .. "$") then
 					insert(data.categories, langname .. " feminine terms lacking feminine ending")
@@ -618,72 +634,100 @@ local function handle_gender(data, args, nonlemma)
 	end
 end
 
--- Part-of-speech functions
+-----------------------------------------------------------------------------------------
+--                                   Inflection handlers                               --
+-----------------------------------------------------------------------------------------
 
-local adj_inflections = {
-	{field = "*"}, -- handle def, obl, inf
-	{field = "f", label = "feminine"},
-	{field = "d", label = "masculine dual"},
-	{field = "fd", label = "feminine dual"},
-	{field = "cpl", label = "common plural"},
-	{field = "pl", label = "masculine plural"},
-	{field = "fpl", label = "feminine plural"},
-}
+-- Add list parameters to `params` (a structure as passed to [[Module:parameters]]) for a parameter named `argpref`.
+-- If `argpref` is "*", add the nominal inflection parameters for construct state, definite state, etc. Related
+-- transliteration and gender parameters are no longer supported in favor of inline modifiers, and error messages are
+-- output if these parameters are used.
+local function add_infl_params(params, argpref)
+	params[argpref] = {list = true, disallow_holes = true}
+	params[argpref .. "tr"] = {replaced_by = false, instead = "use <tr:...> inline modifier on |" .. argpref .. "="}
+	params[argpref .. "g"] = {replaced_by = false, instead = "use <g:...> inline modifier on |" .. argpref .. "="}
+end
 
-local function create_infl_list_params(infl_list)
-	params = {}
-	for _, infl in ipairs(infl_list) do
-		if infl.field == "*" then
-			for _, spec in ipairs(nominal_inflections) do
-				add_infl_params(params, spec.field)
-			end
-		else
-			add_infl_params(params, infl.field)
+--[=[
+Fetch a list of inflections from the arguments in `args` based on argument `field` (e.g. "pl"). Label with `label`
+(e.g. "plural"), which will appear in the headword. Insert into `data.inflections`, where `data` is the structure
+passed to [[Module:headword]]. If `generate_default` is specified, it should be a function of two arguments
+(`data`, `args`), which should generate the default value if no values are specified or if "+" is explicitly given.
+If `generate_default` isn't specified and the user gave no values, no inflection will be inserted.
+]=]
+local function handle_infl(data, args, spec)
+	local newinfls = parse_inflection(data, args, spec.field, false)
+	if not newinfls[1] and spec.default_when_not_explicit and spec.default_when_not_explicit(data, args) then
+		newinfls = {{term = "+"}}
+	end
+	if spec.handle then
+		spec.handle(data, args, newinfls)
+	end
+	local default_specs = spec.allowed_defspecs
+	if not default_specs then
+		default_specs = spec.generate_default and {["+"] = true} or {}
+	end
+	local saw_defspec = false
+	for _, newinfl in ipairs(newinfls) do
+		if default_specs[newinfl.term] or newinfl.term == "~" then
+			saw_defspec = true
+			break
 		end
 	end
-	return params
+	if saw_defspec then
+		local newnewinfls = {}
+		for _, newinfl in ipairs(newinfls) do
+			if default_specs[newinfl.term] then
+				if newinfl.tr then
+					error("Can't specify translit for default value '" .. newinfl.term .. "'")
+				end
+				local definfls = spec.generate_default(data, args, newinfl.term)
+				for _, definfl in ipairs(definfls) do
+					m_headword_utilities.combine_termobj_qualifiers_labels(definfl, newinfl)
+					insert(newnewinfls, definfl)
+				end
+			elseif newinfl.term == "~" then
+				if newinfl.tr then
+					error("Can't specify translit for head-requesting value '~'")
+				end
+				for _, headobj in ipairs(data.heads) do
+					headobj = m_table.shallowCopy(headobj)
+					m_headword_utilities.combine_termobj_qualifiers_labels(headobj, newinfl)
+					insert(newnewinfls, headobj)
+				end
+			else
+				insert(newnewinfls, newinfl)
+			end
+		end
+		newinfls = newnewinfls
+	end
+	if newinfls[1] then
+		if newinfls[1].term == "--" then
+			if newinfls[2] then
+				error("Can't specify more than one term if first term is '--', meaning \"don't insert anything\"")
+			end
+		else
+			insert_inflection(data, newinfls, spec.label, nil, spec.defgender, spec.field, spec.no_label,
+				spec.usually_no_label)
+		end
+	end
+end
+
+local function add_infl_list_params(params, infl_list)
+	for _, infl in ipairs(infl_list) do
+		add_infl_params(params, infl.field)
+	end
 end
 
 local function handle_infl_list_args(data, args, infl_list)
 	for _, infl in ipairs(infl_list) do
-		if infl.handle then
-			infl.handle(data, args)
-		elseif infl.field == "*" then
-			for _, spec in ipairs(nominal_inflections) do
-				handle_infl(data, args, spec.field, spec.label, spec.generate_default)
-			end
-		else
-			handle_infl(data, args, infl.field, infl.label, infl.generate_default)
-		end
+		handle_infl(data, args, infl)
 	end
 end
 
-pos_functions["adjectives"] = {
-	params = (function()
-		local params = create_infl_list_params(adj_inflections)
-		add_infl_params(params, "el")
-		return params
-	end)(),
-	func = function(data, args)
-		handle_infl_list_args(data, args, adj_inflections)
-		handle_infl(data, args, "el", "<<elative>>")
-	end
-}
-
-local function make_default_with_ending(ending, endingtr)
-	return function(data, args)
-		local heads = data.heads
-		if not heads[1] then
-			heads = {{term = data.pagename}}
-		end
-		local forms = {}
-		for i = 1, #heads do
-			local tr = heads[i].tr
-			insert(forms, {term = heads[i].term .. ending, tr = tr and tr .. endingtr or nil})
-		end
-		return forms
-	end
-end
+-----------------------------------------------------------------------------------------
+--                               Default ending generators                             --
+-----------------------------------------------------------------------------------------
 
 local function make_conditional_default(specs)
 	return function(data, args)
@@ -691,145 +735,347 @@ local function make_conditional_default(specs)
 		if not heads[1] then
 			heads = {{term = data.pagename}}
 		end
-		local forms = {}
-		for i = 1, #heads do
-			local tr = heads[i].tr
-			insert(forms, {term = heads[i].term .. ending, tr = tr and tr .. endingtr or nil})
+		local newobjs = {}
+		for _, headobj in ipairs(heads) do
+			local term = ar.reorder_shadda(headobj.term)
+			local tr = headobj.tr
+			local matched = false
+			for _, spec in ipairs(specs) do
+				local from, fromtr, to, totr = unpack(spec)
+				if from:find("^%^") then
+					pref = rmatch(term, from .. "$")
+				else
+					pref = rmatch(term, "^(.*)" .. from .. "$")
+				end
+				if pref then
+					term = pref .. to
+					tr = replace_tr_ending(tr, fromtr, totr)
+					matched = true
+					headobj = m_table.shallowCopy(headobj)
+					headobj.term = ar.undo_reorder_shadda(term)
+					headobj.tr = tr
+					insert(newobjs, headobj)
+					break
+				end
+			end
+			if not matched then
+				error(("Internal error: No matching spec: head=%s"):format(dump(headobj)))
+			end
 		end
-		return forms
+		return newobjs
 	end
 end
 
 local default_feminine = make_conditional_default {
-	{ar.AN .. AMAQ, "an", ar.AAH, "āh"},
-	{ar.AN .. ALIF, "an", ar.AAH, "āh"}, -- e.g. مُحْيًا
-	{ar.HAMZA .. ar.IN, "ʔin", ar.HAMZA_ON_YA .. ar.IYAH, "ʔiya"},
+	{ar.AN .. ar.AMAQ, "an", ar.AAH, "āh"},
+	{ar.AN .. ar.ALIF, "an", ar.AAH, "āh"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "in", ar.HAMZA_ON_YA .. ar.IYAH, "iya"},
 	{ar.IN, "in", ar.IYAH, "iya"},
 	{"", "", ar.AH, "a"},
 }
 
+local default_masculine = make_conditional_default {
+	-- tall alif substitutes for alif maqṣūra after a yāʔ
+	{ar.Y .. ar.AAH, "āh", ar.AN .. ar.ALIF, "an"},
+	{ar.AAH, "āh", ar.AN .. ar.AMAQ, "an"},
+    -- handle the common case of final-weak feminine active participle with preceding hamza;
+    -- the hamza-on-yāʔ always converts back to hamza on the line when preceded by ā (alif) but
+    -- may not otherwise, so we just leave it alone in that case
+	{ar.ALIF .. ar.HAMZA_ON_YA .. ar.IYAH, "iya", ar.HAMZA .. ar.IN, "in"},
+	{ar.IYAH, "iya", ar.IN, "in"},
+	{ar.AH, "a", "", ""},
+	{"", "", "", ""},
+}
+
 local default_masculine_plural = make_conditional_default {
-	{ar.AN .. AMAQ, "an", ar.AWN, "awn"},
-	{ar.AN .. ALIF, "an", ar.AWN, "awn"}, -- e.g. مُحْيًا
-	{ar.HAMZA .. ar.IN, "ʔin", ar.HAMZA_ON_WAW .. ar.UUN, "ʔūn"},
+	{ar.AN .. ar.AMAQ, "an", ar.AWN, "awn"},
+	{ar.AN .. ar.ALIF, "an", ar.AWN, "awn"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "in", ar.HAMZA_ON_WAW .. ar.UUN, "ūn"},
 	{ar.IN, "in", ar.UUN, "ūn"},
 	{"", "", ar.UUN, "ūn"},
 }
 
-local regular_adj_inflections = {
-	{field = "*"}, -- handle def, obl, inf
-	{field = "f", label = "feminine", generate_default =
-	},
-	{field = "d", label = "masculine dual"},
-	{field = "fd", label = "feminine dual"},
-	{field = "cpl", label = "common plural"},
-	{field = "pl", label = "masculine plural", generate_default =
-	},
-	{field = "fpl", label = "feminine plural", generate_default =
-		make_default_with_ending {
-			{ar.AN .. AMAQ, "an", ar.AYAAT, "ayāt"},
-			{ar.AN .. ALIF, "an", ar.AYAAT, "ayāt"}, -- e.g. مُحْيًا
-			{ar.HAMZA .. ar.IN, "ʔin", ar.HAMZA_ON_YA .. ar.IYAAT, "ʔiyāt"},
-			{ar.IN, "in", ar.HAMZA_ON_YA .. ar.IYAAT, "ʔiyāt"},
-			{"", "", ar.AAT, "āt"},
-		}
-	},
+local default_feminine_plural = make_conditional_default {
+	-- صَلَاة pl. صَلَوَات and أَدَاة pl. أَدَوَات and similar; but نَوَاة and وَفَاة with a و in them become نَوَيَات and وَفَيَات;
+	-- and longer terms like مُبَارَاة and كُمَّثْرَاة invariably form their plural in -يَات.
+	{"^([^و]" .. ar.A .. "[^و])" .. ar.AAH, "āh", ar.A .. ar.W .. ar.AAT, "awāt"},
+	{ar.AAH, "āh", ar.AYAAT, "ayāt"},
+	{ar.AN .. ar.AMAQ, "an", ar.AYAAT, "ayāt"},
+	{ar.AN .. ar.ALIF, "an", ar.AYAAT, "ayāt"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "in", ar.HAMZA_ON_YA .. ar.IYAAT, "iyāt"},
+	{ar.IN, "in", ar.IYAAT, "iyāt"},
+	{ar.AH, "a", ar.AAT, "āt"},
+	{"", "", ar.AAT, "āt"},
 }
 
-local sound_adj_inflections = {
-	{field = "*"}, -- handle def, obl, inf
-	{field = "f", label = "feminine", generate_default = make_default_with_ending(ar.AH, "a")},
-	{field = "d", label = "masculine dual"},
-	{field = "fd", label = "feminine dual"},
-	{field = "cpl", label = "common plural"},
-	{field = "pl", label = "masculine plural", generate_default = make_default_with_ending(ar.UUNA, "ūna")},
-	{field = "fpl", label = "feminine plural", generate_default = make_default_with_ending(ar.AAT, "āt")},
+local default_masculine_dual = make_conditional_default {
+	{ar.AN .. ar.AMAQ, "an", ar.AYAAN, "ayān"},
+	{ar.AN .. ar.ALIF, "an", ar.AYAAN, "ayān"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "in", ar.HAMZA_ON_YA .. ar.IYAAN, "iyān"},
+	{ar.IN, "in", ar.IYAAN, "iyān"},
+	{"", "", ar.AAN, "ān"},
 }
 
-local function get_sound_adj_params()
-	local params = create_infl_list_params(sound_adj_inflections)
+local default_feminine_dual = make_conditional_default {
+	{ar.AN .. ar.AMAQ, "an", ar.AATAAN, "ātān"},
+	{ar.AN .. ar.ALIF, "an", ar.AATAAN, "ātān"}, -- e.g. مُحْيًا
+	{ar.HAMZA .. ar.IN, "in", ar.HAMZA_ON_YA .. ar.IY .. ar.ATAAN, "iyatān"},
+	{ar.IN, "in", ar.IY .. ar.ATAAN, "iyatān"},
+	{"", "", ar.ATAAN, "atān"},
+}
+
+-- Return whether `term` is a nisba noun or adjective, ending in -iyy or -iyyah. `nisba_val` is the value of
+-- args.nisba; if non-nil, it overrides any auto-determination based on the shape of the term.
+local function term_is_nisba(term, nisba_val)
+	if nisba_val ~= nil then
+		return nisba_val
+	end
+	term = ar.reorder_shadda(term) -- necessary to avoid issues with e.g. أُورُوبِّيّ.
+	local pref = rmatch(term, ar.IYY .. ar.UN .. "?$")
+	if not pref then
+		pref = rmatch(term, ar.IYYAH .. ar.UN .. "?$")
+	end
+	-- Avoid false positives for words like قَوِيّ "strong" and صَبِيّ "boy". There may be other false positives
+	-- but this should catch most of them and will avoid very many false negatives.
+	return pref and not rfind(pref, "^[^ا]" .. ar.A .. ".$")
+end
+
+-----------------------------------------------------------------------------------------
+--                                      Adjectives                                     --
+-----------------------------------------------------------------------------------------
+
+local function is_defaulting_adjective(data, args)
+	return data.orig_pos_category == "defaulting adjectives"
+end
+
+local adj_field_elative = {field = "el", label = "<<elative>>"}
+
+local adj_inflections = {
+	adj_field_inf,
+	adj_field_obl,
+	adj_field_def,
+	{field = "f", label = "feminine", generate_default = default_feminine,
+		default_when_not_explicit = is_defaulting_adjective},
+	{field = "d", label = "masculine dual", generate_default = default_masculine_dual},
+	{field = "fd", label = "feminine dual", generate_default = default_feminine_dual},
+	{field = "cpl", label = "common plural"},
+	{field = "pl", label = "masculine plural", generate_default = default_masculine_plural,
+		default_when_not_explicit = is_defaulting_adjective},
+	{field = "fpl", label = "feminine plural", generate_default = default_feminine_plural,
+		default_when_not_explicit = is_defaulting_adjective},
+}
+
+local function get_adj_params()
+	local params = {}
+	add_infl_list_params(params, adj_inflections)
 	add_infl_params(params, "el")
+	params.nisba = boolean_param
 	return params
 end
 
-local function handle_sound_adj_params(data, args)	
-	data.pos_category = "adjectives"
-	handle_infl_list_args(data, args, sound_adj_inflections)
-	handle_infl(data, args, "el", "<<elative>>")
-end
-
-pos_functions["sound adjectives"] = {
-	params = get_sound_adj_params(),
-	func = handle_sound_adj_params,
-}
-
--- Almost identical to sound adjective handling except for the nisba category.
-pos_functions["nisba adjectives"] = {
-	params = get_sound_adj_params(),
-	func = handle_sound_adj_params,
-	func = function(data, args)
-		insert(data.categories, langname .. " relative adjectives (nisba)")
-		handle_sound_adj_params(data, args)
+local function handle_adj_args(data, args)
+	handle_infl_list_args(data, args, adj_inflections)
+	handle_infl(data, args, adj_field_elative)
+	for _, headobj in ipairs(data.heads) do
+		if term_is_nisba(headobj.term, args.nisba) then
+			insert(data.categories, langname .. " relative adjectives (nisba)")
+			break
+		end
 	end
+end
+
+pos_functions["adjectives"] = {
+	params = get_adj_params,
+	func = handle_adj_args,
 }
 
-local sound_noun_inflections = {
-	{field = "*"}, -- handle cons, def, obl, inf
-	{field = "pl", label = "plural", generate_default = make_default_with_ending(ar.UUNA, "ūna")},
-	{field = "f", label = "feminine", generate_default = make_default_with_ending(ar.AH, "a")},
+pos_functions["defaulting adjectives"] = {
+	params = get_adj_params,
+	func = function(data, args)
+		data.pos_category = "adjectives"
+		handle_adj_args(data, args)
+	end,
 }
 
-local function get_sound_noun_params()
-	local params = create_infl_list_params(sound_noun_inflections)
-	add_gender_params(params, "m")
+-----------------------------------------------------------------------------------------
+--                                      Nouns, etc.                                    --
+-----------------------------------------------------------------------------------------
+
+local function get_masc_or_feminine_gender(data, default_type)
+	local saw_m, saw_f, saw_mf
+	for _, gender in ipairs(data.genders) do
+		if is_masc_sg(gender.spec) then
+			saw_m = true
+		elseif is_fem_sg(gender.spec) then
+			saw_f = true
+		elseif is_masc_fem_sg(gender.spec) then
+			saw_mf = true
+		end
+	end
+	if saw_mf or saw_m and saw_f then
+		error("Can't generate default for " .. default_type .. " when gender is both masculine and feminine")
+	elseif saw_m then
+		return "m"
+	elseif saw_f then
+		return "f"
+	else
+		error("Can't generate default for " .. default_type .. " when gender is not specified as " ..
+			"masculine or feminine singular")
+	end
+end
+
+local function is_defaulting_noun(data, args)
+	return data.orig_pos_category == "defaulting nouns"
+end
+
+local noun_field_dual = {
+	field = "d", label = "dual",
+	generate_default = function(data, args)
+		local gender = get_masc_or_feminine_gender(data, "noun dual")
+		if gender == "m" then
+			return default_masculine_dual(data, args)
+		else
+			return default_feminine_dual(data, args)
+		end
+	end,
+}
+
+local noun_field_plural = {
+	field = "pl", label = "plural",
+	generate_default = function(data, args, defspec)
+		local gender = get_masc_or_feminine_gender(data, "noun plural")
+		if gender == "m" then
+			if defspec == "+f" then
+				return default_feminine_plural(data, args)
+			else
+				return default_masculine_plural(data, args)
+			end
+		elseif defspec == "+f" then
+			error("Can't specify '+f' with feminine gender; just use '+'")
+		else
+			return default_feminine_plural(data, args)
+		end
+	end,
+	-- Handle the case where pl=-, indicating an uncountable noun.
+	handle = function(data, args, terms)
+		if terms[1] and terms[1] == "-" then
+			insert(data.categories, langname .. " uncountable nouns")
+			if args.pauc and args.pauc[1] then
+				error("Can't specify paucals when pl=-")
+			end
+		end
+	end,
+	allowed_defspecs = {["+"] = true, ["+f"] = true},
+	default_when_not_explicit = is_defaulting_noun,
+	no_label = "<<uncountable>>",
+	usually_no_label = "usually <<uncountable>>",
+}
+
+local noun_field_paucal = {
+	field = "pauc", label = "<<paucal>>", generate_default = default_feminine_plural,
+}
+
+local noun_field_feminine = {
+	field = "f", label = "feminine", generate_default = default_feminine,
+	default_when_not_explicit = function(data, args)
+		if data.orig_pos_category ~= "defaulting nouns" then
+			return nil
+		end
+		local gender = get_masc_or_feminine_gender(data, "defaulting-if-masculine noun feminine")
+		return gender == "m"
+	end,
+}
+
+local noun_field_masculine = {
+	field = "m", label = "masculine", generate_default = default_masculine,
+	default_when_not_explicit = function(data, args)
+		if data.orig_pos_category ~= "defaulting nouns" then
+			return nil
+		end
+		local gender = get_masc_or_feminine_gender(data, "defaulting-if-feminine noun masculine")
+		return gender == "f"
+	end,
+}
+
+local noun_basic_inflections = {
+	noun_field_cons,
+	noun_field_inf,
+	noun_field_obl,
+	noun_field_def,
+}
+
+local noun_shared_inflections = {
+	noun_field_dual,
+	noun_field_plural,
+}
+
+local noun_extra_inflections = {
+	noun_field_paucal,
+	noun_field_feminine,
+	noun_field_masculine,
+}
+
+local function get_noun_params()
+	local params = {}
+	add_gender_params(params)
+	add_infl_list_params(params, noun_basic_inflections)
+	add_infl_list_params(params, noun_shared_inflections)
+	add_infl_list_params(params, noun_extra_inflections)
+	params.nisba = boolean_param
 	return params
 end
 
-local function handle_sound_noun_params(data, args, is_nisba)
-	data.pos_category = "nouns"
+local function handle_noun_args(data, args)
 	handle_gender(data, args)
-	if is_nisba then
-		insert(data.categories, langname .. " relative nouns (nisba)")
+	handle_infl_list_args(data, args, noun_basic_inflections)
+	handle_infl_list_args(data, args, noun_shared_inflections)
+	handle_infl_list_args(data, args, noun_extra_inflections)
+	for _, headobj in ipairs(data.heads) do
+		if term_is_nisba(headobj.term, args.nisba) then
+			insert(data.categories, langname .. " relative nouns (nisba)")
+			break
+		end
 	end
-	handle_infl_list_args(data, args, sound_noun_inflections)
 end
 
-pos_functions["sound nouns"] = {
-	params = get_sound_noun_params(),
-	func = handle_sound_noun_params,
+pos_functions["nouns"] = {
+	params = get_noun_params,
+	func = handle_noun_args,
 }
 
--- Almost identical to sound adjective handling except for the nisba category.
-pos_functions["nisba nouns"] = {
-	params = get_sound_noun_params(),
+pos_functions["defaulting nouns"] = {
+	params = get_noun_params,
 	func = function(data, args)
-		handle_sound_noun_params(data, args, "is_nisba")
-	end
+		data.pos_category = "nouns"
+		-- FIXME: Temporary hack, remove when nouns converted
+		if args[2] and args[2][1].spec == "?" then
+			args[2][1].spec = "m"
+		end
+		handle_noun_args(data, args)
+	end,
 }
 
-local sing_coll_noun_inflections = {
-	{field = "*"}, -- handle cons, def, obl, inf
-	{field = "d", label = "dual"},
-	{field = "pl", label = "plural", handle = handle_noun_plural},
-	{field = "pauc", label = "<<paucal>>"},
-}
+local noun_field_singulative = {field = "sing", label = "<<singulative>>", defgender = "f"}
+local noun_field_collective = {field = "coll", label = "<<collective>>", defgender = "m"}
 
 local function handle_sing_coll_noun_infls(data, args, otherinfl, otherlabel, othergender)
-	handle_gender(data, args)
 	-- Handle sing= (corresponding singulative noun) or coll= (corresponding collective noun) and their gender
 	handle_infl(data, args, otherinfl, otherlabel, nil, othergender)
 	handle_infl_list_args(data, args, sing_coll_noun_inflections)
 end
 
-local function get_sing_coll_noun_params(defgender, otherinfl)
-	local params = create_infl_list_params(sing_coll_noun_inflections)
+local function get_singulative_collective_noun_params(defgender, otherinfl)
+	local params = {}
 	add_gender_params(params, defgender)
+	add_infl_list_params(params, noun_basic_inflections)
 	add_infl_params(params, otherinfl)
+	add_infl_list_params(params, noun_shared_inflections)
+	add_infl_params(params, "pauc")
 	return params
 end
 
 pos_functions["collective nouns"] = {
-	params = get_sing_coll_noun_params("m", "sing"),
+	params = function() return get_singulative_collective_noun_params("m", "sing") end,
 	func = function(data, args)
 		data.pos_category = "nouns"
 		insert(data.categories, langname .. " collective nouns")
@@ -837,12 +1083,16 @@ pos_functions["collective nouns"] = {
 			headdata = data,
 			label = "<<collective>>",
 		}
-		handle_sing_coll_noun_infls(data, args, "sing", "<<singulative>>", "f")
+		handle_gender(data, args)
+		handle_infl_list_args(data, args, noun_basic_inflections)
+		handle_infl(data, args, noun_field_singulative)
+		handle_infl_list_args(data, args, noun_shared_inflections)
+		handle_infl(data, args, noun_field_paucal)
 	end
 }
 
 pos_functions["singulative nouns"] = {
-	params = get_sing_coll_noun_params("f", "coll"),
+	params = function() return get_singulative_collective_noun_params("f", "coll") end,
 	func = function(data, args)
 		data.pos_category = "nouns"
 		insert(data.categories, langname .. " singulative nouns")
@@ -850,87 +1100,70 @@ pos_functions["singulative nouns"] = {
 			headdata = data,
 			label = "<<singulative>>",
 		}
-		handle_sing_coll_noun_infls(data, args, "coll", "<<collective>>", "m")
+		handle_gender(data, args)
+		handle_infl_list_args(data, args, noun_basic_inflections)
+		handle_infl(data, args, noun_field_collective)
+		handle_infl_list_args(data, args, noun_shared_inflections)
+		handle_infl(data, args, noun_field_paucal)
 	end
-}
-
-local noun_inflections = {
-	{field = "*"}, -- handle cons, def, obl, inf
-	{field = "d", label = "dual"},
-	{field = "pl", label = "plural", handle = handle_noun_plural},
-	{field = "pauc", label = "<<paucal>>"},
-	{field = "f", label = "feminine"},
-	{field = "m", label = "masculine"},
-}
-
-local function get_noun_params()
-	local params = create_infl_list_params(noun_inflections)
-	add_gender_params(params)
-	return params
-end
-
-local function handle_noun_infls(data, args)
-	handle_gender(data, args)
-	handle_infl_list_args(data, args, noun_inflections)
-end
-
-pos_functions["nouns"] = {
-	params = get_noun_params(),
-	func = handle_noun_infls,
 }
 
 -- FIXME: Do numerals really behave almost as nouns? They vary by masc/fem.
 pos_functions["numerals"] = {
-	params = get_noun_params(),
+	params = get_noun_params,
 	func = function(data, args)
 		insert(data.categories, langname .. " cardinal numbers")
-		handle_noun_infls(data, args)
+		handle_noun_args(data, args)
 	end
 }
 
 pos_functions["proper nouns"] = {
-	params = get_noun_params(),
-	func = handle_noun_infls,
-}
-
-local pronoun_inflections = {
-	{field = "*"}, -- handle cons, def, obl, inf
-	{field = "d", label = "dual"},
-	{field = "pl", label = "plural"},
-	{field = "f", label = "feminine"},
+	params = get_noun_params,
+	func = handle_noun_args,
 }
 
 local function get_pronoun_params()
-	local params = create_infl_list_params(pronoun_inflections)
-	add_gender_params(params)
+	local params = {}
+	add_gender_params(params, defgender)
+	add_infl_list_params(params, noun_basic_inflections)
+	add_infl_list_params(params, noun_shared_inflections)
+	add_infl_params(params, "f")
 	return params
 end
 
 pos_functions["pronouns"] = {
-	params = get_pronoun_params(),
+	params = get_pronoun_params,
 	func = function(data, args)
 		handle_gender(data, args)
-		handle_infl_list_args(data, args, pronoun_inflections)
+		handle_infl_list_args(data, args, noun_basic_inflections)
+		handle_infl_list_args(data, args, noun_shared_inflections)
+		handle_infl(data, args, noun_field_feminine)
 	end
 }
 
+-----------------------------------------------------------------------------------------
+--                                    Non-lemma forms                                  --
+-----------------------------------------------------------------------------------------
+
 local function get_gender_only_params(default)
-	local params = {}
-	add_gender_params(params, default)
-	return params
+	return function()
+		local params = {}
+		add_gender_params(params, default)
+		return params
+	end
 end
 
 pos_functions["noun plural forms"] = {
-	params = (function()
+	params = function()
 		local params = {}
 		add_gender_params(params, "p")
 		add_infl_params(params, "cons")
 		return params
-	end)(),
+	end,
 	func = function(data, args)
 		data.pos_category = "noun forms"
 		handle_gender(data, args, "nonlemma")
-		handle_infl(data, args, "cons", "<<construct state>>")
+		handle_infl(data, args, {field = "cons", label = "<<construct state>>"})
 	end
 }
 
@@ -951,7 +1184,7 @@ pos_functions["noun dual forms"] = {
 }
 
 pos_functions["adjective plural forms"] = {
-	params = get_gender_only_params("m-p"),
+	params = get_gender_only_params("m-d"),
 	func = function(data, args)
 		data.pos_category = "adjective forms"
 		handle_gender(data, args, "nonlemma")
@@ -959,17 +1192,17 @@ pos_functions["adjective plural forms"] = {
 }
 
 pos_functions["adjective dual forms"] = {
-	params = get_gender_only_params("m-p"),
+	params = get_gender_only_params("m-d"),
 	func = function(data, args)
 		data.pos_category = "adjective forms"
-		handle_gender(data, args, "m-d", "nonlemma")
+		handle_gender(data, args, "nonlemma")
 	end
 }
 
 pos_functions["noun forms"] = {
 	params = get_gender_only_params(),
 	func = function(data, args)
-		handle_gender(data, args, nil, "nonlemma")
+		handle_gender(data, args, "nonlemma")
 	end
 }
 
@@ -990,22 +1223,24 @@ local function handle_conj_form(data, args)
 end
 
 pos_functions["verb forms"] = {
-	params = {
-		[2] = {},
-	},
+	params = function()
+		return {
+			[2] = {},
+		}
+	end,
 	func = function(data, args)
 		handle_conj_form(data, args)
 	end
 }
 
 local function get_participle_params()
-	local params = create_infl_list_params(adj_inflections)
+	local params = get_adj_params()
 	params[2] = {}
 	return params
 end
 
 pos_functions["active participles"] = {
-	params = get_participle_params(),
+	params = get_participle_params,
 	func = function(data, args)
 		data.pos_category = "participles"
 		insert(data.categories, langname .. " active participles")
@@ -1015,7 +1250,7 @@ pos_functions["active participles"] = {
 }
 
 pos_functions["passive participles"] = {
-	params = get_participle_params(),
+	params = get_participle_params,
 	func = function(data, args)
 		data.pos_category = "participles"
 		insert(data.categories, langname .. " passive participles")
@@ -1030,7 +1265,7 @@ pos_functions["passive participles"] = {
 
 pos_functions["verbs"] = {
 	head_is_not_1 = true,
-	params = {
+	params = function() return {
 		[1] = {},
 		-- Comma-separated lists with possible inline modifiers
 		["past"] = {},
@@ -1039,7 +1274,7 @@ pos_functions["verbs"] = {
 		["vn"] = {},
 		["noautolinktext"] = {type = "boolean"},
 		["noautolinkverb"] = {type = "boolean"},
-	},
+	} end,
 	func = function(data, args)
 		local ar_verb = require(ar_verb_module)
 		local alternant_multiword_spec =
@@ -1323,6 +1558,21 @@ pos_functions["verbs"] = {
 		end
 		]=]
 	end
+}
+
+-----------------------------------------------------------------------------------------
+--                                Generic parts of speech                              --
+-----------------------------------------------------------------------------------------
+
+pos_functions.head_with_gender = {
+	params = function()
+		return {
+			[3] = {type = "genders"},
+		}
+	end,
+	func = function(data, args)
+		handle_gender(data, args, "nonlemma", 3)
+	end,
 }
 
 return export
