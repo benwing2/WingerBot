@@ -82,7 +82,7 @@ def default_feminine_plural(term, tr):
 def default_masculine_dual(term, tr):
   if term.endswith(ar.AN + ar.AMAQ) or term.endswith(ar.AN + ar.ALIF):
     term = term[:-2] + ar.AYAAN
-    tr = check_tr_ending(tr, "an", "awn")
+    tr = check_tr_ending(tr, "an", "ayān")
   elif term.endswith(ar.HAMZA + ar.IN):
     term = term[:-2] + ar.HAMZA_ON_YAA + ar.IYAAN
     tr = check_tr_ending(tr, "in", "iyān")
@@ -234,6 +234,21 @@ def process_text_on_page(index, pagetitle, text):
         inflections = adj_inflections
         genders = None
       else:
+        ar_head_pos = None
+        if tn in ["ar-noun-pl", "ar-noun-dual", "ar-noun-form"]:
+          ar_head_pos = "nounf"
+        elif tn in ["ar-adj-pl", "ar-adj-fem", "ar-adj-dual", "ar-adj-form"]:
+          ar_head_pos = "adjf"
+        if ar_head_pos:
+          head = getp("1")
+          gender = getp("2")
+          t.add("1", ar_head_pos)
+          t.add("2", head)
+          if gender:
+            t.add("3", gender)
+          blib.set_template_name(t, "ar-head")
+          pagemsg("Convert {{%s}} to {{ar-head|%s}}" % (tn, ar_head_pos))
+          notes.append("convert {{%s}} to {{ar-head|%s}}" % (tn, ar_head_pos))
         continue
       origt = str(t)
       orighead = getp("1")
@@ -386,10 +401,10 @@ def process_text_on_page(index, pagetitle, text):
         if getp("f") == "+":
           rmparam(t, "f")
           subnotes.append("remove redundant feminine")
-        blib.set_template_name(t, "ar-noun-anim")
+        blib.set_template_name(t, "ar-noun+")
         subnote_text = "; " + ", ".join(subnotes) if subnotes else ""
-        pagemsg("Convert {{%s}} to {{ar-noun-anim}}%s" % (tn, subnote_text))
-        notes.append("convert {{%s}} to {{ar-noun-anim}}%s" % (tn, subnote_text))
+        pagemsg("Convert {{%s}} to {{ar-noun+}}%s" % (tn, subnote_text))
+        notes.append("convert {{%s}} to {{ar-noun+}}%s" % (tn, subnote_text))
 
       if tn == "ar-noun" and getp("pl") and (genders == "m" and getp("f") == "+" or genders == "f" and getp("m") == "+"):
         subnotes = []
@@ -402,10 +417,10 @@ def process_text_on_page(index, pagetitle, text):
         if genders == "f" and getp("m") == "+":
           rmparam(t, "m")
           subnotes.append("remove redundant masculine")
-        blib.set_template_name(t, "ar-noun-anim")
+        blib.set_template_name(t, "ar-noun+")
         subnote_text = "; " + ", ".join(subnotes) if subnotes else ""
-        pagemsg("Convert {{ar-noun}} to {{ar-noun-anim}}%s" % subnote_text)
-        notes.append("convert {{ar-noun}} to {{ar-noun-anim}}%s" % subnote_text)
+        pagemsg("Convert {{ar-noun}} to {{ar-noun+}}%s" % subnote_text)
+        notes.append("convert {{ar-noun}} to {{ar-noun+}}%s" % subnote_text)
 
       if getp("d") == "+":
         pagemsg("Removing redundant d=+: %s" % str(t))
