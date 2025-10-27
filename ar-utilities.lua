@@ -133,9 +133,14 @@ local AAH = AA .. TAM   -- final-weak feminine ending
 local AAT = AA .. T     -- short strong feminine plural ending
 local AATUN = AAT .. UN -- full strong nominative feminine plural ending
 local IYAH = I .. Y .. AH -- ending of some final-weak feminines
-local AYAAT = AY .. AAT -- final-weak dual ending
-local IYAAT = IY .. AAT -- final-weak dual ending
+local AYAAT = AY .. AAT -- final-weak plural ending
+local AYAAN = AY .. AAN -- final-weak dual ending
+local IYAAT = IY .. AAT -- final-weak plural ending
+local IYAAN = IY .. AAN -- final-weak dual ending
+local IYY = IY .. SH    -- masculine nisba ending
 local IYYAH = IY .. SH .. AH -- feminine nisba ending
+local ATAAN = A .. T .. AAN -- feminine dual ending
+local AATAAN = AAT .. AAN -- final-weak feminine dual ending
 
 -- other possibilities (currently found in verb module):
 -- AT, AYSK, AWSK, N, NA, NI, M, MA, MU, TA, TU, _I = ALIF .. I, _U = ALIF .. U
@@ -167,8 +172,13 @@ export.AAT = AAT
 export.AATUN = AATUN
 export.IYAH = IYAH
 export.AYAAT = AYAAT
+export.AYAAN = AYAAN
 export.IYAAT = IYAAT
+export.IYAAN = IYAAN
+export.IYY = IYY
 export.IYYAH = IYYAH
+export.ATAAN = ATAAN
+export.AATAAN = AATAAN
 
 function export.reorder_shadda(text)
 	-- shadda+short-vowel (including tanwīn vowels, i.e. -an -in -un) gets
@@ -179,6 +189,10 @@ function export.reorder_shadda(text)
 	-- would come after the -in.)
 	text = rsub(text, "(" .. DIACRITIC_ANY_BUT_SH .. ")" .. SH, SH .. "%1")
 	return text
+end
+
+function export.undo_reorder_shadda(text)
+	return mw.ustring.toNFC(text)
 end
 
 --------------------------- hamza processing ------------------------------
