@@ -12,6 +12,7 @@ local dump = mw.dumpObject
 local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local insert = table.insert
 local concat = table.concat
+local remove = table.remove
 local sort = table.sort
 
 local function deepEquals(...)
@@ -334,8 +335,10 @@ end
 
 function export.insert_fixed_inflection(data)
 	local headdata, origterm, label = data.headdata, data.originating_term, data.label
+	local inflobj = data.inflobj or headdata
+	inflobj.inflections = inflobj.inflections or {}
 	if not origterm then
-		insert(headdata.inflections, {
+		insert(inflobj.inflections, {
 			label = export.replace_glossary_links_in_label(label)
 		})
 	else
@@ -346,18 +349,25 @@ function export.insert_fixed_inflection(data)
 		-- Preserve qualifiers, labels, references
 		origterm.term = nil
 		origterm.label = export.replace_glossary_links_in_label(label)
-		insert(headdata.inflections, origterm)
+		insert(inflobj.inflections, origterm)
 	end
 end
 
 
 --[==[
-Insert previously-parsed terms into `headdata.inflections`. `data` is an object with the following fields:
+Insert previously-parsed terms into an `inflections` field. The `inflections` field will be initialized if needed.
+`data` is an object with the following fields:
 * `headdata`: The headword structure passed to [[Module:headword]]. Required.
+* `inflobj`: The object whose `inflections` field the terms are inserted into. Defaults to `headdata`. Only needs
+   to be set for nested inflections, which are specified for an inflection object rather than the headword data
+   structure as a whole.
 * `terms`: The list of parsed terms. If {nil} or omitted, nothing happens unless `request` is set.
 * `label`: The label that the inflections are given; any parts of the label surrounded in <<...>> are linked to the
-glossary. (If the contents of <<...> contain a | in them, they are a two-part link.) Required.
-* `no_label`: If the inflection is {"-"}, insert a fixed label with this value. Defaults to {"no "} plus the label.
+   glossary. (If the contents of <<...> contain a | in them, they are a two-part link.) Required.
+* `no_label`: If the term is {"-"} and there are no other terms, insert a fixed label with this value. Defaults to
+   {"no "} plus the label.
+* `usually_no_label`: If the term is {"-"} and there are other terms, insert a fixed label with this value. Defaults to
+   {"usually no "} plus the label.
 * `accel`: If specified, a full accelerator object to add to the inflections.
 * `request`: If specified and no terms are given, insert a label with a request for inflections to be given.
 * `enable_auto_translit`: If specified and terms are given, display automatic transliteration of the terms.
@@ -369,36 +379,45 @@ glossary. (If the contents of <<...> contain a | in them, they are a two-part li
 ]==]
 function export.insert_inflection(data)
 	local headdata, terms, label = data.headdata, data.terms, data.label
+	local inflobj = data.inflobj or headdata
 	if terms and terms[1] then
 		if terms[1].term == "-" then
 			if terms[2] then
-				-- FIXME: We probably want to pass in an error function
-				error(("Don't know how to handle '-' as an inflection for label '%s' along with a second value %s"
-					):format(label, terms[2].term and ("'%s'"):format(terms[2].term) or "(nil)"))
-			end
-			export.insert_fixed_inflection {
-				headdata = headdata,
-				originating_term = terms[1],
-				label = data.no_label or "no " .. label,
-			}
-		else
-			if data.check_missing then
-				export.check_term_list_missing {
+				export.insert_fixed_inflection {
 					headdata = headdata,
-					terms = terms,
-					lang = data.lang,
-					plpos = data.plpos,
+					inflobj = inflobj,
+					originating_term = terms[1],
+					label = data.usually_no_label or "usually no " .. label,
 				}
+				remove(terms, 1)
+			else
+				export.insert_fixed_inflection {
+					headdata = headdata,
+					inflobj = inflobj,
+					originating_term = terms[1],
+					label = data.no_label or "no " .. label,
+				}
+				return
 			end
-			terms.label = export.replace_glossary_links_in_label(label)
-			if data.accel then
-				terms.accel = data.accel
-			end
-			terms.enable_auto_translit = data.enable_auto_translit
-			insert(headdata.inflections, terms)
 		end
+		if data.check_missing then
+			export.check_term_list_missing {
+				headdata = headdata,
+				terms = terms,
+				lang = data.lang,
+				plpos = data.plpos,
+			}
+		end
+		terms.label = export.replace_glossary_links_in_label(label)
+		if data.accel then
+			terms.accel = data.accel
+		end
+		terms.enable_auto_translit = data.enable_auto_translit
+		inflobj.inflections = inflobj.inflections or {}
+		insert(inflobj.inflections, terms)
 	elseif data.request then
-		insert(headdata.inflections, {
+		inflobj.inflections = inflobj.inflections or {}
+		insert(inflobj.inflections, {
 			label = export.replace_glossary_links_in_label(label),
 			request = true,
 		})
