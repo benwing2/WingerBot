@@ -38,6 +38,7 @@ local format_categories = require_when_needed(utilities_module, "format_categori
 local full_headword = require_when_needed(headword_module, "full_headword")
 local get_label_info = require_when_needed(labels_module, "get_label_info")
 local get_link_page = require_when_needed(links_module, "get_link_page")
+local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
 local insert = table.insert
 local insertIfNot = require_when_needed(table_module, "insertIfNot")
 local ipairs = ipairs
@@ -67,9 +68,8 @@ local list_param = {list = true, disallow_holes = true}
 local list_allow_holes = {list = true, allow_holes = true}
 local boolean_param = {type = "boolean"}
 
-local function glossary_link(entry, text)
-	text = text or entry
-	return "[[Appendix:Glossary#" .. entry .. "|" .. text .. "]]"
+local function ine(val)
+	if val == "" then return nil else return val end
 end
 
 local function track(page)
@@ -162,8 +162,24 @@ end
 -- The main entry point.
 -- This is the only function that can be invoked from a template.
 function export.show(frame)
-	local poscat = frame.args[1] or error("Part of speech has not been specified. Please pass parameter 1 to the module invocation.")
-	
+	local iparams = {
+		[1] = true,
+	}
+
+	local iargs = require("Module:parameters").process(frame.args, iparams)
+
+	local parargs = frame:getParent().args
+	local poscat = iargs[1]
+	local pos_in_1 = not poscat
+	if pos_in_1 then
+		poscat = ine(parargs[1]) or
+			mw.title.getCurrentTitle().fullText == "Template:en-head" and "interjection" or
+			error("Part of speech must be specified in 1=")
+		poscat = require(headword_module).canonicalize_pos(poscat)
+	end
+
+	local indexing_poscat = pos_in_1 and "head" or poscat
+
 	local params = {
 		["head"] = list_param,
 		["id"] = true,
@@ -180,7 +196,11 @@ function export.show(frame)
 		["pagename"] = true, -- for testing
 	}
 
-	local pos_data = pos_functions[poscat]
+	if pos_in_1 then
+		params[1] = {required = true} -- required but ignored as already processed above
+	end
+
+	local pos_data = pos_functions[indexing_poscat]
 	local pos_func
 	if pos_data then
 		local pos_params = pos_data.params
@@ -192,9 +212,10 @@ function export.show(frame)
 		pos_func = pos_data.func
 	end
 
-	local args = process_params(frame:getParent().args, params, nil, "en-headword", "show")
+	local args = process_params(parargs, params)
 
-	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename -- Accounts for unsupported titles.
+	-- Account for unsupported titles, e.g. 'C|N>K' instead of 'Unsupported titles/C through N to K'.
+	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 
 	local user_specified_heads = parse_inflection(args, "head", "is_head")
 	local heads = user_specified_heads
@@ -331,7 +352,7 @@ function export.show(frame)
 		})
 	end
 
-	if #heads == 0 then
+	if not heads[1] then
 		heads = {{term = autohead}}
 	else
 		for _, headobj in ipairs(heads) do
@@ -339,6 +360,9 @@ function export.show(frame)
 			if head:find("^~") then
 				head = apply_link_modifiers(autohead, head:sub(2))
 				headobj.term = head
+			elseif head:find("^[!?]$") then
+				-- If explicit head= just consists of ! or ?, add it to the end of the default head.
+				headobj.term = autohead .. head
 			end
 			if head == autohead then
 				track("redundant-head")
@@ -352,14 +376,12 @@ function export.show(frame)
 		categories = {},
 		heads = heads,
 		user_specified_heads = user_specified_heads,
-		no_redundant_head_cat = not user_specified_heads[1],
+		-- We use our own splitting algorithm so the redundant head cat will be inaccurate.
+		no_redundant_head_cat = true,
 		inflections = {},
 		nomultiwordcat = args.nomultiwordcat,
 		sort_key = args.sort,
-		pagename = args.pagename,
-		-- This is always set, and in the case of unsupported titles, it's the displayed version (e.g. 'C|N>K' instead of
-		-- 'Unsupported titles/C through N to K').
-		displayed_pagename = pagename,
+		pagename = pagename,
 		id = args.id,
 		force_cat_output = force_cat,
 	}
@@ -421,7 +443,7 @@ function export.show(frame)
 	end
 
 	return full_headword(data)
-		.. (#extra_categories > 0
+		.. (extra_categories[1]
 			and format_categories(extra_categories, lang, args.sort)
 			or "")
 end
@@ -453,7 +475,7 @@ end
 
 -- This function does the common work between adjectives and adverbs.
 local function process_comparative_args(data, args, plpos)
-	local pagename = data.displayed_pagename
+	local pagename = data.pagename
 
 	local comps = parse_inflection(args, 1)
 	local sups = parse_inflection(args, "sup")
@@ -783,7 +805,7 @@ local function canonicalize_plural(pl, pagename, pos)
 end
 
 local function do_nouns(args, data, pos)
-	local pagename = data.displayed_pagename
+	local pagename = data.pagename
 	pos = pos or "noun"
 
 	if args.def then
@@ -1023,7 +1045,7 @@ pos_functions["verbs"] = {
 
 		local pres_3sgs, pres_ptcs, pasts, past_ptcs
 
-		local pagename = data.displayed_pagename
+		local pagename = data.pagename
 
 		------------------------------------------- UTILITY FUNCTIONS #2 ------------------------------------------
 
@@ -1426,7 +1448,7 @@ pos_functions["verbs"] = {
 			past_ptcs = fetch_termobjs("en_form")
 			-- Use the "linked" form of the lemma as the head if no head= explicitly given and the user specified
 			-- brackets in one of the lemmas. Otherwise we use the default headword-linking algorithm.
-			if #data.user_specified_heads == 0 and alternant_multiword_spec.saw_bracket then
+			if not data.user_specified_heads[1] and alternant_multiword_spec.saw_bracket then
 				data.heads = {}
 				for _, lemma_obj in ipairs(alternant_multiword_spec.forms.lemma_linked) do
 					insert(data.heads, m_headword_utilities.convert_formobj_to_termobj(lemma_obj))
@@ -1610,7 +1632,7 @@ pos_functions["verbs"] = {
 				end
 				base = prev
 			end
-			if not base:find(" ") and #seen_adverbs > 0 then
+			if not base:find(" ") and seen_adverbs[1] then
 				insert(data.categories, langname .. " phrasal verbs")
 				for i = #seen_adverbs, 1, -1 do
 					insert(data.categories, langname .. ' phrasal verbs formed with "' .. seen_adverbs[i] ..
