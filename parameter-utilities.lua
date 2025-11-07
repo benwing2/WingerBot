@@ -85,6 +85,17 @@ export.default_special_separators = {
 	["→"] = " → ",
 }
 
+-- Table listing how subitem delimiters display. Unlike for `default_special_separators`, the presence of an item in
+-- this table does not mean that the delimiter is recognized; only those specified by `data.splitchar` are recognized.
+export.default_subitem_separator_map = {
+	[";"] = "; ",
+	[","] = ", ",
+	["/"] = "/",
+	["_"] = " ",
+	["~"] = " ~ ",
+	["→"] = " → ",
+}
+
 --[==[ intro:
 The purpose of this module is to facilitate implementation of templates that can have arguments specified either through
 inline modifiers or separate parameters. There are two types of templates supported: those that take a list of items
@@ -774,6 +785,8 @@ end
 -- `termobj`: The object to store the inline modifiers into. If there are subitems, they are in the `terms` field;
 --     otherwise the properties are stored directly into `termobj`.
 -- `has_subitems`: True if there are subitems.
+-- `subitem_separator_map`: If `has_subitems` and this is specified, controls the assignment of the `separator` field
+--	   in subitems. If not specified or a delimiter is not in the map, it is copied unchanged.
 -- `lang`: Language object to store into all items.
 -- `sc`: Script object to store into all items, or nil.
 -- `subitem_param_handling`: "only", "first" or "last", indicating what to do if there are multiple subitems.
@@ -872,8 +885,13 @@ local function copy_separate_params_to_termobj_and_postprocess(data)
 		end
 
 		copy_separate_params_to_termobj(fetch_destobj)
-		for _, subitem in ipairs(termobj.terms) do
+		for i, subitem in ipairs(termobj.terms) do
 			set_lang_and_sc(subitem)
+			if subitem.delimiter then
+				subitem.separator == i == 1 and "" or
+					data.subitem_separator_map and data.subitem_separator_map[subitem.delimiter] or
+					subitem.delimiter
+			end
 			if data.postprocess_termobj then
 				data.postprocess_termobj(subitem, data)
 			end
@@ -890,7 +908,7 @@ end
 
 local function postprocess_termobj(item, data)
 	if not (data.disallow_custom_separators or data.use_semicolon) then
-		if data.has_subitems and item.delimiter == "," then
+		if data.has_subitems and item.separator and item.separator:find(",", nil, true) then
 			data.use_semicolon = true
 		else
 			-- If the displayed term (from .term/etc. or .alt) has an embedded comma, use a semicolon to
@@ -927,9 +945,10 @@ Some notable properties of this function:
   ''augmented'' with list parameters, one for each per-term property, and [[Module:parameters]] is invoked. In the
   latter case where raw argument processing is done by the caller, they must build the partial `params` structure;
   augment it themselves using `augment_params_with_modifiers()`; call [[Module:parameters]] themselves; and pass in the
-  processed arguments. In both cases, the return value of this function contains two values, a list of objects, one per
-  term, specifying the term and all properties; and the processed arguments structure, so that the non-term-property
-  arguments can be processed as appropriate.
+  processed arguments. In both cases, the return value of this function contains three values: a list of objects, one
+  per term, specifying the term and all properties; he processed arguments structure, so that the non-term-property
+  arguments can be processed as appropriate; and an object containing miscellaneous global computed properties
+  (currently only `use_semicolon`; see below).
 # Optionally, each term can consist of a number of ''subitems'' separated by delimiters (usually a comma, but the
   possible delimiter or delimiters are controllable). Each subitem can have its own inline modifiers. This functionality
   is used, for example, by {{tl|col}} and variants, which allow each row to have comma-separated or tilde-separated
@@ -1081,11 +1100,13 @@ Some notable properties of this function:
   currently being processed). This is used, for example, in [[Module:alternative forms]], where an unspecified item
   signal the end of items and the start of labels.
 
-Two values are returned, the list of items and the processed `args` structure. In each returned item, there will be one
-field set for each specified property (either through inline modifiers or separate parameters). If subitems are not
-allowed, each item directly has fields set on it for the specified properties. If subitems ''are'' allowed, each item
-contains a `terms` field, which is a list of subitem objects, each of which has fields set on it for the specified
-properties of that subitem. In addition, the following fields may be set on each item or subitem:
+Three values are returned: the list of items; the processed `args` structure; and an object of miscellaneous computed
+global values (currently only `use_semicolon`, indicating that commas were found in individual arguments and so the
+default separator should be a semicolon). In each returned item, there will be one field set for each specified property
+(either through inline modifiers or separate parameters). If subitems are not allowed, each item directly has fields set
+on it for the specified properties. If subitems ''are'' allowed, each item contains a `terms` field, which is a list of
+subitem objects, each of which has fields set on it for the specified properties of that subitem. In addition, the
+following fields may be set on each item or subitem:
 * `term`: The term portion of the item (minus inline modifiers and language prefixes). {nil} if no term was given.
 * `orig_index`: The original index into the item in the items table returned by `process()` in [[Module:parameters]].
   This may differ from `itemno` if there are raw semiclons and `disallow_custom_separators` is not given.
@@ -1100,9 +1121,11 @@ properties of that subitem. In addition, the following fields may be set on each
   (c) neither (a) nor (b) apply and the `lang` field of the overall `data` object is set, providing a default value.
 * `sc`: The script object of the item. This is set when either (a) the `sc` property is allowed and specified; (b)
   `sc` isn't otherwise set and the `sc` field of the overall `data` object is set, providing a default value.
-* `delimiter`: If subitems are allowed, this specifies the delimiter used prior to the given subitem (e.g. {","}).
-In addition, regardless of whether subitems are allowed, the top-level item will have a `separator` field set if
-`disallow_custom_separators` is not given, specifying the separator to display before the item.
+* `delimiter`: If subitems are allowed, this is set on subitems and specifies the delimiter used prior to the given
+  subitem (e.g. {","}).
+* `separator`: The separator to display before the item. Always set on subitems, and set on top-level items if
+  `disallow_custom_separators` is not given. Controlled by `special_separators` (for top-level items) and
+  `subitem_separator_map` (for subitems).
 ]==]
 function export.parse_list_with_inline_modifiers_and_separate_params(data)
 	validate_argument_related_fields(data)
@@ -1265,7 +1288,7 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 		end
 	end
 
-	return items, args
+	return items, args, {use_semicolon = use_semicolon}
 end
 
 
@@ -1401,6 +1424,10 @@ Some notable properties of this function:
   error), {"first"} (store the separate parameters in the first subitem) and {"last"} (store the separate parameters
   in the last subitem). The default is {"only"}. As a special case, an {{para|scN}} separate parameter will be stored
   into all subitems.
+* `subitem_separator_map`: Table mapping user-specified delimiters to displayed separators, stored in the `separator`
+  field of the subitem. If not specified, it defaults to `default_subitem_separator_map`. Note that the presence of an
+  item in this table does not mean that it can be used as a delimiter; only the delimiters specified using `splitchar`
+  are recognized. Delimiters not in this map display as-is.
 
 Two values are returned, an object describing the item (or subitems) and the processed `args` structure. In the returned
 item, there will be one field set for each specified property (either through inline modifiers or separate parameters).
@@ -1418,6 +1445,9 @@ the specified properties of that subitem. In addition, the following fields may 
 * `sc`: The script object of the item. This is set when either (a) the `sc` property is allowed and specified; (b)
   `sc` isn't otherwise set and the `sc` field of the overall `data` object is set, providing a default value.
 * `delimiter`: If subitems are allowed, this specifies the delimiter used prior to the given subitem (e.g. {","}).
+* `separator`: If subitems are allowed, this specifies the displayed form of the delimiter to be shown before a given
+  subitem. The mapping from user-specified delimiters to displayed separators is handled by `subitem_separator_map`;
+  see above. The first subitem always has a blank string in the `separator` field.
 ]==]
 function export.parse_term_with_inline_modifiers_and_separate_params(data)
 	validate_argument_related_fields(data)

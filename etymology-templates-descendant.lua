@@ -1,30 +1,32 @@
 local export = {}
 
-local concat = table.concat
-local insert = table.insert
-local listToSet = require("Module:table").listToSet
-local rsplit = mw.text.split
-
+local debug_track_module = "Module:debug/track"
 local descendants_tree_module = "Module:descendants tree"
+local etymology_style_css = "Module:etymology/style.css"
 local labels_module = "Module:labels"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
 local parse_utilities_module = "Module:parse utilities"
+local pron_qualifier_module = "Module:pron qualifier"
 local qualifier_module = "Module:qualifier"
 local references_module = "Module:references"
 local scripts_module = "Module:scripts"
 local table_module = "Module:table"
+local template_styles_module = "Module:TemplateStyles"
+
+local concat = table.concat
+local insert = table.insert
+local rsplit = mw.text.split
 
 local error_on_no_descendants = false
 
-local function qualifier(content)
-	if content then
-		return '<span class="ib-brac qualifier-brac">(</span><span class="ib-content qualifier-content">' .. content .. '</span><span class="ib-brac qualifier-brac">)</span>'
-	end
+local function split_labels_on_comma(...)
+	split_labels_on_comma = require(labels_module).split_labels_on_comma
+	return split_labels_on_comma(...)
 end
 
 local function track(page)
-	return require("Module:debug/track")("descendant/" .. page)
+	return require(debug_track_module)("descendant/" .. page)
 end
 
 local function ine(arg)
@@ -39,92 +41,27 @@ local function add_tooltip(text, tooltip)
 	return '<span class="desc-arr" title="' .. tooltip .. '">' .. text .. '</span>'
 end
 
-local function split_on_comma(term)
-	if term:find(",%s") then
-		return require(parse_utilities_module).split_on_comma(term)
-	else
-		return rsplit(term, ",")
-	end
-end
-
-local function term_already_linked(term)
-	-- optimization to avoid unnecessarily loading [[Module:parse utilities]]
-	return term:find("[<{]") and require(parse_utilities_module).term_already_linked(term)
-end
-
-
--- Params that modify a descendant term (as also supported by {{l}}, {{m}}). Doesn't include gloss=, which we
--- handle specially.
-local param_term_mods = {"alt", "g", "id", "lit", "pos", "t", "tr", "ts", "q", "qq", "l", "ll", "ref"}
-local param_term_mod_set = listToSet(param_term_mods)
 -- Boolean params indicating whether a descendant term (or all terms) are particular sorts of borrowings.
 local bortypes = {"inh", "bor", "lbor", "slb", "obor", "translit", "der", "clq", "pclq", "sml", "unc"}
-local bortype_set = listToSet(bortypes)
 -- Aliases of clq=.
 local calque_aliases = {"cal", "calq", "calque"}
-local calque_alias_set = listToSet(calque_aliases)
 -- Aliases of pclq=.
 local partial_calque_aliases = {"pcal", "pcalq", "pcalque"}
-local partial_calque_alias_set = listToSet(partial_calque_aliases)
--- Miscellaneous list params where e.g. q1= and q= are different.
-local misc_index_separated_list_params = {"q", "qq", "l", "ll", "lb"}
-local misc_index_separated_list_param_set = listToSet(misc_index_separated_list_params)
--- Miscellaneous list params where e.g. ref1= and ref= are the same.
-local misc_non_separated_list_params = {"ref"}
-local misc_non_separated_list_param_set = listToSet(misc_non_separated_list_params)
 
--- Add a "regular" list param such as g=, gloss=, lit=, etc. "Regular" here means that `param` and `param1` are
--- the same thing. `type` if given is the param type (e.g. "boolean") and `alias_of` is used for params that are
--- aliases of other params.
-local function add_regular_list_param(params, param, type, alias_of)
-	local spec = {type = type, list = true}
-	if alias_of == nil then
-		spec.allow_holes = true
-	else
-		spec.alias_of = alias_of
-	end
-	params[param] = spec
-end
-
--- Add an index-separated list param such as bor=, calq=, qq=, etc. "Index-separated" means that `param` and
--- `param1` are different. Non-numbered `param` is accessible as `args.param` while numbered `param1`, `param2`,
--- etc. are accessible as `args.partparam[1]`, `args.partparam[2]`, etc. `type` if given is the param type (e.g.
--- "boolean") and `alias_of` is used for params that are aliases of other params.
-local function add_index_separated_list_param(params, param, type, alias_of)
-	params[param] = {alias_of = alias_of, type = type}
-	local spec = {type = type, list = param, require_index = true}
-	if alias_of == nil then
-		spec.allow_holes = true
-	else
-		spec.alias_of = "part" .. alias_of
-	end
-	params["part" .. param] = spec
-end
-
--- Convert a raw lb= param (or nil) to a list of label info objects of the format described in get_label_info() in
--- [[Module:labels]]). Unrecognized labels will end up with an unchanged display form. Return nil if nil passed in.
-local function split_and_process_raw_labels(raw_lb, lang)
-	if not raw_lb then
-		return nil
-	end
-	return require(labels_module).split_and_process_raw_labels { labels = raw_lb, lang = lang, nocat = true }
-end
-
--- Return a function of one argument `arg` (a param name), which fetches args[`arg`] if index == 0, else
--- args["part" .. `arg`][index].
-local function get_val(args, index)
-	return function(arg)
+--- Return a function of one argument `field` (a param name), which fetches `args`[`field`].default if index == 0, else
+--- `container`[`field`].
+local function get_val(container, args, index)
+	return function(field)
 		if index == 0 then
-			return args[arg]
+			return args[field].default
 		else
-			return args["part" .. arg][index]
+			return container[field]
 		end
 	end
 end
 
--- Return the arrow text for the `index`th term, or the overall arrow text if index == 0.
-local function get_arrow(args, index)
-	local val = get_val(args, index)
+local function get_arrow(container, args, index)
+	local val = get_val(container, args, index)
 	local arrow
 
 	if val("bor") then
@@ -166,114 +103,62 @@ local function get_arrow(args, index)
 end
 
 -- Return the pre-qualifier text for the `index`th term, or the overall pre-qualifier text if index == 0.
-local function get_pre_qualifiers(args, index, lang)
-	local val = get_val(args, index)
-	local quals
-
+local function get_pre_qualifiers_labels(container, args, index)
 	if index > 0 then
-		local labels_lb = split_and_process_raw_labels(val("lb"), lang)
-		local labels_l = split_and_process_raw_labels(val("l"), lang)
-		local labels
-		if labels_lb and labels_l then
-			labels = labels_lb
-			require(table_module).extend(labels, labels_l)
-		else
-			labels = labels_lb or labels_l
-		end
-		if labels then
-			labels = require(labels_module).format_processed_labels {
-				labels = labels, lang = lang, no_ib_content = true
-			}
-			if labels ~= "" then -- not sure labels can be an empty string but it seems possible in some circumstances
-				quals = {labels}
-			end
-		end
+		-- per term labels and qualifiers are handled at the subitem level, by full_link().
+		return nil, nil
 	end
-	if val("q") then
-		quals = quals or {}
-		insert(quals, val("q"))
-	end
-	if quals then
-		return require(qualifier_module).format_qualifier(quals) .. " "
-	else
-		return ""
-	end
+	local val = get_val(container, args, index)
+	return val("l"), val("q")
 end
 
 -- Return the post-qualifier text for the `index`th term, or the overall post-qualifier text if index == 0.
-local function get_post_qualifiers(args, index, lang)
-	local val = get_val(args, index)
-	local postqs = {}
+local function get_post_qualifiers_labels(container, args, index, lang)
+	local val = get_val(container, args, index)
+	local boolean_labels = {}
 
 	if val("inh") then
-		insert(postqs, qualifier("inherited"))
+		insert(boolean_labels, "inherited")
 	end
 	if val("lbor") then
-		insert(postqs, qualifier("learned"))
+		insert(boolean_labels, "learned")
 	end
 	if val("slb") then
-		insert(postqs, qualifier("semi-learned"))
+		insert(boolean_labels, "semi-learned")
 	end
 	if val("translit") then
-		insert(postqs, qualifier("transliteration"))
+		insert(boolean_labels, "transliteration")
 	end
 	if val("clq") then
-		insert(postqs, qualifier("calque"))
+		insert(boolean_labels, "calque")
 	end
 	if val("pclq") then
-		insert(postqs, qualifier("partial calque"))
+		insert(boolean_labels, "partial calque")
 	end
 	if val("sml") then
-		insert(postqs, qualifier("semantic loan"))
+		insert(boolean_labels, "semantic loan")
 	end
-	local quals
 	if index > 0 then
-		local labels = split_and_process_raw_labels(val("ll"), lang)
-		if labels then
-			labels = require(labels_module).format_processed_labels {
-				labels = labels, lang = lang
-			}
-			if labels ~= "" then
-				quals = {labels}
-			end
-		end
-		if val("qq") then
-			quals = quals or {}
-			insert(quals, val("qq"))
-		end
-		if quals then
-			insert(postqs, require(qualifier_module).format_qualifier(quals))
-		end
+		-- per term labels, qualifiers and references are handled at the subitem level, by full_link().
+		return boolean_labels
 	else
-		if val("qq") then
-			insert(postqs, require(qualifier_module).format_qualifier(val("qq")))
-		end
-		local labels_lb = split_and_process_raw_labels(val("lb"), lang)
-		local labels_ll = split_and_process_raw_labels(val("ll"), lang)
-		local labels
-		if labels_lb and labels_ll then
-			labels = labels_lb
-			require(table_module).extend(labels, labels_ll)
-		else
-			labels = labels_lb or labels_ll
-		end
-		if labels then
+		local quals, refs, dash_labels
+		quals = val("qq")
+		if val("ll") then
+			-- Convert a raw l=/ll= param (or nil) to a list of label info objects of the format described in
+			-- get_label_info() in [[Module:labels]] and then format them into strings. Unrecognized labels will end up
+			-- with an unchanged display form.
+			local labels = require(labels_module).split_and_process_raw_labels {
+				labels = val("ll"), lang = lang, nocat = true}
 			labels = require(labels_module).format_processed_labels {
 				labels = labels, lang = lang
 			}
 			if labels ~= "" then
-				insert(postqs, "&mdash; " .. labels)
+				dash_labels = " &mdash; " .. labels
 			end
 		end
+		return boolean_labels, quals, dash_labels
 	end
-	local refs_text = ""
-	if index > 0 and val("ref") then
-		 refs_text = require(references_module).format_references(val("ref"))
-	end
-	if #postqs > 0 then
-		refs_text .. return " " .. concat(postqs, " ")
-	end
-	return refs_text
 end
 
 local function desc_or_desc_tree(frame, desc_tree)
@@ -283,52 +168,23 @@ local function desc_or_desc_tree(frame, desc_tree)
 		params = {
 			[1] = {required = true, type = "language", family = true, default = "gem-pro"},
 			[2] = {required = true, list = true, allow_holes = true, default = "*fuhsaz"},
-			["notext"] = boolean,
-			["noalts"] = boolean,
-			["noparent"] = boolean,
+			notext = boolean,
+			noalts = boolean,
+			noparent = boolean,
 		}
 	else
 		params = {
 			[1] = {required = true, type = "language", family = true, default = "en"},
-			[2] = {list = true, allow_holes = true},
-			["alts"] = boolean
+			[2] = {list = true, allow_holes = true, template_default = "word"},
+			alts = boolean,
 		}
-		-- If template namespace.
-		if mw.title.getCurrentTitle().namespace == 10 then
-			params[2].default = "word"
-		end
 	end
 	
-	for _, term_mod in ipairs(param_term_mods) do
-		add_regular_list_param(params, term_mod)
-	end
-	-- Handle gloss= specially because it's an alias.
-	add_regular_list_param(params, "gloss", nil, "t")
-	-- Handle sc= specially because the type is "script".
-	add_regular_list_param(params, "sc", "script")
-	for _, bortype in ipairs(bortypes) do
-		add_index_separated_list_param(params, bortype, "boolean")
-	end
-	for _, calque_alias in ipairs(calque_aliases) do
-		add_index_separated_list_param(params, calque_alias, "boolean", "clq")
-	end
-	for _, partial_calque_alias in ipairs(partial_calque_aliases) do
-		add_index_separated_list_param(params, partial_calque_alias, "boolean", "pclq")
-	end
-	for _, misc_index_separated_list_param in ipairs(misc_index_separated_list_params) do
-		add_index_separated_list_param(params, misc_index_separated_list_param)
-	end
-	for _, misc_non_separated_list_param in ipairs(misc_non_separated_list_params) do
-		add_regular_list_param(params, misc_non_separated_list_params)
-	end
-
 	-- Add other single params.
 	params.sclang = boolean
 	params.sclb = {type = "boolean", alias_of = "sclang"}
 	params.nolang = boolean
 	params.nolb = {type = "boolean", alias_of = "nolang"}
-
-	local namespace = mw.title.getCurrentTitle().nsText
 
 	local parent_args
 	if frame.args[1] then
@@ -362,12 +218,12 @@ local function desc_or_desc_tree(frame, desc_tree)
 
 	local param_mods = m_param_utils.construct_param_mods {
 		{group = "link", "ref", "l", "q"},
-		{param = bortypes, type = "boolean", overall = true},
+		{param = bortypes, type = "boolean", overall = true, separate_no_index = true},
 		{param = calque_aliases, alias_of = "clq"},
 		{param = partial_calque_aliases, alias_of = "pclq"},
 	}
 
-	local groups, args = m_param_utils.parse_list_with_inline_modifiers_and_separate_params {
+	local groups, args, globalprops = m_param_utils.parse_list_with_inline_modifiers_and_separate_params {
 		params = params,
 		param_mods = param_mods,
 		raw_args = parent_args,
@@ -378,7 +234,8 @@ local function desc_or_desc_tree(frame, desc_tree)
 		-- Due to allowing families as langs and substituting 'und', it's easier to do this later.
 		-- lang = function() ... end
 		sc = "sc.default",
-		splitchar = ",",
+		splitchar = "[,~]",
+		subitem_separator_map = {[","] = "/", ["~"] = " ~ "},
 		pre_normalize_modifiers = function(data)
 			local modtext = data.modtext
 			modtext = modtext:match("^<(.*)>$")
@@ -394,10 +251,11 @@ local function desc_or_desc_tree(frame, desc_tree)
 	}
 
 	local lang = args[1]
-	local terms = args[2]
-	local alts = args.alt
 	
-	if (namespace == "" or namespace == "Reconstruction") and (lang:hasType("appendix-constructed") and not lang:hasType("regular")) then
+	local namespace = mw.title.getCurrentTitle().nsText
+
+	if (namespace == "" or namespace == "Reconstruction") and (
+		lang:hasType("appendix-constructed") and not lang:hasType("regular")) then
 		error("Terms in appendix-only constructed languages may not be given as descendants.")
 	end
 
@@ -425,43 +283,41 @@ local function desc_or_desc_tree(frame, desc_tree)
 		proxy_lang = lang
 	end
 
-	local languageName
+	local langname
 	if is_family then
 		-- The display form for families includes the word "languages", which we probably don't want to
 		-- display.
-		languageName = lang:getCanonicalName()
+		langname = lang:getCanonicalName()
 	else
-		languageName = lang:getDisplayForm()
+		langname = lang:getDisplayForm()
 	end
 	local langtag
 	
 	if args.sclang then
-		local sc = args.sc[1]
-		if sc then
-			langtag = sc:getDisplayForm()
+		local first_termobj = groups[1] and groups[1].terms[1]
+		if not first_termobj then
+			error("sclang= given but no term exists to display the script name of")
+		end
+		local sc_to_use = first_termobj.sc
+		if not sc_to_use then
 		else
-			local term, alt = terms[1], alts[1]
-			local best_sc
-			if is_family then
-				best_sc = require(scripts_module).findBestScriptWithoutLang(term or alt, "none is last resort")
-			else
-				best_sc = lang:findBestScript(term or alt)
+			local first_term = first_termobj.term or first_termobj.alt
+			if not first_term then
+				error("sclang= given but first specified item no term or display form to display the script name of")
 			end
-			langtag = best_sc:getDisplayForm()
+			if first_termobj.lang then
+				sc_to_use = first_termobj.lang:findBestScript(first_term)
+			elseif is_family then
+				sc_to_use = require(scripts_module).findBestScriptWithoutLang(first_term, "none is last resort")
+			else
+				sc_to_use = lang:findBestScript(first_term)
+			end
 		end
+		langtag = sc_to_use:getDisplayForm()
 	else
-		langtag = languageName
+		langtag = langname
 	end
 	
-	-- Find the maximum index among any of the list parameters.
-	local maxmaxindex = terms.maxindex
-	for k, v in pairs(args) do
-		if type(v) == "table" and v.maxindex and v.maxindex > maxmaxindex then
-			maxmaxindex = v.maxindex
-		end
-	end
-	
-	local parts = {}
 	local terms_for_descendant_trees = {}
 	-- Keep track of descendants whose descendant tree we fetch. Don't fetch the same descendant tree twice (which
 	-- can happen especially with Arabic-script terms with the same unvocalized spelling but differing vocalization).
@@ -470,175 +326,100 @@ local function desc_or_desc_tree(frame, desc_tree)
 	local terms_and_ids_fetched = {}
 	local descendant_terms_seen = {}
 
-	local number_of_groups = 0
+	local parts = {}
+
 	for i, group in ipairs(groups) do
 		local number_of_items = 0
+		local group_parts = {}
+		local terms_for_alt_forms = {}
+
 		for j, item in ipairs(group.terms) do
+			local link = ""
 			item.lang = item.lang or proxy_lang
 			item.track_sc = true
-	end
-
-	local ind = 0
-	for i = 1, maxmaxindex do
-
-
-			-- Construct a link out of `termobj`. Also add the term to the list of descendant trees and/or alternative
+			-- Construct a link out of `item`. Also add the term to the list of descendant trees and/or alternative
 			-- forms to fetch, if the page+ID combination hasn't already been seen.
-			local function get_link()
-				local link = ""
-				-- If an individual term has a literal comma in it, use semicolons for all joiners. Otherwise we use
-				-- semicolon only if the user specified a literal semicolon as a term.
-				if termobj.term and termobj.term:find(",") then
-					use_semicolon = true
-				end
-				if termobj.term ~= "-" then -- including term == nil
-					link = require("Module:links").full_link(termobj, nil, true)
-					if termobj.term and (desc_tree or fetch_alt_forms) then
-						local entry_name = require(links_module).get_link_page(termobj.term, lang, sc)
-						-- NOTE: We use the term and ID as the key, but not the language. This is OK currently because
-						-- all terms have the same language; but if we ever add support for a term-specific language,
-						-- we need to fix this.
-						local term_and_id = termobj.id and entry_name .. "!!!" .. termobj.id or entry_name
-						if not terms_and_ids_fetched[term_and_id] then
-							terms_and_ids_fetched[term_and_id] = true
-							local term_for_fetching = {
-								lang = lang, entry_name = entry_name, id = termobj.id
-							}
-							if desc_tree then
-								if is_family then
-									error("No support currently (and probably ever) for fetching a descendant tree when a family code instead of language code is given")
-								end
-								if error_on_no_descendants then
-									require(table_module).insertIfNot(descendant_terms_seen,
-										{ term = termobj.term, id = termobj.id })
-								end
-								table.insert(terms_for_descendant_trees, term_for_fetching)
+			if item.term ~= "-" then -- including term == nil
+				item.show_qualifiers = true
+				link = require(links_module).full_link(item, nil, true)
+				if item.term and (desc_tree or fetch_alt_forms) then
+					local entry_name = require(links_module).get_link_page(item.term, lang, sc)
+					-- NOTE: We use the term and ID as the key, but not the language. This is OK currently because
+					-- all terms have the same language; but if we ever add support for a term-specific language,
+					-- we need to fix this.
+					local term_and_id = item.id and entry_name .. "!!!" .. item.id or entry_name
+					if not terms_and_ids_fetched[term_and_id] then
+						terms_and_ids_fetched[term_and_id] = true
+						local term_for_fetching = {
+							lang = lang, entry_name = entry_name, id = item.id
+						}
+						if desc_tree then
+							if is_family then
+								error("No support currently (and probably ever) for fetching a descendant tree when a family code instead of language code is given")
 							end
-							if fetch_alt_forms then
-								if is_family then
-									error("No support currently (and probably ever) for fetching alternative forms when a family code instead of language code is given")
-								end
-								-- [[Special:WhatLinksHere/Wiktionary:Tracking/descendant/alts]]
-								track("alts")
-								table.insert(terms_for_alt_forms, term_for_fetching)
+							if error_on_no_descendants then
+								require(table_module).insertIfNot(descendant_terms_seen,
+									{ term = item.term, id = item.id })
 							end
+							table.insert(terms_for_descendant_trees, term_for_fetching)
+						end
+						if fetch_alt_forms then
+							if is_family then
+								error("No support currently (and probably ever) for fetching alternative forms when a family code instead of language code is given")
+							end
+							-- [[Special:WhatLinksHere/Wiktionary:Tracking/descendant/alts]]
+							track("alts")
+							table.insert(terms_for_alt_forms, term_for_fetching)
 						end
 					end
-				elseif termobj.ts or termobj.gloss or #termobj.genders > 0 then
-					-- [[Special:WhatLinksHere/Wiktionary:Tracking/descendant/no term]]
-					track("no term")
-					termobj.term = nil
-					link = require("Module:links").full_link(termobj, nil, true)
-					link = link
-						:gsub("<small>%[Term%?%]</small> ", "")
-						:gsub("<small>%[Term%?%]</small>&nbsp;", "")
-						:gsub("%[%[Category:[^%[%]]+ term requests%]%]", "")
-				else -- display no link at all
-					-- [[Special:WhatLinksHere/Wiktionary:Tracking/descendant/no term or annotations]]
-					track("no term or annotations")
 				end
-				return link
+			elseif item.tr or item.ts or item.gloss or item.genders[1] then
+				-- [[Special:WhatLinksHere/Wiktionary:Tracking/descendant/no term]]
+				track("no term")
+				item.term = nil
+				item.show_qualifiers = true
+				link = require(links_module).full_link(item, nil, true)
+				link = link
+					:gsub("<small>%[Term%?%]</small> ", "")
+					:gsub("<small>%[Term%?%]</small>&nbsp;", "")
+					:gsub("%[%[Category:[^%[%]]+ term requests%]%]", "")
+			else -- display no link at all
+				-- [[Special:WhatLinksHere/Wiktionary:Tracking/descendant/no term or annotations]]
+				track("no term or annotations")
+			end
+			if link ~= "" then
+				if number_of_items > 0 then
+					insert(group_parts, "/")
+				end
+				number_of_items = number_of_items + 1
+				insert(group_parts, link)
+			end
+		end
+		if number_of_items > 0 then
+			for _, altterm in ipairs(terms_for_alt_forms) do
+				local altform = m_desctree.get_alternative_forms(altterm.lang, altterm.entry_name, altterm.id,
+					globalprops.use_semicolon and "; " or ", ")
+				if altform ~= "" then
+					insert(group_parts, globalprops.use_semicolon and "; " or ", ")
+					insert(group_parts, altform)
+				end
 			end
 
-			-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude HTML entry with <span ...>, <i ...>,
-			-- <br/> or similar in it, caused by wrapping an argument in {{l|...}}, {{af|...}} or similar.
-			if term and term:find("<") and not require(parse_utilities_module).term_contains_top_level_html(term) then
-				local run = require(parse_utilities_module).parse_balanced_segment_run(term, "<", ">")
-				-- Split the non-modifier parts of an alternating run on comma, but not on comma+whitespace.
-				local comma_separated_runs = require(parse_utilities_module).split_alternating_runs_on_comma(run)
-				local sub_links = {}
-
-				local function parse_err(msg)
-					local parts = {}
-					for _, run in ipairs(comma_separated_runs) do
-						insert(parts, concat(run))
-					end
-					error(msg .. ": " .. (i + 1) .. "=" .. concat(parts, ","))
-				end
-				for j, run in ipairs(comma_separated_runs) do
-					reinit_termobj(run[1])
-					local seen_mods = {}
-					for k = 2, #run - 1, 2 do
-						if run[k + 1] ~= "" then
-							parse_err("Extraneous text '" .. run[k + 1] .. "' after modifier")
-						end
-						local modtext = run[k]:match("^<(.*)>$")
-						if not modtext then
-							parse_err("Internal error: Modifier '" .. modtext .. "' isn't surrounded by angle brackets")
-						end
-						local prefix, arg = modtext:match("^(%l+):(.*)$")
-						if prefix then
-							if seen_mods[prefix] then
-								parse_err("Modifier '" .. prefix .. "' occurs twice, second occurrence " .. run[k])
-							end
-							seen_mods[prefix] = true
-							if prefix == "t" or prefix == "gloss" then
-								termobj.gloss = arg
-							elseif prefix == "g" then
-								termobj.genders = rsplit(arg, "%s*,%s*")
-							elseif prefix == "sc" then
-								termobj.sc = arg
-							elseif param_term_mod_set[prefix] then
-								termobj[prefix] = arg
-							elseif misc_index_separated_list_param_set[prefix] then
-								if j < #comma_separated_runs then
-									parse_err("Modifier " .. run[k] .. " should come after the last term")
-								end
-								args["part" .. prefix][ind] = arg
-							elseif prefix == "tag" then
-								-- FIXME: Remove support for <tag:...> in favor of <ll:...>
-								error("Use <ll:...> instead of <tag:...>")
-							else
-								parse_err("Unrecognized prefix '" .. prefix .. "' in modifier " .. run[k])
-							end
-						elseif j < #comma_separated_runs then
-							parse_err("Modifier " .. run[k] .. " should come after the last term")
-						else
-							if seen_mods[modtext] then
-								parse_err("Modifier '" .. modtext .. "' occurs twice")
-							end
-							seen_mods[modtext] = true
-							if bortype_set[modtext] then
-								args["part" .. modtext][ind] = true
-							elseif calque_alias_set[modtext] then
-								args.partclq[ind] = true
-							elseif partial_calque_alias_set[modtext] then
-								args.partpclq[ind] = true
-							else
-								parse_err("Unrecognized modifier '" .. modtext .. "'")
-							end
-						end
-					end
-					local sub_link = get_link()
-					if sub_link ~= "" then
-						insert(sub_links, sub_link)
-					end
-				end
-				link = concat(sub_links, "/")
-			elseif term and term:find(",") then
-				local sub_terms = split_on_comma(term)
-				local sub_links = {}
-				for _, sub_term in ipairs(sub_terms) do
-					reinit_termobj(sub_term)
-					local sub_link = get_link()
-					if sub_link ~= "" then
-						insert(sub_links, sub_link)
-					end
-				end
-				link = concat(sub_links, "/")
-			else
-				reinit_termobj(term)
-				link = get_link()
+			local group_link = concat(group_parts)
+			insert(parts, group.separator)
+			if not args.notext then
+				insert(parts, get_arrow(group args, i))
 			end
-
-			local arrow = get_arrow(args, ind)
-			local preqs = get_pre_qualifiers(args, ind, proxy_lang)
-			local postqs = get_post_qualifiers(args, ind, proxy_lang)
-
-			insert(parts, {
-				arrow = arrow, preqs = preqs, link = link, terms_for_alt_forms = terms_for_alt_forms, postqs = postqs,
-				use_semicolon = terms[i - 1] == ";"
-			})
+			-- no pre-qualifiers/labels and no post-qualifiers/dash-labels
+			local post_boolean_labels = get_post_qualifiers_labels(group, args, i, proxy_lang)
+			if post_boolean_labels and post_boolean_labels[1] then
+				group_link = require(pron_qualifier_module).format_qualifiers {
+					lang = proxy_lang,
+					text = group_link,
+					ll = post_boolean_labels,
+				}
+			end
+			insert(parts, group_link)
 		end
 	end
 
@@ -679,42 +460,32 @@ local function desc_or_desc_tree(frame, desc_tree)
 		return descendants
 	end
 
-	local initial_arrow = get_arrow(args, 0)
-	local initial_preqs = get_pre_qualifiers(args, 0, proxy_lang)
-	local final_postqs = get_post_qualifiers(args, 0, proxy_lang)
+	local initial_labels, initial_quals = get_pre_qualifiers_labels(nil, args, 0)
+	local final_boolean_labels, final_quals, final_dash_labels = get_post_qualifiers_labels(nil, args, 0, proxy_lang)
 
-	-- Now format each part. We wait to do this because we may not know the separator (semicolon or comma) till now.
-	for i, part in ipairs(parts) do
-		local partparts = {}
-		local function ins(text)
-			insert(partparts, text)
-		end
-		if not args.notext then
-			ins(part.arrow)
-		end
-		ins(part.preqs)
-		ins(part.link)
-		for _, altterm in ipairs(part.terms_for_alt_forms) do
-			local altform = m_desctree.get_alternative_forms(altterm.lang, altterm.entry_name, altterm.id,
-				use_semicolon and "; " or ", ")
-			if altform ~= "" then
-				ins(use_semicolon and "; " or ", ")
-				ins(altform)
-			end
-		end
-		ins(part.postqs)
-		local parttext = concat(partparts)
-		if i > 1 and parttext ~= "" then
-			parttext = ((use_semicolon or part.use_semicolon) and "; " or ", ") .. parttext
-		end
-		parts[i] = parttext
+	local all_linktext = concat(parts)
+	if initial_labels and initial_labels[1] or initial_quals and initial_quals[1] or
+			final_boolean_labels and final_boolean_labels[1] or final_quals and final_quals[1] or
+			final_refs and final_refs[1] then
+		all_linktext = require(pron_qualifier_module).format_qualifiers {
+			lang = proxy_lang,
+			text = all_linktext,
+			l = initial_labels,
+			q = initial_quals,
+			ll = final_boolean_labels,
+			qq = final_quals,
+		}
 	end
-
-	local all_linktext = initial_preqs .. concat(parts) .. final_postqs .. descendants
+	if final_dash_labels then
+		all_linktext = all_linktext .. final_dash_labels
+	end
+	all_linktext = all_linktext .. descendants
 
 	if args.notext then
 		return all_linktext
-	elseif args.nolang then
+	end
+	local initial_arrow = get_arrow(nil, args, 0)
+	if args.nolang then
 		return initial_arrow .. all_linktext
 	else
 		return concat { initial_arrow, langtag, ":", all_linktext ~= "" and " " or "", all_linktext }
@@ -722,7 +493,7 @@ local function desc_or_desc_tree(frame, desc_tree)
 end
 
 function export.descendant(frame)
-	return desc_or_desc_tree(frame, false) .. require("Module:TemplateStyles")("Module:etymology/style.css")
+	return desc_or_desc_tree(frame, false) .. require(template_styles_module)(etymology_style_css)
 end
 
 function export.descendants_tree(frame)
