@@ -1,13 +1,21 @@
 local export = {}
 
 local debug_track_module = "Module:debug/track"
-local languages_module = "Module:languages"
+local functions_module = "Module:fun"
 local parameters_module = "Module:parameters"
 local parse_interface_module = "Module:parse interface"
 local parse_utilities_module = "Module:parse utilities"
 local table_module = "Module:table"
 
 local dump = mw.dumpObject
+local error = error
+local insert = table.insert
+local ipairs = ipairs
+local next = next
+local pairs = pairs
+local require = require
+local tonumber = tonumber
+local type = type
 
 --[==[
 Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures
@@ -19,9 +27,9 @@ local function debug_track(...)
 	return debug_track(...)
 end
 
-local function length(...)
-	length = require(table_module).length
-	return length(...)
+local function is_callable(...)
+	is_callable = require(functions_module).is_callable
+	return is_callable(...)
 end
 
 local function list_to_set(...)
@@ -49,6 +57,11 @@ local function shallow_copy(...)
 	return shallow_copy(...)
 end
 
+local function table_len(...)
+	table_len = require(table_module).length
+	return table_len(...)
+end
+
 ----------------- end loaders ----------------
 
 local function track(page, track_module)
@@ -69,11 +82,7 @@ export.default_special_separators = {
 	[";"] = "; ",
 	["_"] = " ",
 	["~"] = " ~ ",
-}
-
--- Table listing the default recognized special separator arguments and how they display.
-export.default_special_continuations = {
-	["etc."] = {display = "''etc.''"},
+	["→"] = " → ",
 }
 
 --[==[ intro:
@@ -130,7 +139,7 @@ function export.show(frame)
 		[2] = {list = true, allow_holes = true, required = true, default = "term"},
 	}
 
-    local m_param_utils = require(parameter_utilities_module)
+	local m_param_utils = require(parameter_utilities_module)
 
 	-- This constructs the `param_mods` structure by adding well-known groups of parameters (such as all the parameters
 	-- associated with based on full_link() in [[Module:links]], with default properties that can be overridden. This is
@@ -223,9 +232,10 @@ local param_mods = {
 	g = {
 		-- [[Module:links]] expects the genders in "genders".
 		item_dest = "genders",
-		sublist = true,
+		type = "genders",
 	},
 	pos = {},
+	ng = {},
 	lit = {},
 	id = {},
 	sc = {
@@ -299,9 +309,10 @@ local recognized_param_mod_groups = {
 		g = {
 			-- [[Module:links]] expects the genders in "genders".
 			item_dest = "genders",
-			sublist = true,
+			type = "genders",
 		},
 		pos = {},
+		ng = {},
 		lit = {},
 		id = {},
 		sc = {
@@ -454,8 +465,8 @@ The built-in parameter groups are as follows:
 {|class="wikitable"
 ! Group !! Group meaning !! Parameter !! Parameter meaning !! Default properties
 |-
-| rowspan=10| `link`
-| rowspan=10| link parameters; same as those available on {{tl|l}}, {{tl|m}} and other linking templates
+| rowspan=11| `link`
+| rowspan=11| link parameters; same as those available on {{tl|l}}, {{tl|m}} and other linking templates
 | `alt` || display text, overriding the term's display form || —
 |-
 | `t` || gloss (translation) of a non-English term || {item_dest = "gloss"}
@@ -466,9 +477,11 @@ The built-in parameter groups are as follows:
 |-
 | `ts` || transcription of a non-Latin-script term, if the transliteration is markedly different from the actual pronunciation; should not be used for IPA pronunciations || —
 |-
-| `g` || comma-separated list of genders; whitespace may surround the comma and will be ignored || {item_dest = "genders", sublist = true}
+| `g` || comma-separated list of genders; whitespace may surround the comma and will be ignored || {item_dest = "genders", type = "genders"}
 |-
 | `pos` || part of speech for the term || —
+|-
+| `ng` || arbitrary non-gloss descriptive text for the term || —
 |-
 | `lit` || literal meaning (translation) of the term || —
 |-
@@ -610,27 +623,27 @@ function export.augment_params_with_modifiers(params, param_mods, overall_only)
 			end
 		end
 	else
-		local list_with_holes = { list = true, allow_holes = true }
+		local list_with_holes
 		-- Add parameters for each term modifier.
 		for param_mod, param_mod_spec in pairs(param_mods) do
-			local has_extra_specs = false
-			for k in pairs(param_mod_spec) do
+			local param_spec
+			for k, v in pairs(param_mod_spec) do
 				if not param_mod_spec_key_is_builtin(k) then
-					has_extra_specs = true
-					break
-				end
-			end
-			if not has_extra_specs then
-				params[param_mod] = list_with_holes
-			else
-				local param_spec = mw.clone(list_with_holes)
-				for k, v in pairs(param_mod_spec) do
-					if not param_mod_spec_key_is_builtin(k) then
-						param_spec[k] = v
+					if param_spec == nil then
+						param_spec = {list = true}
 					end
+					param_spec[k] = v
 				end
-				params[param_mod] = param_spec
 			end
+			if param_spec == nil then
+				if list_with_holes == nil then
+					list_with_holes = {list = true, allow_holes = true}
+				end
+				param_spec = list_with_holes
+			elseif param_spec.alias_of == nil then
+				param_spec.allow_holes = true
+			end
+			params[param_mod] = param_spec
 		end
 	end
 end
@@ -652,7 +665,11 @@ end
 -- one argument (`args`), which returns the argument value; or the value itself. Return the resulting value and the
 -- parameter in `args` that the value came from, or nil if unknown (i.e. a function or direct value was specified).
 local function fetch_argument(args, index_or_value)
-	if type(index_or_value) == "string" then
+	if not index_or_value then
+		return index_or_value, nil
+	end
+	local index_or_value_type = type(index_or_value)
+	if index_or_value_type == "string" then
 		if index_or_value:sub(-8) == ".default" then
 			local index_without_default = index_or_value:sub(1, -9)
 			local arg_obj = fetch_argument(args, index_without_default)
@@ -666,37 +683,19 @@ local function fetch_argument(args, index_or_value)
 			index_or_value = tonumber(index_or_value)
 		end
 		return args[index_or_value], index_or_value
-	elseif type(index_or_value) == "number" then
+	elseif index_or_value_type == "number" then
 		return args[index_or_value], index_or_value
-	elseif type(index_or_value) == "function" then
+	elseif is_callable(index_or_value) then
 		return index_or_value(args), nil
-	else
-		return index_or_value, nil
 	end
+	return index_or_value, nil
 end
 
 function export.generate_obj_maybe_parsing_lang_prefix(data)
 	local term = data.term
 	local term_dest = data.term_dest or "term"
 	local termobj = data.termobj or {}
-
-	-- Check for "special continuation" such as 'etc.'. 
-	if data.special_continuations and data.special_continuations[term] then
-		local is_continuation = data.recognize_continuations_everywhere
-		if not is_continuation and data.separated_groups and data.group_index and
-			#data.separated_groups == data.group_index then
-			is_continuation = true
-		end
-		if is_continuation then
-			termobj[term_dest] = nil
-			termobj.alt = data.special_continuations[term]
-			termobj.is_continuation = true
-			termobj.lang = require(languages_module).getByCode("en")
-			return termobj
-		end
-	end
-
-	if data.parse_lang_prefix and term:find(":") then
+	if data.parse_lang_prefix and term:find(":", nil, true) then
 		local actual_term, termlangs = parse_term_with_lang {
 			term = term,
 			parse_err = data.parse_err,
@@ -720,7 +719,6 @@ function export.generate_obj_maybe_parsing_lang_prefix(data)
 	else
 		termobj[term_dest] = term ~= "" and term or nil
 	end
-	termobj.lang = termobj.lang or data.default_lang
 	return termobj
 end
 
@@ -837,10 +835,10 @@ local function copy_separate_params_to_termobj_and_postprocess(data)
 		if not termobj.terms then
 			termobj.terms = {}
 		end
-
+		
 		-- Compute whether any of the separate indexed params exist for this index.
 		local any_param_at_index
-		for param_mod, param_mod_spec in pairs(param_mods) do
+		for param_mod in pairs(param_mods) do
 			local argval = fetch_separate_param(args, param_mod, itemno)
 			if not argval_missing(argval) then
 				any_param_at_index = true
@@ -877,7 +875,7 @@ local function copy_separate_params_to_termobj_and_postprocess(data)
 		for _, subitem in ipairs(termobj.terms) do
 			set_lang_and_sc(subitem)
 			if data.postprocess_termobj then
-				data.postprocess_termobj(subitem)
+				data.postprocess_termobj(subitem, data)
 			end
 		end
 	else
@@ -885,7 +883,22 @@ local function copy_separate_params_to_termobj_and_postprocess(data)
 		copy_separate_params_to_termobj(function(param_mod, dest) return termobj end)
 		set_lang_and_sc(termobj)
 		if data.postprocess_termobj then
-			data.postprocess_termobj(termobj)
+			data.postprocess_termobj(termobj, data)
+		end
+	end
+end
+
+local function postprocess_termobj(item, data)
+	if not (data.disallow_custom_separators or data.use_semicolon) then
+		if data.has_subitems and item.delimiter == "," then
+			data.use_semicolon = true
+		else
+			-- If the displayed term (from .term/etc. or .alt) has an embedded comma, use a semicolon to
+			-- join the terms.
+			local term_text = item[data.term_dest] or item.alt
+			if term_text and term_text:find(",", nil, true) then
+				data.use_semicolon = true
+			end
 		end
 	end
 end
@@ -962,16 +975,16 @@ Some notable properties of this function:
   modifiers and separate arguments and doesn't actually format the resulting items. However, if specified, it is used
   for certain purposes:
   *# It specifies the default for the `lang` property of returned objects if not otherwise set (e.g. by a language
-     prefix).
+	 prefix).
   *# It is used to initialize an internal cache for speeding up language-code parsing (primarily useful if the same
-     language code may appear in several items, such as with {{tl|col}} and related templates).
+	 language code may appear in several items, such as with {{tl|col}} and related templates).
   The value of `lang` can be any of the following:
   * If a string of the form "foo.default", it is assumed to be requesting the value of `args["foo"].default`.
   * Otherwise, if a string or number, it is assumed to be requesting the value of `args` at that key. Note that if the
-    string is in the form of a number (e.g. "3"), it is normalized to a number prior to fetching (this also happens with
+	string is in the form of a number (e.g. "3"), it is normalized to a number prior to fetching (this also happens with
 	a spec like "2.default").
   * Otherwise, if a function, it is assumed to be a function to return the argument value given `args`, which is passed
-    to the function as its only argument.
+	to the function as its only argument.
   * Otherwise, it is used directly.
 * `sc` ('''recommended'''): The script object for the items, or the name of the argument to fetch the object from. The
   possible values and their handling are the same as with `lang`. In general, as with `lang`, it is not strictly
@@ -1058,12 +1071,12 @@ Some notable properties of this function:
 * `stop_when`: If specified, a function to determine when to prematurely stop processing items. It is passed a single
   argument, an object containing the following fields:
   ** `term`: The raw term, prior to parsing off language prefixes and inline modifiers (since the processing of
-     `stop_when` happens before parsing the term).
+	 `stop_when` happens before parsing the term).
   ** `any_param_at_index`: True if any separate property parameters exist for this item.
   ** `orig_index`: Same as `orig_index` below.
   ** `itemno`: Same as `itemno` below.
   ** `stored_itemno`: The index where this item will be stored into the returned items table. This may differ from
-     `itemno` due to skipped items (it will never be different if `dont_skip_items` is set).
+	 `itemno` due to skipped items (it will never be different if `dont_skip_items` is set).
   The function should return true to stop processing items and return the ones processed so far (not including the item
   currently being processed). This is used, for example, in [[Module:alternative forms]], where an unspecified item
   signal the end of items and the start of labels.
@@ -1093,9 +1106,10 @@ In addition, regardless of whether subitems are allowed, the top-level item will
 ]==]
 function export.parse_list_with_inline_modifiers_and_separate_params(data)
 	validate_argument_related_fields(data)
-	local args
-	if data.raw_args then
-		local termarg_spec = data.params[data.termarg]
+	local raw_args, termarg, param_mods, args = data.raw_args, data.termarg, data.param_mods
+	if raw_args then
+		local params = data.params
+		local termarg_spec = params[termarg]
 		if termarg_spec == true or not termarg_spec.list then
 			internal_error("Term spec in `data.params` must have `list` set", termarg_spec)
 		end
@@ -1103,22 +1117,23 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 			internal_error("Term spec in `data.params` must have either `allow_holes` or `disallow_holes` set",
 				termarg_spec)
 		end
-		export.augment_params_with_modifiers(data.params, data.param_mods)
-		args = process_params(data.raw_args, data.params)
+		export.augment_params_with_modifiers(params, param_mods)
+		args = process_params(raw_args, params)
 	else
 		args = data.processed_args
 	end
 
-	if data.process_args_before_parsing then
-		data.process_args_before_parsing(args)
+	local process_args_before_parsing = data.process_args_before_parsing
+	if process_args_before_parsing then
+		process_args_before_parsing(args)
 	end
 
 	-- Find the maximum index among any of the list parameters.
-	local term_args = args[data.termarg]
+	local term_args = args[termarg]
 	-- As a special case, the term args might not have a `maxindex` field because they might have
 	-- been declared with `disallow_holes = true`, so fall back to the actual length of the list
-	-- using the length function, since # can be unpredictable with arbitrary tables.
-	local maxmaxindex = term_args.maxindex or length(term_args)
+	-- using the table_len function, since # can be unpredictable with arbitrary tables.
+	local maxmaxindex = term_args.maxindex or table_len(term_args)
 	for _, v in pairs(args) do
 		if type(v) == "table" and v.maxindex and v.maxindex > maxmaxindex then
 			maxmaxindex = v.maxindex
@@ -1126,9 +1141,7 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 	end
 
 	local special_separators = data.special_separators or export.default_special_separators
-	local items = {}
-	local lang_cache = data.lang_cache or {}
-	local use_semicolon
+	local items, lang_cache, use_semicolon = {}, data.lang_cache or {}
 	local lang = fetch_argument(args, data.lang)
 	if lang then
 		lang_cache[lang:getCode()] = lang
@@ -1145,7 +1158,7 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 
 			-- Compute whether any of the separate indexed params exist for this index.
 			local any_param_at_index
-			for param_mod, param_mod_spec in pairs(data.param_mods) do
+			for param_mod in pairs(param_mods) do
 				local argval = args[param_mod]
 				-- Careful with argument values that may be `false`.
 				if argval then
@@ -1157,7 +1170,7 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 				end
 			end
 
-			if data.stop_when and data.stop_when {
+			if data.stop_when and data.stop_when{
 				term = term,
 				-- FIXME, we should just pass in `any_param_at_index` directly.
 				any_param_at_index = term ~= nil or any_param_at_index,
@@ -1184,26 +1197,26 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 				end
 
 				-- Add 1 because first term index starts at 2.
-				local paramname = data.termarg + i - 1
-
-				local function generate_obj(term, parse_err)
-					return export.generate_obj_maybe_parsing_lang_prefix {
-						term = term,
-						termobj = data.splitchar and {} or termobj,
-						term_dest = data.term_dest,
-						paramname = paramname,
-						parse_lang_prefix = data.parse_lang_prefix,
-						parse_err = parse_err,
-						allow_bad_lang_prefix = data.allow_bad_lang_prefix,
-						allow_multiple_lang_prefixes = data.allow_multiple_lang_prefixes,
-						lang_cache = lang_cache,
-					}
-				end
+				local paramname = termarg + i - 1
 
 				if term then
+					local function generate_obj(term, parse_err)
+						return export.generate_obj_maybe_parsing_lang_prefix {
+							term = term,
+							termobj = data.splitchar and {} or termobj,
+							term_dest = term_dest,
+							paramname = paramname,
+							parse_lang_prefix = data.parse_lang_prefix,
+							parse_err = parse_err,
+							allow_bad_lang_prefix = data.allow_bad_lang_prefix,
+							allow_multiple_lang_prefixes = data.allow_multiple_lang_prefixes,
+							lang_cache = lang_cache,
+						}
+					end
+
 					parse_inline_modifiers(term, {
 						paramname = paramname,
-						param_mods = data.param_mods,
+						param_mods = param_mods,
 						generate_obj = generate_obj,
 						splitchar = data.splitchar,
 						preserve_splitchar = true,
@@ -1214,26 +1227,12 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 					})
 				end
 
-				local function postprocess_termobj(termobj)
-					if not data.disallow_custom_separators and not use_semicolon then
-						if data.splitchar and termobj.delimiter == "," then
-							use_semicolon = true
-						else
-							-- If the displayed term (from .term/etc. or .alt) has an embedded comma, use a semicolon to
-							-- join the terms.
-							local term_text = termobj[term_dest] or termobj.alt
-							if term_text and term_text:find(",") then
-								use_semicolon = true
-							end
-						end
-					end
-				end
-
-				copy_separate_params_to_termobj_and_postprocess {
+				local term_data = {
 					args = args,
-					param_mods = data.param_mods,
+					param_mods = param_mods,
 					itemno = itemno,
 					termobj = termobj,
+					term_dest = term_dest,
 					has_subitems = not not data.splitchar,
 					lang = lang,
 					-- As a special case, if the caller defined a scN= separate param, set it on all subitems if there
@@ -1243,8 +1242,14 @@ function export.parse_list_with_inline_modifiers_and_separate_params(data)
 					allow_conflicting_inline_mods_and_separate_params =
 						data.allow_conflicting_inline_mods_and_separate_params,
 					postprocess_termobj = postprocess_termobj,
+					disallow_custom_separators = data.disallow_custom_separators,
+					use_semicolon = use_semicolon,
 				}
-				table.insert(items, termobj)
+
+				copy_separate_params_to_termobj_and_postprocess(term_data)
+				use_semicolon = term_data.use_semicolon
+
+				insert(items, termobj)
 			end
 		end
 	end
@@ -1416,34 +1421,36 @@ the specified properties of that subitem. In addition, the following fields may 
 ]==]
 function export.parse_term_with_inline_modifiers_and_separate_params(data)
 	validate_argument_related_fields(data)
-	local args
-	if data.raw_args then
-		local termarg_spec = data.params[data.termarg]
+	local raw_args, termarg, param_mods, args = data.raw_args, data.termarg, data.param_mods
+	if raw_args then
+		local params = data.params
+		local termarg_spec = params[termarg]
 		if type(termarg_spec) == "table" and termarg_spec.list then
 			internal_error("Term spec in `data.params` must not have `list` set", termarg_spec)
 		end
-		export.augment_params_with_modifiers(data.params, data.param_mods, "always")
+		export.augment_params_with_modifiers(params, param_mods, "always")
 		if data.make_separate_g_into_list then
 			-- HACK: g= is a list for compatibility, but sublist as an inline parameter.
-			data.params.g = {list = true, item_dest = "genders"}
+			params.g = {list = true, item_dest = "genders", type = "genders", flatten = true}
 		end
-		if data.adjust_params_before_arg_processing then
-			data.adjust_params_before_arg_processing(data.params)
+		local adjust_params_before_arg_processing = data.adjust_params_before_arg_processing
+		if adjust_params_before_arg_processing then
+			adjust_params_before_arg_processing(params)
 		end
-		args = process_params(data.raw_args, data.params)
+		args = process_params(raw_args, params)
 	else
 		args = data.processed_args
 	end
 
-	if data.process_args_before_parsing then
-		data.process_args_before_parsing(args)
+	local process_args_before_parsing = data.process_args_before_parsing
+	if process_args_before_parsing then
+		process_args_before_parsing(args)
 	end
 
-	local termarg = data.termarg
-	local term = args[termarg]
+	local term, lang_cache = args[termarg], data.lang_cache
 	local lang = fetch_argument(args, data.lang)
-	if lang and data.lang_cache then
-		data.lang_cache[lang:getCode()] = lang
+	if lang and lang_cache then
+		lang_cache[lang:getCode()] = lang
 	end
 	local sc = fetch_argument(args, data.sc)
 	local term_dest = data.term_dest or "term"
@@ -1451,48 +1458,48 @@ function export.parse_term_with_inline_modifiers_and_separate_params(data)
 	if not term then
 		track("missing-term", data.track_module)
 	end
-	local termobj = {}
-
-	local function generate_obj(term, parse_err)
-		return export.generate_obj_maybe_parsing_lang_prefix {
-			term = term,
-			termobj = data.splitchar and {} or termobj,
-			term_dest = data.term_dest,
-			paramname = termarg,
-			parse_lang_prefix = data.parse_lang_prefix,
-			parse_err = parse_err,
-			allow_bad_lang_prefix = data.allow_bad_lang_prefix,
-			allow_multiple_lang_prefixes = data.allow_multiple_lang_prefixes,
-			lang_cache = data.lang_cache,
-		}
-	end
+	local termobj, splitchar = {}, data.splitchar
 
 	if term then
+		local function generate_obj(term, parse_err)
+			return export.generate_obj_maybe_parsing_lang_prefix {
+				term = term,
+				termobj = splitchar and {} or termobj,
+				term_dest = term_dest,
+				paramname = termarg,
+				parse_lang_prefix = data.parse_lang_prefix,
+				parse_err = parse_err,
+				allow_bad_lang_prefix = data.allow_bad_lang_prefix,
+				allow_multiple_lang_prefixes = data.allow_multiple_lang_prefixes,
+				lang_cache = lang_cache,
+			}
+		end
+
 		parse_inline_modifiers(term, {
-			paramname = paramname,
-			param_mods = data.param_mods,
+			paramname = termarg,
+			param_mods = param_mods,
 			generate_obj = generate_obj,
-			splitchar = data.splitchar,
+			splitchar = splitchar,
 			preserve_splitchar = true,
 			escape_fun = data.escape_fun,
 			unescape_fun = data.unescape_fun,
-			outer_container = data.splitchar and termobj or nil,
+			outer_container = splitchar and termobj or nil,
 			pre_normalize_modifiers = data.pre_normalize_modifiers,
 		})
 	end
 
-	copy_separate_params_to_termobj_and_postprocess {
+	copy_separate_params_to_termobj_and_postprocess{
 		args = args,
-		param_mods = data.param_mods,
+		param_mods = param_mods,
 		termobj = termobj,
-		has_subitems = not not data.splitchar,
+		has_subitems = not not splitchar,
 		lang = lang,
 		sc = sc,
 		subitem_param_handling = data.subitem_param_handling,
 		allow_conflicting_inline_mods_and_separate_params = data.allow_conflicting_inline_mods_and_separate_params,
 	}
 
-	if data.splitchar and termobj.terms[2] then
+	if splitchar and termobj.terms[2] then
 		track("parse-term-multiple-subitems", data.track_module)
 		track("parse-term-multiple-subitems")
 	end
