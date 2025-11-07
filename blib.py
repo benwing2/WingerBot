@@ -188,6 +188,11 @@ def ucfirst(txt):
     return txt
   return txt[0].upper() + txt[1:]
 
+def lcfirst(txt):
+  if not txt:
+    return txt
+  return txt[0].lower() + txt[1:]
+
 def parse_text(text):
   return mwparserfromhell.parser.Parser().parse(text, skip_style_tags=True)
 
@@ -1169,8 +1174,8 @@ def create_argparser(desc, include_pagefile=False, include_stdin=False,
       help="When processing categories, do the category and subcategories instead of pages belong to the category.")
     parser.add_argument("--recursive", action="store_true",
       help="In conjunction with --cats, recursively process pages in subcategories.")
-    parser.add_argument("--track-seen", action="store_true",
-      help="Track previously seen articles and don't visit them again.")
+    parser.add_argument("--no-track-seen", action="store_true",
+      help="Don't track previously seen articles in order to not visit them again. Use to avoid running out of memory on very large categories.")
     parser.add_argument("--prune-cats", help="Regex to use to prune categories when processing subcategories recursively; any categories matching the regex will be skipped along with any of their subcategories (unless reachable in some other manner).")
     parser.add_argument("--filter-cats", help="Regex to use to filter categories when processing subcategories recursively; any categories not matching the regex will be skipped along with any of their subcategories (unless reachable in some other manner).")
     parser.add_argument("--refs", help="List of references to process, comma-separated.")
@@ -1369,7 +1374,7 @@ def do_pagefile_cats_refs(
       cat_pages_to_skip |= set(str(page.title()) for page in raw_cat_articles(cat, seen=None))
       errmsg(" done.")
   if seen is None:
-    seen = set() if args.track_seen else None
+    seen = set() if not args.no_track_seen else None
 
   def page_should_be_filtered_out(pagetitle, errandpagemsg):
     if pagetitle in pages_to_skip or pagetitle in cat_pages_to_skip:
@@ -1569,7 +1574,7 @@ def do_pagefile_cats_refs(
         else:
           for index, page in cat_articles(cat, start, end, seen=seen, filter_cats_regex=args_filter_cats,
                                           prune_cats_regex=args_prune_cats, recurse=args.recursive,
-                                          track_seen=args.track_seen, verbose=args.verbose):
+                                          track_seen=not args.no_track_seen, verbose=args.verbose):
             process_pywikibot_page(index, page, no_check_seen=True)
       if args.cats:
         for cat in split_arg(args.cats):
@@ -1629,7 +1634,7 @@ def do_pagefile_cats_refs(
     for cat in default_cats:
       for index, page in cat_articles(cat, start, end, seen=seen, filter_cats_regex=args_filter_cats,
                                       prune_cats_regex=args_prune_cats, recurse=args.recursive,
-                                      track_seen=args.track_seen, verbose=args.verbose):
+                                      track_seen=not args.no_track_seen, verbose=args.verbose):
         process_pywikibot_page(index, page, no_check_seen=True)
     for ref in default_refs:
       for index, page in references(ref, start, end, namespaces=ref_namespaces):
