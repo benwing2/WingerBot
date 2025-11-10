@@ -1,12 +1,13 @@
---[=[
+local export = {}
+
+-- Author: Benwing2
+
+--[==[ intro:
 	This module contains functions to implement {{form of/*doc}} templates.
 	The module contains the actual implementation, meant to be called from other
-	Lua code. See [[Module:form of doc/templates]] for the function meant to be
+	Lua code. See [[Module:form of doc/templates]] for the functions meant to be
 	called directly from templates.
-
-	Author: Benwing2
-]=]
-local export = {}
+]==]
 
 local en_utilities_module = "Module:en-utilities"
 local form_of_module = "Module:form of"
@@ -46,7 +47,6 @@ local safe_require = require(load_module).safe_require
 local serial_comma_join = m_table.serialCommaJoin
 local shallow_copy = m_table.shallowCopy
 local sort = table.sort
-local str_utils_format = m_str_utils.format
 local table_extend = m_table.extend
 local tostring = tostring
 local ucfirst = m_str_utils.ucfirst
@@ -55,7 +55,7 @@ local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 local form_of_lang_data_module_prefix = m_form_of.form_of_lang_data_module_prefix
 local form_of_data1 = require(m_form_of.form_of_data1_module)
 local form_of_data2 = require(m_form_of.form_of_data2_module)
-local form_of_pos = require(m_form_of.form_of_pos_module)
+local form_of_pos = mw.loadData(m_form_of.headword_data_module).pos_aliases
 
 local SHORTCUTS = m_form_of_data.SHORTCUTS
 local TAG_TYPE = m_form_of_data.TAG_TYPE
@@ -65,12 +65,16 @@ local function lang_name(langcode, param)
 end
 
 local function link_box(content)
-	return "<div class=\"noprint plainlinks\" style=\"float: right; clear: both; margin: 0 0 .5em 1em; background: #f9f9f9; border: 1px #aaaaaa solid; margin-top: -1px; padding: 5px; font-weight: bold; font-size: small;\">"
+	return "<div class=\"noprint plainlinks\" style=\"float: right; clear: both; margin: 0 0 .5em 1em; background: var(--wikt-palette-paleblue, #f9f9f9); border: 1px var(--border-color-base,#aaaaaa) solid; margin-top: -1px; padding: 5px; font-weight: bold; font-size: small;\">"
 		.. content .. "</div>"
 end
 
+local function raw_editpage(page)
+	return tostring(mw.uri.fullUrl(page, "action=edit"))
+end
+
 local function show_editlink(page)
-	return link_box("[" .. tostring(mw.uri.fullUrl(page, "action=edit")) .. " Edit]")
+	return link_box("[" .. raw_editpage(page) .. " Edit]")
 end
 
 local function template_name(preserve_lang_code)
@@ -102,6 +106,9 @@ function export.introdoc(args)
 	local parts = {}
 	local function ins(txt)
 		insert(parts, txt)
+	end
+	if args.etymtemp then
+		ins("{{hatnote|This template is for definition sections. For the template used in etymology sections, see [[Template:" .. args.etymtemp .. "]].}}\n")
 	end
 	ins(("{{uses lua|%s/templates}}"):format(form_of_module))
 	ins("This template creates a definition line for ")
@@ -142,7 +149,7 @@ function export.introdoc(args)
 By default, this template displays its output as a full sentence, with an initial capital letter and a trailing period
 (full stop). This can be overridden using {{para|nocap|1}} and/or {{para|nodot|1}} (see below).
 ]===])
-	elseif args.withcap then
+	elseif args.withcap or args.withencap and lang == "en" then
 		ins([===[
 
 By default, this template displays its output with an initial capital letter. This can be overridden using
@@ -151,32 +158,39 @@ By default, this template displays its output with an initial capital letter. Th
 	elseif args.withencap then
 		ins([===[
 
-By default, this template displays its output with an initial capital letter if the language in {{para|1}} is English
-(but not otherwise). This can be overridden by using {{para|nocap|1}} to make the initial letter lowercase for English,
-or {{para|cap|1}} to make the initial letter capitalized otherwise (but this is not generally recommended, because
-non-English definitions should be lowercase).
-]===])
+By default, this template displays its output with an initial capital letter if the term's language in {{para|1}} is
+English (but not otherwise]===])
+		if args.usedwithlimitedlangs then
+			ins([==[, and there are likely no English examples for this template).]==])
+		else
+			ins([==[). This can be overridden by using {{para|nocap|1}} to make the initial letter lowercase for
+English. This does not auto-add a final period; if (and only if) the term's language is English, you should manually
+include it after the template unless other text follows, since English definitions should be formatted like full
+sentences.]==])
+		end
+		ins("\n")
 	else
 		ins([===[
 
 By default, this template displays its output with an initial lowercase letter. This can be overridden by using
-{{para|cap|1}} to make the initial letter capitalized (but this is not generally recommended for non-English languages,
-as non-English definitions should be lowercase).
-]===])
+{{para|cap|1}} to make the initial letter capitalized]===] .. (lang == "en" and ".\n" or " (but this is not " ..
+"generally recommended for non-English languages, as non-English definitions should be lowercase).\n"))
 	end
 	ins([===[
 
 This template is '''not''' meant to be used in etymology sections.]===])
-	local etymtemp = args.etymtemp
-	if etymtemp then
-		ins(" For those sections, use {{tl|" .. etymtemp .. "}} instead.")
+	if args.etymtemp then
+		ins(" For those sections, use {{tl|" .. args.etymtemp .. "}} instead.\n")
+	else
+		ins("\n")
 	end
 	ins([===[
 
+'''Note:''' This is a “form of” template. The full list of such templates, including their distinctive properties and
+how to customize the output of this template, can be found at [[:Category:Form-of templates]].
 
-Note that users can customize how the output of this template displays by modifying their Custom CSS files. See
-[[:Category:Form-of templates|“Form of” templates]] for details.
-]===])
+''The documentation for this page is auto-generated by [[Module:form of doc]].<sup>[<span class="plainlinks">[]===] .. raw_editpage("Module:form of doc") ..
+" edit]</span>]</sup> As a result, the edit buttons on most section links do not work.''\n")
 	return concat(parts)
 end
 
@@ -233,9 +247,9 @@ function export.paramdoc(args)
 		"indicate diacritics; instead, put the diacritics in the first parameter.")
 	else
 		param_and_doc("1", false, true,
-		"The [[WT:LANGCODE|language code]] of the term linked to (which this page is " .. sgdescof .. "). See
-		[[Wiktionary:List of languages]]. <small>The parameter {{para|lang}} is a deprecated synonym; please do not " ..
-		"use. If this is used, all numbered parameters move down by one.</small>")
+		"The [[WT:LANGCODE|language code]] of the term linked to (which this page is " .. sgdescof .. "). See " ..
+		"[[Wiktionary:List of languages]]. <small>The parameter {{para|lang}} is a deprecated synonym; please do " ..
+		"not use. If this is used, all numbered parameters move down by one.</small>")
 		param_and_doc("2", false, true,
 		"The term to link to (which this page is " .. sgdescof .. "). This should include diacritics as appropriate " ..
 		"to the language (e.g. accents in Russian to mark the stress, vowel diacritics in Arabic, macrons in Latin " ..
@@ -257,61 +271,79 @@ function export.paramdoc(args)
 			"If {{para|optional|1}}, indicates that the contraction is optional.")
 	end
 	param_and_doc({"t", lang and "3" or "4"}, false, false, "A gloss or short translation of the term linked " ..
-	"to. <small>The parameter {{para|gloss}} s a deprecated synonym; please do not use.</small>")
+	"to. <small>The parameter {{para|gloss}} is a deprecated synonym; please do not use.</small>")
 	param_and_doc("tr", false, false,
 		"Transliteration for non-Latin-script terms, if different from the automatically-generated one.")
 	param_and_doc("ts", false, false, "Transcription for non-Latin-script terms whose transliteration is " ..
 	"markedly different from the actual pronunciation. Should not be used for IPA pronunciations.")
-	param_and_doc("sc", false, false, "Script code to use, if script detection does not work. See " ..
-	"[[Wiktionary:Scripts]].")
 	param_and_doc("cat", true, false, "Additional categories to place the page into. They are automatically " ..
 	"prepended with the language name. A single parameter can contain multiple comma-separated categories as long " ..
 	"as there is no space after the comma.")
+	param_and_doc("addl", false, false, "Additional text to display at the end, before the final closing " ..
+	"<code>&lt;/span></code> tag. It is normally joined to the preceding text by a comma followed by a space. However, if the " ..
+	"value of {{para|addl}} begins with a colon or semicolon, it is appended directly with no joining punctuation, " ..
+	"and if the value begins with an underscore, the remainder is joined to the preceding text with a space.")
 	if args.withfrom then
 		param_and_doc("from", true, false, "A label (see {{tl|label}}) that gives additional information on " ..
-		"the dialect that the term belongs to, the place that it originates from, or something similar.")
+		"the language variety that the term belongs to, the place that it originates from, or something similar.")
 	end
 	if args.withdot then
 		param_and_doc("dot", false, false,
 		"A character to replace the final dot that is normally shown automatically.")
 		param_and_doc("nodot", false, false, "If {{para|nodot|1}}, then no automatic dot will be shown.")
 	end
-	if args.withcap or args.withencap then
-		param_and_doc("nocap", false, false, "If {{para|nocap|1}}, then the first letter will be in lowercase.")
+	if (args.withcap or args.withencap) and not args.usedwithlimitedlangs then
+		-- Don't even mention if usedwithlimitedlangs=1, because there are unlikely to be English examples.
+		param_and_doc("nocap", false, false, "If {{para|nocap|1}}, then the first letter will be in lowercase." ..
+			(args.withencap and " Only useful for English, because other languages already begin with a lowercase letter."
+			or ""))
 	end
 	if not args.withcap then
 		param_and_doc("cap", false, false, "If {{para|cap|1}}, then the first letter will be in capitalized. " ..
-		"Not generally recommended except for English definitions" .. (args.withencap and " (which are already " ..
-		"capitalized by default)" or "") .. ".")
+		"Not generally recommended" .. (args.withencap and "" or  ", except for English definitions") ..
+		", because non-English definitions should begin with a lowercase letter and be formatted like a phrase, " ..
+		"rather than a full sentence.")
 	end
 	if args.cat and args.cat[1] then
 		param_and_doc("nocat", false, false, "Disable categorization of categories built into the template. " ..
-		"For example, {{tl|ellipsis of|en|...}} normally categories into e.g. [[:Categroy:English ellipses]], but " ..
+		"For example, {{tl|ellipsis of|en|...}} normally categories into e.g. [[:Category:English ellipses]], but " ..
 		"this can be disabled using {{para|nocat|1}}. This does not affect categories explicitly specified in the " ..
 		"template call itself using {{para|cat}}.")
 	end
+	param_and_doc("notext", false, false, "If {{para|notext|1}}, don't display the initial text preceding the " ..
+	"term(s), but only the actual term or terms. The page is still categorized as normal, unless {{para|nocat|1}} " ..
+	"is given.")
 	param_and_doc("id", false, false, "A sense id for the term, which links to anchors on the page set by " ..
 	"the {{tl|senseid}} template.")
-	param_and_doc("addl", false, false, "Additional text to display at the end, before the final closing " ..
-	"&lt;span/> tag. It is normally joined to the preceding text by a comma followed by a space. However, if the " ..
-	"value of {{para|addl}} begins with a colon or semicolon, it is appended directly with no joining punctuation, " ..
-	"and if the value begins with an underscore, the remainder is joined to the preceding text with a space.")
+	param_and_doc("sc", false, false, "Script code to use, if script detection does not work. See " ..
+	"[[Wiktionary:Scripts]]. Rarely needs to be given.")
+	param_and_doc("sort", false, false, "Sort key for sorting any categories the page is added to. Rarely needs " ..
+	"to be given except for Japanese, and even then, only when there are multiple possible pronunciations.")
+
+	if args.addlparamtext then
+		ins("\n")
+		ins(args.addlparamtext)
+		ins("\n")
+	end
 
 	ins([==[
 
 ===Inline modifiers===
-Use a syntax like <code>Изабе́лла<tr:Izabɛ́lla><t:Isabelle></code> to specify modifiers such as transliterations, glosses and qualifiers. In this example, for the Russian name {{m|ru|Изабе́лла|tr=Izabɛ́lla|t=Isabelle}}, the manual transliteration ''Izabɛ́lla'' and gloss "Isabelle" are given. The following modifiers are recognized; see {{temp|link}} for the exact meaning of these modifiers.
+Use a syntax like <code>Изабе́лла<tr:Izabɛ́lla><t:Isabelle></code> to specify modifiers such as transliterations, glosses, labels and qualifiers. In this example, for the Russian name {{m|ru|Изабе́лла|tr=Izabɛ́lla|t=Isabelle}}, the manual transliteration ''Izabɛ́lla'' and gloss "Isabelle" are given. The following modifiers are recognized; see [[WT:Inline modifiers]] for more detailed discussion of inline modifiers and the meanings of the modifiers given below.
 * <code>t</code>: gloss
 * <code>tr</code>: transliteration
 * <code>ts</code>: transcription, for languages where the transliteration and pronunciation are markedly different
-* <code>q</code>: left qualifier, e.g. {{cd|<q:neither sexual nor romantic in nature>}} (in reference to [[platonic love]]); this appears '''before''' the term, parenthesized and italicized
-* <code>qq</code>: right qualifier; this appears '''after''' the term, parenthesized and italicized
-* <code>l</code>: comma-separated left labels, e.g. {{cd|<l:rare>}} or {{cd|<l:UK,Australia>}} or {{cd|<l:archaic,or,dialectal>}}; as shown, there must not be a space after the comma for it to be recognized as a delimiter; the labels appear '''before''' the term, parenthesized, italicized and appropriately linked as if {{tl|lb}} were used (but without categorization); an alternative syntax is to enclose the labels in {{cd|<<...>>}}, e.g. {{cd|<l:<<rare>>, <<archaic>> or <<dialectal>>>}}
+* <code>l</code>: comma-separated left labels, e.g. {{cd|<l:rare>}} or {{cd|<l:UK,Australia>}} or {{cd|<l:archaic,or,dialectal>}} or {{cd|<l:<<rare>>, <<archaic>> or <<dialectal>>>}}
+*: As shown, in the syntax without {{cd|<<...>>}}, there must not be a space after the comma for it to be recognized as a delimiter.
+*: The labels appear '''before''' the term, parenthesized, italicized and appropriately linked as if {{tl|lb}} were used (but without categorization).
 * <code>ll</code>: comma-separated right labels; these appear '''after''' the term, parenthesized, italicized and appropriately linked as for left labels
+* <code>q</code>: left qualifier; this appears '''before''' the term, parenthesized and italicized, but displayed as-is, without interpretation; useful for one-off explanatory notes
+* <code>qq</code>: right qualifier; this appears '''after''' the term, parenthesized and italicized
 * <code>ref</code>: reference or references, using the syntax documented in [[Template:IPA#References]]
 * <code>g</code>: comma-separated list of gender/number specifications; see [[Module:gender and number]] for the complete list
 * <code>alt</code>: alternative display text
 * <code>pos</code>: part of speech
+* <code>ng</code>: arbitrary non-gloss explanatory text
 * <code>lit</code>: literal meaning
 * <code>id</code>: sense ID; see {{temp|senseid}}
 * <code>sc</code>: script code]==])
@@ -323,35 +355,37 @@ function export.usagedoc(args)
 	for _, exlang in ipairs(args.exlang) do
 		insert(exlangs, exlang)
 	end
-	insert(exlangs, 'en')
-	insert(exlangs, 'de')
-	insert(exlangs, 'ja')
+	if not args.usedwithlimitedlangs then
+		insert(exlangs, 'en')
+		insert(exlangs, 'de')
+		insert(exlangs, 'ja')
+	end
 	exlangs = remove_duplicates(exlangs)
 	local sub = {}
 	local langparts = {}
 	for _, langcode in ipairs(exlangs) do
 		insert(langparts, '<code>' .. langcode .. '</code> for ' .. lang_name(langcode, "exlang"))
 	end
-	sub.exlangs = serial_comma_join(langparts, {conj = "or"})
-	sub.tempname = template_name("preserve lang code")
+	local exlangs = serial_comma_join(langparts, {conj = "or"})
+	local tempname = template_name("preserve lang code")
 
 	if args.lang then
-		return str_utils_format([===[
+		return ([===[
 ==Usage==
 Use in the definition line, most commonly as follows:
- # {\op}{\op}{tempname}|<var><primary entry goes here></var>{\cl}{\cl}
+ # <code><nowiki>{{%s</nowiki>|<var><primary entry goes here></var>}}</code>
 
 ===Parameters===
-]===], sub) .. export.paramdoc(args)
+]===]):format(tempname) .. export.paramdoc(args)
 	else
-		return str_utils_format([===[
+		return ([===[
 ==Usage==
 Use in the definition line, most commonly as follows:
- # {\op}{\op}{tempname}|<var><langcode></var>|<var><primary entry goes here></var>{\cl}{\cl}
-where <code><var><langcode></var></code> is the [[Wiktionary:Languages|language code]], e.g. {exlangs}.
+ # <code><nowiki>{{%s</nowiki>|<var><langcode></var>|<var><primary entry goes here></var>}}</code>
+where <code><var><langcode></var></code> is the [[Wiktionary:Languages|language code]], e.g. %s.
 
 ===Parameters===
-]===], sub) .. export.paramdoc(args)
+]===]):format(tempname, exlangs) .. export.paramdoc(args)
 	end
 end
 
@@ -538,12 +572,12 @@ function export.non_alias_shortcut_table()
 	insert(parts, "! Shortcut !! Expansion !! Display form")
 	if non_alias_shortcuts1[1] then
 		insert(parts, "|-")
-		insert(parts, '! colspan="3" style="text-align: center; background: #dddddd;" | More common:')
+		insert(parts, '! colspan="3" style="text-align: center; background: var(--wikt-palette-grey-3, #dddddd);" | More common:')
 		insert_shortcut_group(parts, non_alias_shortcuts1)
 	end
 	if non_alias_shortcuts2[1] then
 		insert(parts, "|-")
-		insert(parts, '! colspan="3" style="text-align: center; background: #dddddd;" | Less common:')
+		insert(parts, '! colspan="3" style="text-align: center; background: var(--wikt-palette-grey-3, #dddddd);" | Less common:')
 		insert_shortcut_group(parts, non_alias_shortcuts2)
 	end
 	insert(parts, "|}")
