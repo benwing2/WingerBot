@@ -39,7 +39,6 @@ local parse_tag_set_properties -- Defined below.
 local require = require
 local sort = table.sort
 local split_tag_set -- Defined below.
-local tagged_inflections -- Defined below.
 local type = type
 
 --[==[
@@ -297,12 +296,38 @@ local function wrap_in_span(text, classes)
 	end
 end
 
+local function show_linked_term(data)
+	local termobj, face, span_classes, ok_to_destructively_modify, overall_lang, text_classes =
+		data.termobj, data.face, data.span_classes, data.ok_to_destructively_modify, data.overall_lang,
+		data.text_classes
+	local need_to_copy
+	local pretext_lang
+	if overall_lang and overall_lang:getCode() ~= termobj.lang:getCode() then
+		pretext_lang = wrap_in_span(termobj.lang:makeWikipediaLink() .. " ", text_classes)
+	end
+	local need_to_show_qualifiers = termobj.q or termobj.qq or termobj.a or termobj.aa or termobj.l or termobj.ll or
+		termobj.refs
+	need_to_copy = not ok_to_destructively_modify and (pretext_lang or need_to_show_qualifiers)
+	if need_to_copy then
+		termobj = shallow_copy(termobj)
+	end
+	if pretext_lang then
+		termobj.pretext = pretext_lang
+	end
+	if need_to_show_qualifiers then
+		termobj.show_qualifiers = true
+	end
+	return wrap_in_span(full_link(termobj, face), span_classes)
+end
+
 --[==[
 Lowest-level implementation of form-of templates, including the general {{tl|form of}} as well as those that deal with
 inflection tags, such as the general {{tl|inflection of}}, semi-specific variants such as {{tl|participle of}}, and
 specific variants such as {{tl|past participle of}}. `data` contains all the information controlling the display, with
 the following fields:
 
+* `.lang`: Overall language of the form-of template. If specified, any lemmas, enclitics or base lemmas that are of a
+   different language will have that language displayed before the term in question.
 * `.text`: Text to insert before the lemmas. Wrapped in the value of `.text_classes`, or its default; see below.
 * `.lemmas`: List of objects describing the lemma(s) of which the term in question is a non-lemma form. These are passed
    directly to {full_link()} in [[Module:links]]. Each object should have at minimum a `.lang` field containing the
@@ -327,7 +352,9 @@ the following fields:
    {"form-of-definition use-with-mention"}. Use `false` for no wrapping.
 * `.lemma_classes`: Additional CSS classes used to wrap the lemma links. Default is {"form-of-definition-link"}.
    Use `false` for no wrapping.
-* `.posttext`: Additional text to display after the lemma links.]==]
+* `.posttext`: Additional text to display after the lemma links.
+* `.ok_to_destructively_modify`: If set, data structures (including the nested lemma structures) can be modified
+  in-place to save memory; otherwise they will be copied before modifying.]==]
 function export.format_form_of(data)
 	if type(data) ~= "table" then
 		error("Internal error: First argument must now be a table of arguments")
@@ -354,9 +381,14 @@ function export.format_form_of(data)
 		else
 			local formatted_terms = {}
 			for _, lemma in ipairs(data.lemmas) do
-				insert(formatted_terms, wrap_in_span(
-					full_link(lemma, data.lemma_face, nil, "show qualifiers"), lemma_classes
-				))
+				insert(formatted_terms, show_linked_term {
+					termobj = lemma,
+					face = data.lemma_face,
+					span_classes = lemma_classes,
+					ok_to_destructively_modify = data.ok_to_destructively_modify,
+					overall_lang = data.lang,
+					text_classes = text_classes
+				})
 			end
 			insert(parts, serial_comma_join(formatted_terms, {conj = data.conj or "and"}))
 		end
@@ -370,9 +402,14 @@ function export.format_form_of(data)
 		local formatted_terms = {}
 		for _, enclitic in ipairs(data.enclitics) do
 			-- FIXME, should we have separate clitic face and/or classes?
-			insert(formatted_terms, wrap_in_span(
-				full_link(enclitic, data.lemma_face, nil, "show qualifiers"), lemma_classes
-			))
+			insert(formatted_terms, show_linked_term {
+				termobj = enclitic,
+				face = data.lemma_face,
+				span_classes = lemma_classes,
+				ok_to_destructively_modify = data.ok_to_destructively_modify,
+				overall_lang = data.lang,
+				text_classes = text_classes
+			})
 		end
 		insert(parts, " (")
 		insert(parts, wrap_in_span("with enclitic" .. (#data.enclitics > 1 and "s" or "") .. " ", text_classes))
@@ -388,8 +425,8 @@ function export.format_form_of(data)
 			if text_classes then
 				insert(parts, "</span>")
 			end
-			insert(parts, (tagged_inflections {
-				lang = base_lemma.lemmas[1].lang,
+			insert(parts, (export.tagged_inflections {
+				lang = data.lang or base_lemma.lemmas[1].lang,
 				tags = base_lemma.paramobj.tags,
 				lemmas = base_lemma.lemmas,
 				conj = base_lemma.conj or "and",
@@ -397,6 +434,7 @@ function export.format_form_of(data)
 				no_format_categories = true,
 				nocat = true,
 				text_classes = data.text_classes,
+				ok_to_destructively_modify = ok_to_destructively_modify,
 			}))
 			if text_classes then
 				insert(parts, "<span class='" .. text_classes .. "'>")
@@ -1284,7 +1322,9 @@ information controlling the display, with the following fields:
 * `.text_classes`: CSS classes used to wrap the tag text and lemma links. Default is
    {"form-of-definition use-with-mention"}.
 * `.lemma_classes`: Additional CSS classes used to wrap the lemma links. Default is {"form-of-definition-link"}.
-`.joiner`: Override the joiner (normally a slash) used to join multipart tags. You should normally not specify this.
+* `.joiner`: Override the joiner (normally a slash) used to join multipart tags. You should normally not specify this.
+* `.ok_to_destructively_modify`: If set, data structures (including the nested lemma structures) can be modified
+  in-place to save memory; otherwise they will be copied before modifying.
 
 A typical call might look like this (for {{m+|es|amo}}): {
 	local lang = require("Module:languages").getByCode("es")
@@ -1401,7 +1441,6 @@ function export.tagged_inflections(data)
 	end
 	return formatted_text, categories
 end
-tagged_inflections = export.tagged_inflections
 
 function export.dump_form_of_data(frame)
 	local data = {
