@@ -10,7 +10,7 @@ local etymology_module = "Module:etymology"
 local pron_qualifier_module = "Module:pron qualifier"
 local scripts_module = "Module:scripts"
 local utilities_module = "Module:utilities"
--- Export this so the category code in [[Module:category tree/poscatboiler/data/terms by etymology]] can access it.
+-- Export this so the category code in [[Module:category tree/etymology]] can access it.
 export.affix_lang_data_module_prefix = "Module:affix/lang-data/"
 
 local rsub = m_str_utils.gsub
@@ -21,11 +21,54 @@ local rmatch = m_str_utils.match
 local pluralize = require(en_utilities_module).pluralize
 local u = m_str_utils.char
 local ucfirst = m_str_utils.ucfirst
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
 
--- Export this so the category code in [[Module:category tree/poscatboiler/data/terms by etymology]] can access it.
+function export.affix_variants(canonical, variants)
+	local mappings = {}
+	for _, variant in ipairs(variants) do
+		mappings[variant] = canonical
+	end
+	return mappings
+end
+
+function export.id_mapping(default, ids)
+	local mapping = { default = default }
+	if ids then
+		for id, target in pairs(ids) do
+			mapping[id] = target
+		end
+	end
+	return mapping
+end
+
+function export.id_mapping_with_affix_variants(base, id_variants)
+	local mappings = {}
+	for id, variants in pairs(id_variants) do
+		for _, variant in ipairs(variants) do
+			mappings[variant] = export.id_mapping(base, {[id] = base})
+		end
+	end
+	return mappings
+end
+
+function export.merge_tables(...)
+	local result = {}
+	for i = 1, select('#', ...) do
+		local t = select(i, ...)
+		if t then
+			for k, v in pairs(t) do
+				result[k] = v
+			end
+		end
+	end
+	return result
+end
+
+-- Export this so the category code in [[Module:category tree/etymology]] can access it.
 export.langs_with_lang_specific_data = {
 	["az"] = true,
 	["fi"] = true,
+	["fr"] = true,
 	["izh"] = true,
 	["la"] = true,
 	["sah"] = true,
@@ -78,15 +121,15 @@ local default_pos = "term"
   *# The display and link affixes are explicitly made different using {{para|alt<var>N</var>}} parameters, `<alt:...>`
      inline modifiers or piped links, as described above under "display affix".
   *# For certain languages, certain affixes are mapped to canonical form using language-specific mappings. For example,
-	 in Finnish, the adjective-forming suffix [[-kas]] appears as [[-käs]] after front vowels, but logically both
-	 forms are the same suffix and should be linked and categorized the same. Similarly, in Latin, the negative and
-	 intensive prefixes spelled [[in-]] (etymologically two distinct prefixes) appear variously as [[il-]], [[im-]] or
-	 [[ir-]] before certain consonants. Mappings are supplied in [[Module:affix/lang-data/LANGCODE]] to convert
-	 Finnish [[-käs]] to [[-kas]] for linking and categorization purposes. Note that the affixes in the mappings use
-	 "lookup hyphens" to indicate the different types of affixes, which is usually the same as the template hyphen but
-	 differs for Arabic scripts, because there are multiple possible template hyphens recognized but only one lookup
-	 hyphen (tatweel). The form of the affix as used to look up in the mapping tables is called the "lookup affix";
-	 see below.
+	 in Finnish, the adjective-forming suffix {{m|fi|-kas}} appears as {{m|fi|-käs}} after front vowels, but logically
+	 both forms are the same suffix and should be linked and categorized the same. Similarly, in Latin, the negative and
+	 intensive prefixes spelled {{m|la|in-}} (etymologically two distinct prefixes) appear variously as {{m|la|il-}},
+	 {{m|la|im-}} or {{m|la|ir-}} before certain consonants. Mappings are supplied in [[Module:affix/lang-data/LANGCODE]]
+	 to convert Finnish {{m|fi|-käs}} to {{m|fi|-kas}} for linking and categorization purposes. Note that the affixes in
+	 the mappings use "lookup hyphens" to indicate the different types of affixes, which is usually the same as the
+	 template hyphen but differs for Arabic scripts, because there are multiple possible template hyphens recognized but
+	 only one lookup hyphen (tatweel). The form of the affix as used to look up in the mapping tables is called the
+	 "lookup affix"; see below.
 * A "stripped link affix" is a link affix that has been passed through the language's `makeEntryName()` function, which
   may strip certain diacritics: e.g. macrons in Latin and Old English (indicating length); acute and grave accents in
   Russian and various other Slavic languages (indicating stress); vowel diacritics in most Arabic-script languages; and
@@ -102,15 +145,15 @@ local default_pos = "term"
 	 form passed through the language's `makeEntryName()` function, which strips out certain diacritics, but with the
 	 lookup hyphen re-added if it was stripped out, as in the case of tatweel in many Arabic-script languages).
   The reason for this double lookup procedure is to allow for mappings that are sensitive to the extra diacritics, but
-  also allow for mappings that are not sensitive in this fashion (e.g. Russian [[-ливый]] occurs both stressed and
+  also allow for mappings that are not sensitive in this fashion (e.g. Russian {{m|ru|-ливый}} occurs both stressed and
   unstressed, but is the same prefix either way).
-* A "category affix" is the affix as it appears in categories such as [[:Category:Finnish terms suffixed with -kas]].
-  The category affix is currently always the same as the stripped link affix. This means that for Arabic-script
-  languages, it may or may not have a tatweel, even if the correponding display affix and regular link affix have a
-  tatweel. As mentioned above, makeEntryName() strips tatweel for Arabic, Persian and Urdu, but not for Ottoman Turkish.
-  Hence affix categories for Arabic, Persian and Urdu will be missing the tatweel, but affix categories for
-  Ottoman Turkish will have it. An additional complication is that if the template affix contains a ZWNJ, the display
-  (and hence the link and category affixes) will have no hyphen attached in any case.
+* A "category affix" is the affix as it appears in categories such as [[:Category:Finnish terms suffixed with -kas|
+  Category:Finnish terms suffixed with ''-kas'']]. The category affix is currently always the same as the stripped link
+  affix. This means that for Arabic-script languages, it may or may not have a tatweel, even if the correponding display
+  affix and regular link affix have a tatweel. As mentioned above, makeEntryName() strips tatweel for Arabic, Persian
+  and Urdu, but not for Ottoman Turkish. Hence affix categories for Arabic, Persian and Urdu will be missing the
+  tatweel, but affix categories for Ottoman Turkish will have it. An additional complication is that if the template
+  affix contains a ZWNJ, the display (and hence the link and category affixes) will have no hyphen attached in any case.
 ]==]
 
 -----------------------------------------------------------------------------------------
@@ -702,7 +745,7 @@ local function lookup_affix_mapping(affix, affix_type, lang, scode, thyph_re, lo
 					local mapping = langdata.affix_mappings[lookup_affix]
 					if mapping then
 						if type(mapping) == "table" then
-							mapping = mapping[affix_id or false]
+							mapping = mapping[affix_id] or mapping.default or mapping[affix_id or false]
 							if mapping then
 								return mapping
 							end
@@ -752,8 +795,8 @@ described in the comment at the top of the file; otherwise, the link and display
 will be the same in any case if the template term has a bracketed link in it or is not an affix.) If
 `return_lookup_affix` is given, the fourth return value contains the term with appropriate lookup hyphens in the
 appropriate places; otherwise, it is the same as the display term. (This functionality is used in
-[[Module:category tree/poscatboiler/data/affixes and compounds]] to convert link affixes into lookup affixes so that
-they can be looked up in the affix mapping tables.)
+[[Module:category tree/affixes and compounds]] to convert link affixes into lookup affixes so that they can be looked up
+in the affix mapping tables.)
 ]==]
 local function parse_term_for_affixes(term, lang, sc, affix_type, do_affix_mapping, return_lookup_affix, affix_id)
 	if not term then
@@ -846,8 +889,8 @@ Add a hyphen to a term in the appropriate place, based on the specified affix ty
 in that place. For example, if `affix_type` == {"prefix"}, we'll add a hyphen onto the end if it's not already there (or
 is of the wrong type). Three values are returned: the link term, display term and lookup term. This function is a thin
 wrapper around `parse_term_for_affixes`; see the comments above that function for more information. Note that this
-function is exposed externally because it is called by [[Module:category tree/poscatboiler/data/affixes and compounds]];
-see the comment in `parse_term_for_affixes` for more information.
+function is exposed externally because it is called by [[Module:category tree/affixes and compounds]]; see the comment
+in `parse_term_for_affixes` for more information.
 ]==]
 function export.make_affix(term, lang, sc, affix_type, do_affix_mapping, return_lookup_affix, affix_id)
 	if not (affix_type == "prefix" or affix_type == "suffix" or affix_type == "circumfix" or affix_type == "infix" or
@@ -866,31 +909,10 @@ end
 -----------------------------------------------------------------------------------------
 
 --[==[
-Implementation of {{tl|affix}} and {{tl|surface analysis}}. `data` contains all the information describing the affixes to
-be displayed, and contains the following:
-
-* `.lang` ('''required'''): Overall language object. Different from term-specific language objects (see `.parts` below).
-* `.sc`: Overall script object (usually omitted). Different from term-specific script objects.
-* `.parts` ('''required'''): List of objects describing the affixes to show. The general format of each object is as would
-           be passed to `full_link()`, except that the `.lang` field should be missing unless the term is of a language
-		   different from the overall `.lang` value (in such a case, the language name is shown along with the term and
-		   an additional "derived from" category is added). '''WARNING''': The data in `.parts` will be destructively
-		   modified.
-* `.pos`: Overall part of speech (used in categories, defaults to {"terms"}). Different from term-specific part of speech.
-* `.sort_key`: Overall sort key. Normally omitted except e.g. in Japanese.
-* `.type`: Type of compound, if the parts in `.parts` describe a compound. Strictly optional, and if supplied, the
-		   compound type is displayed before the parts (normally capitalized, unless `.nocap` is given).
-* `.nocap`: Don't capitalize the first letter of text displayed before the parts (relevant only if `.type` or
-		    `.surface_analysis` is given).
-* `.notext`: Don't display any text before the parts (relevant only if `.type` or `.surface_analysis` is given).
-* `.nocat`: Disable all categorization.
-* `.lit`: Overall literal definition. Different from term-specific literal definitions.
-* `.force_cat`: Always display categories, even on userspace pages.
-* `.surface_analysis`: Implement {{surface analysis}}; adds `By surface analysis, ` before the parts.
-
-'''WARNING''': This destructively modifies both `data` and the individual structures within `.parts`.
+Core categorization logic for affixes. This is shared between show_affix() and get_affix_categories_only().
+Returns the categories array and other metadata needed for formatting.
 ]==]
-function export.show_affix(data)
+local function generate_affix_categories(data)
 	data.pos = data.pos or default_pos
 	data.pos = pluralize(data.pos)
 
@@ -899,7 +921,6 @@ function export.show_affix(data)
 	data.borrowing_type = borrowing_type
 
 	-- Process each part
-	local parts_formatted = {}
 	local whole_words = 0
 	local is_affix_or_compound = false
 
@@ -909,7 +930,6 @@ function export.show_affix(data)
 		part = part or {}
 		data.parts[i] = part
 		canonicalize_part(part, data.lang, data.sc)
-
 		-- Determine affix type and get link and display terms (see text at top of file). Store them in the part
 		-- (in fields that won't clash with fields used by full_link() in [[Module:links]] or link_term()), so they
 		-- can be used in the loop below when categorizing.
@@ -922,9 +942,6 @@ function export.show_affix(data)
 		-- If part.alt would be the same as part.term, make it nil, so that it isn't erroneously tracked as being
 		-- redundant alt text.
 		part.alt = part.alt or (part.affix_display_term ~= part.affix_link_term and part.affix_display_term) or nil
-
-		-- Make a link for the part.
-		table.insert(parts_formatted, export.link_term(part, data))
 	end
 
 	-- Now do categorization.
@@ -980,18 +997,75 @@ function export.show_affix(data)
 		error("The parameters did not include any affixes, and the term is not a compound. Please provide at least one affix.")
 	end
 
+	return text_sections, categories, borrowing_type
+end
+
+--[==[
+Implementation of {{tl|affix}} and {{tl|surface analysis}}. `data` contains all the information describing the affixes to
+be displayed, and contains the following:
+
+* `.lang` ('''required'''): Overall language object. Different from term-specific language objects (see `.parts` below).
+* `.sc`: Overall script object (usually omitted). Different from term-specific script objects.
+* `.parts` ('''required'''): List of objects describing the affixes to show. The general format of each object is as would
+           be passed to `full_link()`, except that the `.lang` field should be missing unless the term is of a language
+		   different from the overall `.lang` value (in such a case, the language name is shown along with the term and
+		   an additional "derived from" category is added). '''WARNING''': The data in `.parts` will be destructively
+		   modified.
+* `.pos`: Overall part of speech (used in categories, defaults to {"terms"}). Different from term-specific part of speech.
+* `.sort_key`: Overall sort key. Normally omitted except e.g. in Japanese.
+* `.type`: Type of compound, if the parts in `.parts` describe a compound. Strictly optional, and if supplied, the
+		   compound type is displayed before the parts (normally capitalized, unless `.nocap` is given).
+* `.nocap`: Don't capitalize the first letter of text displayed before the parts (relevant only if `.type` or
+		    `.surface_analysis` is given).
+* `.notext`: Don't display any text before the parts (relevant only if `.type` or `.surface_analysis` is given).
+* `.nocat`: Disable all categorization.
+* `.lit`: Overall literal definition. Different from term-specific literal definitions.
+* `.force_cat`: Always display categories, even on userspace pages.
+* `.surface_analysis`: Implement {{surface analysis}}; adds `By surface analysis, ` before the parts.
+
+'''WARNING''': This destructively modifies both `data` and the individual structures within `.parts`.
+]==]
+function export.show_affix(data)
+	local text_sections, categories, borrowing_type = generate_affix_categories(data)
+
+	-- Process each part for display
+	local parts_formatted = {}
+	for i, part in ipairs_with_gaps(data.parts) do
+		-- Make a link for the part
+		table.insert(parts_formatted, export.link_term(part, data))
+	end
+
 	if data.surface_analysis then
 		local text = "by " .. glossary_link("surface analysis") .. ", "
 		if not data.nocap then
 			text = ucfirst(text)
 		end
-
 		table.insert(text_sections, 1, text)
 	end
 
 	table.insert(text_sections, export.join_formatted_parts { data = data, parts_formatted = parts_formatted,
 		categories = categories })
 	return table.concat(text_sections)
+end
+
+--[==[
+Get only the categories that would be generated by show_affix(), without any text output or formatting.
+This is used by Module:etymon to get affix categorization.
+Returns an array of category objects, where 
+each entry is either a string (simple category name) or a table with keys `cat`, `sort_key`, 
+and `sort_base` for more complex categorization.
+
+`data` should have the same structure as passed to show_affix():
+* `.lang` (required): Overall language object
+* `.parts` (required): Array of affix part objects with `.term`, `.lang`, `.id`, etc.
+* `.pos`: Part of speech (defaults to "terms")
+* `.sort_key`: Overall sort key for categories
+
+'''WARNING''': This destructively modifies both `data` and the individual structures within `.parts`.
+]==]
+function export.get_affix_categories_only(data)
+	local text_sections, categories, borrowing_type = generate_affix_categories(data)
+	return categories
 end
 
 
