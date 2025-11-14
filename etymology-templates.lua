@@ -13,12 +13,11 @@ local dump = mw.dumpObject
 local etymology_module = "Module:etymology"
 local etymology_specialized_module = "Module:etymology/specialized"
 local parameter_utilities_module = "Module:parameter utilities"
-local table_module = "Module:table"
-
-local allowedConjsForJoinSegments = require_when_needed(table_module, "allowedConjsForJoinSegments")
 
 -- For testing
 local force_cat = false
+
+local allowed_conjs = {"and", "or", ",", "/", "~", ";"}
 
 local function parse_etym_args(parent_args, base_params, has_dest_lang)
 	local m_param_utils = require(parameter_utilities_module)
@@ -84,7 +83,7 @@ function export.parse_2_lang_args(parent_args, has_text, no_family)
 		["nocat"] = boolean,
 		["sort"] = true,
 		["sourceconj"] = true,
-		["conj"] = {set = , default = ","},
+		["conj"] = {set = allowed_conjs, default = ","},
 	}
 	if has_text then
 		params["notext"] = boolean
@@ -186,7 +185,7 @@ function export.cognate(frame)
 		[3] = {alias_of = "alt"},
 		[4] = {alias_of = "t"},
 		sourceconj = true,
-		["conj"] = {set = allowedConjsForJoinSegments, default = ","},
+		["conj"] = {set = allowed_conjs, default = ","},
 		sort = true,
 	}
 
@@ -262,7 +261,7 @@ function export.misc_variant(frame)
 		nocap = boolean, -- should be processed in the template itself
 		notext = boolean,
 		nocat = boolean,
-		conj = {set = allowedConjsForJoinSegments},
+		conj = {set = allowed_conjs},
 		sort = true,
 	}
 
@@ -299,8 +298,7 @@ function export.misc_variant(frame)
 		track_module = "etymology",
 		lang = 1,
 		sc = "sc",
-		-- Don't do this, doesn't seem to make sense.
-		-- parse_lang_prefix = true,
+		parse_lang_prefix = true,
 		make_separate_g_into_list = true,
 		splitchar = ",",
 		subitem_param_handling = "last",
@@ -310,6 +308,7 @@ function export.misc_variant(frame)
 		lang = args[1],
 		notext = args.notext,
 		text = iargs.text,
+		oftext = iargs.oftext,
 		terms = terms.terms,
 		sort_key = args.sort,
 		conj = args.conj or iargs.conj or "and",
@@ -340,7 +339,7 @@ function export.misc_variant_multiple_terms(frame)
 		nocap = boolean, -- should be processed in the template itself
 		notext = boolean,
 		nocat = boolean,
-		conj = {set = allowedConjsForJoinSegments},
+		conj = {set = allowed_conjs},
 		sort = true,
 	}
 
@@ -372,6 +371,7 @@ function export.misc_variant_multiple_terms(frame)
 		lang = args[1],
 		notext = args.notext,
 		text = iargs.text,
+		oftext = iargs.oftext,
 		terms = terms,
 		sort_key = args.sort,
 		conj = args.conj or iargs.conj or "and",
