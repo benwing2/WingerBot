@@ -3,6 +3,7 @@ local export = {}
 local debug_track_module = "Module:debug/track"
 local form_of_module = "Module:form of"
 local functions_module = "Module:fun"
+local headword_data_module = "Module:headword/data"
 local languages_module = "Module:languages"
 local load_module = "Module:load"
 local parameters_module = "Module:parameters"
@@ -123,7 +124,7 @@ end
 
 local m_form_of_pos
 local function get_m_form_of_pos()
-	m_form_of_pos, get_m_form_of_pos = load_data(require(form_of_module).form_of_pos_module), nil
+	m_form_of_pos, get_m_form_of_pos = load_data(headword_data_module).pos_aliases, nil
 	return m_form_of_pos
 end
 
@@ -143,7 +144,7 @@ This module contains code that directly implements {{tl|form of}}, {{tl|inflecti
 -- [[Wiktionary:Tracking/form-of/TEMPLATE/PAGE]]. If TEMPLATE is omitted, the tracking category is of the form
 -- [[Wiktionary:Tracking/form-of/PAGE]].
 local function track(page, template)
-	debug_track("form-of/" .. (template and template .. "/" or "") .. page)
+	debug_track("form of/" .. (template and template .. "/" or "") .. page)
 end
 
 
@@ -153,14 +154,10 @@ local function get_common_template_params()
 		["cat"] = {list = true, sublist = "comma without whitespace", flatten = true},
 		["notext"] = {type = "boolean"},
 		["sort"] = true,
-		["conj"] = {set = allowed_conj_set, default = "and"},
 		["enclitic"] = true,
 		-- FIXME! The following should only be available when withcap=1 in invocation args or when withencap=1 and the
 		-- language is "en". Before doing that, need to remove all uses of nocap= in other circumstances.
 		["nocap"] = {type = "boolean"},
-		-- FIXME! The following should only be available when withdot=1 in invocation args. Before doing that, need to
-		-- remove all uses of nodot= in other circumstances.
-		["nodot"] = {type = "boolean"},
 		["addl"] = true, -- additional text to display at the end, before the closing </span>
 		["pagename"] = true, -- for testing, etc.
 	}
@@ -253,8 +250,7 @@ local function handle_withdot_withcap(iargs, params)
 
 	if iargs.withdot then
 		params.dot = true
-	else
-		ignored_tracked_params.nodot = true
+		params.nodot = {type = "boolean"}
 	end
 
 	if iargs.withcap and iargs.withencap then
@@ -263,7 +259,7 @@ local function handle_withdot_withcap(iargs, params)
 
 	if not iargs.withcap then
 		params.cap = {type = "boolean"}
-		ignored_tracked_params.nocap = true
+		ignored_tracked_params.nocap = iargs.withencap and "non-english" or "always"
 	end
 
 	return ignored_tracked_params
@@ -460,34 +456,25 @@ local function construct_form_of_text(data)
 			-- Don't do this, doesn't seem to make sense.
 			-- parse_lang_prefix = true,
 			make_separate_g_into_list = true,
-			process_args_before_parsing = function(args)
-				-- For compatibility with the previous code, we accept a comma-separated list of genders in each of g=,
-				-- g2=, etc. in addition to separate genders in g=/g2=/etc.
-				if args.g and args.g[1] then
-					local genders = {}
-					for _, g in ipairs(args.g) do
-						extend(genders, split(g, ","))
-					end
-					args.g = genders
-				end
-			end,
 			splitchar = ",",
 			subitem_param_handling = "last",
+			parse_lang_prefix = true,
 		}
 	end
+
+	local lang = args[compat and "lang" or 1]
 
 	-- Tracking for certain user-specified params. This is generally used for
 	-- parameters that we accept but ignore, so that we can eventually remove
 	-- all uses of these params and stop accepting them.
 	if ignored_tracked_params then
-		for ignored_tracked_param, _ in pairs(ignored_tracked_params) do
-			if parent_args[ignored_tracked_param] then
+		for ignored_tracked_param, condition in pairs(ignored_tracked_params) do
+			if parent_args[ignored_tracked_param] and (condition ~= "non-english" or lang:getCode() ~= "en") then
 				track("arg/" .. ignored_tracked_param, template)
+				track("arg/" .. ignored_tracked_param)
 			end
 		end
 	end
-
-	local lang = args[compat and "lang" or 1]
 
 	-- Determine categories for the page, including tracking categories
 
@@ -551,7 +538,7 @@ local function construct_form_of_text(data)
 		init_param_mods()
 		local enclitics_obj = parse_terms_with_inline_modifiers("enclitic", args.enclitic, param_mods, lang)
 		enclitics = enclitics_obj.terms
-		enclitic_conj = enclitic_conj.conj
+		enclitic_conj = enclitics_obj.conj
 	end
 	local base_lemmas = {}
 	if base_lemma_params then
@@ -588,6 +575,7 @@ local function construct_form_of_text(data)
 		lemmas = lemmas,
 		conj = terms and terms.conj or iargs.conj,
 		enclitics = enclitics,
+		enclitic_conj = enclitic_conj,
 		base_lemmas = base_lemmas,
 		categories = categories,
 		posttext = posttext,
@@ -620,6 +608,7 @@ local function get_common_invocation_params()
 		["cat"] = {list = true, sublist = "comma without whitespace", flatten = true},
 		["ignore"] = {list = true},
 		["def"] = {list = true},
+		["conj"] = {set = allowed_conj_set, default = "and"},
 		["withcap"] = {type = "boolean"},
 		["withencap"] = {type = "boolean"},
 		["withdot"] = {type = "boolean"},
@@ -633,7 +622,8 @@ end
 
 
 local function should_ucfirst_text(args, iargs, lang)
-	return args.cap or (iargs.withcap or iargs.withencap and lang:getCode() == "en") and not args.nocap
+	local code = lang:getCode() 
+	return args.cap or (iargs.withcap or iargs.withencap and code == "en" or code == "mul") and not args.nocap
 end
 
 
@@ -723,8 +713,9 @@ function export.form_of_t(frame)
 				end
 			end
 			return format_form_of {
-				text = text, lemmas = lemma_data.lemmas, conj = lemma_data.conj, enclitics = lemma_data.enclitics,
-				base_lemmas = lemma_data.base_lemmas, lemma_face = "term", posttext = lemma_data.posttext
+				lang = lemma_data.lang, text = text, lemmas = lemma_data.lemmas, conj = lemma_data.conj,
+				enclitics = lemma_data.enclitics, base_lemmas = lemma_data.base_lemmas, lemma_face = "term",
+				posttext = lemma_data.posttext
 			}, {}
 		end
 	}
@@ -767,6 +758,7 @@ local function construct_tagged_form_of_text(data)
 				lemmas = lemma_data.lemmas,
 				conj = lemma_data.conj,
 				enclitics = lemma_data.enclitics,
+				enclitic_conj = lemma_data.enclitic_conj,
 				base_lemmas = lemma_data.base_lemmas,
 				lemma_face = "term",
 				POS = args.p,
