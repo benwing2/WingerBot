@@ -58,24 +58,23 @@ def process_text_on_page(
               pv = str(param.value).strip()
               if re.search("^" + paramspec + "$", pn):
                 if fn(pv):
-                  if args.verbose:
-                    if negate_messages:
-                      pagemsg("Skipping because param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
-                    else:
-                      pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
+                  if negate_messages:
+                    pagemsg("Skipping because param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
+                  elif args.verbose:
+                    pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
                   return True
           else:
             pn = paramspec
             pv = getp(pn)
             if fn(pv):
-              if args.verbose:
-                if negate_messages:
-                  pagemsg("Skipping because param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
-                else:
-                  pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
+              if negate_messages:
+                pagemsg("Skipping because param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
+              elif args.verbose:
+                pagemsg("Param %s=%s matches filter %s: %s" % (pn, pv, filt_for_message, origt))
               return True
           if negate_messages:
-            pagemsg("Processing because filter %s doesn't match: %s" % (filt_for_message, origt))
+            if args.verbose:
+              pagemsg("Processing because filter %s doesn't match: %s" % (filt_for_message, origt))
           else:
             pagemsg("Skipping because filter %s doesn't match: %s" % (filt_for_message, origt))
           return False
