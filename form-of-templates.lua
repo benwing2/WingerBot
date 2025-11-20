@@ -586,7 +586,7 @@ local function construct_form_of_text(data)
 	local text = form_of_text .. (
 		args.nodot and "" or args.dot or iargs.withdot and "." or ""
 	)
-	if #lemma_data.categories == 0 then
+	if not lemma_data.categories[1] then
 		return text
 	end
 	return text .. format_categories(lemma_data.categories, lemma_data.lang, args.sort,
@@ -712,11 +712,12 @@ function export.form_of_t(frame)
 					text = ucfirst(text)
 				end
 			end
+			-- This returns two values, which we pass up to the caller.
 			return format_form_of {
 				lang = lemma_data.lang, text = text, lemmas = lemma_data.lemmas, conj = lemma_data.conj,
 				enclitics = lemma_data.enclitics, base_lemmas = lemma_data.base_lemmas, lemma_face = "term",
 				posttext = lemma_data.posttext
-			}, {}
+			}
 		end
 	}
 end
