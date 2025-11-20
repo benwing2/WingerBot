@@ -23,7 +23,7 @@ def process_text_on_page(index, pagename, text):
   for t in parsed.filter_templates():
     origt = str(t)
     tn = tname(t)
-    if tn in ["desc", "descendant", "desctree", "descendants tree"]:
+    if tn in templates_to_do:
       if t.has("4"):
         gloss = getparam(t, "4")
         if gloss:
@@ -65,10 +65,13 @@ def process_text_on_page(index, pagename, text):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Move 3=/4= in {{desc}}/{{desctree}} to alt=/t=, consolidate genders", include_pagefile=True,
-    include_stdin=True)
+parser = blib.create_argparser("Move 3=/4= in specified templates e.g. {{desc}}/{{desctree}} to alt=/t=, consolidate genders",
+                               include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
+parser.add_argument("--templates", help="Comma-separated list of templates to move 3=/4= in",
+                    default="desc,descendant,desctree,descendants tree")
 start, end = blib.parse_start_end(args.start, args.end)
-
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_refs=["Template:desc", "Template:desctree"],
-    edit=True, stdin=True)
+templates_to_do = args.templates.split(",")
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+                           default_refs=["Template:%s" % temp for temp in templates_to_do],
+                           edit=True, stdin=True)
