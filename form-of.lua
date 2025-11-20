@@ -3,6 +3,7 @@ local export = {}
 export.force_cat = false -- for testing; set to true to display categories even on non-mainspace pages
 
 local debug_track_module = "Module:debug/track"
+local etymology_module = "Module:etymology"
 local form_of_cats_module = "Module:form of/cats"
 local form_of_data_module = "Module:form of/data"
 local form_of_data1_module = "Module:form of/data/1"
@@ -300,10 +301,15 @@ local function show_linked_term(data)
 	local termobj, face, span_classes, ok_to_destructively_modify, overall_lang, text_classes =
 		data.termobj, data.face, data.span_classes, data.ok_to_destructively_modify, data.overall_lang,
 		data.text_classes
-	local need_to_copy
-	local pretext_lang
+	local need_to_copy, pretext_lang
+	local categories = {}
 	if overall_lang and overall_lang:getCode() ~= termobj.lang:getCode() then
-		pretext_lang = wrap_in_span(termobj.lang:makeWikipediaLink() .. " ", text_classes)
+		local lang_display
+		lang_display, categories = require(etymology_module).insert_source_cat_get_display {
+			lang = data.overall_lang,
+			source = termobj.lang,
+		}
+		pretext_lang = wrap_in_span(lang_display .. " ", text_classes)
 	end
 	local need_to_show_qualifiers = termobj.q or termobj.qq or termobj.a or termobj.aa or termobj.l or termobj.ll or
 		termobj.refs
@@ -317,7 +323,7 @@ local function show_linked_term(data)
 	if need_to_show_qualifiers then
 		termobj.show_qualifiers = true
 	end
-	return wrap_in_span(full_link(termobj, face), span_classes)
+	return wrap_in_span(full_link(termobj, face), span_classes), categories
 end
 
 --[==[
@@ -354,7 +360,11 @@ the following fields:
    Use `false` for no wrapping.
 * `.posttext`: Additional text to display after the lemma links.
 * `.ok_to_destructively_modify`: If set, data structures (including the nested lemma structures) can be modified
-  in-place to save memory; otherwise they will be copied before modifying.]==]
+  in-place to save memory; otherwise they will be copied before modifying.
+
+Returns two values, the formatted string and any categories to add the page to (which will arise if `.lang` is
+specified and a language other than `.lang` is given in one of the lemmas in `.lemmas` or enclitics in `.enclitics`).
+]==]
 function export.format_form_of(data)
 	if type(data) ~= "table" then
 		error("Internal error: First argument must now be a table of arguments")
@@ -375,20 +385,25 @@ function export.format_form_of(data)
 	if data.text ~= "" and data.lemmas then
 		insert(parts, " ")
 	end
+	local categories = {}
 	if data.lemmas then
 		if type(data.lemmas) == "string" then
 			insert(parts, wrap_in_span(data.lemmas, lemma_classes))
 		else
 			local formatted_terms = {}
 			for _, lemma in ipairs(data.lemmas) do
-				insert(formatted_terms, show_linked_term {
+				local linked_term, this_categories = show_linked_term {
 					termobj = lemma,
 					face = data.lemma_face,
 					span_classes = lemma_classes,
 					ok_to_destructively_modify = data.ok_to_destructively_modify,
 					overall_lang = data.lang,
 					text_classes = text_classes
-				})
+				}
+				if this_categories[1] then
+					extend(categories, this_categories)
+				end
+				insert(formatted_terms, linked_term)
 			end
 			insert(parts, serial_comma_join(formatted_terms, {conj = data.conj or "and"}))
 		end
@@ -402,14 +417,18 @@ function export.format_form_of(data)
 		local formatted_terms = {}
 		for _, enclitic in ipairs(data.enclitics) do
 			-- FIXME, should we have separate clitic face and/or classes?
-			insert(formatted_terms, show_linked_term {
+			local linked_term, this_categories = show_linked_term {
 				termobj = enclitic,
 				face = data.lemma_face,
 				span_classes = lemma_classes,
 				ok_to_destructively_modify = data.ok_to_destructively_modify,
 				overall_lang = data.lang,
 				text_classes = text_classes
-			})
+			}
+			if this_categories[1] then
+				extend(categories, this_categories)
+			end
+			insert(formatted_terms, linked_term)
 		end
 		insert(parts, " (")
 		insert(parts, wrap_in_span("with enclitic" .. (#data.enclitics > 1 and "s" or "") .. " ", text_classes))
@@ -449,7 +468,7 @@ function export.format_form_of(data)
 	if text_classes then
 		insert(parts, "</span>")
 	end
-	return concat(parts)
+	return concat(parts), categories
 end
 format_form_of = export.format_form_of
 
@@ -1408,19 +1427,20 @@ function export.tagged_inflections(data)
 	local format_data = shallow_copy(data)
 
 	local of_text = data.lemmas and " of" or ""
-	local formatted_text
+	local formatted_text, this_categories
 	if #inflections == 1 then
 		if need_per_tag_set_labels then
 			error("Internal error: need_per_tag_set_labels should not be set with one inflection")
 		end
 		format_data.text = format_labels(overall_labels, data, data.notext) .. (data.pretext or "") .. (data.notext and "" or
 			((data.capfirst and ucfirst(inflections[1].infl_text) or inflections[1].infl_text) .. of_text))
-		formatted_text = format_form_of(format_data)
+		formatted_text, this_categories = format_form_of(format_data)
 	else
 		format_data.text = format_labels(overall_labels, data, data.notext) .. (data.pretext or "") .. (data.notext and "" or
 			((data.capfirst and "Inflection" or "inflection") .. of_text))
 		format_data.posttext = (data.posttext or "") .. ":"
-		local link = format_form_of(format_data)
+		local link
+		link, this_categories = format_form_of(format_data)
 		local text_classes = data.text_classes
 		if text_classes == nil then
 			text_classes = "form-of-definition use-with-mention"
@@ -1431,9 +1451,12 @@ function export.tagged_inflections(data)
 		end
 		formatted_text = link .. concat(inflections)
 	end
+	if this_categories[1] then
+		extend(categories, this_categories)
+	end
 
 	if not data.no_format_categories then
-		if #categories > 0 then
+		if categories[1] then
 			formatted_text = formatted_text .. format_categories(categories, data.lang,
 				data.sort, nil, export.force_cat)
 		end
