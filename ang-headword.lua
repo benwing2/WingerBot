@@ -3,32 +3,17 @@ local pos_functions = {}
 
 local lang = require("Module:languages").getByCode("ang")
 
-local rfind = mw.ustring.find
-local rsubn = mw.ustring.gsub
+local insert = table.insert
+local remove = table.remove
 
--- version of rsubn() that discards all but the first return value
-local function rsub(term, foo, bar)
-	local retval = rsubn(term, foo, bar)
-	return retval
+local function get_plaintext(...)
+	get_plaintext = require("Module:utilities").get_plaintext
+	return get_plaintext(...)
 end
 
 local function track(page)
 	require("Module:debug").track("ang-headword/" .. page)
 	return true
-end
-
-local function format(array, concatenater)
-	if #array == 0 then
-		return ""
-	else
-		local concatenated = table.concat(array, concatenater)
-		if concatenated == "" then
-			return ""
-		elseif rfind(concatenated, "'$") then
-			concatenated = concatenated .. " "
-		end
-		return "; ''" .. concatenated .. "''"
-	end
 end
 
 local function glossary_link(anchor, text)
@@ -40,12 +25,13 @@ end
 -- This is the only function that can be invoked from a template.
 function export.show(frame)
 	local NAMESPACE = mw.title.getCurrentTitle().nsText
-	local PAGENAME = mw.title.getCurrentTitle().text
+	-- unused
+	-- local PAGENAME = mw.loadData("Module:headword/data").pagename
 
 	local iparams = {
 		[1] = {required = true},
-		["def"] = {},
-		["suff_type"] = {},
+		["def"] = true,
+		["suff_type"] = true,
 	}
 	local iargs = require("Module:parameters").process(frame.args, iparams)
 	local args = frame:getParent().args
@@ -54,22 +40,26 @@ function export.show(frame)
 	local suff_type = iargs.suff_type
 	local postype = nil
 	if suff_type then
-		postype = poscat .. '-' .. suff_type
+		postype = poscat .. "-" .. suff_type
 	else
 		postype = poscat
 	end
 
-	local data = {lang = lang, categories = {}, heads = {}, genders = {}, inflections = {}}
-	local infl_classes = {}
-	local appendix = {}
-	local postscript = {}
+	local data = {
+		lang = lang,
+		heads = {},
+		genders = {},
+		inflections = {},
+		categories = {},
+		no_redundant_head_cat = true, -- we want the headword specified to specify whether it has long vowels
+	}
 
 	if poscat == "suffixes" then
-		table.insert(data.categories, "Old English " .. suff_type .. "-forming suffixes")
+		insert(data.categories, "Old English " .. suff_type .. "-forming suffixes")
 	end
 
 	if pos_functions[postype] then
-		local new_poscat = pos_functions[postype](def, args, data, infl_classes, appendix, postscript)
+		local new_poscat = pos_functions[postype](def, args, data)
 		if new_poscat then
 			poscat = new_poscat
 		end
@@ -77,20 +67,46 @@ function export.show(frame)
 
 	data.pos_category = (NAMESPACE == "Reconstruction" and "reconstructed " or "") .. poscat
 	
-	postscript = table.concat(postscript, ", ")
-	
-	return
-		require("Module:headword").full_headword(data)
-		.. format(infl_classes, "/")
-		.. format(appendix, ", ")
-		.. (postscript ~= "" and " (" .. postscript .. ")" or "")
+	return require("Module:headword").full_headword(data)
 end
 
-pos_functions["verbs"] = function(def, args, data, infl_classes, appendix)
+local function validate_genders(genders)
+	for _, gspec in ipairs(genders) do
+		local g = gspec.spec
+		if g ~= "m" and g ~= "f" and g ~= "n" and g ~= "m-p" and g ~= "f-p" and g ~= "n-p" and g ~= "?" then
+			error("Invalid gender: " .. g)
+		end
+	end
+end
+
+pos_functions["nouns"] = function(def, args, data)
 	local params = {
-		[1] = {alias_of = 'head'},
 		["head"] = {list = true},
-		["id"] = {},
+		["id"] = true,
+		[1] = {type = "genders", list = "g", flatten = true, disallow_holes = true},
+		["g"] = {alias_of = 1, list = false},
+		[2] = {list = "pl", disallow_holes = true},
+	}
+
+	local args = require("Module:parameters").process(args, params)
+	data.heads = args.head
+	data.id = args.id
+	validate_genders(args[1])
+	data.genders = args[1]
+	local pl = args[2]
+	if pl[1] then
+		pl.label = "nominative plural"
+		insert(data.inflections, pl)
+	end
+end
+
+pos_functions["proper nouns"] = pos_functions["nouns"]
+
+pos_functions["verbs"] = function(def, args, data)
+	local params = {
+		[1] = {alias_of = "head", list = false},
+		["head"] = {list = true},
+		["id"] = true,
 	}
 
 	local args = require("Module:parameters").process(args, params)
@@ -98,190 +114,76 @@ pos_functions["verbs"] = function(def, args, data, infl_classes, appendix)
 	data.id = args.id
 end
 
-local function adjectives(pos, def, args, data, infl_classes, appendix)
-	local NAMESPACE = mw.title.getCurrentTitle().nsText
+local function adjectives(pos, def, args, data)
+	local list = {list = true}
 	local params = {
-		[1] = {alias_of = "head"},
-		["head"] = {list = true},
-		["comp"] = {list = true},
-		[2] = {alias_of = "comp"},
-		["sup"] = {list = true},
-		[3] = {alias_of = "sup"},
-		["adv"] = {list = true},
-		["indecl"] = {type = boolean},
-		["id"] = {},
+		[1] = {alias_of = "head", list = false},
+		["head"] = list,
+		["comp"] = list,
+		[2] = {alias_of = "comp", list = false},
+		["sup"] = list,
+		[3] = {alias_of = "sup", list = false},
+		["adv"] = list,
+		["indecl"] = {type = "boolean"},
+		["id"] = true,
 	}
 	local args = require("Module:parameters").process(args, params)
 	data.heads = args.head
 	data.id = args.id
 
 	if args.indecl then
-		table.insert(data.inflections, {label = glossary_link("indeclinable")})
+		insert(data.inflections, {label = glossary_link("indeclinable")})
 	end
 	local comp = args.comp
 	if #comp > 0 then
 		comp.label = "comparative"
-		table.insert(data.inflections, comp)
+		insert(data.inflections, comp)
 	end
 	local sup = args.sup
 	if #sup > 0 then
 		sup.label = "superlative"
-		table.insert(data.inflections, sup)
+		insert(data.inflections, sup)
 	end
 	if #args.adv > 0 then
 		args.adv.label = "adverb"
-		table.insert(data.inflections, args.adv)
+		insert(data.inflections, args.adv)
 	end
 end
 
-local function adjectives_comp(pos, def, args, data, infl_classes, appendix)
-	if args.is_lemma then
-		-- Track so we can remove uses
-		track("islemma")
-	end
-	local params = {
-		[1] = {alias_of = 'head'},
-		[2] = {alias_of = 'pos'},
-		["head"] = {list = true, default = mw.title.getCurrentTitle().text},
-		["pos"] = {list = true},
-		["sup"] = {list = true},
-		["islemma"] = {type = "boolean"},
-		["is_lemma"] = {type = "boolean", alias_of = "islemma"},
-		["indecl"] = {type = boolean},
-		["id"] = {},
-	}
-	local args = require("Module:parameters").process(args, params)
-	data.heads = args.head
-	data.id = args.id
-	if args.islemma then
-		-- See below. This happens automatically by virtue of the default POS
-		-- unless we overrride it, which we do when islemma.
-		table.insert(data.categories, "Old English comparative " .. pos)
-	end
-
-	if args.indecl then
-		table.insert(data.inflections, {label = glossary_link("indeclinable")})
-	end
-	if #args.pos > 0 then
-		args.pos.label = "positive"
-		table.insert(data.inflections, args.pos)
-	elseif args.islemma then
-		table.insert(data.inflections, {label = "no positive form"})
-	end
-
-	if #args.sup > 0 then
-		args.sup.label = "superlative"
-		table.insert(data.inflections, args.sup)
-	end
-
-	if args.islemma then
-		-- If islemma, we're a comparative adjective without positive form,
-		-- so we're treated as a lemma. In that case, we return "adjectives" as
-		-- the part of speech, which will automatically categorize into
-		-- "Old English adjectives" and "Old English lemmas", otherwise we don't
-		-- return anything, which defaults to the passed-in POS (usually
-		-- "comparative adjectives"), which will automatically categorize into
-		-- that POS (e.g. "Old English comparative adjectives") and into
-		-- "Old English non-lemma forms".
-		return pos
-	end
-end
-
-local function adjectives_sup(pos, def, args, data, infl_classes, appendix)
-	if args.is_lemma then
-		-- Track so we can remove uses
-		track("islemma")
-	end
-	local params = {
-		[1] = {alias_of = 'head'},
-		[2] = {alias_of = 'pos'},
-		["head"] = {list = true, default = mw.title.getCurrentTitle().text},
-		["pos"] = {list = true},
-		["comp"] = {list = true},
-		["islemma"] = {type = "boolean"},
-		["is_lemma"] = {type = "boolean", alias_of = "islemma"},
-		["indecl"] = {type = boolean},
-		["id"] = {},
-	}
-	local args = require("Module:parameters").process(args, params)
-	data.heads = args.head
-	data.id = args.id
-
-	if args.islemma then
-		-- See below. This happens automatically by virtue of the default POS
-		-- unless we overrride it, which we do when islemma.
-		table.insert(data.categories, "Old English superlative " .. pos)
-	end
-
-	if args.indecl then
-		table.insert(data.inflections, {label = glossary_link("indeclinable")})
-	end
-	if #args.pos > 0 then
-		args.pos.label = "positive"
-		table.insert(data.inflections, args.pos)
-	end
-	if #args.comp > 0 then
-		args.comp.label = "comparative"
-		table.insert(data.inflections, args.comp)
-	end
-	if #args.pos == 0 and #args.comp == 0 and args.islemma then
-		table.insert(data.inflections, {label = "no positive or comparative form"})
-	end
-
-	if args.islemma then
-		-- If islemma, we're a superlative adjective without positive form,
-		-- so we're treated as a lemma. In that case, we return "adjectives" as
-		-- the part of speech, which will automatically categorize into
-		-- "Old English adjectives" and "Old English lemmas", otherwise we don't
-		-- return anything, which defaults to the passed-in POS (usually
-		-- "superlative adjectives"), which will automatically categorize into
-		-- that POS (e.g. "Old English superlative adjectives") and into
-		-- "Old English non-lemma forms".
-		return pos
-	end
-end
-
-pos_functions["adjectives"] = function(def, args, data, infl_classes, appendix)
-	return adjectives("adjectives", def, args, data, infl_classes, appendix)
-end
-
-pos_functions["comparative adjectives"] = function(def, args, data, infl_classes, appendix)
-	return adjectives_comp("adjectives", def, args, data, infl_classes, appendix)
-end
-
-pos_functions["superlative adjectives"] = function(def, args, data, infl_classes, appendix)
-	return adjectives_sup("adjectives", def, args, data, infl_classes, appendix)
+pos_functions["adjectives"] = function(def, args, data)
+	return adjectives("adjectives", def, args, data)
 end
 	
-pos_functions["participles"] = function(def, args, data, infl_classes, appendix)
-	return adjectives("participles", def, args, data, infl_classes, appendix)
+pos_functions["participles"] = function(def, args, data)
+	return adjectives("participles", def, args, data)
 end
 
-pos_functions["determiners"] = function(def, args, data, infl_classes, appendix)
-	return adjectives("determiners", def, args, data, infl_classes, appendix)
+pos_functions["determiners"] = function(def, args, data)
+	return adjectives("determiners", def, args, data)
 end
 
-pos_functions["pronouns"] = function(def, args, data, infl_classes, appendix)
-	return adjectives("pronouns", def, args, data, infl_classes, appendix)
+pos_functions["pronouns"] = function(def, args, data)
+	return adjectives("pronouns", def, args, data)
 end
 
-pos_functions["suffixes-adjective"] = function(def, args, data, infl_classes, appendix)
-	return adjectives("suffixes", def, args, data, infl_classes, appendix)
+pos_functions["suffixes-adjective"] = function(def, args, data)
+	return adjectives("suffixes", def, args, data)
 end
 
-pos_functions["numerals-adjective"] = function(def, args, data, infl_classes, appendix)
-	return adjectives("numerals", def, args, data, infl_classes, appendix)
+pos_functions["numerals-adjective"] = function(def, args, data)
+	return adjectives("numerals", def, args, data)
 end
 
-pos_functions["adverbs"] = function(def, args, data, infl_classes, appendix)
+pos_functions["adverbs"] = function(def, args, data)
+	local list = {list = true}
 	local params = {
-		[1] = {alias_of = 'head'},
-		[2] = {alias_of = 'comp'},
-		[3] = {alias_of = 'sup'},
-		["head"] = {list = true},
-		["comp"] = {list = true},
-		["sup"] = {list = true},
-		["id"] = {},
+		[1] = {alias_of = "head", list = false},
+		[2] = {alias_of = "comp", list = false},
+		[3] = {alias_of = "sup", list = false},
+		["head"] = list,
+		["comp"] = list,
+		["sup"] = list,
+		["id"] = true,
 	}
 
 	local args = require("Module:parameters").process(args, params)
@@ -303,110 +205,124 @@ pos_functions["adverbs"] = function(def, args, data, infl_classes, appendix)
 	end
 
 	if comp == "-" then
-		table.insert(data.inflections, {label = "not [[Appendix:Glossary#comparative|comparable]]"})
-		table.insert(data.categories, "Old English uncomparable adverbs")
+		insert(data.inflections, {label = "not " .. glossary_link("comparable")})
+		insert(data.categories, "Old English uncomparable adverbs")
 	else
-		table.insert(data.inflections, comp)
+		insert(data.inflections, comp)
 	end
 	if sup == "-" then
 		if comp ~= "-" then
-			table.insert(data.inflections, {label = "no [[Appendix:Glossary#superlative|superlative]]"})
+			insert(data.inflections, {label = "no " .. glossary_link("superlative")})
 		end
 	else
-		table.insert(data.inflections, sup)
-	end
-end
-
-pos_functions["comparative adverbs"] = function(def, args, data, infl_classes, appendix)
-	local params = {
-		[1] = {alias_of = 'head'},
-		[2] = {alias_of = 'pos'},
-		["head"] = {list = true, default = mw.title.getCurrentTitle().text},
-		["pos"] = {list = true},
-		["sup"] = {list = true},
-		["islemma"] = {type = "boolean"},
-		["id"] = {},
-	}
-	local args = require("Module:parameters").process(args, params)
-	data.heads = args.head
-	data.id = args.id
-	if args.islemma then
-		-- See below. This happens automatically by virtue of the default POS
-		-- unless we overrride it, which we do when islemma.
-		table.insert(data.categories, "Old English comparative adverbs")
-	end
-
-	if #args.pos > 0 then
-		args.pos.label = "positive"
-		table.insert(data.inflections, args.pos)
-	elseif args.islemma then
-		table.insert(data.inflections, {label = "no positive form"})
-	end
-
-	if #args.sup > 0 then
-		args.sup.label = "superlative"
-		table.insert(data.inflections, args.sup)
-	end
-
-	if args.islemma then
-		-- See the corresponding comment in adjectives_comp().
-		return "adverbs"
-	end
-end
-
-pos_functions["superlative adverbs"] = function(def, args, data, infl_classes, appendix)
-	local params = {
-		[1] = {alias_of = 'head'},
-		[2] = {alias_of = 'pos'},
-		["head"] = {list = true, default = mw.title.getCurrentTitle().text},
-		["pos"] = {list = true},
-		["comp"] = {list = true},
-		["islemma"] = {type = "boolean"},
-		["id"] = {},
-	}
-	local args = require("Module:parameters").process(args, params)
-	data.heads = args.head
-	data.id = args.id
-
-	if args.islemma then
-		-- See below. This happens automatically by virtue of the default POS
-		-- unless we overrride it, which we do when islemma.
-		table.insert(data.categories, "Old English superlative adverbs")
-	end
-
-	if #args.pos > 0 then
-		args.pos.label = "positive"
-		table.insert(data.inflections, args.pos)
-	end
-	if #args.comp > 0 then
-		args.comp.label = "comparative"
-		table.insert(data.inflections, args.comp)
-	end
-	if #args.pos == 0 and #args.comp == 0 and args.islemma then
-		table.insert(data.inflections, {label = "no positive or comparative form"})
-	end
-
-	if args.islemma then
-		-- See the corresponding comment in adjectives_comp().
-		return "adverbs"
+		insert(data.inflections, sup)
 	end
 end
 
 pos_functions["suffixes-adverb"] = pos_functions["adverbs"]
 
-local function non_lemma_forms(def, args, data, infl_classes, appendix, postscript)
+local function get_forms(forms)
+	if #forms == 0 then
+		return nil
+	end
+	local i, attested = 1, false
+	while true do
+		local form = forms[i]
+		if form == nil then
+			return forms, attested
+		elseif form == "-" then
+			remove(forms, i)
+		else
+			if not (attested or get_plaintext(form):sub(1, 1) == "*") then
+				attested = true
+			end
+			i = i + 1
+		end
+	end
+end
+
+local function degree(pos, deg, other_arg, other_label, args, data)
+	local boolean = {type = "boolean"}
+	local list = {list = true}
+	local params = {
+		[1] = {alias_of = "head", list = false},
+		["head"] = list,
+		["positive"] = list,
+		[other_arg] = list,
+		["indecl"] = boolean,
+		["id"] = true,
+	}
+	local args = require("Module:parameters").process(args, params)
+	data.heads = args.head
+	data.id = args.id
+
+	if args.indecl then
+		insert(data.inflections, {label = glossary_link("indeclinable")})
+	end
+
+	local positive, positive_attested = get_forms(args.positive)
+
+	if positive then
+		if not positive_attested then
+			insert(data.categories, "Old English " .. deg .. "-only " .. pos)
+		end
+		if #positive > 0 then
+			args.positive.label = "positive"
+			insert(data.inflections, args.positive)
+		else
+			insert(data.inflections, {label = "no positive form"})
+		end
+	end
+
+	local other = get_forms(args[other_arg])
+	if other then
+		if #other > 0 then
+			args[other_arg].label = other_label
+			insert(data.inflections, args[other_arg])
+		else
+			insert(data.inflections, {label = "no " .. other_label .. " form"})
+		end
+	end
+
+	-- If a lemma, return the primary part of speech ("adjectives" or
+	-- "adverbs"), so that the term is categorized in "Old English adjectives"
+	-- or "Old English adverbs". Otherwise, return nothing, so that the term
+	-- goes in the relevant non-lemma category (e.g. "Old English comparative
+	-- adjectives"), and into "Old English non-lemma forms".
+	if positive and not positive_attested then
+		return pos
+	end
+end
+
+pos_functions["comparative adjectives"] = function(def, args, data)
+	return degree("adjectives", "comparative", "sup", "superlative", args, data)
+end
+
+pos_functions["superlative adjectives"] = function(def, args, data)
+	return degree("adjectives", "superlative", "comp", "comparative", args, data)
+end
+
+pos_functions["comparative adverbs"] = function(def, args, data)
+	return degree("adverbs", "comparative", "sup", "superlative", args, data)
+end
+
+pos_functions["superlative adverbs"] = function(def, args, data)
+	return degree("adverbs", "superlative", "comp", "comparative", args, data)
+end
+
+local function non_lemma_forms(def, args, data)
 	local params = {
 		[1] = {required = true, default = def}, -- headword or cases
 		["head"] = {list = true, require_index = true},
 		["g"] = {list = true},
-		["id"] = {},
+		["id"] = true,
 	}
 
 	local args = require("Module:parameters").process(args, params)
 
 	local heads = {args[1]}
 	for _, head in ipairs(args.head) do
-		table.insert(heads, head)
+		insert(heads, head)
 	end
 	data.heads = heads
 	data.genders = args.g
