@@ -6,6 +6,7 @@ local template_parser_module = "Module:template parser"
 
 local concat = table.concat
 local dump = mw.dumpObject
+local expand_template = require("Module:frame").expandTemplate
 local insert = table.insert
 local is_callable = require("Module:fun").is_callable
 local lcfirst = require("Module:string utilities").lcfirst
@@ -18,6 +19,10 @@ local tostring = tostring
 local type = type
 local ucfirst = require("Module:string utilities").ucfirst
 local uupper = require("Module:string utilities").upper
+
+local function internal_error(msg)
+	error("Internal error: " .. msg)
+end
 
 local function get_lang(...)
 	local _get_lang = require("Module:languages").getByCode
@@ -54,7 +59,7 @@ local valid_keys = list_to_set{"code", "label", "sc", "raw", "args", "also", "ca
 function Category.new(info)
 	for key in pairs(info) do
 		if not valid_keys[key] then
-			error("The parameter \"" .. key .. "\" was not recognized.")
+			internal_error("The parameter \"" .. key .. "\" was not recognized.")
 		end
 	end
 
@@ -62,13 +67,13 @@ function Category.new(info)
 	self._info = info
 
 	if not self._info.label then
-		error("No label was specified.")
+		internal_error("No label was specified.")
 	end
 
 	self:initCommon()
 
 	if not self._data then
-		error("The " .. (self._info.raw and "raw " or "") .. "label \"" .. self._info.label .. "\" does not exist" .. self:get_originating_info() .. ".")
+		internal_error("The " .. (self._info.raw and "raw " or "") .. "label \"" .. self._info.label .. "\" does not exist" .. self:get_originating_info() .. ".")
 	end
 
 	return self
@@ -76,6 +81,27 @@ end
 
 
 function Category:initCommon()
+	local function patch_args(args)
+		-- This fixes the issue with Scribunto automatically converting keys
+		-- in a table as numbers to strings, which in turn causes a circular
+		-- error for having argument parameter names as numbers as strings.
+		
+		if type(args) ~= "table" then
+			return args
+		end
+		
+		local new_args = {}
+		for k, v in pairs(args) do
+			if type(k) == "string" and string.len(k) < 10 and not string.match(k, "^0") and string.match(k, "^%d+$") then
+				new_args[tonumber(k)] = patch_args(v)
+			else
+				new_args[k] = patch_args(v)
+			end
+		end
+		return new_args
+	end
+	
+	
 	local args_handled = false
 	if self._info.raw then
 		-- Check if the category exists
@@ -95,7 +121,7 @@ function Category:initCommon()
 			-- Go through raw handlers
 			local data = {
 				category = self._info.label,
-				args = self._info.args or {},
+				args = patch_args(self._info.args) or {},
 				called_from_inside = self._info.called_from_inside,
 			}
 			for _, handler in ipairs(lang_independent_data["RAW_HANDLERS"]) do
@@ -112,14 +138,14 @@ function Category:initCommon()
 				end
 				if self._data.lang then
 					if type(self._data.lang) ~= "string" then
-						error("Received non-string value " .. dump(self._data.lang) .. " for self._data.lang, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
+						internal_error("Received non-string value " .. dump(self._data.lang) .. " for self._data.lang, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
 					end
 					self._lang = get_lang(self._data.lang)
 					self._info.code = self._lang:getCode()
 				end
 				if self._data.sc then
 					if type(self._data.sc) ~= "string" then
-						error("Received non-string value " .. dump(self._data.sc) .. " for self._data.sc, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
+						internal_error("Received non-string value " .. dump(self._data.sc) .. " for self._data.sc, label \"" .. self._info.label .. "\"" .. self:get_originating_info() .. ".")
 					end
 					self._sc = get_script(self._data.sc)
 					self._info.sc = self._sc:getCode()
@@ -173,7 +199,7 @@ function Category:initCommon()
 								label = self._info.label,
 								lang = self._lang,
 								sc = self._sc,
-								args = self._info.args or {},
+								args = patch_args(self._info.args) or {},
 								called_from_inside = self._info.called_from_inside,
 							}
 							self._data, args_handled = handler(data)
@@ -215,7 +241,7 @@ function Category:initCommon()
 				label = self._info.label,
 				lang = self._lang,
 				sc = self._sc,
-				args = self._info.args or {},
+				args = patch_args(self._info.args) or {},
 				called_from_inside = self._info.called_from_inside,
 			}
 			for _, handler in ipairs(lang_independent_data["HANDLERS"]) do
@@ -239,7 +265,7 @@ function Category:initCommon()
 	end
 
 	if self._sc and not self._lang then
-		error("Umbrella categories cannot have a script specified.")
+		internal_error("Umbrella categories cannot have a script specified.")
 	end
 end
 
@@ -254,9 +280,9 @@ function Category:convert_spec_to_string(desc)
 	elseif desc_type == "number" then
 		return tostring(desc)
 	elseif not is_callable(desc) then
-		error("Internal error: `desc` must be a string, number, function, callable table or nil; received a " .. desc_type)
+		internal_error("`desc` must be a string, number, function, callable table or nil; received " .. dump(desc))
 	end
-	desc = desc{
+	desc = desc {
 		lang = self._lang,
 		sc = self._sc,
 		label = self._info.label,
@@ -269,7 +295,7 @@ function Category:convert_spec_to_string(desc)
 	if desc_type == "string" then
 		return desc
 	end
-	error("Internal error: the value returned by `desc` must be a string or nil; received a " .. desc_type)
+	internal_error("The value returned by `desc` must be a string or nil; received " .. dump(desc))
 end
 
 local function add_obj_args(args, obj, obj_type)
@@ -328,9 +354,9 @@ function Category:getBreadcrumbName()
 	local ret
 
 	if self._lang or self._info.raw then
-		ret = self._data.breadcrumb
+		ret = self._data.breadcrumb or self._data.breadcrumb_and_first_sort_base
 	else
-		ret = self._data.umbrella and self._data.umbrella.breadcrumb
+		ret = self._data.umbrella and (self._data.umbrella.breadcrumb or self._data.umbrella.breadcrumb_and_first_sort_base)
 	end
 	if not ret then
 		ret = self._info.label
@@ -354,7 +380,7 @@ end
 local function expand_toc_template_if(template)
 	local template_obj = new_title(template, 10)
 	if template_obj.exists then
-		return mw.getCurrentFrame():expandTemplate{title = template_obj.text, args = {}}
+		return expand_template{title = template_obj.text}
 	end
 	return nil
 end
@@ -653,14 +679,18 @@ function Category:new_sortkey(sortkey)
 	return sortkey
 end
 
-function Category:inherit_spec(spec, parent_spec)
+function Category:inherit_spec(spec, parent_spec, substitute_result)
 	if spec == false then
 		return nil
 	end
-	return self:substitute_template_specs(spec or parent_spec)
+	local retval = spec or parent_spec
+	if substitute_result then
+		retval = self:substitute_template_specs(retval)
+	end
+	return retval
 end
 
-function Category:canonicalize_parents_children(cats, is_children)
+function Category:canonicalize_parents_children(cats, is_children, fallback_sort_base)
 	if not cats then
 		return nil
 	elseif type(cats) == "table" then
@@ -693,26 +723,26 @@ function Category:canonicalize_parents_children(cats, is_children)
 			raw = cat.raw
 		end
 		
-		local lang = self:inherit_spec(cat.lang, not raw and self._info.code or nil)
-		local sc = self:inherit_spec(cat.sc, not raw and self._info.sc or nil)
+		local lang = self:inherit_spec(cat.lang, not raw and self._info.code or nil, "substitute")
+		local sc = self:inherit_spec(cat.sc, not raw and self._info.sc or nil, "substitute")
 		
 		-- Get the sortkey.
-		local sortkey = cat.sort
+		local sortkey = self:inherit_spec(cat.sort, i == 1 and fallback_sort_base and {sort_base = fallback_sort_base} or nil)
 		if type(sortkey) == "table" then
 			sortkey.sort_base = self:substitute_template_specs(sortkey.sort_base) or
-				error("Missing .sort_base in '" .. table_type .. "' .sort table for '" ..
+				internal_error("Missing .sort_base in '" .. table_type .. "' .sort table for '" ..
 					self._info.label .. "' category entry in module '" .. (self._data.module or "unknown") .. "'")
 			if sortkey.sort_func then
 				-- Not allowed to give a lang and/or script if sort_func is given.
 				local bad_spec = sortkey.lang and "lang" or sortkey.sc and "sc" or nil
 				if bad_spec then
-					error("Cannot specify both ." .. bad_spec .. " and .sort_func in '" .. table_type ..
+					internal_error("Cannot specify both ." .. bad_spec .. " and .sort_func in '" .. table_type ..
 						"' .sort table for '" .. self._info.label .. "' category entry in module '" ..
 						(self._data.module or "unknown") .. "'")
 				end
 			else
-				sortkey.lang = self:inherit_spec(sortkey.lang, lang)
-				sortkey.sc = self:inherit_spec(sortkey.sc, sc)
+				sortkey.lang = self:inherit_spec(sortkey.lang, lang, "substitute")
+				sortkey.sc = self:inherit_spec(sortkey.sc, sc, "substitute")
 			end
 		else
 			sortkey = self:substitute_template_specs(sortkey)
@@ -722,14 +752,14 @@ function Category:canonicalize_parents_children(cats, is_children)
 		if cat.module then
 			-- A reference to a category using another category tree module.
 			if not cat.args then
-				error("Missing .args in '" .. table_type .. "' table with module=\"" .. cat.module .. "\" for '" ..
+				internal_error("Missing .args in '" .. table_type .. "' table with module=\"" .. cat.module .. "\" for '" ..
 					self._info.label .. "' category entry in module '" .. (self._data.module or "unknown") .. "'")
 			end
 			name = require("Module:category tree/" .. cat.module).new(self:substitute_template_specs_in_args(cat.args))
 		else
 			name = cat.name
 			if not name then
-				error("Missing .name in " .. (is_umbrella and "umbrella " or "") .. "'" .. table_type .. "' table for '" ..
+				internal_error("Missing .name in " .. (is_umbrella and "umbrella " or "") .. "'" .. table_type .. "' table for '" ..
 					self._info.label .. "' category entry in module '" .. (self._data.module or "unknown") .. "'")
 			elseif type(name) == "string" then -- otherwise, assume it's a category object and use it directly
 				name = self:substitute_template_specs(name)
@@ -771,14 +801,16 @@ function Category:getParents()
 			{name = parent2, sort = self._sc:getCanonicalName()},
 		}
 	else
-		local parents
+		local parents, fallback_sort_base
 		if is_umbrella then
 			parents = self._data.umbrella and self._data.umbrella.parents or self._data.umbrella_parents
+			fallback_sort_base = self._data.umbrella and self._data.umbrella.breadcrumb_and_first_sort_base or nil
 		else
 			parents = self._data.parents
+			fallback_sort_base = self._data.breadcrumb_and_first_sort_base
 		end
 
-		ret = self:canonicalize_parents_children(parents)
+		ret = self:canonicalize_parents_children(parents, nil, fallback_sort_base)
 		if not ret then
 			return nil
 		end
@@ -788,7 +820,7 @@ function Category:getParents()
 	for _, parent in ipairs(ret) do
 		local parent_cat = parent.name.getCategoryName and parent.name:getCategoryName()
 		if self_cat == parent_cat then
-			error(("Internal error: Infinite loop would occur, as parent category '%s' is the same as the child category"):format(self_cat))
+			internal_error(("Infinite loop would occur, as parent category '%s' is the same as the child category"):format(self_cat))
 		end
 	end
 
@@ -896,7 +928,7 @@ end
 function Category:getTOCTemplateName()
 	-- This should only be invoked if getTOC() returns true, meaning to do the default algorithm, but getTOC()
 	-- implements its own default algorithm.
-	error("Internal error: This should never get called")
+	internal_error("This should never get called")
 end
 
 
