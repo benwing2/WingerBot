@@ -3,7 +3,7 @@ local pos_functions = {}
 
 local force_cat = false -- for testing; if true, categories appear in non-mainspace pages
 
-local langcode = "oj"
+local langcode = "unm"
 local lang = require("Module:languages").getByCode(langcode, true)
 local langname = lang:getCanonicalName()
 
@@ -19,32 +19,25 @@ local glossary_link = require_when_needed(headword_utilities_module, "glossary_l
 local links_module = "Module:links"
 local parse_interface_module = "Module:parse interface"
 
-local rfind = m_str_utils.find
-local ulower = m_str_utils.lower
 local insert = table.insert
 
-local list_param = {list = true, disallow_holes = true}
 local boolean_param = {type = "boolean"}
 
-local legal_verb_class = {
-	["vii"] = {"inanimate intransitive verbs", {["+"] = "", p = "inherently plural"}},
-	["vai"] = {"animate intransitive verbs", {
-		["+"] = "", ["2"] = "pseudo-VAI", o = "optional object", p = "inherently plural"}
-	},
-	["vti"] = {"transitive inanimate verbs", {
-		["+"] = "{{m|oj||-am}} stem", ["2"] = "{{m|oj||-oo}} stem", ["3"] = "{{m|oj||-i}} stem",
-		["4"] = "{{m|oj||-aam}} stem"}
-	},
-	["vta"] = {"transitive animate verbs", {["+"] = "", i = "inverse only"}},
+local legal_verb_classes = {
+	["vii"] = {"inanimate intransitive", "VII (<<inanimate>>-subject <<intransitive>>)"},
+	["vai"] = {"animate intransitive", "VAI (<<animate>>-subject <<intransitive>>)"},
+	["vti"] = {"transitive inanimate", "VTI (<<transitive>> <<inanimate>>-object)"},
+	["vta"] = {"transitive animate", "VTA (<<transitive>> <<animate>>-object)"},
 }
 
-local m_scripts = require("Module:scripts")
-local Latn = m_scripts.getByCode("Latn")
-local Cans = m_scripts.getByCode("Cans")
+local function track(page)
+	require("Module:debug/track")("unm-headword/" .. page)
+	return true
+end
 
 -- Parse an inflection. The raw arguments come from `args[field]`, which is parsed for inline modifiers. Multiple
 -- comma-separated values are allowed.
-local function parse_inflection(data, args, field, is_head)
+local function parse_inflection(args, field, is_head)
 	local argfield = field
 	local argpref = field
 	if type(argfield) == "table" then
@@ -53,94 +46,24 @@ local function parse_inflection(data, args, field, is_head)
 	end
 	local include_mods
 	if is_head then
-		include_mods = {{"oth", true}}
+		include_mods = {}
 	else
-		include_mods = {{"oth", true}, "g"}
+		include_mods = {"t"}
 	end
-	if is_head then
-		local retval
-		if args[argfield] then
-			retval = m_headword_utilities.parse_term_with_modifiers {
-				val = args[argfield],
-				paramname = field,
-				splitchar = ",",
-				is_head = is_head,
-				include_mods = include_mods,
-			}
-		end
-		return retval or {}
-	else
-		return m_headword_utilities.parse_term_list_with_modifiers {
-			forms = args[argfield],
+	local retval
+	if args[argfield] then
+		retval = m_headword_utilities.parse_term_with_modifiers {
+			val = args[argfield],
 			paramname = field,
 			splitchar = ",",
 			is_head = is_head,
 			include_mods = include_mods,
 		}
 	end
+	return retval or {}
 end
 
-local function insert_inflection(data, terms, label, accel, defgender, track_field, no_label, usually_no_label)
-	local track_pos = m_en_utilities.singularize(data.pos_category)
-
-	for _, termobj in ipairs(terms) do
-		-- If the user supplied a construct state or informal form for the term with a value of "+", substitute the
-		-- default value for the term. If the user supplied a value of "--", they want no value displayed. Otherwise,
-		-- if the user didn't supply any value, we check to see if the default construct state or informal form is
-		-- different from the lemma and display it if so; this applies particularly to terms in '-in' and '-an', where
-		-- the default construct state or informal form is almost always correct.
-		local field = has_construct_state(data) and "cons" or "inf"
-		if not termobj[field] then
-			local defcons, defconstr = default_construct_state_or_informal(termobj.term, termobj.tr)
-			if termobj.term ~= defcons or termobj.tr ~= defconstr then
-				-- We don't want to copy qualifiers, labels, etc. from the term object because we're a subinflection of
-				-- the term object.
-				termobj[field] = {{term = defcons, tr = defconstr}}
-			end
-		elseif termobj[field][1].term == "--" then
-			if termobj[field][2] then
-				error("Can't specify more than one value for <" .. field .. ":...> if first value is '--', meaning \"don't insert anything\"")
-			end
-			termobj[field] = nil
-		else
-			for i, consobj in ipairs(termobj[field]) do
-				if consobj.term == "+" then
-					if consobj.tr then
-						error("Can't specify translit for default value '+'")
-					end
-					consobj.term, consobj.tr = default_construct_state_or_informal(termobj.term, termobj.tr)
-				elseif consobj.term == "~" then
-					if consobj.tr then
-						error("Can't specify translit for term-requesting value '~'")
-					end
-					consobj.term, consobj.tr = termobj.term, termobj.tr
-				end
-			end
-		end
-
-		if defgender and not termobj.genders then
-			termobj.genders = {{spec = defgender}}
-		end
-
-		local function insert_nested_inflection(field, label)
-			if termobj[field] then
-				m_headword_utilities.insert_inflection {
-					headdata = data,
-					inflobj = termobj,
-					terms = termobj[field],
-					label = label
-				}
-			end
-		end
-
-		insert_nested_inflection("oth", 
-		for _, spec in ipairs(has_construct_state(data) and noun_inflections or adjective_inflections) do
-			insert_nested_inflection(spec.field, spec.label)
-		end
-
-		track_form(track_field, termobj.term, termobj.tr, track_pos)
-	end
-
+local function insert_inflection(data, terms, label, accel, no_label, usually_no_label)
 	m_headword_utilities.insert_inflection {
 		headdata = data,
 		terms = terms,
@@ -154,15 +77,9 @@ end
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
 -- sections enclosed in <<...>> are linked to the glossary. `accel` is the accelerator form, or nil.
-local function parse_and_insert_inflection(pos, data, args, field, label, accel)
-	m_headword_utilities.parse_and_insert_inflection {
-		headdata = data,
-		forms = args[field],
-		paramname = field,
-		label = label,
-		accel = accel and {form = accel} or nil,
-		splitchar = ",",
-	}
+local function parse_and_insert_inflection(data, args, field, label, accel, no_label, usually_no_label)
+	local terms = parse_inflection(args, field, is_head)
+	insert_inflection(data, terms, label, accel, no_label, usually_no_label)
 end
 
 -- The main entry point.
@@ -186,41 +103,70 @@ function export.show(frame)
 		actual_poscat = require(headword_module).canonicalize_pos(actual_poscat)
 	end
 
+	local indexing_poscat = actual_poscat and "head" or poscat
+
 	local params = {
-		head = {list = true, disallow_holes = true, template_default = def or "gaazhagens"},
-		tr = {list = true, allow_holes = true},
+		head = {template_default = def or "palia"},
 		id = true,
-		sort = true,
-		-- no nolinkhead= because head in 1= should always be specified
-		altform = boolean_param,
 		json = boolean_param,
+		sort = true,
+		nolink = boolean_param,
+		nolinkhead = {alias_of = "nolink"},
+		suffix = boolean_param,
+		nosuffix = boolean_param,
+		altform = boolean_param,
 		pagename = true, -- for testing
 	}
 	if actual_poscat then
 		params[1] = {required = true} -- required but ignored as already processed above
 	end
 
-	if pos_functions[poscat] then
-		local posparams = pos_functions[poscat].params
+	local pos_data = pos_functions[indexing_poscat]
+	local pos_func, pos_not_suffix
+	if pos_data then
+		local pos_params = pos_data.params
 		if type(posparams) == "function" then
 			posparams = posparams(lang)
 		end
-		for key, val in pairs(posparams) do
-			params[key] = val
+		if pos_params then
+			for key, val in pairs(pos_params) do
+				params[key] = val
+			end
 		end
+		pos_func = pos_data.func
+		pos_not_suffix = pos_data.not_suffix
 	end
 
     local args = require("Module:parameters").process(parargs, params)
 
 	local pagename = args.pagename or mw.loadData(headword_data_module).pagename
 
-	local heads = m_headword_utilities.parse_term_list_with_modifiers {
-		forms = args.head,
-		paramname = "head",
-		is_head = true,
-		include_mods = {"tr"},
-		splitchar = ",",
-	}
+	local user_specified_heads = parse_inflection(args, "head", "is_head")
+	local heads = user_specified_heads
+	local autohead
+	if args.nolink then
+		autohead = pagename
+	else
+		autohead = m_headword_utilities.add_links_to_multiword_term(pagename, {})
+	end
+
+	if not heads[1] then
+		heads = {{term = autohead}}
+	else
+		for _, headobj in ipairs(heads) do
+			local head = headobj.term
+			--if head:find("^~") then
+			--	head = apply_link_modifiers(autohead, head:sub(2))
+			--	headobj.term = head
+			if head:find("^[!?]$") then
+				-- If explicit head= just consists of ! or ?, add it to the end of the default head.
+				headobj.term = autohead .. head
+			end
+			if head == autohead then
+				track("redundant-head")
+			end
+		end
+	end
 
 	local data = {
 		lang = lang,
@@ -233,100 +179,21 @@ function export.show(frame)
 		sort_key = args.sort,
 		force_cat_output = force_cat,
 		is_suffix = false,
-		no_redundant_head_cat = not heads[1],
 		altform = args.altform,
+		heads = heads,
 	}
 
-	local sc = lang:findBestScript(pagename)
-	
-	local other_sc
-	
-	if sc:getCode() == "Latn" then
-		other_sc = "Cyrl"
-	elseif sc:getCode() == "Cyrl" then
-		other_sc = "Latn"
-	end
-
-	if not heads[1] then
-		heads = {{term = pagename}}
-	end
-	local numheads = #heads
-
-	-- Copy translit in trN= to head structure (it can also be specified using inline modifier <tr:...>).
-	for i, tr in pairs(args.tr) do
-		if type(i) == "number" then
-			if i > numheads then
-				error(("Specified value for tr%s= but only %s head%s available"):format(
-					i, numheads, numheads == 1 and "" or "s"))
-			end
-			heads[i].tr = tr
-		end
-	end
-
-	-- If pagename is Latin or Cyrillic, display the other-script transliteration as an inflection. Use manually
-	-- specified translit if available, otherwise auto-translit.
-	if other_sc then
-		other_sc = require("Module:scripts").getByCode(other_sc)
-		local inflection = {label = other_sc:getCanonicalName() .. " spelling"}
-
-		if heads[1].tr == "-" then
-			inflection.label = "not attested in " .. other_sc:getCanonicalName() .. " spelling"
-		else
-			for _, head in ipairs(heads) do
-				local tr = head.tr
-				
-				if not tr then
-					tr = require("Module:sh-translit").tr(require("Module:links").remove_links(head.term), "sh", sc:getCode())
-				end
-				
-				insert(inflection, {term = tr, sc = other_sc})
-			end
-		end
-		
-		insert(data.inflections, inflection)
-	end
-	-- Now remove the translit from the `heads` structure so it doesn't display in the normal translit slot.
-	for i, head in ipairs(heads) do
-		if head.tr then
-			if not other_sc then
-				error(("Translit specified for head #%s when pagename is neither Latin nor Cyrillic"):format(i))
-			end
-			head.tr = nil
-		end
-	end
-	data.heads = heads
-
-	local singular_poscat = require(en_utilities_module).singularize(actual_poscat or poscat)
-
-	local needs_accents = false
-	for _, head in ipairs(heads) do
-		-- FIXME, should split by space and check each word
-		local lower_nfd_head = ulower(unfd(head.term))
-		if rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "]") and not
-			rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "][" .. tonal_accents .. "]") then
-			needs_accents = true
-			break
-		end
-	end
-	if needs_accents then
-		insert(data.categories, "Requests for accents in " .. langname .. " " .. singular_poscat .. " entries")
-	end		
-
-	if pagename:find("^%-") and poscat ~= "suffixes" and poscat ~= "suffix forms" then
+	if args.suffix or not args.nosuffix and pagename:find("^%-") and not pagename:find("^%-%-") and
+		poscat ~= "suffix forms" and (not pos_not_suffix or not pos_not_suffix(args, data)) then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
+		local singular_poscat = require(en_utilities_module).singularize(actual_poscat or poscat)
 		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
-	if pos_functions[poscat] then
-		pos_functions[poscat].func(args, data)
-	end
-
-	-- unfd (mw.ustring.toNFD) performs decomposition, so letters that decompose to an ASCII vowel and a diacritic,
-	-- such as é, are counted as vowels and do not need to be included in the pattern.
-	if not pagename:find("[ %-]") and not rfind(ulower(unfd(pagename)), V) then
-		insert(data.categories, langname .. " words spelled without vowels")
+	if pos_func then
+		pos_func(args, data)
 	end
 
     if args.json then
@@ -336,152 +203,187 @@ function export.show(frame)
 	return require(headword_module).full_headword(data)
 end
 
+local function validate_genders(genders)
+	for _, gspec in ipairs(genders) do
+		local g = gspec.spec
+		if g ~= "an" and g ~= "in" and g ~= "an-p" and g ~= "in-p" and g ~= "?" then
+			error("Unrecognized gender: '" .. g .. "'")
+		end
+	end
+end
+
 pos_functions["nouns"] = {
 	params = {
-		g = {type = "gender", default = "?"},
-		pl = list_param, -- plural
-		adj = list_param, -- adjectival
-		dim = list_param, -- diminutive
-		obv = list_param, -- obviative
-		loc = list_param, -- locative
-		locpl = list_param, -- locative plural
-		absent = list_param, -- absentative
-		absentpl = list_param, -- absentative plural
-		poss = list_param, -- possessive
-		poss3s = list_param, -- third-singular possessive (FIXME: same as preceding?)
-		poss1s = list_param, -- first-singular possessive
-		gen = list_param, -- genitive (FIXME: same as possessive or adjectival?)
-		pej = list_param, -- pejorative
-		voc = list_param, -- vocative
-		objurg = list_param, -- objurgative (FIXME: what is this?)
+		g = {type = "genders", default = "?"},
+		pl = true, -- plural
+		adj = true, -- adjectival
+		dim = true, -- diminutive
+		obv = true, -- obviative
+		loc = true, -- locative
+		locpl = true, -- locative plural
+		absent = true, -- absentative
+		absentpl = true, -- absentative plural
+		poss = true, -- possessive
+		poss3s = true, -- third-singular possessive (FIXME: same as preceding?)
+		poss1s = true, -- first-singular possessive
+		gen = true, -- genitive (FIXME: same as possessive or adjectival?)
+		pej = true, -- pejorative
+		voc = true, -- vocative
+		objurg = true, -- objurgative (FIXME: what is this?)
 		root = boolean_param, -- if specified, categorizes into noun roots and noun finals (?) and not noun suffixes, and displays "noun root, final"
 	},
 	func = function(args, data)
-		local script_code = args[1]
-		local translit = args[2]
-		script = Latn
-		if script_code == "c" then script = Cans end
-		
-		if translit ~= nil then
-			if script_code == "c" then table.insert(data.inflections, {label = "Latin spelling", sc=Latn, translit})
-			else table.insert(data.inflections, {label = "Canadian syllabics spelling", sc=Cans, translit})
-			end
-		end
-		
-		local gender = args["g"]
-		local plural = args["pl"]
-		local plother = args["plother"]
-		local obv = args["obv"]
-		local loc = args["loc"]
-		local dim = args["dim"]
-		local pej = args["pej"]
-		
-		if gender == "an" then table.insert(data.genders, "an")
-		elseif gender == "in" then table.insert(data.genders, "in")
-		else end
-		
-		if plural ~= nil then
-			if gender == "an" then table.insert(data.inflections, {label = "plural", sc=script, accel = {form = "p"}, plural}) 
-			elseif gender == "in" then table.insert(data.inflections, {label = "plural", sc=script, accel = {form = "p//obv"}, plural}) 
-			else table.insert(data.inflections, {label = "plural", plural}) end
-		end
-		
-		if plother ~= nil then
-			if script_code == "Cans" then table.insert(data.inflections, {label = "plural Latin spelling", sc=Latn, plother})
-			else table.insert(data.inflections, {label = "plural Canadian syllabics spelling", sc=Cans, plother})
-			end
-		end
-		
-		if obv ~= nil then
-			if gender == "an" then table.insert(data.inflections, {label = "obviative", sc=script, accel = {form = "obv"}, obv}) 
-			elseif gender == "in" then table.insert(data.inflections, {label = "obviative", sc=script, accel = {form = "p//obv"}, obv}) 
-			else table.insert(data.inflections, {label = "obviative", plural})  end
-		end
-		
-			-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
-			-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
-			-- given; <<..>> in the label is linked to the glossary. `accel` is the accelerator form, or nil.
-			local function handle_infl(field, label, accel)
-				parse_and_insert_inflection("noun", data, args, field, label, accel)
-			end
+		data.genders = args.g
+		validate_genders(data.genders)
 
-			handle_infl("loc", "locative", "loc")
-			handle_infl("dim", "diminutive", "dim")
-			handle_infl("pej", "pejorative", "pej")
-	end
-}
-
-pos_functions["verbs"] = {
-	params = {
-		[1] = {default = "?"},
-		indic3s = list_param, -- third singular indicative (FIXME: is this normally the lemma form?)
-		indic3p = list_param, -- third plural indicative (FIXME: same as preceding?)
-		pl = list_param, -- plural
-		plcoll = list_param, -- present indicative plural collective
-		conj3s = list_param, -- third singular conjunct
-		subj3s = list_param, -- third singular subjunctive
-		redup3s = list_param, -- third singular with reduplication
-		absent = list_param, -- third singular present indicative absentative
-		intj = list_param, -- interjective singular
-		part = list_param, -- participle
-		plpart = list_param, -- plural participle
-		fut = list_param, -- future
-		impv = list_param, -- imperative
-		pass = list_param, -- passive
-		freq = list_param, -- frequentative
-		dim = list_param, -- diminutive
-		pej = list_param, -- pejorative
-		initch = list_param, -- initial change
-		initredup = list_param, -- initial reduplication
-		initchredup = list_param, -- initial change and reduplication
-		anim = list_param, -- animate
-		inan = list_param, -- inanimate
-		root = boolean_param, -- if specified, categorizes into verb roots and verb finals (?) and not verb suffixes, and displays "verb root, final"
-	},
-	func = function(args, data)
-		local class_subclass = args[1]
-		if class_subclass == "?" then
-			insert(data.inflections, {label = "unknown animacy and transitivity"})
-		else
-			local class, subclass = class_subclass:match("^(v[a-z][a-z])(.?)$")
-			if not class then
-				error(("Invalid value for verb class '%s', should be 'vii', 'vai', 'vti' or 'vta' possibly with an extra character indicating a subclass"):format(class_subclass))
-			end
-		end
-		if class == "vta" then
-			table.insert(data.inflections, {label = "animate transitive", nil})
-			table.insert(data.categories, "Ojibwe verb transitive animate (vta)")
-		elseif class == "vti" then
-			table.insert(data.inflections, {label = "inanimate transitive", nil})
-			table.insert(data.categories, "Ojibwe verb transitive inanimate (vti)")
-		elseif class == "vai" then
-			table.insert(data.inflections, {label = "animate intransitive", nil})
-			table.insert(data.categories, "Ojibwe verb animate intransitive (vai)")
-		elseif class == "vii" then
-			table.insert(data.inflections, {label = "inanimate intransitive", nil})
-			table.insert(data.categories, "Ojibwe verb inanimate intransitive (vii)")
-		elseif class == "vai2" then
-			table.insert(data.inflections, {label = "animate intransitive class 2", nil})
-			table.insert(data.categories, "Ojibwe verb animate intransitive class 2 (vai2)")
-		else
-			error("invalid verb class")
+		if args.root then
+			m_headword_utilities.insert_fixed_inflection {
+				headdata = data,
+				label = "noun root, final",
+			}
+			insert(data.categories, langname .. " " .. "noun roots")
+			insert(data.categories, langname .. " " .. "noun finals")
 		end
 
 		-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
 		-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
-		-- given; <<..>> in the label is linked to the glossary. `accel` is the accelerator form, or nil.
-		local function handle_infl(field, label, accel)
-			parse_and_insert_inflection("verb", data, args, field, label, accel)
+		-- given; <<..>> in the label is linked to the glossary. `accel` is the accelerator form, or nil. `no_label`
+		-- overrides the text generated when '-' is given as the only value. `usually_no_label` overrides the text
+		-- generated when '-' is given as a value followed by some other value.
+		local function handle_infl(field, label, accel, no_label, usually_no_label)
+			parse_and_insert_inflection(data, args, field, label, accel, no_label, usually_no_label)
 		end
-		handle_infl("conj", "conjunct form")
-		handle_infl("chconj", "changed conjunct form")
-		handle_infl("redup", "reduplicated form")
-		handle_infl("stem", "stem")
-		handle_infl("aug", "augmented form")
-		handle_infl("3s3indep", "3s-3' independent form")
-		handle_infl("2s3impv", "2s-3 imperative form")
+
+		handle_infl("pl", "plural")
+		handle_infl("adj", "adjectival")
+		handle_infl("dim", "diminutive")
+		handle_infl("obv", "obviative")
+		handle_infl("loc", "locative")
+		handle_infl("locpl", "locative plural")
+		handle_infl("absent", "absentative")
+		handle_infl("absentpl", "absentative plural")
+		handle_infl("poss", "possessive")
+		handle_infl("poss3s", "third-singular possessive") -- FIXME, same as preceding?
+		handle_infl("poss1s", "first-singular possessive")
+		handle_infl("gen", "genitive") -- FIXME, same as possessive or adjectival?
+		handle_infl("pej", "pejorative")
+		handle_infl("voc", "vocative")
+		handle_infl("objurg", "objurgative") -- FIXME, what is this?
+	end,
+	not_suffix = function(args, data)
+		return args.root
+	end,
+}
+
+pos_functions["proper nouns"] = pos_functions["nouns"]
+pos_functions["pronouns"] = pos_functions["nouns"]
+
+pos_functions["verbs"] = {
+	params = {
+		[1] = {default = "?"},
+		indic3p = true, -- third plural indicative
+		plcoll = true, -- present indicative plural collective
+		conj3s = true, -- third singular conjunct
+		subj3s = true, -- third singular subjunctive
+		redup3s = true, -- third singular with reduplication
+		absent = true, -- third singular present indicative absentative
+		intj = true, -- interjective singular
+		part = true, -- participle
+		partpl = true, -- participle plural
+		fut = true, -- future
+		past = true, -- future
+		impv = true, -- imperative
+		neg = true, -- negative
+		pass = true, -- passive
+		freq = true, -- frequentative
+		-- Do the following four even make sense for verbs? Are they mistakes for noun properties?
+		dim = true, -- diminutive
+		pej = true, -- pejorative
+		adj = true, -- adjectival
+		loc = true, -- locative
+		initch = true, -- initial change
+		initredup = true, -- initial reduplication
+		initchredup = true, -- initial change and reduplication
+		anim = true, -- animate equivalent
+		inan = true, -- inanimate equivalent
+		root = boolean_param, -- if specified, categorizes into verb roots and verb finals (?) and not verb suffixes, and displays "verb root, final"
+	},
+	func = function(args, data)
+		if args.root then
+			m_headword_utilities.insert_fixed_inflection {
+				headdata = data,
+				label = "verb root, final",
+			}
+			insert(data.categories, langname .. " " .. "verb roots")
+			insert(data.categories, langname .. " " .. "verb finals")
+		end
+
+		local classes = parse_inflection(args, 1)
+		for _, class in ipairs(classes) do
+			
+			if class.term == "?" then
+				m_headword_utilities.insert_fixed_inflection {
+					headdata = data,
+					originating_term = class,
+					label = "unknown <<animacy>> and <<transitivity>>",
+				}
+			else
+				if not legal_verb_classes[class.term] then
+					local legal_classes = {}
+					for k, _ in pairs(legal_verb_classes) do
+						insert(legal_classes, k)
+					end
+					table.sort(legal_classes)
+					error(("Unrecognized verb class '%s', should be one of %s"):format(class.term,
+						mw.text.list(legal_classes, nil,  " or ")))
+				end
+				insert(data.categories, langname .. " " .. legal_verb_classes[class.term][1] .. " verbs")
+				-- WARNING, the following destructively modifies 'class'
+				m_headword_utilities.insert_fixed_inflection {
+					headdata = data,
+					originating_term = class,
+					label = legal_verb_classes[class.term][2],
+				}
+			end
+		end
+
+		-- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments
+		-- come from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are
+		-- given; <<..>> in the label is linked to the glossary. `accel` is the accelerator form, or nil. `no_label`
+		-- overrides the text generated when '-' is given as the only value. `usually_no_label` overrides the text
+		-- generated when '-' is given as a value followed by some other value.
+		local function handle_infl(field, label, accel, no_label, usually_no_label)
+			parse_and_insert_inflection(data, args, field, label, accel, no_label, usually_no_label)
+		end
+
+		handle_infl("indic3p", "third plural indicative")
+		handle_infl("plcoll", "present indicative plural collective")
+		handle_infl("conj3s", "third singular conjunct")
+		handle_infl("subj3s", "third singular subjunctive")
+		handle_infl("redup3s", "third singular with reduplication")
+		handle_infl("absent", "third singular present indicative absentative")
+		handle_infl("intj", "interjective singular")
 		handle_infl("part", "participle")
-	end
+		handle_infl("partpl", "participle plural")
+		handle_infl("fut", "future")
+		handle_infl("past", "past")
+		handle_infl("impv", "imperative")
+		handle_infl("neg", "negative")
+		handle_infl("pass", "passive")
+		handle_infl("freq", "frequentative")
+		handle_infl("dim", "diminutive")
+		handle_infl("pej", "pejorative")
+		handle_infl("adj", "adjectival")
+		handle_infl("loc", "locative")
+		handle_infl("initch", "initial change")
+		handle_infl("initredup", "initial reduplication")
+		handle_infl("initchredup", "initial change and reduplication")
+		handle_infl("anim", "animate equivalent")
+		handle_infl("inan", "inanimate equivalent")
+	end,
+	not_suffix = function(args, data)
+		return args.root
+	end,
 }
 
 return export
