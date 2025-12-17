@@ -1,12 +1,19 @@
+-- Prevent substitution.
+if mw.isSubsting() then
+	return require("Module:unsubst")
+end
+
+local m_str_utils = require("Module:string utilities")
+
 local categorize = require("Module:zh-cat").categorize
 local change_to_variant = require("Module:zh-forms").change_to_variant
 local concat = table.concat
 local extract_gloss = require("Module:zh/extract").extract_gloss
-local findTemplates = require("Module:template parser").findTemplates
+local find_templates = require("Module:template parser").find_templates
 local format_cat = require("Module:utilities").format_categories
 local full_link = require("Module:links").full_link
 local get_lang = require("Module:languages").getByCode
-local get_section = require("Module:utilities").get_section
+local get_section = require("Module:pages").get_section
 local gsplit = mw.text.gsplit
 local html_create = mw.html.create
 local insert = table.insert
@@ -15,9 +22,9 @@ local maintenance_cats = require("Module:headword").maintenance_cats
 local pairs = pairs
 local tostring = tostring
 local track = require('Module:debug').track
-local type = type
-local ulen = mw.ustring.len
-local usub = mw.ustring.sub
+local trim = m_str_utils.trim
+local ulen = m_str_utils.len
+local usub = m_str_utils.sub
 
 local m_data = mw.loadData("Module:zh-see/data")
 local lect_codes = mw.loadData("Module:zh/data/lect codes")
@@ -38,16 +45,6 @@ local function get_content(title)
 		return false
 	end
 	return get_section(content:getContent(), "Chinese", 2)
-end
-
-local function do_preprocess(frame, args)
-	for k, v in pairs(args) do
-		if type(k) == "string" then
-			k = frame:preprocess(k)
-		end
-		args[k] = frame:preprocess(v)
-	end
-	return args
 end
 
 local function process_zh_forms(data, abbrevs, args)
@@ -71,12 +68,12 @@ local function process_zh_forms(data, abbrevs, args)
 	end
 end
 
-local function process_categories(frame, template, args)
-	local cat_type = m_data.cat_type[template]
+local function process_categories(template, name)
+	local cat_type = m_data.cat_type[name]
 	if not cat_type then
 		return
 	end
-	args = do_preprocess(frame, args)
+	local args = template:get_arguments()
 	local code = lect_codes.langcode_to_abbr[args[1]] and args[1]
 	if not code then
 		return
@@ -89,7 +86,7 @@ local function process_categories(frame, template, args)
 	)
 	local categories = {}
 	for i = 2, #args do
-		insert(categories, cat_prefix .. args[i])
+		insert(categories, cat_prefix .. trim(args[i]))
 	end
 	return format_cat(categories, lang)
 end
@@ -100,23 +97,24 @@ local function iterate_templates(frame, data, abbrev, chained)
 	if not abbrev then
 		abbrevs = {}
 	end
-	for template, args in findTemplates(data.content) do
-		if template == "zh-forms" then
+	for template in find_templates(data.content) do
+		local name = template:get_name()
+		if name == "zh-forms" then
 			zh_forms = true
 			if not abbrev then
-				process_zh_forms(data, abbrevs, do_preprocess(frame, args))
+				process_zh_forms(data, abbrevs, template:get_arguments())
 			end
-		elseif template == "zh-see" and not chained then
-			args = do_preprocess(frame, args)
+		elseif name == "zh-see" and not chained then
+			local args = template:get_arguments()
 			zh_see = args[1]
 			data.new_abbrev = args[2]
-		elseif template == "zh-pron" then
-			zh_pron = zh_pron or do_preprocess(frame, args)
-		elseif abbrev ~= "poj" and abbrev ~= "trc" then
-			if template == "zh-character component" then
+		elseif name == "zh-pron" then
+			zh_pron = zh_pron or template:get_arguments()
+		elseif data.abbrev ~= "poj" then
+			if name == "zh-character component" then
 				zh_char_comp = true
 			else
-				local cats = process_categories(frame, template, args)
+				local cats = process_categories(template, name)
 				if cats then
 					insert(data.categories, cats)
 				end
@@ -147,7 +145,8 @@ local function iterate_templates(frame, data, abbrev, chained)
 		end
 	end
 	if zh_pron then
-		if abbrev == "poj" or abbrev == "trc" then
+		local data_abbrev = data.abbrev
+		if data_abbrev == "poj" or data_abbrev == "trc" then
 			local new_zh_pron = {}
 			for k, v in pairs(zh_pron) do
 				if k == "mn" or k == "cat" then
@@ -155,9 +154,12 @@ local function iterate_templates(frame, data, abbrev, chained)
 				end
 			end
 			zh_pron = new_zh_pron
-			zh_pron.no_foreign_script_cat = "yes"
+			if data_abbrev == "poj" then
+				zh_pron.poj_form_zh_see = "yes"
+			end
 		end
 		zh_pron.only_cat = "yes"
+		-- FIXME: this should be a callable function.
 		local cats = frame:expandTemplate{
 			title = "Template:zh-pron",
 			args = zh_pron
@@ -201,6 +203,7 @@ function export.show(frame)
 	if not data.content then
 		insert(data.categories, format_cat({"Chinese redlinks/zh-see"}, langs.zh))
 	else
+		data.content = data.content:gsub("<ref>.+</ref>", "")
 		iterate_templates(frame, data, data.abbrev)
 	end
 	
@@ -224,7 +227,7 @@ function export.show(frame)
 		}
 	else
 		self_link_chars = full_link{
-			term = data.pagename:gsub("[%z\1-\127\194-\244][\128-\191]*", "[[%0]]") .. "//",
+			term = data.pagename:gsub(".[\128-\191]*", "[[%0]]") .. "//",
 			lang = langs.zh,
 			tr = "-"
 		}
@@ -278,19 +281,21 @@ function export.show(frame)
 	
 	local box = html_create("table")
 		:addClass("wikitable")
+		:addClass("zh-see")
 		:allDone()
 	if non_lemma_cat:match("simplified") then
 		box = box:addClass("mw-collapsible")
 			:addClass("mw-collapsed")
 	end
 	box = box:css("border", "1px")
-		:css("border", "1px solid #797979")
+		:css("border", "1px solid var(--wikt-palette-grey-9, #797979)")
 		:css("margin-left", "1px")
 		:css("text-align", "left")
 		:css("min-width", (data.chain and "80" or "70") .. "%")
 		:tag("tr")
 			:tag("td")
-				:css("background-color", "#eeeeee")
+				:css("background-color", "var(--wikt-palette-dullcyan,#eaecf0)")
+				:css("color", "inherit")
 				:css("padding-left", "0.5em")
 				:wikitext(wikitext1)
 				:tag("br")
@@ -304,7 +309,8 @@ function export.show(frame)
 		box = box:tag("tr")
 			:tag("td")
 				:addClass("mw-collapsible-content")
-				:css("background-color", "#F5DEB3")
+				:css("background-color", "var(--wikt-palette-lightyellow,#FFFFe0)")
+				:css("color", "inherit")
 				:css("font-size", "smaller")
 				:tag("b")
 					:wikitext("Notes:")
