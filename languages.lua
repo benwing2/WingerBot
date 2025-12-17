@@ -430,23 +430,28 @@ local function normalize(text, sc)
 	return sc:toFixedNFD(text)
 end
 
-local function doSubstitutions(self, text, sc, substitution_data, function_name, recursed)
-	local fail, cats = nil, {}
+local function doSubstitutions(self, text, sc, substitution_data, data_field, function_name, recursed)
+	local fail, cats, actual_substitution_data = nil, {}, substitution_data
 	-- If there are language-specific substitutes given in the data module, use those.
 	if type(substitution_data) == "table" then
 		-- If a script is specified, run this function with the script-specific data before continuing.
 		local sc_code = sc:getCode()
+		local has_substitution_data = false
 		if substitution_data[sc_code] then
-			text, fail, cats = doSubstitutions(self, text, sc, substitution_data[sc_code], function_name, true)
+			has_substitution_data = true
+			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data[sc_code], data_field, function_name, true)
 		-- Hant, Hans and Hani are usually treated the same, so add a special case to avoid having to specify each one separately.
 		elseif sc_code:match("^Han") and substitution_data.Hani then
-			text, fail, cats = doSubstitutions(self, text, sc, substitution_data.Hani, function_name, true)
+			has_substitution_data = true
+			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data.Hani, data_field, function_name, true)
 		-- Substitution data with key 1 in the outer table may be given as a fallback.
 		elseif substitution_data[1] then
-			text, fail, cats = doSubstitutions(self, text, sc, substitution_data[1], function_name, true)
+			has_substitution_data = true
+			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data[1], data_field, function_name, true)
 		end
 		-- Iterate over all strings in the "from" subtable, and gsub with the corresponding string in "to". We work with the NFD decomposed forms, as this simplifies many substitutions.
 		if substitution_data.from then
+			has_substitution_data = true
 			for i, from in ipairs(substitution_data.from) do
 				-- Normalize each loop, to ensure multi-stage substitutions work correctly.
 				text = sc:toFixedNFD(text)
@@ -455,6 +460,7 @@ local function doSubstitutions(self, text, sc, substitution_data, function_name,
 		end
 
 		if substitution_data.remove_diacritics then
+			has_substitution_data = true
 			text = sc:toFixedNFD(text)
 			-- Convert exceptions to PUA.
 			local remove_exceptions, substitutes = substitution_data.remove_exceptions
@@ -477,6 +483,9 @@ local function doSubstitutions(self, text, sc, substitution_data, function_name,
 			if remove_exceptions then
 				text = text:gsub("\242[\128-\191]*", substitutes)
 			end
+		end
+		if not has_substitution_data and sc._data[data_field] then
+			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, sc._data[data_field], data_field, function_name, true)
 		end
 	elseif type(substitution_data) == "string" then
 		-- If there is a dedicated function module, use that.
@@ -501,18 +510,21 @@ local function doSubstitutions(self, text, sc, substitution_data, function_name,
 		else
 			error("Substitution data '" .. substitution_data .. "' does not match an existing module.")
 		end
+	elseif substitution_data == nil and sc._data[data_field] then
+		-- If language-specific sort key (etc.) is nil, fall back to script-wide sort key (etc.).
+		text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, sc._data[data_field], data_field, function_name, true)
 	end
 
 	-- Don't normalize to NFC if this is the inner loop or if a module returned nil.
 	if recursed or not text then
-		return text, fail, cats
+		return text, fail, cats, actual_substitution_data
 	end
 	-- Fix any discouraged sequences created during the substitution process, and normalize into the final form.
-	return sc:toFixedNFC(sc:fixDiscouragedSequences(text)), fail, cats
+	return sc:toFixedNFC(sc:fixDiscouragedSequences(text)), fail, cats, actual_substitution_data
 end
 
 -- Split the text into sections, based on the presence of temporarily substituted formatting characters, then iterate over each one to apply substitutions. This avoids putting PUA characters through language-specific modules, which may be unequipped for them.
-local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, substitution_data, function_name)
+local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, substitution_data, data_field, function_name, notrim)
 	local fail, cats, sections = nil, {}
 	-- See [[Module:languages/data]].
 	if not find(text, "\244") or (load_data(languages_data_module).substitution[self._code] == "cont") then
@@ -520,10 +532,12 @@ local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCare
 	else
 		sections = split(text, "\244[\128-\143][\128-\191]*", true)
 	end
+	local actual_substitution_data
 	for _, section in ipairs(sections) do
 		-- Don't bother processing empty strings or whitespace (which may also not be handled well by dedicated modules).
 		if gsub(section, "%s+", "") ~= "" then
-			local sub, sub_fail, sub_cats = doSubstitutions(self, section, sc, substitution_data, function_name)
+			local sub, sub_fail, sub_cats, this_actual_substitution_data = doSubstitutions(self, section, sc, substitution_data, data_field, function_name)
+			actual_substitution_data = this_actual_substitution_data
 			-- Second round of temporary substitutions, in case any formatting was added by the main substitution process. However, don't do this if the section contains formatting already (as it would have had to have been escaped to reach this stage, and therefore should be given as raw text).
 			if sub and subbedChars then
 				local noSub
@@ -551,16 +565,19 @@ local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCare
 		end
 	end
 
-	-- Trim, unless there are only spacing characters, while ignoring any final formatting characters.
-	text = text and text:gsub("^([\128-\191\244]*)%s+(%S)", "%1%2")
-		:gsub("(%S)%s+([\128-\191\244]*)$", "%1%2")
+	if not notrim then
+		-- Trim, unless there are only spacing characters, while ignoring any final formatting characters.
+		-- Do not trim sort keys because spaces at the beginning are significant.
+		text = text and text:gsub("^([\128-\191\244]*)%s+(%S)", "%1%2")
+			:gsub("(%S)%s+([\128-\191\244]*)$", "%1%2")
+	end
 
 	-- Remove duplicate categories.
 	if #cats > 1 then
 		cats = remove_duplicates(cats)
 	end
 
-	return text, fail, cats, subbedChars
+	return text, fail, cats, subbedChars, actual_substitution_data
 end
 
 -- Process carets (and any escapes). Default to simple removal, if no pattern/replacement is given.
@@ -1522,10 +1539,9 @@ function Language:makeEntryName(text, sc)
 
 	local fail, cats
 	text = normalize(text, sc)
-	text, fail, cats = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.entry_name, "makeEntryName")
+	text, fail, cats = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.entry_name, "entry_name", "makeEntryName")
 
 	text = umatch(text, "^[¿¡]?(.-[^%s%p].-)%s*[؟?!;՛՜ ՞ ՟？！︖︕।॥။၊་།]?$") or text
-
 
 	-- Escape unsupported characters so they can be used in titles. ` is used as a delimiter for this, so a raw use of it in an unsupported title is also escaped here to prevent interference; this is only done with unsupported titles, though, so inclusion won't in itself mean a title is treated as unsupported (which is why it's excluded from the earlier test).
 	if unsupported then
@@ -1538,6 +1554,27 @@ function Language:makeEntryName(text, sc)
 				return gsub(m, "~", "`tilde`")
 			end)
 		text = "Unsupported titles/" .. text
+	else
+		-- Check if this is a mammoth page. If so, which subpage should we link to?
+		local mammoth_pages = load_data(links_data_module).mammoth_pages
+		if mammoth_pages[text] then
+			local canonical_name = self:getCanonicalName()
+			if canonical_name ~= "Translingual" and canonical_name ~= "English" then
+				local this_subpage
+				for _, subpage_spec in ipairs(load_data(links_data_module).mammoth_page_subpage_list) do
+					-- unpack() fails utterly on data loaded using mw.loadData() even if offsets are given
+					local subpage, pattern = subpage_spec[1], subpage_spec[2]
+					if pattern == true or umatch(self:getCanonicalName(), pattern) then
+						this_subpage = subpage
+						break
+					end
+				end
+				if not this_subpage then
+					error("Internal error: Bad data in mammoth_page_subpage_list, in [[Module:links/data]]; last entry didn't have 'true' in it")
+				end
+				text = text .. "/" .. this_subpage
+			end
+		end
 	end
 
 	return text, fail, cats
@@ -1562,8 +1599,12 @@ function Language:makeSortKey(text, sc)
 	if match(text, "<[^<>]+>") then
 		track("track HTML tag")
 	end
-	-- Remove directional characters, soft hyphens, strip markers and HTML tags.
+	-- Remove directional characters, bold, italics, soft hyphens, strip markers and HTML tags.
+	-- FIXME: Partly duplicated with remove_formatting() in [[Module:links]].
 	text = ugsub(text, "[\194\173\226\128\170-\226\128\174\226\129\166-\226\129\169]", "")
+	text = text
+		:gsub("('*)'''(.-'*)'''", "%1%2")
+		:gsub("('*)''(.-'*)''", "%1%2")
 	text = gsub(unstrip(text), "<[^<>]+>", "")
 
 	text = decode_uri(text, "PATH")
@@ -1590,11 +1631,12 @@ function Language:makeSortKey(text, sc)
 		text = ulower(text)
 	end
 
-	local sort_key = self._data.sort_key
-	text, fail, cats = iterateSectionSubstitutions(self, text, sc, nil, nil, sort_key, "makeSortKey")
+	local actual_substitution_data
+	-- Don't trim whitespace here because it's significant at the beginning of a sort key or sort base.
+	text, fail, cats, _, actual_substitution_data = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.sort_key, "sort_key", "makeSortKey", "notrim")
 
 	if not sc:sortByScraping() then
-		if self:hasDottedDotlessI() and not sort_key then
+		if self:hasDottedDotlessI() and not actual_substitution_data then
 			text = gsub(gsub(text, "ı", "I"), "i", "İ")
 			text = sc:toFixedNFC(text)
 		end
@@ -1620,7 +1662,7 @@ local function processDisplayText(text, self, sc, keepCarets, keepPrefixes)
 	sc = checkScript(text, self, sc)
 	local fail, cats
 	text = normalize(text, sc)
-	text, fail, cats, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, self._data.display_text, "makeDisplayText")
+	text, fail, cats, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, self._data.display_text, "display_text", "makeDisplayText")
 
 	text = removeCarets(text, sc)
 
@@ -1709,7 +1751,7 @@ function Language:transliterate(text, sc, module_override)
 	end
 
 	-- Transliterate (using the module override if applicable).
-	text, fail, cats, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, true, module_override or self._data.translit, "tr")
+	text, fail, cats, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, true, module_override or self._data.translit, "translit", "tr")
 
 	if not text then
 		return nil, true, cats
@@ -1957,7 +1999,7 @@ do
 	end
 
 	--[==[
-	<span style="color: #BA0000">This function is not for use in entries or other content pages.</span>
+	<span style="color: var(--wikt-palette-red,#BA0000)">This function is not for use in entries or other content pages.</span>
 	Returns a blob of data about the language. The format of this blob is undocumented, and perhaps unstable; it's intended for things like the module's own unit-tests, which are "close friends" with the module and will be kept up-to-date as the format changes. If `extra` is set, any extra data in the relevant `/extra` module will be included. (Note that it will be included anyway if it has already been loaded into the language object.) If `raw` is set, then the returned data will not contain any data inherited from parent objects.
 	-- Do NOT use these methods!
 	-- All uses should be pre-approved on the talk page!
