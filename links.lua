@@ -166,6 +166,12 @@ local function umatch(...)
 	return umatch(...)
 end
 
+local m_headword_data
+local function get_headword_data()
+	m_headword_data = load_data("Module:headword/data")
+	return m_headword_data
+end
+
 local function track(page, code)
 	local tracking_page = "links/" .. page
 	debug_track(tracking_page)
@@ -314,8 +320,17 @@ function export.get_fragment(text)
 	return text
 end
 
-local pos_tags
-function export.get_link_page(target, lang, sc, plain)
+--[==[
+Given a link target as passed to `full_link()`, get the actual page that the target refers to. This removes
+bold, italics, strip markets and HTML; calls `makeEntryName()` for the language in question; converts targets
+beginning with `*` to the Reconstruction namespace; and converts appendix-constructed languages to the Appendix
+namespace. Returns up to three values:
+# the actual page to link to, or {nil} to not link to anything;
+# how the target should be displayed as, if the user didn't explicitly specify any display text; generally the
+  same as the original target, but minus any anti-asterisk !!;
+# the value `true` if the target had a backslash-escaped * in it (FIXME: explain this more clearly).
+]==]
+function export.get_link_page_with_auto_display(target, lang, sc, plain)
 	local orig_target = target
 
 	if not target then
@@ -346,7 +361,8 @@ function export.get_link_page(target, lang, sc, plain)
 		end
 	end
 
-	-- Check if the term is reconstructed and remove any asterisk. Otherwise, handle the escapes.
+	-- Check if the term is reconstructed and remove any asterisk. Also check for anti-asterisk (!!).
+	-- Otherwise, handle the escapes.
 	local reconstructed, escaped, anti_asterisk
 	if not plain then
 		target, reconstructed = target:gsub("^%*(.)", "%1")
@@ -374,17 +390,21 @@ function export.get_link_page(target, lang, sc, plain)
 	end
 
 	-- Get the entry name for the language.
-	target = lang:makeEntryName(target, sc)
+	target = lang:makeEntryName(target, sc, reconstructed == 1)
 
 	-- If the link contains unexpanded template parameters, then don't create a link.
 	if target:match("{{{.-}}}") then
+		-- FIXME: Should we return the original target as the default display value (second return value)?
 		return nil
 	end
 
-	-- Link to appendix for reconstructed terms and terms in appendix-only languages. Plain links interpret * literally, however.
+	-- Link to appendix for reconstructed terms and terms in appendix-only languages. Plain links interpret *
+	-- literally, however.
 	if reconstructed == 1 then
 		if lang:getFullCode() == "und" then
-			return nil
+			-- Return the original target as default display value. If we don't do this, we wrongly get
+			-- [Term?] displayed instead.
+			return nil, orig_target
 		end
 		target = "Reconstruction:" .. lang:getFullName() .. "/" .. target
 	-- Reconstructed languages and substrates require an initial *.
@@ -398,6 +418,11 @@ function export.get_link_page(target, lang, sc, plain)
 	end
 
 	return target, orig_target, escaped > 0
+end
+
+function export.get_link_page(target, lang, sc, plain)
+	local target, auto_display, escaped = export.get_link_page_with_auto_display(target, lang, sc, plain)
+	return target, escaped
 end
 
 -- Make a link from a given link's parts
@@ -414,12 +439,13 @@ local function make_link(link, lang, sc, id, isolated, cats, no_alt_ast, plain)
 	end
 
 	-- Process the target
-	local new_target, auto_display, escaped = export.get_link_page(link.target, lang, sc, plain)
+	local auto_display, escaped
+	link.target, auto_display, escaped = export.get_link_page_with_auto_display(link.target, lang, sc, plain)
 
 	-- Create a default display form.
 	-- If the target is "" then it's a link like [[#English]], which refers to the current page.
 	if auto_display == "" then
-		auto_display = load_data("Module:headword/data").pagename
+		auto_display = (m_headword_data or get_headword_data()).pagename
 	end
 
 	-- If the display is the target and the reconstruction * has been escaped, remove the escaping backslash.
@@ -584,8 +610,18 @@ local function process_embedded_links(text, alt, lang, sc, id, cats, no_alt_ast,
 			return capture
 		end
 
-		if all_reconstructed and not link.target:match("^%*") then
-			link.target = "*" .. link.target
+		if all_reconstructed then
+			if link.target:find("^!!") then
+				-- Check for anti-asterisk !! at the beginning of a target, indicating that a reconstructed term
+				-- wants a part of the term to link to a non-reconstructed term, e.g. Old English
+				-- {{ang-noun|m|head=*[[!!Crist|Cristes]] [[!!mæsseǣfen]]}}.
+				link.target = link.target:sub(3)
+				-- Also remove !! from the display, which may have been copied from the target (as in mæsseǣfen in
+				-- the example above).
+				link.display = link.display:gsub("^!!", "")
+			elseif not link.target:match("^%*") then
+				link.target = "*" .. link.target
+			end
 		end
 
 		linktext = make_link(link, lang, sc, id, false, nil, no_alt_ast, plain)
@@ -681,7 +717,7 @@ local function simple_link(term, fragment, alt, lang, sc, id, cats, no_alt_ast, 
 		end
 		term = selective_trim(term)
 	end
-	
+
 	-- If not, make a link using the parameters.
 	return make_link({
 		target = term,
@@ -812,6 +848,8 @@ function export.mark(text, item_type, face, lang)
 		tag = { '<span class="ts mention-ts Latn">/\226\129\160', '\226\129\160/</span>' }
 	elseif item_type == "pos" then
 		tag = { '<span class="ann-pos">', '</span>' }
+	elseif item_type == "non-gloss" then
+		tag = { '<span class="ann-non-gloss">', '</span>' }
 	elseif item_type == "annotations" then
 		tag = { '<span class="mention-gloss-paren annotation-paren">(</span>',
 			'<span class="mention-gloss-paren annotation-paren">)</span>' }
@@ -824,6 +862,8 @@ function export.mark(text, item_type, face, lang)
 	end
 end
 
+local pos_tags
+
 --[==[Formats the annotations that are displayed with a link created by {{code|lua|full_link}}. Annotations are the extra bits of information that are displayed following the linked term, and include things such as gender, transliteration, gloss and so on. 
 * The first argument is a table possessing some or all of the following keys:
 *:; <code class="n">genders</code>
@@ -833,7 +873,9 @@ end
 *:; <code class="n">gloss</code>
 *:: Gloss that translates the term in the link, or gives some other descriptive information.
 *:; <code class="n">pos</code>
-*:: Part of speech of the linked term. If the given argument matches one of the templates in [[:Category:Part of speech tags]], then call that to show a part-of-speech tag. Otherwise, just show the given text as it is.
+*:: Part of speech of the linked term. If the given argument matches one of the aliases in `pos_aliases` in [[Module:headword/data]], or consists of a part of speech or alias followed by `f` (for a non-lemma form), expand it appropriately. Otherwise, just show the given text as it is.
+*:; <code class="n">ng</code>
+*:: Arbitrary non-gloss descriptive text for the link. This should be used in preference to putting descriptive text in `gloss` or `pos`.
 *:; <code class="n">lit</code>
 *:: Literal meaning of the term, if the usual meaning is figurative or idiomatic.
 *:Any of the above values can be omitted from the <code class="n">info</code> argument. If a completely empty table is given (with no annotations at all), then an empty string is returned.
@@ -894,13 +936,36 @@ function export.format_link_annotations(data, face)
 			data.pos = data.pos .. "[[Category:links likely containing transcriptions in pos]]"
 		end
 
-		pos_tags = pos_tags or load_data("Module:headword/data").pos_aliases
-		insert(annotations, export.mark(pos_tags[data.pos] or data.pos, "pos"))
+		-- Canonicalize part of speech aliases as well as non-lemma aliases like 'nf' or 'nounf' for "noun form".
+		pos_tags = pos_tags or (m_headword_data or get_headword_data()).pos_aliases
+		local pos = pos_tags[data.pos]
+		if not pos and data.pos:find("f$") then
+			local pos_form = data.pos:sub(1, -2)
+			-- We only expand something ending in 'f' if the result is a recognized non-lemma POS.
+			pos_form = (pos_tags[pos_form] or pos_form) .. " form"
+			if (m_headword_data or get_headword_data()).nonlemmas[pos_form .. "s"] then
+				pos = pos_form
+			end
+		end
+		insert(annotations, export.mark(pos or data.pos, "pos"))
+	end
+
+	-- Non-gloss text
+	if data.ng then
+		insert(annotations, export.mark(data.ng, "non-gloss"))
 	end
 
 	-- Literal/sum-of-parts meaning
 	if data.lit then
 		insert(annotations, "literally " .. export.mark(data.lit, "gloss"))
+	end
+
+	-- Provide a hook to insert additional annotations such as nested inflections.
+	if data.postprocess_annotations then
+		data.postprocess_annotations {
+			data = data,
+			annotations = annotations
+		}
 	end
 
 	if #annotations > 0 then
@@ -956,20 +1021,38 @@ local function encode_accel_param(prefix, param)
 	return prefix .. encode_accel_param_chars(param)
 end
 
-local function get_class(lang, tr, accel)
-	if not accel then
+local function insert_if_not_blank(list, item)
+	if item == "" then
+		return
+	end
+	insert(list, item)
+end
+
+local function get_class(lang, tr, accel, nowrap)
+	if not accel and not nowrap then
 		return ""
 	end
-	local form = accel.form
-	return "form-of lang-" .. lang:getFullCode() .. " " ..
-		(form and encode_accel_param_chars(form) .. "-form-of" or "") .. " " ..
-		(encode_accel_param("gender-", accel.gender)) .. " " ..
-		(encode_accel_param("pos-", accel.pos)) .. " " ..
-		(encode_accel_param("transliteration-", accel.translit or (tr ~= "-" and tr or nil))) .. " " ..
-		(encode_accel_param("target-", accel.target)) .. " " ..
-		(encode_accel_param("origin-", accel.lemma)) .. " " ..
-		(encode_accel_param("origin_transliteration-", accel.lemma_translit)) .. " " ..
-		(accel.no_store and "form-of-nostore" or "") .. " "
+	local classes = {}
+	if accel then
+		insert(classes, "form-of lang-" .. lang:getFullCode())
+		local form = accel.form
+		if form then
+			insert(classes, encode_accel_param_chars(form) .. "-form-of")
+		end
+		insert_if_not_blank(classes, encode_accel_param("gender-", accel.gender))
+		insert_if_not_blank(classes, encode_accel_param("pos-", accel.pos))
+		insert_if_not_blank(classes, encode_accel_param("transliteration-", accel.translit or (tr ~= "-" and tr or nil)))
+		insert_if_not_blank(classes, encode_accel_param("target-", accel.target))
+		insert_if_not_blank(classes, encode_accel_param("origin-", accel.lemma))
+		insert_if_not_blank(classes, encode_accel_param("origin_transliteration-", accel.lemma_translit))
+		if accel.no_store then
+			insert(classes, "form-of-nostore")
+		end
+	end
+	if nowrap then
+		insert(classes, nowrap)
+	end
+	return concat(classes, " ")
 end
 
 -- Add any left or right regular or accent qualifiers, labels or references to a formatted term. `data` is the object
@@ -1023,20 +1106,28 @@ The first argument, <code class="n">data</code>, must be a table. It contains th
 	sc = script_object,
 	track_sc = boolean,
 	no_nonstandard_sc_cat = boolean,
-	fragment = link_fragment
+	fragment = link_fragment,
 	id = sense_id,
 	genders = { "gender1", "gender2", ... },
 	tr = transliteration,
 	ts = transcription,
 	gloss = gloss,
 	pos = part_of_speech_tag,
+	ng = non-gloss text,
 	lit = literal_translation,
 	no_alt_ast = boolean,
 	accel = {accelerated_creation_tags},
 	interwiki = interwiki,
+	pretext = "text_at_beginning" or nil,
+	posttext = "text_at_end" or nil,
 	q = { "left_qualifier1", "left_qualifier2", ...} or "left_qualifier",
 	qq = { "right_qualifier1", "right_qualifier2", ...} or "right_qualifier",
+	l = { "left_label1", "left_label2", ...},
+	ll = { "right_label1", "right_label2", ...},
+	a = { "left_accent_qualifier1", "left_accent_qualifier2", ...},
+	aa = { "right_accent_qualifier1", "right_accent_qualifier2", ...},
 	refs = { "formatted_ref1", "formatted_ref2", ...} or { {text = "text", name = "name", group = "group"}, ... },
+	show_qualifiers = boolean,
 } }
 Any one of the items in the <code class="n">data</code> table may be {{code|lua|nil}}, but an error will be shown if neither <code class="n">term</code> nor <code class="n">alt</code> nor <code class="n">tr</code> is present.
 Thus, calling {{code|lua|2=full_link{ term = term, lang = lang, sc = sc } }}, where <code class="n">term</code> is an entry name, <code class="n">lang</code>  is a [[Module:languages#Language objects|language object]] from [[Module:languages]], and <code class="n">sc</code> is a [[Module:scripts#Script objects|script object]] from [[Module:scripts]], will give a plain link similar to the one produced by the template {{temp|l}}, and calling {{code|lua|2=full_link( { term = term, lang = lang, sc = sc }, "term" )}} will give a link similar to the one produced by the template {{temp|m}}.
@@ -1045,9 +1136,10 @@ The function will:
 * Call <code class="n">[[#language_link|language_link]]</code> on the term or alt forms, to remove diacritics in the page name, process any embedded wikilinks and create links to Reconstruction or Appendix pages when necessary.
 * Call <code class="n">[[Module:script utilities#tag_text]]</code> to add the appropriate language and script tags to the term, and to italicize terms written in the Latin script if necessary. Accelerated creation tags, as used by [[WT:ACCEL]], are included.
 * Generate a transliteration, based on the alt or term arguments, if the script is not Latin and no transliteration was provided.
-* Add the annotations (transliteration, gender, gloss etc.) after the link.
+* Add the annotations (transliteration, gender, gloss, etc.) after the link.
 * If <code class="n">no_alt_ast</code> is specified, then the alt text does not need to contain an asterisk if the language is reconstructed. This should only be used by modules which really need to allow links to reconstructions that don't display asterisks (e.g. number boxes).
-* If <code class="n">show_qualifiers</code> is specified, left and right qualifiers and references will be displayed. (This is for compatibility reasons, since a fair amount of code stores qualifiers and/or references in these fields and displays them itself, expecting {{code|lua|full_link()}} to ignore them.]==]
+* If <code class="n">pretext</code> or <code class="n">posttext</code> is specified, this is text to (respectively) prepend or append to the output, directly before processing qualifiers, labels and references. This can be used to add arbitrary extra text inside of the qualifiers, labels and references.
+* If <code class="n">show_qualifiers</code> is specified or the `show_qualifiers` field is set, left and right qualifiers, accent qualifiers, labels and references will be displayed, otherwise they will be ignored. (This is because a fair amount of code stores qualifiers, labels and/or references in these fields and displays them itself, rather than expecting {{code|lua|full_link()}} to display them.)]==]
 function export.full_link(data, face, allow_self_link, show_qualifiers)
 	if data.cats ~= nil then
 		track("cats")
@@ -1146,13 +1238,13 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 		-- simple_link can return nil, so check if a link has been generated.
 		if link then
 			-- Add "nowrap" class to prefixes in order to prevent wrapping after the hyphen
-			local nowrap = ""
+			local nowrap
 			local display_term = data.alt[i] or data.term[i]
-			if display_term and (sub(display_term, 1, 1) == "-" or mw.ustring.sub(display_term, 1, 1) == "־") then -- "sub" does not work for the Hebrew-script hyphen
-				nowrap = " nowrap"
+			if display_term and (display_term:find("^%-") or display_term:find("^־")) then -- Hebrew maqqef -- FIXME, use hyphens from [[Module:affix]]
+				nowrap = "nowrap"
 			end
 			
-			link = tag_text(link, lang, data.sc[i], face, get_class(lang, data.tr[i], accel) .. nowrap)
+			link = tag_text(link, lang, data.sc[i], face, get_class(lang, data.tr[i], accel, nowrap))
 		else
 			--[[	No term to show.
 					Is there at least a transliteration we can work from?	]]
@@ -1248,10 +1340,17 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 
 	insert(output, export.format_link_annotations(data, face))
 
-	local categories = #cats > 0 and format_categories(cats, lang, "-", nil, nil, data.sc) or ""
+	if data.pretext then
+		insert(output, 1, data.pretext)
+	end
+	if data.posttext then
+		insert(output, data.posttext)
+	end
+
+	local categories = cats[1] and format_categories(cats, lang, "-", nil, nil, data.sc) or ""
 
 	output = concat(output)
-	if show_qualifiers then
+	if show_qualifiers or data.show_qualifiers then
 		output = add_qualifiers_and_refs_to_term(data, output)
 	end
 	return output .. categories
