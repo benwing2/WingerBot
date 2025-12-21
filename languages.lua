@@ -1501,26 +1501,84 @@ function Language:getStandardCharacters(sc)
 	end
 end
 
---[==[Make the entry name (i.e. the correct page name).]==]
-function Language:makeEntryName(text, sc)
+--[==[
+Strip diacritics from display text `text` (in a language-specific fashion), which is in the script `sc`. If `sc` is
+omitted or {nil}, the script is autodetected. This also strips certain punctuation characters from the end and (in the
+case of Spanish upside-down question mark and exclamation points) from the beginning; strips any whitespace at the
+end of the text or between the text and final stripped punctuation characters; and applies some language-specific
+Unicode normalizations to replace discouraged characters with their prescribed alternatives. Return the stripped text.
+]==]
+function Language:stripDiacritics(text, sc)
 	if (not text) or text == "" then
-		return text, nil, {}
+		return text
+	end
+
+	sc = checkScript(text, self, sc)
+
+	text = normalize(text, sc)
+	-- FIXME, rename makeEntryName to stripDiacritics and get rid of second and third return values
+	-- everywhere
+	text, _, _ = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.entry_name, "entry_name",
+		"makeEntryName")
+
+	text = umatch(text, "^[¿¡]?(.-[^%s%p].-)%s*[؟?!;՛՜ ՞ ՟？！︖︕।॥။၊་།]?$") or text
+	return text
+end
+
+--[==[
+Convert a ''logical'' pagename (the pagename as it appears to the user, after diacritics and punctuation have been
+stripped) to a ''physical'' pagename (the pagename as it appears in the MediaWiki database). Reasons for a difference
+between the two are (a) unsupported titles such as `[ ]` (with square brackets in them), `#` (pound/hash sign) and
+`¯\_(ツ)_/¯` (with underscores), as well as overly long titles of various sorts; (b) "mammoth" pages that are split into
+parts (e.g. `a`, which is split into physical pagenames `a/languages A to L` and `a/languages M to Z`). For almost all
+purposes, you should work with logical and not physical pagenames. But there are certain use cases that require physical
+pagenames, such as checking the existence of a page or retrieving a page's contents.
+
+`pagename` is the logical pagename to be converted. `is_reconstructed` indicates whether the page is in the
+`Reconstruction` namespace. If it is omitted or has the value {nil}, the pagename is checked for an initial asterisk,
+and if found, the asterisk is removed and the page is assumed to be a `Reconstruction` page. Setting a value of `false`
+or `true` to `is_reconstructed` disables this check and allows for pagenames that begin with an asterisk.
+]==]
+function Language:logicalToPhysical(pagename, is_reconstructed)
+	-- FIXME: This probably shouldn't happen but it happens when makeEntryName() receives nil.
+	if pagename == nil then
+		track("nil-passed-to-logicalToPhysical")
+		return nil
+	end
+	local initial_asterisk
+	if is_reconstructed == nil then
+		local pagename_minus_initial_asterisk
+		initial_asterisk, pagename_minus_initial_asterisk = pagename:match("^(%*)(.*)$")
+		if pagename_minus_initial_asterisk then
+			is_reconstructed = true
+			pagename = pagename_minus_initial_asterisk
+		end
+	end
+
+	if not is_reconstructed then
+		-- Check if the pagename is a listed unsupported title.
+		local unsupportedTitles = load_data(links_data_module).unsupported_titles
+		if unsupportedTitles[pagename] then
+			return "Unsupported titles/" .. unsupportedTitles[pagename], nil, {}
+		end
 	end
 
 	-- Set `unsupported` as true if certain conditions are met.
 	local unsupported
-	-- Check if there's an unsupported character. \239\191\189 is the replacement character U+FFFD, which can't be typed directly here due to an abuse filter. Unix-style dot-slash notation is also unsupported, as it is used for relative paths in links, as are 3 or more consecutive tildes.
-	-- Note: match is faster with magic characters/charsets; find is faster with plaintext.
+	-- Check if there's an unsupported character. \239\191\189 is the replacement character U+FFFD, which can't be typed
+	-- directly here due to an abuse filter. Unix-style dot-slash notation is also unsupported, as it is used for
+	-- relative paths in links, as are 3 or more consecutive tildes. Note: match is faster with magic
+	-- characters/charsets; find is faster with plaintext.
 	if (
-		match(text, "[#<>%[%]_{|}]") or
-		find(text, "\239\191\189") or
-		match(text, "%f[^%z/]%.%.?%f[%z/]") or
-		find(text, "~~~")
+		match(pagename, "[#<>%[%]_{|}]") or
+		find(pagename, "\239\191\189") or
+		match(pagename, "%f[^%z/]%.%.?%f[%z/]") or
+		find(pagename, "~~~")
 	) then
 		unsupported = true
 	-- If it looks like an interwiki link.
-	elseif find(text, ":") then
-		local prefix = gsub(text, "^:*(.-):.*", ulower)
+	elseif find(pagename, ":") then
+		local prefix = gsub(pagename, "^:*(.-):.*", ulower)
 		if (
 			load_data("Module:data/namespaces")[prefix] or
 			load_data("Module:data/interwikis")[prefix]
@@ -1529,35 +1587,27 @@ function Language:makeEntryName(text, sc)
 		end
 	end
 
-	-- Check if the text is a listed unsupported title.
-	local unsupportedTitles = load_data(links_data_module).unsupported_titles
-	if unsupportedTitles[text] then
-		return "Unsupported titles/" .. unsupportedTitles[text], nil, {}
-	end
-
-	sc = checkScript(text, self, sc)
-
-	local fail, cats
-	text = normalize(text, sc)
-	text, fail, cats = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.entry_name, "entry_name", "makeEntryName")
-
-	text = umatch(text, "^[¿¡]?(.-[^%s%p].-)%s*[؟?!;՛՜ ՞ ՟？！︖︕।॥။၊་།]?$") or text
-
-	-- Escape unsupported characters so they can be used in titles. ` is used as a delimiter for this, so a raw use of it in an unsupported title is also escaped here to prevent interference; this is only done with unsupported titles, though, so inclusion won't in itself mean a title is treated as unsupported (which is why it's excluded from the earlier test).
+	-- Escape unsupported characters so they can be used in titles. ` is used as a delimiter for this, so a raw use of
+	-- it in an unsupported title is also escaped here to prevent interference; this is only done with unsupported
+	-- titles, though, so inclusion won't in itself mean a title is treated as unsupported (which is why it's excluded
+	-- from the earlier test).
 	if unsupported then
+		-- FIXME: This conversion needs to be different for reconstructed pages with unsupported characters. There
+		-- aren't any currently, but if there ever are, we need to fix this e.g. to put them in something like
+		-- Reconstruction:Proto-Indo-European/Unsupported titles/`lowbar``num`.
 		local unsupported_characters = load_data(links_data_module).unsupported_characters
-		text = text:gsub("[#<>%[%]_`{|}\239]\191?\189?", unsupported_characters)
+		pagename = pagename:gsub("[#<>%[%]_`{|}\239]\191?\189?", unsupported_characters)
 			:gsub("%f[^%z/]%.%.?%f[%z/]", function(m)
 				return gsub(m, "%.", "`period`")
 			end)
 			:gsub("~~~+", function(m)
 				return gsub(m, "~", "`tilde`")
 			end)
-		text = "Unsupported titles/" .. text
-	else
+		pagename = "Unsupported titles/" .. pagename
+	elseif not is_reconstructed then
 		-- Check if this is a mammoth page. If so, which subpage should we link to?
 		local mammoth_pages = load_data(links_data_module).mammoth_pages
-		if mammoth_pages[text] then
+		if mammoth_pages[pagename] then
 			local canonical_name = self:getCanonicalName()
 			if canonical_name ~= "Translingual" and canonical_name ~= "English" then
 				local this_subpage
@@ -1572,13 +1622,26 @@ function Language:makeEntryName(text, sc)
 				if not this_subpage then
 					error("Internal error: Bad data in mammoth_page_subpage_list, in [[Module:links/data]]; last entry didn't have 'true' in it")
 				end
-				text = text .. "/" .. this_subpage
+				pagename = pagename .. "/" .. this_subpage
 			end
 		end
 	end
 
-	return text, fail, cats
+	return (initial_asterisk or "") .. pagename
 end
+
+--[==[
+Strip the diacritics from a display pagename and convert the resulting logical pagename into a physical pagename.
+This allows you, for example, to retrieve the contents of the page or check its existence. WARNING: This is deprecated
+and will be going away. It is a simple composition of `self:stripDiacritics` and `self:logicalToPhysical`; most callers
+only want the former, and if you need both, call them both yourself.
+
+`text` and `sc` are as in `self:stripDiacritics`, and `is_reconstructed` is as in `self:logicalToPhysical`.
+]==]
+function Language:makeEntryName(text, sc, is_reconstructed)
+	return self:logicalToPhysical(self:stripDiacritics(text, sc), is_reconstructed)
+end
+
 
 --[==[Generates alternative forms using a specified method, and returns them as a table. If no method is specified, returns a table containing only the input term.]==]
 function Language:generateForms(text, sc)
