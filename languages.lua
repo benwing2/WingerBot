@@ -1,28 +1,30 @@
---[=[
+--[==[ intro:
 This module implements fetching of language-specific information and processing text in a given language.
+
+===Types of languages===
 
 There are two types of languages: full languages and etymology-only languages. The essential difference is that only
 full languages appear in L2 headings in vocabulary entries, and hence categories like [[:Category:French nouns]] exist
 only for full languages. Etymology-only languages have either a full language or another etymology-only language as
 their parent (in the parent-child inheritance sense), and for etymology-only languages with another etymology-only
 language as their parent, a full language can always be derived by following the parent links upwards. For example,
-"Canadian French", code 'fr-CA', is an etymology-only language whose parent is the full language "French", code 'fr'.
+"Canadian French", code `fr-CA`, is an etymology-only language whose parent is the full language "French", code `fr`.
 An example of an etymology-only language with another etymology-only parent is "Northumbrian Old English", code
-'ang-nor', which has "Anglian Old English", code 'ang-ang' as its parent; this is an etymology-only language whose
-parent is "Old English", code "ang", which is a full language. (This is because Northumbrian Old English is considered
-a variety of Anglian Old English.) Sometimes the parent is the "Undetermined" language, code 'und'; this is the case,
-for example, for "substrate" languages such as "Pre-Greek", code 'qsb-grc', and "the BMAC substrate", code 'qsb-bma'.
+`ang-nor`, which has "Anglian Old English", code `ang-ang` as its parent; this is an etymology-only language whose
+parent is "Old English", code `ang`, which is a full language. (This is because Northumbrian Old English is considered
+a variety of Anglian Old English.) Sometimes the parent is the "Undetermined" language, code `und`; this is the case,
+for example, for "substrate" languages such as "Pre-Greek", code `qsb-grc`, and "the BMAC substrate", code `qsb-bma`.
 
 It is important to distinguish language ''parents'' from language ''ancestors''. The parent-child relationship is one
 of containment, i.e. if X is a child of Y, X is considered a variety of Y. On the other hand, the ancestor-descendant
-relationship is one of descent in time. For example, "Classical Latin", code 'la-cla', and "Late Latin", code 'la-lat',
-are both etymology-only languages with "Latin", code 'la', as their parents, because both of the former are varieties
+relationship is one of descent in time. For example, "Classical Latin", code `la-cla`, and "Late Latin", code `la-lat`,
+are both etymology-only languages with "Latin", code `la`, as their parents, because both of the former are varieties
 of Latin. However, Late Latin does *NOT* have Classical Latin as its parent because Late Latin is *not* a variety of
-Classical Latin; rather, it is a descendant. There is in fact a separate 'ancestors' field that is used to express the
+Classical Latin; rather, it is a descendant. There is in fact a separate `ancestors` field that is used to express the
 ancestor-descendant relationship, and Late Latin's ancestor is given as Classical Latin. It is also important to note
 that sometimes an etymology-only language is actually the conceptual ancestor of its parent language. This happens,
-for example, with "Old Italian" (code 'roa-oit'), which is an etymology-only variant of full language "Italian" (code
-'it'), and with "Old Latin" (code 'itc-ola'), which is an etymology-only variant of Latin. In both cases, the full
+for example, with "Old Italian" (code `roa-oit`), which is an etymology-only variant of full language "Italian" (code
+`it`), and with "Old Latin" (code `itc-ola`), which is an etymology-only variant of Latin. In both cases, the full
 language has the etymology-only variant listed as an ancestor. This allows a Latin term to inherit from Old Latin
 using the {{tl|inh}} template (where in this template, "inheritance" refers to ancestral inheritance, i.e. inheritance
 in time, rather than in the parent-child sense); likewise for Italian and Old Italian.
@@ -48,65 +50,89 @@ accepted (returning a {Family} object as described in [[Module:families]]). Ther
 functions in [[Module:languages]] and [[Module:etymology languages]] to convert a language's canonical name to a
 {Language} object (depending on whether the canonical name refers to a full or etymology-only language).
 
+===Textual representations===
+
 Textual strings belonging to a given language come in several different ''text variants'':
 # The ''input text'' is what the user supplies in wikitext, in the parameters to {{tl|m}}, {{tl|l}}, {{tl|ux}},
-{{tl|t}}, {{tl|lang}} and the like.
-# The ''display text'' is the text in the form as it will be displayed to the user. This can include accent marks that
-are stripped to form the entry text (see below), as well as embedded bracketed links that are variously processed
-further. The display text is generated from the input text by applying language-specific transformations; for most
-languages, there will be no such transformations. Examples of transformations are bad-character replacements for
-certain languages (e.g. replacing 'l' or '1' to [[palochka]] in certain languages in Cyrillic); and for Thai and
-Khmer, converting space-separated words to bracketed words and resolving respelling substitutions such as [กรีน/กฺรีน],
-which indicate how to transliterate given words.
-# The ''entry text'' is the text in the form used to generate a link to a Wiktionary entry. This is usually generated
-from the display text by stripping certain sorts of diacritics on a per-language basis, and sometimes doing other
-transformations. The concept of ''entry text'' only really makes sense for text that does not contain embedded links,
-meaning that display text containing embedded links will need to have the links individually processed to get
-per-link entry text in order to generate the resolved display text (see below).
-# The ''resolved display text'' is the result of resolving embedded links in the display text (e.g. converting them to
-two-part links where the first part has entry-text transformations applied, and adding appropriate language-specific
-fragments) and adding appropriate language and script tagging. This text can be passed directly to MediaWiki for
-display.
-# The ''source translit text'' is the text as supplied to the language-specific {transliterate()} method. The form of
-the source translit text may need to be language-specific, e.g Thai and Khmer will need the full unprocessed input
-text, whereas other languages may need to work off the display text. [FIXME: It's still unclear to me how embedded
-bracketed links are handled in the existing code.] In general, embedded links need to be removed (i.e. converted to
-their "bare display" form by taking the right part of two-part links and removing double brackets), but when this
-happens is unclear to me [FIXME]. Some languages have a chop-up-and-paste-together scheme that sends parts of the
-text through the transliterate mechanism, and for others (those listed with "cont" in {substition} in
-[[Module:languages/data]]) they receive the full input text, but preprocessed in certain ways. (The wisdom of this is
-still unclear to me.)
-# The ''transliterated text'' (or ''transliteration'') is the result of transliterating the source translit text.
-Unlike for all the other text variants except the transcribed text, it is always in the Latin script.
+  {{tl|t}}, {{tl|lang}} and the like.
+# The ''corrected input text'' is the input text with some corrections and/or normalizations applied, such as
+  bad-character replacements for certain languages, like replacing `l` or `1` to [[palochka]] in some languages written
+  in Cyrillic. (FIXME: This currently goes under the name ''display text'' but that will be repurposed below. Also,
+  [[User:Surjection]] suggests renaming this to ''normalized input text'', but "normalized" is used in a different sense
+  in [[Module:usex]].)
+# The ''display text'' is the text in the form as it will be displayed to the user. This is what appears in headwords,
+  in usexes, in displayed internal links, etc. This can include accent marks that are removed to form the stripped
+  display text (see below), as well as embedded bracketed links that are variously processed further. The display text
+  is generated from the corrected input text by applying language-specific transformations; for most languages, there
+  will be no such transformations. The general reason for having a difference between input and display text is to allow
+  for extra information in the input text that is not displayed to the user but is sent to the transliteration module.
+  Note that having different display and input text is only supported currently through special-casing but will be
+  generalized. Examples of transformations are: (1) Removing the {{cd|^}} that is used in certain East Asian (and
+  possibly other unicameral) languages to indicate capitalization of the transliteration (which is currently
+  special-cased); (2) for Korean, removing or otherwise processing hyphens (which is currently special-cased); (3) for
+  Arabic, removing a ''sukūn'' diacritic placed over a ''tāʔ marbūṭa'' (like this: ةْ) to indicate that the
+  ''tāʔ marbūṭa'' is pronounced and transliterated as /t/ instead of being silent [NOTE, NOT IMPLEMENTED YET]; (4) for
+  Thai and Khmer, converting space-separated words to bracketed words and resolving respelling substitutions such as
+  `[กรีน/กฺรีน]`, which indicate how to transliterate given words [NOTE, NOT IMPLEMENTED YET except in language-specific
+  templates like {{tl|th-usex}}].
+## The ''right-resolved display text'' is the result of removing brackets around one-part embedded links and resolving
+   two-part embedded links into their right-hand components (i.e. converting two-part links into the displayed form).
+   The process of right-resolution is what happens when you call {{cd|remove_links()}} in [[Module:links]] on some text.
+   When applied to the display text, it produces exactly what the user sees, without any link markup.
+# The ''stripped display text'' is the result of applying diacritic-stripping to the display text.
+## The ''left-resolved stripped display text'' [NEED BETTER NAME] is the result of applying left-resolution to the
+   stripped display text, i.e. similar to right-resolution but resolving two-part embedded links into their left-hand
+   components (i.e. the linked-to page). If the display text refers to a single page, the resulting of applying
+   diacritic stripping and left-resolution produces the ''logical pagename''.
+# The ''physical pagename text'' is the result of converting the stripped display text into physical page links. If the
+  stripped display text contains embedded links, the left side of those links is converted into physical page links;
+  otherwise, the entire text is considered a pagename and converted in the same fashion. The conversion does three
+  things: (1) converts characters not allowed in pagenames into their "unsupported title" representation, e.g.
+  {{cd|Unsupported titles/`gt`}} in place of the logical name {{cd|>}}; (2) handles certain special-cased
+  unsupported-title logical pagenames, such as {{cd|Unsupported titles/Space}} in place of {{cd|[space]}} and
+  {{cd|Unsupported titles/Ancient Greek dish}} in place of a very long Greek name for a gourmet dish as found in
+  Aristophanes; (3) converts "mammoth" pagenames such as [[a]] into their appropriate split component, e.g.
+  [[a/languages A to L]].
+# The ''source translit text'' is the text as supplied to the language-specific {{cd|transliterate()}} method. The form
+  of the source translit text may need to be language-specific, e.g Thai and Khmer will need the corrected input text,
+  whereas other languages may need to work off the display text. [FIXME: It's still unclear to me how embedded bracketed
+  links are handled in the existing code.] In general, embedded links need to be right-resolved (see above), but when
+  this happens is unclear to me [FIXME]. Some languages have a chop-up-and-paste-together scheme that sends parts of the
+  text through the transliterate mechanism, and for others (those listed with "cont" in {{cd|substitution}} in
+  [[Module:languages/data]]) they receive the full input text, but preprocessed in certain ways. (The wisdom of this is
+  still unclear to me.)
+# The ''transliterated text'' (or ''transliteration'') is the result of transliterating the source translit text. Unlike
+  for all the other text variants except the transcribed text, it is always in the Latin script.
 # The ''transcribed text'' (or ''transcription'') is the result of transcribing the source translit text, where
-"transcription" here means a close approximation to the phonetic form of the language in languages (e.g. Akkadian,
-Sumerian, Ancient Egyptian, maybe Tibetan) that have a wide difference between the written letters and spoken form.
-Unlike for all the other text variants other than the transliterated text, it is always in the Latin script.
-Currently, the transcribed text is always supplied manually be the user; there is no such thing as a
-{lua|transcribe()} method on language objects.
+  "transcription" here means a close approximation to the phonetic form of the language in languages (e.g. Akkadian,
+  Sumerian, Ancient Egyptian, maybe Tibetan) that have a wide difference between the written letters and spoken form.
+  Unlike for all the other text variants other than the transliterated text, it is always in the Latin script.
+  Currently, the transcribed text is always supplied manually be the user; there is no such thing as a
+  {{cd|transcribe()}} method on language objects.
 # The ''sort key'' is the text used in sort keys for determining the placing of pages in categories they belong to. The
-sort key is generated from the pagename or a specified ''sort base'' by lowercasing, doing language-specific
-transformations and then uppercasing the result. If the sort base is supplied and is generated from input text, it
-needs to be converted to display text, have embedded links removed (i.e. resolving them to their right side if they
-are two-part links) and have entry text transformations applied.
+  sort key is generated from the pagename or a specified ''sort base'' by lowercasing, doing language-specific
+  transformations and then uppercasing the result. If the sort base is supplied and is generated from input text, it
+  needs to be converted to display text, have embedded links removed through right-resolution and have
+  diacritic-stripping applied.
 # There are other text variants that occur in usexes (specifically, there are normalized variants of several of the
-above text variants), but we can skip them for now.
+  above text variants), but we can skip them for now.
 
 The following methods exist on {Language} objects to convert between different text variants:
-# {makeDisplayText}: This converts input text to display text.
-# {lua|makeEntryName}: This converts input or display text to entry text. [FIXME: This needs some rethinking. In
-particular, {lua|makeEntryName} is sometimes called on display text (in some paths inside of [[Module:links]]) and
-sometimes called on input text (in other paths inside of [[Module:links]], and usually from other modules). We need
-to make sure we don't try to convert input text to display text twice, but at the same time we need to support
-calling it directly on input text since so many modules do this. This means we need to add a parameter indicating
-whether the passed-in text is input or display text; if that former, we call {lua|makeDisplayText} ourselves.]
-# {lua|transliterate}: This appears to convert input text with embedded brackets removed into a transliteration.
-[FIXME: This needs some rethinking. In particular, it calls {lua|processDisplayText} on its input, which won't work
-for Thai and Khmer, so we may need language-specific flags indicating whether to pass the input text directly to the
-language transliterate method. In addition, I'm not sure how embedded links are handled in the existing translit code;
-a lot of callers remove the links themselves before calling {lua|transliterate()}, which I assume is wrong.]
-# {lua|makeSortKey}: This converts entry text (?) to a sort key. [FIXME: Clarify this.]
-]=]
+# {correctInputText} (currently called {makeDisplayText}): This converts input text to corrected input text.
+# {stripDiacritics}: This converts to stripped display text. [FIXME: This needs some rethinking. In particular,
+  {stripDiacritics} is sometimes called on input text, corrected input text or display text (in various paths inside of
+  [[Module:links]], and, in the case of input text, usually from other modules). We need to make sure we don't try to
+  convert input text to display text twice, but at the same time we need to support calling it directly on input text
+  since so many modules do this. This means we need to add a parameter indicating whether the passed-in text is input,
+  corrected input, or display text; if the former two, we call {correctInputText} ourselves.]
+# {logicalToPhysical}: This converts logical pagenames to physical pagenames.
+# {transliterate}: This appears to convert input text with embedded brackets removed into a transliteration.
+  [FIXME: This needs some rethinking. In particular, it calls {processDisplayText} on its input, which won't work
+  for Thai and Khmer, so we may need language-specific flags indicating whether to pass the input text directly to the
+  language transliterate method. In addition, I'm not sure how embedded links are handled in the existing translit code;
+  a lot of callers remove the links themselves before calling {transliterate()}, which I assume is wrong.]
+# {makeSortKey}: This converts display text (?) to a sort key. [FIXME: Clarify this.]
+]==]
 local export = {}
 
 local debug_track_module = "Module:debug/track"
@@ -241,11 +267,6 @@ local function pattern_escape(...)
 	return pattern_escape(...)
 end
 
-local function remove_duplicates(...)
-	remove_duplicates = require(table_module).removeDuplicates
-	return remove_duplicates(...)
-end
-
 local function replacement_escape(...)
 	replacement_escape = require(string_replacement_escape_module)
 	return replacement_escape(...)
@@ -364,8 +385,7 @@ local function doTempSubstitutions(text, subbedChars, keepCarets, noTrim)
 		insert(patterns, "((%s+)[\128-\191\244]*)$")
 	end
 	-- Pre-substitution, of "[[" and "]]", which makes pattern matching more accurate.
-	text = gsub(text, "%f[%[]%[%[", "\1")
-		:gsub("%f[%]]%]%]", "\2")
+	text = gsub(text, "%f[%[]%[%[", "\1"):gsub("%f[%]]%]%]", "\2")
 	local i = #subbedChars
 	for _, pattern in ipairs(patterns) do
 		-- Patterns ending in \0 stand are for things like "[[" or "]]"), so the inserted PUA are treated as breaks between terms by modules that scrape info from pages.
@@ -389,8 +409,7 @@ local function doTempSubstitutions(text, subbedChars, keepCarets, noTrim)
 			return m1New
 		end)
 	end
-	text = gsub(text, "\1", "%[%[")
-		:gsub("\2", "%]%]")
+	text = gsub(text, "\1", "%[%["):gsub("\2", "%]%]")
 	return text, subbedChars
 end
 
@@ -400,10 +419,10 @@ local function undoTempSubstitutions(text, subbedChars)
 		local byte2 = floor(i / 4096) % 64 + 128
 		local byte3 = floor(i / 64) % 64 + 128
 		local byte4 = i % 64 + 128
-		text = gsub(text, "\244[" .. char(byte2) .. char(byte2+8) .. "]" .. char(byte3) .. char(byte4), replacement_escape(subbedChars[i]))
+		text = gsub(text, "\244[" .. char(byte2) .. char(byte2+8) .. "]" .. char(byte3) .. char(byte4),
+			replacement_escape(subbedChars[i]))
 	end
-	text = gsub(text, "\1", "%[%[")
-		:gsub("\2", "%]%]")
+	text = gsub(text, "\1", "%[%["):gsub("\2", "%]%]")
 	return text
 end
 
@@ -430,26 +449,44 @@ local function normalize(text, sc)
 	return sc:toFixedNFD(text)
 end
 
+-- Subfunction of iterateSectionSubstitutions(). Process an individual chunk of text according to the specifications in
+-- `substitution_data`. The input parameters are all as in the documentation of iterateSectionSubstitutions() except for
+-- `recursed`, which is set to true if we called ourselves recursively to process a script-specific setting or
+-- script-wide fallback. Returns two values: the processed text and the actual substitution data used to do the
+-- substitutions (same as the `actual_substitution_data` return value to iterateSectionSubstitutions()).
 local function doSubstitutions(self, text, sc, substitution_data, data_field, function_name, recursed)
-	local fail, cats, actual_substitution_data = nil, {}, substitution_data
+	-- BE CAREFUL in this function because the value at any level can be `false`, which causes no processing to be done
+	-- and blocks any further fallback processing.
+	local actual_substitution_data = substitution_data
 	-- If there are language-specific substitutes given in the data module, use those.
 	if type(substitution_data) == "table" then
 		-- If a script is specified, run this function with the script-specific data before continuing.
 		local sc_code = sc:getCode()
 		local has_substitution_data = false
-		if substitution_data[sc_code] then
+		if substitution_data[sc_code] ~= nil then
 			has_substitution_data = true
-			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data[sc_code], data_field, function_name, true)
-		-- Hant, Hans and Hani are usually treated the same, so add a special case to avoid having to specify each one separately.
-		elseif sc_code:match("^Han") and substitution_data.Hani then
+			if substitution_data[sc_code] then
+				text, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data[sc_code], data_field,
+					function_name, true)
+			end
+		-- Hant, Hans and Hani are usually treated the same, so add a special case to avoid having to specify each one
+		-- separately.
+		elseif sc_code:match("^Han") and substitution_data.Hani ~= nil then
 			has_substitution_data = true
-			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data.Hani, data_field, function_name, true)
+			if substitution_data.Hani then
+				text, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data.Hani, data_field,
+					function_name, true)
+			end
 		-- Substitution data with key 1 in the outer table may be given as a fallback.
-		elseif substitution_data[1] then
+		elseif substitution_data[1] ~= nil then
 			has_substitution_data = true
-			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data[1], data_field, function_name, true)
+			if substitution_data[1] then
+				text, actual_substitution_data = doSubstitutions(self, text, sc, substitution_data[1], data_field,
+					function_name, true)
+			end
 		end
-		-- Iterate over all strings in the "from" subtable, and gsub with the corresponding string in "to". We work with the NFD decomposed forms, as this simplifies many substitutions.
+		-- Iterate over all strings in the "from" subtable, and gsub with the corresponding string in "to". We work with
+		-- the NFD decomposed forms, as this simplifies many substitutions.
 		if substitution_data.from then
 			has_substitution_data = true
 			for i, from in ipairs(substitution_data.from) do
@@ -485,7 +522,9 @@ local function doSubstitutions(self, text, sc, substitution_data, data_field, fu
 			end
 		end
 		if not has_substitution_data and sc._data[data_field] then
-			text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, sc._data[data_field], data_field, function_name, true)
+			-- If language-specific sort key (etc.) is nil, fall back to script-wide sort key (etc.).
+			text, actual_substitution_data = doSubstitutions(self, text, sc, sc._data[data_field], data_field,
+				function_name, true)
 		end
 	elseif type(substitution_data) == "string" then
 		-- If there is a dedicated function module, use that.
@@ -494,51 +533,92 @@ local function doSubstitutions(self, text, sc, substitution_data, data_field, fu
 			-- TODO: translit functions should take objects, not codes.
 			-- TODO: translit functions should be called with form NFD.
 			if function_name == "tr" then
-				text, fail, cats = module[function_name](text, self._code, sc:getCode())
+				if not module[function_name] then
+					error(("Internal error: Module [[%s]] has no function named 'tr'"):format(substitution_data))
+				end
+				text = module[function_name](text, self._code, sc:getCode())
+			elseif function_name == "stripDiacritics" then
+				-- FIXME, get rid of this arm after renaming makeEntryName -> stripDiacritics.
+				if module[function_name] then
+					text = module[function_name](sc:toFixedNFD(text), self, sc)
+				elseif module.makeEntryName then
+					text = module.makeEntryName(sc:toFixedNFD(text), self, sc)
+				else
+					error(("Internal error: Module [[%s]] has no function named 'stripDiacritics' or 'makeEntryName'"
+						):format(substitution_data))
+				end
 			else
-				text, fail, cats = module[function_name](sc:toFixedNFD(text), self, sc)
-			end
-			-- TODO: get rid of the `fail` and `cats` return values.
-			if fail ~= nil then
-				track("fail")
-				track("fail/" .. self._code)
-			end
-			if cats ~= nil then
-				track("cats")
-				track("cats/" .. self._code)
+				if not module[function_name] then
+					error(("Internal error: Module [[%s]] has no function named '%s'"):format(
+						substitution_data, function_name))
+				end
+				text = module[function_name](sc:toFixedNFD(text), self, sc)
 			end
 		else
 			error("Substitution data '" .. substitution_data .. "' does not match an existing module.")
 		end
 	elseif substitution_data == nil and sc._data[data_field] then
 		-- If language-specific sort key (etc.) is nil, fall back to script-wide sort key (etc.).
-		text, fail, cats, actual_substitution_data = doSubstitutions(self, text, sc, sc._data[data_field], data_field, function_name, true)
+		text, actual_substitution_data = doSubstitutions(self, text, sc, sc._data[data_field], data_field,
+			function_name, true)
 	end
 
 	-- Don't normalize to NFC if this is the inner loop or if a module returned nil.
 	if recursed or not text then
-		return text, fail, cats, actual_substitution_data
+		return text, actual_substitution_data
 	end
 	-- Fix any discouraged sequences created during the substitution process, and normalize into the final form.
-	return sc:toFixedNFC(sc:fixDiscouragedSequences(text)), fail, cats, actual_substitution_data
+	return sc:toFixedNFC(sc:fixDiscouragedSequences(text)), actual_substitution_data
 end
 
--- Split the text into sections, based on the presence of temporarily substituted formatting characters, then iterate over each one to apply substitutions. This avoids putting PUA characters through language-specific modules, which may be unequipped for them.
-local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, substitution_data, data_field, function_name, notrim)
-	local fail, cats, sections = nil, {}
+-- Split the text into sections, based on the presence of temporarily substituted formatting characters, then iterate
+-- over each section to apply substitutions (e.g. transliteration or diacritic stripping). This avoids putting PUA
+-- characters through language-specific modules, which may be unequipped for them. This function is passed the following
+-- values:
+-- * `self` (the Language object);
+-- * `text` (the text to process);
+-- * `sc` (the script of the text, which must be specified; callers should call checkScript() as needed to autodetect the
+--   script of the text if not given explicitly by the user);
+-- * `subbedChars` (an array of the same length as the text, indicating which characters have been substituted and by
+--   what, or {nil} if no substitutions are to happen);
+-- * `keepCarets` (DOCUMENT ME);
+-- * `substitution_data` (the data indicating which substitutions to apply, taken directly from `data_field` in the
+--   language's data structure in a submodule of [[Module:languages/data]]);
+-- * `data_field` (the data field from which `substitution_data` was fetched, such as "sort_key" or "strip_diacritics");
+-- * `function_name` (the name of the function to call to do the substitution, in case `substitution_data` specifies a
+--   module to do the substitution);
+-- * `notrim` (don't trim whitespace at the edges of `text`; set when computing the sort key, because whitespace at the
+--   beginning of a sort key is significant and causes the resulting page to be sorted at the beginning of the category
+--   it's in).
+-- Returns three values:
+-- (1) the processed text;
+-- (2) the value of `subbedChars` that was passed in, possibly modified with additional character substitutions; will be
+--     {nil} if {nil} was passed in;
+-- (3) the actual substitution data that was used to apply substitutions to `text`; this may be different from the value
+--     of `substitution_data` passed in if that value recursively specified script-specific substitutions or if no
+--     substitution data could be found in the language-specific data (e.g. {nil} was passed in or a structure was passed
+--     in that had no setting for the script given in `sc`), but a script-wide fallback value was set; currently it is
+--     only used by makeSortKey().
+local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, substitution_data, data_field,
+	function_name, notrim)
+	local sections
 	-- See [[Module:languages/data]].
-	if not find(text, "\244") or (load_data(languages_data_module).substitution[self._code] == "cont") then
+	if not find(text, "\244") or load_data(languages_data_module).substitution[self._code] == "cont" then
 		sections = {text}
 	else
 		sections = split(text, "\244[\128-\143][\128-\191]*", true)
 	end
 	local actual_substitution_data
 	for _, section in ipairs(sections) do
-		-- Don't bother processing empty strings or whitespace (which may also not be handled well by dedicated modules).
+		-- Don't bother processing empty strings or whitespace (which may also not be handled well by dedicated
+		-- modules).
 		if gsub(section, "%s+", "") ~= "" then
-			local sub, sub_fail, sub_cats, this_actual_substitution_data = doSubstitutions(self, section, sc, substitution_data, data_field, function_name)
+			local sub, this_actual_substitution_data = doSubstitutions(self, section, sc, substitution_data, data_field,
+				function_name)
 			actual_substitution_data = this_actual_substitution_data
-			-- Second round of temporary substitutions, in case any formatting was added by the main substitution process. However, don't do this if the section contains formatting already (as it would have had to have been escaped to reach this stage, and therefore should be given as raw text).
+			-- Second round of temporary substitutions, in case any formatting was added by the main substitution
+			-- process. However, don't do this if the section contains formatting already (as it would have had to have
+			-- been escaped to reach this stage, and therefore should be given as raw text).
 			if sub and subbedChars then
 				local noSub
 				for _, pattern in ipairs(require(languages_data_patterns_module)) do
@@ -550,34 +630,22 @@ local function iterateSectionSubstitutions(self, text, sc, subbedChars, keepCare
 					sub, subbedChars = doTempSubstitutions(sub, subbedChars, keepCarets, true)
 				end
 			end
-			if (not sub) or sub_fail then
+			if not sub then
 				text = sub
-				fail = sub_fail
-				cats = sub_cats or {}
 				break
 			end
 			text = sub and gsub(text, pattern_escape(section), replacement_escape(sub), 1) or text
-			if type(sub_cats) == "table" then
-				for _, cat in ipairs(sub_cats) do
-					insert(cats, cat)
-				end
-			end
 		end
 	end
 
 	if not notrim then
 		-- Trim, unless there are only spacing characters, while ignoring any final formatting characters.
 		-- Do not trim sort keys because spaces at the beginning are significant.
-		text = text and text:gsub("^([\128-\191\244]*)%s+(%S)", "%1%2")
-			:gsub("(%S)%s+([\128-\191\244]*)$", "%1%2")
+		text = text and text:gsub("^([\128-\191\244]*)%s+(%S)", "%1%2"):gsub("(%S)%s+([\128-\191\244]*)$", "%1%2") or
+			nil
 	end
 
-	-- Remove duplicate categories.
-	if #cats > 1 then
-		cats = remove_duplicates(cats)
-	end
-
-	return text, fail, cats, subbedChars, actual_substitution_data
+	return text, subbedChars, actual_substitution_data
 end
 
 -- Process carets (and any escapes). Default to simple removal, if no pattern/replacement is given.
@@ -586,10 +654,10 @@ local function processCarets(text, pattern, repl)
 	repeat
 		text, rep = gsub(text, "\\\\(\\*^)", "\3%1")
 	until rep == 0
-	return text:gsub("\\^", "\4")
+	return (text:gsub("\\^", "\4")
 		:gsub(pattern or "%^", repl or "")
 		:gsub("\3", "\\")
-		:gsub("\4", "^")
+		:gsub("\4", "^"))
 end
 
 -- Remove carets if they are used to capitalize parts of transliterations (unless they have been escaped).
@@ -912,7 +980,7 @@ function Language:findBestScript(text, forceDetect)
 			end
 			local t, s, found = 0, 0
 			-- This is faster than using mw.ustring.gmatch directly.
-			for ch in gmatch(ugsub(text, "[" .. Hani.characters .. "]", "\255%0"), "\255(.[\128-\191]*)") do
+			for ch in gmatch((ugsub(text, "[" .. Hani.characters .. "]", "\255%0")), "\255(.[\128-\191]*)") do
 				found = true
 				if Hant_chars[ch] then
 					t = t + 1
@@ -941,7 +1009,7 @@ function Language:findBestScript(text, forceDetect)
 
 			-- Count characters by removing everything in the script's charset and comparing to the original length.
 			local charset = sc.characters
-			local count = charset and length - ulen(ugsub(text, "[" .. charset .. "]+", "")) or 0
+			local count = charset and length - ulen((ugsub(text, "[" .. charset .. "]+", ""))) or 0
 
 			if count >= length then
 				return sc
@@ -1518,8 +1586,8 @@ function Language:stripDiacritics(text, sc)
 	text = normalize(text, sc)
 	-- FIXME, rename makeEntryName to stripDiacritics and get rid of second and third return values
 	-- everywhere
-	text, _, _ = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.entry_name, "entry_name",
-		"makeEntryName")
+	text, _, _ = iterateSectionSubstitutions(self, text, sc, nil, nil,
+		self._data.strip_diacritics or self._data.entry_name, "strip_diacritics", "stripDiacritics")
 
 	text = umatch(text, "^[¿¡]?(.-[^%s%p].-)%s*[؟?!;՛՜ ՞ ՟？！︖︕।॥။၊་།]?$") or text
 	return text
@@ -1534,32 +1602,34 @@ parts (e.g. `a`, which is split into physical pagenames `a/languages A to L` and
 purposes, you should work with logical and not physical pagenames. But there are certain use cases that require physical
 pagenames, such as checking the existence of a page or retrieving a page's contents.
 
-`pagename` is the logical pagename to be converted. `is_reconstructed` indicates whether the page is in the
-`Reconstruction` namespace. If it is omitted or has the value {nil}, the pagename is checked for an initial asterisk,
-and if found, the asterisk is removed and the page is assumed to be a `Reconstruction` page. Setting a value of `false`
-or `true` to `is_reconstructed` disables this check and allows for pagenames that begin with an asterisk.
+`pagename` is the logical pagename to be converted. `is_reconstructed_or_appendix` indicates whether the page is in the
+`Reconstruction` or `Appendix` namespaces. If it is omitted or has the value {nil}, the pagename is checked for an
+initial asterisk, and if found, the page is assumed to be a `Reconstruction` page. Setting a value of `false` or `true`
+to `is_reconstructed_or_appendix` disables this check and allows for mainspace pagenames that begin with an asterisk.
 ]==]
-function Language:logicalToPhysical(pagename, is_reconstructed)
+function Language:logicalToPhysical(pagename, is_reconstructed_or_appendix)
 	-- FIXME: This probably shouldn't happen but it happens when makeEntryName() receives nil.
 	if pagename == nil then
 		track("nil-passed-to-logicalToPhysical")
 		return nil
 	end
 	local initial_asterisk
-	if is_reconstructed == nil then
+	if is_reconstructed_or_appendix == nil then
 		local pagename_minus_initial_asterisk
 		initial_asterisk, pagename_minus_initial_asterisk = pagename:match("^(%*)(.*)$")
 		if pagename_minus_initial_asterisk then
-			is_reconstructed = true
+			is_reconstructed_or_appendix = true
 			pagename = pagename_minus_initial_asterisk
+		elseif self:hasType("appendix-constructed") then
+			is_reconstructed_or_appendix = true
 		end
 	end
 
-	if not is_reconstructed then
+	if not is_reconstructed_or_appendix then
 		-- Check if the pagename is a listed unsupported title.
 		local unsupportedTitles = load_data(links_data_module).unsupported_titles
 		if unsupportedTitles[pagename] then
-			return "Unsupported titles/" .. unsupportedTitles[pagename], nil, {}
+			return "Unsupported titles/" .. unsupportedTitles[pagename]
 		end
 	end
 
@@ -1598,13 +1668,13 @@ function Language:logicalToPhysical(pagename, is_reconstructed)
 		local unsupported_characters = load_data(links_data_module).unsupported_characters
 		pagename = pagename:gsub("[#<>%[%]_`{|}\239]\191?\189?", unsupported_characters)
 			:gsub("%f[^%z/]%.%.?%f[%z/]", function(m)
-				return gsub(m, "%.", "`period`")
+				return (gsub(m, "%.", "`period`"))
 			end)
 			:gsub("~~~+", function(m)
-				return gsub(m, "~", "`tilde`")
+				return (gsub(m, "~", "`tilde`"))
 			end)
 		pagename = "Unsupported titles/" .. pagename
-	elseif not is_reconstructed then
+	elseif not is_reconstructed_or_appendix then
 		-- Check if this is a mammoth page. If so, which subpage should we link to?
 		local mammoth_pages = load_data(links_data_module).mammoth_pages
 		if mammoth_pages[pagename] then
@@ -1636,10 +1706,10 @@ This allows you, for example, to retrieve the contents of the page or check its 
 and will be going away. It is a simple composition of `self:stripDiacritics` and `self:logicalToPhysical`; most callers
 only want the former, and if you need both, call them both yourself.
 
-`text` and `sc` are as in `self:stripDiacritics`, and `is_reconstructed` is as in `self:logicalToPhysical`.
+`text` and `sc` are as in `self:stripDiacritics`, and `is_reconstructed_or_appendix` is as in `self:logicalToPhysical`.
 ]==]
-function Language:makeEntryName(text, sc, is_reconstructed)
-	return self:logicalToPhysical(self:stripDiacritics(text, sc), is_reconstructed)
+function Language:makeEntryName(text, sc, is_reconstructed_or_appendix)
+	return self:logicalToPhysical(self:stripDiacritics(text, sc), is_reconstructed_or_appendix)
 end
 
 
@@ -1653,11 +1723,13 @@ function Language:generateForms(text, sc)
 	return require("Module:" .. self._data.generate_forms).generateForms(text, self, sc)
 end
 
---[==[Creates a sort key for the given entry name, following the rules appropriate for the language. This removes diacritical marks from the entry name if they are not considered significant for sorting, and may perform some other changes. Any initial hyphen is also removed, and anything parentheses is removed as well.
-The <code>sort_key</code> setting for each language in the data modules defines the replacements made by this function, or it gives the name of the module that takes the entry name and returns a sortkey.]==]
+--[==[Creates a sort key for the given stripped text, following the rules appropriate for the language. This removes
+diacritical marks from the stripped text if they are not considered significant for sorting, and may perform some other
+changes. Any initial hyphen is also removed, and anything in parentheses is removed as well.
+The <code>sort_key</code> setting for each language in the data modules defines the replacements made by this function, or it gives the name of the module that takes the stripped text and returns a sortkey.]==]
 function Language:makeSortKey(text, sc)
 	if (not text) or text == "" then
-		return text, nil, {}
+		return text
 	end
 	if match(text, "<[^<>]+>") then
 		track("track HTML tag")
@@ -1665,9 +1737,7 @@ function Language:makeSortKey(text, sc)
 	-- Remove directional characters, bold, italics, soft hyphens, strip markers and HTML tags.
 	-- FIXME: Partly duplicated with remove_formatting() in [[Module:links]].
 	text = ugsub(text, "[\194\173\226\128\170-\226\128\174\226\129\166-\226\129\169]", "")
-	text = text
-		:gsub("('*)'''(.-'*)'''", "%1%2")
-		:gsub("('*)''(.-'*)''", "%1%2")
+	text = text:gsub("('*)'''(.-'*)'''", "%1%2"):gsub("('*)''(.-'*)''", "%1%2")
 	text = gsub(unstrip(text), "<[^<>]+>", "")
 
 	text = decode_uri(text, "PATH")
@@ -1687,34 +1757,39 @@ function Language:makeSortKey(text, sc)
 			:gsub("I", "ı")
 		text = sc:toFixedNFD(text)
 	end
-	-- Convert to lowercase, make the sortkey, then convert to uppercase. Where the language has dotted dotless i, it is usually not necessary to convert "i" to "İ" and "ı" to "I" first, because "I" will always be interpreted as conventional "I" (not dotless "İ") by any sorting algorithms, which will have been taken into account by the sortkey substitutions themselves. However, if no sortkey substitutions have been specified, then conversion is necessary so as to prevent "i" and "ı" both being sorted as "I".
-	-- An exception is made for scripts that (sometimes) sort by scraping page content, as that means they are sensitive to changes in capitalization (as it changes the target page).
-	local fail, cats
+	-- Convert to lowercase, make the sortkey, then convert to uppercase. Where the language has dotted dotless i, it is
+	-- usually not necessary to convert "i" to "İ" and "ı" to "I" first, because "I" will always be interpreted as
+	-- conventional "I" (not dotless "İ") by any sorting algorithms, which will have been taken into account by the
+	-- sortkey substitutions themselves. However, if no sortkey substitutions have been specified, then conversion is
+	-- necessary so as to prevent "i" and "ı" both being sorted as "I".
+	--
+	-- An exception is made for scripts that (sometimes) sort by scraping page content, as that means they are sensitive
+	-- to changes in capitalization (as it changes the target page).
 	if not sc:sortByScraping() then
 		text = ulower(text)
 	end
 
 	local actual_substitution_data
 	-- Don't trim whitespace here because it's significant at the beginning of a sort key or sort base.
-	text, fail, cats, _, actual_substitution_data = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.sort_key, "sort_key", "makeSortKey", "notrim")
+	text, _, actual_substitution_data = iterateSectionSubstitutions(self, text, sc, nil, nil, self._data.sort_key,
+		"sort_key", "makeSortKey", "notrim")
 
 	if not sc:sortByScraping() then
 		if self:hasDottedDotlessI() and not actual_substitution_data then
-			text = gsub(gsub(text, "ı", "I"), "i", "İ")
+			text = text:gsub("ı", "I"):gsub("i", "İ")
 			text = sc:toFixedNFC(text)
 		end
 		text = uupper(text)
 	end
 
 	-- Remove parentheses, as long as they are either preceded or followed by something.
-	text = gsub(text, "(.)[()]+", "%1")
-		:gsub("[()]+(.)", "%1")
+	text = gsub(text, "(.)[()]+", "%1"):gsub("[()]+(.)", "%1")
 
 	text = escape_risky_characters(text)
-	return text, fail, cats
+	return text
 end
 
---[==[Create the form used as as a basis for display text and transliteration.]==]
+--[==[Create the form used as as a basis for display text and transliteration. FIXME: Rename to correctInputText().]==]
 local function processDisplayText(text, self, sc, keepCarets, keepPrefixes)
 	local subbedChars = {}
 	text, subbedChars = doTempSubstitutions(text, subbedChars, keepCarets)
@@ -1723,9 +1798,9 @@ local function processDisplayText(text, self, sc, keepCarets, keepPrefixes)
 	text = checkNoEntities(self, text)
 
 	sc = checkScript(text, self, sc)
-	local fail, cats
 	text = normalize(text, sc)
-	text, fail, cats, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, self._data.display_text, "display_text", "makeDisplayText")
+	text, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, keepCarets, self._data.display_text,
+		"display_text", "makeDisplayText")
 
 	text = removeCarets(text, sc)
 
@@ -1738,7 +1813,7 @@ local function processDisplayText(text, self, sc, keepCarets, keepPrefixes)
 		text = gsub(text, "\\:", "\4")
 		while true do
 			local prefix = gsub(text, "^(.-):.+", function(m1)
-				return gsub(m1, "\244[\128-\191]*", "")
+				return (gsub(m1, "\244[\128-\191]*", ""))
 			end)
 			-- Check if the prefix is an interwiki, though ignore capitalised Wiktionary:, which is a namespace.
 			if not prefix or prefix == text or prefix == "Wiktionary"
@@ -1753,42 +1828,49 @@ local function processDisplayText(text, self, sc, keepCarets, keepPrefixes)
 				return concat(ret) .. m2
 			end)
 		end
-		text = gsub(text, "\3", "\\")
-			:gsub("\4", ":")
+		text = gsub(text, "\3", "\\"):gsub("\4", ":")
 	end
 
-	return text, fail, cats, subbedChars
+	return text, subbedChars
 end
 
 --[==[Make the display text (i.e. what is displayed on the page).]==]
 function Language:makeDisplayText(text, sc, keepPrefixes)
-	if (not text) or text == "" then
-		return text, nil, {}
+	if not text or text == "" then
+		return text
 	end
 
-	local fail, cats, subbedChars
-	text, fail, cats, subbedChars = processDisplayText(text, self, sc, nil, keepPrefixes)
+	local subbedChars
+	text, subbedChars = processDisplayText(text, self, sc, nil, keepPrefixes)
 
 	text = escape_risky_characters(text)
-	return undoTempSubstitutions(text, subbedChars), fail, cats
+	return undoTempSubstitutions(text, subbedChars)
 end
 
---[==[Transliterates the text from the given script into the Latin script (see [[Wiktionary:Transliteration and romanization]]). The language must have the <code>translit</code> property for this to work; if it is not present, {{code|lua|nil}} is returned.
-Returns three values:
-# The transliteration.
-# A boolean which indicates whether the transliteration failed for an unexpected reason. If {{code|lua|false}}, then the transliteration either succeeded, or the module is returning nothing in a controlled way (e.g. the input was {{code|lua|"-"}}). Generally, this means that no maintenance action is required. If {{code|lua|true}}, then the transliteration is {{code|lua|nil}} because either the input or output was defective in some way (e.g. [[Module:ar-translit]] will not transliterate non-vocalised inputs, and this module will fail partially-completed transliterations in all languages). Note that this value can be manually set by the transliteration module, so make sure to cross-check to ensure it is accurate.
-# A table of categories selected by the transliteration module, which should be in the format expected by {{code|lua|format_categories}} in [[Module:utilities]].
-The <code>sc</code> parameter is handled by the transliteration module, and how it is handled is specific to that module. Some transliteration modules may tolerate {{code|lua|nil}} as the script, others require it to be one of the possible scripts that the module can transliterate, and will show an error if it's not one of them. For this reason, the <code>sc</code> parameter should always be provided when writing non-language-specific code.
-The <code>module_override</code> parameter is used to override the default module that is used to provide the transliteration. This is useful in cases where you need to demonstrate a particular module in use, but there is no default module yet, or you want to demonstrate an alternative version of a transliteration module before making it official. It should not be used in real modules or templates, only for testing. All uses of this parameter are tracked by [[Wiktionary:Tracking/languages/module_override]].
+--[==[Transliterates the text from the given script into the Latin script (see
+[[Wiktionary:Transliteration and romanization]]). The language must have the <code>translit</code> property for this to
+work; if it is not present, {{code|lua|nil}} is returned.
+
+The <code>sc</code> parameter is handled by the transliteration module, and how it is handled is specific to that
+module. Some transliteration modules may tolerate {{code|lua|nil}} as the script, others require it to be one of the
+possible scripts that the module can transliterate, and will throw an error if it's not one of them. For this reason,
+the <code>sc</code> parameter should always be provided when writing non-language-specific code.
+
+The <code>module_override</code> parameter is used to override the default module that is used to provide the
+transliteration. This is useful in cases where you need to demonstrate a particular module in use, but there is no
+default module yet, or you want to demonstrate an alternative version of a transliteration module before making it
+official. It should not be used in real modules or templates, only for testing. All uses of this parameter are tracked
+by [[Wiktionary:Tracking/languages/module_override]].
 '''Known bugs''':
 * This function assumes {tr(s1) .. tr(s2) == tr(s1 .. s2)}. When this assertion fails, wikitext markups like <nowiki>'''</nowiki> can cause wrong transliterations.
-* HTML entities like <code>&amp;apos;</code>, often used to escape wikitext markups, do not work.]==]
+* HTML entities like <code>&amp;apos;</code>, often used to escape wikitext markups, do not work.
+]==]
 function Language:transliterate(text, sc, module_override)
 	-- If there is no text, or the language doesn't have transliteration data and there's no override, return nil.
 	if not (self._data.translit or module_override) then
-		return nil, false, {}
-	elseif (not text) or text == "" or text == "-" then
-		return text, false, {}
+		return nil
+	elseif not text or text == "" or text == "-" then
+		return text
 	end
 	-- If the script is not transliteratable (and no override is given), return nil.
 	sc = checkScript(text, self, sc)
@@ -1798,7 +1880,7 @@ function Language:transliterate(text, sc, module_override)
 		track("non-transliterable/" .. self._code)
 		track("non-transliterable/" .. sc:getCode())
 		track("non-transliterable/" .. sc:getCode() .. "/" .. self._code)
-		return nil, true, {}
+		return nil
 	end
 
 	-- Remove any strip markers.
@@ -1808,26 +1890,30 @@ function Language:transliterate(text, sc, module_override)
 	local processed = load_data(languages_data_module).substitution[self._code] ~= "none"
 
 	-- Get the display text with the keepCarets flag set.
-	local fail, cats, subbedChars
+	local subbedChars
 	if processed then
-		text, fail, cats, subbedChars = processDisplayText(text, self, sc, true)
+		text, subbedChars = processDisplayText(text, self, sc, true)
 	end
 
 	-- Transliterate (using the module override if applicable).
-	text, fail, cats, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, true, module_override or self._data.translit, "translit", "tr")
+	text, subbedChars = iterateSectionSubstitutions(self, text, sc, subbedChars, true, module_override or
+		self._data.translit, "translit", "tr")
 
 	if not text then
-		return nil, true, cats
+		return nil
 	end
 
 	-- Incomplete transliterations return nil.
 	local charset = sc.characters
 	if charset and umatch(text, "[" .. charset .. "]") then
-		-- Remove any characters in Latin, which includes Latin characters also included in other scripts (as these are false positives), as well as any PUA substitutions. Anything remaining should only be script code "None" (e.g. numerals).
+		-- Remove any characters in Latin, which includes Latin characters also included in other scripts (as these are
+		-- false positives), as well as any PUA substitutions. Anything remaining should only be script code "None"
+		-- (e.g. numerals).
 		local check_text = ugsub(text, "[" .. get_script("Latn").characters .. "􀀀-􏿽]+", "")
-		-- Set none_is_last_resort_only flag, so that any non-None chars will cause a script other than "None" to be returned.
+		-- Set none_is_last_resort_only flag, so that any non-None chars will cause a script other than "None" to be
+		-- returned.
 		if find_best_script_without_lang(check_text, true):getCode() ~= "None" then
-			return nil, true, cats
+			return nil
 		end
 	end
 
@@ -1836,7 +1922,8 @@ function Language:transliterate(text, sc, module_override)
 		text = undoTempSubstitutions(text, subbedChars)
 	end
 
-	-- If the script does not use capitalization, then capitalize any letters of the transliteration which are immediately preceded by a caret (and remove the caret).
+	-- If the script does not use capitalization, then capitalize any letters of the transliteration which are
+	-- immediately preceded by a caret (and remove the caret).
 	if text and not sc:hasCapitalization() and text:find("^", 1, true) then
 		text = processCarets(text, "%^([\128-\191\244]*%*?)([^\128-\191\244][\128-\191]*)", function(m1, m2)
 			return m1 .. uupper(m2)
@@ -1848,9 +1935,7 @@ function Language:transliterate(text, sc, module_override)
 		track("module_override")
 	end
 
-	fail = text == nil and (not not fail) or false
-
-	return text, fail, cats
+	return text
 end
 
 do
@@ -1889,15 +1974,15 @@ function Language:hasDottedDotlessI()
 end
 
 function Language:toJSON(opts)
-	local entry_name, entry_name_patterns, entry_name_remove_diacritics = self._data.entry_name
-	if entry_name then
-		if entry_name.from then
-			entry_name_patterns = {}
-			for i, from in ipairs(entry_name.from) do
-				insert(entry_name_patterns, {from = from, to = entry_name.to[i] or ""})
+	local strip_diacritics, strip_diacritics_patterns, strip_diacritics_remove_diacritics = self._data.strip_diacritics
+	if strip_diacritics then
+		if strip_diacritics.from then
+			strip_diacritics_patterns = {}
+			for i, from in ipairs(strip_diacritics.from) do
+				insert(strip_diacritics_patterns, {from = from, to = strip_diacritics.to[i] or ""})
 			end
 		end
-		entry_name_remove_diacritics = entry_name.remove_diacritics
+		strip_diacritics_remove_diacritics = strip_diacritics.remove_diacritics
 	end
 	-- mainCode should only end up non-nil if dontCanonicalizeAliases is passed to make_object().
 	-- props should either contain zero-argument functions to compute the value, or the value itself.
@@ -1909,8 +1994,8 @@ function Language:toJSON(opts)
 		mainCode = self._mainCode,
 		parent = function() return self:getParentCode() end,
 		full = function() return self:getFullCode() end,
-		entryNamePatterns = entry_name_patterns,
-		entryNameRemoveDiacritics = entry_name_remove_diacritics,
+		stripDiacriticsPatterns = strip_diacritics_patterns,
+		stripDiacriticsRemoveDiacritics = strip_diacritics_remove_diacritics,
 		family = function() return self:getFamilyCode() end,
 		aliases = function() return self:getAliases() end,
 		varieties = function() return self:getVarieties() end,
