@@ -1,8 +1,11 @@
 local export = {}
 
-local collation_module = "Module:collation"
 local languages_module = "Module:languages"
 local maintenance_category_module = "Module:maintenance category"
+local pages_module = "Module:pages"
+local string_compare_module = "Module:string/compare"
+local string_decode_entities_module = "Module:string/decodeEntities"
+local string_remove_comments_module = "Module:string/removeComments"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
 local template_parser_module = "Module:template parser"
@@ -27,62 +30,65 @@ local toNFC = ustring.toNFC
 local toNFD = ustring.toNFD
 local ugsub = ustring.gsub
 
---[==[
-Loaders for functions in other modules, which overwrite themselves with the target function when called. This ensures modules are only loaded when needed, retains the speed/convenience of locally-declared pre-loaded functions, and has no overhead after the first call, since the target functions are called directly in any subsequent calls.]==]
-	local function class_else_type(...)
-		class_else_type = require(template_parser_module).class_else_type
-		return class_else_type(...)
-	end
-	
-	local function decode_entities(...)
-		decode_entities = require(string_utilities_module).decode_entities
-		return decode_entities(...)
-	end
-	
-	local function encode_entities(...)
-		encode_entities = require(string_utilities_module).encode_entities
-		return encode_entities(...)
-	end
-	
-	local function get_category(...)
-		get_category = require(maintenance_category_module).get_category
-		return get_category(...)
-	end
-	
-	local function get_lang(...)
-		get_lang = require(languages_module).getByCode
-		return get_lang(...)
-	end
-	
-	local function list_to_set(...)
-		list_to_set = require(table_module).listToSet
-		return list_to_set(...)
-	end
-	
-	local function parse(...)
-		parse = require(template_parser_module).parse
-		return parse(...)
-	end
-	
-	local function remove_comments(...)
-		remove_comments = require(string_utilities_module).remove_comments
-		return remove_comments(...)
-	end
-	
-	local function split(...)
-		split = require(string_utilities_module).split
-		return split(...)
-	end
-	
-	local function string_sort(...)
-		string_sort = require(collation_module).string_sort
-		return string_sort(...)
-	end
-	
-	local function uupper(...)
-		uupper = require(string_utilities_module).upper
-		return uupper(...)
-	end
+local function class_else_type(...)
+	class_else_type = require(template_parser_module).class_else_type
+	return class_else_type(...)
+end
+
+local function decode_entities(...)
+	decode_entities = require(string_decode_entities_module)
+	return decode_entities(...)
+end
+
+local function encode_entities(...)
+	encode_entities = require(string_utilities_module).encode_entities
+	return encode_entities(...)
+end
+
+local function get_category(...)
+	get_category = require(maintenance_category_module).get_category
+	return get_category(...)
+end
+
+local function get_lang(...)
+	get_lang = require(languages_module).getByCode
+	return get_lang(...)
+end
+
+local function list_to_set(...)
+	list_to_set = require(table_module).listToSet
+	return list_to_set(...)
+end
+
+local function parse(...)
+	parse = require(template_parser_module).parse
+	return parse(...)
+end
+
+local function remove_comments(...)
+	remove_comments = require(string_remove_comments_module)
+	return remove_comments(...)
+end
+
+local function physical_to_logical_pagename_if_mammoth(...)
+	physical_to_logical_pagename_if_mammoth = require(pages_module).physical_to_logical_pagename_if_mammoth
+	return physical_to_logical_pagename_if_mammoth(...)
+end
+
+local function split(...)
+	split = require(string_utilities_module).split
+	return split(...)
+end
+
+local function string_compare(...)
+	string_compare =  require(string_compare_module)
+	return string_compare(...)
+end
+
+local function uupper(...)
+	uupper = require(string_utilities_module).upper
+	return uupper(...)
+end
 
 --[==[
 Loaders for objects, which load data (or some other object) into some variable, which can then be accessed as "foo or get_foo()", where the function get_foo sets the object to "foo" and then returns it. This ensures they are only loaded when needed, and avoids the need to check for the existence of the object each time, since once "foo" has been set, "get_foo" will not be called again.]==]
@@ -675,8 +681,9 @@ object includes the following fields:
 * `namespace`: Namespace of the pagename.
 * `ns`: Namespace table for the page from mw.site.namespaces (TODO: merge with `namespace` above).
 * `full_raw_pagename`: Full version of the '''RAW''' pagename (i.e. unsupported-title pages aren't canonicalized);
-  including the namespace and the root (portion before the slash).
+  including the namespace and the base (portion before the slash).
 * `pagename`: Canonicalized subpage portion of the pagename (unsupported-title pages are canonicalized).
+* `pagename_with_base`: Same as `pagename` in the main namespace; otherwise, the whole pagename without the namespace.
 * `decompose_pagename`: Equivalent of `pagename` in NFD decomposition.
 * `pagename_len`: Length of `pagename` in Unicode chars, where combinations of spacing character + decomposed diacritic
   are treated as single characters.
@@ -687,9 +694,14 @@ object includes the following fields:
 * `raw_defaultsort`: FIXME: Document me.
 * `wikitext_topic_cat`: FIXME: Document me.
 * `wikitext_langname_cat`: FIXME: Document me.
+
+`no_fetch_content` says to not fetch and parse the content or set a DEFAULTSORT sort key, in order to save time on
+test and documentation pages that have lots of template invocations that set `|pagename=`. It turns out nearly all the
+time of this function is contained in the line `frame:callParserFunction("DEFAULTSORT", data.pagename_defaultsort)`,
+so we skip it on test and documentation pages where it accomplishes nothing in any case.
 ]==]
 
-function export.process_page(pagename)
+function export.process_page(pagename, no_fetch_content)
 	local data = {
 		comb_chars = comb_chars,
 		emoji_pattern = "[" .. emoji_chars .. "]",
@@ -716,9 +728,13 @@ function export.process_page(pagename)
 	else
 		raw_title = mw.title.getCurrentTitle()
 	end
-	data.namespace = raw_title.nsText
+
+	local nsText = raw_title.nsText
+	local namespace_is_reconstruction = nsText == "Reconstruction"
+	data.namespace = nsText
 	data.ns = mw.site.namespaces[raw_title.namespace]
-	data.full_raw_pagename = raw_title.fullText
+	local full_raw_pagename = raw_title.fullText
+	data.full_raw_pagename = full_raw_pagename
 
 	local frame = mw.getCurrentFrame()
 	-- WARNING: `content` may be nil, e.g. if we're substing a template like {{ja-new}} on a not-yet-created page
@@ -726,10 +742,11 @@ function export.process_page(pagename)
 	-- or other non-mainspace page. We used to make the latter an error but there are too many modules that do it,
 	-- and substing on a nonexistent page is totally legit, and we don't actually need to be able to access the
 	-- content of the page.
-	local content = raw_title:getContent()
+	local content = not no_fetch_content and raw_title:getContent() or nil
 
 	-- Get the pagename.
-	pagename = gsub(raw_title.subpageText, "^Unsupported titles/(.+)", function(m)
+	pagename = physical_to_logical_pagename_if_mammoth(raw_title)
+	pagename = gsub(pagename, "^Unsupported titles/(.+)", function(m)
 		insert(cats, "Unsupported titles")
 		local title = (unsupported_titles or get_unsupported_titles())[m]
 		if title then
@@ -775,8 +792,13 @@ function export.process_page(pagename)
 		return concat(title)
 	end)
 	
-	-- Save pagename, as local variable will be destructively modified.
+	-- Save pagename, as the local variable will be destructively modified.
 	data.pagename = pagename
+	if nsText == "" then
+		data.pagename_with_base = pagename
+	else
+		data.pagename_with_base = raw_title.text
+	end
 	-- Decompose the pagename in Unicode normalization form D.
 	data.decompose_pagename = toNFD(pagename)
 	-- Explode the current page name into a character table, taking decomposed combining characters into account.
@@ -796,13 +818,15 @@ function export.process_page(pagename)
 	-- Generate DEFAULTSORT.
 	data.encoded_pagename = encode_entities(data.pagename)
 	data.pagename_defaultsort = get_lang("mul"):makeSortKey(data.encoded_pagename)
-	frame:callParserFunction("DEFAULTSORT", data.pagename_defaultsort)
+	if not no_fetch_content then
+		frame:callParserFunction("DEFAULTSORT", data.pagename_defaultsort)
+	end
 	data.raw_defaultsort = uupper(raw_title.text)
 	
 	-- Make `L2_list` and `L2_sections`, note raw wikitext use of {{DEFAULTSORT:}} and {{DISPLAYTITLE:}}, then add categories if any unwanted L1 headings are found, the L2 headings are in the wrong order, or they don't match a canonical language name.
 	-- Note: HTML comments shouldn't be removed from `content` until after this step, as they can affect the result.
 	do
-		local L2_list, L2_list_len, L2_sections, sort_cache, prev = {}, 0, {}, {}
+		local L2_list, L2_list_len, L2_sections, sort_cache, prev, rc = {}, 0, {}, {}
 		local new_cats, L2_wrong_order = {}
 		
 		local function get_weight(L2)
@@ -843,7 +867,7 @@ function export.process_page(pagename)
 			-- FIXME: we need a more sophisticated sorting method which handles non-diacritic special characters (e.g. Magɨ).
 			if prev and not (
 				L2_wrong_order or
-				string_sort(get_weight(prev), get_weight(name))
+				string_compare(get_weight(prev), get_weight(name))
 			) then
 				new_cats["Pages with language headings in the wrong order"] = true
 				L2_wrong_order = true
@@ -856,11 +880,16 @@ function export.process_page(pagename)
 		end
 		
 		local function handle_template(template)
-			local name = template:get_name()
+			-- Turn off redirect checking except in the Reconstruction namespace because the rc flag is only
+			-- used in the Reconstruction namespace and the other names are parser functions, which AFAIK can't
+			-- be redirected to.
+			local name = template:get_name(nil, not namespace_is_reconstruction and "no_redirect" or nil)
 			if name == "DEFAULTSORT:" then
 				new_cats["Pages with DEFAULTSORT conflicts"] = true
 			elseif name == "DISPLAYTITLE:" then
 				new_cats["Pages with DISPLAYTITLE conflicts"] = true
+			elseif name == "reconstructed" then
+				rc = true
 			end
 		end
 		
@@ -886,6 +915,12 @@ function export.process_page(pagename)
 		
 		for cat in pairs(new_cats) do
 			insert(cats, get_category(cat))
+		end
+		if namespace_is_reconstruction and not rc then
+			local langname = match(full_raw_pagename, "^Reconstruction:([^/]+)/.")
+			if langname then
+				insert(cats, get_category(langname .. " entries missing Template:reconstructed"))
+			end
 		end
 	end
 
