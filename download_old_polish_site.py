@@ -16,6 +16,7 @@ last_index = 23425
 
 columns = [
   "filename",
+  "url",
   "title",
   "Typ",
   "Rodzaj",
@@ -88,9 +89,17 @@ def download_sub_pages():
 def parse_one_page(filename, contents):
   lines = contents.split("\n")
   title = None
-  props = {"filename": filename}
   saw_properties = False
   in_properties = False
+  m = re.search(r"^([0-9]+)-([0-9]+)-(.+)\.html", filename)
+  main_file, subfile_order, subfile_index = m.groups()
+  if not m:
+    print("Can't parse filename: %s" % filename, file=sys.stderr)
+  if subfile_index == "NULL":
+    url = url_prefix + str(int(main_file))
+  else:
+    url = url_prefix + str(int(main_file)) + "/" + subfile_index
+  props = {"filename": filename, "url": url}
   for lineno, line in enumerate(lines):
     if "artykuł hasłowy" in line:
       if title is not None:
