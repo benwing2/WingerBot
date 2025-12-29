@@ -13,7 +13,10 @@ def process_subpage(origpage, origindex, page, index):
     msg("Page %s %s: %s %s: %s" % (origindex, origpagetitle, index, pagetitle, txt))
 
   #if pagetitle.startswith("Template:"):
-  pagemsg("Found one")
+  if args.redirects_only:
+    pagemsg("Found redirect")
+  else:
+    pagemsg("Found reference")
 
 def process_page(page, index):
   global args
