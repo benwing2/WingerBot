@@ -181,8 +181,7 @@ Page 4258 Template:mwl-conj-I: -------- begin text --------
 |{{{1}}}{{#switch:{{{2|}}}|ç=ç|g=g|c=c|#default={{{2|}}}}}ariemos
 |{{{1}}}{{#switch:{{{2|}}}|ç=ç|g=g|c=c|#default={{{2|}}}}}ariedes
 |{{{1}}}{{#switch:{{{2|}}}|ç=ç|g=g|c=c|#default={{{2|}}}}}arien
-}}<includeonly>[[Category: Mirandese verbs ending in -ar]]</includeonly><noinclude>
-[[Category:Mirandese verb inflection-table templates|I]]{{documentation}}</noinclude>
+}}<includeonly>[[Category:Mirandese verbs ending in -ar]]</includeonly><noinclude>{{tcat|conj}}{{documentation}}</noinclude>
 -------- end text --------
 Page 4259 Template:mwl-conj-II: -------- begin text --------
 {{mwl-conj-table
@@ -253,8 +252,7 @@ Page 4259 Template:mwl-conj-II: -------- begin text --------
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}ermos
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}erdes
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}eren
-}}<includeonly>[[Category: Mirandese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Mirandese verb inflection-table templates|II]]{{documentation}}</noinclude>
+}}<includeonly>[[Category:Mirandese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj}}{{documentation}}</noinclude>
 -------- end text --------
 Page 4260 Template:mwl-conj-III: -------- begin text --------
 {{mwl-conj-table
@@ -325,538 +323,537 @@ Page 4260 Template:mwl-conj-III: -------- begin text --------
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}irmos
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}irdes
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}iren
-}}<includeonly>[[Category: Mirandese verbs ending in -ir]]</includeonly><noinclude>
-[[Category:Mirandese verb inflection-table templates|III]]{{documentation}}</noinclude>
+}}<includeonly>[[Category:Mirandese verbs ending in -ir]]</includeonly><noinclude>{{tcat|conj}}{{documentation}}</noinclude>
 -------- end text --------
 Page 4474 Template:mns-nor-conj-table-reg: -------- begin text --------
 {{mns-nor-conj-table<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}гум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}гын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}гум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}гын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}<!--
 
--->|{{{1|{{PAGENAME}}}}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|в|п=и|б|н|т|с|г|м|к|з|х|ц|ӈ|ж|д|р|ф|ч|ш|щ|л=ы}}ме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}г<!--
+-->|{{{1|{{pagename}}}}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|в|п=и|б|н|т|с|г|м|к|з|х|ц|ӈ|ж|д|р|ф|ч|ш|щ|л=ы}}ме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}г<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}в<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}гыт<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}в<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}гыт<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}тэ<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}тэ<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ламе̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}тэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ламе̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}тэ̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яныл<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яге<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яге<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яге̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яге̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яга̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яга̄ныл<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ян<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янэ<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ян<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янэ<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ян<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яны̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янанэ̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ян<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янанэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янэ̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ян<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яны̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яна̄ныл<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}я̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ян<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яна̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}я̄ныл<!--
 
-{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}
+{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сум<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сын<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}с<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сум<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сын<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}с<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=аса|у={{#switch:{{{2|}}}|+=аса|-=ысу|=су}}|ю=йсу|я=яса}}ме̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сы̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сы̄г<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=аса|у={{#switch:{{{2|}}}|+=аса|-=ысу|=су}}|ю=йсу|я=яса}}ме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сы̄г<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сув<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сы̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сыт<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сув<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=й|я=я}}сыт<!--
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слум<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слн<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэ<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слум<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слн<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэ<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сламе̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слы̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сламе̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэ̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слув<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слы̄н<!--
--->|{{{1|{{PAGENAME}}}}}{{#switch:{{{2|}}}|+=а|-=ы|=}}са̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слув<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слы̄н<!--
+-->|{{{1|{{pagename}}}}}{{#switch:{{{2|}}}|+=а|-=ы|=}}са̄ныл<!--
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагум<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагн<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саге<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагум<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагн<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саге<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагаме̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагы̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саге̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагаме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саге̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагув<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагы̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сага̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагув<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сагы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сага̄ныл<!--
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санум<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сан<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}са̄нэ<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санум<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сан<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}са̄нэ<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санаме̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саны̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санаме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санэ̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санув<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саны̄н<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сана̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}санув<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}саны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сана̄ныл<!--
 
 
 
 
--->|{{{1|{{PAGENAME}}}}}нем<!--
--->|{{{1|{{PAGENAME}}}}}нэн<!--
--->|{{{1|{{PAGENAME}}}}}нотэ<!--
+-->|{{{1|{{pagename}}}}}нем<!--
+-->|{{{1|{{pagename}}}}}нэн<!--
+-->|{{{1|{{pagename}}}}}нотэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нэме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нон<!--
--->|{{{1|{{PAGENAME}}}}}нэтон<!--
+-->|{{{1|{{pagename}}}}}нэме̄н<!--
+-->|{{{1|{{pagename}}}}}нон<!--
+-->|{{{1|{{pagename}}}}}нэтон<!--
 
--->|{{{1|{{PAGENAME}}}}}нов<!--
--->|{{{1|{{PAGENAME}}}}}нон<!--
--->|{{{1|{{PAGENAME}}}}}ноныл<!--
+-->|{{{1|{{pagename}}}}}нов<!--
+-->|{{{1|{{pagename}}}}}нон<!--
+-->|{{{1|{{pagename}}}}}ноныл<!--
 
 
--->|{{{1|{{PAGENAME}}}}}нолум<!--
--->|{{{1|{{PAGENAME}}}}}нолн<!--
--->|{{{1|{{PAGENAME}}}}}нотэ<!--
+-->|{{{1|{{pagename}}}}}нолум<!--
+-->|{{{1|{{pagename}}}}}нолн<!--
+-->|{{{1|{{pagename}}}}}нотэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нэламе̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэлон<!--
--->|{{{1|{{PAGENAME}}}}}нэтон<!--
+-->|{{{1|{{pagename}}}}}нэламе̄н<!--
+-->|{{{1|{{pagename}}}}}нэлон<!--
+-->|{{{1|{{pagename}}}}}нэтон<!--
 
--->|{{{1|{{PAGENAME}}}}}нэлув<!--
--->|{{{1|{{PAGENAME}}}}}нэлон<!--
--->|{{{1|{{PAGENAME}}}}}ноныл<!--
+-->|{{{1|{{pagename}}}}}нэлув<!--
+-->|{{{1|{{pagename}}}}}нэлон<!--
+-->|{{{1|{{pagename}}}}}ноныл<!--
 
 
--->|{{{1|{{PAGENAME}}}}}ногум<!--
--->|{{{1|{{PAGENAME}}}}}ногын<!--
--->|{{{1|{{PAGENAME}}}}}нон<!--
--->|{{{1|{{PAGENAME}}}}}ноге<!--
+-->|{{{1|{{pagename}}}}}ногум<!--
+-->|{{{1|{{pagename}}}}}ногын<!--
+-->|{{{1|{{pagename}}}}}нон<!--
+-->|{{{1|{{pagename}}}}}ноге<!--
 
--->|{{{1|{{PAGENAME}}}}}нэгаме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэгагме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэгон<!--
--->|{{{1|{{PAGENAME}}}}}нэгагон<!--
--->|{{{1|{{PAGENAME}}}}}нэге̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэгаге̄н<!--
+-->|{{{1|{{pagename}}}}}нэгаме̄н<!--
+-->|{{{1|{{pagename}}}}}нэгагме̄н<!--
+-->|{{{1|{{pagename}}}}}нэгон<!--
+-->|{{{1|{{pagename}}}}}нэгагон<!--
+-->|{{{1|{{pagename}}}}}нэге̄н<!--
+-->|{{{1|{{pagename}}}}}нэгаге̄н<!--
 
--->|{{{1|{{PAGENAME}}}}}нэгув<!--
--->|{{{1|{{PAGENAME}}}}}нэгагув<!--
--->|{{{1|{{PAGENAME}}}}}нэгагон<!--
--->|{{{1|{{PAGENAME}}}}}нэгон<!--
--->|{{{1|{{PAGENAME}}}}}нэганыл<!--
--->|{{{1|{{PAGENAME}}}}}нэгаганыл<!--
+-->|{{{1|{{pagename}}}}}нэгув<!--
+-->|{{{1|{{pagename}}}}}нэгагув<!--
+-->|{{{1|{{pagename}}}}}нэгагон<!--
+-->|{{{1|{{pagename}}}}}нэгон<!--
+-->|{{{1|{{pagename}}}}}нэганыл<!--
+-->|{{{1|{{pagename}}}}}нэгаганыл<!--
 
 
--->|{{{1|{{PAGENAME}}}}}нонум<!--
--->|{{{1|{{PAGENAME}}}}}нонын<!--
--->|{{{1|{{PAGENAME}}}}}нон<!--
--->|{{{1|{{PAGENAME}}}}}нонэ<!--
+-->|{{{1|{{pagename}}}}}нонум<!--
+-->|{{{1|{{pagename}}}}}нонын<!--
+-->|{{{1|{{pagename}}}}}нон<!--
+-->|{{{1|{{pagename}}}}}нонэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нэнаме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэнон<!--
--->|{{{1|{{PAGENAME}}}}}нэнанон<!--
--->|{{{1|{{PAGENAME}}}}}нэнанон<!--
--->|{{{1|{{PAGENAME}}}}}нэнон<!--
+-->|{{{1|{{pagename}}}}}нэнаме̄н<!--
+-->|{{{1|{{pagename}}}}}нэме̄н<!--
+-->|{{{1|{{pagename}}}}}нэнон<!--
+-->|{{{1|{{pagename}}}}}нэнанон<!--
+-->|{{{1|{{pagename}}}}}нэнанон<!--
+-->|{{{1|{{pagename}}}}}нэнон<!--
 
--->|{{{1|{{PAGENAME}}}}}нэнув<!--
--->|{{{1|{{PAGENAME}}}}}нэнанув<!--
--->|{{{1|{{PAGENAME}}}}}нэнон<!--
--->|{{{1|{{PAGENAME}}}}}нэнанон<!--
--->|{{{1|{{PAGENAME}}}}}ноныл<!--
--->|{{{1|{{PAGENAME}}}}}нэнаныл<!--
+-->|{{{1|{{pagename}}}}}нэнув<!--
+-->|{{{1|{{pagename}}}}}нэнанув<!--
+-->|{{{1|{{pagename}}}}}нэнон<!--
+-->|{{{1|{{pagename}}}}}нэнанон<!--
+-->|{{{1|{{pagename}}}}}ноныл<!--
+-->|{{{1|{{pagename}}}}}нэнаныл<!--
 
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}м<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}м<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}маме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мы̄г<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}маме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мы̄г<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мы̄т<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мы̄т<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}млум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}млын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мтэ<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}млум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}млын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мтэ<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мламе̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}млы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мтэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мламе̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}млы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мтэ̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}млув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}млы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ма̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}млув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}млы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ма̄ныл<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}магум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}магын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}маге<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}магум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}магын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}маге<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}магме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}магы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}маге̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}магме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}магы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}маге̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}магув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}магы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}мага̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}магув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}магы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}мага̄ныл<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}манум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}манын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}манэ<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}манум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}манын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}манэ<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}манаме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}маны̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}манэ̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}манаме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}маны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}манэ̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}манув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}маны̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ма̄ныл<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}манув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}маны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ма̄ныл<!--
 
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гум-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гын-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=ӣ|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ӣ}}-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=ӣ|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ӣ}}-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}мена-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}га̄-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}мена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}га̄-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}ва-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гыт-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}ва-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гыт-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лум-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лын-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}тэ̄-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}тэ̄-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ламена-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}тэна-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ламена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}тэна-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лува-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}лына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яныл-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}лына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яныл-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягум-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягын-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яге̄-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яге̄-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягмена-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягмена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягена-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягува-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ягына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}яганыл-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ягына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}яганыл-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янум-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янын-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янэ-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янэ-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янмена-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янэна-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янэ̄н-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янмена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янэна-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янэ̄н-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янува-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}янаныла-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}янаныла-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сум-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сын-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}с-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}с-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=аса|у={{#switch:{{{2|}}}|+=аса|-=ысу|=су}}|ю=йсу|я=яса}}мена-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сыга-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=аса|у={{#switch:{{{2|}}}|+=аса|-=ысу|=су}}|ю=йсу|я=яса}}мена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сыга-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сува-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сыт-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=}}|ю=и|я=я}}сыт-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слум-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слн-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэ-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слн-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэ-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сламена-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэна-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сламена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}стэна-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слува-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слына-ке<!--
--->|{{{1|{{PAGENAME}}}}}саныла-ке<!--
--->|{{{1|{{PAGENAME}}}}}саныл-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}слына-ке<!--
+-->|{{{1|{{pagename}}}}}саныла-ке<!--
+-->|{{{1|{{pagename}}}}}саныл-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}сагум-ке<!--
--->|{{{1|{{PAGENAME}}}}}сагн-ке<!--
--->|{{{1|{{PAGENAME}}}}}саге̄-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}сагум-ке<!--
+-->|{{{1|{{pagename}}}}}сагн-ке<!--
+-->|{{{1|{{pagename}}}}}саге̄-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагамена-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саге̄на-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагамена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саге̄на-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагува-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саганыл-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сагына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саганыл-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санум-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санын-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санэ̄-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санэ̄-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санамена-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сана-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санэ̄на-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санамена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сана-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санэ̄на-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санува-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санына-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сана-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сананыл-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саныла-ке<!--
--->|{{#invoke:string/templates|sub|{{{4|{{PAGENAME}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{PAGENAME}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саныл-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}санына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сана-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}сананыл-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саныла-ке<!--
+-->|{{#invoke:string/templates|sub|{{{4|{{pagename}}}}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{{4|{{pagename}}}}}|-5}}|а=а|у={{#switch:{{{2|}}}|+=а|-=ы|=ы}}|ю=и|я=я}}саныл-ке<!--
 
 
 
 
--->|{{{1|{{PAGENAME}}}}}нӯвум<!--
--->|{{{1|{{PAGENAME}}}}}нӯвын<!--
--->|{{{1|{{PAGENAME}}}}}нув<!--
+-->|{{{1|{{pagename}}}}}нӯвум<!--
+-->|{{{1|{{pagename}}}}}нӯвын<!--
+-->|{{{1|{{pagename}}}}}нув<!--
 
--->|{{{1|{{PAGENAME}}}}}нуваме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувы̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувы̄г<!--
+-->|{{{1|{{pagename}}}}}нуваме̄н<!--
+-->|{{{1|{{pagename}}}}}нувы̄н<!--
+-->|{{{1|{{pagename}}}}}нувы̄г<!--
 
--->|{{{1|{{PAGENAME}}}}}нувӯв<!--
--->|{{{1|{{PAGENAME}}}}}нувы̄н<!--
--->|{{{1|{{PAGENAME}}}}}нӯвыт<!--
+-->|{{{1|{{pagename}}}}}нувӯв<!--
+-->|{{{1|{{pagename}}}}}нувы̄н<!--
+-->|{{{1|{{pagename}}}}}нӯвыт<!--
 
 
--->|{{{1|{{PAGENAME}}}}}нӯвлум<!--
--->|{{{1|{{PAGENAME}}}}}нӯвлын<!--
--->|{{{1|{{PAGENAME}}}}}нӯвтэ<!--
+-->|{{{1|{{pagename}}}}}нӯвлум<!--
+-->|{{{1|{{pagename}}}}}нӯвлын<!--
+-->|{{{1|{{pagename}}}}}нӯвтэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нувламе̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувлы̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувтэ̄н<!--
+-->|{{{1|{{pagename}}}}}нувламе̄н<!--
+-->|{{{1|{{pagename}}}}}нувлы̄н<!--
+-->|{{{1|{{pagename}}}}}нувтэ̄н<!--
 
--->|{{{1|{{PAGENAME}}}}}нувлув<!--
--->|{{{1|{{PAGENAME}}}}}нувлы̄н<!--
--->|{{{1|{{PAGENAME}}}}}нува̄ныл<!--
+-->|{{{1|{{pagename}}}}}нувлув<!--
+-->|{{{1|{{pagename}}}}}нувлы̄н<!--
+-->|{{{1|{{pagename}}}}}нува̄ныл<!--
 
 
--->|{{{1|{{PAGENAME}}}}}нува̄гум<!--
--->|{{{1|{{PAGENAME}}}}}нува̄гын<!--
--->|{{{1|{{PAGENAME}}}}}нува̄ге<!--
+-->|{{{1|{{pagename}}}}}нува̄гум<!--
+-->|{{{1|{{pagename}}}}}нува̄гын<!--
+-->|{{{1|{{pagename}}}}}нува̄ге<!--
 
--->|{{{1|{{PAGENAME}}}}}нувагаме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувагы̄н<!--
--->|{{{1|{{PAGENAME}}}}}нуваге̄н<!--
+-->|{{{1|{{pagename}}}}}нувагаме̄н<!--
+-->|{{{1|{{pagename}}}}}нувагы̄н<!--
+-->|{{{1|{{pagename}}}}}нуваге̄н<!--
 
--->|{{{1|{{PAGENAME}}}}}нувагув<!--
--->|{{{1|{{PAGENAME}}}}}нувагы̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувага̄ныл<!--
+-->|{{{1|{{pagename}}}}}нувагув<!--
+-->|{{{1|{{pagename}}}}}нувагы̄н<!--
+-->|{{{1|{{pagename}}}}}нувага̄ныл<!--
 
 
--->|{{{1|{{PAGENAME}}}}}нува̄нум<!--
--->|{{{1|{{PAGENAME}}}}}нува̄нын<!--
--->|{{{1|{{PAGENAME}}}}}нува̄нэ<!--
+-->|{{{1|{{pagename}}}}}нува̄нум<!--
+-->|{{{1|{{pagename}}}}}нува̄нын<!--
+-->|{{{1|{{pagename}}}}}нува̄нэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нуванме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нуваны̄н<!--
--->|{{{1|{{PAGENAME}}}}}нуванэ̄н<!--
+-->|{{{1|{{pagename}}}}}нуванме̄н<!--
+-->|{{{1|{{pagename}}}}}нуваны̄н<!--
+-->|{{{1|{{pagename}}}}}нуванэ̄н<!--
 
--->|{{{1|{{PAGENAME}}}}}нуванув<!--
--->|{{{1|{{PAGENAME}}}}}нуваны̄н<!--
--->|{{{1|{{PAGENAME}}}}}нува̄ныл<!--
+-->|{{{1|{{pagename}}}}}нуванув<!--
+-->|{{{1|{{pagename}}}}}нуваны̄н<!--
+-->|{{{1|{{pagename}}}}}нува̄ныл<!--
 
 
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}лн<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}лы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}лы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}лн<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}лы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}лы̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}гн<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}гы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}гн<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}гы̄н<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}нын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}ны̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е}}ны̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}е̄}}н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}нын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}ны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е}}ны̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=е̄|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}э̄|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}е̄}}н<!--
 
 
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}вем<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}вен<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}вем<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}вен<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}веме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄г<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}веме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄г<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄в<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}вет<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄в<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}вет<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄сум<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄сын<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}вес<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄сум<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄сын<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}вес<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весаме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весы̄г<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весаме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весы̄г<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весув<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весы̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄сыт<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весув<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весы̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄сыт<!--
 
 
 
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄м-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄н-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄м-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄н-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄мена-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄на-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄га-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄мена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄на-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄га-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄ва-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄на-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄т-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄ва-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄на-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄т-ке<!--
 
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весум-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весын-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}ве̄с-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весум-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весын-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}ве̄с-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весамена-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весыга-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весамена-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весыга-ке<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весува-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весына-ке<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}я}}весыта-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весува-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весына-ке<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=я|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}а|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}я}}весыта-ке<!--
 
 
 
 
 
--->|{{{1|{{PAGENAME}}}}}нэм<!--
--->|{{{1|{{PAGENAME}}}}}нэн<!--
--->|{{{1|{{PAGENAME}}}}}нэ̄тэ<!--
+-->|{{{1|{{pagename}}}}}нэм<!--
+-->|{{{1|{{pagename}}}}}нэн<!--
+-->|{{{1|{{pagename}}}}}нэ̄тэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нэме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэ̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэны̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэтэ̄н<!--
+-->|{{{1|{{pagename}}}}}нэме̄н<!--
+-->|{{{1|{{pagename}}}}}нэ̄н<!--
+-->|{{{1|{{pagename}}}}}нэны̄н<!--
+-->|{{{1|{{pagename}}}}}нэтэ̄н<!--
 
--->|{{{1|{{PAGENAME}}}}}нэ̄в<!--
--->|{{{1|{{PAGENAME}}}}}нэ̄<!--
--->|{{{1|{{PAGENAME}}}}}нэны̄н<!--
--->|{{{1|{{PAGENAME}}}}}нэ̄ныл<!--
+-->|{{{1|{{pagename}}}}}нэ̄в<!--
+-->|{{{1|{{pagename}}}}}нэ̄<!--
+-->|{{{1|{{pagename}}}}}нэны̄н<!--
+-->|{{{1|{{pagename}}}}}нэ̄ныл<!--
 
--->|{{{1|{{PAGENAME}}}}}мам<!--
--->|{{{1|{{PAGENAME}}}}}ман<!--
--->|{{{1|{{PAGENAME}}}}}ма<!--
+-->|{{{1|{{pagename}}}}}мам<!--
+-->|{{{1|{{pagename}}}}}ман<!--
+-->|{{{1|{{pagename}}}}}ма<!--
 
--->|{{{1|{{PAGENAME}}}}}маме̄н<!--
--->|{{{1|{{PAGENAME}}}}}ма̄н<!--
--->|{{{1|{{PAGENAME}}}}}ма̄г<!--
+-->|{{{1|{{pagename}}}}}маме̄н<!--
+-->|{{{1|{{pagename}}}}}ма̄н<!--
+-->|{{{1|{{pagename}}}}}ма̄г<!--
 
--->|{{{1|{{PAGENAME}}}}}мав<!--
--->|{{{1|{{PAGENAME}}}}}ма̄н<!--
--->|{{{1|{{PAGENAME}}}}}мат<!--
+-->|{{{1|{{pagename}}}}}мав<!--
+-->|{{{1|{{pagename}}}}}ма̄н<!--
+-->|{{{1|{{pagename}}}}}мат<!--
 
 
 
 
--->|{{{1|{{PAGENAME}}}}}нувэм<!--
--->|{{{1|{{PAGENAME}}}}}нувэн<!--
--->|{{{1|{{PAGENAME}}}}}нувэ<!--
+-->|{{{1|{{pagename}}}}}нувэм<!--
+-->|{{{1|{{pagename}}}}}нувэн<!--
+-->|{{{1|{{pagename}}}}}нувэ<!--
 
--->|{{{1|{{PAGENAME}}}}}нувэме̄н<!--
--->|{{{1|{{PAGENAME}}}}}нувэн<!--
--->|{{{1|{{PAGENAME}}}}}нувэг<!--
+-->|{{{1|{{pagename}}}}}нувэме̄н<!--
+-->|{{{1|{{pagename}}}}}нувэн<!--
+-->|{{{1|{{pagename}}}}}нувэг<!--
 
--->|{{{1|{{PAGENAME}}}}}нувэв<!--
--->|{{{1|{{PAGENAME}}}}}нувэн<!--
--->|{{{1|{{PAGENAME}}}}}нувэт<!--
+-->|{{{1|{{pagename}}}}}нувэв<!--
+-->|{{{1|{{pagename}}}}}нувэн<!--
+-->|{{{1|{{pagename}}}}}нувэт<!--
 
 
 
 
--->|{{PAGENAME}}<!--
+-->|{{pagename}}<!--
 
--->| {{#switch:{{{2|}}}|+={{{1|}}}{{#switch:{{#invoke:string/templates|pos|{{PAGENAME}}|-5}}|а=ам|у=ум|ю=юм}}|-={{{1|}}}ум|{{#invoke:string/templates|sub|{{PAGENAME}}|1|-5}}{{#switch:{{#invoke:string/templates|pos|{{PAGENAME}}|-4}}|ь=и|а=а|у=у|й=ю}}м}}<!--
+-->| {{#switch:{{{2|}}}|+={{{1|}}}{{#switch:{{#invoke:string/templates|pos|{{pagename}}|-5}}|а=ам|у=ум|ю=юм}}|-={{{1|}}}ум|{{#invoke:string/templates|sub|{{pagename}}|1|-5}}{{#switch:{{#invoke:string/templates|pos|{{pagename}}|-4}}|ь=и|а=а|у=у|й=ю}}м}}<!--
 
 -->|<!--
 -->|<!--
@@ -869,49 +866,49 @@ Page 4474 Template:mns-nor-conj-table-reg: -------- begin text --------
 -->|<!--
 -->|<!--
 
--->|{{#switch:{{{3|}}}|+={{{1|}}}нэ|-={{{1|}}}ын|{{#invoke:string/templates|sub|{{PAGENAME}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{PAGENAME}}|-5}}|а=ан|у=нэ|ю=йнэ}}}}<!--
+-->|{{#switch:{{{3|}}}|+={{{1|}}}нэ|-={{{1|}}}ын|{{#invoke:string/templates|sub|{{pagename}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{pagename}}|-5}}|а=ан|у=нэ|ю=йнэ}}}}<!--
 
--->|{{#switch:{{{3|}}}|+={{{1|}}}нэм|-={{{1|}}}ынм|*=-|{{#invoke:string/templates|sub|{{PAGENAME}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{PAGENAME}}|-5}}|а=|у=нэм|ю=йнэм}}}}<!--
--->|{{#switch:{{{3|}}}|+={{{1|}}}нэ̄н|-={{{1|}}}ы̄нн|*=-|{{#invoke:string/templates|sub|{{PAGENAME}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{PAGENAME}}|-5}}|а=|у=нэ̄н|ю=йнэ̄м}}}}<!--
--->|{{#switch:{{{3|}}}|+={{{1|}}}нэ̄|-={{{1|}}}ы̄н|*=-|{{#invoke:string/templates|sub|{{PAGENAME}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{PAGENAME}}|-5}}|а=|у=нэ̄тэ|ю=йнэ̄тэ}}}}<!--
-
--->|<!--
--->|<!--
--->|<!--
+-->|{{#switch:{{{3|}}}|+={{{1|}}}нэм|-={{{1|}}}ынм|*=-|{{#invoke:string/templates|sub|{{pagename}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{pagename}}|-5}}|а=|у=нэм|ю=йнэм}}}}<!--
+-->|{{#switch:{{{3|}}}|+={{{1|}}}нэ̄н|-={{{1|}}}ы̄нн|*=-|{{#invoke:string/templates|sub|{{pagename}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{pagename}}|-5}}|а=|у=нэ̄н|ю=йнэ̄м}}}}<!--
+-->|{{#switch:{{{3|}}}|+={{{1|}}}нэ̄|-={{{1|}}}ы̄н|*=-|{{#invoke:string/templates|sub|{{pagename}}|1|-6}}{{#switch:{{#invoke:string/templates|pos|{{pagename}}|-5}}|а=|у=нэ̄тэ|ю=йнэ̄тэ}}}}<!--
 
 -->|<!--
 -->|<!--
 -->|<!--
 
--->|{{{1|{{PAGENAME}}}}}та̄л<!--
+-->|<!--
+-->|<!--
+-->|<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}м<!--
+-->|{{{1|{{pagename}}}}}та̄л<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}мам<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ман<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ма<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}матэ<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}м<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}маме̄н<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ман<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}маг<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}мам<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ман<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ма<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}матэ<!--
 
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}мав<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}ман<!--
--->|{{#invoke:string/templates|sub|{{{1|{{PAGENAME}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{PAGENAME}}}}}|-1}}и}}мат<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}маме̄н<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ман<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}маг<!--
+
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}мав<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}ман<!--
+-->|{{#invoke:string/templates|sub|{{{1|{{pagename}}}}}|1|-2}}{{#switch:{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}|й=и|н|т|с|л={{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}ы|{{#invoke:string/templates|pos|{{{1|{{pagename}}}}}|-1}}и}}мат<!--
 
 
--->|{{{1|{{PAGENAME}}}}}ке̄мт<!--
--->|{{{1|{{PAGENAME}}}}}ке̄нт<!--
--->|{{{1|{{PAGENAME}}}}}ке̄т<!--
+-->|{{{1|{{pagename}}}}}ке̄мт<!--
+-->|{{{1|{{pagename}}}}}ке̄нт<!--
+-->|{{{1|{{pagename}}}}}ке̄т<!--
 
--->|{{{1|{{PAGENAME}}}}}кеме̄нт<!--
--->|{{{1|{{PAGENAME}}}}}ке̄нт<!--
--->|{{{1|{{PAGENAME}}}}}ке̄гт<!--
+-->|{{{1|{{pagename}}}}}кеме̄нт<!--
+-->|{{{1|{{pagename}}}}}ке̄нт<!--
+-->|{{{1|{{pagename}}}}}ке̄гт<!--
 
--->|{{{1|{{PAGENAME}}}}}ке̄вт<!--
--->|{{{1|{{PAGENAME}}}}}ке̄нт<!--
--->|{{{1|{{PAGENAME}}}}}ке̄тт<!--
+-->|{{{1|{{pagename}}}}}ке̄вт<!--
+-->|{{{1|{{pagename}}}}}ке̄нт<!--
+-->|{{{1|{{pagename}}}}}ке̄тт<!--
 
 -->}}<noinclude>{{documentation}}</noinclude>
 -------- end text --------
@@ -987,8 +984,7 @@ Page 5038 Template:roa-opt-conj (aduzer): -------- begin text --------
 |persinf_1p=aduzermos
 |persinf_2p=aduzerdes
 |persinf_3p=aduzeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|a]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:a}}</noinclude>
 -------- end text --------
 Page 5043 Template:roa-opt-conj (aver): -------- begin text --------
 {{#invoke:checkparams|warn}}<!-- Validate template parameters
@@ -1064,8 +1060,7 @@ Page 5043 Template:roa-opt-conj (aver): -------- begin text --------
 |persinf_1p=avermos
 |persinf_2p=averdes
 |persinf_3p=averen
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|a]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:a}}</noinclude>
 -------- end text --------
 Page 5044 Template:roa-opt-conj (avĩir): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1140,8 +1135,7 @@ Page 5044 Template:roa-opt-conj (avĩir): -------- begin text --------
 |persinf_1p=avĩirmos,aviirmos,avirmos	
 |persinf_2p=avĩirdes,aviirdes,avirdes
 |persinf_3p=avĩiren,aviiren,aviren
-}}<includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|a]]</noinclude>
+}}<includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>{{tcat|conj:a}}</noinclude>
 -------- end text --------
 Page 5045 Template:roa-opt-conj-ar: -------- begin text --------
 {{roa-opt-conj-table
@@ -1221,8 +1215,7 @@ Page 5045 Template:roa-opt-conj-ar: -------- begin text --------
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|ç=ç|c=c|e=e|ẽ=ẽ|g=g|#default={{{2|}}}}}armos}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|ç=ç|c=c|e=e|ẽ=ẽ|g=g|#default={{{2|}}}}}ardes}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|ç=c|c=qu|e=e|ẽ=ẽ|g=g|#default={{{2|}}}}}aren}}
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ar|*]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ar|*]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 5046 Template:roa-opt-conj-er: -------- begin text --------
 {{roa-opt-conj-table
@@ -1302,8 +1295,7 @@ Page 5046 Template:roa-opt-conj-er: -------- begin text --------
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|c=c|e=e|ẽ=ẽ|gu=gu|#default={{{2|}}}}}ermos}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|c=c|e=e|ẽ=ẽ|gu=gu|#default={{{2|}}}}}erdes}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|c=c|e=e|ẽ=ẽ|gu=gu|#default={{{2|}}}}}eren}}
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 5047 Template:roa-opt-conj (bendizer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1377,8 +1369,7 @@ Page 5047 Template:roa-opt-conj (bendizer): -------- begin text --------
 |persinf_1p=bendizermos
 |persinf_2p=bendizerdes
 |persinf_3p=bendizeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|b]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:b}}</noinclude>
 -------- end text --------
 Page 5056 Template:roa-opt-conj (dizer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1452,8 +1443,7 @@ Page 5056 Template:roa-opt-conj (dizer): -------- begin text --------
 |persinf_1p=dizermos,dezermos
 |persinf_2p=dizerdes,dezerdes
 |persinf_3p=dizeren,dezeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|d]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:d}}</noinclude>
 -------- end text --------
 Page 5057 Template:roa-opt-conj (doer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1527,8 +1517,7 @@ Page 5057 Template:roa-opt-conj (doer): -------- begin text --------
 |persinf_1p=doermos
 |persinf_2p=doerdes
 |persinf_3p=doeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|d]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:d}}</noinclude>
 -------- end text --------
 Page 5069 Template:roa-opt-conj (ir): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1603,8 +1592,7 @@ Page 5069 Template:roa-opt-conj (ir): -------- begin text --------
 |persinf_1p=irmos
 |persinf_2p=irdes
 |persinf_3p=iren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|i]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>{{tcat|conj:i}}</noinclude>
 -------- end text --------
 Page 5073 Template:roa-opt-conj (moer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1678,8 +1666,7 @@ Page 5073 Template:roa-opt-conj (moer): -------- begin text --------
 |persinf_1p=*moermos
 |persinf_2p=*moerdes
 |persinf_3p=*moeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|m]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:m}}</noinclude>
 -------- end text --------
 Page 5088 Template:roa-opt-conj (querer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1750,8 +1737,7 @@ Page 5088 Template:roa-opt-conj (querer): -------- begin text --------
 |persinf_1p=querermos
 |persinf_2p=quererdes
 |persinf_3p=quereren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|q]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:q}}</noinclude>
 -------- end text --------
 Page 5100 Template:roa-opt-conj (soer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1825,8 +1811,7 @@ Page 5100 Template:roa-opt-conj (soer): -------- begin text --------
 |persinf_1p=*soermos
 |persinf_2p=*soerdes
 |persinf_3p=*soeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|s]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:s}}</noinclude>
 -------- end text --------
 Page 5101 Template:roa-opt-conj (trager): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1901,8 +1886,7 @@ Page 5101 Template:roa-opt-conj (trager): -------- begin text --------
 |persinf_1p=tragermos,trazermos
 |persinf_2p=tragerdes,trazerdes
 |persinf_3p=trageren,trazeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|t]]</noinclude>
+}}{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:t}}</noinclude>
 -------- end text --------
 Page 5103 Template:roa-opt-conj (valer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -1973,8 +1957,7 @@ Page 5103 Template:roa-opt-conj (valer): -------- begin text --------
 |persinf_1p=valermos
 |persinf_2p=valerdes
 |persinf_3p=valeren
-}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|v]]</noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>{{tcat|conj:v}}</noinclude>
 -------- end text --------
 Page 5105 Template:roa-opt-conj (viir): -------- begin text --------
 {{roa-opt-conj-manual
@@ -2049,8 +2032,7 @@ Page 5105 Template:roa-opt-conj (viir): -------- begin text --------
 |persinf_1p=*vĩirmos,viirmos,virmos	
 |persinf_2p=*vĩirdes,viirdes,*virdes
 |persinf_3p=*vĩiren,viiren,viren
-}}<includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
-[[Category:Old Galician-Portuguese verb inflection-table templates|v]]</noinclude>
+}}<includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>{{tcat|conj:v}}</noinclude>
 -------- end text --------
 Page 5380 Template:osp-conj (seer): -------- begin text --------
 <templatestyles src="Module:roa-verb/style.css" /><div class="NavFrame">
@@ -2285,10 +2267,10 @@ Page 5380 Template:osp-conj (seer): -------- begin text --------
 | —
 ! style="text align:left; font-weight: normal" colspan="10" |
 |}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Spanish verbs ending in -er]]</includeonly><noinclude>{{documentation}}
-[[Category:Old Spanish verb inflection-table templates|s]]</noinclude>
+{{tcat|conj:s}}</noinclude>
 -------- end text --------
 Page 5492 Template:rsk-decl-noun-table: -------- begin text --------
-{{inflection-table-top|title=Declension of {{m|rsk||{{PAGENAME}}}} <!--<span>({{{type|irregular}}})</span>-->|palette=blue|tall=yes}}
+{{inflection-table-top|title=Declension of {{m|rsk||{{pagename}}}} <!--<span>({{{type|irregular}}})</span>-->|palette=blue|tall=yes}}
 ! 
 ! singular
 ! plural
@@ -2320,12 +2302,12 @@ Page 5492 Template:rsk-decl-noun-table: -------- begin text --------
 ! vocative
 | {{#if:{{{7|}}}|{{l-self|rsk|{{{7}}}}}|—}}
 | {{#if:{{{14|}}}|{{l-self|rsk|{{{14}}}}}|—}}
-{{inflection-table-bottom}}<noinclude>[[Category:Pannonian Rusyn noun inflection-table templates|*]]</noinclude>
+{{inflection-table-bottom}}<noinclude>{{tcat|ndecl:*}}</noinclude>
 -------- end text --------
 Page 5806 Template:pl-conj-ap-impersonal: -------- begin text --------
-{{inflection-table-top|title=Conjugation of {{m|pl||{{{lemma|{{PAGENAME}}}}}}}|category=conjugation|tall=yes|palette=blue}}
+{{inflection-table-top|title=Conjugation of {{m|pl||{{{lemma|{{pagename}}}}}}}|category=conjugation|tall=yes|palette=blue}}
 ! title="bezokolicznik" | infinitive
-| {{l-self|pl|{{{lemma|{{PAGENAME}}}}}}}
+| {{l-self|pl|{{{lemma|{{pagename}}}}}}}
 |-
 ! title="czas przyszły" |  future indicative
 | {{l-self|pl|{{{1}}}}}
@@ -2434,26 +2416,25 @@ Page 6205 Template:rom-conj-si: -------- begin text --------
 | <!--1 pl--> —
 | <!--2 pl--> {{l|rom|aven}} ({{l|rom|oven}})
 | <!--3 pl--> —
-{{inflection-table-bottom}}<noinclude>
-[[Category:Romani verb inflection-table templates|Si]]</noinclude>
+{{inflection-table-bottom}}<noinclude>{{tcat|conj}}</noinclude>
 -------- end text --------
 Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
 <templatestyles src="Module:roa-verb/style.css" /><div class="NavFrame">
-<div class="NavHead" align=left>&nbsp; &nbsp; Conjugation of ''{{PAGENAME}}'' (highly irregular, [[Appendix:Glossary#suppletive|suppletive]])<includeonly></includeonly>
+<div class="NavHead" align=left>&nbsp; &nbsp; Conjugation of ''{{l-self|sc|{{pagename}}}}'' (highly irregular, [[Appendix:Glossary#suppletive|suppletive]])<includeonly></includeonly>
 </div>
 <div class="NavContent">
 {| class="roa-inflection-table"
 |-
 ! class="roa-nonfinite-header" | infinitive
-| colspan="2" | '''{{PAGENAME}}'''
+| colspan="2" | '''{{l-self|sc|{{pagename}}}}'''
 ! colspan="2" class="roa-nonfinite-header" | auxiliary verb
-| colspan="2" | {{l|sc|èssere}}
+| colspan="2" | {{l-self|sc|èssere}}
 
 |-
 ! class="roa-nonfinite-header" | gerund
-| colspan="2" | {{l|sc|{{{ger|essende}}}}}
+| colspan="2" | {{l-self|sc|{{{ger|essende}}}}}
 ! class="roa-nonfinite-header" colspan =2 | past participle
-| colspan="2" | {{l|sc|{{{pastp|istadu}}}}}
+| colspan="2" | {{l-self|sc|{{{pastp|istadu}}}}}
 
 |- class="roa-person-number-header"
 ! rowspan="2" | person
@@ -2479,30 +2460,30 @@ Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
 
 |-
 ! class="roa-indicative-left-rail" | present
-| {{l|sc|{{{pres1s|so}}}}}
-| {{l|sc|{{{pres2s|ses}}}}}
-| {{l|sc|{{{pres3s|est}}}}}
-| {{l|sc|{{{pres1p|semus}}}}}
-| {{l|sc|{{{pres2p|seis}}}}}
-| {{l|sc|{{{pres3p|sunt}}}}}
+| {{l-self|sc|{{{pres1s|so}}}}}
+| {{l-self|sc|{{{pres2s|ses}}}}}
+| {{l-self|sc|{{{pres3s|est}}}}}
+| {{l-self|sc|{{{pres1p|semus}}}}}
+| {{l-self|sc|{{{pres2p|seis}}}}}
+| {{l-self|sc|{{{pres3p|sunt}}}}}
 
 |-
 ! class="roa-indicative-left-rail" | imperfect
-| {{l|sc|{{{impf1s|fia}}}}}
-| {{l|sc|{{{impf2s|fias}}}}}
-| {{l|sc|{{{impf3s|fiat}}}}}
-| {{l|sc|{{{impf1p|fìamus}}}}}
-| {{l|sc|{{{impf2p|fiais}}}}}
-| {{l|sc|{{{impf3p|fiant}}}}}
+| {{l-self|sc|{{{impf1s|fia}}}}}
+| {{l-self|sc|{{{impf2s|fias}}}}}
+| {{l-self|sc|{{{impf3s|fiat}}}}}
+| {{l-self|sc|{{{impf1p|fìamus}}}}}
+| {{l-self|sc|{{{impf2p|fiais}}}}}
+| {{l-self|sc|{{{impf3p|fiant}}}}}
 
 |-
 ! class="roa-indicative-left-rail" | future
-| apo a '''{{PAGENAME}}'''
-| as a '''{{PAGENAME}}'''
-| at a '''{{PAGENAME}}'''
-| amus a '''{{PAGENAME}}'''
-| ais a '''{{PAGENAME}}'''
-| ant a '''{{PAGENAME}}'''
+| apo a '''{{l-self|sc|{{pagename}}}}'''
+| as a '''{{l-self|sc|{{pagename}}}}'''
+| at a '''{{l-self|sc|{{pagename}}}}'''
+| amus a '''{{l-self|sc|{{pagename}}}}'''
+| ais a '''{{l-self|sc|{{pagename}}}}'''
+| ant a '''{{l-self|sc|{{pagename}}}}'''
 
 |- class="roa-conditional-left-rail"
 ! conditional
@@ -2515,12 +2496,12 @@ Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
 
 |-
 ! class="roa-conditional-left-rail" | present
-| dia '''{{PAGENAME}}'''
-| dias '''{{PAGENAME}}'''
-| diat '''{{PAGENAME}}'''
-| diamus '''{{PAGENAME}}'''
-| diais '''{{PAGENAME}}'''
-| diant '''{{PAGENAME}}'''
+| dia '''{{l-self|sc|{{pagename}}}}'''
+| dias '''{{l-self|sc|{{pagename}}}}'''
+| diat '''{{l-self|sc|{{pagename}}}}'''
+| diamus '''{{l-self|sc|{{pagename}}}}'''
+| diais '''{{l-self|sc|{{pagename}}}}'''
+| diant '''{{l-self|sc|{{pagename}}}}'''
 
 |- class="roa-subjunctive-left-rail"
 ! subjunctive
@@ -2533,21 +2514,21 @@ Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
 
 |-
 ! class="roa-subjunctive-left-rail" | present
-| {{l|sc|{{{sub1s|sia}}}}}
-| {{l|sc|{{{sub2s|sias}}}}}
-| {{l|sc|{{{sub3s|siat}}}}}
-| {{l|sc|{{{sub1p|siamus}}}}}
-| {{l|sc|{{{sub2p|siais}}}}}
-| {{l|sc|{{{sub3p|siant}}}}}
+| {{l-self|sc|{{{sub1s|sia}}}}}
+| {{l-self|sc|{{{sub2s|sias}}}}}
+| {{l-self|sc|{{{sub3s|siat}}}}}
+| {{l-self|sc|{{{sub1p|siamus}}}}}
+| {{l-self|sc|{{{sub2p|siais}}}}}
+| {{l-self|sc|{{{sub3p|siant}}}}}
 
 |-
 ! class="roa-subjunctive-left-rail" | imperfect
-| {{l|sc|{{{impfsub1s|essere}}}}}
-| {{l|sc|{{{impfsub2s|esseres}}}}}
-| {{l|sc|{{{impfsub3s|esseret}}}}}
-| {{l|sc|{{{impfsub1p|esseremus}}}}}
-| {{l|sc|{{{impfsub2p|essereis}}}}}
-| {{l|sc|{{{impfsub3p|esserent}}}}}
+| {{l-self|sc|{{{impfsub1s|essere}}}}}
+| {{l-self|sc|{{{impfsub2s|esseres}}}}}
+| {{l-self|sc|{{{impfsub3s|esseret}}}}}
+| {{l-self|sc|{{{impfsub1p|esseremus}}}}}
+| {{l-self|sc|{{{impfsub2p|essereis}}}}}
+| {{l-self|sc|{{{impfsub3p|esserent}}}}}
 
 |- class="roa-imperative-left-rail"
 ! rowspan="2" | imperative
@@ -2560,18 +2541,18 @@ Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
 
 |-
 | —
-| {{l|sc|{{{imp2s|sias}}}}}
-| {{l|sc|{{{imp3s|siat}}}}}
-| {{l|sc|{{{imp1p|siamus}}}}}
-| {{l|sc|{{{imp2p|siais}}}}}
-| {{l|sc|{{{imp3p|siant}}}}}
+| {{l-self|sc|{{{imp2s|sias}}}}}
+| {{l-self|sc|{{{imp3s|siat}}}}}
+| {{l-self|sc|{{{imp1p|siamus}}}}}
+| {{l-self|sc|{{{imp2p|siais}}}}}
+| {{l-self|sc|{{{imp3p|siant}}}}}
 
 |}</div></div><noinclude>{{documentation}}</noinclude>
 -------- end text --------
 Page 6602 Template:sl-decl-noun-table-unc2: -------- begin text --------
 {| class="inflection-table vsSwitcher" data-toggle-category="inflection" style="border: 1px solid var(--wikt-palette-grey, #9e9e9e);"
 |- style="background: var(--wikt-palette-lightblue, #d9ebff); text-align: left;"
-! class="vsToggleElement" colspan="4" | {{{title|Declension of ''{{PAGENAME}}''}}}
+! class="vsToggleElement" colspan="4" | {{{title|Declension of ''{{pagename}}''}}}
 |- class="vsShow"
 ! style="width: 11em; background: var(--wikt-palette-lighterblue, #ebf4ff);" | nom. {{#switch:{{{n|}}}|pl=plur.|du=dual|#default=sing.}}
 | style="width: 11em;" colspan="3" | {{l-self|sl|{{{1}}}}}
@@ -2628,7 +2609,7 @@ Page 6605 Template:sl-decl-noun-table3unc: -------- begin text --------
 |n-3=Third neuter declension (no endings) [[Category:Slovene neuter nouns with no endings]] [[Category:Slovene neuter nouns with {{{infix|no }}}infix]]
 |f-1-r=First feminine declension (r-stem) [[Category:Slovene feminine r-stem nouns]] [[Category:Slovene feminine nouns with {{{infix|no }}}infix]]
 |n-2=Second neuter declension (a-stem) [[Category:Slovene neuter a-stem nouns]] [[Category:Slovene neuter nouns with {{{infix|no }}}infix]]
-|#default=Declension of ''{{PAGENAME}}'' <includeonly>[[Category:Requests for declension type in Slovene noun entries]]</includeonly>}}{{#switch:{{{accent|}}}|1=, fixed accent|2=, mobile accent|3=, short ending accent|3a=, short ending accent|3b=, long ending accent|4=, long mixed accent|4a=, short mixed accent|4b=, long mixed accent|#default=<includeonly>[[Category:Requests for accentual type in Slovene noun entries]]</includeonly>}}{{#switch:{{{infix|no}}}|no=|#default=, -{{{infix}}} infix}}{{#switch:{{{irregtitle|{{{irreg|no}}}}}}|no= |{{{irregtitle}}}=, {{{irregtitle}}} [[Category:Slovene irregular nouns]]|yes=, irregular [[Category:Slovene irregular nouns]]|#default= }} ({{#switch:{{{n|}}}|pl=pluralia|du=dualia|#default=singularia}} tantum)}}}
+|#default=Declension of ''{{pagename}}'' <includeonly>[[Category:Requests for declension type in Slovene noun entries]]</includeonly>}}{{#switch:{{{accent|}}}|1=, fixed accent|2=, mobile accent|3=, short ending accent|3a=, short ending accent|3b=, long ending accent|4=, long mixed accent|4a=, short mixed accent|4b=, long mixed accent|#default=<includeonly>[[Category:Requests for accentual type in Slovene noun entries]]</includeonly>}}{{#switch:{{{infix|no}}}|no=|#default=, -{{{infix}}} infix}}{{#switch:{{{irregtitle|{{{irreg|no}}}}}}|no= |{{{irregtitle}}}=, {{{irregtitle}}} [[Category:Slovene irregular nouns]]|yes=, irregular [[Category:Slovene irregular nouns]]|#default= }} ({{#switch:{{{n|}}}|pl=pluralia|du=dualia|#default=singularia}} tantum)}}}
 |- class="vsShow"
 ! style="width: 11em; background: var(--wikt-palette-lighterblue, #ebf4ff);" | nom. {{#switch:{{{n|}}}|pl=plur.|du=dual|#default=sing.}}
 | style="width: 11em;" colspan="3" | {{#switch:{{{n|}}}|pl={{l-self|sl|{{{15|{{{1}}}}}}}}|du={{l-self|sl|{{{8|{{{1}}}}}}}}|#default={{l-self|sl|{{{1}}}}}}}
@@ -2664,11 +2645,11 @@ Page 6605 Template:sl-decl-noun-table3unc: -------- begin text --------
 <!--
 
 --><noinclude>{{documentation}}
-[[Category:Slovene noun inflection-table templates| ]]</noinclude>
+{{tcat|ndecl:_}}</noinclude>
 -------- end text --------
 Page 6684 Template:sdh-conj-head: -------- begin text --------
 <div class="NavFrame" style="">
-<div class="NavHead">{{{header|Conjugation of {{m-self|sdh||{{PAGENAME}}|tr=-}}}}}</div>
+<div class="NavHead">{{{header|Conjugation of {{m-self|sdh||{{pagename}}|tr=-}}}}}</div>
 <div class="NavContent">
 {| border="1" color="#cdcdcd" style="border-collapse:collapse; line-height:2em; border:1px solid var(--wikt-palette-darkgrey,#555555); background:var(--wikt-palette-grey-0,#fdfdfd); width:100%; text-align:center" class="inflection-table"
 |-
@@ -2788,61 +2769,58 @@ Page 6684 Template:sdh-conj-head: -------- begin text --------
 |
 | {{l-self|sdh|{{{2p-impr}}}}}
 |
-|}</div></div><noinclude>[[Category: Southern Kurdish verb inflection-table templates| ]][[Category:Templates auto-palettized by SurjectionBot]]</noinclude>
+|}</div></div><noinclude>{{tcat|conj:_}}[[Category:Templates auto-palettized by SurjectionBot]]</noinclude>
 -------- end text --------
 Page 7014 Template:ttj-decl-pl: -------- begin text --------
-{{inflection-table-top|title=Inflected forms of {{{head|{{m|ttj||-{{PAGENAME}}}}}}}|palette=indigo|tall=yes|min-width=18em}}
+{{inflection-table-top|title=Inflected forms of {{{head|{{m|ttj||-{{pagename}}}}}}}|palette=indigo|tall=yes|min-width=18em}}
 ! Noun class
 ! plural only
 |- |
 ! 2
-| {{l|ttj|{{{prefix|}}} {{{ba|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|e={{{c2|be}}}{{{1|{{PAGENAME}}}}}|o={{{c2|bo}}}{{{1|{{PAGENAME}}}}}|#default={{{c2|ba}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=ba}}
+| {{l|ttj|{{{prefix|}}} {{{ba|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|e={{{c2|be}}}{{{1|{{pagename}}}}}|o={{{c2|bo}}}{{{1|{{pagename}}}}}|#default={{{c2|ba}}}{{{1|{{pagename}}}}}}}}}}|accel-form=ba}}
 |- |
 ! 4
-| {{l|ttj|{{{prefix|}}} {{{e|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|a|e|o|u={{{c4|y}}}{{{1|{{PAGENAME}}}}}|#default={{{c4|e}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=e}}
+| {{l|ttj|{{{prefix|}}} {{{e|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|a|e|o|u={{{c4|y}}}{{{1|{{pagename}}}}}|#default={{{c4|e}}}{{{1|{{pagename}}}}}}}}}}|accel-form=e}}
 |- |
 ! 6
-| {{l|ttj|{{{prefix|}}} {{{ma|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|e={{{c6|me}}}{{{1|{{PAGENAME}}}}}|o={{{c6|mo}}}{{{1|{{PAGENAME}}}}}|#default={{{c6|ma}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=ma}}
+| {{l|ttj|{{{prefix|}}} {{{ma|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|e={{{c6|me}}}{{{1|{{pagename}}}}}|o={{{c6|mo}}}{{{1|{{pagename}}}}}|#default={{{c6|ma}}}{{{1|{{pagename}}}}}}}}}}|accel-form=ma}}
 |- |
 ! 8
-| {{l|ttj|{{{prefix|}}} {{{bi|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|a|e|o|u={{{c8|by}}}{{{1|{{PAGENAME}}}}}|#default={{{c8|bi}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=bi}}
+| {{l|ttj|{{{prefix|}}} {{{bi|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|a|e|o|u={{{c8|by}}}{{{1|{{pagename}}}}}|#default={{{c8|bi}}}{{{1|{{pagename}}}}}}}}}}|accel-form=bi}}
 |- |
 ! 10
-| {{l|ttj|{{{prefix|}}} {{{n|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|a|e|o|u={{{c10|y}}}{{{1|{{PAGENAME}}}}}|#default={{{c10|e}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=n}}
+| {{l|ttj|{{{prefix|}}} {{{n|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|a|e|o|u={{{c10|y}}}{{{1|{{pagename}}}}}|#default={{{c10|e}}}{{{1|{{pagename}}}}}}}}}}|accel-form=n}}
 |- |
 ! 13
-| {{l|ttj|{{{prefix|}}} {{{tu|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|a|e|o|i={{{c13|tw}}}{{{1|{{PAGENAME}}}}}|#default={{{c13|tu}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=tu}}
+| {{l|ttj|{{{prefix|}}} {{{tu|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|a|e|o|i={{{c13|tw}}}{{{1|{{pagename}}}}}|#default={{{c13|tu}}}{{{1|{{pagename}}}}}}}}}}|accel-form=tu}}
 |- |
 ! 14
-| {{l|ttj|{{{prefix|}}} {{{bu|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|a|e|o|i={{{c14|bw}}}{{{1|{{PAGENAME}}}}}|#default={{{c14|bu}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=bu}}
+| {{l|ttj|{{{prefix|}}} {{{bu|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|a|e|o|i={{{c14|bw}}}{{{1|{{pagename}}}}}|#default={{{c14|bu}}}{{{1|{{pagename}}}}}}}}}}|accel-form=bu}}
 |- |
 ! 16
-| {{l|ttj|{{{prefix|}}} {{{ha|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|e={{{c16|he}}}{{{1|{{PAGENAME}}}}}|o={{{c16|ho}}}{{{1|{{PAGENAME}}}}}|#default={{{c16|ha}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=ma}}
-{{inflection-table-bottom}}<!--
---><noinclude>{{documentation}}[[Category:Tooro inflection-table templates]]</noinclude>
+| {{l|ttj|{{{prefix|}}} {{{ha|{{#switch:{{padleft:|1|{{{1|{{pagename}}}}}}}|e={{{c16|he}}}{{{1|{{pagename}}}}}|o={{{c16|ho}}}{{{1|{{pagename}}}}}|#default={{{c16|ha}}}{{{1|{{pagename}}}}}}}}}}|accel-form=ma}}
+{{inflection-table-bottom}}<noinclude>{{documentation}}{{tcat|advinfl}}</noinclude>
 -------- end text --------
 Page 7074 Template:tr-decl-post: -------- begin text --------
-{{inflection-table-top|title=Declension of ''{{PAGENAME}}''|palette=red|tall=yes}}
+{{inflection-table-top|title=Declension of ''{{pagename}}''|palette=red|tall=yes}}
 ! [[benim]] (“{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}me”)
-| [[{{{1}}}]]
+| {{l-self|tr|{{{1}}}}}
 |-
 ! [[senin]] (“{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}you”)
-| [[{{{2}}}]]
+| {{l-self|tr|{{{2}}}}}
 |-
 ! [[onun]] (“{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}him/her/it”)
-| [[{{PAGENAME}}]]
+| {{l-self|tr|{{pagename}}}}
 |-
 ! [[bizim]] (“{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}us”)
-| [[{{{3}}}]]
+| {{l-self|tr|{{{3}}}}}
 |-
 ! [[sizin]] (“{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}you”)
-| [[{{{4}}}]]
+| {{l-self|tr|{{{4}}}}}
 |-
 ! [[onların]] (“{{#if:{{{t|}}}|[{{{t|}}}]|{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}}}them”)
-| [[{{{5}}}]]
-{{inflection-table-bottom}}<noinclude>
-{{documentation}}
-</noinclude>
+| {{l-self|tr|{{{5}}}}}
+{{inflection-table-bottom}}<noinclude>{{documentation}}</noinclude>
 -------- end text --------
 Page 7136 Template:hsb-conj-ip-Va1: -------- begin text --------
 {{#invoke:checkparams|warn}}<!-- Validate template parameters
@@ -2877,8 +2855,7 @@ Page 7136 Template:hsb-conj-ip-Va1: -------- begin text --------
 |ł={{{ł|{{{1}}}ał}}}
 |vn={{{vn|{{{1}}}anje}}}
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian imperfective Va1 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian imperfective Va1 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7137 Template:hsb-conj-ip-Ve1: -------- begin text --------
 {{#invoke:checkparams|error}}<!-- Validate template parameters
@@ -2913,8 +2890,7 @@ Page 7137 Template:hsb-conj-ip-Ve1: -------- begin text --------
 |ł={{{ł|{{{1}}}ował}}}
 |vn={{{vn|{{{1}}}owanje}}}
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian imperfective Ve1 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian imperfective Ve1 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7138 Template:hsb-conj-ip-Ve2: -------- begin text --------
 {{hsb-conj-table 
@@ -2948,8 +2924,7 @@ Page 7138 Template:hsb-conj-ip-Ve2: -------- begin text --------
 |ł={{{ł|{{{1}}}ył}}}
 |vn={{{vn|{{{1}}}jenje}}}
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian imperfective Ve2 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian imperfective Ve2 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7139 Template:hsb-conj-ip-Ve4a: -------- begin text --------
 {{#invoke:checkparams|warn}}<!-- Validate template parameters
@@ -2984,8 +2959,7 @@ Page 7139 Template:hsb-conj-ip-Ve4a: -------- begin text --------
 |ł={{{1}}}ł
 |vn={{{1}}}će
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian imperfective Ve4a verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian imperfective Ve4a verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7140 Template:hsb-conj-ip-Vi1: -------- begin text --------
 {{hsb-conj-table 
@@ -3019,8 +2993,7 @@ Page 7140 Template:hsb-conj-ip-Vi1: -------- begin text --------
 |ł={{{ł|{{{1}}}ił}}}
 |vn={{{vn|{{{1}}}{{#if:{{{2|}}}|j}}enje}}}
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian imperfective Vi1 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian imperfective Vi1 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7141 Template:hsb-conj-ip-Vi2: -------- begin text --------
 {{hsb-conj-table 
@@ -3054,8 +3027,7 @@ Page 7141 Template:hsb-conj-ip-Vi2: -------- begin text --------
 |ł={{{ł|{{{1}}}ał}}}
 |vn={{{vn|{{{1}}}enje}}}
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian imperfective Vi2 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian imperfective Vi2 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7142 Template:hsb-conj-p-Va1: -------- begin text --------
 {{hsb-conj-table 
@@ -3088,8 +3060,7 @@ Page 7142 Template:hsb-conj-p-Va1: -------- begin text --------
 |ł={{{1}}}ał
 |vn={{{1}}}anje
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian perfective Va1 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian perfective Va1 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7143 Template:hsb-conj-p-Ve1: -------- begin text --------
 {{hsb-conj-table 
@@ -3122,8 +3093,7 @@ Page 7143 Template:hsb-conj-p-Ve1: -------- begin text --------
 |ł={{{ł|{{{1}}}ował}}}
 |vn={{{vn|{{{1}}}owanje}}}
 |notes={{{notes|}}}
-}}<includeonly>[[Category:Upper Sorbian perfective Ve1 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category:Upper Sorbian perfective Ve1 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7144 Template:hsb-conj-p-Ve2: -------- begin text --------
 {{#invoke:checkparams|warn}}<!-- Validate template parameters
@@ -3157,8 +3127,7 @@ Page 7144 Template:hsb-conj-p-Ve2: -------- begin text --------
 |ł={{{1}}}ył
 |vn={{{1}}}jenje
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian perfective Ve2 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian perfective Ve2 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7145 Template:hsb-conj-p-Vi1: -------- begin text --------
 {{hsb-conj-table 
@@ -3191,8 +3160,7 @@ Page 7145 Template:hsb-conj-p-Vi1: -------- begin text --------
 |ł={{{1}}}ił
 |vn={{{1}}}jenje
 |notes={{{notes|}}}
-}}<includeonly>[[Category: Upper Sorbian perfective Vi1 verbs]]</includeonly><noinclude>
-[[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
+}}<includeonly>[[Category: Upper Sorbian perfective Vi1 verbs]]</includeonly><noinclude>{{tcat|conj:a}}{{documentation}}</noinclude>
 -------- end text --------
 Page 7233 Template:vgr-noun-f-aai: -------- begin text --------
 {{vgr-decl-noun
@@ -3206,10 +3174,10 @@ Page 7233 Template:vgr-noun-f-aai: -------- begin text --------
 |8={{{1}}}ઊંએ
 |9={{{1}}}એ
 |10={{{1}}}ઊંએ
-}}<noinclude>[[Category:Vaghri noun inflection-table templates]]</noinclude>
+}}<noinclude>{{tcat|ndecl}}</noinclude>
 -------- end text --------
 Page 7417 Template:cy-conj-a: -------- begin text --------
-{{inflection-table-top|title=Conjugation of {{m|cy||{{PAGENAME}}}} (literary)|palette=green|tall=yes}}
+{{inflection-table-top|title=Conjugation of {{m|cy||{{pagename}}}} (literary)|palette=green|tall=yes}}
 ! rowspan=2 |
 ! colspan=3 scope=col | ''singular''
 ! colspan=3 scope=col | ''plural''
@@ -3280,7 +3248,7 @@ Page 7417 Template:cy-conj-a: -------- begin text --------
 | class="blank-end-row" colspan="999" rowspan="999" |
 |-
 ! scope=row | verbal noun
-| colspan=3 | [[{{PAGENAME}}]]
+| colspan=3 | {{l-self|cy|{{pagename}}}}
 |-
 ! scope=row | verbal adjectives
 | colspan=3 | {{#switch:{{{verbadj}}}|edig={{l-self|cy|{{{1}}}edig}}|adwy={{l-self|cy|{{{1}}}adwy}}|none=—|both-a={{l-self|cy|{{{1}}}aedig}}, {{l-self|cy|{{{1}}}aëdig}}<br/>{{l-self|cy|{{{1}}}adwy}}|{{l-self|cy|{{{1}}}edig}}<br/>{{l-self|cy|{{{1}}}adwy}}}}
