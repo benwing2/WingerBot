@@ -19,20 +19,16 @@ def process_text_on_page(index, pagetitle, text):
   notes = []
 
   # Split into sections
-  splitsections = re.split(r"(^[ \t]*==[ \t]*[^=\n]+?[ \t]*==[ \t]*?\n)", text, 0, re.M)
-  pagehead = splitsections[0]
+  text, orig_secfinalnl = blib.force_two_newlines_in_secbody(text)
+  sections, sections_by_lang, section_langs = blib.split_text_into_sections(text, pagemsg)
+  pagehead = sections[0]
 
   # Convert to a list of three items: language name, section header, section text minus separator.
   keyed_sections = []
-  for i in range(1, len(splitsections), 2):
-    m = re.search(r"=\s*([^=\n]+?)\s*=", splitsections[i])
-    assert m
-    langname = m.group(1)
-    secheader = splitsections[i]
-    sectext = splitsections[i + 1]
-    m = re.search(r"^(.*?\n)(\n*--+\n*)$", sectext, re.S)
-    if m:
-      sectext = m.group(1)
+  for i in range(2, len(sections), 2):
+    _, langname = section_langs[i // 2 - 1]
+    secheader = sections[i - 1]
+    sectext = sections[i]
     keyed_sections.append([langname, secheader, sectext])
 
   # Make sure new language section not already present.
@@ -45,21 +41,13 @@ def process_text_on_page(index, pagetitle, text):
   for i in range(len(keyed_sections)):
     if keyed_sections[i][0] == args.fromlang:
       keyed_sections[i][0] = args.tolang
-      keyed_sections[i][1] = re.sub("=[ \t]*%s[ \t]*=" % re.escape(args.fromlang), "=%s=" % args.tolang, keyed_sections[i][1])
+      keyed_sections[i][1] = "==%s==\n" % args.tolang
 
-  # Re-sort add combine with separators.
-  def lang_sort_key(langname):
-    if langname == "Translingual":
-      return (0, langname)
-    elif langname == "English":
-      return (1, langname)
-    else:
-      return (2, langname)
-
-  separator = "\n----\n\n"
-  text = pagehead + separator.join(
-    secheader + sectext for langname, secheader, sectext in sorted(keyed_sections, key=lambda sec: lang_sort_key(sec[0]))
+  text = pagehead + "".join(
+    secheader + sectext for langname, secheader, sectext in sorted(keyed_sections, key=lambda sec: blib.langname_key(sec[0]))
   )
+
+  text = text.rstrip("\n") + orig_secfinalnl
 
   if text != origtext:
     notes.append("move %s section to %s" % (args.fromlang, args.tolang))

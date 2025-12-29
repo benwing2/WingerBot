@@ -9,9 +9,6 @@ from collections import defaultdict
 
 blib.getData()
 
-def normalize_lang(text):
-  return re.sub("[\u0300-\u036F]", "", unicodedata.normalize("NFD", text)).lower()
-
 language_sets = {
   "Albanian": {
     "recognize": lambda lang: lang.endswith("Albanian") or lang in ["Arbëresh", "Arvanitika", "Tosk", "Gheg"],
@@ -148,12 +145,12 @@ language_sets = {
       "Roman": "Latin",
     },
   },
-  "Nahuatl": {
-    # FIXME: Make sure it's OK to move "Foo Nahuatl" under "Nahuatl"
-    "add_lang": {"Central", "Central Huasteca", "Central Puebla", "Classical", "Coatepec", "Cosoleacaque",
-                 "Eastern Durango", "Eastern Huasteca", "Guerrero", "Highland Puebla", ...},
-    ...,
-  },
+  #"Nahuatl": {
+  #  # FIXME: Make sure it's OK to move "Foo Nahuatl" under "Nahuatl"
+  #  "add_lang": {"Central", "Central Huasteca", "Central Puebla", "Classical", "Coatepec", "Cosoleacaque",
+  #               "Eastern Durango", "Eastern Huasteca", "Guerrero", "Highland Puebla", ...},
+  #  ...,
+  #},
   "Norwegian": {
     "recognize": lambda lang: lang.startswith("Norwegian") or lang in ["Bokmål", "Bokmal", "Nynorsk"],
     "rename": {
@@ -226,6 +223,7 @@ language_sets = {
       "Lower": "Lower Sorbian",
       "Upper": "Upper Sorbian",
     },
+  },
   "Spanish": {},
   "Tujia": {},
   "Welsh": {},
@@ -283,7 +281,7 @@ def process_text_on_page(index, pagename, text):
           for lang, indented_lang, lineind, transline, origline in translation_lines:
             new_lines.append(origline)
         else:
-          translation_lines = [(normalize_lang(lang), normalize_lang(indented_lang), lineind, line, origline)
+          translation_lines = [(blib.langname_key(lang), blib.langname_key(indented_lang), lineind, line, origline)
                                for lang, indented_lang, lineind, line, origline in translation_lines]
           new_translation_lines = sorted(translation_lines)
           if translation_lines != new_translation_lines:

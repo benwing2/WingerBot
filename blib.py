@@ -3,7 +3,7 @@
 
 # Author: Benwing; bits and pieces taken from code written by CodeCat/Rua for MewBot
 
-import pywikibot, mwparserfromhell, re, string, sys, urllib, datetime, json, argparse, time
+import pywikibot, mwparserfromhell, re, string, sys, urllib, datetime, json, argparse, time, itertools
 from collections import defaultdict
 import xml.sax
 import difflib
@@ -226,7 +226,9 @@ def parse_template_name(name):
 
 def tname(template):
   before, name, after = parse_template_name(str(template.name))
-  return name
+  # If we are renaming uses of e.g. {{Chinese pinyin TOC}}, we should match {{Chinese_pinyin_TOC}} as well because
+  # MediaWiki will.
+  return name.replace("_", " ")
 
 def pname(param):
   before, name, after = parse_template_name(str(param.name))
@@ -744,17 +746,29 @@ def iter_pages(pageiter, startprefix = None, endprefix = None, key = None):
       errmsg(str(i) + "/" + str(endprefix) + tdisp)
 
 
-def references(page, startprefix = None, endprefix = None, namespaces = None,
-    only_template_inclusion = False, filter_redirects = False, include_page = False):
+def references_without_templates(page, namespaces=None, only_template_inclusion=False, filter_redirects=False):
+  for refpage in page.getReferences(only_template_inclusion=only_template_inclusion, namespaces=namespaces,
+                                    filter_redirects=filter_redirects):
+    if not refpage.title().startswith("Template:"):
+      yield refpage
+
+def references(page, startprefix=None, endprefix=None, namespaces=None, only_template_inclusion=False,
+               filter_redirects=False, include_page=False, templates_first=False):
   if isinstance(page, str):
     page = pywikibot.Page(site, page)
-  pageiter = page.getReferences(only_template_inclusion = only_template_inclusion,
-      namespaces = namespaces, filter_redirects = filter_redirects)
-  if include_page:
-    pages = [page] + list(pageiter)
+  initial_items = []
+  if templates_first:
+    initial_items.extend(list(page.getReferences(only_template_inclusion=only_template_inclusion,
+      namespaces=["Template"], filter_redirects=filter_redirects)))
+    rest_pageiter = references_without_templates(
+      page, namespaces=namespaces, only_template_inclusion=only_template_inclusion, filter_redirects=filter_redirects)
   else:
-    pages = pageiter
-  for i, current in iter_items(pages, startprefix, endprefix):
+    rest_pageiter = page.getReferences(namespaces=namespaces, only_template_inclusion=only_template_inclusion,
+                                       filter_redirects=filter_redirects)
+  if include_page:
+    initial_items.append(page)
+  pageiter = itertools.chain(initial_items, rest_pageiter)
+  for i, current in iter_items(pageiter, startprefix, endprefix):
     yield i, current
 
 def get_contributions(user, startprefix=None, endprefix=None, max=None, namespaces=None):
@@ -1009,8 +1023,8 @@ class ProcessItems(object):
     return retval
 
 def iter_items(items, startprefix=None, endprefix=None, get_name=get_page_name, get_index=None,
-    skip_ignorable_pages=False):
-  i = 0
+               skip_ignorable_pages=False, first_index=1):
+  i = first_index - 1
   t = None
   steps = 50
   skipsteps = 1000
@@ -1153,7 +1167,7 @@ def create_argparser(desc, include_pagefile=False, include_stdin=False,
     no_beginning_line=False, suppress_start_end=False):
   if not no_beginning_line:
     msg("Beginning at %s" % time.ctime(starttime))
-  parser = argparse.ArgumentParser(description=desc)
+  parser = argparse.ArgumentParser(description=desc, formatter_class=argparse.RawDescriptionHelpFormatter)
   if not suppress_start_end:
     parser.add_argument('start', help="Starting page index", nargs="?")
     parser.add_argument('end', help="Ending page index", nargs="?")
@@ -1180,6 +1194,8 @@ def create_argparser(desc, include_pagefile=False, include_stdin=False,
     parser.add_argument("--filter-cats", help="Regex to use to filter categories when processing subcategories recursively; any categories not matching the regex will be skipped along with any of their subcategories (unless reachable in some other manner).")
     parser.add_argument("--refs", help="List of references to process, comma-separated.")
     parser.add_argument("--pages-and-refs", help="List of pages to process, comma-separated, along with references to those pages.")
+    parser.add_argument("--templates-first", help="When processing references, do templates before other pages.",
+                        action="store_true")
     parser.add_argument("--specials", help="Special pages to do, comma-separated.")
     parser.add_argument("--do-specials-cat-pages", action="store_true",
       help="When processing specials pages that are categories, do pages of those categories.")
@@ -1355,13 +1371,14 @@ def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_for
 # the same. This can be used e.g. to create multi-level indices.
 def do_pagefile_cats_refs(
     args, start, end, process, default_pages=[], default_cats=[], default_refs=[], edit=False, stdin=False,
-    only_lang=None, include_comment=False, filter_pages=None, ref_namespaces=None, canonicalize_pagename=None,
-    skip_ignorable_pages=False, seen=None, process_index=lambda x: x):
+    only_lang=None, include_comment=False, filter_pages=None, ref_namespaces=None, templates_first=False,
+    canonicalize_pagename=None, skip_ignorable_pages=False, seen=None, process_index=lambda x: x):
   args_namespaces = args.namespaces and args.namespaces.split(",") or []
   args_namespaces = [0 if x == "-" else int(x) if re.search("^[0-9]+$", x) else x for x in args_namespaces]
   args_ref_namespaces = args.ref_namespaces and args.ref_namespaces.split(",")
   args_filter_pages = args.filter_pages
   args_filter_pages_not = args.filter_pages_not
+  templates_first = templates_first or args.templates_first
   # FIXME: Is it correct to use canonicalize_pagename here?
   pages_to_skip = set(split_arg(args.skip_pages, canonicalize=canonicalize_pagename)) if args.skip_pages else set()
   if args.skip_page_file:
@@ -1585,13 +1602,13 @@ def do_pagefile_cats_refs(
     if args.refs:
       for ref in split_arg(args.refs):
         # We don't use ref_namespaces here because the user might not want it.
-        for index, page in references(ref, start, end, namespaces=args_ref_namespaces):
+        for index, page in references(ref, start, end, namespaces=args_ref_namespaces, templates_first=templates_first):
           process_pywikibot_page(index, page)
     if args.pages_and_refs:
       for page_and_ref in split_arg(args.pages_and_refs):
         # We don't use ref_namespaces here because the user might not want it.
         for index, page in references(page_and_ref, start, end, namespaces=args_ref_namespaces,
-            include_page=True):
+                                      templates_first=templates_first, include_page=True):
           process_pywikibot_page(index, page)
     if args.specials:
       for special in split_arg(args.specials):
@@ -1605,7 +1622,7 @@ def do_pagefile_cats_refs(
               process_pywikibot_page(index2, subcat, no_check_seen=True)
           if args.do_specials_refs:
             # We don't use ref_namespaces here because the user might not want it.
-            for index2, page2 in references(title, namespaces=args_ref_namespaces):
+            for index2, page2 in references(title, namespaces=args_ref_namespaces, templates_first=templates_first):
               process_pywikibot_page(index2, page2)
           if not args.do_specials_cat_pages and not args.do_specials_refs:
             process_pywikibot_page(index, page)
@@ -1637,7 +1654,7 @@ def do_pagefile_cats_refs(
                                       track_seen=not args.no_track_seen, verbose=args.verbose):
         process_pywikibot_page(index, page, no_check_seen=True)
     for ref in default_refs:
-      for index, page in references(ref, start, end, namespaces=ref_namespaces):
+      for index, page in references(ref, start, end, namespaces=ref_namespaces, templates_first=templates_first):
         process_pywikibot_page(index, page)
 
   elapsed_time()
@@ -2866,7 +2883,7 @@ def split_trailing_separator_and_categories(sectext):
 
   return secbody, sectail
 
-def force_two_newlines_in_secbody(secbody, sectail):
+def force_two_newlines_in_secbody(secbody, sectail=""):
   m = re.search(r"\A(.*?)(\n*)\Z", secbody, re.S)
   secbody, secbody_finalnl = m.groups()
   secbody += "\n\n"
@@ -3304,3 +3321,18 @@ def levenshtein(s1, s2):
         previous_row = current_row
 
     return previous_row[-1]
+
+# Key for sorting by langname.
+def langname_key(langname):
+  if langname == "Translingual":
+    return " "
+  elif langname == "English":
+    # Translingual before English per [[WT:ELE]].
+    return "  "
+  else:
+    # FIXME! What is the correct rule for handling non-ASCII characters? I notice that e.g. Yámana comes before
+    # Yoruba on [[ala]] and elsewhere (hence combining diacritics should be ignored), and 'Are'are comes between Ao and
+    # Asturian on [[na]] (hence apostrophes should be ignored), but ǃKung (not with an exclamation point but U+01C3)
+    # comes after Zulu (hence non-ASCII letters should not be ignored). For now I've decided to convert to decomposed
+    # form and remove apostrophes and all combining diacritics (which are generally in the range U+0300 to U+036F).
+    return re.sub("['\u0300-\u036F]", "", unicodedata.normalize("NFD", langname)).lower()

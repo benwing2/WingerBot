@@ -137,9 +137,9 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
   retval = blib.find_modifiable_lang_section(pagetext, langname, None, force_final_nls=True)
   if retval is None:
     sections, sections_by_lang, section_langs = blib.split_text_into_sections(pagetext, pagemsg)
-    normalized_langname = langname.lower()
+    normalized_langname = blib.langname_key(langname)
     for j, seclangname in section_langs:
-      normalized_seclangname = re.sub("[\u0300-\u036F]", "", unicodedata.normalize("NFD", seclangname)).lower()
+      normalized_seclangname = blib.langname_key(seclangname)
       if normalized_seclangname > normalized_langname:
         sections[j - 1:j - 1] = [newsection]
         pagemsg("Inserting lang section %s before %s entry" % (infl_part, seclangname))

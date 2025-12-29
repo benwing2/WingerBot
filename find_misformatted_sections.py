@@ -420,20 +420,7 @@ def process_text_on_page(index, pagetitle, text):
     sections_for_sorting.append((langname, sections[j - 1], sections[j]))
 
   # Sort by language name if needed.
-  def langname_key(langname):
-    if langname == "Translingual":
-      return " "
-    elif langname == "English":
-      # Translingual before English per [[WT:ELE]].
-      return "  "
-    else:
-      # FIXME! What is the correct rule for handling non-ASCII characters? I notice that e.g. Yámana comes before
-      # Yoruba on [[ala]] and elsewhere (hence combining diacritics should be ignored), but 'Are'are comes before
-      # Acehnese on [[ma]] (hence apostrophes should not be ignored), and ǃKung (not with an exclamation point but
-      # U+01C3) comes after Zulu (hence non-ASCII letters should not be ignored). For now I've decided to convert to
-      # decomposed form and remove all combining diacritics (which are generally in the range U+0300 to U+036F).
-      return re.sub("[\u0300-\u036F]", "", unicodedata.normalize("NFD", langname)).lower()
-  sorted_sections = sorted(sections_for_sorting, key=lambda sec: langname_key(sec[0]))
+  sorted_sections = sorted(sections_for_sorting, key=lambda sec: blib.langname_key(sec[0]))
   if sorted_sections != sections_for_sorting:
     msg("Page %s %s: %s" % (index, pagetitle, "WARNING: Language sections misordered, reordering"))
     if args.correct:
