@@ -1,6 +1,6 @@
-Beginning at Sun Dec 28 18:43:22 2025
+Beginning at Sun Dec 28 19:46:24 2025
 Page 3274 Template:csb-decl-noun-sing: -------- begin text --------
-{{inflection-table-top|title={{{title|Declension of {{m|csb||{{SUBPAGENAME}}}}}}}|palette=blue|tall=yes|min-width=18em}}
+{{inflection-table-top|title={{{title|Declension of {{m|csb||{{pagename}}}}}}}|palette=blue|tall=yes|min-width=18em}}
 ! 
 ! singular
 |-
@@ -25,14 +25,13 @@ Page 3274 Template:csb-decl-noun-sing: -------- begin text --------
 ! vocative
 | {{#if:{{{7|}}}|{{l-self|csb|{{{7}}}|accel-form=voc}}|&mdash;}}
 {{inflection-table-bottom}}<!--
---></div></div><!--
 
 --><noinclude>{{documentation}}</noinclude>
 -------- end text --------
 Page 3291 Template:csb-conj-bëc: -------- begin text --------
 <templatestyles src="Template:csb-conj/styles.css" />
 {| class="inflection-table ts-csb-conj vsSwitcher" data-toggle-category="conjugation" data-vs-showtext="show ▼" data-vs-hidetext="hide ▲"
-! class="ts-csb-conj-title vsToggleElement" colspan="18" | Conjugation of {{lang|csb|{{PAGENAME}}}} ({{{type|irregular}}})</div>
+! class="ts-csb-conj-title vsToggleElement" colspan="18" | Conjugation of {{lang|csb|{{pagename}}}} ({{{type|irregular}}})
 |- class="ts-csb-conj-header vsHide"
 <!-- headers -->
 ! rowspan="2" |
@@ -111,7 +110,7 @@ Page 3291 Template:csb-conj-bëc: -------- begin text --------
 | colspan="3" | {{l|csb|[[niech]] [[bądze]], [[niech]] [[bãdze]], [[niech]] [[mdze]]}}
 | colspan="2" | {{l|csb|[[niech]] [[bãdą]], [[niech]] [[bądą]], [[niech]] [[mdą]]}}
 | &mdash;
-|}<noinclude>{{documentation}}[[Category:Kashubian verb inflection-table templates|*]]</noinclude>
+|}<noinclude>{{documentation}}{{tcat|conj:*}}</noinclude>
 -------- end text --------
 Page 4258 Template:mwl-conj-I: -------- begin text --------
 {{mwl-conj-table
@@ -182,7 +181,7 @@ Page 4258 Template:mwl-conj-I: -------- begin text --------
 |{{{1}}}{{#switch:{{{2|}}}|ç=ç|g=g|c=c|#default={{{2|}}}}}ariemos
 |{{{1}}}{{#switch:{{{2|}}}|ç=ç|g=g|c=c|#default={{{2|}}}}}ariedes
 |{{{1}}}{{#switch:{{{2|}}}|ç=ç|g=g|c=c|#default={{{2|}}}}}arien
-}}</div></div><includeonly>[[Category: Mirandese verbs ending in -ar]]</includeonly><noinclude>
+}}<includeonly>[[Category: Mirandese verbs ending in -ar]]</includeonly><noinclude>
 [[Category:Mirandese verb inflection-table templates|I]]{{documentation}}</noinclude>
 -------- end text --------
 Page 4259 Template:mwl-conj-II: -------- begin text --------
@@ -254,7 +253,7 @@ Page 4259 Template:mwl-conj-II: -------- begin text --------
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}ermos
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}erdes
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}eren
-}}</div></div><includeonly>[[Category: Mirandese verbs ending in -er]]</includeonly><noinclude>
+}}<includeonly>[[Category: Mirandese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Mirandese verb inflection-table templates|II]]{{documentation}}</noinclude>
 -------- end text --------
 Page 4260 Template:mwl-conj-III: -------- begin text --------
@@ -326,7 +325,7 @@ Page 4260 Template:mwl-conj-III: -------- begin text --------
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}irmos
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}irdes
 |{{{1}}}{{#switch:{{{2|}}}|c=c|#default={{{2|}}}}}iren
-}}</div></div><includeonly>[[Category: Mirandese verbs ending in -ir]]</includeonly><noinclude>
+}}<includeonly>[[Category: Mirandese verbs ending in -ir]]</includeonly><noinclude>
 [[Category:Mirandese verb inflection-table templates|III]]{{documentation}}</noinclude>
 -------- end text --------
 Page 4474 Template:mns-nor-conj-table-reg: -------- begin text --------
@@ -914,7 +913,7 @@ Page 4474 Template:mns-nor-conj-table-reg: -------- begin text --------
 -->|{{{1|{{PAGENAME}}}}}ке̄нт<!--
 -->|{{{1|{{PAGENAME}}}}}ке̄тт<!--
 
--->}}</div></div><noinclude>{{documentation}}</noinclude>
+-->}}<noinclude>{{documentation}}</noinclude>
 -------- end text --------
 Page 5038 Template:roa-opt-conj (aduzer): -------- begin text --------
 {{roa-opt-conj-manual
@@ -988,7 +987,7 @@ Page 5038 Template:roa-opt-conj (aduzer): -------- begin text --------
 |persinf_1p=aduzermos
 |persinf_2p=aduzerdes
 |persinf_3p=aduzeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|a]]</noinclude>
 -------- end text --------
 Page 5043 Template:roa-opt-conj (aver): -------- begin text --------
@@ -1065,7 +1064,7 @@ Page 5043 Template:roa-opt-conj (aver): -------- begin text --------
 |persinf_1p=avermos
 |persinf_2p=averdes
 |persinf_3p=averen
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|a]]</noinclude>
 -------- end text --------
 Page 5044 Template:roa-opt-conj (avĩir): -------- begin text --------
@@ -1141,7 +1140,7 @@ Page 5044 Template:roa-opt-conj (avĩir): -------- begin text --------
 |persinf_1p=avĩirmos,aviirmos,avirmos	
 |persinf_2p=avĩirdes,aviirdes,avirdes
 |persinf_3p=avĩiren,aviiren,aviren
-}}<div align=left></div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
+}}<includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|a]]</noinclude>
 -------- end text --------
 Page 5045 Template:roa-opt-conj-ar: -------- begin text --------
@@ -1222,7 +1221,7 @@ Page 5045 Template:roa-opt-conj-ar: -------- begin text --------
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|ç=ç|c=c|e=e|ẽ=ẽ|g=g|#default={{{2|}}}}}armos}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|ç=ç|c=c|e=e|ẽ=ẽ|g=g|#default={{{2|}}}}}ardes}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|ç=c|c=qu|e=e|ẽ=ẽ|g=g|#default={{{2|}}}}}aren}}
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ar|*]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ar|*]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 5046 Template:roa-opt-conj-er: -------- begin text --------
@@ -1303,7 +1302,7 @@ Page 5046 Template:roa-opt-conj-er: -------- begin text --------
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|c=c|e=e|ẽ=ẽ|gu=gu|#default={{{2|}}}}}ermos}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|c=c|e=e|ẽ=ẽ|gu=gu|#default={{{2|}}}}}erdes}}
 |{{l-self|roa-opt|{{{1}}}{{#switch:{{{2|}}}|c=c|e=e|ẽ=ẽ|gu=gu|#default={{{2|}}}}}eren}}
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 5047 Template:roa-opt-conj (bendizer): -------- begin text --------
@@ -1378,7 +1377,7 @@ Page 5047 Template:roa-opt-conj (bendizer): -------- begin text --------
 |persinf_1p=bendizermos
 |persinf_2p=bendizerdes
 |persinf_3p=bendizeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|b]]</noinclude>
 -------- end text --------
 Page 5056 Template:roa-opt-conj (dizer): -------- begin text --------
@@ -1453,7 +1452,7 @@ Page 5056 Template:roa-opt-conj (dizer): -------- begin text --------
 |persinf_1p=dizermos,dezermos
 |persinf_2p=dizerdes,dezerdes
 |persinf_3p=dizeren,dezeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|d]]</noinclude>
 -------- end text --------
 Page 5057 Template:roa-opt-conj (doer): -------- begin text --------
@@ -1528,7 +1527,7 @@ Page 5057 Template:roa-opt-conj (doer): -------- begin text --------
 |persinf_1p=doermos
 |persinf_2p=doerdes
 |persinf_3p=doeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|d]]</noinclude>
 -------- end text --------
 Page 5069 Template:roa-opt-conj (ir): -------- begin text --------
@@ -1604,7 +1603,7 @@ Page 5069 Template:roa-opt-conj (ir): -------- begin text --------
 |persinf_1p=irmos
 |persinf_2p=irdes
 |persinf_3p=iren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|i]]</noinclude>
 -------- end text --------
 Page 5073 Template:roa-opt-conj (moer): -------- begin text --------
@@ -1679,7 +1678,7 @@ Page 5073 Template:roa-opt-conj (moer): -------- begin text --------
 |persinf_1p=*moermos
 |persinf_2p=*moerdes
 |persinf_3p=*moeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|m]]</noinclude>
 -------- end text --------
 Page 5088 Template:roa-opt-conj (querer): -------- begin text --------
@@ -1751,7 +1750,7 @@ Page 5088 Template:roa-opt-conj (querer): -------- begin text --------
 |persinf_1p=querermos
 |persinf_2p=quererdes
 |persinf_3p=quereren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|q]]</noinclude>
 -------- end text --------
 Page 5100 Template:roa-opt-conj (soer): -------- begin text --------
@@ -1826,7 +1825,7 @@ Page 5100 Template:roa-opt-conj (soer): -------- begin text --------
 |persinf_1p=*soermos
 |persinf_2p=*soerdes
 |persinf_3p=*soeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|s]]</noinclude>
 -------- end text --------
 Page 5101 Template:roa-opt-conj (trager): -------- begin text --------
@@ -1902,7 +1901,7 @@ Page 5101 Template:roa-opt-conj (trager): -------- begin text --------
 |persinf_1p=tragermos,trazermos
 |persinf_2p=tragerdes,trazerdes
 |persinf_3p=trageren,trazeren
-}}{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|t]]</noinclude>
 -------- end text --------
 Page 5103 Template:roa-opt-conj (valer): -------- begin text --------
@@ -1974,7 +1973,7 @@ Page 5103 Template:roa-opt-conj (valer): -------- begin text --------
 |persinf_1p=valermos
 |persinf_2p=valerdes
 |persinf_3p=valeren
-}}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
+}}<div align=left>{{reflist}}</div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -er]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|v]]</noinclude>
 -------- end text --------
 Page 5105 Template:roa-opt-conj (viir): -------- begin text --------
@@ -2050,7 +2049,7 @@ Page 5105 Template:roa-opt-conj (viir): -------- begin text --------
 |persinf_1p=*vĩirmos,viirmos,virmos	
 |persinf_2p=*vĩirdes,viirdes,*virdes
 |persinf_3p=*vĩiren,viiren,viren
-}}<div align=left></div></div></div><includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
+}}<includeonly>[[Category:Old Galician-Portuguese verbs ending in -ir]]</includeonly><noinclude>
 [[Category:Old Galician-Portuguese verb inflection-table templates|v]]</noinclude>
 -------- end text --------
 Page 5380 Template:osp-conj (seer): -------- begin text --------
@@ -2285,7 +2284,6 @@ Page 5380 Template:osp-conj (seer): -------- begin text --------
 | {{l-self|osp|non}}/{{l-self|osp|no}} {{l-self|osp|seyades}}, {{l-self|osp|non}} /{{l-self|osp|no}} {{l-self|osp|*seyaes}}, {{l-self|osp|non}}/{{l-self|osp|no}} {{l-self|osp|seades}}, {{l-self|osp|non}}/{{l-self|osp|no}} {{l-self|osp|seaes}}, {{l-self|osp|non}}/{{l-self|osp|no}} {{l-self|osp|seáis}}
 | —
 ! style="text align:left; font-weight: normal" colspan="10" |
-</div>
 |}<div align=left>{{reflist}}</div></div></div><includeonly>[[Category:Old Spanish verbs ending in -er]]</includeonly><noinclude>{{documentation}}
 [[Category:Old Spanish verb inflection-table templates|s]]</noinclude>
 -------- end text --------
@@ -2296,32 +2294,32 @@ Page 5492 Template:rsk-decl-noun-table: -------- begin text --------
 ! plural
 |-
 ! nominative
-| {{#if:{{{1|}}}|{{l-self|rsk|{{{1}}}}}</span>|—}}
-| {{#if:{{{8|}}}|{{l-self|rsk|{{{8}}}}}</span>|—}}
+| {{#if:{{{1|}}}|{{l-self|rsk|{{{1}}}}}|—}}
+| {{#if:{{{8|}}}|{{l-self|rsk|{{{8}}}}}|—}}
 |-
 ! genitive
-| {{#if:{{{2|}}}|{{l-self|rsk|{{{2}}}}}</span>|—}}
-| {{#if:{{{9|}}}|{{l-self|rsk|{{{9}}}}}</span>|—}}
+| {{#if:{{{2|}}}|{{l-self|rsk|{{{2}}}}}|—}}
+| {{#if:{{{9|}}}|{{l-self|rsk|{{{9}}}}}|—}}
 |-
 ! dative
-| {{#if:{{{3|}}}|{{l-self|rsk|{{{3}}}}}</span>|—}}
-| {{#if:{{{10|}}}|{{l-self|rsk|{{{10}}}}}</span>|—}}
+| {{#if:{{{3|}}}|{{l-self|rsk|{{{3}}}}}|—}}
+| {{#if:{{{10|}}}|{{l-self|rsk|{{{10}}}}}|—}}
 |-
 ! accusative
-| {{#if:{{{4|}}}|{{l-self|rsk|{{{4}}}}}</span>|—}}
-| {{#if:{{{11|}}}|{{l-self|rsk|{{{11}}}}}</span>|—}}
+| {{#if:{{{4|}}}|{{l-self|rsk|{{{4}}}}}|—}}
+| {{#if:{{{11|}}}|{{l-self|rsk|{{{11}}}}}|—}}
 |-
 ! instrumental
-| {{#if:{{{5|}}}|{{l-self|rsk|{{{5}}}}}</span>|—}}
-| {{#if:{{{12|}}}|{{l-self|rsk|{{{12}}}}}</span>|—}}
+| {{#if:{{{5|}}}|{{l-self|rsk|{{{5}}}}}|—}}
+| {{#if:{{{12|}}}|{{l-self|rsk|{{{12}}}}}|—}}
 |-
 ! locative
-| {{#if:{{{6|}}}|{{l-self|rsk|{{{6}}}}}</span>|—}}
-| {{#if:{{{13|}}}|{{l-self|rsk|{{{13}}}}}</span>|—}}
+| {{#if:{{{6|}}}|{{l-self|rsk|{{{6}}}}}|—}}
+| {{#if:{{{13|}}}|{{l-self|rsk|{{{13}}}}}|—}}
 |-
 ! vocative
-| {{#if:{{{7|}}}|{{l-self|rsk|{{{7}}}}}</span>|—}}
-| {{#if:{{{14|}}}|{{l-self|rsk|{{{14}}}}}</span>|—}}
+| {{#if:{{{7|}}}|{{l-self|rsk|{{{7}}}}}|—}}
+| {{#if:{{{14|}}}|{{l-self|rsk|{{{14}}}}}|—}}
 {{inflection-table-bottom}}<noinclude>[[Category:Pannonian Rusyn noun inflection-table templates|*]]</noinclude>
 -------- end text --------
 Page 5806 Template:pl-conj-ap-impersonal: -------- begin text --------
@@ -2340,7 +2338,7 @@ Page 5806 Template:pl-conj-ap-impersonal: -------- begin text --------
 |-
 ! title="tryb rozkazujący" | imperative
 | {{l-self|pl|niech [[{{{1}}}]]}}
-{{inflection-table-bottom}}</div></div><noinclude>{{documentation}}</noinclude>
+{{inflection-table-bottom}}<noinclude>{{documentation}}</noinclude>
 -------- end text --------
 Page 6205 Template:rom-conj-si: -------- begin text --------
 {{inflection-table-top|title=Conjugation of {{m|rom||si}}|palette=custom|tall=yes}}
@@ -2436,7 +2434,7 @@ Page 6205 Template:rom-conj-si: -------- begin text --------
 | <!--1 pl--> —
 | <!--2 pl--> {{l|rom|aven}} ({{l|rom|oven}})
 | <!--3 pl--> —
-{{inflection-table-bottom}}</div><noinclude>
+{{inflection-table-bottom}}<noinclude>
 [[Category:Romani verb inflection-table templates|Si]]</noinclude>
 -------- end text --------
 Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
@@ -2568,7 +2566,7 @@ Page 6382 Template:sc-conj-èssere-LSC: -------- begin text --------
 | {{l|sc|{{{imp2p|siais}}}}}
 | {{l|sc|{{{imp3p|siant}}}}}
 
-|}</div></div></div><noinclude>{{documentation}}</noinclude>
+|}</div></div><noinclude>{{documentation}}</noinclude>
 -------- end text --------
 Page 6602 Template:sl-decl-noun-table-unc2: -------- begin text --------
 {| class="inflection-table vsSwitcher" data-toggle-category="inflection" style="border: 1px solid var(--wikt-palette-grey, #9e9e9e);"
@@ -2601,7 +2599,7 @@ Page 6602 Template:sl-decl-noun-table-unc2: -------- begin text --------
 |-class="vsHide"
 ! style="background:var(--wikt-palette-lighterblue, #ebf4ff)" | instrumental
 | {{#switch:{{{n|}}}|pl={{{18}}}|du={{{12}}}|#default={{l-self|sl|{{{6}}}}}}}
-|}</div></div><!--
+|}<!--
 
 --><noinclude>{{documentation}}</noinclude>
 -------- end text --------
@@ -2661,8 +2659,7 @@ Page 6605 Template:sl-decl-noun-table3unc: -------- begin text --------
 |-class="vsHide"
 ! style="background:var(--wikt-palette-lighterblue, #ebf4ff)" | (vocative)<br><small>({{l|sl|ogȏvorni imenovȃlnik}})</small>
 | {{#switch:{{{n|}}}|pl={{l-self|sl|{{{21|{{{7}}}}}}}}|du={{l-self|sl|{{{14|{{{7}}}}}}}}|#default={{l-self|sl|{{{7}}}}}}}
-|}</div></div>
-<includeonly>[[Category:Slovene {{#switch:{{{n|}}}|pl=pluralia tantum]]|du=dualia tantum]]|#default=uncountable nouns]]}}</includeonly>
+|}<includeonly>[[Category:Slovene {{#switch:{{{n|}}}|pl=pluralia tantum]]|du=dualia tantum]]|#default=uncountable nouns]]}}</includeonly>
 
 <!--
 
@@ -2676,14 +2673,14 @@ Page 6684 Template:sdh-conj-head: -------- begin text --------
 {| border="1" color="#cdcdcd" style="border-collapse:collapse; line-height:2em; border:1px solid var(--wikt-palette-darkgrey,#555555); background:var(--wikt-palette-grey-0,#fdfdfd); width:100%; text-align:center" class="inflection-table"
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-grey-amber-2,#F0E9D6)" colspan="3" | infinitive
-| style="font-weight:normal" colspan="4" | {{l-self|sdh|{{{inf}}}}} <br/> </small>
+| style="font-weight:normal" colspan="4" | {{l-self|sdh|{{{inf}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-grey-amber-2,#F0E9D6)" colspan="1" | past stem
-| style="font-weight:normal" colspan="1" | {{l-self|sdh|{{{ps-stem}}}}} <br/> <small>
+| style="font-weight:normal" colspan="1" | {{l-self|sdh|{{{ps-stem}}}}}
 ! style="font-weight:bold;background:var(--wikt-palette-grey-amber-2,#F0E9D6)" colspan="1" | present stem
-| style="font-weight:normal" colspan="1" | {{l-self|sdh|{{{pr-stem}}}}} <br/> <small>
+| style="font-weight:normal" colspan="1" | {{l-self|sdh|{{{pr-stem}}}}}
 ! style="font-weight:bold;background:var(--wikt-palette-grey-amber-2,#F0E9D6)" colspan="1" | Participle
-| style="font-weight:normal" colspan="2" | {{l-self|sdh|{{{part}}}}} <br/> <small>
+| style="font-weight:normal" colspan="2" | {{l-self|sdh|{{{part}}}}}
 |- style="text-align:center;"
 | style="font-weight:bold;background:var(--wikt-palette-grey-4,#cdcdcd)" rowspan="2" colspan="1" | person
 ! style="font-weight:bold;background:var(--wikt-palette-grey-4,#cdcdcd)" colspan="3" | singular
@@ -2705,60 +2702,60 @@ Page 6684 Template:sdh-conj-head: -------- begin text --------
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" colspan="1" | ئوان
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | simple past
-| {{l-self|sdh|{{{1s-past}}}}} <br/> </small>
-| {{l-self|sdh|{{{2s-past}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-past}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-past}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-past}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-past}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-past}}}}}
+| {{l-self|sdh|{{{2s-past}}}}}
+| {{l-self|sdh|{{{3s-past}}}}}
+| {{l-self|sdh|{{{1p-past}}}}}
+| {{l-self|sdh|{{{2p-past}}}}}
+| {{l-self|sdh|{{{3p-past}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | simple present
-| {{l-self|sdh|{{{1s-pres}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-pres}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-pres}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-pres}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-pres}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-pres}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-pres}}}}}
+| {{l-self|sdh|{{{2s-pres}}}}}
+| {{l-self|sdh|{{{3s-pres}}}}}
+| {{l-self|sdh|{{{1p-pres}}}}}
+| {{l-self|sdh|{{{2p-pres}}}}}
+| {{l-self|sdh|{{{3p-pres}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | past (imperfect)
-| {{l-self|sdh|{{{1s-impf}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-impf}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-impf}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-impf}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-impf}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-impf}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-impf}}}}}
+| {{l-self|sdh|{{{2s-impf}}}}}
+| {{l-self|sdh|{{{3s-impf}}}}}
+| {{l-self|sdh|{{{1p-impf}}}}}
+| {{l-self|sdh|{{{2p-impf}}}}}
+| {{l-self|sdh|{{{3p-impf}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | past progressive
-| {{l-self|sdh|{{{1s-ps-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-ps-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-ps-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-ps-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-ps-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-ps-prog}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-ps-prog}}}}}
+| {{l-self|sdh|{{{2s-ps-prog}}}}}
+| {{l-self|sdh|{{{3s-ps-prog}}}}}
+| {{l-self|sdh|{{{1p-ps-prog}}}}}
+| {{l-self|sdh|{{{2p-ps-prog}}}}}
+| {{l-self|sdh|{{{3p-ps-prog}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | present progressive
-| {{l-self|sdh|{{{1s-pr-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-pr-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-pr-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-pr-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-pr-prog}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-pr-prog}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-pr-prog}}}}}
+| {{l-self|sdh|{{{2s-pr-prog}}}}}
+| {{l-self|sdh|{{{3s-pr-prog}}}}}
+| {{l-self|sdh|{{{1p-pr-prog}}}}}
+| {{l-self|sdh|{{{2p-pr-prog}}}}}
+| {{l-self|sdh|{{{3p-pr-prog}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | past perfect
-| {{l-self|sdh|{{{1s-ps-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-ps-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-ps-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-ps-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-ps-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-ps-perf}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-ps-perf}}}}}
+| {{l-self|sdh|{{{2s-ps-perf}}}}}
+| {{l-self|sdh|{{{3s-ps-perf}}}}}
+| {{l-self|sdh|{{{1p-ps-perf}}}}}
+| {{l-self|sdh|{{{2p-ps-perf}}}}}
+| {{l-self|sdh|{{{3p-ps-perf}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-indigo-4,#CCCCFF)" | present perfect
-| {{l-self|sdh|{{{1s-pr-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-pr-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-pr-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-pr-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-pr-perf}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-pr-perf}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-pr-perf}}}}}
+| {{l-self|sdh|{{{2s-pr-perf}}}}}
+| {{l-self|sdh|{{{3s-pr-perf}}}}}
+| {{l-self|sdh|{{{1p-pr-perf}}}}}
+| {{l-self|sdh|{{{2p-pr-perf}}}}}
+| {{l-self|sdh|{{{3p-pr-perf}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-grey-red-0,#E8ADAA)" colspan="1" | subjunctive
 ! style="font-weight:bold;background:var(--wikt-palette-grey-red-0,#E8ADAA)" colspan="1" | م
@@ -2769,27 +2766,27 @@ Page 6684 Template:sdh-conj-head: -------- begin text --------
 ! style="font-weight:bold;background:var(--wikt-palette-grey-red-0,#E8ADAA)" colspan="1" | ئوان
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-grey-red-0,#E8ADAA)" | past
-| {{l-self|sdh|{{{1s-ps-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-ps-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-ps-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-ps-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-ps-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-ps-subj}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-ps-subj}}}}}
+| {{l-self|sdh|{{{2s-ps-subj}}}}}
+| {{l-self|sdh|{{{3s-ps-subj}}}}}
+| {{l-self|sdh|{{{1p-ps-subj}}}}}
+| {{l-self|sdh|{{{2p-ps-subj}}}}}
+| {{l-self|sdh|{{{3p-ps-subj}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-grey-red-0,#E8ADAA)" | present
-| {{l-self|sdh|{{{1s-pr-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{2s-pr-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{3s-pr-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{1p-pr-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{2p-pr-subj}}}}} <br/> <small>
-| {{l-self|sdh|{{{3p-pr-subj}}}}} <br/> <small>
+| {{l-self|sdh|{{{1s-pr-subj}}}}}
+| {{l-self|sdh|{{{2s-pr-subj}}}}}
+| {{l-self|sdh|{{{3s-pr-subj}}}}}
+| {{l-self|sdh|{{{1p-pr-subj}}}}}
+| {{l-self|sdh|{{{2p-pr-subj}}}}}
+| {{l-self|sdh|{{{3p-pr-subj}}}}}
 |-
 ! style="font-weight:bold;background:var(--wikt-palette-teal-0,#93E9BE)" colspan="1" | imperative
 |
-| {{l-self|sdh|{{{2s-impr}}}}} <br/> <small>
+| {{l-self|sdh|{{{2s-impr}}}}}
 |
 |
-| {{l-self|sdh|{{{2p-impr}}}}} <br/> <small>
+| {{l-self|sdh|{{{2p-impr}}}}}
 |
 |}</div></div><noinclude>[[Category: Southern Kurdish verb inflection-table templates| ]][[Category:Templates auto-palettized by SurjectionBot]]</noinclude>
 -------- end text --------
@@ -2823,7 +2820,6 @@ Page 7014 Template:ttj-decl-pl: -------- begin text --------
 | {{l|ttj|{{{prefix|}}} {{{ha|{{#switch:{{padleft:|1|{{{1|{{PAGENAME}}}}}}}|e={{{c16|he}}}{{{1|{{PAGENAME}}}}}|o={{{c16|ho}}}{{{1|{{PAGENAME}}}}}|#default={{{c16|ha}}}{{{1|{{PAGENAME}}}}}}}}}}|accel-form=ma}}
 {{inflection-table-bottom}}<!--
 --><noinclude>{{documentation}}[[Category:Tooro inflection-table templates]]</noinclude>
-</div>
 -------- end text --------
 Page 7074 Template:tr-decl-post: -------- begin text --------
 {{inflection-table-top|title=Declension of ''{{PAGENAME}}''|palette=red|tall=yes}}
@@ -2844,7 +2840,7 @@ Page 7074 Template:tr-decl-post: -------- begin text --------
 |-
 ! [[onların]] (“{{#if:{{{t|}}}|[{{{t|}}}]|{{#if:{{{t|}}}|[{{{t|}}}]&nbsp;|}}}}them”)
 | [[{{{5}}}]]
-{{inflection-table-bottom}}</div></div><noinclude>
+{{inflection-table-bottom}}<noinclude>
 {{documentation}}
 </noinclude>
 -------- end text --------
@@ -2880,7 +2876,8 @@ Page 7136 Template:hsb-conj-ip-Va1: -------- begin text --------
 |pp={{{pp|{{{1}}}any}}}
 |ł={{{ł|{{{1}}}ał}}}
 |vn={{{vn|{{{1}}}anje}}}
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian imperfective Va1 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian imperfective Va1 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7137 Template:hsb-conj-ip-Ve1: -------- begin text --------
@@ -2915,7 +2912,8 @@ Page 7137 Template:hsb-conj-ip-Ve1: -------- begin text --------
 |pp={{{pp|{{{1}}}owany}}}
 |ł={{{ł|{{{1}}}ował}}}
 |vn={{{vn|{{{1}}}owanje}}}
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian imperfective Ve1 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian imperfective Ve1 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7138 Template:hsb-conj-ip-Ve2: -------- begin text --------
@@ -2949,7 +2947,8 @@ Page 7138 Template:hsb-conj-ip-Ve2: -------- begin text --------
 |pp={{{pp|{{{1}}}jeny}}}
 |ł={{{ł|{{{1}}}ył}}}
 |vn={{{vn|{{{1}}}jenje}}}
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian imperfective Ve2 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian imperfective Ve2 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7139 Template:hsb-conj-ip-Ve4a: -------- begin text --------
@@ -2984,7 +2983,8 @@ Page 7139 Template:hsb-conj-ip-Ve4a: -------- begin text --------
 |pp={{{1}}}ty
 |ł={{{1}}}ł
 |vn={{{1}}}će
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian imperfective Ve4a verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian imperfective Ve4a verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7140 Template:hsb-conj-ip-Vi1: -------- begin text --------
@@ -3018,7 +3018,8 @@ Page 7140 Template:hsb-conj-ip-Vi1: -------- begin text --------
 |pp={{{pp|{{{1}}}{{#if:{{{2|}}}|j}}eny}}}
 |ł={{{ł|{{{1}}}ił}}}
 |vn={{{vn|{{{1}}}{{#if:{{{2|}}}|j}}enje}}}
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian imperfective Vi1 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian imperfective Vi1 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7141 Template:hsb-conj-ip-Vi2: -------- begin text --------
@@ -3052,7 +3053,8 @@ Page 7141 Template:hsb-conj-ip-Vi2: -------- begin text --------
 |pp={{{pp|{{{1}}}any}}}
 |ł={{{ł|{{{1}}}ał}}}
 |vn={{{vn|{{{1}}}enje}}}
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian imperfective Vi2 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian imperfective Vi2 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7142 Template:hsb-conj-p-Va1: -------- begin text --------
@@ -3085,7 +3087,8 @@ Page 7142 Template:hsb-conj-p-Va1: -------- begin text --------
 |pp={{{1}}}any
 |ł={{{1}}}ał
 |vn={{{1}}}anje
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian perfective Va1 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian perfective Va1 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7143 Template:hsb-conj-p-Ve1: -------- begin text --------
@@ -3118,7 +3121,8 @@ Page 7143 Template:hsb-conj-p-Ve1: -------- begin text --------
 |pp={{{pa|{{{1}}}owany}}}
 |ł={{{ł|{{{1}}}ował}}}
 |vn={{{vn|{{{1}}}owanje}}}
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category:Upper Sorbian perfective Ve1 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category:Upper Sorbian perfective Ve1 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7144 Template:hsb-conj-p-Ve2: -------- begin text --------
@@ -3152,7 +3156,8 @@ Page 7144 Template:hsb-conj-p-Ve2: -------- begin text --------
 |pp={{{1}}}jeny
 |ł={{{1}}}ył
 |vn={{{1}}}jenje
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian perfective Ve2 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian perfective Ve2 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7145 Template:hsb-conj-p-Vi1: -------- begin text --------
@@ -3185,11 +3190,12 @@ Page 7145 Template:hsb-conj-p-Vi1: -------- begin text --------
 |pp={{{1}}}jeny
 |ł={{{1}}}ił
 |vn={{{1}}}jenje
-}}{{#if:{{{notes|}}}|<span class='use-with-mention'>{{{notes}}}</span>|}}</div></div><includeonly>[[Category: Upper Sorbian perfective Vi1 verbs]]</includeonly><noinclude>
+|notes={{{notes|}}}
+}}<includeonly>[[Category: Upper Sorbian perfective Vi1 verbs]]</includeonly><noinclude>
 [[Category:Upper Sorbian verb inflection-table templates|a]]{{documentation}}</noinclude>
 -------- end text --------
 Page 7233 Template:vgr-noun-f-aai: -------- begin text --------
-# {{vgr-decl-noun
+{{vgr-decl-noun
 |1={{{1}}}
 |2={{{1}}}ઊં
 |3={{{1}}}
@@ -3278,7 +3284,7 @@ Page 7417 Template:cy-conj-a: -------- begin text --------
 |-
 ! scope=row | verbal adjectives
 | colspan=3 | {{#switch:{{{verbadj}}}|edig={{l-self|cy|{{{1}}}edig}}|adwy={{l-self|cy|{{{1}}}adwy}}|none=—|both-a={{l-self|cy|{{{1}}}aedig}}, {{l-self|cy|{{{1}}}aëdig}}<br/>{{l-self|cy|{{{1}}}adwy}}|{{l-self|cy|{{{1}}}edig}}<br/>{{l-self|cy|{{{1}}}adwy}}}}
-{{inflection-table-bottom}}</div><noinclude>{{documentation}}</noinclude>
+{{inflection-table-bottom}}<noinclude>{{documentation}}</noinclude>
 -------- end text --------
-Elapsed time: 0 mins 0.20 secs
-Ending at Sun Dec 28 18:43:23 2025
+Elapsed time: 0 mins 6.07 secs
+Ending at Sun Dec 28 19:46:30 2025
