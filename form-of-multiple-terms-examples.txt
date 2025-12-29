@@ -1,291 +1,481 @@
 abbreviation of
 
-Page 698 G: Found match for regex: <begin> # {{C|en|Recreational drugs}} {{lb|en|drug|_|slang}} {{abbrev of|en|gamma-hydroxybutyrate,gamma-butyrolactone}}. <end>
-Page 182 h: Found match for regex: <begin> # {{lb|sv|nonstandard|anglicism}} {{abbreviation of|sv|en:hour}} <end>
-Page 182 h: Found match for regex: <begin> # {{lb|sv|strictly|_|technology}} {{abbreviation of|sv|la:hōra}} <end>
-Page 180 d: Found match for regex: <begin> # {{abbreviation of|en|died,death}}. <end>
-Page 184 k: Found match for regex: <begin> # {{senseid|mul|thousand}} {{lb|mul|numbers}} {{abbreviation of|mul|fr:kilo-|t=1000}} <end>
-Page 192 t: Found match for regex: <begin> # {{lb|vi|slang|Internet|text messaging}} {{abbreviation of|vi|tao,tau,tôi<q:sometimes>,tớ}} <end>
-Page 353 cent: Found match for regex: <begin> # {{lb|en|obsolete|except in ''per cent'' and ''cent percent''}} {{abbreviation of|en|la:centum|t=one hundred}}. <end>
-Page 481 LC: Found match for regex: <begin> # {{lb|mul|[[w:IUCN Red List|IUCN Red List]]}} {{abbreviation of|mul|en:[[w:Least-concern species|Least Concern]]}} <end>
-Page 569 LP: Found match for regex: <begin> # {{lb|pl|music}} {{abbr of|pl|en:long play}}; {{m|pl|płyta długogrająca|t=a sound recording album, forming a compositional whole}} <end>
-Page 2231 FAI: Found match for regex: <begin> # {{abbreviation of|mul|fr:{{w|lang=en|Fédération Aéronautique Internationale}}}}: {{l|en|FAI}} {{gl|the world federation for aeronautics and airsports}} <end>
-Page 7580 RXR: Found match for regex: <begin> # {{abbreviation of|en|railroad,railway,rail-line,[[rail]] [[crossing]]}}: a [[level crossing]]. <end>
-Page 185 l: Found match for regex: <begin> # {{abbreviation of|en|la:libra|t=[[pound]] ([[pound sterling|sterling]])}}. <end>
-Page 894 IMS: Found match for regex: <begin> # {{place|en|<=abbr of:[[w:en:Indianapolis Motor Speedway|Indianapolis Motor Speedway]]<t:The Brickyard>|racetrack|ward/Speedway|city/Indianapolis|twp/Wayne|co/Marion|s/Indiana|c/USA}}. <end>
-Page 1377 ארה״ב: Found match for regex: <begin> # {{place|he|<=abbr of:אַרְצוֹת הַבְּרִית<tr:ar'tsót hab'rít><eq:United States>|country|cont/North America|t=US}} <end>
-Page 11212 UMall: Found match for regex: <begin> # {{place|tl|<=abbr of:en:[[university|University]] [[mall|Mall]]|mall|district/Malate|city/Manila|c/Philippines}} <end>
-Page 11704 cnd.: Found match for regex: <begin> # {{abbreviation of|pl|czego należało dowieść,co należało dowieść}}: [[QED]] {{gl|end of proof}} <end>
-Page 2877 JK: Found match for regex: <begin> # {{abbreviation of|ja|女子高生<tr:joshi kōsei>,[[女子]][[高校生]]<tr:joshi kōkōsei><t:high school girl>}} <end>
-Page 2087 JJ: Found match for regex: <begin> # {{lb|en|law|postnominal}} {{plural of|en|J}}: {{abbreviation of|en|judges,justices|nocap=1}}. <end>
+|-
+| {{m+|en|G}} || {{demo2c|<nowiki>{{C|en|Recreational drugs}} {{lb|en|drug|_|slang}} {{abbrev of|en|gamma-hydroxybutyrate,gamma-butyrolactone}}.</nowiki>}}
+|-
+| {{m+|en|h}} || {{demo2c|<nowiki>{{lb|sv|nonstandard|anglicism}} {{abbreviation of|sv|en:hour}}</nowiki>}}
+|-
+| {{m+|en|h}} || {{demo2c|<nowiki>{{lb|sv|strictly|_|technology}} {{abbreviation of|sv|la:hōra}}</nowiki>}}
+|-
+| {{m+|en|d}} || {{demo2c|<nowiki>{{abbreviation of|en|died,death}}.</nowiki>}}
+|-
+| {{m+|en|k}} || {{demo2c|<nowiki>{{senseid|mul|thousand}} {{lb|mul|numbers}} {{abbreviation of|mul|fr:kilo-|t=1000}}</nowiki>}}
+|-
+| {{m+|en|t}} || {{demo2c|<nowiki>{{lb|vi|slang|Internet|text messaging}} {{abbreviation of|vi|tao,tau,tôi<q:sometimes>,tớ}}</nowiki>}}
+|-
+| {{m+|en|cent}} || {{demo2c|<nowiki>{{lb|en|obsolete|except in ''per cent'' and ''cent percent''}} {{abbreviation of|en|la:centum|t=one hundred}}.</nowiki>}}
+|-
+| {{m+|en|LC}} || {{demo2c|<nowiki>{{lb|mul|[[w:IUCN Red List|IUCN Red List]]}} {{abbreviation of|mul|en:[[w:Least-concern species|Least Concern]]}}</nowiki>}}
+|-
+| {{m+|en|LP}} || {{demo2c|<nowiki>{{lb|pl|music}} {{abbr of|pl|en:long play}}; {{m|pl|płyta długogrająca|t=a sound recording album, forming a compositional whole}}</nowiki>}}
+|-
+| {{m+|en|FAI}} || {{demo2c|<nowiki>{{abbreviation of|mul|fr:{{w|lang=en|Fédération Aéronautique Internationale}}}}: {{l|en|FAI}} {{gl|the world federation for aeronautics and airsports}}</nowiki>}}
+|-
+| {{m+|en|RXR}} || {{demo2c|<nowiki>{{abbreviation of|en|railroad,railway,rail-line,[[rail]] [[crossing]]}}: a [[level crossing]].</nowiki>}}
+|-
+| {{m+|en|l}} || {{demo2c|<nowiki>{{abbreviation of|en|la:libra|t=[[pound]] ([[pound sterling|sterling]])}}.</nowiki>}}
+|-
+| {{m+|en|IMS}} || {{demo2c|<nowiki>{{place|en|<=abbr of:[[w:en:Indianapolis Motor Speedway|Indianapolis Motor Speedway]]<t:The Brickyard>|racetrack|ward/Speedway|city/Indianapolis|twp/Wayne|co/Marion|s/Indiana|c/USA}}.</nowiki>}}
+|-
+| {{m+|en|ארה״ב}} || {{demo2c|<nowiki>{{place|he|<=abbr of:אַרְצוֹת הַבְּרִית<tr:ar'tsót hab'rít><eq:United States>|country|cont/North America|t=US}}</nowiki>}}
+|-
+| {{m+|en|UMall}} || {{demo2c|<nowiki>{{place|tl|<=abbr of:en:[[university|University]] [[mall|Mall]]|mall|district/Malate|city/Manila|c/Philippines}}</nowiki>}}
+|-
+| {{m+|en|cnd.}} || {{demo2c|<nowiki>{{abbreviation of|pl|czego należało dowieść,co należało dowieść}}: [[QED]] {{gl|end of proof}}</nowiki>}}
+|-
+| {{m+|en|JK}} || {{demo2c|<nowiki>{{abbreviation of|ja|女子高生<tr:joshi kōsei>,[[女子]][[高校生]]<tr:joshi kōkōsei><t:high school girl>}}</nowiki>}}
+|-
+| {{m+|en|JJ}} || {{demo2c|<nowiki>{{lb|en|law|postnominal}} {{plural of|en|J}}: {{abbreviation of|en|judges,justices|nocap=1}}.</nowiki>}}
 
 clipping of
 
-Page 219 sub: Found match for regex: <begin> # {{lb|en|colloquial|internet}} {{clipping of|en|subscription,subscriber<q:by extension>|addl=_to an online channel or feed}}. <end>
-Page 279 res: Found match for regex: <begin> # {{lb|en|North America|informal}} {{clipping of|en|reservation,reserve}}. <end>
-Page 355 patio: Found match for regex: <begin> # {{clipping of|es|patio de recreo,patio de juegos|t=playground}} <end>
-Page 1010 tarayıcı: Found match for regex: <begin> # {{lb|tr|Internet}} {{clipping of|tr|ağ tarayıcısı,Web tarayıcısı|t=[[Web browser]]}} <end>
-Page 1803 A-fib: Found match for regex: <begin> # {{lb|en|medicine}} {{clipping of|en|atrial fibrillation,auricular fibrillation}}. <end> 
-Page 1869 祇園: Found match for regex: <begin> # {{lb|ja|Buddhism}} {{clipping of|ja|祇園精舎<tr:Gion-shōja>,祇樹給孤独>園<tr:Giju gikkodokuon>}}: [[Jetavana]], a [[Buddhist]] [[monastery]] in [[India]] <end>
-Page 1898 Shep: Found match for regex: <begin> # {{C|en|Nicknames}} A [[nickname]], from being a {{clipping of|en|Shepherd,Shephard,Sheperd,Shepard|addl=surnames|nocap=1}}. <end>
-Page 1974 افه: Found match for regex: <begin> # {{clipping of|ota|افندی<tr:efendi>,افندم<tr:efendim>}} <end>
-Page 2231 väckare: Found match for regex: <begin> # {{lb|sv|rare}} {{clipping of|sv|väckarklocka,väckarur||alarm clock}} <end>
-Page 2478 グラボ: Found match for regex: <begin> # {{clip of|ja|[[グラフィックボード|'''グラ'''フィック'''ボ'''ード]]<tr:gurafikku bōdo>,[[グラフィックスボード|'''グラ'''フィックス'''ボ'''ード]]<tr:gurafikkusu bōdo>|t=[[graphics card]]}} <end>
-Page 2523 国連安保理: Found match for regex: <begin> # {{clip of|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai>|sort=こくれんあんぽり|t=[[United Nations Security Council]]}}: the [[UN Security Council]] <end>
-Page 2009 akutt: Found match for regex: <begin> # {{lb|nb|chiefly in the definite singular|colloquial|healthcare}} {{clip of|nb|akuttmottak<t:emergency room>|akuttavdeling<t:emergency department>}} <end>
+|-
+| {{m+|en|sub}} || {{demo2c|<nowiki>{{lb|en|colloquial|internet}} {{clipping of|en|subscription,subscriber<q:by extension>|addl=_to an online channel or feed}}.</nowiki>}}
+|-
+| {{m+|en|res}} || {{demo2c|<nowiki>{{lb|en|North America|informal}} {{clipping of|en|reservation,reserve}}.</nowiki>}}
+|-
+| {{m+|en|patio}} || {{demo2c|<nowiki>{{clipping of|es|patio de recreo,patio de juegos|t=playground}}</nowiki>}}
+|-
+| {{m+|en|tarayıcı}} || {{demo2c|<nowiki>{{lb|tr|Internet}} {{clipping of|tr|ağ tarayıcısı,Web tarayıcısı|t=[[Web browser]]}}</nowiki>}}
+|-
+| {{m+|en|A-fib}} || {{demo2c|<nowiki>{{lb|en|medicine}} {{clipping of|en|atrial fibrillation,auricular fibrillation}}.</nowiki>}} 
+|-
+| {{m+|en|祇園}} || {{demo2c|<nowiki>{{lb|ja|Buddhism}} {{clipping of|ja|祇園精舎<tr:Gion-shōja>,祇樹給孤独>園<tr:Giju gikkodokuon>}}: [[Jetavana]], a [[Buddhist]] [[monastery]] in [[India]]</nowiki>}}
+|-
+| {{m+|en|Shep}} || {{demo2c|<nowiki>{{C|en|Nicknames}} A [[nickname]], from being a {{clipping of|en|Shepherd,Shephard,Sheperd,Shepard|addl=surnames|nocap=1}}.</nowiki>}}
+|-
+| {{m+|en|افه}} || {{demo2c|<nowiki>{{clipping of|ota|افندی<tr:efendi>,افندم<tr:efendim>}}</nowiki>}}
+|-
+| {{m+|en|väckare}} || {{demo2c|<nowiki>{{lb|sv|rare}} {{clipping of|sv|väckarklocka,väckarur||alarm clock}}</nowiki>}}
+|-
+| {{m+|en|グラボ}} || {{demo2c|<nowiki>{{clip of|ja|[[グラフィックボード|'''グラ'''フィック'''ボ'''ード]]<tr:gurafikku bōdo>,[[グラフィックスボード|'''グラ'''フィックス'''ボ'''ード]]<tr:gurafikkusu bōdo>|t=[[graphics card]]}}</nowiki>}}
+|-
+| {{m+|en|国連安保理}} || {{demo2c|<nowiki>{{clip of|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai>|sort=こくれんあんぽり|t=[[United Nations Security Council]]}}: the [[UN Security Council]]</nowiki>}}
+|-
+| {{m+|en|akutt}} || {{demo2c|<nowiki>{{lb|nb|chiefly in the definite singular|colloquial|healthcare}} {{clip of|nb|akuttmottak<t:emergency room>|akuttavdeling<t:emergency department>}}</nowiki>}}
 
 misc_variant:
 
-Page 1193 Fergie: Found match for regex: <begin> {{clipping|en|Ferguson,Fergusson,Fergus}} {{suffix|en||ie}}. <end>
-Page 2160 meybuz: Found match for regex: <begin> From the [[trademark]] ''Meybuz''. Possibly a compound with {{clipping|tr|meyve<t:fruit>,meyveli<t:fruity, with fruit>|nocap=1}} + {{m|tr|buz|t=ice}}. <end>
-Page 711 D: Found match for regex: <begin> * {{sense|chemistry|deuterium}} {{abbrev|mul|en:deuterium}}. <end>
-Page 711 D: Found match for regex: <begin> * {{sense|Germany}} {{abbrev|mul|de:Deutschland||Germany}}. <end>
+|-
+| {{m+|en|Fergie}} || {{demo2c|<nowiki>{{clipping|en|Ferguson,Fergusson,Fergus}} {{suffix|en||ie}}.</nowiki>}}
+|-
+| {{m+|en|meybuz}} || {{demo2c|<nowiki>From the [[trademark]] ''Meybuz''. Possibly a compound with {{clipping|tr|meyve<t:fruit>,meyveli<t:fruity, with fruit>|nocap=1}} + {{m|tr|buz|t=ice}}.</nowiki>}}
+|-
+| {{m+|en|D}} || {{demo2c|<nowiki>* {{sense|chemistry|deuterium}} {{abbrev|mul|en:deuterium}}.</nowiki>}}
+|-
+| {{m+|en|D}} || {{demo2c|<nowiki>* {{sense|Germany}} {{abbrev|mul|de:Deutschland||Germany}}.</nowiki>}}
 
 initialism of:
 
-Page 3532 mfG: Found match for regex: <begin> # {{lb|de|informal}} {{initialism of|de|mit freundlichen Grüßen<t:with friendly greetings>,mit freundlichem Gruß}} <end>
-Page 4576 TLE: Found match for regex: <begin> # {{lb|en|astronautics}} {{initialism of|en|[[two-line]] [[element]],[[three-line]] [[element]]}}. <end>
-Page 6273 EFP: Found match for regex: <begin> # {{label|en|finance}} {{initialism of|en|[[exchange]] for [[physical]],exchange [[future]]s for physical,[[exchange]] [[future]]s for product|addl=a type of transaction}}. <end>
-Page 46 AA: Found match for regex: <begin> # {{lb|en|aviation}} {{initialism of|en|{{w|Ansett Australia}},{{w|Ansett Airways}}}}. <end>
-Page 7919 HVO: Found match for regex: <begin> # {{initialism of|en|[[hydrogenated]] [[vegetable]] [[oil]],[[hydro-]][[treated]] [[vegetable oil]]|qq=used as a biofuel}}. <end>
-Page 10215 BNF: Found match for regex: <begin> # {{lb|en|computing}} {{init of|en|Backus-Naur form,Backus normal form<q:originally>}}. <end>
-Page 26 CE: Found match for regex: <begin> # {{initialism of|en|Common Era,Current Era,Christian Era}}. Equivalent of [[AD]]. Like other era initialisms, often written in [[small caps]]. <end>
-Page 236 ASP: Found match for regex: <begin> # {{lb|en|finance}} {{initialism of|en|w:average selling price,[[average]] sale(s) [[price]]<q:more rarely>}}. <end>
-Page 261 ECG: Found match for regex: <begin> # {{C|en|Electrocardiography}} {{lb|en|cardiology}} {{initialism of|en|electrocardiogram,electrocardiography,electrocardiograph}}.<!--polysemic in real-world usage--> <end> 
-Page 510 RIP: Found match for regex: <begin> # {{init of|en|requiescat in pace,requiescant in pace,rest in peace}} {{gl|a blessing or expression of hope that a deceased person is at peace}}. <end> 
-Page 1443 ARM: Found match for regex: <begin> # {{lb|en|computing}} {{init of|en|{{w|ARM architecture|Acorn RISC Machine}},{{w|ARM architecture|Advanced RISC Machine}}}}. <end>
-Page 1683 AUC: Found match for regex: <begin> # {{lb|la|historical}} {{initialism of|la|ab urbe conditā,annō urbis conditae}}: [[accord]]ing to the [[Roman]] [[era]], [[reckon]]ing the [[year]]s [[pass]]ed from the [[foundation]] of the [[city]] of [[Rome]] by [[Romulus]], on April 21 in the [[various]] [[year]]s 753{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|Varro, Cicero, Censorinus, most of Pliny, & most modern accounts}}, 752{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|V. Flaccus}}, 751{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|Cato, Dionysius of Halicarnassus, & most of Livy}}, 750{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|Polybius}}, or 747{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|F. Pictor & some of Livy}}. <end>
-Page 1893 SMP: Found match for regex: <begin> # {{initialism of|en|{{w|stable marriage problem}},{{w|Stable marriage problem|stable matching problem}}}}. <end>
-Page 2115 SFA: Found match for regex: <begin> # {{initialism of|de|Steuerfachangestellter,{{w|Steuerfachangestellter|Steuerfachangestellte|lang=de}}}} <end>
-Page 2341 EDC: Found match for regex: <begin> # {{lb|en|organic compound}} {{initialism of|en|{{w|1,2-dichloroethane|ethylene dichloride and 1,2-dichloroethane}}}}. <end>
-Page 3254 UEA: Found match for regex: <begin> # {{initialism of|en|eo:{{w|Universala Esperanto-Asocio}}|t=World Esperanto association}}. <end>
-Page 2061 SFSR: Found match for regex: <begin> # {{initialism of|en|[[Soviet]] [[federated]] [[socialist]] [[republic]],[[socialist]] [[federated]] [[Soviet]] [[republic]]}}: <end>
-Page 2346 GMA: Found match for regex: <begin> # {{init of|tl|en:{{w|Global Media Arts}}|addl=a broadcasting company in the Philippines}}. <end>
-Page 2346 GMA: Found match for regex: <begin> # {{lb|tl|obsolete}} {{init of|tl|en:{{w|Greater Manila Area}} Network|addl=the old form of {{w|Global Media Arts}} Network}}. <end>
-Page 3569 cv: Found match for regex: <begin> # {{m|en|hp}}: {{init of|fr|cheval-vapeur,chevaux-vapeurs||steam horse(s)|addl=the unit symbol for metric {{w|tax horsepower}}, a nominal calculation of horsepower used for taxation purposes; real horsepower is abbreviated {{m|fr|ch}}}} <end>
-Page 6923 ΜΜΕ: Found match for regex: <begin> * {{initialism of|el|[[μέσα|Μέσα]] [[μαζικής|Μαζικής]] [[ενημέρωση|Ενημέρωσης]]<t:medium, mass, information>,μέσο μαζικής ενημέρωσης<g:n><t:mass medium of information>|addl=the '''E''' may also stand for {{l|el|επικοινωνία|Επικοινωνία|g=f|t=communication}}}} <end>
-Page 794 GM: Found match for regex: <begin> # {{senseid|en|game master or game moderator}} {{lb|en|countable|RPG}} {{init of|en|game master,[[game]] [[moderator]]}}. <end>
-Page 4863 HSH: Found match for regex: <begin> # {{init of|en|[[his|His]] [[serene|Serene]] [[Highness]],[[her|Her]] [[serene|Serene]] [[Highness]]|addl=the title of a number of members of the [[royal family]] in various countries}}. <end>
-Page 8477 AYA: Found match for regex: <begin> # {{senseid|en|adolescent or young adult}} {{lb|en|chiefly|sciences|medicine}} {{init of|en|[[adolescent]] or [[young adult]],[[adolescent]] and [[young adult]]}}. <end>
-Page 736 CNC: Found match for regex: <begin> # {{senseid|en|Q190247}} {{lb|en|computing|manufacturing}} {{init of|en|w:computer numerical control,[[computerized]] [[numerical control]]}}. <end>
-Page 2386 SLM: Found match for regex: <begin> # {{senseid|en|single longitudinal-mode laser}} {{init of|en|[[w:longitudinal mode|single–longitudinal-mode]] [laser]<!--"an SLM laser"-->,[[w:longitudinal mode|single–longitudinal-mode laser]]<!--"an SLM"-->}}. <end>
-Page 2842 TIC: Found match for regex: <begin> # {{lb|id|tourism}} {{init of|id|en:[[tourist]] [[information]] [[centre]]}} <end>
-Page 10952 HIS: Found match for regex: <begin> # {{lb|en|medicine|software}} {{init of|en|w:health information system,[[hospital]] [[information]] [[system]]}}. <end>
-Page 4320 mfG: Found match for regex: <begin> # {{lb|de|informal}} {{init of|de|mit freundlichen Grüßen<t:with friendly greetings>,mit freundlichem Gruß<t:with friendly greeting>}} <end>
-Page 0 CTD: <begin> # {{init of|en|[[carboxyl]] tail [[domain]],carboxyl [[terminal]] domain}}. <end>
-Page 0 CTD: <begin> # {{init of|en|[[conductivity]], [[temperature]], [[depth]]}}; {{abbreviation of|en|[[CTD apparatus]]|nocap=1}}. <end>
+|-
+| {{m+|en|mfG}} || {{demo2c|<nowiki>{{lb|de|informal}} {{initialism of|de|mit freundlichen Grüßen<t:with friendly greetings>,mit freundlichem Gruß}}</nowiki>}}
+|-
+| {{m+|en|TLE}} || {{demo2c|<nowiki>{{lb|en|astronautics}} {{initialism of|en|[[two-line]] [[element]],[[three-line]] [[element]]}}.</nowiki>}}
+|-
+| {{m+|en|EFP}} || {{demo2c|<nowiki>{{label|en|finance}} {{initialism of|en|[[exchange]] for [[physical]],exchange [[future]]s for physical,[[exchange]] [[future]]s for product|addl=a type of transaction}}.</nowiki>}}
+|-
+| {{m+|en|AA}} || {{demo2c|<nowiki>{{lb|en|aviation}} {{initialism of|en|{{w|Ansett Australia}},{{w|Ansett Airways}}}}.</nowiki>}}
+|-
+| {{m+|en|HVO}} || {{demo2c|<nowiki>{{initialism of|en|[[hydrogenated]] [[vegetable]] [[oil]],[[hydro-]][[treated]] [[vegetable oil]]|qq=used as a biofuel}}.</nowiki>}}
+|-
+| {{m+|en|BNF}} || {{demo2c|<nowiki>{{lb|en|computing}} {{init of|en|Backus-Naur form,Backus normal form<q:originally>}}.</nowiki>}}
+|-
+| {{m+|en|CE}} || {{demo2c|<nowiki>{{initialism of|en|Common Era,Current Era,Christian Era}}. Equivalent of [[AD]]. Like other era initialisms, often written in [[small caps]].</nowiki>}}
+|-
+| {{m+|en|ASP}} || {{demo2c|<nowiki>{{lb|en|finance}} {{initialism of|en|w:average selling price,[[average]] sale(s) [[price]]<q:more rarely>}}.</nowiki>}}
+|-
+| {{m+|en|ECG}} || {{demo2c|<nowiki>{{C|en|Electrocardiography}} {{lb|en|cardiology}} {{initialism of|en|electrocardiogram,electrocardiography,electrocardiograph}}.<!--polysemic in real-world usage--></nowiki>}} 
+|-
+| {{m+|en|RIP}} || {{demo2c|<nowiki>{{init of|en|requiescat in pace,requiescant in pace,rest in peace}} {{gl|a blessing or expression of hope that a deceased person is at peace}}.</nowiki>}} 
+|-
+| {{m+|en|ARM}} || {{demo2c|<nowiki>{{lb|en|computing}} {{init of|en|{{w|ARM architecture|Acorn RISC Machine}},{{w|ARM architecture|Advanced RISC Machine}}}}.</nowiki>}}
+|-
+| {{m+|en|AUC}} || {{demo2c|<nowiki>{{lb|la|historical}} {{initialism of|la|ab urbe conditā,annō urbis conditae}}: [[accord]]ing to the [[Roman]] [[era]], [[reckon]]ing the [[year]]s [[pass]]ed from the [[foundation]] of the [[city]] of [[Rome]] by [[Romulus]], on April 21 in the [[various]] [[year]]s 753{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|Varro, Cicero, Censorinus, most of Pliny, & most modern accounts}}, 752{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|V. Flaccus}}, 751{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|Cato, Dionysius of Halicarnassus, & most of Livy}}, 750{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|Polybius}}, or 747{{nbsp}}[[BC|{{smallcaps|bc}}]] {{qualifier|F. Pictor & some of Livy}}.</nowiki>}}
+|-
+| {{m+|en|SMP}} || {{demo2c|<nowiki>{{initialism of|en|{{w|stable marriage problem}},{{w|Stable marriage problem|stable matching problem}}}}.</nowiki>}}
+|-
+| {{m+|en|SFA}} || {{demo2c|<nowiki>{{initialism of|de|Steuerfachangestellter,{{w|Steuerfachangestellter|Steuerfachangestellte|lang=de}}}}</nowiki>}}
+|-
+| {{m+|en|EDC}} || {{demo2c|<nowiki>{{lb|en|organic compound}} {{initialism of|en|{{w|1,2-dichloroethane|ethylene dichloride and 1,2-dichloroethane}}}}.</nowiki>}}
+|-
+| {{m+|en|UEA}} || {{demo2c|<nowiki>{{initialism of|en|eo:{{w|Universala Esperanto-Asocio}}|t=World Esperanto association}}.</nowiki>}}
+|-
+| {{m+|en|SFSR}} || {{demo2c|<nowiki>{{initialism of|en|[[Soviet]] [[federated]] [[socialist]] [[republic]],[[socialist]] [[federated]] [[Soviet]] [[republic]]}}:</nowiki>}}
+|-
+| {{m+|en|GMA}} || {{demo2c|<nowiki>{{init of|tl|en:{{w|Global Media Arts}}|addl=a broadcasting company in the Philippines}}.</nowiki>}}
+|-
+| {{m+|en|GMA}} || {{demo2c|<nowiki>{{lb|tl|obsolete}} {{init of|tl|en:{{w|Greater Manila Area}} Network|addl=the old form of {{w|Global Media Arts}} Network}}.</nowiki>}}
+|-
+| {{m+|en|cv}} || {{demo2c|<nowiki>{{m|en|hp}}: {{init of|fr|cheval-vapeur,chevaux-vapeurs||steam horse(s)|addl=the unit symbol for metric {{w|tax horsepower}}, a nominal calculation of horsepower used for taxation purposes; real horsepower is abbreviated {{m|fr|ch}}}}</nowiki>}}
+|-
+| {{m+|en|ΜΜΕ}} || {{demo2c|<nowiki>* {{initialism of|el|[[μέσα|Μέσα]] [[μαζικής|Μαζικής]] [[ενημέρωση|Ενημέρωσης]]<t:medium, mass, information>,μέσο μαζικής ενημέρωσης<g:n><t:mass medium of information>|addl=the '''E''' may also stand for {{l|el|επικοινωνία|Επικοινωνία|g=f|t=communication}}}}</nowiki>}}
+|-
+| {{m+|en|GM}} || {{demo2c|<nowiki>{{senseid|en|game master or game moderator}} {{lb|en|countable|RPG}} {{init of|en|game master,[[game]] [[moderator]]}}.</nowiki>}}
+|-
+| {{m+|en|HSH}} || {{demo2c|<nowiki>{{init of|en|[[his|His]] [[serene|Serene]] [[Highness]],[[her|Her]] [[serene|Serene]] [[Highness]]|addl=the title of a number of members of the [[royal family]] in various countries}}.</nowiki>}}
+|-
+| {{m+|en|AYA}} || {{demo2c|<nowiki>{{senseid|en|adolescent or young adult}} {{lb|en|chiefly|sciences|medicine}} {{init of|en|[[adolescent]] or [[young adult]],[[adolescent]] and [[young adult]]}}.</nowiki>}}
+|-
+| {{m+|en|CNC}} || {{demo2c|<nowiki>{{senseid|en|Q190247}} {{lb|en|computing|manufacturing}} {{init of|en|w:computer numerical control,[[computerized]] [[numerical control]]}}.</nowiki>}}
+|-
+| {{m+|en|SLM}} || {{demo2c|<nowiki>{{senseid|en|single longitudinal-mode laser}} {{init of|en|[[w:longitudinal mode|single–longitudinal-mode]] [laser]<!--"an SLM laser"-->,[[w:longitudinal mode|single–longitudinal-mode laser]]<!--"an SLM"-->}}.</nowiki>}}
+|-
+| {{m+|en|TIC}} || {{demo2c|<nowiki>{{lb|id|tourism}} {{init of|id|en:[[tourist]] [[information]] [[centre]]}}</nowiki>}}
+|-
+| {{m+|en|HIS}} || {{demo2c|<nowiki>{{lb|en|medicine|software}} {{init of|en|w:health information system,[[hospital]] [[information]] [[system]]}}.</nowiki>}}
+|-
+| {{m+|en|mfG}} || {{demo2c|<nowiki>{{lb|de|informal}} {{init of|de|mit freundlichen Grüßen<t:with friendly greetings>,mit freundlichem Gruß<t:with friendly greeting>}}</nowiki>}}
+|-
+| {{m+|en|CTD}} || {{demo2c|<nowiki>{{init of|en|[[carboxyl]] tail [[domain]],carboxyl [[terminal]] domain}}.</nowiki>}}
+|-
+| {{m+|en|CTD}} || {{demo2c|<nowiki>{{init of|en|[[conductivity]], [[temperature]], [[depth]]}}; {{abbreviation of|en|[[CTD apparatus]]|nocap=1}}.</nowiki>}}
 
 with place:
 
-Page 41 EU: Found match for regex: <begin> # {{place|fr|initof=États-Unis<t:United States>|country|cont/North America|t=US}} <end>
-Page 539 СССР: Found match for regex: <begin> # {{lb|mk|historical}} {{place|mk|initof=Сојуз на Советските Социјалистички Републики|former country|c/Europe,Asia|t=USSR}} <end>
-Page 1007 США: Found match for regex: <begin> # {{place|uk|initof=Сполу́чені Шта́ти Аме́рики|country|cont/North America|t1=USA}} <end>
-Page 3787 TMR: Found match for regex: <begin> # {{place|en|initof={{w|Mount Royal, Quebec|Town of Mount Royal}}|municipality|p/Quebec|c/Canada}}. <end>
-Page 8913 ЧССР: Found match for regex: <begin> # {{lb|mk|historical}} {{place|mk|initof=Чехословачка Социјалистичка Република<t:Czechoslovak Socialist Republic>|former country|c/Europe|t=CSSR}} <end>
-Page 13656 IFSC: Found match for regex: <begin> # {{place|en|initof=[[w:International Financial Services Centre, Dublin|International Financial Services Centre]]|central business district/and/[[special economic zone]]|city/Dublin|country/Ireland}}. <end>
-Page 2402 WBA: Found match for regex: <begin> # {{place|nv|initof=Wááshindoon bikéyah ałhidadiidzooígíí<lit:United Country of Washington>|country|cont/North America|t=USA}} <end>
-Page 2898 EUA: Found match for regex: <begin> # {{place|ca|initof=Emirats Àrabs Units<t:United Arab Emirates>|country|r/Western Asia|in the|r/Middle East|t1=UAE|t2=United Arab Emirates}} <end>
-Page 8455 HRD: Found match for regex: <begin> # {{place|en|region|initof=Huanghe River Delta<t:Yellow River Delta>|c/China|on the {{l|en|[[Yellow River]]/[[Huanghe]]}}, at its {{l|en|delta}} regions by the {{l|en|Shandong Peninsula}}, on the {{l|en|Bohai Sea}} and {{l|en|Yellow Sea}}, marginal seas of the {{l|en|Pacific Ocean}}}}. <end>
-Page 478 AQ: Found match for regex: <begin> # {{place|it|capital city|abbrof=Aquila,L'Aquila|adr/Abruzzo|c/Italy}} <end>
+|-
+| {{m+|en|EU}} || {{demo2c|<nowiki>{{place|fr|initof=États-Unis<t:United States>|country|cont/North America|t=US}}</nowiki>}}
+|-
+| {{m+|en|СССР}} || {{demo2c|<nowiki>{{lb|mk|historical}} {{place|mk|initof=Сојуз на Советските Социјалистички Републики|former country|c/Europe,Asia|t=USSR}}</nowiki>}}
+|-
+| {{m+|en|США}} || {{demo2c|<nowiki>{{place|uk|initof=Сполу́чені Шта́ти Аме́рики|country|cont/North America|t1=USA}}</nowiki>}}
+|-
+| {{m+|en|TMR}} || {{demo2c|<nowiki>{{place|en|initof={{w|Mount Royal, Quebec|Town of Mount Royal}}|municipality|p/Quebec|c/Canada}}.</nowiki>}}
+|-
+| {{m+|en|ЧССР}} || {{demo2c|<nowiki>{{lb|mk|historical}} {{place|mk|initof=Чехословачка Социјалистичка Република<t:Czechoslovak Socialist Republic>|former country|c/Europe|t=CSSR}}</nowiki>}}
+|-
+| {{m+|en|IFSC}} || {{demo2c|<nowiki>{{place|en|initof=[[w:International Financial Services Centre, Dublin|International Financial Services Centre]]|central business district/and/[[special economic zone]]|city/Dublin|country/Ireland}}.</nowiki>}}
+|-
+| {{m+|en|WBA}} || {{demo2c|<nowiki>{{place|nv|initof=Wááshindoon bikéyah ałhidadiidzooígíí<lit:United Country of Washington>|country|cont/North America|t=USA}}</nowiki>}}
+|-
+| {{m+|en|EUA}} || {{demo2c|<nowiki>{{place|ca|initof=Emirats Àrabs Units<t:United Arab Emirates>|country|r/Western Asia|in the|r/Middle East|t1=UAE|t2=United Arab Emirates}}</nowiki>}}
+|-
+| {{m+|en|HRD}} || {{demo2c|<nowiki>{{place|en|region|initof=Huanghe River Delta<t:Yellow River Delta>|c/China|on the {{l|en|[[Yellow River]]/[[Huanghe]]}}, at its {{l|en|delta}} regions by the {{l|en|Shandong Peninsula}}, on the {{l|en|Bohai Sea}} and {{l|en|Yellow Sea}}, marginal seas of the {{l|en|Pacific Ocean}}}}.</nowiki>}}
+|-
+| {{m+|en|AQ}} || {{demo2c|<nowiki>{{place|it|capital city|abbrof=Aquila,L'Aquila|adr/Abruzzo|c/Italy}}</nowiki>}}
 
 abbreviation of
 
-Page 1791 JK: Found match for regex: <begin> # {{abbreviation of|ja|女子高生<tr:joshi kōsei>,[[女子]][[高校生]]<tr:joshi kōkōsei>|t=high-school girl}} <end>
-Page 468 v.: Found match for regex: <begin> # {{lb|sv|common}} {{abbreviation of|sv|väg<t:road>,vägen<t:the [...] road>}}. <end>
-Page 846 ed.: Found match for regex: <begin> # {{abbreviation of|en|edited,[[edited]] by}}. <end>
-Page 4315 Stuka: Found match for regex: <begin> # {{abbreviation of|de|Sturzkampfbomber,Sturzkampfflugzeug}}. <end>
-Page 5335 מצ״ב: Found match for regex: <begin> # {{lb|he|in|_|correspondence}} {{abbreviation of|he|[[מצורף בזה|מצורף בזה \ מְצֹרָף בָּזֶה]]<t:ttached [[herewith]]>,[[מצורף בזה|מצורף בזאת \ מְצֹרָף בָּזֹאת]]<t:attached [[hereby]]>}} <end>
-Page 6353 Bdf.: Found match for regex: <begin> # {{abbreviation of|en|Bedfordshire,Bedford}}. <end>
-Page 6362 Cth.: Found match for regex: <begin> # {{abbreviation of|en|Carmarthenshire,Carmarthen,Commonwealth}}. <end>
-Page 9107 parl.: Found match for regex: <begin> # {{abbreviation of|la|parlamentārius,parlamentāria|t=[[parliamentarian]], [[member of parliament]]}} <end>
-Page 2571 JGA: Found match for regex: <begin> # {{abbreviation of|de|Junggesellenabschied<t:[[stag party]]>,Junggesellinnenabschied<t:[[hen party]]>}} <end>
-Page 9104 rot.: Found match for regex: <begin> # {{abbreviation of|la|rotula,rotulus,etc.|t=[[scroll]], [[roll]]}} <end>
-Page 465 Mrs: Found match for regex: <begin> # {{abbreviation of|en|Missus,Mistress|addl=; used before an adult woman's name or surname, used for any high-status woman without regard to marital status until the 1800s, after which it began to be reserved for married, divorced and widowed women and used with their married surnames}}. <end>
-Page 740 K: Found match for regex: <begin> # {{abbreviation of|sv|källare,källarplan,källarvåning||basement level}} <end>
-Page 5021 עמ׳: Found match for regex: <begin> # {{abbreviation of|he|עַמּוּד<tr:amúd>,עַמּוּדִים<tr:amudím>|t=[[page]] or pages}}: [[p.]], [[pp.]] <end>
-Page 5138 c/w: Found match for regex: <begin> # {{lb|en|music}} {{abbreviation of|en||[[comes]] [[with]],[[coupled]] with,,[[combined]] with|addl=; commonly used with 45 [[RPM]] [[single]]s, referring to the [[flip side]] ([[B-side]]) of the record}}. <end>
-Page 5604 IOA: Found match for regex: <begin> # {{label|mul|sports}} {{abbreviation of|mul|en:[[independent]] [[Olympics]] [[athlete]]s,en:[[individual]] [[Olympics]] [[athlete]]s|addl=country code for the team}} <end>
-Page 5908 SSaDV: Found match for regex: <begin> # {{abbreviation of|en|sea star-associated densovirus,seastar-associated densovirus,sea-star-associated densovirus,seastar associated densovirus,sea star associated densovirus}}. <end>
-Page 6001 USCT: Found match for regex: <begin> # {{lb|en|radiology|countable}} {{ellipsis of|en|USCT [[machine]]}}; {{abbreviation of|en|ultrasound computer tomograph,ultrasound computed tomograph,ultrasound computerized tomograph|addl=a machine for making such ultrasound scans using such ultrasound technology}}. <end>
-Page 6295 red.: Found match for regex: <begin> # {{abbreviation of|da|redaktion,redigeret,redaktør}}: [[ed.]] <end>
-Page 7512 LSJ: Found match for regex: <begin> # {{abbreviation of|en|[[w:A Greek–English Lexicon|Liddell–Scott–Jones]],[[w:A Greek–English Lexicon|Liddell-Scott-Jones]]|addl=another name of the Greek–English dictionary ''A Greek–English Lexicon'' by Henry George Liddell, Robert Scott and Henry Stuart Jones}}. <end>
-Page 8653 JO1: Found match for regex: <begin> # {{abbreviation of|en|[[junior]] [[officer]], [[1]],junior officer, grade [[one]],junior officer, [[first]] class,etc.}} <end>
-Page 504 OMG: Found match for regex: <begin> # {{abbreviation of|de|[[oh]] [[mein Gott]],[[oh]], [[mein Gott]],[[o]] [[mein]] [[Gott]]}}: {{l|en|OMG}} <end>
-Page 4897 schediasm.: Found match for regex: <begin> # {{abbreviation of|la|schediasma,schediasmata,etc.}} <end>
-Page 6316 ASS: Found match for regex: <begin> # {{abbreviation of|de|[[Azetylsalizylsäure]]/[[Acetylsalicylsäure]],[[Acetylsalizylsäure]]/[[Azetylsalicylsäure]]|t=acetylsalicylic acid}} <end>
+|-
+| {{m+|en|JK}} || {{demo2c|<nowiki>{{abbreviation of|ja|女子高生<tr:joshi kōsei>,[[女子]][[高校生]]<tr:joshi kōkōsei>|t=high-school girl}}</nowiki>}}
+|-
+| {{m+|en|v.}} || {{demo2c|<nowiki>{{lb|sv|common}} {{abbreviation of|sv|väg<t:road>,vägen<t:the [...] road>}}.</nowiki>}}
+|-
+| {{m+|en|ed.}} || {{demo2c|<nowiki>{{abbreviation of|en|edited,[[edited]] by}}.</nowiki>}}
+|-
+| {{m+|en|Stuka}} || {{demo2c|<nowiki>{{abbreviation of|de|Sturzkampfbomber,Sturzkampfflugzeug}}.</nowiki>}}
+|-
+| {{m+|en|מצ״ב}} || {{demo2c|<nowiki>{{lb|he|in|_|correspondence}} {{abbreviation of|he|[[מצורף בזה|מצורף בזה \ מְצֹרָף בָּזֶה]]<t:ttached [[herewith]]>,[[מצורף בזה|מצורף בזאת \ מְצֹרָף בָּזֹאת]]<t:attached [[hereby]]>}}</nowiki>}}
+|-
+| {{m+|en|Bdf.}} || {{demo2c|<nowiki>{{abbreviation of|en|Bedfordshire,Bedford}}.</nowiki>}}
+|-
+| {{m+|en|Cth.}} || {{demo2c|<nowiki>{{abbreviation of|en|Carmarthenshire,Carmarthen,Commonwealth}}.</nowiki>}}
+|-
+| {{m+|en|parl.}} || {{demo2c|<nowiki>{{abbreviation of|la|parlamentārius,parlamentāria|t=[[parliamentarian]], [[member of parliament]]}}</nowiki>}}
+|-
+| {{m+|en|JGA}} || {{demo2c|<nowiki>{{abbreviation of|de|Junggesellenabschied<t:[[stag party]]>,Junggesellinnenabschied<t:[[hen party]]>}}</nowiki>}}
+|-
+| {{m+|en|rot.}} || {{demo2c|<nowiki>{{abbreviation of|la|rotula,rotulus,etc.|t=[[scroll]], [[roll]]}}</nowiki>}}
+|-
+| {{m+|en|Mrs}} || {{demo2c|<nowiki>{{abbreviation of|en|Missus,Mistress|addl=; used before an adult woman's name or surname, used for any high-status woman without regard to marital status until the 1800s, after which it began to be reserved for married, divorced and widowed women and used with their married surnames}}.</nowiki>}}
+|-
+| {{m+|en|K}} || {{demo2c|<nowiki>{{abbreviation of|sv|källare,källarplan,källarvåning||basement level}}</nowiki>}}
+|-
+| {{m+|en|עמ׳}} || {{demo2c|<nowiki>{{abbreviation of|he|עַמּוּד<tr:amúd>,עַמּוּדִים<tr:amudím>|t=[[page]] or pages}}: [[p.]], [[pp.]]</nowiki>}}
+|-
+| {{m+|en|c/w}} || {{demo2c|<nowiki>{{lb|en|music}} {{abbreviation of|en||[[comes]] [[with]],[[coupled]] with,,[[combined]] with|addl=; commonly used with 45 [[RPM]] [[single]]s, referring to the [[flip side]] ([[B-side]]) of the record}}.</nowiki>}}
+|-
+| {{m+|en|IOA}} || {{demo2c|<nowiki>{{label|mul|sports}} {{abbreviation of|mul|en:[[independent]] [[Olympics]] [[athlete]]s,en:[[individual]] [[Olympics]] [[athlete]]s|addl=country code for the team}}</nowiki>}}
+|-
+| {{m+|en|SSaDV}} || {{demo2c|<nowiki>{{abbreviation of|en|sea star-associated densovirus,seastar-associated densovirus,sea-star-associated densovirus,seastar associated densovirus,sea star associated densovirus}}.</nowiki>}}
+|-
+| {{m+|en|USCT}} || {{demo2c|<nowiki>{{lb|en|radiology|countable}} {{ellipsis of|en|USCT [[machine]]}}; {{abbreviation of|en|ultrasound computer tomograph,ultrasound computed tomograph,ultrasound computerized tomograph|addl=a machine for making such ultrasound scans using such ultrasound technology}}.</nowiki>}}
+|-
+| {{m+|en|red.}} || {{demo2c|<nowiki>{{abbreviation of|da|redaktion,redigeret,redaktør}}: [[ed.]]</nowiki>}}
+|-
+| {{m+|en|LSJ}} || {{demo2c|<nowiki>{{abbreviation of|en|[[w:A Greek–English Lexicon|Liddell–Scott–Jones]],[[w:A Greek–English Lexicon|Liddell-Scott-Jones]]|addl=another name of the Greek–English dictionary ''A Greek–English Lexicon'' by Henry George Liddell, Robert Scott and Henry Stuart Jones}}.</nowiki>}}
+|-
+| {{m+|en|JO1}} || {{demo2c|<nowiki>{{abbreviation of|en|[[junior]] [[officer]], [[1]],junior officer, grade [[one]],junior officer, [[first]] class,etc.}}</nowiki>}}
+|-
+| {{m+|en|OMG}} || {{demo2c|<nowiki>{{abbreviation of|de|[[oh]] [[mein Gott]],[[oh]], [[mein Gott]],[[o]] [[mein]] [[Gott]]}}: {{l|en|OMG}}</nowiki>}}
+|-
+| {{m+|en|schediasm.}} || {{demo2c|<nowiki>{{abbreviation of|la|schediasma,schediasmata,etc.}}</nowiki>}}
+|-
+| {{m+|en|ASS}} || {{demo2c|<nowiki>{{abbreviation of|de|[[Azetylsalizylsäure]]/[[Acetylsalicylsäure]],[[Acetylsalizylsäure]]/[[Azetylsalicylsäure]]|t=acetylsalicylic acid}}</nowiki>}}
 
 short for
 
-Page 79 gone: Found match for regex: <begin> # {{alternative spelling of|en|gon//gon'}}: {{short for|en|gonna,going to|nocap=1}}. <end>
-Page 596 Deutschland: Found match for regex: <begin> ## {{short for|de|[[Heiliges Römisches Reich|Heiliges Römisches Reich Deutscher Nation]],[[Heiliges Römisches Reich|heiliges römisches Reich deutscher Nation]]}} {{defdate|till 1806}} <end>
-Page 1486 安全保障理事会: Found match for regex: <begin> # {{short for|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai><t:[[United Nations Security Council]]>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai><t:[[UN Security Council]]>|sort=あんぜんほしょうりじかい}}: the [[Security Council]] <end>
-Page 347 金: Found match for regex: <begin> # {{lb|ja|colloquial}} {{short for|ja|金物<tr:kanamono>,金具<tr:kanagu>}}: [[metal]] [[fittings]] <end>
-Page 1751 五輪: Found match for regex: <begin> ## {{short for|ja|五輪塔<tr:gorintō>,五輪卒塔婆<tr:gorin sotoba>|t=a [[five]]-[[ringed]] [[pagoda]]}} <end>
-Page 1237 đi: Found match for regex: <begin> # {{lb|vi|euphemism}} {{short for|vi|đi [[ỉa]]<t:to shit>,đi ngoài<t:to defecate>}} <end>
-Page 1239 skuter: Found match for regex: <begin> # {{short for|nn|snøskuter,vasskuter,etc.}} <end>
-Page 2920 ⳥: Found match for regex: <begin> # {{short for|cop|ⲙⲁⲣⲧⲩⲣⲓⲁ,ⲙⲁⲣⲧⲏⲣⲓⲁ,ⲙⲁⲣⲧⲩⲣⲟⲥ<l:Bohairic>|t=martyr(s)}} <end>
+|-
+| {{m+|en|gone}} || {{demo2c|<nowiki>{{alternative spelling of|en|gon//gon'}}: {{short for|en|gonna,going to|nocap=1}}.</nowiki>}}
+|-
+| {{m+|en|Deutschland}} || {{demo2c|<nowiki>## {{short for|de|[[Heiliges Römisches Reich|Heiliges Römisches Reich Deutscher Nation]],[[Heiliges Römisches Reich|heiliges römisches Reich deutscher Nation]]}} {{defdate|till 1806}}</nowiki>}}
+|-
+| {{m+|en|安全保障理事会}} || {{demo2c|<nowiki>{{short for|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai><t:[[United Nations Security Council]]>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai><t:[[UN Security Council]]>|sort=あんぜんほしょうりじかい}}: the [[Security Council]]</nowiki>}}
+|-
+| {{m+|en|金}} || {{demo2c|<nowiki>{{lb|ja|colloquial}} {{short for|ja|金物<tr:kanamono>,金具<tr:kanagu>}}: [[metal]] [[fittings]]</nowiki>}}
+|-
+| {{m+|en|五輪}} || {{demo2c|<nowiki>## {{short for|ja|五輪塔<tr:gorintō>,五輪卒塔婆<tr:gorin sotoba>|t=a [[five]]-[[ringed]] [[pagoda]]}}</nowiki>}}
+|-
+| {{m+|en|đi}} || {{demo2c|<nowiki>{{lb|vi|euphemism}} {{short for|vi|đi [[ỉa]]<t:to shit>,đi ngoài<t:to defecate>}}</nowiki>}}
+|-
+| {{m+|en|skuter}} || {{demo2c|<nowiki>{{short for|nn|snøskuter,vasskuter,etc.}}</nowiki>}}
+|-
+| {{m+|en|⳥}} || {{demo2c|<nowiki>{{short for|cop|ⲙⲁⲣⲧⲩⲣⲓⲁ,ⲙⲁⲣⲧⲏⲣⲓⲁ,ⲙⲁⲣⲧⲩⲣⲟⲥ<l:Bohairic>|t=martyr(s)}}</nowiki>}}
 
 ellipsis of
 
-Page 3725 قلزم: Found match for regex: <begin> # {{lb|fa|archaic}} the [[Red Sea]]; {{ellipsis of|fa|دریای قلزم<tr:daryâ-ye qolzom>,بحر قلزم<tr:bahr-e qolzom>}} <end>
-Page 464 Aufzug: Found match for regex: <begin> # {{lb|de|gymnastics}} {{ellipsis of|de|Felgaufzug,Hüftaufzug|t=[[upward circle]], [[circle-up]]}} <end>
+|-
+| {{m+|en|قلزم}} || {{demo2c|<nowiki>{{lb|fa|archaic}} the [[Red Sea]]; {{ellipsis of|fa|دریای قلزم<tr:daryâ-ye qolzom>,بحر قلزم<tr:bahr-e qolzom>}}</nowiki>}}
+|-
+| {{m+|en|Aufzug}} || {{demo2c|<nowiki>{{lb|de|gymnastics}} {{ellipsis of|de|Felgaufzug,Hüftaufzug|t=[[upward circle]], [[circle-up]]}}</nowiki>}}
 Page 1032 lái: Found match for regex: <begin> # {{lb|vi|colloquial}} {{ellipsis of|vi|lái xe<t:driver>,lái đò<t:boatman>}}
-Page 73 man-of-war: Found match for regex: <begin> ## {{ellipsis of|en|man-of-war bird,man-of-war hawk<l:obsolete>|t=any of a number of [[seabird]]s, especially one which attacks other seabirds to take their food}}. <end>
-Page 202 平: Found match for regex: <begin> # {{ellipsis of|ja|平氏<tr:Heishi>,平家<tr:Heike>|t=[[Taira]] [[clan]]|sort=へい}} <end>
-Page 220 昼: Found match for regex: <begin> # {{ellipsis of|ja|昼ご飯<tr:hiru gohan>,昼飯<tr:hirumeshi>|t=lunch|sort=ひ>る}} <end>
-Page 407 tap: Found match for regex: <begin> ## {{lb|en|Britain}} {{ellisps of|en|taphouse,taproom|t=place where alcoholic beverages are served [[on tap]]}}. <end>
-Page 437 sacrifice: Found match for regex: <begin> ## {{lb|en|baseball}} {{ellipsis of|en|sacrifice bunt,sacrifice hit|t=a play in which the batter intentionally hits the ball softly with a hands-spread batting stance at the cost of an out to advance one or more [[runner]]s}}. <end>
-Page 445 public: Found match for regex: <begin> ## {{lb|en|informal}} {{ellipsis of|en|public house,public bar<l:dated>|t=an inn, a pub: the more basic bar in a public house, as contrasted with the lounge bar or [[saloon]] bar which has more comfortable seats, personalized service, etc.}}. <end>
-Page 230 ABM: Found match for regex: <begin> # {{ellipsis of|en|{{w|ABM Treaty}},{{w|Anti-Ballistic Missile Treaty}}}}. <end>
-Page 676 cooler: Found match for regex: <begin> # {{lb|en|India|countable}} {{ellipsis of|en|air cooler,evaporative cooler,desert cooler,swamp cooler}}. <end>
-Page 884 ledger: Found match for regex: <begin> # {{lb|en|fishing}} {{ellipsis of|en|ledger bait<t:fishing bait attached to a floating line fastened to the bank of a pond, stream, etc.>,ledger line<t:fishing line used with ledger bait for [[bottom fishing]]; [[ligger]]>}}. <end>
-Page 4080 Llanarmon: Found match for regex: <begin> # {{ellipsis of|en|Llanarmon Dyffryn Ceiriog,Llanarmon DC,Llanarmon-yn-Ial}}. <end>
-Page 1442 sắc: Found match for regex: <begin> # {{lb|vi|archaic}} {{ellipsis of|vi|sắc đẹp,nhan sắc||[[womanly]] [[beauty]]}} <end>
-Page 1486 安全保障理事会: Found match for regex: <begin> # {{ellipsis of|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai><t:[[United Nations Security Council]]>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai><t:[[UN Security Council]]>|sort=あんぜんほしょうりじかい}}: the [[Security Council]] <end>
-Page 37 maiestas: Found match for regex: <begin> ## {{lb|la|law}} {{ellipsis of|la|[[crīmen]] [[maiestas|maiestātis]],[[lēx]] [[maiestas|maiestātis]]|t=[[treason]], [[high treason]], [[lèse majesté]]}} <end>
-Page 15 Oregano: Found match for regex: <begin> # {{lb|de|dated}} {{ellipsis of|de|Karibischer Oregano<t:{{w|Lippia micromera}}>,Mexikanischer Oregano<t:{{w|Lippia graveolens}}>}} <end>
-Page 108 فرعی: Found match for regex: <begin> # [[side road]]; {{ellipsis of|fa|جاده فرعی<tr:jâde-ye far'i>,راه فرعی<tr:râh-e far'i>}} <end>
+|-
+| {{m+|en|man-of-war}} || {{demo2c|<nowiki>## {{ellipsis of|en|man-of-war bird,man-of-war hawk<l:obsolete>|t=any of a number of [[seabird]]s, especially one which attacks other seabirds to take their food}}.</nowiki>}}
+|-
+| {{m+|en|平}} || {{demo2c|<nowiki>{{ellipsis of|ja|平氏<tr:Heishi>,平家<tr:Heike>|t=[[Taira]] [[clan]]|sort=へい}}</nowiki>}}
+|-
+| {{m+|en|昼}} || {{demo2c|<nowiki>{{ellipsis of|ja|昼ご飯<tr:hiru gohan>,昼飯<tr:hirumeshi>|t=lunch|sort=ひ>る}}</nowiki>}}
+|-
+| {{m+|en|tap}} || {{demo2c|<nowiki>## {{lb|en|Britain}} {{ellisps of|en|taphouse,taproom|t=place where alcoholic beverages are served [[on tap]]}}.</nowiki>}}
+|-
+| {{m+|en|sacrifice}} || {{demo2c|<nowiki>## {{lb|en|baseball}} {{ellipsis of|en|sacrifice bunt,sacrifice hit|t=a play in which the batter intentionally hits the ball softly with a hands-spread batting stance at the cost of an out to advance one or more [[runner]]s}}.</nowiki>}}
+|-
+| {{m+|en|public}} || {{demo2c|<nowiki>## {{lb|en|informal}} {{ellipsis of|en|public house,public bar<l:dated>|t=an inn, a pub: the more basic bar in a public house, as contrasted with the lounge bar or [[saloon]] bar which has more comfortable seats, personalized service, etc.}}.</nowiki>}}
+|-
+| {{m+|en|ABM}} || {{demo2c|<nowiki>{{ellipsis of|en|{{w|ABM Treaty}},{{w|Anti-Ballistic Missile Treaty}}}}.</nowiki>}}
+|-
+| {{m+|en|cooler}} || {{demo2c|<nowiki>{{lb|en|India|countable}} {{ellipsis of|en|air cooler,evaporative cooler,desert cooler,swamp cooler}}.</nowiki>}}
+|-
+| {{m+|en|ledger}} || {{demo2c|<nowiki>{{lb|en|fishing}} {{ellipsis of|en|ledger bait<t:fishing bait attached to a floating line fastened to the bank of a pond, stream, etc.>,ledger line<t:fishing line used with ledger bait for [[bottom fishing]]; [[ligger]]>}}.</nowiki>}}
+|-
+| {{m+|en|Llanarmon}} || {{demo2c|<nowiki>{{ellipsis of|en|Llanarmon Dyffryn Ceiriog,Llanarmon DC,Llanarmon-yn-Ial}}.</nowiki>}}
+|-
+| {{m+|en|sắc}} || {{demo2c|<nowiki>{{lb|vi|archaic}} {{ellipsis of|vi|sắc đẹp,nhan sắc||[[womanly]] [[beauty]]}}</nowiki>}}
+|-
+| {{m+|en|安全保障理事会}} || {{demo2c|<nowiki>{{ellipsis of|ja|国際連合安全保障理事会<tr:Kokusai Rengō Anzen Hoshō Rijikai><t:[[United Nations Security Council]]>,国連安全保障理事会<tr:Kokuren Anzen Hoshō Rijikai><t:[[UN Security Council]]>|sort=あんぜんほしょうりじかい}}: the [[Security Council]]</nowiki>}}
+|-
+| {{m+|en|maiestas}} || {{demo2c|<nowiki>## {{lb|la|law}} {{ellipsis of|la|[[crīmen]] [[maiestas|maiestātis]],[[lēx]] [[maiestas|maiestātis]]|t=[[treason]], [[high treason]], [[lèse majesté]]}}</nowiki>}}
+|-
+| {{m+|en|Oregano}} || {{demo2c|<nowiki>{{lb|de|dated}} {{ellipsis of|de|Karibischer Oregano<t:{{w|Lippia micromera}}>,Mexikanischer Oregano<t:{{w|Lippia graveolens}}>}}</nowiki>}}
+|-
+| {{m+|en|فرعی}} || {{demo2c|<nowiki>[[side road]]; {{ellipsis of|fa|جاده فرعی<tr:jâde-ye far'i>,راه فرعی<tr:râh-e far'i>}}</nowiki>}}
 
 
 
 acronym of
 
-Page 775 FAT: Found match for regex: <begin> # {{lb|en|computing}} {{acronym of|en|w:File Allocation Table,file allocation table}}. <end>
+|-
+| {{m+|en|FAT}} || {{demo2c|<nowiki>{{lb|en|computing}} {{acronym of|en|w:File Allocation Table,file allocation table}}.</nowiki>}}
 
 
 syllabic abbreviation of
 
-Page 2757 金検: Found match for regex: <begin> # {{syllabic abbreviation of|ja|金属検出器<tr:kinzoku tanchi-ki>,金属検知器<tr:kinzoku kenshutsu-ki>|t=metal detector}} <end>
-Page 3785 プレコン: Found match for regex: <begin> # {{lb|ja|construction}} {{syllabic abbreviation of|ja|プレキャスト鉄筋コ>ンクリート<tr:purekyasuto tekkin konkurīto><t:[[precast]] [[reinforced concrete]]>,プレキャストコンクリート<tr:purekyasuto konkurīto><t:[[precast]] [[concrete]]>}} <end>
+|-
+| {{m+|en|金検}} || {{demo2c|<nowiki>{{syllabic abbreviation of|ja|金属検出器<tr:kinzoku tanchi-ki>,金属検知器<tr:kinzoku kenshutsu-ki>|t=metal detector}}</nowiki>}}
+|-
+| {{m+|en|プレコン}} || {{demo2c|<nowiki>{{lb|ja|construction}} {{syllabic abbreviation of|ja|プレキャスト鉄筋コ>ンクリート<tr:purekyasuto tekkin konkurīto><t:[[precast]] [[reinforced concrete]]>,プレキャストコンクリート<tr:purekyasuto konkurīto><t:[[precast]] [[concrete]]>}}</nowiki>}}
 Page 50 安保: <begin> # {{sylabbr of|ja|日本国とアメリカ合衆国との間の相互協力及び安全保障条約<tr:Nihonkoku to Amerika Gasshūkoku to no Aida no Sōgō Kyōryoku Oyobi Anzen Hoshō Jōyaku>,日米安全保障条約<tr:Nichibei Anzen Hoshō Jōyaku>||{{w|Treaty of Mutual Cooperation and Security between the United States and Japan}}|sort=あんぽ}}; {{ellipsis of|ja|安保条約|tr=Anpo Jōyaku|sort=あんぽ}} <end>
-Page 63 渋ハロ: Found match for regex: <begin> # {{sylabbr of|ja|[[渋谷]]の[[ハロウィン]]<tr:Shibuya no Harowin>,[[渋谷]]の[[ハロウィーン]]<tr:Shibuya no Harowīn>|t=[[Shibuya]] Halloween}} <end>
+|-
+| {{m+|en|渋ハロ}} || {{demo2c|<nowiki>{{sylabbr of|ja|[[渋谷]]の[[ハロウィン]]<tr:Shibuya no Harowin>,[[渋谷]]の[[ハロウィーン]]<tr:Shibuya no Harowīn>|t=[[Shibuya]] Halloween}}</nowiki>}}
 
 obsolete form of
 
-Page 9211 Oosman: Found match for regex: <begin> # {{obsolete form of|en|Osman,Usman}}. <end>
-Page 6510 fa ré: Found match for regex: <begin> # {{obsolete form of|ga|fara,frae|t=along with, beside}} <end>
+|-
+| {{m+|en|Oosman}} || {{demo2c|<nowiki>{{obsolete form of|en|Osman,Usman}}.</nowiki>}}
+|-
+| {{m+|en|fa ré}} || {{demo2c|<nowiki>{{obsolete form of|ga|fara,frae|t=along with, beside}}</nowiki>}}
 
 former name of
 
-Page 250 Grand Falls: Found match for regex: <begin> # {{place|en|<=former name of:Churchill Falls;;former name of:McLean Falls|waterfall|r/Labrador|p/Newfoundland and Labrador|c/Canada|on the former|river/Grand River|now|river/Churchill River}}. <end>
-Page 317 Kuper: Found match for regex: <begin> # {{place|en|<=ellip of:Kuper Island;;fmr of:Penelakut|island|strait/Strait of Georgia|r/Vancouver Island|p/British Columbia|c/Canada}}. <end>
-Page 606 Slavutych: Found match for regex: <begin> # {{lb|en|historical}} {{place|en|<=fmr of:Dnipro,Dnieper|river|c/Ukraine,Belarus,Russia|in|continent/Europe|flowing into the|sea/Black Sea|; used when referring to the early Rus era}}. <end>
+|-
+| {{m+|en|Grand Falls}} || {{demo2c|<nowiki>{{place|en|<=former name of:Churchill Falls;;former name of:McLean Falls|waterfall|r/Labrador|p/Newfoundland and Labrador|c/Canada|on the former|river/Grand River|now|river/Churchill River}}.</nowiki>}}
+|-
+| {{m+|en|Kuper}} || {{demo2c|<nowiki>{{place|en|<=ellip of:Kuper Island;;fmr of:Penelakut|island|strait/Strait of Georgia|r/Vancouver Island|p/British Columbia|c/Canada}}.</nowiki>}}
+|-
+| {{m+|en|Slavutych}} || {{demo2c|<nowiki>{{lb|en|historical}} {{place|en|<=fmr of:Dnipro,Dnieper|river|c/Ukraine,Belarus,Russia|in|continent/Europe|flowing into the|sea/Black Sea|; used when referring to the early Rus era}}.</nowiki>}}
 
 misspelling of
 
-Page 523 etatisme: Found match for regex: <begin> # {{misspelling of|en|etatism,étatisme}}. <end>
-Page 1879 ġzira: Found match for regex: <begin> # {{misspelling of|mt|gżira,ġżira}} <end>
+|-
+| {{m+|en|etatisme}} || {{demo2c|<nowiki>{{misspelling of|en|etatism,étatisme}}.</nowiki>}}
+|-
+| {{m+|en|ġzira}} || {{demo2c|<nowiki>{{misspelling of|mt|gżira,ġżira}}</nowiki>}}
 
 deliberate misspelling of
 
-Page 120 mog1: Found match for regex: <begin> # {{lb|sv|nonstandard|internet slang}} {{deliberate misspelling of|sv|moget,mogen|t=mature}} <end>
+|-
+| {{m+|en|mog1}} || {{demo2c|<nowiki>{{lb|sv|nonstandard|internet slang}} {{deliberate misspelling of|sv|moget,mogen|t=mature}}</nowiki>}}
 
 eye dialect of
 
-Page 5 of: Found match for regex: <begin> # {{lb|en|usually in modal perfect constructions}} {{eye dialect of|en|have,’ve|addl=chiefly in depictions of colloquial speech}}. <end>
+|-
+| {{m+|en|of}} || {{demo2c|<nowiki>{{lb|en|usually in modal perfect constructions}} {{eye dialect of|en|have,’ve|addl=chiefly in depictions of colloquial speech}}.</nowiki>}}
 
 pronunciation spelling of
 
-Page 862 waint: Found match for regex: <begin> # {{lb|en|Yorkshire|Lancashire}} {{pronunciation spelling of|en|won't,wouldn't}}. <end>
+|-
+| {{m+|en|waint}} || {{demo2c|<nowiki>{{lb|en|Yorkshire|Lancashire}} {{pronunciation spelling of|en|won't,wouldn't}}.</nowiki>}}
 
 superseded spelling of
 
-Page 117 doze: Found match for regex: <begin> # {{superseded spelling of|an|doce,dotze}} <end>
+|-
+| {{m+|en|doze}} || {{demo2c|<nowiki>{{superseded spelling of|an|doce,dotze}}</nowiki>}}
 
 given name
 
-Page 1739 Kel: Found match for regex: <begin> # {{given name|en|female|<=clip of:Kelly}}. <end>
-Page 1739 Kel: Found match for regex: <begin> # {{given name|en|male|<=clip of:Kellan}}. <end>
+|-
+| {{m+|en|Kel}} || {{demo2c|<nowiki>{{given name|en|female|<=clip of:Kelly}}.</nowiki>}}
+|-
+| {{m+|en|Kel}} || {{demo2c|<nowiki>{{given name|en|male|<=clip of:Kellan}}.</nowiki>}}
 
 tcl
 
-Page 2064 Teng: Found match for regex: <begin> # {{tcl|en|<ellip of:Teng County;;fmr of:Tengzhou|id=Q1207076}}. <end>
-Page 2066 Resto: Found match for regex: <begin> # {{lb|en|colloquial}} {{tcl|en|<clip of:Restoration Island|id=Q21905136}}. <end>
-Page 2597 Southend: Found match for regex: <begin> ## {{tcl|en|<ellip of:Southend-on-Sea|id=Q203995,Q21487155}}. <end>
-Page 2662 Peel Region: Found match for regex: <begin> # {{tcl|en|<ellip of:[[Peel|Regional Municipality of Peel]]|id=Q50811}}. <end>
-Page 3301 Cavalaire: Found match for regex: <begin> # {{tcl|en|<ellipsis of:Cavalaire-sur-Mer|id=Q475816}}. <end>
-Page 3301 Cavalaire: Found match for regex: <begin> # {{tcl|fr|Cavalaire-sur-Mer|<=ellipsis of:Cavalaire-sur-Mer|id=Q475816}} <end>
-Page 3236 'Sconset: Found match for regex: <begin> # {{tcl|en|<aphetic form of:Siasconset|id=Q7506866}}. <end>
+|-
+| {{m+|en|Teng}} || {{demo2c|<nowiki>{{tcl|en|<ellip of:Teng County;;fmr of:Tengzhou|id=Q1207076}}.</nowiki>}}
+|-
+| {{m+|en|Resto}} || {{demo2c|<nowiki>{{lb|en|colloquial}} {{tcl|en|<clip of:Restoration Island|id=Q21905136}}.</nowiki>}}
+|-
+| {{m+|en|Southend}} || {{demo2c|<nowiki>## {{tcl|en|<ellip of:Southend-on-Sea|id=Q203995,Q21487155}}.</nowiki>}}
+|-
+| {{m+|en|Peel Region}} || {{demo2c|<nowiki>{{tcl|en|<ellip of:[[Peel|Regional Municipality of Peel]]|id=Q50811}}.</nowiki>}}
+|-
+| {{m+|en|Cavalaire}} || {{demo2c|<nowiki>{{tcl|en|<ellipsis of:Cavalaire-sur-Mer|id=Q475816}}.</nowiki>}}
+|-
+| {{m+|en|Cavalaire}} || {{demo2c|<nowiki>{{tcl|fr|Cavalaire-sur-Mer|<=ellipsis of:Cavalaire-sur-Mer|id=Q475816}}</nowiki>}}
+|-
+| {{m+|en|'Sconset}} || {{demo2c|<nowiki>{{tcl|en|<aphetic form of:Siasconset|id=Q7506866}}.</nowiki>}}
 
 place
 
-Page 2260 Semmering: Found match for regex: <begin> # {{place|en|<=ellip of:{{w|Semmering Pass}}|mountain pass|between|s/Lower Austria,s/Styria|c/Austria}}. <end>
-Page 2260 Semmering: Found match for regex: <begin> # {{place|de|<=ellip of:{{w|lang=de|Semmering-Pass}}|mountain pass|between|s/Lower Austria,s/Styria|c/Austria}} <end>
+|-
+| {{m+|en|Semmering}} || {{demo2c|<nowiki>{{place|en|<=ellip of:{{w|Semmering Pass}}|mountain pass|between|s/Lower Austria,s/Styria|c/Austria}}.</nowiki>}}
+|-
+| {{m+|en|Semmering}} || {{demo2c|<nowiki>{{place|de|<=ellip of:{{w|lang=de|Semmering-Pass}}|mountain pass|between|s/Lower Austria,s/Styria|c/Austria}}</nowiki>}}
 
 syllabic abbreviation of
 
-Page 1983 安保: Found match for regex: <begin> # {{sylabbr of|ja|日本国とアメリカ合衆国との間の相互協力及び安全保障条約<tr:Nihonkoku to Amerika Gasshūkoku to no Aida no Sōgō Kyōryoku Oyobi Anzen Hoshō Jōyaku>,日米安全保障条約<tr:Nichibei Anzen Hoshō Jōyaku>||{{w|Treaty of Mutual Cooperation and Security between the United States and Japan}}|sort=あんぽ}}; {{ellipsis of|ja|安保条約|tr=Anpo Jōyaku|sort=あんぽ}} <end>
+|-
+| {{m+|en|安保}} || {{demo2c|<nowiki>{{sylabbr of|ja|日本国とアメリカ合衆国との間の相互協力及び安全保障条約<tr:Nihonkoku to Amerika Gasshūkoku to no Aida no Sōgō Kyōryoku Oyobi Anzen Hoshō Jōyaku>,日米安全保障条約<tr:Nichibei Anzen Hoshō Jōyaku>||{{w|Treaty of Mutual Cooperation and Security between the United States and Japan}}|sort=あんぽ}}; {{ellipsis of|ja|安保条約|tr=Anpo Jōyaku|sort=あんぽ}}</nowiki>}}
 
 synonym of
 
-Page 5527 jampan: Found match for regex: <begin> # {{lb|en|India|chiefly|_|historical}} {{synonym of|en|dandy,tonjon|addl=a [[kind]] of [[open]] [[sedan chair]], [[particularly]] one with its main [[pole]] [[suspend]]ed from [[smaller]] [[pole]]s [[borne]] on the [[shoulder]]s of two [[pair]]s of [[porter]]s}}. <end>
-Page 5551 marconi operator: Found match for regex: <begin> # {{synonym of|en|wireless operator,radio operator|addl=a person who operates a wireless set / radio communications device}}. <end>
-Page 5713 elpaterol: Found match for regex: <begin> # {{lb|hu|transitive|colloquial}} {{synonym of|hu|elpakol,elrakosgat,összecsomagol||to [[put away]], [[pack up]]}}<!-- https://wikiszotar.hu/ertelmezo-szotar/Elpaterol --> <end>
-Page 12099 Kehllaut: Found match for regex: <begin> # {{lb|de|phonetics|strictly|less common}} {{synonym of|de|Glottal,Kehlkopflaut<t:glottal>}} <end>
-Page 13338 Serican: Found match for regex: <begin> # {{lb|en|historical|or|archaic}} {{synonym of|en|Chinese,[[northern|Northern]] [[Chinese]]|addl=chiefly in the context of ancient Greco-Roman knowledge of China}}. <end>
-Page 50367 hurtle: Found match for regex: <begin> # {{lb|en|obsolete|rare}} {{synonym of|en|hurtleberry,whortleberry|t=any of several [[shrub#Noun|shrubs]] [[belong]]ing to the [[genus]] ''[[Vaccinium]]''; a [[berry#Noun|berry]] of one of these shrubs}}. <end>
-Page 102166 segelhäst: Found match for regex: <begin> # {{lb|sv|kenning}} {{syn of|sv|skepp<t:ship>,segelskepp<t:sailship>}}. <end>
-Page 57602 yearday: Found match for regex: <begin> ## {{syn of|en|deathday,year's mind<l:Christianity>|addl=the [[anniversary]] of a [[person]]'s [[death]], [[particularly]] as [[observed]] with a [[requiem mass]] or [[other]] [[commemoration]]}}. <end>
-Page 27017 pays du Matin-Calme: Found match for regex: <begin> # {{lb|fr|journalism|periphrasis}} {{synonym of|fr|Corée<t:Korea>,Corée du Sud<t:South Korea>}} <end>
-Page 23469 művi: Found match for regex: <begin> # {{synonym of|hu|mesterséges,mesterkélt,erőltetett,kényszeredett||[[artificial]], [[staged]], [[forced]], {{q|smile}} [[cheesy]]}}. <end>
-Page 568 φυλάσσω: Found match for regex: <begin> # {{lb|el|formal}} to [[guard]], [[protect]], [[watch over]]; {{synonym of|el|φυλάω,φυλώ,φυλάγω}} <end>
-Page 5179 binding agent: Found match for regex: <begin> # {{synonym of|en|binder<qq:chemical or other substance>|addl=: a material or [[substance]] that holds other materials together mechanically, chemically, or as an [[adhesive]], to form a [[cohesive]] whole}}. <end>
-Page 56194 tét: Found match for regex: <begin> # {{lb|hu|obsolete}} {{verbal noun of|hu|tesz||to put, place}}, {{synonym of|hu|tett,tétel<qq:as a verbal noun><conj:and>}} <end>
-Page 7191 landfill site: Found match for regex: <begin> # {{synonym of|en|landfill<qq:noun, sense 1>}}. <end>
-Page 31864 まき: Found match for regex: <begin> # {{syn of|ja|高野槇<tr:kōyamaki><t:{{vern|Japanese umbrella-pine}} ({{taxlink|Sciadopitys verticillata|species}})>,犬槇<tr:inumaki><t:{{vern|yew plum pine}} ({{taxlink|Podocarpus macrophyllus|species}})>}} <end>
-Page 50475 peloton: Found match for regex: <begin> # {{lb|en|military|chiefly|historical}} {{synonym of|en|platoon<t:a small group of [[soldier#Noun|soldiers]],{{w|section (military unit)|section}}<qq:cognate with the former; not invariably synonymous with it, depending on century of use<!--definitions/counts vary by time and place-->>}}. <end>
-Page 50871 summit: Found match for regex: <begin> ### {{lb|en|botany}} {{synonym of|en|anther<t:the [[pollen]]-[[bearing]] part of the [[stamen]] of a flower>,stigma<q:rare><t:the sticky part of a flower that receives [[pollen]] during [[pollination]]>}}. <end>
-Page 51805 blockage: Found match for regex: <begin> ## {{synonym of|en|thrombosis,thromboembolism,embolism}}. <end>
+|-
+| {{m+|en|jampan}} || {{demo2c|<nowiki>{{lb|en|India|chiefly|_|historical}} {{synonym of|en|dandy,tonjon|addl=a [[kind]] of [[open]] [[sedan chair]], [[particularly]] one with its main [[pole]] [[suspend]]ed from [[smaller]] [[pole]]s [[borne]] on the [[shoulder]]s of two [[pair]]s of [[porter]]s}}.</nowiki>}}
+|-
+| {{m+|en|marconi operator}} || {{demo2c|<nowiki>{{synonym of|en|wireless operator,radio operator|addl=a person who operates a wireless set / radio communications device}}.</nowiki>}}
+|-
+| {{m+|en|elpaterol}} || {{demo2c|<nowiki>{{lb|hu|transitive|colloquial}} {{synonym of|hu|elpakol,elrakosgat,összecsomagol||to [[put away]], [[pack up]]}}<!-- https://wikiszotar.hu/ertelmezo-szotar/Elpaterol --></nowiki>}}
+|-
+| {{m+|en|Kehllaut}} || {{demo2c|<nowiki>{{lb|de|phonetics|strictly|less common}} {{synonym of|de|Glottal,Kehlkopflaut<t:glottal>}}</nowiki>}}
+|-
+| {{m+|en|Serican}} || {{demo2c|<nowiki>{{lb|en|historical|or|archaic}} {{synonym of|en|Chinese,[[northern|Northern]] [[Chinese]]|addl=chiefly in the context of ancient Greco-Roman knowledge of China}}.</nowiki>}}
+|-
+| {{m+|en|hurtle}} || {{demo2c|<nowiki>{{lb|en|obsolete|rare}} {{synonym of|en|hurtleberry,whortleberry|t=any of several [[shrub#Noun|shrubs]] [[belong]]ing to the [[genus]] ''[[Vaccinium]]''; a [[berry#Noun|berry]] of one of these shrubs}}.</nowiki>}}
+|-
+| {{m+|en|segelhäst}} || {{demo2c|<nowiki>{{lb|sv|kenning}} {{syn of|sv|skepp<t:ship>,segelskepp<t:sailship>}}.</nowiki>}}
+|-
+| {{m+|en|yearday}} || {{demo2c|<nowiki>## {{syn of|en|deathday,year's mind<l:Christianity>|addl=the [[anniversary]] of a [[person]]'s [[death]], [[particularly]] as [[observed]] with a [[requiem mass]] or [[other]] [[commemoration]]}}.</nowiki>}}
+|-
+| {{m+|en|pays du Matin-Calme}} || {{demo2c|<nowiki>{{lb|fr|journalism|periphrasis}} {{synonym of|fr|Corée<t:Korea>,Corée du Sud<t:South Korea>}}</nowiki>}}
+|-
+| {{m+|en|művi}} || {{demo2c|<nowiki>{{synonym of|hu|mesterséges,mesterkélt,erőltetett,kényszeredett||[[artificial]], [[staged]], [[forced]], {{q|smile}} [[cheesy]]}}.</nowiki>}}
+|-
+| {{m+|en|φυλάσσω}} || {{demo2c|<nowiki>{{lb|el|formal}} to [[guard]], [[protect]], [[watch over]]; {{synonym of|el|φυλάω,φυλώ,φυλάγω}}</nowiki>}}
+|-
+| {{m+|en|binding agent}} || {{demo2c|<nowiki>{{synonym of|en|binder<qq:chemical or other substance>|addl=: a material or [[substance]] that holds other materials together mechanically, chemically, or as an [[adhesive]], to form a [[cohesive]] whole}}.</nowiki>}}
+|-
+| {{m+|en|tét}} || {{demo2c|<nowiki>{{lb|hu|obsolete}} {{verbal noun of|hu|tesz||to put, place}}, {{synonym of|hu|tett,tétel<qq:as a verbal noun><conj:and>}}</nowiki>}}
+|-
+| {{m+|en|landfill site}} || {{demo2c|<nowiki>{{synonym of|en|landfill<qq:noun, sense 1>}}.</nowiki>}}
+|-
+| {{m+|en|まき}} || {{demo2c|<nowiki>{{syn of|ja|高野槇<tr:kōyamaki><t:{{vern|Japanese umbrella-pine}} ({{taxlink|Sciadopitys verticillata|species}})>,犬槇<tr:inumaki><t:{{vern|yew plum pine}} ({{taxlink|Podocarpus macrophyllus|species}})>}}</nowiki>}}
+|-
+| {{m+|en|peloton}} || {{demo2c|<nowiki>{{lb|en|military|chiefly|historical}} {{synonym of|en|platoon<t:a small group of [[soldier#Noun|soldiers]],{{w|section (military unit)|section}}<qq:cognate with the former; not invariably synonymous with it, depending on century of use<!--definitions/counts vary by time and place-->>}}.</nowiki>}}
+|-
+| {{m+|en|summit}} || {{demo2c|<nowiki>### {{lb|en|botany}} {{synonym of|en|anther<t:the [[pollen]]-[[bearing]] part of the [[stamen]] of a flower>,stigma<q:rare><t:the sticky part of a flower that receives [[pollen]] during [[pollination]]>}}.</nowiki>}}
+|-
+| {{m+|en|blockage}} || {{demo2c|<nowiki>## {{synonym of|en|thrombosis,thromboembolism,embolism}}.</nowiki>}}
 
 diminutive of
 
-Page 2108 εμποράκος: Found match for regex: <begin> # {{diminutive of|el|έμπορος,έμπορας}} <end>
-Page 11090 Gio: Found match for regex: <begin> ## {{diminutive of|en|Giovanni,Giovani,Giorgi,Giorgio,Giuseppe,Sergio}}. <end>
-Page 17397 Bevo: Found match for regex: <begin> # A nickname, {{diminutive of|en|Beverley,Beverly<qq:a surname>|nocap=1}}. <end>
-Page 20381 Humpy: Found match for regex: <begin> ## {{diminutive of|en|Humphrey,Humphry}}. <end>
-Page 24263 postie: Found match for regex: <begin> # {{lb|en|UK|Ireland|Commonwealth|colloquial}} {{diminutive of|en|postman,postwoman}}. <end>
+|-
+| {{m+|en|εμποράκος}} || {{demo2c|<nowiki>{{diminutive of|el|έμπορος,έμπορας}}</nowiki>}}
+|-
+| {{m+|en|Gio}} || {{demo2c|<nowiki>## {{diminutive of|en|Giovanni,Giovani,Giorgi,Giorgio,Giuseppe,Sergio}}.</nowiki>}}
+|-
+| {{m+|en|Bevo}} || {{demo2c|<nowiki>A nickname, {{diminutive of|en|Beverley,Beverly<qq:a surname>|nocap=1}}.</nowiki>}}
+|-
+| {{m+|en|Humpy}} || {{demo2c|<nowiki>## {{diminutive of|en|Humphrey,Humphry}}.</nowiki>}}
+|-
+| {{m+|en|postie}} || {{demo2c|<nowiki>{{lb|en|UK|Ireland|Commonwealth|colloquial}} {{diminutive of|en|postman,postwoman}}.</nowiki>}}
 
 
 pejorative of
 
-Page 32 одежонка: Found match for regex: <begin> # {{lb|ru|colloquial}} {{pejorative of|ru|одёжа,оде́жда}}: [[nasty]] [[clothing]] <end>
+|-
+| {{m+|en|одежонка}} || {{demo2c|<nowiki>{{lb|ru|colloquial}} {{pejorative of|ru|одёжа,оде́жда}}: [[nasty]] [[clothing]]</nowiki>}}
 
 contraction of
 
-Page 9156 u'd: Found match for regex: <begin> # {{lb|en|informal|Internet|text messaging}} {{abbreviation of|en|you'd}}, {{contraction of|en|[[you]] [[had]],[[you]] [[would]]|nocap=1}}. <end>
+|-
+| {{m+|en|u'd}} || {{demo2c|<nowiki>{{lb|en|informal|Internet|text messaging}} {{abbreviation of|en|you'd}}, {{contraction of|en|[[you]] [[had]],[[you]] [[would]]|nocap=1}}.</nowiki>}}
 
 apocopic form of
 
-Page 36 amig': Found match for regex: <begin> # {{lb|roa-opt|sometimes before a vowel}} {{apocopic form of|roa-opt|amigo,amiga}} <end>
-Page 48 Arman: Found match for regex: <begin> {{apocopic form of|ceb|Armand,Armando}} <end>
-Page 778 tod: Found match for regex: <begin> # {{apocopic form of|osp|todo,toda|t=[[all]]}} <end>
+|-
+| {{m+|en|amig'}} || {{demo2c|<nowiki>{{lb|roa-opt|sometimes before a vowel}} {{apocopic form of|roa-opt|amigo,amiga}}</nowiki>}}
+|-
+| {{m+|en|Arman}} || {{demo2c|<nowiki>{{apocopic form of|ceb|Armand,Armando}}</nowiki>}}
+|-
+| {{m+|en|tod}} || {{demo2c|<nowiki>{{apocopic form of|osp|todo,toda|t=[[all]]}}</nowiki>}}
 
 syncopic form of
 
-Page 55 -아야겠-: Found match for regex: <begin> # {{alternative form of|ko|-어야겠-|from=[[Appendix:Korean sound symbolism|Yang-vowel]]}}; {{syncopic form of|ko|[[-아야 하다|-아야 하]][[-겠-]],[[-아야 되다|-아야 되]][[-겠-]]}} <end>
+|-
+| {{m+|en|-아야겠-}} || {{demo2c|<nowiki>{{alternative form of|ko|-어야겠-|from=[[Appendix:Korean sound symbolism|Yang-vowel]]}}; {{syncopic form of|ko|[[-아야 하다|-아야 하]][[-겠-]],[[-아야 되다|-아야 되]][[-겠-]]}}</nowiki>}}
 
 misconstruction of
 
-Page 14 purplely: Found match for regex: <begin> # {{lb|en|rare}} {{misconstruction of|en|purpley,purply}}: somewhat [[purple]]. <end>
-Page 25 bid one's time: Found match for regex: <begin> # {{misconstruction of|en|bide one's time,bode one's time}}. <end>
-Page 327 could of: Found match for regex: <begin> # {{misconstruction of|en|[[could]] [[have]],[[could've]]}}. <end>
+|-
+| {{m+|en|purplely}} || {{demo2c|<nowiki>{{lb|en|rare}} {{misconstruction of|en|purpley,purply}}: somewhat [[purple]].</nowiki>}}
+|-
+| {{m+|en|bid one's time}} || {{demo2c|<nowiki>{{misconstruction of|en|bide one's time,bode one's time}}.</nowiki>}}
+|-
+| {{m+|en|could of}} || {{demo2c|<nowiki>{{misconstruction of|en|[[could]] [[have]],[[could've]]}}.</nowiki>}}
 
 alternative form of
 
-Page 24990 wat: Found match for regex: <begin> # {{alternative form of|enm|wait,wath,wet,what,whate,whete,witen,wode,wold,woth,weten,wacche,wacchen,wachet,watchinges,wate,walte,weiten,witien}} <end>
-Page 245742 percaya: Found match for regex: <begin> # {{lb|ms|informal}} {{alternative form of|ms|mempercayai,percayai}} <end>
-Page 39319 elveszejt: Found match for regex: <begin> # {{lb|hu|transitive|dialectal}} {{alternative form of|hu|elveszt,elveszít<t:to lose [something]>}} <end>
-Page 88757 ভালনে: Found match for regex: <begin> # {{alt form|as|আপোনাৰ ভালনে,তোমাৰ ভালনে,তোৰ ভালনে}} <end>
-Page 218742 -- --: Found match for regex: <begin> # {{alternative form of|mul|( ),— —|addl=; these are two sets of {{m|mul|--}} used to enclose [[parenthetical]] text, like two [[em dash]]es, especially when actual em dashes are not [[available]]}} <end>
-Page 287619 admiralle: Found match for regex: <begin> # {{alternative form of|enm|amiral,emir,admiral}} <end>
+|-
+| {{m+|en|wat}} || {{demo2c|<nowiki>{{alternative form of|enm|wait,wath,wet,what,whate,whete,witen,wode,wold,woth,weten,wacche,wacchen,wachet,watchinges,wate,walte,weiten,witien}}</nowiki>}}
+|-
+| {{m+|en|percaya}} || {{demo2c|<nowiki>{{lb|ms|informal}} {{alternative form of|ms|mempercayai,percayai}}</nowiki>}}
+|-
+| {{m+|en|elveszejt}} || {{demo2c|<nowiki>{{lb|hu|transitive|dialectal}} {{alternative form of|hu|elveszt,elveszít<t:to lose [something]>}}</nowiki>}}
+|-
+| {{m+|en|ভালনে}} || {{demo2c|<nowiki>{{alt form|as|আপোনাৰ ভালনে,তোমাৰ ভালনে,তোৰ ভালনে}}</nowiki>}}
+|-
+| {{m+|en|-- --}} || {{demo2c|<nowiki>{{alternative form of|mul|( ),— —|addl=; these are two sets of {{m|mul|--}} used to enclose [[parenthetical]] text, like two [[em dash]]es, especially when actual em dashes are not [[available]]}}</nowiki>}}
+|-
+| {{m+|en|admiralle}} || {{demo2c|<nowiki>{{alternative form of|enm|amiral,emir,admiral}}</nowiki>}}
 
 plural of
 
-Page 82600 náimhde: Found match for regex: <begin> # {{alt form|ga|naimhde}}: {{plural of|ga|námhaid,námha}} <end>
+|-
+| {{m+|en|náimhde}} || {{demo2c|<nowiki>{{alt form|ga|naimhde}}: {{plural of|ga|námhaid,námha}}</nowiki>}}
 
 only used in
 
-Page 151049 蓜: Found match for regex: <begin> # {{alt form|ja|配}}; {{only used in|ja|蓜島,蓜嶋}} <end>
+|-
+| {{m+|en|蓜}} || {{demo2c|<nowiki>{{alt form|ja|配}}; {{only used in|ja|蓜島,蓜嶋}}</nowiki>}}
 
 ru-initialism of
 
@@ -326,6 +516,8 @@ ru-acronym of
 
 verbal noun of
 
-Page 11 goil: Found match for regex: <begin> # {{lb|ga|Connacht|Ulster}} {{verbal noun of|ga|gabh<t:go>,téigh}} <end>
-Page 144 danje: Found match for regex: <begin> # {{verbal noun of|dsb|daś<t:give><pos:perfective>}} <end>
+|-
+| {{m+|en|goil}} || {{demo2c|<nowiki>{{lb|ga|Connacht|Ulster}} {{verbal noun of|ga|gabh<t:go>,téigh}}</nowiki>}}
+|-
+| {{m+|en|danje}} || {{demo2c|<nowiki>{{verbal noun of|dsb|daś<t:give><pos:perfective>}}</nowiki>}}
 
