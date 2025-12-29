@@ -12,9 +12,8 @@ def process_text_on_page(index, pagename, text):
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
-  if "desc" not in text:
+  if not re.search(re_to_search, text):
     return
-
   #pagemsg("Processing")
 
   notes = []
@@ -63,15 +62,19 @@ def process_text_on_page(index, pagename, text):
     if origt != str(t):
       pagemsg("Replaced %s with %s" % (origt, str(t)))
 
+  if args.comment_annotation:
+    notes = args.comment_annotation + ": " + "; ".join(blib.group_notes(notes))
   return str(parsed), notes
 
 parser = blib.create_argparser("Move 3=/4= in specified templates e.g. {{desc}}/{{desctree}} to alt=/t=, consolidate genders",
                                include_pagefile=True, include_stdin=True)
-args = parser.parse_args()
+parser.add_argument("--comment-annotation", help="Annotation to prepend to changelog comments")
 parser.add_argument("--templates", help="Comma-separated list of templates to move 3=/4= in",
                     default="desc,descendant,desctree,descendants tree")
+args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 templates_to_do = args.templates.split(",")
+re_to_search = "(%s)" % "|".join(re.escape(temp) for temp in templates_to_do)
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
                            default_refs=["Template:%s" % temp for temp in templates_to_do],
                            edit=True, stdin=True)
