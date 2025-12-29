@@ -8,12 +8,49 @@ from blib import getparam, rmparam, msg, site, tname, pname
 from rename import rename_page
 
 templates_to_rename = set()
+templates_to_delete = set()
 template_couldnt_be_renamed = set()
 template_to_new_name_dict = {}
+template_alias_to_canonical_for_rename = {}
+
+def rename_template_and_subpage(index, old_name, new_name, pagemsg, errandpagemsg):
+  template_page = pywikibot.Page(site, "Template:%s" % old_name)
+  rename_comment = args.comment
+  if not rename_comment:
+    rename_comment = "rename template preparatory to renaming all uses"
+  rename_comment = blib.changelog_to_string(rename_comment, args.comment_tag)
+  templates_to_rename.remove(old_name)
+  if not rename_page(args, index, template_page, "Template:%s" % new_name, rename_comment, None, None):
+    ignore_error = False
+    if ignore_rename_errors is True:
+      ignore_error = True # ignore all rename errors
+    elif ignore_rename_errors and old_name in ignore_rename_errors:
+      ignore_error = True # ignore rename error for this template
+    else:
+      template_couldnt_be_renamed.add(old_name)
+    if ignore_error:
+      pagemsg("WARNING: Ignoring rename error for Template:%s -> Template:%s" % (old_name, new_name))
+  else:
+    # Attempt to rename documentation and talk pages, if they exist; but don't abort if they can't be renamed,
+    # as long as the template itself can be renamed.
+    docpagename = "Template:%s/documentation" % old_name
+    docpage = pywikibot.Page(site, docpagename)
+    new_docpagename = "Template:%s/documentation" % new_name
+    if blib.safe_page_exists(docpage, errandpagemsg):
+      if not rename_page(args, index, docpage, new_docpagename, "%s (rename doc page)" % rename_comment, None,
+                         None):
+        pagemsg("WARNING: Ignoring rename error for doc page %s -> %s" % (old_name, docpagename, new_docpagename))
+    talkpagename = "Template talk:%s" % old_name
+    talkpage = pywikibot.Page(site, talkpagename)
+    new_talkpagename = "Template talk:%s" % new_name
+    if blib.safe_page_exists(talkpage, errandpagemsg):
+      if not rename_page(args, index, talkpage, new_talkpagename, "%s (rename talk page)" % rename_comment, None,
+                         None):
+        pagemsg("WARNING: Ignoring rename error for talk page %s -> %s" % (old_name, talkpagename, new_talkpagename))
 
 def process_text_on_page(
     index, pagetitle, text, templates, new_names, params_to_add, params_to_prepend, params_to_insert, params_to_remove,
-    params_to_rename, from_to_regex, filters, recognized_params, comment, comment_tag
+    params_to_rename, from_to_regex, filters, recognized_params
 ):
   if not any(template in text for template in templates):
     return
@@ -22,6 +59,8 @@ def process_text_on_page(
 
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
@@ -153,27 +192,12 @@ def process_text_on_page(
       if must_continue:
         continue
 
-      if tn in templates_to_rename:
-        new_name = template_to_new_name_dict[tn]
-        template_page = pywikibot.Page(site, "Template:%s" % tn)
-        rename_comment = comment
-        if not rename_comment:
-          rename_comment = "rename template preparatory to renaming all uses"
-        rename_comment = blib.changelog_to_string(rename_comment, comment_tag)
-        templates_to_rename.remove(tn)
-        if not rename_page(args, index, template_page, "Template:%s" % new_name, rename_comment, None, None):
-          ignore_error = False
-          if ignore_rename_errors is True:
-            ignore_error = True # ignore all rename errors
-          elif ignore_rename_errors and tn in ignore_rename_errors:
-            ignore_error = True # ignore rename error for this template
-          else:
-            template_couldnt_be_renamed.add(tn)
-          if ignore_error:
-            pagemsg("WARNING: Ignoring rename error for Template:%s -> Template:%s" % (tn, new_name))
-
-      if tn in template_couldnt_be_renamed:
-        pagemsg("Skipping %s because template couldn't be renamed" % tn)
+      old_name = template_alias_to_canonical_for_rename.get(tn, tn)
+      if old_name in templates_to_rename:
+        new_name = template_to_new_name_dict[old_name]
+        rename_template_and_subpage(index, old_name, new_name, pagemsg, errandpagemsg)
+      if old_name in template_couldnt_be_renamed:
+        pagemsg("Skipping %s because template couldn't be renamed" % old_name)
         continue
 
       if from_to_regex:
@@ -286,16 +310,35 @@ def process_text_on_page(
     if str(t) != origt:
       pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
 
+  comment = args.comment
   if not comment:
     comment = notes
-  comment = blib.changelog_to_string(comment, comment_tag)
+  comment = blib.changelog_to_string(comment, args.comment_tag)
   return str(parsed), comment
 
-pa = blib.create_argparser("Rewrite templates, possibly renaming params or the template itself, or removing params",
+pa = blib.create_argparser(
+"""Rewrite template references, possibly renaming params or the template itself, or adding or removing params.
+
+`-t` specifies the template(s) to operate on; separate multiple templates with a comma (with no space following).
+By default, the pages operated on are those with references to the specified template(s). You can give rename the
+references using `-n`, append parameters using `--add`, prepend parameters using `--prepend, insert numbered parameters
+using `--insert`, rename parameters using `--from` and `--to`, etc.
+
+When renaming template references, if there are multiple templates in `-t`, there should either be the same number in
+`-n` (causing the two lists to be paired up) or only one template in `-n` (in which case all references to templates in
+`-t` will be given the same name, specified in `-n`).
+
+Alternatively, use `--direcfile` to specify pairs of templates to operate on and their new names, separated by ' ||| '.
+
+If you specify `--rename-templates`, templates whose references are given new names will themselves be renamed prior to
+renaming their references (they are renamed first so that the template with the new name will already be in place when
+the references are renamed and the page saved). If an error occurs during renaming the template itself, its references
+will not be changed unless the template is among those given in `--ignore-rename-errors` (use the value 'all' to ignore
+all rename errors).""",
   include_pagefile=True, include_stdin=True)
 pa.add_argument("-t", "--template", help="Name of template; separate with a comma for multiple templates.")
 pa.add_argument("-n", "--new-name", help="New name of template; separate with a comma for multiple templates.")
-pa.add_argument("--direcfile", help="File containing templates to rewrite.")
+pa.add_argument("--direcfile", help="File containing pairs of templates to rename, separated by ' ||| '.")
 pa.add_argument("--rename-templates", help="Rename the templates whose references are being changed.",
                 action="store_true")
 pa.add_argument("--with-redirect", action="store_true",
@@ -319,6 +362,7 @@ pa.add_argument("--filter", help="Only take action on templates matching the fil
 pa.add_argument("--recognized-params", help="Comma-separated list of regexps matching recognized params. Use - to indicate no recognized params. If the template contains any unrecognized params, a warning will be displayed and no action taken. Regexps are auto-anchored on both ends.")
 pa.add_argument("-c", "--comment", help="Comment to use in place of auto-generated ones.")
 pa.add_argument("--comment-tag", help="Comment tag to use along with auto-generated ones.")
+pa.add_argument("--output-pages-to-delete", help="Output file containing templates to delete.")
 args = pa.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
@@ -355,6 +399,8 @@ def handle_params_to_add(paramname, process_parts=None):
     params_to_add.append(parts_to_add)
   return params_to_add
 
+output_pages_to_delete = []
+
 if args.direcfile:
   templates = []
   new_names = []
@@ -362,11 +408,35 @@ if args.direcfile:
     if " ||| " not in line:
       msg("Line %s: WARNING: Saw bad line in --direcfile: %s" % (index, line))
       continue
-    frompage, topage = line.split(" ||| ")
-    frompage = re.sub("^Template:", "", frompage)
+    lineparts = line.split(" ||| ")
+    if len(lineparts) == 3:
+      frompages, topage, directive = lineparts
+    else:
+      frompages, topage = lineparts
+      directive = "rename"
+    frompages = re.sub("(^|,)Template:", r"\1", frompages)
+    frompages = blib.split_arg(frompages)
     topage = re.sub("^Template:", "", topage)
-    templates.append(frompage)
-    new_names.append(topage)
+    first_from = None
+    for frompage in frompages:
+      templates.append(frompage)
+      new_names.append(topage)
+      if directive == "delete-all":
+        templates_to_delete.add(frompage)
+        output_pages_to_delete.append("Template:%s" % frompage)
+      elif directive == "delete-butfirst":
+        if first_from is None:
+          first_from = frompage
+          templates_to_rename.add(frompage)
+        else:
+          templates_to_delete.add(frompage)
+          output_pages_to_delete.append("Template:%s" % frompage)
+          template_alias_to_canonical_for_rename[frompage] = first_from
+      elif directive == "rename":
+        templates_to_rename.add(frompage)
+      else:
+        msg("Line %s: WARNING: Unrecognized directive in --direcfile: %s" % (index, line))
+        break
 else:
   templates = handle_single_param("template", blib.split_arg)
   new_names = handle_single_param("new_name", blib.split_arg)
@@ -376,6 +446,9 @@ else:
     else:
       raise ValueError("Saw %s template(s) '%s' but %s new name(s) '%s'; both must agree in number or there must be only one new name" %
         (len(templates), ",".join(templates), len(new_names), ",".join(new_names)))
+  if args.rename_templates:
+    templates_to_rename = set(templates)
+
 if not templates:
   raise ValueError("No templates specified to process")
 if new_names:
@@ -398,7 +471,6 @@ def process_insert_parts(param, value):
 params_to_insert = handle_params_to_add("insert", process_insert_parts)
 params_to_remove = handle_list_param("remove", split_on_comma=True)
 filters = handle_list_param("filter")
-comment = handle_single_param("comment")
 
 if len(from_) != len(to):
   raise ValueError("Same number of --from and --to arguments must be specified")
@@ -407,11 +479,38 @@ params_to_rename = list(zip(from_, to))
 
 def do_process_text_on_page(index, pagetitle, text):
   return process_text_on_page(index, pagetitle, text, templates, new_names, params_to_add, params_to_prepend,
-    params_to_insert, params_to_remove, params_to_rename, args.from_to_regex, filters, recognized_params, comment,
-    args.comment_tag)
+    params_to_insert, params_to_remove, params_to_rename, args.from_to_regex, filters, recognized_params)
 
-if args.rename_templates:
-  templates_to_rename = set(templates)
-
+# We want to do template references first in case we rename a template that is included in other templates. For example,
+# if we rename {{alt-decl-noun}} to {{alt-ndecl-base}} followed by {{alt-noun-c}} to {{alt-ndecl-c}}, and
+# {{alt-ndecl-c}} is defined using {{alt-decl-noun}}, we want to rename the reference to {{alt-decl-noun}} in
+# {{alt-ndecl-c}} before processing any other references to {{alt-decl-noun}} (which will include all pages that
+# transclude {{alt-ndecl-c}}).
 blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True,
-  default_refs=["Template:%s" % template for template in templates])
+  default_refs=["Template:%s" % template for template in templates], templates_first=True)
+
+if templates_to_rename:
+  msg("WARNING: The following templates were not renamed due to not having any uses; consider deleting them:")
+  sorted_templates_to_rename = sorted(list(templates_to_rename))
+  for tn in sorted_templates_to_rename:
+    msg("Template:%s" % tn)
+  msg("Renaming templates without any uses ...")
+  for index, old_name in enumerate(sorted_templates_to_rename):
+    def pagemsg(txt):
+      msg("Page %s Template:%s: %s" % (index + 1, old_name, txt))
+    def errandpagemsg(txt):
+      errandmsg("Page %s Template:%s: %s" % (index + 1, old_name, txt))
+    new_name = template_to_new_name_dict[old_name]
+    rename_template_and_subpage(index + 1, old_name, new_name, pagemsg, errandpagemsg)
+  msg("Renaming templates without any uses ... Done.")
+
+if output_pages_to_delete:
+  if templates_to_rename:
+    msg("")
+  msg("The following pages need to be deleted:")
+  for page in output_pages_to_delete:
+    msg(page)
+  if args.output_pages_to_delete:
+    with open(args.output_pages_to_delete, "w", encoding="utf-8") as fp:
+      for page in output_pages_to_delete:
+        print(page, file=fp)
