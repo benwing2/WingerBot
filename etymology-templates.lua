@@ -296,7 +296,7 @@ function export.misc_variant(frame)
 		raw_args = parent_args,
 		termarg = 2,
 		track_module = "etymology",
-		lang = 1,
+		-- Don't set lang here as we want to know whether there was a lang prefix or not.
 		sc = "sc",
 		parse_lang_prefix = true,
 		make_separate_g_into_list = true,
@@ -363,7 +363,7 @@ function export.misc_variant_multiple_terms(frame)
 		-- For compatibility, we need to not skip completely unspecified items. It is common, for example, to do
 		-- {{suffix|lang||foo}} to generate "+ -foo".
 		dont_skip_items = true,
-		lang = 1,
+		-- Don't set lang here as we want to know whether there was a lang prefix or not.
 		sc = "sc.default",
 	}
 
