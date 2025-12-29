@@ -239,19 +239,19 @@ end
 -- Implements {{t}}, {{t+}}, {{t-check}} and {{t+check}}.
 function export.show(frame)
 	local args = process_params(frame:getParent().args, (parameters_data or get_parameters_data())["translation"])
-	local check = frame.args["check"]
+	local check = frame.args.check
 	return export.show_terminfo({
 		lang = args[1],
-		sc = args["sc"],
+		sc = args.sc,
 		track_sc = true,
 		term = args[2],
-		alt = args["alt"],
-		id = args["id"],
+		alt = args.alt,
+		id = args.id,
 		genders = args[3],
-		tr = args["tr"],
-		ts = args["ts"],
-		lit = args["lit"],
-		interwiki = frame.args["interwiki"],
+		tr = args.tr,
+		ts = args.ts,
+		lit = args.lit,
+		interwiki = frame.args.interwiki,
 	}, check and check ~= "")
 end
 
@@ -359,7 +359,7 @@ local function see(args, see_text)
 			:tag("i")
 				:wikitext(see_text)
 		:allDone()
-	local terms, id = args[2], args["id"]
+	local terms, id = args[2], args.id
 	
 	if #terms == 0 then
 		terms[1] = args[1]
@@ -421,8 +421,8 @@ function export.needed(frame)
 			:wikitext("please add this translation if you can")
 			:done()
 		
-	if not args["nocat"] then
-		local type, sort = args[2], args["sort"]
+	if not args.nocat then
+		local type, sort = args[2], args.sort
 		if type == "quote" then
 			category = "Requests for translations of " .. lang:getCanonicalName() .. " quotations"
 		elseif type == "usex" then
@@ -442,7 +442,7 @@ function export.no_equivalent(frame)
 	local args = process_params(frame:getParent().args, (parameters_data or get_parameters_data())["no equivalent translation"])
 	
 	local text = "no equivalent term in " .. args[1]:getCanonicalName()
-	if not args["noend"] then
+	if not args.noend then
 		text = text .. ", but see"
 	end
 	
@@ -457,9 +457,9 @@ function export.no_attested(frame)
 	local text = "no [[WT:ATTEST|attested]] term in " .. langname
 	local category = ""
 	
-	if not args["noend"] then
+	if not args.noend then
 		text = text .. ", but see"
-		local sort = args["sort"]
+		local sort = args.sort
 		category = format_categories(langname .. " unattested translations", en or get_en(), sort, not sort and canonical_pagename() or nil)
 	end
 	
