@@ -774,13 +774,28 @@ pos_functions["adverbs"] = {
 	end,
 }
 
-pos_functions["conjunctions"] = {
+
+pos_functions["pronouns"] = {
 	params = {
-		[1] = {alias_of = "head", list = false},
+		["desc"] = true,
+		["obj"] = true,
+		["possdet"] = true,
+		["posspron"] = true,
+		["refl"] = true,
 	},
+
+	func = function(args, data)
+		if args.desc then
+			local desc = parse_inflection(args, "desc")
+			insert_fixed_inflection(data, desc.term, desc)
+		end
+		parse_and_insert_inflection(data, args, "obj", "objective")
+		parse_and_insert_inflection(data, args, "possdet", "possessive determiner")
+		parse_and_insert_inflection(data, args, "posspron", "possessive pronoun")
+		parse_and_insert_inflection(data, args, "refl", "reflexive")
+	end,
 }
 
-pos_functions["interjections"] = pos_functions["conjunctions"]
 
 local function escape(str)
 	return (str:gsub("\\([:#])", "\\\\%1")
