@@ -657,6 +657,27 @@ local function get_unsupported_titles()
 	return unsupported_titles
 end
 
+-- To save on memory, we only cache names with either non-ASCII characters in them or ASCII characters to be removed or
+-- transformed (apostrophe, double quote, hyphen).
+local L2_sort_key_cache = {}
+
+function export.get_L2_sort_key(L2)
+	if L2 == "Translingual" then
+		return "\1"
+	elseif L2 == "English" then
+		return "\2"
+	elseif match(L2, "^[%z\1-\b\14-!#-&(-,.-\127]+$") then
+		return L2
+	end
+	local sort_key = L2_sort_key_cache[L2]
+	if sort_key then
+		return sort_key
+	end
+	sort_key = toNFC(ugsub(ugsub(toNFD(L2), "[" .. comb_chars_all .. "'\"ʻʼ]+", ""), "[%s%-]+", " "))
+	L2_sort_key_cache[L2] = sort_key
+	return sort_key
+end
+
 --[==[
 Given a pagename (or {nil} for the current page), create and return a data structure describing the page. The returned
 object includes the following fields:
@@ -826,25 +847,9 @@ function export.process_page(pagename, no_fetch_content)
 	-- Make `L2_list` and `L2_sections`, note raw wikitext use of {{DEFAULTSORT:}} and {{DISPLAYTITLE:}}, then add categories if any unwanted L1 headings are found, the L2 headings are in the wrong order, or they don't match a canonical language name.
 	-- Note: HTML comments shouldn't be removed from `content` until after this step, as they can affect the result.
 	do
-		local L2_list, L2_list_len, L2_sections, sort_cache, prev, rc = {}, 0, {}, {}
+		local L2_list, L2_list_len, L2_sections = {}, 0, {}
+		local prev, rc
 		local new_cats, L2_wrong_order = {}
-		
-		local function get_weight(L2)
-			if L2 == "Translingual" then
-				return "\1"
-			elseif L2 == "English" then
-				return "\2"
-			elseif match(L2, "^[%z\1-\b\14-!#-&(-,.-\127]+$") then
-				return L2
-			end
-			local weight = sort_cache[L2]
-			if weight then
-				return weight
-			end
-			weight = toNFC(ugsub(ugsub(toNFD(L2), "[" .. comb_chars_all .. "'\"ʻʼ]+", ""), "[%s%-]+", " "))
-			sort_cache[L2] = weight
-			return weight
-		end
 		
 		local function handle_heading(heading)
 			local level = heading.level
@@ -867,7 +872,7 @@ function export.process_page(pagename, no_fetch_content)
 			-- FIXME: we need a more sophisticated sorting method which handles non-diacritic special characters (e.g. Magɨ).
 			if prev and not (
 				L2_wrong_order or
-				string_compare(get_weight(prev), get_weight(name))
+				string_compare(export.get_L2_sort_key(prev), export.get_L2_sort_key(name))
 			) then
 				new_cats["Pages with language headings in the wrong order"] = true
 				L2_wrong_order = true

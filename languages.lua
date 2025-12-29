@@ -138,6 +138,7 @@ local export = {}
 local debug_track_module = "Module:debug/track"
 local etymology_languages_data_module = "Module:etymology languages/data"
 local families_module = "Module:families"
+local headword_page_module = "Module:headword/page"
 local json_module = "Module:JSON"
 local language_like_module = "Module:language-like"
 local languages_data_module = "Module:languages/data"
@@ -215,6 +216,11 @@ end
 local function encode_entities(...)
 	encode_entities = require(string_encode_entities_module)
 	return encode_entities(...)
+end
+
+local function get_L2_sort_key(...)
+	get_L2_sort_key = require(headword_page_module).get_L2_sort_key
+	return get_L2_sort_key(...)
 end
 
 local function get_script(...)
@@ -1676,21 +1682,24 @@ function Language:logicalToPhysical(pagename, is_reconstructed_or_appendix)
 		pagename = "Unsupported titles/" .. pagename
 	elseif not is_reconstructed_or_appendix then
 		-- Check if this is a mammoth page. If so, which subpage should we link to?
-		local mammoth_pages = load_data(links_data_module).mammoth_pages
-		if mammoth_pages[pagename] then
-			local canonical_name = self:getCanonicalName()
+		local m_links_data = load_data(links_data_module)
+		local mammoth_page_type = m_links_data.mammoth_pages[pagename]
+		if mammoth_page_type then
+			local canonical_name = self:getFullName()
 			if canonical_name ~= "Translingual" and canonical_name ~= "English" then
 				local this_subpage
-				for _, subpage_spec in ipairs(load_data(links_data_module).mammoth_page_subpage_list) do
+				local L2_sort_key = get_L2_sort_key(canonical_name)
+				for _, subpage_spec in ipairs(m_links_data.mammoth_page_subpage_types[mammoth_page_type]) do
 					-- unpack() fails utterly on data loaded using mw.loadData() even if offsets are given
 					local subpage, pattern = subpage_spec[1], subpage_spec[2]
-					if pattern == true or umatch(self:getCanonicalName(), pattern) then
+					if pattern == true or L2_sort_key:match(pattern) then
 						this_subpage = subpage
 						break
 					end
 				end
 				if not this_subpage then
-					error("Internal error: Bad data in mammoth_page_subpage_list, in [[Module:links/data]]; last entry didn't have 'true' in it")
+					error(("Internal error: Bad data in mammoth_page_subpage_pages in [[Module:links/data]] for mammoth page %s, type %s; last entry didn't have 'true' in it"):format(
+						pagename, mammoth_page_type))
 				end
 				pagename = pagename .. "/" .. this_subpage
 			end

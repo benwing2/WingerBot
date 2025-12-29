@@ -27,8 +27,12 @@ function export.show_template(frame)
 	-- Are we on a subpage?
 	local root_mammoth_page_title = this_title
 	
-	local prefixed_base, subpage = this_title.prefixedText:match("^(.+)/(.-)$")
-	if subpage and m_links_data.mammoth_page_subpages[subpage] then
+	-- Formerly we checked for the specific known subpages of a given mammoth split page, e.g. we would convert
+	-- [[a/languages M to Z]] to [[a]] assuming that [[a/languages M to Z]] was one of the splits, but not
+	-- [[a/languages N to Z]]. To simplify this, we just convert anything with the right mammoth split page format
+	-- on the assumption that it's unlikely we will ever have a legitimate non-mammoth-split pagename of this sort.
+	local prefixed_base, subpage = this_title.prefixedText:match("^(.+)/languages [A-Z] to [A-Z]$")
+	if subpage then
 		root_mammoth_page_title = mw.title.new(prefixed_base)
 		if not root_mammoth_page_title then
 			error(("Internal error: Something wrong, prefixed base '%s' of mammoth page has bad character even though prefixedText '%s' does not seem to"):format(
@@ -44,7 +48,7 @@ function export.show_template(frame)
 	local L2_count = 2
 
 	-- compile a list of L2 headers on each subpage
-	for _, subpage_spec in ipairs(m_links_data.mammoth_page_subpage_list) do
+	for _, subpage_spec in ipairs(m_links_data.mammoth_page_subpage_list[m_links_data.mammoth_pages[prefixed_base]]) do
 		local subpage_name = subpage_spec[1]
 		local subpage_title = root_mammoth_page_title:subPageTitle(subpage_name)
 		local subpage_content = subpage_title and subpage_title:getContent()

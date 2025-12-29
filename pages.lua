@@ -443,19 +443,14 @@ function export.physical_to_logical_pagename_if_mammoth(title, include_base)
 	end
 
 	if title.nsText == "" then
+		-- Formerly we checked for the specific known subpages of a given mammoth split page, e.g. we would convert
+		-- [[a/languages M to Z]] to [[a]] assuming that [[a/languages M to Z]] was one of the splits, but not
+		-- [[a/languages N to Z]]. To simplify this, we just convert anything with the right mammoth split page format
+		-- on the assumption that it's unlikely we will ever have a legitimate non-mammoth-split pagename of this sort.
 		local pagename = title.text
-		local slash_pos = pagename:find("/")
-		if slash_pos then
-		    local after_slash = pagename:sub(slash_pos + 1)
-		    local links_data = mw.loadData("Module:links/data")
-			if links_data.mammoth_page_subpages[after_slash] then
-				-- Looks like we have a mammoth page. If so, act as though we are on the root page (e.g. [[a]] instead
-				-- of [[a/languages A to L]]).
-				local maybe_pagename = pagename:sub(1, slash_pos - 1)
-				if links_data.mammoth_pages[maybe_pagename] then
-					pagename = maybe_pagename
-				end
-			end
+		local mammoth_root_page = pagename:match("^(.*)/languages [A-Z] to [A-Z]$")
+		if mammoth_root_page then
+			pagename = mammoth_root_page
 		end
 		return pagename
 	elseif include_base then
