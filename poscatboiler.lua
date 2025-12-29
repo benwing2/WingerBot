@@ -1,6 +1,8 @@
 local lang_independent_data = require("Module:category tree/data")
 local lang_specific_module = "Module:category tree/lang"
 local lang_specific_module_prefix = lang_specific_module .. "/"
+local family_specific_module = "Module:category tree/fam"
+local family_specific_module_prefix = family_specific_module .. "/"
 local labels_utilities_module = "Module:labels/utilities"
 local template_parser_module = "Module:template parser"
 
@@ -178,16 +180,18 @@ function Category:initCommon()
 		
 		-- First, check lang-specific labels and handlers if this is not an umbrella category.
 		if self._lang then
-			local langs_with_modules = require(lang_specific_module)
+			local objects_with_modules = require(lang_specific_module)
 			local obj, seen = self._lang, {}
+			local object_specific_module_prefix = lang_specific_module_prefix
+			local is_family = false
 			repeat
-				if langs_with_modules[obj:getCode()] then
-					local module = lang_specific_module_prefix .. obj:getCode()
+				if objects_with_modules[obj:getCode()] then
+					local module = object_specific_module_prefix .. obj:getCode()
 					local labels_and_handlers = require(module)
 					if labels_and_handlers.LABELS then
 						self._data = labels_and_handlers.LABELS[self._info.label]
 						if self._data then
-							if self._data.umbrella == nil and self._data.umbrella_parents == nil then
+							if not is_family and self._data.umbrella == nil and self._data.umbrella_parents == nil then
 								self._data.umbrella = false
 							end
 							self._data.module = self._data.module or module
@@ -204,7 +208,8 @@ function Category:initCommon()
 							}
 							self._data, args_handled = handler(data)
 							if self._data then
-								if self._data.umbrella == nil and self._data.umbrella_parents == nil then
+								if not is_family and self._data.umbrella == nil and
+									self._data.umbrella_parents == nil then
 									self._data.umbrella = false
 								end
 								self._data.module = self._data.module or module
@@ -218,6 +223,11 @@ function Category:initCommon()
 				end
 				seen[obj:getCode()] = true
 				obj = obj:getFamily()
+				if not is_family then
+					is_family = true
+					object_specific_module_prefix = family_specific_module_prefix
+					objects_with_modules = require(family_specific_module)
+				end
 			until not obj or seen[obj:getCode()]
 		end
 
@@ -231,6 +241,21 @@ function Category:initCommon()
 				self._data = labels[self._info.orig_label]
 				if self._data then
 					self._info.label = self._info.orig_label
+				end
+			end
+			if not self._data and not self._lang then
+				-- Check family-specific labels for umbrella label.
+				local families_with_modules = require(family_specific_module)
+				for famcode, _ in pairs(families_with_modules) do
+					local module = family_specific_module_prefix .. famcode
+					local labels_and_handlers = require(module)
+					if labels_and_handlers.LABELS then
+						self._data = labels_and_handlers.LABELS[self._info.label]
+						if self._data then
+							self._data.module = self._data.module or module
+							break
+						end
+					end
 				end
 			end
 		end
@@ -249,6 +274,32 @@ function Category:initCommon()
 				if self._data then
 					self._data.module = self._data.module or handler.module
 					break
+				end
+			end
+			if not self._data and not self._lang then
+				-- Check family-specific labels for umbrella handler.
+				local families_with_modules = require(family_specific_module)
+				for famcode, _ in pairs(families_with_modules) do
+					local module = family_specific_module_prefix .. famcode
+					local labels_and_handlers = require(module)
+					if labels_and_handlers.HANDLERS then
+						for _, handler in ipairs(labels_and_handlers.HANDLERS) do
+							local data = {
+								label = self._info.label,
+								sc = self._sc,
+								args = patch_args(self._info.args) or {},
+								called_from_inside = self._info.called_from_inside,
+							}
+							self._data, args_handled = handler(data)
+							if self._data then
+								self._data.module = self._data.module or module
+								break
+							end
+						end
+					end
+					if self._data then
+						break
+					end
 				end
 			end
 		end
