@@ -89,6 +89,12 @@ local detect_category_type_list = {
 	{"conjug.*", "verb inflection-table"},
 	{"infl%-verb.*", "verb inflection-table"},
 
+	-- pronunciation
+	{".*IPA.*", "pronunciation"},
+	{"pronunciation", "pronunciation"},
+	{"pr", "pronunciation"},
+	{"p", "pronunciation"},
+
 	-- pronominal boxes
 	{".*personal pronouns", "personal pronouns"},
 	{".*demonstrative.*", "demonstratives"},
@@ -126,6 +132,7 @@ local detect_category_type_list = {
 --   it is a list where each element is a two-element list of a Lua pattern anchored on both sides and the corresponding
 --   pattern replacement string. The specs are processed in order.
 local category_type_to_category = {
+	-- Inflection-table templates
 	{"noun inflection-table", {
 		aliases = {"nouninfl", "noundecl", "ndecl"},
 		cats = {{name = "noun inflection-table", sort = {
@@ -171,10 +178,54 @@ local category_type_to_category = {
 			{"conj", "*"},
 		}}},
 	}},
+
+	-- Headword-line templates
 	{"headword-line", {
 		aliases = {"hw", "headword"},
 		cats = {"headword-line"},
 	}},
+
+	-- Definition templates
+	{"definition", {
+		aliases = {"def", "defn"},
+		cats = {"definition"},
+	}},
+	{"form-of", {
+		aliases = {"form of"},
+		cats = {"form-of"},
+	}},
+
+	-- Etymology and pronunciation templates
+	{"etymology", {
+		aliases = {"etym"},
+		cats = {"etymology"},
+	}},
+	{"pronunciation", {
+		aliases = {"pron"},
+		cats = {"pronunciation"},
+	}},
+
+	-- Pseudo-namespace templates
+	{"reference", {
+		aliases = {"ref"},
+		cats = {"reference"},
+	}},
+	{"quotation", {
+		aliases = {"quote"},
+		cats = {"quotation"},
+	}},
+	{"usage", {
+		cats = {"usage"},
+	}},
+	{"list", {
+		cats = {"list"},
+	}},
+	{"auto-table", {
+		aliases = {"table"},
+		cats = {"auto-table"},
+	}},
+
+	-- Navigation templates
 	{"personal pronouns", {
 		aliases = {"perspron"},
 		cats = {"navigation", "Category:Personal pronoun boxes"},
@@ -209,6 +260,11 @@ local category_type_to_category = {
 	}},
 	{"ordinals", {
 		cats = {"navigation", "Category:Number boxes"},
+	}},
+
+	-- Entry templates
+	{"entry", {
+		cats = {"entry"},
 	}},
 }
 
@@ -249,17 +305,69 @@ local function obj_code(obj)
 	return obj:getCode()
 end
 
-local function infer_lang_or_script_code(name)
+local function get_prefixed_obj(after_prefix)
+	return after_prefix:match("^(%l[%a-]*%a):(.+)$")
+end
+
+local function get_suffixed_obj(after_prefix)
+	local rest, objcode = after_prefix:match("^(.+)/(%l[%a-]*%a)$")
+	return objcode, rest
+end
+
+local pseudo_namespace_templates = {
+	{"R:", {
+		category_type = "reference",
+		get_obj_and_rest = get_prefixed_obj,
+	}},
+	{"RQ:", {
+		category_type = "quotation",
+		get_obj_and_rest = get_prefixed_obj,
+	}},
+	{"U:", {
+		category_type = "usage",
+		get_obj_and_rest = get_prefixed_obj,
+	}},
+	{"list:", {
+		category_type = "list",
+		get_obj_and_rest = get_suffixed_obj,
+	}},
+	{"table:", {
+		category_type = "auto-table",
+		get_obj_and_rest = get_suffixed_obj,
+	}},
+}
+
+local function infer_lang_or_script_code_and_category_type(name)
+	if name:find(":") then -- only check for pseudo-namespace prefix when a colon is present
+		for _, pseudo_namespace_spec in ipairs(pseudo_namespace_templates) do
+			local prefix, props = unpack(pseudo_namespace_spec)
+			local after_prefix = name:find("^" .. prefix .. "(.+)$")
+			if after_prefix then
+				local objcode, rest = props.get_obj_and_rest(after_prefix)
+				local obj
+				if objcode then
+					obj = get_lang_or_script(objcode) -- may return nil
+					if not obj then
+						rest = after_prefix
+					end
+				else
+					rest = after_prefix
+				end
+				return obj, rest, props.category_type
+			end
+		end
+	end
+
 	local hyphen_parts = split(name, "%-")
 	for i = #hyphen_parts - 1, 1, -1 do
 		local code = concat(hyphen_parts, "-", 1, i)
 		local obj = get_lang_or_script(code)
 		if obj then
 			local rest = concat(hyphen_parts, "-", i + 1)
-			return obj, rest
+			return obj, rest, nil
 		end
 	end
-	return nil, nil
+	return nil, name, nil
 end
 
 local function process_sortbase_specs(sortbase, specs)
@@ -428,22 +536,29 @@ function export.categorize(frame)
 				cattypes = split_on_comma(args[1])
 			end
 
-			local inferred_obj, inferred_rest = infer_lang_or_script_code(rootpage)
+			local inferred_obj, inferred_rest, inferred_cattype =
+				infer_lang_or_script_code_and_category_type(rootpage)
 			if template_objs == nil or not cattypes then
 				if not inferred_obj then
-					error(("Unable to infer language or script from template root page '%s' for template '%s'; specify lang/script and type explicitly"):format(
-					rootpage, pagename))
+					if not inferred_cattype then
+						error(("Unable to infer language or script from template root page '%s' for template '%s'; specify lang/script and type explicitly"):format(
+							rootpage, pagename))
+					else
+						error(("Unable to infer language or script from template root page '%s' for template '%s', inferred category type '%s'; specify lang/script explicitly"):format(
+							rootpage, pagename, inferred_cattype))
+					end
 				end
 				if template_objs == nil then
 					template_objs = {inferred_obj}
 				end
 				if not cattypes then
-					local inferred_type = template_name_minus_langcode_to_category_type(inferred_rest)
-					if not inferred_type then
+					inferred_cattype = inferred_cattype or
+						template_name_minus_langcode_to_category_type(inferred_rest)
+					if not inferred_cattype then
 						error(("Unable to infer template category type from template remainder (after stripping langcode) '%s' for template '%s'; specify type explicitly"):format(
 							inferred_rest, pagename))
 					end
-					cattypes = {inferred_type}
+					cattypes = {inferred_cattype}
 				end
 			end
 
