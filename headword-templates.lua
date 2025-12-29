@@ -19,11 +19,6 @@ local function process_params(...)
 	return process_params(...)
 end
 
-local function split(...)
-	split = require(string_utilities_module).split
-	return split(...)
-end
-
 local function track(page)
 	debug_track("headword/templates/" .. page)
 	return true
@@ -34,31 +29,31 @@ local function get_args(frame)
 	local boolean_list_allow_holes = {type = "boolean", list = true, allow_holes = true}
 	local list_allow_holes = {list = true, allow_holes = true}
 	return process_params(frame:getParent().args, {
-		[1] = {required = true, type = "language", default = "und"},
-		["sc"] = {type = "script"},
-		["sort"] = true,
+		[1] = {required = true, type = "language", template_default = "und"},
+		sc = {type = "script"},
+		sort = true,
 
-		[2] = {required = true, default = "nouns"},
-		["sccat"] = boolean,
-		["noposcat"] = boolean,
-		["nomultiwordcat"] = boolean,
-		["nogendercat"] = boolean,
-		["nopalindromecat"] = boolean,
-		["nolinkhead"] = boolean,
-		["autotrinfl"] = boolean,
-		["altform"] = boolean, -- EXPERIMENTAL: see [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]]
-		["cat2"] = true,
-		["cat3"] = true,
-		["cat4"] = true,
+		[2] = {required = true, template_default = "nouns"},
+		sccat = boolean,
+		noposcat = boolean,
+		nomultiwordcat = boolean,
+		nogendercat = boolean,
+		nopalindromecat = boolean,
+		nolinkhead = boolean,
+		autotrinfl = boolean,
+		altform = boolean, -- EXPERIMENTAL: see [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]]
+		cat2 = true,
+		cat3 = true,
+		cat4 = true,
+		pagename = true,
 
-		["head"] = list_allow_holes,
-		["image"] = true,
-		["id"] = true,
-		["tr"] = list_allow_holes,
-		["ts"] = list_allow_holes,
-		["gloss"] = true,
-		["g"] = {list = true},
-		["g\1qual"] = list_allow_holes,
+		head = list_allow_holes,
+		image = true,
+		id = true,
+		tr = list_allow_holes,
+		ts = list_allow_holes,
+		gloss = true,
+		g = {list = true, type = "genders", flatten = true},
 
 		[3] = list_allow_holes,
 
@@ -75,8 +70,16 @@ local function get_args(frame)
 		["f\1id"] = list_allow_holes,
 		["f\1tr"] = list_allow_holes,
 		["f\1ts"] = list_allow_holes,
-		["f\1g"] = list_allow_holes,
-		["f\1qual"] = list_allow_holes,
+		["f\1t"] = list_allow_holes,
+		["f\1lit"] = list_allow_holes,
+		["f\1pos"] = list_allow_holes,
+		["f\1ng"] = list_allow_holes,
+		["f\1g"] = {list = true, allow_holes = true, type = "genders"},
+		["f\1q"] = {list = true, allow_holes = true, type = "qualifier"},
+		["f\1qq"] = {list = true, allow_holes = true, type = "qualifier"},
+		["f\1l"] = {list = true, allow_holes = true, type = "labels"},
+		["f\1ll"] = {list = true, allow_holes = true, type = "labels"},
+		["f\1ref"] = {list = true, allow_holes = true, type = "references"},
 		["f\1autotr"] = boolean_list_allow_holes,
 		["f\1nolink"] = boolean_list_allow_holes,
 	})
@@ -90,18 +93,18 @@ function export.head_t(frame)
 	-- Get language and script information
 	local data = {}
 	data.lang = args[1]
-	data.sc = args["sc"]
-	data.sccat = args["sccat"]
-	data.sort_key = args["sort"]
-	data.heads = args["head"]
-	data.image = args["image"]
+	data.sc = args.sc
+	data.sccat = args.sccat
+	data.sort_key = args.sort
+	data.heads = args.head
+	data.image = args.image
+	data.pagename = args.pagename
 
-
-	data.id = args["id"]
-	data.translits = args["tr"]
-	data.transcriptions = args["ts"]
-	data.gloss = args["gloss"]
-	data.genders = args["g"]
+	data.id = args.id
+	data.translits = args.tr
+	data.transcriptions = args.ts
+	data.gloss = args.gloss
+	data.genders = args.g
 
 	-- TODO should throw an error if data.heads gets overwritten
 	if data.image then
@@ -109,29 +112,18 @@ function export.head_t(frame)
 	end
 
 	-- This shouldn't really happen.
-	for i = 1, args["head"].maxindex do
-		if not args["head"][i] then
+	for i = 1, args.head.maxindex do
+		if not args.head[i] then
 			track("head-with-holes")
 		end
 	end
 
-	for k, v in pairs(args["gqual"]) do
-		if k ~= "maxindex" then
-			if data.genders[k] then
-				data.genders[k] = {spec = data.genders[k], qualifiers = {v}}
-			else
-				k = k == 1 and "" or tostring(k)
-				error(("g%squal= specified without g%s="):format(k, k))
-			end
-		end
-	end
-
 	-- EXPERIMENTAL: see [[Wiktionary:Beer parlour/2024/June#Decluttering the altform mess]]
-	data.altform = args["altform"]
+	data.altform = args.altform
 
 	-- Part-of-speech category
 	local pos_category = args[2]
-	data.noposcat = args["noposcat"]
+	data.noposcat = args.noposcat
 
 	-- Check for headword aliases and then pluralize if the POS term does not have an invariable plural.
 	data.pos_category = m_headword.canonicalize_pos(pos_category)
@@ -139,29 +131,29 @@ function export.head_t(frame)
 	-- Additional categories.
 	local categories = {}
 	data.whole_page_categories = {}
-	data.nomultiwordcat = args["nomultiwordcat"]
-	data.nogendercat = args["nogendercat"]
-	data.nopalindromecat = args["nopalindromecat"]
+	data.nomultiwordcat = args.nomultiwordcat
+	data.nogendercat = args.nogendercat
+	data.nopalindromecat = args.nopalindromecat
 
 	-- FIXME: add a minimum_index spec to [[Module:parameters]] list specs, so
 	-- that `cat` can be changed to a list parameter starting at index 2.
-	if args["cat2"] then
-		insert(categories, data.lang:getFullName() .. " " .. args["cat2"])
+	if args.cat2 then
+		insert(categories, data.lang:getFullName() .. " " .. args.cat2)
 	end
-	if args["cat3"] then
-		insert(categories, data.lang:getFullName() .. " " .. args["cat3"])
+	if args.cat3 then
+		insert(categories, data.lang:getFullName() .. " " .. args.cat3)
 	end
-	if args["cat4"] then
-		insert(categories, data.lang:getFullName() .. " " .. args["cat4"])
+	if args.cat4 then
+		insert(categories, data.lang:getFullName() .. " " .. args.cat4)
 	end
 
 	data.categories = categories
 
 	-- Headword linking
-	data.nolinkhead = args["nolinkhead"]
+	data.nolinkhead = args.nolinkhead
 
 	-- Inflected forms
-	data.inflections = {enable_auto_translit = args["autotrinfl"]}
+	data.inflections = {enable_auto_translit = args.autotrinfl}
 
 	local forms = args[3]
 	local n = forms.maxindex / 2
@@ -176,21 +168,29 @@ function export.head_t(frame)
 				gender    = args["faccel-gender"][i],
 				nostore   = args["faccel-nostore"][i],
 			} or nil,
-			request  = args["frequest"][i],
-			enable_auto_translit = args["fautotr"][i],
+			request  = args.frequest[i],
+			enable_auto_translit = args.fautotr[i],
 		}
 
 		local form = {
 			term          =  forms[i * 2],
-			alt           =  args["falt"][i],
-			genders       =  args["fg"][i] and split(args["fg"][i], ",") or {},
-			id            =  args["fid"][i],
-			lang          =  args["flang"][i],
-			nolinkinfl    =  args["fnolink"][i],
-			q             = {args["fqual"][i]},
-			sc            =  args["fsc"][i],
-			tr            =  args["ftr"][i],
-			ts            =  args["fts"][i],
+			alt           =  args.falt[i],
+			genders       =  args.fg[i],
+			id            =  args.fid[i],
+			lang          =  args.flang[i],
+			nolinkinfl    =  args.fnolink[i],
+			q             =  args.fq[i],
+			qq            =  args.fqq[i],
+			l             =  args.fl[i],
+			ll            =  args.fll[i],
+			refs          =  args.fref[i],
+			sc            =  args.fsc[i],
+			tr            =  args.ftr[i],
+			ts            =  args.fts[i],
+			gloss         =  args.ft[i],
+			lit           =  args.flit[i],
+			pos           =  args.fpos[i],
+			ng           =  args.fng[i],
 		}
 
 		-- If no term or alt is given, then the label is shown alone.
