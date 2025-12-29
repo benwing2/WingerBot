@@ -18,6 +18,8 @@ local ipairs = ipairs
 local pairs = pairs
 local require = require
 
+local boolean_param = {type = "boolean"}
+
 -- FIXME: Finish [[Module:format utilities]].
 -- local allowed_conj_set = require(format_utilities_module).allowed_conj_set_for_join_segments
 local allowed_conj_set = {["and"] = true, ["or"] = true, ["and/or"] = true}
@@ -152,12 +154,12 @@ local function get_common_template_params()
 	return {
 		-- Named params not controlling link display
 		["cat"] = {list = true, sublist = "comma without whitespace", flatten = true},
-		["notext"] = {type = "boolean"},
+		["notext"] = boolean_param,
 		["sort"] = true,
 		["enclitic"] = true,
 		-- FIXME! The following should only be available when withcap=1 in invocation args or when withencap=1 and the
 		-- language is "en". Before doing that, need to remove all uses of nocap= in other circumstances.
-		["nocap"] = {type = "boolean"},
+		["nocap"] = boolean_param,
 		["addl"] = true, -- additional text to display at the end, before the closing </span>
 		["pagename"] = true, -- for testing, etc.
 	}
@@ -194,19 +196,6 @@ local function parse_terms_with_inline_modifiers(paramname, val, param_mods, lan
 end
 
 
--- Modify PARAMS in-place by adding parameters that control the link to the
--- main entry. TERM_PARAM is the number of the param specifying the main
--- entry itself; TERM_PARAM + 1 will be the display text, and TERM_PARAM + 2
--- will be the gloss, unless NO_NUMBERED_GLOSS is given.
-local function add_link_params(parent_args, params, term_param, no_numbered_gloss)
-	params[term_param + 1] = {alias_of = "alt"}
-	if not no_numbered_gloss then
-		params[term_param + 2] = {alias_of = "t"}
-	end
-	-- Numbered params controlling link display
-	params[term_param] = true
-end
-
 -- Need to do what [[Module:parameters]] does to string arguments from parent_args as we're running this
 -- before calling [[Module:parameters]] on parent_args.
 local function ine(arg)
@@ -236,10 +225,25 @@ local function add_base_lemma_params(parent_args, iargs, params, compat)
 	end
 end
 
+--[=[
+Modify `params` in-place by adding parameters that control the link to the main entry and any base lemmas. `term_param`
+is the number of the param specifying the main entry itself; `term_param` + 1 will be the display text, and `term_param`
++ 2 will be the gloss, unless `no_numbered_gloss` is given. The base lemma parameters are determined by attempting to
+load language-specific data for the language of the page; this comes from |lang= if `compat` is given, else from |1=.
+]=]
 local function add_link_and_base_lemma_params(iargs, parent_args, params, term_param, compat, no_numbered_gloss)
 	local base_lemma_params
 	if not iargs.nolink and not iargs.linktext then
-		add_link_params(parent_args, params, term_param, no_numbered_gloss)
+		-- Numbered params controlling link display
+		if iargs.with_multiple_parts then
+			params[term_param] = {list = true}
+		else
+			params[term_param + 1] = {alias_of = "alt"}
+			if not no_numbered_gloss then
+				params[term_param + 2] = {alias_of = "t"}
+			end
+			params[term_param] = true
+		end
 		base_lemma_params = add_base_lemma_params(parent_args, iargs, params, compat)
 	end
 	return base_lemma_params
@@ -250,7 +254,7 @@ local function handle_withdot_withcap(iargs, params)
 
 	if iargs.withdot then
 		params.dot = true
-		params.nodot = {type = "boolean"}
+		params.nodot = boolean_param
 	end
 
 	if iargs.withcap and iargs.withencap then
@@ -258,7 +262,7 @@ local function handle_withdot_withcap(iargs, params)
 	end
 
 	if not iargs.withcap then
-		params.cap = {type = "boolean"}
+		params.cap = boolean_param
 		ignored_tracked_params.nocap = iargs.withencap and "non-english" or "always"
 	end
 
@@ -356,17 +360,14 @@ local function construct_form_of_text(data)
 	Process parent arguments. This is similar to the following:
 		require("Module:parameters").process(parent_args, params)
 	but in addition it does the following:
-	(1) Supplies default values for unspecified parent arguments as specified in
-		DEFAULTS, which consist of specs of the form "ARG=VALUE". These are
-		added to the parent arguments prior to processing, so boolean and number
-		parameters will process the value appropriately.
-	(2) Removes parent arguments specified in IGNORESPECS, which consist either
-		of bare argument names to remove, or list-argument names to remove of the
-		form "ARG:list".
-	(3) Tracks the use of any parent arguments specified in TRACKED_PARAMS, which
-		is a set-type table where the keys are arguments as they exist after
-		processing (hence numeric arguments should be numbers, not strings)
-		and the values should be boolean true.
+	(1) Supplies default values for unspecified parent arguments as specified in DEFAULTS, which consist of specs of the
+		form "ARG=VALUE". These are added to the parent arguments prior to processing, so boolean and number parameters
+		will process the value appropriately.
+	(2) Removes parent arguments specified in IGNORESPECS, which consist either of bare argument names to remove, or
+		list-argument names to remove of the form "ARG:list".
+	(3) Tracks the use of any parent arguments specified in TRACKED_PARAMS, which is a set where the keys are arguments
+		as they exist after processing (hence numeric arguments should be numbers, not strings) and the values should be
+		boolean true.
 	]=]--
 	local defaults = iargs.def
 	local ignorespecs = iargs.ignore
@@ -445,21 +446,33 @@ local function construct_form_of_text(data)
 		args = process_params(parent_args, params)
 	else
 		init_param_mods()
-		terms, args = m_param_utils.parse_term_with_inline_modifiers_and_separate_params {
-			params = params,
-			param_mods = param_mods,
-			raw_args = parent_args,
-			termarg = term_param,
-			track_module = "form-of" .. (template and "/" .. template or ""),
-			lang = compat and "lang" or 1,
-			sc = "sc",
-			-- Don't do this, doesn't seem to make sense.
-			-- parse_lang_prefix = true,
-			make_separate_g_into_list = true,
-			splitchar = ",",
-			subitem_param_handling = "last",
-			parse_lang_prefix = true,
-		}
+		if iargs.with_multiple_parts then
+			terms, args = m_param_utils.parse_term_with_inline_modifiers_and_separate_params {
+				params = params,
+				param_mods = param_mods,
+				raw_args = parent_args,
+				termarg = term_param,
+				track_module = "form-of" .. (template and "/" .. template or ""),
+				lang = compat and "lang" or 1,
+				sc = "sc",
+				parse_lang_prefix = true,
+				make_separate_g_into_list = true,
+				splitchar = ",",
+				subitem_param_handling = "last",
+			}
+		else
+			terms, args = m_param_utils.parse_term_with_inline_modifiers_and_separate_params {
+				params = params,
+				param_mods = param_mods,
+				raw_args = parent_args,
+				termarg = term_param,
+				track_module = "form-of" .. (template and "/" .. template or ""),
+				lang = compat and "lang" or 1,
+				sc = "sc.default",
+				parse_lang_prefix = true,
+				disallow_custom_separators = true,
+			}
+		end
 	end
 
 	local lang = args[compat and "lang" or 1]
@@ -573,7 +586,7 @@ local function construct_form_of_text(data)
 		lang = lang,
 		args = args,
 		lemmas = lemmas,
-		conj = terms and terms.conj or iargs.conj,
+		conj = iargs.with_multiple_parts and "+" or terms and terms.conj or iargs.conj,
 		enclitics = enclitics,
 		enclitic_conj = enclitic_conj,
 		base_lemmas = base_lemmas,
@@ -599,9 +612,11 @@ local function construct_form_of_text(data)
 end
 
 
--- Invocation parameters shared between form_of_t(), tagged_form_of_t() and inflection_of_t().
-local function get_common_invocation_params()
-	return {
+-- Invocation parameters shared between form_of_t(), tagged_form_of_t() and inflection_of_t(). `calling_func` is the
+-- invoking function ("form_of_t", "tagged_form_of_t" or "inflection_of_t"), for handling parameters shared by two but
+-- not all three invoking functions.
+local function get_common_invocation_params(calling_func)
+	local iparams = {
 		["term_param"] = {type = "number"},
 		["lang"] = true, -- To be used as the default code in params.
 		["sc"] = {type = "script"},
@@ -609,15 +624,19 @@ local function get_common_invocation_params()
 		["ignore"] = {list = true},
 		["def"] = {list = true},
 		["conj"] = {set = allowed_conj_set, default = "and"},
-		["withcap"] = {type = "boolean"},
-		["withencap"] = {type = "boolean"},
-		["withdot"] = {type = "boolean"},
-		["nolink"] = {type = "boolean"},
+		["withcap"] = boolean_param,
+		["withencap"] = boolean_param,
+		["withdot"] = boolean_param,
+		["nolink"] = boolean_param,
 		["linktext"] = true,
 		["posttext"] = true,
 		["noprimaryentrycat"] = true,
 		["lemma_is_sort_key"] = true,
 	}
+	if calling_func ~= "inflection_of_t" then
+		iparams.with_multiple_parts = boolean_param
+	end
+	return iparams
 end
 
 
@@ -638,6 +657,11 @@ Invocation params:
 ; {{para|term_param}}
 : Numbered param holding the term linked to. Other numbered params come after. Defaults to 1 if invocation or template
   param {{para|lang}} is present, otherwise 2.
+; {{para|with_multiple_parts|1}}
+: If specified, higher numbered parameters above the numbered param in {{para|term_param}} specify additional parts out
+  of which the term was constructed, for use by templates like {{tl|contraction of}}. (If not specified, the parameter
+  at <code><var>term_param</var> + 1</code> is the display form, same as {{para|alt}}, and the parameter at
+  at <code><var>term_param</var> + 2</code> is the gloss, same as {{para|t}}.)
 ; {{para|lang}}
 : Default language code for language-specific templates. If specified, no language code needs to be specified, and if
   specified it needs to be set using {{para|lang}}, not {{para|1}}.
@@ -656,15 +680,15 @@ Invocation params:
 ; {{para|def}}, {{para|def2}}, ...:
 : One or more default values to supply for template args. For example, specifying {{para|def|2=tr=-}} causes the default
   for template param {{para|tr}} to be `-`. Actual template params override these defaults.
-; {{para|withcap}}
+; {{para|withcap|1}}
 : Capitalize the first character of the text preceding the link, unless template param {{para|nocap}} is given.
-; {{para|withencap}}
+; {{para|withencap|1}}
 : Capitalize the first character of the text preceding the link if the language is English and template param
   {{para|nocap}} is not given.
-; {{para|withdot}}
+; {{para|withdot|1}}
 : Add a final period after the link, unless template param {{para|nodot}} is given to suppress the period, or
   {{para|dot}} is given to specify an alternative punctuation character.
-; {{para|nolink}}
+; {{para|nolink|1}}
 : Suppress the display of the link. If specified, none of the template params that control the link
   ({{para|<var>term_param</var>}}, {{para|<var>term_param</var> + 1}}, {{para|<var>term_param</var> + 2}}, {{para|t}},
   {{para|gloss}}, {{para|sc}}, {{para|tr}}, {{para|ts}}, {{para|pos}}, {{para|g}}, {{para|id}}, {{para|lit}}) will be
@@ -681,11 +705,11 @@ Invocation params:
 ; {{para|noprimaryentrycat}}
 : Category to add the page to if the primary entry linked to doesn't exist. The language name will automatically be
   prepended.
-; {{para|lemma_is_sort_key}}
+; {{para|lemma_is_sort_key|1}}
 : If the user didn't specify a sort key, use the lemma as the sort key (instead of the page itself).
 ]==]
 function export.form_of_t(frame)
-	local iparams = get_common_invocation_params()
+	local iparams = get_common_invocation_params("form_of_t")
 	iparams[1] = {required = true}
 	local iargs = process_params(frame.args, iparams)
 	local parent_args = frame:getParent().args
@@ -693,7 +717,7 @@ function export.form_of_t(frame)
 	local params = get_common_template_params()
 
 	if next(iargs.cat) then
-		params.nocat = {type = "boolean"}
+		params.nocat = boolean_param
 	end
 
 	return construct_form_of_text {
@@ -737,7 +761,7 @@ local function construct_tagged_form_of_text(data)
 
 	-- Named params not controlling link display
 	-- Always included because lang-specific categories may be added
-	params.nocat = {type = "boolean"}
+	params.nocat = boolean_param
 	params.p = true
 	params.POS = {alias_of = "p"}
 
@@ -792,23 +816,24 @@ Invocation params:
 : If specified, character to split specified inflection tags on. This allows multiple tags to be included in a single
   argument, simplifying template code.
 ; {{para|term_param}}
+; {{para|with_multiple_parts|1}}
 ; {{para|lang}}
 ; {{para|sc}}
 ; {{para|cat}}, {{para|cat2}}, ...
 ; {{para|ignore}}, {{para|ignore2}}, ...
 ; {{para|def}}, {{para|def2}}, ...
-; {{para|withcap}}
-; {{para|withencap}}
-; {{para|withdot}}
-; {{para|nolink}}
+; {{para|withcap|1}}
+; {{para|withencap|1}}
+; {{para|withdot|1}}
+; {{para|nolink|1}}
 ; {{para|linktext}}
 ; {{para|posttext}}
 ; {{para|noprimaryentrycat}}
-; {{para|lemma_is_sort_key}}
+; {{para|lemma_is_sort_key|1}}
 : All of these are the same as in {form_of_t()}.
 ]==]
 function export.tagged_form_of_t(frame)
-	local iparams = get_common_invocation_params()
+	local iparams = get_common_invocation_params("tagged_form_of_t")
 	iparams[1] = {list = true, required = true}
 	iparams.split_tags = true
 
@@ -858,18 +883,18 @@ Invocation params:
 ; {{para|cat}}, {{para|cat2}}, ...
 ; {{para|ignore}}, {{para|ignore2}}, ...
 ; {{para|def}}, {{para|def2}}, ...
-; {{para|withcap}}
-; {{para|withencap}}
-; {{para|withdot}}
-; {{para|nolink}}
+; {{para|withcap|1}}
+; {{para|withencap|1}}
+; {{para|withdot|1}}
+; {{para|nolink|1}}
 ; {{para|linktext}}
 ; {{para|posttext}}
 ; {{para|noprimaryentrycat}}
-; {{para|lemma_is_sort_key}}
+; {{para|lemma_is_sort_key|1}}
 : All of these are the same as in {form_of_t()}.
 ]==]
 function export.inflection_of_t(frame)
-	local iparams = get_common_invocation_params()
+	local iparams = get_common_invocation_params("inflection_of_t")
 	iparams.preinfl = {list = true}
 	iparams.postinfl = {list = true}
 	iparams.split_tags = true

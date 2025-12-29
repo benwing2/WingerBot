@@ -342,7 +342,8 @@ the following fields:
    `.lemmas` can be a string, which is displayed directly, or omitted, to show no lemma links and omit the connecting
    text.
 * `.lemma_face`: "Face" to use when displaying the lemma objects. Usually should be set to {"term"}.
-* `.conj`: Conjunction or separator to use when joining multiple lemma objects. Defaults to {"and"}.
+* `.conj`: Conjunction or separator to use when joining multiple lemma objects. Defaults to {"and"}. If this has the
+   value "+", the lemmas are joined with concat(), else with serialCommaJoin() in [[Module:table]].
 * `.enclitics`: List of enclitics to display after the lemmas, in parens.
 * `.enclitic_conj`: Conjunction or separator to use when joining multiple enclitics. Defaults to {"and"}.
 * `.base_lemmas`: List of base lemmas to display after the lemmas, in the case where the lemmas in `.lemmas` are
@@ -405,7 +406,12 @@ function export.format_form_of(data)
 				end
 				insert(formatted_terms, linked_term)
 			end
-			insert(parts, serial_comma_join(formatted_terms, {conj = data.conj or "and"}))
+			if data.conj == "+" then
+				-- This is what [[Module:affix]] does.
+				insert(parts, concat(formatted_terms, " +&lrm; "))
+			else
+				insert(parts, serial_comma_join(formatted_terms, {conj = data.conj or "and"}))
+			end
 		end
 	end
 	if data.enclitics and #data.enclitics > 0 then
