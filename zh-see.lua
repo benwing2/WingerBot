@@ -10,7 +10,7 @@ local change_to_variant = require("Module:zh-forms").change_to_variant
 local concat = table.concat
 local extract_gloss = require("Module:zh/extract").extract_gloss
 local find_templates = require("Module:template parser").find_templates
-local format_cat = require("Module:utilities").format_categories
+local format_categories = require("Module:utilities").format_categories
 local full_link = require("Module:links").full_link
 local get_lang = require("Module:languages").getByCode
 local get_section = require("Module:pages").get_section
@@ -21,7 +21,7 @@ local ipairs = ipairs
 local maintenance_cats = require("Module:headword").maintenance_cats
 local pairs = pairs
 local tostring = tostring
-local track = require('Module:debug').track
+local track = require("Module:debug").track
 local trim = m_str_utils.trim
 local ulen = m_str_utils.len
 local usub = m_str_utils.sub
@@ -29,7 +29,6 @@ local usub = m_str_utils.sub
 local m_data = mw.loadData("Module:zh-see/data")
 local lect_codes = mw.loadData("Module:zh/data/lect codes")
 local headword_data = mw.loadData("Module:headword/data")
-local namespace = mw.title.getCurrentTitle().namespace
 
 local langs = setmetatable({}, {
 	__index = function(t, k)
@@ -68,7 +67,7 @@ local function process_zh_forms(data, abbrevs, args)
 	end
 end
 
-local function process_categories(template, name)
+local function process_template_categories(categories, template, name)
 	local cat_type = m_data.cat_type[name]
 	if not cat_type then
 		return
@@ -84,11 +83,9 @@ local function process_categories(template, name)
 		cat_type == "catlangname" and (lang:getCanonicalName() .. " ") or
 		""
 	)
-	local categories = {}
 	for i = 2, #args do
-		insert(categories, cat_prefix .. trim(args[i]))
+		insert(categories, {cat = cat_prefix .. trim(args[i]), lang = lang})
 	end
-	return format_cat(categories, lang)
 end
 
 local function iterate_templates(frame, data, abbrev, chained)
@@ -114,10 +111,7 @@ local function iterate_templates(frame, data, abbrev, chained)
 			if name == "zh-character component" then
 				zh_char_comp = true
 			else
-				local cats = process_categories(template, name)
-				if cats then
-					insert(data.categories, cats)
-				end
+				process_template_categories(categories, template, name)
 			end
 		end
 	end
@@ -336,8 +330,8 @@ function export.show(frame)
 	
 	box = tostring(box)
 	
-	if not data.content and (namespace == 0 or namespace == 118) then
-		insert(data.categories, format_cat({"Chinese terms with uncreated forms"}, langs.zh))
+	if not data.content then
+		insert(data.categories, {cat = "Chinese terms with uncreated forms", lang = langs.zh})
 	end
 	
 	for _, word in ipairs(m_data.categorize) do
