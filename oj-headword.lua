@@ -19,32 +19,35 @@ local glossary_link = require_when_needed(headword_utilities_module, "glossary_l
 local links_module = "Module:links"
 local parse_interface_module = "Module:parse interface"
 
-local rfind = m_str_utils.find
-local ulower = m_str_utils.lower
 local insert = table.insert
 
-local list_param = {list = true, disallow_holes = true}
 local boolean_param = {type = "boolean"}
 
-local legal_verb_class = {
-	["vii"] = {"inanimate intransitive verbs", {["+"] = "", p = "inherently plural"}},
-	["vai"] = {"animate intransitive verbs", {
-		["+"] = "", ["2"] = "pseudo-VAI", o = "optional object", p = "inherently plural"}
+local legal_verb_classes = {
+	["vii"] = {"inanimate intransitive", "VII (<<inanimate>>-subject <<intransitive>>)",
+		{["+"] = "", p = "inherently plural"}},
+	["vai"] = {"animate intransitive", "VAI (<<animate>>-subject <<intransitive>>)",
+		{["+"] = "", ["2"] = "pseudo-VAI", o = "optional object", p = "inherently plural"}},
+	["vti"] = {"transitive inanimate", "VTI (<<transitive>> <<inanimate>>-object)",
+		{["+"] = "{{m|oj||-am}} stem", ["2"] = "{{m|oj||-oo}} stem", ["3"] = "{{m|oj||-i}} stem",
+		 ["4"] = "{{m|oj||-aam}} stem"}
 	},
-	["vti"] = {"transitive inanimate verbs", {
-		["+"] = "{{m|oj||-am}} stem", ["2"] = "{{m|oj||-oo}} stem", ["3"] = "{{m|oj||-i}} stem",
-		["4"] = "{{m|oj||-aam}} stem"}
-	},
-	["vta"] = {"transitive animate verbs", {["+"] = "", i = "inverse only"}},
+	["vta"] = {"transitive animate", "VTA (<<transitive>> <<animate>>-object)",
+		{["+"] = "", i = "inverse only"}},
 }
 
 local m_scripts = require("Module:scripts")
 local Latn = m_scripts.getByCode("Latn")
 local Cans = m_scripts.getByCode("Cans")
 
+local function track(page)
+	require("Module:debug/track")("oj-headword/" .. page)
+	return true
+end
+
 -- Parse an inflection. The raw arguments come from `args[field]`, which is parsed for inline modifiers. Multiple
 -- comma-separated values are allowed.
-local function parse_inflection(data, args, field, is_head)
+local function parse_inflection(args, field, is_head)
 	local argfield = field
 	local argpref = field
 	if type(argfield) == "table" then
@@ -53,31 +56,21 @@ local function parse_inflection(data, args, field, is_head)
 	end
 	local include_mods
 	if is_head then
-		include_mods = {{"oth", true}}
+		include_mods = {}
 	else
-		include_mods = {{"oth", true}, "g"}
+		include_mods = {{"oth", true}, "t"}
 	end
-	if is_head then
-		local retval
-		if args[argfield] then
-			retval = m_headword_utilities.parse_term_with_modifiers {
-				val = args[argfield],
-				paramname = field,
-				splitchar = ",",
-				is_head = is_head,
-				include_mods = include_mods,
-			}
-		end
-		return retval or {}
-	else
-		return m_headword_utilities.parse_term_list_with_modifiers {
-			forms = args[argfield],
+	local retval
+	if args[argfield] then
+		retval = m_headword_utilities.parse_term_with_modifiers {
+			val = args[argfield],
 			paramname = field,
 			splitchar = ",",
 			is_head = is_head,
 			include_mods = include_mods,
 		}
 	end
+	return retval or {}
 end
 
 local function insert_inflection(data, terms, label, accel, defgender, track_field, no_label, usually_no_label)
@@ -151,18 +144,23 @@ local function insert_inflection(data, terms, label, accel, defgender, track_fie
 	}
 end
 
+local function insert_inflection(data, terms, label, accel, no_label, usually_no_label)
+	m_headword_utilities.insert_inflection {
+		headdata = data,
+		terms = terms,
+		label = label,
+		accel = accel and {form = accel} or nil,
+		no_label = no_label,
+		usually_no_label = usually_no_label,
+	}
+end
+
 -- Parse and insert an inflection not requiring additional processing into `data.inflections`. The raw arguments come
 -- from `args[field]`, which is parsed for inline modifiers. `label` is the label that the inflections are given;
 -- sections enclosed in <<...>> are linked to the glossary. `accel` is the accelerator form, or nil.
-local function parse_and_insert_inflection(pos, data, args, field, label, accel)
-	m_headword_utilities.parse_and_insert_inflection {
-		headdata = data,
-		forms = args[field],
-		paramname = field,
-		label = label,
-		accel = accel and {form = accel} or nil,
-		splitchar = ",",
-	}
+local function parse_and_insert_inflection(data, args, field, label, accel, no_label, usually_no_label)
+	local terms = parse_inflection(args, field, is_head)
+	insert_inflection(data, terms, label, accel, no_label, usually_no_label)
 end
 
 -- The main entry point.
@@ -186,41 +184,70 @@ function export.show(frame)
 		actual_poscat = require(headword_module).canonicalize_pos(actual_poscat)
 	end
 
+	local indexing_poscat = actual_poscat and "head" or poscat
+
 	local params = {
-		head = {list = true, disallow_holes = true, template_default = def or "gaazhagens"},
-		tr = {list = true, allow_holes = true},
+		head = {template_default = def or "gaazhagens"},
+		oth = true,
 		id = true,
-		sort = true,
-		-- no nolinkhead= because head in 1= should always be specified
-		altform = boolean_param,
 		json = boolean_param,
+		sort = true,
+		nolink = boolean_param,
+		nolinkhead = {alias_of = "nolink"},
+		suffix = boolean_param,
+		nosuffix = boolean_param,
+		altform = boolean_param,
 		pagename = true, -- for testing
 	}
 	if actual_poscat then
 		params[1] = {required = true} -- required but ignored as already processed above
 	end
 
-	if pos_functions[poscat] then
-		local posparams = pos_functions[poscat].params
+	local pos_data = pos_functions[indexing_poscat]
+	local pos_func, pos_not_suffix
+	if pos_data then
+		local pos_params = pos_data.params
 		if type(posparams) == "function" then
 			posparams = posparams(lang)
 		end
-		for key, val in pairs(posparams) do
-			params[key] = val
+		if pos_params then
+			for key, val in pairs(pos_params) do
+				params[key] = val
+			end
 		end
+		pos_func = pos_data.func
+		pos_not_suffix = pos_data.not_suffix
 	end
-
-    local args = require("Module:parameters").process(parargs, params)
 
 	local pagename = args.pagename or mw.loadData(headword_data_module).pagename
 
-	local heads = m_headword_utilities.parse_term_list_with_modifiers {
-		forms = args.head,
-		paramname = "head",
-		is_head = true,
-		include_mods = {"tr"},
-		splitchar = ",",
-	}
+	local user_specified_heads = parse_inflection(args, "head", "is_head")
+	local heads = user_specified_heads
+	local autohead
+	if args.nolink then
+		autohead = pagename
+	else
+		autohead = m_headword_utilities.add_links_to_multiword_term(pagename, {})
+	end
+
+	if not heads[1] then
+		heads = {{term = autohead}}
+	else
+		for _, headobj in ipairs(heads) do
+			local head = headobj.term
+			--if head:find("^~") then
+			--	head = apply_link_modifiers(autohead, head:sub(2))
+			--	headobj.term = head
+			if head:find("^[!?]$") then
+				-- If explicit head= just consists of ! or ?, add it to the end of the default head.
+				headobj.term = autohead .. head
+			elseif head == "+" then
+				headobj.term = autohead
+			elseif head == autohead then
+				track("redundant-head")
+			end
+		end
+	end
 
 	local data = {
 		lang = lang,
@@ -233,100 +260,38 @@ function export.show(frame)
 		sort_key = args.sort,
 		force_cat_output = force_cat,
 		is_suffix = false,
-		no_redundant_head_cat = not heads[1],
 		altform = args.altform,
+		heads = heads,
+		sc = lang:findBestScript(pagename),
 	}
 
-	local sc = lang:findBestScript(pagename)
-	
 	local other_sc
 	
 	if sc:getCode() == "Latn" then
-		other_sc = "Cyrl"
-	elseif sc:getCode() == "Cyrl" then
+		other_sc = "Cans"
+	elseif sc:getCode() == "Cans" then
 		other_sc = "Latn"
 	end
+	data.other_sc = other_sc
 
-	if not heads[1] then
-		heads = {{term = pagename}}
-	end
-	local numheads = #heads
-
-	-- Copy translit in trN= to head structure (it can also be specified using inline modifier <tr:...>).
-	for i, tr in pairs(args.tr) do
-		if type(i) == "number" then
-			if i > numheads then
-				error(("Specified value for tr%s= but only %s head%s available"):format(
-					i, numheads, numheads == 1 and "" or "s"))
-			end
-			heads[i].tr = tr
-		end
-	end
-
-	-- If pagename is Latin or Cyrillic, display the other-script transliteration as an inflection. Use manually
-	-- specified translit if available, otherwise auto-translit.
-	if other_sc then
-		other_sc = require("Module:scripts").getByCode(other_sc)
-		local inflection = {label = other_sc:getCanonicalName() .. " spelling"}
-
-		if heads[1].tr == "-" then
-			inflection.label = "not attested in " .. other_sc:getCanonicalName() .. " spelling"
-		else
-			for _, head in ipairs(heads) do
-				local tr = head.tr
-				
-				if not tr then
-					tr = require("Module:sh-translit").tr(require("Module:links").remove_links(head.term), "sh", sc:getCode())
-				end
-				
-				insert(inflection, {term = tr, sc = other_sc})
-			end
-		end
-		
-		insert(data.inflections, inflection)
-	end
-	-- Now remove the translit from the `heads` structure so it doesn't display in the normal translit slot.
-	for i, head in ipairs(heads) do
-		if head.tr then
-			if not other_sc then
-				error(("Translit specified for head #%s when pagename is neither Latin nor Cyrillic"):format(i))
-			end
-			head.tr = nil
-		end
-	end
-	data.heads = heads
-
-	local singular_poscat = require(en_utilities_module).singularize(actual_poscat or poscat)
-
-	local needs_accents = false
-	for _, head in ipairs(heads) do
-		-- FIXME, should split by space and check each word
-		local lower_nfd_head = ulower(unfd(head.term))
-		if rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "]") and not
-			rfind(lower_nfd_head, "[" .. vowels_that_can_bear_tone .. "][" .. tonal_accents .. "]") then
-			needs_accents = true
-			break
-		end
-	end
-	if needs_accents then
-		insert(data.categories, "Requests for accents in " .. langname .. " " .. singular_poscat .. " entries")
-	end		
-
-	if pagename:find("^%-") and poscat ~= "suffixes" and poscat ~= "suffix forms" then
+	if args.suffix or not args.nosuffix and pagename:find("^%-") and not pagename:find("^%-%-") and
+		poscat ~= "suffix forms" and (not pos_not_suffix or not pos_not_suffix(args, data)) then
 		data.is_suffix = true
 		data.pos_category = "suffixes"
+		local singular_poscat = require(en_utilities_module).singularize(actual_poscat or poscat)
 		insert(data.categories, langname .. " " .. singular_poscat .. "-forming suffixes")
 		insert(data.inflections, {label = singular_poscat .. "-forming suffix"})
 	end
 
-	if pos_functions[poscat] then
-		pos_functions[poscat].func(args, data)
+	if args.oth then
+		if not other_sc then
+			error("Other-script value specified for head when pagename is neither Latin nor Canadian syllabics")
+		end
+		parse_and_insert_inflection(data, args, "oth", other_sc:getCanonicalName() .. " spelling")
 	end
 
-	-- unfd (mw.ustring.toNFD) performs decomposition, so letters that decompose to an ASCII vowel and a diacritic,
-	-- such as é, are counted as vowels and do not need to be included in the pattern.
-	if not pagename:find("[ %-]") and not rfind(ulower(unfd(pagename)), V) then
-		insert(data.categories, langname .. " words spelled without vowels")
+	if pos_func then
+		pos_func(args, data)
 	end
 
     if args.json then
@@ -336,25 +301,37 @@ function export.show(frame)
 	return require(headword_module).full_headword(data)
 end
 
+local function validate_genders(genders)
+	for _, gspec in ipairs(genders) do
+		local g = gspec.spec
+		if g ~= "an" and g ~= "in" and g ~= "an-p" and g ~= "in-p" and g ~= "?" then
+			error("Unrecognized gender: '" .. g .. "'")
+		end
+	end
+end
+
 pos_functions["nouns"] = {
 	params = {
-		g = {type = "gender", default = "?"},
-		pl = list_param, -- plural
-		obv = list_param, -- obviative
-		loc = list_param, -- locative
-		locdist = list_param, -- locative distributive
-		dim = list_param, -- diminutive
-		pej = list_param, -- pejorative
-		dimpej = list_param, -- diminutive pejorative
-		pejpl = list_param, -- pejorative plural
-		contemp = list_param, -- contemptive
-		stem = list_param, -- stem
-		final = list_param, -- final
-		finalpl = list_param, -- final plural
-		pret = list_param, -- preterit
+		g = {type = "genders", default = "?"},
+		pl = true, -- plural
+		obv = true, -- obviative
+		loc = true, -- locative
+		locdist = true, -- locative distributive
+		dim = true, -- diminutive
+		pej = true, -- pejorative
+		dimpej = true, -- diminutive pejorative
+		pejpl = true, -- pejorative plural
+		contemp = true, -- contemptive
+		stem = true, -- stem
+		final = true, -- final
+		finalpl = true, -- final plural
+		pret = true, -- preterit
 		oblposs = boolean_param, -- obligatorily possessed; should categorize as 'dependent inanimate nouns' or 'dependent animate nouns' and turn off suffix handling
 	},
 	func = function(args, data)
+		data.genders = args.g
+		validate_genders(data.genders)
+
 		local script_code = args[1]
 		local translit = args[2]
 		script = Latn
