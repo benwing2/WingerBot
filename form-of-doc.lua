@@ -231,12 +231,75 @@ function export.paramdoc(args)
 	local tempname = template_name()
 	local art = args.art or get_indefinite_article(tempname)
 	local sgdescof = args.sgdescof or art .. " " .. tempname
-	ins("''Positional (unnamed) parameters:''\n")
-	local lang = args.lang
-	if args.lang then
+
+	ins("''Required parameters:''\n")
+	local numbered_param_group = {}
+	local paramdoc_spec = {}
+	if not args.lang then
+		insert(numbered_param_group, {"lang", param = "1", required = true})
+	end
+	insert(numbered_param_group,
+		{"linked_term", param = args.lang and "1" or "2", descof = sgdescof, lang = args.lang, multiple_terms = true,
+		inline_mods = true, lang_prefix = true, required = true})
+	local linked_param_group = {
+		{"alt", param = {args.lang and "2" or "3", "alt"}},
+		{"t", param = {"t", args.lang and "3" or "4", "gloss"}},
+		{"g"},
+		{"tr"},
+		{"ts"},
+		{"pos"},
+		{"ng"},
+		{"lit"},
+		{"id"},
+		{"sc"},
+	}
+	local other_param_group = { 
+		{"cat", list = true, multiple_items = true},
+		{"addl"},
+	}
+	if args.withfrom then
+		insert(other_param_group, {"from", list = true})
+
+	if args.withfrom then
+		param_and_doc("from", true, false, "A label (see {{tl|label}}) that gives additional information on " ..
+		"the language variety that the term belongs to, the place that it originates from, or something similar.")
+	end
+	if args.withdot then
+		param_and_doc("dot", false, false,
+		"A character to replace the final dot that is normally shown automatically.")
+		param_and_doc("nodot", false, false, "If {{para|nodot|1}}, then no automatic dot will be shown.")
+	end
+	if (args.withcap or args.withencap) and not args.usedwithlimitedlangs then
+		-- Don't even mention if usedwithlimitedlangs=1, because there are unlikely to be English examples.
+		param_and_doc("nocap", false, false, "If {{para|nocap|1}}, then the first letter will be in lowercase." ..
+			(args.withencap and " Only useful for English, because other languages already begin with a lowercase letter."
+			or ""))
+	end
+	if not args.withcap then
+		param_and_doc("cap", false, false, "If {{para|cap|1}}, then the first letter will be in capitalized. " ..
+		"Not generally recommended" .. (args.withencap and "" or  ", except for English definitions") ..
+		", because non-English definitions should begin with a lowercase letter and be formatted like a phrase, " ..
+		"rather than a full sentence.")
+	end
+	if args.cat and args.cat[1] then
+		param_and_doc("nocat", false, false, "Disable categorization of categories built into the template. " ..
+		"For example, {{tl|ellipsis of|en|...}} normally categories into e.g. [[:Category:English ellipses]], but " ..
+		"this can be disabled using {{para|nocat|1}}. This does not affect categories explicitly specified in the " ..
+		"template call itself using {{para|cat}}.")
+	end
+	param_and_doc("notext", false, false, "If {{para|notext|1}}, don't display the initial text preceding the " ..
+	"term(s), but only the actual term or terms. The page is still categorized as normal, unless {{para|nocat|1}} " ..
+	"is given.")
+	param_and_doc("id", false, false, "A sense id for the term, which links to anchors on the page set by " ..
+	"the {{tl|senseid}} template.")
+	param_and_doc("sc", false, false, "Script code to use, if script detection does not work. See " ..
+	"[[Wiktionary:Scripts]]. Rarely needs to be given.")
+	param_and_doc("sort", false, false, "Sort key for sorting any categories the page is added to. Rarely needs " ..
+	"to be given except for Japanese, and even then, only when there are multiple possible pronunciations.")
+
 		param_and_doc("1", false, true,
 		"The term to link to (which this page is " .. sgdescof .. "). This should include any needed diacritics as " ..
-		"appropriate to " .. lang_name(lang, "lang") .. ". These diacritics will automatically be stripped out in " ..
+		"appropriate to " .. lang_name(args.lang, "lang") .. ". These diacritics will automatically be stripped out in " ..
 		"the appropriate fashion in order to create the link to the page. This parameter can also include multiple " ..
 		"terms separated by a comma, as long as there is no space after the comma, and each such term can have " ..
 		"inline modifiers specifying transliterations, display forms, qualifiers, labels, genders and other " ..
@@ -264,13 +327,7 @@ function export.paramdoc(args)
 		"indicate diacritics; instead, put the diacritics in the second parameter.")
 	end
 	ins("''Named parameters:''\n")
-	if args.etymtemp == 'contraction' then
-		param_and_doc("mandatory", false, false,
-			"If {{para|mandatory|1}}, indicates that the contraction is mandatory.")
-		param_and_doc("optional", false, false,
-			"If {{para|optional|1}}, indicates that the contraction is optional.")
-	end
-	param_and_doc({"t", lang and "3" or "4"}, false, false, "A gloss or short translation of the term linked " ..
+	param_and_doc({"t", args.lang and "3" or "4"}, false, false, "A gloss or short translation of the term linked " ..
 	"to. <small>The parameter {{para|gloss}} is a deprecated synonym; please do not use.</small>")
 	param_and_doc("tr", false, false,
 		"Transliteration for non-Latin-script terms, if different from the automatically-generated one.")
