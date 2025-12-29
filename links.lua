@@ -43,7 +43,7 @@ local tostring = tostring
 local type = type
 local unstrip = mw.text.unstrip
 
-local NAMESPACE = get_current_title().namespace
+local NAMESPACE = get_current_title().nsText
 
 local function anchor_encode(...)
 	anchor_encode = require(memoize_module)(mw.uri.anchorEncode, true)
@@ -822,7 +822,7 @@ function export.embedded_language_links(data)
 	term = selective_trim(term)
 	-- FIXME: Double-escape any percent-signs, because we don't want to treat non-linked text as having percent-encoded characters. This is a hack: percent-decoding should come out of [[Module:languages]] and only dealt with in this module, as it's specific to links.
 	term = term:gsub("%%", "%%25")
-	return (lang:makeDisplayText(term, sc, true))
+	return lang:makeDisplayText(term, sc, true)
 end
 
 function export.mark(text, item_type, face, lang)
@@ -1141,19 +1141,16 @@ The function will:
 * If <code class="n">pretext</code> or <code class="n">posttext</code> is specified, this is text to (respectively) prepend or append to the output, directly before processing qualifiers, labels and references. This can be used to add arbitrary extra text inside of the qualifiers, labels and references.
 * If <code class="n">show_qualifiers</code> is specified or the `show_qualifiers` field is set, left and right qualifiers, accent qualifiers, labels and references will be displayed, otherwise they will be ignored. (This is because a fair amount of code stores qualifiers, labels and/or references in these fields and displays them itself, rather than expecting {{code|lua|full_link()}} to display them.)]==]
 function export.full_link(data, face, allow_self_link, show_qualifiers)
-	if data.cats ~= nil then
-		track("cats")
-	end
-	-- Prevent data from being destructively modified.
-	local data = shallow_copy(data)
-
 	if type(data) ~= "table" then
 		error("The first argument to the function full_link must be a table. "
 			.. "See Module:links/documentation for more information.")
 	elseif data.term and data.term:find("\\", nil, true) or data.alt and data.alt:find("\\", nil, true) then
 		track("escaped", "full_link")
 	end
-	
+
+	-- Prevent data from being destructively modified.
+	local data = shallow_copy(data)
+
 	-- FIXME: this shouldn't be added to `data`, as that means the input table needs to be cloned.
 	data.cats = {}
 	
@@ -1188,7 +1185,8 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 	
 	-- Create the link
 	local output = {}
-	local id, no_alt_ast, srwc, accel, nevercalltr = data.id, data.no_alt_ast, data.suppress_redundant_wikilink_cat, data.accel, data.never_call_transliteration_module
+	local id, no_alt_ast, srwc, accel, nevercalltr = data.id, data.no_alt_ast, data.suppress_redundant_wikilink_cat,
+		data.accel, data.never_call_transliteration_module
 
 	for i in ipairs(terms) do
 		local link
@@ -1255,7 +1253,7 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 				if i > 1 then
 					remove(output)
 					break
-				elseif NAMESPACE ~= 10 then -- Template:
+				elseif NAMESPACE ~= "Template" then
 					insert(cats, lang:getFullName() .. " term requests")
 				end
 				link = "<small>[Term?]</small>"
@@ -1291,28 +1289,24 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 					text = export.remove_links(text, true)
 				end
 	
-				local automated_tr, tr_categories
-				automated_tr, data.tr_fail, tr_categories = lang:transliterate(text, data.sc[1])
+				local automated_tr = lang:transliterate(text, data.sc[1])
 	
-				if automated_tr or data.tr_fail then
+				if automated_tr then
 					local manual_tr = data.tr[1]
 	
 					if manual_tr then
-						if (export.remove_links(manual_tr) == export.remove_links(automated_tr)) and (not data.tr_fail) then
+						if export.remove_links(manual_tr) == export.remove_links(automated_tr) then
 							insert(cats, lang:getFullName() .. " terms with redundant transliterations")
-						elseif not data.tr_fail then
+						else
 							-- Prevents Arabic root categories from flooding the tracking categories.
-							if NAMESPACE ~= 14 then -- Category:
+							if NAMESPACE ~= "Category" then
 								insert(cats, lang:getFullName() .. " terms with non-redundant manual transliterations")
 							end
 						end
 					end
 					
-					if (not manual_tr) or lang:overrideManualTranslit(data.sc[1]) then
+					if not manual_tr or lang:overrideManualTranslit(data.sc[1]) then
 						data.tr[1] = automated_tr
-						for _, category in ipairs(tr_categories) do
-							insert(cats, category)
-						end
 					end
 				end
 			end
@@ -1320,7 +1314,7 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 	end
 
 	-- Link to the transliteration entry for languages that require this
-	if data.tr[1] and lang:link_tr(data.sc[1]) and not (data.tr[1]:match("%[%[(.-)%]%]") or data.tr_fail) then
+	if data.tr[1] and lang:link_tr(data.sc[1]) and not data.tr[1]:match("%[%[(.-)%]%]") then
 		data.tr[1] = simple_link(
 			data.tr[1],
 			nil,
@@ -1332,7 +1326,7 @@ function export.full_link(data, face, allow_self_link, show_qualifiers)
 			no_alt_ast,
 			srwc
 		)
-	elseif data.tr[1] and not (lang:link_tr(data.sc[1]) or data.tr_fail) then
+	elseif data.tr[1] and not lang:link_tr(data.sc[1]) then
 		-- Remove the pseudo-HTML tags added by remove_links.
 		data.tr[1] = data.tr[1]:gsub("</?link>", "")
 	end
