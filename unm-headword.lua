@@ -161,8 +161,9 @@ function export.show(frame)
 			if head:find("^[!?]$") then
 				-- If explicit head= just consists of ! or ?, add it to the end of the default head.
 				headobj.term = autohead .. head
-			end
-			if head == autohead then
+			elseif head == "+" then
+				headobj.term = autohead
+			elseif head == autohead then
 				track("redundant-head")
 			end
 		end
