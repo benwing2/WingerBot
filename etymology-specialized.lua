@@ -139,7 +139,8 @@ function export.specialized_borrowing(data)
 	end
 	
 	text = data.notext and "" or text
-	return text .. require(etymology_module).format_sources {
+	return text
+	local sourcetext = require(etymology_module).format_sources {
 		lang = lang,
 		sources = sources,
 		terms = terms,
@@ -147,7 +148,8 @@ function export.specialized_borrowing(data)
 		categories = categories,
 		nocat = data.nocat,
 		sourceconj = data.sourceconj,
-	} .. require(etymology_module).format_links(terms, data.conj, "etymology/specialized")
+	}
+	return text .. require(etymology_module).format_links(terms, data.conj, "etymology/specialized", sourcetext)
 end
 
 

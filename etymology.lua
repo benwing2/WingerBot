@@ -93,23 +93,27 @@ local function lang_is_source(lang, source)
 	return lang:getCode() == source:getCode() or lang:hasParent(source)
 end
 
--- Format one or more links as specified in `termobjs`, a list of term objects of the format accepted by full_link() in
--- [[Module:links]], additionally with optional qualifiers, labels and references. `conj` is used to join multiple
--- terms and must be specified if there is more than one term. `template_name` is the template name used in debug
--- tracking and must be specified. The return value begins with a space if there is anything to display (which is always
--- the case unless there is a single term with the value "-").
-function export.format_links(termobjs, conj, template_name)
+--[==[
+Format one or more links as specified in `termobjs`, a list of term objects of the format accepted by `full_link()` in
+[[Module:links]], additionally with optional qualifiers, labels and references. `conj` is used to join multiple terms
+and must be specified if there is more than one term. `template_name` is the template name used in debug tracking and
+must be specified. Optional `sourcetext` is text to prepend to the concatenated terms, separated by a space if the
+concatenated terms are non-empty (which is always the case unless there is a single term with the value "-"). If
+`qualifiers_labels_on_outside` is given, any qualifiers, labels or references specified in the first term go on the
+outside of (i.e before) `sourcetext`; otherwise they will end up on the inside.
+]==]
+function export.format_links(termobjs, conj, template_name, sourcetext, qualifiers_labels_on_outside)
+	if not template_name then
+		error("Internal error: Must specify `template_name` to format_links()")
+	end
 	for i, termobj in ipairs(termobjs) do
-		local term = termobj.term
 		if termobj.lang:hasType("family") then
-			if term and term ~= "-" then
+			if termobj.term and termobj.term ~= "-" then
 				debug_track(template_name .. "/family-with-term")
 			end
-			term = "-"
-			termobj.term = term
+			termobj.term = "-"
 		end
-		template_name = template_name or "derived"
-		if term == "-" then
+		if termobj.term == "-" then
 			--[=[
 			[[Special:WhatLinksHere/Wiktionary:Tracking/cognate/no-term]]
 			[[Special:WhatLinksHere/Wiktionary:Tracking/derived/no-term]]
@@ -117,17 +121,18 @@ function export.format_links(termobjs, conj, template_name)
 			[[Special:WhatLinksHere/Wiktionary:Tracking/calque/no-term]]
 			]=]
 			debug_track(template_name .. "/no-term")
-			termobjs[i] = ""
+			termobjs[i] = i == 1 and sourcetext or ""
 		else
-			termobjs[i] = full_link(termobj, "term", nil, "show qualifiers")
+			if i == 1 and qualifiers_labels_on_outside and sourcetext then
+				termobj.pretext = sourcetext .. " "
+				sourcetext = nil
+			end
+			termobjs[i] = (i == 1 and sourcetext and sourcetext .. " " or "") ..
+				full_link(termobj, "term", nil, "show qualifiers")
 		end
 	end
 
-	local retval = join_segs(termobjs, conj)
-	if retval ~= "" then
-		retval = " " .. retval
-	end
-	return retval
+	return join_segs(termobjs, conj)
 end
 
 function export.get_display_and_cat_name(source, raw)
@@ -203,17 +208,18 @@ source language will be linked to the Wikipedia entry for the language, just as 
 
 `data` contains the following fields:
 * `lang`: The destination language object into which the terms were borrowed, inherited or otherwise derived. Used for
-          categorization and can be nil, as with {{tl|cog}}.
+   categorization and can be nil, as with {{tl|cog}}.
 * `sources`: List of source objects. Most commonly there is only one. If there are multiple, the non-final ones are
-             handled specially; see above.
+   handled specially; see above.
 * `terms`: List of term objects. Most commonly there is only one. If there are multiple source objects as well as
-           multiple term objects, the non-final source objects link to the first term object.
+   multiple term objects, the non-final source objects link to the first term object.
 * `sort_key`: Sort key for categories. Usually nil.
 * `categories`: Categories to add to the page. Additional categories may be added to `categories` based on the source
-                languages ('''in which case `categories` is destructively modified'''). If `lang` is nil, no categories
-				will be added.
+   languages ('''in which case `categories` is destructively modified'''). If `lang` is nil, no categories will be
+   added.
 * `nocat`: Don't add any categories to the page.
-* `sourceconj`: Conjunction used to separate multiple source languages. Defaults to {"and"}.
+* `sourceconj`: Conjunction used to separate multiple source languages. Defaults to {"and"}. Currently recognized
+   values are `and`, `or`, `,`, `;`, `/` and `~`.
 * `borrowing_type`: Borrowing type used in categories, such as {"learned borrowings"}. Defaults to {"terms derived"}.
 * `force_cat`: Force category generation on non-mainspace pages.
 ]==]
@@ -271,7 +277,7 @@ end
 
 -- Internal implementation of {{cognate}}/{{cog}} template.
 function export.format_cognate(data)
-	return export.format_derived{
+	return export.format_derived {
 		sources = data.sources,
 		terms = data.terms,
 		sort_key = data.sort_key,
@@ -282,25 +288,38 @@ function export.format_cognate(data)
 	}
 end
 
--- Internal implementation of {{derived}}/{{der}} template. This is called externally from [[Module:affix]],
--- [[Module:affixusex]] and [[Module:see]] and needs to support qualifiers, labels and references on the outside
--- of the sources for use by those modules.
+--[==[
+Internal implementation of {{derived}}/{{der}} template. This dispThis is called externally from [[Module:affix]],
+[[Module:affixusex]] and [[Module:see]] and needs to support qualifiers, labels and references on the outside
+of the sources for use by those modules.
+
+`data` contains the following fields:
+* `lang`: The destination language object into which the terms were derived. Used for categorization and can be nil, as
+   with {{tl|cog}}; in this case, no categories are added.
+* `sources`: List of source objects. Most commonly there is only one. If there are multiple, the non-final ones are
+   handled specially; see `format_sources()`.
+* `terms`: List of term objects. Most commonly there is only one. If there are multiple source objects as well as
+   multiple term objects, the non-final source objects link to the first term object.
+* `conj`: Conjunction used to separate multiple terms. '''Required'''. Currently recognized values are `and`, `or`, `,`,
+   `;`, `/` and `~`.
+* `sourceconj`: Conjunction used to separate multiple source languages. Defaults to {"and"}. Currently recognized
+   values are as for `conj` above.
+* `qualifiers_labels_on_outside`: If specified, any qualifiers, labels or references in the first term in `terms` will
+   be displayed on the outside of (before) the source language(s) in `sources`. Normally this should be specified if
+   there is only one term possible in `terms`.
+* `template_name`: Name of the template invoking this function. Must be specified. Only used for tracking pages.
+* `sort_key`: Sort key for categories. Usually nil.
+* `categories`: Categories to add to the page. Additional categories may be added to `categories` based on the source
+   languages ('''in which case `categories` is destructively modified'''). If `lang` is nil, no categories will be
+   added.
+* `nocat`: Don't add any categories to the page.
+* `borrowing_type`: Borrowing type used in categories, such as {"learned borrowings"}. Defaults to {"terms derived"}.
+* `force_cat`: Force category generation on non-mainspace pages.
+]==]
 function export.format_derived(data)
 	local terms = data.terms
-	local result = export.format_sources(data) .. export.format_links(terms, data.conj, data.template_name)
-	local q, qq, l, ll, refs = data.q, data.qq, data.l, data.ll, data.refs
-	if q and q[1] or qq and qq[1] or l and l[1] or ll and ll[1] or refs and refs[1] then
-		result = format_qualifiers{
-			lang = terms[1].lang,
-			text = result,
-			q = q,
-			qq = qq,
-			l = l,
-			ll = ll,
-			refs = refs,
-		}
-	end
-	return result
+	local sourcetext = export.format_sources(data)
+	return export.format_links(terms, data.conj, data.template_name, sourcetext, data.qualifiers_labels_on_outside)
 end
 
 function export.insert_borrowed_cat(categories, lang, source)
@@ -327,7 +346,7 @@ function export.format_borrowed(data)
 	data = shallow_copy(data)
 	data.categories = categories
 
-	return export.format_sources(data) .. export.format_links(data.terms, data.conj, "borrowed")
+	return export.format_links(data.terms, data.conj, "borrowed", export.format_sources(data))
 end
 
 do
@@ -378,7 +397,7 @@ end
 
 -- Internal implementation of {{inherited}}/{{inh}} template.
 function export.format_inherited(data)
-	local lang, terms, sort_key, nocat = data.lang, data.terms, data.sort_key, data.nocat
+	local lang, terms, nocat = data.lang, data.terms, data.nocat
 	local source = terms[1].lang
 	
 	local categories = {}
@@ -388,15 +407,10 @@ function export.format_inherited(data)
 
 	export.check_ancestor(lang, source)
 
-	return export.format_source{
-		lang = lang,
-		source = source,
-		sort_key = sort_key,
-		categories = categories,
-		nocat = nocat,
-		force_cat = data.force_cat,
-	} .. export.format_links(terms, data.conj, "inherited")
-	
+	data = shallow_copy(data)
+	data.categories = categories
+
+	return export.format_links(terms, data.conj, "inherited", export.format_source(data))
 end
 
 -- Internal implementation of "misc variant" templates such as {{abbrev}}, {{clipping}}, {{reduplication}} and the like.
@@ -408,9 +422,35 @@ function export.format_misc_variant(data)
 	end
 	if terms[1] then
 		if not notext then
-			insert(parts, " " .. (data.oftext or "of") .. " ")
+			-- FIXME: If term is given as '-', we should consider displaying just "Clipping" not "Clipping of".
+			insert(parts, " " .. (data.oftext or "of"))
 		end
-		insert(parts, export.format_links(terms, data.conj, "misc_variant"))
+		local termparts = {}
+		-- Make links out of all the parts.
+		for _, termobj in ipairs(terms) do
+			local result
+			if termobj.lang then
+				result = export.format_derived {
+					lang = lang,
+					terms = {termobj},
+					sources = {termobj.lang},
+					template_name = "misc_variant",
+					qualifiers_labels_on_outside = true,
+					force_cat = data.force_cat,
+				}
+			else
+				termobj.lang = lang
+				result = export.format_links({termobj}, nil, "misc_variant")
+			end
+
+			table.insert(termparts, result)
+		end
+
+		local linktext = join_segs(termparts, data.conj)
+		if not notext and linktext ~= "" then
+			insert(parts, " ")
+		end
+		insert(linktext)
 	end
 
 	local categories = {}
@@ -419,7 +459,7 @@ function export.format_misc_variant(data)
 			insert(categories, lang:getFullName() .. " " .. cat)
 		end
 	end
-	if #categories > 0 then
+	if categories[1] then
 		insert(parts, format_categories(categories, lang, data.sort_key, nil, data.force_cat or force_cat))
 	end
 

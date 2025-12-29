@@ -14,7 +14,7 @@ object contains the following fields:
 * `sc`: Overall script object; default for items not specifying their own script.
 * `items`: List of items. Each is an object with the following fields:
 ** `term`: The term (affix or resulting term).
-** `gloss`, `tr`, `ts`, `genders`, `alt`, `id`, `lit`, `pos`: The same as for `full_links()` in [[Module:links]].
+** `gloss`, `tr`, `ts`, `genders`, `alt`, `id`, `lit`, `pos`, `ng`: The same as for `full_links()` in [[Module:links]].
 ** `lang`: Language of the term. Should only be set when the term has its own language, and will cause the
    language to be displayed before the term. Defaults to the overall `lang`.
 ** `sc`: Script of the term. Defaults to the overall `sc`.
@@ -24,16 +24,16 @@ object contains the following fields:
 ** `arrow`: If specified, the separator is a right arrow. If none of `fulljoiner`, `joiner` and `arrow` are given,
    the separator is a right arrow if it's the last item, otherwise a plus sign if it's not the first item, otherwise
    there's no displayed separator.
-** `q`: Left regular qualifier(s) for the term.
-** `qq`: Right regular qualifier(s) for the term.
 ** `l`: Left labels for the term.
 ** `ll`: Right labels for the term.
+** `q`: Left regular qualifier(s) for the term.
+** `qq`: Right regular qualifier(s) for the term.
 ** `refs`: References for the term, in the structure expected by [[Module:references]].
 * `lit`: Overall literal meaning.
-* `q`: Overall left regular qualifier(s).
-* `qq`: Overall right regular qualifier(s).
 * `l`: Overall left labels.
 * `ll`: Overall right labels.
+* `q`: Overall left regular qualifier(s).
+* `qq`: Overall right regular qualifier(s).
 
 '''WARNING:''' This destructively modifies the `items` objects (specifically by adding default values for `lang` and
 `sc`).
@@ -62,27 +62,12 @@ function export.format_affixusex(data)
 		item.lang = item.lang or data.lang
 		item.sc = item.sc or data.sc
 		if item_lang_specific then
-			-- format_derived() processes per-item qualifiers, labels and references, but they end up on the wrong side
-			-- of the source (at least on the left), so we need to move them up.
-			local q = item.q
-			local qq = item.qq
-			local l = item.l
-			local ll = item.ll
-			local refs = item.refs
-			item.q = nil
-			item.qq = nil
-			item.l = nil
-			item.ll = nil
-			item.refs = nil
 			text = require(etymology_module).format_derived {
 				sources = {item.lang},
 				terms = {item},
+				-- Don't need to specify `nocat = true` because we don't pass in `lang`.
 				template_name = "affixusex",
-				q = q,
-				qq = qq,
-				l = l,
-				ll = ll,
-				refs = refs,
+				qualifiers_labels_on_outside = true,
 			}
 		else
 			text = require(links_module).full_link(item, "term", nil, "show qualifiers")

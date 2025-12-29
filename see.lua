@@ -70,32 +70,16 @@ function export.see(frame)
 	ins("''")
 
 	local termparts = {}
-	-- Make links out of all the parts
+	-- Make links out of all the parts.
 	for _, item in ipairs(items) do
 		local result
 		if item.lang then
-			-- format_derived() processes per-item qualifiers, labels and references, but they end up on the wrong side
-			-- of the source (at least on the left), so we need to move them up.
-			local q = item.q
-			local qq = item.qq
-			local l = item.l
-			local ll = item.ll
-			local refs = item.refs
-			item.q = nil
-			item.qq = nil
-			item.l = nil
-			item.ll = nil
-			item.refs = nil
 			result = require(etymology_module).format_derived {
 				terms = {item},
 				sources = {item.lang},
-				nocat = true,
+				-- Don't need to specify `nocat = true` because we don't pass in `lang`.
 				template_name = "see",
-				q = q,
-				qq = qq,
-				l = l,
-				ll = ll,
-				refs = refs,
+				qualifiers_labels_on_outside = true,
 			}
 		else
 			local raw_term = item.alt or item.term

@@ -559,31 +559,16 @@ function export.link_term(part, data)
 	local result
 
 	if part.part_lang then
-		-- format_derived() processes per-part qualifiers, labels and references, but they end up on the wrong side
-		-- of the source (at least on the left), so we need to move them up.
-		local q = part.q
-		local qq = part.qq
-		local l = part.l
-		local ll = part.ll
-		local refs = part.refs
-		part.q = nil
-		part.qq = nil
-		part.l = nil
-		part.ll = nil
-		part.refs = nil
 		result = require(etymology_module).format_derived {
 			lang = data.lang,
 			terms = {part},
 			sources = {part.lang},
 			sort_key = data.sort_key,
 			nocat = data.nocat,
+			template_name = "affix",
+			qualifiers_labels_on_outside = true,
 			borrowing_type = data.borrowing_type,
 			force_cat = data.force_cat or debug_force_cat,
-			q = q,
-			qq = qq,
-			l = l,
-			ll = ll,
-			refs = refs,
 		}
 	else
 		result = m_links.full_link(part, "term", nil, "show qualifiers")
