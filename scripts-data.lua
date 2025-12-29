@@ -281,6 +281,7 @@ m["Armn"] = process_ranges{
 		0xFB13, 0xFB17,
 	},
 	capitalized = true,
+	translit = "Armn-translit",
 }
 
 m["Avst"] = process_ranges{
@@ -474,6 +475,7 @@ m["Brah"] = process_ranges{
 		from = {"𑀅𑀸", "𑀋𑀾", "𑀏𑁂"},
 		to = {"𑀆", "𑀌", "𑀐"}
 	},
+	translit = "Brah-translit",
 }
 
 m["Brai"] = process_ranges{
@@ -874,6 +876,7 @@ m["Geok"] = process_ranges{
 	},
 	varieties = {"Nuskhuri", "Asomtavruli"},
 	capitalized = true,
+	translit = "Geok-translit",
 }
 
 m["Geor"] = process_ranges{
@@ -888,6 +891,7 @@ m["Geor"] = process_ranges{
 	},
 	varieties = {"Mkhedruli", "Mtavruli"},
 	capitalized = true,
+	translit = "Geor-translit",
 }
 
 m["Glag"] = process_ranges{
@@ -1063,6 +1067,7 @@ m["Grek"] = process_ranges{
 		display_text = m["Grek"].display_text,
 		strip_diacritics = "Polyt-stripdiacritics",
 		sort_key = m["Grek"].sort_key,
+		translit = "grc-translit",
 	}
 
 m["Gujr"] = process_ranges{
@@ -1405,6 +1410,7 @@ m["Ital"] = process_ranges{
 		0x10300, 0x10323,
 		0x1032D, 0x1032F,
 	},
+	translit = "Ital-translit",
 }
 
 m["Java"] = process_ranges{
@@ -1581,6 +1587,7 @@ m["Knda"] = process_ranges{
 		from = {"ಉಾ", "ಋಾ", "ಒೌ"},
 		to = {"ಊ", "ೠ", "ಔ"}
 	},
+	translit = "kn-translit",
 }
 
 m["Kpel"] = {
@@ -1827,6 +1834,13 @@ m["Lisu"] = process_ranges{
 		from = {"['’]", "[.ꓸ][.ꓸ]", "[.ꓸ][,ꓹ]"},
 		to = {"ʼ", "ꓺ", "ꓻ"}
 	},
+	translit = "Lisu-translit",
+	sort_key = {
+		from = {"𑾰"},
+		to = {"ꓬ" .. p[1]}
+	},
+}
+
 }
 
 m["Loma"] = {
@@ -1899,6 +1913,7 @@ m["Mani"] = process_ranges{
 		0x10AEB, 0x10AF6,
 	},
 	direction = "rtl",
+	translit = "Mani-translit",
 }
 
 m["Marc"] = process_ranges{
@@ -1987,6 +2002,7 @@ m["Mlym"] = process_ranges{
 		from = {"ഇൗ", "ഉൗ", "എെ", "ഒാ", "ഒൗ", "ക്‍", "ണ്‍", "ന്‍റ", "ന്‍", "മ്‍", "യ്‍", "ര്‍", "ല്‍", "ള്‍", "ഴ്‍", "െെ", "ൻ്റ"},
 		to = {"ഈ", "ഊ", "ഐ", "ഓ", "ഔ", "ൿ", "ൺ", "ൻറ", "ൻ", "ൔ", "ൕ", "ർ", "ൽ", "ൾ", "ൖ", "ൈ", "ന്റ"}
 	},
+	translit = "ml-translit",
 }
 
 m["Modi"] = process_ranges{
@@ -2032,6 +2048,7 @@ do
 		direction = "vertical-ltr",
 		display_text = Mong_displaytext,
 		strip_diacritics = Mong_displaytext,
+		translit = "Mong-translit",
 	}
 
 		m["mnc-Mong"] = process_ranges{
@@ -2063,6 +2080,7 @@ do
 			},
 			direction = "vertical-ltr",
 			parent = "Mong",
+			translit = "mnc-translit",
 		}
 		
 		m["sjo-Mong"] = process_ranges{
@@ -2116,6 +2134,7 @@ do
 			},
 			direction = "vertical-ltr",
 			parent = "Mong",
+			translit = "xwo-translit",
 		}
 end
 
@@ -2234,6 +2253,7 @@ m["Narb"] = process_ranges{
 		0x10A80, 0x10A9F,
 	},
 	direction = "rtl",
+	translit = "Narb-translit",
 }
 
 m["Nbat"] = process_ranges{
@@ -2349,6 +2369,7 @@ m["Orkh"] = process_ranges{
 		0x10C00, 0x10C48,
 	},
 	direction = "rtl",
+	translit = "Orkh-translit",
 }
 
 m["Orya"] = process_ranges{
@@ -2511,6 +2532,7 @@ m["Phnx"] = process_ranges{
 		0x1091F, 0x1091F,
 	},
 	direction = "rtl",
+	translit = "Phnx-translit",
 }
 
 m["Plrd"] = process_ranges{
@@ -2629,6 +2651,7 @@ m["Sarb"] = process_ranges{
 		0x10A60, 0x10A7F,
 	},
 	direction = "rtl",
+	translit = "Sarb-translit",
 }
 
 m["Saur"] = process_ranges{
@@ -2684,6 +2707,7 @@ m["Shrd"] = process_ranges{
 		0xA838, 0xA838,
 		0x11180, 0x111DF,
 	},
+	translit = "Shrd-translit",
 }
 
 m["Shui"] = {
@@ -2702,6 +2726,7 @@ m["Sidd"] = process_ranges{
 		0x11580, 0x115B5,
 		0x115B8, 0x115DD,
 	},
+	translit = "Sidd-translit",
 }
 
 m["Sidt"] = {
@@ -2955,6 +2980,7 @@ m["Tang"] = process_ranges{
 		0x18D00, 0x18D08,
 	},
 	spaces = false,
+	translit = "Tang-translit",
 }
 
 m["Tavt"] = process_ranges{
@@ -3091,6 +3117,7 @@ do
 		display_text = Tibt_displaytext,
 		strip_diacritics = Tibt_displaytext,
 		sort_key = "Tibt-sortkey",
+		translit = "Tibt-translit",
 	}
 	
 		m["sit-tam-Tibt"] = {
@@ -3111,6 +3138,7 @@ do
 			display_text = m["Tibt"].display_text,
 			strip_diacritics = m["Tibt"].strip_diacritics,
 			sort_key = m["Tibt"].sort_key,
+			translit = m["Tibt"].translit,
 		}
 end
 
