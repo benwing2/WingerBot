@@ -13,6 +13,7 @@ local JSON_module = "Module:JSON"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
 local parameters_module = "Module:parameters"
+local scripts_module = "Module:scripts"
 local string_utilities_module = "Module:string utilities"
 local utilities_module = "Module:utilities"
 
@@ -25,6 +26,7 @@ local format_categories = require_when_needed(utilities_module, "format_categori
 
 local uupper = m_string_utilities.upper
 local ulower = m_string_utilities.lower
+local ufind = m_string_utilities.find
 local insert = table.insert
 local concat = table.concat
 
@@ -50,7 +52,8 @@ end
 --[==[
 Implementation of {{tl|Latn-def}}, {{tl|Cyrl-def}} and the like. Supports the following invocation parameter:
 ; {{para|sc}}
-: Specify the script code. If omitted, taken from the template parameter {{para|sc}}, which must be specified.
+: Specify the script code. If omitted, taken from the template parameter {{para|sc}}; if that is omitted, autodetected
+  from the pagename and/or character specified in 3=. If neither method is possible, an error is thrown.
 ]==]
 function export.show(frame)
 	local list_param = {list = true, disallow_holes = true}
@@ -68,10 +71,11 @@ function export.show(frame)
 	local params = {
 		[1] = {type = "language", required = true, template_default = "und"},
 		[2] = {set = deftypes},
-		sc = {type = "script", required = not iargs.sc},
+		sc = {type = "script"},
 		nocap = boolean_param,
 		dot = true,
 		nodot = boolean_param,
+		pagename = true,
 	}
 	local function merge_params(extra_params)
 		for k, v in pairs(extra_params) do
@@ -82,26 +86,24 @@ function export.show(frame)
 		merge_params {
 			[3] = {required = true},
 			[4] = true,
-			onecase = boolean_param, -- FIXME: pointless param
-			["alphabet name"] = true,
+			linklang = boolean_param,
+			["alphabet"] = true,
+			["alphvar"] = true,
 			t = true,
-			trans = {alias_of = "t"},
 		}
 	elseif deftype == "letter" then
 		merge_params {
 			[3] = {type = "number"},
 			[4] = list_param,
-			indef = boolean_param,
-			["alphabet name"] = true,
+			["alphabet"] = true,
+			["alphvar"] = true,
 		}
 	elseif deftype == "diacritic" then
 		merge_params {
 			[3] = list_param,
 			name = list_param,
-			noname = boolean_param,
 			nopairs = boolean_param,
 			t = {list = true, allow_holes = true},
-			trans = {alias_of = "t", list = true, allow_holes = true},
 		}
 	elseif deftype == "ordinal" then
 		merge_params {
@@ -125,22 +127,68 @@ function export.show(frame)
 	local args = require(parameters_module).process(parent_args, params)
 	local lang = args[1]
 	local sc = args.sc or iargs.sc
+
+	if not sc then
+		if deftype == "letter" or deftype == "ordinal" then
+			sc = lang:findBestScript(args.pagename or mw.loadData("Module:headword/data").pagename)
+		elseif deftype == "diacritic" or deftype == "name" then
+			local test_char = args[3]
+			if type(test_char) == "table" then
+				test_char = test_char[1]
+			end
+			if not test_char then
+				error("No letter is specified in 3= from which the script can be derived; you must specify the script explicitly in sc=")
+			end
+			sc = lang:findBestScript(test_char)
+		else
+			sc = require(scripts_module).getByCode("Latn") -- not actually used
+		end
+	end
 	local scname = sc:getCanonicalName()
 	local sccatname = sc:getCategoryName()
 	local scdisplay = sc:getDisplayForm()
+	local linked_script = ("[[Appendix:%s|%s]]"):format(sccatname, sccatname)
 	local categories = {}
 	ins("<span class='use-with-mention'>")
 	if deftype == "name" then
 		ins(args.nocap and "the" or "The")
-		ins((" name of the [[Appendix:%s|%s]] letter "):format(sccatname, (scdisplay:gsub(" ", "-"))))
-		ins(full_link({ lang = lang, term = args[3], tr = "-", sc = sc}, "term"))
+		ins((" name of the %s letter "):format(linked_script))
+		local function link_to_lang_or_mul(char)
+			-- Either link a character using the language in 1= or using 'mul' (Translingual). We do this to avoid
+			-- yellow links from trying to link to a nonexistent character. Basically, if linklang=1, we always link
+			-- using the language in 1=; otherwise we try to see if the character is in the language's standardChars,
+			-- and if not, link to Translingual. If the standardChars for the language is missing or the character can't
+			-- be looked up (e.g. it's a digraph or trigraph), assume it's in the language and link using the language.
+			local lang_for_linking
+			if args.linklang then
+				lang_for_linking = lang
+			elseif #char > 1 then
+				-- If the character is a digraph or trigraph, we can't check it against standardChars, which only lists
+				-- single Unicode chars.
+				lang_for_linking = lang
+			else
+				local standard_chars = lang:getStandardCharacters(sc)
+				if type(standard_chars) ~= "string" or ufind(standard_chars, char) then
+					-- No standardChars, or character in standardChars; link using lang.
+					lang_for_linking = lang
+				else
+					lang_for_linking = lang_getByCode("mul", true)
+				end
+			end
+			return full_link({ lang = lang_for_linking, term = char, tr = "-", sc = sc}, "term")
+		end
+		ins(link_to_lang_or_mul(args[3]))
 		if args[4] and not args.onecase then
 			ins("/")
-			ins(full_link({lang = lang, term = args[4], tr = "-", sc = sc}, "term"))
+			ins(link_to_lang_or_mul(args[4]))
 		end
-		local alphabet_name = args["alphabet name"]
-		if alphabet_name then
-			ins(", in " .. alphabet_name)
+		if args.alphabet then
+			ins(", in " .. args.alphabet)
+			if args.alphvar then
+				ins(" (" .. args.alphvar .. ")")
+			end
+		elseif args.alphvar then
+			ins(", in " .. args.alphvar)
 		end
 		if args.t then
 			ins(", called ")
@@ -150,33 +198,49 @@ function export.show(frame)
 		insert(categories, ("%s:%s letter names"):format(lang:getFullCode(), scname))
 
 	elseif deftype == "letter" then
-		ins(args.nocap and (args.indef and "a" or "the") or (args.indef and "A" or "The"))
+		local indef = args.indef or not args[3]
+		ins(args.nocap and (indef and "a" or "the") or (indef and "A" or "The"))
 		if args[3] then
 			ins(" ")
 			ins(ordinal_to_word(args[3]))
 		end
+		-- If we're Translingual, don't say we're a letter of the "Translingual alphabet" because there is no such
+		-- thing; instead, say we're a letter of the given script, and omit the coda that says "written in the Foo
+		-- script" because it's redundant.
+		local is_mul = lang:getFullCode() == "mul"
+		local lang_for_linking = is_mul and lang_getByCode("en", true) or lang
 		ins(" [[letter]] of the ")
-		ins(lang:getCanonicalName())
-		ins(" [[alphabet]]")
-		local alphabet_name = args["alphabet name"]
-		if alphabet_name then
-			ins(" (" .. alphabet_name .. ")")
+		if args.alphabet then
+			ins(args.alphabet)
+		elseif is_mul then
+			ins(linked_script)
+		else
+			ins(lang:getCanonicalName())
+			ins(" [[alphabet]]")
 		end
-		ins(", ")
+		if args.alphvar then
+			ins(" (" .. args.alphvar .. ")")
+		end
 		if args[4][1] then
-			ins("called ")
+			ins(", called ")
 			local formatted_names = {}
 			for _, name in ipairs(args[4]) do
-				insert(formatted_names, full_link({lang = lang, term = name}, "term"))
+				insert(formatted_names, full_link({lang = lang_for_linking, term = name}, "term"))
 			end
 			ins(mw.text.listToText(formatted_names, nil, " or "))
-			ins(" and ")
+			if not is_mul then
+				ins(" and ")
+			end
+		elseif not is_mul then
+			ins(", ")
 		end
-		ins(("written in the [[Appendix:%s|%s]]"):format(sccatname, sccatname))
+		if not is_mul then
+			ins(("written in the %s"):format(linked_script))
+		end
 
 	elseif deftype == "diacritic" then
 		ins(args.nocap and "a" or "A")
-		ins((" [[diacritical mark]] of the [[Appendix:%s|%s]]"):format(sccatname, sccatname))
+		ins((" [[diacritical mark]] of the %s"):format(linked_script))
 		if not args.noname and args.name[1] then
 			ins(", called ")
 			local formatted_names = {}
@@ -215,7 +279,7 @@ function export.show(frame)
 			insert(formatted_names, full_link({lang = lang, term = name}, "term"))
 		end
 		ins(mw.text.listToText(formatted_names, nil, " or "))
-		ins((" and written in the [[Appendix:%s|%s]]"):format(sccatname, sccatname))
+		ins((" and written in the %s"):format(linked_script))
 		insert(categories, ("%s ordinal numbers"):format(lang:getFullName()))
 
 	elseif deftype == "syllable" then
