@@ -19,6 +19,8 @@ local insert = table.insert
 --[==[
 Implementation of the letter headword template for a given language (e.g. {{tl|en-letter}}, {{tl|it-letter}} or {{tl|sh-letter}}).
 Supports the following invocation parameters:
+; {{para|pos}}
+: The plural part of speech to use; defaults to {{cd|letters}}. Other possibilities are e.g. {{cd|numeral symbols}} for ordinal letters.
 ; {{para|lang}}
 : The language code of the language of the headword template. Omit for language-agnostic {{tl|letter}}.
 ; {{para|sc}}
@@ -37,6 +39,7 @@ function export.show(frame)
 	local list_param = {list = true, disallow_holes = true}
 	local boolean_param = {type = "boolean"}
 	local iargs = require(parameters_module).process(frame.args, {
+		pos = {default = "letters"},
 		lang = {type = "language", template_default = "und"},
 		sc = {type = "script"},
 		g = {type = "genders"},
@@ -80,7 +83,7 @@ function export.show(frame)
 	local data = {
 		lang = lang,
 		sc = sc,
-		pos_category = "letters",
+		pos_category = iargs.pos,
 		categories = {},
 		pagename = pagename,
 		inflections = {},
@@ -90,7 +93,13 @@ function export.show(frame)
 		force_cat_output = force_cat,
 		genders = not args.nog and (args.g and args.g[1] and args.g or iargs.g) or nil,
 		categories = {},
+		-- Disable "terms with redundant script codes" and "terms with non-redundant manual script codes"
+		-- categories. We always specify the script and the categories simply aren't useful in this case; having
+		-- them just clutters the categories with letter entries.
+		no_script_code_cat = true,
 	}
+	-- All letters can also be used as nouns ("There are two f's in that word").
+	insert(data.categories, lang:getFullName() .. " nouns")
 	if sc:getCode() ~= "None" then
 		insert(data.categories, sc:getCategoryName() .. " characters")
 	end
@@ -136,6 +145,15 @@ function export.show(frame)
 			values = {default}
 		else
 			return
+		end
+		if values[1] == "-" then
+			if not values[2] then
+				insert(data.inflections, {label = "no " .. label})
+				return
+			else
+				insert(data.inflections, {label = "usually no " .. label})
+				table.remove(values, 1)
+			end
 		end
 		values.label = label
 		insert(data.inflections, values)
