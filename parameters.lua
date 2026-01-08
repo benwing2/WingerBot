@@ -251,11 +251,20 @@ Possible parameter tags are listed below:
   aren't actually required on template pages. This can be used to show an example of the template in action when the
   template page is visited; however, it is preferred to use `template_default` for this purpose, for clarity.
 ; {template_default =}
-: Specifies a default input value for absent or empty parameters only on template pages. Template pages are any page in
-  the template space (beginning with `Template:`) except for documentation pages (those ending in `.../documentation`).
-  This can be used to provide an example value for a non-required parameter when the template page is visited, without
-  interfering with other uses of the template. Both `template_default` and `default` can be specified for the same
-  parameter. If this is done, `template_default` applies on template pages, and `default` on other pages. As an example,
+: Specifies a default input value for absent or empty parameters only on the template demo invocation (the invocation of
+  the template that is displayed when the template page that implements the template is viewed). Template pages are
+  pages in template space that invoke (through {{tl|#invoke:}}) the module that implements the template and calls
+  [[Module:parameters]]. For example, the page [[Template:en-noun]] implements the {{tl|en-noun}} template, which in
+  turn invokes [[Module:en-headword]], and is a template page for [[Module:en-headword]]. When the template page
+  [[Template:en-noun]] is visited, the {{tl|#invoke:}} of the template's module is expanded as if the template were
+  called without arguments, and the output is inserted at that point into the processed page. This output serves as a
+  sort of demo of the template's functionality. `template_default` can be used to supply default values for use only in
+  this demo. Since the template page may also contain other invocations of the same template (e.g. on the template's
+  documentation page, which is typically transcluded into the template page itself), `template_default` does not apply
+  if there are any arguments passed to the template or if the template is invoked on any other page but its own template
+  page (which is checked by comparing the name of the invoking template to the current pagename). Both
+  `template_default` and `default` can be specified for the same parameter. If this is done, `template_default` applies
+  for the argumentless template invocation on the template page, and `default` in all other circumstances As an example,
   {{tl|cs-IPA}} uses the equivalent of {[1] = {default = "+", template_default = "příklad"}} to supply a default of
   {"+"} for mainspace and documentation pages (which tells the module to use the value of the {{para|pagename}}
   parameter, falling back to the actual pagename), but {"příklad"} (which means "example"), on [[Template:cs-IPA]].
@@ -385,12 +394,12 @@ Possible parameter tags are listed below:
   parameters {{para|f1accel}}, {{para|f2accel}}, ... can be captured by using the parameter name {"f\1accel"}, as is
   done in [[Module:headword/templates]].
 ; {set =}
-: Require that the value of the parameter be one of the specified list of values (or omitted, if {required = true} isn't
-  given). The values in the specified list should be strings corresponding to the raw parameter values except when
-  {type = "number"}, in which case they should be numbers. A individual value in the list can also be an ''alias list'',
-  which is a list where the first value is the "canonical" value and the remainder are aliases. When one of the aliases
-  is used, the resulting parameter field in the returned arguments structure will have the canonical value. The use of
-  `set` is disallowed if {type = "boolean"} and causes an error to be thrown.
+: Require that the value of the parameter be one of the specified values (or omitted, if {required = true} isn't given).
+  Two formats are allowed; either a list of possible values can be supplied, or a table can be supplied where the keys
+  are allowed values and the values are either `true` or a string naming a value found elsewhere in the table as a key.
+  In the latter case, the key is an alias and the value is the canonical value, and if the user uses the alias, it will
+  automatically be mapped to the canonical value. In such a case, the canonical value cannot itself be an alias. The use
+  of `set` is disallowed if {type = "boolean"} and causes an error to be thrown.
 ; {sublist =}
 : The value of the parameter is a delimiter-separated list of individual raw values. The resulting field in `args` will
   be a Lua list (i.e. a table with numeric indices) of the converted values. If {sublist = true} is given, the values
@@ -480,7 +489,7 @@ Possible parameter tags are listed below:
 ]==]
 
 -- Returns true if the current page is a template or module containing the current {{#invoke}}.
--- If the include_documentation argument is given, also returns true if the current page is either page's docuemntation page.
+-- If the include_documentation argument is given, also returns true if the current page is either page's documentation page.
 local own_page, own_page_or_documentation
 local function is_own_page(include_documentation)
 	if own_page == nil then
