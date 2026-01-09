@@ -9,7 +9,6 @@ local require_when_needed = require("Module:utilities/require when needed")
 local ConvertNumeric_module = "Module:ConvertNumeric"
 local headword_module = "Module:headword"
 local headword_utilities_module = "Module:headword utilities"
-local JSON_module = "Module:JSON"
 local languages_module = "Module:languages"
 local links_module = "Module:links"
 local parameters_module = "Module:parameters"
@@ -75,6 +74,7 @@ function export.show(frame)
 		nocap = boolean_param,
 		dot = true,
 		nodot = boolean_param,
+		addl = true,
 		pagename = true,
 	}
 	local function merge_params(extra_params)
@@ -87,22 +87,31 @@ function export.show(frame)
 			[3] = {required = true},
 			[4] = true,
 			linklang = boolean_param,
-			["alphabet"] = true,
-			["alphvar"] = true,
-			t = true,
+			alphabet = true,
+			alphvar = true,
+			lit = true,
+			eq = true,
 		}
 	elseif deftype == "letter" then
 		merge_params {
 			[3] = {type = "number"},
 			[4] = list_param,
-			["alphabet"] = true,
-			["alphvar"] = true,
+			linklang = boolean_param, -- only used for prec/foll
+			alphabet = true,
+			alphvar = true,
+			t = {list = true, allow_holes = true},
+			prec = true,
+			foll = true,
+			last = boolean_param,
 		}
 	elseif deftype == "diacritic" then
 		merge_params {
 			[3] = list_param,
 			name = list_param,
+			alphabet = true,
+			alphvar = true,
 			nopairs = boolean_param,
+			moreexamples = boolean_param,
 			t = {list = true, allow_holes = true},
 		}
 	elseif deftype == "ordinal" then
@@ -144,41 +153,42 @@ function export.show(frame)
 			sc = require(scripts_module).getByCode("Latn") -- not actually used
 		end
 	end
+	local sccode = sc:getCode()
 	local scname = sc:getCanonicalName()
 	local sccatname = sc:getCategoryName()
 	local scdisplay = sc:getDisplayForm()
 	local linked_script = ("[[Appendix:%s|%s]]"):format(sccatname, sccatname)
 	local categories = {}
 	ins("<span class='use-with-mention'>")
+	local function link_to_lang_or_mul(char)
+		-- Either link a character using the language in 1= or using 'mul' (Translingual). We do this to avoid
+		-- yellow links from trying to link to a nonexistent character. Basically, if linklang=1, we always link
+		-- using the language in 1=; otherwise we try to see if the character is in the language's standardChars,
+		-- and if not, link to Translingual. If the standardChars for the language is missing or the character can't
+		-- be looked up (e.g. it's a digraph or trigraph), assume it's in the language and link using the language.
+		local lang_for_linking
+		if args.linklang then
+			lang_for_linking = lang
+		elseif #char > 1 then
+			-- If the character is a digraph or trigraph, we can't check it against standardChars, which only lists
+			-- single Unicode chars.
+			lang_for_linking = lang
+		else
+			local standard_chars = lang:getStandardCharacters(sc)
+			if type(standard_chars) ~= "string" or ufind(standard_chars, char) then
+				-- No standardChars, or character in standardChars; link using lang.
+				lang_for_linking = lang
+			else
+				lang_for_linking = lang_getByCode("mul", true)
+			end
+		end
+		return full_link({ lang = lang_for_linking, term = char, tr = "-", sc = sc}, "term")
+	end
 	if deftype == "name" then
 		ins(args.nocap and "the" or "The")
 		ins((" name of the %s letter "):format(linked_script))
-		local function link_to_lang_or_mul(char)
-			-- Either link a character using the language in 1= or using 'mul' (Translingual). We do this to avoid
-			-- yellow links from trying to link to a nonexistent character. Basically, if linklang=1, we always link
-			-- using the language in 1=; otherwise we try to see if the character is in the language's standardChars,
-			-- and if not, link to Translingual. If the standardChars for the language is missing or the character can't
-			-- be looked up (e.g. it's a digraph or trigraph), assume it's in the language and link using the language.
-			local lang_for_linking
-			if args.linklang then
-				lang_for_linking = lang
-			elseif #char > 1 then
-				-- If the character is a digraph or trigraph, we can't check it against standardChars, which only lists
-				-- single Unicode chars.
-				lang_for_linking = lang
-			else
-				local standard_chars = lang:getStandardCharacters(sc)
-				if type(standard_chars) ~= "string" or ufind(standard_chars, char) then
-					-- No standardChars, or character in standardChars; link using lang.
-					lang_for_linking = lang
-				else
-					lang_for_linking = lang_getByCode("mul", true)
-				end
-			end
-			return full_link({ lang = lang_for_linking, term = char, tr = "-", sc = sc}, "term")
-		end
 		ins(link_to_lang_or_mul(args[3]))
-		if args[4] and not args.onecase then
+		if args[4] then
 			ins("/")
 			ins(link_to_lang_or_mul(args[4]))
 		end
@@ -190,31 +200,50 @@ function export.show(frame)
 		elseif args.alphvar then
 			ins(", in " .. args.alphvar)
 		end
-		if args.t then
+		if args.lit then
+			ins(", literally “")
+			ins(args.lit)
+			ins("”")
+		end
+		if args.eq then
 			ins(", called ")
-			ins(full_link({lang = lang_getByCode("en", true), term = args.t}, "term"))
+			ins(full_link({lang = lang_getByCode("en", true), term = args.eq}, "term"))
 			ins(" in English")
 		end
 		insert(categories, ("%s:%s letter names"):format(lang:getFullCode(), scname))
 
 	elseif deftype == "letter" then
-		local indef = args.indef or not args[3]
+		local indef = not args[3] and not args.last
 		ins(args.nocap and (indef and "a" or "the") or (indef and "A" or "The"))
 		if args[3] then
 			ins(" ")
 			ins(ordinal_to_word(args[3]))
+		end
+		if args.last then
+			if args[3] then
+				ins(" and")
+			end
+			ins(" last")
 		end
 		-- If we're Translingual, don't say we're a letter of the "Translingual alphabet" because there is no such
 		-- thing; instead, say we're a letter of the given script, and omit the coda that says "written in the Foo
 		-- script" because it's redundant.
 		local is_mul = lang:getFullCode() == "mul"
 		local lang_for_linking = is_mul and lang_getByCode("en", true) or lang
-		ins(" [[letter]] of the ")
+		ins(" [[letter]] of ")
 		if args.alphabet then
 			ins(args.alphabet)
 		elseif is_mul then
-			ins(linked_script)
+			ins("the ")
+			if sccode:find("Lat") and (args.pagename or mw.loadData("Module:headword/data").pagename):match("^[a-zA-Z]$") then
+				-- Latn, Latf, Latg, pjt-Latn; if in ASCII a-z or A-Z, display as "basic modern Latin alphabet",
+				-- otherwise as "Latin script" as all other scripts display for mul.
+				ins(("[[%s|%s]]"):format(sccatname, "basic modern Latin alphabet"))
+			else
+				ins(linked_script)
+			end
 		else
+			ins("the ")
 			ins(lang:getCanonicalName())
 			ins(" [[alphabet]]")
 		end
@@ -225,7 +254,7 @@ function export.show(frame)
 			ins(", called ")
 			local formatted_names = {}
 			for _, name in ipairs(args[4]) do
-				insert(formatted_names, full_link({lang = lang_for_linking, term = name}, "term"))
+				insert(formatted_names, full_link({lang = lang_for_linking, term = name, gloss = args.t[i]}, "term"))
 			end
 			ins(mw.text.listToText(formatted_names, nil, " or "))
 			if not is_mul then
@@ -237,11 +266,32 @@ function export.show(frame)
 		if not is_mul then
 			ins(("written in the %s"):format(linked_script))
 		end
+		if args.prec then
+			ins("; preceded by ")
+			ins(link_to_lang_or_mul(args.prec))
+		end
+		if args.foll then
+			if args.prec then
+				ins(" and ")
+			else
+				ins("; ")
+			end
+			ins("followed by ")
+			ins(link_to_lang_or_mul(args.foll))
+		end
 
 	elseif deftype == "diacritic" then
 		ins(args.nocap and "a" or "A")
 		ins((" [[diacritical mark]] of the %s"):format(linked_script))
-		if not args.noname and args.name[1] then
+		if args.alphabet then
+			ins(" in " .. args.alphabet)
+			if args.alphvar then
+				ins(" (" .. args.alphvar .. ")")
+			end
+		elseif args.alphvar then
+			ins(" in " .. args.alphvar)
+		end
+		if args.name[1] then
 			ins(", called ")
 			local formatted_names = {}
 			for i, name in ipairs(args.name) do
@@ -251,35 +301,44 @@ function export.show(frame)
 		end
 		ins(" in ")
 		ins(lang:getCanonicalName())
-		ins(", and found on ")
-		local formatted_letters = {}
-		local function format_letter(letter)
-			return ("<span class='mention'>%s</span>"):format(full_link {lang = lang, term = letter, sc = sc})
-		end
-		if args.nopairs then
-			for _, letter in ipairs(args[3]) do
-				insert(formatted_letters, format_letter(letter))
+		if args[3][1] then
+			ins(", and found on ")
+			local formatted_letters = {}
+			local function format_letter(letter)
+				return ("<span class='mention'>%s</span>"):format(full_link {lang = lang, term = letter, sc = sc})
 			end
-		elseif #args[3] % 2 == 1 then
-			error(("Saw %s letters but need an even number when nopairs= is not given"):format(#args[3]))
-		else
-			for i = 1, #args[3], 2 do
-				insert(formatted_letters, ("%s/%s"):format(format_letter(args[3][i]), format_letter(args[3][i + 1])))
+			if args.nopairs then
+				for _, letter in ipairs(args[3]) do
+					insert(formatted_letters, format_letter(letter))
+				end
+			elseif #args[3] % 2 == 1 then
+				error(("Saw %s letters but need an even number when nopairs= is not given"):format(#args[3]))
+			else
+				for i = 1, #args[3], 2 do
+					insert(formatted_letters, ("%s/%s"):format(format_letter(args[3][i]), format_letter(args[3][i + 1])))
+				end
+			end
+			ins(mw.text.listToText(formatted_letters))
+			if args.moreexamples then
+				ins(", among others")
 			end
 		end
-		ins(mw.text.listToText(formatted_letters))
 
 	elseif deftype == "ordinal" then
 		ins(args.nocap and "the" or "The")
 		ins((" [[ordinal]] number '''[[%s]]''', derived from this letter of the "):format(ordinal_to_word(args[3])))
 		ins(lang:getCanonicalName())
-		ins( " [[alphabet]], called ")
-		local formatted_names = {}
-		for _, name in ipairs(args[4]) do
-			insert(formatted_names, full_link({lang = lang, term = name}, "term"))
+		ins( " [[alphabet]], ")
+		if args[4][1] then
+			ins("called ")
+			local formatted_names = {}
+			for _, name in ipairs(args[4]) do
+				insert(formatted_names, full_link({lang = lang, term = name}, "term"))
+			end
+			ins(mw.text.listToText(formatted_names, nil, " or "))
+			ins(" and ")
 		end
-		ins(mw.text.listToText(formatted_names, nil, " or "))
-		ins((" and written in the %s"):format(linked_script))
+		ins(("written in the %s"):format(linked_script))
 		insert(categories, ("%s ordinal numbers"):format(lang:getFullName()))
 
 	elseif deftype == "syllable" then
@@ -295,6 +354,16 @@ function export.show(frame)
 
 	else
 		error(("Internal error: Unhandled deftype %s"):format(mw.dumpObject(deftype)))
+	end
+	local addl = args.addl
+	if addl then
+		if addl:find("^[;:]") then
+			ins(addl)
+		elseif addl:find("^_") then
+			ins(" " .. addl:sub(2))
+		else
+			ins(", " .. addl)
+		end
 	end
 	if args.dot then
 		ins(args.dot)
