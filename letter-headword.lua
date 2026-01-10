@@ -8,6 +8,7 @@ local headword_module = "Module:headword"
 local headword_utilities_module = "Module:headword utilities"
 local JSON_module = "Module:JSON"
 local parameters_module = "Module:parameters"
+local scripts_module = "Module:scripts"
 
 local m_string_utilities = require("Module:string utilities")
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
@@ -15,6 +16,18 @@ local glossary_link = require_when_needed(headword_utilities_module, "glossary_l
 local uupper = m_string_utilities.upper
 local ulower = m_string_utilities.lower
 local insert = table.insert
+
+local function ine(val)
+	if val == "" then return nil else return val end
+end
+
+local function add_initial_colon_to_term(term)
+	if term ~= "-" and term ~= "+" and not term:find("^:") then
+		-- Make sure we link to the specified term even if it has a diacritic that would normally be stripped off.
+		term = ":" .. term
+	end
+	return term
+end
 
 --[==[
 Implementation of the letter headword template for a given language (e.g. {{tl|en-letter}}, {{tl|it-letter}} or {{tl|sh-letter}}).
@@ -59,6 +72,7 @@ function export.show(frame)
 		id = true,
 		sort = true,
 		pagename = true,
+		modern = true,
 	}
 	if not iargs.lang then
 		params[1] = {type = "language", required = true, template_default = "und"}
@@ -69,7 +83,28 @@ function export.show(frame)
 	if iargs.allow_tr or not iargs.lang then
 		params.tr = list_param
 	end
-	local args = require(parameters_module).process(parent_args, params)
+	local args, unrecognized_args = require(parameters_module).process(parent_args, params, "return_unknown")
+	local still_unrecognized = {}
+	local other_scripts = {}
+	for k, v in pairs(unrecognized_args) do
+		local sc = require(scripts_module).getByCode(k)
+		if sc then
+			v = ine(v)
+			if v then
+				insert(other_scripts, {
+					scname = sc:getCanonicalName(),
+					sc = sc,
+					value = v,
+				})
+			end
+		else
+			still_unrecognized[k] = v
+		end
+	end
+	if next(still_unrecognized) ~= nil then
+		require(parameters_module).params_list_error(still_unrecognized, "not used by this template")
+	end
+
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
 	if args.type then
 		if args.type ~= "upper" and args.type ~= "lower" and args.type ~= "mixed" and args.type ~= "nocase" then
@@ -146,6 +181,9 @@ function export.show(frame)
 		else
 			return
 		end
+		for i, value in ipairs(values) do
+			values[i] = add_initial_colon_to_term(values[i])
+		end
 		if values[1] == "-" then
 			if not values[2] then
 				insert(data.inflections, {label = "no " .. label})
@@ -221,6 +259,50 @@ function export.show(frame)
 			insert(data.inflections, {label = glossary_link("invariable")})
 		else
 			insert_inflection(pls, default_pls, "plural")
+		end
+	end
+
+	local function parse_equivalent(value, paramname)
+		local termobjs
+		if value:find("[,<]") then
+			termobjs = require(headword_utilities_module).parse_term_with_modifiers {
+				val = value,
+				paramname = paramname,
+				splitchar = ",",
+			}
+		else
+			termobjs = {{ term = value }}
+		end
+		for _, termobj in ipairs(termobjs) do
+			termobj.term = add_initial_colon_to_term(termobj.term)
+			termobj.tr = "-"
+		end
+		return termobjs
+	end
+
+	local function insert_equivalent(termobjs, label)
+		if termobjs[1].term == "-" then
+			require(headword_utilities_module).insert_inflection {
+				headdata = data,
+				terms = termobjs,
+				label = label,
+			}
+		else
+			termobjs.label = label
+			insert(data.inflections, termobjs)
+		end
+	end
+
+	if args.modern then
+		local termobjs = parse_equivalent(args.modern, "modern")
+		insert_equivalent(termobjs, "modern equivalent")
+	end
+		
+	if other_scripts[1] then
+		table.sort(other_scripts, function(a, b) return a.scname < b.scname end)
+		for _, othscript in ipairs(other_scripts) do
+			local termobjs = parse_equivalent(othscript.value, othscript.sc:getCode())
+			insert_equivalent(termobjs, othscript.scname .. " equivalent")
 		end
 	end
 
