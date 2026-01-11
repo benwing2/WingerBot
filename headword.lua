@@ -20,6 +20,7 @@ local table_module = "Module:table"
 local utilities_module = "Module:utilities"
 
 local concat = table.concat
+local dump = mw.dumpObject
 local insert = table.insert
 local ipairs = ipairs
 local max = math.max
@@ -250,7 +251,7 @@ local function format_term_with_qualifiers_and_refs(lang, part, formatted, j)
 			return nil
 		end
 		if type(list) ~= "table" then
-			error(("Internal error: Wrong type for `part.%s`=%s, should be \"table\""):format(field, mw.dumpObject(list)))
+			error(("Internal error: Wrong type for `part.%s`=%s, should be \"table\""):format(field, dump(list)))
 		end
 		return list[1]
 	end
@@ -426,7 +427,7 @@ local function format_headword(data)
 		local transliteration_page = new_title(langname .. " transliteration", "Wiktionary")
 		local saw_translit_page = false
 
-		if transliteration_page and transliteration_page.exists then
+		if transliteration_page and transliteration_page:getContent() then
 			translits_formatted = " [[Wiktionary:" .. langname .. " transliteration|•]]" .. translits_formatted
 			saw_translit_page = true
 		end
@@ -436,7 +437,7 @@ local function format_headword(data)
 			langname = data.lang:getFullName()
 			transliteration_page = new_title(langname .. " transliteration", "Wiktionary")
 
-			if transliteration_page and transliteration_page.exists then
+			if transliteration_page and transliteration_page:getContent() then
 				translits_formatted = " [[Wiktionary:" .. langname .. " transliteration|•]]" .. translits_formatted
 			end
 		end
@@ -479,10 +480,10 @@ local function format_headword_genders(data)
 	return retval
 end
 
+-- Forward reference
+local format_inflections
 
 local function format_inflection_parts(data, parts)
-	local any_part_translit = false
-
 	for j, part in ipairs(parts) do
 		if type(part) ~= "table" then
 			part = {term = part}
@@ -516,16 +517,24 @@ local function format_inflection_parts(data, parts)
 			-- multiple terms). The reason for doing this is to avoid clutter in headword lines by default in languages
 			-- where the script is relatively straightforward to read by learners (e.g. Greek, Russian), but allow it
 			-- to be enabled in languages with more complex scripts (e.g. Arabic).
-			local tr = part.tr or part.translit or (not (parts.enable_auto_translit or data.inflections.enable_auto_translit) and "-" or nil)
-			if tr ~= "-" then
-				any_part_translit = true
-			end
+			--
+			-- FIXME: With nested inflections, should we also respect `enable_auto_translit` at the top level of the
+			-- nested inflections structure?
+			local tr = part.tr or not (parts.enable_auto_translit or data.inflections.enable_auto_translit) and "-" or nil
+			-- FIXME: Temporary errors added 2025-10-03. Remove after a month or so.
 			if part.translit then
-				track("old-part-translit", part.lang or data.lang)
+				error("Internal error: Use field `tr` not `translit` for specifying an inflection part translit")
 			end
 			if part.transcription then
-				track("old-part-transcription", part.lang or data.lang)
+				error("Internal error: Use field `ts` not `transcription` for specifying an inflection part transcription")
 			end
+			local postprocess_annotations
+			if part.inflections then
+				postprocess_annotations = function(infldata)
+					insert(infldata.annotations, format_inflections(data, part.inflections))
+				end
+			end
+				
 			formatted = full_link(
 				{
 					term = not nolinkinfl and part.term or nil,
@@ -538,8 +547,9 @@ local function format_inflection_parts(data, parts)
 					id = part.id,
 					genders = part.genders,
 					tr = tr,
-					ts = part.ts or part.transcription or nil,
+					ts = part.ts,
 					accel = partaccel or parts.accel,
+					postprocess_annotations = postprocess_annotations,
 				},
 				face
 				)
@@ -561,29 +571,95 @@ local function format_inflection_parts(data, parts)
 	end
 
 	local parts_label = parts.label and ("<i>" .. parts.label .. "</i>") or ""
-	return format_term_with_qualifiers_and_refs(data.lang, parts, parts_label .. parts_output, 1), any_part_translit
+	return format_term_with_qualifiers_and_refs(data.lang, parts, parts_label .. parts_output, 1)
 end
 
 
--- Format the inflections following the headword.
-local function format_inflections(data)
-	local any_part_translit = false
-	if data.inflections and data.inflections[1] then
+-- Format the inflections following the headword or nested after a given inflection. Declared local above.
+function format_inflections(data, inflections)
+	if inflections and inflections[1] then
 		-- Format each inflection individually.
-		for key, infl in ipairs(data.inflections) do
-			local this_any_part_translit
-			data.inflections[key], this_any_part_translit = format_inflection_parts(data, infl)
-			if this_any_part_translit then
-				any_part_translit = true
-			end
+		for key, infl in ipairs(inflections) do
+			inflections[key] = format_inflection_parts(data, infl)
 		end
 
-		local concat_result = concat(data.inflections, ", ")
-		return " (" .. concat_result .. ")"
+		return concat(inflections, ", ")
 	else
 		return ""
 	end
 end
+
+
+-- Format the top-level inflections following the headword. Currently this just adds parens around the
+-- formatted comma-separated inflections in `data.inflections`.
+local function format_top_level_inflections(data)
+	local result = format_inflections(data, data.inflections)
+	if result ~= "" then
+		return " (" .. result .. ")"
+	else
+		return result
+	end
+end
+
+
+-- Forward reference
+local check_red_link_inflections
+
+-- Check a single inflection (which consists of a label and zero or more terms, each possibly with nested inflections)
+-- for red links. If so, insert a red-link category based on `plpos` (the plural part of speech to insert in the
+-- category), stop further processing, and return true. If no red links found, return false.
+local function check_red_link_inflection_parts(data, parts, plpos)
+	for _, part in ipairs(parts) do
+		if type(part) ~= "table" then
+			part = {term = part}
+		end
+		local term = part.term
+		if term and not term:find("%[%[") then
+			local stripped_physical_term = get_link_page(term, data.lang, part.sc or parts.sc or nil)
+			if stripped_physical_term then
+				local title = mw.title.new(stripped_physical_term)
+				if title and not title:getContent() then
+					insert(data.categories, data.lang:getFullName() .. " " .. plpos .. " with red links in their headword lines")
+					return true
+				end
+			end
+		end
+		if part.inflections then
+			if check_red_link_inflections(data, part.inflections, plpos) then
+				return true
+			end
+		end
+	end
+	
+	return false
+end
+
+
+-- Check a set of inflections (each of which describes a single inflection of the term, such as feminine or plural, and
+-- consists of a label and zero or more terms, each possibly with nested inflections) for red links. If so, insert a
+-- red-link category based on `plpos` (the plural part of speech to insert in the category), stop further processing,
+-- and return true. If no red links found, return false.
+function check_red_link_inflections(data, inflections, plpos)
+	if inflections and inflections[1] then
+		-- Check each inflection individually.
+		for key, infl in ipairs(inflections) do
+			if check_red_link_inflection_parts(data, infl, plpos) then
+				return true
+			end
+		end
+	end
+	
+	return false
+end
+
+
+-- Check the top-level inflections in `data.inflections`, along with any nested inflections, for red links. If so,
+-- insert a red-link category based on `plpos` (the plural part of speech to insert in the category), stop further
+-- processing, and return true. If no red links found, return false.
+local function check_red_link_inflections_top_level(data, plpos)
+	return check_red_link_inflections(data, data.inflections, plpos)
+end
+
 
 --[==[
 Returns the plural form of `pos`, a raw part of speech input, which could be singular or
@@ -608,7 +684,8 @@ If `best_guess` is given and the POS is in neither the lemma nor non-lemma list,
 based on whether it ends in " forms"; otherwise, return nil.
 ]==]
 function export.pos_lemma_or_nonlemma(plpos, best_guess)
-	local isLemma = (m_data or get_data()).lemmas
+	local m_headword_data = m_data or get_data()
+	local isLemma = m_headword_data.lemmas
 	-- Is it a lemma category?
 	if isLemma[plpos] then
 		return "lemma"
@@ -618,7 +695,7 @@ function export.pos_lemma_or_nonlemma(plpos, best_guess)
 		return "lemma"
 	end
 	-- Is it a nonlemma category?
-	local isNonLemma = (m_data or get_data()).nonlemmas
+	local isNonLemma = m_headword_data.nonlemmas
 	if isNonLemma[plpos] or isNonLemma[plpos_no_recon] then
 		return "non-lemma form"
 	end
@@ -646,12 +723,12 @@ function export.canonicalize_pos(pos)
 	if pos == "pro" or pos == "prof" then
 		error("POS 'pro' for 'pronoun' no longer allowed as it's too ambiguous; use 'pron'")
 	end
-	local data = m_data or get_data()
-	if data.pos_aliases[pos] then
-		pos = data.pos_aliases[pos]
+	local m_headword_data = m_data or get_data()
+	if m_headword_data.pos_aliases[pos] then
+		pos = m_headword_data.pos_aliases[pos]
 	elseif pos:sub(-1) == "f" then
 		pos = pos:sub(1, -2)
-		pos = (data.pos_aliases[pos] or pos) .. " forms"
+		pos = (m_headword_data.pos_aliases[pos] or pos) .. " forms"
 	end
 	return export.pluralize_pos(pos)
 end
@@ -667,22 +744,22 @@ local function init_and_find_maximum_index(data, element, allow_blank_string)
 	end
 	local typ = type(data[element])
 	if typ ~= "table" then
-		error(("In full_headword(), `data.%s` must be an array but is a %s"):format(element, typ))
+		error(("Internal error: In full_headword(), `data.%s` must be an array but is a %s"):format(element, typ))
 	end
 	for k, v in pairs(data[element]) do
 		if k ~= "maxindex" then
 			if type(k) ~= "number" then
-				error(("Unrecognized non-numeric key '%s' in `data.%s`"):format(k, element))
+				error(("Internal error: Unrecognized non-numeric key '%s' in `data.%s`"):format(k, element))
 			end
 			if k > maxind then
 				maxind = k
 			end
 			if v then
 				if type(v) ~= "string" then
-					error(("For key '%s' in `data.%s`, value should be a string but is a %s"):format(k, element, type(v)))
+					error(("Internal error: For key '%s' in `data.%s`, value should be a string but is a %s"):format(k, element, type(v)))
 				end
 				if not allow_blank_string and v == "" then
-					error(("For key '%s' in `data.%s`, blank string not allowed; use 'false' for the default"):format(k, element))
+					error(("Internal error: For key '%s' in `data.%s`, blank string not allowed; use 'false' for the default"):format(k, element))
 				end
 			end
 		end
@@ -769,15 +846,15 @@ function export.full_headword(data)
 	------------ 1. Basic checks for old-style (multi-arg) calling convention. ------------
 
 	if data.getCanonicalName then
-		error("In full_headword(), the first argument `data` needs to be a Lua object (table) of properties, not a language object")
+		error("Internal error: In full_headword(), the first argument `data` needs to be a Lua object (table) of properties, not a language object")
 	end
 
 	if not data.lang or type(data.lang) ~= "table" or not data.lang.getCode then
-		error("In full_headword(), the first argument `data` needs to be a Lua object (table) and `data.lang` must be a language object")
+		error("Internal error: In full_headword(), the first argument `data` needs to be a Lua object (table) and `data.lang` must be a language object")
 	end
 
 	if data.id and type(data.id) ~= "string" then
-		error("The id in the data table should be a string.")
+		error("Internal error: The id in the data table should be a string.")
 	end
 
 	------------ 2. Initialize pagename etc. ------------
@@ -787,19 +864,33 @@ function export.full_headword(data)
 	local langname = data.lang:getCanonicalName()
 	local full_langname = data.lang:getFullName()
 
-	local raw_pagename, page = data.pagename
-	if raw_pagename and raw_pagename ~= (m_data or get_data()).pagename then -- for testing, doc pages, etc.
-		page = process_page(raw_pagename)
+	local raw_pagename = data.pagename
+	local page
+	local m_headword_data = m_data or get_data()
+	if raw_pagename and raw_pagename ~= m_headword_data.pagename then -- for testing, doc pages, etc.
+		-- data.pagename is often set on documentation and test pages through the pagename= parameter of various
+		-- templates, to emulate running on that page. Having a large number of such test templates on a single
+		-- page often leads to timeouts, because we fetch and parse the contents of each page in turn. However,
+		-- we don't really need to do that and can function fine without fetching and parsing the contents of a
+		-- given page, so turn off content fetching/parsing (and also setting the DEFAULTSORT key through a parser
+		-- function, which is *slooooow*) in certain namespaces where test and documentation templates are likely to
+		-- be found and where actual content does not live (User, Template, Module).
+		local actual_namespace = m_headword_data.page.namespace
+		local no_fetch_content = actual_namespace == "User" or actual_namespace == "Template" or
+			actual_namespace == "Module"
+		page = process_page(raw_pagename, no_fetch_content)
 	else
-		page = (m_data or get_data()).page
+		page = m_headword_data.page
 	end
+
+	local namespace = page.namespace
 
 	------------ 3. Initialize `data.heads` table; if old-style, convert to new-style. ------------
 
 	if type(data.heads) == "table" and type(data.heads[1]) == "table" then
 		-- new-style
 		if data.translits or data.transcriptions then
-			error("In full_headword(), if `data.heads` is new-style (array of head objects), `data.translits` and `data.transcriptions` cannot be given")
+			error("Internal error: In full_headword(), if `data.heads` is new-style (array of head objects), `data.translits` and `data.transcriptions` cannot be given")
 		end
 	else
 		-- convert old-style `heads`, `translits` and `transcriptions` to new-style
@@ -854,7 +945,7 @@ function export.full_headword(data)
 	end
 
 	if not data.pos_category then
-		error("`data.pos_category` not specified and could not be inferred from the categories given in "
+		error("Internal error: `data.pos_category` not specified and could not be inferred from the categories given in "
 			.. "`data.categories`. Either specify the plural part of speech in `data.pos_category` "
 			.. "(e.g. \"proper nouns\") or ensure that the first category in `data.categories` is formed from the "
 			.. "language's canonical name plus the plural part of speech (e.g. \"Norwegian Bokmål proper nouns\")."
@@ -913,7 +1004,7 @@ function export.full_headword(data)
 
 	-- Add links to multi-word page names when appropriate
 	if not (is_reconstructed or data.nolinkhead) then
-		local no_links = (m_data or get_data()).no_multiword_links
+		local no_links = m_headword_data.no_multiword_links
 		if not (no_links[langcode] or no_links[full_langcode]) and export.head_is_multiword(default_head) then
 			default_head = export.add_multiword_links(default_head, true)
 		end
@@ -925,7 +1016,6 @@ function export.full_headword(data)
 
 	------------ 6. Check the namespace against the language type. ------------
 
-	local namespace = page.namespace
 	if namespace == "" then
 		if lang_reconstructed then
 			error("Entries in " .. langname .. " must be placed in the Reconstruction: namespace")
@@ -987,9 +1077,15 @@ function export.full_headword(data)
 			end
 			-- Track uses of sc parameter.
 			if head.sc:getCode() == auto_sc:getCode() then
-				insert(data.categories, full_langname .. " terms with redundant script codes")
+				track("redundant script code", data.lang)
+				if not data.no_script_code_cat then
+					insert(data.categories, full_langname .. " terms with redundant script codes")
+				end
 			else
-				insert(data.categories, full_langname .. " terms with non-redundant manual script codes")
+				track("non-redundant manual script code", data.lang)
+				if not data.no_script_code_cat then
+					insert(data.categories, full_langname .. " terms with non-redundant manual script codes")
+				end
 			end
 		end
 
@@ -1014,7 +1110,7 @@ function export.full_headword(data)
 		if head.tr == "-" then
 			head.tr = nil
 		else
-			local notranslit = (m_data or get_data()).notranslit
+			local notranslit = m_headword_data.notranslit
 			if not (notranslit[langcode] or notranslit[full_langcode]) and head.sc:isTransliterated() then
 				head.tr_manual = not not head.tr
 
@@ -1023,23 +1119,21 @@ function export.full_headword(data)
 					text = remove_links(text)
 				end
 
-				local automated_tr, tr_categories
-				automated_tr, head.tr_fail, tr_categories = data.lang:transliterate(text, head.sc)
+				local automated_tr = data.lang:transliterate(text, head.sc)
 
-				if automated_tr or head.tr_fail then
+				if automated_tr then
 					local manual_tr = head.tr
 
 					if manual_tr then
-						if (remove_links(manual_tr) == remove_links(automated_tr)) and (not head.tr_fail) then
+						if remove_links(manual_tr) == remove_links(automated_tr) then
 							insert(data.categories, full_langname .. " terms with redundant transliterations")
-						elseif not head.tr_fail then
+						else
 							insert(data.categories, full_langname .. " terms with non-redundant manual transliterations")
 						end
 					end
 
 					if not manual_tr then
 						head.tr = automated_tr
-						extend(data.categories, tr_categories)
 					end
 				end
 
@@ -1084,7 +1178,7 @@ function export.full_headword(data)
 	local unsupported_pagename, unsupported = page.full_raw_pagename:gsub("^Unsupported titles/", "")
 	if unsupported == 1 and page.unsupported_titles[unsupported_pagename] then
 		display_title = 'Unsupported titles/<span class="' .. dt_script_code .. '">' .. page.unsupported_titles[unsupported_pagename] .. '</span>'
-	elseif page_non_ascii and (m_data or get_data()).toBeTagged[dt_script_code]
+	elseif page_non_ascii and m_headword_data.toBeTagged[dt_script_code]
 		or (dt_script_code == "Jpan" and (text_in_script(page.pagename, "Hira") or text_in_script(page.pagename, "Kana")))
 		or (dt_script_code == "Kore" and text_in_script(page.pagename, "Hang")) then
 		display_title = '<span class="' .. dt_script_code .. '">' .. page.full_raw_pagename .. '</span>'
@@ -1132,27 +1226,38 @@ function export.full_headword(data)
 
 	if has_redundant_head_param then
 		if not data.no_redundant_head_cat then
-			insert(data.categories, full_langname .. " terms with redundant head parameter")
+			-- This is not the right way to go about this; too many exceptions and problems due to language-specific headword
+			-- handling customization. If we want this, it should be opt-in by a given language passing in the default headword.
+			-- insert(data.categories, full_langname .. " terms with redundant head parameter")
 		end
 	end
 
 	-- If the first head is multiword (after removing links), maybe insert into "LANG multiword terms".
 	if not data.nomultiwordcat and any_script_has_spaces and postype == "lemma" then
-		local no_multiword_cat = (m_data or get_data()).no_multiword_cat
+		local no_multiword_cat = m_headword_data.no_multiword_cat
 		if not (no_multiword_cat[langcode] or no_multiword_cat[full_langcode]) then
 			-- Check for spaces or hyphens, but exclude prefixes and suffixes.
 			-- Use the pagename, not the head= value, because the latter may have extra
 			-- junk in it, e.g. superscripted text that throws off the algorithm.
-			local no_hyphen = (m_data or get_data()).hyphen_not_multiword_sep
+			local no_hyphen = m_headword_data.hyphen_not_multiword_sep
 			-- Exclude hyphens if the data module states that they should for this language.
 			local checkpattern = (no_hyphen[langcode] or no_hyphen[full_langcode]) and ".[%s፡]." or ".[%s%-፡]."
-			if umatch(page.pagename, checkpattern) and not non_categorizable(page.full_raw_pagename) then
+			local is_multiword = umatch(page.pagename, checkpattern)
+
+			if is_multiword and not non_categorizable(page.full_raw_pagename) then
 				insert(data.categories, full_langname .. " multiword terms")
+			elseif not is_multiword then
+				local long_word_threshold = m_headword_data.long_word_thresholds[langcode] or
+					m_headword_data.long_word_thresholds[full_langcode]
+				if long_word_threshold and ulen(page.pagename) >= long_word_threshold then
+					insert(data.categories, "Long " .. full_langname .. " words")
+				end
 			end
 		end
 	end
 
-	if data.sccat then
+	local default_sccat = m_headword_data.default_sccat
+	if data.sccat or data.sccat == nil and (default_sccat[langcode] or default_sccat[full_langcode]) then
 		for _, head in ipairs(data.heads) do
 			insert(data.categories, full_langname .. " " .. data.pos_category .. " in " ..
 				head.sc:getDisplayForm())
@@ -1165,39 +1270,68 @@ function export.full_headword(data)
 		-- multiple written scripts in it. Typically these are Greek or Cyrillic letters used for their phonetic
 		-- values.
 		local characters_to_ignore = {
-			["aaq"] = "α", -- Penobscot
+			["aaq"] = "αάὰ", -- Penobscot (Algonquian)
 			["acy"] = "δθ", -- Cypriot Arabic
-			["anc"] = "γ", -- Ngas
-			["aou"] = "χ", -- A'ou
-			["awg"] = "β", -- Anguthimri
-			["bhp"] = "β", -- Bima
-			["byk"] = "θ", -- Biao
-			["cdy"] = "θ", -- Chadong
-			["clm"] = "χ", -- Klallam
-			["col"] = "χ", -- Colombia-Wenatchi
-			["coo"] = "χ", -- Comox; FIXME: others? E.g. Greek theta (θ)?
-			["ets"] = "θ", -- Yekhee
-			["gmw-gts"] = "χ", -- Gottscheerish
-			["hur"] = "θ", -- Halkomelem
-			["izh"] = "ь", -- Ingrian
-			["kic"] = "θ", -- Kickapoo
-			["lil"] = "χ", -- Lillooet
+			["aez"] = "β", -- Aeka (Trans-New Guinea)
+			["anc"] = "γ", -- Ngas (Chadic/Afroasiatic)
+			["aou"] = "χ", -- A'ou (Kra-Dai)
+			["art-blk"] = "ч", -- Bolak (conlang)
+			["awg"] = "β", -- Anguthimri (Pama-Nyungan)
+			["az"] = "ь", -- Azerbaijani (Turkic; Yañalif Latin spelling, c. 1928 - 1938)
+			["ba"] = "ь", -- Bashkir (Turkic; Yañalif Latin spelling, c. 1928 - 1938)
+			["bhp"] = "β", -- Bima (Austronesian)
+			["bjz"] = "β", -- Baruga (Trans-New Guinea)
+			["byk"] = "θ", -- Biao (Kra-Dai)
+			["cdy"] = "θ", -- Chadong (Kra-Dai)
+			["chp"] = "θ", -- Chipewyan (Athabaskan)
+			["cjh"] = "χ", -- Upper Chehalis (Salishan)
+			["clm"] = "χ", -- Klallam (Salishan)
+			["col"] = "χ", -- Colombia-Wenatchi (Salishan)
+			["coo"] = "χθ", -- Comox (Salishan)
+			["crx"] = "θ", -- Carrier (Athabaskan)
+			["ets"] = "θ", -- Yekhee (Edoid/Niger-Congo)
+			["ett"] = "χ", -- Etruscan (isolate; in romanizations)
+			["fla"] = "χ", -- Montana Salish (Salishan)
+			["grt"] = "་", -- Garo (South Asian Sino-Tibetan)
+			["gmw-gts"] = "χ", -- Gottscheerish (Bavarian variant spoken in Slovenia)
+			["hur"] = "χθ", -- Halkomelem (Salishan)
+			["itc-psa"] = "f", -- Pre-Samnite (Italic; normally written in Greek)
+			["izh"] = "ь", -- Ingrian (Finnic)
+			["kic"] = "θ", -- Kickapoo (Algonquian)
+			["kk"] = "ь", -- Kazakh (Turkic; Yañalif Latin spelling, c. 1928 - 1938)
+			["ky"] = "ь", -- Kyrgyz (Turkic; Yañalif Latin spelling, c. 1928 - 1938)
+			["lil"] = "χ", -- Lillooet (Salishan)
+			["lsi"] = "ꓹ", -- Lashi (Lolo-Burmese/Sino-Tibetan; represents a glottal stop)
 			["mhz"] = "β", -- Mor (Austronesian)
-			["neg"]=  "ӡ", -- Negidal (normally in Cyrillic)
-			["oui"] = "γβ", -- Old Uyghur: FIXME: others? E.g. Greek delta (δ)?
-			["pox"] = "χ", -- Polabian
-			["rom"] = "Θθ", -- Romani: International Standard; two different thetas???
-			["sah"] = "ь", -- Yakut (1929 - 1939 Latin spelling)
-			["sjw"] = "θ", -- Shawnee
-			["squ"] = "χ", -- Squamish
-			["str"] = "χθ", -- Saanich; uses two Greek letters
-			["twa"] = "χ", -- Twana
-			["yha"] = "θ", -- Baha
-			["za"] = "зч", -- Zhuang; 1957-1982 alphabet used two Cyrillic letters (as well as some others like
+			["mqn"] = "β", -- Moronene (Austronesian)
+			["neg"]=  "ӡā", -- Negidal (Tungusic; normally in Cyrillic)
+			["oka"] = "χ", -- Okanagan (Salishan)
+			["ole"] = "θ", -- Olekha (Sino-Tibetan)
+			["oui"] = "γβ", -- Old Uyghur (Turkic; FIXME: others? E.g. Greek delta (δ)?)
+			["pox"] = "χ", -- Polabian (West Slavic)
+			["rif"] = "ε", -- Tarifit (Berber)
+			["rom"] = "Θθ", -- Romani (Indic: International Standard; two different thetas???)
+			["rpn"] = "β", -- Repanbitip (Austronesian)
+			["sah"] = "ь", -- Yakut (Turkic; 1929 - 1939 Latin spelling)
+			["sit-jap"] = "χ", -- Japhug (Sino-Tibetan)
+			["sjw"] = "θ", -- Shawnee (Algonquian)
+			["squ"] = "χ", -- Squamish (Salishan)
+			["str"] = "χθ", -- Saanich (Salishan)
+			["teh"] = "χ", -- Tehuelche (Chonan; spoken in Argentina)
+			["tep"] = "η", -- Tepecano (Uto-Aztecan)
+			["thp"] = "χ", -- Thompson (Salishan)
+			["tk"] = "ь", -- Turkmen (Turkic; Yañalif Latin spelling, c. 1928 - 1938)
+			["tt"] = "ь", -- Kazakh (Turkic; Yañalif Latin spelling, c. 1928 - 1938)
+			["twa"] = "χ", -- Twana (Salishan)
+			["wbl"] = "ы", -- Wakhi (Iranian)
+			["xbc"] = "ϸ", -- Bactrian (Iranian; represents š; normally written in Greek)
+			["yha"] = "θ", -- Baha (Kra-Dai)
+			["za"] = "зч", -- Zhuang (Tai/Kra-Dai); 1957-1982 alphabet used two Cyrillic letters (as well as some others like
 						   -- ƃ, ƅ, ƨ, ɯ and ɵ that look like Cyrillic or Greek but are actually Latin)
-			["zlw-slv"] = "χђћ", -- Slovincian; FIXME: χ is Greek, the other two are Cyrillic, but I'm not sure
-								 -- the currect characters are being chosen in the entry names
-			["zng"] = "θ", -- Mang
+			["zlw-slv"] = "χђћ", -- Slovincian (West Slavic; FIXME: χ is Greek, the other two are Cyrillic, but I'm not sure
+								 -- the currect characters are being chosen in the entry names)
+			["zng"] = "θ", -- Mang (Mon-Khmer)
+			["ztp"] = "θ", -- Loxicha Zapotec (Zapotecan)
 		}
 		-- Determine how many real scripts are found in the pagename, where we exclude symbols and such. We exclude
 		-- scripts whose `character_category` is false as well as Zmth (mathematical notation symbols), which has a
@@ -1365,6 +1499,12 @@ function export.full_headword(data)
 		end
 	end
 
+	-- Add red link category if called for and we're not a "large" page, where such checks are disabled.
+	if data.checkredlinks and not m_headword_data.large_pages[m_headword_data.pagename] then
+		local plposcat = type(data.checkredlinks) == "string" and data.checkredlinks or data.pos_category
+		check_red_link_inflections_top_level(data, plposcat)
+	end
+
 	-- Add to various maintenance categories.
 	export.maintenance_cats(page, data.lang, data.categories, data.whole_page_categories)
 
@@ -1375,7 +1515,7 @@ function export.full_headword(data)
 	local text = '<span class="headword-line">' ..
 		format_headword(data) ..
 		format_headword_genders(data) ..
-		format_inflections(data) .. '</span>'
+		format_top_level_inflections(data) .. '</span>'
 
 	-- Language-specific categories.
 	local cats = format_categories(
