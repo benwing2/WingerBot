@@ -2,6 +2,7 @@ local export = {}
 
 local fun_is_callable_module = "Module:fun/isCallable"
 local languages_module = "Module:languages"
+local links_module = "Module:links"
 local parse_utilities_module = "Module:parse utilities"
 local string_pattern_escape_module = "Module:string/patternEscape"
 local string_replacement_escape_module = "Module:string/replacementEscape"
@@ -175,7 +176,9 @@ function export.parse_term_with_modifiers(data)
 
 	-- Check for inline modifier, e.g. מרים<tr:Miryem>. But exclude top-level HTML entry with <span ...>,
 	-- <sup> or similar in it.
-	if (val:find("<", nil, true) or data.splitchar) and not term_contains_top_level_html(val) then
+	if (val:find("<", nil, true) or data.splitchar) and not term_contains_top_level_html(val) and
+		-- don't parse inline modifiers if is_head and the value begins with a ~ (link modifier syntax)
+		(not data.is_head or not val:find("^~")) then
 		local param_mods = param_mods
 		if data.is_head then
 			param_mods = shallow_copy(param_mods)
@@ -1075,6 +1078,14 @@ function export.add_links_to_multiword_term(term, data)
 	return retval:match("^%[%[([^%[%]]*)%]%]$") or retval
 end
 
+local function canonicalize_begin_end_spec(spec)
+	local from, to = spec:match("^(.-):(.*)$")
+	if not from then
+		from = spec
+		to = ""
+	end
+	return from, to
+end
 
 --[==[
 Given a `linked_term` that is the output of add_links_to_multiword_term(), apply modifications as given in
@@ -1108,25 +1119,37 @@ Here, we rely on the alternative notation mentioned above for e.g. 'altr[i:o]', 
 and link multiword subterms using e.g. 'andare a letto:~'. (The code knows how to handle multiword subexpressions
 properly, and if the link text and destination are the same, only a single-part link is formed.)
 ]==]
-function export.apply_link_modifiers(linked_term, modifier_spec)
+function export.apply_link_modifiers(linked_term, modifier_spec, lang)
 	local split_modspecs = split(modifier_spec, "%s*;%s*")
 	for j, modspec in ipairs(split_modspecs) do
+		local id
+		if modspec:find("<") then
+			local rest
+			rest, id = modspec:match("^(.*)<id:(.-)>$")
+			if rest then
+				modspec = rest
+			end
+		end
 		local subterm, dest, otherlang
-		local begin_from, begin_to, rest, end_from, end_to = modspec:match("^%[(.-):(.*)%]([^:]*)%[(.-):(.*)%]$")
-		if begin_from then
+		local begin_spec, rest, end_spec = modspec:match("^%[(.-)%]([^:]*)%[(.-)%]$")
+		if begin_spec then
+			local begin_from, begin_to = canonicalize_begin_end_spec(begin_spec)
+			local end_from, end_to = canonicalize_begin_end_spec(end_spec)
 			subterm = begin_from .. rest .. end_from
 			dest = begin_to .. rest .. end_to
 		end
 		if not subterm then
-			rest, end_from, end_to = modspec:match("^([^:]*)%[(.-):(.*)%]$")
+			rest, end_spec = modspec:match("^([^:]*)%[(.-)%]$")
 			if rest then
+				local end_from, end_to = canonicalize_begin_end_spec(end_spec)
 				subterm = rest .. end_from
 				dest = rest .. end_to
 			end
 		end
 		if not subterm then
-			begin_from, begin_to, rest = modspec:match("^%[(.-):(.*)%]([^:]*)$")
-			if begin_from then
+			begin_spec, rest = modspec:match("^%[(.-)%]([^:]*)$")
+			if begin_spec then
+				local begin_from, begin_to = canonicalize_begin_end_spec(begin_spec)
 				subterm = begin_from .. rest
 				dest = begin_to .. rest
 			end
@@ -1153,11 +1176,20 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 			end
 		end
 		if not subterm then
-			error(("Single modifier spec %s should be of the form SUBTERM:DEST where SUBTERM is one or more words in a multiword "
-					.. "term and DEST is the destination to link the subterm to (possibly prefixed by a language code); or of "
-					.. "the form BEGIN[FROM:TO], which is equivalent to BEGINFROM:BEGINTO; or similarly [FROM:TO]END, which is "
-					.. "equivalent to FROMEND:TOEND"):
-				format(modspec))
+			if modspec == "?" or modspec == "!" then
+				subterm = "$"
+				dest = modspec
+			elseif modspec == "..." or modspec == "...?" then
+				subterm = "$"
+				dest = " " .. modspec
+			elseif modspec:find("^[A-Z]$") then
+				-- X, Y, etc. by themselves are unlinked, to help with snowclones
+				subterm = modspec
+				dest = "_"
+			else
+				subterm = modspec
+				dest = "~"
+			end
 		end
 		if subterm == "^" then
 			linked_term = dest:gsub("_", " ") .. linked_term
@@ -1169,7 +1201,7 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 					escape_wikicode(subterm), escape_wikicode(modspec)))
 			end
 			local escaped_subterm = pattern_escape(subterm)
-			local subterm_re = "%[%[" .. escaped_subterm:gsub("(%%?[ '%-])", "%%]*%1%%[*") .. "%]%]"
+			local subterm_re = "%[%[" .. escaped_subterm:gsub("(%%?[ ',%-])", "%%]*%1%%[*") .. "%]%]"
 			local expanded_dest
 			if dest:find("~", nil, true) then
 				expanded_dest = dest:gsub("~", replacement_escape(subterm))
@@ -1181,7 +1213,25 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 			end
 
 			local subterm_replacement
-			if expanded_dest:find("[", nil, true) then
+			if expanded_dest == "_" then
+				subterm_replacement = subterm
+				if id then
+					error("Can't supply <id:...> with an unlinked subterm")
+				end
+				if otherlang then
+					error("Can't supply prefixed language with an unlinked subterm")
+				end
+			elseif id or otherlang then
+				if id and expanded_dest:find("[", nil, true) then
+					error("Can't supply <id:...> with destination with embedded brackets")
+				end
+				subterm_replacement = require(links_module).language_link {
+					lang = otherlang or lang,
+					term = expanded_dest,
+					alt = subterm,
+					id = id,
+				}
+			elseif expanded_dest:find("[", nil, true) then
 				-- Use the destination directly if it has brackets in it (e.g. to put brackets around parts of a word).
 				subterm_replacement = expanded_dest
 			elseif expanded_dest == subterm then
@@ -1190,8 +1240,10 @@ function export.apply_link_modifiers(linked_term, modifier_spec)
 				subterm_replacement = "[[" .. expanded_dest .. "|" .. subterm .. "]]"
 			end
 
-			local replaced_linked_term = ugsub(linked_term, subterm_re, replacement_escape(subterm_replacement))
+			local escaped_subterm_replacement = replacement_escape(subterm_replacement)
+			local replaced_linked_term = ugsub(linked_term, subterm_re, escaped_subterm_replacement)
 			if replaced_linked_term == linked_term then
+				mw.log(("Attempted to replace %s with %s in %s"):format(subterm_re, escaped_subterm_replacement, linked_term))
 				error(("Subterm '%s' could not be located in %slinked expression %s, or replacement same as subterm"):format(
 					subterm, j > 1 and "intermediate " or "", escape_wikicode(linked_term)))
 			else
