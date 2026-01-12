@@ -7,14 +7,20 @@ local require_when_needed = require("Module:utilities/require when needed")
 local headword_module = "Module:headword"
 local headword_utilities_module = "Module:headword utilities"
 local JSON_module = "Module:JSON"
+local languages_module = "Module:languages"
 local parameters_module = "Module:parameters"
 local scripts_module = "Module:scripts"
+local table_module = "Module:table"
 
 local m_string_utilities = require("Module:string utilities")
 local glossary_link = require_when_needed(headword_utilities_module, "glossary_link")
+local deep_equals = require_when_needed(table_module, "deepEquals")
+local shallow_copy = require_when_needed(table_module, "shallowCopy")
 
 local uupper = m_string_utilities.upper
+local ucfirst = m_string_utilities.ucfirst
 local ulower = m_string_utilities.lower
+local ulen = m_string_utilities.len
 local insert = table.insert
 
 local function ine(val)
@@ -29,22 +35,103 @@ local function add_initial_colon_to_term(term)
 	return term
 end
 
+local function resolve_plus(termobjs, default, paramname)
+	local saw_plus = false
+	for _, termobj in ipairs(termobjs) do
+		if termobj.term == "+" then
+			saw_plus = true
+			break
+		end
+	end
+	if not saw_plus then
+		return termobjs
+	end
+	if not default then
+		error(("Saw '+' for param '%s' but no default available"):format(paramname))
+	end
+	if type(default) == "string" then
+		for _, termobj in ipairs(termobjs) do
+			if termobj.term == "+" then
+				termobj.term = default
+			end
+		end
+		return termobjs
+	end
+	if type(default) ~= "table" then
+		error("Internal error: `default` should be nil, string or list of strings")
+	end
+
+	local resolved_termobjs = {}
+	for _, termobj in ipairs(termobjs) do
+		if termobj.term == "+" then
+			for _, defval in ipairs(default) do
+				defval = shallow_copy(defval)
+				require(headword_utilities_module).combine_termobj_qualifiers_labels(defval, termobj)
+				insert(resolved_termobjs, defval)
+			end
+		else
+			insert(resolved_termobjs, termobj)
+		end
+	end
+	return resolved_termobjs
+end
+
+local function parse_equivalent(value, default, paramname, no_prefix_colon)
+	if not value then
+		return nil
+	end
+	local termobjs
+	if value == "+" then
+		-- optimization to avoid loading [[Module:headword utilities]]
+		if not default then
+			error(("Saw '+' for param '%s' but no default available"):format(paramname))
+		end
+		if type(default) == "string" then
+			termobjs = {{term = default}}
+		else
+			if type(default) ~= "table" then
+				error("Internal error: `default` should be nil, string or list of term objects")
+			end
+			termobjs = default
+		end
+	elseif value:find("[,<]") then
+		termobjs = require(headword_utilities_module).parse_term_with_modifiers {
+			val = value,
+			paramname = paramname,
+			splitchar = ",",
+			include_mods = {"tr", "ts", "t", "sc"},
+		}
+	else
+		termobjs = {{ term = value }}
+	end
+	termobjs = resolve_plus(termobjs, default, paramname)
+	for _, termobj in ipairs(termobjs) do
+		if not no_prefix_colon then
+			termobj.term = add_initial_colon_to_term(termobj.term)
+		end
+		termobj.tr = "-"
+	end
+	return termobjs
+end
+
 --[==[
-Implementation of the letter headword template for a given language (e.g. {{tl|en-letter}}, {{tl|it-letter}} or {{tl|sh-letter}}).
-Supports the following invocation parameters:
+Implementation of the letter headword template for a given language (e.g. {{tl|en-letter}}, {{tl|it-letter}} or
+{{tl|sh-letter}}). Supports the following invocation parameters:
 ; {{para|pos}}
-: The plural part of speech to use; defaults to {{cd|letters}}. Other possibilities are e.g. {{cd|numeral symbols}} for ordinal letters.
+: The plural part of speech to use; defaults to {{cd|letters}}. Other possibilities are e.g. {{cd|numeral symbols}} for
+numeral symbols (letters used for list items).
 ; {{para|lang}}
 : The language code of the language of the headword template. Omit for language-agnostic {{tl|letter}}.
 ; {{para|sc}}
 : Specify the default script code. Rarely needs to be given.
 ; {{para|g}}
-: Specify the default gender(s) of the letter. Multiple comma-separated values are allowed, along with qualifier, label and reference
-  inline modifiers. See [[Module:gender and number]] for more information, including the allowed values. The default(s) can be overridden
-  using the {{para|g}} template parameter.
-; {{para|pl_ending}}, {{para|pl_ending2}}, ...
-: Specify the default ending(s) of the plural form(s) of the letter. Use the value {{cd|_}} to indicate a null ending. The default(s) can be overridden
-  using the {{para|pl}}, {{para|pl2}}, ... template parameters.
+: Specify the default gender(s) of the letter. Multiple comma-separated values are allowed, along with qualifier, label
+  and reference inline modifiers. See [[Module:gender and number]] for more information, including the allowed values.
+  The default(s) can be overridden using the {{para|g}} template parameter.
+; {{para|pl_ending}} ...
+: Specify the default ending(s) of the plural form(s) of the letter. Multiple items should be comma-separated, and
+  qualifier, label, reference, transliteration and gloss inline modifiers are allowed. Use the value {{cd|_}} to
+  indicate a null ending. The default(s) can be overridden using the {{para|pl}} template parameter.
 ; {{para|allow_tr|1}}
 : Specify that the template allows the {{para|tr}} parameter to be given for specifying transliteration.
 ]==]
@@ -56,53 +143,70 @@ function export.show(frame)
 		lang = {type = "language", template_default = "und"},
 		sc = {type = "script"},
 		g = {type = "genders"},
-		pl_ending = list_param,
+		pl_ending = true,
 		allow_tr = boolean_param,
 	})
 	local parent_args = frame:getParent().args
+	local allowed_types = {"upper", "lower", "mixed", "allcaps", "nocase"}
 	local params = {
 		g = {type = "genders"},
 		sc = {type = "script"},
-		type = true,
-		upper = list_param,
-		lower = list_param,
-		mixed = list_param,
-		pl = list_param,
+		type = {set = allowed_types},
+		head = list_param,
+		upper = true,
+		lower = true,
+		mixed = true,
+		allcaps = true,
+		pl = true,
 		nopl = boolean_param,
 		id = true,
 		sort = true,
 		pagename = true,
 		modern = true,
 	}
+	local langparam, otherparam
 	if not iargs.lang then
-		params[1] = {type = "language", required = true, template_default = "und"}
+		langparam = 1
+		otherparam = 2
+		params[langparam] = {type = "language", required = true, template_default = "und"}
+	else
+		otherparam = 1
 	end
+	params[otherparam] = list_param
 	if iargs.g and iargs.g[1] then
 		params.nog = boolean_param
 	end
 	if iargs.allow_tr or not iargs.lang then
 		params.tr = list_param
 	end
-	local args, unrecognized_args = require(parameters_module).process(parent_args, params, "return_unknown")
-	local still_unrecognized = {}
-	local other_scripts = {}
-	for k, v in pairs(unrecognized_args) do
-		local sc = require(scripts_module).getByCode(k)
-		if sc then
-			v = ine(v)
-			if v then
-				insert(other_scripts, {
-					scname = sc:getCanonicalName(),
-					sc = sc,
-					value = v,
-				})
-			end
-		else
-			still_unrecognized[k] = v
-		end
+	if not iargs.lang then
+		params.ts = list_param
 	end
-	if next(still_unrecognized) ~= nil then
-		require(parameters_module).params_list_error(still_unrecognized, "not used by this template")
+	local args = require(parameters_module).process(parent_args, params)
+	local others = {}
+
+	for i, otherspec in ipairs(args[otherparam]) do
+		local lang_sc, rest = otherspec:match("^([a-zA-Z0-9-]+):([^ ].*)$")
+		if not lang_sc then
+			error(("Expected other-lang or other-script param %s=%s to begin with a language code or script code followed by a colon and no space"):format(i + otherparam - 1, otherspec))
+		end
+		local obj = require(scripts_module).getByCode(lang_sc)
+		local objtype
+		if obj then
+			objtype = "script"
+		else
+			obj = require(languages_module).getByCode(lang_sc, nil, "allow etym")
+			if obj then
+				objtype = "language"
+			else
+				error(("Unrecognized language or script '%s' in %s=%s"):format(lang_sc, i + otherparam - 1, otherspec))
+			end
+		end
+		insert(others, {
+			obj = obj,
+			objtype = objtype,
+			value = rest,
+		})
 	end
 
 	local pagename = args.pagename or mw.loadData("Module:headword/data").pagename
@@ -112,7 +216,7 @@ function export.show(frame)
 				args.type))
 		end
 	end
-	local lang = args[1] or iargs.lang
+	local lang = langparam and args[langparam] or iargs.lang
 	local sc = args.sc or iargs.sc or lang:findBestScript(pagename)
 	
 	local data = {
@@ -124,7 +228,9 @@ function export.show(frame)
 		inflections = {},
 		id = args.id,
 		sort_key = args.sort,
+		heads = args.head,
 		translits = args.tr,
+		transcriptions = args.ts,
 		force_cat_output = force_cat,
 		genders = not args.nog and (args.g and args.g[1] and args.g or iargs.g) or nil,
 		categories = {},
@@ -140,147 +246,12 @@ function export.show(frame)
 	end
 	local uppage = uupper(pagename)
 	local lopage = ulower(pagename)
-	local function resolve_plus(values, default, label)
-		local saw_plus = false
-		for _, value in ipairs(values) do
-			if value == "+" then
-				saw_plus = true
-				break
-			end
-		end
-		if saw_plus then
-			local resolved_values = {}
-			for _, value in ipairs(values) do
-				if value == "+" then
-					if type(default) == "table" then
-						for _, defval in ipairs(default) do
-							insert(resolved_values, defval)
-						end
-					elseif type(default) == "string" then
-						insert(resolved_values, default)
-					else
-						error(("Saw '+' for label '%s' but no default available"):format(label))
-					end
-				else
-					insert(resolved_values, value)
-				end
-			end
-			values = resolved_values
-		end
-		return values
-	end
-		
-	local function insert_inflection(explicit, default, label)
-		local values
-		if explicit[1] then
-			values = resolve_plus(explicit, default, label)
-		elseif type(default) == "table" then
-			values = default
-		elseif type(default) == "string" then
-			values = {default}
-		else
+	local ucfirstpage = ucfirst(lopage)
+
+	local function insert_inflection(termobjs, label)
+		if not termobjs or not termobjs[1] then
 			return
 		end
-		for i, value in ipairs(values) do
-			values[i] = add_initial_colon_to_term(values[i])
-		end
-		if values[1] == "-" then
-			if not values[2] then
-				insert(data.inflections, {label = "no " .. label})
-				return
-			else
-				insert(data.inflections, {label = "usually no " .. label})
-				table.remove(values, 1)
-			end
-		end
-		values.label = label
-		insert(data.inflections, values)
-	end
-	local typ = args.type
-	if not typ then
-		if uppage == lopage then
-			typ = "nocase"
-		elseif data.pagename == uppage then
-			typ = "upper"
-		elseif data.pagename == lopage then
-			typ = "lower"
-		else
-			typ = "mixed"
-		end
-	end
-			
-	if typ == "nocase" then
-		if args.upper[1] or args.lower[1] or args.mixed[1] then
-			error("Can't specify upper=, lower= or mixed= when letter has no case")
-		end
-		insert(data.inflections, {label = "no case"})
-	elseif typ == "upper" then
-		if args.upper[1] then
-			error("Already uppercase; can't specify upper=")
-		end
-		insert(data.inflections, {label = "[[Appendix:Capital letter|upper case]]"})
-		insert_inflection(args.lower, lopage, "lower case")
-		insert_inflection(args.mixed, nil, "mixed case")
-	elseif typ == "lower" then
-		if args.lower[1] then
-			error("Already lowercase; can't specify lower=")
-		end
-		insert(data.inflections, {label = "lower case"})
-		insert_inflection(args.upper, uppage, "upper case")
-		insert_inflection(args.mixed, nil, "mixed case")
-	else
-		if args.mixed[1] then
-			error("Already mixed-case; can't specify mixed=")
-		end
-		insert(data.inflections, {label = "mixed case"})
-		insert_inflection(args.upper, uppage, "upper case")
-		insert_inflection(args.lower, lopage, "lower case")
-	end
-	if args.nopl then
-		insert(data.inflections, {label = "no plural"})
-	elseif args.pl[1] or iargs.pl_ending[1] then
-		local default_pls
-		if iargs.pl_ending[1] then
-			default_pls = {}
-			for _, pl_ending in ipairs(iargs.pl_ending) do
-				if pl_ending == "_" then
-					insert(default_pls, pagename)
-				else
-					insert(default_pls, pagename .. pl_ending)
-				end
-			end
-		end
-		local pls = args.pl
-		if not pls[1] then
-			pls = {"+"}
-		end
-		pls = resolve_plus(pls, default_pls, "plural")
-		if not pls[2] and pls[1] == pagename then
-			insert(data.inflections, {label = glossary_link("invariable")})
-		else
-			insert_inflection(pls, default_pls, "plural")
-		end
-	end
-
-	local function parse_equivalent(value, paramname)
-		local termobjs
-		if value:find("[,<]") then
-			termobjs = require(headword_utilities_module).parse_term_with_modifiers {
-				val = value,
-				paramname = paramname,
-				splitchar = ",",
-			}
-		else
-			termobjs = {{ term = value }}
-		end
-		for _, termobj in ipairs(termobjs) do
-			termobj.term = add_initial_colon_to_term(termobj.term)
-			termobj.tr = "-"
-		end
-		return termobjs
-	end
-
-	local function insert_equivalent(termobjs, label)
 		if termobjs[1].term == "-" then
 			require(headword_utilities_module).insert_inflection {
 				headdata = data,
@@ -293,16 +264,124 @@ function export.show(frame)
 		end
 	end
 
+	local typ = args.type
+	if not typ then
+		if uppage == lopage then
+			typ = "nocase"
+		elseif data.pagename == ucfirstpage then
+			typ = "upper"
+		elseif data.pagename == uppage then
+			typ = "allcaps"
+		elseif data.pagename == lopage then
+			typ = "lower"
+		else
+			typ = "mixed"
+		end
+	end
+
+	if typ == "nocase" then
+		if args.upper or args.lower or args.mixed or args.allcaps then
+			error("Can't specify upper=, lower=, mixed= or allcaps= when letter has no case")
+		end
+		insert(data.inflections, {label = "no case"})
+	else
+		local upper = parse_equivalent(args.upper or "+", ucfirstpage, "upper")
+		local lower = parse_equivalent(args.lower or "+", lopage, "lower")
+		local allcaps = parse_equivalent(args.allcaps or ulen(pagename) == 1 and args.upper or "+", uppage, "allcaps")
+		local mixed = parse_equivalent(args.mixed, nil, "mixed")
+		local pagenameobj = {{term = ":" .. pagename, tr = "-"}}
+		if typ == "upper" then
+			if args.upper then
+				error("Already uppercase; can't specify upper=")
+			end
+			insert(data.inflections, {label = "[[Appendix:Capital letter|upper case]]"})
+			insert_inflection(lower, "lower case")
+			if not deep_equals(pagenameobj, allcaps) then
+				insert_inflection(allcaps, "[[Appendix:Capital letter|all caps]]")
+			end
+			insert_inflection(mixed, "mixed case")
+		elseif typ == "lower" then
+			if args.lower then
+				error("Already lowercase; can't specify lower=")
+			end
+			insert(data.inflections, {label = "lower case"})
+			if deep_equals(upper, allcaps) then
+				if ulen(pagename) == 1 then
+					insert_inflection(upper, "[[Appendix:Capital letter|upper case]]")
+				else
+					insert_inflection(upper, "[[Appendix:Capital letter|upper case]] and all caps")
+				end
+			else
+				insert_inflection(upper, "[[Appendix:Capital letter|upper case]]")
+				insert_inflection(allcaps, "[[Appendix:Capital letter|all caps]]")
+			end
+			insert_inflection(mixed, "mixed case")
+		elseif typ == "allcaps" then
+			if args.allcaps then
+				error("Already all-caps; can't specify allcaps=")
+			end
+			insert(data.inflections, {label = "[[Appendix:Capital letter|all caps]]"})
+			if not deep_equals(pagenameobj, upper) then
+				insert_inflection(upper, "[[Appendix:Capital letter|upper]]")
+			end
+			insert_inflection(lower, "lower case")
+			insert_inflection(mixed, "mixed case")
+		else
+			if args.mixed then
+				error("Already mixed-case; can't specify mixed=")
+			end
+			insert(data.inflections, {label = "mixed case"})
+			insert_inflection(lower, "lower case")
+			if deep_equals(upper, allcaps) then
+				insert_inflection(upper, "[[Appendix:Capital letter|upper case]] and all caps")
+			else
+				insert_inflection(upper, "[[Appendix:Capital letter|upper case]]")
+				insert_inflection(allcaps, "[[Appendix:Capital letter|all caps]]")
+			end
+		end
+	end
+	if args.nopl then
+		insert(data.inflections, {label = "no plural"})
+	elseif args.pl or iargs.pl_ending then
+		local default_pls
+		if iargs.pl_ending then
+			default_pls = parse_equivalent(iargs.pl_ending, nil, "pl_ending", "no_prefix_colon")
+			for _, pl_ending in ipairs(default_pls) do
+				if pl_ending.term == "_" then
+					pl_ending.term = pagename
+				else
+					pl_ending.term = pagename .. pl_ending.term
+				end
+			end
+		end
+		local pls = parse_equivalent(args.pl or "+", default_pls, "pl")
+		if not pls[2] and pls[1].term == ":" .. pagename then
+			require(headword_utilities_module).insert_fixed_inflection {
+				headdata = data,
+				originating_term = pls[1],
+				label = glossary_link("invariable"),
+			}
+		else
+			insert_inflection(pls, "plural")
+		end
+	end
+
 	if args.modern then
-		local termobjs = parse_equivalent(args.modern, "modern")
-		insert_equivalent(termobjs, "modern equivalent")
+		local termobjs = parse_equivalent(args.modern, nil, "modern")
+		insert_inflection(termobjs, "modern equivalent")
 	end
 		
-	if other_scripts[1] then
-		table.sort(other_scripts, function(a, b) return a.scname < b.scname end)
-		for _, othscript in ipairs(other_scripts) do
-			local termobjs = parse_equivalent(othscript.value, othscript.sc:getCode())
-			insert_equivalent(termobjs, othscript.scname .. " equivalent")
+	if others[1] then
+		for _, other in ipairs(others) do
+			local termobjs = parse_equivalent(other.value, nil, other.obj:getCode())
+			for _, termobj in ipairs(termobjs) do
+				if other.objtype == "language" then
+					termobj.lang = other.obj
+				else
+					termobj.sc = other.obj
+				end
+			end
+			insert_inflection(termobjs, other.obj:getCanonicalName() .. " equivalent")
 		end
 	end
 
@@ -350,18 +429,22 @@ The following parameters are supported:
 ;{{para|1|req=1}}
 : Language code (see {{slink|WT:Languages#Language codes}}) for the language of the letter.]=] .. "\n") .. [=[
 ;{{para|type}}
-: Explicitly specify the case of the letter: {{cd|upper}}, {{cd|lower}}, {{cd|mixed}} (for combinations of two or more characters treated as ]=] ..
-	[=[a distinct letter where the letter has separate uppercase and lowercase forms, such as Vietnamese {{m|es|Ch}}) or {{cd|nocase}} ]=] ..
-	[=[(for letters without case). This rarely needs to be given as it is autodetected.
-;{{para|upper}}, {{para|upper2}}, ...
-: Explicitly specify the uppercase equivalent(s) of a lowercase or mixed-case letter. Cannot be specified for already-uppercase or caseless letters. ]=] ..
+: Explicitly specify the case of the letter: {{cd|upper}}, {{cd|lower}}, {{cd|allcaps}} (for all-capital-letter ]=] ..
+[=[combinations of two or more characters whose normal uppercase version has only the first character ]=] ..
+[=[capitalized, {{cd|mixed}} (for the rare case of a mixture of uppercase and lowercase letters in a digraph ]=] ..
+[=[that is not the uppercase form) or {{cd|nocase}} (for letters without case). This usually does not need to be ]=] ..
+[=[given, as it is autodetected; but some lowercase or uppercase characters need it because Unicode does not ]=] ..
+[=[correctly register the character as having case.
+;{{para|upper}}
+: Explicitly specify the uppercase equivalent(s) of a lowercase or mixed-case letter. Cannot be specified for
+  already-uppercase or caseless letters. ]=] ..
 	[=[This rarely needs to be given as it is normally auto-generated by uppercasing the pagename.
-;{{para|lower}}, {{para|lower2}}, ...
+;{{para|lower}}
 : Explicitly specify the lowercase equivalent(s) of an uppercase or mixed-case letter. Cannot be specified for already-lowercase or caseless letters. ]=] ..
 	[=[This rarely needs to be given as it is normally auto-generated by lowercasing the pagename.
-;{{para|mixed}}, {{para|mixed2}}, ...
+;{{para|mixed}}
 : Explicitly specify the mixed-case equivalent(s) of an uppercase or lowercase letter. Cannot be specified for already mixed-case or caseless letters.
-;{{para|pl}}, {{para|pl2}}, ...
+;{{para|pl}}
 : Explicitly specify the plural(s) of the letter.]=] .. (iargs.default_pl and " This overrides the default value(s) provided by the template " ..
 	"and normally does not need to be given as letter plurals are largely the same for all letters. A value of {{cd|+}} explicitly requests " ..
 	"the default value(s)." or "") .. "\n" .. [=[
