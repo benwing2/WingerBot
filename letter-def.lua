@@ -66,7 +66,12 @@ function export.show(frame)
 	})
 	local parent_args = frame:getParent().args
 	local deftype = ine(parent_args[2])
-	local deftypes = {"diacritic", "letter", "name", "ordinal", "syllable"}
+	local orig_deftype = deftype
+	if deftype == "ordinal" then
+		deftype = "numsym"
+	end
+	-- FIXME: convert 'ordinal' to 'numsym'
+	local deftypes = {"letter", "ordinal", "numsym", "name", "diacritic", "syllable"}
 	local params = {
 		[1] = {type = "language", required = true, template_default = "und"},
 		[2] = {set = deftypes},
@@ -82,17 +87,7 @@ function export.show(frame)
 			params[k] = v
 		end
 	end
-	if deftype == "name" then
-		merge_params {
-			[3] = {required = true},
-			[4] = true,
-			linklang = boolean_param,
-			alphabet = true,
-			alphvar = true,
-			lit = true,
-			eq = true,
-		}
-	elseif deftype == "letter" then
+	if deftype == "letter" or deftype == "numsym" then
 		merge_params {
 			[3] = {type = "number"},
 			[4] = list_param,
@@ -104,6 +99,16 @@ function export.show(frame)
 			foll = true,
 			last = boolean_param,
 		}
+	elseif deftype == "name" then
+		merge_params {
+			[3] = {required = true},
+			[4] = true,
+			linklang = boolean_param,
+			alphabet = true,
+			alphvar = true,
+			lit = true,
+			eq = true,
+		}
 	elseif deftype == "diacritic" then
 		merge_params {
 			[3] = list_param,
@@ -114,11 +119,6 @@ function export.show(frame)
 			moreexamples = boolean_param,
 			t = {list = true, allow_holes = true},
 		}
-	elseif deftype == "ordinal" then
-		merge_params {
-			[3] = {required = true},
-			[4] = list_param,
-		}
 	elseif deftype == "syllable" then
 		merge_params {
 			[3] = {required = true},
@@ -126,9 +126,13 @@ function export.show(frame)
 			[5] = {required = true},
 		}
 	else
-		local possible_deftypes = "'name', 'letter', 'diacritic', 'ordinal' or 'syllable'"
+		local possible_deftypes = {}
+		for _, possible in ipairs(deftypes) do
+			insert(possible_deftypes, ("'%s'"):format(possible))
+		end
+		possible_deftypes = mw.text.listToText(possible_deftypes, nil, " or ")
 		if deftype then
-			error(("Invalid value '%s' for 2=, should be one of %s"):format(deftype, possible_deftypes))
+			error(("Invalid value '%s' for 2=, should be one of %s"):format(orig_deftype, possible_deftypes))
 		else
 			error(("Missing value for 2=, should be one of %s"):format(possible_deftypes))
 		end
@@ -138,7 +142,7 @@ function export.show(frame)
 	local sc = args.sc or iargs.sc
 
 	if not sc then
-		if deftype == "letter" or deftype == "ordinal" then
+		if deftype == "letter" or deftype == "numsym" then
 			sc = lang:findBestScript(args.pagename or mw.loadData("Module:headword/data").pagename)
 		elseif deftype == "diacritic" or deftype == "name" then
 			local test_char = args[3]
@@ -184,37 +188,14 @@ function export.show(frame)
 		end
 		return full_link({ lang = lang_for_linking, term = char, tr = "-", sc = sc}, "term")
 	end
-	if deftype == "name" then
-		ins(args.nocap and "the" or "The")
-		ins((" name of the %s letter "):format(linked_script))
-		ins(link_to_lang_or_mul(args[3]))
-		if args[4] then
-			ins("/")
-			ins(link_to_lang_or_mul(args[4]))
-		end
-		if args.alphabet then
-			ins(", in " .. args.alphabet)
-			if args.alphvar then
-				ins(" (" .. args.alphvar .. ")")
-			end
-		elseif args.alphvar then
-			ins(", in " .. args.alphvar)
-		end
-		if args.lit then
-			ins(", literally “")
-			ins(args.lit)
-			ins("”")
-		end
-		if args.eq then
-			ins(", called ")
-			ins(full_link({lang = lang_getByCode("en", true), term = args.eq}, "term"))
-			ins(" in English")
-		end
-		insert(categories, ("%s:%s letter names"):format(lang:getFullCode(), scname))
 
-	elseif deftype == "letter" then
+	if deftype == "letter" or deftype == "numsym" then
 		local indef = not args[3] and not args.last
-		ins(args.nocap and (indef and "a" or "the") or (indef and "A" or "The"))
+		local article = args.indef and "A" or "The"
+		if args.nocap then
+			article = article:lower()
+		end
+		ins(article)
 		if args[3] then
 			ins(" ")
 			ins(ordinal_to_word(args[3]))
@@ -230,7 +211,13 @@ function export.show(frame)
 		-- script" because it's redundant.
 		local is_mul = lang:getFullCode() == "mul"
 		local lang_for_linking = is_mul and lang_getByCode("en", true) or lang
-		ins(" [[letter]] of ")
+		ins(" ")
+		if deftype == "numsym" then
+			ins("[[numeral]] [[symbol]]")
+		else
+			ins("[[letter]]")
+		end
+		ins(" of ")
 		if args.alphabet then
 			ins(args.alphabet)
 		elseif is_mul then
@@ -279,6 +266,38 @@ function export.show(frame)
 			ins("followed by ")
 			ins(link_to_lang_or_mul(args.foll))
 		end
+		if deftype == "numsym" then
+			-- FIXME: Rethink the name of this category.
+			insert(categories, ("%s ordinal numbers"):format(lang:getFullName()))
+		end
+
+	elseif deftype == "name" then
+		ins(args.nocap and "the" or "The")
+		ins((" name of the %s letter "):format(linked_script))
+		ins(link_to_lang_or_mul(args[3]))
+		if args[4] then
+			ins("/")
+			ins(link_to_lang_or_mul(args[4]))
+		end
+		if args.alphabet then
+			ins(", in " .. args.alphabet)
+			if args.alphvar then
+				ins(" (" .. args.alphvar .. ")")
+			end
+		elseif args.alphvar then
+			ins(", in " .. args.alphvar)
+		end
+		if args.lit then
+			ins(", literally “")
+			ins(args.lit)
+			ins("”")
+		end
+		if args.eq then
+			ins(", called ")
+			ins(full_link({lang = lang_getByCode("en", true), term = args.eq}, "term"))
+			ins(" in English")
+		end
+		insert(categories, ("%s:%s letter names"):format(lang:getFullCode(), scname))
 
 	elseif deftype == "diacritic" then
 		ins(args.nocap and "a" or "A")
@@ -324,23 +343,6 @@ function export.show(frame)
 			end
 		end
 
-	elseif deftype == "ordinal" then
-		ins(args.nocap and "the" or "The")
-		ins((" [[ordinal]] number '''[[%s]]''', derived from this letter of the "):format(ordinal_to_word(args[3])))
-		ins(lang:getCanonicalName())
-		ins( " [[alphabet]], ")
-		if args[4][1] then
-			ins("called ")
-			local formatted_names = {}
-			for _, name in ipairs(args[4]) do
-				insert(formatted_names, full_link({lang = lang, term = name}, "term"))
-			end
-			ins(mw.text.listToText(formatted_names, nil, " or "))
-			ins(" and ")
-		end
-		ins(("written in the %s"):format(linked_script))
-		insert(categories, ("%s ordinal numbers"):format(lang:getFullName()))
-
 	elseif deftype == "syllable" then
 		ins(args.nocap and "the " or "The ")
 		if args[3] ~= "-" then
@@ -357,7 +359,7 @@ function export.show(frame)
 	end
 	local addl = args.addl
 	if addl then
-		if addl:find("^[;:]") then
+		if addl:find("^[;:.]") then
 			ins(addl)
 		elseif addl:find("^_") then
 			ins(" " .. addl:sub(2))
