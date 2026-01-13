@@ -23,7 +23,18 @@ local ulower = m_string_utilities.lower
 local ulen = m_string_utilities.len
 local insert = table.insert
 
+local per_language_defaults = {
+	de = {g = "n"},
+	en = {pl_ending = "s,'s"},
+	it = {g = "f,m", pl_ending = "_"},
+	pt = {g = "m"},
+}
+
 local function ine(val)
+	if not val then
+		return val
+	end
+	val = mw.text.trim(val)
 	if val == "" then return nil else return val end
 end
 
@@ -138,7 +149,28 @@ numeral symbols (letters used for list items).
 function export.show(frame)
 	local list_param = {list = true, disallow_holes = true}
 	local boolean_param = {type = "boolean"}
-	local iargs = require(parameters_module).process(frame.args, {
+	local frame_args = frame.args
+	local parent_args = frame:getParent().args
+
+	-- Extract language and any per-language defaults. If they exist, clone the frame args and set the defaults into the
+	-- frame args before parsing. If there is no language specified at either the invocation or template level, we'll
+	-- get an error later.
+	local lang = ine(frame_args.lang) or ine(parent_args[1])
+	if lang and per_language_defaults[lang] then
+		local cloned_frame_args = {}
+		for k, v in pairs(frame_args) do
+			cloned_frame_args[k] = v
+		end
+		local defaults = per_language_defaults[lang]
+		for k, v in pairs(defaults) do
+			if cloned_frame_args[k] == nil then
+				cloned_frame_args[k] = v
+			end
+		end
+		frame_args = cloned_frame_args
+	end
+
+	local iargs = require(parameters_module).process(frame_args, {
 		pos = {default = "letters"},
 		lang = {type = "language", template_default = "und"},
 		sc = {type = "script"},
@@ -146,7 +178,6 @@ function export.show(frame)
 		pl_ending = true,
 		allow_tr = boolean_param,
 	})
-	local parent_args = frame:getParent().args
 	local allowed_types = {"upper", "lower", "mixed", "allcaps", "nocase"}
 	local params = {
 		g = {type = "genders"},
