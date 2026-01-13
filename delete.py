@@ -38,7 +38,7 @@ if args.direcfile:
       pagetitle, page_comment = line.split(" ||| ")
     else:
       pagetitle = line
-      page_comment = comment
+      page_comment = args.comment or 'delete file'
     page = pywikibot.Page(site, pagetitle)
     process_page(page, index, args, page_comment)
 else:
