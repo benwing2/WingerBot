@@ -351,7 +351,7 @@ Possible parameter tags are listed below:
 :: The value is interpreted as the name of a parameter, and will be normalized using the method that Scribunto uses when
    constructing a {frame.args} table of arguments. This means that integers will be converted to numbers, but all other
    arguments will remain as strings (e.g. {"1"} will be normalized to {1}, but {"foo"} and {"1.5"} will remain
-   unchanged). Note that Scribunto also trims parmeter names, following the same trimming method that this module
+   unchanged). Note that Scribunto also trims parameter names, following the same trimming method that this module
    applies by default to all parameter types.
 :: This type is useful when one set of input arguments is used to construct a {params} table for use in a subsequent
    {export.process()} call with another set of input arguments; for instance, the set of valid parameters for a template
@@ -631,6 +631,12 @@ local function validate_alias_options(...)
 end
 
 -- TODO: give ranges instead of long lists, if possible.
+--[==[ func: export.params_list_error(params, msg)
+Given a key-value table of raw parameters `params`, display an error message about all the parameters seen in the table.
+The parameter names are displayed in sorted order. `msg` should be e.g. {"required"} or {"not used by this template"}.
+This is used internally to display error messages about required or invalid parameters, and can be used for the same
+purpose by code that processes its own parameters (e.g. if the `return_unknown` flag is specified to `process`).
+]==]
 local function params_list_error(params, msg)
 	local list, n = {}, 0
 	for name in sorted_pairs(params) do
@@ -643,6 +649,8 @@ local function params_list_error(params, msg)
 		msg
 	), 3)
 end
+export.params_list_error = params_list_error
+
 
 -- Helper function for use with convert_val_error(). Format a list of possible choices using `concat_list` and
 -- conjunction "or", displaying "either " before the choices if there's more than one.
