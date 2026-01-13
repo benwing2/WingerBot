@@ -1,4 +1,4 @@
-Beginning at Wed Jan  7 22:54:13 2026
+Beginning at Mon Jan 12 18:25:02 2026
 Page 1 Unsupported titles/Space: -------- begin text --------
 {{also|Appendix:Blank characters|Appendix:Control characters}}
 {{character info|0x20}}
@@ -3557,7 +3557,8 @@ Page 102 ǀ: -------- begin text --------
 {{also|{{!}}|ʇ|∣|丨|uni=auto}}
 {{character info}}
 {{character info/var|𐞶}}
-{{character image|Lepsius dental click.svg|caption=The original Lepsius lower-case dental click letter}}
+{{character image|IPA Unicode 0x01C0 alt.svg|caption=Form without descender.}}
+{{character image|Lepsius dental click.svg|caption=The original Lepsius lower-case dental click letter.}}
 
 ==Translingual==
 {{wp|Dental click}}
@@ -3626,6 +3627,7 @@ Page 103 ǁ: -------- begin text --------
 {{also|uni=auto|{{!}} {{!}}|‖|‖ ‖|∥|⏸}}
 {{character info}}
 {{character info/var|𐞷}}
+{{character image|IPA Unicode 0x01C1 alt.svg|caption=Form without descender.}}
 {{character image|Lepsius lateral click.svg|caption=The original Lepsius lower-case lateral click letter}}
 
 ==Translingual==
@@ -3695,6 +3697,7 @@ Page 104 ǂ: -------- begin text --------
 {{character info}}
 {{character info/var|𐞸}}
 {{also|‡|ŧ|キ|ⱡ|#}}
+{{character image|IPA Unicode 0x01C2 alt.svg|caption=Form without descender.}}
 {{character image|Lepsius palatal click.svg|caption=The original Lepsius lower-case palatal click letter}}
 ==Translingual==
 {{wp|Palatal click}}
@@ -4423,10 +4426,10 @@ Page 131 Ǣ: -------- begin text --------
 The vowel letter [[Æ]] marked for length. Long vowels are not consistently distinguished in Old English manuscripts. They generally are in modern editions.
 -------- end text --------
 Page 132 ǥ: -------- begin text --------
-{{also|Ǥ|◌̵|Appendix:Variations of "g"}}
+{{also|Ǥ|g̶|◌̵|Appendix:Variations of "g"}}
 {{character info}}
 {{character image|Unicode 0x01E5.svg| image2 = Unicode 0x01E5 high stroke character variant.svg
-|caption=The letter ''ǥ'' has a variant with the stroke through the bowl (right), used i.a. in Kiowa.
+|caption=The letter ''ǥ'' has a variant with the stroke through the bowl (right), used e.g. in Kiowa.
 }}
 {{character image|Unicode 0x01E5 open-tail character variant.svg| image2 = Unicode 0x01E5 high stroke and open-tail character variant.svg
 |caption = The letter ''ǥ'' also has variants with an open tail.
@@ -4438,23 +4441,9 @@ Page 132 ǥ: -------- begin text --------
 {{head|mul|symbol}}
 
 # {{lb|mul|IPA|obsolete|open-tail variant {{angbr|[[File:G with open slanted tail and stroke.svg|20px]]}} and later {{angbr|[[file:Unicode 0x01E5 open-tail character variant.svg|20px]]}}}} a [[voiced]] [[velar]] [[fricative]];  {{n-g|superseded by}} '''[[ɣ]]'''
-# {{lb|mul|NAPA|bowl-struck variant {{angbr|[[File:Unicode 0x01E5 high stroke character variant.svg|20px]]}} or {{angbr|[[file:Unicode 0x01E5 high stroke and open-tail character variant.svg|20px]]}}}} A voiced velar fricative (IPA {{IPAfont|[ɣ]}})
-
-==Kiowa==
-
-===Alternative forms===
-* {{l|kio|[g}}
-
-===Pronunciation===
-* {{IPA|kio|/k/}}
-
-===Letter===
-{{head|kio|letter|upper case|[[Ǥ|G̶]]|head=g̶}}
-
-# {{lb|kio|Bowl-struck variant}} {{ng|An unaspirated 'k' sound; alphabetized before [[g]].}}
 
 ===See also===
-{{list:Latin script letters/kio}}
+* {{l|mul|g̶|qq=the bowl-struck variant {{angbr|[[File:Unicode 0x01E5 high stroke character variant.svg|20px]]}} or {{angbr|[[file:Unicode 0x01E5 high stroke and open-tail character variant.svg|20px]]}} used in Americanist notation ([[NAPA]])}}
 
 ==Skolt Sami==
 
@@ -4462,7 +4451,7 @@ Page 132 ǥ: -------- begin text --------
 * {{qualifier|phoneme}} {{IPA|sms|/ɣ/}}
 
 ===Letter===
-{{head|sms|letter|upper case|Ǥ}}
+{{letter|sms}}
 
 # {{Latn-def|sms|letter|14}}
 
@@ -4484,7 +4473,7 @@ Letter {{l|sl|g}} with stroke to signify spirantization.
 }}
 
 ===Symbol===
-{{head-lite|sl|symbols|langname=Slovene}}
+{{head|sl|symbol}}
 
 # {{qualifier|[[wikipedia:Slovene_national_phonetic_transcription|dialectal transcription]]}} ''[[phonetic|Phonetic]] [[transcription]] of sound'' [{{IPAlink|ɡ̞|ɡ}}].
 
@@ -4498,32 +4487,16 @@ Although by the description, the corresponding IPA representation should be appr
 * {{cite-book|sl|last=Kenda-Jež |first=Karmen |date=February 27, 2017 |title=Fonetična trankripcija |trans-title=Phonetic transcription |url=https://fran.si/150/sla-slovenski-lingvisticni-atlas-1/datoteke/SLA1_Foneticna-transkripcija.pdf |archiveurl=https://web.archive.org/web/20220122221458/https://www.fran.si/150/sla-slovenski-lingvisticni-atlas-1/datoteke/SLA1_Foneticna-transkripcija.pdf |archivedate=January 22, 2022 |accessdate=March 19, 2022 |publisher=Znanstvenoraziskovalni center [[SAZU]], Inštitut za slovenski jezik Frana Ramovša |pages=27–30 }}
 -------- end text --------
 Page 133 Ǥ: -------- begin text --------
-{{also|ǥ|◌̵|Appendix:Variations of "g"}}
+{{also|G̶|ǥ|◌̵|Appendix:Variations of "g"}}
 {{character info}}
-{{character image|Unicode 0x01E4 alt.svg|caption=An alternative form is used as the capital of the bowl-struck lower-case letter.}}
-==Kiowa==
-
-===Alternative forms===
-* {{l|kio|[G}}
-
-===Pronunciation===
-* {{IPA|kio|/k/}}
-
-===Letter===
-{{head|kio|letter|head=G̶|lower case|[[ǥ|g̶]]}}
-
-# {{lb|kio|Bowl-struck variant}} {{ng|An unaspirated 'k' sound; alphabetized before [[G]].}}
-
-===See also===
-{{list:Latin script letters/kio}}
-
+{{character image|Unicode 0x01E4 alt.svg|caption=An alternative form is used as the capital of the bowl-struck lower-case letter, used e.g. for Kiowa.}}
 ==Skolt Sami==
 
 ===Pronunciation===
 * {{qualifier|phoneme}} {{IPA|sms|/ɣ/}}
 
 ===Letter===
-{{head|sms|letter|lower case|ǥ}}
+{{letter|sms}}
 
 # {{Latn-def|sms|letter|14}}
 
@@ -5395,9 +5368,9 @@ This retired symbol had been adopted specifically to transcribe the Japanese nas
 ==Lakota==
 
 ===Letter===
-{{head|lkt|letter|uppercase|Ƞ}}
+{{letter|lkt|modern=ŋ}}
 
-# {{non-gloss|An obsolete letter used to indicate [[nasalisation]] of the previous vowel. Replaced by [[ŋ]].}}
+# {{tlb|lkt|obsolete}} {{Latn-def|lkt|letter|addl=; an obsolete letter used to indicate [[nasalisation]] of the previous vowel}}
 
 ====See also====
 {{list:Latin script letters/lkt}}
@@ -5405,7 +5378,7 @@ This retired symbol had been adopted specifically to transcribe the Japanese nas
 ==Malayalam==
 
 ===Letter===
-{{head|ml|letter|upper case|*{{PAGENAME}}|sc=Latn}}
+{{letter|ml|upper=-}}
 
 # {{lb|ml|dated}} romanization of {{angbr|[[ഞ]]}}
 -------- end text --------
@@ -6227,7 +6200,7 @@ Casing pair only used in Northwest Territories. In Saskatchewan, non-casing {{an
 # {{Latn-def|scs|letter}}
 -------- end text --------
 Page 198 Ƀ: -------- begin text --------
-{{also|ƀ|␢|β|◌̵|Appendix:Variations of "b"}}
+{{also|ƀ|B̶|␢|β|◌̵|Appendix:Variations of "b"}}
 {{character info}}
 {{character image|Unicode 0x0243 alt.svg|caption=An alternative form is used as the capital of the bowl-struck lower-case letter.}}
 {{wp|B with stroke}}
@@ -6237,51 +6210,22 @@ Page 198 Ƀ: -------- begin text --------
 * {{IPA|jra|/ʔb/}}
 
 ===Letter===
-{{head|jra|letter|lower case|ƀ}}
+{{letter|jra}}
 
 # {{Latn-def|jra|letter|5}}
-
-==Kiowa==
-
-===Alternative forms===
-* {{l|kio|[B}}
-
-===Pronunciation===
-* {{IPA|kio|/p/}}
-
-===Letter===
-{{head|kio|letter|head=B̶|lower case|[[ƀ|b̶]]}}
-
-# {{lb|kio|Bowl-struck variant}} {{ng|An unaspirated 'p' sound; alphabetized before [[B]].}}
-
-===See also===
-{{list:Latin script letters/kio}}
 
 ==Old Saxon==
 
 ===Letter===
-{{head|osx|letter|lower case|ƀ|sc=Latn}}
+{{letter|osx}}
 
-# {{ng|A letter of the [[Old Saxon]] alphabet.}}
-
-==Pilagá==
-
-===Pronunciation===
-*{{IPA|plg|/β/}}
-
-===Letter===
-{{head|plg|letter|head=B̶|lower case|[[ƀ|b̶]]}}
-
-# {{lb|plg|Bowl-struck variant}} {{ng|A letter of the [[Pilagá]] alphabet.}}
-
-====See also====
-{{list:Latin script letters/plg}}
+# {{Latn-def|osx|letter}}
 
 ===See also===
 {{Latn-script}}
 -------- end text --------
 Page 199 ƀ: -------- begin text --------
-{{also|Ƀ|␢|β|◌̵|uni=auto|Appendix:Variations of "b"}}
+{{also|Ƀ|b̶|␢|β|◌̵|uni=auto|Appendix:Variations of "b"}}
 {{character info}}
 {{character image
  | caption = The letter ƀ has a variant with the stroke through the bowl, used i.a. in Kiowa. 
@@ -6290,9 +6234,9 @@ Page 199 ƀ: -------- begin text --------
 ==Translingual==
 
 ===Symbol===
-{{mul-symbol|head=b̶}}
+{{mul-symbol}}
 
-# {{lb|mul|NAPA|bowl-struck variant}} A voiced bilabial fricative (IPA {{IPAfont|[β]}})
+# {{lb|mul|NAPA}} {{altform|mul|b̶}}
 
 ==Jarai==
 
@@ -6300,25 +6244,9 @@ Page 199 ƀ: -------- begin text --------
 * {{IPA|jra|/ʔb/}}
 
 ===Letter===
-{{head|jra|letter|upper case|Ƀ}}
+{{letter|jra}}
 
 # {{Latn-def|jra|letter|5}}
-
-==Kiowa==
-
-===Alternative forms===
-* {{l|kio|[b}}
-
-===Pronunciation===
-* {{IPA|kio|/p/}}
-
-===Letter===
-{{head|kio|letter|upper case|[[Ƀ|B̶]]|head=b̶}}
-
-# {{lb|kio|Bowl-struck variant}} {{ng|An unaspirated 'p' sound; alphabetized before [[b]].}}
-
-===See also===
-{{list:Latin script letters/kio}}
 
 ==Old English==
 
@@ -6337,22 +6265,9 @@ Page 199 ƀ: -------- begin text --------
 * {{IPA|osx|/v/}}
 
 ===Letter===
-{{head|osx|letter|upper case|Ƀ|sc=Latn}}
+{{letter|osx}}
 
-# {{ng|A letter of the {{l|en|Old Saxon}} alphabet.}}
-
-==Pilagá==
-
-===Pronunciation===
-*{{IPA|plg|/β/}}
-
-===Letter===
-{{head|plg|letter|head=b̶|upper case|[[Ƀ|B̶]]}}
-
-# {{lb|plg|Bowl-struck variant}} {{ng|A letter of the [[Pilagá]] alphabet.}}
-
-====See also====
-{{list:Latin script letters/plg}}
+# {{Latn-def|osx|letter}}
 
 ==Slovene==
 
@@ -6363,7 +6278,7 @@ Letter {{l|sl|b}} with a stroke to signify partial spirantization, which is some
 * {{qualifier|sound|unofficial}}: {{IPA|sl|[b̞]}}
 
 ===Symbol===
-{{head|sl|symbols}}
+{{head|sl|symbol}}
 
 # {{qualifier|[[wikipedia:Slovene_national_phonetic_transcription|SNPT]]}} ''[[phonetic|Phonetic]] [[transcription]] of partially spirantized'' [{{IPAlink|b}}], [{{IPAlink|b̞|b}}].
 
@@ -11969,7 +11884,7 @@ Page 446 ꞉: -------- begin text --------
 ===Symbol===
 {{head|mul|symbol}}
 
-# {{lb|mul|NAPA}} {{altform|mul|ꞏ}} {{ng|for vowel length (e.g. {{angbr|[[a꞉]]}}).}}
+# {{lb|mul|NAPA}} {{altform|mul|·}} {{ng|for vowel length (e.g. {{angbr|[[a꞉]]}}).}}
 # {{ng|A component of the vowel letters {{angbr|{{l|bco|a꞉}}}} and {{angbr|{{l|bco|o꞉}}}} in a number of languages Papua New Guinea (e.g. Gobasi {{angbr|Go꞉bosi}}).}}
 
 ====Derived terms====
@@ -12229,10 +12144,10 @@ Page 452 ꞏ: -------- begin text --------
 ===Letter===
 {{head|mul|letter|sc=Latn}}
 
-# Used to transliterate the [['Phags-pa]] glottal-stop letter [[&#xA856;]].
+# Used to transliterate the [['Phags-pa|ʼPhags-pa]] glottal-stop letter [[&#xA856;]].
 
 ====Usage notes====
-* The [[vowel length]] mark, used in the alphabets of a number of American languages (e.g. see {{angbr|[[a·]]}}), is [[·]] (U+00B7 MIDDLE DOT),<ref>[https://www.unicode.org/charts/PDF/U0080.pdf "C1 Controls and Latin-1 Supplement"], Unicode</ref> not ꞏ (U+A78F LATIN LETTER SINOLOGICAL DOT).
+* The Sinological/ʼPhags-pa dot is larger than the [[vowel length]] mark used in the alphabets of a number of American languages (e.g. see {{angbr|[[a·]]}}). The latter is [[·]] (U+00B7 MIDDLE DOT).<ref>[https://www.unicode.org/charts/PDF/U0080.pdf "C1 Controls and Latin-1 Supplement"], Unicode</ref>
 
 ====References====
 <references/>
@@ -13118,7 +13033,7 @@ Page 506 Ᶎ: -------- begin text --------
 -------- end text --------
 Page 507 Ꟈ: -------- begin text --------
 {{character info}}
-{{also|Đ}}
+{{also|Đ|D̶}}
 ==Gaulish==
 
 ===Etymology===
@@ -13137,7 +13052,7 @@ Not clear if it descends from Latin [[D]] or from Greek [[Θ]] (the sound had on
 ===Numeral===
 {{head|la|numeral}}
 
-# {{q|[[Roman numeral]]s}} [[five hundred|Five hundred]] (500).
+# {{q|[[Roman numeral]]s}} [[five hundred]] (500)
 # {{cln|mul|ordinal numbers}} the [[five]] [[hundredth]] (500th)
 -------- end text --------
 Page 508 ꟉꟉ: -------- begin text --------
@@ -13160,12 +13075,12 @@ Page 508 ꟉꟉ: -------- begin text --------
 Page 509 ꟊꟊ: -------- begin text --------
 {{also|Appendix:Variations of "s"}}
 {{character info|ꟊ}}
-==Translingual==
+==Gaulish==
 
 ===Letter===
-{{head|mul|letter|upper case|ꟉꟉ|head=ꟊꟊ}}
+{{head|cel-gau|letter|upper case|ꟉꟉ|head=ꟊꟊ}}
 
-# {{lb|mul|paleography}} {{ng|The modern convention for the lower-case form of Gaulish [[ꟉꟉ]].}}
+# {{lb|cel-gau|paleography}} {{ng|The modern convention for the lower-case form of Gaulish [[ꟉꟉ]].}}
 
 ====See also====
 {{Latn-script}}
@@ -13327,7 +13242,7 @@ Page 519 ꟕ: -------- begin text --------
 # {{lb|enm|Ormulum}} A scribal abbreviation of double [[wynn]] {{angbr|[[ƿ|ƿƿ]]}} in the ''{{w|Ormulum}}''.
 
 ====Notes====
-* Usage is variable; for example, {{m|enm|troꟕþe}} and {{m|enm|troƿƿþe}} are both found for {{m|enm|trouthe||truth; belief}}.
+* Usage is variable; for example, {{m|enm|troꟕþe}} and {{m|enm|trowwþe|troƿƿþe}} are both found for {{m|enm|trouthe||truth; belief}}.
 -------- end text --------
 Page 520 Ꟗ: -------- begin text --------
 {{character info}}
@@ -27576,8 +27491,8 @@ Page 593 Ä: -------- begin text --------
 {{col-top|2|Doubling of long Ä}}
 * Long ''ä'' may be doubled to ''ää'' in the following cases:
 ** when it is followed by two or more consonants: {{m|gmw-cfr|[[Wääch]] ''or'' [[Wäch]]}};
-** when the German cognate has two vowel letters: {{m|gmw-cfr|[[Stään]] ''or'' [[Stän]]}} ({{m+|de|Stein}});
 ** when the German cognate has a consonant lost or not present in Central Franconian: {{m|gmw-cfr|[[Stään]] ''or'' [[Stän]]}} ({{m+|de|Stern}});
+** when the German cognate has two vowel letters: {{m|gmw-cfr|[[Stään]] ''or'' [[Stän]]}} ({{m+|de|Stein}});
 ** when the German cognate has a short vowel: {{m|gmw-cfr|[[ääße]] ''or'' [[äße]]}} ({{m+|de|essen}}).
 {{col-bottom}}
 {{col-top|2|Choice between Ä and E}}
@@ -27587,7 +27502,9 @@ Page 593 Ä: -------- begin text --------
 ** when the German cognate has ''er'': {{m|gmw-cfr|[[Hätz]] ''or'' [[Hetz]]}} ({{m+|de|Herz}});
 ** when there is a related word with ''a'': {{m|gmw-cfr|[[trämmele]] ''or'' [[tremmele]]}} (because of the variant {{m|gmw-cfr|trammele}});
 ** when there is a special reason to specify that the vowel is {{IPAchar|/ɛ/}}, not {{IPAchar|/e/}}: {{m|gmw-cfr|[[bränge]] ''or'' [[brenge]]}} (because {{m+|de|bringen}} suggests {{IPAchar|/e/}}).
-* {{IPAchar|/œy̯/|/øy̯/}} may be represented by ''eu'' or ''äu''. The latter of these is used when the German cognate has ''äu'' or ''au''. It may or may not be used when there is a related word with ''au'': {{m|gmw-cfr|[[däue]] ''or'' [[deue]]}} (because of related {{m|gmw-cfr|Dau}}).
+* {{IPAchar|/œy̯/|/øy̯/}} may be represented by ''eu'' or ''äu''. The latter of these is used when the German cognate has ''äu'' or ''au''. It may or may not be used in the following cases:
+** when the German cognate has another umlaut letter: {{m|gmw-cfr|[[fläute]] ''or'' [[fleute]]}} ({{m+|de|flöten}});
+** when there is a related word with ''au'': {{m|gmw-cfr|[[däue]] ''or'' [[deue]]}} (because of the noun {{m|gmw-cfr|Dau}}).
 {{col-bottom}}
 
 ==Elfdalian==
@@ -33705,7 +33622,6 @@ Abbreviations.
 # {{Latn-def|maz|letter}}
 
 ==Chinese==
-{{zh-forms}}
 
 ===Etymology 1===
 
@@ -37391,26 +37307,39 @@ From {{der|yue|en|differentiate|'''d'''ifferentiate}} or the differentiation sym
 
 ==Kabyle==
 
-===Etymology===
-From {{inh|kab|ber-pro|*d}}. Cognate with {{cog|tzm|ⴷ}}.
+===Pronunciation===
+* {{kab-IPA}}
 
-===Particle===
-{{head|kab|particle}}
+===Etymology 1===
+{{inh+|kab|ber-pro|-}}. Cognate with {{cog|tzm|ⴷ}}.
+
+====Particle====
+{{kab-particle}}
 
 # {{lb|kab|copula}} to [[be]]
-#: {{ux|kab|'''D''' tidett!|t=It''''s''' true!}}
-#: {{ux|kab|Nekk '''d''' anelmad.|t=I '''am''' a student.}}
+#: {{uxa|kab|'''D''' tidett!|t=It''''s''' true!}}
+#: {{uxa|kab|Nekk '''d''' anelmad.|t=I '''am''' a student.}}
 
-===Particle===
-{{head|kab|particle}}
+===Etymology 2===
+{{inh+|kab|ber-pro|-}}.
 
-# {{n-g|proximal particle; suffixed onto verbs to indicate a direction towards an inferred reference point}}
+====Particle====
+{{kab-particle}}
 
-===Conjunction===
-{{head|kab|conjunction}}
+# {{ng|proximal particle; suffixed onto verbs to indicate a direction towards an inferred reference point}}
 
-# [[and]]
-#: {{ux|kab|Nekk '''d''' gma neggan.|t=Me '''and''' my brother were sleeping.}}
+===Etymology 3===
+{{inh+|kab|ber-pro|-}}.
+
+====Preposition====
+{{kab-preposition}}
+
+# {{lb|kab|only|_|with|_|nouns}} [[and]]
+#: {{uxa|kab|Nekk '''d''' gma neggan.|t=Me '''and''' my brother were sleeping.}}
+
+===References===
+* {{R:kab:Amawal}}
+* {{R:kab:Dallet:1982}}
 
 ==Kankanaey==
 
@@ -40457,7 +40386,7 @@ Page 670 đ: -------- begin text --------
 {{also|Đ|Đ.|ŧ|◌̵|Appendix:Variations of "d"}}
 {{character info}}
 {{character image
- | caption = The letter đ has a variant with the stroke through the bowl, used i.a. in Kiowa
+ | caption = The letter đ has a variant with the stroke through the bowl, used for example in Kiowa
  | 1 = Unicode 0x0111 alt.svg
 }}
 ==Translingual==
@@ -40465,8 +40394,8 @@ Page 670 đ: -------- begin text --------
 ===Symbol===
 {{head|mul|symbol}}
 
-# {{lb|mul|NAPA|bowl-struck variant}} A voiced dental fricative (IPA {{IPAfont|[ð]}})
-# {{lb|mul|{{w|Teuthonista}}}} a voiced [[interdental]] [[plosive]].<ref>''Vivaio Acustico delle Lingue e dei Dialetti d'Italia.'' Humboldt University, Berlin.</ref>
+# {{lb|mul|NAPA}} {{alt form|mul|d̶}}.
+# {{lb|mul|{{w|Teuthonista}}}} A voiced [[interdental]] [[plosive]].<ref>''Vivaio Acustico delle Lingue e dei Dialetti d'Italia.'' Humboldt University, Berlin.</ref>
 
 ===References===
 <references/>
@@ -40477,9 +40406,9 @@ Page 670 đ: -------- begin text --------
 * {{sense|phoneme}} {{IPA|brh|/ɖ /}}
 
 ===Letter===
-{{head|brh|letter|uppercase|Đ|sc=Latn}}
+{{letter|brh|Arab:ڈ}}
 
-# {{ng|A [[letter]] of the [[Brahui]] Latin alphabet. Its analog in Arabic script is [[ڈ]].}}
+# {{Latn-def|brh|letter}}
 
 ==Jarai==
 
@@ -40487,32 +40416,9 @@ Page 670 đ: -------- begin text --------
 * {{IPA|jra|/ʔd/}}
 
 ===Letter===
-{{head|jra|letter|upper case|Đ}}
+{{letter|jra}}
 
 # {{Latn-def|jra|letter|8}}
-
-==Kiowa==
-
-===Alternative forms===
-* {{l|kio|[d}}
-
-===Pronunciation===
-* {{IPA|kio|/t/}}
-
-===Letter===
-{{head|kio|letter|head=d̶|upper case|[[Đ|D̶]]}}
-
-# {{lb|kio|Bowl-struck variant}} {{ng|An unaspirated 't' sound; alphabetized before [[d]].}}
-
-===See also===
-{{list:Latin script letters/kio}}
-
-==Moro==
-
-===Letter===
-{{head|mor|letter|head=d̶|upper case|[[Đ|D̶]]}}
-
-# {{lb|mor|Bowl-struck variant}} {{ng|One of several orthographic conventions for the dental consonant {{IPAfont|[d̪]}}. Others are {{angbr|[[Ð|Ð ð]]}} and {{angbr|[[Ḏ|Ḏ ḏ]]}}.}}
 
 ==North Frisian==
 
@@ -40520,7 +40426,7 @@ Page 670 đ: -------- begin text --------
 * {{IPA|frr|[l]|q2=some speakers|[r]}}
 
 ===Letter===
-{{head|frr|letter|lower case||upper case|Đ}}
+{{letter|frr}}
 
 # {{lb|frr|Sylt}} {{Latn-def|frr|letter}}
 
@@ -40536,7 +40442,7 @@ Page 670 đ: -------- begin text --------
 * {{qualifier|phoneme}} {{IPA|se|/ð/}}
 
 ===Letter===
-{{head|se|letter|upper case|Đ}}
+{{letter|se}}
 
 # {{Latn-def|se|letter|7}}
 
@@ -40551,7 +40457,7 @@ Page 670 đ: -------- begin text --------
 ===Letter===
 {{sh-letter}}
 
-# The 8th letter of the Serbo-Croatian Latin alphabet ([[gajica]]), preceded by {{l|sh|dž}} and followed by {{l|sh|e}}.
+# {{Latn-def|sh|letter|8|alphvar={{l|sh|gajica}}|prec=dž|foll=e}}
 
 ====Usage notes====
 * Sometimes written as '''dj'''.
@@ -40565,12 +40471,12 @@ Page 670 đ: -------- begin text --------
 * {{qualifier|phoneme}} {{IPA|scn|/ɖ/}}
 
 ===Letter===
-{{head|scn|letter|upper case|Đ}}
+{{letter|scn}}
 
-# {{rfdef|scn}}
+# {{Latn-def|scn|letter}}
 
 ====Usage notes====
-* Less common in modern usage, often written DD
+* Less common in modern usage, often written DD.
 
 ==Skolt Sami==
 
@@ -40578,7 +40484,7 @@ Page 670 đ: -------- begin text --------
 * {{qualifier|phoneme}} {{IPA|sms|/ð/}}
 
 ===Letter===
-{{head|sms|letter|upper case|Đ}}
+{{letter|sms}}
 
 # {{Latn-def|sms|letter|9}}
 
@@ -40601,12 +40507,12 @@ From Gaj's Latin alphabet {{m|sh|đ}}, from Czech alphabet {{m|cs|d}}, from Lati
 ====Letter====
 {{letter|sl}}
 
-# {{ng|Additional letter used primarily in loanwords from [[Serbo-Croatian]].}}
+# {{Latn-def|sl|letter|addl=used primarily in loanwords from [[Serbo-Croatian]]}}
 
 ====Noun====
 {{sl-noun|đ|m-in}}
 
-# {{n-g-lite|The name of the [[Appendix:Latin script|Latin script]] letter '''''[[Đ]]''''' / '''''[[đ]]'''''.}}
+# {{Latn-def|sl|name|Đ|đ}}
 
 =====Declension=====
 * Overall more common
@@ -40615,6 +40521,9 @@ From Gaj's Latin alphabet {{m|sh|đ}}, from Czech alphabet {{m|cs|d}}, from Lati
 * More common when with a definite adjective
 {{sl-decl-noun-table2|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|đ|title=Masculine inan., no endings}}
 
+=====Alternative forms=====
+* {{alt|sl|méhki dž|méhki džẹ̄||standard}}
+
 ===Etymology 2===
 Letter {{l|sl|d}} with a stroke to signify partial spirantization, which is sometimes also used in other phonetic transcriptions.
 
@@ -40622,7 +40531,7 @@ Letter {{l|sl|d}} with a stroke to signify partial spirantization, which is some
 * {{q|sound|unofficial}}: {{IPA|sl|[d̞]}}
 
 ====Symbol====
-{{head-lite|sl|symbols|langname=Slovene}}
+{{head|sl|symbol}}
 
 # {{qualifier|[[wikipedia:Slovene_national_phonetic_transcription|SNPT]]}} ''[[phonetic|Phonetic]] [[transcription]] of sound'' [{{IPAlink|d̞|d}}].
 
@@ -40649,7 +40558,7 @@ Although by the description, the corresponding IPA representation should be appr
 {{list:Latin script letters/vi}}
 -------- end text --------
 Page 671 Đ: -------- begin text --------
-{{also|đ|Ð|Ɖ|Đ.|◌̵|Appendix:Variations of "d"}}
+{{also|đ|Ð|Ɖ|D̶|Ꟈ|Đ.|Appendix:Variations of "d"}}
 {{character info}}
 {{character image|Unicode 0x0110 alt.svg|caption=An alternative form is used as the capital of the bowl-struck lower-case letter.}}
 ==Jarai==
@@ -40658,39 +40567,16 @@ Page 671 Đ: -------- begin text --------
 * {{IPA|jra|/ʔd/}}
 
 ===Letter===
-{{head|jra|letter|lower case|đ}}
+{{letter|jra}}
 
 # {{Latn-def|jra|letter|8}}
-
-==Kiowa==
-
-===Alternative forms===
-* {{l|kio|[D}}
-
-===Pronunciation===
-* {{IPA|kio|/t/}}
-
-===Letter===
-{{head|kio|letter|head=D̶|lower case|[[đ|d̶]]}}
-
-# {{lb|kio|Bowl-struck variant}} {{ng|An unaspirated 't' sound; alphabetized before [[D]].}}
-
-===See also===
-{{list:Latin script letters/kio}}
-
-==Moro==
-
-===Letter===
-{{head|mor|letter|head=D̶|lower case|[[đ|d̶]]}}
-
-# {{lb|mor|Bowl-struck variant}} {{ng|One of several orthographic conventions for the dental consonant {{IPAfont|[d̪]}}. Others are {{angbr|[[Ð|Ð ð]]}} and {{angbr|[[Ḏ|Ḏ ḏ]]}}.}}
 
 ==Serbo-Croatian==
 
 ===Letter===
-{{head|sh|letter|upper case, lower case|đ|Cyrillic spelling|Ђ}}
+{{letter|sh|Cyrl:Ђ}}
 
-# The 8th [[letter]] of the Serbo-Croatian alphabet ([[gajica]]), preceded by [[Dž]] and followed by [[E]], and representing /d͡ʑ/.
+# {{Latn-def|sh|letter|8|alphvar={{l|sh|gajica}}|prec=Dž|foll=E|addl=representing {{ic|/d͡ʑ/}}}}
 
 ==Skolt Sami==
 
@@ -40698,7 +40584,7 @@ Page 671 Đ: -------- begin text --------
 * {{qualifier|phoneme}} {{IPA|sms|/ð/}}
 
 ===Letter===
-{{head|sms|letter|lower case|đ}}
+{{letter|sms}}
 
 # {{Latn-def|sms|letter|9}}
 
@@ -40721,12 +40607,12 @@ From Gaj's Latin alphabet {{m|sh|Đ}}, from {{der|sl|cs|-}} alphabet {{m|cs|D}},
 ===Letter===
 {{letter|sl}}
 
-# {{ng|Additional letter used primarily in loanwords from [[Serbo-Croatian]].}}
+# {{Latn-def|sl|letter|addl=used primarily in loanwords from [[Serbo-Croatian]]}}
 
 ===Noun===
 {{sl-noun|Đ|m-in}}
 
-# {{n-g-lite|The name of the [[Appendix:Latin script|Latin script]] letter '''''[[Đ]]''''' / '''''[[đ]]'''''.}}
+# {{Latn-def|sl|name|Đ|đ}}
 
 ====Declension====
 * Overall more common
@@ -40903,6 +40789,43 @@ The letter name is ultimately from {{der|en|la|ē}}. Use of the Latin letter in 
 =====Coordinate terms=====
 {{list:Latin script letter names/en/simple}}
 
+=====Translations=====
+{{multitrans|data=
+{{trans-top|name of the letter E, e}}
+* Arabic: {{tt+|ar|إِي|m}}, {{tt+|ar|إِيه|m}}
+* Asturian: {{tt+|ast|e}}
+* Bengali: {{tt+|bn|ই}}
+* Bulgarian: {{tt+|bg|е|n}}
+* Catalan: {{tt+|ca|e|f}}
+* Chinese:
+*: Mandarin: {{t-needed|cmn}}
+* Esperanto: {{tt+|eo|e}}
+* Finnish: {{tt+|fi|ee}}
+* French: {{tt+|fr|e|m}}
+* Galician: {{tt+|gl|e|m}}
+* German: {{tt+|de|e|n}}
+* Greek: {{tt+|el|ι|n}}
+* Hawaiian: {{tt|haw|ʻē}}
+* Hindi: {{tt+|hi|ई}}
+* Ido: {{tt+|io|e}}
+* Irish: {{tt|ga|é}}, {{tt|ga|edad}}, {{tt|ga|eabhadh}}
+* Japanese: {{tt+|ja|イー|tr=ī}}
+* Korean: {{tt+|ko|이}}
+* Latin: {{tt+|la|ē}}
+* Malay: {{tt+|ms|i}}, {{tt+|ms|i}}
+* Marathi: {{tt|mr|ई}}
+* Occitan: {{tt+|oc|e|f}}
+* Persian: {{tt+|fa|ای|tr=i}}, {{tt+|fa|ئی|tr='i}}
+* Portuguese: {{tt+|pt|é|m}}, {{tt+|pt|ê|m}}
+* Russian: {{tt+|ru|и|n}} {{qualifier|English}}, {{tt+|ru|е|n}}, {{tt+|ru|э|n}}
+* Spanish: {{tt+|es|e|f}}
+* Thai: {{tt+|th|อี}}
+* Turkish: {{tt+|tr|e}}
+* Vietnamese: {{tt+|vi|e}}
+* Welsh: {{tt|cy|e|f}}
+{{trans-bottom}}
+}}
+
 ===Etymology 2===
 From a deliberate [[apheresis]] of both {{m|en|he}} and {{m|en|she}}.
 
@@ -40918,9 +40841,6 @@ From a deliberate [[apheresis]] of both {{m|en|he}} and {{m|en|she}}.
 =====Synonyms=====
 * [[ey]]
 * ''see'' [[Appendix:English third-person singular pronouns]]
-
-=====Translations=====
-{{see translation subpage}}
 
 ===Etymology 3===
 {{etymid|en|music}}From the common method of counting semiquavers as "one-e-and-a, two-e-and-a" and so on.
@@ -42515,7 +42435,8 @@ From {{inh|oc|pro|e}}, from {{inh|oc|la|et}}.
 ==Old English==
 
 ===Pronunciation===
-* {{ang-IPA|e}}
+* {{ang-IPA|ē}}
+* {{rhymes|ang|ē|s=1}}
 
 ===Letter===
 {{letter|ang}}
@@ -56440,18 +56361,18 @@ Lower case variation of upper case {{m|en|I}}, from {{der|mul|grc|-}} letter {{m
 {{Latn-script}}
 '''Derived symbols'''
 * {{l|mul|j}}
-* {{l|mul|ɨ}} — [[International Phonetic Alphabet|IPA]]
-* {{l|mul|İ}} and [[ı]] — Turkish
+* [[ɨ]] — [[International Phonetic Alphabet|IPA]]
+* [[İ]] and [[ı]] — Turkish
 
 '''Similar and related symbols'''
 * {{l|mul|Ι}} and [[ι]] — Greek
-* {{l|mul|І}} and [[і]] — Cyrillic I, used in [[Belarusian]] and [[Ukrainian]]
-* {{l|mul|Ӏ}} and [[ӏ]] — Cyrillic [[palochka]], used in the [[Caucasian]] languages
+* [[І]] and [[і]] — Cyrillic I, used in [[Belarusian]] and [[Ukrainian]]
+* [[Ӏ]] and [[ӏ]] — Cyrillic [[palochka]], used in the [[Caucasian]] languages
 * {{l|mul|ا}} — Arabic (alif)
 * {{l|mul|1}} — Arabic numeral
 * {{l|mul|Ꭵ}} — [[Cherokee]] (IPA: ə̃)
-* {{l|mul|ᛁ}} — [[Runic]]
-* {{l|mul|ɪ}} — [[International Phonetic Alphabet|IPA]]
+* [[ᛁ]] — [[Runic]]
+* [[ɪ]] — [[International Phonetic Alphabet|IPA]]
 
 ===Etymology 2===
 * {{sense|mathematics, imaginary number}} abbreviation of {{m|en|imaginary}}
@@ -56532,7 +56453,7 @@ From {{der|en|la|i}}, [[minuscule]] of {{m|la|I}}.
 # {{Latn-def|en|letter|9|i}}
 
 =====Usage notes=====
-The English letter {{m|en|i}} represents many different sounds, often the diphthong {{IPAchar|/aɪ/}} (from Middle English {{IPAchar|/iː/}}), as in the pronoun {{m|en|I}}, or {{IPAchar|/ɪ/}} as in {{m|en|bit|b'''i'''t}}.
+The English letter {{m|en|i}} represents many different sounds, often the diphthong {{IPAchar|/aɪ/}} (from Middle English {{IPAchar|/iː/}}), as in the pronoun {{m|en|I}}, or {{IPAchar|/ɪ/}} as in {{m|en|bit|b'''i'''t}}. In borrowings, it may represent {{IPAchar|/iː/}} as well.
 
 =====See also=====
 {{list:Latin script letters/en/simple}}
@@ -56553,7 +56474,42 @@ The English letter {{m|en|i}} represents many different sounds, often the diphth
 * {{l|en|eye}}
 
 =====Translations=====
-{{see translation subpage|Noun}}
+{{multitrans|data=
+{{trans-top|name of the letter I, i}}
+* Arabic: {{tt+|ar|أَي|m}} {{q|English}}, {{tt+|ar|إِي|m}}
+* Asturian: {{tt+|ast|i}}
+* Bengali: {{tt+|bn|আই}}
+* Bulgarian: {{tt+|bg|и|n}}
+* Burmese: {{tt+|my|အိုင်}}
+* Catalan: {{tt+|ca|i|f}}
+* Chinese:
+*: Mandarin: {{q|English letter names are called as in English, no other standard Mandarin name exists}}
+* Esperanto: {{tt+|eo|i}}
+* Finnish: {{tt+|fi|ii}}
+* Galician: {{tt+|gl|i|m}}, {{tt|gl|i latino|m}}
+* German: {{tt+|de|I|n}}
+* Greek: {{tt+|el|άι}}
+* Hawaiian: {{tt|haw|ʻī}}
+* Hindi: {{tt+|hi|आई}}
+* Ido: {{tt+|io|i}}
+* Irish: {{tt|ga|í}}, {{tt|ga|idad}}, {{tt|ga|iodhadh}}
+* Japanese: {{tt+|ja|アイ|tr=ai}} {{q|English}}, {{tt+|ja|牛の角文字|tr=ushi no tsunomoji}} {{q|dated}}
+* Korean: {{tt+|ko|아이}}
+* Latin: {{tt+|la|ī}}
+* Malay: {{tt+|ms|ai}}
+* Marathi: {{tt|mr|आय}}
+* Occitan: {{tt+|oc|i|f}}
+* Persian: {{tt+|fa|آی|tr=ây}}
+* Portuguese: {{tt+|pt|i|m}}
+* Romanian: {{tt+|ro|i}}
+* Russian: {{tt+|ru|ай|n}} {{q|English}}, {{tt+|ru|и|n}}
+* Spanish: {{tt+|es|i|f}}, {{tt+|es|i latina|f}}
+* Thai: {{tt+|th|ไอ}}
+* Turkish: {{tt+|tr|i}}
+* Vietnamese: {{tt+|vi|i}}, {{tt+|vi|i ngắn}}
+* Welsh: {{tt|cy|i|f}}, {{tt|cy|i dot|f}}, {{tt|cy|i ddot|f}}
+{{trans-bottom}}
+}}
 
 ====Derived terms====
 {{col|en|i-adjective|i-breve|dot the i's and cross the t's|i-dotter|i-dotting|i-mutation|i-stem|i-word|long i|short i|i-umlaut|ith}}
@@ -57680,13 +57636,40 @@ From {{inh|kea|pt|e}}.
 
 ==Kabyle==
 
-===Etymology===
-{{rfe|kab}}
+===Pronunciation===
+* {{kab-IPA}}
 
-===Preposition===
-{{head|kab|prepositions}}
+===Etymology 1===
+{{inh+|kab|ber-pro|-}}.
 
-# [[to]], [[for]]
+====Preposition====
+{{kab-preposition}}
+
+# {{lb|kab|dative}} {{n-g|denotes the indirect object}}: [[to]], [[for]]
+#: {{uxa|kab|Fk-as-t '''i''' gma-k.|Give it '''to''' your brother.}}
+
+=====Usage notes=====
+Nouns following the preposition {{m-self|kab|i}} are placed in the {{lg|annexed state}}.
+
+===Etymology 2===
+{{inh+|kab|ber-pro|-}}.
+
+====Particle====
+{{kab-particle}}
+
+# {{n-g|a particle used to coordinate between conversational turns}}: [[and]], [[as for]]
+#: {{uxa|kab|'''I''' kečč, dacu ara txedmeḍ?|'''As for''' you, what will you do?}}
+
+===Etymology 3===
+
+====Pronoun====
+{{kab-pronoun|m|g2=f}}
+
+# {{alt form of|kab|ay}}
+
+===References===
+* {{R:kab:Amawal}}
+* {{R:kab:Dallet:1982}}
 
 ==Kankanaey==
 
@@ -64500,13 +64483,14 @@ Image:Fraktur letter j.svg|Uppercase and lowercase '''J''' in [[Fraktur]]
 * {{l|yue|JJ}}
 
 ===Etymology 2===
-{{zh-forms|alt=積-Cantonese}}
-
 From the letter J of the English pattern playing cards. Various names exist for this symbol in the spoken language.
 ; Mandarin ''gōu''
 : From {{m|zh|鉤||hook}}, because the letter J resembles a hook.
 ; Cantonese ''zik<sup>1</sup>''
 : Borrowed from {{bor|yue|en|jack}}.
+
+====Alternative forms====
+* {{alter|zh|積<q:Cantonese><tr:->}}
 
 ====Pronunciation====
 {{zh-pron
@@ -77419,7 +77403,39 @@ Image:Fraktur letter o.svg|Uppercase and lowercase '''O''' in [[Fraktur]]
 {{col2|en|kayo|o-dark-thirty|okay|closed o|open o}}
 
 =====Translations=====
-{{see translation subpage|Noun}}
+{{multitrans|data=
+{{trans-top|name of the letter O, o}}
+* Arabic: {{tt|ar|أُوه|m}}, {{tt|ar|أُوه|m|tr=ʔoh}}
+* Asturian: {{tt+|ast|o}}
+* Bengali: {{tt+|bn|ও}}
+* Bulgarian: {{tt+|bg|о|n}}
+* Burmese: {{tt+|my|အို}}
+* Catalan: {{tt+|ca|o|f}}
+* Chinese:
+*: Mandarin: {{qualifier|English letter names are called as in English, no other standard Mandarin name exists}}
+* Esperanto: {{tt+|eo|o}}
+* Finnish: {{tt+|fi|oo}}
+* French: {{tt+|fr|o}}
+* Galician: {{tt+|gl|o|m}}
+* Greek: {{tt|el|όου|n}}
+* Hawaiian: {{tt|haw|ʻō}}
+* Hindi: {{tt+|hi|ओ}}
+* Ido: {{tt+|io|o}}
+* Irish: {{tt|ga|ó}}, {{tt|ga|onn}}
+* Japanese: {{tt+|ja|オウ|tr=ō}}
+* Korean: {{tt+|ko|오}}
+* Latin: {{tt+|la|ō}}
+* Malay: {{tt+|ms|o}}
+* Marathi: {{tt|mr|ओ}}
+* Occitan: {{tt+|oc|o|f}}
+* Portuguese: {{tt+|pt|ó|m}}, {{tt+|pt|ô|m}}
+* Russian: {{tt+|ru|о́у|n}} {{qualifier|English}}, {{tt+|ru|о|n}}
+* Spanish: {{tt+|es|o|f}}
+* Thai: {{tt+|th|โอ}}
+* Turkish: {{tt+|tr|o}}
+* Vietnamese: {{tt+|vi|o}}
+{{trans-bottom}}
+}}
 
 =====See also=====
 {{list:Latin script letter names/en/simple}}
@@ -92528,7 +92544,7 @@ Otherwise, pre-consonantal and word-final ''s'' is always pronounced {{IPAchar|/
 * {{audio|de|De-S04.ogg|a=Germany}}
 
 ===Letter===
-{{de-letter|lower2=ſ|lower=s}}
+{{de-letter|lower=s,ſ<l:obsolete>}}
 
 # {{Latn-def|de|letter|19|es}}
 #* {{quote-text|de|year=1877|author=Dr. Schröer|chapter=Gelegentliche Bemerkungen über erhöhte Ansprüche, die nun an die Aufzeichnung mundartlicher Sprachproben zu stellen wären|title=Die deutschen Mundarten. Zeitschrift für Dichtung, Forschung und Kritik. Herausgegeben von Dr. G. Karl Frommann. Siebenter Band (neuer Folge erster Band)|page=15
@@ -93122,7 +93138,7 @@ Page 844 ſ: -------- begin text --------
 * This is the [[long s|long]], [[medial s|medial]], or [[descending s]], as distinct from the [[short s|short]] or [[terminal s]] ([[s]]).
 * In Roman and [[Fraktur]] script, the long S was typically used everywhere except at the end of words, where the short S was used, with exceptions:
 ** The use of short S at the end of words was sometimes maintained even in derivative or compound words, as for example ''hisſelf'' (his + (-)ſelf), ''ſucceſsful'' (ſucceſs + -ful), ''princeſsſhip'' (see the 1767 quotation).
-** Short S was sometimes used before letters with left-side ascenders, like b, f, or long ſ, which the top curl of a long S would overlap, making the sequence either difficult to print or unaesthetic, hence e.g. ''whisker'' instead of ''whiſker''. An alternative was to insert a space between the long S and the ascender (''whiſ&#8239;<!--narrow no-break space-->ker''), or use a ligature.<ref>{{cite-book|en|year=1998|author=Joanna Gondris|title=Reading Readings: Essays on Shakespeare Editing in the Eighteenth Century|publisher=Fairleigh Dickinson Univ Press|isbn=9780838637128|page=64|text=As there were no ligatures at this time in long-''s'' + ''k'' ( and very few in long-''s'' + ''b''), setting a long-''s'' before a letter with an ascender at its left side (like ''k'' or ''b'' — or like ''f'', for which there likely never was an English ligature with long-''s'') would break its kern against the ascender. Hence, to avoid fouling, a round-''s'' was often used in this environment (though sometimes a long-''s'' was set, along with a protective space under its fore-kern, which created a "pigeon hole" in the word in which it appeared, [...])}}</ref>
+** Short S was sometimes used before letters with left-side ascenders, like b, f, or long ſ, which the top curl of a long S would overlap, making the sequence either difficult to print or unaesthetic, hence e.g. ''whisker'' instead of ''whiſker''. An alternative was to insert a space between the long S and the ascender (''whiſ&#8239;<!--narrow no-break space-->ker''), or use a ligature.<ref>{{cite-book|en|year=1998|author=Joanna Gondris|title=Reading Readings: Essays on Shakespeare Editing in the Eighteenth Century|publisher=Fairleigh Dickinson Univ Press|isbn=9780838637128|page=64|text=As there were no ligatures at this time in long-''s'' + ''k'' (and very few in long-''s'' + ''b''), setting a long-''s'' before a letter with an ascender at its left side (like ''k'' or ''b'' — or like ''f'', for which there likely never was an English ligature with long-''s'') would break its kern against the ascender. Hence, to avoid fouling, a round-''s'' was often used in this environment (though sometimes a long-''s'' was set, along with a protective space under its fore-kern, which created a "pigeon hole" in the word in which it appeared, [...])}}</ref>
 ** Some documents wrote or typeset ''ss'' as ''ſs'', e.g. in ''neceſsary'', either as a deviation from all nonfinal ''s'' being ''ſ'' (especially in handwriting), or as a deviation from all ''s'' being ''s'' (as in the [[:File:United_States_Declaration_of_Independence.jpg|US Declaration of Independence]]: "When in the Course of human events, it becomes neceſsary for one people to diſsolve...", or [[:File:Constitution_of_the_United_States%2C_page_1.jpg|US Constitution]]: "the first Claſs shall...").
 * This distinction occurred only in minuscule (lowercase); the single majuscule (uppercase) form [[S]] was used regardless of word-position.
 * Sometimes “ﬆ” was used instead of “ſt”.
@@ -93388,9 +93404,9 @@ Page 848 Ṡ: -------- begin text --------
 ==Irish==
 
 ===Letter===
-{{letter|ga|lower=ṡ|lower2=ẛ}}
+{{letter|ga|lower=ṡ,ẛ<l:obsolete>}}
 
-# {{n-g|The letter {{m|mul|S}} with a {{m|ga|ponc séimhithe}} (dot above), used primarily in {{w|Gaelic type}}; equivalent to the digraph {{m|ga||Sh}} in roman type.}}
+# {{ng|The letter {{m|mul|S}} with a {{m|ga|ponc séimhithe}} (dot above), used primarily in {{w|Gaelic type}}; equivalent to the digraph {{m|ga||Sh}} in roman type.}}
 
 ===See also===
 {{list:Latin script letters/ga}}
@@ -106613,7 +106629,7 @@ Abbreviations of various words beginning with W.
 * {{sense|sports}} [[OTW]]
 * {{sense|compass}} [[NNW]], [[NW]], [[SSW]], [[SW]], [[WNW]], [[WSW]]
 * {{sense|internet slang}} [[dub]], [[W community]], [[W/L community]]
-* {{sense|''others''}} [[C of W]], [[W particle]], [[W-2 employee]], [[W-sitting]], {{l|en|W chromosome}}, {{l|en|W-League}}, {{l|en|Lambert W function}}, {{l|en|W in the chat}}
+* {{sense|''others''}} [[C of W]], [[W particle]], [[W-2 employee]], [[W-sitting]], {{l|en|W chromosome}}, {{l|en|W-League}}, {{l|en|Lambert W function}}, {{l|en|W in the chat}}, {{l|en|W Tree}}
 
 =====Translations=====
 {{trans-top-see|west|west}}
@@ -111104,7 +111120,7 @@ See {{m|en|IJ}}.
 ====Letter====
 {{letter|fr}}
 
-# {{Latn-def|fi|letter|25|i grec}}
+# {{Latn-def|fr|letter|25|i grec}}
 
 =====See also=====
 * Previous letter: [[X#French|X]]
@@ -112529,7 +112545,7 @@ Image:Fraktur letter z.svg|Uppercase and lowercase '''Z''' in [[Fraktur]]
 ==Azerbaijani==
 
 ===Pronunciation===
-* {{qualifier|phoneme}} {{IPA|az|[z]}} 
+* {{qualifier|phoneme}} {{IPA|az|[z]}}
 * {{qualifier|letter name}} {{IPA|az|[zeː]|[zɯː]}}
 
 ===Letter===
@@ -112926,8 +112942,7 @@ This word can be placed after a type of person and before a number to indicate t
 {{list:Latin script letters/csb}}
 
 ===Etymology 2===
-{{etymon|csb|id=from|:inh|sla-pro:*jьz<id:from>|tree=1}}{{etymid|csb|from}}
-{{inh+|csb|sla-pro|*jьz}}.
+{{etymon|csb|id=from|:inh|sla-pro:*jьz<id:from>|tree=+|text=+}}
 
 ====Preposition====
 {{head|csb|preposition}}
@@ -112938,8 +112953,7 @@ This word can be placed after a type of person and before a number to indicate t
 * {{alt|csb|ze|zez}}
 
 ===Etymology 3===
-{{etymon|csb|id=with|:inh|sla-pro:*sъ(n)<id:with>|tree=1}}{{etymid|csb|with}}
-{{inh+|csb|sla-pro|*sъ(n)}}.
+{{etymon|csb|id=with|:inh|sla-pro:*sъ(n)<id:with>|tree=+|text=+}}
 
 ====Preposition====
 {{head|csb|preposition}}
@@ -113134,8 +113148,7 @@ From {{inh-lite|dsb|sla-pro|*sъ(n)}}, from {{inh-lite|dsb|ine-pro|*ḱom}}.
 * {{IPA|zlw-opl|/z/|/s/}}
 
 ===Etymology 1===
-{{etymon|zlw-opl|id=from|:inh|sla-pro:*jьz<id:from>|tree=1}}{{etymid|zlw-opl|from}}
-{{inh+|zlw-opl|sla-pro|*jьz}}. {{etydate|14th century}}.
+{{etymon|zlw-opl|id=from|:inh|sla-pro:*jьz<id:from>|etydate=14th century|tree=+|text=+}}
 
 ====Preposition====
 {{head|zlw-opl|preposition}} {{+obj|zlw-opl|gen}}
@@ -113171,8 +113184,7 @@ From {{inh-lite|dsb|sla-pro|*sъ(n)}}, from {{inh-lite|dsb|ine-pro|*ḱom}}.
 * {{desc|szl|z|id=from|t=from}}
 
 ===Etymology 2===
-{{etymon|zlw-opl|id=with|:inh|sla-pro:*sъ(n)<id:with>|tree=1}}{{etymid|zlw-opl|with}}
-{{inh+|zlw-opl|sla-pro|*sъ(n)}}. {{etydate|14th century}}.
+{{etymon|zlw-opl|id=with|:inh|sla-pro:*sъ(n)<id:with>|etydate=14th century|tree=+|text=+}}
 
 ====Preposition====
 {{head|zlw-opl|preposition}} {{+obj|zlw-opl|ins}}
@@ -113208,8 +113220,7 @@ From {{inh-lite|dsb|sla-pro|*sъ(n)}}, from {{inh-lite|dsb|ine-pro|*ḱom}}.
 {{list:Latin script letters/pl}}
 
 ===Etymology 2===
-{{etymon|pl|id=from|:inh|zlw-opl:z<id:from>|tree=1}}{{etymid|pl|from}}
-{{inh+|pl|zlw-opl|z<t:from>|id=from}}.
+{{etymon|pl|id=from|:inh|zlw-opl:z<id:from><t:from>|tree=+|text=+}}
 
 ====Alternative forms====
 * {{alt|pl|ze}}
@@ -113240,8 +113251,7 @@ From {{inh-lite|dsb|sla-pro|*sъ(n)}}, from {{inh-lite|dsb|ine-pro|*ḱom}}.
 #: {{coi|pl|Mam '''z''' pięć jabłek|I have five '''ish''' apples.}}
 
 ===Etymology 3===
-{{etymon|pl|id=with|:inh|zlw-opl:z<id:with>|tree=1}}{{etymid|pl|with}}
-{{inh+|pl|zlw-opl|z<t:with>|id=with}}.
+{{etymon|pl|id=with|:inh|zlw-opl:z<id:with><t:with>|tree=+|text=+}}
 
 ====Alternative forms====
 * {{alt|pl|ze}}
@@ -113411,8 +113421,7 @@ From {{inh-lite|dsb|sla-pro|*sъ(n)}}, from {{inh-lite|dsb|ine-pro|*ḱom}}.
 {{list:Latin script letters/szl}}
 
 ===Etymology 2===
-{{etymon|szl|id=from|:inh|zlw-opl:z<id:from>|tree=1}}{{etymid|szl|from}}
-{{inh+|szl|zlw-opl|z<t:from>|id=from}}.
+{{etymon|szl|id=from|:inh|zlw-opl:z<id:from><t:from>|tree=+|text=+}}
 
 ====Preposition====
 {{head|szl|preposition}} {{+obj|szl|gen}}
@@ -113425,8 +113434,7 @@ From {{inh-lite|dsb|sla-pro|*sъ(n)}}, from {{inh-lite|dsb|ine-pro|*ḱom}}.
 * {{alt|szl|ze|ś|zy|s}}
 
 ===Etymology 3===
-{{etymon|szl|id=with|:inh|zlw-opl:z<id:with>|tree=1}}{{etymid|szl|with}}
-{{inh+|szl|zlw-opl|z<t:with>|id=with}}.
+{{etymon|szl|id=with|:inh|zlw-opl:z<id:with><t:with>|tree=+|text=+}}
 
 ====Preposition====
 {{head|szl|preposition}} {{+obj|szl|ins}}
@@ -121536,13 +121544,6 @@ Use for {{IPAfont|[ʊ]}} in e.g. ''{{w|Atlas Linguarum Europae|Atlas Linguarum E
 
 ====Antonyms====
 *[[ᴇ]]
-
-==Kildin Sami==
-
-===Letter===
-{{head|sjd|letter|upper case|Ω}}
-
-# {{lb|sjd|obsolete}} {{ng|A letter of the {{w|Unified Northern Alphabet}}.}}
 -------- end text --------
 Page 1125 𝼙: -------- begin text --------
 {{character info}}
@@ -121568,5 +121569,5 @@ Page 1126 𝼜: -------- begin text --------
 ====See also====
 {{Latn-script}}
 -------- end text --------
-Elapsed time: 1 mins 59.42 secs
-Ending at Wed Jan  7 22:56:12 2026
+Elapsed time: 1 mins 59.01 secs
+Ending at Mon Jan 12 18:27:01 2026
