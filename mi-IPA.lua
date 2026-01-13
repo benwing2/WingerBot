@@ -1,19 +1,32 @@
 local export = {}
 
-function export.ipa(frame)
+local languages_module = "Module:languages"
+local pron_utilities_module = "Module:pron utilities"
+local string_utilities_module = "Module:string utilities"
 
-	local args = frame:getParent().args
-	local titleData = mw.title.getCurrentTitle()
-	local input = args[1] or titleData.text
-	local stress = args['stress']
+local m_str_utils = require(string_utilities_module)
+
+local ugsub = m_str_utils.gsub
+local ulower = m_str_utils.lower
+
+local insert = table.insert
+
+local function rsub(text, from, to)
+	return (ugsub(text, from, to)) -- Discard second return value
+end
+
+local function respelling_to_IPA(data)
+	local input = data.respelling
+	local stress = data.item.stress
 	
-	input = input:lower()
+	input = ulower(input)
 		-- replace hard-to-manipulate Unicode chars with ASCII substitutes
 		:gsub("ā", "A"):gsub("ē", "E"):gsub("ī", "I"):gsub("ō", "O"):gsub("ū", "U")
-		-- test for unknown inputs; `#` replaced at end
-		:gsub("[^aeiouAEIOUhkmngprtw/%[%]ˈˌ.%-%s]", "#")
+	-- test for unknown inputs; `#` replaced at end
+	input = rsub(input, "[^aeiouAEIOUhkmngprtw/%[%]ˈˌ.%-%s]", "#")
+	input = input
 		-- replace hyphens
-		:gsub("-", " ")
+		:gsub("%-", " ")
 		-- syllabify
 		:gsub("([aeiouAEIOU])", "%1.")
 
@@ -33,8 +46,8 @@ function export.ipa(frame)
 		:gsub("wh", "ɸ")
 		:gsub("ng", "ŋ")
 
-	-- [real]
-	local real = input
+	-- [phonetic]
+	local phonetic = input
 		:gsub("a", "ɐ")
 		:gsub("A", "ɑː")
 		:gsub("e", "ɛ")
@@ -70,34 +83,49 @@ function export.ipa(frame)
 		end
 		phonemic = stressed_phonemic
 
-		-- loop through syllables in [real] representation, adding stress markers
-		local stressed_real = ""
+		-- loop through syllables in [phonetic] representation, adding stress markers
+		local stressed_phonetic = ""
 		index = 0
-		for syll in real:gmatch("[^.%s]+") do
+		for syll in phonetic:gmatch("[^.%s]+") do
 			index = index + 1
-			stressed_real = stressed_real .. (stresses[index] or ".") .. syll
+			stressed_phonetic = stressed_phonetic .. (stresses[index] or ".") .. syll
 		end
-		real = stressed_real
+		phonetic = stressed_phonetic
 	end
 
+	local categories = {}
+
 	-- test for unknown inputs
-	local errorText = "[invalid input]"
-	if titleData.namespace == 0 then
-		errorText = errorText .. "[[Category:Maori terms with invalid IPA pronunciation]]"
+	if phonemic:find("#") then
+		phonemic = phonemic:gsub("#", "[invalid input]")
+		insert(categories, "Maori terms with invalid IPA pronunciation")
 	end
-	phonemic = phonemic:gsub("#", errorText)
-	real = real:gsub("#", errorText)
+	if phonetic:find("#") then
+		phonetic = phonetic:gsub("#", "[invalid input]")
+		insert(categories, "Maori terms with invalid IPA pronunciation")
+	end
 	
 	-- clean up results
 	phonemic = phonemic:gsub("^%.", ""):gsub("%.$", ""):gsub("%.%s", " ")
-	real = real:gsub("^%.", ""):gsub("%.$", ""):gsub("%.%s", " ")
+	phonetic = phonetic:gsub("^%.", ""):gsub("%.$", ""):gsub("%.%s", " ")
 
-	-- create output
-	local prefix = "[[Wiktionary:International Phonetic Alphabet|IPA]]<sup>([[w:Māori phonology|key]])</sup>: "
-	local output = "<span class='IPA'>" .. "/" .. phonemic .. "/, [" .. real .. "]" .. "</span>"
-	local category = titleData.namespace == 0 and "[[Category:Maori terms with IPA pronunciation]]" or ""
-	return prefix .. output .. category
+	return ("/%s/ [%s]"):format(phonemic, phonetic), categories
+end
 
+function export.ipa(frame)
+	local parent_args = frame:getParent().args
+
+	local augment_param_mod_spec = {
+		{param = "stress"},
+	}
+
+	return require(pron_utilities_module).format_prons {
+		lang = require(languages_module).getByCode("mi"),
+		respelling_to_IPA = respelling_to_IPA,
+		raw_args = parent_args,
+		augment_param_mod_spec = augment_param_mod_spec,
+		track_module = "mi-IPA",
+	}
 end
 
 return export
