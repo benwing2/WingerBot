@@ -124,11 +124,12 @@ function export.show(frame)
 		deftype = "numsym"
 	end
 	local canontype = deftype
-	if canontype == "digraph" or canontype == "trigraph" or canontype == "tetragraph" or canontype == "multigraph" then
+	if canontype == "digraph" or canontype == "trigraph" or canontype == "tetragraph" or canontype == "pentagraph" or
+		canontype == "multigraph" then
 		canontype = "letter"
 	end
 	-- FIXME: convert 'ordinal' to 'numsym'
-	local deftypes = {"letter", "digraph", "trigraph", "tetragraph", "multigraph", "numsym", "ordinal", "name", "diacritic", "syllable"}
+	local deftypes = {"letter", "digraph", "trigraph", "tetragraph", "pentagraph", "multigraph", "numsym", "ordinal", "name", "diacritic", "syllable"}
 	local params = {
 		[1] = {type = "language", required = true, template_default = "und"},
 		[2] = {set = deftypes, required = true},
@@ -151,7 +152,6 @@ function export.show(frame)
 			linklang = boolean_param, -- only used for prec/foll
 			alphabet = true,
 			alphvar = true,
-			t = {list = true, allow_holes = true},
 			prec = true,
 			foll = true,
 			last = boolean_param,
@@ -169,12 +169,11 @@ function export.show(frame)
 	elseif canontype == "diacritic" then
 		merge_params {
 			[3] = list_param,
-			name = list_param,
+			name = true,
 			alphabet = true,
 			alphvar = true,
 			nopairs = boolean_param,
 			moreexamples = boolean_param,
-			t = {list = true, allow_holes = true},
 		}
 	elseif canontype == "syllable" then
 		merge_params {
@@ -304,9 +303,6 @@ function export.show(frame)
 				local nameobjs = parse_param(name, i + 3)
 				for _, nameobj in ipairs(nameobjs) do
 					nameobj.lang = lang_for_linking
-					if args.t[i] then
-						nameobj.gloss = args.t[i]
-					end
 					insert(formatted_names, full_link(nameobj, "term"))
 				end
 			end
@@ -377,18 +373,13 @@ function export.show(frame)
 		elseif args.alphvar then
 			ins(" in " .. args.alphvar)
 		end
-		if args.name[1] then
+		if args.name then
 			ins(", called ")
 			local formatted_names = {}
-			for i, name in ipairs(args.name) do
-				local nameobjs = parse_param(name, "name" .. (i == 1 and "" or i))
-				for _, nameobj in ipairs(nameobjs) do
-					nameobj.lang = lang
-					if args.t[i] then
-						nameobj.gloss = args.t[i]
-					end
-					insert(formatted_names, full_link(nameobj, "term"))
-				end
+			local nameobjs = parse_param(args.name, "name")
+			for _, nameobj in ipairs(nameobjs) do
+				nameobj.lang = lang
+				insert(formatted_names, full_link(nameobj, "term"))
 			end
 			ins(mw.text.listToText(formatted_names, nil, " or "))
 		end
