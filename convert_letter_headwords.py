@@ -189,7 +189,7 @@ def process_text_on_page(index, pagetitle, text):
       continue
     langcode = blib.languages_byCanonicalName[seclang]["code"]
     def replace_ordinal_def(m):
-      label, ordinal, rest = m.groups()
+      label, ordinal, letter_group, rest = m.groups()
       cardinal = convert_ordinal_to_cardinal(ordinal)
       if cardinal is None:
         pagemsg("WARNING: Unrecognized ordinal '%s' in ordinal definition line for lang %s: %s" % (
@@ -199,11 +199,13 @@ def process_text_on_page(index, pagetitle, text):
       def alphrest_in_default_script(alphrest):
         return args.letter_def == "Arab-def" and alphrest.lower() in [
           "arabic script", "perso-arabic script", "shahmukhi script", "{{w|shahmukhi}} script"
+        ] or args.letter_def == "letter def" and alphrest.lower() in [
+          "devanagari", "devanagari script",
         ]
       if m:
         alphabet, alphtype, alphrest = m.groups()
       else:
-        m = re.search(r"of (?:the )?\[\[([^\[\]\n]+?)\]\](.*)$", rest)
+        m = re.search(r"(?:of|in) (?:the )?\[\[([^\[\]\n]+?)\]\](.*)$", rest)
         if m:
           alphabet, alphrest = m.groups()
           alphtype = "alphabet"
@@ -220,17 +222,17 @@ def process_text_on_page(index, pagetitle, text):
           if alphabet != seclang:
             pagemsg("WARNING: Alphabet name '%s' not same as language '%s' in ordinal definition line: %s" % (
               alphabet, seclang, m.group(0)))
-            return "# %s{{%s|%s|letter|%s|alphabet=the [[%s]] [[%s]]}}" % (
-                label, args.letter_def, langcode, cardinal, alphabet, alphtype)
+            return "# %s{{%s|%s|%s|%s|alphabet=the [[%s]] [[%s]]}}" % (
+                label, args.letter_def, langcode, letter_group, cardinal, alphabet, alphtype)
           else:
-            return "# %s{{%s|%s|letter|%s}}" % (label, args.letter_def, langcode, cardinal)
+            return "# %s{{%s|%s|%s|%s}}" % (label, args.letter_def, langcode, letter_group, cardinal)
 
       notes_replace_ordinal_def.append("%s %s" % (ordinal, seclang))
       #notes.append("partially replace ordinal definition for '%s' letter of '%s' alphabet with {{%s|...}}" % (
       #  ordinal, seclang, args.letter_def))
-      return "# %s{{%s|%s|letter|%s}}FIXME: %s" % (label, args.letter_def, langcode, cardinal, rest)
+      return "# %s{{%s|%s|%s|%s}}FIXME: %s" % (label, args.letter_def, langcode, letter_group, cardinal, rest)
 
-    sectext = re.sub(r"^# ((?:\{\{[^{}\n]*\}\} )?)(?:'*|\{\{(?:ng|n-g|non-gloss|n-g-lite)\|*)?The \[*([a-z -]*(?:st|nd|rd|th))\]* \[*letter\]* (.*?)['.}]*$",
+    sectext = re.sub(r"^# ((?:\{\{[^{}\n]*\}\} )?)(?:'*|\{\{(?:ng|n-g|non-gloss|n-g-lite)\|)?[Tt]he \[*([a-z -]*(?:st|nd|rd|th))\]* \[*(letter|consonant|vowel)\]* (.*?)['.}]*$",
                      replace_ordinal_def, sectext, 0, re.M)
     sections[j] = sectext
 
@@ -298,9 +300,9 @@ def process_text_on_page(index, pagetitle, text):
       ", ".join(notes_replace_ordinal_def), args.letter_def))
   return text, notes
 
-parser = blib.create_argparser("Convert {{head|LANG|letter}} to {{letter|LANG}}",
+parser = blib.create_argparser("Convert {{head|LANG|letter}} to {{letter|LANG}} and letter definitions to {{letter def}}",
   include_pagefile=True, include_stdin=True)
-parser.add_argument("--letter-def", default="Latn-def", help="Template to use in letter definitions")
+parser.add_argument("--letter-def", default="letter def", help="Template to use in letter definitions")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
