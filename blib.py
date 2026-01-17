@@ -1696,6 +1696,29 @@ wm_languages_byCanonicalName = None
 
 language_aliases_to_canonical = None
 
+def init_fake_langdata():
+  global languages_byCanonicalName, languages_byCode, etym_languages_byCanonicalName, etym_languages_byCode
+  languages_byCanonicalName = {
+    "English": {"code": "en"},
+    "Old English": {"code": "ang"},
+    "Greek": {"code": "el"},
+    "Hungarian": {"code": "hu"},
+    "Japanese": {"code": "ja"},
+    "Chinese": {"code": "zh"},
+    "Spanish": {"code": "es"},
+    "French": {"code": "fr"},
+    "Portuguese": {"code": "pt"},
+    "Latin": {"code": "la"},
+    "Norwegian Bokmål": {"code": "nb"},
+    "Norwegian Nynorsk": {"code": "nn"},
+  }
+  languages_byCode = {
+    y["code"]: {"canonicalName": x} for x, y in languages_byCanonicalName.items()
+  }
+  etym_languages_byCanonicalName = {}
+  etym_languages_byCode = {
+    y["code"]: {"canonicalName": x} for x, y in etym_languages_byCanonicalName.items()
+  }
 
 def getData():
   getLanguageData()

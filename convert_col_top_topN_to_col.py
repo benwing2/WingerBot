@@ -7,23 +7,7 @@ import blib
 from blib import getparam, rmparam, msg, site, tname, pname
 from collections import defaultdict
 
-blib.languages_byCanonicalName = {
-  "English": {"code": "en"},
-  "Old English": {"code": "ang"},
-  "Greek": {"code": "el"},
-  "Hungarian": {"code": "hu"},
-  "Japanese": {"code": "ja"},
-  "Chinese": {"code": "zh"},
-  "Spanish": {"code": "es"},
-  "French": {"code": "fr"},
-  "Portuguese": {"code": "pt"},
-  "Latin": {"code": "la"},
-  "Norwegian Bokmål": {"code": "nb"},
-  "Norwegian Nynorsk": {"code": "nn"},
-}
-blib.languages_byCode = {
-  y["code"]: {"canonicalName": x} for x, y in blib.languages_byCanonicalName.items()
-}
+blib.init_fake_langdata()
 blib.getLanguageData()
 
 shortcut_to_expansion = {
