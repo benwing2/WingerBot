@@ -50,12 +50,13 @@ def process_text_on_page(index, pagetitle, text):
   text = text.rstrip("\n") + orig_secfinalnl
 
   if text != origtext:
-    notes.append("move %s section to %s" % (args.fromlang, args.tolang))
+    notes.append("move %s section to %s%s" % (args.fromlang, args.tolang, " (%s)" % args.comment_tag if args.comment_tag else ""))
   return text, notes
 
 parser = blib.create_argparser("Move entries from one language to another", include_pagefile=True, include_stdin=True)
 parser.add_argument("--fromlang", required=True, help="Existing language to rename.")
 parser.add_argument("--tolang", required=True, help="New name of language.")
+parser.add_argument("--comment-tag", help="Tag to add to changelog message indicating reason for renaming.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
