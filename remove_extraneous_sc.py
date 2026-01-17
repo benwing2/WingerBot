@@ -6,14 +6,19 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, msg, site, tname, pname
 
-templates_with_sc = {
+translation_templates_with_sc = {
   "t": ["alt", "2"],
   "tt": ["alt", "2"],
   "t+": ["alt", "2"],
   "tt+": ["alt", "2"],
   "t-": ["alt", "2"],
+  "tt+check": ["alt", "2"],
   "t+check": ["alt", "2"],
   "t-check": ["alt", "2"],
+  "t-needed": ["alt", "2"],
+}
+
+link_templates_with_sc = {
   "l": ["3", "2"],
   "link": ["3", "2"],
   "l-self": ["3", "2"],
@@ -24,15 +29,14 @@ templates_with_sc = {
   "m+": ["3", "2"],
 }
 
+templates_with_sc = translation_templates_with_sc
+#templates_with_sc = translation_templates_with_sc | link_templates_with_sc
+
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
-
   notes = []
-
-  global args
 
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
@@ -60,19 +64,23 @@ def process_text_on_page(index, pagetitle, text):
         if not value_to_check:
           pagemsg("WARNING: For lang=%s, no displayable value, not removing sc=%s: %s" % (lang, sc, str(t)))
           continue
-        detected_sc = expand_text("{{#invoke:scripts/templates|findBestScript|%s|%s}}" % (value_to_check, lang))
+        detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s}}" % (
+          lang, value_to_check))
         if not detected_sc:
           continue
         if detected_sc == "ms-Arab" and sc == "Arab" and lang == "ms":
           pagemsg("Detected script ms-Arab for lang=ms, saw explicit sc=Arab, which is probably wrong, removing sc=: %s" % (str(t)))
-        if detected_sc != sc:
+        elif detected_sc in ["Hans", "Hant"] and sc == "Hani":
+          pagemsg("Detected script %s, saw explicit sc=Hani which is a superset, removing sc=: %s" % (detected_sc, str(t)))
+        elif detected_sc != sc:
           if len(detected_sc) >= 4 and len(sc) >= 4 and detected_sc[-4:] == sc[-4:]:
             pagemsg("For lang=%s, detected script %s, saw explicit sc=%s, both are variants of the same script, removing sc=: %s" % (lang, detected_sc, sc, str(t)))
           elif detected_sc == "None":
             pagemsg("WARNING: For lang=%s, detected script %s but saw explicit sc=%s, which may be right: %s" % (lang, detected_sc, sc, str(t)))
             continue
           else:
-            force_detected_sc = expand_text("{{#invoke:scripts/templates|findBestScript|%s|%s|true}}" % (value_to_check, lang))
+            force_detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s|true}}" % (
+              lang, value_to_check))
             if force_detected_sc == detected_sc:
               pagemsg("WARNING: For lang=%s, force-detected script %s but saw explicit sc=%s, explicit sc= probably wrong: %s" % (lang, detected_sc, sc, str(t)))
             else:
@@ -82,6 +90,18 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("remove redundant sc=%s from {{%s}}" % (sc, tn))
     if str(t) != origt:
       pagemsg("Replaced %s with %s" % (origt, str(t)))
+  notes = blib.group_notes(notes)
+  remove_redundant_notes = []
+  other_notes = []
+  for note in notes:
+    m = re.search("^remove redundant (.*)", note)
+    if m:
+      remove_redundant_notes.append(m.group(1))
+    else:
+      other_notes.append(note)
+  if remove_redundant_notes:
+    remove_redundant_notes = ["remove redundant " + ", ".join(remove_redundant_notes)]
+  notes = remove_redundant_notes + other_notes
   return parsed, notes
 
 parser = blib.create_argparser("Remove redundant sc=", include_pagefile=True, include_stdin=True)
