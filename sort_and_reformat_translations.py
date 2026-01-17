@@ -7,19 +7,20 @@ import blib
 from blib import getparam, rmparam, msg, errmsg, site, tname
 from collections import defaultdict
 
-#blib.init_fake_langdata()
-blib.getData()
+blib.init_fake_langdata()
+#blib.getData()
 
 def boolean_function_matches(fun, lang):
   if callable(fun):
     return fun(lang)
+  elif type(fun) is str:
+    raise ValueError("Invalid type (string) for Boolean function or set '%s' when matching '%s'" % (fun, lang))
   else:
     return lang in fun
 
 def default_indentfun(group, lang):
   return lang.endswith(" " + group)
 
-indonesian_malay_recognize = {"Carakan"}
 indonesian_malay_rename_map = {
   "Arabic": "Jawi",
   "Roman": "Rumi",
@@ -31,9 +32,9 @@ indonesian_malay_rename_map = {
   "Singkil": "Alas-Kluet Batak",
 }
 indonesian_malay_unindent = {
-  "Acehnese", "Alas-Kluet Batak", "Ambonese Malay", "Baba Malay", "Balinese", "Banda", "Banjarese", "Buginese",
-  "Brunei Malay", "Ende", "Indonesian", "Jambi Malay", "Javanese", "Madurese", "Makasar", "Minangkabau", "Nias",
-  "Pattani Malay", "Sarawak Malay", "Sikule", "Simeulue", "Sundanese", "Terengganu Malay"
+  "Acehnese", "Alas-Kluet Batak", "Balinese", "Banda", "Banjarese", "Buginese",
+  "Ende", "Indonesian", "Javanese", "Madurese", "Makasar", "Minangkabau", "Nias",
+  "Sikule", "Simeulue", "Sundanese",
 }
 
 # Groups of languages handled under a single header, with properties. The key is the top-level header, which is usually
@@ -64,6 +65,13 @@ language_groups = {
   "Albanian": {
     "indent": lambda lang: lang.endswith(" Albanian") or lang in {"Arbëresh", "Arvanitika", "Tosk", "Gheg"},
   },
+  "Altai": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Amuzgo": {
+    "add_lang": {"Guerrero", "Ipalapa", "San Pedro Amuzgos"},
+  },
+  "Apabhramsa": {},
   "Apache": {
     "indent": lambda lang: lang.endswith(" Apache") or lang in {"Jicarilla", "Lipan", "Chiricahua"}, # not Navajo
     "rename": {
@@ -123,6 +131,9 @@ language_groups = {
     "unindent": {"Armenian", "Assyrian Neo-Aramaic", "Egyptian Arabic"},
     "recognize": {"Middle Armenian", "Western Armenian"},
   },
+  "Arrernte": {
+    "add_lang": {"Eastern", "Western"},
+  },
   "Azerbaijani": {
     "rename": {
       "Abjad": "Arabic",
@@ -134,8 +145,51 @@ language_groups = {
     },
     "recognize": {"Cyrillic"},
   },
-  "Bai": {},
+  "Bai": {
+    "add_lang": {"Central", "Northern", "Lama", "Panyi", "Southern"},
+  },
+  "Batak": {
+    "add_lang": {"Alas-Kluet", "Angkola", "Dairi", "Karo", "Mandailing", "Simalungun", "Toba"},
+  },
+  "Belarusian": {
+    "rename": {
+      "Roman": "Latin",
+    },
+  },
+  "Berber": {
+    "indent": lambda lang: False,
+    "unindent": {"Central Atlas Tamazight", "Kabyle", "Tachawit", "Tarifit", "Tashelhit"},
+  },
+  "Breton": {},
+  "Bulgarian": {
+    "rename": {
+      "Cyrillic": "Bulgarian",
+      "Old Bulgarian": "Old Church Slavonic",
+    },
+    "unindent": {"Bulgarian", "Old Church Slavonic", "Cantonese", "Egyptian Arabic", "Mandarin"},
+  },
+  "Buryat": {
+    "rename": {
+      "Classic": "Old Buryat",
+      "Classical": "Old Buryat",
+    },
+  },
+  "Catalan": {
+    "indent": lambda lang: lang.endswith(" Catalan") or lang in {"Valencian"},
+    "unindent": {"Mandarin"},
+  },
+  "Chakma": {
+    "unindent": {"Eastern Cham", "Western Cham"},
+  },
   "Cham": {}, # Note: Ai-Cham is unrelated
+  "Chatino": {
+    "add_lang": {"Eastern Highland", "Nopala", "Tataltepec", "Teojomulco", "Western Highland", "Zacatepec",
+                 "Zenzontepec", "San Juan Quiahije"},
+  },
+  "Chinantec": {
+    "add_lang": {"Chiltepec", "Comaltepec", "Lalana", "Lealao", "Ojitlán", "Ozumacín", "Palantla", "Quiotepec",
+                 "Sochiapam", "Tepetotutla", "Tepinapa", "Tlacoatzintepec", "Usila", "Valle Nacional",},
+  },
   "Chinese": {
     "indent": lambda lang: lang.endswith(" Chinese") or any(lang == x or lang.endswith(" " + x) for x in [
       "Cantonese", "Yue", "Dungan", "Gan", "Hakka", "Huizhou", "Jin", "Min", "Min Nan", "Wu",
@@ -151,6 +205,45 @@ language_groups = {
       "Puxian": "Puxian Min",
     }
   },
+  "Coptic": {
+    "indent": lambda lang: lang.endswith(" Coptic") or lang in {
+      "Akhmimic", "Bohairic", "Fayyumic", "Sahidic", "Lycopolitan", "Oxyrhynchite"},
+    "add_lang": {"Akhmimic", "Bohairic", "Fayyumic", "Sahidic", "Lycopolitan", "Oxyrhynchite"},
+    "rename": {
+      "{{qualifier|Sahidic}}": "Sahidic Coptic",
+      "{{q|Bohairic}}": "Bohairic Coptic",
+      "Boharic": "Bohairic Coptic",
+    },
+  },
+  "Cree": {
+    # Michif is listed as a Cree variety but it's actually a mixed language.
+    "indent": lambda lang: lang.endswith(" Cree") or lang in {"Atikamekw", "Montagnais", "Naskapi"},
+    "add_lang": {"Moose", "Northern East", "Plains", "Southern East", "Swampy", "Woods"},
+  },
+  "Crimean Tatar": {
+    "rename": {
+      "Roman": "Latin",
+    },
+  },
+  "Cuicatec": {
+    "add_lang": {"Tepeuxila", "Teutila"},
+  },
+  "East Cree": {
+    "indent": lambda lang: False,
+    "unindent": {"Northern East Cree", "Southern East Cree"},
+  },
+  "Egyptian": {
+    "indent": lambda lang: lang.endswith(" Egyptian") or lang in {"Demotic"},
+    "rename": {
+      "(Akhmimic)": "Akhmimic Coptic",
+      "Demotic": "Demotic Egyptian",
+    },
+    "unindent": {"Akhmimic", "Akhmimic Coptic", "Bohairic", "Coptic", "Fayyumic", "Lycopolitan", "Old Coptic",
+                 "Oxyrhynchite", "Sahidic"},
+  },
+  "Enets": {
+    "add_lang": {"Forest", "Tundra"},
+  },
   "French": {
     # Note: By the time the 'indent' function is called, "Louisiana Creole French" will have been renamed to
     # "Louisiana Creole" due to the setting in top_level_rename so we don't have to worry about it getting indented.
@@ -160,6 +253,21 @@ language_groups = {
       "Modern": "French",
     },
     "unindent": {"French", "Louisiana Creole", "Louisiana Creole French"},
+  },
+  "Frisian": {
+    "add_lang": {"North", "Saterland", "West"},
+  },
+  "Fula": {
+    "rename": {
+      "Roman": "Latin",
+      "Pular": "Pulaar",
+    },
+    "recognize": {"Adlam"},
+  },
+  "Gagauz": {
+    "rename": {
+      "Roman": "Latin",
+    },
   },
   "Georgian": {},
   # FIXME: inconsistent nesting currently, issues with "Low German"
@@ -198,24 +306,85 @@ language_groups = {
     },
     "unindent": {"Greek"},
   },
+  "Guarani": {},
+  "Gujarati": {
+    "add_lang": {"Middle", "Old"},
+  },
+  "Haida": {},
+  "Hebrew": {
+    "add_lang": {"Biblical", "Samaritan"},
+    "rename": {
+      "Ancient": "Biblical Hebrew",
+      "Ancient Hebrew": "Biblical Hebrew",
+      "Modern": "Hebrew",
+      "Modern Hebrew": "Hebrew",
+    },
+    "unindent": {"Hebrew"},
+  },
+  "Hindustani": {
+    "indent": lambda lang: False,
+    "unindent": {"Hindi", "Urdu"},
+  },
+  "Hmong": {
+    "add_lang": {"Green", "White"},
+  },
+  "Hungarian": {
+    "rename": {
+      "Roman": "Latin",
+    },
+    "unindent": {"Hungarian"},
+  },
+  "Ilocano": {
+    "rename": {
+      "Roman": "Latin",
+    },
+    "recognize": {"Baybayin"},
+  },
   "Indonesian": {
     "rename": indonesian_malay_rename_map,
-    "recognize": indonesian_malay_recognize,
     "unindent": indonesian_malay_unindent,
   },
+  "Inuktitut": {
+    "rename": {
+      "Roman": "Latin",
+    },
+  },
   "Irish": {
-    "unindent": {"Central Kurdish"},
     "rename": {"Modern Irish": "Irish"},
-    "unindent": {"Irish"},
+    "unindent": {"Irish", "Central Kurdish"},
     "recognize": {"Old Irish", "Middle Irish", "Primitive Irish"},
   },
   "Javanese": {
     "rename": indonesian_malay_rename_map,
-    "recognize": lambda lang: (boolean_function_matches(indonesian_malay_recognize, lang) or
-                               lang in {"Kaili", "Krama", "Ngoko"}),
+    "recognize": lambda lang: lang in {"Kaili", "Krama", "Ngoko", "Carakan"},
     "unindent": indonesian_malay_unindent,
   },
-  "Khanty": {},
+  "Kaili": {
+    "add_lang": {"Da'a", "Ledo", "Unde"},
+  },
+  "Karelian": {
+    "rename": {
+      "Karelian Proper": "Karelian",
+      "Livvi-Karelian": "Livvi",
+    },
+    "unindent": {"Karelian", "Livvi"},
+    "recognize": {"Tver Karelian"},
+  },
+  "Keres": {
+    "add_lang": {"Eastern", "Western"},
+  },
+  "Khanty": {
+    "add_lang": {"Eastern", "Northern", "Southern"},
+  },
+  "Khmer": {
+    "unindent": {"Central Kurdish", "Northern Kurdish"},
+  },
+  "Komi": {
+    "indent": lambda lang: lang.startswith("Komi-"),
+  },
+  "Korean": {
+    "unindent": {"Jeju", "Bokmål", "Northern Kurdish"},
+  },
   "Kurdish": {
     "indent": lambda lang: lang.endswith(" Kurdish") or lang in {"Laki", "Sorani", "Kurmanji"},
     "rename": {
@@ -228,6 +397,10 @@ language_groups = {
     },
     "unindent": {"Gurani", "Zazaki"},
   },
+  "Kyrgyz": {
+    "unindent": {"Sorani"},
+    "recognize": {"Arabic", "Cyrillic"},
+  },
   "Ladino": {
     "rename": {
       "Hebew": "Hebrew",
@@ -237,9 +410,23 @@ language_groups = {
       "Roman": "Latin",
     },
   },
-  "Lawa": {},
+  "Latin": {
+    "add_lang": {"Classical", "Medieval"},
+    "rename": {
+      "Modern": "Contemporary Latin",
+      "[[Medieval Latin]]": "Medieval Latin",
+      "[[Vulgar Latin]]": "Vulgar Latin",
+    },
+  },
+  "Lawa": {
+    "add_lang": {"Eastern", "Western"},
+  },
+  "Lenape": {
+    "indent": lambda lang: False,
+    "unindent": {"Munsee", "Unami"},
+  },
   "Low German": {
-    # FIXME: Make sure Middle Low German OK to indent; currrently only 14/47 indented.
+    # FIXME: Make sure Middle Low German OK to indent; currently only 14/47 indented.
     "indent": lambda lang: lang.endswith(" Low German") or lang in {"Dutch Low Saxon"},
     "add_lang": {"East Frisian"},
     "rename": {
@@ -253,18 +440,55 @@ language_groups = {
     "unindent": {"Plautdietsch"},
   },
   "Malay": {
-    "indent": lambda lang: False,
     "rename": indonesian_malay_rename_map,
-    "recognize": indonesian_malay_recognize,
     "unindent": indonesian_malay_unindent,
+  },
+  "Manobo": {
+    "add_lang": {"Agusan", "Ata", "Cinamiguin", "Cotabato", "Dibabawon", "Ilianen", "Matigsalug", "Obo", "Rajah Kabunsuwan", "Sarangani", "Western Bukidnon"},
+  },
+  "Mansi": {
+    "add_lang": {"Central", "Eastern", "Western", "Northern", "Southern"},
   },
   "Mari": {
     "indent": lambda lang: lang.endswith(" Mari") and lang not in {"Austronesian Mari", "Sepik Mari"},
     "add_lang": {"Eastern", "Western"},
     "unindent": {"Austronesian Mari", "Sepik Mari"},
   },
-  "Mansi": {},
-  "Mongolian": {
+  "Marquesan": {
+    "add_lang": {"North", "South"},
+  },
+  "Mazahua": {
+    "add_lang": {"Central", "Michoacán"},
+  },
+  "Mazatec": {
+    "add_lang": {"Chiquihuitlán", "Huautla", "Ixcatlán", "Jalapa de Díaz", "Mazatlán", "Puebla",
+                 "San Jerónimo Tecóatl"},
+  },
+  "Me'phaa": {
+    "add_lang": {"Acatepec", "Azoyú", "Tlacoapa"},
+  },
+  "Miwok": {
+    "add_lang": {"Coast", "Lake"},
+  },
+  "Mixe": {
+    "add_lang": {"Coatlán", "Isthmus", "Quetzaltepec", "Totontepec"},
+  },
+  "Mixtec": {
+    "add_lang": {
+      "Alacatlatzala", "Alcozauca", "Amoltepec", "Apasco-Apoala", "Atatláhuca", "Ayutla", "Cacaloxtepec", "Chayuco",
+      "Chazumba", "Chigmecatitlán", "Coatzospan", "Cuyamecalco", "Diuxi-Tilantongo", "Huitepec", "Itundujia",
+      "Ixtayutla", "Jamiltepec", "Juxtlahuaca", "Magdalena Peñasco", "Metlatónoc", "Mitlatongo", "Mixtepec",
+      "Northern Tlaxiaco", "Northwest Oaxaca", "Ocotepec", "Peñoles", "Pinotepa Nacional", "San Juan Colorado",
+      "San Juan Teita", "San Miguel el Grande", "San Miguel Piedras", "Santa Lucía Monteverde", "Santa María Zacatepec",
+      "Silacayoapan", "Sindihui", "Sinicahua", "Southeastern Nochixtlán", "Southern Puebla", "Southwestern Tlaxiaco",
+      "Soyaltepec", "Tacahua", "Tamazola", "Teposcolula", "Tezoatlán", "Tidaá", "Tijaltepec", "Tlazoyaltepec",
+      "Tututepec", "Western Juxtlahuaca", "Yoloxochitl", "Yosondúa", "Yucuañe", "Yutanduchi",
+    },
+    "rename": {
+      "San Miguel El Grande": "San Miguel el Grande Mixtec",
+    },
+  },
+ "Mongolian": {
     "rename": {
       "Roman": "Latin",
       "Cyrilic": "Cyrillic",
@@ -275,8 +499,10 @@ language_groups = {
     "recognize": {"Mongolian"},
     "unindent": {"Khamnigan Mongol"},
   },
+  "Murut": {
+    "add_lang": {"Keningau", "Selungai", "Sembakang", "Serudung", "Tagal", "Timugon"},
+  },
   "Nahuatl": {
-    # FIXME: Make sure it's OK to move "Foo Nahuatl" under "Nahuatl"
     "add_lang": {"Central", "Central Huasteca", "Central Puebla", "Classical", "Coatepec", "Cosoleacaque",
                  "Eastern Durango", "Eastern Huasteca", "Guerrero", "Highland Puebla", "Huaxcaleca",# "Isthmus",
                  "Mecayapan", "Michoacán", "Morelos", "Northern Oaxaca", "Northern Puebla", "Ometepec", "Orizaba",
@@ -286,6 +512,9 @@ language_groups = {
     "rename": {
       "Northern Peubla": "Northern Puebla Nahuatl",
     },
+  },
+  "Nenets": {
+    "add_lang": {"Forest", "Tundra"},
   },
   "Norwegian": {
     "indent": lambda lang: lang.startswith("Norwegian ") or lang in {"Bokmål", "Bokmal", "Nynorsk"},
@@ -303,13 +532,54 @@ language_groups = {
     },
     "unindent": {"Norwegian"},
   },
+  "Occitan": {},
   "Ohlone": {},
+  "Ojibwe": {
+    "rename": {
+      "Canadian Syllabics": "Canadian syllabics",
+      "Roman": "Latin",
+    },
+  },
   "Old Church Slavonic": {
     "rename": {
       "Cytillic": "Cyrillic",
       "Roman": "Latin",
     },
     "recognize": {"Glagolitic"},
+  },
+  "Old English": {
+    "rename": {
+      "Latin": "Old English",
+      "Roman": "Old English",
+    },
+    "unindent": {"Old English", "Middle English"},
+    "recognize": {"Runic"},
+  },
+  "Ossetian": {
+    "add_lang": {"Digor", "Iron"},
+    "rename": {
+      "Digorian": "Digor Issetian",
+      "Ironian": "Iron Issetian",
+      "{{qualifier|Digor}}": "Digor Issetian",
+      "{{qualifier|Iron}}": "Iron Issetian",
+    },
+  },
+  "Otomi": {
+    "add_lang": {"Eastern Highland", "Estado de México", "Ixtenco", "Mezquital", "Querétaro", "Temoaya", "Tenango",
+                 "Texcatepec", "Tilapa"},
+  },
+  "Pame": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Paraguayan Guarani": {
+    "indent": lambda lang: False,
+    "rename": {
+      "Mbyá": "Mbya Guarani",
+    },
+    "unindent": {"Mbya Guarani", "Tapieté"},
+  },
+  "Penan": {
+    "add_lang": {"Eastern", "Western"},
   },
   "Persian": {
       # FIXME: Make sure Middle Persian/Old Persian OK to indent; currrently only 27/286 Middle Persian and 16/105
@@ -322,8 +592,18 @@ language_groups = {
     },
     "unindent": {"Tajik"},
   },
+  "Polish": {},
+  "Popoloca": {
+    "add_lang": {"Coyotepec", "Mezontla", "San Felipe Otlaltepec", "San Juan Atzingo", "San Luís Temalacayuca",
+                 "San Marcos Tlalcoyalco", "Santa Inés Ahuatempan"},
+    "unindent": {"Highland Popoluca", "Amecameca Central Nahuatl", "Bokmål", "Mandarin", "Norwegian Bokmål", "Swedish"},
+  },
+  "Popoluca": {
+    "add_lang": {"Highland", "Oluta", "Sayula", "Texistepec"},
+  },
   "Portuguese": {
     # FIXME: Make sure entries in this section are kosher
+    "indent": lambda lang: lang.endswith(" Portuguese") and lang not in {"Old Portuguese", "Old Galician Portuguese"},
     "add_lang": {"Brazilian", "European"},
     "rename": {
       "Brazil": "Brazilian Portuguese",
@@ -332,6 +612,12 @@ language_groups = {
       "Iberian": "European Portuguese",
       "{{qualifier|Brazil}}": "Brazilian Portuguese",
       "{{qualifier|Portugal}}": "European Portuguese",
+    },
+    "unindent": {"Old Galician-Portuguese", "Old Galician Portuguese", "Old Portuguese"},
+  },
+  "Prakrit": {
+    "rename": {
+      "Maharashtri Prakrit": "Maharastri Prakrit",
     },
   },
   "Punjabi": {
@@ -346,15 +632,48 @@ language_groups = {
     },
     "unindent": {"Kurmanji"},
   },
-  "Roglai": {},
-  "Romani": {},
-  "Sama": {},
+  "Quechua": {
+    "add_lang": {"Central", "Southern"},
+  },
+  "Roglai": {
+    "add_lang": {"Cacgia", "Northern"},
+  },
+  "Romani": {
+    "add_lang": {"Balkan", "Baltic", "Carpathian", "Kalo Finnish", "Sinte", "Vlax", "Welsh"},
+  },
+  "Russian": {
+    "rename": {
+      "Cyrillic": "Russian",
+      "Roman": "Latin",
+    },
+    "unindent": {"Russian", "Old East Slavic", "Northern Selkup", "Southern Selkup"},
+  },
+  "Sama": {
+    "add_lang": {"Central", "Pangutaran", "Southern"},
+  },
+  "Samaritan": {
+    "indent": lambda lang: False,
+    "unindent": {"Samaritan Aramaic", "Samaritan Hebrew"},
+  },
   "Sami": {
     "add_lang": {"Akkala", "Inari", "Kemi", "Kildin", "Lule", "Northern", "Pite", "Skolt", "Southern", "Ter", "Ume"},
     "rename": {
       "Kola": "Kildin Sami",
     },
     "unindent": {"Bokmål"},
+  },
+  "Sardinian": {
+    "indent": lambda lang: lang.endswith(" Sardinian") or lang in {"Campidanese", "Logudorese", "Nuorese"},
+    "rename": {
+      "Logudorese Sardinian": "Logudorese",
+      "Campidanese Sardinian": "Campidanese",
+      "Gallurese Sardinian": "Gallurese",
+    },
+    "recognize": {"Nuorese"},
+    "unindent": {"Gallurese", "Sassarese"},
+  },
+  "Selkup": {
+    "add_lang": {"Northern", "Southern"},
   },
   "Serbo-Croatian": {
     "rename": {
@@ -368,6 +687,9 @@ language_groups = {
       "Roman spelling": "Latin",
     }
   },
+  "Slavey": {
+    "add_lang": {"North", "South"},
+  },
   "Sorbian": {
     "add_lang": {"Lower", "Upper"},
     "rename": {
@@ -378,10 +700,62 @@ language_groups = {
   "Spanish": {},
   "Sundanese": {
     "rename": indonesian_malay_rename_map,
-    "recognize": indonesian_malay_recognize,
     "unindent": indonesian_malay_unindent,
   },
-  "Tujia": {},
+  "Swedish": {},
+  "Tagalog": {
+    "rename": {
+      "Roman": "Latin",
+    },
+    "recognize": {"Baybayin"},
+  },
+  "Tatar": {
+    "indent": lambda lang: False,
+    "unindent": {"Crimean Tatar"},
+    "rename": {
+      "Roman": "Latin",
+    },
+    "recognize": {"Arabic", "Cyrillic", "Kryashen"},
+  },
+  "Tepehua": {
+    "add_lang": {"Huehuetla", "Pisaflores", "Tlachichilco"},
+  },
+  "Tepehuan": {
+    "add_lang": {"Northern", "Southeastern", "Southwestern"},
+  },
+  "Thai": {
+    "add_lang": {"Northern", "Southern"},
+    "unindent": {"Isan"},
+  },
+  "Tibetan": {},
+  "Tidung": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Totonac": {
+    "add_lang": {"Coyutla", "Filomena Mata-Coahuitlán", "Highland", "Misantla", "Papantla", "Upper Necaxa",
+                 "Western", "Xicotepec de Juárez"},
+  },
+  "Triqui": {
+    "add_lang": {"Chicahuaxtla", "Copala", "San Martín Itunyoso"},
+  },
+  "Tujia": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Turkish": {
+    "rename": {
+      "Modern": "Turkish",
+      "Modern Turkish": "Turkish",
+      "Latin": "Turkish",
+      "Arabic": "Ottoman Turkish",
+      "Ottoman": "Ottoman Turkish",
+    },
+    "unindent": {"Turkish", "Old Turkic"},
+  },
+  "Turkmen": {
+    "rename": {
+      "Roman": "Latin",
+    },
+  },
   "Uzbek": {
     "rename": {
       "Roman": "Latin",
@@ -389,11 +763,45 @@ language_groups = {
     "recognize": {"Arabic", "Cyrillic"},
   },
   "Welsh": {},
-  "Yokuts": {},
+  "Yokuts": {
+    "indent": lambda lang: lang.endswith(" Yokuts") or lang in {"Gashowu", "Palewyami"},
+    "add_lang": {"Buena Vista", "Delta", "Gashowu", "Kings River", "Northern Valley", "Palewyami", "Southern Valley",
+                 "Tule-Kaweah"},
+  },
+  "Yukaghir": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Zapotec": {
+    "indent": lambda lang: lang.endswith(" Zapotec") or lang in {"Central Mahuatlán Zapoteco"},
+    "add_lang": {
+      "Amatlán", "Ayoquesco", "Cajonos", "Isthmus", "Mitla", "Mixtepec", "Quioquitani-Quierí", "San Juan Guelavía",
+      "San Pedro Quiatoni", "Santa María Quiegolani", "Southern Rincon", "Texmelucan", "Tilquiapan", "Tlacolulita",
+      "Xanaguía", "Yalálag", "Yatee", "Yatzachi", "Zaniza", "Zoogocho", "Aloápam", "Asunción Mixtepec",
+      "Central Mahuatlán", "Chichicapan", "Choapan", "Coatecas Altas", "Coatlán", "El Alto", "Elotepec",
+      "Guevea de Humboldt", "Lachiguiri", "Lachixío", "Lapaguía-Guivini", "Loxicha", "Mazaltepec", "Ocotlán",
+      "Ozolotepec", "Petapa", "Quiavicuzas", "Rincón", "San Agustín Mixtepec", "San Baltazar Loxicha",
+      "San Pablo Güilá", "Santa Catarina Albarradas", "Santa Inés Yatzechi", "Santiago Xanica",
+      "Santo Domingo Albarradas", "San Vicente Coatlán", "Sierra de Juárez", "Southeastern Ixtlán", "Tabaa",
+      "Tejalapan", "Totomachapan", "Xadani", "Yareni", "Yautepec",
+    },
+    "rename": {
+      "Central Mahuatlán Zapoteco": "Central Mahuatlán Zapotec",
+    },
+  },
+  "Zoque": {
+    "add_lang": {"Chimalapa", "Copainalá", "Francisco León", "Rayón", "Tabasco"},
+  },
 }
 
 top_level_rename = {
+  "Azeri": "Azerbaijani",
   "Louisiana Creole French": "Louisiana Creole",
+  "Old Portuguese": "Old Galician-Portuguese",
+  "Old Galician Portuguese": "Old Galician-Portuguese",
+  "Low Saxon/Low German": "Low German",
+  "Sámi": "Sami",
+  "Serbo-Croat": "Serbo-Croatian",
+  "Nowegian": "Norwegian",
 }
 
 new_language_groups = {}
@@ -435,13 +843,13 @@ def process_text_on_page(index, pagename, text):
   langgroup_header_lineind = None
   translation_lines = None
 
-  def rename_indented_lang(indented_lang, prev_lang):
-    group_props = language_groups[prev_lang]
+  def rename_indented_lang(indented_lang, prev_top_level_lang):
+    group_props = language_groups[prev_top_level_lang]
     new_indented_lang = None
     add_lang = group_props.get("add_lang", set())
     rename_map = group_props.get("rename", {})
     if boolean_function_matches(add_lang, indented_lang):
-      new_indented_lang = indented_lang + " " + prev_lang
+      new_indented_lang = indented_lang + " " + prev_top_level_lang
     elif indented_lang in rename_map:
       new_indented_lang = rename_map[indented_lang]
     if new_indented_lang:
@@ -517,7 +925,10 @@ def process_text_on_page(index, pagename, text):
       saw_opening_html_comment = False
       opening_trans_line = line
       opening_lineind = lineind
-      prev_lang = ""
+      # We need to keep track of the previous header (in `prev_top_level_lang`) and the stack of any languages indented under
+      # the header (in `prev_indented_langs`), so that when we sort the lines at the end, unrecognized lines follow the
+      # preceding line and indented lines end up under the right header(s).
+      prev_top_level_lang = ""
       prev_indented_langs = []
       # This is a list of a tuple of (top_level_lang, indented_langs, lineind, line, counts_for_sorting), serving as a
       # sort key, where
@@ -529,8 +940,21 @@ def process_text_on_page(index, pagename, text):
       # * `counts_for_sorting` is a boolean, whether to consider this line when checking to see whether sorting caused
       #   anything to move; this check is only to determine whether to add a changelog note indicating that we sorted
       #   out-of-order lines, not for the actual sort, which uses all lines.
+      #
+      # When encountering an unrecognized line, `top_level_lang` comes directly from `prev_top_level_lang` and `indented_langs`
+      # directly from `prev_indented_langs`.
       translation_lines = []
       orig_translation_lines = []
+      # The next two settings are used when we move a line to a different indentation level (e.g. indent a previously
+      # top-level line or unindent an indented line). Any lines afterward that were indented underneath the moved line
+      # (determined by looking at `need_to_reset_colons_at_or_above_level`) need to have to have their indentation level
+      # changed according to the change in indentation level of the moved line (taken from `reset_colons_offset`).
+      # Once we encounter a line below the indentation level of `need_to_reset_colons_at_or_above_level`, we reset both
+      # of the settings below. Note that a value of 0 for `need_to_reset_colons_at_or_above_level` indicates that no
+      # indentation moving needs to happen because it indicates the minimum indentation level at which we need to change
+      # the indentation, and we will never be doing this to top-level lines (no indentation).
+      need_to_reset_colons_at_or_above_level = 0
+      reset_colons_offset = 0
       new_lines.append(line)
       is_indented_under_header = False
     elif re.search(r"^\}* *\{\{trans-bottom", line): # allow for multitrans closing braces before {{trans-bottom}}
@@ -591,7 +1015,7 @@ def process_text_on_page(index, pagename, text):
           pagemsg("WARNING: Unrecognized langcode %s in {{ttbc}}: %s" % (langcode, line))
           return m.group(0)
         line = re.sub(r"\{\{ttbc\|([^{}|=]*)\}\}", replace_ttbc, line)
-        langname_regex = r"(?:'Are'are|\w[^:;{}]*?)"
+        langname_regex = r"(?:'Are'are|!Xóõ|\w[^:;{}]*?)"
         m = re.search(r"^([:*]+ *)(%s)(;?)((?: *\{\{.*)?)$" % langname_regex, line)
         if m:
           init, potential_lang, semicolon, rest = m.groups()
@@ -610,74 +1034,103 @@ def process_text_on_page(index, pagename, text):
           init_star, rest = m.groups()
           line = "*:" + rest
           notes.append("replace %s with *: in translation section" % init_star)
-        m = re.search(r"^(\* *:? *)(%s) *(:.*)$" % langname_regex, line)
+        m = re.search(r"^\* *(:*) *(%s) *:(.*)$" % langname_regex, line)
         if m:
-          init_star, lang, rest = m.groups()
-          if ":" in init_star:
-            init_star = "*: "
-          else:
-            init_star = "* "
-          newline = init_star + lang + rest
+          colons, lang, rest = m.groups()
+          rest = rest.strip()
+          if rest:
+            rest = " " + rest
+          newline = "*%s %s:%s" % (colons, lang, rest)
           if newline != line:
             line = newline
-            notes.append("remove extraneous spaces in translation section")
+            notes.append("fix spacing issues for lang '%s' in translation section" % lang)
         m = re.search(r"^(\* *(:+) *)([^:]+)(:.*)$", line)
         if m:
           # We're processing an indented line.
           init_star, colons, indented_lang, rest = m.groups()
-          potential_prev_indented_langs = prev_indented_langs[:]
+          # Copy the indentation stack so we don't affect the stack for preceding lines.
+          prev_indented_langs = prev_indented_langs[:]
           new_indent = len(colons)
-          old_indent = len(potential_prev_indented_langs)
+          if need_to_reset_colons_at_or_above_level > 0 and new_indent >= need_to_reset_colons_at_or_above_level:
+            # We are indented under a line that moved and changed indentation; we need to change our indentation
+            # accordingly.
+            new_indent += reset_colons_offset
+            colons = ":" * new_indent
+            init_star = "*" + colons + " "
+            line = init_star + indented_lang + rest
+            pagemsg("Reindenting line for language %s: %s" % (indented_lang, line))
+            notes.append("reindent line for language '%s' in translation section" % indented_lang)
+          else:
+            # We are not indented under such a line, so reset the flags controlling indentation changing.
+            need_to_reset_colons_at_or_above_level = 0
+            reset_colons_offset = 0
+          old_indent = len(prev_indented_langs)
           if new_indent > old_indent:
             if new_indent - old_indent > 1:
               pagemsg("WARNING: Saw greater than one increase in nesting, from %s to %s: lineind %s, line: %s" % (
                 old_indent, new_indent, lineind, line))
             while new_indent - old_indent:
-              potential_prev_indented_langs.append("")
+              prev_indented_langs.append("")
               old_indent += 1
           elif new_indent < old_indent:
-            potential_prev_indented_langs = potential_prev_indented_langs[:new_indent]
-          potential_prev_indented_langs[-1] = indented_lang
-          lang_counts[indented_lang][prev_lang] += 1
+            prev_indented_langs = prev_indented_langs[:new_indent]
+          prev_indented_langs[-1] = indented_lang
+          lang_counts[indented_lang][prev_top_level_lang] += 1
           total_lang_counts[indented_lang] += 1
-          header_counts[prev_lang][indented_lang] += 1
+          header_counts[prev_top_level_lang][indented_lang] += 1
           if not is_indented_under_header:
-            total_header_counts[prev_lang] += 1
+            total_header_counts[prev_top_level_lang] += 1
             is_indented_under_header = True
-          if prev_lang in language_groups:
-            group_props = language_groups[prev_lang]
+          if prev_top_level_lang in language_groups:
+            group_props = language_groups[prev_top_level_lang]
             add_lang = group_props.get("add_lang", set())
             rename_map = group_props.get("rename", {})
-            new_indented_lang = rename_indented_lang(indented_lang, prev_lang)
+            new_indented_lang = rename_indented_lang(indented_lang, prev_top_level_lang)
             if new_indented_lang != indented_lang:
-              pagemsg("Renaming %s variety %s to %s" % (prev_lang, indented_lang, new_indented_lang))
-              notes.append("rename %s variety %s to %s" % (prev_lang, indented_lang, new_indented_lang))
+              pagemsg("Renaming %s variety %s to %s" % (prev_top_level_lang, indented_lang, new_indented_lang))
+              notes.append("rename %s variety %s to %s" % (prev_top_level_lang, indented_lang, new_indented_lang))
               indented_lang = new_indented_lang
+              prev_indented_langs[-1] = indented_lang
               line = "%s%s%s" % (init_star, indented_lang, rest)
             if boolean_function_matches(group_props.get("unindent", set()), indented_lang):
-              pagemsg("Unindenting translation for %s under %s" % (indented_lang, prev_lang))
-              notes.append("unindent translation for %s under %s" % (indented_lang, prev_lang))
-              # don't set prev_indented_langs or prev_lang; we are moving an indented line to top level but if the
-              # next line is unrecognized, it should stay where it is and not move to top level.
-              #
+              pagemsg("Unindenting translation for %s under %s" % (indented_lang, prev_top_level_lang))
+              notes.append("unindent translation for %s under %s" % (indented_lang, prev_top_level_lang))
               # We may need to unindent and then re-indent under a different header, possibly renaming the language in
               # the process (e.g. in the 2026-01-01 dump there are 6 occurrences of Kurmanji indented under Punjabi;
               # they need to be unindented, reindented under Kurdish and renamed to Northern Kurdish). The function
               # need_to_indent_lang() takes care of outputting a message and adding to notes[].
+              #
+              # Make sure to set prev_indented_langs and prev_top_level_lang; we are moving an indented line to top
+              # level and potentially reindenting it elsewhere; if the next line is unrecognized, it should follow.
               indent_under_group, new_lang_name = need_to_indent_lang(indented_lang, lineind)
               indented_lang = new_lang_name
               if indent_under_group:
                 line = "*: " + indented_lang + rest
+                prev_top_level_lang = indent_under_group
+                prev_indented_lang = [indented_lang]
                 translation_lines.append((indent_under_group, [indented_lang], lineind, line, False))
+                # Any lines indented under the previously indented line may need to have their indentation decreased,
+                # specifically if the previous indentation was greater than 1, because the new indentation is 1.
+                reset_colons_offset = -new_indent + 1
+                if reset_colons_offset:
+                  need_to_reset_colons_at_or_above_level = new_indent + 1
+                else:
+                  need_to_reset_colons_at_or_above_level = 0
               else:
                 # We may be unindenting "Modern Greek", renamed to just "Greek"; it needs to become a header line,
                 # and be handled as such.
+                prev_top_level_lang = indented_lang
+                prev_indented_langs = []
                 add_header_line(indented_lang, rest, lineind)
+                # Any lines indented under the previously indented line need to have their indentation decreased.
+                need_to_reset_colons_at_or_above_level = new_indent + 1
+                reset_colons_offset = -new_indent
             else:
-              if args.rename_min and prev_lang == "Chinese" and indented_lang == "Min Nan":
+              if args.rename_min and prev_top_level_lang == "Chinese" and indented_lang == "Min Nan":
                 pagemsg("Replacing 'Min Nan' translation with Hokkien and changing code nan -> nan-hbl")
                 notes.append("replace 'Min Nan' translation with Hokkien and change code nan -> nan-hbl")
                 indented_lang = "Hokkien"
+                prev_indented_langs[-1] = indented_lang
                 parsed = blib.parse_text(rest)
                 changed = False
                 for t in parsed.filter_templates():
@@ -691,56 +1144,55 @@ def process_text_on_page(index, pagename, text):
                   rest = str(parsed)
                 line = "%s%s%s" % (init_star, indented_lang, rest)
               else:
-                indentfun = group_props.get("indent", lambda lang: default_indentfun(prev_lang, lang))
+                indentfun = group_props.get("indent", lambda lang: default_indentfun(prev_top_level_lang, lang))
                 recognizefun = group_props.get("recognize", set())
                 recognized = (indented_lang in group_props["rename_right_side"] or
                               boolean_function_matches(indentfun, indented_lang) or
                               boolean_function_matches(recognizefun, indented_lang))
-                if not recognized and indented_lang.endswith(" " + prev_lang):
-                  recognized = boolean_function_matches(add_lang, indented_lang[:-len(prev_lang) - 1])
+                if not recognized and indented_lang.endswith(" " + prev_top_level_lang):
+                  recognized = boolean_function_matches(add_lang, indented_lang[:-len(prev_top_level_lang) - 1])
                 if not recognized:
-                  pagemsg("WARNING: Unrecognized indented lang %s under %s" % (indented_lang, prev_lang))
-                  unrecognized_indented_lang_counts[prev_lang][indented_lang] += 1
-                  header_with_unrecognized_lang_counts[prev_lang] += 1
-              prev_indented_langs = potential_prev_indented_langs
-              translation_lines.append((prev_lang, prev_indented_langs, lineind, line, True))
+                  pagemsg("WARNING: Unrecognized indented lang %s under %s" % (indented_lang, prev_top_level_lang))
+                  unrecognized_indented_lang_counts[prev_top_level_lang][indented_lang] += 1
+                  header_with_unrecognized_lang_counts[prev_top_level_lang] += 1
+              translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, True))
           else:
-            prev_indented_langs = potential_prev_indented_langs
-            translation_lines.append((prev_lang, prev_indented_langs, lineind, line, True))
+            translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, True))
         else:
           m = re.search(r"^\* *((%s)(:.*))$" % langname_regex, line)
           if not m:
             pagemsg("WARNING: Unrecognized line in translation section: %s" % line)
             if re.search(r"^\s*<!--", line) and lineind > opening_lineind + 1:
               saw_opening_html_comment = True
-            translation_lines.append((prev_lang, prev_indented_langs, lineind, line, True))
+            translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, True))
           else:
             # We're processing an unindented (top-level) line.
             rest, lang, after_lang = m.groups()
             lang_counts[lang][""] += 1
             total_lang_counts[lang] += 1
             is_indented_under_header = False
-            # First check if we need to rename the top-level line (e.g. because it's using an outdated name).
-            if lang in top_level_rename:
-              new_lang = top_level_rename[lang]
-              pagemsg("Renaming top-level variety %s to %s" % (lang, new_lang))
-              notes.append("rename top-level variety %s to %s" % (lang, new_lang))
-              lang = new_lang
-              line = "* " + lang + after_lang
-            # Then check if we need to indent the language (using its new name if renamed).
+            # We're not indented under any header so reset any flags controlling offsetting the indentation.
+            need_to_reset_colons_at_or_above_level = 0
+            reset_colons_offset = 0
+            # Check if we need to indent and possibly rename the language.
             indent_under_group, new_lang_name = need_to_indent_lang(lang, lineind)
             if indent_under_group:
               lang = new_lang_name
               line = "*: " + lang + after_lang
-              # Unrecognized lines directly a top-level line that we indent and move elsewhere should probably stay
-              # where they are and not follow the moved line. So, don't change prev_lang/prev_indented_langs, so they
-              # go after the preceding line.
-              translation_lines.append((indent_under_group, [lang], lineind, line, False))
+              # Unrecognized lines directly after a top-level line that we indent and move elsewhere should move with
+              # the line, as above.
+              prev_top_level_lang = indent_under_group
+              prev_indented_langs = [lang]
+              # Any lines indented under the newly indented (previously top-level) line need to have their indentation
+              # increased.
+              need_to_reset_colons_at_or_above_level = 1
+              reset_colons_offset = 1
+              translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, False))
             else:
               if new_lang_name != lang:
                 lang = new_lang_name
                 line = "* " + lang + after_lang
-              prev_lang = lang
+              prev_top_level_lang = lang
               prev_indented_langs = []
               # We handle the header lines of known language groups differently, since we may be indenting lines under
               # a header that may not (yet?) exist, or moving an indented line like "Modern Greek" to be the header line
@@ -758,8 +1210,9 @@ def process_text_on_page(index, pagename, text):
   text = "\n".join(new_lines)
 
   if text != origtext and not notes:
-    notes.append("sort translation lines")
-    pagemsg("WARNING: Adding default changelog 'sort translation lines'")
+    default_changelog = "misc reformatting of translation lines"
+    notes.append(default_changelog)
+    pagemsg("WARNING: Adding default changelog '%s'" % default_changelog)
   return text, notes
 
 parser = blib.create_argparser(
