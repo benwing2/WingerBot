@@ -15,6 +15,7 @@ local parameters_module = "Module:parameters"
 local scripts_module = "Module:scripts"
 local string_utilities_module = "Module:string utilities"
 local table_module = "Module:table"
+local Unicode_data_module = "Module:Unicode data"
 local utilities_module = "Module:utilities"
 
 local m_links = require(links_module)
@@ -28,6 +29,8 @@ local serial_comma_join = require_when_needed(table_module, "serialCommaJoin")
 local uupper = m_string_utilities.upper
 local ulower = m_string_utilities.lower
 local ufind = m_string_utilities.find
+local unfd = mw.ustring.toNFD
+local unfc = mw.ustring.toNFC
 local insert = table.insert
 local concat = table.concat
 
@@ -156,6 +159,19 @@ function export.show(frame)
 			foll = true,
 			last = boolean_param,
 		}
+	elseif canontype == "letter-dia" then
+		merge_params {
+			letter = true,
+			lettername = true,
+			diacritic = true,
+			dianame = true,
+			name = true,
+			linklang = boolean_param, -- only used for prec/foll
+			alphabet = true,
+			alphvar = true,
+			prec = true,
+			foll = true,
+		}
 	elseif canontype == "name" then
 		merge_params {
 			[3] = {required = true},
@@ -247,6 +263,95 @@ function export.show(frame)
 	end
 
 	if canontype == "letter" or canontype == "numsym" then
+		local indef = not args[3] and not args.last
+		local article = indef and "A" or "The"
+		if args.nocap then
+			article = article:lower()
+		end
+		ins(article)
+		if args[3] then
+			ins(" ")
+			ins(ordinal_to_word(args[3]))
+		end
+		if args.last then
+			if args[3] then
+				ins(" and")
+			end
+			ins(" last")
+		end
+		-- If we're Translingual, don't say we're a letter of the "Translingual alphabet" because there is no such
+		-- thing; instead, say we're a letter of the given script, and omit the coda that says "written in the Foo
+		-- script" because it's redundant.
+		local is_mul = lang:getFullCode() == "mul"
+		local lang_for_linking = is_mul and lang_getByCode("en", true) or lang
+		ins(" ")
+		if canontype == "numsym" then
+			ins("[[numeral]] [[symbol]]")
+		elseif args[3] and deftype ~= "letter" then
+			ins("[[letter]] (a [[" .. deftype .. "]])")
+		else
+			ins("[[" .. deftype .. "]]")
+		end
+		ins(" of ")
+		if args.alphabet then
+			ins(args.alphabet)
+		elseif is_mul then
+			ins("the ")
+			if sccode:find("Lat") and (args.pagename or mw.loadData("Module:headword/data").pagename):match("^[a-zA-Z]$") then
+				-- Latn, Latf, Latg, pjt-Latn; if in ASCII a-z or A-Z, display as "basic modern Latin alphabet",
+				-- otherwise as "Latin script" as all other scripts display for mul.
+				ins(("[[%s|%s]]"):format(sccatname, "basic modern Latin alphabet"))
+			else
+				ins(linked_script)
+			end
+		else
+			ins("the ")
+			ins(lang:getCanonicalName())
+			ins(" [[alphabet]]")
+		end
+		if args.alphvar then
+			ins(" (" .. args.alphvar .. ")")
+		end
+		if args[4][1] then
+			ins(", called ")
+			local formatted_names = {}
+			for i, name in ipairs(args[4]) do
+				local nameobjs = parse_param(name, i + 3)
+				for _, nameobj in ipairs(nameobjs) do
+					nameobj.lang = lang_for_linking
+					insert(formatted_names, full_link(nameobj, "term"))
+				end
+			end
+			ins(mw.text.listToText(formatted_names, nil, " or "))
+			if not is_mul then
+				ins(" and ")
+			end
+		elseif not is_mul then
+			ins(", ")
+		end
+		if not is_mul then
+			ins(("written in the %s"):format(linked_script))
+		end
+		if args.prec then
+			ins("; preceded by ")
+			ins(link_to_lang_or_mul(args.prec, "prec"))
+		end
+		if args.foll then
+			if args.prec then
+				ins(" and ")
+			else
+				ins("; ")
+			end
+			ins("followed by ")
+			ins(link_to_lang_or_mul(args.foll, "foll"))
+		end
+		if canontype == "numsym" then
+			-- FIXME: Rethink the name of this category.
+			insert(categories, ("%s ordinal numbers"):format(lang:getFullName()))
+		end
+
+	elseif canontype == "letter-dia" then
+		local nfd = unfd(pagename)
 		local indef = not args[3] and not args.last
 		local article = indef and "A" or "The"
 		if args.nocap then
