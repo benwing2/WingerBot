@@ -114,7 +114,7 @@ language_groups = {
     "unindent": {"Arabic"},
   },
   "Aramaic": {
-    "indent": lambda lang: lang.endswith(" Aramaic") or lang in {
+    "indent": lambda lang: lang.endswith(" Aramaic") or lang.endswith(" Neo-Aramaic") or lang in {
       "Mlahsö", "Turoyo", "Classical Syriac", "Hulaulá", "Hértevin", "Koy Sanjaq Surat", "Lishana Deni",
       "Lishanid Noshan", "Lishán Didán", "Senaya", "Classical Mandaic", "Mandaic"},
     "rename": {
@@ -126,7 +126,12 @@ language_groups = {
       #"Palestinian Aramaic": "Jewish Palestinian Aramaic",
       "Syriac": "Classical Syriac",
       "Syriac, Classical": "Classical Syriac",
+      "Classic Syriac": "Classical Syriac",
+      "Hebrew": "Hebrew script",
+      "Hebrew Script": "Hebrew script",
+      "Imperial Aramiac": "Imperial Aramaic",
     },
+    "unindent": {"Classical Nahuatl"},
   },
   "Armenian": {
     "add_lang": {"Classical", "Middle", "Old", "Western"},
@@ -139,7 +144,7 @@ language_groups = {
     "add_lang": {"Eastern", "Western"},
   },
   "Assamese": {
-    "add_lang": {"Early", "Middle"},
+    "add_lang": {"Early", "Middle", "Central", "Eastern"},
     "rename": {
       "Old Assamese": "Early Assamese",
     },
@@ -225,19 +230,24 @@ language_groups = {
   },
   "Chinese": {
     "indent": lambda lang: lang.endswith(" Chinese") or any(lang == x or lang.endswith(" " + x) for x in [
-      "Cantonese", "Yue", "Dungan", "Gan", "Hakka", "Huizhou", "Jin", "Min", "Min Nan", "Wu",
+      "Mandarin", "Cantonese", "Yue", "Dungan", "Gan", "Hakka", "Huizhou", "Jin", "Min", "Min Nan", "Wu",
       "Hangzhounese", "Ningbonese", "Shanghainese", "Suzhounese", "Wenzhounese", "Xiang",
       "Pinghua", "Waxiang", "Hokkien", "Hainanese", "Teochew", "Shaozhou Tuhua", "Sichuanese", "Taishanese",
       "Tangwang"]) or lang in {"Ci"}, # not Wutunhua, a Mandarin-Amdo-Bonan creole
     "add_lang": {"Middle", "Old"},
     "rename": {
       "Madarin": "Mandarin",
+      "* Mandarin": "Mandarin",
+      "Mandain": "Mandarin",
       "Min Bei": "Northern Min",
       "Min Dong": "Eastern Min",
       # "Min Nan": "Hokkien", Min Nan handled specially because we rename the lang code as well
       "Min Zhong": "Central Min",
       "Puxian": "Puxian Min",
-    }
+      "Wuu": "Wu",
+      "Suzhou dialect": "Suzhounese",
+    },
+    "unindent": {"German", "Hindi", "Italian", "Japanese", "Jingpo", "Mon", "Yiddish"},
   },
   "Coptic": {
     "indent": lambda lang: lang.endswith(" Coptic") or lang in {
@@ -309,6 +319,17 @@ language_groups = {
   },
   "Frisian": {
     "add_lang": {"North", "Old", "Saterland", "West"},
+    "rename": {
+      "Öömrang": "Amrum",
+      "Fering": "Föhr",
+      "Fering-Öömrang": "Föhr-Amrum",
+      "Helgoland": "Heligoland",
+      "Söl'ring": "Sylt",
+      "Hallig": "Halligen",
+    },
+    "recognize": {"Amrum", "Föhr", "Föhr-Amrum", "Halligen", "Heligoland", "Mooring", "Sylt", "Karrharde",
+                  "Wiedingharde", "Bökingharde", "Goesharde"},
+    "unindent": {"Bokmål", "Nynorsk"},
   },
   "Fula": {
     "rename": {
@@ -353,6 +374,7 @@ language_groups = {
       "Alemannic": "Alemannic German",
       "Alsace": "Alsatian Alemannic German",
       "Alsatian <small>(Low Alemannic German)</small>": "Alsatian Alemannic German",
+      "Alsatian": "Alsatian Alemannic German",
       "Ancient": "Old High German",
       "Bavaria": "Bavarian",
       "Modern German": "German",
@@ -360,7 +382,8 @@ language_groups = {
       "Silesian German": "Silesian East Central German",
     },
     "unindent": {"Luxembourgish", "German", "Plautdietsch", "Colonia Tovar German", "Pennsylvania German",
-                 "Volga German", "Zipser German", "Low German", "German Low German", "Northern Kurdish"},
+                 "Volga German", "Zipser German", "Low German", "German Low German", "Northern Kurdish",
+                 "Cimbrian", "Gottscheerish", "Hunsrik", "Mòcheno", "Sathmar Swabian"},
   },
   "Greek": {
     "indent": lambda lang: lang.endswith(" Greek") or lang in {
@@ -403,6 +426,7 @@ language_groups = {
     # Fiji Hindi is not Hindi but comes from Eastern Indo-Aryan languages
     "indent": lambda lang: lang.endswith(" Hindi") and lang not in {"Andaman Creole Hindi", "Fiji Hindi"},
     "add_lang": {"Old"},
+    "unindent": {"Andaman Creole Hindi", "Fiji Hindi", "Urdu"},
   },
   "Hindustani": {
     "indent": lambda lang: False,
@@ -431,9 +455,14 @@ language_groups = {
     "unindent": indonesian_malay_unindent | {"Peranakan Indonesian"},
   },
   "Inuktitut": {
+    "add_lang": {"Eastern Canadian"},
     "rename": {
       "Roman": "Latin",
+      "Nunatsiavummiut": "Inuttitut",
+      "Inuttut": "Inuttitut",
+      "Syllabics": "Canadian syllabics",
     },
+    "unindent": {"Inuinnaqtun", "Inuvialuktun"},
   },
   "Irish": {
     # what about Classical Gaelic?
@@ -527,6 +556,7 @@ language_groups = {
   },
   "Lithuanian": {
     "add_lang": {"Old"},
+    "recognize": {"Aukštaitian", "Samogitian"},
   },
   "Low German": {
     "indent": lambda lang: lang.endswith(" Low German") and lang not in {"Plautdietsch"} or lang in {"Dutch Low Saxon"},
@@ -617,8 +647,8 @@ language_groups = {
       "Classic": "Classical Mongolian",
       "Classical": "Classical Mongolian",
       "Khamingan Mongolian": "Khamnigan Mongol",
+      "Mongolian": "Mongolian script",
     },
-    "recognize": {"Mongolian"},
     "unindent": {"Khamnigan Mongol"},
   },
   "Murut": {
@@ -659,13 +689,19 @@ language_groups = {
       "Norwegian (bokmål)": "Bokmål",
       "Norwegian Bokmal": "Bokmål",
       "Bokmal": "Bokmål",
+      "bokmål": "Bokmål",
       "Norwegian Nynorsk": "Nynorsk",
       "Norwegian (Nynorsk)": "Nynorsk",
       "Norwegian (nynorsk)": "Nynorsk",
       "Nynorak": "Nynorsk",
+      "Nynorsh": "Nynorsk",
+      "nymorsk": "Nynorsk",
+      "nynorsk": "Nynorsk",
       "Nynorskl": "Nynorsk",
+      "Nynosk": "Nynorsk",
+      "Nynrosk": "Nynorsk",
     },
-    "unindent": {"Norwegian", "Traveller Norwegian"},
+    "unindent": {"Norwegian", "Traveller Norwegian", "Old French", "Old Norse", "Portuguese", "Russian", "Spanish"},
   },
   "Occitan": {
     "add_lang": {"Old"},
@@ -823,15 +859,20 @@ language_groups = {
   },
   "Serbo-Croatian": {
     "rename": {
+      "Cryllic": "Cyrillic",
       "Cyrilli": "Cyrillic",
+      "Cyrilliс": "Cyrillic", # with a Cyrillic с
       "Cyrillic script": "Cyrillic",
       "Cyrillic spelling": "Cyrillic",
       "Latin script": "Latin",
       "Latın": "Latin",
+      "Roma": "Latin",
       "Roman": "Latin",
       "Roman script": "Latin",
       "Roman spelling": "Latin",
-    }
+    },
+    "recognize": "Arebica",
+    "unindent": {"Lower Sorbian", "Upper Sorbian"},
   },
   "Slavey": {
     "add_lang": {"North", "South"},
@@ -917,11 +958,13 @@ language_groups = {
     "rename": {
       "Roman": "Latin",
     },
+    "recognize": {"Cyrillic"},
   },
   "Uyghur": {
     "indent": lambda lang: False,
     # Old Uyghur is NOT the ancestor of modern Uyghur
     "unindent": {"Old Uyghur"},
+    "recognize": {"Arabic", "Cyrillic", "Latin"},
   },
   "Uzbek": {
     "rename": {
@@ -937,6 +980,12 @@ language_groups = {
   },
   "Welsh": {
     "add_lang": {"Middle", "Old"},
+    "rename": {
+      "North": "North Wales Welsh",
+      "North Wales": "North Wales Welsh",
+      "South": "South Wales Welsh",
+      "South Wales": "South Wales Welsh",
+    },
   },
   "Yokuts": {
     "indent": lambda lang: lang.endswith(" Yokuts") or lang in {"Gashowu", "Palewyami"},
