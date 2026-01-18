@@ -7,8 +7,8 @@ import blib
 from blib import getparam, rmparam, msg, errmsg, site, tname
 from collections import defaultdict
 
-blib.init_fake_langdata()
-#blib.getData()
+#blib.init_fake_langdata()
+blib.getData()
 
 def boolean_function_matches(fun, lang):
   if callable(fun):
@@ -864,7 +864,7 @@ def process_text_on_page(index, pagename, text):
     if lang in top_level_rename:
       new_lang = top_level_rename[lang]
       pagemsg("Renaming top-level variety %s to %s" % (lang, new_lang))
-      notes.append("rename top-level variety %s to %s" % (lang, new_lang))
+      notes.append(["rename top-level variety ", "%s->%s" % (lang, new_lang), ""])
       lang = new_lang
     # Now check if we need to indent (and possibly rename) the language.
     for group, group_props in language_groups.items():
@@ -873,11 +873,11 @@ def process_text_on_page(index, pagename, text):
         new_indented_lang = rename_indented_lang(lang, group)
         if new_indented_lang != lang:
           pagemsg("Indenting %s variety %s and renaming to %s" % (group, lang, new_indented_lang))
-          notes.append("indent %s variety %s and rename to %s" % (group, lang, new_indented_lang))
+          notes.append(["indent ", ["%s->" % group, "%s [rename to %s]" % (lang, new_indented_lang), ""], ""])
           lang = new_indented_lang
         else:
           pagemsg("Indenting %s variety %s" % (group, lang))
-          notes.append("indent %s variety %s" % (group, lang))
+          notes.append(["indent ", ["%s->" % group, lang, ""], ""])
         # We're indenting an unindented lang under a header. If the header doesn't already exist, it needs to be added.
         # We may not know whether to add the header till after we've processed the whole translation section; at that
         # point, if necessary, we add the header to the end. In all cases, we then sort, which puts the header in the
@@ -945,16 +945,19 @@ def process_text_on_page(index, pagename, text):
       # directly from `prev_indented_langs`.
       translation_lines = []
       orig_translation_lines = []
-      # The next two settings are used when we move a line to a different indentation level (e.g. indent a previously
-      # top-level line or unindent an indented line). Any lines afterward that were indented underneath the moved line
-      # (determined by looking at `need_to_reset_colons_at_or_above_level`) need to have to have their indentation level
-      # changed according to the change in indentation level of the moved line (taken from `reset_colons_offset`).
-      # Once we encounter a line below the indentation level of `need_to_reset_colons_at_or_above_level`, we reset both
-      # of the settings below. Note that a value of 0 for `need_to_reset_colons_at_or_above_level` indicates that no
-      # indentation moving needs to happen because it indicates the minimum indentation level at which we need to change
-      # the indentation, and we will never be doing this to top-level lines (no indentation).
-      need_to_reset_colons_at_or_above_level = 0
-      reset_colons_offset = 0
+      # The next four settings are used when we indent or unindent a line. Any lines afterward that were indented
+      # underneath the moved line (determined by looking at `move_indented_at_or_above_level`) need to have to have
+      # their top-level lang and indented langs set according to `move_indented_top_level_lang` and
+      # `move_indented_indented_langs`, and may have to have their indentation level changed according to the change in
+      # indentation level of the moved line (taken from `move_indented_offset`). Once we encounter a line below the
+      # indentation level of `move_indented_at_or_above_level`, we reset all of the settings below. Note that a value of
+      # 0 for `move_indented_at_or_above_level` indicates that no indentation moving needs to happen because it
+      # indicates the minimum indentation level at which we need to change the indentation, and we will never be doing
+      # this to top-level lines (no indentation).
+      move_indented_at_or_above_level = 0
+      move_indented_offset = 0
+      move_indented_top_level_lang = None
+      move_indented_indented_langs = []
       new_lines.append(line)
       is_indented_under_header = False
     elif re.search(r"^\}* *\{\{trans-bottom", line): # allow for multitrans closing braces before {{trans-bottom}}
@@ -979,8 +982,9 @@ def process_text_on_page(index, pagename, text):
           ]
           new_translation_lines_for_sorting = sorted(translation_lines_for_sorting)
           if translation_lines_for_sorting != new_translation_lines_for_sorting:
-            notes.append("sort translation lines under %s" %
-                         re.sub(r"\|.*?\}", "}", re.sub(r"\}\}.*", "}}", opening_trans_line)))
+            pagemsg("Sorting lines under %s" % opening_trans_line)
+            notes.append(["sort lines under ",
+                          re.sub(r"\|.*?\}", "}", re.sub(r"\}\}.*", "}}", opening_trans_line)), ""])
           translation_lines = [
             (blib.langname_key(lang), [blib.langname_key(x) for x in indented_lang], lineind, line)
             for lang, indented_lang, lineind, line, counts_for_sorting in translation_lines
@@ -1002,15 +1006,18 @@ def process_text_on_page(index, pagename, text):
         newline = line.replace("\u00A0", " ")
         if newline != line:
           line = newline
-          notes.append("replace NBSP with regular space in translation section")
+          pagemsg("Replacing NBSP with regular space")
+          notes.append(["replace NBSP with regular space", "", ""])
         if not line.strip():
-          notes.append("skip blank line in translation section")
+          pagemsg("Skipping blank line")
+          notes.append(["skip blank line", "", ""])
           continue
         def replace_ttbc(m):
           langcode = m.group(1)
           if langcode in blib.languages_byCode:
             langname = blib.languages_byCode[langcode]["canonicalName"]
-            notes.append("replace {{ttbc|%s}} with %s" % (langcode, langname))
+            pagemsg("Replacing {{ttbc|%s}} with %s" % (langcode, langname))
+            notes.append(["replace ", "{{ttbc|%s}}->%s" % (langcode, langname), ""])
             return langname
           pagemsg("WARNING: Unrecognized langcode %s in {{ttbc}}: %s" % (langcode, line))
           return m.group(0)
@@ -1021,19 +1028,20 @@ def process_text_on_page(index, pagename, text):
           init, potential_lang, semicolon, rest = m.groups()
           if potential_lang in blib.languages_byCanonicalName or potential_lang in blib.etym_languages_byCanonicalName:
             if semicolon:
-              pagemsg("Replace semicolon with colon after language %s: %s" % (potential_lang, line))
+              pagemsg("Replacing semicolon with colon after lang %s: %s" % (potential_lang, line))
             else:
-              pagemsg("Adding missing colon after language %s: %s" % (potential_lang, line))
+              pagemsg("Adding missing colon after lang %s: %s" % (potential_lang, line))
             line = init + potential_lang + ":" + rest
             if semicolon:
-              notes.append("replace semicolon with colon after language name '%s' in translation section" % (potential_lang))
+              notes.append(["replace semicolon with colon after lang ",  potential_lang, ""])
             else:
-              notes.append("add missing colon after language name '%s' in translation section" % (potential_lang))
+              notes.append(["add missing colon after lang ", potential_lang, ""])
         m = re.search(r"^([:*]\*)( *%s: *\{\{.*)$" % langname_regex, line)
         if m:
           init_star, rest = m.groups()
           line = "*:" + rest
-          notes.append("replace %s with *: in translation section" % init_star)
+          pagemsg("Replacing %s with *: %s" % (init_star, line))
+          notes.append(["replace ", init_star, " with *:"])
         m = re.search(r"^\* *(:*) *(%s) *:(.*)$" % langname_regex, line)
         if m:
           colons, lang, rest = m.groups()
@@ -1043,7 +1051,8 @@ def process_text_on_page(index, pagename, text):
           newline = "*%s %s:%s" % (colons, lang, rest)
           if newline != line:
             line = newline
-            notes.append("fix spacing issues for lang '%s' in translation section" % lang)
+            pagemsg("Fixing spacing issues for lang %s: %s" % (lang, line))
+            notes.append(["fix spacing issues for lang ", lang, ""])
         m = re.search(r"^(\* *(:+) *)([^:]+)(:.*)$", line)
         if m:
           # We're processing an indented line.
@@ -1051,50 +1060,67 @@ def process_text_on_page(index, pagename, text):
           # Copy the indentation stack so we don't affect the stack for preceding lines.
           prev_indented_langs = prev_indented_langs[:]
           new_indent = len(colons)
-          if need_to_reset_colons_at_or_above_level > 0 and new_indent >= need_to_reset_colons_at_or_above_level:
-            # We are indented under a line that moved and changed indentation; we need to change our indentation
-            # accordingly.
-            new_indent += reset_colons_offset
-            colons = ":" * new_indent
-            init_star = "*" + colons + " "
-            line = init_star + indented_lang + rest
-            pagemsg("Reindenting line for language %s: %s" % (indented_lang, line))
-            notes.append("reindent line for language '%s' in translation section" % indented_lang)
+          new_prev_top_level_lang = prev_top_level_lang
+          new_prev_indented_langs = prev_indented_langs
+          maintain_old_prev_langs = False
+          if move_indented_at_or_above_level > 0 and new_indent >= move_indented_at_or_above_level:
+            # We are indented under a line that moved and may have changed indentation; we need to move accordingly and
+            # possibly change indentation, but not permanently set the previous top-level and indented langs so that
+            # once we encounter a non-indented lang, we use the old settings.
+            maintain_old_prev_langs = True
+            new_prev_top_level_lang = move_indented_top_level_lang
+            new_prev_indented_langs = move_indented_indented_langs
+            if move_indented_offset != 0:
+              new_indent += move_indented_offset
+              colons = ":" * new_indent
+              init_star = "*" + colons + " "
+              line = init_star + indented_lang + rest
+              pagemsg("Reindenting line for lang %s: %s" % (indented_lang, line))
+              notes.append(["reindent line for lang ", indented_lang, ""])
+            pagemsg("Moving line under lang %s: %s" % (
+              " -> ".join([new_prev_top_level_lang] + new_prev_indented_langs), line))
           else:
             # We are not indented under such a line, so reset the flags controlling indentation changing.
-            need_to_reset_colons_at_or_above_level = 0
-            reset_colons_offset = 0
-          old_indent = len(prev_indented_langs)
+            move_indented_at_or_above_level = 0
+            move_indented_offset = 0
+            move_indented_top_level_lang = None
+            move_indented_indented_langs = []
+          old_indent = len(new_prev_indented_langs)
           if new_indent > old_indent:
             if new_indent - old_indent > 1:
               pagemsg("WARNING: Saw greater than one increase in nesting, from %s to %s: lineind %s, line: %s" % (
                 old_indent, new_indent, lineind, line))
             while new_indent - old_indent:
-              prev_indented_langs.append("")
+              new_prev_indented_langs.append("")
               old_indent += 1
           elif new_indent < old_indent:
-            prev_indented_langs = prev_indented_langs[:new_indent]
-          prev_indented_langs[-1] = indented_lang
-          lang_counts[indented_lang][prev_top_level_lang] += 1
+            new_prev_indented_langs = new_prev_indented_langs[:new_indent]
+          new_prev_indented_langs[-1] = indented_lang
+          lang_counts[indented_lang][new_prev_top_level_lang] += 1
           total_lang_counts[indented_lang] += 1
-          header_counts[prev_top_level_lang][indented_lang] += 1
+          header_counts[new_prev_top_level_lang][indented_lang] += 1
           if not is_indented_under_header:
-            total_header_counts[prev_top_level_lang] += 1
+            total_header_counts[new_prev_top_level_lang] += 1
             is_indented_under_header = True
-          if prev_top_level_lang in language_groups:
-            group_props = language_groups[prev_top_level_lang]
+          if new_prev_top_level_lang in language_groups:
+            group_props = language_groups[new_prev_top_level_lang]
             add_lang = group_props.get("add_lang", set())
             rename_map = group_props.get("rename", {})
-            new_indented_lang = rename_indented_lang(indented_lang, prev_top_level_lang)
+            new_indented_lang = rename_indented_lang(indented_lang, new_prev_top_level_lang)
             if new_indented_lang != indented_lang:
-              pagemsg("Renaming %s variety %s to %s" % (prev_top_level_lang, indented_lang, new_indented_lang))
-              notes.append("rename %s variety %s to %s" % (prev_top_level_lang, indented_lang, new_indented_lang))
+              pagemsg("Renaming %s variety %s to %s" % (new_prev_top_level_lang, indented_lang, new_indented_lang))
+              notes.append(["rename ", [
+                "%s variety " % new_prev_top_level_lang, "%s->%s" % (indented_lang, new_indented_lang), ""], ""])
               indented_lang = new_indented_lang
-              prev_indented_langs[-1] = indented_lang
+              new_prev_indented_langs[-1] = indented_lang
               line = "%s%s%s" % (init_star, indented_lang, rest)
             if boolean_function_matches(group_props.get("unindent", set()), indented_lang):
-              pagemsg("Unindenting translation for %s under %s" % (indented_lang, prev_top_level_lang))
-              notes.append("unindent translation for %s under %s" % (indented_lang, prev_top_level_lang))
+              pagemsg("Unindenting %s under %s" % (indented_lang, new_prev_top_level_lang))
+              notes.append(["unindent ", ["", indented_lang, " under %s" % new_prev_top_level_lang], ""])
+              if maintain_old_prev_langs:
+                pagemsg("WARNING: In the middle of moving indented languages under %s and trying to move %s to top level; resetting status, need to check manually" % (
+                  "->".join([new_prev_top_level_lang] + new_prev_indented_langs), indented_lang))
+              maintain_old_prev_langs = True
               # We may need to unindent and then re-indent under a different header, possibly renaming the language in
               # the process (e.g. in the 2026-01-01 dump there are 6 occurrences of Kurmanji indented under Punjabi;
               # they need to be unindented, reindented under Kurdish and renamed to Northern Kurdish). The function
@@ -1106,31 +1132,34 @@ def process_text_on_page(index, pagename, text):
               indented_lang = new_lang_name
               if indent_under_group:
                 line = "*: " + indented_lang + rest
-                prev_top_level_lang = indent_under_group
-                prev_indented_lang = [indented_lang]
+                new_prev_top_level_lang = indent_under_group
+                new_prev_indented_langs = [indented_lang]
                 translation_lines.append((indent_under_group, [indented_lang], lineind, line, False))
                 # Any lines indented under the previously indented line may need to have their indentation decreased,
                 # specifically if the previous indentation was greater than 1, because the new indentation is 1.
-                reset_colons_offset = -new_indent + 1
-                if reset_colons_offset:
-                  need_to_reset_colons_at_or_above_level = new_indent + 1
-                else:
-                  need_to_reset_colons_at_or_above_level = 0
+                move_indented_offset = -new_indent + 1
+                move_indented_at_or_above_level = new_indent + 1
+                move_indented_top_level_lang = new_prev_top_level_lang
+                # Not clear we need to copy the list but best to do it for safety. (FIXME: Verify if it's needed.)
+                move_indented_indented_langs = new_prev_indented_langs[:]
               else:
                 # We may be unindenting "Modern Greek", renamed to just "Greek"; it needs to become a header line,
                 # and be handled as such.
-                prev_top_level_lang = indented_lang
-                prev_indented_langs = []
+                new_prev_top_level_lang = indented_lang
+                new_prev_indented_langs = []
                 add_header_line(indented_lang, rest, lineind)
                 # Any lines indented under the previously indented line need to have their indentation decreased.
-                need_to_reset_colons_at_or_above_level = new_indent + 1
-                reset_colons_offset = -new_indent
+                move_indented_at_or_above_level = new_indent + 1
+                move_indented_offset = -new_indent
+                move_indented_top_level_lang = new_prev_top_level_lang
+                # Not clear we need to copy the list but best to do it for safety. (FIXME: Verify if it's needed.)
+                move_indented_indented_langs = new_prev_indented_langs[:]
             else:
-              if args.rename_min and prev_top_level_lang == "Chinese" and indented_lang == "Min Nan":
-                pagemsg("Replacing 'Min Nan' translation with Hokkien and changing code nan -> nan-hbl")
-                notes.append("replace 'Min Nan' translation with Hokkien and change code nan -> nan-hbl")
+              if args.rename_min and new_prev_top_level_lang == "Chinese" and indented_lang == "Min Nan":
+                pagemsg("Replacing Min Nan with Hokkien and changing code nan->nan-hbl")
+                notes.append(["replace Min Nan with Hokkien and change code nan->nan-hbl", "", ""])
                 indented_lang = "Hokkien"
-                prev_indented_langs[-1] = indented_lang
+                new_prev_indented_langs[-1] = indented_lang
                 parsed = blib.parse_text(rest)
                 changed = False
                 for t in parsed.filter_templates():
@@ -1144,20 +1173,23 @@ def process_text_on_page(index, pagename, text):
                   rest = str(parsed)
                 line = "%s%s%s" % (init_star, indented_lang, rest)
               else:
-                indentfun = group_props.get("indent", lambda lang: default_indentfun(prev_top_level_lang, lang))
+                indentfun = group_props.get("indent", lambda lang: default_indentfun(new_prev_top_level_lang, lang))
                 recognizefun = group_props.get("recognize", set())
                 recognized = (indented_lang in group_props["rename_right_side"] or
                               boolean_function_matches(indentfun, indented_lang) or
                               boolean_function_matches(recognizefun, indented_lang))
-                if not recognized and indented_lang.endswith(" " + prev_top_level_lang):
-                  recognized = boolean_function_matches(add_lang, indented_lang[:-len(prev_top_level_lang) - 1])
+                if not recognized and indented_lang.endswith(" " + new_prev_top_level_lang):
+                  recognized = boolean_function_matches(add_lang, indented_lang[:-len(new_prev_top_level_lang) - 1])
                 if not recognized:
-                  pagemsg("WARNING: Unrecognized indented lang %s under %s" % (indented_lang, prev_top_level_lang))
-                  unrecognized_indented_lang_counts[prev_top_level_lang][indented_lang] += 1
-                  header_with_unrecognized_lang_counts[prev_top_level_lang] += 1
-              translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, True))
+                  pagemsg("WARNING: Unrecognized indented lang %s under %s" % (indented_lang, new_prev_top_level_lang))
+                  unrecognized_indented_lang_counts[new_prev_top_level_lang][indented_lang] += 1
+                  header_with_unrecognized_lang_counts[new_prev_top_level_lang] += 1
+              translation_lines.append((new_prev_top_level_lang, new_prev_indented_langs, lineind, line, True))
           else:
-            translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, True))
+            translation_lines.append((new_prev_top_level_lang, new_prev_indented_langs, lineind, line, True))
+          if not maintain_old_prev_langs:
+            prev_top_level_lang = new_prev_top_level_lang
+            prev_indented_langs = new_prev_indented_langs
         else:
           m = re.search(r"^\* *((%s)(:.*))$" % langname_regex, line)
           if not m:
@@ -1172,8 +1204,10 @@ def process_text_on_page(index, pagename, text):
             total_lang_counts[lang] += 1
             is_indented_under_header = False
             # We're not indented under any header so reset any flags controlling offsetting the indentation.
-            need_to_reset_colons_at_or_above_level = 0
-            reset_colons_offset = 0
+            move_indented_at_or_above_level = 0
+            move_indented_offset = 0
+            move_indented_top_level_lang = None
+            move_indented_indented_langs = []
             # Check if we need to indent and possibly rename the language.
             indent_under_group, new_lang_name = need_to_indent_lang(lang, lineind)
             if indent_under_group:
@@ -1185,8 +1219,11 @@ def process_text_on_page(index, pagename, text):
               prev_indented_langs = [lang]
               # Any lines indented under the newly indented (previously top-level) line need to have their indentation
               # increased.
-              need_to_reset_colons_at_or_above_level = 1
-              reset_colons_offset = 1
+              move_indented_at_or_above_level = 1
+              move_indented_offset = 1
+              move_indented_top_level_lang = prev_top_level_lang
+              # Not clear we need to copy the list but best to do it for safety. (FIXME: Verify if it's needed.)
+              move_indented_indented_langs = prev_indented_langs[:]
               translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, False))
             else:
               if new_lang_name != lang:
@@ -1210,9 +1247,35 @@ def process_text_on_page(index, pagename, text):
   text = "\n".join(new_lines)
 
   if text != origtext and not notes:
-    default_changelog = "misc reformatting of translation lines"
-    notes.append(default_changelog)
+    default_changelog = "misc reformatting"
+    notes.append([default_changelog, "", ""])
     pagemsg("WARNING: Adding default changelog '%s'" % default_changelog)
+
+  def group_notes(notes, joiner=", "):
+    notes_middles = {}
+    uniq_notes = []
+    # Preserve ordering of notes but combine similar notes, maintaining the order.
+    for before, middle, after in notes:
+      key = (before, after)
+      if key in notes_middles:
+        if middle not in notes_middles[key]:
+          notes_middles[key].append(middle)
+      else:
+        notes_middles[key] = [middle]
+        uniq_notes.append(key)
+    def fmt_note(key):
+      middles = notes_middles[key]
+      if type(middles[0]) is list:
+        middles = group_notes(middles, " + " if "->" in middles[0][1] else "/")
+      before, after = key
+      return "%s%s%s" % (before, joiner.join(middles), after)
+    return [fmt_note(key) for key in uniq_notes]
+
+  notes = group_notes(notes)
+  notes = "translations: " + "; ".join(blib.group_notes(notes))
+  comment_len = len(notes.encode("utf-8"))
+  if comment_len > 500:
+    pagemsg("WARNING: Comment length %s > 500: %s" % (comment_len, notes))
   return text, notes
 
 parser = blib.create_argparser(
