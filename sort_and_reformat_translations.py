@@ -36,6 +36,11 @@ indonesian_malay_unindent = {
   "Ende", "Indonesian", "Javanese", "Madurese", "Makasar", "Minangkabau", "Nias",
   "Sikule", "Simeulue", "Sundanese",
 }
+malay_creole_mixed = {
+  # all of these are creoles or mixed languages
+  "Ambonese Malay", "Baba Malay", "Cocos Islands Malay", "Makassar Malay", "Malaccan Creole Malay",
+  "North Moluccan Malay", "Sri Lankan Creole Malay",
+}
 
 # Groups of languages handled under a single header, with properties. The key is the top-level header, which is usually
 # a language name in its own right. The value is a dictionary of properties, with keys as follows:
@@ -124,15 +129,26 @@ language_groups = {
     },
   },
   "Armenian": {
-    "add_lang": {"Classical", "Old"},
+    "add_lang": {"Classical", "Middle", "Old", "Western"},
     "rename": {
       "Modern Armenian": "Armenian",
     },
     "unindent": {"Armenian", "Assyrian Neo-Aramaic", "Egyptian Arabic"},
-    "recognize": {"Middle Armenian", "Western Armenian"},
   },
   "Arrernte": {
     "add_lang": {"Eastern", "Western"},
+  },
+  "Assamese": {
+    "add_lang": {"Early", "Middle"},
+    "rename": {
+      "Old Assamese": "Early Assamese",
+    },
+  },
+  "Avar": {
+    "add_lang": {"Old"},
+  },
+  "Awadhi": {
+    "add_lang": {"Old"},
   },
   "Azerbaijani": {
     "rename": {
@@ -156,17 +172,25 @@ language_groups = {
       "Roman": "Latin",
     },
   },
+  "Bengali": {
+    "add_lang": {"Middle", "Old"},
+  },
   "Berber": {
     "indent": lambda lang: False,
     "unindent": {"Central Atlas Tamazight", "Kabyle", "Tachawit", "Tarifit", "Tashelhit"},
   },
-  "Breton": {},
+  "Breton": {
+    "add_lang": {"Middle", "Old"},
+  },
   "Bulgarian": {
     "rename": {
       "Cyrillic": "Bulgarian",
       "Old Bulgarian": "Old Church Slavonic",
     },
     "unindent": {"Bulgarian", "Old Church Slavonic", "Cantonese", "Egyptian Arabic", "Mandarin"},
+  },
+  "Burmese": {
+    "add_lang": {"Old"},
   },
   "Buryat": {
     "rename": {
@@ -176,15 +200,24 @@ language_groups = {
   },
   "Catalan": {
     "indent": lambda lang: lang.endswith(" Catalan") or lang in {"Valencian"},
+    "add_lang": {"Old"},
     "unindent": {"Mandarin"},
   },
   "Chakma": {
     "unindent": {"Eastern Cham", "Western Cham"},
   },
-  "Cham": {}, # Note: Ai-Cham is unrelated
+  "Cham": {
+     # Note: Ai-Cham is unrelated
+     "add_lang": {"Eastern", "Western"},
+  },
   "Chatino": {
     "add_lang": {"Eastern Highland", "Nopala", "Tataltepec", "Teojomulco", "Western Highland", "Zacatepec",
                  "Zenzontepec", "San Juan Quiahije"},
+  },
+  "Chin": {
+    "add_lang": {"Asho", "Bawm", "Bualkhaw", "Chinbon", "Daai", "Falam", "Kaang", "Khumi", "Laitu", "Mara", "Mro",
+                 "Mün", "Ngawn", "Senthang", "Siyin", "Songlai", "Sumtu", "Tawr", "Tedim", "Thado", "Thaipum",
+                 "Zotung"},
   },
   "Chinantec": {
     "add_lang": {"Chiltepec", "Comaltepec", "Lalana", "Lealao", "Ojitlán", "Ozumacín", "Palantla", "Quiotepec",
@@ -196,6 +229,7 @@ language_groups = {
       "Hangzhounese", "Ningbonese", "Shanghainese", "Suzhounese", "Wenzhounese", "Xiang",
       "Pinghua", "Waxiang", "Hokkien", "Hainanese", "Teochew", "Shaozhou Tuhua", "Sichuanese", "Taishanese",
       "Tangwang"]) or lang in {"Ci"}, # not Wutunhua, a Mandarin-Amdo-Bonan creole
+    "add_lang": {"Middle", "Old"},
     "rename": {
       "Madarin": "Mandarin",
       "Min Bei": "Northern Min",
@@ -215,6 +249,9 @@ language_groups = {
       "Boharic": "Bohairic Coptic",
     },
   },
+  "Cornish": {
+    "add_lang": {"Middle", "Old"},
+  },
   "Cree": {
     # Michif is listed as a Cree variety but it's actually a mixed language.
     "indent": lambda lang: lang.endswith(" Cree") or lang in {"Atikamekw", "Montagnais", "Naskapi"},
@@ -227,6 +264,21 @@ language_groups = {
   },
   "Cuicatec": {
     "add_lang": {"Tepeuxila", "Teutila"},
+  },
+  "Czech": {
+    "add_lang": {"Old"},
+  },
+  "Danish": {
+    "indent": lambda lang: lang.endswith(" Danish") and lang not in {
+      # Traveller Danish is a mixed language
+      "Traveller Danish"},
+    "add_lang": {"Old"},
+  },
+  "Dutch": {
+    # Berbice Creole Dutch, Skepi Creole Dutch
+    "indent": lambda lang: lang.endswith(" Dutch") and not lang.endswith(" Creole Dutch"),
+    "add_lang": {"Jersey", "Middle", "Old"},
+    "unindent": {"Berbice Creole Dutch", "Skepi Creole Dutch"},
   },
   "East Cree": {
     "indent": lambda lang: False,
@@ -245,9 +297,10 @@ language_groups = {
     "add_lang": {"Forest", "Tundra"},
   },
   "French": {
-    # Note: By the time the 'indent' function is called, "Louisiana Creole French" will have been renamed to
-    # "Louisiana Creole" due to the setting in top_level_rename so we don't have to worry about it getting indented.
-    "add_lang": {"Canadian"},
+    # Karipúna Creole French, Réunion Creole French, San Miguel Creole French, formerly Louisiana Creole French
+    # (now just Louisiana Creole)
+    "indent": lambda lang: lang.endswith(" French") and not lang.endswith(" Creole French"),
+    "add_lang": {"Canadian", "Middle", "Old"},
     "rename": {
       "Canada": "Canadian French",
       "Modern": "French",
@@ -255,7 +308,7 @@ language_groups = {
     "unindent": {"French", "Louisiana Creole", "Louisiana Creole French"},
   },
   "Frisian": {
-    "add_lang": {"North", "Saterland", "West"},
+    "add_lang": {"North", "Old", "Saterland", "West"},
   },
   "Fula": {
     "rename": {
@@ -269,15 +322,33 @@ language_groups = {
       "Roman": "Latin",
     },
   },
-  "Georgian": {},
-  # FIXME: inconsistent nesting currently, issues with "Low German"
+  "Georgian": {
+    "add_lang": {"Old"},
+  },
   "German": {
-    # FIXME: Clean up
     "indent": lambda lang: (
-      lang.endswith(" German") and not lang.endswith("Low German") and lang not in {"Pennsylvania German"} or
-      lang in {"Kölsch"}
+      lang.endswith(" German") and not lang.endswith("Low German") and lang not in {
+        "Colonia Tovar German", "Pennsylvania German", "Volga German", "Zipser German",
+      } or lang in {"East Franconian", "Rhine Franconian", "Central Franconian", "Bavarian", "Kölsch", "Swabian"}
+      # Not Gottscheerisch (descended from Bavarian, spoken in Slovenia and with a Slovenian-based orthography);
+      # not Vilamovian (descended from East Central German, spoken in the Silesian Voivodeship of Poland and with a
+      #   Polish-based orthography);
+      # not Luxembourgish (spoken in Luxembourg)
+      # not Yiddish (spoken in Israel and the United States)
+      # not Cimbrian (spoken in Trentino and Veneto, Italy)
+      # not Hutterisch (spoken in Canada and the United States)
+      # not Hunsrik (spoken in Brazil, Argentina, Paraguay)
+      # not Mòcheno (spoken in Trentino, Italy)
+      # not Yenish (German mixed with Romani and Yiddish)
+      # not Sathmar Swabian (spoken in Romania)
+      # not Transylvanian Saxon (spoken in Romania)
+      # not Colonia Tovar German? (spoken in Venezuela)
+      # not Pennsylvania German? (spoken in the United States)
+      # not Volga German? (spoken in Russia and Kazakhstan)
+      # not Zipser German? (spoken in Slovakia and Romania)
+      # yes Walser German? (not a language at Wiktionary but a dialect of Alemannic German)
     ),
-    "add_lang": {"Alemannic", "East Central"},
+    "add_lang": {"Alemannic", "Colonia Tovar", "East Central", "Middle High", "Old High", "Pennsylvania"},
     "rename": {
       "Alemannic": "Alemannic German",
       "Alsace": "Alsatian Alemannic German",
@@ -288,8 +359,8 @@ language_groups = {
       "Silesian": "Silesian East Central German",
       "Silesian German": "Silesian East Central German",
     },
-    "unindent": {"Luxembourgish", "German", "Plautdietsch", "Pennsylvania German", "Low German", "German Low German",
-                 "Northern Kurdish"},
+    "unindent": {"Luxembourgish", "German", "Plautdietsch", "Colonia Tovar German", "Pennsylvania German",
+                 "Volga German", "Zipser German", "Low German", "German Low German", "Northern Kurdish"},
   },
   "Greek": {
     "indent": lambda lang: lang.endswith(" Greek") or lang in {
@@ -306,11 +377,18 @@ language_groups = {
     },
     "unindent": {"Greek"},
   },
-  "Guarani": {},
+  "Guarani": {
+    "add_lang": {"Mbya", "Paraguayan"},
+  },
   "Gujarati": {
     "add_lang": {"Middle", "Old"},
   },
-  "Haida": {},
+  "Gutnish": {
+    "add_lang": {"Old"},
+  },
+  "Haida": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Hebrew": {
     "add_lang": {"Biblical", "Samaritan"},
     "rename": {
@@ -321,6 +399,11 @@ language_groups = {
     },
     "unindent": {"Hebrew"},
   },
+  "Hindi": {
+    # Fiji Hindi is not Hindi but comes from Eastern Indo-Aryan languages
+    "indent": lambda lang: lang.endswith(" Hindi") and lang not in {"Andaman Creole Hindi", "Fiji Hindi"},
+    "add_lang": {"Old"},
+  },
   "Hindustani": {
     "indent": lambda lang: False,
     "unindent": {"Hindi", "Urdu"},
@@ -329,6 +412,7 @@ language_groups = {
     "add_lang": {"Green", "White"},
   },
   "Hungarian": {
+    "add_lang": {"Old"},
     "rename": {
       "Roman": "Latin",
     },
@@ -341,8 +425,10 @@ language_groups = {
     "recognize": {"Baybayin"},
   },
   "Indonesian": {
+    # Peranakan Indonesian is a creole
+    "indent": lambda lang: lang.endswith(" Indonesian") and lang not in {"Peranakan Indonesian"},
     "rename": indonesian_malay_rename_map,
-    "unindent": indonesian_malay_unindent,
+    "unindent": indonesian_malay_unindent | {"Peranakan Indonesian"},
   },
   "Inuktitut": {
     "rename": {
@@ -350,17 +436,25 @@ language_groups = {
     },
   },
   "Irish": {
+    # what about Classical Gaelic?
+    "add_lang": {"Middle", "Old", "Primitive"},
     "rename": {"Modern Irish": "Irish"},
     "unindent": {"Irish", "Central Kurdish"},
-    "recognize": {"Old Irish", "Middle Irish", "Primitive Irish"},
+  },
+  "Japanese": {
+    "add_lang": {"Old"},
   },
   "Javanese": {
+    "add_lang": {"Caribbean", "New Caledonian", "Old"},
     "rename": indonesian_malay_rename_map,
     "recognize": lambda lang: lang in {"Kaili", "Krama", "Ngoko", "Carakan"},
     "unindent": indonesian_malay_unindent,
   },
   "Kaili": {
     "add_lang": {"Da'a", "Ledo", "Unde"},
+  },
+  "Kannada": {
+    "add_lang": {"Middle", "Old"},
   },
   "Karelian": {
     "rename": {
@@ -377,12 +471,15 @@ language_groups = {
     "add_lang": {"Eastern", "Northern", "Southern"},
   },
   "Khmer": {
+    "add_lang": {"Middle", "Northern", "Old"},
     "unindent": {"Central Kurdish", "Northern Kurdish"},
   },
   "Komi": {
-    "indent": lambda lang: lang.startswith("Komi-"),
+    "indent": lambda lang: lang.startswith("Komi-") or lang.endswith(" Komi"),
+    "add_lang": {"Old"},
   },
   "Korean": {
+    "add_lang": {"Early Modern", "Middle", "Old"},
     "unindent": {"Jeju", "Bokmål", "Northern Kurdish"},
   },
   "Kurdish": {
@@ -425,29 +522,44 @@ language_groups = {
     "indent": lambda lang: False,
     "unindent": {"Munsee", "Unami"},
   },
+  "Leonese": {
+    "add_lang": {"Old"},
+  },
+  "Lithuanian": {
+    "add_lang": {"Old"},
+  },
   "Low German": {
-    # FIXME: Make sure Middle Low German OK to indent; currently only 14/47 indented.
-    "indent": lambda lang: lang.endswith(" Low German") or lang in {"Dutch Low Saxon"},
+    "indent": lambda lang: lang.endswith(" Low German") and lang not in {"Plautdietsch"} or lang in {"Dutch Low Saxon"},
     "add_lang": {"East Frisian"},
     "rename": {
       "Dutch Low German": "Dutch Low Saxon",
       "East Frisian Low Saxon": "East Frisian Low German",
       "German Low Saxon": "German Low German",
+      "Mennonite Low German": "Plautdietsch",
       "Mennonite Plautdietsch": "Plautdietsch",
       "Plauttdietsch": "Plautdietsch",
       "Plauttdietsch (Mennonite Low German)": "Plautdietsch",
     },
-    "unindent": {"Plautdietsch"},
+    "unindent": {"Plautdietsch", "Old Saxon"},
   },
   "Malay": {
+    "indent": lambda lang: lang.endswith(" Malay") and lang not in malay_creole_mixed,
+    "add_lang": {"Ambonese", "Baba", "Bacanese", "Banda", "Berau", "Brunei", "Bukit", "Central", "Jambi", "Kedah",
+                 "Larantuka", "Negeri Sembilan", "Old", "Pattani", "Sarawak", "Terengganu",},
     "rename": indonesian_malay_rename_map,
-    "unindent": indonesian_malay_unindent,
+    "unindent": indonesian_malay_unindent | malay_creole_mixed,
+  },
+  "Manipuri": {
+    "add_lang": {"Bishnupriya", "Old"},
   },
   "Manobo": {
     "add_lang": {"Agusan", "Ata", "Cinamiguin", "Cotabato", "Dibabawon", "Ilianen", "Matigsalug", "Obo", "Rajah Kabunsuwan", "Sarangani", "Western Bukidnon"},
   },
   "Mansi": {
     "add_lang": {"Central", "Eastern", "Western", "Northern", "Southern"},
+  },
+  "Marathi": {
+    "add_lang": {"Old"},
   },
   "Mari": {
     "indent": lambda lang: lang.endswith(" Mari") and lang not in {"Austronesian Mari", "Sepik Mari"},
@@ -463,6 +575,9 @@ language_groups = {
   "Mazatec": {
     "add_lang": {"Chiquihuitlán", "Huautla", "Ixcatlán", "Jalapa de Díaz", "Mazatlán", "Puebla",
                  "San Jerónimo Tecóatl"},
+  },
+  "Median": {
+    "add_lang": {"Middle", "Old"},
   },
   "Me'phaa": {
     "add_lang": {"Acatepec", "Azoyú", "Tlacoapa"},
@@ -488,7 +603,14 @@ language_groups = {
       "San Miguel El Grande": "San Miguel el Grande Mixtec",
     },
   },
- "Mongolian": {
+  "Mon": {
+    "indent": lambda lang: lang.endswith(" Mon") and lang not in {
+      "Biao Mon", "Yangum Mon"}, # Biao Mon is in the Mien family; Yangum Mon is in the Torricelli family in New Guinea
+    "add_lang": {"Middle", "Old", "Thai"},
+    "unindent": {"Biao Mon", "Yangum Mon"},
+  },
+  "Mongolian": {
+    # not Middle Mongol
     "rename": {
       "Roman": "Latin",
       "Cyrilic": "Cyrillic",
@@ -501,6 +623,9 @@ language_groups = {
   },
   "Murut": {
     "add_lang": {"Keningau", "Selungai", "Sembakang", "Serudung", "Tagal", "Timugon"},
+  },
+  "Naga": {
+    "add_lang": {"Chothe", "Kharam", "Moyon"},
   },
   "Nahuatl": {
     "add_lang": {"Central", "Central Huasteca", "Central Puebla", "Classical", "Coatepec", "Cosoleacaque",
@@ -516,8 +641,18 @@ language_groups = {
   "Nenets": {
     "add_lang": {"Forest", "Tundra"},
   },
+  "Newar": {
+    "add_lang": {"Classical", "Middle"},
+    "rename": {
+      "Middle Newari": "Middle Newar",
+      "Classical Newari": "Classical Newar",
+    },
+  },
   "Norwegian": {
-    "indent": lambda lang: lang.startswith("Norwegian ") or lang in {"Bokmål", "Bokmal", "Nynorsk"},
+    "indent": lambda lang: lang.startswith("Norwegian ") or lang.endswith(" Norwegian") and lang not in {
+      # Traveller Norwegian is a mixed language
+      "Traveller Norwegian"} or lang in {"Bokmål", "Bokmal", "Nynorsk"},
+    "add_lang": {"Middle"},
     "rename": {
       "Norwegian Bokmål": "Bokmål",
       "Norwegian (Bokmål)": "Bokmål",
@@ -530,10 +665,17 @@ language_groups = {
       "Nynorak": "Nynorsk",
       "Nynorskl": "Nynorsk",
     },
-    "unindent": {"Norwegian"},
+    "unindent": {"Norwegian", "Traveller Norwegian"},
   },
-  "Occitan": {},
-  "Ohlone": {},
+  "Occitan": {
+    "add_lang": {"Old"},
+  },
+  "Odia": {
+    "add_lang": {"Adivasi", "Middle", "Old"},
+  },
+  "Ohlone": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Ojibwe": {
     "rename": {
       "Canadian Syllabics": "Canadian syllabics",
@@ -582,17 +724,17 @@ language_groups = {
     "add_lang": {"Eastern", "Western"},
   },
   "Persian": {
-      # FIXME: Make sure Middle Persian/Old Persian OK to indent; currrently only 27/286 Middle Persian and 16/105
-      # Old Persian indented.
     "indent": lambda lang: lang.endswith(" Persian") or lang in {"Dari", "Hazaragi"},
-    "add_lang": {"Classical", "Iranian"},
+    "add_lang": {"Classical", "Iranian", "Middle", "Old"},
     "rename": {
       "Dari Persian": "Dari",
       "Iranian Pesian": "Iranian Persian",
     },
     "unindent": {"Tajik"},
   },
-  "Polish": {},
+  "Polish": {
+    "add_lang": {"Old", "Middle"},
+  },
   "Popoloca": {
     "add_lang": {"Coyotepec", "Mezontla", "San Felipe Otlaltepec", "San Juan Atzingo", "San Luís Temalacayuca",
                  "San Marcos Tlalcoyalco", "Santa Inés Ahuatempan"},
@@ -616,6 +758,7 @@ language_groups = {
     "unindent": {"Old Galician-Portuguese", "Old Galician Portuguese", "Old Portuguese"},
   },
   "Prakrit": {
+    "add_lang": {"Ashokan", "Kamarupi", "Niya"},
     "rename": {
       "Maharashtri Prakrit": "Maharastri Prakrit",
     },
@@ -623,7 +766,7 @@ language_groups = {
   "Punjabi": {
     # FIXME: Make sure it's OK to move "Foo Punjabi" under "Punjabi"; only 3/382 occurrences of Western Panjabi indented
     "indent": lambda lang: lang.endswith(" Punjabi") or lang.endswith(" Panjabi"),
-    "add_lang": {"Eastern", "Western"},
+    "add_lang": {"Eastern", "Old", "Western"},
     "rename": {
       "Eastern Panjabi": "Eastern Punjabi",
       "Western Panjabi": "Western Punjabi",
@@ -636,7 +779,7 @@ language_groups = {
     "add_lang": {"Central", "Southern"},
   },
   "Roglai": {
-    "add_lang": {"Cacgia", "Northern"},
+    "add_lang": {"Cacgia", "Northern", "Southern"},
   },
   "Romani": {
     "add_lang": {"Balkan", "Baltic", "Carpathian", "Kalo Finnish", "Sinte", "Vlax", "Welsh"},
@@ -672,6 +815,9 @@ language_groups = {
     "recognize": {"Nuorese"},
     "unindent": {"Gallurese", "Sassarese"},
   },
+  "Scots": {
+    "add_lang": {"Middle"},
+  },
   "Selkup": {
     "add_lang": {"Northern", "Southern"},
   },
@@ -690,6 +836,9 @@ language_groups = {
   "Slavey": {
     "add_lang": {"North", "South"},
   },
+  "Slovak": {
+    "add_lang": {"Old"},
+  },
   "Sorbian": {
     "add_lang": {"Lower", "Upper"},
     "rename": {
@@ -697,17 +846,25 @@ language_groups = {
       "Low Sorbian": "Lower Sorbian",
     },
   },
-  "Spanish": {},
+  "Spanish": {
+    "add_lang": {"Old"},
+  },
   "Sundanese": {
+    "add_lang": {"Old"},
     "rename": indonesian_malay_rename_map,
     "unindent": indonesian_malay_unindent,
   },
-  "Swedish": {},
+  "Swedish": {
+    "add_lang": {"Old"},
+  },
   "Tagalog": {
     "rename": {
       "Roman": "Latin",
     },
     "recognize": {"Baybayin"},
+  },
+  "Tamil": {
+    "add_lang": {"Old"},
   },
   "Tatar": {
     "indent": lambda lang: False,
@@ -716,6 +873,9 @@ language_groups = {
       "Roman": "Latin",
     },
     "recognize": {"Arabic", "Cyrillic", "Kryashen"},
+  },
+  "Telugu": {
+    "add_lang": {"Old"},
   },
   "Tepehua": {
     "add_lang": {"Huehuetla", "Pisaflores", "Tlachichilco"},
@@ -727,7 +887,9 @@ language_groups = {
     "add_lang": {"Northern", "Southern"},
     "unindent": {"Isan"},
   },
-  "Tibetan": {},
+  "Tibetan": {
+    "add_lang": {"Old"},
+  },
   "Tidung": {
     "add_lang": {"Northern", "Southern"},
   },
@@ -756,13 +918,26 @@ language_groups = {
       "Roman": "Latin",
     },
   },
+  "Uyghur": {
+    "indent": lambda lang: False,
+    # Old Uyghur is NOT the ancestor of modern Uyghur
+    "unindent": {"Old Uyghur"},
+  },
   "Uzbek": {
     "rename": {
       "Roman": "Latin",
     },
     "recognize": {"Arabic", "Cyrillic"},
   },
-  "Welsh": {},
+  "Vietnamese": {
+    "add_lang": {"Middle"},
+  },
+  "Watut": {
+    "add_lang": {"Middle", "North", "South"},
+  },
+  "Welsh": {
+    "add_lang": {"Middle", "Old"},
+  },
   "Yokuts": {
     "indent": lambda lang: lang.endswith(" Yokuts") or lang in {"Gashowu", "Palewyami"},
     "add_lang": {"Buena Vista", "Delta", "Gashowu", "Kings River", "Northern Valley", "Palewyami", "Southern Valley",
@@ -796,12 +971,15 @@ language_groups = {
 top_level_rename = {
   "Azeri": "Azerbaijani",
   "Louisiana Creole French": "Louisiana Creole",
+  "Low Saxon/Low German": "Low German",
+  "Newari": "Newar",
+  "Nowegian": "Norwegian",
   "Old Portuguese": "Old Galician-Portuguese",
   "Old Galician Portuguese": "Old Galician-Portuguese",
-  "Low Saxon/Low German": "Low German",
   "Sámi": "Sami",
   "Serbo-Croat": "Serbo-Croatian",
-  "Nowegian": "Norwegian",
+  "Slovakian": "Slovak",
+  "Slovenian": "Slovene",
 }
 
 new_language_groups = {}
