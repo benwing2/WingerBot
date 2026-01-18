@@ -249,6 +249,9 @@ language_groups = {
     },
     "unindent": {"German", "Hindi", "Italian", "Japanese", "Jingpo", "Mon", "Yiddish"},
   },
+  "Comorian": {
+    "add_lang": {"Maore", "Mwali", "Ndzwani", "Ngazidja"},
+  },
   "Coptic": {
     "indent": lambda lang: lang.endswith(" Coptic") or lang in {
       "Akhmimic", "Bohairic", "Fayyumic", "Sahidic", "Lycopolitan", "Oxyrhynchite"},
@@ -385,6 +388,9 @@ language_groups = {
                  "Volga German", "Zipser German", "Low German", "German Low German", "Northern Kurdish",
                  "Cimbrian", "Gottscheerish", "Hunsrik", "Mòcheno", "Sathmar Swabian"},
   },
+  "Ghale": {
+    "add_lang": {"Kutang", "Northern", "Southern"},
+  },
   "Greek": {
     "indent": lambda lang: lang.endswith(" Greek") or lang in {
       "Kaliarda", "Katharevousa", "Yevanic", "Tsakonian", "Opuntian Locrian", "Ozolian Locrian"},
@@ -405,6 +411,9 @@ language_groups = {
   },
   "Gujarati": {
     "add_lang": {"Middle", "Old"},
+  },
+  "Gurung": {
+    "add_lang": {"Eastern", "Western"},
   },
   "Gutnish": {
     "add_lang": {"Old"},
@@ -479,6 +488,9 @@ language_groups = {
     "recognize": lambda lang: lang in {"Kaili", "Krama", "Ngoko", "Carakan"},
     "unindent": indonesian_malay_unindent,
   },
+  "Jino": {
+    "add_lang": {"Buyuan", "Youle"},
+  },
   "Kaili": {
     "add_lang": {"Da'a", "Ledo", "Unde"},
   },
@@ -493,8 +505,18 @@ language_groups = {
     "unindent": {"Karelian", "Livvi"},
     "recognize": {"Tver Karelian"},
   },
+  "Karen": {
+    "add_lang": {"Brek", "Bwe", "Geba", "Geko", "Lahta", "Manumanaw", "Pa'o", "Paku", "S'gaw", "Yinbaw", "Yintale",
+                 "Zayein"},
+  },
+  "Kayah": {
+    "add_lang": {"Eastern", "Western"},
+  },
   "Keres": {
     "add_lang": {"Eastern", "Western"},
+  },
+  "Kham": {
+    "add_lang": {"Eastern Parbate", "Gamale", "Sheshi", "Western Parbate"},
   },
   "Khanty": {
     "add_lang": {"Eastern", "Northern", "Southern"},
@@ -536,6 +558,12 @@ language_groups = {
       "Roman": "Latin",
     },
   },
+  "Lalo": {
+    "add_lang": {"Dongshanba", "Xishanba"},
+  },
+  "Lalu": {
+    "add_lang": {"Eastern", "Western"},
+  },
   "Latin": {
     "add_lang": {"Classical", "Medieval"},
     "rename": {
@@ -558,6 +586,9 @@ language_groups = {
     "add_lang": {"Old"},
     "recognize": {"Aukštaitian", "Samogitian"},
   },
+  "Lorung": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Low German": {
     "indent": lambda lang: lang.endswith(" Low German") and lang not in {"Plautdietsch"} or lang in {"Dutch Low Saxon"},
     "add_lang": {"East Frisian"},
@@ -571,6 +602,9 @@ language_groups = {
       "Plauttdietsch (Mennonite Low German)": "Plautdietsch",
     },
     "unindent": {"Plautdietsch", "Old Saxon"},
+  },
+  "Magar": {
+    "add_lang": {"Eastern", "Western"},
   },
   "Malay": {
     "indent": lambda lang: lang.endswith(" Malay") and lang not in malay_creole_mixed,
@@ -608,6 +642,9 @@ language_groups = {
   },
   "Median": {
     "add_lang": {"Middle", "Old"},
+  },
+  "Meohang": {
+    "add_lang": {"Eastern", "Western"},
   },
   "Me'phaa": {
     "add_lang": {"Acatepec", "Azoyú", "Tlacoapa"},
@@ -651,11 +688,23 @@ language_groups = {
     },
     "unindent": {"Khamnigan Mongol"},
   },
+  "Muji": {
+    "add_lang": {"Northern", "Qila", "Southern"},
+  },
   "Murut": {
     "add_lang": {"Keningau", "Selungai", "Sembakang", "Serudung", "Tagal", "Timugon"},
   },
   "Naga": {
-    "add_lang": {"Chothe", "Kharam", "Moyon"},
+    "add_lang": {
+      # FIXME: WARNING: Naga languages come from several different families under Sino-Tibetan:
+      "Chothe", "Kharam", "Moyon", # Kuki-Chin:
+      "Chokri", "Khezha", "Mao", "Northern Rengma", "Pochuri", "Poumei", "Southern Rengma", # Angami-Pochuri:
+      "Khiamniungan", "Konyak", "Leinong", "Makyan", # Konyak-Chang
+      "Kyan-Karyaw", "Lao", "Tutsa", # Tangsa-Nocte
+      "Khoibu", "Maring", # Maringic
+      "Tangkhul", # Tangkhulic
+      "Inpui", "Liangmai", "Maram", "Mzieme", "Puimei", "Rongmei", "Thangal", "Zeme", # Zeme
+    },
   },
   "Nahuatl": {
     "add_lang": {"Central", "Central Huasteca", "Central Puebla", "Classical", "Coatepec", "Cosoleacaque",
@@ -668,6 +717,9 @@ language_groups = {
       "Northern Peubla": "Northern Puebla Nahuatl",
     },
   },
+  "Ndebele": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Nenets": {
     "add_lang": {"Forest", "Tundra"},
   },
@@ -677,6 +729,9 @@ language_groups = {
       "Middle Newari": "Middle Newar",
       "Classical Newari": "Classical Newar",
     },
+  },
+  "Nisu": {
+    "add_lang": {"Eastern", "Northern", "Southern", "Southwestern"},
   },
   "Norwegian": {
     "indent": lambda lang: lang.startswith("Norwegian ") or lang.endswith(" Norwegian") and lang not in {
@@ -768,6 +823,9 @@ language_groups = {
     },
     "unindent": {"Tajik"},
   },
+  "Phowa": {
+    "add_lang": {"Ani", "Hlepho", "Labo"},
+  },
   "Polish": {
     "add_lang": {"Old", "Middle"},
   },
@@ -799,6 +857,9 @@ language_groups = {
       "Maharashtri Prakrit": "Maharastri Prakrit",
     },
   },
+  "Pumi": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Punjabi": {
     # FIXME: Make sure it's OK to move "Foo Punjabi" under "Punjabi"; only 3/382 occurrences of Western Panjabi indented
     "indent": lambda lang: lang.endswith(" Punjabi") or lang.endswith(" Panjabi"),
@@ -810,6 +871,12 @@ language_groups = {
       "Gurmikhi": "Gurmukhi",
     },
     "unindent": {"Kurmanji"},
+  },
+  "Pwo": {
+    "add_lang": {"Eastern", "Northern", "Phrae", "Western"},
+  },
+  "Qiang": {
+    "add_lang": {"Northern", "Southern"},
   },
   "Quechua": {
     "add_lang": {"Central", "Southern"},
@@ -904,6 +971,9 @@ language_groups = {
     },
     "recognize": {"Baybayin"},
   },
+  "Tamang": {
+    "add_lang": {"Eastern Gorkha", "Eastern", "Northwestern", "Southwestern", "Western"},
+  },
   "Tamil": {
     "add_lang": {"Old"},
   },
@@ -929,7 +999,7 @@ language_groups = {
     "unindent": {"Isan"},
   },
   "Tibetan": {
-    "add_lang": {"Old"},
+    "add_lang": {"Old", "Amdo", "Khams"},
   },
   "Tidung": {
     "add_lang": {"Northern", "Southern"},
