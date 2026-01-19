@@ -290,7 +290,10 @@ language_groups = {
       "Classical": "Old Buryat",
     },
   },
-  # Buyang: four languages, two of which have "Buyang" in them
+  "Buyang": {
+    "indent": lambda lang: lang.endswith(" Buyang") or lang in {"En", "Yerong"},
+    "add_lang": {"E'ma", "Langnian"},
+  },
   # Bwamu: four languages, Bomu, Buamu, Cwi Bwamu and Láá Láá Bwamu; we group them as the Bwa languages, while Glottolog
   #   calls them the Bwamu languages.
   "Catalan": {
@@ -417,6 +420,9 @@ language_groups = {
     "indent": lambda lang: False,
     "unindent": {"Northern East Cree", "Southern East Cree"},
   },
+  "Ede": {
+    "indent": lambda lang: lang.endswith("Ede Nago") or lang.startswith("Ede ") or lang in {"Ifè"},
+  },
   "Efate": {
     "add_lang": {"North", "South"},
   },
@@ -486,6 +492,10 @@ language_groups = {
                  # under the Phla-Pherá subfamily
                  "Eastern Xwla", "Gbesi", "Kotafon", "Saxwe", "Tofin", "Western Xwla", "Xwela",
                 },
+  },
+  "Gelao": {
+    "indent": lambda lang: lang.endswith(" Gelao") or lang in {"Qau", "A'ou", "Mulao"},
+    "add_lang": {"Green", "Red", "White"},
   },
   "Georgian": {
     "add_lang": {"Old"},
@@ -585,6 +595,9 @@ language_groups = {
     "add_lang": {"Old"},
     "unindent": {"Andaman Creole Hindi", "Fiji Hindi", "Urdu"},
   },
+  "Hindko": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Hindustani": {
     "indent": lambda lang: False,
     "unindent": {"Hindi", "Urdu"},
@@ -592,7 +605,7 @@ language_groups = {
   "Hmong": {
     # We include the various Bunu languages as well as Ná-Meo, Pa-Hng and She as being Hmong languages but they are not
     # included in ISO 639-3's hmn Hmong macrolanguage and don't end or start in Hmong, Mong or Miao, so I'm excluding
-    # them. ISO 639-3 excludes hmf (Hmong Don) and hmv (Hmong Dô) from the China/Laos hmn macro language mostly I think
+    # them. ISO 639-3 excludes hmf (Hmong Don), hmv (Hmong Dô) from the China/Laos hmn macro language mostly I think
     # because they're spoken in Vietnam and influenced by Vietnamese and French, but I am including them. The following
     # languages are included (the Bunu languages go under Bunu):
     # cqd – Chuanqiandian Cluster Miao (cover term for Hmong in China)
@@ -622,8 +635,9 @@ language_groups = {
     # muq – Eastern Xiangxi Miao
     # mww – White Hmong [Wiktionary]; Hmong Daw (China, Laos), White Hmong (United States) [Wikipedia]
     # sfm – Small Flowery Miao
-    "indent": lambda lang: lang.endswith(" Hmong") or lang.endswith(" Miao") or lang.startswith("Hmong ") or
-      lang in {"Ge", "A-Hmao"},
+    # Cao Miao is Kam-Sui, not Hmong at all
+    "indent": lambda lang: lang.endswith(" Hmong") or lang.endswith(" Miao") and lang not in {"Cao Miao"} or
+      lang.startswith("Hmong ") or lang in {"Ge", "A-Hmao"},
     "add_lang": {"Green", "White"},
   },
   "Hungarian": {
@@ -632,6 +646,9 @@ language_groups = {
       "Roman": "Latin",
     },
     "unindent": {"Hungarian"},
+  },
+  "Ifugao": {
+    "add_lang": {"Amganad", "Batad", "Mayoyao", "Tuwali"},
   },
   "Ilocano": {
     "rename": {
@@ -760,6 +777,11 @@ language_groups = {
     "indent": lambda lang: lang.startswith("Komi-") or lang.endswith(" Komi"),
     "add_lang": {"Old"},
   },
+  "Konjo": {
+    # Not the Konjo Bantu language
+    "indent": {"Coastal", "Highland"},
+    "add_lang": {"Coastal", "Highland"},
+  },
   "Koraga": {
     "add_lang": {"Korra", "Mudu"},
   },
@@ -776,6 +798,9 @@ language_groups = {
   },
   "Krumen": {
     "add_lang": {"Plapo", "Pye", "Tepo"},
+  },
+  "Kulango": {
+    "add_lang": {"Bondoukou", "Bouna"},
   },
   "Kurdish": {
     "indent": lambda lang: lang.endswith(" Kurdish") or lang in {"Laki", "Sorani", "Kurmanji"},
@@ -1164,6 +1189,10 @@ language_groups = {
   "Polish": {
     "add_lang": {"Old", "Middle"},
   },
+  "Pomo": {
+    "indent": lambda lang: lang.endswith(" Pomo") or lang in {"Kashaya"},
+    "add_lang": {"Central", "Eastern", "Northeastern", "Northern", "Southeastern", "Southern"},
+  },
   "Popoloca": {
     "add_lang": {"Coyotepec", "Mezontla", "San Felipe Otlaltepec", "San Juan Atzingo", "San Luís Temalacayuca",
                  "San Marcos Tlalcoyalco", "Santa Inés Ahuatempan"},
@@ -1248,6 +1277,10 @@ language_groups = {
     },
     "unindent": {"Bokmål"},
   },
+  "Samo": {
+    # FIXME: Confusion with Samo language of New Guinea
+    "add_lang": {"Matya", "Maya", "Southern"},
+  },
   "Sardinian": {
     "indent": lambda lang: lang.endswith(" Sardinian") or lang in {"Campidanese", "Logudorese", "Nuorese"},
     "rename": {
@@ -1313,7 +1346,7 @@ language_groups = {
   },
   "Subanen": {
     #Central/Northern Subanen, Kolibugan/Western Subanon, Lapuyan/Eastern Subanun
-    "indent": lambda lang: lang.endswith(" Subanen") or lang.endswith( " Subanon") or lang.endswith( "Subanun"),
+    "indent": lambda lang: lang.endswith(" Subanen") or lang.endswith(" Subanon") or lang.endswith(" Subanun"),
     "add_lang": {"Central", "Northern"},
   },
   "Sundanese": {
@@ -1403,6 +1436,9 @@ language_groups = {
   },
   "Tukang Besi": {
     "indent": lambda lang: lang.startswith("Tukang Besi "),
+  },
+  "Tunebo": {
+    "add_lang": {"Angosturas", "Barro Negro", "Central", "Western"},
   },
   "Turkish": {
     "rename": {
