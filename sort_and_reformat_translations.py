@@ -162,12 +162,15 @@ language_groups = {
     "add_lang": {"Eastern", "Western"},
   },
   "Ashéninka": {
-    # FIXME: This is part of a dialect complex, with various other languages.
+    "indent": lambda lang: (lang.endswith(" Ashéninka") or lang.startswith("Ashéninka ") or
+                            lang in {"Ajyíninka Apurucayali"}),
+    # Pichis Ashéninka, South Ucayali Ashéninka, Ucayali-Yurúa Ashéninka, Ashéninka Pajonal, Ashéninka Perené,
+    # Ajyíninka Apurucayali
     "add_lang": {"Pichis", "South Ucayali", "Ucayali-Yurúa"},
   },
   "Asmat": {
-    # FIXME: WARNING: The following, although closely related, don't form a clade. They appear to represent the
-    # languages of the Asmat ethnicity.
+    # WARNING: The following, although closely related, don't form a clade without Citak. They represent the languages
+    # of the Asmat ethnicity, while Citak is considered a different ethnicity.
     "add_lang": {"Casuarina Coast", "Central", "North", "Yaosakor"},
   },
   "Assamese": {
@@ -189,7 +192,8 @@ language_groups = {
     "add_lang": {"Asue", "Central", "Edera", "Jair", "North", "South"},
   },
   "Ayta": {
-    # Sorsogon and Tayabas are considered spurious by ISO and should be removed
+    # Tayabas is considered spurious by ISO and should be removed; Sorsogon probably likewise (unattested per
+    # Glottolog).
     "add_lang": {"Abenlen", "Ambala", "Bataan", "Mag-Anchi", "Mag-Indi", "Sorsogon", "Tayabas"},
   },
   "Azerbaijani": {
@@ -216,7 +220,9 @@ language_groups = {
     "add_lang": {"Indonesian", "West Coast"},
   },
   # Banda: There are five Banda-Foo languages and four Foo Banda languages but none form a clade and there are several
-  # others not with Banda in their name.
+  #        others not with Banda in their name.
+  # Babar: North Babar and Southeast Babar are in different subfamilies and there are several other Babar languages in
+  #        each family.
   "Bareli": {
     "add_lang": {"Palya", "Pauri", "Rathwi"},
   },
@@ -233,7 +239,8 @@ language_groups = {
   },
   "Berber": {
     "indent": lambda lang: False,
-    "unindent": {"Central Atlas Tamazight", "Kabyle", "Tachawit", "Tarifit", "Tashelhit"},
+    "unindent": {"Central Atlas Tamazight", "Kabyle", "Tachawit", "Tarifit", "Tashelhit", "Tunisian Berber",
+                 "Northern Saharan Berber"},
   },
   "Bété": {
     # FIXME: Two more languages are needed to form a clade, Godié and Kouya
@@ -249,9 +256,14 @@ language_groups = {
     "add_lang": {"Bau", "Biatah", "Bukar-Sadung"},
   },
   "Bikol": {
-    "add_lang": {"Buhi'non", "Libon", "Miraya", "West Albay"},
+    # Buhi'non Bikol, Libon Bikol, Miraya Bikol, West Albay Bikol; Bikol Central; Northern Catanduanes Bicolano,
+    # Southern Catanduanes Bicolano, Iriga Bicolano.
+    "indent": lambda lang: lang.endswith(" Bikol") or lang.startswith("Bikol ") or lang.endswith(" Bicolano"),
   },
-  # Bisaya: Sabah Bisaya and Brunei Bisaya are named after locations and ethnic groups; not closely related
+  "Birifor": {
+    "add_lang": {"Malba", "Southern"},
+  },
+  # Bisaya: Sabah Bisaya and Brunei Bisaya are named after locations and ethnic groups; not closely related.
   "Blaan": {
     "add_lang": {"Koronadal", "Sarangani"},
   },
@@ -261,10 +273,17 @@ language_groups = {
   "Bontoc": {
     "add_lang": {"Central", "Northern", "Southern", "Eastern", "Southwestern"},
   },
+  "Bozo": { # Mande
+    "add_lang": {"Hainyaxo", "Jenaama", "Tiemacèwè", "Tiéyaxo"},
+  },
+  "Bunu": {
+    "add_lang": {"Bu-Nao", "Jiongnai", "Wunai", "Younuo"},
+  },
   "Breton": {
     "add_lang": {"Middle", "Old"},
   },
   "Bru": {
+    # WARNING: The clade seems to also contain Sô, Khua, Northern Katang and Southern Katang.
     "add_lang": {"Eastern", "Western"},
   },
   "Buang": {
@@ -312,6 +331,7 @@ language_groups = {
     "add_lang": {"Eastern Highland", "Nopala", "Tataltepec", "Teojomulco", "Western Highland", "Zacatepec",
                  "Zenzontepec", "San Juan Quiahije"},
   },
+  # Chehalis: Upper Chehalis and Lower Chehalis are in different subfamilies
   "Chin": {
     "add_lang": {"Asho", "Bawm", "Bualkhaw", "Chinbon", "Daai", "Falam", "Kaang", "Khumi", "Laitu", "Mara", "Mro",
                  "Mün", "Ngawn", "Senthang", "Siyin", "Songlai", "Sumtu", "Tawr", "Tedim", "Thado", "Thaipum",
@@ -395,6 +415,7 @@ language_groups = {
       "Traveller Danish"},
     "add_lang": {"Old"},
   },
+  # Damar: East Damar and West Damar are not closely related.
   "Dida": {
     "indent": lambda lang: lang.endswith(" Dida") or lang in {"Guébie"},
     "add_lang": {"Lakota", "Yocoboué"},
@@ -443,6 +464,7 @@ language_groups = {
     "indent": {"North Fali", "South Fali"},
     "add_lang": {"North", "South"},
   },
+  # Fars: Northwestern Fars is spurious per Glottolog; Southwestern Fars is a collection of disparate dialects.
   "French": {
     # Karipúna Creole French, Réunion Creole French, San Miguel Creole French, formerly Louisiana Creole French
     # (now just Louisiana Creole)
@@ -640,6 +662,9 @@ language_groups = {
       lang.startswith("Hmong ") or lang in {"Ge", "A-Hmao"},
     "add_lang": {"Green", "White"},
   },
+  "Huitoto": {
+    "add_lang": {"Minica", "Murui", "Nüpode"},
+  },
   "Hungarian": {
     "add_lang": {"Old"},
     "rename": {
@@ -830,10 +855,8 @@ language_groups = {
     },
   },
   "Lalo": {
-    "add_lang": {"Dongshanba", "Xishanba"},
-  },
-  "Lalu": {
-    "add_lang": {"Eastern", "Western"},
+    "indent": lambda lang: lang.endswith(" Lalo") or lang.endswith(" Lalu"),
+    # Eastern Lalu, Western Lalu, Dongshanba Lalo, Xishanba Lalo
   },
   "Latin": {
     "add_lang": {"Classical", "Medieval"},
@@ -1016,6 +1039,7 @@ language_groups = {
     "add_lang": {"Keningau", "Selungai", "Sembakang", "Serudung", "Tagal", "Timugon"},
   },
   "Muyu": {
+    # appear to form a clade with Yongkom
     "add_lang": {"North", "South"},
   },
   "Naga": {
@@ -1062,6 +1086,7 @@ language_groups = {
     "add_lang": {"Car", "Central", "Southern"},
   },
   "Nisu": {
+    # FIXME: Southwestern Nisu appears spurious.
     "add_lang": {"Eastern", "Northern", "Southern", "Southwestern"},
   },
   "Norwegian": {
@@ -1386,7 +1411,7 @@ language_groups = {
   },
   "Tatar": {
     "indent": lambda lang: False,
-    "unindent": {"Crimean Tatar"},
+    "unindent": {"Crimean Tatar", "Siberian Tatar"},
     "rename": {
       "Roman": "Latin",
     },
@@ -1412,6 +1437,7 @@ language_groups = {
     "unindent": {"Isan"},
   },
   "Tharu": {
+    # Sonha, Buksa, Majhi and Musasa seem to be in the clade but are associated with other ethnic groups.
     "add_lang": {"Chitwania", "Dangaura", "Kathoriya", "Kochila", "Rana"},
   },
   "Tibetan": {
@@ -1492,11 +1518,13 @@ language_groups = {
   "Yali": {
     "add_lang": {"Angguruk", "Ninia", "Pass Valley"},
   },
+  # Yau: Finisterre Yau and Torricelli Yau are unrelated.
   "Yokuts": {
     "indent": lambda lang: lang.endswith(" Yokuts") or lang in {"Gashowu", "Palewyami"},
     "add_lang": {"Buena Vista", "Delta", "Gashowu", "Kings River", "Northern Valley", "Palewyami", "Southern Valley",
                  "Tule-Kaweah"},
   },
+  # Yugur: Western Yugur is Turkic but East Yugur is Mongolic
   "Yukaghir": {
     "add_lang": {"Northern", "Southern"},
   },
