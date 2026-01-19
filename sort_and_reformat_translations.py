@@ -67,10 +67,27 @@ malay_creole_mixed = {
 #   function returning False, i.e. any indented language not recognized by the other methods specified above will result
 #   in a warning.
 language_groups = {
+  "Agta": {
+    "add_lang": {
+      # WARNING: The following do not form a clade and may come from several different Philippine families, but all are
+      # spoken by Negritos.
+      "Alabat Island", "Camarines Norte", "Casiguran Dumagat", "Central Cagayan", "Dicamay", "Dinapigue", "Dupaningan",
+      "Isarog", "Mount Iraya", "Mount Iriga", "Nagtipunan", "Pahanan", "Remontado", "Umiray Dumaget", "Villa Viciosa",
+    },
+  },
+  "Aizi": {
+    "add_lang": {"Mobumrin", "Tiagbamrin"},
+  },
   "Albanian": {
     "indent": lambda lang: lang.endswith(" Albanian") or lang in {"Arbëresh", "Arvanitika", "Tosk", "Gheg"},
   },
+  "Alta": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Altai": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Amami Ōshima": {
     "add_lang": {"Northern", "Southern"},
   },
   "Amuzgo": {
@@ -124,7 +141,7 @@ language_groups = {
       "Jewish Baylonian Aramaic": "Jewish Babylonian Aramaic",
       #"Palestinian": "Jewish Palestinian Aramaic",
       #"Palestinian Aramaic": "Jewish Palestinian Aramaic",
-      "Syriac": "Classical Syriac",
+      #"Syriac": "Classical Syriac", # commented out per Chuck Entz suggestion
       "Syriac, Classical": "Classical Syriac",
       "Classic Syriac": "Classical Syriac",
       "Hebrew": "Hebrew script",
@@ -143,17 +160,36 @@ language_groups = {
   "Arrernte": {
     "add_lang": {"Eastern", "Western"},
   },
+  "Ashéninka": {
+    # FIXME: This is part of a dialect complex, with various other languages.
+    "add_lang": {"Pichis", "South Ucayali", "Ucayali-Yurúa"},
+  },
+  "Asmat": {
+    # FIXME: WARNING: The following, although closely related, don't form a clade. They appear to represent the
+    # languages of the Asmat ethnicity.
+    "add_lang": {"Casuarina Coast", "Central", "North", "Yaosakor"},
+  },
   "Assamese": {
     "add_lang": {"Early", "Middle", "Central", "Eastern"},
     "rename": {
       "Old Assamese": "Early Assamese",
     },
   },
+  "Atta": {
+    "add_lang": {"Faire", "Pamplona", "Pudtol"},
+  },
   "Avar": {
     "add_lang": {"Old"},
   },
   "Awadhi": {
     "add_lang": {"Old"},
+  },
+  "Awyu": {
+    "add_lang": {"Asue", "Central", "Edera", "Jair", "North", "South"},
+  },
+  "Ayta": {
+    # Sorsogon and Tayabas are considered spurious by ISO and should be removed
+    "add_lang": {"Abenlen", "Ambala", "Bataan", "Mag-Anchi", "Mag-Indi", "Sorsogon", "Tayabas"},
   },
   "Azerbaijani": {
     "rename": {
@@ -168,6 +204,20 @@ language_groups = {
   },
   "Bai": {
     "add_lang": {"Central", "Northern", "Lama", "Panyi", "Southern"},
+  },
+  "Baga": {
+    # Baga Pokur is Senegambian (Atlantic-Congo) but the others form the Baga clade under Mel (Atlantic-Congo):
+    # Baga Kaloum, Baga Koga, Baga Manduri, Baga Sitemu, Baga Sobané
+    "indent": lambda lang: lang.startswith("Baga ") and lang not in {"Baga Pokur"},
+  },
+  "Bajau": {
+    # FIXME, there is a third language in the clade, Mapun.
+    "add_lang": {"Indonesian", "West Coast"},
+  },
+  # Banda: There are five Banda-Foo languages and four Foo Banda languages but none form a clade and there are several
+  # others not with Banda in their name.
+  "Bareli": {
+    "add_lang": {"Palya", "Pauri", "Rathwi"},
   },
   "Batak": {
     "add_lang": {"Alas-Kluet", "Angkola", "Dairi", "Karo", "Mandailing", "Simalungun", "Toba"},
@@ -184,8 +234,34 @@ language_groups = {
     "indent": lambda lang: False,
     "unindent": {"Central Atlas Tamazight", "Kabyle", "Tachawit", "Tarifit", "Tashelhit"},
   },
+  "Bété": {
+    # FIXME: Two more languages are needed to form a clade, Godié and Kouya
+    "add_lang": {"Daloa", "Gagnoa", "Guiberoua"},
+  },
+  "Bhoti": {
+    # Spiti Bhoti, Stod Bhoti, Bhoti Kinnauri form a clade with Nyamkat and Tukpa
+    "indent": lambda lang: lang.endswith(" Bhoti") or lang.startswith("Bhoti "),
+    "add_lang": {"Spiti", "Stod"},
+  },
+  "Bidayuh": {
+    "add_lang": {"Bau", "Biatah", "Bukar-Sadung"},
+  },
+  # Bisaya: Sabah Bisaya and Brunei Bisaya are named after locations and ethnic groups; not closely related
+  "Boma": { # Bantu
+    "add_lang": {"North", "South"},
+  },
+  "Bontoc": {
+    "add_lang": {"Central", "Northern", "Southern", "Eastern", "Southwestern"},
+  },
   "Breton": {
     "add_lang": {"Middle", "Old"},
+  },
+  "Bru": {
+    "add_lang": {"Eastern", "Western"},
+  },
+  "Buang": {
+    # Note: this is a linkage, not a clade
+    "add_lang": {"Mangga", "Mapos"},
   },
   "Bulgarian": {
     "rename": {
@@ -193,6 +269,9 @@ language_groups = {
       "Old Bulgarian": "Old Church Slavonic",
     },
     "unindent": {"Bulgarian", "Old Church Slavonic", "Cantonese", "Egyptian Arabic", "Mandarin"},
+  },
+  "Bunu": {
+    "add_lang": {"Bu-Nao", "Jiongnai", "Wunai", "Younuo"},
   },
   "Burmese": {
     "add_lang": {"Old"},
@@ -203,6 +282,9 @@ language_groups = {
       "Classical": "Old Buryat",
     },
   },
+  # Buyang: four languages, two of which have "Buyang" in them
+  # Bwamu: four languages, Bomu, Buamu, Cwi Bwamu and Láá Láá Bwamu; we group them as the Bwa languages, while Glottolog
+  #   calls them the Bwamu languages.
   "Catalan": {
     "indent": lambda lang: lang.endswith(" Catalan") or lang in {"Valencian"},
     "add_lang": {"Old"},
@@ -249,6 +331,9 @@ language_groups = {
     },
     "unindent": {"German", "Hindi", "Italian", "Japanese", "Jingpo", "Mon", "Yiddish"},
   },
+  "Chorote": {
+    "add_lang": {"Iyojwa'ja", "Iyo'wujwa"},
+  },
   "Comorian": {
     "add_lang": {"Maore", "Mwali", "Ndzwani", "Ngazidja"},
   },
@@ -281,11 +366,25 @@ language_groups = {
   "Czech": {
     "add_lang": {"Old"},
   },
+  # "Daju": Three of seven Dajuic languages (the three not forming a clade) end in Daju. According to Glottolog, the
+  # hierarchy is Eastern Dajuic (Logorik and Shatt) vs. Western Dajuic, which splits into Dar Daju Daju, Dar Sila Daju,
+  # Njalgulgule and Nyala Dajuic (Baygo and Dar Fur Daju).
+  "Dani": {
+    # forms a clade with Walak and Hupla
+    "add_lang": {"Lower Grand Valley", "Mid Grand Valley", "Upper Grand Valley", "Western"},
+  },
   "Danish": {
     "indent": lambda lang: lang.endswith(" Danish") and lang not in {
       # Traveller Danish is a mixed language
       "Traveller Danish"},
     "add_lang": {"Old"},
+  },
+  "Dida": {
+    "indent": lambda lang: lang.endswith(" Dida") or lang in {"Guébie"},
+    "add_lang": {"Lakota", "Yocoboué"},
+  },
+  "Dinka": {
+    "add_lang": {"Northeastern", "Northwestern", "South Central", "Southeastern", "Southwestern"},
   },
   "Dutch": {
     # Berbice Creole Dutch, Skepi Creole Dutch
@@ -296,6 +395,9 @@ language_groups = {
   "East Cree": {
     "indent": lambda lang: False,
     "unindent": {"Northern East Cree", "Southern East Cree"},
+  },
+  "Efate": {
+    "add_lang": {"North", "South"},
   },
   "Egyptian": {
     "indent": lambda lang: lang.endswith(" Egyptian") or lang in {"Demotic"},
@@ -308,6 +410,11 @@ language_groups = {
   },
   "Enets": {
     "add_lang": {"Forest", "Tundra"},
+  },
+  "Fali": {
+    # Baissa Fali is unrelated
+    "indent": {"North Fali", "South Fali"},
+    "add_lang": {"North", "South"},
   },
   "French": {
     # Karipúna Creole French, Réunion Creole French, San Miguel Creole French, formerly Louisiana Creole French
@@ -345,6 +452,19 @@ language_groups = {
     "rename": {
       "Roman": "Latin",
     },
+  },
+  "Garasia": {
+    # FIXME: Bhili is needed to complete the clade but it appears only the following two go by "Garasia".
+    "add_lang": {"Adiwasi", "Rajput"},
+  },
+  # Gbaya: Northwest Gbaya, Gbaya-Bozoum and Gbaya-Bossongoa are in the Western Gbaya family with two others;
+  #        Southwest Gbaya is in the Southern Gbaya family with two others;
+  #        Gbaya-Mbodomo is in the Eastern Gbaya family with six others.
+  "Gbe": {
+    "add_lang": {"Ci", "Defi", "Maxi", "Waci", "Weme",
+                 # under the Phla-Pherá subfamily
+                 "Eastern Xwla", "Gbesi", "Kotafon", "Saxwe", "Tofin", "Western Xwla", "Xwela",
+                },
   },
   "Georgian": {
     "add_lang": {"Old"},
@@ -391,6 +511,12 @@ language_groups = {
   "Ghale": {
     "add_lang": {"Kutang", "Northern", "Southern"},
   },
+  "Giziga": {
+    "add_lang": {"North", "South"},
+  },
+  "Grebo": {
+    "add_lang": {"Barclayville", "Central", "Gboloo", "Northern", "Southern"},
+  },
   "Greek": {
     "indent": lambda lang: lang.endswith(" Greek") or lang in {
       "Kaliarda", "Katharevousa", "Yevanic", "Tsakonian", "Opuntian Locrian", "Ozolian Locrian"},
@@ -407,11 +533,12 @@ language_groups = {
     "unindent": {"Greek"},
   },
   "Guarani": {
-    "add_lang": {"Mbya", "Paraguayan"},
+    "add_lang": {"Classical", "Eastern Bolivian", "Mbya", "Paraguayan", "Western Bolivian"},
   },
   "Gujarati": {
     "add_lang": {"Middle", "Old"},
   },
+  # Gula: Bon Gula and Zan Gula form a clade with Kulaal and maybe Fania, but Gula iself and Tar Gula are unrelated.
   "Gurung": {
     "add_lang": {"Eastern", "Western"},
   },
@@ -442,6 +569,40 @@ language_groups = {
     "unindent": {"Hindi", "Urdu"},
   },
   "Hmong": {
+    # We include the various Bunu languages as well as Ná-Meo, Pa-Hng and She as being Hmong languages but they are not
+    # included in ISO 639-3's hmn Hmong macrolanguage and don't end or start in Hmong, Mong or Miao, so I'm excluding
+    # them. ISO 639-3 excludes hmf (Hmong Don) and hmv (Hmong Dô) from the China/Laos hmn macro language mostly I think
+    # because they're spoken in Vietnam and influenced by Vietnamese and French, but I am including them. The following
+    # languages are included (the Bunu languages go under Bunu):
+    # cqd – Chuanqiandian Cluster Miao (cover term for Hmong in China)
+    # hea – Northern Qiandong Miao
+    # hma – Southern Mashan Hmong
+    # hmc – Central Huishui Hmong
+    # hmd – A-Hmao [Wiktionary]; Large Flowery Miao [Wikipedia]
+    # hme – Eastern Huishui Hmong
+    # hmf – Hmong Don (Vietnam)
+    # hmg – Southwestern Guiyang Hmong
+    # hmh – Southwestern Huishui Hmong
+    # hmi – Northern Huishui Hmong
+    # hmj – Ge
+    # hml – Luopohe Hmong
+    # hmm – Central Mashan Hmong
+    # hmp – Northern Mashan Hmong
+    # hmq – Eastern Qiandong Miao
+    # hms – Southern Qiandong Miao
+    # hmv – Hmong Dô (Vietnam)
+    # hmw – Western Mashan Hmong
+    # hmy – Southern Guiyang Hmong
+    # hmz – Hmong Shua (Sinicized Miao)
+    # hnj – Green Hmong [Wiktionary]; Mong Njua/Mong Leng (China, Laos), Blue/Green Hmong (United States) [Wikipedia]
+    # hrm – Horned Miao [Wiktionary]; A-Hmo, Horned Miao (China) [Wikipedia]
+    # huj – Northern Guiyang Hmong
+    # mmr – Western Xiangxi Miao
+    # muq – Eastern Xiangxi Miao
+    # mww – White Hmong [Wiktionary]; Hmong Daw (China, Laos), White Hmong (United States) [Wikipedia]
+    # sfm – Small Flowery Miao
+    "indent": lambda lang: lang.endswith(" Hmong") or lang.endswith(" Miao") or lang.startswith("Hmong ") or
+      lang in {"Ge", "A-Hmao"},
     "add_lang": {"Green", "White"},
   },
   "Hungarian": {
@@ -479,6 +640,9 @@ language_groups = {
     "rename": {"Modern Irish": "Irish"},
     "unindent": {"Irish", "Central Kurdish"},
   },
+  "Itneg": {
+    "add_lang": {"Banao", "Binongan", "Inlaod", "Maeng", "Masadiit", "Moyadan"},
+  },
   "Japanese": {
     "add_lang": {"Old"},
   },
@@ -494,8 +658,17 @@ language_groups = {
   "Kaili": {
     "add_lang": {"Da'a", "Ledo", "Unde"},
   },
+  "Kalapuya": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Kalinga": {
+      "add_lang": {"Butbut", "Limos", "Lubuagan", "Mabaka Valley", "Madukayang", "Southern", "Tanudan"},
+  },
   "Kannada": {
     "add_lang": {"Middle", "Old"},
+  },
+  "Karaboro": { # Karaboro clade under Senufo under Atlantic-Congo
+    "add_lang": {"Eastern", "Western"},
   },
   "Karelian": {
     "rename": {
@@ -509,9 +682,13 @@ language_groups = {
     "add_lang": {"Brek", "Bwe", "Geba", "Geko", "Lahta", "Manumanaw", "Pa'o", "Paku", "S'gaw", "Yinbaw", "Yintale",
                  "Zayein"},
   },
+  "Katu": {
+    "add_lang": {"Eastern", "Western"},
+  },
   "Kayah": {
     "add_lang": {"Eastern", "Western"},
   },
+  # Ke: Hunjara-Kaina Ke and Marti Ke are not at all related.
   "Keres": {
     "add_lang": {"Eastern", "Western"},
   },
@@ -525,16 +702,41 @@ language_groups = {
     "add_lang": {"Middle", "Northern", "Old"},
     "unindent": {"Central Kurdish", "Northern Kurdish"},
   },
+  # Kinnauri: Harijan Kinnauri is Indo-Aryan; Bhoti Kinnauri descends from Old Tibetan; Chitkuli Kinnauri and plain
+  #           Kinnauri are Kinnauric languages under West Himalayish under Sino-Tibetan.
+  "Kissi": { # Kissi clade under Mel under Atlantic-Congo
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Kiwai": {
+    "add_lang": {"Northeast", "Southern"},
+  },
+  "Koiari": {
+    "add_lang": {"Grass", "Mountain"},
+  },
+  "Koli": {
+    "add_lang": {"Kachi", "Parkari", "Wadiyara"},
+  },
   "Komi": {
     "indent": lambda lang: lang.startswith("Komi-") or lang.endswith(" Komi"),
     "add_lang": {"Old"},
+  },
+  "Koraga": {
+    "add_lang": {"Korra", "Mudu"},
   },
   "Korean": {
     "add_lang": {"Early Modern", "Middle", "Old"},
     "unindent": {"Jeju", "Bokmål", "Northern Kurdish"},
   },
+  "Kpelle": {
+    # FIXME: Forms a clade with Kono (Guinea) (knu)
+    "add_lang": {"Guinea", "Liberia"},
+  },
+  "Krumen": {
+    "add_lang": {"Plapo", "Pye", "Tepo"},
+  },
   "Kurdish": {
     "indent": lambda lang: lang.endswith(" Kurdish") or lang in {"Laki", "Sorani", "Kurmanji"},
+    "add_lang": {"Central", "Northern", "Southern"},
     "rename": {
       "Cnetral Kurdish": "Central Kurdish",
       "Laki Kurdish": "Laki",
@@ -545,6 +747,7 @@ language_groups = {
     },
     "unindent": {"Gurani", "Zazaki"},
   },
+  # Kurumba: varieties scattered among several families; no clades
   "Kyrgyz": {
     "unindent": {"Sorani"},
     "recognize": {"Arabic", "Cyrillic"},
@@ -579,12 +782,22 @@ language_groups = {
     "indent": lambda lang: False,
     "unindent": {"Munsee", "Unami"},
   },
+  "Lenca": {
+    "add_lang": {"Honduran", "Salvadoran"},
+  },
   "Leonese": {
     "add_lang": {"Old"},
+  },
+  "Limba": {
+    "add_lang": {"East", "West-Central"},
   },
   "Lithuanian": {
     "add_lang": {"Old"},
     "recognize": {"Aukštaitian", "Samogitian"},
+  },
+  "Lobu": {
+    # FIXME: These seem to be only part of the Paitanic languages clade (Austronesian).
+    "add_lang": {"Lanas", "Tampias"},
   },
   "Lorung": {
     "add_lang": {"Northern", "Southern"},
@@ -603,8 +816,16 @@ language_groups = {
     },
     "unindent": {"Plautdietsch", "Old Saxon"},
   },
+  "Luri": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Magar": {
     "add_lang": {"Eastern", "Western"},
+  },
+  "Maidu": {
+    # Nisenan is the fourth language forming the Maiduan languages.
+    "indent": lambda lang: lang.endswith(" Maidu") or lang in {"Nisenan"},
+    "add_lang": {"Northeast", "Northwest", "Valley"},
   },
   "Malay": {
     "indent": lambda lang: lang.endswith(" Malay") and lang not in malay_creole_mixed,
@@ -612,6 +833,13 @@ language_groups = {
                  "Larantuka", "Negeri Sembilan", "Old", "Pattani", "Sarawak", "Terengganu",},
     "rename": indonesian_malay_rename_map,
     "unindent": indonesian_malay_unindent | malay_creole_mixed,
+  },
+  "Mambila": {
+    "add_lang": {"Cameroon", "Nigeria"},
+  },
+  "Maninka": {
+    # FIXME: This is part of a linkage ([[w:Maninka language]]), with various other languages
+    "add_lang": {"Konyanka", "Sankaran"},
   },
   "Manipuri": {
     "add_lang": {"Bishnupriya", "Old"},
@@ -630,9 +858,16 @@ language_groups = {
     "add_lang": {"Eastern", "Western"},
     "unindent": {"Austronesian Mari", "Sepik Mari"},
   },
+  "Maria": { # Dravidian
+    "add_lang": {"Dandami", "Hill"},
+  },
   "Marquesan": {
     "add_lang": {"North", "South"},
   },
+  "Masela": {
+    "add_lang": {"Central", "East", "West"},
+  },
+  # Maya: Yucatec Maya and Mopan Maya happen to have Maya in their names but the other 30 don't.
   "Mazahua": {
     "add_lang": {"Central", "Michoacán"},
   },
@@ -643,6 +878,9 @@ language_groups = {
   "Median": {
     "add_lang": {"Middle", "Old"},
   },
+  "Melanau": {
+    "add_lang": {"Central", "Daro-Matu", "Sibu"},
+  },
   "Meohang": {
     "add_lang": {"Eastern", "Western"},
   },
@@ -650,10 +888,11 @@ language_groups = {
     "add_lang": {"Acatepec", "Azoyú", "Tlacoapa"},
   },
   "Miwok": {
-    "add_lang": {"Coast", "Lake"},
+    "add_lang": {"Bay", "Central Sierra", "Coast", "Lake", "Northern Sierra", "Plains", "Southern Sierra"},
   },
   "Mixe": {
-    "add_lang": {"Coatlán", "Isthmus", "Quetzaltepec", "Totontepec"},
+    "add_lang": {"Coatlán", "Isthmus", "Juquila", "Mazatlán", "North Central", "Quetzaltepec", "Tlahuitoltepec",
+                 "Totontepec"},
   },
   "Mixtec": {
     "add_lang": {
@@ -669,6 +908,10 @@ language_groups = {
     "rename": {
       "San Miguel El Grande": "San Miguel el Grande Mixtec",
     },
+  },
+  "Mnong": {
+    # Needs Kraol to form a clade
+    "add_lang": {"Central", "Eastern", "Southern"},
   },
   "Mon": {
     "indent": lambda lang: lang.endswith(" Mon") and lang not in {
@@ -688,11 +931,19 @@ language_groups = {
     },
     "unindent": {"Khamnigan Mongol"},
   },
+  # Monpa: Kalaktang Monpa, Tawang Monpa; not closely related, many other languages needed to form a clade
   "Muji": {
+    # forms a clade with Bokha and Phuma
     "add_lang": {"Northern", "Qila", "Southern"},
+  },
+  "Muria": {
+    "add_lang": {"Eastern", "Far Western", "Western"},
   },
   "Murut": {
     "add_lang": {"Keningau", "Selungai", "Sembakang", "Serudung", "Tagal", "Timugon"},
+  },
+  "Muyu": {
+    "add_lang": {"North", "South"},
   },
   "Naga": {
     "add_lang": {
@@ -730,6 +981,13 @@ language_groups = {
       "Classical Newari": "Classical Newar",
     },
   },
+  "Ngbandi": {
+    "add_lang": {"Northern", "Southern"},
+  },
+  "Nicobarese": {
+    # Only forms a clade with Chaura and Teressa
+    "add_lang": {"Car", "Central", "Southern"},
+  },
   "Nisu": {
     "add_lang": {"Eastern", "Northern", "Southern", "Southwestern"},
   },
@@ -758,6 +1016,12 @@ language_groups = {
     },
     "unindent": {"Norwegian", "Traveller Norwegian", "Old French", "Old Norse", "Portuguese", "Russian", "Spanish"},
   },
+  "Nuaulu": {
+    "add_lang": {"North", "South"},
+  },
+  "Nuni": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Occitan": {
     "add_lang": {"Old"},
   },
@@ -767,6 +1031,9 @@ language_groups = {
   "Ohlone": {
     "add_lang": {"Northern", "Southern"},
   },
+  "Ojibwa": {
+    "add_lang": {"Central", "Eastern", "Northwestern", "Severn", "Western"},
+  },
   "Ojibwe": {
     "rename": {
       "Canadian Syllabics": "Canadian syllabics",
@@ -774,6 +1041,7 @@ language_groups = {
     },
   },
   "Old Church Slavonic": {
+    "indent": {"Church Slavonic"},
     "rename": {
       "Cytillic": "Cyrillic",
       "Roman": "Latin",
@@ -788,6 +1056,9 @@ language_groups = {
     "unindent": {"Old English", "Middle English"},
     "recognize": {"Runic"},
   },
+  "One": {
+    "add_lang": {"Inebu", "Kabore", "Kwamtim", "Molmo", "Northern", "Southern"},
+  },
   "Ossetian": {
     "add_lang": {"Digor", "Iron"},
     "rename": {
@@ -801,8 +1072,20 @@ language_groups = {
     "add_lang": {"Eastern Highland", "Estado de México", "Ixtenco", "Mezquital", "Querétaro", "Temoaya", "Tenango",
                  "Texcatepec", "Tilapa"},
   },
+  # Pahari: Kullu Pahari, Mahasu Pahari; form a clade with Harijan Kinnauri, Hinduri and Sirmauri
+  "Paharia": { # Dravidian
+    # Mal Paharia is an Indo-Aryan language heavily influenced by the Dravidian Paharia (aka Malto) languages
+    "indent": lambda lang: lang.endswith(" Paharia") and lang not in {"Mal Paharia"},
+    "add_lang": {"Kumarbhag", "Sawriya"},
+  },
+  "Palaung": {
+    "add_lang": {"Ruching", "Rumai", "Shwe"},
+  },
+  "Palawano": {
+    "add_lang": {"Brooke's Point", "Central", "Southwest"},
+  },
   "Pame": {
-    "add_lang": {"Northern", "Southern"},
+    "add_lang": {"Central", "Northern", "Southern"},
   },
   "Paraguayan Guarani": {
     "indent": lambda lang: False,
@@ -810,6 +1093,9 @@ language_groups = {
       "Mbyá": "Mbya Guarani",
     },
     "unindent": {"Mbya Guarani", "Tapieté"},
+  },
+  "Pashayi": {
+    "add_lang": {"Northeast", "Northwest", "Southeast", "Southwest"},
   },
   "Penan": {
     "add_lang": {"Eastern", "Western"},
@@ -826,6 +1112,7 @@ language_groups = {
   "Phowa": {
     "add_lang": {"Ani", "Hlepho", "Labo"},
   },
+  # Picene: North Picene and South Picene are not closely related, if at all, and the former may be a hoax.
   "Polish": {
     "add_lang": {"Old", "Middle"},
   },
@@ -894,7 +1181,10 @@ language_groups = {
     },
     "unindent": {"Russian", "Old East Slavic", "Northern Selkup", "Southern Selkup"},
   },
+  # Salish: Only Montana Salish and Southern Puget Sound Salish, nowhere near each other and only two of many Salish
+  # languages.
   "Sama": {
+    # FIXME: Balangingi seems needed to fill out a clade with Central and Southern.
     "add_lang": {"Central", "Pangutaran", "Southern"},
   },
   "Samaritan": {
@@ -924,6 +1214,14 @@ language_groups = {
   "Selkup": {
     "add_lang": {"Northern", "Southern"},
   },
+  "Senni": {
+    # may need other langs to form an Eastern Songhay clade
+    "add_lang": {"Humburi", "Koyraboro"},
+  },
+  "Senoufo": { # Senufo clade under Atlantic-Congo
+    # the whole clade except for Karaboro, which has its own group
+    "indent": lambda lang: lang.endswith(" Senoufo") or lang.endswith(" Sénoufo") or lang in {"Nafaanra", "Supyire", "Djimini"},
+  },
   "Serbo-Croatian": {
     "rename": {
       "Cryllic": "Cyrillic",
@@ -938,7 +1236,7 @@ language_groups = {
       "Roman script": "Latin",
       "Roman spelling": "Latin",
     },
-    "recognize": "Arebica",
+    "recognize": {"Arebica"},
     "unindent": {"Lower Sorbian", "Upper Sorbian"},
   },
   "Slavey": {
@@ -957,6 +1255,9 @@ language_groups = {
   "Spanish": {
     "add_lang": {"Old"},
   },
+  "Stieng": {
+    "add_lang": {"Budeh", "Bulo"},
+  },
   "Sundanese": {
     "add_lang": {"Old"},
     "rename": indonesian_malay_rename_map,
@@ -971,11 +1272,23 @@ language_groups = {
     },
     "recognize": {"Baybayin"},
   },
+  # Tagbanwa: Calamian Tagbanwa, Central Tagbanwa and Tagbanwa; don't form a clade
+  "Tairora": {
+    "add_lang": {"North", "South"},
+  },
   "Tamang": {
     "add_lang": {"Eastern Gorkha", "Eastern", "Northwestern", "Southwestern", "Western"},
   },
   "Tamil": {
     "add_lang": {"Old"},
+  },
+  "Tanana": { # Athabaskan
+    # FIXME: Needs Tanacross to form a clade
+    "add_lang": {"Lower", "Upper"},
+  },
+  # Tanna: North Tanna, Southwest Tanna; needs Kwamera, Lenakel and Whitesands to form a clade
+  "Tarahumara": {
+    "add_lang": {"Lowland", "Central", "Northern", "Southeastern", "Southwestern"},
   },
   "Tatar": {
     "indent": lambda lang: False,
@@ -985,6 +1298,12 @@ language_groups = {
     },
     "recognize": {"Arabic", "Cyrillic", "Kryashen"},
   },
+  "Tawbuid": {
+    "add_lang": {"Eastern", "Western"},
+  },
+  # Teke: Ibali Teke, Central Teke, Teke-Fuumu, Teke-Kukuya, Teke-Laali, Teke-Tege, Teke-Tsaayi, Teke-Tyee
+  # These are all in the Teke-Mbede languages but scattered throughout, with no clades formable without including
+  # several other languages.
   "Telugu": {
     "add_lang": {"Old"},
   },
@@ -998,6 +1317,9 @@ language_groups = {
     "add_lang": {"Northern", "Southern"},
     "unindent": {"Isan"},
   },
+  "Tharu": {
+    "add_lang": {"Chitwania", "Dangaura", "Kathoriya", "Kochila", "Rana"},
+  },
   "Tibetan": {
     "add_lang": {"Old", "Amdo", "Khams"},
   },
@@ -1008,11 +1330,17 @@ language_groups = {
     "add_lang": {"Coyutla", "Filomena Mata-Coahuitlán", "Highland", "Misantla", "Papantla", "Upper Necaxa",
                  "Western", "Xicotepec de Juárez"},
   },
+  "Toussian": {
+    "add_lang": {"Northern", "Southern"},
+  },
   "Triqui": {
     "add_lang": {"Chicahuaxtla", "Copala", "San Martín Itunyoso"},
   },
   "Tujia": {
     "add_lang": {"Northern", "Southern"},
+  },
+  "Tukang Besi": {
+    "indent": lambda lang: lang.startswith("Tukang Besi "),
   },
   "Turkish": {
     "rename": {
@@ -1029,6 +1357,9 @@ language_groups = {
       "Roman": "Latin",
     },
     "recognize": {"Cyrillic"},
+  },
+  "Tutchone": {
+    "add_lang": {"Northern", "Southern"},
   },
   "Uyghur": {
     "indent": lambda lang: False,
@@ -1056,6 +1387,9 @@ language_groups = {
       "South": "South Wales Welsh",
       "South Wales": "South Wales Welsh",
     },
+  },
+  "Yali": {
+    "add_lang": {"Angguruk", "Ninia", "Pass Valley"},
   },
   "Yokuts": {
     "indent": lambda lang: lang.endswith(" Yokuts") or lang in {"Gashowu", "Palewyami"},
