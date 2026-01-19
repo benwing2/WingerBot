@@ -90,6 +90,7 @@ language_groups = {
   "Amami Ōshima": {
     "add_lang": {"Northern", "Southern"},
   },
+  # Ambrym: name of island, not a family; North Ambrym and Southeast Ambrym are in different subfamilies
   "Amuzgo": {
     "add_lang": {"Guerrero", "Ipalapa", "San Pedro Amuzgos"},
   },
@@ -238,6 +239,7 @@ language_groups = {
     # FIXME: Two more languages are needed to form a clade, Godié and Kouya
     "add_lang": {"Daloa", "Gagnoa", "Guiberoua"},
   },
+  # Bhil: Dungra Bhil and Sindhi Bhil are not closely related
   "Bhoti": {
     # Spiti Bhoti, Stod Bhoti, Bhoti Kinnauri form a clade with Nyamkat and Tukpa
     "indent": lambda lang: lang.endswith(" Bhoti") or lang.startswith("Bhoti "),
@@ -246,7 +248,13 @@ language_groups = {
   "Bidayuh": {
     "add_lang": {"Bau", "Biatah", "Bukar-Sadung"},
   },
+  "Bikol": {
+    "add_lang": {"Buhi'non", "Libon", "Miraya", "West Albay"},
+  },
   # Bisaya: Sabah Bisaya and Brunei Bisaya are named after locations and ethnic groups; not closely related
+  "Blaan": {
+    "add_lang": {"Koronadal", "Sarangani"},
+  },
   "Boma": { # Bantu
     "add_lang": {"North", "South"},
   },
@@ -331,6 +339,11 @@ language_groups = {
     },
     "unindent": {"German", "Hindi", "Italian", "Japanese", "Jingpo", "Mon", "Yiddish"},
   },
+  "Chontal": {
+    # Tabasco Chontal is not related to the others
+    "indent": lambda lang: lang.endswith(" Chontal") and lang not in {"Tabasco Chontal"},
+    "add_lang": {"Lowland Oaxaca", "Highland Oaxaca"},
+  },
   "Chorote": {
     "add_lang": {"Iyojwa'ja", "Iyo'wujwa"},
   },
@@ -385,6 +398,14 @@ language_groups = {
   },
   "Dinka": {
     "add_lang": {"Northeastern", "Northwestern", "South Central", "Southeastern", "Southwestern"},
+  },
+  "Dogon": {
+    "indent": lambda lang: lang.endswith(" Dogon") or lang in {"Tommo So", "Ben Tey", "Dogul Dom", "Jamsay", "Bunoge"},
+    "add_lang": {"Ampari", "Ana Tinga", "Bankan Tey", "Bondum Dom", "Donno So", "Mombo", "Nanga Dama", "Tebul Ure",
+                 "Tene Kan", "Tiranige Diga", "Tomo Kan", "Toro So", "Toro Tegu", "Yanda"},
+  },
+  "Dusun": {
+    "add_lang": {"Central", "Sugut", "Tambunan", "Tempasuk"},
   },
   "Dutch": {
     # Berbice Creole Dutch, Skepi Creole Dutch
@@ -655,14 +676,28 @@ language_groups = {
   "Jino": {
     "add_lang": {"Buyuan", "Youle"},
   },
+  "Kadazan": {
+    "add_lang": {"Coastal", "Klias River", "Labuk-Kinabatangan"},
+  },
   "Kaili": {
     "add_lang": {"Da'a", "Ledo", "Unde"},
+  },
+  "Kalagan": {
+    # plain Kalagan is also a language
+    "add_lang": {"Kagan", "Tagakaulu"},
   },
   "Kalapuya": {
     "add_lang": {"Northern", "Southern"},
   },
   "Kalinga": {
       "add_lang": {"Butbut", "Limos", "Lubuagan", "Mabaka Valley", "Madukayang", "Southern", "Tanudan"},
+  },
+  "Kallahan": {
+    # Tinoc is deprecated (merged into kak) and should be removed
+    "add_lang": {"Kayapa", "Keley-I", "Tinoc"},
+  },
+  "Kam": {
+    "add_lang": {"Northern", "Southern"},
   },
   "Kannada": {
     "add_lang": {"Middle", "Old"},
@@ -687,6 +722,11 @@ language_groups = {
   },
   "Kayah": {
     "add_lang": {"Eastern", "Western"},
+  },
+  "Kayan": {
+    # the 6 below + Kayan Mahakam + Bahau
+    "indent": lambda lang: lang.endswith(" Bayan") or lang.startswith("Bayan ") or lang in {"Bahau"},
+    "add_lang": {"Baram", "Busang", "Kayan River", "Mendalam", "Rejang", "Wahau"},
   },
   # Ke: Hunjara-Kaina Ke and Marti Ke are not at all related.
   "Keres": {
@@ -730,6 +770,9 @@ language_groups = {
   "Kpelle": {
     # FIXME: Forms a clade with Kono (Guinea) (knu)
     "add_lang": {"Guinea", "Liberia"},
+  },
+  "Krahn": {
+    "add_lang": {"Eastern", "Western"},
   },
   "Krumen": {
     "add_lang": {"Plapo", "Pye", "Tepo"},
@@ -827,6 +870,7 @@ language_groups = {
     "indent": lambda lang: lang.endswith(" Maidu") or lang in {"Nisenan"},
     "add_lang": {"Northeast", "Northwest", "Valley"},
   },
+  # Makian: East Makian and West Makian are unrelated
   "Malay": {
     "indent": lambda lang: lang.endswith(" Malay") and lang not in malay_creole_mixed,
     "add_lang": {"Ambonese", "Baba", "Bacanese", "Banda", "Berau", "Brunei", "Bukit", "Central", "Jambi", "Kedah",
@@ -837,9 +881,12 @@ language_groups = {
   "Mambila": {
     "add_lang": {"Cameroon", "Nigeria"},
   },
-  "Maninka": {
-    # FIXME: This is part of a linkage ([[w:Maninka language]]), with various other languages
-    "add_lang": {"Konyanka", "Sankaran"},
+  "Mandingo": {
+    # Eastern/Western/Kita Maninkakan; Konyaka/Sankaran/Forest Maninka; Mandinka, Mandingo (FIXME: should be a family)
+    "indent": lambda lang: lang.endswith(" Maninka") or lang.endswith(" Maninkakan") or lang in {"Mandinka", "Mandingo"},
+  },
+  "Maninkakan": {
+    "add_lang": {"Eastern", "Western"},
   },
   "Manipuri": {
     "add_lang": {"Bishnupriya", "Old"},
@@ -919,6 +966,7 @@ language_groups = {
     "add_lang": {"Middle", "Old", "Thai"},
     "unindent": {"Biao Mon", "Yangum Mon"},
   },
+  # Mongol: Middle Mongol and Khamnigan Mongol do not form a clade
   "Mongolian": {
     # not Middle Mongol
     "rename": {
@@ -1175,6 +1223,8 @@ language_groups = {
     "add_lang": {"Balkan", "Baltic", "Carpathian", "Kalo Finnish", "Sinte", "Vlax", "Welsh"},
   },
   "Russian": {
+    # exclude Taimyr Pidgin Russian
+    "indent": lambda lang: lang.endswith(" Russsian") and not lang.endswith(" Pidgin Russian"),
     "rename": {
       "Cyrillic": "Russian",
       "Roman": "Latin",
@@ -1252,11 +1302,19 @@ language_groups = {
       "Low Sorbian": "Lower Sorbian",
     },
   },
+  "Sorsogon": {
+    "add_lang": {"Masbate", "Waray"},
+  },
   "Spanish": {
     "add_lang": {"Old"},
   },
   "Stieng": {
     "add_lang": {"Budeh", "Bulo"},
+  },
+  "Subanen": {
+    #Central/Northern Subanen, Kolibugan/Western Subanon, Lapuyan/Eastern Subanun
+    "indent": lambda lang: lang.endswith(" Subanen") or lang.endswith( " Subanon") or lang.endswith( "Subanun"),
+    "add_lang": {"Central", "Northern"},
   },
   "Sundanese": {
     "add_lang": {"Old"},
@@ -1290,6 +1348,9 @@ language_groups = {
   "Tarahumara": {
     "add_lang": {"Lowland", "Central", "Northern", "Southeastern", "Southwestern"},
   },
+  "Tarangan": {
+    "add_lang": {"East", "West"},
+  },
   "Tatar": {
     "indent": lambda lang: False,
     "unindent": {"Crimean Tatar"},
@@ -1321,7 +1382,7 @@ language_groups = {
     "add_lang": {"Chitwania", "Dangaura", "Kathoriya", "Kochila", "Rana"},
   },
   "Tibetan": {
-    "add_lang": {"Old", "Amdo", "Khams"},
+    "add_lang": {"Classical", "Old", "Amdo", "Khams"},
   },
   "Tidung": {
     "add_lang": {"Northern", "Southern"},
@@ -1331,6 +1392,7 @@ language_groups = {
                  "Western", "Xicotepec de Juárez"},
   },
   "Toussian": {
+    # NOTE: Goes under Tusya in Wikipedia
     "add_lang": {"Northern", "Southern"},
   },
   "Triqui": {
@@ -1378,6 +1440,9 @@ language_groups = {
   },
   "Watut": {
     "add_lang": {"Middle", "North", "South"},
+  },
+  "Wee": {
+    "indent": {"Wè Western", "Wè Southern"},
   },
   "Welsh": {
     "add_lang": {"Middle", "Old"},
