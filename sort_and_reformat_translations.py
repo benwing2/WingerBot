@@ -21,6 +21,9 @@ def boolean_function_matches(fun, lang):
 def default_indentfun(group, lang):
   return lang.endswith(" " + group)
 
+def langname_key(lang):
+  return blib.langname_key(lang, prepend_translingual_english=False)
+
 indonesian_malay_rename_map = {
   "Arabic": "Jawi",
   "Roman": "Rumi",
@@ -458,6 +461,10 @@ language_groups = {
   },
   "Enets": {
     "add_lang": {"Forest", "Tundra"},
+  },
+  "English": {
+    "indent": lambda lang: False,
+    "unindent": {"Middle English", "Old English"},
   },
   "Fali": {
     # Baissa Fali is unrelated
@@ -931,7 +938,8 @@ language_groups = {
   },
   "Mandingo": {
     # Eastern/Western/Kita Maninkakan; Konyaka/Sankaran/Forest Maninka; Mandinka, Mandingo (FIXME: should be a family)
-    "indent": lambda lang: lang.endswith(" Maninka") or lang.endswith(" Maninkakan") or lang in {"Mandinka", "Mandingo"},
+    "indent": lambda lang: lang.endswith(" Maninka") or lang.endswith(" Maninkakan") or lang in {"Mandinka"},
+    "unindent": {"Mandingo"},
   },
   "Maninkakan": {
     "add_lang": {"Eastern", "Western"},
@@ -1736,7 +1744,7 @@ def process_text_on_page(index, pagename, text):
           # differ from the original lines. To get a better sense of whether we actually reordered any lines, sort
           # before adding the new headers and then sort for real after adding the headers.
           translation_lines_for_sorting = [
-            (blib.langname_key(lang), [blib.langname_key(x) for x in indented_lang], lineind, line)
+            (langname_key(lang), [langname_key(x) for x in indented_lang], lineind, line)
              for lang, indented_lang, lineind, line, counts_for_sorting in translation_lines
              if counts_for_sorting
           ]
@@ -1746,10 +1754,25 @@ def process_text_on_page(index, pagename, text):
             notes.append(["sort lines under ",
                           re.sub(r"\|.*?\}", "}", re.sub(r"\}\}.*", "}}", opening_trans_line)), ""])
           translation_lines = [
-            (blib.langname_key(lang), [blib.langname_key(x) for x in indented_lang], lineind, line)
+            (langname_key(lang), [langname_key(x) for x in indented_lang], lineind, line)
             for lang, indented_lang, lineind, line, counts_for_sorting in translation_lines
           ]
           translation_lines = sorted(translation_lines)
+          prev_line = None
+          filtered_lines = []
+          translation_lines.append([("Foo", "Foo"), "", None, None])
+          for next_line in translation_lines:
+            if prev_line:
+              (_, prev_lang), prev_indented_lang, prev_lineind, prev_transline = prev_line
+              (_, next_lang), next_indented_lang, next_lineind, next_transline = next_line
+              if (not prev_indented_lang and not next_indented_lang and "* %s:" % prev_lang == prev_transline and
+                  (next_transline is None or next_transline.startswith("* %s:" % next_lang))):
+                pagemsg("Filtering out superfluous top-level line: %s" % prev_transline)
+                notes.append(["filter out superfluous header for ", prev_lang, ""])
+              else:
+                filtered_lines.append(prev_line)
+            prev_line = next_line
+          translation_lines = filtered_lines
           for lang, indented_lang, lineind, transline in translation_lines:
             new_lines.append(transline)
       new_lines.append(line)
@@ -2007,7 +2030,7 @@ def process_text_on_page(index, pagename, text):
   text = "\n".join(new_lines)
 
   if text != origtext and not notes:
-    default_changelog = "misc reformatting"
+    default_changelog = "misc reformatting (usually sorting)"
     notes.append([default_changelog, "", ""])
     pagemsg("WARNING: Adding default changelog '%s'" % default_changelog)
 

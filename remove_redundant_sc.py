@@ -29,8 +29,41 @@ link_templates_with_sc = {
   "m+": ["3", "2"],
 }
 
-templates_with_sc = translation_templates_with_sc
+templates_with_sc = link_templates_with_sc
+#templates_with_sc = translation_templates_with_sc
 #templates_with_sc = translation_templates_with_sc | link_templates_with_sc
+
+def check_script_agrees(value_to_check, lang, sc, pagemsg, expand_text, line_or_t, action_msg):
+  detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s}}" % (lang, value_to_check))
+  if not detected_sc:
+    return False
+  if detected_sc == "ms-Arab" and sc == "Arab" and lang == "ms":
+    pagemsg("Detected script ms-Arab for lang=ms, saw explicit sc=Arab, which is probably wrong, %s: %s" % (
+      action_msg, line_or_t))
+    return True
+  if detected_sc in ["Hans", "Hant"] and sc == "Hani":
+    pagemsg("Detected script %s, saw explicit sc=Hani which is a superset, %s: %s" % (
+      detected_sc, action_msg, line_or_t))
+    return True
+  if detected_sc != sc:
+    if len(detected_sc) >= 4 and len(sc) >= 4 and detected_sc[-4:] == sc[-4:]:
+      pagemsg("For lang=%s, detected script %s, saw explicit sc=%s, both are variants of the same script, %s: %s" % (
+        lang, detected_sc, sc, action_msg, line_or_t))
+      return True
+    if detected_sc == "None":
+      pagemsg("WARNING: For lang=%s, detected script %s but saw explicit sc=%s, which may be right: %s" % (
+        lang, detected_sc, sc, line_or_t))
+      return False
+    force_detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s|true}}" % (
+      lang, value_to_check))
+    if force_detected_sc == detected_sc:
+      pagemsg("WARNING: For lang=%s, force-detected script %s but saw explicit sc=%s, explicit sc= probably wrong: %s"
+              % (lang, detected_sc, sc, line_or_t))
+    else:
+      pagemsg("WARNING: For lang=%s, detected script %s but force-detected %s and saw explicit sc=%s, which may be right: %s" % (
+        lang, detected_sc, force_detected_sc, sc, line_or_t))
+    return False
+  return True
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -64,28 +97,9 @@ def process_text_on_page(index, pagetitle, text):
         if not value_to_check:
           pagemsg("WARNING: For lang=%s, no displayable value, not removing sc=%s: %s" % (lang, sc, str(t)))
           continue
-        detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s}}" % (
-          lang, value_to_check))
-        if not detected_sc:
+        agrees = check_script_agrees(value_to_check, lang, sc, pagemsg, expand_text, str(t), "removing sc=")
+        if not agrees:
           continue
-        if detected_sc == "ms-Arab" and sc == "Arab" and lang == "ms":
-          pagemsg("Detected script ms-Arab for lang=ms, saw explicit sc=Arab, which is probably wrong, removing sc=: %s" % (str(t)))
-        elif detected_sc in ["Hans", "Hant"] and sc == "Hani":
-          pagemsg("Detected script %s, saw explicit sc=Hani which is a superset, removing sc=: %s" % (detected_sc, str(t)))
-        elif detected_sc != sc:
-          if len(detected_sc) >= 4 and len(sc) >= 4 and detected_sc[-4:] == sc[-4:]:
-            pagemsg("For lang=%s, detected script %s, saw explicit sc=%s, both are variants of the same script, removing sc=: %s" % (lang, detected_sc, sc, str(t)))
-          elif detected_sc == "None":
-            pagemsg("WARNING: For lang=%s, detected script %s but saw explicit sc=%s, which may be right: %s" % (lang, detected_sc, sc, str(t)))
-            continue
-          else:
-            force_detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s|true}}" % (
-              lang, value_to_check))
-            if force_detected_sc == detected_sc:
-              pagemsg("WARNING: For lang=%s, force-detected script %s but saw explicit sc=%s, explicit sc= probably wrong: %s" % (lang, detected_sc, sc, str(t)))
-            else:
-              pagemsg("WARNING: For lang=%s, detected script %s but force-detected %s and saw explicit sc=%s, which may be right: %s" % (lang, detected_sc, force_detected_sc, sc, str(t)))
-            continue
         rmparam(t, "sc")
         notes.append("remove redundant sc=%s from {{%s}}" % (sc, tn))
     if str(t) != origt:
@@ -104,8 +118,9 @@ def process_text_on_page(index, pagetitle, text):
   notes = remove_redundant_notes + other_notes
   return parsed, notes
 
-parser = blib.create_argparser("Remove redundant sc=", include_pagefile=True, include_stdin=True)
-args = parser.parse_args()
-start, end = blib.parse_start_end(args.start, args.end)
+if __name__ == "__main__":
+  parser = blib.create_argparser("Remove redundant sc=", include_pagefile=True, include_stdin=True)
+  args = parser.parse_args()
+  start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

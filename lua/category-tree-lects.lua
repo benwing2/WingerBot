@@ -3,21 +3,22 @@ local export = {}
 local raw_categories = {}
 local raw_handlers = {}
 
-local m_languages = require("Module:languages")
-local m_table = require("Module:table")
-local parse_utilities_module = "Module:parse utilities"
-local string_utilities_module = "Module:string utilities"
 local labels_module = "Module:labels"
 local labels_utilities_module = "Module:labels/utilities"
-local rsplit = mw.text.split
+local parse_utilities_module = "Module:parse utilities"
+local string_utilities_module = "Module:string utilities"
+
+local m_languages = require("Module:languages")
+local m_str_utils = require(string_utilities_module)
+local m_table = require("Module:table")
+
+local pattern_escape = m_str_utils.pattern_escape
+local replacement_escape = m_str_utils.replacement_escape
+local split = m_str_utils.split
 
 local function track(page)
-	-- [[Special:WhatLinksHere/Wiktionary:Tracking/poscatboiler/languages/PAGE]]
-	return require("Module:debug/track")("poscatboiler/language-varieties/" .. page)
-end
-
-local function pattern_escape(pattern)
-	return require(string_utilities_module).pattern_escape(pattern)
+	-- [[Special:WhatLinksHere/Wiktionary:Tracking/poscatboiler/lects/PAGE]]
+	return require("Module:debug/track")("poscatboiler/lects/" .. page)
 end
 
 -- This module handles lect/variety categories of all sorts, e.g. regional lect categories such as
@@ -25,7 +26,7 @@ end
 -- [[:Category:Early Modern English]]; sociolect categories such as [[:Category:Polari]]; and umbrella categories of the
 -- form e.g. [[:Category:Varieties of English]] and [[:Category:Regional French]].
 
--- FIXME: Eliminate the word "dialect" here and in the {{auto cat}} parameter in favor of "lect" or "variety".
+-- FIXME: Eliminate the word "dialect" here and in the {{auto cat}} parameter in favor of "lect" or "variety". [DONE]
 
 --[=[
 FIXME:
@@ -72,7 +73,7 @@ local function split_on_comma(term)
 	if term:find(",%s") then
 		return require(parse_utilities_module).split_on_comma(term)
 	else
-		return rsplit(term, ",")
+		return split(term, ",")
 	end
 end
 
@@ -160,7 +161,7 @@ local function get_returnable_lang_code(lang)
 end
 
 
-local memoizing_dialect_handler
+local memoizing_lect_handler
 
 
 local function category_to_lang_name(category)
@@ -184,11 +185,12 @@ local function scrape_category_for_auto_cat_args(cat)
 	if cat_page then
 		local contents = cat_page:getContent()
 		if contents then
-			for name, args in require("Module:template parser").findTemplates(contents) do
+			local frame = mw.getCurrentFrame()
+			for template in require("Module:template parser").find_templates(contents) do
 				-- The template parser automatically handles redirects and canonicalizes them, so uses of {{autocat}}
 				-- will also be found.
-				if name == "auto cat" then
-					return args
+				if template:get_name() == "auto cat" then
+					return template:get_arguments()
 				end
 			end
 		end
@@ -214,16 +216,16 @@ local function determine_lect_type(category, lang, default_parent_cat)
 			return "extinct"
 		end
 	end
-	-- Otherwise, call the dialect handler recursively for the parent category. This is correct e.g. for
+	-- Otherwise, call the lect handler recursively for the parent category. This is correct e.g. for
 	-- things like subvarieties of Classical Persian, where the lang itself (Persian) isn't extinct but the
-	-- parent category refers to an extinct variety. If the dialect handler fails to return a type, it's because
+	-- parent category refers to an extinct variety. If the lect handler fails to return a type, it's because
 	-- the parent category doesn't exist or isn't defined using {{auto cat}}, and doesn't have a language as a
 	-- suffix. In that case, if we're dealing with an etymology-only language, check the parent language. Finally,
 	-- fall back to returning "extant" if all else fails.
 	local parent_type
 	if default_parent_cat then
-		export.register_likely_dialect_parent_cat(default_parent_cat)
-		_, parent_type = memoizing_dialect_handler(default_parent_cat, nil, true)
+		export.register_likely_lect_parent_cat(default_parent_cat)
+		parent_type = select(2, memoizing_lect_handler(default_parent_cat, nil, true))
 	end
 	if parent_type then
 		return parent_type
@@ -259,7 +261,7 @@ local function infer_region_from_lang(pagename, lang)
 	while lang_to_check do
 		local suffix = lang_to_check:getCanonicalName()
 		while true do
-			region = pagename:match("^(.*) " .. pattern_escape(suffix) .. "$")
+			local region = pagename:match("^(.*) " .. pattern_escape(suffix) .. "$")
 			if region then
 				return region
 			end
@@ -577,26 +579,26 @@ local function get_parents_from_sorted_labels(sorted_labels, category, all_cats)
 	return {"+"}, nil
 end
 
-local likely_dialect_parent_cat = {}
+local likely_lect_parent_cat = {}
 
--- Register that `cat` is likely to be a dialect cat, so we try to handle it as such in the dialect handler when
+-- Register that `cat` is likely to be a lect cat, so we try to handle it as such in the lect handler when
 -- we are called on that category. This avoids the need to have manual allow-lists of nonstandardly-named parent
--- dialect categories to handle, such as [[:Category:Assyrian]], [[:Category:Ripuarian Franconian]] ("Franconian" is
+-- lect categories to handle, such as [[:Category:Assyrian]], [[:Category:Ripuarian Franconian]] ("Franconian" is
 -- not a language) and [[:Category:Limburgan-Ripuarian transitional dialects]].
-function export.register_likely_dialect_parent_cat(cat)
+function export.register_likely_lect_parent_cat(cat)
 	if type(cat) == "string" and not cat:find("^Category:") then
-		likely_dialect_parent_cat[cat] = true
+		likely_lect_parent_cat[cat] = true
 	end
 end
 
--- Handle dialect categories such as [[:Category:New Zealand English]], [[:Category:Late Middle English]],
+-- Handle lect categories such as [[:Category:New Zealand English]], [[:Category:Late Middle English]],
 -- [[:Category:Arbëresh Albanian]], [[:Category:Provençal]] or arbitrarily-named categories like
--- [[:Category:Issime Walser]]. We currently require that dialect=1 is specified to the call to {{auto cat}} to avoid
+-- [[:Category:Issime Walser]]. We currently require that lect=1 is specified to the call to {{auto cat}} to avoid
 -- overfiring. However, if called from inside, we are processing the breadcrumb for the parent (or conceivably the
--- child) of a dialect category, and won't have any params set, so we can't rely on dialect=1. In that case, only fire
+-- child) of a lect category, and won't have any params set, so we can't rely on lect=1. In that case, only fire
 -- if the category is or ends in the name of a full or etymology-only language, and scrape the category's call to
 -- {{auto cat}} to get the appropriate params. This means that nonstandardly-named categories like
--- [[:Category:Issime Walser]] can't be parents of other dialect categories. To work around this, either we have to
+-- [[:Category:Issime Walser]] can't be parents of other lect categories. To work around this, either we have to
 -- relax the code below to operate on all raw categories (not necessarily a good idea), or we rename the
 -- nonstandardly-named categories (e.g. in the case above, to [[:Category:Issime Walser German]], since Walser German
 -- is a recognized etymology-only language).
@@ -604,10 +606,10 @@ end
 -- NOTE: We are able to handle categories for etymology-only families (currently only [[:Category:Middle Iranian]] and
 -- [[:Category:Old Iranian]]) and for etymology-only substrate languages (e.g. [[:Category:The BMAC substrate]]).
 -- There is some special "family" code for the former.
-local function dialect_handler(category, raw_args, called_from_inside)
+local function lect_handler(category, raw_args, called_from_inside)
 	if called_from_inside then
 		-- Avoid infinite loops from wrongly processing non-lect categories. We have a check around line 344 below
-		-- for categories whose {{auto cat}} doesn't say dialect=1, but we still need the following in case of
+		-- for categories whose {{auto cat}} doesn't say lect=1, but we still need the following in case of
 		-- non-existent categories we're being asked to process (e.g. [[:Category:User bcc]] ->
 		-- [[:Category:Southern Balochi]] (nonexistent) -> [[:Category:Regional Baluchi]] (nonexistent), which
 		-- causes an infinite loop without the check below.
@@ -624,11 +626,11 @@ local function dialect_handler(category, raw_args, called_from_inside)
 		-- produce the right parent for [[:Category:Central Yoruba]] but not for [[:Category:Ekiti Yoruba]], where the
 		-- default parent would be [[:Category:Regional Yoruba]] instead of the correct [[:Category:Central Yoruba]].
 		local lang, breadcrumb = split_region_lang(category)
-		if lang or likely_dialect_parent_cat[category] then
+		if lang or likely_lect_parent_cat[category] then
 			raw_args = scrape_category_for_auto_cat_args(category)
-			if raw_args and not ine(raw_args.dialect) then
+			if raw_args and not ine(raw_args.lect) then
 				-- We are scraping something like [[:Category:American Sign Language]] that ends in a valid language but is not
-				-- a dialect.
+				-- a lect.
 				return nil
 			end
 			if not raw_args then
@@ -641,7 +643,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 						label_with_parent and label_with_parent.labdata[prop]
 				end
 
-				local all_labels, sorted_labels = get_sorted_labels(category, lang)
+				local sorted_labels = select(2, get_sorted_labels(category, lang))
 				if sorted_labels then
 					parents, label_with_parent = get_parents_from_sorted_labels(sorted_labels, category)
 					if not lang and label_with_parent then
@@ -652,7 +654,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 				end
 
 				if not lang then
-					-- We were instructed to scrape by virtue of `dialect_parent_cats_to_scrape`, but couldn't scrape
+					-- We were instructed to scrape by virtue of `register_likely_lect_parent_cat`, but couldn't scrape
 					-- anything.
 					return nil
 				end
@@ -666,13 +668,13 @@ local function dialect_handler(category, raw_args, called_from_inside)
 				end
 				local first_parent_cat = parents[1]
 				if type(first_parent_cat) ~= "string" or first_parent_cat:find("^Category:") then
-					-- Only keep `first_parent_cat` if it refers to a raw poscat label (which is probably a dialect
+					-- Only keep `first_parent_cat` if it refers to a raw poscat label (which is probably a lect
 					-- handler label).
 					first_parent_cat = nil
 				end
 
-				track("dialect")
-				export.register_likely_dialect_parent_cat(parents[1])
+				track("lect")
+				export.register_likely_lect_parent_cat(parents[1])
 
 				-- NOTE: When called from inside, the description doesn't matter; nor do any parents other than the
 				-- first. This is because called_from_inside is only set when computing the breadcrumb trail, which
@@ -692,7 +694,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 		end
 	end
 
-	if not called_from_inside and not ine(raw_args.dialect) then
+	if not called_from_inside and not ine(raw_args.lect) then
 		return nil
 	end
 
@@ -700,7 +702,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 
 	local params = {
 		[1] = {},
-		dialect = {type = "boolean"},
+		lect = {type = "boolean"},
 		lang = {},
 		verb = {},
 		prep = {},
@@ -733,7 +735,6 @@ local function dialect_handler(category, raw_args, called_from_inside)
 	-- They may be overridden later.
 
 	local lang, breadcrumb, regiondesc, langname
-	local region
 	category = args.pagename or category
 	if not args.lang then
 		lang, breadcrumb = split_region_lang(category)
@@ -804,7 +805,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 		first_parent_cat = parents[1]
 	end
 	if type(first_parent_cat) ~= "string" or first_parent_cat:find("^Category:") then
-		-- Only keep `first_parent_cat` if it refers to a raw poscat label (which is probably a dialect handler label).
+		-- Only keep `first_parent_cat` if it refers to a raw poscat label (which is probably a lect handler label).
 		-- WARNING: Code below using `first_parent_cat` must handle nil.
 		first_parent_cat = nil
 	end
@@ -830,7 +831,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 	-- If no breadcrumb, this often happens when the langname and category are the same (happens only with etym-only
 	-- languages), and the parent category is set below to the full parent, so the breadcrumb should show the
 	-- language name (or equivalently, the category). If the langname and category are different, we should fall back to
-	-- the category. E.g. for Singlish, lang=en is specified and we can't infer a breadcrumb because the dialect name
+	-- the category. E.g. for Singlish, lang=en is specified and we can't infer a breadcrumb because the lect name
 	-- doesn't end in "English"; in this case we want the breadcrumb to show "Singlish".
 	breadcrumb = getprop("breadcrumb") or breadcrumb or category
 
@@ -838,16 +839,14 @@ local function dialect_handler(category, raw_args, called_from_inside)
 
 	if args[1] then
 		regiondesc = args[1]
-		the_prefix = ""
 	else
 		local regionprop = getprop("region")
 		if regionprop then
 			regiondesc = regionprop
-			the_prefix = ""
 		elseif label_with_parent then
 			-- It's not clear which of the following two are better. The second one uses the actual label display form,
 			-- which might be argued to be better, except that it will often be linked to a Wikipedia article about the
-			-- dialect rather than the place. The first one just uses the canonical label directly (which will later be
+			-- lect rather than the place. The first one just uses the canonical label directly (which will later be
 			-- linked to itself if unlinked). A third possibility is to use `label_with_parent.display` if present,
 			-- otherwise `label_with_parent.canonical`.
 			regiondesc = label_with_parent.canonical
@@ -883,8 +882,8 @@ local function dialect_handler(category, raw_args, called_from_inside)
 		if refined_lang then
 			break
 		end
-		export.register_likely_dialect_parent_cat(ancestral_cat)
-		local settings, _ = memoizing_dialect_handler(ancestral_cat, nil, true)
+		export.register_likely_lect_parent_cat(ancestral_cat)
+		local settings, _ = memoizing_lect_handler(ancestral_cat, nil, true)
 		if not settings then
 			break
 		end
@@ -957,16 +956,16 @@ local function dialect_handler(category, raw_args, called_from_inside)
 		end
 	end
 	if lect_type == "extinct" then
-		prefix_addl("This language variety is [[extinct language|extinct]].")
+		prefix_addl("This lect is [[extinct language|extinct]].")
 		table.insert(parents, "Category:All extinct languages")
 	elseif lect_type == "reconstructed" then
-		prefix_addl("This language variety is [[reconstructed language|reconstructed]].")
+		prefix_addl("This lect is [[reconstructed language|reconstructed]].")
 		table.insert(parents, "Category:Reconstructed languages")
 	elseif lect_type == "unattested" then
-		prefix_addl("This language variety is {{w|unattested language|unattested}}.")
+		prefix_addl("This lect is {{w|unattested language|unattested}}.")
 		table.insert(parents, "Category:Unattested languages")
 	elseif lect_type == "constructed" then
-		prefix_addl("This language variety is [[constructed language|constructed]].")
+		prefix_addl("This lect is [[constructed language|constructed]].")
 		table.insert(parents, "Category:Constructed languages")
 	end
 
@@ -1014,8 +1013,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 				table.insert(linked_countries, country)
 			end
 			linked_countries = m_table.serialCommaJoin(linked_countries)
-			linked_regiondesc = linked_regiondesc:gsub("<country>",
-				require(string_utilities_module).replacement_escape(linked_countries))
+			linked_regiondesc = linked_regiondesc:gsub("<country>", replacement_escape(linked_countries))
 		elseif not getprop("nolink") and linkable(linked_regiondesc) then
 			-- Even if nolink not given, don't try to link if HTML or = sign found in linked_regiondesc, otherwise
 			-- we're likely to get an error.
@@ -1042,10 +1040,16 @@ local function dialect_handler(category, raw_args, called_from_inside)
 	local topright_parts = {}
 	-- Insert Wikipedia article `article` for Wikimedia language `wmcode` into `topright_parts`, avoiding duplication.
 	local function insert_wikipedia_article(wmcode, article)
-		m_table.insertIfNot(topright_parts, ("{{wp%s%s}}"):format(
-			wmcode == "en" and "" or "|lang=" .. wmcode,
-			article == category and "" or "|" .. article
-		))
+		if wmcode == "commons" then
+			m_table.insertIfNot(topright_parts, ("{{commons%s}}"):format(
+				article == category and "" or "|" .. article
+			))
+		else
+			m_table.insertIfNot(topright_parts, ("{{wp%s%s}}"):format(
+				wmcode == "en" and "" or "|lang=" .. wmcode,
+				article == category and "" or "|" .. article
+			))
+		end
 	end
 
 	local function insert_wikipedia_articles_for_wikipedia_specs(specs, default)
@@ -1114,7 +1118,7 @@ local function dialect_handler(category, raw_args, called_from_inside)
 			insert_wikipedia_articles_for_wikipedia_specs(split_on_comma(args.wp), category)
 		end
 		if args.wikidata then
-			insert_wikipedia_articles_for_wikidata_specs(rsplit(args.wikidata, "%s*,%s*"), lang)
+			insert_wikipedia_articles_for_wikidata_specs(split(args.wikidata, "%s*,%s*"), lang)
 		end
 	elseif pagename == ucfirst(langname) then
 		local topright_parts = {}
@@ -1152,8 +1156,8 @@ local function dialect_handler(category, raw_args, called_from_inside)
 
 	-------------------- 11. Return the combined structure of all information. -------------------
 
-	track("dialect")
-	export.register_likely_dialect_parent_cat(parents[1])
+	track("lect")
+	export.register_likely_lect_parent_cat(parents[1])
 
 	return {
 		-- FIXME, allow etymological codes here
@@ -1171,20 +1175,20 @@ end
 
 local memoized_responses = {}
 
-memoizing_dialect_handler = function(category, raw_args, called_from_inside)
+memoizing_lect_handler = function(category, raw_args, called_from_inside)
 	mw.log(category)
 	local retval = memoized_responses[category]
 	if not retval then
-		retval = {dialect_handler(category, raw_args, called_from_inside)}
+		retval = {lect_handler(category, raw_args, called_from_inside)}
 		memoized_responses[category] = retval
 	end
 	local obj, lect_type = retval[1], retval[2]
 	return obj, lect_type
 end
 
--- Actual handler for dialect categories. See dialect_handler() above.
+-- Actual handler for lect categories. See lect_handler() above.
 table.insert(raw_handlers, function(data)
-	local settings, _ = memoizing_dialect_handler(data.category, data.args, data.called_from_inside)
+	local settings, _ = memoizing_lect_handler(data.category, data.args, data.called_from_inside)
 	return settings, not not settings
 end)
 

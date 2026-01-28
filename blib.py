@@ -129,7 +129,7 @@ pos_regex = "==(%s)==" % "|".join(re_escaped_lemma_poses)
 
 # Don't include t-simple here because it also has a langname= param that may need changing. (In any case, t-simple
 # has been deleted.)
-translation_templates = ["t", "t+", "tt", "tt+", "t-", "t+check", "tt+check", "t-check", "t-needed"]
+translation_templates = ["t", "t+", "tt", "tt+", "t-", "t+check", "tt+check", "t-check", "tt-check", "t-needed"]
 label_templates = ["lb", "lbl", "label", "tlb", "term-label"]
 qualifier_templates = ["q", "qual", "qualifier", "i", "qf", "q-lite"]
 
@@ -1649,8 +1649,8 @@ def do_pagefile_cats_refs(
     for index, pagetitle in iter_items(default_pages, start, end):
       process_pywikibot_page(index, pywikibot.Page(site, pagetitle))
     for cat in default_cats:
-      for index, page in cat_articles(cat, start, end, seen=seen, filter_cats_regex=args_filter_cats,
-                                      prune_cats_regex=args_prune_cats, recurse=args.recursive,
+      for index, page in cat_articles(cat, start, end, seen=seen, filter_cats_regex=args.filter_cats,
+                                      prune_cats_regex=args.prune_cats, recurse=args.recursive,
                                       track_seen=not args.no_track_seen, verbose=args.verbose):
         process_pywikibot_page(index, page, no_check_seen=True)
     for ref in default_refs:
@@ -1672,25 +1672,20 @@ def elapsed_time():
     msg("Elapsed time: %s mins %0.2f secs" % (mins, secs))
   msg("Ending at %s" % time.ctime(endtime))
 
-languages = None
 languages_byCode = None
 languages_byCanonicalName = None
 languages_byAlias = None
 
-families = None
 families_byCode = None
 families_byCanonicalName = None
 
-scripts = None
 scripts_byCode = None
 scripts_byCanonicalName = None
 
-etym_languages = None
 etym_languages_byCode = None
 etym_languages_byCanonicalName = None
 etym_languages_byAlias = None
 
-wm_languages = None
 wm_languages_byCode = None
 wm_languages_byCanonicalName = None
 
@@ -1727,6 +1722,31 @@ def getData():
   getEtymLanguageData()
   getAliasData()
 
+def saveData(outfile):
+  langdata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
+  families = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
+  scripts = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
+  etym_languages = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
+  aliases = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
+  master = {
+    "languages": langdata,
+    "families": families,
+    "scripts": scripts,
+    "etym_languages": etym_languages,
+    "aliases": aliases,
+  }
+  with open(outfile, "w") as fp:
+    fp.write(json.dumps(master))
+
+def loadData(outfile):
+  with open(outfile, "r") as fp:
+    master = json_loads(fp.read())
+  setLanguageData(master["languages"])
+  setFamilyData(master["families"])
+  setScriptData(master["scripts"])
+  setEtymLanguageData(master["etym_languages"])
+  setAliasData(master["aliases"])
+
 def json_loads(data):
   try:
     return json.loads(data)
@@ -1734,10 +1754,9 @@ def json_loads(data):
     print("JSON decode error processing the following: %s" % data)
     raise
 
-def getLanguageData():
-  global languages, languages_byCode, languages_byCanonicalName, languages_byAlias
+def setLanguageData(jsondata):
+  global languages_byCode, languages_byCanonicalName, languages_byAlias
 
-  jsondata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
   languages = json_loads(jsondata)
   languages_byCode = {}
   languages_byCanonicalName = {}
@@ -1751,10 +1770,14 @@ def getLanguageData():
         assert(type(alias) is str)
         languages_byAlias[alias].append(lang)
 
-def getFamilyData():
-  global families, families_byCode, families_byCanonicalName
+def getLanguageData():
+  jsondata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
+  setLanguageData(jsondata)
 
-  families = json_loads(site.expand_text("{{#invoke:User:MewBot|getFamilyData}}"))
+def setFamilyData(familydata):
+  global families_byCode, families_byCanonicalName
+
+  families = json_loads(familydata)
   families_byCode = {}
   families_byCanonicalName = {}
 
@@ -1762,11 +1785,18 @@ def getFamilyData():
     families_byCode[fam["code"]] = fam
     families_byCanonicalName[fam["canonicalName"]] = fam
 
+def getFamilyData():
+  familydata = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
+  setFamilyData(familydata)
 
 def getScriptData():
-  global scripts, scripts_byCode, scripts_byCanonicalName
+  scriptdata = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
+  setScriptData(scriptdata)
 
-  scripts = json_loads(site.expand_text("{{#invoke:User:MewBot|getScriptData}}"))
+def setScriptData(scriptdata):
+  global scripts_byCode, scripts_byCanonicalName
+
+  scripts = json_loads(scriptdata)
   scripts_byCode = {}
   scripts_byCanonicalName = {}
 
@@ -1774,11 +1804,14 @@ def getScriptData():
     scripts_byCode[sc["code"]] = sc
     scripts_byCanonicalName[sc["canonicalName"]] = sc
 
-
 def getEtymLanguageData():
-  global etym_languages, etym_languages_byCode, etym_languages_byCanonicalName, etym_languages_byAlias
+  etymdata = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
+  setEtymLanguageData(etymdata)
 
-  etym_languages = json_loads(site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}"))
+def setEtymLanguageData(etymdata):
+  global etym_languages_byCode, etym_languages_byCanonicalName, etym_languages_byAlias
+
+  etym_languages = json_loads(etymdata)
   etym_languages_byCode = {}
   etym_languages_byCanonicalName = {}
   etym_languages_byAlias = defaultdict(list)
@@ -1791,12 +1824,14 @@ def getEtymLanguageData():
         assert(type(alias) is str)
         etym_languages_byAlias[alias].append(etyl)
 
-
 def getAliasData():
+  aliasdata = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
+  setAliasData(aliasdata)
+
+def setAliasData(aliasdata):
   global language_aliases_to_canonical
 
-  jsondata = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
-  language_aliases_to_canonical = json_loads(jsondata)
+  language_aliases_to_canonical = json_loads(aliasdata)
 
 
 def try_repeatedly(fun, errandpagemsg, operation="save", bad_value_ret=None, max_tries=2, sleep_time=5):
@@ -3346,16 +3381,19 @@ def levenshtein(s1, s2):
     return previous_row[-1]
 
 # Key for sorting by langname.
-def langname_key(langname):
-  if langname == "Translingual":
-    return " "
-  elif langname == "English":
-    # Translingual before English per [[WT:ELE]].
-    return "  "
-  else:
+def langname_key(langname, prepend_translingual_english=True):
+  key = None
+  if prepend_translingual_english:
+    if langname == "Translingual":
+      key = " "
+    elif langname == "English":
+      # Translingual before English per [[WT:ELE]].
+      key = "  "
+  if key is None:
     # FIXME! What is the correct rule for handling non-ASCII characters? I notice that e.g. Yámana comes before
     # Yoruba on [[ala]] and elsewhere (hence combining diacritics should be ignored), and 'Are'are comes between Ao and
     # Asturian on [[na]] (hence apostrophes should be ignored), but ǃKung (not with an exclamation point but U+01C3)
     # comes after Zulu (hence non-ASCII letters should not be ignored). For now I've decided to convert to decomposed
     # form and remove apostrophes and all combining diacritics (which are generally in the range U+0300 to U+036F).
-    return re.sub("['\u0300-\u036F]", "", unicodedata.normalize("NFD", langname)).lower()
+    key = re.sub(r"[-\s'\"ʻʼ\u0300-\u036F]", "", unicodedata.normalize("NFD", langname)).lower()
+  return (key, langname)
