@@ -25,8 +25,8 @@ local Hrkt = m_sc_getByCode("Hrkt")
 local Kana = m_sc_getByCode("Kana")
 
 local function track(page)
-	-- [[Special:WhatLinksHere/Wiktionary:Tracking/poscatboiler/languages/PAGE]]
-	return require("Module:debug/track")("poscatboiler/languages/" .. page)
+	-- [[Special:WhatLinksHere/Wiktionary:Tracking/category tree/languages/PAGE]]
+	return require("Module:debug/track")("category tree/languages/" .. page)
 end
 
 -- This handles language categories of the form e.g. [[:Category:French language]] and
@@ -70,15 +70,14 @@ raw_categories["Languages by country"] = {
 	},
 }
 
-raw_categories["Language isolates"] = {
-	topright = "{{wikipedia|Language isolate}}\n{{commonscat|Language isolates}}",
-	description = "Languages with no known relatives.",
+raw_categories["Languages not sorted into a location category"] = {
+	description = "Languages which do not specify (in their {{tl|auto cat}} call) the location(s) where they are spoken.",
+	additional = "This excludes constructed and reconstructed languages; as a result, all languages in this category explicitly specify their location as {{cd|UNKNOWN}}.",
 	parents = {
-		{name = "Languages by family", sort = "*Isolates"},
-		{name = "All language families", sort = "Isolates"},
+		{name = "Requests"},
 	},
+	hidden = true,
 }
-
 
 -----------------------------------------------------------------------------
 --                                                                         --
@@ -91,7 +90,7 @@ raw_categories["Language isolates"] = {
 -- {{auto cat}} (if any), and return a table of its arguments. If the category page doesn't exist or doesn't have
 -- an {{auto cat}} invocation, return nil.
 --
--- FIXME: Duplicated in [[Module:category tree/poscatboiler/data/lects]].
+-- FIXME: Duplicated in [[Module:category tree/lects]].
 local function scrape_category_for_auto_cat_args(cat)
 	local cat_page = mw.title.new("Category:" .. cat)
 	if cat_page then
@@ -161,6 +160,18 @@ local function linkbox(lang, setwiki, setwikt, setsister, entryname)
 		wiktionarylinks = "''None.''"
 	end
 	
+	-- Don't even show Wiktionary links section for reconstructed languages,
+	-- as they are ineligible for Wiktionary editions
+	local wiktionarylinks_chunk = concat{
+[=[|-
+| style="vertical-align: top; height: 35px; width: 40px; border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | [[File:Wiktionary-logo-v2.svg|35px|none|Wiktionary]]
+|style="border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | '''Wiktionary edition''']=], wikt_plural, [=[ written in ]=], canonicalName, [=[:
+<div style="padding: 5px 10px">]=], wiktionarylinks, [=[</div>
+]=]}
+	if lang:hasType('reconstructed') then
+		wiktionarylinks_chunk = ''
+	end
+
 	if setsister then
 		track("setsister")
 		if setsister == "-" then
@@ -178,32 +189,29 @@ local function linkbox(lang, setwiki, setwikt, setsister, entryname)
 
 {| style="font-size: 90%"
 |-
-| style="vertical-align: top; height: 35px; border-bottom: 1px solid lightgray;" | [[File:Wikipedia-logo.png|35px|none|Wikipedia]]
-| style="border-bottom: 1px solid lightgray;" | '''English Wikipedia''' has an article on:
+| style="vertical-align: top; height: 35px; border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | [[File:Wikipedia-logo.png|35px|none|Wikipedia]]
+| style="border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | '''English Wikipedia''' has an article on:
 <div style="padding: 5px 10px">]=], (setwiki == "-" and "''None.''" or "'''[[w:" .. wikipediaArticle .. "|" .. wikipediaArticle .. "]]'''"), [=[</div>
 
 |-
-| style="vertical-align: top; height: 35px; border-bottom: 1px solid lightgray;" | [[File:Wikimedia-logo.svg|35px|none|Wikimedia Commons]]
-| style="border-bottom: 1px solid lightgray;" | '''Wikimedia Commons''' has links to ]=], canonicalName, [=[-related content in sister projects:
+| style="vertical-align: top; height: 35px; border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | [[File:Wikimedia-logo.svg|35px|none|Wikimedia Commons]]
+| style="border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | '''Wikimedia Commons''' has links to ]=], canonicalName, [=[-related content in sister projects:
 <div style="padding: 5px 10px">]=], (setsister == "-" and "''None.''" or "'''[[commons:" .. setsister .. "|" .. setsister .. "]]'''"), [=[</div>
 
+]=], wiktionarylinks_chunk, [=[
 |-
-| style="vertical-align: top; height: 35px; width: 40px; border-bottom: 1px solid lightgray;" | [[File:Wiktionary-logo-v2.svg|35px|none|Wiktionary]]
-|style="border-bottom: 1px solid lightgray;" | '''Wiktionary edition''']=], wikt_plural, [=[ written in ]=], canonicalName, [=[:
-<div style="padding: 5px 10px">]=], wiktionarylinks, [=[</div>
-
-|-
-| style="vertical-align: top; height: 35px; border-bottom: 1px solid lightgray;" | [[File:Open book nae 02.svg|35px|none|Entry]]
-| style="border-bottom: 1px solid lightgray;" | '''Wiktionary entry''' for the language's English name:
+| style="vertical-align: top; height: 35px; border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | [[File:Open book nae 02.svg|35px|none|Entry]]
+| style="border-bottom: 1px solid var(--wikt-palette-grey-4,lightgray);" | '''Wiktionary entry''' for the language's English name:
 <div style="padding: 5px 10px">''']=], require("Module:links").full_link({lang = m_languages.getByCode("en"), term = entryname or canonicalName}), [=['''</div>
 
 |-
 | style="vertical-align: top; height: 35px;" | [[File:Crystal kfind.png|35px|none|Considerations]]
 || '''Wiktionary resources''' for editors contributing to ]=], canonicalName, [=[ entries:
 <div style="padding: 5px 0">
-* '''[[Wiktionary:About ]=], canonicalName, [=[]]'''
+* '''[[Wiktionary:]=], canonicalName, [=[ entry guidelines]]'''
 * '''[[:Category:]=], canonicalName, [=[ reference templates|Reference templates]] ({{PAGESINCAT:]=], canonicalName, [=[ reference templates}})'''
 * '''[[Appendix:]=], canonicalName, [=[ bibliography|Bibliography]]'''
+</div>
 |}
 </div>]=]
 }
@@ -328,11 +336,15 @@ local function infobox(lang)
 	local famCode = fam and fam:getCode()
 	
 	if not fam then
-		insert(ret, "<td>unclassified</td>")
+		insert(ret, "<td>[[:Category:Unassigned languages|unassigned]]</td>")
+	elseif famCode == "qfa-dis" then
+		insert(ret, "<td>[[:Category:Languages of disputed affiliation|disputed affiliation]]</td>")
 	elseif famCode == "qfa-iso" then
 		insert(ret, "<td>[[:Category:Language isolates|language isolate]]</td>")
 	elseif famCode == "qfa-mix" then
 		insert(ret, "<td>[[:Category:Mixed languages|mixed language]]</td>")
+	elseif famCode == "qfa-unc" then
+		insert(ret, "<td>[[:Category:Unclassifiable languages|unclassifiable language]]</td>")
 	elseif famCode == "sgn" then
 		insert(ret, "<td>[[:Category:Sign languages|sign language]]</td>")
 	elseif famCode == "crp" then
@@ -482,10 +494,10 @@ local function infobox(lang)
 	return concat(ret)
 end
 
-local function NavFrame(content, title)
+local function NavFrame_for_family_tree(content, title)
 	return '<div class="NavFrame"><div class="NavHead">'
 		.. (title or '{{{title}}}') .. '</div>'
-		.. '<div class="NavContent" style="text-align: left;">'
+		.. '<div class="NavContent" style="text-align: left; font-size: calc(1em / 0.95); padding: 0.3em">'
 		.. content
 		.. '</div></div>'
 end
@@ -566,11 +578,12 @@ local function get_description_topright_additional(lang, locations, extinct, set
 			"All terms in this language may be available at [[Appendix:" .. ucfirst(canonicalName) .. "]]."
 	end
 	
-	local about = new_title("Wiktionary:About " .. canonicalName)
+	local entry_guidelines_page = "Wiktionary:" .. canonicalName .. " entry guidelines"
+	local entry_guidelines = new_title(entry_guidelines_page)
 	
-	if about.exists then
+	if entry_guidelines.exists then
 		add = add .. "\n\n" ..
-			"Please see '''[[Wiktionary:About " .. canonicalName .. "]]''' for information and special considerations for creating " .. nameWithLanguage .. " entries."
+			"Please see '''[[" .. entry_guidelines_page .. "]]''' for information and special considerations for creating " .. nameWithLanguage .. " entries."
 	end
 	
 	local ok, tree_of_descendants = pcall(
@@ -582,7 +595,7 @@ local function get_description_topright_additional(lang, locations, extinct, set
 	
 	if ok then
 		if tree_of_descendants then
-			add = add .. NavFrame(
+			add = add .. NavFrame_for_family_tree(
 				tree_of_descendants,
 				"Family tree")
 		else
@@ -608,11 +621,15 @@ local function get_parents(lang, locations, extinct)
 	
 	-- FIXME: Some of the following categories should be added to this module.
 	if not fam then
-		insert(ret, {name = "Category:Unclassified languages", sort = sortkey})
+		insert(ret, {name = "Category:Unassigned languages", sort = sortkey})
+	elseif famCode == "qfa-dis" then
+		insert(ret, {name = "Category:Languages of disputed affiliation", sort = sortkey})
 	elseif famCode == "qfa-iso" then
 		insert(ret, {name = "Category:Language isolates", sort = sortkey})
 	elseif famCode == "qfa-mix" then
 		insert(ret, {name = "Category:Mixed languages", sort = sortkey})
+	elseif famCode == "qfa-unc" then
+		insert(ret, {name = "Category:Unclassifiable languages", sort = sortkey})
 	elseif famCode == "sgn" then
 		insert(ret, {name = "Category:All sign languages", sort = sortkey})
 	elseif famCode == "crp" then
@@ -708,7 +725,9 @@ local function get_parents(lang, locations, extinct)
 		insert(ret, {name = "Category:All extinct languages", sort = sortkey})
 	end
 
-	if not saw_location then
+	if not saw_location and not (lang:hasType("reconstructed") or (fam and fam:getCode() == "art")) then
+		-- Constructed and reconstructed languages don't need a location specified and often won't have one,
+		-- so don't put them in this maintenance category.
 		insert(ret, {name = "Category:Languages not sorted into a location category", sort = sortkey})
 	end
 
@@ -725,11 +744,11 @@ local function get_children()
 	end
 
 	insert(ret, {name = "terms derived from {{{langname}}}", is_label = true, lang = false})
-	insert(ret, {module = "topic cat", args = {code = "{{{langcode}}}", label = "all topics"}, sort = "all topics"})
+	insert(ret, {name = "{{{langcode}}}:All topics", sort = "all topics"})
 	insert(ret, {name = "Varieties of {{{langname}}}"})
 	insert(ret, {name = "Requests concerning {{{langname}}}"})
-	insert(ret, {name = "Category:Rhymes:{{{langname}}}", description = "Lists of {{{langname}}} words by their rhymes."})
-	insert(ret, {name = "Category:User {{{langcode}}}", description = "Wiktionary users categorized by fluency levels in {{{langdisp}}}."})
+	insert(ret, {name = "Rhymes:{{{langname}}}", description = "Lists of {{{langname}}} words by their rhymes."})
+	insert(ret, {name = "User {{{langcode}}}", description = "Wiktionary users categorized by fluency levels in {{{langdisp}}}."})
 	return ret
 end
 
