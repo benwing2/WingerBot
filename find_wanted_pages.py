@@ -5,11 +5,11 @@
 
 import pywikibot, re, sys, argparse, codecs
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site
 from collections import defaultdict
 
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 templates_to_check = {}
 for template in [
@@ -106,8 +106,8 @@ def process_text_on_page(index, pagetitle, pagetext):
       page = linkparts[0]
       if "#" in page:
         page, anchor = page.split("#", 1)
-        if anchor in blib.languages_byCanonicalName:
-          note_link(blib.languages_byCanonicalName[anchor]["code"], page)
+        if anchor in lang_utils.languages_by_canonical_name:
+          note_link(lang_utils.languages_by_canonical_name[anchor]["code"], page)
         else:
           note_link(None, page)
       else:

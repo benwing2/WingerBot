@@ -4,7 +4,7 @@
 import pywikibot, re, sys, argparse
 from collections import defaultdict
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, errandmsg, site, tname
 
 import infltags
@@ -975,10 +975,10 @@ def process_text_on_page(index, pagetitle, text):
       m = re.search("^==(.*)==\n$", sections[j - 1])
       assert m
       langname = m.group(1)
-      if langname not in blib.languages_byCanonicalName:
+      if langname not in lang_utils.languages_by_canonical_name:
         pagemsg("WARNING: Unrecognized language %s" % langname)
       else:
-        langcode = blib.languages_byCanonicalName[langname]["code"]
+        langcode = lang_utils.languages_by_canonical_name[langname]["code"]
         newsection = convert_raw_section(sections[j], langcode, infer_langcode=False)
         sections[j] = newsection
     return "".join(sections)
@@ -1352,7 +1352,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.convert_raw:
-  blib.getData()
+  lang_utils.get_all_lang_data()
 
 def fetch_page_titles_and_text(textfile):
   with open(textfile, "r", encoding="utf-8") as fp:

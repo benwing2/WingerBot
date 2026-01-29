@@ -7,7 +7,7 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, msg, site, tname, pname
 
-from fix_links import sh_remove_accents
+from lang_utils import sh_remove_accents
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):

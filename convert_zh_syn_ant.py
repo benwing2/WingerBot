@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -58,19 +58,19 @@ def process_text_on_page(index, pagetitle, text):
           term += "<t:%s>" % gloss
         if qual:
           langcode = None
-          if qual in blib.languages_byCanonicalName:
-            langcode = blib.languages_byCanonicalName[qual]["code"]
-          elif qual in blib.etym_languages_byCanonicalName:
-            langcode = blib.etym_languages_byCanonicalName[qual]["code"]
-          elif qual in blib.languages_byAlias:
-            alias_langs = blib.languages_byAlias[qual]
+          if qual in lang_utils.languages_by_canonical_name:
+            langcode = lang_utils.languages_by_canonical_name[qual]["code"]
+          elif qual in lang_utils.etym_languages_by_canonical_name:
+            langcode = lang_utils.etym_languages_by_canonical_name[qual]["code"]
+          elif qual in lang_utils.languages_by_alias:
+            alias_langs = lang_utils.languages_by_alias[qual]
             if len(alias_langs) > 1:
               pagemsg("WARNING: For apparent language alias '%s', saw multiple possible language codes %s: %s"
                 % (qual, ",".join(lang["code"] for lang in alias_langs), str(t)))
             else:
               langcode = alias_langs[0]["code"]
-          elif qual in blib.etym_languages_byAlias:
-            alias_langs = blib.etym_languages_byAlias[qual]
+          elif qual in lang_utils.etym_languages_by_alias:
+            alias_langs = lang_utils.etym_languages_by_alias[qual]
             if len(alias_langs) > 1:
               pagemsg("WARNING: For apparent etymology language alias '%s', saw multiple possible language codes %s: %s"
                 % (qual, ",".join(lang["code"] for lang in alias_langs), str(t)))

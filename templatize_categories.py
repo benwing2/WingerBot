@@ -3,7 +3,7 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
 def process_text_on_page(index, pagetitle, text, langcode, langname, topicstemp):
@@ -115,17 +115,17 @@ if __name__ == "__main__":
   if not langcode and not langname:
     raise ValueError("Either --langcode or --langname must be specified")
   if not langcode:
-    blib.getData()
-    if langname not in blib.languages_byCanonicalName:
+    lang_utils.get_all_lang_data()
+    if langname not in lang_utils.languages_by_canonical_name:
       pagemsg("WARNING: Unknown language name %s" % langname)
     else:
-      langcode = blib.languages_byCanonicalName[langname]["code"]
+      langcode = lang_utils.languages_by_canonical_name[langname]["code"]
   elif not langname:
-    blib.getData()
-    if langcode not in blib.languages_byCode:
+    lang_utils.get_all_lang_data()
+    if langcode not in lang_utils.languages_by_code:
       pagemsg("WARNING: Unknown language code %s" % langcode)
     else:
-      langname = blib.languages_byCode[langcode]["canonicalName"]
+      langname = lang_utils.languages_by_code[langcode]["canonicalName"]
 
   if langcode and langname:
     def do_process_text_on_page(index, pagetitle, text):

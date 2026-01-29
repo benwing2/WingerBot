@@ -6,10 +6,10 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import Any, Callable
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
 
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 class Fields:
   pass
@@ -120,8 +120,8 @@ def process_text_on_page_for_label_objects(index, pagename, text):
     m = re.search("^Module:(.*):Dialects$", pagename)
   if m:
     langcode = m.group(1)
-    if langcode in blib.languages_byCode:
-      langname = blib.languages_byCode[langcode]["canonicalName"]
+    if langcode in lang_utils.languages_by_code:
+      langname = lang_utils.languages_by_code[langcode]["canonicalName"]
     else:
       errandpagemsg("WARNING: Can't locate language %s" % langcode)
 
@@ -609,7 +609,7 @@ if __name__ == "__main__":
       m = re.search("^Module:(.*):Dialects$", module_name)
       if m:
         code = m.group(1)
-        if code not in blib.languages_byCode:
+        if code not in lang_utils.languages_by_code:
           errandpagemsg("WARNING: Can't locate language %s, skipping entire file" % code)
           continue
       else:

@@ -4,7 +4,7 @@
 import pywikibot, re, sys, argparse
 from dataclasses import dataclass
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
 
 @dataclass
@@ -20,7 +20,7 @@ class LabelData:
   appendix_comment: str
   aliases: list
 
-#blib.getLanguageData()
+#lang_utils.get_language_data()
 
 def process_text_on_page(index, pagename, text):
   def pagemsg(txt):
@@ -39,8 +39,8 @@ def process_text_on_page(index, pagename, text):
   #langname = None
   #if m:
   #  code = m.group(1)
-  #  if code in blib.languages_byCode:
-  #    langname = blib.languages_byCode[code]["canonicalName"]
+  #  if code in lang_utils.languages_by_code:
+  #    langname = lang_utils.languages_by_code[code]["canonicalName"]
   #  else:
   #    errandpagemsg("WARNING: Can't locate language %s" % code)
 

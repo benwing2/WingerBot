@@ -4,11 +4,13 @@
 import pywikibot, re, sys, argparse
 from collections import defaultdict
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
 
 import clean_label_module
 from clean_label_module import LabelData, Field, FieldReference
+
+lang_utils.get_language_data()
 
 existing_langs_seen = set()
 def process_text_on_page(index, pagename, text):
@@ -135,7 +137,7 @@ else:
       words = cat.split(" ")
       for i in range(len(words) - 1, 0, -1):
         lang_suffix = " ".join(words[i:])
-        if lang_suffix in blib.languages_byCanonicalName:
+        if lang_suffix in lang_utils.languages_by_canonical_name:
           prefix = " ".join(words[:i])
           langs_by_category_prefix[prefix].append(lang_suffix)
           category_prefixes[cat].append((prefix, lang_suffix))
@@ -161,18 +163,18 @@ else:
           regcat = canon_cat(regcat)
           pagemsg("For regional label '%s', regional category '%s', languages: %s" % (
               labelobj.label, regcat, regcat not in langs_by_category_prefix and "NONE" or ", ".join(
-                "%s (%s)" % (blib.languages_byCanonicalName[lang]["code"], lang) for lang in
+                "%s (%s)" % (lang_utils.languages_by_canonical_name[lang]["code"], lang) for lang in
                 langs_by_category_prefix[regcat])))
           for lang in langs_by_category_prefix[regcat]:
-            langs_for_label.add(blib.languages_byCanonicalName[lang]["code"])
+            langs_for_label.add(lang_utils.languages_by_canonical_name[lang]["code"])
         for plaincat in labelobj.plain_categories.cats:
           plaincat = canon_cat(plaincat)
           pagemsg("For regional label '%s', plain category '%s', languages: %s" % (
               labelobj.label, plaincat, plaincat not in category_prefixes and "NONE" or ", ".join(
-                "%s (%s=%s)" % (prefix, blib.languages_byCanonicalName[lang]["code"], lang) for prefix, lang in
+                "%s (%s=%s)" % (prefix, lang_utils.languages_by_canonical_name[lang]["code"], lang) for prefix, lang in
                 category_prefixes[plaincat])))
           for prefix, lang in category_prefixes[plaincat]:
-            langs_for_label.add(blib.languages_byCanonicalName[lang]["code"])
+            langs_for_label.add(lang_utils.languages_by_canonical_name[lang]["code"])
         langs_for_label = sorted(list(langs_for_label))
       elif hasattr(labelobj.fields, "langs"):
         langs_for_label = labelobj.fields.langs.value
@@ -205,7 +207,7 @@ else:
           if labelobj.label in regional_labels_by_lang[lang]:
             existing_labelobj = regional_labels_by_lang[lang][labelobj.label]
             pagemsg("WARNING: For language %s (%s), regional label '%s' seen more than once as label or alias%s" % (
-              (blib.languages_byCanonicalName[lang]["code"], lang, labelobj.label,
+              (lang_utils.languages_by_canonical_name[lang]["code"], lang, labelobj.label,
                "" if existing_labelobj.label == labelobj.label else
                " (existing label is alias for '%s')" % existing_labelobj.label)))
           else:

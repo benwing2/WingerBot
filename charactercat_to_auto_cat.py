@@ -3,13 +3,14 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def one_char(t):
-  return len(t) == 1 or len(t) == 2 and 0xD800 <= ord(t[0]) <= 0xDBFF
+  #return len(t) == 1 or len(t) == 2 and 0xD800 <= ord(t[0]) <= 0xDBFF
+  return len(t) == 1
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -42,14 +43,14 @@ def process_text_on_page(index, pagetitle, text):
       t_sort = getparam(t, "sort")
       t_context = getparam(t, "context")
       t_context2 = getparam(t, "context2")
-      if langname not in blib.languages_byCanonicalName:
+      if langname not in lang_utils.languages_by_canonical_name:
         pagemsg("WARNING: Unrecognized language name: %s" % langname)
         continue
       if not t_lang:
-        t_lang = blib.languages_byCanonicalName[langname]["code"]
-      elif blib.languages_byCanonicalName[langname]["code"] != t_lang:
+        t_lang = lang_utils.languages_by_canonical_name[langname]["code"]
+      elif lang_utils.languages_by_canonical_name[langname]["code"] != t_lang:
         pagemsg("WARNING: Auto-determined code %s for language name %s != manually specified %s" % (
-          blib.languages_byCanonicalName[langname]["code"], langname, t_lang))
+          lang_utils.languages_by_canonical_name[langname]["code"], langname, t_lang))
         continue
       if t_char == char:
         t_char = None

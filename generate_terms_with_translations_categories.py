@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_page(page, index):
   pagetitle = str(page.title())
@@ -19,10 +19,10 @@ def process_page(page, index):
     tn = tname(t)
     if tn in blib.translation_templates:
       lang = getparam(t, "1").strip()
-      if lang in blib.languages_byCode:
-        langname = blib.languages_byCode[lang]["canonicalName"]
-      elif lang in blib.etym_languages_byCode:
-        langname = blib.etym_languages_byCode[lang]["canonicalName"]
+      if lang in lang_utils.languages_by_code:
+        langname = lang_utils.languages_by_code[lang]["canonicalName"]
+      elif lang in lang_utils.etym_languages_by_code:
+        langname = lang_utils.etym_languages_by_code[lang]["canonicalName"]
       else:
         pagemsg("WARNING: Unrecognized lang code %s" % lang)
         continue

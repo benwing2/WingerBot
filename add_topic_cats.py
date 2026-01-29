@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
 
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 import templatize_categories
 
@@ -26,10 +26,10 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
   sort_key = japanese_sort_keys.get(pagetitle, "")
 
   for lang, cats in cats_to_add[pagetitle]:
-    if lang not in blib.languages_byCode:
+    if lang not in lang_utils.languages_by_code:
       pagemsg("WARNING: Saw unrecognized language code '%s'" % lang)
       continue
-    langname = blib.languages_byCode[lang]["canonicalName"]
+    langname = lang_utils.languages_by_code[lang]["canonicalName"]
     retval = blib.find_modifiable_lang_section(text, langname, pagemsg)
     if retval is None:
       continue

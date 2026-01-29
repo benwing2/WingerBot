@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname, pname
 
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 parser = blib.create_argparser("Move categories based on a regex", include_pagefile=True, include_stdin=True)
 parser.add_argument("--from", help="Old name of template; can be specified multiple times",
@@ -31,10 +31,10 @@ for index, line in blib.iter_items_from_file(args.direcfile, start, end):
     linemsg("WARNING: Unrecognized line: %s" % line)
   else:
     langcode, cat = m.groups()
-    if langcode not in blib.languages_byCode:
+    if langcode not in lang_utils.languages_by_code:
       linemsg("WARNING: Unrecognized lang code '%s': %s" % (langcode, line))
       continue
     origcat = cat
     for fromre, tore in moves_to_do:
       cat = re.sub(fromre, tore, cat)
-    msg("Category:%s:%s ||| Category:%s %s" % (langcode, origcat, blib.languages_byCode[langcode]["canonicalName"], cat))
+    msg("Category:%s:%s ||| Category:%s %s" % (langcode, origcat, lang_utils.languages_by_code[langcode]["canonicalName"], cat))

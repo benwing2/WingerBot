@@ -4,10 +4,10 @@
 from collections import defaultdict
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -23,10 +23,10 @@ def process_text_on_page(index, pagetitle, text):
     m = re.search("^== *(.*?) *==\n$", sections[j - 1])
     assert m
     langname = m.group(1)
-    if langname not in blib.languages_byCanonicalName:
+    if langname not in lang_utils.languages_by_canonical_name:
       pagemsg("WARNING: Can't find language %s" % langname)
       continue
-    langcode = blib.languages_byCanonicalName[langname]["code"]
+    langcode = lang_utils.languages_by_canonical_name[langname]["code"]
     newsectext = re.sub(r"\b%s\b" % args.langcode_var, langcode, sections[j])
     if newsectext != sections[j]:
       notes.append(args.comment or "replace %s with %s" % (args.langcode_var, langcode))

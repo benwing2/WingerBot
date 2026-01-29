@@ -6,16 +6,6 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, msg, site, tname
 
-quote_templates = ["quote-av", "quote-book", "quote-hansard",
-  "quote-journal", "quote-newsgroup", "quote-song", "quote-us-patent",
-  "quote-video", "quote-web", "quote-wikipedia",
-  # aliases
-  "quote-news", "quote-magazine",
-  # misc garbage
-  "quote-poem", "quote-text",
-]
-blib.getData()
-
 def process_page(page, index, parsed):
   pagetitle = str(page.title())
   def pagemsg(txt):
@@ -29,7 +19,7 @@ def process_page(page, index, parsed):
     for t in parsed.filter_templates():
       origt = str(t)
       tn = tname(t)
-      if tn in quote_templates:
+      if tn in blib.quote_templates:
         if not getparam(t, "nocat"):
           continue
         if getparam(t, "lang").strip() != "en":

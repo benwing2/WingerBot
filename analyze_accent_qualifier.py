@@ -3,7 +3,7 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, errmsg, site, tname
 from collections import defaultdict
 import json
@@ -36,7 +36,7 @@ qualifiers_to_enumerate = {
   ("wine-whine", "English"),
 }
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagename, text):
   def pagemsg(txt):
@@ -71,11 +71,11 @@ def process_text_on_page(index, pagename, text):
           if paramind == 0:
             pseudo_langname = None
             pseudo_langtype = None
-            if param in blib.languages_byCode:
-              pseudo_langname = blib.languages_byCode[param]["canonicalName"]
+            if param in lang_utils.languages_by_code:
+              pseudo_langname = lang_utils.languages_by_code[param]["canonicalName"]
               pseudo_langtype = "full"
-            elif param in blib.etym_languages_byCode:
-              pseudo_langname = blib.etym_languages_byCode[param]["canonicalName"]
+            elif param in lang_utils.etym_languages_by_code:
+              pseudo_langname = lang_utils.etym_languages_by_code[param]["canonicalName"]
               pseudo_langtype = "etym-only"
             if pseudo_langtype:
               pass
@@ -150,10 +150,10 @@ for label, labelobj in sorted(list(accent_qualifier_data["labels"].items()), key
   langs = labels_langs[label]
   langcodes = set()
   for lang in langs:
-    if lang not in blib.languages_byCanonicalName:
+    if lang not in lang_utils.languages_by_canonical_name:
       msg("-- WARNING: Can't convert language '%s' to language code" % lang)
     else:
-      langcode = blib.languages_byCanonicalName[lang]["code"]
+      langcode = lang_utils.languages_by_canonical_name[lang]["code"]
       langcodes.add(langcode)
   aliases = labels_aliases[label]
   msg('labels["%s"] = {' % label)

@@ -3,7 +3,7 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname
 
 def process_text_on_page(index, pagetitle, text):
@@ -44,7 +44,8 @@ def process_text_on_page(index, pagetitle, text):
       keyed_sections[i][1] = "==%s==\n" % args.tolang
 
   text = pagehead + "".join(
-    secheader + sectext for langname, secheader, sectext in sorted(keyed_sections, key=lambda sec: blib.langname_key(sec[0]))
+    secheader + sectext for langname, secheader, sectext in sorted(
+      keyed_sections, key=lambda sec: lang_utils.langname_key(sec[0]))
   )
 
   text = text.rstrip("\n") + orig_secfinalnl

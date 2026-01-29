@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
   global args
@@ -22,18 +22,18 @@ def process_text_on_page(index, pagetitle, text):
         sections[j - 1].strip())
       continue
     thislangname = m.group(1)
-    if thislangname not in blib.languages_byCanonicalName:
+    if thislangname not in lang_utils.languages_by_canonical_name:
       pagemsg("WARNING: Unrecognized section lang %s" % thislangname)
       continue
-    thislangcode = blib.languages_byCanonicalName[thislangname]["code"]
+    thislangcode = lang_utils.languages_by_canonical_name[thislangname]["code"]
     def replace_name_translit(m):
       origline = m.group(0)
       source_lang, name_type, template, period = m.groups()
-      if source_lang not in blib.languages_byCanonicalName:
+      if source_lang not in lang_utils.languages_by_canonical_name:
         pagemsg("WARNING: Unrecognized source lang %s, can't parse: <from> %s <to> %s <end>" %
           (source_lang, origline, origline))
         return origline
-      source_lang_code = blib.languages_byCanonicalName[source_lang]["code"]
+      source_lang_code = lang_utils.languages_by_canonical_name[source_lang]["code"]
       parsed = blib.parse_text(template)
       t = list(parsed.filter_templates())[0]
       lang = getparam(t, "1")

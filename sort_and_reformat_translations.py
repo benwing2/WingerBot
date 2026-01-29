@@ -3,12 +3,12 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, errmsg, site, tname
 from collections import defaultdict
 
 #blib.init_fake_langdata()
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def boolean_function_matches(fun, lang):
   if callable(fun):
@@ -22,7 +22,7 @@ def default_indentfun(group, lang):
   return lang.endswith(" " + group)
 
 def langname_key(lang):
-  return blib.langname_key(lang, prepend_translingual_english=False)
+  return lang_utils.langname_key(lang, prepend_translingual_english=False)
 
 indonesian_malay_rename_map = {
   "Arabic": "Jawi",
@@ -42,7 +42,7 @@ indonesian_malay_unindent = {
 malay_creole_mixed = {
   # all of these are creoles or mixed languages
   "Ambonese Malay", "Baba Malay", "Cocos Islands Malay", "Makassar Malay", "Malaccan Creole Malay",
-  "North Moluccan Malay", "Sri Lankan Creole Malay",
+  "North Moluccan Malay", "Papuan Malay", "Sri Lankan Creole Malay",
 }
 
 # Groups of languages handled under a single header, with properties. The key is the top-level header, which is usually
@@ -1797,8 +1797,8 @@ def process_text_on_page(index, pagename, text):
           continue
         def replace_ttbc(m):
           langcode = m.group(1)
-          if langcode in blib.languages_byCode:
-            langname = blib.languages_byCode[langcode]["canonicalName"]
+          if langcode in lang_utils.languages_by_code:
+            langname = lang_utils.languages_by_code[langcode]["canonicalName"]
             pagemsg("Replacing {{ttbc|%s}} with %s" % (langcode, langname))
             notes.append(["replace ", "{{ttbc|%s}}->%s" % (langcode, langname), ""])
             return langname
@@ -1809,7 +1809,7 @@ def process_text_on_page(index, pagename, text):
         m = re.search(r"^([:*]+ *)(%s)(;?)((?: *\{\{.*)?)$" % langname_regex, line)
         if m:
           init, potential_lang, semicolon, rest = m.groups()
-          if potential_lang in blib.languages_byCanonicalName or potential_lang in blib.etym_languages_byCanonicalName:
+          if potential_lang in lang_utils.languages_by_canonical_name or potential_lang in lang_utils.etym_languages_by_canonical_name:
             if semicolon:
               pagemsg("Replacing semicolon with colon after lang %s: %s" % (potential_lang, line))
             else:

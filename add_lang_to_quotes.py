@@ -3,20 +3,12 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname
 
 borrowed_langs = {}
 
-quote_templates = ["quote-av", "quote-book", "quote-hansard",
-  "quote-journal", "quote-newsgroup", "quote-song", "quote-us-patent",
-  "quote-video", "quote-web", "quote-wikipedia",
-  # aliases
-  "quote-news", "quote-magazine",
-  # misc garbage
-  "quote-poem", "quote-text",
-]
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
   global args
@@ -27,18 +19,18 @@ def process_text_on_page(index, pagetitle, text):
 
   def hack_templates(parsed, langname, subsectitle, langnamecode=None,
       is_citation=False):
-    if langname not in blib.languages_byCanonicalName:
+    if langname not in lang_utils.languages_by_canonical_name:
       if not is_citation:
         langnamecode = None
     else:
-      langnamecode = blib.languages_byCanonicalName[langname]["code"]
+      langnamecode = lang_utils.languages_by_canonical_name[langname]["code"]
 
     for t in parsed.filter_templates():
       origt = str(t)
       tn = tname(t)
       if tn in ["citation", "citations"] and is_citation:
         langnamecode = getparam(t, "lang")
-      elif tn in quote_templates:
+      elif tn in blib.quote_templates:
         if getparam(t, "lang"):
           continue
         lang = getparam(t, "language")

@@ -4,97 +4,13 @@
 from collections import defaultdict
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
-# Compile a map from etym language code to its first non-etym-language ancestor.
-etym_language_to_parent = {}
-for code in blib.etym_languages_byCode:
-  parent = code
-  while parent in blib.etym_languages_byCode:
-    parent = blib.etym_languages_byCode[parent]["parent"]
-  etym_language_to_parent[code] = parent
-
-def get_family_proto_lang(fam):
-  if fam not in blib.families_byCode:
-    return None
-  protolang = blib.families_byCode[fam].get("protoLanguage", fam + "-pro")
-  if protolang not in blib.languages_byCode:
-    return None
-  return protolang
-
-def get_lang_family(lang):
-  if lang not in blib.languages_byCode:
-    return None
-  fam = blib.languages_byCode[lang].get("family", None)
-  if fam and fam in blib.families_byCode:
-    return fam
-  return None
-
-def get_family_family(fam):
-  if fam not in blib.families_byCode:
-    return None
-  fam = blib.families_byCode[fam].get("family", None)
-  if fam and fam in blib.families_byCode:
-    return fam
-  return None
-
-# Return the direct ancestor(s) of a language. This is the same algorithm used
-# in [[Module:languages]].
-def get_lang_direct_ancestors(lang):
-  if lang not in blib.languages_byCode:
-    return set()
-  if "ancestors" in blib.languages_byCode[lang]:
-    return blib.languages_byCode[lang]["ancestors"]
-  fam = get_lang_family(lang)
-  protolang = fam and get_family_proto_lang(fam) or None
-  # For the case where the current language is the proto-language
-  # of its family, we need to step up a level higher right from the start.
-  if protolang and protolang == lang:
-    fam = get_family_family(fam)
-    protolang = fam and get_family_proto_lang(fam) or None
-  while not protolang and not (not fam or fam == "qfa-not"):
-    fam = get_family_family(fam)
-    protolang = fam and get_family_proto_lang(fam) or None
-  if protolang:
-    return {protolang}
-  else:
-    return set()
-
-def get_lang_all_ancestors(lang):
-  all_ancestors = set()
-  def get_all_ancestors(lang):
-    direct_ancestors = get_lang_direct_ancestors(lang)
-    for ancestor in direct_ancestors:
-      all_ancestors.add(ancestor)
-      get_all_ancestors(ancestor)
-  get_all_ancestors(lang)
-  return all_ancestors
-
-# Compile a map from etym and non-etym language codes to all ancestors.
-language_to_parents = defaultdict(set)
-for code in blib.etym_languages_byCode:
-  parent = code
-  while parent in blib.etym_languages_byCode:
-    parent = blib.etym_languages_byCode[parent]["parent"]
-    language_to_parents[code].add(parent)
-  for ancestor in get_lang_all_ancestors(parent):
-    language_to_parents[code].add(ancestor)
-for code in blib.languages_byCode:
-  for ancestor in get_lang_all_ancestors(code):
-    language_to_parents[code].add(ancestor)
-
-language_to_parents["nb"].add("no")
-language_to_parents["nn"].add("no")
-language_to_parents["wym"].add("gmw-ecg")
-language_to_parents["lb"].add("gmw-cfr")
-
-#for code in blib.languages_byCode:
-#  msg("For language %s, ancestors=%s" % (code, ",".join(language_to_parents[code])))
-#for code in blib.etym_languages_byCode:
-#  msg("For language %s, ancestors=%s" % (code, ",".join(language_to_parents[code])))
+language_to_ancestors = lang_utils.get_language_to_ancestors_map()
+etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
 
 def lang_desc(lang, main_lang):
   if lang == main_lang:
@@ -143,10 +59,10 @@ def process_text_on_page(index, pagetitle, text):
               elif prevline_main_lang == thisline_main_lang:
                 pagemsg("Saw etym language %s indented under etym language %s, both with the same parent %s" % (
                   thisline_lang, prevline_lang, prevline_main_lang))
-              elif thisline_main_lang not in language_to_parents:
+              elif thisline_main_lang not in language_to_ancestors:
                 pagemsg("WARNING: Something strange, saw unrecognized main lang %s for lang %s" % (
                   thisline_main_lang, thisline_lang))
-              elif prevline_main_lang in language_to_parents[thisline_main_lang]:
+              elif prevline_main_lang in language_to_ancestors[thisline_main_lang]:
                 if prevline_main_lang == prevline_lang:
                   pagemsg("Saw language %s indented under parent %s" % (
                     lang_desc(thisline_lang, thisline_main_lang), lang_desc(prevline_lang, prevline_main_lang)))

@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -98,8 +98,8 @@ def process_text_on_page(index, pagetitle, text):
       if m:
         default_lang, default_root = m.groups()
         default_root = re.sub("-$", "", default_root)
-        if default_lang in blib.languages_byCanonicalName:
-          default_source = blib.languages_byCanonicalName[default_lang]["code"]
+        if default_lang in lang_utils.languages_by_canonical_name:
+          default_source = lang_utils.languages_by_canonical_name[default_lang]["code"]
         else:
           pagemsg("WARNING: Unable to find language %s" % default_lang)
           continue

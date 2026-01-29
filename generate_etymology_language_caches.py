@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
-blib.getEtymLanguageData()
+lang_utils.get_etym_language_data()
 
 parser = blib.create_argparser("Create code-to-canonical-name and canonical-names tables for etymology languages")
 args = parser.parse_args()
@@ -15,7 +15,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 code_to_canonical_name = {}
 canonical_name_to_code = {}
 
-for etyl in blib.etym_languages:
+for etyl in lang_utils.etym_languages:
   code = etyl["code"]
   canonical_name = etyl["canonicalName"]
   is_alias = "mainCode" in etyl and etyl["mainCode"] != code

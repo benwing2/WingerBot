@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import blib
+import blib, lang_utils
 from blib import msg
 from collections import defaultdict
 
 #blib.init_fake_langdata()
-blib.getData()
+lang_utils.get_all_lang_data()
 
-languages = list(blib.languages_byCanonicalName.keys())
+languages = list(lang_utils.languages_by_canonical_name.keys())
 
 def langname_key(lang):
-  return blib.langname_key(lang, prepend_translingual_english=False)
+  return lang_utils.langname_key(lang, prepend_translingual_english=False)
 
 langs_by_key = defaultdict(list)
 

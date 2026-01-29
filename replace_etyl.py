@@ -3,18 +3,13 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 # Compile a map from etym language code to its first non-etym-language ancestor.
-etym_language_to_parent = {}
-for code in blib.etym_languages_byCode:
-  parent = code
-  while parent in blib.etym_languages_byCode:
-    parent = blib.etym_languages_byCode[parent]["parent"]
-  etym_language_to_parent[code] = parent
+etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
 
 def process_text_on_page(index, pagetitle, pagetext):
   global args
@@ -39,7 +34,7 @@ def process_text_on_page(index, pagetitle, pagetext):
   def m_und_uder(m):
     destcode, sourcecode, term_code = m.groups()
     origtext = m.group(0)
-    if destcode in blib.families_byCode or etym_language_to_parent.get(destcode, "NONE") in blib.families_byCode:
+    if destcode in lang_utils.families_by_code or etym_language_to_parent.get(destcode, "NONE") in lang_utils.families_by_code:
       pass
     else:
       pagemsg("WARNING: Saw {{etyl|%s|%s}} {{m|und|...}} where destination is not a family, not changing" %
@@ -61,8 +56,8 @@ def process_text_on_page(index, pagetitle, pagetext):
     etym_langcode, from_langcode = mm.groups()
     if etym_langcode != m_langcode:
       display_msg = False
-      if (etym_langcode in blib.etym_languages_byCode and m_langcode in blib.etym_languages_byCode
-          and blib.etym_languages_byCode[etym_langcode]["canonicalName"] == blib.etym_languages_byCode[m_langcode]["canonicalName"]):
+      if (etym_langcode in lang_utils.etym_languages_by_code and m_langcode in lang_utils.etym_languages_by_code
+          and lang_utils.etym_languages_by_code[etym_langcode]["canonicalName"] == lang_utils.etym_languages_by_code[m_langcode]["canonicalName"]):
         pagemsg("Saw etym lang %s in {{etyl}} and etym lang %s in {{m}}, which are aliases of each other"
             % (etym_langcode, m_langcode))
         display_msg = True

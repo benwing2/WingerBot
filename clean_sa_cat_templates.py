@@ -6,8 +6,6 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, msg, site, tname
 
-blib.getData()
-
 templates = [
   "sa-ima1s",
   "sa-ima3p",

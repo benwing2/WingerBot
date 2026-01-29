@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 possible_hyphens = "-־ـ\u200c"
 def process_text_on_page(index, pagetitle, text):
@@ -47,12 +47,12 @@ def process_text_on_page(index, pagetitle, text):
       t_tr = getparam(t, "tr")
       t_sort = getparam(t, "sort")
       t_sc = getparam(t, "sc")
-      if langname not in blib.languages_byCanonicalName:
+      if langname not in lang_utils.languages_by_canonical_name:
         pagemsg("WARNING: Unrecognized language name: %s" % langname)
         continue
-      if blib.languages_byCanonicalName[langname]["code"] != t_lang:
+      if lang_utils.languages_by_canonical_name[langname]["code"] != t_lang:
         pagemsg("WARNING: Auto-determined code %s for language name %s != manually specified %s" % (
-          blib.languages_byCanonicalName[langname]["code"], langname, t_lang))
+          lang_utils.languages_by_canonical_name[langname]["code"], langname, t_lang))
         continue
       if tn[:-4] != affixtype:
         pagemsg("WARNING: Auto-determined affix type %s != manually specified %s" % (affixtype, tn[:-4]))
@@ -97,7 +97,7 @@ def process_text_on_page(index, pagetitle, text):
       t_term = add_missing_hyphens(t_term)
       already_checked_t_alt = False
       if t_term != term:
-        manual_entry_name = expand_text("{{#invoke:languages/templates|makeEntryName|%s|%s}}" % (t_lang, t_term))
+        manual_entry_name = expand_text("{{#invoke:languages/templates|stripDiacritics|%s|%s}}" % (t_lang, t_term))
         if manual_entry_name != term:
           pagemsg("WARNING: Can't match manually specified term %s (originally %s, entry name %s) to auto-determined term %s" % (
             t_term, orig_t_term, manual_entry_name, term))
@@ -118,15 +118,15 @@ def process_text_on_page(index, pagetitle, text):
       if t_alt and not already_checked_t_alt:
         orig_t_alt = t_alt
         t_alt = add_missing_hyphens(t_alt)
-        manual_entry_name = expand_text("{{#invoke:languages/templates|makeEntryName|%s|%s}}" % (t_lang, t_alt))
+        manual_entry_name = expand_text("{{#invoke:languages/templates|getByCode|%s|stripDiacritics|%s}}" % (t_lang, t_alt))
         if manual_entry_name != term:
           pagemsg("WARNING: Can't match manually specified alt %s (originally %s, entry name %s) to auto-determined term %s" % (
             t_alt, orig_t_alt, manual_entry_name, term))
           continue
       if t_sort:
-        auto_entry_name = expand_text("{{#invoke:languages/templates|makeEntryName|%s|%s}}" % (t_lang, term))
+        auto_entry_name = expand_text("{{#invoke:languages/templates|getByCode|%s|stripDiacritics|%s}}" % (t_lang, term))
         autosort = expand_text("{{#invoke:languages/templates|getByCode|%s|makeSortKey|%s}}" % (t_lang, auto_entry_name))
-        manual_entry_name = expand_text("{{#invoke:languages/templates|makeEntryName|%s|%s}}" % (t_lang, add_missing_hyphens(t_sort)))
+        manual_entry_name = expand_text("{{#invoke:languages/templates|getByCode|%s|stripDiacritics|%s}}" % (t_lang, add_missing_hyphens(t_sort)))
         manual_sort = expand_text("{{#invoke:languages/templates|getByCode|%s|makeSortKey|%s}}" % (t_lang, manual_entry_name))
         if manual_sort != autosort:
           pagemsg("Keeping sort key %s because canonicalized sort key %s based on it not same as canonicalized sort key %s based on term %s" % (

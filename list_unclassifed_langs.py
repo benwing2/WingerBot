@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import re
-import blib
+import blib, lang_utils
 from blib import msg
 from collections import defaultdict
 
 #blib.init_fake_langdata()
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 languages = []
 
@@ -22,10 +22,10 @@ def process_text_on_page(index, pagename, text):
     pagemsg("WARNING: Page is not a language category")
   else:
     langname = m.group(1)
-    if langname not in blib.languages_byCanonicalName:
+    if langname not in lang_utils.languages_by_canonical_name:
       pagemsg("WARNING: Unrecognized language name '%s'" % langname)
     else:
-      languages.append((blib.languages_byCanonicalName[langname]["code"], langname))
+      languages.append((lang_utils.languages_by_canonical_name[langname]["code"], langname))
 
 if __name__ == "__main__":
   parser = blib.create_argparser("Convert language categories to codes", include_pagefile=True, include_stdin=True)

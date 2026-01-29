@@ -3,14 +3,14 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname, pname
 
 accent_templates = ["a", "accent"]
 
 accent_templates_have_lang = True
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 lang_for_special_pages = {
   "Wiktionary:Entry layout": "en",
@@ -88,11 +88,11 @@ def process_text_on_page(index, pagetitle, text):
   if not re.search(accent_template_re, text):
     return
   def hack_templates(sectext, langname, langnamecode=None, is_citation=False):
-    if langname not in blib.languages_byCanonicalName:
+    if langname not in lang_utils.languages_by_canonical_name:
       if not is_citation:
         langnamecode = None
     else:
-      langnamecode = blib.languages_byCanonicalName[langname]["code"]
+      langnamecode = lang_utils.languages_by_canonical_name[langname]["code"]
 
     lines = sectext.split("\n")
     for i, line in enumerate(lines):
@@ -197,7 +197,7 @@ def process_text_on_page(index, pagetitle, text):
             pagemsg("WARNING: No params: %s" % str(t))
             continue
           param1 = numbered_params[0]
-          if (args.skip_already_done and param1 in blib.languages_byCode and
+          if (args.skip_already_done and param1 in lang_utils.languages_by_code and
               len(numbered_params) > 1):
             pagemsg("Skipping likely already-done template: %s" % str(t))
             continue

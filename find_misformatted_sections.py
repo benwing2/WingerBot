@@ -2,54 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import pywikibot, re, sys, argparse, unicodedata
-
-import blib
-from blib import getparam, rmparam, tname, msg, site
 from collections import defaultdict
+
+import blib, lang_utils
+from blib import getparam, rmparam, tname, msg, site
 
 # FIXME: Declension before Derived terms etc.
 # FIXME: Better handling of Alternative Forms
-
-chinese_low_surrogates = (
-  "[" +
-  # The following should be the SIP: U+20000 (D840+DC00) to U+2EBEF (D87A+DFEF): #"𠀀-𮯯"
-  # We include a bit more than needed to get everything.
-  "\uD840-\uD87A"+
-  # The following should be the ExtG: U+30000 (D880+DC00) to U+3134F (D884+DF4F): "𰀀-𱍏"
-  # We include a bit more than needed to get everything.
-  "\uD880-\uD884"+
-  "]"
-)
-
-chinese_misc_ideographic_symbols_and_punctuation = (
-  #"𖿢𖿣𖿰𖿱" i.e. "\U+00016FE2\U+00016FE3\U+00016FF0\U+00016FF1"
-  # i.e. D81B+DFE2 + D81B+DFE3 + D81B+DFF0 + D81B+DFF1
-  "\uD81B[\uDFE2\uDFE3\uDFF0\uDFF1]"
-)
-
-# In the following, we skip the ranges and characters that require surrogates in UTF16 because
-# we're still in Python 2. We handle those characters specially, decomposing them into their
-# individual surrogates (yuck). When we switch to Python 3, this issue should go away.
-chinese_ranges = (
-  "[" + 
-  "\u4E00-\u9FFF"+ # "一-鿿"
-  "\u3400-\u4DBF"+ # "㐀-䶿" # ExtA
-  #"\U00020000-\U0002EBEF"+ # "𠀀-𮯯" # SIP 
-  #"\U00030000-\U0003134F"+ # "𰀀-𱍏" # ExtG
-  "﨎﨏﨑﨓﨔﨟﨡﨣﨤﨧﨨﨩"+
-  "\u2E80-\u2EFF"+ # "⺀-⻿" # Radicals Supplement
-  "\u3000-\u303F"+ # "　-〿" # CJK Symbols and Punctuation
-  #"𖿢𖿣𖿰𖿱"+ # Ideographic Symbols and Punctuation
-  "\u31C0-\u31EF"+ # "㇀-㇯" # Strokes
-  "\u337B-\u337F\u32FF"+ # "㍻-㍿㋿" # 組文字
-  "]"
-)
-
-def matches_chinese_character(pagetitle):
-  return (len(pagetitle) == 1 and re.search("^" + chinese_ranges + "$", pagetitle)
-    or len(pagetitle) == 2 and re.search("^" + chinese_low_surrogates + "$", pagetitle[0])
-    or len(pagetitle) == 2 and re.search("^" + chinese_misc_ideographic_symbols_and_punctuation + "$", pagetitle)
-  )
 
 def get_subsection_id(subsections, k, include_equal_signs=False):
   if k == 0:
@@ -118,7 +77,7 @@ def group_correction_notes(template, notes):
 def allowed_non_mainspace_pagetitle(pagetitle):
   if pagetitle.startswith("Reconstruction:"):
     return True
-  for lang in blib.appendix_only_langnames:
+  for lang in lang_utils.appendix_only_langnames:
     if pagetitle.startswith("Appendix:%s/" % lang):
       return True
   return False
@@ -186,7 +145,7 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
   dont_indent = False
 
   subpagetitle = re.sub(".*/", "", pagetitle)
-  if matches_chinese_character(subpagetitle):
+  if lang_utils.matches_chinese_character(subpagetitle):
     pagemsg("WARNING: Page title is a single Chinese character, not changing indentation")
     dont_indent = True
 
@@ -262,7 +221,7 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
       pos_since_etym_section = 0
       num_seen_by_header_since_etym_section = defaultdict(int)
       pos_sections_seen_by_header_since_etym_section = defaultdict(set)
-    if re.search(blib.pos_regex, subsections[k]):
+    if re.search(lang_utils.pos_regex, subsections[k]):
       pos_since_etym_section += 1
     m = re.search(header_to_reindent_regex, subsections[k])
     if m:
@@ -356,7 +315,7 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
       dont_correct_until_etym_header = False
     if dont_correct_until_etym_header:
       continue
-    if re.search(blib.pos_regex, subsections[k]):
+    if re.search(lang_utils.pos_regex, subsections[k]):
       if has_etym_sections and k < beginning_of_etym_sections:
         pagemsg("WARNING: Saw POS header before beginning of multi-etym sections in section %s" % (subsection_id(k)))
         dont_correct_until_etym_header = True
@@ -420,7 +379,7 @@ def process_text_on_page(index, pagetitle, text):
     sections_for_sorting.append((langname, sections[j - 1], sections[j]))
 
   # Sort by language name if needed.
-  sorted_sections = sorted(sections_for_sorting, key=lambda sec: blib.langname_key(sec[0]))
+  sorted_sections = sorted(sections_for_sorting, key=lambda sec: lang_utils.langname_key(sec[0]))
   if sorted_sections != sections_for_sorting:
     msg("Page %s %s: %s" % (index, pagetitle, "WARNING: Language sections misordered, reordering"))
     if args.correct:

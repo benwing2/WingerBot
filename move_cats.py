@@ -3,14 +3,14 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname, pname
 
 topics_templates = ["topics", "topic", "top", "c", "C", "catlangcode"]
 catlangname_templates = ["catlangname", "cln"]
 categorize_templates = ["categorize", "cat"]
 
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 def process_text_on_page(index, pagetitle, text):
   global args
@@ -104,7 +104,7 @@ def process_text_on_page(index, pagetitle, text):
       m = re.search("^(.*?):(.*)$", fullcat)
       if m:
         langcode, cat = m.groups()
-        if langcode not in blib.languages_byCode:
+        if langcode not in lang_utils.languages_by_code:
           pagemsg("WARNING: Unrecognized lang code %s for category '%s'" % (langcode, fullcat))
           continue
         cat = cat.strip()
@@ -117,18 +117,18 @@ def process_text_on_page(index, pagetitle, text):
         for i in range(len(catwords) - 1, 0, -1): # always include at least one word in the language we check
           putative_lang = " ".join(catwords[:i])
           putative_cat = " ".join(catwords[i:])
-          if putative_lang in blib.languages_byCanonicalName:
-            langcode = blib.languages_byCanonicalName[putative_lang]["code"]
+          if putative_lang in lang_utils.languages_by_canonical_name:
+            langcode = lang_utils.languages_by_canonical_name[putative_lang]["code"]
             cat = putative_cat
             cattype = "poscat"
             break
         if langcode is None:
-          if seclangname not in blib.languages_byCanonicalName:
+          if seclangname not in lang_utils.languages_by_canonical_name:
             pagemsg("WARNING: Found raw category '%s' and unrecognized language '%s' in section header %s" % (
               fullcat, seclangname, j // 2))
             continue
           else:
-            langcode = blib.languages_byCanonicalName[seclangname]["code"]
+            langcode = lang_utils.languages_by_canonical_name[seclangname]["code"]
             cat = fullcat.strip()
             cattype = "raw"
 

@@ -5,6 +5,7 @@ import pywikibot, re, sys, argparse
 
 import blib
 from blib import getparam, rmparam, tname, pname, msg, site
+import lang_utils
 
 def process_text_on_page(index, pagetitle, text):
   global args
@@ -51,7 +52,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("move {{wikipedia}} line to top of etym section")
         else:
           lines_so_far.append(line)
-      if re.search(blib.pos_regex, subsections[k]): # Maybe a lemma
+      if re.search(lang_utils.pos_regex, subsections[k]): # Maybe a lemma
         lines = subsections[k + 1].strip().split("\n")
         for lineind, line in enumerate(lines):
           if re.search(r"\{\{(head\|[^{}]*|[a-z][a-z][a-z]?-[^{}|]*)forms?\b", line):

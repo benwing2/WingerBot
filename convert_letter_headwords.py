@@ -3,9 +3,9 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
-blib.getLanguageData()
+lang_utils.get_language_data()
 
 ordinal_to_cardinal = {}
 ordinals = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth",
@@ -184,10 +184,10 @@ def process_text_on_page(index, pagetitle, text):
   for j in range(2, len(sections), 2):
     sectext = sections[j]
     seclang = lang_sections[j]
-    if seclang not in blib.languages_byCanonicalName:
+    if seclang not in lang_utils.languages_by_canonical_name:
       pagemsg("WARNING: Unrecognized language '%s' in section %s" % (seclang, j))
       continue
-    langcode = blib.languages_byCanonicalName[seclang]["code"]
+    langcode = lang_utils.languages_by_canonical_name[seclang]["code"]
     def replace_ordinal_def(m):
       label, ordinal, letter_group, rest = m.groups()
       cardinal = convert_ordinal_to_cardinal(ordinal)

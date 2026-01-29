@@ -6,199 +6,15 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, tname, msg, site
 
-from fix_cog_usage import etym_language_to_parent, language_name_to_code
-from fix_links import language_codes_to_properties, sh_remove_accents
+import lang_utils
 
-langcode_langname_to_correct_langcode = {
-  # Don't do the following; they aren't correct.
-  # ("Middle Chinese", "zh"): "ltc",
-  # ("Old Chinese", "zh"): "och",
-  ("Middle French", "fr"): "frm",
-  ("Old French", "fr"): "fro",
-  ("Low German", "nds-de"): "nds-de",
-  # Arabic, xng
-  ("Middle English", "en"): "enm",
-  ("Mamluk-Kipchak", "qwm"): "trk-mmk",
-  ("Old Spanish", "es"): "osp",
-  # Chinese, xng
-  ("French", "en"): "fr",
-  # Solon, evn
-  ("Norwegian", "nb"): "nb",
-  ("Spanish", "pt"): "es",
-  # English, enm: do by hand?
-  ("Norwegian", "nn"): "nn",
-  ("Portuguese", "es"): "pt",
-  ("Aromanian", "ro"): "rup",
-  # West Frisian, ofs
-  ("Old Portuguese", "pt"): "roa-opt",
-  # Uyghur, xng
-  ("Galician", "ga"): "gl",
-  ("Old Danish", "da"): "gmq-oda",
-  ("Cornish", "co"): "kw",
-  ("Sardinian", "sn"): "sc",
-  ("English", "fr"): "en",
-  # Armenian, xcl
-  ("Sicilian", "sc"): "scn",
-  ("Old Ukrainian", "uk"): "zle-ouk",
-  ("Old Swedish", "sv"): "gmq-osw",
-  ("Middle Welsh", "mwl"): "wlm",
-  # Hebrew, arc
-  # Greek, grc: do by hand?
-  # Dutch, dum
-  ("Livvi", "liv"): "olo",
-  # Faroese, is
-  ("Spanish", "it"): "es",
-  ("Old Norse", "no"): "non",
-  ("English", "la"): "en",
-  # Crimean Tatar, krc
-  # Chagatai, tt
-  ("Tagalog", "en"): "tl",
-  ("Scots", "en"): "sco",
-  ("Old Catalan", "ca"): "roa-oca",
-  # Middle Low German, gmh
-  ("Middle Dutch", "nl"): "dum",
-  # Latin, mul
-  ("Italian", "en"): "it",
-  # Irish, sga
-  # French, fro
-  # French, frm
-  ("English", "tl"): "en",
-  ("Swedish", "sw"): "sv",
-  ("Swedish", "se"): "sv",
-  ("Old Welsh", "wlo"): "owl",
-  ("Old Latin", "la"): "itc-ola",
-  ("Old Belarusian", "be"): "zle-obe",
-  ("Norwegian", "non"): "no",
-  ("Middle High German", "de"): "gmh",
-  ("Middle Breton", "mbr"): "xbm",
-  ("Middle Armenian", "hy"): "axm",
-  ("Italian", "pt"): "it",
-  ("Italian", "fr"): "it",
-  # Icelandic, fo 
-  ("Galician", "pt"): "gl",
-  # Chinese, cmn 
-  ("Catalan", "en"): "ca",
-  # Don't do the following; it isn't correct.
-  # ("Cantonese", "zh"): "yue",
-  # Wa, prk
-  ("Ukrainian", "ru"): "uk",
-  # Swedish, gmq-osw
-  ("Spanish", "fr"): "es",
-  ("Old Italian", "ito"): "roa-oit",
-  # Norwegian, da
-  # Middle English, ang
-  ("Middle Breton", "mbt"): "xbm",
-  ("Latvian", "lt"): "lv",
-  ("Latin", "en"): "la",
-  ("German", "fr"): "de",
-  ("Friulian", "fr"): "fur",
-  ("Estonian", "es"): "et",
-  ("Dutch", "en"): "nl",
-  ("Walloon", "wal"): "wa",
-  # Swedish, no
-  ("Swabian", "gsw"): "swg",
-  # Silesian, gmw-ecg (dialect of gmw-ecg)
-  ("Old Polish", "pl"): "zlw-opl",
-  ("Old Irish", "ga"): "sga",
-  # Occitan, ca 
-  ("Norwegian Nynorsk", "no"): "nn",
-  ("Norman", "fr"): "nrf",
-  ("Middle Welsh", "mlw"): "wlm",
-  ("Middle Low German", "mgl"): "gml",
-  # Livvi, krl
-  ("Italian", "la"): "it",
-  # German, gmh
-  ("Galician", "es"): "gl",
-  # French, nrf
-  ("English", "es"): "en",
-}
-  
-non_canonical_to_canonical_names = {
-  "Romansh": "Romansch",
-  "Nynorsk": "Norwegian Nynorsk",
-  # Nynorsk: more specific than Norwegian
-  "Azeri": "Azerbaijani",
-  "Old Frankish": "Frankish",
-  "Cuman": "Kipchak", # is this correct?
-  "Khorezmian": "Khwarezmian",
-  "East Frisian": "Saterland Frisian",
-  "Uighur": "Uyghur",
-  "Meadow Mari": "Eastern Mari",
-  "Hill Mari": "Western Mari",
-  "Komi": "Komi-Zyrian", # is this correct?
-  # Croatian: ? map to Serbo-Croatian?
-  # Nancowry: more specific than Central Nicobarese
-  # Mari: less specific than Eastern Mari
-  "Malaccan Creole Portuguese": "Kristang",
-  "Modern Greek": "Greek",
-  "Odia": "Oriya",
-  # Languedocien: more specific than Occitan
-  # Gascon: more specific than Occitan
-  "Nogay": "Nogai",
-  "Kurripako": "Curripaco",
-  "Official Aramaic": "Imperial Aramaic",
-  "Southern Altay": "Southern Altai",
-  "Ludic": "Ludian",
-  "Sorani": "Central Kurdish",
-  "Sinhala": "Sinhalese",
-  "Car": "Car Nicobarese",
-  # Serbian: ? map to Serbo-Croatian?
-  "Kurmanji": "Northern Kurdish",
-  # Chakavian: more specific than Serbo-Croatian
-  # Valencian: more specific than Catalan
-  # Logudorese Sardinian: more specific than Sardinian
-  # Campidanese: more specific than Sardinian
-  "Awakatek": "Aguacateca",
-  # Auvergnat: more specific than Occitan
-  "Yukuna": "Yucuna",
-  "West Greenlandic Pidgin": "Greenlandic Pidgin",
-  # Walser: more specific than Alemannic German
-  # Swiss German: more specific than German
-  "Papiamento": "Papiamentu",
-  "Low Saxon": "Low German",
-  # Kinyarwanda: ? more specific than Rwanda-Rundi?
-  # Kajkavian: more specific than Serbo-Croatian
-  "Izhorian": "Ingrian",
-  # Flemish: ? more specific than Dutch?
-  "Belarussian": "Belarusian",
-  "Sipakapa": "Sipakapense",
-  # Ripuarian: ? more specific than Central Franonian?
-  # Nuorese: more specific than Sardinian
-  # Moselle Franconian: ? more specific than Central Franconian?
-  # Logudorese: more specific than Sardinian
-  "Inupiaq": "Inupiak",
-  # Frisian: not same as West Frisian
-  "Abkhazian": "Abkhaz",
-  "Tangkhul": "Tangkhul Naga",
-  # Siglitun: ? more specific than Inuktitut?
-  "Salako": "Kendayan",
-  "Proto-Sami": "Proto-Samic",
-  "Poitevin": "Poitevin-Saintongeais",
-  "Old Uighur": "Old Uyghur",
-  # Nunatsiavummiut: ? more specific than Inuktitut?
-  "Khamnigan": "Khamnigan Mongol",
-  # Inuinnaqtun: ? more specific than Inkutitut?
-  "Ilokano": "Ilocano",
-  # "High German": "German",
-  # Erzgebirgisch: more specific than East Central German
-  # Bontok: not same as Central Bontoc
-  "Bikol": "Bikol Central",
-  "Balochi": "Baluchi",
-  # Amuzgo: not same as Guerrero Amuzgo
-  ###
-  ### Names formerly unrecognized, now non-canonical
-  ###
-  "Khalkha": "Khalkha Mongolian",
-  "Eastern Yugur": "East Yugur",
-  "Orkhon": "Old Turkic",
-  "Sgaw": "S'gaw Karen",
-  "Faeroese": "Faroese",
-}
+# Comment out to load latest data on-the-fly
+lang_utils.load_all_lang_data("langdata.json")
 
-unrecognized_to_canonical_names = {
-  "Written Tibetan": ("Written", "Tibetan"),
-  "Written Burmese": ("Written", "Burmese"),
-}
+etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+language_name_to_code = lang_utils.get_language_name_to_code_map()
+
+from lang_utils import language_codes_to_properties, sh_remove_accents
 
 def process_text_on_page(index, pagetitle, pagetext):
   global args
@@ -382,9 +198,9 @@ def process_text_on_page(index, pagetitle, pagetext):
         if (langname, template_langcode) in langcode_langname_to_correct_langcode:
           new_langcode = langcode_langname_to_correct_langcode[(langname, template_langcode)]
           if new_langcode == template_langcode:
-            if template_langcode in blib.languages_byCode:
-              new_langname = blib.languages_byCode[template_langcode]["canonicalName"]
-            elif template_langcode in blib.etym_languages_byCode:
+            if template_langcode in lang_utils.languages_by_code:
+              new_langname = lang_utils.languages_by_code[template_langcode]["canonicalName"]
+            elif template_langcode in lang_utils.etym_languages_by_code:
               pagemsg("WARNING: Encountered template langcode %s that's an etymology language: %s" % (
                 template_langcode, origtext))
               break

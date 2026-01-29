@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, errandmsg, site
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 lects_to_codes = {
   "Hainanese": "nan-hnm",
@@ -473,7 +473,7 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
         if lect not in lects_to_codes:
           raise ValueError("Unrecognized lect type '%s' generated" % lect)
         code = lects_to_codes[lect]
-        lang_obj = blib.languages_byCode[code] if code in blib.languages_byCode else blib.etym_languages_byCode[code]
+        lang_obj = lang_utils.languages_by_code[code] if code in lang_utils.languages_by_code else lang_utils.etym_languages_by_code[code]
         canon_name = lang_obj["canonicalName"]
         if canon_name not in canon_lects_seen:
           canon_lects_seen.append(canon_name)

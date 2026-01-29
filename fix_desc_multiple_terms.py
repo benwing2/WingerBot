@@ -6,8 +6,16 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, tname, pname, msg, site
 
-from fix_cog_usage import etym_language_to_parent, language_name_to_code
-from fix_links import language_codes_to_properties, sh_remove_accents
+import lang_utils
+
+# Comment out to load latest data on-the-fly
+lang_utils.load_all_lang_data("langdata.json")
+lang_utils.get_all_lang_data()
+
+etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+language_name_to_code = lang_utils.get_language_name_to_code_map()
+
+from lang_utils import language_codes_to_properties, sh_remove_accents
 
 global_params = [
   "bor", "lbor", "slb", "translit", "der", "clq", "cal", "calq", "calque", "pclq", "sml", "unc", "nolb", "sclb"
@@ -161,8 +169,8 @@ def process_text_on_page(index, pagetitle, pagetext):
         if not mm:
           pagemsg("WARNING: Internal error: Something wrong, not a raw link: %s: %s" % (linktext, origtext))
           return linktext
-        if non_etym_langcode in blib.languages_byCode:
-          langname = blib.languages_byCode[non_etym_langcode]["canonicalName"]
+        if non_etym_langcode in lang_utils.languages_by_code:
+          langname = lang_utils.languages_by_code[non_etym_langcode]["canonicalName"]
         else:
           pagemsg("WARNING: For langcode %s, non-etym parent %s isn't a language: %s"
             % (langcode, non_etym_langcode, origtext))

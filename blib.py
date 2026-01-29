@@ -3,7 +3,7 @@
 
 # Author: Benwing; bits and pieces taken from code written by CodeCat/Rua for MewBot
 
-import pywikibot, mwparserfromhell, re, string, sys, urllib, datetime, json, argparse, time, itertools
+import pywikibot, mwparserfromhell, re, sys, urllib, datetime, json, argparse, time, itertools
 from collections import defaultdict
 import xml.sax
 import difflib
@@ -14,124 +14,19 @@ from json.decoder import JSONDecodeError
 
 site = pywikibot.Site()
 
-appendix_only_langnames = [
-  "Adûni",
-  "Afrihili",
-  "Belter Creole",
-  "Black Speech",
-  "Bolak",
-  "Communicationssprache",
-  "Dothraki",
-  "Eloi",
-  "Glosa",
-  "Goa'uld",
-  "High Valyrian",
-  "Interlingue",
-  "Interslavic",
-  "Klingon",
-  "Kotava",
-  "Láadan",
-  "Lapine",
-  "Lingua Franca Nova",
-  "Lojban",
-  "Mandalorian",
-  "Medefaidrin",
-  "Mundolinco",
-  "Na'vi",
-  "Neo",
-  "Novial",
-  "Noxilo",
-  "Quenya",
-  "Romanova",
-  "Sindarin",
-  "Talossan",
-  "Toki Pona",
-  "Unas",
-]
-
-lemma_poses = [
-  "Abbreviation",
-  "Acronym",
-  "Adjectival noun", # Japanese-specific
-  "Adjective",
-  "Adnominal",
-  "Adposition",
-  "Adverb",
-  "Affix",
-  "Ambiposition",
-  "Article",
-  "Cardinal number",
-  "Circumfix",
-  "Circumposition",
-  "Classifier",
-  "Combined form",
-  "Combining form",
-  "Confix",
-  "Conjunction",
-  "Contraction",
-  "Converb",
-  "Counter",
-  "Determiner",
-  "Diacritical mark",
-  "Gerund",
-  "Han character",
-  "Han tu",
-  "Hanja",
-  "Hanzi",
-  "Ideophone",
-  "Idiom",
-  "Infinitive",
-  "Infix",
-  "Initialism",
-  "Interfix",
-  "Interjection",
-  "Jyutping",
-  "Kanji",
-  "Kanji reading",
-  "Letter",
-  "Ligature",
-  "Misspelling",
-  "Morpheme",
-  "Noun",
-  "Number",
-  "Numeral",
-  "Numeral symbol",
-  "Particle",
-  "Participle",
-  "Pinyin",
-  "Phrase",
-  "Postposition",
-  "Postpositional phrase",
-  "Predicative",
-  "Prefix",
-  "Preposition",
-  "Prepositional phrase",
-  "Preverb",
-  "Pronominal adverb",
-  "Pronoun",
-  "Proper noun",
-  "Proverb",
-  "Punctuation mark",
-  "Relative",
-  "Romaji",
-  "Romanization",
-  "Root",
-  "Singulative",
-  "Stem",
-  "Suffix",
-  "Syllable",
-  "Symbol",
-  "Verb",
-]
-
-re_escaped_lemma_poses = [re.escape(k) for k in lemma_poses]
-pos_regex = "==(%s)==" % "|".join(re_escaped_lemma_poses)
-
 # Don't include t-simple here because it also has a langname= param that may need changing. (In any case, t-simple
 # has been deleted.)
 translation_templates = ["t", "t+", "tt", "tt+", "t-", "t+check", "tt+check", "t-check", "tt-check", "t-needed"]
 label_templates = ["lb", "lbl", "label", "tlb", "term-label"]
 qualifier_templates = ["q", "qual", "qualifier", "i", "qf", "q-lite"]
+quote_templates = ["quote-av", "quote-book", "quote-hansard",
+  "quote-journal", "quote-newsgroup", "quote-song", "quote-us-patent",
+  "quote-video", "quote-web", "quote-wikipedia",
+  # aliases
+  "quote-news", "quote-magazine",
+  # misc garbage
+  "quote-poem", "quote-text",
+]
 
 def remove_links(text):
   # eliminate [[FOO| in [[FOO|BAR]], and then remaining [[ and ]]
@@ -1671,168 +1566,6 @@ def elapsed_time():
   else:
     msg("Elapsed time: %s mins %0.2f secs" % (mins, secs))
   msg("Ending at %s" % time.ctime(endtime))
-
-languages_byCode = None
-languages_byCanonicalName = None
-languages_byAlias = None
-
-families_byCode = None
-families_byCanonicalName = None
-
-scripts_byCode = None
-scripts_byCanonicalName = None
-
-etym_languages_byCode = None
-etym_languages_byCanonicalName = None
-etym_languages_byAlias = None
-
-wm_languages_byCode = None
-wm_languages_byCanonicalName = None
-
-language_aliases_to_canonical = None
-
-def init_fake_langdata():
-  global languages_byCanonicalName, languages_byCode, etym_languages_byCanonicalName, etym_languages_byCode
-  languages_byCanonicalName = {
-    "English": {"code": "en"},
-    "Old English": {"code": "ang"},
-    "Greek": {"code": "el"},
-    "Hungarian": {"code": "hu"},
-    "Japanese": {"code": "ja"},
-    "Chinese": {"code": "zh"},
-    "Spanish": {"code": "es"},
-    "French": {"code": "fr"},
-    "Portuguese": {"code": "pt"},
-    "Latin": {"code": "la"},
-    "Norwegian Bokmål": {"code": "nb"},
-    "Norwegian Nynorsk": {"code": "nn"},
-  }
-  languages_byCode = {
-    y["code"]: {"canonicalName": x} for x, y in languages_byCanonicalName.items()
-  }
-  etym_languages_byCanonicalName = {}
-  etym_languages_byCode = {
-    y["code"]: {"canonicalName": x} for x, y in etym_languages_byCanonicalName.items()
-  }
-
-def getData():
-  getLanguageData()
-  getFamilyData()
-  getScriptData()
-  getEtymLanguageData()
-  getAliasData()
-
-def saveData(outfile):
-  langdata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
-  families = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
-  scripts = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
-  etym_languages = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
-  aliases = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
-  master = {
-    "languages": langdata,
-    "families": families,
-    "scripts": scripts,
-    "etym_languages": etym_languages,
-    "aliases": aliases,
-  }
-  with open(outfile, "w") as fp:
-    fp.write(json.dumps(master))
-
-def loadData(outfile):
-  with open(outfile, "r") as fp:
-    master = json_loads(fp.read())
-  setLanguageData(master["languages"])
-  setFamilyData(master["families"])
-  setScriptData(master["scripts"])
-  setEtymLanguageData(master["etym_languages"])
-  setAliasData(master["aliases"])
-
-def json_loads(data):
-  try:
-    return json.loads(data)
-  except JSONDecodeError:
-    print("JSON decode error processing the following: %s" % data)
-    raise
-
-def setLanguageData(jsondata):
-  global languages_byCode, languages_byCanonicalName, languages_byAlias
-
-  languages = json_loads(jsondata)
-  languages_byCode = {}
-  languages_byCanonicalName = {}
-  languages_byAlias = defaultdict(list)
-
-  for lang in languages:
-    languages_byCode[lang["code"]] = lang
-    languages_byCanonicalName[lang["canonicalName"]] = lang
-    if "aliases" in lang:
-      for alias in lang["aliases"]:
-        assert(type(alias) is str)
-        languages_byAlias[alias].append(lang)
-
-def getLanguageData():
-  jsondata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
-  setLanguageData(jsondata)
-
-def setFamilyData(familydata):
-  global families_byCode, families_byCanonicalName
-
-  families = json_loads(familydata)
-  families_byCode = {}
-  families_byCanonicalName = {}
-
-  for fam in families:
-    families_byCode[fam["code"]] = fam
-    families_byCanonicalName[fam["canonicalName"]] = fam
-
-def getFamilyData():
-  familydata = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
-  setFamilyData(familydata)
-
-def getScriptData():
-  scriptdata = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
-  setScriptData(scriptdata)
-
-def setScriptData(scriptdata):
-  global scripts_byCode, scripts_byCanonicalName
-
-  scripts = json_loads(scriptdata)
-  scripts_byCode = {}
-  scripts_byCanonicalName = {}
-
-  for sc in scripts:
-    scripts_byCode[sc["code"]] = sc
-    scripts_byCanonicalName[sc["canonicalName"]] = sc
-
-def getEtymLanguageData():
-  etymdata = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
-  setEtymLanguageData(etymdata)
-
-def setEtymLanguageData(etymdata):
-  global etym_languages_byCode, etym_languages_byCanonicalName, etym_languages_byAlias
-
-  etym_languages = json_loads(etymdata)
-  etym_languages_byCode = {}
-  etym_languages_byCanonicalName = {}
-  etym_languages_byAlias = defaultdict(list)
-
-  for etyl in etym_languages:
-    etym_languages_byCode[etyl["code"]] = etyl
-    etym_languages_byCanonicalName[etyl["canonicalName"]] = etyl
-    if "aliases" in etyl:
-      for alias in etyl["aliases"]:
-        assert(type(alias) is str)
-        etym_languages_byAlias[alias].append(etyl)
-
-def getAliasData():
-  aliasdata = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
-  setAliasData(aliasdata)
-
-def setAliasData(aliasdata):
-  global language_aliases_to_canonical
-
-  language_aliases_to_canonical = json_loads(aliasdata)
-
 
 def try_repeatedly(fun, errandpagemsg, operation="save", bad_value_ret=None, max_tries=2, sleep_time=5):
   num_tries = 0
@@ -3379,21 +3112,3 @@ def levenshtein(s1, s2):
         previous_row = current_row
 
     return previous_row[-1]
-
-# Key for sorting by langname.
-def langname_key(langname, prepend_translingual_english=True):
-  key = None
-  if prepend_translingual_english:
-    if langname == "Translingual":
-      key = " "
-    elif langname == "English":
-      # Translingual before English per [[WT:ELE]].
-      key = "  "
-  if key is None:
-    # FIXME! What is the correct rule for handling non-ASCII characters? I notice that e.g. Yámana comes before
-    # Yoruba on [[ala]] and elsewhere (hence combining diacritics should be ignored), and 'Are'are comes between Ao and
-    # Asturian on [[na]] (hence apostrophes should be ignored), but ǃKung (not with an exclamation point but U+01C3)
-    # comes after Zulu (hence non-ASCII letters should not be ignored). For now I've decided to convert to decomposed
-    # form and remove apostrophes and all combining diacritics (which are generally in the range U+0300 to U+036F).
-    key = re.sub(r"[-\s'\"ʻʼ\u0300-\u036F]", "", unicodedata.normalize("NFD", langname)).lower()
-  return (key, langname)

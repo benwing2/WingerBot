@@ -3,30 +3,10 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
-blib.getData()
-
-GRAVE = "\u0300"
-ACUTE = "\u0301"
-CFLEX = "\u0302"
-MACRON = "\u0304"
-BREVE = "\u0306"
-DOTOVER = "\u0307"
-DIAER = "\u0308"
-DOUBLEACUTE = "\u030B"
-CARON = "\u030C"
-VERTLINEABOVE = "\u030D"
-DOUBLEGRAVE = "\u030F"
-DOTUNDER = "\u0323"
-DIAERUNDER = "\u0324"
-DOUBLEMACRON = "\u033F"
-DOTABOVERIGHT = "\u0358"
-combining_accent_re = (
-  "[" + GRAVE + ACUTE + CFLEX + MACRON + BREVE + DOTOVER + DIAER + DOUBLEACUTE + CARON + VERTLINEABOVE
-  + DOUBLEGRAVE + DOTUNDER + DIAERUNDER + DOUBLEMACRON + DOTABOVERIGHT + "ⁿ]"
-)
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -141,7 +121,7 @@ def process_text_on_page(index, pagetitle, text):
               % (i + 1, origterm, str(t)))
             simp = after_colon
             after_colon = None
-          elif (re.search(combining_accent_re, unicodedata.normalize("NFD", after_colon)) or
+          elif (re.search(lang_utils.zh_combining_accent_re, unicodedata.normalize("NFD", after_colon)) or
                 re.search("[bcdfghjklmnpqrstwz]h?y?[aeiou][aeiou]?[iumnptk]?g?[1-9]", after_colon)):
             tr = after_colon
           else:
@@ -164,10 +144,10 @@ def process_text_on_page(index, pagetitle, text):
           item += "<t:%s>" % gloss
         if note:
           langcode = None
-          if note in blib.languages_byCanonicalName:
-            langcode = blib.languages_byCanonicalName[note]["code"]
-          elif note in blib.etym_languages_byCanonicalName:
-            langcode = blib.etym_languages_byCanonicalName[note]["code"]
+          if note in lang_utils.languages_by_canonical_name:
+            langcode = lang_utils.languages_by_canonical_name[note]["code"]
+          elif note in lang_utils.etym_languages_by_canonical_name:
+            langcode = lang_utils.etym_languages_by_canonical_name[note]["code"]
           if langcode:
             item = "%s:%s" % (langcode, item)
           else:

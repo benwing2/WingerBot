@@ -6,119 +6,16 @@ import pywikibot, re, sys, argparse
 import blib
 from blib import getparam, rmparam, msg, site
 
-blib.getData()
+import lang_utils
+
+# Comment out to load latest data on-the-fly
+lang_utils.load_all_lang_data("langdata.json")
+
+etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+language_name_to_code = lang_utils.get_language_name_to_code_map()
 
 lang_letter = "[\w,-]"
 lang_letter_or_space = "[\w, -]"
-
-# Compile a map from etym language code to its corresponding full language.
-etym_language_to_parent = {}
-for code, spec in blib.etym_languages_byCode.items():
-  if "full" in spec: # etym-lang families don't have the key "full"
-    etym_language_to_parent[code] = spec["full"]
-
-# Compile a map from all language names (including for etym languages) to a tuple
-# (LANGCODES, ETYMCODE, ISETYMCANON) where LANGCODES is a list of zero or more
-# tuples of (CODE, ISCANON) where CODE is a non-etym lang code and ISCANON is True
-# if this language name is the canonical name of that code; ETYMCODE is the best etym
-# code associated with this language name or None if no etym codes associated with
-# this language name, and ISETYMCANON is True if the language name is the canonical
-# name of ETYMCODE. We accumulate the list of all non-etym lang codes because we have
-# the non-etym lang code specified already and need to match, but need to adjudicate
-# among multiple codes for a given etym language because we have to pick one code to
-# use when the language name is encountered.
-language_name_to_code = {}
-def add_name_with_code(name, code, iscanon, isetym):
-  if name in language_name_to_code:
-    langcodes, otheretymcode, otherisetymcanon = language_name_to_code[name]
-    if not isetym:
-      langcodes.append((code, iscanon))
-    elif otheretymcode is None:
-      language_name_to_code[name] = (langcodes, code, iscanon)
-    else:
-      if iscanon and not otherisetymcanon:
-        msg("Preferring new %s over existing %s because their name %s is the canonical name of new %s but not existing %s" % (
-          code, otheretymcode, name, code, otheretymcode))
-        setnew = True
-      elif otherisetymcanon and not iscanon:
-        msg("Preferring existing %s over new %s because their name %s is the canonical name of existing %s but not new %s" % (
-          otheretymcode, code, name, otheretymcode, code))
-        setnew = False
-      elif re.search("^[a-z][a-z]$", code):
-        msg("Preferring new %s over existing %s (name %s) because new %s looks like a two-letter regular language code" % (
-          code, otheretymcode, name, code))
-        setnew = True
-      elif re.search("^[a-z][a-z]$", otheretymcode):
-        msg("Preferring existing %s over new %s (name %s) because existing %s looks like a two-letter regular language code" % (
-          otheretymcode, code, name, otheretymcode))
-        setnew = False
-      elif re.search("^[a-z][a-z][a-z]$", code):
-        msg("Preferring new %s over existing %s (name %s) because new %s looks like a regular three-letter language code" % (
-          code, otheretymcode, name, code))
-        setnew = True
-      elif re.search("^[a-z][a-z][a-z]$", otheretymcode):
-        msg("Preferring existing %s over new %s (name %s) because existing %s looks like a regular three-letter language code" % (
-          otheretymcode, code, name, otheretymcode))
-        setnew = False
-      elif "-" in code:
-        msg("Preferring new %s over existing %s (name %s) because new %s has a hyphen in it" % (
-          code, otheretymcode, name, code))
-        setnew = True
-      elif "-" in otheretymcode:
-        msg("Preferring existing %s over new %s (name %s) because existing %s has a hyphen in it" % (
-          otheretymcode, code, name, otheretymcode))
-        setnew = False
-      elif "." in code:
-        msg("Preferring new %s over existing %s (name %s) because new %s has a period in it" % (
-          code, otheretymcode, name, code))
-        setnew = True
-      elif "." in otheretymcode:
-        msg("Preferring existing %s over new %s (name %s) because existing %s has a period in it" % (
-          otheretymcode, code, name, otheretymcode))
-        setnew = False
-      elif len(code) < len(otheretymcode):
-        msg("Preferring new %s over existing %s (name %s) because new %s is shorter" % (
-          code, otheretymcode, name, code))
-        setnew = True
-      elif len(otheretymcode) < len(code):
-        msg("Preferring existing %s over new %s (name %s) because existing %s is shorter" % (
-          otheretymcode, code, name, otheretymcode))
-        setnew = False
-      else:
-        msg("Preferring new %s over existing %s (name %s) because %s is new" % (
-          code, otheretymcode, name, code))
-        setnew = True
-      if setnew:
-        language_name_to_code[name] = (langcodes, code, iscanon)
-  else:
-    if isetym:
-      language_name_to_code[name] = ([], code, iscanon)
-    else:
-      language_name_to_code[name] = ([(code, iscanon)], None, None)
-
-for code, desc in blib.languages_byCode.items():
-  add_name_with_code(desc["canonicalName"], code, True, False)
-  if "aliases" in desc:
-    for alias in desc["aliases"]:
-      add_name_with_code(alias, code, False, False)
-  # Not safe to add otherNames, which may be varieties, and information will be lost. E.g.
-  # Replacing <Jèrriais {{m|nrf|lanchi}}> with <{{cog|nrf|lanchi}}> (BAD).
-  #if "otherNames" in desc:
-  #  for othername in desc["otherNames"]:
-  #    add_name_with_code(othername, code, False, False)
-for code, desc in blib.etym_languages_byCode.items():
-  add_name_with_code(desc["canonicalName"], code, True, True)
-  if "aliases" in desc:
-    for alias in desc["aliases"]:
-      add_name_with_code(alias, code, False, True)
-  # Not safe to add otherNames, which may be varieties, and information will be lost.
-  #if "otherNames" in desc:
-  #  for othername in desc["otherNames"]:
-  #    add_name_with_code(othername, code, False, True)
-
-# 2024-10-15: temporary hack for recently renamed language Venetian -> Venetan (still in dump)
-if "Venetan" in language_name_to_code:
-  language_name_to_code["Venetian"] = language_name_to_code["Venetan"]
 
 def process_text_on_page(index, pagetitle, pagetext):
   global args
@@ -195,8 +92,8 @@ def process_text_on_page(index, pagetitle, pagetext):
             langnames = [langname]
           langcodes = []
           langcodes_for_checking = []
-          if langcode in blib.language_aliases_to_canonical:
-            langcode = blib.language_aliases_to_canonical[langcode]
+          if langcode in lang_utils.language_aliases_to_canonical:
+            langcode = lang_utils.language_aliases_to_canonical[langcode]
           langname_code_info = []
           for langname in langnames:
             if langname not in language_name_to_code:

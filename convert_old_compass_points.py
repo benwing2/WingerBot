@@ -3,9 +3,11 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 from convert_col_top_topN_to_col import simplify_link, convert_one_line
+
+lang_utils.get_language_data()
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
@@ -73,10 +75,10 @@ def process_text_on_page(index, pagetitle, text):
       if not lang:
         pagemsg("WARNING: Found {{compass}} without language code: %s" % origt)
         continue
-      if lang not in blib.languages_byCode:
+      if lang not in lang_utils.languages_by_code:
         pagemsg("WARNING: Unknown language code %s in {{compass}}: %s" % (lang, origt))
         continue
-      langname = blib.languages_byCode[lang]["canonicalName"]
+      langname = lang_utils.languages_by_code[lang]["canonicalName"]
       def process_direction(direc):
         terms = []
         for i in range(1, 20):

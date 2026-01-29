@@ -3,27 +3,19 @@
 
 import pywikibot, re, sys, argparse, unicodedata
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, tname, pname, msg, site
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
-# List of punctuation or spacing characters that are found inside of words.
-# Used to exclude characters from the regex above.
-wordPunc = "-־׳״'.·*’་•:"
-notWordPunc = "([^" + wordPunc + "]+)"
-
-punc_chars = "".join("\\" + unichr(i) for i in range(sys.maxunicode)
-    if unicodedata.category(unichr(i)).startswith('P'))
-
-spacingPunctuation = "[" + punc_chars + r"\s]+"
+spacing_punctuation = lang_utils.get_spacing_punctuation()
 
 # Return true if the given head is multiword according to the algorithm used
 # in full_headword().
 def head_is_multiword(head):
-  for m in re.finditer(spacingPunctuation, head):
-    possibleWordBreak = m.group(0)
-    if re.search(notWordPunc, possibleWordBreak):
+  for m in re.finditer(spacing_punctuation, head):
+    possible_word_break = m.group(0)
+    if re.search(lang_utils.not_word_punc, possible_word_break):
       return True
 
   return False
@@ -31,9 +23,9 @@ def head_is_multiword(head):
 # Add links to a multiword head.
 def add_multiword_links(head):
   def workaround_to_exclude_chars(m):
-    return re.sub(notWordPunc, r"]]\1[[", m.group(0))
+    return re.sub(not_word_punc, r"]]\1[[", m.group(0))
 
-  head = "[[" + re.sub(spacingPunctuation, workaround_to_exclude_chars, head) + "]]"
+  head = "[[" + re.sub(spacing_punctuation, workaround_to_exclude_chars, head) + "]]"
 
   # Remove any empty links, which could have been created above
   # at the beginning or end of the string.
@@ -111,9 +103,9 @@ start, end = blib.parse_start_end(args.start, args.end)
 cats = []
 langcodes = args.langs.split(",")
 for langcode in langcodes:
-  if langcode not in blib.languages_byCode:
+  if langcode not in lang_utils.languages_by_code:
     msg("WARNING: Unrecognized language code '%s'" % langcode)
   else:
-    cats.append("%s terms with redundant head parameter" % blib.languages_byCode[langcode]["canonicalName"])
+    cats.append("%s terms with redundant head parameter" % lang_utils.languages_by_code[langcode]["canonicalName"])
 
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=cats, edit=True, stdin=True)

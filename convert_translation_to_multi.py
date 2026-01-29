@@ -4,13 +4,13 @@
 import pywikibot, re, sys, argparse, json
 from collections import defaultdict
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname, pname
 from remove_redundant_sc import check_script_agrees
 
-#blib.init_fake_langdata()
-#blib.getData()
-blib.loadData("langdata.json")
+#lang_utils.init_fake_lang_data()
+#lang_utils.get_all_lang_data()
+lang_utils.load_all_lang_data("langdata.json")
 
 seen_quals = defaultdict(int)
 
@@ -66,21 +66,21 @@ def make_inline_modifier(key, val, pagemsg):
 def lookup_langname(langname, prefer="lang"):
   if langname.endswith(" script"):
     langname = re.sub(" script$", "", langname)
-    if langname in blib.scripts_byCanonicalName:
-      return blib.scripts_byCanonicalName[langname]["code"], "script"
+    if langname in lang_utils.scripts_by_canonical_name:
+      return lang_utils.scripts_by_canonical_name[langname]["code"], "script"
     return None, None
-  if prefer == "script" and langname in blib.scripts_byCanonicalName:
-    return blib.scripts_byCanonicalName[langname]["code"], "script"
-  if prefer == "family" and langname in blib.families_byCanonicalName:
-    return blib.families_byCanonicalName[langname]["code"], "family"
-  if langname in blib.languages_byCanonicalName:
-    return blib.languages_byCanonicalName[langname]["code"], "lang"
-  elif langname in blib.etym_languages_byCanonicalName:
-    return blib.etym_languages_byCanonicalName[langname]["code"], "etymlang"
-  elif langname in blib.families_byCanonicalName:
-    return blib.families_byCanonicalName[langname]["code"], "family"
-  elif langname in blib.scripts_byCanonicalName:
-    return blib.scripts_byCanonicalName[langname]["code"], "script"
+  if prefer == "script" and langname in lang_utils.scripts_by_canonical_name:
+    return lang_utils.scripts_by_canonical_name[langname]["code"], "script"
+  if prefer == "family" and langname in lang_utils.families_by_canonical_name:
+    return lang_utils.families_by_canonical_name[langname]["code"], "family"
+  if langname in lang_utils.languages_by_canonical_name:
+    return lang_utils.languages_by_canonical_name[langname]["code"], "lang"
+  elif langname in lang_utils.etym_languages_by_canonical_name:
+    return lang_utils.etym_languages_by_canonical_name[langname]["code"], "etymlang"
+  elif langname in lang_utils.families_by_canonical_name:
+    return lang_utils.families_by_canonical_name[langname]["code"], "family"
+  elif langname in lang_utils.scripts_by_canonical_name:
+    return lang_utils.scripts_by_canonical_name[langname]["code"], "script"
   else:
     return None, None
 
@@ -170,11 +170,11 @@ def convert_one_line(init_star, langname, rest, pagemsg, expand_text):
             return line
           if not line_langcode:
             line_langcode = langcode
-            if langcode in blib.languages_byCode:
-              should_langname = blib.languages_byCode[langcode]["canonicalName"]
+            if langcode in lang_utils.languages_by_code:
+              should_langname = lang_utils.languages_by_code[langcode]["canonicalName"]
               is_ety = False
-            elif langcode in blib.etym_languages_byCode:
-              should_langname = blib.etym_languages_byCode[langcode]["canonicalName"]
+            elif langcode in lang_utils.etym_languages_by_code:
+              should_langname = lang_utils.etym_languages_by_code[langcode]["canonicalName"]
               is_ety = True
             else:
               pagemsg("WARNING: Unrecognized language code %s: %s" % (langcode, line))
@@ -249,12 +249,12 @@ def convert_one_line(init_star, langname, rest, pagemsg, expand_text):
     rest = "{{%s|%s%s|%s}}" % (line_tempname, line_langcode, line_langcode_suffix, "|".join(entries))
     return "%s%s" % (init_star, rest)
   else:
-    if langname in blib.languages_byCanonicalName:
-      langcode = blib.languages_byCanonicalName[langname]["code"]
-    elif langname in blib.etym_languages_byCanonicalName:
-      langcode = blib.etym_languages_byCanonicalName[langname]["code"]
-    elif langname in blib.families_byCanonicalName:
-      langcode = blib.families_byCanonicalName[langname]["code"]
+    if langname in lang_utils.languages_by_canonical_name:
+      langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+    elif langname in lang_utils.etym_languages_by_canonical_name:
+      langcode = lang_utils.etym_languages_by_canonical_name[langname]["code"]
+    elif langname in lang_utils.families_by_canonical_name:
+      langcode = lang_utils.families_by_canonical_name[langname]["code"]
     else:
       pagemsg("WARNING: Unrecognized language name %s: %s" % (langname, line))
       return line
@@ -652,10 +652,10 @@ def process_text_on_page(index, pagename, text):
 #  section_langs = dict(section_langs)
 #  for j in range(2, len(sections), 2):
 #    langname = section_langs[j]
-#    if langname not in blib.languages_byCanonicalName:
+#    if langname not in lang_utils.languages_by_canonical_name:
 #      pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
 #      continue
-#    langcode = blib.languages_byCanonicalName[langname]["code"]
+#    langcode = lang_utils.languages_by_canonical_name[langname]["code"]
 #    subsections, subsections_by_header, subsection_headers, subsection_levels = (
 #      blib.split_text_into_subsections(sections[j], pagemsg)
 #    )

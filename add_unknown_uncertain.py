@@ -3,10 +3,10 @@
 
 import pywikibot, re, sys, argparse
 
-import blib
+import blib, lang_utils
 from blib import getparam, rmparam, msg, site, tname
 
-blib.getData()
+lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
   global args
@@ -18,11 +18,11 @@ def process_text_on_page(index, pagetitle, text):
   def do_templatize(subsectext, langname, subsectitle):
     if not subsectitle.startswith("Etymology"):
       return subsectext
-    if langname not in blib.languages_byCanonicalName:
+    if langname not in lang_utils.languages_by_canonical_name:
       pagemsg("WARNING: Unknown language %s" % langname)
       return subsectext
     else:
-      langcode = blib.languages_byCanonicalName[langname]["code"]
+      langcode = lang_utils.languages_by_canonical_name[langname]["code"]
 
     def replace_unknown_uncertain(m, template):
       newtemp = "{{%s|%s}}" % (template, langcode)
