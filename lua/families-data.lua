@@ -4979,7 +4979,7 @@ m["paa-wke"] = {
 	"West Keram",
 	nil,
 	"paa-ker",
-	aliases = {"Mongol-Langam", "Ulmapo"}, -- Ulmapo used by Glottolog
+	aliases = {"Koam", "Mongol-Langam", "Ulmapo"}, -- Koam used by Foley, Ulmapo used by Glottolog
 }
 
 m["paa-wpa"] = {
