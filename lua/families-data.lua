@@ -401,16 +401,17 @@ m["alv-sav"] = {
 }
 
 m["alv-sma"] = {
-	"Suppire-Mamara",
+	"Supyire-Mamara",
 	4446348,
 	"alv-snf",
+	aliases = {"Suppire-Mamara"},
 }
 
 m["alv-snf"] = {
 	"Senufo",
 	33795,
 	"alv",
-	aliases = {"Senufic", "Senoufo"},
+	aliases = {"Senufic", "Senoufo", "Sénoufo"},
 }
 
 m["alv-sng"] = {
@@ -3234,7 +3235,13 @@ m["ngf-ang"] = {
 	"Angan",
 	3217366,
 	"ngf",
-	aliases = {"Kratke Range"}, -- alternative name given by Wikipedia
+	aliases = {"Kratke Range"}, -- Usher
+}
+
+m["ngf-ank"] = {
+	"Angal-Kewa",
+	12626916, -- exist in dewiki and hrwiki
+	"ngf-sak",
 }
 
 m["ngf-ask"] = {
@@ -3244,7 +3251,49 @@ m["ngf-ask"] = {
 	-- Wikipedia uses Asmat-Kamoro to refer to a narrower group excluding the Sabakor languages (Buruwai and Kamberau,
 	-- which Glottolog splits into North Kamrau and South Kamrau [sic]), and uses Asmat-Kamrau to refer to what we and
 	-- Glottolog call Asmat-Kamoro. Glottolog does not recognize the narrower grouping.
-	aliases = {"Asmat-Kamrau"},
+	aliases = {"Asmat-Kamrau", -- Wikipedia
+			   "Asmat-Kamrau Bay", -- Usher
+			  },
+}
+
+m["ngf-asm"] = {
+	"Asmat",
+	4807421,
+	"ngf-ask",
+}
+
+m["ngf-ata"] = {
+	"Ankave-Tainae-Akoye",
+	nil,
+	"ngf-ang",
+	aliases = {"Southwest Kratke Range"}, -- Usher
+}
+
+m["ngf-awd"] = {
+	"Awyu-Dumut", -- [[w:Awyu-Dumut languages]] redirects to [[w:Greater Awyu languages]]
+	4830163, -- exist in eswiki, hrwiki and ruwiki
+	"ngf-gaw",
+	aliases = {"Central Digul River"}, -- Usher
+}
+
+m["ngf-awy"] = {
+	"Awyu",
+	96372866,
+	"ngf-awd",
+}
+
+m["ngf-bda"] = {
+	"Becking-Dawi",
+	nil, -- Q55993716 ([[Category:Becking–Dawi languages]]) exists in enwiki
+	"ngf-gaw",
+	aliases = {"Becking and Dawi Rivers"}, -- Usher
+}
+
+m["ngf-bin"] = {
+	"Binanderean",
+	3217374, -- Wikidata doesn't distinguish Binanderean from Greater Binanderean
+	"ngf-gbi",
+	aliases = {"Oro"}, -- Usher (2020)
 }
 
 m["ngf-boa"] = {
@@ -3260,6 +3309,20 @@ m["ngf-bos"] = {
 	4947122,
 	"ngf",
 	aliases = {"Papuan Plateau"}, -- alternative name given by Wikipedia
+}
+
+m["ngf-bsi"] = {
+	"Baruya-Simbari",
+	nil,
+	"ngf-ang",
+	aliases = {"Northwest Kratke Range"}, -- Usher
+}
+
+m["ngf-cda"] = {
+	"Central Dani",
+	nil,
+	"ngf-dan",
+	aliases = {"Dani"}, -- Usher
 }
 
 m["ngf-chw"] = {
@@ -3293,7 +3356,16 @@ m["ngf-dan"] = {
 	-- reserves the name Dani (or "Dani proper") for a narrower group excluding Wano and the poorly attested Ngalik
 	-- languages (Nduga, Silimo, and the Yali dialect cluster, which we, following Ethnologue and Glottolog, split into
 	-- Anggurk Yali, Ninia Yali and Pass Valley Yali). Glottolog does not recognize the narrower grouping.
-	aliases = {"Baliem Valley"},
+	aliases = {"Baliem Valley", -- Wikipedia
+			   "Balim Valley", -- Usher
+			  },
+}
+
+m["ngf-dum"] = {
+	"Dumut", -- [[w:Dumut languages]] redirects to [[w:Greater Awyu languages]]
+	nil,
+	"ngf-awd",
+	aliases = {"Wambon"}, -- Usher
 }
 
 m["ngf-ehu"] = {
@@ -3310,10 +3382,24 @@ m["ngf-eku"] = {
 	aliases = {"East Kutubu"}, -- Glottolog's name
 }
 
+m["ngf-enc"] = {
+	"Engic",
+	nil,
+	"ngf-eng",
+	aliases = {"Engan", -- Glottolog
+			   "Engan proper", -- Wikipedia
+			   "North Engan", -- alternative name given by Wikipedia
+			   "Trans-Enga", -- Usher
+			  },
+}
+
 m["ngf-eng"] = {
 	"Engan",
 	3217449,
 	"ngf",
+	aliases = {"Enga-Kewa-Huli", -- Glottolog, Pawley-Hammarström
+			   "Enga-Southern Highlands", -- Usher
+			  },
 }
 
 m["ngf-era"] = {
@@ -3386,6 +3472,20 @@ m["ngf-gaw"] = {
 	aliases = {"Digul River"}, -- used by Usher (2020)
 }
 
+m["ngf-gbi"] = {
+	"Greater Binanderean",
+	3217374, -- Wikidata doesn't distinguish Binanderean from Greater Binanderean
+	"ngf", -- not placed in Trans-New Guinea in Usher (2020)
+	aliases = {"Guhu-Oro"}, -- Guhu-Oro is used in Usher (2020)
+}
+
+m["ngf-gko"] = {
+	"Gaena-Korafe",
+	11732347, -- considered a single Korafe language by Wikipedia
+	"ngf-bin",
+	aliases = {"Gaina-Korafe"}, -- Usher
+}
+
 m["ngf-gmo"] = {
 	"Gusap-Mot",
 	16110857,
@@ -3414,6 +3514,19 @@ m["ngf-gum"] = {
 	"ngf-mab",
 }
 
+m["ngf-gvd"] = {
+	"Grand Valley Dani", -- considered a single language by Wikipedia
+	5595219,
+	"ngf-cda",
+}
+
+m["ngf-hag"] = {
+	"Hagen", -- [[w:Hagen languages]] redirects to [[w:Chimbu–Wahgi languages]]
+	nil,
+	"ngf-chw",
+	aliases = {"Melpa-Kaugel River"}, -- Usher
+}
+
 m["ngf-han"] = {
 	"Hanseman",
 	5651020,
@@ -3426,6 +3539,13 @@ m["ngf-huo"] = {
 	5946109,
 	"ngf-fhu",
 	aliases = {"Huon Peninsula"}, -- per Usher
+}
+
+m["ngf-jim"] = {
+	"Jimi", -- [[w:Jimi languages]] and [[w:Jimi River languages]] redirect to [[w:Chimbu–Wahgi languages]]
+	nil,
+	"ngf-chw",
+	aliases = {"Jimi River"}, -- Usher
 }
 
 m["ngf-kab"] = {
@@ -3441,7 +3561,7 @@ m["ngf-kai"] = {
 	"Kainantu", -- Kambaira: under "unclassified Kainantu" (Glottolog), Tairora (Pawley-Hammarström), Gauwa (Usher)
 	15478590,
 	"ngf-kgo",
-    aliases = {"Gadsup-Auyana-Awa-Tairora"}, -- Wurm,
+	aliases = {"Gadsup-Auyana-Awa-Tairora"}, -- Wurm,
 }
 
 m["ngf-kak"] = {
@@ -3474,6 +3594,13 @@ m["ngf-kgo"] = {
 	aliases = {"Eastern Highlands"}, -- per Usher (2020)
 }
 
+m["ngf-khu"] = {
+	"Kewa-Huli",
+	nil,
+	"ngf-eng",
+	aliases = {"Huli-Southern Highlands"}, -- Usher
+}
+
 m["ngf-kma"] = {
 	"Kâte-Mape",
 	nil,
@@ -3481,6 +3608,13 @@ m["ngf-kma"] = {
 	aliases = {"Kate-Mape-Sene", -- Pawley-Hammarström (with Sene),
 			   "Southeast Huon", -- Usher
 			  },
+}
+
+m["ngf-kme"] = {
+	"Kapau-Menya",
+	nil,
+	"ngf-ang",
+	aliases = {"Southeast Kratke Range"}, -- Usher
 }
 
 m["ngf-koi"] = {
@@ -3518,6 +3652,13 @@ m["ngf-kto"] = {
 	aliases = {"Tobo-Kube"},
 }
 
+m["ngf-kts"] = {
+	"Komyandaret-Tsaukambo",
+	nil,
+	"ngf-bda",
+	aliases = {"Becking River"}, -- Usher
+}
+
 m["ngf-kum"] = {
 	"Kumil",
 	nil,
@@ -3533,6 +3674,12 @@ m["ngf-kya"] = {
 	aliases = {"Henganofi", -- Usher
 			   "Kamano-Yagaria-Keigana",
 			  },
+}
+
+m["ngf-lok"] = {
+	"Lowland Ok",
+	nil,
+	"ngf-okk",
 }
 
 m["ngf-mab"] = {
@@ -3573,11 +3720,24 @@ m["ngf-min"] = {
 -- 	"ngf-war",
 -- }
 
+m["ngf-mok"] = {
+	"Mountain Ok", -- [[w:Mountain Ok languages]] redirects to [[w:Ok languages]]
+	nil,
+	"ngf-okk",
+}
+
 m["ngf-mom"] = {
 	"Mombum",
 	6897077,
 	"ngf", -- not accepted as TNG by Glottolog but accepted by all others
 	aliases = {"Mombum-Koneraw", "Komolom", "Muli Strait"}, -- Pawley-Hammarström uses Komolom, Usher uses Muli Strait
+}
+
+m["ngf-msu"] = {
+	"Mian-Suganga", -- considred a single Mian language by Wikipedia
+	12952846,
+	"ngf-mok",
+	aliases = {"Mianic"}, -- Glottolog
 }
 
 m["ngf-nad"] = {
@@ -3587,6 +3747,27 @@ m["ngf-nad"] = {
 	aliases = {"Adelbert Range-Isumrud Strait", -- Usher (2020)
 			   "North Adelbert",
 			   "Pihom-Isumrud"}, -- Ross?
+}
+
+m["ngf-nbi"] = {
+	"North Binanderean",
+	nil,
+	"ngf-bin",
+	aliases = {"Suena-Zia"}, -- Usher
+}
+
+m["ngf-nde"] = {
+	"Ndeiram", -- [[w:Ndeiram River languages]] redirects to [[w:Greater Awyu languages]]
+	nil,
+	"ngf-awd",
+	aliases = {"Ndeiram River"}, -- Usher?
+}
+
+m["ngf-ngn"] = {
+	"Ngalik-Nduga", -- [[w:Ngalik languages]] redirects to [[w:Baliem Valley languages]] = Dani languages
+	nil,
+	"ngf-dan",
+	aliases = {"Ngalik"}, -- Usher
 }
 
 m["ngf-nso"] = {
@@ -3621,6 +3802,13 @@ m["ngf-nwh"] = {
 	aliases = {"Wamas-Samosa-Murupi-Mosimo"}, -- Glottolog, Greenhill, and Pawley-Hammarström following Z'graggen; the most common name, but very unwieldy
 }
 
+m["ngf-oen"] = {
+	"Outer Engan", -- considered a single Nete language by Wikipedia
+	6998869,
+	"ngf-enc",
+	aliases = {"Nete-Bisorio"}, -- Usher
+}
+
 m["ngf-okk"] = {
 	"Ok",
 	7081687,
@@ -3631,6 +3819,13 @@ m["ngf-omo"] = {
 	"Omosan", -- not included in (Greater) Northern Adelbert by Glottolog, but a sister
 	nil,
 	"ngf-nad",
+}
+
+m["ngf-oro"] = {
+	"Orokaivic",
+	7103752, -- considered a single Orokaiva language by Wikipedia
+	"ngf-bin",
+	aliases = {"Central Oro"}, -- Usher
 }
 
 m["ngf-pan"] = {
@@ -3660,6 +3855,13 @@ m["ngf-rai"] = {
 	aliases = {"South Madang"}, -- Usher
 }
 
+m["ngf-sab"] = {
+	"Sabakor", -- [[w:Sabakor languages]] redirects to [[w:Asmat–Kamrau languages]]
+	nil, -- 55994614 is for [[Category:Kamrau Bay languages]], which exists on enwiki
+	"ngf-ask",
+	aliases = {"Kamrau Bay"}, -- Usher
+}
+
 m["ngf-sad"] = {
 	"Southern Adelbert",
 	12633980,
@@ -3667,6 +3869,13 @@ m["ngf-sad"] = {
 	aliases = {"South Adelbert", -- Glottolog
 			   "Southern Adelbert Range", -- Z'graggen (1980)
 			   "Sogeram and Tomul Rivers"}, -- Usher (2020)?
+}
+
+m["ngf-sak"] = {
+	"Sau-Angal-Kewa",
+	nil,
+	"ngf-khu",
+	aliases = {"Southern Highlands"}, -- Usher
 }
 
 m["ngf-san"] = {
@@ -3682,6 +3891,12 @@ m["ngf-sbh"] = {
 	"South Bird's Head",
 	7566330,
 	"ngf",
+}
+
+m["ngf-sim"] = {
+	"Simbu",
+	nil,
+	"ngf-chw",
 }
 
 m["ngf-sog"] = {
@@ -3701,6 +3916,13 @@ m["ngf-sop"] = {
 			  },
 }
 
+m["ngf-taa"] = {
+	"Tainae-Akoye",
+	nil,
+	"ngf-ata",
+	aliases = {"Akoye-Tainae"}, -- Usher
+}
+
 m["ngf-tai"] = {
 	"Tairora",
 	nil,
@@ -3718,6 +3940,13 @@ m["ngf-tib"] = {
 			   "Tiboran River", -- Usher (2020)
 			   "Tibor", -- Pick (2020) and Glottolog including Wanambre/Mokati
 			  }
+}
+
+m["ngf-tna"] = {
+	"Tangko-Nakai",
+	nil,
+	"ngf-okk",
+	aliases = {"Central Ok"}, -- Usher
 }
 
 m["ngf-uru"] = {
@@ -3741,6 +3970,13 @@ m["ngf-waa"] = {
 	aliases = {"Awara-Wantoat"}, -- per Wikipedia
 }
 
+m["ngf-wah"] = {
+	"Wahgi", -- [[w:Wahgi languages]] redirects to [[w:Chimbu–Wahgi languages]]
+	nil,
+	"ngf-chw",
+	aliases = {"Wahgi Valley"}, -- Usher
+}
+
 m["ngf-wan"] = {
 	"Wantoatic",
 	nil,
@@ -3757,6 +3993,20 @@ m["ngf-war"] = {
 	aliases = {"Warup River"}, -- Usher?
 }
 
+m["ngf-woj"] = {
+	"Wojokesic",
+	nil,
+	"ngf-ang",
+	aliases = {"Northeast Kratke Range"}, -- Usher
+}
+
+m["ngf-wok"] = {
+	"West Ok",
+	nil,
+	"ngf-okk",
+	aliases = {"Kwer-Kopkaka-Burumakok"}, -- Glottolog, Pawley-Hammarström
+}
+
 m["ngf-wso"] = {
 	"West Sogeram",
 	nil,
@@ -3771,6 +4021,13 @@ m["ngf-yag"] = {
 	35323986,
 	"ngf-mad",
 	aliases = {"Yaganon River"}, -- Usher
+}
+
+m["ngf-yal"] = {
+	"Yali", -- considered a single language by Wikipedia
+	8047468,
+	"ngf-ngn",
+	aliases = {"Ngalik"}, -- Glottolog, Pawley-Hammarström
 }
 
 m["ngf-yar"] = {
@@ -4546,6 +4803,22 @@ m["paa"] = {
 	"qfa-not",
 }
 
+m["paa-aia"] = {
+	"Aian",
+	4767739, -- Annaberg languages
+	"paa-ram",
+	aliases = {"Middle Ramu", -- Foley (with Rao),
+			   "Annaberg", -- with Rao
+			   "Aram-Aren", -- Usher
+			  },
+}
+
+m["paa-alp"] = {
+	"Alor-Pantar",
+	3502429,
+	"paa-tap",
+}
+
 m["paa-amu"] = {
 	"Amto-Musan",
 	480281,
@@ -4570,6 +4843,16 @@ m["paa-arf"] = {
 	4783702,
 }
 
+m["paa-ata"] = {
+	"Ataitan",
+	4812652,
+	"paa-ram",
+	aliases = {"Tangu", -- Foley
+			   "Tanggu", -- alternative name given by Wikipedia
+			   "Moam River", -- Usher
+			  },
+}
+
 m["paa-baa"] = {
 	"Bayono-Awbono",
 	2424781,
@@ -4581,23 +4864,60 @@ m["paa-bai"] = {
 	aliases = {"East New Britain"},
 }
 
-m["paa-bin"] = {
-	"Binanderean",
-	3217374, -- Wikidata doesn't distinguish Binanderean from Greater Binanderean
-	"paa-gbi",
-	aliases = {"Oro"}, -- Oro is used in Usher (2020)
+m["paa-baw"] = {
+	"Bosngun-Awar",
+	nil,
+	"paa-ott",
+	aliases = {"East Ramu Coast", -- Usher
+			   "Bosman-Awar", -- Wikipedia
+			  },
+}
+
+m["paa-bew"] = {
+	"Bewani", -- [[w:Bewani languages]] redirects to [[w:Border languages (New Guinea)]]; but Croatian Wikipedia has an entry
+	16113460,
+	"paa-bor",
+	aliases = {"Poal River"}, -- Usher
+}
+
+m["paa-boa"] = {
+	"Boazi",
+	48803717,
+	"paa-mby",
+	aliases = {"Lake Murray"}, -- Usher
 }
 
 m["paa-bor"] = {
 	"Border",
 	1752158,
-	aliases = {"Upper Tami"},
+	aliases = {"Upper Tami",
+			   "Tami River-Bewani Range", -- Usher
+			  },
 }
 
 m["paa-bul"] = {
 	"Bulaka River",
 	4987195,
 	aliases = {"Yelmek-Maklew", "Jabga"}, -- Yelmek-Maklew in Evans (2018) and Gregor (2021)
+}
+
+m["paa-bvi"] = {
+	"Betaf-Vitou", -- Glottolog
+	nil,
+	"paa-tor",
+	aliases = {"Vitou-Betaf", -- Wikipedia
+			   "Fitou-Tena", -- Usher
+			   "Manirem",
+			  },
+}
+
+m["paa-clp"] = {
+	"Central Lakes Plain", -- [[w:Central Lakes Plain languages]] redirects to [[w:Lakes Plain languages]]
+	nil, -- Q86780132 is for the corresponding category, which exists in enwiki
+	"paa-lpl",
+	aliases = {"East Tariku", -- Glottolog
+			   "Central Lakes Plains", -- Usher
+			  },
 }
 
 m["paa-dtu"] = {
@@ -4640,10 +4960,27 @@ m["paa-ele"] = {
 	aliases = {"Kerema Bay"},
 }
 
+m["paa-elp"] = {
+	"East Lakes Plain", -- [[w:East Lakes Plain languages]] redirects to [[w:Lakes Plain languages]]; but Croatian Wikipedia has an entry
+	12633078,
+	"paa-lpl",
+	aliases = {"East Lakes Plains"}, -- Usher
+}
+
 m["paa-etf"] = {
 	"Eastern Trans-Fly",
 	5330530,
 	aliases = {"Oriomo"}, -- in increasing recent use, probably originating in Evans (2018)
+}
+
+m["paa-eti"] = {
+	"East Timor",
+	15496066,
+	"paa-tap",
+	aliases = {"Oirata-Makasae", -- Wikipedia's name
+			   "Eastern Timor", -- alternative name given by Wikipedia
+			   "Fataluku-Makasai", "Oirata-Makasai", -- alternative names given by Wikidata
+			  },
 }
 
 m["paa-fas"] = {
@@ -4652,11 +4989,32 @@ m["paa-fas"] = {
 	aliases = {"Baibai-Fas"}, -- Glottolog's name
 }
 
-m["paa-gbi"] = {
-	"Greater Binanderean",
-	3217374, -- Wikidata doesn't distinguish Binanderean from Greater Binanderean
-	-- often placed in Trans-New Guinea but not in Usher (2020)
-	aliases = {"Guhu-Oro"}, -- Guhu-Oro is used in Usher (2020)
+m["paa-flp"] = {
+	"Far West Lakes Plain", -- [[w:Wapoga River languages]] redirects to [[w:Lakes Plain languages]]
+	nil, -- Q86808337 is for the corresponding Wapoga languages category, which exists in enwiki
+	"paa-lpl",
+	aliases = {"Rasawa", -- Clouse (1997)
+			   "Wapoga River", -- Usher, including Kehu/Keuw (unclassified by others)
+			  },
+}
+
+m["paa-gkw"] = {
+	"Greater Kwerba",
+	12635134,
+	aliases = {"West Foja Range", -- Usher
+			   "Kwerbic", -- Wikipedia
+			   "Kwerba", -- Foley (2018)
+			  },
+}
+
+m["paa-gto"] = {
+	"Galela-Tobelo",
+	nil,
+	"paa-nnh",
+	aliases = {"Mainland North Halmaheran", -- Glottolog
+			   "Mainland North Halmahera", "Northeast Halmahera", -- alternative names
+			   "Northeast Halmaheran", -- Wikipedia, from Verhoeve 1988
+			  },
 }
 
 m["paa-hya"] = {
@@ -4664,6 +5022,24 @@ m["paa-hya"] = {
 	nil,
 	"paa-mam",
 	aliases = {"Yahang-Heyo"}, -- Wikipedia's name
+}
+
+m["paa-ing"] = {
+	"Inland Gulf",
+	6034783,
+	"paa-ani",
+	aliases = {"Inland Gulf of Papua"}, -- Glottolog
+}
+
+m["paa-isk"] = {
+	"Inner Sko",
+	65043889,
+	"paa-sko",
+	aliases = {"Skouic", -- Glottolog
+			   "West Vanimo Coast", -- Usher
+			   "Western Skou", -- Wikipedia
+			   "Inner Skou", "Nuclear Skou", -- alternative names given by Wikipedia
+			  },
 }
 
 m["paa-iwa"] = {
@@ -4677,6 +5053,12 @@ m["paa-kae"] = {
 	130390498,
 	-- often placed in TNG
 	aliases = {"Kamula-Elevala River"},
+}
+
+m["paa-kan"] = {
+	"Kanum", -- removed from Tonda by Glottolog
+	nil,
+	"paa-ton",
 }
 
 m["paa-kay"] = {
@@ -4708,7 +5090,7 @@ m["paa-kko"] = {
 m["paa-koa"] = {
 	"Kombio-Arapesh",
 	16115049,
-	"paa-tor",
+	"paa-trr",
 	aliases = {"Kombio-Arapeshan", -- Laycock, who includes Wom
 			   "Kombio-Arapesh-Urat", -- Glottolog, including Urat
 			  },
@@ -4741,10 +5123,26 @@ m["paa-kwa"] = {
 	aliases = {"Humene-Uare"},
 }
 
+m["paa-kwe"] = {
+	"Kwerba proper",
+	12635134,
+	"paa-gkw",
+	aliases = {"Kwerba", -- Usher
+			   "Kwerbaic", -- Glottolog
+			  },
+}
+
 m["paa-kwo"] = {
 	"Kwomtari",
 	2075415,
 	aliases = {"Kwomtari-Nai"}, -- Senu River is a larger unproven proposal
+}
+
+m["paa-lla"] = {
+	"Loloda-Laba", -- a single language in Glottolog (Loloda-Laba) and Wikipedia (Loloda)
+	11732388, -- for the Loloda language
+	"paa-gto",
+	aliases = {"Loloda"}, -- Wikipedia's name
 }
 
 m["paa-lma"] = {
@@ -4756,8 +5154,15 @@ m["paa-lma"] = {
 
 m["paa-lpl"] = {
 	"Lakes Plain",
-	aliases = {"Lakes Plains"},
 	6478969,
+	aliases = {"Lakes Plains"},
+}
+
+m["paa-lra"] = {
+	"Lower Ramu",
+	65089469,
+	"paa-ram",
+	aliases = {"Ottilien-Misegian"}, -- alternative name given by Wikipedia 
 }
 
 m["paa-lse"] = {
@@ -4781,7 +5186,7 @@ m["paa-mal"] = {
 m["paa-mam"] = {
 	"Maimai", -- Foley's Maimai is expanded
 	53679325, -- this is the code for the expanded Maimai with 6 languages, as opposed to the 3 in "Nuclear Maimai"
-	"paa-tor",
+	"paa-trr",
 	aliases = {"Nuclear Maimai", -- Glottolog's name
 			   "Maimai proper", -- Wikipedia's name
 			  },
@@ -4796,7 +5201,7 @@ m["paa-man"] = {
 m["paa-mar"] = {
 	"Marienberg",
 	1570589,
-	"paa-tor",
+	"paa-trr",
 	aliases = {"Marienberg Hills"}, -- Usher
 }
 
@@ -4819,6 +5224,18 @@ m["paa-mbi"] = {
 			  },
 }
 
+m["paa-mby"] = {
+	"Marind-Boazi-Yaqay",
+	3217484,
+	"paa-ani",
+	aliases = {"Marind-Boazi-Yaqai", -- Glottolog
+			   "Marind-Yakhai", -- Usher, without Boazi
+			   "Marind-Yaqai", -- Wikidata
+			   "Marind", -- alternative name given by Wikipedia
+			   "Marind-Arandai", -- alternative name given by Spanish Wikipedia
+			  },
+}
+
 m["paa-mmu"] = {
 	"Mandi-Muniwara",
 	nil,
@@ -4834,6 +5251,20 @@ m["paa-mon"] = {
 			  },
 }
 
+m["paa-mri"] = {
+	"Marindic", -- [[w:Marindic languages]] redirects to [[w:Marind–Yaqai languages]]
+	nil,
+	"paa-mby",
+	aliases = {"Marind"}, -- Usher; a single language
+}
+
+m["paa-nam"] = {
+	"Nambu",
+	6961418,
+	"paa-yam",
+	aliases = {"East Morehead River"}, -- Usher
+}
+
 m["paa-nbo"] = {
 	"North Bougainville",
 	749496,
@@ -4843,6 +5274,18 @@ m["paa-ndu"] = {
 	"Ndu",
 	3217498,
 	"paa-sep", -- Not accepted by Glottolog
+	aliases = {"Ndu-Nggala"}, -- Usher
+}
+
+m["paa-ngk"] = {
+	"Ngkolmpu", -- considered a single language by Wikipedia
+	5908646,
+	"paa-kan",
+	aliases = {"Ngkantr", -- Glottolog
+			   "Ngkolmpu Kanum", -- Wikipedia
+			   "Ngkontar", -- alternative name given by Wikipedia
+			   "Kanum", -- used by Wikidata
+			  },
 }
 
 m["paa-nha"] = {
@@ -4857,6 +5300,34 @@ m["paa-nim"] = {
 	aliases = {"Nimboranic", -- per Glottolog
 			   "Grime River", -- per Usher (2020)
 			  }
+}
+
+m["paa-nnd"] = {
+	"Nuclear Ndu",
+	nil,
+	"paa-ndu",
+	aliases = {"Ndu", -- Usher, with Boiken/Boikin
+			   "Ndu proper", -- Wikipedia
+			  },
+}
+
+m["paa-nnh"] = {
+	"Northern North Halmahera",
+	nil,
+	"paa-nha",
+	aliases = {"Northern North Halmaheran", -- Glottolog
+			   "Halmahera", -- Usher
+			   "Core Halmaheran", -- Wikipedia
+			  },
+}
+
+m["paa-ott"] = {
+	"Ottilien",
+	7109477,
+	"paa-lra",
+	aliases = {"Ramu Coast", -- Usher
+			   "Watam-Awar-Gamay", -- alternative name given by Wikipedia
+			  },
 }
 
 m["paa-pah"] = {
@@ -4884,10 +5355,58 @@ m["paa-pia"] = {
 			   "Waibuk"},
 }
 
+m["paa-pio"] = {
+	"Piore River",
+	65043152,
+	"paa-sko",
+	aliases = {"Barupu Lagoon", -- Glottolog
+			   "Lagoon", -- alternative name given by Wikipedia
+			  },
+}
+
+m["paa-por"] = {
+	"Porapora", -- Foley includes Ambakich (which we, Glottolog, and Usher treat as Keram)
+	65044258,
+	"paa-ram",
+	aliases = {"Agoan", -- Glottolog
+			   "Porapora River", -- Usher
+			   "core Grass", -- alternative name given by Wikipedia
+			  }, 
+}
+
 m["paa-ram"] = {
 	"Ramu",
 	3442808,
 	aliases = {"Ramu River"}, -- per Usher (2020)
+}
+
+m["paa-rsa"] = {
+	"Rasawa-Saponi", -- [[w:Rasawa-Saponi languages]] redirects to [[w:Lakes Plain languages]]
+	nil, -- Q9859418 is for the coresponding category, which exists in the Piedmontese Wikipedia (?!)
+	"paa-flp",
+	aliases = {"Rombak River"}, -- Usher
+}
+
+m["paa-rub"] = {
+	"Ruboni",
+	6875319,
+	"paa-lra",
+	aliases = {"Misegian", -- Wikipedia's name
+			   "Mikarew", -- alternative name given by Wikipedia
+			   "Ruboni Range"}, -- Usher
+}
+
+m["paa-saa"] = {
+	"Samarokena-Airoran",
+	96417699,
+	"paa-gkw",
+	aliases = {"Apauwar Coast"}, -- Usher
+}
+
+m["paa-sah"] = {
+	"Sahu",
+	nil,
+	"paa-nnh",
 }
 
 m["paa-sbo"] = {
@@ -4907,6 +5426,12 @@ m["paa-sep"] = {
 	3508772,
 }
 
+m["paa-shi"] = {
+	"Serra Hills",
+	65043154,
+	"paa-sko",
+}
+
 m["paa-sko"] = {
 	"Sko",
 	953509,
@@ -4916,6 +5441,22 @@ m["paa-sko"] = {
 m["paa-sng"] = {
 	"Senagi",
 	2066550,
+}
+
+m["paa-taa"] = {
+	"Taikat-Awyi", -- [[w:Taikat languages]] redirects to [[w:Border languages (New Guinea)]]; but Croatian Wikipedia has an entry
+	12643265,
+	"paa-bor",
+	aliases = {"Taikat", -- Foley
+			   "Upper Tami River", -- Usher
+			  },
+}
+
+m["paa-tam"] = {
+	"Tamolan",
+	7681634,
+	"paa-ram",
+	aliases = {"Guam River"}, -- Usher
 }
 
 m["paa-tap"] = {
@@ -4930,20 +5471,50 @@ m["paa-teb"] = {
 	aliases = {"Dadibi-Folopa"},
 }
 
+m["paa-tir"] = {
+	"Tirio",
+	7809225,
+	"paa-ani",
+	aliases = {"Nuclear Lower Fly", -- Pawley-Hammarström ("Lower Fly" includes Abom)
+			   "Nuclear Tirio", -- Glottolog ("Tirio" includes Abom)
+			   "Lower Fly River", -- Usher (without Abom)
+			  },
+}
+
 m["paa-tki"] = {
 	"Turama-Kikori",
 	7853680,
 	aliases = {"Turama-Kikorian", "Rumu-Omati River"},
 }
 
-m["paa-tkw"] = {
-	"Tor-Kwerba",
-	7827523,
+m["paa-ton"] = {
+	"Tonda",
+	8581005,
+	"paa-yam",
+	aliases = {"West Morehead River"}, -- Usher
+}
+
+m["paa-too"] = {
+	"Tor-Orya",
+	16590099,
+	aliases = {"Orya-Tor"},
 }
 
 m["paa-tor"] = {
+	"Tor", -- [[w:Tor languages]] redirects to [[w:Orya–Tor languages]]
+	nil,
+	"paa-too",
+}
+
+m["paa-trr"] = {
 	"Torricelli",
 	1333831,
+}
+
+m["paa-tti"] = {
+	"Ternate-Tidore",
+	nil,
+	"paa-nnh",
 }
 
 m["paa-wal"] = {
@@ -4962,6 +5533,15 @@ m["paa-wap"] = {
 	aliases = {"Wapeic"}, -- Glottolog
 }
 
+m["paa-war"] = {
+	"Waris", -- [[w:Waris languages]] redirects to [[w:Border languages (New Guinea)]]; but Croatian Wikipedia has an entry
+	12645076,
+	"paa-bor",
+	aliases = {"Warisic", -- Glottolog
+			   "Bapi River", -- Usher (without Manem or Senggi)
+			  },
+}
+
 m["paa-wbh"] = {
 	"West Bird's Head",
 	5330530,
@@ -4975,6 +5555,13 @@ m["paa-wel"] = {
 	aliases = {"West Eleman"},
 }
 
+m["paa-wig"] = {
+	"West Inland Gulf",
+	nil,
+	"paa-ing",
+	aliases = {"West Inland Gulf of Papua"}, -- Glottolog
+}
+
 m["paa-wke"] = {
 	"West Keram",
 	nil,
@@ -4982,16 +5569,42 @@ m["paa-wke"] = {
 	aliases = {"Koam", "Mongol-Langam", "Ulmapo"}, -- Koam used by Foley, Ulmapo used by Glottolog
 }
 
+m["paa-wko"] = {
+	"Wára-Kómnzo", -- since we split out Kómnzo as a separate language
+	11732474, -- for the Wara language
+	"paa-ton",
+	aliases = {"Anta-Komnzo-Wára-Wérè-Kémä", -- Glottolog's name
+			   "Wára", "Wara", -- Wikipedia
+			  },
+}
+
+m["paa-wlp"] = {
+	"West Lakes Plain", -- [[w:Tariku languages]] redirects to [[w:Lakes Plain languages]]
+	47007503, -- actually for "Tariku languages", which per Wikipedia covers Fayu, Kirikiri, Iau and Tause
+	"paa-lpl",
+	aliases = {"West Tariku", -- Glottolog
+			   "West Lakes Plains"}, -- Usher, with Edopi/Iau
+}
+
 m["paa-wpa"] = {
 	"Wapei-Palei",
 	65043156,
-	"paa-tor",
+	"paa-trr",
 }
 
 m["paa-yam"] = {
 	"Yam",
 	15062272,
-	aliases = {"Morehead and Upper Maro River"},
+	aliases = {"Morehead and Upper Maro River",
+			   "Morehead River", -- Usher
+			  },
+}
+
+m["paa-yaq"] = {
+	"Yaqayic", -- [[w:Yaqai languages]] redirects to [[w:Marind–Yaqai languages]]
+	nil,
+	"paa-mby",
+	aliases = {"Yakhai-Warkay"}, -- Usher
 }
 
 m["paa-ysa"] = {
@@ -5276,6 +5889,7 @@ m["poz-wot"] = {
 	"Wotu-Wolio",
 	1041317,
 	"poz-clb",
+	aliases = {"Island Kaili-Wolio"}, -- Glottolog
 }
 
 m["pqe"] = {
