@@ -591,6 +591,13 @@ m["bew-kot"] = {
 
 -- Philippine varieties
 
+m["xnn"] = {
+	"Northern Kankanaey",
+	12953609,
+	"kne",
+	aliases = {"Northern Kankanay", "Northern Kankana-ey"},
+}
+
 m["tl-old"] = {
 	"Old Tagalog",
 	12967437,
@@ -2019,7 +2026,7 @@ m["pra-odr"] = {
 -- Punjabi varieties
 
 m["pnb"] = {
-	"Western Panjabi",
+	"Western Punjabi",
 	58635,
 	"pa",
 	"pa-Arab",
