@@ -12,268 +12,13 @@ local s = m_langdata.shared
 
 local m = {}
 
--- Ainu varieties
+----------------------------------------------------------------------------------------------------------------------
+--                                                Afroasiatic varieties                                             --
+----------------------------------------------------------------------------------------------------------------------
 
-m["ain-hok"] = {
-	"Hokkaido Ainu",
-	20968488,
-	"ain",
-	aliases = {"Hokkaidō Ainu"},
-}
-
-m["ain-kur"] = {
-	"Kuril Ainu",
-	20967012,
-	"ain",
-}
-
-m["ain-sak"] = {
-	"Sakhalin Ainu",
-	20747371,
-	"ain",
-}
-
--- Akan varieties
-
-
-m["tw"] = {
-	"Twi Akan",
-	36850,
-	"ak",
-	aliases = {"Twi"},
-}
-
-m["abr"] = {
-	"Abron",
-	34831,
-	"tw",
-	aliases = {"Brong", "Bono", "Bono Twi"},
-}
-
-m["tw-asa"] = {
-	"Asante Twi",
-	19261685,
-	"tw",
-	aliases = {"Asante", "Ashanti", "Ashante"},
-}
-
-m["tw-aku"] = {
-	"Akuapem Twi",
-	31150449,
-	"tw",
-	aliases = {"Akuapem", "Akuapim", "Akwapem Twi", "Akwapi"},
-}
-
-m["fat"] = {
-	"Fante Akan",
-	35570,
-	"ak",
-	aliases = {"Fante", "Fanti", "Fantse", "Mfantse"},
-}
-
-m["wss"] = {
-	"Wasa",
-	36914,
-	"ak",
-}
-
--- Albanian varieties
-
-m["aln"] = {
-	"Gheg Albanian",
-	181037,
-	"sq",
-	aliases = {"Gheg"},
-}
-
-m["aae"] = {
-	"Arbëresh Albanian",
-	1075302,
-	"als",
-	aliases = {"Arbëreshë", "Arbëresh"},
-}
-
-m["aat"] = {
-	"Arvanitika Albanian",
-	29347,
-	"als",
-	aliases = {"Arvanitika"},
-}
-
-m["als"] = {
-	"Tosk Albanian",
-	180937,
-	"sq",
-	aliases = {"Tosk"},
-}
-
--- Armenian varieties
-
-m["hyw"] = {
-	"Western Armenian",
-	180945,
-	"hy",
-}
-
-m["hye"] = {
-	"Eastern Armenian",
-	181059,
-	"hy",
-}
-
--- Bantu varieties
-
-m["bnt-cmn"] = {
-	"Common Bantu",
-	nil,
-	"bnt-pro",
-}
-
-m["xh-bha"] = {
-	"Bhaca",
-	4900493,
-	"xh",
-	aliases = {"isiBhaca", "IsiBhaca"},
-}
-
--- Semitic varieties
-
--- Akkadian varieties
-
-m["akk-old"] = {
-	"Old Akkadian",
-	nil,
-	"akk",
-}
-
-m["akk-obb"] = {
-	"Old Babylonian",
-	nil,
-	"akk",
-}
-
-m["akk-oas"] = {
-	"Old Assyrian",
-	nil,
-	"akk",
-}
-
-m["akk-mbb"] = {
-	"Middle Babylonian",
-	nil,
-	"akk",
-}
-
-m["akk-mas"] = {
-	"Middle Assyrian",
-	nil,
-	"akk",
-}
-
-m["akk-nbb"] = {
-	"Neo-Babylonian",
-	nil,
-	"akk",
-}
-
-m["akk-nas"] = {
-	"Neo-Assyrian",
-	nil,
-	"akk",
-}
-
-m["akk-lbb"] = {
-	"Late Babylonian",
-	nil,
-	"akk",
-}
-
-m["akk-stb"] = {
-	"Standard Babylonian",
-	nil,
-	"akk",
-}
-
--- Arabic varieties
-
-m["jrb"] = {
-	"Judeo-Arabic",
-	37733,
-	"ar",
-}
-
--- Aramaic varieties
-
-m["arc-bib"] = {
-	"Biblical Aramaic",
-	843235,
-	"arc",
-	family = "sem-are",
-}
-
-m["arc-cpa"] = {
-	"Christian Palestinian Aramaic",
-	60790119,
-	"arc",
-	family = "sem-arw",
-	aliases = {"Melkite Aramaic", "Palestinian Syriac", "Syropalestinian Aramaic"},
-}
-
-m["arc-imp"] = {
-	"Imperial Aramaic",
-	7079491,
-	"arc",
-	aliases = {"Official Aramaic"},
-}
-
-m["arc-hat"] = {
-	"Hatran Aramaic",
-	3832926,
-	"arc",
-	family = "sem-are",
-}
-
-m["arc-jla"] = {
-	"Jewish Literary Aramaic",
-	105952842,
-	"arc",
-}
-
-m["arc-nab"] = {
-	"Nabataean Aramaic",
-	36178,
-	"arc",
-}
-
-m["arc-old"] = {
-	"Old Aramaic",
-	3398392,
-	"arc",
-}
-
-m["arc-pal"] = {
-	"Palmyrene Aramaic",
-	1510113,
-	"arc",
-	family = "sem-arw",
-}
-
-m["tmr"] = {
-	"Jewish Babylonian Aramaic",
-	33407,
-	"arc",
-	family = "sem-ase",
-}
-
-m["jpa"] = {
-	"Jewish Palestinian Aramaic",
-	948909,
-	"arc",
-	family = "sem-arw",
-	aliases = {"Galilean Aramaic"},
-}
-
--- Berber varieties
+--------------------------------------------------------------------------------------
+--                                    Berber varieties                              --
+--------------------------------------------------------------------------------------
 
 m["shi-med"] = {
 	"Medieval Tashelhit",
@@ -281,670 +26,102 @@ m["shi-med"] = {
 	"shi",
 }
 
--- Catalan varieties
+-- Tuareg lects
 
-m["ca-val"] = {
-	"Valencian",
-	32641,
-	"ca",
+m["thv"] = {
+	"Tamahaq",
+	56703,
+	"tmh",
 }
 
--- Central Nicobarese varieties
-
-m["ncb-cam"] = {
-	"Camorta",
-	5026908,
-	"ncb",
-	aliases = {"Kamorta"},
+m["ttq"] = {
+	"Tawellemmet",
+	56390,
+	"tmh",
 }
 
-m["ncb-kat"] = {
-	"Katchal",
-	17064263,
-	"ncb",
-	aliases = {"Tehnu"},
+m["taq"] = {
+	"Tamasheq",
+	4670066,
+	"tmh",
 }
 
-m["ncb-nan"] = {
-	"Nancowry",
-	6962504,
-	"ncb",
-	aliases = {"Nankwari"},
+m["thz"] = {
+	"Tayert",
+	56388,
+	"tmh",
 }
+
+m["thv-ght"] = {
+	"Ghat",
+	47012900,
+	"thv",
+}
+
+--------------------------------------------------------------------------------------
+--                                   Cushitic varieties                             --
+--------------------------------------------------------------------------------------
+
+-- Oromo varieties
+
+m["hae"] = {
+	"Harar Oromo",
+	5330355,
+	"om",
+	aliases = {"Eastern Oromo"},
+}
+
+m["gax"] = {
+	"Borana",
+	2910610,
+	"om",
+	aliases = {"Southern Oromo"},
+}
+
+m["orc"] = {
+	"Orma",
+	2919128,
+	"om",
+}
+
+m["ssn"] = {
+	"Waata",
+	3501553,
+	"om",
+}
+
+--------------------------------------------------------------------------------------
+--                                   Egyptian varieties                             --
+--------------------------------------------------------------------------------------
 
 -----------------------------------------------------
---                Chinese varieties                --
+--           Ancient Egyptian varieties            --
 -----------------------------------------------------
 
-------------- Old Chinese, Middle Chinese -------------
-
-m["och-ear"] = {
-	"Early Old Chinese",
-	nil,
-	"och",
-}
-
-m["och-lat"] = {
-	"Late Old Chinese",
-	nil,
-	"och",
-}
-
-m["ltc-ear"] = {
-	"Early Middle Chinese",
-	nil,
-	"ltc",
-}
-
-m["ltc-lat"] = {
-	"Late Middle Chinese",
-	nil,
-	"ltc",
-}
-
-------------- Classical/Literary varieties -------------
-
--- FIXME: Temporary.
-m["lzh-shi"] = {
-	"Traditional Chinese poetry",
-	1759242,
-	"lzh",
-}
-
--- FIXME: Temporary.
-m["lzh-cii"] = {
-	"Ci",
-	1091366,
-	"lzh",
-}
-
--- FIXME: Temporary.
-m["lzh-yue"] = {
-	"Classical Cantonese",
-	nil,
-	"lzh",
-}
-
--- FIXME: Temporary.
-m["lzh-cmn"] = {
-	"Classical Mandarin",
-	nil,
-	"lzh",
-}
-
--- FIXME: Temporary.
-m["lzh-tai"] = {
-	"Classical Taishanese",
-	nil,
-	"lzh",
-}
-
--- FIXME: Temporary.
-m["lzh-cmn-TW"] = {
-	"Classical Taiwanese Mandarin",
-	nil,
-	"lzh-cmn",
-}
-
--- FIXME: Temporary.
-m["lzh-VI"] = {
-	"Vietnamese Classical Chinese",
-	17034227,
-	"lzh",
-}
-
--- FIXME: Temporary.
-m["lzh-KO"] = {
-	"Korean Classical Chinese",
-	10496257,
-	"lzh",
-	ietf_subtag = "lzh-KR" -- KR = South Korea, as there is no code for Korea as a whole
-}
-
--- FIXME: Temporary.
-m["lzh-lit"] = {
-	"Literary Chinese",
-	nil,
-	"lzh",
-}
-
--- FIXME: Temporary. FIXME: Do we need this? How does it differ from Old Chinese?
-m["lzh-pre"] = {
-	"Pre-Classical Chinese",
-	nil,
-	"lzh",
-}
-
-------------- Written Vernacular varieties -------------
-
--- FIXME: Temporary.
-m["cmn-wvc"] = {
-	"Written vernacular Mandarin",
-	783605,
-	"cmn",
-}
-
--- FIXME: Temporary. FIXME: How does this differ from "Literary Cantonese"?
-m["yue-wvc"] = {
-	"Written vernacular Cantonese",
-	nil,
-	"yue",
-}
-
--- FIXME: Temporary.
-m["zhx-tai-wvc"] = {
-	"Written vernacular Taishanese",
-	nil,
-	"zhx-tai",
-}
-
-------------- Mandarin varieties -------------
-
--- FIXME: Temporary. NOTE: The Linguist List assigns the "w:Beijing dialect" (Wikidata 1147606) the code "cmn-bej" and
--- the larger "w:Beijing Mandarin (division of Mandarin)" dialect group (Wikidata 2169652; what we call "Beijingic
--- Mandarin", after Glottolog) the code "cmn-bei".
-m["cmn-bei"] = {
-	"Beijing Mandarin",
-	1147606,
-	"cmn-bec",
-}
-
--- FIXME: Temporary.
-m["cmn-bec"] = {
-	"Beijingic Mandarin",
-	2169652,
-	"cmn",
-}
-
--- FIXME: Temporary. NOTE: The Linguist List uses the code cmn-zho.
-m["cmn-cep"] = {
-	"Central Plains Mandarin",
-	3048775,
-	"cmn",
-	aliases = {"Zhongyuan Mandarin"},
-}
-
-m["cmn-ear"] = {
-	"Early Mandarin",
-	837169,
-	"cmn",
-	ancestors = "ltc",
-}
-
--- FIXME: Temporary.
-m["cmn-gua"] = {
-	"Guanzhong Mandarin",
-	3431648,
-	"cmn-cep",
-}
-
--- FIXME: Temporary. Appears to be a subdialect of Guiliu Mandarin, which in turn is a subdialect of Southwestern Mandarin.
-m["cmn-gui"] = {
-	"Guilin Mandarin",
-	11111636,
-	"cmn-sow",
-}
-
-m["cmn-jhu"] = {
-	"Jianghuai Mandarin",
-	2128953,
-	"cmn",
-	aliases = {"Lower Yangtze Mandarin"},
-}
-
--- FIXME: Temporary.
-m["cmn-lan"] = {
-	"Lanyin Mandarin",
-	662754,
-	"cmn",
-}
-
--- FIXME: Temporary.
-m["cmn-MY"] = {
-	"Malaysian Mandarin",
-	13646143,
-	"cmn",
-}
-
--- FIXME: Temporary.
-m["cmn-nan"] = {
-	"Nanjing Mandarin",
-	2681098,
-	"cmn-jhu",
-}
-
--- FIXME: Temporary.
-m["cmn-noe"] = {
-	"Northeastern Mandarin",
-	1064504,
-	"cmn",
-}
-
--- FIXME: Temporary.
-m["cmn-PH"] = {
-	"Philippine Mandarin",
-	7185155,
-	"cmn",
-}
-
--- FIXME: Temporary.
-m["cmn-SG"] = {
-	"Singapore Mandarin",
-	1048980,
-	"cmn",
-}
-
--- FIXME: Temporary.
-m["cmn-sow"] = {
-	"Southwestern Mandarin",
-	2609239,
-	"cmn",
-}
-
--- FIXME: Temporary. Appears to be a subdialect of Jilu Mandarin.
-m["cmn-tia"] = {
-	"Tianjin Mandarin",
-	7800220,
-	"cmn",
-}
-
--- FIXME: Temporary. NOTE: Wikidata also has Q4380827 "Taiwanese Mandarin", defined as "rare dialect of Standard Chinese
--- (Mandarin) used in Taiwan, which is strongly influenced by Taiwanese Hokkien; mostly used by elderlies" and having no
--- English Wikipedia article (but see w:zh:臺灣國語).
-m["cmn-TW"] = {
-	"Taiwanese Mandarin",
-	262828,
-	"cmn",
-}
-
--- FIXME: Temporary. Appears to be a subdialect of Wu-Tian Mandarin, in turn a subdialect of Southwestern Mandarin.
--- Given the code cmn-xwu in the Linguist List.
-m["cmn-wuh"] = {
-	"Wuhan Mandarin",
-	11124731,
-	"cmn-sow",
-	aliases = {"Wuhanese"},
-}
-
--- FIXME: Temporary. Appears to be a subdialect of Lanyin Mandarin.
-m["cmn-xin"] = {
-	"Xining Mandarin",
-	nil,
-	"cmn-lan",
-}
-
--- FIXME: Temporary.
-m["cmn-yan"] = {
-	"Yangzhou Mandarin",
-	nil,
-	"cmn-jhu",
-}
-
-------------- Cantonese varieties -------------
-
--- FIXME: Temporary.
-m["yue-gua"] = {
-	"Guangzhou Cantonese",
-	nil,
-	"yue",
-}
-
--- FIXME: Temporary. Given the codes yue-yue or yue-can in the Linguist List.
-m["yue-HK"] = {
-	"Hong Kong Cantonese",
-	5894342,
-	"yue",
-}
-
--- FIXME: Temporary. FIXME: How does this differ from "Written vernacular Cantonese"?
-m["yue-lit"] = {
-	"Literary Cantonese",
-	2472605,
-	"yue",
-}
-
-------------- Wu varieties -------------
-
-m["wuu-han"] = {
-	"Hangzhounese",
-	5648144,
-	"wuu",
-}
-
-m["wuu-nin"] = {
-	"Ningbonese",
-	3972199,
-	"wuu",
-}
-
--- FIXME: Temporary.
-m["wuu-nor"] = {
-	"Northern Wu",
-	7675988,
-	"wuu",
-	aliases = {"Taihu Wu"},
-}
-
--- FIXME: Temporary? Subvariety of Taihu Wu. NOTE: "chm" stands for Chongming, the main dialect, to avoid a conflict
--- with Shanghainese.
-m["wuu-chm"] = {
-	"Shadi Wu",
-	6112340,
-	"wuu-nor",
-}
-
-m["wuu-sha"] = {
-	"Shanghainese",
-	36718,
-	"wuu-nor",
-}
-
-m["wuu-suz"] = {
-	"Suzhounese",
-	831744,
-	"wuu-nor",
-}
-
--- FIXME: Temporary. May be converted into a full language and/or split.
-m["wuu-wen"] = {
-	"Wenzhounese",
-	710218,
-	"wuu",
-}
-
-------------- Xiang varieties -------------
-
-m["hsn-lou"] = {
-	"Loudi Xiang",
-	10943823,
-	"hsn-old",
-}
-
-m["hsn-hya"] = {
-	"Hengyang Xiang",
-	20689035,
-	"hsn-hzh",
-}
-
-m["hsn-hzh"] = {
-	"Hengzhou Xiang",
-	nil,
-	"hsn",
-}
-
-m["hsn-new"] = {
-	"New Xiang",
-	7012696,
-	"hsn",
-	aliases = {"Chang-Yi"},
-}
-
-m["hsn-old"] = {
-	"Old Xiang",
-	7085453,
-	"hsn",
-	aliases = {"Lou-Shao"},
-}
-
-------------- Hakka varieties -------------
-
--- FIXME: Temporary.
-m["hak-dab"] = {
-	"Dabu Hakka",
-	19855566,
-	"hak", -- formerly hak-TW but seems to be spoken primary in Dabu County in Guangdong
-}
-
--- FIXME: Temporary.
-m["hak-eam"] = {
-	"Early Modern Hakka",
-	nil,
-	"hak",
-}
-
--- FIXME: Temporary.
-m["hak-hai"] = {
-	"Hailu Hakka",
-	17038519,
-	"hak", -- often considered a Taiwanese lect but also spoken in [[Shanwei]], [[Guangdong]]
-}
-
--- FIXME: Temporary.
-m["hak-HK"] = {
-	"Hong Kong Hakka",
-	2675834,
-	"hak",
-}
-
--- FIXME: Temporary.
-m["hak-hui"] = {
-	"Huiyang Hakka",
-	16873881,
-	"hak",
-}
-
--- FIXME: Temporary.
-m["hak-hui-MY"] = {
-	"Malaysian Huiyang Hakka",
-	nil,
-	"hak-hui",
-}
-
--- FIXME: Temporary. Similar to and possibly the parent of Sixian Hakka in Taiwan.
-m["hak-mei"] = {
-	"Meixian Hakka",
-	839295,
-	"hak",
-	aliases = {"Moiyan Hakka", "Meizhou Hakka"},
-}
-
--- FIXME: Temporary.
-m["hak-six"] = {
-	"Sixian Hakka",
-	9668261,
-	"hak-TW",
-}
-
--- FIXME: Temporary.
-m["hak-TW"] = {
-	"Taiwanese Hakka",
-	2391532,
-	"hak",
-}
-
--- FIXME: Temporary.
-m["hak-zha"] = {
-	"Zhao'an Hakka",
-	6703311,
-	"hak",
-	aliases = {"Zhangzhou Hakka"},
-}
-
--- Southern Min varieties --
-
-m["nan-anx"] = {
-	"Anxi Hokkien",
-	97064149,
-	"nan-qua",
-}
-
-m["nan-cha"] = {
-	"Changtai Hokkien",
-	nil,
-	"nan-zha",
-}
-
-m["nan-hou"] = {
-	"Houlu Min",
-	19855492,
-	"nan-dat",
-}
-
-m["nan-hui"] = {
-	"Hui'an Hokkien",
-	16241797,
-	"nan-qua",
-}
-
-m["nan-jin"] = {
-	"Jinjiang Hokkien",
-	11089375,
-	"nan-qua",
-}
-
-m["nan-kin"] = {
-	"Kinmenese Hokkien",
-	56278342,
-	"nan-xia",
-	aliases = {"Kinmen Hokkien"},
-}
-
-m["nan-med"] = {
-	"Medan Hokkien",
-	6805114,
-	"nan-zha",
-}
-
-m["nan-pen"] = {
-	"Penang Hokkien",
-	11120689,
-	"nan-zha",
-}
-
-m["nan-hbl-PH"] = {
-	"Philippine Hokkien",
-	3236692,
-	"nan-qua",
-}
-
-m["nan-qia"] = {
-	"Qianlu Min",
-	19842517,
-	"nan-dat",
-}
-
-m["nan-qua"] = {
-	"Quanzhou Hokkien",
-	2251677,
-	"nan-hbl",
-	aliases = {"Chinchew", "Choanchew"},
-}
-
--- FIXME: Temporary? Derived from both Quanzhou and Zhangzhou Hokkien.
-m["nan-hbl-SG"] = {
-	"Singapore Hokkien",
-	3846528,
-	"nan-hbl",
-}
-
-m["nan-spm"] = {
-	"Southern Malaysian Hokkien",
-	7570322,
-	"nan-qua",
-	aliases = {"Southern Malaysia Hokkien", "Southern Peninsular Malaysian Hokkien", "Southern Peninsular Malaysia Hokkien"}
-}
-
-m["nan-hbl-TW"] = {
-	"Taiwanese Hokkien",
-	36778,
-	"nan-hbl",
-}
-
-m["nan-ton"] = {
-	"Tong'an Hokkien",
-	nil,
-	"nan-xia",
+m["egy-old"] = {
+	"Old Egyptian",
+	447117,
+	"egy",
 }
 
-m["nan-xia"] = {
-	"Xiamen Hokkien",
-	68744,
-	"nan-hbl",
-	aliases = {"Amoy", "Amoyese", "Amoynese", "Xiamenese"},
+m["egy-mid"] = {
+	"Middle Egyptian",
+	657330,
+	"egy",
+	aliases = {"Classical Egyptian"},
 }
 
-m["nan-yon"] = {
-	"Yongchun Hokkien",
-	65118728,
-	"nan-qua",
+m["egy-nmi"] = {
+	"Neo-Middle Egyptian",
+	123735278,
+	"egy",
+	aliases = {"Égyptien de tradition", "Traditional Egyptian"},
 }
-
-m["nan-zha"] = {
-	"Zhangzhou Hokkien",
-	8070492,
-	"nan-hbl",
-	aliases = {"Changchew", "Chiangchew", "Changchow"},
-}
-
-m["nan-zho"] = {
-	"Zhao'an Hokkien",
-	65118728,
-	"nan-zha",
-	aliases = {"Zhao'an", "Chawan", "Chawan Hokkien"},
-}
-
-m["nan-zhp"] = {
-	"Zhangping Hokkien",
-	15937822,
-	"nan-zha",
-}
-
-------------- Other Min varieties -------------
-
--- FIXME: Temporary. Affiliation within Min uncertain; some combination of Eastern and Southern.
-m["zhx-zho"] = {
-	"Zhongshan Min",
-	8070958,
-	"zh",
-}
-
-------------- Other Chinese varieties -------------
-
--- FIXME: Temporary. Affiliation within Chinese uncertain; possibly Yue.
-m["zhx-dan"] = {
-	"Danzhou Chinese",
-	2578935,
-	"zh",
-}
-
-------------- Chinese romanization varieties -------------
-
--- [[Wiktionary:Information desk/2022/June#Etymology Coding Issue]]
--- [[Wiktionary:Grease pit/2022/June#Transliteration Systems in Etymologies 2]]
-
-m["cmn-pinyin"] = {
-	"Hanyu Pinyin",
-	42222,
-	"cmn",
-	aliases = {"Pinyin"},
-}
-
-m["cmn-tongyong"] = {
-	"Tongyong Pinyin",
-	700739,
-	"cmn",
-}
-
-m["cmn-wadegiles"] = {
-	"Wade–Giles",
-	208442,
-	"cmn",
-	aliases = {"Wade-Giles", "Wade Giles"},
-}
-
-m["zh-postal"] = {
-	"Postal Romanization",
-	151868,
-	"zh",
-}
-
--- Chinese cyrillization
 
-m["cmn-palladius"] = {
-	"Palladius",
-	1234239,
-	"cmn",
-	aliases = {"Palladius system"},
+m["egy-lat"] = {
+	"Late Egyptian",
+	1852329,
+	"egy",
 }
 
 -----------------------------------------------------
@@ -1045,145 +222,797 @@ m["cop-sah"] = {
 	aliases = {"Sahidic", "Saidic Coptic", "Saidic", "Thebaic Coptic", "Thebaic"},
 }
 
+--------------------------------------------------------------------------------------
+--                                   Semitic varieties                              --
+--------------------------------------------------------------------------------------
+
 -----------------------------------------------------
---                 Dutch varieties                 --
+--                Akkadian varieties               --
+-----------------------------------------------------
+
+m["akk-old"] = {
+	"Old Akkadian",
+	nil,
+	"akk",
+}
+
+m["akk-obb"] = {
+	"Old Babylonian",
+	nil,
+	"akk",
+}
+
+m["akk-oas"] = {
+	"Old Assyrian",
+	nil,
+	"akk",
+}
+
+m["akk-mbb"] = {
+	"Middle Babylonian",
+	nil,
+	"akk",
+}
+
+m["akk-mas"] = {
+	"Middle Assyrian",
+	nil,
+	"akk",
+}
+
+m["akk-nbb"] = {
+	"Neo-Babylonian",
+	nil,
+	"akk",
+}
+
+m["akk-nas"] = {
+	"Neo-Assyrian",
+	nil,
+	"akk",
+}
+
+m["akk-lbb"] = {
+	"Late Babylonian",
+	nil,
+	"akk",
+}
+
+m["akk-stb"] = {
+	"Standard Babylonian",
+	nil,
+	"akk",
+}
+
+-----------------------------------------------------
+--                 Arabic varieties                --
+-----------------------------------------------------
+
+m["jrb"] = {
+	"Judeo-Arabic",
+	37733,
+	"ar",
+}
+
+-----------------------------------------------------
+--                Aramaic varieties                --
+-----------------------------------------------------
+
+m["arc-bib"] = {
+	"Biblical Aramaic",
+	843235,
+	"arc",
+	family = "sem-are",
+}
+
+m["arc-cpa"] = {
+	"Christian Palestinian Aramaic",
+	60790119,
+	"arc",
+	family = "sem-arw",
+	aliases = {"Melkite Aramaic", "Palestinian Syriac", "Syropalestinian Aramaic"},
+}
+
+m["arc-imp"] = {
+	"Imperial Aramaic",
+	7079491,
+	"arc",
+	aliases = {"Official Aramaic"},
+}
+
+m["arc-hat"] = {
+	"Hatran Aramaic",
+	3832926,
+	"arc",
+	family = "sem-are",
+}
+
+m["arc-jla"] = {
+	"Jewish Literary Aramaic",
+	105952842,
+	"arc",
+}
+
+m["arc-nab"] = {
+	"Nabataean Aramaic",
+	36178,
+	"arc",
+}
+
+m["arc-old"] = {
+	"Old Aramaic",
+	3398392,
+	"arc",
+}
+
+m["arc-pal"] = {
+	"Palmyrene Aramaic",
+	1510113,
+	"arc",
+	family = "sem-arw",
+}
+
+m["tmr"] = {
+	"Jewish Babylonian Aramaic",
+	33407,
+	"arc",
+	family = "sem-ase",
+}
+
+m["jpa"] = {
+	"Jewish Palestinian Aramaic",
+	948909,
+	"arc",
+	family = "sem-arw",
+	aliases = {"Galilean Aramaic"},
+}
+
+-----------------------------------------------------
+--                 Hebrew varieties                --
+-----------------------------------------------------
+
+m["hbo"] = {
+	"Biblical Hebrew",
+	1982248,
+	"he",
+	aliases = {"Classical Hebrew"},
+}
+
+m["he-mis"] = {
+	"Mishnaic Hebrew",
+	1649362,
+	"he",
+	ancestors = "hbo",
+}
+
+m["he-med"] = {
+	"Medieval Hebrew",
+	2712572,
+	"he",
+	ancestors = "he-mis",
+}
+
+m["he-IL"] = {
+	"Israeli Hebrew",
+	8141,
+	"he",
+}
+
+m["bsh-kat"] = {
+	"Kativiri",
+	2605045,
+	"bsh",
+	aliases = {"Katə́viri"},
+}
+
+m["xvi"] = {
+	"Kamviri",
+	1193495,
+	"bsh",
+	aliases = {"Kamvíri"},
+}
+
+m["bsh-mum"] = {
+	"Mumviri",
+	nil,
+	aliases = {"Mumvíri"},
+	"bsh"
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                                  Ainu varieties                                                  --
+----------------------------------------------------------------------------------------------------------------------
+
+m["ain-hok"] = {
+	"Hokkaido Ainu",
+	20968488,
+	"ain",
+	aliases = {"Hokkaidō Ainu"},
+}
+
+m["ain-kur"] = {
+	"Kuril Ainu",
+	20967012,
+	"ain",
+}
+
+m["ain-sak"] = {
+	"Sakhalin Ainu",
+	20747371,
+	"ain",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                          American indigenous varieties                                           --
+----------------------------------------------------------------------------------------------------------------------
+
+-----------------------------------------------------
+--              Algonquian varieties               --
+-----------------------------------------------------
+
+m["alv-kro"] = {
+	"Kromanti",
+	1093206,
+	"crp-mar",
+}
+
+-----------------------------------------------------
+--                 Inuit varieties                 --
+-----------------------------------------------------
+
+m["esi"] = {
+	"North Alaskan Inupiatun",
+	nil,
+	"ik"
+}
+
+m["esk"] = {
+	"Northwest Alaskan Inupiatun",
+	25559714,
+	"ik"
+}
+
+-----------------------------------------------------
+--               Iroquoian varieties               --
+-----------------------------------------------------
+
+m["iro-ohu"] = {
+	"Old Wendat",
+	nil,
+	"wdt",
+}
+
+m["iro-omo"] = {
+	"Old Mohawk",
+	nil,
+	"moh",
+}
+
+m["iro-oon"] = {
+	"Old Onondaga",
+	nil,
+	"ono",
+}
+
+-----------------------------------------------------
+--               Tupi-Guarani varieties            --
+-----------------------------------------------------
+
+-- Old Tupi varieties
+
+m["tpw-lga"] = {
+	"Língua Geral Amazônica",
+	18275323,
+	"tpw",
+	aliases = {"Língua Geral"},
+}
+
+m["tpw-lgp"] = {
+	"Língua Geral Paulista",
+	2669239,
+	"tpw",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                             Austroasiatic varieties                                              --
+----------------------------------------------------------------------------------------------------------------------
+
+-- Khmer varieties
+
+m["okz-ang"] = {
+	"Angkorian Old Khmer",
+	nil,
+	"okz",
+	wikipedia_article = "Khmer language#Historical periods",
+}
+
+m["okz-pre"] = {
+	"Pre-Angkorian Old Khmer",
+	nil,
+	"okz",
+	wikipedia_article = "Khmer language#Historical periods",
+}
+
+-- Central Nicobarese varieties
+
+m["ncb-cam"] = {
+	"Camorta",
+	5026908,
+	"ncb",
+	aliases = {"Kamorta"},
+}
+
+m["ncb-kat"] = {
+	"Katchal",
+	17064263,
+	"ncb",
+	aliases = {"Tehnu"},
+}
+
+m["ncb-nan"] = {
+	"Nancowry",
+	6962504,
+	"ncb",
+	aliases = {"Nankwari"},
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                              Austronesian varieties                                              --
+----------------------------------------------------------------------------------------------------------------------
+
+-- Malay and related varieties
+
+m["ms-old"] = { -- this has the ISO code 'omy'
+	"Old Malay",
+	nil,
+	"ms",
+}
+
+m["ms-cla"] = {
+	"Classical Malay",
+	nil,
+	"ms",
+	ancestors = "ms-old",
+}
+
+m["pse-bsm"] = {
+	"Besemah",
+	nil,
+	"pse",
+}
+
+m["bew-kot"] = {
+	"Betawi Kota",
+	nil,
+	"bew",
+	aliases = {"Urban Betawi"}, -- in Jakarta
+}
+
+
+-- Philippine varieties
+
+m["tl-old"] = {
+	"Old Tagalog",
+	12967437,
+	"tl",
+}
+
+m["tl-cls"] = {
+	"Classical Tagalog",
+	nil,
+	"tl",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                                Caucasian varieties                                               --
+----------------------------------------------------------------------------------------------------------------------
+
+-- Kartvelian varieties
+
+
+m["ka-mid"] = {
+	"Middle Georgian",
+	nil,
+	"ka",
+	ancestors = "oge",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                                Dravidian varieties                                               --
+----------------------------------------------------------------------------------------------------------------------
+
+m["ta-mid"] = {
+	"Middle Tamil",
+	20987434,
+	"ta",
+}
+
+m["kn-hav"] = {
+	"Havigannada",
+	24276369,
+	"kn",
+}
+
+m["kn-kun"] = {
+	"Kundagannada",
+	6444255,
+	"kn",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                             Indo-European varieties                                              --
+----------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------
+--                                  Albanian varieties                              --
+--------------------------------------------------------------------------------------
+
+m["aln"] = {
+	"Gheg Albanian",
+	181037,
+	"sq",
+	aliases = {"Gheg"},
+}
+
+m["aae"] = {
+	"Arbëresh Albanian",
+	1075302,
+	"als",
+	aliases = {"Arbëreshë", "Arbëresh"},
+}
+
+m["aat"] = {
+	"Arvanitika Albanian",
+	29347,
+	"als",
+	aliases = {"Arvanitika"},
+}
+
+m["als"] = {
+	"Tosk Albanian",
+	180937,
+	"sq",
+	aliases = {"Tosk"},
+}
+
+--------------------------------------------------------------------------------------
+--                                  Armenian varieties                              --
+--------------------------------------------------------------------------------------
+
+m["hyw"] = {
+	"Western Armenian",
+	180945,
+	"hy",
+}
+
+m["hye"] = {
+	"Eastern Armenian",
+	181059,
+	"hy",
+}
+
+--------------------------------------------------------------------------------------
+--                                Balto-Slavic varieties                            --
+--------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------
+--                            Baltic varieties                         --
+-------------------------------------------------------------------------
+
+m["bat-pro"] = {
+	"Proto-Baltic",
+	1703347,
+	"ine-bsl-pro",
+}
+
+m["bat-dni"] = {
+	"Dnieper Baltic",
+	4163178,
+	"bat-pro",
+	family = "bat",
+	aliases = {"Dniepr Baltic", "Dnieper-Oka Baltic", "Dniepr-Oka Baltic"},
+}
+
+m["bat-gol"] = {
+	"Golyad",
+	4142855,
+	"bat-dni",
+	aliases = {"Eastern Galindian", "East Galindian"},
+}
+
+-------------------------------------------------------------------------
+--                            Slavic varieties                         --
+-------------------------------------------------------------------------
+
+-----------------------------------------------------
+--               Bulgarian varieties               --
+-----------------------------------------------------
+
+m["cu-bgm"] = {
+	"Middle Bulgarian",
+	12294897,
+	"cu",
+	ancestors = "cu"
+}
+
+-----------------------------------------------------
+--             Church Slavonic varieties           --
+-----------------------------------------------------
+
+-- Old Moscow Church Slavonic deleted as it seems not distinct enough from Russian (Synodal) Church Slavonic.
+
+m["zls-chs-ru"] = {
+	"Russian Church Slavonic",
+	21662400,
+	"zls-chs",
+	aliases = {"Synodal Church Slavonic", "New Moscow Church Slavonic", "Novomoskovsk Church Slavonic"},
+}
+
+m["zls-chs-uk"] = {
+	"Ukrainian Church Slavonic",
+	12153548,
+	"zls-chs",
+	aliases = {"Rusyn Church Slavonic", "Belarusian Church Slavonic"},
+}
+
+--[=[
+
+-- Not sure about these yet.
+
+m["zls-chs-bg"] = {
+	"Bulgarian Church Slavonic",
+	nil,
+	"zls-chs",
+}
+
+m["zls-chs-cs"] = {
+	"Czech Church Slavonic",
+	nil,
+	"zls-chs",
+}
+
+m["zls-chs-hr"] = {
+	"Croatian Church Slavonic",
+	nil,
+	"zls-chs",
+}
+
+m["zls-chs-mk"] = {
+	"Macedonian Church Slavonic",
+	nil,
+	"zls-chs",
+}
+
+m["zls-chs-ro"] = {
+	"Romanian Church Slavonic",
+	nil,
+	"zls-chs",
+}
+
+m["zls-chs-sr"] = {
+	"Serbian Church Slavonic",
+	nil,
+	"zls-chs",
+}
+
+]=]
+
+-----------------------------------------------------
+--                  Czech varieties                --
+-----------------------------------------------------
+
+m["cs-ear"] = {
+	"Early Modern Czech",
+	nil,
+	"cs",
+	ancestors = "zlw-ocs"
+}
+
+-----------------------------------------------------
+--              East Slavic varieties              --
+-----------------------------------------------------
+
+m["zle-ops"] = {
+	"Old Pskovian",
+	4167885,
+	"zle-ono",
+}
+
+m["zle-mru"] = {
+	"Middle Russian",
+	35228,
+	"ru",
+	"Cyrs",
+	ancestors = "orv",
+	translit = "ru-translit",
+	strip_diacritics = {
+		Cyrs = {
+			remove_diacritics = c.grave .. c.acute .. c.diaer,
+		},
+	},
+
+}
+
+m["zle-mbe"] = {
+	"Middle Belarusian",
+	13211,
+	"zle-ort",
+}
+
+m["zle-muk"] = {
+	"Middle Ukrainian",
+	13211,
+	"zle-ort",
+}
+
+m["uk-CA"] = {
+	"Canadian Ukrainian",
+	4161010,
+	"uk",
+}
+
+-----------------------------------------------------
+--                  Polish varieties               --
+-----------------------------------------------------
+
+m["zlw-mpl"] = {
+	"Middle Polish",
+	402878,
+	"pl",
+	ancestors = "zlw-opl",
+	strip_diacritics = {
+		remove_diacritics = c.acute,
+		remove_exceptions = {"Ć", "ć", "Ń", "ń", "Ó", "ó", "Ś", "ś", "Ź", "ź"},
+	},
+}
+
+m["pl-gre"] = {
+	"Greater Polish",
+	4106789,
+	"pl",
+}
+
+m["pl-les"] = {
+	"Lesser Polish",
+	361709,
+	"pl",
+}
+
+m["pl-mas"] = {
+	"Masovian Polish",
+	4274559,
+	"pl",
+}
+
+m["pl-gor"] = {
+	"Goral",
+	452889,
+	"pl",
+}
+
+-----------------------------------------------------
+--              Serbo-Croatian varieties           --
+-----------------------------------------------------
+
+m["ckm"] = {
+	"Chakavian Serbo-Croatian",
+	337565,
+	"sh",
+	aliases = {"Čakavian"},
+}
+
+m["kjv"] = {
+	"Kajkavian Serbo-Croatian",
+	838165,
+	"sh",
+}
+
+m["sh-tor"] = { -- Linguist code srp-tor
+	"Torlakian Serbo-Croatian",
+	1078803,
+	"sh",
+	aliases = {"Torlak"},
+}
+
+--------------------------------------------------------------------------------------
+--                                   Celtic varieties                               --
+--------------------------------------------------------------------------------------
+
+-----------------------------------------------------
+--                Brythonic varieties              --
+-----------------------------------------------------
+
+m["bry-ear"] = {
+	"Early Brythonic",
+	nil,
+	"cel-bry-pro",
+}
+
+m["bry-lat"] = {
+	"Late Brythonic",
+	nil,
+	"cel-bry-pro",
+}
+
+-----------------------------------------------------
+--                 Gaulish varieties               --
+-----------------------------------------------------
+
+m["xcg"] = {
+	"Cisalpine Gaulish",
+	3832927,
+	"cel-gau",
+}
+
+m["xtg"] = {
+	"Transalpine Gaulish",
+	29977,
+	"cel-gau",
+}
+
+-----------------------------------------------------
+--                  Welsh varieties                --
+-----------------------------------------------------
+
+m["cy-nor"] = {
+	"North Wales Welsh",
+	13127692,
+	"cy",
+	aliases = {"North Walian Welsh", "Northern Welsh"},
+}
+
+m["cy-sou"] = {
+	"South Wales Welsh",
+	13127689,
+	"cy",
+	aliases = {"South Walian Welsh", "Southern Welsh"},
+}
+
+--------------------------------------------------------------------------------------
+--                                  Germanic varieties                              --
+--------------------------------------------------------------------------------------
+
+-- Proto-West Germanic varieties
+
+m["frk"] = {
+	"Frankish",
+	10860505,
+	"gmw-pro",
+	family = "gmw-frk",
+	aliases = {"Old Frankish"},
+}
+
+m["gem-sue"] = {
+	"Suevic",
+	134600275,
+	"gmw-pro",
+	aliases = {"Suebian"},
+}
+
+m["gmw-afr-pro"] = {
+	"Proto-Anglo-Frisian",
+	134603379,
+	"gmw-nsg-pro",
+	family = "gmw-afr",
+}
+
+m["gmw-nsg-pro"] = {
+	"Proto-North Sea Germanic",
+	134603374,
+	"gmw-pro",
+	family = "gmw-nsg",
+	aliases = {"Proto-Ingvaeonic"},
+}
+
+-----------------------------------------------------
+--                  Dutch varieties                --
 -----------------------------------------------------
 
 m["nl-BE"] = {
 	"Belgian Dutch",
 	34147,
 	"nl",
-	aliases = { "Flemish", "Flemish Dutch", "Southern Dutch"},
-}
-
------------------------------------------------------
---               Low Saxon varieties               --
------------------------------------------------------
-
-m["act"] = {
-	"Achterhoeks",
-	153627,
-	"nds-nl",
-	aliases = {"Achterhoek", "Achterhooks"},
-}
-
-m["drt"] = {
-	"Drents",
-	2736709,
-	"nds-nl",
-	aliases = {"Drèents", "Dreins", "Dreints", "Drints"},
-}
-
-m["frs"] = {
-	"East Frisian Low German",
-	149208,
-	"nds-de",
-	aliases = {"East Frisian", "East Frisian Low Saxon"},
-}
-
-m["gos"] = {
-	"Gronings",
-	508854,
-	"nds-nl",
-	aliases = {"Grunnegs", "Grönnegs"},
-}
-
-m["nds-lpr"] = {
-	"Low Prussian",
-	33982,
-	"nds-de",
-}
-
-m["sdz"] = {
-	"Sallands",
-	3436668,
-	"nds-nl",
-	aliases = {"Sallaans", "Sallaands"},
-}
-
-m["stl"] = {
-	"Stellingwerfs",
-	506010,
-	"nds-nl",
-	aliases = {"Stellingwarfs"},
-}
-
-m["twd"] = {
-	"Twents",
-	497363,
-	"nds-nl",
-	aliases = {"Tweants"},
-}
-
-m["vel"] = {
-	"Veluws",
-	2484810,
-	"nds-nl",
-}
-
-m["wep"] = {
-	"Westphalian",
-	505655,
-	"nds-de",
-	aliases = {"Westfalish", "Westphalien"},
-}
-
------------------------------------------------------
---               Egyptian varieties                --
------------------------------------------------------
-
-m["egy-old"] = {
-	"Old Egyptian",
-	447117,
-	"egy",
-}
-
-m["egy-mid"] = {
-	"Middle Egyptian",
-	657330,
-	"egy",
-	aliases = {"Classical Egyptian"},
-}
-
-m["egy-nmi"] = {
-	"Neo-Middle Egyptian",
-	123735278,
-	"egy",
-	aliases = {"Égyptien de tradition", "Traditional Egyptian"},
-}
-
-m["egy-lat"] = {
-	"Late Egyptian",
-	1852329,
-	"egy",
-}
-
------------------------------------------------------
---                Elamite varieties                --
------------------------------------------------------
-
-m["elx-old"] = {
-	"Old Elamite",
-	nil,
-	"elx",
-}
-
-m["elx-mid"] = {
-	"Middle Elamite",
-	nil,
-	"elx",
-}
-
-m["elx-neo"] = {
-	"Neo-Elamite",
-	nil,
-	"elx",
-}
-
-m["elx-ach"] = {
-	"Achaemenid Elamite",
-	nil,
-	"elx",
+	aliases = {"Flemish", "Flemish Dutch", "Southern Dutch"},
 }
 
 -----------------------------------------------------
@@ -1422,302 +1251,7 @@ m["ang-wsx"] = {
 }
 
 -----------------------------------------------------
---     French and French-based creole varieties    --
------------------------------------------------------
-
-m["fro-nor"] = {
-	"Old Northern French",
-	2044917,
-	"fro",
-	aliases = {"Old Norman", "Old Norman French"},
-}
-
-m["fro-pic"] = {
-	"Picard Old French",
-	nil,
-	"fro",
-}
-
-m["xno"] = {
-	"Anglo-Norman",
-	35214,
-	"fro-nor",
-}
-
-m["xno-law"] = {
-	"Law French",
-	2044323,
-	"xno",
-}
-
-m["zrp"] = {
-	"Zarphatic",
-	36994,
-	"fro",
-	aliases = {"Judeo-French"}
-}
-
-m["fr-CA"] = {
-	"Canadian French",
-	1450506,
-	"fr",
-}
-
-m["fr-CH"] = {
-	"Swiss French",
-	1480152,
-	"fr",
-}
-
-m["fr-aca"] = {
-	"Acadian French",
-	415109,
-	"fr",
-}
-
-m["fr-lou"] = {
-	"Louisiana French",
-	3083213,
-	"fr",
-}
-
-m["fr-mis"] = {
-	"Missouri French",
-	3083210,
-	"fr",
-}
-
-m["frc"] = {
-	"Cajun French",
-	880301,
-	"fr-lou",
-}
-
-m["ht-sdm"] = {
-	"Saint Dominican Creole French",
-	nil,
-	"ht",
-	ancestors = "fr",
-}
-
--- Norman varieties
-
-m["nrf-grn"] = {
-	"Guernsey Norman",
-	56428,
-	"nrf",
-	aliases = {"Guernsey"},
-}
-
-m["nrf-jer"] = {
-	"Jersey Norman",
-	56430,
-	"nrf",
-	aliases = {"Jersey"},
-}
-
------------------------------------------------------
---                Franco-Provençal varieties              --
------------------------------------------------------
-
-m["frp-old"] = {
-	"Old Franco-Provençal",
-	nil,
-	"frp",
-}
-
------------------------------------------------------
---                Brythonic varieties              --
------------------------------------------------------
-
-m["bry-ear"] = {
-	"Early Brythonic",
-	nil,
-	"cel-bry-pro",
-}
-
-m["bry-lat"] = {
-	"Late Brythonic",
-	nil,
-	"cel-bry-pro",
-}
-
------------------------------------------------------
---                 Gaulish varieties               --
------------------------------------------------------
-
-m["xcg"] = {
-	"Cisalpine Gaulish",
-	3832927,
-	"cel-gau",
-}
-
-m["xtg"] = {
-	"Transalpine Gaulish",
-	29977,
-	"cel-gau",
-}
-
------------------------------------------------------
---                Portuguese varieties             --
------------------------------------------------------
-
-m["pt-BR"] = {
-	"Brazilian Portuguese",
-	750553,
-	"pt",
-}
-
-m["pt-PT"] = {
-	"European Portuguese",
-	922399,
-	"pt",
-}
-
------------------------------------------------------
---                  Spanish varieties              --
------------------------------------------------------
-
-m["es-ear"] = {
-	"Early Modern Spanish",
-	5364419,
-	"es",
-}
-
-m["es-AR"] = {
-	"Rioplatense Spanish",
-	509780,
-	"es",
-}
-
-m["es-BO"] = {
-	"Bolivian Spanish",
-	510730,
-	"es",
-}
-
-m["es-CL"] = {
-	"Chilean Spanish",
-	857295,
-	"es",
-}
-
-m["es-CO"] = {
-	"Colombian Spanish",
-	1115875,
-	"es",
-}
-
-m["es-CU"] = {
-	"Cuban Spanish",
-	824909,
-	"es",
-}
-
-m["es-MX"] = {
-	"Mexican Spanish",
-	616620,
-	"es",
-}
-
-m["es-PE"] = {
-	"Peruvian Spanish",
-	736236,
-	"es",
-}
-
-m["es-PH"] = {
-	"Philippine Spanish",
-	22091406,
-	"es",
-}
-
-m["es-US"] = {
-	"United States Spanish",
-	2301077,
-	"es",
-	aliases = {"US Spanish"},
-}
---use label "US Spanish" to put Spanish terms in this category
-
-m["es-PR"] = {
-	"Puerto Rican Spanish",
-	7258609,
-	"es",
-}
-
-m["es-VE"] = {
-	"Venezuelan Spanish",
-	840017,
-	"es",
-}
-
------------------------------------------------------
---                   Fula varieties                --
------------------------------------------------------
-
-m["fuc"] = {
-	"Pulaar",
-	1420205,
-	"ff",
-}
-
-m["fuf"] = {
-	"Pular",
-	3915357,
-	"ff",
-}
-
-m["ffm"] = {
-	"Maasina Fulfulde",
-	3915322,
-	"ff",
-}
-
-m["fue"] = {
-	-- no enwiki entry as of yet but frwiki and pmswiki have one
-	"Borgu Fulfulde",
-	12952426,
-	"ff",
-}
-
-m["fuh"] = {
-	-- no enwiki entry as of yet but frwiki and pmswiki have one
-	"Western Niger Fulfulde",
-	12952430,
-	"ff",
-}
-
-m["fuq"] = {
-	-- no enwiki entry as of yet but frwiki, hrwiki and pmswiki have one
-	"Central-Eastern Niger Fulfulde",
-	12628799,
-	"ff",
-}
-
-m["fuv"] = {
-	-- no enwiki entry as of yet but dewiki, frwiki, hrwiki, pmswiki and swwiki have one
-	"Nigerian Fulfulde",
-	36129,
-	"ff",
-}
-
-m["fub"] = {
-	-- no enwiki entry as of yet but dewiki, frwiki, hrwiki, pmswiki, ptwiki, swwiki and yowiki have one
-	"Adamawa Fulfulde",
-	34776,
-	"ff",
-}
-
-m["fui"] = {
-	-- no enwiki entry as of yet but pmswiki and swwiki have one
-	"Bagirmi Fulfulde",
-	11003859,
-	"ff",
-}
-
------------------------------------------------------
---               German(ic) varieties              --
+--              High German varieties              --
 -----------------------------------------------------
 
 -- (modern) German varieties
@@ -1789,38 +1323,6 @@ m["lng"] = {
 	"goh",
 }
 
--- Proto-West Germanic varieties
-
-m["frk"] = {
-	"Frankish",
-	10860505,
-	"gmw-pro",
-	family = "gmw-frk",
-	aliases = {"Old Frankish"},
-}
-
-m["gem-sue"] = {
-	"Suevic",
-	134600275,
-	"gmw-pro",
-	aliases = {"Suebian"},
-}
-
-m["gmw-afr-pro"] = {
-	"Proto-Anglo-Frisian",
-	134603379,
-	"gmw-nsg-pro",
-	family = "gmw-afr",
-}
-
-m["gmw-nsg-pro"] = {
-	"Proto-North Sea Germanic",
-	134603374,
-	"gmw-pro",
-	family = "gmw-nsg",
-	aliases = {"Proto-Ingvaeonic"},
-}
-
 -- Alemannic German varieties
 
 m["gsw-low"] = {
@@ -1851,6 +1353,180 @@ m["wae"] = {
 	"Walser German",
 	680517,
 	"gsw-hst",
+}
+
+-----------------------------------------------------
+--               Low German varieties              --
+-----------------------------------------------------
+
+m["act"] = {
+	"Achterhoeks",
+	153627,
+	"nds-nl",
+	aliases = {"Achterhoek", "Achterhooks"},
+}
+
+m["drt"] = {
+	"Drents",
+	2736709,
+	"nds-nl",
+	aliases = {"Drèents", "Dreins", "Dreints", "Drints"},
+}
+
+m["frs"] = {
+	"East Frisian Low German",
+	149208,
+	"nds-de",
+	aliases = {"East Frisian", "East Frisian Low Saxon"},
+}
+
+m["gos"] = {
+	"Gronings",
+	508854,
+	"nds-nl",
+	aliases = {"Grunnegs", "Grönnegs"},
+}
+
+m["nds-lpr"] = {
+	"Low Prussian",
+	33982,
+	"nds-de",
+}
+
+m["sdz"] = {
+	"Sallands",
+	3436668,
+	"nds-nl",
+	aliases = {"Sallaans", "Sallaands"},
+}
+
+m["stl"] = {
+	"Stellingwerfs",
+	506010,
+	"nds-nl",
+	aliases = {"Stellingwarfs"},
+}
+
+m["twd"] = {
+	"Twents",
+	497363,
+	"nds-nl",
+	aliases = {"Tweants"},
+}
+
+m["vel"] = {
+	"Veluws",
+	2484810,
+	"nds-nl",
+}
+
+m["wep"] = {
+	"Westphalian",
+	505655,
+	"nds-de",
+	aliases = {"Westfalish", "Westphalien"},
+}
+
+-----------------------------------------------------
+--              North Frisian varieties            --
+-----------------------------------------------------
+
+m["frr-ins"] = {
+	"Insular North Frisian",
+	110629610,
+	"frr",
+}
+
+m["frr-fam"] = {
+	"Föhr-Amrum North Frisian",
+	110629601,
+	"frr-ins",
+}
+
+m["frr-foh"] = {
+	"Föhr North Frisian",
+	28185,
+	"frr-fam",
+	aliases = {"Föhr Frisian", "Fering",
+			   "Ferring", -- Glottolog
+			  },
+	varieties = {"Aasdring", "Weesdring"},
+}
+
+m["frr-amr"] = {
+	"Amrum North Frisian",
+	28192,
+	"frr-fam",
+	aliases = {"Amrum Frisian", "Amrum", "Öömrang"},
+}
+
+m["frr-hel"] = {
+	"Heligoland North Frisian",
+	28086,
+	"frr-ins",
+	aliases = {"Heligoland Frisian", "Halunder", "Heligolandic Frisian", "Heligolandic North Frisian",
+			   "Helgoland Frisian", "Helgoland North Frisian", "Helgoland"},
+}
+
+m["frr-syl"] = {
+	"Sylt North Frisian",
+	28181,
+	"frr-ins",
+	aliases = {"Sylt Frisian", "Söl'ring",
+			   "Sölreng", -- Glottolog
+			  },
+}
+
+m["frr-mai"] = {
+	"Mainland North Frisian",
+	110629626,
+	"frr",
+}
+
+m["frr-hal"] = {
+	"Halligen North Frisian",
+	28177,
+	"frr-mai",
+	aliases = {"Halligen Frisian", "Halifreesk", "Hallingen Frisian", "Hallingen North Frisian",
+			   "Hallingen", -- Glottolog
+			  },
+}
+
+m["frr-moo"] = {
+	"Mooring North Frisian",
+	28187,
+	"frr-mai",
+	aliases = {"Bökingharde North Frisian", "Bökingharde Frisian", "Böökinghiirder frasch",
+			   "Mooring", "Moring",
+			  },
+	varieties = {{"East Mooring", "Ostermooring"}, {"West Mooring", "Westermooring"}},
+}
+
+m["frr-kar"] = {
+	"Karrharde North Frisian",
+	28191,
+	"frr-mai",
+	aliases = {"Karrharde Frisian", "Karrharder",
+			  },
+}
+
+m["frr-goe"] = {
+	-- Technically this refers to three adjacent dialects (Northern, Central and Southern), the latter of which went
+	-- extinct in 1980-1981. As a result, Glottolog speaks of "Norder-Mittelgoesharde", referring to the remaining two.
+	"Goesharde North Frisian",
+	28183,
+	"frr-mai",
+	aliases = {"Norder-Mittelgoesharde North Frisian", "Norder-Mittelgoesharde Frisian", "Norder-Mittelgoesharde",
+			   "Goesharde Frisian", "Goesharde", "Gooshiirder",
+			  },
+}
+
+m["frr-wie"] = {
+	"Wiedingharde North Frisian",
+	28171,
+	"frr-mai",
+	aliases = {"Wiedingharde Frisian", "Wiedingharde", "Wiringhiirder freesk",
+			  },
 }
 
 -----------------------------------------------------
@@ -1888,9 +1564,9 @@ m["gmq-osw-lat"] = {
 	ancestors = "gmq-osw",
 }
 
------------------------------------------------------
---                  Greek varieties                --
------------------------------------------------------
+--------------------------------------------------------------------------------------
+--                                    Greek varieties                               --
+--------------------------------------------------------------------------------------
 
 m["qsb-grc"] = {
 	"Pre-Greek",
@@ -2036,78 +1712,363 @@ m["el-kal"] = {
 	"el",
 }
 
+--------------------------------------------------------------------------------------
+--                                Indo-Iranian varieties                            --
+--------------------------------------------------------------------------------------
 
------------------------------------------------------
---                 Hebrew varieties                --
------------------------------------------------------
+-------------------------------------------------------------------------
+--                          Indo-Aryan varieties                       --
+-------------------------------------------------------------------------
 
-m["hbo"] = {
-	"Biblical Hebrew",
-	1982248,
-	"he",
-	aliases = {"Classical Hebrew"},
-}
-
-m["he-mis"] = {
-	"Mishnaic Hebrew",
-	1649362,
-	"he",
-	ancestors = "hbo",
-}
-
-m["he-med"] = {
-	"Medieval Hebrew",
-	2712572,
-	"he",
-	ancestors = "he-mis",
-}
-
-m["he-IL"] = {
-	"Israeli Hebrew",
-	8141,
-	"he",
-}
-
-m["bsh-kat"] = {
-	"Kativiri",
-	2605045,
-	"bsh",
-	aliases = {"Katə́viri"},
-}
-
-m["xvi"] = {
-	"Kamviri",
-	1193495,
-	"bsh",
-	aliases = {"Kamvíri"},
-}
-
-m["bsh-mum"] = {
-	"Mumviri",
+-- reconstructed intermediate stages
+m["pra-pro"] = {
+	"Proto-New Indo-Aryan",
 	nil,
-	aliases = {"Mumvíri"},
-	"bsh"
+	"pra",
 }
 
------------------------------------------------------
---                 Inuit varieties                 --
------------------------------------------------------
-
-m["esi"] = {
-	"North Alaskan Inupiatun",
+m["inc-ash-pro"] = {
+	"Proto-Middle Indo-Aryan",
 	nil,
-	"ik"
+	"inc-ash",
 }
 
-m["esk"] = {
-	"Northwest Alaskan Inupiatun",
-	25559714,
-	"ik"
+m["inc-mit"] = {
+	"Mitanni",
+	1986700,
+	"inc-pro",
 }
 
------------------------------------------------------
---                 Iranian varieties               --
------------------------------------------------------
+m["bra-old"] = {
+	"Old Braj",
+	nil,
+	"bra",
+}
+
+-- Apabhramsas
+
+m["inc-aav"] = {
+	"Avahattha",
+	nil,
+	"inc-apa",
+	aliases = {"Abahattha"},
+}
+
+m["inc-asa"] = {
+	"Sauraseni Apabhramsa",
+	nil,
+	"inc-apa",
+}
+
+m["inc-agu"] = {
+	"Gurjara Apabhramsa",
+	nil,
+	"inc-apa",
+}
+
+m["inc-aka"] = {
+	"Kasmiri Apabhramsa",
+	nil,
+	"inc-apa",
+}
+
+m["inc-ama"] = {
+	"Maharastri Apabhramsa",
+	nil,
+	"inc-apa",
+}
+
+m["inc-ata"] = {
+	"Takka Apabhramsa",
+	nil,
+	"inc-apa",
+}
+
+m["inc-avr"] = {
+	"Vracada Apabhramsa",
+	nil,
+	"inc-apa",
+}
+
+-- Assamese varieties
+m["as-bkm"] = {
+	"Barpetia Kamrupi Assamese",
+	30642960,
+	"as",
+}
+
+m["as-nkm"] = {
+	"Nalbaria Kamrupi Assamese",
+	85787678,
+	"as",
+}
+
+m["as-pkm"] = {
+	"Palasbaria Kamrupi Assamese",
+	nil,
+	"as",
+}
+
+-- Bengali varieties
+
+m["bn-dvn"] = {
+	"Dhakaiya Vaṅga Bengali",
+	48726851,
+	"bn", -- Eastern Bengali variety
+}
+
+m["bn-nvn"] = {
+	"Noakhailla Vaṅga Bengali",
+	107548681,
+	"bn", -- Eastern Bengali variety
+}
+
+-- Dhivehi varieties
+
+m["dv-mul"] = {
+	"Mulaku Dhivehi",
+	nil,
+	"dv",
+	aliases = {"Mulaku Divehi", "Mulaku Bas"},
+}
+
+m["dv-huv"] = {
+	"Huvadhu Dhivehi",
+	nil,
+	"dv",
+	aliases = {"Huvadhu Divehi", "Huvadhu Bas"},
+}
+
+m["dv-add"] = {
+	"Addu Dhivehi",
+	nil,
+	"dv",
+	aliases = {"Addu Divehi", "Addu Bas"},
+}
+
+-- Gujarati varieties
+
+m["gu-kat"] = {
+	"Kathiyawadi",
+	nil,
+	"gu",
+	aliases = {"Kathiyawadi Gujarati", "Kathiawadi"},
+}
+
+m["gu-lda"] = {
+	"Lisan ud-Dawat Gujarati",
+	nil,
+	"gu",
+	aliases = {"Lisan ud-Dawat", "LDA"},
+}
+
+-- Hindi varieties
+
+m["hi-mum"] = {
+	"Bombay Hindi",
+	3543151,
+	"hi",
+	aliases = {"Mumbai Hindi", "Bambaiyya Hindi"},
+}
+
+m["hi-mid"] = {
+	"Middle Hindi",
+	nil,
+	"inc-ohi",
+	ancestors = "inc-ohi",
+}
+
+-- Konkani varieties
+
+m["kok-mid"] = {
+	"Middle Konkani",
+	nil,
+	"kok",
+	aliases = {"Medieval Konkani"},
+}
+
+m["kok-old"] = {
+	"Old Konkani",
+	nil,
+	"kok",
+	aliases = {"Early Konkani"},
+}
+
+-- Prakrits
+
+m["pra-ard"] = {
+	"Ardhamagadhi Prakrit",
+	35217,
+	"pra",
+	aliases = {"Ardhamagadhi"},
+}
+
+m["pra-hel"] = {
+	"Helu Prakrit",
+	15080869,
+	"pra",
+	aliases = {"Elu", "Elu Prakrit", "Helu"},
+}
+
+m["pra-kha"] = {
+	"Khasa Prakrit",
+	nil,
+	"pra",
+	aliases = {"Khasa"},
+}
+
+m["pra-mag"] = {
+	"Magadhi Prakrit", -- Not to be confused with Magahi (mag)
+	2652214,
+	"pra",
+	aliases = {"Magadhi"},
+}
+
+m["pra-mah"] = {
+	"Maharastri Prakrit",
+	2586773,
+	"pra",
+	aliases = {"Maharashtri Prakrit", "Maharastri", "Maharashtri"},
+}
+
+m["pra-pai"] = {
+	"Paisaci Prakrit",
+	2995607,
+	"pra-sau",
+	aliases = {"Paisaci", "Paisachi"},
+	ancestors = "pra-sau"
+}
+
+m["pra-sau"] = {
+	"Sauraseni Prakrit",
+	2452885,
+	"pra",
+	aliases = {"Sauraseni", "Shauraseni"},
+}
+
+m["pra-ava"] = {
+	"Avanti",
+	nil,
+	"pra",
+	aliases = {"Avanti Prakrit"},
+}
+
+m["pra-pra"] = {
+	"Pracya",
+	nil,
+	"pra",
+	aliases = {"Pracya Prakrit"},
+}
+
+m["pra-bah"] = {
+	"Bahliki",
+	nil,
+	"pra",
+	aliases = {"Bahliki Prakrit"},
+}
+
+m["pra-dak"] = {
+	"Daksinatya",
+	nil,
+	"pra",
+	aliases = {"Daksinatya Prakrit"},
+}
+
+m["pra-sak"] = {
+	"Sakari",
+	nil,
+	"pra",
+	aliases = {"Sakari Prakrit"},
+}
+
+m["pra-can"] = {
+	"Candali",
+	nil,
+	"pra",
+	aliases = {"Candali Prakrit"},
+}
+
+m["pra-sab"] = {
+	"Sabari",
+	nil,
+	"pra",
+	aliases = {"Sabari Prakrit"},
+}
+
+m["pra-abh"] = {
+	"Abhiri",
+	nil,
+	"pra",
+	aliases = {"Abhiri Prakrit"},
+}
+
+m["pra-dra"] = {
+	"Dramili",
+	nil,
+	"pra",
+	aliases = {"Dramili Prakrit"},
+}
+
+m["pra-odr"] = {
+	"Odri",
+	nil,
+	"pra",
+	aliases = {"Odri Prakrit"},
+}
+
+-- Punjabi varieties
+
+m["pnb"] = {
+	"Western Panjabi",
+	58635,
+	"pa",
+	"pa-Arab",
+}
+
+-- Sanskrit varieties
+
+m["vsn"] = {
+	"Vedic Sanskrit",
+	36858,
+	"sa",
+}	
+
+m["cls"] = {
+	"Classical Sanskrit",
+	11059,
+	"sa",
+}
+
+m["sa-bhs"] = {
+	"Buddhist Hybrid Sanskrit",
+	248758,
+	"sa",
+}
+
+m["sa-bra"] = {
+	"Brahmanic Sanskrit",
+	36858,
+	"sa",
+}
+
+m["sa-neo"] = {
+	"New Sanskrit",
+	11059,
+	"sa",
+}
+
+-- Sinhalese varieties
+
+m["si-med"] = {
+	"Medieval Sinhalese",
+	nil,
+	"si",
+	aliases = {"Medieval Sinhala"},
+}
+
+-------------------------------------------------------------------------
+--                           Iranian varieties                         --
+-------------------------------------------------------------------------
 
 m["qsb-bma"] = {
 	"the BMAC substrate",
@@ -3058,381 +3019,13 @@ m["sgh-baj"] = {
 	"sgh-xgb",
 }
 
--- Indo-Aryan varieties
-
--- reconstructed intermediate stages
-m["pra-pro"] = {
-	"Proto-New Indo-Aryan",
-	nil,
-	"pra",
-}
-
-m["inc-ash-pro"] = {
-	"Proto-Middle Indo-Aryan",
-	nil,
-	"inc-ash",
-}
-
--- Assamese varieties
-m["as-bkm"] = {
-	"Barpetia Kamrupi Assamese",
-	30642960,
-	"as",
-}
-
-m["as-nkm"] = {
-	"Nalbaria Kamrupi Assamese",
-	85787678,
-	"as",
-}
-
-m["as-pkm"] = {
-	"Palasbaria Kamrupi Assamese",
-	nil,
-	"as",
-}
-
--- Eastern Bengali variety
-m["bn-dvn"] = {
-	"Dhakaiya Vaṅga Bengali",
-	48726851,
-	"bn",
-}
-
--- Eastern Bengali variety
-m["bn-nvn"] = {
-	"Noakhailla Vaṅga Bengali",
-	107548681,
-	"bn",
-}
-
-m["inc-mit"] = {
-	"Mitanni",
-	1986700,
-	"inc-pro",
-}
-
-m["bra-old"] = {
-	"Old Braj",
-	nil,
-	"bra",
-}
-
-m["gu-kat"] = {
-	"Kathiyawadi",
-	nil,
-	"gu",
-	aliases = {"Kathiyawadi Gujarati", "Kathiawadi"},
-}
-
-m["gu-lda"] = {
-	"Lisan ud-Dawat Gujarati",
-	nil,
-	"gu",
-	aliases = {"Lisan ud-Dawat", "LDA"},
-}
-
-m["hi-mum"] = {
-	"Bombay Hindi",
-	3543151,
-	"hi",
-	aliases = {"Mumbai Hindi", "Bambaiyya Hindi"},
-}
-
-m["hi-mid"] = {
-	"Middle Hindi",
-	nil,
-	"inc-ohi",
-	ancestors = "inc-ohi",
-}
-
-m["pnb"] = {
-	"Western Panjabi",
-	58635,
-	"pa",
-	"pa-Arab",
-}
-
-m["vsn"] = {
-	"Vedic Sanskrit",
-	36858,
-	"sa",
-}	
-
-m["cls"] = {
-	"Classical Sanskrit",
-	11059,
-	"sa",
-}
-
-m["sa-bhs"] = {
-	"Buddhist Hybrid Sanskrit",
-	248758,
-	"sa",
-}
-
-m["sa-bra"] = {
-	"Brahmanic Sanskrit",
-	36858,
-	"sa",
-}
-
-m["sa-neo"] = {
-	"New Sanskrit",
-	11059,
-	"sa",
-}
-
-m["si-med"] = {
-	"Medieval Sinhalese",
-	nil,
-	"si",
-	aliases = {"Medieval Sinhala"},
-}
-
-m["kok-mid"] = {
-	"Middle Konkani",
-	nil,
-	"kok",
-	aliases = {"Medieval Konkani"},
-}
-
-m["kok-old"] = {
-	"Old Konkani",
-	nil,
-	"kok",
-	aliases = {"Early Konkani"},
-}
-
-
--- Indian subcontinent languages
-
-
--- Dhivehi varieties
-
-m["dv-mul"] = {
-	"Mulaku Dhivehi",
-	nil,
-	"dv",
-	aliases = {"Mulaku Divehi", "Mulaku Bas"},
-}
-
-m["dv-huv"] = {
-	"Huvadhu Dhivehi",
-	nil,
-	"dv",
-	aliases = {"Huvadhu Divehi", "Huvadhu Bas"},
-}
-
-m["dv-add"] = {
-	"Addu Dhivehi",
-	nil,
-	"dv",
-	aliases = {"Addu Divehi", "Addu Bas"},
-}
-
-
--- Dravidian varieties
-
-
-m["ta-mid"] = {
-	"Middle Tamil",
-	20987434,
-	"ta",
-}
-
-m["kn-hav"] = {
-	"Havigannada",
-	24276369,
-	"kn",
-}
-
-m["kn-kun"] = {
-	"Kundagannada",
-	6444255,
-	"kn",
-}
-
--- Prakrits
-
-m["pra-ard"] = {
-	"Ardhamagadhi Prakrit",
-	35217,
-	"pra",
-	aliases = {"Ardhamagadhi"},
-}
-
-m["pra-hel"] = {
-	"Helu Prakrit",
-	15080869,
-	"pra",
-	aliases = {"Elu", "Elu Prakrit", "Helu"},
-}
-
-m["pra-kha"] = {
-	"Khasa Prakrit",
-	nil,
-	"pra",
-	aliases = {"Khasa"},
-}
-
-m["pra-mag"] = {
-	"Magadhi Prakrit", -- Not to be confused with Magahi (mag)
-	2652214,
-	"pra",
-	aliases = {"Magadhi"},
-}
-
-m["pra-mah"] = {
-	"Maharastri Prakrit",
-	2586773,
-	"pra",
-	aliases = {"Maharashtri Prakrit", "Maharastri", "Maharashtri"},
-}
-
-m["pra-pai"] = {
-	"Paisaci Prakrit",
-	2995607,
-	"pra-sau",
-	aliases = {"Paisaci", "Paisachi"},
-	ancestors = "pra-sau"
-}
-
-m["pra-sau"] = {
-	"Sauraseni Prakrit",
-	2452885,
-	"pra",
-	aliases = {"Sauraseni", "Shauraseni"},
-}
-
-m["pra-ava"] = {
-	"Avanti",
-	nil,
-	"pra",
-	aliases = {"Avanti Prakrit"},
-}
-
-m["pra-pra"] = {
-	"Pracya",
-	nil,
-	"pra",
-	aliases = {"Pracya Prakrit"},
-}
-
-m["pra-bah"] = {
-	"Bahliki",
-	nil,
-	"pra",
-	aliases = {"Bahliki Prakrit"},
-}
-
-m["pra-dak"] = {
-	"Daksinatya",
-	nil,
-	"pra",
-	aliases = {"Daksinatya Prakrit"},
-}
-
-m["pra-sak"] = {
-	"Sakari",
-	nil,
-	"pra",
-	aliases = {"Sakari Prakrit"},
-}
-
-m["pra-can"] = {
-	"Candali",
-	nil,
-	"pra",
-	aliases = {"Candali Prakrit"},
-}
-
-m["pra-sab"] = {
-	"Sabari",
-	nil,
-	"pra",
-	aliases = {"Sabari Prakrit"},
-}
-
-m["pra-abh"] = {
-	"Abhiri",
-	nil,
-	"pra",
-	aliases = {"Abhiri Prakrit"},
-}
-
-m["pra-dra"] = {
-	"Dramili",
-	nil,
-	"pra",
-	aliases = {"Dramili Prakrit"},
-}
-
-m["pra-odr"] = {
-	"Odri",
-	nil,
-	"pra",
-	aliases = {"Odri Prakrit"},
-}
-
--- Apabhramsas
-
-m["inc-aav"] = {
-	"Avahattha",
-	nil,
-	"inc-apa",
-	aliases = {"Abahattha"},
-}
-
-m["inc-asa"] = {
-	"Sauraseni Apabhramsa",
-	nil,
-	"inc-apa",
-}
-
-m["inc-agu"] = {
-	"Gurjara Apabhramsa",
-	nil,
-	"inc-apa",
-}
-
-m["inc-aka"] = {
-	"Kasmiri Apabhramsa",
-	nil,
-	"inc-apa",
-}
-
-m["inc-ama"] = {
-	"Maharastri Apabhramsa",
-	nil,
-	"inc-apa",
-}
-
-m["inc-ata"] = {
-	"Takka Apabhramsa",
-	nil,
-	"inc-apa",
-}
-
-m["inc-avr"] = {
-	"Vracada Apabhramsa",
-	nil,
-	"inc-apa",
-}
-
--- Italian, Latin and other Italic varieties
-
-m["roa-oit"] = {
-	"Old Italian",
-	nil,
-	"it",
-}
-
-m["it-CH"] = {
-	"Switzerland Italian",
-	672147,
-	"it",
-}
+--------------------------------------------------------------------------------------
+--                                   Italic varieties                               --
+--------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------
+--                             Latin varieties                         --
+-------------------------------------------------------------------------
 
 -- Latin varieties by period
 
@@ -3527,14 +3120,9 @@ m["la-con"] = {
 	"la-new",
 }
 
-m["roa-pro"] = {
-	"Proto-Romance",
-	3408029,
-	"la-lat",
-	ancestors = "la-vul",
-}
-
--- other Italic lects
+-------------------------------------------------------------------------
+--                    Miscellaneous Italic varieties                   --
+-------------------------------------------------------------------------
 
 m["xfa-cap"] = {
 	"Capenate",
@@ -3554,78 +3142,426 @@ m["osc-sam"] = {
 	"osc",
 }
 
+-------------------------------------------------------------------------
+--                            Romance varieties                        --
+-------------------------------------------------------------------------
 
--- Malay and related varieties
+m["roa-pro"] = {
+	"Proto-Romance",
+	3408029,
+	"la-lat",
+	ancestors = "la-vul",
+}
 
-m["ms-old"] = { -- this has the ISO code 'omy'
-	"Old Malay",
+-----------------------------------------------------
+--                Catalan varieties                --
+-----------------------------------------------------
+
+m["ca-val"] = {
+	"Valencian",
+	32641,
+	"ca",
+}
+
+-----------------------------------------------------
+--           Franco-Provençal varieties            --
+-----------------------------------------------------
+
+m["frp-old"] = {
+	"Old Franco-Provençal",
 	nil,
-	"ms",
+	"frp",
 }
 
-m["ms-cla"] = {
-	"Classical Malay",
+-----------------------------------------------------
+--     French and French-based creole varieties    --
+-----------------------------------------------------
+
+m["fro-nor"] = {
+	"Old Northern French",
+	2044917,
+	"fro",
+	aliases = {"Old Norman", "Old Norman French"},
+}
+
+m["fro-pic"] = {
+	"Picard Old French",
 	nil,
-	"ms",
-	ancestors = "ms-old",
+	"fro",
 }
 
-m["pse-bsm"] = {
-	"Besemah",
+m["xno"] = {
+	"Anglo-Norman",
+	35214,
+	"fro-nor",
+}
+
+m["xno-law"] = {
+	"Law French",
+	2044323,
+	"xno",
+}
+
+m["zrp"] = {
+	"Zarphatic",
+	36994,
+	"fro",
+	aliases = {"Judeo-French"}
+}
+
+m["fr-CA"] = {
+	"Canadian French",
+	1450506,
+	"fr",
+}
+
+m["fr-CH"] = {
+	"Swiss French",
+	1480152,
+	"fr",
+}
+
+m["fr-aca"] = {
+	"Acadian French",
+	415109,
+	"fr",
+}
+
+m["fr-lou"] = {
+	"Louisiana French",
+	3083213,
+	"fr",
+}
+
+m["fr-mis"] = {
+	"Missouri French",
+	3083210,
+	"fr",
+}
+
+m["frc"] = {
+	"Cajun French",
+	880301,
+	"fr-lou",
+}
+
+m["ht-sdm"] = {
+	"Saint Dominican Creole French",
 	nil,
-	"pse",
+	"ht",
+	ancestors = "fr",
 }
 
-m["bew-kot"] = {
-	"Betawi Kota",
+-- Norman varieties
+
+m["nrf-grn"] = {
+	"Guernsey Norman",
+	56428,
+	"nrf",
+	aliases = {"Guernsey"},
+}
+
+m["nrf-jer"] = {
+	"Jersey Norman",
+	56430,
+	"nrf",
+	aliases = {"Jersey"},
+}
+
+-----------------------------------------------------
+--                Italian varieties                --
+-----------------------------------------------------
+
+m["roa-oit"] = {
+	"Old Italian",
 	nil,
-	"bew",
-	aliases = {"Urban Betawi"}, -- in Jakarta
+	"it",
 }
 
+m["it-CH"] = {
+	"Switzerland Italian",
+	672147,
+	"it",
+}
 
--- Mongolic lects
+-----------------------------------------------------
+--                Occitan varieties                --
+-----------------------------------------------------
 
-m["xng-ear"] = {
-	"Early Middle Mongol",
+m["oc-auv"] = {
+	"Auvergnat",
+	35359,
+	"oc",
+	aliases = {"Auvernhat", "Auvergnese"},
+}
+
+m["oc-gas"] = {
+	"Gascon",
+	35735,
+	"oc",
+}
+
+-- standardized dialect of Gascon
+m["oc-ara"] = {
+	"Aranese",
+	10196,
+	"oc-gas",
+}
+
+m["oc-lan"] = {
+	"Languedocien",
+	942602,
+	"oc",
+	aliases = {"Lengadocian"},
+}
+
+m["oc-lim"] = {
+	"Limousin",
+	427614,
+	"oc",
+}
+
+m["oc-pro"] = {
+	"Provençal",
+	241243,
+	"oc",
+	aliases = {"Provencal"},
+}
+
+m["oc-pro-old"] = {
+	"Old Provençal",
+	2779185,
+	"pro",
+}
+
+m["oc-viv"] = {
+	"Vivaro-Alpine",
+	1649613,
+	"oc",
+}
+
+m["oc-jud"] = {
+	"Shuadit",
+	56472,
+	"oc",
+	aliases = {
+		"Chouhadite", "Chouhadit", "Chouadite", "Chouadit", "Shuhadit",
+		"Judeo-Occitan", "Judæo-Occitan", "Judaeo-Occitan",
+		"Judeo-Provençal", "Judæo-Provençal", "Judaeo-Provençal",
+		"Judeo-Provencal", "Judaeo-Provencal",
+		"Judeo-Comtadin", "Judæo-Comtadin", "Judaeo-Comtadin",
+	},
+}
+
+-----------------------------------------------------
+--                Portuguese varieties             --
+-----------------------------------------------------
+
+m["pt-BR"] = {
+	"Brazilian Portuguese",
+	750553,
+	"pt",
+}
+
+m["pt-PT"] = {
+	"European Portuguese",
+	922399,
+	"pt",
+}
+
+-----------------------------------------------------
+--            Rhaeto-Romansh varieties             --
+-----------------------------------------------------
+
+-- Ladin varieties
+
+m["lld-bad"] = {
+	"Badiot Ladin",
+	3706562,
+	"lld",
+	aliases = {"Badiot", "Badioto", "Badiotto"},
+}
+
+m["lld-fas"] = {
+	"Fascian Ladin",
+	742627,
+	"lld",
+	aliases = {"Fascian", "Fassano"},
+}
+
+m["lld-fod"] = {
+	"Fodom Ladin",
+	3706605,
+	"lld",
+	aliases = {"Fodom", "Livinallese"},
+}
+
+m["lld-ghe"] = {
+	"Gherdëina Ladin",
+	3706597,
+	"lld",
+	aliases = {"Gherdëina", "Gardenese", "Val Gardena"},
+}
+
+-- Romansch varieties
+
+m["rm-put"] = {
+	"Puter Romansch",
+	688309,
+	"rm",
+	aliases = {"Puter", "Putèr", "Upper Engadine", "rm-puter"},
+}
+
+m["rm-srm"] = {
+	"Surmiran Romansch",
+	690216,
+	"rm",
+	aliases = {"Surmiran", "rm-surmiran",
+			   "Surmiran-Albula", -- Glottolog
+			  },
+}
+
+m["rm-srs"] = {
+	"Sursilvan Romansch",
+	688348,
+	"rm",
+	aliases = {"Sursilvan", "rm-sursilv"},
+}
+
+m["rm-sut"] = {
+	"Sutsilvan Romansch",
+	688272,
+	"rm",
+	aliases = {"Sutsilvan", "rm-sutsilv"},
+	varieties = {"Scharans Sutsilvan"}, -- per Glottolog
+}
+
+m["rm-val"] = {
+	"Vallader Romansch",
+	690226,
+	"rm",
+	aliases = {"Vallader", "Putèr", "Lower Engadine", "rm-vallader"},
+}
+
+m["rm-gri"] = {
+	"Rumantsch Grischun",
+	688873,
+	"rm",
+	aliases = {"rm-rumgr"},
+}
+
+-----------------------------------------------------
+--               Sardinian varieties               --
+-----------------------------------------------------
+
+m["sc-src"] = {
+	"Logudorese",
+	777974,
+	"sc",
+	aliases = {"Logudorese Sardinian"},
+}
+
+m["sc-nuo"] = {
+	"Nuorese",
 	nil,
-	"xng",
+	"sc-src",
+	aliases = {"Nuorese Sardinian"},
 }
 
-m["xng-lat"] = {
-	"Late Middle Mongol",
-	nil,
-	"xng",
-	ancestors = "xng-ear",
+m["sc-sro"] = {
+	"Campidanese",
+	35348,
+	"sc",
+	aliases = {"Campidanese Sardinian"},
 }
 
-m["mn-kha"] = {
-	"Khalkha Mongolian",
-	6399808,
-	"mn",
-	aliases = {"Khalkha"},
+-----------------------------------------------------
+--                 Spanish varieties               --
+-----------------------------------------------------
+
+m["es-ear"] = {
+	"Early Modern Spanish",
+	5364419,
+	"es",
 }
 
-m["mn-ord"] = {
-	"Ordos Mongolian",
-	716904,
-	"mn",
-	aliases = {"Ordos"},
+m["es-AR"] = {
+	"Rioplatense Spanish",
+	509780,
+	"es",
 }
 
-m["mn-cha"] = {
-	"Chakhar Mongolian",
-	907425,
-	"mn",
-	aliases = {"Chakhar"},
+m["es-BO"] = {
+	"Bolivian Spanish",
+	510730,
+	"es",
 }
 
-m["mn-khr"] = {
-	"Khorchin Mongolian",
-	3196210,
-	"mn",
-	aliases = {"Khorchin"},
+m["es-CL"] = {
+	"Chilean Spanish",
+	857295,
+	"es",
 }
+
+m["es-CO"] = {
+	"Colombian Spanish",
+	1115875,
+	"es",
+}
+
+m["es-CU"] = {
+	"Cuban Spanish",
+	824909,
+	"es",
+}
+
+m["es-MX"] = {
+	"Mexican Spanish",
+	616620,
+	"es",
+}
+
+m["es-PE"] = {
+	"Peruvian Spanish",
+	736236,
+	"es",
+}
+
+m["es-PH"] = {
+	"Philippine Spanish",
+	22091406,
+	"es",
+}
+
+m["es-US"] = {
+	"United States Spanish",
+	2301077,
+	"es",
+	aliases = {"US Spanish"},
+}
+--use label "US Spanish" to put Spanish terms in this category
+
+m["es-PR"] = {
+	"Puerto Rican Spanish",
+	7258609,
+	"es",
+}
+
+m["es-VE"] = {
+	"Venezuelan Spanish",
+	840017,
+	"es",
+}
+
+m["es-lun"] = {
+	"Lunfardo",
+	1401612,
+	"es",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                                 Japonic varieties                                                --
+----------------------------------------------------------------------------------------------------------------------
 
 -- Japanese varieties
 
@@ -3672,15 +3608,9 @@ m["ja-cla"] = {
 	-- ancestors = "ja-mid-ear",
 }
 
--- Kartvelian varieties
-
-
-m["ka-mid"] = {
-	"Middle Georgian",
-	nil,
-	"ka",
-	ancestors = "oge",
-}
+----------------------------------------------------------------------------------------------------------------------
+--                                                Koreanic varieties                                                --
+----------------------------------------------------------------------------------------------------------------------
 
 -- Korean varieties
 
@@ -3764,185 +3694,115 @@ m["ko-yuk"] = {
 	aliases = {"Yukchin Korean", "Ryukjin Korean", "Ryukchin Korean"},
 }
 
--- Occitan varieties
+----------------------------------------------------------------------------------------------------------------------
+--                                                Mongolic varieties                                                --
+----------------------------------------------------------------------------------------------------------------------
 
-m["oc-auv"] = {
-	"Auvergnat",
-	35359,
-	"oc",
-	aliases = {"Auvernhat", "Auvergnese"},
-}
-
-m["oc-gas"] = {
-	"Gascon",
-	35735,
-	"oc",
-}
-
--- standardized dialect of Gascon
-m["oc-ara"] = {
-	"Aranese",
-	10196,
-	"oc-gas",
-}
-
-m["oc-lan"] = {
-	"Languedocien",
-	942602,
-	"oc",
-	aliases = {"Lengadocian"},
-}
-
-m["oc-lim"] = {
-	"Limousin",
-	427614,
-	"oc",
-}
-
-m["oc-pro"] = {
-	"Provençal",
-	241243,
-	"oc",
-	aliases = {"Provencal"},
-}
-
-m["oc-pro-old"] = {
-	"Old Provençal",
-	2779185,
-	"pro",
-}
-
-m["oc-viv"] = {
-	"Vivaro-Alpine",
-	1649613,
-	"oc",
-}
-
-m["oc-jud"] = {
-	"Shuadit",
-	56472,
-	"oc",
-	aliases = {
-		"Chouhadite", "Chouhadit", "Chouadite", "Chouadit", "Shuhadit",
-		"Judeo-Occitan", "Judæo-Occitan", "Judaeo-Occitan",
-		"Judeo-Provençal", "Judæo-Provençal", "Judaeo-Provençal",
-		"Judeo-Provencal", "Judaeo-Provencal",
-		"Judeo-Comtadin", "Judæo-Comtadin", "Judaeo-Comtadin",
-	},
-}
-
--- Old Tupi varieties
-
-m["tpw-lga"] = {
-	"Língua Geral Amazônica",
-	18275323,
-	"tpw",
-	aliases = {"Língua Geral"},
-}
-
-m["tpw-lgp"] = {
-	"Língua Geral Paulista",
-	2669239,
-	"tpw",
-}
-
--- Oromo varieties
-
-m["hae"] = {
-	"Harar Oromo",
-	5330355,
-	"om",
-	aliases = {"Eastern Oromo"},
-}
-
-m["gax"] = {
-	"Borana",
-	2910610,
-	"om",
-	aliases = {"Southern Oromo"},
-}
-
-m["orc"] = {
-	"Orma",
-	2919128,
-	"om",
-}
-
-m["ssn"] = {
-	"Waata",
-	3501553,
-	"om",
-}
-
--- Papuan language varieties
-
-m["kze"] = {
-	"Kosena",
-	12952663,
-	"auy",
-}
-
-m["ont"] = {
-	"Ontenu",
-	3352827,
-	"gaj",
-	aliases = {"Ontena"},
-}
-
--- Phillipine varieties
-
-m["tl-old"] = {
-	"Old Tagalog",
-	12967437,
-	"tl",
-}
-
-m["tl-cls"] = {
-	"Classical Tagalog",
+m["xng-ear"] = {
+	"Early Middle Mongol",
 	nil,
-	"tl",
+	"xng",
 }
 
-
--- Pre-Roman substrates
-
-m["qsb-ibe"] = {
-	"Paleo-Hispanic",
-	246801,
-	"und",
-	family = "qfa-sub",
-	aliases = {"Palaeo-Hispanic", "Paleohispanic", "Palaeohispanic", "Paleo-Iberian", "Palaeo-Iberian"},
-}
-
-m["qsb-bal"] = {
-	"Paleo-Balkan",
-	1815070,
-	"und",
-	family = "qfa-sub",
-	aliases = {"Palaeo-Balkan", "Paleobalkan", "Palaeobalkan"},
-}
-
--- Sardinian varieties
-
-m["sc-src"] = {
-	"Logudorese",
-	777974,
-	"sc",
-	aliases = {"Logudorese Sardinian"},
-}
-
-m["sc-nuo"] = {
-	"Nuorese",
+m["xng-lat"] = {
+	"Late Middle Mongol",
 	nil,
-	"sc-src",
-	aliases = {"Nuorese Sardinian"},
+	"xng",
+	ancestors = "xng-ear",
 }
 
-m["sc-sro"] = {
-	"Campidanese",
-	35348,
-	"sc",
-	aliases = {"Campidanese Sardinian"},
+m["mn-kha"] = {
+	"Khalkha Mongolian",
+	6399808,
+	"mn",
+	aliases = {"Khalkha"},
+}
+
+m["mn-ord"] = {
+	"Ordos Mongolian",
+	716904,
+	"mn",
+	aliases = {"Ordos"},
+}
+
+m["mn-cha"] = {
+	"Chakhar Mongolian",
+	907425,
+	"mn",
+	aliases = {"Chakhar"},
+}
+
+m["mn-khr"] = {
+	"Khorchin Mongolian",
+	3196210,
+	"mn",
+	aliases = {"Khorchin"},
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                               Niger-Congo varieties                                              --
+----------------------------------------------------------------------------------------------------------------------
+
+-----------------------------------------------------
+--                  Akan varieties                 --
+-----------------------------------------------------
+
+m["tw"] = {
+	"Twi Akan",
+	36850,
+	"ak",
+	aliases = {"Twi"},
+}
+
+m["abr"] = {
+	"Abron",
+	34831,
+	"tw",
+	aliases = {"Brong", "Bono", "Bono Twi"},
+}
+
+m["tw-asa"] = {
+	"Asante Twi",
+	19261685,
+	"tw",
+	aliases = {"Asante", "Ashanti", "Ashante"},
+}
+
+m["tw-aku"] = {
+	"Akuapem Twi",
+	31150449,
+	"tw",
+	aliases = {"Akuapem", "Akuapim", "Akwapem Twi", "Akwapi"},
+}
+
+m["fat"] = {
+	"Fante Akan",
+	35570,
+	"ak",
+	aliases = {"Fante", "Fanti", "Fantse", "Mfantse"},
+}
+
+m["wss"] = {
+	"Wasa",
+	36914,
+	"ak",
+}
+
+-----------------------------------------------------
+--                 Bantu varieties                 --
+-----------------------------------------------------
+
+m["bnt-cmn"] = {
+	"Common Bantu",
+	nil,
+	"bnt-pro",
+}
+
+m["xh-bha"] = {
+	"Bhaca",
+	4900493,
+	"xh",
+	aliases = {"isiBhaca", "IsiBhaca"},
 }
 
 -- Rwanda-Rundi varieties
@@ -3961,181 +3821,735 @@ m["rw-run"] = {
 	aliases = {"Rundi"},
 }
 
--- Slavic varieties
+-----------------------------------------------------
+--                   Fula varieties                --
+-----------------------------------------------------
 
-m["cs-ear"] = {
-	"Early Modern Czech",
+m["fuc"] = {
+	"Pulaar",
+	1420205,
+	"ff",
+}
+
+m["fuf"] = {
+	"Pular",
+	3915357,
+	"ff",
+}
+
+m["ffm"] = {
+	"Maasina Fulfulde",
+	3915322,
+	"ff",
+}
+
+m["fue"] = {
+	-- no enwiki entry as of yet but frwiki and pmswiki have one
+	"Borgu Fulfulde",
+	12952426,
+	"ff",
+}
+
+m["fuh"] = {
+	-- no enwiki entry as of yet but frwiki and pmswiki have one
+	"Western Niger Fulfulde",
+	12952430,
+	"ff",
+}
+
+m["fuq"] = {
+	-- no enwiki entry as of yet but frwiki, hrwiki and pmswiki have one
+	"Central-Eastern Niger Fulfulde",
+	12628799,
+	"ff",
+}
+
+m["fuv"] = {
+	-- no enwiki entry as of yet but dewiki, frwiki, hrwiki, pmswiki and swwiki have one
+	"Nigerian Fulfulde",
+	36129,
+	"ff",
+}
+
+m["fub"] = {
+	-- no enwiki entry as of yet but dewiki, frwiki, hrwiki, pmswiki, ptwiki, swwiki and yowiki have one
+	"Adamawa Fulfulde",
+	34776,
+	"ff",
+}
+
+m["fui"] = {
+	-- no enwiki entry as of yet but pmswiki and swwiki have one
+	"Bagirmi Fulfulde",
+	11003859,
+	"ff",
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                                  Papuan varieties                                                --
+----------------------------------------------------------------------------------------------------------------------
+
+m["kze"] = {
+	"Kosena",
+	12952663,
+	"auy",
+}
+
+m["ont"] = {
+	"Ontenu",
+	3352827,
+	"gaj",
+	aliases = {"Ontena"},
+}
+
+----------------------------------------------------------------------------------------------------------------------
+--                                              Sino-Tibetan varieties                                              --
+----------------------------------------------------------------------------------------------------------------------
+
+m["tbq-pro"] = {
+	"Proto-Tibeto-Burman",
+	7251864,
+	"sit-pro",
+}
+
+-----------------------------------------------------
+--                Chinese varieties                --
+-----------------------------------------------------
+
+------------- Old Chinese, Middle Chinese -------------
+
+m["och-ear"] = {
+	"Early Old Chinese",
 	nil,
-	"cs",
-	ancestors = "zlw-ocs"
+	"och",
 }
 
-m["cu-bgm"] = {
-	"Middle Bulgarian",
-	12294897,
-	"cu",
-	ancestors = "cu"
-}
-
-m["zle-mru"] = {
-	"Middle Russian",
-	35228,
-	"ru",
-	"Cyrs",
-	ancestors = "orv",
-	translit = "ru-translit",
-	strip_diacritics = {
-		Cyrs = {
-			remove_diacritics = c.grave .. c.acute .. c.diaer,
-		},
-	},
-
-}
-
-m["zle-mbe"] = {
-	"Middle Belarusian",
-	13211,
-	"zle-ort",
-}
-
-m["zle-muk"] = {
-	"Middle Ukrainian",
-	13211,
-	"zle-ort",
-}
-
-m["uk-CA"] = {
-	"Canadian Ukrainian",
-	4161010,
-	"uk",
-}
-
--- Church Slavonic varieties
-
--- Old Moscow Church Slavonic deleted as it seems not distinct enough from Russian (Synodal) Church Slavonic.
-
-m["zls-chs-ru"] = {
-	"Russian Church Slavonic",
-	21662400,
-	"zls-chs",
-	aliases = {"Synodal Church Slavonic", "New Moscow Church Slavonic", "Novomoskovsk Church Slavonic"},
-}
-
-m["zls-chs-uk"] = {
-	"Ukrainian Church Slavonic",
-	12153548,
-	"zls-chs",
-	aliases = {"Rusyn Church Slavonic", "Belarusian Church Slavonic"},
-}
-
---[=[
-
--- Not sure about these yet.
-
-m["zls-chs-bg"] = {
-	"Bulgarian Church Slavonic",
+m["och-lat"] = {
+	"Late Old Chinese",
 	nil,
-	"zls-chs",
+	"och",
 }
 
-m["zls-chs-cs"] = {
-	"Czech Church Slavonic",
+m["ltc-ear"] = {
+	"Early Middle Chinese",
 	nil,
-	"zls-chs",
+	"ltc",
 }
 
-m["zls-chs-hr"] = {
-	"Croatian Church Slavonic",
+m["ltc-lat"] = {
+	"Late Middle Chinese",
 	nil,
-	"zls-chs",
+	"ltc",
 }
 
-m["zls-chs-mk"] = {
-	"Macedonian Church Slavonic",
+------------- Classical/Literary varieties -------------
+
+-- FIXME: Temporary.
+m["lzh-shi"] = {
+	"Traditional Chinese poetry",
+	1759242,
+	"lzh",
+}
+
+-- FIXME: Temporary.
+m["lzh-cii"] = {
+	"Ci",
+	1091366,
+	"lzh",
+}
+
+-- FIXME: Temporary.
+m["lzh-yue"] = {
+	"Classical Cantonese",
 	nil,
-	"zls-chs",
+	"lzh",
 }
 
-m["zls-chs-ro"] = {
-	"Romanian Church Slavonic",
+-- FIXME: Temporary.
+m["lzh-cmn"] = {
+	"Classical Mandarin",
 	nil,
-	"zls-chs",
+	"lzh",
 }
 
-m["zls-chs-sr"] = {
-	"Serbian Church Slavonic",
+-- FIXME: Temporary.
+m["lzh-tai"] = {
+	"Classical Taishanese",
 	nil,
-	"zls-chs",
+	"lzh",
 }
 
-]=]
-
--- Polish varieties
-
-m["zlw-mpl"] = {
-	"Middle Polish",
-	402878,
-	"pl",
-	ancestors = "zlw-opl",
-	strip_diacritics = {
-		remove_diacritics = c.acute,
-		remove_exceptions = {"Ć", "ć", "Ń", "ń", "Ó", "ó", "Ś", "ś", "Ź", "ź"},
-	},
+-- FIXME: Temporary.
+m["lzh-cmn-TW"] = {
+	"Classical Taiwanese Mandarin",
+	nil,
+	"lzh-cmn",
 }
 
-m["pl-gre"] = {
-	"Greater Polish",
-	4106789,
-	"pl",
+-- FIXME: Temporary.
+m["lzh-VI"] = {
+	"Vietnamese Classical Chinese",
+	17034227,
+	"lzh",
 }
 
-m["pl-les"] = {
-	"Lesser Polish",
-	361709,
-	"pl",
+-- FIXME: Temporary.
+m["lzh-KO"] = {
+	"Korean Classical Chinese",
+	10496257,
+	"lzh",
+	ietf_subtag = "lzh-KR" -- KR = South Korea, as there is no code for Korea as a whole
 }
 
-m["pl-mas"] = {
-	"Masovian Polish",
-	4274559,
-	"pl",
+-- FIXME: Temporary.
+m["lzh-lit"] = {
+	"Literary Chinese",
+	nil,
+	"lzh",
 }
 
-m["pl-gor"] = {
-	"Goral",
-	452889,
-	"pl",
+-- FIXME: Temporary. FIXME: Do we need this? How does it differ from Old Chinese?
+m["lzh-pre"] = {
+	"Pre-Classical Chinese",
+	nil,
+	"lzh",
 }
 
-m["zle-ops"] = {
-	"Old Pskovian",
-	4167885,
-	"zle-ono",
+------------- Written Vernacular varieties -------------
+
+-- FIXME: Temporary.
+m["cmn-wvc"] = {
+	"Written vernacular Mandarin",
+	783605,
+	"cmn",
 }
 
--- Serbo-Croatian varieties
-
-m["ckm"] = {
-	"Chakavian Serbo-Croatian",
-	337565,
-	"sh",
-	aliases = {"Čakavian"},
+-- FIXME: Temporary. FIXME: How does this differ from "Literary Cantonese"?
+m["yue-wvc"] = {
+	"Written vernacular Cantonese",
+	nil,
+	"yue",
 }
 
-m["kjv"] = {
-	"Kajkavian Serbo-Croatian",
-	838165,
-	"sh",
+-- FIXME: Temporary.
+m["zhx-tai-wvc"] = {
+	"Written vernacular Taishanese",
+	nil,
+	"zhx-tai",
 }
 
-m["sh-tor"] = { -- Linguist code srp-tor
-	"Torlakian Serbo-Croatian",
-	1078803,
-	"sh",
-	aliases = {"Torlak"},
+------------- Mandarin varieties -------------
+
+-- FIXME: Temporary. NOTE: The Linguist List assigns the "w:Beijing dialect" (Wikidata 1147606) the code "cmn-bej" and
+-- the larger "w:Beijing Mandarin (division of Mandarin)" dialect group (Wikidata 2169652; what we call "Beijingic
+-- Mandarin", after Glottolog) the code "cmn-bei".
+m["cmn-bei"] = {
+	"Beijing Mandarin",
+	1147606,
+	"cmn-bec",
 }
 
--- Tibetic lects
+-- FIXME: Temporary.
+m["cmn-bec"] = {
+	"Beijingic Mandarin",
+	2169652,
+	"cmn",
+}
+
+-- FIXME: Temporary. NOTE: The Linguist List uses the code cmn-zho.
+m["cmn-cep"] = {
+	"Central Plains Mandarin",
+	3048775,
+	"cmn",
+	aliases = {"Zhongyuan Mandarin"},
+}
+
+m["cmn-ear"] = {
+	"Early Mandarin",
+	837169,
+	"cmn",
+	ancestors = "ltc",
+}
+
+-- FIXME: Temporary.
+m["cmn-gua"] = {
+	"Guanzhong Mandarin",
+	3431648,
+	"cmn-cep",
+}
+
+-- FIXME: Temporary. Appears to be a subdialect of Guiliu Mandarin, which in turn is a subdialect of Southwestern Mandarin.
+m["cmn-gui"] = {
+	"Guilin Mandarin",
+	11111636,
+	"cmn-sow",
+}
+
+m["cmn-jhu"] = {
+	"Jianghuai Mandarin",
+	2128953,
+	"cmn",
+	aliases = {"Lower Yangtze Mandarin"},
+}
+
+-- FIXME: Temporary.
+m["cmn-lan"] = {
+	"Lanyin Mandarin",
+	662754,
+	"cmn",
+}
+
+-- FIXME: Temporary.
+m["cmn-MY"] = {
+	"Malaysian Mandarin",
+	13646143,
+	"cmn",
+}
+
+-- FIXME: Temporary.
+m["cmn-nan"] = {
+	"Nanjing Mandarin",
+	2681098,
+	"cmn-jhu",
+}
+
+-- FIXME: Temporary.
+m["cmn-noe"] = {
+	"Northeastern Mandarin",
+	1064504,
+	"cmn",
+}
+
+-- FIXME: Temporary.
+m["cmn-PH"] = {
+	"Philippine Mandarin",
+	7185155,
+	"cmn",
+}
+
+-- FIXME: Temporary.
+m["cmn-SG"] = {
+	"Singapore Mandarin",
+	1048980,
+	"cmn",
+}
+
+-- FIXME: Temporary.
+m["cmn-sow"] = {
+	"Southwestern Mandarin",
+	2609239,
+	"cmn",
+}
+
+-- FIXME: Temporary. Appears to be a subdialect of Jilu Mandarin.
+m["cmn-tia"] = {
+	"Tianjin Mandarin",
+	7800220,
+	"cmn",
+}
+
+-- FIXME: Temporary. NOTE: Wikidata also has Q4380827 "Taiwanese Mandarin", defined as "rare dialect of Standard Chinese
+-- (Mandarin) used in Taiwan, which is strongly influenced by Taiwanese Hokkien; mostly used by elderlies" and having no
+-- English Wikipedia article (but see w:zh:臺灣國語).
+m["cmn-TW"] = {
+	"Taiwanese Mandarin",
+	262828,
+	"cmn",
+}
+
+-- FIXME: Temporary. Appears to be a subdialect of Wu-Tian Mandarin, in turn a subdialect of Southwestern Mandarin.
+-- Given the code cmn-xwu in the Linguist List.
+m["cmn-wuh"] = {
+	"Wuhan Mandarin",
+	11124731,
+	"cmn-sow",
+	aliases = {"Wuhanese"},
+}
+
+-- FIXME: Temporary. Appears to be a subdialect of Lanyin Mandarin.
+m["cmn-xin"] = {
+	"Xining Mandarin",
+	nil,
+	"cmn-lan",
+}
+
+-- FIXME: Temporary.
+m["cmn-yan"] = {
+	"Yangzhou Mandarin",
+	nil,
+	"cmn-jhu",
+}
+
+------------- Cantonese varieties -------------
+
+-- FIXME: Temporary.
+m["yue-gua"] = {
+	"Guangzhou Cantonese",
+	nil,
+	"yue",
+}
+
+-- FIXME: Temporary. Given the codes yue-yue or yue-can in the Linguist List.
+m["yue-HK"] = {
+	"Hong Kong Cantonese",
+	5894342,
+	"yue",
+}
+
+-- FIXME: Temporary. FIXME: How does this differ from "Written vernacular Cantonese"?
+m["yue-lit"] = {
+	"Literary Cantonese",
+	2472605,
+	"yue",
+}
+
+------------- Wu varieties -------------
+
+m["wuu-han"] = {
+	"Hangzhounese",
+	5648144,
+	"wuu",
+}
+
+m["wuu-nin"] = {
+	"Ningbonese",
+	3972199,
+	"wuu",
+}
+
+-- FIXME: Temporary.
+m["wuu-nor"] = {
+	"Northern Wu",
+	7675988,
+	"wuu",
+	aliases = {"Taihu Wu"},
+}
+
+-- FIXME: Temporary? Subvariety of Taihu Wu. NOTE: "chm" stands for Chongming, the main dialect, to avoid a conflict
+-- with Shanghainese.
+m["wuu-chm"] = {
+	"Shadi Wu",
+	6112340,
+	"wuu-nor",
+}
+
+m["wuu-sha"] = {
+	"Shanghainese",
+	36718,
+	"wuu-nor",
+}
+
+m["wuu-suz"] = {
+	"Suzhounese",
+	831744,
+	"wuu-nor",
+}
+
+-- FIXME: Temporary. May be converted into a full language and/or split.
+m["wuu-wen"] = {
+	"Wenzhounese",
+	710218,
+	"wuu",
+}
+
+------------- Xiang varieties -------------
+
+m["hsn-lou"] = {
+	"Loudi Xiang",
+	10943823,
+	"hsn-old",
+}
+
+m["hsn-hya"] = {
+	"Hengyang Xiang",
+	20689035,
+	"hsn-hzh",
+}
+
+m["hsn-hzh"] = {
+	"Hengzhou Xiang",
+	nil,
+	"hsn",
+}
+
+m["hsn-new"] = {
+	"New Xiang",
+	7012696,
+	"hsn",
+	aliases = {"Chang-Yi"},
+}
+
+m["hsn-old"] = {
+	"Old Xiang",
+	7085453,
+	"hsn",
+	aliases = {"Lou-Shao"},
+}
+
+------------- Hakka varieties -------------
+
+-- FIXME: Temporary.
+m["hak-dab"] = {
+	"Dabu Hakka",
+	19855566,
+	"hak", -- formerly hak-TW but seems to be spoken primary in Dabu County in Guangdong
+}
+
+-- FIXME: Temporary.
+m["hak-eam"] = {
+	"Early Modern Hakka",
+	nil,
+	"hak",
+}
+
+-- FIXME: Temporary.
+m["hak-hai"] = {
+	"Hailu Hakka",
+	17038519,
+	"hak", -- often considered a Taiwanese lect but also spoken in [[Shanwei]], [[Guangdong]]
+}
+
+-- FIXME: Temporary.
+m["hak-HK"] = {
+	"Hong Kong Hakka",
+	2675834,
+	"hak",
+}
+
+-- FIXME: Temporary.
+m["hak-hui"] = {
+	"Huiyang Hakka",
+	16873881,
+	"hak",
+}
+
+-- FIXME: Temporary.
+m["hak-hui-MY"] = {
+	"Malaysian Huiyang Hakka",
+	nil,
+	"hak-hui",
+}
+
+-- FIXME: Temporary. Similar to and possibly the parent of Sixian Hakka in Taiwan.
+m["hak-mei"] = {
+	"Meixian Hakka",
+	839295,
+	"hak",
+	aliases = {"Moiyan Hakka", "Meizhou Hakka"},
+}
+
+-- FIXME: Temporary.
+m["hak-six"] = {
+	"Sixian Hakka",
+	9668261,
+	"hak-TW",
+}
+
+-- FIXME: Temporary.
+m["hak-TW"] = {
+	"Taiwanese Hakka",
+	2391532,
+	"hak",
+}
+
+-- FIXME: Temporary.
+m["hak-zha"] = {
+	"Zhao'an Hakka",
+	6703311,
+	"hak",
+	aliases = {"Zhangzhou Hakka"},
+}
+
+-- Southern Min varieties --
+
+m["nan-anx"] = {
+	"Anxi Hokkien",
+	97064149,
+	"nan-qua",
+}
+
+m["nan-cha"] = {
+	"Changtai Hokkien",
+	nil,
+	"nan-zha",
+}
+
+m["nan-hou"] = {
+	"Houlu Min",
+	19855492,
+	"nan-dat",
+}
+
+m["nan-hui"] = {
+	"Hui'an Hokkien",
+	16241797,
+	"nan-qua",
+}
+
+m["nan-jin"] = {
+	"Jinjiang Hokkien",
+	11089375,
+	"nan-qua",
+}
+
+m["nan-kin"] = {
+	"Kinmenese Hokkien",
+	56278342,
+	"nan-xia",
+	aliases = {"Kinmen Hokkien"},
+}
+
+m["nan-med"] = {
+	"Medan Hokkien",
+	6805114,
+	"nan-zha",
+}
+
+m["nan-pen"] = {
+	"Penang Hokkien",
+	11120689,
+	"nan-zha",
+}
+
+m["nan-hbl-PH"] = {
+	"Philippine Hokkien",
+	3236692,
+	"nan-qua",
+}
+
+m["nan-qia"] = {
+	"Qianlu Min",
+	19842517,
+	"nan-dat",
+}
+
+m["nan-qua"] = {
+	"Quanzhou Hokkien",
+	2251677,
+	"nan-hbl",
+	aliases = {"Chinchew", "Choanchew"},
+}
+
+-- FIXME: Temporary? Derived from both Quanzhou and Zhangzhou Hokkien.
+m["nan-hbl-SG"] = {
+	"Singapore Hokkien",
+	3846528,
+	"nan-hbl",
+}
+
+m["nan-spm"] = {
+	"Southern Malaysian Hokkien",
+	7570322,
+	"nan-qua",
+	aliases = {"Southern Malaysia Hokkien", "Southern Peninsular Malaysian Hokkien", "Southern Peninsular Malaysia Hokkien"}
+}
+
+m["nan-hbl-TW"] = {
+	"Taiwanese Hokkien",
+	36778,
+	"nan-hbl",
+}
+
+m["nan-ton"] = {
+	"Tong'an Hokkien",
+	nil,
+	"nan-xia",
+}
+
+m["nan-xia"] = {
+	"Xiamen Hokkien",
+	68744,
+	"nan-hbl",
+	aliases = {"Amoy", "Amoyese", "Amoynese", "Xiamenese"},
+}
+
+m["nan-yon"] = {
+	"Yongchun Hokkien",
+	65118728,
+	"nan-qua",
+}
+
+m["nan-zha"] = {
+	"Zhangzhou Hokkien",
+	8070492,
+	"nan-hbl",
+	aliases = {"Changchew", "Chiangchew", "Changchow"},
+}
+
+m["nan-zho"] = {
+	"Zhao'an Hokkien",
+	65118728,
+	"nan-zha",
+	aliases = {"Zhao'an", "Chawan", "Chawan Hokkien"},
+}
+
+m["nan-zhp"] = {
+	"Zhangping Hokkien",
+	15937822,
+	"nan-zha",
+}
+
+------------- Other Min varieties -------------
+
+-- FIXME: Temporary. Affiliation within Min uncertain; some combination of Eastern and Southern.
+m["zhx-zho"] = {
+	"Zhongshan Min",
+	8070958,
+	"zh",
+}
+
+------------- Other Chinese varieties -------------
+
+-- FIXME: Temporary. Affiliation within Chinese uncertain; possibly Yue.
+m["zhx-dan"] = {
+	"Danzhou Chinese",
+	2578935,
+	"zh",
+}
+
+------------- Chinese romanization varieties -------------
+
+-- [[Wiktionary:Information desk/2022/June#Etymology Coding Issue]]
+-- [[Wiktionary:Grease pit/2022/June#Transliteration Systems in Etymologies 2]]
+
+m["cmn-pinyin"] = {
+	"Hanyu Pinyin",
+	42222,
+	"cmn",
+	aliases = {"Pinyin"},
+}
+
+m["cmn-tongyong"] = {
+	"Tongyong Pinyin",
+	700739,
+	"cmn",
+}
+
+m["cmn-wadegiles"] = {
+	"Wade–Giles",
+	208442,
+	"cmn",
+	aliases = {"Wade-Giles", "Wade Giles"},
+}
+
+m["zh-postal"] = {
+	"Postal Romanization",
+	151868,
+	"zh",
+}
+
+-- Chinese cyrillization
+
+m["cmn-palladius"] = {
+	"Palladius",
+	1234239,
+	"cmn",
+	aliases = {"Palladius system"},
+}
+
+-----------------------------------------------------
+--                Tibetic varieties                --
+-----------------------------------------------------
 
 m["adx"] = {
 	"Amdo Tibetan",
@@ -4161,39 +4575,54 @@ m["tsk"] = {
 	"bo",
 }
 
--- Tuareg lects
+----------------------------------------------------------------------------------------------------------------------
+--                                                  Tai-Kadai varieties                                             --
+----------------------------------------------------------------------------------------------------------------------
 
-m["thv"] = {
-	"Tamahaq",
-	56703,
-	"tmh",
+m["th-old"] = {
+	"Old Thai",
+	nil,
+	"tai-swe-pro",
+	wikipedia_article = "Thai language#Old Thai",
 }
 
-m["ttq"] = {
-	"Tawellemmet",
-	56390,
-	"tmh",
+m["th-suk"] = {
+	"Sukhothai Old Thai", -- 1238-1438. Cannot use "Sukhothai Thai" as Sukhothai is the current city and "Sukhothai Thai" is a lect.
+	nil,
+	"th-old",
+	aliases = {"Sukhothai Siamese"},
+	wikipedia_article = "Thai language#Old Thai",
 }
 
-m["taq"] = {
-	"Tamasheq",
-	4670066,
-	"tmh",
+m["th-ayu"] = {
+	"Ayutthaya Old Thai", -- 1351-1767. Cannot use "Ayutthaya Thai" as Ayutthaya is the current city.
+	nil,
+	"th-old",
+	aliases = {"Ayutthaya Siamese"},
+	wikipedia_article = "Thai language#Old Thai",
 }
 
-m["thz"] = {
-	"Tayert",
-	56388,
-	"tmh",
+--[[
+m["th-new"] = {
+	"Hacked Thai", -- temporary for testing new translit/display methods
+	nil,
+	"th",
+	translit = "User:Benwing2/th-scraping-translit",
+	display_text = "User:Benwing2/th-scraping-translit",
+	strip_diacritics = "User:Benwing2/th-scraping-translit",
+	preprocess_links = "User:Benwing2/th-scraping-translit",
+}
+]]
+
+m["tai-shz"] = {
+	"Shangsi Zhuang",
+	13216,
+	"za",
 }
 
-m["thv-ght"] = {
-	"Ghat",
-	47012900,
-	"thv",
-}
-
--- Turkic lects
+----------------------------------------------------------------------------------------------------------------------
+--                                                 Turkic varieties                                                 --
+----------------------------------------------------------------------------------------------------------------------
 
 m["trk-cmn-pro"] = {
 	"Proto-Common Turkic",
@@ -4347,7 +4776,21 @@ m["xbo-vol"] = {
 	"xbo",
 }
 
--- Uralic lects
+----------------------------------------------------------------------------------------------------------------------
+--                                                 Uralic varieties                                                 --
+----------------------------------------------------------------------------------------------------------------------
+
+m["fiu-pro"] = {
+	"Proto-Finno-Ugric",
+	79890,
+	"urj-pro",
+}
+
+m["urj-fpr-pro"] = {
+	"Proto-Finno-Permic",
+	nil,
+	"urj-pro",
+}
 
 m["krl-nor"] = {
 	"North Karelian",
@@ -4373,7 +4816,9 @@ m["mns-wes"] = {
 	"mns-cen",
 }
 
--- Yeneseian lects
+----------------------------------------------------------------------------------------------------------------------
+--                                                Yeneseian varieties                                               --
+----------------------------------------------------------------------------------------------------------------------
 
 m["qfa-yke-pro"] = {
 	"Proto-Ketic",
@@ -4403,78 +4848,9 @@ m["qfa-ypm-pro"] = {
 	family = "qfa-ypm",
 }
 
--- Other lects
-
-m["alv-kro"] = {
-	"Kromanti",
-	1093206,
-	"crp-mar",
-}
-
-m["bat-pro"] = {
-	"Proto-Baltic",
-	1703347,
-	"ine-bsl-pro",
-}
-
-m["bat-dni"] = {
-	"Dnieper Baltic",
-	4163178,
-	"bat-pro",
-	family = "bat",
-	aliases = {"Dniepr Baltic", "Dnieper-Oka Baltic", "Dniepr-Oka Baltic"},
-}
-
-m["bat-gol"] = {
-	"Golyad",
-	4142855,
-	"bat-dni",
-	aliases = {"Eastern Galindian", "East Galindian"},
-}
-
-m["es-lun"] = {
-	"Lunfardo",
-	1401612,
-	"es",
-}
-
-m["fiu-pro"] = {
-	"Proto-Finno-Ugric",
-	79890,
-	"urj-pro",
-}
-
-m["iro-ohu"] = {
-	"Old Wendat",
-	nil,
-	"wdt",
-}
-
-m["iro-omo"] = {
-	"Old Mohawk",
-	nil,
-	"moh",
-}
-
-m["iro-oon"] = {
-	"Old Onondaga",
-	nil,
-	"ono",
-}
-
-m["okz-ang"] = {
-	"Angkorian Old Khmer",
-	nil,
-	"okz",
-	wikipedia_article = "Khmer language#Historical periods",
-}
-
-m["okz-pre"] = {
-	"Pre-Angkorian Old Khmer",
-	nil,
-	"okz",
-	wikipedia_article = "Khmer language#Historical periods",
-}
+----------------------------------------------------------------------------------------------------------------------
+--                                              Miscellaneous varieties                                             --
+----------------------------------------------------------------------------------------------------------------------
 
 m["mul-tax"] = {
 	"taxonomic name",
@@ -4482,57 +4858,54 @@ m["mul-tax"] = {
 	"mul",
 }
 
-m["tai-shz"] = {
-	"Shangsi Zhuang",
-	13216,
-	"za",
-}
+-----------------------------------------------------
+--                Elamite varieties                --
+-----------------------------------------------------
 
-m["tbq-pro"] = {
-	"Proto-Tibeto-Burman",
-	7251864,
-	"sit-pro",
-}
-
-m["th-old"] = {
-	"Old Thai",
+m["elx-old"] = {
+	"Old Elamite",
 	nil,
-	"tai-swe-pro",
-	wikipedia_article = "Thai language#Old Thai",
+	"elx",
 }
 
-m["th-suk"] = {
-	"Sukhothai Old Thai", -- 1238-1438. Cannot use "Sukhothai Thai" as Sukhothai is the current city and "Sukhothai Thai" is a lect.
+m["elx-mid"] = {
+	"Middle Elamite",
 	nil,
-	"th-old",
-	aliases = {"Sukhothai Siamese"},
-	wikipedia_article = "Thai language#Old Thai",
+	"elx",
 }
 
-m["th-ayu"] = {
-	"Ayutthaya Old Thai", -- 1351-1767. Cannot use "Ayutthaya Thai" as Ayutthaya is the current city.
+m["elx-neo"] = {
+	"Neo-Elamite",
 	nil,
-	"th-old",
-	aliases = {"Ayutthaya Siamese"},
-	wikipedia_article = "Thai language#Old Thai",
+	"elx",
 }
 
-m["urj-fpr-pro"] = {
-	"Proto-Finno-Permic",
+m["elx-ach"] = {
+	"Achaemenid Elamite",
 	nil,
-	"urj-pro",
+	"elx",
 }
 
---[[
-m["th-new"] = {
-	"Hacked Thai", -- temporary for testing new translit/display methods
-	nil,
-	"th",
-	translit = "User:Benwing2/th-scraping-translit",
-	display_text = "User:Benwing2/th-scraping-translit",
-	strip_diacritics = "User:Benwing2/th-scraping-translit",
-	preprocess_links = "User:Benwing2/th-scraping-translit",
+-----------------------------------------------------
+--                     Substrates                  --
+-----------------------------------------------------
+
+-- Pre-Roman substrates
+
+m["qsb-ibe"] = {
+	"Paleo-Hispanic",
+	246801,
+	"und",
+	family = "qfa-sub",
+	aliases = {"Palaeo-Hispanic", "Paleohispanic", "Palaeohispanic", "Paleo-Iberian", "Palaeo-Iberian"},
 }
-]]
+
+m["qsb-bal"] = {
+	"Paleo-Balkan",
+	1815070,
+	"und",
+	family = "qfa-sub",
+	aliases = {"Palaeo-Balkan", "Paleobalkan", "Palaeobalkan"},
+}
 
 return require("Module:languages").finalizeData(m, "language", true)
