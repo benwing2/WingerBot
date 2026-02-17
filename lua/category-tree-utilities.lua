@@ -1,5 +1,9 @@
 local export = {}
 
+local en_utilities_module = "Module:en-utilities"
+
+local unpack = unpack or table.unpack -- Lua 5.2 compatibility
+
 --[=[
 Generate labels for inflection classes. `data` is a table with the following fields:
 * `labels`: The table into which the labels are written.
@@ -76,7 +80,7 @@ function export.add_inflection_labels(data)
 	local function make_spec_bare(spec)
 		return (data.make_spec_bare or default_make_spec_bare)(spec)
 	end
-	local plpos = require("Module:string utilities").pluralize(data.pos)
+	local plpos = require(en_utilities_module).pluralize(data.pos)
 	for full_infl, spec in pairs(data.stem_classes) do
 		local subgenders = spec.possible_genders
 
