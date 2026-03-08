@@ -1,4 +1,7 @@
 local labels = {}
+local handlers = {}
+
+local category_tree_utilities_module = "Module:category tree/utilities"
 
 ------- GERMANIC VERB CLASSES -------
 
@@ -206,158 +209,294 @@ labels["class 7 strong j-present verbs"] = {
 
 ------- GERMANIC NOUN CLASSES -------
 
-local ine_pro_prec_addl = {
+local ine_pro_prec_footer = {
 	["<a>-stem"] = "{PIE} thematic nouns in <*-os> (masculine), <*-om> (neuter), with genitive <*-osyo> and nominative plural <*-oes> (masculine), <*-eh₂> (neuter).",
 	["<i>-stem"] = "{PIE} athematic proterokinetic nouns in <*-is>, with genitive <*-eys> and nominative plural <*-eyes>.",
 	["<u>-stem"] = "{PIE} athematic proterokinetic nouns in <*-us> (masculine or feminine), <*-u> (neuter), with genitive <*-ews> and nominative plural <*-ewes> (masculine or feminine), <*-uh₂> (neuter), although the {PG} genitive continues a post-PIE form <*-ows>."
 
-local gem_pro_props = {
-	["<a>-stem"] = {
-		daughter_desc = "<<c:<a>-stem nouns>>, ending in <*-az> (masculine), <*-ą> (neuter).",
-	},
-	["<ja>-stem"] = {
-		daughter_desc = "<<c:<ja>-stem nouns>>, ending in <*-jaz> (masculine), <*-ją> (neuter), which are effectively <a>-stem nouns with a stem suffix <*-j->.",
-		addl_intro = "Due to {{w|Sievers' Law}}, these nouns only occur with light stems (those with a short root vowel followed by a single consonant); otherwise the stem suffix appears as <*-ij-> (see <<c:<ija>-stem nouns>>). In {PG}, the endings were nearly the same as for plain <a>-stem nouns, but the two classes diverged in most daughter languages.",
-		umlaut = {"i"},
-	},
-	["<ija>-stem"] = {
-		daughter_desc = "<<c:<ija>-stem nouns>>, ending in <*-ijaz> (masculine), <*-iją> (neuter), which are effectively <a>-stem nouns with a stem suffix <*-ij->.",
-		addl = "Due to {{w|Sievers' Law}}, these only occur after heavy stems (those with a long root vowel or diphthong, or a short vowel followed by a two or more consonants); otherwise the stem suffix appears as <*-j-> (see <<c:<ja>-stem nouns>>). In {PG}, the endings were nearly the same as for plain <a>-stem nouns, but the two classes diverged in most daughter languages.",
-		umlaut = {"i"},
-	},
-	["<wa>-stem"] = {
-		daughter_desc = "<<c:<a>-stem nouns>> with a stem suffix <*-w->.",
-		addl = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes.",
-		umlaut = {"u"},
-	},
-	["<ō>-stem"] = {
-		daughter_desc = "<<c:<ō>-stem nouns>>, ending in <*-ō> and always feminine.",
-		addl = "The ending was raised to {{ic|/u/}} in North Germanic and West Germanic, which triggered {U-UMLAUT} in Old Norse.",
-	},
-	["<jō>-stem"] = {
-		daughter_desc = "<<c:<ō>-stem nouns>> with a stem suffix <*-j->, which triggered {I-UMLAUT}.",
-		addl = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with light stems (those with a short root vowel followed by a single consonant), due to {{w|Sievers' Law}}; the corresponding heavy-stem nouns had a stem suffix <*-ij->. See also the related <<c:<ī>/<jō>-stem nouns|<ī>/<jō>-stem>> class of nouns.",
-	},
+local all_lang_props = {
+	i_umlaut_throughout = "These nouns have {i_umlaut} throughout the paradigm in most daughter languages.",
 	["<ijō>-stem"] = {
-		daughter_desc = "<<c:<ō>-stem nouns>> with a stem suffix <*-ij->, which triggered {I-UMLAUT}.",
-		addl = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with heavy stems (those with a long root vowel or diphthong, or a short vowel followed by a two or more consonants), due to {{w|Sievers' Law}}; the corresponding light-stem nouns had a stem suffix <*-j->. See also the related <<c:<ī>/<jō>-stem nouns|<ī>/<jō>-stem>> class of nouns.",
+		daughter_desc = "<<c:<ō>-stem nouns>> with a {PG} stem suffix <*-ij->, which triggered {i_umlaut}.",
+		footer = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with heavy stems ({heavy_stem_expl}), due to {sievers}; the corresponding light-stem nouns had a stem suffix <*-j->. See also the related <<c:<ī>/<jō>-stem nouns|<ī>/<jō>-stem>> class of nouns.",
 	},
 	["<ī>/<jō>-stem"] = {
-		daughter_desc = "<<c:<ī>/<jō>-stem nouns>>, ending in <*-ī> in the nominative/vocative singular but otherwise having <ō>-stem endings with a stem suffix <*-ij->.",
-		addl = "These nouns have {I-UMLAUT} in the ",
+		daughter_desc = "<<c:<ī>/<jō>-stem nouns>>, ending in {PG} <*-ī> in the nominative/vocative singular but otherwise having <ō>-stem endings with a {PG} stem suffix <*-ij->.",
+		footer = "These nouns have {i_umlaut} in the ",
 	},
 	["<wō>-stem"] = {
-		daughter_desc = "<<c:<ō>-stem nouns>> with a stem suffix <*-w->.",
-		addl = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes.",
+		daughter_desc = "<<c:<ō>-stem nouns>> with a {PG} stem suffix <*-w->.",
+		footer = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes.",
 	},
 	["<i>-stem"] = {
-		daughter_desc = "<<c:<i>-stem nouns>>, ending in <*-iz> (masculine or feminine), <*-i> (neuter).",
-		addl = "<i>-stem neuters were rare in {PG} and disappeared in most daughter languages).",
+		daughter_desc = "<<c:<i>-stem nouns>>, ending in {PG} <*-iz> (masculine or feminine), <*-i> (neuter).",
+		footer = "<i>-stem neuters were rare in {PG} and disappeared in most daughter languages).",
 	},
 	["<u>-stem"] = {
-		daughter_desc = "<<c:<u>-stem nouns>>, ending in <*-uz> (masculine or feminine), <*-u> (neuter).",
-		addl = "<u>-stem neuters were rare in {PG} but survived in many daughter languages, particularly reflexes of {{m+|gem-pro|*fehu||livestock, cattle, property, wealth}}).",
+		daughter_desc = "<<c:<u>-stem nouns>>, ending in {PG} <*-uz> (masculine or feminine), <*-u> (neuter).",
+		footer = "<u>-stem neuters were rare in {PG} but survived in many daughter languages, particularly reflexes of {{m+|gem-pro|*fehu||livestock, cattle, property, wealth}}).",
 	},
 	["<an>-stem"] = {
 		daughter_desc = "<<c:<an>-stem nouns>>, which were masculine or neuter in {PG} and ended in overlong <*-ô>, with an <*-n-> formant throughout the oblique and plural forms.",
-		addl = "This class, along with the corresponding feminine <ōn>-stem nouns, was continued in all daughter languages, where it is the origin of so-called \"weak\" nouns. The <*-n-> format disappears in North Germanic due to loss of word-final <*-n>, but is maintained in most West Germanic languages.",
+		footer = "This class, along with the corresponding feminine <ōn>-stem nouns, was continued in all daughter languages, where it is the origin of so-called \"weak\" nouns. The <*-n-> format disappears in North Germanic due to loss of word-final <*-n>, but is maintained in most West Germanic languages.",
 	},
 	["<ōn>-stem"] = {
 		daughter_desc = "<<c:<ōn>-stem nouns>>, which were feminine in {PG} and ended in <*-ǭ>, with an <*-ōn-> formant throughout the oblique and plural forms.",
-		addl = "This class, along with the corresponding masculine and neuter <ōn>-stem nouns, was continued in all daughter languages, where it is the origin of so-called \"weak\" nouns. The <*-n-> format disappears in North Germanic due to loss of word-final <*-n>, but is maintained in most West Germanic languages.",
+		footer = "This class, along with the corresponding masculine and neuter <ōn>-stem nouns, was continued in all daughter languages, where it is the origin of so-called \"weak\" nouns. The <*-n-> format disappears in North Germanic due to loss of word-final <*-n>, but is maintained in most West Germanic languages.",
 	},
 	["<jōn>-stem"] = {
-		daughter_desc = "<<c:<ōn>-stem nouns>> with a stem suffix <*-j->.",
-		addl = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with light stems (those with a short root vowel followed by a single consonant), due to {{w|Sievers' Law}}; the corresponding heavy-stem nouns had a stem suffix <*-ij->.",
+		daughter_desc = "<<c:<ōn>-stem nouns>> with a {PG} stem suffix <*-j->.",
+		footer = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with light stems (, due to {sievers}; the corresponding heavy-stem nouns had a stem suffix <*-ij->.",
 	},
 	["<ijōn>-stem"] = {
-		daughter_desc = "<<c:<ōn>-stem nouns>> with a stem suffix <*-ij->.",
-		addl = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with heavy stems (those with a long root vowel or diphthong, or a short vowel followed by a two or more consonants), due to {{w|Sievers' Law}}; the corresponding light-stem nouns had a stem suffix <*-j->.",
+		daughter_desc = "<<c:<ōn>-stem nouns>> with a {PG} stem suffix <*-ij->.",
+		footer = "This was not a distinct class in {PG}, but developed into one in many daughter languages due to sound changes. In {PG}, these nouns only occurred with heavy stems ({heavy_stem_expl}), due to {sievers}; the corresponding light-stem nouns had a stem suffix <*-j->.",
 	},
 	["<īn>-stem"] = {
 		daughter_desc = "<<c:<īn>-stem nouns>>, a class of feminine abstract nouns ending in <*-į̄> in {PG}, with an <*-īn> formant throughout the oblique and plural forms.",
-		addl = "In most daughter languages, the oblique forms all merged to have the same ending, in many cases borrowing the ending of the nominative and in the process becoming indeclinable. {OE} replaced the original <-i> ending with the <-u> ending of <ō>-stems, but the original ending left its mark in {I-UMLAUT} in all forms.",
+		footer = "In most daughter languages, the oblique forms all merged to have the same ending, in many cases borrowing the ending of the nominative and in the process becoming indeclinable. {OE} replaced the original <-i> ending with the <-u> ending of <ō>-stems, but the original ending left its mark in {i_umlaut} in all forms.",
 	},
 	["<z>-stem"] = {
 		daughter_desc = "<<c:<z>-stem nouns>>, neuter in {PG} and ending in <*-az> with genitive <*-iziz> and nominative/accusative plural <*-izō>.",
-		addl = "This class was numerous in {PG} but become rare in daughter languages due to the effects of {I-UMLAUT}, which operated in cases with the <*-iz-> formant, i.e. the oblique singular and throughout the plural but not in the nominative or accusative singular. Usually, either the umlauted or non-umlauted stem was generalized throughout the paradigm and the noun moved to another declension, although which stem was generalized, which declension the noun ended up in, and whether the <*-z-> formant (which developed into an {{ic|/r/}} in North and West Germanic) was incorporated into the stem varied from language to language, often resulting in doublets within a single language. This class survived as a relic class in the West Germanic languages (ironically becoming productive again in modern German as a common way of forming neuter plurals). This class should not be confused with <<c:<r>-stem nouns|<r>-stem nouns>>, which are masculine or feminine and predominantly kinship terms.",
+		footer = "This class was numerous in {PG} but become rare in daughter languages due to the effects of {i_umlaut}, which operated in cases with the <*-iz-> formant, i.e. the oblique singular and throughout the plural but not in the nominative or accusative singular. Usually, either the umlauted or non-umlauted stem was generalized throughout the paradigm and the noun moved to another declension, although which stem was generalized, which declension the noun ended up in, and whether the <*-z-> formant (which developed into an {{ic|/r/}} in North and West Germanic) was incorporated into the stem varied from language to language, often resulting in doublets within a single language. This class survived as a relic class in the West Germanic languages (ironically becoming productive again in modern German as a common way of forming neuter plurals). This class should not be confused with <<c:<r>-stem nouns|<r>-stem nouns>>, which are masculine or feminine and predominantly kinship terms.",
 	},
 	["<r>-stem"] = {
 		daughter_desc = "<<c:<r>-stem nouns>>, ending in <*-ēr>.",
-		addl = "This was a small class of common kinship nouns in {PG} and was continued in most daughter languages, but the nouns often developed irregularities which differed from noun to noun. This class should not be confused with neuter <<c:<z>-stem nouns|<z>-stem nouns>>, which also contained an {{ic|/r/}} stem formant in North and West Germanic and was also a relic class.",
+		footer = "This was a small class of common kinship nouns in {PG} and was continued in most daughter languages, but the nouns often developed irregularities which differed from noun to noun. This class should not be confused with neuter <<c:<z>-stem nouns|<z>-stem nouns>>, which also contained an {{ic|/r/}} stem formant in North and West Germanic and was also a relic class.",
 	},
 }
 
 
 --[=[
-Noun declension specifications. The top-level key is the stem class, and the value is an object containing properties of
-the stem class. If the stem class contains the word 'GENDER' in it, it expands into labels both for a parent category
-that subsumes several genders (obtained by removing the word 'GENDER' and following whitespace) as well as
-gender-specific children categories (obtained by replacing the word 'GENDER' with the genders specified in the
-`possible_genders` field). The stem class can contain literal Latin-script text (e.g. suffixes), which will be
-italicized in breadcrumbs and titles. The fields of the property object for a given stem class are as follows:
-* `gender`: The description of the gender(s) of the stem class. If preceded by ~, the description is preceded by
-  "most commonly". This appears in the `additional` field of the label properties. It is not used in gender-specific
-  children categories; instead the gender of that category is used.
-* `possible_genders`: The possible genders this class occurs in. If this is specified, the word 'GENDER' must occur in
-  the stem class, and gender-specific variants of the stem class (with GENDER replaced by the possible genders) are
-  handled along with a parent category subsuming all genders. 
-* `nom_sg`: The nominative singular ending. Use <...> to enclose literal Latin-script text (e.g. suffixes), which will
-  be italicized.
-* `GENDER_nom_sg`: The nominative singular ending for the GENDER variant of this stem class. If not specified, the
-  value of `nom_sg` is used.
-* `gen_sg`: The genitive singular ending. Conventions are the same as for `nom_sg`.
-* `GENDER_gen_sg`: The genitive singular ending for the GENDER variant of this stem class. If not specified, the value
-  of `gen_sg` is used.
-* `nom_pl`: The nominative plural ending. Conventions are the same as for `nom_sg`.
-* `GENDER_nom_pl`: The nominative plural ending for the GENDER variant of this stem class. If not specified, the value
-  of `nom_pl` is used.
-* `breadcrumb`: The breadcrumb for the category, appearing in the trail of breadcrumbs at the top of the page. If this
-  stem has gender-specific variants, the breadcrumb specified here is used only for the parent category, while the
-  gender-specific child categories use the gender as the breadcrumb. If not specified, it defaults to `sortkey`. If that
-  is also not specified, or if the breadcrumb has the value "+", the stem class (without the word 'GENDER') is used.
-  (Use "+" when a sortkey is specified but the stem class should be used as the breadcrumb.)
-* `parent`: The parent category or categories. If specified, the actual category label is formed by appending the part
-  of speech (e.g. "nouns"). Defaults to "POS by inflection type" where POS is the part of speech. Note that
-  gender-specific child categories do not use this, but always have the gender-subsuming parent stem class category as
-  their parent.
-* `sortkey`: The sort key used for sorting this category among its parent's children. Defaults to the stem class
-  (without the word 'GENDER'). Note that gender-specific child categories do nto use this, but always use the gender
-  as the sort key.
+Noun declension specifications. The keys are language codes and the values are tables where each key is an inflection
+class label and the values are in the format described in [[Module:category tree/utilities]].
 ]=]
 local noun_decls = {
-	["gem-pro"] = {
+	vars = {
+		PIE = "{{w|Proto-Indo-European}}",
+		PG = "{{w|Proto-Germanic}}",
+		PWG = "{{w|Proto-West Germanic}}",
+		OHG = "{{w|Old High German}}",
+		OE = "{{w|Old English}}",
+		ON = "{{w|Old Norse}}",
+		OS = "{{w|Old Saxon}}",
+		OF = "{{w|Old Frisian}}",
+		WGG = "{{w|West Germanic gemination}}",
+		PAL = "{{w|Phonological_history_of_Old_English#Palatalization|palatalization}}",
+		depending = "(depending on the reconstruction, the particular word and/or the dialect)",
+		originates_from = "This class originates from {from}. It evolves as follows:",
+		light_stem_expl = "those with a short root vowel followed by a single consonant",
+		heavy_stem_expl = "those with a long root vowel or diphthong, or a short vowel followed by a two or more consonants",
+		sievers = "{{w|Sievers' law}}",
+		verner = "{{w|Verner's law}}",
+
+		-- a-stem settings
+		base_pie_a_stem = "{PIE} {stem_weight}thematic nouns in <*-os> (masculine), <*-om> (neuter){genitive_cont}{stem_suffix}",
+		masculine_base_pie_a_stem = "{PIE} {stem_weight}masculine thematic nouns in <*-os>{genitive_cont}{stem_suffix}",
+		neuter_base_pie_a_stem = "{PIE} {stem_weight}neuter thematic nouns in <*-om>{genitive_cont}{stem_suffix}",
+		pie_a_stem_genitive_cont = "genitive <*-osyo> and nominative plural <*-oes> (masculine), <*-eh₂> (neuter; later <*-ā>)",
+		masculine_pie_a_stem_genitive_cont = "genitive <*-osyo> and nominative plural <*-oes>",
+		neuter_pie_a_stem_genitive_cont = "genitive <*-osyo> and nominative/accusative plural <*-eh₂> (later <*-ā>)",
+		pie_a_stem = "{base_pie_a_stem<genitive_cont:{GENDER_pie_a_stem_genitive_cont}>}",
+		pie_gen_a_stem_to_gem = "Genitive <*-osyo> becomes <*-as> (North and West Germanic), <*-is> (East Germanic) in a way not fully explained.",
+		pie_masc_pl_a_stem_to_gem = "Masculine nominative plural <*-oes> regularly becomes overlong <*-ôs> or <*-ôz> (with variation due to {verner}).",
+		pie_neut_pl_a_stem_to_gem = "Neuter nominative/accusative plural <*-ā> regularly becomes <*-ō>.",
+		pie_a_stem_to_gem = "{PIE} nominative masculine <*-os>, neuter <*-om> regularly becomes {PG} <*-az> and <*-ą>. {pie_gen_a_stem_to_gem} {pie_masc_pl_a_stem_to_gem} {pie_neut_pl_a_stem_to_gem}",
+		masculine_pie_a_stem_to_gem = "{PIE} nominative masculine <*-os> regularly becomes {PG} <*-az>. {pie_gen_a_stem_to_gem} {pie_masc_pl_a_stem_to_gem}",
+		neuter_pie_a_stem_to_gem = "{PIE} nominative/accusative neuter <*-om> regularly becomes {PG} <*-ą>. {pie_gen_a_stem_to_gem} {pie_neut_pl_a_stem_to_gem}",
+		gem_masc_pl_a_stem_to_gmw = "Overlong masculine plural <*-ôs> or <*-ôz> became West Germanic <*-ōs> or <*-ōz>, with both alternants persisting.",
+		gem_neut_pl_a_stem_to_gmw = "Neuter plural <*-ō> was raised and shortened to <*-u>. (This is common to North and West Germanic and is also observed in the nominative singular of <ō>-stems.)",
+		gem_a_stem_to_gmw = "{PG} final <*-z> was lost in West Germanic, followed by loss of final <*-a> and <*-ą>. {gem_masc_pl_a_stem_to_gmw} {gem_neut_pl_a_stem_to_gmw}",
+		masculine_gem_a_stem_to_gmw = "{PG} final <*-z> was lost in West Germanic, followed by loss of final <*-a>. {gem_masc_pl_a_stem_to_gmw}",
+		neuter_gem_a_stem_to_gmw = "{PG} final <*-ą> was lost in the nominative/accusative singular. {gem_neut_pl_a_stem_to_gmw}",
+
+		-- ō-stem settings
+		pie_o_stem = "{PIE} {stem_weight}thematic feminine nouns in <*-eh₂> (later <*-ā>){stem_suffix}",
+		pie_o_stem_to_gem = "Late {PIE} nominative <*-ā> regularly becomes {PG} <*-ō>. {PIE} genitive <*-eh₂s> (later <*-ās>) regularly becomes <*-ōz>. Nominative plural <*-eh₂es> regularly becomes overlong <*-ôz>.",
+		gem_o_stem_to_gmw = "{PG} nominative singular <*-ō> was raised and shortened to {PWG} <*-u> (the same development happened in the neuter plural of <a>-stems). Subsequently, final <*-z> was lost in West Germanic, with newly final <*-ō> lowering to <*-ā> and overlong <*-ô> shortened to <*-ō>.",
+
+		y_stem_suffix = "a stem suffix <*-y-> or <*-ey->",
+		iy_stem_suffix = "a stem suffix <*-i(y)-> or <*-ey->",
+		pg_class_derived_from = "The {PG} class is derived in turn from",
+		see_ija_stem_xref = " (see <<c:<ija>-stem nouns>>)",
+		see_ja_stem_xref = " (see <<c:<ja>-stem nouns>>)",
+		see_ijo_stem_xref = " (see <<c:<ijō>-stem nouns>>)",
+		see_jo_stem_xref = " (see <<c:<jō>-stem nouns>>)",
+		-- j_stem_sievers_law = "Due to {sievers}, <*-j-> only occurs after light stems ({light_stem_expl}); otherwise the stem suffix appears as <*-ij->",
+		j_stem_sievers_law = "Since all nouns in this class originally had a light stem ({light_stem_expl}), {PIE} <*-y-> and <*-ey-> were continued as {PG} <*-j-> due to {sievers}; heavy-stem nouns would have <*-ij-> instead",
+		-- ij_stem_sievers_law = "Due to {sievers}, <*-ij-> only occurs after heavy stems ({heavy_stem_expl}); otherwise the stem suffix appears as <*-j->",
+		ij_stem_sievers_law = "Since all nouns in this class originally had a heavy stem ({heavy_stem_expl}), {PIE} <*-(i)y-> and <*-ey-> were continued as {PG} <*-ij-> due to {sievers}; light-stem nouns would have <*-j-> instead",
+		ja_ija_stem_divergence = "In {PG}, the endings were nearly the same as for plain <a>-stem nouns, but the two classes diverged in most daughter languages.",
+	},
+	["default"] = {
 		["GENDER <a>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
-			masculine_nom_sg = "<*-az>",
-			neuter_nom_sg = "<*-ą>",
-			gen_sg = "<*-as> or <*-is> (depending on the reconstruction, the particular word and/or the dialect)",
-			masculine_nom_pl = "<*-ōz> or <*-ōs> (depending on the reconstruction, the particular word and/or the dialect)",
-			neuter_nom_pl = "<*-ō>",
+			desc = "ending in {PG} <*-az> (masculine), <*-ą> (neuter)",
+			masculine_desc = "ending in {PG} <*-az>",
+			neuter_desc = "ending in {PG} <*-ą>",
 		},
 		["GENDER <ja>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
-			masculine_nom_sg = "<*-jaz>",
-			neuter_nom_sg = "<*-ją>",
-			gen_sg = "<*-jas> or <*-is> (depending on the reconstruction, the particular word and/or the dialect)",
-			masculine_nom_pl = "<*-jōz> or <*-jōs> (depending on the reconstruction, the particular word and/or the dialect)",
-			neuter_nom_pl = "<*-jō>",
+			desc = "ending in {PG} <*-jaz> (masculine), <*-ją> (neuter)",
+			masculine_desc = "ending in {PG} <*-jaz>",
+			neuter_desc = "ending in {PG} <*-ją>",
 			parent = "<a>-stem",
 		},
 		["GENDER <ija>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
+			desc = "ending in {PG} <*-ijaz> (masculine), <*-iją> (neuter)",
+			masculine_desc = "ending in {PG} <*-ijaz>",
+			neuter_desc = "ending in {PG} <*-iją>",
+			parent = "<a>-stem",
+		},
+		["GENDER <wa>-stem"] = {
+			possible_genders = {"masculine", "neuter"},
+			desc = "ending in {PG} <*-waz> (masculine), <*-wą> (neuter)",
+			masculine_desc = "ending in {PG} <*-waz>",
+			neuter_desc = "ending in {PG} <*-wą>",
+			parent = "<a>-stem",
+		},
+		["<ō>-stem"] = {
+			gender = "feminine",
+			desc = "ending in {PG} <*-ō> and always feminine",
+		},
+		["<jō>-stem"] = {
+			gender = "feminine",
+			desc = "ending in {PG} <*-jō> and always feminine",
+			parent = "<o>-stem",
+		},
+		["<ijō>-stem"] = {
+			gender = "feminine",
+			desc = "ending in {PG} <*-ijō> and always feminine",
+			parent = "<o>-stem",
+		},
+		["<ī>/<jō>-stem"] = {
+			gender = "feminine",
+			nom_sg = "<*-ī>",
+			gen_sg = "<*-ijōz>",
+			nom_pl = "<*-ijôz>",
+			parent = "<ō>-stem",
+		},
+		["GENDER <i>-stem"] = {
+			gender = "masculine/feminine or neuter",
+			possible_genders = {"masculine or feminine", "neuter"},
+			["masculine or feminine_nom_sg"] = "<*-iz>",
+			neuter_nom_sg = "<*-i>",
+			gen_sg = "<*-īz>",
+			["masculine or feminine_nom_pl"] = "<*-īz>",
+			neuter_nom_pl = "<*-ī>",
+		},
+		["GENDER <u>-stem"] = {
+			gender = "masculine/feminine or neuter",
+			possible_genders = {"masculine or feminine", "neuter"},
+			["masculine or feminine_nom_sg"] = "<*-uz>",
+			neuter_nom_sg = "<*-u>",
+			gen_sg = "<*-auz>",
+			["masculine or feminine_nom_pl"] = "<*-iwiz>",
+			neuter_nom_pl = "<*-ū>",
+		},
+		["GENDER <an>-stem"] = {
+			possible_genders = {"masculine", "neuter"},
+			nom_sg = "<*-ô>",
+			gen_sg = "<*-iniz>",
+			masculine_nom_pl = "<*-aniz>",
+			neuter_nom_pl = "<*-ōnō>",
+			parent = "n-stem",
+		},
+		["<īn>-stem"] = {
+			gender = "feminine",
+			nom_sg = "<*-į̄>",
+			gen_sg = "<*-īniz>",
+			nom_pl = "<*-īniz>",
+			parent = "n-stem",
+		},
+		["<ōn>-stem"] = {
+			gender = "feminine",
+			nom_sg = "<*-ǭ>",
+			gen_sg = "<*-ōniz>",
+			nom_pl = "<*-ōniz>",
+			parent = "n-stem",
+		},
+		["<r>-stem"] = {
+			gender = "masculine or feminine",
+			nom_sg = "<*-ēr>",
+			gen_sg = "<*-urz>",
+			nom_pl = "<*-riz>",
+		},
+		["<z>-stem"] = {
+			gender = "neuter",
+			nom_sg = "<*-az>",
+			gen_sg = "<*-iziz>",
+			nom_pl = "<*-izō>",
+		},
+		["consonant stem"] = {
+			gender = "masculine/feminine or neuter",
+			possible_genders = {"masculine or feminine", "neuter"},
+			["masculine or feminine_nom_sg"] = "<*-z> (after a voiced consonant) or <*-s> (after a voiceless consonant)",
+			neuter_nom_sg = "no ending (with loss of <*-þ>)",
+			["masculine or feminine_nom_pl"] = "<*-iz>",
+			neuter_nom_pl = "no ending",
+		},
+	},
+	["gem-pro"] = {
+		["GENDER <a>-stem"] = {
+			desc = "deriving from {GENDER_base_pie_a_stem<stem_weight:><stem_suffix:><genitive_cont:>}",
+			genitive_msg = "The derivation of the Germanic genitive from the {PIE} genitive is not well-understood.",
+			masculine_plural_msg = "The {PIE} masculine plural ending <*-oes> ending evolved to pre-{PG} <*-ôs>, which became <*-ôz> in some nouns (depending on {verner} alternations). One or the other ending was generalized in daughter languages. The <*-ôs> form prevailed in {OE}, becoming <-as> (similarly in other northern West Germanic languages), but the <*-ôz> form prevailed in {OHG} (becoming <-ā>) and {ON} (becoming <-ar>). The Gothic ending could derive from either.",
+			neuter_plural_msg = "The {PIE} neuter plural ending <*-eh₂> (late {PIE} <*-ā>, {PG} <*-ō>) ending was raised to <*-u> in North Germanic and West Germanic, which triggered {u_umlaut} in {ON}."
+			header = [==[
+These {PIE} thematic nouns had {pie_a_stem_genitive_cont}.
+
+{genitive_msg}
+
+{masculine_plural_msg}
+
+{neuter_plural_msg}
+]==],
+			masculine_header = [==[
+These {PIE} masculine thematic nouns had {masculine_pie_a_stem_genitive_cont}.
+
+{genitive_msg}
+
+{masculine_plural_msg}
+]==],
+			neuter_header = [==[
+These {PIE} neuter thematic nouns had {neuter_pie_a_stem_genitive_cont}.
+
+{genitive_msg}
+
+{neuter_plural_msg}
+]==],
+			masculine_nom_sg = "<*-az>",
+			neuter_nom_sg = "<*-ą>",
+			gen_sg = "<*-as> or <*-is> {depending}",
+			masculine_nom_pl = "<*-ôz> or <*-ôs> {depending}",
+			neuter_nom_pl = "<*-ō>",
+		},
+		["GENDER <ja>-stem"] = {
+			desc = "deriving from {GENDER_base_pie_a_stem<stem_weight:light-stem ><stem_suffix:, with {y_stem_suffix}><genitive_cont:>}",
+			header = "{j_stem_sievers_law} {see_ija_stem_xref}. {ja_ija_stem_divergence}",
+			masculine_nom_sg = "<*-jaz>",
+			neuter_nom_sg = "<*-ją>",
+			gen_sg = "<*-jas> or <*-is> {depending}",
+			masculine_nom_pl = "<*-jôz> or <*-jôs> {depending}",
+			neuter_nom_pl = "<*-jō>",
+		},
+		["GENDER <ija>-stem"] = {
+			desc = "deriving from {GENDER_base_pie_a_stem<stem_weight:heavy-stem ><stem_suffix:, with {iy_stem_suffix}><genitive_cont:>}",
+			header = "{ij_stem_sievers_law} {see_ja_stem_xref}. {ja_ija_stem_divergence}",
 			masculine_nom_sg = "<*-ijaz>",
 			neuter_nom_sg = "<*-iją>",
-			gen_sg = "<*-ijas> or <*-īs> (depending on the reconstruction, the particular word and/or the dialect)",
-			masculine_nom_pl = "<*-ijōz> or <*-ijōs> (depending on the reconstruction, the particular word and/or the dialect)",
+			gen_sg = "<*-ijas> or <*-īs> {depending}",
+			masculine_nom_pl = "<*-ijôz> or <*-ijôs> {depending}",
 			neuter_nom_pl = "<*-ijō>",
-			parent = "<a>-stem",
 		},
 		["<ō>-stem"] = {
 			gender = "feminine",
 			nom_sg = "<*-ō>",
 			gen_sg = "<*-ōz>",
 			nom_pl = "<*-ôz>",
+			after_pp = "The nominative singular ending was raised to <*-u> in North Germanic and West Germanic, which triggered {u_umlaut} in {ON}.",
 		},
 		["<ī>/<jō>-stem"] = {
 			gender = "feminine",
@@ -428,44 +567,91 @@ local noun_decls = {
 		},
 	},
 	["gmw-pro"] = {
+		vars = {
+			i_umlaut_palatalization = "{i_umlaut} (to varying degrees) in all daughter languages, and {PAL} in Old English and Old Frisian",
+			west_germanic_final_loss = "The {PG} final masculine <*-z> was lost except in monosyllables (where it persists as <-r> in {OHG} but was eventually lost elsewhere). The final neuter <-ą> lost its nasalization, merging into the remaining masculine <*-a>. The vowel was eventually lost everywhere, but there is evidence that this was an areal change that happened post-{PWG}; hence the two reconstructions in the nominative singular.",
+			west_germanic_masculine_final_loss = "The {PG} final masculine <*-z> was lost except in monosyllables (where it persists as <-r> in {OHG} but was eventually lost elsewhere). The resulting <*-a> was also lost everywhere, but there is evidence that this was an areal change that happened post-{PWG}; hence the two reconstructions in the nominative singular.",
+			west_germanic_neuter_final_loss = "{PG} final neuter <*-ą> apparently first lost its nasalization and then was lost entirely, but there is evidence that the latter change was an areal change that happened post-{PWG}; hence the two reconstructions in the nominative singular.",
+		},
 		["GENDER <a>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
-			nom_sg = "the bare stem",
+			header = [==[
+{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:><stem_suffix:>}.
+
+{west_germanic_GENDER_final_loss}
+]==],
+			nom_sg = "<*-a>, becoming a null ending",
 			gen_sg = "<*-as>",
-			masculine_nom_pl = "<*-ō> or <*-ōs>",
+			masculine_nom_pl = "<*-ō> or <*-ōs> {depending}",
 			neuter_nom_pl = "<*-u>",
 		},
 		["GENDER <ja>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
-			nom_sg = "<*-i>",
+			header = [==[
+{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:light-stem ><stem_suffix:, with {y_stem_suffix}>}.
+
+{j_stem_sievers_law} {see_ija_stem_xref}. {ja_ija_stem_divergence}
+
+{west_germanic_GENDER_final_loss}
+
+The <*-j-> stem suffix triggered {WGG}, as well as {i_umlaut_palatalization}.
+]==],
+			nom_sg = "<*-ja>, becoming <*-i>",
 			gen_sg = "<*-jas> with {WGG}",
-			masculine_nom_pl = "<*-jō> or <*-jōs> with {WGG}",
+			masculine_nom_pl = "<*-jō> or <*-jōs> with {WGG} {depending}",
 			neuter_nom_pl = "<*-ju> with {WGG}",
-			parent = "<a>-stem",
 		},
 		["GENDER <ija>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
-			nom_sg = "<*-ī>",
+			header = [==[
+{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:heavy-stem ><stem_suffix:, with {iy_stem_suffix}>}.
+
+{ij_stem_sievers_law} {see_ja_stem_xref}. {ja_ija_stem_divergence}
+
+{west_germanic_GENDER_final_loss}
+
+The <*-ij-> stem suffix triggered {i_umlaut_palatalization}.
+]==],
+			nom_sg = "<*-ija>, becoming <*-ī>",
 			gen_sg = "<*-ijas>",
-			masculine_nom_pl = "<*-ijō> or <*-ijōs> after a heavy root, <*-jō> or <*-jōs> with {WGG} after a light root",
+			masculine_nom_pl = "<*-ijō> or <*-ijōs> after a heavy root, <*-jō> or <*-jōs> with {WGG} after a light root {depending}",
 			neuter_nom_pl = "<*-iju> after a heavy root, <*-ju> with {WGG} after a light root",
-			parent = "<a>-stem",
 		},
 		["GENDER <wa>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
-			nom_sg = "<*-u>",
+			header = [==[
+{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:><stem_suffix:, with a stem ending in <*-w->>}.
+
+{west_germanic_GENDER_final_loss}
+]==],
+			nom_sg = "<*-wa>, becoming <*-u>",
 			gen_sg = "<*-was>",
-			masculine_nom_pl = "<*-wō> or <*-wōs>",
+			masculine_nom_pl = "<*-wō> or <*-wōs> {depending}",
 			neuter_nom_pl = "<*-u>",
-			parent = "<a>-stem",
+		},
+		["<ō>-stem"] = {
+			header = [==[
+{pg_class_derived_from} {pie_o_stem<stem_weight:><stem_suffix:>}.
+
+The {PG} nominative singular ending <*-ō> was raised to <*-u> in North Germanic and West Germanic (still present in {OE} in light stems), which triggered {u_umlaut} in {ON} before being lost. Compare the similar development of the neuter plural of <a>-stems. Nominative/accusative plural <-ir> in some nouns is borrowed from <i>-stems.
+]==],
+			nom_sg = "<*-u>",
+			gen_sg = "<*-ā>",
+			nom_pl = "<*-ō>",
+		},
+		["<ī>/<jō>-stem"] = {
+			nom_sg = "<*-ī>",
+			gen_sg = "<*-ijā> after a heavy stem, <*-jā> with {WGG} after a light stem",
+			nom_pl = "<*-ijō> after a heavy stem, <*-jō> with {WGG} after a light stem",
+		},
+		["<wō>-stem"] = {
+			nom_sg = "<*-u>",
+			gen_sg = "<*-wā>",
+			nom_pl = "<*-wō>",
 		},
 		["<i>-stem"] = {
 			gender = "masculine, feminine or neuter",
+			header = "In {PG}, the masculine and feminine <i>-stems differed from the neuter <i>-stems in the nominative and accusative, but later sound changes caused the two classes to converge.",
+			possible_genders = false,
 			nom_sg = "<*-i>",
 			gen_sg = "<*-ī>",
 			nom_pl = "<*-ī>",
-			addl = "In {PG}, the masculine and feminine <i>-stems differed from the neuter <i>-stems in the " ..
-			"nominative and accusative, but later sound changes caused the two classes to converge.",
 		},
 		["GENDER <an>-stem"] = {
 			gender = "masculine or rarely neuter",
@@ -499,9 +685,9 @@ local noun_decls = {
 		},
 		["consonant stem"] = {
 			gender = "masculine, feminine or rarely neuter",
-			nom_sg = "the bare stem",
-			gen_sg = "<*-i> (with {I-UMLAUT} of roots in <*-e->)",
-			nom_pl = "[:gen_sg:]",
+			nom_sg = "a null ending",
+			gen_sg = "<*-i> (with {i_umlaut} of roots in <*-e->)",
+			nom_pl = "{gen_sg}",
 		},
 		["<r>-stem"] = {
 			gender = "masculine or feminine",
@@ -511,71 +697,60 @@ local noun_decls = {
 		},
 		["<z>-stem"] = {
 			gender = "neuter",
-			nom_sg = "the bare stem",
-			gen_sg = "<*-iʀi> (with {I-UMLAUT} of roots in <*-e->)",
-			nom_pl = "<*-iʀu> (with {I-UMLAUT} of roots in <*-e->)",
-		},
-		["<ō>-stem"] = {
-			gender = "feminine",
-			nom_sg = "<*-u>",
-			gen_sg = "<*-ā>",
-			nom_pl = "<*-ō>",
-		},
-		["<ī>/<jō>-stem"] = {
-			gender = "feminine",
-			nom_sg = "<*-ī>",
-			gen_sg = "<*-ijā> after a heavy stem, <*-jā> with {WGG} after a light stem",
-			nom_pl = "<*-ijō> after a heavy stem, <*-jō> with {WGG} after a light stem",
-			parent = "<ō>-stem",
-		},
-		["<wō>-stem"] = {
-			gender = "feminine",
-			nom_sg = "<*-u>",
-			gen_sg = "<*-wā>",
-			nom_pl = "<*-wō>",
-			parent = "<ō>-stem",
+			nom_sg = "a null ending",
+			gen_sg = "<*-iʀi> (with {i_umlaut} of roots in <*-e->)",
+			nom_pl = "<*-iʀu> (with {i_umlaut} of roots in <*-e->)",
 		},
 	},
 	got = {
 		["GENDER <a>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			header = "{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:><stem_suffix:>}.",
 			masculine_nom_sg = "<-s>",
-			neuter_nom_sg = "the bare stem",
+			neuter_nom_sg = "a null ending",
 			gen_sg = "<-is>",
 			masculine_nom_pl = "<-ōs>",
 			neuter_nom_pl = "<-a>",
 		},
 		["GENDER <ja>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			header = [==[
+{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:light-stem ><stem_suffix:, with {y_stem_suffix}>}.
+
+{j_stem_sievers_law} {see_ija_stem_xref}.
+]==]
 			masculine_nom_sg = "<-jis>",
-			neuter_nom_sg = "the bare stem",
+			neuter_nom_sg = "a null ending",
 			gen_sg = "<-jis>",
 			masculine_nom_pl = "<-jōs>",
 			neuter_nom_pl = "<-ja>",
+			after_pp = "<*-is> would be expected in the nominative and genitive singular but the lost <-j-> was restored based on other inflections where it remained.",
 		},
 		["GENDER <ija>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			header = [==[
+{pg_class_derived_from} {GENDER_pie_a_stem<stem_weight:heavy-stem ><stem_suffix:, with {iy_stem_suffix}>}.
+
+{ij_stem_sievers_law} {see_ja_stem_xref}.
+]==]
 			masculine_nom_sg = "<-eis>",
 			neuter_nom_sg = "<-i>",
 			masculine_gen_sg = "<-eis>",
 			neuter_gen_sg = "<-jis>",
 			masculine_nom_pl = "<-jōs>",
 			neuter_nom_pl = "<-ja>",
-			addl = "In Gothic, neuter <ija>-stems have merged with <ja>-stems but masculine <ija>-stems remain distinct, hence the difference in the genitive singular.",
+			after_pp = "In Gothic, neuter <ija>-stems merged with <ja>-stems and borrowed their endings, but masculine <ija>-stems remain distinct, hence the difference in the genitive singular.",
+			masculine_after_pp = false,
+			neuter_after_pp = "In Gothic, neuter <ija>-stems merged with <ja>-stems and borrowed their endings.",
 		},
 		["<ō>-stem"] = {
-			gender = "feminine",
+			header = "See also the related <<c:<ī>/<jō>-stem nouns|<ī>/<jō>-stem>> class of nouns.",
 			nom_sg = "<-a>",
 			gen_sg = "<-ōs>",
 			nom_pl = "<-ōs>",
 		},
 		["<ī>/<jō>-stem"] = {
-			gender = "feminine",
+			header = "Not to be confused with [[:Category:Gothic i/ō-stem nouns|<i>/<ō>-stems]], all of which have a suffix element <-ein-> followed by a mixture of <i>-stem and <ō>-stem endings.",
 			nom_sg = "<-i>",
 			gen_sg = "<-jōs>",
 			nom_pl = "<-jōs>",
-			parent = "ō-stem",
-			addl = "Not to be confused with [[:Category:Gothic i/ō-stem nouns|<i>/<ō>-stems]], all of which have a suffix element <-ein-> followed by a mixture of <i>-stem and <ō>-stem endings.",
 		},
 		["<i>/<ō>-stem"] = {
 			gender = "feminine",
@@ -583,7 +758,7 @@ local noun_decls = {
 			gen_sg = "<-einais>",
 			nom_pl = "<-einōs>",
 			parent = {"feminine i-stem", "ō-stem"},
-			addl = "This is a special, highly productive class of abstract nouns that was innovated in Gothic and had a mixture of <i>-stem and <ō>-stem endings after a suffix element <-ein->. Not to be confused with [[:Category:Gothic ī/jō-stem nouns|<ī>/<jō>-stems]], which decline like feminine <jō> stems (i.e. <ō> stems with a preceding <j>) except in the nominative and vocative singular. Also not to be confused with [[:Category:Gothic īn-stem nouns|<īn>-stems]], which are also feminine abstract nouns with an <-ein-> formant in most cases, but which take <n>-stem endings.",
+			footer = "This is a special, highly productive class of abstract nouns that was innovated in Gothic and had a mixture of <i>-stem and <ō>-stem endings after a suffix element <-ein->. Not to be confused with [[:Category:Gothic ī/jō-stem nouns|<ī>/<jō>-stems]], which decline like feminine <jō> stems (i.e. <ō> stems with a preceding <j>) except in the nominative and vocative singular. Also not to be confused with [[:Category:Gothic īn-stem nouns|<īn>-stems]], which are also feminine abstract nouns with an <-ein-> formant in most cases, but which take <n>-stem endings.",
 		},
 		["GENDER <i>-stem"] = {
 			possible_genders = {"masculine", "feminine"},
@@ -591,7 +766,7 @@ local noun_decls = {
 			masculine_gen_sg = "<-is>",
 			feminine_gen_sg = "<-ais>",
 			nom_pl = "<-eis>",
-			addl = "In Gothic, masculine <i>-stems have been restructured in the singular on the basis of <a>-stems while feminine <i>-stems preserve the original endings (although feminine genitive singular <-ais> is formed analogically to <-aus> in <u>-stems; <#-eis> would be expected); compare a similar development in {OHG}. Both genders preserve the original endings in the plural. No neuter <i>-stems survive; the few that existed in {PG} were moved to other declensions.",
+			footer = "In Gothic, masculine <i>-stems have been restructured in the singular on the basis of <a>-stems while feminine <i>-stems preserve the original endings (although feminine genitive singular <-ais> is formed analogically to <-aus> in <u>-stems; <#-eis> would be expected); compare a similar development in {OHG}. Both genders preserve the original endings in the plural. No neuter <i>-stems survive; the few that existed in {PG} were moved to other declensions.",
 		},
 		["GENDER <u>-stem"] = {
 			gender = "masculine/feminine or neuter",
@@ -645,101 +820,146 @@ local noun_decls = {
 		},
 	},
 	non = {
+		vars = {
+			-- settings across stems
+			non_j_stem_i_umlaut = "The <*-j-> normally triggered {i_umlaut} throughout the stem as well as gemination of a preceding velar. In the literary period, the <-j-> was maintained only before back vowels (as in genitive plural <-ja>); hence it is missing in front-vowel endings such as <-i>, <-ir> and <-is> and consonantal endings like <-r> and <-s>.",
+			non_ij_stem_i_umlaut = "The <*-ij-> normally triggered {i_umlaut} throughout the stem, and was then lost except after velars, where it was reduced to <*-j->. In the literary period, this <-j-> was maintained only before back vowels (as in genitive plural <-ja>); hence it is missing in front-vowel endings such as <-i>, <-ir> and <-is> and consonantal endings like <-r> and <-s>.",
+			non_w_stem_u_umlaut = "The <*-w-> normally triggered {u_umlaut} throughout the stem, and was then lost except after velars, vowels and light stems ({light_stem_expl}), where it was converted to <*-v->. In the literary period, this <-v-> was maintained before vowels other than <u>, and otherwise lost.",
+
+			-- <a>-stem settings
+			gem_masc_pl_a_stem_to_non = "Masculine plural {verner} variant <*-ôz> was generalized in North Germanic and shortened to <-ar>.",
+			gem_neut_pl_a_stem_to_non = "Neuter plural <*-ō> was raised and shortened to <*-u>. (This is common to North and West Germanic and is also observed in the nominative singular of <ō>-stems.)",
+			gem_neut_pl_a_stem_to_non = "Masculine plural {verner} variant <*-ôz> was generalized in North Germanic and shortened to <-ar>.",
+			gem_a_stem_to_non_init = "{PG} <*z> regularly developed to <*ʀ> (probably a rhotic fricative) in North Germanic, and eventually merged with <*r>. All short vowels in final unstressed syllables were ultimately lost, leading to",
+			gem_a_stem_to_non = "{gem_a_stem_to_non_init} non-syllabic nominative masculine <-r> and genitive <-s> endings and endingless nominative/accusative neuter. {gem_masc_pl_a_stem_to_non} {gem_neut_pl_a_stem_to_non}",
+			masculine_gem_a_stem_to_non = "{gem_a_stem_to_non_init} non-syllabic nominative masculine <-r> and genitive <-s> endings. {gem_masc_pl_a_stem_to_non}",
+			neuter_gem_a_stem_to_non = "All short vowels in final unstressed syllables were ultimately lost in North Gerrmanic, leading to non-syllabic genitive <-s> and endingless nominative/accusative neuter. {gem_neut_pl_a_stem_to_non}",
+			non_ja_stem_final_u = "\n# Final <*-u> in the neuter nominative/accusative plural is regularly lost. It would normally trigger {u_umlaut}, but this was blocked by the preceding <*-j->.",
+			masculine_non_ja_stem_final_u = "",
+			-- neuter_non_ja_stem_final_u inherits from non_ja_stem_final_u
+			non_a_stem_genitive_ar_origin = "Genitive singulars ending <-ar> are borrowed from <i>-stems or <u>-stems.",
+
+			-- <ō>-stem settings
+			gem_o_stem_to_non = "{PG} nominative singular <*-ō> was raised and shortened to <*-u> (a development common to North and West Germanic and also observed in the neuter plural of <a>-stems). Final <*-z> developed to <*-ʀ> (probably a rhotic fricative), and eventually merged with <*-r>. Unstressed <*ō> and overlong <*ô> both ultimately shortened and lowered to <a>.",
+			non_jo_stem_final_u = "Final <*-u> is regularly lost. It would normally trigger {u_umlaut}, but this was blocked by the preceding <*-j->.",
+		},
 		["GENDER <a>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			non_a_stem_final_u = "\n# Final <*-u> in the neuter nominative/accusative plural triggered {u_umlaut} and then was lost.",
+			masculine_non_a_stem_final_u = "",
+			-- neuter_non_a_stem_final_u inherits from non_a_stem_final_u
+			header = [==[
+{originates_from<from:{GENDER_pie_a_stem<stem_weight:><stem_suffix:>}>}
+# {GENDER_pie_a_stem_to_gem}
+# {GENDER_gem_a_stem_to_non}{GENDER_non_a_stem_final_u}
+# {non_a_stem_genitive_ar_origin}
+]==],
 			masculine_nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>)",
-			neuter_nom_sg = "the bare stem",
+			neuter_nom_sg = "a null ending",
 			gen_sg = "<-s> or sometimes <-ar>",
 			masculine_nom_pl = "<-ar>",
-			neuter_nom_pl = "the bare stem with {U-UMLAUT}",
+			neuter_nom_pl = "a null ending with {u_umlaut}",
+			masculine_after_pp = false,
 			masculine_examples = [==[
-
-# <<hestr||horse|g=m>>
-# <<hǫfundr||chieftain|g=m>> (genitive <<hǫfundar>>)
-# <<hauss||skull|g=m>> (with <-r> assimilated to <-s>; accusative <<haus>>)
-# <<hals||neck|g=m>> (with <-r> dropped after preceding consonant + <s>; accusative <<hals>>)
-# <<heiðr||honor, worth|g=m>> (with <-r> part of the stem; accusative <<heiðr>>)
-# <<fleinn||arrow|g=m>> (with <-r> assimilated to <-n>; accusative <<flein>>)
-# <<hamarr||hammer|g=m>> (dative <<hamri>>, with contraction)
+# <<hestr||horse>>
+# <<hǫfundr||chieftain>> (genitive <<hǫfundar>>)
+# <<hauss||skull>> (with <-r> assimilated to <-s>; accusative <<haus>>)
+# <<hals||neck>> (with <-r> dropped after preceding consonant + <s>; accusative <<hals>>)
+# <<heiðr||honor, worth>> (with <-r> part of the stem; accusative <<heiðr>>)
+# <<fleinn||arrow>> (with <-r> assimilated to <-n>; accusative <<flein>>)
+# <<hamarr||hammer>> (dative <<hamri>>, with contraction)
 ]==],
 			neuter_examples = [==[
-
-# <<orð||word|g=n>>
-# <<barn||child|g=n>> (nominative/accusative plural <<bǫrn>>, with {U-UMLAUT})
-# <<hǫfuð||head|g=n>> (with contraction; dative <<hǫfði>>)
+# <<orð||word>>
+# <<barn||child>> (nominative/accusative plural <<bǫrn>>, with {u_umlaut})
+# <<hǫfuð||head>> (with contraction; dative <<hǫfði>>)
 ]==],
 		},
 		["GENDER <ja>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			header = [==[
+{originates_from<from:{GENDER_pie_a_stem<stem_weight:light-stem ><stem_suffix:, with {y_stem_suffix}>}>}
+# {pie_a_stem_to_gem}
+# {gem_a_stem_to_non}
+# {j_stem_sievers_law}{see_ija_stem_xref}. {non_j_stem_i_umlaut}{GENDER_non_ja_stem_final_u}
+# {non_a_stem_genitive_ar_origin}
+]==],
 			masculine_nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>), or <-ir> in proper names",
-			neuter_nom_sg = "the bare stem",
+			neuter_nom_sg = "a null ending",
 			gen_sg = "<-s> or sometimes <-jar>, or <-is> in proper names",
 			masculine_nom_pl = "<-jar>, or <-ir> in proper names",
-			neuter_nom_pl = "the bare stem",
-			parent = "<a>-stem",
-			addl = "This class derives from {PG} <a>-stems ending in <j> after a light root, a vowel or a velar. As a result, the stem usually has {I-UMLAUT} throughout.",
+			neuter_nom_pl = "a null ending",
 			masculine_examples = [==[
-
-# <<niðr||kinsman, relative|g=m>> (nominative plural <<niðjar>>)
-# <<herr||army|g=m>>, from {PG} <<gem-pro:*harjaz>> (nominative plural <<herjar>>)
-# <<Mjǫllnir|ng=name of a Norse god|g=m>>, from {PG} <<gem-pro:*Meldunjaz>>
+# <<niðr||kinsman, relative>> (nominative plural <<niðjar>>)
+# <<herr||army>>, from <<gem-pro+:*harjaz>> (nominative plural <<herjar>>)
+# <<Mjǫllnir|ng=name of a Norse god>>, from <<gem-pro+:*Meldunjaz>>
 ]==],
 			neuter_examples = [==[
-
-# <<kyn||kind, type; kin>> (genitive plural <<kynja>>)
-# <<egg||egg>> (genitive plural <<eggja>>)
+# <<kyn||kind, type; kin>>, from <<gem-pro+:*kunją>> (genitive plural <<kynja>>)
+# <<egg||egg>>, from <<gem-pro+:*ajją>>, with <-gg(j)-> due to {{w|Holtzmann's law}} (genitive plural <<eggja>>)
 ]==],
 		},
 		["GENDER <ija>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			non_ija_stem_velar_example = "Thus, nominative singular <<fylkir||chief, king>> and <<ríki||realm>> are missing the <-j-> infix, but it reappears in genitive plural <<fylkja>>, <<ríkja>>.",
+			masculine_non_ija_stem_velar_example = "Thus, nominative singular <<fylkir||chief, king>> is missing the <-j-> infix, but it reappears in genitive plural <<fylkja>>.",
+			neuter_non_ija_stem_velar_example = "Thus, nominative singular <<ríki||realm>> is missing the <-j-> infix, but it reappears in genitive plural <<ríkja>>.",
+			header = [==[
+{originates_from<from:{GENDER_pie_a_stem<stem_weight:heavy-stem ><stem_suffix:, with {iy_stem_suffix}>}>}
+# {pie_a_stem_to_gem}
+# {gem_a_stem_to_non}
+# {ij_stem_sievers_law}{see_ja_stem_xref}. {non_ij_stem_i_umlaut} {GENDER_non_ija_stem_velar_example}{GENDER_non_ja_stem_final_u}
+]==],
 			masculine_nom_sg = "<-ir>",
-			neuter_nom_sg = "the bare stem",
+			neuter_nom_sg = "<-i>",
 			gen_sg = "<-is> or sometimes <-ar>",
 			masculine_nom_pl = "<-ar>",
 			neuter_nom_pl = "<-i>",
-			parent = "<a>-stem",
-			addl = "This class derives from {PG} <a>-stems ending in <ij> after a heavy root. As a result, the stem normally has {I-UMLAUT} throughout.",
 			masculine_examples = [==[
-
-# <<endir||end>>, from {PG} <<gem-pro:*andijaz>> (nominative plural <<endar>>)
+# <<endir||end>>, from <<gem-pro+:*andijaz>> (nominative plural <<endar>>)
 # <<fylkir||chief, king>> (nominative plural <<fylkjar>>)
 # <<eyrir||ounce; money>> (irregular nominative plural <<aurar>>)
 ]==],
 			neuter_examples = [==[
-
 # <<leyfi||permission, leave>> (genitive plural <<leyfa>>)
-# <<rīki||realm>> (genitive plural <<rīkja>>)
+# <<ríki||realm>> (genitive plural <<ríkja>>)
 # <<erendi||errand>> (genitive plural <<erenda>>)
 ]==],
 		},
 		["GENDER <wa>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			non_wa_stem_final_u = "\n# Final <*-u> in the neuter nominative/accusative plural is regularly lost. It would normally trigger {u_umlaut}, but its effect is not visible because <*-w-> also caused {u_umlaut}.",
+			masculine_non_wa_stem_final_u = "",
+			-- neuter_non_wa_stem_final_u inherits from non_wa_stem_final_u
+			header = [==[
+{originates_from<from:{GENDER_pie_a_stem<stem_weight:><stem_suffix:, with a stem ending in <*-w->>}>}
+# {pie_a_stem_to_gem}
+# {gem_a_stem_to_non}
+# {non_w_stem_u_umlaut} Hence it is present in genitive plural <-va> and dative singular <-vi>, but missing in dative plural <-um> and genitive singular <-s>.{GENDER_non_wa_stem_final_u}
+]==],
 			masculine_nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>)",
-			neuter_nom_sg = "the bare stem",
+			neuter_nom_sg = "a null ending",
 			gen_sg = "<-s> or sometimes <-var>",
 			masculine_nom_pl = "<-var>",
-			neuter_nom_pl = "the bare stem",
-			parent = "<a>-stem",
-			addl = "This class derives from {PG} <a>-stems ending in <w>. As a result, the stem has {U-UMLAUT} hroughout.",
+			neuter_nom_pl = "a null ending",
 			masculine_examples = [==[
-
 # <<sǫngr||song>> (nominative plural <<sǫngvar>>)
 # <<snjór||snow>> (nominative plural <<snjóvar>>)
 ]==],
 			neuter_examples = [==[
-
 # <<mjǫl||flour>> (genitive plural <<mjǫlva>>)
 # <<hǫgg||blow, strike>> (genitive plural <<hǫggva>>)
 # <<hræ||corpse>> (genitive plural <<hræva>>)
 ]==],
 		},
 		["<ō>-stem"] = {
-			gender = "feminine",
-			nom_sg = "the bare stem with {U-UMLAUT}",
-			gen_sg = "<-ar> without {U-UMLAUT}",
-			nom_pl = "<-ar> without {U-UMLAUT}; often also <-ir> is allowed",
+			header = [==[
+{originates_from<from:{pie_o_stem<stem_weight:><stem_suffix:>}>}
+# {pie_o_stem_to_gem}
+# {gem_o_stem_to_non}
+# Final <*-u> triggered {u_umlaut} and then was lost.
+Nominative/accusative plural <-ir> in some nouns is borrowed from <i>-stems.
+]==],
+			nom_sg = "a null ending with {u_umlaut}",
+			gen_sg = "<-ar> without {u_umlaut}",
+			nom_pl = "<-ar> without {u_umlaut}; often also <-ir> is allowed",
 			examples = [==[
-
 # <<gjǫf||gift>> (genitive <<gjafar>>, nominative/accusative plural <<gjafar>>/<<gjafir>>)
 # <<fjǫðr||feather>> (genitive <<fjaðrar>>)
 # <<dróttning||queen; mistress>> (dative <<dróttningu>>)
@@ -747,75 +967,86 @@ local noun_decls = {
 ]==],
 		},
 		["<jō>-stem"] = {
-			gender = "feminine",
-			nom_sg = "the bare stem",
+			header = [==[
+{originates_from<from:{pie_o_stem<stem_weight:light-stem ><stem_suffix:, with {y_stem_suffix}>}>}
+# {pie_o_stem_to_gem}
+# {gem_o_stem_to_non}
+# {j_stem_sievers_law}{see_ijo_stem_xref}. {non_j_stem_i_umlaut}
+# {non_jo_stem_final_u}
+]==],
+			nom_sg = "a null ending",
 			gen_sg = "<-jar>",
 			nom_pl = "<-jar>",
-			parent = "<ō>-stem",
-			addl = "This class derives from {PG} <ō>-stems ending in <j> after a light root, a vowel or a velar. As a result, the stem has {I-UMLAUT} throughout.",
 			examples = [==[
-
 # <<ben||wound>> (genitive <<benjar>>)
 # <<egg||edge>> (genitive <<eggjar>>, dative <<egg>> or <<eggju>>)
 # <<þý||female slave>> (genitive <<þýjar>>, dative <<þýju>>)
 ]==],
 		},
 		["<ijō>-stem"] = {
-			gender = "feminine",
+			header = [==[
+{originates_from<from:{pie_o_stem<stem_weight:heavy-stem ><stem_suffix:, with {iy_stem_suffix}>}>}
+# {pie_o_stem_to_gem}
+# {gem_o_stem_to_non}
+# {ij_stem_sievers_law}{see_jo_stem_xref}. In {ON}, the <*-ij-> would normally trigger {i_umlaut} throughout the stem, but there are a large number of exceptions, which are only partly explained. The <*-ij-> was ultimately lost except after velars, where it was reduced to <*-j->. In the literary period, this <-j-> was maintained only before back vowels (as in genitive plural <-ja>); hence it is missing in front-vowel endings such as <-i>, <-ir> and <-is> and consonantal endings like <-r> and <-s>.
+# {non_jo_stem_final_u}
+# Nominative/accusative plural <-ir> in some nouns is borrowed from <i>-stems.
+]==],
 			nom_sg = "<-r>",
 			gen_sg = "<-ar> (usually <-jar> after velars)",
 			nom_pl = "<-ar> (usually <-jar> after velars) or sometimes <-ir>",
-			parent = "<ō>-stem",
-			addl = "The stem usually has {I-UMLAUT} throughout, but there are many exceptions.",
 			examples = [==[
-
-# <<mýrr||moor>>, from {PG} <<gem-pro:*miuzijō>> (nominative/accusative plural <<mýrar>>)
-# <<ylgr||she-wolf>>, from {PG} <<gem-pro:*wulgī>> (nominative/accusative plural <<ylgjar>>)
-# <<gunnr|gunnr, guðr|battle, war>>, from {PG} <<gem-pro:*gunþiz>> (nominative/accusative plural <<gunnar>>)
-# <<hildr||battle>>, from {PG} <<gem-pro:*hildiz>> (nominative/accusative plural <<hildir>>)
+# <<mýrr||moor>>, from <<gem-pro+:*miuzijō>> (nominative/accusative plural <<mýrar>>)
+# <<ylgr||she-wolf>>, from <<gem-pro+:*wulgī>> (nominative/accusative plural <<ylgjar>>)
+# <<gunnr|gunnr, guðr|battle, war>>, from <<gem-pro+:*gunþiz>> (nominative/accusative plural <<gunnar>>)
+# <<hildr||battle>>, from <<gem-pro+:*hildiz>> (nominative/accusative plural <<hildir>>)
 ]==],
 		},
 		["<wō>-stem"] = {
-			gender = "feminine",
-			nom_sg = "the bare stem",
+			header = [==[
+{originates_from<from:{pie_o_stem<stem_weight:><stem_suffix:, with a stem ending in <*-w->>}>}
+# {pie_o_stem_to_gem}
+# {gem_o_stem_to_non}
+# {non_w_stem_u_umlaut} Hence it is present in genitive plural <-va> and genitive singular <-var>, but missing in dative plural <-um>, dative singular <-u>, and nominative/accusative/dative singular with a null ending.
+# Final <*-u> is regularly lost. It would normally trigger {u_umlaut}, but its effect is not visible because <*-w-> also caused {u_umlaut}.
+]==],
+			nom_sg = "a null ending",
 			gen_sg = "<-var>",
 			nom_pl = "<-var>",
-			parent = "<ō>-stem",
-			addl = "The stem has {U-UMLAUT} throughout.",
-			examples = "<<ǫr||arrow>> (genitive <<ǫrvar>>); <<dǫgg||drizzle; fog; dew>> (genitive <<dǫggvar>>)",
+			examples = [==[
+# <<ǫr||arrow>> (genitive <<ǫrvar>>)
+# <<dǫgg||drizzle; fog; dew>> (genitive <<dǫggvar>>)
+]==],
 		},
 		["GENDER <i>-stem"] = {
 			possible_genders = {"masculine", "feminine"},
 			masculine_nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>)",
-			feminine_nom_sg = "the bare stem with {U-UMLAUT}",
+			feminine_nom_sg = "a null ending with {u_umlaut}",
 			masculine_gen_sg = "<-ar> (<-jar> after vowels, velars or sometimes other consonants) or <-s>",
 			feminine_gen_sg = "<-ar>",
 			nom_pl = "<-ir>",
-			feminine_addl = "Feminine <i>-stem nouns have completely merged with <ō>-stem nouns in the singular, with the result that {I-UMLAUT}, which should theoretically be present throughout the paradigm, is often missing, and conversely {U-UMLAUT}, which should not be present, is normally found in the nominative and accusative singular. The genitive <-ar> is likewise borrowed from the <ō>-stems. The only thing distinguishing feminine <i>-stem nouns is the nominative/accusative plural <-ir>, whereas feminine <ō>-stem nouns use <-ar> (but often allow <-ir> as well, due to analogy with the <i>-stems). As a result of this convergence, many Old Norse <i>-stem feminines derive from original <ō>-stem nouns, and vice-versa.",
-			masculine_addl = [==[
-
+			feminine_footer = "Feminine <i>-stem nouns have completely merged with <ō>-stem nouns in the singular, with the result that {i_umlaut}, which should theoretically be present throughout the paradigm, is often missing, and conversely {u_umlaut}, which should not be present, is normally found in the nominative and accusative singular. The genitive <-ar> is likewise borrowed from the <ō>-stems. The only thing distinguishing feminine <i>-stem nouns is the nominative/accusative plural <-ir>, whereas feminine <ō>-stem nouns use <-ar> (but often allow <-ir> as well, due to analogy with the <i>-stems). As a result of this convergence, many {ON} <i>-stem feminines derive from original <ō>-stem nouns, and vice-versa.",
+			masculine_footer = [==[
 Masculine <i>-stems are closer to the original Proto-Germanic paradigm than feminine <i>-stems. The following differences from <a>-stems should be noted:
-# {I-UMLAUT} is often present throughout the paradigm (although it tends to be missing in light stems, i.e. those with a short vowel followed by a single consonant, due to early elision of the <*-i->).
+# {I_umlaut} is often present throughout the paradigm (although it tends to be missing in light stems, i.e. {light_stem_expl}, due to early elision of the <*-i->).
 # The genitive is more commonly in <-ar> than <-s>, opposite to the tendency in <a>-stems, and maintains the stem infix <-j-> in some words. (Theoretically, <a>-stems should always have their genitive in <-s> and <i>-stems in <-ar>, but contamination in both directions has occurred.)
 # The dative ending is usually null, whereas in <a>-stems it is usually <-i> (but exceptions occur in both directions, even more so in modern Icelandic).
 # The nominative and accusative plurals are clearly distinct, with <i>-stems having <-i-> and <a>-stems having <-a->.
 ]==],
 			masculine_examples = [==[
-
-# <<gestr||guest|g=m>> (genitive <<gests>>)
-# <<staðr||place|g=m>> (genitive <<staðar>>)
-# <<drykkr||drink, beverage|g=m>> (genitive <<drykkjar>>)
-# <<hár||thole|g=m>> (genitive <<hás>>)
-# <<gríss||boar; piglet|g=m>> (genitive <<gríss>>, nominative plural <<grísir>>),
+# <<gestr||guest>> (genitive <<gests>>)
+# <<staðr||place>> (genitive <<staðar>>)
+# <<drykkr||drink, beverage>> (genitive <<drykkjar>>)
+# <<hár||thole>> (genitive <<hás>>)
+# <<gríss||boar; piglet>> (genitive <<gríss>>, nominative plural <<grísir>>),
 ]==],
 			feminine_examples = [==[
-
-# <<kván||wife|g=f>>, from {PG} <<gem-pro:*kwēniz>>, without {I-UMLAUT}
-# <<ætt||direction; family; generation>> and <<átt||family, race; direction>>, both from {PG} <<gem-pro:*aihtiz>>, with and without {I-UMLAUT}
-# <<sýn||sight; appearance|g=f>> and <<sjón|ng=same|g=f>>, both from {PG} <<gem-pro:*siuniz>>, with and without {I-UMLAUT}
-# <<ǫld||time, age; cycle|g=f>>, from {PG} <<gem-pro:*aldiz>> (dative <<ǫldu>>, <<ǫld>>)
-# <<ǫsp||aspen|g=f>>, from {PG} <<gem-pro:*aspō>>
-# <<sorg||sorrow; grief|g=f>>, from {PG} <<gem-pro:*surgō>>
+# <<kván||wife>>, from <<gem-pro+:*kwēniz>>, without {i_umlaut}
+# <<ætt||direction; family; generation>> and <<átt||family, race; direction>>, both from <<gem-pro+:*aihtiz>>, with and without {i_umlaut}
+# <<sýn||sight; appearance>> and <<sjón|ng=same>>, both from <<gem-pro+:*siuniz>>, with and without {i_umlaut}
+# <<ǫld||time, age; cycle>>, from <<gem-pro+:*aldiz>> (dative <<ǫldu>>, <<ǫld>>)
+# <<ǫsp||aspen>>, from <<gem-pro+:*aspō>>
+# <<sorg||sorrow; grief>>, from <<gem-pro+:*surgō>>
 ]==],
 		},
 		["GENDER <an>-stem"] = {
@@ -825,22 +1056,20 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 			neuter_nom_sg = "<-a>",
 			gen_sg = "<-a>",
 			masculine_nom_pl = "<-ar>",
-			neuter_nom_pl = "<-u> with {U-UMLAUT}",
+			neuter_nom_pl = "<-u> with {u_umlaut}",
 			parent = "n-stem",
 			masculine_examples = [==[
-
-# <<bogi||bow|g=m>>
-# <<hreifi||wrist|g=m>>
-# <<dōmari||judge|g=m>> (genitive plural <<dómurum>>)
-# <<gumi||man|g=m>> (nominative plural <<gumar>> or <<gumnar>>)
-# <<oxi||ox|g=m>> (nominative plural <<oxar>> or <<øxn>>, with consonant-stem endings)
-# <<lé||scythe|g=m>> (genitive <<ljá>> < <<|*léa>>, nominative plural <<ljár>>)
+# <<bogi||bow>>
+# <<hreifi||wrist>>
+# <<dōmari||judge>> (genitive plural <<dómurum>>)
+# <<gumi||man>> (nominative plural <<gumar>> or <<gumnar>>)
+# <<oxi||ox>> (nominative plural <<oxar>> or <<øxn>>, with consonant-stem endings)
+# <<lé||scythe>> (genitive <<ljá>> < <<|*léa>>, nominative plural <<ljár>>)
 ]==],
 			neuter_examples = [==[
-
-# <<auga||eye|g=n>> (genitive plural <<augna>>)
-# <<eyra||ear|g=n>>, from {PG} {{gem-pro:*ausô}} (which is assumed to have maintained Verner alternation in the stem, where the <*-z-> alternant was generalized in Northwest Germanic and caused {I-UMLAUT} due to Old Norse <z>-mutation; genitive plural <<eyrna>>)
-# <<hjarta||heart|g=n>> (nominative/accusative plural <<hjǫrtu>>, genitive plural <<hjartna>>)
+# <<auga||eye>> (genitive plural <<augna>>)
+# <<eyra||ear>>, from <<gem-pro+:*ausô>> (which is assumed to have maintained Verner alternation in the stem, where the <*-z-> alternant was generalized in Northwest Germanic and caused {i_umlaut} due to {ON} <z>-mutation; genitive plural <<eyrna>>)
+# <<hjarta||heart>> (nominative/accusative plural <<hjǫrtu>>, genitive plural <<hjartna>>)
 ]==],
 		},
 		["<jan>-stem"] = {
@@ -850,7 +1079,6 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 			nom_pl = "<-jar>",
 			parent = "masculine <an>-stem",
 			examples = [==[
-
 # <<bryti||steward>> (genitive <<brytja>>)
 # <<steði||anvil>> (genitive <<steðja>>)
 # <<erfingi||heir>> (genitive <<erfingja>>)
@@ -862,25 +1090,23 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 			gen_sg = "<-i>",
 			nom_pl = "<-ar>",
 			parent = "n-stem",
-			addl = "The stem has {I-UMLAUT} throughout.",
+			footer = "The stem has {i_umlaut} throughout.",
 			examples = [==[
-
 # <<deyfi||deafness>>
-# <<elli||old age>>, from {PG} {{gem-pro:*alþį̄}}
+# <<elli||old age>>, from <<gem-pro+:*alþį̄>>
 # <<lygi||lie>> (nominative/accusative plural <<lygar>>)
 ]==],
 		},
 		["<ōn>-stem"] = {
 			gender = "feminine",
 			nom_sg = "<-a>",
-			gen_sg = "<-u> with {U-UMLAUT}",
-			nom_pl = "<-ur> with {U-UMLAUT}",
+			gen_sg = "<-u> with {u_umlaut}",
+			nom_pl = "<-ur> with {u_umlaut}",
 			parent = "n-stem",
 			examples = [==[
-
 # <<saga||story>> (accusative <<sǫgu>>, genitive plural <<sagna>>)
 # <<hvíla||bed>> (genitive plural <<hvílna>>)
-# <<hǿna||hen>>, from {PG} {{gem-pro:*hōnijǭ}} (genitive plural <<hǿnna>>)
+# <<hǿna||hen>>, from <<gem-pro+:*hōnijǭ>> (genitive plural <<hǿnna>>)
 # <<blaðra||bladder>> (accusative <<blǫðru>>, genitive plural <<blaðra>>)
 ]==],
 		},
@@ -890,13 +1116,12 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 			gen_sg = "<-ju>",
 			nom_pl = "<-jur>",
 			parent = "<ōn>-stem",
-			addl = "This class derives from {PG} <ōn>-stems ending in <j> after a light root, a vowel or a velar. As a result, the stem has {I-UMLAUT} throughout.",
+			footer = "This class derives from {PG} <ōn>-stems ending in <j> after a light root, a vowel or a velar. As a result, the stem has {i_umlaut} throughout.",
 			examples = [==[
-
 # <<smiðja||smithy>> (genitive plural <<smiðja>>)
 # <<hyggja||thought, opinion>> (genitive plural <<hyggna>>)
 # <<brynja||coat of mail>> (genitive plural <<brynja>>)
-# <<eimyrja||ember>>, from {PG} {{gem-pro:*aimuzjǭ}} (genitive plural <<eimyrja>>)
+# <<eimyrja||ember>>, from <<gem-pro+:*aimuzjǭ>> (genitive plural <<eimyrja>>)
 ]==],
 		},
 		["<wōn>-stem"] = {
@@ -905,9 +1130,8 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 			gen_sg = "<-u>",
 			nom_pl = "<-ur>",
 			parent = "<ōn>-stem",
-			addl = "This class derives from {PG} <ōn>-stems ending in <w>. As a result, the stem has {U-UMLAUT} throughout.",
+			footer = "This class derives from {PG} <ōn>-stems ending in <w>. As a result, the stem has {u_umlaut} throughout.",
 			examples = [==[
-
 # <<vǫlva||prophetess, witch>>
 # <<vǫkva||moisture, humidity>>
 # <<kvikva||quick (living tissue under nails or hooves); running fluid>>
@@ -915,50 +1139,46 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 		},
 		["<u>-stem"] = {
 			gender = "masculine",
-			nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>) with {U-UMLAUT}",
-			gen_sg = "<-ar> without {U-UMLAUT}",
-			nom_pl = "<-ir> with {I-UMLAUT}",
-			addl = "This class preserves most characteristics of {PG} <u>-stems, including {U-UMLAUT} in the nominative and accusative singular and the accusative and dative plural, and {I-UMLAUT} in the dative singular (< {PG} <*-iwi>) and nominative plural (< {PG} <*-iwiz>). The accusative plural is marked by a unique ending <-u>. The only remnant of <u>-stem neuters is <<fé>>, which has no obvious characteristics of <u>-stems any more and is best treated as simply irregular.",
+			nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>) with {u_umlaut}",
+			gen_sg = "<-ar> without {u_umlaut}",
+			nom_pl = "<-ir> with {i_umlaut}",
+			footer = "This class preserves most characteristics of {PG} <u>-stems, including {u_umlaut} in the nominative and accusative singular and the accusative and dative plural, and {i_umlaut} in the dative singular (< {PG} <*-iwi>) and nominative plural (< {PG} <*-iwiz>). The accusative plural is marked by a unique ending <-u>. The only remnant of <u>-stem neuters is <<fé>>, which has no obvious characteristics of <u>-stems any more and is best treated as simply irregular.",
 			examples = [==[
-
-# <<fjǫrðr||fjord>>, from {PG} <<gem-pro:*ferðuz>> (dative <<firði>>, genitive <<fjarðar>>)
-# <<lǫgr||sea, lake>>, from {PG} <<gem-pro:*laguz>> (dative <<legi>>, genitive <<lagar>>)
-# <<spánn|spánn, spónn|chip of wood; spoon>>, from {PG} <<gem-pro:*spēnuz>> (with <-r> assimilated to <-n>, and <ó> from earlier <ǫ́> before <n>; dative <<spæni>>)
-# <<fǫgnuðr||happiness, joy; greetings>> (dative <<fagnaði>>, genitive <<fagnaðar>>, nominative plural <<fagnaðir>>; nousn with the abstract ending <-(n)uðr>/<-(n)aðr> are not subject to {I-UMLAUT})
+# <<fjǫrðr||fjord>>, from <<gem-pro+:*ferðuz>> (dative <<firði>>, genitive <<fjarðar>>)
+# <<lǫgr||sea, lake>>, from <<gem-pro+:*laguz>> (dative <<legi>>, genitive <<lagar>>)
+# <<spánn|spánn, spónn|chip of wood; spoon>>, from <<gem-pro+:*spēnuz>> (with <-r> assimilated to <-n>, and <ó> from earlier <ǫ́> before <n>; dative <<spæni>>)
+# <<fǫgnuðr||happiness, joy; greetings>> (dative <<fagnaði>>, genitive <<fagnaðar>>, nominative plural <<fagnaðir>>; nousn with the abstract ending <-(n)uðr>/<-(n)aðr> are not subject to {i_umlaut})
 ]==]
 		},
 		["GENDER consonant stem"] = {
 			possible_genders = {"masculine", "feminine"},
 			masculine_nom_sg = "<-r> (which assimilates to a preceding <l>, <n> or <s>)",
-			feminine_nom_sg = "usually the bare stem with {U-UMLAUT}",
+			feminine_nom_sg = "usually a null ending with {u_umlaut}",
 			masculine_gen_sg = "<-ar> or <-s>",
-			feminine_gen_sg = "<-ar> or <-r>, the latter often with {I-UMLAUT}",
-			nom_pl = "<-r> (which assimilates to a preceding <l>, <n> or <s>) with {I-UMLAUT}",
-			feminine_addl = "Feminine consonant stems with {U-UMLAUT} were usually originally <u>-stem or <ō>-stem nouns, or analogical to them.",
+			feminine_gen_sg = "<-ar> or <-r>, the latter often with {i_umlaut}",
+			nom_pl = "<-r> (which assimilates to a preceding <l>, <n> or <s>) with {i_umlaut}",
+			feminine_footer = "Feminine consonant stems with {u_umlaut} were usually originally <u>-stem or <ō>-stem nouns, or analogical to them.",
 			masculine_examples = [==[
-
-# <<fótr||foot; leg|g=m>> (genitive <<fótar>>, dative <<fǿti>>, nominative/accusative plural <<fǿtr>>)
-# <<vetr||winter; year|g=m>> (with <-r> lost after stem ending in consonant + <-r>; genitive <<vetrar>>, nominative/accusative plural <<vetr>>)
+# <<fótr||foot; leg>> (genitive <<fótar>>, dative <<fǿti>>, nominative/accusative plural <<fǿtr>>)
+# <<vetr||winter; year>> (with <-r> lost after stem ending in consonant + <-r>; genitive <<vetrar>>, nominative/accusative plural <<vetr>>)
 ]==],
 			feminine_examples = [==[
-
-# <<bók||book; beech|g=f>> (genitive <<bókar>> or <<bǿkr>>, nominative/accusative plural <<bǿkr>>)
-# <<gás||goose|g=f>> (genitive <<gásar>>, nominative/accusative plural <<gæss>> with <-r> assimilated to <-s>)
-# <<hǫnd||hand|g=f>>, from {PG} <<gem-pro:*handuz>> (genitive <<handar>>, dative <<hendi>>, nominative/accusative plural <<hendr>>)
-# <<strǫnd||border; shore|g=f>>, from {PG} <<gem-pro:*strandō>> (genitive <<strandar>>, dative <<strǫnd>> or <<strǫndu>>, nominative/accusative plural <<strendr>>)
-# <<tǫnn||tooth|g=f>>, from {PG} <<gem-pro:*tanþs>>, with analogical {U-UMLAUT} (genitive <<tannar>>, nominative/accusative plural <<tenn>>/<<tennr>>/<<teðr>>, with the last variant the original and phonologically expected form)
-# <<mjǫlk||milk|g=f>>, from {PG} <<gem-pro:*meluks>>, with {U-UMLAUT} from the lost medial vowel (genitive <<mjǫlkr>>, singular-only)
-# <<fló||flea|g=f>>, from {PG} <<gem-pro:*flauhaz>>, with declension and gender change (genitive <<flóar>>, nominative/accusative plural <<flœr>>)
+# <<bók||book; beech>> (genitive <<bókar>> or <<bǿkr>>, nominative/accusative plural <<bǿkr>>)
+# <<gás||goose>> (genitive <<gásar>>, nominative/accusative plural <<gæss>> with <-r> assimilated to <-s>)
+# <<hǫnd||hand>>, from <<gem-pro+:*handuz>> (genitive <<handar>>, dative <<hendi>>, nominative/accusative plural <<hendr>>)
+# <<strǫnd||border; shore>>, from <<gem-pro+:*strandō>> (genitive <<strandar>>, dative <<strǫnd>> or <<strǫndu>>, nominative/accusative plural <<strendr>>)
+# <<tǫnn||tooth>>, from <<gem-pro+:*tanþs>>, with analogical {u_umlaut} (genitive <<tannar>>, nominative/accusative plural <<tenn>>/<<tennr>>/<<teðr>>, with the last variant the original and phonologically expected form)
+# <<mjǫlk||milk>>, from <<gem-pro+:*meluks>>, with {u_umlaut} from the lost medial vowel (genitive <<mjǫlkr>>, singular-only)
+# <<fló||flea>>, from <<gem-pro+:*flauhaz>>, with declension and gender change (genitive <<flóar>>, nominative/accusative plural <<flœr>>)
 ]==],
 		},
 		["<r>-stem"] = {
 			gender = "masculine or feminine",
 			nom_sg = "<-ir>",
-			gen_sg = "<-ur> with {U-UMLAUT}",
-			nom_pl = "<-r> with {I-UMLAUT}",
+			gen_sg = "<-ur> with {u_umlaut}",
+			nom_pl = "<-r> with {i_umlaut}",
 			parent = "consonant stem",
 			examples = [==[
-
 # <<faðir||father|g=m>> (accusative <<fǫður>>, dative <<fǫður>> or <<feðr>>, genitive <<fǫður>> or <<fǫðurs>>, nominative/accusative plural <<feðr>>)
 # <<bróðir||brother|g=m>> (accusative <<bróður>>, dative <<bróður>> or <<brǿðr>>, genitive <<brǫður>>, nominative/accusative plural <<brǿðr>>)
 # <<móðir||mother|g=f>> (accusative/dative/genitive <<móður>>, nominative/accusative plural <<mœðr>>)
@@ -971,10 +1191,9 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 			gender = "masculine",
 			nom_sg = "<-i>",
 			gen_sg = "<-a>",
-			nom_pl = "<-r> with {I-UMLAUT}",
+			nom_pl = "<-r> with {i_umlaut}",
 			parent = "consonant stem",
 			examples = [==[
-
 # <<bóndi||farmer, husband>> (nominative/accusative plural <<bǿndr>>)
 # <<seljandi||seller, vendor>> (nominative/accusative plural <<seljendr>>, dative plural <<seljǫndum>>)
 # <<farandi||traveler>> (nominative/accusative plural <<farendr>>, dative plural <<fǫrundum>>)
@@ -984,71 +1203,127 @@ Masculine <i>-stems are closer to the original Proto-Germanic paradigm than femi
 		},
 	},
 	ang = {
+		vars = {
+			gmw_gen_a_stem_to_ang = "West Germanic genitive <*-as> become early {OE} <-æs>, later <-es>.",
+			gmw_masc_pl_a_stem_to_ang = "Masculine plural {verner} variant <*-ōs> was generalized in {OE} and shortened to <-as>.",
+			gmw_neut_pl_a_stem_to_ang = "Neuter plural <-u> persisted after light stems ({light_stem_expl}) but was lost after heavy stems.",
+		},
 		["GENDER <a>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
-			nom_sg = "the bare stem",
+			gmw_a_stem_to_ang = "{gmw_gen_a_stem_to_ang} {gmw_masc_pl_a_stem_to_ang} {gmw_neut_pl_a_stem_to_ang}",
+			masculine_gmw_a_stem_to_ang = "{gmw_gen_a_stem_to_ang} {gmw_masc_pl_a_stem_to_ang}",
+			neuter_gmw_a_stem_to_ang = "{gmw_gen_a_stem_to_ang} {gmw_neut_pl_a_stem_to_ang}",
+			header = [==[
+{originates_from<from:{GENDER_pie_a_stem<stem_weight:><stem_suffix:>}>}
+# {GENDER_pie_a_stem_to_gem}
+# {GENDER_gem_a_stem_to_gmw}
+# {GENDER_gmw_a_stem_to_ang}
+]==],
+			nom_sg = "a null ending",
 			gen_sg = "<-es>",
-			masculine_nom_pl = "<-ās>",
+			masculine_nom_pl = "<-as>",
 			neuter_nom_pl = "<-u> after light stems, no ending after heavy stems",
-			masculine_examples = "<<stān||stone|g=m>>; <<dæġ||day|g=m>> (nominative plural <<dagas>>, cf. {{w|Anglo-Frisian brightening}}); <<wealh||Celt; Welsh person|g=m>> (genitive <<wēales>>, cf. {{w|Phonological history of Old English#H-loss}})",
-			neuter_examples = "<<sċip||ship|g=n>> (nominative plural <<sċipu>>); <<word||word|g=n>> (nominative plural <<word>>)",
+			masculine_examples = [==[
+# <<stān||stone>>
+# <<dæġ||day>> (nominative/accusative plural <<dagas>>, cf. {{w|Anglo-Frisian brightening}})
+# <<enġel||angel>>, from <<gmw-pro+|*angil>> (nominative/accusative plural <<englas>>, cf. {{w|Phonological history of Old English#Medial syncopation}})
+# <<wealh||Celt; Welsh person; foreigner>> (genitive <<wēales>>, nominative/accusative plural <<wēalās>>, cf. {{w|Phonological history of Old English#H-loss}})
+]==],
+			neuter_examples = [==[
+# <<sċip||ship>> (nominative/accusative plural <<sċipu>>)
+# <<word||word>> (nominative/accusative plural <<word>>)
+# <<fæt||vat>> (nominative/accusative plural <<fatu>>, cf. {{w|Anglo-Frisian brightening}})
+# <<hēafod||head>> (nominative/accusative plural <<hēafdu>>, cf. {{w|Phonological history of Old English#Medial syncopation}})
+]==]
 		},
 		["GENDER <ja>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			desc = "ending in {PG} <*-(i)jaz> (masculine), <*-(i)ją> (neuter)",
+			masculine_desc = "ending in {PG} <*-(i)jaz>",
+			neuter_desc = "ending in {PG} <*-(i)ją>",
+			gmw_neut_pl_ja_stem_to_ang = "Neuter plural <-u> normally persisted after light stems ({light_stem_expl}) but was lost after heavy stems; in this case, however, <*-ju> after a light stem caused the stem to become heavy, leading to loss of <*-u>, while conversely in <*-iju> after a heavy stem, the <*-ij-> was considered a light syllable and caused the <*-u> to remain.",
+			gmw_ja_stem_to_ang = "{gmw_gen_a_stem_to_ang} {gmw_masc_pl_a_stem_to_ang} {gmw_neut_pl_ja_stem_to_ang}",
+			masculine_gmw_ja_stem_to_ang = "{gmw_gen_a_stem_to_ang} {gmw_masc_pl_a_stem_to_ang}",
+			neuter_gmw_ja_stem_to_ang = "{gmw_gen_a_stem_to_ang} {gmw_neut_pl_ja_stem_to_ang}",
+			neut_pl_u = ";\nneuter nominative/accusative plural <-u> after (originally) heavy stems, but no ending after (originally) light stems, which is the reverse of the pattern for plain <a>-stems.",
+			masculine_neut_pl_u = ".",
+			-- neuter_neut_pl_u inherits from neut_pl_u
+			header = [==[
+This class represents the merger of the {PG} <ja>-stem and <ija>-stem classes. In {PG}, <ja>-stem nouns were essentially just <a>-stem nouns with a <*-j-> stem suffix; likewise, <ija>-stem nouns were <a>-stem nouns with an <*-ij-> stem suffix. The two suffixes were allophonic variants of each other, determined by {sievers} law and conditioned by the weight of the preceding stem, with <*-j-> occurring after light stems ({light_stem_expl}) and <*-ij-> after heavy stems.
+
+{PG} {GENDER} <a>-stems originate from {GENDER_pie_a_stem<stem_weight:><stem_suffix:>}. They evolve as follows:
+# {GENDER_pie_a_stem_to_gem}
+# {GENDER_gem_a_stem_to_gmw} The light-stem suffix <*-j-> triggered {WGG} of the stem-final consonant (other than <*-r->, which was not geminated).
+# {GENDER_gmw_ja_stem_to_ang}
+# The <*-(i)j-> suffix triggered {i_umlaut} throughout the paradigm and {PAL} of a final velar stop. <*-j-> was then lost except after <*-r->, while <*-ij-> was lost except word finally, where it persists as <-e>.
+
+As a result, {OE} <ja>-stems largely merged with <a>-stems, but are distinguishable by:
+# <-e> in the nominative/accusative singular after originally heavy stems, and {WGG} of the stem-final consonant after originally light stems;
+# the presence of {i_umlaut} throughout the paradigm;
+# {PAL} of a final velar stop{GENDER_neut_pl_u}
+]==],
 			nom_sg = "<-e> after (originally) heavy stems, no ending after (originally) light stems",
 			gen_sg = "<-es>",
 			masculine_nom_pl = "<-as>",
 			neuter_nom_pl = "<-u> after (originally) heavy stems, no ending after (originally) light stems",
-			addl = [==[
-In {OE}, <ja>-stems have largely merged with <a>-stems, but are distinguishable by
-# ''-e'' in the nominative/accusative singular after originally heavy stems, and {WGG} of the stem-final consonant after originally light stems;
-# the presence of {I-UMLAUT} throughout the paradigm;
-# [[palatalization]] of a final velar stop;
-# in the neuter, nominative plural <-u> after (originally) heavy stems, but no ending after (originally) light stems, which is the reverse of the pattern for plain <a>-stems.
-]==],
 			masculine_examples = [==[
-
-# <<hryċġ||back, spine|g=m>> (with {I-UMLAUT} of original <*-u->, {WGG} after a light stem, and palatalization)
-# <<ende||end|g=m>> (with {I-UMLAUT} of original <*-a->, and nominative ''-e'' after a heavy stem)
-# <<lǣċe||doctor|g=m>> (with nominative ''-e'' after a heavy stem, and palatalization)
-# <<hryre||fall; ruin|g=m>> (no {WGG} after <r>, leading to preservation of original <*-i> from {PG} <*-jaz>)
-# <<here||army|g=m>> (genitive <<herġes>>; this word preserves <*-j-> after <r>)
+# <<hryċġ||back, spine>> (with {i_umlaut} of original <*-u->, {WGG} after a light stem, and {PAL})
+# <<ende||end>> (with {i_umlaut} of original <*-a->, and nominative ''-e'' after a heavy stem)
+# <<lǣċe||doctor>> (with nominative ''-e'' after a heavy stem, and {PAL})
+# <<hryre||fall; ruin>> (no {WGG} after <r>, leading to preservation of original <*-i> from {PG} <*-jaz>)
+# <<here||army>> (genitive <<herġes>>; this word preserves <*-j-> after <r>)
 ]==],
 			neuter_examples = [==[
-
-# <<bedd||bed|g=n>> (nominative plural <<bedd>>; with {I-UMLAUT} of original <*-a->, and {WGG} after a light stem)
-# <<rīċe||kingdom|g=n>> (nominative plural <<rīċu>>; with nominative ''-e'' and nominative plural ''-u'' after a heavy stem, and palatalization)
+# <<bedd||bed>> (nominative plural <<bedd>>; with {i_umlaut} of original <*-a->, and {WGG} after a light stem)
+# <<rīċe||kingdom>> (nominative plural <<rīċu>>; with nominative ''-e'' and nominative plural ''-u'' after a heavy stem, and {PAL})
 ]==],
 		},
 		["GENDER <wa>-stem"] = {
-			possible_genders = {"masculine", "neuter"},
+			header = [==[
+{originates_from<from:{GENDER_pie_a_stem<stem_weight:><stem_suffix:, with a stem ending in <*-w->>}>}
+# {GENDER_pie_a_stem_to_gem}
+# {GENDER_gem_a_stem_to_gmw} After loss of the nominative singular ending, the word-final <*-w> becomes <*-u> after a consonant, which is retained after light stems ({light_stem_expl}, which includes most words in this class) and dropped otherwise.
+# {GENDER_gmw_a_stem_to_ang}
+# <*-w-> occurring syllable-finally after a vowel combines with the vowel to form a long diphthong, e.g. <<gmw-pro+:*trew||tree>> becomes <<trēo>>. Before a <*-w-> between vowels, a <*-u-> normally appears, leading to the same long diphthong, hence e.g. {PWG} genitive <<gmw-pro:|*trewas>> becomes <*treuwas> and ultimately <<trēowes>>. Within the literary period, the nominative sometimes acquires the <-w> of the oblique forms, hence both <<trēo>> and <<trēow>> are found, with modern <<en+:tree>> inherited from the former.
+]==],
 			nom_sg = "<-u> after consonants, no ending or <-w> after diphthongs",
 			gen_sg = "<-wes>",
 			masculine_nom_pl = "<-was>",
 			neuter_nom_pl = "<-u> after consonants, no ending or <-w> after diphthongs",
-			masculine_examples = "<<bearu||grove, wood|g=m>> (genitive <<bearwes>>, nominative plural <<bearwas>>)",
-			neuter_examples = "<<searu||machine, device|g=n>> (genitive <<searwes>>, nominative plural <<searu>>); <<trēo|trēo(w)|tree|g=n>> (genitive <<trēowes>>, nominative plural <<trēo|trēo(w)>>)",
+			masculine_examples = [==[
+# <<bearu||grove, wood>> (genitive <<bearwes>>, nominative plural <<bearwas>>)
+]==],
+			neuter_examples = [==[
+# <<searu||machine, device>> (genitive <<searwes>>, nominative plural <<searu>>)
+# <<trēo|trēo(w)|tree>> (genitive <<trēowes>>, nominative plural <<trēo|trēo(w)>>)
+]==],
 		},
 		["<ō>-stem"] = {
-			gender = "feminine",
 			nom_sg = "<-u> after light stems, no ending after heavy stems",
 			gen_sg = "<-e>",
 			nom_pl = "<-e>, <-a>",
-			addl = "Original <jō>-stems and <ijō>-stems are indistinguishable from <ō>-stems other than by the presence of {I-UMLAUT} throughout the paradigm, palatalization of final velars and with {WGG} after original light stems.",
-			examples = "<<ġiefu||gift>> (genitive <<ġiefe>>, light stem); <<þēod||people, nation; language>> (genitive <<þēode>>, heavy stem); <<bryċġ||bridge>> (original <jō>-stem, with {I-UMLAUT}, {WGG} and palatalization); <<ġierd||rod>> (original <ijō>-stem, with {I-UMLAUT})",
+			footer = "Original <jō>-stems and <ijō>-stems are indistinguishable from <ō>-stems other than by the presence of {i_umlaut} throughout the paradigm, {PAL} of final velars and with {WGG} after original light stems.",
+			examples = [==[
+# <<ġiefu||gift>> (genitive <<ġiefe>>, light stem)
+# <<þēod||people, nation; language>> (genitive <<þēode>>, heavy stem)
+# <<bryċġ||bridge>> (original <jō>-stem, with {i_umlaut}, {WGG} and {PAL})
+# <<ġierd||rod>> (original <ijō>-stem, with {i_umlaut})
+]==],
 		},
 		["<wō>-stem"] = {
-			gender = "feminine",
 			nom_sg = "<-u> after light stems, no ending after heavy stems",
 			gen_sg = "<-we>",
 			nom_pl = "<-we>, <-wa>",
-			examples = "<<sinu||sinew, nerve>> (genitive <<sinwe>>); <<beadu||battle, war>> (genitive <<beadwe>>); <<lǣs||pasture>> (genitive <<lǣswe>>); <<clēa||claw, nail>> (genitive <<clawe>>)",
+			examples = [==[
+# <<sinu||sinew, nerve>> (genitive <<sinwe>>)
+# <<beadu||battle, war>> (genitive <<beadwe>>)
+# <<lǣs||pasture>> (genitive <<lǣswe>>)
+# <<clēa||claw, nail>> (genitive <<clawe>>)
+]==],
 		},
 		["GENDER <i>-stem"] = {
 			gender = "masculine or feminine (rarely neuter)",
 			possible_genders = {"masculine", "feminine", "neuter"},
 			masculine_nom_sg = "<-e> after light stems, no ending after heavy stems",
-			feminine_nom_sg = "the bare stem after heavy stems (light-stem feminine <i>-stems have merged with <jō>-stems)",
+			feminine_nom_sg = "a null ending after heavy stems (light-stem feminine <i>-stems have merged with <jō>-stems)",
 			neuter_nom_sg = "<-e> after light stems (heavy-stem neuter <i>-stems have merged with <ja>-stems)",
 			masculine_gen_sg = "<-es>",
 			feminine_gen_sg = "<-e>",
@@ -1056,24 +1331,52 @@ In {OE}, <ja>-stems have largely merged with <a>-stems, but are distinguishable 
 			masculine_nom_pl = "<-as> (<-e> in some demonyms such as <<Engle||Angles, English>> and a few other words such as <<wine||friend>>)",
 			feminine_nom_pl = "<-e> or <-a>",
 			neuter_nom_pl = "<-u>",
-			addl = [==[
+			footer = [==[
 In {OE}, <i>-stems have largely merged with <ja>/<jō>-stems, but are distinguishable by
 # in the masculine and neuter, <-e> in the nominative/accusative singular after originally light stems, without {WGG}, as in <<sleġe||a strike, a blow, a hit>> < {{m+|gem-pro|*slagiz}} vs. <<seċġ||man, hero>> < {{m+|gem-pro|*sagjaz}};
 # contrastingly, no <-e> in the nominative/accusative singular after originally heavy stems, as in <<ende||end>> < {{m+|gem-pro|*andijaz}} vs. <<bend||bond; ribbon>> < {{m+|gem-pro|*bandiz}};
 # in the feminine, optional accusative singular with a null ending, as opposed to the normal ending in <-e>;
-# some masculine plural-only demonyms, e.g. <<Engle||Angles, English>>, <<Mierċe||Mercians>>, and a few other nouns, e.g. <<wine||friend(s)>>, <<ielde||men>>, <<ielfe||elves>>, <<lēode||people>>, form their nominative/accusative plural in <-e>, the original <i>-stem ending.
+# some masculine plural-only demonyms, and a few other nouns, form their nominative/accusative plural in <-e>, the original <i>-stem ending.
 ]==],
-			masculine_examples = "<<stede||place|g=m>>, <<cyre||choice|g=m>>, <<eġe||fear|g=m>> (all light stems); <<ġiest||guest|g=m>>, <<wyrm||worm|g=m>>, <<fenġ||grasp|g=m>>, <<swēġ||sound, noise|g=m>> (all heavy stems)",
-			feminine_examples = "<<cwēn||queen|g=f>>, <<brȳd||bride|g=f>>, <<benċ||bench|g=f>>, <<fierd||army|=f>>",
-			neuter_examples = "<<spere||spear|g=n>>, <<orleġe||fate|g=n>>>, <<sife||sieve|g=n>>", 
+			masculine_examples = [==[
+# <<stede||place>> (light stem)
+# <<cyre||choice>> (light stem)
+# <<eġe||fear>> (light stem)
+# <<wine||friend>> (light stem, plural <<wine>>)
+# <<ġiest||guest>> (heavy stem)
+# <<wyrm||worm>> (heavy stem)
+# <<fenġ||grasp>> (heavy stem)
+# <<swēġ||sound, noise>> (heavy stem)
+# <<ielde||men>> (plural only)
+# <<ielfe||elves>> (plural only)
+# <<lēode||people>> (plural only)
+# <<Engle||Angles, English>> (plural-only)
+# <<Mierċe||Mercians>> (plural only)
+]==],
+			feminine_examples = [==[
+# <<cwēn||queen>> (accusative <<cwēn>> or <<cwēne>>)
+# <<brȳd||bride>> (likewise)
+# <<benċ||bench>> (likewise)
+# <<fierd||army>> (likewise)
+]==],
+			neuter_examples = [==[
+# <<spere||spear>>
+# <<orleġe||fate>>
+# <<sife||sieve>>
+]==], 
 		},
 		["<u>-stem"] = {
 			gender = "masculine or feminine",
 			nom_sg = "<-u> after light stems, no ending after heavy stems",
 			gen_sg = "<-a>",
 			nom_pl = "<-a>",
-			addl = "The only remnants of a neuter <u>-stem are Northumbrian <<feolu||much>> and West Saxon plural <<fela|fela, feola|many>>. Original {{m+|gem-pro|*fehu}} become <a>-stem <<feoh>> in prehistoric {OE}.",
-			examples = "<<sunu||son|g=m>>; <<feld||field|g=m>>; <<duru||door|g=f>>; <<hand||hand|g=f>>", 
+			footer = "The only remnants of a neuter <u>-stem are Northumbrian <<feolu||much>> and West Saxon plural <<fela|fela, feola|many>>. Original {{m+|gem-pro|*fehu}} become <a>-stem <<feoh>> in prehistoric {OE}.",
+			examples = [==[
+# <<sunu||son|g=m>>
+# <<feld||field|g=m>>
+# <<duru||door|g=f>>
+# <<hand||hand|g=f>>
+]==], 
 		},
 		["GENDER <n>-stem"] = {
 			possible_genders = {"masculine", "feminine", "neuter"},
@@ -1082,62 +1385,118 @@ In {OE}, <i>-stems have largely merged with <ja>/<jō>-stems, but are distinguis
 			neuter_nom_sg = "<-e>",
 			gen_sg = "<-an>",
 			nom_pl = "<-an>",
-			addl = "This represents the merger of masculine and neuter <-an> stems and feminine <-ōn> stems, with the only difference remaining in the nominative singular (and neuter accusative singular). There were also <-jan> and <-jōn> stems (indistinguishable from plain <-n> stems except by the presence of {I-UMLAUT}) and <-wan> and <-wōn> stems (indistinguishable from plain <-n> stems).",
-			masculine_examples = "<<nama||name|g=m>>; <<frēa||lord|g=m>>; <<dēma||judge|g=m>> (<ijan>-stem, with {I-UMLAUT}); <<wreċċa||exiled person|g=m>> (<jan>-stem with {I-UMLAUT}, {WGG} and palatalization); <spearwa||sparrow|g=m>> (<wan>-stem)",
-			feminine_examples = "<<tunge||tongue|g=f>>; <<bēo||bee|g=f>>; <<bēċe||beech tree|g=f>> (<ijōn-stem>, with {I-UMLAUT} and palatalization); <<wiċċe||witch|g=f>> (<jōn>-stem, with {I-UMLAUT}, {WGG} and palatalization); <<swealwe||swallow|g=f>> (<wōn>-stem)",
-			neuter_examples = "<<ēage||eye|g=n>>; <<ēare||ear|g=n>>; <<wange||cheek|g=n>>",
+			footer = "This represents the merger of masculine and neuter <an>-stems and feminine <ōn>-stems, with the only difference remaining in the nominative singular (and neuter accusative singular). There were also <jan>/<ijan>-stems and <jōn>/<ijōn>-stems (indistinguishable from plain <n>-stems except by the presence of {i_umlaut}, {WGG} after light stems and {PAL} after velars) and <wan>-stems and <wōn>-stems (indistinguishable from plain <n>-stems except sometimes by the presence of <-w-> in the stem).",
+			masculine_examples = [==[
+# <<nama||name>>
+# <<frēa||lord>>, from {{m+|gmw-pro|frawō}} (a <wan>-stem), from {{m+|gem-pro|*frawjô}} (a <jan>-stem)
+# <<dēma||judge>> (<ijan>-stem, with {i_umlaut})
+# <<wreċċa||exiled person>> (<jan>-stem with {i_umlaut}, {WGG} and {PAL})
+# <spearwa||sparrow>> (<wan>-stem)
+]==],
+			feminine_examples = [==[
+# <<tunge||tongue>>
+# <<bēo||bee>>, from {{m+|gem-pro|*bijō}} (<jōn>-stem)
+# <<bēċe||beech tree>> (<ijōn-stem>, with {i_umlaut} and {PAL})
+# <<wiċċe||witch>> (<jōn>-stem, with {i_umlaut}, {WGG} and {PAL})
+# <<swealwe||swallow>> (<wōn>-stem)
+]==],
+			neuter_examples = [==[
+# <<ēage||eye>>
+# <<ēare||ear>>
+# <<wange||cheek>>
+]==],
 		},
 		["consonant stem"] = {
 			possible_genders = {"masculine", "feminine"},
-			masculine_nom_sg = "the bare stem",
+			masculine_nom_sg = "a null ending",
 			feminine_nom_sg = "<-u> after light stems, no ending after heavy stems",
 			masculine_gen_sg = "<-es>",
-			feminine_gen_sg = "either the bare stem with {I-UMLAUT} or <-e> without {I-UMLAUT} after heavy stems, but only <-e> without {I-UMLAUT} after light stems",
-			masculine_nom_pl = "the bare stem with {I-UMLAUT}",
-			feminine_nom_pl = "the bare stem with {I-UMLAUT} after heavy stems, <-e> with {I-UMLAUT} after light stems",
-			addl = "The dative singular also had {I-UMLAUT}, and was identical the nominative/accusative plural.",
-			masculine_examples = "<<fōt||foot|g=m>>, <<tōþ||tooth|g=m>>, <<mann||man|g=m>>",
-			feminine_examples = "<<bōc||book|g=f>>, <<gāt||goat|g=f>>, <<meoluc|meoluc, meolc|milk|g=f>>, <<burg||city|g=f>> (forms with {I-UMLAUT} may appear as <<byriġ>>), <<hnutu||nut|g=f>>",
+			feminine_gen_sg = "either a null ending with {i_umlaut} or <-e> without {i_umlaut} after heavy stems, but only <-e> without {i_umlaut} after light stems",
+			masculine_nom_pl = "a null ending with {i_umlaut}",
+			feminine_nom_pl = "a null ending with {i_umlaut} after heavy stems, <-e> with {i_umlaut} after light stems",
+			footer = "The dative singular also had {i_umlaut}, and was identical to the nominative/accusative plural.",
+			masculine_examples = [==[
+# <<fōt||foot>> (dative singular, nominative/accusative plural <<fēt>>)
+# <<tōþ||tooth>> (dative singular, nominative/accusative plural <<tēþ>>)
+# <<mann||man>> (dative singular, nominative/accusative plural <<menn>>)
+]==],
+			feminine_examples = [==[
+# <<bōc||book>> (genitive singular <<bēċ>> or <<bōce>>; dative singular, nominative/accusative plural <<bēċ>> with {PAL})
+# <<gāt||goat>> (genitive singular <<gǣt>> or <<gāte>>; dative singular, nominative/accusative plural <<gǣt>>)
+# <<burg||city>> (genitive singular <<byrġ>>, <<byriġ>> or <<burge>>; dative singular, nominative/accusative plural <<byrġ>>, <<byriġ>> with {PAL})
+# <<hnutu||nut>> (genitive singular <<hnute>>; dative singular, nominative/accusative plural <<hnyte>>)
+# <<furh||furrow>> (genitive singular <<fūre>> or <<fyrh>>; dative singular, nominative/accusative plural <<fyrh>>; genitive plural <<fūra>>, dative plural <<fūrum>>, cf. {{w|Phonological history of Old English#H-loss}})
+]==],
 		},
 		["<nd>-stem"] = {
 			gender = "masculine",
 			nom_sg = "<-nd>",
 			gen_sg = "<-ndes>",
-			nom_pl = "<-nd> with or without {I-UMLAUT}, <-nde> or <-ndas>",
+			nom_pl = "<-nd> with or without {i_umlaut}, <-nde> or <-ndas>",
 			parent = "consonant stem",
-			addl = "There were two variants, largely monosyllabic nouns with optional {I-UMLAUT} in the dative singular and nominative/accusative plural, such as <<frēond||friend>>, and polysyllabic agent nouns in <-end>, without {I-UMLAUT} or in some cases with {I-UMLAUT} throughout the paradigm, when derived from a verb with {I-UMLAUT} in its stem.",
-			examples = "With optional {I-UMLAUT}: <<frēond||friend>>, <<fēond||enemy>>, <<tēond||accuser>>, <<gōddōnd||benefactor>>; without {I-UMLAUT}: <<wīgend||warrior>>, <<āgend||owner>>, <<hǣlend||savior>> (with original infix <*-ij-> causing {I-UMLAUT} of the stem), <<hettend||enemy>> (with original infix <*-j-> causing {I-UMLAUT} of the stem and {WGG})",
+			footer = "There were two variants, largely monosyllabic nouns with optional {i_umlaut} in the dative singular and nominative/accusative plural, such as <<frēond||friend>>, and polysyllabic agent nouns in <-end>, without {i_umlaut} or in some cases with {i_umlaut} throughout the paradigm, when derived from a verb with {i_umlaut} in its stem.",
+			examples = [==[
+# <<frēond||friend>> (dative singular <<frīend>> or <<frēonde>>; nominative/accusative plural <<frīend>>, <<frēond>> or <<frēondas>>)
+# <<fēond||enemy>> (like <<frēond>>)
+# <<tēond||accuser>> (like <<frēond>>)
+# <<gōddōnd||benefactor>> (nominative/accusative plural <<gōddōnd>> or <<gōddēnd>>)
+# <<wīgend||warrior>> (without {i_umlaut})
+# <<āgend||owner>> (wihtout {i_umlaut})
+# <<hǣlend||savior>> (with original infix <*-ij-> causing {i_umlaut} of the stem)
+# <<hettend||enemy>> (with original infix <*-j-> causing {i_umlaut} of the stem and {WGG})
+]==],
 		},
 		["<r>-stem"] = {
 			gender = "masculine or feminine",
 			nom_sg = "<-or> or <-er>",
-			gen_sg = "same as nominative singular, sometimes with {I-UMLAUT}",
+			gen_sg = "same as nominative singular, sometimes with {i_umlaut}",
 			nom_pl = "<-ra>, <-ru>; <-as> for <<fæder>>",
 			parent = "consonant stem",
-			addl = "There were only seven words in this declension class (five regular kinship terms and two collective kinship terms), and each declined differently.",
-			examples = "<<fæder||father|g=m>>; <<brōþor||brother|g=m>>; <<mōdor||mother|g=f>>; <<dohtor||daughter|g=f>>; <<sweostor||sister|g=f>>; <<ġebrōþor|ġebrōþor, ġebrōþru|brothers|g=m-p>>; <<ġesweostor|ġesweostor, ġesweostru, ġesweostra|sisters|g=f-p>>",
+			footer = "There were only seven words in this declension class (five regular kinship terms and two collective kinship terms), and each declined differently.",
+			examples = [==[
+# <<fæder||father|g=m>>
+# <<brōþor||brother|g=m>>
+# <<mōdor||mother|g=f>>
+# <<dohtor||daughter|g=f>>
+# <<sweostor||sister|g=f>>
+# <<ġebrōþor|ġebrōþor, ġebrōþru|brothers|g=m-p>>
+# <<ġesweostor|ġesweostor, ġesweostru, ġesweostra|sisters|g=f-p>>
+]==],
 		},
 		["<z>-stem"] = {
 			gender = "neuter",
-			nom_sg = "the bare stem",
+			nom_sg = "a null ending",
 			gen_sg = "<-es>",
 			nom_pl = "<-ru>",
 			parent = "consonant stem",
-			addl = "This was a relic class in {OE}. The vast majority of nouns in this class in {PWG} were transferred to another class in prehistoric {OE}, sometimes changing gender in the process. Doublets were frequent, e.g. <<gāst>> and <<gǣst||spirit, breath>>; <<sigor>> and <<sige||victory>>; <<dōgor>> and Northumbrian <<dœ̄ġ||day>>; <<hālor>> and <<hǣl||health, salvation>>; <<salor>> and <<sæl||hall>>; <<hlǣw>> and <<hlāw||mound, hill>>.",
-			examples = "<<lamb||lamb>>; <<ċealf||calf>>; <<ǣġ||egg>>; <<ċild||child>> (nominative/accusative plural <<ċild>> or <<ċildru>>)",
+			footer = "This was a relic class in {OE}. The vast majority of nouns in this class in {PWG} were transferred to another class in prehistoric {OE}, sometimes changing gender in the process. Doublets were frequent, e.g. <<gāst>> and <<gǣst||spirit, breath>>; <<sigor>> and <<sige||victory>>; <<dōgor>> and Northumbrian <<dœ̄ġ||day>>; <<hālor>> and <<hǣl||health, salvation>>; <<salor>> and <<sæl||hall>>; <<hlǣw>> and <<hlāw||mound, hill>>. Note that {i_umlaut} is expected in the genitive/dative singular and throughout the plural (and in fact is present in the plural in {OHG}), but was eliminated in {OE} by analogy.",
+			examples = [==[
+# <<lamb||lamb>>
+# <<ċealf||calf>>
+# <<ǣġ||egg>>
+# <<ċild||child>> (nominative/accusative plural <<ċild>> or <<ċildru>>)
+]==],
 		},
 	},
 	goh = {
 		["GENDER <a>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
-			nom_sg = "the bare stem",
-			masculine_nom_sg = "the bare stem",
-			neuter_nom_sg = "the bare stem",
+			nom_sg = "a null ending",
+			masculine_nom_sg = "a null ending",
+			neuter_nom_sg = "a null ending",
 			gen_sg = "<-es>; later <-as>",
 			masculine_nom_pl = "<-ā> (later <-a>)",
-			neuter_nom_pl = "the bare stem",
-			masculine_examples = "<<tag||day|g=m>>; <<kuning||king|g=m>>; <<ackar||acre, field|g=m>> (genitive <<ackres>>)",
-			neuter_examples = "<<wort||word|g=n>>; <<barn||child|g=n>>; <<zwīfal||doubt|g=n>> (genitive <<zwīfles>>)",
+			neuter_nom_pl = "a null ending",
+			masculine_examples = [==[
+# <<tag||day>>
+# <<kuning||king>>
+# <<ackar||acre, field>> (genitive <<ackres>>)
+]==],
+			neuter_examples = [==[
+# <<wort||word>>
+# <<barn||child>>
+# <<zwīfal||doubt>> (genitive <<zwīfles>>)
+]==],
 		},
 		["GENDER <ja>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
@@ -1146,50 +1505,85 @@ In {OE}, <i>-stems have largely merged with <ja>/<jō>-stems, but are distinguis
 			masculine_nom_pl = "<-e> (later <-ā>, becoming <-a>)",
 			neuter_nom_pl = "<-i>",
 			parent = "GENDER <a>-stem",
-			addl = "{OHG} <ja>-stems have {I-UMLAUT} throughout the paradigm, although it is not represented in spelling except when the Proto-West Germanic root vowel was <*a>, becoming {OHG} <e>, e.g. <<betti||bed>> from {{m+|gmw-pro|*badi}}~{{m|gmw-pro|*baddja}} with {WGG}. Early 9th century <ja>-stems still included the {{ic|/j/}} glide in many inflections, e.g. dative singular <-ie>, instrumental singular <-iu>, genitive plural <-eo> or <-io>, but it was soon dropped, with the inflections merging with plain <a>-stems except in the nominative/accusative singular (compare a similar development in {OE}).",
-			masculine_examples = "<<hirti||herdsman|g=m>>; <<lērāri||teacher|g=m>>; <<rucki||back>> (with {WGG})",
-			neuter_examples = "<<enti||end|g=n>> (with visible {I-UMLAUT}); <<kunni||race, kind|g=n>> (with {WGG}); <<heri||army|g=n>> (genitive <<heries>>, with no {WGG} and preserved {{ic|/j/}} after {{ic|/r/}})",
+			footer = "{OHG} <ja>-stems have {i_umlaut} throughout the paradigm, although it is not represented in spelling except when the Proto-West Germanic root vowel was <*a>, becoming {OHG} <e>, e.g. <<betti||bed>> from {{m+|gmw-pro|*badi}}~{{m|gmw-pro|*baddja}} with {WGG}. Early 9th century <ja>-stems still included the {{ic|/j/}} glide in many inflections, e.g. dative singular <-ie>, instrumental singular <-iu>, genitive plural <-eo> or <-io>, but it was soon dropped, with the inflections merging with plain <a>-stems except in the nominative/accusative singular (compare a similar development in {OE}).",
+			masculine_examples = [==[
+# <<hirti||herdsman>>
+# <<lērāri||teacher>>
+# <<rucki||back>> (with {WGG})
+]==],
+			neuter_examples = [==[
+# <<enti||end>> (with visible {i_umlaut})
+# <<kunni||race, kind>> (with {WGG})
+# <<heri||army>> (genitive <<heries>>, with no {WGG} and preserved {{ic|/j/}} after {{ic|/r/}})
+]==],
 		},
 		["GENDER <wa>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
 			nom_sg = "<-o>; sometimes dropped when directly following long vowel and forming a diphthong after a short vowel",
 			gen_sg = "<-wes>; after a consonant, <-awes> or sometimes <-ewes>, with an [[epenthetic]] vowel",
 			masculine_nom_pl = "<-ā> (later <-a>)",
-			neuter_nom_pl = "[:nom_sg:]",
+			neuter_nom_pl = "{nom_sg}",
 			parent = "GENDER <a>-stem",
-			masculine_examples = "<<snēo|snēo, snē|snow|g=m>> (genitive <<snēwes>>); <<scato||shadow|g=m>> (genitive <<scatawes>>); <<bū||dwelling|g=m>> (genitive <<būwes>>)",
-			neuter_examples = "<<kneo||knee|g=n>> (genitive <<knëwes>>); <<trëso||treasure|g=n>> (genitive <<trësawes>>); <<rēo|rēo, rē|corpse|g=n>> (genitive <<rēwes>>)",
+			masculine_examples = [==[
+# <<snēo|snēo, snē|snow>> (genitive <<snēwes>>)
+# <<scato||shadow>> (genitive <<scatawes>>)
+# <<bū||dwelling>> (genitive <<būwes>>)
+]==],
+			neuter_examples = [==[
+# <<kneo||knee>> (genitive <<knëwes>>)
+# <<trëso||treasure>> (genitive <<trësawes>>)
+# <<rēo|rēo, rē|corpse>> (genitive <<rēwes>>)
+]==],
 		},
 		["<ō>-stem"] = {
 			gender = "feminine",
 			nom_sg = "<-a>",
 			gen_sg = "<-a> (sometimes <-u> or <-o>)",
 			nom_pl = "<-ā>",
-			addl = "The {OHG} nominative ending <-a> was taken from the accusative; the expected nominative would be <#-u> or no ending.",
-			examples = "<<gëba||gift>>, <<ërda||earth>>, <<triuwa||fidelity>>",
+			footer = "The {OHG} nominative ending <-a> was taken from the accusative; the expected nominative would be <#-u> or no ending.",
+			examples = [==[
+# <<gëba||gift>>
+# <<ërda||earth>>
+# <<triuwa||fidelity>>
+]==],
 		},
 		["<jō>-stem"] = {
 			gender = "feminine",
 			nom_sg = "<-e>, <-ea>, <-ia> (early); <-a> (later)",
-			gen_sg = "[:nom_sg:]",
+			gen_sg = "{nom_sg}",
 			nom_pl = "<-e>, <-eā>, <-iā> (early); <-ā> (later)",
 			parent = "<ō>-stem",
-			addl = "{OHG} <jō>-stems have {I-UMLAUT} throughout the paradigm, although it is not represented in spelling except when the {PWG} root vowel was <*a>, becoming {OHG} <e>, e.g. <<hella|hella, helle, hellea|hell>> from {{m+|gmw-pro|*hallju}} with {WGG}. Early 9th century <jō>-stems still included the {{ic|/j/}} glide in many inflections, e.g. dative singular <-iu>, genitive plural <-eōno>, but it was soon dropped, with the inflections merging with plain <ō>-stems. Feminines in <-in> such as <<kuningin||queen>>, <<friuntin||female friend>> preserve the {PWG} and {PG} <<c:gmw-pro:<ī>/<jō>-stem nouns|<ī>/jō> noun>> declension, with original nominative in <*-ī> dropped and remaining forms reflecting {WGG}. (Later {OHG} variants of these nouns ended in <-inna>, showing merger with <ō>-stems.)",
-			examples = "<<sunta|sunta, sunte, suntea|sin>>; <<hella|hella, helle, hellea|hell>> (with visible {I-UMLAUT} and {WGG}); <<kuningin||queen>> (genitive <<kuninginna>>)",
+			footer = "{OHG} <jō>-stems have {i_umlaut} throughout the paradigm, although it is not represented in spelling except when the {PWG} root vowel was <*a>, becoming {OHG} <e>, e.g. <<hella|hella, helle, hellea|hell>> from {{m+|gmw-pro|*hallju}} with {WGG}. Early 9th century <jō>-stems still included the {{ic|/j/}} glide in many inflections, e.g. dative singular <-iu>, genitive plural <-eōno>, but it was soon dropped, with the inflections merging with plain <ō>-stems. Feminines in <-in> such as <<kuningin||queen>>, <<friuntin||female friend>> preserve the {PWG} and {PG} <<c:gmw-pro:<ī>/<jō>-stem nouns|<ī>/jō> noun>> declension, with original nominative in <*-ī> dropped and remaining forms reflecting {WGG}. (Later {OHG} variants of these nouns ended in <-inna>, showing merger with <ō>-stems.)",
+			examples = [==[
+# <<sunta|sunta, sunte, suntea|sin>>
+# <<hella|hella, helle, hellea|hell>> (with visible {i_umlaut} and {WGG})
+# <<kuningin||queen>> (genitive <<kuninginna>>)
+]==],
 		},
 		["GENDER <i>-stem"] = {
 			possible_genders = {"masculine", "feminine"},
-			nom_sg = "no ending, without {I-UMLAUT}; occasionally <-i> after light stems (those with a short vowel followed by a single consonant), with {I-UMLAUT}",
+			nom_sg = "no ending, without {i_umlaut}; occasionally <-i> after light stems ({light_stem_expl}), with {i_umlaut}",
 			masculine_gen_sg = "<-es>",
-			feminine_gen_sg = "<-i> with {I-UMLAUT}",
-			nom_pl = "<-i> with {I-UMLAUT}",
-			addl = [==[
-In {OHG}, masculine <i>-stems were restructured in the singular to take <a>-stem endings, prior to {I-UMLAUT}, but kept <i>-stem endings in the plural. (There were two exceptions: (1) the instrumental singular preserved the ending <-iu> through the early 9th century and accordingly sometimes had {I-UMLAUT}, as in instrumental singular <<gastiu>> or <<gestiu>> of <<gast||guest>>; and (2) the nominative/accusative singular of a few nouns with light stems preserved the original <-i> ending, such as <<wini||friend>>, <<quiti||saying>>; but compare <<slag||blow, strike, hit>> without the <-i> ending or {I-UMLAUT}, and contrast the cognate <<ang:sleġe>> with {ang:I-UMLAUT} and a reflex of {PWG} <-i>.) Feminine nouns mostly dropped the original <-i> in the nominative and accusative prior to {I-UMLAUT} (which seems to have been a regular development in heavy stems that was analogically carried over to some light stems), but otherwise kept the <i>-stem endings. The result was a paradigm with {I-UMLAUT} throughout the plural, but not in the singular except in the feminine genitive and dative singular. (Exceptionally, feminine <<turi||door>> and <<kuri||choice>> maintained original <-i> in the nominative/accusative singular, leading to {I-UMLAUT} throughout the paradigm; cf. modern {{m+|de|Tür||door|g=f}}, {{m|de|Kür||choice|g=f|ll=poetic}}. This did not apply to most light-stem feminines, cf. <<stat||place>> without {I-UMLAUT} and contrast cognate <<ang:stede>> with {ang:I-UMLAUT} and a reflex of {PWG} <-i>.)
+			feminine_gen_sg = "<-i> with {i_umlaut}",
+			nom_pl = "<-i> with {i_umlaut}",
+			footer = [==[
+In {OHG}, masculine <i>-stems were restructured in the singular to take <a>-stem endings, prior to {i_umlaut}, but kept <i>-stem endings in the plural. (There were two exceptions: (1) the instrumental singular preserved the ending <-iu> through the early 9th century and accordingly sometimes had {i_umlaut}, as in instrumental singular <<gastiu>> or <<gestiu>> of <<gast||guest>>; and (2) the nominative/accusative singular of a few nouns with light stems preserved the original <-i> ending, such as <<wini||friend>>, <<quiti||saying>>; but compare <<slag||blow, strike, hit>> without the <-i> ending or {i_umlaut}, and contrast the cognate <<ang:sleġe>> with {ang:I-UMLAUT} and a reflex of {PWG} <-i>.) Feminine nouns mostly dropped the original <-i> in the nominative and accusative prior to {i_umlaut} (which seems to have been a regular development in heavy stems that was analogically carried over to some light stems), but otherwise kept the <i>-stem endings. The result was a paradigm with {i_umlaut} throughout the plural, but not in the singular except in the feminine genitive and dative singular. (Exceptionally, feminine <<turi||door>> and <<kuri||choice>> maintained original <-i> in the nominative/accusative singular, leading to {i_umlaut} throughout the paradigm; cf. modern {{m+|de|Tür||door|g=f}}, {{m|de|Kür||choice|g=f|ll=poetic}}. This did not apply to most light-stem feminines, cf. <<stat||place>> without {i_umlaut} and contrast cognate <<ang:stede>> with {ang:I-UMLAUT} and a reflex of {PWG} <-i>.)
 
-The development of {I-UMLAUT} in the plural of this paradigm, combined with similar inherited behavior in consonant stems, <z>-stems and <r>-stems, led to {I-UMLAUT} becoming a mark of the plural. This subsequently spread to many <a>-stem nouns, such as modern {{m+|de|Nagel||nail}} and {{m|de|Hammer||hammer}}, with non-original umlauted plurals ''Nägel'' and ''Hämmer''.
+The development of {i_umlaut} in the plural of this paradigm, combined with similar inherited behavior in consonant stems, <z>-stems and <r>-stems, led to {i_umlaut} becoming a mark of the plural. This subsequently spread to many <a>-stem nouns, such as modern {{m+|de|Nagel||nail}} and {{m|de|Hammer||hammer}}, with non-original umlauted plurals ''Nägel'' and ''Hämmer''.
 ]==],
-			masculine_examples = "<<gast||guest|g=m>> (nominative plural <<gesti>>); <<wurm||worm|g=m>>; <<aphul||apple|g=m>> (nominative plural <<ephili>>); <<slag||blow, strike, hit|g=m>> (nominative plural <<slegi>>); <<wini||friend|g=m>>",
-			feminine_examples = "<<anst||favor|g=f>> (genitive singular, nominative plural <<ensti>>); <<jugund||youth|g=f>>; <<gift||gift|g=f>>; <<turi||door|g=f>>",
+			masculine_examples = [==[
+# <<gast||guest>> (nominative plural <<gesti>>)
+# <<wurm||worm>>
+# <<aphul||apple>> (nominative plural <<ephili>>)
+# <<slag||blow, strike, hit>> (nominative plural <<slegi>>)
+# <<wini||friend>>
+]==],
+			feminine_examples = [==[
+# <<anst||favor>> (genitive singular, nominative plural <<ensti>>)
+# <<jugund||youth>>
+# <<gift||gift>>
+# <<turi||door>>
+]==],
 		},
 		["GENDER <an>-stem"] = {
 			possible_genders = {"masculine", "neuter"},
@@ -1199,8 +1593,17 @@ The development of {I-UMLAUT} in the plural of this paradigm, combined with simi
 			masculine_nom_pl = "<-on>, <-un>",
 			neuter_nom_pl = "<-un>, <-on>",
 			parent = "n-stem",
-			masculine_examples = "<<namo||name|g=m>>; <<wahsmo||fruit|g=m>>; <<stërno||star|g=m>>; <<gomo||man|g=m>>",
-			neuter_examples = "<<hërza||heart|g=n>>; <<ouga||eye|g=n>>; <<ōra||ear|g=n>>",
+			masculine_examples = [==[
+# <<namo||name>>
+# <<wahsmo||fruit>>
+# <<stërno||star>>
+# <<gomo||man>>
+]==],
+			neuter_examples = [==[
+# <<hërza||heart>>
+# <<ouga||eye>>
+# <<ōra||ear>>
+]==],
 		},
 		["<ōn>-stem"] = {
 			gender = "feminine",
@@ -1208,7 +1611,11 @@ The development of {I-UMLAUT} in the plural of this paradigm, combined with simi
 			gen_sg = "<-ūn>",
 			nom_pl = "<-ūn>",
 			parent = "n-stem",
-			examples = "<<zunga||tongue>>; <<quëna||woman>>; <<sunna||sun>>",
+			examples = [==[
+# <<zunga||tongue>>
+# <<quëna||woman>>
+# <<sunna||sun>>
+]==],
 		},
 		["<īn>-stem"] = {
 			gender = "feminine",
@@ -1216,23 +1623,37 @@ The development of {I-UMLAUT} in the plural of this paradigm, combined with simi
 			gen_sg = "<-ī>",
 			nom_pl = "<-ī>",
 			parent = "n-stem",
-			addl = "{OHG} <īn>-stems have {I-UMLAUT} throughout the paradigm (cf. {{m+|de|Höhe||height}} < {OHG} <<hōhī>>, {{m+|de|Süße||sweetness}} < {OHG} <<suoȥȥī>>), although it is usually represented in spelling. This paradigm is indeclinable except for genitive plural <-īno>, dative plural <-īm> (later <-īn>).",
-			examples = "<<hōhī||height>>; <<snëllī||quickness>>; <<tiufī||depth>>; <<menigī|menigī, managī|multitude>>; <<toufī||dipping, baptism>>; <<welī||choice>> (with visible {I-UMLAUT})",
+			footer = "{OHG} <īn>-stems have {i_umlaut} throughout the paradigm (cf. {{m+|de|Höhe||height}} < {OHG} <<hōhī>>, {{m+|de|Süße||sweetness}} < {OHG} <<suoȥȥī>>), although it is usually represented in spelling. This paradigm is indeclinable except for genitive plural <-īno>, dative plural <-īm> (later <-īn>).",
+			examples = [==[
+# <<hōhī||height>>
+# <<snëllī||quickness>>
+# <<tiufī||depth>>
+# <<menigī|menigī, managī|multitude>>
+# <<toufī||dipping, baptism>>
+# <<welī||choice>> (with visible {i_umlaut})
+]==],
 		},
 		["<u>-stem"] = {
 			gender = "masculine or or rarely neuter",
 			nom_sg = "<-u> after light stems; no examples with heavy stems",
 			gen_sg = "<-es>",
-			nom_pl = "<-i> with {I-UMLAUT} when masculine; unattested when neuter",
-			addl = "<u>-stems are a relic class in {OHG}. Only 6 masculine nouns, all light-stem, maintain original <-u> in the nominative/accusative singular, otherwise behaving as <i>-stems: <<situ||custom>>, <<fridu||peace>>, <<hugu||understanding>>, <<sigu||victory>>, <<witu||wood>> and <<sunu||son>> (also found as <<sun>>). All remaining <u>-stems inherited from {PWG} have been moved completely to become <i>-stems or sometimes <a>-stems. Only one neuter <u>-stem remains, <<fihu||cattle>>, which behaves as an <a>-stem in the oblique singular and is unattested in the plural. No feminine <u>-stems remain, but the <i>-stem noun <<hant||hand>> maintains a vestige of its original <u>-stem declension in the dative plural <<hantum>> (later <<hantun>>, <<hanton>>), in place of expected #<<hantim>>.",
+			nom_pl = "<-i> with {i_umlaut} when masculine; unattested when neuter",
+			footer = "<u>-stems are a relic class in {OHG}. Only 6 masculine nouns, all light-stem, maintain original <-u> in the nominative/accusative singular, otherwise behaving as <i>-stems: <<situ||custom>>, <<fridu||peace>>, <<hugu||understanding>>, <<sigu||victory>>, <<witu||wood>> and <<sunu||son>> (also found as <<sun>>). All remaining <u>-stems inherited from {PWG} have been moved completely to become <i>-stems or sometimes <a>-stems. Only one neuter <u>-stem remains, <<fihu||cattle>>, which behaves as an <a>-stem in the oblique singular and is unattested in the plural. No feminine <u>-stems remain, but the <i>-stem noun <<hant||hand>> maintains a vestige of its original <u>-stem declension in the dative plural <<hantum>> (later <<hantun>>, <<hanton>>), in place of expected #<<hantim>>.",
 		},
 		["consonant stem"] = {
 			gender = "masculine or feminine",
-			nom_sg = "the bare stem",
-			gen_sg = "<-es> when masculine; the bare stem when feminine",
-			nom_pl = "the bare stem",
-			addl = "This is a relic class in {OHG}. Most consonant stems have been converted to <i>-stems. The remaining nouns are distinguished by a null ending in the dative singular and nominative/accusative plural, without the expected {I-UMLAUT} (all such nouns are heavy-stem and as a result the original <-i> ending was regularly dropped prior {I-UMLAUT} taking place; compare the same development in the nominative/accusative singular of <i>-stems).",
-			examples = "<<man||man|g=m>> (genitive <<mannes>>); <<naht||night|g=f>>; <<buoch||book>> (neuter in the singular with genitive <<buoches>>, feminine in the plural); <<burg||city>>, <<brust||breast>> could follow either consonant stems or <i>-stems; <<fuoȥ||foot>> moved to the <i>-stems but maintained consonant-stem dative plural <<fuoȥum>> (later <<fuoȥun>>, <<fuoȥon>>)",
+			nom_sg = "a null ending",
+			gen_sg = "<-es> when masculine; a null ending when feminine",
+			nom_pl = "a null ending",
+			footer = "This is a relic class in {OHG}. Most consonant stems have been converted to <i>-stems. The remaining nouns are distinguished by a null ending in the dative singular and nominative/accusative plural, without the expected {i_umlaut} (all such nouns are heavy-stem and as a result the original <-i> ending was regularly dropped prior {i_umlaut} taking place; compare the same development in the nominative/accusative singular of <i>-stems).",
+			examples = [==[
+# <<man||man|g=m>> (genitive <<mannes>>)
+# <<naht||night|g=f>>
+# <<buoch||book>> (neuter in the singular with genitive <<buoches>>, feminine in the plural)
+# <<burg||city|g=f>> (which could be either a consonant stem or <i>-stem)
+# <<brust||breast|g=f>> (like <<burg>>)
+# <<fuoȥ||foot|g=f>> (moved to the <i>-stems but maintained consonant-stem dative plural <<fuoȥum>>, later <<fuoȥun>>, <<fuoȥon>>)
+]==],
 		},
 		["<nd>-stem"] = {
 			gender = "masculine",
@@ -1240,7 +1661,7 @@ The development of {I-UMLAUT} in the plural of this paradigm, combined with simi
 			gen_sg = "<-ntes>",
 			nom_pl = "<-nt>, or <-ntā> (later <-nta>)",
 			parent = "consonant stem",
-			addl = "This contained present participles used as nouns as well as <<friunt||friend>>. This class had nearly merged with <a>-stems, the only difference being the nominative/accusative plural, which could have a null ending.",
+			footer = "This contained present participles used as nouns as well as <<friunt||friend>>. This class had nearly merged with <a>-stems, the only difference being the nominative/accusative plural, which could have a null ending.",
 		},
 		["<r>-stem"] = {
 			gender = "masculine or feminine",
@@ -1248,41 +1669,67 @@ The development of {I-UMLAUT} in the plural of this paradigm, combined with simi
 			gen_sg = "<-er>; also <-eres> for <<fater>>",
 			nom_pl = "<-er>; <-erā>/<-era> for <<fater>>",
 			parent = "consonant stem",
-			addl = "There were only five words in this declension class: <<fater||father>>, <<bruoder||brother>>, <<muoter||mother>>, <<tohter||daughter>> and <<swëster||sister>>. <<fater>> had <a>-stem endings in the plural and alternatively in the singular as well.",
+			footer = "There were only five words in this declension class.",
+			examples = [==[
+# <<bruoder||brother>>
+# <<muoter||mother>>
+# <<tohter||daughter>>
+# <<swëster||sister>>
+# <<fater||father>> (with <a>-stem endings in the plural and alternatively in the singular as well)
+]==],
 		},
 		["<z>-stem"] = {
 			gender = "neuter",
-			nom_sg = "the bare stem",
+			nom_sg = "a null ending",
 			gen_sg = "<-es>",
-			nom_pl = "<-ir> with {I-UMLAUT}",
+			nom_pl = "<-ir> with {i_umlaut}",
 			parent = "consonant stem",
-			addl = "This was a relic class in {OHG} that later expanded considerably. The singular had assimilated to <a>-stem endings (originally the genitive and dative singular had the <-ir-> infix as well) but the plural maintained the <-ir> infix, which triggered {I-UMLAUT}.",
-			examples = "<<lamb||lamb>>; <<kalb||calf>>; <<blat||leaf>>; <<grab||grave>>",
+			footer = "This was a relic class in {OHG} that later expanded considerably. The singular had assimilated to <a>-stem endings (originally the genitive and dative singular had the <-ir-> infix as well) but the plural maintained the <-ir> infix, which triggered {i_umlaut}.",
+			examples = [==[
+# <<lamb||lamb>>
+# <<kalb||calf>>
+# <<blat||leaf>>
+# <<grab||grave>>
+]==],
 		},
+	},
 }
 
-require("Module:category tree/utilities").add_inflection_labels {
-	labels = labels,
-	pos = "noun",
-	stem_classes = noun_decls,
+require(category_tree_utilities_module).add_inflection_handler {
+	handlers = handlers,
+	poses = {"noun"},
+	stem_classes = function(handdata)
+		return noun_decls[handdata.lang:getCode()]
+	end,
 	principal_parts = {
 		{"nom_sg", "nominative singular"},
 		{"gen_sg", "genitive singular"},
 		{"nom_pl", "nominative plural"},
 	},
-	mark_up_spec = function(spec, nolink)
+	mark_up_spec = function(data, handdata, spec, nolink)
 		-- umlauts
-		spec = spec:gsub("I%-UMLAUT", "{{w|Old Norse#Umlaut|i-umlaut}}")
-		spec = spec:gsub("U%-UMLAUT", "{{w|Old Norse#U-umlaut|u-umlaut}}")
-		spec = spec:gsub("{I-UMLAUT}", "{{w|Germanic umlaut}}")
-		spec = spec:gsub("{WGG}", "{{w|West Germanic gemination}}")
-		if nolink then
-			spec = require("Module:links").remove_links(spec)
-		end
-		return (spec:gsub("<(.-)>", "''%1''"))
+		spec = spec:gsub("{([Uu])%-umlaut}", "{{w|Old Norse#U-umlaut|%1-umlaut}}")
+		spec = spec:gsub("{([Ii])%-umlaut}", function(i)
+			local wikilink
+			local langcode = handdata.lang:getFullCode()
+			if langcode == "non" then
+				wikilink = "Old Norse#Umlaut"
+			elseif langcode == "ang" then
+				wikilink = "Germanic umlaut#I-mutation in Old English"
+			elseif langcode == "goh" then
+				wikilink = "Germanic umlaut#I-mutation in High German"
+			elseif langcode == "osx" then
+				wikilink = "Germanic umlaut#I-mutation in Old Saxon"
+			elseif langcode == "odt" then
+				wikilink = "Germanic umlaut#I-mutation in Dutch"
+			else
+				wikilink = "Germanic umlaut"
+			end
+			return ("{{w|%s|%s-umlaut}}"):format(wikilink, i)
+		end)
+		return require(category_tree_utilities_module).default_mark_up_spec(data, handdata, spec, nolink)
 	end,
-	addl = "The stem classes are named from the perspective of [[:Category:Proto-Germanic language|Proto-Germanic]] " ..
-	"and may not still be visible in {{{langname}}} inflections.",
+	footer = "The stem classes are named from the perspective of [[:Category:Proto-Germanic language|Proto-Germanic]] and may not still be visible in {{{langname}}} inflections.",
 }
 
 for _, pos in ipairs({"nouns"}) do
@@ -1302,20 +1749,6 @@ for _, pos in ipairs({"nouns"}) do
 		}
 	end
 end
-
-labels["masculine a-stem nouns"] = {
-	displaytitle = "{{{langname}}} masculine ''a''-stem nouns",
-	description = "{{{langname}}} masculine ''a''-stem nouns. These nouns have a genitive singular in ''-es'' and a nominative plural in ''-as''.",
-	parents = {{name = "a-stem nouns", sort = "masculine"}},
-	breadcrumb = "masculine",
-}
-
-labels["neuter a-stem nouns"] = {
-	displaytitle = "{{{langname}}} neuter ''a''-stem nouns",
-	description = "{{{langname}}} neuter ''a''-stem nouns. These nouns have a genitive singular in ''-es'' and a nominative plural that is either endingless (if the stem is heavy) or ending in ''-u'' (if the stem is light).",
-	parents = {{name = "a-stem nouns", sort = "neuter"}},
-	breadcrumb = "neuter",
-}
 
 for _, decl in ipairs({"n"}) do
 	for _, gender in ipairs { "masculine", "feminine", "neuter" } do
@@ -1340,4 +1773,4 @@ for key, data in pairs(labels) do
 	end
 end
 
-return {LABELS = labels}
+return {LABELS = labels, HANDLERS = handlers}
