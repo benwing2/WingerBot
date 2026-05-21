@@ -4967,6 +4967,12 @@ m["paa-elp"] = {
 	aliases = {"East Lakes Plains"}, -- Usher
 }
 
+m["paa-epw"] = {
+	"Eastern Pauwasi",
+	16115496,
+	aliases = {"East Pauwasi"},
+}
+
 m["paa-etf"] = {
 	"Eastern Trans-Fly",
 	5330530,
@@ -5152,6 +5158,14 @@ m["paa-lma"] = {
 	-- Sometimes in a putative Arai-Samaia family along with Amto-Musan and the Pyu language
 }
 
+m["paa-lmu"] = {
+	"Lepki-Murkim", -- Kembra accepted by Glottolog and Usher; not by Foley (2020) but does not exclude the possibility
+					-- of a relationship
+	85776285,
+	-- independent family per Glottolog, part of South Pauwasi River family (under Pauwasi) per Usher (2020)
+	aliases = {"Lepki-Murkim-Kembra"}, -- Glottolog
+}
+
 m["paa-lpl"] = {
 	"Lakes Plain",
 	6478969,
@@ -5321,6 +5335,12 @@ m["paa-nnh"] = {
 			  },
 }
 
+m["paa-nto"] = {
+	"Namla-Tofanma",
+	16918187,
+	-- independent family per Glottolog and Foley (2018), part of West Pauwasi family (under Pauwasi) per Usher (2020)
+}
+
 m["paa-ott"] = {
 	"Ottilien",
 	7109477,
@@ -5341,11 +5361,6 @@ m["paa-pal"] = {
 	65089113,
 	"paa-wpa",
 	aliases = {"Nuclear Palai"},
-}
-
-m["paa-pau"] = {
-	"Pauwasi",
-	7155496,
 }
 
 m["paa-pia"] = {
@@ -5590,6 +5605,13 @@ m["paa-wpa"] = {
 	"Wapei-Palei",
 	65043156,
 	"paa-trr",
+}
+
+m["paa-wpw"] = { -- paa-wpa already used by Wapei-Palei
+	"Western Pauwasi", -- 2 langs per Glottolog and Pawley-Hammarström; Usher also includes Namla-Tofanma and Usku
+	85815062,
+	aliases = {"West Pauwasi", -- Wikipedia, Usher
+			   "Tebi-Towe", "Dubu-Towei"},
 }
 
 m["paa-yam"] = {
