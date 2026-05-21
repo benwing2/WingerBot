@@ -34,34 +34,38 @@ templates_with_sc = link_templates_with_sc
 #templates_with_sc = translation_templates_with_sc | link_templates_with_sc
 
 def check_script_agrees(value_to_check, lang, sc, pagemsg, expand_text, line_or_t, action_msg):
+  def line_pagemsg(txt):
+    if line_or_t:
+      pagemsg("%s: %s" % (txt, line_or_t))
+    else:
+      pagemsg(txt)
   detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s}}" % (lang, value_to_check))
   if not detected_sc:
     return False
   if detected_sc == "ms-Arab" and sc == "Arab" and lang == "ms":
-    pagemsg("Detected script ms-Arab for lang=ms, saw explicit sc=Arab, which is probably wrong, %s: %s" % (
-      action_msg, line_or_t))
+    line_pagemsg("Detected script ms-Arab for lang=ms, saw explicit sc=Arab, which is probably wrong, %s" %
+      action_msg)
     return True
   if detected_sc in ["Hans", "Hant"] and sc == "Hani":
-    pagemsg("Detected script %s, saw explicit sc=Hani which is a superset, %s: %s" % (
-      detected_sc, action_msg, line_or_t))
+    line_pagemsg("Detected script %s, saw explicit sc=Hani which is a superset, %s" % (detected_sc, action_msg))
     return True
   if detected_sc != sc:
     if len(detected_sc) >= 4 and len(sc) >= 4 and detected_sc[-4:] == sc[-4:]:
-      pagemsg("For lang=%s, detected script %s, saw explicit sc=%s, both are variants of the same script, %s: %s" % (
-        lang, detected_sc, sc, action_msg, line_or_t))
+      line_pagemsg("For lang=%s, detected script %s, saw explicit sc=%s, both are variants of the same script, %s" % (
+        lang, detected_sc, sc, action_msg))
       return True
     if detected_sc == "None":
-      pagemsg("WARNING: For lang=%s, detected script %s but saw explicit sc=%s, which may be right: %s" % (
-        lang, detected_sc, sc, line_or_t))
+      line_pagemsg("WARNING: For lang=%s, detected script %s but saw explicit sc=%s, which may be right" % (
+        lang, detected_sc, sc))
       return False
     force_detected_sc = expand_text("{{#invoke:languages/templates|getByCode|%s|findBestScript|%s|true}}" % (
       lang, value_to_check))
     if force_detected_sc == detected_sc:
-      pagemsg("WARNING: For lang=%s, force-detected script %s but saw explicit sc=%s, explicit sc= probably wrong: %s"
-              % (lang, detected_sc, sc, line_or_t))
+      line_pagemsg("WARNING: For lang=%s, force-detected script %s but saw explicit sc=%s, explicit sc= probably wrong"
+                   % (lang, detected_sc, sc))
     else:
-      pagemsg("WARNING: For lang=%s, detected script %s but force-detected %s and saw explicit sc=%s, which may be right: %s" % (
-        lang, detected_sc, force_detected_sc, sc, line_or_t))
+      line_pagemsg("WARNING: For lang=%s, detected script %s but force-detected %s and saw explicit sc=%s, which may be right" % (
+        lang, detected_sc, force_detected_sc, sc))
     return False
   return True
 
