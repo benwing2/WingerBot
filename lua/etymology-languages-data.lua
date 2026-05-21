@@ -292,6 +292,49 @@ m["jrb"] = {
 	"Judeo-Arabic",
 	37733,
 	"ar",
+	pseudo_families = "qfa-jew",
+}
+
+m["apc-leb"] = {
+	"Lebanese North Levantine Arabic",
+	1516642,
+	"apc",
+	aliases = {"Lebanese Arabic"},
+}
+
+m["apc-sle"] = {
+	"South Lebanese North Levantine Arabic",
+	14206590,
+	"apc",
+	aliases = {"South Lebanese Arabic"},
+}
+
+m["apc-nle"] = {
+	"North Lebanese North Levantine Arabic",
+	nil,
+	"apc",
+	aliases = {"North Lebanese Arabic"},
+}
+
+m["apc-syr"] = {
+	"Syrian North Levantine Arabic",
+	2143071,
+	"apc",
+	aliases = {"Syrian Arabic"},
+}
+
+m["apc-ale"] = {
+	"Aleppine North Levantine Arabic",
+	7056921,
+	"apc-syr",
+	aliases = {"Aleppo Arabic", "Aleppine Arabic"},
+}
+
+m["apc-dam"] = {
+	"Damascene North Levantine Arabic",
+	12237466,
+	"apc-syr",
+	aliases = {"Damascus Arabic", "Damascene Arabic"},
 }
 
 -----------------------------------------------------
@@ -331,6 +374,7 @@ m["arc-jla"] = {
 	"Jewish Literary Aramaic",
 	105952842,
 	"arc",
+	pseudo_families = "qfa-jew",
 }
 
 m["arc-nab"] = {
@@ -357,6 +401,7 @@ m["tmr"] = {
 	33407,
 	"arc",
 	family = "sem-ase",
+	pseudo_families = "qfa-jew",
 }
 
 m["jpa"] = {
@@ -365,6 +410,7 @@ m["jpa"] = {
 	"arc",
 	family = "sem-arw",
 	aliases = {"Galilean Aramaic"},
+	pseudo_families = "qfa-jew",
 }
 
 -----------------------------------------------------
@@ -396,27 +442,6 @@ m["he-IL"] = {
 	"Israeli Hebrew",
 	8141,
 	"he",
-}
-
-m["bsh-kat"] = {
-	"Kativiri",
-	2605045,
-	"bsh",
-	aliases = {"Katə́viri"},
-}
-
-m["xvi"] = {
-	"Kamviri",
-	1193495,
-	"bsh",
-	aliases = {"Kamvíri"},
-}
-
-m["bsh-mum"] = {
-	"Mumviri",
-	nil,
-	aliases = {"Mumvíri"},
-	"bsh"
 }
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -3026,6 +3051,30 @@ m["sgh-baj"] = {
 	"sgh-xgb",
 }
 
+-------------------------------------------------------------------------
+--                          Nuristani varieties                        --
+-------------------------------------------------------------------------
+
+m["bsh-kat"] = {
+	"Kativiri",
+	2605045,
+	"bsh",
+	aliases = {"Katə́viri"},
+}
+
+m["xvi"] = {
+	"Kamviri",
+	1193495,
+	"bsh",
+	aliases = {"Kamvíri"},
+}
+
+m["bsh-mum"] = {
+	"Mumviri",
+	nil,
+	aliases = {"Mumvíri"},
+	"bsh"
+}
 --------------------------------------------------------------------------------------
 --                                   Italic varieties                               --
 --------------------------------------------------------------------------------------
@@ -3181,7 +3230,7 @@ m["frp-old"] = {
 }
 
 -----------------------------------------------------
---     French and French-based creole varieties    --
+--        French and derived creole varieties      --
 -----------------------------------------------------
 
 m["fro-nor"] = {
@@ -3213,7 +3262,8 @@ m["zrp"] = {
 	"Zarphatic",
 	36994,
 	"fro",
-	aliases = {"Judeo-French"}
+	aliases = {"Judeo-French"},
+	pseudo_families = "qfa-jew",
 }
 
 m["fr-CA"] = {
@@ -3358,11 +3408,14 @@ m["oc-jud"] = {
 		"Judeo-Provencal", "Judaeo-Provencal",
 		"Judeo-Comtadin", "Judæo-Comtadin", "Judaeo-Comtadin",
 	},
+	pseudo_families = "qfa-jew",
 }
 
 -----------------------------------------------------
---                Portuguese varieties             --
+--     Portuguese and derived creole varieties     --
 -----------------------------------------------------
+
+-- Portuguese
 
 m["pt-BR"] = {
 	"Brazilian Portuguese",
@@ -3376,17 +3429,117 @@ m["pt-PT"] = {
 	"pt",
 }
 
+-- Kabuverdianu (Cape Verde Creole, Cape Verdean Creole)
+
+m["kea-bar"] = {
+	"Barlavento Kabuverdianu",
+	2217638,
+	"kea",
+	aliases = {"Barlavento", "Barlavento Creole", "Sampadjudu"},
+}
+
+m["kea-bvi"] = {
+	"Boa Vista Kabuverdianu",
+	16501837,
+	"kea-bar",
+	aliases = {"Boa Vista Creole"},
+}
+
+m["kea-sal"] = {
+	"Sal Kabuverdianu",
+	18707467,
+	"kea-bar",
+	aliases = {"Sal Creole"},
+}
+
+m["kea-saa"] = {
+	"Santo Antão Kabuverdianu",
+	18707472,
+	"kea-bar",
+	aliases = {"Santo Antão Creole"},
+}
+
+m["kea-sni"] = {
+	"São Nicolau Kabuverdianu",
+	18707549,
+	"kea-bar",
+	aliases = {"São Nicolau Creole"},
+}
+
+m["kea-svi"] = {
+	"São Vicente Kabuverdianu",
+	18707550,
+	"kea-bar",
+	aliases = {"São Vicente Creole"},
+}
+
+m["kea-sot"] = {
+	"Sotavento Kabuverdianu",
+	10261559,
+	"kea",
+	aliases = {"Sotavento", "Sotavento Creole", "Badiu"},
+}
+
+m["kea-bra"] = {
+	"Brava Kabuverdianu",
+	18670181,
+	"kea-sot",
+	aliases = {"Brava Creole"},
+}
+
+m["kea-fog"] = {
+	"Fogo Kabuverdianu",
+	18706861,
+	"kea-sot",
+	aliases = {"Fogo Creole"},
+}
+
+m["kea-mai"] = {
+	"Maio Kabuverdianu",
+	18707286,
+	"kea-sot",
+	aliases = {"Maio Creole"},
+}
+
+m["kea-san"] = {
+	"Santiago Kabuverdianu",
+	35117,
+	"kea-sot",
+	aliases = {"Santiago Creole"},
+}
+
+m["kea-alu"] = {
+	"ALUPEC Kabuverdianu",
+	375704,
+	"kea",
+	aliases = {"ALUPEC", "Alfabeto Unificado para a Escrita do Cabo-Verdiano"},
+}
+
 -----------------------------------------------------
 --            Rhaeto-Romansh varieties             --
 -----------------------------------------------------
 
 -- Ladin varieties
 
+m["lld-amp"] = {
+	"Ampezan Ladin",
+	25617466,
+	"lld",
+	aliases = {"Anpezan", "Ampezan", "Ampezzan", "Ampezzano"},
+}
+
 m["lld-bad"] = {
 	"Badiot Ladin",
 	3706562,
 	"lld",
 	aliases = {"Badiot", "Badioto", "Badiotto"},
+}
+
+m["lld-cad"] = {
+	"Cadorino Ladin",
+	3706570,
+	"lld",
+	aliases = {"Cadorino"},
 }
 
 m["lld-fas"] = {
@@ -3403,11 +3556,25 @@ m["lld-fod"] = {
 	aliases = {"Fodom", "Livinallese"},
 }
 
+m["lld-for"] = {
+	"Fornes Ladin",
+	5470374,
+	"lld",
+	aliases = {"Fornes"},
+}
+
 m["lld-ghe"] = {
 	"Gherdëina Ladin",
 	3706597,
 	"lld",
 	aliases = {"Gherdëina", "Gardenese", "Val Gardena"},
+}
+
+m["lld-non"] = {
+	"Nones Ladin",
+	1055027,
+	"lld",
+	aliases = {"Nones", "Noneso"},
 }
 
 -- Romansch varieties
