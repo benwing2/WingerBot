@@ -743,6 +743,14 @@ This class originates from {PIE} athematic neuter <u>-stems in <*-u>. There were
 			nom_sg = "<*-ēr>",
 			gen_sg = "<*-urz>",
 			nom_pl = "<*-riz>",
+			examples = [==[
+# <<*fadēr||father|g=m>>
+# <<*brōþēr||brother|g=m>>
+# <<*þeuhtēr||grandson, descendant|g=m>> (only survives in {OHG})
+# <<*mōdēr||mother|g=f>>
+# <<*swestēr||sister|g=f>>
+# <<*duhtēr||daughter|g=f>>
+]==],
 		},
 		["<z>-stem"] = {
 			gender = "neuter",
