@@ -48,7 +48,7 @@ def process_text_on_page(index, pagetitle, text, prev_comment):
     found_match = False
     if args.regex is None:
       found_match = True
-    elif args.all:
+    elif not args.not_ and not args.only_first_match:
       for m in re.finditer(args.regex, text_to_search, re.M):
         found_match = True
         output_match(m)
@@ -84,10 +84,10 @@ if __name__ == "__main__":
   parser = blib.create_argparser("Search on pages", include_pagefile=True,
     include_stdin=True)
   parser.add_argument("-e", "--regex", help="Regular expression to search for.")
-  parser.add_argument("--not", dest="not_", help="Only output if regex not found.",
+  parser.add_argument("--not", dest="not_", help="Only output if regex not found in file. This implies --only-first-match.",
       action="store_true")
   parser.add_argument('--input-from-diff', help="Use the specified file as input, a previous output of a job run with --diff.")
-  parser.add_argument('--all', help="Include all matches.", action="store_true")
+  parser.add_argument('--only-first-match', help="Only include the first match, instead of all matches.", action="store_true")
   parser.add_argument('--output-from-to', help="Output in from-to format (single file for original and changes), for ease in pushing changes.", action="store_true")
   parser.add_argument('--output-begin-end', help="Output in split begin-end format (separate files for original and changes), for ease in pushing changes.", action="store_true")
   parser.add_argument('--no-encode-embedded-newlines', help="Don't convert embedded newlines to '\\n' (normally done to keep everything on one line).", action="store_true")
@@ -98,6 +98,4 @@ if __name__ == "__main__":
 
   if not args.regex and not args.text:
     raise ValueError("-e (--regex) must be given unless --text is given")
-  if args.not_ and args.all:
-    raise ValueError("Can't combine --not with --all")
   search_pages(start, end)
