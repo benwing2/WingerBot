@@ -373,6 +373,9 @@ language_groups = {
   "Chorote": {
     "add_lang": {"Iyojwa'ja", "Iyo'wujwa"},
   },
+  "Circassian": {
+    "add_lang": {"East", "West"},
+  },
   "Comorian": {
     "add_lang": {"Maore", "Mwali", "Ndzwani", "Ngazidja"},
   },
@@ -941,6 +944,9 @@ language_groups = {
     "indent": lambda lang: lang.endswith(" Maninka") or lang.endswith(" Maninkakan") or lang in {"Mandinka"},
     "unindent": {"Mandingo"},
   },
+  "Mandobo": {
+    "add_lang": {"Lower", "Upper"},
+  },
   "Maninkakan": {
     "add_lang": {"Eastern", "Western"},
   },
@@ -1334,10 +1340,6 @@ language_groups = {
     # may need other langs to form an Eastern Songhay clade
     "add_lang": {"Humburi", "Koyraboro"},
   },
-  "Senoufo": { # Senufo clade under Atlantic-Congo
-    # the whole clade except for Karaboro, which has its own group
-    "indent": lambda lang: lang.endswith(" Senoufo") or lang.endswith(" Sénoufo") or lang in {"Nafaanra", "Supyire", "Djimini"},
-  },
   "Serbo-Croatian": {
     "rename": {
       "Cryllic": "Cyrillic",
@@ -1407,8 +1409,8 @@ language_groups = {
     "add_lang": {"Old"},
   },
   "Tanana": { # Athabaskan
-    # FIXME: Needs Tanacross to form a clade
-    "add_lang": {"Lower", "Upper"},
+    "indent": lambda lang: False,
+    "unindent": {"Lower Tanana", "Upper Tanana"},
   },
   # Tanna: North Tanna, Southwest Tanna; needs Kwamera, Lenakel and Whitesands to form a clade
   "Tarahumara": {
