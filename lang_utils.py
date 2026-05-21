@@ -6,7 +6,7 @@ from collections import defaultdict
 import unicodedata
 from json.decoder import JSONDecodeError
 
-from blib import site
+from blib import site, msg
 import rulib
 
 appendix_only_langnames = [
@@ -127,110 +127,137 @@ langcode_langname_to_correct_langcode = {
   # Don't do the following; they aren't correct.
   # ("Middle Chinese", "zh"): "ltc",
   # ("Old Chinese", "zh"): "och",
-  ("Middle French", "fr"): "frm",
-  ("Old French", "fr"): "fro",
-  ("Low German", "nds-de"): "nds-de",
-  # Arabic, xng
-  ("Middle English", "en"): "enm",
-  ("Mamluk-Kipchak", "qwm"): "trk-mmk",
-  ("Old Spanish", "es"): "osp",
-  # Chinese, xng
-  ("French", "en"): "fr",
-  # Solon, evn
-  ("Norwegian", "nb"): "nb",
-  ("Spanish", "pt"): "es",
-  # English, enm: do by hand?
-  ("Norwegian", "nn"): "nn",
-  ("Portuguese", "es"): "pt",
-  ("Aromanian", "ro"): "rup",
-  # West Frisian, ofs
-  ("Old Portuguese", "pt"): "roa-opt",
-  # Uyghur, xng
-  ("Galician", "ga"): "gl",
-  ("Old Danish", "da"): "gmq-oda",
-  ("Cornish", "co"): "kw",
-  ("Sardinian", "sn"): "sc",
-  ("English", "fr"): "en",
-  # Armenian, xcl
-  ("Sicilian", "sc"): "scn",
-  ("Old Ukrainian", "uk"): "zle-ouk",
-  ("Old Swedish", "sv"): "gmq-osw",
-  ("Middle Welsh", "mwl"): "wlm",
-  # Hebrew, arc
-  # Greek, grc: do by hand?
-  # Dutch, dum
-  ("Livvi", "liv"): "olo",
-  # Faroese, is
-  ("Spanish", "it"): "es",
-  ("Old Norse", "no"): "non",
-  ("English", "la"): "en",
-  # Crimean Tatar, krc
-  # Chagatai, tt
-  ("Tagalog", "en"): "tl",
-  ("Scots", "en"): "sco",
-  ("Old Catalan", "ca"): "roa-oca",
-  # Middle Low German, gmh
-  ("Middle Dutch", "nl"): "dum",
-  # Latin, mul
-  ("Italian", "en"): "it",
-  # Irish, sga
-  # French, fro
-  # French, frm
-  ("English", "tl"): "en",
-  ("Swedish", "sw"): "sv",
-  ("Swedish", "se"): "sv",
-  ("Old Welsh", "wlo"): "owl",
-  ("Old Latin", "la"): "itc-ola",
-  ("Old Belarusian", "be"): "zle-obe",
-  ("Norwegian", "non"): "no",
-  ("Middle High German", "de"): "gmh",
-  ("Middle Breton", "mbr"): "xbm",
-  ("Middle Armenian", "hy"): "axm",
-  ("Italian", "pt"): "it",
-  ("Italian", "fr"): "it",
-  # Icelandic, fo 
-  ("Galician", "pt"): "gl",
-  # Chinese, cmn 
-  ("Catalan", "en"): "ca",
   # Don't do the following; it isn't correct.
   # ("Cantonese", "zh"): "yue",
-  # Wa, prk
-  ("Ukrainian", "ru"): "uk",
-  # Swedish, gmq-osw
-  ("Spanish", "fr"): "es",
-  ("Old Italian", "ito"): "roa-oit",
-  # Norwegian, da
-  # Middle English, ang
-  ("Middle Breton", "mbt"): "xbm",
-  ("Latvian", "lt"): "lv",
-  ("Latin", "en"): "la",
-  ("German", "fr"): "de",
-  ("Friulian", "fr"): "fur",
-  ("Estonian", "es"): "et",
+  #
+  ("Algerian Arabic", "ar"): "arq",
+  # ("Arabic", "xng"):
+  # ("Armenian", "xcl"):
+  ("Biloxi", "bil"): "bll",
+  ("Bulgarian", "be"): "bg",
+  ("Armenian", "ar"): "hy",
+  ("Aromanian", "ro"): "rup",
+  ("Catalan", "en"): "ca",
+  # ("Chagatai", "tt"):
+  ("Chinese", "cmn"): "cmn",
+  # ("Chinese", "xng"):
+  ("Classical Syriac", "arc"): "syc",
+  ("Cornish", "co"): "kw",
+  # ("Crimean Tatar", "krc"):
+  # ("Dutch", "dum"):
   ("Dutch", "en"): "nl",
-  ("Walloon", "wal"): "wa",
-  # Swedish, no
-  ("Swabian", "gsw"): "swg",
-  # Silesian, gmw-ecg (dialect of gmw-ecg)
-  ("Old Polish", "pl"): "zlw-opl",
-  ("Old Irish", "ga"): "sga",
-  # Occitan, ca 
-  ("Norwegian Nynorsk", "no"): "nn",
-  ("Norman", "fr"): "nrf",
-  ("Middle Welsh", "mlw"): "wlm",
-  ("Middle Low German", "mgl"): "gml",
-  # Livvi, krl
-  ("Italian", "la"): "it",
-  # German, gmh
-  ("Galician", "es"): "gl",
-  # French, nrf
+  ("Early Assemese", "as"): "inc-oas",
+  ("Egyptian Arabic", "ar"): "arz",
+  # ("English", "enm: do by hand?"):
   ("English", "es"): "en",
+  ("English", "fr"): "en",
+  ("English", "la"): "en",
+  ("English", "tl"): "en",
+  ("Estonian", "es"): "et",
+  # ("Faroese", "is"):
+  ("French", "en"): "fr",
+  # ("French", "frm"):
+  # ("French", "fro"):
+  # ("French", "nrf"):
+  ("Friulian", "fr"): "fur",
+  ("Galician", "es"): "gl",
+  ("Galician", "ga"): "gl",
+  ("Galician", "pt"): "gl",
+  ("German", "fr"): "de",
+  # ("German", "gmh"):
+  # ("Greek", "grc: do by hand?"):
+  ("Gulf Arabic", "ar"): "afb",
+  # ("Hebrew", "arc"):
+  ("Hijazi Arabic", "ar"): "acw",
+  ("Hijazi Arabic", "arz"): "acw",
+  ("Hokkien", "cmn"): "nan-hbl",
+  # ("Icelandic", "fo "):
+  ("Iraqi Arabic", "ar"): "acm",
+  ("Iraqi Arabic", "arz"): "acm",
+  # ("Irish", "sga"):
+  ("Italian", "en"): "it",
+  ("Italian", "fr"): "it",
+  ("Italian", "la"): "it",
+  ("Italian", "pt"): "it",
+  ("Kurdish", "ckb"): "ckb",
+  ("Latin", "en"): "la",
+  # ("Latin", "mul"):
+  ("Latvian", "lt"): "lv",
+  # ("Livvi", "krl"):
+  ("Livvi", "liv"): "olo",
+  ("Low German", "nds-de"): "nds-de",
+  ("Mamluk-Kipchak", "qwm"): "trk-mmk",
+  ("Mandarin", "zh"): "cmn",
+  ("Middle Armenian", "hy"): "axm",
+  ("Middle Breton", "mbr"): "xbm",
+  ("Middle Breton", "mbt"): "xbm",
+  ("Middle Dutch", "nl"): "dum",
+  # ("Middle English", "ang"):
+  ("Middle English", "en"): "enm",
+  ("Middle French", "fr"): "frm",
+  ("Middle High German", "de"): "gmh",
+  # ("Middle Low German", "gmh"):
+  ("Middle Low German", "mgl"): "gml",
+  ("Middle Welsh", "mlw"): "wlm",
+  ("Middle Welsh", "mwl"): "wlm",
+  ("Moroccan Arabic", "ar"): "ary",
+  ("Moroccan Arabic", "arz"): "ary",
+  ("Norman", "fr"): "nrf",
+  ("North Levantine Arabic", "acp"): "apc",
+  ("North Levantine Arabic", "ar"): "apc",
+  ("Norwegian Bokmål", "no"): "nb",
+  ("Norwegian Nynorsk", "no"): "nn",
+  # ("Norwegian", "da"):
+  ("Norwegian", "nb"): "nb",
+  ("Norwegian", "nn"): "nn",
+  ("Norwegian", "non"): "no",
+  # ("Occitan", "ca "):
+  ("Old Belarusian", "be"): "zle-obe",
+  ("Old Catalan", "ca"): "roa-oca",
+  ("Old Danish", "da"): "gmq-oda",
+  ("Old French", "fr"): "fro",
+  ("Old Galician-Portuguese", "pt"): "roa-opt",
+  ("Old Irish", "ga"): "sga",
+  ("Old Italian", "ito"): "roa-oit",
+  ("Old Latin", "la"): "itc-ola",
+  ("Old Norse", "no"): "non",
+  ("Old Polish", "pl"): "zlw-opl",
+  ("Old Portuguese", "pt"): "roa-opt",
+  ("Old Spanish", "es"): "osp",
+  ("Old Swedish", "sv"): "gmq-osw",
+  ("Old Ukrainian", "uk"): "zle-ouk",
+  ("Old Welsh", "wlo"): "owl",
+  ("Portuguese", "br"): "pt",
+  ("Portuguese", "es"): "pt",
+  ("Sardinian", "sn"): "sc",
+  ("Scots", "en"): "sco",
+  ("Sicilian", "sc"): "scn",
+  # ("Silesian", "gmw-ecg (dialect of gmw-ecg)"):
+  # ("Solon", "evn"):
+  ("South Levantine Arabic", "ar"): "ajp",
+  ("Spanish", "fr"): "es",
+  ("Spanish", "it"): "es",
+  ("Spanish", "pt"): "es",
+  ("Sudanese Arabic", "ar"): "apd",
+  ("Swabian", "gsw"): "swg",
+  # ("Swedish", "gmq-osw"):
+  # ("Swedish", "no"):
+  ("Swedish", "se"): "sv",
+  ("Swedish", "sw"): "sv",
+  ("Tagalog", "en"): "tl",
+  ("Tunisian Arabic", "ar"): "aeb",
+  ("Ukrainian", "ru"): "uk",
+  # ("Uyghur", "xng"):
+  # ("Wa", "prk"):
+  ("Walloon", "wal"): "wa",
+  # ("West Frisian", "ofs"):
+  ("Yemeni Arabic", "ar"): "ayn",
 }
 
 non_canonical_to_canonical_names = {
   "Romansh": "Romansch",
+  "Bokmål": "Norwegian Bokmål",
   "Nynorsk": "Norwegian Nynorsk",
-  # Nynorsk: more specific than Norwegian
   "Azeri": "Azerbaijani",
   "Old Frankish": "Frankish",
   "Cuman": "Kipchak", # is this correct?
@@ -239,13 +266,13 @@ non_canonical_to_canonical_names = {
   "Uighur": "Uyghur",
   "Meadow Mari": "Eastern Mari",
   "Hill Mari": "Western Mari",
-  "Komi": "Komi-Zyrian", # is this correct?
+  # Komi: less specific than Komi-Zyrian
   # Croatian: ? map to Serbo-Croatian?
   # Nancowry: more specific than Central Nicobarese
   # Mari: less specific than Eastern Mari
   "Malaccan Creole Portuguese": "Kristang",
   "Modern Greek": "Greek",
-  "Odia": "Oriya",
+  "Oriya": "Odia",
   # Languedocien: more specific than Occitan
   # Gascon: more specific than Occitan
   "Nogay": "Nogai",
@@ -451,7 +478,18 @@ def set_script_data(scriptdata):
 
   for sc in scripts:
     scripts_by_code[sc["code"]] = sc
-    scripts_by_canonical_name[sc["canonicalName"]] = sc
+    canonical_name = sc["canonicalName"]
+    if canonical_name in scripts_by_canonical_name:
+      newcode = sc["code"]
+      curcode = scripts_by_canonical_name[canonical_name]["code"]
+      if "-" not in newcode:
+        if "-" in curcode:
+          scripts_by_canonical_name[canonical_name] = sc
+        else:
+          msg("WARNING: Both script code '%s' and '%s' have canonical name '%s' and neither has a hyphen" % (
+            curcode, newcode, canonical_name))
+    else:
+      scripts_by_canonical_name[canonical_name] = sc
 
 already_fetched_script_data = False
 def get_script_data():
@@ -907,7 +945,7 @@ chinese_low_surrogates = (
 
 chinese_misc_ideographic_symbols_and_punctuation = (
   #"𖿢𖿣𖿰𖿱" 
-  "\U+00016FE2\U+00016FE3\U+00016FF0\U+00016FF1"
+  "\U00016FE2\U00016FE3\U00016FF0\U00016FF1"
   # i.e. D81B+DFE2 + D81B+DFE3 + D81B+DFF0 + D81B+DFF1
   #"\uD81B[\uDFE2\uDFE3\uDFF0\uDFF1]"
 )
