@@ -2771,8 +2771,8 @@ A4+(em)/p2:p3 Żółte		29		-e			*			*			-e			-ych						all toponyms in -[błnpr
 A4N/n1		małe		1		-e			-ego		-ym			-e			-ych		
 A4N			czesne		189		-e			-ego		-ym			-e			-ych		
 A4N/p3		berberysowate 280	-e			*			*			-e			-ych						~75% in -owate
-C1c			nacięcie	2432	-cie		-cia		-ciu		-cia		-ć			
-C1c/p2		zajęcia		1		-cia		*			*			-cia		-ć			
+C1c			nacięcie	2432	-cie		-cia		-ciu		-cia		-ć			n
+C1c/p2		zajęcia		1		-cia		*			*			-cia		-ć			n.pl
 C1c/p3		objęcia		3		-cia		*			*			-cia		-ć			
 C1ę+(en)/n1	imię		1		-ę			-enia		-eniu		-ona		-on			
 C1ę+(en)	plemię		17		-ę			-enia		-eniu		-ona		-on			
@@ -2857,7 +2857,7 @@ C4łs		rzemiosło	3		-sło		-sła		-śle		-sła		-sł							rzemiesło/rzemiosł
 C4łta		światło		3		-atło		-atła		-etle		-atła		-ateł						światło/półświatło/dwuświatło
 C4łz		giezło		1		-zło		-zła		-źle		-zła		-zł			
 C4me		jarzmo		4		-mo			-ma			-mie		-ma			-em							pasmo/powismo/karzmo/krzyżmo
-C5ms		pismo		12		-smo		-sma		-śmie		-sma		-sm							pasmo and pismo+compounds
+C4ms		pismo		12		-smo		-sma		-śmie		-sma		-sm							pasmo and pismo+compounds
 C4ne		dno			44		-no			-na			-nie		-na			-en							in -[djlłr]no/-chno/-czno
 C4ne/p2		Próchna		2		-na			*			*			-na			-en			
 C4ne/p3		żarna		3		-na			*			*			-na			-en			
