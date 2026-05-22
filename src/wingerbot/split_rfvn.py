@@ -10,7 +10,6 @@ cjk_chars = "[\u1100-\u11FF\u2E80-\uA4FF\uAC00-\uD7FF\uFF00-\uFFEF]|[\uD840-\uD8
 cjk_regex = "(%s|-notice-(zh|ja|ko)-)" % cjk_chars
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

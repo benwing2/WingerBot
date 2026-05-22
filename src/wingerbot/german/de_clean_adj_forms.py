@@ -66,8 +66,6 @@ def check_if_lemma_and_ending_match_pagetitle(lemma, ending, pagetitle, allow_um
   return no_explicit
 
 def process_text_on_page(index, pagetitle, text):
-  global args
-
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

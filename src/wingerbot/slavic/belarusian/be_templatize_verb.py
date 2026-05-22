@@ -8,7 +8,6 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 def process_page(page, index, parsed):
   pagetitle = str(page.title())
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):

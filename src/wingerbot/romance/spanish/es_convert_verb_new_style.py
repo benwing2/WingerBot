@@ -53,7 +53,6 @@ def generate_verb_forms(template, errandpagemsg, expand_text):
 
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -71,7 +70,6 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
 
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):

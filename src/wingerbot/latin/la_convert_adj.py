@@ -230,7 +230,6 @@ def generate_old_adj_forms(template, errandpagemsg, expand_text, return_raw=Fals
   return augmented_args
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 

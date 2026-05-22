@@ -9,7 +9,6 @@ from wingerbot.blib import getparam, rmparam, msg, site
 from wingerbot.slavic.russian import runounlib
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   subpagetitle = re.sub(".*:", "", pagetitle)
   def pagemsg(txt):

@@ -97,7 +97,6 @@ def compare_headword_decl_forms(id_slot, headword_forms, decl_slots, noun_props,
   return True
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

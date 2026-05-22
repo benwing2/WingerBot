@@ -13,7 +13,6 @@ global_params_at_end = ["q", "alts"]
 item_params = ["alt", "g", "gloss", "t", "id", "lit", "pos", "tr", "ts", "sc"]
 
 def process_text_on_page(index, pagetitle, pagetext):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

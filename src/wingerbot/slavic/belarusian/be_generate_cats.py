@@ -17,7 +17,6 @@ adj_stem_types = ["hard", "soft", "velar-stem", "possessive", "surname"]
 vowel_alts = ["а-е", "а-о", "а-во", "ы-о", "о-ы", "во-а"]
 
 def create_cat(cat, catargs, extratext=None):
-  global args
   if args.pos == "verb":
     pos = "verb"
     shortpos = "verb"

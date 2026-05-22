@@ -19,7 +19,6 @@ def get_subsection_level(subsection_text):
   return len(re.sub("[^=].*", "", subsection_text.strip()))
 
 def process_text_on_page(pageindex, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
 

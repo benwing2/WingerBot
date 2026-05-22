@@ -30,7 +30,6 @@ french_head_templates_1_not_head = [
 ]
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

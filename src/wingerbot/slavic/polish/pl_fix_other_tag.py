@@ -11,8 +11,6 @@ def remove_comment_continuations(text):
   return text.replace("<!--\n-->", "").strip()
 
 def process_text_on_page(pagetitle, index, text):
-  global args
-
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

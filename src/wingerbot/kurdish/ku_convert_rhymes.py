@@ -15,8 +15,6 @@ def process_page_for_rename(page, index):
 
   pagemsg("Processing")
 
-  global args
-
   totitle = pagename.replace(":Kurdish", ":Northern Kurdish")
   comment = "Rename Rhymes:Kurdish/... -> Rhymes:Northern Kurdish/..."
   if args.save:

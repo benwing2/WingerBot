@@ -22,7 +22,6 @@ conversions = [
 ]
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

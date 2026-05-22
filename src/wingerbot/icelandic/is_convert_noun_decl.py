@@ -260,7 +260,6 @@ def generate_old_noun_forms(template, errandpagemsg, expand_text):
   return args
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -312,7 +311,6 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
     pagemsg, errandpagemsg, already_split=True, show_all=True), new_forms, new_genders, new_number
 
 def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
-  global args
   origt = str(t)
   tn = tname(t)
   def getp(param):
@@ -579,7 +577,6 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
   return t, new_forms, new_genders, new_number
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):

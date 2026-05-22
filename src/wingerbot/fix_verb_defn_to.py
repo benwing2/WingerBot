@@ -12,7 +12,6 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 def process_text_on_page(pageindex, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
 

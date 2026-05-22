@@ -9,7 +9,6 @@ from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 from wingerbot.latin import lalib
 
 def process_lemma_page(page, index, is_comp, form):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -69,7 +68,6 @@ def process_lemma_page(page, index, is_comp, form):
   return str(parsed), notes
 
 def process_non_lemma_page(page, index):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

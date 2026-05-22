@@ -258,7 +258,6 @@ def generate_old_noun_forms(template, errandpagemsg, expand_text, return_raw=Fal
   return args
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -327,7 +326,6 @@ def compute_noun_lemma_and_subtypes(decl, stem1, stem2, num, stem_suffix, pl_suf
   return lemma, stem2, subtypes
 
 def convert_la_decl_multi_to_new(t, pagetitle, pagemsg, errandpagemsg):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
   origt = str(t)

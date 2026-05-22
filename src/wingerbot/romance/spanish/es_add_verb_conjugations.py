@@ -61,7 +61,6 @@ def process_page_for_generate(page, index, verbs):
   msg("%s%s%s %s" % (prefix, verb, spec, linked_rest))
 
 def process_text_on_page_for_full_conj(index, pagename, text, verbs):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
   def errandpagemsg(txt):
@@ -123,7 +122,6 @@ def process_text_on_page_for_full_conj(index, pagename, text, verbs):
 
 
 def process_text_on_page_for_single_word(index, pagename, text, spec):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
   def errandpagemsg(txt):

@@ -141,7 +141,6 @@ def find_noun_word_types(lemma, pagemsg):
   return per_word_types, seen_poses
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

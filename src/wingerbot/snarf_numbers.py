@@ -105,7 +105,6 @@ def read_existing_number_data(langindex, lang):
 
 
 def process_text_on_page(index, pagetitle, text, langcodes):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

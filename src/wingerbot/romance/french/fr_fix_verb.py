@@ -205,7 +205,6 @@ def compare_conjugation(index, page, template, refl, pagemsg, expand_text,
   return difvals
 
 def process_page(page, index, parsed):
-  global args
   verbose = args.verbose
   pagetitle = str(page.title())
   subpagetitle = re.sub("^.*:", "", pagetitle)

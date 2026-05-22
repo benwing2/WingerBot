@@ -24,7 +24,6 @@ expand_text_cache = {}
 # case there are multiple forms for the slot).
 def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_infltemps,
     pagemsg, errandpagemsg):
-  global args
   lemma_pagetitle = lemma_no_macrons
   if lemma_pagetitle.startswith("*"):
     lemma_pagetitle = "Reconstruction:Latin/" + lemma_pagetitle[1:]
@@ -134,8 +133,6 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
   return inflargs_sets
 
 def process_text_on_page(index, pagetitle, text):
-  global args
-
   if pagetitle.startswith("Reconstruction:Latin/"):
     pagetitle = re.sub("^Reconstruction:Latin/", "*", pagetitle)
   def pagemsg(txt):

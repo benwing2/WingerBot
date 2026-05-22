@@ -89,7 +89,6 @@ def default_verb_forms(verb):
     return full_s_form, full_ing_form, full_ed_form, None, None, None
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

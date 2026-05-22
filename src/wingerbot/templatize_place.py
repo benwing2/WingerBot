@@ -1991,7 +1991,6 @@ def remove_links_from_topics(text):
   return re.sub(r"\{\{(topics|topic|top|C|c)\|.*?\}\}", remove_links, text)
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   origtext = text

@@ -13,7 +13,6 @@ from collections import defaultdict
 lastcats_seen = defaultdict(int)
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   origtext = text

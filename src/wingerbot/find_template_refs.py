@@ -19,7 +19,6 @@ def process_subpage(origpage, origindex, page, index):
     pagemsg("Found reference")
 
 def process_page(page, index):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

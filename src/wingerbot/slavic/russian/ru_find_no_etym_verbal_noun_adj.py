@@ -172,7 +172,6 @@ def form_ppp(conjtype, pagetitle, args):
     return None
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):

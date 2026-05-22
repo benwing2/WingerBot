@@ -15,7 +15,6 @@ refs_re = "(Olivetti|DiPI|Treccani|DOP|Internazionale|Garzanti)"
 seen_pages = set()
 
 def process_page(index, page, spec):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

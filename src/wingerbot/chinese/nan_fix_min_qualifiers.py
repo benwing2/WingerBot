@@ -578,7 +578,6 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
   return section_min_types
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

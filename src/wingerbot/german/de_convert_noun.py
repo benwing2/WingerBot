@@ -637,7 +637,6 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
 
 
 def process_text_in_section(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -702,7 +701,6 @@ def process_text_in_section(index, pagetitle, text):
 
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -9,7 +9,6 @@ from wingerbot.blib import getparam, tname, msg, errandmsg
 from wingerbot.latin import lalib, convert_la_headword_noun
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

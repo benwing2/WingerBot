@@ -131,7 +131,6 @@ def canonicalize_existing_linked_head(head, pagemsg, link_the=False):
   return retval
 
 def process_text_on_page(index, pagename, text, verbs):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
   def errandpagemsg(txt):

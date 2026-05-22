@@ -77,7 +77,6 @@ def paste_arg_sets(arg_sets, t, verb_type, rm_pres_stem, as_string,
   return args
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

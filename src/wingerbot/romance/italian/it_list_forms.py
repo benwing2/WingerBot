@@ -41,7 +41,6 @@ def list_forms(template, errandpagemsg, expand_text):
       msg("%s\t%s\t%s\t%s" % (infinitive, key, "".join(linktext), "".join(displaytext)))
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):

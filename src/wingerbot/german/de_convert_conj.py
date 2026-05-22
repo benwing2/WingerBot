@@ -19,7 +19,6 @@ def parse_aux(aux):
     return None
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -114,8 +113,6 @@ def process_text_on_page(index, pagetitle, text):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  global args
 
   notes = []
 

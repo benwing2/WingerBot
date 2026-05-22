@@ -20,7 +20,6 @@ template_to_infl_codes = {
 }
 
 def snarf_noun_accents_and_forms(noun, orig_pagemsg):
-  global args
   pagetitle = bglib.remove_accents(noun)
   if pagetitle in nouns_to_accents_and_forms:
     return nouns_to_accents_and_forms[pagetitle]

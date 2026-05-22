@@ -13,8 +13,6 @@ def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  global args
-
   notes = []
 
   pagemsg("Processing")

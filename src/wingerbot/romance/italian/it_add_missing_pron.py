@@ -220,7 +220,6 @@ def hack_respelling(pagetitle, respelling):
   return respelling, warnings
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -11,7 +11,6 @@ borrowed_langs = {}
 lang_utils.get_all_lang_data()
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

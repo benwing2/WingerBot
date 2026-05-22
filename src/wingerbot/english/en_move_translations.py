@@ -17,7 +17,6 @@ headers_to_swap = [
 headers_to_swap_regex = "(%s)" % "|".join(headers_to_swap)
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

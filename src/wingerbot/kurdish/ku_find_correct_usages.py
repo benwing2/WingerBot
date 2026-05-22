@@ -12,7 +12,6 @@ templates_seen = {}
 templates_changed = {}
 
 def process_text_on_page(index, pagename, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
 

@@ -18,7 +18,6 @@ lang_letter = "[\w,-]"
 lang_letter_or_space = "[\w, -]"
 
 def process_text_on_page(index, pagetitle, pagetext):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

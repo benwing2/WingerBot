@@ -14,7 +14,6 @@ def blacklist(category):
   #return False
 
 def process_page(page, index):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

@@ -71,7 +71,6 @@ def process_form(page, index, slot, form, pos, pagemsg):
   return text, notes
 
 def process_page(page, index):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

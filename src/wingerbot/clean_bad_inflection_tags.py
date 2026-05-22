@@ -627,7 +627,6 @@ detailed_multipart_tag_stats_as_set = defaultdict(int)
 num_tag_sets = 0
 
 def record_stats_on_tag_set(tag_set):
-  global args
   if args.no_use_form_of_data:
     combinable_tags_by_dimension_table = combinable_tags_by_dimension_across_semicolon
   else:
@@ -664,7 +663,6 @@ def output_stats_on_tag_set():
 # Sort tags, but leave unknown tags and tags of certain categories where
 # they are (which means we can't move a tag across such a tag).
 def sort_tags(tags):
-  global args
   if args.no_use_form_of_data:
     combinable_tags_by_dimension_table = combinable_tags_by_dimension_across_semicolon
   else:
@@ -694,8 +692,6 @@ def sort_tags(tags):
   return sorted_tags
 
 def canonicalize_tag_1(tag, shorten, pagemsg, add_to_bad_tags_split_canon=False):
-  global args
-
   def maybe_shorten(tag):
     if shorten:
       return tag_to_canonical_form_table.get(tag, tag)
@@ -764,8 +760,6 @@ def canonicalize_raw_tag(tag, shorten, pagemsg, add_to_bad_tags_split_canon=Fals
   return canonicalize_tag(tag, shorten, pagemsg, add_to_bad_tags_split_canon)
 
 def process_text_on_page(index, pagetitle, text):
-  global args
-
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -49,7 +49,6 @@ def new_generate_verb_forms(template, errandpagemsg, expand_text, return_raw=Fal
   return blib.split_generate_args(result)
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

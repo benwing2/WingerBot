@@ -308,7 +308,6 @@ def make_augmentative(form, special=None):
   return munge_form_for_ending(form, "aug") + "ão"
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

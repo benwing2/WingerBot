@@ -10,7 +10,6 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 label_params_by_count = defaultdict(int)
 label_params_with_underscores_by_count = defaultdict(int)
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

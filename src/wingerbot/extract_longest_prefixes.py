@@ -12,8 +12,6 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 prefixes_by_length = defaultdict(lambda: defaultdict(list))
 
 def process_page(page, index):
-  global args
-
   pagetitle = str(page.title())
   for i in range(1, args.max_prefix_length + 1):
     if len(pagetitle) >= i:

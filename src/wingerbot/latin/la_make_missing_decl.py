@@ -8,7 +8,6 @@ from wingerbot.blib import getparam, msg, errandmsg
 from wingerbot.latin import lalib, convert_la_headword_noun
 
 def process_line(index, line, online):
-  global args
   line = line.strip()
   m = re.search(r"^Page [0-9]+ (.*?): WARNING: Saw noun headword template.*: (\{\{la-(?:proper )?noun\|.*?\}\})$", line)
   if not m:

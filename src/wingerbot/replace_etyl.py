@@ -12,7 +12,6 @@ lang_utils.get_all_lang_data()
 etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
 
 def process_text_on_page(index, pagetitle, pagetext):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

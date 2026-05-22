@@ -10,8 +10,6 @@ from wingerbot.latin import lalib
 from wingerbot.latin.lalib import remove_macrons
 
 def process_text_on_page(index, pagetitle, text):
-  global args
-
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

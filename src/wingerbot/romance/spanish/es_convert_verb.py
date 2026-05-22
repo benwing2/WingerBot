@@ -221,7 +221,6 @@ def make_verb_form_full(form, clitic, refl, post, is_part, do_link):
 
 
 def process_text_on_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

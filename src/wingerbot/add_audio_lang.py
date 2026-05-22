@@ -12,7 +12,6 @@ from wingerbot.blib import getparam, rmparam, msg, site
 langs_to_codes = {}
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):

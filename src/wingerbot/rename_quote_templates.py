@@ -305,8 +305,6 @@ def undo_html_entity_replacement(txt):
   return txt
 
 def process_text_on_page(index, pagetitle, text):
-  global args
-
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, blib.escape_newline(txt)))
 

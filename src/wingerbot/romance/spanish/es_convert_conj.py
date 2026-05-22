@@ -254,7 +254,6 @@ old_es_conj_templates = {
 }
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg, include_combined):
-  global args
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -282,7 +281,6 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
     generate_new_forms, pagemsg, errandpagemsg, already_split=True, show_all=True)
 
 def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
-  global args
   origt = str(t)
   tn = tname(t)
   m = re.search(r"^es-conj(-.*)$", tn)

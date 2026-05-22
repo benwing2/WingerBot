@@ -7,7 +7,6 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
 def process_lemma_page(page, index, form):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -60,7 +59,6 @@ def process_lemma_page(page, index, form):
   return str(parsed), notes
 
 def process_text_on_non_lemma_page(index, pagetitle, text):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

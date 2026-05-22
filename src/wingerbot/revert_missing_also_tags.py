@@ -10,7 +10,6 @@ from wingerbot.blib import site, msg, errmsg, group_notes, iter_items
 # damage.
 
 def restore_removed_pagehead(index, pagetitle, comment, oldrevid):
-  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -31,7 +31,6 @@ def lengthen_ns_nf(text):
   return text
 
 def process_page(page, index, parsed):
-  global args
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

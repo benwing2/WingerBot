@@ -23,7 +23,6 @@ def get_subsection_id(subsections, k, include_equal_signs=False):
   return "%s (%s)" % (k // 2 + 1, subsection_name)
 
 def check_for_bad_etym_sections(secbody, pagemsg):
-  global args
   l3_subsections = re.split(r"(^===[^=\n]+===[ \t]*\n)", secbody, 0, re.M)
   subsections = re.split(r"(^===+[^=\n]+===+[ \t]*\n)", secbody, 0, re.M)
   l3_last_etym_header = len(l3_subsections) - 2
@@ -83,7 +82,6 @@ def allowed_non_mainspace_pagetitle(pagetitle):
   return False
 
 def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
-  global args
   notes = []
   def append_note(note):
     if langname:

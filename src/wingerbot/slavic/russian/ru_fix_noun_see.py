@@ -7,7 +7,6 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 def process_page(page, index, parsed):
-  global args
   verbose = args.verbose
   pagetitle = str(page.title())
   def pagemsg(txt):
