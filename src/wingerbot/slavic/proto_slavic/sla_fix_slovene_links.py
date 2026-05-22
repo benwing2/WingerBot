@@ -67,7 +67,8 @@ def look_up_tonal_form(pagename, pagemsg):
       str(e)))
     return None
   tonal_forms = []
-  for t in blib.parse(page).filter_templates():
+  parsed = blib.parse_text(text)
+  for t in parsed.filter_templates():
     if str(t.name) == "sl-tonal":
       if args.verbose:
         pagemsg("look_up_tonal_form: For page %s, found tonal template %s" %
@@ -82,8 +83,7 @@ def look_up_tonal_form(pagename, pagemsg):
           tonal_forms.append(getparam(t, param))
   return tonal_forms
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -93,9 +93,8 @@ def process_page(page, index, parsed):
 
   pagemsg("Processing")
 
-  text = str(page.text)
   notes = []
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
   saw_sl_tonal = False
   saw_sl_plain = 0
   for t in parsed.filter_templates():
@@ -120,7 +119,7 @@ def process_page(page, index, parsed):
   # template processing so the substitution didn't disappear.
   repeat = True
   while repeat:
-    parsed = blib.parse(page)
+    parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
       origt = str(t)
       if str(t.name) in ["l"] and getparam(t, "1") == "sl":
@@ -177,7 +176,7 @@ def process_page(page, index, parsed):
               #    pagemsg("WARNING: Length mismatch when replacing multiple tonal variants, may have matched multiple templates: from=%s, to=%s" % (
               #      fromsub, newsub))
               #  notes.append("replaced Slovene %s with multi tonal variants %s" % (linkpage, ",".join(tonal_forms)))
-              #  page.text = newtext
+              #  text = newtext
               #  break
             else:
               t.name = "l/sl-tonal"
@@ -202,9 +201,9 @@ def process_page(page, index, parsed):
   return str(parsed).replace("{{l-REPLACEME|", "{{l|"), notes
 
 parser = blib.create_argparser("Convert Slovene links in Proto-Slavic pages to tonal form",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Proto-Slavic lemmas"])

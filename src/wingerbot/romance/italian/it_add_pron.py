@@ -4,7 +4,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 from wingerbot.romance.italian.it_snarf_pron import apply_default_pronun
 
 refs_re = "(Olivetti|DiPI|Treccani|DOP|Internazionale|Garzanti)"
@@ -14,12 +14,14 @@ refs_re = "(Olivetti|DiPI|Treccani|DOP|Internazionale|Garzanti)"
 
 seen_pages = set()
 
-def process_page(index, page, spec):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing pronunciation spec: %s" % spec)
+  spec = pagetitle_to_spec.get(pagetitle, None)
+  if not spec:
+    pagemsg("WARNING: No spec found for pagetitle")
+    return
   m = re.search("^([a-z0-9]*): (.*)$", spec)
   if not m:
     pagemsg("WARNING: Unrecognized pronunciation spec: %s" % spec)
@@ -102,7 +104,6 @@ def process_page(index, page, spec):
 
   notes = []
 
-  text = str(page.text)
   retval = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
   if retval is None:
     return
@@ -370,8 +371,10 @@ def process_page(index, page, spec):
   sections[j] = secbody.rstrip("\n") + sectail
   return "".join(sections), notes
 
-parser = blib.create_argparser("Add Italian pronunciations based on file of directives")
-parser.add_argument("--direcfile", required=True, help="File containing pronunciations, as output from snarf_it_pron.py and modified")
+parser = blib.create_argparser(
+  "Add Italian pronunciations based on file of directives",
+  include_pagefile=True, include_stdin=True)
+parser.add_argument("--direcfile", required=True, help="File containing pronunciations, as output from it_snarf_pron.py and modified")
 parser.add_argument("--override-refs", action="store_true", help="Override reference params (n:Foo), even if some get deleted in the process")
 parser.add_argument("--old-it-ipa", action="store_true", help="Store as {{it-IPA}} instead of {{it-pr}}")
 args = parser.parse_args()
@@ -383,20 +386,23 @@ def get_items(lines):
   for lineno, line in lines:
     m = re.search("^Page ([0-9]+) (.*): <respelling> *(.*?) *<end>", line)
     if not m:
-      # Not a warning, there will be several of these from output of snarf_it_pron.py
+      # Not a warning, there will be several of these from output of it_snarf_pron.py
       msg("Line %s: Unrecognized line: %s" % (lineno, line))
     else:
       yield m.groups()
 
+pagetitle_to_spec = {}
 for _, (index, pagetitle, spec) in blib.iter_items(get_items(lines), start, end, get_name=lambda x:x[1], get_index=lambda x:int(x[0])):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   page = pywikibot.Page(site, pagetitle)
-  if not page.exists():
+  if not blib.safe_page_exists(page, errandpagemsg):
     pagemsg("WARNING: Page doesn't exist, skipping")
   else:
-    def do_process_page(page, index, parsed):
-      return process_page(index, page, spec)
-    blib.do_edit(page, index, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
+    pagetitle_to_spec[pagetitle] = spec
 
-blib.elapsed_time()
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_spec.keys()))

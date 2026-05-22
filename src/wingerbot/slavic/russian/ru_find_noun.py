@@ -6,8 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(index, page, save, verbose):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   subpagetitle = re.sub(".*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -19,8 +18,8 @@ def process_page(index, page, save, verbose):
     return
 
   notes = []
-  text = str(page.text)
-  parsed = blib.parse(page)
+
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     if str(t.name) in ["ru-noun", "ru-proper noun"]:
@@ -53,7 +52,6 @@ parser = blib.create_argparser("Find cases of declined ru-noun uses")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, page in blib.references("Template:ru-noun", start, end):
-  process_page(i, page, args.save, args.verbose)
-for i, page in blib.references("Template:ru-proper noun", start, end):
-  process_page(i, page, args.save, args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:ru-noun", "Template:ru-proper noun"])

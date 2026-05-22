@@ -26,7 +26,7 @@ def snarf_noun_accents_and_forms(noun, orig_pagemsg):
   def pagemsg(txt):
     orig_pagemsg("Noun %s: %s" % (noun, txt))
   page = pywikibot.Page(site, pagetitle)
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
   lemma = None
   for t in parsed.filter_templates():
     if tname(t) in ["bg-noun", "bg-proper noun"]:
@@ -88,8 +88,7 @@ def infls_to_slot(infls):
   else:
     return None
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -328,9 +327,9 @@ def process_page(page, index, parsed):
   return str(parsed), notes
 
 parser = blib.create_argparser("Convert Bulgarian noun forms to standard templates",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
-  default_cats=["Bulgarian noun forms"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+  default_cats=["Bulgarian noun forms"], edit=True, stdin=True)

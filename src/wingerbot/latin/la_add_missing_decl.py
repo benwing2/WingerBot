@@ -8,19 +8,22 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 from wingerbot.latin import lalib
 
-def process_page(page, index, headword_template, decl_template):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  text = str(page.text)
+  props = pagetitle_to_props.get(pagetitle, None)
+  if props is None:
+    pagemsg("WARNING: Can't locate headword and decl templates for page")
+    return
+  headword_template, decl_template = props
   origtext = text
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
   sections, j, secbody, sectail, has_non_latin = retval
 
@@ -46,7 +49,7 @@ def process_page(page, index, headword_template, decl_template):
   if num_ndecl_templates + num_adecl_templates >= num_noun_headword_templates:
     pagemsg("WARNING: Already seen %s decl template(s) >= %s headword template(s), skipping" % (
       num_ndecl_templates + num_adecl_templates, num_noun_headword_templates))
-    return None, None
+    return
 
   subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 
@@ -57,7 +60,7 @@ def process_page(page, index, headword_template, decl_template):
   if num_declension_headers >= num_noun_headword_templates:
     pagemsg("WARNING: Already seen %s Declension/Inflection header(s) >= %s headword template(s), skipping" % (
       num_declension_headers, num_noun_headword_templates))
-    return None, None
+    return
 
   for k in range(2, len(subsections), 2):
     if headword_template in subsections[k]:
@@ -74,7 +77,7 @@ def process_page(page, index, headword_template, decl_template):
       break
   else:
     pagemsg("WARNING: Couldn't locate headword template, skipping: %s" % headword_template)
-    return None, None
+    return
   secbody = "".join(subsections)
   sections[j] = secbody + sectail
   text = "".join(sections)
@@ -83,18 +86,23 @@ def process_page(page, index, headword_template, decl_template):
     notes.append("convert 3+ newlines to 2")
   return text, notes
 
-parser = blib.create_argparser("Add missing declension to Latin terms")
+parser = blib.create_argparser(
+  "Add missing declension to Latin terms", include_pagefile=True,
+  include_stdin=True)
 parser.add_argument("--direcfile", help="File of output directives from make_latin_missing_decl.py", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
+
+pagetitle_to_props = {}
 
 for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
   m = re.search("^Page [0-9]+ (.*?): For noun (.*?), declension (.*?)$", line)
   if not m:
     msg("Line %s: Unrecognized line, skipping: %s" % (lineno, line))
   else:
-    pagename, headword_template, decl_template = m.groups()
-    def do_process_page(page, index, parsed):
-      return process_page(page, index, headword_template, decl_template)
-    blib.do_edit(pywikibot.Page(site, pagename), lineno, do_process_page, save=args.save,
-        verbose=args.verbose, diff=args.diff)
+    pagetitle, headword_template, decl_template = m.groups()
+    pagetitle_to_props[pagetitle] = (headword_template, decl_template)
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_props.keys()))

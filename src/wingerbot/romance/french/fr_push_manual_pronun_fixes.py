@@ -6,23 +6,24 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
 
-def process_page(page, index, line, respelling, orig_template, repl_template,
-    args):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
+  props = pagetitle_to_props.get(pagetitle, None)
+  if not props:
+    pagemsg("WARNING: Can't find properties for pagetitle")
+    return
+  respelling, orig_template, repl_template = props
   if respelling == "-":
     pagemsg("Skipping line with respelling '-': %s" % line)
     return
-
   if respelling == "":
     pagemsg("WARNING: Skipping blank respelling: %s" % line)
     return
 
   notes = []
 
-  text = str(page.text)
   if orig_template not in text:
     pagemsg("WARNING: Can't find original template %s in text" % orig_template)
     return
@@ -76,10 +77,14 @@ def process_page(page, index, line, respelling, orig_template, repl_template,
 
   return text, notes
 
-parser = blib.create_argparser("Push manual {{fr-IPA}} replacements for {{IPA|fr}}")
+parser = blib.create_argparser(
+  "Push manual {{fr-IPA}} replacements for {{IPA|fr}}", include_pagefile=True,
+  include_stdin=True)
 parser.add_argument("--direcfile", help="File of directives", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
+
+pagetitle_to_props = {}
 
 for index, line in blib.iter_items_from_file(args.direcfile, start, end):
   m = re.search(r"^(.*?)\|Page [0-9]+ (.*?): WARNING: Can't replace (\{\{IPA\|fr\|.*?\}\}) with (\{\{.*?\}\}) because auto-generated pron .*$", line)
@@ -87,8 +92,8 @@ for index, line in blib.iter_items_from_file(args.direcfile, start, end):
     errandmsg("Line %s: Unrecognized line: %s" % (index, line))
     continue
   respelling, page, orig_template, repl_template = m.groups()
-  def do_process_page(page, index, parsed):
-    return process_page(page, index, line, respelling, orig_template,
-        repl_template, args)
-  blib.do_edit(pywikibot.Page(site, page), index, do_process_page,
-    save=args.save, verbose=args.verbose, diff=args.diff)
+  pagetitle_to_props[page] = (respelling, orig_template, repl_template)
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_props.keys()))

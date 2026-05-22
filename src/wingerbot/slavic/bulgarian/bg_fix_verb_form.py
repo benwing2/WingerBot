@@ -15,7 +15,7 @@ def snarf_verb_accents():
     pagetitle = str(page.title())
     def pagemsg(txt):
       msg("Page %s %s: %s" % (index, pagetitle, txt))
-    parsed = blib.parse(page)
+    parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
       if tname(t) == "bg-verb":
         verb = getparam(t, "1")
@@ -31,8 +31,7 @@ def snarf_verb_accents():
             unaccented_verb, verbs_to_accents[unaccented_verb], verb, str(t)))
         verbs_to_accents[unaccented_verb] = verb
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -381,11 +380,11 @@ def process_page(page, index, parsed):
   return text, notes
 
 parser = blib.create_argparser("Convert Bulgarian verb forms to standard templates",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 snarf_verb_accents()
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
-  default_cats=["Bulgarian verb forms"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+  default_cats=["Bulgarian verb forms"], edit=True, stdin=True)

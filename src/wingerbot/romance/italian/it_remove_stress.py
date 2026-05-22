@@ -84,16 +84,13 @@ def synchronize(term, hyphenation, pagemsg):
   secs.append(hyph[last_transfer_j:])
   return "".join(secs).replace(" ", "").split("|")
 
-def process_page(index, page, title_with_syllable_divs=None):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-
-  text = str(page.text)
 
   notes = []
 
@@ -145,6 +142,7 @@ def process_page(index, page, title_with_syllable_divs=None):
         pagemsg("No it-stress template in Pronunciation section")
       continue
     if not it_hyph_template:
+      title_with_syllable_divs = title_to_title_with_syllable_divs.get(pagetitle, None)
       if not title_with_syllable_divs:
         pagemsg("WARNING: Saw it-stress template %s but no hyphenation template and --stressfile not given" %
             str(it_stress_template))
@@ -198,10 +196,14 @@ def process_page(index, page, title_with_syllable_divs=None):
   sections[j] = secbody + sectail
   return "".join(sections), notes
 
-parser = blib.create_argparser("Transfer accent from {{it-stress}} to {{hyph|it}} and remove {{it-stress}}, or replace {{it-stress}} with synthesized {{hyph|it}}")
+parser = blib.create_argparser(
+  "Transfer accent from {{it-stress}} to {{hyph|it}} and remove {{it-stress}}, or replace {{it-stress}} with synthesized {{hyph|it}}",
+  include_pagefile=True, include_stdin=True)
 parser.add_argument("--stressfile", help="List of pages with stress.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
+
+title_to_title_with_syllable_divs = {}
 
 if args.stressfile:
   for index, line in blib.iter_items_from_file(args.stressfile, start, end):
@@ -212,16 +214,16 @@ if args.stressfile:
       m = re.search(r"^\* Page [0-9]+ \[\[(.*?)\]\]: WARNING:.*$", line)
       if m:
         title = m.group(1)
+        # FIXME: Is this correct???
         title_with_syllable_divs = title.replace(".", "")
       else:
         msg("Line %s: WARNING: Unable to parse: %s" % (index, line))
         continue
-    page = pywikibot.Page(site, title)
-    def handler(page, index, parsed):
-      return process_page(index, page, title_with_syllable_divs)
-    blib.do_edit(page, index, handler, save=args.save, verbose=args.verbose)
+    title_to_title_with_syllable_divs[title] = title_with_syllable_divs
+  blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True,
+    default_pages=list(title_to_title_with_syllable_divs.keys()))
 else:
-  for index, page in blib.references("Template:it-stress", start, end):
-    def handler(page, index, parsed):
-      return process_page(index, page)
-    blib.do_edit(page, index, handler, save=args.save, verbose=args.verbose)
+  blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True,
+    default_refs=["Template:it-stress"])

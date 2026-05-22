@@ -91,9 +91,6 @@ def lcfirst(txt):
 def parse_text(text):
   return mwparserfromhell.parser.Parser().parse(text, skip_style_tags=True)
 
-def parse(page):
-  return parse_text(page.text)
-
 def getparam(template, param):
   if template.has(param):
     return str(template.get(param).value)
@@ -490,7 +487,7 @@ def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, d
       if func:
         if verbose:
           p.pagemsg("Begin processing")
-        retval = func(page, index, parse(page))
+        retval = func(page, index, parse_text(page.text))
         new, comment, has_changed = handle_process_page_retval(retval, page.text, p.pagemsg, verbose, diff)
         if has_changed:
           page.text = new
@@ -529,7 +526,7 @@ def do_edit(page, index, func=None, null=False, save=False, verbose=False, diff=
       if func:
         if verbose:
           pagemsg("Begin processing")
-        retval = func(page, index, parse(page))
+        retval = func(page, index, parse_text(page.text))
 
         new, comment, has_changed = handle_process_page_retval(retval, page.text, pagemsg, verbose, diff)
         if has_changed:

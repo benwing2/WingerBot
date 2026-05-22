@@ -26,7 +26,7 @@ lang_inflection_of_templates = {
   "it": [],
 }
 
-def delete_form_1(page, index, lemma, formind, formval, lang):
+def delete_form_1(page, index, lemma, formind, formval):
   notes = []
 
   def pagemsg(txt):
@@ -37,7 +37,7 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
   text = str(page.text)
   origtext = text
 
-  retval = blib.find_modifiable_lang_section(text, lang_to_langname[lang], pagemsg)
+  retval = blib.find_modifiable_lang_section(text, lang_to_langname[args.lang], pagemsg)
   if retval is None:
     return
 
@@ -64,15 +64,15 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
     saw_bad_template = False
     for t in parsed.filter_templates():
       tn = tname(t)
-      if tn in lang_headword_templates[lang] or (
-        tn == "head" and getparam(t, "1") == lang and getparam(t, "2") in form_poses
+      if tn in lang_headword_templates[args.lang] or (
+        tn == "head" and getparam(t, "1") == args.lang and getparam(t, "2") in form_poses
       ):
         saw_head = True
       elif tn in inflection_of_templates:
         langcode = getparam(t, "1")
-        if langcode != lang:
+        if langcode != args.lang:
           errandpagemsg("WARNING: In %s section, found {{%s}} for different language %s: %s" % (
-            lang_to_langname[lang], tn, langcode, str(t)))
+            lang_to_langname[args.lang], tn, langcode, str(t)))
           return
         actual_lemma = getparam(t, "2")
         if actual_lemma == lemma:
@@ -80,7 +80,7 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
         else:
           pagemsg("Found {{%s}} for different lemma %s: %s" % (tn, actual_lemma, str(t)))
           saw_other_infl = True
-      elif tn in lang_inflection_of_templates[lang]:
+      elif tn in lang_inflection_of_templates[args.lang]:
         actual_lemma = getparam(t, "1")
         if actual_lemma == lemma:
           saw_infl = True
@@ -93,8 +93,8 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
         remove_deletable_tag_sets_from_subsection = True
       for t in parsed.filter_templates():
         tn = tname(t)
-        if tn not in lang_headword_templates[lang] + lang_inflection_of_templates[lang] + inflection_of_templates and not (
-            tn == "head" and getparam(t, "1") == lang and getparam(t, "2") in form_poses
+        if tn not in lang_headword_templates[args.lang] + lang_inflection_of_templates[args.lang] + inflection_of_templates and not (
+            tn == "head" and getparam(t, "1") == args.lang and getparam(t, "2") in form_poses
           ):
           pagemsg("WARNING: Saw unrecognized template in otherwise deletable subsection #%s: %s" % (
             k // 2, str(t)))
@@ -132,7 +132,7 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
             k // 2, subsections[k - 1].strip()))
 
   if not subsections_to_delete and not subsections_to_remove_inflections_from:
-    pagemsg("Found %s section but no deletable or excisable subsections" % lang_to_langname[lang])
+    pagemsg("Found %s section but no deletable or excisable subsections" % lang_to_langname[args.lang])
     return
 
   #### Now, we can delete an inflection, a subsection or the whole section or page
@@ -149,21 +149,21 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
         tn = tname(t)
         if tn in inflection_of_templates:
           langcode = getparam(t, "1")
-          assert langcode == lang
+          assert langcode == args.lang
           actual_lemma = getparam(t, "2")
           if actual_lemma == lemma:
             return ""
-        if tn in lang_inflection_of_templates[lang]:
+        if tn in lang_inflection_of_templates[args.lang]:
           actual_lemma = getparam(t, "1")
           if actual_lemma == lemma:
             return ""
       return str(parsed)
 
-    for tn in lang_inflection_of_templates[lang] + inflection_of_templates:
+    for tn in lang_inflection_of_templates[args.lang] + inflection_of_templates:
       newnewsubsec = re.sub(r"^# \{\{%s\|[^{}\n]*\}\}\n" % re.escape(tn), remove_inflections, newsubsec, 0, re.M)
       if newnewsubsec != newsubsec:
         newsubsec = newnewsubsec
-        notes.append("removed {{%s}} inflection(s) for bad %s form(s) of [[%s]]" % (tn, lang_to_langname[lang], lemma))
+        notes.append("removed {{%s}} inflection(s) for bad %s form(s) of [[%s]]" % (tn, lang_to_langname[args.lang], lemma))
         subsections[k] = newsubsec
 
   for k in reversed(subsections_to_delete):
@@ -185,11 +185,11 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
     # Whole section deletable
     if subsections[0].strip():
       pagemsg("WARNING: Whole %s section deletable except that there's text above all subsections: <%s>" % (
-        lang_to_langname[lang], subsections[0].strip()))
+        lang_to_langname[args.lang], subsections[0].strip()))
       return
     if "[[Category:" in sectail:
       pagemsg("WARNING: Whole %s section deletable except that there's a category at the end: <%s>" % (
-        lang_to_langname[lang], sectail.strip()))
+        lang_to_langname[args.lang], sectail.strip()))
       return
     if not has_non_lang:
       # Can delete the whole page, but check for non-blank section 0
@@ -204,8 +204,8 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
     del sections[j]
     del sections[j-1]
     notes.append("excised %s subsection%s for bad %s form(s) of [[%s]], leaving no %s section" % (
-      (len(subsections_to_delete), "" if len(subsections_to_delete) == 1 else "s", lang_to_langname[lang],
-        lemma, lang_to_langname[lang])))
+      (len(subsections_to_delete), "" if len(subsections_to_delete) == 1 else "s", lang_to_langname[args.lang],
+        lemma, lang_to_langname[args.lang])))
     if j > len(sections):
       # We deleted the last section, remove the separator at the end of the
       # previous section.
@@ -254,12 +254,12 @@ def delete_form_1(page, index, lemma, formind, formval, lang):
       return
 
     notes.append("%s for bad %s form(s) of %s, leaving some subsections remaining" % (
-      deletable_subsec_note_text, lang_to_langname[lang], lemma))
+      deletable_subsec_note_text, lang_to_langname[args.lang], lemma))
     text = "".join(sections)
 
   return text, notes
 
-def delete_form(index, lemma, formind, formval, lang, save, verbose, diff):
+def delete_form(index, lemma, formind, formval):
   def pagemsg(txt):
     msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
 
@@ -273,22 +273,22 @@ def delete_form(index, lemma, formind, formval, lang, save, verbose, diff):
     return
 
   def do_delete_form_1(page, index, parsed):
-    return delete_form_1(page, index, lemma, formind, formval, lang)
-  blib.do_edit(page, index, do_delete_form_1, save=save, verbose=verbose,
-      diff=diff)
+    return delete_form_1(page, index, lemma, formind, formval)
+  blib.do_edit(page, index, do_delete_form_1, save=args.save, verbose=args.verbose,
+      diff=args.diff)
 
-def process_page(index, lemma, forms, lang, pages_to_delete, save, verbose, diff):
+def process_page(index, lemma, forms, pages_to_delete):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, lemma, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, lemma, txt))
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, lemma, pagemsg, verbose)
+    return blib.expand_text(tempcall, lemma, pagemsg, args.verbose)
 
   pagemsg("Processing")
 
   for formind, form in blib.iter_items(forms):
-    delete_form(index, lemma, formind, form, lang, save, verbose, diff)
+    delete_form(index, lemma, formind, form)
 
 parser = blib.create_argparser("Delete bad forms for inflected languages")
 parser.add_argument('--formfile', help="File containing lemmas and forms to delete.", required=True)
@@ -301,7 +301,7 @@ pages_to_delete = []
 for index, line in blib.iter_items_from_file(args.formfile, start, end):
   lemma, forms = re.split(": *", line)
   forms = re.split(", *", forms)
-  process_page(index, lemma, forms, args.lang, pages_to_delete, args.save, args.verbose, args.diff)
+  process_page(index, lemma, forms, pages_to_delete)
 
 msg("The following pages need to be deleted:")
 for page in pages_to_delete:

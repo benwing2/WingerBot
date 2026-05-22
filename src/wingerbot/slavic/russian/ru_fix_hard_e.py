@@ -4,19 +4,22 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
 
-def process_page(index, page, direc):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   subpagetitle = re.sub(".*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
+  direc = pagetitle_to_direc.get(pagetitle, None)
+  if not direc:
+    pagemsg("WARNING: Can't find directive for page")
+    return
+
   notes = []
-  text = str(page.text)
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   def frob_gender_param(t, param):
     val = getparam(t, param)
@@ -56,18 +59,23 @@ def process_page(index, page, direc):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Fix hard-е nouns according to directives")
+parser = blib.create_argparser(
+  "Fix hard-е nouns according to directives",
+  include_pagefile=True, include_stdin=True)
 parser.add_argument("--direcfile", help="File listing directives to apply to nouns",
   required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
+
+pagetitle_to_direc = {}
 
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
   if "!!!" in line:
     page, direc = re.split("!!!", line)
   else:
     page, direc = re.split(" ", line)
-    def do_process_page(page, index, parsed):
-      return process_page(index, page, direc)
-    blib.do_edit(pywikibot.Page(site, page), i, do_process_page, save=args.save,
-      verbose=args.verbose, diff=args.diff)
+    pagetitle_to_direc[page] = direc
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_direc.keys()))

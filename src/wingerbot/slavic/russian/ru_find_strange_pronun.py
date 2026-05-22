@@ -10,18 +10,15 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, fix_star):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  pagetext = page.text
   notes = []
 
-  for m in re.finditer(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", pagetext,
-      re.M):
+  for m in re.finditer(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", text, re.M):
     pretext = m.group(1)
     ruIPA = m.group(2)
     posttext = m.group(3)
@@ -39,11 +36,11 @@ def process_page(page, index, fix_star):
       else:
         return wholeline
     newtext = re.sub(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", fix_star,
-        pagetext, 0, re.M)
-    if newtext != pagetext:
+        text, 0, re.M)
+    if newtext != text:
       notes.append("add missing * to ru-IPA lines")
-      pagetext = newtext
-    return pagetext, notes
+      text = newtext
+    return text, notes
 
 parser = blib.create_argparser("Find strange Russian pronun lines",
   include_pagefile=True)
@@ -52,8 +49,5 @@ parser.add_argument("--fix-star", action="store_true",
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-def do_process_page(page, index, parsed):
-  return process_page(page, index, args.fix_star)
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Russian lemmas", "Russian non-lemma forms"])

@@ -405,13 +405,15 @@ templates_to_remove_empty_dot = []
 templates_to_check_for_empty_dot = []
 templates_to_remove_nodot = []
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
+
   notes = []
+          
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     origt = str(t)
@@ -460,11 +462,11 @@ def process_page(page, index, parsed):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Move lang= to 1=", include_pagefile=True)
+parser = blib.create_argparser("Move lang= to 1=", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
     default_refs=["Template:%s" % template for template in templates_to_iterate_over],
     #ref_namespaces=[10]
     #default_refs=["Template:tracking/form-of/form-of-t/unused/nodot"]

@@ -8,8 +8,7 @@ from wingerbot.blib import getparam, rmparam, msg, site
 
 borrowed_langs = {}
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -61,8 +60,6 @@ def process_page(page, index, parsed):
       return m.group(0)
     borrowed_langs[langcode] = borrowed_langs.get(langcode, 0) + 1
     return "{{bor|ru|%s|%s}}" % (langcode, term)
-
-  text = str(page.text)
   orig_text = text
 
   # Do inherited cases. We look for a line beginning with either nothing or
@@ -118,11 +115,11 @@ def process_page(page, index, parsed):
   return text, "Use {{inh}}/{{bor}} in Russian for terms inherited or borrowed"
 
 parser = blib.create_argparser("Use {{inh}} and {{bor}} where possible in Russian",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Russian lemmas", "Russian non-lemma forms"])
 
 msg("")

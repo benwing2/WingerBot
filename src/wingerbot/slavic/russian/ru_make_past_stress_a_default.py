@@ -4,17 +4,15 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
+
+  parsed = blib.parse_text(text)
 
   notes = []
   for t in parsed.filter_templates():
@@ -23,7 +21,7 @@ def process_page(page, index, parsed):
     param3 = getparam(t, "3")
     if str(t.name) in ["ru-conj", "ru-conj-old"] and param2.startswith("8b"):
       if [x for x in t.params if str(x.value) == "or"]:
-        errpagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+        pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
         continue
       if param2 in ["8b", "8b+p"]:
         t.add("2", getparam(t, "2").replace("8b", "8b/b"))
@@ -32,7 +30,7 @@ def process_page(page, index, parsed):
         t.add("2", getparam(t, "2").replace("/a", ""))
         notes.append("make past stress /a default in class 8b")
       elif param2 not in ["8b/b", "8b/b+p"]:
-        errpagemsg("WARNING: Unable to parse param2 %s" % param2)
+        pagemsg("WARNING: Unable to parse param2 %s" % param2)
     if str(t.name) in ["ru-conj", "ru-conj-old"] and param2.startswith("irreg"):
       if re.search("(да́?ть|бы́?ть|кля́?сть)(ся)?$", param3):
         if param2 == "irreg":
@@ -52,7 +50,7 @@ def process_page(page, index, parsed):
           t.add("2", "irreg")
           notes.append("make past stress /a default in irreg verb")
         elif not param2.startswith("irreg/"):
-          errpagemsg("WARNING: Unable to parse param2 %s" % param2)
+          pagemsg("WARNING: Unable to parse param2 %s" % param2)
 
     newt = str(t)
     if origt != newt:
@@ -60,11 +58,12 @@ def process_page(page, index, parsed):
 
   return parsed, notes
 
-parser = blib.create_argparser("Fix up class-8 and irregular arguments to have class a as default past stress")
+parser = blib.create_argparser(
+  "Fix up class-8 and irregular arguments to have class a as default past stress",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, page in blib.cat_articles("Russian class 8b verbs", start, end):
-  blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
-for i, page in blib.cat_articles("Russian irregular verbs", start, end):
-  blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Russian class 8b verbs", "Russian irregular verbs"])

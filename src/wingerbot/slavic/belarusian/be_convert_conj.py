@@ -61,6 +61,7 @@ def process_section(index, pagetitle, sectext):
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
   pagemsg("Processing")
+
   notes = []
   conjt = None
   parsed = blib.parse_text(sectext)
@@ -129,12 +130,10 @@ def process_section(index, pagetitle, sectext):
 
   return sectext, notes
 
-def process_page(page, index, parsed):
-  notes = []
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  text = str(page.text)
+  notes = []
   retval = blib.find_modifiable_lang_section(text, "Belarusian", pagemsg)
   if retval is None:
     pagemsg("WARNING: Couldn't find Belarusian section")
@@ -155,9 +154,9 @@ def process_page(page, index, parsed):
   return "".join(sections), notes
 
 parser = blib.create_argparser("Replace Belarusian manual conjugations with automatic ones",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
-    default_refs=["Template:be-conj-manual"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+    default_refs=["Template:be-conj-manual"], edit=True, stdin=True)

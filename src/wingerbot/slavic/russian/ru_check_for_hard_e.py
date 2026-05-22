@@ -7,16 +7,22 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
 
-def process_page(index, page, phon, softphon, variant, verbose, lemmas):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  if not page.exists():
+  props = pagetitle_to_props.get(pagetitle, None)
+  if not props:
+    pagemsg("WARNING: Can't find properties for page")
+    return
+  phon, softphon, variant = props
+  if not text and not blib.safe_page_exists(Pywikibot.page(site, pagetitle), errandpagemsg):
     pagemsg("Page doesn't exist, should have pron phon=%s%s" % (phon,
       variant and " with variant %s" % variant or ""))
     return
@@ -29,7 +35,7 @@ def process_page(index, page, phon, softphon, variant, verbose, lemmas):
       phon, variant and " with variant %s" % variant or ""))
     return
 
-  parsed = blib.parse_text(page.text)
+  parsed = blib.parse_text(text)
   prons = []
   for t in parsed.filter_templates():
     tname = str(t.name)
@@ -68,18 +74,22 @@ def process_page(index, page, phon, softphon, variant, verbose, lemmas):
       pagemsg("WARNING: Mismatched pronunciation, found %s, expected %s"
           % (",".join(prons), ",".join(expected)))
     
-parser = blib.create_argparser("Check for words in enwikt that should have hard е")
-parser.add_argument('--direcfile', help="File containing words from ruwikt page Приложение:Русские_слова_с_твёрдым_парным_согласным_перед_Е specifying words that should have hard е")
+parser = blib.create_argparser(
+  "Check for words in enwikt that should have hard е",
+  include_pagefile=True, include_stdin=True)
+parser.add_argument('--direcfile', help="File containing words from ruwikt page Приложение:Русские_слова_с_твёрдым_парным_согласным_перед_Е specifying words that should have hard е",
+                    required=True)
 parser.add_argument('--lemmafile', help="File containing lemmas, needed to check for non-lemmas that look like lemmas")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-if not args.direcfile:
-  raise RuntimeError("--direcfile required")
 if not args.lemmafile:
   lemmas = None
 else:
   lemmas = set(blib.yield_items_from_file(args.lemmafile))
+
+pagetitle_to_props = {}
+
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
   if not line.startswith("*"):
     msg("Page %s ???: Ignoring line: %s" % (i, line))
@@ -94,5 +104,8 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
       phon = re.sub(r"\{\{red\|ѐ\}\}", "э̀", phon)
       softphon = m.group(2)
       softphon = re.sub(r"\{\{red\|(.*?)\}\}", r"\1", softphon)
-      process_page(i, pywikibot.Page(site, m.group(1)), phon, softphon,
-          m.group(4), args.verbose, lemmas)
+      pagetitle_to_props[m.group(1)] = (phon, softphon, m.group(4))
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_props.keys()))

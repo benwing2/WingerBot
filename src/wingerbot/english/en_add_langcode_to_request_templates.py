@@ -8,8 +8,7 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 request_templates = ["rfdatek", "rfquotek"]
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -46,7 +45,6 @@ def process_page(page, index, parsed):
 
   pagemsg("Processing")
 
-  text = str(page.text)
   notes = []
 
   sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
@@ -66,9 +64,9 @@ def process_page(page, index, parsed):
   return newtext, notes
 
 parser = blib.create_argparser("Add |lang=en to request templates missing |lang",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Language code missing/%s" % template for template in request_templates])

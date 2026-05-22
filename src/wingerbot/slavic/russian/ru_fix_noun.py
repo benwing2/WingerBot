@@ -17,8 +17,7 @@ from wingerbot.blib import getparam, rmparam, msg, site
 
 from wingerbot.slavic.russian import runounlib
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -28,8 +27,6 @@ def process_page(page, index, parsed):
   if ":" in pagetitle:
     pagemsg("WARNING: Colon in page title, skipping")
     return
-
-  text = str(page.text)
 
   foundrussian = False
   sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
@@ -46,7 +43,7 @@ def process_page(page, index, parsed):
 
       subsections = re.split("(^===[^=]*===\n)", sections[j], 0, re.M)
       for k in range(2, len(subsections), 2):
-        retval = process_page_section(index, page, subsections[k])
+        retval = process_page_section(index, pagetitle, subsections[k])
         if retval:
           (replaced, this_num_ru_noun_subs, this_num_ru_proper_noun_subs,
               this_num_replace_bian, this_transferred_tr) = retval
@@ -81,18 +78,13 @@ def process_page(page, index, parsed):
     assert notes
     return new_text, notes
 
-def process_page_section(index, page, section):
-  pagetitle = str(page.title())
+def process_page_section(index, pagetitle, section):
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-  if not page.exists():
-    pagemsg("WARNING: Page doesn't exist, skipping")
-    return None
 
   parsed = blib.parse_text(section)
 
@@ -102,7 +94,7 @@ def process_page_section(index, page, section):
   for t in parsed.filter_templates():
     if str(t.name) == "ru-decl-noun-see":
       pagemsg("Found ru-decl-noun-see, skipping")
-      return None
+      return
 
   for t in parsed.filter_templates():
     if str(t.name) == "ru-noun-table":
@@ -299,10 +291,10 @@ def process_page_section(index, page, section):
   return str(parsed), ru_noun_changed, ru_proper_noun_changed, bian_replaced, frobbed_manual_translit
 
 parser = blib.create_argparser("Convert ru-noun to ru-noun+, ru-proper noun to ru-proper noun+",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   #default_refs=["Template:ru-noun", "Template:ru-proper noun"],
   default_refs=["Template:tracking/ru-headword/bad-ru-noun"])

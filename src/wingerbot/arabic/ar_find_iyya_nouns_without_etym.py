@@ -2,25 +2,30 @@
 # -*- coding: utf-8 -*-
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, getparam, addparam, tname
 
-def search_iyya_noetym(startFrom, upTo):
-  for index, page in blib.cat_articles("Arabic nouns", startFrom, upTo):
-    text = blib.parse(page)
-    pagetitle = page.title()
-    etym = False
-    suffix = False
-    if pagetitle.endswith("ية"):
-      for t in text.filter_templates():
-        if t.name in ["ar-etym-iyya", "ar-etym-nisba-a",
-            "ar-etym-noun-nisba", "ar-etym-noun-nisba-linking"]:
-          etym = True
-        if t.name == "suffix":
-          suffix = True
-      if not etym:
-        msg("Page %s %s: Ends with -iyya, no appropriate etym template%s" % (
-          index, pagetitle, " (has suffix template)" if suffix else ""))
+def process_text_on_page(index, pagetitle, text):
+  def pagemsg(txt):
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-startFrom, upTo = blib.parse_args()
+  etym = False
+  suffix = False
+  if pagetitle.endswith("ية"):
+    parsed = blib.parse_text(text)
+    for t in parsed.filter_templates():
+      if tname(t) in ["ar-etym-iyya", "ar-etym-nisba-a",
+          "ar-etym-noun-nisba", "ar-etym-noun-nisba-linking"]:
+        etym = True
+      if tname(t) == "suffix":
+        suffix = True
+    if not etym:
+      pagemsg("Ends with -iyya, no appropriate etym template%s" % (" (has suffix template)" if suffix else ""))
 
-search_iyya_noetym(startFrom, upTo)
+parser = blib.create_argparser(
+  "Find Arabic -iyya nouns without etymology", include_pagefile=True, include_stdin=True)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Arabic nouns"])

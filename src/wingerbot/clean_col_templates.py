@@ -32,13 +32,14 @@ templates_to_clean = templates_to_rename.keys() + [
   "rel2", "rel3", "rel4",
 ]
   
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
+
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     origt = str(t)
@@ -90,10 +91,13 @@ def process_page(page, index, parsed):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("In multicolumn templates, orphan lesser-used ones, move lang= to 1= and remove unnecessary links")
+parser = blib.create_argparser(
+  "In multicolumn templates, orphan lesser-used ones, move lang= to 1= and remove unnecessary links",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for template in templates_to_clean:
-  for i, page in blib.references("Template:%s" % template, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:%s" % template for template in templates_to_clean]
+)

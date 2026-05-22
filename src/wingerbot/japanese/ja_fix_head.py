@@ -16,15 +16,13 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(index, page, romaji_to_keep):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  text = str(page.text)
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
   notes = []
   for t in parsed.filter_templates():
     tname = str(t.name)
@@ -103,7 +101,7 @@ def process_page(index, page, romaji_to_keep):
   return str(parsed), notes
 
 parser = blib.create_argparser("Convert Japanese headwords from old-style to new-style",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True,
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
@@ -112,7 +110,5 @@ for i, page in blib.cat_articles("Japanese terms with romaji needing attention")
   pagetitle = str(page.title())
   romaji_to_keep.add(pagetitle)
 
-def do_process_page(page, index, parsed):
-  return process_page(index, page, romaji_to_keep)
-blib.do_pagefile_cats_refs(args, start, end, do_process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_refs=["Template:%s" % ref for ref in ["ja-noun", "ja-adj", "ja-verb", "ja-pos"]])

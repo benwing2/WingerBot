@@ -10,9 +10,7 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 # from wingerbot.slavic.russian import runounlib
 
-def process_page(page, index, parsed):
-  verbose = args.verbose
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -22,8 +20,6 @@ def process_page(page, index, parsed):
   if ":" in pagetitle:
     pagemsg("WARNING: Colon in page title, skipping")
     return
-
-  text = str(page.text)
 
   foundrussian = False
   sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
@@ -40,7 +36,7 @@ def process_page(page, index, parsed):
 
       subsections = re.split("(^===[^=]*===\n)", sections[j], 0, re.M)
       for k in range(2, len(subsections), 2):
-        retval = process_page_section(index, page, subsections[k], verbose)
+        retval = process_page_section(index, page, subsections[k])
         if retval:
           (replaced, this_num_ru_noun_table_cleaned_subs,
               this_num_ru_noun_table_link_copied_subs, this_num_ru_noun_subs,
@@ -72,14 +68,14 @@ def process_page(page, index, parsed):
         "" if num_ru_proper_noun_subs == 1 else " (%s)" % num_ru_proper_noun_subs))
     return new_text, notes
 
-def process_page_section(index, page, section, verbose):
+def process_page_section(index, page, section):
   pagetitle = str(page.title())
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   if not page.exists():
     pagemsg("WARNING: Page doesn't exist, skipping")
@@ -135,7 +131,7 @@ def process_page_section(index, page, section, verbose):
   headword_template = headword_templates[0]
   decl_templates = [x for x in [noun_table_template, noun_old_template] if x]
 
-  if verbose:
+  if args.verbose:
     pagemsg("Found headword template: %s" % str(headword_template))
     pagemsg("Found decl template: %s" % str(noun_table_template))
     if noun_old_template:
@@ -284,9 +280,9 @@ def process_page_section(index, page, section, verbose):
   return str(parsed), ru_noun_table_cleaned, ru_noun_table_link_copied, ru_noun_changed, ru_proper_noun_changed
 
 parser = blib.create_argparser("Copy the declension in ru-noun-table to ru-noun+, preserving any m=, f=, g=, etc. in the latter.",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_refs=["Template:ru-noun+", "Template:ru-proper noun+"])

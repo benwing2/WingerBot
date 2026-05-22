@@ -204,7 +204,7 @@ def compare_conjugation(index, page, template, refl, pagemsg, expand_text,
     difvals.append((prop, (curval, newval)))
   return difvals
 
-def process_page(page, index, parsed):
+def process_text_on_page(index, pagetitle, text):
   verbose = args.verbose
   pagetitle = str(page.title())
   subpagetitle = re.sub("^.*:", "", pagetitle)
@@ -219,8 +219,6 @@ def process_page(page, index, parsed):
   if ":" in pagetitle:
     pagemsg("WARNING: Colon in page title, skipping")
     return
-
-  text = str(page.text)
 
   notes = []
   parsed = blib.parse_text(text)
@@ -272,9 +270,9 @@ def process_page(page, index, parsed):
   return str(parsed), notes
 
 parser = blib.create_argparser("Convert old fr-conj-* to fr-conj-auto",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["French verbs"])

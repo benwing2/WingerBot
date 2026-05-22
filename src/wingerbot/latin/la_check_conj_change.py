@@ -5,7 +5,6 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
-
 from wingerbot.latin import lalib
 
 def compare_new_and_old_templates(t, pagetitle, pagemsg, errandpagemsg):
@@ -31,8 +30,7 @@ def compare_new_and_old_templates(t, pagetitle, pagemsg, errandpagemsg):
   return blib.compare_new_and_old_template_forms(t, t, generate_old_forms,
     generate_new_forms, pagemsg, errandpagemsg)
 
-def process_page(page, index):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -40,7 +38,7 @@ def process_page(page, index):
 
   pagemsg("Processing")
 
-  parsed = blib.parse_text(str(page.text))
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     tn = tname(t)
@@ -48,9 +46,9 @@ def process_page(page, index):
       compare_new_and_old_templates(str(t), pagetitle, pagemsg, errandpagemsg)
 
 parser = blib.create_argparser("Check potential changes to {{la-conj}} implementation",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True,
     default_refs=["Template:la-conj"])

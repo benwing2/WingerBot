@@ -340,9 +340,10 @@ def canon_head(pagetitle, index, template):
 
 # Canonicalize the Arabic and Latin in the headword templates on the
 # given page. Returns the changed text along with a changelog message.
-def canon_one_page_headwords(pagetitle, index, text):
+def canon_one_page_headwords(index, pagetitle, text):
   actions = []
-  for template in text.filter_templates():
+  parsed = blib.parse_text(text)
+  for template in parsed.filter_templates():
     tname = str(template.name)
     if tname in arlib.arabic_non_verbal_headword_templates:
       thisactions = []
@@ -358,18 +359,6 @@ def canon_one_page_headwords(pagetitle, index, text):
   msg("Change log for page %s = %s" % (pagetitle, changelog))
   return text, changelog
 
-# Canonicalize Arabic and Latin in headword templates on pages from STARTFROM
-# to (but not including) UPTO, either page names or 0-based integers. Save
-# changes if SAVE is true. Show exact changes if VERBOSE is true.
-def canon_headwords(save, verbose, startFrom, upTo):
-  def process_page(page, index, text):
-    return canon_one_page_headwords(str(page.title()), index, text)
-  #for page in blib.references("Template:tracking/ar-head/head", startFrom, upTo):
-  #for page in blib.references("Template:ar-nisba", startFrom, upTo):
-  for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
-    for index, page in blib.cat_articles(cat, startFrom, upTo):
-      blib.do_edit(page, index, process_page, save=save, verbose=verbose)
-
 # Canonicalize Arabic and Latin in link-like templates on pages from STARTFROM
 # to (but not including) UPTO, either page names or 0-based integers. Save
 # changes if SAVE is true. Show exact changes if VERBOSE is true. CATTYPE
@@ -377,7 +366,8 @@ def canon_headwords(save, verbose, startFrom, upTo):
 # indicating which pages to examine. If CATTYPE is 'pagetext', PAGES_TO_DO
 # should be a list of (PAGETITLE, PAGETEXT). If CATTYPE is 'pages', PAGES_TO_DO
 # should be a list of page titles, specifying the pages to do.
-def canon_links(save, verbose, cattype, startFrom, upTo, pages_to_do=[]):
+def canon_one_page_links(index, pagetitle, text):
+  raise RuntimeError("No longer works, needs rewriting based on persian/fa_canon.py")
   def process_param(pagetitle, index, pagetext, template, tlang, param, paramtr):
     result = canon_param(pagetitle, index, template, param, paramtr,
         include_tempname_in_changelog=True)
@@ -403,34 +393,26 @@ def canon_links(save, verbose, cattype, startFrom, upTo, pages_to_do=[]):
       startFrom, upTo, process_param, sort_group_changelogs,
       pages_to_do=pages_to_do, split_templates="[,،/]")
 
-if __name__ == "__main__":
-  pa = blib.create_argparser("Correct vocalization and translit")
-  pa.add_argument("--headwords", action='store_true',
-      help="Correct vocalization and translit of headwords")
-  pa.add_argument("--cattype", default="borrowed",
-      help="""Categories to examine ('vocab', 'borrowed', 'translation',
-  'links', 'pagetext', 'pages' or comma-separated list)""")
-  pa.add_argument("--page-file",
-      help="""File containing "pages" to process when --cattype pagetext,
-  or list of pages when --cattype pages""")
+def process_text_on_page(index, pagetitle, text):
+  canon_one_page_headwords(index, pagetitle, text)
 
-  params = pa.parse_args()
-  startFrom, upTo = blib.parse_start_end(params.start, params.end)
-  pages_to_do = []
-  if params.page_file:
-    for line in open(params.page_file, "r", encoding="utf-8"):
-      line = line.strip()
-      if params.cattype == "pages":
-        pages_to_do.append(line)
-      else:
-        m = re.match(r"^Page [0-9]+ (.*?): [^:]*: Processing (.*?)$", line)
-        if not m:
-          msg("WARNING: Unable to parse line: [%s]" % line)
-        else:
-          pages_to_do.append(m.groups())
+parser = blib.create_argparser("Clean up Arabic transliterations", include_pagefile=True, include_stdin=True)
+parser.add_argument("--direcfile", help="File containing output from find_regex.py, to process")
+parser.add_argument("--overall-comment", help="Overall comment to add to final changelog msg")
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-  if params.headwords:
-    canon_headwords(params.save, params.verbose, startFrom, upTo)
-  else:
-    canon_links(params.save, params.verbose, params.cattype, startFrom, upTo,
-        pages_to_do=pages_to_do)
+if args.direcfile:
+  for lineindex, line in blib.iter_items_from_file(args.direcfile, start, end):
+    lineno = lineindex + 1
+    def linemsg(text):
+      msg("Line %s: %s" % (lineno, text))
+    m = re.search("^Page ([0-9]+) (.*?): (.*)$", line)
+    if not m:
+      linemsg("WARNING: Unrecognized line: %s" % line)
+    else:
+      index, pagetitle, text = m.groups()
+      process_text_on_page(index, pagetitle, text)
+else:
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+      skip_ignorable_pages=True)

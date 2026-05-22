@@ -96,8 +96,7 @@ def compare_headword_decl_forms(id_slot, headword_forms, decl_slots, noun_props,
     return False
   return True
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -106,8 +105,6 @@ def process_page(page, index, parsed):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
-
-  text = str(page.text)
   origtext = text
 
   notes = []
@@ -450,9 +447,9 @@ def process_page(page, index, parsed):
 
 if __name__ == "__main__":
   parser = blib.create_argparser("Convert Latin noun headword templates to new form",
-      include_pagefile=True)
+      include_pagefile=True, include_stdin=True)
   args = parser.parse_args()
   start, end = blib.parse_start_end(args.start, args.end)
 
-  blib.do_pagefile_cats_refs(args, start, end, process_page,
-    default_cats=["Latin nouns", "Latin proper nouns"], edit=True)
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+    default_cats=["Latin nouns", "Latin proper nouns"], edit=True, stdin=True)

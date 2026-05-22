@@ -6,15 +6,13 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, warn_on_no_change=False):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-
-  text = str(page.text)
   origtext = text
+
   notes = []
 
   def fix_indent(text, header, lto):
@@ -46,21 +44,16 @@ def process_page(page, index, warn_on_no_change=False):
 
   text = "".join(sections)
 
+  warn_on_no_change = not not args.pagefile
   if origtext != text:
     return text, notes
   elif warn_on_no_change:
     pagemsg("WARNING: No changes")
 
 parser = blib.create_argparser("Fix indentation of Pronunciation, Declension, Conjugation, Alternative forms sections",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-def do_process_page(page, index, parsed):
-  if args.pagefile:
-    return process_page(page, index, warn_on_no_change=True)
-  else:
-    return process_page(page, index, warn_on_no_change=False)
-
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
     default_cats=["Russian lemmas", "Russian non-lemma forms"])

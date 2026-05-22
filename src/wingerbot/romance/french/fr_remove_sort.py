@@ -14,8 +14,7 @@ fr_head_templates = ["fr-noun", "fr-proper noun", "fr-proper-noun",
   "fr-past participle", "fr-prefix", "fr-prep", "fr-pron",
   "fr-punctuation mark", "fr-suffix", "fr-verb form", "fr-verb-form"]
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -24,8 +23,6 @@ def process_page(page, index, parsed):
   if ":" in pagetitle:
     pagemsg("WARNING: Colon in page title, skipping")
     return
-
-  text = str(page.text)
 
   notes = []
   parsed = blib.parse_text(text)
@@ -42,9 +39,9 @@ def process_page(page, index, parsed):
   return str(parsed), notes
 
 parser = blib.create_argparser("Remove sort= from French terms",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["French lemmas", "French non-lemma forms"])

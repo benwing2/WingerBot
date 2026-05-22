@@ -10,7 +10,6 @@ from wingerbot.latin import lalib
 
 def find_head_comp_sup(pagetitle, pagemsg):
   page = pywikibot.Page(site, pagetitle)
-  text = str(page.text)
   parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     if tname(t) == "la-adv":
@@ -35,14 +34,11 @@ def find_head_comp_sup(pagetitle, pagemsg):
       return head, comp, sup
   return None, None, None
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-
-  text = str(page.text)
   origtext = text
 
   retval = lalib.find_latin_section(text, pagemsg)
@@ -162,10 +158,10 @@ def process_page(page, index, parsed):
   return "".join(sections), notes
 
 parser = blib.create_argparser("Fix headword of Latin comparative and superlative adverbs",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
     default_cats=["Latin comparative adverbs", "Latin superlative adverbs"],
-    edit=True)
+    edit=True, stdin=True)

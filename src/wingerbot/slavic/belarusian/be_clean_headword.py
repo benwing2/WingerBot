@@ -8,8 +8,7 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 from wingerbot.slavic.belarusian import belib
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -281,7 +280,6 @@ def process_page(page, index, parsed):
       pagemsg("Replaced %s with %s" % (origt, str(t)))
     return True
 
-
   def process_adj_headt(t):
     origt = str(t)
     def getp(param):
@@ -314,7 +312,8 @@ def process_page(page, index, parsed):
       notes.append("fix up {{be-adj}} to use new param convention")
       pagemsg("Replaced %s with %s" % (origt, str(t)))
     return True
-
+          
+  parsed = blib.parse_text(text)
 
   headt = None
   for t in parsed.filter_templates():
@@ -347,11 +346,11 @@ def process_page(page, index, parsed):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Clean up be-noun params",
-    include_pagefile=True)
+parser = blib.create_argparser("Clean up Belarusian headword params",
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
-    #default_refs=["Template:be-adj", "Template:be-verb", "Template:be-noun"], edit=True)
-    default_cats=["Belarusian proper nouns", "Belarusian nouns"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+    #default_refs=["Template:be-adj", "Template:be-verb", "Template:be-noun"], edit=True, stdin=True)
+    default_cats=["Belarusian proper nouns", "Belarusian nouns"], edit=True, stdin=True)

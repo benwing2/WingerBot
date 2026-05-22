@@ -8,8 +8,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(index, page, fix_missing_plurals):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -18,8 +17,6 @@ def process_page(index, page, fix_missing_plurals):
   if ":" in pagetitle:
     pagemsg("WARNING: Colon in page title, skipping")
     return
-
-  text = str(page.text)
 
   notes = []
   parsed = blib.parse_text(text)
@@ -60,7 +57,7 @@ def process_page(index, page, fix_missing_plurals):
         if found_feminine_noun:
           pagemsg("Found 'feminine noun of', assuming countable")
         elif g not in ["m-p", "f-p"] and not plural:
-          if fix_missing_plurals:
+          if args.fix_missing_plurals:
             pagemsg("WARNING: No plural given in %s, assuming default plural, PLEASE REVIEW"
                 % str(t))
             fixed_plural_warning = True
@@ -183,15 +180,12 @@ def process_page(index, page, fix_missing_plurals):
   return str(parsed), notes
 
 parser = blib.create_argparser("Convert head|fr|* to fr-*",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 parser.add_argument("--fix-missing-plurals", action="store_true", help="Fix cases with missing plurals by just assuming the default plural.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-def do_process_page(page, index, parsed):
-  return process_page(index, page, args.fix_missing_plurals)
-
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["French nouns", "French proper nouns", "French pronouns", "French determiners",
     "French adjectives", "French verbs", "French participles", "French adverbs",
     "French prepositions", "French conjunctions", "French interjections", "French idioms",

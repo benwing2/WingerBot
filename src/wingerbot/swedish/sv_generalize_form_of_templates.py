@@ -54,13 +54,14 @@ templates_to_process = form_of_templates + alt_form_of_templates + (
   language_specific_form_of_templates + language_specific_alt_form_of_templates
 )
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
+
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     origt = str(t)
@@ -96,10 +97,12 @@ def process_page(page, index, parsed):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Convert sv-* form-of templates to {{infl of}}")
+parser = blib.create_argparser(
+  "Convert sv-* form-of templates to {{infl of}}",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, template in blib.iter_items(templates_to_process, start, end):
-  page = pywikibot.Page(site, "Template:%s" % template)
-  blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=["Template:%s" for template in templates_to_process])

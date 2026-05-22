@@ -51,24 +51,22 @@ all_he_form_of_template_map = {
 }
 all_he_form_of_templates = [x[0] for x in all_he_form_of_template_specs]
 
-def process_page(page, index, parsed, move_dot, rename):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
 
-  text = str(page.text)
-
   if ":" in pagetitle and not re.search(
       "^(Citations|Appendix|Reconstruction|Transwiki|Talk|Wiktionary|[A-Za-z]+ talk):", pagetitle):
     pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
     return None, None
 
-  if move_dot:
+  if args.move_dot:
     templates_to_replace = []
 
+    parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
       tn = tname(t)
       if tn in all_he_form_of_templates:
@@ -103,7 +101,7 @@ def process_page(page, index, parsed, move_dot, rename):
       text = newtext
       notes.append("move .= outside of {{he-*}} template")
 
-  if rename:
+  if args.rename:
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
       origt = str(t)
@@ -161,7 +159,8 @@ def process_page(page, index, parsed, move_dot, rename):
 
   return text, notes
 
-parser = blib.create_argparser("Clean up {{he-*}} templates")
+parser = blib.create_argparser(
+  "Clean up {{he-*}} templates", include_pagefile=True, include_stdin=True)
 parser.add_argument('--move-dot', help="Move .= outside of template",
     action="store_true")
 parser.add_argument('--rename', help="Rename templates",
@@ -169,10 +168,6 @@ parser.add_argument('--rename', help="Rename templates",
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for template in all_he_form_of_templates:
-  for i, page in blib.references("Template:%s" % template, start, end):
-    blib.do_edit(page, i,
-      lambda page, index, parsed:
-        process_page(page, index, parsed, args.move_dot, args.rename),
-      save=args.save, verbose=args.verbose
-    )
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:%s" for template in all_he_form_of_templates])

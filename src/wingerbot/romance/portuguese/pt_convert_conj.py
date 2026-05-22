@@ -137,27 +137,6 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
     t.add("1", manual_conjs[pagetitle])
   return t
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  pagemsg("Processing")
-
-  notes = []
-
-  for t in parsed.filter_templates():
-    tn = tname(t)
-    if tn == "pt-conj" and getparam(t, "2"):
-      if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
-        pass
-      else:
-        return
-
-  return str(parsed), notes
-
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

@@ -11,12 +11,13 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
+
+  parsed = blib.parse_text(text)
 
   notes = []
   for t in parsed.filter_templates():
@@ -54,9 +55,12 @@ def process_page(page, index, parsed):
 
   return parsed, notes
 
-parser = blib.create_argparser("Convert {{ru-ux}} to {{ux|ru}} or {{uxi|ru}}")
+parser = blib.create_argparser(
+  "Convert {{ru-ux}} to {{ux|ru}} or {{uxi|ru}}",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, page in blib.references("Template:ru-ux", start, end):
-  blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:ru-ux"])

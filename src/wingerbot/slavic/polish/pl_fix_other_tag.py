@@ -10,11 +10,12 @@ from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
 def remove_comment_continuations(text):
   return text.replace("<!--\n-->", "").strip()
 
-def process_text_on_page(pagetitle, index, text):
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
+
   notes = []
 
   if blib.page_should_be_ignored(pagetitle):
@@ -85,14 +86,9 @@ def process_text_on_page(pagetitle, index, text):
 
   return str(parsed), notes
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
-  text = str(page.text)
-  return process_text_on_page(pagetitle, index, text)
-
 parser = blib.create_argparser("Replace 'other' with 'nv' in Polish {{inflection of}} templates",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

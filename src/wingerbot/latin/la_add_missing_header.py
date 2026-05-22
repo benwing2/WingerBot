@@ -18,14 +18,11 @@ tempname_to_header = {
   "la-pronoun-form": "Pronoun",
 }
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-
-  text = str(page.text)
   origtext = text
 
   retval = lalib.find_latin_section(text, pagemsg)
@@ -62,8 +59,8 @@ def process_page(page, index, parsed):
   return "".join(sections), notes
 
 parser = blib.create_argparser("Add missing header to Latin non-lemma terms",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

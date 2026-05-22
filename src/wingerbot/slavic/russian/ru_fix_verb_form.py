@@ -9,8 +9,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -21,7 +20,6 @@ def process_page(page, index, parsed):
     pagemsg("WARNING: Colon in page title, skipping page")
     return
 
-  text = str(page.text)
   notes = []
 
   foundrussian = False
@@ -264,9 +262,9 @@ def process_page(page, index, parsed):
   return "".join(sections), notes
 
 parser = blib.create_argparser("Convert raw verb forms to use 'inflection of'",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Russian verb forms"])

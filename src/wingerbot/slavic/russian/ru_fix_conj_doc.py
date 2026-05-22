@@ -8,8 +8,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -19,7 +18,9 @@ def process_page(page, index, parsed):
   pagemsg("Processing")
   return "#REDIRECT [[Module:ru-verb/documentation]]", "redirect to [[Module:ru-verb/documentation]]"
 
-parser = blib.create_argparser("Redirect ru-conj-* documentation pages")
+parser = blib.create_argparser(
+  "Redirect ru-conj-* documentation pages",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
@@ -32,7 +33,7 @@ types = ["7a", "7b", "8a", "8b", "9a", "9b", "10a", "10c", "11a", "11b",
     "irreg-клясть", "irreg-слыхать-видать", "irreg-стелить-стлать",
     "irreg-быть", "irreg-ссать-сцать", "irreg-чтить", "irreg-ошибиться",
     "irreg-плескать", "irreg-внимать", "irreg-обязывать"]
-for i, ty in blib.iter_items(types, start, end):
-  template = "Template:ru-conj-%s/documentation" % ty
-  blib.do_edit(pywikibot.Page(site, template), i, process_page, save=args.save,
-    verbose=args.verbose, diff=args.diff)
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=["Template:ru-conj-%s/documentation" % ty for i, ty in blib.iter_items(types, start, end)])

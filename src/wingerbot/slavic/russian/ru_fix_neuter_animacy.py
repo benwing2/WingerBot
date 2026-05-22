@@ -6,8 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, fix_indeclinable):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   subpagetitle = re.sub(".*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -19,8 +18,7 @@ def process_page(page, index, fix_indeclinable):
     return
 
   notes = []
-  text = str(page.text)
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   def frob_gender_param(t, param):
     val = getparam(t, param)
@@ -43,7 +41,7 @@ def process_page(page, index, fix_indeclinable):
       if origt != str(t):
         param3 = getparam(t, "3")
         if param3 != "-":
-          if fix_indeclinable:
+          if args.fix_indeclinable:
             if param3:
               pagemsg("WARNING: Can't make indeclinable, has genitive singular given: %s" % origt)
               return
@@ -64,14 +62,11 @@ def process_page(page, index, fix_indeclinable):
   return str(parsed), comment
 
 parser = blib.create_argparser("Make neuter nouns be inanimate",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 parser.add_argument("--fix-indeclinable", action="store_true",
     help="Make non-indeclinables be indeclinable")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-def do_process_page(page, index, parsed):
-  return process_page(index, page, args.fix_indeclinable)
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_refs=["Template:ru-noun", "Template:ru-proper noun"])

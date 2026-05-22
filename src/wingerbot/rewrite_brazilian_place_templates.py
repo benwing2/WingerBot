@@ -6,13 +6,15 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
+
   notes = []
+          
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     tn = tname(t)
@@ -69,10 +71,10 @@ def process_page(page, index, parsed):
   return str(parsed), notes
 
 parser = blib.create_argparser("Rewrite Brazil-specific place templates to use {{place}}",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
     default_refs=["Template:place:Brazil/capital", "Template:place:Brazil/state", "Template:place:Brazil/state capital",
-      "Template:place:Brazil/municipality"], edit=True)
+      "Template:place:Brazil/municipality"], edit=True, stdin=True)

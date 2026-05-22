@@ -10,17 +10,17 @@ from wingerbot.latin import lalib
 
 pages_to_delete = []
 
-def delete_term(index, term, expected_head_templates, save, verbose):
-  notes = []
-
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, term, txt))
-  page = pywikibot.Page(site, term)
-  if not page.exists():
-    pagemsg("Skipping form value %s, page doesn't exist" % term)
-    return
 
-  text = str(page.text)
+  notes = []
+
+  if not text:
+    page = pywikibot.Page(site, pagetitle)
+    if not page.exists():
+      pagemsg("Skipping form value %s, page doesn't exist" % term)
+      return
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
@@ -93,18 +93,15 @@ def delete_term(index, term, expected_head_templates, save, verbose):
 
   return text, notes
 
-parser = blib.create_argparser("Delete bad Latin terms", include_pagefile=True)
+parser = blib.create_argparser("Delete bad Latin terms", include_pagefile=True, include_stdin=True)
 parser.add_argument('--headtemp', required=True, help="Name(s) of expected headword template(s).")
 parser.add_argument('--output-pages-to-delete', help="File to write pages to delete.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-headtemp = blib.split_arg(args.headtemp)
+expected_head_templates = blib.split_arg(args.headtemp)
 
-def process_page(page, index, parsed):
-  return delete_term(index, page, headtemp)
-
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
 
 msg("The following pages need to be deleted:")
 for page in pages_to_delete:

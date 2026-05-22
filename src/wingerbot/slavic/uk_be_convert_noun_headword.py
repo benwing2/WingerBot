@@ -11,8 +11,7 @@ from wingerbot.slavic.belarusian import belib as be
 
 AC = "\u0301"
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
@@ -27,6 +26,9 @@ def process_page(page, index, parsed):
   gender_and_animacy = None
   genitives = None
   plurals = None
+          
+  parsed = blib.parse_text(text)
+
   for t in parsed.filter_templates():
     tn = tname(t)
     if tn in [args.lang + "-noun", args.lang + "-proper noun"]:
@@ -98,7 +100,7 @@ def process_page(page, index, parsed):
       heads = None
   return str(parsed), notes
 
-parser = blib.create_argparser("Convert {{uk-noun}}/{{be-noun}} to new style", include_pagefile=True)
+parser = blib.create_argparser("Convert {{uk-noun}}/{{be-noun}} to new style", include_pagefile=True, include_stdin=True)
 parser.add_argument("--lang", required=True, help="Language (uk or be)")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
@@ -107,5 +109,5 @@ if args.lang not in ["uk", "be"]:
   raise ValueError("Unrecognized language: %s" % args.lang)
 langname = "Ukrainian" if args.lang == "uk" else "Belarusian"
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
-    default_cats=[langname + " nouns", langname + " proper nouns"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+    default_cats=[langname + " nouns", langname + " proper nouns"], edit=True, stdin=True)

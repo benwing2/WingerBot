@@ -5,7 +5,6 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
-
 from wingerbot.latin import lalib
 
 pages_to_delete = []
@@ -21,8 +20,6 @@ def process_form(page, index, slot, form, pos):
   if not page.exists():
     pagemsg("Skipping form value %s, page doesn't exist" % form)
     return None, None
-
-  text = str(page.text)
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
@@ -71,14 +68,11 @@ def process_form(page, index, slot, form, pos):
   text = "".join(sections)
   return text, notes
 
-def process_page(page, index):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-  text = str(page.text)
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
@@ -151,8 +145,8 @@ def process_page(page, index):
         handler, save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Correct headers/headwords to reflect changes from noun to proper noun (and occasionally vice-versa)",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)

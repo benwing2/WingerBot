@@ -30,15 +30,12 @@ pos_to_pos = {
   'verb': 'v'
 }
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
-
-  text = str(page.text)
 
   def replace_pos(m):
     return "%s|pos=%s}}" % (m.group(1), pos_to_pos[m.group(2)])
@@ -75,11 +72,11 @@ def process_page(page, index, parsed):
 
   return text, notes
 
-parser = blib.create_argparser("Move {{pos *}} declarations inside of links")
+parser = blib.create_argparser(
+  "Move {{pos *}} declarations inside of links", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for template in templates:
-  msg("Processing references to Template:%s" % template)
-  for i, page in blib.references("Template:%s" % template, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:%s" for template in templates])

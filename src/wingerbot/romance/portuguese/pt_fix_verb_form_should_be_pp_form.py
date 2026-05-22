@@ -113,11 +113,6 @@ def process_text_on_page(index, pagetitle, text):
 
   return text, notes
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
-  text = str(page.text)
-  return process_text_on_page(pagetitle, index, text)
-
 parser = blib.create_argparser("Fix Portuguese verb form headers that should be past participle forms",
   include_pagefile=True, include_stdin=True)
 parser.add_argument("--partial-page", action="store_true", help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.")

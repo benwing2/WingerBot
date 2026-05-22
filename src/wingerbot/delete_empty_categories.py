@@ -21,7 +21,7 @@ def delete_page(page, comment, errandpagemsg):
         raise e
       errandpagemsg("WARNING: APIError, try #%s: %s" % (i + 1, e))
 
-def process_page(page, index, args, comment):
+def process_page(page, index):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -40,7 +40,7 @@ def process_page(page, index, args, comment):
     errandpagemsg("Skipping (not empty): num_pages=%s, num_subcats=%s" % (
       num_pages, num_subcats))
     return
-  this_comment = comment or 'delete empty category'
+  this_comment = args.comment or 'delete empty category'
   if page.exists():
     if args.save:
       delete_page(page, '%s (content was "%s")' % (this_comment, str(page.text)), errandpagemsg)
@@ -55,6 +55,4 @@ params.add_argument("--comment", help="Specify the change comment to use")
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-def do_process_page(page, index):
-  return process_page(page, index, args, args.comment)
-blib.do_pagefile_cats_refs(args, start, end, do_process_page)
+blib.do_pagefile_cats_refs(args, start, end, process_page)

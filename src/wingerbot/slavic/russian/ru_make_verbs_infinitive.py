@@ -76,8 +76,7 @@ def paste_arg_sets(arg_sets, t, verb_type, rm_pres_stem, as_string,
         args.append((str(param.name), str(param.value)))
   return args
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -87,9 +86,8 @@ def process_page(page, index, parsed):
 
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+  parsed = blib.parse_text(text)
 
-  text = str(page.text)
-  parsed = blib.parse(page)
   notes = []
   for t in parsed.filter_templates():
     origt = str(t)
@@ -373,18 +371,11 @@ def process_page(page, index, parsed):
   return str(parsed), notes
 
 parser = blib.create_argparser("Fix up verb conjugations to use the infinitive",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=["User:Benwing2/test-ru-verb", "User:Benwing2/test-ru-verb-2", "Module:ru-verb/documentation"],
   default_refs=["Template:ru-conj-old"],
   default_cats=["Russian irregular verbs", "Russian verbs"])
-
-for pagename, index in [
-  ("User:Benwing2/test-ru-verb", 1),
-  ("User:Benwing2/test-ru-verb-2", 2),
-  ("Module:ru-verb/documentation", 1)
-]:
-  blib.do_edit(pywikibot.Page(site, pagename), index, process_page,
-  save=args.save, verbose=args.verbose, diff=args.diff)

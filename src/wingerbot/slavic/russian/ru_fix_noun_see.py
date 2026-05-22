@@ -6,18 +6,16 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  verbose = args.verbose
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   headword_template = None
   see_template = None
@@ -89,9 +87,9 @@ def process_page(page, index, parsed):
   return str(parsed), "Replace ru-decl-noun-see with ru-noun-table, taken from headword template (%s)" % str(headword_template.name)
 
 parser = blib.create_argparser("Convert ru-decl-noun-see into ru-noun-table decl template, taken from headword ru-(proper )noun+ template",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_refs=["Template:ru-decl-noun-see"])

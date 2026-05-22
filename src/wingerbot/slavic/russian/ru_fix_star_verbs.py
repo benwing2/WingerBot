@@ -4,27 +4,24 @@
 import pywikibot, re, sys, argparse, copy
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, tname, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  def expand_text(tempcall):
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
 
-  def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+  parsed = blib.parse_text(text)
 
   notes = []
   for t in parsed.filter_templates():
     origt = str(t)
     if tname(t) in ["ru-conj", "ru-conj-old"]:
       if [x for x in t.params if str(x.value) == "or"]:
-        errpagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+        pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
         continue
       param2 = getparam(t, "2")
       if "*" in param2:
@@ -49,8 +46,7 @@ def process_page(page, index, parsed):
         new_tempcall = re.sub(r"^\{\{ru-conj-old", "{{ru-generate-verb-forms|old=1", str(t))
       result = expand_text(new_tempcall)
       if not result:
-        errpagemsg("WARNING: Error expanding new template %s" % new_tempcall)
-        return None, ""
+        return
       new_forms = blib.split_generate_args(result)
       if tname(t) == "ru-conj":
         orig_tempcall = re.sub(r"^\{\{ru-conj", "{{ru-generate-verb-forms", origt)
@@ -58,8 +54,7 @@ def process_page(page, index, parsed):
         orig_tempcall = re.sub(r"^\{\{ru-conj-old", "{{ru-generate-verb-forms|old=1", origt)
       result = expand_text(orig_tempcall)
       if not result:
-        errpagemsg("WARNING: Error expanding original template %s" % orig_tempcall)
-        return None, ""
+        return
       orig_forms = blib.split_generate_args(result)
 
       # Compare each form and accumulate a list of mismatches.
@@ -80,9 +75,9 @@ def process_page(page, index, parsed):
       # If mismatches, output them and don't change anything.
 
       if mismatches:
-        errpagemsg("WARNING: Mismatch comparing old %s to new %s: %s" % (
+        pagemsg("WARNING: Mismatch comparing old %s to new %s: %s" % (
           orig_tempcall, new_tempcall, " || ".join(mismatches)))
-        return None, ""
+        return
 
     newt = str(t)
     if origt != newt:
@@ -90,11 +85,12 @@ def process_page(page, index, parsed):
 
   return parsed, notes
 
-parser = blib.create_argparser("Add * to 9b and 11b verbs as needed")
+parser = blib.create_argparser(
+  "Add * to 9b and 11b verbs as needed",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for category in ["Russian class 9b verbs", "Russian class 11b verbs"]:
-  msg("Processing category: %s" % category)
-  for i, page in blib.cat_articles(category, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Russian class 9b verbs", "Russian class 11b verbs"])

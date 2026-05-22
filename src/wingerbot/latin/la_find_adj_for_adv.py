@@ -17,8 +17,6 @@ def investigate_possible_adj(index, adj_pagename, adv, adv_defns):
     pagemsg("Doesn't exist for adverb %s" % adv)
     return
 
-  text = str(page.text)
-
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
     return
@@ -37,8 +35,7 @@ def investigate_possible_adj(index, adj_pagename, adv, adv_defns):
         adj_defns = lalib.find_defns(subsections[k])
         msg("%s /// %s /// %s /// %s" % (adv, adj, ";".join(adv_defns), ";".join(adj_defns)))
 
-def process_page(page, index):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -48,8 +45,6 @@ def process_page(page, index):
     pagemsg("WARNING: Space in page title, skipping")
     return
   pagemsg("Processing")
-
-  text = str(page.text)
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
@@ -92,9 +87,9 @@ def process_page(page, index):
           investigate_possible_adj(index, possible_adj, adv, adv_defns)
 
 parser = blib.create_argparser("Find corresponding adjectives for Latin adverbs",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True,
     default_cats=["Latin adverbs"])

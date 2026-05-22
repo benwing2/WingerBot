@@ -7,9 +7,9 @@ import pywikibot
 
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam
+from wingerbot.arabic import arlib, ar_translit
 
-from wingerbot.arabic import arlib
-from wingerbot.arabic import ar_translit
+raise RuntimeError("No longer works; needs rewriting")
 
 # Vocalize ARABIC based on LATIN. Return vocalized Arabic text if
 # vocalization succeeds and is different from the existing Arabic text,

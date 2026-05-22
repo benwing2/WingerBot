@@ -14,10 +14,13 @@ def process_form(index, page, lemma, formind, formval, subs):
 
   def pagemsg(txt):
     msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
 
   notes = []
 
-  parsed = blib.parse(page)
+  pagetext = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(pagetext)
 
   for t in parsed.filter_templates():
     origt = str(t)
@@ -80,13 +83,13 @@ def process_form(index, page, lemma, formind, formval, subs):
       pagemsg("Replaced %s with %s" % (origt, str(t)))
   return str(parsed), notes
 
-def process_page(index, pos, lemma, subs, infl, save, verbose):
+def process_page(index, pos, lemma, subs, infl):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, lemma, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, lemma, txt))
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, remove_macrons(lemma), pagemsg, verbose)
+    return blib.expand_text(tempcall, remove_macrons(lemma), pagemsg, args.verbose)
 
   pagemsg("Processing")
 
@@ -102,7 +105,8 @@ def process_page(index, pos, lemma, subs, infl, save, verbose):
   for formind, form in blib.iter_items(forms_to_delete):
     def handler(page, formind, parsed):
       return process_form(index, page, lemma, formind, form, subs)
-    blib.do_edit(pywikibot.Page(site, remove_macrons(form)), formind, handler, save=save, verbose=verbose)
+    blib.do_edit(pywikibot.Page(site, remove_macrons(form)), formind, handler,
+                 save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Fix up bad Latin forms")
 parser.add_argument('--declfile', help="File containing pos lemma bad:good,... infl", required=True)
@@ -115,4 +119,4 @@ for index, line in blib.iter_items_from_file(args.declfile, start, end):
   else:
     pos, lemma, subs, infl = re.split(" ", line, 4)
   subs = [] if subs == "-" else [x.split(":") for x in subs.split(",")]
-  process_page(index, pos, lemma, subs, infl, args.save, args.verbose)
+  process_page(index, pos, lemma, subs, infl)

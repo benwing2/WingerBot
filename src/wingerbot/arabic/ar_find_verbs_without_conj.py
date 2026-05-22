@@ -2,17 +2,22 @@
 # -*- coding: utf-8 -*-
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg
 
-def search_noconj(startFrom, upTo):
-  for index, page in blib.cat_articles("Arabic verbs", startFrom, upTo):
-    text = str(blib.parse(page))
-    pagetitle = page.title()
-    if "{{ar-verb" not in text:
-      msg("* ar-verb not in {{l|ar|%s}}" % pagetitle)
-    if "{{ar-conj" not in text:
-      msg("* ar-conj not in {{l|ar|%s}}" % pagetitle)
+def process_text_on_page(index, pagetitle, text):
+  def pagemsg(txt):
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-startFrom, upTo = blib.parse_args()
+  if "{{ar-verb" not in text:
+    pagemsg("Didn't find {{ar-verb}}")
+  if "{{ar-conj" not in text:
+    pagemsg("Didn't find {{ar-conj}}")
 
-search_noconj(startFrom, upTo)
+parser = blib.create_argparser(
+  "Find Arabic verbs without conjugation", include_pagefile=True, include_stdin=True)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Arabic verbs"])

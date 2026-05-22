@@ -6,14 +6,13 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-def process_page(page, index):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     tn = tname(t)
@@ -34,8 +33,8 @@ def process_page(page, index):
         else:
           pagemsg("{{fr-IPA|%s%s}} == %s in both old and new" % (pronval, pos_arg, pron))
 
-parser = blib.create_argparser("Check for change in {{fr-IPA}}", include_pagefile=True)
+parser = blib.create_argparser("Check for change in {{fr-IPA}}", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, default_refs=["Template:fr-IPA"])
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, default_refs=["Template:fr-IPA"])

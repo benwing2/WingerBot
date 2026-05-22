@@ -10,8 +10,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -20,9 +19,8 @@ def process_page(page, index, parsed):
   if ":" in pagetitle:
     pagemsg("WARNING: Colon in page title, skipping page")
     return
+  parsed = blib.parse_text(text)
 
-  text = str(page.text)
-  parsed = blib.parse(page)
   notes = []
 
   for t in parsed.filter_templates():
@@ -92,9 +90,9 @@ def process_page(page, index, parsed):
 
 
 parser = blib.create_argparser('Find deprecated usages of {{prefixusex}} and {{suffixusex}} and fix some of them',
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_refs=["Template:prefixusex", "Template:suffixusex"])

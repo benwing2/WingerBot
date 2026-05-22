@@ -7,7 +7,6 @@ import pywikibot, re, sys, traceback
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
-
 from wingerbot.slavic.belarusian import belib
 from wingerbot.slavic.bulgarian import bglib
 from wingerbot.slavic.ukrainian import uklib
@@ -514,13 +513,12 @@ lemma_headword_to_pronun_mapping_cache = {}
 # of an etym section), and for each such lemma, fetch a mapping from
 # headword-derived stems to pronunciations as found in the uk/be-IPA templates.
 # Return PRONUNMAPPING, a map as described above.
-def lookup_pronun_mapping(parsed, pagemsg):
+def lookup_pronun_mapping(parsed, pagemsg, errandpagemsg):
   lemmas = get_lemmas_of_form_page(parsed)
   pron_temp_name = args.lang + "-IPA"
   all_pronunmappings = {}
   for lemma in lemmas:
-    # Need to create our own expand_text() with the page title set to the
-    # lemma
+    # Need to create our own expand_text() with the page title set to the lemma
     def expand_text(t):
       return blib.expand_text(t, lemma, pagemsg, args.verbose)
 
@@ -530,12 +528,8 @@ def lookup_pronun_mapping(parsed, pagemsg):
     else:
       cached = False
       newpage = pywikibot.Page(site, lemma)
-      try:
-        parsed = blib.parse(newpage)
-      except pywikibot.exceptions.InvalidTitle as e:
-        pagemsg("WARNING: Invalid title, skipping")
-        traceback.print_exc(file=sys.stdout)
-        continue
+      newpagetext = blib.safe_page_text(newpage, errandpagemsg)
+      parsed = blib.parse_text(newpagetext)
 
       # Compute headword->pronun mapping
       headwords = get_headword_pronuns(parsed, lemma, pagemsg, expand_text)
@@ -577,15 +571,16 @@ def lookup_pronun_mapping(parsed, pagemsg):
   return all_pronunmappings
 
 def process_section(section, indentlevel, headword_pronuns,
-    pagetitle, pagemsg, expand_text):
+    pagetitle, pagemsg, errandpagemsg, expand_text):
   assert indentlevel in [3, 4]
+
   notes = []
 
   was_unable_to_match = False
 
   parsed = blib.parse_text(section)
 
-  pronunmapping = lookup_pronun_mapping(parsed, pagemsg)
+  pronunmapping = lookup_pronun_mapping(parsed, pagemsg, errandpagemsg)
 
   pron_temp_name = args.lang + "-IPA"
   pronun_lines = []
@@ -886,14 +881,27 @@ def process_section(section, indentlevel, headword_pronuns,
 
   return section, notes, was_unable_to_match
 
-def process_page_text(index, text, pagetitle):
+def process_text_on_page(index, text, pagetitle):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   notes = []
+
+  pagemsg("Processing")
+
+  if ":" in pagetitle:
+    pagemsg("WARNING: Colon in page title, skipping")
+    return
+
+  for skip_regex in skip_pages:
+    if re.search(skip_regex, pagetitle):
+      pagemsg("WARNING: Skipping because page in skip_pages matching %s" %
+          skip_regex)
+      return
 
   pron_temp_name = args.lang + "-IPA"
   foundlang = False
@@ -904,13 +912,13 @@ def process_page_text(index, text, pagetitle):
     if sections[j-1] == "==%s==\n" % langname:
       if foundlang:
         pagemsg("WARNING: Found multiple %s sections" % langname)
-        return None
+        return
       foundlang = True
 
       need_l3_pronun = False
       if "===Pronunciation 1===" in sections[j]:
         pagemsg("WARNING: Found ===Pronunciation 1===, should convert page to multiple etymologies")
-        return None
+        return
       if "===Etymology 1===" in sections[j]:
 
         # If multiple etymologies, things are more complicated. We may have to
@@ -927,7 +935,7 @@ def process_page_text(index, text, pagetitle):
         pagemsg("Found multiple etymologies (%s)" % (len(etymsections)//2))
         if len(etymsections) < 5:
           pagemsg("WARNING: Misformatted page with multiple etymologies (too few etymologies, skipping)")
-          return None
+          return
 
         # Check for misnumbered etymology sections
         # FIXME, this should be a separate script
@@ -973,7 +981,7 @@ def process_page_text(index, text, pagetitle):
         numpronunsecs = len(re.findall("^===Pronunciation===$", etymsections[0], re.M))
         if numpronunsecs > 1:
           pagemsg("WARNING: Multiple ===Pronunciation=== sections in preamble to multiple etymologies, needs to be fixed")
-          return None
+          return
 
         if need_per_section_pronuns:
           pagemsg("Multiple etymologies, split pronunciations needed")
@@ -990,11 +998,11 @@ def process_page_text(index, text, pagetitle):
           m = re.search(r"(^===Pronunciation===\n)(.*?)(^==|\Z)", etymsections[0], re.M | re.S)
           if not m:
             pagemsg("WARNING: Can't find ===Pronunciation=== section when it should be there, logic error?")
-            return None
+            return
           if not re.search(r"^(\* \{\{%s(?:\|([^}]*))?\}\}\n)*$" % pron_temp_name, m.group(2)):
             pagemsg("WARNING: Pronunciation section to be removed contains extra stuff (e.g. manual IPA or audio), can't remove: <%s>\n" % (
               m.group(1) + m.group(2)))
-            return None
+            return
           foundpronuns = []
           for m in re.finditer(r"(\{\{%s(?:\|([^}]*))?\}\})" % pron_temp_name, m.group(2)):
             # FIXME, not right, should do what we do above with foundpronuns
@@ -1011,7 +1019,7 @@ def process_page_text(index, text, pagetitle):
             if not (set(foundpronuns) <= set(combined_headword_pronuns)):
               pagemsg("WARNING: When trying to delete pronunciation section, existing pronunciation %s not subset of headword-derived pronunciation %s, unable to delete" %
                     (joined_foundpronuns, joined_headword_pronuns))
-              return None
+              return
           etymsections[0] = re.sub(r"(^===Pronunciation===\n)(.*?)(\Z|^==|^\[\[|^--)", r"\3", etymsections[0], 1, re.M | re.S)
           sections[j] = "".join(etymsections)
           text = "".join(sections)
@@ -1071,7 +1079,7 @@ def process_page_text(index, text, pagetitle):
               continue
             result = process_section(etymsections[k], 4,
                 etym_headword_pronuns[k], pagetitle,
-                pagemsg, expand_text)
+                pagemsg, errandpagemsg, expand_text)
             if result is None:
               continue
             etymsections[k], etymsection_notes, etymsection_unable_to_match = result
@@ -1097,11 +1105,11 @@ def process_page_text(index, text, pagetitle):
         headword_pronuns = get_headword_pronuns(blib.parse_text(text), pagetitle, pagemsg, expand_text)
         # If error, skip page.
         if headword_pronuns is None:
-          return None
+          return
 
         # Process the section
         result = process_section(sections[j], 3, headword_pronuns,
-            pagetitle, pagemsg, expand_text)
+            pagetitle, pagemsg, errandpagemsg, expand_text)
         if result is None:
           continue
         sections[j], section_notes, section_unable_to_match = result
@@ -1111,40 +1119,9 @@ def process_page_text(index, text, pagetitle):
 
   if not foundlang:
     pagemsg("WARNING: Can't find %s section" % langname)
-    return None
-
-  return text, notes, was_unable_to_match
-
-def process_page(page, index, parsed=None):
-  pagetitle = str(page.title())
-
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  pagemsg("Processing")
-
-  if ":" in pagetitle:
-    pagemsg("WARNING: Colon in page title, skipping")
     return
 
-  for skip_regex in skip_pages:
-    if re.search(skip_regex, pagetitle):
-      pagemsg("WARNING: Skipping because page in skip_pages matching %s" %
-          skip_regex)
-      return
-
-  if not page.exists():
-    pagemsg("WARNING: Page doesn't exist")
-    return
-
-  text = str(page.text)
-  result = process_page_text(index, text, pagetitle)
-  if result is None:
-    return
-
-  newtext, notes, was_unable_to_match = result
-
-  if newtext != text:
+  if text != orig_text:
     assert notes
     if was_unable_to_match:
       pagemsg("WARNING: Would save and unable to match mapping")
@@ -1152,10 +1129,10 @@ def process_page(page, index, parsed=None):
   # Eliminate sequences of 3 or more newlines, which may come from
   # ensure_two_trailing_nl(). Add comment if none, in case of existing page
   # with extra newlines.
-  newnewtext = re.sub(r"\n\n\n+", r"\n\n", newtext)
-  if newnewtext != newtext and not notes:
+  newtext = re.sub(r"\n\n\n+", r"\n\n", text)
+  if newtext != text and not notes:
     notes = ["eliminate sequences of 3 or more newlines"]
-  newtext = newnewtext
+  text = newtext
 
   return newtext, notes
 
@@ -1169,7 +1146,7 @@ def process_lemma(index, pagetitle, forms):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   page = pywikibot.Page(site, pagetitle)
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     tname = str(t.name)
     tempcall = None
@@ -1214,7 +1191,7 @@ def read_pages(filename, start, end):
         page = line
     yield i, page
 
-parser = blib.create_argparser("Add pronunciation sections to Ukrainian, Belarusian or Bulgarian Wiktionary entries", include_pagefile=True)
+parser = blib.create_argparser("Add pronunciation sections to Ukrainian, Belarusian or Bulgarian Wiktionary entries", include_pagefile=True, include_stdin=True)
 parser.add_argument('--lemma-file', help="File containing lemmas to process, one per line; non-lemma forms will be done")
 parser.add_argument('--lemmas', help="List of comma-separated lemmas to process; non-lemma forms will be done")
 parser.add_argument('--lang', help="Language (uk, be, bg)", choices=['uk', 'be', 'bg'], required=True)
@@ -1336,10 +1313,11 @@ if args.lemma_file or args.lemmas:
     lemmas = blib.iter_items(re.split(",", args.lemmas), start, end)
   for i, lemma in lemmas:
     process_lemma(i, com.remove_accents(lemma), forms)
+  blib.elapsed_time()
 
 else:
-  blib.do_pagefile_cats_refs(args, start, end, process_page,
-      default_cats=[langname + " lemmas", langname + " non-lemma forms"], edit=True)
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+      default_cats=[langname + " lemmas", langname + " non-lemma forms"])
 
 def subval_to_string(subval):
   if type(subval) is tuple:
@@ -1353,5 +1331,3 @@ for regex, subvals in manual_pronun_mapping:
     msg("WARNING: Unapplied manual_pronun_mapping %s->%s" % (regex,
       ",".join(subval_to_string(x) for x in subvals) if type(subvals) is list
       else subval_to_string(subvals)))
-
-blib.elapsed_time()

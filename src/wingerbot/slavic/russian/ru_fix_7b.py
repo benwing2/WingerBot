@@ -5,11 +5,9 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
-
 from wingerbot.slavic.russian import rulib
 
-def process_page(index, page, direc):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -18,8 +16,12 @@ def process_page(index, page, direc):
 
   pagemsg("Processing")
 
-  text = str(page.text)
-  parsed = blib.parse(page)
+  direc = pagetitle_to_direc.get(pagetitle, None)
+  if not direc:
+    pagemsg("WARNING: Can't locate directive for page")
+    return
+
+  parsed = blib.parse_text(text)
   notes = []
   origdirec = direc
   for t in parsed.filter_templates():
@@ -82,11 +84,13 @@ def process_page(index, page, direc):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Fix up class-7b arguments")
+parser = blib.create_argparser(
+  "Fix up class-7b arguments", include_pagefile=True, include_stdin=True)
 parser.add_argument('--direcfile', help="File containing pages to fix and directives.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
+pagetitle_to_direc = {}
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
   if " " not in line:
     msg("Line %s: Skipping because no space: %s" % (i, line))
@@ -94,7 +98,8 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
     msg("Line %s: Skipping because 7b not in line: %s" % (i, line))
   else:
     page, direc = re.split(" ", line)
-    def do_process_page(page, index, parsed):
-      return process_page(index, page, direc)
-    blib.do_edit(pywikibot.Page(site, page), i, do_process_page, save=args.save,
-      verbose=args.verbose, diff=args.diff)
+    pagetitle_to_direc[page] = direc
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_direc.keys()))

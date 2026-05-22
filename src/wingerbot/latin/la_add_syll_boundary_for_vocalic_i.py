@@ -30,14 +30,12 @@ prefixes = [
 
 vowel_re = "[aeiouyāēīōūȳăĕĭŏŭ]"
 
-def process_page(page, index, add_dot_after_i, convert_j):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  text = str(page.text)
   origtext = text
 
   retval = lalib.find_latin_section(text, pagemsg)
@@ -60,10 +58,10 @@ def process_page(page, index, add_dot_after_i, convert_j):
           macron_prefix = prefix
         orig_param1 = param1
         if re.search("^%s[ij]" % macron_prefix, param1):
-          if re.search("^%si%s" % (macron_prefix, vowel_re), param1) and add_dot_after_i:
+          if re.search("^%si%s" % (macron_prefix, vowel_re), param1) and args.add_dot_after_i:
             param1 = re.sub("^%si" % macron_prefix, "%si." % macron_prefix, param1)
             notes.append("add dot after i in {{la-IPA}} to force vocalic pronunciation")
-          elif re.search("^%sj%s" % (macron_prefix, vowel_re), param1) and convert_j:
+          elif re.search("^%sj%s" % (macron_prefix, vowel_re), param1) and args.convert_j:
             param1 = re.sub("^%sj" % macron_prefix, "%si" % macron_prefix, param1)
             notes.append("convert j to i in {{la-IPA}} to match pagename; j no longer necessary to force consonantal pronunciation")
           if param1 != orig_param1:
@@ -91,7 +89,7 @@ def process_page(page, index, add_dot_after_i, convert_j):
   return "".join(sections), notes
 
 parser = blib.create_argparser("Add syllabic boundary to {{la-IPA}} for vocalic i that would be interpreted as consonantal",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 parser.add_argument("--add-dot-after-i", help="Add dot after 'i' to make sure it's syllabic", action="store_true")
 parser.add_argument("--convert-j", help="Convert 'j' back to 'i' after prefix", action="store_true")
 args = parser.parse_args()
@@ -105,7 +103,7 @@ def page_needs_investigating(pagetitle):
       return True
   return False
 
-def do_process_page(page, index, parsed):
-  return process_page(page, index, args.add_dot_after_i, args.convert_j)
-blib.do_pagefile_cats_refs(args, start, end, do_process_page, default_refs=["Template:la-IPA"], edit=True,
-    filter_pages=page_needs_investigating)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, default_refs=["Template:la-IPA"],
+  edit=True, stdin=True, filter_pages=page_needs_investigating
+)

@@ -6,14 +6,11 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-
-  text = str(page.text)
   newtext = text
 
   newtext = re.sub(r"\{\{ru-noun form\|[^|=]*\|([^|=]*)\|tr=.*?\}\}\n\n# \{\{alternative (?:form|spelling) of\|(.*?)\|lang=ru\}\}\n\n\[\[Category:Russian spellings with е instead of ё\]\]",
@@ -27,9 +24,9 @@ def process_page(page, index, parsed):
   return newtext, "Replaced manual alt-ё specification with {{ru-pos-alt-ё}}"
 
 parser = blib.create_argparser("Replace manual alt-ё specification with {{ru-pos-alt-ё}}",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Russian spellings with е instead of ё"])

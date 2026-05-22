@@ -28,8 +28,7 @@ def process_page_for_rename(page, index):
     errandpagemsg("Would move '%s' to '%s': comment=%s" % (pagename, totitle, comment))
 
 
-def process_page_for_fix(page, index, parsed):
-  pagename = str(page.title())
+def process_text_on_page_for_fix(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
   def errandpagemsg(txt):
@@ -38,8 +37,6 @@ def process_page_for_fix(page, index, parsed):
   pagemsg("Processing")
 
   notes = []
-
-  text = str(page.text)
 
   newtext = re.sub(r"\[\[(.*?)\]\]", r"{{l|kmr|\1}}", text)
   if newtext != text:
@@ -61,9 +58,10 @@ def process_page_for_fix(page, index, parsed):
 
   return text, notes
 
-parser = blib.create_argparser("Move 'Kurdish' rhymes page to Northern Kurdish", include_pagefile=True)
+parser = blib.create_argparser("Move 'Kurdish' rhymes page to Northern Kurdish",
+                               include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(args, start, end, process_page_for_rename, default_cats=["Kurdish rhymes"])
-blib.do_pagefile_cats_refs(args, start, end, process_page_for_fix, default_cats=["Kurdish rhymes"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_fix, default_cats=["Kurdish rhymes"], edit=True, stdin=True)

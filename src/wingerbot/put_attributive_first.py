@@ -3,25 +3,15 @@
 
 import pywikibot, re, sys, argparse
 from wingerbot import blib
-from wingerbot.blib import site, msg, errmsg
+from wingerbot.blib import site, msg, errandmsg
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
-
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
   def errpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  if not blib.try_repeatedly(lambda: page.exists(), pagemsg,
-      "check page existence"):
-    pagemsg("Page doesn't exist, can't add etymology")
-    return
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   notes = []
-  pagetext = str(page.text)
 
   def put_attributive_first(m):
     labels = m.group(1).split('|')
@@ -29,16 +19,16 @@ def process_page(page, index, parsed):
       labels_wo_attributive = [label for label in labels if label != 'attributive']
       labels = ['attributive'] + labels_wo_attributive
     return '{{lb|ru|%s}}' % '|'.join(labels)
-  newtext = re.sub(r'\{\{lb\|ru\|(.*?)\}\}', put_attributive_first, pagetext)
+  newtext = re.sub(r'\{\{lb\|ru\|(.*?)\}\}', put_attributive_first, text)
 
-  if newtext != pagetext:
+  if newtext != text:
     notes.append("put attributive label first")
   return newtext, notes
 
 if __name__ == "__main__":
   parser = blib.create_argparser("Put attributive label first",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
   args = parser.parse_args()
   start, end = blib.parse_start_end(args.start, args.end)
 
-  blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True)
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

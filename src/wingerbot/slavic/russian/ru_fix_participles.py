@@ -18,8 +18,7 @@ from wingerbot.blib import getparam, rmparam, msg, site
 def ensure_two_trailing_nl(text):
   return re.sub(r"\n*$", r"\n\n", text)
 
-def process_page(page, index, parsed, nowarn=False):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text, nowarn=False):
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -30,7 +29,6 @@ def process_page(page, index, parsed, nowarn=False):
     pagemsg("WARNING: Colon in page title, skipping page")
     return
 
-  text = str(page.text)
   notes = []
 
   found_participle = False
@@ -195,18 +193,18 @@ def process_page(page, index, parsed, nowarn=False):
   return new_text, notes
 
 parser = blib.create_argparser("Canonicalize various participle definition lines and fix headword and section header",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 # FIXME! Won't quite work with --pagefile or --pages; will do them twice.
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
   default_cats=["Russian participles", "Russian present active participles",
     "Russian present passive participles", "Russian past active participles",
     "Russian past passive participles"])
 
-def process_page_nowarn(page, index, parsed):
-  return process_page(page, index, parsed, nowarn=True)
+def process_text_on_page_nowarn(page, index, parsed):
+  return process_text_on_page(page, index, parsed, nowarn=True)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page_nowarn, edit=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_nowarn, edit=True, stdin=True,
   default_cats=["Russian non-lemma forms"])

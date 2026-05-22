@@ -5,11 +5,9 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
-
 from wingerbot.latin import lalib
 
-def process_page(page, index, adverb):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -17,7 +15,10 @@ def process_page(page, index, adverb):
 
   pagemsg("Processing")
 
-  text = str(page.text)
+  adv = adj_to_adv.get(pagetitle)
+  if not adv:
+    pagemsg("WARNING: Can't find adverb for adjective pagetitle")
+    return
 
   parsed = blib.parse_text(text)
   adj_template = None
@@ -45,7 +46,7 @@ def process_page(page, index, adverb):
     template_to_fix = part_template
   else:
     pagemsg("WARNING: Didn't see adjective or participle template")
-    return None, None
+    return
   existing_advs = blib.fetch_param_chain(template_to_fix, "adv", "adv")
   changed = False
   for i in range(len(existing_advs)):
@@ -72,19 +73,22 @@ def process_page(page, index, adverb):
 
   return str(parsed), notes
 
-parser = blib.create_argparser("Add Latin adverbs to adjectives based on the output of find_latin_adj_for_adv.py")
+parser = blib.create_argparser(
+  "Add Latin adverbs to adjectives based on the output of find_latin_adj_for_adv.py",
+  include_pagefile=True, include_stdin=True)
 parser.add_argument("--direcfile", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
+adj_to_adv = {}
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
   m = re.search("^(.*?) /// (.*?) /// .*? /// .*?$", line)
   if not m:
     msg("Line %s: Unrecognized line: %s" % (i, line))
     continue
   adv, adj = m.groups()
-  def do_process_page(page, index, parsed):
-    return process_page(page, index, adv)
-  blib.do_edit(pywikibot.Page(site, lalib.remove_macrons(adj)), i,
-      do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
-blib.elapsed_time()
+  adj_to_adv[lalib.remove_macrons(adj)] = adv
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_keys=list(adj_to_adv.keys()))

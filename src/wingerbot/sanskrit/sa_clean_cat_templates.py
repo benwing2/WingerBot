@@ -18,15 +18,12 @@ templates = [
   "sa-pra2s",
 ]
 
-def process_page(page, index, parsed, remove_manual_cats=False):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
-
-  text = str(page.text)
 
   for t in templates:
     newtext = re.sub(r"\n*\{\{%s\}\}" % t, "", text)
@@ -41,7 +38,8 @@ def process_page(page, index, parsed, remove_manual_cats=False):
 
   return text, notes
 
-parser = blib.create_argparser("Remove unnecessary {{sa-*}} category templates")
+parser = blib.create_argparser(
+  "Remove unnecessary {{sa-*}} category templates", include_pagefile=True, include_stdin=True)
 parser.add_argument("--delete-templates", action="store_true")
 parser.add_argument("--remove-manual-cats", action="store_true")
 parser.add_argument("--delete-verb-subcats", action="store_true")
@@ -49,13 +47,14 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.remove_manual_cats:
+  cats_to_do = []
   for i, catpage in blib.cat_subcats("Sanskrit verb forms", recurse=True):
-    msg("In category %s:" % str(catpage.title()))
-    for j, page in blib.cat_articles(catpage, start, end):
-      msg("Page %s" % str(page.title()))
-      blib.do_edit(page, j,
-        lambda p, index, parsed: process_page(p, index, parsed, remove_manual_cats=True),
-        save=args.save, verbose=args.verbose)
+    cat = str(catpage.title())
+    if cat not in cats_to_do:
+      cats_to_do.append(cat)
+  blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True,
+    default_cats=cats_to_do)
 elif args.delete_verb_subcats:
   for i, catpage in blib.cat_subcats("Sanskrit verb forms", recurse=True):
     msg("In category %s:" % str(catpage.title()))
@@ -70,8 +69,6 @@ elif args.delete_templates:
       page = pywikibot.Page(site, "Template:%s" % template)
       page.delete("Remove unnecessary {{sa-*}} category templates")
 else:
-  for template in templates:
-    msg("Processing references to Template:%s" % template)
-    for i, page in blib.references("Template:%s" % template, start, end):
-      blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
-
+  blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True,
+    default_refs=["Template:%s" for template in templates])

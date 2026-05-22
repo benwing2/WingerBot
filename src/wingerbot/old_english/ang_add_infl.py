@@ -30,8 +30,7 @@ pos_to_old_style_infl_template_prefix = {
 def get_indentation_level(header):
   return len(re.sub("[^=].*", "", header, 0, re.S))
 
-def process_page(page, index, pos):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -40,7 +39,6 @@ def process_page(page, index, pos):
 
   pagemsg("Processing")
 
-  text = str(page.text)
   retval = blib.find_modifiable_lang_section(text, "Old English", pagemsg)
   if retval is None:
     pagemsg("WARNING: Couldn't find Old English section")
@@ -151,7 +149,7 @@ def process_page(page, index, pos):
   return text, notes
 
 parser = blib.create_argparser("Find Old English noun/verb/adjective inflections or add new ones",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 parser.add_argument("--pos", help="Part of speech (noun, proper noun, verb, adjective)")
 parser.add_argument("--new-infls", help="File of new inflections")
 args = parser.parse_args()
@@ -172,8 +170,5 @@ if args.new_infls:
   for page in saw_multiple:
     del pages_to_infls[page]
 
-def do_process_page(page, index, parsed=None):
-  return process_page(page, index, args.pos)
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_page,
-    edit=not not pages_to_infls, default_cats=["Old English %ss" % args.pos])
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+    edit=not not pages_to_infls, stdin=True, default_cats=["Old English %ss" % args.pos])

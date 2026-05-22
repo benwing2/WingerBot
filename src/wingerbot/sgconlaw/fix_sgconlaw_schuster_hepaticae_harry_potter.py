@@ -18,15 +18,12 @@ def rsub_repeatedly(fr, to, text):
       return text
     text = newtext
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   notes = []
-
-  text = str(page.text)
 
   newtext = rsub_repeatedly(r"\n(:?#+)\* \{\{RQ:Schuster Hepaticae V\|(.*)\}\}:?\n\1\*: (.*)(\n|$)",
       r"\n\1* {{RQ:Schuster Hepaticae|volume=V|page=\2|text=\3}}\4",
@@ -51,11 +48,12 @@ def process_page(page, index, parsed):
 
   return text, notes
 
-parser = blib.create_argparser("Rename {{RQ:Schuster Hepaticae V}} and {{RQ:Harry Potter}} templates")
+parser = blib.create_argparser(
+  "Rename {{RQ:Schuster Hepaticae V}} and {{RQ:Harry Potter}} templates", include_pagefile=True,
+  include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for template in templates:
-  msg("Processing references to Template:%s" % template)
-  for i, page in blib.references("Template:%s" % template, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:%s" % template for template in templates])

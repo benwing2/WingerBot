@@ -7,16 +7,15 @@ from wingerbot.blib import getparam, rmparam, msg, errmsg, errandmsg, site
 import pywikibot, re, sys, argparse
 from wingerbot.slavic.russian import rulib
 
-def process_page(index, page, contents, verbose, comment):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  if verbose:
-    pagemsg("For [[%s]]:" % pagename)
-    pagemsg("------- begin text --------")
-    msg(contents.rstrip("\n"))
-    msg("------- end text --------")
+  props = pagetitle_to_props.get(pagetitle, None)
+  if not props:
+    pagemsg("WARNING: Can't locate properties for page")
+    return
+  index, contents, comment = props
 
   if not contents.endswith("\n"):
     contents += "\n"
@@ -33,11 +32,10 @@ def process_page(index, page, contents, verbose, comment):
     return outlines
 
   def do_process():
-    if not page.exists():
+    if not text:
       pagemsg("WARNING: Page doesn't exist")
       return
     else:
-      text = page.text
       retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
       if retval is None:
         return
@@ -127,41 +125,35 @@ def process_page(index, page, contents, verbose, comment):
       msg("\n".join(outlines))
   return retval
 
+pagetitle_to_props = {}
+
 if __name__ == "__main__":
-  parser = blib.create_argparser("Push new Russian derived-verb tables from infer_ru_derverb_prefixes.py",
-    suppress_start_end=True)
-  parser.add_argument('files', nargs='*', help="Files containing directives.")
-  parser.add_argument("--direcfile", help="File containing entries.")
+  parser = blib.create_argparser(
+    "Push new Russian derived-verb tables from infer_ru_derverb_prefixes.py",
+    include_pagefile=True, include_stdin=True)
+  parser.add_argument("--files", help="Comma-separated list of files containing text.")
+  parser.add_argument("--direcfile", help="File containing find-regex-style file text.")
   parser.add_argument("--comment", help="Comment to use.", required=True)
-  parser.add_argument("--pagefile", help="File to restrict list of pages done.")
   args = parser.parse_args()
 
-  if args.pagefile:
-    pages = set(blib.yield_items_from_file(args.pagefile))
-  else:
-    pages = set()
+  if args.files:
+    files = args.files.split(",")
+    for index, extfn in enumerate(files):
+      lines = list(blib.yield_items_from_file(extfn))
+      pagetitle = re.sub(r"\.der$", "", rulib.recompose(extfn))
+      pagetitle_to_props[pagetitle] = (index, "\n".join(lines), args.comment)
 
-  if args.direcfile:
+  elif args.direcfile:
     lines = open(args.direcfile, "r", encoding="utf-8")
-
-    index_pagename_text_comment = blib.yield_text_from_find_regex(lines, args.verbose)
-    for _, (index, pagename, text, comment) in blib.iter_items(index_pagename_text_comment,
+    index_pagetitle_text_comment = blib.yield_text_from_find_regex(lines, args.verbose)
+    for _, (index, pagetitle, text, comment) in blib.iter_items(index_pagetitle_text_comment,
         get_name=lambda x:x[1], get_index=lambda x:x[0]):
-      if pages and pagename not in pages:
-        continue
       if comment:
         comment = "%s; %s" % (comment, args.comment)
       else:
         comment = args.comment
-      def do_process_page(page, index, parsed):
-        return process_page(index, page, text, args.verbose, comment)
-      blib.do_edit(pywikibot.Page(site, pagename), index, do_process_page,
-          save=args.save, verbose=args.verbose, diff=args.diff)
-  else:
-    for index, extfn in enumerate(args.files):
-      lines = list(blib.yield_items_from_file(extfn))
-      pagename = re.sub(r"\.der$", "", rulib.recompose(extfn))
-      def do_process_page(page, index, parsed):
-        return process_page(index, page, "\n".join(lines), args.verbose, args.comment)
-      blib.do_edit(pywikibot.Page(site, pagename), index + 1, do_process_page,
-          save=args.save, verbose=args.verbose, diff=args.diff)
+      pagetitle_to_props[pagetitle] = (index, text, comment)
+
+  blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True,
+    default_pages=list(pagetitle_to_props.keys()))

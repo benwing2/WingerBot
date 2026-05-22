@@ -8,12 +8,13 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
+          
+  parsed = blib.parse_text(text)
 
   notes = []
   adjval = None
@@ -46,11 +47,12 @@ def process_page(page, index, parsed):
 
   return parsed, notes
 
-parser = blib.create_argparser("Add accented forms to {{cardinalbox}} and {{ordinalbox}}")
+parser = blib.create_argparser(
+  "Add accented forms to {{cardinalbox}} and {{ordinalbox}}",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, page in blib.cat_articles("Russian ordinal numbers", start, end):
-  blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
-for i, page in blib.cat_articles("Russian numerals", start, end):
-  blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Russian ordinal numbers", "Russian numerals"])

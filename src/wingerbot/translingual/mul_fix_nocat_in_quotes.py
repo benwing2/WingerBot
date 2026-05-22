@@ -6,15 +6,14 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   if blib.page_should_be_ignored(pagetitle):
     pagemsg("Skipping ignored page")
-    return None, ""
-      
+    return
+
   def hack_templates(parsed, subsectitle):
     for t in parsed.filter_templates():
       origt = str(t)
@@ -44,7 +43,6 @@ def process_page(page, index, parsed):
 
   pagemsg("Processing")
 
-  text = str(page.text)
   notes = []
 
   sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
@@ -68,11 +66,12 @@ def process_page(page, index, parsed):
   newtext = "".join(sections)
   return newtext, notes
 
-parser = blib.create_argparser("Convert nocat=1 in Translingual quote-* templates to termlang=en")
+parser = blib.create_argparser(
+  "Convert nocat=1 in Translingual quote-* templates to termlang=en", include_pagefile=True,
+  include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for cat in ["Quotations using nocat parameter"]:
-  msg("Processing category %s" % cat)
-  for i, page in blib.cat_articles(cat, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Quotations using nocat parameter"])

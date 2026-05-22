@@ -4,15 +4,11 @@
 import pywikibot, re, sys, argparse, copy
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, tname, msg, site
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
@@ -31,21 +27,15 @@ def process_page(page, index, parsed):
 
   return parsed, notes
 
-parser = blib.create_argparser("Fix up verb conjugations to not specify -refl")
+parser = blib.create_argparser(
+  "Fix up verb conjugations to not specify -refl",
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_edit(pywikibot.Page(site, "User:Benwing2/test-ru-verb"), 1,
-  process_page, save=args.save, verbose=args.verbose)
-blib.do_edit(pywikibot.Page(site, "User:Benwing2/test-ru-verb-2"), 2,
-  process_page, save=args.save, verbose=args.verbose)
-for ref in ["Template:ru-conj-old"]:
-  msg("Processing references to: %s" % ref)
-  for i, page in blib.references(ref, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
-blib.do_edit(pywikibot.Page(site, "Module:ru-verb/documentation"), 1,
-  process_page, save=args.save, verbose=args.verbose)
-for category in ["Russian verbs"]:
-  msg("Processing category: %s" % category)
-  for i, page in blib.cat_articles(category, start, end):
-    blib.do_edit(page, i, process_page, save=args.save, verbose=args.verbose)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:ru-conj-old"],
+  default_cats=["Russian verbs"],
+  default_pages=["User:Benwing2/test-ru-verb", "User:Benwing2/test-ru-verb-2", "Module:ru-verb/documentation"],
+)

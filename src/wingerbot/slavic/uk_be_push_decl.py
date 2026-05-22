@@ -7,7 +7,6 @@ import pywikibot
 
 from wingerbot import blib
 from wingerbot.blib import rmparam, getparam, msg, site, tname
-
 from wingerbot.slavic.ukrainian import uklib as uk
 from wingerbot.slavic.belarusian import belib as be
 

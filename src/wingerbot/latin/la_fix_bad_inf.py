@@ -8,14 +8,11 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 from wingerbot.latin import lalib
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-
-  text = str(page.text)
   origtext = text
 
   retval = lalib.find_latin_section(text, pagemsg)
@@ -123,8 +120,8 @@ From {{m|la|%s}}.
   return "".join(sections), comment
 
 parser = blib.create_argparser("Fix Latin forms wrongly specified as infinitives that should be participles or gerunds",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

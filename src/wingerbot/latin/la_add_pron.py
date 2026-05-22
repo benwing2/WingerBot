@@ -276,18 +276,21 @@ lemma_headword_to_pronun_mapping_cache = {}
 # of an etym section), and for each such lemma fetch a mapping from
 # headword-derived stems to pronunciations as found in the la-IPA templates.
 # Return PRONUNMAPPING, a map as described above.
-def lookup_pronun_mapping(parsed, verbose, pagemsg):
+def lookup_pronun_mapping(parsed, pagemsg, errandpagemsg):
   lemmas = get_lemmas_of_form_page(parsed)
   all_pronunmappings = {}
   orig_pagemsg = pagemsg
+  orig_errandpagemsg = errandpagemsg
   for lemma in lemmas:
-    # Create our own pagemsg() that lists the lemma
+    # Create our own pagemsg() and errandpagemsg() that lists the lemma
     def pagemsg(txt):
       orig_pagemsg("%s: %s" % (lemma, txt))
+    def errandpagemsg(txt):
+      orig_errandpagemsg("%s: %s" % (lemma, txt))
     # Need to create our own expand_text() with the page title set to the
     # lemma
     def expand_text(t):
-      return blib.expand_text(t, lemma, pagemsg, verbose)
+      return blib.expand_text(t, lemma, pagemsg, args.verbose)
 
     if lemma in lemma_headword_to_pronun_mapping_cache:
       cached = True
@@ -295,12 +298,8 @@ def lookup_pronun_mapping(parsed, verbose, pagemsg):
     else:
       cached = False
       newpage = pywikibot.Page(site, lemma)
-      try:
-        parsed = blib.parse(newpage)
-      except pywikibot.exceptions.InvalidTitle as e:
-        pagemsg("WARNING: Invalid title, skipping")
-        traceback.print_exc(file=sys.stdout)
-        continue
+      newpagetext = blib.safe_page_text(newpage, errandpagemsg)
+      parsed = blib.parse_text(newpagetext)
 
       # Compute headword->pronun mapping
       headwords = get_headword_pronuns(parsed, lemma, pagemsg, expand_text)
@@ -308,7 +307,7 @@ def lookup_pronun_mapping(parsed, verbose, pagemsg):
 
       # Find the pronunciations but also get pre-text and post-text
       for m in re.finditer(r"^(.*)(\{\{la-IPA(?:\|[^}]*)?\}\})(.*)$",
-          newpage.text, re.M):
+          newpagetext, re.M):
         pretext = m.group(1)
         laIPA = m.group(2)
         posttext = m.group(3)
@@ -347,8 +346,8 @@ def lookup_pronun_mapping(parsed, verbose, pagemsg):
 
   return all_pronunmappings
 
-def process_section(section, indentlevel, headword_pronuns, program_args,
-    pagetitle, verbose, pagemsg, expand_text):
+def process_section(section, indentlevel, headword_pronuns, args,
+    pagetitle, pagemsg, errandpagemsg, expand_text):
   assert indentlevel in [3, 4]
   notes = []
 
@@ -356,7 +355,7 @@ def process_section(section, indentlevel, headword_pronuns, program_args,
 
   parsed = blib.parse_text(section)
 
-  pronunmapping = lookup_pronun_mapping(parsed, verbose, pagemsg)
+  pronunmapping = lookup_pronun_mapping(parsed, pagemsg, errandpagemsg)
 
   pronun_lines = []
   # Figure out how many headword variants there are, and if there is more
@@ -474,7 +473,7 @@ def process_section(section, indentlevel, headword_pronuns, program_args,
     pagemsg("WARNING: Found the word 'initialism', please check")
 
   overrode_existing_pronun = False
-  if program_args.override_pronun:
+  if args.override_pronun:
     pronun_line_re = r"^(\* .*\{\{la-IPA(?:\|([^}]*))?\}\}.*)\n"
     for m in re.finditer(pronun_line_re, section, re.M):
       overrode_existing_pronun = True
@@ -558,12 +557,25 @@ def process_section(section, indentlevel, headword_pronuns, program_args,
 
   return section, notes, was_unable_to_match
 
-def process_page_text(index, text, pagetitle, program_args):
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, program_args.verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+
+  pagemsg("Processing")
+
+  if ":" in pagetitle:
+    pagemsg("WARNING: Colon in page title, skipping")
+    return
+
+  for skip_regex in skip_pages:
+    if re.search(skip_regex, pagetitle):
+      pagemsg("WARNING: Skipping because page in skip_pages matching %s" %
+          skip_regex)
+      return
 
   notes = []
 
@@ -734,8 +746,8 @@ def process_page_text(index, text, pagetitle, program_args):
             if not etym_headword_pronuns[k]:
               continue
             result = process_section(etymsections[k], 4,
-                etym_headword_pronuns[k], program_args, pagetitle,
-                program_args.verbose, pagemsg, expand_text)
+                etym_headword_pronuns[k], args, pagetitle,
+                pagemsg, errandpagemsg, expand_text)
             if result is None:
               continue
             etymsections[k], etymsection_notes, etymsection_unable_to_match = result
@@ -765,7 +777,7 @@ def process_page_text(index, text, pagetitle, program_args):
 
         # Process the section
         result = process_section(sections[j], 3, headword_pronuns,
-            program_args, pagetitle, program_args.verbose, pagemsg, expand_text)
+            args, pagetitle, pagemsg, errandpagemsg, expand_text)
         if result is None:
           continue
         sections[j], section_notes, section_unable_to_match = result
@@ -792,38 +804,7 @@ def process_page_text(index, text, pagetitle, program_args):
     notes = [fmt_key_val(x, y) for x, y in notescount]
     comment = "; ".join(notes)
 
-  return text, comment, was_unable_to_match
-
-def process_page(index, page, program_args):
-  pagetitle = str(page.title())
-
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  pagemsg("Processing")
-
-  if ":" in pagetitle:
-    pagemsg("WARNING: Colon in page title, skipping")
-    return None, None
-
-  for skip_regex in skip_pages:
-    if re.search(skip_regex, pagetitle):
-      pagemsg("WARNING: Skipping because page in skip_pages matching %s" %
-          skip_regex)
-      return None, None
-
-  if not page.exists():
-    pagemsg("WARNING: Page doesn't exist")
-    return None, None
-
-  text = str(page.text)
-  result = process_page_text(index, text, pagetitle, program_args)
-  if result is None:
-    return None, None
-
-  newtext, comment, was_unable_to_match = result
-
-  if newtext != text:
+  if text != orig_text:
     assert comment
     if was_unable_to_match:
       pagemsg("WARNING: Would save and unable to match mapping")
@@ -831,14 +812,14 @@ def process_page(index, page, program_args):
   # Eliminate sequences of 3 or more newlines, which may come from
   # ensure_two_trailing_nl(). Add comment if none, in case of existing page
   # with extra newlines.
-  newnewtext = re.sub(r"\n\n\n+", r"\n\n", newtext)
-  if newnewtext != newtext and not comment:
+  newtext = re.sub(r"\n\n\n+", r"\n\n", text)
+  if newtext != text and not comment:
     comment = "eliminate sequences of 3 or more newlines"
-  newtext = newnewtext
+  text = newtext
 
-  return newtext, comment
+  return text, comment
 
-def process_lemma(index, pagetitle, slots, program_args):
+def process_lemma(index, pagetitle, slots, args):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -847,10 +828,11 @@ def process_lemma(index, pagetitle, slots, program_args):
   pagemsg("Processing")
 
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, program_args.verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   page = pywikibot.Page(site, pagetitle)
-  parsed = blib.parse(page)
+  pagetext = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(pagetext)
   for t in parsed.filter_templates():
     tn = tname(t)
     pos = None
@@ -861,8 +843,8 @@ def process_lemma(index, pagetitle, slots, program_args):
     elif tn == "la-adecl":
       pos = "adj"
     if pos:
-      args = lalib.generate_infl_forms(pos, str(t), errandpagemsg, expand_text)
-      for slot in args:
+      inflargs = lalib.generate_infl_forms(pos, str(t), errandpagemsg, expand_text)
+      for slot in inflargs:
         matches = False
         for spec in slots:
           if spec == slot:
@@ -872,7 +854,7 @@ def process_lemma(index, pagetitle, slots, program_args):
             matches = True
             break
         if matches:
-          for formpagename in re.split(",", args[slot]):
+          for formpagename in re.split(",", inflargs[slot]):
             if "[" in formpagename or "|" in formpagename:
               pagemsg("WARNING: Skipping page %s with links in it" % formpagename)
             else:
@@ -884,12 +866,14 @@ def process_lemma(index, pagetitle, slots, program_args):
                 pagemsg("WARNING: Skipping dictionary form")
               else:
                 def do_process_page(page, index, parsed):
-                  return process_page(index, page, program_args)
-                blib.do_edit(formpage, index, do_process_page,
-                    save=program_args.save, verbose=program_args.verbose,
-                    diff=program_args.diff)
+                  pagetitle = str(page.title)
+                  text = blib.safe_page_text(page, errandpagemsg)
+                  return process_text_on_page(index, pagetitle, text)
+                blib.do_edit(formpage, index, do_process_page, save=args.save, verbose=args.verbose,
+                    diff=args.diff)
 
-parser = blib.create_argparser("Add pronunciation sections to Latin Wiktionary entries", include_pagefile=True)
+parser = blib.create_argparser("Add pronunciation sections to Latin Wiktionary entries",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument('--lemma-file', help="File containing lemmas to process, one per line; non-lemma forms will be done")
 parser.add_argument('--lemmas', help="List of comma-separated lemmas to process; non-lemma forms will be done")
 parser.add_argument("--slots", help="Slots to process in conjunction with --lemmas and --lemma-file.")
@@ -908,10 +892,8 @@ if args.lemma_file or args.lemmas:
     process_lemma(i, lalib.remove_macrons(lemma), slots, args)
 
 else:
-  def do_process_page(page, index, parsed):
-    return process_page(index, page, args)
-  blib.do_pagefile_cats_refs(args, start, end, do_process_page,
-      default_cats=["Latin lemmas", "Latin non-lemma forms"], edit=True)
+  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+      default_cats=["Latin lemmas", "Latin non-lemma forms"], edit=True, stdin=True)
 
 def subval_to_string(subval):
   if type(subval) is tuple:
@@ -925,5 +907,3 @@ for regex, subvals in manual_pronun_mapping:
     msg("WARNING: Unapplied manual_pronun_mapping %s->%s" % (regex,
       ",".join(subval_to_string(x) for x in subvals) if type(subvals) is list
       else subval_to_string(subvals)))
-
-blib.elapsed_time()

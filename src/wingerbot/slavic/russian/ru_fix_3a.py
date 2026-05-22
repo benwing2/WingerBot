@@ -4,25 +4,29 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
 
 from wingerbot.slavic.russian import rulib
 
-def process_page(index, page, direc, delete_bad, verbose):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  def expand_text(tempcall):
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("WARNING: Script no longer applies and would need fixing up")
   return
 
-  def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
-
   pagemsg("Processing")
 
-  text = str(page.text)
-  parsed = blib.parse(page)
+  direc = pagetitle_to_direc.get(pagetitle, None)
+  if not direc:
+    pagemsg("WARNING: Can't locate directive for page")
+    return
+
+  parsed = blib.parse_text(text)
   notes = []
   direc = direc.replace("3oa", "3°a")
   for t in parsed.filter_templates():
@@ -49,7 +53,7 @@ def process_page(index, page, direc, delete_bad, verbose):
       if not result:
         pagemsg("WARNING: Error generating forms, skipping")
         continue
-      if delete_bad:
+      if args.delete_bad:
         newargs = blib.split_generate_args(result)
         for form in ["past_m", "past_f", "past_n", "past_pl", "past_m_short",
             "past_f_short", "past_n_short", "past_pl_short"]:
@@ -98,9 +102,11 @@ parser.add_argument('--delete-bad', action="store_true", help="Delete bad forms.
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
+pagetitle_to_direc = {}
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
   page, direc = re.split(" ", line)
-  def do_process_page(page, index, parsed):
-    return process_page(index, page, direc, args.delete_bad, args.verbose)
-  blib.do_edit(pywikibot.Page(site, page), i, do_process_page, save=args.save,
-    verbose=args.verbose, diff=args.diff)
+  pagetitle_to_direc[page] = direc
+
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_pages=list(pagetitle_to_direc.keys()))

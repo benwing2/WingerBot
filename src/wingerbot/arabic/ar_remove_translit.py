@@ -8,8 +8,9 @@ import pywikibot
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam
 
-from wingerbot.arabic import arlib
-from wingerbot.arabic import ar_translit
+from wingerbot.arabic import arlib, ar_translit
+
+raise RuntimeError("No longer works; needs rewriting")
 
 # Compare the auto-translit of PARAM with the corresponding transliteration
 # parameter PARAMTR. If both found and both the same, remove the translit

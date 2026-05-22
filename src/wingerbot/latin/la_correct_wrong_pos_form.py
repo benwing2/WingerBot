@@ -5,7 +5,6 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
-
 from wingerbot.latin import lalib
 
 def process_form(page, index, slot, form, pos, pagemsg):
@@ -19,13 +18,11 @@ def process_form(page, index, slot, form, pos, pagemsg):
 
   if not page.exists():
     pagemsg("Skipping form value %s, page doesn't exist" % form)
-    return None, None
-
-  text = str(page.text)
+    return
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
   sections, j, secbody, sectail, has_non_latin = retval
 
@@ -70,8 +67,7 @@ def process_form(page, index, slot, form, pos, pagemsg):
   text = "".join(sections)
   return text, notes
 
-def process_page(page, index):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -79,11 +75,9 @@ def process_page(page, index):
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-  text = str(page.text)
-
   retval = lalib.find_heads_and_defns(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
   (
     sections, j, secbody, sectail, has_non_latin, subsections,
@@ -117,7 +111,7 @@ def process_page(page, index):
     expected_inflt = "la-ndecl"
 
   if not headwords_to_do:
-    return None, None
+    return
 
   for headword in headwords_to_do:
     for inflt in headword['infl_templates']:
@@ -150,9 +144,9 @@ def process_page(page, index):
             handler, save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Correct headers/headwords of non-lemma forms with the wrong part of speech",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True,
   default_cats=["Latin participles", "Latin proper nouns"])

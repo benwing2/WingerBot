@@ -6,13 +6,12 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(index, page):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   found_headword_template = False
   headword_templates = []
@@ -33,17 +32,13 @@ def process_page(index, page):
     else:
       pagemsg("Found old-style headword template(s) %s without decl" % ", ".join(headword_templates))
 
-parser = blib.create_argparser("Find Russian nouns without declension")
+parser = blib.create_argparser(
+  "Find Russian nouns without declension", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-#for pos in ["nouns", "proper nouns"]:
-#  Do multi-word nouns
-#  tracking_page = "Template:tracking/ru-headword/space-in-headword/" + pos
-#  msg("Processing references to %s" % tracking_page)
-#  for index, page in blib.references(tracking_page, start, end):
-#    process_page(index, page)
-#  Do all nouns with {{ru-noun}} or {{ru-proper noun}}
-for template in ["ru-noun", "ru-proper noun"]:
-  for index, page in blib.references("Template:%s" % template, start, end):
-    process_page(index, page)
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:ru-noun", "Template:ru-proper noun"],
+  #default_refs=["Template:tracking/ru-headword/space-in-headword/%s" % pos for pos in ["nouns", "proper nouns"]],
+)

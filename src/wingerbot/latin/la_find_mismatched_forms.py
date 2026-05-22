@@ -57,14 +57,7 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
     if args.verbose:
       pagemsg("Couldn't find %s in heads_and_defns_cache" % lemma_pagetitle)
     page = pywikibot.Page(site, lemma_pagetitle)
-    try:
-      exists = blib.try_repeatedly(lambda: page.exists(), pagemsg, "determine if page exists")
-    except pywikibot.exceptions.InvalidTitle as e:
-      pagemsg("WARNING: Invalid title %s, skipping" % lemma_pagetitle)
-      heads_and_defns_cache[lemma_pagetitle] = "nonexistent"
-      traceback.print_exc(file=sys.stdout)
-      return None
-    if not exists:
+    if not blib.safe_page_exists(page, errandpagemsg):
       pagemsg("WARNING: Lemma %s doesn't exist" % lemma_no_macrons)
       heads_and_defns_cache[lemma_pagetitle] = "nonexistent"
       return None

@@ -2,13 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import pywikibot, re, sys, argparse, time
-import traceback
-import unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
-from collections import OrderedDict
-
 from wingerbot.slavic.russian import rulib
 
 ordinals = {
@@ -356,7 +352,12 @@ def generate_page(num):
     generate_decl(num)
 )
 
-def process_page(index, num, save, verbose, params):
+def process_text_on_page(index, pagetitle, text):
+  def pagemsg(txt):
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+
   comment = None
   notes = []
 
@@ -364,33 +365,13 @@ def process_page(index, num, save, verbose, params):
   pagetitle = rulib.remove_accents(lemma)
   newtext = generate_page(num)
 
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  # Prepare to create page
-  pagemsg("Creating entry")
-  page = pywikibot.Page(site, pagetitle)
-
-  # If invalid title, don't do anything.
-  existing_text = blib.safe_page_text(page, errandpagemsg, bad_value_ret=None)
-  if existing_text is None:
-    return
-
-  if not blib.safe_page_exists(page, errandpagemsg):
+  if not text:
     # Page doesn't exist. Create it.
     pagemsg("Creating page")
-    comment = "Create page for Russian numeral %s (%s)" % (
-        lemma, num)
-    page.text = newtext
-    if verbose:
-      pagemsg("New text is [[%s]]" % page.text)
+    return newtext, "Create page for Russian numeral %s (%s)" % (lemma, num)
   else: # Page does exist
-    pagetext = existing_text
-
     # Split into sections
-    splitsections = re.split("(^==[^=\n]+==\n)", pagetext, 0, re.M)
+    splitsections = re.split("(^==[^=\n]+==\n)", text, 0, re.M)
     # Extract off pagehead and recombine section headers with following text
     pagehead = splitsections[0]
     sections = []
@@ -414,8 +395,8 @@ def process_page(index, num, save, verbose, params):
           # because we always break after processing the Russian section.
           sections[i:i+1] = [mm.group(1), mm.group(2)]
 
-        if params.overwrite_page:
-          if "==Etymology 1==" in sections[i] and not params.overwrite_etymologies:
+        if args.overwrite_page:
+          if "==Etymology 1==" in sections[i] and not args.overwrite_etymologies:
             errandpagemsg("WARNING: Found ==Etymology 1== in page text, not overwriting, skipping form")
             return
           else:
@@ -444,21 +425,21 @@ def process_page(index, num, save, verbose, params):
         sections[-1] = ensure_two_trailing_nl(sections[-1])
         sections += ["----\n\n", newtext]
       else:
-        if not params.overwrite_page:
+        if not args.overwrite_page:
           notes.append("formerly empty")
         if pagehead.lower().startswith("#redirect"):
           pagemsg("WARNING: Page is redirect, overwriting")
           notes.append("overwrite redirect")
           pagehead = re.sub(r"#redirect *\[\[(.*?)\]\] *(<!--.*?--> *)*\n*",
               r"{{also|\1}}\n", pagehead, 0, re.I)
-        elif not params.overwrite_page:
+        elif not args.overwrite_page:
           pagemsg("WARNING: No language sections in current page")
         sections += [newtext]
 
     # End of loop over sections in existing page; rejoin sections
     newtext = pagehead + ''.join(sections)
 
-    if page.text != newtext:
+    if text != newtext:
       assert comment or notes
 
     # Eliminate sequences of 3 or more newlines, which may come from
@@ -469,13 +450,10 @@ def process_page(index, num, save, verbose, params):
       notes = ["eliminate sequences of 3 or more newlines"]
     newtext = newnewtext
 
-    if page.text == newtext:
+    if text == newtext:
       pagemsg("No change in text")
-    elif verbose:
-      pagemsg("Replacing <%s> with <%s>" % (page.text, newtext))
-    else:
-      pagemsg("Text has changed")
-    page.text = newtext
+    elif args.verbose:
+      pagemsg("Replacing <%s> with <%s>" % (text, newtext))
 
   # Executed whether creating new page or modifying existing page.
   # Check for changed text and save if so.
@@ -485,27 +463,24 @@ def process_page(index, num, save, verbose, params):
       comment += " (%s)" % notestext
     else:
       comment = notestext
-  if page.text != existing_text:
-    if save:
-      pagemsg("Saving with comment = %s" % comment)
-      blib.safe_page_save(page, comment, errandpagemsg)
-    else:
-      pagemsg("Would save with comment = %s" % comment)
 
-pa = blib.create_argparser("Save Russian numbers to Wiktionary")
-pa.add_argument("--offline", help="Operate offline, outputting text of new pages", action="store_true")
-pa.add_argument("--overwrite-page", action="store_true",
+  return newtext, comment
+
+parser = blib.create_argparser(
+  "Save Russian numbers to Wiktionary"
+  include_pagefile=True, include_stdin=True)
+parser.add_argument("--offline", help="Operate offline, outputting text of new pages", action="store_true")
+parser.add_argument("--overwrite-page", action="store_true",
     help="""If specified, overwrite the entire existing page of inflections.
 Won't do this if it finds "Etymology N", unless --overwrite-etymologies is
 given. WARNING: Be careful!""")
-pa.add_argument("--overwrite-etymologies", action="store_true",
+parser.add_argument("--overwrite-etymologies", action="store_true",
     help="""If specified and --overwrite-page, overwrite the entire existing
 page of inflections even if "Etymology N". WARNING: Be careful!""")
-pa.add_argument("--numerals",
+parser.add_argument("--numerals",
     help="""Comma-separated and/or hyphen-separated list of numerals to process.""")
-
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
 def iter_numerals():
   for ten in sorted(cardinal_tens.keys())[:-1]: # Skip 100
@@ -521,16 +496,18 @@ def iter_specified_numerals(spec):
     else:
       yield int(singlespec)
 
-if params.numerals:
-  pages = iter_specified_numerals(params.numerals)
+if args.numerals:
+  pages = iter_specified_numerals(args.numerals)
 else:
   pages = iter_numerals()
-for current, index in blib.iter_pages(pages, startFrom, upTo,
-    key=lambda x:str(x)):
-  if params.offline:
+
+if args.offline:
+  for current, index in blib.iter_pages(pages, startFrom, upTo, key=lambda x:str(x)):
     print("========== Text for #%s: ==========" % current)
     print("")
     print(generate_page(current))
     print("")
-  else:
-    process_page(index, current, params.save, params.verbose, params)
+else:
+  blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True,
+    default_pages=list(pages))

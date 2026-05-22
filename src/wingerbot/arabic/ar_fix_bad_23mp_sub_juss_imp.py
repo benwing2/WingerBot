@@ -75,8 +75,7 @@ def convert_etym_subsection_to_single_etymology_section(text):
   return "".join(subsections)
 
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errpagemsg(txt):
@@ -88,11 +87,10 @@ def process_page(page, index, parsed):
   if not pagetitle.endswith("و"):
     pagemsg("Page title doesn't end with waw, skipping")
     return
-  if not page.exists():
+  page = pywikibot.Page(site, pagetitle)
+  if not text and not page.exists():
     pagemsg("WARNING: Page doesn't exist, skipping")
     return
-
-  text = str(page.text)
   origtext = text
   sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
 
@@ -283,8 +281,8 @@ def process_page(page, index, parsed):
     return text, notes
 
 parser = blib.create_argparser("Fix misspelling in Arabic 2nd/3rd masc pl non-past subj/juss forms",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

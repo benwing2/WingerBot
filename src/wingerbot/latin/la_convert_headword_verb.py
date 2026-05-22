@@ -48,8 +48,7 @@ def new_generate_verb_forms(template, errandpagemsg, expand_text, return_raw=Fal
     return None
   return blib.split_generate_args(result)
 
-def process_page(page, index, parsed):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
@@ -58,8 +57,6 @@ def process_page(page, index, parsed):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
-
-  text = str(page.text)
   origtext = text
 
   notes = []
@@ -292,9 +289,9 @@ def process_page(page, index, parsed):
   return "".join(sections), notes
 
 parser = blib.create_argparser("Convert Latin verb headword templates to new form",
-    include_pagefile=True)
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page,
-  default_cats=["Latin verbs"], edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
+  default_cats=["Latin verbs"], edit=True, stdin=True)

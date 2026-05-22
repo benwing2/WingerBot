@@ -6,14 +6,13 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(index, page):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   found_headword_template = False
   for t in parsed.filter_templates():
@@ -28,9 +27,10 @@ def process_page(index, page):
         notes.append("found head header (%s)" % getparam(t, "2"))
     pagemsg("Missing adj headword template%s" % (notes and "; " + ",".join(notes)))
 
-parser = blib.create_argparser("Find missing Russian adjective headwords")
+parser = blib.create_argparser(
+  "Find missing Russian adjective headwords", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for index, page in blib.references("Template:ru-decl-adj", start, end):
-  process_page(index, page)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_refs=["Template:ru-decl-adj"])

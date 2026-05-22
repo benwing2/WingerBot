@@ -69,18 +69,17 @@ def correct_nom_sg_n_participle(page, index, participle, lemma):
   sections[j] = secbody + sectail
   return "".join(sections), notes
 
-def process_page(index, page, save, verbose, diff):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
 
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
 
   for t in parsed.filter_templates():
     if tname(t) == "la-conj":
@@ -95,13 +94,12 @@ def process_page(index, page, save, verbose, diff):
           def do_correct_nom_sg_n_participle(page, index, parsed):
             return correct_nom_sg_n_participle(page, index, supform,
                 args["1s_pres_actv_indc"])
-          blib.do_edit(pywikibot.Page(site,
-            lalib.remove_macrons(supform)), index,
-            do_correct_nom_sg_n_participle, save=save, verbose=verbose,
-            diff=diff)
+          blib.do_edit(pywikibot.Page(site, lalib.remove_macrons(supform)), index,
+            do_correct_nom_sg_n_participle, save=args.save, verbose=args.verbose,
+            diff=args.diff)
 
 parser = blib.create_argparser("Fix Latin impersonal passive participles and output deletion lines for non-impersonal variants",
-  include_pagefile=True)
+  include_pagefile=True, include_stdin=True)
 parser.add_argument("--ignore", help="Comma-separated pages to ignore.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
@@ -110,10 +108,8 @@ ignore_pages = []
 if args.ignore:
   ignore_pages = args.ignore.split(",")
 
-def do_process_page(page, index, parsed):
-  if str(page.title()) not in ignore_pages:
-    return process_page(index, page, args.save, args.verbose, args.diff)
-  return None, None
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_page, edit=True,
-  default_cats=["Latin verbs with impersonal passive"])
+blib.do_pagefile_cats_refs(
+  args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Latin verbs with impersonal passive"],
+  filter_pages=lambda pagetitle: pagetitle not in ignore_pages
+)
