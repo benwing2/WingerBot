@@ -101,8 +101,8 @@ def process_text_on_page(pageindex, pagetitle, text):
           elif affix.startswith("-ment<") or no_hyphen and affix.startswith("ment<"):
             try:
               inlinemod = blib.parse_inline_modifier(affix)
-            except e as ParseException:
-              pagemsg("WARNING: Unable to parse inline modifier spec %s" % affix)
+            except ParseException as e:
+              pagemsg("WARNING: Unable to parse inline modifier spec %s: %s" % (affix, str(e)))
               continue
             affix_id = inlinemod.get_modifier("id")
             if affix_id is not None:

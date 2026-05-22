@@ -3,13 +3,11 @@
 
 # Go through all Russian lemmas looking for headwords with secondary stress in them.
 
-import pywikibot, re, sys, argparse
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import getparam, tname, msg
 
-from wingerbot.slavic.russian import rulib
 from wingerbot.slavic.russian import runounlib
 
 GR = "\u0300" # grave =  ̀

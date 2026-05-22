@@ -1742,7 +1742,7 @@ def output_stats(num_counts):
 
 # Compute the list of all uppercase Unicode characters, see
 # https://stackoverflow.com/questions/36187349/python-regex-for-unicode-capitalized-words
-pLu = u'[{}]'.format("".join([unichr(i) for i in range(sys.maxunicode) if unichr(i).isupper()]))
+pLu = u'[{}]'.format("".join([chr(i) for i in range(sys.maxunicode) if chr(i).isupper()]))
 proper_noun_word_regex = r"(?u)%s[\w'.-]*" % pLu
 # The following regex requires that the first word of a county/parish/borough name be capitalized
 # and contain only letters, hyphens (Stratford-on-Avon), apostrophes (King's Lynn) and periods

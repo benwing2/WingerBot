@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# FIXME: Partly written, not working.
+
 import pywikibot, re, sys, argparse, time
 import traceback
 import unicodedata

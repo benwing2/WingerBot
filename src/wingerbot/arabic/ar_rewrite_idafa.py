@@ -9,8 +9,7 @@ from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam
 from wingerbot.arabic.arlib import arabic_decl_templates
 
-def rewrite_one_page_idafa(page, index, text):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   num_new_style = 0
@@ -19,10 +18,11 @@ def rewrite_one_page_idafa(page, index, text):
   num_basestate_ind_def = 0
   idafa_added = []
   has_proper_noun = False
-  for t in text.filter_templates():
+  parsed = blib.parse_text(text)
+  for t in parsed.filter_templates():
     if t.name == "ar-proper noun":
       has_proper_noun = True
-  for t in text.filter_templates():
+  for t in parsed.filter_templates():
     if t.name.startswith("ar-decl-"):
       changed = False
 
@@ -145,7 +145,7 @@ def rewrite_one_page_idafa(page, index, text):
   if actions:
     changelog = "; ".join(actions)
     pagemsg("Changelog = %s" % changelog)
-    return text, changelog
+    return str(parsed), changelog
   return text, ""
 
 parser = blib.create_argparser("Rewrite ʾidāfa params with idafa= param, and related changes",

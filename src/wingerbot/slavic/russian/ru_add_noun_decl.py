@@ -41,13 +41,12 @@
 # 11. (DONE) Adding declension to proper nouns, should use n=sg if proper noun
 #    is singular-only
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, site
 
-from wingerbot.slavic.russian import rulib
-from wingerbot.slavic.russian import runounlib
+from wingerbot.slavic.russian import rulib, runounlib
 
 # [singular ending, plural ending, gender, requires special case (1)]
 pl_data = [
@@ -392,12 +391,12 @@ def process_text_on_page(index, pagetitle, text):
         if found_gender == "mf":
           if not m:
             pagemsg("WARNING: For singular in -ь and plural in -и, need gender in singular and don't have it, word #%s, skipping: lemma=%s, infl=%s" %
-                (wordinfl, lemma, infl))
+                (wordind, lemma, infl))
             return None
           decl_gender = m.group(1)
           if decl_gender == "n":
             pagemsg("WARNING: For singular in -ь and plural in -и, can't have neuter gender for word #%s, skipping: lemma=%s, infl=%s" %
-                (wordinfl, lemma, infl))
+                (wordind, lemma, infl))
             return None
           elif decl_gender in ["m", "3f"]:
             pagemsg("Singular in -ь and plural in -и, already found gender %s in decl for word #%s, taking no action: lemma=%s, infl=%s" %
@@ -515,7 +514,7 @@ def process_text_on_page(index, pagetitle, text):
 
   headword_is_proper = str(headword_template.name) == "ru-proper noun"
 
-  if getparam(headword_template, "3") == "-" or "[[Category:Russian indeclinable nouns]]" in page.text:
+  if getparam(headword_template, "3") == "-" or "[[Category:Russian indeclinable nouns]]" in text:
     pagemsg("WARNING: Indeclinable noun, skipping")
     return
 

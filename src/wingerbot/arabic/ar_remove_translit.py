@@ -34,7 +34,7 @@ def process_param(pagetitle, index, template, param, paramtr,
     return True
   if latin:
     try:
-      _, canonlatin = tr_matching(arabic, latin, True, pagemsg)
+      _, canonlatin = ar_translit.tr_matching(arabic, latin, True, pagemsg)
       if not canonlatin:
         pagemsg("Unable to match-canonicalize %s (%s)" % (arabic, latin))
     except Exception as e:

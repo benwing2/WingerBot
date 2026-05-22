@@ -42,8 +42,6 @@ def add_params_to_template(t, params, seen_from_params, pagemsg):
 def process_text_on_page(index, pagename, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
   pagemsg("Processing")
 

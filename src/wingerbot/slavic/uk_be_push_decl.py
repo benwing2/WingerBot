@@ -8,8 +8,8 @@ import pywikibot
 from wingerbot import blib
 from wingerbot.blib import rmparam, getparam, msg, site, tname
 
-from wingerbot.ukrainian import uklib as uk
-from wingerbot.belarusian import belib as be
+from wingerbot.slavic.ukrainian import uklib as uk
+from wingerbot.slavic.belarusian import belib as be
 
 uk_decl_noun_slots = [
   "nom_s", "nom_p", "gen_s", "gen_p", "dat_s", "dat_p",

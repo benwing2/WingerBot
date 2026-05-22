@@ -149,7 +149,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, getparam, addparam, rmparam
 from wingerbot.slavic.russian import ruheadlib, rulib, ru_reverse_translit
 
 semi_verbose = False # Set by --semi-verbose or --verbose

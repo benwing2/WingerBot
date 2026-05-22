@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
-from wingerbot.romance.italian.snarf_it_pron import apply_default_pronun
+from wingerbot.romance.italian.it_snarf_pron import apply_default_pronun
 
 refs_re = "(Olivetti|DiPI|Treccani|DOP|Internazionale|Garzanti)"
 

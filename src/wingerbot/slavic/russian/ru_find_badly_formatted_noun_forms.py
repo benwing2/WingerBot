@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import msg, tname
 
 def process_text_on_page(index, pagetitle, text):
   global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  notes = []
 
   parsed = blib.parse_text(text)
 

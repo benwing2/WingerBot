@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-def process_text_on_page(index, pagetitle, text):
+def process_text_on_page(index, pagetitle, text, pos):
   global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -35,5 +35,8 @@ parser = blib.create_argparser("Find Old English terms without inflection",
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_cats=["Old English %s" % pos for pos in ["nouns", "verbs", "adjectives"])
+for pos in ["nouns", "verbs", "adjectives"]:
+  def do_process_text_on_page(index, pagetitle, text):
+    return process_text_on_page(index, pagetitle, text, pos)
+  blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=False, stdin=True,
+    default_cats=["Old English %s" % pos])

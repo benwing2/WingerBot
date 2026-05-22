@@ -153,7 +153,7 @@ def push_one_set_of_manual_changes(pagetitle, index, text, repl_curr_changes, co
       elif repl_curr_diff == 0:
         if newtext_text_diff != 0:
           pagemsg("WARNING: Something wrong, no change in text length during replacement but expected change: Expected length change=%s, actual=%s, curr=%s, repl=%s"
-              % (repl_curr_diff, newtext_text_diff, curr, repl))
+              % (repl_curr_diff, newtext_text_diff, curr_template, repl_template))
       else:
         ratio = float(newtext_text_diff) / repl_curr_diff
         if ratio == int(ratio):

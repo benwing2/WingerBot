@@ -4,7 +4,6 @@
 import re
 import unicodedata
 from wingerbot import blib
-from collections import OrderedDict
 
 AC = "\u0301" # acute =  ́
 GR = "\u0300" # grave =  ̀
@@ -92,7 +91,7 @@ def is_monosyllabic(word):
   return not re.search("[" + vowel + "].*[" + vowel + "]", word)
 
 def ends_with_vowel(word):
-  return re.search("[" + vowel + "][" + AC + GR + DI + "]?$", word)
+  return re.search("[" + vowel + "][" + AC + GR + "]?$", word)
 
 grave_deaccenter = {
     GR:"", # grave accent

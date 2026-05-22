@@ -5,8 +5,7 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
-
-from wingerbot.belarusian import belib as be
+from wingerbot.slavic.belarusian import belib as be
 
 AC = "\u0301"
 

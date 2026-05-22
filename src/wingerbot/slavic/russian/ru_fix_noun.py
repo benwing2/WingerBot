@@ -46,7 +46,7 @@ def process_page(page, index, parsed):
 
       subsections = re.split("(^===[^=]*===\n)", sections[j], 0, re.M)
       for k in range(2, len(subsections), 2):
-        retval = process_page_section(index, page, subsections[k], verbose)
+        retval = process_page_section(index, page, subsections[k])
         if retval:
           (replaced, this_num_ru_noun_subs, this_num_ru_proper_noun_subs,
               this_num_replace_bian, this_transferred_tr) = retval
@@ -81,14 +81,14 @@ def process_page(page, index, parsed):
     assert notes
     return new_text, notes
 
-def process_page_section(index, page, section, verbose):
+def process_page_section(index, page, section):
   pagetitle = str(page.title())
   subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   if not page.exists():
     pagemsg("WARNING: Page doesn't exist, skipping")
@@ -145,7 +145,7 @@ def process_page_section(index, page, section, verbose):
   frobbed_manual_translit = []
   decl_templates = [x for x in [noun_table_template, noun_old_template] if x]
 
-  if verbose:
+  if args.verbose:
     pagemsg("Found headword template: %s" % str(headword_template))
     pagemsg("Found decl template: %s" % str(noun_table_template))
     if noun_old_template:
@@ -154,7 +154,7 @@ def process_page_section(index, page, section, verbose):
   # Retrieve headword translit and maybe transfer to decl
   headword_tr = getparam(headword_template, "tr")
   if headword_tr:
-    if verbose:
+    if args.verbose:
       pagemsg("Found headword manual translit tr=%s" % headword_tr)
     if "," in headword_tr:
       pagemsg("WARNING: Comma in headword manual translit, skipping: %s" %

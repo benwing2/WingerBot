@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# FIXME: Partly written, not working. No longer applies; {{deftempboiler}} was deleted in 2019.
+
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib

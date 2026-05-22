@@ -15,7 +15,7 @@ def process_text_on_page(index, pagetitle, text):
 
   notes = []
 
-  section = blib.find_lang_section(pagetext, "Russian", pagemsg)
+  section = blib.find_lang_section(text, "Russian", pagemsg)
   if not section:
     return
 

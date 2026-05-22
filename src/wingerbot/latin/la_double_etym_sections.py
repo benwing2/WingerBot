@@ -14,6 +14,8 @@ def process_text_on_page(index, pagename, text):
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
+  notes = []
+
   pagemsg("Processing")
 
   m = re.search(r"\A(.*?)(\n+--+\n*)\Z", text, re.S)

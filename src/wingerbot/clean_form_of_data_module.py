@@ -224,13 +224,13 @@ def process_text_on_page(index, pagename, text):
           return True
         return False
 
-      def process_numbered_value(dest, process_value):
+      def process_numbered_value(offset, dest_name, dest, process_value):
         processed_value = process_value(line)
         if process_value is None:
           new_lines.append(origline)
         elif process_value is not False:
           if dest:
-            linemsg("WARNING: Saw key '%s' twice for tag '%s': %s" % (key, tag, origline.strip()))
+            linemsg("WARNING: Saw value #%s (type %s) twice: %s" % (offset, dest_name, origline.strip()))
             new_lines.append(origline)
           else:
             dest[0] = processed_value
@@ -252,13 +252,13 @@ def process_text_on_page(index, pagename, text):
         else:
           offset = lineno - tag_lineno
           if offset == 1:
-            process_numbered_value(tag_type, process_tag_type)
+            process_numbered_value(1, "tag_type", tag_type, process_tag_type)
           elif offset == 2:
-            process_numbered_value(glossary, process_combined_glossary)
+            process_numbered_value(2, "glossary", glossary, process_combined_glossary)
           elif offset == 3:
-            process_numbered_value(wikidata, process_wikidata)
+            process_numbered_value(3, "wikidata", wikidata, process_wikidata)
           elif offset == 4:
-            process_numbered_value(shortcuts, process_shortcuts)
+            process_numbered_value(4, "shortcuts", shortcuts, process_shortcuts)
           else:
             linemsg("WARNING: Unrecognized numbered line, offset %s > 4" % offset)
             new_lines.append(origline)

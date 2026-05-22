@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse, unicodedata
+import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg
 
 lang_utils.get_all_lang_data()
 
@@ -23,7 +23,7 @@ def head_is_multiword(head):
 # Add links to a multiword head.
 def add_multiword_links(head):
   def workaround_to_exclude_chars(m):
-    return re.sub(not_word_punc, r"]]\1[[", m.group(0))
+    return re.sub(lang_utils.not_word_punc, r"]]\1[[", m.group(0))
 
   head = "[[" + re.sub(spacing_punctuation, workaround_to_exclude_chars, head) + "]]"
 

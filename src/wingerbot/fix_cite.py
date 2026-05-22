@@ -48,7 +48,7 @@ simple_replace = [
     ("reference-video", "quote-video"),
 ]
 
-def process_page(page, index, parsed)::
+def process_page(page, index, parsed):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

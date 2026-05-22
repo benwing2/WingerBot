@@ -3,7 +3,8 @@
 
 import re, sys, argparse
 
-from wingerbot.blib import msg, errmsg
+from wingerbot import blib
+from wingerbot.blib import errmsg
 from wingerbot.slavic.russian import rulib
 
 parser = blib.create_argparser("Find lemmas which would have forms saved by create_ru_inflections.py.")

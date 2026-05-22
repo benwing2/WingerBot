@@ -198,7 +198,7 @@ for index, badpagetitle in input_pages_to_delete:
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, badpagetitle, txt))
   def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, badagetitle, txt))
+    errandmsg("Page %s %s: %s" % (index, badpagetitle, txt))
   if not blib.safe_page_exists(badpage, errandpagemsg):
     pagemsg("Skipping because page doesn't exist")
     continue

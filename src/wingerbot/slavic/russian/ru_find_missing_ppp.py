@@ -19,12 +19,8 @@ def process_page(page, index, fixdirecs):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
-
   pagemsg("Processing")
 
-  text = str(page.text)
   parsed = blib.parse(page)
   notes = []
   saw_paired_verb = False

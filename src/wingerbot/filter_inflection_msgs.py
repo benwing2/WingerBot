@@ -3,7 +3,8 @@
 
 import re, sys, argparse
 
-from wingerbot.blib import msg, errmsg
+from wingerbot import blib
+from wingerbot.blib import errmsg
 
 parser = blib.create_argparser("Filter inflection messages to those which would have forms saved.")
 parser.add_argument('--direcfile', help="File containing inflection messages.", required=True)

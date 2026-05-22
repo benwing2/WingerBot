@@ -122,7 +122,7 @@ def process_text_on_page(index, pagetitle, text):
       contents = "{{auto cat|sort=%s}}" % daiyoji_readings[0]
       return contents, notes
   else:
-    pagemsg("WARNING: Can't find reading %s by looking through category contents" % reading)
+    pagemsg("WARNING: Can't find reading for daiyoji %s by looking through category contents" % daiyoji)
 
 
 parser = blib.create_argparser("Create 'Japanese terms with FOO replaced by daiyōji BAR' categories",

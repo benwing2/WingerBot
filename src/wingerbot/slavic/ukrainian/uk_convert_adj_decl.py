@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-from wingerbot.ukrainian import uklib
+from wingerbot.slavic.ukrainian import uklib
 
 def process_page(page, index, parsed):
   pagetitle = str(page.title())

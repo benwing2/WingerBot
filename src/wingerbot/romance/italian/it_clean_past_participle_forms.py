@@ -840,7 +840,7 @@ def process_text_on_page(index, pagetitle, text):
             verify_lang(t)
             verify_past_participle(t, getp("2"))
             if not re.search("[ts][ei]$", pagetitle):
-              pagemsg("WARNING: Found plural past participle form but page title doesn't have the correct form" % desc)
+              pagemsg("WARNING: Found plural past participle form but page title doesn't have the correct form")
               raise BreakException()
             verify_form_for_correct_lemma(t, getp("2"))
             if pagetitle.endswith("e"):

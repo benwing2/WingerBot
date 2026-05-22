@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from wingerbot import blib
+from wingerbot import lang_utils
 import json
 
 lang_outfile = "lang-data.json"

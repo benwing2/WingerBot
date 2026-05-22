@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re, sys, argparse
+from functools import cmp_to_key
 
 from wingerbot.blib import msg
 from wingerbot import blib
@@ -11,6 +12,9 @@ parser = blib.create_argparser("Generate Russian derived-verb tables.")
 parser.add_argument('--direcfile', help="File containing directives.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
+
+def cmp(x, y):
+  return (x > y) - (x < y) # Recommended replacement for Python2 cmp
 
 def render_groups(groups):
   def is_noequiv(x):
@@ -29,9 +33,11 @@ def render_groups(groups):
   def sort_aspect_pair(x, y):
     xpf, ximpf = x
     ypf, yimpf = y
-    # First compare ignoring accents, so that влить goes before вли́ться,
-    # then compare with accents so e.g. рассы́пать and рассыпа́ть are ordered
-    # consistently.
+    # First compare ignoring accents, so that влить goes before вли́ться, then compare with
+    # accents so e.g. рассы́пать and рассыпа́ть are ordered consistently. We also compare
+    # perfectives before imperectives, but if either perfective is "* (no equivalent)", we
+    # ignore the other perfective and just compare the imperfectives. This is tricky to do
+    # with a key so we use an old-stye comparator.
     retval = compare_aspect_pair(rulib.remove_accents(xpf), rulib.remove_accents(ximpf),
       rulib.remove_accents(ypf), rulib.remove_accents(yimpf))
     if retval == 0:
@@ -42,7 +48,7 @@ def render_groups(groups):
   pfs = []
   impfs = []
   for gr in groups:
-    gr = sorted(gr, cmp=sort_aspect_pair)
+    gr = sorted(gr, key=cmp_to_key(sort_aspect_pair))
     for pf, impf in gr:
       pfs.append(pf)
       impfs.append(impf)

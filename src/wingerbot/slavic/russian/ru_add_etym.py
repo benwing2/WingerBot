@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse, time
+import pywikibot, re
 from wingerbot import blib
-from wingerbot.blib import site, msg, errmsg, errandmsg, group_notes, iter_items
+from wingerbot.blib import site, msg, errmsg, errandmsg, group_notes
 from wingerbot.slavic.russian import rulib
 
 # Split text on a separator, but not if separator is preceded by
@@ -63,6 +63,7 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
   elif etym == "--":
     etymtext = ""
   elif re.search(r"^(part|adj|partadj)([fnp]):", etym):
+    # FIXME! This branch doesn't currently work.
     m = re.search(r"^(part|adj|partadj)([fnp]):(.*)", etym)
     forms = {"f":["nom|f|s"], "n":["nom|n|s", "acc|n|s"], "p":["nom|p", "in|acc|p"]}
     infleclines = ["# {{inflection of|lang=ru|%s||%s}}" %
@@ -225,4 +226,4 @@ if __name__ == "__main__":
   start, end = blib.parse_start_end(args.start, args.end)
 
   for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
-    process_line(i, line, args.add_passive_of, args.override_etym, args.save, args.verbose)
+    process_line(lineno, line, args.add_passive_of, args.override_etym, args.save, args.verbose)

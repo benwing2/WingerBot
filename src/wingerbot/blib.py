@@ -478,7 +478,7 @@ class EditParams(object):
     msg("Page %s %s: %s" % (self.index, self.title, txt))
 
   def errandpagemsg(self, txt):
-    errandmsg("Page %s %s: %s" % (self, index, self, title, txt))
+    errandmsg("Page %s %s: %s" % (self.index, self.title, txt))
 
   def expand_text(self, tempcall):
     return blib_expand_text(tempcall, self.title, self.pagemsg, self.verbose)
@@ -896,9 +896,9 @@ class ProcessItems(object):
     if isinstance(self.endprefix, int) and not self.t:
       self.t = datetime.datetime.now()
 
-    if self.skip_ignorable_pages and page_should_be_ignored(get_name(item)):
+    if self.skip_ignorable_pages and page_should_be_ignored(self.get_name(item)):
       pywikibot.output("Page %s %s: page has a prefix or suffix indicating it should not be touched, skipping" % (
-        self.i, get_name(item)))
+        self.i, self.get_name(item)))
       retval = False
     else:
       retval = self.i

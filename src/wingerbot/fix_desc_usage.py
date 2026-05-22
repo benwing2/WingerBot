@@ -14,8 +14,6 @@ lang_utils.load_all_lang_data("langdata.json")
 etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
 language_name_to_code = lang_utils.get_language_name_to_code_map()
 
-from wingerbot.lang_utils import language_codes_to_properties, sh_remove_accents
-
 def process_text_on_page(index, pagetitle, pagetext):
   global args
   def pagemsg(txt):
@@ -73,7 +71,7 @@ def process_text_on_page(index, pagetitle, pagetext):
       termlink = m.group(1)
       if termlink.startswith("[["):
         termlink = re.sub(r"^\[\[(.*?)\]\]$", 
-          lambda m: sub_link(m, "Serbo-Croatian", "sh", sh_remove_accents, origtext,
+          lambda m: sub_link(m, "Serbo-Croatian", "sh", lang_utils.sh_remove_accents, origtext,
             add_sclb=True), termlink)
       else:
         parsed = blib.parse_text(termlink)
@@ -96,15 +94,15 @@ def process_text_on_page(index, pagetitle, pagetext):
     bullets, langname, links = m.groups()
     origtext = m.group(0)
 
-    if langname in non_canonical_to_canonical_names:
-      new_langname = non_canonical_to_canonical_names[langname]
+    if langname in lang_utils.non_canonical_to_canonical_names:
+      new_langname = lang_utils.non_canonical_to_canonical_names[langname]
       pagemsg("Replacing non-canonical or unrecognized %s with %s: %s" % (
         langname, new_langname, origtext))
       langname = new_langname
 
     pretext = ""
-    if langname in unrecognized_to_canonical_names:
-      spec = unrecognized_to_canonical_names[langname]
+    if langname in lang_utils.unrecognized_to_canonical_names:
+      spec = lang_utils.unrecognized_to_canonical_names[langname]
       if type(spec) is tuple:
         new_pretext, new_langname = spec
         pretext = new_pretext + " "
@@ -128,7 +126,7 @@ def process_text_on_page(index, pagetitle, pagetext):
     if len(potential_langcodes) > 1:
       pagemsg("WARNING: Language name %s has multiple canonical codes %s, skipping: %s" % (
         langname, ",".join(potential_langcodes), origtext))
-      return origtet
+      return origtext
     if len(potential_langcodes) == 1 and isetymcanon:
       pagemsg("WARNING: Language name %s has both regular canonical code %s and etym language canonical code %s, skipping: %s" % (
         langname, list(potential_langcodes)[0], etymcode, origtext))
@@ -160,9 +158,9 @@ def process_text_on_page(index, pagetitle, pagetext):
       link_langcode = etym_language_to_parent.get(langcode, langcode)
 
     link_langcode_remove_accents = None
-    if link_langcode in language_codes_to_properties:
+    if link_langcode in lang_utils.language_codes_to_properties:
       _, link_langcode_remove_accents, _, _ = (
-        language_codes_to_properties[link_langcode])
+        lang_utils.language_codes_to_properties[link_langcode])
 
     # Replace raw links with templated links.
     def replace_raw_link(m):
@@ -195,8 +193,8 @@ def process_text_on_page(index, pagetitle, pagetext):
     for t in parsed.filter_templates():
       if tname(t) in ["l", "m"]:
         template_langcode = getparam(t, "1")
-        if (langname, template_langcode) in langcode_langname_to_correct_langcode:
-          new_langcode = langcode_langname_to_correct_langcode[(langname, template_langcode)]
+        if (langname, template_langcode) in lang_utils.langcode_langname_to_correct_langcode:
+          new_langcode = lang_utils.langlangcode_langname_to_correct_langcode[(langname, template_langcode)]
           if new_langcode == template_langcode:
             if template_langcode in lang_utils.languages_by_code:
               new_langname = lang_utils.languages_by_code[template_langcode]["canonicalName"]

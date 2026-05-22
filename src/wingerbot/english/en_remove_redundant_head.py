@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
 
 def singularize(text):

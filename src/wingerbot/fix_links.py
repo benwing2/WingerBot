@@ -22,11 +22,14 @@
 # is more careful to avoid converting raw links that are probably not to
 # French vocabulary words (e.g. to numbers or symbols).
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, rsub_repeatedly
 from wingerbot import lang_utils
+
+lbracket_sub = "\ufff1"
+rbracket_sub = "\ufff2"
 
 thislangcodes = None
 thislangnames = None

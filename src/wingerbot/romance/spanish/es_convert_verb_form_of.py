@@ -215,8 +215,9 @@ def process_text_on_page(index, pagetitle, pagetext):
         saw_comb = any("comb" in tag for tag in full_expansions[0]["tags"])
         all_comb = all("comb" in tag for tag in full_expansions[0]["tags"])
         if saw_comb and not all_comb:
-          pagemsg("WARNING: Mixture of combination and non-combination tags   ") FIXME
-      if not partial
+          pagemsg("WARNING: Mixture of combination and non-combination tags   ")
+          # FIXME: Not finished
+          ...
       notes.append("replace {{es-compound of}} with {{es-verb form of|%s}} for infinitive [[%s]]" % (conj, inf))
       del t.params[:]
       t.add("1", conj)

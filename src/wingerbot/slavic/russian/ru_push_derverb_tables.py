@@ -11,8 +11,6 @@ def process_page(index, page, contents, verbose, comment):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   if verbose:
     pagemsg("For [[%s]]:" % pagename)

@@ -22,8 +22,6 @@ code_to_kurdish_lang = {
 def process_text_on_page(index, pagename, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
   pagemsg("Processing")
 

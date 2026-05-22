@@ -431,7 +431,7 @@ def normalize_bare_arg(arg, pagetitle, pagemsg):
           word = before + abbrev_sub + after
         else:
           err("Internal error: abbrev_vowel from abbrev_text " + abbrev_text +
-            " didn't match any vowel or glide: " + origtext)
+            " didn't match any vowel or glide: " + origarg)
           return None
 
     if not is_prefix:

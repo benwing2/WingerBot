@@ -3,10 +3,10 @@
 
 # Use past_adv_part_short=- instead of past_adv_part_short=
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg
 
 def process_page(index, page, save, verbose):
   pagetitle = str(page.title())

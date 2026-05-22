@@ -35,8 +35,9 @@ def process_page(page, index, parsed):
         t.add("past_actv_part", "-")
         pagemsg("Replacing %s with %s" % (origt, str(t)))
 
-  if new_text != text:
-    return new_text, notes
+  newtext = str(parsed)
+  if newtext != text:
+    return newtext, notes
 
   if not notes:
     pagemsg("WARNING: No changes")

@@ -155,7 +155,7 @@ def convert_paired_palatal_to_plain(stem, ending):
   # For stems that alternate between n/t/d and ň/ť/ď, we always maintain the stem in the latter format and
   # convert to the corresponding plain as needed, with e -> ě (normally we always have 'ě' as the ending, but
   # the user may specify 'e').
-  if ending and not rfind(ending, "^[eěií]"):
+  if ending and not re.search("^[eěií]", ending):
     return stem, ending
   m = re.search("^(.*)([" + paired_palatal + "])$", stem)
   if m:

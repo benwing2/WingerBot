@@ -28,7 +28,7 @@ def process_text_on_page(index, pagetitle, text):
         term = mmm.group(1)
       else:
         pagemsg("WARNING: Can't parse other-gender text <%s> in line: <from> %s <to> %s <end>" %
-          (gender_text, m.group(0), m.group(0)))
+          (gender_term, m.group(0), m.group(0)))
         return m.group(0)
     gender = gender.lower()
     if gender in ["feminine", "female", "masculine of"]:

@@ -9,8 +9,6 @@ from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, si
 def process_text_on_page(index, pagename, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
   if not re.search(re_to_search, text):
     return

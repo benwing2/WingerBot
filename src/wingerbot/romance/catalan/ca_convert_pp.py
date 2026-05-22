@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
-from wingerbot.romance.catalan.convert_ca_adj_noun import make_feminine, make_plural
+from wingerbot.romance.catalan.ca_convert_adj_noun import make_feminine, make_plural
 
 old_template = "ca-pp-old"
 

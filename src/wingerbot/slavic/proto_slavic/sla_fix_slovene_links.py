@@ -50,7 +50,7 @@ def remove_slovene_accents(lemma):
   lemma = re.sub(OGONEK, "", lemma)
   return lemma
 
-def look_up_tonal_form(pagename, pagemsg, verbose):
+def look_up_tonal_form(pagename, pagemsg):
   try:
     page = pywikibot.Page(site, pagename)
   except Exception as e:
@@ -59,7 +59,7 @@ def look_up_tonal_form(pagename, pagemsg, verbose):
     return None
   try:
     if not page.exists():
-      if verbose:
+      if args.verbose:
         pagemsg("look_up_tonal_form: Page %s doesn't exist" % pagename)
       return None
   except Exception as e:
@@ -69,7 +69,7 @@ def look_up_tonal_form(pagename, pagemsg, verbose):
   tonal_forms = []
   for t in blib.parse(page).filter_templates():
     if str(t.name) == "sl-tonal":
-      if verbose:
+      if args.verbose:
         pagemsg("look_up_tonal_form: For page %s, found tonal template %s" %
             (pagename, str(t)))
       if tonal_forms:
@@ -149,8 +149,7 @@ def process_page(page, index, parsed):
                 (pname, str(t)))
             break
         else:
-          tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage),
-              pagemsg, verbose)
+          tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage), pagemsg)
           if tonal_forms:
             if False: #len(tonal_forms) > 1:
               pass

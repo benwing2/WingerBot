@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+
+from wingerbot import blib
 from wingerbot.slavic.russian import rulib
 from collections import OrderedDict
 

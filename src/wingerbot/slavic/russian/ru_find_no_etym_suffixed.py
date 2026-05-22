@@ -145,7 +145,7 @@ def process_text_on_page(index, pagetitle, text):
       append_possible(stem_to_try, "ёк")
       append_possible(stem_to_try, "ец")
   # If derived adverbs, try -о, -е, -и
-  if adverbs:
+  if args.adverbs:
     for stem, palatal in stems:
       stems_to_try = []
       stems_to_try.append(stem)

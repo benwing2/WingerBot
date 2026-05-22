@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
-
-from wingerbot.slavic.russian import rulib
+from wingerbot.blib import msg, tname
 
 def process_text_on_page(index, pagetitle, text):
   global args

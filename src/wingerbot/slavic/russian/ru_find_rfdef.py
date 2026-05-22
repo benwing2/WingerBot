@@ -3,8 +3,6 @@
 
 # Find pages that need definitions among a set list (e.g. most frequent words).
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 

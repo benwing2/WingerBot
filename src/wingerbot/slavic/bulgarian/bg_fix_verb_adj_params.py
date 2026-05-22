@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
-from wingerbot.bulgarian import bglib
+from wingerbot.slavic.bulgarian import bglib
 
 def process_page(page, index, parsed):
   pagetitle = str(page.title())
@@ -77,7 +77,7 @@ def process_page(page, index, parsed):
       # Erase all params.
       del t.params[:]
       # Put back new params.
-      t.add("1", rulib.remove_monosyllabic_accents(head or pagetitle))
+      t.add("1", bglib.remove_monosyllabic_accents(head or pagetitle))
       notes.append("move head= to 1= in {{%s}}" % tn)
       if a:
         t.add("2", a)

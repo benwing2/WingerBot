@@ -4,7 +4,7 @@
 import pywikibot, re, sys, argparse, copy
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
 from wingerbot.slavic.russian import rulib
 
@@ -81,9 +81,8 @@ def process_page(page, index, parsed):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
@@ -111,7 +110,7 @@ def process_page(page, index, parsed):
         if not m:
           m = re.search("^(irreg-?[абцдеѣфгчийклмнопярстувшхызёюжэщьъ%-]*)", arg_set[0])
           if not m:
-            errpagemsg("Unrecognized conjugation type: %s" % arg_set[0])
+            errandpagemsg("Unrecognized conjugation type: %s" % arg_set[0])
             continue
         conj_type = m.group(1).replace("o", "°")
         inf, tr = rulib.split_russian_tr(arg_set[1])
@@ -278,7 +277,7 @@ def process_page(page, index, parsed):
               infstem = rulib.make_ending_stressed_ru(infstem)
             inf = arg_set[1] + infstem
           else:
-            error("Unknown conjugation type " + conj_type)
+            errandpagemsg("Unknown conjugation type " + conj_type)
           if inf:
             if refl:
               if re.search("[тч]ь$", inf):
@@ -310,7 +309,7 @@ def process_page(page, index, parsed):
               "|".join(orig_args), "|old=1" if tname(t).endswith("ru-conj-old") else "")
           orig_result = expand_text(orig_tempcall)
           if not orig_result:
-            errpagemsg("WARNING: Error expanding original template %s" % orig_tempcall)
+            errandpagemsg("WARNING: Error expanding original template %s" % orig_tempcall)
             continue
           orig_forms = blib.split_generate_args(orig_result)
 
@@ -323,7 +322,7 @@ def process_page(page, index, parsed):
               "|".join(new_args), "|old=1" if tname(t).endswith("ru-conj-old") else "")
           new_result = expand_text(new_tempcall)
           if not new_result:
-            errpagemsg("WARNING: Error expanding new template %s" % new_tempcall)
+            errandpagemsg("WARNING: Error expanding new template %s" % new_tempcall)
             continue
           new_forms = blib.split_generate_args(new_result)
 
@@ -345,7 +344,7 @@ def process_page(page, index, parsed):
           # 4. If mismatches, output them and don't change anything.
 
           if mismatches:
-            errpagemsg("WARNING: Mismatch comparing old %s to new %s: %s" % (
+            errandpagemsg("WARNING: Mismatch comparing old %s to new %s: %s" % (
               orig_tempcall, new_tempcall, " || ".join(mismatches)))
             continue
 

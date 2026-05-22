@@ -364,10 +364,10 @@ def rewrite_one_page_ru_decl_noun(page, index, text):
       addparam(t, "3", declclass)
       if bare:
         addparam(t, "4", bare)
-      if acc_sg:
-        addparam(t, "acc_sg", acc_sg)
-      if loc_sg:
-        addparam(t, "loc", loc_sg)
+      if accsg:
+        addparam(t, "acc_sg", accsg)
+      if locsg:
+        addparam(t, "loc", locsg)
       if anim:
         addparam(t, "a", anim)
       if n:

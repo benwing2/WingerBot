@@ -55,6 +55,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.pos == "adj":
+  # FIXME: Need to define adj_decls. See uk_generate_cats.py. However, this whole
+  # script is out of date, as we now auto-generate category descriptions.
   for ty, endings in adj_decls:
     create_cat(ty + " ~", ["adj"] + list(endings))
 

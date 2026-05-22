@@ -3,11 +3,11 @@
 
 # Go through all the French terms we can find and remove redundant head=.
 
-import pywikibot, re, sys, argparse
+import re, sys
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg
 
 fr_head_or_1_templates = ["fr-verb", "fr-adv", "fr-phrase",
   "fr-intj", "fr-prep"]
@@ -20,9 +20,9 @@ fr_head_only_templates = ["fr-noun", "fr-proper noun", "fr-proper-noun",
 fr_head_templates = fr_head_or_1_templates + fr_head_only_templates
 
 exclude_punc_chars = "-־׳״'.·*[]"
-punc_chars = "".join("\\" + unichr(i) for i in range(sys.maxunicode)
-    if unicodedata.category(unichr(i)).startswith('P') and
-    unichr(i) not in exclude_punc_chars)
+punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode)
+    if unicodedata.category(chr(i)).startswith('P') and
+    chr(i) not in exclude_punc_chars)
 
 def link_text(text):
   words = re.split("([" + punc_chars + r"\s]+)", text)
@@ -94,4 +94,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
   default_cats=["French lemmas"],
-  #default_cats=["French lemmas", "French non-lemma forms"],)
+  #default_cats=["French lemmas", "French non-lemma forms"],
+)

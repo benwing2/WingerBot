@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 
-from wingerbot.bulgarian import bglib
+from wingerbot.slavic.bulgarian import bglib
 
 nouns_to_accents_and_forms = {}
 

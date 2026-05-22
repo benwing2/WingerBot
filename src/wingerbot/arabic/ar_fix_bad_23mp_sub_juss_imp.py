@@ -270,7 +270,7 @@ def process_page(page, index, parsed):
     comment = "Rename misspelled 2nd/3rd masc pl subj/juss/impr non-lemma form"
     pagemsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
     errpagemsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
-    if save:
+    if args.save:
       try:
         page.move(new_pagetitle, reason=comment, movetalk=True, noredirect=True)
       except pywikibot.PageRelatedError as error:

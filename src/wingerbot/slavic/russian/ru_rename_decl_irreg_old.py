@@ -86,4 +86,4 @@ start, end = blib.parse_start_end(args.start, args.end)
 blib.do_pagefile_cats_refs(args, start, end, process_page, edit=True,
   default_refs=["Template:%s" % template for template in
     ["ru-adj-table", "ru-decl-noun", "ru-decl-noun-unc",
-     "ru-decl-noun-pl", "ru-noun-old", "ru-adj-old"])
+     "ru-decl-noun-pl", "ru-noun-old", "ru-adj-old"]])

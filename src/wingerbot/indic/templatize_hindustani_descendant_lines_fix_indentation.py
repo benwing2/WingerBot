@@ -71,13 +71,13 @@ def process_text_on_page(index, pagetitle, text):
         hindustani_t = list(blib.parse_text(hindustani_template).filter_templates())[0]
         assert tname(hindustani_t) == "desc"
         def getp(param):
-          return getparam(t, param)
+          return getparam(hindustani_t, param)
         if getp("1") != "inc-hnd":
           linemsg("WARNING: Something likely wrong, saw Hindustani descendant template with wrong lang code: %s" % line)
           continue
         prev_is_hindustani = True
         if getp("2") != "-":
-          pagemsg("WARNING: Saw Hindustani descendant without - in 2=: %s" % str(t))
+          pagemsg("WARNING: Saw Hindustani descendant without - in 2=: %s" % str(hindustani_t))
         prev_hindustani_bor = getp("bor")
         prev_hindustani_der = getp("der")
         prev_hindustani_stars = initial_stars

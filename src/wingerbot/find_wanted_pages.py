@@ -3,7 +3,7 @@
 
 # Go through a dump finding links to nonexistent pages.
 
-import pywikibot, re, sys, argparse, codecs
+import pywikibot, re, sys, argparse, codecs, gzip
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site

@@ -3,25 +3,25 @@
 
 # Find Russian perfective verbs with explicit past passive participles
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
-def process_page(index, page, save, verbose):
-  pagetitle = str(page.title())
+def process_text_on_page(index, pagetitle, text):
+  global args
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
 
-  parsed = blib.parse(page)
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
-    if str(t.name) in ["ru-conj", "ru-conj-old"] and getparam(t, "1").startswith("pf"):
-      if tname == "ru-conj":
+    tn = tname(t)
+    if tn in ["ru-conj", "ru-conj-old"] and getparam(t, "1").startswith("pf"):
+      if tn == "ru-conj":
         tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
       else:
         tempcall = re.sub(r"\{\{ru-conj-old", "{{ru-generate-verb-forms|old=y", str(t))
@@ -37,10 +37,10 @@ def process_page(index, page, save, verbose):
             val = re.sub("//.*", "", val)
             pagemsg("Found perfective past passive participle: %s" % val)
 
-parser = blib.create_argparser("Find Russian perfective verbs with explicit past passive participles")
+parser = blib.create_argparser("Find Russian perfective verbs with explicit past passive participles",
+    include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for category in ["Russian verbs"]:
-  for i, page in blib.cat_articles(category, start, end):
-    process_page(i, page, args.save, args.verbose)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+  default_cats=["Russian verbs"])

@@ -21,7 +21,7 @@ def process_text_on_page(index, pagetitle, text):
   else:
     if not re.search("== *Chinese *==", text):
       return
-    sectext = blib.find_lang_section(text, partial_page and "Chinese" or None, None)
+    sectext = blib.find_lang_section(text, args.partial_page and "Chinese" or None, None)
   if sectext and re.search(r"\{\{(%s)\|" % "|".join(blib.label_templates), sectext):
     parsed = blib.parse_text(sectext)
 

@@ -56,7 +56,9 @@ def process_text_on_page(index, pagetitle, text):
     pagemsg("WARNING: Something strange, {{etydate}} not found ==Etymology== but found outside")
     return
 
-  subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+  subsections, subsections_by_header, subsection_headers, subsection_levels = (
+    blib.split_text_into_subsections(pl_secbody, pagemsg)
+  )
   for k in range(2, len(subsections), 2):
     if "==References==" in subsections[k - 1]:
       newsubsec = re.sub(r"^:?\*\s*\{\{R:pl:NKJP\}\}\n", "", subsections[k], 0, re.M)
@@ -68,9 +70,9 @@ def process_text_on_page(index, pagetitle, text):
           subsections[k] = ""
           notes.append("remove now empty References section from Polish term")
 
-  secbody = "".join(subsections)
+  pl_secbody = "".join(subsections)
   # Strip extra newlines added to secbody
-  sections[j] = secbody.rstrip("\n") + sectail
+  sections[pl_sec] = pl_secbody.rstrip("\n") + pl_sectail
   return "".join(sections), notes
   
 parser = blib.create_argparser("Remove {{etydate}} from Polish etymologies when inherited from Old Polish", include_pagefile=True, include_stdin=True)

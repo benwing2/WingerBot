@@ -5,7 +5,6 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, errandmsg
-
 from wingerbot.latin import lalib, convert_la_headword_noun
 
 def process_line(index, line, online):

@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
-from wingerbot.czech import cslib as cs
+from wingerbot.slavic.czech import cslib as cs
 
 def is_undefined(word):
   return word in ["", "-", "-", "—"]

@@ -117,13 +117,13 @@ if __name__ == "__main__":
   if not langcode:
     lang_utils.get_all_lang_data()
     if langname not in lang_utils.languages_by_canonical_name:
-      pagemsg("WARNING: Unknown language name %s" % langname)
+      msg("WARNING: Unknown language name %s" % langname)
     else:
       langcode = lang_utils.languages_by_canonical_name[langname]["code"]
   elif not langname:
     lang_utils.get_all_lang_data()
     if langcode not in lang_utils.languages_by_code:
-      pagemsg("WARNING: Unknown language code %s" % langcode)
+      msg("WARNING: Unknown language code %s" % langcode)
     else:
       langname = lang_utils.languages_by_code[langcode]["canonicalName"]
 

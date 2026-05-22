@@ -4,8 +4,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
-
+from wingerbot.blib import getparam, msg, errandmsg, tname
 from wingerbot.slavic.russian import rulib
 
 lemmas = []
@@ -35,7 +34,7 @@ def process_text_on_page(index, pagetitle, text):
 
   notes = []
 
-  section = blib.find_lang_section(pagetext, "Russian", pagemsg)
+  section = blib.find_lang_section(text, "Russian", pagemsg)
   if not section:
     errandpagemsg("WARNING: Couldn't find Russian section")
     return

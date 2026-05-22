@@ -4,8 +4,8 @@
 import re, sys, argparse
 
 from wingerbot.blib import msg, errmsg, remove_links
-from wingerbot.ukrainian import uklib
-from wingerbot.bulgarian import bglib
+from wingerbot.slavic.ukrainian import uklib
+from wingerbot.slavic.bulgarian import bglib
 from wingerbot import generate_pos
 
 lang = None

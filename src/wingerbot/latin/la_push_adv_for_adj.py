@@ -77,7 +77,7 @@ parser.add_argument("--direcfile", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, line in blib.iter_items_from_file(lines, start, end):
+for i, line in blib.iter_items_from_file(args.direcfile, start, end):
   m = re.search("^(.*?) /// (.*?) /// .*? /// .*?$", line)
   if not m:
     msg("Line %s: Unrecognized line: %s" % (i, line))

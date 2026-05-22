@@ -308,7 +308,7 @@ def extract_tags_and_nontag_params_from_inflection_of(t, notes):
   if getparam(t, "lang"):
     lang = getparam(t, "lang")
     term_param = 1
-    notes.append("move lang=%s in {{%s}} to 1=" % (lang, tn))
+    notes.append("move lang=%s in {{%s}} to 1=" % (lang, tname(t)))
   else:
     lang = getparam(t, "1")
     term_param = 2

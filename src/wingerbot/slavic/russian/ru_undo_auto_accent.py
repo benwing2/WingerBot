@@ -16,6 +16,9 @@ from wingerbot.blib import msg, getparam, addparam
 site = pywikibot.Site()
 
 def undo_ru_auto_accent(save, verbose, direcfile, start, end):
+  msg("WARNING: Script no longer applies and would need fixing up")
+  return
+
   template_removals = []
   for lineno, line in blib.iter_items_from_file(direcfile, start, end):
     m = re.search(r"^Page [0-9]+ (.*?): Replaced (\{\{.*?\}\}) with (\{\{.*?\}\})$",

@@ -5,14 +5,14 @@
 # on a set of pages.
 
 import unicodedata
-import pywikibot, re, sys, argparse
+import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 
-#punc_chars = "".join("\\" + unichr(i) for i in range(sys.maxunicode)
-#    if unicodedata.category(unichr(i)).startswith('P'))
+punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode)
+    if unicodedata.category(chr(i)).startswith('P'))
 
 # WARNING: May not work any more.
 def fast_remove_diacritics(text, langcode):

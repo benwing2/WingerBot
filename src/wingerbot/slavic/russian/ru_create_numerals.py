@@ -442,7 +442,7 @@ def process_page(index, num, save, verbose, params):
 
       if sections:
         sections[-1] = ensure_two_trailing_nl(sections[-1])
-        sections += ["----\n\n", newsection]
+        sections += ["----\n\n", newtext]
       else:
         if not params.overwrite_page:
           notes.append("formerly empty")
@@ -453,7 +453,7 @@ def process_page(index, num, save, verbose, params):
               r"{{also|\1}}\n", pagehead, 0, re.I)
         elif not params.overwrite_page:
           pagemsg("WARNING: No language sections in current page")
-        sections += [newsection]
+        sections += [newtext]
 
     # End of loop over sections in existing page; rejoin sections
     newtext = pagehead + ''.join(sections)

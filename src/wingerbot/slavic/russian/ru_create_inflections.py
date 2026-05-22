@@ -2283,7 +2283,7 @@ def create_inflection_entry(program_args, save, index, inflections, lemma,
                   if tname(t) in ["ru-noun+", "ru-proper noun+"]:
                     otherlemmaarg = rulib.fetch_noun_lemma(t, expand_text)
                     if otherlemmaarg is None:
-                      warn("Error generating noun forms when %s" % purpose)
+                      warn("Error generating noun forms when finding plurale tantum noun lemma for paired lemma in same etym section")
                     else:
                       otherlemmas = set(re.split(",", otherlemmaarg))
                       for otherlemma in otherlemmas:

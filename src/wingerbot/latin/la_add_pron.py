@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
-import difflib
-import unicodedata
+from dataclasses import dataclass
+
+import pywikibot, re, sys, traceback
 from collections import Counter
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
-
+from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
 from wingerbot.latin import lalib
 
 skip_pages = []
@@ -125,34 +124,12 @@ def pronun_matches(hpron, foundpron, pagemsg):
 
   return False
 
-# Simple class to hold pronunciation found in la-IPA, along with remaining
-# params and the text before and after. Lots of boilerplate to support
-# equality and hashing. Based on
-# http://stackoverflow.com/questions/390250/elegant-ways-to-support-equivalence-equality-in-python-classes
-class FoundPronun(object):
-  """Very basic"""
-  def __init__(self, pron, extra_params, pre, post):
-    self.pron = pron
-    self.extra_params = extra_params
-    self.pre = pre
-    self.post = post
-
-  def __eq__(self, other):
-    """Override the default Equals behavior"""
-    if isinstance(other, self.__class__):
-      return (self.pron == other.pron and self.extra_params == extra_params
-          and self.pre == other.pre and self.post == other.post)
-    return NotImplemented
-
-  def __ne__(self, other):
-    """Define a non-equality test"""
-    if isinstance(other, self.__class__):
-      return not self.__eq__(other)
-    return NotImplemented
-
-  def __hash__(self):
-    """Override the default hash behavior (that returns the id or the object)"""
-    return hash(tuple(self.pron, self.extra_params, self.pre, self.post))
+@dataclass(frozen=True)
+class FoundPronun:
+  pron: str
+  extra_params: str
+  pre: str
+  post: str
 
   def __repr__(self):
     return "%s%s%s%s" % (self.pre and "[%s]" % self.pre or "", self.pron,

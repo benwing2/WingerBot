@@ -169,7 +169,7 @@ def process_text_on_page(index, pagetitle, text):
           audiot = list(blib.parse_text(all_audios[0].strip()).filter_templates())[0]
           assert(tname(audiot) == "audio")
           if getparam(audiot, "1") != "pl":
-            pagemsg("WARNING: Wrong language in {{audio}}, skipping: %s" % audio_line)
+            pagemsg("WARNING: Wrong language in {{audio}}, skipping: %s" % all_audios[0].strip())
             return
           audiofile = getparam(audiot, "2")
           audiogloss = getparam(audiot, "3")
@@ -178,7 +178,7 @@ def process_text_on_page(index, pagetitle, text):
             pv = str(param.value)
             if pn not in ["1", "2", "3"]:
               pagemsg("WARNING: Unrecognized param %s=%s in {{audio}}, skipping: %s" % (
-                pn, pv, audio_line))
+                pn, pv, all_audios[0].strip()))
               return
           if audiogloss in ["Audio", "audio"]:
             audiogloss = ""

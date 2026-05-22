@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse, time
+import re
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg
+from wingerbot.blib import msg
 
 def process_text_on_page(index, pagetitle, text):
   global args
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  notes = []
+  def pagemsg(txt):
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
   if retval is None:

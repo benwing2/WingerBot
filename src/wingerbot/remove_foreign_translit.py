@@ -4,9 +4,7 @@
 # This program removes redundant translit from links and similar templates,
 # and also removes redundant sc= values from those same links.
 
-import re, unicodedata
-
-import pywikibot
+import re
 
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam, rmparam
@@ -178,4 +176,4 @@ if params.lang:
   longlang, this_ignore_manual_tr = languages[params.lang]
 
 canon_links(params.save, params.verbose, params.cattype, languages.keys(),
-    longlang, startFrom, upTo, pages_to_do=pages_to_do)
+    longlang, start, end, pages_to_do=pages_to_do)

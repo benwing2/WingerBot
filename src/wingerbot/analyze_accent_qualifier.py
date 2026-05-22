@@ -41,8 +41,6 @@ lang_utils.get_all_lang_data()
 def process_text_on_page(index, pagename, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
   if not re.search(r"\{\{ *(IPA|a(ccent)?) *\|", text):
     return
@@ -96,12 +94,6 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 def read_aliases():
   global accent_qualifier_data
-  def pagemsg(txt):
-    msg("Page 0: %s" % txt)
-  def errandpagemsg(txt):
-    errandmsg("Page 0: %s" % txt)
-  def expand_text(tempcall):
-    return blib.expand_text(tempcall, "foo", pagemsg, args.verbose)
   #accent_qualifier_data = json.loads(expand_text("{{#invoke:accent qualifier|output_data_module}}"))
   accent_qualifier_data = {"aliases": {}, "labels": {}}
 

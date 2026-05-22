@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, errandmsg, site, bool_param_is_true
 from wingerbot.latin import lalib
-from wingerbot.latin.convert_la_adj import adj_decl_and_subtype_to_props
+from wingerbot.latin.la_convert_adj import adj_decl_and_subtype_to_props
 
 # FIXME: Out of date script, not needed any more, might not still work.
 
@@ -17,7 +17,7 @@ def extract_base(lemma, ending):
     return re.search("^(.*)" + ending + "$", lemma)
 
 def stem_matches_any(stem1, stem2, endings_and_subtypes):
-  stem2 = stem2 or infer_3rd_decl_stem(stem1)
+  stem2 = stem2 or lalib.infer_3rd_decl_stem(stem1)
   for ending, subtypes in endings_and_subtypes:
     if type(ending) is tuple:
       stem1_ending, stem2_ending = ending

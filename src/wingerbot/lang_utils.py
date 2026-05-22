@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, json
+import re, json, sys
 from collections import defaultdict
 import unicodedata
 from json.decoder import JSONDecodeError
@@ -677,9 +677,6 @@ def get_language_name_to_code():
   return language_name_to_code
 
 
-lbracket_sub = "\ufff1"
-rbracket_sub = "\ufff2"
-
 GRAVE = "\u0300" # grave =  ̀
 ACUTE = "\u0301" # acute =  ́
 CFLEX = "\u0302" # circumflex =  ̂
@@ -975,7 +972,7 @@ def matches_chinese_character(pagetitle):
 # Compile a map from etym language code to its first non-etym-language ancestor.
 def old_get_etym_language_to_parent_map():
   etym_language_to_parent = {}
-  for code in lang_prefix_template.etym_languages_by_code:
+  for code in etym_languages_by_code:
     parent = code
     while parent in etym_languages_by_code:
       parent = etym_languages_by_code[parent]["parent"]
@@ -1071,6 +1068,6 @@ word_punc = "-־׳״'.·*’་•:"
 not_word_punc = "([^" + word_punc + "]+)"
 
 def get_spacing_punctuation():
-  punc_chars = "".join("\\" + unichr(i) for i in range(sys.maxunicode)
-      if unicodedata.category(unichr(i)).startswith('P'))
+  punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode)
+      if unicodedata.category(chr(i)).startswith('P'))
   return "[" + punc_chars + r"\s]+"

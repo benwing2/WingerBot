@@ -3,7 +3,7 @@
 
 import re
 
-from wingerbot import blib
+from wingerbot import blib, msg
 from wingerbot.canon_foreign import canon_links
 from wingerbot.slavic.russian import ru_translit
 

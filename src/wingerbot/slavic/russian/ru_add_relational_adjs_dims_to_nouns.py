@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, tname, msg, site
 
 from wingerbot.slavic.russian import rulib
 
@@ -86,7 +86,7 @@ def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   nounpage = pywikibot.Page(site, pagetitle)
   if not blib.safe_page_exists(nounpage, pagemsg):
-    pagemsg("WARNING: Noun %s for %s %s doesn't exist" % (noun, desc, ",".join(adjs_or_dims))
+    pagemsg("WARNING: Noun %s for %s %s doesn't exist" % (noun, desc, ",".join(adjs_or_dims)))
     return
   def do_add_rel_adj_or_dim_to_noun_page(page, index, parsed):
     return add_rel_adj_or_dim_to_noun_page(page, index, adjs_or_dims, param, desc)

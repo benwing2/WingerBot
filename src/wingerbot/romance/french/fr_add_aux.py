@@ -28,7 +28,7 @@ etre = [
 
 # List of verbs that can be conjugated using either 'avoir' or 'être' in the
 # passé composé.
-local avoir_or_etre = {
+avoir_or_etre = {
   "abdiquer", "abonnir","absconder","abuser","abâtardir","accommoder","acculturer","adapter","adhærer","admirer","aguerrir","aider","aliter","alourdir","alphabétiser","amerrir","anémier","apparenter","aspirer","attrouper","ausculter",
   "balbutier","barbeler","batailler","bloguer","bosseler","bouillir","bouturer","buer",
   "cagouler","candir","cartonner","cascader","caserner","cauchemarder","ceindre","cintrer","circuler","coincer","commercer","commémorer","comparaître","confectionner","connaitre","consentir","conspuer","consterner","constituer","contorsionner","contrister","convoyer","couver","couvrir","crever",
@@ -50,105 +50,105 @@ local avoir_or_etre = {
 }
 
 templates_to_change = [
-"fr-conj-er",
-"fr-conj-ir",
-"fr-conj-re",
-"fr-conj-aillir",
-"fr-conj-aitre",
-"fr-conj-aître",
-"fr-conj-aller",
-"fr-conj-avoir",
-"fr-conj-ayer",
-"fr-conj-boire",
-"fr-conj-bruire",
-"fr-conj-cer",
-"fr-conj-cevoir",
-"fr-conj-circoncire",
-"fr-conj-clure (es)",
-"fr-conj-clure (se)",
-"fr-conj-coudre",
-"fr-conj-courir",
-"fr-conj-cre",
-"fr-conj-crire",
-"fr-conj-croire",
-"fr-conj-croitre",
-"fr-conj-croitre (décroitre)",
-"fr-conj-devoir",
-"fr-conj-confire",
-"fr-conj-dire",
-"fr-conj-dire (sez)",
-"fr-conj-douloir",
-"fr-conj-e-er",
-"fr-conj-é-er",
-"fr-conj-éger",
-"fr-conj-envoyer",
-"fr-conj-eoir",
-"fr-conj-estre",
-"fr-conj-être",
-"fr-conj-xx-er",
-"fr-conj-chauvir",
-"fr-conj-faillir",
-"fr-conj-faire",
-"fr-conj-foutre",
-"fr-conj-frire",
-"fr-conj-fuir",
-"fr-conj-ger",
-"fr-conj-gésir",
-"fr-conj-haïr",
-"fr-conj-ir (e)",
-"fr-conj-ir (s)",
-"fr-conj-lire",
-"fr-conj-luire",
-"fr-conj-maudire",
-"fr-conj-mettre",
-"fr-conj-moudre",
-"fr-conj-mourir",
-"fr-conj-mouvoir",
-"fr-conj-mouvoir (u)",
-"fr-conj-naitre",
-"fr-conj-naître",
-"fr-conj-ouïr",
-"fr-conj-oître",
-"fr-conj-paître",
-"fr-conj-plaire",
-"fr-conj-pleuvoir",
-"fr-conj-pourvoir",
-"fr-conj-pouvoir",
-"fr-conj-pre",
-"fr-conj-prendre",
-"fr-conj-prévoir",
-"fr-conj-prévaloir",
-"fr-conj-quérir",
-"fr-conj-re (gn)",
-"fr-conj-repleuvoir",
-"fr-conj-repouvoir",
-"fr-conj-résoudre",
-"fr-conj-revouloir",
-"fr-conj-rir",
-"fr-conj-rire",
-"fr-conj-saillir",
-"fr-conj-savoir",
-"fr-conj-souvenir",
-"fr-conj-suffire",
-"fr-conj-ensuivre",
-"fr-conj-suivre",
-"fr-conj-taire",
-"fr-conj-tenir",
-"fr-conj-traire",
-"fr-conj-ttre",
-"fr-conj-uire",
-"fr-conj-valoir",
-"fr-conj-venir",
-"fr-conj-vêtir",
-"fr-conj-vivre",
-"fr-conj-voir",
-"fr-conj-vouloir",
-"fr-conj-yer"
+  "fr-conj-er",
+  "fr-conj-ir",
+  "fr-conj-re",
+  "fr-conj-aillir",
+  "fr-conj-aitre",
+  "fr-conj-aître",
+  "fr-conj-aller",
+  "fr-conj-avoir",
+  "fr-conj-ayer",
+  "fr-conj-boire",
+  "fr-conj-bruire",
+  "fr-conj-cer",
+  "fr-conj-cevoir",
+  "fr-conj-circoncire",
+  "fr-conj-clure (es)",
+  "fr-conj-clure (se)",
+  "fr-conj-coudre",
+  "fr-conj-courir",
+  "fr-conj-cre",
+  "fr-conj-crire",
+  "fr-conj-croire",
+  "fr-conj-croitre",
+  "fr-conj-croitre (décroitre)",
+  "fr-conj-devoir",
+  "fr-conj-confire",
+  "fr-conj-dire",
+  "fr-conj-dire (sez)",
+  "fr-conj-douloir",
+  "fr-conj-e-er",
+  "fr-conj-é-er",
+  "fr-conj-éger",
+  "fr-conj-envoyer",
+  "fr-conj-eoir",
+  "fr-conj-estre",
+  "fr-conj-être",
+  "fr-conj-xx-er",
+  "fr-conj-chauvir",
+  "fr-conj-faillir",
+  "fr-conj-faire",
+  "fr-conj-foutre",
+  "fr-conj-frire",
+  "fr-conj-fuir",
+  "fr-conj-ger",
+  "fr-conj-gésir",
+  "fr-conj-haïr",
+  "fr-conj-ir (e)",
+  "fr-conj-ir (s)",
+  "fr-conj-lire",
+  "fr-conj-luire",
+  "fr-conj-maudire",
+  "fr-conj-mettre",
+  "fr-conj-moudre",
+  "fr-conj-mourir",
+  "fr-conj-mouvoir",
+  "fr-conj-mouvoir (u)",
+  "fr-conj-naitre",
+  "fr-conj-naître",
+  "fr-conj-ouïr",
+  "fr-conj-oître",
+  "fr-conj-paître",
+  "fr-conj-plaire",
+  "fr-conj-pleuvoir",
+  "fr-conj-pourvoir",
+  "fr-conj-pouvoir",
+  "fr-conj-pre",
+  "fr-conj-prendre",
+  "fr-conj-prévoir",
+  "fr-conj-prévaloir",
+  "fr-conj-quérir",
+  "fr-conj-re (gn)",
+  "fr-conj-repleuvoir",
+  "fr-conj-repouvoir",
+  "fr-conj-résoudre",
+  "fr-conj-revouloir",
+  "fr-conj-rir",
+  "fr-conj-rire",
+  "fr-conj-saillir",
+  "fr-conj-savoir",
+  "fr-conj-souvenir",
+  "fr-conj-suffire",
+  "fr-conj-ensuivre",
+  "fr-conj-suivre",
+  "fr-conj-taire",
+  "fr-conj-tenir",
+  "fr-conj-traire",
+  "fr-conj-ttre",
+  "fr-conj-uire",
+  "fr-conj-valoir",
+  "fr-conj-venir",
+  "fr-conj-vêtir",
+  "fr-conj-vivre",
+  "fr-conj-voir",
+  "fr-conj-vouloir",
+  "fr-conj-yer"
 ]
 
 refl_templates_to_change = [
-    "fr-conj-er-refl-vowel",
-    "fr-conj-er-refl-cons"
+  "fr-conj-er-refl-vowel",
+  "fr-conj-er-refl-cons"
 ]
 
 all_verb_props = [
@@ -172,7 +172,7 @@ def find_old_template_props(template, pagemsg, verbose):
     template_text = cached_template_calls[name]
   else:
     template_page = pywikibot.Page(site, "Template:%s" % name)
-    if not page.exists():
+    if not template_page.exists():
       pagemsg("WARNING: Can't locate template 'Template:%s'" % name)
       return None
     template_text = str(template_page.text)
@@ -251,7 +251,7 @@ def process_page(page, index, parsed):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
 
@@ -267,7 +267,7 @@ def process_page(page, index, parsed):
     name = str(t.name)
     if name in templates_to_change or name in refl_templates_to_change:
       refl = name in refl_templates_to_change
-      difvals = compare_conjugation(index, page, t, refl, pagemsg, expand_text, verbose)
+      difvals = compare_conjugation(index, page, t, refl, pagemsg, expand_text, args.verbose)
       if difvals is None:
         pass
       elif difvals:

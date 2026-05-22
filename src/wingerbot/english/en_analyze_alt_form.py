@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+# FIXME: Not working or tested.
+
+from dataclasses import dataclass
+import re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import msg
 
 parser = blib.create_argparser("Analyze uses of {{alt form}} for English terms")
 parser.add_argument("--direcfile", help="Output from 'find_regex.py --all' on a dump file.")
@@ -86,7 +89,7 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
     (lambda x: re.sub(r"re\b", "er", x), "-re -> -er", Pondian("re-form", "er-form")),
     (ise_to_ize, "-ise/-iser/-ises/-ised/-is(e)ing/-is(e)ation(al)/is(e)able/is(e)ability -> same with -iz-",
       Pondian("ise-form", "ize-form")),
-    (lambda x: ise_to_ize(x, omit_extra_e-True),
+    (lambda x: ise_to_ize(x, omit_extra_e=True),
      "-ise/-iser/-ises/-ised/-is(e)ing/-is(e)ation(al)/is(e)able/is(e)ability -> same with -iz- and omit extra -e-",
       Pondian("ise-form", "ize-form")),
     (lambda x: ise_to_ize(x, with_y=True),
@@ -100,19 +103,6 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
     (lambda x: re.sub(r"ll(|[eo]r'?s?'?|ed|en|ist|ing|ful|ous|ate(?:[drs]|rs)?)\b", r"l\1", x), "ll -> l", Pondian("ll-form", "l-form")),
   ]
 
-    txt = ible_eable_to_able(txt)
-    txt = ey_to_y(txt)
-    txt = ie_to_y(txt)
-    txt = y_to_i(txt)
-    txt = l_bar_to_l(txt)
-    txt = ph_to_f(txt)
-    txt = or_to_er(txt)
-    txt = ck_to_k(txt)
-    txt = q_to_k(txt)
-    txt = k_to_c(txt)
-    txt = gh_to_g(txt)
-    txt = ll_to_l(txt)
-    txt = ah_eh_to_a_e(txt)
   if to_page.replace("-", "") == from_page.replace("-", ""):
     pagemsg("Saw from-page '%s' same as to-page with hyphens removed" % from_page)
     continue

@@ -5,6 +5,7 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, errandmsg, site
+from wingerbot.latin import lalib
 
 # FIXME: Out of date script, not needed any more, might not still work.
 
@@ -24,7 +25,7 @@ def la_adj_1_and_2_subtype(stem1, stem2, decl, types, num, g, is_adj, pagetitle,
       stem1 = stem1[:-4] + "er"
     set_stem1 = True
   elif stem1.endswith("er") or stem1.endswith("ur"):
-    macronless_stem1 = remove_macrons(stem1)
+    macronless_stem1 = lalib.remove_macrons(stem1)
     if macronless_stem1 != pagetitle and macronless_stem1 + "us" != pagetitle:
       pagemsg("WARNING: Potential 1&2 adjective ending in -er or -ur, but pagetitle=%s not same" %
           pagetitle)
@@ -74,7 +75,7 @@ def la_adj_3rd_1E_subtype(stem1, stem2, decl, types, num, g, is_adj, pagetitle, 
     types = ["-I" if x == "par" else x for x in types]
   if num == "pl":
     types = types + ["pl"]
-  if stem2 == infer_3rd_decl_stem(stem1):
+  if stem2 == lalib.infer_3rd_decl_stem(stem1):
     stem2 = ""
   if re.search("(is|[ij]or|e)$", stem1):
     pagemsg("WARNING: Possible wrongly tagged adj, decl=3-1, stem1=%s, stem2=%s" % (
@@ -102,7 +103,7 @@ def la_adj_3rd_2E_subtype(stem1, stem2, decl, types, num, g, is_adj, pagetitle, 
 def la_adj_3rd_3E_subtype(stem1, stem2, decl, types, num, g, is_adj, pagetitle, pagemsg):
   if num == "pl":
     types = types + ["pl"]
-  if stem2 == infer_3rd_decl_stem(stem1):
+  if stem2 == lalib.infer_3rd_decl_stem(stem1):
     stem2 = ""
   if not stem1.endswith("er"):
     pagemsg("WARNING: Possible wrongly tagged adj, decl=3-3, stem1=%s, stem2=%s" % (
