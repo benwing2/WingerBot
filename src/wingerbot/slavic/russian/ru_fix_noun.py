@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert ru-noun to ru-noun+, ru-proper noun to ru-proper noun+, transfer
 # manual translit in headword to declension template (ru-noun-table).

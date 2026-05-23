@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Author: Benwing; bits and pieces taken from code written by CodeCat/Rua for MewBot
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert ru-ux to ux|ru or uxi|ru (depending on whether inline= is present).
 # In the process, convert sub= to subst=. Don't convert if one of the

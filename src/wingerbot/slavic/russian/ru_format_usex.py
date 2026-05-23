@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert Russian usage examples that are manually formatted using {{lang}}
 # or links to use {{uxi|ru}} or {{ux|ru}}

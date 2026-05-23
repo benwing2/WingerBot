@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Reduce page number by one for {{RQ:Jonson Alchemist}}.
 

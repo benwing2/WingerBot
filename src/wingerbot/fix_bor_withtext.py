@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Replace "{{bor|...|withtext=1}}" with "Borrowed from {{bor|...}}" when
 # at beginning of line or sentence, possibly after a bullet or number

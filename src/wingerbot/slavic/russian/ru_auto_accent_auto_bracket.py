@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # This script adds accents, links and boldface to Russian text inside of templates like {{l|ru|...}}, {{m|ru|...}},
 # {{ux|ru|...}}, etc. This is done by looking up words in the dictionary and adding information if it's unambiguous

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert {{ru-noun form}} and {{uk-noun form}} to use {{head}}.
 

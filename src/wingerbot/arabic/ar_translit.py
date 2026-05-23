@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Authors: Benwing, ZxxZxxZ, Atitarev
 
 import re, unicodedata

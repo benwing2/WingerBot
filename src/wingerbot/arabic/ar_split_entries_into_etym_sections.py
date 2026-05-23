@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # FIXME: Unlikely to work, as it has never been tested.
 

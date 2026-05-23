@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Fix up short adjective forms when possible, canonicalizing existing
 # 'inflection of' and converting raw inflection to 'inflection of'

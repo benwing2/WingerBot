@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # FIXME: Lowercase pronunciations for capitalized lemmas (DONE)
 # FIXME: Lowercase hyphenations for capitalized lemmas (DONE)

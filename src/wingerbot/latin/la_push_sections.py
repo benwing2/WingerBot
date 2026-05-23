@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # FIXME: Out of date. Use push_find_regex_changes.py.
 

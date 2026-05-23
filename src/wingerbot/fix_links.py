@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # This program replaces raw links of the form '[[foo]]' with templated links
 # of the form '{{l|ru|foo}}', and raw two-part links of the form '[[foo|bar]]'

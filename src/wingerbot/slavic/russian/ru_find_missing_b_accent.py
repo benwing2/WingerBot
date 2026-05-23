@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Find places where accent b is likely missing in Russian noun declensions.
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # This program removes redundant translit from links and similar templates,
 # and also removes redundant sc= values from those same links.

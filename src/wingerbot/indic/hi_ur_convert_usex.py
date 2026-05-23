@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert {{hi-usex}}/{{hi-x}} and {{ur-x}} to {{uxa}} (auto-inline), or sometimes {{ux}} or {{uxi}}.
 

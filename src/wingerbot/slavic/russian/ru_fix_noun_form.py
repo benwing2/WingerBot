@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Fix up noun forms, using {{ru-noun form}} instead of {{head|ru|noun form}}
 

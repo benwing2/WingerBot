@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert Japanese headwords from old-style to new-style. We look at
 # ja-noun, ja-adj, ja-verb and ja-pos.

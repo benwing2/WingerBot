@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Use past_adv_part_short=- instead of past_adv_part_short=
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from wingerbot import blib
 from wingerbot.canon_foreign import canon_one_page_links

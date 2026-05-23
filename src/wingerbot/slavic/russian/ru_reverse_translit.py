@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # This is used to reverse-convert transliterated Latin back to Russian,
 # so we can generate phon= for ru-IPA calls from the transliteration.

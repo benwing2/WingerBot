@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Fix up noun forms when possible, canonicalizing existing 'inflection of'.
 # In particular, we convert 'prep' to 'pre', shorten full forms to

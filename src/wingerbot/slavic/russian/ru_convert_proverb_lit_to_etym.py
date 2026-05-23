@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert "literally X" expressions in the definition of a proverb into etymologies.
 

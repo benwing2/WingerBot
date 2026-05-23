@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Go through Russian lemmas looking for pages with missing phon= or missing translit.
 # Currently we just look for э in the ru-IPA call but not in the page title.

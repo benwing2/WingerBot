@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # FIXME:
 # 1. i in IPA corresponding to й e.g. белогвардейка /bɛloɡvərˈdɛikə/, азербайджанец /əzɛrbəiˈdʒanɛt͡s/ (DONE)

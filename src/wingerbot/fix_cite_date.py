@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Replace dates of the form "1 January, 2012" with "1 January 2012"
 # (remove the comma) in quotation/citation templates.

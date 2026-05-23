@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Rename quotation templates. In the process, we move passage text outside of the template inside. For example,
 # if the --direcfile specifies 'RQ:Browne Errors ||| RQ:Browne Pseudodoxia Epidemica', we replace

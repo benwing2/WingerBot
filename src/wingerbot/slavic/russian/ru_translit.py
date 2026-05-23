@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Authors: Benwing; Atitarev for tr() and tr_adj() functions, in Lua
 
 import re

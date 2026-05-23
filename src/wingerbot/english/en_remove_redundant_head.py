@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import pywikibot, re, sys, argparse, unicodedata
 from dataclasses import dataclass

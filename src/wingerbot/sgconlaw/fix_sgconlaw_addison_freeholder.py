@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 ##* {{RQ:Addison Freeholder|50|June 11 1715}}
 ##*:The enemies of our happy establishment seem at present to copy out the piety of this seditious prophet , and to have recourse to his laudable method of '''club-law''', when they find all other means of enforcing the absurdity of their opinions to be ineffectual.

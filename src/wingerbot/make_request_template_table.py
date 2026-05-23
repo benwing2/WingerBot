@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from wingerbot.blib import getparam, rmparam, msg, errmsg, site
 import pywikibot, re, sys, argparse

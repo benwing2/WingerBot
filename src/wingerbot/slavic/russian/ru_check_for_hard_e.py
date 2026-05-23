@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Given the file from ruwikt of words where е is pronounced hard, check
 # the words in enwikt to see their pronunciations.

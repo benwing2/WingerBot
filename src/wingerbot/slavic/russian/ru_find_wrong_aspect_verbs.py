@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Find places where ru-verb is missing or its aspect(s) don't agree with the
 # aspect(s) in ru-conj-*. Maybe fix them by copying the aspect from ru-verb

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Find redlinks (non-existent pages) in multiword Russian lemmas, i.e. individual
 # words in multiword lemmas that don't exist as lemmas. Output data in two

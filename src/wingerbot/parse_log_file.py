@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # This works by modifying lines that end with a template (which is the {{FROM}}
 # template, i.e. the template as it stood in Wiktionary before modification)

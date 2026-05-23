@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Convert la-noun old form (specifying nominative, genitive, gender and
 # declension) to new form (same as la-ndecl).

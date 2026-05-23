@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Rename Bacon quotation templates. In the process, we move passage text outside of the template inside. For example,
 # if the --direcfile specifies 'RQ:Bacon Of The True Greatness ||| Of the True Greatness of Kingdoms and Estates', we replace

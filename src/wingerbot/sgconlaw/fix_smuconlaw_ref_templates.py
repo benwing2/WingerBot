@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Replace title= with entry= in a couple of reference templates, and strip
 # final periods from entry= in the same templates.

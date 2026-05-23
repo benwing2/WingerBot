@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # FIXME: Not tested, probably obsolete as we now have data modules to generate this stuff.
 

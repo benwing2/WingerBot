@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Go through all the pages in 'Category:R:vep:UVVV with red link' looking
 # for {{R:vep:UVVV}} templates, and check the pages in those templates to

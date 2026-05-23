@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Find and fix deprecated usages of {{prefixusex}} and {{suffixusex}}: Either use of the lang= param,
 # or a prefix as a term in {{prefixusex}} or a suffix as a term in {{suffixusex}}. We only fix lang=;

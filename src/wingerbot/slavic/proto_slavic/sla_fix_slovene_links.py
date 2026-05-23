@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # This script modifies Proto-Slavic pages containing links to Slovene words
 # to contain the tonal version of the word by looking it up in the entry.

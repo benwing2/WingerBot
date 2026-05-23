@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Move text outside of {{RQ:Dryden AZ}} inside, with some renaming of templates and args.
 # Specifically, we replace:

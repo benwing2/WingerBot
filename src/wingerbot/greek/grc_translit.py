@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Authors: Benwing; ??? for tr() functions, in Lua
 
 import re

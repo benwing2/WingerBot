@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 templates_to_do = [
   ("am-interjection", "Amharic"),
