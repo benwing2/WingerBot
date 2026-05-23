@@ -5,7 +5,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import msg, rmparam, getparam, site
+from wingerbot.blib import msg, errandmsg, rmparam, getparam, site
 from wingerbot.slavic.russian.rulib import (
   velar,
   sib,
@@ -327,11 +327,17 @@ def infer_decl(t, pagemsg):
   pagemsg("WARNING: Unable to infer short accent")
   return None
 
-def infer_one_page_decls_1(page, index, text):
+def infer_one_page_decls_1(index, page, text=None):
+  pagetitle = str(page.title())
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, str(page.title()), txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  if text is None:
+    text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
   for tempname in decl_templates:
-    for t in text.filter_templates():
+    for t in parsed.filter_templates():
       if str(t.name).strip() == tempname:
         orig_template = str(t)
         args = infer_decl(t, pagemsg)
@@ -371,11 +377,11 @@ def infer_one_page_decls_1(page, index, text):
           if verbose:
             pagemsg("Replacing %s with %s" % (orig_template, new_template))
 
-  return text, "Convert adj decl to new form and infer short-accent pattern"
+  return str(parsed), "Convert adj decl to new form and infer short-accent pattern"
 
-def infer_one_page_decls(page, index, text):
+def infer_one_page_decls(index, page, text):
   try:
-    return infer_one_page_decls_1(page, index, text)
+    return infer_one_page_decls_1(index, page, text)
   except Exception as e:
     msg("%s %s: WARNING: Got an error: %s" % (index, str(page.title()), repr(e)))
     traceback.print_exc(file=sys.stdout)
@@ -407,9 +413,8 @@ def test_infer():
     def title(self):
       return "test_infer"
   for pagetext in test_templates:
-    text = blib.parse_text(pagetext)
     page = Page()
-    newtext, comment = infer_one_page_decls(page, 1, text)
+    newtext, comment = infer_one_page_decls(1, page, pagetext)
     msg("newtext = %s" % str(newtext))
     msg("comment = %s" % comment)
 
@@ -434,4 +439,4 @@ else:
       if ignore_page(page):
         msg("Page %s %s: Skipping due to namespace" % (index, str(page.title())))
       else:
-        blib.do_edit(page, index, infer_one_page_decls, save=args.save)
+        blib.do_edit(index, page, infer_one_page_decls, save=args.save)

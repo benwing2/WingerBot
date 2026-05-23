@@ -61,7 +61,7 @@ if __name__ == "__main__":
       comment = "%s; %s" % (comment, args.comment)
     else:
       comment = args.comment
-    def do_process_page(page, index, parsed):
+    def do_process_page(index, page):
       return process_page(index, page, text, args.lang, args.verbose, comment)
-    blib.do_edit(pywikibot.Page(site, pagename), index, do_process_page,
+    blib.do_edit(index, pywikibot.Page(site, pagename), do_process_page,
         save=args.save, verbose=args.verbose, diff=args.diff)

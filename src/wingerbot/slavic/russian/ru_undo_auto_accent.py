@@ -11,9 +11,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
-
-site = pywikibot.Site()
+from wingerbot.blib import msg, errandmsg, getparam, addparam, site
 
 def undo_ru_auto_accent(save, verbose, direcfile, start, end):
   msg("WARNING: Script no longer applies and would need fixing up")
@@ -33,12 +31,15 @@ def undo_ru_auto_accent(save, verbose, direcfile, start, end):
 
     if not re.search(r"^\{\{(ux|usex|ru-ux|lang)\|", orig_template):
       continue
-    def undo_one_page_ru_auto_accent(page, index, text):
+    def undo_one_page_ru_auto_accent(index, page):
+      pagetitle = str(page.title())
       def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, str(page.title()), txt))
-      text = str(text)
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
+      def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+      text = blib.safe_page_text(page, errandpagemsg)
       if not re.search("^#\*:* *%s" % re.escape(repl_template), text, re.M):
-        return None, ""
+        return
       found_orig_template = orig_template in text
       newtext = text.replace(repl_template, orig_template)
       changelog = ""
@@ -65,8 +66,7 @@ def undo_ru_auto_accent(save, verbose, direcfile, start, end):
       msg("Page %s %s: WARNING, something wrong, does not exist" % (
         index, pagename))
     else:
-      blib.do_edit(page, index, undo_one_page_ru_auto_accent, save=save,
-          verbose=verbose)
+      blib.do_edit(index, page, undo_one_page_ru_auto_accent, save=save, verbose=verbose)
 
 params = blib.create_argparser("Undo auto-accent changes involving ux, usex and lang templates that look like direct quotes")
 params.add_argument("--file",

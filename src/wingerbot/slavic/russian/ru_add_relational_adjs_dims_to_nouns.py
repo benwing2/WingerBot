@@ -8,7 +8,7 @@ from wingerbot.blib import getparam, tname, msg, site
 
 from wingerbot.slavic.russian import rulib
 
-def add_rel_adj_or_dim_to_noun_page(nounpage, index, new_adj_or_dims, param, desc):
+def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, desc):
   notes = []
   pagetitle = str(nounpage.title())
   def pagemsg(txt):
@@ -88,9 +88,9 @@ def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
   if not blib.safe_page_exists(nounpage, pagemsg):
     pagemsg("WARNING: Noun %s for %s %s doesn't exist" % (noun, desc, ",".join(adjs_or_dims)))
     return
-  def do_add_rel_adj_or_dim_to_noun_page(page, index, parsed):
-    return add_rel_adj_or_dim_to_noun_page(page, index, adjs_or_dims, param, desc)
-  blib.do_edit(nounpage, index, do_add_rel_adj_or_dim_to_noun_page, save=args.save, verbose=args.verbose,
+  def do_add_rel_adj_or_dim_to_noun_page(index, page):
+    return add_rel_adj_or_dim_to_noun_page(index, page, adjs_or_dims, param, desc)
+  blib.do_edit(index, nounpage, do_add_rel_adj_or_dim_to_noun_page, save=args.save, verbose=args.verbose,
     diff=args.diff)
 
 def process_section_for_relational_adj_snarf(index, pagetitle, text, is_multi_etym_section):
@@ -254,9 +254,9 @@ if args.direcfile:
     else:
       add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, 'dim', 'diminutive')
 else:
-  def process_text_on_page(index, pagename, text):
+  def process_text_on_page(index, pagetitle, text):
     if args.pos == "reladj":
-      snarf_relational_adjs(index, pagename, text)
+      snarf_relational_adjs(index, pagetitle, text)
     else:
-      snarf_diminutives(index, pagename, text)
+      snarf_diminutives(index, pagetitle, text)
   blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)

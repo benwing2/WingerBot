@@ -502,7 +502,7 @@ else:
   pages = iter_numerals()
 
 if args.offline:
-  for current, index in blib.iter_pages(pages, startFrom, upTo, key=lambda x:str(x)):
+  for current, index in blib.iter_pages(pages, start, end, key=lambda x:str(x)):
     print("========== Text for #%s: ==========" % current)
     print("")
     print(generate_page(current))

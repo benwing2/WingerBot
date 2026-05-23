@@ -390,7 +390,7 @@ def canon_one_page_links(index, pagetitle, text):
     return result
 
   return blib.process_links(save, verbose, "ar", "Arabic", cattype,
-      startFrom, upTo, process_param, sort_group_changelogs,
+      start, end, process_param, sort_group_changelogs,
       pages_to_do=pages_to_do, split_templates="[,،/]")
 
 def process_text_on_page(index, pagetitle, text):

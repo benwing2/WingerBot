@@ -115,9 +115,9 @@ def process_page_for_anagrams(index, page, modify_this_page):
   text = "".join(sections)
 
   for anagram in anagrams:
-    def do_process_page(page, index, parsed):
+    def do_process_page(index, page):
       return remove_anagram_from_page(index, page, pagetitle)
-    blib.do_edit(pywikibot.Page(site, anagram), index, do_process_page,
+    blib.do_edit(index, pywikibot.Page(site, anagram), do_process_page,
       save=args.save, verbose=args.verbose, diff=args.diff)
 
   return text, notes
@@ -203,9 +203,7 @@ for index, badpagetitle in input_pages_to_delete:
     pagemsg("Skipping because page doesn't exist")
     continue
   process_page_for_anagrams(index, badpage, modify_this_page=False)
-  def do_process_page(page, index, parsed):
-    return process_page_for_deletion(index, page)
-  blib.do_edit(badpage, index, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
+  blib.do_edit(index, badpage, process_page_for_deletion, save=args.save, verbose=args.verbose, diff=args.diff)
   #this_comment = 'delete bad Italian non-lemma form'
   #if args.save:
   #  existing_text = blib.safe_page_text(badpage, errandpagemsg, bad_value_ret=None)
@@ -224,9 +222,9 @@ for index, frompagetitle, topagetitle in pages_to_rename:
   if not blib.safe_page_exists(frompage, errandpagemsg):
     pagemsg("Skipping because page doesn't exist")
     continue
-  def do_process_page(page, index, parsed):
+  def do_process_page(index, page):
     return process_page_for_anagrams(index, page, modify_this_page=True)
-  blib.do_edit(frompage, index, do_process_page,
+  blib.do_edit(index, frompage, do_process_page,
     save=args.save, verbose=args.verbose, diff=args.diff)
   topage = pywikibot.Page(site, topagetitle)
   if blib.safe_page_exists(topage, errandpagemsg):

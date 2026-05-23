@@ -178,8 +178,8 @@ def yield_page_lines(fn):
       fix_page_lines(last_replace_line, len(page_lines))
     yield index, pagename, page_lines
 
-def parse_log_file(fn, startFrom, upTo):
-  for current, index in blib.iter_pages(yield_page_lines(fn), startFrom, upTo,
+def parse_log_file(fn, start, end):
+  for current, index in blib.iter_pages(yield_page_lines(fn), start, end,
       key=lambda x:x[1]):
     pageindex, pagename, lines = current
     for line in lines:

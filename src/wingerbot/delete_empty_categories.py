@@ -3,7 +3,7 @@
 
 import re
 from wingerbot import blib
-from wingerbot.blib import msg, errmsg, site
+from wingerbot.blib import msg, errandmsg, site
 import pywikibot
 
 from pywikibot.exceptions import APIError
@@ -21,13 +21,12 @@ def delete_page(page, comment, errandpagemsg):
         raise e
       errandpagemsg("WARNING: APIError, try #%s: %s" % (i + 1, e))
 
-def process_page(page, index):
+def process_page(index, page):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   if args.verbose:
     pagemsg("Processing")
   if not pagetitle.startswith("Category:"):

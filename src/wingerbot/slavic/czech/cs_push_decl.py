@@ -49,13 +49,17 @@ def compare_forms(origforms, replforms, ignore_slots, pagemsg):
       return False
   return True
 
-def replace_decl(page, index, parsed, decl, declforms, ignore_slots):
+def replace_decl(index, page, decl, declforms, ignore_slots):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   pagemsg("Processing decl {{cs-ndecl|%s}}" % decl)
   notes = []
   saw_decl = False
+  text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     tn = tname(t)
     forms = {}
@@ -158,7 +162,7 @@ for index, pagename, decl, ignore_slots in yield_decls():
   if not blib.safe_page_exists(page, errandpagemsg):
     pagemsg("WARNING: Didn't find page; declension is {{cs-ndecl|%s}}" % decl)
     continue
-  def do_replace_decl(page, index, parsed):
-    return replace_decl(page, index, parsed, decl, predforms, ignore_slots)
-  blib.do_edit(page, index, do_replace_decl, save=args.save, verbose=args.verbose,
+  def do_replace_decl(index, page):
+    return replace_decl(index, page, decl, predforms, ignore_slots)
+  blib.do_edit(index, page, do_replace_decl, save=args.save, verbose=args.verbose,
       diff=args.diff)

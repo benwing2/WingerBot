@@ -66,7 +66,7 @@ adjectival_phrases = [
 # when creating the declension template. Parameters that are all alphabetic
 # are expanded so that e.g. "f" will also remove parameters named
 # "f2", "f3", "f4", etc. and "ftr", "f2tr", "f3tr", etc.
-def create_declension(page, index, save, pos, tempname, decltempname, sgnum,
+def create_declension(index, page, save, pos, tempname, decltempname, sgnum,
     removeparams, is_proper=False):
   pagename = page.title()
   comments = []
@@ -594,17 +594,17 @@ def create_declension(page, index, save, pos, tempname, decltempname, sgnum,
       blib.safe_page_save(page, comment, errandmsg)
 
 def create_declensions(save, pos, tempname, decltempname, sgnum,
-    startFrom, upTo, removeparams, is_proper=False):
-  for index, page in blib.references("Template:%s" % tempname, startFrom, upTo):
-    create_declension(page, index, save, pos, tempname, decltempname, sgnum,
+    start, end, removeparams, is_proper=False):
+  for index, page in blib.references("Template:%s" % tempname, start, end):
+    create_declension(index, page, save, pos, tempname, decltempname, sgnum,
         removeparams, is_proper=is_proper)
 
-pa = blib.create_argparser("Create Arabic declensions")
-pa.add_argument("--proper", action='store_true',
+parser = blib.create_argparser("Create Arabic declensions")
+parser.add_argument("--proper", action='store_true',
     help="Do proper nouns only")
 
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 params_to_remove = [
     "2", # gender; not included in declension tables
@@ -642,17 +642,17 @@ non_gendered_params_to_remove = params_to_remove + [
 
 if not params.proper:
   create_declensions(params.save, "Noun", "ar-noun", "ar-decl-noun",
-      "sg", startFrom, upTo, non_gendered_params_to_remove)
+      "sg", start, end, non_gendered_params_to_remove)
   create_declensions(params.save, "Noun", "ar-coll-noun", "ar-decl-coll-noun",
-      "coll", startFrom, upTo, non_gendered_params_to_remove)
+      "coll", start, end, non_gendered_params_to_remove)
   create_declensions(params.save, "Noun", "ar-sing-noun", "ar-decl-sing-noun",
-      "sing", startFrom, upTo, non_gendered_params_to_remove)
+      "sing", start, end, non_gendered_params_to_remove)
   create_declensions(params.save, "Noun", "ar-noun-nisba", "ar-decl-gendered-noun",
-      "sg", startFrom, upTo, params_to_remove)
+      "sg", start, end, params_to_remove)
   for adj_template in ["ar-adj", "ar-nisba", "ar-adj-sound", "ar-adj-in",
       "ar-adj-an"]:
     create_declensions(params.save, "Adjective", adj_template, "ar-decl-adj",
-        "sg", startFrom, upTo, params_to_remove)
+        "sg", start, end, params_to_remove)
 create_declensions(params.save, "Proper noun", "ar-proper noun", "ar-decl-noun",
-    "sing", startFrom, upTo, non_gendered_params_to_remove,
+    "sing", start, end, non_gendered_params_to_remove,
     is_proper=True)

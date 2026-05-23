@@ -540,22 +540,22 @@ export.numbers[%s] = {
   msg("""
 return export""")
 
-pa = blib.create_argparser("Save numbers to Wiktionary")
-pa.add_argument("--lemmas", action="store_true",
+parser = blib.create_argparser("Save numbers to Wiktionary")
+parser.add_argument("--lemmas", action="store_true",
     help="Do lemmas from 21-99.")
-pa.add_argument("--non-lemmas", action="store_true",
+parser.add_argument("--non-lemmas", action="store_true",
     help="Do non-lemmas from 21-99.")
-pa.add_argument("--ordinal-lemmas", action="store_true",
+parser.add_argument("--ordinal-lemmas", action="store_true",
     help="Do ordinal lemmas from 11-19.")
-pa.add_argument("--ordinal-non-lemmas", action="store_true",
+parser.add_argument("--ordinal-non-lemmas", action="store_true",
     help="Do ordinal non-lemmas from 11-19.")
-pa.add_argument("--number-list-data", action="store_true",
+parser.add_argument("--number-list-data", action="store_true",
     help="Output number list data.")
-pa.add_argument("--offline", action="store_true",
+parser.add_argument("--offline", action="store_true",
     help="Run offline, checking output only.")
 
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 def iter_pages(createfn):
   for tenval, ten, digval, dig in iter_numerals():
@@ -568,7 +568,7 @@ def iter_pages_units(createfn, include_ten=False, skip_one=False):
 
 def do_pages(createfn, iterfn=iter_pages):
   pages = iterfn(createfn)
-  for current, index in blib.iter_pages(pages, startFrom, upTo,
+  for current, index in blib.iter_pages(pages, start, end,
       key=lambda x:x[0]):
     pagename, text, changelog = current
     pagetitle = remove_diacritics(pagename)
@@ -581,9 +581,9 @@ def do_pages(createfn, iterfn=iter_pages):
         msg("Page %s %s: WARNING, page already exists, skipping" % (
           index, pagename))
       else:
-        def save_text(page, index, parsed):
+        def save_text(index, page):
           return text, changelog
-        blib.do_edit(page, index, save_text, save=params.save,
+        blib.do_edit(index, page, save_text, save=params.save,
             verbose=params.verbose)
 
 if params.lemmas:

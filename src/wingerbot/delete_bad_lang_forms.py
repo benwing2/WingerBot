@@ -26,7 +26,7 @@ lang_inflection_of_templates = {
   "it": [],
 }
 
-def delete_form_1(page, index, lemma, formind, formval):
+def delete_form_1(index, page, lemma, formind, formval):
   notes = []
 
   def pagemsg(txt):
@@ -272,9 +272,9 @@ def delete_form(index, lemma, formind, formval):
     pagemsg("Skipping form value %s, page doesn't exist" % formval)
     return
 
-  def do_delete_form_1(page, index, parsed):
-    return delete_form_1(page, index, lemma, formind, formval)
-  blib.do_edit(page, index, do_delete_form_1, save=args.save, verbose=args.verbose,
+  def do_delete_form_1(index, page):
+    return delete_form_1(index, page, lemma, formind, formval)
+  blib.do_edit(index, page, do_delete_form_1, save=args.save, verbose=args.verbose,
       diff=args.diff)
 
 def process_page(index, lemma, forms, pages_to_delete):

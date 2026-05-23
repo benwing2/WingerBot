@@ -9,7 +9,7 @@ from wingerbot.latin import lalib
 
 pages_to_delete = []
 
-def process_form(page, index, slot, form, pos):
+def process_form(index, page, slot, form, pos):
   def pagemsg(txt):
     msg("Page %s %s %s: %s" % (index, slot, form, txt))
 
@@ -139,9 +139,9 @@ def process_text_on_page(index, pagetitle, text):
       slots_and_forms_to_process.append((slot, form))
   for index, (slot, form) in blib.iter_items(sorted(slots_and_forms_to_process,
       key=lambda x: lalib.remove_macrons(x[1]))):
-    def handler(page, index, parsed):
-      return process_form(page, index, slot, form, pos)
-    blib.do_edit(pywikibot.Page(site, lalib.remove_macrons(form)), index,
+    def handler(index, page):
+      return process_form(index, page, slot, form, pos)
+    blib.do_edit(index, pywikibot.Page(site, lalib.remove_macrons(form)),
         handler, save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Correct headers/headwords to reflect changes from noun to proper noun (and occasionally vice-versa)",

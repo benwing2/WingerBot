@@ -3,16 +3,15 @@
 
 import re
 from wingerbot import blib
-from wingerbot.blib import msg, errmsg, site
+from wingerbot.blib import msg, errandmsg, site
 import pywikibot
 
-def process_page(page, index, args, comment):
+def process_page(index, page, args, comment):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   if args.verbose:
     pagemsg("Processing")
   this_comment = comment or 'delete page'
@@ -41,8 +40,8 @@ if args.direcfile:
       pagetitle = line
       page_comment = args.comment or 'delete file'
     page = pywikibot.Page(site, pagetitle)
-    process_page(page, index, args, page_comment)
+    process_page(index, page, args, page_comment)
 else:
-  def do_process_page(page, index):
-    return process_page(page, index, args, args.comment)
+  def do_process_page(index, page):
+    return process_page(index, page, args, args.comment)
   blib.do_pagefile_cats_refs(args, start, end, do_process_page)

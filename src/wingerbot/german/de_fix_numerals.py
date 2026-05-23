@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-def process_page(page, index, parsed):
+def process_page(index, page):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -33,4 +33,4 @@ for index, page in blib.cat_articles("German ordinal numbers", start, end):
   for ending in endings:
     page = pywikibot.Page(site, pagetitle[:-1] + ending)
     if page.exists():
-      blib.do_edit(page, index, process_page, save=args.save, verbose=args.verbose)
+      blib.do_edit(index, page, process_page, save=args.save, verbose=args.verbose)

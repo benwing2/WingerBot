@@ -6,7 +6,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam, rmparam, getrmparam, remove_links
+from wingerbot.blib import msg, errandmsg, getparam, addparam, rmparam, getrmparam, remove_links
 
 ru_noun_transl = [
   ["ru-noun-([12])", "", "stem-bare"],
@@ -91,12 +91,16 @@ def remove_diacritics(text):
   text = text.replace(GR, "")
   return text
 
-def rewrite_one_page_ru_decl_adj(page, index, text):
+def rewrite_one_page_ru_decl_adj(index, page):
   oldtemps = []
   pagename = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
-  for t in text.filter_templates():
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
+  for t in parsed.filter_templates():
     converted = True
     def tname():
       return str(t.name).strip()
@@ -180,13 +184,17 @@ def rewrite_one_page_ru_decl_adj(page, index, text):
     comment = "convert %s -> ru-decl-adj" % ", ".join(oldtemps)
   else:
     comment = None
-  return text, comment
+  return str(parsed), comment
 
-def rewrite_one_page_ru_decl_noun(page, index, text):
+def rewrite_one_page_ru_decl_noun(index, page):
   oldtemps = []
   pagename = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
   nochange = False
   change = False
   for t in text.filter_templates():
@@ -385,24 +393,24 @@ def rewrite_one_page_ru_decl_noun(page, index, text):
     comment = None
   return text, comment
 
-def rewrite_ru_decl_noun(save, verbose, startFrom, upTo):
+def rewrite_ru_decl_noun(save, verbose, start, end):
   for cat in ["Russian nouns"]:
-    for index, page in blib.cat_articles(cat, startFrom, upTo):
-      blib.do_edit(page, index, rewrite_one_page_ru_decl_noun, save=save, verbose=verbose)
-def rewrite_ru_decl_adj(save, verbose, startFrom, upTo):
+    for index, page in blib.cat_articles(cat, start, end):
+      blib.do_edit(index, page, rewrite_one_page_ru_decl_noun, save=save, verbose=verbose)
+def rewrite_ru_decl_adj(save, verbose, start, end):
   for cat in ["Russian adjectives"]:
-    for index, page in blib.cat_articles(cat, startFrom, upTo):
-      blib.do_edit(page, index, rewrite_one_page_ru_decl_adj, save=save, verbose=verbose)
+    for index, page in blib.cat_articles(cat, start, end):
+      blib.do_edit(index, page, rewrite_one_page_ru_decl_adj, save=save, verbose=verbose)
 
-pa = blib.create_argparser("Rewrite Russian old declension templates")
-pa.add_argument("--adjectives", action='store_true',
+parser = blib.create_argparser("Rewrite Russian old declension templates")
+parser.add_argument("--adjectives", action='store_true',
     help="Rewrite old adjective templates")
-pa.add_argument("--nouns", action='store_true',
+parser.add_argument("--nouns", action='store_true',
     help="Rewrite old noun templates")
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 if params.adjectives:
-  rewrite_ru_decl_adj(params.save, params.verbose, startFrom, upTo)
+  rewrite_ru_decl_adj(params.save, params.verbose, start, end)
 if params.nouns:
-  rewrite_ru_decl_noun(params.save, params.verbose, startFrom, upTo)
+  rewrite_ru_decl_noun(params.save, params.verbose, start, end)

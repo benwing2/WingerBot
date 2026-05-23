@@ -6,34 +6,36 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, errandmsg, getparam, addparam, tname
 
-def fix_tool_place_noun(save, verbose, startFrom, upTo):
-  for template in ["ar-tool noun", "ar-noun of place", "ar-instance noun"]:
-
+def fix_tool_place_noun(save, verbose, start, end):
+  for tn in ["ar-tool noun", "ar-noun of place", "ar-instance noun"]:
     # Fix the template refs. If cap= is present, remove it; else, add lc=.
-    def fix_one_page_tool_place_noun(page, index, text):
-      pagetitle = page.title()
-      for t in text.filter_templates():
-        if t.name == template:
+    def fix_one_page_tool_place_noun(index, page):
+      pagetitle = str(page.title())
+      def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
+      def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+      text = blib.safe_page_text(page, errandpagemsg)
+      parsed = blib.parse_text(text)
+      for t in parsed.filter_templates():
+        if tname(t) == tn:
           if getparam(t, "cap"):
-            msg("Page %s %s: Template %s: Remove cap=" %
-                (index, pagetitle, template))
+            pagemsg("Template %s: Remove cap=" % tn)
             t.remove("cap")
           else:
-            msg("Page %s %s: Template %s: Add lc=1" %
-                (index, pagetitle, template))
+            pagemsg("Template %s: Add lc=1" % tn)
             addparam(t, "lc", "1")
       changelog = "%s: If cap= is present, remove it, else add lc=" % template
-      msg("Page %s %s: Change log = %s" % (index, pagetitle, changelog))
-      return text, changelog
+      return str(parsed), changelog
 
-    for index, page in blib.references("Template:" + template, startFrom, upTo):
-      blib.do_edit(page, index, fix_one_page_tool_place_noun, save=save,
+    for index, page in blib.references("Template:" + template, start, end):
+      blib.do_edit(index, page, fix_one_page_tool_place_noun, save=save,
           verbose=verbose)
 
-pa = blib.create_argparser("Fix lc vs. cap in tool/place noun etym templates")
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+parser = blib.create_argparser("Fix lc vs. cap in tool/place noun etym templates")
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
-fix_tool_place_noun(params.save, params.verbose, startFrom, upTo)
+fix_tool_place_noun(params.save, params.verbose, start, end)

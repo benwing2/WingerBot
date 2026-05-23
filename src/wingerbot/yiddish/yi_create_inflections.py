@@ -1400,7 +1400,7 @@ def find_inflection_templates(text, expected_header, expected_poses, skip_poses,
 # true if the particular form value in question is to be skipped. This is
 # used e.g. to skip periphrastic future forms.
 def create_forms(lemmas_to_process, lemmas_to_overwrite,
-    lemmas_to_not_overwrite, program_args, save, startFrom, upTo, formspec,
+    lemmas_to_not_overwrite, program_args, save, start, end, formspec,
     generate_inflection_dict, form_aliases, pos, headtemp, dicform_codes,
     expected_header, expected_poses, skip_poses, is_inflection_template,
     generate_forms, is_lemma_template, skip_inflections=None):
@@ -1410,9 +1410,9 @@ def create_forms(lemmas_to_process, lemmas_to_overwrite,
 
   if lemmas_to_process:
     pages_to_process = ((index, pywikibot.Page(site, page)) for index, page in
-        blib.iter_items(lemmas_to_process, startFrom, upTo))
+        blib.iter_items(lemmas_to_process, start, end))
   else:
-    pages_to_process = blib.cat_articles("Yiddish %ss" % pos, startFrom, upTo)
+    pages_to_process = blib.cat_articles("Yiddish %ss" % pos, start, end)
 
   for index, page in pages_to_process:
     pagetitle = str(page.title())
@@ -1542,10 +1542,10 @@ def generate_adj_forms(t, expand_text):
     return expand_text(re.sub(r"^\{\{yi-decl-poss\s*\|", r"{{yi-generate-adj-forms|decltype=possessive|",
       str(t)))
 
-def create_adj_forms(save, startFrom, upTo, formspec, lemmas_to_process,
+def create_adj_forms(save, start, end, formspec, lemmas_to_process,
     lemmas_to_overwrite, lemmas_to_not_overwrite, program_args):
   create_forms(lemmas_to_process, lemmas_to_overwrite,
-      lemmas_to_not_overwrite, program_args, save, startFrom, upTo, formspec,
+      lemmas_to_not_overwrite, program_args, save, start, end, formspec,
       adj_form_inflection_dict, adj_form_aliases,
       "adjective", "head|yi|adjective form", "pred",
       "Declension", ["Adjective", "Participle", "Ordinal numeral"],
@@ -1555,37 +1555,37 @@ def create_adj_forms(save, startFrom, upTo, formspec, lemmas_to_process,
       lambda t:tname(t) == "yi-adj",
       )
 
-pa = blib.create_argparser("Create Yiddish inflection entries")
-pa.add_argument("--adj-form",
+parser = blib.create_argparser("Create Yiddish inflection entries")
+parser.add_argument("--adj-form",
     help="""Do specified adjective-form inflections, a comma-separated list.
 Possible elements are pred, er, n, e, s or all (all forms). The predicate
 form will not be created even if specified, because it is the same as the
 dictionary/lemma form. Also, non-existent forms for particular adjectives
 will not be created.""")
-pa.add_argument("--lemmafile",
+parser.add_argument("--lemmafile",
     help="""File containing lemmas to process.""")
-pa.add_argument("--lemmas",
+parser.add_argument("--lemmas",
     help="""Comma-separated list of lemmas to process.""")
-pa.add_argument("--overwrite-lemmas",
+parser.add_argument("--overwrite-lemmas",
     help="""File containing list of lemmas where the current inflections are
 considered to have errors in them (e.g. due to the conjugation template having
 incorrect aspect) and thus should be overwritten. Entries are without
 accents.""")
-pa.add_argument("--lemmas-to-not-overwrite",
+parser.add_argument("--lemmas-to-not-overwrite",
     help="""File containing list of lemma pages, which should in general
 be the entire set of lemmas. Any non-lemma form that would overwrite the
 Yiddish section (--overwrite-page) will not do so if the form is one of
 these pages. Entries are without accents.""")
-pa.add_argument("--overwrite-page", action="store_true",
+parser.add_argument("--overwrite-page", action="store_true",
     help="""If specified, overwrite the entire existing page of inflections.
 Won't do this if it finds "Etymology N", unless --overwrite-etymologies is
 given. WARNING: Be careful!""")
-pa.add_argument("--overwrite-etymologies", action="store_true",
+parser.add_argument("--overwrite-etymologies", action="store_true",
     help="""If specified and --overwrite-page, overwrite the entire existing
 page of inflections even if "Etymology N". WARNING: Be careful!""")
 
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 if params.lemmafile:
   lemmas_to_process = list(blib.yield_items_from_file(params.lemmafile))
@@ -1603,6 +1603,6 @@ else:
   lemmas_to_not_overwrite = []
 if params.adj_form:
   function_to_call = create_adj_forms
-  function_to_call(params.save, startFrom, upTo, params.adj_form, lemmas_to_process, lemmas_to_overwrite, lemmas_to_not_overwrite, params)
+  function_to_call(params.save, start, end, params.adj_form, lemmas_to_process, lemmas_to_overwrite, lemmas_to_not_overwrite, params)
 
 blib.elapsed_time()

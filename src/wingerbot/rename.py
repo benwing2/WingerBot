@@ -114,6 +114,6 @@ if __name__ == "__main__":
       frompage, topage = line.split(" ||| ")
       rename_page(args, index, pywikibot.Page(blib.site, frompage), topage, args.rename_comment, from_, to)
   else:
-    def do_process_page(page, index):
+    def do_process_page(index, page):
       return rename_page(args, index, page, None, args.rename_comment, from_, to)
     blib.do_pagefile_cats_refs(args, start, end, do_process_page)

@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
 
-def process_page_for_rename(page, index):
+def process_page_for_rename(index, page):
   pagename = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagename, txt))

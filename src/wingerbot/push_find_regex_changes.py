@@ -161,8 +161,8 @@ if __name__ == "__main__":
       if origcontents == newtext:
         msg("Page %s %s: Skipping contents because no change" % (index, pagetitle))
       else:
-        def do_process_page(page, index, parsed):
+        def do_process_page(index, page):
           return process_text_on_page(index, str(page.title()), page.text, newtext, comment, origcontents)
-        blib.do_edit(pywikibot.Page(site, pagetitle), index, do_process_page,
+        blib.do_edit(index, pywikibot.Page(site, pagetitle), do_process_page,
             save=args.save, verbose=args.verbose, diff=args.diff)
     blib.elapsed_time()

@@ -1176,7 +1176,7 @@ def process_lemma(index, pagetitle, forms):
             elif formpagename == pagetitle:
               pagemsg("WARNING: Skipping dictionary form")
             else:
-              process_page(formpage, index)
+              process_page(index, formpage)
 
 def read_pages(filename, start, end):
   for i, line in blib.iter_items_from_file(filename, start, end):

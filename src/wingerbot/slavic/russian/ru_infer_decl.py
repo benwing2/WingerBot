@@ -17,7 +17,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, site
+from wingerbot.blib import rmparam, getparam, msg, errandmsg, site, tname
 from wingerbot.slavic.russian.rulib import (
   AC,
   is_unstressed,
@@ -219,7 +219,7 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
   if verbose:
     pagemsg("Processing %s" % str(t))
 
-  tname = str(t.name).strip()
+  tn = tname(t)
   forms = {}
 
   # Initialize all cases to blank in case we don't set them again later
@@ -227,20 +227,20 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
     if case:
       forms[case] = ""
 
-  if tname == "ru-decl-noun":
+  if tn == "ru-decl-noun":
     number = []
     numonly = ""
     getcases = ru_decl_noun_cases
-  elif tname == "ru-decl-noun-unc":
+  elif tn == "ru-decl-noun-unc":
     number = ["n=sg"]
     numonly = "sg"
     getcases = ru_decl_noun_unc_cases
-  elif tname == "ru-decl-noun-pl":
+  elif tn == "ru-decl-noun-pl":
     number = []
     numonly = "pl"
     getcases = ru_decl_noun_pl_cases
   else:
-    assert False, "Unrecognized template name: %s" % tname
+    assert False, "Unrecognized template name: %s" % tn
 
   i = 1
   for case in getcases:
@@ -731,14 +731,20 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
 
   return None
 
-def infer_one_page_decls_1(page, index, text):
+def infer_one_page_decls_1(index, page, text=None):
+  pagetitle = str(page.title())
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, str(page.title()), txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  if text is None:
+    text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
   genders = set()
   headwords = set()
   # Extract the genders and the headwords
-  for t in text.filter_templates():
-    if str(t.name).strip() in ["ru-noun", "ru-proper noun"]:
+  for t in parsed.filter_templates():
+    if tname(t) in ["ru-noun", "ru-proper noun"]:
       m = re.search("^([mfn])", getparam(t, "2"))
       if not m:
         pagemsg("WARNING: Strange ru-noun template: %s" % str(t))
@@ -767,9 +773,10 @@ def infer_one_page_decls_1(page, index, text):
     linked_headwords[linked_word] = linked_headword
 
   inferred_decls = []
-  for t in text.filter_templates():
-    if str(t.name).strip() in manual_templates:
-      if str(t.name).strip() == "ru-decl-noun-pl":
+  for t in parsed.filter_templates():
+    tn = tname(t)
+    if tn in manual_templates:
+      if tn == "ru-decl-noun-pl":
         genders = list(genders)
         if len(genders) == 0:
           pagemsg("WARNING: Can't find gender for pl-only nominal")
@@ -796,11 +803,11 @@ def infer_one_page_decls_1(page, index, text):
           else:
             t.add(i, arg)
             i += 1
-  return text, "Infer declension for manual decl(s): %s" % ", ".join(inferred_decls)
+  return str(parsed), "Infer declension for manual decl(s): %s" % ", ".join(inferred_decls)
 
-def infer_one_page_decls(page, index, text):
+def infer_one_page_decls(index, page):
   try:
-    return infer_one_page_decls_1(page, index, text)
+    return infer_one_page_decls_1(index, page)
   except Exception as e:
     msg("%s %s: WARNING: Got an error: %s" % (index, str(page.title()), repr(e)))
     traceback.print_exc(file=sys.stdout)
@@ -1384,10 +1391,9 @@ def test_infer():
     def title(self):
       return "test_infer"
   for pagetext in test_templates:
-    text = blib.parse_text(pagetext)
     page = Page()
     msg("original text = [[%s]]" % pagetext)
-    newtext, comment = infer_one_page_decls(page, 1, text)
+    newtext, comment = infer_one_page_decls(1, page, pagetext)
     msg("newtext = %s" % str(newtext))
     msg("comment = %s" % comment)
 
@@ -1410,5 +1416,5 @@ else:
       if ignore_page(page):
         msg("Page %s %s: Skipping due to namespace" % (index, str(page.title())))
       else:
-        blib.do_edit(page, index, infer_one_page_decls, save=args.save)
+        blib.do_edit(index, page, infer_one_page_decls, save=args.save)
 

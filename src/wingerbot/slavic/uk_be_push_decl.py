@@ -6,7 +6,7 @@ import traceback, sys
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, site, tname
+from wingerbot.blib import rmparam, getparam, msg, errandmsg, site, tname
 from wingerbot.slavic.ukrainian import uklib as uk
 from wingerbot.slavic.belarusian import belib as be
 
@@ -69,12 +69,16 @@ def compare_forms(origforms, replforms, pagemsg):
       return False
   return True
 
-def replace_decl(page, index, parsed, decl, declforms):
+def replace_decl(index, page, decl, declforms):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   pagemsg("Processing decl %s" % decl)
   notes = []
+  text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     tn = tname(t)
     forms = {}
@@ -161,7 +165,7 @@ for index, decl in yield_decls():
   lemma = predforms["nom_s"] if "nom_s" in predforms else predforms["nom_p"]
   real_pagename = re.sub(",.*", "", module.remove_accents(blib.remove_links(lemma)))
   page = pywikibot.Page(site, real_pagename)
-  def do_replace_decl(page, index, parsed):
-    return replace_decl(page, index, parsed, decl, predforms)
-  blib.do_edit(page, index, do_replace_decl, save=args.save, verbose=args.verbose,
+  def do_replace_decl(index, page):
+    return replace_decl(index, page, decl, predforms)
+  blib.do_edit(index, page, do_replace_decl, save=args.save, verbose=args.verbose,
       diff=args.diff)

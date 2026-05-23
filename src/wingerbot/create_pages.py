@@ -6,7 +6,7 @@ from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, site
 import pywikibot
 
-def process_page(page, index):
+def process_page(index, page):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))

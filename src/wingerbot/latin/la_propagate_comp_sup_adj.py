@@ -8,7 +8,7 @@ from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
 from wingerbot.latin import lalib
 
-def process_lemma_page(page, index, is_comp, form):
+def process_lemma_page(index, page, is_comp, form):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -78,10 +78,9 @@ def process_text_on_page(index, pagetitle, text):
       lemma = getparam(t, "1") or pagetitle
       pos = getparam(t, "pos")
       if pos:
-        def do_process(page, index, parsed):
-          return process_lemma_page(page, index, tn == "la-adj-comp",
-              lemma)
-        blib.do_edit(pywikibot.Page(site, lalib.remove_macrons(pos)), index,
+        def do_process(index, page):
+          return process_lemma_page(index, page, tn == "la-adj-comp", lemma)
+        blib.do_edit(index, pywikibot.Page(site, lalib.remove_macrons(pos)),
             do_process, save=args.save, verbose=args.verbose, diff=args.diff)
       else:
         pagemsg("WARNING: Didn't see positive degree: %s" % str(t))

@@ -3,7 +3,7 @@
 
 import re
 from wingerbot import blib
-from wingerbot.blib import msg, errmsg, site
+from wingerbot.blib import msg, errandmsg, site
 import pywikibot
 
 def blacklist(category):
@@ -13,13 +13,12 @@ def blacklist(category):
   #  return True
   #return False
 
-def process_page(page, index):
+def process_page(index, page):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-    errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
   if args.verbose:

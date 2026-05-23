@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse, unicodedata
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-def process_page(page, index):
+def process_page(index, page):
   pagetitle = str(page.title())
   for i, catpage in blib.cat_subcats(page, recurse=True):
     cat = str(catpage.title())

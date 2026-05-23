@@ -316,7 +316,7 @@ def process_text_on_page(
   comment = blib.changelog_to_string(comment, args.comment_tag)
   return str(parsed), comment
 
-pa = blib.create_argparser(
+parser = blib.create_argparser(
 """Rewrite template references, possibly renaming params or the template itself, or adding or removing params.
 
 `-t` specifies the template(s) to operate on; separate multiple templates with a comma (with no space following).
@@ -336,34 +336,34 @@ the references are renamed and the page saved). If an error occurs during renami
 will not be changed unless the template is among those given in `--ignore-rename-errors` (use the value 'all' to ignore
 all rename errors).""",
   include_pagefile=True, include_stdin=True)
-pa.add_argument("-t", "--template", help="Name of template; separate with a comma for multiple templates.")
-pa.add_argument("-n", "--new-name", help="New name of template; separate with a comma for multiple templates.")
-pa.add_argument("--direcfile", help="File containing pairs of templates to rename, separated by ' ||| '.")
-pa.add_argument("--rename-templates", help="Rename the templates whose references are being changed.",
+parser.add_argument("-t", "--template", help="Name of template; separate with a comma for multiple templates.")
+parser.add_argument("-n", "--new-name", help="New name of template; separate with a comma for multiple templates.")
+parser.add_argument("--direcfile", help="File containing pairs of templates to rename, separated by ' ||| '.")
+parser.add_argument("--rename-templates", help="Rename the templates whose references are being changed.",
                 action="store_true")
-pa.add_argument("--with-redirect", action="store_true",
+parser.add_argument("--with-redirect", action="store_true",
                 help="If specified, redirects are created from the old page to the new page when renaming.")
-pa.add_argument("--ignore-rename-errors", help="Comma-separated list of templates to ignore rename errors for, or 'all' for all templates.")
-pa.add_argument("-r", "--remove", help="Param to remove, can be specified multiple times",
+parser.add_argument("--ignore-rename-errors", help="Comma-separated list of templates to ignore rename errors for, or 'all' for all templates.")
+parser.add_argument("-r", "--remove", help="Param to remove, can be specified multiple times",
     action="append")
-pa.add_argument("--from", help="Old name of param, can be specified multiple times",
+parser.add_argument("--from", help="Old name of param, can be specified multiple times",
     metavar="FROM", dest="from_", action="append")
-pa.add_argument("--to", help="New name of param, can be specified multiple times; if param preceded by an !, can overwrite existing param",
+parser.add_argument("--to", help="New name of param, can be specified multiple times; if param preceded by an !, can overwrite existing param",
     action="append")
-pa.add_argument("--from-to-regex", help="Interpret values in --from and --to as regexes.", action="store_true")
-pa.add_argument("--prepend", help="PARAM=VALUE to add at the beginning, can be specified multiple times; VALUE can have {{PAGENAME}} in it to substitute the page title",
+parser.add_argument("--from-to-regex", help="Interpret values in --from and --to as regexes.", action="store_true")
+parser.add_argument("--prepend", help="PARAM=VALUE to add at the beginning, can be specified multiple times; VALUE can have {{PAGENAME}} in it to substitute the page title",
     action="append")
-pa.add_argument("--add", help="PARAM=VALUE to add at the end, can be specified multiple times; VALUE can have {{PAGENAME}} in it to substitute the page title",
+parser.add_argument("--add", help="PARAM=VALUE to add at the end, can be specified multiple times; VALUE can have {{PAGENAME}} in it to substitute the page title",
     action="append")
-pa.add_argument("--insert", help="Insert numeric PARAM=VALUE|VALUE|..., moving greater numeric params to the right; can be specified multiple times, works from right to left; VALUE can have {{PAGENAME}} in it to substitute the page title",
+parser.add_argument("--insert", help="Insert numeric PARAM=VALUE|VALUE|..., moving greater numeric params to the right; can be specified multiple times, works from right to left; VALUE can have {{PAGENAME}} in it to substitute the page title",
     action="append")
-pa.add_argument("--filter", help="Only take action on templates matching the filter, which should be either PARAM meaning the parameter must exist and be non-empty; !PARAM meaning the parameter must not exist or must be empty; PARAM=VALUE meaning the parameter must have the given value; PARAM!=VALUE meaning the parameter must not have the given value; PARAM~REGEX meaning the parameter's value must match the given regular expression (unanchored); PARAM!~REGEX meaning the parameter's value must not match the given regular expression (unanchored). In addition, if !PARAM=VALUE is specified, we will not take action if the parameter has the given value, and if !PARAM~REGEX is specified, we will not take action if the parameter's value matches the given regular expression (unanchored). (PARAM!=VALUE and PARAM!~REGEX differ from !PARAM=VALUE and !PARAM~REGEX if PARAM is a regular expression; see below.) Note that all parameter values have whitespace stripped from both ends before comparison. If PARAM begins with a ~, it is interpreted as a regex, anchored on both sides (i.e. the regex applies to the parameter's name rather than its value). VALUE and REGEX can have {{PAGENAME}} in them to substitute the page title; when substituting into a regular expression, the page title is properly escaped. --filter can be specified multiple times; if so, all filters must match.",
+parser.add_argument("--filter", help="Only take action on templates matching the filter, which should be either PARAM meaning the parameter must exist and be non-empty; !PARAM meaning the parameter must not exist or must be empty; PARAM=VALUE meaning the parameter must have the given value; PARAM!=VALUE meaning the parameter must not have the given value; PARAM~REGEX meaning the parameter's value must match the given regular expression (unanchored); PARAM!~REGEX meaning the parameter's value must not match the given regular expression (unanchored). In addition, if !PARAM=VALUE is specified, we will not take action if the parameter has the given value, and if !PARAM~REGEX is specified, we will not take action if the parameter's value matches the given regular expression (unanchored). (PARAM!=VALUE and PARAM!~REGEX differ from !PARAM=VALUE and !PARAM~REGEX if PARAM is a regular expression; see below.) Note that all parameter values have whitespace stripped from both ends before comparison. If PARAM begins with a ~, it is interpreted as a regex, anchored on both sides (i.e. the regex applies to the parameter's name rather than its value). VALUE and REGEX can have {{PAGENAME}} in them to substitute the page title; when substituting into a regular expression, the page title is properly escaped. --filter can be specified multiple times; if so, all filters must match.",
     action="append")
-pa.add_argument("--recognized-params", help="Comma-separated list of regexps matching recognized params. Use - to indicate no recognized params. If the template contains any unrecognized params, a warning will be displayed and no action taken. Regexps are auto-anchored on both ends.")
-pa.add_argument("-c", "--comment", help="Comment to use in place of auto-generated ones.")
-pa.add_argument("--comment-tag", help="Comment tag to use along with auto-generated ones.")
-pa.add_argument("--output-pages-to-delete", help="Output file containing templates to delete.")
-args = pa.parse_args()
+parser.add_argument("--recognized-params", help="Comma-separated list of regexps matching recognized params. Use - to indicate no recognized params. If the template contains any unrecognized params, a warning will be displayed and no action taken. Regexps are auto-anchored on both ends.")
+parser.add_argument("-c", "--comment", help="Comment to use in place of auto-generated ones.")
+parser.add_argument("--comment-tag", help="Comment tag to use along with auto-generated ones.")
+parser.add_argument("--output-pages-to-delete", help="Output file containing templates to delete.")
+args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 def handle_single_param(paramname, process=None):

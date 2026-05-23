@@ -6,12 +6,20 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam, rmparam
+from wingerbot.blib import msg, errandmsg, getparam, addparam, rmparam, tname
 
-def rewrite_one_page_arz_headword(page, index, text):
+def rewrite_one_page_arz_headword(index, page):
+  pagetitle = str(page.title())
+  def pagemsg(txt):
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
+
   temps_changed = []
-  for t in text.filter_templates():
-    if str(t.name) == "arz-noun":
+  for t in parsed.filter_templates():
+    if tname(t) == "arz-noun":
       head = getparam(t, "head")
       rmparam(t, "head")
       tr = getparam(t, "tr")
@@ -39,7 +47,7 @@ def rewrite_one_page_arz_headword(page, index, text):
       if sort:
         addparam(t, "sort", sort)
       temps_changed.append("arz-noun")
-    elif str(t.name) == "arz-adj":
+    elif tname(t) == "arz-adj":
       head = getparam(t, "head")
       rmparam(t, "head")
       tr = getparam(t, "tr")
@@ -72,14 +80,14 @@ def rewrite_one_page_arz_headword(page, index, text):
       temps_changed.append("arz-adj")
   return text, "rewrite %s to new style" % ", ".join(temps_changed)
 
-def rewrite_arz_headword(save, verbose, startFrom, upTo):
+def rewrite_arz_headword(save, verbose, start, end):
   for cat in ["Egyptian Arabic adjectives", "Egyptian Arabic nouns"]:
-    for index, page in blib.cat_articles(cat, startFrom, upTo):
-      blib.do_edit(page, index, rewrite_one_page_arz_headword, save=save,
+    for index, page in blib.cat_articles(cat, start, end):
+      blib.do_edit(index, page, rewrite_one_page_arz_headword, save=save,
           verbose=verbose)
 
-pa = blib.create_argparser("Rewrite Egyptian Arabic headword templates")
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+parser = blib.create_argparser("Rewrite Egyptian Arabic headword templates")
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
-rewrite_arz_headword(params.save, params.verbose, startFrom, upTo)
+rewrite_arz_headword(params.save, params.verbose, start, end)

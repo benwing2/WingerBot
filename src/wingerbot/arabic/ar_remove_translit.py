@@ -6,7 +6,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, errandmsg, getparam, addparam, tname
 
 from wingerbot.arabic import arlib, ar_translit
 
@@ -144,39 +144,41 @@ def process_head(pagetitle, index, template):
     i += 1
   return actions
 
-# Process the headword templates on the given page with the given text,
+# Process the headword templates on the given page,
 # removing translit params when the auto-translit returns the same thing, or
 # canonicalizing. Returns the changed text along with a changelog message.
-def process_one_page_headwords(pagetitle, index, text):
+def process_one_page_headwords(index, page):
+  pagetitle = str(page.title())
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  text = blib.safe_page_text(page, errandpagemsg)
+  parsed = blib.parse_text(text)
   actions = []
-  for template in text.filter_templates():
-    if template.name in arlib.arabic_non_verbal_headword_templates:
+  for t in parsed.filter_templates():
+    tn = tname(t)
+    if tn in arlib.arabic_non_verbal_headword_templates:
       thisactions = []
-      tr = getparam(template, "tr")
-      thisactions += process_head(pagetitle, index, template)
+      tr = getparam(t, "tr")
+      thisactions += process_head(pagetitle, index, t)
       for param in ["pl", "plobl", "cpl", "cplobl", "fpl", "fplobl", "f",
           "fobl", "m", "mobl", "obl", "el", "sing", "coll", "d", "dobl",
           "pauc", "cons"]:
-        thisactions += process_param_chain(pagetitle, index, template, param)
+        thisactions += process_param_chain(pagetitle, index, t, param)
       if len(thisactions) > 0:
-        actions.append("%s: %s" % (template.name, ', '.join(thisactions)))
+        actions.append("%s: %s" % (tn, ', '.join(thisactions)))
   changelog = '; '.join(actions)
-  #if len(actions) > 0:
-  msg("Change log for page %s = %s" % (pagetitle, changelog))
-  return text, changelog
+  return str(parsed), changelog
 
 # Remove translit params from headword templates when the auto-translit
 # returns the same thing, or canonicalizing, on pages from STARTFROM to
 # (but not including) UPTO, either page names or 0-based integers. Save
 # changes if SAVE is true. Show exact changes if VERBOSE is true.
-def process_headwords(save, verbose, startFrom, upTo):
-  def process_page(page, index, text):
-    return process_one_page_headwords(str(page.title()), index, text)
-  #for page in blib.references("Template:tracking/ar-head/head", startFrom, upTo):
-  #for page in blib.references("Template:ar-nisba", startFrom, upTo):
+def process_headwords(save, verbose, start, end):
+  #for page in blib.references("Template:tracking/ar-head/head", start, end):
+  #for page in blib.references("Template:ar-nisba", start, end):
   for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
-    for index, page in blib.cat_articles(cat, startFrom, upTo):
-      blib.do_edit(page, index, process_page, save=save, verbose=verbose)
+    for index, page in blib.cat_articles(cat, start, end):
+      blib.do_edit(index, page, process_one_page_headwords, save=save, verbose=verbose)
 
 # Remove translit params from link-like templates when the auto-translit
 # returns the same thing, or canonicalizing, on pages from STARTFROM to
@@ -184,7 +186,7 @@ def process_headwords(save, verbose, startFrom, upTo):
 # changes if SAVE is true. Show exact changes if VERBOSE is true.
 # CATTYPE should be 'vocab', 'borrowed' or 'translation', indicating which
 # categories to examine.
-def process_links(save, verbose, cattype, startFrom, upTo):
+def process_links(save, verbose, cattype, start, end):
   def do_process_param(pagetitle, index, pagetext, template, templang, param, paramtr):
     result = process_param(pagetitle, index, template, param, paramtr,
         include_tempname_in_changelog=True)
@@ -202,18 +204,18 @@ def process_links(save, verbose, cattype, startFrom, upTo):
         result = newresult
     return result
   return blib.process_links(save, verbose, "ar", "Arabic", cattype,
-      startFrom, upTo, do_process_param, sort_group_changelogs)
+      start, end, do_process_param, sort_group_changelogs)
 
-pa = blib.create_argparser("Remove redundant translit")
-pa.add_argument("-l", "--links", action='store_true',
+parser = blib.create_argparser("Remove redundant translit")
+parser.add_argument("-l", "--links", action='store_true',
     help="Vocalize links")
-pa.add_argument("--cattype", default="borrowed",
+parser.add_argument("--cattype", default="borrowed",
     help="Categories to examine ('vocab', 'borrowed', 'translation')")
 
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 if params.links:
-  process_links(params.save, params.verbose, params.cattype, startFrom, upTo)
+  process_links(params.save, params.verbose, params.cattype, start, end)
 else:
-  process_headwords(params.save, params.verbose, startFrom, upTo)
+  process_headwords(params.save, params.verbose, start, end)

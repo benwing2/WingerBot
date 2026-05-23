@@ -1123,10 +1123,10 @@ def process_template(pagetitle, index, pagetext, template, ruparam, trparam,
 
 # Main function to implement the whole script.
 def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direcfile,
-    save, verbose, startFrom, upTo):
+    save, verbose, start, end):
   if direcfile:
     processing_lines = []
-    for index, line in blib.iter_items_from_file(direcfile, startFrom, upTo):
+    for index, line in blib.iter_items_from_file(direcfile, start, end):
       m = re.match(r"^(Page [^ ]+ )(.*?)(: .*?:) Processing: (\{\{.*?\}\})( <- \{\{.*?\}\} \(\{\{.*?\}\}\))$",
           line)
       if not m:
@@ -1163,30 +1163,31 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
         ruheadlib.output_stats(pagemsg)
       return result
 
-    blib.process_links(save, verbose, "ru", "Russian", cattype, startFrom,
-        upTo, check_template_for_missing_accent,
-        join_actions=join_changelog_notes, split_templates=None)
+    blib.process_links(
+      save, verbose, "ru", "Russian", cattype, start, end,
+      check_template_for_missing_accent, join_actions=join_changelog_notes,
+      split_templates=None)
 
-pa = blib.create_argparser("Auto-accent and auto-bracket Russian terms")
-pa.add_argument("--cattype", default="vocab",
+parser = blib.create_argparser("Auto-accent and auto-bracket Russian terms")
+parser.add_argument("--cattype", default="vocab",
     help="Categories to examine ('vocab', 'borrowed', 'translation')")
-pa.add_argument("--file",
+parser.add_argument("--file",
     help="File containing output from parse_log_file.py")
-pa.add_argument("--semi-verbose", action="store_true",
+parser.add_argument("--semi-verbose", action="store_true",
     help="More info but not as much as --verbose")
-pa.add_argument("--find-accents", action="store_true",
+parser.add_argument("--find-accents", action="store_true",
     help="Look up the accents in existing pages")
-pa.add_argument("--accent-hidden", action="store_true",
+parser.add_argument("--accent-hidden", action="store_true",
     help="Also add accents and brackets to hidden qutoes")
-pa.add_argument("--no-cache", action="store_true",
+parser.add_argument("--no-cache", action="store_true",
     help="Disable caching head lookup results")
 
-params = pa.parse_args()
+params = parser.parse_args()
 semi_verbose = params.semi_verbose or params.verbose
 global_disable_cache = params.no_cache
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+start, end = blib.parse_start_end(params.start, params.end)
 
 auto_accent_auto_bracket_russian(params.find_accents, params.accent_hidden,
-    params.cattype, params.file, params.save, params.verbose, startFrom, upTo)
+    params.cattype, params.file, params.save, params.verbose, start, end)
 
 blib.elapsed_time()

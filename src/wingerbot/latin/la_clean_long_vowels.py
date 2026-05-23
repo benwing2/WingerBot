@@ -793,12 +793,12 @@ def do_process_form(index, page, lemma, formind, formval, pos, tag_sets_to_proce
 def process_form(index, lemma, formind, formval, pos, tag_sets_to_process, progargs, comment_tag):
   def pagemsg(txt):
     msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-  def handler(page, index, parsed):
+  def handler(index, page):
     return do_process_form(index, page, lemma, formind, formval, pos, tag_sets_to_process, progargs, comment_tag)
   if "[" in formval:
     pagemsg("Skipping form value %s with link in it" % formval)
   else:
-    blib.do_edit(pywikibot.Page(site, remove_macrons(formval)), index, handler, save=progargs.save,
+    blib.do_edit(index, pywikibot.Page(site, remove_macrons(formval)), handler, save=progargs.save,
                  verbose=progargs.verbose, diff=progargs.diff)
 
 def process_all_forms(args, index, lemma, pos, progargs, comment_tag):
@@ -944,9 +944,9 @@ def do_process_participle(index, page, lemma, formind, formval, explicit_stem, p
   return "".join(sections), group_notes(notes)
 
 def process_participle(index, lemma, formind, formval, explicit_stem, progargs, comment_tag):
-  def handler(page, index, parsed):
+  def handler(index, page):
     return do_process_participle(index, page, lemma, formind, formval, explicit_stem, progargs, comment_tag)
-  blib.do_edit(pywikibot.Page(site, remove_macrons(formval)), index, handler, save=progargs.save, verbose=progargs.verbose, diff=progargs.diff)
+  blib.do_edit(index, pywikibot.Page(site, remove_macrons(formval)), handler, save=progargs.save, verbose=progargs.verbose, diff=progargs.diff)
 
 def frob_nominal_lemma_spec(ht, lemmaspec, stem, pagemsg, notes, comment_tag, lemma):
   if "((" in lemmaspec or " " in lemmaspec or "<" in lemmaspec or "/" in lemmaspec:
@@ -1386,8 +1386,8 @@ if __name__ == "__main__":
           index, lemma, pos))
         continue
       lemma = lalib.la_get_headword_from_template(fake_template, "foo", pagemsg)[0]
-    def handler(page, index, parsed):
+    def handler(index, page):
       return do_process_lemma(index, page, pos, infl, lemmaspec, lemma, explicit_stem, args, comment_tag)
 
-    blib.do_edit(pywikibot.Page(site, remove_macrons(lemma)), index, handler, save=args.save,
+    blib.do_edit(index, pywikibot.Page(site, remove_macrons(lemma)), handler, save=args.save,
         verbose=args.verbose, diff=args.diff)

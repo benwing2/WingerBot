@@ -22,7 +22,7 @@ split_recognized_tag_sets = [
   tag_set.split("|") for tag_set in recognized_tag_sets
 ]
 
-def fix_new_page(page, index, parsed):
+def fix_new_page(index, page):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -274,7 +274,7 @@ def process_text_on_page(index, pagetitle, text):
       except pywikibot.PageRelatedError as error:
         pagemsg("Error moving to %s: %s" % (new_pagetitle, error))
         return
-    blib.do_edit(pywikibot.Page(site, new_pagetitle), index, fix_new_page,
+    blib.do_edit(index, pywikibot.Page(site, new_pagetitle), fix_new_page,
         save=args.save, verbose=args.verbose, diff=args.diff)
 
   else:

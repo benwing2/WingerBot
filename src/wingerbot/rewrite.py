@@ -53,18 +53,18 @@ def process_text_on_page(index, pagetitle, text, refrom, reto, pagetitle_sub, co
     pagemsg("WARNING: No replacements made")
   return text, comment or "replace %s" % (", ".join("%s -> %s" % (f, t) for f, t in zipped_fromto))
 
-pa = blib.create_argparser("Search and replace on pages", include_pagefile=True, include_stdin=True)
-pa.add_argument("-f", "--from", help="From regex, can be specified multiple times",
+parser = blib.create_argparser("Search and replace on pages", include_pagefile=True, include_stdin=True)
+parser.add_argument("-f", "--from", help="From regex, can be specified multiple times",
     metavar="FROM", dest="from_", required=True, action="append")
-pa.add_argument("-t", "--to", help="To regex, can be specified multiple times",
+parser.add_argument("-t", "--to", help="To regex, can be specified multiple times",
     required=True, action="append")
-pa.add_argument("--comment", help="Specify the change comment to use")
-pa.add_argument("--pagetitle", help="Value to substitute page title with")
-pa.add_argument("--lang-only", help="Only replace in the specified language section")
-pa.add_argument("--reorder-shadda", help="Reorder shadda + short vowel to fix Unicode bug")
-pa.add_argument("--warn-on-no-replacement", action="store_true",
+parser.add_argument("--comment", help="Specify the change comment to use")
+parser.add_argument("--pagetitle", help="Value to substitute page title with")
+parser.add_argument("--lang-only", help="Only replace in the specified language section")
+parser.add_argument("--reorder-shadda", help="Reorder shadda + short vowel to fix Unicode bug")
+parser.add_argument("--warn-on-no-replacement", action="store_true",
   help="Warn if no replacements made")
-args = pa.parse_args()
+args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 from_ = list(args.from_)

@@ -104,7 +104,7 @@ def sort_group_changelogs(actions):
 # blib.process_links(); this is only used when CATTYPE is 'vocab' or
 # 'borrowed'.
 def canon_links(save, verbose, cattype, lang, longlang,
-    startFrom, upTo, pages_to_do=[]):
+    start, end, pages_to_do=[]):
   def process_param(pagetitle, index, pagetext, template, tlang, param, paramtr):
     def pagemsg(txt):
       msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -142,20 +142,20 @@ def canon_links(save, verbose, cattype, lang, longlang,
     return result
 
   return blib.process_links(save, verbose, lang, longlang, cattype,
-      startFrom, upTo, process_param, sort_group_changelogs,
+      start, end, process_param, sort_group_changelogs,
       pages_to_do=pages_to_do)
 
-pa = blib.create_argparser("Remove redundant foreign translit and script")
-pa.add_argument("--lang",
+parser = blib.create_argparser("Remove redundant foreign translit and script")
+parser.add_argument("--lang",
     help="""Language to use when --cattype is 'vocab' or 'borrowed'.""")
-pa.add_argument("--cattype", default="borrowed",
+parser.add_argument("--cattype", default="borrowed",
     help="""Categories to examine ('vocab', 'borrowed', 'translation',
 'links', 'pagetext', 'pages', an arbitrary category or comma-separated list)""")
-pa.add_argument("--page-file",
+parser.add_argument("--page-file",
     help="""File containing "pages" to process when --cattype pagetext,
 or list of pages when --cattype pages""")
 
-params = pa.parse_args()
+params = parser.parse_args()
 start, end = blib.parse_start_end(params.start, params.end)
 pages_to_do = []
 if params.page_file:

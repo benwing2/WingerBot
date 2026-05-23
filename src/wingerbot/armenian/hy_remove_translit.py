@@ -6,7 +6,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, errmsg, getparam
+from wingerbot.blib import msg, errandmsg, getparam
 
 templates_changed = {}
 template_params_removed = {}
@@ -86,20 +86,24 @@ ignore_prefixes = ["User:", "Talk:",
     "Wiktionary:Grease pit", "Wiktionary:Etymology scriptorium",
     "Wiktionary:Information desk"]
 
-def remove_translit(params, startFrom, upTo):
+def remove_translit(params, start, end):
   # Remove redundant translits on one page.
-  def remove_translit_one_page(page, index, text):
+  def remove_translit_one_page(index, page):
     pagetitle = page.title()
-    def pagemsg(text):
-      msg("Page %s %s: %s" % (index, pagetitle, text))
+    def pagemsg(txt):
+      msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+      errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     # Hack for grc pages where we don't want to remove the translit
     if "Ͷ" in pagetitle or "ͷ" in pagetitle:
       pagemsg("Page has Ͷ or ͷ in it, not doing")
-      return text, ""
+      return
 
     params_removed = []
-    for t in text.filter_templates():
+    text = blib.safe_page_text(page, errandpagemsg)
+    parsed = blib.parse_text(text)
+    for t in parsed.filter_templates():
       tname = str(t.name)
       def getp(param):
         return getparam(t, param)
@@ -286,7 +290,7 @@ def remove_translit(params, startFrom, upTo):
     if pr_msg:
       changelog = "Remove translit/sc (%s)" % pr_msg
       pagemsg("Change log = %s" % changelog)
-    return text, changelog
+    return str(parsed), changelog
 
   def get_langs_to_do():
     if params.langs == "all":
@@ -324,8 +328,7 @@ def remove_translit(params, startFrom, upTo):
 
   def yield_lemma_non_lemma_page_titles():
     for cat in yield_cats("lemma,non-lemma"):
-      msg("Retrieving pages from %s ..." % cat)
-      errmsg("Retrieving pages from %s ..." % cat)
+      errandmsg("Retrieving pages from %s ..." % cat)
       for index, page in blib.cat_articles(cat, None, None):
         yield page.title()
 
@@ -335,27 +338,26 @@ def remove_translit(params, startFrom, upTo):
     pages_to_ignore = set()
 
   for category in yield_cats():
-    msg("Processing category %s ..." % category)
-    errmsg("Processing category %s ..." % category)
-    for index, page in blib.cat_articles(category, startFrom, upTo):
+    errandmsg("Processing category %s ..." % category)
+    for index, page in blib.cat_articles(category, start, end):
       if page.title() not in pages_to_ignore:
-        blib.do_edit(page, index, remove_translit_one_page, save=params.save,
+        blib.do_edit(index, page, remove_translit_one_page, save=params.save,
             verbose=params.verbose)
 
-pa = blib.create_argparser("Remove translit, sc= from hy, xcl, ka, el, grc templates")
-pa.add_argument("--langs", default="all",
+parser = blib.create_argparser("Remove translit, sc= from hy, xcl, ka, el, grc templates")
+parser.add_argument("--langs", default="all",
     help="Languages to do, a comma-separated list or 'all'")
-pa.add_argument("--cattype", default="all",
+parser.add_argument("--cattype", default="all",
     help="""Categories to examine ('all' or comma-separated list of
 'translit', 'lemma', 'non-lemma'; default 'all')""")
-pa.add_argument("--ignore-lemma-non-lemma", action="store_true",
+parser.add_argument("--ignore-lemma-non-lemma", action="store_true",
     help="""Ignore lemma and non-lemma pages (useful with '--cattype translit').""")
-pa.add_argument("--do-head", action="store_true",
+parser.add_argument("--do-head", action="store_true",
     help="""Remove tr= in {{head|..}}""")
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
-remove_translit(params, startFrom, upTo)
+remove_translit(params, start, end)
 
 msg("Templates processed:")
 for template, count in sorted(templates_changed.items(), key=lambda x:-x[1]):

@@ -142,9 +142,10 @@ def vocalize_head(pagetitle, index, template):
 
 # Vocalize the headword templates on the given page with the given text.
 # Returns the changed text along with a changelog message.
-def vocalize_one_page_headwords(pagetitle, index, text):
+def vocalize_one_page_headwords(index, pagetitle, text):
   actions_taken = []
-  for template in text.filter_templates():
+  parsed = blib.parse_text(text)
+  for template in parsed.filter_templates():
     paramschanged = []
     if template.name in arlib.arabic_non_verbal_headword_templates:
       paramschanged += vocalize_head(pagetitle, index, template)
@@ -161,25 +162,25 @@ def vocalize_one_page_headwords(pagetitle, index, text):
   changelog = "vocalize parameters: %s" % '; '.join(actions_taken)
   #if len(actions_taken) > 0:
   msg("Page %s %s: Change log = %s" % (index, pagetitle, changelog))
-  return text, changelog
+  return str(parsed), changelog
 
 # Vocalize headword templates on pages from STARTFROM to (but not including)
 # UPTO, either page names or 0-based integers. Save changes if SAVE is true.
 # Show exact changes if VERBOSE is true.
-def vocalize_headwords(save, verbose, startFrom, upTo):
-  def process_page(page, index, text):
-    return vocalize_one_page_headwords(str(page.title()), index, text)
-  #for page in blib.references("Template:tracking/ar-head/head", startFrom, upTo):
-  #for page in blib.references("Template:ar-nisba", startFrom, upTo):
+def vocalize_headwords(save, verbose, start, end):
+  def process_page(index, page):
+    return vocalize_one_page_headwords(index, str(page.title()), str(page.text))
+  #for page in blib.references("Template:tracking/ar-head/head", start, end):
+  #for page in blib.references("Template:ar-nisba", start, end):
   for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
-    for index, page in blib.cat_articles(cat, startFrom, upTo):
-      blib.do_edit(page, index, process_page, save=save, verbose=verbose)
+    for index, page in blib.cat_articles(cat, start, end):
+      blib.do_edit(index, page, process_page, save=save, verbose=verbose)
 
 # Vocalize link-like templates on pages from STARTFROM to (but not including)
 # UPTO, either page names or 0-based integers. Save changes if SAVE is true.
 # Show exact changes if VERBOSE is true. CATTYPE should be 'vocab', 'borrowed'
 # or 'translation', indicating which categories to examine.
-def vocalize_links(save, verbose, cattype, startFrom, upTo):
+def vocalize_links(save, verbose, cattype, start, end):
   def process_param(pagetitle, index, pagetext, template, tlang, param, paramtr):
     result = vocalize_param(pagetitle, index, template, param, paramtr)
     if isinstance(result, str):
@@ -189,18 +190,18 @@ def vocalize_links(save, verbose, cattype, startFrom, upTo):
     return "vocalize links: %s" % '; '.join(actions)
 
   return blib.process_links(save, verbose, "ar", "Arabic", cattype,
-      startFrom, upTo, process_param, join_actions)
+      start, end, process_param, join_actions)
 
-pa = blib.create_argparser("Correct vocalization and translit")
-pa.add_argument("-l", "--links", action='store_true',
+parser = blib.create_argparser("Correct vocalization and translit")
+parser.add_argument("-l", "--links", action='store_true',
     help="Vocalize links")
-pa.add_argument("--cattype", default="borrowed",
+parser.add_argument("--cattype", default="borrowed",
     help="Categories to examine ('vocab', 'borrowed', 'translation')")
 
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 if params.links:
-  vocalize_links(params.save, params.verbose, params.cattype, startFrom, upTo)
+  vocalize_links(params.save, params.verbose, params.cattype, start, end)
 else:
-  vocalize_headwords(params.save, params.verbose, startFrom, upTo)
+  vocalize_headwords(params.save, params.verbose, start, end)

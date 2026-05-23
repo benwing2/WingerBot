@@ -477,7 +477,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             else:
               indexed_pagemsg("Not skipping %s form %s for slot %s; even though there's a corresponding standard Galician verb, the form is not part of it" % (
                 normname, form, slot))
-        def process_page(page, index, parsed):
+        def process_page(index, page):
           retval = process_text_on_inflection_page(index, str(page.title()), blib.safe_page_text(page, errandpagemsg),
                                                    norm, pos, conjinf, conj, slot)
           if retval and should_skip:
@@ -486,7 +486,7 @@ def process_text_on_page(index, pagetitle, pagetext):
               normname, form, slot, blib.changelog_to_string(changelog)))
             return
           return retval
-        blib.do_edit(pywikibot.Page(site, form), get_combined_index(), process_page, save=args.save,
+        blib.do_edit(get_combined_index(), pywikibot.Page(site, form), process_page, save=args.save,
                      verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Create verb inflections for Spanish, Galician or Portuguese", include_pagefile=True,

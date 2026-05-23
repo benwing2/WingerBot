@@ -30,7 +30,7 @@ for etyl in lang_utils.etym_languages:
     msg("is_alias = %s" % etyl)
 
 msg("--------------------- [[Module:etymology languages/code to canonical name]] -------------------")
-def do_code_to_canonical_name(page, index, parsed):
+def do_code_to_canonical_name(index, page):
   text = []
   def ins(txt):
     text.append(txt)
@@ -41,11 +41,11 @@ def do_code_to_canonical_name(page, index, parsed):
   ins("}")
   return "\n".join(text), "update [[Module:etymology languages/code to canonical name]]"
 
-blib.do_edit(pywikibot.Page(site, "Module:etymology languages/code to canonical name"), 1, do_code_to_canonical_name,
+blib.do_edit(1, pywikibot.Page(site, "Module:etymology languages/code to canonical name"), do_code_to_canonical_name,
              save=args.save, verbose=args.verbose, diff=args.diff)
 
 msg("--------------------- [[Module:etymology languages/canonical names]] -------------------")
-def do_canonical_names(page, index, parsed):
+def do_canonical_names(index, page):
   text = []
   def ins(txt):
     text.append(txt)
@@ -56,5 +56,5 @@ def do_canonical_names(page, index, parsed):
   ins("}")
   return "\n".join(text), "update [[Module:etymology languages/canonical names]]"
 
-blib.do_edit(pywikibot.Page(site, "Module:etymology languages/canonical names"), 2, do_canonical_names,
+blib.do_edit(2, pywikibot.Page(site, "Module:etymology languages/canonical names"), do_canonical_names,
              save=args.save, verbose=args.verbose, diff=args.diff)

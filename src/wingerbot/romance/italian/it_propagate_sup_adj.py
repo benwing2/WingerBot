@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
-def process_lemma_page(page, index, form):
+def process_lemma_page(index, page, form):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -71,9 +71,9 @@ def process_text_on_non_lemma_page(index, pagetitle, text):
     tn = tname(t)
     if tn == "superlative of" and getparam(t, "1") == "it":
       lemma = getparam(t, "2")
-      def do_process(page, index, parsed):
-        return process_lemma_page(page, index, pagetitle)
-      blib.do_edit(pywikibot.Page(site, lemma), index,
+      def do_process(index, page):
+        return process_lemma_page(index, page, pagetitle)
+      blib.do_edit(index, pywikibot.Page(site, lemma),
           do_process, save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Add sup= to {{it-adj}} headword params based on superlative entries",

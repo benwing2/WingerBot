@@ -8,7 +8,7 @@ from wingerbot.blib import tname, msg, errandmsg, site
 
 from wingerbot.latin import lalib
 
-def correct_nom_sg_n_participle(page, index, participle, lemma):
+def correct_nom_sg_n_participle(index, page, participle, lemma):
   pagetitle = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -91,10 +91,9 @@ def process_text_on_page(index, pagetitle, text):
           non_impers_part = re.sub("um$", "us", supform)
           pagemsg("Line to delete: part %s allbutnomsgn {{la-adecl|%s}}" % (
             non_impers_part, non_impers_part))
-          def do_correct_nom_sg_n_participle(page, index, parsed):
-            return correct_nom_sg_n_participle(page, index, supform,
-                args["1s_pres_actv_indc"])
-          blib.do_edit(pywikibot.Page(site, lalib.remove_macrons(supform)), index,
+          def do_correct_nom_sg_n_participle(index, page):
+            return correct_nom_sg_n_participle(index, page, supform, args["1s_pres_actv_indc"])
+          blib.do_edit(index, pywikibot.Page(site, lalib.remove_macrons(supform)),
             do_correct_nom_sg_n_participle, save=args.save, verbose=args.verbose,
             diff=args.diff)
 

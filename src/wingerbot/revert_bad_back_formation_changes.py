@@ -9,7 +9,7 @@ from wingerbot.blib import site, msg, errandmsg, group_notes, iter_items
 # period after back-formation templates without nodot=, leading it to add extraneous
 # periods in some cases. This script undoes the damage.
 
-def process_page(page, index, parsed):
+def process_page(index, page):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):

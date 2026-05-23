@@ -865,11 +865,11 @@ def process_lemma(index, pagetitle, slots, args):
               elif formpagename == pagetitle:
                 pagemsg("WARNING: Skipping dictionary form")
               else:
-                def do_process_page(page, index, parsed):
+                def do_process_page(index, page):
                   pagetitle = str(page.title)
                   text = blib.safe_page_text(page, errandpagemsg)
                   return process_text_on_page(index, pagetitle, text)
-                blib.do_edit(formpage, index, do_process_page, save=args.save, verbose=args.verbose,
+                blib.do_edit(index, formpage, do_process_page, save=args.save, verbose=args.verbose,
                     diff=args.diff)
 
 parser = blib.create_argparser("Add pronunciation sections to Latin Wiktionary entries",

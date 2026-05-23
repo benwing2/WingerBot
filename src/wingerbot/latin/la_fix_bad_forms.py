@@ -103,9 +103,9 @@ def process_page(index, pos, lemma, subs, infl):
     forms_to_delete.extend(form.split(","))
 
   for formind, form in blib.iter_items(forms_to_delete):
-    def handler(page, formind, parsed):
+    def handler(formind, page):
       return process_form(index, page, lemma, formind, form, subs)
-    blib.do_edit(pywikibot.Page(site, remove_macrons(form)), formind, handler,
+    blib.do_edit(formind, pywikibot.Page(site, remove_macrons(form)), handler,
                  save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Fix up bad Latin forms")

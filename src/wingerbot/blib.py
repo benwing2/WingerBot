@@ -487,7 +487,7 @@ def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, d
       if func:
         if verbose:
           p.pagemsg("Begin processing")
-        retval = func(page, index, parse_text(page.text))
+        retval = func(index, page)
         new, comment, has_changed = handle_process_page_retval(retval, page.text, p.pagemsg, verbose, diff)
         if has_changed:
           page.text = new
@@ -515,7 +515,7 @@ def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, d
 
     break
 
-def do_edit(page, index, func=None, null=False, save=False, verbose=False, diff=False):
+def do_edit(index, page, func=None, null=False, save=False, verbose=False, diff=False):
   title = str(page.title())
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, title, txt))
@@ -526,7 +526,7 @@ def do_edit(page, index, func=None, null=False, save=False, verbose=False, diff=
       if func:
         if verbose:
           pagemsg("Begin processing")
-        retval = func(page, index, parse_text(page.text))
+        retval = func(index, page)
 
         new, comment, has_changed = handle_process_page_retval(retval, page.text, pagemsg, verbose, diff)
         if has_changed:
@@ -1214,17 +1214,10 @@ def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_for
 # def process_text_on_page(index, pagetitle, text):
 #   ...
 #
-# If `stdin`=False and `edit`=True, `process` should be defined like this:
+# If `stdin`=False, `process` should be defined like this:
 #
-# def process_page(page, index, parsed):
+# def process_page(index, page):
 #   ...
-#
-# If `stdin`=False and `edit`=False, `process` should be defined like this:
-#
-# def process_page(page, index):
-#   ...
-#
-# FIXME: The `parsed` argument is unnecessary and shouldn't be passed in.
 #
 # The return value of `process` is immaterial if edit=False; otherwise it should be NEWTEXT, NOTES where NEWTEXT is the
 # new text of the page, and NOTES is either a string (the comment to use when saving the page) or a list of strings
@@ -1371,7 +1364,7 @@ def do_pagefile_cats_refs(
       errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
     if page_should_be_filtered_out(pagetitle, errandpagemsg):
       return
-    def do_process_page(page, index, parsed=None):
+    def do_process_page(index, page):
       if stdin:
         pagetext = safe_page_text(page, errandpagemsg)
         return do_process_text_on_page(index, pagetitle, pagetext, None, pagemsg)
@@ -1380,21 +1373,18 @@ def do_pagefile_cats_refs(
           pagetext = safe_page_text(page, errandpagemsg)
           if "==%s==" % only_lang not in pagetext:
             return None, None
-        if edit:
-          return process(page, index, parsed)
-        else:
-          return process(page, index)
+        return process(index, page)
 
     if args.find_regex_output:
       # We are reading from Wiktionary but asked to output in find_regex format.
-      retval = do_process_page(page, index)
+      retval = do_process_page(index, page)
       pagetext = safe_page_text(page, errandpagemsg)
       do_handle_stdin_retval(args, retval, pagetext, None, pagemsg, output_format="find-regex", edit=edit)
     elif edit:
-      do_edit(page, index, do_process_page, save=args.save, verbose=args.verbose,
+      do_edit(index, page, do_process_page, save=args.save, verbose=args.verbose,
           diff=args.diff)
     else:
-      do_process_page(page, index)
+      do_process_page(index, page)
 
   if stdin and (args.stdin or args.find_regex or args.begin_end):
     pages_to_filter = None
@@ -1980,7 +1970,7 @@ def process_one_page_links(
   # Process the link-like templates on the page with the given title and text,
   # calling PROCESSFN for each pair of foreign/Latin. Return a list of
   # changelog actions.
-  def do_process_one_page_links(pagetitle, index, parsed, processfn):
+  def do_process_one_page_links(index, pagetitle, parsed, processfn):
     def pagemsg(txt):
       msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -2577,15 +2567,14 @@ def process_one_page_links(
   #      return ["split %s=%s" % (obj.paramtr, latin)]
   #    return []
   #
-  #  actions += do_process_one_page_links(pagetitle, index, parsed,
-  #      process_param_for_splitting)
+  #  actions += do_process_one_page_links(index, pagetitle, parsed, process_param_for_splitting)
   #  parsed = parse_text(newtext[0])
 
-  actions += do_process_one_page_links(pagetitle, index, parsed, process_param)
+  actions += do_process_one_page_links(index, pagetitle, parsed, process_param)
   return str(parsed), actions
 
-#def process_one_page_links_wrapper(page, index, text):
-#  return process_one_page_links(str(page.title()), index, text)
+#def process_one_page_links_wrapper(index, page):
+#  return process_one_page_links(index, str(page.title()))
 #
 #if "," in cattype:
 #  cattypes = cattype.split(",")
@@ -2600,16 +2589,16 @@ def process_one_page_links(
 #    for template in templates:
 #      msg("Processing template %s" % template)
 #      errmsg("Processing template %s" % template)
-#      for index, page in references("Template:%s" % template, startFrom, upTo):
-#        do_edit(page, index, process_one_page_links_wrapper, save=save,
+#      for index, page in references("Template:%s" % template, start, end):
+#        do_edit(index, page, process_one_page_links_wrapper, save=save,
 #            verbose=verbose)
 #  elif cattype == "pages":
-#    for index, pagename in iter_items(pages_to_do, startFrom, upTo):
+#    for index, pagename in iter_items(pages_to_do, start, end):
 #      page = pywikibot.Page(site, pagename)
-#      do_edit(page, index, process_one_page_links_wrapper, save=save,
+#      do_edit(index, page, process_one_page_links_wrapper, save=save,
 #          verbose=verbose)
 #  elif cattype == "pagetext":
-#    for index, current in iter_items(pages_to_do, startFrom, upTo,
+#    for index, current in iter_items(pages_to_do, start, end,
 #        get_name=lambda x:x[0]):
 #      pagetitle, pagetext = current
 #      do_process_text(pagetitle, pagetext, index, process_one_page_links,
@@ -2623,8 +2612,8 @@ def process_one_page_links(
 #    else:
 #      cats = [cattype]
 #      #raise ValueError("Category type '%s' should be 'vocab', 'borrowed', 'translation', 'links', 'pages' or 'pagetext'")
-#    for index, page in cat_articles(cats, startFrom, upTo):
-#      do_edit(page, index, process_one_page_links_wrapper, save=save,
+#    for index, page in cat_articles(cats, start, end):
+#      do_edit(index, page, process_one_page_links_wrapper, save=save,
 #          verbose=verbose)
 
 def output_process_links_template_counts(templates_seen, templates_changed):

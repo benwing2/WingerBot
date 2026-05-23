@@ -6,32 +6,32 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, remove_links
+from wingerbot.blib import msg, errandmsg, getparam, remove_links
 from wingerbot.arabic.arlib import (
   reorder_shadda,
   arabic_all_headword_templates,
   remove_diacritics,
 )
 
-def split_one_page_etymologies(page, index, pagetext, verbose):
-
-  # Fetch pagename, create pagemsg() fn to output msg with page name included
-  pagename = page.title()
-  pagetext = str(pagetext)
-  def pagemsg(text):
-    msg("Page %s %s: %s" % (index, pagename, text))
+def split_one_page_etymologies(index, page, verbose):
+  pagetitle = str(page.title())
+  def pagemsg(txt):
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+  text = blib.safe_page_text(page, errandpagemsg)
 
   comment = None
   notes = []
 
   # Split off interwiki links at end
   m = re.match(r"^(.*?\n)(\n*(\[\[[a-z0-9_\-]+:[^\]]+\]\]\n*)*)$",
-      pagetext, re.S)
+      text, re.S)
   if m:
     pagebody = m.group(1)
     pagetail = m.group(2)
   else:
-    pagebody = pagetext
+    pagebody = text
     pagetail = ""
 
   # Split into sections
@@ -208,14 +208,14 @@ def split_one_page_etymologies(page, index, pagetext, verbose):
 
   # Don't signal a save if only differences are whitespace at end,
   # since it appears that newlines at end get stripped when saving.
-  if pagetext.rstrip() == newtext.rstrip():
+  if text.rstrip() == newtext.rstrip():
     pagemsg("No change in text")
   else:
     if verbose:
-      pagemsg("Replacing [[%s]] with [[%s]]" % (pagetext, newtext))
+      pagemsg("Replacing [[%s]] with [[%s]]" % (text, newtext))
     else:
       pagemsg("Text has changed")
-    pagetext = newtext
+    text = newtext
 
     # Construct and output comment.
     notestext = '; '.join(notes)
@@ -225,20 +225,20 @@ def split_one_page_etymologies(page, index, pagetext, verbose):
       else:
         comment = notestext
     assert(comment)
-    pagemsg("comment = %s" % comment, simple = True)
+    pagemsg("comment = %s" % comment, simple=True)
 
-  return pagetext, comment
+  return text, comment
 
-def split_etymologies(save, verbose, startFrom, upTo):
-  def split_page_etymologies(page, index, pagetext):
-    return split_one_page_etymologies(page, index, pagetext, verbose)
-  for index, page in blib.cat_articles("Arabic lemmas", startFrom, upTo):
-    blib.do_edit(page, index, split_page_etymologies, save=save,
+def split_etymologies(save, verbose, start, end):
+  def split_page_etymologies(index, page):
+    return split_one_page_etymologies(index, page, verbose)
+  for index, page in blib.cat_articles("Arabic lemmas", start, end):
+    blib.do_edit(index, page, split_page_etymologies, save=save,
         verbose=verbose)
 
-pa = blib.create_argparser("Split etymology sections")
-params = pa.parse_args()
-startFrom, upTo = blib.parse_start_end(params.start, params.end)
+parser = blib.create_argparser("Split etymology sections")
+params = parser.parse_args()
+start, end = blib.parse_start_end(params.start, params.end)
 
 split_etymologies(params.save, True, # params.verbose
-    startFrom, upTo)
+    start, end)

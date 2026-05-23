@@ -33,15 +33,14 @@ def restore_removed_pagehead(index, pagetitle, comment, oldrevid):
         pagetext = page.text
         newtext = oldtext_pagehead + pagetext
 
-        def do_process_page(pg, ind, parsed):
+        def do_process_page(index, page):
           return newtext, ["Restore missing page head: %s" % oldtext_pagehead.strip()]
-        blib.do_edit(page, index, do_process_page, save=args.save,
-          verbose=args.verbose, diff=args.diff)
+        blib.do_edit(index, page, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
 
 def process_item(index, item):
   restore_removed_pagehead(index, item['title'], item['comment'], item['parentid'])
 
-def process_page(page, index):
+def process_page(index, page):
   pagetitle = str(page.title())
   revisions = list(page.revisions(total=50))
   for rev in revisions:

@@ -6,7 +6,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, errandmsg, getparam, addparam
 
 site = pywikibot.Site()
 
@@ -23,9 +23,12 @@ def undo_greek_removal(save, verbose, direcfile, start, end):
   for index, (pagename, removed_param, template_text) in blib.iter_items(
       template_removals, get_name = lambda x: x[0]):
 
-    def undo_one_page_greek_removal(page, index, text):
+    def undo_one_page_greek_removal(index, page):
+      pagetitle = str(page.title())
       def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, str(page.title()), txt))
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
+      def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
       template = blib.parse_text(template_text).filter_templates()[0]
       orig_template = str(template)
       if getparam(template, "sc") == "polytonic":
@@ -34,7 +37,7 @@ def undo_greek_removal(save, verbose, direcfile, start, end):
       param_value = getparam(template, removed_param)
       template.remove(removed_param)
       from_template = str(template)
-      text = str(text)
+      text = blib.safe_page_text(page, errandpagemsg)
       found_orig_template = orig_template in text
       newtext = text.replace(from_template, to_template)
       changelog = ""
@@ -61,7 +64,7 @@ def undo_greek_removal(save, verbose, direcfile, start, end):
       msg("Page %s %s: WARNING, something wrong, does not exist" % (
         index, pagename))
     else:
-      blib.do_edit(page, index, undo_one_page_greek_removal, save=save,
+      blib.do_edit(index, page, undo_one_page_greek_removal, save=save,
           verbose=verbose)
 
 params = blib.create_argparser("Undo Greek transliteration removal")

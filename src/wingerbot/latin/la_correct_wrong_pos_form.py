@@ -7,7 +7,7 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 from wingerbot.latin import lalib
 
-def process_form(page, index, slot, form, pos, pagemsg):
+def process_form(index, page, slot, form, pos, pagemsg):
   orig_pagemsg = pagemsg
   def pagemsg(txt):
     orig_pagemsg("%s %s %s: %s" % (index, slot, form, txt))
@@ -137,10 +137,11 @@ def process_text_on_page(index, pagetitle, text):
           slots_and_forms_to_process.append((slot, form))
       for formindex, (slot, form) in blib.iter_items(sorted(slots_and_forms_to_process,
           key=lambda x: lalib.remove_macrons(x[1]))):
-        def handler(page, formindex, parsed):
-          return process_form(page, formindex, slot, form, pos, pagemsg)
-        blib.do_edit(pywikibot.Page(site, lalib.remove_macrons(form)),
+        def handler(formindex, page):
+          return process_form(formindex, page, slot, form, pos, pagemsg)
+        blib.do_edit(
             "%s.%s" % (index, formindex),
+            pywikibot.Page(site, lalib.remove_macrons(form)),
             handler, save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Correct headers/headwords of non-lemma forms with the wrong part of speech",

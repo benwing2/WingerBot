@@ -77,9 +77,9 @@ def process_text_on_page(index, pagetitle, text):
       if not blib.safe_page_exists(mascpage, errandpagemsg):
         pagemsg("WARNING: Masculine %s doesn't exist: %s" % (masc, str(t)))
         continue
-      def do_process(page, index, parsed):
+      def do_process(index, page):
         return process_masc_page(index, page, pagetitle)
-      blib.do_edit(mascpage, index, do_process, save=args.save, verbose=args.verbose, diff=args.diff)
+      blib.do_edit(index, mascpage, do_process, save=args.save, verbose=args.verbose, diff=args.diff)
 
 parser = blib.create_argparser("Copy {{female equivalent of}} nouns to the f= of the corresponding masculine",
   include_pagefile=True, include_stdin=True)

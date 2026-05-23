@@ -203,8 +203,8 @@ blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, st
     "Russian present passive participles", "Russian past active participles",
     "Russian past passive participles"])
 
-def process_text_on_page_nowarn(page, index, parsed):
-  return process_text_on_page(page, index, parsed, nowarn=True)
+def process_text_on_page_nowarn(index, pagetitle, text):
+  return process_text_on_page(index, pagetitle, text, nowarn=True)
 
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_nowarn, edit=True, stdin=True,
   default_cats=["Russian non-lemma forms"])
