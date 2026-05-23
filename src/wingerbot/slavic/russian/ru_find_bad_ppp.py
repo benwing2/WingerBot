@@ -53,159 +53,171 @@ from wingerbot.blib import getparam, rmparam, msg, site
 
 from wingerbot.slavic.russian import rulib
 
+
 # FIXME, not used
 def iotate(word):
-  if re.search("[бвфпм]$", word):
-    return [word + "л"]
-  if re.search("[зг]$", word):
-    return [re.sub("[зг]$", "ж", word)]
-  if re.search("[сш]$", word):
-    return [re.sub("[сш]$", "ш", word)]
-  if re.search("с[тк]$", word):
-    return [re.sub("с[тк]$", "щ", word)]
-  if re.search("д$", word):
-    return [re.sub("д$", "ж", word), re.sub("д$", "жд", word)]
-  if re.search("т$", word):
-    return [re.sub("т$", "ч", word), re.sub("т$", "щ", word)]
-  if re.search("к$", word):
-    return [re.sub("к$", "ч", word)]
-  return [word]
+    if re.search("[бвфпм]$", word):
+        return [word + "л"]
+    if re.search("[зг]$", word):
+        return [re.sub("[зг]$", "ж", word)]
+    if re.search("[сш]$", word):
+        return [re.sub("[сш]$", "ш", word)]
+    if re.search("с[тк]$", word):
+        return [re.sub("с[тк]$", "щ", word)]
+    if re.search("д$", word):
+        return [re.sub("д$", "ж", word), re.sub("д$", "жд", word)]
+    if re.search("т$", word):
+        return [re.sub("т$", "ч", word), re.sub("т$", "щ", word)]
+    if re.search("к$", word):
+        return [re.sub("к$", "ч", word)]
+    return [word]
+
 
 # Form the past passive participle from the verb type, infinitive and
 # other parts. For the moment we don't try to get the stress right,
 # and return a form without stress or ё.
 def form_ppp(conjtype, pagetitle, args):
-  def form_ppp_1(conjtype, pagetitle, args):
-    def first_entry(forms):
-      forms = re.sub(",.*", "", forms)
-      return re.sub("//.*", "", forms)
-    if not re.search("^[0-9]+", conjtype):
-      return None
-    conjtype = int(re.sub("^([0-9]+).*", r"\1", conjtype))
-    if ((pagetitle.endswith("ать") or pagetitle.endswith("ять")) and
-        conjtype != 14):
-      return re.sub("ть$", "нный", pagetitle)
-    if pagetitle.endswith("еть") and conjtype == 1:
-      return re.sub("ть$", "нный", pagetitle)
-    if conjtype in [4, 5]:
-      sg1 = args["pres_1sg"] if "pres_1sg" in args else args["futr_1sg"]
-      if not sg1 or sg1 == "-":
-        return None
-      sg1 = first_entry(sg1)
-      assert re.search("[ую]́?$", sg1)
-      return re.sub("[ую]́?$", "енный", sg1)
-    if conjtype in [7, 8]:
-      sg3 = args["pres_3sg"] if "pres_3sg" in args else args["futr_3sg"]
-      sg3 = first_entry(sg3)
-      assert re.search("[её]́?т$", sg3)
-      return re.sub("[её]́?т$", "енный", sg3)
-    if conjtype in [3, 10]:
-      return re.sub("ть$", "тый", pagetitle)
-    assert conjtype in [9, 11, 12, 14, 15, 16]
-    pastm = first_entry(args["past_m"])
-    return re.sub("л?$", "тый", pastm)
+    def form_ppp_1(conjtype, pagetitle, args):
+        def first_entry(forms):
+            forms = re.sub(",.*", "", forms)
+            return re.sub("//.*", "", forms)
 
-  retval = form_ppp_1(conjtype, pagetitle, args)
-  if retval:
-    return rulib.make_unstressed_ru(retval)
-  else:
-    return None
+        if not re.search("^[0-9]+", conjtype):
+            return None
+        conjtype = int(re.sub("^([0-9]+).*", r"\1", conjtype))
+        if (pagetitle.endswith("ать") or pagetitle.endswith("ять")) and conjtype != 14:
+            return re.sub("ть$", "нный", pagetitle)
+        if pagetitle.endswith("еть") and conjtype == 1:
+            return re.sub("ть$", "нный", pagetitle)
+        if conjtype in [4, 5]:
+            sg1 = args["pres_1sg"] if "pres_1sg" in args else args["futr_1sg"]
+            if not sg1 or sg1 == "-":
+                return None
+            sg1 = first_entry(sg1)
+            assert re.search("[ую]́?$", sg1)
+            return re.sub("[ую]́?$", "енный", sg1)
+        if conjtype in [7, 8]:
+            sg3 = args["pres_3sg"] if "pres_3sg" in args else args["futr_3sg"]
+            sg3 = first_entry(sg3)
+            assert re.search("[её]́?т$", sg3)
+            return re.sub("[её]́?т$", "енный", sg3)
+        if conjtype in [3, 10]:
+            return re.sub("ть$", "тый", pagetitle)
+        assert conjtype in [9, 11, 12, 14, 15, 16]
+        pastm = first_entry(args["past_m"])
+        return re.sub("л?$", "тый", pastm)
+
+    retval = form_ppp_1(conjtype, pagetitle, args)
+    if retval:
+        return rulib.make_unstressed_ru(retval)
+    else:
+        return None
+
 
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+    def expand_text(tempcall):
+        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-  pagemsg("Processing")
+    pagemsg("Processing")
 
-  do_fix = not not args.pagefile
+    do_fix = not not args.pagefile
 
-  parsed = blib.parse_text(text)
-  notes = []
-  for t in parsed.filter_templates():
-    tname = str(t.name)
-    if tname in ["ru-conj", "ru-conj-old"]:
-      if [x for x in t.params if str(x.value) == "or"]:
-        pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
-        continue
-      conjtype = getparam(t, "2")
-      if tname == "ru-conj":
-        tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
-      else:
-        tempcall = re.sub(r"\{\{ru-conj-old", "{{ru-generate-verb-forms|old=y", str(t))
-      result = expand_text(tempcall)
-      if not result:
-        pagemsg("WARNING: Error generating forms, skipping")
-        continue
-      args = blib.split_generate_args(result)
-      for base in ["past_pasv_part", "ppp"]:
-        forms_to_remove = []
-        if args[base] == "-":
-          continue
-        for form in re.split(",", args[base]):
-          origform = form
-          form = re.sub("//.*", "", form)
-          fix_form = False
-          if not re.search(r"([аяеё]́?нный|тый)$", form):
-            pagemsg("WARNING: Past passive participle doesn't end correctly: %s" % form)
-            fix_form = True
-          unstressed_page = rulib.make_unstressed_ru(pagetitle)
-          unstressed_form = rulib.make_unstressed_ru(form)
-          warned = False
-          if unstressed_form[0] != unstressed_page[0]:
-            pagemsg("WARNING: Past passive participle doesn't begin with same letter, probably for wrong aspect: %s"
-                % form)
-            warned = True
-            fix_form = True
-          if form.endswith("нный"):
-            if pagetitle.endswith("ать"):
-              good_ending = "анный"
-            elif pagetitle.endswith("ять"):
-              good_ending = "янный"
+    parsed = blib.parse_text(text)
+    notes = []
+    for t in parsed.filter_templates():
+        tname = str(t.name)
+        if tname in ["ru-conj", "ru-conj-old"]:
+            if [x for x in t.params if str(x.value) == "or"]:
+                pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+                continue
+            conjtype = getparam(t, "2")
+            if tname == "ru-conj":
+                tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
             else:
-              good_ending = "енный"
-            if not unstressed_form.endswith(good_ending):
-              pagemsg("WARNING: Past passive participle doesn't end right, probably for wrong aspect: %s"
-                  % form)
-              warned = True
-              fix_form = True
-          if not warned:
-            correct_form = form_ppp(conjtype, pagetitle, args)
-            if correct_form and unstressed_form != correct_form:
-              pagemsg("WARNING: Past passive participle not formed according to rule, probably wrong: found %s, expected %s"
-                  % (unstressed_form, correct_form))
-              fix_form = True
-          if fix_form:
-            forms_to_remove.append(origform)
-        if forms_to_remove and do_fix:
-          curvals = []
-          for i in ["", "2", "3", "4", "5", "6", "7", "8", "9"]:
-            val = getparam(t, base + i)
-            if val:
-              curvals.append(val)
-          newvals = [x for x in curvals if x not in forms_to_remove]
-          if len(curvals) - len(newvals) != len(forms_to_remove):
-            pagemsg("WARNING: Something wrong, couldn't remove all PPP forms %s"
-                % ",".join(forms_to_remove))
-          curindex = 1
-          origt = str(t)
-          for newval in newvals:
-            t.add(base + ("" if curindex == 1 else str(curindex)), newval)
-            curindex += 1
-          for i in range(curindex, 10):
-            rmparam(t, base + ("" if i == 1 else str(i)))
-          pagemsg("Replacing %s with %s" % (origt, str(t)))
-          notes.append("removed bad past pasv part(s) %s"
-              % ",".join(forms_to_remove))
+                tempcall = re.sub(r"\{\{ru-conj-old", "{{ru-generate-verb-forms|old=y", str(t))
+            result = expand_text(tempcall)
+            if not result:
+                pagemsg("WARNING: Error generating forms, skipping")
+                continue
+            args = blib.split_generate_args(result)
+            for base in ["past_pasv_part", "ppp"]:
+                forms_to_remove = []
+                if args[base] == "-":
+                    continue
+                for form in re.split(",", args[base]):
+                    origform = form
+                    form = re.sub("//.*", "", form)
+                    fix_form = False
+                    if not re.search(r"([аяеё]́?нный|тый)$", form):
+                        pagemsg("WARNING: Past passive participle doesn't end correctly: %s" % form)
+                        fix_form = True
+                    unstressed_page = rulib.make_unstressed_ru(pagetitle)
+                    unstressed_form = rulib.make_unstressed_ru(form)
+                    warned = False
+                    if unstressed_form[0] != unstressed_page[0]:
+                        pagemsg(
+                            "WARNING: Past passive participle doesn't begin with same letter, probably for wrong aspect: %s"
+                            % form
+                        )
+                        warned = True
+                        fix_form = True
+                    if form.endswith("нный"):
+                        if pagetitle.endswith("ать"):
+                            good_ending = "анный"
+                        elif pagetitle.endswith("ять"):
+                            good_ending = "янный"
+                        else:
+                            good_ending = "енный"
+                        if not unstressed_form.endswith(good_ending):
+                            pagemsg(
+                                "WARNING: Past passive participle doesn't end right, probably for wrong aspect: %s"
+                                % form
+                            )
+                            warned = True
+                            fix_form = True
+                    if not warned:
+                        correct_form = form_ppp(conjtype, pagetitle, args)
+                        if correct_form and unstressed_form != correct_form:
+                            pagemsg(
+                                "WARNING: Past passive participle not formed according to rule, probably wrong: found %s, expected %s"
+                                % (unstressed_form, correct_form)
+                            )
+                            fix_form = True
+                    if fix_form:
+                        forms_to_remove.append(origform)
+                if forms_to_remove and do_fix:
+                    curvals = []
+                    for i in ["", "2", "3", "4", "5", "6", "7", "8", "9"]:
+                        val = getparam(t, base + i)
+                        if val:
+                            curvals.append(val)
+                    newvals = [x for x in curvals if x not in forms_to_remove]
+                    if len(curvals) - len(newvals) != len(forms_to_remove):
+                        pagemsg(
+                            "WARNING: Something wrong, couldn't remove all PPP forms %s" % ",".join(forms_to_remove)
+                        )
+                    curindex = 1
+                    origt = str(t)
+                    for newval in newvals:
+                        t.add(base + ("" if curindex == 1 else str(curindex)), newval)
+                        curindex += 1
+                    for i in range(curindex, 10):
+                        rmparam(t, base + ("" if i == 1 else str(i)))
+                    pagemsg("Replacing %s with %s" % (origt, str(t)))
+                    notes.append("removed bad past pasv part(s) %s" % ",".join(forms_to_remove))
 
-  return str(parsed), notes
+    return str(parsed), notes
 
-parser = blib.create_argparser("Find Russian terms with bad past passive participles",
-  include_pagefile=True, include_stdin=True)
+
+parser = blib.create_argparser(
+    "Find Russian terms with bad past passive participles", include_pagefile=True, include_stdin=True
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_cats=["Russian verbs"])
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+)

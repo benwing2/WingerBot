@@ -7,24 +7,27 @@ from wingerbot.blib import errandmsg
 # period after back-formation templates without nodot=, leading it to add extraneous
 # periods in some cases. This script undoes the damage.
 
+
 def process_page(index, page):
-  pagetitle = str(page.title())
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    pagetitle = str(page.title())
 
-  revisions = list(page.revisions(total=1))
-  for rev in revisions:
-    if rev['user'] != 'WingerBot' or (
-        not rev['comment'].startswith('add period to back-formation template without nodot=')):
-      errandpagemsg("WARNING: Can't revert page, another change happened since then")
-    else:
-      oldrevid = rev['_parent_id']
-      if oldrevid:
-        oldtext = page.getOldVersion(oldrevid)
-        return oldtext, "Undo faulty addition of period after back-formation template"
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-parser = blib.create_argparser("Undo extraneously-added periods after back-formation templates",
-  include_pagefile=True)
+    revisions = list(page.revisions(total=1))
+    for rev in revisions:
+        if rev["user"] != "WingerBot" or (
+            not rev["comment"].startswith("add period to back-formation template without nodot=")
+        ):
+            errandpagemsg("WARNING: Can't revert page, another change happened since then")
+        else:
+            oldrevid = rev["_parent_id"]
+            if oldrevid:
+                oldtext = page.getOldVersion(oldrevid)
+                return oldtext, "Undo faulty addition of period after back-formation template"
+
+
+parser = blib.create_argparser("Undo extraneously-added periods after back-formation templates", include_pagefile=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

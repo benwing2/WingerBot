@@ -7,96 +7,109 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 # col templates
 templates_to_rename = {
-  "der1": "col1",
-  "ant2": "col2",
-  "coord2": "col2",
-  "hyp2": "col2",
-  "syn2": "col2",
-  "desc3": "col3",
-  "hyp3": "col3",
-  "syn3": "col3",
-  "ant4": "col4",
-  "hyp4": "col4",
-  "syn4": "col4",
-  "der5": "col5",
-  "rel5": "col5",
-  "der2-u": "col2-u",
-  "der3-u": "col3-u",
-  "der4-u": "col4-u",
-  "der5-u": "col5-u",
+    "der1": "col1",
+    "ant2": "col2",
+    "coord2": "col2",
+    "hyp2": "col2",
+    "syn2": "col2",
+    "desc3": "col3",
+    "hyp3": "col3",
+    "syn3": "col3",
+    "ant4": "col4",
+    "hyp4": "col4",
+    "syn4": "col4",
+    "der5": "col5",
+    "rel5": "col5",
+    "der2-u": "col2-u",
+    "der3-u": "col3-u",
+    "der4-u": "col4-u",
+    "der5-u": "col5-u",
 }
 
 templates_to_clean = templates_to_rename.keys() + [
-  "der2", "der3", "der4",
-  "rel2", "rel3", "rel4",
+    "der2",
+    "der3",
+    "der4",
+    "rel2",
+    "rel3",
+    "rel4",
 ]
-  
+
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
-  notes = []
+    pagemsg("Processing")
+    notes = []
 
-  parsed = blib.parse_text(text)
+    parsed = blib.parse_text(text)
 
-  for t in parsed.filter_templates():
-    origt = str(t)
-    tn = tname(t)
-    if tn in templates_to_rename:
-      blib.set_template_name(t, templates_to_rename[tn])
-      notes.append("rename {{%s}} to {{%s}}" % (tn, templates_to_rename[tn]))
-    if tn in templates_to_clean:
-      # First move lang= to 1=
-      lang = getparam(t, "lang")
-      if lang:
-        # Fetch all params.
-        params = []
-        for param in t.params:
-          pname = str(param.name)
-          if pname.strip() != "lang":
-            params.append((pname, param.value, param.showkey))
-        # Erase all params.
-        del t.params[:]
-        t.add("1", lang)
-        # Put remaining parameters in order.
-        for name, value, showkey in params:
-          if re.search("^[0-9]+$", name):
-            t.add(str(int(name) + 1), value, showkey=showkey, preserve_spacing=False)
-          else:
-            t.add(name, value, showkey=showkey, preserve_spacing=False)
-        notes.append("move lang= to 1= in {{%s}}" % tn)
+    for t in parsed.filter_templates():
+        origt = str(t)
+        tn = tname(t)
+        if tn in templates_to_rename:
+            blib.set_template_name(t, templates_to_rename[tn])
+            notes.append("rename {{%s}} to {{%s}}" % (tn, templates_to_rename[tn]))
+        if tn in templates_to_clean:
+            # First move lang= to 1=
+            lang = getparam(t, "lang")
+            if lang:
+                # Fetch all params.
+                params = []
+                for param in t.params:
+                    pname = str(param.name)
+                    if pname.strip() != "lang":
+                        params.append((pname, param.value, param.showkey))
+                # Erase all params.
+                del t.params[:]
+                t.add("1", lang)
+                # Put remaining parameters in order.
+                for name, value, showkey in params:
+                    if re.search("^[0-9]+$", name):
+                        t.add(str(int(name) + 1), value, showkey=showkey, preserve_spacing=False)
+                    else:
+                        t.add(name, value, showkey=showkey, preserve_spacing=False)
+                notes.append("move lang= to 1= in {{%s}}" % tn)
 
-      # Then remove unnecessary links
-      lang = getparam(t, "1").strip()
-      num = 2
-      oldt = str(t)
-      while True:
-        link = getparam(t, str(num))
-        if not link:
-          break
-        m = re.search(r"^(\s*)\{\{l\|%s\|([^|{}]*)\}\}(\s*)$" % lang, link)
-        if m:
-          t.add(str(num), "%s%s%s" % m.groups(), preserve_spacing=False)
-        m = re.search(r"^(\s*)\[\[([^|\[\]]*)\]\](\s*)$", link)
-        if m:
-          t.add(str(num), "%s%s%s" % m.groups(), preserve_spacing=False)
-        num += 1
-      if oldt != str(t):
-        notes.append("remove unnecessary links in {{%s}}" % tn)
+            # Then remove unnecessary links
+            lang = getparam(t, "1").strip()
+            num = 2
+            oldt = str(t)
+            while True:
+                link = getparam(t, str(num))
+                if not link:
+                    break
+                m = re.search(r"^(\s*)\{\{l\|%s\|([^|{}]*)\}\}(\s*)$" % lang, link)
+                if m:
+                    t.add(str(num), "%s%s%s" % m.groups(), preserve_spacing=False)
+                m = re.search(r"^(\s*)\[\[([^|\[\]]*)\]\](\s*)$", link)
+                if m:
+                    t.add(str(num), "%s%s%s" % m.groups(), preserve_spacing=False)
+                num += 1
+            if oldt != str(t):
+                notes.append("remove unnecessary links in {{%s}}" % tn)
 
-    if str(t) != origt:
-      pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+        if str(t) != origt:
+            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
 
-  return str(parsed), notes
+    return str(parsed), notes
+
 
 parser = blib.create_argparser(
-  "In multicolumn templates, orphan lesser-used ones, move lang= to 1= and remove unnecessary links",
-  include_pagefile=True, include_stdin=True)
+    "In multicolumn templates, orphan lesser-used ones, move lang= to 1= and remove unnecessary links",
+    include_pagefile=True,
+    include_stdin=True,
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-  args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_refs=["Template:%s" % template for template in templates_to_clean]
+    args,
+    start,
+    end,
+    process_text_on_page,
+    edit=True,
+    stdin=True,
+    default_refs=["Template:%s" % template for template in templates_to_clean],
 )

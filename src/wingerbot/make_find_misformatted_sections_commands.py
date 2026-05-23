@@ -10,8 +10,11 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 for lineno, lang in blib.iter_items_from_file(args.direcfile, start, end):
-  lclang = lang.lower().replace(" ", "-").replace("(", "").replace(")", "").replace("'", "")
-  cmd = "python find_misformatted_sections.py --cats \"%s lemmas\" --correct --diff --save > find_misformatted_sections.%s-lemmas.out.1.%s.save" % (lang, lclang, args.tag)
-  echocmd = cmd.replace("'", "\\'").replace('"', '\'"\'').replace(">", '">"').replace("(", "'('").replace(")", "')'")
-  print("echo %s" % echocmd)
-  print(cmd)
+    lclang = lang.lower().replace(" ", "-").replace("(", "").replace(")", "").replace("'", "")
+    cmd = (
+        'python find_misformatted_sections.py --cats "%s lemmas" --correct --diff --save > find_misformatted_sections.%s-lemmas.out.1.%s.save'
+        % (lang, lclang, args.tag)
+    )
+    echocmd = cmd.replace("'", "\\'").replace('"', "'\"'").replace(">", '">"').replace("(", "'('").replace(")", "')'")
+    print("echo %s" % echocmd)
+    print(cmd)

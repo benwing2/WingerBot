@@ -7,53 +7,54 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 from wingerbot.latin import lalib
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  notes = []
+    notes = []
 
-  if " " in pagetitle:
-    pagemsg("WARNING: Space in page title, skipping")
-    return
-  pagemsg("Processing")
-          
-  parsed = blib.parse_text(text)
+    if " " in pagetitle:
+        pagemsg("WARNING: Space in page title, skipping")
+        return
+    pagemsg("Processing")
 
-  for t in parsed.filter_templates():
-    origt = str(t)
-    tn = tname(t)
-    if tn == "la-ndecl":
-      lemmaspec = getparam(t, "1")
-      m = re.search("^(.*)<(.*)>$", lemmaspec)
-      if not m:
-        pagemsg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (
-          lemmaspec, origt))
-        continue
-      lemma, spec = m.groups()
-      if "/" in lemma:
-        base, stem2 = lemma.split("/")
-        if stem2 == re.sub("gō$", "gin", base):
-          stem2 = ""
-      else:
-        base = lemma
-        stem2 = base + "n"
-      if not base.endswith("gō"):
-        pagemsg("WARNING: Base %s doesn't end in -gō, skipping: %s" % (
-          base, origt))
-        continue
-      if stem2:
-        newlemma = "%s/%s" % (base, stem2)
-      else:
-        newlemma = base
-      t.add("1", "%s<%s>" % (newlemma, spec))
-      pagemsg("Replaced %s with %s" % (origt, str(t)))
-      notes.append("convert 3rd-declension -gō term according to new default stem -gin in {{la-ndecl}}")
+    parsed = blib.parse_text(text)
 
-  return str(parsed), notes
+    for t in parsed.filter_templates():
+        origt = str(t)
+        tn = tname(t)
+        if tn == "la-ndecl":
+            lemmaspec = getparam(t, "1")
+            m = re.search("^(.*)<(.*)>$", lemmaspec)
+            if not m:
+                pagemsg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (lemmaspec, origt))
+                continue
+            lemma, spec = m.groups()
+            if "/" in lemma:
+                base, stem2 = lemma.split("/")
+                if stem2 == re.sub("gō$", "gin", base):
+                    stem2 = ""
+            else:
+                base = lemma
+                stem2 = base + "n"
+            if not base.endswith("gō"):
+                pagemsg("WARNING: Base %s doesn't end in -gō, skipping: %s" % (base, origt))
+                continue
+            if stem2:
+                newlemma = "%s/%s" % (base, stem2)
+            else:
+                newlemma = base
+            t.add("1", "%s<%s>" % (newlemma, spec))
+            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            notes.append("convert 3rd-declension -gō term according to new default stem -gin in {{la-ndecl}}")
 
-parser = blib.create_argparser("Fix Latin 3rd-decl -gō nouns to default to stem in -gin",
-    include_pagefile=True, include_stdin=True)
+    return str(parsed), notes
+
+
+parser = blib.create_argparser(
+    "Fix Latin 3rd-decl -gō nouns to default to stem in -gin", include_pagefile=True, include_stdin=True
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

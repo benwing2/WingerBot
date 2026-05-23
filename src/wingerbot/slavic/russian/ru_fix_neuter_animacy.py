@@ -5,67 +5,75 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
+
 def process_text_on_page(index, pagetitle, text):
-  subpagetitle = re.sub(".*:", "", pagetitle)
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    subpagetitle = re.sub(".*:", "", pagetitle)
 
-  pagemsg("Processing")
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  if ":" in pagetitle:
-    pagemsg("WARNING: Colon in page title, skipping")
-    return
+    pagemsg("Processing")
 
-  notes = []
-  parsed = blib.parse_text(text)
+    if ":" in pagetitle:
+        pagemsg("WARNING: Colon in page title, skipping")
+        return
 
-  def frob_gender_param(t, param):
-    val = getparam(t, param)
-    if val == "n":
-      t.add(param, "n-in")
-    elif val == "n-p":
-      t.add(param, "n-in-p")
+    notes = []
+    parsed = blib.parse_text(text)
 
-  for t in parsed.filter_templates():
-    if str(t.name) in ["ru-noun", "ru-proper noun"]:
-      origt = str(t)
-      frob_gender_param(t, "2")
-      i = 2
-      while True:
-        if getparam(t, "g" + str(i)):
-          frob_gender_param(t, "g" + str(i))
-          i += 1
-        else:
-          break
-      if origt != str(t):
-        param3 = getparam(t, "3")
-        if param3 != "-":
-          if args.fix_indeclinable:
-            if param3:
-              pagemsg("WARNING: Can't make indeclinable, has genitive singular given: %s" % origt)
-              return
-            else:
-              t.add("3", "-")
-              notes.append("make indeclinable")
-              pagemsg("Making indeclinable: %s" % str(t))
-          else:
-            pagemsg("WARNING: Would add inanimacy to neuter, but isn't marked as indeclinable: %s" % origt)
-            return
-        pagemsg("Replacing %s with %s" % (origt, str(t)))
+    def frob_gender_param(t, param):
+        val = getparam(t, param)
+        if val == "n":
+            t.add(param, "n-in")
+        elif val == "n-p":
+            t.add(param, "n-in-p")
 
-  if notes:
-    comment = "Add inanimacy to neuters (%s)" % "; ".join(notes)
-  else:
-    comment = "Add inanimacy to neuters"
+    for t in parsed.filter_templates():
+        if str(t.name) in ["ru-noun", "ru-proper noun"]:
+            origt = str(t)
+            frob_gender_param(t, "2")
+            i = 2
+            while True:
+                if getparam(t, "g" + str(i)):
+                    frob_gender_param(t, "g" + str(i))
+                    i += 1
+                else:
+                    break
+            if origt != str(t):
+                param3 = getparam(t, "3")
+                if param3 != "-":
+                    if args.fix_indeclinable:
+                        if param3:
+                            pagemsg("WARNING: Can't make indeclinable, has genitive singular given: %s" % origt)
+                            return
+                        else:
+                            t.add("3", "-")
+                            notes.append("make indeclinable")
+                            pagemsg("Making indeclinable: %s" % str(t))
+                    else:
+                        pagemsg("WARNING: Would add inanimacy to neuter, but isn't marked as indeclinable: %s" % origt)
+                        return
+                pagemsg("Replacing %s with %s" % (origt, str(t)))
 
-  return str(parsed), comment
+    if notes:
+        comment = "Add inanimacy to neuters (%s)" % "; ".join(notes)
+    else:
+        comment = "Add inanimacy to neuters"
 
-parser = blib.create_argparser("Make neuter nouns be inanimate",
-  include_pagefile=True, include_stdin=True)
-parser.add_argument("--fix-indeclinable", action="store_true",
-    help="Make non-indeclinables be indeclinable")
+    return str(parsed), comment
+
+
+parser = blib.create_argparser("Make neuter nouns be inanimate", include_pagefile=True, include_stdin=True)
+parser.add_argument("--fix-indeclinable", action="store_true", help="Make non-indeclinables be indeclinable")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_refs=["Template:ru-noun", "Template:ru-proper noun"])
+blib.do_pagefile_cats_refs(
+    args,
+    start,
+    end,
+    process_text_on_page,
+    edit=True,
+    stdin=True,
+    default_refs=["Template:ru-noun", "Template:ru-proper noun"],
+)

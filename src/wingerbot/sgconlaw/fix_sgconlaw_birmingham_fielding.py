@@ -8,7 +8,7 @@
 # #*: It is never possible to settle down to the ordinary routine of life at sea until the screw begins to revolve. There is an '''hour''' or two, after the passengers have embarked, which is disquieting and fussy.
 #
 # with:
-#  
+#
 # #* {{RQ:Birmingham Gossamer|chapter=I|passage=It is never possible to settle down to the ordinary routine of life at sea until the screw begins to revolve. There is an '''hour''' or two, after the passengers have embarked, which is disquieting and fussy.}}
 #
 # We also replace:
@@ -27,74 +27,89 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
 
-replace_templates = [
-  "RQ:Brmnghm Gsmr", "RQ:Fielding Tom Jones"
-]
+replace_templates = ["RQ:Brmnghm Gsmr", "RQ:Fielding Tom Jones"]
 
 fielding_book_to_volume = {
-  "I": "I",
-  "II": "I",
-  "III": "I",
-  "IV": "II",
-  "V": "II",
-  "VI": "II",
-  "VII": "III",
-  "VIII": "III",
-  "IX": "III",
-  "X": "IV",
-  "XI": "IV",
-  "XII": "IV",
-  "XIII": "V",
-  "XIV": "V",
-  "XV": "V",
-  "XVI": "VI",
-  "XVII": "VI",
-  "XVIII": "VI",
+    "I": "I",
+    "II": "I",
+    "III": "I",
+    "IV": "II",
+    "V": "II",
+    "VI": "II",
+    "VII": "III",
+    "VIII": "III",
+    "IX": "III",
+    "X": "IV",
+    "XI": "IV",
+    "XII": "IV",
+    "XIII": "V",
+    "XIV": "V",
+    "XV": "V",
+    "XVI": "VI",
+    "XVII": "VI",
+    "XVIII": "VI",
 }
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
+    pagemsg("Processing")
 
-  if ":" in pagetitle and not re.search(
-      "^(Citations|Appendix|Reconstruction|Transwiki|Talk|Wiktionary|[A-Za-z]+ talk):", pagetitle):
-    pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
-    return
+    if ":" in pagetitle and not re.search(
+        "^(Citations|Appendix|Reconstruction|Transwiki|Talk|Wiktionary|[A-Za-z]+ talk):", pagetitle
+    ):
+        pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
+        return
 
-  notes = []
+    notes = []
 
-  newtext = text
-  curtext = newtext
-
-  newtext = re.sub(r"\{\{RQ:Brmnghm Gsmr\|([^|]*?)\|[^|]*?\}\}\n#\*: (.*?)\n",
-    r"{{RQ:Birmingham Gossamer|chapter=\1|passage=\2}}\n", curtext)
-  if curtext != newtext:
-    notes.append("reformat {{RQ:Brmnghm Gsmr}}")
+    newtext = text
     curtext = newtext
 
-  def replace_rq_fielding_tom_jones(m):
-    book = m.group(1).upper()
-    chapter = m.group(2).upper()
-    volume = fielding_book_to_volume[book]
-    return "{{RQ:Fielding Tom Jones|book=%s|chapter=%s|passage=%s}}\n" % (book, chapter, m.group(3))
-  newtext = re.sub(r"\{\{RQ:Fielding Tom Jones\|([^|]*?)\|([IVXLCDMivxlcdm]+)\}\}\n#\*: (.*?)\n",
-      replace_rq_fielding_tom_jones, curtext)
-  if curtext != newtext:
-    notes.append("reformat {{RQ:Fielding Tom Jones}}")
-    curtext = newtext
+    newtext = re.sub(
+        r"\{\{RQ:Brmnghm Gsmr\|([^|]*?)\|[^|]*?\}\}\n#\*: (.*?)\n",
+        r"{{RQ:Birmingham Gossamer|chapter=\1|passage=\2}}\n",
+        curtext,
+    )
+    if curtext != newtext:
+        notes.append("reformat {{RQ:Brmnghm Gsmr}}")
+        curtext = newtext
 
-  return curtext, notes
+    def replace_rq_fielding_tom_jones(m):
+        book = m.group(1).upper()
+        chapter = m.group(2).upper()
+        volume = fielding_book_to_volume[book]
+        return "{{RQ:Fielding Tom Jones|book=%s|chapter=%s|passage=%s}}\n" % (book, chapter, m.group(3))
+
+    newtext = re.sub(
+        r"\{\{RQ:Fielding Tom Jones\|([^|]*?)\|([IVXLCDMivxlcdm]+)\}\}\n#\*: (.*?)\n",
+        replace_rq_fielding_tom_jones,
+        curtext,
+    )
+    if curtext != newtext:
+        notes.append("reformat {{RQ:Fielding Tom Jones}}")
+        curtext = newtext
+
+    return curtext, notes
+
 
 if __name__ == "__main__":
-  parser = blib.create_argparser("Reformat {{RQ:Brmnghm Gsmr}} and {{RQ:Fielding Tom Jones}}",
-    include_pagefile=True, include_stdin=True)
-  args = parser.parse_args()
-  start, end = blib.parse_start_end(args.start, args.end)
+    parser = blib.create_argparser(
+        "Reformat {{RQ:Brmnghm Gsmr}} and {{RQ:Fielding Tom Jones}}", include_pagefile=True, include_stdin=True
+    )
+    args = parser.parse_args()
+    start, end = blib.parse_start_end(args.start, args.end)
 
-  blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-    default_refs=["Template:%s" % template for template in replace_templates],
-    # FIXME: formerly had includelinks=True on call to blib.references();
-    # doesn't exist any more
-  )
+    blib.do_pagefile_cats_refs(
+        args,
+        start,
+        end,
+        process_text_on_page,
+        edit=True,
+        stdin=True,
+        default_refs=["Template:%s" % template for template in replace_templates],
+        # FIXME: formerly had includelinks=True on call to blib.references();
+        # doesn't exist any more
+    )

@@ -6,99 +6,98 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 from wingerbot.slavic.russian import rulib
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("WARNING: Script no longer applies and would need fixing up")
-  return
-
-  pagemsg("Processing")
-
-  direc = pagetitle_to_direc.get(pagetitle, None)
-  if not direc:
-    pagemsg("WARNING: Can't locate directive for page")
+    pagemsg("WARNING: Script no longer applies and would need fixing up")
     return
 
-  parsed = blib.parse_text(text)
-  notes = []
-  origdirec = direc
-  for t in parsed.filter_templates():
-    origt = str(t)
-    direc = origdirec
-    if str(t.name) in ["ru-conj-7b"]:
-      rmparam(t, "past_m")
-      rmparam(t, "past_f")
-      rmparam(t, "past_n")
-      rmparam(t, "past_pl")
-      rmparam(t, "notes")
-      rmparam(t, "past_adv_part")
-      rmparam(t, "past_adv_part2")
-      rmparam(t, "past_adv_part_short")
-      #ppps = blib.fetch_param_chain(t, "past_pasv_part", "past_pasv_part")
-      #blib.remove_param_chain(t, "past_pasv_part", "past_pasv_part")
-      presstem = getparam(t, "3")
-      rmparam(t, "5")
-      rmparam(t, "4")
-      rmparam(t, "3")
-      npp = "npp" in direc
-      direc = direc.replace("npp", "")
-      yo = "ё" in direc
-      direc = direc.replace("ё", "")
-      direc = re.sub("7b/?", "", direc)
-      if re.search("е́?[^аэыоуяеиёю]*$", presstem):
-        if not yo:
-          pagemsg("Something wrong, е-stem present and no ё directive")
-        if npp:
-          presstem = rulib.make_ending_stressed_ru(presstem)
-        else:
-          presstem = re.sub("е́?([^аэыоуяеиёю]*)$", r"ё\1", presstem)
-      else:
-        presstem = rulib.make_ending_stressed_ru(presstem)
-      pap = getparam(t, "past_actv_part")
-      pred_pap = presstem + "ший"
-      if direc not in ["b", "b(9)"] and re.search("[дт]$", presstem):
-        pred_pap = re.sub("[дт]$", "", presstem) + "вший"
-      if pap:
-        if pap == pred_pap:
-          pagemsg("Removing past_actv_part=%s because same as predicted" % pap)
-          rmparam(t, "past_actv_part")
-        else:
-          pagemsg("Not removing unpredictable past_actv_part=%s (predicted %s)" %
-              (pap, pred_pap))
-      for param in t.params:
-        if not re.search("^([0-9]+$|past_pasv_part)", str(param.name)):
-          pagemsg("Found additional named param %s" % str(param))
-      t.add("3", presstem)
-      if direc:
-        t.add("4", "")
-        t.add("5", direc)
-      blib.sort_params(t)
-      #blib.set_param_chain(t, ppps, "past_pasv_part", "past_pasv_part")
-      notes.append("set class-7b verb to directive %s%s" %
-          (direc, npp and " (no ё in present stem)" or ""))
-    newt = str(t)
-    if origt != newt:
-      pagemsg("Replaced %s with %s" % (origt, newt))
+    pagemsg("Processing")
 
-  return str(parsed), notes
+    direc = pagetitle_to_direc.get(pagetitle, None)
+    if not direc:
+        pagemsg("WARNING: Can't locate directive for page")
+        return
 
-parser = blib.create_argparser(
-  "Fix up class-7b arguments", include_pagefile=True, include_stdin=True)
-parser.add_argument('--direcfile', help="File containing pages to fix and directives.")
+    parsed = blib.parse_text(text)
+    notes = []
+    origdirec = direc
+    for t in parsed.filter_templates():
+        origt = str(t)
+        direc = origdirec
+        if str(t.name) in ["ru-conj-7b"]:
+            rmparam(t, "past_m")
+            rmparam(t, "past_f")
+            rmparam(t, "past_n")
+            rmparam(t, "past_pl")
+            rmparam(t, "notes")
+            rmparam(t, "past_adv_part")
+            rmparam(t, "past_adv_part2")
+            rmparam(t, "past_adv_part_short")
+            # ppps = blib.fetch_param_chain(t, "past_pasv_part", "past_pasv_part")
+            # blib.remove_param_chain(t, "past_pasv_part", "past_pasv_part")
+            presstem = getparam(t, "3")
+            rmparam(t, "5")
+            rmparam(t, "4")
+            rmparam(t, "3")
+            npp = "npp" in direc
+            direc = direc.replace("npp", "")
+            yo = "ё" in direc
+            direc = direc.replace("ё", "")
+            direc = re.sub("7b/?", "", direc)
+            if re.search("е́?[^аэыоуяеиёю]*$", presstem):
+                if not yo:
+                    pagemsg("Something wrong, е-stem present and no ё directive")
+                if npp:
+                    presstem = rulib.make_ending_stressed_ru(presstem)
+                else:
+                    presstem = re.sub("е́?([^аэыоуяеиёю]*)$", r"ё\1", presstem)
+            else:
+                presstem = rulib.make_ending_stressed_ru(presstem)
+            pap = getparam(t, "past_actv_part")
+            pred_pap = presstem + "ший"
+            if direc not in ["b", "b(9)"] and re.search("[дт]$", presstem):
+                pred_pap = re.sub("[дт]$", "", presstem) + "вший"
+            if pap:
+                if pap == pred_pap:
+                    pagemsg("Removing past_actv_part=%s because same as predicted" % pap)
+                    rmparam(t, "past_actv_part")
+                else:
+                    pagemsg("Not removing unpredictable past_actv_part=%s (predicted %s)" % (pap, pred_pap))
+            for param in t.params:
+                if not re.search("^([0-9]+$|past_pasv_part)", str(param.name)):
+                    pagemsg("Found additional named param %s" % str(param))
+            t.add("3", presstem)
+            if direc:
+                t.add("4", "")
+                t.add("5", direc)
+            blib.sort_params(t)
+            # blib.set_param_chain(t, ppps, "past_pasv_part", "past_pasv_part")
+            notes.append("set class-7b verb to directive %s%s" % (direc, npp and " (no ё in present stem)" or ""))
+        newt = str(t)
+        if origt != newt:
+            pagemsg("Replaced %s with %s" % (origt, newt))
+
+    return str(parsed), notes
+
+
+parser = blib.create_argparser("Fix up class-7b arguments", include_pagefile=True, include_stdin=True)
+parser.add_argument("--direcfile", help="File containing pages to fix and directives.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 pagetitle_to_direc = {}
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
-  if " " not in line:
-    msg("Line %s: Skipping because no space: %s" % (i, line))
-  elif "7b" not in line:
-    msg("Line %s: Skipping because 7b not in line: %s" % (i, line))
-  else:
-    page, direc = re.split(" ", line)
-    pagetitle_to_direc[page] = direc
+    if " " not in line:
+        msg("Line %s: Skipping because no space: %s" % (i, line))
+    elif "7b" not in line:
+        msg("Line %s: Skipping because 7b not in line: %s" % (i, line))
+    else:
+        page, direc = re.split(" ", line)
+        pagetitle_to_direc[page] = direc
 
 blib.do_pagefile_cats_refs(
-  args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_pages=list(pagetitle_to_direc.keys()))
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_direc.keys())
+)

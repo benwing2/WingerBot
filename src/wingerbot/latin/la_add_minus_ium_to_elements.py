@@ -7,50 +7,51 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 from wingerbot.latin import lalib
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  notes = []
+    notes = []
 
-  if " " in pagetitle:
-    pagemsg("WARNING: Space in page title, skipping")
-    return
-  if not pagetitle.endswith("ium"):
-    pagemsg("Doesn't end in -ium, skipping")
-    return
-  pagemsg("Processing")
-          
-  parsed = blib.parse_text(text)
+    if " " in pagetitle:
+        pagemsg("WARNING: Space in page title, skipping")
+        return
+    if not pagetitle.endswith("ium"):
+        pagemsg("Doesn't end in -ium, skipping")
+        return
+    pagemsg("Processing")
 
-  num_ndecl_templates = 0
-  for t in parsed.filter_templates():
-    origt = str(t)
-    tn = tname(t)
-    if tn == "la-ndecl":
-      num_ndecl_templates += 1
-      lemmaspec = getparam(t, "1")
-      m = re.search("^(.*)<(.*)>$", lemmaspec)
-      if not m:
-        pagemsg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (
-          lemmaspec, origt))
-        continue
-      lemma, spec = m.groups()
-      if ".-ium" not in spec:
-        spec += ".-ium"
-        t.add("1", "%s<%s>" % (lemma, spec))
-        pagemsg("Replaced %s with %s" % (origt, str(t)))
-        notes.append("add .-ium to declension of Latin chemical element")
-  if num_ndecl_templates > 1:
-    pagemsg("WARNING: Saw multiple {{la-ndecl}} templates, some may not be elements")
-    return
+    parsed = blib.parse_text(text)
 
-  return str(parsed), notes
+    num_ndecl_templates = 0
+    for t in parsed.filter_templates():
+        origt = str(t)
+        tn = tname(t)
+        if tn == "la-ndecl":
+            num_ndecl_templates += 1
+            lemmaspec = getparam(t, "1")
+            m = re.search("^(.*)<(.*)>$", lemmaspec)
+            if not m:
+                pagemsg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (lemmaspec, origt))
+                continue
+            lemma, spec = m.groups()
+            if ".-ium" not in spec:
+                spec += ".-ium"
+                t.add("1", "%s<%s>" % (lemma, spec))
+                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                notes.append("add .-ium to declension of Latin chemical element")
+    if num_ndecl_templates > 1:
+        pagemsg("WARNING: Saw multiple {{la-ndecl}} templates, some may not be elements")
+        return
 
-parser = blib.create_argparser("Add missing .-ium to Latin elements",
-    include_pagefile=True, include_stdin=True)
+    return str(parsed), notes
+
+
+parser = blib.create_argparser("Add missing .-ium to Latin elements", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
-    default_cats=["la:Chemical elements"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, default_cats=["la:Chemical elements"], edit=True, stdin=True
+)

@@ -5,13 +5,12 @@
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
-parser = blib.create_argparser("Find pages that need definitions",
-  include_pagefile=True)
+parser = blib.create_argparser("Find pages that need definitions", include_pagefile=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 lines = set(blib.yield_items_from_file(args.pagefile))
 for i, page in blib.cat_articles("Russian entries needing definition", start, end):
-  pagetitle = page.title()
-  if pagetitle in lines:
-    msg("* Page %s [[%s]]" % (i, pagetitle))
+    pagetitle = page.title()
+    if pagetitle in lines:
+        msg("* Page %s [[%s]]" % (i, pagetitle))

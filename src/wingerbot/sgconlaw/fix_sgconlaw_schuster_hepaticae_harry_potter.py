@@ -5,54 +5,66 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-templates = [
-  "RQ:Schuster Hepaticae",
-  "RQ:Harry Potter"
-]
+templates = ["RQ:Schuster Hepaticae", "RQ:Harry Potter"]
+
 
 def rsub_repeatedly(fr, to, text):
-  while True:
-    newtext = re.sub(fr, to, text)
-    if newtext == text:
-      return text
-    text = newtext
+    while True:
+        newtext = re.sub(fr, to, text)
+        if newtext == text:
+            return text
+        text = newtext
+
 
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
-  notes = []
+    pagemsg("Processing")
+    notes = []
 
-  newtext = rsub_repeatedly(r"\n(:?#+)\* \{\{RQ:Schuster Hepaticae V\|(.*)\}\}:?\n\1\*: (.*)(\n|$)",
-      r"\n\1* {{RQ:Schuster Hepaticae|volume=V|page=\2|text=\3}}\4",
-      text)
-  if newtext != text:
-    notes.append("rename {{RQ:Schuster Hepaticae V}} to {{RQ:Schuster Hepaticae|volume=V}}")
-    text = newtext
+    newtext = rsub_repeatedly(
+        r"\n(:?#+)\* \{\{RQ:Schuster Hepaticae V\|(.*)\}\}:?\n\1\*: (.*)(\n|$)",
+        r"\n\1* {{RQ:Schuster Hepaticae|volume=V|page=\2|text=\3}}\4",
+        text,
+    )
+    if newtext != text:
+        notes.append("rename {{RQ:Schuster Hepaticae V}} to {{RQ:Schuster Hepaticae|volume=V}}")
+        text = newtext
 
-  newtext = rsub_repeatedly(r"\n(:?#+)\* \{\{RQ:Harry Potter\|([^|\n}]*)\|([^|\n}]*)((?:\|.*?)?)\}\}:?\n\1\*: (.*)\n\1\*:: (.*)(\n|$)",
-      r"\n\1* {{RQ:mul:Rowling Harry Potter|\3|\2\4|text=\5|t=\6}}\7",
-      text)
-  if newtext != text:
-    notes.append("rename {{RQ:Harry Potter}} to {{RQ:mul:Rowling Harry Potter}}")
-    text = newtext
+    newtext = rsub_repeatedly(
+        r"\n(:?#+)\* \{\{RQ:Harry Potter\|([^|\n}]*)\|([^|\n}]*)((?:\|.*?)?)\}\}:?\n\1\*: (.*)\n\1\*:: (.*)(\n|$)",
+        r"\n\1* {{RQ:mul:Rowling Harry Potter|\3|\2\4|text=\5|t=\6}}\7",
+        text,
+    )
+    if newtext != text:
+        notes.append("rename {{RQ:Harry Potter}} to {{RQ:mul:Rowling Harry Potter}}")
+        text = newtext
 
-  newtext = rsub_repeatedly(r"\n(:?#+)\* \{\{RQ:Harry Potter\|([^|\n}]*)\|([^|\n}]*)((?:\|.*?)?)\}\}:?\n\1\*: \{\{(?:ux|quote)\|.*?\|(.*?)\|(?:t=)?(.*?)\}\}(\n|$)",
-      r"\n\1* {{RQ:mul:Rowling Harry Potter|\3|\2\4|text=\5|t=\6}}\7",
-      text)
-  if newtext != text:
-    notes.append("rename {{RQ:Harry Potter}} to {{RQ:mul:Rowling Harry Potter}}")
-    text = newtext
+    newtext = rsub_repeatedly(
+        r"\n(:?#+)\* \{\{RQ:Harry Potter\|([^|\n}]*)\|([^|\n}]*)((?:\|.*?)?)\}\}:?\n\1\*: \{\{(?:ux|quote)\|.*?\|(.*?)\|(?:t=)?(.*?)\}\}(\n|$)",
+        r"\n\1* {{RQ:mul:Rowling Harry Potter|\3|\2\4|text=\5|t=\6}}\7",
+        text,
+    )
+    if newtext != text:
+        notes.append("rename {{RQ:Harry Potter}} to {{RQ:mul:Rowling Harry Potter}}")
+        text = newtext
 
-  return text, notes
+    return text, notes
+
 
 parser = blib.create_argparser(
-  "Rename {{RQ:Schuster Hepaticae V}} and {{RQ:Harry Potter}} templates", include_pagefile=True,
-  include_stdin=True)
+    "Rename {{RQ:Schuster Hepaticae V}} and {{RQ:Harry Potter}} templates", include_pagefile=True, include_stdin=True
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-  args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_refs=["Template:%s" % template for template in templates])
+    args,
+    start,
+    end,
+    process_text_on_page,
+    edit=True,
+    stdin=True,
+    default_refs=["Template:%s" % template for template in templates],
+)

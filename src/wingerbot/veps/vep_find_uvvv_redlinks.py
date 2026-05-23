@@ -9,24 +9,28 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
+    pagemsg("Processing")
 
-  parsed = blib.parse_text(text)
-  for t in parsed.filter_templates():
-    if str(t.name) == "R:vep:UVVV":
-      refpages = blib.fetch_param_chain(t, "1", "")
-      for refpage in refpages:
-        if not pywikibot.Page(site, refpage).exists():
-          pagemsg("Page [[%s]] does not exist" % refpage)
+    parsed = blib.parse_text(text)
+    for t in parsed.filter_templates():
+        if str(t.name) == "R:vep:UVVV":
+            refpages = blib.fetch_param_chain(t, "1", "")
+            for refpage in refpages:
+                if not pywikibot.Page(site, refpage).exists():
+                    pagemsg("Page [[%s]] does not exist" % refpage)
 
-parser = blib.create_argparser("Find red links in pages in Category:R:vep:UVVV with red link",
-  include_pagefile=True, include_stdin=True)
+
+parser = blib.create_argparser(
+    "Find red links in pages in Category:R:vep:UVVV with red link", include_pagefile=True, include_stdin=True
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True,
-    default_cats=["R:vep:UVVV with red link"])
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, stdin=True, default_cats=["R:vep:UVVV with red link"]
+)

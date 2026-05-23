@@ -12,64 +12,71 @@ import pywikibot
 from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, getparam, addparam, site
 
+
 def undo_ru_auto_accent(save, verbose, direcfile, start, end):
-  msg("WARNING: Script no longer applies and would need fixing up")
-  return
+    msg("WARNING: Script no longer applies and would need fixing up")
+    return
 
-  template_removals = []
-  for lineno, line in blib.iter_items_from_file(direcfile, start, end):
-    m = re.search(r"^Page [0-9]+ (.*?): Replaced (\{\{.*?\}\}) with (\{\{.*?\}\})$",
-        line)
-    if not m:
-      msg("Line %s: WARNING: Unable to parse line: [%s]" % (lineno, line))
-    else:
-      template_removals.append(m.groups())
-
-  for index, (pagename, removed_param, template_text) in blib.iter_items(
-      template_removals, get_name = lambda x: x[0]):
-
-    if not re.search(r"^\{\{(ux|usex|ru-ux|lang)\|", orig_template):
-      continue
-    def undo_one_page_ru_auto_accent(index, page):
-      pagetitle = str(page.title())
-      def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-      def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-      text = blib.safe_page_text(page, errandpagemsg)
-      if not re.search("^#\*:* *%s" % re.escape(repl_template), text, re.M):
-        return
-      found_orig_template = orig_template in text
-      newtext = text.replace(repl_template, orig_template)
-      changelog = ""
-      if newtext == text:
-        if not found_orig_template:
-          pagemsg("WARNING: Unable to locate 'repl' template when undoing Russian auto-accenting: %s"
-              % repl_template)
+    template_removals = []
+    for lineno, line in blib.iter_items_from_file(direcfile, start, end):
+        m = re.search(r"^Page [0-9]+ (.*?): Replaced (\{\{.*?\}\}) with (\{\{.*?\}\})$", line)
+        if not m:
+            msg("Line %s: WARNING: Unable to parse line: [%s]" % (lineno, line))
         else:
-          pagemsg("Original template found, taking no action")
-      else:
-        pagemsg("Replaced %s with %s" % (repl_template, orig_template))
-        if found_orig_template:
-          pagemsg("WARNING: Undid replacement, but original template %s already present!" %
-              orig_template)
-        if len(newtext) - len(text) != len(orig_template) - len(repl_template):
-          pagemsg("WARNING: Length mismatch when undoing Russian auto-accenting, may have matched multiple templates: orig=%s, repl=%s" % (
-            orig_template, repl_template))
-        changelog = "Undid auto-accenting (per Wikitiki89) of %s" % (orig_template)
-        pagemsg("Change log = %s" % changelog)
-      return newtext, changelog
+            template_removals.append(m.groups())
 
-    page = pywikibot.Page(site, pagename)
-    if not page.exists():
-      msg("Page %s %s: WARNING, something wrong, does not exist" % (
-        index, pagename))
-    else:
-      blib.do_edit(index, page, undo_one_page_ru_auto_accent, save=save, verbose=verbose)
+    for index, (pagename, removed_param, template_text) in blib.iter_items(template_removals, get_name=lambda x: x[0]):
 
-params = blib.create_argparser("Undo auto-accent changes involving ux, usex and lang templates that look like direct quotes")
-params.add_argument("--file",
-    help="File containing log file from original auto-accent run", required=True)
+        if not re.search(r"^\{\{(ux|usex|ru-ux|lang)\|", orig_template):
+            continue
+
+        def undo_one_page_ru_auto_accent(index, page):
+            pagetitle = str(page.title())
+
+            def pagemsg(txt):
+                msg("Page %s %s: %s" % (index, pagetitle, txt))
+
+            def errandpagemsg(txt):
+                errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+
+            text = blib.safe_page_text(page, errandpagemsg)
+            if not re.search("^#\*:* *%s" % re.escape(repl_template), text, re.M):
+                return
+            found_orig_template = orig_template in text
+            newtext = text.replace(repl_template, orig_template)
+            changelog = ""
+            if newtext == text:
+                if not found_orig_template:
+                    pagemsg(
+                        "WARNING: Unable to locate 'repl' template when undoing Russian auto-accenting: %s"
+                        % repl_template
+                    )
+                else:
+                    pagemsg("Original template found, taking no action")
+            else:
+                pagemsg("Replaced %s with %s" % (repl_template, orig_template))
+                if found_orig_template:
+                    pagemsg("WARNING: Undid replacement, but original template %s already present!" % orig_template)
+                if len(newtext) - len(text) != len(orig_template) - len(repl_template):
+                    pagemsg(
+                        "WARNING: Length mismatch when undoing Russian auto-accenting, may have matched multiple templates: orig=%s, repl=%s"
+                        % (orig_template, repl_template)
+                    )
+                changelog = "Undid auto-accenting (per Wikitiki89) of %s" % (orig_template)
+                pagemsg("Change log = %s" % changelog)
+            return newtext, changelog
+
+        page = pywikibot.Page(site, pagename)
+        if not page.exists():
+            msg("Page %s %s: WARNING, something wrong, does not exist" % (index, pagename))
+        else:
+            blib.do_edit(index, page, undo_one_page_ru_auto_accent, save=save, verbose=verbose)
+
+
+params = blib.create_argparser(
+    "Undo auto-accent changes involving ux, usex and lang templates that look like direct quotes"
+)
+params.add_argument("--file", help="File containing log file from original auto-accent run", required=True)
 
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

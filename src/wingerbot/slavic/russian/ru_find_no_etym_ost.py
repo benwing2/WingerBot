@@ -9,59 +9,67 @@ from wingerbot.slavic.russian import rulib
 
 nouns = []
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  notes = []
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  if not re.search("[иы]й$", pagetitle):
-    pagemsg("Skipping adjective not in -ый or -ий")
-    return
+    notes = []
 
-  noun = re.sub("[иы]й$", "ость", pagetitle)
-  if noun not in nouns:
-    return
+    if not re.search("[иы]й$", pagetitle):
+        pagemsg("Skipping adjective not in -ый or -ий")
+        return
 
-  if rulib.check_for_alt_yo_terms(text, pagemsg):
-    return
+    noun = re.sub("[иы]й$", "ость", pagetitle)
+    if noun not in nouns:
+        return
 
-  parsed = blib.parse_text(text)
+    if rulib.check_for_alt_yo_terms(text, pagemsg):
+        return
 
-  for t in parsed.filter_templates():
-    tn = tname(t)
-    if tn == "ru-adj":
-      heads = blib.fetch_param_chain(t, "1", "head", pagetitle)
-      if len(heads) > 1:
-        pagemsg("Skipping adjective with multiple heads: %s" % ",".join(heads))
-        continue
-      noun_page = pywikibot.Page(site, noun)
-      noun_text = blib.safe_page_text(page, errandpagemsg)
-      if not noun_text:
-        pagemsg("Page %s doesn't exist or is empty" % noun)
-        continue
-      nounsection = blib.find_lang_section(noun_text, "Russian", pagemsg)
-      if not nounsection:
-        continue
-      if "==Etymology" in nounsection:
-        pagemsg("Noun %s already has etymology" % noun)
-        continue
-      tr = getparam(t, "tr")
-      if tr:
-        msg("%s %s+tr1=%s+-ость no-etym" % (noun, heads[0], tr))
-      else:
-        msg("%s %s+-ость no-etym" % (noun, heads[0]))
+    parsed = blib.parse_text(text)
+
+    for t in parsed.filter_templates():
+        tn = tname(t)
+        if tn == "ru-adj":
+            heads = blib.fetch_param_chain(t, "1", "head", pagetitle)
+            if len(heads) > 1:
+                pagemsg("Skipping adjective with multiple heads: %s" % ",".join(heads))
+                continue
+            noun_page = pywikibot.Page(site, noun)
+            noun_text = blib.safe_page_text(page, errandpagemsg)
+            if not noun_text:
+                pagemsg("Page %s doesn't exist or is empty" % noun)
+                continue
+            nounsection = blib.find_lang_section(noun_text, "Russian", pagemsg)
+            if not nounsection:
+                continue
+            if "==Etymology" in nounsection:
+                pagemsg("Noun %s already has etymology" % noun)
+                continue
+            tr = getparam(t, "tr")
+            if tr:
+                msg("%s %s+tr1=%s+-ость no-etym" % (noun, heads[0], tr))
+            else:
+                msg("%s %s+-ость no-etym" % (noun, heads[0]))
+
 
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
-parser = blib.create_argparser("Try to construct etymologies of nouns in -ость from adjectives",
-    include_pagefile=True, include_stdin=True, canonicalize_pagename=rulib.remove_accents)
+parser = blib.create_argparser(
+    "Try to construct etymologies of nouns in -ость from adjectives",
+    include_pagefile=True,
+    include_stdin=True,
+    canonicalize_pagename=rulib.remove_accents,
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 for i, page in blib.cat_articles("Russian nouns"):
-  nouns.append(str(page.title()))
+    nouns.append(str(page.title()))
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_cats=["Russian adjectives"])
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjectives"]
+)

@@ -9,15 +9,16 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
+    pagemsg("Processing")
 
-  origtext = text
-  text = re.sub(
-    r"""(^(?:<[^<>]*?>)?[*#:]*\s*|     # beginning of line, possibly after
+    origtext = text
+    text = re.sub(
+        r"""(^(?:<[^<>]*?>)?[*#:]*\s*|     # beginning of line, possibly after
                                        # bullet/number/indent symbol or HTML
          \.(?:<[^<>]*?>)?\s+|          # or, after a period (marking end of
                                        # sentence), possibly followed by HTML
@@ -36,17 +37,24 @@ def process_text_on_page(index, pagetitle, text):
                                             # allows one nested {{...}}
         )
         \}\}""",
-    r"\1Borrowed from \2\3}}", text, 0, re.M | re.X)
+        r"\1Borrowed from \2\3}}",
+        text,
+        0,
+        re.M | re.X,
+    )
 
-  if text != origtext:
-    return text, "Remove withtext= from {{bor}}/{{borrowed}}/{{borrowing}}"
-  else:
-    pagemsg("WARNING: Unable to remove withtext=1")
+    if text != origtext:
+        return text, "Remove withtext= from {{bor}}/{{borrowed}}/{{borrowing}}"
+    else:
+        pagemsg("WARNING: Unable to remove withtext=1")
 
-parser = blib.create_argparser("Replace withtext= in {{bor}} with 'Borrowed from {{bor}}'",
-  include_pagefile=True, include_stdin=True)
+
+parser = blib.create_argparser(
+    "Replace withtext= in {{bor}} with 'Borrowed from {{bor}}'", include_pagefile=True, include_stdin=True
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_cats=["bor with withtext"])
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["bor with withtext"]
+)

@@ -5,35 +5,43 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
+
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  notes = []
+    notes = []
 
-  pagemsg("Processing")
-          
-  parsed = blib.parse_text(text)
+    pagemsg("Processing")
 
-  head = None
-  last_lang = None
-  for t in parsed.filter_templates():
-    origt = str(t)
-    tn = tname(t)
-    if tn in ["citation", "citations"]:
-      last_lang = getparam(t, "1")
-    if tn == "timeline":
-      if last_lang == "en":
-        blib.set_template_name(t, "en-timeline")
-        notes.append("'timeline' -> 'en-timeline'")
-      else:
-        pagemsg("WARNING: Skipped due to not being on English citations page (last_lang=%s): %s" % (last_lang, str(t)))
+    parsed = blib.parse_text(text)
 
-  return str(parsed), notes
+    head = None
+    last_lang = None
+    for t in parsed.filter_templates():
+        origt = str(t)
+        tn = tname(t)
+        if tn in ["citation", "citations"]:
+            last_lang = getparam(t, "1")
+        if tn == "timeline":
+            if last_lang == "en":
+                blib.set_template_name(t, "en-timeline")
+                notes.append("'timeline' -> 'en-timeline'")
+            else:
+                pagemsg(
+                    "WARNING: Skipped due to not being on English citations page (last_lang=%s): %s"
+                    % (last_lang, str(t))
+                )
 
-parser = blib.create_argparser("timeline -> en-timeline on English citation pages",
-    include_pagefile=True, include_stdin=True)
+    return str(parsed), notes
+
+
+parser = blib.create_argparser(
+    "timeline -> en-timeline on English citation pages", include_pagefile=True, include_stdin=True
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_refs=["Template:timeline"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, default_refs=["Template:timeline"], edit=True, stdin=True
+)

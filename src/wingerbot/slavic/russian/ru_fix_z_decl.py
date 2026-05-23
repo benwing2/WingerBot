@@ -7,89 +7,93 @@ from wingerbot.blib import getparam, rmparam, msg, site
 
 from wingerbot.slavic.russian import runounlib
 
+
 def process_text_on_page(index, pagetitle, text):
-  subpagetitle = re.sub(".*:", "", pagetitle)
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    subpagetitle = re.sub(".*:", "", pagetitle)
 
-  pagemsg("Processing")
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  if ":" in pagetitle:
-    pagemsg("WARNING: Colon in page title, skipping")
-    return
+    pagemsg("Processing")
 
-  def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+    if ":" in pagetitle:
+        pagemsg("WARNING: Colon in page title, skipping")
+        return
 
-  parsed = blib.parse_text(text)
+    def expand_text(tempcall):
+        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-  headword_templates = []
-  for t in parsed.filter_templates():
-    if str(t.name) in ["ru-noun", "ru-proper noun"]:
-      headword_templates.append(t)
+    parsed = blib.parse_text(text)
 
-  headword_template = None
-  if len(headword_templates) > 1:
-    pagemsg("WARNING: Multiple old-style headword templates, not sure which one to use, using none")
-    for ht in headword_templates:
-      pagemsg("Ignored headword template: %s" % str(ht))
-  elif len(headword_templates) == 0:
-    pagemsg("WARNING: No old-style headword templates")
-  else:
-    headword_template = headword_templates[0]
-    pagemsg("Found headword template: %s" % str(headword_template))
+    headword_templates = []
+    for t in parsed.filter_templates():
+        if str(t.name) in ["ru-noun", "ru-proper noun"]:
+            headword_templates.append(t)
 
-  num_z_decl = 0
-  for t in parsed.filter_templates():
-    if str(t.name) == "ru-decl-noun-z":
-      num_z_decl += 1
-      pagemsg("Found z-decl template: %s" % str(t))
-      ru_noun_table_template = runounlib.convert_zdecl_to_ru_noun_table(t,
-          subpagetitle, pagemsg, headword_template=headword_template)
-      if not ru_noun_table_template:
-        pagemsg("WARNING: Unable to convert z-decl template: %s" % str(t))
-        continue
+    headword_template = None
+    if len(headword_templates) > 1:
+        pagemsg("WARNING: Multiple old-style headword templates, not sure which one to use, using none")
+        for ht in headword_templates:
+            pagemsg("Ignored headword template: %s" % str(ht))
+    elif len(headword_templates) == 0:
+        pagemsg("WARNING: No old-style headword templates")
+    else:
+        headword_template = headword_templates[0]
+        pagemsg("Found headword template: %s" % str(headword_template))
 
-      if headword_template:
-        generate_template = re.sub(r"^\{\{ru-noun-table",
-            "{{ru-generate-noun-args", str(ru_noun_table_template))
-        if str(headword_template.name) == "ru-proper noun":
-          generate_template = re.sub(r"\}\}$", "|ndef=sg}}", generate_template)
+    num_z_decl = 0
+    for t in parsed.filter_templates():
+        if str(t.name) == "ru-decl-noun-z":
+            num_z_decl += 1
+            pagemsg("Found z-decl template: %s" % str(t))
+            ru_noun_table_template = runounlib.convert_zdecl_to_ru_noun_table(
+                t, subpagetitle, pagemsg, headword_template=headword_template
+            )
+            if not ru_noun_table_template:
+                pagemsg("WARNING: Unable to convert z-decl template: %s" % str(t))
+                continue
 
-        def pagemsg_with_proposed(text):
-          pagemsg("Proposed ru-noun-table template: %s" %
-              str(ru_noun_table_template))
-          pagemsg(text)
+            if headword_template:
+                generate_template = re.sub(
+                    r"^\{\{ru-noun-table", "{{ru-generate-noun-args", str(ru_noun_table_template)
+                )
+                if str(headword_template.name) == "ru-proper noun":
+                    generate_template = re.sub(r"\}\}$", "|ndef=sg}}", generate_template)
 
-        generate_result = expand_text(str(generate_template))
-        if not generate_result:
-          pagemsg_with_proposed("WARNING: Error generating noun args, skipping")
-          continue
-        args = blib.split_generate_args(generate_result)
+                def pagemsg_with_proposed(text):
+                    pagemsg("Proposed ru-noun-table template: %s" % str(ru_noun_table_template))
+                    pagemsg(text)
 
-        # This will check number mismatch and animacy mismatch
-        new_genders = runounlib.check_old_noun_headword_forms(headword_template,
-            args, subpagetitle, pagemsg_with_proposed)
-        if new_genders == None:
-          continue
+                generate_result = expand_text(str(generate_template))
+                if not generate_result:
+                    pagemsg_with_proposed("WARNING: Error generating noun args, skipping")
+                    continue
+                args = blib.split_generate_args(generate_result)
 
-      origt = str(t)
-      t.name = "ru-noun-table"
-      del t.params[:]
-      for param in ru_noun_table_template.params:
-        t.add(param.name, param.value)
-      pagemsg("Replacing z-decl %s with regular decl %s" %
-          (origt, str(t)))
+                # This will check number mismatch and animacy mismatch
+                new_genders = runounlib.check_old_noun_headword_forms(
+                    headword_template, args, subpagetitle, pagemsg_with_proposed
+                )
+                if new_genders == None:
+                    continue
 
-  if num_z_decl > 1:
-    pagemsg("WARNING: Found multiple z-decl templates (%s)" % num_z_decl)
+            origt = str(t)
+            t.name = "ru-noun-table"
+            del t.params[:]
+            for param in ru_noun_table_template.params:
+                t.add(param.name, param.value)
+            pagemsg("Replacing z-decl %s with regular decl %s" % (origt, str(t)))
 
-  return str(parsed), "Replace ru-decl-noun-z with ru-noun-table"
+    if num_z_decl > 1:
+        pagemsg("WARNING: Found multiple z-decl templates (%s)" % num_z_decl)
 
-parser = blib.create_argparser("Convert ru-decl-noun-z into ru-noun-table",
-  include_pagefile=True, include_stdin=True)
+    return str(parsed), "Replace ru-decl-noun-z with ru-noun-table"
+
+
+parser = blib.create_argparser("Convert ru-decl-noun-z into ru-noun-table", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_refs=["Template:ru-decl-noun-z"])
+blib.do_pagefile_cats_refs(
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:ru-decl-noun-z"]
+)

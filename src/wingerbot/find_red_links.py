@@ -18,39 +18,41 @@ start, end = blib.parse_start_end(args.start, args.end)
 lemmas = set()
 msg("Reading %s lemmas" % args.lang)
 for i, page in blib.cat_articles("%s lemmas" % args.lang, start, end):
-  lemmas.add(str(page.title()))
+    lemmas.add(str(page.title()))
 
 words_freq = {}
 
 for i, line in blib.iter_items_from_file(args.pagefile, start, end):
-  pagename = re.split(r"\s", line)[args.field - 1]
-  m = re.search("[^-'Ѐ-џҊ-ԧꚀ-ꚗ]", pagename)
-  if m:
-    outtext = "skipped due to non-Cyrillic characters"
-  else:
-    for pagenm, pagetype in [(pagename, ""),
-        (pagename.capitalize(), " (capitalized)"),
-        (pagename.upper(), " (uppercased)")]:
-      if pagenm in lemmas:
-        outtext = "exists%s" % pagetype
-        break
-      else:
-        page = pywikibot.Page(site, pagenm)
-        if page.exists():
-          text = str(page.text)
-          if re.search("#redirect", text, re.I):
-            outtext = "exists%s as redirect" % pagetype
-          elif re.search(r"\{\{superlative of", text):
-            outtext = "exists%s as superlative" % pagetype
-          elif "==%s==" % args.lang in text:
-            outtext = "exists%s as non-lemma" % pagetype
-          else:
-            outtext = "exists%s only in some other language" % pagetype
-          break
+    pagename = re.split(r"\s", line)[args.field - 1]
+    m = re.search("[^-'Ѐ-џҊ-ԧꚀ-ꚗ]", pagename)
+    if m:
+        outtext = "skipped due to non-Cyrillic characters"
     else:
-      outtext = "does not exist"
-  if args.output_orig:
-    msg("| %s || %s || %s" % (i, " || ".join(line), outtext))
-    msg("|-")
-  else:
-    msg("Page %s [[%s]]: %s" % (i, pagename, outtext))
+        for pagenm, pagetype in [
+            (pagename, ""),
+            (pagename.capitalize(), " (capitalized)"),
+            (pagename.upper(), " (uppercased)"),
+        ]:
+            if pagenm in lemmas:
+                outtext = "exists%s" % pagetype
+                break
+            else:
+                page = pywikibot.Page(site, pagenm)
+                if page.exists():
+                    text = str(page.text)
+                    if re.search("#redirect", text, re.I):
+                        outtext = "exists%s as redirect" % pagetype
+                    elif re.search(r"\{\{superlative of", text):
+                        outtext = "exists%s as superlative" % pagetype
+                    elif "==%s==" % args.lang in text:
+                        outtext = "exists%s as non-lemma" % pagetype
+                    else:
+                        outtext = "exists%s only in some other language" % pagetype
+                    break
+        else:
+            outtext = "does not exist"
+    if args.output_orig:
+        msg("| %s || %s || %s" % (i, " || ".join(line), outtext))
+        msg("|-")
+    else:
+        msg("Page %s [[%s]]: %s" % (i, pagename, outtext))

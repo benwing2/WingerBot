@@ -10,14 +10,14 @@ HAMZA_ON_WAW = "ؤ"
 HAMZA_ON_YAA = "ئ"
 
 # diacritics
-A  = "\u064E" # fatḥa
-AN = "\u064B" # fatḥatān (fatḥa tanwīn)
-U  = "\u064F" # ḍamma
-UN = "\u064C" # ḍammatān (ḍamma tanwīn)
-I  = "\u0650" # kasra
-IN = "\u064D" # kasratān (kasra tanwīn)
-SK = "\u0652" # sukūn = no vowel
-SH = "\u0651" # šadda = gemination of consonants
+A = "\u064e"  # fatḥa
+AN = "\u064b"  # fatḥatān (fatḥa tanwīn)
+U = "\u064f"  # ḍamma
+UN = "\u064c"  # ḍammatān (ḍamma tanwīn)
+I = "\u0650"  # kasra
+IN = "\u064d"  # kasratān (kasra tanwīn)
+SK = "\u0652"  # sukūn = no vowel
+SH = "\u0651"  # šadda = gemination of consonants
 DAGGER_ALIF = "\u0670"
 DIACRITIC_ANY_BUT_SH = "[" + A + I + U + AN + IN + UN + SK + DAGGER_ALIF + "]"
 DIACRITIC_ANY = "[" + A + I + U + AN + IN + UN + SK + SH + DAGGER_ALIF + "]"
@@ -65,54 +65,72 @@ IYAAT = IY + AAT
 IYAAN = IY + AAN
 IYYAH = IY + SH + AH
 
+
 def remove_diacritics(word):
-  return re.sub(DIACRITIC_ANY, "", word)
+    return re.sub(DIACRITIC_ANY, "", word)
+
 
 def reorder_shadda(text):
-  # shadda+short-vowel (including tanwīn vowels, i.e. -an -in -un) gets
-  # replaced with short-vowel+shadda during NFC normalisation, which
-  # MediaWiki does for all Unicode strings; however, it makes
-  # detection and replacement processes inconvenient, so undo it.
-  return re.sub("(" + DIACRITIC_ANY_BUT_SH + ")" + SH, SH + r"\1", text)
+    # shadda+short-vowel (including tanwīn vowels, i.e. -an -in -un) gets
+    # replaced with short-vowel+shadda during NFC normalisation, which
+    # MediaWiki does for all Unicode strings; however, it makes
+    # detection and replacement processes inconvenient, so undo it.
+    return re.sub("(" + DIACRITIC_ANY_BUT_SH + ")" + SH, SH + r"\1", text)
+
 
 def undo_reorder_shadda(text):
-  return unicodedata.normalize("NFC", text)
+    return unicodedata.normalize("NFC", text)
+
 
 arabic_adj_headword_templates = [
-  "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an", "ar-nisba",
-  "ar-adj-fem", "ar-adj-pl", "ar-adj-dual"]
+    "ar-adj",
+    "ar-adj-sound",
+    "ar-adj-in",
+    "ar-adj-an",
+    "ar-nisba",
+    "ar-adj-fem",
+    "ar-adj-pl",
+    "ar-adj-dual",
+]
 
 arabic_noun_headword_templates = [
-  # Nouns/numerals/pronouns
-  "ar-noun", "ar-coll-noun", "ar-sing-noun", "ar-noun-nisba",
-  "ar-proper noun", "ar-numeral", "ar-pron",
-  "ar-noun-pl", "ar-noun-dual"]
+    # Nouns/numerals/pronouns
+    "ar-noun",
+    "ar-coll-noun",
+    "ar-sing-noun",
+    "ar-noun-nisba",
+    "ar-proper noun",
+    "ar-numeral",
+    "ar-pron",
+    "ar-noun-pl",
+    "ar-noun-dual",
+]
 
-arabic_participle_headword_templates = [
-  "ar-act-participle", "ar-pass-participle"]
+arabic_participle_headword_templates = ["ar-act-participle", "ar-pass-participle"]
 
-arabic_verb_headword_templates = [
-  "ar-verb", "ar-verb-form"]
+arabic_verb_headword_templates = ["ar-verb", "ar-verb-form"]
 
-arabic_other_headword_templates = [
-  "ar-adv", "ar-con", "ar-interj", "ar-particle", "ar-prep"]
+arabic_other_headword_templates = ["ar-adv", "ar-con", "ar-interj", "ar-particle", "ar-prep"]
 
 arabic_nominal_headword_templates = (
-    arabic_adj_headword_templates +
-    arabic_noun_headword_templates +
-    arabic_participle_headword_templates)
+    arabic_adj_headword_templates + arabic_noun_headword_templates + arabic_participle_headword_templates
+)
 
-arabic_non_verbal_headword_templates = (
-    arabic_nominal_headword_templates +
-    arabic_other_headword_templates)
+arabic_non_verbal_headword_templates = arabic_nominal_headword_templates + arabic_other_headword_templates
 
 arabic_all_headword_templates = (
-    arabic_adj_headword_templates +
-    arabic_noun_headword_templates +
-    arabic_participle_headword_templates +
-    arabic_verb_headword_templates +
-    arabic_other_headword_templates)
+    arabic_adj_headword_templates
+    + arabic_noun_headword_templates
+    + arabic_participle_headword_templates
+    + arabic_verb_headword_templates
+    + arabic_other_headword_templates
+)
 
 arabic_decl_templates = [
-  "ar-decl-noun", "ar-decl-gendered-noun", "ar-decl-coll-noun",
-    "ar-decl-sing-noun", "ar-decl-adj", "ar-decl-numeral"]
+    "ar-decl-noun",
+    "ar-decl-gendered-noun",
+    "ar-decl-coll-noun",
+    "ar-decl-sing-noun",
+    "ar-decl-adj",
+    "ar-decl-numeral",
+]

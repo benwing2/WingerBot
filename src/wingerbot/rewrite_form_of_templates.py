@@ -6,65 +6,81 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot.form_of_templates import (
-  language_specific_alt_form_of_templates,
-  alt_form_of_templates,
-  language_specific_form_of_templates,
-  form_of_templates
+    language_specific_alt_form_of_templates,
+    alt_form_of_templates,
+    language_specific_form_of_templates,
+    form_of_templates,
 )
 
-templates_to_process = form_of_templates + alt_form_of_templates + (
-  language_specific_form_of_templates + language_specific_alt_form_of_templates
+templates_to_process = (
+    form_of_templates
+    + alt_form_of_templates
+    + (language_specific_form_of_templates + language_specific_alt_form_of_templates)
 )
+
 
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  pagemsg("Processing")
-  notes = []
+    pagemsg("Processing")
+    notes = []
 
-  parsed = blib.parse_text(text)
+    parsed = blib.parse_text(text)
 
-  for t in parsed.filter_templates():
-    origt = str(t)
-    tn = tname(t)
-    if tn == "#invoke:form of/templates" and getparam(t, "1") == "template_tags":
-      t.add("1", "tagged_form_of_t")
-      notes.append("Rewrite {{#invoke:form of/templates|template_tags}} with {{#invoke:form of/templates|tagged_form_of_t}}")
-    if tn == "#invoke:form of" and getparam(t, "1") in ["form_of_t", "alt_form_of_t"]:
-      ignorelist = blib.fetch_param_chain(t, "ignorelist", "ignorelist")
-      if ignorelist:
-        ignore = blib.fetch_param_chain(t, "ignore", "ignore")
-        for il in ignorelist:
-          ignore.append(il + ":list")
-        blib.set_param_chain(t, ignore, "ignore", "ignore", before="ignorelist")
-        blib.remove_param_chain(t, "ignorelist", "ignorelist")
-      blib.set_template_name(t, "#invoke:form of/templates")
-      notes.append("Rewrite {{#invoke:form of|%s}} with {{#invoke:form of/templates|form_of_t}}"  % getparam(t, "1"))
-    if tn == "#invoke:form of" and getparam(t, "1") == "alt_form_of_t":
-      t.add("2", getparam(t, "text"), before="text")
-      rmparam(t, "text")
-      if t.has("nocap"):
-        rmparam(t, "nocap")
-      else:
-        t.add("withcap", "1")
-      if t.has("nodot"):
-        rmparam(t, "nodot")
-      else:
-        t.add("withdot", "1")
-      t.add("1", "form_of_t")
+    for t in parsed.filter_templates():
+        origt = str(t)
+        tn = tname(t)
+        if tn == "#invoke:form of/templates" and getparam(t, "1") == "template_tags":
+            t.add("1", "tagged_form_of_t")
+            notes.append(
+                "Rewrite {{#invoke:form of/templates|template_tags}} with {{#invoke:form of/templates|tagged_form_of_t}}"
+            )
+        if tn == "#invoke:form of" and getparam(t, "1") in ["form_of_t", "alt_form_of_t"]:
+            ignorelist = blib.fetch_param_chain(t, "ignorelist", "ignorelist")
+            if ignorelist:
+                ignore = blib.fetch_param_chain(t, "ignore", "ignore")
+                for il in ignorelist:
+                    ignore.append(il + ":list")
+                blib.set_param_chain(t, ignore, "ignore", "ignore", before="ignorelist")
+                blib.remove_param_chain(t, "ignorelist", "ignorelist")
+            blib.set_template_name(t, "#invoke:form of/templates")
+            notes.append(
+                "Rewrite {{#invoke:form of|%s}} with {{#invoke:form of/templates|form_of_t}}" % getparam(t, "1")
+            )
+        if tn == "#invoke:form of" and getparam(t, "1") == "alt_form_of_t":
+            t.add("2", getparam(t, "text"), before="text")
+            rmparam(t, "text")
+            if t.has("nocap"):
+                rmparam(t, "nocap")
+            else:
+                t.add("withcap", "1")
+            if t.has("nodot"):
+                rmparam(t, "nodot")
+            else:
+                t.add("withdot", "1")
+            t.add("1", "form_of_t")
 
-    if str(t) != origt:
-      pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+        if str(t) != origt:
+            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
 
-  return str(parsed), notes
+    return str(parsed), notes
+
 
 parser = blib.create_argparser(
-  "Convert form_of_t and alt_form_of_t invocations in [[Module:form of]] to form_of_t in [[Module:form of/templates]]",
-  include_pagefile=True, include_stdin=True)
+    "Convert form_of_t and alt_form_of_t invocations in [[Module:form of]] to form_of_t in [[Module:form of/templates]]",
+    include_pagefile=True,
+    include_stdin=True,
+)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-  args, start, end, process_text_on_page, edit=True, stdin=True,
-  default_pages=["Template:%s" % template for template in templates_to_process])
+    args,
+    start,
+    end,
+    process_text_on_page,
+    edit=True,
+    stdin=True,
+    default_pages=["Template:%s" % template for template in templates_to_process],
+)

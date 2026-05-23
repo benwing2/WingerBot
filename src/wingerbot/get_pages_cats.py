@@ -14,14 +14,14 @@ start, end = blib.parse_start_end(args.start, args.end)
 cats = args.cats.split(",")
 cat_contents = {}
 for cat in cats:
-  cat_contents[cat] = set()
-  for index, page in blib.cat_articles(cat):
-    cat_contents[cat].add(str(page.title()))
+    cat_contents[cat] = set()
+    for index, page in blib.cat_articles(cat):
+        cat_contents[cat].add(str(page.title()))
 
 for index, line in blib.yield_items_from_file(args.direcfile, include_original_lineno=True):
-  page, extra_info = line.split(": ", 1)
-  cats_seen = []
-  for cat in cats:
-    if page in cat_contents[cat]:
-      cats_seen.append(cat)
-  msg("* Page %s [[%s]]: %s: %s" % (index, page, extra_info, ",".join(cats_seen)))
+    page, extra_info = line.split(": ", 1)
+    cats_seen = []
+    for cat in cats:
+        if page in cat_contents[cat]:
+            cats_seen.append(cat)
+    msg("* Page %s [[%s]]: %s: %s" % (index, page, extra_info, ",".join(cats_seen)))
