@@ -8,6 +8,8 @@ import re
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam, rmparam
 
+raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
+
 show_template = True
 
 # Map from language codes to list of [LONGLANG, IGNORE_MANUAL_TR], where
@@ -31,7 +33,7 @@ languages = {
 # parameter PARAMTR. Return False if PARAM has no value, else list of
 # changelog actions.
 def canon_param(
-    pagetitle, index, template, tlang, param, paramtr, pagemsg, expand_text, include_tempname_in_changelog=False
+    index, pagetitle, template, tlang, param, paramtr, pagemsg, expand_text, include_tempname_in_changelog=False
 ):
     if isinstance(param, list):
         fromparam, toparam = param
@@ -105,7 +107,7 @@ def sort_group_changelogs(actions):
 # blib.process_links(); this is only used when CATTYPE is 'vocab' or
 # 'borrowed'.
 def canon_links(save, verbose, cattype, lang, longlang, start, end, pages_to_do=[]):
-    def process_param(pagetitle, index, pagetext, template, tlang, param, paramtr):
+    def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -113,7 +115,7 @@ def canon_links(save, verbose, cattype, lang, longlang, start, end, pages_to_do=
             return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
 
         result = canon_param(
-            pagetitle, index, template, tlang, param, paramtr, pagemsg, expand_text, include_tempname_in_changelog=True
+            index, pagetitle, template, tlang, param, paramtr, pagemsg, expand_text, include_tempname_in_changelog=True
         )
         scvalue = getparam(template, "sc")
         if scvalue:

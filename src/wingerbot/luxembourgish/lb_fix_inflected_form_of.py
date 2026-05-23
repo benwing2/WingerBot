@@ -23,7 +23,7 @@ rename_templates_without_lang = [
 rename_templates = rename_templates_with_lang + rename_templates_without_lang
 
 
-def process_text_on_page(pagetitle, index, text):
+def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 

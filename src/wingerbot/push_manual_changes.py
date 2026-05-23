@@ -135,7 +135,7 @@ def filter_split_changes_removing_no_effect_lines(direcfile_changes_dict, origfi
     return filtered_direcfile_changes_dict
 
 
-def push_one_set_of_manual_changes(pagetitle, index, text, repl_curr_changes, comment):
+def push_one_set_of_manual_changes(index, pagetitle, text, repl_curr_changes, comment):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -226,7 +226,7 @@ def process_text_on_page_pushing_manual_changes(index, pagetitle, text):
         return
     notes = []
     for repl_curr_changes, comment in direcfile_changes_dict[pagetitle]:
-        text, this_changelogs = push_one_set_of_manual_changes(pagetitle, index, text, repl_curr_changes, comment)
+        text, this_changelogs = push_one_set_of_manual_changes(index, pagetitle, text, repl_curr_changes, comment)
         notes.extend(this_changelogs)
 
     return text, combine_notes_with_comment(notes)
@@ -258,7 +258,7 @@ def process_text_on_page_pushing_split_manual_changes(index, pagetitle, text):
         pagemsg("from-changes identical to to-changes, skipping")
         return
     # FIXME: Support per-change comments in replacement file
-    text, notes = push_one_set_of_manual_changes(pagetitle, index, text, zip(to_changes, from_changes), None)
+    text, notes = push_one_set_of_manual_changes(index, pagetitle, text, zip(to_changes, from_changes), None)
 
     return text, combine_notes_with_comment(notes)
 

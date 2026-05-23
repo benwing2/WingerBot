@@ -9,7 +9,7 @@ from wingerbot.blib import msg, errandmsg, getparam, addparam, tname
 
 from wingerbot.arabic import arlib, ar_translit
 
-raise RuntimeError("No longer works; needs rewriting")
+raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
 
 
 # Compare the auto-translit of PARAM with the corresponding transliteration
@@ -17,7 +17,7 @@ raise RuntimeError("No longer works; needs rewriting")
 # parameter. Otherwise, if PARAM found, try to canonicalize. If a change
 # made, return a string describing the action, else True. If PARAM not found,
 # return False.
-def process_param(pagetitle, index, template, param, paramtr, include_tempname_in_changelog=False):
+def process_param(index, pagetitle, template, param, paramtr, include_tempname_in_changelog=False):
     def pagemsg(text):
         msg("Page %s %s: %s.%s: %s" % (index, pagetitle, template.name, param, text))
 
@@ -106,15 +106,15 @@ def sort_group_changelogs(actions):
 # attempt to process "pl", "pl2", "pl3", etc. based on "pltr", "pl2tr",
 # "pl3tr", etc., stopping when "plN" isn't found. Return list of actions
 # taken, for use in the changelog message.
-def process_param_chain(pagetitle, index, template, param):
+def process_param_chain(index, pagetitle, template, param):
     actions = []
-    result = process_param(pagetitle, index, template, param, param + "tr")
+    result = process_param(index, pagetitle, template, param, param + "tr")
     if isinstance(result, list):
         actions.extend(result)
     i = 2
     while result:
         thisparam = param + str(i)
-        result = process_param(pagetitle, index, template, thisparam, thisparam + "tr")
+        result = process_param(index, pagetitle, template, thisparam, thisparam + "tr")
         if isinstance(result, list):
             actions.extend(result)
         i += 1
@@ -124,13 +124,13 @@ def process_param_chain(pagetitle, index, template, param):
 # Proces the head param(s) for the given headword template on the given page,
 # looking for translits to remove or canonicalize. Modifies the templates in
 # place. Return list of actions taken, for use in the changelog message.
-def process_head(pagetitle, index, template):
+def process_head(index, pagetitle, template):
     actions = []
 
     # Handle existing 1= and head from page title
     if template.has("tr"):
         # Try to process 1=
-        result = process_param(pagetitle, index, template, "1", "tr")
+        result = process_param(index, pagetitle, template, "1", "tr")
         if isinstance(result, list):
             actions.extend(result)
 
@@ -139,7 +139,7 @@ def process_head(pagetitle, index, template):
     result = True
     while result:
         thisparam = "head" + str(i)
-        result = process_param(pagetitle, index, template, thisparam, "tr" + str(i))
+        result = process_param(index, pagetitle, template, thisparam, "tr" + str(i))
         if isinstance(result, list):
             actions.extend(result)
         i += 1
@@ -163,7 +163,7 @@ def process_one_page_headwords(index, page):
         if tn in arlib.arabic_non_verbal_headword_templates:
             thisactions = []
             tr = getparam(t, "tr")
-            thisactions += process_head(pagetitle, index, t)
+            thisactions += process_head(index, pagetitle, t)
             for param in [
                 "pl",
                 "plobl",
@@ -184,7 +184,7 @@ def process_one_page_headwords(index, page):
                 "pauc",
                 "cons",
             ]:
-                thisactions += process_param_chain(pagetitle, index, t, param)
+                thisactions += process_param_chain(index, pagetitle, t, param)
             if len(thisactions) > 0:
                 actions.append("%s: %s" % (tn, ", ".join(thisactions)))
     changelog = "; ".join(actions)
@@ -210,8 +210,8 @@ def process_headwords(save, verbose, start, end):
 # CATTYPE should be 'vocab', 'borrowed' or 'translation', indicating which
 # categories to examine.
 def process_links(save, verbose, cattype, start, end):
-    def do_process_param(pagetitle, index, pagetext, template, templang, param, paramtr):
-        result = process_param(pagetitle, index, template, param, paramtr, include_tempname_in_changelog=True)
+    def do_process_param(index, pagetitle, pagetext, template, templang, param, paramtr):
+        result = process_param(index, pagetitle, template, param, paramtr, include_tempname_in_changelog=True)
         if getparam(template, "sc") == "Arab":
             msg("Page %s %s: %s.%s: Removing sc=Arab" % (index, pagetitle, template.name, "sc"))
             oldtempl = "%s" % str(template)

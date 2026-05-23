@@ -15,7 +15,7 @@ templates_changed = {}
 
 
 def process_text_on_page(index, pagetitle, text):
-    return canon_one_page_links(pagetitle, index, text, "bg", "Cyrl", bg_translit, templates_seen, templates_changed)
+    return canon_one_page_links(index, pagetitle, text, "bg", "Cyrl", bg_translit, templates_seen, templates_changed)
 
 
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)

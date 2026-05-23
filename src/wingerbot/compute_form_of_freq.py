@@ -9,7 +9,7 @@ from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
 form_of_forms = defaultdict(int)
 
 
-def process_text_on_page(pagetitle, index, text):
+def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -49,7 +49,7 @@ if args.textfile:
             msg("Page %s: Skipping bad text: %s" % (index, page))
             continue
         pagetitle, pagetext = split_vals
-        process_text_on_page(pagetitle, index, pagetext)
+        process_text_on_page(index, pagetitle, pagetext)
 
     for form, count in sorted(list(form_of_forms.items()), key=lambda x: -x[1]):
         msg("%-50s = %s" % (form, count))

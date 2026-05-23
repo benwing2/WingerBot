@@ -3,8 +3,6 @@
 import re, unicodedata
 import traceback
 
-import pywikibot
-
 from wingerbot import blib
 from wingerbot.blib import msg, errmsg, getparam, addparam, tname
 
@@ -373,7 +371,7 @@ def sort_group_changelogs(actions):
 # TRANSLIT_MODULE is the module handling transliteration,
 # match-canonicalization and removal of diacritics.
 def canon_one_page_links(
-    pagetitle, index, text, lang, langname, script, translit_module, templates_seen, templates_changed, addl_params
+    index, pagetitle, text, lang, langname, script, translit_module, templates_seen, templates_changed, addl_params
 ):
     if not isinstance(script, list):
         script = [script]

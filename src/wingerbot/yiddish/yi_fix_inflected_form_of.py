@@ -39,7 +39,7 @@ def make_non_final(term):
     return term[:-1] + reversed_finals.get(last_char, last_char)
 
 
-def process_text_on_page(pagetitle, index, text):
+def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 

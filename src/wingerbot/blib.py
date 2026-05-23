@@ -3242,7 +3242,7 @@ def process_one_page_links(
 #    for index, current in iter_items(pages_to_do, start, end,
 #        get_name=lambda x:x[0]):
 #      pagetitle, pagetext = current
-#      do_process_text(pagetitle, pagetext, index, process_one_page_links,
+#      do_process_text(index, pagetitle, pagetext, process_one_page_links,
 #          verbose=verbose)
 #  else:
 #    if cattype == "vocab":

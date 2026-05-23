@@ -46,7 +46,7 @@ def diff_string(old, new):
 # PARAMTR is the name of the parameter in this template containing the Latin
 # text. All four are used only in status messages and ACTIONS.
 def do_canon_param(
-    pagetitle, index, template, fromparam, toparam, paramtr, arabic, latin, include_tempname_in_changelog=False
+    index, pagetitle, template, fromparam, toparam, paramtr, arabic, latin, include_tempname_in_changelog=False
 ):
     actions = []
     tname = str(template.name)
@@ -189,7 +189,7 @@ def do_canon_param(
 # [FROMPARAM, TOPARAM], where FROMPARAM may be "page title") and Latin
 # parameter PARAMTR. Return False if PARAM has no value, else list of
 # changelog actions.
-def canon_param(pagetitle, index, template, param, paramtr, include_tempname_in_changelog=False):
+def canon_param(index, pagetitle, template, param, paramtr, include_tempname_in_changelog=False):
     if isinstance(param, list):
         fromparam, toparam = param
     else:
@@ -199,7 +199,7 @@ def canon_param(pagetitle, index, template, param, paramtr, include_tempname_in_
     if not arabic:
         return False
     canonarabic, canonlatin, actions = do_canon_param(
-        pagetitle, index, template, fromparam, toparam, paramtr, arabic, latin, include_tempname_in_changelog
+        index, pagetitle, template, fromparam, toparam, paramtr, arabic, latin, include_tempname_in_changelog
     )
     oldtempl = "%s" % str(template)
     if canonarabic:
@@ -252,15 +252,15 @@ def sort_group_changelogs(actions):
 # is "pl" then this will attempt to vocalize "pl", "pl2", "pl3", etc. based on
 # "pltr", "pl2tr", "pl3tr", etc., stopping when "plN" isn't found. Return
 # list of changelog actions.
-def canon_param_chain(pagetitle, index, template, param):
+def canon_param_chain(index, pagetitle, template, param):
     actions = []
-    result = canon_param(pagetitle, index, template, param, param + "tr")
+    result = canon_param(index, pagetitle, template, param, param + "tr")
     if result != False:
         actions.extend(result)
     i = 2
     while result != False:
         thisparam = param + str(i)
-        result = canon_param(pagetitle, index, template, thisparam, thisparam + "tr")
+        result = canon_param(index, pagetitle, template, thisparam, thisparam + "tr")
         if result != False:
             actions.extend(result)
         i += 1
@@ -270,7 +270,7 @@ def canon_param_chain(pagetitle, index, template, param):
 # Vocalize the head param(s) for the given headword template on the given page.
 # Modifies the templates in place. Return list of changed parameters, for
 # use in the changelog message.
-def canon_head(pagetitle, index, template):
+def canon_head(index, pagetitle, template):
     actions = []
     # pagetitle = str(page.title(withNamespace=False))
 
@@ -303,7 +303,7 @@ def canon_head(pagetitle, index, template):
             actions.append("split translit into multiple heads")
 
         # Try to vocalize 1=
-        result = canon_param(pagetitle, index, template, "1", "tr")
+        result = canon_param(index, pagetitle, template, "1", "tr")
         if result != False:
             actions.extend(result)
 
@@ -313,7 +313,7 @@ def canon_head(pagetitle, index, template):
             latin = getparam(template, "tr")
             if arabic and latin:
                 canonarabic, canonlatin, newactions = do_canon_param(
-                    pagetitle, index, template, "page title", "1", "tr", arabic, latin
+                    index, pagetitle, template, "page title", "1", "tr", arabic, latin
                 )
                 oldtempl = "%s" % str(template)
                 if canonarabic:
@@ -334,7 +334,7 @@ def canon_head(pagetitle, index, template):
     result = True
     while result != False:
         thisparam = "head" + str(i)
-        result = canon_param(pagetitle, index, template, thisparam, "tr" + str(i))
+        result = canon_param(index, pagetitle, template, thisparam, "tr" + str(i))
         if result != False:
             actions.extend(result)
         i += 1
@@ -350,7 +350,7 @@ def canon_one_page_headwords(index, pagetitle, text):
         tname = str(template.name)
         if tname in arlib.arabic_non_verbal_headword_templates:
             thisactions = []
-            thisactions += canon_head(pagetitle, index, template)
+            thisactions += canon_head(index, pagetitle, template)
             for param in [
                 "pl",
                 "plobl",
@@ -371,7 +371,7 @@ def canon_one_page_headwords(index, pagetitle, text):
                 "pauc",
                 "cons",
             ]:
-                thisactions += canon_param_chain(pagetitle, index, template, param)
+                thisactions += canon_param_chain(index, pagetitle, template, param)
             if len(thisactions) > 0:
                 actions.append("%s: %s" % (tname, ", ".join(thisactions)))
     changelog = "; ".join(actions)
@@ -388,10 +388,10 @@ def canon_one_page_headwords(index, pagetitle, text):
 # should be a list of (PAGETITLE, PAGETEXT). If CATTYPE is 'pages', PAGES_TO_DO
 # should be a list of page titles, specifying the pages to do.
 def canon_one_page_links(index, pagetitle, text):
-    raise RuntimeError("No longer works, needs rewriting based on persian/fa_canon.py")
+    raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
 
-    def process_param(pagetitle, index, pagetext, template, tlang, param, paramtr):
-        result = canon_param(pagetitle, index, template, param, paramtr, include_tempname_in_changelog=True)
+    def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
+        result = canon_param(index, pagetitle, template, param, paramtr, include_tempname_in_changelog=True)
         if getparam(template, "sc") == "Arab":
             tname = str(template.name)
             if show_template and result == False:

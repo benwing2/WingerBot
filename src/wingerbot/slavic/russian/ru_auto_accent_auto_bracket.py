@@ -151,6 +151,8 @@ from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam, rmparam
 from wingerbot.slavic.russian import ruheadlib, rulib, ru_reverse_translit
 
+raise RuntimeError("No longer works with removal of process_links(); see fa_canon.py for how to rewrite")
+
 semi_verbose = False  # Set by --semi-verbose or --verbose
 
 AC = "\u0301"  # acute =  ́
@@ -1102,7 +1104,7 @@ def apply_substs(ru, substs, pagemsg):
 # FIND_ACCENTS is True) and replacing the appropriate param and translit
 # param.
 def process_template(
-    pagetitle, index, pagetext, template, ruparam, trparam, output_line, find_accents, accent_hidden, verbose
+    index, pagetitle, pagetext, template, ruparam, trparam, output_line, find_accents, accent_hidden, verbose
 ):
     origt = str(template)
     saveparam = ruparam
@@ -1249,7 +1251,7 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
             def pagemsg(text):
                 msg("Page %s(%s) %s: %s" % (pagenum, index, pagetitle, text))
 
-            def check_template_for_missing_accent(pagetitle, index, pagetext, template, templang, ruparam, trparam):
+            def check_template_for_missing_accent(index, pagetitle, pagetext, template, templang, ruparam, trparam):
                 def output_line(directive):
                     msg(
                         "* %s[[%s]]%s %s: <nowiki>%s%s</nowiki>"
@@ -1257,8 +1259,8 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
                     )
 
                 return process_template(
-                    pagetitle,
                     index,
+                    pagetitle,
                     pagetext,
                     template,
                     ruparam,
@@ -1287,7 +1289,7 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
                 ruheadlib.output_stats(pagemsg)
     else:
 
-        def check_template_for_missing_accent(pagetitle, index, pagetext, template, templang, ruparam, trparam):
+        def check_template_for_missing_accent(index, pagetitle, pagetext, template, templang, ruparam, trparam):
             def pagemsg(text):
                 msg("Page %s %s: %s" % (index, pagetitle, text))
 
@@ -1295,8 +1297,8 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
                 pagemsg("%s: %s" % (directive, str(template)))
 
             result = process_template(
-                pagetitle,
                 index,
+                pagetitle,
                 pagetext,
                 template,
                 ruparam,

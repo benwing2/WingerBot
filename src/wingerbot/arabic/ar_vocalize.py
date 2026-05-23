@@ -8,7 +8,7 @@ from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam
 from wingerbot.arabic import arlib, ar_translit
 
-raise RuntimeError("No longer works; needs rewriting")
+raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
 
 
 # Vocalize ARABIC based on LATIN. Return vocalized Arabic text if
@@ -16,7 +16,7 @@ raise RuntimeError("No longer works; needs rewriting")
 # else False. TEMPLATE is the template being processed and PARAM is the
 # name of the parameter in this template being vocalized; both are used
 # only in status messages.
-def do_vocalize_param(pagetitle, index, template, param, arabic, latin):
+def do_vocalize_param(index, pagetitle, template, param, arabic, latin):
     def pagemsg(text):
         msg("Page %s %s: %s.%s: %s" % (index, pagetitle, template.name, param, text))
 
@@ -39,13 +39,13 @@ def do_vocalize_param(pagetitle, index, template, param, arabic, latin):
 # Attempt to vocalize parameter PARAM based on corresponding transliteration
 # parameter PARAMTR. If PARAM not found, return False. Else, return the
 # vocalized Arabic if different from unvocalized, else return True.
-def vocalize_param(pagetitle, index, template, param, paramtr):
+def vocalize_param(index, pagetitle, template, param, paramtr):
     arabic = getparam(template, param)
     latin = getparam(template, paramtr)
     if not arabic:
         return False
     if latin:
-        vocalized = do_vocalize_param(pagetitle, index, template, param, arabic, latin)
+        vocalized = do_vocalize_param(index, pagetitle, template, param, arabic, latin)
         if vocalized:
             oldtempl = "%s" % str(template)
             addparam(template, param, vocalized)
@@ -58,15 +58,15 @@ def vocalize_param(pagetitle, index, template, param, paramtr):
 # is "pl" then this will attempt to vocalize "pl", "pl2", "pl3", etc. based on
 # "pltr", "pl2tr", "pl3tr", etc., stopping when "plN" isn't found. Return
 # list of changed parameters, for use in the changelog message.
-def vocalize_param_chain(pagetitle, index, template, param):
+def vocalize_param_chain(index, pagetitle, template, param):
     paramschanged = []
-    result = vocalize_param(pagetitle, index, template, param, param + "tr")
+    result = vocalize_param(index, pagetitle, template, param, param + "tr")
     if isinstance(result, str):
         paramschanged.append(param)
     i = 2
     while result:
         thisparam = param + str(i)
-        result = vocalize_param(pagetitle, index, template, thisparam, thisparam + "tr")
+        result = vocalize_param(index, pagetitle, template, thisparam, thisparam + "tr")
         if isinstance(result, str):
             paramschanged.append(thisparam)
         i += 1
@@ -76,7 +76,7 @@ def vocalize_param_chain(pagetitle, index, template, param):
 # Vocalize the head param(s) for the given headword template on the given page.
 # Modifies the templates in place. Return list of changed parameters, for
 # use in the changelog message.
-def vocalize_head(pagetitle, index, template):
+def vocalize_head(index, pagetitle, template):
     paramschanged = []
     # pagetitle = str(page.title(withNamespace=False))
 
@@ -109,7 +109,7 @@ def vocalize_head(pagetitle, index, template):
             paramschanged.append("split translit into multiple heads")
 
         # Try to vocalize 1=
-        result = vocalize_param(pagetitle, index, template, "1", "tr")
+        result = vocalize_param(index, pagetitle, template, "1", "tr")
         if isinstance(result, str):
             paramschanged.append("1")
 
@@ -118,7 +118,7 @@ def vocalize_head(pagetitle, index, template):
             arabic = str(pagetitle)
             latin = getparam(template, "tr")
             if arabic and latin:
-                vocalized = do_vocalize_param(pagetitle, index, template, "page title", arabic, latin)
+                vocalized = do_vocalize_param(index, pagetitle, template, "page title", arabic, latin)
                 if vocalized:
                     oldtempl = "%s" % str(template)
                     if template.has("2"):
@@ -133,7 +133,7 @@ def vocalize_head(pagetitle, index, template):
     result = True
     while result:
         thisparam = "head" + str(i)
-        result = vocalize_param(pagetitle, index, template, thisparam, "tr" + str(i))
+        result = vocalize_param(index, pagetitle, template, thisparam, "tr" + str(i))
         if isinstance(result, str):
             paramschanged.append(thisparam)
         i += 1
@@ -148,7 +148,7 @@ def vocalize_one_page_headwords(index, pagetitle, text):
     for template in parsed.filter_templates():
         paramschanged = []
         if template.name in arlib.arabic_non_verbal_headword_templates:
-            paramschanged += vocalize_head(pagetitle, index, template)
+            paramschanged += vocalize_head(index, pagetitle, template)
             for param in [
                 "pl",
                 "plobl",
@@ -169,7 +169,7 @@ def vocalize_one_page_headwords(index, pagetitle, text):
                 "pauc",
                 "cons",
             ]:
-                paramschanged += vocalize_param_chain(pagetitle, index, template, param)
+                paramschanged += vocalize_param_chain(index, pagetitle, template, param)
             if len(paramschanged) > 0:
                 if template.has("tr"):
                     tempname = "%s %s" % (template.name, getparam(template, "tr"))
@@ -201,8 +201,8 @@ def vocalize_headwords(save, verbose, start, end):
 # Show exact changes if VERBOSE is true. CATTYPE should be 'vocab', 'borrowed'
 # or 'translation', indicating which categories to examine.
 def vocalize_links(save, verbose, cattype, start, end):
-    def process_param(pagetitle, index, pagetext, template, tlang, param, paramtr):
-        result = vocalize_param(pagetitle, index, template, param, paramtr)
+    def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
+        result = vocalize_param(index, pagetitle, template, param, paramtr)
         if isinstance(result, str):
             result = ["%s (%s)" % (result, template.name)]
         return result
