@@ -19,13 +19,16 @@ template_to_infl_codes = {
   "vocative plural of": ["voc", "p"],
 }
 
-def snarf_noun_accents_and_forms(noun, orig_pagemsg):
+def snarf_noun_accents_and_forms(noun, orig_pagemsg, orig_errandpagemsg):
   pagetitle = bglib.remove_accents(noun)
   if pagetitle in nouns_to_accents_and_forms:
     return nouns_to_accents_and_forms[pagetitle]
   def pagemsg(txt):
     orig_pagemsg("Noun %s: %s" % (noun, txt))
+  def errandpagemsg(txt):
+    orig_errandpagemsg("Noun %s: %s" % (noun, txt))
   page = pywikibot.Page(site, pagetitle)
+  text = blib.safe_page_text(page, errandpagemsg)
   parsed = blib.parse_text(text)
   lemma = None
   for t in parsed.filter_templates():
@@ -98,6 +101,7 @@ def process_text_on_page(index, pagetitle, text):
 
   pagemsg("Processing")
 
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     if tname(t) == "bg-noun-form":
       origt = str(t)
@@ -199,7 +203,7 @@ def process_text_on_page(index, pagetitle, text):
       blib.set_template_name(t, "inflection of")
       del t.params[:]
       t.add("1", "bg")
-      lemma, forms = snarf_noun_accents_and_forms(noun, pagemsg)
+      lemma, forms = snarf_noun_accents_and_forms(noun, pagemsg, errandpagemsg)
       if not lemma:
         pagemsg("WARNING: Unable to find accented equivalent of %s: %s" % (noun, origt))
         t.add("2", noun)

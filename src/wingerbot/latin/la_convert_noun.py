@@ -515,12 +515,12 @@ def process_text_on_page(index, pagetitle, text):
       if t:
         notes.append("converted {{la-decl-multi}} to {{%s}}" % tname(t))
       else:
-        return None, None
+        return
     elif tn in old_la_noun_decl_templates:
       if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
         notes.append("converted {{%s}} to {{la-ndecl}}" % tn)
       else:
-        return None, None
+        return
 
   return str(parsed), notes
 

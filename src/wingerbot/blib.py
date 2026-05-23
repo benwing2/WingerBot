@@ -3,14 +3,13 @@
 
 # Author: Benwing; bits and pieces taken from code written by CodeCat/Rua for MewBot
 
-import pywikibot, mwparserfromhell, re, sys, urllib, datetime, json, argparse, time, itertools
+import pywikibot, mwparserfromhell, re, sys, urllib, datetime, argparse, time, itertools
 from collections import defaultdict
 import xml.sax
 import difflib
 import traceback
 import unicodedata
 import multiprocessing as mp
-from json.decoder import JSONDecodeError
 
 site = pywikibot.Site()
 
@@ -1372,7 +1371,7 @@ def do_pagefile_cats_refs(
         if only_lang:
           pagetext = safe_page_text(page, errandpagemsg)
           if "==%s==" % only_lang not in pagetext:
-            return None, None
+            return
         return process(index, page)
 
     if args.find_regex_output:
@@ -2755,6 +2754,36 @@ def split_text_into_subsections(secbody, pagemsg):
 #
 #    sections[j] = secbody.rstrip("\n") + sectail
 #    text = "".join(sections)
+#
+#
+# A possible workflow for using this function in combination with split_text_into_subsections() to modify a particular
+# subsection would be:
+#
+#   retval = blib.find_modifiable_lang_section(text, langname, pagemsg, force_final_nls=True)
+#   if retval is None:
+#     return
+#   sections, j, secbody, sectail, has_non_lang = retval
+#
+#   subsections, subsections_by_header, subsection_headers, subsection_levels = (
+#     blib.split_text_into_subsections(secbody, pagemsg)
+#   )
+#   for k in range(2, len(subsections), 2):  # Loop over content subsections
+#     if subsections[k - 1].strip() == "==Declension==":  # Look for the "Declension" subsection
+#       parsed = blib.parse_text(subsections[k])
+#       for t in parsed.filter_templates():
+#         [etc.]
+#       subsections[k] = str(parsed)
+#
+#   secbody = "".join(subsections)
+#   sections[j] = secbody.rstrip("\n") + sectail
+#   text = "".join(sections)
+#
+#   This first finds the appropriate language section, then splits it into subsections, then modifies the "Declension"
+#   subsection, then puts everything back together. Note that `force_final_nls=True` is used to ensure that we can
+#   reliably swap two sections or subsections even if one of them occurs at the very end of the page (final newlines
+#   are automatically stripped by MediaWiki). We strip the final newlines off `secbody` before putting it back together
+#   to avoid extra newlines being added to the final page text. (These extra newlines would be automatically stripped
+#   upon saving, but would wrongly show up in diffs.)
 def find_modifiable_lang_section(text, lang, pagemsg, force_final_nls=False):
   sections, sections_by_lang, _ = split_text_into_sections(text, pagemsg)
 

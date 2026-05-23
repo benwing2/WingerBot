@@ -26,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
   if not found_head_verb_form or not found_inflection_of:
     # Find definition line
     foundrussian = False
-    sections = re.split("(^==[^=]*==\n)", str(page.text), 0, re.M)
+    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
 
     for j in range(2, len(sections), 2):
       if sections[j-1] == "==Russian==\n":

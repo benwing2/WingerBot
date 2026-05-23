@@ -98,7 +98,7 @@ def process_text_on_page(pagetitle, index, text):
       rmparam(t, "tr")
       if len(t.params) > 0:
         pagemsg("WARNING: Original template %s has extra params, skipping" % origt)
-        return None, None
+        return
       # Set new name
       blib.set_template_name(t, "inflection of")
       # Put back new params.

@@ -26,9 +26,9 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
   saw_lemma_in_etym = False
@@ -80,11 +80,11 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
       delete = True
 
   if not delete:
-    return None, None
+    return
 
   args = lalib.generate_adj_forms(infl_template, errandpagemsg, expand_text)
   if args is None:
-    return None, None
+    return
   single_forms_to_delete = []
   for key, form in args.items():
     single_forms_to_delete.extend(form.split(","))
@@ -95,20 +95,20 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
 
   if subsections[0].strip():
     pagemsg("WARNING: Whole Latin section deletable except that there's text above all subsections: <%s>" % subsections[0].strip())
-    return None, None
+    return
   if "[[Category:" in sectail:
     pagemsg("WARNING: Whole Latin section deletable except that there's a category at the end: <%s>" % sectail.strip())
-    return None, None
-  if not has_non_latin:
+    return
+  if not has_non_lang:
     # Can delete the whole page, but check for non-blank section 0
     cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
     if cleaned_sec0.strip():
       pagemsg("WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip())
-      return None, None
+      return
     pagetitle = str(page.title())
     pagemsg("Page %s should be deleted" % pagetitle)
     pages_to_delete.append(pagetitle)
-    return None, None
+    return
   del sections[j]
   del sections[j-1]
   notes.append("removed Latin section for bad participle")
@@ -181,9 +181,9 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   # FIXME!
 
@@ -220,7 +220,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
         if lang != "la":
           errandpagemsg("WARNING: In Latin section, found {{inflection of}} for different language %s: %s" % (
             lang, str(t)))
-          return None, None
+          return
         actual_lemma = getparam(t, str(lemma_param))
         # Allow mismatch in macrons, which often happens, e.g. because
         # a macron was added to the lemma page but not to the inflections
@@ -279,7 +279,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
 
   if not subsections_to_delete and not subsections_to_remove_inflections_from:
     pagemsg("Found Latin section but no deletable or excisable subsections")
-    return None, None
+    return
 
   #### Now, we can delete an inflection, a subsection or the whole section or page
 
@@ -355,20 +355,20 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
     # Whole section deletable
     if subsections[0].strip():
       pagemsg("WARNING: Whole Latin section deletable except that there's text above all subsections: <%s>" % subsections[0].strip())
-      return None, None
+      return
     if "[[Category:" in sectail:
       pagemsg("WARNING: Whole Latin section deletable except that there's a category at the end: <%s>" % sectail.strip())
-      return None, None
-    if not has_non_latin:
+      return
+    if not has_non_lang:
       # Can delete the whole page, but check for non-blank section 0
       cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
       if cleaned_sec0.strip():
         pagemsg("WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip())
-        return None, None
+        return
       pagetitle = str(page.title())
       pagemsg("Page %s should be deleted" % pagetitle)
       pages_to_delete.append(pagetitle)
-      return None, None
+      return
     del sections[j]
     del sections[j-1]
     notes.append("excised %s subsection%s for bad Latin forms, leaving no Latin section" %
@@ -414,11 +414,11 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
     if "==Etymology" in sections[j]:
       pagemsg("WARNING: %s but found Etymology subsection, don't know how to handle" %
           deletable_subsec_text)
-      return None, None
+      return
     if "==Pronunciation" in sections[j]:
       pagemsg("WARNING: %s but found Pronunciation subsection, don't know how to handle" %
           deletable_subsec_text)
-      return None, None
+      return
 
     notes.append("%s for bad Latin forms, leaving some subsections remaining" %
       deletable_subsec_note_text)

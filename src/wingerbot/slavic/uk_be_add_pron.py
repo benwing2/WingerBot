@@ -3,10 +3,10 @@
 
 # FIXME: This script is not yet working.
 
-import pywikibot, re, sys, traceback
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import errandmsg, getparam, rmparam, msg, site, tname
 from wingerbot.slavic.belarusian import belib
 from wingerbot.slavic.bulgarian import bglib
 from wingerbot.slavic.ukrainian import uklib
@@ -1139,24 +1139,26 @@ def process_text_on_page(index, text, pagetitle):
 def process_lemma(index, pagetitle, forms):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-  pagemsg("Processing")
-
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
+  pagemsg("Processing")
+
   page = pywikibot.Page(site, pagetitle)
+  text = blib.safe_page_text(page, errandpagemsg)
   parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
-    tname = str(t.name)
+    tn = tname(t)
     tempcall = None
-    if tname == "%s-conj" % args.lang:
+    if tn == "%s-conj" % args.lang:
       tempcall = re.sub(r"^\{\{%s-conj" % args.lang, "{{%s-generate-verb-forms" % args.lang,
           str(t))
-    elif tname == "%s-ndecl" % args.lang:
+    elif tn == "%s-ndecl" % args.lang:
       tempcall = re.sub(r"^\{\{%s-ndecl" % args.lang, "{{%s-generate-noun-forms" % args.lang,
           str(t))
-    elif tname == "%s-adecl" % args.lang:
+    elif tn == "%s-adecl" % args.lang:
       tempcall = re.sub(r"^\{\{%s-adecl" % args.lang, "{{%s-generate-adj-forms" % args.lang,
           str(t))
     if tempcall:

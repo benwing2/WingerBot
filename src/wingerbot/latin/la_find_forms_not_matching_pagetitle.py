@@ -18,8 +18,8 @@ def process_text_on_page(index, pagetitle, text):
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
-  sections, j, secbody, sectail, has_non_latin = retval
+    return
+  sections, j, secbody, sectail, has_non_lang = retval
   parsed = blib.parse_text(secbody)
   for t in parsed.filter_templates():
     tn = tname(t)
@@ -32,7 +32,7 @@ def process_text_on_page(index, pagetitle, text):
           unprefixed_title = pagetitle
         if no_macrons_head != unprefixed_title:
           pagemsg("WARNING: Bad Latin head: %s" % str(t))
-  return None, None
+  return
 
 parser = blib.create_argparser("Check for bad Latin forms",
   include_pagefile=True, include_stdin=True)

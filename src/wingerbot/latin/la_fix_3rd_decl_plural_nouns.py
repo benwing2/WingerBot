@@ -115,7 +115,7 @@ def process_text_on_page(index, pagetitle, text):
         bad_compare = True
 
   if bad_compare:
-    return None, None
+    return
   return str(parsed), notes
 
 parser = blib.create_argparser("Fix Latin 3rd-decl plural nouns to specify plural lemma, and check new against old {{la-ndecl}} code",

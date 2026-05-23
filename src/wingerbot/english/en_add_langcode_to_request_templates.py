@@ -14,7 +14,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if blib.page_should_be_ignored(pagetitle):
     pagemsg("Skipping ignored page")
-    return None, None
+    return
       
   def hack_templates(parsed, langname):
     for t in parsed.filter_templates():

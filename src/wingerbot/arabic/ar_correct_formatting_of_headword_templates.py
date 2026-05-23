@@ -3,12 +3,8 @@
 
 import re
 
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg
-
-from wingerbot.arabic import ar_translit
+from wingerbot.blib import msg, errandmsg
 
 def search_category_for_missing_template(pos, templates, save, start, end):
   return search_category_for_missing_form(pos, pos, templates, save, start, end),

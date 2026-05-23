@@ -135,6 +135,7 @@ if __name__ == "__main__":
   parser.add_argument("--direcfile", help="File containing find-regex-style file text.")
   parser.add_argument("--comment", help="Comment to use.", required=True)
   args = parser.parse_args()
+  start, end = blib.parse_start_end(args.start, args.end)
 
   if args.files:
     files = args.files.split(",")

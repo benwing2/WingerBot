@@ -811,7 +811,7 @@ def infer_one_page_decls(index, page):
   except Exception as e:
     msg("%s %s: WARNING: Got an error: %s" % (index, str(page.title()), repr(e)))
     traceback.print_exc(file=sys.stdout)
-    return text, "no change"
+    return
 
 test_templates = [
   """{{ru-decl-noun

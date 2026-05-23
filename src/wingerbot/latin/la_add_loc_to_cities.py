@@ -16,7 +16,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if " " in pagetitle:
     pagemsg("WARNING: Space in page title, skipping")
-    return None, None
+    return
   pagemsg("Processing")
           
   parsed = blib.parse_text(text)
@@ -45,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("add .loc to declension of Latin city")
   if num_ndecl_templates > 1:
     pagemsg("WARNING: Saw multiple {{la-ndecl}} templates, some may not be cities")
-    return None, None
+    return
   if num_ndecl_templates == 0:
     pagemsg("WARNING: Didn't see any {{la-ndecl}} templates")
 

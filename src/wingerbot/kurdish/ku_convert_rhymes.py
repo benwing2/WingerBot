@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, errandmsg, tname
 
 def process_page_for_rename(index, page):
-  pagename = str(page.title())
+  pagetitle = str(page.title())
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagename, txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagename, txt))
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
-  totitle = pagename.replace(":Kurdish", ":Northern Kurdish")
+  totitle = pagetitle.replace(":Kurdish", ":Northern Kurdish")
   comment = "Rename Rhymes:Kurdish/... -> Rhymes:Northern Kurdish/..."
   if args.save:
     try:
@@ -25,14 +25,12 @@ def process_page_for_rename(index, page):
       errandpagemsg("Error moving to %s: %s" % (totitle, error))
       return
   else:
-    errandpagemsg("Would move '%s' to '%s': comment=%s" % (pagename, totitle, comment))
+    errandpagemsg("Would move '%s' to '%s': comment=%s" % (pagetitle, totitle, comment))
 
 
 def process_text_on_page_for_fix(index, pagetitle, text):
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagename, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagename, txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
 
@@ -64,4 +62,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(args, start, end, process_page_for_rename, default_cats=["Kurdish rhymes"])
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_fix, default_cats=["Kurdish rhymes"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_fix,
+                           edit=True, stdin=True, default_cats=["Kurdish rhymes"])

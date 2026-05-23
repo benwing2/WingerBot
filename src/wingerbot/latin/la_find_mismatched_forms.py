@@ -72,7 +72,7 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
     return None
 
   (
-    sections, j, secbody, sectail, has_non_latin, subsections,
+    sections, j, secbody, sectail, has_non_lang, subsections,
     parsed_subsections, headwords, pronun_sections, etym_sections
   ) = retval
 
@@ -140,14 +140,14 @@ def process_text_on_page(index, pagetitle, text):
 
   # Greatly speed things up when --stdin by ignoring non-Latin pages
   if "==Latin==" not in text:
-    return None, None
+    return
 
   retval = lalib.find_heads_and_defns(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
   (
-    sections, j, secbody, sectail, has_non_latin, subsections,
+    sections, j, secbody, sectail, has_non_lang, subsections,
     parsed_subsections, headwords, pronun_sections, etym_sections
   ) = retval
 

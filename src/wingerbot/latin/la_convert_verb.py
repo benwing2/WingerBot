@@ -291,7 +291,7 @@ def process_text_on_page(index, pagetitle, text):
       if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
         notes.append("converted {{%s}} to {{la-conj}}" % tn)
       else:
-        return None, None
+        return
 
   return str(parsed), notes
 

@@ -855,7 +855,7 @@ def create_inflection_entry(program_args, save, index, inflections, lemma,
     return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
   def warn(warning, simple=False, err=False):
     text = format_pagemsg_text(warning, simple)
-    issue_warning(text, errpagemsg if err else pagemsg, warnings)
+    issue_warning(text, errandpagemsg if err else pagemsg, warnings)
   def warn_if(doit, warning, simple=False, err=False):
     if doit:
       warn(warning, simple=simple, err=err)

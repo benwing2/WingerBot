@@ -20,13 +20,13 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   if "===Etymology 1===" in secbody:
     pagemsg("WARNING: Multiple etymologies, don't know what to do")
-    return None, None
+    return
 
   notes = []
 
@@ -40,7 +40,7 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
     if subsections[k - 1] == "===Participle===\n":
       if saw_participle:
         pagemsg("WARNING: Saw multiple participles, skipping")
-        return None, None
+        return
       saw_participle = True
       subsections[k] = participle_text
       notes.append("correct participle %s of %s to be impersonal" %

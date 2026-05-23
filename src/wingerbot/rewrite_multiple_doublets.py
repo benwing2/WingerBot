@@ -17,7 +17,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if blib.page_should_be_ignored(pagetitle):
     pagemsg("WARNING: Page should be ignored")
-    return None, None
+    return
 
   def combine_doublets(m):
     first = blib.parse_text(m.group(1))

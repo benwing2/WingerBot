@@ -126,7 +126,7 @@ all_verb_props = [
 
 cached_template_calls = {}
 
-def find_old_template_props(template, pagemsg, verbose):
+def find_old_template_props(template, pagemsg):
   name = str(template.name)
   if name in cached_template_calls:
     template_text = cached_template_calls[name]
@@ -137,7 +137,7 @@ def find_old_template_props(template, pagemsg, verbose):
       return None
     template_text = str(template_page.text)
     cached_template_calls[name] = template_text
-  if verbose:
+  if args.verbose:
     pagemsg("Found template text: %s" % template_text)
   for t in blib.parse_text(template_text).filter_templates():
     tname = str(t.name).strip() # template name may have spaces
@@ -174,8 +174,7 @@ def find_old_template_props(template, pagemsg, verbose):
       str(template))
   return None
 
-def compare_conjugation(index, page, template, refl, pagemsg, expand_text,
-    verbose):
+def compare_conjugation(template, refl, pagemsg, expand_text):
   # Force reflexive templates to succeed since they don't use {{fr-conj}}
   if str(template.name) in refl_templates_to_change:
     return []
@@ -187,7 +186,7 @@ def compare_conjugation(index, page, template, refl, pagemsg, expand_text,
   for arg in re.split(r"\|", generate_result):
     name, value = re.split("=", arg)
     args[name] = re.sub("<!>", "|", value)
-  existing_args = find_old_template_props(template, pagemsg, verbose)
+  existing_args = find_old_template_props(template, pagemsg)
   if existing_args is None:
     return None
   difvals = []
@@ -205,14 +204,11 @@ def compare_conjugation(index, page, template, refl, pagemsg, expand_text,
   return difvals
 
 def process_text_on_page(index, pagetitle, text):
-  verbose = args.verbose
-  pagetitle = str(page.title())
-  subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   def expand_text(tempcall):
-    return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
+    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
   pagemsg("Processing")
 
@@ -226,7 +222,7 @@ def process_text_on_page(index, pagetitle, text):
     name = str(t.name)
     if name in templates_to_change or name in refl_templates_to_change:
       refl = name in refl_templates_to_change
-      difvals = compare_conjugation(index, page, t, refl, pagemsg, expand_text, verbose)
+      difvals = compare_conjugation(t, refl, pagemsg, expand_text)
       if difvals is None:
         pass
       elif difvals:

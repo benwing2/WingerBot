@@ -17,21 +17,21 @@ def process_text_on_page(index, pagetitle, text):
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   subsections = re.split("(^==.*==\n)", secbody, 0, re.M)
 
   if len(subsections) != 3:
     pagemsg("WARNING: Not right # of sections (expected 1): %s" %
         ",".join(subsections[k].strip() for k in range(1, len(subsections), 2)))
-    return None, None
+    return
 
   if subsections[1] != "===Verb===\n":
     pagemsg("WARNING: Expected ===Verb=== in subsections[1] but saw %s" %
         subsections[1].strip())
-    return None, None
+    return
 
   parsed = blib.parse_text(subsections[2])
   infl = None
@@ -42,13 +42,13 @@ def process_text_on_page(index, pagetitle, text):
       if infl:
         pagemsg("WARNING: Saw more than one {{la-verb-form}} call: %s" %
             str(t))
-        return None, None
+        return
       infl = getparam(t, "1")
     elif tname(t) == "inflection of":
       if lemma:
         pagemsg("WARNING: Saw more than one {{inflection of}} call: %s" %
             str(t))
-        return None, None
+        return
       if getparam(t, "lang"):
         lemma = getparam(t, "1")
       else:
@@ -56,11 +56,11 @@ def process_text_on_page(index, pagetitle, text):
       infloft = t
     else:
       pagemsg("WARNING: Saw unexpected template: %s" % str(t))
-      return None, None
+      return
   if not infl or not lemma:
     pagemsg("WARNING: Didn't find both inflection %s and lemma %s" % (
       infl, lemma))
-    return None, None
+    return
   infl = re.sub(" (esse|īrī)$", "", infl)
   if infl.endswith("us"):
     if infl.endswith("ūrus"):
@@ -114,7 +114,7 @@ From {{m|la|%s}}.
     comment = "correct Latin form to gerund/participle form"
   else:
     pagemsg("WARNING: Unrecognized ending for participle/gerund %s" % infl)
-    return None, None
+    return
 
   sections[j] = sectext + sectail
   return "".join(sections), comment

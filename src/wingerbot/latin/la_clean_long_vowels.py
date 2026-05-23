@@ -661,7 +661,7 @@ def do_process_form(index, page, lemma, formind, formval, pos, tag_sets_to_proce
     return
 
   (
-    sections, j, secbody, sectail, has_non_latin, subsections,
+    sections, j, secbody, sectail, has_non_lang, subsections,
     parsed_subsections, headwords, pronun_sections, etym_sections
   ) = retval
 
@@ -854,7 +854,7 @@ def do_process_participle(index, page, lemma, formind, formval, explicit_stem, p
     return
 
   (
-    sections, j, secbody, sectail, has_non_latin, subsections,
+    sections, j, secbody, sectail, has_non_lang, subsections,
     parsed_subsections, headwords, pronun_sections, etym_sections
   ) = retval
 
@@ -1024,7 +1024,7 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
     return
 
   (
-    sections, j, secbody, sectail, has_non_latin, subsections,
+    sections, j, secbody, sectail, has_non_lang, subsections,
     parsed_subsections, headwords, pronun_sections, etym_sections
   ) = retval
 

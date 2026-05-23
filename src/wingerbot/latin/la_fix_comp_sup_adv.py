@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
-
+from wingerbot.blib import errandmsg, getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
-def find_head_comp_sup(pagetitle, pagemsg):
+def find_head_comp_sup(pagetitle, pagemsg, errandpagemsg):
   page = pywikibot.Page(site, pagetitle)
+  text = blib.safe_page_text(page, errandpagemsg)
   parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     if tname(t) == "la-adv":
@@ -37,15 +37,17 @@ def find_head_comp_sup(pagetitle, pagemsg):
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   pagemsg("Processing")
   origtext = text
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   notes = []
 
@@ -103,7 +105,7 @@ def process_text_on_page(index, pagetitle, text):
               pagemsg("WARNING: Unrecognized part of speech '%s': %s" % (
                 pos, str(t)))
             else:
-              real_head, real_comp, real_sup = find_head_comp_sup(lalib.remove_macrons(posdeg), pagemsg)
+              real_head, real_comp, real_sup = find_head_comp_sup(lalib.remove_macrons(posdeg), pagemsg, errandpagemsg)
               if real_head:
                 if lalib.remove_macrons(real_head) != lalib.remove_macrons(posdeg):
                   pagemsg("WARNING: Can't replace positive degree %s with %s because they differ when macrons are removed" % (

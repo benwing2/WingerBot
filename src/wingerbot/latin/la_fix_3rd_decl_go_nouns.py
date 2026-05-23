@@ -16,7 +16,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if " " in pagetitle:
     pagemsg("WARNING: Space in page title, skipping")
-    return None, None
+    return
   pagemsg("Processing")
           
   parsed = blib.parse_text(text)

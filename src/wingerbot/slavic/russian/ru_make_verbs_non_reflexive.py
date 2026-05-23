@@ -13,6 +13,8 @@ def process_text_on_page(index, pagetitle, text):
   pagemsg("Processing")
 
   notes = []
+
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     origt = str(t)
     if tname(t) in ["ru-conj", "ru-conj-old", "User:Benwing2/ru-conj",

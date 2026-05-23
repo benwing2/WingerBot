@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import msg, tname
 
 from wingerbot.latin import lalib
 
@@ -12,27 +12,18 @@ pages_to_delete = []
 
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, term, txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   notes = []
-
-  if not text:
-    page = pywikibot.Page(site, pagetitle)
-    if not page.exists():
-      pagemsg("Skipping form value %s, page doesn't exist" % term)
-      return
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
     return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-  saw_lemma_in_etym = False
-  saw_wrong_lemma_in_etym = False
   saw_head = False
-  infl_template = None
   saw_bad_template = False
   for k in range(2, len(subsections), 2):
     parsed = blib.parse_text(subsections[k])
@@ -72,7 +63,7 @@ def process_text_on_page(index, pagetitle, text):
   if "[[Category:" in sectail:
     pagemsg("WARNING: Whole Latin section deletable except that there's a category at the end: <%s>" % sectail.strip())
     return
-  if not has_non_latin:
+  if not has_non_lang:
     # Can delete the whole page, but check for non-blank section 0
     cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
     if cleaned_sec0.strip():

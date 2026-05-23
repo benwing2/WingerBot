@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse, time
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg, group_notes, iter_items
+from wingerbot.blib import errandmsg
 
 # clean_etym_templates.py had a bug in it that it wasn't idempotent w.r.t. adding a
 # period after back-formation templates without nodot=, leading it to add extraneous
 # periods in some cases. This script undoes the damage.
 
 def process_page(index, page):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+  pagetitle = str(page.title())
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -27,7 +25,7 @@ def process_page(index, page):
         return oldtext, "Undo faulty addition of period after back-formation template"
 
 parser = blib.create_argparser("Undo extraneously-added periods after back-formation templates",
-  include_pagefile=True, include_stdin=True)
+  include_pagefile=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

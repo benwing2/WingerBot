@@ -25,7 +25,7 @@ def process_text_on_page(index, pagetitle, text):
   if retval is None:
     return
   
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   parsed = blib.parse_text(secbody)
   for t in parsed.filter_templates():

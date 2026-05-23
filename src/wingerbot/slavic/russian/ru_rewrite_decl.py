@@ -93,9 +93,9 @@ def remove_diacritics(text):
 
 def rewrite_one_page_ru_decl_adj(index, page):
   oldtemps = []
-  pagename = str(page.title())
+  pagetitle = str(page.title())
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagename, txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   text = blib.safe_page_text(page, errandpagemsg)
@@ -188,9 +188,9 @@ def rewrite_one_page_ru_decl_adj(index, page):
 
 def rewrite_one_page_ru_decl_noun(index, page):
   oldtemps = []
-  pagename = str(page.title())
+  pagetitle = str(page.title())
   def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagename, txt))
+    msg("Page %s %s: %s" % (index, pagetitle, txt))
   def errandpagemsg(txt):
     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
   text = blib.safe_page_text(page, errandpagemsg)
@@ -262,7 +262,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
       bare = getrmparam(t, "3")
       locsg = getrmparam(t, "13")
       locpl = getrmparam(t, "14")
-      stem = stem or ustem or bare or pagename
+      stem = stem or ustem or bare or pagetitle
       declclass = ""
       accentclass = "3"
       if locpl and locpl != remove_diacritics(stem) + "а́х":
@@ -301,15 +301,15 @@ def rewrite_one_page_ru_decl_noun(index, page):
           stem = getrmparam(t, "2")
           bare = getrmparam(t, "3")
           stem = stem or ustem or bare
-        elif directive == "u-stem-pagename":
+        elif directive == "u-stem-pagetitle":
           ustem = getrmparam(t, "1")
           stem = getrmparam(t, "2")
-          stem = stem or ustem or pagename
-        elif directive == "u-stem-bare-pagename":
+          stem = stem or ustem or pagetitle
+        elif directive == "u-stem-bare-pagetitle":
           ustem = getrmparam(t, "1")
           stem = getrmparam(t, "2")
           bare = getrmparam(t, "3")
-          stem = stem or ustem or bare or pagename
+          stem = stem or ustem or bare or pagetitle
         elif directive == "u-stem-u-bare":
           ustem = getrmparam(t, "1")
           stem = getrmparam(t, "2")

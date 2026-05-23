@@ -30,17 +30,17 @@ def process_lemma_page(index, page, is_comp, form):
       if la_adj_template:
         pagemsg("WARNING: Saw multiple adjective headword templates in subsection, %s and %s, skipping" % (
           str(la_adj_template), str(t)))
-        return None, None
+        return
       la_adj_template = t
     if tn == "la-part":
       if la_part_template:
         pagemsg("WARNING: Saw multiple adjective headword templates in subsection, %s and %s, skipping" % (
           str(la_part_template), str(t)))
-        return None, None
+        return
       la_part_template = t
   if not la_adj_template and not la_part_template:
     pagemsg("WARNING: Didn't see adjective or participle lemma template")
-    return None, None
+    return
   if is_comp:
     param = "comp"
   else:

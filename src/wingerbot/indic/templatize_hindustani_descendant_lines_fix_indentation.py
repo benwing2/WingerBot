@@ -18,8 +18,6 @@ def process_text_on_page(index, pagetitle, text):
     return
   sections, j, secbody, sectail, has_non_lang = retval
 
-  subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
   subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
       secbody, pagemsg)
   for desc_ind in subsections_by_header.get("Descendants", []):
@@ -98,7 +96,6 @@ def process_text_on_page(index, pagetitle, text):
           else:
             notes.append("clean Hindustani descendant template")
         continue
-
 
   secbody = "".join(subsections)
   # Strip extra newlines added to secbody

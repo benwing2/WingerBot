@@ -19,13 +19,13 @@ def process_form(index, page, slot, form, pos):
 
   if not page.exists():
     pagemsg("Skipping form value %s, page doesn't exist" % form)
-    return None, None
+    return
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   if pos == "pn":
     from_header = "==Noun=="
@@ -78,7 +78,7 @@ def process_text_on_page(index, pagetitle, text):
   if retval is None:
     return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   parsed = blib.parse_text(secbody)
   saw_noun = None

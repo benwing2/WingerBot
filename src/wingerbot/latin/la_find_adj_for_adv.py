@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
-
+from wingerbot.blib import errandmsg, getparam, tname, msg, site
 from wingerbot.latin import lalib
 
 def investigate_possible_adj(index, adj_pagename, adv, adv_defns):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, adj_pagename, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, adj_pagename, txt))
   pagemsg("Trying for adverb %s" % adv)
   page = pywikibot.Page(site, adj_pagename)
   if not page.exists():
     pagemsg("Doesn't exist for adverb %s" % adv)
     return
+  text = blib.safe_page_text(page, errandpagemsg)
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
     return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   subsections = re.split("(^===+[^=\n]+===+\n)", secbody, 0, re.M)
 
@@ -50,7 +52,7 @@ def process_text_on_page(index, pagetitle, text):
   if retval is None:
     return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   subsections = re.split("(^===+[^=\n]+===+\n)", secbody, 0, re.M)
 

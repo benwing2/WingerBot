@@ -772,7 +772,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if blib.page_should_be_ignored(pagetitle):
     pagemsg("WARNING: Page should be ignored")
-    return None, None
+    return
 
   global tag_to_canonical_form_table
   global combinable_tags_by_dimension_table

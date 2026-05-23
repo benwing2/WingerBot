@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
-from wingerbot.latin import lalib
+from wingerbot.blib import tname, msg, errandmsg
 
 def compare_new_and_old_templates(t, pagetitle, pagemsg, errandpagemsg):
   def expand_text(tempcall):

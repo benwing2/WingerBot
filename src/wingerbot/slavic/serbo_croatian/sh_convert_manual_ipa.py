@@ -480,8 +480,8 @@ def process_text_on_page(index, pagetitle, text):
       elif tn == "sh-IPA":
         sh_IPA_templates.append(t)
     if len(head_templates) > 1:
-      pagemsg("WARNING: Found multiple headword templates in section %s, not modifying: %s" % ",".join(
-        secnum, str(ht) for ht in head_templates))
+      pagemsg("WARNING: Found multiple headword templates in section %s, not modifying: %s" % (
+        secnum, ",".join(str(ht) for ht in head_templates)))
       return None
     if not head_templates:
       pagemsg("WARNING: Found no head templates in section %s, not modifying" % secnum)

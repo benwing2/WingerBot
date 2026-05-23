@@ -57,7 +57,7 @@ def process_text_on_page(index, pagetitle, text):
         en = check_for_translation_italics(en, m.group(0))
         if check_for_stray_vertical_bar(ru) or check_for_stray_vertical_bar(tr) or check_for_stray_vertical_bar(en):
           return m.group(0)
-        retval = prefix + " {{ux|ru|%s|tr=%s|%s}}" % (ru, tr, en)
+        retval = "#: {{ux|ru|%s|tr=%s|%s}}" % (ru, tr, en)
         pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
         notes.append("converted raw multi-line usex to 'ux|ru'")
         return retval

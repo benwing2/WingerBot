@@ -24,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
     return
 
   newsectext = re.sub(r"^==Latin==\n", "", newsectext) + "\n\n"
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   notes = []
 

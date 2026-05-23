@@ -16,7 +16,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if ":" in pagetitle:
     pagemsg("Skipping page with colon in pagetitle")
-    return None, None
+    return
 
   notes = []
           

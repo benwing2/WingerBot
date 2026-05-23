@@ -27,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
       lemma = getparam(t, "1")
   if not lemma:
     pagemsg("WARNING: Couldn't find declension template")
-    return None, None
+    return
   for t in parsed.filter_templates():
     if tname(t) == "head" and getparam(t, "1") == "la" and getparam(t, "2") == "adjective superlative form":
       origt = str(t)

@@ -4,14 +4,13 @@
 # Copy the declension in ru-noun-table to ru-noun+, preserving any m=, f=,
 # g=, etc. in the latter.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 # from wingerbot.slavic.russian import runounlib
 
 def process_text_on_page(index, pagetitle, text):
-  subpagetitle = re.sub("^.*:", "", pagetitle)
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -36,7 +35,7 @@ def process_text_on_page(index, pagetitle, text):
 
       subsections = re.split("(^===[^=]*===\n)", sections[j], 0, re.M)
       for k in range(2, len(subsections), 2):
-        retval = process_page_section(index, page, subsections[k])
+        retval = process_page_section(index, pagetitle, subsections[k])
         if retval:
           (replaced, this_num_ru_noun_table_cleaned_subs,
               this_num_ru_noun_table_link_copied_subs, this_num_ru_noun_subs,
@@ -68,18 +67,12 @@ def process_text_on_page(index, pagetitle, text):
         "" if num_ru_proper_noun_subs == 1 else " (%s)" % num_ru_proper_noun_subs))
     return new_text, notes
 
-def process_page_section(index, page, section):
-  pagetitle = str(page.title())
-  subpagetitle = re.sub("^.*:", "", pagetitle)
+def process_page_section(index, pagetitle, section):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
   def expand_text(tempcall):
     return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-  if not page.exists():
-    pagemsg("WARNING: Page doesn't exist, skipping")
-    return None
 
   parsed = blib.parse_text(section)
 

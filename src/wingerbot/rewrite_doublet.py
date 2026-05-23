@@ -19,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
 
   if blib.page_should_be_ignored(pagetitle):
     pagemsg("WARNING: Page should be ignored")
-    return None, None
+    return
 
   parsed = blib.parse_text(text)
 

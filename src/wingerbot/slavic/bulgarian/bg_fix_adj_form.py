@@ -15,6 +15,9 @@ def snarf_adj_accents():
     pagetitle = str(page.title())
     def pagemsg(txt):
       msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+      errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
       if tname(t) == "bg-adj":
@@ -34,13 +37,12 @@ def snarf_adj_accents():
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   notes = []
 
   pagemsg("Processing")
 
+  parsed = blib.parse_text(text)
   for t in parsed.filter_templates():
     if tname(t) == "bg-adj-form":
       origt = str(t)
@@ -81,8 +83,6 @@ def process_text_on_page(index, pagetitle, text):
   for t in parsed.filter_templates():
     tn = tname(t)
     origt = str(t)
-    saw_infl = False
-    already_fetched_forms = False
     if tn == "head" and getparam(t, "1") == "bg" and getparam(t, "2") == "adjective form":
       saw_headt = True
       if headt and not saw_infl_after_head:

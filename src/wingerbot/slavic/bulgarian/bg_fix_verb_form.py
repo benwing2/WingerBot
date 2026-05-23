@@ -15,6 +15,9 @@ def snarf_verb_accents():
     pagetitle = str(page.title())
     def pagemsg(txt):
       msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+      errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
       if tname(t) == "bg-verb":
@@ -34,8 +37,6 @@ def snarf_verb_accents():
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
-  def errandpagemsg(txt):
-    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   notes = []
 

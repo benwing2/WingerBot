@@ -38,7 +38,7 @@ def process_lemma_page(index, page, form):
       it_part_template = t
   if not it_adj_template and not it_part_template:
     pagemsg("WARNING: Didn't see adjective or participle lemma template")
-    return None, None
+    return
   if it_part_template:
     if it_adj_template:
       pagemsg("WARNING: Saw both %s and %s, choosing adjective template" % (

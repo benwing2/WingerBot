@@ -6,8 +6,40 @@ from wingerbot import blib
 from wingerbot.blib import site, msg, errmsg, errandmsg, group_notes
 from wingerbot.slavic.russian import rulib
 
-# Split text on a separator, but not if separator is preceded by
-# a backslash, and remove such backslashes
+# Examples of lines in the --direcfile:
+#
+# замбийский За́мбия+-и́йский
+# зимбабвийский Зимба́бве+tr1=Zimbábvɛ+-и́йский
+# индийский И́ндия+-и́йский
+# индонезийский Индоне́зия+tr1=Indonɛ́zija,_Indonézija+-и́йский
+# валлийский Валлис+alt1=Ва́лл(ис)+t1=[[Wales]]+q1=dated+-и́йский
+# каспийский raw:Borrowed from {{affix|ru|Caspius|t1=[[Caspian]]|lang1=la|-и́йский}}.
+#
+# The format of the directive file is as follows. Each line consists of two fields separated by whitespace, with the following meaning:
+# 1. The first field is the term to which the etymology should be added. Accents may be present and will be removed to form the pagename,
+#    although they only currently matter when --add-passive-of is given.
+# 2. The second field is the etymology, which normally corresponds to an {{affix|ru|...}} template call. + signs are converted to | characters
+#    and underscores to spaces. The following special forms are also allowed:
+#   a. A hyphen, indicating that the etymology is unknown; a call to {{rfe|ru}} will be added in this case.
+#   b. A double hyphen, indicating that no etymology section should be added at all. This is useful e.g. for participles and other non-lemma forms.
+#   c. A string of the form acr:FULLEXPR:MEANING, indicating that the term is an acronym of the full expression FULLEXPR, which has the meaning MEANING.
+#      For example, acr:МГУ:Московский_государственный_университет would indicate that the term is an acronym of [[Московский государственный университет]],
+#      meaning "Moscow State University".
+#   d. A string of the form deverb:SOURCETERM, indicating that the term is a deverbal from SOURCETERM. For example, deverb:разгово́р would indicate that the term is a deverbal from [[разговор]].
+#   e. A string of the form back:SOURCETERM, indicating that the term is a back-formation from SOURCETERM.
+#   f. A string of the form raw:RAW ETYM, specifying the etymology text RAW ETYM directly, without any processing other than ensuring there is a space after commas.
+#      Spaces are allowed in the raw etymology text.
+#   g. A string of the form LANG:SOURCETERM, indicating that the term is borrowed from SOURCETERM in language LANG (a language code). Such strings can be directly preceded
+#      by ? or << to indicate uncertainty or ultimate borrowing, respectively. For example, ?de:Wald would indicate that the term is perhaps borrowed from German Wald,
+#      and <<de:Wald would indicate that the term is ultimately borrowed from German Wald.
+#   h. A string of the form part[fnp]:X, adj[fnp]:X, or partadj[fnp]:X, where X is a term. This indicates that the term is a participle, adjective, or participle/adjective form
+#      of the term X, where fnp indicates whether the term is feminine, neuter, or plural. For example, partf:разгово́рный would indicate that the term is a feminine participle
+#     form of разгово́рный, and adjp:разгово́рный would indicate that the term is a plural adjective form of разгово́рный. [NOT CURRENTLY WORKING]
+# 3. Lines starting with ! are treated the same as lines not starting with !, except that if an etymology section already exists, it will be overridden with the new etymology
+#    instead of leaving the page alone.
+# 4. Lines starting with # are treated as comments and ignored.
+
+# Split text on a separator, but not if separator is preceded by a backslash, and remove such backslashes
 def do_split(sep, text, maxsplit=0):
   elems = re.split(r"(?<![\\])%s" % sep, text, maxsplit)
   return [re.sub(r"\\(%s)" % sep, r"\1", elem) for elem in elems]
@@ -59,14 +91,14 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
   if etym == "?":
     error("Etymology consists of bare question mark")
   elif etym == "-":
-    etymtext = "===Etymology===\n{{rfe|lang=ru}}\n\n"
+    etymtext = "===Etymology===\n{{rfe|ru}}\n\n"
   elif etym == "--":
     etymtext = ""
   elif re.search(r"^(part|adj|partadj)([fnp]):", etym):
     # FIXME! This branch doesn't currently work.
     m = re.search(r"^(part|adj|partadj)([fnp]):(.*)", etym)
     forms = {"f":["nom|f|s"], "n":["nom|n|s", "acc|n|s"], "p":["nom|p", "in|acc|p"]}
-    infleclines = ["# {{inflection of|lang=ru|%s||%s}}" %
+    infleclines = ["# {{inflection of|ru|%s||%s}}" %
         (m.group(3), form) for form in forms[m.group(2)]]
     if m.group(1) in ["adj", "partadj"]:
       adjinfltext = """===Adjective===
@@ -87,48 +119,49 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
   else:
     if etym.startswith("acr:"):
       _, fullexpr, meaning = do_split(":", etym)
-      etymtext = "{{ru-etym acronym of|%s||%s}}." % (fullexpr, meaning)
+      etymtext = "{{acronym of|ru|%s||%s}}." % (fullexpr, meaning)
     elif etym.startswith("deverb:"):
       _, sourceterm = do_split(":", etym)
-      etymtext = "Deverbal from {{m|ru|%s}}." % sourceterm
+      etymtext = "{{deverbal|ru|%s}}." % sourceterm
     elif etym.startswith("back:"):
       _, sourceterm = do_split(":", etym)
-      etymtext = "{{back-form|lang=ru|%s}}" % sourceterm
+      etymtext = "{{back-form|ru|%s}}" % sourceterm
     elif etym.startswith("raw:"):
       etymtext = re.sub(", *", ", ", re.sub("^raw:", "", etym))
     elif ":" in etym and "+" not in etym:
+      nocap = False
       if etym.startswith("?"):
-        prefix = "Perhaps borrowed from "
+        prefix = "Perhaps "
         etym = re.sub(r"^\?", "", etym)
+        nocap = True
       elif etym.startswith("<<"):
-        prefix = "Ultimately borrowed from "
+        prefix = "Ultimately "
         etym = re.sub(r"^<<", "", etym)
+        nocap = True
       else:
-        prefix = "Borrowed from "
+        prefix = ""
       m = re.search(r"^([a-zA-Z.-]+):(.*)", etym)
       if not m:
         error("Bad etymology form: %s" % etym)
-      etymtext = "%s{{bor|ru|%s|%s}}." % (prefix, m.group(1), m.group(2))
+      etymtext = "%s{{bor+|ru|%s|%s%s}}." % (prefix, m.group(1), m.group(2), "|nocap=1" if nocap else "")
     else:
       prefix = ""
-      suffix = ""
       if etym.startswith("?"):
         prefix = "Perhaps from "
-        suffix = "."
         etym = re.sub(r"^\?", "", etym)
       elif etym.startswith("<<"):
         prefix = "Ultimately from "
-        suffix = "."
         etym = re.sub(r"^<<", "", etym)
+      else:
+        prefix = "From "
       m = re.search(r"^([a-zA-Z.-]+):(.*)", etym)
       if m:
         langtext = "|lang1=%s" % m.group(1)
         etym = m.group(2)
       else:
         langtext = ""
-      etymtext = "%s{{affix|ru|%s%s}}%s" % (prefix,
-          "|".join(do_split(r"\+", re.sub(", *", ", ", etym))), langtext,
-          suffix)
+      etymtext = "%s{{affix|ru|%s%s}}." % (prefix,
+          "|".join(do_split(r"\+", re.sub(", *", ", ", etym))), langtext)
     etymbody = etymtext + "\n\n"
     etymtext = "===Etymology===\n" + etymbody
 
@@ -195,7 +228,7 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
         active_term = rulib.remove_monosyllabic_accents(
           re.sub("с[яь]$", "", accented_term))
         sections[i] = re.sub(r"(^(#.*\n)+)",
-          r"\1# {{passive of|lang=ru|%s}}\n" % active_term,
+          r"\1# {{passive of|ru|%s}}\n" % active_term,
           sections[i], 1, re.M)
 
       newtext = pagehead + "".join(sections)
@@ -215,15 +248,15 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
     else:
       pagemsg("Would save with comment = %s" % comment)
 
-if __name__ == "__main__":
-  parser = blib.create_argparser("Add etymologies to Russian pages based on directives")
-  parser.add_argument('--direcfile', help="File containing directives.")
-  parser.add_argument('--add-passive-of', action='store_true',
-      help="Add {{passive of|lang=ru|...}} to defn.")
-  parser.add_argument('--override-etym', action='store_true',
-      help="Automatically override any existing etymologies.")
-  args = parser.parse_args()
-  start, end = blib.parse_start_end(args.start, args.end)
+parser = blib.create_argparser("Add etymologies to Russian pages based on directives",
+    include_pagefile=True, include_stdin=True)
+parser.add_argument('--direcfile', help="File containing directives.")
+parser.add_argument('--add-passive-of', action='store_true',
+    help="Add {{passive of|ru|...}} to defn.")
+parser.add_argument('--override-etym', action='store_true',
+    help="Automatically override any existing etymologies.")
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-  for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
-    process_line(lineno, line, args.add_passive_of, args.override_etym, args.save, args.verbose)
+for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
+  process_line(lineno, line, args.add_passive_of, args.override_etym, args.save, args.verbose)

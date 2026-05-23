@@ -361,8 +361,11 @@ def process_text_on_page(index, pagetitle, text):
   comment = None
   notes = []
 
+  num = lemmas_to_numbers.get(pagetitle, None)
+  if num is None:
+    pagemsg("WARNING: Page title doesn't look like a numeral, skipping")
+    return
   lemma = ru_num(num)
-  pagetitle = rulib.remove_accents(lemma)
   newtext = generate_page(num)
 
   if not text:
@@ -467,7 +470,7 @@ def process_text_on_page(index, pagetitle, text):
   return newtext, comment
 
 parser = blib.create_argparser(
-  "Save Russian numbers to Wiktionary"
+  "Save Russian numbers to Wiktionary",
   include_pagefile=True, include_stdin=True)
 parser.add_argument("--offline", help="Operate offline, outputting text of new pages", action="store_true")
 parser.add_argument("--overwrite-page", action="store_true",
@@ -508,6 +511,8 @@ if args.offline:
     print(generate_page(current))
     print("")
 else:
+  lemmas_to_numbers = {rulib.remove_accents(ru_num(num)): num for num in iter_numerals()}
   blib.do_pagefile_cats_refs(
     args, start, end, process_text_on_page, edit=True, stdin=True,
-    default_pages=list(pages))
+    default_pages=list(lemmas_to_numbers.values())
+  )

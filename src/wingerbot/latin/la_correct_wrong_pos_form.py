@@ -24,7 +24,7 @@ def process_form(index, page, slot, form, pos, pagemsg):
   if retval is None:
     return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   if pos == "pn":
     from_header = "==Noun=="
@@ -80,7 +80,7 @@ def process_text_on_page(index, pagetitle, text):
     return
 
   (
-    sections, j, secbody, sectail, has_non_latin, subsections,
+    sections, j, secbody, sectail, has_non_lang, subsections,
     parsed_subsections, headwords, pronun_sections, etym_sections
   ) = retval
 

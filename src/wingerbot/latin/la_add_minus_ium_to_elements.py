@@ -16,10 +16,10 @@ def process_text_on_page(index, pagetitle, text):
 
   if " " in pagetitle:
     pagemsg("WARNING: Space in page title, skipping")
-    return None, None
+    return
   if not pagetitle.endswith("ium"):
     pagemsg("Doesn't end in -ium, skipping")
-    return None, None
+    return
   pagemsg("Processing")
           
   parsed = blib.parse_text(text)
@@ -44,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("add .-ium to declension of Latin chemical element")
   if num_ndecl_templates > 1:
     pagemsg("WARNING: Saw multiple {{la-ndecl}} templates, some may not be elements")
-    return None, None
+    return
 
   return str(parsed), notes
 

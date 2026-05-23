@@ -61,7 +61,7 @@ def process_text_on_page(index, pagetitle, text):
   if ":" in pagetitle and not re.search(
       "^(Citations|Appendix|Reconstruction|Transwiki|Talk|Wiktionary|[A-Za-z]+ talk):", pagetitle):
     pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
-    return None, None
+    return
 
   if args.move_dot:
     templates_to_replace = []

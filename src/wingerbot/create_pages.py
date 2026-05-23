@@ -17,7 +17,7 @@ def process_page(index, page):
   if page.exists():
     errandpagemsg("Page already exists, not overwriting")
     return
-  comment = 'Created page with "%s"' % contents
+  comment = 'Created page with "%s"' % args.contents
   if args.save:
     page.text = args.contents
     if blib.safe_page_save(page, comment, errandpagemsg):

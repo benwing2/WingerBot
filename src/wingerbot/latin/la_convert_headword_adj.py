@@ -45,9 +45,9 @@ def process_text_on_page(index, pagetitle, text):
 
   retval = lalib.find_latin_section(text, pagemsg)
   if retval is None:
-    return None, None
+    return
 
-  sections, j, secbody, sectail, has_non_latin = retval
+  sections, j, secbody, sectail, has_non_lang = retval
 
   subsections = re.split("(^===[^=]*===\n)", secbody, 0, re.M)
 

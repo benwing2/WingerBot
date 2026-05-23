@@ -6,7 +6,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import errandmsg, getparam, rmparam, msg, site
 
 GRAVE     = "\u0300"
 ACUTE     = "\u0301"
@@ -50,24 +50,11 @@ def remove_slovene_accents(lemma):
   lemma = re.sub(OGONEK, "", lemma)
   return lemma
 
-def look_up_tonal_form(pagename, pagemsg):
-  try:
-    page = pywikibot.Page(site, pagename)
-  except Exception as e:
-    pagemsg("WARNING: Error looking up page %s: %s" % (pagename,
-      str(e)))
-    return None
-  try:
-    if not page.exists():
-      if args.verbose:
-        pagemsg("look_up_tonal_form: Page %s doesn't exist" % pagename)
-      return None
-  except Exception as e:
-    pagemsg("WARNING: Error checking page existence for %s: %s" % (pagename,
-      str(e)))
-    return None
-  tonal_forms = []
+def look_up_tonal_form(pagename, pagemsg, errandpagemsg):
+  page = pywikibot.Page(site, pagename)
+  text = blib.safe_page_text(page, errandpagemsg)
   parsed = blib.parse_text(text)
+  tonal_forms = []
   for t in parsed.filter_templates():
     if str(t.name) == "sl-tonal":
       if args.verbose:
@@ -86,6 +73,8 @@ def look_up_tonal_form(pagename, pagemsg):
 def process_text_on_page(index, pagetitle, text):
   def pagemsg(txt):
     msg("Page %s %s: %s" % (index, pagetitle, txt))
+  def errandpagemsg(txt):
+    errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
   if pagetitle in skip_pages:
     pagemsg("Skipping because in skip list")
@@ -148,7 +137,7 @@ def process_text_on_page(index, pagetitle, text):
                 (pname, str(t)))
             break
         else:
-          tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage), pagemsg)
+          tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage), pagemsg, errandpagemsg)
           if tonal_forms:
             if False: #len(tonal_forms) > 1:
               pass
