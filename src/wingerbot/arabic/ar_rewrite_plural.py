@@ -26,7 +26,7 @@ def rewrite_ar_plural(save, verbose, start, end):
 
 
 parser = blib.create_argparser("Rewrite ar-plural to ar-noun-pl templates")
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-rewrite_ar_plural(params.save, params.verbose, start, end)
+rewrite_ar_plural(args.save, args.verbose, start, end)

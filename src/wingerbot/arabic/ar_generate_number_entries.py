@@ -688,8 +688,8 @@ parser.add_argument("--ordinal-non-lemmas", action="store_true", help="Do ordina
 parser.add_argument("--number-list-data", action="store_true", help="Output number list data.")
 parser.add_argument("--offline", action="store_true", help="Run offline, checking output only.")
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
 
 def iter_pages(createfn):
@@ -708,7 +708,7 @@ def do_pages(createfn, iterfn=iter_pages):
     for current, index in blib.iter_pages(pages, start, end, key=lambda x: x[0]):
         pagename, text, changelog = current
         pagetitle = remove_diacritics(pagename)
-        if params.offline:
+        if args.offline:
             msg("Text for %s: [[%s]]" % (pagename, text))
             msg("Changelog = %s" % changelog)
         else:
@@ -720,21 +720,21 @@ def do_pages(createfn, iterfn=iter_pages):
                 def save_text(index, page):
                     return text, changelog
 
-                blib.do_edit(index, page, save_text, save=params.save, verbose=params.verbose)
+                blib.do_edit(index, page, save_text, save=args.save, verbose=args.verbose)
 
 
-if params.lemmas:
+if args.lemmas:
     do_pages(create_lemma)
-if params.non_lemmas:
+if args.non_lemmas:
     do_pages(lambda tv, t, dv, d: create_non_lemma(tv, t, dv, d, obl=True))
     do_pages(lambda tv, t, dv, d: create_non_lemma(tv, t, dv, d, fem=True))
     do_pages(lambda tv, t, dv, d: create_non_lemma(tv, t, dv, d, obl=True, fem=True))
-if params.ordinal_lemmas:
+if args.ordinal_lemmas:
     do_pages(create_ordinal_lemma)
     do_pages(create_unit_ordinal_lemma, lambda fn: iter_pages_units(fn, include_ten=True, skip_one=True))
     do_pages(create_teen_ordinal_lemma, iter_pages_units)
-if params.ordinal_non_lemmas:
+if args.ordinal_non_lemmas:
     do_pages(create_unit_ordinal_non_lemma, lambda fn: iter_pages_units(fn, include_ten=True, skip_one=True))
     do_pages(create_teen_ordinal_non_lemma, iter_pages_units)
-if params.number_list_data:
+if args.number_list_data:
     create_number_list_data()

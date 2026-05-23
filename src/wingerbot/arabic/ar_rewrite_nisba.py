@@ -32,7 +32,7 @@ def rewrite_ar_nisba(save, verbose, start, end):
 
 
 parser = blib.create_argparser("Rewrite ar-nisba, changing head= to 1=")
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-rewrite_ar_nisba(params.save, params.verbose, start, end)
+rewrite_ar_nisba(args.save, args.verbose, start, end)

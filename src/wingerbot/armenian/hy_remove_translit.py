@@ -408,10 +408,10 @@ parser.add_argument(
     help="""Ignore lemma and non-lemma pages (useful with '--cattype translit').""",
 )
 parser.add_argument("--do-head", action="store_true", help="""Remove tr= in {{head|..}}""")
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-remove_translit(params, start, end)
+remove_translit(args, start, end)
 
 msg("Templates processed:")
 for template, count in sorted(templates_changed.items(), key=lambda x: -x[1]):

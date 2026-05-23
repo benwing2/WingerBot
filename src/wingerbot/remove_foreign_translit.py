@@ -168,13 +168,13 @@ parser.add_argument(
 or list of pages when --cattype pages""",
 )
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 pages_to_do = []
-if params.page_file:
-    for lineno, line in blib.iter_items_from_file(params.page_file, start, end):
+if args.page_file:
+    for lineno, line in blib.iter_items_from_file(args.page_file, start, end):
         # FIXME: We don't yet support a cattype list containing 'pages'
-        if params.cattype == "pages":
+        if args.cattype == "pages":
             pages_to_do.append(line)
         else:
             m = re.match(r"^Page [0-9]+ (.*?): [^:]*: Processing (.*?)$", line)
@@ -183,11 +183,11 @@ if params.page_file:
             else:
                 pages_to_do.append(m.groups())
 longlang = None
-if params.lang:
-    if params.lang not in languages:
-        raise ValueError("Unrecognized language '%s'" % params.lang)
-    longlang, this_ignore_manual_tr = languages[params.lang]
+if args.lang:
+    if args.lang not in languages:
+        raise ValueError("Unrecognized language '%s'" % args.lang)
+    longlang, this_ignore_manual_tr = languages[args.lang]
 
 canon_links(
-    params.save, params.verbose, params.cattype, languages.keys(), longlang, start, end, pages_to_do=pages_to_do
+    args.save, args.verbose, args.cattype, languages.keys(), longlang, start, end, pages_to_do=pages_to_do
 )

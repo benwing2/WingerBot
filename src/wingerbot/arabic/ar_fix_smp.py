@@ -51,7 +51,7 @@ def fix_smp(save, verbose, start, end):
 
 
 parser = blib.create_argparser("Change |pl=smp to |pl=sp in declension templates")
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-fix_smp(params.save, params.verbose, start, end)
+fix_smp(args.save, args.verbose, start, end)

@@ -101,7 +101,7 @@ pages_already_erased = set()
 # accented lemma (e.g. the singular, masculine or dictionary form of a
 # verb); and LEMMATR is the associated manual transliterations (if any).
 # POS is the part of speech of the word (capitalized, e.g. "Noun"). Only
-# save the changed page if SAVE is true. INDEX is the numeric index of
+# save the changed page if args.save is true. INDEX is the numeric index of
 # the lemma page, for ID purposes and to aid restarting. INFLTYPE is e.g.
 # "adj form nom_m", and is used in messages; both POS and INFLTYPE are
 # used in special-case code that is appropriate to only certain inflectional
@@ -146,8 +146,7 @@ pages_already_erased = set()
 # allow for stress mismatch when inserting a new subsection next to an
 # existing one, instead of creating a new etymology section.
 def create_inflection_entry(
-    program_args,
-    save,
+    args,
     index,
     inflections,
     lemma,
@@ -449,10 +448,10 @@ def create_inflection_entry(
                     # See comment above.
                     sections[i : i + 1] = [mm.group(1), mm.group(2)]
 
-                if program_args.overwrite_page:
+                if args.overwrite_page:
                     if pagename in pages_already_erased:
                         pagemsg("WARNING: Not overwriting page, already overwritten previously")
-                    elif "==Etymology 1==" in sections[i] and not program_args.overwrite_etymologies:
+                    elif "==Etymology 1==" in sections[i] and not args.overwrite_etymologies:
                         errandpagemsg("WARNING: Found ==Etymology 1== in page text, not overwriting, skipping form")
                         return
                     elif "{{audio|" in sections[i]:
@@ -1387,7 +1386,7 @@ def create_inflection_entry(
                 sections[-1] = ensure_two_trailing_nl(sections[-1])
                 sections += ["----\n\n", newsection]
             else:
-                if not program_args.overwrite_page:
+                if not args.overwrite_page:
                     notes.append("formerly empty")
                 if pagehead.lower().startswith("#redirect"):
                     pagemsg("WARNING: Page is redirect, overwriting")
@@ -1395,7 +1394,7 @@ def create_inflection_entry(
                     pagehead = re.sub(
                         r"#redirect *\[\[(.*?)\]\] *(<!--.*?--> *)*\n*", r"{{also|\1}}\n", pagehead, 0, re.I
                     )
-                elif not program_args.overwrite_page:
+                elif not args.overwrite_page:
                     pagemsg("WARNING: No language sections in current page")
                 sections += [newsection]
 
@@ -1433,7 +1432,7 @@ def create_inflection_entry(
         else:
             comment = notestext
     if page.text != existing_text:
-        if save:
+        if args.save:
             blib.safe_page_save(page, comment, errandpagemsg)
         else:
             pagemsg("Would save with comment = %s" % comment, simple=True)
@@ -1478,7 +1477,7 @@ adj_form_inflection_list = [
 ]
 
 
-def adj_form_inflection_dict(infltemp, args):
+def adj_form_inflection_dict(infltemp, adjargs):
     return dict(adj_form_inflection_list)
 
 
@@ -1494,7 +1493,7 @@ poss_adj_form_inflection_list = [
 ]
 
 
-def poss_adj_form_inflection_dict(infltemp, args):
+def poss_adj_form_inflection_dict(infltemp, possadjargs):
     return dict(poss_adj_form_inflection_list)
 
 
@@ -1574,8 +1573,7 @@ def find_inflection_templates(
 # Yiddish section will not do so if the form is one of these pages.
 # Entries are without accents.
 #
-# SAVE is as in create_inflection_entry(). STARTFROM and UPTO, if not None,
-# delimit the range of pages to process (inclusive on both ends).
+# START and END, if not None, delimit the range of pages to process (inclusive on both ends).
 #
 # FORMSPEC specifies the form(s) to do, a comma-separated list of form codes,
 # possibly including aliases (e.g. 'all'). GENERATE_INFLECTION_DICT is a
@@ -1621,8 +1619,7 @@ def create_forms(
     lemmas_to_process,
     lemmas_to_overwrite,
     lemmas_to_not_overwrite,
-    program_args,
-    save,
+    args,
     start,
     end,
     formspec,
@@ -1685,9 +1682,9 @@ def create_forms(
             if not result:
                 pagemsg("WARNING: Error generating %s forms, skipping" % pos)
                 continue
-            args = blib.split_generate_args(result)
+            inflargs = blib.split_generate_args(result)
             for dicform_code in dicform_codes:
-                if dicform_code in args:
+                if dicform_code in inflargs:
                     break
             else:
                 pagemsg(
@@ -1696,16 +1693,16 @@ def create_forms(
                 continue
             if dicform_code != dicform_codes[0]:
                 pagemsg("create_forms: Using non-default dictionary form code %s" % dicform_code)
-            if "," in args[dicform_code]:
-                pagemsg("WARNING: Can't handle comma in dictionary form code %s, skipping" % args[dicform_code])
+            if "," in inflargs[dicform_code]:
+                pagemsg("WARNING: Can't handle comma in dictionary form code %s, skipping" % inflargs[dicform_code])
                 continue
-            dicforms = [args[dicform_code]]
-            forms_desired = parse_form_spec(formspec, generate_inflection_dict(infltemp, args), form_aliases)
+            dicforms = [inflargs[dicform_code]]
+            forms_desired = parse_form_spec(formspec, generate_inflection_dict(infltemp, inflargs), form_aliases)
             # Fetch dictionary forms, remove accents on monosyllables
             dicforms = [split_yi_tr(dicform) for dicform in dicforms]
-            dicforms_args_sets = [(dicforms, args)]
+            dicforms_args_sets = [(dicforms, inflargs)]
             split_dicforms = dicforms
-            split_args = args
+            split_args = inflargs
             for dicformyi, dicformtr in split_dicforms:
                 for formname, inflsets in forms_desired:
                     # Skip the dictionary form; also skip forms that don't have
@@ -1781,8 +1778,7 @@ def create_forms(
                                     deftemp_allows_multiple_tag_sets = True
                                     our_headtemp = headtemp
                                     create_inflection_entry(
-                                        program_args,
-                                        save,
+                                        args,
                                         index,
                                         inflections,
                                         dicformyi,
@@ -1811,14 +1807,13 @@ def generate_adj_forms(t, expand_text):
 
 
 def create_adj_forms(
-    save, start, end, formspec, lemmas_to_process, lemmas_to_overwrite, lemmas_to_not_overwrite, program_args
+    start, end, formspec, lemmas_to_process, lemmas_to_overwrite, lemmas_to_not_overwrite, args
 ):
     create_forms(
         lemmas_to_process,
         lemmas_to_overwrite,
         lemmas_to_not_overwrite,
-        program_args,
-        save,
+        args,
         start,
         end,
         formspec,
@@ -1875,34 +1870,33 @@ parser.add_argument(
 page of inflections even if "Etymology N". WARNING: Be careful!""",
 )
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-if params.lemmafile:
-    lemmas_to_process = list(blib.yield_items_from_file(params.lemmafile))
-elif params.lemmas:
-    lemmas_to_process = blib.split_arg(params.lemmas)
+if args.lemmafile:
+    lemmas_to_process = list(blib.yield_items_from_file(args.lemmafile))
+elif args.lemmas:
+    lemmas_to_process = blib.split_arg(args.lemmas)
 else:
     lemmas_to_process = []
-if params.overwrite_lemmas:
-    lemmas_to_overwrite = list(blib.yield_items_from_file(params.overwrite_lemmas))
+if args.overwrite_lemmas:
+    lemmas_to_overwrite = list(blib.yield_items_from_file(args.overwrite_lemmas))
 else:
     lemmas_to_overwrite = []
-if params.lemmas_to_not_overwrite:
-    lemmas_to_not_overwrite = list(blib.yield_items_from_file(params.lemmas_to_not_overwrite))
+if args.lemmas_to_not_overwrite:
+    lemmas_to_not_overwrite = list(blib.yield_items_from_file(args.lemmas_to_not_overwrite))
 else:
     lemmas_to_not_overwrite = []
-if params.adj_form:
+if args.adj_form:
     function_to_call = create_adj_forms
     function_to_call(
-        params.save,
         start,
         end,
-        params.adj_form,
+        args.adj_form,
         lemmas_to_process,
         lemmas_to_overwrite,
         lemmas_to_not_overwrite,
-        params,
+        args,
     )
 
 blib.elapsed_time()

@@ -132,12 +132,12 @@ parser.add_argument("--headword", action="store_true", help="Rewrite form= to 1=
 parser.add_argument(
     "--canonicalize", action="store_true", help="Canonicalize form in Arabic verb templates other than ar-verb"
 )
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-if params.headword:
-    rewrite_verb_headword(params.save, start, end)
-if params.canonicalize:
-    canonicalize_verb_form(params.save, start, end, "ar-conj", "1")
-    canonicalize_verb_form(params.save, start, end, "ar-past3sm", "1")
-    canonicalize_verb_form(params.save, start, end, "ar-verb-part", "2")
+if args.headword:
+    rewrite_verb_headword(args.save, start, end)
+if args.canonicalize:
+    canonicalize_verb_form(args.save, start, end, "ar-conj", "1")
+    canonicalize_verb_form(args.save, start, end, "ar-past3sm", "1")
+    canonicalize_verb_form(args.save, start, end, "ar-verb-part", "2")

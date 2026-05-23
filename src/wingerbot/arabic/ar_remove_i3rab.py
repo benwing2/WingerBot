@@ -128,16 +128,16 @@ parser = blib.create_argparser("Remove i3rab")
 parser.add_argument("--verb", action="store_true", help="Do verbal nouns in verbs")
 parser.add_argument("--noun", action="store_true", help="Do arguments in nouns")
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-if params.noun:
+if args.noun:
     do_nouns(
         ["noun", "adjective"],
         ["ar-noun", "ar-coll-noun", "ar-sing-noun", "ar-nisba", "ar-noun-nisba", "ar-adj", "ar-numeral"],
-        params.save,
+        args.save,
         start,
         end,
     )
-if params.verb:
-    do_verbs(params.save, start, end)
+if args.verb:
+    do_verbs(args.save, start, end)

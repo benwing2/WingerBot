@@ -20,13 +20,13 @@ parser.add_argument(
 or list of pages when --cattype pages""",
 )
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 pages_to_do = []
-if params.page_file:
-    for line in open(params.page_file, "r", encoding="utf-8"):
+if args.page_file:
+    for line in open(args.page_file, "r", encoding="utf-8"):
         line = line.strip()
-        if params.cattype == "pages":
+        if args.cattype == "pages":
             pages_to_do.append(line)
         else:
             m = re.match(r"^Page [0-9]+ (.*?): [^:]*: Processing (.*?)$", line)
@@ -38,9 +38,9 @@ if params.page_file:
                 pages_to_do.append(m.groups())
 
 canon_links(
-    params.save,
-    params.verbose,
-    params.cattype,
+    args.save,
+    args.verbose,
+    args.cattype,
     "grc",
     "Ancient Greek",
     ["polytonic", "Grek"],

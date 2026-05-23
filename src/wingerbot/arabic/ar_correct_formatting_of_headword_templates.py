@@ -247,10 +247,10 @@ def correct_link_formatting(save, start, end):
 parser = blib.create_argparser("Correct formatting of headword templates")
 parser.add_argument("-l", "--links", action="store_true", help="Vocalize links")
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-if params.links:
-    correct_link_formatting(params.save, start, end)
+if args.links:
+    correct_link_formatting(args.save, start, end)
 else:
-    correct_headword_formatting(params.save, start, end)
+    correct_headword_formatting(args.save, start, end)

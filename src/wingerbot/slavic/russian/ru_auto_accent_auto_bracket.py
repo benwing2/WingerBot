@@ -1334,13 +1334,13 @@ parser.add_argument("--find-accents", action="store_true", help="Look up the acc
 parser.add_argument("--accent-hidden", action="store_true", help="Also add accents and brackets to hidden qutoes")
 parser.add_argument("--no-cache", action="store_true", help="Disable caching head lookup results")
 
-params = parser.parse_args()
-semi_verbose = params.semi_verbose or params.verbose
-global_disable_cache = params.no_cache
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+semi_verbose = args.semi_verbose or args.verbose
+global_disable_cache = args.no_cache
+start, end = blib.parse_start_end(args.start, args.end)
 
 auto_accent_auto_bracket_russian(
-    params.find_accents, params.accent_hidden, params.cattype, params.file, params.save, params.verbose, start, end
+    args.find_accents, args.accent_hidden, args.cattype, args.file, args.save, args.verbose, start, end
 )
 
 blib.elapsed_time()

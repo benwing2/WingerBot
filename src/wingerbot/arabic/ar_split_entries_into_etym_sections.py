@@ -261,7 +261,7 @@ def split_etymologies(save, verbose, start, end):
 
 
 parser = blib.create_argparser("Split etymology sections")
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-split_etymologies(params.save, True, start, end)  # params.verbose
+split_etymologies(args.save, True, start, end)  # args.verbose

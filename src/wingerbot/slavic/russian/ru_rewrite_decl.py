@@ -416,10 +416,10 @@ def rewrite_ru_decl_adj(save, verbose, start, end):
 parser = blib.create_argparser("Rewrite Russian old declension templates")
 parser.add_argument("--adjectives", action="store_true", help="Rewrite old adjective templates")
 parser.add_argument("--nouns", action="store_true", help="Rewrite old noun templates")
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-if params.adjectives:
-    rewrite_ru_decl_adj(params.save, params.verbose, start, end)
-if params.nouns:
-    rewrite_ru_decl_noun(params.save, params.verbose, start, end)
+if args.adjectives:
+    rewrite_ru_decl_adj(args.save, args.verbose, start, end)
+if args.nouns:
+    rewrite_ru_decl_noun(args.save, args.verbose, start, end)

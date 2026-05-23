@@ -217,10 +217,10 @@ parser = blib.create_argparser("Correct vocalization and translit")
 parser.add_argument("-l", "--links", action="store_true", help="Vocalize links")
 parser.add_argument("--cattype", default="borrowed", help="Categories to examine ('vocab', 'borrowed', 'translation')")
 
-params = parser.parse_args()
-start, end = blib.parse_start_end(params.start, params.end)
+args = parser.parse_args()
+start, end = blib.parse_start_end(args.start, args.end)
 
-if params.links:
-    vocalize_links(params.save, params.verbose, params.cattype, start, end)
+if args.links:
+    vocalize_links(args.save, args.verbose, args.cattype, start, end)
 else:
-    vocalize_headwords(params.save, params.verbose, start, end)
+    vocalize_headwords(args.save, args.verbose, start, end)
