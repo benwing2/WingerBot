@@ -22,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
     subsections = subsecs.subsections
     for k, header in subsecs.subsection_headers:
         if header == "Anagrams" and k + 1 < len(subsections):
-            subsections = subsections[0:k - 1] + subsections[k + 1 : len(subsections)] + subsections[k - 1 : k + 1]
+            subsections = subsections[0 : k - 1] + subsections[k + 1 : len(subsections)] + subsections[k - 1 : k + 1]
             notes.append("put Anagrams last in %s section" % args.langname)
             break
 

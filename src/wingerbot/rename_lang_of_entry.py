@@ -44,9 +44,7 @@ def process_text_on_page(index, pagetitle, text):
     # Reorder sections by new language name, to make sure the new language section is in the right place.
     section_langs = sorted(new_headers, key=lambda x: lang_utils.langname_key(x[1]))
 
-    text = pagehead + "".join(
-        secheader + sections[j - 1: j + 1] for j, secheader in section_langs
-    )
+    text = pagehead + "".join(secheader + sections[j - 1 : j + 1] for j, secheader in section_langs)
 
     text = text.rstrip("\n") + orig_secfinalnl
 

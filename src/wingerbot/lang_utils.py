@@ -1014,7 +1014,8 @@ language_codes_to_properties: dict[str, tuple[str, Callable[[str], str], str, st
 #  canonical_
 
 language_names_to_properties = {
-    langname: (langcode, remove_accents, charset, ignore_translit) for langcode, (langname, remove_accents, charset, ignore_translit) in language_codes_to_properties.items()
+    langname: (langcode, remove_accents, charset, ignore_translit)
+    for langcode, (langname, remove_accents, charset, ignore_translit) in language_codes_to_properties.items()
 }
 
 
@@ -1022,7 +1023,7 @@ def do_remove_diacritics(text, patterns, remove_diacritics):
     pass
 
 
-#chinese_low_surrogates = (
+# chinese_low_surrogates = (
 #    "["
 #    +
 #    # The following should be the SIP: U+20000 (D840+DC00) to U+2EBEF (D87A+DFEF): #"𠀀-𮯯"
@@ -1033,7 +1034,7 @@ def do_remove_diacritics(text, patterns, remove_diacritics):
 #    # We include a bit more than needed to get everything.
 #    "\ud880-\ud884"
 #    + "]"
-#)
+# )
 
 chinese_misc_ideographic_symbols_and_punctuation = (
     # "𖿢𖿣𖿰𖿱"

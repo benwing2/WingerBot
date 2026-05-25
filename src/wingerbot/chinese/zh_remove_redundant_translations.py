@@ -60,6 +60,7 @@ def process_text_on_page(index, pagetitle, text):
             lines = subsections[k].split("\n")
             in_chinese = False
             for j, line in enumerate(lines):
+
                 def line_pagemsg(txt):
                     msg("Page %s %s: %s: <from> %s <to> %s <end>" % (index, pagetitle, txt, line, line))
 

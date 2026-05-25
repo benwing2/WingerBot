@@ -164,7 +164,8 @@ def process_text_on_page(pageindex, pagetitle, text):
 
                 if qualifier and len(syns) > 1:
                     pagemsg(
-                        "WARNING: Saw qualifier along with multiple synonyms, not sure how to proceed: <%s>" % orig_syntext
+                        "WARNING: Saw qualifier along with multiple synonyms, not sure how to proceed: <%s>"
+                        % orig_syntext
                     )
                     return None
                 joiner_after = ";" if qualifier or len(syns) > 1 else ","
@@ -374,7 +375,11 @@ def process_text_on_page(pageindex, pagetitle, text):
                 any_semicolon = any(syn.joiner_after == ";" for syn in syns)
                 if any_semicolon:
                     syns = [
-                        ParsedSyn(syn.synonym, syn.other_params, ";" if syn.joiner_after is not None and any_semicolon else syn.joiner_after)
+                        ParsedSyn(
+                            syn.synonym,
+                            syn.other_params,
+                            ";" if syn.joiner_after is not None and any_semicolon else syn.joiner_after,
+                        )
                         for syn in syns
                     ]
                 saw_nyms_already.add(syntype)
@@ -415,14 +420,20 @@ def process_text_on_page(pageindex, pagetitle, text):
             if find_defns_result is None:
                 continue
 
-            def put_back_new_defns(defns: list[str], syndesc: str, skipped_a_line: bool, lines: list[str], skipped_linenos: list[int]) -> None:
+            def put_back_new_defns(
+                defns: list[str], syndesc: str, skipped_a_line: bool, lines: list[str], skipped_linenos: list[int]
+            ) -> None:
                 """Put the new definitions in `defns` back into the subsection text, clearing out any existing text
                 (e.g. synonym or antonym lines, which have been incorporated into `defns`). If `skipped_a_line` is True,
                 put the skipped lines back in as well instead of clearing out all synonym or antonym lines. `syndesc`
                 is a description of the type of synonyms or antonyms being processed, for logging purposes."""
                 if find_defns_result is None or defn_subsection is None:
-                    raise RuntimeError("Expected to have found a definition subsection and definition when calling put_back_new_defns")
-                subsecs.subsections[defn_subsection] = find_defns_result.before_defn_text + "".join(defns) + find_defns_result.after_defn_text
+                    raise RuntimeError(
+                        "Expected to have found a definition subsection and definition when calling put_back_new_defns"
+                    )
+                subsecs.subsections[defn_subsection] = (
+                    find_defns_result.before_defn_text + "".join(defns) + find_defns_result.after_defn_text
+                )
                 if skipped_a_line:
                     skipped_linenos = sorted(skipped_linenos)
                     skipped_lines = [lines[lineno] for lineno in skipped_linenos]
@@ -659,11 +670,13 @@ def process_text_on_page(pageindex, pagetitle, text):
                     )
                 )
             if len(defns) == 1 or args.do_your_best:
+
                 @dataclass
                 class SynsByLine:
                     lineno: int
                     synno: int
                     parsed_syns: list[ParsedSyn]
+
                 unparsable = False
                 all_syns: list[SynsByLine] = []
                 syns_by_tag = {}
@@ -742,7 +755,9 @@ def process_text_on_page(pageindex, pagetitle, text):
                                     for syn_by_line in all_syns
                                 ]
                         # Add inline synonyms
-                        all_parsed_syns = [syn for syn_by_line in all_syns for syn in syn_by_line.parsed_syns]  # flatten
+                        all_parsed_syns = [
+                            syn for syn_by_line in all_syns for syn in syn_by_line.parsed_syns
+                        ]  # flatten
                         new_defn = add_syns_to_defn(all_parsed_syns, defns[0], len(defns) > 1)
                         if new_defn is None:
                             continue

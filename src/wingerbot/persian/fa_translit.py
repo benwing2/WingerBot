@@ -1827,7 +1827,7 @@ def test_with_obj(obj, latin, arabic, should_outcome, should_latin=None):
         num_failed += 1
 
 
-def test(latin, arabic, should_outcome, should_latin=None):
+def test(latin, arabic, should_outcome, should_latin=None, gloss=None):
     test_with_obj(None, latin, arabic, should_outcome, should_latin=should_latin)
 
 

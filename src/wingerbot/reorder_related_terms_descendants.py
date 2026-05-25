@@ -21,8 +21,11 @@ def process_text_on_page(index, pagetitle, text):
         for k, header in subsecs.subsection_headers:
             if header == "Descendants":
                 desc_indent = subsecs.subsection_levels[k]
-                if (k + 2 < len(subsections) and subsecs.subsection_headers[k + 2] == "Related terms" and
-                    subsecs.subsection_levels[k + 2] == desc_indent):
+                if (
+                    k + 2 < len(subsections)
+                    and subsecs.subsection_headers[k + 2] == "Related terms"
+                    and subsecs.subsection_levels[k + 2] == desc_indent
+                ):
                     desc_text = subsections[k - 1 : k + 1]
                     subsections[k - 1 : k + 1] = subsections[k + 1 : k + 3]
                     subsections[k + 1 : k + 3] = desc_text

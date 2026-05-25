@@ -3485,7 +3485,9 @@ def create_forms(
             ]
             # Group dictionary forms by Russian, to group multiple translits
             dicforms = rulib.group_translits(dicforms, pagemsg, verbose)
-            dicforms_args_sets = split_forms_with_stress_variants(formvals, forms_desired, dicforms, pagemsg, expand_text)
+            dicforms_args_sets = split_forms_with_stress_variants(
+                formvals, forms_desired, dicforms, pagemsg, expand_text
+            )
             # If multiple stress variants, allow stress mismatch when comparing
             # definitions to see if we can insert a subsection next to an existing
             # one rather than create a new etymology section, so the stress variants

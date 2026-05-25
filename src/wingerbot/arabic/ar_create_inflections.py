@@ -303,7 +303,12 @@ def create_inflection_entry(
                 infltemp_params_str,
                 "|tr=%s" % infltr if infltr else "",
             )
-            new_defn_template = "{{%s|%s%s%s}}" % (deftemp, lemma, "|tr=%s" % lemmatr if lemmatr else "", deftemp_params)
+            new_defn_template = "{{%s|%s%s%s}}" % (
+                deftemp,
+                lemma,
+                "|tr=%s" % lemmatr if lemmatr else "",
+                deftemp_params,
+            )
             newposbody = """%s
 
     # %s
@@ -526,7 +531,9 @@ def create_inflection_entry(
 
                             for t in parsed.filter_templates():
                                 if t.name == "ar-verb-form":
-                                    vf_vowels = re.sub("[^" + A + I + U + "]", "", reorder_shadda(getparam(t, "1"))[0:-1])
+                                    vf_vowels = re.sub(
+                                        "[^" + A + I + U + "]", "", reorder_shadda(getparam(t, "1"))[0:-1]
+                                    )
                                     if len(vf_vowels) > 0:
                                         if vf_vowels[-1] == A:
                                             vf_last_vowel = "a"
@@ -849,7 +856,9 @@ def create_inflection_entry(
                                             )
                                             return False
                                         if re.search(r"\bp\b", new):
-                                            pagemsg("WARNING: Something wrong, new vn/fem gender %s has 'p' in it" % new)
+                                            pagemsg(
+                                                "WARNING: Something wrong, new vn/fem gender %s has 'p' in it" % new
+                                            )
                                             return False
                                     m = re.search(r"\b([mf])\b", existing)
                                     existing_mf = m and m.group(1)
@@ -885,7 +894,9 @@ def create_inflection_entry(
                                     return False
                                 new_gender2 = len(gender) == 2 and gender[1] or ""
                                 if existing_gender2 or new_gender2:
-                                    new_gender2 = gender_compatible(existing_gender2 or defgender, new_gender2 or defgender)
+                                    new_gender2 = gender_compatible(
+                                        existing_gender2 or defgender, new_gender2 or defgender
+                                    )
                                     if new_gender2 == False:
                                         return False
                                 changed = False
@@ -894,7 +905,9 @@ def create_inflection_entry(
                                     addparam(headword_template, "2", new_gender)
                                     changed = True
                                 if new_gender2 != existing_gender2 and new_gender2 and new_gender2 != defgender:
-                                    pagemsg("Modifying second gender from '%s' to '%s'" % (existing_gender2, new_gender2))
+                                    pagemsg(
+                                        "Modifying second gender from '%s' to '%s'" % (existing_gender2, new_gender2)
+                                    )
                                     addparam(headword_template, "g2", new_gender2)
                                     changed = True
                                 if changed:
@@ -985,7 +998,8 @@ def create_inflection_entry(
                                         # Replace existing infl with new one
                                         if len(inflection) > len(existing_infl):
                                             pagemsg(
-                                                "Updating existing %s %s with %s" % (infltemp, existing_infl, inflection)
+                                                "Updating existing %s %s with %s"
+                                                % (infltemp, existing_infl, inflection)
                                             )
                                             addparam(infl_headword_template, infl_headword_matching_param, inflection)
                                             if infltr:
@@ -998,19 +1012,24 @@ def create_inflection_entry(
 
                                         # Replace existing lemma with new one
                                         if len(lemma) > len(existing_lemma):
-                                            pagemsg("Updating existing '%s' %s with %s" % (deftemp, existing_lemma, lemma))
+                                            pagemsg(
+                                                "Updating existing '%s' %s with %s" % (deftemp, existing_lemma, lemma)
+                                            )
                                             addparam(defn_template, "1", lemma)
                                             if lemmatr:
                                                 addparam(defn_template, "tr", lemmatr)
 
                                         subsections[j] = str(parsed)
                                         sections[i] = "".join(subsections)
-                                        comment = "Update Arabic with better vocalized versions: %s %s, %s %s, pos=%s" % (
-                                            infltype,
-                                            inflection,
-                                            lemmatype,
-                                            lemma,
-                                            pos,
+                                        comment = (
+                                            "Update Arabic with better vocalized versions: %s %s, %s %s, pos=%s"
+                                            % (
+                                                infltype,
+                                                inflection,
+                                                lemmatype,
+                                                lemma,
+                                                pos,
+                                            )
                                         )
                                         break
 
@@ -1058,7 +1077,8 @@ def create_inflection_entry(
                                             found_exact_matching = True
                                         else:
                                             pagemsg(
-                                                "Found non-matching definitional template for %s: %s" % (infltype, str(d_t))
+                                                "Found non-matching definitional template for %s: %s"
+                                                % (infltype, str(d_t))
                                             )
 
                                     if verb_part_inserted_defn:
@@ -1083,16 +1103,25 @@ def create_inflection_entry(
                                         if subsections[j][-1] != "\n":
                                             subsections[j] += "\n"
                                         subsections[j] = re.sub(
-                                            r"^(.*\n#[^\n]*\n)", r"\1# %s\n" % new_defn_template, subsections[j], 1, re.S
+                                            r"^(.*\n#[^\n]*\n)",
+                                            r"\1# %s\n" % new_defn_template,
+                                            subsections[j],
+                                            1,
+                                            re.S,
                                         )
                                         sections[i] = "".join(subsections)
-                                        pagemsg("Adding new definitional template to existing defn for pos = %s" % (pos))
-                                        comment = "Add new definitional template to existing defn: %s %s, %s %s, pos=%s" % (
-                                            infltype,
-                                            inflection,
-                                            lemmatype,
-                                            lemma,
-                                            pos,
+                                        pagemsg(
+                                            "Adding new definitional template to existing defn for pos = %s" % (pos)
+                                        )
+                                        comment = (
+                                            "Add new definitional template to existing defn: %s %s, %s %s, pos=%s"
+                                            % (
+                                                infltype,
+                                                inflection,
+                                                lemmatype,
+                                                lemma,
+                                                pos,
+                                            )
                                         )
 
                                     # Don't break, so we can check for duplicate entries.
@@ -1110,7 +1139,12 @@ def create_inflection_entry(
                                     check_fix_infl_params(infl_headword_template, infltemp_params, gender, True)
                                     # "Do nothing", but set a comment, in case we made a template
                                     # change like updating i3rab or changing gender.
-                                    comment = "Already found entry: %s %s, %s %s" % (infltype, inflection, lemmatype, lemma)
+                                    comment = "Already found entry: %s %s, %s %s" % (
+                                        infltype,
+                                        inflection,
+                                        lemmatype,
+                                        lemma,
+                                    )
                                     break
 
                             # At this point, didn't find both headword and definitional
@@ -1326,7 +1360,8 @@ def create_inflection_entry(
                                 insert_at = None
                                 for j in range(2, len(subsections), 2):
                                     if re.match(
-                                        "^===+Verb===+" if is_verb_part else "^===+(Noun|Adjective)===+", subsections[j - 1]
+                                        "^===+Verb===+" if is_verb_part else "^===+(Noun|Adjective)===+",
+                                        subsections[j - 1],
                                     ):
                                         parsed = blib.parse_text(subsections[j])
                                         defn_templates = [t for t in parsed.filter_templates() if t.name == deftemp]
@@ -1337,7 +1372,9 @@ def create_inflection_entry(
 
                             insert_at = section_to_insert_after()
                             if insert_at:
-                                pagemsg("Found section to insert %s after: [[%s]]" % (infltype, subsections[insert_at - 1]))
+                                pagemsg(
+                                    "Found section to insert %s after: [[%s]]" % (infltype, subsections[insert_at - 1])
+                                )
 
                                 # Determine indent level and skip past sections at higher indent
                                 m = re.match("^(==+)", subsections[insert_at - 2])
@@ -1360,7 +1397,12 @@ def create_inflection_entry(
                                     secmsg = "noun/adjective section for same inflection"
 
                                 pagemsg("Inserting after %s" % secmsg)
-                                comment = "Insert entry for %s %s of %s after %s" % (infltype, inflection, lemma, secmsg)
+                                comment = "Insert entry for %s %s of %s after %s" % (
+                                    infltype,
+                                    inflection,
+                                    lemma,
+                                    secmsg,
+                                )
                                 subsections[insert_at - 1] = ensure_two_trailing_nl(subsections[insert_at - 1])
                                 if indentlevel == 3:
                                     subsections[insert_at:insert_at] = [newposheader, newposbody + "\n"]
@@ -1383,14 +1425,17 @@ def create_inflection_entry(
                                         parsed = blib.parse_text(subsections[j])
                                         for t in parsed.filter_templates():
                                             if (
-                                                t.name in ["ar-noun", "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]
+                                                t.name
+                                                in ["ar-noun", "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]
                                                 and template_head_matches(t, inflection)
                                                 and insert_at is None
                                             ):
                                                 insert_at = j - 1
 
                             if insert_at is not None:
-                                pagemsg("Found section to insert participle before: [[%s]]" % subsections[insert_at + 1])
+                                pagemsg(
+                                    "Found section to insert participle before: [[%s]]" % subsections[insert_at + 1]
+                                )
 
                                 comment = "Insert entry for %s %s of %s before section for same lemma" % (
                                     infltype,
@@ -1427,12 +1472,15 @@ def create_inflection_entry(
                             while ("\n===Etymology %s===\n" % j) in sections[i]:
                                 j += 1
                             pagemsg('Found multiple etymologies, adding new section "Etymology %s"' % (j))
-                            comment = "Append entry (Etymology %s) for %s %s of %s, pos=%s in existing Arabic section" % (
-                                j,
-                                infltype,
-                                inflection,
-                                lemma,
-                                pos,
+                            comment = (
+                                "Append entry (Etymology %s) for %s %s of %s, pos=%s in existing Arabic section"
+                                % (
+                                    j,
+                                    infltype,
+                                    inflection,
+                                    lemma,
+                                    pos,
+                                )
                             )
                             sections[i] = ensure_two_trailing_nl(sections[i])
                             sections[i] += "===Etymology %s===\n" % j + entrytextl4 + "\n"
@@ -2590,16 +2638,12 @@ personal = args.personal
 
 if args.plural:
     create_plurals("Noun", ["ar-noun", "ar-noun-nisba"], start, end)
-    create_plurals(
-        "Adjective", ["ar-adj", "ar-nisba", "ar-adj-sound", "ar-adj-in", "ar-adj-an"], start, end
-    )
+    create_plurals("Adjective", ["ar-adj", "ar-nisba", "ar-adj-sound", "ar-adj-in", "ar-adj-an"], start, end)
 
 if args.feminine:
     # FIXME: Feminine noun creation not tested yet
     create_feminines("Noun", ["ar-noun", "ar-noun-nisba"], start, end)
-    create_feminines(
-        "Adjective", ["ar-adj", "ar-nisba", "ar-adj-sound", "ar-adj-in", "ar-adj-an"], start, end
-    )
+    create_feminines("Adjective", ["ar-adj", "ar-nisba", "ar-adj-sound", "ar-adj-in", "ar-adj-an"], start, end)
 
 if args.verbal_noun:
     create_verbal_nouns(start, end)

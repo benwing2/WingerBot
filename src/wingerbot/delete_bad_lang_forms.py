@@ -52,11 +52,11 @@ def delete_form_1(index, page, lemma, formind, formval):
 
     # FIXME!
 
-    # if "==Etymology 1==" in secbody:
-    #  etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-    #  for k in range(2, len(etym_sections), 2):
-    #    etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
-    #  secbody = "".join(etym_sections)
+    #if "==Etymology 1==" in secbody:
+    #    etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+    #    for k in range(2, len(etym_sections), 2):
+    #        etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
+    #    secbody = "".join(etym_sections)
 
     subsections_to_delete = []
     subsections_to_remove_inflections_from = []

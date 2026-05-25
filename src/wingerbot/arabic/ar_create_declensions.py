@@ -79,10 +79,13 @@ adjectival_phrases = [
 def create_declension(index, page, pos, tempname, decltempname, sgnum, removeparams, is_proper=False):
     def create_declension_1(index, page):
         pagetitle = page.title()
+
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
+
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+
         text = blib.safe_page_text(page, errandpagemsg)
 
         comments = []
@@ -133,6 +136,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 parsed = blib.parse_text(reorder_shadda(subsections[k]))
 
                 orig_pagemsg = pagemsg
+
                 def pagemsg(txt):
                     orig_pagemsg("%s: [[%s]]" % (txt, subsections[k]))
 
@@ -151,9 +155,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     pagemsg("Alternative spelling redirect found in text, skipping")
                     continue
                 if pos == "Adjective":
-                    feminine_of_templates = [
-                        temp for temp in parsed.filter_templates() if temp.name in ["feminine of"]
-                    ]
+                    feminine_of_templates = [temp for temp in parsed.filter_templates() if temp.name in ["feminine of"]]
                     if len(feminine_of_templates) > 0:
                         pagemsg("feminine-of template found for adjective, skipping")
                         continue
@@ -192,8 +194,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 headword_template = headword_templates[0]
                 if headword_template.name != tempname:
                     pagemsg(
-                        "Headword template should be '%s' but is '%s', skipping"
-                        % (tempname, headword_template.name)
+                        "Headword template should be '%s' but is '%s', skipping" % (tempname, headword_template.name)
                     )
                     continue
 
@@ -247,9 +248,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     words = re.split(r"\s", remove_links(head))
                     head = words[0]
                     if len(words) > 2:
-                        pagemsg(
-                            "WARNING: Headword template head %s has two or more spaces in it, skipping" % orighead
-                        )
+                        pagemsg("WARNING: Headword template head %s has two or more spaces in it, skipping" % orighead)
                         continue
                     assert len(words) == 2
 
@@ -624,11 +623,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     return arabic
 
                 params = "|".join(
-                    [
-                        process_param(param)
-                        for param in headword_template.params
-                        if not param_should_be_removed(param)
-                    ]
+                    [process_param(param) for param in headword_template.params if not param_should_be_removed(param)]
                 )
                 # For templates that automatically supply the masculine plural,
                 # supply it here, too if not overridden.

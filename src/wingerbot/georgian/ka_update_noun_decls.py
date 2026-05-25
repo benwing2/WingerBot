@@ -62,8 +62,8 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("convert {{ka-noun-c-2}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    #newtext = re.sub(r"==\s*Declension\s*==", "==Inflection==", secbody)
-    #if secbody != newtext:
+    # newtext = re.sub(r"==\s*Declension\s*==", "==Inflection==", secbody)
+    # if secbody != newtext:
     #    notes.append("==Declension== -> ==Inflection== in Georgian section")
     #    secbody = newtext
 

@@ -1806,9 +1806,7 @@ def generate_adj_forms(t, expand_text):
         return expand_text(re.sub(r"^\{\{yi-decl-poss\s*\|", r"{{yi-generate-adj-forms|decltype=possessive|", str(t)))
 
 
-def create_adj_forms(
-    start, end, formspec, lemmas_to_process, lemmas_to_overwrite, lemmas_to_not_overwrite, args
-):
+def create_adj_forms(start, end, formspec, lemmas_to_process, lemmas_to_overwrite, lemmas_to_not_overwrite, args):
     create_forms(
         lemmas_to_process,
         lemmas_to_overwrite,

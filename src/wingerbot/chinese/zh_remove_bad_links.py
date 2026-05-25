@@ -40,7 +40,7 @@ def process_text_on_page(index, pagetitle, text):
             del subsections[k : k + 2]
         notes.append("remove empty References section")
 
-    return modsec.rebuild(secbody = "".join(subsections)), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

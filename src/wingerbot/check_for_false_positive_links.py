@@ -12,6 +12,7 @@ english_pages = {}
 def find_english_pages(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+
     secs = blib.split_text_into_sections(text, pagemsg)
     saw_langs = set()
     saw_english = False

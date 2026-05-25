@@ -959,7 +959,9 @@ def pre_pre_canonicalize_arabic(text, msgfun=msg):
         text = newtext
     return text
 
+
 word_initial_prefix = r"(^|\s|\[\[|\|)"
+
 
 # Pre-canonicalize the Arabic. If SAFE, only do "safe" operations appropriate
 # to canonicalizing Arabic on its own, not before a tr_matching() operation.
@@ -994,14 +996,18 @@ def pre_canonicalize_arabic(text, safe=False, msgfun=msg):
         # word-initial al + l + dagger-alif + h (allāh): convert second l
         # to double_l_subst; will match shadda in Latin allāh during
         # tr_matching(), will be converted back during post-canonicalization
-        text = rsub(text, word_initial_prefix + "(\u0627\u064e?\u0644)\u0644(\u0670?ه)", r"\1\2" + double_l_subst + r"\3")
+        text = rsub(
+            text, word_initial_prefix + "(\u0627\u064e?\u0644)\u0644(\u0670?ه)", r"\1\2" + double_l_subst + r"\3"
+        )
         # same for hamzat al-waṣl + l + l + dagger-alif + h occurring anywhere.
         text = rsub(text, "(\u0671\u064e?\u0644)\u0644(\u0670?ه)", r"\1" + double_l_subst + r"\2")
         # word-initial al + sun letter: convert l to assimilating_l_subst; will
         # convert back during post-canonicalization; during tr_matching(),
         # assimilating_l_subst will match the appropriate character, or "l"
         text = rsub(
-            text, word_initial_prefix + "(\u0627\u064e?)\u0644([" + sun_letters + "])", r"\1\2" + assimilating_l_subst + r"\3"
+            text,
+            word_initial_prefix + "(\u0627\u064e?)\u0644([" + sun_letters + "])",
+            r"\1\2" + assimilating_l_subst + r"\3",
         )
         # same for hamzat al-waṣl + l + sun letter occurring anywhere.
         text = rsub(text, "(\u0671\u064e?)\u0644([" + sun_letters + "])", r"\1" + assimilating_l_subst + r"\2")

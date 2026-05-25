@@ -26,6 +26,7 @@ def process_text_on_page(index, pagetitle, text):
     sections = secs.sections
 
     for j, seclangname in secs.section_langs:
+
         def matches(cat, cat_type):
             cat = cat.replace("_", " ")
             for fromre, from_type, tore, to_type in moves_to_do:

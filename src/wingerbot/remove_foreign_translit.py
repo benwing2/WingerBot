@@ -188,6 +188,4 @@ if args.lang:
         raise ValueError("Unrecognized language '%s'" % args.lang)
     longlang, this_ignore_manual_tr = languages[args.lang]
 
-canon_links(
-    args.save, args.verbose, args.cattype, languages.keys(), longlang, start, end, pages_to_do=pages_to_do
-)
+canon_links(args.save, args.verbose, args.cattype, languages.keys(), longlang, start, end, pages_to_do=pages_to_do)

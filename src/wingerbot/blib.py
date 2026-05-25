@@ -39,24 +39,30 @@ type ProcessTextOnPageWithCommentCallback = Callable[[Index, str, str, Changelog
 # 2. Create the union of callback types.
 type DoPagefileCatsRefsCallback = ProcessPageCallback | ProcessTextOnPageCallback | ProcessTextOnPageWithCommentCallback
 
+
 # 3. Implement explicit runtime TypeIs predicates for Pylance narrowing.
-def is_process_text_on_page_with_comment_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[ProcessTextOnPageWithCommentCallback]:
+def is_process_text_on_page_with_comment_callback(
+    func: DoPagefileCatsRefsCallback,
+) -> TypeIs[ProcessTextOnPageWithCommentCallback]:
     return len(inspect.signature(func).parameters) == 4
+
 
 def is_process_text_on_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[ProcessTextOnPageCallback]:
     return len(inspect.signature(func).parameters) == 3
 
+
 def is_process_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[ProcessPageCallback]:
     return len(inspect.signature(func).parameters) == 2
+
 
 # 4. Implement the dispatcher function that calls the appropriate callback based on its signature.
 def execute_do_pagefile_cats_refs_callback(
     callback: DoPagefileCatsRefsCallback,
-    index: Index, 
+    index: Index,
     page: Page | None,
     pagetitle: str | None,
     text: str | None,
-    prev_comment: ChangelogComment | None
+    prev_comment: ChangelogComment | None,
 ) -> None:
 
     if is_process_text_on_page_with_comment_callback(callback):
@@ -65,10 +71,10 @@ def execute_do_pagefile_cats_refs_callback(
                 "Internal error: Saw four-arg callback (process_text_on_page_with_comment) but expected "
                 "two-arg callback (process_page)"
             )
-        # Pylance narrows the type to ProcessTextOnPageWithCommentCallback here. 
+        # Pylance narrows the type to ProcessTextOnPageWithCommentCallback here.
         # Only 4 parameters are permitted.
-        callback(index, pagetitle, text, prev_comment) 
-        
+        callback(index, pagetitle, text, prev_comment)
+
     elif is_process_text_on_page_callback(callback):
         if pagetitle is None or text is None:
             raise RuntimeError(
@@ -80,10 +86,10 @@ def execute_do_pagefile_cats_refs_callback(
                 "Internal error: Saw three-arg callback (process_text_on_page) but expected "
                 "four-arg callback (process_text_on_page_with_comment)"
             )
-        # Pylance narrows the type to ProcessTextOnPageCallback here. 
+        # Pylance narrows the type to ProcessTextOnPageCallback here.
         # Only 3 parameters are permitted.
         callback(index, pagetitle, text)
-        
+
     elif is_process_page_callback(callback):
         if pagetitle is not None or text is not None:
             if prev_comment is not None:
@@ -97,15 +103,14 @@ def execute_do_pagefile_cats_refs_callback(
                     "three-arg callback (process_text_on_page)"
                 )
         if page is None:
-            raise RuntimeError(
-                "Internal error: Bad call to execute_callback: pagetitle, text, page all None"
-            )
-        # Pylance narrows the type to ProcessPageCallback here. 
+            raise RuntimeError("Internal error: Bad call to execute_callback: pagetitle, text, page all None")
+        # Pylance narrows the type to ProcessPageCallback here.
         # Only 2 parameters are permitted.
         callback(index, page)
-        
+
     else:
         raise RuntimeError("Callback signature is invalid or unrecognized")
+
 
 ############################ End implementation of do_pagefile_cats_refs callback to satisfy Pylance.
 
@@ -242,7 +247,7 @@ def parse_template_name(name: str) -> tuple[str, str, str]:
     """Parse a template name into three parts: any whitespace and/or comments before the name, the name itself, and
     any whitespace and/or comments after the name."""
     m = re.search(r"\A(\s*)(.*?)(\s*(?:<!--.*?-->)?\s*)\Z", name, re.S)
-    assert m is not None # Regex should always match
+    assert m is not None  # Regex should always match
     before, name, after = m.groups()
     return before, name, after
 
@@ -308,8 +313,11 @@ def find_following_param(t, param):
 #   prefix is NAME are checked and the term index is ###;
 # * a function of one argument to convert the param name to a term index (or None to skip the param).
 # If no matching params are found, 0 is returned.
-def find_max_term_index(t: Template, first_numeric: int | str | Callable[[int], int | None] | None = None,
-                        named_params: Literal[True] | list[str] | Callable[[str], int | None] | None = None) -> int:
+def find_max_term_index(
+    t: Template,
+    first_numeric: int | str | Callable[[int], int | None] | None = None,
+    named_params: Literal[True] | list[str] | Callable[[str], int | None] | None = None,
+) -> int:
     if isinstance(first_numeric, str):
         first_numeric = int(first_numeric)
 
@@ -363,7 +371,14 @@ class ParameterError(Exception):
 #
 # Handling of parameter errors (see above) depends on the value of `errors`. If "throw" (the default), ParameterError
 # is thrown. If "return", a string specifying the error message is returned.
-def fetch_param_chain(t: Template, first: ParamOrParamList, pref: str | None = None, firstdefault: str = "", holes: str = "close", errors: str = "throw") -> list[str | None] | str:
+def fetch_param_chain(
+    t: Template,
+    first: ParamOrParamList,
+    pref: str | None = None,
+    firstdefault: str = "",
+    holes: str = "close",
+    errors: str = "throw",
+) -> list[str | None] | str:
     is_number = pref is None and type(first) is str and re.search("^[0-9]+$", first)
     assert first != "", "first= may not be an empty string"
     if type(first) is list:
@@ -596,14 +611,12 @@ def handle_process_page_retval(retval, existing_text: str, pagemsg: PagemsgCallb
     return new, comment, has_changed
 
 
-def expand_text(tempcall: str, pagetitle: str, pagemsg: PagemsgCallback, verbose: bool, suppress_errors: bool = False) -> str | Literal[False]:
+def expand_text(
+    tempcall: str, pagetitle: str, pagemsg: PagemsgCallback, verbose: bool, suppress_errors: bool = False
+) -> str | Literal[False]:
     if verbose:
         pagemsg("Expanding text: %s" % tempcall)
-    result = try_repeatedly(
-        lambda: site.expand_text(tempcall, title=pagetitle),
-        pagemsg,
-        "expand text: %s" % tempcall
-    )
+    result = try_repeatedly(lambda: site.expand_text(tempcall, title=pagetitle), pagemsg, "expand text: %s" % tempcall)
     if result is None:
         result = '<strong class="error">Invalid title</strong>'
     assert type(result) is str, "Expected string result from expand_text, got %s" % type(result)
@@ -1682,13 +1695,17 @@ def do_pagefile_cats_refs(
 
         return sections, j, secbody, sectail
 
-    def do_process_text_on_page(index: Index, pagetitle: str, text: str, prev_comment: ChangelogComment | None, pagemsg: PagemsgCallback) -> ProcessPageRetval:
+    def do_process_text_on_page(
+        index: Index, pagetitle: str, text: str, prev_comment: ChangelogComment | None, pagemsg: PagemsgCallback
+    ) -> ProcessPageRetval:
         def errandpagemsg(txt: str) -> None:
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
         def call_process(text_to_call: str) -> ProcessPageRetval:
             if include_comment:
-                return execute_do_pagefile_cats_refs_callback(process, index, None, pagetitle, text_to_call, prev_comment)
+                return execute_do_pagefile_cats_refs_callback(
+                    process, index, None, pagetitle, text_to_call, prev_comment
+                )
             else:
                 return execute_do_pagefile_cats_refs_callback(process, index, None, pagetitle, text_to_call, None)
 
@@ -2020,8 +2037,13 @@ def elapsed_time():
     msg("Ending at %s" % time.ctime(endtime))
 
 
-def try_repeatedly[T](fun: Callable[[], T], errandpagemsg: PagemsgCallback, operation: str = "save", max_tries: int = 2,
-                      sleep_time: int = 5) -> T | None:
+def try_repeatedly[T](
+    fun: Callable[[], T],
+    errandpagemsg: PagemsgCallback,
+    operation: str = "save",
+    max_tries: int = 2,
+    sleep_time: int = 5,
+) -> T | None:
     num_tries = 0
 
     def log_exception(txt, e, skipping=False):
@@ -2156,7 +2178,7 @@ def parse_balanced_segment_run(segment_run, op, cl):
 #
 # parse_multi_delimiter_balanced_segment_run("foo[bar(baz[bat])], quux<glorp>", [(r"\[", r"\]"), (r"\(", r"\)"), ("<", ">")]) =
 #   ["foo", "[bar(baz[bat])]", ", quux", "<glorp>", ""]
-def parse_multi_delimiter_balanced_segment_run(segment_run: str, delimiter_pairs:list[tuple[str, str]]) -> list[str]:
+def parse_multi_delimiter_balanced_segment_run(segment_run: str, delimiter_pairs: list[tuple[str, str]]) -> list[str]:
     open_to_close_map = {}
     open_close_items = []
     open_items = []
@@ -2344,7 +2366,14 @@ class ParamWithInlineModifier:
 
     Use parse_inline_modifier() to parse a string into a ParamWithInlineModifier.
     """
-    def __init__(self, mainval: str, modifiers: list[tuple[str, str]], preceding_whitespace: str = "", following_whitespace: str = ""):
+
+    def __init__(
+        self,
+        mainval: str,
+        modifiers: list[tuple[str, str]],
+        preceding_whitespace: str = "",
+        following_whitespace: str = "",
+    ):
         self.mainval = mainval
         self.modifiers = modifiers
         self.preceding_whitespace = preceding_whitespace
@@ -2630,8 +2659,12 @@ def process_one_page_links(
             #   parse as an inline modifier, checking for a display-text param in 'alt:' and translit in 'tr:'. In this case,
             #   if `other_lang_param` is specified, check for a 'lang:' inline modifier and ignore `param` if so.
             def doparam_checking_alt(
-                langparam: Langparam, param: ParamOrParamList, altparam: ParamOrParamList | None, trparam: ParamOrParamList | None,
-                other_lang_param: ParamOrParamList | None = None, check_inline_modifiers: bool = False
+                langparam: Langparam,
+                param: ParamOrParamList,
+                altparam: ParamOrParamList | None,
+                trparam: ParamOrParamList | None,
+                other_lang_param: ParamOrParamList | None = None,
+                check_inline_modifiers: bool = False,
             ) -> bool:
                 # Here we repeat the check at the beginning of `doparam`; but this short-circuits all the templates for
                 # different languages.
@@ -3431,6 +3464,7 @@ class SplitTextIntoSectionsResult:
     def section_lang_dict(self):
         return dict(self.section_langs)
 
+
 def split_text_into_sections(pagetext: str, pagemsg: PagemsgCallback | None) -> SplitTextIntoSectionsResult:
     """Split text into sections.
     Return a `SplitTextIntoSubsectionsResult` object, with fields as follows:
@@ -3473,7 +3507,9 @@ class SplitTextIntoSubsectionsResult:
         return dict(self.subsection_headers)
 
 
-def split_text_into_subsections(secbody: str, pagemsg: PagemsgCallback | None, only_level: int | None = None) -> SplitTextIntoSubsectionsResult:
+def split_text_into_subsections(
+    secbody: str, pagemsg: PagemsgCallback | None, only_level: int | None = None
+) -> SplitTextIntoSubsectionsResult:
     """Split `secbody` (the body of a language section, as returned by find_modifiable_lang_section()) into subsections.
     Return a `SplitTextIntoSubsectionsResult` object, with fields as follows:
     * `subsections` is a list of the text of the sections, where odd-numbered elements contain headers and even-numbered
@@ -3488,7 +3524,7 @@ def split_text_into_subsections(secbody: str, pagemsg: PagemsgCallback | None, o
       equal signs of the section header).
     The original language section body can be reconstructed by concatenating the values of `subsections` with a blank
     string between them.
-    
+
     If `only_level` is given, only split on headers of that level; otherwise, split on all headers."""
     header_equals = "=" * only_level if only_level is not None else "==+"
     subsections = re.split(r"(^%s[^=\n]+%s[ \t]*\n)" % (header_equals, header_equals), secbody, 0, re.M)
@@ -3518,9 +3554,8 @@ def split_text_into_subsections(secbody: str, pagemsg: PagemsgCallback | None, o
             subsection_levels[j] = num_equals
             subsection_headers.append((j, header))
             subsections_by_header[header].append(j)
-    return SplitTextIntoSubsectionsResult(
-        subsections, subsections_by_header, subsection_headers, subsection_levels
-    )
+    return SplitTextIntoSubsectionsResult(subsections, subsections_by_header, subsection_headers, subsection_levels)
+
 
 @dataclass
 class ModifiableLangSection:
@@ -3548,8 +3583,9 @@ class ModifiableLangSection:
         return "".join(self.sections)
 
 
-def find_modifiable_lang_section(text: str, lang: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False
-                                 ) -> ModifiableLangSection | None:
+def find_modifiable_lang_section(
+    text: str, lang: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False
+) -> ModifiableLangSection | None:
     """Find the section for the language `lang` in `text` (the text of the page), returning values so that the
     language-specific text can be modified and then the page as a whole put back together in preparation for saving.
     Return None if the language can't be found; otherwise, return a `ModifiableLangSection` named tuple of five values:
