@@ -1842,7 +1842,7 @@ def process_text_on_page(index, pagetitle, text):
                                     if m:
                                         tr = m.group(1)
                                 if gloss:
-                                    cleaned_gloss = re.sub("\{\{ *[^{}]*? *\}\}", "", gloss)
+                                    cleaned_gloss = re.sub(r"\{\{ *[^{}]*? *\}\}", "", gloss)
                                     if (
                                         lang in ["ar", "ur", "fa", "pa"]
                                         and (

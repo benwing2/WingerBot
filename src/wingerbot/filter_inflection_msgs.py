@@ -15,7 +15,7 @@ pagenos = set()
 for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
     if "Would save with comment" in line:
         m = re.search(
-            "^Page ([0-9]+) .*Would save with comment.* (?:of|dictionary form) (.*?)(,| after| before| \(add| \(modify| \(update|$)",
+            r"^Page ([0-9]+) .*Would save with comment.* (?:of|dictionary form) (.*?)(,| after| before| \(add| \(modify| \(update|$)",
             line,
         )
         if not m:

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -13,17 +13,16 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     secbody, sectail = blib.force_two_newlines_in_secbody(text, "")
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 
     while True:
-        # Look for a participle and move it up.
-        for k in range(2, len(subsections), 2):
-            m = re.search(r"^(===+)Descendants\1$", subsections[k - 1])
-            if m:
-                desc_indent = len(m.group(1))
-                if k < len(subsections) - 2 and re.search(
-                    "^%sRelated terms%s$" % ("=" * desc_indent, "=" * desc_indent), subsections[k + 1]
-                ):
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
+        # Look for a Related terms section and move it up.
+        for k, header in subsecs.subsection_headers:
+            if header == "Descendants":
+                desc_indent = subsecs.subsection_levels[k]
+                if (k + 2 < len(subsections) and subsecs.subsection_headers[k + 2] == "Related terms" and
+                    subsecs.subsection_levels[k + 2] == desc_indent):
                     desc_text = subsections[k - 1 : k + 1]
                     subsections[k - 1 : k + 1] = subsections[k + 1 : k + 3]
                     subsections[k + 1 : k + 3] = desc_text
@@ -32,8 +31,6 @@ def process_text_on_page(index, pagetitle, text):
 
         else:  # no break
             break
-
-        continue
 
     secbody = "".join(subsections)
     # Strip extra newlines added to secbody

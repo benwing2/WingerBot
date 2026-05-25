@@ -211,15 +211,14 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
 
     pagemsg("Processing")
 
-    retval = blib.find_modifiable_lang_section(text, lang_to_name[lang], pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, lang_to_name[lang], pagemsg)
+    if modsec is None:
         pagemsg("WARNING: Couldn't find %s section" % lang_to_name[lang])
         return
-    sections, j, secbody, sectail, has_non_lang = retval
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsections = re.split("(^==+[^=\n]+==+\n)", modsec.secbody, 0, re.M)
     k = 1
     last_pos = None
-    if "indeclinable %ss" % pos in secbody + sectail:
+    if "indeclinable %ss" % pos in modsec.secbody + modsec.sectail:
         pagemsg("Saw 'indeclinable %ss' in text, skipping" % pos)
         return
     while k < len(subsections):
@@ -339,9 +338,7 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                     )
             k += 2
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    text = "".join(sections)
+    text = modsec.rebuild(secbody="".join(subsections))
     text = re.sub("\n\n\n+", "\n\n", text)
     if not notes and origtext != text:
         notes.append("convert 3+ newlines to 2")

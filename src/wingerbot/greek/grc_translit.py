@@ -531,7 +531,7 @@ def post_canonicalize_greek(text, msgfun=msg):
     # instead issue a warning.
     # If no rough breathing before beginning-of-word vowel, add a smooth
     # breathing sign.
-    newtext = rsub(text, "(^|[ \[\]|])(" + greek_vowels + ")", r"\1" + SMBR + r"\2")
+    newtext = rsub(text, r"(^|[ \[\]|])(" + greek_vowels + ")", r"\1" + SMBR + r"\2")
     if newtext != text:
         msgfun("WARNING: Text %s may be missing a smooth-breathing sign" % text)
     # Put rough/smooth breathing after diphthong; rough breathing comes first

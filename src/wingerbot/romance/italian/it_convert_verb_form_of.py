@@ -105,7 +105,7 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     def do_sectext(sectext, secheadertext):
         possible_templates = "{{inflection of}}/{{infl of}}"
-        tname_re = "(?:(?:inflection|infl) of\|it)"
+        tname_re = r"(?:(?:inflection|infl) of\|it)"
         chunks = re.split(r"^((?:# \{\{%s\|.*\n)+)" % tname_re, sectext, 0, re.M)
         this_note_parts = []
         for k in range(1, len(chunks), 2):

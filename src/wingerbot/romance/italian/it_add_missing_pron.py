@@ -248,7 +248,7 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 
@@ -328,7 +328,7 @@ def process_text_on_page(index, pagetitle, text):
                                     "WARNING: For respelling %s for pronun %s, word %s is missing stress"
                                     % (respelling, pronun, rw)
                                 )
-                        if not re.search("^[a-zA-ZàèéìòóùÀÈÉÌÒÓÙ. ʒʃ\[\]-]+$", respelling):
+                        if not re.search(r"^[a-zA-ZàèéìòóùÀÈÉÌÒÓÙ. ʒʃ\[\]-]+$", respelling):
                             set_unable("WARNING: Strange char in respelling %s for pronun %s" % (respelling, pronun))
                         else:
                             putative_pagetitle = re.sub(

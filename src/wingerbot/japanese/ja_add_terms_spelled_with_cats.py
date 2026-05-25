@@ -51,7 +51,7 @@ def process_text_on_page(index, pagetitle, text):
         if retval is None:
             pagemsg_with_spelling("WARNING: Couldn't find %s section" % lang)
         else:
-            sections, j, secbody, sectail, has_non_lang = retval
+            sections, j, secbody, sectail, has_non_lang = retval.props()
 
             parsed = blib.parse_text(secbody)
             saw_readings_template = False
@@ -103,7 +103,7 @@ def process_text_on_page(index, pagetitle, text):
         if retval is None:
             pagemsg_with_contents("WARNING: Couldn't find %s section" % lang)
             continue
-        sections, j, secbody, sectail, has_non_lang = retval
+        sections, j, secbody, sectail, has_non_lang = retval.props()
 
         saw_kanjitab = False
         must_continue = False

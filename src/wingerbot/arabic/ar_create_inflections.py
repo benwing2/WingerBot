@@ -2013,7 +2013,7 @@ def expand_template(page, text):
 def get_part_prop(page, template, prefix):
     # Make an expand-template call to convert the conjugation template to
     # the desired form or property.
-    return expand_template(page, re.sub("\{\{ar-(conj|verb)\|", "{{%s|" % prefix, str(template)))
+    return expand_template(page, re.sub(r"\{\{ar-(conj|verb)\|", "{{%s|" % prefix, str(template)))
 
 
 # def get_dicform(page, template):
@@ -2479,12 +2479,11 @@ def create_elatives(elfile, start, end):
     elative_defns = []
     for line in blib.yield_items_from_file(elfile):
         elative_defns.append(parse_elative_defn(line))
-    for current, index in blib.iter_pages(
+    for index, current in blib.iter_items(
         elative_defns,
         start,
         end,
-        # key is the elative
-        key=lambda x: x[1],
+        get_name=lambda x: x[1],
     ):
         defn_text, elative, arpositives = current
         create_inflection_entry(

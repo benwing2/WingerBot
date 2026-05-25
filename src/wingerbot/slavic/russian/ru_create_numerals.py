@@ -621,7 +621,7 @@ else:
     pages = iter_numerals()
 
 if args.offline:
-    for current, index in blib.iter_pages(pages, start, end, key=lambda x: str(x)):
+    for index, current in blib.iter_items(pages, start, end, get_name=lambda x: str(x)):
         print("========== Text for #%s: ==========" % current)
         print("")
         print(generate_page(current))

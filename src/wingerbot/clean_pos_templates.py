@@ -27,12 +27,9 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("move {{pos *}} inside of link")
         text = newtext
 
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
+    secs = blib.split_text_into_sections(text, pagemsg)
 
-    for j in range(2, len(sections), 2):
-        m = re.search("^==(.*)==\n$", sections[j - 1])
-        assert m
-        langname = m.group(1)
+    for j, langname in secs.section_langs:
         if langname not in lang_utils.languages_by_canonical_name:
             langnamecode = None
         else:
@@ -44,12 +41,12 @@ def process_text_on_page(index, pagetitle, text):
                 return m.group(0)
             return "\n* {{l|%s|%s|pos=%s}}" % (langnamecode, m.group(1), pos_to_pos[m.group(2)])
 
-        newsec = re.sub(r"\n\* \[\[([^\[\]\n]*?)\]\] \{\{pos[ _](.*?)\}\}", replace_raw_pos, sections[j])
-        if newsec != sections[j]:
+        newsec = re.sub(r"\n\* \[\[([^\[\]\n]*?)\]\] \{\{pos[ _](.*?)\}\}", replace_raw_pos, secs.sections[j])
+        if newsec != secs.sections[j]:
             notes.append("move {{pos *}} inside of raw link")
-            sections[j] = newsec
+            secs.sections[j] = newsec
 
-    text = "".join(sections)
+    text = "".join(secs.sections)
 
     return text, notes
 

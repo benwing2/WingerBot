@@ -16,12 +16,10 @@ def process_text_on_page(index, pagetitle, text):
     seen_trans = [pagetitle]
     english_section = blib.find_lang_section(text, "English", pagemsg)
     if english_section:
-        subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-            english_section, pagemsg
-        )
-        if "Translations" in subsections_by_header:
-            for k in subsections_by_header["Translations"]:
-                expanded = expand_text(subsections[k])
+        subsecs = blib.split_text_into_subsections(english_section, pagemsg)
+        if "Translations" in subsecs.subsections_by_header:
+            for k in subsecs.subsections_by_header["Translations"]:
+                expanded = expand_text(subsecs.subsections[k])
                 if expanded:
                     for m in re.finditer(
                         r'<span class="[A-Z].*?" lang=".*?">\[\[([^\[\]\|]*)\|([^\[\]\|]*)\]\]</span>', expanded
@@ -35,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
                     pagemsg("%s: %s" % (trans, txt))
 
                 trans_page = pywikibot.Page(site, trans)
-                trans_text = blib.safe_page_text(trans_page, pagemsg_with_trans, bad_value_ret=None)
+                trans_text = blib.safe_page_text(trans_page, pagemsg_with_trans)
                 if trans_text:
                     m = re.search(r"\A#redirect\s*\[\[(.*?)\]\]", trans_text, re.I)
                     if m:

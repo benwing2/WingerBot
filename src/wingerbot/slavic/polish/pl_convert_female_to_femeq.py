@@ -17,7 +17,7 @@ def split_line(line):
         assert m
         beginning, rest_with_gloss = m.groups()
         labeltext = ""
-    rest_with_gloss = re.sub("^[Aa]\s+", "", rest_with_gloss)
+    rest_with_gloss = re.sub(r"^[Aa]\s+", "", rest_with_gloss)
     m = re.search(r"^(.*?)\s*(\{\{(?:gl|gloss)\|.*\}\})$", rest_with_gloss)
     if m:
         rest, gloss = m.groups()
@@ -41,7 +41,7 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 

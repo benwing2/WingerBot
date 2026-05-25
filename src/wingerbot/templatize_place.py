@@ -2510,7 +2510,7 @@ def process_text_on_page(index, pagetitle, text):
             # and "located near", otherwise "near" will match and we'll get an unrecognized
             # holonym like "Calabria situated".
             m = re.search(
-                "^(.*[^ ])( *(?:[,.:;]|[,.:;]? +(?:that|which|where|with|located|situated|(?<!ated )near)) +.+?| *\{\{[^{}]*\}\}.*?)$",
+                r"^(.*[^ ])( *(?:[,.:;]|[,.:;]? +(?:that|which|where|with|located|situated|(?<!ated )near)) +.+?| *\{\{[^{}]*\}\}.*?)$",
                 line,
             )
             if m:
@@ -2534,11 +2534,9 @@ def process_text_on_page(index, pagetitle, text):
                     msg(m)
                 return origline
 
-    sections = re.split("(^==[^\n=]*==\n)", text, 0, re.M)
-    for j in range(2, len(sections), 2):
-        m = re.search("^==(.*)==\n$", sections[j - 1])
-        assert m
-        langname = m.group(1)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    for j, langname in secs.section_langs:
         if langname not in lang_utils.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language %s" % langname)
         else:

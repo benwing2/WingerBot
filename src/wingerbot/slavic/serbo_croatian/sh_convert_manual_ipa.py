@@ -455,7 +455,7 @@ def process_text_on_page(index, pagetitle, text):
     force_final_nls=True)
   if retval is None:
     return
-  sections, j, secbody, sectail, has_non_lang = retval
+  sections, j, secbody, sectail, has_non_lang = retval.props()
 
   parsed = blib.parse_text(secbody)
 

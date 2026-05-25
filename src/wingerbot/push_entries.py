@@ -25,18 +25,13 @@ def process_page(index, page, contents, lang, verbose, comment):
     else:
         insert_before = 0
         curtext = page.text
-        sections = re.split("(^==[^=]*==\n)", curtext, 0, re.M)
-
-        for j in range(2, len(sections), 2):
-            m = re.search(r"^==\s*(.*?)\s*==\n", sections[j - 1])
-            if not m:
-                errandpagemsg("WARNING: Saw bad second-level header: %s" % sections[j - 1].strip())
-                return
-            foundlang = m.group(1)
-            if foundlang == lang:
+        secs = blib.split_text_into_sections(curtext, pagemsg)
+        sections = secs.sections
+        for j, langname in secs.section_langs:
+            if langname == lang:
                 errandpagemsg("WARNING: Already found %s section" % lang)
                 return
-            if foundlang > lang:
+            if langname > lang:
                 insert_before = j - 1
                 break
         if insert_before == 0:

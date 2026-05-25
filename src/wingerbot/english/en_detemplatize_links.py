@@ -99,7 +99,7 @@ def process_text_on_page(index, pagetitle, text):
         if retval is None:
             pagemsg("WARNING: Couldn't find %s section" % args.langname)
             return
-        sections, j, secbody, sectail, has_non_lang = retval
+        sections, j, secbody, sectail, has_non_lang = retval.props()
 
         secbody = fix_sec_links(secbody)
         sections[j] = secbody + sectail

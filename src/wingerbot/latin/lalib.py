@@ -877,7 +877,7 @@ def find_heads_and_defns(text, pagemsg):
     if retval is None:
         return None
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 

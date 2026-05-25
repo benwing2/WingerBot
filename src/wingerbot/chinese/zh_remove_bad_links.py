@@ -11,17 +11,11 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-    origtext = text
 
-    retval = blib.find_modifiable_lang_section(text, "Chinese", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Chinese", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval
-
-    m = re.search(r"\A(.*?)(\n*)\Z", secbody, re.S)
-    secbody, secbody_finalnl = m.groups()
-    secbody += "\n\n"
+    secbody = modsec.secbody
 
     notes = []
 
@@ -35,20 +29,18 @@ def process_text_on_page(index, pagetitle, text):
     if new_secbody != secbody:
         notes.append("remove bad Chinese links (see [[Wiktionary:Grease pit/2019/September#Requesting bot help]])")
         secbody = new_secbody
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     subsections_to_delete = []
-    for k in range(1, len(subsections), 2):
-        if subsections[k] in ["===References===\n", "====References====\n"] and not subsections[k + 1].strip():
+    for k, header in subsecs.subsection_headers:
+        if header == "References" and subsecs.subsection_levels[k] in [3, 4] and not subsections[k + 1].strip():
             subsections_to_delete.append(k)
     if subsections_to_delete:
         for k in reversed(subsections_to_delete):
             del subsections[k : k + 2]
         notes.append("remove empty References section")
 
-    secbody = "".join(subsections)
-    sections[j] = secbody.rstrip("\n") + secbody_finalnl + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody = "".join(subsections)), notes
 
 
 parser = blib.create_argparser(

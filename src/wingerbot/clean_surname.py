@@ -224,7 +224,7 @@ def process_text_on_page(index, pagetitle, text):
                 if tn == "surname":
                     fromval = re.sub(" < .*", "", getparam(t, "from"))
                     if fromval:
-                        newline = re.sub("(%s) of \[*%s\]* origin" % (re.escape(str(t)), fromval), r"\1", line)
+                        newline = re.sub(r"(%s) of \[*%s\]* origin" % (re.escape(str(t)), fromval), r"\1", line)
                         if newline != line:
                             pagemsg("Replaced line #%s <%s> with <%s>" % (lineno + 1, line, newline))
                             lines[lineno] = newline

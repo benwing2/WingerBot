@@ -44,10 +44,10 @@ def process_text_on_page(
     else:
         sec_to_replace = None
         foundlang = False
-        sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
+        secs = blib.split_text_into_sections(text, pagemsg)
 
-        for j in range(2, len(sections), 2):
-            if sections[j - 1] == "==%s==\n" % lang_only:
+        for j, header in secs.section_langs:
+            if header == lang_only:
                 if foundlang:
                     pagemsg("WARNING: Found multiple %s sections, skipping page" % lang_only)
                     if warn_on_no_replacement:
@@ -61,8 +61,8 @@ def process_text_on_page(
             if warn_on_no_replacement:
                 pagemsg("WARNING: No replacements made")
             return
-        sections[sec_to_replace] = replace_text(sections[sec_to_replace])
-        text = "".join(sections)
+        secs.sections[sec_to_replace] = replace_text(secs.sections[sec_to_replace])
+        text = "".join(secs.sections)
     if warn_on_no_replacement and text == origtext:
         pagemsg("WARNING: No replacements made")
     return text, comment or "replace %s" % (", ".join("%s -> %s" % (f, t) for f, t in zipped_fromto))

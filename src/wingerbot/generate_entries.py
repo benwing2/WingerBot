@@ -663,7 +663,7 @@ def process_line(line, pagename, etymnum, pronuns, pronuns_at_top):
             if pos == "adj" and not is_invar_gender and not re.search("[оіїє]́?в$|[иії]́?[нй]$", t):
                 error("Term %s is supposed to be an adjective but doesn't end in adjectival ending" % t)
         if lang != "pt":
-            if pos == "adj" and not is_invar_gender and re.search("r\|(m|f|adj|g)", hdecltext):
+            if pos == "adj" and not is_invar_gender and re.search(r"\|(m|f|adj|g)", hdecltext):
                 error(
                     "Term %s is supposed to be an adjective but has noun properties in the declension: %s"
                     % (t, hdecltext)

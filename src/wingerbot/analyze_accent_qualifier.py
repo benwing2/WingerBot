@@ -44,7 +44,8 @@ def process_text_on_page(index, pagename, text):
 
     if not re.search(r"\{\{ *(IPA|a(ccent)?) *\|", text):
         return
-    sections, sections_by_lang, section_langs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
 
     def record_qual_and_lang(qual, lang):
         total_qualifiers[qual] += 1
@@ -57,7 +58,7 @@ def process_text_on_page(index, pagename, text):
                 else:
                     too_many_pages_for_qualifiers_by_lang[qual][lang] = True
 
-    for j, lang in section_langs:
+    for j, lang in secs.section_langs:
         sectext = sections[j]
         if not re.search(r"\{\{ *(IPA|a(ccent)?) *\|", sectext):
             continue
@@ -67,6 +68,7 @@ def process_text_on_page(index, pagename, text):
             if tn in ["a", "accent"]:
                 params = blib.fetch_param_chain(t, "2" if accent_templates_have_lang else "1")
                 for paramind, param in enumerate(params):
+                    assert param is not None  # all holes closed in fetch_param_chain
                     param = param.strip()
                     if paramind == 0:
                         pseudo_langname = None

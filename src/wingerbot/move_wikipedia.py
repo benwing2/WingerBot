@@ -18,31 +18,32 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
 
     sect_for_wiki = 0
-    seen_lemmas = []
-    for k in range(1, len(subsections), 2):
-        if re.search(r"==\s*Etymology [0-9]+\s*==", subsections[k]):
-            sect_for_wiki = k + 1
-            seen_lemmas = []
+    seen_lemma_headers = []
+    for k, header in subsecs.subsection_headers:
+        if re.search(r"^Etymology [0-9]$", header):
+            sect_for_wiki = k
+            seen_lemma_headers = []
         else:
-            lines = subsections[k + 1].strip().split("\n")
+            lines = subsecs.subsections[k].strip().split("\n")
             lines = [line for line in lines]
             lines_so_far = []
             for lineind, line in enumerate(lines):
                 if re.search(r"^\{\{(wp|wiki|wikipedia|Wikipedia)\|[^{}]*\}\}$", line):
-                    if len(seen_lemmas) >= 1:
+                    if len(seen_lemma_headers) >= 1:
                         pagemsg(
-                            "Already saw preceding lemma(s) %s, not moving wikipedia line %s"
-                            % (",".join(seen_lemmas), line)
+                            "Already saw preceding lemma header(s) %s, not moving wikipedia line %s"
+                            % (",".join(seen_lemma_headers), line)
                         )
                         lines_so_far.append(line)
                     else:
                         # Put after any other wikipedia lines.
-                        m = re.search(r"\A(.*?)(\n*)\Z", subsections[sect_for_wiki], re.S)
+                        m = re.search(r"\A(.*?)(\n*)\Z", subsecs.subsections[sect_for_wiki], re.S)
+                        assert m  # should always match
                         stripped_sect_for_wiki, sect_for_wiki_endlines = m.groups()
                         sect_for_wiki_lines = stripped_sect_for_wiki.split("\n")
                         for i in range(len(sect_for_wiki_lines)):
@@ -51,24 +52,24 @@ def process_text_on_page(index, pagetitle, text):
                             ):
                                 break
                         sect_for_wiki_lines[i:i] = [line]
-                        subsections[sect_for_wiki] = "\n".join(sect_for_wiki_lines) + sect_for_wiki_endlines
-                        subsections[k + 1] = "%s\n\n" % "\n".join(lines_so_far + lines[lineind + 1 :])
+                        subsecs.subsections[sect_for_wiki] = "\n".join(sect_for_wiki_lines) + sect_for_wiki_endlines
+                        subsecs.subsections[k] = "%s\n\n" % "\n".join(lines_so_far + lines[lineind + 1 :])
                         notes.append("move {{wikipedia}} line to top of etym section")
                 else:
                     lines_so_far.append(line)
-            if re.search(lang_utils.pos_regex, subsections[k]):  # Maybe a lemma
-                lines = subsections[k + 1].strip().split("\n")
+            if re.search("^" + lang_utils.pos_regex + "$", header):  # Maybe a lemma
+                lines = subsecs.subsections[k].strip().split("\n")
                 for lineind, line in enumerate(lines):
                     if re.search(r"\{\{(head\|[^{}]*|[a-z][a-z][a-z]?-[^{}|]*)forms?\b", line):
                         pagemsg(
                             "Saw potential lemma section %s but appears to be a non-lemma form due to line #%s: %s"
-                            % (subsections[k].strip(), lineind + 1, line)
+                            % (header, lineind + 1, line)
                         )
                         break
                 else:  # no break
-                    seen_lemmas.append(subsections[k].strip())
+                    seen_lemma_headers.append(header)
 
-    secbody = "".join(subsections)
+    secbody = "".join(subsecs.subsections)
     # Strip extra newlines added to secbody
     sections[j] = secbody.rstrip("\n") + sectail
     if args.langname == "Italian":  # why this special case?

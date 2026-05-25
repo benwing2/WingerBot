@@ -20,7 +20,7 @@ def process_text_on_page(index, pagetitle, text):
     if retval is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
     saw_head = False
@@ -72,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
         return
     if not has_non_lang:
         # Can delete the whole page, but check for non-blank section 0
-        cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
+        cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
         if cleaned_sec0.strip():
             pagemsg(
                 "WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip()

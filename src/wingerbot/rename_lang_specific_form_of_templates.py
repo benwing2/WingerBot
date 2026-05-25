@@ -6976,7 +6976,7 @@ def process_text_on_page(index, pagetitle, text):
         if retval is None:
             pagemsg("WARNING: Couldn't find %s section" % args.lang_for_combine_inflection_of)
             return text, notes
-        sections, j, secbody, sectail, has_non_lang = retval
+        sections, j, secbody, sectail, has_non_lang = retval.props()
         dont_combine_tags = args.dont_combine_tags.split(",") if args.dont_combine_tags else None
         secbody = infltags.combine_adjacent_inflection_of_calls(secbody, notes, pagemsg, verbose=args.verbose)
         parsed = blib.parse_text(secbody)

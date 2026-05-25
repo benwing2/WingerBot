@@ -17,7 +17,7 @@ def process_text_on_page(index, pagetitle, text):
     retval = blib.find_modifiable_lang_section(text, None if args.partial_page else "Portuguese", pagemsg)
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
     for k in range(2, len(subsections), 2):

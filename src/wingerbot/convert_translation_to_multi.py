@@ -93,7 +93,13 @@ def escape_template_delimiters(val, pagemsg):
     # generates HTML of the form '<span class="Latn" lang="de">[[:bar#German|bar]]</span>'.
     try:
         run = blib.parse_multi_delimiter_balanced_segment_run(
-            val, [(r"\[\[", r"\]\]"), (r"\{\{", r"\}\}"), ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"), ("<ref ", "/>")]
+            val,
+            [
+                (r"\[\[", r"\]\]"),
+                (r"\{\{", r"\}\}"),
+                ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"),
+                ("<ref ", "/>"),
+            ],
         )
     except blib.ParseException:
         # FIXME: Do something better in this case. Ideally we should make parse_multi_delimiter_balanced_segment_run()
@@ -111,7 +117,10 @@ def escape_template_delimiters(val, pagemsg):
 
 
 def make_inline_modifier(key, val, pagemsg):
-    return "<%s:%s>" % (key, escape_inline_val(escape_template_delimiters(val, pagemsg)))
+    return "<%s:%s>" % (
+        key,
+        escape_inline_val(escape_template_delimiters(val, pagemsg)),
+    )
 
 
 def lookup_langname(langname, prefer="lang"):
@@ -137,7 +146,10 @@ def lookup_langname(langname, prefer="lang"):
 
 
 def text_has_translation_template(txt):
-    return re.search(r"\{\{ *(%s) *\|" % "|".join(re.escape(x) for x in blib.translation_templates), txt)
+    return re.search(
+        r"\{\{ *(%s) *\|" % "|".join(re.escape(x) for x in blib.translation_templates),
+        txt,
+    )
 
 
 # Convert a line/row from {{col*}} or from in between {{col-top}}/{{col-bottom}} etc. `line_non_templated` is True if
@@ -149,7 +161,9 @@ def text_has_translation_template(txt):
 # `langcode` is the langcode of the outer template being processed (e.g. {{col*}}), or the langcode of the section we're
 # in, and `langname` is the corresponding language name. `pagemsg` is a function of one argument to display a warning or
 # other message.
-def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_multitrans):
+def convert_one_line(
+    init_star, init_langname, rest, pagemsg, expand_text, in_multitrans
+):
     def make_inline_mod(key, val):
         return make_inline_modifier(key, val, pagemsg)
 
@@ -163,8 +177,13 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
     line = init_star + init_langname + rest
     if init_langname:
         if text_has_translation_template(init_langname):
-            pagemsg("WARNING: Initial langname '%s' has translation template" % init_langname)
-            init_langname = convert_one_line("", "", init_langname, pagemsg, expand_text, in_multitrans)
+            pagemsg(
+                "WARNING: Initial langname '%s' has translation template"
+                % init_langname
+            )
+            init_langname = convert_one_line(
+                "", "", init_langname, pagemsg, expand_text, in_multitrans
+            )
             line = init_star + init_langname + rest
         if rest == ":":
             rest = ""
@@ -175,12 +194,21 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
             init_langname_code, init_langname_type = lookup_langname(
                 init_langname, prefer="script" if init_star.startswith("*:") else "lang"
             )
-            if not init_langname_code and init_langname in lang_utils.non_canonical_to_canonical_names:
-                canonical_langname = lang_utils.non_canonical_to_canonical_names[init_langname]
-                pagemsg("Mapping non-canonical name %s to canonical %s" % (init_langname, canonical_langname))
+            if (
+                not init_langname_code
+                and init_langname in lang_utils.non_canonical_to_canonical_names
+            ):
+                canonical_langname = lang_utils.non_canonical_to_canonical_names[
+                    init_langname
+                ]
+                pagemsg(
+                    "Mapping non-canonical name %s to canonical %s"
+                    % (init_langname, canonical_langname)
+                )
                 init_langname = canonical_langname
                 init_langname_code, init_langname_type = lookup_langname(
-                    init_langname, prefer="script" if init_star.startswith("*:") else "lang"
+                    init_langname,
+                    prefer="script" if init_star.startswith("*:") else "lang",
                 )
                 if not init_langname_code:
                     pagemsg(
@@ -276,7 +304,13 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                     entry_parts.append(("qq", ", ".join(right_qualifiers)))
                 if entry_references:
                     entry_parts.append(("ref", " !!! ".join(entry_references)))
-                entries.append(entry + "".join("<%s:%s>" % (mod, escape_inline_val(val)) for mod, val in entry_parts))
+                entries.append(
+                    entry
+                    + "".join(
+                        "<%s:%s>" % (mod, escape_inline_val(val))
+                        for mod, val in entry_parts
+                    )
+                )
                 entry = None
                 left_labels = []
                 right_labels = []
@@ -318,19 +352,31 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
         try:
             segments = blib.parse_multi_delimiter_balanced_segment_run(
                 rest,
-                [(r"\(''", r"''\)"), (r"\{\{", r"\}\}"), ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"), ("<ref ", "/>")],
+                [
+                    (r"\(''", r"''\)"),
+                    (r"\{\{", r"\}\}"),
+                    ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"),
+                    ("<ref ", "/>"),
+                ],
             )
         except blib.ParseException as e:
             # FIXME: Do something better in this case. Ideally we should make parse_multi_delimiter_balanced_segment_run()
             # have an `ignore_mismatch` flag.
-            pagemsg("WARNING: Error parsing line using full delimiters, falling back to double braces only: %s" % e)
+            pagemsg(
+                "WARNING: Error parsing line using full delimiters, falling back to double braces only: %s"
+                % e
+            )
             try:
-                segments = blib.parse_multi_delimiter_balanced_segment_run(rest, [(r"\{\{", r"\}\}")])
+                segments = blib.parse_multi_delimiter_balanced_segment_run(
+                    rest, [(r"\{\{", r"\}\}")]
+                )
             except blib.ParseException as e:
                 pagemsg("WARNING: Error parsing line using double braces only: %s" % e)
                 return line
 
-        alternating_runs = blib.split_alternating_runs(segments, r"(\s*[,;/]\s*|\s+or\s+)")
+        alternating_runs = blib.split_alternating_runs(
+            segments, r"(\s*[,;/]\s*|\s+or\s+)"
+        )
 
         # We used to implement conversion in an entirely left-to-right fashion but there were too many edge cases to worry
         # about. Instead we work bottom-up in multiple passes:
@@ -398,7 +444,16 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                         )
                         append_template()
                         line_parts.append(
-                            "(" + convert_one_line("", "", segment[1:-1], pagemsg, expand_text, in_multitrans) + ")"
+                            "("
+                            + convert_one_line(
+                                "",
+                                "",
+                                segment[1:-1],
+                                pagemsg,
+                                expand_text,
+                                in_multitrans,
+                            )
+                            + ")"
                         )
                     else:
                         pagemsg(
@@ -418,7 +473,11 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                 elif re.search("^<ref", segment):
                     pagemsg("WARNING: Reference, can't handle yet: %s" % segment)
                     # FIXME
-                elif re.search(r"^\{\{ *(%s) *\|" % "|".join(re.escape(x) for x in blib.qualifier_templates), segment):
+                elif re.search(
+                    r"^\{\{ *(%s) *\|"
+                    % "|".join(re.escape(x) for x in blib.qualifier_templates),
+                    segment,
+                ):
                     qt = list(blib.parse_text(segment).filter_templates())[0]
                     quals = blib.fetch_param_chain(qt, "1")
                     processed_quals = []
@@ -429,12 +488,17 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                                 "WARNING: Param %s= of qualifier template %s at position i=%s, j=%s has embedded translation template"
                                 % (k + 1, segment, i, j)
                             )
-                            processed_quals.append(convert_one_line("", "", qual, pagemsg, expand_text, in_multitrans))
+                            processed_quals.append(
+                                convert_one_line(
+                                    "", "", qual, pagemsg, expand_text, in_multitrans
+                                )
+                            )
                             saw_embedded_translation_template = True
                         else:
                             processed_quals.append(qual)
                     alternating_run[j] = Qualifier(
-                        qualifiers=processed_quals, saw_embedded_translation_template=saw_embedded_translation_template
+                        qualifiers=processed_quals,
+                        saw_embedded_translation_template=saw_embedded_translation_template,
                     )
                     # if saw_embedded_translation_template:
                     #  append_template()
@@ -448,7 +512,9 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                     #  quals_on_line.extend(processed_quals)
                     #  seen_raw_parts_before_translation.append(segment)
                 elif re.search(
-                    r"^\{\{ *(%s) *\|" % "|".join(re.escape(x) for x in blib.translation_templates), segment
+                    r"^\{\{ *(%s) *\|"
+                    % "|".join(re.escape(x) for x in blib.translation_templates),
+                    segment,
                 ):
                     # if entry is not None:
                     #  pagemsg("WARNING: Saw two translation templates not delimiter-separated")
@@ -471,7 +537,9 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                         entry += "<check>"
                     if tn.startswith("tt"):
                         if not in_multitrans:
-                            pagemsg("WARNING: Apparent multitrans template outside of multitrans section")
+                            pagemsg(
+                                "WARNING: Apparent multitrans template outside of multitrans section"
+                            )
                     if genders:
                         entry_parts.append(("g", ",".join(genders)))
                     for param in ["alt", "id", "sc", "t", "tr", "ts", "lit"]:
@@ -496,20 +564,30 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
 
                     langcode = getp("1")
                     if langcode in lang_utils.languages_by_code:
-                        langcode_langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+                        langcode_langname = lang_utils.languages_by_code[langcode][
+                            "canonicalName"
+                        ]
                         langcode_type = "lang"
                     elif langcode in lang_utils.etym_languages_by_code:
-                        langcode_langname = lang_utils.etym_languages_by_code[langcode]["canonicalName"]
+                        langcode_langname = lang_utils.etym_languages_by_code[langcode][
+                            "canonicalName"
+                        ]
                         langcode_type = "etymlang"
                     elif langcode in lang_utils.families_by_code:
-                        langcode_langname = lang_utils.families_by_code[langcode]["canonicalName"]
+                        langcode_langname = lang_utils.families_by_code[langcode][
+                            "canonicalName"
+                        ]
                         langcode_type = "family"
                     else:
                         langcode_langname = None
                         langcode_type = None
                         pagemsg("WARNING: Unrecognized language code %s" % langcode)
                     matched_init_langname = None
-                    if init_langname and langcode_langname and langcode_langname != init_langname:
+                    if (
+                        init_langname
+                        and langcode_langname
+                        and langcode_langname != init_langname
+                    ):
                         if init_langname_code in etym_language_to_parent and (
                             langcode == etym_language_to_parent[init_langname_code]
                         ):
@@ -519,8 +597,15 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                             )
                             langcode = init_langname_code
                             matched_init_langname = True
-                        elif (init_langname, langcode) in lang_utils.langcode_langname_to_correct_langcode:
-                            new_langcode = lang_utils.langcode_langname_to_correct_langcode[(init_langname, langcode)]
+                        elif (
+                            init_langname,
+                            langcode,
+                        ) in lang_utils.langcode_langname_to_correct_langcode:
+                            new_langcode = (
+                                lang_utils.langcode_langname_to_correct_langcode[
+                                    (init_langname, langcode)
+                                ]
+                            )
                             pagemsg(
                                 "WARNING: Mismatch between explicit language name %s (%s code %s) and %s code %s (language name %s), correcting to code %s, please check"
                                 % (
@@ -582,7 +667,9 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                         if matched_init_langname and init_langname:
                             template_tempname = "t" + distinguishing_new_insert
                         init_langname_prefix = (
-                            "" if matched_init_langname else init_langname + ": " if init_langname else ""
+                            ""
+                            if matched_init_langname
+                            else init_langname + ": " if init_langname else ""
                         )
 
                     if template_langcode and template_langcode != langcode:
@@ -594,7 +681,9 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                     template_langcode = langcode
 
                 else:
-                    pagemsg("WARNING: Unrecognized template, can't handle yet: %s" % segment)
+                    pagemsg(
+                        "WARNING: Unrecognized template, can't handle yet: %s" % segment
+                    )
                     append_template()
                     if text_has_translation_template(segment):
                         if not segment.startswith("{{"):
@@ -620,7 +709,14 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                                             "Converting nested translation template(s) in parameter %s=%s in segment %s at position i=%s, j=%s"
                                             % (pn, pv, segment, i, j)
                                         )
-                                        newpv = convert_one_line("", "", pv, pagemsg, expand_text, in_multitrans)
+                                        newpv = convert_one_line(
+                                            "",
+                                            "",
+                                            pv,
+                                            pagemsg,
+                                            expand_text,
+                                            in_multitrans,
+                                        )
                                         pagemsg(
                                             "Converted parameter %s=%s in segment %s at position i=%s, j=%s to %s"
                                             % (pn, pv, segment, i, j, newpv)
@@ -638,7 +734,11 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
         for qual in quals_on_line:
             seen_converted_quals[qual][template_langcode or "UNKNOWN"] += 1
             seen_converted_qual_count[qual] += 1
-        return "%s%s%s" % (init_star or "", init_langname_prefix or "", "".join(line_parts))
+        return "%s%s%s" % (
+            init_star or "",
+            init_langname_prefix or "",
+            "".join(line_parts),
+        )
     else:
         return line
 
@@ -652,7 +752,9 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
 # `langcode` is the langcode of the outer template being processed (e.g. {{col*}}), or the langcode of the section we're
 # in, and `langname` is the corresponding language name. `pagemsg` is a function of one argument to display a warning or
 # other message.
-def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, in_multitrans):
+def convert_one_line_old(
+    init_star, init_langname, rest, pagemsg, expand_text, in_multitrans
+):
     def make_inline_mod(key, val):
         return make_inline_modifier(key, val, pagemsg)
 
@@ -666,8 +768,13 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
     line = init_star + init_langname + rest
     if init_langname:
         if text_has_translation_template(init_langname):
-            pagemsg("WARNING: Initial langname '%s' has translation template" % init_langname)
-            init_langname = convert_one_line("", "", init_langname, pagemsg, expand_text, in_multitrans)
+            pagemsg(
+                "WARNING: Initial langname '%s' has translation template"
+                % init_langname
+            )
+            init_langname = convert_one_line(
+                "", "", init_langname, pagemsg, expand_text, in_multitrans
+            )
             line = init_star + init_langname + rest
         if rest == ":":
             rest = ""
@@ -678,12 +785,21 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
             init_langname_code, init_langname_type = lookup_langname(
                 init_langname, prefer="script" if init_star.startswith("*:") else "lang"
             )
-            if not init_langname_code and init_langname in lang_utils.non_canonical_to_canonical_names:
-                canonical_langname = lang_utils.non_canonical_to_canonical_names[init_langname]
-                pagemsg("Mapping non-canonical name %s to canonical %s" % (init_langname, canonical_langname))
+            if (
+                not init_langname_code
+                and init_langname in lang_utils.non_canonical_to_canonical_names
+            ):
+                canonical_langname = lang_utils.non_canonical_to_canonical_names[
+                    init_langname
+                ]
+                pagemsg(
+                    "Mapping non-canonical name %s to canonical %s"
+                    % (init_langname, canonical_langname)
+                )
                 init_langname = canonical_langname
                 init_langname_code, init_langname_type = lookup_langname(
-                    init_langname, prefer="script" if init_star.startswith("*:") else "lang"
+                    init_langname,
+                    prefer="script" if init_star.startswith("*:") else "lang",
                 )
                 if not init_langname_code:
                     pagemsg(
@@ -779,7 +895,13 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                     entry_parts.append(("qq", ", ".join(right_qualifiers)))
                 if entry_references:
                     entry_parts.append(("ref", " !!! ".join(entry_references)))
-                entries.append(entry + "".join("<%s:%s>" % (mod, escape_inline_val(val)) for mod, val in entry_parts))
+                entries.append(
+                    entry
+                    + "".join(
+                        "<%s:%s>" % (mod, escape_inline_val(val))
+                        for mod, val in entry_parts
+                    )
+                )
                 entry = None
                 left_labels = []
                 right_labels = []
@@ -821,19 +943,31 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
         try:
             segments = blib.parse_multi_delimiter_balanced_segment_run(
                 rest,
-                [(r"\(''", r"''\)"), (r"\{\{", r"\}\}"), ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"), ("<ref ", "/>")],
+                [
+                    (r"\(''", r"''\)"),
+                    (r"\{\{", r"\}\}"),
+                    ("(?:<ref>|<ref [^<>]*[^/]>)", "</ref>"),
+                    ("<ref ", "/>"),
+                ],
             )
         except blib.ParseException as e:
             # FIXME: Do something better in this case. Ideally we should make parse_multi_delimiter_balanced_segment_run()
             # have an `ignore_mismatch` flag.
-            pagemsg("WARNING: Error parsing line using full delimiters, falling back to double braces only: %s" % e)
+            pagemsg(
+                "WARNING: Error parsing line using full delimiters, falling back to double braces only: %s"
+                % e
+            )
             try:
-                segments = blib.parse_multi_delimiter_balanced_segment_run(rest, [(r"\{\{", r"\}\}")])
+                segments = blib.parse_multi_delimiter_balanced_segment_run(
+                    rest, [(r"\{\{", r"\}\}")]
+                )
             except blib.ParseException as e:
                 pagemsg("WARNING: Error parsing line using double braces only: %s" % e)
                 return line
 
-        alternating_runs = blib.split_alternating_runs(segments, r"(\s*[,;/]\s*|\s+or\s+)")
+        alternating_runs = blib.split_alternating_runs(
+            segments, r"(\s*[,;/]\s*|\s+or\s+)"
+        )
 
         # We used to implement conversion in an entirely left-to-right fashion but there were too many edge cases to worry
         # about. Instead we work bottom-up in multiple passes:
@@ -901,7 +1035,16 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                         )
                         append_template()
                         line_parts.append(
-                            "(" + convert_one_line("", "", segment[1:-1], pagemsg, expand_text, in_multitrans) + ")"
+                            "("
+                            + convert_one_line(
+                                "",
+                                "",
+                                segment[1:-1],
+                                pagemsg,
+                                expand_text,
+                                in_multitrans,
+                            )
+                            + ")"
                         )
                     else:
                         pagemsg(
@@ -921,7 +1064,11 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                 elif re.search("^<ref", segment):
                     pagemsg("WARNING: Reference, can't handle yet: %s" % segment)
                     # FIXME
-                elif re.search(r"^\{\{ *(%s) *\|" % "|".join(re.escape(x) for x in blib.qualifier_templates), segment):
+                elif re.search(
+                    r"^\{\{ *(%s) *\|"
+                    % "|".join(re.escape(x) for x in blib.qualifier_templates),
+                    segment,
+                ):
                     qt = list(blib.parse_text(segment).filter_templates())[0]
                     quals = blib.fetch_param_chain(qt, "1")
                     processed_quals = []
@@ -932,12 +1079,17 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                                 "WARNING: Param %s= of qualifier template %s at position i=%s, j=%s has embedded translation template"
                                 % (k + 1, segment, i, j)
                             )
-                            processed_quals.append(convert_one_line("", "", qual, pagemsg, expand_text, in_multitrans))
+                            processed_quals.append(
+                                convert_one_line(
+                                    "", "", qual, pagemsg, expand_text, in_multitrans
+                                )
+                            )
                             saw_embedded_translation_template = True
                         else:
                             processed_quals.append(qual)
                     alternating_run[j] = Qualifier(
-                        qualifiers=processed_quals, saw_embedded_translation_template=saw_embedded_translation_template
+                        qualifiers=processed_quals,
+                        saw_embedded_translation_template=saw_embedded_translation_template,
                     )
                     # if saw_embedded_translation_template:
                     #  append_template()
@@ -951,11 +1103,18 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                     #  quals_on_line.extend(processed_quals)
                     #  seen_raw_parts_before_translation.append(segment)
                 elif re.search(
-                    r"^\{\{ *(%s) *\|" % "|".join(re.escape(x) for x in blib.translation_templates), segment
+                    r"^\{\{ *(%s) *\|"
+                    % "|".join(re.escape(x) for x in blib.translation_templates),
+                    segment,
                 ):
                     if entry is not None:
-                        pagemsg("WARNING: Saw two translation templates not delimiter-separated")
-                        if seen_raw_parts_before_translation and "".join(seen_raw_parts_before_translation).strip():
+                        pagemsg(
+                            "WARNING: Saw two translation templates not delimiter-separated"
+                        )
+                        if (
+                            seen_raw_parts_before_translation
+                            and "".join(seen_raw_parts_before_translation).strip()
+                        ):
                             pagemsg(
                                 "WARNING: INTERNAL ERROR: Saw two translation templates not delimiter-separated and not separated by whitespace, but %s at position i=%s, j=%s"
                                 % (seen_raw_parts_before_translation, i, j - 1)
@@ -976,7 +1135,9 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                         entry += "<check>"
                     if tn.startswith("tt"):
                         if not in_multitrans:
-                            pagemsg("WARNING: Apparent multitrans template outside of multitrans section")
+                            pagemsg(
+                                "WARNING: Apparent multitrans template outside of multitrans section"
+                            )
                     if genders:
                         entry_parts.append(("g", ",".join(genders)))
                     for param in ["alt", "id", "sc", "t", "tr", "ts", "lit"]:
@@ -1001,20 +1162,30 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
 
                     langcode = getp("1")
                     if langcode in lang_utils.languages_by_code:
-                        langcode_langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+                        langcode_langname = lang_utils.languages_by_code[langcode][
+                            "canonicalName"
+                        ]
                         langcode_type = "lang"
                     elif langcode in lang_utils.etym_languages_by_code:
-                        langcode_langname = lang_utils.etym_languages_by_code[langcode]["canonicalName"]
+                        langcode_langname = lang_utils.etym_languages_by_code[langcode][
+                            "canonicalName"
+                        ]
                         langcode_type = "etymlang"
                     elif langcode in lang_utils.families_by_code:
-                        langcode_langname = lang_utils.families_by_code[langcode]["canonicalName"]
+                        langcode_langname = lang_utils.families_by_code[langcode][
+                            "canonicalName"
+                        ]
                         langcode_type = "family"
                     else:
                         langcode_langname = None
                         langcode_type = None
                         pagemsg("WARNING: Unrecognized language code %s" % langcode)
                     matched_init_langname = None
-                    if init_langname and langcode_langname and langcode_langname != init_langname:
+                    if (
+                        init_langname
+                        and langcode_langname
+                        and langcode_langname != init_langname
+                    ):
                         if init_langname_code in etym_language_to_parent and (
                             langcode == etym_language_to_parent[init_langname_code]
                         ):
@@ -1024,8 +1195,15 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                             )
                             langcode = init_langname_code
                             matched_init_langname = True
-                        elif (init_langname, langcode) in lang_utils.langcode_langname_to_correct_langcode:
-                            new_langcode = lang_utils.langcode_langname_to_correct_langcode[(init_langname, langcode)]
+                        elif (
+                            init_langname,
+                            langcode,
+                        ) in lang_utils.langcode_langname_to_correct_langcode:
+                            new_langcode = (
+                                lang_utils.langcode_langname_to_correct_langcode[
+                                    (init_langname, langcode)
+                                ]
+                            )
                             pagemsg(
                                 "WARNING: Mismatch between explicit language name %s (%s code %s) and %s code %s (language name %s), correcting to code %s, please check"
                                 % (
@@ -1087,7 +1265,9 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                         if matched_init_langname and init_langname:
                             template_tempname = "t" + distinguishing_new_insert
                         init_langname_prefix = (
-                            "" if matched_init_langname else init_langname + ": " if init_langname else ""
+                            ""
+                            if matched_init_langname
+                            else init_langname + ": " if init_langname else ""
                         )
 
                     if template_langcode and template_langcode != langcode:
@@ -1099,7 +1279,9 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                     template_langcode = langcode
 
                 else:
-                    pagemsg("WARNING: Unrecognized template, can't handle yet: %s" % segment)
+                    pagemsg(
+                        "WARNING: Unrecognized template, can't handle yet: %s" % segment
+                    )
                     append_template()
                     if text_has_translation_template(segment):
                         if not segment.startswith("{{"):
@@ -1125,7 +1307,14 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                                             "Converting nested translation template(s) in parameter %s=%s in segment %s at position i=%s, j=%s"
                                             % (pn, pv, segment, i, j)
                                         )
-                                        newpv = convert_one_line("", "", pv, pagemsg, expand_text, in_multitrans)
+                                        newpv = convert_one_line(
+                                            "",
+                                            "",
+                                            pv,
+                                            pagemsg,
+                                            expand_text,
+                                            in_multitrans,
+                                        )
                                         pagemsg(
                                             "Converted parameter %s=%s in segment %s at position i=%s, j=%s to %s"
                                             % (pn, pv, segment, i, j, newpv)
@@ -1143,7 +1332,11 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
         for qual in quals_on_line:
             seen_converted_quals[qual][template_langcode or "UNKNOWN"] += 1
             seen_converted_qual_count[qual] += 1
-        return "%s%s%s" % (init_star or "", init_langname_prefix or "", "".join(line_parts))
+        return "%s%s%s" % (
+            init_star or "",
+            init_langname_prefix or "",
+            "".join(line_parts),
+        )
     else:
         return line
 
@@ -1164,7 +1357,10 @@ def process_text_on_page(index, pagename, text):
         origline = line
 
         def pagemsg(txt):
-            msg("Page %s %s: Line %s: %s: line = <begin> %s <end>" % (index, pagename, lineind + 1, txt, origline))
+            msg(
+                "Page %s %s: Line %s: %s: line = <begin> %s <end>"
+                % (index, pagename, lineind + 1, txt, origline)
+            )
 
         def expand_text(tempcall):
             return blib.expand_text(tempcall, pagename, pagemsg, args.verbose)
@@ -1180,23 +1376,33 @@ def process_text_on_page(index, pagename, text):
             if not in_multitrans:
                 pagemsg("WARNING: Apparent end of multitrans section not in multitrans")
             in_multitrans = False
-        elif re.search(r"\{\{multitrans", line):  # don't get confused by {{multitrans}} in a closing comment
+        elif re.search(
+            r"\{\{multitrans", line
+        ):  # don't get confused by {{multitrans}} in a closing comment
             if not in_translation_section:
                 pagemsg(
-                    "WARNING: Apparent {{multitrans}} start outside of ==Translations==, in ==%s==" % subsection_header
+                    "WARNING: Apparent {{multitrans}} start outside of ==Translations==, in ==%s=="
+                    % subsection_header
                 )
             if in_multitrans:
                 pagemsg("WARNING: Apparent nested multitrans section")
             in_multitrans = True
-        if re.search(r"^\{\{(trans-top|checktrans-top|trans-top-see|trans-top-also)[|}]", line):
+        if re.search(
+            r"^\{\{(trans-top|checktrans-top|trans-top-see|trans-top-also)[|}]", line
+        ):
             if in_translation_box:
                 pagemsg("WARNING: Nested translation boxes, skipping page")
                 return
             in_translation_box = True
             if not in_translation_section:
-                pagemsg("WARNING: Translation box not in ==Translations== section but in ==%s==" % subsection_header)
+                pagemsg(
+                    "WARNING: Translation box not in ==Translations== section but in ==%s=="
+                    % subsection_header
+                )
             new_lines.append(line)
-        elif re.search(r"^\}* *\{\{trans-bottom", line):  # allow for multitrans closing braces before {{trans-bottom}}
+        elif re.search(
+            r"^\}* *\{\{trans-bottom", line
+        ):  # allow for multitrans closing braces before {{trans-bottom}}
             if not in_translation_box:
                 pagemsg("WARNING: Found {{trans-bottom}} not in a translation box")
             in_translation_box = False
@@ -1205,12 +1411,16 @@ def process_text_on_page(index, pagename, text):
             m = re.search(r"^(\* *:* *)([^:]+)(:.*)$", line)
             if m:
                 init_star, langname, rest = m.groups()
-                newline = convert_one_line(init_star, langname, rest, pagemsg, expand_text, in_multitrans)
+                newline = convert_one_line(
+                    init_star, langname, rest, pagemsg, expand_text, in_multitrans
+                )
                 if newline != line:
                     notes.append("convert translation line to {{t}}")
                     line = newline
             elif text_has_translation_template(line):
-                newline = convert_one_line("", "", line, pagemsg, expand_text, in_multitrans)
+                newline = convert_one_line(
+                    "", "", line, pagemsg, expand_text, in_multitrans
+                )
                 if newline != line:
                     notes.append("convert misformatted translation line to {{t}}")
                     line = newline
@@ -1225,536 +1435,902 @@ def process_text_on_page(index, pagename, text):
     return "\n".join(new_lines), notes
 
 
-# def process_text_on_page(index, pagetitle, text):
-#  def pagemsg(txt):
-#    msg("Page %s %s: %s" % (index, pagetitle, txt))
-#  def expand_text(tempcall):
-#    return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-#  def make_inline_mod(key, val):
-#    return make_inline_modifier(key, val, pagemsg)
+#def process_text_on_page(index, pagetitle, text):
+#    def pagemsg(txt):
+#        msg("Page %s %s: %s" % (index, pagetitle, txt))
 #
-#  def extract_left_and_right_qualifiers_and_genders(line):
-#    left_qual = []
-#    right_qual = []
-#    right_gloss = []
-#    exterior_genders = []
-#    line_comment = ""
+#    def expand_text(tempcall):
+#        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 #
-#    m = re.search("^(.*)(<!--.*?-->)$", line)
-#    if m:
-#      line, line_comment = m.groups()
-#      line = line.strip()
-#    def extract_left_or_right_qualifier_or_gender(line, on_left=True):
-#      this_qual = None
-#      this_gender = None
-#      this_gloss = None
-#      # check for left qualifiers specified using a qualifier template
-#      if on_left:
-#        left_re = ""
-#        right_re = " *(.*?)"
-#      else:
-#        left_re = "(.*?) *"
-#        right_re = ""
-#      m = None
-#      if not m and not on_left:
-#        m = re.search(r"^%s\{\{(?:g|g2)\|([^{}=]*)\}\}%s$" % (left_re, right_re), line)
+#    def make_inline_mod(key, val):
+#        return make_inline_modifier(key, val, pagemsg)
+#
+#    def extract_left_and_right_qualifiers_and_genders(line):
+#        left_qual = []
+#        right_qual = []
+#        right_gloss = []
+#        exterior_genders = []
+#        line_comment = ""
+#
+#        m = re.search("^(.*)(<!--.*?-->)$", line)
 #        if m:
-#          line, this_gender = m.groups()
-#          this_gender = this_gender.replace("|", ",")
-#      if not m and not on_left:
-#        m = re.search(r"^%s\{\{(?:gloss|gl)\|([^{}=]*)\}\}%s$" % (left_re, right_re), line)
-#        if m:
-#          line, this_gloss = m.groups()
-#          this_gloss = this_gloss.replace("|", "; ")
-#      if not m:
-#        m = re.search(r"^%s\{\{(?:qualifier|qual|q|qf|i)\|([^{}=]*)\}\}%s$" % (left_re, right_re), line)
-#        if m:
-#          this_qual, line = m.groups()
-#      if not m:
-#        # check for qualifier-like ''(...)''
-#        m = re.search(r"^%s''\(([^'{}]*)\)''%s$" % (left_re, right_re), line)
-#        if m:
-#          this_qual, line = m.groups()
-#      if not m:
-#        # check for qualifier-like (''...'')
-#        m = re.search(r"^%s\(''([^'{}]*)''\)%s$" % (left_re, right_re), line)
-#        if m:
-#          this_qual, line = m.groups()
-#      if not m:
-#        # check for somewhat qualifier-like ''...''
-#        m = re.search(r"^%s''([^'{}]*)''%s$" % (left_re, right_re), line)
-#        if m:
-#          this_qual, line = m.groups()
-#      if not m and not on_left:
-#        # check for parenthesized parts of speech on the right
-#        m = re.search(r"^%s\((noun|verb|adjective|adverb)\)%s$" % (left_re, right_re), line)
-#        if m:
-#          this_qual, line = m.groups()
-#      if this_qual is not None and not on_left:
-#        this_qual, line = line, this_qual
-#      if this_qual is not None:
-#        # Split on comma+space and on | (separate params), but not | or comma+space inside of links.
-#        # Don't split if the qualifier text begins "literally".
-#        if re.search("^'*literally", this_qual):
-#          this_qual = [this_qual]
-#        else:
-#          segments = blib.parse_balanced_segment_run(this_qual, "[", "]")
-#          alternating_runs = blib.split_alternating_runs(segments, "(?:\||,\s+)")
-#          this_qual = ["".join(x) for x in alternating_runs]
-#      return this_qual, this_gender, this_gloss, line
+#            line, line_comment = m.groups()
+#            line = line.strip()
 #
-#    while True:
-#      this_left_quals, this_left_gender, this_left_gloss, line = extract_left_or_right_qualifier_or_gender(
-#        line, on_left=True)
-#      if this_left_quals is None:
-#        break
-#      left_qual.extend(this_left_quals)
-#
-#    while True:
-#      this_right_quals, this_right_gender, this_right_gloss, line = extract_left_or_right_qualifier_or_gender(
-#        line, on_left=False)
-#      if this_right_quals is None and this_right_gender is None and this_right_gloss is None:
-#        break
-#      if this_right_quals:
-#        right_qual.extend(this_right_quals)
-#      if this_right_gender:
-#        exterior_genders.append(this_right_gender)
-#      if this_right_gloss:
-#        right_gloss.append(this_right_gloss)
-#
-#    return line, left_qual, right_qual, exterior_genders, right_gloss, line_comment
-#
-#  def construct_line_with_quals(vals, left_qual, right_qual, exterior_genders, right_gloss, line_comment):
-#    def convert_quals(quals, is_left, has_pos, has_g):
-#      qualparts = []
-#      non_converted_quals = []
-#      labels = []
-#      def convert_qual(qual):
-#        nonlocal has_pos, has_g
-#        gender_map = {
-#          "m": "m",
-#          "m.": "m",
-#          "masc": "m",
-#          "masc.": "m",
-#          "masculine": "m",
-#          "f": "f",
-#          "f.": "f",
-#          "fem": "f",
-#          "fem.": "f",
-#          "feminine": "f",
-#          #"n": "n", existing uses seem to be "noun" not "neuter"
-#          #"n.": "n", existing uses seem to be "noun" not "neuter"
-#          "neut": "n",
-#          "neut.": "n",
-#          "neuter": "n",
-#          "mp": "m-p",
-#          "m.p.": "m-p",
-#          "m.pl.": "m-p",
-#          "m-p": "m-p",
-#          "m p": "m-p",
-#          "m pl": "m-p",
-#          "m. p.": "m-p",
-#          "m. pl.": "m-p",
-#          "masc pl": "m-p",
-#          "masc. pl.": "m-p",
-#          "masculine plural": "m-p",
-#          "fp": "f-p",
-#          "f.p.": "f-p",
-#          "f.pl.": "f-p",
-#          "f-p": "f-p",
-#          "f p": "f-p",
-#          "f pl": "f-p",
-#          "f. p.": "f-p",
-#          "f. pl.": "f-p",
-#          "fem pl": "f-p",
-#          "fem. pl.": "f-p",
-#          "feminine plural": "f-p",
-#          "np": "n-p",
-#          "n.p.": "n-p",
-#          "n.pl.": "n-p",
-#          "n-p": "n-p",
-#          "n p": "n-p",
-#          "n pl": "n-p",
-#          "n. p.": "n-p",
-#          "n. pl.": "n-p",
-#          "neut pl": "n-p",
-#          "neut. pl.": "n-p",
-#          "neuter plural": "f-p",
-#          "pl": "p",
-#          "pl.": "p",
-#          "plural": "p",
-#        }
-#        label_map = {
-#          "archaic or obsolete": "archaic,or,obsolete",
-#          "Sanskritized, rare": "Sanskritized,rare",
-#          "Sanskritized, Rare": "Sanskritized,rare",
-#          "Sanskritized, literary": "Sanskritized,literary",
-#          "Sanskritized, formal or literary": "Sanskritized,formal,or,literary",
-#          "Persianized, rare": "Persianized,rare",
-#          "chiefly Islam": "chiefly,Islam",
-#          "chiefly Hinduism": "chiefly,Hinduism",
-#          "Mediaeval Latin": "Medieval Latin",
-#          "Med. Lat.": "Medieval Latin",
-#          "Mediaeval": "Medieval",
-#          "BrE": "UK",
-#          "obsolete, rare": "obsolete,rare",
-#          "zoölogy": "zoology",
-#          "South African English": "South Africa",
-#          "place name": "toponym",
-#          "placename": "toponym",
-#          "place": "toponym",
-#          "Colloquial": "colloquial",
-#          "Rare": "rare",
-#          "patronym": "patronymic",
-#          "Diminutives:": "diminutive",
-#          "Endearing forms:": "endearing",
-#          "Pejorative forms:": "pejorative",
-#          "Patronymics:": "patronymic",
-#          "Surnames:": "surname",
-#          "New vocatives:": "new vocative",
-#          "New vocative:": "new vocative",
-#          "factative": "factitive",
-#        }
-#        pos_map = {
-#          "adj.": "adj",
-#          "adjective and noun": "adjective, noun",
-#          "n.": "n",
-#          "intransitive": "vi",
-#          "transitive": "vt",
-#        }
-#        m = re.search("^'*literally[:;'\" ]+(.*?)['\"]?$", qual)
-#        if m:
-#          qualparts.append(make_inline_mod("lit", m.group(1)))
-#        elif qual in label_map:
-#          labels.append(label_map[qual])
-#        elif qual in [
-#          "rare", "uncommon", "colloquial", "informal", "nonstandard", "non-standard", "offensive",
-#          "figurative", "figuratively", "formal", "learned", "impersonal", "slang", "vulgar", "literary", "historical",
-#          "humble speech", "jocular", "euphemistic", "derogatory", "expressive", "vernacular", "childish",
-#          "abbreviation", "initialism", "back-formation", "clipping", "blend", "proverb",
-#          "active", "passive", "reflexive", "mediopassive", "iterative", "causative", "causative-iterative",
-#          "collective",
-#          "dialectal", "regional", "poetic", "uncertain", "honorific", "nickname", "pejorative", "humorous",
-#          "toponym", "surname", "patronymic", "female patronymic", "male patronymic", "former name",
-#          "obsolete", "archaic", "dated", "deprecated", "diminutive", "augmentative", "endearing", "semelfactive",
-#          "US", "American", "North America", "Canada", "Canadian", "UK", "British", "Britain", "British English",
-#          "Australia", "Australian", "Ireland", "Irish", "New Zealand", "Indian English", "AU", "NZ",
-#          "Anglo-Norman", "Standard Malay", "Indonesian",
-#          "Spain", "Argentina", "Venezuela", "Dominican Republic", "Costa Rica", "Mexico", "Puerto Rico", "Paraguay",
-#          "Uruguay", "Chile", "Bolivia", "Colombia", "Costa Rica", "Cuba", "Panama", "Nicaragua", "Ecuador",
-#          "El Salvador", "Honduras", "Peru", "Guatemala", "Brazil", "Portugal", "Belize",
-#          "Puter", "Sursilvan", "Sutsilvan", "Surmiran", "Vallader", "Rumantsch Grischun",
-#          "sports", "medicine", "law", "logic", "shipping", "theology", "phonology", "music", "grammar", "religion",
-#          "linguistics", "geology", "botany", "ornithology", "sociology", "psychiatry", "zoology", "anatomy",
-#          "chemistry", "architecture", "phonetics", "biology", "astronomy",
-#          "Sanskritized", "Sanskritised", "Persianized", "Persianised", "Netherlands",
-#          "Late Latin", "Classical", "Byzantine", "Vulgar Latin", "Medieval Latin", "New Latin", "Katharevousa",
-#          "Gheg", "Standard", "Tosk", "Arbërisht", "Arvanitic",
-#          "East Slavic", "North Korea", "South Korea", "Münsterländisch", "Kamviri", "Altmärkisch", "North Germanic",
-#          "Pulaar", "Pular", # two different languages!
-#          "Maasina", "Adamawa", "Kuril Ainu", "Northern Finnic", "Ecclesiastical", "Quebec", "Austria", "Algherese",
-#        ]:
-#          labels.append(qual)
-#        elif not has_pos and qual in pos_map:
-#          qualparts.append(make_inline_mod("pos", pos_map[qual]))
-#          has_pos = True
-#        elif not has_pos and qual in [
-#          "noun", "n", "proper noun", "adjective", "adj", "verb", "v", "vb", "adverb", "adv", "preposition", "prep",
-#          "conjunction", "conj", "verbal noun", "[[vi]]", "[[vt]]", "participle", "adjective, noun", "agent nouns",
-#          "agent noun", "[[na]]", "[[ni]]", "[[vai]]", "[[vii]]", "[[vti]]", "[[vta]]", "na", "ni", "vai", "vii", "vti",
-#          "vta", "instrumental nouns", "instrumental noun", "action noun", "gerund",
-#        ]:
-#          qualparts.append(make_inline_mod("pos", qual.replace("[[", "").replace("]]", "")))
-#          has_pos = True
-#        elif not has_g and qual in gender_map:
-#          if is_left:
-#            qualparts.append(make_inline_mod("g", gender_map[qual]))
-#            has_g = True
-#          else:
-#            exterior_genders.append(gender_map[qual])
-#        else:
-#          seen_quals[qual] += 1
-#          non_converted_quals.append(qual)
-#      for qual in quals:
-#        convert_qual(qual)
-#      if labels:
-#        qualparts.append(make_inline_mod("l" if is_left else "ll", ",".join(labels)))
-#      if non_converted_quals:
-#        qualparts.append(make_inline_mod("q" if is_left else "qq", ", ".join(non_converted_quals)))
-#      return "".join(qualparts)
-#
-#    if left_qual:
-#      vals[0] += convert_quals(left_qual, True, "<pos:" in vals[0], "<g:" in vals[0])
-#    if right_qual:
-#      vals[-1] += convert_quals(right_qual, False, "<pos:" in vals[-1], "<g:" in vals[-1])
-#    if exterior_genders:
-#      if "<g:" in vals[-1]:
-#        pagemsg("WARNING: Saw both interior and exterior genders, trying to combine")
-#        vals[-1] = re.sub("(<g:.*?)>", r"\1,%s>" % escape_inline_val(",".join(exterior_genders)), vals[-1])
-#      else:
-#        vals[-1] += make_inline_mod("g", ",".join(exterior_genders))
-#    if right_gloss:
-#      if "<t:" in vals[-1]:
-#        pagemsg("WARNING: Saw both interior and exterior glosses, trying to combine")
-#        vals[-1] = re.sub("(<t:.*?)>", r"\1; %s>" % escape_inline_val("; ".join(right_gloss)), vals[-1])
-#      else:
-#        vals[-1] += make_inline_mod("t", "; ".join(right_gloss))
-#    return ",".join(vals) + line_comment
-#
-#  notes = []
-#
-#  sections, sections_by_lang, section_langs = blib.split_text_into_sections(text, pagemsg)
-#  section_langs = dict(section_langs)
-#  for j in range(2, len(sections), 2):
-#    langname = section_langs[j]
-#    if langname not in lang_utils.languages_by_canonical_name:
-#      pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
-#      continue
-#    langcode = lang_utils.languages_by_canonical_name[langname]["code"]
-#    subsections, subsections_by_header, subsection_headers, subsection_levels = (
-#      blib.split_text_into_subsections(sections[j], pagemsg)
-#    )
-#    for k in range(2, len(subsections), 2):
-#      header = subsection_headers[k]
-#
-#      if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsections[k]):
-#        parsed = blib.parse_text(subsections[k])
-#        for t in parsed.filter_templates():
-#          tn = tname(t)
-#          if tn in ["col", "col1", "col2", "col3", "col4", "col5", "col6"]:
-#            newparams = []
-#            numrows = 0
-#            numchangedrows = 0
-#            origt = str(t)
-#            tlang = getparam(t, "1").strip()
-#            for param in t.params:
-#              pn = pname(param)
-#              pv = str(param.value)
-#              if pn != "1" and re.search("^[0-9]+$", pn):
-#                numrows += 1
-#                m = re.search(r"(\s*)(.*?)(\s*)$", pv, re.S)
-#                beginspace, maintext, endspace = m.groups()
-#                newmaintext, left_qual, right_qual, exterior_genders, right_gloss, line_comment = (
-#                  extract_left_and_right_qualifiers_and_genders(maintext))
-#                newparts, new_notes = convert_one_line(newmaintext, False, langcode, langname, pagemsg, expand_text)
-#                if type(newparts) is str:
-#                  pagemsg("WARNING: %s, not changing: %s" % (newparts, pv.strip()))
-#                elif newparts is not None:
-#                  newmaintext = construct_line_with_quals(
-#                    newparts, left_qual, right_qual, exterior_genders, right_gloss, line_comment)
-#                  newpv = beginspace + newmaintext + endspace
-#                  numchangedrows += 1
-#                  pagemsg("Replaced %s=<%s> with <%s> in {{%s|%s}} in ==%s==" % (
-#                    pn, pv.strip(), newpv.strip(), tn, tlang, header.strip()))
-#                  pv = newpv
-#                  notes.extend(new_notes)
-#              newparams.append((pn, pv, param.showkey))
-#            del t.params[:]
-#            for pn, pv, showkey in newparams:
-#              t.add(pn, pv, showkey=showkey, preserve_spacing=False)
-#            if origt != str(t):
-#              notes.append("optimize %s of %s row%s in {{%s|%s}} in ==%s==" % (
-#                numchangedrows, numrows, "s" if numrows != 1 else "", tn, tlang, header.strip()))
-#        subsections[k] = str(parsed)
-#
-#      expected_abbrev = header_to_col_top_abbrev.get(header, None)
-#      lines = subsections[k].split("\n")
-#      newlines = []
-#      raw_col_lines = None
-#      col_elements = None
-#      if args.do_derived_related:
-#        if header.strip() in ["Derived terms", "Related terms"]:
-#          in_col_top = True
-#          lines.append("\uFFF0") # sentinel line
-#          raw_col_lines = []
-#          for line in lines:
-#            if line.startswith("*"):
-#              raw_col_lines.append(line)
+#        def extract_left_or_right_qualifier_or_gender(line, on_left=True):
+#            this_qual = None
+#            this_gender = None
+#            this_gloss = None
+#            # check for left qualifiers specified using a qualifier template
+#            if on_left:
+#                left_re = ""
+#                right_re = " *(.*?)"
 #            else:
-#              break
-#          total_processable_lines = len(raw_col_lines)
-#          if total_processable_lines < args.min_derived_related_lines:
-#            pagemsg("Saw only %s element%s in ==%s==, can't convert to {{col}}" % (
-#              total_processable_lines, "" if total_processable_lines == 1 else "s", header.strip()))
-#            in_col_top = False
-#          raw_col_lines = []
-#          col_elements = []
-#        else:
-#          in_col_top = False
-#      else:
-#        in_col_top = False
-#      col_top_tn = None
-#      new_notes = []
-#      cant_convert = False
-#      col_top_header = None
-#      for line in lines:
-#        if in_col_top:
-#          raw_col_lines.append(line)
-#          if args.do_derived_related and not line.startswith("*"):
-#            if len(col_elements) < args.min_derived_related_lines:
-#              pagemsg("Processed %s element%s out of %s in ==%s== before getting to an unconvertible element" % (
-#                len(col_elements), "" if len(col_elements) == 1 else "s", total_processable_lines, header.strip()))
-#              cant_convert = True
-#              newlines.extend(raw_col_lines)
-#              in_col_top = False
-#              continue
-#            elif cant_convert:
-#              newlines.extend(raw_col_lines)
-#              in_col_top = False
-#              continue
-#            else:
-#              no_sort_param = ""
-#              if pagetitle in no_sort_lists:
-#                for no_sort_lang, no_sort_firstel in no_sort_lists[pagetitle]:
-#                  if no_sort_lang == langcode:
-#                    if no_sort_firstel == col_elements[0][1:]:
-#                      no_sort_param = "|sort=0"
+#                left_re = "(.*?) *"
+#                right_re = ""
+#            m = None
+#            if not m and not on_left:
+#                m = re.search(
+#                    r"^%s\{\{(?:g|g2)\|([^{}=]*)\}\}%s$" % (left_re, right_re), line
+#                )
+#                if m:
+#                    line, this_gender = m.groups()
+#                    this_gender = this_gender.replace("|", ",")
+#            if not m and not on_left:
+#                m = re.search(
+#                    r"^%s\{\{(?:gloss|gl)\|([^{}=]*)\}\}%s$" % (left_re, right_re), line
+#                )
+#                if m:
+#                    line, this_gloss = m.groups()
+#                    this_gloss = this_gloss.replace("|", "; ")
+#            if not m:
+#                m = re.search(
+#                    r"^%s\{\{(?:qualifier|qual|q|qf|i)\|([^{}=]*)\}\}%s$"
+#                    % (left_re, right_re),
+#                    line,
+#                )
+#                if m:
+#                    this_qual, line = m.groups()
+#            if not m:
+#                # check for qualifier-like ''(...)''
+#                m = re.search(r"^%s''\(([^'{}]*)\)''%s$" % (left_re, right_re), line)
+#                if m:
+#                    this_qual, line = m.groups()
+#            if not m:
+#                # check for qualifier-like (''...'')
+#                m = re.search(r"^%s\(''([^'{}]*)''\)%s$" % (left_re, right_re), line)
+#                if m:
+#                    this_qual, line = m.groups()
+#            if not m:
+#                # check for somewhat qualifier-like ''...''
+#                m = re.search(r"^%s''([^'{}]*)''%s$" % (left_re, right_re), line)
+#                if m:
+#                    this_qual, line = m.groups()
+#            if not m and not on_left:
+#                # check for parenthesized parts of speech on the right
+#                m = re.search(
+#                    r"^%s\((noun|verb|adjective|adverb)\)%s$" % (left_re, right_re),
+#                    line,
+#                )
+#                if m:
+#                    this_qual, line = m.groups()
+#            if this_qual is not None and not on_left:
+#                this_qual, line = line, this_qual
+#            if this_qual is not None:
+#                # Split on comma+space and on | (separate params), but not | or comma+space inside of links.
+#                # Don't split if the qualifier text begins "literally".
+#                if re.search("^'*literally", this_qual):
+#                    this_qual = [this_qual]
+#                else:
+#                    segments = blib.parse_balanced_segment_run(this_qual, "[", "]")
+#                    alternating_runs = blib.split_alternating_runs(
+#                        segments, "(?:\||,\s+)"
+#                    )
+#                    this_qual = ["".join(x) for x in alternating_runs]
+#            return this_qual, this_gender, this_gloss, line
+#
+#        while True:
+#            this_left_quals, this_left_gender, this_left_gloss, line = (
+#                extract_left_or_right_qualifier_or_gender(line, on_left=True)
+#            )
+#            if this_left_quals is None:
+#                break
+#            left_qual.extend(this_left_quals)
+#
+#        while True:
+#            this_right_quals, this_right_gender, this_right_gloss, line = (
+#                extract_left_or_right_qualifier_or_gender(line, on_left=False)
+#            )
+#            if (
+#                this_right_quals is None
+#                and this_right_gender is None
+#                and this_right_gloss is None
+#            ):
+#                break
+#            if this_right_quals:
+#                right_qual.extend(this_right_quals)
+#            if this_right_gender:
+#                exterior_genders.append(this_right_gender)
+#            if this_right_gloss:
+#                right_gloss.append(this_right_gloss)
+#
+#        return line, left_qual, right_qual, exterior_genders, right_gloss, line_comment
+#
+#    def construct_line_with_quals(
+#        vals, left_qual, right_qual, exterior_genders, right_gloss, line_comment
+#    ):
+#        def convert_quals(quals, is_left, has_pos, has_g):
+#            qualparts = []
+#            non_converted_quals = []
+#            labels = []
+#
+#            def convert_qual(qual):
+#                nonlocal has_pos, has_g
+#                gender_map = {
+#                    "m": "m",
+#                    "m.": "m",
+#                    "masc": "m",
+#                    "masc.": "m",
+#                    "masculine": "m",
+#                    "f": "f",
+#                    "f.": "f",
+#                    "fem": "f",
+#                    "fem.": "f",
+#                    "feminine": "f",
+#                    # "n": "n", existing uses seem to be "noun" not "neuter"
+#                    # "n.": "n", existing uses seem to be "noun" not "neuter"
+#                    "neut": "n",
+#                    "neut.": "n",
+#                    "neuter": "n",
+#                    "mp": "m-p",
+#                    "m.p.": "m-p",
+#                    "m.pl.": "m-p",
+#                    "m-p": "m-p",
+#                    "m p": "m-p",
+#                    "m pl": "m-p",
+#                    "m. p.": "m-p",
+#                    "m. pl.": "m-p",
+#                    "masc pl": "m-p",
+#                    "masc. pl.": "m-p",
+#                    "masculine plural": "m-p",
+#                    "fp": "f-p",
+#                    "f.p.": "f-p",
+#                    "f.pl.": "f-p",
+#                    "f-p": "f-p",
+#                    "f p": "f-p",
+#                    "f pl": "f-p",
+#                    "f. p.": "f-p",
+#                    "f. pl.": "f-p",
+#                    "fem pl": "f-p",
+#                    "fem. pl.": "f-p",
+#                    "feminine plural": "f-p",
+#                    "np": "n-p",
+#                    "n.p.": "n-p",
+#                    "n.pl.": "n-p",
+#                    "n-p": "n-p",
+#                    "n p": "n-p",
+#                    "n pl": "n-p",
+#                    "n. p.": "n-p",
+#                    "n. pl.": "n-p",
+#                    "neut pl": "n-p",
+#                    "neut. pl.": "n-p",
+#                    "neuter plural": "f-p",
+#                    "pl": "p",
+#                    "pl.": "p",
+#                    "plural": "p",
+#                }
+#                label_map = {
+#                    "archaic or obsolete": "archaic,or,obsolete",
+#                    "Sanskritized, rare": "Sanskritized,rare",
+#                    "Sanskritized, Rare": "Sanskritized,rare",
+#                    "Sanskritized, literary": "Sanskritized,literary",
+#                    "Sanskritized, formal or literary": "Sanskritized,formal,or,literary",
+#                    "Persianized, rare": "Persianized,rare",
+#                    "chiefly Islam": "chiefly,Islam",
+#                    "chiefly Hinduism": "chiefly,Hinduism",
+#                    "Mediaeval Latin": "Medieval Latin",
+#                    "Med. Lat.": "Medieval Latin",
+#                    "Mediaeval": "Medieval",
+#                    "BrE": "UK",
+#                    "obsolete, rare": "obsolete,rare",
+#                    "zoölogy": "zoology",
+#                    "South African English": "South Africa",
+#                    "place name": "toponym",
+#                    "placename": "toponym",
+#                    "place": "toponym",
+#                    "Colloquial": "colloquial",
+#                    "Rare": "rare",
+#                    "patronym": "patronymic",
+#                    "Diminutives:": "diminutive",
+#                    "Endearing forms:": "endearing",
+#                    "Pejorative forms:": "pejorative",
+#                    "Patronymics:": "patronymic",
+#                    "Surnames:": "surname",
+#                    "New vocatives:": "new vocative",
+#                    "New vocative:": "new vocative",
+#                    "factative": "factitive",
+#                }
+#                pos_map = {
+#                    "adj.": "adj",
+#                    "adjective and noun": "adjective, noun",
+#                    "n.": "n",
+#                    "intransitive": "vi",
+#                    "transitive": "vt",
+#                }
+#                m = re.search("^'*literally[:;'\" ]+(.*?)['\"]?$", qual)
+#                if m:
+#                    qualparts.append(make_inline_mod("lit", m.group(1)))
+#                elif qual in label_map:
+#                    labels.append(label_map[qual])
+#                elif qual in [
+#                    "rare",
+#                    "uncommon",
+#                    "colloquial",
+#                    "informal",
+#                    "nonstandard",
+#                    "non-standard",
+#                    "offensive",
+#                    "figurative",
+#                    "figuratively",
+#                    "formal",
+#                    "learned",
+#                    "impersonal",
+#                    "slang",
+#                    "vulgar",
+#                    "literary",
+#                    "historical",
+#                    "humble speech",
+#                    "jocular",
+#                    "euphemistic",
+#                    "derogatory",
+#                    "expressive",
+#                    "vernacular",
+#                    "childish",
+#                    "abbreviation",
+#                    "initialism",
+#                    "back-formation",
+#                    "clipping",
+#                    "blend",
+#                    "proverb",
+#                    "active",
+#                    "passive",
+#                    "reflexive",
+#                    "mediopassive",
+#                    "iterative",
+#                    "causative",
+#                    "causative-iterative",
+#                    "collective",
+#                    "dialectal",
+#                    "regional",
+#                    "poetic",
+#                    "uncertain",
+#                    "honorific",
+#                    "nickname",
+#                    "pejorative",
+#                    "humorous",
+#                    "toponym",
+#                    "surname",
+#                    "patronymic",
+#                    "female patronymic",
+#                    "male patronymic",
+#                    "former name",
+#                    "obsolete",
+#                    "archaic",
+#                    "dated",
+#                    "deprecated",
+#                    "diminutive",
+#                    "augmentative",
+#                    "endearing",
+#                    "semelfactive",
+#                    "US",
+#                    "American",
+#                    "North America",
+#                    "Canada",
+#                    "Canadian",
+#                    "UK",
+#                    "British",
+#                    "Britain",
+#                    "British English",
+#                    "Australia",
+#                    "Australian",
+#                    "Ireland",
+#                    "Irish",
+#                    "New Zealand",
+#                    "Indian English",
+#                    "AU",
+#                    "NZ",
+#                    "Anglo-Norman",
+#                    "Standard Malay",
+#                    "Indonesian",
+#                    "Spain",
+#                    "Argentina",
+#                    "Venezuela",
+#                    "Dominican Republic",
+#                    "Costa Rica",
+#                    "Mexico",
+#                    "Puerto Rico",
+#                    "Paraguay",
+#                    "Uruguay",
+#                    "Chile",
+#                    "Bolivia",
+#                    "Colombia",
+#                    "Costa Rica",
+#                    "Cuba",
+#                    "Panama",
+#                    "Nicaragua",
+#                    "Ecuador",
+#                    "El Salvador",
+#                    "Honduras",
+#                    "Peru",
+#                    "Guatemala",
+#                    "Brazil",
+#                    "Portugal",
+#                    "Belize",
+#                    "Puter",
+#                    "Sursilvan",
+#                    "Sutsilvan",
+#                    "Surmiran",
+#                    "Vallader",
+#                    "Rumantsch Grischun",
+#                    "sports",
+#                    "medicine",
+#                    "law",
+#                    "logic",
+#                    "shipping",
+#                    "theology",
+#                    "phonology",
+#                    "music",
+#                    "grammar",
+#                    "religion",
+#                    "linguistics",
+#                    "geology",
+#                    "botany",
+#                    "ornithology",
+#                    "sociology",
+#                    "psychiatry",
+#                    "zoology",
+#                    "anatomy",
+#                    "chemistry",
+#                    "architecture",
+#                    "phonetics",
+#                    "biology",
+#                    "astronomy",
+#                    "Sanskritized",
+#                    "Sanskritised",
+#                    "Persianized",
+#                    "Persianised",
+#                    "Netherlands",
+#                    "Late Latin",
+#                    "Classical",
+#                    "Byzantine",
+#                    "Vulgar Latin",
+#                    "Medieval Latin",
+#                    "New Latin",
+#                    "Katharevousa",
+#                    "Gheg",
+#                    "Standard",
+#                    "Tosk",
+#                    "Arbërisht",
+#                    "Arvanitic",
+#                    "East Slavic",
+#                    "North Korea",
+#                    "South Korea",
+#                    "Münsterländisch",
+#                    "Kamviri",
+#                    "Altmärkisch",
+#                    "North Germanic",
+#                    "Pulaar",
+#                    "Pular",  # two different languages!
+#                    "Maasina",
+#                    "Adamawa",
+#                    "Kuril Ainu",
+#                    "Northern Finnic",
+#                    "Ecclesiastical",
+#                    "Quebec",
+#                    "Austria",
+#                    "Algherese",
+#                ]:
+#                    labels.append(qual)
+#                elif not has_pos and qual in pos_map:
+#                    qualparts.append(make_inline_mod("pos", pos_map[qual]))
+#                    has_pos = True
+#                elif not has_pos and qual in [
+#                    "noun",
+#                    "n",
+#                    "proper noun",
+#                    "adjective",
+#                    "adj",
+#                    "verb",
+#                    "v",
+#                    "vb",
+#                    "adverb",
+#                    "adv",
+#                    "preposition",
+#                    "prep",
+#                    "conjunction",
+#                    "conj",
+#                    "verbal noun",
+#                    "[[vi]]",
+#                    "[[vt]]",
+#                    "participle",
+#                    "adjective, noun",
+#                    "agent nouns",
+#                    "agent noun",
+#                    "[[na]]",
+#                    "[[ni]]",
+#                    "[[vai]]",
+#                    "[[vii]]",
+#                    "[[vti]]",
+#                    "[[vta]]",
+#                    "na",
+#                    "ni",
+#                    "vai",
+#                    "vii",
+#                    "vti",
+#                    "vta",
+#                    "instrumental nouns",
+#                    "instrumental noun",
+#                    "action noun",
+#                    "gerund",
+#                ]:
+#                    qualparts.append(
+#                        make_inline_mod("pos", qual.replace("[[", "").replace("]]", ""))
+#                    )
+#                    has_pos = True
+#                elif not has_g and qual in gender_map:
+#                    if is_left:
+#                        qualparts.append(make_inline_mod("g", gender_map[qual]))
+#                        has_g = True
 #                    else:
-#                      pagemsg("WARNING: Found no-sort directive matching langcode '%s' but specified first element '%s' didn't match actual first element '%s'" % (
-#                        langcode, no_sort_firstel, col_elements[0][1:]))
-#              newlines.append("{{col|%s%s" % (langcode, no_sort_param))
-#              newlines.extend(col_elements)
-#              newlines.append("}}")
-#              newlines.append(line)
-#              notes.extend(new_notes)
-#              notes.append("convert %s raw elements under ==%s== to {{col|%s%s|%s|%s|...}}" % (
-#                len(col_elements), header.strip(), langcode, no_sort_param, col_elements[0][1:], col_elements[1][1:]))
-#              in_col_top = False
-#              continue
-#          m = re.search("^\{\{ *((?:col-)?bottom) *\|", line.strip())
-#          if m:
-#            if not cant_convert:
-#              pagemsg("WARNING: Saw {{%s}} with params, can't convert to {{col}}: %s" % (m.group(1), origline))
-#            newlines.extend(raw_col_lines)
-#            in_col_top = False
-#            continue
-#          m = re.search("^\{\{ *((?:col-)?bottom) *\}\}$", line.strip())
-#          if m:
-#            if cant_convert:
-#              newlines.extend(raw_col_lines)
-#              in_col_top = False
-#              continue
-#            if col_top_header and col_top_header != expected_abbrev:
-#              col_top_header = shortcut_to_expansion.get(col_top_header, col_top_header)
+#                        exterior_genders.append(gender_map[qual])
+#                else:
+#                    seen_quals[qual] += 1
+#                    non_converted_quals.append(qual)
+#
+#            for qual in quals:
+#                convert_qual(qual)
+#            if labels:
+#                qualparts.append(
+#                    make_inline_mod("l" if is_left else "ll", ",".join(labels))
+#                )
+#            if non_converted_quals:
+#                qualparts.append(
+#                    make_inline_mod(
+#                        "q" if is_left else "qq", ", ".join(non_converted_quals)
+#                    )
+#                )
+#            return "".join(qualparts)
+#
+#        if left_qual:
+#            vals[0] += convert_quals(
+#                left_qual, True, "<pos:" in vals[0], "<g:" in vals[0]
+#            )
+#        if right_qual:
+#            vals[-1] += convert_quals(
+#                right_qual, False, "<pos:" in vals[-1], "<g:" in vals[-1]
+#            )
+#        if exterior_genders:
+#            if "<g:" in vals[-1]:
+#                pagemsg(
+#                    "WARNING: Saw both interior and exterior genders, trying to combine"
+#                )
+#                vals[-1] = re.sub(
+#                    "(<g:.*?)>",
+#                    r"\1,%s>" % escape_inline_val(",".join(exterior_genders)),
+#                    vals[-1],
+#                )
 #            else:
-#              col_top_header = ""
-#            col_bottom_tn = m.group(1)
-#            newlines.append("{{col|%s%s" % (
-#              langcode, "|title=%s" % col_top_header if col_top_header else ""
-#            ))
-#            newlines.extend(col_elements)
-#            newlines.append("}}")
-#            notes.extend(new_notes)
-#            notes.append("convert {{%s}}/{{%s}} to {{col|%s|...}} with %s line%s in ==%s==" % (
-#              col_top_tn, col_bottom_tn, langcode, len(col_elements), "" if len(col_elements) == 1 else "s",
-#              header.strip()))
-#            in_col_top = False
-#            continue
-#          if cant_convert:
-#            continue
-#          if not line.startswith("*"):
-#            pagemsg("WARNING: Non-bulleted line, can't convert to {{col}} (yet?): %s" % line)
-#            cant_convert = True
-#            continue
-#          if re.search(r"\{\{ *desc *\|", line):
-#            pagemsg("WARNING: Line with {{desc}}, can't convert to {{col}}: %s" % line)
-#            cant_convert = True
-#            continue
-#          if re.search(r"\{\{ *desctree *\|", line):
-#            pagemsg("WARNING: Line with {{desctree}}, can't convert to {{col}}: %s" % line)
-#            cant_convert = True
-#            continue
-#          m = re.search(r"^(\*+)(.*)$", line)
-#          if not m:
-#            pagemsg("WARNING: INTERNAL ERROR: Line doesn't have a term after a single bullet: %s" % line)
-#            cant_convert = True
-#            continue
-#          origline = line
-#          number_of_bullets, line = m.groups()
-#          if re.search("^[:#]", line):
-#            pagemsg("WARNING: Saw *: or *# at beginning of line, can't convert to {{col}}: %s" % origline)
-#            cant_convert = True
-#            continue
-#          if len(number_of_bullets) == 1:
-#            bullet_prefix = ""
-#          else:
-#            bullet_prefix = number_of_bullets[1:] + " "
-#          line = line.strip()
-#          bulleted_line = escape_template_delimiters(bullet_prefix + line, pagemsg)
-#          if re.search(r"\{\{ *(ja-l|ja-r|ja-r/args|ryu-l|ryu-r|ryu-r/args|ko-l|zh-l|vi-l|he-l) *\|", line):
-#            pagemsg("WARNING: Unable to convert specialized Asian linking template to {{col}} format, inserting raw: %s" % origline)
-#            col_elements.append("|%s" % bulleted_line)
-#            continue
-#          if re.search(r"\{\{ *(vern|taxfmt|taxlink) *\|", line):
-#            pagemsg("WARNING: Unable to convert specialized taxonomy linking template to {{col}} format, inserting raw: %s" % origline)
-#            col_elements.append("|%s" % bulleted_line)
-#            continue
-#
-#          def handle_parse_error(reason):
-#            nonlocal cant_convert
-#            if re.search(match_link_template_re, line):
-#              pagemsg("WARNING: %s and line has templated link, inserting raw: %s" % (reason, origline))
-#              col_elements.append("|%s" % bulleted_line)
+#                vals[-1] += make_inline_mod("g", ",".join(exterior_genders))
+#        if right_gloss:
+#            if "<t:" in vals[-1]:
+#                pagemsg(
+#                    "WARNING: Saw both interior and exterior glosses, trying to combine"
+#                )
+#                vals[-1] = re.sub(
+#                    "(<t:.*?)>",
+#                    r"\1; %s>" % escape_inline_val("; ".join(right_gloss)),
+#                    vals[-1],
+#                )
 #            else:
-#              pagemsg("WARNING: %s and no templated link present, can't convert to {{col}}: %s" % (reason, origline))
-#              cant_convert = True
+#                vals[-1] += make_inline_mod("t", "; ".join(right_gloss))
+#        return ",".join(vals) + line_comment
 #
-#          line, left_qual, right_qual, exterior_genders, right_gloss, line_comment = (
-#            extract_left_and_right_qualifiers_and_genders(line))
-#          els, this_new_notes = convert_one_line(line, True, langcode, langname, pagemsg, expand_text)
-#          if type(els) is str:
-#            handle_parse_error(els)
-#          elif els is None:
-#            handle_parse_error("Can't parse links")
-#          else:
-#            newline = "|%s%s" % (bullet_prefix, construct_line_with_quals(
-#              els, left_qual, right_qual, exterior_genders, right_gloss, line_comment))
-#            col_elements.append(newline)
-#            new_notes.extend(this_new_notes)
+#    notes = []
 #
-#        else:
-#          m = None
-#          if not m and args.do_col_top:
-#            m = re.search(r"^\{\{(col-top)\|[0-9]+\|([^|=]*)\}\}$", line)
-#            if m:
-#              col_top_tn, col_top_header = m.groups()
-#          if not m and args.do_top:
-#            m = re.search(r"^\{\{(top[0-9])\}\}$", line)
-#            if m:
-#              col_top_tn = m.group(1)
-#              col_top_header = ""
-#          if not m and args.do_top:
-#            m = re.search(r"^\{\{(top[0-9])\|([^{}]*)\}\}$", line)
-#            if m:
-#              col_top_tn, col_top_header = m.groups()
-#              if col_top_header == langcode:
-#                col_top_header = ""
-#              if col_top_header.startswith("title="):
-#                col_top_header = col_top_header[6:]
-#          if m:
-#            in_col_top = True
-#            col_elements = []
+#    secs = blib.split_text_into_sections(text, pagemsg)
+#    sections = secs.sections
+#    for j, langname in secs.section_langs:
+#        if langname not in lang_utils.languages_by_canonical_name:
+#            pagemsg(
+#                "WARNING: Unknown language name %s, skipping section %s"
+#                % (langname, j // 2)
+#            )
+#            continue
+#        langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+#        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
+#        for k, header in subsecs.subsection_headers:
+#            if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsecs.subsections[k]):
+#                parsed = blib.parse_text(subsecs.subsections[k])
+#                for t in parsed.filter_templates():
+#                    tn = tname(t)
+#                    if tn in ["col", "col1", "col2", "col3", "col4", "col5", "col6"]:
+#                        newparams = []
+#                        numrows = 0
+#                        numchangedrows = 0
+#                        origt = str(t)
+#                        tlang = getparam(t, "1").strip()
+#                        for param in t.params:
+#                            pn = pname(param)
+#                            pv = str(param.value)
+#                            if pn != "1" and re.search("^[0-9]+$", pn):
+#                                numrows += 1
+#                                m = re.search(r"(\s*)(.*?)(\s*)$", pv, re.S)
+#                                beginspace, maintext, endspace = m.groups()
+#                                (
+#                                    newmaintext,
+#                                    left_qual,
+#                                    right_qual,
+#                                    exterior_genders,
+#                                    right_gloss,
+#                                    line_comment,
+#                                ) = extract_left_and_right_qualifiers_and_genders(
+#                                    maintext
+#                                )
+#                                newparts, new_notes = convert_one_line(
+#                                    newmaintext,
+#                                    False,
+#                                    langcode,
+#                                    langname,
+#                                    pagemsg,
+#                                    expand_text,
+#                                )
+#                                if type(newparts) is str:
+#                                    pagemsg(
+#                                        "WARNING: %s, not changing: %s"
+#                                        % (newparts, pv.strip())
+#                                    )
+#                                elif newparts is not None:
+#                                    newmaintext = construct_line_with_quals(
+#                                        newparts,
+#                                        left_qual,
+#                                        right_qual,
+#                                        exterior_genders,
+#                                        right_gloss,
+#                                        line_comment,
+#                                    )
+#                                    newpv = beginspace + newmaintext + endspace
+#                                    numchangedrows += 1
+#                                    pagemsg(
+#                                        "Replaced %s=<%s> with <%s> in {{%s|%s}} in ==%s=="
+#                                        % (
+#                                            pn,
+#                                            pv.strip(),
+#                                            newpv.strip(),
+#                                            tn,
+#                                            tlang,
+#                                            header,
+#                                        )
+#                                    )
+#                                    pv = newpv
+#                                    notes.extend(new_notes)
+#                            newparams.append((pn, pv, param.showkey))
+#                        del t.params[:]
+#                        for pn, pv, showkey in newparams:
+#                            t.add(pn, pv, showkey=showkey, preserve_spacing=False)
+#                        if origt != str(t):
+#                            notes.append(
+#                                "optimize %s of %s row%s in {{%s|%s}} in ==%s=="
+#                                % (
+#                                    numchangedrows,
+#                                    numrows,
+#                                    "s" if numrows != 1 else "",
+#                                    tn,
+#                                    tlang,
+#                                    header,
+#                                )
+#                            )
+#                subsecs.subsections[k] = str(parsed)
+#
+#            expected_abbrev = header_to_col_top_abbrev.get(header, None)
+#            lines = subsecs.subsections[k].split("\n")
+#            newlines = []
+#            raw_col_lines = None
+#            col_elements = None
+#            if args.do_derived_related:
+#                if header in ["Derived terms", "Related terms"]:
+#                    in_col_top = True
+#                    lines.append("\ufff0")  # sentinel line
+#                    raw_col_lines = []
+#                    for line in lines:
+#                        if line.startswith("*"):
+#                            raw_col_lines.append(line)
+#                        else:
+#                            break
+#                    total_processable_lines = len(raw_col_lines)
+#                    if total_processable_lines < args.min_derived_related_lines:
+#                        pagemsg(
+#                            "Saw only %s element%s in ==%s==, can't convert to {{col}}"
+#                            % (
+#                                total_processable_lines,
+#                                "" if total_processable_lines == 1 else "s",
+#                                header,
+#                            )
+#                        )
+#                        in_col_top = False
+#                    raw_col_lines = []
+#                    col_elements = []
+#                else:
+#                    in_col_top = False
+#            else:
+#                in_col_top = False
+#            col_top_tn = None
 #            new_notes = []
 #            cant_convert = False
-#            raw_col_lines = [line]
-#          else:
-#            newlines.append(line)
-#      if in_col_top:
-#        pagemsg("WARNING: Saw {{col-top}} without closing {{col-bottom}}")
-#        newlines.extend(raw_col_lines)
-#      subsections[k] = "\n".join(x for x in newlines if x != "\uFFF0") # exclude sentinel
-#    sections[j] = "".join(subsections)
+#            col_top_header = None
+#            for line in lines:
+#                if in_col_top:
+#                    raw_col_lines.append(line)
+#                    if args.do_derived_related and not line.startswith("*"):
+#                        if len(col_elements) < args.min_derived_related_lines:
+#                            pagemsg(
+#                                "Processed %s element%s out of %s in ==%s== before getting to an unconvertible element"
+#                                % (
+#                                    len(col_elements),
+#                                    "" if len(col_elements) == 1 else "s",
+#                                    total_processable_lines,
+#                                    header,
+#                                )
+#                            )
+#                            cant_convert = True
+#                            newlines.extend(raw_col_lines)
+#                            in_col_top = False
+#                            continue
+#                        elif cant_convert:
+#                            newlines.extend(raw_col_lines)
+#                            in_col_top = False
+#                            continue
+#                        else:
+#                            no_sort_param = ""
+#                            if pagetitle in no_sort_lists:
+#                                for no_sort_lang, no_sort_firstel in no_sort_lists[
+#                                    pagetitle
+#                                ]:
+#                                    if no_sort_lang == langcode:
+#                                        if no_sort_firstel == col_elements[0][1:]:
+#                                            no_sort_param = "|sort=0"
+#                                        else:
+#                                            pagemsg(
+#                                                "WARNING: Found no-sort directive matching langcode '%s' but specified first element '%s' didn't match actual first element '%s'"
+#                                                % (
+#                                                    langcode,
+#                                                    no_sort_firstel,
+#                                                    col_elements[0][1:],
+#                                                )
+#                                            )
+#                            newlines.append("{{col|%s%s" % (langcode, no_sort_param))
+#                            newlines.extend(col_elements)
+#                            newlines.append("}}")
+#                            newlines.append(line)
+#                            notes.extend(new_notes)
+#                            notes.append(
+#                                "convert %s raw elements under ==%s== to {{col|%s%s|%s|%s|...}}"
+#                                % (
+#                                    len(col_elements),
+#                                    header,
+#                                    langcode,
+#                                    no_sort_param,
+#                                    col_elements[0][1:],
+#                                    col_elements[1][1:],
+#                                )
+#                            )
+#                            in_col_top = False
+#                            continue
+#                    m = re.search("^\{\{ *((?:col-)?bottom) *\|", line.strip())
+#                    if m:
+#                        if not cant_convert:
+#                            pagemsg(
+#                                "WARNING: Saw {{%s}} with params, can't convert to {{col}}: %s"
+#                                % (m.group(1), origline)
+#                            )
+#                        newlines.extend(raw_col_lines)
+#                        in_col_top = False
+#                        continue
+#                    m = re.search("^\{\{ *((?:col-)?bottom) *\}\}$", line.strip())
+#                    if m:
+#                        if cant_convert:
+#                            newlines.extend(raw_col_lines)
+#                            in_col_top = False
+#                            continue
+#                        if col_top_header and col_top_header != expected_abbrev:
+#                            col_top_header = shortcut_to_expansion.get(
+#                                col_top_header, col_top_header
+#                            )
+#                        else:
+#                            col_top_header = ""
+#                        col_bottom_tn = m.group(1)
+#                        newlines.append(
+#                            "{{col|%s%s"
+#                            % (
+#                                langcode,
+#                                "|title=%s" % col_top_header if col_top_header else "",
+#                            )
+#                        )
+#                        newlines.extend(col_elements)
+#                        newlines.append("}}")
+#                        notes.extend(new_notes)
+#                        notes.append(
+#                            "convert {{%s}}/{{%s}} to {{col|%s|...}} with %s line%s in ==%s=="
+#                            % (
+#                                col_top_tn,
+#                                col_bottom_tn,
+#                                langcode,
+#                                len(col_elements),
+#                                "" if len(col_elements) == 1 else "s",
+#                                header,
+#                            )
+#                        )
+#                        in_col_top = False
+#                        continue
+#                    if cant_convert:
+#                        continue
+#                    if not line.startswith("*"):
+#                        pagemsg(
+#                            "WARNING: Non-bulleted line, can't convert to {{col}} (yet?): %s"
+#                            % line
+#                        )
+#                        cant_convert = True
+#                        continue
+#                    if re.search(r"\{\{ *desc *\|", line):
+#                        pagemsg(
+#                            "WARNING: Line with {{desc}}, can't convert to {{col}}: %s"
+#                            % line
+#                        )
+#                        cant_convert = True
+#                        continue
+#                    if re.search(r"\{\{ *desctree *\|", line):
+#                        pagemsg(
+#                            "WARNING: Line with {{desctree}}, can't convert to {{col}}: %s"
+#                            % line
+#                        )
+#                        cant_convert = True
+#                        continue
+#                    m = re.search(r"^(\*+)(.*)$", line)
+#                    if not m:
+#                        pagemsg(
+#                            "WARNING: INTERNAL ERROR: Line doesn't have a term after a single bullet: %s"
+#                            % line
+#                        )
+#                        cant_convert = True
+#                        continue
+#                    origline = line
+#                    number_of_bullets, line = m.groups()
+#                    if re.search("^[:#]", line):
+#                        pagemsg(
+#                            "WARNING: Saw *: or *# at beginning of line, can't convert to {{col}}: %s"
+#                            % origline
+#                        )
+#                        cant_convert = True
+#                        continue
+#                    if len(number_of_bullets) == 1:
+#                        bullet_prefix = ""
+#                    else:
+#                        bullet_prefix = number_of_bullets[1:] + " "
+#                    line = line.strip()
+#                    bulleted_line = escape_template_delimiters(
+#                        bullet_prefix + line, pagemsg
+#                    )
+#                    if re.search(
+#                        r"\{\{ *(ja-l|ja-r|ja-r/args|ryu-l|ryu-r|ryu-r/args|ko-l|zh-l|vi-l|he-l) *\|",
+#                        line,
+#                    ):
+#                        pagemsg(
+#                            "WARNING: Unable to convert specialized Asian linking template to {{col}} format, inserting raw: %s"
+#                            % origline
+#                        )
+#                        col_elements.append("|%s" % bulleted_line)
+#                        continue
+#                    if re.search(r"\{\{ *(vern|taxfmt|taxlink) *\|", line):
+#                        pagemsg(
+#                            "WARNING: Unable to convert specialized taxonomy linking template to {{col}} format, inserting raw: %s"
+#                            % origline
+#                        )
+#                        col_elements.append("|%s" % bulleted_line)
+#                        continue
 #
-#  return "".join(sections), notes
+#                    def handle_parse_error(reason):
+#                        nonlocal cant_convert
+#                        if re.search(match_link_template_re, line):
+#                            pagemsg(
+#                                "WARNING: %s and line has templated link, inserting raw: %s"
+#                                % (reason, origline)
+#                            )
+#                            col_elements.append("|%s" % bulleted_line)
+#                        else:
+#                            pagemsg(
+#                                "WARNING: %s and no templated link present, can't convert to {{col}}: %s"
+#                                % (reason, origline)
+#                            )
+#                            cant_convert = True
+#
+#                    (
+#                        line,
+#                        left_qual,
+#                        right_qual,
+#                        exterior_genders,
+#                        right_gloss,
+#                        line_comment,
+#                    ) = extract_left_and_right_qualifiers_and_genders(line)
+#                    els, this_new_notes = convert_one_line(
+#                        line, True, langcode, langname, pagemsg, expand_text
+#                    )
+#                    if type(els) is str:
+#                        handle_parse_error(els)
+#                    elif els is None:
+#                        handle_parse_error("Can't parse links")
+#                    else:
+#                        newline = "|%s%s" % (
+#                            bullet_prefix,
+#                            construct_line_with_quals(
+#                                els,
+#                                left_qual,
+#                                right_qual,
+#                                exterior_genders,
+#                                right_gloss,
+#                                line_comment,
+#                            ),
+#                        )
+#                        col_elements.append(newline)
+#                        new_notes.extend(this_new_notes)
+#
+#                else:
+#                    m = None
+#                    if not m and args.do_col_top:
+#                        m = re.search(r"^\{\{(col-top)\|[0-9]+\|([^|=]*)\}\}$", line)
+#                        if m:
+#                            col_top_tn, col_top_header = m.groups()
+#                    if not m and args.do_top:
+#                        m = re.search(r"^\{\{(top[0-9])\}\}$", line)
+#                        if m:
+#                            col_top_tn = m.group(1)
+#                            col_top_header = ""
+#                    if not m and args.do_top:
+#                        m = re.search(r"^\{\{(top[0-9])\|([^{}]*)\}\}$", line)
+#                        if m:
+#                            col_top_tn, col_top_header = m.groups()
+#                            if col_top_header == langcode:
+#                                col_top_header = ""
+#                            if col_top_header.startswith("title="):
+#                                col_top_header = col_top_header[6:]
+#                    if m:
+#                        in_col_top = True
+#                        col_elements = []
+#                        new_notes = []
+#                        cant_convert = False
+#                        raw_col_lines = [line]
+#                    else:
+#                        newlines.append(line)
+#            if in_col_top:
+#                pagemsg("WARNING: Saw {{col-top}} without closing {{col-bottom}}")
+#                newlines.extend(raw_col_lines)
+#            subsecs.subsections[k] = "\n".join(
+#                x for x in newlines if x != "\ufff0"
+#            )  # exclude sentinel
+#        sections[j] = "".join(subsecs.subsections)
+#
+#    return "".join(sections), notes
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Convert translation lines to new-syntax {{t}}", include_pagefile=True, include_stdin=True
+        "Convert translation lines to new-syntax {{t}}",
+        include_pagefile=True,
+        include_stdin=True,
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(
+        args, start, end, process_text_on_page, edit=True, stdin=True
+    )
 
     msg("")
     header = "%-50s | %5s | %s" % ("Qualifier", "Count", "By lang")
@@ -1762,6 +2338,7 @@ if __name__ == "__main__":
     msg("-" * len(header))
     for qual, count in sorted(seen_converted_qual_count.items(), key=lambda x: -x[1]):
         by_lang = ", ".join(
-            "%s=%s" % (k, v) for k, v in sorted(seen_converted_quals[qual].items(), key=lambda x: -x[1])
+            "%s=%s" % (k, v)
+            for k, v in sorted(seen_converted_quals[qual].items(), key=lambda x: -x[1])
         )
         msg("%-50s | %5s | %s" % (qual, count, by_lang))

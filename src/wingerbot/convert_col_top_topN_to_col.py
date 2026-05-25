@@ -5,8 +5,9 @@ import pywikibot, re, sys, argparse, json
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 from collections import defaultdict
+from typing import cast
 
-blib.init_fake_langdata()
+lang_utils.init_fake_langdata()
 lang_utils.get_language_data()
 
 shortcut_to_expansion = {
@@ -177,7 +178,7 @@ def num_inserts_from_insertion_sort(arr):
     num_inserts = 0
     n = len(arr)  # Get the length of the array
     if n <= 1:
-        return  # If the array has 0 or 1 element, it is already sorted, so return
+        return 0 # If the array has 0 or 1 element, it is already sorted, so return
     for i in range(1, n):  # Iterate over the array starting from the second element
         key = arr[i]  # Store the current element as the key to be inserted in the right position
         j = i - 1
@@ -402,7 +403,10 @@ def convert_one_line(line, line_non_templated, langcode, langname, pagemsg, expa
                 append_if("id")
                 genders = blib.fetch_param_chain(linkt, "g")
                 if genders:
-                    app(make_inline_mod("g", ",".join(genders)))
+                    # Shut up Pylance by casting to list[str]. We know that the result of fetch_param_chain()
+                    # is a list of strings (not a string because errors="throw", and no None values because
+                    # holes="close"), but Pylance doesn't.
+                    app(make_inline_mod("g", ",".join(cast(list[str], genders))))
                 els.append("".join(parts))
             return els, this_notes
     else:
@@ -486,7 +490,7 @@ def process_text_on_page(index, pagetitle, text):
                     this_qual = [this_qual]
                 else:
                     segments = blib.parse_balanced_segment_run(this_qual, "[", "]")
-                    alternating_runs = blib.split_alternating_runs(segments, "(?:\||,\s+)")
+                    alternating_runs = blib.split_alternating_runs(segments, r"(?:\||,\s+)")
                     this_qual = ["".join(x) for x in alternating_runs]
             return this_qual, this_gender, this_gloss, line
 
@@ -868,22 +872,17 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    sections, sections_by_lang, section_langs = blib.split_text_into_sections(text, pagemsg)
-    section_langs = dict(section_langs)
-    for j in range(2, len(sections), 2):
-        langname = section_langs[j]
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    for j, langname in secs.section_langs:
         if langname not in lang_utils.languages_by_canonical_name:
             pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
             continue
         langcode = lang_utils.languages_by_canonical_name[langname]["code"]
-        subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-            sections[j], pagemsg
-        )
-        for k in range(2, len(subsections), 2):
-            header = subsection_headers[k]
-
-            if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsections[k]):
-                parsed = blib.parse_text(subsections[k])
+        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
+        for k, header in subsecs.subsection_headers:
+            if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsecs.subsections[k]):
+                parsed = blib.parse_text(subsecs.subsections[k])
                 for t in parsed.filter_templates():
                     tn = tname(t)
                     if tn in ["col", "col1", "col2", "col3", "col4", "col5", "col6"]:
@@ -898,6 +897,7 @@ def process_text_on_page(index, pagetitle, text):
                             if pn != "1" and re.search("^[0-9]+$", pn):
                                 numrows += 1
                                 m = re.search(r"(\s*)(.*?)(\s*)$", pv, re.S)
+                                assert m  # Should always match, even with newlines in pv
                                 beginspace, maintext, endspace = m.groups()
                                 newmaintext, left_qual, right_qual, exterior_genders, right_gloss, line_comment = (
                                     extract_left_and_right_qualifiers_and_genders(maintext)
@@ -928,15 +928,15 @@ def process_text_on_page(index, pagetitle, text):
                                 "optimize %s of %s row%s in {{%s|%s}} in ==%s=="
                                 % (numchangedrows, numrows, "s" if numrows != 1 else "", tn, tlang, header.strip())
                             )
-                subsections[k] = str(parsed)
+                subsecs.subsections[k] = str(parsed)
 
             expected_abbrev = header_to_col_top_abbrev.get(header, None)
-            lines = subsections[k].split("\n")
+            lines = subsecs.subsections[k].split("\n")
             newlines = []
-            raw_col_lines = None
-            col_elements = None
+            raw_col_lines = []
+            col_elements = []
             if args.do_derived_related:
-                if header.strip() in ["Derived terms", "Related terms"]:
+                if header in ["Derived terms", "Related terms"]:
                     in_col_top = True
                     lines.append("\ufff0")  # sentinel line
                     raw_col_lines = []
@@ -973,7 +973,7 @@ def process_text_on_page(index, pagetitle, text):
                                     len(col_elements),
                                     "" if len(col_elements) == 1 else "s",
                                     total_processable_lines,
-                                    header.strip(),
+                                    header,
                                 )
                             )
                             cant_convert = True
@@ -1005,7 +1005,7 @@ def process_text_on_page(index, pagetitle, text):
                                 "convert %s raw elements under ==%s== to {{col|%s%s|%s|%s|...}}"
                                 % (
                                     len(col_elements),
-                                    header.strip(),
+                                    header,
                                     langcode,
                                     no_sort_param,
                                     col_elements[0][1:],
@@ -1072,7 +1072,7 @@ def process_text_on_page(index, pagetitle, text):
                                                 )
                                             )
                             continue
-                    m = re.search("^\{\{ *((?:col-)?bottom) *\|", line.strip())
+                    m = re.search(r"^\{\{ *((?:col-)?bottom) *\|", line.strip())
                     if m:
                         if not cant_convert:
                             pagemsg(
@@ -1081,7 +1081,7 @@ def process_text_on_page(index, pagetitle, text):
                         newlines.extend(raw_col_lines)
                         in_col_top = False
                         continue
-                    m = re.search("^\{\{ *((?:col-)?bottom) *\}\}$", line.strip())
+                    m = re.search(r"^\{\{ *((?:col-)?bottom) *\}\}$", line.strip())
                     if m:
                         if cant_convert:
                             newlines.extend(raw_col_lines)
@@ -1106,7 +1106,7 @@ def process_text_on_page(index, pagetitle, text):
                                 langcode,
                                 len(col_elements),
                                 "" if len(col_elements) == 1 else "s",
-                                header.strip(),
+                                header,
                             )
                         )
                         in_col_top = False
@@ -1217,8 +1217,8 @@ def process_text_on_page(index, pagetitle, text):
             if in_col_top:
                 pagemsg("WARNING: Saw {{col-top}} without closing {{col-bottom}}")
                 newlines.extend(raw_col_lines)
-            subsections[k] = "\n".join(x for x in newlines if x != "\ufff0")  # exclude sentinel
-        sections[j] = "".join(subsections)
+            subsecs.subsections[k] = "\n".join(x for x in newlines if x != "\ufff0")  # exclude sentinel
+        sections[j] = "".join(subsecs.subsections)
 
     return "".join(sections), notes
 

@@ -12,8 +12,6 @@ langs_to_codes = {}
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -26,13 +24,10 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("WARNING: Colon in page title, skipping page")
         return
 
-    notes = []
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
 
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-
-    for j in range(2, len(sections), 2):
-        m = re.search("^==(.*?)==\n", sections[j - 1])
-        lang = m.group(1)
+    for j, lang in secs.section_langs:
         parsed = blib.parse_text(sections[j])
         for t in parsed.filter_templates():
             if str(t.name) == "audio" and not getparam(t, "lang"):

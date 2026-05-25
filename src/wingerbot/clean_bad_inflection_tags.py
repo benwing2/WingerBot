@@ -1009,18 +1009,15 @@ def process_text_on_page(index, pagetitle, text):
     def convert_raw(text):
         if args.langcode:
             return convert_raw_section(text, args.langcode, infer_langcode=True)
-        sections = re.split("(^==[^=\n]+==\n)", text, 0, re.M)
-        for j in range(2, len(sections), 2):
-            m = re.search("^==(.*)==\n$", sections[j - 1])
-            assert m
-            langname = m.group(1)
+        secs = blib.split_text_into_sections(text, pagemsg)
+        for j, langname in secs.section_langs:
             if langname not in lang_utils.languages_by_canonical_name:
                 pagemsg("WARNING: Unrecognized language %s" % langname)
             else:
                 langcode = lang_utils.languages_by_canonical_name[langname]["code"]
-                newsection = convert_raw_section(sections[j], langcode, infer_langcode=False)
-                sections[j] = newsection
-        return "".join(sections)
+                newsection = convert_raw_section(secs.sections[j], langcode, infer_langcode=False)
+                secs.sections[j] = newsection
+        return "".join(secs.sections)
 
     if args.convert_raw:
         if pagetitle in skip_pages:

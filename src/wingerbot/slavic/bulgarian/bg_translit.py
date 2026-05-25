@@ -117,7 +117,7 @@ def tr(text, lang=None, sc=None, msgfun=msg):
     text = tr_canonicalize_bulgarian(text)
 
     # Remove word-final hard sign
-    text = rsub(text, "[Ъъ]($|[- \]])", r"\1")
+    text = rsub(text, r"[Ъъ]($|[- \]])", r"\1")
 
     # ьо becomes jo, Ьо becomes Jo
     text = rsub(text, "ь(?=[Оо])", r"j")
@@ -740,8 +740,8 @@ def pre_pre_canonicalize_bulgarian(text, msgfun=msg):
 
     # Convert word-final hard sign to special silent character; will be
     # undone later
-    text = rsub(text, "Ъ($|[- \]])", capital_silent_hard_sign + r"\1")
-    text = rsub(text, "ъ($|[- \]])", small_silent_hard_sign + r"\1")
+    text = rsub(text, r"Ъ($|[- \]])", capital_silent_hard_sign + r"\1")
+    text = rsub(text, r"ъ($|[- \]])", small_silent_hard_sign + r"\1")
 
     # sub non-Cyrillic similar chars to Cyrillic
     newtext = rsub(text, latin_lookalikes_re, latin_to_bulgarian_lookalikes)

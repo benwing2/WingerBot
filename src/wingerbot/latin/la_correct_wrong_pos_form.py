@@ -25,7 +25,7 @@ def process_form(index, page, slot, form, pos, pagemsg):
     if retval is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     if pos == "pn":
         from_header = "==Noun=="

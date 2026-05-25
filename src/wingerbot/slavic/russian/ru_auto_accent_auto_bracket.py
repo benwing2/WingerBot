@@ -1117,7 +1117,7 @@ def process_template(
     if str(template.name) == "head":
         # Skip {{head}}. We don't want to mess with headwords.
         return False
-    if not accent_hidden and re.search("^#\*:* *%s" % re.escape(origt), str(pagetext), re.M):
+    if not accent_hidden and re.search(r"^#\*:* *%s" % re.escape(origt), str(pagetext), re.M):
         if semi_verbose:
             pagemsg("process_template: Skipping template because hidden by #*: %s" % origt)
             return False

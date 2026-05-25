@@ -10,20 +10,16 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
 
-    subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-        secbody, pagemsg
-    )
-    for k in range(2, len(subsections), 2):
-        header = subsection_headers[k]
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    for k, header in subsecs.subsection_headers:
         if header in poses:
-            sectext = subsections[k]
+            sectext = subsecs.subsections[k]
             defns = blib.find_defns(sectext, args.langcode)
             pagemsg("%s: %s: %s" % (k, header, ";".join(defns)))
 

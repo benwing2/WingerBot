@@ -20,7 +20,7 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
     if retval is None:
         pagemsg("WARNING: Couldn't find Russian section for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
     parsed = blib.parse_text(secbody)
     head = None
     for t in parsed.filter_templates():
@@ -194,7 +194,7 @@ def snarf_relational_adjs(index, pagetitle, text):
     # if retval is None:
     #  pagemsg("WARNING: Couldn't find Russian section")
     #  return
-    # sections, j, secbody, sectail, has_non_lang = retval
+    # sections, j, secbody, sectail, has_non_lang = retval.props()
     secbody = text
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
@@ -261,7 +261,7 @@ def snarf_diminutives(index, pagetitle, text):
     # if retval is None:
     #  pagemsg("WARNING: Couldn't find Russian section")
     #  return
-    # sections, j, secbody, sectail, has_non_lang = retval
+    # sections, j, secbody, sectail, has_non_lang = retval.props()
     secbody = text
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)

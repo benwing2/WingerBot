@@ -11,7 +11,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 # Make sure there are two trailing newlines
@@ -20,8 +20,6 @@ def ensure_two_trailing_nl(text):
 
 
 def process_text_on_page(index, pagetitle, text, nowarn=False):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -38,29 +36,30 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
     retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections, _, _, _ = blib.split_text_into_subsections(secbody, pagemsg)
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         found_subsec_participle = False
         # Try to canonicalize existing 'inflection of'
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             gloss3 = True
-            tname = str(t.name)
+            tn = tname(t)
             canon_params = None
-            if tname == "ru-participle of":
+            if tn == "ru-participle of":
                 found_participle = True
                 found_subsec_participle = True
-            elif tname == "present active participle of" and getparam(t, "lang") == "ru":
+            elif tn == "present active participle of" and getparam(t, "lang") == "ru":
                 canon_params = ["pres", "act"]
-            elif tname == "past active participle of" and getparam(t, "lang") == "ru":
+            elif tn == "past active participle of" and getparam(t, "lang") == "ru":
                 canon_params = ["past", "act"]
-            elif tname == "present passive participle of" and getparam(t, "lang") == "ru":
+            elif tn == "present passive participle of" and getparam(t, "lang") == "ru":
                 canon_params = ["pres", "pass"]
-            elif tname == "past passive participle of" and getparam(t, "lang") == "ru":
+            elif tn == "past passive participle of" and getparam(t, "lang") == "ru":
                 canon_params = ["past", "pass"]
-            elif tname == "inflection of" and getparam(t, "lang") == "ru":
+            elif tn == "inflection of" and getparam(t, "lang") == "ru":
                 gloss3 = False
                 # Fetch the numbered params starting with 3
                 numbered_params = []
@@ -100,7 +99,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
                 found_participle = True
                 found_subsec_participle = True
                 origt = str(t)
-                origname = str(t.name)
+                origtn = tname(t)
                 t.name = "ru-participle of"
                 # Fetch param 1 and param 2, and non-numbered params except lang=
                 # and nocat=.
@@ -128,9 +127,9 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
                     t.add(name, value)
                 newt = str(t)
                 pagemsg("Replaced %s with %s" % (origt, newt))
-                notes.append("replaced '%s' with 'ru-participle of/%s'" % (origname, "/".join(canon_params)))
+                notes.append("replaced '%s' with 'ru-participle of/%s'" % (origtn, "/".join(canon_params)))
         if found_subsec_participle:
-            if "Verb" in subsections[k - 1]:
+            if header == "Verb":
                 origsubsec = subsections[k - 1]
                 subsections[k - 1] = re.sub("Verb", "Participle", subsections[k - 1])
                 pagemsg(
@@ -150,30 +149,32 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
 
     # Rearrange Participle and Noun/Adjective sections; repeat until no change, in case we have
     # both Noun and Adjective sections before the Participle.
-    subsections, _, _, _ = blib.split_text_into_subsections(secbody, pagemsg)
     while True:
         rearranged = False
-        for k in range(2, len(subsections), 2):
+        l3secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3)
+        l3sections = l3secs.subsections
+        l3section_headers = l3secs.subsection_headers
+        for k, header in l3section_headers:
             if (
-                subsections[k - 1] in ["===Noun===\n", "===Adjective===\n"]
-                and k + 1 < len(subsections)
-                and subsections[k + 1] == "===Participle===\n"
+                header in ["Noun", "Adjective"]
+                and k + 1 < len(l3sections)
+                and l3secs.subsection_header_dict[k + 1] == "Participle"
             ):
-                tmp = subsections[k - 1]
-                subsections[k - 1] = subsections[k + 1]
-                subsections[k + 1] = tmp
-                tmp = subsections[k]
-                subsections[k] = ensure_two_trailing_nl(subsections[k + 2])
-                subsections[k + 2] = tmp
+                tmp = l3sections[k - 1]
+                l3sections[k - 1] = l3sections[k + 1]
+                l3sections[k + 1] = tmp
+                tmp = l3sections[k]
+                l3sections[k] = l3sections[k + 2]
+                l3sections[k + 2] = tmp
                 rearranged = True
                 pagemsg(
                     "Swapped %s with %s"
-                    % (subsections[k + 1].replace("\n", r"\n"), subsections[k - 1].replace("\n", r"\n"))
+                    % (l3sections[k + 1].replace("\n", r"\n"), l3sections[k - 1].replace("\n", r"\n"))
                 )
                 notes.append("swap Participle section with Noun/Adjective")
+        secbody = "".join(l3sections)
         if not rearranged:
             break
-    secbody = "".join(subsections)
     # Strip extra newlines added to secbody
     sections[j] = secbody.rstrip("\n") + sectail
     new_text = "".join(sections)

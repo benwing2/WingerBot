@@ -32,7 +32,7 @@ def fix_new_page(index, page):
 
     origtext = str(page.text)
     text = origtext
-    newtext = re.sub("^\{\{also\|.*?\}\}\n", "", text)
+    newtext = re.sub(r"^\{\{also\|.*?\}\}\n", "", text)
     if text != newtext:
         notes.append("remove no-longer-relevant {{also}} hatnote")
         text = newtext

@@ -110,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
         if retval is None:
             pagemsg_with_contents("WARNING: Couldn't find %s section" % lang)
             return
-        sections, j, secbody, sectail, has_non_lang = retval
+        sections, j, secbody, sectail, has_non_lang = retval.props()
         saw_templates = False
         if "Etymology 1" in secbody:
             etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)

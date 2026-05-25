@@ -392,7 +392,7 @@ def create_inflection_entry(
     notes = []
 
     # If invalid title, don't do anything.
-    existing_text = blib.safe_page_text(page, errandpagemsg, bad_value_ret=None)
+    existing_text = blib.safe_page_text_or_none(page, errandpagemsg)
     if existing_text is None:
         return
 

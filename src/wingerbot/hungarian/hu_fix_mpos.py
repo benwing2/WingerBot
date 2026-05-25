@@ -18,7 +18,7 @@ def process_text_on_page(index, pagetitle, text):
     if retval is None:
         pagemsg("WARNING: Couldn't find Hungarian section")
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
     parsed = blib.parse_text(secbody)
     saw_mpos_inflection_of = False
     for t in parsed.filter_templates():

@@ -137,10 +137,7 @@ for index, pagetitle in blib.iter_items(seen_pages):
             pagemsg("WARNING: Page doesn't exist any more")
             curtext = ""
         else:
-            curtext = blib.safe_page_text(page, errandpagemsg, bad_value_ret=None)
-            if curtext is None:
-                pagemsg("WARNING: Page can't be fetched")
-                curtext = ""
+            curtext = blib.safe_page_text(page, errandpagemsg)
         if oldtext is None:
             output_page(output_newly_created_user, pagetext)
             output_page(output_newly_created_current, curtext)

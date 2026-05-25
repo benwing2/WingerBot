@@ -26,10 +26,9 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
             pagemsg("WARNING: Saw unrecognized language code '%s'" % lang)
             continue
         langname = lang_utils.languages_by_code[lang]["canonicalName"]
-        retval = blib.find_modifiable_lang_section(text, langname, pagemsg)
-        if retval is None:
+        modsec = blib.find_modifiable_lang_section(text, langname, pagemsg)
+        if modsec is None:
             continue
-        sections, j, secbody, sectail, has_non_lang = retval
         if lang == "zh":
             topics_temp = "zh-cat"
             topics_temp_lang = None
@@ -39,7 +38,7 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
             topics_temp_lang = "1"
             topics_temp_cats = "2"
         langtext, this_notes = templatize_categories.process_text_on_page(
-            index, pagetitle, sections[j], lang, langname, topics_temp
+            index, pagetitle, modsec.sections[modsec.j], lang, langname, topics_temp
         )
         notes.extend(this_notes)
         parsed = blib.parse_text(langtext)
@@ -76,7 +75,7 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
                 )
                 if str(t) != origt:
                     pagemsg("Replaced %s with %s" % (origt, str(t)))
-                sections[j] = str(parsed)
+                modsec.sections[modsec.j] = str(parsed)
             else:
                 secbody, sectail = blib.split_trailing_separator(langtext)
                 if not secbody.endswith("\n"):
@@ -94,8 +93,8 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
                 notes.append(
                     "add categories %s in new {{%s}}" % (",".join("%s:%s" % (lang, cat) for cat in cats), topics_temp)
                 )
-                sections[j] = secbody + sectail
-        text = "".join(sections)
+                modsec.sections[modsec.j] = secbody + sectail
+        text = "".join(modsec.sections)
 
     return text, notes
 

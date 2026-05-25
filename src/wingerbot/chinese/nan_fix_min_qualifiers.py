@@ -555,13 +555,12 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
         return lects_seen or [], saw_zh_pron, saw_zh_label
 
     if "Etymology 1" in chinese_text or "Pronunciation 1" in chinese_text:
-        subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-            chinese_text, pagemsg
-        )
+        subsecs = blib.split_text_into_subsections(chinese_text, pagemsg)
+        subsections = subsecs.subsections
         etym_pron_sectext = []
         index_of_secbegin = None
-        for k in range(2, len(subsections), 2):
-            if re.search("= *(Etymology|Pronunciation) +[0-9]+ *=", subsections[k - 1]):
+        for k, header in subsecs.subsection_headers:
+            if re.search("^(Etymology|Pronunciation) +[0-9]$", header):
                 if index_of_secbegin:
                     etym_pron_sectext.append(
                         (subsections[index_of_secbegin].strip(), "".join(subsections[index_of_secbegin : k - 1]))

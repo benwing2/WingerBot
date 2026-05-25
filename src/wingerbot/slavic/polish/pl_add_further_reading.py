@@ -17,10 +17,11 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     # Add missing space between * and { in case of {{R:pl:WSJP}} or {{R:pl:PWN}} directly after * without space
-    newsecbody = re.sub("^\*\{", "* {", secbody, 0, re.M)
+    newsecbody = re.sub(r:w
+                        "^\*\{", "* {", secbody, 0, re.M)
     if newsecbody != secbody:
         notes.append("add missing space after bullet *")
         secbody = newsecbody

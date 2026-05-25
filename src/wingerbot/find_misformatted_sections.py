@@ -98,9 +98,12 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
         else:
             notes.append(note)
 
-    subsections = re.split(r"(^===+[^=\n]+===+[ \t]*\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     def subsection_id(k, include_equal_signs=False):
+        if include_equal_signs:
+            return get_subsection_id(subsecs.subsection_headers, k, include_equal_signs=True)
         return get_subsection_id(subsections, k, include_equal_signs=include_equal_signs)
 
     # Look for Etymology 1 by itself and maybe correct.
@@ -243,7 +246,7 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
             pos_since_etym_section = 0
             num_seen_by_header_since_etym_section = defaultdict(int)
             pos_sections_seen_by_header_since_etym_section = defaultdict(set)
-        if re.search(lang_utils.pos_regex, subsections[k]):
+        if re.search("==" + lang_utils.pos_regex + "==", subsections[k]):
             pos_since_etym_section += 1
         m = re.search(header_to_reindent_regex, subsections[k])
         if m:
@@ -358,7 +361,7 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
             dont_correct_until_etym_header = False
         if dont_correct_until_etym_header:
             continue
-        if re.search(lang_utils.pos_regex, subsections[k]):
+        if re.search("==" + lang_utils.pos_regex + "==", subsections[k]):
             if has_etym_sections and k < beginning_of_etym_sections:
                 pagemsg(
                     "WARNING: Saw POS header before beginning of multi-etym sections in section %s" % (subsection_id(k))
@@ -386,11 +389,10 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
 
 
 def process_text_on_page(index, pagetitle, text):
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
+
     if ":" in pagetitle and not allowed_non_mainspace_pagetitle(pagetitle):
-
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         pagemsg("WARNING: Not mainspace, not changing")
         return
 
@@ -399,10 +401,6 @@ def process_text_on_page(index, pagetitle, text):
     text += "\n\n"
 
     if args.partial_page:
-
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         if re.search("^==[^\n=]*==$", text, re.M):
             pagemsg("WARNING: --partial-page specified but saw an L2 header, skipping")
             return
@@ -411,11 +409,11 @@ def process_text_on_page(index, pagetitle, text):
         return newtext.rstrip("\n") + text_finalnl, notes
 
     notes = []
-    sections = re.split("(^==[^\n=]*==[ \t]*\n)", text, 0, re.M)
-
     # Correct extraneous spaces in L2 headers and prepare for sorting by language.
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
     sections_for_sorting = []
-    for j in range(2, len(sections), 2):
+    for j, _ in secs.section_langs:
         # Fetch L2 language name.
         m = re.search("^==([ \t]*)(.*?)([ \t]*)==([ \t]*)\n$", sections[j - 1])
         space1, langname, space2, space3 = m.groups()

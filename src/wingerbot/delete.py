@@ -20,7 +20,7 @@ def process_page(index, page, args, comment):
     this_comment = comment or "delete page"
     if blib.safe_page_exists(page, errandpagemsg):
         if args.save:
-            existing_text = blib.safe_page_text(page, errandpagemsg, bad_value_ret=None)
+            existing_text = blib.safe_page_text_or_none(page, errandpagemsg)
             if existing_text is not None:
                 page.delete('%s (content was "%s")' % (this_comment, existing_text))
                 errandpagemsg("Deleted (comment=%s)" % this_comment)

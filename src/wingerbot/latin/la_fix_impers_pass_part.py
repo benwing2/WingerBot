@@ -23,7 +23,7 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
     if retval is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     if "===Etymology 1===" in secbody:
         pagemsg("WARNING: Multiple etymologies, don't know what to do")

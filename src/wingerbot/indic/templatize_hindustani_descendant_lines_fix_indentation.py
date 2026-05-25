@@ -17,12 +17,11 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-        secbody, pagemsg
-    )
-    for desc_ind in subsections_by_header.get("Descendants", []):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for desc_ind in subsecs.subsections_by_header.get("Descendants", []):
         lines = subsections[desc_ind].split("\n")
         prev_is_hindustani = False
         prev_hindustani_stars = ""

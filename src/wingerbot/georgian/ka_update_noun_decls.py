@@ -18,7 +18,7 @@ def process_text_on_page(index, pagetitle, text):
     if retval is None:
         pagemsg("WARNING: Couldn't find Georgian section")
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     # newtext = re.sub(r"====[ ]?Declension[ ]?====\n\{\{ka-decl-adj-auto\}\}\n", "", secbody)
     # newtext = re.sub(r"====[ ]?Declension[ ]?====\n\{\{ka-adj-decl.*?\}\}\n", "", newtext)
@@ -32,40 +32,40 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("convert {{ka-noun-c}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    newtext = re.sub("\{\{ka-noun-a\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
-    newtext = re.sub("\{\{ka-noun-a\|.*\}\}", "{{ka-infl-noun}}", newtext)
+    newtext = re.sub(r"\{\{ka-noun-a\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
+    newtext = re.sub(r"\{\{ka-noun-a\|.*\}\}", "{{ka-infl-noun}}", newtext)
     if secbody != newtext:
         notes.append("convert {{ka-noun-a}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    newtext = re.sub("\{\{ka-noun-o\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
-    newtext = re.sub("\{\{ka-noun-o\|.*\}\}", "{{ka-infl-noun}}", newtext)
+    newtext = re.sub(r"\{\{ka-noun-o\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
+    newtext = re.sub(r"\{\{ka-noun-o\|.*\}\}", "{{ka-infl-noun}}", newtext)
     if secbody != newtext:
         notes.append("convert {{ka-noun-o}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    newtext = re.sub("\{\{ka-noun-u\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
-    newtext = re.sub("\{\{ka-noun-u\|.*\}\}", "{{ka-infl-noun}}", newtext)
+    newtext = re.sub(r"\{\{ka-noun-u\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
+    newtext = re.sub(r"\{\{ka-noun-u\|.*\}\}", "{{ka-infl-noun}}", newtext)
     if secbody != newtext:
         notes.append("convert {{ka-noun-u}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    newtext = re.sub("\{\{ka-noun-e\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
-    newtext = re.sub("\{\{ka-noun-e\|.*\}\}", "{{ka-infl-noun}}", newtext)
+    newtext = re.sub(r"\{\{ka-noun-e\|.*plural.*\}\}", "{{ka-infl-noun|-}}", secbody)
+    newtext = re.sub(r"\{\{ka-noun-e\|.*\}\}", "{{ka-infl-noun}}", newtext)
     if secbody != newtext:
         notes.append("convert {{ka-noun-e}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    newtext = re.sub("\{\{ka\-noun-c-2\|.*?\|.*?\|(.*?)\|.*plural.*\}\}", r"{{ka-infl-noun|\1|-}}", secbody)
-    newtext = re.sub("\{\{ka\-noun-c-2\|.*?\|.*?\|(.*?)\|.*\}\}", r"{{ka-infl-noun|\1}}", newtext)
+    newtext = re.sub(r"\{\{ka\-noun-c-2\|.*?\|.*?\|(.*?)\|.*plural.*\}\}", r"{{ka-infl-noun|\1|-}}", secbody)
+    newtext = re.sub(r"\{\{ka\-noun-c-2\|.*?\|.*?\|(.*?)\|.*\}\}", r"{{ka-infl-noun|\1}}", newtext)
     if secbody != newtext:
         notes.append("convert {{ka-noun-c-2}} to {{ka-infl-noun}}")
         secbody = newtext
 
-    # newtext = re.sub(r"==\s*Declension\s*==", "==Inflection==", secbody)
-    # if secbody != newtext:
-    #  notes.append("==Declension== -> ==Inflection== in Georgian section")
-    #  secbody = newtext
+    #newtext = re.sub(r"==\s*Declension\s*==", "==Inflection==", secbody)
+    #if secbody != newtext:
+    #    notes.append("==Declension== -> ==Inflection== in Georgian section")
+    #    secbody = newtext
 
     sections[j] = secbody + sectail
     return "".join(sections), notes

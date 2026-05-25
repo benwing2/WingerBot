@@ -227,11 +227,10 @@ def process_text_on_page(index, pagetitle, text):
             "replace {{head|LANG|letter}} with {{letter|LANG}} for %s" % ", ".join(notes_replace_head_letter_langs)
         )
     notes_replace_ordinal_def = []
-    sections, sections_by_lang, lang_sections = blib.split_text_into_sections(text, pagemsg)
-    lang_sections = dict(lang_sections)
-    for j in range(2, len(sections), 2):
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    for j, seclang in secs.section_langs:
         sectext = sections[j]
-        seclang = lang_sections[j]
         if seclang not in lang_utils.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language '%s' in section %s" % (seclang, j))
             continue

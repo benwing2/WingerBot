@@ -77,10 +77,8 @@ def process_text_on_page(index, pagetitle, text):
                 lang_utils.language_names_to_properties[thislangname]
             )
 
-            subsections = re.split("(^==.*==\n)", sectext, 0, re.M)
-            for k in range(2, len(subsections), 2):
-                m = re.search("^===*([^=]*)=*==\n$", subsections[k - 1])
-                subsectitle = m.group(1).strip()
+            subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+            for k, subsectitle in subsecs.subsection_headers:
                 if not (
                     subsectitle in sections_to_always_include
                     or this_ignore_translit != "latin"
@@ -97,7 +95,7 @@ def process_text_on_page(index, pagetitle, text):
                         return "link in '%s' in %s" % (subsectitle, thislangname)
 
                 def sub_link(orig, text, translit, origtemplate):
-                    if re.search("[\[\]]", text):
+                    if re.search(r"[\[\]]", text):
                         pagemsg("WARNING: Stray brackets in %s, skipping: %s" % (linktext(), orig))
                         return orig
                     if this_ignore_translit == "latin":
@@ -249,7 +247,7 @@ def process_text_on_page(index, pagetitle, text):
 
                 # Split templates, then rejoin text involving templates that don't
                 # have newlines in them
-                split_templates = re.split(template_table_split_re, subsections[k], 0, re.S)
+                split_templates = re.split(template_table_split_re, subsecs.subsections[k], 0, re.S)
                 must_continue = False
                 for l in range(0, len(split_templates), 2):
                     if "{" in split_templates[l] or "}" in split_templates[l]:
@@ -324,13 +322,13 @@ def process_text_on_page(index, pagetitle, text):
                                     lines[l] = "".join(split_line)
                                     split_text[kk] = "".join(lines)
                                     # Strip off the newline we added at the beginning
-                                    subsections[k] = "".join(split_text)
-                                    assert subsections[k][0] == "\n"
-                                    subsections[k] = subsections[k][1:]
-                                    sectext = "".join(subsections)
+                                    subsecs.subsections[k] = "".join(split_text)
+                                    assert subsecs.subsections[k][0] == "\n"
+                                    subsecs.subsections[k] = subsecs.subsections[k][1:]
+                                    sectext = "".join(subsecs.subsections)
 
                 # Check for gender placed after a link and incorporate into the link.
-                seclines = subsections[k].split("\n")
+                seclines = subsecs.subsections[k].split("\n")
                 replaced = False
                 for lineind, secline in enumerate(seclines):
 
@@ -358,23 +356,18 @@ def process_text_on_page(index, pagetitle, text):
                         seclines[lineind] = new_secline
                         replaced = True
                 if replaced:
-                    subsections[k] = "\n".join(seclines)
-                    sectext = "".join(subsections)
+                    subsecs.subsections[k] = "\n".join(seclines)
+                    sectext = "".join(subsecs.subsections)
 
         return sectext
 
     if args.single_lang:
         newtext = do_section(text, args.single_lang)
     else:
-        sections = re.split("(^==[^\n=]*==\n)", text, 0, re.M)
-        for j in range(2, len(sections), 2):
-            m = re.search("^==(.*?)==\n$", sections[j - 1])
-            if not m:
-                pagemsg("WARNING: Something wrong, can't parse section from %s" % sections[j - 1].strip())
-                continue
-            thislangname = m.group(1)
-            sections[j] = do_section(sections[j], thislangname)
-        newtext = "".join(sections)
+        secs = blib.split_text_into_sections(text, pagemsg)
+        for j, thislangname in secs.section_langs:
+            secs.sections[j] = do_section(secs.sections[j], thislangname)
+        newtext = "".join(secs.sections)
 
     if subbed_links:
         seen_langs = {}

@@ -272,16 +272,18 @@ def process_text_on_page(index, pagetitle, text):
     elif pagetitle.startswith("Appendix:"):
         newtext, _ = hack_templates(text, "Unknown")
     else:
-        sections, sections_by_lang, lang_sections = blib.split_text_into_sections(text, pagemsg)
+        secs = blib.split_text_into_sections(text, pagemsg)
+        sections = secs.sections
         if not pagetitle.startswith("Citations"):
-            for j, langname in lang_sections:
+            for j, langname in secs.section_langs:
                 sections[j], _ = hack_templates(sections[j], langname)
             newtext = "".join(sections)
         else:
             # Citation section?
-            sections, sections_by_lang, lang_sections = blib.split_text_into_sections(text, pagemsg)
+            secs = blib.split_text_into_sections(text, pagemsg)
+            sections = secs.sections
             sections[0], langnamecode = hack_templates(sections[0], "Unknown", langnamecode=None, is_citation=True)
-            for j, langname in lang_sections:
+            for j, langname in secs.section_langs:
                 sections[j], langnamecode = hack_templates(
                     sections[j], langname, langnamecode=langnamecode, is_citation=True
                 )

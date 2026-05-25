@@ -17,7 +17,7 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     col3_splits = re.split(r"^((?:\{\{col3\|pl\|[^{}\n]*\}\}\n)+)", secbody, 0, re.M)
     for k in range(1, len(col3_splits), 2):

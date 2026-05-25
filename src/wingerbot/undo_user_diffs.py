@@ -39,10 +39,8 @@ def process_text_on_page(index, pagetitle, text):
     if not blib.safe_page_exists(page, errandpagemsg):
         pagemsg("WARNING: Page doesn't exist any more")
     else:
-        curtext = blib.safe_page_text(page, errandpagemsg, bad_value_ret=None)
-        if curtext is None:
-            pagemsg("WARNING: Page can't be fetched")
-        else:
+        curtext = blib.safe_page_text_or_none(page, errandpagemsg)
+        if curtext is not None:
             if args.input_format == "diff-match-patch":
                 from diff_match_patch import diff_match_patch
 

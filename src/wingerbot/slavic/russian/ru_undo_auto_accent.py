@@ -40,7 +40,7 @@ def undo_ru_auto_accent(save, verbose, direcfile, start, end):
                 errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
             text = blib.safe_page_text(page, errandpagemsg)
-            if not re.search("^#\*:* *%s" % re.escape(repl_template), text, re.M):
+            if not re.search(r"^#\*:* *%s" % re.escape(repl_template), text, re.M):
                 return
             found_orig_template = orig_template in text
             newtext = text.replace(repl_template, orig_template)

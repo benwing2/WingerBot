@@ -145,11 +145,12 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         return newsection, notes
 
     # Pass None for pagemsg to suppress warning on lang section not found.
-    retval = blib.find_modifiable_lang_section(pagetext, langname, None, force_final_nls=True)
-    if retval is None:
-        sections, sections_by_lang, section_langs = blib.split_text_into_sections(pagetext, pagemsg)
+    modsecs = blib.find_modifiable_lang_section(pagetext, langname, None, force_final_nls=True)
+    if modsecs is None:
+        secs = blib.split_text_into_sections(pagetext, pagemsg)
+        sections = secs.sections
         normalized_langname = lang_utils.langname_key(langname)
-        for j, seclangname in section_langs:
+        for j, seclangname in secs.section_langs:
             normalized_seclangname = lang_utils.langname_key(seclangname)
             if normalized_seclangname > normalized_langname:
                 sections[j - 1 : j - 1] = [newsection]
@@ -161,10 +162,11 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         notes.append("append lang section %s at end of page" % note_part)
         return "".join(sections), notes
 
-    sections, j, secbody, sectail, has_non_lang = retval
-    subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-        secbody, pagemsg
-    )
+    subsecs = blib.split_text_into_subsections(modsecs.secbody, pagemsg)
+    subsections = subsecs.subsections
+    subsections_by_header = subsecs.subsections_by_header
+    subsection_headers = subsecs.subsection_headers
+    subsection_levels = subsecs.subsection_levels
 
     # Look for possible matching headword/definition templates.
     matching_defn_templates = []
@@ -280,11 +282,9 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
                 )
                 return
             subsections[subsecind] = newsubsec
-            secbody = "".join(subsections)
-            sections[j] = secbody.rstrip("\n") + sectail
             pagemsg("Inserting new definition into existing subsection %s" % infl_part)
             notes.append("insert new definition into existing subsection %s" % note_part)
-            return "".join(sections), notes
+            return modsecs.rebuild(secbody="".join(subsections)), notes
 
     # Didn't find POS section for form. If form is a past participle, look for an adjective section and add before.
     if pos == "participle" and "Adjective" in subsections_by_header:
@@ -303,19 +303,17 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
             )
             return
         subsections[adj_secind - 1 : adj_secind - 1] = [newposl4 if subsection_levels[adj_secind] == 4 else newpos]
-        secbody = "".join(subsections)
-        sections[j] = secbody.rstrip("\n") + sectail
         pagemsg("Inserting participle subsection %s before adjective subsection" % infl_part)
         notes.append("insert participle subsection %s before adjective subsection" % note_part)
-        return "".join(sections), notes
+        return modsecs.rebuild(secbody="".join(subsections)), notes
 
     # Didn't find POS section for form.
     if "Etymology 1" in subsections_by_header:
         highest_etym_section = 1
-        for k in range(2, len(subsections), 2):
+        for k, header in subsection_headers:
             # Find last Etymology N subsection. Then skip backwards past L3 sections and insert new section (in case there
             # are References, See also, Further reading, etc. at L3 after all Etymology N sections).
-            m = re.search("^Etymology ([0-9]+)$", subsection_headers[k])
+            m = re.search("^Etymology ([0-9]+)$", header)
             if m:
                 highest_etym_section = int(m.group(1))
         for k in range(len(subsections) - 1, 1, -2):
@@ -325,11 +323,9 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
             "===Etymology %s===\n" % (highest_etym_section + 1),
             "\n" + newposl4,
         ]
-        secbody = "".join(subsections)
-        sections[j] = secbody.rstrip("\n") + sectail
         pagemsg("Appending etym subsection %s" % infl_part)
         notes.append("append etym subsection %s" % note_part)
-        return "".join(sections), notes
+        return modsecs.rebuild(secbody="".join(subsections)), notes
 
     # One etymology section for language. Wrap existing text in Etymology 1 and add Etymology 2.
     if "Etymology" in subsections_by_header:
@@ -364,13 +360,11 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
 
     subsections.append("===Etymology 2===\n")
     subsections.append("\n" + newposl4)
-    secbody = "".join(subsections)
-    sections[j] = secbody.rstrip("\n") + sectail
     pagemsg("Wrapping existing lang section in Etymology 1, appending Etymology 2 subsection %s" % infl_part)
     notes.append(
         "wrapping existing %s lang section in Etymology 1, append Etymology 2 subsection %s" % (normname, note_part)
     )
-    return "".join(sections), notes
+    return modsecs.rebuild(secbody="".join(subsections)), notes
 
 
 def process_text_on_page(index, pagetitle, pagetext):

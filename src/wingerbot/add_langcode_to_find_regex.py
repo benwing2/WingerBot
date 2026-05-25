@@ -17,12 +17,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
 
-    for j in range(2, len(sections), 2):
-        m = re.search("^== *(.*?) *==\n$", sections[j - 1])
-        assert m
-        langname = m.group(1)
+    for j, langname in secs.section_langs:
         if langname not in lang_utils.languages_by_canonical_name:
             pagemsg("WARNING: Can't find language %s" % langname)
             continue

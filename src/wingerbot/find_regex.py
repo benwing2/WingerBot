@@ -19,17 +19,14 @@ def process_text_on_page(index, pagetitle, text, prev_comment):
     if not args.lang:
         text_to_search = text
     else:
-        text_to_search = []
+        text_to_search_parts = []
         langs = set(re.split(",(?!= )", args.lang))
-        sections, sections_by_lang, _ = blib.split_text_into_sections(text, pagemsg)
-
-        for seclang, secind in sections_by_lang.items():
+        secs = blib.split_text_into_sections(text, pagemsg)
+        sections = secs.sections
+        for secind, seclang in secs.section_langs:
             if seclang in langs:
-                if len(langs) == 1:
-                    text_to_search = [sections[secind]]
-                    break
-                text_to_search.append(sections[secind - 1] + sections[secind])
-        text_to_search = "".join(text_to_search)
+                text_to_search_parts.append(sections[secind - 1] + sections[secind])
+        text_to_search = "".join(text_to_search_parts)
 
     def encode(txt):
         if not args.no_encode_embedded_newlines:

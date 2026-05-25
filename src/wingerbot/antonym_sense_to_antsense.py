@@ -12,12 +12,10 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     notes = []
 
-    subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-        text, pagemsg
-    )
-    if "Antonyms" in subsections_by_header:
-        for secno in subsections_by_header["Antonyms"]:
-            parsed = blib.parse_text(subsections[secno])
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    if "Antonyms" in subsecs.subsections_by_header:
+        for secno in subsecs.subsections_by_header["Antonyms"]:
+            parsed = blib.parse_text(subsecs.subsections[secno])
             changed = False
             for t in parsed.filter_templates():
                 origt = str(t)
@@ -33,8 +31,8 @@ def process_text_on_page(pageindex, pagetitle, text):
                     notes.append("{{s}} -> {{as}} in Antonyms section")
                     changed = True
             if changed:
-                subsections[secno] = str(parsed)
-    text = "".join(subsections)
+                subsecs.subsections[secno] = str(parsed)
+    text = "".join(subsecs.subsections)
     return text, notes
 
 

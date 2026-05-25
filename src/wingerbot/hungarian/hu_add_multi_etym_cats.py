@@ -111,7 +111,7 @@ def process_text_on_page(index, pagetitle, text):
     if retval is None:
         pagemsg("WARNING: Couldn't find Hungarian section")
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
     if "==Etymology 1==" not in secbody:
         return
     etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)

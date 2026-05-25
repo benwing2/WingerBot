@@ -161,7 +161,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 def yield_decls():
     for lineno, line in blib.iter_items_from_file(args.declfile, start, end):
         found_ndecl_style = False
-        for m in re.finditer(r"\{\{(?:User:Benwing2/)?" + args.lang + "-ndecl\|(.*?)\}\}", line):
+        for m in re.finditer(r"\{\{(?:User:Benwing2/)?" + args.lang + r"-ndecl\|(.*?)\}\}", line):
             found_ndecl_style = True
             yield lineno, m.group(1)
         if not found_ndecl_style:

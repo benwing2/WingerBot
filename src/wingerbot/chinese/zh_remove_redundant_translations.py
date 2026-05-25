@@ -53,14 +53,13 @@ def process_text_on_page(index, pagetitle, text):
     if not re.search(r"^\* *Chinese:*", text, re.M):
         return
 
-    subsections = re.split(r"(^\s*==+[^=\n]+==+\s*\n)", text, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
-        if re.search(r"==\s*Translations\s*==", subsections[k - 1]):
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Translations":
             lines = subsections[k].split("\n")
             in_chinese = False
             for j, line in enumerate(lines):
-
                 def line_pagemsg(txt):
                     msg("Page %s %s: %s: <from> %s <to> %s <end>" % (index, pagetitle, txt, line, line))
 

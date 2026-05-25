@@ -3,7 +3,7 @@
 import json, re
 
 from wingerbot import blib
-from wingerbot.blib import site, getparam, tname
+from wingerbot.blib import PagemsgCallback, site, getparam, tname
 
 dump_form_of_data = False
 
@@ -172,12 +172,12 @@ def fetch_tag_tables(preferred_tag_variants=set()):
     return tag_to_dimension_table, tag_to_canonical_form_table
 
 
-def combine_adjacent_inflection_of_calls(text, notes, pagemsg, verbose=False):
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
-    for j in range(0, len(subsections), 2):
+def combine_adjacent_inflection_of_calls(text: str, notes: list[str], pagemsg: PagemsgCallback, verbose: bool = False):
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    for j in range(0, len(subsecs.subsections), 2):
         for template in inflection_of_templates:
 
-            def combine_adjacent_inflections(m):
+            def combine_adjacent_inflections(m: re.Match):
                 inflections = re.split(r"(\{\{%s\|.*\}\})" % template, m.group(0))
                 prev_lang = None
                 prev_lemma = None
@@ -233,6 +233,10 @@ def combine_adjacent_inflection_of_calls(text, notes, pagemsg, verbose=False):
                         and prev_misc_params == this_misc_params
                     ):
                         # Can combine prev with this.
+                        # prev_tags can't be None because we're not in the first iteration (we check
+                        # `prev_lang == this_lang`, `this_lang` is a string, and we set `prev_tags` to `this_tags`
+                        # at the end of the first iteration at the same time we set `prev_lang`).
+                        assert prev_tags is not None
                         this_tags = prev_tags + [";"] + this_tags
                         notes.append(
                             "combine adjacent calls to %s"
@@ -314,14 +318,14 @@ def combine_adjacent_inflection_of_calls(text, notes, pagemsg, verbose=False):
                 r"^([#*]+) \{\{%s\|(?:[^{}\n]|\{\{[^{}\n]*\}\})*\}\}(?:\n\1 \{\{%s\|(?:[^{}\n]|\{\{[^{}\n]*\}\})*\}\})+$"
                 % (template, template),
                 combine_adjacent_inflections,
-                subsections[j],
+                subsecs.subsections[j],
                 0,
                 re.M,
             )
-            if verbose and newsubsection != subsections[j]:
-                pagemsg("Replaced <<%s>> with <<%s>>" % (subsections[j], newsubsection))
-            subsections[j] = newsubsection
-    return "".join(subsections)
+            if verbose and newsubsection != subsecs.subsections[j]:
+                pagemsg("Replaced <<%s>> with <<%s>>" % (subsecs.subsections[j], newsubsection))
+            subsecs.subsections[j] = newsubsection
+    return "".join(subsecs.subsections)
 
 
 # Extract the tags and the non-tag parameters. Remove empty tags.

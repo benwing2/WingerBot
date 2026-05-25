@@ -102,7 +102,7 @@ def process_text_on_page(index, pagetitle, pagetext):
     pagetext = pagetext_nonl + "\n\n"
 
     def do_sectext(sectext, do_infl_of):
-        tname_re = "(?:inflection of\|pt|infl of\|pt)" if do_infl_of else "pt-verb[ -]form[ -]of"
+        tname_re = r"(?:inflection of\|pt|infl of\|pt)" if do_infl_of else "pt-verb[ -]form[ -]of"
         chunks = re.split(r"^((?:# \{\{%s\|.*\n)+)" % tname_re, sectext, 0, re.M)
         for k in range(1, len(chunks), 2):
             verb_form_chunk = chunks[k]

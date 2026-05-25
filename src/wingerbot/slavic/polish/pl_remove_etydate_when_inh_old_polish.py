@@ -15,7 +15,9 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    sections, sections_by_lang, _ = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    sections_by_lang = secs.sections_by_lang
     pl_sec = sections_by_lang.get("Polish", None)
     opl_sec = sections_by_lang.get("Old Polish", None)
     if pl_sec is None or opl_sec is None:
@@ -32,12 +34,10 @@ def process_text_on_page(index, pagetitle, text):
     opl_secbody, opl_sectail = blib.split_trailing_separator_and_categories(sections[opl_sec])
     opl_secbody, opl_sectail = blib.force_two_newlines_in_secbody(opl_secbody, opl_sectail)
 
-    pl_subsections, pl_subsections_by_header, pl_subsection_headers, pl_subsection_levels = (
-        blib.split_text_into_subsections(pl_secbody, pagemsg)
-    )
-    opl_subsections, opl_subsections_by_header, opl_subsection_headers, opl_subsection_levels = (
-        blib.split_text_into_subsections(opl_secbody, pagemsg)
-    )
+    pl_subsecs = blib.split_text_into_subsections(pl_secbody, pagemsg)
+    pl_subsections = pl_subsecs.subsections
+    pl_subsections_by_header = pl_subsecs.subsections_by_header
+    opl_subsecs = blib.split_text_into_subsections(opl_secbody, pagemsg)
 
     if "Etymology 1" in pl_subsections_by_header:
         pagemsg("WARNING: Skipping Polish section with {{etydate}} and ==Etymology 1==, can't handle yet")
@@ -56,11 +56,10 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("WARNING: Something strange, {{etydate}} not found ==Etymology== but found outside")
         return
 
-    subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-        pl_secbody, pagemsg
-    )
-    for k in range(2, len(subsections), 2):
-        if "==References==" in subsections[k - 1]:
+    subsecs = blib.split_text_into_subsections(pl_secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "References":
             newsubsec = re.sub(r"^:?\*\s*\{\{R:pl:NKJP\}\}\n", "", subsections[k], 0, re.M)
             if newsubsec != subsections[k]:
                 notes.append("remove {{R:pl:NKJP}} from Polish References section")

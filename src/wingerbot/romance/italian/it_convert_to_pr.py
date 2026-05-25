@@ -351,9 +351,9 @@ def syllabify_from_spelling(text):
     # divide as .Ch. Exceptions are [[wahhabismo]], [[amharico]], [[kinderheim]], [[schopenhaueriano]] but the latter
     # three seem questionable as the pronunciation puts the first consonant in the following syllable and makes the h
     # silent.
-    text = re.sub("(" + C_NOT_H + "'?)\.([hH])", r".\1\2", text)
+    text = re.sub("(" + C_NOT_H + r"'?)\.([hH])", r".\1\2", text)
     # gn represents a single sound so it should not be divided.
-    text = re.sub("([gG])\.([nN])", r".\1\2", text)
+    text = re.sub(r"([gG])\.([nN])", r".\1\2", text)
     # Existing hyphenations of [[atlante]], [[Betlemme]], [[genetliaco]], [[betlemita]] all divide as .tl,
     # and none divide as t.l. No examples of -dl- but it should be the same per
     # http://www.italianlanguageguide.com/pronunciation/syllabication.asp.
@@ -575,7 +575,7 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 

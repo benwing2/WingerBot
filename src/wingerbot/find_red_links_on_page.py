@@ -54,11 +54,11 @@ def process_text_on_page(index, pagetitle, text):
                 if re.search("#redirect", text, re.I):
                     outtext = "exists as redirect"
                 else:
-                    sections, sections_by_lang, section_langs = blib.split_text_into_sections(text, pagemsg)
-                    if langname in sections_by_lang:
+                    secs = blib.split_text_into_sections(text, pagemsg)
+                    if langname in secs.sections_by_lang:
                         outtext = "exists in %s" % langname
                     else:
-                        existing_langs = [lang for secno, lang in section_langs]
+                        existing_langs = [lang for secno, lang in secs.section_langs]
                         outtext = "exists in other languages %s" % ", ".join(existing_langs)
             else:
                 outtext = "does not exist"

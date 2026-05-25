@@ -12,25 +12,21 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Anagrams" and k + 1 < len(subsections):
+            subsections = subsections[0:k - 1] + subsections[k + 1 : len(subsections)] + subsections[k - 1 : k + 1]
+            notes.append("put Anagrams last in %s section" % args.langname)
+            break
 
-    for k in range(1, len(subsections), 2):
-        if re.search("==Anagrams==", subsections[k]):
-            if k + 2 < len(subsections):
-                subsections = subsections[0:k] + subsections[k + 2 : len(subsections)] + subsections[k : k + 2]
-                notes.append("put Anagrams last in %s section" % args.langname)
-
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("put Anagrams last", include_pagefile=True, include_stdin=True)

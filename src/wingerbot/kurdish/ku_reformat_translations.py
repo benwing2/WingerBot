@@ -75,10 +75,10 @@ def process_text_on_page(index, pagename, text):
 
                             def sub_links(newtext):
                                 # handle one-part links
-                                newtext = re.sub(r"\[\[([^" + arabic_charset + ":|]*?)\]\]", r"{{t|kmr|\1}}", newtext)
+                                newtext = re.sub(r"\[\[([^" + arabic_charset + r":|]*?)\]\]", r"{{t|kmr|\1}}", newtext)
                                 # handle two-part links
                                 newtext = re.sub(
-                                    r"\[\[([^" + arabic_charset + ":|]*?)\|([^" + arabic_charset + ":|]*?)\]\]",
+                                    r"\[\[([^" + arabic_charset + r":|]*?)\|([^" + arabic_charset + r":|]*?)\]\]",
                                     r"{{t|kmr|\1|alt=\2}}",
                                     newtext,
                                 )

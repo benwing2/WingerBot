@@ -1,23 +1,13 @@
 #!/usr/bin/env python3
 
+from dataclasses import dataclass
+
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site, rsub_repeatedly
 
 from collections import defaultdict
-
-
-def rsub_repeatedly(fr, to, text):
-    while True:
-        new_text = re.sub(fr, to, text)
-        if new_text == text:
-            return new_text
-        text = new_text
-
-
-def get_subsection_level(subsection_text):
-    return len(re.sub("[^=].*", "", subsection_text.strip()))
 
 
 def process_text_on_page(pageindex, pagetitle, text):
@@ -31,42 +21,41 @@ def process_text_on_page(pageindex, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
 
     lemma_defn_subsection = None
     non_lemma_defn_subsection = None
     num_defn_subsections_seen = 0
-    for k in range(2, len(subsections), 2):
-        if re.search("=Etymology", subsections[k - 1]):
+    for k, header in subsecs.subsection_headers:
+        if header.startswith("Etymology"):
             lemma_defn_subsection = None
             non_lemma_defn_subsection = None
             num_defn_subsections_seen = 0
-        if "\n#" in subsections[k] and not re.search("=(Etymology|Pronunciation|Usage notes)", subsections[k - 1]):
-            lines = subsections[k].strip().split("\n")
+        if "\n#" in subsecs.subsections[k] and not re.search("^(Etymology|Pronunciation|Usage notes)", header):
+            lines = subsecs.subsections[k].strip().split("\n")
             for lineind, line in enumerate(lines):
                 if re.search(r"\{\{(head\|[^{}]*|[a-z][a-z][a-z]?-[^{}|]*)forms?\b", line):
                     pagemsg(
                         "Saw potential lemma section #%s %s but appears to be a non-lemma form due to line #%s, not counting as lemma: %s"
-                        % (k // 2 + 1, subsections[k - 1].strip(), lineind + 1, line)
+                        % (k // 2 + 1, subsecs.subsections[k - 1].strip(), lineind + 1, line)
                     )
                     non_lemma_defn_subsection = k
                     break
             else:  # no break
                 lemma_defn_subsection = k
                 num_defn_subsections_seen += 1
-            defn_subsection_level = get_subsection_level(subsections[k - 1])
+            defn_subsection_level = subsecs.subsection_levels[k]
             saw_nyms_already = set()
-        m = re.search("=(Synonyms|Antonyms)=", subsections[k - 1])
-        if m:
-            syntype = m.group(1).lower()[:-1]
+        if header in ["Synonyms", "Antonyms"]:
+            syntype = header.lower()[:-1]
             if lemma_defn_subsection is None and non_lemma_defn_subsection is None:
                 pagemsg(
                     "WARNING: Encountered %ss section #%s without preceding definition section" % (syntype, k // 2 + 1)
                 )
                 continue
-            synant_subsection_level = get_subsection_level(subsections[k - 1])
+            synant_subsection_level = subsecs.subsection_levels[k]
             if num_defn_subsections_seen > 1 and synant_subsection_level <= defn_subsection_level:
                 pagemsg(
                     "WARNING: Saw %s definition sections followed by %s section #%s at same level or higher, skipping section"
@@ -81,20 +70,32 @@ def process_text_on_page(pageindex, pagetitle, text):
             # Prefer the last lemma definition subsection, if any, over a subsequent non-lemma definition subsection.
             defn_subsection = lemma_defn_subsection or non_lemma_defn_subsection
 
-            def parse_syns(syns):
+            @dataclass
+            class ParsedSyn:
+                synonym: str
+                other_params: list[tuple[str, str]]
+                joiner_after: str | None
+
+            def parse_syns(syntext: str) -> list[ParsedSyn] | None:
+                """Parse the synonyms or antonyms out of a line, returning a list of ParsedSyn items, where each item
+                represents a parsed synonym with its associated parameters and joiner. In ParsedSyn, `synonym` is the
+                synonym itself, `other_params` is a list of (param, value) for any parameters other than the synonym,
+                and `joiner_after` is the string that should be used to join this synonym to the next one on the line,
+                or None if this is the last synonym on the line. Return None if we encounter something we don't know how
+                to parse."""
                 retval = []
-                syns = syns.strip()
-                orig_syns = syns
+                syntext = syntext.strip()
+                orig_syntext = syntext
                 qualifier = None
                 while True:
                     # check for qualifiers specified using a qualifier template
-                    m = re.search(r"^(.*?)\{\{(?:qualifier|qual|q|i)\|([^{}|=]*)\}\}(.*?)$", syns)
+                    m = re.search(r"^(.*?)\{\{(?:qualifier|qual|q|i)\|([^{}|=]*)\}\}(.*?)$", syntext)
                     if m:
                         before_text, qualifier, after_text = m.groups()
-                        syns = before_text + after_text
+                        syntext = before_text + after_text
                         break
                     # check for qualifiers using e.g. {{lb|ru|...}}
-                    m = re.search(r"^(.*?)\{\{(?:lb)\|%s\|([^{}=]*)\}\}(.*?)$" % re.escape(args.langcode), syns)
+                    m = re.search(r"^(.*?)\{\{(?:lb)\|%s\|([^{}=]*)\}\}(.*?)$" % re.escape(args.langcode), syntext)
                     if m:
                         before_text, qualifier, after_text = m.groups()
                         # do this before handling often/sometimes/etc. in case the label has often|_|pejorative or similar
@@ -140,30 +141,30 @@ def process_text_on_page(pageindex, pagetitle, text):
                         ]
                         qualifier = re.sub(r"\b(%s)\|" % "|".join(terms_no_following_comma), r"\1 ", qualifier)
                         qualifier = qualifier.replace("|", ", ")
-                        syns = before_text + after_text
+                        syntext = before_text + after_text
                         break
                     # check for qualifier-like ''(...)''
-                    m = re.search(r"^(.*?)''\(([^'{}]*)\)''(.*?)$", syns)
+                    m = re.search(r"^(.*?)''\(([^'{}]*)\)''(.*?)$", syntext)
                     if m:
                         before_text, qualifier, after_text = m.groups()
-                        syns = before_text + after_text
+                        syntext = before_text + after_text
                         break
                     # check for qualifier-like (''...'')
-                    m = re.search(r"^(.*?)\(''([^'{}]*)''\)(.*?)$", syns)
+                    m = re.search(r"^(.*?)\(''([^'{}]*)''\)(.*?)$", syntext)
                     if m:
                         before_text, qualifier, after_text = m.groups()
-                        syns = before_text + after_text
+                        syntext = before_text + after_text
                         break
                     break
 
                 # Split on commas, semicolons, slashes but don't split commas etc. inside of braces or brackets
-                split_by_brackets_braces = re.split(r"(\{\{[^{}]*\}\}|\[\[[^\[\]]*\]\])", syns.strip())
+                split_by_brackets_braces = re.split(r"(\{\{[^{}]*\}\}|\[\[[^\[\]]*\]\])", syntext.strip())
                 comma_separated_runs = blib.split_alternating_runs(split_by_brackets_braces, "(?: *[,;] *| +/ +)")
                 syns = ["".join(comma_separated_run) for comma_separated_run in comma_separated_runs]
 
                 if qualifier and len(syns) > 1:
                     pagemsg(
-                        "WARNING: Saw qualifier along with multiple synonyms, not sure how to proceed: <%s>" % orig_syns
+                        "WARNING: Saw qualifier along with multiple synonyms, not sure how to proceed: <%s>" % orig_syntext
                     )
                     return None
                 joiner_after = ";" if qualifier or len(syns) > 1 else ","
@@ -300,7 +301,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                         if new_syn != syn:
                             pagemsg("Add brackets to '%s', producing '%s'" % (syn, new_syn))
                             syn = new_syn
-                    other_params = [
+                    other_params_with_none = [
                         ("tr", translit),
                         ("t", gloss),
                         ("q", qualifier),
@@ -308,32 +309,42 @@ def process_text_on_page(pageindex, pagetitle, text):
                         ("pos", pos),
                         ("lit", lit),
                     ]
+                    other_params = [(param, val) for param, val in other_params_with_none if val is not None]
                     # Set the joiner_after to None for everything but the last synonym on the row; we will then change
                     # all commas to semicolons if there is any semicolon, so we are consistently using commas or
                     # semicolons to separate groups of synonyms.
-                    retval.append((syn, other_params, joiner_after if synindex == len(syns) - 1 else None))
+                    retval.append(ParsedSyn(syn, other_params, joiner_after if synindex == len(syns) - 1 else None))
                 return retval
 
-            def find_defns():
-                m = re.search(r"\A(.*?)((?:^#[^\n]*\n)+)(.*?)\Z", subsections[defn_subsection], re.M | re.S)
+            @dataclass
+            class FindDefnsResult:
+                before_defn_text: str
+                defns: list[str]
+                after_defn_text: str
+
+            def find_defns() -> FindDefnsResult | None:
+                if defn_subsection is None:
+                    pagemsg("WARNING: Couldn't find definition subsection for %s section #%s" % (syntype, k // 2 + 1))
+                    return None
+                m = re.search(r"\A(.*?)((?:^#[^\n]*\n)+)(.*?)\Z", subsecs.subsections[defn_subsection], re.M | re.S)
                 if not m:
                     pagemsg(
                         "WARNING: Couldn't find definitions in definition subsection #%s" % (defn_subsection // 2 + 1)
                     )
-                    return None, None, None
+                    return None
                 before_defn_text, defn_text, after_defn_text = m.groups()
                 if re.search("^#", before_defn_text, re.M) or re.search("^#", after_defn_text, re.M):
                     pagemsg(
                         "WARNING: Saw definitions in before or after text in definition subsection #%s, not sure what to do"
                         % (defn_subsection // 2 + 1)
                     )
-                    return None, None, None
+                    return None
                 if re.search("^##", defn_text, re.M):
                     pagemsg(
                         "WARNING: Found ## definition in definition subsection #%s, not sure what to do"
                         % (defn_subsection // 2 + 1)
                     )
-                    return None, None, None
+                    return None
                 defns = re.split("^(#[^*:].*\n(?:#[*:].*\n)*)", defn_text, 0, re.M)
                 for between_index in range(0, len(defns), 2):
                     if defns[between_index]:
@@ -341,40 +352,44 @@ def process_text_on_page(pageindex, pagetitle, text):
                             "WARNING: Saw unknown text <%s> between definitions, not sure what to do"
                             % defns[between_index].strip()
                         )
-                        return None, None, None
+                        return None
                 defns = [x for i, x in enumerate(defns) if i % 2 == 1]
-                return before_defn_text, defns, after_defn_text
+                return FindDefnsResult(before_defn_text, defns, after_defn_text)
 
-            def add_syns_to_defn(syns, defn, add_fixme):
-                for syn, other_params, joiner_after in syns:
-                    if not syn and joiner_after is not None:
+            def add_syns_to_defn(syns: list[ParsedSyn], defn: str, add_fixme: bool) -> str | None:
+                """Add the synonyms or antonyms in `syns` to the definition `defn`, returning the new definition text.
+                If `add_fixme` is True, add a FIXME to the end of the {{syn}} or {{ant}} template to indicate that the
+                synonyms or antonyms need to be checked. Return None if we encounter something we don't know how to
+                handle."""
+                for syn in syns:
+                    if not syn.synonym and syn.joiner_after is not None:
                         pagemsg(
                             "WARNING: Would remove last synonym from a group: %s"
-                            % ",".join(syn for syn, other_params, joiner_after in syns)
+                            % ",".join(syn.synonym for syn in syns)
                         )
                         return None
-                syns = [(syn, other_params, joiner_after) for syn, other_params, joiner_after in syns if syn]
+                syns = [syn for syn in syns if syn.synonym]
                 if len(syns) == 0:
                     return defn
-                any_semicolon = any(joiner_after == ";" for sy, other_params, joiner_after in syns)
+                any_semicolon = any(syn.joiner_after == ";" for syn in syns)
                 if any_semicolon:
                     syns = [
-                        (syn, other_params, ";" if joiner_after is not None and any_semicolon else joiner_after)
-                        for syn, other_params, joiner_after in syns
+                        ParsedSyn(syn.synonym, syn.other_params, ";" if syn.joiner_after is not None and any_semicolon else syn.joiner_after)
+                        for syn in syns
                     ]
                 saw_nyms_already.add(syntype)
                 joined_syns = "|".join(
                     "%s%s%s"
                     % (
-                        syn,
-                        "".join("<%s:%s>" % (param, val) if val else "" for param, val in other_params),
+                        syn.synonym,
+                        "".join("<%s:%s>" % (param, val) for param, val in syn.other_params),
                         (
-                            "|" + joiner_after
-                            if i < len(syns) - 1 and joiner_after is not None and joiner_after != ","
+                            "|" + syn.joiner_after
+                            if i < len(syns) - 1 and syn.joiner_after is not None and syn.joiner_after != ","
                             else ""
                         ),
                     )
-                    for i, (syn, other_params, joiner_after) in enumerate(syns)
+                    for i, syn in enumerate(syns)
                 )
                 fixme_msg = " FIXME" if add_fixme else ""
                 if syntype == "synonym":
@@ -396,19 +411,25 @@ def process_text_on_page(pageindex, pagetitle, text):
                     )
 
             # Find definitions
-            before_defn_text, defns, after_defn_text = find_defns()
-            if before_defn_text is None:
+            find_defns_result = find_defns()
+            if find_defns_result is None:
                 continue
 
-            def put_back_new_defns(defns, syndesc, skipped_a_line, lines, skipped_linenos):
-                subsections[defn_subsection] = before_defn_text + "".join(defns) + after_defn_text
+            def put_back_new_defns(defns: list[str], syndesc: str, skipped_a_line: bool, lines: list[str], skipped_linenos: list[int]) -> None:
+                """Put the new definitions in `defns` back into the subsection text, clearing out any existing text
+                (e.g. synonym or antonym lines, which have been incorporated into `defns`). If `skipped_a_line` is True,
+                put the skipped lines back in as well instead of clearing out all synonym or antonym lines. `syndesc`
+                is a description of the type of synonyms or antonyms being processed, for logging purposes."""
+                if find_defns_result is None or defn_subsection is None:
+                    raise RuntimeError("Expected to have found a definition subsection and definition when calling put_back_new_defns")
+                subsecs.subsections[defn_subsection] = find_defns_result.before_defn_text + "".join(defns) + find_defns_result.after_defn_text
                 if skipped_a_line:
                     skipped_linenos = sorted(skipped_linenos)
                     skipped_lines = [lines[lineno] for lineno in skipped_linenos]
-                    subsections[k] = "\n".join(skipped_lines)
+                    subsecs.subsections[k] = "\n".join(skipped_lines)
                 else:
-                    subsections[k - 1] = ""
-                    subsections[k] = ""
+                    subsecs.subsections[k - 1] = ""
+                    subsecs.subsections[k] = ""
                 notes.append(
                     "convert %ss in %s subsection %s to inline %ss in subsection %s based on %s"
                     % (syntype, args.langname, k // 2 + 1, syntype, defn_subsection // 2 + 1, syndesc)
@@ -416,10 +437,10 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             # Pull out all synonyms by number
             unparsable = False
-            syns_by_number = defaultdict(list)
+            syns_by_number: defaultdict[int, list[ParsedSyn]] = defaultdict(list)
             skipped_lines = []
             skipped_a_line = False
-            lines = subsections[k].split("\n")
+            lines = subsecs.subsections[k].split("\n")
             for lineno, line in enumerate(lines):
                 if not line.strip():
                     skipped_lines.append(lineno)
@@ -453,9 +474,10 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             if not unparsable and len(syns_by_number) > 0:
                 # Find definitions
-                before_defn_text, defns, after_defn_text = find_defns()
-                if before_defn_text is None:
+                find_defns_result = find_defns()
+                if find_defns_result is None:
                     continue
+                defns = find_defns_result.defns
 
                 # Don't consider definitions with {{reflexive of|...}} in them
                 reindexed_defns = {}
@@ -495,7 +517,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             skipped_lines = []
             skipped_a_line = False
             must_continue = False
-            lines = subsections[k].split("\n")
+            lines = subsecs.subsections[k].split("\n")
             for lineno, line in enumerate(lines):
                 if not line.strip():
                     skipped_lines.append(lineno)
@@ -532,7 +554,7 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             if not unparsable:
                 # Pull out each definition (not including continuations) and remove links
-                unlinked_defns = []
+                unlinked_defns: list[str] = []
                 must_continue = False
                 for defn in defns:
                     m = re.search("^# *(.*)\n", defn)
@@ -545,8 +567,8 @@ def process_text_on_page(pageindex, pagetitle, text):
                     continue
 
                 # Match tags against definitions
-                tag_to_defn = {}
-                defn_to_tag = {}
+                tag_to_defn: dict[str, int] = {}
+                defn_to_tag: dict[int, str] = {}
                 must_continue = False
                 bad = False
                 for tag in syns_by_tag.keys():
@@ -591,6 +613,9 @@ def process_text_on_page(pageindex, pagetitle, text):
                             must_continue = True
                             break
                     if not bad:
+                        # In the first `if not bad` block, if `matching_defn` is None, we will have already broken
+                        # out of the loop (or set `bad` to True), so `matching_defn` is guaranteed not to be None here.
+                        assert matching_defn is not None
                         defn_to_tag[matching_defn] = tag
                         tag_to_defn[tag] = matching_defn
                 if must_continue:
@@ -634,12 +659,17 @@ def process_text_on_page(pageindex, pagetitle, text):
                     )
                 )
             if len(defns) == 1 or args.do_your_best:
+                @dataclass
+                class SynsByLine:
+                    lineno: int
+                    synno: int
+                    parsed_syns: list[ParsedSyn]
                 unparsable = False
-                all_syns = []
+                all_syns: list[SynsByLine] = []
                 syns_by_tag = {}
                 skipped_lines = []
                 skipped_a_line = False
-                lines = subsections[k].split("\n")
+                lines = subsecs.subsections[k].split("\n")
                 total_syns = 0
                 for lineno, line in enumerate(lines):
                     if not line.strip():
@@ -658,7 +688,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                         skipped_a_line = True
                         skipped_lines.append(lineno)
                     else:
-                        all_syns.append((lineno, total_syns, parsed_syns))
+                        all_syns.append(SynsByLine(lineno, total_syns, parsed_syns))
                     total_syns += 1
 
                 if not unparsable:
@@ -669,18 +699,18 @@ def process_text_on_page(pageindex, pagetitle, text):
                             "Saw %s definitions and %s synonym lines, matching definitions and synonym lines"
                             % (len(defns), total_syns)
                         )
-                        for lineno, synno, parsed_syns in all_syns:
+                        for syn_by_line in all_syns:
                             # Add inline synonyms
-                            new_defn = add_syns_to_defn(parsed_syns, defns[synno], True)
+                            new_defn = add_syns_to_defn(syn_by_line.parsed_syns, defns[syn_by_line.synno], True)
                             if new_defn is None:
                                 pagemsg(
                                     "WARNING: Couldn't add %s line when matching definitions and synonym lines: %s"
-                                    % (syntype, lines[lineno])
+                                    % (syntype, lines[syn_by_line.lineno])
                                 )
                                 skipped_a_line = True
-                                skipped_lines.append(lineno)
+                                skipped_lines.append(syn_by_line.lineno)
                                 continue
-                            defns[synno] = new_defn
+                            defns[syn_by_line.synno] = new_defn
                             changed = True
                     else:
                         if len(defns) > 1:
@@ -693,27 +723,27 @@ def process_text_on_page(pageindex, pagetitle, text):
                             # to the first synonym on the line to make it easier to manually line up synonyms with definitions.
                             if total_syns > 1:
                                 all_syns = [
-                                    (
-                                        lineno,
-                                        synno,
+                                    SynsByLine(
+                                        syn_by_line.lineno,
+                                        syn_by_line.synno,
                                         [
-                                            (
-                                                syn,
+                                            ParsedSyn(
+                                                parsed_syn.synonym,
                                                 (
-                                                    other_params + [("qq", "l%s" % (synno + 1))]
+                                                    parsed_syn.other_params + [("qq", "l%s" % (syn_by_line.synno + 1))]
                                                     if synindex == 0
-                                                    else other_params
+                                                    else parsed_syn.other_params
                                                 ),
-                                                joiner_after,
+                                                parsed_syn.joiner_after,
                                             )
-                                            for synindex, (syn, other_params, joiner_after) in enumerate(parsed_syns)
+                                            for synindex, parsed_syn in enumerate(syn_by_line.parsed_syns)
                                         ],
                                     )
-                                    for lineno, synno, parsed_syns in all_syns
+                                    for syn_by_line in all_syns
                                 ]
                         # Add inline synonyms
-                        all_syns = [syn for lineno, synno, parsed_syns in all_syns for syn in parsed_syns]  # flatten
-                        new_defn = add_syns_to_defn(all_syns, defns[0], len(defns) > 1)
+                        all_parsed_syns = [syn for syn_by_line in all_syns for syn in syn_by_line.parsed_syns]  # flatten
+                        new_defn = add_syns_to_defn(all_parsed_syns, defns[0], len(defns) > 1)
                         if new_defn is None:
                             continue
                         defns[0] = new_defn
@@ -726,7 +756,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                         )
                     continue
 
-    secbody = "".join(subsections)
+    secbody = "".join(subsecs.subsections)
     # Strip extra newlines added to secbody
     sections[j] = secbody.rstrip("\n") + sectail
     return "".join(sections), notes

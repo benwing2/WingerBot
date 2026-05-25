@@ -63,8 +63,8 @@ def process_text_on_page(index, pagename, text):
         transtext = str(parsed)
         return prefix + transtext
 
-    text = re.sub("^(\*:? *Kurmanji: *)(.*)$", lambda m: replace_trans(m, "kmr", "Northern Kurdish"), text, 0, re.M)
-    text = re.sub("^(\*:? *Sorani: *)(.*)$", lambda m: replace_trans(m, "ckb", "Central Kurdish"), text, 0, re.M)
+    text = re.sub(r"^(\*:? *Kurmanji: *)(.*)$", lambda m: replace_trans(m, "kmr", "Northern Kurdish"), text, 0, re.M)
+    text = re.sub(r"^(\*:? *Sorani: *)(.*)$", lambda m: replace_trans(m, "ckb", "Central Kurdish"), text, 0, re.M)
 
     def replace_trans_by_lemma(m):
         prefix, transtext = m.groups()
@@ -115,9 +115,9 @@ def process_text_on_page(index, pagename, text):
         transtext = str(parsed)
         return prefix + transtext
 
-    text = re.sub("^(\*:? *Kurdish: *)(.*)$", replace_trans_by_lemma, text, 0, re.M)
+    text = re.sub(r"^(\*:? *Kurdish: *)(.*)$", replace_trans_by_lemma, text, 0, re.M)
 
-    for m in re.finditer("^\*:? *(.*?): *(.*)$", text, re.M):
+    for m in re.finditer(r"^\*:? *(.*?): *(.*)$", text, re.M):
         prefix, transtext = m.groups()
         parsed = blib.parse_text(transtext)
         for t in parsed.filter_templates():

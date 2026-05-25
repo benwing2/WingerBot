@@ -18,15 +18,15 @@ def process_text_on_page(pageindex, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     saw_affix_template_with_ment = False
 
     def fix_up_section(secbody, etym_level):
         nonlocal saw_affix_template_with_ment
-        subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-            secbody, pagemsg
-        )
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
+        subsections_by_header = subsecs.subsections_by_header
         etymsec_text = " for Etymology %s" % etym_level if etym_level else ""
         if "Noun" in subsections_by_header and "Adverb" in subsections_by_header:
             pagemsg("WARNING: Saw both noun and adverb sections%s, skipping" % etymsec_text)

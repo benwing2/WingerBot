@@ -12,15 +12,10 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    origtext = text
     notes = []
-    sections = re.split("(^==[^\n=]*==\n)", text, 0, re.M)
-    for j in range(2, len(sections), 2):
-        m = re.search("^==(.*?)==\n$", sections[j - 1])
-        if not m:
-            pagemsg("WARNING: Something wrong, can't parse section from %s" % sections[j - 1].strip())
-            continue
-        thislangname = m.group(1)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    for j, thislangname in secs.section_langs:
         if thislangname not in lang_utils.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized section lang %s" % thislangname)
             continue

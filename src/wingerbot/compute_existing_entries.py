@@ -51,18 +51,13 @@ def process_text_on_page(index, pagetitle, pagetext):
             return
 
     # Split into sections
-    splitsections = re.split("(^==[^=\n]+==\n)", pagetext, 0, re.M)
+    secs = blib.split_text_into_sections(pagetext, pagemsg)
     langs = []
-    for k in range(1, len(splitsections), 2):
-        m = re.search(r"^==\s*(.*?)\s*==\n", splitsections[k])
-        if not m:
-            pagemsg("WARNING: Can't parse language header?: %s" % splitsections[k].strip())
+    for j, langname in secs.section_langs:
+        if langname not in lang_utils.languages_by_canonical_name:
+            pagemsg("WARNING: Unrecognized language: %s" % langname)
         else:
-            langname = m.group(1)
-            if langname not in lang_utils.languages_by_canonical_name:
-                pagemsg("WARNING: Unrecognized language: %s" % langname)
-            else:
-                langs.append(lang_utils.languages_by_canonical_name[langname]["code"])
+            langs.append(lang_utils.languages_by_canonical_name[langname]["code"])
     pagemsg("Langs=%s" % ",".join(langs))
 
 

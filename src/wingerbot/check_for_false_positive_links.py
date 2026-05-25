@@ -10,14 +10,16 @@ english_pages = {}
 
 
 def find_english_pages(index, pagetitle, text):
-    splitsections = re.split("^==([^=\n]+)==\n", text, 0, re.M)
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
+    secs = blib.split_text_into_sections(text, pagemsg)
     saw_langs = set()
     saw_english = False
-    for k in range(1, len(splitsections), 2):
-        if splitsections[k] == "English":
+    for j, langname in secs.section_langs:
+        if langname == "English":
             saw_english = True
         else:
-            saw_langs.add(splitsections[k])
+            saw_langs.add(langname)
     if saw_english:
         english_pages[pagetitle] = saw_langs
 

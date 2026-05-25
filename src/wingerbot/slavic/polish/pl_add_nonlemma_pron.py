@@ -61,7 +61,7 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 
@@ -177,7 +177,7 @@ def process_text_on_page(index, pagetitle, text):
                 if len(all_audios) > 1:
                     pagemsg(
                         "WARNING: Saw multiple {{audio}} templates, skipping: %s"
-                        % ",".join(x.strip() for x in all_audios())
+                        % ",".join(x.strip() for x in all_audios)
                     )
                     return
                 if len(all_audios) == 1:

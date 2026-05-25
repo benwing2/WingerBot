@@ -1241,8 +1241,10 @@ def create_inflection_entry(
         comment = None
         notes = []
 
-        existing_text = blib.safe_page_text(page, pagemsg)
-        if not blib.safe_page_exists(page, pagemsg):
+        existing_text = blib.safe_page_text_or_none(page, errandpagemsg)
+        if existing_text is None:
+            return None
+        if not blib.safe_page_exists(page, errandpagemsg):
             # Page doesn't exist. Create it.
             pagemsg("Creating page")
             comment = "Create page for Russian %s %s of %s, pos=%s" % (infltype, joined_infls, lemma, pos)

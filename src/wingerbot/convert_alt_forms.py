@@ -11,10 +11,10 @@ change_alter_to_alt = True
 def process_text_in_section(secbody, pagemsg):
     notes = []
 
-    subsections = re.split(r"(^===+[^=\n]+===+[ \t]*\n)", secbody, 0, re.M)
-    for k in range(1, len(subsections), 2):
-        if re.search(r"==\s*Alternative forms\s*==", subsections[k]):
-            subsectext = subsections[k + 1]
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    for k, header in subsecs.subsection_headers:
+        if header == "Alternative forms":
+            subsectext = subsecs.subsections[k]
             parsed = blib.parse_text(subsectext)
             # Don't recurse into templates or we will change {{m}} to {{alt}} inside a param
             for t in parsed.filter_templates(recursive=False):
@@ -312,9 +312,9 @@ def process_text_in_section(secbody, pagemsg):
                         notes.append("remove extraneous whitespace from ==Alternative forms== line")
             subsectext = "\n".join(lines)
 
-            subsections[k + 1] = subsectext
+            subsecs.subsections[k] = subsectext
 
-    secbody = "".join(subsections)
+    secbody = "".join(subsecs.subsections)
     return secbody, notes
 
 
@@ -322,17 +322,13 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
-    newsecbody, notes = process_text_in_section(secbody, pagemsg)
-
-    # Strip extra newlines added to secbody
-    sections[j] = newsecbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    newsecbody, notes = process_text_in_section(modsec.secbody, pagemsg)
+    return modsec.rebuild(secbody=newsecbody), notes
 
 
 parser = blib.create_argparser(

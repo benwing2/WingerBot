@@ -44,17 +44,13 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    sections = re.split("(^\s*==[^=]*==\s*\n)", text, 0, re.M)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
 
-    for j in range(2, len(sections), 2):
-        m = re.search(r"^\s*==\s*(.*?)\s*==\s*\n$", sections[j - 1])
-        assert m
-        langname = m.group(1)
-        subsections = re.split("(^\s*==.*==\s*\n)", sections[j], 0, re.M)
-        for k in range(2, len(subsections), 2):
-            m = re.search("^\s*===*\s*(.*?)\s*=*==\s*\n$", subsections[k - 1])
-            assert m
-            subsectitle = m.group(1)
+    for j, langname in secs.section_langs:
+        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
+        subsections = subsecs.subsections
+        for k, subsectitle in subsecs.subsection_headers:
             subsections[k] = do_templatize(subsections[k], langname, subsectitle)
         sections[j] = "".join(subsections)
 

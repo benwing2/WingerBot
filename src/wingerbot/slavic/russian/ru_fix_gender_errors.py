@@ -58,7 +58,7 @@ pagetitle_to_genders = {}
 
 # * Page 3574 [[коала]]: WARNING: Gender mismatch, existing=m-an,f-an, new=f-an
 for i, line in blib.iter_items_from_file(args.direcfile, start, end):
-    m = re.search("^\* Page [0-9]+ \[\[(.*?)\]\]: WARNING: Gender mismatch, existing=(.*?), new=.*?$", line)
+    m = re.search(r"^\* Page [0-9]+ \[\[(.*?)\]\]: WARNING: Gender mismatch, existing=(.*?), new=.*?$", line)
     if not m:
         msg("Line %s: WARNING: Can't process line: %s" % (i, line))
     else:

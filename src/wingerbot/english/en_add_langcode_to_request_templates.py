@@ -46,15 +46,9 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-
-    for j in range(0, len(sections), 2):
-        if j == 0:
-            langname = None
-        else:
-            m = re.search("^==(.*)==\n$", sections[j - 1])
-            assert m
-            langname = m.group(1)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    for j, langname in [(0, "")] + secs.section_langs:
         parsed = blib.parse_text(sections[j])
         hack_templates(parsed, langname)
         sections[j] = str(parsed)

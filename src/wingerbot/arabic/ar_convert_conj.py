@@ -113,11 +113,9 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections, subsections_by_header, subsection_headers, subsection_levels = blib.split_text_into_subsections(
-        secbody, pagemsg
-    )
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
 
     parsed_by_subsections = {}
     headts = None
@@ -125,13 +123,13 @@ def process_text_on_page(index, pagetitle, text):
     saw_headt = False
 
     def subsection_header_and_num(k):
-        return subsections[k - 1].strip() if k > 0 else "FIRST SUBSECTION", k // 2
+        return subsecs.subsections[k - 1].strip() if k > 0 else "FIRST SUBSECTION", k // 2
 
     def format_subsection_header_and_num(k):
         return "%s (#%s)" % subsection_header_and_num(k)
 
-    for k in range(0, len(subsections), 2):
-        parsed = blib.parse_text(subsections[k])
+    for k in range(0, len(subsecs.subsections), 2):
+        parsed = blib.parse_text(subsecs.subsections[k])
         parsed_by_subsections[k] = parsed
         this_headts = []
         this_conjts = []
@@ -534,11 +532,11 @@ def process_text_on_page(index, pagetitle, text):
             headts = None
 
     secbody_parts = []
-    for k in range(len(subsections)):
+    for k in range(len(subsecs.subsections)):
         if k % 2 == 0:
             secbody_parts.append(str(parsed_by_subsections[k]))
         else:
-            secbody_parts.append(subsections[k])
+            secbody_parts.append(subsecs.subsections[k])
     secbody = "".join(secbody_parts)
     sections[j] = secbody.rstrip("\n") + sectail
     text = "".join(sections)

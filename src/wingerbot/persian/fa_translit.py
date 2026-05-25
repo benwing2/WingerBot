@@ -1129,13 +1129,13 @@ def pre_canonicalize_arabic(text, safe=False, msgfun=msg):
         return text
     if not safe:
         # word-initial al + consonant + shadda: remove shadda
-        text = rsub(text, "(^|\\s|\[\[|\|)(\u0627\u064e?\u0644[" + lconsonants + "])" + SH, r"\1\2")
+        text = rsub(text, r"(^|\\s|\[\[|\|)(\u0627\u064e?\u0644[" + lconsonants + "])" + SH, r"\1\2")
         # same for hamzat al-waṣl + l + consonant + shadda, anywhere
         text = rsub(text, "(\u0671\u064e?\u0644[" + lconsonants + "])" + SH, r"\1")
         # word-initial al + l + dagger-alif + h (allâh): convert second l
         # to double_l_subst; will match shadda in Latin allâh during
         # tr_matching(), will be converted back during post-canonicalization
-        text = rsub(text, "(^|\\s|\[\[|\|)(\u0627\u064e?\u0644)\u0644(\u0670?ه)", r"\1\2" + double_l_subst + r"\3")
+        text = rsub(text, r"(^|\\s|\[\[|\|)(\u0627\u064e?\u0644)\u0644(\u0670?ه)", r"\1\2" + double_l_subst + r"\3")
         # same for hamzat al-waṣl + l + l + dagger-alif + h occurring anywhere.
         text = rsub(text, "(\u0671\u064e?\u0644)\u0644(\u0670?ه)", r"\1" + double_l_subst + "\2")
         # Don't do this as we don't currently handle it in the main body of the code and it causes issues for lots of
@@ -1195,7 +1195,7 @@ def post_canonicalize_arabic(text, safe=False, msgfun=msg):
     # remove sukuun after kasra + yâ'
     text = rsub(text, "\u0650\u064a" + SK, "\u0650\u064a")
     # initial al + consonant + sukuun + sun letter: convert to shadda
-    text = rsub(text, "(^|\\s|\[\[|\|)(\u0627\u064e?\u0644)" + SK + "([" + sun_letters + "])", r"\1\2\3" + SH)
+    text = rsub(text, r"(^|\\s|\[\[|\|)(\u0627\u064e?\u0644)" + SK + "([" + sun_letters + "])", r"\1\2\3" + SH)
     # same for hamzat al-waṣl + l + consonant + sukuun + sun letters anywhere
     text = rsub(text, "(\u0671\u064e?\u0644)" + SK + "([" + sun_letters + "])", r"\1\2" + SH)
     # Undo shadda+short-vowel reversal in pre_pre_canonicalize_arabic.
@@ -1827,7 +1827,7 @@ def test_with_obj(obj, latin, arabic, should_outcome, should_latin=None):
         num_failed += 1
 
 
-def test(obj, latin, arabic, should_outcome, should_latin=None):
+def test(latin, arabic, should_outcome, should_latin=None):
     test_with_obj(None, latin, arabic, should_outcome, should_latin=should_latin)
 
 

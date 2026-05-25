@@ -34,7 +34,7 @@ def get_def_forms(lemma, prep, pagemsg):
         m = re.search("^(.*?)( .*)$", lemma)
         refl_clitic_verb, post = m.groups()
         left_brackets = re.sub(r"[^\[]", "", refl_clitic_verb)
-        right_brackets = re.sub("[^\]]", "", refl_clitic_verb)
+        right_brackets = re.sub(r"[^\]]", "", refl_clitic_verb)
         if len(left_brackets) == len(right_brackets):
             refl_clitic_verb = blib.remove_links(refl_clitic_verb)
         else:

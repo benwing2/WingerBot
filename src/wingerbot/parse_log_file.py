@@ -177,7 +177,7 @@ def yield_page_lines(fn):
 
 
 def parse_log_file(fn, start, end):
-    for current, index in blib.iter_pages(yield_page_lines(fn), start, end, key=lambda x: x[1]):
+    for index, current in blib.iter_items(yield_page_lines(fn), start, end, get_name=lambda x: x[1]):
         pageindex, pagename, lines = current
         for line in lines:
             m = re.match(r"^Page ([0-9/.-]+) (.*)$", line)

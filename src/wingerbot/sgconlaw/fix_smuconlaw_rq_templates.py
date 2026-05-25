@@ -29,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
 
     def replace_rq_rbrtn(m):
         pagegroup = m.group(1)
-        mm = re.search("^([IVXLCDM]+)\.([0-9]+)\.([0-9]+)\.([ivxlcdm]+)$", pagegroup)
+        mm = re.search(r"^([IVXLCDM]+)\.([0-9]+)\.([0-9]+)\.([ivxlcdm]+)$", pagegroup)
         if mm:
             replace = "{{%s|part=%s|section=%s|member=%s|subsection=%s|passage=%s}}\n" % (
                 newtname,
@@ -42,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
             pagemsg(("Replacing %s with %s" % (m.group(0), replace)).replace("\n", r"\n"))
             return replace
         else:
-            mm = re.search("^([IVXLCDM]+)\.([0-9]+)\.([0-9]+)$", pagegroup)
+            mm = re.search(r"^([IVXLCDM]+)\.([0-9]+)\.([0-9]+)$", pagegroup)
             if mm:
                 replace = "{{%s|part=%s|section=%s|member=%s|passage=%s}}\n" % (
                     newtname,
@@ -66,7 +66,7 @@ def process_text_on_page(index, pagetitle, text):
 
     def replace_rq_flr(m):
         pagegroup = m.group(1)
-        mm = re.search("^([IVXLCDM]+)\.([0-9]+)$", pagegroup)
+        mm = re.search(r"^([IVXLCDM]+)\.([0-9]+)$", pagegroup)
         if mm:
             replace = "{{%s|chapter=%s|book=%s|passage=%s}}\n" % (newtname, mm.group(2), mm.group(1), m.group(2))
             pagemsg(("Replacing %s with %s" % (m.group(0), replace)).replace("\n", r"\n"))

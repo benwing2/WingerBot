@@ -19,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
     retval = lalib.find_latin_section(text, pagemsg)
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
         tn = tname(t)

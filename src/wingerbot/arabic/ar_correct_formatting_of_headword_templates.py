@@ -31,7 +31,7 @@ def search_category_for_missing_form(form, pos, templates, save, start, end):
             if not rawinfl:
                 continue
             infl = re.match(
-                "'*\{\{(?:lang|l)\|ar\|(.*?)\}\}'* *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *\{\{g\|(.*?)\}\}",
+                r"'*\{\{(?:lang|l)\|ar\|(.*?)\}\}'* *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *\{\{g\|(.*?)\}\}",
                 rawinfl,
             )
             if not infl:

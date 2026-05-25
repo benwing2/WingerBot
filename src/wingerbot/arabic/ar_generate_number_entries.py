@@ -705,7 +705,7 @@ def iter_pages_units(createfn, include_ten=False, skip_one=False):
 
 def do_pages(createfn, iterfn=iter_pages):
     pages = iterfn(createfn)
-    for current, index in blib.iter_pages(pages, start, end, key=lambda x: x[0]):
+    for index, current in blib.iter_items(pages, start, end, get_name=lambda x: x[0]):
         pagename, text, changelog = current
         pagetitle = remove_diacritics(pagename)
         if args.offline:

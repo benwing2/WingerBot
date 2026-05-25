@@ -26,7 +26,7 @@ templates_to_rename = {
     "der5-u": "col5-u",
 }
 
-templates_to_clean = templates_to_rename.keys() + [
+templates_to_clean = list(templates_to_rename.keys()) + [
     "der2",
     "der3",
     "der4",

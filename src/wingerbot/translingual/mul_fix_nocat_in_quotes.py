@@ -45,19 +45,14 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-
-    for j in range(2, len(sections), 2):
-        m = re.search("^==(.*)==\n$", sections[j - 1])
-        assert m
-        langname = m.group(1)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
+    for j, langname in secs.section_langs:
         if langname != "Translingual":
             continue
-        subsections = re.split("(^==.*==\n)", sections[j], 0, re.M)
-        for k in range(2, len(subsections), 2):
-            m = re.search("^===*(.*?)=*==\n$", subsections[k - 1])
-            assert m
-            subsectitle = m.group(1)
+        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
+        subsections = subsecs.subsections
+        for k, subsectitle in subsecs.subsection_headers:
             parsed = blib.parse_text(subsections[k])
             hack_templates(parsed, subsectitle)
             subsections[k] = str(parsed)

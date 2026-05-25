@@ -240,7 +240,7 @@ def infer_decl(t, pagemsg):
     def get_stressed_form(form):
         if "," not in form:
             return form
-        forms = re.split("\s*,\s*", form)
+        forms = re.split(r"\s*,\s*", form)
         if len(forms) > 2:
             pagemsg("WARNING: More than two forms in %s" % form)
             return None

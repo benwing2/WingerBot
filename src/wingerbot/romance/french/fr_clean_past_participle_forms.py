@@ -28,7 +28,7 @@ def process_text_on_page(index, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")

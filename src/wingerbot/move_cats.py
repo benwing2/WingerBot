@@ -22,10 +22,10 @@ def process_text_on_page(index, pagetitle, text):
     origtext = text
     notes = []
 
-    sections, sections_by_lang, section_langs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
 
-    for j, seclangname in section_langs:
-
+    for j, seclangname in secs.section_langs:
         def matches(cat, cat_type):
             cat = cat.replace("_", " ")
             for fromre, from_type, tore, to_type in moves_to_do:

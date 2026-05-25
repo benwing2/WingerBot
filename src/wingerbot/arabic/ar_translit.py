@@ -830,7 +830,7 @@ def pre_canonicalize_latin(text, arabic=None, msgfun=msg):
                 if re.search("!$", aword) and not re.search("!$", lword):
                     lword += "!"
                 # Same for a final question mark
-                if re.search("؟$", aword) and not re.search("\?$", lword):
+                if re.search("؟$", aword) and not re.search(r"\?$", lword):
                     lword += "?"
                 latinwords[i] = lword
             text = " ".join(latinwords)
@@ -959,6 +959,7 @@ def pre_pre_canonicalize_arabic(text, msgfun=msg):
         text = newtext
     return text
 
+word_initial_prefix = r"(^|\s|\[\[|\|)"
 
 # Pre-canonicalize the Arabic. If SAFE, only do "safe" operations appropriate
 # to canonicalizing Arabic on its own, not before a tr_matching() operation.
@@ -987,23 +988,23 @@ def pre_canonicalize_arabic(text, safe=False, msgfun=msg):
         text = rsub(text, "\u0627\u064b", silent_alif_subst + "\u064b")
         text = rsub(text, "\u0649\u064b", silent_alif_maqsuura_subst + "\u064b")
         # word-initial al + consonant + shadda: remove shadda
-        text = rsub(text, "(^|\\s|\[\[|\|)(\u0627\u064e?\u0644[" + lconsonants + "])\u0651", "\\1\\2")
+        text = rsub(text, word_initial_prefix + "(\u0627\u064e?\u0644[" + lconsonants + "])\u0651", r"\1\2")
         # same for hamzat al-waṣl + l + consonant + shadda, anywhere
-        text = rsub(text, "(\u0671\u064e?\u0644[" + lconsonants + "])\u0651", "\\1")
+        text = rsub(text, "(\u0671\u064e?\u0644[" + lconsonants + "])\u0651", r"\1")
         # word-initial al + l + dagger-alif + h (allāh): convert second l
         # to double_l_subst; will match shadda in Latin allāh during
         # tr_matching(), will be converted back during post-canonicalization
-        text = rsub(text, "(^|\\s|\[\[|\|)(\u0627\u064e?\u0644)\u0644(\u0670?ه)", "\\1\\2" + double_l_subst + "\\3")
+        text = rsub(text, word_initial_prefix + "(\u0627\u064e?\u0644)\u0644(\u0670?ه)", r"\1\2" + double_l_subst + r"\3")
         # same for hamzat al-waṣl + l + l + dagger-alif + h occurring anywhere.
-        text = rsub(text, "(\u0671\u064e?\u0644)\u0644(\u0670?ه)", "\\1" + double_l_subst + "\\2")
+        text = rsub(text, "(\u0671\u064e?\u0644)\u0644(\u0670?ه)", r"\1" + double_l_subst + r"\2")
         # word-initial al + sun letter: convert l to assimilating_l_subst; will
         # convert back during post-canonicalization; during tr_matching(),
         # assimilating_l_subst will match the appropriate character, or "l"
         text = rsub(
-            text, "(^|\\s|\[\[|\|)(\u0627\u064e?)\u0644([" + sun_letters + "])", "\\1\\2" + assimilating_l_subst + "\\3"
+            text, word_initial_prefix + "(\u0627\u064e?)\u0644([" + sun_letters + "])", r"\1\2" + assimilating_l_subst + r"\3"
         )
         # same for hamzat al-waṣl + l + sun letter occurring anywhere.
-        text = rsub(text, "(\u0671\u064e?)\u0644([" + sun_letters + "])", "\\1" + assimilating_l_subst + "\\2")
+        text = rsub(text, "(\u0671\u064e?)\u0644([" + sun_letters + "])", r"\1" + assimilating_l_subst + r"\2")
     return text
 
 
@@ -1037,7 +1038,7 @@ def post_canonicalize_arabic(text, safe=False):
     # remove sukūn after kasra + yā'
     text = rsub(text, "\u0650\u064a\u0652", "\u0650\u064a")
     # initial al + consonant + sukūn + sun letter: convert to shadda
-    text = rsub(text, "(^|\\s|\[\[|\|)(\u0627\u064e?\u0644)\u0652([" + sun_letters + "])", "\\1\\2\\3\u0651")
+    text = rsub(text, word_initial_prefix + "(\u0627\u064e?\u0644)\u0652([" + sun_letters + "])", "\\1\\2\\3\u0651")
     # same for hamzat al-waṣl + l + consonant + sukūn + sun letters anywhere
     text = rsub(text, "(\u0671\u064e?\u0644)\u0652([" + sun_letters + "])", "\\1\\2\u0651")
     # Undo shadda+short-vowel reversal in pre_pre_canonicalize_arabic.

@@ -22,15 +22,13 @@ def process_text_on_page(pageindex, pagetitle, text):
     )
     if retval is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
 
-    for k in range(2, len(subsections), 2):
-        if not subsections[k].startswith("{{%s-verb|" % args.langcode):
+    for k, subsectitle in subsecs.subsection_headers:
+        if not subsecs.subsections[k].startswith("{{%s-verb|" % args.langcode):
             continue
-        m = re.search("^===*([^=]*)=*==\n$", subsections[k - 1])
-        subsectitle = m.group(1)
         if subsectitle in ["Etymology", "Pronunciation"]:
             continue
 
@@ -128,9 +126,9 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             return "# " + defn + "\n"
 
-        subsections[k] = re.sub("^# (.*)\n", add_to_to_defn, subsections[k], 0, re.M)
+        subsecs.subsections[k] = re.sub("^# (.*)\n", add_to_to_defn, subsecs.subsections[k], 0, re.M)
 
-    secbody = "".join(subsections)
+    secbody = "".join(subsecs.subsections)
     # Strip extra newlines added to secbody
     sections[j] = secbody.rstrip("\n") + sectail
     return "".join(sections), notes

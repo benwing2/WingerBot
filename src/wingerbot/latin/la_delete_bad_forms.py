@@ -30,7 +30,7 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
     if retval is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
     saw_lemma_in_etym = False
@@ -123,7 +123,7 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
         return
     if not has_non_lang:
         # Can delete the whole page, but check for non-blank section 0
-        cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
+        cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
         if cleaned_sec0.strip():
             pagemsg(
                 "WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip()
@@ -208,7 +208,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
     if retval is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     # FIXME!
 
@@ -412,7 +412,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
             return
         if not has_non_lang:
             # Can delete the whole page, but check for non-blank section 0
-            cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
+            cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
             if cleaned_sec0.strip():
                 pagemsg(
                     "WARNING: Whole page deletable except that there's text above all sections: <%s>"

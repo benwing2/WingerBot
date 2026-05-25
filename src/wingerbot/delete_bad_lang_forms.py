@@ -42,14 +42,13 @@ def delete_form_1(index, page, lemma, formind, formval):
     def errandpagemsg(txt):
         errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
 
-    text = str(page.text)
-    origtext = text
+    text = blib.safe_page_text(page, errandpagemsg)
 
-    retval = blib.find_modifiable_lang_section(text, lang_to_langname[args.lang], pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, lang_to_langname[args.lang], pagemsg)
+    if modsec is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
 
     # FIXME!
 
@@ -62,8 +61,9 @@ def delete_form_1(index, page, lemma, formind, formval):
     subsections_to_delete = []
     subsections_to_remove_inflections_from = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         saw_head = False
         saw_infl = False
@@ -119,25 +119,25 @@ def delete_form_1(index, page, lemma, formind, formval):
                     break
             else:
                 # No break
-                if re.search("===(Noun|Verb|Adjective)===", subsections[k - 1]):
-                    indent_header = subsections[k - 1].strip()
-                    indent = len(re.sub("^(=+).*", r"\1", indent_header))
+                if re.search("^(Noun|Verb|Adjective)$", header):
+                    indent = subsecs.subsection_levels[k]
                     has_non_deletable_subsubsection = False
                     extra_subsubsections_to_delete = []
-                    l = k
-                    while l + 1 < len(subsections):
-                        nextindent = len(re.sub("^(=+).*", r"\1", subsections[l + 1].strip()))
+                    l = k + 2
+                    while l < len(subsections):
+                        nextindent = subsecs.subsection_levels[l]
                         if nextindent <= indent:
                             break
                         # Italian verb forms often have Synonyms sections for alternative forms, and random Related terms sections
-                        if re.search("==(Synonyms|Related terms)==", subsections[l + 1]):
-                            extra_subsubsections_to_delete.append(l + 2)
+                        nextheader = subsecs.subsection_header_dict[l]
+                        if re.search("^(Synonyms|Related terms)$", nextheader):
+                            extra_subsubsections_to_delete.append(l)
                             l += 2
                         else:
                             has_non_deletable_subsubsection = True
                             pagemsg(
                                 "WARNING: Subsection #%s (header %s, indent %s) has subsubsection with header %s (indent %s), not deleting"
-                                % (l // 2, indent_header, indent, subsections[l + 1].strip(), nextindent)
+                                % (l // 2 - 1, header, indent, nextheader, nextindent)
                             )
                             break
                     if not has_non_deletable_subsubsection:
@@ -221,7 +221,7 @@ def delete_form_1(index, page, lemma, formind, formval):
             return
         if not has_non_lang:
             # Can delete the whole page, but check for non-blank section 0
-            cleaned_sec0 = re.sub("^\{\{also\|.*?\}\}\n", "", sections[0])
+            cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
             if cleaned_sec0.strip():
                 pagemsg(
                     "WARNING: Whole page deletable except that there's text above all sections: <%s>"

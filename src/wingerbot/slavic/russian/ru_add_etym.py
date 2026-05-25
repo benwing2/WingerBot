@@ -179,7 +179,7 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
     # Load page
     page = pywikibot.Page(site, pagetitle)
 
-    if not blib.try_repeatedly(lambda: page.exists(), pagemsg, "check page existence"):
+    if not blib.safe_page_exists(page, errandpagemsg):
         pagemsg("Page doesn't exist, can't add etymology")
         return
 

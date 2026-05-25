@@ -11,17 +11,11 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    # pagemsg("Processing")
-
-    if blib.page_should_be_ignored(pagetitle):
-        # pagemsg("WARNING: Page should be ignored")
-        return
-
-    sections = re.split("(^==[^=\n]+==\n)", text, 0, re.M)
+    secs = blib.split_text_into_sections(text, pagemsg)
+    sections = secs.sections
     langs = []
-    for j in range(1, len(sections), 2):
-        m = re.search("^==(.*)==$", sections[j])
-        langs.append(m.group(1))
+    for j, langname in secs.section_langs:
+        langs.append(langname)
     pagemsg("Languages = %s" % ",".join(langs))
 
 

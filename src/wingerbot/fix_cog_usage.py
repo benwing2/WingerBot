@@ -13,8 +13,8 @@ lang_utils.load_all_lang_data("langdata.json")
 etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
 language_name_to_code = lang_utils.get_language_name_to_code_map()
 
-lang_letter = "[\w,-]"
-lang_letter_or_space = "[\w, -]"
+lang_letter = r"[\w,-]"
+lang_letter_or_space = r"[\w, -]"
 
 
 def process_text_on_page(index, pagetitle, pagetext):
@@ -63,7 +63,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         #  return newtext
 
         raw_cognates = re.split(
-            "([A-Z]%s+(?: %s+)*? +\{\{(?:[ml]|term)\|[A-Za-z0-9.-]+\|(?:[^{}]|\{\{[^{}]*?\}\})*\}\})"
+            r"([A-Z]%s+(?: %s+)*? +\{\{(?:[ml]|term)\|[A-Za-z0-9.-]+\|(?:[^{}]|\{\{[^{}]*?\}\})*\}\})"
             % (lang_letter, lang_letter),
             cogs,
             0,
@@ -77,7 +77,7 @@ def process_text_on_page(index, pagetitle, pagetext):
 
                 def process():
                     m = re.search(
-                        "^([A-Z]%s+(?: %s+)*?) +\{\{(?:[ml]|term)\|([A-Za-z0-9.-]+)(\|(?:[^{}]|\{\{[^{}]*?\}\})*\}\})$"
+                        r"^([A-Z]%s+(?: %s+)*?) +\{\{(?:[ml]|term)\|([A-Za-z0-9.-]+)(\|(?:[^{}]|\{\{[^{}]*?\}\})*\}\})$"
                         % (lang_letter, lang_letter),
                         raw_cognate_part,
                         re.U,

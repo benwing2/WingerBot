@@ -71,7 +71,8 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    subsections = re.split("(^==.*==\n)", text, 0, re.M)
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
     newtext = text
 
     def move_param(t, fr, to, frob_from=None):
@@ -208,17 +209,17 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("reference-book -> cite-book%s" % (fixed_params and " and fix book cite params" or ""))
                 pagemsg("Replacing %s with %s in %s" % (origt, str(t), in_what))
 
-    for j in range(0, len(subsections), 2):
-        parsed = blib.parse_text(subsections[j])
-        if j > 0 and re.search(r"^===*References===*\n", subsections[j - 1]):
+    for k, header in [(0, "")] + subsecs.subsection_headers:
+        parsed = blib.parse_text(subsections[k])
+        if k > 0 and header == "References":
             replace_in_reference(parsed, "==References== section")
-            subsections[j] = str(parsed)
+            subsections[k] = str(parsed)
         else:
             for t in parsed.filter_tags():
                 if str(t.tag) == "ref":
                     tagparsed = mw.wikicode.Wikicode([t])
                     replace_in_reference(tagparsed, "<ref>")
-                    subsections[j] = str(parsed)
+                    subsections[k] = str(parsed)
         need_to_replace_double_quote_prefixes = False
         for t in parsed.filter_templates():
             tname = str(t.name)
@@ -269,13 +270,13 @@ def process_text_on_page(index, pagetitle, text):
                     )
                 )
                 pagemsg("Replacing %s with %s" % (origt, str(t)))
-        subsections[j] = str(parsed)
+        subsections[k] = str(parsed)
         if need_to_replace_double_quote_prefixes:
-            newval = re.sub("^#\* #\* ", "#* ", subsections[j], 0, re.M)
-            if newval != subsections[j]:
+            newval = re.sub(r"^#\* #\* ", "#* ", subsections[k], 0, re.M)
+            if newval != subsections[k]:
                 notes.append("remove double #* prefix")
                 pagemsg("Removed double #* prefix")
-            subsections[j] = newval
+            subsections[k] = newval
 
     return "".join(subsections), notes
 

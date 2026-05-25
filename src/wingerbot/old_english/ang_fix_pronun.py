@@ -73,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
     # if retval is None:
     #  pagemsg("WARNING: Couldn't find Old English section")
     #  return
-    # sections, j, secbody, sectail, has_non_lang = retval
+    # sections, j, secbody, sectail, has_non_lang = retval.props()
     secbody = text
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
@@ -157,7 +157,7 @@ def process_page_for_modification(index, pagetitle, text, new_pronuns):
     if retval is None:
         pagemsg("WARNING: Couldn't find Old English section")
         return
-    sections, j, secbody, sectail, has_non_lang = retval
+    sections, j, secbody, sectail, has_non_lang = retval.props()
     heads = None
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)

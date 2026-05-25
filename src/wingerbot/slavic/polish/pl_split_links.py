@@ -19,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
         hacked_inside = re.sub(r"\]\] *, *\[\[", "]]%s[[" % TEMPSEP, inside)
         parts = hacked_inside.split(TEMPSEP)
         for i in range(len(parts)):
-            mm = re.search("^\[\[([^\[\]]*)\]\]$", parts[i])
+            mm = re.search(r"^\[\[([^\[\]]*)\]\]$", parts[i])
             if not mm:
                 pagemsg("WARNING: Saw unparsable part %s, not changing: %s" % (parts[i], m.group(0)))
                 return m.group(0)

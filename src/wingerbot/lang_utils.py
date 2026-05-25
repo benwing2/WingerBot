@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections.abc import Callable
 import re, json, sys
 from collections import defaultdict
 import unicodedata
@@ -119,7 +120,7 @@ lemma_poses = [
 ]
 
 re_escaped_lemma_poses = [re.escape(k) for k in lemma_poses]
-pos_regex = "==(%s)==" % "|".join(re_escaped_lemma_poses)
+pos_regex = "(%s)" % "|".join(re_escaped_lemma_poses)
 
 
 langcode_langname_to_correct_langcode = {
@@ -900,112 +901,112 @@ sinhalese_charset = "\u0d82-\u0df4"
 # from [[Module:links]], or "latin" if the language uses the Latin script and
 # hence has no translit, or "notranslit" if the language doesn't do
 # auto-translit)
-language_codes_to_properties = {
-    "af": ["Afrikaans", lambda x: x, latin_charset, "latin"],
-    "am": ["Amharic", lambda x: x, "ሀ-᎙ⶀ-ⷞꬁ-ꬮ", False],
-    "ar": ["Arabic", ar_remove_accents, arabic_charset, False],
-    "as": ["Assamese", lambda x: x, assamese_charset, False],
-    "az": ["Azerbaijani", lambda x: x, latin_charset, "latin"],
-    "ba": ["Bashkir", lambda x: x, cyrillic_charset, True],
-    "bcl": ["Bikol Central", phi_remove_accents, latin_charset, "latin"],
-    "be": ["Belarusian", bg_remove_accents, cyrillic_charset, False],
-    "bg": ["Bulgarian", bg_remove_accents, cyrillic_charset, False],
-    "bn": ["Bengali", lambda x: x, "ঀ-ঃঅ-ঌএঐও-নপ-রললশ-হ়-ৄেৈো-ৎৗড়ঢ়য়়ৠ-ৣ০-৯", False],
-    "bo": ["Tibetan", lambda x: x, "ༀ-࿚", True],
-    "br": ["Breton", lambda x: x, latin_charset, "latin"],
-    "ca": ["Catalan", lambda x: x, latin_charset, "latin"],
-    "ce": ["Chechen", lambda x: x.replace(MACRON, ""), cyrillic_charset, True],
-    "ceb": ["Cebuano", phi_remove_accents, latin_charset, "latin"],
-    "cs": ["Czech", lambda x: x, latin_charset, "latin"],
-    #'cu': ["Old Church Slavonic", lambda x:x.replace("\u0484", ""), cyrillic_charset + glagolitic_charset, False],
-    "cv": ["Chuvash", lambda x: x, cyrillic_charset, True],
-    "cy": ["Welsh", lambda x: x, latin_charset, "latin"],
-    "da": ["Danish", lambda x: x, latin_charset, "latin"],
-    "de": ["German", lambda x: x, latin_charset, "latin"],
-    "dlm": ["Dalmatian", lambda x: x, latin_charset, "latin"],
-    "el": ["Greek", lambda x: x, "Ͱ-Ͽ", True],
-    "en": ["English", lambda x: x, latin_charset, "latin"],
-    "eo": ["Esperanto", lambda x: x, latin_charset, "latin"],
-    "es": ["Spanish", lambda x: x, latin_charset, "latin"],
-    "et": ["Estonian", lambda x: x, latin_charset, "latin"],
-    "eu": ["Basque", lambda x: x, latin_charset, "latin"],
-    "fa": ["Persian", fa_remove_accents, arabic_charset, "notranslit"],
-    "fi": ["Finnish", lambda x: x.replace("ˣ", ""), latin_charset, "latin"],
-    "fo": ["Faroese", lambda x: x, latin_charset, "latin"],
-    "fr": ["French", lambda x: x, latin_charset, "latin"],
-    "fur": ["Friulian", lambda x: x, latin_charset, "latin"],
-    "fy": ["West Frisian", lambda x: x, latin_charset, "latin"],
-    "ga": ["Irish", lambda x: x, latin_charset, "latin"],
-    "gd": ["Scottish Gaelic", lambda x: x, latin_charset, "latin"],
-    "gl": ["Galician", lambda x: x, latin_charset, "latin"],
-    "grc": ["Ancient Greek", grc_remove_accents, "ἀ-῾Ͱ-Ͽ", True],
-    "gu": ["Gujarati", lambda x: x, "\u0a81-\u0af9", False],
-    "gv": ["Manx", lambda x: x, latin_charset, "latin"],
-    "he": ["Hebrew", he_remove_accents, hebrew_charset, "notranslit"],
-    "hi": ["Hindi", lambda x: x, "\u0900-\u097f\ua8e0-\ua8fd", False],
-    "hil": ["Hiligaynon", phi_remove_accents, latin_charset, "latin"],
-    "hu": ["Hungarian", lambda x: x, latin_charset, "latin"],
-    "hy": ["Armenian", hy_remove_accents, "Ա-֏ﬓ-ﬗ", True],
-    "ia": ["Interlingua", lambda x: x, latin_charset, "latin"],
-    "id": ["Indonesian", lambda x: x, latin_charset, "latin"],
-    "ie": ["Interlingue", ie_remove_accents, latin_charset, "latin"],
-    "ilo": ["Ilocano", phi_diaer_remove_accents, latin_charset, "latin"],
-    "io": ["Ido", lambda x: x, latin_charset, "latin"],
-    "is": ["Icelandic", lambda x: x, latin_charset, "latin"],
-    "it": ["Italian", lambda x: x, latin_charset, "latin"],
-    "ka": ["Georgian", lambda x: x.replace(CFLEX, ""), "ა-ჿᲐ-Ჿ", True],
-    "km": ["Khmer", lambda x: x, "ក-៹᧠-᧿", False],
-    "kn": ["Kannada", lambda x: x, "ಀ-ೲ", False],
-    "la": ["Latin", la_remove_accents, latin_charset, "latin"],
-    "lb": ["Luxembourgish", lambda x: x, latin_charset, "latin"],
-    "lmo": ["Lombard", lambda x: x, latin_charset, "latin"],
-    "lo": ["Lao", lambda x: x, "ກ-ໟ", False],
-    "lt": ["Lithuanian", lt_remove_accents, latin_charset, "latin"],
-    # 'lv': ["Latvian", ..., latin_charset, "latin"],
-    "mg": ["Malagasy", lambda x: x, latin_charset, "latin"],
-    "mk": ["Macedonian", mk_remove_accents, cyrillic_charset, False],
-    "ml": ["Malayalam", lambda x: x, malayalam_charset, True],
-    "mr": ["Marathi", lambda x: x, devanagari_charset, False],
-    "ms": ["Malay", lambda x: x, latin_charset, "latin"],
-    "mt": ["Maltese", lambda x: x, latin_charset, "latin"],
-    "my": ["Burmese", lambda x: x, "က-႟ꩠ-ꩿꧠ-ꧾ", True],
-    "nb": ["Norwegian Bokmål", lambda x: x, latin_charset, "latin"],
-    "ne": ["Nepalese", lambda x: x, devanagari_charset + newa_charset, False],
-    "nl": ["Dutch", lambda x: x, latin_charset, "latin"],
-    "nn": ["Norwegian Nynorsk", lambda x: x, latin_charset, "latin"],
-    "no": ["Norwegian", lambda x: x, latin_charset, "latin"],
-    "non": ["Old Norse", lambda x: x, latin_charset, "latin"],
-    "oc": ["Occitan", lambda x: x, latin_charset, "latin"],
-    "or": ["Oriya", lambda x: x, "\u0b01-\u0b77", False],
-    "pa": ["Punjabi", lambda x: x, "\u0a01-\u0a75", "notranslit"],
-    "pag": ["Pangasinan", phi_diaer_remove_accents, latin_charset, "latin"],
-    "pam": ["Kapampangan", phi_remove_accents, latin_charset, "latin"],
-    "pl": ["Polish", lambda x: x, latin_charset, "latin"],
-    "ps": ["Pashto", lambda x: x, arabic_charset, "notranslit"],
-    "pt": ["Portuguese", lambda x: x, latin_charset, "latin"],
-    "qu": ["Quechua", lambda x: x, latin_charset, "latin"],
-    "rm": ["Romansch", lambda x: x, latin_charset, "latin"],
-    "ro": ["Romanian", lambda x: x, latin_charset, "latin"],
-    "ru": ["Russian", rulib.remove_accents, cyrillic_charset, False],
-    "rup": ["Aromanian", lambda x: x, latin_charset, "latin"],
-    "sh": ["Serbo-Croatian", sh_remove_accents, latin_charset + cyrillic_charset, "latin"],
-    "si": ["Sinhalese", lambda x: x, sinhalese_charset, True],
-    "sk": ["Slovak", lambda x: x, latin_charset, "latin"],
-    "sl": ["Slovene", sl_remove_accents, latin_charset, "latin"],
-    "sq": ["Albanian", lambda x: x, latin_charset, "latin"],
-    "sv": ["Swedish", lambda x: x, latin_charset, "latin"],
-    "sw": ["Swahili", lambda x: x, latin_charset, "latin"],
-    "ta": ["Tamil", lambda x: x, "\u0b82-\u0bfa", True],
-    "te": ["Telugu", lambda x: x, "\u0c00-\u0c7f", True],
-    "tg": ["Tajik", lambda x: x.replace(ACUTE, ""), cyrillic_charset, True],
-    "th": ["Thai", lambda x: x, "ก-๛", False],
-    "tl": ["Tagalog", phi_remove_accents, latin_charset, "latin"],
-    "tr": ["Turkish", lambda x: x, latin_charset, "latin"],
-    "uk": ["Ukrainian", bg_remove_accents, cyrillic_charset, False],
-    "ur": ["Urdu", ur_remove_accents, arabic_charset, "notranslit"],
-    "vi": ["Vietnamese", lambda x: x, latin_charset, "latin"],
-    "war": ["Waray-Waray", phi_remove_accents, latin_charset, "latin"],
-    "yi": ["Yiddish", lambda x: x, hebrew_charset, False],
+language_codes_to_properties: dict[str, tuple[str, Callable[[str], str], str, str | bool]] = {
+    "af": ("Afrikaans", lambda x: x, latin_charset, "latin"),
+    "am": ("Amharic", lambda x: x, "ሀ-᎙ⶀ-ⷞꬁ-ꬮ", False),
+    "ar": ("Arabic", ar_remove_accents, arabic_charset, False),
+    "as": ("Assamese", lambda x: x, assamese_charset, False),
+    "az": ("Azerbaijani", lambda x: x, latin_charset, "latin"),
+    "ba": ("Bashkir", lambda x: x, cyrillic_charset, True),
+    "bcl": ("Bikol Central", phi_remove_accents, latin_charset, "latin"),
+    "be": ("Belarusian", bg_remove_accents, cyrillic_charset, False),
+    "bg": ("Bulgarian", bg_remove_accents, cyrillic_charset, False),
+    "bn": ("Bengali", lambda x: x, "ঀ-ঃঅ-ঌএঐও-নপ-রললশ-হ়-ৄেৈো-ৎৗড়ঢ়য়়ৠ-ৣ০-৯", False),
+    "bo": ("Tibetan", lambda x: x, "ༀ-࿚", True),
+    "br": ("Breton", lambda x: x, latin_charset, "latin"),
+    "ca": ("Catalan", lambda x: x, latin_charset, "latin"),
+    "ce": ("Chechen", lambda x: x.replace(MACRON, ""), cyrillic_charset, True),
+    "ceb": ("Cebuano", phi_remove_accents, latin_charset, "latin"),
+    "cs": ("Czech", lambda x: x, latin_charset, "latin"),
+    #'cu': ("Old Church Slavonic", lambda x:x.replace("\u0484", ""), cyrillic_charset + glagolitic_charset, False),
+    "cv": ("Chuvash", lambda x: x, cyrillic_charset, True),
+    "cy": ("Welsh", lambda x: x, latin_charset, "latin"),
+    "da": ("Danish", lambda x: x, latin_charset, "latin"),
+    "de": ("German", lambda x: x, latin_charset, "latin"),
+    "dlm": ("Dalmatian", lambda x: x, latin_charset, "latin"),
+    "el": ("Greek", lambda x: x, "Ͱ-Ͽ", True),
+    "en": ("English", lambda x: x, latin_charset, "latin"),
+    "eo": ("Esperanto", lambda x: x, latin_charset, "latin"),
+    "es": ("Spanish", lambda x: x, latin_charset, "latin"),
+    "et": ("Estonian", lambda x: x, latin_charset, "latin"),
+    "eu": ("Basque", lambda x: x, latin_charset, "latin"),
+    "fa": ("Persian", fa_remove_accents, arabic_charset, "notranslit"),
+    "fi": ("Finnish", lambda x: x.replace("ˣ", ""), latin_charset, "latin"),
+    "fo": ("Faroese", lambda x: x, latin_charset, "latin"),
+    "fr": ("French", lambda x: x, latin_charset, "latin"),
+    "fur": ("Friulian", lambda x: x, latin_charset, "latin"),
+    "fy": ("West Frisian", lambda x: x, latin_charset, "latin"),
+    "ga": ("Irish", lambda x: x, latin_charset, "latin"),
+    "gd": ("Scottish Gaelic", lambda x: x, latin_charset, "latin"),
+    "gl": ("Galician", lambda x: x, latin_charset, "latin"),
+    "grc": ("Ancient Greek", grc_remove_accents, "ἀ-῾Ͱ-Ͽ", True),
+    "gu": ("Gujarati", lambda x: x, "\u0a81-\u0af9", False),
+    "gv": ("Manx", lambda x: x, latin_charset, "latin"),
+    "he": ("Hebrew", he_remove_accents, hebrew_charset, "notranslit"),
+    "hi": ("Hindi", lambda x: x, "\u0900-\u097f\ua8e0-\ua8fd", False),
+    "hil": ("Hiligaynon", phi_remove_accents, latin_charset, "latin"),
+    "hu": ("Hungarian", lambda x: x, latin_charset, "latin"),
+    "hy": ("Armenian", hy_remove_accents, "Ա-֏ﬓ-ﬗ", True),
+    "ia": ("Interlingua", lambda x: x, latin_charset, "latin"),
+    "id": ("Indonesian", lambda x: x, latin_charset, "latin"),
+    "ie": ("Interlingue", ie_remove_accents, latin_charset, "latin"),
+    "ilo": ("Ilocano", phi_diaer_remove_accents, latin_charset, "latin"),
+    "io": ("Ido", lambda x: x, latin_charset, "latin"),
+    "is": ("Icelandic", lambda x: x, latin_charset, "latin"),
+    "it": ("Italian", lambda x: x, latin_charset, "latin"),
+    "ka": ("Georgian", lambda x: x.replace(CFLEX, ""), "ა-ჿᲐ-Ჿ", True),
+    "km": ("Khmer", lambda x: x, "ក-៹᧠-᧿", False),
+    "kn": ("Kannada", lambda x: x, "ಀ-ೲ", False),
+    "la": ("Latin", la_remove_accents, latin_charset, "latin"),
+    "lb": ("Luxembourgish", lambda x: x, latin_charset, "latin"),
+    "lmo": ("Lombard", lambda x: x, latin_charset, "latin"),
+    "lo": ("Lao", lambda x: x, "ກ-ໟ", False),
+    "lt": ("Lithuanian", lt_remove_accents, latin_charset, "latin"),
+    # 'lv': ("Latvian", ..., latin_charset, "latin"),
+    "mg": ("Malagasy", lambda x: x, latin_charset, "latin"),
+    "mk": ("Macedonian", mk_remove_accents, cyrillic_charset, False),
+    "ml": ("Malayalam", lambda x: x, malayalam_charset, True),
+    "mr": ("Marathi", lambda x: x, devanagari_charset, False),
+    "ms": ("Malay", lambda x: x, latin_charset, "latin"),
+    "mt": ("Maltese", lambda x: x, latin_charset, "latin"),
+    "my": ("Burmese", lambda x: x, "က-႟ꩠ-ꩿꧠ-ꧾ", True),
+    "nb": ("Norwegian Bokmål", lambda x: x, latin_charset, "latin"),
+    "ne": ("Nepalese", lambda x: x, devanagari_charset + newa_charset, False),
+    "nl": ("Dutch", lambda x: x, latin_charset, "latin"),
+    "nn": ("Norwegian Nynorsk", lambda x: x, latin_charset, "latin"),
+    "no": ("Norwegian", lambda x: x, latin_charset, "latin"),
+    "non": ("Old Norse", lambda x: x, latin_charset, "latin"),
+    "oc": ("Occitan", lambda x: x, latin_charset, "latin"),
+    "or": ("Oriya", lambda x: x, "\u0b01-\u0b77", False),
+    "pa": ("Punjabi", lambda x: x, "\u0a01-\u0a75", "notranslit"),
+    "pag": ("Pangasinan", phi_diaer_remove_accents, latin_charset, "latin"),
+    "pam": ("Kapampangan", phi_remove_accents, latin_charset, "latin"),
+    "pl": ("Polish", lambda x: x, latin_charset, "latin"),
+    "ps": ("Pashto", lambda x: x, arabic_charset, "notranslit"),
+    "pt": ("Portuguese", lambda x: x, latin_charset, "latin"),
+    "qu": ("Quechua", lambda x: x, latin_charset, "latin"),
+    "rm": ("Romansch", lambda x: x, latin_charset, "latin"),
+    "ro": ("Romanian", lambda x: x, latin_charset, "latin"),
+    "ru": ("Russian", rulib.remove_accents, cyrillic_charset, False),
+    "rup": ("Aromanian", lambda x: x, latin_charset, "latin"),
+    "sh": ("Serbo-Croatian", sh_remove_accents, latin_charset + cyrillic_charset, "latin"),
+    "si": ("Sinhalese", lambda x: x, sinhalese_charset, True),
+    "sk": ("Slovak", lambda x: x, latin_charset, "latin"),
+    "sl": ("Slovene", sl_remove_accents, latin_charset, "latin"),
+    "sq": ("Albanian", lambda x: x, latin_charset, "latin"),
+    "sv": ("Swedish", lambda x: x, latin_charset, "latin"),
+    "sw": ("Swahili", lambda x: x, latin_charset, "latin"),
+    "ta": ("Tamil", lambda x: x, "\u0b82-\u0bfa", True),
+    "te": ("Telugu", lambda x: x, "\u0c00-\u0c7f", True),
+    "tg": ("Tajik", lambda x: x.replace(ACUTE, ""), cyrillic_charset, True),
+    "th": ("Thai", lambda x: x, "ก-๛", False),
+    "tl": ("Tagalog", phi_remove_accents, latin_charset, "latin"),
+    "tr": ("Turkish", lambda x: x, latin_charset, "latin"),
+    "uk": ("Ukrainian", bg_remove_accents, cyrillic_charset, False),
+    "ur": ("Urdu", ur_remove_accents, arabic_charset, "notranslit"),
+    "vi": ("Vietnamese", lambda x: x, latin_charset, "latin"),
+    "war": ("Waray-Waray", phi_remove_accents, latin_charset, "latin"),
+    "yi": ("Yiddish", lambda x: x, hebrew_charset, False),
 }
 
 # auto_languages = {}
@@ -1013,7 +1014,7 @@ language_codes_to_properties = {
 #  canonical_
 
 language_names_to_properties = {
-    langprops[0]: [langcode] + langprops[1:] for langcode, langprops in language_codes_to_properties.items()
+    langname: (langcode, remove_accents, charset, ignore_translit) for langcode, (langname, remove_accents, charset, ignore_translit) in language_codes_to_properties.items()
 }
 
 
@@ -1021,18 +1022,18 @@ def do_remove_diacritics(text, patterns, remove_diacritics):
     pass
 
 
-chinese_low_surrogates = (
-    "["
-    +
-    # The following should be the SIP: U+20000 (D840+DC00) to U+2EBEF (D87A+DFEF): #"𠀀-𮯯"
-    # We include a bit more than needed to get everything.
-    "\ud840-\ud87a"
-    +
-    # The following should be the ExtG: U+30000 (D880+DC00) to U+3134F (D884+DF4F): "𰀀-𱍏"
-    # We include a bit more than needed to get everything.
-    "\ud880-\ud884"
-    + "]"
-)
+#chinese_low_surrogates = (
+#    "["
+#    +
+#    # The following should be the SIP: U+20000 (D840+DC00) to U+2EBEF (D87A+DFEF): #"𠀀-𮯯"
+#    # We include a bit more than needed to get everything.
+#    "\ud840-\ud87a"
+#    +
+#    # The following should be the ExtG: U+30000 (D880+DC00) to U+3134F (D884+DF4F): "𰀀-𱍏"
+#    # We include a bit more than needed to get everything.
+#    "\ud880-\ud884"
+#    + "]"
+#)
 
 chinese_misc_ideographic_symbols_and_punctuation = (
     # "𖿢𖿣𖿰𖿱"

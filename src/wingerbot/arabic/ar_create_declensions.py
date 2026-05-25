@@ -112,14 +112,13 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
         retval = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
         if retval is None:
             return
-        sections, j, secbody, sectail, has_non_lang = retval
+        sections, j, secbody, sectail, has_non_lang = retval.props()
 
-        subsections, subsections_by_header, subsection_headers, subsection_levels = (
-            blib.split_text_into_subsections(secbody, pagemsg)
-        )
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
 
         # Go through each subsection
-        for k in range(2, len(subsections), 2):  # Loop over content subsections
+        for k, header in subsecs.subsection_headers:
             notes = []
 
             def add_note(note):
@@ -127,7 +126,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     notes.append(note)
 
             # Look for subsections matching the given POS
-            if re.match("^===+%s===+\n" % pos, subsections[k - 1]):
+            if header == pos:
                 # Call reorder_shadda here so the templates we work with have
                 # shadda in correct order but we don't mess with other text to
                 # avoid unnecessary saving

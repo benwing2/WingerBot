@@ -11,7 +11,7 @@ from wingerbot import lang_utils
 lang_utils.load_all_lang_data("langdata.json")
 
 etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
-language_name_to_code = lang_utils.get_language_name_to_code_map()
+language_name_to_code = lang_utils.get_language_name_to_code()
 
 
 def process_text_on_page(index, pagetitle, pagetext):
@@ -112,12 +112,8 @@ def process_text_on_page(index, pagetitle, pagetext):
 
         pretext = ""
         if langname in lang_utils.unrecognized_to_canonical_names:
-            spec = lang_utils.unrecognized_to_canonical_names[langname]
-            if type(spec) is tuple:
-                new_pretext, new_langname = spec
-                pretext = new_pretext + " "
-            else:
-                new_langname = spec
+            new_pretext, new_langname = lang_utils.unrecognized_to_canonical_names[langname]
+            pretext = new_pretext + " " if new_pretext else ""
             pagemsg(
                 "Replacing unrecognized %s with %s%s: %s"
                 % (langname, new_langname, ' (with pretext "%s")' % pretext if pretext else "", origtext)
@@ -200,15 +196,14 @@ def process_text_on_page(index, pagetitle, pagetext):
             pagemsg("Replacing m-type link <%s> with <%s>" % (links, new_links))
             links = new_links
 
-        # Replace bad language codes in templated links with better ones, based
-        # on langname.
+        # Replace bad language codes in templated links with better ones, based on langname.
         parsed = blib.parse_text(links)
         made_mod = False
         for t in parsed.filter_templates():
             if tname(t) in ["l", "m"]:
                 template_langcode = getparam(t, "1")
                 if (langname, template_langcode) in lang_utils.langcode_langname_to_correct_langcode:
-                    new_langcode = lang_utils.langlangcode_langname_to_correct_langcode[(langname, template_langcode)]
+                    new_langcode = lang_utils.langcode_langname_to_correct_langcode[(langname, template_langcode)]
                     if new_langcode == template_langcode:
                         if template_langcode in lang_utils.languages_by_code:
                             new_langname = lang_utils.languages_by_code[template_langcode]["canonicalName"]
