@@ -7,8 +7,8 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 from collections import defaultdict
 from typing import cast
 
-lang_utils.init_fake_langdata()
-lang_utils.get_language_data()
+lang_utils.init_fake_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 shortcut_to_expansion = {
     "alt": "Alternative forms",
@@ -222,10 +222,10 @@ def simplify_link(is_raw, link, altval, langcode, sec_langcode, sec_langname, pa
         m = re.search("^(.*?)#(.*)$", link)
         if m:
             newlink, explicit_langname = m.groups()
-            if explicit_langname not in lang_utils.languages_by_canonical_name:
+            if explicit_langname not in lang_data.languages_by_canonical_name:
                 pagemsg("WARNING: Unknown language name %s in link %s, not removing" % (explicit_langname, origlink))
             else:
-                explicit_langcode = lang_utils.languages_by_canonical_name[explicit_langname]["code"]
+                explicit_langcode = lang_data.languages_by_canonical_name[explicit_langname]["code"]
                 if not langcode or langcode == explicit_langcode:
                     langcode = explicit_langcode
                 else:
@@ -875,10 +875,10 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
     for j, langname in secs.section_langs:
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
             continue
-        langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+        langcode = lang_data.languages_by_canonical_name[langname]["code"]
         subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
         for k, header in subsecs.subsection_headers:
             if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsecs.subsections[k]):

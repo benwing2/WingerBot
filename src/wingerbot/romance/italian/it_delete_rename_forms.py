@@ -27,14 +27,14 @@ def remove_anagram_from_page(index, page, pagetitle_to_remove):
     if not text:
         return
 
-    retval = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
-        if "===Anagrams===" in subsections[k - 1]:
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Anagrams":
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
                 tn = tname(t)
@@ -62,12 +62,7 @@ def remove_anagram_from_page(index, page, pagetitle_to_remove):
                             % (pagetitle_to_remove, annotation)
                         )
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 def process_page_for_anagrams(index, page, modify_this_page):
@@ -85,17 +80,16 @@ def process_page_for_anagrams(index, page, modify_this_page):
     if not text:
         return
 
-    retval = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     anagrams = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
-        if "===Anagrams===" in subsections[k - 1]:
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Anagrams":
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
                 tn = tname(t)
@@ -121,11 +115,8 @@ def process_page_for_anagrams(index, page, modify_this_page):
                 subsections[k - 1] = ""
                 subsections[k] = ""
                 notes.append("remove Anagrams section prior to renaming page%s" % annotation)
-    secbody = "".join(subsections)
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
+    text = modsec.rebuild(secbody="".join(subsections))
 
     for anagram in anagrams:
 
@@ -264,7 +255,7 @@ for index, frompagetitle, topagetitle in pages_to_rename:
         try:
             frompage.move(topagetitle, reason=this_comment, movetalk=True, noredirect=True)
             errandpagemsg("Renamed to %s" % topagetitle)
-        except pywikibot.PageRelatedError as error:
+        except pywikibot.exceptions.PageRelatedError as error:
             errandpagemsg("Error moving to %s: %s" % (topagetitle, error))
     else:
         pagemsg("Would rename to %s (comment=%s)" % (topagetitle, this_comment))

@@ -32,22 +32,22 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     origtext = text
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Spanish", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     sectail_is_demonym = re.search(r"\{\{(C|c|top|topic|topics|catlangcode)\|es(\|[^{}=|]*)*\|Demonyms([|}])", sectail)
 
     rawest_toponym_to_marked_up = {}
     need_to_remove_cat = [False]
 
-    for k in range(2, len(subsections), 2):
-
+    for k, header in subsecs.subsection_headers:
         def raw_toponym_to_toponym(raw_toponym):
             toponym = None
             rawest_toponym = None
@@ -196,8 +196,7 @@ def process_text_on_page(index, pagetitle, text):
         of_or_from_re = "(?:of or from|(?:of|from) or (?:relating|related|pertaining) to|of, from or (?:relating|related|pertaining) to|of|from)"
         gloss_qual_re = "(?:gl|gloss|q|i|qual|qualifier)"
 
-        if "==Adjective==" in subsections[k - 1] and sectail_is_demonym:
-
+        if header == "Adjective" and sectail_is_demonym:
             def replace_of(m):
                 gloss = ""
                 raw_toponym = m.group(1)
@@ -243,7 +242,7 @@ def process_text_on_page(index, pagetitle, text):
                 re.M,
             )
 
-        if "==Noun==" in subsections[k - 1]:
+        if header == "Noun":
             demonym_gender = None
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():

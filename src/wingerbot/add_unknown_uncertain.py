@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -17,11 +17,11 @@ def process_text_on_page(index, pagetitle, text):
     def do_templatize(subsectext, langname, subsectitle):
         if not subsectitle.startswith("Etymology"):
             return subsectext
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unknown language %s" % langname)
             return subsectext
         else:
-            langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langcode = lang_data.languages_by_canonical_name[langname]["code"]
 
         def replace_unknown_uncertain(m, template):
             newtemp = "{{%s|%s}}" % (template, langcode)

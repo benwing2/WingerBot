@@ -12,27 +12,26 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     notes = []
 
     def process_etym_section(sectext):
         references_sec = None
         further_reading_sec = None
-        subsections = re.split("(^==+[^=\n]+==+\n)", sectext, 0, re.M)
-
-        for k in range(2, len(subsections), 2):
-            if re.search(r"^===*\s*References\s*===* *\n", subsections[k - 1]):
+        subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+        subsections = subsecs.subsections
+        for k, header in subsecs.subsection_headers:
+            if header == "References":
                 if references_sec:
                     pagemsg("WARNING: Saw two ===References=== sections in a single etym section")
                     return sectext
                 references_sec = k
-            if re.search(r"^===*\s*Further reading\s*===* *\n", subsections[k - 1]):
+            if header == "Further reading":
                 if further_reading_sec:
                     pagemsg("WARNING: Saw two ===Further reading=== sections in a single etym section")
                     return sectext
@@ -87,12 +86,12 @@ def process_text_on_page(index, pagetitle, text):
             subsections[references_sec] = ""
         return "".join(subsections)
 
-    has_etym_1 = "==Etymology 1==" in secbody
+    has_etym_1 = "==Etymology 1==" in modsec.secbody
 
     if not has_etym_1:
-        secbody = process_etym_section(secbody)
+        secbody = process_etym_section(modsec.secbody)
     else:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+        etym_sections = re.split("(^===Etymology [0-9]+===\n)", modsec.secbody, 0, re.M)
         if len(etym_sections) < 5:
             pagemsg("WARNING: Something wrong, saw 'Etymology 1' but didn't see two etym sections")
         else:
@@ -100,11 +99,7 @@ def process_text_on_page(index, pagetitle, text):
                 etym_sections[k] = process_etym_section(etym_sections[k])
                 secbody = "".join(etym_sections)
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

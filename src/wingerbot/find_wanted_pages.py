@@ -8,7 +8,7 @@ from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site
 from collections import defaultdict
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 templates_to_check = {}
 for template in [
@@ -122,8 +122,8 @@ def process_text_on_page(index, pagetitle, pagetext):
             page = linkparts[0]
             if "#" in page:
                 page, anchor = page.split("#", 1)
-                if anchor in lang_utils.languages_by_canonical_name:
-                    note_link(lang_utils.languages_by_canonical_name[anchor]["code"], page)
+                if anchor in lang_data.languages_by_canonical_name:
+                    note_link(lang_data.languages_by_canonical_name[anchor]["code"], page)
                 else:
                     note_link(None, page)
             else:

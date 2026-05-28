@@ -9,9 +9,10 @@ from wingerbot import lang_utils
 
 # Comment out to load latest data on-the-fly
 lang_utils.load_all_lang_data("langdata.json")
+lang_alias_data = lang_utils.get_lang_alias_data()
 
-etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
-language_name_to_code = lang_utils.get_language_name_to_code_map()
+etym_language_to_parent = lang_utils.get_etym_language_to_parent()
+language_name_to_code = lang_utils.get_language_name_to_code()
 
 lang_letter = r"[\w,-]"
 lang_letter_or_space = r"[\w, -]"
@@ -27,14 +28,8 @@ def process_text_on_page(index, pagetitle, pagetext):
         pagemsg("Processing")
 
     # Split into (sub)sections
-    splitsections = re.split("(^===*[^=\n]+=*==\n)", pagetext, 0, re.M)
-    # Extract off pagehead and recombine section headers with following text
-    pagehead = splitsections[0]
-    sections = []
-    for i in range(1, len(splitsections)):
-        if (i % 2) == 1:
-            sections.append("")
-        sections[-1] += splitsections[i]
+    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsections = subsecs.subsections
 
     def replace_with_cog(m):
         at_beg, cogs, at_end = m.groups()
@@ -103,8 +98,8 @@ def process_text_on_page(index, pagetitle, pagetext):
                         langnames = [langname]
                     langcodes = []
                     langcodes_for_checking = []
-                    if langcode in lang_utils.language_aliases_to_canonical:
-                        langcode = lang_utils.language_aliases_to_canonical[langcode]
+                    if langcode in lang_alias_data.language_aliases_to_canonical:
+                        langcode = lang_alias_data.language_aliases_to_canonical[langcode]
                     langname_code_info = []
                     for langname in langnames:
                         if langname not in language_name_to_code:
@@ -233,17 +228,12 @@ def process_text_on_page(index, pagetitle, pagetext):
             match_etyl_re_arm,
         )
     )
-    for i in range(len(sections)):
-        if re.match("^===*Etymology( [0-9]+)?=*==", sections[i]):
-            text = sections[i]
-            while True:
-                new_text = re.sub(match_cognate_re, replace_with_cog, text, 0, re.M | re.U)
-                if new_text == text:
-                    break
-                sections[i] = new_text
-                text = new_text
 
-    return pagehead + "".join(sections), notes
+    for k, header in subsecs.subsection_headers:
+        if re.search("^Etymology( [0-9]+)?$", header):
+            subsections[k] = blib.rsub_repeatedly(match_cognate_re, replace_with_cog, subsections[k], 0, re.M)
+
+    return "".join(subsections), notes
 
 
 if __name__ == "__main__":

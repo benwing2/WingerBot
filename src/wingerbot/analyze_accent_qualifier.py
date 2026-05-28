@@ -7,7 +7,7 @@ from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
 from collections import defaultdict
 import json
 
-accent_qualifier_data = None
+accent_qualifier_data = {"aliases": {}, "labels": {}}
 total_qualifiers = defaultdict(int)
 qualifiers_by_lang = defaultdict(lambda: defaultdict(int))
 pages_for_qualifiers_by_lang = defaultdict(lambda: defaultdict(set))
@@ -35,7 +35,8 @@ qualifiers_to_enumerate = {
     ("wine-whine", "English"),
 }
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 
 def process_text_on_page(index, pagename, text):
@@ -73,11 +74,11 @@ def process_text_on_page(index, pagename, text):
                     if paramind == 0:
                         pseudo_langname = None
                         pseudo_langtype = None
-                        if param in lang_utils.languages_by_code:
-                            pseudo_langname = lang_utils.languages_by_code[param]["canonicalName"]
+                        if param in lang_data.languages_by_code:
+                            pseudo_langname = lang_data.languages_by_code[param]["canonicalName"]
                             pseudo_langtype = "full"
-                        elif param in lang_utils.etym_languages_by_code:
-                            pseudo_langname = lang_utils.etym_languages_by_code[param]["canonicalName"]
+                        elif param in etym_lang_data.etym_languages_by_code:
+                            pseudo_langname = etym_lang_data.etym_languages_by_code[param]["canonicalName"]
                             pseudo_langtype = "etym-only"
                         if pseudo_langtype:
                             pass
@@ -102,7 +103,6 @@ start, end = blib.parse_start_end(args.start, args.end)
 def read_aliases():
     global accent_qualifier_data
     # accent_qualifier_data = json.loads(expand_text("{{#invoke:accent qualifier|output_data_module}}"))
-    accent_qualifier_data = {"aliases": {}, "labels": {}}
 
 
 read_aliases()
@@ -154,10 +154,10 @@ for label, labelobj in sorted(list(accent_qualifier_data["labels"].items()), key
     langs = labels_langs[label]
     langcodes = set()
     for lang in langs:
-        if lang not in lang_utils.languages_by_canonical_name:
+        if lang not in lang_data.languages_by_canonical_name:
             msg("-- WARNING: Can't convert language '%s' to language code" % lang)
         else:
-            langcode = lang_utils.languages_by_canonical_name[lang]["code"]
+            langcode = lang_data.languages_by_canonical_name[lang]["code"]
             langcodes.add(langcode)
     aliases = labels_aliases[label]
     msg('labels["%s"] = {' % label)

@@ -94,11 +94,11 @@ def process_text_on_page(index, pagetitle, pagetext):
     if blib.page_should_be_ignored(pagetitle):
         return
 
-    m = re.search(r"\A(.*?)(\n*)\Z", pagetext, re.S)
-    pagetext_nonl, finalnl = m.groups()
-    pagetext = pagetext_nonl + "\n\n"
+    modsec = blib.find_modifiable_lang_section(pagetext, None, pagemsg, force_final_nls=True)
+    if modsec is None:
+        return
 
-    chunks = re.split(r"^((?:# \{\{es-verb form of\|.*\n)+)", pagetext, 0, re.M)
+    chunks = re.split(r"^((?:# \{\{es-verb form of\|.*\n)+)", modsec.secbody, 0, re.M)
     for k in range(1, len(chunks), 2):
         verb_form_chunk = chunks[k]
         extra_text = ""
@@ -217,7 +217,8 @@ def process_text_on_page(index, pagetitle, pagetext):
             continue
         chunks[k] = "".join(parts)
         pagemsg("Replaced <%s> with <%s>" % (escape_newlines(verb_form_chunk), escape_newlines(chunks[k])))
-    pagetext = "".join(chunks).rstrip("\n") + finalnl
+
+    pagetext = modsec.rebuild(secbody="".join(chunks))
 
     parsed = blib.parse_text(pagetext)
     for t in parsed.filter_templates():

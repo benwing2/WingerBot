@@ -20,17 +20,17 @@ ar_conj_template = "ar-conj/old"
 @dataclass
 class ArConjProperties:
     vform: str
-    weakness: str = None
-    rad1: str = None
-    rad2: str = None
-    rad3: str = None
-    rad4: str = None
-    past_vowel: str = None
-    nonpast_vowel: str = None
-    vns: list[str] = None
-    vn_ids: list[str] = None
-    passive: str = None
-    variant: str = None
+    weakness: str | None = None
+    rad1: str | None = None
+    rad2: str | None = None
+    rad3: str | None = None
+    rad4: str | None = None
+    past_vowel: str | None = None
+    nonpast_vowel: str | None = None
+    vns: list[str] | None = None
+    vn_ids: list[str] | None = None
+    passive: str | None = None
+    variant: str | None = None
     noimp: bool = False
     intrans: bool = False
 

@@ -5,7 +5,8 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 lects_to_codes = {
     "Hainanese": "nan-hnm",
@@ -508,9 +509,9 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
                     raise ValueError("Unrecognized lect type '%s' generated" % lect)
                 code = lects_to_codes[lect]
                 lang_obj = (
-                    lang_utils.languages_by_code[code]
-                    if code in lang_utils.languages_by_code
-                    else lang_utils.etym_languages_by_code[code]
+                    lang_data.languages_by_code[code]
+                    if code in lang_data.languages_by_code
+                    else etym_lang_data.etym_languages_by_code[code]
                 )
                 canon_name = lang_obj["canonicalName"]
                 if canon_name not in canon_lects_seen:
@@ -676,9 +677,9 @@ def process_text_on_page(index, pagetitle, text):
             for term in terms:
                 m = re.search("^(?:([a-z][a-z][a-zA-Z.,-]*):)?([^ ].*?)(<.*>)?$", term)
                 if m:
-                    langcodes, actual_term, modifiers = m.groups()
+                    langcodes_str, actual_term, modifiers = m.groups()
                     linked_term = link_term(actual_term)
-                    langcodes = langcodes or ""
+                    langcodes_str = langcodes_str or ""
                     modifiers = modifiers or ""
                     modified_langcodes = []
 
@@ -720,8 +721,8 @@ def process_text_on_page(index, pagetitle, text):
                             pagemsg("Converting %s" % msg_body)
                             notes.append("convert %s" % msg_body)
 
-                    if langcodes:
-                        langcodes = langcodes.split(",")
+                    if langcodes_str:
+                        langcodes = langcodes_str.split(",")
                         for langcode in langcodes:
                             if langcode == "nan":  # or langcode == "nan-hbl":
                                 lect_types = find_southern_min_types(index, pagetitle, t, actual_term, linkglosses)
@@ -840,11 +841,11 @@ def process_text_on_page(index, pagetitle, text):
                                 "WARNING: Generating %s > 3 prefixed language codes %s (term %s)"
                                 % (len(modified_langcodes), ",".join(modified_langcodes), linked_term)
                             )
-                        modified_langcodes = "%s:" % ",".join(modified_langcodes)
+                        modified_langcode_str = "%s:" % ",".join(modified_langcodes)
                     else:
-                        modified_langcodes = ""
-                    if langcodes != modified_langcodes or modifiers != new_modifiers:
-                        term = "%s%s%s" % (modified_langcodes, actual_term, new_modifiers)
+                        modified_langcode_str = ""
+                    if langcodes_str != modified_langcode_str or modifiers != new_modifiers:
+                        term = "%s%s%s" % (modified_langcode_str, actual_term, new_modifiers)
                 modified_terms.append(term)
             if terms != modified_terms:
                 blib.set_param_chain(t, modified_terms, "2")

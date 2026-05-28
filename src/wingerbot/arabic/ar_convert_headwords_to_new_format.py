@@ -26,7 +26,7 @@ def convert_inflection(t, pref, pagemsg, fetch_nominal_inflections=False, no_joi
         return getparam(t, param).strip()
 
     outvals = []
-    vals = blib.fetch_param_chain(t, pref, holes="allow")
+    vals = blib.fetch_param_chain_allow_holes(t, pref)
     consvals = None
     if fetch_nominal_inflections:
         consvals = convert_inflection(t, pref + "cons", pagemsg, no_join=True)
@@ -125,7 +125,7 @@ def convert_head_tr_gender(t, pagemsg):
 
     outheads = []
     heads = blib.fetch_param_chain(t, "1", "head", holes="disallow")
-    trs = blib.fetch_param_chain(t, "tr", holes="allow")
+    trs = blib.fetch_param_chain_allow_holes(t, "tr")
     genders = blib.fetch_param_chain(t, "2", "g", holes="close")
     if heads and len(trs) > len(heads):
         pagemsg(

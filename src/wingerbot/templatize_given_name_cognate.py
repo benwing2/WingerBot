@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -36,13 +36,13 @@ def process_text_on_page(index, pagetitle, text):
         lang = m.group(1)
         if source_lang:
             source_lang = source_lang.strip()
-            if source_lang not in lang_utils.languages_by_canonical_name:
+            if source_lang not in lang_data.languages_by_canonical_name:
                 pagemsg(
                     "WARNING: Unrecognized source lang %s, can't parse: <from> %s <to> %s <end>"
                     % (source_lang, origline, origline)
                 )
                 return origline
-            source_lang_code = lang_utils.languages_by_canonical_name[source_lang]["code"]
+            source_lang_code = lang_data.languages_by_canonical_name[source_lang]["code"]
             if source_lang_code != lang:
                 pagemsg(
                     "WARNING: Source lang code %s for %s != template lang code %s, can't parse: <from> %s <to> %s <end>"

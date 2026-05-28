@@ -6,10 +6,8 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-lang_utils.get_all_lang_data()
-
-language_to_ancestors = lang_utils.get_language_to_ancestors_map()
-etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+language_to_ancestors = lang_utils.get_language_to_ancestors()
+etym_language_to_parent = lang_utils.get_etym_language_to_parent()
 
 
 def lang_desc(lang, main_lang):

@@ -29,9 +29,12 @@ from dataclasses import dataclass, field
 # 16. Support HTML comments in lang codes.
 # 17. Handle {{t-egy}}.
 
-# lang_utils.init_fake_lang_data()
-# lang_utils.get_all_lang_data()
+lang_utils.init_fake_lang_data()
 lang_utils.load_all_lang_data("langdata.json")
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
+family_data = lang_utils.get_family_data()
+script_data = lang_utils.get_script_data()
 
 
 @dataclass
@@ -51,7 +54,7 @@ class Qualifier:
     saw_embedded_translation_template: bool
 
 
-etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+etym_language_to_parent = lang_utils.get_etym_language_to_parent()
 
 seen_converted_quals = defaultdict(lambda: defaultdict(int))
 seen_converted_qual_count = defaultdict(int)
@@ -126,21 +129,21 @@ def make_inline_modifier(key, val, pagemsg):
 def lookup_langname(langname, prefer="lang"):
     if langname.endswith(" script"):
         langname = re.sub(" script$", "", langname)
-        if langname in lang_utils.scripts_by_canonical_name:
-            return lang_utils.scripts_by_canonical_name[langname]["code"], "script"
+        if langname in script_data.scripts_by_canonical_name:
+            return script_data.scripts_by_canonical_name[langname]["code"], "script"
         return None, None
-    if prefer == "script" and langname in lang_utils.scripts_by_canonical_name:
-        return lang_utils.scripts_by_canonical_name[langname]["code"], "script"
-    if prefer == "family" and langname in lang_utils.families_by_canonical_name:
-        return lang_utils.families_by_canonical_name[langname]["code"], "family"
-    if langname in lang_utils.languages_by_canonical_name:
-        return lang_utils.languages_by_canonical_name[langname]["code"], "lang"
-    elif langname in lang_utils.etym_languages_by_canonical_name:
-        return lang_utils.etym_languages_by_canonical_name[langname]["code"], "etymlang"
-    elif langname in lang_utils.families_by_canonical_name:
-        return lang_utils.families_by_canonical_name[langname]["code"], "family"
-    elif langname in lang_utils.scripts_by_canonical_name:
-        return lang_utils.scripts_by_canonical_name[langname]["code"], "script"
+    if prefer == "script" and langname in script_data.scripts_by_canonical_name:
+        return script_data.scripts_by_canonical_name[langname]["code"], "script"
+    if prefer == "family" and langname in family_data.families_by_canonical_name:
+        return family_data.families_by_canonical_name[langname]["code"], "family"
+    if langname in lang_data.languages_by_canonical_name:
+        return lang_data.languages_by_canonical_name[langname]["code"], "lang"
+    elif langname in etym_lang_data.etym_languages_by_canonical_name:
+        return etym_lang_data.etym_languages_by_canonical_name[langname]["code"], "etymlang"
+    elif langname in family_data.families_by_canonical_name:
+        return family_data.families_by_canonical_name[langname]["code"], "family"
+    elif langname in script_data.scripts_by_canonical_name:
+        return script_data.scripts_by_canonical_name[langname]["code"], "script"
     else:
         return None, None
 
@@ -527,14 +530,14 @@ def convert_one_line(init_star, init_langname, rest, pagemsg, expand_text, in_mu
                         entry_references.append(val)
 
                     langcode = getp("1")
-                    if langcode in lang_utils.languages_by_code:
-                        langcode_langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+                    if langcode in lang_data.languages_by_code:
+                        langcode_langname = lang_data.languages_by_code[langcode]["canonicalName"]
                         langcode_type = "lang"
-                    elif langcode in lang_utils.etym_languages_by_code:
-                        langcode_langname = lang_utils.etym_languages_by_code[langcode]["canonicalName"]
+                    elif langcode in etym_lang_data.etym_languages_by_code:
+                        langcode_langname = etym_lang_data.etym_languages_by_code[langcode]["canonicalName"]
                         langcode_type = "etymlang"
-                    elif langcode in lang_utils.families_by_code:
-                        langcode_langname = lang_utils.families_by_code[langcode]["canonicalName"]
+                    elif langcode in family_data.families_by_code:
+                        langcode_langname = family_data.families_by_code[langcode]["canonicalName"]
                         langcode_type = "family"
                     else:
                         langcode_langname = None
@@ -1066,14 +1069,14 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                         entry_references.append(val)
 
                     langcode = getp("1")
-                    if langcode in lang_utils.languages_by_code:
-                        langcode_langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+                    if langcode in lang_data.languages_by_code:
+                        langcode_langname = lang_data.languages_by_code[langcode]["canonicalName"]
                         langcode_type = "lang"
-                    elif langcode in lang_utils.etym_languages_by_code:
-                        langcode_langname = lang_utils.etym_languages_by_code[langcode]["canonicalName"]
+                    elif langcode in etym_lang_data.etym_languages_by_code:
+                        langcode_langname = etym_lang_data.etym_languages_by_code[langcode]["canonicalName"]
                         langcode_type = "etymlang"
-                    elif langcode in lang_utils.families_by_code:
-                        langcode_langname = lang_utils.families_by_code[langcode]["canonicalName"]
+                    elif langcode in family_data.families_by_code:
+                        langcode_langname = family_data.families_by_code[langcode]["canonicalName"]
                         langcode_type = "family"
                     else:
                         langcode_langname = None
@@ -1781,10 +1784,10 @@ def process_text_on_page(index, pagename, text):
 #    secs = blib.split_text_into_sections(text, pagemsg)
 #    sections = secs.sections
 #    for j, langname in secs.section_langs:
-#        if langname not in lang_utils.languages_by_canonical_name:
+#        if langname not in lang_data.languages_by_canonical_name:
 #            pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
 #            continue
-#        langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+#        langcode = lang_data.languages_by_canonical_name[langname]["code"]
 #        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
 #        for k, header in subsecs.subsection_headers:
 #            if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsecs.subsections[k]):

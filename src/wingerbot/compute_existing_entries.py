@@ -21,11 +21,11 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, errmsg, site
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 appendix_constructed_langnames = set()
 
-for code, lang in lang_utils.languages_by_code.items():
+for code, lang in lang_data.languages_by_code.items():
     if lang.get("type", "") == "appendix-constructed":
         appendix_constructed_langnames.add(lang["canonicalName"])
 
@@ -54,10 +54,10 @@ def process_text_on_page(index, pagetitle, pagetext):
     secs = blib.split_text_into_sections(pagetext, pagemsg)
     langs = []
     for j, langname in secs.section_langs:
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language: %s" % langname)
         else:
-            langs.append(lang_utils.languages_by_canonical_name[langname]["code"])
+            langs.append(lang_data.languages_by_canonical_name[langname]["code"])
     pagemsg("Langs=%s" % ",".join(langs))
 
 

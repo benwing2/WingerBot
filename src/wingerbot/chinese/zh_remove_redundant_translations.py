@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 translation_templates = blib.translation_templates
 
@@ -86,10 +86,10 @@ def process_text_on_page(index, pagetitle, text):
                                     notes.append("remove sc=%s from Chinese translation template" % sc)
                                 lang = getparam(t, "1")
                                 if lang == "zh":
-                                    if lect not in lang_utils.languages_by_canonical_name:
+                                    if lect not in lang_data.languages_by_canonical_name:
                                         line_pagemsg("WARNING: Unrecognized Chinese lect %s" % lect)
                                     else:
-                                        langnamecode = lang_utils.languages_by_canonical_name[lect]["code"]
+                                        langnamecode = lang_data.languages_by_canonical_name[lect]["code"]
                                         t.add("1", langnamecode)
                                         notes.append(
                                             "convert 'zh' to '%s' for %s translation template {{%s}}"
@@ -99,10 +99,10 @@ def process_text_on_page(index, pagetitle, text):
                         line = str(parsed)
                         lines[j] = line
 
-                        if lect not in lang_utils.languages_by_canonical_name:
+                        if lect not in lang_data.languages_by_canonical_name:
                             line_pagemsg("WARNING: Unrecognized Chinese lect %s" % lect)
                             continue
-                        lectcode = lang_utils.languages_by_canonical_name[lect]["code"]
+                        lectcode = lang_data.languages_by_canonical_name[lect]["code"]
 
                         if lectcode not in lects_to_remove_redundant_translations:
                             line_pagemsg("Skipping lect %s (%s) not using automatic simplification" % (lect, lectcode))

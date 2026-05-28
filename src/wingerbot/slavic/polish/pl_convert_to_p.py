@@ -58,23 +58,22 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("Page title is a single letter or a prefix, skipping")
         return
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
-    for k in range(1, len(subsections), 2):
-        if re.search(r"==\s*Pronunciation\s*==", subsections[k]):
-            secheader = re.sub(r"\s*Pronunciation\s*", "Pronunciation", subsections[k])
-            if secheader != subsections[k]:
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Pronunciation":
+            secheader = re.sub(r"\s*Pronunciation\s*", "Pronunciation", subsections[k - 1])
+            if secheader != subsections[k - 1]:
                 subsections[k] = secheader
                 notes.append("remove extraneous spaces in ==Pronunciation== header")
             extra_notes = []
-            parsed = blib.parse_text(subsections[k + 1])
+            parsed = blib.parse_text(subsections[k])
             num_pl_IPA = 0
             saw_pl_p = False
             for t in parsed.filter_templates():
@@ -93,7 +92,7 @@ def process_text_on_page(index, pagetitle, text):
             if num_pl_IPA > 1:
                 pagemsg("WARNING: Saw multiple {{pl-IPA}} in Pronunciation section, skipping")
                 continue
-            lines = subsections[k + 1].strip().split("\n")
+            lines = subsections[k].strip().split("\n")
             # Remove blank lines.
             lines = [line for line in lines if line]
             hyph_lines = []
@@ -300,15 +299,12 @@ def process_text_on_page(index, pagetitle, text):
 
             all_lines = "\n".join([str(newtemp)])
             newsubsec = "%s\n\n" % all_lines
-            if subsections[k + 1] != newsubsec:
+            if subsections[k] != newsubsec:
                 this_notes = ["convert {{pl-IPA}} to {{pl-p}}"] + extra_notes
                 notes.extend(this_notes)
-            subsections[k + 1] = newsubsec
+            subsections[k] = newsubsec
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Convert {{pl-IPA}} to {{pl-p}}", include_pagefile=True, include_stdin=True)

@@ -109,7 +109,8 @@ def process_text_on_page(index, pagetitle, text):
         return
     sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     has_etym_sections = "==Etymology 1==" in secbody
     if has_etym_sections and location == "all":
@@ -234,28 +235,28 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("add top-level Italian pron %s (manually assisted)" % new_pron_template)
 
     if location == "all":
-        for k in range(2, len(subsections), 2):
-            if "==Pronunciation==" in subsections[k - 1]:
+        for k, header in subsecs.subsection_headers:
+            if header == "Pronunciation":
                 if not insert_into_existing_pron_section(k):
                     return
                 break
         else:  # no break
             k = 2
-            while k < len(subsections) and re.search("==(Alternative forms|Etymology)==", subsections[k - 1]):
+            while k < len(subsections) and subsecs.subsection_header_dict[k] in ["Alternative forms", "Etymology"]:
                 k += 2
             if k - 1 >= len(subsections):
                 pagemsg("WARNING: No lemma or non-lemma section at top level")
                 return
             insert_new_l3_pron_section(k - 1)
     elif location == "top":
-        for k in range(2, len(subsections), 2):
-            if "==Pronunciation==" in subsections[k - 1]:
+        for k, header in subsecs.subsection_headers:
+            if header == "Pronunciation":
                 if not insert_into_existing_pron_section(k):
                     return
                 break
         else:  # no break
-            for k in range(2, len(subsections), 2):
-                if "==Etymology 1==" in subsections[k - 1]:
+            for k, header in subsecs.subsection_headers:
+                if header == "Etymology 1":
                     insert_new_l3_pron_section(k - 1)
                     break
             else:  # no break
@@ -266,7 +267,7 @@ def process_text_on_page(index, pagetitle, text):
 
         def insert_pron_section_in_etym_section():
             k = begin_etym_n_section + 2
-            while k < len(subsections) and re.search("==Alternative forms==", subsections[k - 1]):
+            while k < len(subsections) and subsecs.subsection_header_dict[k] == "Alternative forms":
                 k += 2
             if k - 1 >= len(subsections):
                 pagemsg(
@@ -278,15 +279,15 @@ def process_text_on_page(index, pagetitle, text):
             subsections[k - 1 : k - 1] = ["====Pronunciation====\n", pron_prefix + new_pron_template + "\n\n"]
             notes.append("add Italian pron %s to Etymology %s (manually assisted)" % (new_pron_template, location))
 
-        for k in range(2, len(subsections), 2):
-            if "==Etymology %s==" % location in subsections[k - 1]:
+        for k, header in subsecs.subsection_headers:
+            if header == "Etymology %s" % location:
                 begin_etym_n_section = k
-            elif re.search("==Etymology [0-9]", subsections[k - 1]):
+            elif re.search("^Etymology [0-9]", header):
                 if begin_etym_n_section:
                     # We encountered the next Etymology section and didn't see Pronunciation; insert a Pronunciation section.
                     insert_pron_section_in_etym_section()
                     break
-            elif begin_etym_n_section and "==Pronunciation==" in subsections[k - 1]:
+            elif begin_etym_n_section and header == "Pronunciation":
                 if not insert_into_existing_pron_section(k):
                     return
                 break
@@ -303,14 +304,14 @@ def process_text_on_page(index, pagetitle, text):
         if refs or have_footnotes:
             # Check for refs in References or Further reading embedded in Etym section
             begin_etym_n_section = None
-            for k in range(2, len(subsections), 2):
-                if "==Etymology %s==" % location in subsections[k - 1]:
+            for k, header in subsecs.subsection_headers:
+                if header == "Etymology %s" % location:
                     begin_etym_n_section = k - 1
-                elif re.search("==Etymology [0-9]", subsections[k - 1]):
+                elif re.search("^Etymology [0-9]", header):
                     # next etym section
                     break
                 elif begin_etym_n_section:
-                    if refs and re.search(r"====\s*(References|Further reading)\s*====", subsections[k - 1]):
+                    if refs and subsecs.subsection_levels[k] == 4 and header in ["References", "Further reading"]:
                         # Found References or Further reading embedded in Etym section
                         pagemsg("Found %s in Etymology %s section" % (subsections[k - 1].strip(), location))
                         needed_refs = []
@@ -323,7 +324,7 @@ def process_text_on_page(index, pagetitle, text):
                             else:
                                 needed_refs.append(ref)
                         refs = needed_refs
-                    if have_footnotes and re.search(r"====\s*References\s*====", subsections[k - 1]):
+                    if have_footnotes and subsecs.subsection_levels[k] == 4 and header == "References":
                         # Check for <references/> in References embedded in Etym section
                         if re.search(r"<references\s*/?\s*>", subsections[k]):
                             pagemsg(
@@ -334,8 +335,8 @@ def process_text_on_page(index, pagetitle, text):
 
     if refs:
         # Check for references already present
-        for k in range(2, len(subsections), 2):
-            if re.search("^===(References|Further reading)===\n", subsections[k - 1]):
+        for k, header in subsecs.subsection_headers:
+            if header in ["References", "Further reading"] and subsecs.subsection_levels[k] == 3:
                 needed_refs = []
                 for ref in refs:
                     if ref in subsections[k]:
@@ -346,8 +347,8 @@ def process_text_on_page(index, pagetitle, text):
         if refs:
             added_ref_text = "\n".join("* " + ref for ref in refs) + "\n\n"
             # Still some references, need to add them to existing References section or create new one
-            for k in range(2, len(subsections), 2):
-                if re.search("^===References===\n", subsections[k - 1]):
+            for k, header in subsecs.subsection_headers:
+                if header == "References" and subsecs.subsection_levels[k] == 3:
                     subsections[k] = subsections[k].rstrip("\n") + "\n" + added_ref_text
                     notes.append(
                         "add Italian pronun reference%s %s to existing ===References=== section"
@@ -356,7 +357,7 @@ def process_text_on_page(index, pagetitle, text):
                     break
             else:  # no break
                 k = len(subsections) - 1
-                while k >= 2 and re.search(r"==\s*(Anagrams|Further reading)\s*==", subsections[k - 1]):
+                while k >= 2 and subsecs.subsection_header_dict[k] in ["Anagrams", "Further reading"]:
                     k -= 2
                 if k < 2:
                     pagemsg("WARNING: No lemma or non-lemma section")
@@ -370,7 +371,7 @@ def process_text_on_page(index, pagetitle, text):
     if have_footnotes:
         # Need <references/>; check if already present
         for k in range(len(subsections) - 1, 2, -2):
-            if re.search(r"^===\s*References\s*===$", subsections[k - 1].strip()):
+            if subsecs.subsection_header_dict[k] == "References" and subsecs.subsection_levels[k] == 3:
                 if re.search(r"<references\s*/?\s*>", subsections[k]):
                     pagemsg("Already found <references /> in ===References=== section %s" % (k // 2))
                 else:
@@ -379,7 +380,7 @@ def process_text_on_page(index, pagetitle, text):
                 break
         else:  # no break
             k = len(subsections) - 1
-            while k >= 2 and re.search(r"==\s*(Anagrams|Further reading)\s*==", subsections[k - 1]):
+            while k >= 2 and subsecs.subsection_header_dict[k] in ["Anagrams", "Further reading"]:
                 k -= 2
             if k < 2:
                 pagemsg("WARNING: No lemma or non-lemma section")

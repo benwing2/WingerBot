@@ -6,8 +6,9 @@ from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
 from collections import defaultdict
 
-# blib.init_fake_langdata()
-lang_utils.get_all_lang_data()
+lang_utils.init_fake_lang_data()
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 
 def boolean_function_matches(fun, lang):
@@ -2331,8 +2332,8 @@ def process_text_on_page(index, pagename, text):
 
                 def replace_ttbc(m):
                     langcode = m.group(1)
-                    if langcode in lang_utils.languages_by_code:
-                        langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+                    if langcode in lang_data.languages_by_code:
+                        langname = lang_data.languages_by_code[langcode]["canonicalName"]
                         pagemsg("Replacing {{ttbc|%s}} with %s" % (langcode, langname))
                         notes.append(["replace ", "{{ttbc|%s}}->%s" % (langcode, langname), ""])
                         return langname
@@ -2345,8 +2346,8 @@ def process_text_on_page(index, pagename, text):
                 if m:
                     init, potential_lang, semicolon, rest = m.groups()
                     if (
-                        potential_lang in lang_utils.languages_by_canonical_name
-                        or potential_lang in lang_utils.etym_languages_by_canonical_name
+                        potential_lang in lang_data.languages_by_canonical_name
+                        or potential_lang in etym_lang_data.etym_languages_by_canonical_name
                     ):
                         if semicolon:
                             pagemsg("Replacing semicolon with colon after lang %s: %s" % (potential_lang, line))
@@ -2625,12 +2626,12 @@ def process_text_on_page(index, pagename, text):
 
         return [fmt_note(key) for key in uniq_notes]
 
-    notes = group_notes(notes)
-    notes = "translations: " + "; ".join(blib.group_notes(notes))
-    comment_len = len(notes.encode("utf-8"))
+    notes_str = group_notes(notes)
+    notes_str = "translations: " + "; ".join(blib.group_notes(notes))
+    comment_len = len(notes_str.encode("utf-8"))
     if comment_len > 500:
         pagemsg("WARNING: Comment length %s > 500: %s" % (comment_len, notes))
-    return text, notes
+    return text, notes_str
 
 
 parser = blib.create_argparser(

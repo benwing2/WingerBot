@@ -12,14 +12,14 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     # Add missing space between * and { in case of {{R:pl:WSJP}} or {{R:pl:PWN}} directly after * without space
+    secbody = modsec.secbody
     newsecbody = re.sub(r"^\*\{", "* {", secbody, 0, re.M)
     if newsecbody != secbody:
         notes.append("add missing space after bullet *")
@@ -56,36 +56,36 @@ def process_text_on_page(index, pagetitle, text):
             )
         return
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     # Check for templates in sections outside of 'Further reading'
-    for k in range(2, len(subsections), 2):
-        if not re.search("^==+Further reading==+\n", subsections[k - 1]):
+    for k, header in subsecs.subsection_headers:
+        if header != "Further reading":
             if "{{R:pl:WSJP}}" in subsections[k] or "{{R:pl:PWN}}" in subsections[k]:
-                if re.search("^==+References==+\n", subsections[k - 1]):
+                if header == "References":
                     pagemsg(
                         "WARNING: Saw {{R:pl:WSJP}} or {{R:pl:PWN}} in %s section, can't handle"
-                        % subsections[k - 1].strip()
+                        % header
                     )
                     return
                 else:
                     pagemsg(
                         "WARNING: Saw {{R:pl:WSJP}} or {{R:pl:PWN}} in %s section, need to review manually"
-                        % subsections[k - 1].strip()
+                        % header
                     )
 
     # Check for References or Further reading already present
-    for k in range(2, len(subsections), 2):
-        if re.search("^==+Further reading==+\n", subsections[k - 1]):
-            newsubsecval = "===Further reading===\n"
-            if subsections[k - 1] != newsubsecval:
+    for k, header in subsecs.subsection_headers:
+        if header == "Further reading":
+            if subsecs.subsection_levels[k] != 3:
                 for l in range(k + 2, len(subsections), 2):
-                    if not re.search("^===Anagrams===\n", subsections[l - 1]):
+                    if subsecs.subsection_header_dict[l] != "Anagrams":
                         pagemsg(
                             "WARNING: Saw level > 3 Further reading and a following non-Anagrams section %s, can't handle"
-                            % subsections[l - 1].strip()
+                            % subsecs.subsection_header_dict[l]
                         )
                         return
+                newsubsecval = "===Further reading===\n"
                 notes.append("replaced %s with level-3 %s" % (subsections[k - 1].strip(), newsubsecval.strip()))
                 subsections[k - 1] = newsubsecval
             newsubsec = re.sub(
@@ -121,7 +121,7 @@ def process_text_on_page(index, pagetitle, text):
             break
     else:  # no break
         k = len(subsections) - 1
-        while k >= 2 and re.search(r"==\s*Anagrams\s*==", subsections[k - 1]):
+        while k >= 2 and subsecs.subsection_header_dict[k] == "Anagrams":
             k -= 2
         if k < 2:
             pagemsg("WARNING: No lemma or non-lemma section")
@@ -129,10 +129,7 @@ def process_text_on_page(index, pagetitle, text):
         subsections[k + 1 : k + 1] = ["===Further reading===\n* {{R:pl:WSJP}}\n* {{R:pl:PWN}}\n\n"]
         notes.append("add new ===Further reading=== section to Polish lemma with {{R:pl:WSJP}} and {{R:pl:PWN}}")
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

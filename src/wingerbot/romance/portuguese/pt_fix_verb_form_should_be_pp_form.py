@@ -14,21 +14,20 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, None if args.partial_page else "Portuguese", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, None if args.partial_page else "Portuguese", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
-        if not re.search("==(Verb|Participle)==", subsections[k - 1]):
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header not in ["Verb", "Participle"]:
             continue
         parsed = blib.parse_text(subsections[k])
         must_continue = False
         headt = None
         form_of_t = None
         for t in parsed.filter_templates():
-
             def getp(param):
                 return getparam(t, param)
 
@@ -52,6 +51,11 @@ def process_text_on_page(index, pagetitle, text):
                     must_continue = True
                     break
                 form_of_t = t
+                if headt is None:
+                    pagemsg("WARNING: Saw {{pt-verb form of}} template without {{head|pt|...}} in section: %s" % origt)
+                    must_continue = True
+                    break
+
                 lemma = re.sub("<.*?>$", "", getp("1"))
                 if lemma.endswith("ar"):
                     stem = lemma[:-1] + "d"
@@ -75,7 +79,7 @@ def process_text_on_page(index, pagetitle, text):
                     blib.set_template_name(t, "past participle of")
                     t.add("1", "pt")
                     t.add("2", lemma)
-                    subsections[k - 1] = subsections[k - 1].replace("=Verb=", "=Participle=")
+                    subsections[k - 1] = subsections[k - 1].replace("Verb", "Participle")
                     notes.append("convert verb form for Portuguese lemma '%s' to past participle" % lemma)
                 elif re.search("(a|os|as)$", pagetitle):
                     pp_lemma = re.sub("[ao]s?$", "", pagetitle) + "o"
@@ -95,7 +99,7 @@ def process_text_on_page(index, pagetitle, text):
                         )
                     )
                     if newtn is None:
-                        raise ValueError(
+                        raise RuntimeError(
                             "Internal error: Something wrong, can't identify gender/number of page title '%s'"
                             % pagetitle
                         )
@@ -105,7 +109,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("2", pp_lemma)
                     headt.add("2", "past participle form")
                     headt.add("g", newg)
-                    subsections[k - 1] = subsections[k - 1].replace("=Verb=", "=Participle=")
+                    subsections[k - 1] = subsections[k - 1].replace("Verb", "Participle")
                     notes.append(
                         "convert verb form for Portuguese lemma '%s' to past participle form for past participle '%s'"
                         % (lemma, pp_lemma)
@@ -132,12 +136,8 @@ def process_text_on_page(index, pagetitle, text):
         if must_continue:
             continue
         subsections[k] = str(parsed)
-    secbody = "".join(subsections)
 
-    sections[j] = secbody + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

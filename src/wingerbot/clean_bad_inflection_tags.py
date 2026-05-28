@@ -1011,10 +1011,10 @@ def process_text_on_page(index, pagetitle, text):
             return convert_raw_section(text, args.langcode, infer_langcode=True)
         secs = blib.split_text_into_sections(text, pagemsg)
         for j, langname in secs.section_langs:
-            if langname not in lang_utils.languages_by_canonical_name:
+            if langname not in lang_data.languages_by_canonical_name:
                 pagemsg("WARNING: Unrecognized language %s" % langname)
             else:
-                langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+                langcode = lang_data.languages_by_canonical_name[langname]["code"]
                 newsection = convert_raw_section(secs.sections[j], langcode, infer_langcode=False)
                 secs.sections[j] = newsection
         return "".join(secs.sections)
@@ -1421,7 +1421,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.convert_raw:
-    lang_utils.get_all_lang_data()
+    lang_data = lang_utils.get_lang_data()
 
 
 def fetch_page_titles_and_text(textfile):

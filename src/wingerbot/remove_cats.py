@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 topics_templates = ["topics", "topic", "top", "c", "C", "catlangcode"]
 catlangname_templates = ["catlangname", "cln"]
@@ -61,11 +61,11 @@ def process_text_on_page(index, pagetitle, text):
                 elif tn in categorize_templates:
                     full_cat = cat
                 else:
-                    if lang not in lang_utils.languages_by_code:
+                    if lang not in lang_data.languages_by_code:
                         pagemsg("WARNING: Saw unrecognized language code '%s'" % lang)
                         return
                     else:
-                        full_cat = "%s %s" % (lang_utils.languages_by_code[lang]["canonicalName"], cat)
+                        full_cat = "%s %s" % (lang_data.languages_by_code[lang]["canonicalName"], cat)
                 if should_remove_cat(full_cat):
                     if full_cat not in removed_cats:
                         removed_cats.append(full_cat)

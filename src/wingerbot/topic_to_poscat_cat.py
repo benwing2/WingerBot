@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 parser = blib.create_argparser("Move categories based on a regex", include_pagefile=True, include_stdin=True)
 parser.add_argument(
@@ -41,7 +41,7 @@ for index, line in blib.iter_items_from_file(args.direcfile, start, end):
         linemsg("WARNING: Unrecognized line: %s" % line)
     else:
         langcode, cat = m.groups()
-        if langcode not in lang_utils.languages_by_code:
+        if langcode not in lang_data.languages_by_code:
             linemsg("WARNING: Unrecognized lang code '%s': %s" % (langcode, line))
             continue
         origcat = cat
@@ -49,5 +49,5 @@ for index, line in blib.iter_items_from_file(args.direcfile, start, end):
             cat = re.sub(fromre, tore, cat)
         msg(
             "Category:%s:%s ||| Category:%s %s"
-            % (langcode, origcat, lang_utils.languages_by_code[langcode]["canonicalName"], cat)
+            % (langcode, origcat, lang_data.languages_by_code[langcode]["canonicalName"], cat)
         )

@@ -6,7 +6,7 @@ from wingerbot.blib import msg
 from collections import defaultdict
 
 # blib.init_fake_langdata()
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 languages = []
 
@@ -22,10 +22,10 @@ def process_text_on_page(index, pagename, text):
         pagemsg("WARNING: Page is not a language category")
     else:
         langname = m.group(1)
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language name '%s'" % langname)
         else:
-            languages.append((lang_utils.languages_by_canonical_name[langname]["code"], langname))
+            languages.append((lang_data.languages_by_canonical_name[langname]["code"], langname))
 
 
 if __name__ == "__main__":

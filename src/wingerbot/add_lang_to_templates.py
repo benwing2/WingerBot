@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -19,11 +19,11 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     def hack_templates(parsed, langname, langnamecode=None, is_citation=False):
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             if not is_citation:
                 langnamecode = None
         else:
-            langnamecode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langnamecode = lang_data.languages_by_canonical_name[langname]["code"]
 
         for t in parsed.filter_templates():
             origt = str(t)

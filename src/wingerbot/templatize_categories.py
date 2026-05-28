@@ -150,17 +150,17 @@ if __name__ == "__main__":
     if not langcode and not langname:
         raise ValueError("Either --langcode or --langname must be specified")
     if not langcode:
-        lang_utils.get_all_lang_data()
-        if langname not in lang_utils.languages_by_canonical_name:
+        lang_data = lang_utils.get_lang_data()
+        if langname not in lang_data.languages_by_canonical_name:
             msg("WARNING: Unknown language name %s" % langname)
         else:
-            langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langcode = lang_data.languages_by_canonical_name[langname]["code"]
     elif not langname:
-        lang_utils.get_all_lang_data()
-        if langcode not in lang_utils.languages_by_code:
+        lang_data = lang_utils.get_lang_data()
+        if langcode not in lang_data.languages_by_code:
             msg("WARNING: Unknown language code %s" % langcode)
         else:
-            langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+            langname = lang_data.languages_by_code[langcode]["canonicalName"]
 
     if langcode and langname:
 

@@ -8,7 +8,7 @@ from typing import Any, Callable
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 
 class Fields:
@@ -134,8 +134,8 @@ def process_text_on_page_for_label_objects(index, pagename, text):
         m = re.search("^Module:(.*):Dialects$", pagename)
     if m:
         langcode = m.group(1)
-        if langcode in lang_utils.languages_by_code:
-            langname = lang_utils.languages_by_code[langcode]["canonicalName"]
+        if langcode in lang_data.languages_by_code:
+            langname = lang_data.languages_by_code[langcode]["canonicalName"]
         else:
             errandpagemsg("WARNING: Can't locate language %s" % langcode)
 
@@ -739,7 +739,7 @@ if __name__ == "__main__":
             m = re.search("^Module:(.*):Dialects$", module_name)
             if m:
                 code = m.group(1)
-                if code not in lang_utils.languages_by_code:
+                if code not in lang_data.languages_by_code:
                     errandpagemsg("WARNING: Can't locate language %s, skipping entire file" % code)
                     continue
             else:

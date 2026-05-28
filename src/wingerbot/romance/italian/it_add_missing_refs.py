@@ -4,7 +4,6 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
-from wingerbot import infltags
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -13,14 +12,13 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    parsed = blib.parse_text(secbody)
+    parsed = blib.parse_text(modsec.secbody)
     needs_refs = False
 
     for t in parsed.filter_templates():
@@ -41,15 +39,16 @@ def process_text_on_page(index, pagetitle, text):
                 needs_refs = True
 
     if needs_refs:
-        if re.search(r"(<references\s*/?\s*>|\{\{reflist)", secbody):
+        if re.search(r"(<references\s*/?\s*>|\{\{reflist)", modsec.secbody):
             pagemsg("Already saw <references /> or {{reflist}}")
             return
 
-        subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+        subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+        subsections = subsecs.subsections
 
         saw_references_sec = False
-        for k in range(2, len(subsections), 2):
-            if re.search(r"^===*\s*References\s*===* *\n", subsections[k - 1]):
+        for k, header in subsecs.subsection_headers:
+            if header == "References":
                 if saw_references_sec:
                     pagemsg("WARNING: Saw two ===References=== sections")
                 else:
@@ -59,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if not saw_references_sec:
             k = len(subsections) - 1
-            while k >= 2 and re.search(r"==\s*(Anagrams|Further reading)\s*==", subsections[k - 1]):
+            while k >= 2 and subsecs.subsection_header_dict[k] in ["Anagrams", "Further reading"]:
                 k -= 2
             if k < 2:
                 pagemsg("WARNING: No lemma or non-lemma section")
@@ -69,10 +68,7 @@ def process_text_on_page(index, pagetitle, text):
 
         secbody = "".join(subsections)
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

@@ -97,9 +97,9 @@ def process_text_on_page(index, pagetitle, pagetext):
     if blib.page_should_be_ignored(pagetitle):
         return
 
-    m = re.search(r"\A(.*?)(\n*)\Z", pagetext, re.S)
-    pagetext_nonl, finalnl = m.groups()
-    pagetext = pagetext_nonl + "\n\n"
+    modsec = blib.find_modifiable_lang_section(pagetext, None, pagemsg, force_final_nls=True)
+    if modsec is None:
+        return
 
     def do_sectext(sectext, do_infl_of):
         tname_re = r"(?:inflection of\|pt|infl of\|pt)" if do_infl_of else "pt-verb[ -]form[ -]of"
@@ -237,35 +237,29 @@ def process_text_on_page(index, pagetitle, pagetext):
         return "".join(chunks)
 
     # First do {{pt-verb form of}} and {{pt-verb-form-of}}.
-    pagetext = do_sectext(pagetext, do_infl_of=False)
+    secbody = do_sectext(modsec.secbody, do_infl_of=False)
 
     # Then do {{inflection of}}. Do this second; if we do it first, the resulting new-style {{pt-verb form of}}
     # triggers a needless warning.
-    subsections = re.split("(^==+[^=\n]+==+\n)", pagetext, 0, re.M)
-    for k in range(2, len(subsections), 2):
-        if "=Verb=" in subsections[k - 1] and re.search(r"\{\{head\|pt\|verb form[|}]", subsections[k]):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Verb" and re.search(r"\{\{head\|pt\|verb form[|}]", subsections[k]):
             parsed = blib.parse_text(subsections[k])
-            must_continue = False
             for t in parsed.filter_templates():
                 tn = tname(t)
                 if tn in ["pt-verb", "pt-conj"]:
                     pagemsg("WARNING: Saw verb form along with verb, skipping: %s" % (str(t)))
-                    must_continue = True
                     break
                 if tn == "head" and getparam(t, "1") != "pt":
                     pagemsg("WARNING: Saw {{head}} for wrong language, skipping: %s" % (str(t)))
-                    must_continue = True
                     break
                 if tn == "head" and getparam(t, "2") != "verb form":
                     pagemsg("WARNING: Saw {{head}} for wrong part of speech, skipping: %s" % (str(t)))
-                    must_continue = True
                     break
                 subsections[k] = do_sectext(subsections[k], do_infl_of=True)
-    pagetext = "".join(subsections)
 
-    pagetext = pagetext.rstrip("\n") + finalnl
-
-    return pagetext, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

@@ -13,7 +13,7 @@ headers_to_swap = [
     "Anagrams",
 ]
 
-headers_to_swap_regex = "(%s)" % "|".join(headers_to_swap)
+headers_to_swap_regex = "^(%s)$" % "|".join(headers_to_swap)
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -22,20 +22,20 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "English", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    subsection_header_dict = subsecs.subsection_header_dict
     for k in range(1, len(subsections) - 2, 2):
-        if re.search(r"==%s==" % headers_to_swap_regex, subsections[k]) and re.search(
-            "==Translations==", subsections[k + 2]
+        if re.search(headers_to_swap_regex, subsection_header_dict[k + 1]) and (
+            subsection_header_dict[k + 3] == "Translations"
         ):
-            notes.append("swap %s and %s sections" % (subsections[k].strip(), subsections[k + 2].strip()))
+            notes.append("swap %s and %s sections" % (subsection_header_dict[k + 1], subsection_header_dict[k + 3]))
             temp = subsections[k]
             subsections[k] = subsections[k + 2]
             subsections[k + 2] = temp
@@ -43,11 +43,7 @@ def process_text_on_page(index, pagetitle, text):
             subsections[k + 1] = subsections[k + 3]
             subsections[k + 3] = temp
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Swap misordered Translations sections", include_pagefile=True, include_stdin=True)

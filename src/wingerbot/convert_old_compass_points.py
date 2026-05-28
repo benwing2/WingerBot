@@ -6,7 +6,7 @@ from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 from wingerbot.convert_col_top_topN_to_col import simplify_link, convert_one_line
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -78,10 +78,10 @@ def process_text_on_page(index, pagetitle, text):
             if not lang:
                 pagemsg("WARNING: Found {{compass}} without language code: %s" % origt)
                 continue
-            if lang not in lang_utils.languages_by_code:
+            if lang not in lang_data.languages_by_code:
                 pagemsg("WARNING: Unknown language code %s in {{compass}}: %s" % (lang, origt))
                 continue
-            langname = lang_utils.languages_by_code[lang]["canonicalName"]
+            langname = lang_data.languages_by_code[lang]["canonicalName"]
 
             def process_direction(direc):
                 terms = []

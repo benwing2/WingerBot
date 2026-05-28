@@ -9,8 +9,10 @@ from wingerbot import lang_utils
 
 # Comment out to load latest data on-the-fly
 lang_utils.load_all_lang_data("langdata.json")
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
-etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+etym_language_to_parent = lang_utils.get_etym_language_to_parent()
 language_name_to_code = lang_utils.get_language_name_to_code()
 
 
@@ -205,9 +207,9 @@ def process_text_on_page(index, pagetitle, pagetext):
                 if (langname, template_langcode) in lang_utils.langcode_langname_to_correct_langcode:
                     new_langcode = lang_utils.langcode_langname_to_correct_langcode[(langname, template_langcode)]
                     if new_langcode == template_langcode:
-                        if template_langcode in lang_utils.languages_by_code:
-                            new_langname = lang_utils.languages_by_code[template_langcode]["canonicalName"]
-                        elif template_langcode in lang_utils.etym_languages_by_code:
+                        if template_langcode in lang_data.languages_by_code:
+                            new_langname = lang_data.languages_by_code[template_langcode]["canonicalName"]
+                        elif template_langcode in etym_lang_data.etym_languages_by_code:
                             pagemsg(
                                 "WARNING: Encountered template langcode %s that's an etymology language: %s"
                                 % (template_langcode, origtext)
@@ -275,24 +277,12 @@ def process_text_on_page(index, pagetitle, pagetext):
         pagemsg("Replacing <%s> with <%s>" % (origtext, newtext))
         return newtext
 
-    if args.do_all_sections:
-        pagehead = ""
-        sections = [pagetext]
-    else:
-        # Split into (sub)sections
-        splitsections = re.split("(^===*[^=\n]+=*==\n)", pagetext, 0, re.M)
-        # Extract off pagehead and recombine section headers with following text
-        pagehead = splitsections[0]
-        sections = []
-        for i in range(1, len(splitsections)):
-            if (i % 2) == 1:
-                sections.append("")
-            sections[-1] += splitsections[i]
-
+    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsections = subsecs.subsections
     # Go through each section in turn, looking for Descendants sections
-    for i in range(len(sections)):
-        if args.do_all_sections or re.match("^===*Descendants=*==\n", sections[i]):
-            text = sections[i]
+    for k, header in subsecs.subsection_headers:
+        if args.do_all_sections or header == "Descendants":
+            text = subsections[k]
             text = re.sub(
                 r"^(\*+:?)( *(?:→ *)?)(Serbo-Croat(?:ian):|\{\{desc(?:\|.*?)?\|sh(?:\|.*?)?\|-(?:\|.*?)?\}\})((?:\n\1[*:] *(?:Latin|Roman|Cyrillic): *(?:\[\[[^\[\]\n]*?\]\]|\{\{[lm]\|sh\|[^{}\n]*?\}\}))+)",
                 replace_serbo_croatian_with_desc,
@@ -307,9 +297,9 @@ def process_text_on_page(index, pagetitle, pagetext):
                 0,
                 re.M,
             )
-            sections[i] = text
+            subsections[k] = text
 
-    return pagehead + "".join(sections), "Use {{desc}} for descendants in place of LANG {{l|CODE|...}} or LANG [[LINK]]"
+    return "".join(subsections), "Use {{desc}} for descendants in place of LANG {{l|CODE|...}} or LANG [[LINK]]"
 
 
 parser = blib.create_argparser(

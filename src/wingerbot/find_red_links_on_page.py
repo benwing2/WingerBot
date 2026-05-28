@@ -15,17 +15,17 @@ punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode) if unicodedata
 
 # WARNING: May not work any more.
 def fast_remove_diacritics(text, langcode):
-    if langcode not in lang_utils.languages_by_code:
+    if langcode not in lang_data.languages_by_code:
         return text
-    if "entryNamePatterns" in lang_utils.languages_by_code[langcode]:
-        for entry in lang_utils.languages_by_code[langcode]["entryNamePatterns"]:
+    if "entryNamePatterns" in lang_data.languages_by_code[langcode]:
+        for entry in lang_data.languages_by_code[langcode]["entryNamePatterns"]:
             from_ = entry["from"]
             from_ = from_.replace("%p", "[" + punc_chars + "]")
             to_ = entry["to"]
             to_ = re.sub("%([0-9]+)", r"\\\1", to_)
             text = re.sub(from_, to_, text)
-    if "entryNameRemoveDiacritics" in lang_utils.languages_by_code[langcode]:
-        diacritics_to_remove = lang_utils.languages_by_code[langcode]["entryNameRemoveDiacritics"]
+    if "entryNameRemoveDiacritics" in lang_data.languages_by_code[langcode]:
+        diacritics_to_remove = lang_data.languages_by_code[langcode]["entryNameRemoveDiacritics"]
         text = unicodedata.normalize(
             "NFC", re.sub("[" + diacritics_to_remove + "]", "", unicodedata.normalize("NFD", text))
         )
@@ -78,10 +78,10 @@ def process_text_on_page(index, pagetitle, text):
             for t in parsed.filter_templates():
                 if tname(t) in templates:
                     lang = getparam(t, "1")
-                    if lang not in lang_utils.languages_by_code:
+                    if lang not in lang_data.languages_by_code:
                         pagemsg("WARNING: Unrecognized language code %s" % lang)
                         continue
-                    langname = lang_utils.languages_by_code[lang]["canonicalName"]
+                    langname = lang_data.languages_by_code[lang]["canonicalName"]
                     term = getparam(t, "2")
                     pagenm = remove_diacritics(term, lang)
                     if not pagenm:
@@ -109,7 +109,7 @@ if args.check_raw_links and not args.langname:
     raise ValueError("--langname must be specified if --check-raw-links specified")
 if args.templates:
     templates = args.templates.split(",")
-    lang_utils.get_all_lang_data()
+    lang_data = lang_utils.get_lang_data()
 else:
     templates = []
 

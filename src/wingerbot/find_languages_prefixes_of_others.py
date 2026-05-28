@@ -6,13 +6,14 @@ from collections import defaultdict
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
-# lang_utils.init_fake_lang_data()
-lang_utils.get_all_lang_data()
-# lang_utils.load_all_lang_data("langdata.json")
+lang_utils.init_fake_lang_data()
+#lang_utils.load_all_lang_data("langdata.json")
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 all_langs = sorted(
-    [(x, "full") for x in lang_utils.languages_by_canonical_name.keys()]
-    + [(x, "etym") for x in lang_utils.etym_languages_by_canonical_name.keys()]
+    [(x, "full") for x in lang_data.languages_by_canonical_name.keys()]
+    + [(x, "etym") for x in etym_lang_data.etym_languages_by_canonical_name.keys()]
 )
 prevs = []
 for i in range(len(all_langs)):

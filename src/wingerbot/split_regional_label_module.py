@@ -9,7 +9,7 @@ from wingerbot.blib import msg, errandmsg
 from wingerbot import clean_label_module
 from wingerbot.clean_label_module import LabelData, Field, FieldReference
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 existing_langs_seen = set()
 
@@ -170,7 +170,7 @@ else:
             words = cat.split(" ")
             for i in range(len(words) - 1, 0, -1):
                 lang_suffix = " ".join(words[i:])
-                if lang_suffix in lang_utils.languages_by_canonical_name:
+                if lang_suffix in lang_data.languages_by_canonical_name:
                     prefix = " ".join(words[:i])
                     langs_by_category_prefix[prefix].append(lang_suffix)
                     category_prefixes[cat].append((prefix, lang_suffix))
@@ -206,13 +206,13 @@ else:
                             regcat not in langs_by_category_prefix
                             and "NONE"
                             or ", ".join(
-                                "%s (%s)" % (lang_utils.languages_by_canonical_name[lang]["code"], lang)
+                                "%s (%s)" % (lang_data.languages_by_canonical_name[lang]["code"], lang)
                                 for lang in langs_by_category_prefix[regcat]
                             ),
                         )
                     )
                     for lang in langs_by_category_prefix[regcat]:
-                        langs_for_label.add(lang_utils.languages_by_canonical_name[lang]["code"])
+                        langs_for_label.add(lang_data.languages_by_canonical_name[lang]["code"])
                 for plaincat in labelobj.plain_categories.cats:
                     plaincat = canon_cat(plaincat)
                     pagemsg(
@@ -223,13 +223,13 @@ else:
                             plaincat not in category_prefixes
                             and "NONE"
                             or ", ".join(
-                                "%s (%s=%s)" % (prefix, lang_utils.languages_by_canonical_name[lang]["code"], lang)
+                                "%s (%s=%s)" % (prefix, lang_data.languages_by_canonical_name[lang]["code"], lang)
                                 for prefix, lang in category_prefixes[plaincat]
                             ),
                         )
                     )
                     for prefix, lang in category_prefixes[plaincat]:
-                        langs_for_label.add(lang_utils.languages_by_canonical_name[lang]["code"])
+                        langs_for_label.add(lang_data.languages_by_canonical_name[lang]["code"])
                 langs_for_label = sorted(list(langs_for_label))
             elif hasattr(labelobj.fields, "langs"):
                 langs_for_label = labelobj.fields.langs.value
@@ -280,7 +280,7 @@ else:
                             "WARNING: For language %s (%s), regional label '%s' seen more than once as label or alias%s"
                             % (
                                 (
-                                    lang_utils.languages_by_canonical_name[lang]["code"],
+                                    lang_data.languages_by_canonical_name[lang]["code"],
                                     lang,
                                     labelobj.label,
                                     (

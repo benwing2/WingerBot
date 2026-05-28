@@ -5,10 +5,11 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site
 
-lang_utils.get_all_lang_data()
+family_data = lang_utils.get_family_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 # Compile a map from etym language code to its first non-etym-language ancestor.
-etym_language_to_parent = lang_utils.get_etym_language_to_parent_map()
+etym_language_to_parent = lang_utils.get_etym_language_to_parent()
 
 
 def process_text_on_page(index, pagetitle, pagetext):
@@ -20,22 +21,15 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     notes = []
 
-    # Split into (sub)sections
-    splitsections = re.split("(^===*[^=\n]+=*==\n)", pagetext, 0, re.M)
-    # Extract off pagehead and recombine section headers with following text
-    pagehead = splitsections[0]
-    sections = []
-    for i in range(1, len(splitsections)):
-        if (i % 2) == 1:
-            sections.append("")
-        sections[-1] += splitsections[i]
+    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsections = subsecs.subsections
 
     def m_und_uder(m):
         destcode, sourcecode, term_code = m.groups()
         origtext = m.group(0)
         if (
-            destcode in lang_utils.families_by_code
-            or etym_language_to_parent.get(destcode, "NONE") in lang_utils.families_by_code
+            destcode in family_data.families_by_code
+            or etym_language_to_parent.get(destcode, "NONE") in family_data.families_by_code
         ):
             pass
         else:
@@ -62,10 +56,10 @@ def process_text_on_page(index, pagetitle, pagetext):
         if etym_langcode != m_langcode:
             display_msg = False
             if (
-                etym_langcode in lang_utils.etym_languages_by_code
-                and m_langcode in lang_utils.etym_languages_by_code
-                and lang_utils.etym_languages_by_code[etym_langcode]["canonicalName"]
-                == lang_utils.etym_languages_by_code[m_langcode]["canonicalName"]
+                etym_langcode in etym_lang_data.etym_languages_by_code
+                and m_langcode in etym_lang_data.etym_languages_by_code
+                and etym_lang_data.etym_languages_by_code[etym_langcode]["canonicalName"]
+                == etym_lang_data.etym_languages_by_code[m_langcode]["canonicalName"]
             ):
                 pagemsg(
                     "Saw etym lang %s in {{etyl}} and etym lang %s in {{m}}, which are aliases of each other"
@@ -101,50 +95,35 @@ def process_text_on_page(index, pagetitle, pagetext):
         return newtext
 
     # Go through each section in turn, looking for Etymology sections
-    for i in range(len(sections)):
-        if re.match("^===*Etymology( [0-9]+)?=*==", sections[i]):
-            text = sections[i]
+    for k, header in subsecs.subsection_headers:
+        if re.match("^Etymology( [0-9]+)?$", header):
+            sectext = subsections[k]
             # First try for {{etyl|DESTFAMILY|SOURCE}} {{m|und|...
-            while True:
-                new_text = re.sub(
+            sectext = blib.rsub_repeatedly(
                     r"\{\{etyl\|([A-Za-z0-9.-]+)\|([A-Za-z0-9.-]+)\}\}( +\{\{(?:m|mention)\|und\|)",
                     m_und_uder,
-                    text,
+                    sectext,
                     0,
                     re.M,
                 )
-                if new_text == text:
-                    break
-                sections[i] = new_text
-                text = new_text
-            # First try for {{etyl|DEST|SOURCE}} {{m|SOURCE|...
-            while True:
-                new_text = re.sub(
+            # Then try for {{etyl|DEST|SOURCE}} {{m|SOURCE|...
+            sectext = blib.rsub_repeatedly(
                     r"(\{\{etyl\|[A-Za-z0-9.-]+\|[A-Za-z0-9.-]+\}\})(?: +\{\{(?:m|mention)\|)([A-Za-z0-9.-]+)(\|)",
                     replace_with_uder,
-                    text,
+                    sectext,
                     0,
                     re.M,
                 )
-                if new_text == text:
-                    break
-                sections[i] = new_text
-                text = new_text
             # Then do remaining {{etyl|DEST|SOURCE}} not followed by {{m|...
-            while True:
-                new_text = re.sub(
+            sectext = blib.rsub_repeatedly(
                     r"\{\{etyl\|([A-Za-z0-9.-]+)\|([A-Za-z0-9.-]+)\}\}(?! +\{\{(?:m|mention)\|)",
                     swap_etyl_uder,
-                    text,
+                    sectext,
                     0,
                     re.M,
                 )
-                if new_text == text:
-                    break
-                sections[i] = new_text
-                text = new_text
 
-    return pagehead + "".join(sections), notes
+    return "".join(subsections), notes
 
 
 if __name__ == "__main__":

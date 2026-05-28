@@ -396,17 +396,18 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("WARNING: Not mainspace, not changing")
         return
 
-    m = re.search(r"\A(.*?)(\n*)\Z", text, re.S)
-    text, text_finalnl = m.groups()
-    text += "\n\n"
+    modsec = blib.find_modifiable_lang_section(text, None, pagemsg, force_final_nls=True)
+    if modsec is None:
+        return
+    text = modsec.secbody
 
     if args.partial_page:
         if re.search("^==[^\n=]*==$", text, re.M):
             pagemsg("WARNING: --partial-page specified but saw an L2 header, skipping")
             return
         check_for_bad_etym_sections(text, pagemsg)
-        newtext, notes = check_for_bad_subsections(text, pagetitle, pagemsg, None)
-        return newtext.rstrip("\n") + text_finalnl, notes
+        newtext, notes = check_for_bad_subsections(modsec.secbody, pagetitle, pagemsg, None)
+        return modsec.rebuild(secbody=newtext), notes
 
     notes = []
     # Correct extraneous spaces in L2 headers and prepare for sorting by language.
@@ -480,7 +481,7 @@ def process_text_on_page(index, pagetitle, text):
         newsection, this_notes = check_for_bad_subsections(sections[j], pagetitle, pagemsg, langname)
         sections[j] = newsection
         notes.extend(this_notes)
-    return "".join(sections).rstrip("\n") + text_finalnl, notes
+    return modsec.rebuild(secbody="".join(sections)), notes
 
 
 parser = blib.create_argparser("Find misformatted sections of various sorts", include_pagefile=True, include_stdin=True)

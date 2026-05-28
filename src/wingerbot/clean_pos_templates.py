@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 templates = ["pos a", "pos adj", "pos adv", "pos adverb", "pos n", "pos noun", "pos v", "pos verb"]
 
@@ -30,10 +30,10 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
 
     for j, langname in secs.section_langs:
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             langnamecode = None
         else:
-            langnamecode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langnamecode = lang_data.languages_by_canonical_name[langname]["code"]
 
         def replace_raw_pos(m):
             if not langnamecode:

@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -16,21 +16,21 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
     for j, thislangname in secs.section_langs:
-        if thislangname not in lang_utils.languages_by_canonical_name:
+        if thislangname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized section lang %s" % thislangname)
             continue
-        thislangcode = lang_utils.languages_by_canonical_name[thislangname]["code"]
+        thislangcode = lang_data.languages_by_canonical_name[thislangname]["code"]
 
         def replace_name_translit(m):
             origline = m.group(0)
             source_lang, name_type, template, period = m.groups()
-            if source_lang not in lang_utils.languages_by_canonical_name:
+            if source_lang not in lang_data.languages_by_canonical_name:
                 pagemsg(
                     "WARNING: Unrecognized source lang %s, can't parse: <from> %s <to> %s <end>"
                     % (source_lang, origline, origline)
                 )
                 return origline
-            source_lang_code = lang_utils.languages_by_canonical_name[source_lang]["code"]
+            source_lang_code = lang_data.languages_by_canonical_name[source_lang]["code"]
             parsed = blib.parse_text(template)
             t = list(parsed.filter_templates())[0]
             lang = getparam(t, "1")

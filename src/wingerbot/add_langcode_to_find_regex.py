@@ -6,7 +6,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -21,10 +21,10 @@ def process_text_on_page(index, pagetitle, text):
     sections = secs.sections
 
     for j, langname in secs.section_langs:
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Can't find language %s" % langname)
             continue
-        langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+        langcode = lang_data.languages_by_canonical_name[langname]["code"]
         newsectext = re.sub(r"\b%s\b" % args.langcode_var, langcode, sections[j])
         if newsectext != sections[j]:
             notes.append(args.comment or "replace %s with %s" % (args.langcode_var, langcode))

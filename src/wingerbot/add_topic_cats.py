@@ -5,7 +5,7 @@ import re
 from wingerbot import blib, lang_utils, templatize_categories
 from wingerbot.blib import getparam, rmparam, msg, tname
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys):
@@ -22,10 +22,10 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
     sort_key = japanese_sort_keys.get(pagetitle, "")
 
     for lang, cats in cats_to_add[pagetitle]:
-        if lang not in lang_utils.languages_by_code:
+        if lang not in lang_data.languages_by_code:
             pagemsg("WARNING: Saw unrecognized language code '%s'" % lang)
             continue
-        langname = lang_utils.languages_by_code[lang]["canonicalName"]
+        langname = lang_data.languages_by_code[lang]["canonicalName"]
         modsec = blib.find_modifiable_lang_section(text, langname, pagemsg)
         if modsec is None:
             continue

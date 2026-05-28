@@ -104,20 +104,15 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     if pagetitle.startswith("Rhymes:Italian/"):
-        sections = [text]
-        j = 0
-        secbody = text
-        sectail = ""
-        has_non_lang = False
+        modsec = blib.find_modifiable_lang_section(text, None, pagemsg)
     else:
-        retval = blib.find_modifiable_lang_section(text, "Italian", pagemsg)
-        if retval is None:
-            return
-        sections, j, secbody, sectail, has_non_lang = retval.props()
+        modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg)
+    if modsec is None:
+        return
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         it_stress_template = None
         it_hyph_template = None
@@ -145,7 +140,7 @@ def process_text_on_page(index, pagetitle, text):
         if do_continue:
             continue
         if not it_stress_template:
-            if "==Pronunciation==" in subsections[k - 1]:
+            if header == "Pronunciation":
                 pagemsg("No it-stress template in Pronunciation section")
             continue
         if not it_hyph_template:
@@ -204,9 +199,7 @@ def process_text_on_page(index, pagetitle, text):
             subsections[k] = subsec_k
             notes.append("transfer accent from {{it-stress}} to {{hyph|it}} and remove {{it-stress}}")
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

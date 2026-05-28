@@ -7,7 +7,7 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 borrowed_langs = {}
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -17,11 +17,11 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     def hack_templates(parsed, langname, subsectitle, langnamecode=None, is_citation=False):
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             if not is_citation:
                 langnamecode = None
         else:
-            langnamecode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langnamecode = lang_data.languages_by_canonical_name[langname]["code"]
 
         for t in parsed.filter_templates():
             origt = str(t)
@@ -89,7 +89,7 @@ def process_text_on_page(index, pagetitle, text):
                 subsecs.subsections[k] = str(parsed)
             secs.sections[j] = "".join(subsecs.subsections)
     else:
-        # Citation section?
+        # Citation page
         langnamecode = None
         for j, langname in [(0, "Unknown")] + secs.section_langs:
             parsed = blib.parse_text(secs.sections[j])

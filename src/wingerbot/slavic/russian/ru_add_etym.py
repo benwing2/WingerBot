@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from typing import NoReturn
+
 import pywikibot, re
 from wingerbot import blib
 from wingerbot.blib import site, msg, errmsg, errandmsg, group_notes
@@ -45,11 +47,11 @@ def do_split(sep, text, maxsplit=0):
     return [re.sub(r"\\(%s)" % sep, r"\1", elem) for elem in elems]
 
 
-def process_line(index, line, add_passive_of, override_etym, save, verbose):
-    def error(text):
+def process_line(index, line):
+    def error(text) -> NoReturn:
         errmsg("ERROR: Processing line: %s" % line)
         errmsg("ERROR: %s" % text)
-        assert False
+        raise RuntimeError("Internal error: %s" % text)
 
     def check_stress(word):
         word = re.sub(r"|.*", "", word)
@@ -62,6 +64,7 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
     # Skip lines consisting entirely of comments
     if line.startswith("#"):
         return
+    override_etym = args.override_etym
     if line.startswith("!"):
         override_etym = True
         line = line[1:]
@@ -84,7 +87,6 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -96,9 +98,7 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
         etymtext = "===Etymology===\n{{rfe|ru}}\n\n"
     elif etym == "--":
         etymtext = ""
-    elif re.search(r"^(part|adj|partadj)([fnp]):", etym):
-        # FIXME! This branch doesn't currently work.
-        m = re.search(r"^(part|adj|partadj)([fnp]):(.*)", etym)
+    elif (m := re.search(r"^(part|adj|partadj)([fnp]):(.*)$", etym)) is not None:
         forms = {"f": ["nom|f|s"], "n": ["nom|n|s", "acc|n|s"], "p": ["nom|p", "in|acc|p"]}
         infleclines = ["# {{inflection of|ru|%s||%s}}" % (m.group(3), form) for form in forms[m.group(2)]]
         if m.group(1) in ["adj", "partadj"]:
@@ -150,7 +150,7 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
             else:
                 prefix = ""
             m = re.search(r"^([a-zA-Z.-]+):(.*)", etym)
-            if not m:
+            if m is None:
                 error("Bad etymology form: %s" % etym)
             etymtext = "%s{{bor+|ru|%s|%s%s}}." % (prefix, m.group(1), m.group(2), "|nocap=1" if nocap else "")
         else:
@@ -183,74 +183,46 @@ def process_line(index, line, add_passive_of, override_etym, save, verbose):
         pagemsg("Page doesn't exist, can't add etymology")
         return
 
-    pagemsg("Adding etymology")
-    notes = []
-    pagetext = str(page.text)
+    def process_page(index, page):
+        pagemsg("Adding etymology")
+        notes = []
 
-    # Split into sections
-    splitsections = re.split("(^==[^=\n]+==\n)", pagetext, 0, re.M)
-    # Extract off pagehead and recombine section headers with following text
-    pagehead = splitsections[0]
-    sections = []
-    for i in range(1, len(splitsections)):
-        if (i % 2) == 1:
-            sections.append("")
-        sections[-1] += splitsections[i]
+        pagetext = blib.safe_page_text(page, errandpagemsg)
 
-    # Go through each section in turn, looking for existing Russian section
-    for i in range(len(sections)):
-        m = re.match("^==([^=\n]+)==$", sections[i], re.M)
-        if not m:
-            pagemsg("Can't find language name in text: [[%s]]" % (sections[i]))
-        elif m.group(1) == "Russian":
-            if override_etym:
-                subsections = re.split("(^===+[^=\n]+===+\n)", sections[i], 0, re.M)
+        modsec = blib.find_modifiable_lang_section(pagetext, "Russian", pagemsg)
+        if modsec is None:
+            return
 
-                replaced_etym = False
-                for j in range(2, len(subsections), 2):
-                    if "==Etymology==" in subsections[j - 1] or "==Etymology 1==" in subsections[j - 1]:
-                        subsections[j] = etymbody
-                        replaced_etym = True
-                        break
-
-                if replaced_etym:
-                    sections[i] = "".join(subsections)
-                    newtext = "".join(sections)
-                    notes.append("replace Etymology section in Russian lemma with manually specified etymology")
+        subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+        subsections = subsecs.subsections
+        replaced_etym = False
+        for k, header in subsecs.subsection_headers:
+            if header in ["Etymology", "Etymology 1"]:
+                if override_etym:
+                    subsections[k] = etymbody
+                    replaced_etym = True
                     break
+                else:
+                    errandpagemsg("WARNING: Already found etymology, skipping")
+                    return
+        if replaced_etym:
+            return modsec.rebuild(secbody="".join(subsections)), notes
 
-            if "==Etymology==" in sections[i] or "==Etymology 1==" in sections[i]:
-                errandpagemsg("WARNING: Already found etymology, skipping")
-                return
+        insert_before = 1
+        if subsecs.subsection_header_dict[insert_before + 1] == "Alternative forms":
+            insert_before += 2
 
-            subsections = re.split("(^===+[^=\n]+===+\n)", sections[i], 0, re.M)
+        subsections[insert_before : insert_before] = etymtext
+        secbody = "".join(subsections)
+        if args.add_passive_of:
+            active_term = rulib.remove_monosyllabic_accents(re.sub("с[яь]$", "", accented_term))
+            secbody = re.sub(r"(^(#.*\n)+)", r"\1# {{passive of|ru|%s}}\n" % active_term, secbody, 1, re.M)
 
-            insert_before = 1
-            if "===Alternative forms===" in subsections[insert_before]:
-                insert_before += 2
+        notes.append("add (manually specified) Etymology section to Russian lemma")
 
-            subsections[insert_before] = etymtext + subsections[insert_before]
-            sections[i] = "".join(subsections)
-            if add_passive_of:
-                active_term = rulib.remove_monosyllabic_accents(re.sub("с[яь]$", "", accented_term))
-                sections[i] = re.sub(r"(^(#.*\n)+)", r"\1# {{passive of|ru|%s}}\n" % active_term, sections[i], 1, re.M)
+        return modsec.rebuild(secbody=secbody), notes
 
-            newtext = pagehead + "".join(sections)
-            notes.append("add (manually specified) Etymology section to Russian lemma")
-            break
-    else:
-        errandpagemsg("WARNING: Can't find Russian section, skipping")
-        return
-
-    if newtext != pagetext:
-        if verbose:
-            pagemsg("Replacing <%s> with <%s>" % (pagetext, newtext))
-        assert notes
-        comment = "; ".join(group_notes(notes))
-        if save:
-            blib.safe_page_save(page, comment, errandpagemsg)
-        else:
-            pagemsg("Would save with comment = %s" % comment)
+    blib.do_edit(index, page, process_page, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 parser = blib.create_argparser(
@@ -263,4 +235,4 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
-    process_line(lineno, line, args.add_passive_of, args.override_etym, args.save, args.verbose)
+    process_line(lineno, line)

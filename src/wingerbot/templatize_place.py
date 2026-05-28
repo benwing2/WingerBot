@@ -156,7 +156,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 place_qualifiers = [
     "small",
@@ -2537,10 +2537,10 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
     for j, langname in secs.section_langs:
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language %s" % langname)
         else:
-            langcode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langcode = lang_data.languages_by_canonical_name[langname]["code"]
 
             def do_templatize_place_line(m):
                 return templatize_place_line(m, langcode)

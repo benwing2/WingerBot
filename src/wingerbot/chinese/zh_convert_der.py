@@ -5,7 +5,8 @@ import pywikibot, re, sys, argparse, unicodedata
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -159,10 +160,10 @@ def process_text_on_page(index, pagetitle, text):
                     item += "<t:%s>" % gloss
                 if note:
                     langcode = None
-                    if note in lang_utils.languages_by_canonical_name:
-                        langcode = lang_utils.languages_by_canonical_name[note]["code"]
-                    elif note in lang_utils.etym_languages_by_canonical_name:
-                        langcode = lang_utils.etym_languages_by_canonical_name[note]["code"]
+                    if note in lang_data.languages_by_canonical_name:
+                        langcode = lang_data.languages_by_canonical_name[note]["code"]
+                    elif note in etym_lang_data.etym_languages_by_canonical_name:
+                        langcode = etym_lang_data.etym_languages_by_canonical_name[note]["code"]
                     if langcode:
                         item = "%s:%s" % (langcode, item)
                     else:

@@ -56,25 +56,25 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
 
-    has_etym_sections = "==Etymology 1==" in secbody
+    has_etym_sections = "==Etymology 1==" in modsec.secbody
     if has_etym_sections:
         # Check if either Pronunciation with pronunciation template above Etymology 1, or every
         # Etymology N section has Pronunciation with pronunciation template.
         saw_etym_1 = False
         cur_etym_header = None
         saw_pron_in_etym = False
-        for k in range(1, len(subsections), 2):
-            if "==Pronunciation==" in subsections[k]:
-                secparsed = blib.parse_text(subsections[k + 1])
+        for k, header in subsecs.subsection_headers:
+            if header == "Pronunciation":
+                secparsed = blib.parse_text(subsections[k])
                 for t in secparsed.filter_templates():
                     tn = tname(t)
                     if tn in pronun_templates:
@@ -90,10 +90,10 @@ def process_text_on_page(index, pagetitle, text):
                     )
                     return
 
-            if "==Etymology 1==" in subsections[k]:
+            if header == "Etymology 1":
                 saw_etym_1 = True
-                cur_etym_header = subsections[k].strip()
-            elif re.search("==Etymology [0-9]+==", subsections[k]):
+                cur_etym_header = header
+            elif re.search("^Etymology [0-9]+$", header):
                 if not saw_pron_in_etym:
                     pagemsg(
                         "WARNING: No ==Pronunciation== section above ==Etymology N== headers and saw %s without pronunciation template; can't handle, skipping"
@@ -101,7 +101,7 @@ def process_text_on_page(index, pagetitle, text):
                     )
                     return
                 saw_pron_in_etym = False
-                cur_etym_header = subsections[k].strip()
+                cur_etym_header = header
         if not saw_pron_in_etym:
             # Last Etymology N section didn't have pronunciation template.
             pagemsg(
@@ -110,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
             )
             return
 
-    parsed = blib.parse_text(secbody)
+    parsed = blib.parse_text(modsec.secbody)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -222,17 +222,14 @@ def process_text_on_page(index, pagetitle, text):
             break
     else:  # no break
         k = 2
-        while k < len(subsections) and re.search("==(Alternative forms|Etymology)==", subsections[k - 1]):
+        while k < len(subsections) and subsecs.subsection_header_dict[k] in ["Alternative forms", "Etymology"]:
             k += 2
         if k - 1 >= len(subsections):
             pagemsg("WARNING: No lemma or non-lemma section at top level")
             return
         insert_new_l3_pron_section(k - 1)
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Add Polish non-lemma pronunciations", include_pagefile=True, include_stdin=True)

@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -35,10 +35,10 @@ def process_text_on_page(index, pagetitle, text):
                 continue
             langname = m.group(1)
             t_lang = getparam(t, "1")
-            if langname not in lang_utils.languages_by_canonical_name:
+            if langname not in lang_data.languages_by_canonical_name:
                 pagemsg("WARNING: Unrecognized language name: %s" % langname)
                 continue
-            langobj = lang_utils.languages_by_canonical_name[langname]
+            langobj = lang_data.languages_by_canonical_name[langname]
             if langobj["code"] != t_lang:
                 pagemsg(
                     "WARNING: Auto-determined code %s for language name %s != manually specified %s"

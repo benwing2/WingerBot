@@ -531,8 +531,9 @@ def process_text_in_section(index, pagetitle, text):
     subsection_with_head = None
     declts = []
     subsection_with_declts = None
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
-    for k in range(0, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
 
         for t in parsed.filter_templates():
@@ -610,29 +611,25 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(text, None if args.partial_page else "German", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, None if args.partial_page else "German", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    if "=Etymology 1=" in secbody:
+    if "=Etymology 1=" in modsec.secbody:
         notes = []
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+        etym_sections = re.split("(^===Etymology [0-9]+===\n)", modsec.secbody, 0, re.M)
         for k in range(2, len(etym_sections), 2):
             retval = process_text_in_section(index, pagetitle, etym_sections[k])
             if retval:
                 newsectext, newnotes = retval
                 etym_sections[k] = newsectext
                 notes.extend(newnotes)
-        secbody = "".join(etym_sections)
-        sections[j] = secbody + sectail
-        return "".join(sections), notes
+        return modsec.rebuild(secbody="".join(etym_sections)), notes
     else:
-        retval = process_text_in_section(index, pagetitle, secbody)
+        retval = process_text_in_section(index, pagetitle, modsec.secbody)
         if retval:
             secbody, notes = retval
-            sections[j] = secbody + sectail
-            return "".join(sections), notes
+            return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

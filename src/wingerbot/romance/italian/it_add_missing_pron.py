@@ -243,19 +243,19 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
 
     need_ref_section = False
 
-    for k in range(2, len(subsections), 2):
-        if "==Pronunciation==" in subsections[k - 1]:
+    for k, header in subsecs.subsection_headers:
+        if header == "Pronunciation":
             parsed = blib.parse_text(subsections[k])
 
             all_pronun_templates = []
@@ -302,15 +302,16 @@ def process_text_on_page(index, pagetitle, text):
                     all_warnings = []
                     hack_respelling_warnings = []
                     main_warnings = []
-                    unable = [False]
+                    unable = False
                     for pronun in pronuns:
                         respelling = ipa_to_respelling(pronun)
                         respelling, this_hack_respelling_warnings = hack_respelling(pagetitle, respelling)
                         hack_respelling_warnings.extend(this_hack_respelling_warnings)
 
                         def set_unable(msg):
+                            nonlocal unable
                             main_warnings.append(msg)
-                            unable[0] = True
+                            unable = True
 
                         tmsg("For pronun %s, generated respelling %s" % (pronun, respelling))
                         respelling_words = respelling.split(" ")
@@ -366,7 +367,7 @@ def process_text_on_page(index, pagetitle, text):
                                 if putative_pagetitle != pagetitle:
                                     # If respelling already seen, we already warned about it.
                                     if respelling in respellings:
-                                        assert unable[0]
+                                        assert unable
                                     else:
                                         set_unable(
                                             "WARNING: Respelling %s doesn't match page title (putative page title %s, pronun %s)"
@@ -401,7 +402,7 @@ def process_text_on_page(index, pagetitle, text):
                         elif pronun.startswith("["):
                             if this_phonemic_pronun is None:
                                 if this_phonetic_pronun is not None:
-                                    unable[0] = True
+                                    unable = True
                                     append_warnings(
                                         "WARNING: Saw two phonetic pronuns %s (respelling %s) and %s (respelling %s) without intervening phonemic pronun"
                                         % (this_phonetic_pronun, this_phonetic_respelling, pronun, respelling)
@@ -414,13 +415,13 @@ def process_text_on_page(index, pagetitle, text):
                                 this_phonetic_pronun = pronun
                                 this_phonetic_respelling = respelling
                             elif this_phonemic_respelling != respelling:
-                                unable[0] = True
+                                unable = True
                                 append_warnings(
                                     "WARNING: Phonemic respelling %s (pronun %s) differs from phonetic respelling %s (pronun %s)"
                                     % (this_phonemic_respelling, this_phonemic_pronun, respelling, pronun)
                                 )
                             else:
-                                if unable[0] and len(main_warnings) > 0:
+                                if unable and len(main_warnings) > 0:
                                     # `unable` could be set from a previous pronunciation but no main warnings this time around
                                     # because the previously generated warnings have already been appended to all_warnings.
                                     mesg = main_warnings[0]
@@ -431,7 +432,7 @@ def process_text_on_page(index, pagetitle, text):
                             this_phonemic_pronun = None
                             this_phonemic_respelling = None
                         else:
-                            unable[0] = True
+                            unable = True
                             append_warnings(
                                 "WARNING: Pronun %s (respelling %s) not marked as phonemic or phonetic"
                                 % (pronun, respelling)
@@ -441,17 +442,17 @@ def process_text_on_page(index, pagetitle, text):
                             "WARNING: Saw phonemic pronun %s (respelling %s) without corresponding phonetic pronun"
                             % (this_phonemic_pronun, this_phonemic_respelling)
                         )
-                    if not unable[0]:
+                    if not unable:
                         for param in t.params:
                             pn = pname(param)
                             if not re.search("^[0-9]+$", pn) and pn != "nocount":
-                                unable[0] = True
+                                unable = True
                                 append_warnings("WARNING: Saw unrecognized param %s=%s" % (pn, str(param.value)))
                     manual_assist = ""
-                    if unable[0]:
+                    if unable:
                         if pagetitle in ipa_directives:
                             respellings = ipa_directives[pagetitle]
-                            unable[0] = False
+                            unable = False
                             manual_assist = " (manually assisted)"
                             tmsg(
                                 "%sUsing manually-specified IPA-based respelling%s %s; original warnings follow: %s"
@@ -471,7 +472,7 @@ def process_text_on_page(index, pagetitle, text):
                                     " ||| ".join(all_warnings),
                                 )
                             )
-                    if not unable[0]:
+                    if not unable:
                         del t.params[:]
                         nextparam = 0
                         for param in respellings:
@@ -605,11 +606,11 @@ def process_text_on_page(index, pagetitle, text):
                         else:
                             different_headers = []
                             for pos in ["Noun", "Verb", "Adjective", "Adverb", "Participle"]:
-                                if "==%s==" % pos in secbody:
+                                if "==%s==" % pos in modsec.secbody:
                                     different_headers.append(pos)
                             if len(different_headers) > 1:
                                 all_warnings[0:0] = ["WARNING: Multiple headers %s seen" % ",".join(different_headers)]
-                            if "Etymology 1" in secbody:
+                            if "Etymology 1" in modsec.secbody:
                                 all_warnings[0:0] = ["WARNING: Multiple etymologies seen"]
 
                             pagemsg(
@@ -640,24 +641,21 @@ def process_text_on_page(index, pagetitle, text):
 
     if need_ref_section:
         for k in range(len(subsections) - 1, 2, -2):
-            if re.search(r"^===\s*References\s*===$", subsections[k - 1].strip()):
+            if subsecs.subsection_header_dict[k] == "References":
                 if not re.search(r"<references\s*/?\s*>", subsections[k]):
                     subsections[k] = subsections[k].rstrip("\n") + "\n<references />\n\n"
                     notes.append("add <references /> to existing ===References=== section for pronunciation refs")
                 break
         else:  # no break
             for k in range(len(subsections) - 1, 2, -2):
-                if not re.search(r"==\s*(Anagrams|Further reading)\s*==", subsections[k - 1]):
+                if not subsecs.subsection_header_dict[k] in ["Anagrams", "Further reading"]:
                     subsections[k + 1 : k + 1] = ["===References===\n", "<references />\n\n"]
                     notes.append("add new ===References=== section for pronunciation refs")
                     break
             else:  # no break
                 pagemsg("WARNING: Something wrong, couldn't find location to insert ===References=== section")
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Add Italian pronunciations based on rhymes", include_pagefile=True, include_stdin=True)

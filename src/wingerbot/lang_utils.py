@@ -5,6 +5,12 @@ import re, json, sys
 from collections import defaultdict
 import unicodedata
 from json.decoder import JSONDecodeError
+from typing import Any
+from dataclasses import dataclass
+type PropertyDict = dict[str, Any]
+type PropertyDictList = list[PropertyDict]
+type LanguagePropertyDict = dict[str, PropertyDict]
+type LanguageListDict = dict[str, list[PropertyDict]]
 
 from wingerbot.blib import site, msg
 from wingerbot.slavic.russian import rulib
@@ -341,28 +347,50 @@ unrecognized_to_canonical_names = {
     "Written Burmese": ("Written", "Burmese"),
 }
 
-languages_by_code = None
-languages_by_canonical_name = None
-languages_by_alias = None
+@dataclass
+class LangData:
+    languages: PropertyDictList
+    languages_by_code: LanguagePropertyDict
+    languages_by_canonical_name: LanguagePropertyDict
+    languages_by_alias: LanguageListDict
 
-families_by_code = None
-families_by_canonical_name = None
+lang_data: LangData | None = None
 
-scripts_by_code = None
-scripts_by_canonical_name = None
+@dataclass
+class FamilyData:
+    families: PropertyDictList
+    families_by_code: LanguagePropertyDict
+    families_by_canonical_name: LanguagePropertyDict
 
-etym_languages_by_code = None
-etym_languages_by_canonical_name = None
-etym_languages_by_alias = None
+family_data: FamilyData | None = None
 
-wm_languages_by_code = None
-wm_languages_by_canonical_name = None
+@dataclass
+class ScriptData:
+    scripts: PropertyDictList
+    scripts_by_code: LanguagePropertyDict
+    scripts_by_canonical_name: LanguagePropertyDict
 
-language_aliases_to_canonical = None
+script_data: ScriptData | None = None
+
+@dataclass
+class EtymLangData:
+    etym_languages: PropertyDictList
+    etym_languages_by_code: LanguagePropertyDict
+    etym_languages_by_canonical_name: LanguagePropertyDict
+    etym_languages_by_alias: LanguageListDict
+
+etym_lang_data: EtymLangData | None = None
 
 
-def init_fake_langdata():
-    global languages_by_canonical_name, languages_by_code, etym_languages_by_canonical_name, etym_languages_by_code
+@dataclass
+class LangAliasData:
+    language_aliases_to_canonical: dict[str, str]
+
+lang_alias_data: LangAliasData | None = None
+
+
+def init_fake_lang_data():
+    global lang_data
     languages_by_canonical_name = {
         "English": {"code": "en"},
         "Old English": {"code": "ang"},
@@ -378,26 +406,24 @@ def init_fake_langdata():
         "Norwegian Nynorsk": {"code": "nn"},
     }
     languages_by_code = {y["code"]: {"canonicalName": x} for x, y in languages_by_canonical_name.items()}
+    lang_data = LangData([], languages_by_canonical_name, languages_by_code, {})
+
+
+def init_fake_etym_lang_data():
+    global etym_lang_data
     etym_languages_by_canonical_name = {}
     etym_languages_by_code = {y["code"]: {"canonicalName": x} for x, y in etym_languages_by_canonical_name.items()}
-
-
-def get_all_lang_data():
-    get_language_data()
-    get_family_data()
-    get_script_data()
-    get_etym_language_data()
-    get_alias_data()
+    etym_lang_data = EtymLangData([], etym_languages_by_canonical_name, etym_languages_by_code, {})
 
 
 def save_all_lang_data(outfile):
-    langdata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
+    languages = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
     families = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
     scripts = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
     etym_languages = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
     aliases = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
     master = {
-        "languages": langdata,
+        "languages": languages,
         "families": families,
         "scripts": scripts,
         "etym_languages": etym_languages,
@@ -410,11 +436,11 @@ def save_all_lang_data(outfile):
 def load_all_lang_data(outfile):
     with open(outfile, "r") as fp:
         master = json_loads(fp.read())
-    set_language_data(master["languages"])
-    set_family_data(master["families"])
-    set_script_data(master["scripts"])
-    set_etym_language_data(master["etym_languages"])
-    set_alias_data(master["aliases"])
+    load_lang_data(master["languages"])
+    load_family_data(master["families"])
+    load_script_data(master["scripts"])
+    load_etym_lang_data(master["etym_languages"])
+    load_lang_alias_data(master["aliases"])
 
 
 def json_loads(data):
@@ -425,14 +451,8 @@ def json_loads(data):
         raise
 
 
-already_fetched_language_data = False
-
-
-def set_language_data(jsondata):
-    global languages_by_code, languages_by_canonical_name, languages_by_alias
-    global already_fetched_language_data
-
-    languages = json_loads(jsondata)
+def load_lang_data(jsondata: str) -> LangData:
+    languages: PropertyDictList = json_loads(jsondata)
     languages_by_code = {}
     languages_by_canonical_name = {}
     languages_by_alias = defaultdict(list)
@@ -445,23 +465,18 @@ def set_language_data(jsondata):
                 assert type(alias) is str
                 languages_by_alias[alias].append(lang)
 
-    already_fetched_language_data = True
+    return LangData(languages, languages_by_code, languages_by_canonical_name, languages_by_alias)
 
 
-def get_language_data():
-    if already_fetched_language_data:
-        return
-    jsondata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
-    set_language_data(jsondata)
+def get_lang_data() -> LangData:
+    global lang_data
+    if lang_data is None:
+        jsondata = site.expand_text("{{#invoke:User:MewBot|getLanguageData}}")
+        lang_data = load_lang_data(jsondata)
+    return lang_data
 
 
-already_fetched_family_data = False
-
-
-def set_family_data(familydata):
-    global families_by_code, families_by_canonical_name
-    global already_fetched_family_data
-
+def load_family_data(familydata: str) -> FamilyData:
     families = json_loads(familydata)
     families_by_code = {}
     families_by_canonical_name = {}
@@ -469,19 +484,19 @@ def set_family_data(familydata):
     for fam in families:
         families_by_code[fam["code"]] = fam
         families_by_canonical_name[fam["canonicalName"]] = fam
-    already_fetched_family_data = True
+
+    return FamilyData(families, families_by_code, families_by_canonical_name)
 
 
-def get_family_data():
-    if already_fetched_family_data:
-        return
-    familydata = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
-    set_family_data(familydata)
+def get_family_data() -> FamilyData:
+    global family_data
+    if family_data is None:
+        jsondata = site.expand_text("{{#invoke:User:MewBot|getFamilyData}}")
+        family_data = load_family_data(jsondata)
+    return family_data
 
 
-def set_script_data(scriptdata):
-    global scripts_by_code, scripts_by_canonical_name
-
+def load_script_data(scriptdata) -> ScriptData:
     scripts = json_loads(scriptdata)
     scripts_by_code = {}
     scripts_by_canonical_name = {}
@@ -503,26 +518,21 @@ def set_script_data(scriptdata):
         else:
             scripts_by_canonical_name[canonical_name] = sc
 
+    return ScriptData(scripts, scripts_by_code, scripts_by_canonical_name)
 
-already_fetched_script_data = False
 
-
-def get_script_data():
-    global already_fetched_script_data
-    if already_fetched_script_data:
-        return
-    scriptdata = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
-    set_script_data(scriptdata)
-    already_fetched_script_data = True
+def get_script_data() -> ScriptData:
+    global script_data
+    if script_data is None:
+        jsondata = site.expand_text("{{#invoke:User:MewBot|getScriptData}}")
+        script_data = load_script_data(jsondata)
+    return script_data
 
 
 already_fetched_etym_language_data = False
 
 
-def set_etym_language_data(etymdata):
-    global etym_languages_by_code, etym_languages_by_canonical_name, etym_languages_by_alias
-    global already_fetched_etym_language_data
-
+def load_etym_lang_data(etymdata) -> EtymLangData:
     etym_languages = json_loads(etymdata)
     etym_languages_by_code = {}
     etym_languages_by_canonical_name = {}
@@ -536,32 +546,29 @@ def set_etym_language_data(etymdata):
                 assert type(alias) is str
                 etym_languages_by_alias[alias].append(etyl)
 
-    already_fetched_etym_language_data = True
+    return EtymLangData(etym_languages, etym_languages_by_code, etym_languages_by_canonical_name,
+                        etym_languages_by_alias)
 
 
-def get_etym_language_data():
-    if already_fetched_etym_language_data:
-        return
-    etymdata = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
-    set_etym_language_data(etymdata)
+def get_etym_lang_data() -> EtymLangData:
+    global etym_lang_data
+    if etym_lang_data is None:
+        jsondata = site.expand_text("{{#invoke:User:MewBot|getEtymLanguageData}}")
+        etym_lang_data = load_etym_lang_data(jsondata)
+    return etym_lang_data
 
 
-already_fetched_alias_data = False
-
-
-def set_alias_data(aliasdata):
-    global language_aliases_to_canonical
-    global already_fetched_alias_data
-
+def load_lang_alias_data(aliasdata) -> LangAliasData:
     language_aliases_to_canonical = json_loads(aliasdata)
-    already_fetched_alias_data = True
+    return LangAliasData(language_aliases_to_canonical)
 
 
-def get_alias_data():
-    if already_fetched_alias_data:
-        return
-    aliasdata = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
-    set_alias_data(aliasdata)
+def get_lang_alias_data() -> LangAliasData:
+    global lang_alias_data
+    if lang_alias_data is None:
+        jsondata = site.expand_text("{{#invoke:User:MewBot|getAliasData}}")
+        lang_alias_data = load_lang_alias_data(jsondata)
+    return lang_alias_data
 
 
 # Key for sorting by langname.
@@ -584,10 +591,12 @@ def langname_key(langname, prepend_translingual_english=True):
 
 
 # Compile a map from etym language code to its corresponding full language.
-def get_etym_language_to_parent_map():
-    get_etym_language_data()
+def get_etym_language_to_parent():
+    etym_lang_data = get_etym_lang_data()
     etym_language_to_parent = {}
-    for code, spec in etym_languages_by_code.items():
+    # Initialized by get_etym_language_data()
+    assert etym_lang_data.etym_languages_by_code is not None
+    for code, spec in etym_lang_data.etym_languages_by_code.items():
         if "full" in spec:  # etym-lang families don't have the key "full"
             etym_language_to_parent[code] = spec["full"]
     return etym_language_to_parent
@@ -604,8 +613,8 @@ def get_etym_language_to_parent_map():
 # among multiple codes for a given etym language because we have to pick one code to
 # use when the language name is encountered.
 def get_language_name_to_code():
-    get_language_data()
-    get_etym_language_data()
+    lang_data = get_lang_data()
+    etym_lang_data = get_etym_lang_data()
     language_name_to_code = {}
 
     def add_name_with_code(name, code, iscanon, isetym):
@@ -702,7 +711,7 @@ def get_language_name_to_code():
             else:
                 language_name_to_code[name] = ([(code, iscanon)], None, None)
 
-    for code, desc in languages_by_code.items():
+    for code, desc in lang_data.languages_by_code.items():
         add_name_with_code(desc["canonicalName"], code, True, False)
         if "aliases" in desc:
             for alias in desc["aliases"]:
@@ -712,7 +721,7 @@ def get_language_name_to_code():
         # if "otherNames" in desc:
         #  for othername in desc["otherNames"]:
         #    add_name_with_code(othername, code, False, False)
-    for code, desc in etym_languages_by_code.items():
+    for code, desc in etym_lang_data.etym_languages_by_code.items():
         add_name_with_code(desc["canonicalName"], code, True, True)
         if "aliases" in desc:
             for alias in desc["aliases"]:
@@ -1009,10 +1018,6 @@ language_codes_to_properties: dict[str, tuple[str, Callable[[str], str], str, st
     "yi": ("Yiddish", lambda x: x, hebrew_charset, False),
 }
 
-# auto_languages = {}
-# for code, desc in languages_by_code.items():
-#  canonical_
-
 language_names_to_properties = {
     langname: (langcode, remove_accents, charset, ignore_translit)
     for langcode, (langname, remove_accents, charset, ignore_translit) in language_codes_to_properties.items()
@@ -1071,39 +1076,45 @@ def matches_chinese_character(pagetitle):
 
 
 # Compile a map from etym language code to its first non-etym-language ancestor.
-def old_get_etym_language_to_parent_map():
+def old_get_etym_language_to_parent():
+    etym_lang_data = get_etym_lang_data()
     etym_language_to_parent = {}
-    for code in etym_languages_by_code:
+    for code in etym_lang_data.etym_languages_by_code:
         parent = code
-        while parent in etym_languages_by_code:
-            parent = etym_languages_by_code[parent]["parent"]
+        while parent in etym_lang_data.etym_languages_by_code:
+            parent = etym_lang_data.etym_languages_by_code[parent]["parent"]
         etym_language_to_parent[code] = parent
     return etym_language_to_parent
 
 
 def get_family_proto_lang(fam):
-    if fam not in families_by_code:
+    lang_data = get_lang_data()
+    family_data = get_family_data()
+    if fam not in family_data.families_by_code:
         return None
-    protolang = families_by_code[fam].get("protoLanguage", fam + "-pro")
-    if protolang not in languages_by_code:
+    protolang = family_data.families_by_code[fam].get("protoLanguage", fam + "-pro")
+    if protolang not in lang_data.languages_by_code:
         return None
     return protolang
 
 
 def get_lang_family(lang):
-    if lang not in languages_by_code:
+    lang_data = get_lang_data()
+    family_data = get_family_data()
+    if lang not in lang_data.languages_by_code:
         return None
-    fam = languages_by_code[lang].get("family", None)
-    if fam and fam in families_by_code:
+    fam = lang_data.languages_by_code[lang].get("family", None)
+    if fam and fam in family_data.families_by_code:
         return fam
     return None
 
 
 def get_family_family(fam):
-    if fam not in families_by_code:
+    family_data = get_family_data()
+    if fam not in family_data.families_by_code:
         return None
-    fam = families_by_code[fam].get("family", None)
-    if fam and fam in families_by_code:
+    fam = family_data.families_by_code[fam].get("family", None)
+    if fam and fam in family_data.families_by_code:
         return fam
     return None
 
@@ -1111,10 +1122,11 @@ def get_family_family(fam):
 # Return the direct ancestor(s) of a language. This is the same algorithm used
 # in [[Module:languages]].
 def get_lang_direct_ancestors(lang):
-    if lang not in languages_by_code:
+    lang_data = get_lang_data()
+    if lang not in lang_data.languages_by_code:
         return set()
-    if "ancestors" in languages_by_code[lang]:
-        return languages_by_code[lang]["ancestors"]
+    if "ancestors" in lang_data.languages_by_code[lang]:
+        return lang_data.languages_by_code[lang]["ancestors"]
     fam = get_lang_family(lang)
     protolang = fam and get_family_proto_lang(fam) or None
     # For the case where the current language is the proto-language
@@ -1144,17 +1156,19 @@ def get_lang_all_ancestors(lang):
     return all_ancestors
 
 
-def get_language_to_ancestors_map():
+def get_language_to_ancestors():
     # Compile a map from etym and non-etym language codes to all ancestors.
+    lang_data = get_lang_data()
+    etym_lang_data = get_etym_lang_data()
     language_to_ancestors = defaultdict(set)
-    for code in etym_languages_by_code:
+    for code in etym_lang_data.etym_languages_by_code:
         parent = code
-        while parent in etym_languages_by_code:
-            parent = etym_languages_by_code[parent]["parent"]
+        while parent in etym_lang_data.etym_languages_by_code:
+            parent = etym_lang_data.etym_languages_by_code[parent]["parent"]
             language_to_ancestors[code].add(parent)
         for ancestor in get_lang_all_ancestors(parent):
             language_to_ancestors[code].add(ancestor)
-    for code in languages_by_code:
+    for code in lang_data.languages_by_code:
         for ancestor in get_lang_all_ancestors(code):
             language_to_ancestors[code].add(ancestor)
 

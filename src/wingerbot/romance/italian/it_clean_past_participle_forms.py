@@ -617,14 +617,14 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
 
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")
@@ -671,8 +671,8 @@ def process_text_on_page(index, pagetitle, text):
                     return False
         return True
 
-    for k in range(2, len(subsections), 2):
-        if re.search("==(Verb|Participle)==", subsections[k - 1]):
+    for k, header in subsecs.subsection_headers:
+        if header in ["Verb", "Participle"]:
             # Make sure that we're dealing with a potential participle
             maybe_saw_participle = True
             parsed = blib.parse_text(subsections[k])
@@ -696,7 +696,8 @@ def process_text_on_page(index, pagetitle, text):
                 continue
 
             this_sec_notes = []
-            newsubsecheader = subsections[k - 1]
+            newsubsecheader = subsecs.subsection_header_dict[k]
+            newsubsecheadertext = subsections[k - 1]
             newsubseck = subsections[k]
             try:
                 # First split out any participle forms from {{inflection of}}
@@ -1030,8 +1031,8 @@ def process_text_on_page(index, pagetitle, text):
                         else:
                             pagemsg("WARNING: Head template has strange POS for participle: %s" % str(head_template))
                             raise BreakException()
-                    if "Verb" in newsubsecheader:
-                        newsubsecheader = newsubsecheader.replace("Verb", "Participle")
+                    if newsubsecheader == "Verb":
+                        newsubsecheadertext = newsubsecheadertext.replace("Verb", "Participle")
                         this_sec_notes.append("correct ==Verb== to ==Participle== for participle")
 
                 elif saw_inflection_of and saw_pp_form_of:
@@ -1110,11 +1111,11 @@ def process_text_on_page(index, pagetitle, text):
                         participle_ending_to_properties[pagetitle_ending]["gender"],
                     )
 
-                    newsubsecheader = newsubsecheader.replace("Participle", "Verb")
+                    newsubsecheadertext = newsubsecheadertext.replace("Participle", "Verb")
                     newsubseck_lines = (
                         [headword_line_1]
                         + lines_for_inflection_of
-                        + ["", newsubsecheader.replace("Verb", "Participle").rstrip("\n"), headword_line_2, ""]
+                        + ["", newsubsecheadertext.replace("Verb", "Participle").rstrip("\n"), headword_line_2, ""]
                         + lines_for_pp_form
                     )
                     newsubseck = "\n".join(newsubseck_lines) + "\n\n"
@@ -1158,8 +1159,8 @@ def process_text_on_page(index, pagetitle, text):
                             % (existing_gender, should_be_gender)
                         )
                         newsubseck = str(parsed)
-                    if "Verb" in newsubsecheader:
-                        newsubsecheader = newsubsecheader.replace("Verb", "Participle")
+                    if newsubsecheader == "Verb":
+                        newsubsecheadertext = newsubsecheadertext.replace("Verb", "Participle")
                         this_sec_notes.append("correct ==Verb== to ==Participle== for participle form")
 
             except BreakException:
@@ -1167,7 +1168,7 @@ def process_text_on_page(index, pagetitle, text):
                 continue
 
             subsections[k] = newsubseck
-            subsections[k - 1] = newsubsecheader
+            subsections[k - 1] = newsubsecheadertext
             notes.extend(this_sec_notes)
 
     secbody = "".join(subsections)
@@ -1254,26 +1255,27 @@ def process_text_on_page(index, pagetitle, text):
         goes_in_all_at_top = []
         goes_at_top_of_first_etym_section = ""
         last_etym_section = None
-        subsections = re.split("(^==+[^=\n]+==+\n)", sectext, 0, re.M)
+        subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+        subsections = subsecs.subsections
         if not is_etym_section:
             text_before_etym_sections.append(subsections[0])
         else:
             goes_at_top_of_first_etym_section = subsections[0]
-        for k in range(2, len(subsections), 2):
+        for k, header in subsecs.subsection_headers:
             pos = None
             lemma = None
-            if "=Pronunciation=" in subsections[k - 1]:
+            if header == "Pronunciation":
                 if is_etym_section:
                     goes_in_all_at_top.append(k)
                 else:
                     text_before_etym_sections.append(subsections[k - 1])
                     text_before_etym_sections.append(subsections[k])
-            elif "=Etymology=" in subsections[k - 1]:
+            elif header == "Etymology":
                 if is_etym_section:
                     pagemsg("WARNING: Saw =Etymology= in etym section")
                     raise BreakException()
                 goes_at_top_of_first_etym_section = subsections[k]
-            elif "=Alternative forms=" in subsections[k - 1]:
+            elif header == "Alternative forms":
                 # If =Alternative forms= at top, treat like =Pronunciation=; otherwise, append to
                 # end of last etym section.
                 if last_etym_section is None:
@@ -1285,7 +1287,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     existing_poses, existing_lemmas, existing_sections = split_etym_sections[last_etym_section]
                     existing_sections.append((k, None))
-            elif "=Adjective=" in subsections[k - 1]:
+            elif header == "Adjective":
                 pos, lemma = extract_pos_and_lemma(
                     subsections[k],
                     "adjective",
@@ -1294,7 +1296,7 @@ def process_text_on_page(index, pagetitle, text):
                     {"it-adj": "adjective", "it-adj-sup": "adjective", "it-adj-form": "adjective form"},
                     {"adj form of", "plural of", "masculine plural of", "feminine singular of", "feminine plural of"},
                 )
-            elif "=Participle=" in subsections[k - 1]:
+            elif header == "Participle":
                 pos, lemma = extract_pos_and_lemma(
                     subsections[k],
                     "participle",
@@ -1303,7 +1305,7 @@ def process_text_on_page(index, pagetitle, text):
                     {"it-pp": "past participle"},
                     {"masculine plural of", "feminine singular of", "feminine plural of"},
                 )
-            elif "=Noun=" in subsections[k - 1]:
+            elif header == "Noun":
                 pos, lemma = extract_pos_and_lemma(
                     subsections[k],
                     "noun",
@@ -1312,33 +1314,33 @@ def process_text_on_page(index, pagetitle, text):
                     {"it-noun": "noun", "it-plural noun": "noun"},
                     {"noun form of", "plural of"},
                 )
-            elif "=Verb=" in subsections[k - 1]:
+            elif header == "Verb":
                 # FIXME, handle {{it-compound of}}
                 pos, lemma = extract_pos_and_lemma(
                     subsections[k], "verb", {"verb"}, {"verb form"}, {"it-verb": "verb"}, {"verb form of"}
                 )
-            elif "=Adverb=" in subsections[k - 1]:
+            elif header == "Adverb":
                 pos, lemma = extract_pos_and_lemma(subsections[k], "adverb", {"adverb"}, [], {"it-adv": "adverb"}, [])
-            elif "=Interjection=" in subsections[k - 1]:
+            elif header == "Interjection":
                 pos, lemma = extract_pos_and_lemma(subsections[k], "interjection", {"interjection"}, [], {}, [])
-            elif "=Preposition=" in subsections[k - 1]:
+            elif header == "Preposition":
                 pos, lemma = extract_pos_and_lemma(subsections[k], "preposition", {"preposition"}, [], {}, [])
-            elif "=Conjunction=" in subsections[k - 1]:
+            elif header == "Conjunction":
                 pos, lemma = extract_pos_and_lemma(subsections[k], "conjunction", {"conjunction"}, [], {}, [])
             elif re.search(
-                r"=\s*(Synonyms|Antonyms|Hyponyms|Hypernyms|Coordinate terms|Derived terms|Related terms|Descendants|Usage notes|References|Further reading|See also|Conjugation|Declension|Inflection)\s*=",
-                subsections[k - 1],
+                r"^(Synonyms|Antonyms|Hyponyms|Hypernyms|Coordinate terms|Derived terms|Related terms|Descendants|Usage notes|References|Further reading|See also|Conjugation|Declension|Inflection)$",
+                header,
             ):
                 if last_etym_section is None:
                     pagemsg(
                         "WARNING: Saw section header %s without preceding lemma or non-lemma form"
-                        % subsections[k - 1].strip()
+                        % header
                     )
                     raise BreakException()
                 existing_poses, existing_lemmas, existing_sections = split_etym_sections[last_etym_section]
                 existing_sections.append((k, None))
             else:
-                pagemsg("WARNING: Unrecognized section header: %s" % subsections[k - 1].strip())
+                pagemsg("WARNING: Unrecognized section header: %s" % header)
                 raise BreakException()
 
             if pos:
@@ -1510,11 +1512,12 @@ def process_text_on_page(index, pagetitle, text):
     else:
         # Anagrams and such go after all etym sections and remain as such even if we start with non-etym-split text
         # and end with multiple etym sections.
-        subsections_at_level_3 = re.split("(^===[^=\n]+===\n)", secbody, 0, re.M)
+        l3subsecs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3):
+        subsections_at_level_3 = l3subsecs.subsections
         for last_included_sec in range(len(subsections_at_level_3) - 1, 0, -2):
             if not re.search(
-                r"^===\s*(References|See also|Derived terms|Related terms|Further reading|Anagrams)\s*=== *\n",
-                subsections_at_level_3[last_included_sec - 1],
+                r"^(References|See also|Derived terms|Related terms|Further reading|Anagrams)$",
+                l3subsecs.subsection_header_dict[last_included_sec],
             ):
                 break
         text_after_etym_sections = "".join(subsections_at_level_3[last_included_sec + 1 :])
@@ -1559,8 +1562,8 @@ def process_text_on_page(index, pagetitle, text):
             pass
 
     if "{{head|it|past participle form" in secbody:
-        newsectail = re.sub(r"\[\[(?:Category|category|CAT):\s*Italian past participle forms\s*\]\]\n?", "", sectail)
-        if newsectail != sectail:
+        newsectail = re.sub(r"\[\[(?:Category|category|CAT):\s*Italian past participle forms\s*\]\]\n?", "", modsec.sectail)
+        if newsectail != modsec.sectail:
             notes.append("remove redundant explicit 'Italian past participle forms' category")
             sectail = newsectail
         newsecbody = re.sub(r"\|cat2=past participle forms([|}])", r"\1", secbody)
@@ -1573,8 +1576,7 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("WARNING: Explicit 'cat2=past participle forms' still remains")
 
     # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
+    text = modsec.rebuild(secbody=secbody, sectail=sectail)
 
     # Condense 3+ newlines; may have been added when removing redundant categories.
     newtext = re.sub(r"\n\n+", "\n\n", text)

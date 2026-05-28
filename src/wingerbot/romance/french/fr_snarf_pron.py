@@ -12,18 +12,16 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
-
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "French", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
 
-    has_etym_sections = "==Etymology 1==" in secbody
+    has_etym_sections = "==Etymology 1==" in modsec.secbody
     saw_pronun_section_at_top = False
     split_pronun_sections = False
     saw_pronun_section_this_etym_section = False
@@ -35,15 +33,15 @@ def process_text_on_page(index, pagetitle, text):
     etymsections_to_raw_msgs = defaultdict(list)
     if etymsection == "top":
         after_etym_1 = False
-        for k in range(2, len(subsections), 2):
-            if "==Etymology 1==" in subsections[k - 1]:
+        for k, header in subsecs.subsection_headers:
+            if header == "Etymology 1":
                 after_etym_1 = True
-            if "==Pronunciation==" in subsections[k - 1]:
+            if header == "Pronunciation":
                 if after_etym_1:
                     split_pronun_sections = True
                 else:
                     saw_pronun_section_at_top = True
-            m = re.search("==Etymology ([0-9]*)==", subsections[k - 1])
+            m = re.search("^Etymology ([0-9]*)$", header)
             if m:
                 etymsections_to_first_subsection[int(m.group(1))] = k
 
@@ -53,7 +51,7 @@ def process_text_on_page(index, pagetitle, text):
         if txt not in msgs:
             msgs.append(txt)
 
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         msgs = []
 
         def check_missing_pronun(etymsection):
@@ -68,16 +66,16 @@ def process_text_on_page(index, pagetitle, text):
             # pagemsg("<respelling> %s: %s <end> %s" % ("top" if has_etym_sections else "all",
             #  " ".join(x.replace(" ", "_") for x in respellings), " ".join(msgs)))
 
-        m = re.search("==Etymology ([0-9]*)==", subsections[k - 1])
+        m = re.search("^Etymology ([0-9]*)$", header)
         if m:
             if etymsection != "top":
                 check_missing_pronun(etymsection)
             etymsection = m.group(1)
             saw_pronun_section_this_etym_section = False
             saw_existing_pron_this_etym_section = False
-        if "==Pronunciation " in subsections[k - 1]:
-            pagemsg("WARNING: Saw Pronunciation N section header: %s" % subsections[k - 1].strip())
-        if "==Pronunciation==" in subsections[k - 1]:
+        if "Pronunciation " in header:
+            pagemsg("WARNING: Saw Pronunciation N section header: %s" % header)
+        if header == "Pronunciation":
             if saw_pronun_section_this_etym_section:
                 pagemsg("WARNING: Saw two Pronunciation sections under etym section %s" % etymsection)
             if saw_pronun_section_at_top and etymsection != "top":

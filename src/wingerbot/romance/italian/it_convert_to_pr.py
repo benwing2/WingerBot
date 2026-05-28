@@ -236,7 +236,6 @@ def recompose(text):
 def split_but_rejoin_affixes(text):
     if not re.search(r"[\s\-]", text):
         return [text]
-    end
     # First replace hyphens separating words with a special character. Remaining hyphens denote affixes and don't
     # get split. After splitting, replace the special character with a hyphen again.
     TEMP_HYPH = "\ufff0"
@@ -403,6 +402,7 @@ def adjust_initial_capital(arg, pagetitle, pagemsg, origline):
         for arg_word, pagetitle_word in zip(arg_words, pagetitle_words):
             new_arg_word = arg_word
             m = re.search("^(" + pron_sign_c + "*)(.*)$", arg_word)
+            assert m is not None  # regex should always match as no newlines in pagetitle
             arg_word_prefix, arg_word = m.groups()
             if len(arg_word) > 0 and len(pagetitle_word) > 0 and arg_word[0] != pagetitle_word[0]:
                 if arg_word[0].upper() == pagetitle_word[0] or remove_accents(arg_word[0]).upper() == pagetitle_word[0]:
@@ -427,7 +427,9 @@ def normalize_bare_arg(arg, pagetitle, pagemsg):
     if arg == "+":
         arg = pagetitle
     abbrev_text = None
-    m = re.search("^(" + pron_sign_c + "*)(.*?)(" + pron_sign_c + "*)$", arg)
+    # Normally there should be no embedded newlines in arg, but make sure to match any
+    m = re.search("^(" + pron_sign_c + "*)(.*?)(" + pron_sign_c + "*)$", arg, re.S)
+    assert m  # should always match
     arg_prefix, arg, arg_suffix = m.groups()
     if re.search(r"^\^[àéèìóòù]$", arg):
         if re.search("[ %-]", pagetitle):
@@ -443,6 +445,7 @@ def normalize_bare_arg(arg, pagetitle, pagemsg):
         if i % 2 == 1:  # a separator
             continue
         m = re.search("^(" + pron_sign_c + "*)(.*?)(" + pron_sign_c + "*)$", word)
+        assert m  # should always match as we split on embedded newlines as part of separators
         word_prefix, word, word_suffix = m.groups()
 
         def err(msg):
@@ -475,6 +478,7 @@ def normalize_bare_arg(arg, pagetitle, pagemsg):
                     return None
                 before, penultimate, after = m.groups()
                 m = re.search("^(.*?)(" + V + ")(" + NV + "*)$", before)
+                assert m  # should always match as we previously matched a superset of the same
                 before2, antepenultimate, after2 = m.groups()
                 if abbrev_vowel != penultimate and abbrev_vowel != antepenultimate:
                     err(
@@ -570,26 +574,26 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if program_args.partial_page else "Italian", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
 
     sect_for_wiki = 0
-    for k in range(1, len(subsections), 2):
-        if re.search(r"==\s*Etymology [0-9]+\s*==", subsections[k]):
-            sect_for_wiki = k + 1
-        elif re.search(r"==\s*Pronunciation\s*==", subsections[k]):
-            secheader = re.sub(r"\s*Pronunciation\s*", "Pronunciation", subsections[k])
-            if secheader != subsections[k]:
-                subsections[k] = secheader
+    for k, header in subsecs.subsection_headers:
+        if re.search(r"^Etymology [0-9]+$", header):
+            sect_for_wiki = k
+        elif header == "Pronunciation":
+            secheader = re.sub(r"\s*Pronunciation\s*", "Pronunciation", subsections[k - 1])
+            if secheader != subsections[k - 1]:
+                subsections[k - 1] = secheader
                 notes.append("remove extraneous spaces in ==Pronunciation== header")
             extra_notes = []
-            parsed = blib.parse_text(subsections[k + 1])
+            parsed = blib.parse_text(subsections[k])
             num_it_IPA = 0
             saw_it_pr = False
             for t in parsed.filter_templates():
@@ -608,7 +612,7 @@ def process_text_on_page(index, pagetitle, text):
             if num_it_IPA > 1:
                 pagemsg("WARNING: Saw multiple {{it-IPA}} in Pronunciation section, skipping")
                 continue
-            lines = subsections[k + 1].strip().split("\n")
+            lines = subsections[k].strip().split("\n")
             # Remove blank lines.
             lines = [line for line in lines if line]
             hyph_lines = []
@@ -723,7 +727,7 @@ def process_text_on_page(index, pagetitle, text):
                     # run into a problem later on, so we don't end up duplicating the {{wikipedia}} line. We accumulate
                     # lines like this in case for some reason we have two {{wikipedia}} lines in the Pronunciation section.
                     del lines_so_far[-1]
-                    subsections[k + 1] = "%s\n\n" % "\n".join(lines_so_far + lines[lineind + 1 :])
+                    subsections[k] = "%s\n\n" % "\n".join(lines_so_far + lines[lineind + 1 :])
                     notes.append("move {{wikipedia}} line to top of etym section")
                     continue
                 if not line.startswith("* ") and not line.startswith("*{"):
@@ -1067,15 +1071,12 @@ def process_text_on_page(index, pagetitle, text):
 
             all_lines = "\n".join([it_pr] + rhyme_lines + rfap_lines + hyph_lines + homophone_lines)
             newsubsec = "%s\n\n" % all_lines
-            if subsections[k + 1] != newsubsec:
+            if subsections[k] != newsubsec:
                 this_notes = ["convert {{it-IPA}} to {{it-pr}}"] + extra_notes
                 notes.extend(this_notes)
-            subsections[k + 1] = newsubsec
+            subsections[k] = newsubsec
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Convert {{it-IPA}} to {{it-pr}}", include_pagefile=True, include_stdin=True)

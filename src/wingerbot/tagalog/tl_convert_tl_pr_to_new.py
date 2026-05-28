@@ -33,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
                 return getparam(t, param).strip()
 
             def get_chain(first, pref=None, firstdefault="", holes="close"):
-                ret = blib.fetch_param_chain(t, first, pref=pref, firstdefault=firstdefault, holes=holes)
+                ret = blib._fetch_param_chain(t, first, pref=pref, firstdefault=firstdefault, holes=holes)
                 return [x.strip() if x is not None else x for x in ret]
 
             if getp("new"):

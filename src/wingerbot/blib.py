@@ -10,7 +10,7 @@ from mwparserfromhell.nodes import Template, Text
 from mwparserfromhell.wikicode import Wikicode
 from collections import defaultdict
 from dataclasses import astuple, dataclass
-from typing import Any, Callable, Literal, NamedTuple, Protocol, TypeIs, overload
+from typing import Any, Callable, Literal, NamedTuple, Protocol, TypeIs, cast, overload
 import xml.sax
 import difflib
 import traceback
@@ -193,7 +193,7 @@ def errandmsgn(text):
     errmsgn(text)
 
 
-def rsub_repeatedly(fr, to, text, count=0, flags=0):
+def rsub_repeatedly(fr: str | re.Pattern[str], to: str | Callable[[re.Match[str]], str], text: str, count: int = 0, flags: int = 0) -> str:
     while True:
         newtext = re.sub(fr, to, text, count, flags)
         if newtext == text:
@@ -201,13 +201,13 @@ def rsub_repeatedly(fr, to, text, count=0, flags=0):
         text = newtext
 
 
-def ucfirst(txt):
+def ucfirst(txt: str) -> str:
     if not txt:
         return txt
     return txt[0].upper() + txt[1:]
 
 
-def lcfirst(txt):
+def lcfirst(txt: str) -> str:
     if not txt:
         return txt
     return txt[0].lower() + txt[1:]
@@ -217,14 +217,14 @@ def parse_text(text: str) -> Wikicode:
     return mwparserfromhell.parser.Parser().parse(text, skip_style_tags=True)
 
 
-def getparam(template, param):
+def getparam(template: Template, param: str) -> str:
     if template.has(param):
         return str(template.get(param).value)
     else:
         return ""
 
 
-def addparam(template, param, value, showkey=None, before=None):
+def addparam(template: Template, param: str, value: str, showkey: bool | None = None, before: str | None = None) -> None:
     template.add(param, value, preserve_spacing=False, showkey=showkey, before=before)
 
 
@@ -368,17 +368,14 @@ class ParameterError(Exception):
 # Treatment of gaps depends on the value of `holes`. If "close" (the default), holes are closed in the returned list by
 # moving all parameters after the gap down by one. If "allow", holes are left with a value of None in the returned list.
 # If "disallow", it is an error (see below) if any holes are found.
-#
-# Handling of parameter errors (see above) depends on the value of `errors`. If "throw" (the default), ParameterError
-# is thrown. If "return", a string specifying the error message is returned.
-def fetch_param_chain(
+def _fetch_param_chain(
     t: Template,
     first: ParamOrParamList,
     pref: str | None = None,
     firstdefault: str = "",
     holes: str = "close",
-    errors: str = "throw",
-) -> list[str | None] | str:
+    strip: bool = False,
+) -> list[str | None]:
     is_number = pref is None and type(first) is str and re.search("^[0-9]+$", first)
     assert first != "", "first= may not be an empty string"
     if type(first) is list:
@@ -393,26 +390,21 @@ def fetch_param_chain(
         first = [first]
     saw_first = None
 
-    def handle_error(err: str) -> str:
-        if errors == "throw":
-            raise ParameterError(err)
-        return "Parameter error: %s" % err
-
     for f in first:
         val = getparam(t, f)
         if val:
             if saw_first is not None:
-                return handle_error("Saw both %s= and %s=, which are aliases: %s" % (saw_first, f, str(t)))
+                raise ParameterError("Saw both %s= and %s=, which are aliases: %s" % (saw_first, f, str(t)))
             saw_first = f
             ret.append(val)
     if pref:
         if pref not in first and t.has(pref):
-            return handle_error("Parameter error: Saw unrecognized param %s=: %s" % (pref, str(t)))
+            raise ParameterError("Parameter error: Saw unrecognized param %s=: %s" % (pref, str(t)))
         param = pref + "1"
         val = getparam(t, param)
         if val:
             if saw_first is not None:
-                return handle_error("Saw both %s= and %s=, which are aliases: %s" % (saw_first, param, str(t)))
+                raise ParameterError("Saw both %s= and %s=, which are aliases: %s" % (saw_first, param, str(t)))
             saw_first = param
             ret.append(val)
     if saw_first is None:
@@ -427,7 +419,7 @@ def fetch_param_chain(
             if holes == "allow":
                 ret.append(val)
             elif holes == "disallow":
-                return handle_error("Saw hole in %s%s= and holes='disallow': %s" % (pref, i, str(t)))
+                raise ParameterError("Saw hole in %s%s= and holes='disallow': %s" % (pref, i, str(t)))
         else:
             ret.append(val)
     if ret[0] is None:
@@ -435,13 +427,37 @@ def fetch_param_chain(
             if holes == "close":
                 del ret[0]
             elif holes == "disallow":
-                return handle_error("Saw hole at beginning and holes='disallow': %s" % str(t))
+                raise ParameterError("Saw hole at beginning and holes='disallow': %s" % str(t))
         else:
             return [firstdefault] if firstdefault else []
     return ret
 
 
-def append_param_to_chain(t, val, firstparam, parampref=None, before=None):
+def fetch_param_chain(
+    t: Template,
+    first: ParamOrParamList,
+    pref: str | None = None,
+    firstdefault: str = "",
+    holes: str = "close",
+) -> list[str]:
+    if holes == "allow":
+        raise RuntimeError("Internal error: fetch_param_chain() cannot be called with holes=allow")
+    retval = _fetch_param_chain(t, first, pref, firstdefault, holes=holes)
+    return cast(list[str], retval)
+
+
+def fetch_param_chain_allow_holes(
+    t: Template,
+    first: ParamOrParamList,
+    pref: str | None = None,
+    firstdefault: str = "",
+) -> list[str | None]:
+    return _fetch_param_chain(t, first, pref, firstdefault, holes="allow")
+
+
+def append_param_to_chain(
+    t: Template, val: str, firstparam: str, parampref: str | None = None, before: str | None = None
+) -> str:
     is_number = re.search("^[0-9]+$", firstparam)
     if parampref is None:
         parampref = "" if is_number else firstparam
@@ -462,7 +478,7 @@ def append_param_to_chain(t, val, firstparam, parampref=None, before=None):
             return next_param
 
 
-def remove_param_chain(t, firstparam, parampref=None):
+def remove_param_chain(t: Template, firstparam: str, parampref: str | None = None) -> bool:
     is_number = re.search("^[0-9]+$", firstparam)
     if parampref is None:
         parampref = "" if is_number else firstparam
@@ -3566,25 +3582,22 @@ class ModifiableLangSection:
     has_non_lang: bool
     force_final_nls: bool = False
 
-    # FIXME: Eliminate this temporary method and just use the fields directly; this is only needed for
-    # compatibility with the original code that used a tuple.
-    def __iter__(self):
-        return astuple(self)[:5]
-
     def props(self):
         return self.sections, self.j, self.secbody, self.sectail, self.has_non_lang
 
-    def rebuild(self, secbody: str | None = None) -> str:
+    def rebuild(self, secbody: str | None = None, sectail: str | None = None) -> str:
         """Rebuild the page text from the current state of the language section."""
         if secbody is not None:
             self.secbody = secbody
+        if sectail is not None:
+            self.sectail = sectail
         stripped_secbody = self.secbody.rstrip("\n") if self.force_final_nls else self.secbody
         self.sections[self.j] = stripped_secbody + self.sectail
         return "".join(self.sections)
 
 
 def find_modifiable_lang_section(
-    text: str, lang: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False
+    text: str, langname: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False
 ) -> ModifiableLangSection | None:
     """Find the section for the language `lang` in `text` (the text of the page), returning values so that the
     language-specific text can be modified and then the page as a whole put back together in preparation for saving.
@@ -3637,20 +3650,21 @@ def find_modifiable_lang_section(
     subsection, then puts everything back together. Note that `force_final_nls=True` is used to ensure that we can
     reliably swap two sections or subsections even if one of them occurs at the very end of the page (final newlines
     are automatically stripped by MediaWiki)."""
-    secs = split_text_into_sections(text, pagemsg)
 
-    has_non_lang = False
-
-    if lang is None:
+    if langname is None:
         sections = [text]
         j = 0
-    elif lang not in secs.sections_by_lang:
-        if pagemsg:
-            pagemsg("WARNING: Can't find %s section, skipping" % lang)
-        return None
+        has_non_lang = False
     else:
-        j = secs.sections_by_lang[lang]
-        has_non_lang = len(secs.sections_by_lang) > 1
+        secs = split_text_into_sections(text, pagemsg)
+        sections = secs.sections
+        if langname not in secs.sections_by_lang:
+            if pagemsg:
+                pagemsg("WARNING: Can't find %s section, skipping" % langname)
+            return None
+        else:
+            j = secs.sections_by_lang[langname]
+            has_non_lang = len(secs.sections_by_lang) > 1
 
     secbody, sectail = split_trailing_separator_and_categories(sections[j])
 

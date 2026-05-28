@@ -5,7 +5,7 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_language_data()
+lang_data = lang_utils.get_lang_data()
 
 ordinal_to_cardinal = {}
 ordinals = [
@@ -71,7 +71,7 @@ def process_text_on_page(index, pagetitle, text):
             Devanagari_equivalent = None
             sort_key = None
             headparam = None
-            infls = blib.fetch_param_chain(t, "3", holes="allow")
+            infls = blib.fetch_param_chain_allow_holes(t, "3")
             inflgroups = []
             for i in range(len(infls)):
                 if i % 2 == 0:
@@ -231,10 +231,10 @@ def process_text_on_page(index, pagetitle, text):
     sections = secs.sections
     for j, seclang in secs.section_langs:
         sectext = sections[j]
-        if seclang not in lang_utils.languages_by_canonical_name:
+        if seclang not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language '%s' in section %s" % (seclang, j))
             continue
-        langcode = lang_utils.languages_by_canonical_name[seclang]["code"]
+        langcode = lang_data.languages_by_canonical_name[seclang]["code"]
 
         def replace_ordinal_def(m):
             label, ordinal, letter_group, rest = m.groups()

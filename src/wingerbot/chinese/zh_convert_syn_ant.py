@@ -5,7 +5,8 @@ import pywikibot, re, sys, argparse, unicodedata
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
+etym_lang_data = lang_utils.get_etym_lang_data()
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -71,12 +72,12 @@ def process_text_on_page(index, pagetitle, text):
                     term += "<t:%s>" % gloss
                 if qual:
                     langcode = None
-                    if qual in lang_utils.languages_by_canonical_name:
-                        langcode = lang_utils.languages_by_canonical_name[qual]["code"]
-                    elif qual in lang_utils.etym_languages_by_canonical_name:
-                        langcode = lang_utils.etym_languages_by_canonical_name[qual]["code"]
-                    elif qual in lang_utils.languages_by_alias:
-                        alias_langs = lang_utils.languages_by_alias[qual]
+                    if qual in lang_data.languages_by_canonical_name:
+                        langcode = lang_data.languages_by_canonical_name[qual]["code"]
+                    elif qual in etym_lang_data.etym_languages_by_canonical_name:
+                        langcode = etym_lang_data.etym_languages_by_canonical_name[qual]["code"]
+                    elif qual in lang_data.languages_by_alias:
+                        alias_langs = lang_data.languages_by_alias[qual]
                         if len(alias_langs) > 1:
                             pagemsg(
                                 "WARNING: For apparent language alias '%s', saw multiple possible language codes %s: %s"
@@ -84,8 +85,8 @@ def process_text_on_page(index, pagetitle, text):
                             )
                         else:
                             langcode = alias_langs[0]["code"]
-                    elif qual in lang_utils.etym_languages_by_alias:
-                        alias_langs = lang_utils.etym_languages_by_alias[qual]
+                    elif qual in etym_lang_data.etym_languages_by_alias:
+                        alias_langs = etym_lang_data.etym_languages_by_alias[qual]
                         if len(alias_langs) > 1:
                             pagemsg(
                                 "WARNING: For apparent etymology language alias '%s', saw multiple possible language codes %s: %s"

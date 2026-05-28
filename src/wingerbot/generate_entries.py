@@ -253,17 +253,17 @@ def process_line(line, pagename, etymnum, pronuns, pronuns_at_top):
         if lang == "bg":
             if len(els) < 6:
                 error("Expected six fields, saw only %s" % len(els))
-            term, etym, aspect, pairedverb, conj, defns = els[0], els[1], els[2], els[3], els[4], els[5]
+            term, etym, aspect, pairedverb, conj, defns = els[0:6]
             remainder = els[6:]
         elif lang == "uk":
             if len(els) < 5:
                 error("Expected five fields, saw only %s" % len(els))
-            term, etym, pairedverb, conj, defns = els[0], els[1], els[2], els[3], els[4]
+            term, etym, pairedverb, conj, defns = els[0:5]
             remainder = els[5:]
         elif lang == "pt":
             if len(els) < 4:
                 error("Expected four fields, saw only %s" % len(els))
-            term, etym, conj, defns = els[0], els[1], els[2], els[3]
+            term, etym, conj, defns = els[0:4]
             pairedverb = None
             remainder = els[4:]
         else:
@@ -271,12 +271,12 @@ def process_line(line, pagename, etymnum, pronuns, pronuns_at_top):
     elif pos in ["n", "pn", "adj"]:
         if len(els) < 4:
             error("Expected four fields, saw only %s" % len(els))
-        term, etym, decl, defns = els[0], els[1], els[2], els[3]
+        term, etym, decl, defns = els[0:4]
         remainder = els[4:]
     else:
         if len(els) < 3:
             error("Expected three fields, saw only %s" % len(els))
-        term, etym, defns = els[0], els[1], els[2]
+        term, etym, defns = els[0:3]
         remainder = els[3:]
     if term.startswith("!"):
         # ! is for continuing another entry without starting a new etym section.
@@ -322,8 +322,7 @@ def process_line(line, pagename, etymnum, pronuns, pronuns_at_top):
             etymtext = etymheader + "\n"
         else:
             etymtext = ""
-    elif re.search(r"^(part|adj|partadj)([fnp]):", etym):
-        m = re.search(r"^(part|adj|partadj)([fnp]):(.*)", etym)
+    elif (m := re.search(r"^(part|adj|partadj)([fnp]):(.*)$", etym)) is not None:
         forms = {"f": ["%s|f|s" % nomcase], "n": ["%s|n|s" % nomcase], "p": ["%s|p" % nomcase]}
         infleclines = ["# {{inflection of|%s|%s||%s}}" % (lang, m.group(3), form) for form in forms[m.group(2)]]
         if m.group(1) in ["adj", "partadj"]:
@@ -353,8 +352,7 @@ def process_line(line, pagename, etymnum, pronuns, pronuns_at_top):
             etymtext = etymheader + "\n"
         else:
             etymtext = ""
-    elif re.search(r"^pl:", etym):
-        m = re.search(r"^pl:(.*)", etym)
+    elif (m := re.search(r"^pl:(.*)$", etym)) is not None:
         forms = "%s|p" % nomcase
         inflecline = "# {{inflection of|%s|%s||%s}}" % (lang, m.group(1), forms)
         plformtext = """===Noun===

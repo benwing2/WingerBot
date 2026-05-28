@@ -4,10 +4,10 @@ from wingerbot import blib, lang_utils
 from wingerbot.blib import msg
 from collections import defaultdict
 
-# blib.init_fake_langdata()
-lang_utils.get_all_lang_data()
+lang_utils.init_fake_lang_data()
+lang_data = lang_utils.get_lang_data()
 
-languages = list(lang_utils.languages_by_canonical_name.keys())
+languages = list(lang_data.languages_by_canonical_name.keys())
 
 
 def langname_key(lang):

@@ -9,7 +9,7 @@ accent_templates = ["a", "accent"]
 
 accent_templates_have_lang = True
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 lang_for_special_pages = {
     "Wiktionary:Entry layout": "en",
@@ -88,11 +88,11 @@ def process_text_on_page(index, pagetitle, text):
         return
 
     def hack_templates(sectext, langname, langnamecode=None, is_citation=False):
-        if langname not in lang_utils.languages_by_canonical_name:
+        if langname not in lang_data.languages_by_canonical_name:
             if not is_citation:
                 langnamecode = None
         else:
-            langnamecode = lang_utils.languages_by_canonical_name[langname]["code"]
+            langnamecode = lang_data.languages_by_canonical_name[langname]["code"]
 
         lines = sectext.split("\n")
         for i, line in enumerate(lines):
@@ -219,7 +219,7 @@ def process_text_on_page(index, pagetitle, text):
                         pagemsg("WARNING: No params: %s" % str(t))
                         continue
                     param1 = numbered_params[0]
-                    if args.skip_already_done and param1 in lang_utils.languages_by_code and len(numbered_params) > 1:
+                    if args.skip_already_done and param1 in lang_data.languages_by_code and len(numbered_params) > 1:
                         pagemsg("Skipping likely already-done template: %s" % str(t))
                         continue
                     must_continue = False

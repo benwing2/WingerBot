@@ -5,7 +5,7 @@ import re
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, msg
 
-lang_utils.get_all_lang_data()
+lang_data = lang_utils.get_lang_data()
 
 spacing_punctuation = lang_utils.get_spacing_punctuation()
 
@@ -147,9 +147,9 @@ start, end = blib.parse_start_end(args.start, args.end)
 cats = []
 langcodes = args.langs.split(",")
 for langcode in langcodes:
-    if langcode not in lang_utils.languages_by_code:
+    if langcode not in lang_data.languages_by_code:
         msg("WARNING: Unrecognized language code '%s'" % langcode)
     else:
-        cats.append("%s terms with redundant head parameter" % lang_utils.languages_by_code[langcode]["canonicalName"])
+        cats.append("%s terms with redundant head parameter" % lang_data.languages_by_code[langcode]["canonicalName"])
 
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=cats, edit=True, stdin=True)

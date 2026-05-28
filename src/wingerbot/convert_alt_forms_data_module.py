@@ -42,8 +42,8 @@ def process_text_on_page(index, pagename, text):
     # langname = None
     # if m:
     #  code = m.group(1)
-    #  if code in lang_utils.languages_by_code:
-    #    langname = lang_utils.languages_by_code[code]["canonicalName"]
+    #  if code in lang_data.languages_by_code:
+    #    langname = lang_data.languages_by_code[code]["canonicalName"]
     #  else:
     #    errandpagemsg("WARNING: Can't locate language %s" % code)
 

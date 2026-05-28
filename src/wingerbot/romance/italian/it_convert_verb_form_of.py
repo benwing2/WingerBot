@@ -87,10 +87,8 @@ def escape_newlines(text):
 def process_text_on_page(index, pagetitle, pagetext):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -99,9 +97,9 @@ def process_text_on_page(index, pagetitle, pagetext):
     if blib.page_should_be_ignored(pagetitle):
         return
 
-    m = re.search(r"\A(.*?)(\n*)\Z", pagetext, re.S)
-    pagetext_nonl, finalnl = m.groups()
-    pagetext = pagetext_nonl + "\n\n"
+    modsec = blib.find_modifiable_lang_section(pagetext, None, pagemsg, force_final_nls=True)
+    if modsec is None:
+        return
 
     def do_sectext(sectext, secheadertext):
         possible_templates = "{{inflection of}}/{{infl of}}"
@@ -271,9 +269,10 @@ def process_text_on_page(index, pagetitle, pagetext):
         return retval_body + retval_tail
 
     # Do {{inflection of}}.
-    subsections = re.split("(^==+[^=\n]+==+\n)", pagetext, 0, re.M)
-    for k in range(2, len(subsections), 2):
-        if "=Verb=" in subsections[k - 1] and re.search(r"\{\{head\|it\|verb form[|}]", subsections[k]):
+    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Verb" and re.search(r"\{\{head\|it\|verb form[|}]", subsections[k]):
             parsed = blib.parse_text(subsections[k])
             must_continue = False
             for t in parsed.filter_templates():
@@ -291,11 +290,8 @@ def process_text_on_page(index, pagetitle, pagetext):
                     must_continue = True
                     break
                 subsections[k] = do_sectext(subsections[k], subsections[k - 1])
-    pagetext = "".join(subsections)
 
-    pagetext = pagetext.rstrip("\n") + finalnl
-
-    return pagetext, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

@@ -13,8 +13,6 @@ def process_text_on_page(index, pagename, text):
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
-    notes = []
-
     new_lines = []
     lines = text.split("\n")
     label = None
