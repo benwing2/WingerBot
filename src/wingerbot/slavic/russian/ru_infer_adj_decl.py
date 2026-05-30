@@ -4,7 +4,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, rmparam, getparam, site
+from wingerbot.blib import msg, rmparam, getparam, site, tname, Index, ProcessPageRetval
 from wingerbot.slavic.russian.rulib import (
     velar,
     sib,
@@ -99,10 +99,10 @@ def compare_results(oldt, newt, pagemsg):
     return ok
 
 
-def trymatch(t, args, pagemsg):
+def trymatch(t, declargs, pagemsg):
     orig_template = str(t)
-    tname = str(t.name).strip()
-    new_arg_str = "|".join(args)
+    tn = tname(t)
+    new_arg_str = "|".join(declargs)
     if new_arg_str:
         new_arg_str = "|" + new_arg_str
     new_named_params = [
@@ -134,7 +134,7 @@ def trymatch(t, args, pagemsg):
     new_named_param_str = "|".join(str(x) for x in new_named_params)
     if new_named_param_str:
         new_named_param_str = "|" + new_named_param_str
-    new_template = "{{%s%s%s}}" % (tname, new_arg_str, new_named_param_str)
+    new_template = "{{%s%s%s}}" % (tn, new_arg_str, new_named_param_str)
     return compare_results(orig_template, new_template, pagemsg)
 
 
@@ -201,9 +201,9 @@ def infer_decl(t, pagemsg):
     elif m and not f and not n and not p:
         pagemsg("Found only short m")
         stem, decl = combine_stem(stem, decl)
-        args = [stem, decl] + ["short_m=%s" % m]
-        if trymatch(t, args, pagemsg):
-            return args
+        declargs = [stem, decl] + ["short_m=%s" % m]
+        if trymatch(t, declargs, pagemsg):
+            return declargs
         else:
             return None
     elif not m or not f or not n or not p:
@@ -237,22 +237,28 @@ def infer_decl(t, pagemsg):
     n2 = "," in n
     p2 = "," in p
 
-    def get_stressed_form(form):
+    def get_stressed_form(form, paramname):
         if "," not in form:
             return form
         forms = re.split(r"\s*,\s*", form)
         if len(forms) > 2:
-            pagemsg("WARNING: More than two forms in %s" % form)
+            pagemsg("WARNING: More than two forms in %s=%s" % (paramname, form))
             return None
         for frm in forms:
             if not re.search(AC + "$", frm):
                 return frm
-        pagemsg("WARNING: Multiple forms but none stem-stressed: %s" % form)
+        pagemsg("WARNING: Multiple forms but none stem-stressed: %s=%s" % (paramname, form))
         return forms[0]
 
-    sf = get_stressed_form(f)
-    sn = get_stressed_form(n)
-    sp = get_stressed_form(p)
+    sf = get_stressed_form(f, "f")
+    if sf is None:
+        return None
+    sn = get_stressed_form(n, "n")
+    if sn is None:
+        return None
+    sp = get_stressed_form(p, "p")
+    if sp is None:
+        return None
     fend = re.search(AC + "$", f)
     nend = re.search(AC + "$", n)
     pend = re.search(AC + "$", p)
@@ -366,78 +372,70 @@ def infer_decl(t, pagemsg):
         declspec = special + (short_stem and (":" + short_stem) or "")
         if decl:
             declspec = decl + ":" + declspec
-        args = [stem, declspec]
+        declargs = [stem, declspec]
         if explicit_msg:
-            args.append("short_m=" + explicit_msg)
-        if trymatch(t, args, pagemsg):
-            return args
+            declargs.append("short_m=" + explicit_msg)
+        if trymatch(t, declargs, pagemsg):
+            return declargs
     pagemsg("WARNING: Unable to infer short accent")
     return None
 
 
-def infer_one_page_decls_1(index, page, text=None):
-    pagetitle = str(page.title())
-
+def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if text is None:
-        text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)
-    for tempname in decl_templates:
-        for t in parsed.filter_templates():
-            if str(t.name).strip() == tempname:
-                orig_template = str(t)
-                args = infer_decl(t, pagemsg)
-                if not args:
-                    # At least combine stem and declension, blanking decl when possible.
-                    stem, decl = combine_stem(getparam(t, "1"), getparam(t, "2"))
-                    t.add("1", stem)
-                    t.add("2", decl)
-                    # Remove any trailing blank arguments.
-                    for i in range(15, 0, -1):
-                        if not getparam(t, i):
-                            rmparam(t, i)
-                        else:
-                            break
-                    new_template = str(t)
-                    if orig_template != new_template:
-                        if not compare_results(orig_template, new_template, pagemsg):
-                            return None, None
-                else:
-                    for i in range(15, 0, -1):
-                        rmparam(t, i)
-                    rmparam(t, "short_m")
-                    rmparam(t, "short_f")
-                    rmparam(t, "short_n")
-                    rmparam(t, "short_p")
-                    t.name = tempname
-                    i = 1
-                    for arg in args:
-                        if "=" in arg:
-                            name, value = re.split("=", arg)
-                            t.add(name, value)
-                        else:
-                            t.add(i, arg)
-                            i += 1
-                    new_template = str(t)
+    for t in parsed.filter_templates():
+        tn = tname(t)
+        if tn in decl_templates:
+            orig_template = str(t)
+            declargs = infer_decl(t, pagemsg)
+            if not declargs:
+                # At least combine stem and declension, blanking decl when possible.
+                stem, decl = combine_stem(getparam(t, "1"), getparam(t, "2"))
+                t.add("1", stem)
+                t.add("2", decl)
+                # Remove any trailing blank arguments.
+                for i in range(15, 0, -1):
+                    if not getparam(t, str(i)):
+                        rmparam(t, str(i))
+                    else:
+                        break
+                new_template = str(t)
                 if orig_template != new_template:
-                    if verbose:
-                        pagemsg("Replacing %s with %s" % (orig_template, new_template))
+                    if not compare_results(orig_template, new_template, pagemsg):
+                        return None, None
+            else:
+                for i in range(15, 0, -1):
+                    rmparam(t, str(i))
+                rmparam(t, "short_m")
+                rmparam(t, "short_f")
+                rmparam(t, "short_n")
+                rmparam(t, "short_p")
+                t.name = tn
+                i = 1
+                for arg in declargs:
+                    if "=" in arg:
+                        name, value = re.split("=", arg)
+                        t.add(name, value)
+                    else:
+                        t.add(i, arg)
+                        i += 1
+                new_template = str(t)
+            if orig_template != new_template:
+                if verbose:
+                    pagemsg("Replacing %s with %s" % (orig_template, new_template))
 
     return str(parsed), "Convert adj decl to new form and infer short-accent pattern"
 
 
-def infer_one_page_decls(index, page, text):
+def process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
     try:
-        return infer_one_page_decls_1(index, page, text)
+        return _process_text_on_page(index, pagetitle, text)
     except Exception as e:
-        msg("%s %s: WARNING: Got an error: %s" % (index, str(page.title()), repr(e)))
+        msg("%s %s: WARNING: Got an error: %s" % (index, pagetitle, repr(e)))
         traceback.print_exc(file=sys.stdout)
-        return None, None
 
 
 test_templates = [
@@ -464,38 +462,24 @@ test_templates = [
 
 
 def test_infer():
-    class Page:
-        def title(self):
-            return "test_infer"
-
     for pagetext in test_templates:
-        page = Page()
-        newtext, comment = infer_one_page_decls(1, page, pagetext)
+        retval = process_text_on_page(1, "test_infer", pagetext)
+        if retval is not None:
+            newtext, comment = retval
         msg("newtext = %s" % str(newtext))
         msg("comment = %s" % comment)
 
 
-parser = blib.create_argparser("Add pronunciation sections to Russian Wiktionary entries")
+parser = blib.create_argparser("Convert manual Russian adjective declensions to {{ru-decl-adj}} and infer short accent pattern",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument("--mockup", action="store_true", help="Use mocked-up test code")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 mockup = args.mockup
 
 
-def ignore_page(page):
-    if not isinstance(page, str):
-        page = str(page.title())
-    if re.search(r"^(Appendix|Appendix talk|User|User talk|Talk):", page):
-        return True
-    return False
-
-
 if mockup:
     test_infer()
 else:
-    for tempname in decl_templates:
-        for index, page in blib.references("Template:" + tempname, start, end):
-            if ignore_page(page):
-                msg("Page %s %s: Skipping due to namespace" % (index, str(page.title())))
-            else:
-                blib.do_edit(index, page, infer_one_page_decls, save=args.save)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+                               default_refs=["Template:%s" % template for template in decl_templates])

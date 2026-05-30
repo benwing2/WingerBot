@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, errandmsg, site
+from wingerbot.blib import getparam, getrmparam, tname, msg, errandmsg, ExpandTextCallback, PagemsgCallback
 from wingerbot.latin import lalib
 
 # FIXME: Out of date script, not needed any more, might not still work.
@@ -184,8 +184,7 @@ old_la_adj_decl_templates = {
 }
 
 
-def generate_old_adj_forms(template, errandpagemsg, expand_text, return_raw=False, include_linked=False):
-
+def generate_old_adj_forms(template: str, errandpagemsg: PagemsgCallback, expand_text: ExpandTextCallback) -> str | None:
     def generate_adj_forms_prefix(m):
         decl_suffix_to_decltype = {
             "decl-1&2": "1&2",
@@ -210,23 +209,7 @@ def generate_old_adj_forms(template, errandpagemsg, expand_text, return_raw=Fals
         errandpagemsg("Template %s not a recognized adjective declension template" % template)
         return None
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
-    if not result:
-        errandpagemsg("WARNING: Error generating forms, skipping")
-        return None
-    args = blib.split_generate_args(result)
-    if not include_linked:
-        args = {k: v for k, v in args.items() if not k.startswith("linked_")}
-    # Add missing feminine forms if needed
-    augmented_args = {}
-    for key, form in args.items():
-        augmented_args[key] = form
-        if key.endswith("_m"):
-            equiv_fem = key[:-2] + "_f"
-            if equiv_fem not in args:
-                augmented_args[equiv_fem] = form
-    return augmented_args
+    return None if result is False else result
 
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
@@ -234,7 +217,7 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     def generate_old_forms():
-        return generate_old_adj_forms(origt, errandpagemsg, expand_text, return_raw=True)
+        return generate_old_adj_forms(origt, errandpagemsg, expand_text)
 
     def generate_new_forms():
         new_generate_template = re.sub(r"^\{\{la-adecl\|", "{{User:Benwing2/la-new-generate-adj-forms|", newt)

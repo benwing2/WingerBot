@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, itertools, traceback
+import pywikibot, re, itertools
+from dataclasses import dataclass
+from mwparserfromhell.nodes import Template
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, errandmsg, site, tname
-from wingerbot.latin import lalib, clean_latin_long_vowels
+from wingerbot.latin import lalib, la_clean_long_vowels
 
 heads_and_defns_cache = {}
 infl_forms_cache = {}
 get_headword_from_template_cache = {}
 expand_text_cache = {}
 
+
+@dataclass
+class LookupInflectionResult:
+    found_heads: list[str]
+    found_inflsets: list[dict[str, str]]
+
+    def props(self):
+        return self.found_heads, self.found_inflsets
 
 # Look up the inflection(s) of LEMMA (without macrons), of part of speech POS,
 # which uses a head template in EXPECTED_HEADTEMPS and an inflection template
@@ -22,20 +32,15 @@ expand_text_cache = {}
 # template). Each "inflection set" is actually a dictionary mapping slot
 # names to forms (each form value in the map needs to be split on commas in
 # case there are multiple forms for the slot).
-def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_infltemps, pagemsg, errandpagemsg):
+def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_infltemps, orig_pagemsg, orig_errandpagemsg) -> list[LookupInflectionResult] | None:
     lemma_pagetitle = lemma_no_macrons
     if lemma_pagetitle.startswith("*"):
         lemma_pagetitle = "Reconstruction:Latin/" + lemma_pagetitle[1:]
 
-    orig_pagemsg = pagemsg
-    orig_errandpagemsg = errandpagemsg
-
     def pagemsg(txt):
         orig_pagemsg("%s: %s" % (lemma_no_macrons, txt))
-
     def errandpagemsg(txt):
         orig_errandpagemsg("%s: %s" % (lemma_no_macrons, txt))
-
     def expand_text(tempcall):
         cache_key = (tempcall, lemma_pagetitle)
         if cache_key in expand_text_cache:
@@ -62,47 +67,36 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
             heads_and_defns_cache[lemma_pagetitle] = "nonexistent"
             return None
 
-        retval = lalib.find_heads_and_defns(str(page.text), pagemsg)
-        heads_and_defns_cache[lemma_pagetitle] = retval
+        text = blib.safe_page_text(page, errandpagemsg)
+        heads_and_defns = lalib.find_heads_and_defns(text, pagemsg)
+        heads_and_defns_cache[lemma_pagetitle] = heads_and_defns
 
     if retval == "nonexistent":
         pagemsg("WARNING: Lemma %s doesn't exist (cached)" % lemma_no_macrons)
         return None
-    if retval is None:
+    if heads_and_defns is None:
         return None
 
-    (
-        sections,
-        j,
-        secbody,
-        sectail,
-        has_non_lang,
-        subsections,
-        parsed_subsections,
-        headwords,
-        pronun_sections,
-        etym_sections,
-    ) = retval
+    headwords = heads_and_defns.headwords
 
     matched_head = False
 
-    inflargs_sets = []
+    inflargs_sets: list[LookupInflectionResult] = []
 
     seen_heads = []
     seen_infltns = []
     for headword in headwords:
-        ht = headword["head_template"]
+        ht = headword.head_template
         tn = tname(ht)
         heads = lalib.la_get_headword_from_template(ht, lemma_pagetitle, pagemsg, expand_text)
         for head in heads:
             if head not in seen_heads:
                 seen_heads.append(head)
-        for inflt in headword["infl_templates"]:
+        for inflt in headword.infl_templates:
             infltn = tname(inflt)
             if infltn not in seen_infltns:
                 seen_infltns.append(infltn)
         if tn in expected_headtemps:
-            oright = str(ht)
             for head in heads:
                 head_no_links = blib.remove_links(head)
                 if lalib.remove_macrons(head_no_links) == lemma_no_macrons:
@@ -110,8 +104,8 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
             else:
                 # no break
                 continue
-            this_inflargs = []
-            for inflt in headword["infl_templates"]:
+            this_inflargs: list[dict[str, str]] = []
+            for inflt in headword.infl_templates:
                 infltn = tname(inflt)
                 if infltn not in expected_infltemps:
                     pagemsg(
@@ -126,7 +120,7 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
                     continue
                 this_inflargs.append(inflargs)
                 matched_head = True
-            inflargs_sets.append((heads, this_inflargs))
+            inflargs_sets.append(LookupInflectionResult(heads, this_inflargs))
     if not matched_head:
         pagemsg(
             "WARNING: Couldn't find any matching heads, even allowing macron differences (seen heads %s, seen infl template names %s)"
@@ -155,25 +149,15 @@ def process_text_on_page(index, pagetitle, text):
     if "==Latin==" not in text:
         return
 
-    retval = lalib.find_heads_and_defns(text, pagemsg)
-    if retval is None:
+    heads_and_defns = lalib.find_heads_and_defns(text, pagemsg)
+    if heads_and_defns is None:
         return
-
-    (
-        sections,
-        j,
-        secbody,
-        sectail,
-        has_non_lang,
-        subsections,
-        parsed_subsections,
-        headwords,
-        pronun_sections,
-        etym_sections,
-    ) = retval
+    modsec = heads_and_defns.modsec
+    parsed_subsections = heads_and_defns.parsed_subsections
+    headwords = heads_and_defns.headwords
 
     for headword in headwords:
-        ht = headword["head_template"]
+        ht = headword.head_template
         tn = tname(ht)
 
         if tn == "la-noun-form" or tn == "head" and getparam(ht, "1") == "la" and getparam(ht, "2") == "noun form":
@@ -293,7 +277,7 @@ def process_text_on_page(index, pagetitle, text):
         #    headword (and issue a warning). When doing so, we may need to
         #    update the corresponding pronunciation template(s), according to
         #    logic still to be determined (FIXME), but similar to or identical to
-        #    existing logic in clean_latin_long_vowels.py.
+        #    existing logic in la_clean_long_vowels.py.
         # 6. If there are no matches per (5), we first look at the possible
         #    assignments of actual lemmas to each possible {{inflection of}}
         #    template (ignoring macron differences). If there's only one such
@@ -329,15 +313,24 @@ def process_text_on_page(index, pagetitle, text):
         headword_forms = matching_headword_forms
 
         for stage in [1, 2, 3]:
-
             def stagemsg(txt):
                 pagemsg("Stage %s: %s" % (stage, txt))
-
             def errandstagemsg(txt):
                 errandpagemsg("Stage %s: %s" % (stage, txt))
 
+            @dataclass
+            class InflOfTemplatesAndPropertiesResult:
+                t: Template
+                lemma_param: str
+                lemma: str
+                inflargs_sets: list[LookupInflectionResult]
+                tag_sets: list[list[str]]
+
+                def props(self):
+                    return self.t, self.lemma_param, self.lemma, self.inflargs_sets, self.tag_sets
+
             def yield_infl_of_templates_and_properties():
-                for t in headword["infl_of_templates"]:
+                for t in headword.infl_of_templates:
                     lang = getparam(t, "lang")
                     if lang:
                         lemma_param = 1
@@ -382,9 +375,19 @@ def process_text_on_page(index, pagetitle, text):
                         for maybe_multipart_tag_set in lalib.split_tags_into_tag_sets(tags)
                         for tag_set in lalib.split_multipart_tag_set(maybe_multipart_tag_set)
                     ]
-                    yield t, lemma_param, lemma, inflargs_sets, tag_sets
+                    yield InflOfTemplatesAndPropertiesResult(t, str(lemma_param), lemma, inflargs_sets, tag_sets)
 
-            def merge_forms_for_slot(slot, this_inflargs):
+            @dataclass
+            class MergeFormsForSlotResult:
+                all_valid_forms: list[str]
+                all_valid_forms_with_syncopated: list[str]
+                all_matchable_forms: list[str]
+                all_matchable_forms_with_syncopated: list[str]
+
+                def props(self):
+                    return self.all_valid_forms, self.all_valid_forms_with_syncopated, self.all_matchable_forms, self.all_matchable_forms_with_syncopated
+
+            def merge_forms_for_slot(slot: str, this_inflargs: list[dict[str, str]]) -> MergeFormsForSlotResult:
                 # Merge the forms of all inflection templates under the given
                 # lemma headword
                 all_valid_forms = []
@@ -392,7 +395,6 @@ def process_text_on_page(index, pagetitle, text):
                 for inflargs in this_inflargs:
                     if slot not in inflargs:
                         continue
-                    saw_slot_in_inflargs = True
                     forms = inflargs[slot].split(",")
                     valid_forms = [form for form in forms if "[" not in form and "|" not in form]
                     for form in valid_forms:
@@ -408,7 +410,7 @@ def process_text_on_page(index, pagetitle, text):
                 all_matchable_forms_with_syncopated = [
                     form for form in all_valid_forms_with_syncopated if lalib.remove_macrons(form) == pagetitle
                 ]
-                return (
+                return MergeFormsForSlotResult(
                     all_valid_forms,
                     all_valid_forms_with_syncopated,
                     all_matchable_forms,
@@ -417,7 +419,8 @@ def process_text_on_page(index, pagetitle, text):
 
             if stage == 1:
                 matched_infl_of_templates = False
-                for t, lemma_param, lemma, inflargs_sets, tag_sets in yield_infl_of_templates_and_properties():
+                for infl_of_templates_result in yield_infl_of_templates_and_properties():
+                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
 
                     def check_for_tag_set_match(tag_set, allow_lemma_mismatch):
                         slot = lalib.tag_set_to_slot(tag_set, tag_set_groups, stagemsg)
@@ -429,7 +432,8 @@ def process_text_on_page(index, pagetitle, text):
                             return []
                         saw_slot_in_inflargs = False
                         matching_actual_lemmas = []
-                        for actual_lemmas, this_inflargs in inflargs_sets:
+                        for lookup_inflection_result in inflargs_sets:
+                            actual_lemmas, this_inflargs = lookup_inflection_result.props()
                             saw_matching_lemma = False
                             for actual_lemma in actual_lemmas:
                                 actual_lemma = blib.remove_links(actual_lemma)
@@ -442,12 +446,13 @@ def process_text_on_page(index, pagetitle, text):
                             if not saw_matching_lemma:
                                 continue
 
+                            merge_result = merge_forms_for_slot(slot, this_inflargs)
                             (
                                 all_valid_forms,
                                 all_valid_forms_with_syncopated,
                                 all_matchable_forms,
                                 all_matchable_forms_with_syncopated,
-                            ) = merge_forms_for_slot(slot, this_inflargs)
+                            ) = merge_result.props()
 
                             matched_form = False
                             if set(headword_forms) == set(all_matchable_forms):
@@ -507,7 +512,8 @@ def process_text_on_page(index, pagetitle, text):
                         return matching_actual_lemmas
 
                     saw_matching_lemma = False
-                    for actual_lemmas, this_inflargs in inflargs_sets:
+                    for lookup_inflection_result in inflargs_sets:
+                        actual_lemmas, this_inflargs = lookup_inflection_result.props()
                         if lemma in [blib.remove_links(x) for x in actual_lemmas]:
                             saw_matching_lemma = True
                             break
@@ -542,8 +548,8 @@ def process_text_on_page(index, pagetitle, text):
                                 lemma,
                                 ",".join(
                                     actual_lemma
-                                    for actual_lemmas, this_inflargs in inflargs_sets
-                                    for actual_lemma in actual_lemmas
+                                    for lookup_inflection_result in inflargs_sets
+                                    for actual_lemma in lookup_inflection_result.found_heads
                                 ),
                                 str(t),
                             )
@@ -615,7 +621,8 @@ def process_text_on_page(index, pagetitle, text):
             elif stage == 2:
                 common_forms = None
                 no_common_forms = False
-                for t, lemma_param, lemma, inflargs_sets, tag_sets in yield_infl_of_templates_and_properties():
+                for infl_of_templates_result in yield_infl_of_templates_and_properties():
+                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
                     for tag_set in tag_sets:
                         slot = lalib.tag_set_to_slot(tag_set, tag_set_groups, stagemsg)
                         if slot is None or slot not in possible_slots:
@@ -624,7 +631,8 @@ def process_text_on_page(index, pagetitle, text):
                             break
                         this_tag_set_matching_forms = []
                         combined_this_inflargs = []
-                        for actual_lemmas, this_inflargs in inflargs_sets:
+                        for lookup_inflection_result in inflargs_sets:
+                            actual_lemmas, this_inflargs = lookup_inflection_result.props()
                             for actual_lemma in actual_lemmas:
                                 actual_lemma = blib.remove_links(actual_lemma)
                                 if lemma == actual_lemma:
@@ -632,13 +640,8 @@ def process_text_on_page(index, pagetitle, text):
                                     break
                         if not combined_this_inflargs:
                             continue
-                        (
-                            all_valid_forms,
-                            all_valid_forms_with_syncopated,
-                            all_matchable_forms,
-                            all_matchable_forms_with_syncopated,
-                        ) = merge_forms_for_slot(slot, combined_this_inflargs)
-                        for form in all_matchable_forms:
+                        merge_result = merge_forms_for_slot(slot, combined_this_inflargs)
+                        for form in merge_result.all_matchable_forms:
                             if form not in this_tag_set_matching_forms:
                                 this_tag_set_matching_forms.append(form)
                         if common_forms is None:
@@ -680,13 +683,14 @@ def process_text_on_page(index, pagetitle, text):
                         )
                     else:
                         assert len(common_forms) == 1
-                        clean_latin_long_vowels.process_pronun_templates(
-                            headword["pronun_section"],
+                        la_clean_long_vowels.process_pronun_templates(
+                            headword.pronun_section,
                             common_forms[0],
                             stagemsg,
                             notes,
                             "fix macrons in pronun of '%%s' (stage 2): %s -> %s"
                             % (",".join(headword_forms), ",".join(common_forms)),
+                            lemma,
                         )
                     break
 
@@ -694,9 +698,11 @@ def process_text_on_page(index, pagetitle, text):
                 assert stage == 3
                 multiple_assignments = False
                 infl_of_assignments = []
-                for t, lemma_param, lemma, inflargs_sets, tag_sets in yield_infl_of_templates_and_properties():
+                for infl_of_templates_result in yield_infl_of_templates_and_properties():
+                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
                     matching_lemmas = []
-                    for actual_lemmas, this_inflargs in inflargs_sets:
+                    for lookup_inflection_result in inflargs_sets:
+                        actual_lemmas, this_inflargs = lookup_inflection_result.props()
                         for actual_lemma in actual_lemmas:
                             actual_lemma = blib.remove_links(actual_lemma)
                             if lalib.remove_macrons(lemma) == lalib.remove_macrons(actual_lemma):
@@ -715,9 +721,10 @@ def process_text_on_page(index, pagetitle, text):
                 for assignment in itertools.product(*infl_of_assignments):
                     common_forms = None
                     no_common_forms = False
-                    for actual_lemma, (t, lemma_param, lemma, inflargs_sets, tag_sets) in zip(
+                    for actual_lemma, infl_of_templates_result in zip(
                         assignment, yield_infl_of_templates_and_properties()
                     ):
+                        t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
                         for tag_set in tag_sets:
                             slot = lalib.tag_set_to_slot(tag_set, tag_set_groups, stagemsg)
                             if slot is None or slot not in possible_slots:
@@ -726,16 +733,12 @@ def process_text_on_page(index, pagetitle, text):
                                 break
                             this_tag_set_matching_forms = []
                             combined_this_inflargs = []
-                            for actual_lemmas, this_inflargs in inflargs_sets:
+                            for lookup_inflection_result in inflargs_sets:
+                                actual_lemmas, this_inflargs = lookup_inflection_result.props()
                                 if actual_lemma in actual_lemmas:
                                     combined_this_inflargs.extend(this_inflargs)
-                                (
-                                    all_valid_forms,
-                                    all_valid_forms_with_syncopated,
-                                    all_matchable_forms,
-                                    all_matchable_forms_with_syncopated,
-                                ) = merge_forms_for_slot(slot, combined_this_inflargs)
-                                for form in all_matchable_forms:
+                                merge_result = merge_forms_for_slot(slot, combined_this_inflargs)
+                                for form in merge_result.all_matchable_forms:
                                     if form not in this_tag_set_matching_forms:
                                         this_tag_set_matching_forms.append(form)
                             if common_forms is None:
@@ -755,7 +758,9 @@ def process_text_on_page(index, pagetitle, text):
                         if no_common_forms:
                             break
                     if not no_common_forms and common_forms is not None:
-                        if cur_assignment:
+                        if cur_assignment is not None:
+                            # We set cur_assignment and cur_common_forms together
+                            assert cur_common_forms is not None
                             stagemsg(
                                 "WARNING: Multiple assignments of lemmas have common forms, at least %s -> %s and %s -> %s, not changing: %s"
                                 % (
@@ -775,9 +780,12 @@ def process_text_on_page(index, pagetitle, text):
                         % (pagetitle, str(ht))
                     )
                 else:
-                    for actual_lemma, (t, lemma_param, lemma, inflargs_sets, tag_sets) in zip(
+                    # We set cur_assignment and cur_common_forms together
+                    assert cur_common_forms is not None
+                    for actual_lemma, infl_of_templates_result in zip(
                         cur_assignment, yield_infl_of_templates_and_properties()
                     ):
+                        t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
                         notes.append(
                             "fix macrons in lemma of '%s' (stage 3): %s -> %s" % (tname(t), lemma, actual_lemma)
                         )
@@ -805,19 +813,19 @@ def process_text_on_page(index, pagetitle, text):
                         )
                     else:
                         assert len(cur_common_forms) == 1
-                        clean_latin_long_vowels.process_pronun_templates(
-                            headword["pronun_section"],
+                        la_clean_long_vowels.process_pronun_templates(
+                            headword.pronun_section,
                             cur_common_forms[0],
                             stagemsg,
                             notes,
                             "fix macrons in pronun of '%%s' (stage 3): %s -> %s"
                             % (",".join(headword_forms), ",".join(cur_common_forms)),
+                            lemma,
                         )
                     break
 
     secbody = "".join(str(x) for x in parsed_subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

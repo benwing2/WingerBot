@@ -28,11 +28,12 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
-    for j in range(2, len(subsections), 2):
-        if not re.search("==(Adjective|Numeral|Ordinal Numeral|Participle)==", subsections[j - 1]):
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if not re.search("^(Adjective|Numeral|Ordinal Numeral|Participle)$", header):
             continue
-        parsed = blib.parse_text(subsections[j])
+        parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             origt = str(t)
             tn = tname(t)
@@ -94,7 +95,7 @@ def process_text_on_page(index, pagetitle, text):
                     % (
                         lemma,
                         "/".join(
-                            "%s+%s" % (lemmas_to_try, endings_to_try)
+                            "%s+%s" % (lemma_to_try, ending_to_try)
                             for lemma_to_try, ending_to_try, tag_sets in found_combinations
                         ),
                     )
@@ -131,7 +132,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("t", gloss)
             notes.append("replace %s with %s" % (origt, str(t)))
             pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
-        subsections[j] = str(parsed)
+        subsections[k] = str(parsed)
     text = "".join(subsections)
 
     return text, notes

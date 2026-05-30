@@ -12,27 +12,28 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "German", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
+    secbody = modsec.secbody
     if "Etymology 1" in secbody:
         pagemsg("WARNING: Can't handle Etymology 1")
         return
 
-    subsections = re.split("(^===[^=\n]+===\n)", secbody, 0, re.M)
-
     while True:
+        did_move = False
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
         # Look for a participle and move it up.
-        for k in range(2, len(subsections), 2):
-            if re.search("==Participle==", subsections[k - 1]):
+        for k, header in subsecs.subsection_headers:
+            if header == "Participle":
                 l = k
                 while l > 2 and (
-                    re.search("=(Adjective|Adverb)=", subsections[l - 3])
-                    or re.search("=Verb=", subsections[l - 3])
+                    subsecs.subsection_header_dict[l - 2] in ["Adjective", "Adverb"]
+                    or subsecs.subsection_header_dict[l - 2] == "Verb"
                     and re.search(r"\{\{head\|de\|verb form", subsections[l - 2])
                 ):
                     l -= 2
@@ -41,32 +42,31 @@ def process_text_on_page(index, pagetitle, text):
                     subsections[k - 1 : k + 1] = subsections[l - 1 : k - 1]
                     subsections[l - 1 : k - 1] = participle_text
                     notes.append("move Participle section above Adjective/Adverb/Verb form sections")
+                    did_move = True
                     break
+        secbody = "".join(subsections)
 
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
         # Look for a verb form and move it down.
-        for k in range(2, len(subsections), 2):
-            if re.search("==Verb==", subsections[k - 1]) and re.search(r"\{\{head\|de\|verb form", subsections[k]):
+        for k, header in subsecs.subsection_headers:
+            if header == "Verb" and re.search(r"\{\{head\|de\|verb form", subsections[k]):
                 l = k
-                while l < len(subsections) - 2 and re.search("=(Adjective|Adverb|Participle)=", subsections[l + 1]):
+                while l < len(subsections) - 2 and subsecs.subsection_header_dict[l + 2] in ["Adjective", "Adverb", "Participle"]:
                     l += 2
                 if l > k:
                     non_verb_form_text = subsections[k + 1 : l + 1]
                     subsections[k + 1 : l + 1] = subsections[k - 1 : k + 1]
                     subsections[k - 1 : k + 1] = non_verb_form_text
                     notes.append("move Verb form section below Adjective/Adverb/Participle sections")
+                    did_move = True
                     break
+        secbody = "".join(subsections)
 
-        else:  # no break
+        if not did_move:
             break
 
-        continue
-
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

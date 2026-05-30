@@ -36,15 +36,12 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    origtext = text
-
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
-        return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
     notes = []
+
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
     parsed = blib.parse_text(secbody)
 
@@ -86,9 +83,7 @@ def process_text_on_page(index, pagetitle, text):
                 # no break
                 pagemsg("WARNING: Unable to match pronun template against any prefixes: %s" % str(t))
 
-    secbody = str(parsed)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=str(parsed)), notes
 
 
 parser = blib.create_argparser(

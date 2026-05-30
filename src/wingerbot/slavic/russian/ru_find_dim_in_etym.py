@@ -10,19 +10,18 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
-
-    russian = blib.find_lang_section(text, "Russian", pagemsg)
-    if not russian:
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
         return
 
-    subsections = re.split("(^===+[^=\n]+===+\n)", russian, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
     # Go through each subsection in turn, looking for subsection
     # matching the POS with an appropriate headword template whose
     # head matches the inflected form
-    for j in range(2, len(subsections), 2):
-        if "==Etymology" in subsections[j - 1]:
-            parsed = blib.parse_text(subsections[j])
+    for k, header in subsecs.subsection_headers:
+        if header.startswith("Etymology"):
+            parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
                 tn = tname(t)
                 if tn == "diminutive of":

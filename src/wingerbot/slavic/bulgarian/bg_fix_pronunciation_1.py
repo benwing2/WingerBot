@@ -14,12 +14,12 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Bulgarian", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     if "Pronunciation 1" not in secbody:
         return
@@ -34,15 +34,16 @@ def process_text_on_page(index, pagetitle, text):
 
     pronunciation_secs = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     pronsec_text_parts = []
     saw_pron_1 = False
     above_pron_1_sec_0 = subsections[0]
     above_pron_1 = None
     pronsec = None
-    for k in range(2, len(subsections), 2):
-        if "==Pronunciation" in subsections[k - 1]:
-            if "==Pronunciation 1" in subsections[k - 1]:
+    for k, header in subsecs.subsection_headers:
+        if header.startswith("Pronunciation"):
+            if header == "Pronunciation 1":
                 above_pron_1 = above_pron_1_sec_0 + "".join(pronsec_text_parts)
             else:
                 if pronsec is None:
@@ -190,12 +191,8 @@ def process_text_on_page(index, pagetitle, text):
         # Remove one indentation level
         pronsec_text = re.sub("^=(.*)=$", r"\1", pronsec_text, 0, re.M)
         secbody_parts.append(pronsec_text)
-    secbody = "".join(secbody_parts)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-
     notes.append("reformat ==Pronunciation 1== Bulgarian entry to use top-level pronunciation section")
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(secbody_parts)), notes
 
 
 parser = blib.create_argparser(

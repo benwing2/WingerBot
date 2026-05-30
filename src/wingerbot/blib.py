@@ -2,15 +2,17 @@
 
 # Author: Benwing; bits and pieces taken from code written by CodeCat/Rua for MewBot
 
+from collections.abc import Generator, Iterable, Callable
 from importlib.metadata.diagnose import inspect
 
 import pywikibot, mwparserfromhell, re, sys, urllib, datetime, argparse, time, itertools
-from pywikibot import Page
-from mwparserfromhell.nodes import Template, Text
+from pywikibot import Page, Category
+from mwparserfromhell.nodes import Template
+from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.wikicode import Wikicode
 from collections import defaultdict
-from dataclasses import astuple, dataclass
-from typing import Any, Callable, Literal, NamedTuple, Protocol, TypeIs, cast, overload
+from dataclasses import dataclass
+from typing import Any, Literal, TypeIs, cast
 import xml.sax
 import difflib
 import traceback
@@ -24,9 +26,11 @@ type Index = int | str
 type ChangelogComment = str | list[str]
 type ProcessPageRetval = tuple[str | None, ChangelogComment | None] | None
 type PagemsgCallback = Callable[[str], None]
+type ExpandTextCallback = Callable[[str], str | Literal[False]]
 type Langparam = str | tuple[Literal["direct"], str]
 type ProcessLinksParam = tuple[str, *tuple[Any, ...]]
 type ParamOrParamList = str | list[str]
+type PagePrefix = int | str
 
 ############################ Implementation of do_pagefile_cats_refs callback to satisfy Pylance. Unbelievably fugly.
 ############################ Worked out with the help of Google AI.
@@ -228,19 +232,19 @@ def addparam(template: Template, param: str, value: str, showkey: bool | None = 
     template.add(param, value, preserve_spacing=False, showkey=showkey, before=before)
 
 
-def rmparam(template, param):
+def rmparam(template: Template, param: str) -> None:
     if template.has(param):
         template.remove(param)
 
 
-def getrmparam(template, param):
+def getrmparam(template: Template, param: str) -> str:
     val = getparam(template, param)
     rmparam(template, param)
     return val
 
 
-def bool_param_is_true(param):
-    return param and param not in ["0", "no", "n", "false"]
+def bool_param_is_true(param: str) -> bool:
+    return param.lower().strip() not in ["", "0", "no", "n", "false"]
 
 
 def parse_template_name(name: str) -> tuple[str, str, str]:
@@ -252,20 +256,20 @@ def parse_template_name(name: str) -> tuple[str, str, str]:
     return before, name, after
 
 
-def tname(template):
+def tname(template: Template) -> str:
     before, name, after = parse_template_name(str(template.name))
     # If we are renaming uses of e.g. {{Chinese pinyin TOC}}, we should match {{Chinese_pinyin_TOC}} as well because
     # MediaWiki will.
     return name.replace("_", " ")
 
 
-def pname(param):
+def pname(param: Parameter) -> str:
     before, name, after = parse_template_name(str(param.name))
     return name
 
 
-def set_template_name(template, name, origname=None):
-    if not origname:
+def set_template_name(template: Template, name: str, origname: str | None = None) -> None:
+    if origname is None:
         origname = str(template.name)
     before, namepart, after = parse_template_name(origname)
     template.name = before + name + after
@@ -708,7 +712,8 @@ def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, d
         break
 
 
-def do_edit(index, page, func=None, null=False, save=False, verbose=False, diff=False):
+def do_edit(index: Index, page: Page, func: ProcessPageCallback, null: bool = False, save: bool = False,
+            verbose: bool = False, diff: bool = False) -> None:
     title = str(page.title())
 
     def pagemsg(txt):
@@ -719,33 +724,29 @@ def do_edit(index, page, func=None, null=False, save=False, verbose=False, diff=
 
     while True:
         try:
-            if func:
-                if verbose:
-                    pagemsg("Begin processing")
-                retval = func(index, page)
+            if verbose:
+                pagemsg("Begin processing")
+            retval = func(index, page)
 
-                new, comment, has_changed = handle_process_page_retval(retval, page.text, pagemsg, verbose, diff)
-                if has_changed:
+            new, comment, has_changed = handle_process_page_retval(retval, page.text, pagemsg, verbose, diff)
+            if has_changed:
 
-                    def assign_changed_page():
-                        page.text = new
+                def assign_changed_page():
+                    page.text = new
 
-                    try_repeatedly(assign_changed_page, errandpagemsg, "assign changed page to 'page.text'")
-                    if save:
-                        pagemsg("Saving with comment = %s" % comment)
-                        safe_page_save(page, comment, errandpagemsg)
-                    else:
-                        pagemsg("Would save with comment = %s" % comment)
-                elif null:
-                    pagemsg("Purged page cache")
-                    safe_page_purge(page, errandpagemsg)
-                elif comment:
-                    pagemsg("Skipped: %s" % comment)
+                try_repeatedly(assign_changed_page, errandpagemsg, "assign changed page to 'page.text'")
+                if save:
+                    pagemsg("Saving with comment = %s" % comment)
+                    safe_page_save(page, comment, errandpagemsg)
                 else:
-                    pagemsg("Skipped, no changes")
-            else:
+                    pagemsg("Would save with comment = %s" % comment)
+            elif null:
                 pagemsg("Purged page cache")
                 safe_page_purge(page, errandpagemsg)
+            elif comment:
+                pagemsg("Skipped: %s" % comment)
+            else:
+                pagemsg("Skipped, no changes")
         except urllib.error.HTTPError as e:
             if e.code != 503:  # Service unavailable
                 raise
@@ -876,7 +877,7 @@ def check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose=False):
 
 
 def yield_articles(
-    page, seen, startprefix=None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
+    page: Category, seen: set[str] | None, startprefix=None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
 ):
     if not check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose):
         return
@@ -912,13 +913,13 @@ def yield_articles(
 
 
 def raw_cat_articles(
-    page, seen, startprefix=None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
+    page: str | Category, seen, startprefix=None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
 ):
     if isinstance(page, str):
         if not page.startswith("Category:"):
             page = "Category:" + page
         page = pywikibot.Category(site, page)
-    for article in yield_articles(
+    yield from yield_articles(
         page,
         seen,
         startprefix=startprefix,
@@ -926,24 +927,23 @@ def raw_cat_articles(
         prune_cats_regex=prune_cats_regex,
         recurse=recurse,
         verbose=verbose,
-    ):
-        yield article
+    )
 
 
 def cat_articles(
-    page,
-    startprefix=None,
-    endprefix=None,
-    seen=None,
+    page: str | Category,
+    startprefix: PagePrefix | None = None,
+    endprefix: PagePrefix | None = None,
+    seen: set[str] | None = None,
     filter_cats_regex=None,
     prune_cats_regex=None,
     recurse=False,
     track_seen=False,
     verbose=False,
-):
+) -> Generator[tuple[Index, Page], None, None]:
     if seen is None and track_seen:
         seen = set()
-    for i, current in iter_items(
+    yield from iter_items(
         raw_cat_articles(
             page,
             seen,
@@ -955,8 +955,7 @@ def cat_articles(
         ),
         startprefix,
         endprefix,
-    ):
-        yield i, current
+    )
 
 
 def yield_subcats(
@@ -1204,15 +1203,15 @@ class ProcessItems:
         return retval
 
 
-def iter_items(
-    items,
+def iter_items[T](
+    items: Iterable[T],
     startprefix=None,
     endprefix=None,
     get_name=get_page_name,
     get_index=None,
     skip_ignorable_pages=False,
     first_index=1,
-):
+) -> Generator[tuple[Index, T], None, None]:
     i = first_index - 1
     t = None
     steps = 50
@@ -1227,7 +1226,7 @@ def iter_items(
         else:
             index = i
 
-        if startprefix != None:
+        if startprefix is not None:
             should_skip = False
             if isinstance(startprefix, int):
                 if index < startprefix:
@@ -3524,7 +3523,7 @@ class SplitTextIntoSubsectionsResult:
 
 
 def split_text_into_subsections(
-    secbody: str, pagemsg: PagemsgCallback | None, only_level: int | None = None
+    secbody: str, pagemsg: PagemsgCallback | None, only_level: int | None = None, header_re: str | None = None
 ) -> SplitTextIntoSubsectionsResult:
     """Split `secbody` (the body of a language section, as returned by find_modifiable_lang_section()) into subsections.
     Return a `SplitTextIntoSubsectionsResult` object, with fields as follows:
@@ -3541,9 +3540,13 @@ def split_text_into_subsections(
     The original language section body can be reconstructed by concatenating the values of `subsections` with a blank
     string between them.
 
-    If `only_level` is given, only split on headers of that level; otherwise, split on all headers."""
+    If `only_level` is given, only split on headers of that level; otherwise, split on headers of all levels.
+    If `header_re` is given, it should be a regex to match headers to split on (anchored on both ends); otherwise, split
+    on all headers."""
     header_equals = "=" * only_level if only_level is not None else "==+"
-    subsections = re.split(r"(^%s[^=\n]+%s[ \t]*\n)" % (header_equals, header_equals), secbody, 0, re.M)
+    if header_re is None:
+        header_re = r"[^=\n]+"
+    subsections = re.split(r"(^%s[ \t]*%s[ \t]*%s[ \t]*\n)" % (header_equals, header_equals), secbody, 0, re.M)
     subsection_headers = []
     subsections_by_header = defaultdict(list)
     subsection_levels = {}
@@ -3733,7 +3736,7 @@ def replace_in_text(
     return text, True
 
 
-def split_generate_args(tempresult):
+def split_generate_args(tempresult: str) -> dict[str, str]:
     args = {}
     for arg in re.split(r"\|", tempresult):
         values = arg.split("=")

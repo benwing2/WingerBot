@@ -167,7 +167,7 @@ while True:
         if word.startswith("-") or word.endswith("-"):
             # Allow unstressed prefix (e.g. разо-) and unstressed suffix (e.g. -овать)
             return
-        if rulib.needs_accents(word, split_dash=True):
+        if rulib.needs_accents(word, split_hyphen=True):
             error("Word %s missing an accent" % word)
 
     # Skip lines consisting entirely of comments

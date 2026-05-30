@@ -68,7 +68,7 @@ def frob_old_values(key, values):
     return retvals
 
 
-def generate_old_verb_forms(template, errandpagemsg, expand_text, return_raw=False):
+def generate_old_verb_forms(template, errandpagemsg, expand_text):
     template = re.sub(r"\}\}$", "|json=1}}", template)
     forms = expand_text(template)
     if not forms:
@@ -96,7 +96,7 @@ def frob_new_values(values):
     return retvals
 
 
-def generate_new_verb_forms(template, errandpagemsg, expand_text, return_raw=False):
+def generate_new_verb_forms(template, errandpagemsg, expand_text):
     template = re.sub(r"\}\}$", "|json=1}}", template)
     forms = expand_text(template)
     if not forms:

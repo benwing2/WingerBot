@@ -5,8 +5,6 @@ import re
 from wingerbot import blib
 from wingerbot.blib import msg, tname
 
-from wingerbot.latin import lalib
-
 pages_to_delete = []
 
 
@@ -16,16 +14,16 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     saw_head = False
     saw_bad_template = False
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             tn = tname(t)
@@ -78,17 +76,12 @@ def process_text_on_page(index, pagetitle, text):
                 "WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip()
             )
             return
-        pagetitle = str(page.title())
         pagemsg("Page %s should be deleted" % pagetitle)
         pages_to_delete.append(pagetitle)
         return
     del sections[j]
     del sections[j - 1]
     notes.append("removed Latin section for bad term")
-    if j > len(sections):
-        # We deleted the last section, remove the separator at the end of the
-        # previous section.
-        sections[-1] = re.sub(r"\n+--+\n*\Z", "", sections[-1])
     text = "".join(sections)
 
     return text, notes

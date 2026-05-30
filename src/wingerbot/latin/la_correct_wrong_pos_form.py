@@ -7,25 +7,25 @@ from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 from wingerbot.latin import lalib
 
 
-def process_form(index, page, slot, form, pos, pagemsg):
-    orig_pagemsg = pagemsg
-
+def process_form(index, page, slot, form, pos, orig_pagemsg, orig_errandpagemsg):
     def pagemsg(txt):
         orig_pagemsg("%s %s %s: %s" % (index, slot, form, txt))
+    def errandpagemsg(txt):
+        orig_errandpagemsg("%s %s %s: %s" % (index, slot, form, txt))
 
     notes = []
 
     pagemsg("Processing")
 
-    if not page.exists():
+    if not blib.safe_page_exists(page, errandpagemsg):
         pagemsg("Skipping form value %s, page doesn't exist" % form)
         return
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    text = blib.safe_page_text(page, errandpagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     if pos == "pn":
         from_header = "==Noun=="
@@ -48,8 +48,9 @@ def process_form(index, page, slot, form, pos, pagemsg):
     else:
         raise ValueError("Unrecognized POS %s" % pos)
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         if re.search(r"\{\{%s([|}])" % from_headword_template, subsections[k]) or re.search(
             r"\{\{head\|la\|%s([|}])" % from_pos, subsections[k]
         ):
@@ -63,38 +64,21 @@ def process_form(index, page, slot, form, pos, pagemsg):
             subsections[k] = newsubsec
             subsections[k - 1] = newheadersubsec
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-    retval = lalib.find_heads_and_defns(text, pagemsg)
-    if retval is None:
+    heads_and_defns = lalib.find_heads_and_defns(text, pagemsg)
+    if heads_and_defns is None:
         return
-
-    (
-        sections,
-        j,
-        secbody,
-        sectail,
-        has_non_lang,
-        subsections,
-        parsed_subsections,
-        headwords,
-        pronun_sections,
-        etym_sections,
-    ) = retval
+    headwords = heads_and_defns.headwords
 
     part_headwords = []
     adj_headwords = []
@@ -102,7 +86,7 @@ def process_text_on_page(index, pagetitle, text):
     noun_headwords = []
 
     for headword in headwords:
-        ht = headword["head_template"]
+        ht = headword.head_template
         tn = tname(ht)
         if (
             tn == "la-part"
@@ -141,7 +125,7 @@ def process_text_on_page(index, pagetitle, text):
         return
 
     for headword in headwords_to_do:
-        for inflt in headword["infl_templates"]:
+        for inflt in headword.infl_templates:
             infltn = tname(inflt)
             if infltn != expected_inflt:
                 pagemsg(
@@ -150,6 +134,8 @@ def process_text_on_page(index, pagetitle, text):
                 )
                 continue
             inflargs = lalib.generate_infl_forms(pos, str(inflt), errandpagemsg, expand_text)
+            if inflargs is None:
+                continue
             forms_seen = set()
             slots_and_forms_to_process = []
             for slot, formarg in inflargs.items():
@@ -169,7 +155,7 @@ def process_text_on_page(index, pagetitle, text):
             ):
 
                 def handler(formindex, page):
-                    return process_form(formindex, page, slot, form, pos, pagemsg)
+                    return process_form(formindex, page, slot, form, pos, pagemsg, errandpagemsg)
 
                 blib.do_edit(
                     "%s.%s" % (index, formindex),

@@ -4,7 +4,6 @@ import pywikibot, re
 
 from wingerbot import blib
 from wingerbot.blib import tname, msg, errandmsg, site
-
 from wingerbot.latin import lalib
 
 
@@ -13,17 +12,17 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
 
-    text = str(page.text)
-    origtext = text
+    text = blib.safe_page_text(page, errandpagemsg)
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     if "===Etymology 1===" in secbody:
         pagemsg("WARNING: Multiple etymologies, don't know what to do")
@@ -31,7 +30,8 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
 
     notes = []
 
-    subsections = re.split("(^===[^=\n]*===\n)", secbody, 0, re.M)
+    l3subsecs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3)
+    subsections = l3subsecs.subsections
 
     participle_text = """{{head|la|participle|[[indeclinable]]|head=%s}}
 
@@ -40,8 +40,8 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
         lemma,
     )
     saw_participle = False
-    for k in range(2, len(subsections), 2):
-        if subsections[k - 1] == "===Participle===\n":
+    for k, header in l3subsecs.subsection_headers:
+        if header == "Participle":
             if saw_participle:
                 pagemsg("WARNING: Saw multiple participles, skipping")
                 return
@@ -50,9 +50,9 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
             notes.append("correct participle %s of %s to be impersonal" % (participle, lemma))
     secbody = "".join(subsections)
     if not saw_participle:
-        for k in range(2, len(subsections), 2):
+        for k, header in l3subsecs.subsection_headers:
             insert_before = False
-            if subsections[k - 1] == "===References===\n":
+            if header == "References":
                 pagemsg("Inserting new participle subsection before references subsection")
                 insert_before = True
             elif re.search(r"\{\{inflection of.*\|sup", subsections[k]):
@@ -64,22 +64,17 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
                 break
         else:
             # no break
-            if not secbody.endswith("\n\n"):
-                secbody += "\n\n"
             secbody += "===Participle===\n" + participle_text
         notes.append("add impersonal participle %s of %s" % (participle, lemma))
 
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -89,8 +84,8 @@ def process_text_on_page(index, pagetitle, text):
 
     for t in parsed.filter_templates():
         if tname(t) == "la-conj":
-            args = lalib.generate_verb_forms(str(t), errandpagemsg, expand_text)
-            supforms = args.get("sup_acc", "")
+            inflargs = lalib.generate_verb_forms(str(t), errandpagemsg, expand_text)
+            supforms = inflargs.get("sup_acc", "")
             if supforms:
                 supforms = supforms.split(",")
                 for supform in supforms:
@@ -98,7 +93,7 @@ def process_text_on_page(index, pagetitle, text):
                     pagemsg("Line to delete: part %s allbutnomsgn {{la-adecl|%s}}" % (non_impers_part, non_impers_part))
 
                     def do_correct_nom_sg_n_participle(index, page):
-                        return correct_nom_sg_n_participle(index, page, supform, args["1s_pres_actv_indc"])
+                        return correct_nom_sg_n_participle(index, page, supform, inflargs["1s_pres_actv_indc"])
 
                     blib.do_edit(
                         index,

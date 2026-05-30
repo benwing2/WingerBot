@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
+from wingerbot.blib import msg
 
 outtext = []
 

@@ -19,17 +19,15 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    secbody = modsec.secbody
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^===[^=]*===\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     saw_a_template = False
-
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         la_adj_template = None
         must_continue = False
@@ -79,9 +77,7 @@ def process_text_on_page(index, pagetitle, text):
                     r"\n+\* *'*comparative'*: '*(.*?)'+,* *'*superlative'*: '*(.*?)'+\n+", "\n\n", subsections[k], 1
                 )
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

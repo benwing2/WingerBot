@@ -50,14 +50,10 @@ hu_pos_pos_pairs = defaultdict(int)
 
 
 def add_category(secbody, sectail, pagemsg, notes, cat):
-    separator = ""
-    m = re.match(r"^(.*?\n)(\n*--+\n*)$", sectail, re.S)
-    if m:
-        sectail, separator = m.groups()
     if re.search(r"\[\[Category:%s(\||\])" % re.escape(cat), secbody + sectail):
         # Category already present
         pagemsg("Category 'Hungarian %s' already present" % cat)
-        return secbody, sectail + separator
+        return secbody, sectail
     parsed = blib.parse_text(secbody + sectail)
     for t in parsed.filter_templates():
         if tname(t) in ["cln", "catlangname"] and getparam(t, "1") == "hu":
@@ -65,7 +61,7 @@ def add_category(secbody, sectail, pagemsg, notes, cat):
                 if getparam(t, str(i)) == cat:
                     # Category already present in templatized form
                     pagemsg("Category 'Hungarian %s' already present" % cat)
-                    return secbody, sectail + separator
+                    return secbody, sectail
 
     # Now add the category to existing {{cln}}, or create one.
     parsed = blib.parse_text(sectail)
@@ -76,13 +72,13 @@ def add_category(secbody, sectail, pagemsg, notes, cat):
                     break
             else:  # no break
                 pagemsg("WARNING: Something strange, reached 30= in %s and didn't see place to insert" % str(t))
-                return secbody, sectail + separator
+                return secbody, sectail
             before = str(i + 1) if getparam(t, str(i + 1)) else "sort" if getparam(t, "sort") else None
             origt = str(t)
             t.add(str(i), cat, before=before)
             notes.append("insert '%s' into existing {{%s|hu}}" % (cat, tname(t)))
             pagemsg("Replaced %s with %s" % (origt, str(t)))
-            return secbody, str(parsed) + separator
+            return secbody, str(parsed)
     # Need to create {{cln}}.
     newtext = "{{cln|hu|%s}}" % cat
     sectail = sectail.strip()
@@ -92,7 +88,7 @@ def add_category(secbody, sectail, pagemsg, notes, cat):
         sectail = newtext
     notes.append("add %s" % newtext)
     pagemsg("Added %s" % newtext)
-    return secbody.rstrip("\n") + "\n", "\n" + sectail + "\n\n" + separator.lstrip("\n")
+    return secbody.rstrip("\n") + "\n", "\n" + sectail + "\n\n"
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -107,21 +103,21 @@ def process_text_on_page(index, pagetitle, text):
     hu_pages_seen.add(pagetitle)
     pagemsg("Processing")
 
-    retval = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Hungarian section")
+    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
     if "==Etymology 1==" not in secbody:
         return
-    etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+    etym_sections = etym_secs.subsections
     if len(etym_sections) < 5:
         pagemsg("WARNING: Not enough etym sections, found %s, expected >= 5" % len(etym_sections))
         return
     num_lemmas = 0
     num_nonlemma_forms = 0
     poses_seen_per_section = defaultdict(set)
-    for k in range(2, len(etym_sections), 2):
+    for k, header in etym_secs.subsection_headers:
         section = etym_sections[k]
         parsed = blib.parse_text(section)
         saw_lemma = False
@@ -196,8 +192,7 @@ def process_text_on_page(index, pagetitle, text):
             secbody, sectail = add_category(
                 secbody, sectail, pagemsg, notes, "terms with %s and %s etymologies" % (posk, posl)
             )
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody, sectail=sectail), notes
 
 
 parser = blib.create_argparser(

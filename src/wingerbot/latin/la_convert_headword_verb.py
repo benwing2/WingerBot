@@ -33,15 +33,13 @@ def lengthen_ns_nf(text):
     return text
 
 
-def new_generate_verb_forms(template, errandpagemsg, expand_text, return_raw=False, include_props=False):
+def new_generate_verb_forms(template, errandpagemsg, expand_text, include_props=False):
     assert template.startswith("{{la-conj|")
     if include_props:
         generate_template = re.sub(r"^\{\{la-conj\|", "{{User:Benwing2/la-new-generate-verb-props|", template)
     else:
         generate_template = re.sub(r"^\{\{la-conj\|", "{{User:Benwing2/la-new-generate-verb-forms|", template)
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
     if not result:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
@@ -63,17 +61,15 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    secbody = modsec.secbody
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^===[^=]*===\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     saw_a_template = False
-
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         la_verb_template = None
         la_conj_template = None
@@ -311,9 +307,7 @@ def process_text_on_page(index, pagetitle, text):
     if not saw_a_template:
         pagemsg("WARNING: Saw no verb headword or conjugation templates")
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

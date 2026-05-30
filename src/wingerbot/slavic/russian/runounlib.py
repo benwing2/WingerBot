@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import re
+from mwparserfromhell.nodes import Template
 
 from wingerbot.slavic.russian import rulib
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam
+from wingerbot.blib import getparam, rmparam, PagemsgCallback
 
 
 def arg1_is_stress(arg1):
@@ -16,7 +17,7 @@ def arg1_is_stress(arg1):
     return True
 
 
-def split_noun_decl_arg_sets(decl_template, pagemsg):
+def split_noun_decl_arg_sets(decl_template: Template, pagemsg: PagemsgCallback) -> list[list[list[str]]]:
     # Split a noun declension from ru-noun+ or ru-proper noun+ into
     # a list of per-word objects, one per word in the declension (separated
     # by "_", "-" or "join:..."), where each per-word object is a list of
@@ -45,9 +46,9 @@ def split_noun_decl_arg_sets(decl_template, pagemsg):
     # or more declensions separated by "or". Code taken from ru-noun.lua,
     # modified to include at least two elements in each arg set.
     offset = 0
-    arg_sets = []
-    arg_set = []
-    per_word_info = []
+    arg_sets: list[list[str]] = []
+    arg_set: list[str] = []
+    per_word_info: list[list[list[str]]] = []
     for i in range(1, highest_numbered_param + 2):
         end_arg_set = False
         end_word = False

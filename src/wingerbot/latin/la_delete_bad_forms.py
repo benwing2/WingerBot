@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
 
 from wingerbot.latin import lalib
 from wingerbot.latin.lalib import remove_macrons
 
 
-def delete_participle_1(index, page, lemma, formind, formval, pos):
+def delete_participle_1(index, page, lemma, formind, formval):
     notes = []
 
     def pagemsg(txt):
@@ -24,25 +24,24 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
     expected_head_template = "la-part"
 
     text = str(page.text)
-    origtext = text
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     saw_lemma_in_etym = False
     saw_wrong_lemma_in_etym = False
     saw_head = False
     infl_template = None
     saw_bad_template = False
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             tn = tname(t)
-            if tn == "m" and "==Etymology==" in subsections[k - 1]:
+            if tn == "m" and header == "Etymology":
                 actual_lemma = getparam(t, "2")
                 if remove_macrons(lemma, args.preserve_diaeresis) == remove_macrons(
                     actual_lemma, args.preserve_diaeresis
@@ -78,7 +77,7 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
             else:
                 pagemsg(
                     "WARNING: Saw unrecognized template in subsection #%s %s: %s"
-                    % (k // 2, subsections[k - 1].strip(), str(t))
+                    % (k // 2, header, str(t))
                 )
                 saw_bad_template = True
 
@@ -99,11 +98,11 @@ def delete_participle_1(index, page, lemma, formind, formval, pos):
     if not delete:
         return
 
-    args = lalib.generate_adj_forms(infl_template, errandpagemsg, expand_text)
-    if args is None:
+    declargs = lalib.generate_adj_forms(infl_template, errandpagemsg, expand_text)
+    if declargs is None:
         return
     single_forms_to_delete = []
-    for key, form in args.items():
+    for key, form in declargs.items():
         single_forms_to_delete.extend(form.split(","))
     for formformind, formformval in blib.iter_items(single_forms_to_delete):
         delete_form(index, formval, formformind, formformval, "partform", True)
@@ -159,7 +158,7 @@ def delete_participle(index, lemma, formind, formval, pos):
         return
 
     def do_delete_participle_1(index, page):
-        return delete_participle_1(index, page, lemma, formind, formval, pos)
+        return delete_participle_1(index, page, lemma, formind, formval)
 
     blib.do_edit(index, page, do_delete_participle_1, save=args.save, verbose=args.verbose, diff=args.diff)
 
@@ -202,27 +201,26 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
         raise ValueError("Unrecognized part of speech %s" % pos)
 
     text = str(page.text)
-    origtext = text
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
 
     # FIXME!
 
     # if "==Etymology 1==" in secbody:
-    #  etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-    #  for k in range(2, len(etym_sections), 2):
-    #    etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
-    #  secbody = "".join(etym_sections)
+    #    etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+    #    for k in range(2, len(etym_sections), 2):
+    #        etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
+    #    secbody = "".join(etym_sections)
 
     subsections_to_delete = []
     subsections_to_remove_inflections_from = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         saw_head = False
         saw_infl = False
@@ -257,10 +255,10 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
                     # fetch tags
                     tags = []
                     for param in t.params:
-                        pname = str(param.name).strip()
+                        pn = pname(param)
                         pval = str(param.value).strip()
-                        if re.search("^[0-9]+$", pname):
-                            if int(pname) >= lemma_param + 2:
+                        if re.search("^[0-9]+$", pn):
+                            if int(pn) >= lemma_param + 2:
                                 if pval:
                                     tags.append(pval)
                     for tag in tags:
@@ -306,7 +304,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
                     break
             else:
                 # No break
-                if "===%s===" % expected_header_pos in subsections[k - 1]:
+                if header == expected_header_pos:
                     if remove_deletable_tag_sets_from_subsection:
                         subsections_to_remove_inflections_from.append(k)
                     else:
@@ -314,7 +312,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
                 else:
                     pagemsg(
                         "WARNING: Wrong header in otherwise deletable subsection #%s: %s"
-                        % (k // 2, subsections[k - 1].strip())
+                        % (k // 2, header)
                     )
 
     if not subsections_to_delete and not subsections_to_remove_inflections_from:
@@ -353,14 +351,14 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
                         tags = []
                         params = []
                         for param in t.params:
-                            pname = str(param.name).strip()
+                            pn = pname(param)
                             pval = str(param.value).strip()
-                            if re.search("^[0-9]+$", pname):
-                                if int(pname) >= lemma_param + 2:
+                            if re.search("^[0-9]+$", pn):
+                                if int(pn) >= lemma_param + 2:
                                     if pval:
                                         tags.append(pval)
-                            elif pname not in ["lang", "tr", "alt"]:
-                                params.append((pname, pval, param.showkey))
+                            elif pn not in ["lang", "tr", "alt"]:
+                                params.append((pn, pval, param.showkey))
                         tag_sets = lalib.split_tags_into_tag_sets(tags)
                         filtered_tag_sets = []
                         for tag_set in tag_sets:
@@ -511,8 +509,8 @@ def process_page(index, lemma, pos, infl, slots, pages_to_delete):
 
     pagemsg("Processing")
 
-    args = lalib.generate_infl_forms(pos, infl, errandpagemsg, expand_text, add_sync_verb_forms=True)
-    if args is None:
+    declargs = lalib.generate_infl_forms(pos, infl, errandpagemsg, expand_text, add_sync_verb_forms=True)
+    if declargs is None:
         return
 
     forms_to_delete = []
@@ -520,7 +518,7 @@ def process_page(index, lemma, pos, infl, slots, pages_to_delete):
     lemma_no_macrons = remove_macrons(lemma)
 
     def add_bad_forms(bad_slot_fun):
-        for slot, formspec in args.items():
+        for slot, formspec in declargs.items():
             if bad_slot_fun(slot):
                 tag_sets_to_delete.append(lalib.slot_to_tag_set(slot))
                 forms_to_delete.append((slot, formspec))
@@ -533,11 +531,11 @@ def process_page(index, lemma, pos, infl, slots, pages_to_delete):
                 forms_to_delete.append((real_slot, real_form))
             else:
                 forms_to_delete.append((None, slot[1:]))
-        elif slot in args:
+        elif slot in declargs:
             tag_sets_to_delete.append(lalib.slot_to_tag_set(slot))
-            forms_to_delete.append((slot, args[slot]))
+            forms_to_delete.append((slot, declargs[slot]))
         elif slot == "allbutlemma":
-            for sl, formspec in args.items():
+            for sl, formspec in declargs.items():
                 forms = formspec.split(",")
                 forms = [form for form in forms if lemma_no_macrons != remove_macrons(form)]
                 if forms:

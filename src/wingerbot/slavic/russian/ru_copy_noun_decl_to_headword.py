@@ -6,9 +6,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
-
-# from wingerbot.slavic.russian import runounlib
+from wingerbot.blib import getparam, rmparam, msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -21,42 +19,35 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("WARNING: Colon in page title, skipping")
         return
 
-    foundrussian = False
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
     num_ru_noun_table_cleaned_subs = 0
     num_ru_noun_table_link_copied_subs = 0
     num_ru_noun_subs = 0
     num_ru_proper_noun_subs = 0
-    for j in range(2, len(sections), 2):
-        if sections[j - 1] == "==Russian==\n":
-            if foundrussian:
-                pagemsg("WARNING: Found multiple Russian sections, skipping")
-                return
-            foundrussian = True
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        retval = process_page_section(index, pagetitle, subsections[k])
+        if retval:
+            (
+                replaced,
+                this_num_ru_noun_table_cleaned_subs,
+                this_num_ru_noun_table_link_copied_subs,
+                this_num_ru_noun_subs,
+                this_num_ru_proper_noun_subs,
+            ) = retval
+            subsections[k] = replaced
+            num_ru_noun_table_cleaned_subs += this_num_ru_noun_table_cleaned_subs
+            num_ru_noun_table_link_copied_subs += this_num_ru_noun_table_link_copied_subs
+            num_ru_noun_subs += this_num_ru_noun_subs
+            num_ru_proper_noun_subs += this_num_ru_proper_noun_subs
+    secbody = "".join(subsections)
+    new_text = modsec.rebuild(secbody=secbody)
 
-            subsections = re.split("(^===[^=]*===\n)", sections[j], 0, re.M)
-            for k in range(2, len(subsections), 2):
-                retval = process_page_section(index, pagetitle, subsections[k])
-                if retval:
-                    (
-                        replaced,
-                        this_num_ru_noun_table_cleaned_subs,
-                        this_num_ru_noun_table_link_copied_subs,
-                        this_num_ru_noun_subs,
-                        this_num_ru_proper_noun_subs,
-                    ) = retval
-                    subsections[k] = replaced
-                    num_ru_noun_table_cleaned_subs += this_num_ru_noun_table_cleaned_subs
-                    num_ru_noun_table_link_copied_subs += this_num_ru_noun_table_link_copied_subs
-                    num_ru_noun_subs += this_num_ru_noun_subs
-                    num_ru_proper_noun_subs += this_num_ru_proper_noun_subs
-            sections[j] = "".join(subsections)
-
-    new_text = "".join(sections)
-
-    if new_text == text:
-        pass
-    else:
+    if new_text != text:
         notes = []
         if num_ru_noun_table_cleaned_subs > 0:
             notes.append(
@@ -194,17 +185,17 @@ def process_page_section(index, pagetitle, section):
         if not generate_result:
             pagemsg("WARNING: Error generating noun args, skipping")
             return None
-        args = blib.split_generate_args(generate_result)
+        declargs = blib.split_generate_args(generate_result)
 
         # If proper noun and n is both then we need to add n=both because
         # proper noun+ defaults to n=sg
-        if args["n"] == "b" and not getparam(modified_noun_table_template, "n"):
+        if declargs["n"] == "b" and not getparam(modified_noun_table_template, "n"):
             pagemsg("Adding n=both to headword template")
             modified_noun_table_template.add("n", "both")
         # Correspondingly, if n is sg then we can usually remove n=sg;
         # but we need to check that the number is actually sg with n=sg
         # removed because of the possibility of plurale tantum lemmas
-        if args["n"] == "s":
+        if declargs["n"] == "s":
             generate_template_with_ndef = generate_template.replace("}}", "|ndef=sg}}")
             generate_template_with_ndef = re.sub(r"\|n=s[^=|{}]*", "", generate_template_with_ndef)
             generate_result = expand_text(generate_template_with_ndef)
@@ -256,7 +247,7 @@ def process_page_section(index, pagetitle, section):
         if notrcat:
             headword_template.add("notrcat", notrcat)
 
-    # genders = runounlib.check_old_noun_headword_forms(headword_template, args,
+    # genders = runounlib.check_old_noun_headword_forms(headword_template, declargs,
     #    subpagetitle, pagemsg)
     # if genders == None:
     #  return None

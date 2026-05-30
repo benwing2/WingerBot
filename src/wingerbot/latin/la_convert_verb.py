@@ -137,14 +137,9 @@ la_verb_conj_suffix_to_props = {
 }
 
 
-def generate_old_verb_forms(
-    template, errandpagemsg, expand_text, return_raw=False, include_linked=False, include_props=False
-):
+def generate_old_verb_forms(template, errandpagemsg, expand_text):
     if template.startswith("{{la-conj|"):
-        if include_props:
-            generate_template = re.sub(r"^\{\{la-conj\|", "{{la-generate-verb-props|", template)
-        else:
-            generate_template = re.sub(r"^\{\{la-conj\|", "{{la-generate-verb-forms|", template)
+        generate_template = re.sub(r"^\{\{la-conj\|", "{{la-generate-verb-forms|", template)
     elif template.startswith("{{la-conj-3rd-IO|"):
         generate_template = re.sub(r"^\{\{la-conj-3rd-IO\|", "{{la-generate-verb-forms|conjtype=3rd-io|", template)
     else:
@@ -153,15 +148,7 @@ def generate_old_verb_forms(
         errandpagemsg("Template %s not a recognized conjugation template" % template)
         return None
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
-    if not result:
-        errandpagemsg("WARNING: Error generating forms, skipping")
-        return None
-    args = blib.split_generate_args(result)
-    if not include_linked:
-        args = {k: v for k, v in args.items() if not k.startswith("linked_")}
-    return args
+    return None if result is False else result
 
 
 old_la_verb_conj_templates = {
@@ -179,7 +166,7 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     def generate_old_forms():
-        return generate_old_verb_forms(origt, errandpagemsg, expand_text, return_raw=True)
+        return generate_old_verb_forms(origt, errandpagemsg, expand_text)
 
     def generate_new_forms():
         new_generate_template = re.sub(r"^\{\{la-conj\|", "{{User:Benwing2/la-new-generate-verb-forms|", newt)

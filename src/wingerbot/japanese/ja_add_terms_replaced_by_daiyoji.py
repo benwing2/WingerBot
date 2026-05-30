@@ -100,21 +100,20 @@ def process_text_on_page(index, pagetitle, text):
 
         def pagemsg_with_contents(txt):
             pagemsg("%s: %s" % (contents_title, txt))
-
         def errandpagemsg_with_contents(txt):
             pagemsg_with_contents(txt)
             errmsg("Page %s %s: %s: %s" % (index, pagetitle, contents_title, txt))
 
-        contents_page_text = blib.safe_page_text(contents_page, pagemsg_with_contents)
-        retval = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)
-        if retval is None:
-            pagemsg_with_contents("WARNING: Couldn't find %s section" % lang)
+        contents_page_text = blib.safe_page_text(contents_page, errandpagemsg_with_contents)
+        modsec = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)
+        if modsec is None:
             return
-        sections, j, secbody, sectail, has_non_lang = retval.props()
+        secbody = modsec.secbody
         saw_templates = False
         if "Etymology 1" in secbody:
-            etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-            for k in range(2, len(etym_sections), 2):
+            etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+            etym_sections = etym_secs.subsections
+            for k, header in etym_secs.subsection_headers:
                 this_saw_templates = check_secbody_for_readings(etym_sections[k])
                 saw_templates = saw_templates or this_saw_templates
         else:

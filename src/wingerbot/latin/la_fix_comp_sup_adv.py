@@ -38,25 +38,22 @@ def find_head_comp_sup(pagetitle, pagemsg, errandpagemsg):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-    origtext = text
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     notes = []
 
-    subsections = re.split("(^===[^=\n]*===\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
-        if "==Adverb==" in subsections[k - 1]:
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "Adverb":
             parsed = blib.parse_text(subsections[k])
             posdeg = None
             compt = None
@@ -119,6 +116,8 @@ def process_text_on_page(index, pagetitle, text):
                                 else:
                                     pagemsg("Using real positive degree %s instead of %s" % (real_head, posdeg))
                                     inflt = compt or supt
+                                    # We continued out of the loop if not compt and not supt
+                                    assert inflt is not None
                                     origt = str(inflt)
                                     inflt.add("1", real_head)
                                     pagemsg("Replaced %s with %s" % (origt, str(inflt)))
@@ -167,9 +166,7 @@ def process_text_on_page(index, pagetitle, text):
 
             subsections[k] = str(parsed)
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

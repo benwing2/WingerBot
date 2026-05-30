@@ -15,16 +15,16 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         pagetext, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
-        if "==References==" in subsections[k - 1]:
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
+        if header == "References":
             newsubsec = re.sub(r"^:?\*\s*\{\{R:pl:NKJP\}\}\n", "", subsections[k], 0, re.M)
             if newsubsec != subsections[k]:
                 notes.append("remove {{R:pl:NKJP}} from Polish References section")
@@ -34,10 +34,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                     subsections[k] = ""
                     notes.append("remove now empty References section from Polish term")
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Remove {{R:pl:NKJP}} from Polish terms", include_pagefile=True, include_stdin=True)

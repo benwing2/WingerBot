@@ -95,7 +95,7 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
             # New code generates pret 2s for -sen verbs in both -test and -tst; old only in -test
             new_forms["subc_pret_2s"] = remove_forms_in(new_forms["subc_pret_2s"], "[td]st$")
 
-    for form in set(old_forms.keys() + new_forms.keys()):
+    for form in old_forms.keys() | new_forms.keys():
         if form not in new_forms:
             pagemsg(
                 "WARNING: for original %s and new %s, form %s=%s in old forms but missing in new forms"

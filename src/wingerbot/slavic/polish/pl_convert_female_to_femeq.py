@@ -34,18 +34,15 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
 
         # First do 'female'
@@ -120,14 +117,6 @@ def process_text_on_page(index, pagetitle, text):
                         % (rest, str(headt), line)
                     )
                     continue
-                #        if "female" in gloss:
-                #          pagemsg("WARNING: Saw gloss '%s' with 'female', won't change: headt=%s, line=%s" % (
-                #            gloss, str(headt), line))
-                #          continue
-                #        if "woman" in gloss:
-                #          pagemsg("WARNING: Saw gloss '%s' with 'woman', won't change: headt=%s, line=%s" % (
-                #            gloss, str(headt), line))
-                #          continue
                 if "{{" in rest or "}}" in rest:
                     pagemsg(
                         "WARNING: Saw template call in rest '%s', won't change: headt=%s, line=%s"
@@ -231,12 +220,7 @@ def process_text_on_page(index, pagetitle, text):
             subsections[k] = newsubseck
             notes.append("remove 'male' from Polish defns%s" % (", feminine(s) %s" % ",".join(fs) if fs else ""))
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

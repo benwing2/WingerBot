@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 import re
-
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam, site
+from wingerbot.blib import getparam, site
 from wingerbot.slavic.russian import rulib
 
 # List of Russian templates referring to lemmas.
@@ -257,7 +256,6 @@ def lookup_heads_and_inflections(pagename, pagemsg):
             accented_cache[pagename] = None
         return False, None
     else:
-        cached = False
         page = pywikibot.Page(site, pagename)
         try:
             if not page.exists():
@@ -284,84 +282,78 @@ def lookup_heads_and_inflections(pagename, pagemsg):
         inflections_of = set()
         adj_forms = set()
 
-        foundrussian = False
-        sections = re.split("(^==[^=]*==\n)", str(page.text), 0, re.M)
-
-        for j in range(2, len(sections), 2):
-            if sections[j - 1] == "==Russian==\n":
-                if foundrussian:
-                    pagemsg("WARNING: lookup_heads_and_inflections: Found multiple Russian sections")
-                    break
-                foundrussian = True
-
-                subsections = re.split("(^===+[^=\n]+===+\n)", sections[j], 0, re.M)
-                for k in range(2, len(subsections), 2):
-                    parsed = blib.parse_text(subsections[k])
-                    this_heads = set()
-
-                    def add(val, tr, is_lemma):
-                        val_to_add = blib.remove_links(val)
-                        # Remove monosyllabic accents to correctly handle the case of
-                        # рад, which has some heads with an accent and some without.
-                        val_to_add, tr = remove_monosyllabic_accents(val_to_add, tr)
-                        this_heads.add((val_to_add, tr, is_lemma))
-
-                    for t in parsed.filter_templates():
-                        tname = str(t.name)
-                        check_addl_heads = False
-                        if tname in ru_head_templates:
-                            is_lemma = tname in ru_lemma_templates
-                            check_addl_heads = True
-                            if getparam(t, "1"):
-                                add(getparam(t, "1"), getparam(t, "tr"), is_lemma)
-                            elif getparam(t, "head"):
-                                add(getparam(t, "head"), getparam(t, "tr"), is_lemma)
-                            else:
-                                add(pagename, "", is_lemma)
-                        elif tname == "head" and getparam(t, "1") == "ru":
-                            is_lemma = getparam(t, "2") in ru_lemma_poses
-                            check_addl_heads = True
-                            if getparam(t, "head"):
-                                add(getparam(t, "head"), getparam(t, "tr"), is_lemma)
-                            else:
-                                add(pagename, "", is_lemma)
-                        elif tname in ["ru-noun+", "ru-proper noun+"]:
-                            is_lemma = True
-                            lemma = rulib.fetch_noun_lemma(t, expand_text)
-                            lemmas = re.split(",", lemma)
-                            lemmas = [split_ru_tr(lemma, pagemsg) for lemma in lemmas]
-                            # Group lemmas by Russian, to group multiple translits
-                            lemmas = rulib.group_translits(lemmas, pagemsg, semi_verbose)
-                            for val, tr in lemmas:
-                                add(val, tr, is_lemma)
-                        elif (
-                            tname == "ru-participle of" or tname in inflection_templates and getparam(t, "lang") == "ru"
-                        ):
-                            inflections_of.add((frozenset(this_heads), normalize_text(getparam(t, "1"))))
-                        if check_addl_heads:
-                            for i in range(2, 10):
-                                headn = getparam(t, "head" + str(i))
-                                if headn:
-                                    add(headn, getparam(t, "tr" + str(i)), is_lemma)
-                        elif tname == "ru-decl-adj":
-                            result = expand_text(re.sub(r"^\{\{ru-decl-adj", "{{ru-generate-adj-forms", str(t)))
-                            if not result:
-                                pagemsg(
-                                    "WARNING: lookup_heads_and_inflections: Error expanding template %s, page %s"
-                                    % (str(t), pagename)
-                                )
-                            else:
-                                args = blib.split_generate_args(result)
-                                for value in args.itervalues():
-                                    adj_forms.add(value)
-                    heads.update(this_heads)
-
-        # Page exists, is it a redirect?
-        if not foundrussian:
+        modsec = blib.find_modifiable_lang_section(page.text, "Russian", pagemsg)
+        if modsec is None:
             if not global_disable_cache:
                 accented_cache[pagename] = "no-russian"
             pagemsg("lookup_heads_and_inflections: Page %s has no Russian section" % pagename)
             return False, "no-russian"
+        secbody = modsec.secbody
+
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
+        for k, header in subsecs.subsection_headers:
+            parsed = blib.parse_text(subsections[k])
+            this_heads = set()
+
+            def add(val, tr, is_lemma):
+                val_to_add = blib.remove_links(val)
+                # Remove monosyllabic accents to correctly handle the case of
+                # рад, which has some heads with an accent and some without.
+                val_to_add, tr = remove_monosyllabic_accents(val_to_add, tr)
+                this_heads.add((val_to_add, tr, is_lemma))
+
+            for t in parsed.filter_templates():
+                tname = str(t.name)
+                check_addl_heads = False
+                if tname in ru_head_templates:
+                    is_lemma = tname in ru_lemma_templates
+                    check_addl_heads = True
+                    if getparam(t, "1"):
+                        add(getparam(t, "1"), getparam(t, "tr"), is_lemma)
+                    elif getparam(t, "head"):
+                        add(getparam(t, "head"), getparam(t, "tr"), is_lemma)
+                    else:
+                        add(pagename, "", is_lemma)
+                elif tname == "head" and getparam(t, "1") == "ru":
+                    is_lemma = getparam(t, "2") in ru_lemma_poses
+                    check_addl_heads = True
+                    if getparam(t, "head"):
+                        add(getparam(t, "head"), getparam(t, "tr"), is_lemma)
+                    else:
+                        add(pagename, "", is_lemma)
+                elif tname in ["ru-noun+", "ru-proper noun+"]:
+                    is_lemma = True
+                    lemma = rulib.fetch_noun_lemma(t, expand_text)
+                    if lemma is None:
+                        continue
+                    lemmas = re.split(",", lemma)
+                    lemmas = [split_ru_tr(lemma, pagemsg) for lemma in lemmas]
+                    # Group lemmas by Russian, to group multiple translits
+                    lemmas = rulib.group_translits(lemmas, pagemsg, semi_verbose)
+                    for val, tr in lemmas:
+                        add(val, tr, is_lemma)
+                elif (
+                    tname == "ru-participle of" or tname in inflection_templates and getparam(t, "lang") == "ru"
+                ):
+                    inflections_of.add((frozenset(this_heads), normalize_text(getparam(t, "1"))))
+                if check_addl_heads:
+                    for i in range(2, 10):
+                        headn = getparam(t, "head" + str(i))
+                        if headn:
+                            add(headn, getparam(t, "tr" + str(i)), is_lemma)
+                elif tname == "ru-decl-adj":
+                    result = expand_text(re.sub(r"^\{\{ru-decl-adj", "{{ru-generate-adj-forms", str(t)))
+                    if not result:
+                        pagemsg(
+                            "WARNING: lookup_heads_and_inflections: Error expanding template %s, page %s"
+                            % (str(t), pagename)
+                        )
+                    else:
+                        inflargs = blib.split_generate_args(result)
+                        for value in inflargs.values():
+                            adj_forms.add(value)
+            heads.update(this_heads)
 
         saw_lemma = any(is_lemma for ru, tr, is_lemma in heads)
         if not saw_lemma and not inflections_of:

@@ -14,53 +14,50 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Hungarian section")
+    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
-    for k in range(1, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         if (
-            "===Verb===" in subsections[k]
-            and "{{head|hu|verb form" in subsections[k + 1]
-            and "{{participle of|hu|" in subsections[k + 1]
+            header == "Verb"
+            and "{{head|hu|verb form" in subsections[k]
+            and "{{participle of|hu|" in subsections[k]
         ):
             if args.split_participle:
                 newsubsec = re.sub(
                     r"^(#.*\{\{participle of\|hu\|.*)\n(#.*\{\{inflection of\|hu\|.*)\n\n",
                     r"\2\n\1\n\n",
-                    subsections[k + 1],
+                    subsections[k],
                     0,
                     re.M,
                 )
-                if newsubsec != subsections[k + 1]:
+                if newsubsec != subsections[k]:
                     notes.append("reorder {{inflection of|hu|...}} before {{participle of|hu|...}}")
-                    subsections[k + 1] = newsubsec
-                elif re.search(r"\{\{participle of\|hu\|.*\{\{inflection of\|hu\|", subsections[k + 1], re.S):
+                    subsections[k] = newsubsec
+                elif re.search(r"\{\{participle of\|hu\|.*\{\{inflection of\|hu\|", subsections[k], re.S):
                     pagemsg(
                         "WARNING: Saw {{participle of|hu|...}} before {{inflection of|hu|...}} with likely usage examples"
                     )
                     continue
-            if args.split_participle and "{{inflection of|hu|" in subsections[k + 1]:
-                subsections[k + 1] = re.sub(
+            if args.split_participle and "{{inflection of|hu|" in subsections[k]:
+                subsections[k] = re.sub(
                     r"^(#.*\{\{participle of\|hu\|)",
                     r"\n===Participle===\n{{head|hu|participle}}\n\n\1",
-                    subsections[k + 1],
+                    subsections[k],
                     0,
                     re.M,
                 )
                 notes.append("split Hungarian verb form from participle")
             else:
-                subsections[k] = subsections[k].replace("===Verb===", "===Participle===")
-                subsections[k + 1] = re.sub(r"\{\{head\|hu\|verb form", "{{head|hu|participle", subsections[k + 1])
+                subsections[k - 1] = subsections[k].replace("Verb", "Participle")
+                subsections[k] = re.sub(r"\{\{head\|hu\|verb form", "{{head|hu|participle", subsections[k])
                 notes.append("Hungarian verb form -> participle in section with {{participle of}}")
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

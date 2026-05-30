@@ -7,7 +7,6 @@ import pywikibot, re, sys, argparse
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
-
 from wingerbot.latin import lalib
 
 
@@ -43,15 +42,13 @@ noun_decl_to_decl_type = {
 }
 
 
-def new_generate_noun_forms(template, errandpagemsg, expand_text, return_raw=False, include_props=False):
+def new_generate_noun_forms(template, errandpagemsg, expand_text, include_props=False):
     assert template.startswith("{{la-ndecl|")
     if include_props:
         generate_template = re.sub(r"^\{\{la-ndecl\|", "{{User:Benwing2/la-new-generate-noun-props|", template)
     else:
         generate_template = re.sub(r"^\{\{la-ndecl\|", "{{User:Benwing2/la-new-generate-noun-forms|", template)
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
     if not result:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
@@ -117,21 +114,18 @@ def process_text_on_page(index, pagetitle, text):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     pagemsg("Processing")
-    origtext = text
 
     notes = []
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    secbody = modsec.secbody
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^===[^=]*===\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     saw_a_template = False
-
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         la_noun_template = None
         la_ndecl_template = None
@@ -492,9 +486,7 @@ def process_text_on_page(index, pagetitle, text):
     if not saw_a_template:
         pagemsg("WARNING: Saw no noun headword or declension templates")
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 if __name__ == "__main__":

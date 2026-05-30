@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -22,26 +22,20 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("fix %s indentation" % header)
         return newtext
 
-    foundrussian = False
-    sections = re.split("(^==[^=\n]*==\n)", text, 0, re.M)
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+    if "===Etymology 1===" in secbody:
+        pagemsg("WARNING: Skipping page because ===Etymology 1===")
+        return
 
-    for j in range(2, len(sections), 2):
-        if sections[j - 1] == "==Russian==\n":
-            if foundrussian:
-                pagemsg("WARNING: Found multiple Russian sections, skipping page")
-                return
-            foundrussian = True
+    secbody = fix_indent(secbody, "Pronunciation", 3)
+    secbody = fix_indent(secbody, "Alternative forms", 3)
+    secbody = fix_indent(secbody, "Declension", 4)
+    secbody = fix_indent(secbody, "Conjugation", 4)
 
-        if "===Etymology 1===" in sections[j]:
-            pagemsg("WARNING: Skipping page because ===Etymology 1===")
-            return
-
-        sections[j] = fix_indent(sections[j], "Pronunciation", 3)
-        sections[j] = fix_indent(sections[j], "Alternative forms", 3)
-        sections[j] = fix_indent(sections[j], "Declension", 4)
-        sections[j] = fix_indent(sections[j], "Conjugation", 4)
-
-    text = "".join(sections)
+    text = modsec.rebuild(secbody=secbody)
 
     warn_on_no_change = not not args.pagefile
     if origtext != text:

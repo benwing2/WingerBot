@@ -20,35 +20,29 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    foundrussian = False
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-
-    for j in range(2, len(sections), 2):
-        if sections[j - 1] == "==Russian==\n":
-            if foundrussian:
-                pagemsg("WARNING: Found multiple Russian sections, skipping page")
-                return
-            foundrussian = True
-
-            m = re.search(
-                r"\A(.*)^(# .*\]\])[^a-zA-Z0-9\[\]\n]*(?:gloss)?[^a-zA-Z0-9\[\]\n]*literally[^a-zA-Z0-9\[\]\n]*([a-zA-Z0-9\[\]][^\n]*[a-zA-Z0-9\[\]])[^a-zA-Z0-9\[\]\n]*$(.*)\Z",
-                sections[j],
-                re.M | re.S,
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+    m = re.search(
+        r"\A(.*)^(# .*\]\])[^a-zA-Z0-9\[\]\n]*(?:gloss)?[^a-zA-Z0-9\[\]\n]*literally[^a-zA-Z0-9\[\]\n]*([a-zA-Z0-9\[\]][^\n]*[a-zA-Z0-9\[\]])[^a-zA-Z0-9\[\]\n]*$(.*)\Z",
+        secbody,
+        re.M | re.S,
+    )
+    if m:
+        pagemsg("Found defn '%s', literally '%s'" % (m.group(2), m.group(3)))
+        if "\n===Etymology===\n" in secbody:
+            pagemsg("WARNING: Found Etymology section already, not doing anything")
+        else:
+            secbody = '\n===Etymology===\nLiterally, "%s".\n%s%s%s' % (
+                m.group(3),
+                m.group(1),
+                m.group(2),
+                m.group(4),
             )
-            if m:
-                pagemsg("Found defn '%s', literally '%s'" % (m.group(2), m.group(3)))
-                if "\n===Etymology===\n" in sections[j]:
-                    pagemsg("WARNING: Found Etymology section already, not doing anything")
-                else:
-                    sections[j] = '\n===Etymology===\nLiterally, "%s".\n%s%s%s' % (
-                        m.group(3),
-                        m.group(1),
-                        m.group(2),
-                        m.group(4),
-                    )
-                    notes.append("Move literal meaning '%s' to etymology" % m.group(3))
+            notes.append("Move literal meaning '%s' to etymology" % m.group(3))
 
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

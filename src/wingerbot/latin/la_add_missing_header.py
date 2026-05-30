@@ -23,22 +23,20 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-    origtext = text
-
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
-        return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
 
     notes = []
-    for k in range(2, len(subsections), 2):
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         newtext = re.sub(r"^\n*(\{\{la-.*?-form)", r"\1", subsections[k])
         if newtext != subsections[k]:
             notes.append("remove extraneous newlines before Latin non-lemma headword")
-        indent = len(re.sub("^(=+).*\n", r"\1", subsections[k - 1]))
+        indent = subsecs.subsection_levels[k]
 
         def add_header(m):
             lastchar, tempname = m.groups()
@@ -55,9 +53,7 @@ def process_text_on_page(index, pagetitle, text):
         if newnewtext != newtext:
             notes.append("add missing header before Latin non-lemma form")
         subsections[k] = newnewtext
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Add missing header to Latin non-lemma terms", include_pagefile=True, include_stdin=True)

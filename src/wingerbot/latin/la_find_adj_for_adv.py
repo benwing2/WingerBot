@@ -10,29 +10,26 @@ from wingerbot.latin import lalib
 def investigate_possible_adj(index, adj_pagename, adv, adv_defns):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, adj_pagename, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, adj_pagename, txt))
 
     pagemsg("Trying for adverb %s" % adv)
     page = pywikibot.Page(site, adj_pagename)
-    if not page.exists():
+    if not blib.safe_page_exists(page, errandpagemsg):
         pagemsg("Doesn't exist for adverb %s" % adv)
         return
     text = blib.safe_page_text(page, errandpagemsg)
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    secbody = modsec.secbody
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^===+[^=\n]+===+\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
-            origt = str(t)
             tn = tname(t)
             if tn in ["la-adj", "la-part"]:
                 adj = lalib.la_get_headword_from_template(t, adj_pagename, pagemsg)[0]
@@ -44,22 +41,19 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
-
     if " " in pagetitle:
         pagemsg("WARNING: Space in page title, skipping")
         return
     pagemsg("Processing")
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    secbody = modsec.secbody
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-
-    subsections = re.split("(^===+[^=\n]+===+\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             origt = str(t)

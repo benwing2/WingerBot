@@ -13,13 +13,11 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-    origtext = text
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     notes = []
 
@@ -40,8 +38,7 @@ def process_text_on_page(index, pagetitle, text):
 
     secbody = str(parsed).replace("==Noun==", "==Proper noun==")
 
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser("Fix Latin declensions of -polis nouns", include_pagefile=True, include_stdin=True)

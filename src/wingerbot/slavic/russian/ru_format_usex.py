@@ -10,8 +10,6 @@ from wingerbot.blib import getparam, rmparam, msg, site
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -23,8 +21,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    foundrussian = False
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
     def check_for_translation_italics(val, orig):
         val = val.replace("'', ''", ", ")
@@ -45,165 +45,158 @@ def process_text_on_page(index, pagetitle, text):
                 return True
         return False
 
-    for j in range(2, len(sections), 2):
-        if sections[j - 1] == "==Russian==\n":
-            if foundrussian:
-                pagemsg("WARNING: Found multiple Russian sections, skipping page")
-                return
-            foundrussian = True
+    # Try to convert multi-line usex using #:
+    def multi_line_usex(m):
+        ru, tr, en = m.groups()
+        en = check_for_translation_italics(en, m.group(0))
+        if (
+            check_for_stray_vertical_bar(ru)
+            or check_for_stray_vertical_bar(tr)
+            or check_for_stray_vertical_bar(en)
+        ):
+            return m.group(0)
+        retval = "#: {{ux|ru|%s|tr=%s|%s}}" % (ru, tr, en)
+        pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+        notes.append("converted raw multi-line usex to 'ux|ru'")
+        return retval
 
-            # Try to convert multi-line usex using #:
-            def multi_line_usex(m):
-                ru, tr, en = m.groups()
-                en = check_for_translation_italics(en, m.group(0))
-                if (
-                    check_for_stray_vertical_bar(ru)
-                    or check_for_stray_vertical_bar(tr)
-                    or check_for_stray_vertical_bar(en)
-                ):
+    secbody = re.sub(
+        r"^#: \{\{lang\|ru\|([^\n{}]*?)\}\}\n#:: (.*)\n#:::? (.*)$", multi_line_usex, secbody, 0, re.M
+    )
+
+    # Try to convert multi-line usex using #*
+    def multi_line_usex_hidden(m):
+        prefix, ru, tr, en = m.groups()
+        en = check_for_translation_italics(en, m.group(0))
+        if (
+            check_for_stray_vertical_bar(ru)
+            or check_for_stray_vertical_bar(tr)
+            or check_for_stray_vertical_bar(en)
+        ):
+            return m.group(0)
+        retval = "%s#*: {{ux|ru|%s|tr=%s|%s}}" % (prefix, ru, tr, en)
+        pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+        notes.append("converted raw multi-line hidden usex to 'ux|ru'")
+        return retval
+
+    secbody = re.sub(
+        r"^(#\* .*?\n)#\*: \{\{lang\|ru\|([^\n{}]*?)\}\}\n#\*:: ([^{}\n]*)\n#\*:::? ([^{}\n]*)$",
+        multi_line_usex_hidden,
+        secbody,
+        0,
+        re.M,
+    )
+
+    # Try to convert single-line usex that uses {{lang}}, {{l}} or {{m}}
+    for tempname in ["lang", "l", "m"]:
+
+        def single_line_usex_lang_l_m(m):
+            prefix, ru, dash, en = m.groups()
+            en = check_for_translation_italics(en, m.group(0))
+            if dash == "≈":
+                en = "≈ " + dash
+            if tempname == "lang" or "[" in ru:
+                if check_for_stray_vertical_bar(ru) or check_for_stray_vertical_bar(en):
                     return m.group(0)
-                retval = "#: {{ux|ru|%s|tr=%s|%s}}" % (ru, tr, en)
-                pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
-                notes.append("converted raw multi-line usex to 'ux|ru'")
-                return retval
-
-            sections[j] = re.sub(
-                r"^#: \{\{lang\|ru\|([^\n{}]*?)\}\}\n#:: (.*)\n#:::? (.*)$", multi_line_usex, sections[j], 0, re.M
-            )
-
-            # Try to convert multi-line usex using #*
-            def multi_line_usex_hidden(m):
-                prefix, ru, tr, en = m.groups()
-                en = check_for_translation_italics(en, m.group(0))
-                if (
-                    check_for_stray_vertical_bar(ru)
-                    or check_for_stray_vertical_bar(tr)
-                    or check_for_stray_vertical_bar(en)
-                ):
+                retval = prefix + " {{uxi|ru|%s|%s}}" % (ru, en)
+            else:
+                if "|tr=" in ru:
+                    pagemsg("WARNING: Found |tr= in link, can't handle: <<%s>>" % m.group(0))
                     return m.group(0)
-                retval = "%s#*: {{ux|ru|%s|tr=%s|%s}}" % (prefix, ru, tr, en)
-                pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
-                notes.append("converted raw multi-line hidden usex to 'ux|ru'")
-                return retval
+                # A single vertical bar in ru is allowed here; it will be handled
+                # correctly because we wrap it in a raw link
+                if check_for_stray_vertical_bar(en):
+                    return m.group(0)
+                retval = prefix + " {{uxi|ru|[[%s]]|%s}}" % (ru, en)
+            pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+            notes.append("converted raw single-line usex using {{%s}} to 'uxi|ru'" % tempname)
+            return retval
 
-            sections[j] = re.sub(
-                r"^(#\* .*?\n)#\*: \{\{lang\|ru\|([^\n{}]*?)\}\}\n#\*:: ([^{}\n]*)\n#\*:::? ([^{}\n]*)$",
-                multi_line_usex_hidden,
-                sections[j],
-                0,
-                re.M,
-            )
+        # Version with ''...'' around the translation; do this first in case
+        # we have bold (''') around the first Russian word and italics ('')
+        # around the translation; in the opposite order, the bold will get
+        # treated as italics
+        secbody = re.sub(
+            r"^(#:[:*]*?)\*? \{\{%s\|ru\|([^\n{}]*?)\}\}(?: |\&nbsp;)(—|\&mdash;|≈)(?: |\&nbsp;)''(.*?)''$"
+            % tempname,
+            single_line_usex_lang_l_m,
+            secbody,
+            0,
+            re.M,
+        )
+        # Version with ''...'' around the whole thing
+        secbody = re.sub(
+            r"^(#:[:*]*?)\*? ''\{\{%s\|ru\|([^\n{}]*?)\}\}(?: |\&nbsp;)(—|\&mdash;|≈)(?: |\&nbsp;)(.*?)''$"
+            % tempname,
+            single_line_usex_lang_l_m,
+            secbody,
+            0,
+            re.M,
+        )
+        # Version without ''...''
+        secbody = re.sub(
+            r"^(#:[:*]*?)\*? \{\{%s\|ru\|([^\n{}]*?)\}\}(?: |\&nbsp;)(—|\&mdash;|≈)(?: |\&nbsp;)(.*?)$"
+            % tempname,
+            single_line_usex_lang_l_m,
+            secbody,
+            0,
+            re.M,
+        )
 
-            # Try to convert single-line usex that uses {{lang}}, {{l}} or {{m}}
-            for tempname in ["lang", "l", "m"]:
+    # Try to convert single-line usex that is raw, maybe allowing braces
+    # in the right side
+    for allow_braces_on_right in [False, True]:
+        maybe_exclude_braces = "" if allow_braces_on_right else "{}"
+        allow_braces_msg = ", allowing braces on right side" if allow_braces_on_right else ""
 
-                def single_line_usex_lang_l_m(m):
-                    prefix, ru, dash, en = m.groups()
-                    en = check_for_translation_italics(en, m.group(0))
-                    if dash == "≈":
-                        en = "≈ " + dash
-                    if tempname == "lang" or "[" in ru:
-                        if check_for_stray_vertical_bar(ru) or check_for_stray_vertical_bar(en):
-                            return m.group(0)
-                        retval = prefix + " {{uxi|ru|%s|%s}}" % (ru, en)
-                    else:
-                        if "|tr=" in ru:
-                            pagemsg("WARNING: Found |tr= in link, can't handle: <<%s>>" % m.group(0))
-                            return m.group(0)
-                        # A single vertical bar in ru is allowed here; it will be handled
-                        # correctly because we wrap it in a raw link
-                        if check_for_stray_vertical_bar(en):
-                            return m.group(0)
-                        retval = prefix + " {{uxi|ru|[[%s]]|%s}}" % (ru, en)
-                    pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
-                    notes.append("converted raw single-line usex using {{%s}} to 'uxi|ru'" % tempname)
-                    return retval
+        def single_line_usex_raw(m):
+            prefix, ru, dash, en = m.groups()
+            ru = fix_l_m_lang_links_in_ru(ru)
+            en = check_for_translation_italics(en, m.group(0))
+            if check_for_stray_vertical_bar(ru) or check_for_stray_vertical_bar(en):
+                return m.group(0)
+            if dash == "≈":
+                en = "≈ " + en
+            retval = prefix + " {{uxi|ru|%s|%s}}" % (ru, en)
+            pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+            notes.append("converted pure raw single-line usex to 'uxi|ru'%s" % allow_braces_msg)
+            return retval
 
-                # Version with ''...'' around the translation; do this first in case
-                # we have bold (''') around the first Russian word and italics ('')
-                # around the translation; in the opposite order, the bold will get
-                # treated as italics
-                sections[j] = re.sub(
-                    r"^(#:[:*]*?)\*? \{\{%s\|ru\|([^\n{}]*?)\}\}(?: |\&nbsp;)(—|\&mdash;|≈)(?: |\&nbsp;)''(.*?)''$"
-                    % tempname,
-                    single_line_usex_lang_l_m,
-                    sections[j],
-                    0,
-                    re.M,
-                )
-                # Version with ''...'' around the whole thing
-                sections[j] = re.sub(
-                    r"^(#:[:*]*?)\*? ''\{\{%s\|ru\|([^\n{}]*?)\}\}(?: |\&nbsp;)(—|\&mdash;|≈)(?: |\&nbsp;)(.*?)''$"
-                    % tempname,
-                    single_line_usex_lang_l_m,
-                    sections[j],
-                    0,
-                    re.M,
-                )
-                # Version without ''...''
-                sections[j] = re.sub(
-                    r"^(#:[:*]*?)\*? \{\{%s\|ru\|([^\n{}]*?)\}\}(?: |\&nbsp;)(—|\&mdash;|≈)(?: |\&nbsp;)(.*?)$"
-                    % tempname,
-                    single_line_usex_lang_l_m,
-                    sections[j],
-                    0,
-                    re.M,
-                )
+        # Version with ''...'' around the translation; do this first in case
+        # we have bold (''') around the first Russian word and italics ('')
+        # around the translation; in the opposite order, the bold will get
+        # treated as italics
+        secbody = re.sub(
+            r"^(#:[:*]*?)\*? ((?:[^{}\n]|\{\{(?:l|m|lang)\|ru\|.*?\}\})*)(?: |\&nbsp;)(—|-|\&mdash;|≈)(?: |\&nbsp;)''([^%s\n]*?)''$"
+            % maybe_exclude_braces,
+            single_line_usex_raw,
+            secbody,
+            0,
+            re.M,
+        )
+        # Version with ''...'' around the whole thing; the expression after
+        # the '' is a disjunctive lookahead expression and says "(two single
+        # quotes) either followed by 3 more quotes (combination bold+italic)
+        # or not followed by any quote (to exclude bold = ''')
+        secbody = re.sub(
+            r"^(#:[:*]*?)\*? ''(?:(?!')|(?='''))((?:[^{}\n]|\{\{(?:l|m|lang)\|ru\|.*?\}\})*)(?: |\&nbsp;)(—|-|\&mdash;|≈)(?: |\&nbsp;)([^%s\n]*?)''$"
+            % maybe_exclude_braces,
+            single_line_usex_raw,
+            secbody,
+            0,
+            re.M,
+        )
+        # Version without ''...''
+        secbody = re.sub(
+            r"^(#:[:*]*?)\*? ((?:[^{}\n]|\{\{(?:l|m|lang)\|ru\|.*?\}\})*)(?: |\&nbsp;)(—|-|\&mdash;|≈)(?: |\&nbsp;|≈)([^%s\n]*?)$"
+            % maybe_exclude_braces,
+            single_line_usex_raw,
+            secbody,
+            0,
+            re.M,
+        )
 
-            # Try to convert single-line usex that is raw, maybe allowing braces
-            # in the right side
-            for allow_braces_on_right in [False, True]:
-                maybe_exclude_braces = "" if allow_braces_on_right else "{}"
-                allow_braces_msg = ", allowing braces on right side" if allow_braces_on_right else ""
-
-                def single_line_usex_raw(m):
-                    prefix, ru, dash, en = m.groups()
-                    ru = fix_l_m_lang_links_in_ru(ru)
-                    en = check_for_translation_italics(en, m.group(0))
-                    if check_for_stray_vertical_bar(ru) or check_for_stray_vertical_bar(en):
-                        return m.group(0)
-                    if dash == "≈":
-                        en = "≈ " + en
-                    retval = prefix + " {{uxi|ru|%s|%s}}" % (ru, en)
-                    pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
-                    notes.append("converted pure raw single-line usex to 'uxi|ru'%s" % allow_braces_msg)
-                    return retval
-
-                # Version with ''...'' around the translation; do this first in case
-                # we have bold (''') around the first Russian word and italics ('')
-                # around the translation; in the opposite order, the bold will get
-                # treated as italics
-                sections[j] = re.sub(
-                    r"^(#:[:*]*?)\*? ((?:[^{}\n]|\{\{(?:l|m|lang)\|ru\|.*?\}\})*)(?: |\&nbsp;)(—|-|\&mdash;|≈)(?: |\&nbsp;)''([^%s\n]*?)''$"
-                    % maybe_exclude_braces,
-                    single_line_usex_raw,
-                    sections[j],
-                    0,
-                    re.M,
-                )
-                # Version with ''...'' around the whole thing; the expression after
-                # the '' is a disjunctive lookahead expression and says "(two single
-                # quotes) either followed by 3 more quotes (combination bold+italic)
-                # or not followed by any quote (to exclude bold = ''')
-                sections[j] = re.sub(
-                    r"^(#:[:*]*?)\*? ''(?:(?!')|(?='''))((?:[^{}\n]|\{\{(?:l|m|lang)\|ru\|.*?\}\})*)(?: |\&nbsp;)(—|-|\&mdash;|≈)(?: |\&nbsp;)([^%s\n]*?)''$"
-                    % maybe_exclude_braces,
-                    single_line_usex_raw,
-                    sections[j],
-                    0,
-                    re.M,
-                )
-                # Version without ''...''
-                sections[j] = re.sub(
-                    r"^(#:[:*]*?)\*? ((?:[^{}\n]|\{\{(?:l|m|lang)\|ru\|.*?\}\})*)(?: |\&nbsp;)(—|-|\&mdash;|≈)(?: |\&nbsp;|≈)([^%s\n]*?)$"
-                    % maybe_exclude_braces,
-                    single_line_usex_raw,
-                    sections[j],
-                    0,
-                    re.M,
-                )
-
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

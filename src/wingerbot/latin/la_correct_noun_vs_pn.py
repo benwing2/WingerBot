@@ -12,6 +12,8 @@ pages_to_delete = []
 def process_form(index, page, slot, form, pos):
     def pagemsg(txt):
         msg("Page %s %s %s: %s" % (index, slot, form, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s %s: %s" % (index, slot, form, txt))
 
     notes = []
 
@@ -21,11 +23,11 @@ def process_form(index, page, slot, form, pos):
         pagemsg("Skipping form value %s, page doesn't exist" % form)
         return
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    text = blib.safe_page_text(page, errandpagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     if pos == "pn":
         from_header = "==Noun=="
@@ -48,8 +50,9 @@ def process_form(index, page, slot, form, pos):
     else:
         raise ValueError("Unrecognized POS %s" % pos)
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.subsection_headers:
         if re.search(r"\{\{%s([|}])" % from_headword_template, subsections[k]) or re.search(
             r"\{\{head\|la\|%s([|}])" % from_pos, subsections[k]
         ):
@@ -63,24 +66,19 @@ def process_form(index, page, slot, form, pos):
             subsections[k] = newsubsec
             subsections[k - 1] = newheadersubsec
 
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     parsed = blib.parse_text(secbody)
     saw_noun = None
@@ -110,6 +108,8 @@ def process_text_on_page(index, pagetitle, text):
         return
     pos = "pn" if saw_proper_noun else "n"
     ht = saw_proper_noun or saw_noun
+    # If both saw_proper_noun and saw_noun are None, we returned above.
+    assert ht is not None
     if getparam(ht, "indecl"):
         pagemsg("Noun is indeclinable, skipping: %s" % str(ht))
         return

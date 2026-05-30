@@ -5,17 +5,12 @@ import pywikibot, re, sys, argparse
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
 
-from wingerbot.latin import lalib
-
 
 def process_text_on_page(index, pagename, text):
     pagename = pagename[0].lower() + pagename[1:]
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
 
     pagemsg("Processing")
 
@@ -40,18 +35,20 @@ def process_text_on_page(index, pagename, text):
                 pagemsg("Replaced %s with %s" % (origt, str(t)))
     text = str(parsed)
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
     if len(subsections) < 3:
         pagemsg("Something wrong, only one subsection")
         return
     notes.append("lowercase Latin adjective")
     if orig_headword:
         alter_line = "* {{alter|la|%s||alternative case form}}" % orig_headword
-        if "==Alternative forms==" in subsections[1]:
+        if subsecs.subsection_header_dict[2] ==  "Alternative forms":
             subsections[2] = subsections[2].rstrip("\n") + "\n%s\n\n" % alter_line
         else:
             subsections[1:1] = ["===Alternative forms===\n", alter_line + "\n\n"]
         notes.append("add uppercase equivalent as alternative case form")
+    text = "".join(subsections)
 
     return text, notes
 

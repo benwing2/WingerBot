@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
 import re
+from dataclasses import dataclass
+from mwparserfromhell.nodes import Template
+from mwparserfromhell.wikicode import Wikicode
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
-
-
-def find_latin_section(text, pagemsg):
-    return blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+from wingerbot.blib import getparam, rmparam, tname, ExpandTextCallback, ModifiableLangSection, PagemsgCallback
 
 
 la_infl_templates = {
@@ -195,17 +194,28 @@ def infer_adv_stem(adv):
     return adv, False
 
 
-def generate_adj_forms(template, errandpagemsg, expand_text, return_raw=False, include_linked=False):
-
+def generate_adj_forms_raw(
+    template: str,
+    errandpagemsg: PagemsgCallback,
+    expand_text: ExpandTextCallback,
+) -> str | None:
     if template.startswith("{{la-adecl|"):
         generate_template = re.sub(r"^\{\{la-adecl\|", "{{la-generate-adj-forms|", template)
     else:
         errandpagemsg("Template %s not a recognized adjective declension template" % template)
         return None
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
-    if not result:
+    return None if result is False else result
+
+
+def generate_adj_forms(
+    template: str,
+    errandpagemsg: PagemsgCallback,
+    expand_text: ExpandTextCallback,
+    include_linked: bool = False
+) -> dict[str, str] | None:
+    result = generate_adj_forms_raw(template, errandpagemsg, expand_text)
+    if result is None:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
     args = blib.split_generate_args(result)
@@ -222,17 +232,20 @@ def generate_adj_forms(template, errandpagemsg, expand_text, return_raw=False, i
     return augmented_args
 
 
-def generate_noun_forms(template, errandpagemsg, expand_text, return_raw=False, include_linked=False):
-
+def generate_noun_forms_raw(template: str, errandpagemsg: PagemsgCallback, expand_text: ExpandTextCallback) -> str | None:
     if template.startswith("{{la-ndecl|"):
         generate_template = re.sub(r"^\{\{la-ndecl\|", "{{la-generate-noun-forms|", template)
     else:
         errandpagemsg("Template %s not a recognized noun declension template" % template)
         return None
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
-    if not result:
+    return None if result is False else result
+    
+
+def generate_noun_forms(template: str, errandpagemsg: PagemsgCallback, expand_text: ExpandTextCallback,
+                        include_linked: bool = False) -> dict[str, str] | None:
+    result = generate_noun_forms_raw(template, errandpagemsg, expand_text)
+    if result is None:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
     args = blib.split_generate_args(result)
@@ -241,15 +254,8 @@ def generate_noun_forms(template, errandpagemsg, expand_text, return_raw=False, 
     return args
 
 
-def generate_verb_forms(
-    template,
-    errandpagemsg,
-    expand_text,
-    return_raw=False,
-    include_linked=False,
-    include_props=False,
-    add_sync_forms=False,
-):
+def generate_verb_forms_raw(template: str, errandpagemsg: PagemsgCallback, expand_text: ExpandTextCallback,
+                            include_props: bool = False) -> str | None:
     if template.startswith("{{la-conj|"):
         if include_props:
             generate_template = re.sub(r"^\{\{la-conj\|", "{{la-generate-verb-props|", template)
@@ -259,9 +265,19 @@ def generate_verb_forms(
         errandpagemsg("Template %s not a recognized conjugation template" % template)
         return None
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
-    if not result:
+    return None if result is False else result
+    
+
+def generate_verb_forms(
+    template: str,
+    errandpagemsg: PagemsgCallback,
+    expand_text: ExpandTextCallback,
+    include_linked: bool = False,
+    include_props: bool = False,
+    add_sync_forms: bool = False,
+) -> dict[str, str] | None:
+    result = generate_verb_forms_raw(template, errandpagemsg, expand_text, include_props=include_props)
+    if result is None:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
     args = blib.split_generate_args(result)
@@ -285,30 +301,50 @@ def generate_verb_forms(
     return args
 
 
-def generate_infl_forms(
-    pos,
-    template,
-    errandpagemsg,
-    expand_text,
-    return_raw=False,
-    include_linked=False,
-    include_props=False,
-    add_sync_verb_forms=False,
-):
+def generate_infl_forms_raw(
+    pos: str,
+    template: str,
+    errandpagemsg: PagemsgCallback,
+    expand_text: ExpandTextCallback,
+    include_props: bool = False,
+) -> str | None:
     if pos in ["noun", "pn"]:
-        return generate_noun_forms(template, errandpagemsg, expand_text, return_raw, include_linked)
+        return generate_noun_forms_raw(template, errandpagemsg, expand_text)
+    elif pos == "verb":
+        return generate_verb_forms_raw(
+            template,
+            errandpagemsg,
+            expand_text,
+            include_props=include_props,
+        )
+    elif pos in ["adj", "nounadj", "numadj", "part"]:
+        return generate_adj_forms_raw(template, errandpagemsg, expand_text)
+    else:
+        errandpagemsg("WARNING: Bad pos=%s, expected noun/verb/adj/nounadj/numadj/part" % pos)
+        return None
+
+def generate_infl_forms(
+    pos: str,
+    template: str,
+    errandpagemsg: PagemsgCallback,
+    expand_text: ExpandTextCallback,
+    include_linked: bool = False,
+    include_props: bool = False,
+    add_sync_verb_forms: bool = False,
+) -> dict[str, str] | None:
+    if pos in ["noun", "pn"]:
+        return generate_noun_forms(template, errandpagemsg, expand_text, include_linked=include_linked)
     elif pos == "verb":
         return generate_verb_forms(
             template,
             errandpagemsg,
             expand_text,
-            return_raw,
-            include_linked,
-            include_props,
+            include_linked=include_linked,
+            include_props=include_props,
             add_sync_forms=add_sync_verb_forms,
         )
     elif pos in ["adj", "nounadj", "numadj", "part"]:
-        return generate_adj_forms(template, errandpagemsg, expand_text, return_raw, include_linked)
+        return generate_adj_forms(template, errandpagemsg, expand_text, include_linked=include_linked)
     else:
         errandpagemsg("WARNING: Bad pos=%s, expected noun/verb/adj/nounadj/numadj/part" % pos)
         return None
@@ -664,11 +700,9 @@ def la_template_is_head(t):
     return False
 
 
-def la_get_headword_from_template(t, pagename, pagemsg, expand_text=None):
-    if not expand_text:
-
-        def expand_text(tempcall):
-            return blib.expand_text(tempcall, pagename, pagemsg, False)
+def la_get_headword_from_template(t: Template, pagename: str, pagemsg: PagemsgCallback, expand_text: ExpandTextCallback | None = None) -> list[str]:
+    if expand_text is None:
+        expand_text = lambda tempcall: blib.expand_text(tempcall, pagename, pagemsg, False)
 
     tn = tname(t)
     if tn in ["la-adj", "la-part", "la-num-adj", "la-suffix-adj", "la-det", "la-pronoun"]:
@@ -782,9 +816,12 @@ def la_get_headword_from_template(t, pagename, pagemsg, expand_text=None):
         pagemsg("WARNING: Unrecognized headword template %s" % str(t))
         retval = ""
     retval = retval or pagename
-    if type(retval) is not list:
-        retval = [retval]
-    return retval
+    if type(retval) is str:
+        return [retval]
+    else:
+        # Type guard for Pylance. This should not be necessary.
+        assert type(retval) is list
+        return retval
 
 
 # Return the length of FULL that matches STEM, even with mismatches in
@@ -872,98 +909,134 @@ def slot_matches_spec(slot, spec):
         return False
 
 
-def find_heads_and_defns(text, pagemsg):
-    retval = find_latin_section(text, pagemsg)
-    if retval is None:
-        return None
+@dataclass
+class PronunSection:
+    header: str
+    pronun_templates: list[Template]
+    headwords: list[Headword]
+    subsection: int
+    level: int
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+@dataclass
+class EtymSection:
+    header: str
+    headwords: list[Headword]
+    subsection: int
+    level: int
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+@dataclass
+class Headword:
+    head_template: Template
+    header: str
+    is_lemma: bool
+    infl_templates: list[Template]
+    infl_of_templates: list[Template]
+    subsection: int
+    level: int
+    pronun_section: PronunSection | None
+    etym_section: EtymSection | None
+@dataclass
+class FindHeadsAndDefnsResult:
+    modsec: ModifiableLangSection
+    subsections: list[str]
+    parsed_subsections: list[Wikicode]
+    headwords: list[Headword]
+    pronun_sections: list[PronunSection]
+    etym_sections: list[EtymSection]
 
-    parsed_subsections = [None] * len(subsections)
+def find_heads_and_defns(text, pagemsg) -> FindHeadsAndDefnsResult | None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
-    headwords = []
-    pronun_sections = []
-    etym_sections = []
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
-    most_recent_headword = None
-    most_recent_pronun_section = None
-    most_recent_etym_section = None
+    parsed_subsections: list[Wikicode] = []
 
-    def new_headword(header, level, subsection, head_template, is_lemma):
-        retval = {
-            "head_template": head_template,
-            "header": header,
-            "is_lemma": is_lemma,
-            "infl_templates": [],
-            "infl_of_templates": [],
-            "subsection": subsection,
-            "level": level,
-            "pronun_section": most_recent_pronun_section,
-            "etym_section": most_recent_etym_section,
-        }
-        if most_recent_pronun_section:
-            most_recent_pronun_section["headwords"].append(retval)
-        if most_recent_etym_section:
-            most_recent_etym_section["headwords"].append(retval)
+    headwords: list[Headword] = []
+    pronun_sections: list[PronunSection] = []
+    etym_sections: list[EtymSection] = []
+
+    most_recent_headword: Headword | None = None
+    most_recent_pronun_section: PronunSection | None = None
+    most_recent_etym_section: EtymSection | None = None
+
+    def new_headword(header: str, level: int, subsection: int, head_template: Template, is_lemma: bool) -> Headword:
+        retval = Headword(
+            head_template=head_template,
+            header=header,
+            is_lemma=is_lemma,
+            infl_templates=[],
+            infl_of_templates=[],
+            subsection=subsection,
+            level=level,
+            pronun_section=most_recent_pronun_section,
+            etym_section=most_recent_etym_section,
+        )
+        if most_recent_pronun_section is not None:
+            most_recent_pronun_section.headwords.append(retval)
+        if most_recent_etym_section is not None:
+            most_recent_etym_section.headwords.append(retval)
         return retval
 
-    def new_pronun_section(header, level, subsection):
-        return {
-            "header": header,
-            "pronun_templates": [],
-            "headwords": [],
-            "subsection": subsection,
-            "level": level,
-        }
+    def new_pronun_section(header: str, level: int, subsection: int) -> PronunSection:
+        return PronunSection(
+            header=header,
+            pronun_templates=[],
+            headwords=[],
+            subsection=subsection,
+            level=level,
+        )
 
-    def new_etym_section(header, level, subsection):
-        return {
-            "header": header,
-            "headwords": [],
-            "subsection": subsection,
-            "level": level,
-        }
+    def new_etym_section(header: str, level: int, subsection: int) -> EtymSection:
+        return EtymSection(
+            header=header,
+            headwords=[],
+            subsection=subsection,
+            level=level,
+        )
 
     for k in range(len(subsections)):
         if k < 2 or (k % 2) == 1:
-            parsed_subsections[k] = blib.parse_text(subsections[k])
+            parsed_subsections.append(blib.parse_text(subsections[k]))
             continue
-        m = re.search("^(==+)([^=\n]+)", subsections[k - 1])
-        level = len(m.group(1))
-        header = m.group(2)
+        level = subsecs.subsection_levels[k]
+        header = subsecs.subsection_header_dict[k]
         headword_templates_in_section = []
 
-        if most_recent_headword and most_recent_headword["level"] >= level:
+        if most_recent_headword is not None and most_recent_headword.level >= level:
             headwords.append(most_recent_headword)
             most_recent_headword = None
 
         is_pronun_section = header.startswith("Pronunciation")
         if is_pronun_section:
-            if most_recent_pronun_section:
+            if most_recent_pronun_section is not None:
                 pronun_sections.append(most_recent_pronun_section)
             most_recent_pronun_section = new_pronun_section(header, level, k)
-        elif most_recent_pronun_section and most_recent_pronun_section["level"] > level:
+        elif most_recent_pronun_section is not None and most_recent_pronun_section.level > level:
             pronun_sections.append(most_recent_pronun_section)
             most_recent_pronun_section = None
 
         is_etym_section = header.startswith("Etymology")
         if is_etym_section:
-            if most_recent_etym_section:
+            if most_recent_etym_section is not None:
                 etym_sections.append(most_recent_etym_section)
             most_recent_etym_section = new_etym_section(header, level, k)
-        elif most_recent_etym_section and most_recent_etym_section["level"] > level:
+        elif most_recent_etym_section is not None and most_recent_etym_section.level > level:
             etym_sections.append(most_recent_etym_section)
             most_recent_etym_section = None
 
         parsed = blib.parse_text(subsections[k])
-        parsed_subsections[k] = parsed
+        parsed_subsections.append(parsed)
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn == "la-IPA":
                 if is_pronun_section:
-                    most_recent_pronun_section["pronun_templates"].append(t)
+                    # We initialized a new pronun section when is_pronun_section was set
+                    assert most_recent_pronun_section is not None
+                    most_recent_pronun_section.pronun_templates.append(t)
                 else:
                     pagemsg(
                         "WARNING: Pronunciation template %s in %s section, not pronunciation section" % (str(t), header)
@@ -978,6 +1051,8 @@ def find_heads_and_defns(text, pagemsg):
                         pagemsg("WARNING: Unrecognized part of speech %s" % head_pos)
                 if headword_templates_in_section:
                     pagemsg("WARNING: Found additional headword template in same section: %s" % str(t))
+                    # We set most_recent_headword when we added a template to headword_templates_in_section
+                    assert most_recent_headword is not None
                     headwords.append(most_recent_headword)
                 elif most_recent_headword:
                     pagemsg("WARNING: Found headword template nested under previous one: %s" % str(t))
@@ -991,29 +1066,25 @@ def find_heads_and_defns(text, pagemsg):
                 )
                 headword_templates_in_section.append(t)
             elif tn in la_infl_templates:
-                if not most_recent_headword:
+                if most_recent_headword is None:
                     pagemsg("WARNING: Found inflection template not under headword template: %s" % str(t))
                 else:
-                    most_recent_headword["infl_templates"].append(t)
+                    most_recent_headword.infl_templates.append(t)
             elif tn in la_infl_of_templates:
-                if not most_recent_headword:
+                if most_recent_headword is None:
                     pagemsg("WARNING: Found inflection-of template not under headword template: %s" % str(t))
                 else:
-                    most_recent_headword["infl_of_templates"].append(t)
+                    most_recent_headword.infl_of_templates.append(t)
 
-    if most_recent_headword:
+    if most_recent_headword is not None:
         headwords.append(most_recent_headword)
-    if most_recent_pronun_section:
+    if most_recent_pronun_section is not None:
         pronun_sections.append(most_recent_pronun_section)
-    if most_recent_etym_section:
+    if most_recent_etym_section is not None:
         etym_sections.append(most_recent_etym_section)
 
-    return (
-        sections,
-        j,
-        secbody,
-        sectail,
-        has_non_lang,
+    return FindHeadsAndDefnsResult(
+        modsec,
         subsections,
         parsed_subsections,
         headwords,

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+from typing import Literal
+
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, tname, pname, msg
 
 vowels = "aeiouyäöüAEIOUYÄÖÜ"
 capletters = "A-ZÄÖÜ"
@@ -23,12 +25,12 @@ umlaut = {
 decl_templates = {"de-decl-noun-m", "de-decl-noun-f", "de-decl-noun-n", "de-decl-noun-pl"}
 
 
-def apply_umlaut(term):
+def _apply_umlaut(term):
     m = re.search("^(.*[^e])(e[lmnr]?)$", term)
     if m:
         stem, after = m.groups()
         # Nagel -> Nägel, Garten -> Gärten
-        retval = apply_umlaut(stem)
+        retval = _apply_umlaut(stem)
         if not retval:
             return None
         return retval + after
@@ -48,7 +50,7 @@ def apply_umlaut(term):
     return None
 
 
-def analyze_form(pagetitle, form, default, do_stem=False):
+def _analyze_form(pagetitle, form, default, do_stem=False):
     if form == default:
         return "+"
     if do_stem and pagetitle.endswith("e"):
@@ -57,7 +59,7 @@ def analyze_form(pagetitle, form, default, do_stem=False):
         retval = form[len(pagetitle) :]
         if not re.search("^" + CAP, retval):
             return retval
-    umlaut = apply_umlaut(pagetitle)
+    umlaut = _apply_umlaut(pagetitle)
     if umlaut and form.startswith(umlaut):
         return "^" + form[len(umlaut) :]
     if re.search("^" + CAP, form):
@@ -65,8 +67,8 @@ def analyze_form(pagetitle, form, default, do_stem=False):
     return "!" + form
 
 
-def analyze_forms(pagetitle, forms, default, do_stem=False, joiner=":", old_contractions=False):
-    forms = [analyze_form(pagetitle, form, default, do_stem=do_stem) for form in forms]
+def _analyze_forms(pagetitle, forms, default, do_stem=False, joiner=":", old_contractions=False):
+    forms = [_analyze_form(pagetitle, form, default, do_stem=do_stem) for form in forms]
     forms = [form or "-" for form in forms]
     if old_contractions:
         if set(forms) == {"es", "s"}:
@@ -78,7 +80,7 @@ def analyze_forms(pagetitle, forms, default, do_stem=False, joiner=":", old_cont
     return joiner.join(forms)
 
 
-def get_n_ending(stem):
+def _get_n_ending(stem):
     if re.search("e$", stem) or re.search("e[lr]$", stem) and not re.search(NV + "[ei]e[lr]$", stem):
         # [[Kammer]], [[Feier]], [[Leier]], but not [[Spur]], [[Beer]], [[Manier]], [[Schmier]] or [[Vier]]
         # similarly, [[Achsel]], [[Gabel]], [[Tafel]], etc. but not [[Ziel]]
@@ -90,11 +92,11 @@ def get_n_ending(stem):
         return "en"
 
 
-def get_default_gen(lemma, gender, is_weak=False):
+def _get_default_gen(lemma, gender, is_weak=False):
     if gender == "f":
         return ""
     elif is_weak:
-        return get_n_ending(lemma)
+        return _get_n_ending(lemma)
     elif re.search("nis$", lemma):
         # neuter like [[Erlebnis]], [[Geheimnis]] or occasional masculine like [[Firnis]], [[Penis]]
         return "ses"
@@ -107,13 +109,13 @@ def get_default_gen(lemma, gender, is_weak=False):
         return "s"
 
 
-def get_default_pl(lemma, gender, is_weak=False):
+def _get_default_pl(lemma, gender, is_weak=False):
     if re.search("nis$", lemma):
         # neuter like [[Erlebnis]], [[Geheimnis]] or feminine like [[Kenntnis]], [[Wildnis]],
         # or occasional masculine like [[Firnis]], [[Penis]]
         return "se"
     elif gender == "f" or is_weak or re.search("e$", lemma):
-        return get_n_ending(lemma)
+        return _get_n_ending(lemma)
     elif gender == "n" and re.search("um$", lemma):
         # [[Museum]] -> [[Museen]], [[Vakuum]] -> [[Vakuen]]; not masculine [[Baum]] (plural [[Bäume]])
         # or [[Reichtum]] (plural [[Reichtümer]])
@@ -133,10 +135,13 @@ def get_default_pl(lemma, gender, is_weak=False):
         return "e"
 
 
-def convert_gens(pagetitle, gens, from_decl=False):
+def _convert_gens(pagetitle: str, gens: list[str], from_decl=False) -> list[str]:
     if len(gens) == 0:
-        gens = [True]
-    gens = [pagetitle + "s" if gen == True else gen for gen in gens]
+        gens_or_default: list[str | Literal[True]] = [True]
+    else:
+        # `gens_or_default = gens` should be possible but Pylance complains
+        gens_or_default = [gen for gen in gens]
+    gens = [pagetitle + "s" if gen is True else gen for gen in gens_or_default]
     if len(gens) == 1:
         gen = gens[0]
         if gen == "(s)":
@@ -152,7 +157,7 @@ def convert_gens(pagetitle, gens, from_decl=False):
     return gens
 
 
-def convert_pls(pagetitle, pls, is_proper=False):
+def _convert_pls(pagetitle, pls, is_proper=False):
     if len(pls) == 0:
         if is_proper:
             return ["-"]
@@ -164,11 +169,11 @@ def convert_pls(pagetitle, pls, is_proper=False):
     return pls
 
 
-def declts_to_unicode(declts):
+def _join_declts(declts):
     return ",".join(str(declt) for declt in declts)
 
 
-def normalize_values(values):
+def _normalize_values(values):
     newvals = []
     for value in values:
         if value is True:
@@ -182,7 +187,7 @@ def normalize_values(values):
     return newvals
 
 
-def construct_default_equiv(lemma, gender):
+def _construct_default_equiv(lemma, gender):
     if gender == "m":
         lemma = re.sub("e$", "", lemma)
         return lemma + "in"
@@ -194,7 +199,7 @@ def construct_default_equiv(lemma, gender):
     return None
 
 
-def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg):
+def _do_headword_template(headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg):
     notes = []
 
     def analyze_declts(declts, pagetitle, headword_gens, headword_pls):
@@ -231,7 +236,7 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
                     else:
                         pagemsg("WARNING: Unrecognized arg1=%s: %s" % (arg1, str(declt)))
                         return None
-                    decl_gens = convert_gens(pagetitle, [gen], from_decl=True)
+                    decl_gens = _convert_gens(pagetitle, [gen], from_decl=True)
                 num = getp("n")
                 if num == "sg":
                     is_sg = True
@@ -251,18 +256,18 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
                     if pl == "-":
                         is_sg = True
                     else:
-                        decl_pls = normalize_values([pl])
+                        decl_pls = _normalize_values([pl])
                 if prev_is_weak is not None and prev_is_weak != is_weak:
                     pagemsg(
                         "WARNING: Saw declension template with weak=%s different from previous weak=%s: %s"
-                        % (is_weak, prev_is_weak, declts_to_unicode(declts))
+                        % (is_weak, prev_is_weak, _join_declts(declts))
                     )
                     return None
                 prev_is_weak = is_weak
                 if prev_is_sg is not None and prev_is_sg != is_sg:
                     pagemsg(
                         "WARNING: Saw declension template with sg=%s different from previous sg=%s: %s"
-                        % (is_sg, prev_is_sg, declts_to_unicode(declts))
+                        % (is_sg, prev_is_sg, _join_declts(declts))
                     )
                     return None
                 prev_is_sg = is_sg
@@ -286,13 +291,13 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
         ):
             pagemsg(
                 "WARNING: Multiple declension templates with different genders as well as different either genitives or plurals: %s"
-                % declts_to_unicode(declts)
+                % _join_declts(declts)
             )
             return None
         if len(all_decl_gens) != len(first_decl_gens) and len(all_decl_pls) != len(first_decl_pls):
             pagemsg(
                 "WARNING: Multiple declension templates with different both genitives and plurals: %s"
-                % declts_to_unicode(declts)
+                % _join_declts(declts)
             )
             return None
 
@@ -309,9 +314,9 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
             if all_decl_parts == defparts:
                 declspec += ","
             else:
-                all_decl_part_forms = analyze_forms(pagetitle, all_decl_parts, None)
+                all_decl_part_forms = _analyze_forms(pagetitle, all_decl_parts, None)
                 if set(headword_parts) == set(all_decl_parts):
-                    headword_part_forms = analyze_forms(pagetitle, headword_parts, None)
+                    headword_part_forms = _analyze_forms(pagetitle, headword_parts, None)
                     if headword_part_forms != all_decl_part_forms:
                         pagemsg(
                             "NOTE: Headword %s(s) %s same as all decl %s(s) %s but analyzed form(s) different (probably different ordering), preferring headword analyzed form(s) %s over decl analyzed form(s) %s: declts=%s"
@@ -322,7 +327,7 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
                                 ",".join(all_decl_parts),
                                 headword_part_forms,
                                 all_decl_part_forms,
-                                declts_to_unicode(declts),
+                                _join_declts(declts),
                             )
                         )
                         all_decl_part_forms = headword_part_forms
@@ -335,9 +340,9 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
             return declspec
 
         if "m" in all_decl_genders or "n" in all_decl_genders:
-            declspec = compute_part(declspec, headword_gens, all_decl_gens, get_default_gen, "genitive")
+            declspec = compute_part(declspec, headword_gens, all_decl_gens, _get_default_gen, "genitive")
         if "p" not in all_decl_genders:
-            declspec = compute_part(declspec, headword_pls, all_decl_pls, get_default_pl, "plural")
+            declspec = compute_part(declspec, headword_pls, all_decl_pls, _get_default_pl, "plural")
         declspec = re.sub(",*$", "", declspec)
         if is_weak:
             declspec += ".weak"
@@ -355,7 +360,7 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
     if not old_style_headt:
         pagemsg(
             "NOTE: Skipping new-style headt=%s%s"
-            % (str(headt), declts and ", declts=%s" % declts_to_unicode(declts) or "")
+            % (str(headt), declts and ", declts=%s" % _join_declts(declts) or "")
         )
         return notes
 
@@ -364,12 +369,12 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
     if declts:
         sses = [not not getparam(declt, "ss") for declt in declts]
         if len(set(sses)) > 1:
-            pagemsg("WARNING: Saw inconsistent values for ss= in decl templates: %s" % declts_to_unicode(declts))
+            pagemsg("WARNING: Saw inconsistent values for ss= in decl templates: %s" % _join_declts(declts))
             return
         ss = list(set(sses)) == [True]
     if ss:
         if not pagetitle.endswith("ß"):
-            pagemsg("WARNING: Bad ss=1 setting for pagetitle not ending in -ß: %s" % declts_to_unicode(declts))
+            pagemsg("WARNING: Bad ss=1 setting for pagetitle not ending in -ß: %s" % _join_declts(declts))
             return
         # If ss specified, pretend pagetitle ends in -ss, as it does in post-1996 spelling. Later on we add .ss to the
         # headword and declension specs.
@@ -378,13 +383,11 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
     adjectival = any(tname(t).startswith("de-decl-adj+noun") for t in declts)
     genders = blib.fetch_param_chain(headt, "1", "g")
     headword_genders = genders
-    gens = normalize_values(blib.fetch_param_chain(headt, "2", "gen", True))
-    pls = normalize_values(blib.fetch_param_chain(headt, "3", "pl"))
-    dims = normalize_values(blib.fetch_param_chain(headt, "4", "dim"))
-    fems = normalize_values(blib.fetch_param_chain(headt, "f"))
-    mascs = normalize_values(blib.fetch_param_chain(headt, "m"))
-    if gens == [True]:
-        gens = []
+    gens = _normalize_values(blib.fetch_param_chain(headt, "2", "gen"))
+    pls = _normalize_values(blib.fetch_param_chain(headt, "3", "pl"))
+    dims = _normalize_values(blib.fetch_param_chain(headt, "4", "dim"))
+    fems = _normalize_values(blib.fetch_param_chain(headt, "f"))
+    mascs = _normalize_values(blib.fetch_param_chain(headt, "m"))
     for param in headt.params:
         pn = pname(param)
         pv = str(param.value)
@@ -416,7 +419,7 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
         if len(declts) > 1:
             pagemsg(
                 "WARNING: Saw adjectival declension along with multiple declension templates, can't handle: %s"
-                % declts_to_unicode(declts)
+                % _join_declts(declts)
             )
             return
         declt = declts[0]
@@ -434,7 +437,9 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
             if gender in ["m", "f"]:
                 default_equiv = adj + ("e" if gender == "m" else "er")
                 if noun:
-                    default_equiv += " " + construct_default_equiv(noun, gender)
+                    gender_default_equiv = _construct_default_equiv(noun, gender)
+                    assert gender_default_equiv is not None  # because gender is "m" or "f"
+                    default_equiv += " " + gender_default_equiv
             if gender in ["m", "n"]:
                 noun_gen = getp("3")
                 noun_pl = getp("4")
@@ -558,39 +563,39 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
                 else:
                     adj_link = "[[%s|%s]]" % (adj_lemma, adj_form)
                 noun_link = "[[%s]]" % noun
-                # This is less accurate than the above. Often head= is wrong.
-                # Try to update adjective and noun links from head= if given.
-                # head = getparam(headt, "head")
-                # if head:
-                #  m = re.search("^([^ ]*) ([^ ]*)$", head)
-                #  if not m:
-                #    pagemsg("WARNING: Can't parse head=%s for adjective-noun combination, continuing: head=%s, decl=%s"
-                #        % (head, str(headt), str(declt)))
-                #  else:
-                #    head_adj_link, head_noun_link = m.groups()
-                #    m = re.search(r"\[\[([^][]*)\|([^][]*)\]\]$", head_adj_link)
-                #    if m:
-                #      adj_link_lemma, adj_link_form = m.groups()
-                #      if adj_link_form.startswith(adj_link_lemma):
-                #        head_adj_link = "[[%s]]%s" % (adj_link_lemma, adj_link_form[len(adj_link_lemma):])
-                #    if head_adj_link != adj_link:
-                #      pagemsg("NOTE: Head-derived adjective link %s not same as decl-template-derived adjective link %s, using the former: head=%s, decl=%s"
-                #          % (head_adj_link, adj_link, str(headt), str(declt)))
-                #      adj_link = head_adj_link
-                #    if head_noun_link != noun_link:
-                #      pagemsg("NOTE: Head-derived noun link %s not same as decl-template-derived noun link %s, using the former: head=%s, decl=%s"
-                #          % (head_noun_link, noun_link, str(headt), str(declt)))
-                #      noun_link = head_noun_link
+                #This is less accurate than the above. Often head= is wrong.
+                #Try to update adjective and noun links from head= if given.
+                #head = getparam(headt, "head")
+                #if head:
+                #    m = re.search("^([^ ]*) ([^ ]*)$", head)
+                #    if m is None:
+                #        pagemsg("WARNING: Can't parse head=%s for adjective-noun combination, continuing: head=%s, decl=%s"
+                #                % (head, str(headt), str(declt)))
+                #    else:
+                #        head_adj_link, head_noun_link = m.groups()
+                #        m = re.search(r"\[\[([^][]*)\|([^][]*)\]\]$", head_adj_link)
+                #        if m is not None:
+                #            adj_link_lemma, adj_link_form = m.groups()
+                #            if adj_link_form.startswith(adj_link_lemma):
+                #                head_adj_link = "[[%s]]%s" % (adj_link_lemma, adj_link_form[len(adj_link_lemma):])
+                #        if head_adj_link != adj_link:
+                #            pagemsg("NOTE: Head-derived adjective link %s not same as decl-template-derived adjective link %s, using the former: head=%s, decl=%s"
+                #                    % (head_adj_link, adj_link, str(headt), str(declt)))
+                #            adj_link = head_adj_link
+                #        if head_noun_link != noun_link:
+                #            pagemsg("NOTE: Head-derived noun link %s not same as decl-template-derived noun link %s, using the former: head=%s, decl=%s"
+                #                    % (head_noun_link, noun_link, str(headt), str(declt)))
+                #            noun_link = head_noun_link
                 declspec = "%s<+> %s<%s>" % (adj_link, noun_link, declspec)
             headspec = declspec
             is_both = is_proper and not is_sg
         else:
-            pagemsg("WARNING: Unrecognized decl template(s): %s" % declts_to_unicode(declts))
+            pagemsg("WARNING: Unrecognized decl template(s): %s" % _join_declts(declts))
             return
 
     else:  # not adjectival
         if len(genders) == 1 and genders[0] in ["m", "f"]:
-            default_equiv = construct_default_equiv(pagetitle, genders[0])
+            default_equiv = _construct_default_equiv(pagetitle, genders[0])
         headspec = ":".join(genders)
         is_sg = False
         is_both = False
@@ -598,10 +603,10 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
         headword_gens = []
         headword_pls = []
         if headspec != "p":
-            pls = convert_pls(pagetitle, pls, is_proper=is_proper)
+            pls = _convert_pls(pagetitle, pls, is_proper=is_proper)
             headword_pls = pls
             if saw_mn:
-                gens = convert_gens(pagetitle, gens)
+                gens = _convert_gens(pagetitle, gens)
                 headword_gens = gens
                 if (
                     len(gens) == 1
@@ -612,16 +617,16 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
                     is_weak = True
                 def_gens = []
                 for gender in genders:
-                    def_gen = pagetitle + get_default_gen(pagetitle, gender, is_weak)
+                    def_gen = pagetitle + _get_default_gen(pagetitle, gender, is_weak)
                     if def_gen not in def_gens:
                         def_gens.append(def_gen)
                 if set(def_gens) == set(gens):
                     headspec += ","
                 else:
-                    headspec += ",%s" % analyze_forms(pagetitle, gens, None)
+                    headspec += ",%s" % _analyze_forms(pagetitle, gens, None)
             def_pls = []
             for gender in genders:
-                def_pl = pagetitle + get_default_pl(pagetitle, gender, is_weak)
+                def_pl = pagetitle + _get_default_pl(pagetitle, gender, is_weak)
                 if def_pl not in def_pls:
                     def_pls.append(def_pl)
             if set(def_pls) == set(pls):
@@ -631,7 +636,7 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
             elif pls == ["-"]:
                 is_sg = True
             else:
-                headspec += ",%s" % analyze_forms(pagetitle, pls, None)
+                headspec += ",%s" % _analyze_forms(pagetitle, pls, None)
         headspec = re.sub(",*$", "", headspec)
         if is_weak:
             headspec += ".weak"
@@ -642,11 +647,11 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
 
     extraspec = ""
     if dims:
-        extraspec += "|dim=%s" % analyze_forms(pagetitle, dims, None, do_stem=True, joiner=",")
+        extraspec += "|dim=%s" % _analyze_forms(pagetitle, dims, None, do_stem=True, joiner=",")
     if fems:
-        extraspec += "|f=%s" % analyze_forms(pagetitle, fems, default_equiv, do_stem=True, joiner=",")
+        extraspec += "|f=%s" % _analyze_forms(pagetitle, fems, default_equiv, do_stem=True, joiner=",")
     if mascs:
-        extraspec += "|m=%s" % analyze_forms(pagetitle, mascs, default_equiv, do_stem=True, joiner=",")
+        extraspec += "|m=%s" % _analyze_forms(pagetitle, mascs, default_equiv, do_stem=True, joiner=",")
 
     if declts and not adjectival:
         retval = analyze_declts(declts, pagetitle, headword_gens, headword_pls)
@@ -719,7 +724,7 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
     outmsg = "Would " + headt_outmsg
     if declts:
         newdeclt = "{{de-ndecl|%s}}" % declspec
-        declt_outmsg = "convert %s to %s" % (declts_to_unicode(declts), newdeclt)
+        declt_outmsg = "convert %s to %s" % (_join_declts(declts), newdeclt)
         outmsg += " and " + declt_outmsg
     pagemsg(outmsg)
 
@@ -754,8 +759,9 @@ def process_text_in_section(index, pagetitle, text):
     subsection_with_head = None
     declts = []
     subsection_with_declts = None
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
-    for k in range(0, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in [(0, "Unknown")] + subsecs.subsection_headers:
         parsed = blib.parse_text(subsections[k])
 
         for t in parsed.filter_templates():
@@ -767,7 +773,7 @@ def process_text_in_section(index, pagetitle, text):
 
             if tn in ["de-noun", "de-proper noun"]:
                 if declts:
-                    this_notes = do_headword_template(
+                    this_notes = _do_headword_template(
                         headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg
                     )
                     if this_notes is None:
@@ -783,7 +789,7 @@ def process_text_in_section(index, pagetitle, text):
                         "NOTE: Saw head template without corresponding declension template, still processing: %s"
                         % str(headt)
                     )
-                    this_notes = do_headword_template(
+                    this_notes = _do_headword_template(
                         headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg
                     )
                     if this_notes is None:
@@ -798,7 +804,7 @@ def process_text_in_section(index, pagetitle, text):
                             "NOTE: Saw declension template #%s without intervening head template: previous decl template(s)=%s, decl=%s%s"
                             % (
                                 1 + len(declts),
-                                declts_to_unicode(declts),
+                                _join_declts(declts),
                                 str(t),
                                 headt and "; head=%s" % str(headt) or "",
                             )
@@ -819,7 +825,7 @@ def process_text_in_section(index, pagetitle, text):
             pagemsg(
                 "NOTE: Saw head template without corresponding declension template, still processing: %s" % str(headt)
             )
-        this_notes = do_headword_template(
+        this_notes = _do_headword_template(
             headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg
         )
         if this_notes is None:
@@ -832,29 +838,27 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(text, None if args.partial_page else "German", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     if "=Etymology 1=" in secbody:
         notes = []
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
+        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+        etym_sections = etym_secs.subsections
+        for k, header in etym_secs.subsection_headers:
             retval = process_text_in_section(index, pagetitle, etym_sections[k])
-            if retval:
+            if retval is not None:
                 newsectext, newnotes = retval
                 etym_sections[k] = newsectext
                 notes.extend(newnotes)
-        secbody = "".join(etym_sections)
-        sections[j] = secbody + sectail
-        return "".join(sections), notes
+        return modsec.rebuild(secbody="".join(etym_sections)), notes
     else:
         retval = process_text_in_section(index, pagetitle, secbody)
-        if retval:
+        if retval is not None:
             secbody, notes = retval
-            sections[j] = secbody + sectail
-            return "".join(sections), notes
+            return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

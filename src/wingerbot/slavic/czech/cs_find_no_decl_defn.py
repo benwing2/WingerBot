@@ -12,20 +12,20 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
+    modsec = blib.find_modifiable_lang_section(
         text, None if args.partial_page else "Czech", pagemsg, force_final_nls=True
     )
-    if retval is None:
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsections = subsecs.subsections
 
     genders = None
     defns = None
     headt = None
-    for k in range(2, len(subsections), 2):
-        if re.search("==(Noun|Proper noun)==", subsections[k - 1]):
+    for k, header in subsecs.subsection_headers:
+        if header in ["Noun", "Proper noun"]:
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
                 origt = str(t)
@@ -36,7 +36,7 @@ def process_text_on_page(index, pagetitle, text):
                     headt = t
                     genders = blib.fetch_param_chain(t, "1", "g")
                     defns = blib.find_defns(subsections[k], "la")
-        elif "==Declension==" in subsections[k - 1] and "{{rfinfl|cs|" in subsections[k]:
+        elif header == "Declension" and "{{rfinfl|cs|" in subsections[k]:
             if genders is None or defns is None:
                 pagemsg("WARNING: Saw ==Declension== section without preceding headword")
                 continue

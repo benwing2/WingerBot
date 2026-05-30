@@ -16,10 +16,10 @@ def process_text_on_page(index, pagetitle, text):
     if not args.stdin:
         pagemsg("Processing")
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
         tn = tname(t)

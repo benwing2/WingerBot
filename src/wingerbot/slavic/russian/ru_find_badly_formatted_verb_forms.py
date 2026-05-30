@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -18,24 +18,17 @@ def process_text_on_page(index, pagetitle, text):
     found_inflection_of = False
     found_head_verb_form = False
     for t in parsed.filter_templates():
-        if str(t.name) in ["inflection of"]:
+        if tname(t) in ["inflection of"]:
             found_inflection_of = True
-        if str(t.name) == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "verb form":
+        if tname(t) == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "verb form":
             found_head_verb_form = True
 
     if not found_head_verb_form or not found_inflection_of:
         # Find definition line
-        foundrussian = False
-        sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-
-        for j in range(2, len(sections), 2):
-            if sections[j - 1] == "==Russian==\n":
-                if foundrussian:
-                    pagemsg("WARNING: Found multiple Russian sections, skipping page")
-                    return
-                foundrussian = True
-
-                deflines = r"\n".join(re.findall(r"^(# .*)$", sections[j], re.M))
+        modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+        if modsec is None:
+            return
+        deflines = r"\n".join(re.findall(r"^(# .*)$", modsec.secbody, re.M))
 
     if not found_head_verb_form:
         pagemsg("WARNING: No {{head|ru|verb form}}: %s" % deflines)

@@ -21,11 +21,10 @@ def process_text_on_page(index, pagetitle, text):
     headword_template, decl_template = props
     origtext = text
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     notes = []
 
@@ -53,11 +52,11 @@ def process_text_on_page(index, pagetitle, text):
         )
         return
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     num_declension_headers = 0
-    for k in range(1, len(subsections), 2):
-        if "Declension" in subsections[k] or "Inflection" in subsections[k]:
+    for k, header in subsecs.subsection_headers:
+        if header in ["Declension", "Inflection"]:
             num_declension_headers += 1
     if num_declension_headers >= num_noun_headword_templates:
         pagemsg(
@@ -66,7 +65,7 @@ def process_text_on_page(index, pagetitle, text):
         )
         return
 
-    for k in range(2, len(subsections), 2):
+    for k, header in subsecs.subsection_headers:
         if headword_template in subsections[k]:
             pagemsg("Inserting declension section after subsection %s" % k)
             subsections[k] = subsections[k].rstrip("\n") + "\n\n"
@@ -79,9 +78,7 @@ def process_text_on_page(index, pagetitle, text):
     else:
         pagemsg("WARNING: Couldn't locate headword template, skipping: %s" % headword_template)
         return
-    secbody = "".join(subsections)
-    sections[j] = secbody + sectail
-    text = "".join(sections)
+    text = modsec.rebuild(secbody="".join(subsections))
     text = re.sub("\n\n\n+", "\n\n", text)
     if not notes:
         notes.append("convert 3+ newlines to 2")

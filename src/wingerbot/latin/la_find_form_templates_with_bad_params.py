@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
-
-from wingerbot.latin import lalib
+from wingerbot.blib import getparam, msg, errandmsg, tname, pname
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     # Greatly speed things up when --stdin by ignoring non-Latin pages
     if "==Latin==" not in text:
@@ -22,11 +17,10 @@ def process_text_on_page(index, pagetitle, text):
     if not re.search("la-(noun|proper noun|pronoun|verb|adj|num|suffix)-form", text):
         return
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():

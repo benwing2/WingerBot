@@ -13,13 +13,11 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-    origtext = text
 
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     subsections = re.split("(^==.*==\n)", secbody, 0, re.M)
 
@@ -125,8 +123,7 @@ From {{m|la|%s}}.
         pagemsg("WARNING: Unrecognized ending for participle/gerund %s" % infl)
         return
 
-    sections[j] = sectext + sectail
-    return "".join(sections), comment
+    return modsec.rebuild(secbody=sectext), comment
 
 
 parser = blib.create_argparser(

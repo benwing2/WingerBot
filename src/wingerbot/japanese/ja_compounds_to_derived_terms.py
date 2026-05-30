@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -11,12 +11,11 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-    origtext = text
 
-    retval = blib.find_modifiable_lang_section(text, "Japanese", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Japanese", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     notes = []
 
@@ -27,21 +26,23 @@ def process_text_on_page(index, pagetitle, text):
         )
         secbody = newsecbody
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
+    while True:
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsections = subsecs.subsections
+        for k, header in subsecs.subsection_headers:
+            if header == "Derived terms" and subsecs.subsection_levels[k] == 4:
+                endk = k + 2
+                while endk < len(subsections) and subsecs.subsection_header_dict[endk] in ["Synonyms", "Antonyms"] and subsecs.subsection_levels[endk] == 4:
+                    endk += 2
+                if endk > k + 2:
+                    subsections = subsections[0 : k - 1] + subsections[k + 1 : endk - 1] + subsections[k - 1 : k + 1] + subsections[endk - 1 :]
+                    notes.append("reorder Derived terms after Synonyms/Antonyms")
+                    secbody = "".join(subsections)
+                    break
+        else: # no break
+            break
 
-    for k in range(1, len(subsections), 2):
-        if subsections[k] == "====Derived terms====\n":
-            endk = k + 2
-            while endk < len(subsections) and (re.search("^====(Synonyms|Antonyms)====\n$", subsections[endk])):
-                endk += 2
-            if endk > k + 2:
-                subsections = subsections[0:k] + subsections[k + 2 : endk] + subsections[k : k + 2] + subsections[endk:]
-                notes.append("reorder Derived terms after Synonyms/Antonyms")
-
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

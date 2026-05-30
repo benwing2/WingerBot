@@ -250,10 +250,10 @@ def process_spec(specs, stems, generate_default, ss, pagemsg):
                 m = re.search("^(.*)[e" + OMITTED_E + "]([lmnr])$", stem)
                 if not m:
                     pagemsg("WARNING: Internal error: Can't match stem %s for -e" % stem)
-                    return None
+                    return []
                 non_ending, ending = m.groups()
                 if ss:
-                    non_ending = re.sub("ss$", "ß")
+                    non_ending = re.sub("ss$", "ß", non_ending)
                 retval.extend(do_generate_default(non_ending + OMITTED_E + ending))
         else:
             retval.append(spec)
@@ -617,8 +617,9 @@ def process_text_on_page(index, pagetitle, text):
 
     if "=Etymology 1=" in modsec.secbody:
         notes = []
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", modsec.secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
+        etym_secs = blib.split_text_into_subsections(modsec.secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+        etym_sections = etym_secs.subsections
+        for k, header in etym_secs.subsection_headers:
             retval = process_text_in_section(index, pagetitle, etym_sections[k])
             if retval:
                 newsectext, newnotes = retval

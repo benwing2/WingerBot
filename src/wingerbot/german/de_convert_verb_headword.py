@@ -95,6 +95,8 @@ def process_text_on_page(index, pagetitle, text):
                 return True
 
             def fetch_aux():
+                if headt is None:
+                    raise RuntimeError("Internal error: fetch_aux() called when headt is None")
                 aux = getparam(headt, "auxiliary")
                 if aux in ["haben", "sein"]:
                     aux = [aux]

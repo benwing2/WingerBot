@@ -240,7 +240,7 @@ for key, val in la_noun_decl_suffix_to_decltype.items():
 old_la_noun_decl_templates = set("la-decl-%s" % k for k in la_noun_decl_suffix_to_decltype)
 
 
-def generate_old_noun_forms(template, errandpagemsg, expand_text, return_raw=False, include_linked=False):
+def generate_old_noun_forms(template, errandpagemsg, expand_text, include_linked=False):
 
     def generate_noun_forms_prefix(m):
         if m.group(1) in la_noun_decl_suffix_to_decltype:
@@ -268,15 +268,7 @@ def generate_old_noun_forms(template, errandpagemsg, expand_text, return_raw=Fal
         errandpagemsg("Template %s not a recognized noun declension template" % template)
         return None
     result = expand_text(generate_template)
-    if return_raw:
-        return None if result is False else result
-    if not result:
-        errandpagemsg("WARNING: Error generating forms, skipping")
-        return None
-    args = blib.split_generate_args(result)
-    if not include_linked:
-        args = {k: v for k, v in args.items() if not k.startswith("linked_")}
-    return args
+    return None if result is False else result
 
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
@@ -291,7 +283,7 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
                 return None
             return old_result
         else:
-            return generate_old_noun_forms(origt, errandpagemsg, expand_text, return_raw=True)
+            return generate_old_noun_forms(origt, errandpagemsg, expand_text)
 
     def generate_new_forms():
         if newt.startswith("{{la-ndecl|"):
