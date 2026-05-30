@@ -214,9 +214,7 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -235,7 +233,7 @@ def process_text_on_page(index, pagetitle, text):
     etymsections_to_first_subsection = {}
     if etymsection == "top":
         after_etym_1 = False
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if header == "Etymology 1":
                 after_etym_1 = True
             if header == "Pronunciation":
@@ -259,7 +257,7 @@ def process_text_on_page(index, pagetitle, text):
             append_msg(msg)
         return respellings
 
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         msgs = []
 
         def check_missing_pronun(etymsection):
@@ -419,11 +417,6 @@ def process_text_on_page(index, pagetitle, text):
 
 if __name__ == "__main__":
     parser = blib.create_argparser("Snarf Italian pronunciations for fixing", include_pagefile=True, include_stdin=True)
-    parser.add_argument(
-        "--partial-page",
-        action="store_true",
-        help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-    )
     parser.add_argument(
         "--include-defns", action="store_true", help="Include defns of snarfed terms (helps with multi-etym sections)."
     )

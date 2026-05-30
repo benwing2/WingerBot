@@ -194,9 +194,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Spanish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Spanish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -204,7 +202,7 @@ def process_text_on_page(index, pagetitle, text):
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
     sect_for_wiki = 0
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if re.search(r"^Etymology [0-9]+$", header):
             sect_for_wiki = k
         elif header == "Pronunciation":
@@ -608,11 +606,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Convert {{es-IPA}} to {{es-pr}}", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 parser.add_argument(
     "--allow-mismatching-nsyl",
     help="Comma-separated list of pages with known incorrect value for number of syllables in {{rhymes}} template.",

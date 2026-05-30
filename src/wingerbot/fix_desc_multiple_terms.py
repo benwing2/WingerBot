@@ -290,7 +290,7 @@ def process_text_on_page(index, pagetitle, pagetext):
     subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
     subsections = subsecs.subsections
     # Go through each section in turn, looking for Descendants sections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if args.do_all_sections or header == "Descendants":
             text = subsections[k]
             # text = re.sub(r"^(\*+:?)( *(?:→ *)?)(Serbo-Croat(?:ian):|\{\{desc(?:\|.*?)?\|sh(?:\|.*?)?\|-(?:\|.*?)?\}\})((?:\n\1[*:] *(?:Latin|Roman|Cyrillic): *(?:\[\[[^\[\]\n]*?\]\]|\{\{[lm]\|sh\|[^{}\n]*?\}\}))+)",

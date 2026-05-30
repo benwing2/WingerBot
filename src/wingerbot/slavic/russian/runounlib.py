@@ -87,7 +87,8 @@ def split_noun_decl_arg_sets(decl_template: Template, pagemsg: PagemsgCallback) 
 
 def try_to_stress(form):
     if "//" in form:
-        m = re.search("^(.*?)//(.*)$", form)
+        m = re.search("^(.*?)//(.*)$", form, re.S)
+        assert m is not None  # should always match, especially with re.S
         # FIXME: This should stress the translit as well
         return rulib.try_to_stress(m.group(1)) + "//" + m.group(2)
     return rulib.try_to_stress(form)

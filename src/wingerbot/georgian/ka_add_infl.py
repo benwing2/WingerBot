@@ -24,10 +24,6 @@ def adj_indeclinable(pagetitle):
     return pagetitle[-1] in "აეოუ" or pagetitle[-2] in "აეიოუ"
 
 
-def get_indentation_level(header):
-    return len(re.sub("[^=].*", "", header, 0, re.S))
-
-
 def escape_newlines(txt):
     return txt.replace("\n", r"\n")
 
@@ -45,23 +41,23 @@ def process_text_on_page(index, pagetitle, text, pos):
         pagemsg("Skipping indeclinable adjective")
         return
 
-    modsec = blib.find_modifiable_lang_section(text, None if args.partial_page else "Georgian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "Georgian", pagemsg)
     if modsec is None:
         pagemsg("WARNING: Couldn't find Georgian section")
         return
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    subsection_header_dict = subsecs.subsection_header_dict
-    subsection_levels = subsecs.subsection_levels
+    headers = subsecs.headers
+    levels = subsecs.levels
     # Go through each section in turn, looking for the appropriate part of speech
     k = 2
     last_pos = None
     while k < len(subsections):
-        if subsection_header_dict[k] == cappos:
-            level = subsection_levels[k]
+        if headers[k] == cappos:
+            level = levels[k]
             last_pos = cappos
             endk = k + 2
-            while endk < len(subsections) and subsection_levels[endk] > level:
+            while endk < len(subsections) and levels[endk] > level:
                 endk += 2
             pos_text = "".join(subsections[k - 1 : endk - 1])
             parsed = blib.parse_text(pos_text)
@@ -107,7 +103,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                 )
                 new_infl = "{{%s}}" % pos_to_new_style_infl_template[pos]
                 for l in range(k, endk, 2):
-                    if re.search(r"^(Declension|Inflection|Conjugation)$", subsection_header_dict[l]):
+                    if re.search(r"^(Declension|Inflection|Conjugation)$", headers[l]):
                         secparsed = blib.parse_text(subsections[l])
                         for t in secparsed.filter_templates():
                             tn = tname(t)
@@ -137,7 +133,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                         break
                 else:  # no break
                     insert_k = k + 2
-                    while insert_k < endk and subsection_header_dict[insert_k] == "Usage notes":
+                    while insert_k < endk and headers[insert_k] == "Usage notes":
                         insert_k += 2
                     if not subsections[insert_k - 2].endswith("\n\n"):
                         subsections[insert_k - 2] = re.sub("\n*$", "\n\n", subsections[insert_k - 2] + "\n\n")
@@ -154,11 +150,11 @@ def process_text_on_page(index, pagetitle, text, pos):
         else:
             m = re.search(
                 r"^(Noun|Proper noun|Pronoun|Determiner|Verb|Adjective|Adverb|Interjection|Conjunction)$",
-                subsection_header_dict[k],
+                headers[k],
             )
             if m:
                 last_pos = m.group(1)
-            if re.search(r"^(Declension|Inflection|Conjugation)$", subsection_header_dict[k]):
+            if re.search(r"^(Declension|Inflection|Conjugation)$", headers[k]):
                 if not last_pos:
                     pagemsg(
                         "WARNING: Found inflection header before seeing any parts of speech: %s"
@@ -182,11 +178,6 @@ parser = blib.create_argparser(
     "Add Georgian noun/verb/adjective inflections", include_pagefile=True, include_stdin=True
 )
 parser.add_argument("--pos", help="Part of speech (noun, proper noun, verb, adjective)", required=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

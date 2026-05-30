@@ -47,10 +47,10 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
 
-    for j, langname in secs.section_langs:
+    for j, langname in secs.lang_list:
         subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
         subsections = subsecs.subsections
-        for k, subsectitle in subsecs.subsection_headers:
+        for k, subsectitle in subsecs.header_list:
             subsections[k] = do_templatize(subsections[k], langname, subsectitle)
         sections[j] = "".join(subsections)
 

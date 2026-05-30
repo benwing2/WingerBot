@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata, json
+import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, msg, tname, pname
 
 module_name = "zlw-lch-IPA"
 
@@ -51,12 +51,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
@@ -79,7 +77,6 @@ def process_text_on_page(index, pagetitle, text):
                     if not caption and i == 1:
                         param = "ac" + str(i)
                         caption = getp(param)
-                    origcaption = caption
                     if caption and caption in ["Audio", "Audio %s" % i]:
                         pagemsg("Ignoring caption '%s' in %s=: %s" % (caption, param, origt))
                         caption = ""
@@ -213,24 +210,23 @@ def process_text_on_page(index, pagetitle, text):
                 if not caption and i == 1:
                     param = "ac" + str(i)
                     caption = getp(param)
-                origcaption = caption
                 if caption and caption in ["Audio", "Audio %s" % i]:
                     pagemsg("Ignoring caption '%s' in %s=: %s" % (caption, param, origt))
                     caption = ""
 
             if not args.dont_compare_pronuns:
-                ### Old code invoking [[Module:pl-IPA]] directly. New code makes only one invocation
-                # per {{pl-p}} template, which should be faster.
+                ### Old code invoking [[Module:pl-IPA]] directly. New code makes only one invocation per {{pl-p}}
+                #   template, which should be faster.
                 # pl_p_prons = []
                 # must_continue = False
                 # for respelling in respellings:
-                #  pl_p_pron = expand_text("{{#invoke:pl-IPA|convert_to_IPA_bot|%s}}" % respelling)
-                #  if not pl_p_pron:
-                #    must_continue = True
-                #    continue
-                #  pl_p_prons.append("/" + pl_p_pron + "/")
+                #     pl_p_pron = expand_text("{{#invoke:pl-IPA|convert_to_IPA_bot|%s}}" % respelling)
+                #     if not pl_p_pron:
+                #         must_continue = True
+                #         continue
+                #     pl_p_prons.append("/" + pl_p_pron + "/")
                 # if must_continue:
-                #  continue
+                #     continue
                 if ipas:
                     pl_p_args = ""
                 else:
@@ -656,19 +652,10 @@ def process_text_on_page(index, pagetitle, text):
                 pagemsg("Replace %s with %s" % (origt, str(t)))
                 notes.append("replace {{pl-p}} with {{pl-pr}}, changing syntax as appropriate")
 
-    secbody = str(parsed)
-
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=str(parsed)), notes
 
 
 parser = blib.create_argparser("Convert {{pl-p}} to {{pl-pr}}", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 parser.add_argument(
     "--dont-compare-pronuns",
     action="store_true",

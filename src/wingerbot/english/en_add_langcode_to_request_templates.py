@@ -48,7 +48,7 @@ def process_text_on_page(index, pagetitle, text):
 
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
-    for j, langname in [(0, "")] + secs.section_langs:
+    for j, langname in [(0, "")] + secs.lang_list:
         parsed = blib.parse_text(sections[j])
         hack_templates(parsed, langname)
         sections[j] = str(parsed)

@@ -29,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
 
     secs = blib.split_text_into_sections(text, pagemsg)
 
-    for j, langname in secs.section_langs:
+    for j, langname in secs.lang_list:
         if langname not in lang_data.languages_by_canonical_name:
             langnamecode = None
         else:

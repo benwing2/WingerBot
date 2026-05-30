@@ -117,7 +117,7 @@ def process_text_on_page(index, pagetitle, text):
     num_lemmas = 0
     num_nonlemma_forms = 0
     poses_seen_per_section = defaultdict(set)
-    for k, header in etym_secs.subsection_headers:
+    for k, header in etym_secs.header_list:
         section = etym_sections[k]
         parsed = blib.parse_text(section)
         saw_lemma = False

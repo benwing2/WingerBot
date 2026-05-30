@@ -761,7 +761,7 @@ def process_text_in_section(index, pagetitle, text):
     subsection_with_declts = None
     subsecs = blib.split_text_into_subsections(text, pagemsg)
     subsections = subsecs.subsections
-    for k, header in [(0, "Unknown")] + subsecs.subsection_headers:
+    for k, header in [(0, "Unknown")] + subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
 
         for t in parsed.filter_templates():
@@ -847,7 +847,7 @@ def process_text_on_page(index, pagetitle, text):
         notes = []
         etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
         etym_sections = etym_secs.subsections
-        for k, header in etym_secs.subsection_headers:
+        for k, header in etym_secs.header_list:
             retval = process_text_in_section(index, pagetitle, etym_sections[k])
             if retval is not None:
                 newsectext, newnotes = retval
@@ -863,11 +863,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser(
     "Convert {{de-noun}}/{{de-proper noun}} to new format", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

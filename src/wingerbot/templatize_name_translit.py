@@ -15,7 +15,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
-    for j, thislangname in secs.section_langs:
+    for j, thislangname in secs.lang_list:
         if thislangname not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized section lang %s" % thislangname)
             continue

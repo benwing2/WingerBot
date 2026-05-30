@@ -29,10 +29,10 @@ def process_text_on_page(index, pagetitle, text):
     while True:
         subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
-        for k, header in subsecs.subsection_headers:
-            if header == "Derived terms" and subsecs.subsection_levels[k] == 4:
+        for k, header in subsecs.header_list:
+            if header == "Derived terms" and subsecs.levels[k] == 4:
                 endk = k + 2
-                while endk < len(subsections) and subsecs.subsection_header_dict[endk] in ["Synonyms", "Antonyms"] and subsecs.subsection_levels[endk] == 4:
+                while endk < len(subsections) and subsecs.headers[endk] in ["Synonyms", "Antonyms"] and subsecs.levels[endk] == 4:
                     endk += 2
                 if endk > k + 2:
                     subsections = subsections[0 : k - 1] + subsections[k + 1 : endk - 1] + subsections[k - 1 : k + 1] + subsections[endk - 1 :]

@@ -20,33 +20,33 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 sh_headwords = {
-  "sh-adj form",
-  "sh-adjective", "sh-adj",
-  "sh-adverb", "sh-adv",
-  "sh-conjunction", "sh-con",
-  "sh-contraction", "sh-contr",
-  "sh-idiom",
-  "sh-interfix",
-  "sh-interjection", "sh-intj",
-  "sh-letter",
-  "sh-noun",
-  "sh-noun form",
-  "sh-num", "sh-numeral",
-  "sh-part", "sh-participle",
-  "sh-part form",
-  "sh-pcl", "sh-particle",
-  "sh-phrase",
-  "sh-prefix",
-  "sh-prep", "sh-preposition",
-  "sh-pronoun", "sh-pron",
-  "sh-pronoun form", "sh-pron form",
-  "sh-proper noun", "sh-propn",
-  "sh-proper noun form", "sh-propn form",
-  "sh-proverb",
-  "sh-suffix",
-  "sh-suffix form",
-  "sh-verb",
-  "sh-verb form",
+    "sh-adj form",
+    "sh-adjective", "sh-adj",
+    "sh-adverb", "sh-adv",
+    "sh-conjunction", "sh-con",
+    "sh-contraction", "sh-contr",
+    "sh-idiom",
+    "sh-interfix",
+    "sh-interjection", "sh-intj",
+    "sh-letter",
+    "sh-noun",
+    "sh-noun form",
+    "sh-num", "sh-numeral",
+    "sh-part", "sh-participle",
+    "sh-part form",
+    "sh-pcl", "sh-particle",
+    "sh-phrase",
+    "sh-prefix",
+    "sh-prep", "sh-preposition",
+    "sh-pronoun", "sh-pron",
+    "sh-pronoun form", "sh-pron form",
+    "sh-proper noun", "sh-propn",
+    "sh-proper noun form", "sh-propn form",
+    "sh-proverb",
+    "sh-suffix",
+    "sh-suffix form",
+    "sh-verb",
+    "sh-verb form",
 }
 
 GRAVE = "\u0300"
@@ -75,43 +75,43 @@ deny_list = {"ю", "я"}
 # Special case replacements based on known cases where we get it wrong and need explicit syllable divisions.
 # Only at the beginning of a word.
 special_case_replacements = [
-  ("зам.р", "за.мр"),
-  ("изм.р", "из.мр"),
-  ("надв.н", "над.вн"),
-  ("о.брек", "об.рек"),
-  ("о.бреч", "об.реч"),
-  ("о.брич", "об.рич"),
-  ("отм.р", "от.мр"),
-  # The manual IPA claims от.рав and от.ров "to poison; to exhume" but it is derived from о- + трав- per Vasmer.
-  # ("о.трав", "от.рав"),
-  # ("о.тров", "от.ров"),
-  ("о.трек", "от.рек"),
-  ("о.треч", "от.реч"),
-  ("о.трич", "от.рич"),
-  ("о.тсек", "от.сек"),
-  ("о.тсеч", "от.сеч"),
-  ("о.тсич", "от.сич"),
-  ("о.тсъст", "от.съст"),
-  ("о.тсяк", "от.сяк"),
-  ("пре.дрек", "пред.рек"),
-  ("пре.дреч", "пред.реч"),
-  ("пре.дрич", "пред.рич"),
-  ("прем.р", "пре.мр"),
-  # The manual IPA claims при.внас and при.внес "to bring in, to introduce". This is derived from при- + в- + нес-.
-  # Unclear if при.вн makes sense but we also have над.вн, which is clearly better than надв.н.
-  ("прив.н", "при.вн"),
-  ("прим.р", "при.мр"),
-  ("съ.зда", "съз.да"),
-  ("ум.р", "у.мр"),
+    ("зам.р", "за.мр"),
+    ("изм.р", "из.мр"),
+    ("надв.н", "над.вн"),
+    ("о.брек", "об.рек"),
+    ("о.бреч", "об.реч"),
+    ("о.брич", "об.рич"),
+    ("отм.р", "от.мр"),
+    # The manual IPA claims от.рав and от.ров "to poison; to exhume" but it is derived from о- + трав- per Vasmer.
+    # ("о.трав", "от.рав"),
+    # ("о.тров", "от.ров"),
+    ("о.трек", "от.рек"),
+    ("о.треч", "от.реч"),
+    ("о.трич", "от.рич"),
+    ("о.тсек", "от.сек"),
+    ("о.тсеч", "от.сеч"),
+    ("о.тсич", "от.сич"),
+    ("о.тсъст", "от.съст"),
+    ("о.тсяк", "от.сяк"),
+    ("пре.дрек", "пред.рек"),
+    ("пре.дреч", "пред.реч"),
+    ("пре.дрич", "пред.рич"),
+    ("прем.р", "пре.мр"),
+    # The manual IPA claims при.внас and при.внес "to bring in, to introduce". This is derived from при- + в- + нес-.
+    # Unclear if при.вн makes sense but we also have над.вн, which is clearly better than надв.н.
+    ("прив.н", "при.вн"),
+    ("прим.р", "при.мр"),
+    ("съ.зда", "съз.да"),
+    ("ум.р", "у.мр"),
 ]
 
 voiced_to_unvoiced = {
-  "б": "п",
-  "в": "ф",
-  "г": "к",
-  "д": "т",
-  "ж": "ш",
-  "з": "с",
+    "б": "п",
+    "в": "ф",
+    "г": "к",
+    "д": "т",
+    "ж": "ш",
+    "з": "с",
 }
 voiced_obstruent = "бвгджз"
 
@@ -121,521 +121,518 @@ unvoiced_obstruent = "пфктшсхчщц"
 prefixes = ["без", "въз", "възпроиз", "из", "наиз", "поиз", "превъз", "произ", "раз"]
 
 ipa_to_cyrillic = {
-  "a": "а",
-  "æ": "а",
-  "b": "б",
-  "v": "в",
-  "ɡ": "г",
-  "d": "д",
-  "e": "е",
-  "ɛ": "е",
-  "ʒ": "ж",
-  "z": "з",
-  "i": "и",
-  "ɪ": "и",
-  "j": "й",
-  "k": "к",
-  "l": "л",
-  "ɫ": "л",
-  "ʎ": "ль",
-  "m": "м",
-  "ɱ": "м", # e.g. ансамбъл with pronunciation /əŋˈsaɱbəl/
-  "n": "н",
-  "ŋ": "н",
-  "o": "о",
-  "ɔ": "о",
-  "p": "п",
-  "r": "р",
-  "ɾ": "р",
-  "s": "с",
-  "t": "т",
-  "u": "у",
-  "ʊ": "у",
-  "ʉ": "у",
-  "f": "ф",
-  "x": "х",
-  "h": "х",
-  "ʃ": "ш",
-  "ɐ": "ъ",
-  "ə": "ъ",
-  "ɤ": "ъ",
-  "ɵ": "ъ", # e.g. арменка with pronunciation /ərˈmɛnkɵ/
-  "ʲ": "ь",
-  TIE: "",
-  DENTAL: "",
-  RAISED: "",
-  LOWERED: "",
-  FRONTED: "",
-  "(": "",
-  ")": "",
-  ".": "",
+    "a": "а",
+    "æ": "а",
+    "b": "б",
+    "v": "в",
+    "ɡ": "г",
+    "d": "д",
+    "e": "е",
+    "ɛ": "е",
+    "ʒ": "ж",
+    "z": "з",
+    "i": "и",
+    "ɪ": "и",
+    "j": "й",
+    "k": "к",
+    "l": "л",
+    "ɫ": "л",
+    "ʎ": "ль",
+    "m": "м",
+    "ɱ": "м", # e.g. ансамбъл with pronunciation /əŋˈsaɱbəl/
+    "n": "н",
+    "ŋ": "н",
+    "o": "о",
+    "ɔ": "о",
+    "p": "п",
+    "r": "р",
+    "ɾ": "р",
+    "s": "с",
+    "t": "т",
+    "u": "у",
+    "ʊ": "у",
+    "ʉ": "у",
+    "f": "ф",
+    "x": "х",
+    "h": "х",
+    "ʃ": "ш",
+    "ɐ": "ъ",
+    "ə": "ъ",
+    "ɤ": "ъ",
+    "ɵ": "ъ", # e.g. арменка with pronunciation /ərˈmɛnkɵ/
+    "ʲ": "ь",
+    TIE: "",
+    DENTAL: "",
+    RAISED: "",
+    LOWERED: "",
+    FRONTED: "",
+    "(": "",
+    ")": "",
+    ".": "",
 }
 
 def convert_bg_manual_ipa(ipa, pagetitle, pagemsg):
-  endschwa = False
-  orig_ipa = ipa
+    endschwa = False
+    orig_ipa = ipa
 
-  ########## Some early substitutions.
-  ipa = ipa.replace("i̯", "j")
+    ########## Some early substitutions.
+    ipa = ipa.replace("i̯", "j")
 
-  ########## Decompose.
-  ipa = unicodedata.normalize("NFD", ipa)
+    ########## Decompose.
+    ipa = unicodedata.normalize("NFD", ipa)
 
-  ########## Apply basic conversions.
-  ipa = re.sub("(.)", lambda m: ipa_to_cyrillic.get(m.group(1), m.group(1)), ipa)
+    ########## Apply basic conversions.
+    ipa = re.sub("(.)", lambda m: ipa_to_cyrillic.get(m.group(1), m.group(1)), ipa)
 
-  ########## Geminate consonant correction.
-  ipa = ipa.replace("иː", "ий")
-  ipa = re.sub("(.)ː", r"\1\1", ipa)
+    ########## Geminate consonant correction.
+    ipa = ipa.replace("иː", "ий")
+    ipa = re.sub("(.)ː", r"\1\1", ipa)
 
-  ########## Sometimes i appears for й instead of j, e.g. действителност /dɛisˈtvitɛlnost/; correct this.
+    ########## Sometimes i appears for й instead of j, e.g. действителност /dɛisˈtvitɛlnost/; correct this.
 
-  # To allow matching up и/й chars properly, hack the pagetitle to contain йа/йу in place of я/ю word-initial or after a vowel.
-  hacked_pagetitle = re.sub(r"(\b|" + V + ")я", r"\1йа", pagetitle, 0, re.U)
-  hacked_pagetitle = re.sub(r"(\b|" + V + ")ю", r"\1йу", hacked_pagetitle, 0, re.U)
-  hacked_pagetitle_chars = list(hacked_pagetitle)
-  ipa_chars = list(ipa)
+    # To allow matching up и/й chars properly, hack the pagetitle to contain йа/йу in place of я/ю word-initial or after a vowel.
+    hacked_pagetitle = re.sub(r"(\b|" + V + ")я", r"\1йа", pagetitle, 0, re.U)
+    hacked_pagetitle = re.sub(r"(\b|" + V + ")ю", r"\1йу", hacked_pagetitle, 0, re.U)
+    hacked_pagetitle_chars = list(hacked_pagetitle)
+    ipa_chars = list(ipa)
 
-  # Get the indices of all и/й in the pagetitle, along with the corresponding char.
-  pagetitle_ij_indices = [[i, x] for i, x in enumerate(hacked_pagetitle_chars) if x in "ий"]
-  # Get the indices of all i/j in the IPA, along with the corresponding char.
-  ipa_ij_indices = [[i, x] for i, x in enumerate(ipa_chars) if x in "ий"]
+    # Get the indices of all и/й in the pagetitle, along with the corresponding char.
+    pagetitle_ij_indices = [[i, x] for i, x in enumerate(hacked_pagetitle_chars) if x in "ий"]
+    # Get the indices of all i/j in the IPA, along with the corresponding char.
+    ipa_ij_indices = [[i, x] for i, x in enumerate(ipa_chars) if x in "ий"]
 
-  # Make sure same number of i/j in both.
-  num_ipa_ij = len(ipa_ij_indices)
-  num_pagetitle_ij = len(pagetitle_ij_indices)
-  if num_ipa_ij != num_pagetitle_ij:
-    pagemsg("WARNING: IPA %s (original %s) has %s i/j chars but pagetitle '%s' has %s и/й chars" % (
-      ipa, orig_ipa, num_ipa_ij, pagetitle, num_pagetitle_ij))
-  else:
-    # If so, match up corresponding i/j.
-    for (ipa_index, ipa_ij), (pagetitle_index, pagetitle_ij) in zip(ipa_ij_indices, pagetitle_ij_indices):
-      # Correct IPA и to й as appropriate.
-      if ipa_ij == "и" and pagetitle_ij == "й":
-        pagemsg("Replacing IPA и with й at index %s in %s based on pagetitle й at index %s" %
-          (ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "й"
-
-  ipa = "".join(ipa_chars)
-
-  ########## Preliminary handling of ю/я. More work needed to handle vowel reduction and endschwa; see below.
-  ipa = ipa.replace("ьу", "ю")
-  ipa = ipa.replace("ьа", "я")
-  ipa = ipa.replace("йу", "ю")
-  ipa = ipa.replace("йа", "я")
-  ipa = ipa.replace("ьи", "и") # e.g. абаджийките with pronunciation /ˌabəˈd̪ʒijkʲit̪ɛ/
-  ipa = ipa.replace("ье", "е") # e.g. аборигена with pronunciation /ˌaboɾiˈɡʲɛnə/
-
-  ########## Move accents after vowels, but leave original IPA stress mark there as well for later syllable division checking
-  ipa = re.sub("(" + PRIMARY + C + "*" + V + ")", r"\1" + ACUTE, ipa)
-  ipa = re.sub("(" + SECONDARY + C + "*" + V + ")", r"\1" + GRAVE, ipa)
-
-  ########## Correct vowel reduction (unstressed а -> ъ, unstressed у -> о) and endschwa (ъ́ written as а́, ьъ́/йъ́ written as я́).
-
-  pagetitle_chars = list(pagetitle)
-  ipa_chars = list(ipa)
-
-  # Get the indices of all vowels in the pagetitle, along with the corresponding vowel.
-  pagetitle_vowel_indices = [[i, x] for i, x in enumerate(pagetitle_chars) if x in vowel]
-
-  # Get the indices of all vowels in the IPA, along with the corresponding vowel. If there is a stress mark, combine it
-  # with preceding IPA vowel, as we need to distinguish stressed from unstressed vowels.
-  ipa_vowel_indices_with_stress = [[i, x] for i, x in enumerate(ipa_chars) if x in vowel or x in accent]
-  ipa_vowel_indices = []
-  for i, x in ipa_vowel_indices_with_stress:
-    if x in accent:
-      if len(ipa_vowel_indices) == 0:
-        pagemsg("WARNING: Stress mark at index %s not following vowel for IPA %s (original %s)" % (i, ipa, orig_ipa))
-        return
-      if ipa_vowel_indices[-1][0] != i - 1:
-        pagemsg("WARNING: Stress mark at index %s not directly following vowel for IPA %s (original %s)" % (i, ipa, orig_ipa))
-        return
-      ipa_vowel_indices[-1][1] += x
+    # Make sure same number of i/j in both.
+    num_ipa_ij = len(ipa_ij_indices)
+    num_pagetitle_ij = len(pagetitle_ij_indices)
+    if num_ipa_ij != num_pagetitle_ij:
+        pagemsg("WARNING: IPA %s (original %s) has %s i/j chars but pagetitle '%s' has %s и/й chars" % (
+            ipa, orig_ipa, num_ipa_ij, pagetitle, num_pagetitle_ij))
     else:
-      ipa_vowel_indices.append([i, x])
+        # If so, match up corresponding i/j.
+        for (ipa_index, ipa_ij), (pagetitle_index, pagetitle_ij) in zip(ipa_ij_indices, pagetitle_ij_indices):
+            # Correct IPA и to й as appropriate.
+            if ipa_ij == "и" and pagetitle_ij == "й":
+                pagemsg("Replacing IPA и with й at index %s in %s based on pagetitle й at index %s" %
+                    (ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "й"
 
-  # Make sure same number of vowels in both.
-  num_ipa_vowels = len(ipa_vowel_indices)
-  num_pagetitle_vowels = len(pagetitle_vowel_indices)
-  if num_ipa_vowels != num_pagetitle_vowels:
-    pagemsg("WARNING: IPA %s (original %s) has %s vowel(s) but pagetitle '%s' has %s vowel(s)" % (
-      ipa, orig_ipa, num_ipa_vowels, pagetitle, num_pagetitle_vowels))
-  else:
-    # If so, match up corresponding vowels.
-    for (ipa_index, ipa_vowel), (pagetitle_index, pagetitle_vowel) in zip(ipa_vowel_indices, pagetitle_vowel_indices):
-      # Correct unstressed IPA о to у/ю as appropriate.
-      if ipa_vowel == "о" and pagetitle_vowel == "у":
-        pagemsg("Replacing unstressed IPA о with у at index %s in %s based on pagetitle vowel at index %s" %
-          (ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "у"
-      elif ipa_vowel == "о" and ipa_index > 0 and ipa_chars[ipa_index - 1] in ["ь", "й"] and pagetitle_vowel == "ю":
-        pagemsg("Replacing unstressed IPA %sо with ю at index %s in %s based on pagetitle vowel at index %s" %
-          (ipa_chars[ipa_index - 1], ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "ю"
-        ipa_chars[ipa_index - 1] = ""
-      # Correct unstressed IPA у to о as appropriate (e.g. акробатика with pronunciation /akruˈbatikə/)
-      elif ipa_vowel == "у" and pagetitle_vowel == "о":
-        pagemsg("Replacing unstressed IPA у with о at index %s in %s based on pagetitle vowel at index %s" %
-          (ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "о"
-      # Correct unstressed IPA ъ to а/я as appropriate.
-      elif ipa_vowel == "ъ" and pagetitle_vowel == "а":
-        pagemsg("Replacing unstressed IPA ъ with а at index %s in %s based on pagetitle vowel at index %s" %
-          (ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "а"
-      elif ipa_vowel == "ъ" and ipa_index > 0 and ipa_chars[ipa_index - 1] in ["ь", "й"] and pagetitle_vowel == "я":
-        pagemsg("Replacing unstressed IPA %sъ with я at index %s in %s based on pagetitle vowel at index %s" %
-          (ipa_chars[ipa_index - 1], ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "я"
-        ipa_chars[ipa_index - 1] = ""
-      # Correct stressed IPA ъ to а/я as appropriate if word-final, setting endschwa=1.
-      elif ipa_vowel == "ъ́" and pagetitle_vowel == "а" and (
-          ipa_index == len(ipa) - 2 or ipa_index == len(ipa) - 3 and ipa.endswith("т")):
-        pagemsg("Replacing stressed IPA ъ with а at index %s in %s and endschwa=1 based on pagetitle vowel at index %s" %
-          (ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "а"
-        endschwa = True
-      elif (ipa_vowel == "ъ́" and ipa_index > 0 and ipa_chars[ipa_index - 1] in ["ь", "й"] and pagetitle_vowel == "я" and (
-        ipa_index == len(ipa) - 2 or ipa_index == len(ipa) - 3 and ipa.endswith("т"))):
-        pagemsg("Replacing unstressed IPA %sъ with я at index %s in %s and endschwa=1 based on pagetitle vowel at index %s" %
-          (ipa_chars[ipa_index - 1], ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = "я"
-        ipa_chars[ipa_index - 1] = ""
-        endschwa = True
+    ipa = "".join(ipa_chars)
 
-  ipa = "".join(ipa_chars)
+    ########## Preliminary handling of ю/я. More work needed to handle vowel reduction and endschwa; see below.
+    ipa = ipa.replace("ьу", "ю")
+    ipa = ipa.replace("ьа", "я")
+    ipa = ipa.replace("йу", "ю")
+    ipa = ipa.replace("йа", "я")
+    ipa = ipa.replace("ьи", "и") # e.g. абаджийките with pronunciation /ˌabəˈd̪ʒijkʲit̪ɛ/
+    ipa = ipa.replace("ье", "е") # e.g. аборигена with pronunciation /ˌaboɾiˈɡʲɛnə/
 
-  ########## Misc cluster corrections. FIXME: Might not work in some cases.
-  if "щ" in pagetitle:
-    ipa = re.sub("ш(" + stress_mark_c + "?)т", r"\1щ", ipa)
-  if "ц" in pagetitle:
-    ipa = re.sub("т(" + stress_mark_c + "?)с", r"\1ц", ipa)
-  if "ч" in pagetitle:
-    ipa = re.sub("т(" + stress_mark_c + "?)ш", r"\1ч", ipa)
-  if "нтс" in pagetitle:
-    ipa = re.sub("н(" + stress_mark_c + "?)с", r"нт\1с", ipa)
-  if "стк" in pagetitle:
-    ipa = re.sub("с(" + stress_mark_c + "?)к", r"ст\1к", ipa)
-  if "ктн" in pagetitle:
-    ipa = re.sub("к(" + stress_mark_c + "?)н", r"кт\1н", ipa)
-  if "ждн" in pagetitle:
-    ipa = re.sub("ж(" + stress_mark_c + "?)н", r"жд\1н", ipa)
-  if "щн" in pagetitle:
-    ipa = re.sub("ш(" + stress_mark_c + "?)н", r"щ\1н", ipa) # e.g. срещнала /ˈsrɛʃnəɫə/
-  if re.search("зс" + C, pagetitle):
-    # Stress mark should be before с
-    ipa = re.sub("(" + stress_mark_c + "?с" + C + ")", r"з\1", ipa)
-  if "зсъ" in pagetitle and "зсъ" not in ipa: # HACK, e.g. неразсъдителност /nɛrəsəˈditɛlnost/
-    ipa = re.sub("съ", "зсъ", ipa)
-  if "нв" in pagetitle:
-    ipa = re.sub("м(" + stress_mark_c + "?)в", r"н\1в", ipa)
-  if "нф" in pagetitle:
-    ipa = re.sub("м(" + stress_mark_c + "?)ф", r"н\1ф", ipa)
-  if "чт" in pagetitle:
-    ipa = re.sub("т(" + stress_mark_c + "?)щ", r"ч\1т", ipa) # e.g. мечтаещ /mɛtʃˈt̪aɛʃt̪/
+    ########## Move accents after vowels, but leave original IPA stress mark there as well for later syllable division checking
+    ipa = re.sub("(" + PRIMARY + C + "*" + V + ")", r"\1" + ACUTE, ipa)
+    ipa = re.sub("(" + SECONDARY + C + "*" + V + ")", r"\1" + GRAVE, ipa)
 
-  ########## Correct consonant voicing assimilation.
+    ########## Correct vowel reduction (unstressed а -> ъ, unstressed у -> о) and endschwa (ъ́ written as а́, ьъ́/йъ́ written as я́).
 
-  #### First, correct final devoicing.
-  if pagetitle[-1] in voiced_to_unvoiced and ipa[-1] == voiced_to_unvoiced[pagetitle[-1]]:
-    pagemsg("Replacing final devoiced IPA %s with %s based on final voiced pagetitle consonant" % (ipa[-1], pagetitle[-1]))
-    ipa = ipa[:-1] + pagetitle[-1]
+    pagetitle_chars = list(pagetitle)
+    ipa_chars = list(ipa)
 
-  #### Then, correct voicing assimilation before an obstruent.
-  ipa_chars = list(ipa)
+    # Get the indices of all vowels in the pagetitle, along with the corresponding vowel.
+    pagetitle_vowel_indices = [[i, x] for i, x in enumerate(pagetitle_chars) if x in vowel]
 
-  # Get the indices of all consonants in the IPA, along with the corresponding consonant.
-  ipa_cons_indices = [[i, x] for i, x in enumerate(ipa_chars) if x in cons]
-  # Get the indices of all consonants in the pagetitle, along with the corresponding consonant.
-  pagetitle_cons_indices = [[i, x] for i, x in enumerate(pagetitle_chars) if x in cons]
+    # Get the indices of all vowels in the IPA, along with the corresponding vowel. If there is a stress mark, combine it
+    # with preceding IPA vowel, as we need to distinguish stressed from unstressed vowels.
+    ipa_vowel_indices_with_stress = [[i, x] for i, x in enumerate(ipa_chars) if x in vowel or x in accent]
+    ipa_vowel_indices = []
+    for i, x in ipa_vowel_indices_with_stress:
+        if x in accent:
+            if len(ipa_vowel_indices) == 0:
+                pagemsg("WARNING: Stress mark at index %s not following vowel for IPA %s (original %s)" % (i, ipa, orig_ipa))
+                return
+            if ipa_vowel_indices[-1][0] != i - 1:
+                pagemsg("WARNING: Stress mark at index %s not directly following vowel for IPA %s (original %s)" % (i, ipa, orig_ipa))
+                return
+            ipa_vowel_indices[-1][1] += x
+        else:
+            ipa_vowel_indices.append([i, x])
 
-  # Make sure same number of consonants in both.
-  num_ipa_cons = len(ipa_cons_indices)
-  num_pagetitle_cons = len(pagetitle_cons_indices)
-  if num_ipa_cons != num_pagetitle_cons:
-    pagemsg("WARNING: IPA %s (original %s) has %s consonant(s) but pagetitle '%s' has %s consonant(s)" % (
-      ipa, orig_ipa, num_ipa_cons, pagetitle, num_pagetitle_cons))
-  else:
-    # If so, match up corresponding consonants.
-    for (ipa_index, ipa_cons), (pagetitle_index, pagetitle_cons) in zip(ipa_cons_indices, pagetitle_cons_indices):
-      # Check that the next character is voiced or unvoiced (according to `obstruents`), or that the next character is an IPA
-      # stress mark and the following character is voiced or unvoiced.
-      def check_next_voicing(obstruents):
-        return ipa_index < len(ipa) - 1 and ipa_chars[ipa_index + 1] in obstruents or (
-          ipa_index < len(ipa) - 2 and ipa_chars[ipa_index + 1] in stress_mark and ipa_chars[ipa_index + 2] in obstruents
-        )
+    # Make sure same number of vowels in both.
+    num_ipa_vowels = len(ipa_vowel_indices)
+    num_pagetitle_vowels = len(pagetitle_vowel_indices)
+    if num_ipa_vowels != num_pagetitle_vowels:
+        pagemsg("WARNING: IPA %s (original %s) has %s vowel(s) but pagetitle '%s' has %s vowel(s)" % (
+            ipa, orig_ipa, num_ipa_vowels, pagetitle, num_pagetitle_vowels))
+    else:
+        # If so, match up corresponding vowels.
+        for (ipa_index, ipa_vowel), (pagetitle_index, pagetitle_vowel) in zip(ipa_vowel_indices, pagetitle_vowel_indices):
+            # Correct unstressed IPA о to у/ю as appropriate.
+            if ipa_vowel == "о" and pagetitle_vowel == "у":
+                pagemsg("Replacing unstressed IPA о with у at index %s in %s based on pagetitle vowel at index %s" %
+                    (ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "у"
+            elif ipa_vowel == "о" and ipa_index > 0 and ipa_chars[ipa_index - 1] in ["ь", "й"] and pagetitle_vowel == "ю":
+                pagemsg("Replacing unstressed IPA %sо with ю at index %s in %s based on pagetitle vowel at index %s" %
+                    (ipa_chars[ipa_index - 1], ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "ю"
+                ipa_chars[ipa_index - 1] = ""
+            # Correct unstressed IPA у to о as appropriate (e.g. акробатика with pronunciation /akruˈbatikə/)
+            elif ipa_vowel == "у" and pagetitle_vowel == "о":
+                pagemsg("Replacing unstressed IPA у with о at index %s in %s based on pagetitle vowel at index %s" %
+                    (ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "о"
+            # Correct unstressed IPA ъ to а/я as appropriate.
+            elif ipa_vowel == "ъ" and pagetitle_vowel == "а":
+                pagemsg("Replacing unstressed IPA ъ with а at index %s in %s based on pagetitle vowel at index %s" %
+                    (ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "а"
+            elif ipa_vowel == "ъ" and ipa_index > 0 and ipa_chars[ipa_index - 1] in ["ь", "й"] and pagetitle_vowel == "я":
+                pagemsg("Replacing unstressed IPA %sъ with я at index %s in %s based on pagetitle vowel at index %s" %
+                    (ipa_chars[ipa_index - 1], ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "я"
+                ipa_chars[ipa_index - 1] = ""
+            # Correct stressed IPA ъ to а/я as appropriate if word-final, setting endschwa=1.
+            elif ipa_vowel == "ъ́" and pagetitle_vowel == "а" and (
+                    ipa_index == len(ipa) - 2 or ipa_index == len(ipa) - 3 and ipa.endswith("т")):
+                pagemsg("Replacing stressed IPA ъ with а at index %s in %s and endschwa=1 based on pagetitle vowel at index %s" %
+                    (ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "а"
+                endschwa = True
+            elif (ipa_vowel == "ъ́" and ipa_index > 0 and ipa_chars[ipa_index - 1] in ["ь", "й"] and pagetitle_vowel == "я" and (
+                ipa_index == len(ipa) - 2 or ipa_index == len(ipa) - 3 and ipa.endswith("т"))):
+                pagemsg("Replacing unstressed IPA %sъ with я at index %s in %s and endschwa=1 based on pagetitle vowel at index %s" %
+                    (ipa_chars[ipa_index - 1], ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = "я"
+                ipa_chars[ipa_index - 1] = ""
+                endschwa = True
 
-      # Correct devoiced IPA obstruent to voiced equivalent as appropriate.
-      if ipa_cons in unvoiced_to_voiced and check_next_voicing(unvoiced_obstruent) and (
-        pagetitle_cons == unvoiced_to_voiced[ipa_cons]
-      ):
-        new_ipa_cons = unvoiced_to_voiced[ipa_cons]
-        pagemsg("Replacing unvoiced IPA %s before unvoiced obstruent with %s at index %s in %s based on pagetitle cons at index %s" %
-          (ipa_cons, new_ipa_cons, ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = new_ipa_cons
-      # Correct voiced IPA obstruent to unvoiced equivalent as appropriate.
-      elif ipa_cons in voiced_to_unvoiced and check_next_voicing(voiced_obstruent) and (
-        pagetitle_cons == voiced_to_unvoiced[ipa_cons]
-      ):
-        new_ipa_cons = voiced_to_unvoiced[ipa_cons]
-        pagemsg("Replacing voiced IPA %s before voiced obstruent with %s at index %s in %s based on pagetitle cons at index %s" %
-          (ipa_cons, new_ipa_cons, ipa_index, ipa, pagetitle_index))
-        ipa_chars[ipa_index] = new_ipa_cons
+    ipa = "".join(ipa_chars)
 
-  ipa = "".join(ipa_chars)
+    ########## Misc cluster corrections. FIXME: Might not work in some cases.
+    if "щ" in pagetitle:
+        ipa = re.sub("ш(" + stress_mark_c + "?)т", r"\1щ", ipa)
+    if "ц" in pagetitle:
+        ipa = re.sub("т(" + stress_mark_c + "?)с", r"\1ц", ipa)
+    if "ч" in pagetitle:
+        ipa = re.sub("т(" + stress_mark_c + "?)ш", r"\1ч", ipa)
+    if "нтс" in pagetitle:
+        ipa = re.sub("н(" + stress_mark_c + "?)с", r"нт\1с", ipa)
+    if "стк" in pagetitle:
+        ipa = re.sub("с(" + stress_mark_c + "?)к", r"ст\1к", ipa)
+    if "ктн" in pagetitle:
+        ipa = re.sub("к(" + stress_mark_c + "?)н", r"кт\1н", ipa)
+    if "ждн" in pagetitle:
+        ipa = re.sub("ж(" + stress_mark_c + "?)н", r"жд\1н", ipa)
+    if "щн" in pagetitle:
+        ipa = re.sub("ш(" + stress_mark_c + "?)н", r"щ\1н", ipa) # e.g. срещнала /ˈsrɛʃnəɫə/
+    if re.search("зс" + C, pagetitle):
+        # Stress mark should be before с
+        ipa = re.sub("(" + stress_mark_c + "?с" + C + ")", r"з\1", ipa)
+    if "зсъ" in pagetitle and "зсъ" not in ipa: # HACK, e.g. неразсъдителност /nɛrəsəˈditɛlnost/
+        ipa = re.sub("съ", "зсъ", ipa)
+    if "нв" in pagetitle:
+        ipa = re.sub("м(" + stress_mark_c + "?)в", r"н\1в", ipa)
+    if "нф" in pagetitle:
+        ipa = re.sub("м(" + stress_mark_c + "?)ф", r"н\1ф", ipa)
+    if "чт" in pagetitle:
+        ipa = re.sub("т(" + stress_mark_c + "?)щ", r"ч\1т", ipa) # e.g. мечтаещ /mɛtʃˈt̪aɛʃt̪/
 
-  ########## See if explicit syllable division needed
-  # We do this by moving the temporarily moving the accent where it would automatically go and see if this matches
-  # what we had before moving accents after vowels.
-  auto_stress_ipa = ipa.replace(PRIMARY, "").replace(SECONDARY, "")
-  # First, move leftwards over the vowel.
-  auto_stress_ipa = re.sub("(" + V + ")(" + accent_c + ")", r"\2\1", auto_stress_ipa)
-  # Then, move leftwards over й or soft sign.
-  auto_stress_ipa = re.sub("([йь])(" + accent_c + ")", r"\2\1", auto_stress_ipa)
-  # Then, move leftwards over a single consonant.
-  auto_stress_ipa = re.sub("(" + C + ")(" + accent_c + ")", r"\2\1", auto_stress_ipa)
-  # Then, move leftwards over Cl/Cr combinations where C is an obstruent.
-  auto_stress_ipa = re.sub("([бдгпткхфв]" + ")(" + accent_c + ")([рл])", r"\2\1\3", auto_stress_ipa)
-  # Then, move leftwards over kv/gv.
-  auto_stress_ipa = re.sub("([кг]" + ")(" + accent_c + ")(в)", r"\2\1\3", auto_stress_ipa)
-  # Then, move leftwards over sC combinations, where C is a stop or resonant.
-  auto_stress_ipa = re.sub("([сз]" + ")(" + accent_c + ")([бдгптквлрмн])", r"\2\1\3", auto_stress_ipa)
-  # Then, move leftwards over affricates not followed by a consonant.
-  auto_stress_ipa = re.sub("([тд])(" + accent_c + ")([сзшж]" + V + ")", r"\2\1\3", auto_stress_ipa)
-  # Then, move leftwards over any remaining consonants at the beginning of a word.
-  auto_stress_ipa = re.sub(r"\b(" + C + "*)(" + accent_c + ")", r"\2\1", auto_stress_ipa, 0, re.U)
-  # Then correct for known prefixes.
-  for prefix in prefixes:
-    m = re.search("^(.*?)(" + C + "*)$", prefix)
-    prefix_prefix, prefix_final_cons = m.groups()
-    if prefix_final_cons:
-      # Check for accent moved too far to the left into a prefix, e.g. безбрачие accented as беˈзбрачие instead of безˈбрачие
-      auto_stress_ipa = re.sub(r"\b(" + prefix_prefix + ")(" + accent_c + ")(" + prefix_final_cons + ")", r"\1\3\2",
-          auto_stress_ipa, 0, re.U)
+    ########## Correct consonant voicing assimilation.
 
-  ipa_with_orig_accents = ipa.replace(ACUTE, "").replace(GRAVE, "")
-  ipa = ipa.replace(PRIMARY, "").replace(SECONDARY, "")
+    #### First, correct final devoicing.
+    if pagetitle[-1] in voiced_to_unvoiced and ipa[-1] == voiced_to_unvoiced[pagetitle[-1]]:
+        pagemsg("Replacing final devoiced IPA %s with %s based on final voiced pagetitle consonant" % (ipa[-1], pagetitle[-1]))
+        ipa = ipa[:-1] + pagetitle[-1]
 
-  # Now apply special-case replacements.
-  for special_from, special_to in special_case_replacements:
-    auto_stress_special_from = r"\b" + special_from.replace(".", "(" + accent_c + ")")
-    auto_stress_special_to = special_to.replace(".", r"\1")
-    ipa_special_from = r"\b" + special_from.replace(".", "")
-    ipa_special_to = special_to
-    if re.search(auto_stress_special_from, auto_stress_ipa, re.U):
-      auto_stress_ipa = re.sub(auto_stress_special_from, auto_stress_special_to, auto_stress_ipa, 0, re.U)
-      ipa = re.sub(ipa_special_from, ipa_special_to, ipa, 0, re.U)
-      pagemsg("Applying special-case replacement %s -> %s, producing IPA %s" % (special_from, special_to, ipa))
-      break
+    #### Then, correct voicing assimilation before an obstruent.
+    ipa_chars = list(ipa)
 
-  auto_stress_ipa = auto_stress_ipa.replace(ACUTE, PRIMARY).replace(GRAVE, SECONDARY)
-  if ipa_with_orig_accents != auto_stress_ipa:
-    pagemsg("WARNING: IPA before accent moving %s not same as auto-stressed IPA %s" %
-      (ipa_with_orig_accents, auto_stress_ipa))
+    # Get the indices of all consonants in the IPA, along with the corresponding consonant.
+    ipa_cons_indices = [[i, x] for i, x in enumerate(ipa_chars) if x in cons]
+    # Get the indices of all consonants in the pagetitle, along with the corresponding consonant.
+    pagetitle_cons_indices = [[i, x] for i, x in enumerate(pagetitle_chars) if x in cons]
 
-  ########## Finally, check to see whether respelling matches pagetitle except in accents.
-  pagetitle_from_ipa = re.sub(accent_c, "", ipa).replace(".", "")
-  if pagetitle_from_ipa != pagetitle:
-    pagemsg("WARNING: Inferred respelling %s from IPA %s, does not match pagetitle" %
-      (ipa, orig_ipa))
-    return None, False
-  return ipa, endschwa
+    # Make sure same number of consonants in both.
+    num_ipa_cons = len(ipa_cons_indices)
+    num_pagetitle_cons = len(pagetitle_cons_indices)
+    if num_ipa_cons != num_pagetitle_cons:
+        pagemsg("WARNING: IPA %s (original %s) has %s consonant(s) but pagetitle '%s' has %s consonant(s)" % (
+            ipa, orig_ipa, num_ipa_cons, pagetitle, num_pagetitle_cons))
+    else:
+        # If so, match up corresponding consonants.
+        for (ipa_index, ipa_cons), (pagetitle_index, pagetitle_cons) in zip(ipa_cons_indices, pagetitle_cons_indices):
+            # Check that the next character is voiced or unvoiced (according to `obstruents`), or that the next character is an IPA
+            # stress mark and the following character is voiced or unvoiced.
+            def check_next_voicing(obstruents):
+                return ipa_index < len(ipa) - 1 and ipa_chars[ipa_index + 1] in obstruents or (
+                    ipa_index < len(ipa) - 2 and ipa_chars[ipa_index + 1] in stress_mark and ipa_chars[ipa_index + 2] in obstruents
+                )
+
+            # Correct devoiced IPA obstruent to voiced equivalent as appropriate.
+            if ipa_cons in unvoiced_to_voiced and check_next_voicing(unvoiced_obstruent) and (
+                pagetitle_cons == unvoiced_to_voiced[ipa_cons]
+            ):
+                new_ipa_cons = unvoiced_to_voiced[ipa_cons]
+                pagemsg("Replacing unvoiced IPA %s before unvoiced obstruent with %s at index %s in %s based on pagetitle cons at index %s" %
+                    (ipa_cons, new_ipa_cons, ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = new_ipa_cons
+            # Correct voiced IPA obstruent to unvoiced equivalent as appropriate.
+            elif ipa_cons in voiced_to_unvoiced and check_next_voicing(voiced_obstruent) and (
+                pagetitle_cons == voiced_to_unvoiced[ipa_cons]
+            ):
+                new_ipa_cons = voiced_to_unvoiced[ipa_cons]
+                pagemsg("Replacing voiced IPA %s before voiced obstruent with %s at index %s in %s based on pagetitle cons at index %s" %
+                    (ipa_cons, new_ipa_cons, ipa_index, ipa, pagetitle_index))
+                ipa_chars[ipa_index] = new_ipa_cons
+
+    ipa = "".join(ipa_chars)
+
+    ########## See if explicit syllable division needed
+    # We do this by moving the temporarily moving the accent where it would automatically go and see if this matches
+    # what we had before moving accents after vowels.
+    auto_stress_ipa = ipa.replace(PRIMARY, "").replace(SECONDARY, "")
+    # First, move leftwards over the vowel.
+    auto_stress_ipa = re.sub("(" + V + ")(" + accent_c + ")", r"\2\1", auto_stress_ipa)
+    # Then, move leftwards over й or soft sign.
+    auto_stress_ipa = re.sub("([йь])(" + accent_c + ")", r"\2\1", auto_stress_ipa)
+    # Then, move leftwards over a single consonant.
+    auto_stress_ipa = re.sub("(" + C + ")(" + accent_c + ")", r"\2\1", auto_stress_ipa)
+    # Then, move leftwards over Cl/Cr combinations where C is an obstruent.
+    auto_stress_ipa = re.sub("([бдгпткхфв]" + ")(" + accent_c + ")([рл])", r"\2\1\3", auto_stress_ipa)
+    # Then, move leftwards over kv/gv.
+    auto_stress_ipa = re.sub("([кг]" + ")(" + accent_c + ")(в)", r"\2\1\3", auto_stress_ipa)
+    # Then, move leftwards over sC combinations, where C is a stop or resonant.
+    auto_stress_ipa = re.sub("([сз]" + ")(" + accent_c + ")([бдгптквлрмн])", r"\2\1\3", auto_stress_ipa)
+    # Then, move leftwards over affricates not followed by a consonant.
+    auto_stress_ipa = re.sub("([тд])(" + accent_c + ")([сзшж]" + V + ")", r"\2\1\3", auto_stress_ipa)
+    # Then, move leftwards over any remaining consonants at the beginning of a word.
+    auto_stress_ipa = re.sub(r"\b(" + C + "*)(" + accent_c + ")", r"\2\1", auto_stress_ipa, 0, re.U)
+    # Then correct for known prefixes.
+    for prefix in prefixes:
+        m = re.search("^(.*?)(" + C + "*)$", prefix)
+        prefix_prefix, prefix_final_cons = m.groups()
+        if prefix_final_cons:
+            # Check for accent moved too far to the left into a prefix, e.g. безбрачие accented as беˈзбрачие instead of безˈбрачие
+            auto_stress_ipa = re.sub(r"\b(" + prefix_prefix + ")(" + accent_c + ")(" + prefix_final_cons + ")", r"\1\3\2",
+                    auto_stress_ipa, 0, re.U)
+
+    ipa_with_orig_accents = ipa.replace(ACUTE, "").replace(GRAVE, "")
+    ipa = ipa.replace(PRIMARY, "").replace(SECONDARY, "")
+
+    # Now apply special-case replacements.
+    for special_from, special_to in special_case_replacements:
+        auto_stress_special_from = r"\b" + special_from.replace(".", "(" + accent_c + ")")
+        auto_stress_special_to = special_to.replace(".", r"\1")
+        ipa_special_from = r"\b" + special_from.replace(".", "")
+        ipa_special_to = special_to
+        if re.search(auto_stress_special_from, auto_stress_ipa, re.U):
+            auto_stress_ipa = re.sub(auto_stress_special_from, auto_stress_special_to, auto_stress_ipa, 0, re.U)
+            ipa = re.sub(ipa_special_from, ipa_special_to, ipa, 0, re.U)
+            pagemsg("Applying special-case replacement %s -> %s, producing IPA %s" % (special_from, special_to, ipa))
+            break
+
+    auto_stress_ipa = auto_stress_ipa.replace(ACUTE, PRIMARY).replace(GRAVE, SECONDARY)
+    if ipa_with_orig_accents != auto_stress_ipa:
+        pagemsg("WARNING: IPA before accent moving %s not same as auto-stressed IPA %s" %
+            (ipa_with_orig_accents, auto_stress_ipa))
+
+    ########## Finally, check to see whether respelling matches pagetitle except in accents.
+    pagetitle_from_ipa = re.sub(accent_c, "", ipa).replace(".", "")
+    if pagetitle_from_ipa != pagetitle:
+        pagemsg("WARNING: Inferred respelling %s from IPA %s, does not match pagetitle" %
+            (ipa, orig_ipa))
+        return None, False
+    return ipa, endschwa
 
 def process_text_on_page(index, pagetitle, text):
-  def pagemsg(txt):
-    msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-  notes = []
+    notes = []
 
-  if pagetitle in deny_list:
-    pagemsg("WARNING: Skipping because in deny list")
-    return
+    if pagetitle in deny_list:
+        pagemsg("WARNING: Skipping because in deny list")
+        return
 
-  retval = blib.find_modifiable_lang_section(text, None if args.partial_page else "Serbo-Croatian", pagemsg,
-    force_final_nls=True)
-  if retval is None:
-    return
-  sections, j, secbody, sectail, has_non_lang = retval.props()
+    modsec = blib.find_modifiable_lang_section(text, "Serbo-Croatian", pagemsg, force_final_nls=True)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
-  parsed = blib.parse_text(secbody)
+    parsed = blib.parse_text(secbody)
 
-  to_substitute = []
+    to_substitute = []
 
-  def fix_up_section(sectext, warn_on_multiple_heads, secnum):
-    parsed = blib.parse_text(sectext)
+    def fix_up_section(sectext, warn_on_multiple_heads, secnum):
+        parsed = blib.parse_text(sectext)
 
-    this_notes = []
-    head_templates = []
-    IPA_templates = []
-    sh_IPA_templates = []
+        this_notes = []
+        head_templates = []
+        IPA_templates = []
+        sh_IPA_templates = []
+        for t in parsed.filter_templates():
+            def getp(param):
+                return getparam(t, param).strip()
+            tn = tname(t)
+            if tn in sh_headwords:
+                head_templates.append(t)
+            elif tn == "IPA" and getp("1") == "sh":
+                IPA_templates.append(t)
+            elif tn == "sh-IPA":
+                sh_IPA_templates.append(t)
+        if len(head_templates) > 1:
+            pagemsg("WARNING: Found multiple headword templates in section %s, not modifying: %s" % (
+                secnum, ",".join(str(ht) for ht in head_templates)))
+            return None
+        if not head_templates:
+            pagemsg("WARNING: Found no head templates in section %s, not modifying" % secnum)
+            return None
+        heads = blib.fetch_param_chain(head_templates[0], "1", "head")
+        if not heads:
+            pagemsg("Found head template but no heads in section %s, not modifying: %s" % str(head_templates[0]))
+            return None
+        num_sh_IPA_templates = len(sh_IPA_templates)
+        num_IPA_templates = len(IPA_templates)
+        if not num_IPA_templates:
+            pagemsg("Found no {{IPA|sh|...}} templates in section %s, not modifying: %s" % str(head_templates[0]))
+            return None
+        if num_sh_IPA_templates:
+            pagemsg("WARNING: Found %s {{sh-IPA}} template%s but %s {{IPA|sh}} template%s in section %s, not modifying: %s; %s" % (
+                secnum, num_sh_IPA_templates, "s" if len(num_sh_IPA_templates) > 1 else "", num_IPA_templates,
+                "s" if len(num_IPA_templates) > 1 else "", ",".join(str(t) for t in sh_IPA_templates),
+                ",".join(str(t) for t in IPA_templates)))
+            return None
+        IPA_vals = []
+        for it in IPA_templates:
+            IPA_vals.extend(blib.fetch_param_chain(it, "2"))
+        num_IPA_vals = len(IPA_vals)
+        num_heads = len(heads)
+        if num_IPA_vals != num_heads:
+            pagemsg("WARNING: Found %s head%s but %s {{IPA|sh}} value%s in section %s, not modifying: head%s=%s; IPA%s=%s" % (
+                secnum, num_heads, "s" if len(num_heads) > 1 else "", num_IPA_vals, "s" if len(num_IPA_vals) > 1 else "",
+                "s" if len(num_heads) > 1 else "", ",".join(heads), "s" if len(num_IPA_vals) > 1 else "", ",".join(IPA_vals)))
+            return None
+        if 
+
+
+            return sectext
+
+            if 
+            if lalib.la_template_is_head(t):
+                heads |= set(blib.remove_links(x) for x in lalib.la_get_headword_from_template(t, pagetitle, pagemsg))
+            elif tn == "la-IPA":
+                pronun_templates.append(t)
+        newsectext = re.sub(r"\{\{a\|Classical\}\} \{\{IPA(char)?\|.*?\}\}", "{{la-IPA|%s}}" % list(heads)[0], sectext)
+        newsectext = re.sub(r"^\* \{\{IPA(char)?\|.*?\|lang=la\}\}", "{{la-IPA|%s}}" % list(heads)[0], newsectext, 0, re.M)
+        if newsectext != sectext:
+            notes.append("replaced manual Latin pronun with {{la-IPA|%s}}" % list(heads)[0])
+            sectext = newsectext
+        # Recompute pronun templates as we may have added one.
+        parsed = blib.parse_text(sectext)
+        pronun_templates = []
+        for t in parsed.filter_templates():
+            tn = tname(t)
+            if tn == "la-IPA":
+                pronun_templates.append(t)
+        if "{{a|Ecclesiastical}} {{IPA" in sectext:
+            if len(pronun_templates) == 0:
+                pagemsg("WARNING: Found manual Ecclesiastical pronunciation but not {{la-IPA}} template")
+            elif len(pronun_templates) > 1:
+                pagemsg("WARNING: Found manual Ecclesiastical pronunciation and multiple {{la-IPA}} templates: %s" %
+                    ",".join(str(tt) for tt in pronun_templates))
+            else:
+                origt = str(pronun_templates[0])
+                pronun_templates[0].add("eccl", "yes")
+                pagemsg("Replaced %s with %s" % (origt, str(pronun_templates[0])))
+                newsectext = re.sub(r"^\* \{\{a\|Ecclesiastical\}\} \{\{IPA(char)?\|.*?\}\}\n", "",
+                        sectext, 0, re.M)
+                if newsectext == sectext:
+                    pagemsg("WARNING: Unable to remove manual Ecclesiastical prounciation")
+                else:
+                    notes.append("removed manual Ecclesiastical pronunciation and added |eccl=yes to {{la-IPA}}")
+                    sectext = newsectext
+        return sectext
+
+    # If there are multiple Etymology sections, the pronunciation may be above all of
+    # them if all have the same pronunciation, else it will be within each section.
+    # Cater to both situations. We first try without splitting on etym sections; if that
+    # doesn't change anything, it may be because there were multiple heads found and
+    # separate pronunciation sections, so we then try splitting on etym sections.
+    has_etym_1 = "==Etymology 1==" in secbody
+    newsecbody = fix_up_section(secbody, warn_on_multiple_heads=not has_etym_1)
+    if newsecbody != secbody:
+        secbody = newsecbody
+    elif has_etym_1:
+        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+        for k in range(2, len(etym_sections), 2):
+            etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
+        secbody = "".join(etym_sections)
+
+    return modsec.rebuild(secbody=secbody), notes
     for t in parsed.filter_templates():
-      def getp(param):
-        return getparam(t, param).strip()
-      tn = tname(t)
-      if tn in sh_headwords:
-        head_templates.append(t)
-      elif tn == "IPA" and getp("1") == "sh":
-        IPA_templates.append(t)
-      elif tn == "sh-IPA":
-        sh_IPA_templates.append(t)
-    if len(head_templates) > 1:
-      pagemsg("WARNING: Found multiple headword templates in section %s, not modifying: %s" % (
-        secnum, ",".join(str(ht) for ht in head_templates)))
-      return None
-    if not head_templates:
-      pagemsg("WARNING: Found no head templates in section %s, not modifying" % secnum)
-      return None
-    heads = blib.fetch_param_chain(head_templates[0], "1", "head")
-    if not heads:
-      pagemsg("Found head template but no heads in section %s, not modifying: %s" % str(head_templates[0]))
-      return None
-    num_sh_IPA_templates = len(sh_IPA_templates)
-    num_IPA_templates = len(IPA_templates)
-    if not num_IPA_templates:
-      pagemsg("Found no {{IPA|sh|...}} templates in section %s, not modifying: %s" % str(head_templates[0]))
-      return None
-    if num_sh_IPA_templates:
-      pagemsg("WARNING: Found %s {{sh-IPA}} template%s but %s {{IPA|sh}} template%s in section %s, not modifying: %s; %s" % (
-        secnum, num_sh_IPA_templates, "s" if len(num_sh_IPA_templates) > 1 else "", num_IPA_templates,
-        "s" if len(num_IPA_templates) > 1 else "", ",".join(str(t) for t in sh_IPA_templates),
-        ",".join(str(t) for t in IPA_templates)))
-      return None
-    IPA_vals = []
-    for it in IPA_templates:
-      IPA_vals.extend(blib.fetch_param_chain(it, "2"))
-    num_IPA_vals = len(IPA_vals)
-    num_heads = len(heads)
-    if num_IPA_vals != num_heads:
-      pagemsg("WARNING: Found %s head%s but %s {{IPA|sh}} value%s in section %s, not modifying: head%s=%s; IPA%s=%s" % (
-        secnum, num_heads, "s" if len(num_heads) > 1 else "", num_IPA_vals, "s" if len(num_IPA_vals) > 1 else "",
-        "s" if len(num_heads) > 1 else "", ",".join(heads), "s" if len(num_IPA_vals) > 1 else "", ",".join(IPA_vals)))
-      return None
-    if 
+        tn = tname(t)
+        if tn == "IPA" and getparam(t, "1") == "bg":
+            origt = str(t)
+            ipas = blib.fetch_param_chain(t, "2")
+            must_continue = False
+            for param in t.params:
+                pn = pname(param)
+                pv = str(param.value)
+                if not re.search("^[0-9]+$", pn):
+                    pagemsg("WARNING: Saw unrecognized param %s=%s in raw IPA, skipping: %s" % (pn, pv, origt))
+                    must_continue = True
+                    break
+            if must_continue:
+                continue
+            must_continue = False
+            this_notes = []
+            respellings = []
+            for ipa in ipas:
+                ipa = re.sub("^/(.*)/$", r"\1", ipa)
+                ipa = re.sub(r"^\[(.*)\]$", r"\1", ipa)
+                respelling, endschwa = convert_bg_manual_ipa(ipa, pagetitle, pagemsg)
+                if respelling is None:
+                    must_continue = True
+                    break
+                new_respelling = (respelling, endschwa)
+                if new_respelling not in respellings:
+                    respellings.append(new_respelling)
+                    endschwa_note = " with endschwa=1" if endschwa else ""
+                    pagemsg("Converting IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
+                    this_notes.append("convert Bulgarian manual IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
+            if must_continue:
+                continue
+            if len(respellings) == 1:
+                # Replace directly if only one respelling, to reduce cases where we get "Already found replacement text" messages.
+                blib.set_template_name(t, "bg-IPA")
+                del t.params[:]
+                respelling, endschwa = respellings[0]
+                t.add("1", respelling)
+                if endschwa:
+                    t.add("endschwa", "1")
+                pagemsg("Replaced %s with %s directly" % (origt, str(t)))
+            else:
+                replacement_parts = []
+                annparam = "|ann=1" if len(respellings) > 1 else ""
+                for respelling, endschwa in respellings:
+                    endschwa_param = "|endschwa=1" if endschwa else ""
+                    replacement_parts.append("{{bg-IPA|%s%s%s}}" % (respelling, endschwa_param, annparam))
+                replacement_text = "\n* ".join(replacement_parts)
+                to_substitute.append((origt, replacement_text))
+            notes.extend(this_notes)
 
+    secbody = str(parsed)
+    for fromtext, totext in to_substitute:
+        secbody, replaced = blib.replace_in_text(secbody, fromtext, totext, pagemsg, abort_if_warning=True)
+        if not replaced:
+            return
+        pagemsg("Replaced %s with %s using textual substitution" % (fromtext, totext.replace("\n", r"\n")))
 
-      return sectext
-
-      if 
-      if lalib.la_template_is_head(t):
-        heads |= set(blib.remove_links(x) for x in lalib.la_get_headword_from_template(t, pagetitle, pagemsg))
-      elif tn == "la-IPA":
-        pronun_templates.append(t)
-    newsectext = re.sub(r"\{\{a\|Classical\}\} \{\{IPA(char)?\|.*?\}\}", "{{la-IPA|%s}}" % list(heads)[0], sectext)
-    newsectext = re.sub(r"^\* \{\{IPA(char)?\|.*?\|lang=la\}\}", "{{la-IPA|%s}}" % list(heads)[0], newsectext, 0, re.M)
-    if newsectext != sectext:
-      notes.append("replaced manual Latin pronun with {{la-IPA|%s}}" % list(heads)[0])
-      sectext = newsectext
-    # Recompute pronun templates as we may have added one.
-    parsed = blib.parse_text(sectext)
-    pronun_templates = []
-    for t in parsed.filter_templates():
-      tn = tname(t)
-      if tn == "la-IPA":
-        pronun_templates.append(t)
-    if "{{a|Ecclesiastical}} {{IPA" in sectext:
-      if len(pronun_templates) == 0:
-        pagemsg("WARNING: Found manual Ecclesiastical pronunciation but not {{la-IPA}} template")
-      elif len(pronun_templates) > 1:
-        pagemsg("WARNING: Found manual Ecclesiastical pronunciation and multiple {{la-IPA}} templates: %s" %
-          ",".join(str(tt) for tt in pronun_templates))
-      else:
-        origt = str(pronun_templates[0])
-        pronun_templates[0].add("eccl", "yes")
-        pagemsg("Replaced %s with %s" % (origt, str(pronun_templates[0])))
-        newsectext = re.sub(r"^\* \{\{a\|Ecclesiastical\}\} \{\{IPA(char)?\|.*?\}\}\n", "",
-            sectext, 0, re.M)
-        if newsectext == sectext:
-          pagemsg("WARNING: Unable to remove manual Ecclesiastical prounciation")
-        else:
-          notes.append("removed manual Ecclesiastical pronunciation and added |eccl=yes to {{la-IPA}}")
-          sectext = newsectext
-    return sectext
-
-  # If there are multiple Etymology sections, the pronunciation may be above all of
-  # them if all have the same pronunciation, else it will be within each section.
-  # Cater to both situations. We first try without splitting on etym sections; if that
-  # doesn't change anything, it may be because there were multiple heads found and
-  # separate pronunciation sections, so we then try splitting on etym sections.
-  has_etym_1 = "==Etymology 1==" in secbody
-  newsecbody = fix_up_section(secbody, warn_on_multiple_heads=not has_etym_1)
-  if newsecbody != secbody:
-    secbody = newsecbody
-  elif has_etym_1:
-    etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-    for k in range(2, len(etym_sections), 2):
-      etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
-    secbody = "".join(etym_sections)
-
-  sections[j] = secbody + sectail
-  return "".join(sections), notes
-  for t in parsed.filter_templates():
-    tn = tname(t)
-    if tn == "IPA" and getparam(t, "1") == "bg":
-      origt = str(t)
-      ipas = blib.fetch_param_chain(t, "2")
-      must_continue = False
-      for param in t.params:
-        pn = pname(param)
-        pv = str(param.value)
-        if not re.search("^[0-9]+$", pn):
-          pagemsg("WARNING: Saw unrecognized param %s=%s in raw IPA, skipping: %s" % (pn, pv, origt))
-          must_continue = True
-          break
-      if must_continue:
-        continue
-      must_continue = False
-      this_notes = []
-      respellings = []
-      for ipa in ipas:
-        ipa = re.sub("^/(.*)/$", r"\1", ipa)
-        ipa = re.sub(r"^\[(.*)\]$", r"\1", ipa)
-        respelling, endschwa = convert_bg_manual_ipa(ipa, pagetitle, pagemsg)
-        if respelling is None:
-          must_continue = True
-          break
-        new_respelling = (respelling, endschwa)
-        if new_respelling not in respellings:
-          respellings.append(new_respelling)
-          endschwa_note = " with endschwa=1" if endschwa else ""
-          pagemsg("Converting IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
-          this_notes.append("convert Bulgarian manual IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
-      if must_continue:
-        continue
-      if len(respellings) == 1:
-        # Replace directly if only one respelling, to reduce cases where we get "Already found replacement text" messages.
-        blib.set_template_name(t, "bg-IPA")
-        del t.params[:]
-        respelling, endschwa = respellings[0]
-        t.add("1", respelling)
-        if endschwa:
-          t.add("endschwa", "1")
-        pagemsg("Replaced %s with %s directly" % (origt, str(t)))
-      else:
-        replacement_parts = []
-        annparam = "|ann=1" if len(respellings) > 1 else ""
-        for respelling, endschwa in respellings:
-          endschwa_param = "|endschwa=1" if endschwa else ""
-          replacement_parts.append("{{bg-IPA|%s%s%s}}" % (respelling, endschwa_param, annparam))
-        replacement_text = "\n* ".join(replacement_parts)
-        to_substitute.append((origt, replacement_text))
-      notes.extend(this_notes)
-
-  secbody = str(parsed)
-  for fromtext, totext in to_substitute:
-    secbody, replaced = blib.replace_in_text(secbody, fromtext, totext, pagemsg, abort_if_warning=True)
-    if not replaced:
-      return
-    pagemsg("Replaced %s with %s using textual substitution" % (fromtext, totext.replace("\n", r"\n")))
-
-  # Strip extra newlines added to secbody
-  sections[j] = secbody.rstrip("\n") + sectail
-  return "".join(sections), notes
+    # Strip extra newlines added to secbody
+    sections[j] = secbody.rstrip("\n") + sectail
+    return "".join(sections), notes
 
 parser = blib.create_argparser("Convert manual Bulgarian IPA pronunciations to bg-IPA", include_pagefile=True,
-    include_stdin=True)
-parser.add_argument("--partial-page", action="store_true", help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.")
+        include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
-    default_cats=["Bulgarian terms with IPA pronunciation"], edit=True, stdin=True)
+        default_cats=["Bulgarian terms with IPA pronunciation"], edit=True, stdin=True)

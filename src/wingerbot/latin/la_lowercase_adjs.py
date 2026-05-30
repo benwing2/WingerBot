@@ -43,7 +43,7 @@ def process_text_on_page(index, pagename, text):
     notes.append("lowercase Latin adjective")
     if orig_headword:
         alter_line = "* {{alter|la|%s||alternative case form}}" % orig_headword
-        if subsecs.subsection_header_dict[2] ==  "Alternative forms":
+        if subsecs.headers[2] ==  "Alternative forms":
             subsections[2] = subsections[2].rstrip("\n") + "\n%s\n\n" % alter_line
         else:
             subsections[1:1] = ["===Alternative forms===\n", alter_line + "\n\n"]

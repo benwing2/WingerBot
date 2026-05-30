@@ -18,13 +18,13 @@ def process_text_on_page(index, pagetitle, text):
         subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
         # Look for a Related terms section and move it up.
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if header == "Descendants":
-                desc_indent = subsecs.subsection_levels[k]
+                desc_indent = subsecs.levels[k]
                 if (
                     k + 2 < len(subsections)
-                    and subsecs.subsection_headers[k + 2] == "Related terms"
-                    and subsecs.subsection_levels[k + 2] == desc_indent
+                    and subsecs.header_list[k + 2] == "Related terms"
+                    and subsecs.levels[k + 2] == desc_indent
                 ):
                     desc_text = subsections[k - 1 : k + 1]
                     subsections[k - 1 : k + 1] = subsections[k + 1 : k + 3]

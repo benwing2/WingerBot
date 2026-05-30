@@ -27,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
 
-    for j, lang in secs.section_langs:
+    for j, lang in secs.lang_list:
         parsed = blib.parse_text(sections[j])
         for t in parsed.filter_templates():
             if str(t.name) == "audio" and not getparam(t, "lang"):

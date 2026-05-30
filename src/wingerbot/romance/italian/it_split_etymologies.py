@@ -18,12 +18,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     notes = []
 
@@ -136,21 +134,11 @@ def process_text_on_page(index, pagetitle, text):
     l3_secs[1 : last_included_sec + 1] = split_etym_sections
     notes.append("split Italian verb form and other meanings into separate Etymology sections")
 
-    secbody = "".join(l3_secs)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody="".join(l3_secs)), notes
 
 
 parser = blib.create_argparser(
     "Split Italian verb forms into separate Etymology section", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Italian' and has no ==Italian== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

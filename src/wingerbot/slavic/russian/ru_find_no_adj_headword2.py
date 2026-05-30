@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    russiansec = blib.find_lang_section(text, "Russian", pagemsg)
-    if russiansec is None:
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
         return
+    secbody = modsec.secbody
 
     found_headword_template = False
-    parsed = blib.parse_text(russiansec)
+    parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "ru-adj" or (tn == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "adjective form"):
             found_headword_template = True
-    if not found_headword_template and "===Adjective===" in russiansec:
+    if not found_headword_template and "===Adjective===" in secbody:
         pagemsg("WARNING: Missing adj headword template")
 
 

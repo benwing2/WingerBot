@@ -52,7 +52,7 @@ def process_form(index, page, slot, form, pos):
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if re.search(r"\{\{%s([|}])" % from_headword_template, subsections[k]) or re.search(
             r"\{\{head\|la\|%s([|}])" % from_pos, subsections[k]
         ):

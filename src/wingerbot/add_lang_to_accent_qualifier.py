@@ -275,7 +275,7 @@ def process_text_on_page(index, pagetitle, text):
         secs = blib.split_text_into_sections(text, pagemsg)
         sections = secs.sections
         if not pagetitle.startswith("Citations"):
-            for j, langname in secs.section_langs:
+            for j, langname in secs.lang_list:
                 sections[j], _ = hack_templates(sections[j], langname)
             newtext = "".join(sections)
         else:
@@ -283,7 +283,7 @@ def process_text_on_page(index, pagetitle, text):
             secs = blib.split_text_into_sections(text, pagemsg)
             sections = secs.sections
             sections[0], langnamecode = hack_templates(sections[0], "Unknown", langnamecode=None, is_citation=True)
-            for j, langname in secs.section_langs:
+            for j, langname in secs.lang_list:
                 sections[j], langnamecode = hack_templates(
                     sections[j], langname, langnamecode=langnamecode, is_citation=True
                 )

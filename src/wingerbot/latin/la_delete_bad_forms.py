@@ -37,7 +37,7 @@ def delete_participle_1(index, page, lemma, formind, formval):
     saw_head = False
     infl_template = None
     saw_bad_template = False
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             tn = tname(t)
@@ -220,7 +220,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         saw_head = False
         saw_infl = False

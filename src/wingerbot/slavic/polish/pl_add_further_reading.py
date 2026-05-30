@@ -12,14 +12,12 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
+    secbody = modsec.secbody
 
     # Add missing space between * and { in case of {{R:pl:WSJP}} or {{R:pl:PWN}} directly after * without space
-    secbody = modsec.secbody
     newsecbody = re.sub(r"^\*\{", "* {", secbody, 0, re.M)
     if newsecbody != secbody:
         notes.append("add missing space after bullet *")
@@ -59,7 +57,7 @@ def process_text_on_page(index, pagetitle, text):
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
     # Check for templates in sections outside of 'Further reading'
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header != "Further reading":
             if "{{R:pl:WSJP}}" in subsections[k] or "{{R:pl:PWN}}" in subsections[k]:
                 if header == "References":
@@ -75,14 +73,14 @@ def process_text_on_page(index, pagetitle, text):
                     )
 
     # Check for References or Further reading already present
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Further reading":
-            if subsecs.subsection_levels[k] != 3:
+            if subsecs.levels[k] != 3:
                 for l in range(k + 2, len(subsections), 2):
-                    if subsecs.subsection_header_dict[l] != "Anagrams":
+                    if subsecs.headers[l] != "Anagrams":
                         pagemsg(
                             "WARNING: Saw level > 3 Further reading and a following non-Anagrams section %s, can't handle"
-                            % subsecs.subsection_header_dict[l]
+                            % subsecs.headers[l]
                         )
                         return
                 newsubsecval = "===Further reading===\n"
@@ -121,7 +119,7 @@ def process_text_on_page(index, pagetitle, text):
             break
     else:  # no break
         k = len(subsections) - 1
-        while k >= 2 and subsecs.subsection_header_dict[k] == "Anagrams":
+        while k >= 2 and subsecs.headers[k] == "Anagrams":
             k -= 2
         if k < 2:
             pagemsg("WARNING: No lemma or non-lemma section")
@@ -134,11 +132,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser(
     "Add {{R:pl:WSJP}} and {{R:pl:PWN}} to Polish 'Further reading' sections", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

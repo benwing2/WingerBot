@@ -55,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
 
     subsecs = blib.split_text_into_subsections(text, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Translations":
             lines = subsections[k].split("\n")
             in_chinese = False

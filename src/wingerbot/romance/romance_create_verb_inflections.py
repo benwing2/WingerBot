@@ -150,7 +150,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         secs = blib.split_text_into_sections(pagetext, pagemsg)
         sections = secs.sections
         normalized_langname = lang_utils.langname_key(langname)
-        for j, seclangname in secs.section_langs:
+        for j, seclangname in secs.lang_list:
             normalized_seclangname = lang_utils.langname_key(seclangname)
             if normalized_seclangname > normalized_langname:
                 sections[j - 1 : j - 1] = [newsection]
@@ -165,8 +165,8 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
     subsections_by_header = subsecs.subsections_by_header
-    subsection_headers = subsecs.subsection_headers
-    subsection_levels = subsecs.subsection_levels
+    header_list = subsecs.header_list
+    levels = subsecs.levels
 
     # Look for possible matching headword/definition templates.
     matching_defn_templates = []
@@ -296,13 +296,13 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
             )
             return
         adj_secind = adj_sections[0]
-        if subsection_levels[adj_secind] not in [3, 4]:
+        if levels[adj_secind] not in [3, 4]:
             pagemsg(
                 "WARNING: Saw Adjective section %s at level %s != 3 or 4, can't handle"
-                % (subsections[adj_secind - 1].strip(), subsection_levels[adj_secind])
+                % (subsections[adj_secind - 1].strip(), levels[adj_secind])
             )
             return
-        subsections[adj_secind - 1 : adj_secind - 1] = [newposl4 if subsection_levels[adj_secind] == 4 else newpos]
+        subsections[adj_secind - 1 : adj_secind - 1] = [newposl4 if levels[adj_secind] == 4 else newpos]
         pagemsg("Inserting participle subsection %s before adjective subsection" % infl_part)
         notes.append("insert participle subsection %s before adjective subsection" % note_part)
         return modsec.rebuild(secbody="".join(subsections)), notes
@@ -310,14 +310,14 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
     # Didn't find POS section for form.
     if "Etymology 1" in subsections_by_header:
         highest_etym_section = 1
-        for k, header in subsection_headers:
+        for k, header in header_list:
             # Find last Etymology N subsection. Then skip backwards past L3 sections and insert new section (in case there
             # are References, See also, Further reading, etc. at L3 after all Etymology N sections).
             m = re.search("^Etymology ([0-9]+)$", header)
             if m:
                 highest_etym_section = int(m.group(1))
         for k in range(len(subsections) - 1, 1, -2):
-            if subsection_levels[k] > 3:
+            if levels[k] > 3:
                 break
         subsections[k + 1 : k + 1] = [
             "===Etymology %s===\n" % (highest_etym_section + 1),
@@ -336,10 +336,10 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
             pagemsg("WARNING: Saw %s Etymology sections, can't handle" % len(etymology_sections))
             return
         etymology_ind = etymology_sections[0]
-        if subsection_levels[etymology_ind] != 3:
+        if levels[etymology_ind] != 3:
             pagemsg(
                 "WARNING: Saw Etymology section %s at level %s != 3, can't handle"
-                % (subsections[etymology_ind - 1].strip(), subsection_levels[etymology_ind])
+                % (subsections[etymology_ind - 1].strip(), levels[etymology_ind])
             )
             return
         if etymology_ind > 2:

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 
-def get_head_param(t, pagetitle):
+def _get_head_param(t, pagetitle) -> list[str] | None:
     tn = tname(t)
     if tn in ["ang-adj", "ang-adj-comp", "ang-adj-sup", "ang-adv", "ang-adv-comp", "ang-adv-sup", "ang-verb"]:
         retval = blib.fetch_param_chain(t, "1", "head")
@@ -34,24 +34,25 @@ def process_section(index, pagetitle, sectext):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     parsed = blib.parse_text(sectext)
-    head = None
+    heads = None
     for t in parsed.filter_templates():
-        newhead = get_head_param(t, pagetitle)
-        if newhead is not None:
-            newhead = [blib.remove_links(x) for x in newhead]
-            if head and head != newhead:
-                pagemsg("WARNING: Saw multiple heads %s and %s" % (",".join(head), ",".join(newhead)))
-            head = newhead
-    if not head:
+        newheads = _get_head_param(t, pagetitle)
+        if newheads is not None:
+            newheads = [blib.remove_links(x) for x in newheads]
+            if heads is not None and heads != newheads:
+                pagemsg("WARNING: Saw multiple heads %s and %s" % (",".join(heads), ",".join(newheads)))
+            heads = newheads
+    if heads is None:
         pagemsg("WARNING: Couldn't find head")
     saw_pronun = False
+    pipe_joined_heads = "|".join(heads) if heads is not None else "<<%s>>" % pagetitle
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "IPA":
             if getparam(t, "1") != "ang":
                 pagemsg("WARNING: Wrong-language IPA template: %s" % str(t))
                 continue
-            pagemsg("<from> %s <to> {{ang-IPA|%s}} <end>" % (str(t), "|".join(head) or "<<%s>>" % pagetitle))
+            pagemsg("<from> %s <to> {{ang-IPA|%s}} <end>" % (str(t), pipe_joined_heads))
             saw_pronun = True
         elif tn == "ang-IPA":
             pagemsg("Saw existing pronunciation: %s" % str(t))
@@ -59,7 +60,7 @@ def process_section(index, pagetitle, sectext):
     if not saw_pronun:
         pagemsg(
             "WARNING: Didn't see pronunciation for headword %s <new> {{ang-IPA|%s}} <end>"
-            % (",".join(head), "|".join(head))
+            % (",".join(heads) if heads is not None else "NO HEADS", pipe_joined_heads)
         )
 
 
@@ -69,18 +70,17 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    # retval = blib.find_modifiable_lang_section(text, "Old English", pagemsg)
-    # if retval is None:
-    #  pagemsg("WARNING: Couldn't find Old English section")
-    #  return
-    # sections, j, secbody, sectail, has_non_lang = retval.props()
-    secbody = text
+    modsec = blib.find_modifiable_lang_section(text, "Old English", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
     if "Etymology 1" in secbody:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+        etym_sections = etym_secs.subsections
         if "=Pronunciation=" in etym_sections[0]:
             process_section(index, pagetitle, secbody)
         else:
-            for k in range(2, len(etym_sections), 2):
+            for k, header in etym_secs.header_list:
                 process_section(index, pagetitle, etym_sections[k])
     else:
         process_section(index, pagetitle, secbody)
@@ -93,7 +93,7 @@ def process_section_for_modification(index, pagetitle, sectext, indent_level, ne
     parsed = blib.parse_text(sectext)
     heads = []
     for t in parsed.filter_templates():
-        newheads = get_head_param(t, pagetitle)
+        newheads = _get_head_param(t, pagetitle)
         if newheads:
             newheads = [blib.remove_links(x) for x in newheads]
             for head in newheads:
@@ -115,15 +115,16 @@ def process_section_for_modification(index, pagetitle, sectext, indent_level, ne
             saw_pronun = True
     if saw_pronun:
         return sectext
-    subsecs = re.split("(^%s[^=]*?%s\n)" % ("=" * indent_level, "=" * indent_level), sectext, 0, re.M)
-    for k in range(1, len(subsecs), 2):
-        if "=Pronunciation=" in subsecs[k]:
+    subsecs = blib.split_text_into_subsections(sectext, pagemsg, only_level=indent_level)
+    subsections = subsecs.subsections
+    for k, header in subsecs.header_list:
+        if "=Pronunciation=" in subsections[k]:
             pagemsg("WARNING: Already saw pronunciation section without pronunciation in it")
             return sectext
-    k = 1
-    while k < len(subsecs) and re.search("=(Alternative forms|Etymology)=", subsecs[k]):
+    k = 2
+    while k < len(subsections) and subsecs.headers[k] in ["Alternative forms", "Etymology"]:
         k += 2
-    if k >= len(subsecs):
+    if k >= len(subsections):
         pagemsg("WARNING: No place to insert pronunciation")
         return sectext
     new_pronun_map = dict(new_pronuns)
@@ -140,11 +141,11 @@ def process_section_for_modification(index, pagetitle, sectext, indent_level, ne
             pagemsg("WARNING: No pronun found for head %s" % heads[0])
             return sectext
         newsec = "%sPronunciation%s\n* %s\n\n" % ("=" * indent_level, "=" * indent_level, new_pronun_map[heads[0]])
-    subsecs[k:k] = [newsec]
-    return "".join(subsecs)
+    subsections[k - 1 : k - 1] = [newsec]
+    return "".join(subsections)
 
 
-def process_page_for_modification(index, pagetitle, text, new_pronuns):
+def process_text_on_page_for_modification(index, pagetitle, text, new_pronuns):
     if pagetitle not in new_pronuns:
         return
 
@@ -153,19 +154,20 @@ def process_page_for_modification(index, pagetitle, text, new_pronuns):
 
     pagemsg("Processing")
 
-    retval = blib.find_modifiable_lang_section(text, "Old English", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Old English section")
+    modsec = blib.find_modifiable_lang_section(text, "Old English", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
+
     heads = None
     if "Etymology 1" in secbody:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
+        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+        etym_sections = etym_secs.subsections
+        for k, header in etym_secs.header_list:
             parsed = blib.parse_text(etym_sections[k])
             secheads = []
             for t in parsed.filter_templates():
-                this_heads = get_head_param(t, pagetitle)
+                this_heads = _get_head_param(t, pagetitle)
                 if this_heads:
                     this_heads = [blib.remove_links(x) for x in this_heads]
                     for head in this_heads:
@@ -182,12 +184,11 @@ def process_page_for_modification(index, pagetitle, text, new_pronuns):
                     etym_sections[k] = process_section_for_modification(
                         index, pagetitle, etym_sections[k], 4, new_pronuns[pagetitle]
                     )
-                sections[j] = "".join(etym_sections) + sectail
-                return "".join(sections), "add pronunciation(s) to Old English lemma(s)"
-        pagemsg("All etym sections have same head(s) %s, creating a single pronun section" % ",".join(heads))
+                return modsec.rebuild(secbody="".join(etym_sections)), "add pronunciation(s) to Old English lemma(s)"
+        pagemsg("All etym sections have same head(s) %s, creating a single pronun section" % (
+            "NO HEADS" if heads is None else ",".join(heads)))
     secbody = process_section_for_modification(index, pagetitle, secbody, 3, new_pronuns[pagetitle])
-    sections[j] = secbody + sectail
-    return "".join(sections), "add pronunciation(s) to Old English lemma(s)"
+    return modsec.rebuild(secbody=secbody), "add pronunciation(s) to Old English lemma(s)"
 
 
 parser = blib.create_argparser(
@@ -231,7 +232,7 @@ else:
                 new_pronuns[pagename].append((headword, new_pronun))
 
     def do_process_page_for_modification(index, pagetitle, text):
-        return process_page_for_modification(index, pagetitle, text, new_pronuns)
+        return process_text_on_page_for_modification(index, pagetitle, text, new_pronuns)
 
     blib.do_pagefile_cats_refs(
         args, start, end, do_process_page_for_modification, default_cats=["Old English lemmas"], stdin=True, edit=True

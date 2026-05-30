@@ -3,10 +3,10 @@
 # Try to construct etymologies of adjectives and nouns with various suffixes
 # from nouns and verbs.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import msg, errandmsg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -176,20 +176,23 @@ def process_text_on_page(index, pagetitle, text):
 
     for possible_derived, suffix in possible:
         if possible_derived in derived_lemmas:
-            derived_section = blib.find_lang_section_from_page(possible_derived, "Russian", pagemsg, errandpagemsg)
-            if not derived_section:
-                errandpagemsg("WARNING: Couldn't find Russian section for derived term %s" % possible_derived)
+            possible_derived_text = blib.find_page_text(possible_derived, pagemsg, errandpagemsg)
+            if possible_derived_text is None:
                 continue
+            modsec = blib.find_modifiable_lang_section(possible_derived_text, "Russian", pagemsg)
+            if modsec is None:
+                continue
+            derived_section = modsec.secbody
             if "==Etymology" in derived_section:
                 pagemsg("Skipping derived term %s because it already has an etymology" % possible_derived)
                 continue
-            derived_defns = rulib.find_defns(derived_section)
+            derived_defns = blib.find_defns(derived_section, "ru")
             if not derived_defns:
                 errandpagemsg("WARNING: Couldn't find definitions for derived term %s" % possible_derived)
                 continue
 
             derived_parsed = blib.parse_text(derived_section)
-            derived_lemmas = find_noun_lemmas(
+            page_derived_lemmas = find_noun_lemmas(
                 derived_parsed,
                 possible_derived,
                 errandpagemsg,
@@ -204,7 +207,7 @@ def process_text_on_page(index, pagetitle, text):
                     for lemma in lemmas:
                         add_if_not(derived_lemmas, lemma)
 
-            if not derived_lemmas:
+            if not page_derived_lemmas:
                 errandpagemsg("WARNING: No derived term lemmas for %s" % possible_derived)
                 return
 
@@ -233,12 +236,11 @@ def process_text_on_page(index, pagetitle, text):
                 if any("//" in lemma for lemma in base_lemmas):
                     warnings.append("translit-in-lemma")
 
-                base_section = blib.find_lang_section(text, "Russian", pagemsg)
-                if not base_section:
-                    errandpagemsg("WARNING: Couldn't find Russian section for base")
+                modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+                if modsec is None:
                     return
-
-                base_defns = rulib.find_defns(base_section)
+                base_section = modsec.secbody
+                base_defns = blib.find_defns(base_section, "ru")
                 if not base_defns:
                     errandpagemsg("WARNING: Couldn't find definitions for base")
                     return
@@ -248,13 +250,13 @@ def process_text_on_page(index, pagetitle, text):
 
             suffixes_with_stress = []
             for suf in [suffix, rulib.make_beginning_stressed_ru(suffix), rulib.make_ending_stressed_ru(suffix)]:
-                for derived_lemma in derived_lemmas:
+                for derived_lemma in page_derived_lemmas:
                     if derived_lemma.endswith(suf):
                         add_if_not(suffixes_with_stress, suf)
             msg(
                 "%s %s+-%s%s no-etym possible-suffixed %s //// %s"
                 % (
-                    ",".join(derived_lemmas),
+                    ",".join(page_derived_lemmas),
                     ",".join(base_lemmas),
                     ",".join(suffixes_with_stress),
                     " WARNING:%s" % ",".join(warnings) if warnings else "",
@@ -269,7 +271,6 @@ parser = blib.create_argparser(
     "Find etymologies for adjectives and nouns with common suffixes",
     include_pagefile=True,
     include_stdin=True,
-    canonicalize_pagename=rulib.remove_accents,
 )
 parser.add_argument("--nouns", action="store_true", help="Do derived nouns instead of adjectives")
 parser.add_argument("--adverbs", action="store_true", help="Do derived adverbs")
@@ -294,4 +295,5 @@ blib.do_pagefile_cats_refs(
     edit=True,
     stdin=True,
     default_cats=["Russian adjectives"] if args.adverbs else ["Russian proper nouns", "Russian nouns", "Russian verbs"],
+    canonicalize_pagename=rulib.remove_accents,
 )

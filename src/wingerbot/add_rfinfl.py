@@ -197,10 +197,6 @@ lang_to_name = {
 }
 
 
-def get_indentation_level(header):
-    return len(re.sub("[^=].*", "", header, 0, re.S))
-
-
 def process_text_on_page(index, pagetitle, text, lang, pos):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -223,13 +219,13 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
         pagemsg("Saw 'indeclinable %ss' in text, skipping" % pos)
         return
     while k < len(subsections):
-        if subsecs.subsection_header_dict[k] == cappos:
-            level = subsecs.subsection_levels[k]
+        if subsecs.headers[k] == cappos:
+            level = subsecs.levels[k]
             last_pos = cappos
             endk = k + 2
-            while endk < len(subsections) and subsecs.subsection_levels[endk] > level:
+            while endk < len(subsections) and subsecs.levels[endk] > level:
                 endk += 2
-            if endk < len(subsections) and re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.subsection_header_dict[endk]):
+            if endk < len(subsections) and re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[endk]):
                 pagemsg(
                     "WARNING: Found probably misindented inflection header after ==%s== header: %s"
                     % (cappos, subsections[endk - 1].strip())
@@ -290,7 +286,7 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                     pagemsg("Headword template is indeclinable, not adding {{rfinfl}}")
                 else:
                     for l in range(k, endk, 2):
-                        if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.subsection_header_dict[l]):
+                        if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[l]):
                             secparsed = blib.parse_text(subsections[l])
                             for t in secparsed.filter_templates():
                                 tn = tname(t)
@@ -305,7 +301,7 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                             break
                     else:  # no break
                         insert_k = k + 2
-                        while insert_k < endk and subsecs.subsection_header_dict[insert_k] == "Usage notes":
+                        while insert_k < endk and subsecs.headers[insert_k] == "Usage notes":
                             insert_k += 2
                         if not subsections[insert_k - 2].endswith("\n\n"):
                             subsections[insert_k - 2] = re.sub("\n*$", "\n\n", subsections[insert_k - 2] + "\n\n")
@@ -322,11 +318,11 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
         else:
             m = re.search(
                 r"^(Noun|Proper noun|Pronoun|Determiner|Verb|Adverb|Adjective|Interjection|Conjunction)$",
-                subsecs.subsection_header_dict[k],
+                subsecs.headers[k],
             )
             if m:
                 last_pos = m.group(1)
-            if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.subsection_header_dict[k]):
+            if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[k]):
                 if not last_pos:
                     pagemsg(
                         "WARNING: Found inflection header before seeing any parts of speech: %s"

@@ -74,9 +74,13 @@ def iotate(word):
 
 
 def find_noun(pagename, pagemsg, errandpagemsg, expand_text):
-    section = blib.find_lang_section_from_page(pagename, "Russian", pagemsg, errandpagemsg)
-    if not section:
+    nountext = blib.find_page_text(pagename, pagemsg, errandpagemsg)
+    if nountext is None:
         return None
+    modsec = blib.find_modifiable_lang_section(nountext, "Russian", pagemsg)
+    if modsec is None:
+        return None
+    section = modsec.secbody
     if "==Etymology" in section:
         return -1
     parsed = blib.parse_text(section)
@@ -102,10 +106,14 @@ def find_noun(pagename, pagemsg, errandpagemsg, expand_text):
     return nouns[0]
 
 
-def find_adj(pagename, pagemsg, errandpagemsg, expand_text):
-    section = blib.find_lang_section_from_page(pagename, "Russian", pagemsg, errandpagemsg)
-    if not section:
+def find_adj(pagename, pagemsg, errandpagemsg):
+    adjtext = blib.find_page_text(pagename, pagemsg, errandpagemsg)
+    if adjtext is None:
         return None
+    modsec = blib.find_modifiable_lang_section(adjtext, "Russian", pagemsg)
+    if modsec is None:
+        return None
+    section = modsec.secbody
     if "==Etymology" in section:
         return -1
     parsed = blib.parse_text(section)
@@ -274,7 +282,7 @@ def process_text_on_page(index, pagetitle, text):
                     msg("%s %s+-тель no-etym agent-noun" % (agent_noun, stem))
 
             if verbal_adj in adjectives:
-                stressed_adj = find_adj(verbal_adj, pagemsg, errandpagemsg, expand_text)
+                stressed_adj = find_adj(verbal_adj, pagemsg, errandpagemsg)
                 if stressed_adj == -1:
                     pagemsg("Would add etym for %s but already has one" % verbal_adj)
                 else:
@@ -286,7 +294,6 @@ parser = blib.create_argparser(
     "Find etymologies for Russian verbal nouns in -ние and verbal adjectives in -тельный",
     include_pagefile=True,
     include_stdin=True,
-    canonicalize_pagename=rulib.remove_accents,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
@@ -299,5 +306,6 @@ for i, page in blib.cat_articles("Russian adjectives"):
     adjectives.append(page.title())
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"],
+    canonicalize_pagename=rulib.remove_accents,
 )

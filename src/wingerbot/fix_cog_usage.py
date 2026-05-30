@@ -229,7 +229,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         )
     )
 
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if re.search("^Etymology( [0-9]+)?$", header):
             subsections[k] = blib.rsub_repeatedly(match_cognate_re, replace_with_cog, subsections[k], 0, re.M)
 

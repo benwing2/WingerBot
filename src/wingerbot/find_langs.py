@@ -14,7 +14,7 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
     langs = []
-    for j, langname in secs.section_langs:
+    for j, langname in secs.lang_list:
         langs.append(langname)
     pagemsg("Languages = %s" % ",".join(langs))
 

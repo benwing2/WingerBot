@@ -19,12 +19,12 @@ def process_text_on_page(index, pagetitle, text):
     if newsectext is None:
         pagemsg("WARNING: Can't find new text")
         return
-    retval = lalib.find_latin_section(text, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
         return
+    sections, j, secbody, sectail, has_non_lang = modsec.props()
 
     newsectext = re.sub(r"^==Latin==\n", "", newsectext) + "\n\n"
-    sections, j, secbody, sectail, has_non_lang = retval.props()
 
     notes = []
 

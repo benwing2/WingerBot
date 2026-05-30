@@ -10,21 +10,16 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
-
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Latin", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
-            origt = str(t)
             tn = tname(t)
             if tn in ["la-noun", "la-proper noun"]:
                 param1 = getparam(t, "1")
@@ -41,11 +36,6 @@ parser = blib.create_argparser(
     "Find -ius/-ium nouns with/without short genitive, with corresponding defns",
     include_pagefile=True,
     include_stdin=True,
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

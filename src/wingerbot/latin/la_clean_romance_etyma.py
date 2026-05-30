@@ -294,9 +294,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
-    )
+    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
     if retval is None:
         return
     sections, j, secbody, sectail, has_non_lang = retval.props()
@@ -803,11 +801,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Clean up Latin etyma in Romance etymologies", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 parser.add_argument("--langcode", required=True, help="Language code of language to do")
 parser.add_argument("--langname", required=True, help="Language name of language to do")
 args = parser.parse_args()

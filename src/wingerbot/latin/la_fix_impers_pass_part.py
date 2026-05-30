@@ -40,7 +40,7 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
         lemma,
     )
     saw_participle = False
-    for k, header in l3subsecs.subsection_headers:
+    for k, header in l3subsecs.header_list:
         if header == "Participle":
             if saw_participle:
                 pagemsg("WARNING: Saw multiple participles, skipping")
@@ -50,7 +50,7 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
             notes.append("correct participle %s of %s to be impersonal" % (participle, lemma))
     secbody = "".join(subsections)
     if not saw_participle:
-        for k, header in l3subsecs.subsection_headers:
+        for k, header in l3subsecs.header_list:
             insert_before = False
             if header == "References":
                 pagemsg("Inserting new participle subsection before references subsection")
@@ -85,6 +85,8 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         if tname(t) == "la-conj":
             inflargs = lalib.generate_verb_forms(str(t), errandpagemsg, expand_text)
+            if inflargs is None:
+                continue
             supforms = inflargs.get("sup_acc", "")
             if supforms:
                 supforms = supforms.split(",")

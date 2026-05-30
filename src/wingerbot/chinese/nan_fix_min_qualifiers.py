@@ -374,9 +374,10 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
     text = blib.safe_page_text(page, errandpagemsg)
     if not text:
         return "Error fetching text for %s" % linkmsg
-    chinese_text = blib.find_lang_section(text, "Chinese", pagemsg)
-    if chinese_text is None:
-        return "Could locate Chinese section for %s" % linkmsg
+    modsec = blib.find_modifiable_lang_section(text, "Chinese", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
     def find_defns(sectext):
         lines = sectext.split("\n")
@@ -555,12 +556,12 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
                 )
         return lects_seen or [], saw_zh_pron, saw_zh_label
 
-    if "Etymology 1" in chinese_text or "Pronunciation 1" in chinese_text:
-        subsecs = blib.split_text_into_subsections(chinese_text, pagemsg)
+    if "Etymology 1" in secbody or "Pronunciation 1" in secbody:
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
         etym_pron_sectext = []
         index_of_secbegin = None
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if re.search("^(Etymology|Pronunciation) +[0-9]$", header):
                 if index_of_secbegin:
                     etym_pron_sectext.append(
@@ -613,7 +614,7 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
             )
         return southern_min_types
 
-    retval = find_section_min_types(chinese_text)
+    retval = find_section_min_types(secbody)
     if type(retval) is str:
         return retval
     section_min_types, saw_zh_pron, saw_zh_label = retval
@@ -627,7 +628,7 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
             saw_msgs.append("saw {{lb|zh|...}}")
         else:
             saw_msgs.append("didn't see any {{lb|zh|...}}")
-        parsed = blib.parse_text(chinese_text)
+        parsed = blib.parse_text(secbody)
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn == "zh-see":

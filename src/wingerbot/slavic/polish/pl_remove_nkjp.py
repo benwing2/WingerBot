@@ -15,15 +15,13 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        pagetext, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(pagetext, "Polish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "References":
             newsubsec = re.sub(r"^:?\*\s*\{\{R:pl:NKJP\}\}\n", "", subsections[k], 0, re.M)
             if newsubsec != subsections[k]:
@@ -38,11 +36,6 @@ def process_text_on_page(index, pagetitle, pagetext):
 
 
 parser = blib.create_argparser("Remove {{R:pl:NKJP}} from Polish terms", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

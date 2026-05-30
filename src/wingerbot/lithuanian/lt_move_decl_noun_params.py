@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, tname, pname, msg
 
 
 def process_text_on_page(pageindex, pagetitle, text):
@@ -12,12 +12,10 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Lithuanian", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Lithuanian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
@@ -156,21 +154,13 @@ def process_text_on_page(pageindex, pagetitle, text):
                 pagemsg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert plural-only {{lt-decl-noun}} to {{lt-decl-noun-unc}}")
 
-    secbody = str(parsed)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
+    return modsec.rebuild(secbody=str(parsed)), notes
 
     return text, notes
 
 
 parser = blib.create_argparser(
     "Convert {{lt-decl-noun-stress}} to {{lt-decl-noun}}", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

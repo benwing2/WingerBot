@@ -15,16 +15,14 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        pagetext, None if args.partial_page else "Old Church Slavonic", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(pagetext, "Old Church Slavonic", pagemsg, force_final_nls=True)
     if modsec is None:
         return
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
     # Go through each section in turn, looking for Descendants sections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Pronunciation":
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
@@ -50,11 +48,6 @@ parser = blib.create_argparser(
     "Remove Pronunciation sections with {{cu-IPA}} from Old Church Slavonic terms",
     include_pagefile=True,
     include_stdin=True,
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

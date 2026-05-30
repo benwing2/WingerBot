@@ -850,10 +850,6 @@ def synchronize_stems(full, stem):
     return i
 
 
-def find_defns(text):
-    return blib.find_defns(text, "la")
-
-
 def slot_matches_spec(slot, spec):
     if spec == "all":
         return True
@@ -1002,8 +998,8 @@ def find_heads_and_defns(text, pagemsg) -> FindHeadsAndDefnsResult | None:
         if k < 2 or (k % 2) == 1:
             parsed_subsections.append(blib.parse_text(subsections[k]))
             continue
-        level = subsecs.subsection_levels[k]
-        header = subsecs.subsection_header_dict[k]
+        level = subsecs.levels[k]
+        header = subsecs.headers[k]
         headword_templates_in_section = []
 
         if most_recent_headword is not None and most_recent_headword.level >= level:

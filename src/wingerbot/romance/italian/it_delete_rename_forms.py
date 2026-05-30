@@ -33,7 +33,7 @@ def remove_anagram_from_page(index, page, pagetitle_to_remove):
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Anagrams":
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
@@ -88,7 +88,7 @@ def process_page_for_anagrams(index, page, modify_this_page):
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Anagrams":
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():

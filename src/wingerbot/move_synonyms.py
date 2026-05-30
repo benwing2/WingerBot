@@ -16,9 +16,7 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
-    )
+    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
     if retval is None:
         return
     sections, j, secbody, sectail, has_non_lang = retval.props()
@@ -28,7 +26,7 @@ def process_text_on_page(pageindex, pagetitle, text):
     lemma_defn_subsection = None
     non_lemma_defn_subsection = None
     num_defn_subsections_seen = 0
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header.startswith("Etymology"):
             lemma_defn_subsection = None
             non_lemma_defn_subsection = None
@@ -46,7 +44,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             else:  # no break
                 lemma_defn_subsection = k
                 num_defn_subsections_seen += 1
-            defn_subsection_level = subsecs.subsection_levels[k]
+            defn_subsection_level = subsecs.levels[k]
             saw_nyms_already = set()
         if header in ["Synonyms", "Antonyms"]:
             syntype = header.lower()[:-1]
@@ -55,7 +53,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                     "WARNING: Encountered %ss section #%s without preceding definition section" % (syntype, k // 2 + 1)
                 )
                 continue
-            synant_subsection_level = subsecs.subsection_levels[k]
+            synant_subsection_level = subsecs.levels[k]
             if num_defn_subsections_seen > 1 and synant_subsection_level <= defn_subsection_level:
                 pagemsg(
                     "WARNING: Saw %s definition sections followed by %s section #%s at same level or higher, skipping section"
@@ -779,11 +777,6 @@ def process_text_on_page(pageindex, pagetitle, text):
 
 parser = blib.create_argparser(
     "Convert =Synonyms= sections to inline synonyms", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 parser.add_argument("--langcode", required=True, help="Lang code of language to do.")
 parser.add_argument("--langname", required=True, help="Lang name of language to do.")

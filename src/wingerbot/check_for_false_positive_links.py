@@ -16,7 +16,7 @@ def find_english_pages(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     saw_langs = set()
     saw_english = False
-    for j, langname in secs.section_langs:
+    for j, langname in secs.lang_list:
         if langname == "English":
             saw_english = True
         else:

@@ -14,13 +14,13 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, None if args.partial_page else "Portuguese", pagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "Portuguese", pagemsg)
     if modsec is None:
         return
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header not in ["Verb", "Participle"]:
             continue
         parsed = blib.parse_text(subsections[k])
@@ -142,11 +142,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser(
     "Fix Portuguese verb form headers that should be past participle forms", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

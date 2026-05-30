@@ -95,7 +95,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         return newtext
 
     # Go through each section in turn, looking for Etymology sections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if re.match("^Etymology( [0-9]+)?$", header):
             sectext = subsections[k]
             # First try for {{etyl|DESTFAMILY|SOURCE}} {{m|und|...

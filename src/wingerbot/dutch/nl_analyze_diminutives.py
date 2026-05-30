@@ -161,9 +161,7 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Dutch", pagemsg, force_final_nls=True
-    )
+    retval = blib.find_modifiable_lang_section(text, "Dutch", pagemsg, force_final_nls=True)
     if retval is None:
         return
 
@@ -225,11 +223,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Analyze {{nl-noun}} diminutive usage", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Dutch' and has no ==Dutch== header.",
-)
 parser.add_argument("--fix", action="store_true", help="Modify diminutives to use shortcut notation.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

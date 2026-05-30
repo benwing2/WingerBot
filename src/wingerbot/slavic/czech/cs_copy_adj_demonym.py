@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, tname, pname
 
 deny_list_pages = {
     "Charta 77",
@@ -95,17 +95,14 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("Skipping page because in deny_list_pages")
         return
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Czech", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Czech", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     parsed = blib.parse_text(secbody)
 
     headword_template = None
-    col_auto_template = None
     col_auto_items_to_keep = []
     adjs = []
     dems = []
@@ -121,7 +118,6 @@ def process_text_on_page(index, pagetitle, text):
                     "WARNING: Multiple cs-noun or cs-proper noun templates %s and %s" % (str(headword_template), str(t))
                 )
             headword_template = t
-            col_auto_template = None
             col_auto_items_to_keep = []
             adjs = blib.fetch_param_chain(t, "adj")
             dems = blib.fetch_param_chain(t, "dem")
@@ -221,20 +217,13 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("remove now empty Czech 'Derived/Related terms' section")
                 secbody = newtext
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(
     "Copy related adjectives, demonyms and female demonyms from {{col-auto}} to headword template",
     include_pagefile=True,
     include_stdin=True,
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

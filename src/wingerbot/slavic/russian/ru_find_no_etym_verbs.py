@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, errandmsg, tname
@@ -10,10 +10,13 @@ lemmas = []
 
 
 def is_transitive_verb(pagename, pagemsg, errandpagemsg):
-    verb_section = blib.find_lang_section_from_page(pagename, "Russian", pagemsg, errandpagemsg)
-    if not verb_section:
-        errandpagemsg("WARNING: Couldn't find Russian section for verb %s" % pagename)
+    verbtext = blib.find_page_text(pagename, pagemsg, errandpagemsg)
+    if verbtext is None:
         return False
+    modsec = blib.find_modifiable_lang_section(verbtext, "Russian", pagemsg)
+    if modsec is None:
+        return False
+    verb_section = modsec.secbody
 
     parsed = blib.parse_text(verb_section)
     for t in parsed.filter_templates():
@@ -29,22 +32,19 @@ def is_transitive_verb(pagename, pagemsg, errandpagemsg):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
-    section = blib.find_lang_section(text, "Russian", pagemsg)
-    if not section:
-        errandpagemsg("WARNING: Couldn't find Russian section")
+    if "==Etymology" in secbody:
         return
-
-    if "==Etymology" in section:
+    if rulib.check_for_alt_yo_terms(secbody, pagemsg):
         return
-    if rulib.check_for_alt_yo_terms(section, pagemsg):
-        return
-    parsed = blib.parse_text(section)
+    parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
         if tname(t) in ["ru-participle of"]:
             pagemsg("Skipping participle")
@@ -55,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         if tname(t) in ["passive of", "passive form of"]:
             saw_passive = True
-    if not saw_passive and ("passive of" in section or "passive form of" in section):
+    if not saw_passive and ("passive of" in secbody or "passive form of" in secbody):
         saw_bad_passive = True
     splits = []
     for t in parsed.filter_templates():
@@ -184,15 +184,18 @@ def process_text_on_page(index, pagetitle, text):
             continue
         if base_terms_no_accent[0] not in lemmas:
             continue
-        derived_defns = rulib.find_defns(section)
+        derived_defns = blib.find_defns(secbody, "ru")
         if not derived_defns:
             errandpagemsg("WARNING: Couldn't find definitions for derived term %s" % ",".join(derived_terms))
             continue
-        base_section = blib.find_lang_section_from_page(base_terms_no_accent[0], "Russian", pagemsg, errandpagemsg)
-        if not base_section:
-            errandpagemsg("WARNING: Couldn't find Russian section for base term %s" % base_terms_no_accent[0])
+        base_term_text = blib.find_page_text(base_terms_no_accent[0], pagemsg, errandpagemsg)
+        if base_term_text is None:
             continue
-        base_defns = rulib.find_defns(base_section)
+        modsec = blib.find_modifiable_lang_section(base_term_text, "Russian", pagemsg)
+        if modsec is None:
+            continue
+        base_section = modsec.secbody
+        base_defns = blib.find_defns(base_section, "ru")
         if not base_defns:
             errandpagemsg("WARNING: Couldn't find definitions for base term %s" % ",".join(base_terms))
             continue

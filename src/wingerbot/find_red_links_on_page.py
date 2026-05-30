@@ -58,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
                     if langname in secs.sections_by_lang:
                         outtext = "exists in %s" % langname
                     else:
-                        existing_langs = [lang for secno, lang in secs.section_langs]
+                        existing_langs = [lang for secno, lang in secs.lang_list]
                         outtext = "exists in other languages %s" % ", ".join(existing_langs)
             else:
                 outtext = "does not exist"

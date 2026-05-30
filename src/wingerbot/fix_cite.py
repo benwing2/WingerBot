@@ -209,7 +209,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("reference-book -> cite-book%s" % (fixed_params and " and fix book cite params" or ""))
                 pagemsg("Replacing %s with %s in %s" % (origt, str(t), in_what))
 
-    for k, header in [(0, "")] + subsecs.subsection_headers:
+    for k, header in [(0, "")] + subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         if k > 0 and header == "References":
             replace_in_reference(parsed, "==References== section")

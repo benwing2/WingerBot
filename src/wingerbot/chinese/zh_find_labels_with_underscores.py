@@ -16,14 +16,12 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    if args.partial_page:
-        sectext = text
-    else:
-        if not re.search("== *Chinese *==", text):
-            return
-        sectext = blib.find_lang_section(text, args.partial_page and "Chinese" or None, None)
-    if sectext and re.search(r"\{\{(%s)\|" % "|".join(blib.label_templates), sectext):
-        parsed = blib.parse_text(sectext)
+    modsec = blib.find_modifiable_lang_section(text, "Chinese", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+    if re.search(r"\{\{(%s)\|" % "|".join(blib.label_templates), secbody):
+        parsed = blib.parse_text(secbody)
 
         for t in parsed.filter_templates():
             tn = tname(t)
@@ -39,11 +37,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser(
     "Find Chinese labels with underscores between them", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Chinese' and has no ==Chinese== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -190,11 +190,10 @@ def snarf_relational_adjs(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    # retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
-    # if retval is None:
-    #  pagemsg("WARNING: Couldn't find Russian section")
-    #  return
-    # sections, j, secbody, sectail, has_non_lang = retval.props()
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    sections, j, secbody, sectail, has_non_lang = retval.props()
     secbody = text
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)

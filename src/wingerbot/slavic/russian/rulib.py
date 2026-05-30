@@ -745,10 +745,6 @@ def check_for_alt_yo_terms(text, pagemsg):
     return False
 
 
-def find_defns(text):
-    return blib.find_defns(text, "ru")
-
-
 ################################ Test code ##########################
 
 num_failed = 0

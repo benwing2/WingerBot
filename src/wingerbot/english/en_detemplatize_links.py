@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    origtext = text
     notes = []
 
     def get_templated_self_link(link):
@@ -94,20 +93,13 @@ def process_text_on_page(index, pagetitle, text):
             new_lines.append(line)
         return "\n".join(new_lines)
 
-    if args.langname:
-        retval = blib.find_modifiable_lang_section(text, None if args.partial_page else args.langname, pagemsg)
-        if retval is None:
-            pagemsg("WARNING: Couldn't find %s section" % args.langname)
-            return
-        sections, j, secbody, sectail, has_non_lang = retval.props()
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+    secbody = fix_sec_links(secbody)
 
-        secbody = fix_sec_links(secbody)
-        sections[j] = secbody + sectail
-        text = "".join(sections)
-    else:
-        text = fix_sec_links(text)
-
-    return text, notes
+    return text.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(
@@ -116,11 +108,6 @@ parser = blib.create_argparser(
 parser.add_argument("--langname", help="Language to do (optional)")
 parser.add_argument(
     "--self-links-use-raw", action="store_true", help="Self-links use [[#English|LINK]] rather than {{l|en|LINK}}"
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

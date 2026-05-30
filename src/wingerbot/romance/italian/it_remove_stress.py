@@ -112,7 +112,7 @@ def process_text_on_page(index, pagetitle, text):
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         it_stress_template = None
         it_hyph_template = None

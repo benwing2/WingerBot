@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 change_alter_to_alt = True
 
@@ -12,7 +12,7 @@ def process_text_in_section(secbody, pagemsg):
     notes = []
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Alternative forms":
             subsectext = subsecs.subsections[k]
             parsed = blib.parse_text(subsectext)
@@ -322,9 +322,7 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
     if modsec is None:
         return
     newsecbody, notes = process_text_in_section(modsec.secbody, pagemsg)
@@ -336,12 +334,7 @@ parser = blib.create_argparser(
     include_pagefile=True,
     include_stdin=True,
 )
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
-parser.add_argument("--langname", help="Language name. Required if `--partial-page` isn't given.")
+parser.add_argument("--langname", help="Language name. If omitted, do all text on the page (which may be a partial page without L2 header).")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

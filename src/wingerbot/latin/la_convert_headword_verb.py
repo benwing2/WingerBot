@@ -69,7 +69,7 @@ def process_text_on_page(index, pagetitle, text):
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
     saw_a_template = False
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         la_verb_template = None
         la_conj_template = None

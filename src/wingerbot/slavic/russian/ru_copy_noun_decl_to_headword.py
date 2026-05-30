@@ -29,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
     num_ru_proper_noun_subs = 0
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         retval = process_page_section(index, pagetitle, subsections[k])
         if retval:
             (

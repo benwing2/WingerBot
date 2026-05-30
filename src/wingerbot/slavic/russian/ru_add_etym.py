@@ -196,7 +196,7 @@ def process_line(index, line):
         subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
         subsections = subsecs.subsections
         replaced_etym = False
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if header in ["Etymology", "Etymology 1"]:
                 if override_etym:
                     subsections[k] = etymbody
@@ -209,7 +209,7 @@ def process_line(index, line):
             return modsec.rebuild(secbody="".join(subsections)), notes
 
         insert_before = 1
-        if subsecs.subsection_header_dict[insert_before + 1] == "Alternative forms":
+        if subsecs.headers[insert_before + 1] == "Alternative forms":
             insert_before += 2
 
         subsections[insert_before : insert_before] = etymtext

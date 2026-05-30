@@ -27,7 +27,7 @@ def process_page(index, page, contents, lang, verbose, comment):
         curtext = page.text
         secs = blib.split_text_into_sections(curtext, pagemsg)
         sections = secs.sections
-        for j, langname in secs.section_langs:
+        for j, langname in secs.lang_list:
             if langname == lang:
                 errandpagemsg("WARNING: Already found %s section" % lang)
                 return

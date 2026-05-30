@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -16,8 +16,6 @@ def process_text_on_page(index, pagetitle, text):
 
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    notes = []
 
     if not re.search("[иы]й$", pagetitle):
         pagemsg("Skipping adjective not in -ый or -ий")
@@ -39,14 +37,14 @@ def process_text_on_page(index, pagetitle, text):
             if len(heads) > 1:
                 pagemsg("Skipping adjective with multiple heads: %s" % ",".join(heads))
                 continue
-            noun_page = pywikibot.Page(site, noun)
-            noun_text = blib.safe_page_text(page, errandpagemsg)
+            noun_text = blib.safe_page_text(noun_page, errandpagemsg)
             if not noun_text:
                 pagemsg("Page %s doesn't exist or is empty" % noun)
                 continue
-            nounsection = blib.find_lang_section(noun_text, "Russian", pagemsg)
-            if not nounsection:
+            modsec = blib.find_modifiable_lang_section(noun_text, "Russian", pagemsg)
+            if modsec is None:
                 continue
+            nounsection = modsec.secbody
             if "==Etymology" in nounsection:
                 pagemsg("Noun %s already has etymology" % noun)
                 continue
@@ -62,7 +60,6 @@ parser = blib.create_argparser(
     "Try to construct etymologies of nouns in -ость from adjectives",
     include_pagefile=True,
     include_stdin=True,
-    canonicalize_pagename=rulib.remove_accents,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
@@ -71,5 +68,6 @@ for i, page in blib.cat_articles("Russian nouns"):
     nouns.append(str(page.title()))
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjectives"]
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjectives"],
+    canonicalize_pagename=rulib.remove_accents,
 )

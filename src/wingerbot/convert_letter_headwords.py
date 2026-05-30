@@ -229,7 +229,7 @@ def process_text_on_page(index, pagetitle, text):
     notes_replace_ordinal_def = []
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
-    for j, seclang in secs.section_langs:
+    for j, seclang in secs.lang_list:
         sectext = sections[j]
         if seclang not in lang_data.languages_by_canonical_name:
             pagemsg("WARNING: Unrecognized language '%s' in section %s" % (seclang, j))

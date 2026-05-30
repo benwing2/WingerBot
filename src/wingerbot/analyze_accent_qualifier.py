@@ -59,7 +59,7 @@ def process_text_on_page(index, pagename, text):
                 else:
                     too_many_pages_for_qualifiers_by_lang[qual][lang] = True
 
-    for j, lang in secs.section_langs:
+    for j, lang in secs.lang_list:
         sectext = sections[j]
         if not re.search(r"\{\{ *(IPA|a(ccent)?) *\|", sectext):
             continue

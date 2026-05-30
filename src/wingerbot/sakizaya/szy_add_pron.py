@@ -14,16 +14,15 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Sakizaya", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Sakizaya", pagemsg, force_final_nls=True)
     if modsec is None:
         return
+    secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
 
-    parsed = blib.parse_text(modsec.secbody)
+    parsed = blib.parse_text(secbody)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -40,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("add top-level Sakizaya pron %s" % new_pron_template)
 
     k = 2
-    while k < len(subsections) and subsecs.subsection_header_dict[k] in ["Alternative forms", "Etymology"]:
+    while k < len(subsections) and subsecs.headers[k] in ["Alternative forms", "Etymology"]:
         k += 2
     if k - 1 >= len(subsections):
         pagemsg("WARNING: No lemma or non-lemma section at top level")
@@ -51,11 +50,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Add Sakizaya pronunciations", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

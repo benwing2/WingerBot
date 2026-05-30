@@ -232,7 +232,7 @@ def process_text_on_page(index, pagetitle, pagetext):
     # triggers a needless warning.
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Verb" and re.search(r"\{\{head\|ca\|verb form[|}]", subsections[k]):
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():

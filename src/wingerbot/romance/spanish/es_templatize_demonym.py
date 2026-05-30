@@ -32,9 +32,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     origtext = text
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Spanish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Spanish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
     sections, j, secbody, sectail, has_non_lang = modsec.props()
@@ -47,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
     rawest_toponym_to_marked_up = {}
     need_to_remove_cat = [False]
 
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         def raw_toponym_to_toponym(raw_toponym):
             toponym = None
             rawest_toponym = None
@@ -334,11 +332,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Templatize Spanish demonyms", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Spanish' and has no ==Spanish== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

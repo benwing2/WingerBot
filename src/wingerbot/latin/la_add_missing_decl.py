@@ -55,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
     num_declension_headers = 0
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header in ["Declension", "Inflection"]:
             num_declension_headers += 1
     if num_declension_headers >= num_noun_headword_templates:
@@ -65,7 +65,7 @@ def process_text_on_page(index, pagetitle, text):
         )
         return
 
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if headword_template in subsections[k]:
             pagemsg("Inserting declension section after subsection %s" % k)
             subsections[k] = subsections[k].rstrip("\n") + "\n\n"

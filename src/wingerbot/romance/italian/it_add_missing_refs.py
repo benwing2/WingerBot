@@ -12,13 +12,12 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
     if modsec is None:
         return
+    secbody = modsec.secbody
 
-    parsed = blib.parse_text(modsec.secbody)
+    parsed = blib.parse_text(secbody)
     needs_refs = False
 
     for t in parsed.filter_templates():
@@ -39,15 +38,15 @@ def process_text_on_page(index, pagetitle, text):
                 needs_refs = True
 
     if needs_refs:
-        if re.search(r"(<references\s*/?\s*>|\{\{reflist)", modsec.secbody):
+        if re.search(r"(<references\s*/?\s*>|\{\{reflist)", secbody):
             pagemsg("Already saw <references /> or {{reflist}}")
             return
 
-        subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
 
         saw_references_sec = False
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if header == "References":
                 if saw_references_sec:
                     pagemsg("WARNING: Saw two ===References=== sections")
@@ -58,7 +57,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if not saw_references_sec:
             k = len(subsections) - 1
-            while k >= 2 and subsecs.subsection_header_dict[k] in ["Anagrams", "Further reading"]:
+            while k >= 2 and subsecs.headers[k] in ["Anagrams", "Further reading"]:
                 k -= 2
             if k < 2:
                 pagemsg("WARNING: No lemma or non-lemma section")
@@ -73,11 +72,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser(
     "Add missing ===References=== sections in Italian lemmas", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Italian' and has no ==Italian== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -26,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
     secbody = modsec.secbody
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         found_adj_comp = False
         found_adv_comp = False

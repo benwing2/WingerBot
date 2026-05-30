@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot import infltags
 
@@ -14,9 +14,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Bulgarian", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Bulgarian", pagemsg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -41,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
     above_pron_1_sec_0 = subsections[0]
     above_pron_1 = None
     pronsec = None
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header.startswith("Pronunciation"):
             if header == "Pronunciation 1":
                 above_pron_1 = above_pron_1_sec_0 + "".join(pronsec_text_parts)
@@ -197,11 +195,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser(
     "Reformat Bulgarian pages with ==Pronunciation 1==", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

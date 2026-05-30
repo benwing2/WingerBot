@@ -56,23 +56,22 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
+    secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
 
-    has_etym_sections = "==Etymology 1==" in modsec.secbody
+    has_etym_sections = "==Etymology 1==" in secbody
     if has_etym_sections:
         # Check if either Pronunciation with pronunciation template above Etymology 1, or every
         # Etymology N section has Pronunciation with pronunciation template.
         saw_etym_1 = False
         cur_etym_header = None
         saw_pron_in_etym = False
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if header == "Pronunciation":
                 secparsed = blib.parse_text(subsections[k])
                 for t in secparsed.filter_templates():
@@ -110,7 +109,7 @@ def process_text_on_page(index, pagetitle, text):
             )
             return
 
-    parsed = blib.parse_text(modsec.secbody)
+    parsed = blib.parse_text(secbody)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -222,7 +221,7 @@ def process_text_on_page(index, pagetitle, text):
             break
     else:  # no break
         k = 2
-        while k < len(subsections) and subsecs.subsection_header_dict[k] in ["Alternative forms", "Etymology"]:
+        while k < len(subsections) and subsecs.headers[k] in ["Alternative forms", "Etymology"]:
             k += 2
         if k - 1 >= len(subsections):
             pagemsg("WARNING: No lemma or non-lemma section at top level")
@@ -233,11 +232,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Add Polish non-lemma pronunciations", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 parser.add_argument(
     "--ignore-lemma-respelling", action="store_true", help="Add {{pl-p}} to nonlemmas irrespective of lemma respelling."
 )

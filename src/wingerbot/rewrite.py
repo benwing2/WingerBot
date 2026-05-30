@@ -46,7 +46,7 @@ def process_text_on_page(
         foundlang = False
         secs = blib.split_text_into_sections(text, pagemsg)
 
-        for j, header in secs.section_langs:
+        for j, header in secs.lang_list:
             if header == lang_only:
                 if foundlang:
                     pagemsg("WARNING: Found multiple %s sections, skipping page" % lang_only)

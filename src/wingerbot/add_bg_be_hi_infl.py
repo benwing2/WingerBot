@@ -53,10 +53,6 @@ I = "\u093f"
 AA = "\u093e"
 
 
-def get_indentation_level(header):
-    return len(re.sub("[^=].*", "", header, 0, re.S))
-
-
 def process_text_on_page(index, pagetitle, text, pos):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -68,24 +64,27 @@ def process_text_on_page(index, pagetitle, text, pos):
 
     origtext = text
 
-    secbody, sectail = blib.split_trailing_separator_and_categories(text)
+    modsec = blib.find_modifiable_lang_section(text, None, pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-    k = 1
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    k = 2
     last_pos = None
     while k < len(subsections):
-        if re.search(r"=\s*%s\s*=" % cappos, subsections[k]):
-            level = get_indentation_level(subsections[k])
+        if subsecs.headers[k] == cappos:
+            level = subsecs.levels[k]
             last_pos = cappos
             endk = k + 2
-            while endk < len(subsections) and get_indentation_level(subsections[endk]) > level:
+            while endk < len(subsections) and subsecs.levels[endk] > level:
                 endk += 2
-            pos_text = "".join(subsections[k:endk])
+            pos_text = "".join(subsections[k - 1 : endk - 1])
             parsed = blib.parse_text(pos_text)
             head = None
             headt = None
             inflt = None
-            found_rfinfl = False
             found_bg_pre_reform = False
             found_hi_head_needing_manual = False
             hi_head_gender = None
@@ -189,8 +188,8 @@ def process_text_on_page(index, pagetitle, text, pos):
                     else:
                         infl = "{{%s|%s<>}}" % (pos_to_new_style_infl_template[pos] % args.lang, head or pagetitle)
                     for l in range(k, endk, 2):
-                        if re.search(r"=\s*(Declension|Inflection|Conjugation)\s*=", subsections[l]):
-                            secparsed = blib.parse_text(subsections[l + 1])
+                        if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[l]):
+                            secparsed = blib.parse_text(subsections[l])
                             for t in secparsed.filter_templates():
                                 tn = tname(t)
                                 if tname(t) != "rfinfl":
@@ -200,9 +199,10 @@ def process_text_on_page(index, pagetitle, text, pos):
                                     )
                                     break
                             else:  # no break
-                                m = re.search(r"\A(.*?)(\n*)\Z", subsections[l + 1], re.S)
+                                m = re.search(r"\A(.*?)(\n*)\Z", subsections[l], re.S)
+                                assert m is not None  # should always match
                                 sectext, final_newlines = m.groups()
-                                subsections[l + 1] = infl + final_newlines
+                                subsections[l] = infl + final_newlines
                                 pagemsg("Replaced existing decl text <%s> with <%s>" % (sectext, infl))
                                 notes.append(
                                     "replace %s decl text <%s> with <%s>"
@@ -211,11 +211,11 @@ def process_text_on_page(index, pagetitle, text, pos):
                             break
                     else:  # no break
                         insert_k = k + 2
-                        while insert_k < endk and "Usage notes" in subsections[insert_k]:
+                        while insert_k < endk and subsecs.headers[insert_k] == "Usage notes":
                             insert_k += 2
-                        if not subsections[insert_k - 1].endswith("\n\n"):
-                            subsections[insert_k - 1] = re.sub("\n*$", "\n\n", subsections[insert_k - 1] + "\n\n")
-                        subsections[insert_k:insert_k] = [
+                        if not subsections[insert_k - 2].endswith("\n\n"):
+                            subsections[insert_k - 2] = re.sub("\n*$", "\n\n", subsections[insert_k - 2] + "\n\n")
+                        subsections[insert_k - 1 : insert_k - 1] = [
                             "%s%s%s\n"
                             % ("=" * (level + 1), "Conjugation" if pos == "verb" else "Declension", "=" * (level + 1)),
                             infl + "\n\n",
@@ -229,26 +229,25 @@ def process_text_on_page(index, pagetitle, text, pos):
             k = endk
         else:
             m = re.search(
-                r"=\s*(Noun|Proper noun|Pronoun|Determiner|Verb|Adjective|Adverb|Interjection|Conjunction)\s*=",
-                subsections[k],
+                r"^(Noun|Proper noun|Pronoun|Determiner|Verb|Adjective|Adverb|Interjection|Conjunction)$",
+                subsecs.headers[k],
             )
             if m:
                 last_pos = m.group(1)
-            if re.search(r"=\s*(Declension|Inflection|Conjugation)\s*=", subsections[k]):
+            if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[k]):
                 if not last_pos:
                     pagemsg(
                         "WARNING: Found inflection header before seeing any parts of speech: %s"
-                        % (subsections[k].strip())
+                        % (subsections[k - 1].strip())
                     )
                 elif last_pos == cappos:
                     pagemsg(
                         "WARNING: Found probably misindented inflection header after ==%s== header: %s"
-                        % (cappos, subsections[k].strip())
+                        % (cappos, subsections[k - 1].strip())
                     )
             k += 2
 
-    secbody = "".join(subsections)
-    text = secbody + sectail
+    text = modsec.rebuild(secbody="".join(subsections))
     text = re.sub("\n\n\n+", "\n\n", text)
     if origtext != text:
         notes.append("condense 3+ newlines into 2")

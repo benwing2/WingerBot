@@ -12,16 +12,15 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
-    section = blib.find_lang_section(text, "Russian", pagemsg)
-    if not section:
+    if rulib.check_for_alt_yo_terms(secbody, pagemsg):
         return
 
-    if rulib.check_for_alt_yo_terms(section, pagemsg):
-        return
-
-    defns = rulib.find_defns(section)
+    defns = blib.find_defns(secbody, "ru")
     if not defns:
         pagemsg("Couldn't find definitions for %s" % pagetitle)
         return
@@ -34,11 +33,11 @@ parser = blib.create_argparser(
     "Fetch definitions of specified Russian terms",
     include_pagefile=True,
     include_stdin=True,
-    canonicalize_pagename=rulib.remove_accents,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"]
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"],
+    canonicalize_pagename=rulib.remove_accents,
 )

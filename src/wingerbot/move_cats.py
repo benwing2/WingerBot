@@ -25,7 +25,7 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
 
-    for j, seclangname in secs.section_langs:
+    for j, seclangname in secs.lang_list:
 
         def matches(cat, cat_type):
             cat = cat.replace("_", " ")

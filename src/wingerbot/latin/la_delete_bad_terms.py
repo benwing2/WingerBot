@@ -23,7 +23,7 @@ def process_text_on_page(index, pagetitle, text):
     subsections = subsecs.subsections
     saw_head = False
     saw_bad_template = False
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             tn = tname(t)

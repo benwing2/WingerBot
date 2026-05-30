@@ -121,7 +121,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
         subsections = subsecs.subsections
 
         # Go through each subsection
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             notes = []
 
             def add_note(note):

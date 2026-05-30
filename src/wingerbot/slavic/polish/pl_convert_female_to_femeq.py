@@ -34,15 +34,13 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
 
         # First do 'female'
@@ -227,11 +225,6 @@ parser = blib.create_argparser(
     "Convert raw Polish 'female' defns into {{femeq}} and remove 'male' from defns",
     include_pagefile=True,
     include_stdin=True,
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Polish' and has no ==Polish== header.",
 )
 parser.add_argument("--warn-on-woman", action="store_true", help="Warn if 'woman' seen in line.")
 args = parser.parse_args()

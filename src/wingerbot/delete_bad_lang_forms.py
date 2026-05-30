@@ -53,8 +53,9 @@ def delete_form_1(index, page, lemma, formind, formval):
     # FIXME!
 
     #if "==Etymology 1==" in secbody:
-    #    etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-    #    for k in range(2, len(etym_sections), 2):
+    #    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+    #    etym_sections = etym_secs.subsections
+    #    for k, header in etym_secs.header_list:
     #        etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
     #    secbody = "".join(etym_sections)
 
@@ -63,7 +64,7 @@ def delete_form_1(index, page, lemma, formind, formval):
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         saw_head = False
         saw_infl = False
@@ -120,16 +121,16 @@ def delete_form_1(index, page, lemma, formind, formval):
             else:
                 # No break
                 if re.search("^(Noun|Verb|Adjective)$", header):
-                    indent = subsecs.subsection_levels[k]
+                    indent = subsecs.levels[k]
                     has_non_deletable_subsubsection = False
                     extra_subsubsections_to_delete = []
                     l = k + 2
                     while l < len(subsections):
-                        nextindent = subsecs.subsection_levels[l]
+                        nextindent = subsecs.levels[l]
                         if nextindent <= indent:
                             break
                         # Italian verb forms often have Synonyms sections for alternative forms, and random Related terms sections
-                        nextheader = subsecs.subsection_header_dict[l]
+                        nextheader = subsecs.headers[l]
                         if re.search("^(Synonyms|Related terms)$", nextheader):
                             extra_subsubsections_to_delete.append(l)
                             l += 2

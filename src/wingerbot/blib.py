@@ -3417,15 +3417,15 @@ def output_process_links_template_counts(templates_seen, templates_changed):
         msg("  %s = %s" % (template, count))
 
 
-def find_lang_section_from_page(pagename, lang, pagemsg, errandpagemsg):
+def find_page_text(pagename: str, pagemsg: PagemsgCallback, errandpagemsg: PagemsgCallback) -> str | None:
     page = Page(site, pagename)
     if not safe_page_exists(page, errandpagemsg):
         pagemsg("Page %s doesn't exist" % pagename)
-        return False
-
-    pagetext = str(page.text)
-
-    return find_lang_section(pagetext, lang, pagemsg)
+        return None
+    text = safe_page_text_or_none(page, errandpagemsg)
+    if text is None:
+        return None
+    return text
 
 
 def split_trailing_separator(sectext):
@@ -3473,11 +3473,11 @@ def force_two_newlines_in_secbody(secbody, sectail=""):
 class SplitTextIntoSectionsResult:
     sections: list[str]
     sections_by_lang: dict[str, int]
-    section_langs: list[tuple[int, str]]
+    lang_list: list[tuple[int, str]]
 
     @property
-    def section_lang_dict(self):
-        return dict(self.section_langs)
+    def langs(self):
+        return dict(self.lang_list)
 
 
 def split_text_into_sections(pagetext: str, pagemsg: PagemsgCallback | None) -> SplitTextIntoSectionsResult:
@@ -3486,14 +3486,16 @@ def split_text_into_sections(pagetext: str, pagemsg: PagemsgCallback | None) -> 
     * `sections` is a list of the text of the sections, where odd-numbered elements contain headers and even-numbered
       elements contain text between headers.
     * `sections_by_lang` is a dictionary from language name to the index of the section with that language.
-    * `section_langs` is a list of tuples (index, language) for each section with a language header; the index is the
+    * `lang_list` is a list of tuples (index, language) for each section with a language header; the index is the
       index of the text of the section in the `sections` list.
-    The original text can be reconstructed by concatenating the values of `subsections` with a blank string between
+    * `langs` is a dictionary mapping section indices to their language headers (without the equal signs). It
+       is simply dict() called on `lang_list`.
+    The original text can be reconstructed by concatenating the values of `sections` with a blank string between
     them."""
     header_equals = "=="
     sections = re.split(r"(^%s[^=\n]+%s[ \t]*\n)" % (header_equals, header_equals), pagetext, 0, re.M)
     sections_by_lang = {}
-    section_langs = []
+    lang_list = []
     for j in range(2, len(sections), 2):
         m = re.search(r"\A%s[ \t]*(.*?)[ \t]*%s[ \t]*\n\Z" % (header_equals, header_equals), sections[j - 1])
         if not m:
@@ -3501,25 +3503,25 @@ def split_text_into_sections(pagetext: str, pagemsg: PagemsgCallback | None) -> 
                 pagemsg("WARNING: Internal error: Can't match section header: %s" % (sections[j - 1].rstrip("\n")))
         else:
             seclang = m.group(1)
-            section_langs.append((j, seclang))
+            lang_list.append((j, seclang))
             if seclang in sections_by_lang:
                 if pagemsg:
                     pagemsg("WARNING: Found two %s sections, skipping second one" % seclang)
             else:
                 sections_by_lang[seclang] = j
-    return SplitTextIntoSectionsResult(sections, sections_by_lang, section_langs)
+    return SplitTextIntoSectionsResult(sections, sections_by_lang, lang_list)
 
 
 @dataclass
 class SplitTextIntoSubsectionsResult:
     subsections: list[str]
     subsections_by_header: dict[str, list[int]]
-    subsection_headers: list[tuple[int, str]]
-    subsection_levels: dict[int, int]
+    header_list: list[tuple[int, str]]
+    levels: dict[int, int]
 
     @property
-    def subsection_header_dict(self):
-        return dict(self.subsection_headers)
+    def headers(self):
+        return dict(self.header_list)
 
 
 def split_text_into_subsections(
@@ -3531,11 +3533,11 @@ def split_text_into_subsections(
       elements contain text between headers.
     * `subsections_by_header` is a dictionary from header name to a list of the indices (to the section text, not header
        text) of the sections with that header.
-    * `subsection_headers` is a list of tuples (index, header) for each section with a header; the index is the index of
+    * `header_list` is a list of tuples (index, header) for each section with a header; the index is the index of
       the text of the section in the `subsections` list.
-    * `subsection_header_dict` is a dictionary mapping section indices to their headers (wihtout the equal signs). It
-       is simply dict() called on `subsection_headers`.
-    * `subsection_levels` is a dictionary mapping section indices to their header levels (as determined by the number of
+    * `headers` is a dictionary mapping section indices to their headers (without the equal signs). It
+       is simply dict() called on `header_list`.
+    * `levels` is a dictionary mapping section indices to their header levels (as determined by the number of
       equal signs of the section header).
     The original language section body can be reconstructed by concatenating the values of `subsections` with a blank
     string between them.
@@ -3547,9 +3549,9 @@ def split_text_into_subsections(
     if header_re is None:
         header_re = r"[^=\n]+"
     subsections = re.split(r"(^%s[ \t]*%s[ \t]*%s[ \t]*\n)" % (header_equals, header_equals), secbody, 0, re.M)
-    subsection_headers = []
+    header_list = []
     subsections_by_header = defaultdict(list)
-    subsection_levels = {}
+    levels = {}
     for j in range(2, len(subsections), 2):
         m = re.search(r"\A(%s)[ \t]*(.*?)[ \t]*(%s)[ \t]*\n\Z" % (header_equals, header_equals), subsections[j - 1])
         if not m:
@@ -3570,10 +3572,10 @@ def split_text_into_subsections(
                 num_equals = min(left_equals, right_equals)
             else:
                 num_equals = left_equals
-            subsection_levels[j] = num_equals
-            subsection_headers.append((j, header))
+            levels[j] = num_equals
+            header_list.append((j, header))
             subsections_by_header[header].append(j)
-    return SplitTextIntoSubsectionsResult(subsections, subsections_by_header, subsection_headers, subsection_levels)
+    return SplitTextIntoSubsectionsResult(subsections, subsections_by_header, header_list, levels)
 
 
 @dataclass
@@ -3600,7 +3602,8 @@ class ModifiableLangSection:
 
 
 def find_modifiable_lang_section(
-    text: str, langname: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False
+    text: str, langname: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False,
+    auto_partial_page: bool = True,
 ) -> ModifiableLangSection | None:
     """Find the section for the language `lang` in `text` (the text of the page), returning values so that the
     language-specific text can be modified and then the page as a whole put back together in preparation for saving.
@@ -3640,7 +3643,7 @@ def find_modifiable_lang_section(
         return
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
-    for k, header in subsecs.subsection_headers:  # Loop over content subsections
+    for k, header in subsecs.header_list:  # Loop over content subsections
         if header == "Declension":
             parsed = blib.parse_text(subsecs.subsections[k])
             for t in parsed.filter_templates():
@@ -3652,8 +3655,15 @@ def find_modifiable_lang_section(
     This first finds the appropriate language section, then splits it into subsections, then modifies the "Declension"
     subsection, then puts everything back together. Note that `force_final_nls=True` is used to ensure that we can
     reliably swap two sections or subsections even if one of them occurs at the very end of the page (final newlines
-    are automatically stripped by MediaWiki)."""
+    are automatically stripped by MediaWiki).
 
+    If `auto_partial_page` is given (which by default it is), and a language name is specified in `langname`, the
+    function will automatically behave as if None is specified for the language name if no level-2 sections are found
+    on the page. This makes it possible to run a language-specific script on the output of `find_regex.py --lang LANG`,
+    which contains only the text of the language without any L2 language header."""
+
+    if auto_partial_page and langname is not None and not re.search(r"^==[^=\n].*==[ \t]*\n", text, re.M):
+        langname = None
     if langname is None:
         sections = [text]
         j = 0
@@ -3675,17 +3685,6 @@ def find_modifiable_lang_section(
         secbody, sectail = force_two_newlines_in_secbody(secbody, sectail)
 
     return ModifiableLangSection(sections, j, secbody, sectail, has_non_lang)
-
-
-def find_lang_section(pagetext, lang, pagemsg):
-    secs = split_text_into_sections(pagetext, pagemsg)
-    sections_by_lang = secs.sections_by_lang
-
-    if lang not in sections_by_lang:
-        if pagemsg:
-            pagemsg("WARNING: Can't find %s section, skipping" % lang)
-        return None
-    return secs.sections[sections_by_lang[lang]]
 
 
 def replace_in_text(

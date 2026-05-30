@@ -40,7 +40,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         found_subsec_participle = False
         # Try to canonicalize existing 'inflection of'
         parsed = blib.parse_text(subsections[k])
@@ -153,12 +153,12 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
         rearranged = False
         l3secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3)
         l3sections = l3secs.subsections
-        l3section_headers = l3secs.subsection_headers
+        l3section_headers = l3secs.header_list
         for k, header in l3section_headers:
             if (
                 header in ["Noun", "Adjective"]
                 and k + 1 < len(l3sections)
-                and l3secs.subsection_header_dict[k + 1] == "Participle"
+                and l3secs.headers[k + 1] == "Participle"
             ):
                 tmp = l3sections[k - 1]
                 l3sections[k - 1] = l3sections[k + 1]

@@ -12,17 +12,16 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    notes = []
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
 
-    section = blib.find_lang_section(text, "Russian", pagemsg)
-    if not section:
+    if "==Etymology" in secbody:
         return
-
-    if "==Etymology" in section:
+    if rulib.check_for_alt_yo_terms(secbody, pagemsg):
         return
-    if rulib.check_for_alt_yo_terms(section, pagemsg):
-        return
-    parsed = blib.parse_text(section)
+    parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
         if tname(t) in ["ru-participle of"]:
             pagemsg("Skipping participle")
@@ -36,11 +35,11 @@ parser = blib.create_argparser(
     "Find Russian terms without etymology",
     include_pagefile=True,
     include_stdin=True,
-    canonicalize_pagename=rulib.remove_accents,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"]
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"],
+    canonicalize_pagename=rulib.remove_accents,
 )

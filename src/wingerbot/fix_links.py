@@ -78,7 +78,7 @@ def process_text_on_page(index, pagetitle, text):
             )
 
             subsecs = blib.split_text_into_subsections(sectext, pagemsg)
-            for k, subsectitle in subsecs.subsection_headers:
+            for k, subsectitle in subsecs.header_list:
                 if not (
                     subsectitle in sections_to_always_include
                     or this_ignore_translit != "latin"
@@ -365,7 +365,7 @@ def process_text_on_page(index, pagetitle, text):
         newtext = do_section(text, args.single_lang)
     else:
         secs = blib.split_text_into_sections(text, pagemsg)
-        for j, thislangname in secs.section_langs:
+        for j, thislangname in secs.lang_list:
             secs.sections[j] = do_section(secs.sections[j], thislangname)
         newtext = "".join(secs.sections)
 

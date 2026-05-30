@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, msg, tname, pname
 
 AC = "\u0301"  # acute =  ́
 GR = "\u0300"  # grave =  ̀
@@ -25,9 +25,6 @@ separator_c = "[" + separator + "]"
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     def verify_template_is_full_line(tn, line):
         line = line.strip()
@@ -58,15 +55,13 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("Page title is a single letter or a prefix, skipping")
         return
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header == "Pronunciation":
             secheader = re.sub(r"\s*Pronunciation\s*", "Pronunciation", subsections[k - 1])
             if secheader != subsections[k - 1]:
@@ -308,11 +303,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Convert {{pl-IPA}} to {{pl-p}}", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

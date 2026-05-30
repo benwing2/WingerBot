@@ -26,12 +26,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     def extract_pronouns(form1, form2):
         prons = []
@@ -185,19 +183,11 @@ def process_text_on_page(index, pagetitle, text):
             fixed_secbody = newsecbody
         secbody = fixed_secbody
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(
     "Clean up raw Italian compound-of expressions", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Italian' and has no ==Italian== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

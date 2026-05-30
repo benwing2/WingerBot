@@ -32,8 +32,8 @@ def process_text_on_page(index, pagetitle, text):
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
     subsections_to_delete = []
-    for k, header in subsecs.subsection_headers:
-        if header == "References" and subsecs.subsection_levels[k] in [3, 4] and not subsections[k + 1].strip():
+    for k, header in subsecs.header_list:
+        if header == "References" and subsecs.levels[k] in [3, 4] and not subsections[k + 1].strip():
             subsections_to_delete.append(k)
     if subsections_to_delete:
         for k in reversed(subsections_to_delete):

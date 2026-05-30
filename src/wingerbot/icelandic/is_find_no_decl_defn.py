@@ -10,9 +10,7 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Icelandic", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Icelandic", pagemsg, force_final_nls=True)
     if modsec is None:
         return
 
@@ -21,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
 
     defns = None
     headt = None
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header in ["Noun", "Proper noun"]:
             parsed = blib.parse_text(subsections[k])
             for t in parsed.filter_templates():
@@ -49,11 +47,6 @@ parser = blib.create_argparser(
     "Find Icelandic nouns needing declension and output headword, suggested declension and definition",
     include_pagefile=True,
     include_stdin=True,
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

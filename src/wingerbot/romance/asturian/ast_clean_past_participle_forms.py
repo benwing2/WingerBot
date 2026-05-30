@@ -37,12 +37,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Asturian", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Asturian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")
@@ -115,18 +113,10 @@ def process_text_on_page(index, pagetitle, text):
         # something went wrong, do nothing
         pass
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser("Clean up Asturian past participle forms", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Asturian' and has no ==Asturian== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

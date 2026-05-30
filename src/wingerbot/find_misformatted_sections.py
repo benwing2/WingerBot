@@ -103,7 +103,7 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
 
     def subsection_id(k, include_equal_signs=False):
         if include_equal_signs:
-            return get_subsection_id(subsecs.subsection_headers, k, include_equal_signs=True)
+            return get_subsection_id(subsecs.header_list, k, include_equal_signs=True)
         return get_subsection_id(subsections, k, include_equal_signs=include_equal_signs)
 
     # Look for Etymology 1 by itself and maybe correct.
@@ -401,20 +401,18 @@ def process_text_on_page(index, pagetitle, text):
         return
     text = modsec.secbody
 
-    if args.partial_page:
-        if re.search("^==[^\n=]*==$", text, re.M):
-            pagemsg("WARNING: --partial-page specified but saw an L2 header, skipping")
-            return
-        check_for_bad_etym_sections(text, pagemsg)
-        newtext, notes = check_for_bad_subsections(modsec.secbody, pagetitle, pagemsg, None)
-        return modsec.rebuild(secbody=newtext), notes
-
     notes = []
     # Correct extraneous spaces in L2 headers and prepare for sorting by language.
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
+    if len(sections) == 1:
+        # No L2 header; partial page.
+        check_for_bad_etym_sections(text, pagemsg)
+        newtext, notes = check_for_bad_subsections(text, pagetitle, pagemsg, None)
+        return modsec.rebuild(secbody=newtext), notes
+
     sections_for_sorting = []
-    for j, _ in secs.section_langs:
+    for j, _ in secs.lang_list:
         # Fetch L2 language name.
         m = re.search("^==([ \t]*)(.*?)([ \t]*)==([ \t]*)\n$", sections[j - 1])
         space1, langname, space2, space3 = m.groups()
@@ -486,11 +484,6 @@ def process_text_on_page(index, pagetitle, text):
 
 parser = blib.create_argparser("Find misformatted sections of various sorts", include_pagefile=True, include_stdin=True)
 parser.add_argument("--correct", action="store_true", help="Correct errors as much as possible.")
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

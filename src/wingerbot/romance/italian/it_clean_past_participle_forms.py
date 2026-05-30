@@ -617,9 +617,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
     if modsec is None:
         return
 
@@ -671,7 +669,7 @@ def process_text_on_page(index, pagetitle, text):
                     return False
         return True
 
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         if header in ["Verb", "Participle"]:
             # Make sure that we're dealing with a potential participle
             maybe_saw_participle = True
@@ -696,7 +694,7 @@ def process_text_on_page(index, pagetitle, text):
                 continue
 
             this_sec_notes = []
-            newsubsecheader = subsecs.subsection_header_dict[k]
+            newsubsecheader = subsecs.headers[k]
             newsubsecheadertext = subsections[k - 1]
             newsubseck = subsections[k]
             try:
@@ -1261,7 +1259,7 @@ def process_text_on_page(index, pagetitle, text):
             text_before_etym_sections.append(subsections[0])
         else:
             goes_at_top_of_first_etym_section = subsections[0]
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             pos = None
             lemma = None
             if header == "Pronunciation":
@@ -1517,7 +1515,7 @@ def process_text_on_page(index, pagetitle, text):
         for last_included_sec in range(len(subsections_at_level_3) - 1, 0, -2):
             if not re.search(
                 r"^(References|See also|Derived terms|Related terms|Further reading|Anagrams)$",
-                l3subsecs.subsection_header_dict[last_included_sec],
+                l3subsecs.headers[last_included_sec],
             ):
                 break
         text_after_etym_sections = "".join(subsections_at_level_3[last_included_sec + 1 :])
@@ -1587,11 +1585,6 @@ def process_text_on_page(index, pagetitle, text):
 
 
 parser = blib.create_argparser("Clean up Italian past participle forms", include_pagefile=True, include_stdin=True)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Italian' and has no ==Italian== header.",
-)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

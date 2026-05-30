@@ -12,11 +12,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Italian", pagemsg, force_final_nls=True
-    )
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
     if modsec is None:
         return
+    secbody = modsec.secbody
 
     notes = []
 
@@ -25,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
         further_reading_sec = None
         subsecs = blib.split_text_into_subsections(sectext, pagemsg)
         subsections = subsecs.subsections
-        for k, header in subsecs.subsection_headers:
+        for k, header in subsecs.header_list:
             if header == "References":
                 if references_sec:
                     pagemsg("WARNING: Saw two ===References=== sections in a single etym section")
@@ -86,12 +85,12 @@ def process_text_on_page(index, pagetitle, text):
             subsections[references_sec] = ""
         return "".join(subsections)
 
-    has_etym_1 = "==Etymology 1==" in modsec.secbody
+    has_etym_1 = "==Etymology 1==" in secbody
 
     if not has_etym_1:
-        secbody = process_etym_section(modsec.secbody)
+        secbody = process_etym_section(secbody)
     else:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", modsec.secbody, 0, re.M)
+        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
         if len(etym_sections) < 5:
             pagemsg("WARNING: Something wrong, saw 'Etymology 1' but didn't see two etym sections")
         else:
@@ -106,11 +105,6 @@ parser = blib.create_argparser(
     "Move non-references in Italian ===References=== sections to ===Further reading===",
     include_pagefile=True,
     include_stdin=True,
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang Italian' and has no ==Italian== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

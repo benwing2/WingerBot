@@ -6970,9 +6970,7 @@ def process_text_on_page(index, pagetitle, text):
     text = str(parsed)
 
     if args.lang_for_combine_inflection_of:
-        retval = blib.find_modifiable_lang_section(
-            text, None if args.partial_page else args.lang_for_combine_inflection_of, pagemsg
-        )
+        retval = blib.find_modifiable_lang_section(text, args.lang_for_combine_inflection_of, pagemsg)
         if retval is None:
             pagemsg("WARNING: Couldn't find %s section" % args.lang_for_combine_inflection_of)
             return text, notes
@@ -7071,11 +7069,6 @@ parser.add_argument(
     "--check-ignores-include-ucdot",
     help="Whether checking ignore issues, include type 'ucdot' to see whether it can be converted to 'lcnodot'",
     action="store_true",
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

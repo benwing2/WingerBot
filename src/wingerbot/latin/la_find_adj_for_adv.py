@@ -27,13 +27,13 @@ def investigate_possible_adj(index, adj_pagename, adv, adv_defns):
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn in ["la-adj", "la-part"]:
                 adj = lalib.la_get_headword_from_template(t, adj_pagename, pagemsg)[0]
-                adj_defns = lalib.find_defns(subsections[k])
+                adj_defns = blib.find_defns(subsections[k], "la")
                 msg("%s /// %s /// %s /// %s" % (adv, adj, ";".join(adv_defns), ";".join(adj_defns)))
 
 
@@ -53,7 +53,7 @@ def process_text_on_page(index, pagetitle, text):
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
-    for k, header in subsecs.subsection_headers:
+    for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
         for t in parsed.filter_templates():
             origt = str(t)
@@ -64,7 +64,7 @@ def process_text_on_page(index, pagetitle, text):
                 if not is_stem:
                     pagemsg("WARNING: Couldn't infer stem from adverb %s, not standard: %s" % (adv, origt))
                     continue
-                adv_defns = lalib.find_defns(subsections[k])
+                adv_defns = blib.find_defns(subsections[k], "la")
                 possible_adjs = []
                 stem = lalib.remove_macrons(macron_stem)
                 possible_adjs.append(stem + "us")

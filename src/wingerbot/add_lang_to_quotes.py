@@ -81,9 +81,9 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
 
     if not pagetitle.startswith("Citations"):
-        for j, langname in secs.section_langs:
+        for j, langname in secs.lang_list:
             subsecs = blib.split_text_into_subsections(secs.sections[j], pagemsg)
-            for k, header in subsecs.subsection_headers:
+            for k, header in subsecs.header_list:
                 parsed = blib.parse_text(subsecs.subsections[k])
                 hack_templates(parsed, langname, header)
                 subsecs.subsections[k] = str(parsed)
@@ -91,7 +91,7 @@ def process_text_on_page(index, pagetitle, text):
     else:
         # Citation page
         langnamecode = None
-        for j, langname in [(0, "Unknown")] + secs.section_langs:
+        for j, langname in [(0, "Unknown")] + secs.lang_list:
             parsed = blib.parse_text(secs.sections[j])
             langnamecode = hack_templates(parsed, langname, "Unknown", langnamecode=langnamecode, is_citation=True)
             secs.sections[j] = str(parsed)

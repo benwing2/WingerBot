@@ -22,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
     sections_by_lang = secs.sections_by_lang
-    section_langs = secs.section_langs
+    lang_list = secs.lang_list
     pagehead = sections[0]
 
     # Make sure new language section not already present.
@@ -34,17 +34,17 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg("Didn't see %s section for existing language, skipping" % args.fromlang)
         return
 
-    # Change language name. In case the old name appears twice, we iterate over section_langs.
+    # Change language name. In case the old name appears twice, we iterate over lang_list.
     new_headers = []
-    for j, lang in section_langs:
+    for j, lang in lang_list:
         if lang == args.fromlang:
             new_headers.append((j, args.tolang))
         else:
             new_headers.append((j, lang))
     # Reorder sections by new language name, to make sure the new language section is in the right place.
-    section_langs = sorted(new_headers, key=lambda x: lang_utils.langname_key(x[1]))
+    lang_list = sorted(new_headers, key=lambda x: lang_utils.langname_key(x[1]))
 
-    text = pagehead + "".join(secheader + sections[j - 1 : j + 1] for j, secheader in section_langs)
+    text = pagehead + "".join(secheader + sections[j - 1 : j + 1] for j, secheader in lang_list)
 
     text = text.rstrip("\n") + orig_secfinalnl
 

@@ -13,12 +13,10 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else args.langname, pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     saw_affix_template_with_ment = False
 
@@ -163,10 +161,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             "WARNING: Didn't see {{af}}/{{affix}} or {{suf}}/{{suffix}} template with -ment, category might be specified some other way"
         )
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(
@@ -175,12 +170,7 @@ parser = blib.create_argparser(
     include_stdin=True,
 )
 parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
-)
-parser.add_argument(
-    "--langname", help="Name of language whose section to fetch; required unless --partial-page is given."
+    "--langname", help="Opional name of language whose section to fetch.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

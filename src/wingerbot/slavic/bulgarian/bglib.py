@@ -136,7 +136,3 @@ def remove_monosyllabic_accents(word):
 def remove_non_primary_accents(word):
     # remove all pronunciation accents except acute
     return re.sub("([" + non_primary_pron_accents + "ѐЀѝЍ])", lambda m: deaccenter[m.group(1)], word)
-
-
-def find_defns(text):
-    return blib.find_defns(text, "bg")

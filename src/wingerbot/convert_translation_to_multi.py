@@ -1783,13 +1783,13 @@ def process_text_on_page(index, pagename, text):
 #
 #    secs = blib.split_text_into_sections(text, pagemsg)
 #    sections = secs.sections
-#    for j, langname in secs.section_langs:
+#    for j, langname in secs.lang_list:
 #        if langname not in lang_data.languages_by_canonical_name:
 #            pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
 #            continue
 #        langcode = lang_data.languages_by_canonical_name[langname]["code"]
 #        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
-#        for k, header in subsecs.subsection_headers:
+#        for k, header in subsecs.header_list:
 #            if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsecs.subsections[k]):
 #                parsed = blib.parse_text(subsecs.subsections[k])
 #                for t in parsed.filter_templates():

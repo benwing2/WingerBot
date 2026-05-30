@@ -12,12 +12,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(
-        text, None if args.partial_page else "Polish", pagemsg, force_final_nls=True
-    )
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     col3_splits = re.split(r"^((?:\{\{col3\|pl\|[^{}\n]*\}\}\n)+)", secbody, 0, re.M)
     for k in range(1, len(col3_splits), 2):
@@ -42,22 +40,12 @@ def process_text_on_page(index, pagetitle, text):
 
             pagemsg("Replaced <%s> with <%s>" % (quote_nl(col3_splits[k]), quote_nl(new_col3_splits)))
             col3_splits[k] = new_col3_splits
-    secbody = "".join(col3_splits)
 
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody="".join(col3_splits)), notes
 
 
 parser = blib.create_argparser(
     "Sort {{col3|pl}} lines by title (part of speech)", include_pagefile=True, include_stdin=True
-)
-parser.add_argument(
-    "--partial-page",
-    action="store_true",
-    help="Input was generated with 'find_regex.py --lang LANG' and has no ==LANG== header.",
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
