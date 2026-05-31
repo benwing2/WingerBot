@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -16,7 +14,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) in ["ru-conj", "ru-conj-old"]:
+        if tname(t) in ["ru-conj", "ru-conj-old"]:
             conjtype = getparam(t, "2")
             if conjtype.startswith("3a"):
                 if [x for x in t.params if str(x.value) == "or"]:

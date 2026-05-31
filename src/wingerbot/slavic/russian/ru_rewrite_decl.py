@@ -110,37 +110,35 @@ def rewrite_one_page_ru_decl_adj(index, page):
     for t in parsed.filter_templates():
         converted = True
 
-        def tname():
-            return str(t.name).strip()
-
-        origname = tname()
+        tn = tname(t)
+        origname = tn
         origtemplate = str(t)
-        if tname() == "ru-adj-table":
+        if tn == "ru-adj-table":
             t.name = "ru-decl-adj"
         else:
-            if re.match("^ru-adjective[0-9]", tname()):
-                t.name = tname().replace("ru-adjective", "ru-adj")
-            if tname() == "ru-passive participle decl":
+            if re.match("^ru-adjective[0-9]", tn):
+                t.name = tn.replace("ru-adjective", "ru-adj")
+            if tn == "ru-passive participle decl":
                 t.name = "ru-adj1"
             suffix = None
-            if tname() == "ru-adj3-sja":
+            if tn == "ru-adj3-sja":
                 suffix = "ся"
                 t.name = "ru-adj3"
-            elif tname() == "ru-adj5-suffix":
+            elif tn == "ru-adj5-suffix":
                 suffix = "-" + getparam(t, "8")
                 t.name = "ru-adj5"
-            if tname() in ending_for_ru_adj:
-                if tname() == "ru-adj13":
-                    addparam(t, "2", ending_for_ru_adj[tname()])
+            if tn in ending_for_ru_adj:
+                if tn == "ru-adj13":
+                    addparam(t, "2", ending_for_ru_adj[tn])
                     rmparam(t, "8")
                     rmparam(t, "7")
                     rmparam(t, "6")
                     rmparam(t, "5")
                     rmparam(t, "4")
                     rmparam(t, "3")
-                elif tname() in ["ru-adj7", "ru-adj8", "ru-adj9", "ru-adj12"]:
+                elif tn in ["ru-adj7", "ru-adj8", "ru-adj9", "ru-adj12"]:
                     addparam(t, "1", getparam(t, "2").strip())
-                    addparam(t, "2", ending_for_ru_adj[tname()])
+                    addparam(t, "2", ending_for_ru_adj[tn])
                     rmparam(t, "8")
                     rmparam(t, "7")
                     rmparam(t, "6")
@@ -149,7 +147,7 @@ def rewrite_one_page_ru_decl_adj(index, page):
                     rmparam(t, "3")
                 else:
                     addparam(t, "1", getparam(t, "2").strip())
-                    addparam(t, "2", ending_for_ru_adj[tname()])
+                    addparam(t, "2", ending_for_ru_adj[tn])
                     mshort = clean(getparam(t, "3"))
                     if mshort and re.search("[аяоеыи]$", remove_diacritics(mshort)):
                         pagemsg("WARNING: short masculine %s doesn't have right ending" % mshort)
@@ -206,21 +204,19 @@ def rewrite_one_page_ru_decl_noun(index, page):
     parsed = blib.parse_text(text)
     nochange = False
     change = False
-    for t in text.filter_templates():
+    for t in parsed.filter_templates():
         converted = True
 
-        def tname():
-            return str(t.name).strip()
-
-        origname = tname()
+        tn = tname(t)
+        origname = tn
         origtemplate = str(t)
-        if tname() in ["ru-noun-table", "ru-noun-old"]:
+        if tn in ["ru-noun-table", "ru-noun-old"]:
             continue
         stem = ""
         bare = ""
         accsg = ""
         locsg = ""
-        if tname() == "ru-noun-ин":
+        if tn == "ru-noun-ин":
             ustem = getrmparam(t, "1")
             stem = getrmparam(t, "2")
             full = getrmparam(t, "3")
@@ -238,7 +234,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 nochange = True
                 break
             change = True
-        elif tname() == "ru-noun-нок":
+        elif tn == "ru-noun-нок":
             ustem = getrmparam(t, "1")
             stem = getrmparam(t, "2")
             uplural = getrmparam(t, "3")
@@ -265,7 +261,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 nochange = True
                 break
             change = True
-        elif tname() == "ru-noun-vel-3":
+        elif tn == "ru-noun-vel-3":
             ustem = getrmparam(t, "1")
             stem = getrmparam(t, "2")
             bare = getrmparam(t, "3")
@@ -283,7 +279,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
             for entry in ru_noun_transl:
                 if len(entry) == 3:
                     regex, declclass, directive = entry
-                    m = re.match(regex, tname())
+                    m = re.match(regex, tn)
                     if not m:
                         continue
                     assert len(m.groups()) == 1
@@ -291,7 +287,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 else:
                     assert len(entry) == 4
                     regex, declclass, directive, accentclass = entry
-                    m = re.match(regex, tname())
+                    m = re.match(regex, tn)
                     if not m:
                         continue
                     assert len(m.groups()) == 0
@@ -358,7 +354,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 change = True
                 break
             else:
-                if re.match("^ru-noun-", tname()):
+                if re.match("^ru-noun-", tn):
                     pagemsg("Encountered unknown noun decl template %s" % str(t))
         if change:
             if not stem:

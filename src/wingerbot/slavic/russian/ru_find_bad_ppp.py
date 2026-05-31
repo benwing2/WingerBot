@@ -46,10 +46,10 @@
 # the masculine singular past (minus final -л if it's present). Stress is
 # as in the masculine singular past.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -128,13 +128,13 @@ def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
     notes = []
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["ru-conj", "ru-conj-old"]:
+        tn = tname(t)
+        if tn in ["ru-conj", "ru-conj-old"]:
             if [x for x in t.params if str(x.value) == "or"]:
                 pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
             conjtype = getparam(t, "2")
-            if tname == "ru-conj":
+            if tn == "ru-conj":
                 tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
             else:
                 tempcall = re.sub(r"\{\{ru-conj-old", "{{ru-generate-verb-forms|old=y", str(t))

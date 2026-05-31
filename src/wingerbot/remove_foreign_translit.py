@@ -3,12 +3,12 @@
 # This program removes redundant translit from links and similar templates,
 # and also removes redundant sc= values from those same links.
 
+# FIXME: No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite.
+
 import re
 
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam, rmparam
-
-raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
 
 show_template = True
 
@@ -44,19 +44,19 @@ def canon_param(
     if not foreign or not latin:
         return False
     autotr = expand_text("{{xlit|%s|%s}}" % (tlang, foreign))
-    tname = str(template.name)
+    tn = str(template.name)
     if autotr == latin or languages[tlang][1]:
         oldtempl = "%s" % str(template)
         rmparam(template, paramtr)
-        pagemsg("Removing redundant translit for %s.%s (%s)" % (tname, foreign, latin))
+        pagemsg("Removing redundant translit for %s.%s (%s)" % (tn, foreign, latin))
         if include_tempname_in_changelog:
-            paramtrname = "%s.%s.%s" % (tname, tlang, paramtr)
+            paramtrname = "%s.%s.%s" % (tn, tlang, paramtr)
         else:
             paramtrname = paramtr
         pagemsg("Replaced %s with %s" % (oldtempl, str(template)))
         return ["remove redundant %s=%s" % (paramtrname, latin)]
     else:
-        pagemsg("Not removing non-redundant translit for %s.%s (%s); autotr=%s" % (tname, foreign, latin, autotr))
+        pagemsg("Not removing non-redundant translit for %s.%s (%s); autotr=%s" % (tn, foreign, latin, autotr))
     return False
 
 
@@ -126,14 +126,14 @@ def canon_links(save, verbose, cattype, lang, longlang, start, end, pages_to_do=
             foreign = pagetitle if fromparam == "page title" else getparam(template, fromparam)
             predicted_script = expand_text("{{#invoke:scripts/templates|findBestScript|%s|%s}}" % (foreign, tlang))
             if scvalue == predicted_script:
-                tname = str(template.name)
+                tn = str(template.name)
                 if show_template and result == False:
-                    pagemsg("%s.%s.%s: Processing %s" % (tname, tlang, "sc", str(template)))
-                pagemsg("%s.%s.%s: Removing sc=%s" % (tname, tlang, "sc", scvalue))
+                    pagemsg("%s.%s.%s: Processing %s" % (tn, tlang, "sc", str(template)))
+                pagemsg("%s.%s.%s: Removing sc=%s" % (tn, tlang, "sc", scvalue))
                 oldtempl = "%s" % str(template)
                 template.remove("sc")
                 pagemsg("Replaced %s with %s" % (oldtempl, str(template)))
-                newresult = ["remove %s.%s.sc=%s" % (tname, tlang, scvalue)]
+                newresult = ["remove %s.%s.sc=%s" % (tn, tlang, scvalue)]
                 if result != False:
                     result = result + newresult
                 else:

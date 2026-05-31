@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -18,18 +18,18 @@ def process_text_on_page(index, pagetitle, text):
     ru_adj11_template = None
 
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname == "ru-proper noun":
+        tn = tname(t)
+        if tn == "ru-proper noun":
             if proper_noun_headword:
                 pagemsg("WARNING: Multiple ru-proper noun headwords, skipping")
                 return
             proper_noun_headword = t
-        if tname == "surname":
+        if tn == "surname":
             if surname_template:
                 pagemsg("WARNING: Multiple surname templates, skipping")
                 return
             surname_template = t
-        if tname == "ru-adj11":
+        if tn == "ru-adj11":
             if ru_adj11_template:
                 pagemsg("WARNING: Multiple ru-adj11 templates, skipping")
                 return

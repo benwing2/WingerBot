@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    pagemsg("WARNING: Script no longer applies and would need fixing up")
-    return
+    # FIXME: Script no longer applies and would need fixing up.
 
     pagemsg("Processing")
     parsed = blib.parse_text(text)
@@ -19,9 +18,9 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
-        tname = str(t.name)
-        if tname.startswith("ru-conj-") and tname != "ru-conj-verb-see":
-            m = re.search("^ru-conj-(.*)$", tname)
+        tn = tname(t)
+        if tn.startswith("ru-conj-") and tn != "ru-conj-verb-see":
+            m = re.search("^ru-conj-(.*)$", tn)
             t.name = "ru-conj"
             conjtype = m.group(1)
             varargno = None

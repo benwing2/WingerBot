@@ -2,10 +2,8 @@
 
 # Remove adj= and shto= from ru-ux.
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -17,7 +15,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-ux":
+        if tname(t) == "ru-ux":
             origt = str(t)
             if t.has("adj"):
                 pagemsg("Removing adj=")

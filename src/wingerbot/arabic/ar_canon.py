@@ -49,16 +49,16 @@ def do_canon_param(
     index, pagetitle, template, fromparam, toparam, paramtr, arabic, latin, include_tempname_in_changelog=False
 ):
     actions = []
-    tname = str(template.name)
+    tn = str(template.name)
 
     def pagemsg(text):
-        msg("Page %s %s: %s.%s: %s" % (index, pagetitle, tname, fromparam, text))
+        msg("Page %s %s: %s.%s: %s" % (index, pagetitle, tn, fromparam, text))
 
     if show_template:
         pagemsg("Processing %s" % (str(template)))
 
     if include_tempname_in_changelog:
-        paramtrname = "%s.%s" % (tname, paramtr)
+        paramtrname = "%s.%s" % (tn, paramtr)
     else:
         paramtrname = paramtr
 
@@ -347,8 +347,8 @@ def canon_one_page_headwords(index, pagetitle, text):
     actions = []
     parsed = blib.parse_text(text)
     for template in parsed.filter_templates():
-        tname = str(template.name)
-        if tname in arlib.arabic_non_verbal_headword_templates:
+        tn = str(template.name)
+        if tn in arlib.arabic_non_verbal_headword_templates:
             thisactions = []
             thisactions += canon_head(index, pagetitle, template)
             for param in [
@@ -373,7 +373,7 @@ def canon_one_page_headwords(index, pagetitle, text):
             ]:
                 thisactions += canon_param_chain(index, pagetitle, template, param)
             if len(thisactions) > 0:
-                actions.append("%s: %s" % (tname, ", ".join(thisactions)))
+                actions.append("%s: %s" % (tn, ", ".join(thisactions)))
     changelog = "; ".join(actions)
     # if len(actions) > 0:
     msg("Change log for page %s = %s" % (pagetitle, changelog))
@@ -388,19 +388,19 @@ def canon_one_page_headwords(index, pagetitle, text):
 # should be a list of (PAGETITLE, PAGETEXT). If CATTYPE is 'pages', PAGES_TO_DO
 # should be a list of page titles, specifying the pages to do.
 def canon_one_page_links(index, pagetitle, text):
-    raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
+    # FIXME: No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite.
 
     def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
         result = canon_param(index, pagetitle, template, param, paramtr, include_tempname_in_changelog=True)
         if getparam(template, "sc") == "Arab":
-            tname = str(template.name)
+            tn = str(template.name)
             if show_template and result == False:
-                msg("Page %s %s: %s.%s: Processing %s" % (index, pagetitle, tname, "sc", str(template)))
-            msg("Page %s %s: %s.%s: Removing sc=Arab" % (index, pagetitle, tname, "sc"))
+                msg("Page %s %s: %s.%s: Processing %s" % (index, pagetitle, tn, "sc", str(template)))
+            msg("Page %s %s: %s.%s: Removing sc=Arab" % (index, pagetitle, tn, "sc"))
             oldtempl = "%s" % str(template)
             template.remove("sc")
             msg("Page %s %s: Replaced %s with %s" % (index, pagetitle, oldtempl, str(template)))
-            newresult = ["remove %s.sc=Arab" % tname]
+            newresult = ["remove %s.sc=Arab" % tn]
             if result != False:
                 result = result + newresult
             else:

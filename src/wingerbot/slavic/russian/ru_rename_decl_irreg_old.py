@@ -60,7 +60,7 @@ def process_text_on_page(index, pagetitle, text):
                 newval = "1"
             if newname:
                 notes.append("renamed %s -> %s|%s=%s" % (tname(t), newname, newarg, newval))
-                has_newline = ""  # "\n" if "\n" in str(t.name) else ""
+                has_newline = ""  # "\n" if "\n" in str(t.name) else ""  # not tname() as we want to check for spaces
                 t.name = newname
                 if t.has("1"):
                     before = "1"

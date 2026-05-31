@@ -2,10 +2,8 @@
 
 import re
 
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam
+from wingerbot.blib import msg, errandmsg, getparam, tname
 
 templates_changed = {}
 template_params_removed = {}
@@ -113,7 +111,7 @@ def remove_translit(params, start, end):
         text = blib.safe_page_text(page, errandpagemsg)
         parsed = blib.parse_text(text)
         for t in parsed.filter_templates():
-            tname = str(t.name)
+            tn = tname(t)
 
             def getp(param):
                 return getparam(t, param)
@@ -131,7 +129,7 @@ def remove_translit(params, start, end):
                             is_ignore_prefix = True
                     if " talk:" in pagetitle:
                         is_ignore_prefix = True
-                    is_grc = tname.startswith("grc-") or getp("lang") == "grc" or getp("1") == "grc"
+                    is_grc = tn.startswith("grc-") or getp("lang") == "grc" or getp("1") == "grc"
                     has_nwc = has_non_western_chars(val)
                     if val == "-":
                         pagemsg("Not removing %s=-: %s" % (param, str(t)))
@@ -161,12 +159,12 @@ def remove_translit(params, start, end):
                             )
                         pagemsg("Removed %s=%s: %s" % (param, val, str(t)))
                         if value is None:
-                            tempparam = "%s.%s" % (tname, param)
+                            tempparam = "%s.%s" % (tn, param)
                         else:
-                            tempparam = "%s.%s=%s" % (tname, param, value)
+                            tempparam = "%s.%s=%s" % (tn, param, value)
                         params_removed.append(tempparam)
                         t.remove(param)
-                        templates_changed[tname] = templates_changed.get(tname, 0) + 1
+                        templates_changed[tn] = templates_changed.get(tn, 0) + 1
                         template_params_removed[tempparam] = template_params_removed.get(tempparam, 0) + 1
 
             def remove_even(upto=10):
@@ -178,22 +176,22 @@ def remove_translit(params, start, end):
                     doparam(str(i))
 
             # (Old) Armenian declension templates
-            if re.match("^xcl-noun-.*pl", tname) and tname not in [
+            if re.match("^xcl-noun-.*pl", tn) and tn not in [
                 "xcl-noun-ն-pl",
                 "xcl-noun-ն-2-pl",
                 "xcl-noun-ն-3-pl",
                 "xcl-noun-ո-ա-pl",
             ]:
                 remove_even()
-            elif tname.startswith("xcl-noun-collnum"):
+            elif tn.startswith("xcl-noun-collnum"):
                 remove_even()
-            elif tname in ["xcl-noun-հայր", "xcl-noun-տէր", "xcl-noun-այր", "xcl-noun-կին"]:
+            elif tn in ["xcl-noun-հայր", "xcl-noun-տէր", "xcl-noun-այր", "xcl-noun-կին"]:
                 remove_even()
             else:
                 for start_template in ["hy-noun-", "xcl-noun-"]:
-                    if tname.startswith(start_template):
+                    if tn.startswith(start_template):
                         remove_odd()
-            if tname in ["xcl-noun", "xcl-adj"]:
+            if tn in ["xcl-noun", "xcl-adj"]:
                 doparam("1")
             # (Old) Armenian headword templates
             #
@@ -207,7 +205,7 @@ def remove_translit(params, start, end):
             # xcl-numeral, xcl-particle, xcl-postp, xcl-prefix, xcl-prep, xcl-pron,
             # xcl-pron-form, xcl-proper_noun, xcl-proper-noun-form, xcl-root,
             # xcl-suffix, xcl-verb, xcl-verb-form
-            if tname in [
+            if tn in [
                 "hy-adj",
                 "hy-adv",
                 "hy-con",
@@ -258,9 +256,9 @@ def remove_translit(params, start, end):
             ]:
                 remove_odd()
             # Armenian conjugation templates
-            if tname.startswith("hy-conj"):
+            if tn.startswith("hy-conj"):
                 remove_even()
-            if tname.startswith("xcl-conj"):
+            if tn.startswith("xcl-conj"):
                 remove_odd()
             # Middle Armenian headword templates handled further below.
             # NOTE: axm-adj, axm-adv, axm-interj, axm-noun, axm-prefix, axm-suffix,
@@ -277,43 +275,43 @@ def remove_translit(params, start, end):
             #
             # FIXME: ka-decl-noun. All even-numbered parameters (up through at least
             # 36) are translits, but are still used in the template.
-            # if tname == "ka-decl-noun":
+            # if tn == "ka-decl-noun":
             #  remove_even(upto=38)
             #
             # Ancient Greek templates with numbered translit params
-            if tname in ["grc-noun-con"]:
+            if tn in ["grc-noun-con"]:
                 doparam("5")
-            if tname in ["grc-proper noun", "grc-noun"]:
+            if tn in ["grc-proper noun", "grc-noun"]:
                 doparam("4")
-            if tname in ["grc-adj-1&2", "grc-adj-1&3", "grc-part-1&3"]:
+            if tn in ["grc-adj-1&2", "grc-adj-1&3", "grc-part-1&3"]:
                 doparam("3")
-            if tname in ["grc-adj-2nd", "grc-adj-3rd", "grc-adj-2&3"]:
+            if tn in ["grc-adj-2nd", "grc-adj-3rd", "grc-adj-2&3"]:
                 doparam("2")
-            if tname in ["grc-num"]:
+            if tn in ["grc-num"]:
                 doparam("1")
             #
             # Handle any template beginning with hy-, xcl-, ka-, el-, grc-, etc.
             # that has a tr parameter. But don't do el-p, which uses the tr param.
             for lang in remove_tr_langs:
-                if tname.startswith(lang + "-") and tname not in ["el-p"]:
+                if tn.startswith(lang + "-") and tn not in ["el-p"]:
                     doparam("tr")
             # Suffix/prefix/affix
             if (
-                tname in ["suffix", "suffix2", "prefix", "confix", "affix", "circumfix", "infix", "compound"]
+                tn in ["suffix", "suffix2", "prefix", "confix", "affix", "circumfix", "infix", "compound"]
                 and getp("lang") in remove_tr_langs
             ):
                 # Don't just do cases up through where there's a numbered param
                 # because there may be holes.
                 for i in range(1, 11):
                     doparam("tr" + str(i))
-            if (  # (tname in blib.translation_templates or tname in ["l", "m", "link", "mention", "head", "ux"]) and
+            if (  # (tn in blib.translation_templates or tn in ["l", "m", "link", "mention", "head", "ux"]) and
                 getp("1") in remove_tr_langs
             ):
-                if tname == "head" and not params.do_head:
+                if tn == "head" and not params.do_head:
                     pagemsg("Not removing tr= from {{head|...}}: %s" % str(t))
                 else:
                     doparam("tr")
-            if getp("lang") in remove_tr_langs and tname != "borrowing":  # tname in ["term", "usex"] and
+            if getp("lang") in remove_tr_langs and tn != "borrowing":  # tn in ["term", "usex"] and
                 doparam("tr")
             # Remove sc=Armn from (Old) Armenian, sc=Grek from Greek
             for langs, script in [
@@ -323,7 +321,7 @@ def remove_translit(params, start, end):
                 (["grc"], "polytonic"),
                 (["grc"], "Grek"),
             ]:
-                if getp("1") in langs or getp("lang") in langs and tname != "borrowing":
+                if getp("1") in langs or getp("lang") in langs and tn != "borrowing":
                     doparam("sc", script)
 
         reduced_pr = []

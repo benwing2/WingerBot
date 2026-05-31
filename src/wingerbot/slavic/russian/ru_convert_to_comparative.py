@@ -2,10 +2,8 @@
 
 # Convert ru-adv to ru-compararative for comparatives.
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -31,8 +29,8 @@ def process_text_on_page(index, pagetitle, text):
         found_adj_comp = False
         found_adv_comp = False
         for t in parsed.filter_templates():
-            tname = str(t.name)
-            if tname == "comparative of" and getparam(t, "lang") == "ru":
+            tn = tname(t)
+            if tn == "comparative of" and getparam(t, "lang") == "ru":
                 if getparam(t, "POS") == "adjective":
                     found_adj_comp = True
                 elif getparam(t, "POS") == "adverb":
@@ -48,13 +46,13 @@ def process_text_on_page(index, pagetitle, text):
 
         for t in parsed.filter_templates():
             origt = str(t)
-            tname = str(t.name)
+            tn = tname(t)
             template_fixed = False
-            if tname == "ru-adv":
+            if tn == "ru-adv":
                 t.name = "ru-comparative"
                 template_fixed = True
             elif (
-                tname == "head" and getparam(t, "1") == "ru" and (getparam(t, "2") == "adverb comparative form")
+                tn == "head" and getparam(t, "1") == "ru" and (getparam(t, "2") == "adverb comparative form")
             ):
                 head = getparam(t, "head")
                 rmparam(t, "head")

@@ -3,10 +3,10 @@
 # Replace title= with entry= in a couple of reference templates, and strip
 # final periods from entry= in the same templates.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, msg, tname
 
 replace_templates = ["R:MED Online", "R:Reference-meta"]
 
@@ -27,24 +27,24 @@ def process_text_on_page(index, pagetitle, text):
 
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
-        tname = str(t.name)
+        tn = tname(t)
         origt = str(t)
-        if tname.strip() in replace_templates:
+        if tn in replace_templates:
             changed = False
             title = getparam(t, "title")
             if title:
                 t.get("title").name = "entry"
-                notes.append("title -> entry in {{%s}}" % tname.strip())
+                notes.append("title -> entry in {{%s}}" % tn)
                 changed = True
             entry = getparam(t, "entry")
             if changed:
                 pagemsg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
     newtext = str(parsed)
-    for tname in replace_templates:
+    for tn in replace_templates:
         curtext = newtext
-        newtext = re.sub(r"(\{\{%s\|[^{}]*\}\})\." % tname, r"\1", curtext)
+        newtext = re.sub(r"(\{\{%s\|[^{}]*\}\})\." % tn, r"\1", curtext)
         if curtext != newtext:
-            notes.append("remove final period after {{%s}}" % tname)
+            notes.append("remove final period after {{%s}}" % tn)
             pagemsg(("Replacing %s with %s" % (curtext, newtext)).replace("\n", r"\n"))
     return newtext, notes
 

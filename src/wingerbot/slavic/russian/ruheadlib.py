@@ -4,7 +4,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, site
+from wingerbot.blib import getparam, site, tname
 from wingerbot.slavic.russian import rulib
 
 # List of Russian templates referring to lemmas.
@@ -304,10 +304,10 @@ def lookup_heads_and_inflections(pagename, pagemsg):
                 this_heads.add((val_to_add, tr, is_lemma))
 
             for t in parsed.filter_templates():
-                tname = str(t.name)
+                tn = tname(t)
                 check_addl_heads = False
-                if tname in ru_head_templates:
-                    is_lemma = tname in ru_lemma_templates
+                if tn in ru_head_templates:
+                    is_lemma = tn in ru_lemma_templates
                     check_addl_heads = True
                     if getparam(t, "1"):
                         add(getparam(t, "1"), getparam(t, "tr"), is_lemma)
@@ -315,14 +315,14 @@ def lookup_heads_and_inflections(pagename, pagemsg):
                         add(getparam(t, "head"), getparam(t, "tr"), is_lemma)
                     else:
                         add(pagename, "", is_lemma)
-                elif tname == "head" and getparam(t, "1") == "ru":
+                elif tn == "head" and getparam(t, "1") == "ru":
                     is_lemma = getparam(t, "2") in ru_lemma_poses
                     check_addl_heads = True
                     if getparam(t, "head"):
                         add(getparam(t, "head"), getparam(t, "tr"), is_lemma)
                     else:
                         add(pagename, "", is_lemma)
-                elif tname in ["ru-noun+", "ru-proper noun+"]:
+                elif tn in ["ru-noun+", "ru-proper noun+"]:
                     is_lemma = True
                     lemma = rulib.fetch_noun_lemma(t, expand_text)
                     if lemma is None:
@@ -334,7 +334,7 @@ def lookup_heads_and_inflections(pagename, pagemsg):
                     for val, tr in lemmas:
                         add(val, tr, is_lemma)
                 elif (
-                    tname == "ru-participle of" or tname in inflection_templates and getparam(t, "lang") == "ru"
+                    tn == "ru-participle of" or tn in inflection_templates and getparam(t, "lang") == "ru"
                 ):
                     inflections_of.add((frozenset(this_heads), normalize_text(getparam(t, "1"))))
                 if check_addl_heads:
@@ -342,7 +342,7 @@ def lookup_heads_and_inflections(pagename, pagemsg):
                         headn = getparam(t, "head" + str(i))
                         if headn:
                             add(headn, getparam(t, "tr" + str(i)), is_lemma)
-                elif tname == "ru-decl-adj":
+                elif tn == "ru-decl-adj":
                     result = expand_text(re.sub(r"^\{\{ru-decl-adj", "{{ru-generate-adj-forms", str(t)))
                     if not result:
                         pagemsg(
@@ -363,7 +363,7 @@ def lookup_heads_and_inflections(pagename, pagemsg):
             parsed = blib.parse_text(str(page.text))
             yo_pages = set()
             for t in parsed.filter_templates():
-                if str(t.name) in alt_yo_templates:
+                if tname(t) in alt_yo_templates:
                     yo_pages.add(getparam(t, "1"))
             if len(yo_pages) > 1:
                 pagemsg(

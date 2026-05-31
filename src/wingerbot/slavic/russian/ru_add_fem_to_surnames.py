@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 non_adjectival_names = ["Дарвин"]
 
@@ -26,10 +26,10 @@ def process_text_on_page(index, pagetitle, text):
     ru_adj11_template = None
 
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname == "ru-proper noun":
+        tn = tname(t)
+        if tn == "ru-proper noun":
             pagemsg("WARNING: Found old ru-proper noun: %s" % str(t))
-        elif tname == "ru-proper noun+":
+        elif tn == "ru-proper noun+":
             name = getparam(t, "1")
             if not (not getparam(t, 2) or getparam(t, "2") == "+" and not getparam(t, "3")):
                 pagemsg("WARNING: Complex proper noun header, not sure how to handle: %s" % str(t))

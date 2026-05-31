@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 borrowed_langs = {}
 
@@ -29,9 +29,10 @@ def process_text_on_page(index, pagetitle, text):
         parsed = blib.parse_text(text)
         for t in parsed.filter_templates():
             targs = ""
-            if str(t.name) in ["m", "l"] and getparam(t, "1") == langcode:
+            tn = tname(t)
+            if tn in ["m", "l"] and getparam(t, "1") == langcode:
                 targs = re.sub(r"^\{\{\s*[ml]\s*\|\s*%s\s*" % langcode, "", str(t))
-            elif str(t.name) == "term" and getparam(t, "lang") == langcode:
+            elif tn == "term" and getparam(t, "lang") == langcode:
                 rmparam(t, "lang")
                 targs = re.sub(r"^\{\{\s*term\s*", "", str(t))
             if targs:
@@ -112,7 +113,7 @@ def process_text_on_page(index, pagetitle, text):
         for m in re.finditer(r"\{\{bor(rowing)?\|[^{}]*\}\}", text):
             parsed = blib.parse_text(m.group(0))
             for t in parsed.filter_templates():
-                if str(t.name) in ["bor", "borrowing"] and (
+                if tname(t) in ["bor", "borrowing"] and (
                     getparam(t, "lang") == "ru" or not getparam(t, "lang") and getparam(t, "1") == "ru"
                 ):
                     found_borrowing = True

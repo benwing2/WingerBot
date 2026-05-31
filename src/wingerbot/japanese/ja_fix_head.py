@@ -10,10 +10,10 @@
 # 3. If rom= is present and the page isn't in
 #    [[:Category:Japanese terms with romaji needing attention]], remove rom=.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -25,15 +25,15 @@ def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
     notes = []
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["ja-noun", "ja-adj", "ja-verb", "ja-pos"]:
+        tn = tname(t)
+        if tn in ["ja-noun", "ja-adj", "ja-verb", "ja-pos"]:
             origt = str(t)
 
             # Remove old script code
             p1 = getparam(t, "1")
             if p1 in ["r", "h", "ka", "k", "s", "ky", "kk"]:
                 pagemsg("Removing 1=%s: %s" % (p1, str(t)))
-                notes.append("remove 1=%s from %s" % (p1, tname))
+                notes.append("remove 1=%s from %s" % (p1, tn))
                 rmparam(t, "1")
                 for param in t.params:
                     pname = str(param.name)
@@ -61,12 +61,12 @@ def process_text_on_page(index, pagetitle, text):
                 if hira:
                     numbered_params.append(hira)
                     pagemsg("Moving hira=%s to %s=: %s" % (hira, len(numbered_params), str(t)))
-                    notes.append("move hira= to %s= in %s" % (len(numbered_params), tname))
+                    notes.append("move hira= to %s= in %s" % (len(numbered_params), tn))
                 kata = getparam(t, "kata")
                 if kata:
                     numbered_params.append(kata)
                     pagemsg("Moving kata=%s to %s=: %s" % (kata, len(numbered_params), str(t)))
-                    notes.append("move kata= to %s= in %s" % (len(numbered_params), tname))
+                    notes.append("move kata= to %s= in %s" % (len(numbered_params), tn))
                 del t.params[:]
                 # Put back numbered params, then non-numbered params.
                 for i, param in enumerate(numbered_params):
@@ -81,13 +81,13 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     pagemsg("Removing rom=%s: %s" % (getparam(t, "rom"), str(t)))
                     rmparam(t, "rom")
-                    notes.append("remove rom= from %s" % tname)
+                    notes.append("remove rom= from %s" % tn)
 
             # Remove hidx=
             if t.has("hidx"):
                 pagemsg("Removing hidx=%s: %s" % (getparam(t, "hidx"), str(t)))
                 rmparam(t, "hidx")
-                notes.append("remove hidx= from %s" % tname)
+                notes.append("remove hidx= from %s" % tn)
 
             newt = str(t)
             if origt != newt:

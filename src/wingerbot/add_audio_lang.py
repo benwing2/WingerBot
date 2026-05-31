@@ -3,10 +3,8 @@
 # Fix up raw verb forms when possible, canonicalize existing 'conjugation of'
 # to 'inflection of'
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 langs_to_codes = {}
 
@@ -29,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
     for j, lang in secs.lang_list:
         parsed = blib.parse_text(sections[j])
         for t in parsed.filter_templates():
-            if str(t.name) == "audio" and not getparam(t, "lang"):
+            if tname(t) == "audio" and not getparam(t, "lang"):
                 origt = str(t)
                 if lang in langs_to_codes:
                     langcode = langs_to_codes[lang]

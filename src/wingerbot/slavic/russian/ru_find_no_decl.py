@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -18,13 +16,14 @@ def process_text_on_page(index, pagetitle, text):
     found_invariant_headword_template = False
     found_decl_template = False
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-noun", "ru-proper noun"]:
+        tn = tname(t)
+        if tn in ["ru-noun", "ru-proper noun"]:
             found_headword_template = True
             if getparam(t, "3") == "-":
                 found_invariant_headword_template = True
             else:
                 headword_templates.append(str(t))
-        if str(t.name) in ["ru-noun-table", "ru-decl-noun-see"]:
+        if tn in ["ru-noun-table", "ru-decl-noun-see"]:
             found_decl_template = True
     if found_headword_template and not found_invariant_headword_template:
         if found_decl_template:

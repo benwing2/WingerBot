@@ -5,7 +5,7 @@ import re
 from typing import Literal
 import unicodedata
 from wingerbot import blib
-from wingerbot.blib import PagemsgCallback
+from wingerbot.blib import PagemsgCallback, tname
 from collections import OrderedDict
 
 AC = "\u0301"  # acute =  ́
@@ -676,7 +676,7 @@ def paste_russian_tr(ru: str, tr: Translit) -> str:
 # expansion.
 def fetch_noun_args(t, expand_text, forms_only=False):
     generate_template = "ru-generate-noun-forms" if forms_only else "ru-generate-noun-args"
-    if str(t.name) == "ru-noun+":
+    if tname(t) == "ru-noun+":
         generate_template = re.sub(r"^\{\{ru-noun\+", "{{%s" % generate_template, str(t))
     else:
         generate_template = re.sub(r"^\{\{ru-proper noun\+", "{{%s|ndef=sg" % generate_template, str(t))
@@ -738,8 +738,8 @@ def group_translits(formvals, pagemsg, verbose=False):
 def check_for_alt_yo_terms(text, pagemsg):
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["ru-adj-alt-ё", "ru-noun-alt-ё", "ru-proper noun-alt-ё", "ru-verb-alt-ё", "ru-pos-alt-ё"]:
+        tn = tname(t)
+        if tn in ["ru-adj-alt-ё", "ru-noun-alt-ё", "ru-proper noun-alt-ё", "ru-verb-alt-ё", "ru-pos-alt-ё"]:
             pagemsg("Skipping alt-ё term")
             return True
     return False

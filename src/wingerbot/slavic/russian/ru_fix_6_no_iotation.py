@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    pagemsg("WARNING: Script no longer applies and would need fixing up")
-    return
+    # FIXME: Script no longer applies and would need fixing up.
 
     pagemsg("Processing")
     parsed = blib.parse_text(text)
@@ -20,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         origt = str(t)
         param1 = getparam(t, "1")
-        if str(t.name) in ["ru-conj"]:
+        if tname(t) in ["ru-conj"]:
             if re.search(r"^6[ac]", param1):
                 if getparam(t, "no_iotation"):
                     rmparam(t, "no_iotation")

@@ -6,7 +6,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -85,14 +85,15 @@ def process_page_section(index, pagetitle, section):
     noun_old_templates = []
 
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-decl-noun-see":
+        if tname(t) == "ru-decl-noun-see":
             pagemsg("Found ru-decl-noun-see, skipping")
             return None
 
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-noun-table":
+        tn = tname(t)
+        if tn == "ru-noun-table":
             noun_table_templates.append(t)
-        if str(t.name) == "ru-noun-old":
+        if tn == "ru-noun-old":
             noun_old_templates.append(t)
 
     if len(noun_table_templates) > 1:
@@ -110,14 +111,14 @@ def process_page_section(index, pagetitle, section):
         return str(parsed), 0, 0, 0, 0
 
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-noun", "ru-proper noun"]:
+        if tname(t) in ["ru-noun", "ru-proper noun"]:
             pagemsg("Found ru-noun or ru-proper noun, skipping")
             return None
 
     headword_templates = []
 
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-noun+", "ru-proper noun+"]:
+        if tname(t) in ["ru-noun+", "ru-proper noun+"]:
             headword_templates.append(t)
 
     if len(headword_templates) > 1:

@@ -2,10 +2,10 @@
 
 # This script modifies Proto-Slavic pages containing links to Slovene words
 # to contain the tonal version of the word by looking it up in the entry.
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import errandmsg, getparam, rmparam, msg, site
+from wingerbot.blib import errandmsg, getparam, rmparam, msg, site, tname
 
 GRAVE = "\u0300"
 ACUTE = "\u0301"
@@ -56,7 +56,7 @@ def look_up_tonal_form(pagename, pagemsg, errandpagemsg):
     parsed = blib.parse_text(text)
     tonal_forms = []
     for t in parsed.filter_templates():
-        if str(t.name) == "sl-tonal":
+        if tname(t) == "sl-tonal":
             if args.verbose:
                 pagemsg("look_up_tonal_form: For page %s, found tonal template %s" % (pagename, str(t)))
             if tonal_forms:
@@ -93,10 +93,11 @@ def process_text_on_page(index, pagetitle, text):
         # In case we already substituted multiple tonal variants, the first
         # one will have {{l|sl|...}} and we'll try to replace it again unless
         # we have this check.
-        if str(t.name) == "l/sl-tonal":
+        tn = tname(t)
+        if tn == "l/sl-tonal":
             pagemsg("Already found %s, not replacing anything" % str(t))
             saw_sl_tonal = True
-        if str(t.name) == "l" and getparam(t, "1") == "sl":
+        if tn == "l" and getparam(t, "1") == "sl":
             saw_sl_plain += 1
     if saw_sl_plain and saw_sl_tonal:
         pagemsg("WARNING: Saw both {{l|sl|...}} and {{l/sl-tonal|...}}, needs fixing")
@@ -114,7 +115,7 @@ def process_text_on_page(index, pagetitle, text):
         parsed = blib.parse_text(text)
         for t in parsed.filter_templates():
             origt = str(t)
-            if str(t.name) in ["l"] and getparam(t, "1") == "sl":
+            if tname(t) in ["l"] and getparam(t, "1") == "sl":
                 linkpage = getparam(t, "2")
                 altlink = getparam(t, "3")
                 defn = getparam(t, "4")

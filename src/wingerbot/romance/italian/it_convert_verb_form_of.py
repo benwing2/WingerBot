@@ -103,14 +103,14 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     def do_sectext(sectext, secheadertext):
         possible_templates = "{{inflection of}}/{{infl of}}"
-        tname_re = r"(?:(?:inflection|infl) of\|it)"
-        chunks = re.split(r"^((?:# \{\{%s\|.*\n)+)" % tname_re, sectext, 0, re.M)
+        tn_re = r"(?:(?:inflection|infl) of\|it)"
+        chunks = re.split(r"^((?:# \{\{%s\|.*\n)+)" % tn_re, sectext, 0, re.M)
         this_note_parts = []
         for k in range(1, len(chunks), 2):
             verb_form_chunk = chunks[k]
             extra_text = ""
-            if not re.search(r"\A((?:# \{\{%s\|.*\}\}\n)+)\Z" % tname_re, verb_form_chunk):
-                m = re.search(r"\A# \{\{(%s)\|.*\}\}(.*)\n\Z" % tname_re, verb_form_chunk)
+            if not re.search(r"\A((?:# \{\{%s\|.*\}\}\n)+)\Z" % tn_re, verb_form_chunk):
+                m = re.search(r"\A# \{\{(%s)\|.*\}\}(.*)\n\Z" % tn_re, verb_form_chunk)
                 if m:
                     pagemsg(
                         "WARNING: Extraneous text after {{%s}}, adding after new {{it-verb form of}}: <%s>"

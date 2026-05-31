@@ -14,11 +14,10 @@
 # 6. (DONE) Allow control of processing lemmas or non-lemmas.
 # 7. (MOSTLY DONE) Proper handling of multiword non-lemmas.
 
-import pywikibot, re, sys, argparse
-from collections import Counter
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, site, tname
 
 from wingerbot.slavic.russian import rulib
 from wingerbot.slavic.russian import runounlib
@@ -112,8 +111,8 @@ def find_noun_word_types(lemma, pagemsg):
     parsed = blib.parse_text(declpage.text)
     decl_templates = []
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["ru-noun-table", "ru-decl-adj"]:
+        tn = tname(t)
+        if tn in ["ru-noun-table", "ru-decl-adj"]:
             pagemsg("find_noun_word_types: Found decl template: %s" % str(t))
             decl_templates.append(t)
 
@@ -137,8 +136,8 @@ def find_noun_word_types(lemma, pagemsg):
 
     seen_poses = set()
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname == "ru-IPA":
+        tn = tname(t)
+        if tn == "ru-IPA":
             val = getparam(t, "pos")
             if val:
                 seen_poses.add(val)
@@ -186,7 +185,7 @@ def process_text_on_page(index, pagetitle, text):
     subsections_with_ru_ipa = set()
     for k in range(0, len(subsections), 2):
         for t in blib.parse_text(subsections[k]).filter_templates():
-            if str(t.name) == "ru-IPA":
+            if tname(t) == "ru-IPA":
                 subsections_with_ru_ipa.add(k)
                 if getparam(t, "pos"):
                     pagemsg("Already has pos=, skipping template in section %s: %s" % (k // 2, str(t)))
@@ -288,8 +287,8 @@ def process_text_on_page(index, pagetitle, text):
                 def getp(param):
                     return getparam(t, param)
 
-                tname = str(t.name)
-                if tname in ["ru-noun", "ru-proper noun"]:
+                tn = tname(t)
+                if tn in ["ru-noun", "ru-proper noun"]:
                     if getparam(t, "2") == "-":
                         pagemsg("Found invariable noun: %s" % str(t))
                         pos.add("inv")
@@ -297,7 +296,7 @@ def process_text_on_page(index, pagetitle, text):
                         pagemsg("Found declined noun: %s" % str(t))
                         pos.add("n")
                     is_lemma.add(True)
-                elif tname in ["ru-noun+", "ru-proper noun+"]:
+                elif tn in ["ru-noun+", "ru-proper noun+"]:
                     for param in t.params:
                         if re.search("^[0-9]+$", str(param.name)) and "+" in str(param.value):
                             pagemsg("Found declined adjectival noun, treating as adjective: %s" % str(t))
@@ -307,23 +306,23 @@ def process_text_on_page(index, pagetitle, text):
                         pagemsg("Found declined noun: %s" % str(t))
                         pos.add("n")
                     is_lemma.add(True)
-                elif tname == "comparative of" and getp("lang") == "ru":
+                elif tn == "comparative of" and getp("lang") == "ru":
                     pagemsg("Found comparative: %s" % str(t))
                     pos.add("com")
                     is_lemma.add(False)
-                elif tname == "ru-adv":
+                elif tn == "ru-adv":
                     pagemsg("Found adverb: %s" % str(t))
                     pos.add("adv")
                     is_lemma.add(True)
-                elif tname == "ru-adj":
+                elif tn == "ru-adj":
                     pagemsg("Found adjective: %s" % str(t))
                     pos.add("a")
                     is_lemma.add(True)
-                elif tname == "ru-noun form":
+                elif tn == "ru-noun form":
                     pagemsg("Found noun form: %s" % str(t))
                     saw_noun_form = True
                     is_lemma.add(False)
-                elif tname == "head" and getp("1") == "ru":
+                elif tn == "head" and getp("1") == "ru":
                     if getp("2") == "verb form":
                         pagemsg("Found verb form: %s" % str(t))
                         pos.add("v")
@@ -352,7 +351,7 @@ def process_text_on_page(index, pagetitle, text):
                         pagemsg("Found pronoun: %s" % str(t))
                         pos.add("pro")
                         is_lemma.add(True)
-                elif tname == "inflection of" and getp("lang") == "ru":
+                elif tn == "inflection of" and getp("lang") == "ru":
                     is_lemma.add(False)
                     lemma.add(rulib.remove_accents(getp("1")))
                     if saw_noun_form:
@@ -396,17 +395,17 @@ def process_text_on_page(index, pagetitle, text):
                                 pos.add("voc")
                             else:
                                 pos.add("n")
-                elif tname == "prepositional singular of" and getp("lang") == "ru":
+                elif tn == "prepositional singular of" and getp("lang") == "ru":
                     pagemsg("Found prepositional singular case inflection: %s" % str(t))
                     pos.add("pre")
                     is_lemma.add(False)
                     lemma.add(getp("1"))
-                elif tname == "dative singular of" and getp("lang") == "ru":
+                elif tn == "dative singular of" and getp("lang") == "ru":
                     pagemsg("Found dative singular case inflection: %s" % str(t))
                     pos.add("dat")
                     is_lemma.add(False)
                     lemma.add(getp("1"))
-                elif tname == "vocative singular of" and getp("lang") == "ru":
+                elif tn == "vocative singular of" and getp("lang") == "ru":
                     pagemsg("Found vocative case inflection: %s" % str(t))
                     pos.add("voc")
                     is_lemma.add(False)
@@ -531,7 +530,7 @@ def process_text_on_page(index, pagetitle, text):
         # and we want to leave those alone with a warning.
         saw_final_e = {}
         for t in parsed.filter_templates():
-            if str(t.name) == "ru-IPA":
+            if tname(t) == "ru-IPA":
                 param = "phon"
                 phon = getparam(t, param)
                 if not phon:
@@ -550,7 +549,7 @@ def process_text_on_page(index, pagetitle, text):
 
         # Now modify the templates.
         for t in parsed.filter_templates():
-            if str(t.name) == "ru-IPA":
+            if tname(t) == "ru-IPA":
                 param = "phon"
                 phon = getparam(t, param)
                 if not phon:

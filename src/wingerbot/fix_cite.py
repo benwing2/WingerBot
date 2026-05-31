@@ -21,11 +21,11 @@
 # * Replace uses of {{temp|reference-us-patent}} (a redirect) with {{temp|quote-us-patent}}.
 # * Replace uses of {{temp|reference-video}} (a redirect) with {{temp|quote-video}}.
 
-import pywikibot, re, sys, argparse
+import re
 import mwparserfromhell as mw
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, tname
 
 replace_templates = [
     "cite-usenet",
@@ -194,16 +194,16 @@ def process_text_on_page(index, pagetitle, text):
 
     def replace_in_reference(parsed, in_what):
         for t in parsed.filter_templates():
-            tname = str(t.name)
+            tn = tname(t)
             origt = str(t)
-            if tname.strip() in ["reference-journal", "reference-news"]:
-                set_template_name(t, "cite-journal", tname)
-                pagemsg("%s -> cite-journal" % tname.strip())
-                notes.append("%s -> cite-journal" % tname.strip())
+            if tn in ["reference-journal", "reference-news"]:
+                set_template_name(t, "cite-journal", tn)
+                pagemsg("%s -> cite-journal" % tn)
+                notes.append("%s -> cite-journal" % tn)
                 fix_page_params(t)
                 pagemsg("Replacing %s with %s in %s" % (origt, str(t), in_what))
-            if tname.strip() == "reference-book":
-                set_template_name(t, "cite-book", tname)
+            if tn == "reference-book":
+                set_template_name(t, "cite-book", tn)
                 pagemsg("reference-book -> cite-book")
                 fixed_params = fix_cite_book_params(t)
                 notes.append("reference-book -> cite-book%s" % (fixed_params and " and fix book cite params" or ""))
@@ -222,34 +222,34 @@ def process_text_on_page(index, pagetitle, text):
                     subsections[k] = str(parsed)
         need_to_replace_double_quote_prefixes = False
         for t in parsed.filter_templates():
-            tname = str(t.name)
+            tn = tname(t)
             origt = str(t)
             for fr, to in simple_replace:
-                if tname.strip() == fr:
-                    set_template_name(t, to, tname)
+                if tn == fr:
+                    set_template_name(t, to, tn)
                     pagemsg("%s -> %s" % (fr, to))
                     notes.append("%s -> %s" % (fr, to))
                     fix_page_params(t)
                     pagemsg("Replacing %s with %s" % (origt, str(t)))
-            if tname.strip() in ["reference-journal", "reference-news"]:
-                set_template_name(t, "quote-journal", tname)
-                pagemsg("%s -> quote-journal" % tname.strip())
-                notes.append("%s -> quote-journal" % tname.strip())
+            if tn in ["reference-journal", "reference-news"]:
+                set_template_name(t, "quote-journal", tn)
+                pagemsg("%s -> quote-journal" % tn)
+                notes.append("%s -> quote-journal" % tn)
                 fix_page_params(t)
                 pagemsg("Replacing %s with %s outside of reference section" % (origt, str(t)))
-            if tname.strip() == "reference-book":
-                set_template_name(t, "quote-book", tname)
+            if tn == "reference-book":
+                set_template_name(t, "quote-book", tn)
                 pagemsg("reference-book -> cite-book")
                 fixed_params = fix_cite_book_params(t)
                 notes.append("reference-book -> cite-book%s" % (fixed_params and " and fix book cite params" or ""))
                 pagemsg("Replacing %s with %s outside of reference section" % (origt, str(t)))
-            if tname.strip() in ["cite-usenet", "quote-usenet"]:
-                if tname.strip() == "cite-usenet":
+            if tn in ["cite-usenet", "quote-usenet"]:
+                if tn == "cite-usenet":
                     fixed_params = fix_cite_usenet_params(t)
                 else:
                     fixed_params = fix_quote_usenet_params(t)
-                set_template_name(t, "quote-newsgroup", tname)
-                pagemsg("%s -> quote-newsgroup" % tname.strip())
+                set_template_name(t, "quote-newsgroup", tn)
+                pagemsg("%s -> quote-newsgroup" % tn)
                 prefix = getparam(t, "prefix").strip()
                 removed_prefix = False
                 if prefix:
@@ -264,7 +264,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append(
                     "%s -> quote-newsgroup%s%s"
                     % (
-                        tname.strip(),
+                        tn,
                         removed_prefix and ", remove prefix=%s, insert #* before template" % prefix or "",
                         fixed_params and ", fix params" or "",
                     )

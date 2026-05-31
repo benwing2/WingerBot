@@ -195,27 +195,27 @@ def get_headword_pronuns(parsed, pagetitle, pagemsg, expand_text):
 
     for t in parsed.filter_templates():
         check_extra_heads = False
-        tname = str(t.name)
+        tn = tname(t)
         if (
-            tname in ["%s-adj" % args.lang, "%s-adv" % args.lang, "%s-verb" % args.lang]
+            tn in ["%s-adj" % args.lang, "%s-adv" % args.lang, "%s-verb" % args.lang]
             or args.lang == "bg"
-            and tname in ["bg-noun", "bg-proper noun"]
+            and tn in ["bg-noun", "bg-proper noun"]
         ):
             head = getparam(t, "1") or pagetitle
             append_headword(head)
             check_extra_heads = True
-        elif tname in ["%s-phrase" % args.lang]:
+        elif tn in ["%s-phrase" % args.lang]:
             head = getparam(t, "head") or getparam(t, "1") or pagetitle
             append_headword(head)
             check_extra_heads = True
-        elif tname == "head" and getparam(t, "1") == args.lang and getparam(t, "2") == "letter":
+        elif tn == "head" and getparam(t, "1") == args.lang and getparam(t, "2") == "letter":
             pagemsg("WARNING: Skipping page with letter headword")
             return None
-        elif tname == "head" and getparam(t, "1") == args.lang:
+        elif tn == "head" and getparam(t, "1") == args.lang:
             head = getparam(t, "head") or pagetitle
             append_headword(head)
             check_extra_heads = True
-        elif args.lang != "bg" and tname in ["%s-noun" % args.lang, "%s-proper noun" % args.lang]:
+        elif args.lang != "bg" and tn in ["%s-noun" % args.lang, "%s-proper noun" % args.lang]:
             param1 = getparam(t, "1")
             if "<" in param1:
                 parsed_t = blib.parse_text(str(t)).filter_templates()[0]
@@ -557,9 +557,9 @@ def match_headword_and_found_pronuns(headword_pronuns, found_pronuns, pagemsg, e
 def get_lemmas_of_form_page(parsed):
     lemmas = set()
     for t in parsed.filter_templates():
-        tname = str(t.name)
+        tn = tname(t)
         first_param = None
-        if tname in ["inflection of", "comparative of", "superlative of"]:
+        if tn in ["inflection of", "comparative of", "superlative of"]:
             first_param = get_first_param(t)
         if first_param:
             lemma = com.remove_accents(blib.remove_links(getparam(t, first_param)))
@@ -816,9 +816,9 @@ def process_section(section, indentlevel, headword_pronuns, pagetitle, pagemsg, 
                 was_unable_to_match = True
 
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["%s-IPA-manual" % args.lang]:
-            pagemsg("WARNING: Found %s template, skipping" % tname)
+        tn = tname(t)
+        if tn in ["%s-IPA-manual" % args.lang]:
+            pagemsg("WARNING: Found %s template, skipping" % tn)
             return None
     if re.search(r"[Aa]bbreviation", section) and not re.search("==Abbreviations==", section):
         pagemsg("WARNING: Found the word 'abbreviation', please check")
@@ -861,7 +861,7 @@ def process_section(section, indentlevel, headword_pronuns, pagetitle, pagemsg, 
 
     parsed = blib.parse_text(section)
     for t in parsed.filter_templates():
-        if str(t.name) == pron_temp_name:
+        if tname(t) == pron_temp_name:
             origt = str(t)
             arg1 = getparam(t, "1") or pagetitle
             newarg1, their_notes = canonicalize_pronun(arg1, "1")

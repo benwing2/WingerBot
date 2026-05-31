@@ -281,9 +281,9 @@ def match_headword_and_found_pronuns(headword_pronuns, found_pronuns, pagemsg, e
 def get_lemmas_of_form_page(parsed):
     lemmas = set()
     for t in parsed.filter_templates():
-        tname = str(t.name)
+        tn = tname(t)
         first_param = None
-        if tname in ["inflection of", "comparative of", "superlative of"]:
+        if tn in ["inflection of", "comparative of", "superlative of"]:
             first_param = get_first_param(t)
         if first_param:
             lemma = lalib.remove_macrons(blib.remove_links(getparam(t, first_param)))

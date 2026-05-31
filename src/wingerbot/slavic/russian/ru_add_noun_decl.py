@@ -43,7 +43,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site
+from wingerbot.blib import getparam, msg, site, tname
 
 from wingerbot.slavic.russian import rulib, runounlib
 
@@ -241,14 +241,14 @@ def process_text_on_page(index, pagetitle, text):
         headword_templates = []
         decl_z_templates = []
         for t in parsed.filter_templates():
-            tname = str(t.name)
-            if tname in ["ru-noun-table", "ru-decl-adj"]:
+            tn = tname(t)
+            if tn in ["ru-noun-table", "ru-decl-adj"]:
                 pagemsg("find_decl_args: Found decl template: %s" % str(t))
                 decl_templates.append(t)
-            if tname in ["ru-noun", "ru-proper noun"]:
+            if tn in ["ru-noun", "ru-proper noun"]:
                 pagemsg("find_decl_args: Found headword template: %s" % str(t))
                 headword_templates.append(t)
-            if tname in ["ru-decl-noun-z"]:
+            if tn in ["ru-decl-noun-z"]:
                 pagemsg("find_decl_args: Found z-decl template: %s" % str(t))
                 decl_z_templates.append(t)
 
@@ -303,7 +303,7 @@ def process_text_on_page(index, pagetitle, text):
         else:
             # Multiple decl templates
             for t in decl_templates:
-                if str(t.name) == "ru-decl-adj" and re.search("(ий|ый|ой)$", lemma):
+                if tname(t) == "ru-decl-adj" and re.search("(ий|ый|ой)$", lemma):
                     pagemsg(
                         "WARNING: Multiple decl templates during decl lookup for word #%s, assuming adjectival: lemma=%s, infl=%s"
                         % (wordind, lemma, infl)
@@ -577,21 +577,21 @@ def process_text_on_page(index, pagetitle, text):
     headword_template = None
     see_template = None
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname == "ru-decl-noun-see":
+        tn = tname(t)
+        if tn == "ru-decl-noun-see":
             if see_template:
                 pagemsg("WARNING: Multiple ru-decl-noun-see templates, skipping")
                 return
             see_template = t
-        if tname in ["ru-noun+", "ru-proper noun+"]:
-            pagemsg("Found %s, skipping" % tname)
+        if tn in ["ru-noun+", "ru-proper noun+"]:
+            pagemsg("Found %s, skipping" % tn)
             return
-        if tname in ["ru-noun", "ru-proper noun"]:
+        if tn in ["ru-noun", "ru-proper noun"]:
             if headword_template:
                 pagemsg("WARNING: Multiple ru-noun or ru-proper noun templates, skipping")
                 return
             headword_template = t
-        if tname == "ru-pre-reform":
+        if tn == "ru-pre-reform":
             pagemsg("WARNING: Found ru-pre-reform template, skipping")
             return
 

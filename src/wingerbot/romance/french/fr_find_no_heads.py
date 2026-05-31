@@ -3,10 +3,8 @@
 # Go through all the French terms we can find looking for pages that are
 # missing a headword declaration.
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 default_poses = [
     "nouns",
@@ -104,11 +102,11 @@ def process_text_on_page(index, pagetitle, text):
     found_page_head = False
     for t in parsed.filter_templates():
         found_this_head = False
-        tname = str(t.name)
-        if tname in fr_head_templates:
-            headname = tname
+        tn = tname(t)
+        if tn in fr_head_templates:
+            headname = tn
             found_this_head = True
-        elif tname == "head" and getparam(t, "1") == "fr":
+        elif tn == "head" and getparam(t, "1") == "fr":
             headtype = getparam(t, "2")
             headname = "head|fr|%s" % headtype
             if headtype in fr_heads_to_warn_about:

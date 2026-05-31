@@ -3,10 +3,10 @@
 # Convert fr-conj-* templates to fr-conj-auto, checking in the process that
 # the conjugation doesn't change.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, site, tname
 
 # List of verbs are conjugated using 'être' in the passé composé.
 etre = [
@@ -433,8 +433,8 @@ def find_old_template_props(template, pagemsg):
     if args.verbose:
         pagemsg("Found template text: %s" % template_text)
     for t in blib.parse_text(template_text).filter_templates():
-        tname = str(t.name).strip()  # template name may have spaces
-        if tname == "fr-conj" or tname == "#invoke:fr-conj" and getparam(t, "1").strip() == "frconj":
+        tn = tname(t)
+        if tn == "fr-conj" or tn == "#invoke:fr-conj" and getparam(t, "1").strip() == "frconj":
             args = {}
             # Yuck. Template param names sometimes have spaces in them; must strip.
             tparams = [(str(param.name.strip()), str(param.value.strip())) for param in t.params]
@@ -516,7 +516,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
-        name = str(t.name)
+        name = tname(t)
         if name in templates_to_change or name in refl_templates_to_change:
             refl = name in refl_templates_to_change
             difvals = compare_conjugation(index, t, refl, pagemsg, expand_text)

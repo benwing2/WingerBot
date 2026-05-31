@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -21,13 +21,14 @@ def process_text_on_page(index, pagetitle, text):
     headword_templates = []
     decl_templates = []
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-adj":
+        tn = tname(t)
+        if tn == "ru-adj":
             headword_templates.append(t)
             if getparam(t, "2"):
                 hascomp = True
             elif getparam(t, "comp2") or getparam(t, "comp3") or getparam(t, "comp4") or getparam(t, "comp5"):
                 pagemsg("WARNING: Found compN= but no 2=: %s" % str(t))
-        if str(t.name) == "ru-decl-adj":
+        if tn == "ru-decl-adj":
             decl_templates.append(t)
     if hascomp:
         if len(headword_templates) > 1 or len(decl_templates) > 1:

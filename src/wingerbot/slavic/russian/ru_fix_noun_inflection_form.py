@@ -5,10 +5,10 @@
 # abbreviations, put lang=ru first, remove blank form codes, and rearrange
 # form codes like s|gen to be gen|s.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -30,7 +30,7 @@ def process_text_on_page(index, pagetitle, text):
     # Remove blank form codes and canonicalize position of lang=, tr=
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "inflection of" and getparam(t, "lang") == "ru":
+        if tname(t) == "inflection of" and getparam(t, "lang") == "ru":
             origt = str(t)
             # Fetch the numbered params starting with 3, skipping blank ones
             numbered_params = []
@@ -73,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
     # Convert 'prep' to 'pre', etc.
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "inflection of" and getparam(t, "lang") == "ru":
+        if tname(t) == "inflection of" and getparam(t, "lang") == "ru":
             for frm, to in [
                 ("nominative", "nom"),
                 ("accusative", "acc"),
@@ -106,7 +106,7 @@ def process_text_on_page(index, pagetitle, text):
     # Rearrange order of s|gen, p|nom etc. to gen|s, nom|p etc.
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "inflection of" and getparam(t, "lang") == "ru":
+        if tname(t) == "inflection of" and getparam(t, "lang") == "ru":
             if (
                 getparam(t, "3") in ["s", "p"]
                 and getparam(t, "4") in ["nom", "gen", "dat", "acc", "ins", "pre", "voc", "loc", "par"]

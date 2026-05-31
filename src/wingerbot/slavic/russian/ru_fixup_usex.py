@@ -8,10 +8,8 @@
 #    modulo accents.
 # 3. Remove redundant transliteration.
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.slavic.russian import runounlib
 
@@ -29,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) == "ux" and getparam(t, "1") == "ru" and t.has("inline"):
+        if tname(t) == "ux" and getparam(t, "1") == "ru" and t.has("inline"):
             inline = getparam(t, "inline")
             if inline and inline not in ["0", "n", "no", "false"]:
                 t.name = "uxi"
@@ -37,18 +35,19 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 notes.append("remove unneeded inline=%s" % inline)
             rmparam(t, "inline")
-        if str(t.name) in ["ux", "uxi"] and getparam(t, "1") == "ru":
+        tn = tname(t)
+        if tn in ["ux", "uxi"] and getparam(t, "1") == "ru":
             pval = getparam(t, "2")
             newpval = runounlib.fixup_link(pval)
             if pval != newpval:
                 t.add("2", newpval)
-                notes.append("canonicalize two-part links in %s|ru" % str(t.name))
+                notes.append("canonicalize two-part links in %s|ru" % tn)
             pval = getparam(t, "tr")
             if pval:
                 auto_translit = expand_text("{{xlit|ru|%s}}" % getparam(t, "2"))
                 if auto_translit == pval:
                     rmparam(t, "tr")
-                    notes.append("remove redundant translit in %s|ru" % str(t.name))
+                    notes.append("remove redundant translit in %s|ru" % tn)
                 else:
                     pagemsg("WARNING: Non-redundant translit in %s" % str(t))
         newt = str(t)

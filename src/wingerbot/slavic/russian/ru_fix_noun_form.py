@@ -2,10 +2,8 @@
 
 # Fix up noun forms, using {{ru-noun form}} instead of {{head|ru|noun form}}
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def getrmparam(t, param):
@@ -15,8 +13,6 @@ def getrmparam(t, param):
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -31,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "noun form":
+        if tname(t) == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "noun form":
             if getparam(t, "3"):
                 pagemsg("WARNING: Found param 3 in {{head|ru|noun form}}: %s" % str(t))
                 return
@@ -66,7 +62,7 @@ def process_text_on_page(index, pagetitle, text):
             if origt != newt:
                 pagemsg("Replaced %s with %s" % (origt, newt))
                 notes.append("convert {{head|ru|noun form}} to {{ru-noun form}}")
-        elif str(t.name) == "ru-noun form":
+        elif tname(t) == "ru-noun form":
             if getparam(t, "head") and getparam(t, "1"):
                 pagemsg("WARNING: ru-noun form has both params 1= and head=: %s" % str(t))
                 return

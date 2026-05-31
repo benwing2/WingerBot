@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -16,14 +14,15 @@ def process_text_on_page(index, pagetitle, text):
 
     found_headword_template = False
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-adj"]:
+        if tname(t) in ["ru-adj"]:
             found_headword_template = True
     if not found_headword_template:
         notes = []
         for t in parsed.filter_templates():
-            if str(t.name) in ["ru-noun", "ru-noun+", "ru-proper noun", "ru-proper noun+"]:
-                notes.append("found noun header (%s)" % str(t.name))
-            if str(t.name) == "head":
+            tn = tname(q)
+            if tn in ["ru-noun", "ru-noun+", "ru-proper noun", "ru-proper noun+"]:
+                notes.append("found noun header (%s)" % tn)
+            if tn == "head":
                 notes.append("found head header (%s)" % getparam(t, "2"))
         pagemsg("Missing adj headword template%s" % (notes and "; " + ",".join(notes)))
 

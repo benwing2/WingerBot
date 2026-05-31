@@ -6,7 +6,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site
+from wingerbot.blib import getparam, msg, errandmsg, site, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -44,8 +44,8 @@ def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
     prons = []
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["ru-IPA"]:
+        tn = tname(t)
+        if tn in ["ru-IPA"]:
             tphon = getparam(t, "phon")
             if tphon:
                 prons.append("phon=%s" % tphon)

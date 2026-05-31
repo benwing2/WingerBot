@@ -3,10 +3,10 @@
 # Convert fr-conj-* templates to fr-conj-auto, checking in the process that
 # the conjugation doesn't change.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, site, tname
 
 templates_to_change = [
     "fr-conj-er",
@@ -176,8 +176,8 @@ def find_old_template_props(template, pagemsg):
     if args.verbose:
         pagemsg("Found template text: %s" % template_text)
     for t in blib.parse_text(template_text).filter_templates():
-        tname = str(t.name).strip()  # template name may have spaces
-        if tname == "fr-conj" or tname == "#invoke:fr-conj" and getparam(t, "1").strip() == "frconj":
+        tn = tname(t)
+        if tn == "fr-conj" or tn == "#invoke:fr-conj" and getparam(t, "1").strip() == "frconj":
             args = {}
             # Yuck. Template param names sometimes have spaces in them; must strip.
             tparams = [(str(param.name.strip()), str(param.value.strip())) for param in t.params]
@@ -257,9 +257,9 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
-        name = str(t.name)
-        if name in templates_to_change or name in refl_templates_to_change:
-            refl = name in refl_templates_to_change
+        tn = tname(t)
+        if tn in templates_to_change or tn in refl_templates_to_change:
+            refl = tn in refl_templates_to_change
             difvals = compare_conjugation(t, refl, pagemsg, expand_text)
             if difvals is None:
                 pass
@@ -289,8 +289,8 @@ def process_text_on_page(index, pagetitle, text):
                         pagemsg("Found non-avoir auxiliary aux=%s in %s" % (pval, str(t)))
                     auxpname = (
                         "3"
-                        if name in ["fr-conj-e-er", "fr-conj-ir (s)"]
-                        else "aux" if name in ["fr-conj-xx-er", "fr-conj-é-er"] else "2"
+                        if tn in ["fr-conj-e-er", "fr-conj-ir (s)"]
+                        else "aux" if tn in ["fr-conj-xx-er", "fr-conj-é-er"] else "2"
                     )
                     if pname == auxpname and pval != "avoir":
                         aux = pval
@@ -304,7 +304,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("aux", aux)
                 newt = str(t)
                 pagemsg("Replacing %s with %s" % (oldt, newt))
-                notes.append("replaced {{%s}} with %s" % (name, newt))
+                notes.append("replaced {{%s}} with %s" % (tn, newt))
 
     return str(parsed), notes
 

@@ -2,10 +2,10 @@
 
 # Move text outside of certain RQ: templates inside the templates.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -24,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) == "RQ:Wodehouse Offing":
+        if tname(t) == "RQ:Wodehouse Offing":
             chapter = getparam(t, "1")
             passage = getparam(t, "2")
             if chapter or passage:

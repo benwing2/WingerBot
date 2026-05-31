@@ -3,11 +3,10 @@
 # Replace dates of the form "1 January, 2012" with "1 January 2012"
 # (remove the comma) in quotation/citation templates.
 
-import pywikibot, re, sys, argparse
-import mwparserfromhell as mw
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
+from wingerbot.blib import getparam, msg, tname
 
 replace_templates = [
     "cite-book",
@@ -71,9 +70,9 @@ def process_text_on_page(index, pagetitle, text):
 
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
-        tname = str(t.name)
+        tn = tname(t)
         origt = str(t)
-        if tname.strip() in replace_templates:
+        if tn in replace_templates:
             date = getparam(t, "date")
             if date.strip():
                 newdate = re.sub(r"^(\s*[0-9]+\s+%s\s*),(\s*[0-9]+\s*)$" % month_re, r"\1\2", date)
@@ -83,7 +82,7 @@ def process_text_on_page(index, pagetitle, text):
                     # newline separately and you'll get two newlines.
                     t.get("date").value = newdate
                     pagemsg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
-                    notes.append("fix date in %s" % tname.strip())
+                    notes.append("fix date in %s" % tn)
 
     return str(parsed), notes
 

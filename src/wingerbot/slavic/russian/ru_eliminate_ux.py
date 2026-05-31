@@ -5,10 +5,10 @@
 # special-purpose params noadj=, noshto=, adj= or shto= is present (the
 # latter two are obsolete).
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -21,21 +21,21 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-ux":
+        if tname(t) == "ru-ux":
             origt = str(t)
             if t.has("noadj") or t.has("noshto"):
                 pagemsg("WARNING: Can't convert %s, has noadj= or noshto=" % origt)
             elif t.has("adj") or t.has("shto"):
                 pagemsg("WARNING: Can't convert %s, has adj= or shto=" % origt)
             else:
-                tname = "ux"
+                tn = "ux"
                 new_params = []
                 for param in t.params:
                     pname = str(param.name)
                     pval = str(param.value)
                     if pname == "inline":
                         if pval and pval not in ["0", "n", "no", "false"]:
-                            tname = "uxi"
+                            tn = "uxi"
                     elif re.search(r"^[0-9]+$", pname):
                         # move numbered params up by one
                         new_params.append((str(1 + int(pname)), param.value))
@@ -44,11 +44,11 @@ def process_text_on_page(index, pagetitle, text):
                     else:
                         new_params.append((pname, param.value))
                 del t.params[:]
-                t.name = tname
+                t.name = tn
                 t.add("1", "ru")
                 for pname, pval in new_params:
                     t.add(pname, pval)
-                notes.append("Replace {{ru-ux}} with {{%s|ru}}" % tname)
+                notes.append("Replace {{ru-ux}} with {{%s|ru}}" % tn)
             newt = str(t)
             if origt != newt:
                 pagemsg("Replaced %s with %s" % (origt, newt))

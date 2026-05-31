@@ -46,10 +46,10 @@
 # the masculine singular past (minus final -л if it's present). Stress is
 # as in the masculine singular past.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -57,8 +57,8 @@ from wingerbot.slavic.russian import rulib
 # Form the past passive participle from the verb type, infinitive and
 # other parts. For the moment we don't try to get the stress right,
 # and return a form without stress or ё.
-def form_ppp(verbtype, pagetitle, args):
-    def form_ppp_1(verbtype, pagetitle, args):
+def form_ppp(verbtype, pagetitle, conjargs):
+    def form_ppp_1(verbtype, pagetitle, conjargs):
         def first_entry(forms):
             forms = re.sub(",.*", "", forms)
             return re.sub("//.*", "", forms)
@@ -71,24 +71,24 @@ def form_ppp(verbtype, pagetitle, args):
         if pagetitle.endswith("еть") and verbtype == 1:
             return re.sub("ть$", "нный", pagetitle)
         if verbtype in [4, 5]:
-            sg1 = args["pres_1sg"] if "pres_1sg" in args else args["futr_1sg"]
+            sg1 = conjargs["pres_1sg"] if "pres_1sg" in conjargs else conjargs["futr_1sg"]
             if not sg1 or sg1 == "-":
                 return None
             sg1 = first_entry(sg1)
             assert re.search("[ую]́?$", sg1)
             return re.sub("[ую]́?$", "енный", sg1)
         if verbtype in [7, 8]:
-            sg3 = args["pres_3sg"] if "pres_3sg" in args else args["futr_3sg"]
+            sg3 = conjargs["pres_3sg"] if "pres_3sg" in conjargs else conjargs["futr_3sg"]
             sg3 = first_entry(sg3)
             assert re.search("[её]́?т$", sg3)
             return re.sub("[её]́?т$", "енный", sg3)
         if verbtype in [3, 10]:
             return re.sub("ть$", "тый", pagetitle)
         assert verbtype in [9, 11, 12, 14, 15, 16]
-        pastm = first_entry(args["past_m"])
+        pastm = first_entry(conjargs["past_m"])
         return re.sub("л?$", "тый", pastm)
 
-    retval = form_ppp_1(verbtype, pagetitle, args)
+    retval = form_ppp_1(verbtype, pagetitle, conjargs)
     if retval:
         return rulib.make_unstressed_ru(retval)
     else:
@@ -119,8 +119,8 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
-        tname = str(t.name)
-        if tname == "ru-conj":
+        tn = tname(t)
+        if tn == "ru-conj":
             manual_ppps = []
             for form in manual_ppp_forms:
                 ppp = getparam(t, form)
@@ -151,14 +151,14 @@ def process_text_on_page(index, pagetitle, text):
                 if not result:
                     pagemsg("WARNING: Error generating forms, skipping")
                     continue
-                args = blib.split_generate_args(result)
-                if "past_pasv_part" not in args:
+                conjargs = blib.split_generate_args(result)
+                if "past_pasv_part" not in conjargs:
                     pagemsg("WARNING: Something wrong, no past passive participle generated: %s" % str(t))
                     continue
                 auto_ppps = []
                 for form in manual_ppp_forms:
-                    if form in args:
-                        for ppp in re.split(",", args[form]):
+                    if form in conjargs:
+                        for ppp in re.split(",", conjargs[form]):
                             if ppp and ppp != "-":
                                 auto_ppps.append(ppp)
                 if manual_ppps == auto_ppps:

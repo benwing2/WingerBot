@@ -8,7 +8,7 @@
 # 1. When swapping participles with nouns/adjectives, don't do it for
 #    adverbial participles
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
@@ -132,7 +132,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
                 )
                 notes.append("set section header to Participle")
             for t in parsed.filter_templates():
-                if str(t.name) == "head" and getparam(t, "1") == "ru":
+                if tname(t) == "head" and getparam(t, "1") == "ru":
                     origt = str(t)
                     t.add("2", "participle")
                     newt = str(t)

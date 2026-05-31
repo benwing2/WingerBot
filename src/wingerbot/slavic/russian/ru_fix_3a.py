@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -11,15 +11,12 @@ from wingerbot.slavic.russian import rulib
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-    pagemsg("WARNING: Script no longer applies and would need fixing up")
-    return
+    # FIXME: Script no longer applies and would need fixing up
 
     pagemsg("Processing")
 
@@ -33,7 +30,7 @@ def process_text_on_page(index, pagetitle, text):
     direc = direc.replace("3oa", "3°a")
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) in ["ru-conj"]:
+        if tname(t) in ["ru-conj"]:
             conjtype = getparam(t, "1")
             if not conjtype.startswith("3olda"):
                 continue
@@ -100,7 +97,7 @@ def process_text_on_page(index, pagetitle, text):
                                     else:
                                         comment = "Delete erroneously created long form of %s" % pagetitle
                                         pagemsg("Existing text for form %s: [[%s]]" % (formpagename, text))
-                                        if save:
+                                        if args.save:
                                             formpage.delete(comment)
                                         else:
                                             pagemsg("Would delete page %s with comment=%s" % (formpagename, comment))

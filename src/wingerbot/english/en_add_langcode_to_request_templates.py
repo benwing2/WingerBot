@@ -35,7 +35,7 @@ def process_text_on_page(index, pagetitle, text):
                     params.append((pname, param.value, param.showkey))
                 # Erase all params.
                 del t.params[:]
-                newline = "\n" if "\n" in str(t.name) else ""
+                newline = "\n" if "\n" in str(t.name) else "" # not tname() as we want to check for spaces
                 t.add("lang", "en" + newline, preserve_spacing=False)
                 # Put remaining parameters in order.
                 for name, value, showkey in params:

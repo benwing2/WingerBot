@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -17,7 +15,7 @@ def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) in ["ru-conj", "ru-conj-old"]:
+        if tname(t) in ["ru-conj", "ru-conj-old"]:
             verbtype = getparam(t, "2")
             if verbtype in [
                 "pf",

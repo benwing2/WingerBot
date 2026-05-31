@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -24,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
     headword_template = None
 
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-noun+", "ru-proper noun+"]:
+        if tname(t) in ["ru-noun+", "ru-proper noun+"]:
             if headword_template:
                 pagemsg("WARNING: Multiple headword templates, skipping")
                 return

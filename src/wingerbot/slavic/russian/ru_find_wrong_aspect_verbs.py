@@ -7,7 +7,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -21,8 +21,8 @@ def process_text_on_page(index, pagetitle, text):
     headword_aspects = set()
     found_multiple_headwords = False
     for t in parsed.filter_templates():
-        tname = str(t.name)
-        if tname in ["ru-verb", "ru-verb-cform"]:
+        tn = tname(t)
+        if tn in ["ru-verb", "ru-verb-cform"]:
             if headword_aspects:
                 found_multiple_headwords = True
             headword_aspects = set()
@@ -36,7 +36,7 @@ def process_text_on_page(index, pagetitle, text):
                 pagemsg("WARNING: Found aspect '?'")
             else:
                 pagemsg("WARNING: Found bad aspect value '%s' in ru-verb" % aspect)
-        elif tname in ["ru-conj", "ru-conj-old"]:
+        elif tn in ["ru-conj", "ru-conj-old"]:
             aspect = re.sub("-.*", "", getparam(t, "1"))
             if aspect not in ["pf", "impf"]:
                 pagemsg("WARNING: Found bad aspect value '%s' in ru-conj" % getparam(t, "1"))
@@ -57,9 +57,8 @@ def process_text_on_page(index, pagetitle, text):
         else:
             for t in parsed.filter_templates():
                 origt = str(t)
-                tname = str(t.name)
-                if tname in ["ru-conj", "ru-conj-old"]:
-
+                tn = tname(t)
+                if tn in ["ru-conj", "ru-conj-old"]:
                     param1 = getparam(t, "1")
                     param1 = re.sub("^(pf|impf)((-.*)?)$", r"%s\2" % list(headword_aspects)[0], param1)
                     t.add("1", param1)

@@ -104,7 +104,7 @@ def process_text_on_page(index, pagetitle, text):
                     raw_pron_t, raw_accent_t = m.groups()
                 accent_t = list(blib.parse_text(raw_accent_t).filter_templates())[0]
                 pron_t = list(blib.parse_text(raw_pron_t).filter_templates())[0]
-                tname_pron = tname(pron_t)
+                tnpron = tname(pron_t)
                 if accent_templates_have_lang:
                     accents = blib.fetch_param_chain(accent_t, "2")
                     accent_lang = getparam(accent_t, "1")
@@ -112,7 +112,7 @@ def process_text_on_page(index, pagetitle, text):
                     if accent_lang != pron_lang:
                         pagemsg(
                             "WARNING: {{%s}} lang '%s' disagrees with {{%s}} lang '%s', not changing: %s"
-                            % (tname(accent_t), accent_lang, tname_pron, pron_lang, line)
+                            % (tname(accent_t), accent_lang, tnpron, pron_lang, line)
                         )
                         return m.group(0)
                 else:
@@ -122,14 +122,14 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     a_param_name = "aa"
                 if getparam(pron_t, a_param_name):
-                    pagemsg("WARNING: Already saw %s= in {{%s}}, not changing: %s" % (a_param_name, tname_pron, line))
+                    pagemsg("WARNING: Already saw %s= in {{%s}}, not changing: %s" % (a_param_name, tnpron, line))
                     return m.group(0)
                 a_param = ",".join(x.strip() for x in accents)
                 pron_t.add(a_param_name, a_param)
                 notes.append(
-                    "incorporate %s=%s into {{%s|%s}}" % (a_param_name, a_param, tname_pron, getparam(pron_t, "1"))
+                    "incorporate %s=%s into {{%s|%s}}" % (a_param_name, a_param, tnpron, getparam(pron_t, "1"))
                 )
-                if tname_pron == "IPA-lite":
+                if tnpron == "IPA-lite":
                     blib.set_template_name(pron_t, "IPA")
                     notes.append("convert {{IPA-lite}} back to {{IPA}}")
                 return str(pron_t)

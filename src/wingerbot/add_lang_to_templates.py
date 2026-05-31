@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, tname, pname
 
 lang_data = lang_utils.get_lang_data()
 
@@ -39,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     notes.append("infer 1=%s for {{%s}} based on section it's in" % (langnamecode, tn))
                     new_lang = langnamecode
-                newline = "\n" if "\n" in str(t.name) else ""
+                newline = "\n" if "\n" in str(t.name) else ""  # not tname() as we want to check for spaces
                 # Fetch all params.
                 params = []
                 for param in t.params:

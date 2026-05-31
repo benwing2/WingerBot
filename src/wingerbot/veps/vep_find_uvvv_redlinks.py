@@ -4,10 +4,10 @@
 # for {{R:vep:UVVV}} templates, and check the pages in those templates to
 # see if they exist.
 
-import pywikibot, re, sys, argparse
+import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, site, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -18,7 +18,7 @@ def process_text_on_page(index, pagetitle, text):
 
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
-        if str(t.name) == "R:vep:UVVV":
+        if tname(t) == "R:vep:UVVV":
             refpages = blib.fetch_param_chain(t, "1", "")
             for refpage in refpages:
                 if not pywikibot.Page(site, refpage).exists():

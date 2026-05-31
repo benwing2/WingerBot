@@ -2,10 +2,8 @@
 
 # Add accented forms to {{cardinalbox}} and {{ordinalbox}}.
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -20,19 +18,21 @@ def process_text_on_page(index, pagetitle, text):
     adjval = None
     numval = None
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-adj":
+        tn = tname(t)
+        if tn == "ru-adj":
             adjval = blib.remove_links(getparam(t, "1"))
-        if str(t.name) == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "numeral":
+        if tn == "head" and getparam(t, "1") == "ru" and getparam(t, "2") == "numeral":
             numval = blib.remove_links(getparam(t, "head"))
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) == "ordinalbox" and getparam(t, "1") == "ru":
+        tn = tname(t)
+        if tn == "ordinalbox" and getparam(t, "1") == "ru":
             if not adjval:
                 pagemsg("WARNING: Can't find accented ordinal form")
             elif adjval != pagetitle:
                 t.add("alt", adjval)
                 notes.append("Add alt=%s to ordinalbox" % adjval)
-        if str(t.name) == "cardinalbox" and getparam(t, "1") == "ru":
+        if tn == "cardinalbox" and getparam(t, "1") == "ru":
             if not numval:
                 pagemsg("WARNING: Can't find accented cardinal form")
             elif numval != pagetitle:

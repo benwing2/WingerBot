@@ -23,8 +23,8 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     newtext = text
-    tname = "RQ:RBrtn AntmyMlncly"
-    newtname = "RQ:Burton Melancholy"
+    tn = "RQ:RBrtn AntmyMlncly"
+    newtn = "RQ:Burton Melancholy"
     curtext = newtext
 
     def replace_rq_rbrtn(m):
@@ -32,7 +32,7 @@ def process_text_on_page(index, pagetitle, text):
         mm = re.search(r"^([IVXLCDM]+)\.([0-9]+)\.([0-9]+)\.([ivxlcdm]+)$", pagegroup)
         if mm:
             replace = "{{%s|part=%s|section=%s|member=%s|subsection=%s|passage=%s}}\n" % (
-                newtname,
+                newtn,
                 mm.group(1),
                 mm.group(2),
                 mm.group(3),
@@ -45,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
             mm = re.search(r"^([IVXLCDM]+)\.([0-9]+)\.([0-9]+)$", pagegroup)
             if mm:
                 replace = "{{%s|part=%s|section=%s|member=%s|passage=%s}}\n" % (
-                    newtname,
+                    newtn,
                     mm.group(1),
                     mm.group(2),
                     mm.group(3),
@@ -57,27 +57,27 @@ def process_text_on_page(index, pagetitle, text):
                 pagemsg("Unable to parse page group %s in\n<pre>\n%s</pre>" % (pagegroup, m.group(0)))
                 return m.group(0)
 
-    newtext = re.sub(r"\{\{%s\}\}, (.*?):\n#\*: (.*?)\n" % tname, replace_rq_rbrtn, curtext)
+    newtext = re.sub(r"\{\{%s\}\}, (.*?):\n#\*: (.*?)\n" % tn, replace_rq_rbrtn, curtext)
     if curtext != newtext:
-        notes.append("reformat {{%s}}" % tname)
-    tname = "RQ:Flr Mntgn Essays"
-    newtname = "RQ:Florio Montaigne Essayes"
+        notes.append("reformat {{%s}}" % tn)
+    tn = "RQ:Flr Mntgn Essays"
+    newtn = "RQ:Florio Montaigne Essayes"
     curtext = newtext
 
     def replace_rq_flr(m):
         pagegroup = m.group(1)
         mm = re.search(r"^([IVXLCDM]+)\.([0-9]+)$", pagegroup)
         if mm:
-            replace = "{{%s|chapter=%s|book=%s|passage=%s}}\n" % (newtname, mm.group(2), mm.group(1), m.group(2))
+            replace = "{{%s|chapter=%s|book=%s|passage=%s}}\n" % (newtn, mm.group(2), mm.group(1), m.group(2))
             pagemsg(("Replacing %s with %s" % (m.group(0), replace)).replace("\n", r"\n"))
             return replace
         else:
             pagemsg("Unable to parse page group %s in\n<pre>\n%s</pre>" % (pagegroup, m.group(0)))
             return m.group(0)
 
-    newtext = re.sub(r"\{\{%s\}\}, (.*?):\n#\*: (.*?)\n" % tname, replace_rq_flr, curtext)
+    newtext = re.sub(r"\{\{%s\}\}, (.*?):\n#\*: (.*?)\n" % tn, replace_rq_flr, curtext)
     if curtext != newtext:
-        notes.append("reformat {{%s}}" % tname)
+        notes.append("reformat {{%s}}" % tn)
         pagemsg(("Replacing %s with %s" % (curtext, newtext)).replace("\n", r"\n"))
     return newtext, notes
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
+from wingerbot.blib import getparam, msg, errmsg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -19,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
-        if str(t.name) in ["ru-conj", "ru-conj-old"]:
+        if tname(t) in ["ru-conj", "ru-conj-old"]:
             param1 = getparam(t, "1")
             param2 = getparam(t, "2")
             if not param2.startswith("8b"):

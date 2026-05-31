@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub(".*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -30,7 +28,7 @@ def process_text_on_page(index, pagetitle, text):
             t.add(param, "n-in-p")
 
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-noun+", "ru-noun-table"]:
+        if tname(t) in ["ru-noun+", "ru-noun-table"]:
             origt = str(t)
             for param in t.params:
                 if str(param.name) != "1":

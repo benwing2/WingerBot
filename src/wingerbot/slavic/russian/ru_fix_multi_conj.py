@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -20,8 +20,7 @@ def process_text_on_page(index, pagetitle, text):
     conj_templates = []
     mixed_verb_types = False
     for t in parsed.filter_templates():
-        origt = str(t)
-        if str(t.name) in ["ru-conj"]:
+        if tname(t) in ["ru-conj"]:
             num_conjs += 1
             new_verbtype = getparam(t, "1")
             if verbtype and new_verbtype != verbtype:

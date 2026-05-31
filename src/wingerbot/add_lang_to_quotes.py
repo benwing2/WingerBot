@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 borrowed_langs = {}
 
@@ -65,7 +63,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     termlang = None
                 # Put lang parameter.
-                newline = "\n" if "\n" in str(t.name) else ""
+                newline = "\n" if "\n" in str(t.name) else ""  # not tname() as we want to check for spaces
                 t.add("lang", langnamecode + newline, preserve_spacing=False)
                 if termlang:
                     t.add("termlang", termlang + newline, preserve_spacing=False)

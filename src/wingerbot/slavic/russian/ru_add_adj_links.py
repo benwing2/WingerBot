@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -23,12 +23,13 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         origt = str(t)
 
-        if str(t.name) in ["ru-IPA"]:
+        tn = tname(t)
+        if tn in ["ru-IPA"]:
             pron = getparam(t, "1") or getparam(t, "phon")
             if not re.search("[̀ѐЀѝЍ]", pron):
                 pagemsg("WARNING: No secondary accent in pron %s" % pron)
 
-        if str(t.name) in ["ru-adj"]:
+        if tn in ["ru-adj"]:
             head = getparam(t, "1")
             if head and "[[" not in head:
 

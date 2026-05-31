@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -15,7 +15,7 @@ def process_text_on_page(index, pagetitle, text):
 
     found_audio = False
     for t in parsed.filter_templates():
-        if str(t.name) == "audio" and getparam(t, "lang") == "ru":
+        if tname(t) == "audio" and getparam(t, "lang") == "ru":
             found_audio = True
             break
     if found_audio:

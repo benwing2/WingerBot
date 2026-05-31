@@ -3,10 +3,10 @@
 # Fix up raw verb forms when possible, canonicalize existing 'conjugation of'
 # to 'inflection of'
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -28,7 +28,7 @@ def process_text_on_page(index, pagetitle, text):
     # Try to canonicalize existing 'conjugation of'
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "conjugation of" and getparam(t, "lang") == "ru":
+        if tname(t) == "conjugation of" and getparam(t, "lang") == "ru":
             origt = str(t)
             t.name = "inflection of"
             newt = str(t)
@@ -55,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
     # 'impr' to 'imp'
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "inflection of" and getparam(t, "lang") == "ru":
+        if tname(t) == "inflection of" and getparam(t, "lang") == "ru":
             for frm, to in [
                 ("indc", "ind"),
                 ("indicative", "ind"),
@@ -94,7 +94,7 @@ def process_text_on_page(index, pagetitle, text):
     # Remove blank form codes and canonicalize position of lang=, tr=
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "inflection of" and getparam(t, "lang") == "ru":
+        if tname(t) == "inflection of" and getparam(t, "lang") == "ru":
             origt = str(t)
             # Fetch the numbered params starting with 3, skipping blank ones
             numbered_params = []
@@ -138,7 +138,7 @@ def process_text_on_page(index, pagetitle, text):
     # present, future
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
-        if str(t.name) == "inflection of" and getparam(t, "lang") == "ru":
+        if tname(t) == "inflection of" and getparam(t, "lang") == "ru":
             # Fetch the numbered params starting with 3
             numbered_params = []
             for i in range(3, 20):

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -19,7 +19,8 @@ def process_text_on_page(index, pagetitle, text):
         origt = str(t)
         param2 = getparam(t, "2")
         param3 = getparam(t, "3")
-        if str(t.name) in ["ru-conj", "ru-conj-old"] and param2.startswith("8b"):
+        tn = tname(t)
+        if tn in ["ru-conj", "ru-conj-old"] and param2.startswith("8b"):
             if [x for x in t.params if str(x.value) == "or"]:
                 pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
@@ -31,7 +32,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("make past stress /a default in class 8b")
             elif param2 not in ["8b/b", "8b/b+p"]:
                 pagemsg("WARNING: Unable to parse param2 %s" % param2)
-        if str(t.name) in ["ru-conj", "ru-conj-old"] and param2.startswith("irreg"):
+        if tn in ["ru-conj", "ru-conj-old"] and param2.startswith("irreg"):
             if re.search("(да́?ть|бы́?ть|кля́?сть)(ся)?$", param3):
                 if param2 == "irreg":
                     if param3.startswith("вы́"):

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, tname
 
 from wingerbot.slavic.russian import runounlib
 
@@ -27,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
 
     headword_templates = []
     for t in parsed.filter_templates():
-        if str(t.name) in ["ru-noun", "ru-proper noun"]:
+        if tname(t) in ["ru-noun", "ru-proper noun"]:
             headword_templates.append(t)
 
     headword_template = None
@@ -43,7 +43,7 @@ def process_text_on_page(index, pagetitle, text):
 
     num_z_decl = 0
     for t in parsed.filter_templates():
-        if str(t.name) == "ru-decl-noun-z":
+        if tname(t) == "ru-decl-noun-z":
             num_z_decl += 1
             pagemsg("Found z-decl template: %s" % str(t))
             ru_noun_table_template = runounlib.convert_zdecl_to_ru_noun_table(
@@ -68,11 +68,11 @@ def process_text_on_page(index, pagetitle, text):
                 if not generate_result:
                     pagemsg_with_proposed("WARNING: Error generating noun args, skipping")
                     continue
-                args = blib.split_generate_args(generate_result)
+                inflargs = blib.split_generate_args(generate_result)
 
                 # This will check number mismatch and animacy mismatch
                 new_genders = runounlib.check_old_noun_headword_forms(
-                    headword_template, args, subpagetitle, pagemsg_with_proposed
+                    headword_template, inflargs, subpagetitle, pagemsg_with_proposed
                 )
                 if new_genders == None:
                     continue

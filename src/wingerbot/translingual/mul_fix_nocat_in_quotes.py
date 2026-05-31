@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -33,7 +31,7 @@ def process_text_on_page(index, pagetitle, text):
                 # Erase all params.
                 del t.params[:]
                 # Put lang and termlang parameters.
-                newline = "\n" if "\n" in str(t.name) else ""
+                newline = "\n" if "\n" in str(t.name) else ""  # not tname() as we want to check for spaces
                 t.add("lang", "en" + newline, preserve_spacing=False)
                 t.add("termlang", "mul" + newline, preserve_spacing=False)
                 # Put remaining parameters in order.
