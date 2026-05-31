@@ -35,7 +35,7 @@ def process_text_on_page(index, pagetitle, text):
     modsec = blib.find_modifiable_lang_section(text, "Spanish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections

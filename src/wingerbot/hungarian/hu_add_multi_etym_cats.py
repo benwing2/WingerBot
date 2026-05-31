@@ -106,10 +106,10 @@ def process_text_on_page(index, pagetitle, text):
     modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
     if "==Etymology 1==" not in secbody:
         return
-    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
     etym_sections = etym_secs.subsections
     if len(etym_sections) < 5:
         pagemsg("WARNING: Not enough etym sections, found %s, expected >= 5" % len(etym_sections))

@@ -169,10 +169,10 @@ def process_text_on_page(index, pagetitle, text):
         # pagemsg("Replaced <%s> with <%s>" % (escape_newlines(etymtext), escape_newlines(newtext)))
         return newtext
 
-    retval = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     no_multi_etym_msg = None
     if "==Etymology" not in secbody:
@@ -359,12 +359,7 @@ def process_text_on_page(index, pagetitle, text):
             ar_rootboxes,
             saw_nonlemma,
         )
-    secbody = "".join(etym_sections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody="".join(etym_sections)), notes
 
 
 parser = blib.create_argparser(

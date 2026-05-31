@@ -48,12 +48,12 @@ def delete_form_1(index, page, lemma, formind, formval):
     if modsec is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
 
     # FIXME!
 
     #if "==Etymology 1==" in secbody:
-    #    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+    #    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
     #    etym_sections = etym_secs.subsections
     #    for k, header in etym_secs.header_list:
     #        etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
@@ -220,7 +220,7 @@ def delete_form_1(index, page, lemma, formind, formval):
                 % (lang_to_langname[args.lang], sectail.strip())
             )
             return
-        if not has_non_lang:
+        if not modsec.has_non_lang:
             # Can delete the whole page, but check for non-blank section 0
             cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
             if cleaned_sec0.strip():
@@ -248,9 +248,8 @@ def delete_form_1(index, page, lemma, formind, formval):
             )
         )
         if j > len(sections):
-            # We deleted the last section, remove the separator at the end of the
-            # previous section.
-            sections[-1] = re.sub(r"\n+--+\n*\Z", "", sections[-1])
+            # We deleted the last section; remove the final newlines.
+            sections[-1] = sections[-1].rstrip("\n")
         text = "".join(sections)
 
     else:

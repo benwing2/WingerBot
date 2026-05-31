@@ -22,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
     modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
 
     newsectext = re.sub(r"^==Latin==\n", "", newsectext) + "\n\n"
 

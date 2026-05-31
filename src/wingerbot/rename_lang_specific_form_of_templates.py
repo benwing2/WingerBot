@@ -6970,11 +6970,10 @@ def process_text_on_page(index, pagetitle, text):
     text = str(parsed)
 
     if args.lang_for_combine_inflection_of:
-        retval = blib.find_modifiable_lang_section(text, args.lang_for_combine_inflection_of, pagemsg)
-        if retval is None:
-            pagemsg("WARNING: Couldn't find %s section" % args.lang_for_combine_inflection_of)
+        modsec = blib.find_modifiable_lang_section(text, args.lang_for_combine_inflection_of, pagemsg)
+        if modsec is None:
             return text, notes
-        sections, j, secbody, sectail, has_non_lang = retval.props()
+        secbody = modsec.secbody
         dont_combine_tags = args.dont_combine_tags.split(",") if args.dont_combine_tags else None
         secbody = infltags.combine_adjacent_inflection_of_calls(secbody, notes, pagemsg, verbose=args.verbose)
         parsed = blib.parse_text(secbody)
@@ -7005,9 +7004,8 @@ def process_text_on_page(index, pagetitle, text):
                 )
                 if str(t) != origt:
                     pagemsg("Replaced %s with %s" % (origt, str(t)))
-        secbody = str(parsed)
-        sections[j] = secbody + sectail
-        text = "".join(sections)
+
+        text = modsec.rebuild(secbody=str(parsed))
 
     return text, notes
 

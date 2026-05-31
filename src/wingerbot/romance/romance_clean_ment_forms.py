@@ -20,12 +20,14 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     saw_affix_template_with_ment = False
 
-    def fix_up_section(secbody, etym_level):
+    def fix_up_section(secnum, secbody):
+        def pagemsg(txt):
+            msg("Page %s%s %s: %s" % (pageindex, "." + secnum if secnum is not None else "", pagetitle, txt))
         nonlocal saw_affix_template_with_ment
         subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
         subsections_by_header = subsecs.subsections_by_header
-        etymsec_text = " for Etymology %s" % etym_level if etym_level else ""
+        etymsec_text = " for Etymology %s" % secnum if secnum is not None else ""
         if "Noun" in subsections_by_header and "Adverb" in subsections_by_header:
             pagemsg("WARNING: Saw both noun and adverb sections%s, skipping" % etymsec_text)
             return secbody
@@ -41,7 +43,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             pagemsg("WARNING: Didn't see either noun or adverb sections%s, skipping" % etymsec_text)
             return secbody
 
-        if etym_level > 0:
+        if secnum is not None:
             subsec_index = 0
         elif "Etymology" in subsections_by_header:
             msg("subsections_by_header: " + repr(subsections_by_header["Etymology"]))
@@ -148,19 +150,11 @@ def process_text_on_page(pageindex, pagetitle, text):
         subsections[subsec_index] = str(parsed)
         return "".join(subsections)
 
-    if "==Etymology 1==" not in secbody:
-        secbody = fix_up_section(secbody, 0)
-    else:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
-            etym_sections[k] = fix_up_section(etym_sections[k], k // 2)
-        secbody = "".join(etym_sections)
-
+    secbody = blib.map_etym_sections(secbody, pagemsg, fix_up_section)
     if not saw_affix_template_with_ment:
         pagemsg(
             "WARNING: Didn't see {{af}}/{{affix}} or {{suf}}/{{suffix}} template with -ment, category might be specified some other way"
         )
-
     return modsec.rebuild(secbody=secbody), notes
 
 

@@ -17,15 +17,16 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     for k, subsectitle in subsecs.header_list:
-        if not subsecs.subsections[k].startswith("{{%s-verb|" % args.langcode):
+        if not subsections[k].startswith("{{%s-verb|" % args.langcode):
             continue
         if subsectitle in ["Etymology", "Pronunciation"]:
             continue
@@ -124,12 +125,9 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             return "# " + defn + "\n"
 
-        subsecs.subsections[k] = re.sub("^# (.*)\n", add_to_to_defn, subsecs.subsections[k], 0, re.M)
+        subsections[k] = re.sub("^# (.*)\n", add_to_to_defn, subsections[k], 0, re.M)
 
-    secbody = "".join(subsecs.subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Add 'to' to verb defns when missing", include_pagefile=True, include_stdin=True)

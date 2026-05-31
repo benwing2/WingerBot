@@ -2,7 +2,7 @@
 
 import pywikibot, re
 
-from wingerbot import blib
+from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, addparam, msg, errandmsg, site, remove_links, tname
 from wingerbot.arabic.arlib import (
     ALIF,
@@ -59,11 +59,6 @@ def get_vn_gender(word, form):
         return "?"
     else:
         return "m"
-
-
-# Make sure there are two trailing newlines
-def ensure_two_trailing_nl(text):
-    return re.sub(r"\n*$", r"\n\n", text)
 
 
 # Remove trailing -un/-u i3rab from inflected form and lemma
@@ -154,6 +149,8 @@ def create_inflection_entry(
 
     page = pywikibot.Page(site, pagetitle)
 
+    notes = []
+
     def create_inflection_entry_1(index, page):
         # Did we insert an entry or find an existing one? If not, we need to
         # add a new one. If we break out of the loop through subsections of the
@@ -183,7 +180,6 @@ def create_inflection_entry(
                         " (%s)" % lemmatr if lemmatr else "",
                     )
                 )
-
         def errandpagemsg(text, simple=False):
             pagemsg(text, simple=simple, msgfun=errandmsg)
 
@@ -230,1364 +226,1293 @@ def create_inflection_entry(
         # Prepare to create page
         pagemsg("Creating entry")
 
-        must_match_exactly = not is_plural_or_fem
+        while True: # so we can break, for flow control purposes
+            must_match_exactly = not is_plural_or_fem
 
-        # Detect cases where multiple lemmas that are the same when unvocalized
-        # have inflections that are the same when unvocalized. For example, for
-        # singular قطعة and plural قطع, there are three different possible
-        # vocalizations. If so, require the existing versions match exactly
-        # rather than matching with removed diacritics. (The first time around
-        # this won't happen and we may change the vowels to match the first set,
-        # but when processing the later sets, we'll add new entries and the first
-        # set's entry will stand.)
-        if not must_match_exactly:
-            infl_no_vowels = pagetitle
-            lemma_no_vowels = remove_diacritics(lemma)
-            li_no_vowels = (lemma_no_vowels, infl_no_vowels)
-            lemma_inflection_counts[li_no_vowels] = lemma_inflection_counts.get(li_no_vowels, 0) + 1
-            if lemma_inflection_counts[li_no_vowels] > 1:
-                pagemsg(
-                    "Found multiple (%s) vocalized possibilities for %s %s, %s %s"
-                    % (lemma_inflection_counts[li_no_vowels], lemmatype, lemma_no_vowels, infltype, infl_no_vowels)
+            # Detect cases where multiple lemmas that are the same when unvocalized
+            # have inflections that are the same when unvocalized. For example, for
+            # singular قطعة and plural قطع, there are three different possible
+            # vocalizations. If so, require the existing versions match exactly
+            # rather than matching with removed diacritics. (The first time around
+            # this won't happen and we may change the vowels to match the first set,
+            # but when processing the later sets, we'll add new entries and the first
+            # set's entry will stand.)
+            if not must_match_exactly:
+                infl_no_vowels = pagetitle
+                lemma_no_vowels = remove_diacritics(lemma)
+                li_no_vowels = (lemma_no_vowels, infl_no_vowels)
+                lemma_inflection_counts[li_no_vowels] = lemma_inflection_counts.get(li_no_vowels, 0) + 1
+                if lemma_inflection_counts[li_no_vowels] > 1:
+                    pagemsg(
+                        "Found multiple (%s) vocalized possibilities for %s %s, %s %s"
+                        % (lemma_inflection_counts[li_no_vowels], lemmatype, lemma_no_vowels, infltype, infl_no_vowels)
+                    )
+                    must_match_exactly = True
+
+            # Compare parameter PARAM (e.g. "1", "head2", etc.) of template TEMPLATE
+            # with value VALUE. If REQUIRE_EXACT_MATCH, match must be exact (after
+            # canonicalizing shadda); otherwise, match on non-vocalized text.
+            def compare_param(template, param, value, require_exact_match=False):
+                # In place of unknown we should put infltype or lemmatype but it
+                # doesn't matter because of nowarn.
+                paramval = getparam(template, param)
+                paramval = maybe_remove_i3rab("unknown", paramval, nowarn=True, noremove=is_verb_part)
+                if must_match_exactly or require_exact_match:
+                    return reorder_shadda(paramval) == reorder_shadda(value)
+                else:
+                    return remove_diacritics(paramval) == remove_diacritics(value)
+
+            # First, for each template, return a tuple of
+            # (template, param, matches), where MATCHES is true if any head
+            # matches FORM and PARAM is the (first) matching head param.
+            def template_head_match_info(template, form, require_exact_match=False):
+                # Look at all heads
+                if compare_param(template, "1", form, require_exact_match):
+                    return (template, "1", True)
+                i = 2
+                while True:
+                    param = "head" + str(i)
+                    if not getparam(template, param):
+                        return (template, None, False)
+                    if compare_param(template, param, form, require_exact_match):
+                        return (template, param, True)
+                    i += 1
+
+            # True if any head in the template matches FORM.
+            def template_head_matches(template, form, require_exact_match=False):
+                return template_head_match_info(template, form, require_exact_match)[2]
+
+            nonlocal entrytext
+            custom_entrytext = entrytext
+
+            # Prepare parts of new entry to insert
+            if entrytext:
+                entrytextl4 = re.sub("^==(.*?)==$", r"===\1===", entrytext, 0, re.M)
+                newsection = "==Arabic==\n\n===Etymology===\n" + entrytext
+            else:
+                # Synthesize new entry. Some of the parts here besides 'entrytext',
+                # 'entrytextl4' and 'newsection' are used down below when creating
+                # verb parts and participles; these parts don't exist when 'entrytext'
+                # was passed in, but that isn't a problem because it isn't passed in
+                # when creating verb parts or participles.
+                new_headword_template_prefix = "%s|%s" % (infltemp, inflection)
+                new_headword_template = "{{%s%s%s}}" % (
+                    new_headword_template_prefix,
+                    infltemp_params_str,
+                    "|tr=%s" % infltr if infltr else "",
                 )
-                must_match_exactly = True
+                new_defn_template = "{{%s|%s%s%s}}" % (
+                    deftemp,
+                    lemma,
+                    "|tr=%s" % lemmatr if lemmatr else "",
+                    deftemp_params,
+                )
+                newposbody = """%s
 
-        # Compare parameter PARAM (e.g. "1", "head2", etc.) of template TEMPLATE
-        # with value VALUE. If REQUIRE_EXACT_MATCH, match must be exact (after
-        # canonicalizing shadda); otherwise, match on non-vocalized text.
-        def compare_param(template, param, value, require_exact_match=False):
-            # In place of unknown we should put infltype or lemmatype but it
-            # doesn't matter because of nowarn.
-            paramval = getparam(template, param)
-            paramval = maybe_remove_i3rab("unknown", paramval, nowarn=True, noremove=is_verb_part)
-            if must_match_exactly or require_exact_match:
-                return reorder_shadda(paramval) == reorder_shadda(value)
-            else:
-                return remove_diacritics(paramval) == remove_diacritics(value)
+# %s
+""" % (
+                    new_headword_template,
+                    new_defn_template,
+                )
+                newposheader = "===%s===\n" % pos
+                newpos = newposheader + newposbody
+                newposheaderl4 = "====%s====\n" % pos
+                newposl4 = newposheaderl4 + newposbody
+                entrytext = "\n" + newpos
+                entrytextl4 = "\n" + newposl4
+                newsection = "==Arabic==\n" + entrytext
 
-        # First, for each template, return a tuple of
-        # (template, param, matches), where MATCHES is true if any head
-        # matches FORM and PARAM is the (first) matching head param.
-        def template_head_match_info(template, form, require_exact_match=False):
-            # Look at all heads
-            if compare_param(template, "1", form, require_exact_match):
-                return (template, "1", True)
-            i = 2
-            while True:
-                param = "head" + str(i)
-                if not getparam(template, param):
-                    return (template, None, False)
-                if compare_param(template, param, form, require_exact_match):
-                    return (template, param, True)
-                i += 1
+            if not blib.safe_page_exists(page, errandpagemsg):
+                # Page doesn't exist. Create it.
+                pagemsg("Creating page")
+                notes.append("create page for Arabic %s %s of %s, pos=%s" % (infltype, inflection, lemma, pos))
+                if verbose:
+                    pagemsg("New text is [[%s]]" % page.text)
+                return newsection, notes
 
-        # True if any head in the template matches FORM.
-        def template_head_matches(template, form, require_exact_match=False):
-            return template_head_match_info(template, form, require_exact_match)[2]
+            # Page does exist
+            text = blib.safe_page_text(page, errandpagemsg)
+            # Pass None for pagemsg to suppress warning on lang section not found.
+            modsec = blib.find_modifiable_lang_section(text, "Arabic", None, force_final_nls=True)
+            if modsec is None:
+                secs = blib.split_text_into_sections(text, pagemsg)
+                sections = secs.sections
+                normalized_langname = lang_utils.langname_key("Arabic")
+                for k, seclangname in secs.lang_list:
+                    normalized_seclangname = lang_utils.langname_key(seclangname)
+                    if normalized_seclangname > normalized_langname:
+                        sections[k - 1 : k - 1] = [newsection]
+                        pagemsg("Inserting lang section before %s entry" % seclangname)
+                        notes.append("insert lang section for Arabic %s %s of %s, pos=%s, before %s entry" % (infltype, inflection, lemma, pos, seclangname))
+                        return "".join(sections), notes
+                sections.append("\n\n" + newsection)
+                pagemsg("Appending lang section at end of page")
+                notes.append("append lang section for Arabic %s %s of %s, pos=%s, at end of page" % (infltype, inflection, lemma, pos))
+                return "".join(sections), notes
+            secbody = modsec.secbody
 
-        custom_entrytext = entrytext
+            subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+            subsections = subsecs.subsections
 
-        # Prepare parts of new entry to insert
-        if entrytext:
-            entrytextl4 = re.sub("^==(.*?)==$", r"===\1===", entrytext, 0, re.M)
-            newsection = "==Arabic==\n\n===Etymology===\n" + entrytext
-        else:
-            # Synthesize new entry. Some of the parts here besides 'entrytext',
-            # 'entrytextl4' and 'newsection' are used down below when creating
-            # verb parts and participles; these parts don't exist when 'entrytext'
-            # was passed in, but that isn't a problem because it isn't passed in
-            # when creating verb parts or participles.
-            new_headword_template_prefix = "%s|%s" % (infltemp, inflection)
-            new_headword_template = "{{%s%s%s}}" % (
-                new_headword_template_prefix,
-                infltemp_params_str,
-                "|tr=%s" % infltr if infltr else "",
-            )
-            new_defn_template = "{{%s|%s%s%s}}" % (
-                deftemp,
-                lemma,
-                "|tr=%s" % lemmatr if lemmatr else "",
-                deftemp_params,
-            )
-            newposbody = """%s
+            # Convert existing ===Verbal noun=== headers into ===Noun===,
+            # ===Adjective form=== into ===Adjective=== and
+            # ===Noun form=== into ===Noun===.
+            changed = False
+            for k, header in subsecs.header_list:
+                for frompos, topos in [
+                    ("Verbal noun", "Noun"),
+                    ("Adjective form", "Adjective"),
+                    ("Noun form", "Noun"),
+                ]:
+                    if header == frompos:
+                        subsections[k] = blib.make_section_header(topos, subsecs.levels[k])
+                        pagemsg("Converting '%s' section header to '%s'" % (frompos, topos))
+                        notes.append("converted '%s' section header to '%s'" % (frompos, topos))
+                        changed = True
 
-    # %s
-    """ % (
-                new_headword_template,
-                new_defn_template,
-            )
-            newposheader = "===%s===\n" % pos
-            newpos = newposheader + newposbody
-            newposheaderl4 = "====%s====\n" % pos
-            newposl4 = newposheaderl4 + newposbody
-            entrytext = "\n" + newpos
-            entrytextl4 = "\n" + newposl4
-            newsection = "==Arabic==\n" + entrytext
+            if changed:
+                # Since we changed the headers, recompute the subsections and header lists
+                secbody = "".join(subsections)
+                subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+                subsections = subsecs.subsections
 
-        comment = None
-        notes = []
-        existing_text = page.text
+            # If verbal noun or participle or feminine noun, check for an existing
+            # entry matching the headword and defn. If so, don't do anything. We
+            # need to do this because otherwise we might have a situation with two
+            # entries for a given noun (or participle) and the second one having
+            # an appropriate defn, and when we encounter the first one we see it
+            # doesn't have a defn and go ahead and insert it, which we don't want
+            # to do.
+            #
+            # Also count number of entries for given noun (or participle). If
+            # none have a defn and there's more than one, we don't know which one
+            # to insert the defn into, so issue a warning and punt.
+            #
+            # FIXME: Should we do this check for all lemma/inflection types?
+            if is_vn or is_participle or is_feminine_noun:
+                num_matching_headword_templates = 0
+                found_matching_headword_and_defn_templates = False
+                for k, header in subsecs.header_list:
+                    if header == pos:
+                        parsed = blib.parse_text(subsections[k])
 
-        if not page.exists():
-            # Page doesn't exist. Create it.
-            pagemsg("Creating page")
-            comment = "Create page for Arabic %s %s of %s, pos=%s" % (infltype, inflection, lemma, pos)
-            page.text = newsection
-            if verbose:
-                pagemsg("New text is [[%s]]" % page.text)
-        else:  # Page does exist
-            # Split off interwiki links at end
-            m = re.match(r"^(.*?\n)((\[\[[a-z0-9_\-]+:[^\]]+\]\]\n*)*)$", page.text, re.S)
-            if m:
-                pagebody = m.group(1)
-                pagetail = m.group(2)
-            else:
-                pagebody = page.text
-                pagetail = ""
-
-            # Split into sections
-            splitsections = re.split("(^==[^=\n]+==\n)", pagebody, 0, re.M)
-            # Extract off pagehead and recombine section headers with following text
-            pagehead = splitsections[0]
-            sections = []
-            for i in range(1, len(splitsections)):
-                if (i % 2) == 1:
-                    sections.append("")
-                sections[-1] += splitsections[i]
-
-            # Go through each section in turn, looking for existing Arabic section
-            for i in range(len(sections)):
-                m = re.match("^==([^=\n]+)==$", sections[i], re.M)
-                if not m:
-                    pagemsg("WARNING: Can't find language name in text: [[%s]]" % (sections[i]))
-                elif m.group(1) == "Arabic":
-                    # Extract off trailing separator
-                    mm = re.match(r"^(.*?\n)(--+\n*)$", sections[i], re.S)
-                    if mm:
-                        sections[i : i + 1] = [mm.group(1), mm.group(2)]
-                    elif i < len(sections) - 1:
-                        pagemsg("WARNING: Arabic language section %s is non-final and missing trailing separator" % i)
-
-                    # If verb part, correct mistaken indent from a previous run,
-                    # where level-3 entries were inserted instead of level 4.
-                    if is_verb_part and "\n===Etymology 1===\n" in sections[i]:
-                        oldsectionsi = sections[i]
-                        sections[i] = re.sub("\n===Verb===\n", "\n====Verb====\n", sections[i])
-                        if oldsectionsi != sections[i]:
-                            notes.append("corrected verb-part indent level")
-
-                    subsections = re.split("(^===+[^=\n]+===+\n)", sections[i], 0, re.M)
-
-                    # Convert existing ===Verbal noun=== headers into ===Noun===,
-                    # ===Adjective form=== into ===Adjective=== and
-                    # ===Noun form=== into ===Noun===.
-                    for j in range(1, len(subsections), 2):
-                        for frompos, topos in [
-                            ("Verbal noun", "Noun"),
-                            ("Adjective form", "Adjective"),
-                            ("Noun form", "Noun"),
-                        ]:
-                            if re.match("^===+%s===+" % frompos, subsections[j]):
-                                subsections[j] = re.sub("(===+)%s(===+)" % frompos, r"\1%s\2" % topos, subsections[j])
-                                pagemsg("Converting '%s' section header to '%s'" % (frompos, topos))
-                                notes.append("converted '%s' section header to '%s'" % (frompos, topos))
-                            sections[i] = "".join(subsections)
-
-                    # If verbal noun or participle or feminine noun, check for an existing
-                    # entry matching the headword and defn. If so, don't do anything. We
-                    # need to do this because otherwise we might have a situation with two
-                    # entries for a given noun (or participle) and the second one having
-                    # an appropriate defn, and when we encounter the first one we see it
-                    # doesn't have a defn and go ahead and insert it, which we don't want
-                    # to do.
-                    #
-                    # Also count number of entries for given noun (or participle). If
-                    # none have a defn and there's more than one, we don't know which one
-                    # to insert the defn into, so issue a warning and punt.
-                    #
-                    # FIXME: Should we do this check for all lemma/inflection types?
-                    if is_vn or is_participle or is_feminine_noun:
-                        num_matching_headword_templates = 0
-                        found_matching_headword_and_defn_templates = False
-                        for j in range(len(subsections)):
-                            if j > 0 and (j % 2) == 0:
-                                if re.match("^===+%s===+" % pos, subsections[j - 1]):
-                                    parsed = blib.parse_text(subsections[j])
-
-                                    # While we're at it, check for verbal noun defn templates
-                                    # missing form=
-                                    if is_vn:
-                                        for t in parsed.filter_templates():
-                                            if t.name == deftemp and not getparam(t, "form"):
-                                                pagemsg("WARNING: Verbal noun template %s missing form= param" % str(t))
-
-                                    matching_headword_templates = [
-                                        t
-                                        for t in parsed.filter_templates()
-                                        if t.name == infltemp and template_head_matches(t, inflection)
-                                    ]
-                                    matching_defn_templates = [
-                                        t
-                                        for t in parsed.filter_templates()
-                                        if t.name == deftemp and compare_param(t, "1", lemma, require_exact_match=True)
-                                    ]
-                                    num_matching_headword_templates += len(matching_headword_templates)
-                                    if matching_headword_templates and matching_defn_templates:
-                                        found_matching_headword_and_defn_templates = True
-                        if found_matching_headword_and_defn_templates:
-                            pagemsg("Exists and has Arabic section and found %s already in it" % infltype)
-                            break
-                        if num_matching_headword_templates > 1:
-                            pagemsg(
-                                "WARNING: Found multiple matching subsections, don't know which one to insert %s defn into"
-                                % infltype
-                            )
-                            break
-
-                    # Derive a sort key from the text of an inflection-of template.
-                    def inflection_of_sort_key(tstr):
-                        vf_person = 13
-                        vf_voice = "pasv"
-                        vf_mood = "e"
-                        if "|actv" in tstr:
-                            vf_voice = "actv"
-                        if "|past" in tstr:
-                            vf_mood = "a"
-                        if "|indc" in tstr:
-                            vf_mood = "b"
-                        if "|subj" in tstr:
-                            vf_mood = "c"
-                        if "|juss" in tstr:
-                            vf_mood = "d"
-                        persons = all_person_infls
-                        for k in range(len(persons)):
-                            if "|" + persons[k] in tstr:
-                                vf_person = k
-                        return (vf_person, vf_voice, vf_mood)
-
-                    # Sort the definition templates in the verb part subsection indexed
-                    # by INDEX. Return True if anything changed.
-                    def sort_defns_in_one_verb_part_subsection(index):
-                        assert index > 0 and (index % 2) == 0
-                        subsec = subsections[index]
-                        if not subsec.endswith("\n"):
-                            subsec += "\n"
-                        mm = re.match(r"^(.*?\n)((?:# \{\{inflection of\|[^\n}]*\}\}\n)+)(.*)$", subsec, re.S)
-                        if not mm:
-                            pagemsg("WARNING: Strange subsection without inflection-of template: [[%s]]" % subsec)
-                        else:
-                            before, defntext, after = mm.groups()
-                            if defntext:
-                                assert defntext.endswith("\n")
-                                # Ignore last split defn, which will be empty
-                                defns = re.split("\n", defntext)[0:-1]
-                                new_defns = sorted(defns, key=inflection_of_sort_key)
-                                if defns != new_defns:
-                                    subsections[index] = before + "\n".join(new_defns) + "\n" + after
-                                    return True
-                        return False
-
-                    # Sort the definitions in an individual verb-part subsection.
-                    # Return True if text was changed.
-                    def sort_defns_in_verb_part_subsections():
-                        sorted_any = False
-                        for j in range(2, len(subsections), 2):
-                            is_verb_form = "{{ar-verb-form|" in subsections[j]
-                            if is_verb_form:
-                                sorted_this = sort_defns_in_one_verb_part_subsection(j)
-                                sorted_any = sorted_any or sorted_this
-                        if sorted_any:
-                            sections[i] = "".join(subsections)
-                        return sorted_any
-
-                    # Sort the run of individual verb-part subsections from START to
-                    # END, inclusive on both sides.
-                    def sort_verb_part_subsection_run(start, end):
-                        # pagemsg("sort_one_section called with [%s,%s]" % (start, end))
-                        if end == start:
-                            return
-                        assert start > 0 and (start % 2) == 0
-                        assert (end % 2) == 0 and end > start
-                        assert end < len(subsections)
-                        header1 = subsections[start - 1]
-                        for j in range(start + 1, end + 1, 2):
-                            if subsections[j] != header1:
-                                pagemsg(
-                                    "WARNING: Header [[%s]] doesn't match prior header [[%s]], not sorting"
-                                    % (subsections[j], header1)
-                                )
-                                return
-                        subsecs = []
-                        for j in range(start, end + 2, 2):
-                            subsecs.append(subsections[j])
-
-                        def keyfunc(subsec):
-                            parsed = blib.parse_text(subsec)
-                            vf_last_vowel = "u"
-                            vf_person = 13
-                            vf_voice = "pasv"
-                            vf_mood = "e"
-                            seen_inflection_of = False
-
+                        # While we're at it, check for verbal noun defn templates
+                        # missing form=
+                        if is_vn:
                             for t in parsed.filter_templates():
-                                if t.name == "ar-verb-form":
-                                    vf_vowels = re.sub(
-                                        "[^" + A + I + U + "]", "", reorder_shadda(getparam(t, "1"))[0:-1]
-                                    )
-                                    if len(vf_vowels) > 0:
-                                        if vf_vowels[-1] == A:
-                                            vf_last_vowel = "a"
-                                        elif vf_vowels[-1] == I:
-                                            vf_last_vowel = "i"
-                                        else:
-                                            vf_last_vowel = "u"
-                                # Only use first inflection-of template
-                                if t.name == "inflection of" and not seen_inflection_of:
-                                    vf_person, vf_voice, vf_mood = inflection_of_sort_key(str(t))
-                                    seen_inflection_of = True
-                            sort_key = (vf_person, vf_voice, vf_last_vowel, vf_mood)
-                            # pagemsg("Sort key: %s" % (sort_key,))
-                            return sort_key
+                                if tname(t) == deftemp and not getparam(t, "form"):
+                                    pagemsg("WARNING: Verbal noun template %s missing form= param" % str(t))
 
-                        newsubsecs = sorted(subsecs, key=keyfunc)
-                        if newsubsecs != subsecs:
-                            for k, j in zip(range(len(subsecs)), range(start, end + 2, 2)):
-                                subsections[j] = ensure_two_trailing_nl(newsubsecs[k])
+                        matching_headword_templates = [
+                            t
+                            for t in parsed.filter_templates()
+                            if tname(t) == infltemp and template_head_matches(t, inflection)
+                        ]
+                        matching_defn_templates = [
+                            t
+                            for t in parsed.filter_templates()
+                            if tname(t) == deftemp and compare_param(t, "1", lemma, require_exact_match=True)
+                        ]
+                        num_matching_headword_templates += len(matching_headword_templates)
+                        if matching_headword_templates and matching_defn_templates:
+                            found_matching_headword_and_defn_templates = True
+                if found_matching_headword_and_defn_templates:
+                    pagemsg("Exists and has Arabic section and found %s already in it" % infltype)
+                    break
+                if num_matching_headword_templates > 1:
+                    pagemsg(
+                        "WARNING: Found multiple matching subsections, don't know which one to insert %s defn into"
+                        % infltype
+                    )
+                    break
 
-                    # Sort the order of individual verb-part subsections. Return True
-                    # if text was changed.
-                    def sort_verb_part_subsections():
-                        subsections_sentinel = subsections + ["", ""]
-                        # for jj in range(len(subsections_sentinel)):
-                        # pagemsg("Subsection %s: [[%s]]" % (jj, subsections_sentinel[jj]))
-                        start = None
-                        for j in range(len(subsections_sentinel)):
-                            if j > 0 and (j % 2) == 0:
-                                is_verb_form = "{{ar-verb-form|" in subsections_sentinel[j]
-                                if start == None and is_verb_form:
-                                    start = j
-                                if start != None and not is_verb_form:
-                                    end = j - 2
-                                    sort_verb_part_subsection_run(start, end)
-                                    start = None
-                        newtext = "".join(subsections)
+            # Derive a sort key from the text of an inflection-of template.
+            def inflection_of_sort_key(tstr):
+                vf_person = 13
+                vf_voice = "pasv"
+                vf_mood = "e"
+                if "|actv" in tstr:
+                    vf_voice = "actv"
+                if "|past" in tstr:
+                    vf_mood = "a"
+                if "|indc" in tstr:
+                    vf_mood = "b"
+                if "|subj" in tstr:
+                    vf_mood = "c"
+                if "|juss" in tstr:
+                    vf_mood = "d"
+                persons = all_person_infls
+                for i in range(len(persons)):
+                    if "|" + persons[i] in tstr:
+                        vf_person = i
+                return (vf_person, vf_voice, vf_mood)
 
-                        if newtext != sections[i]:
-                            # pagemsg("old sections[i]: [[%s]]\nnew sections[i]: [[%s]]\n" % (
-                            #  sections[i], newtext))
-                            sections[i] = newtext
+            # Sort the definition templates in the verb part subsection numbered INDEX. Return True if text changed.
+            def sort_defns_in_one_verb_part_subsection(index):
+                assert index > 0 and (index % 2) == 0
+                subsec = subsections[index]
+                if not subsec.endswith("\n"):
+                    subsec += "\n"
+                mm = re.match(r"^(.*?\n)((?:# \{\{inflection of\|[^\n}]*\}\}\n)+)(.*)$", subsec, re.S)
+                if not mm:
+                    pagemsg("WARNING: Strange subsection without inflection-of template: [[%s]]" % subsec)
+                else:
+                    before, defntext, after = mm.groups()
+                    if defntext:
+                        assert defntext.endswith("\n")
+                        # Ignore last split defn, which will be empty
+                        defns = re.split("\n", defntext)[0:-1]
+                        new_defns = sorted(defns, key=inflection_of_sort_key)
+                        if defns != new_defns:
+                            subsections[index] = before + "\n".join(new_defns) + "\n" + after
                             return True
-                        else:
-                            return False
+                return False
 
-                    # Return False is ===Etymology N=== section doesn't contain only
-                    # verb parts. Else, return a key of (FORM, LEMMA) where LEMMA
-                    # doesn't contain diacritics.
-                    def verb_part_etym_group_key(text, warn=False):
-                        # Issue a warning only if WARN is True. We do this first time
-                        # around, but not when functioning as a sort key to avoid getting
-                        # a zillion warnings.
-                        def warning(txt):
-                            if warn:
-                                pagemsg("WARNING: %s" % txt)
+            # Sort the definitions in an individual verb-part subsection. Return True if text was changed.
+            def sort_defns_in_verb_part_subsections():
+                sorted_any = False
+                for k, header in subsecs.header_list:
+                    is_verb_form = "{{ar-verb-form|" in subsections[k]
+                    if is_verb_form:
+                        sorted_this = sort_defns_in_one_verb_part_subsection(k)
+                        sorted_any = sorted_any or sorted_this
+                if sorted_any:
+                    nonlocal secbody
+                    secbody = "".join(subsections)
+                return sorted_any
 
-                        subsecs = re.split("(^===+[^=\n]+===+\n)", text, 0, re.M)
-                        if len(subsecs) < 2:
-                            warning("Etym section has no subsections: [[%s]]" % text)
-                            return False
-                        form = None
-                        lemma = None
-                        # Keep track of lemmas seen to reduce warnings
-                        lemmas_seen = []
-                        for j in range(1, len(subsecs), 2):
-                            if not re.match("^=+Verb=+\n", subsecs[j]):
-                                return False
-                            parsed = blib.parse_text(subsecs[j + 1])
-                            for t in parsed.filter_templates():
-                                if t.name == "ar-verb-form":
-                                    newform = getparam(t, "2")
-                                    if not form:
-                                        form = newform
-                                    elif form != newform:
-                                        warning("Same etym section, two different forms, %s and %s" % (form, newform))
-                                elif t.name == "inflection of":
-                                    newlemma = remove_diacritics(getparam(t, "1"))
-                                    if not lemma:
-                                        lemma = newlemma
-                                        lemmas_seen.append(lemma)
-                                    elif lemma != newlemma:
-                                        if newlemma not in lemmas_seen:
-                                            warning(
-                                                "Same etym section, two different vowelless lemmas, %s and %s"
-                                                % (lemma, newlemma)
-                                            )
-                                            lemmas_seen.append(newlemma)
+            # Sort the run of individual verb-part subsections from START to
+            # END, inclusive on both sides.
+            def sort_verb_part_subsection_run(start, end):
+                # pagemsg("sort_one_section called with [%s,%s]" % (start, end))
+                if end == start:
+                    return
+                assert start > 0 and (start % 2) == 0
+                assert (end % 2) == 0 and end > start
+                assert end < len(subsections)
+                header1 = subsections[start - 1].strip()
+                for k in range(start + 2, end + 2, 2):
+                    if subsections[k - 1].strip() != header1:
+                        pagemsg(
+                            "WARNING: Header %s doesn't match prior header %s, not sorting"
+                            % (subsections[k - 1].strip(), header1)
+                        )
+                        return
+                subsections_range = []
+                for k in range(start, end + 2, 2):
+                    subsections_range.append(subsections[k])
+
+                def keyfunc(subsec):
+                    parsed = blib.parse_text(subsec)
+                    vf_last_vowel = "u"
+                    vf_person = 13
+                    vf_voice = "pasv"
+                    vf_mood = "e"
+                    seen_inflection_of = False
+
+                    for t in parsed.filter_templates():
+                        if tname(t) == "ar-verb-form":
+                            vf_vowels = re.sub(
+                                "[^" + A + I + U + "]", "", reorder_shadda(getparam(t, "1"))[0:-1]
+                            )
+                            if len(vf_vowels) > 0:
+                                if vf_vowels[-1] == A:
+                                    vf_last_vowel = "a"
+                                elif vf_vowels[-1] == I:
+                                    vf_last_vowel = "i"
                                 else:
-                                    return False
-                        if not form or not lemma:
-                            warning("Verb etym section has missing templates: [[%s]]" % text)
-                        if not form:
-                            form = 100
-                        elif form not in form_classes_to_number:
-                            warning("Strange verb form class %s" % form)
-                            form = 100
-                        else:
-                            form = form_classes_to_number[form]
-                        if not lemma:
-                            lemma = "يييييييييييييييي"
-                        return (form, lemma)
+                                    vf_last_vowel = "u"
+                        # Only use first inflection-of template
+                        if tname(t) == "inflection of" and not seen_inflection_of:
+                            vf_person, vf_voice, vf_mood = inflection_of_sort_key(str(t))
+                            seen_inflection_of = True
+                    sort_key = (vf_person, vf_voice, vf_last_vowel, vf_mood)
+                    # pagemsg("Sort key: %s" % (sort_key,))
+                    return sort_key
 
-                    # Sort the groups of subsections under ===Etymology N=== headers.
-                    # Return True if text was changed.
-                    def sort_verb_part_etym_groups():
-                        etym_groups = re.split("(^===Etymology [0-9]+===\n)", sections[i], 0, re.M)
-                        if len(etym_groups) > 1:
-                            # Save the header
-                            etym_header = etym_groups[0]
-                            # Separate verb-part and non-verb-part etyms
-                            non_verb_part_etyms = []
-                            verb_part_etyms = []
-                            for j in range(2, len(etym_groups), 2):
-                                is_verb_part_etym = verb_part_etym_group_key(etym_groups[j], warn=True)
-                                if is_verb_part_etym:
-                                    verb_part_etyms.append(etym_groups[j])
-                                else:
-                                    non_verb_part_etyms.append(etym_groups[j])
-                            # Sort verb-part etyms
-                            new_vpes = sorted(verb_part_etyms, key=verb_part_etym_group_key)
-                            # Put non-verb-part etyms before sorted verb-part etyms
-                            new_etym_groups = [etym_header]
-                            sorted_etyms = non_verb_part_etyms + new_vpes
-                            for index, etym_group in zip(range(len(sorted_etyms)), sorted_etyms):
-                                new_etym_groups.append("===Etymology %s===\n" % (index + 1))
-                                new_etym_groups.append(etym_group)
-                            if new_etym_groups != etym_groups:
-                                for j in range(2, len(new_etym_groups), 2):
-                                    new_etym_groups[j] = ensure_two_trailing_nl(new_etym_groups[j])
-                                sections[i] = "".join(new_etym_groups)
-                                # Recompute subsections[] based on new ordering; use
-                                # subsections[:] to overwrite existing subsections list (can't
-                                # just assign to subsections because variable will be local)
-                                subsections[:] = re.split("(^===+[^=\n]+===+\n)", sections[i], 0, re.M)
-                                return True
+                # Sort the contents. All subsections have the same header so we don't need to carry the headers along.
+                newsubsecs = sorted(subsections_range, key=keyfunc)
+                if newsubsecs != subsections_range:
+                    for i, j in zip(range(len(subsections_range)), range(start, end + 2, 2)):
+                        subsections[j] = newsubsecs[i]
+
+            # Sort the order of individual verb-part subsections. Return True if text was changed.
+            def sort_verb_part_subsections():
+                origtext = "".join(subsections)
+                subsections_sentinel = subsections + ["", ""]
+                #for jj in range(len(subsections_sentinel)):
+                #    pagemsg("Subsection %s: [[%s]]" % (jj, subsections_sentinel[jj]))
+                start = None
+                for j in range(len(subsections_sentinel)):
+                    if j > 0 and (j % 2) == 0:
+                        is_verb_form = "{{ar-verb-form|" in subsections_sentinel[j]
+                        if start == None and is_verb_form:
+                            start = j
+                        if start != None and not is_verb_form:
+                            end = j - 2
+                            sort_verb_part_subsection_run(start, end)
+                            start = None
+                newtext = "".join(subsections)
+
+                if newtext != origtext:
+                    # pagemsg("origtext: [[%s]]\nnewtext: [[%s]]\n" % (origtext, newtext))
+                    nonlocal secbody
+                    secbody = newtext
+                    return True
+                else:
+                    return False
+
+            # Return False is ===Etymology N=== section doesn't contain only
+            # verb parts. Else, return a key of (FORM, LEMMA) where LEMMA
+            # doesn't contain diacritics.
+            def verb_part_etym_group_key(text, warn=False):
+                # Issue a warning only if WARN is True. We do this first time
+                # around, but not when functioning as a sort key to avoid getting
+                # a zillion warnings.
+                def warning(txt):
+                    if warn:
+                        pagemsg("WARNING: %s" % txt)
+
+                tsubsecs = blib.split_text_into_subsections(text, pagemsg)
+                tsubsections = tsubsecs.subsections
+                if len(tsubsections) < 2:
+                    warning("Etym section has no subsections: [[%s]]" % text)
+                    return False
+                form = None
+                lemma = None
+                # Keep track of lemmas seen to reduce warnings
+                lemmas_seen = []
+                for k, header in tsubsecs.header_list:
+                    if header != "Verb":
                         return False
-
-                    # Sort adjoining verb form subsections, as well as defns in the
-                    # subsections and etym groups of subsections. However, if
-                    # ETYM_GROUPS_ONLY, only sort the etym groups; we do this when
-                    # we have added a new etym group, because this invalidates
-                    # subsections[], which we rely on in the other two kinds of sorting.
-                    def sort_verb_part_sections(etym_groups_only=False):
-                        sorted1 = not etym_groups_only and sort_defns_in_verb_part_subsections()
-                        sorted2 = not etym_groups_only and sort_verb_part_subsections()
-                        sorted3 = sort_verb_part_etym_groups()
-                        sortmsgs = []
-                        if sorted1:
-                            sortmsgs.append("defns")
-                        if sorted2:
-                            sortmsgs.append("subsecs")
-                        if sorted3:
-                            sortmsgs.append("etym groups")
-                        if sortmsgs:
-                            pagemsg("Sorted verb part sections (%s)" % ",".join(sortmsgs))
-                            notes.append("sorted verb part sections (%s)" % ",".join(sortmsgs))
-
-                    # If verb part, go through and sort adjoining verb form subsections,
-                    # as well as defns in the subsections and etym groups of subsections
-                    if is_verb_part:
-                        sort_verb_part_sections()
-
-                    # Go through each subsection in turn, looking for subsection
-                    # matching the POS with an appropriate headword template whose
-                    # head matches the inflected form
-                    for j in range(len(subsections)):
-                        match_pos = False
-                        particip_pos_mismatch = False
-                        if j > 0 and (j % 2) == 0:
-                            if re.match("^===+%s===+\n" % pos, subsections[j - 1]):
-                                match_pos = True
-                            if is_participle:
-                                for mismatch_pos in ["Noun", "Adjective"]:
-                                    if re.match("^===+%s===+\n" % mismatch_pos, subsections[j - 1]):
-                                        particip_pos_mismatch = True
-                                        particip_mismatch_pos = mismatch_pos
-                                        break
-
-                        # Found a POS match
-                        if match_pos or particip_pos_mismatch:
-                            # Get a parsed representation of the text of subsections[j].
-                            # NOTE: Any time you modify a template coming from this parsed,
-                            # representation, you need to execute the following:
-                            #
-                            # subsections[j] = str(parsed)
-                            # sections[i] = ''.join(subsections)
-                            parsed = blib.parse_text(subsections[j])
-
-                            def check_maybe_remove_i3rab(template, param, wordtype):
-                                # Check for i3rab in existing lemma or infl and remove it if so
-                                existing = getparam(template, param)
-                                existing_no_i3rab = maybe_remove_i3rab(
-                                    wordtype, existing, noremove=is_verb_part or wordtype == "dictionary form"
-                                )
-                                if reorder_shadda(existing) != reorder_shadda(existing_no_i3rab):
-                                    notes.append("removed %s i3rab" % wordtype)
-                                    addparam(template, param, existing_no_i3rab)
-                                    subsections[j] = str(parsed)
-                                    sections[i] = "".join(subsections)
-                                    trparam = "tr" if param == "1" else param.replace("head", "tr")
-                                    existing_tr = getparam(template, trparam)
-                                    if existing_tr:
-                                        pagemsg(
-                                            "WARNING: Removed i3rab from existing %s %s and manual translit %s exists"
-                                            % (wordtype, existing, existing_tr)
-                                        )
-                                    existing = existing_no_i3rab
-                                return existing
-
-                            # Find the inflection headword (e.g. 'ar-noun-pl') and
-                            # definitional (e.g. 'plural of') templates. We require that
-                            # they match, either exactly (apart from i3rab) or only in the
-                            # consonants. If verb part, also require that the conj form match
-                            # in the inflection headword template, but don't require that
-                            # the lemma match in the definitional template.
-
-                            head_matches_tuples = [
-                                template_head_match_info(t, inflection) for t in parsed.filter_templates()
-                            ]
-                            # Now get a list of (TEMPLATE, PARAM) for all matching templates,
-                            # where PARAM is the matching head param, as above.
-                            infl_headword_templates = [
-                                (t, param)
-                                for t, param, matches in head_matches_tuples
-                                if t.name == infltemp
-                                and matches
-                                and (not is_verb_part or compare_param(t, "2", verb_part_form))
-                            ]
-
-                            # Special-case handling for actual noun plurals. We expect an
-                            # ar-noun but if we encounter an ar-coll-noun with the plural as
-                            # the (collective) head and the singular as the singulative, we
-                            # output a message and skip so we don't end up creating a
-                            # duplicate entry. Require exact match because there are cases like
-                            # collective noun صَدَف (singulative صَدَفَة) and plural صُدَف
-                            # (singular صُدْفَة) where we don't want this special case to trigger.
-                            if is_plural_noun:
-                                headword_collective_templates = [
-                                    t
-                                    for t in parsed.filter_templates()
-                                    if t.name == "ar-coll-noun"
-                                    and template_head_matches(t, inflection, require_exact_match=True)
-                                    and compare_param(t, "sing", lemma, require_exact_match=True)
-                                ]
-                                if headword_collective_templates:
-                                    pagemsg(
-                                        "WARNING: Exists and has Arabic section and found collective noun with %s already in it; taking no action"
-                                        % (infltype)
+                    parsed = blib.parse_text(tsubsections[k])
+                    for t in parsed.filter_templates():
+                        if tname(t) == "ar-verb-form":
+                            newform = getparam(t, "2")
+                            if not form:
+                                form = newform
+                            elif form != newform:
+                                warning("Same etym section, two different forms, %s and %s" % (form, newform))
+                        elif tname(t) == "inflection of":
+                            newlemma = remove_diacritics(getparam(t, "1"))
+                            if not lemma:
+                                lemma = newlemma
+                                lemmas_seen.append(lemma)
+                            elif lemma != newlemma:
+                                if newlemma not in lemmas_seen:
+                                    warning(
+                                        "Same etym section, two different vowelless lemmas, %s and %s"
+                                        % (lemma, newlemma)
                                     )
-                                    break
+                                    lemmas_seen.append(newlemma)
+                        else:
+                            return False
+                if not form or not lemma:
+                    warning("Verb etym section has missing templates: [[%s]]" % text)
+                if not form:
+                    form = 100
+                elif form not in form_classes_to_number:
+                    warning("Strange verb form class %s" % form)
+                    form = 100
+                else:
+                    form = form_classes_to_number[form]
+                if not lemma:
+                    lemma = "يييييييييييييييي"
+                return (form, lemma)
 
-                            def particip_mismatch_check():
-                                if particip_pos_mismatch:
-                                    pagemsg(
-                                        "WARNING: Found match for %s but in ===%s=== section rather than ===%s==="
-                                        % (infltype, particip_mismatch_pos, pos)
-                                    )
+            # Sort the groups of subsections under ===Etymology N=== headers.
+            # Return True if text was changed.
+            def sort_verb_part_etym_groups():
+                etym_groups = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
+                if len(etym_groups) > 1:
+                    # Save the header
+                    etym_header = etym_groups[0]
+                    # Separate verb-part and non-verb-part etyms
+                    non_verb_part_etyms = []
+                    verb_part_etyms = []
+                    for k in range(2, len(etym_groups), 2):
+                        is_verb_part_etym = verb_part_etym_group_key(etym_groups[k], warn=True)
+                        if is_verb_part_etym:
+                            verb_part_etyms.append(etym_groups[k])
+                        else:
+                            non_verb_part_etyms.append(etym_groups[k])
+                    # Sort verb-part etyms
+                    new_vpes = sorted(verb_part_etyms, key=verb_part_etym_group_key)
+                    # Put non-verb-part etyms before sorted verb-part etyms
+                    new_etym_groups = [etym_header]
+                    sorted_etyms = non_verb_part_etyms + new_vpes
+                    for index, etym_group in zip(range(len(sorted_etyms)), sorted_etyms):
+                        new_etym_groups.append("===Etymology %s===\n" % (index + 1))
+                        new_etym_groups.append(etym_group)
+                    if new_etym_groups != etym_groups:
+                        nonlocal secbody
+                        secbody = "".join(new_etym_groups)
+                        return True
+                return False
 
-                            # Make sure there's exactly one headword template.
-                            if len(infl_headword_templates) > 1:
+            # Sort adjoining verb form subsections, as well as defns in the subsections and etym groups of subsections.
+            # However, if ETYM_GROUPS_ONLY, only sort the etym groups; we do this when we have added a new etym group,
+            # because this invalidates subsections[], which we rely on in the other two kinds of sorting.
+            def sort_verb_part_sections(etym_groups_only=False) -> None:
+                nonlocal subsecs, subsections
+                sorted1 = not etym_groups_only and sort_defns_in_verb_part_subsections()
+                if sorted1:
+                    # Since we changed the headers, recompute the subsections and header lists
+                    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+                    subsections = subsecs.subsections
+                sorted2 = not etym_groups_only and sort_verb_part_subsections()
+                if sorted2:
+                    # Since we changed the headers, recompute the subsections and header lists
+                    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+                    subsections = subsecs.subsections
+                sorted3 = sort_verb_part_etym_groups()
+                if sorted3:
+                    # Since we changed the headers, recompute the subsections and header lists
+                    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+                    subsections = subsecs.subsections
+                sortmsgs = []
+                if sorted1:
+                    sortmsgs.append("defns")
+                if sorted2:
+                    sortmsgs.append("subsecs")
+                if sorted3:
+                    sortmsgs.append("etym groups")
+                if sortmsgs:
+                    pagemsg("Sorted verb part sections (%s)" % ",".join(sortmsgs))
+                    notes.append("sorted verb part sections (%s)" % ",".join(sortmsgs))
+
+            # If verb part, go through and sort adjoining verb form subsections,
+            # as well as defns in the subsections and etym groups of subsections
+            if is_verb_part:
+                # This recomputes subsecs and subsections
+                sort_verb_part_sections()
+
+            # Go through each subsection in turn, looking for subsection matching the POS with an appropriate headword
+            # template whose head matches the inflected form.
+            for k, header in subsecs.header_list:
+                match_pos = False
+                particip_pos_mismatch = False
+                if header == pos:
+                    match_pos = True
+                if is_participle:
+                    for mismatch_pos in ["Noun", "Adjective"]:
+                        if header == mismatch_pos:
+                            particip_pos_mismatch = True
+                            particip_mismatch_pos = mismatch_pos
+                            break
+
+                # Found a POS match
+                if match_pos or particip_pos_mismatch:
+                    # Get a parsed representation of the text of subsections[k].
+                    # NOTE: Any time you modify a template coming from this parsed,
+                    # representation, you need to execute the following:
+                    #
+                    # subsections[k] = str(parsed)
+                    # nonlocal secbody # if inside a function
+                    # secbody = "".join(subsections)
+                    parsed = blib.parse_text(subsections[k])
+
+                    def check_maybe_remove_i3rab(template, param, wordtype):
+                        # Check for i3rab in existing lemma or infl and remove it if so
+                        existing = getparam(template, param)
+                        existing_no_i3rab = maybe_remove_i3rab(
+                            wordtype, existing, noremove=is_verb_part or wordtype == "dictionary form"
+                        )
+                        if reorder_shadda(existing) != reorder_shadda(existing_no_i3rab):
+                            notes.append("removed %s i3rab" % wordtype)
+                            addparam(template, param, existing_no_i3rab)
+                            subsections[k] = str(parsed)
+                            trparam = "tr" if param == "1" else param.replace("head", "tr")
+                            existing_tr = getparam(template, trparam)
+                            if existing_tr:
                                 pagemsg(
-                                    "WARNING: Found multiple inflection headword templates for %s; taking no action"
+                                    "WARNING: Removed i3rab from existing %s %s and manual translit %s exists"
+                                    % (wordtype, existing, existing_tr)
+                                )
+                            existing = existing_no_i3rab
+                        return existing
+
+                    # Find the inflection headword (e.g. 'ar-noun-pl') and
+                    # definitional (e.g. 'plural of') templates. We require that
+                    # they match, either exactly (apart from i3rab) or only in the
+                    # consonants. If verb part, also require that the conj form match
+                    # in the inflection headword template, but don't require that
+                    # the lemma match in the definitional template.
+
+                    head_matches_tuples = [
+                        template_head_match_info(t, inflection) for t in parsed.filter_templates()
+                    ]
+                    # Now get a list of (TEMPLATE, PARAM) for all matching templates,
+                    # where PARAM is the matching head param, as above.
+                    infl_headword_templates = [
+                        (t, param)
+                        for t, param, matches in head_matches_tuples
+                        if tname(t) == infltemp
+                        and matches
+                        and (not is_verb_part or compare_param(t, "2", verb_part_form))
+                    ]
+
+                    # Special-case handling for actual noun plurals. We expect an
+                    # ar-noun but if we encounter an ar-coll-noun with the plural as
+                    # the (collective) head and the singular as the singulative, we
+                    # output a message and skip so we don't end up creating a
+                    # duplicate entry. Require exact match because there are cases like
+                    # collective noun صَدَف (singulative صَدَفَة) and plural صُدَف
+                    # (singular صُدْفَة) where we don't want this special case to trigger.
+                    if is_plural_noun:
+                        headword_collective_templates = [
+                            t
+                            for t in parsed.filter_templates()
+                            if tname(t) == "ar-coll-noun"
+                            and template_head_matches(t, inflection, require_exact_match=True)
+                            and compare_param(t, "sing", lemma, require_exact_match=True)
+                        ]
+                        if headword_collective_templates:
+                            pagemsg(
+                                "WARNING: Exists and has Arabic section and found collective noun with %s already in it; taking no action"
+                                % (infltype)
+                            )
+                            break  # break out of `for k, header in ...` loop over subsections
+
+                    def particip_mismatch_check():
+                        if particip_pos_mismatch:
+                            pagemsg(
+                                "WARNING: Found match for %s but in ===%s=== section rather than ===%s==="
+                                % (infltype, particip_mismatch_pos, pos)
+                            )
+
+                    # Make sure there's exactly one headword template.
+                    if len(infl_headword_templates) > 1:
+                        pagemsg(
+                            "WARNING: Found multiple inflection headword templates for %s; taking no action"
+                            % (infltype)
+                        )
+                        break  # break out of `for k, header in ...` loop over subsections
+
+                    # Get list of definition templates that match. We may or may
+                    # not be matching in a way that ignores vowels (see
+                    # must_match_exactly above).
+                    approx_defn_templates = [
+                        t
+                        for t in parsed.filter_templates()
+                        if tname(t) == deftemp and (is_verb_part or compare_param(t, "1", lemma))
+                    ]
+                    # Get list of definition templates that match, checking vowels.
+                    defn_templates = [
+                        t
+                        for t in parsed.filter_templates()
+                        if tname(t) == deftemp
+                        and (is_verb_part or compare_param(t, "1", lemma, require_exact_match=True))
+                    ]
+
+                    # Check the existing gender of the given headword template
+                    # (assumed to be "p" if non-existent) and attempt to make sure
+                    # it matches the given gender or can be compatibly modified to
+                    # the new gender. Return False if genders incompatible (and
+                    # issue a warning if WARNING_ON_FALSE), else modify existing
+                    # gender if needed, and return True. (E.g. existing "p" matches
+                    # new "m-p" and will be modified; existing "m-p" matches new "p"
+                    # and will be left alone; existing "p-pr" matches new "m-p" and
+                    # will be modified to "m-p-pr". Similar checks are done for the
+                    # second gender. We don't currently handle the situation where
+                    # e.g. the existing gender is both "m-p" and "f-p" and the new
+                    # gender is "f-p" and "m-p" in reverse order. To handle that,
+                    # we would need to sort both sets of genders by some criterion.)
+                    def check_fix_gender(headword_template, gender, warning_on_false):
+                        defgender = is_plural and "p" or ""
+
+                        def gender_compatible(existing, new):
+                            if is_plural:
+                                if not re.search(r"\bp\b", existing):
+                                    pagemsg(
+                                        "WARNING: Something wrong, existing plural gender %s does not have 'p' in it"
+                                        % existing
+                                    )
+                                    return False
+                                if not re.search(r"\bp\b", new):
+                                    pagemsg(
+                                        "WARNING: Something wrong, new plural gender %s does not have 'p' in it"
+                                        % new
+                                    )
+                                    return False
+                            else:
+                                assert is_vn or is_feminine
+                                if re.search(r"\bp\b", existing):
+                                    pagemsg(
+                                        "WARNING: Something wrong, existing vn/fem gender %s has 'p' in it"
+                                        % existing
+                                    )
+                                    return False
+                                if re.search(r"\bp\b", new):
+                                    pagemsg(
+                                        "WARNING: Something wrong, new vn/fem gender %s has 'p' in it" % new
+                                    )
+                                    return False
+                            m = re.search(r"\b([mf])\b", existing)
+                            existing_mf = m and m.group(1)
+                            m = re.search(r"\b([mf])\b", new)
+                            new_mf = m and m.group(1)
+                            if existing_mf and new_mf and existing_mf != new_mf:
+                                pagemsg(
+                                    "%sCan't modify mf gender from %s to %s"
+                                    % ("WARNING: " if warning_on_false else "", existing_mf, new_mf)
+                                )
+                                return False
+                            new_mf = new_mf or existing_mf
+                            m = re.search(r"\b(pr|np)\b", existing)
+                            existing_pr = m and m.group(1)
+                            m = re.search(r"\b(pr|np)\b", new)
+                            new_pr = m and m.group(1)
+                            if existing_pr and new_pr and existing_pr != new_pr:
+                                pagemsg(
+                                    "%sCan't modify personalness from %s to %s"
+                                    % ("WARNING: " if warning_on_false else "", existing_pr, new_pr)
+                                )
+                                return False
+                            new_pr = new_pr or existing_pr
+                            return "-".join([x for x in [new_mf, defgender, new_pr] if x])
+
+                        if len(gender) == 0:
+                            return True
+                        existing_gender = getparam(headword_template, "2")
+                        existing_gender2 = getparam(headword_template, "g2")
+                        assert len(gender) == 1 or len(gender) == 2
+                        new_gender = gender_compatible(existing_gender or defgender, gender[0])
+                        if new_gender == False:
+                            return False
+                        new_gender2 = len(gender) == 2 and gender[1] or ""
+                        if existing_gender2 or new_gender2:
+                            new_gender2 = gender_compatible(
+                                existing_gender2 or defgender, new_gender2 or defgender
+                            )
+                            if new_gender2 == False:
+                                return False
+                        changed = False
+                        if new_gender != existing_gender and new_gender and new_gender != defgender:
+                            pagemsg("Modifying first gender from '%s' to '%s'" % (existing_gender, new_gender))
+                            addparam(headword_template, "2", new_gender)
+                            changed = True
+                        if new_gender2 != existing_gender2 and new_gender2 and new_gender2 != defgender:
+                            pagemsg(
+                                "Modifying second gender from '%s' to '%s'" % (existing_gender2, new_gender2)
+                            )
+                            addparam(headword_template, "g2", new_gender2)
+                            changed = True
+                        if changed:
+                            subsections[k] = str(parsed)
+                            notes.append("updated gender")
+                        return True
+
+                    # Update the gender in HEADWORD_TEMPLATE according to GENDER
+                    # (which might be empty, meaning no updating) using
+                    # check_fix_gender(). Also update any other parameters in
+                    # HEADWORD_TEMPLATE according to PARAMS. Return False and issue
+                    # a warning if we're unable to update (meaning a parameter
+                    # we wanted to set already existed in HEADWORD_TEMPLATE with a
+                    # different value); else return True. If changes were made,
+                    # an appropriate note will be added to 'notes' and the
+                    # section and subsection text updated.
+                    def check_fix_infl_params(headword_template, params, gender, warning_on_false):
+                        if gender:
+                            if not check_fix_gender(headword_template, gender, warning_on_false):
+                                return False
+                            # Don't try to further process the gender params that we
+                            # already processed.
+                            params = [(param, value) for param, value in params if param not in ["2", "g2"]]
+                        # First check that we can update params before changing anything
+                        for param, value in params:
+                            existing = reorder_shadda(getparam(headword_template, param))
+                            value = reorder_shadda(value)
+                            assert value
+                            if existing == value:
+                                pass
+                            elif existing:
+                                pagemsg(
+                                    "%sCan't modify %s from %s to %s"
+                                    % ("WARNING: " if warning_on_false else "", param, existing, value)
+                                )
+                                return False
+                        # Now update params
+                        changed = False
+                        for param, value in params:
+                            existing = reorder_shadda(getparam(headword_template, param))
+                            value = reorder_shadda(value)
+                            assert value
+                            if existing:
+                                assert existing == value
+                            else:
+                                addparam(headword_template, param, value)
+                                changed = True
+                                notes.append("updated %s=%s" % (param, value))
+                        if changed:
+                            subsections[k] = str(parsed)
+                        return True
+
+                    if infl_headword_templates and len(approx_defn_templates) == 1 and not must_match_exactly:
+
+                        #### Code for plurals and feminines, which may be partly
+                        #### vocalized and may have existing i3rab.
+
+                        infl_headword_template, infl_headword_matching_param = infl_headword_templates[0]
+                        defn_template = approx_defn_templates[0]
+
+                        # Check for i3rab in existing infl and remove it if so.
+                        existing_infl = check_maybe_remove_i3rab(
+                            infl_headword_template, infl_headword_matching_param, infltype
+                        )
+
+                        # Check for i3rab in existing lemma and remove it if so
+                        existing_lemma = check_maybe_remove_i3rab(defn_template, "1", lemmatype)
+
+                        # Check that new inflection is the same as or longer then
+                        # existing inflection, and same for the lemma. In such a
+                        # case we assume that the existing lemma/inflection represents
+                        # a possibly partly vocalized version of new lemma/inflection.
+                        if (len(inflection) > len(existing_infl) or inflection == existing_infl) and (
+                            len(lemma) > len(existing_lemma) or lemma == existing_lemma
+                        ):
+                            if inflection != existing_infl or lemma != existing_lemma:
+                                pagemsg(
+                                    "Approximate match to partly vocalized: Exists and has Arabic section and found %s already in it"
                                     % (infltype)
                                 )
-                                break
-
-                            # Get list of definition templates that match. We may or may
-                            # not be matching in a way that ignores vowels (see
-                            # must_match_exactly above).
-                            approx_defn_templates = [
-                                t
-                                for t in parsed.filter_templates()
-                                if t.name == deftemp and (is_verb_part or compare_param(t, "1", lemma))
-                            ]
-                            # Get list of definition templates that match, checking vowels.
-                            defn_templates = [
-                                t
-                                for t in parsed.filter_templates()
-                                if t.name == deftemp
-                                and (is_verb_part or compare_param(t, "1", lemma, require_exact_match=True))
-                            ]
-
-                            # Check the existing gender of the given headword template
-                            # (assumed to be "p" if non-existent) and attempt to make sure
-                            # it matches the given gender or can be compatibly modified to
-                            # the new gender. Return False if genders incompatible (and
-                            # issue a warning if WARNING_ON_FALSE), else modify existing
-                            # gender if needed, and return True. (E.g. existing "p" matches
-                            # new "m-p" and will be modified; existing "m-p" matches new "p"
-                            # and will be left alone; existing "p-pr" matches new "m-p" and
-                            # will be modified to "m-p-pr". Similar checks are done for the
-                            # second gender. We don't currently handle the situation where
-                            # e.g. the existing gender is both "m-p" and "f-p" and the new
-                            # gender is "f-p" and "m-p" in reverse order. To handle that,
-                            # we would need to sort both sets of genders by some criterion.)
-                            def check_fix_gender(headword_template, gender, warning_on_false):
-                                defgender = is_plural and "p" or ""
-
-                                def gender_compatible(existing, new):
-                                    if is_plural:
-                                        if not re.search(r"\bp\b", existing):
-                                            pagemsg(
-                                                "WARNING: Something wrong, existing plural gender %s does not have 'p' in it"
-                                                % existing
-                                            )
-                                            return False
-                                        if not re.search(r"\bp\b", new):
-                                            pagemsg(
-                                                "WARNING: Something wrong, new plural gender %s does not have 'p' in it"
-                                                % new
-                                            )
-                                            return False
-                                    else:
-                                        assert is_vn or is_feminine
-                                        if re.search(r"\bp\b", existing):
-                                            pagemsg(
-                                                "WARNING: Something wrong, existing vn/fem gender %s has 'p' in it"
-                                                % existing
-                                            )
-                                            return False
-                                        if re.search(r"\bp\b", new):
-                                            pagemsg(
-                                                "WARNING: Something wrong, new vn/fem gender %s has 'p' in it" % new
-                                            )
-                                            return False
-                                    m = re.search(r"\b([mf])\b", existing)
-                                    existing_mf = m and m.group(1)
-                                    m = re.search(r"\b([mf])\b", new)
-                                    new_mf = m and m.group(1)
-                                    if existing_mf and new_mf and existing_mf != new_mf:
-                                        pagemsg(
-                                            "%sCan't modify mf gender from %s to %s"
-                                            % ("WARNING: " if warning_on_false else "", existing_mf, new_mf)
-                                        )
-                                        return False
-                                    new_mf = new_mf or existing_mf
-                                    m = re.search(r"\b(pr|np)\b", existing)
-                                    existing_pr = m and m.group(1)
-                                    m = re.search(r"\b(pr|np)\b", new)
-                                    new_pr = m and m.group(1)
-                                    if existing_pr and new_pr and existing_pr != new_pr:
-                                        pagemsg(
-                                            "%sCan't modify personalness from %s to %s"
-                                            % ("WARNING: " if warning_on_false else "", existing_pr, new_pr)
-                                        )
-                                        return False
-                                    new_pr = new_pr or existing_pr
-                                    return "-".join([x for x in [new_mf, defgender, new_pr] if x])
-
-                                if len(gender) == 0:
-                                    return True  # "nochange"
-                                existing_gender = getparam(headword_template, "2")
-                                existing_gender2 = getparam(headword_template, "g2")
-                                assert len(gender) == 1 or len(gender) == 2
-                                new_gender = gender_compatible(existing_gender or defgender, gender[0])
-                                if new_gender == False:
-                                    return False
-                                new_gender2 = len(gender) == 2 and gender[1] or ""
-                                if existing_gender2 or new_gender2:
-                                    new_gender2 = gender_compatible(
-                                        existing_gender2 or defgender, new_gender2 or defgender
-                                    )
-                                    if new_gender2 == False:
-                                        return False
-                                changed = False
-                                if new_gender != existing_gender and new_gender and new_gender != defgender:
-                                    pagemsg("Modifying first gender from '%s' to '%s'" % (existing_gender, new_gender))
-                                    addparam(headword_template, "2", new_gender)
-                                    changed = True
-                                if new_gender2 != existing_gender2 and new_gender2 and new_gender2 != defgender:
-                                    pagemsg(
-                                        "Modifying second gender from '%s' to '%s'" % (existing_gender2, new_gender2)
-                                    )
-                                    addparam(headword_template, "g2", new_gender2)
-                                    changed = True
-                                if changed:
-                                    subsections[j] = str(parsed)
-                                    sections[i] = "".join(subsections)
-                                    notes.append("updated gender")
-                                return True  # changed and "changed" or "nochange"
-
-                            # Update the gender in HEADWORD_TEMPLATE according to GENDER
-                            # (which might be empty, meaning no updating) using
-                            # check_fix_gender(). Also update any other parameters in
-                            # HEADWORD_TEMPLATE according to PARAMS. Return False and issue
-                            # a warning if we're unable to update (meaning a parameter
-                            # we wanted to set already existed in HEADWORD_TEMPLATE with a
-                            # different value); else return True. If changes were made,
-                            # an appropriate note will be added to 'notes' and the
-                            # section and subsection text updated.
-                            def check_fix_infl_params(headword_template, params, gender, warning_on_false):
-                                if gender:
-                                    if not check_fix_gender(headword_template, gender, warning_on_false):
-                                        return False
-                                    # Don't try to further process the gender params that we
-                                    # already processed.
-                                    params = [(param, value) for param, value in params if param not in ["2", "g2"]]
-                                # First check that we can update params before changing anything
-                                for param, value in params:
-                                    existing = reorder_shadda(getparam(headword_template, param))
-                                    value = reorder_shadda(value)
-                                    assert value
-                                    if existing == value:
-                                        pass
-                                    elif existing:
-                                        pagemsg(
-                                            "%sCan't modify %s from %s to %s"
-                                            % ("WARNING: " if warning_on_false else "", param, existing, value)
-                                        )
-                                        return False
-                                # Now update params
-                                changed = False
-                                for param, value in params:
-                                    existing = reorder_shadda(getparam(headword_template, param))
-                                    value = reorder_shadda(value)
-                                    assert value
-                                    if existing:
-                                        assert existing == value
-                                    else:
-                                        addparam(headword_template, param, value)
-                                        changed = True
-                                        notes.append("updated %s=%s" % (param, value))
-                                if changed:
-                                    subsections[j] = str(parsed)
-                                    sections[i] = "".join(subsections)
-                                return True
-
-                            if infl_headword_templates and len(approx_defn_templates) == 1 and not must_match_exactly:
-
-                                #### Code for plurals and feminines, which may be partly
-                                #### vocalized and may have existing i3rab.
-
-                                infl_headword_template, infl_headword_matching_param = infl_headword_templates[0]
-                                defn_template = approx_defn_templates[0]
-
-                                # Check for i3rab in existing infl and remove it if so.
-                                existing_infl = check_maybe_remove_i3rab(
-                                    infl_headword_template, infl_headword_matching_param, infltype
-                                )
-
-                                # Check for i3rab in existing lemma and remove it if so
-                                existing_lemma = check_maybe_remove_i3rab(defn_template, "1", lemmatype)
-
-                                # Check that new inflection is the same as or longer then
-                                # existing inflection, and same for the lemma. In such a
-                                # case we assume that the existing lemma/inflection represents
-                                # a possibly partly vocalized version of new lemma/inflection.
-                                if (len(inflection) > len(existing_infl) or inflection == existing_infl) and (
-                                    len(lemma) > len(existing_lemma) or lemma == existing_lemma
-                                ):
-                                    if inflection != existing_infl or lemma != existing_lemma:
-                                        pagemsg(
-                                            "Approximate match to partly vocalized: Exists and has Arabic section and found %s already in it"
-                                            % (infltype)
-                                        )
-                                    else:
-                                        pagemsg("Exists and has Arabic section and found %s already in it" % (infltype))
-
-                                    # First, make sure we can update infl params as needed.
-                                    if check_fix_infl_params(infl_headword_template, infltemp_params, gender, True):
-                                        # Replace existing infl with new one
-                                        if len(inflection) > len(existing_infl):
-                                            pagemsg(
-                                                "Updating existing %s %s with %s"
-                                                % (infltemp, existing_infl, inflection)
-                                            )
-                                            addparam(infl_headword_template, infl_headword_matching_param, inflection)
-                                            if infltr:
-                                                trparam = (
-                                                    "tr"
-                                                    if infl_headword_matching_param == "1"
-                                                    else infl_headword_matching_param.replace("head", "tr")
-                                                )
-                                                addparam(infl_headword_template, trparam, infltr)
-
-                                        # Replace existing lemma with new one
-                                        if len(lemma) > len(existing_lemma):
-                                            pagemsg(
-                                                "Updating existing '%s' %s with %s" % (deftemp, existing_lemma, lemma)
-                                            )
-                                            addparam(defn_template, "1", lemma)
-                                            if lemmatr:
-                                                addparam(defn_template, "tr", lemmatr)
-
-                                        subsections[j] = str(parsed)
-                                        sections[i] = "".join(subsections)
-                                        comment = (
-                                            "Update Arabic with better vocalized versions: %s %s, %s %s, pos=%s"
-                                            % (
-                                                infltype,
-                                                inflection,
-                                                lemmatype,
-                                                lemma,
-                                                pos,
-                                            )
-                                        )
-                                        break
-
-                            # We found both templates and their heads matched; inflection
-                            # entry is probably already present. For verb forms, however,
-                            # check all the parameters of the definitional template,
-                            # because there may be multiple definitional templates
-                            # corresponding to different inflections that have the same form
-                            # for the same lemma (e.g. يَكْتُنُو yaktubū is both subjunctive and
-                            # jussive, and يَكْتُبْنَ yaktubna is all 3 of indicative, subjunctive
-                            # and jussive).
-                            if defn_templates and infl_headword_templates:
+                            else:
                                 pagemsg("Exists and has Arabic section and found %s already in it" % (infltype))
 
-                                particip_mismatch_check()
-
-                                infl_headword_template, infl_headword_matching_param = infl_headword_templates[0]
-
-                                # Check for i3rab in existing infl and remove it if so
-                                check_maybe_remove_i3rab(infl_headword_template, infl_headword_matching_param, infltype)
-
-                                # For verb forms check for an exactly matching definitional
-                                # template; if not, insert one at end of definition.
-                                if is_verb_part:
-
-                                    def compare_verb_part_defn_templates(code1, code2):
-                                        pagemsg("Comparing %s with %s" % (code1, code2))
-
-                                        def canonicalize_defn_template(code):
-                                            code = reorder_shadda(code)
-                                            code = re.sub(r"\[\[.*?\]\]", "", code)
-                                            code = re.sub(r"\|gloss=[^|}]*", "", code)
-                                            code = re.sub(r"\|lang=ar", "", code)
-                                            return code
-
-                                        return canonicalize_defn_template(code1) == canonicalize_defn_template(code2)
-
-                                    found_exact_matching = False
-                                    for d_t in defn_templates:
-                                        if compare_verb_part_defn_templates(str(d_t), new_defn_template):
-                                            pagemsg(
-                                                "Found exact-matching definitional template for %s; taking no action"
-                                                % (infltype)
-                                            )
-                                            found_exact_matching = True
-                                        else:
-                                            pagemsg(
-                                                "Found non-matching definitional template for %s: %s"
-                                                % (infltype, str(d_t))
-                                            )
-
-                                    if verb_part_inserted_defn:
-                                        # If we already inserted an entry or found an exact-matching
-                                        # entry, check for duplicate entries. Currently we combine
-                                        # entries with the same inflection and conjugational form
-                                        # and separate lemmas, but previously created separate
-                                        # entries. We will add the new definition to the existing
-                                        # section but need to check for the previously added separate
-                                        # sections.
-                                        if found_exact_matching and len(defn_templates) == 1:
-                                            pagemsg("Found duplicate definition, deleting")
-                                            subsections[j - 1] = ""
-                                            subsections[j] = ""
-                                            sections[i] = "".join(subsections)
-                                            notes.append(
-                                                "delete duplicate definition for %s %s, form %s"
-                                                % (infltype, inflection, verb_part_form)
-                                            )
-                                    elif not found_exact_matching:
-                                        subsections[j] = str(parsed)
-                                        if subsections[j][-1] != "\n":
-                                            subsections[j] += "\n"
-                                        subsections[j] = re.sub(
-                                            r"^(.*\n#[^\n]*\n)",
-                                            r"\1# %s\n" % new_defn_template,
-                                            subsections[j],
-                                            1,
-                                            re.S,
+                            # First, make sure we can update infl params as needed.
+                            if check_fix_infl_params(infl_headword_template, infltemp_params, gender, True):
+                                # Replace existing infl with new one
+                                if len(inflection) > len(existing_infl):
+                                    pagemsg(
+                                        "Updating existing %s %s with %s"
+                                        % (infltemp, existing_infl, inflection)
+                                    )
+                                    addparam(infl_headword_template, infl_headword_matching_param, inflection)
+                                    if infltr:
+                                        trparam = (
+                                            "tr"
+                                            if infl_headword_matching_param == "1"
+                                            else infl_headword_matching_param.replace("head", "tr")
                                         )
-                                        sections[i] = "".join(subsections)
-                                        pagemsg(
-                                            "Adding new definitional template to existing defn for pos = %s" % (pos)
-                                        )
-                                        comment = (
-                                            "Add new definitional template to existing defn: %s %s, %s %s, pos=%s"
-                                            % (
-                                                infltype,
-                                                inflection,
-                                                lemmatype,
-                                                lemma,
-                                                pos,
-                                            )
-                                        )
+                                        addparam(infl_headword_template, trparam, infltr)
 
-                                    # Don't break, so we can check for duplicate entries.
-                                    # We set need_new_entry to false so we won't insert a new
-                                    # one down below.
-                                    verb_part_inserted_defn = True
-                                    need_new_entry = False
+                                # Replace existing lemma with new one
+                                if len(lemma) > len(existing_lemma):
+                                    pagemsg(
+                                        "Updating existing '%s' %s with %s" % (deftemp, existing_lemma, lemma)
+                                    )
+                                    addparam(defn_template, "1", lemma)
+                                    if lemmatr:
+                                        addparam(defn_template, "tr", lemmatr)
 
-                                # Else, not verb form.
-                                else:
-                                    # Fix gender and other inflection params. Even if we can't
-                                    # set them appropriately, do nothing since we already have
-                                    # found an entry with same inflection and definition; but we
-                                    # will output a warning.
-                                    check_fix_infl_params(infl_headword_template, infltemp_params, gender, True)
-                                    # "Do nothing", but set a comment, in case we made a template
-                                    # change like updating i3rab or changing gender.
-                                    comment = "Already found entry: %s %s, %s %s" % (
+                                subsections[k] = str(parsed)
+                                notes.append(
+                                    "update Arabic with better vocalized versions: %s %s, %s %s, pos=%s"
+                                    % (
                                         infltype,
                                         inflection,
                                         lemmatype,
                                         lemma,
+                                        pos,
                                     )
-                                    break
+                                )
+                                break  # break out of `for k, header in ...` loop over subsections
 
-                            # At this point, didn't find both headword and definitional
-                            # template. If we found headword template, insert new definition
-                            # in same section.
-                            elif infl_headword_templates:
-                                infl_headword_template, infl_headword_matching_param = infl_headword_templates[0]
-                                # Check for i3rab in existing infl and remove it if so
-                                check_maybe_remove_i3rab(infl_headword_template, infl_headword_matching_param, infltype)
-                                # Previously, when looking for a matching headword template,
-                                # we may not have required the vowels to match exactly
-                                # (e.g. when creating plurals). But now we want to make sure
-                                # they do, or we will put the new definition under a wrong
-                                # headword.
-                                if compare_param(
-                                    infl_headword_template,
-                                    infl_headword_matching_param,
-                                    inflection,
-                                    require_exact_match=True,
-                                ):
-                                    # Also make sure manual translit matches
-                                    trparam = (
-                                        "tr"
-                                        if infl_headword_matching_param == "1"
-                                        else infl_headword_matching_param.replace("head", "tr")
+                    # We found both templates and their heads matched; inflection
+                    # entry is probably already present. For verb forms, however,
+                    # check all the parameters of the definitional template,
+                    # because there may be multiple definitional templates
+                    # corresponding to different inflections that have the same form
+                    # for the same lemma (e.g. يَكْتُنُو yaktubū is both subjunctive and
+                    # jussive, and يَكْتُبْنَ yaktubna is all 3 of indicative, subjunctive
+                    # and jussive).
+                    if defn_templates and infl_headword_templates:
+                        pagemsg("Exists and has Arabic section and found %s already in it" % (infltype))
+
+                        particip_mismatch_check()
+
+                        infl_headword_template, infl_headword_matching_param = infl_headword_templates[0]
+
+                        # Check for i3rab in existing infl and remove it if so
+                        check_maybe_remove_i3rab(infl_headword_template, infl_headword_matching_param, infltype)
+
+                        # For verb forms check for an exactly matching definitional
+                        # template; if not, insert one at end of definition.
+                        if is_verb_part:
+
+                            def compare_verb_part_defn_templates(code1, code2):
+                                pagemsg("Comparing %s with %s" % (code1, code2))
+
+                                def canonicalize_defn_template(code):
+                                    code = reorder_shadda(code)
+                                    code = re.sub(r"\[\[.*?\]\]", "", code)
+                                    code = re.sub(r"\|gloss=[^|}]*", "", code)
+                                    code = re.sub(r"\|lang=ar", "", code)
+                                    return code
+
+                                return canonicalize_defn_template(code1) == canonicalize_defn_template(code2)
+
+                            found_exact_matching = False
+                            for d_t in defn_templates:
+                                if compare_verb_part_defn_templates(str(d_t), new_defn_template):
+                                    pagemsg(
+                                        "Found exact-matching definitional template for %s; taking no action"
+                                        % (infltype)
                                     )
-                                    existing_tr = getparam(infl_headword_template, trparam)
-                                    # infltr may be None and existing_tr may be "", but
-                                    # they should match
-                                    if (infltr or None) == (existing_tr or None):
+                                    found_exact_matching = True
+                                else:
+                                    pagemsg(
+                                        "Found non-matching definitional template for %s: %s"
+                                        % (infltype, str(d_t))
+                                    )
 
-                                        # Don't insert defn when there are multiple heads because
-                                        # we don't know that all heads are actually legit verbal noun
-                                        # (or participle) alternants.
-                                        if getparam(infl_headword_template, "head2"):
-                                            pagemsg(
-                                                "Inflection template has multiple heads, not inserting %s defn into it"
-                                                % (infltype)
-                                            )
-                                        # Don't insert defn in feminine nouns that end in -iyya,
-                                        # because they're probably abstract nouns with different
-                                        # etymology.
-                                        elif is_feminine_noun and reorder_shadda(
-                                            getparam(infl_headword_template, infl_headword_matching_param)
-                                        ).endswith(IYYAH):
-                                            pagemsg(
-                                                "Not inserting %s defn into noun ending in -iyya, probably an abstract noun"
-                                                % infltype
-                                            )
-                                        # If there's custom entry text (for elatives), we can't
-                                        # just insert a definition because the entry is more
-                                        # complicated.
-                                        elif custom_entrytext:
-                                            pagemsg(
-                                                "Custom entry supplied, not inserting %s defn into existing entry"
-                                                % infltype
+                            if verb_part_inserted_defn:
+                                # If we already inserted an entry or found an exact-matching
+                                # entry, check for duplicate entries. Currently we combine
+                                # entries with the same inflection and conjugational form
+                                # and separate lemmas, but previously created separate
+                                # entries. We will add the new definition to the existing
+                                # section but need to check for the previously added separate
+                                # sections.
+                                if found_exact_matching and len(defn_templates) == 1:
+                                    pagemsg("Found duplicate definition, deleting")
+                                    subsections[k - 1] = ""
+                                    subsections[k] = ""
+                                    notes.append(
+                                        "delete duplicate definition for %s %s, form %s"
+                                        % (infltype, inflection, verb_part_form)
+                                    )
+                            elif not found_exact_matching:
+                                subsections[k] = str(parsed)
+                                if subsections[k][-1] != "\n":
+                                    subsections[k] += "\n"
+                                subsections[k] = re.sub(
+                                    r"^(.*\n#[^\n]*\n)",
+                                    r"\1# %s\n" % new_defn_template,
+                                    subsections[k],
+                                    1,
+                                    re.S,
+                                )
+                                pagemsg(
+                                    "Adding new definitional template to existing defn for pos = %s" % (pos)
+                                )
+                                notes.append(
+                                    "add new definitional template to existing defn: %s %s, %s %s, pos=%s"
+                                    % (
+                                        infltype,
+                                        inflection,
+                                        lemmatype,
+                                        lemma,
+                                        pos,
+                                    )
+                                )
+
+                            # Don't break, so we can check for duplicate entries.
+                            # We set need_new_entry to false so we won't insert a new
+                            # one down below.
+                            verb_part_inserted_defn = True
+                            need_new_entry = False
+
+                        # Else, not verb form.
+                        else:
+                            # Fix gender and other inflection params. Even if we can't
+                            # set them appropriately, do nothing since we already have
+                            # found an entry with same inflection and definition; but we
+                            # will output a warning.
+                            check_fix_infl_params(infl_headword_template, infltemp_params, gender, True)
+                            pagemsg("Already found entry: %s %s, %s %s" % (
+                                infltype,
+                                inflection,
+                                lemmatype,
+                                lemma,
+                            ))
+                            break  # break out of `for k, header in ...` loop over subsections
+
+                    # At this point, didn't find both headword and definitional
+                    # template. If we found headword template, insert new definition
+                    # in same section.
+                    elif infl_headword_templates:
+                        infl_headword_template, infl_headword_matching_param = infl_headword_templates[0]
+                        # Check for i3rab in existing infl and remove it if so
+                        check_maybe_remove_i3rab(infl_headword_template, infl_headword_matching_param, infltype)
+                        # Previously, when looking for a matching headword template,
+                        # we may not have required the vowels to match exactly
+                        # (e.g. when creating plurals). But now we want to make sure
+                        # they do, or we will put the new definition under a wrong
+                        # headword.
+                        if compare_param(
+                            infl_headword_template,
+                            infl_headword_matching_param,
+                            inflection,
+                            require_exact_match=True,
+                        ):
+                            # Also make sure manual translit matches
+                            trparam = (
+                                "tr"
+                                if infl_headword_matching_param == "1"
+                                else infl_headword_matching_param.replace("head", "tr")
+                            )
+                            existing_tr = getparam(infl_headword_template, trparam)
+                            # infltr may be None and existing_tr may be "", but
+                            # they should match
+                            if (infltr or None) == (existing_tr or None):
+
+                                # Don't insert defn when there are multiple heads because
+                                # we don't know that all heads are actually legit verbal noun
+                                # (or participle) alternants.
+                                if getparam(infl_headword_template, "head2"):
+                                    pagemsg(
+                                        "Inflection template has multiple heads, not inserting %s defn into it"
+                                        % (infltype)
+                                    )
+                                # Don't insert defn in feminine nouns that end in -iyya,
+                                # because they're probably abstract nouns with different
+                                # etymology.
+                                elif is_feminine_noun and reorder_shadda(
+                                    getparam(infl_headword_template, infl_headword_matching_param)
+                                ).endswith(IYYAH):
+                                    pagemsg(
+                                        "Not inserting %s defn into noun ending in -iyya, probably an abstract noun"
+                                        % infltype
+                                    )
+                                # If there's custom entry text (for elatives), we can't
+                                # just insert a definition because the entry is more
+                                # complicated.
+                                elif custom_entrytext:
+                                    pagemsg(
+                                        "Custom entry supplied, not inserting %s defn into existing entry"
+                                        % infltype
+                                    )
+                                else:
+                                    # Make sure we can set the gender and other inflection
+                                    # parameters appropriately. If not, we will end up
+                                    # checking for more entries and maybe adding an entirely
+                                    # new entry.
+                                    if check_fix_infl_params(
+                                        infl_headword_template, infltemp_params, gender, False
+                                    ):
+                                        subsections[k] = str(parsed)
+                                        # If there's already a defn line present, insert after
+                                        # any such defn lines. Else, insert at beginning.
+                                        if re.search(r"^# \{\{%s\|" % deftemp, subsections[k], re.M):
+                                            if not subsections[k].endswith("\n"):
+                                                subsections[k] += "\n"
+                                            subsections[k] = re.sub(
+                                                r"(^(# \{\{%s\|.*\n)+)" % deftemp,
+                                                r"\1# %s\n" % new_defn_template,
+                                                subsections[k],
+                                                1,
+                                                re.M,
                                             )
                                         else:
-                                            # Make sure we can set the gender and other inflection
-                                            # parameters appropriately. If not, we will end up
-                                            # checking for more entries and maybe adding an entirely
-                                            # new entry.
-                                            if check_fix_infl_params(
-                                                infl_headword_template, infltemp_params, gender, False
-                                            ):
-                                                subsections[j] = str(parsed)
-                                                # If there's already a defn line present, insert after
-                                                # any such defn lines. Else, insert at beginning.
-                                                if re.search(r"^# \{\{%s\|" % deftemp, subsections[j], re.M):
-                                                    if not subsections[j].endswith("\n"):
-                                                        subsections[j] += "\n"
-                                                    subsections[j] = re.sub(
-                                                        r"(^(# \{\{%s\|.*\n)+)" % deftemp,
-                                                        r"\1# %s\n" % new_defn_template,
-                                                        subsections[j],
-                                                        1,
-                                                        re.M,
-                                                    )
-                                                else:
-                                                    subsections[j] = re.sub(
-                                                        r"^#", "# %s\n#" % new_defn_template, subsections[j], 1, re.M
-                                                    )
-                                                sections[i] = "".join(subsections)
-                                                pagemsg(
-                                                    "Insert existing defn with {{%s}} at beginning after any existing such defns"
-                                                    % (deftemp)
-                                                )
-                                                comment = (
-                                                    "Insert existing defn with {{%s}} at beginning after any existing such defns: %s %s, %s %s"
-                                                    % (deftemp, infltype, inflection, lemmatype, lemma)
-                                                )
-                                                if is_verb_part:
-                                                    sort_verb_part_sections()
-                                                break
-
-                            elif is_participle:
-                                # Couldn't find headword template; if we're a participle,
-                                # see if there's a generic noun or adjective template
-                                # with the same head.
-                                for other_template in ["ar-noun", "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]:
-                                    other_headword_templates = [
-                                        t
-                                        for t in parsed.filter_templates()
-                                        if t.name == other_template and template_head_matches(t, inflection)
-                                    ]
-                                    if other_headword_templates:
-                                        pagemsg("WARNING: Found %s matching %s" % (other_template, infltype))
-                                        # FIXME: Should we break here? Should we insert
-                                        # a participle defn?
-
-                    # else of for loop over subsections, i.e. no break out of loop
-                    else:
-                        # Under certain circumstances with verb parts, we inserted a
-                        # new defn in an existing section but didn't break. We break now,
-                        # but first sort verb part sections if necessary.
-                        if not need_new_entry:
-                            if is_verb_part:
-                                sort_verb_part_sections()
-                            break
-
-                        # At this point we couldn't find an existing subsection with
-                        # matching POS and appropriate headword template whose head matches
-                        # the the inflected form.
-
-                        # If verb part, try to find an existing verb section corresponding
-                        # to the same verb or another verb of the same conjugation form
-                        # (either the lemma of the verb or another non-lemma form) whose
-                        # lemma has the same consonants as the lemma of the verb part in
-                        # question. That way we do match up e.g. passive kutiba with active
-                        # kataba (or kutiba passive of kataba with katiba, if necessary),
-                        # but we don't match up non-past yasurru (from form I sarra) with
-                        # lemma verb entry (ar-verb) form I yasara, or match up non-past
-                        # yaruddu (from form I radda) with non-past verb part (ar-verb-form)
-                        # yaridu (from form I warada).) When looking at ar-verb, do a
-                        # template call to fetch the dictionary forms (lemma forms). When
-                        # looking at ar-verb-form, only the conjugation class is in the
-                        # template; the lemma is contained in a definition template, which
-                        # we check for.
-                        #
-                        # Insert after the last such verb section.
-                        #
-                        # Similarly, if plural or feminine, try to find a section with an
-                        # existing noun or noun form or adjective form with the same
-                        # headword to insert after. Insert after the last such one.
-
-                        if is_verb_part or is_plural_or_fem:
-
-                            def is_section_to_insert_after(t, defn_templates):
-                                if is_verb_part:
-                                    # Check for ar-verb whose dictionary form matches the
-                                    # verb part's lemma in its consonants. See above.
-                                    if (
-                                        t.name == "ar-verb"
-                                        and re.sub("-.*$", "", getparam(t, "1")) == verb_part_form
-                                        and remove_diacritics(lemma)
-                                        in [remove_diacritics(dicform) for dicform in get_dicform_all(page, t)]
-                                    ):
-                                        return True
-                                    # Similar check for ar-verb-form; in this case we need to
-                                    # look at the associated defn templates.
-                                    return (
-                                        t.name == infltemp
-                                        and compare_param(t, "2", verb_part_form)
-                                        and [
-                                            d
-                                            for d in defn_templates
-                                            if remove_diacritics(lemma) == remove_diacritics(getparam(d, "1"))
-                                        ]
-                                    )
-                                else:
-                                    assert is_plural_or_fem
-                                    # For feminine nouns and adjectives, don't insert after section
-                                    # for nouns that ends in -iyya, because they're probably
-                                    # abstract nouns with different etymology -- unless there's
-                                    # a defn, in which case it's probably a feminine noun
-                                    # inflection.
-                                    if (
-                                        is_feminine
-                                        and t.name == "ar-noun"
-                                        and reorder_shadda(getparam(t, "1")).endswith(IYYAH)
-                                        and not [
-                                            d
-                                            for d in defn_templates
-                                            # Unclear if we need this comparison.
-                                            if compare_param(d, "1", lemma)
-                                        ]
-                                    ):
-                                        return False
-                                    # Require that the head exactly matches the new inflection;
-                                    # but that may not be enough.
-                                    if not template_head_matches(t, inflection, require_exact_match=True):
-                                        return False
-                                    # FIXME: Rest of this logic is a bit questionable.
-                                    # If the template is for a pl or fem inflected form, OK.
-                                    if t.name in ["ar-noun-pl", "ar-adj-pl", "ar-noun-fem", "ar-adj-fem"]:
-                                        return True
-                                    # For feminines, also OK if template is for any noun.
-                                    if is_feminine:
-                                        return t.name in ["ar-noun", "ar-coll-noun", "ar-sing-noun"]
-                                    # For plurals, OK to go next to collective nouns, but
-                                    # otherwise we should only go next to nouns that are plural,
-                                    # so we don't end up putting plural inflections next to
-                                    # verbal nouns, e.g. plural صُلُوح of singular صَالِِح next to
-                                    # verbal noun صُلُوح of verb صَلَحَ.
-                                    assert is_plural
-                                    if t.name == "ar-coll-noun":
-                                        return True
-                                    if t.name == "ar-noun" and re.match(r"\bp\b", getparam(t, "2")):
-                                        return True
-                                    return False
-
-                            def section_to_insert_after():
-                                insert_at = None
-                                for j in range(2, len(subsections), 2):
-                                    if re.match(
-                                        "^===+Verb===+" if is_verb_part else "^===+(Noun|Adjective)===+",
-                                        subsections[j - 1],
-                                    ):
-                                        parsed = blib.parse_text(subsections[j])
-                                        defn_templates = [t for t in parsed.filter_templates() if t.name == deftemp]
-                                        for t in parsed.filter_templates():
-                                            if is_section_to_insert_after(t, defn_templates):
-                                                insert_at = j + 1
-                                return insert_at
-
-                            insert_at = section_to_insert_after()
-                            if insert_at:
-                                pagemsg(
-                                    "Found section to insert %s after: [[%s]]" % (infltype, subsections[insert_at - 1])
-                                )
-
-                                # Determine indent level and skip past sections at higher indent
-                                m = re.match("^(==+)", subsections[insert_at - 2])
-                                indentlevel = len(m.group(1))
-                                while insert_at < len(subsections):
-                                    if (insert_at % 2) == 0:
-                                        insert_at += 1
-                                        continue
-                                    m = re.match("^(==+)", subsections[insert_at])
-                                    newindent = len(m.group(1))
-                                    if newindent <= indentlevel:
+                                            subsections[k] = re.sub(
+                                                r"^#", "# %s\n#" % new_defn_template, subsections[k], 1, re.M
+                                            )
+                                        pagemsg(
+                                            "Insert existing defn with {{%s}} at beginning after any existing such defns"
+                                            % (deftemp)
+                                        )
+                                        notes.append(
+                                            "Insert existing defn with {{%s}} at beginning after any existing such defns: %s %s, %s %s"
+                                            % (deftemp, infltype, inflection, lemmatype, lemma)
+                                        )
+                                        if is_verb_part:
+                                            sort_verb_part_sections()
                                         break
-                                    pagemsg("Skipped past higher-indented subsection: [[%s]]" % subsections[insert_at])
-                                    insert_at += 1
 
-                                if is_verb_part:
-                                    secmsg = "verb section for same lemma"
-                                else:
-                                    assert is_plural_or_fem
-                                    secmsg = "noun/adjective section for same inflection"
+                    elif is_participle:
+                        # Couldn't find headword template; if we're a participle,
+                        # see if there's a generic noun or adjective template
+                        # with the same head.
+                        for other_template in ["ar-noun", "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]:
+                            other_headword_templates = [
+                                t
+                                for t in parsed.filter_templates()
+                                if tname(t) == other_template and template_head_matches(t, inflection)
+                            ]
+                            if other_headword_templates:
+                                pagemsg("WARNING: Found %s matching %s" % (other_template, infltype))
+                                # FIXME: Should we break here? Should we insert
+                                # a participle defn?
 
-                                pagemsg("Inserting after %s" % secmsg)
-                                comment = "Insert entry for %s %s of %s after %s" % (
-                                    infltype,
-                                    inflection,
-                                    lemma,
-                                    secmsg,
-                                )
-                                subsections[insert_at - 1] = ensure_two_trailing_nl(subsections[insert_at - 1])
-                                if indentlevel == 3:
-                                    subsections[insert_at:insert_at] = [newposheader, newposbody + "\n"]
-                                else:
-                                    assert indentlevel == 4
-                                    subsections[insert_at:insert_at] = [newposheaderl4, newposbody + "\n"]
-                                sections[i] = "".join(subsections)
-
-                                if is_verb_part:
-                                    sort_verb_part_sections()
-                                break
-
-                        # If participle, try to find an existing noun or adjective with the
-                        # same lemma to insert before. Insert before the first such one.
-                        if is_participle:
-                            insert_at = None
-                            for j in range(len(subsections)):
-                                if j > 0 and (j % 2) == 0:
-                                    if re.match("^===+(Noun|Adjective)===+", subsections[j - 1]):
-                                        parsed = blib.parse_text(subsections[j])
-                                        for t in parsed.filter_templates():
-                                            if (
-                                                t.name
-                                                in ["ar-noun", "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]
-                                                and template_head_matches(t, inflection)
-                                                and insert_at is None
-                                            ):
-                                                insert_at = j - 1
-
-                            if insert_at is not None:
-                                pagemsg(
-                                    "Found section to insert participle before: [[%s]]" % subsections[insert_at + 1]
-                                )
-
-                                comment = "Insert entry for %s %s of %s before section for same lemma" % (
-                                    infltype,
-                                    inflection,
-                                    lemma,
-                                )
-                                if insert_at > 0:
-                                    subsections[insert_at - 1] = ensure_two_trailing_nl(subsections[insert_at - 1])
-                                # Determine indent level
-                                m = re.match("^(==+)", subsections[insert_at])
-                                indentlevel = len(m.group(1))
-                                if indentlevel == 3:
-                                    subsections[insert_at:insert_at] = [newpos + "\n"]
-                                else:
-                                    assert indentlevel == 4
-                                    subsections[insert_at:insert_at] = [newposl4 + "\n"]
-                                sections[i] = "".join(subsections)
-                                break
-
-                        # At this point, couldn't find an existing section to insert
-                        # next to.
-                        pagemsg("Exists and has Arabic section, appending to end of section")
-                        # FIXME! Conceivably instead of inserting at end we should insert
-                        # next to any existing ===Noun=== (or corresponding POS, whatever
-                        # it is), in particular after the last one. However, this makes less
-                        # sense when we create separate etymologies, as we do. Conceivably
-                        # this would mean inserting after the last etymology section
-                        # containing an entry of the same part of speech.
-                        #
-                        # (Perhaps for now we should just skip creating entries if we find
-                        # an existing Arabic entry?)
-                        if "\n===Etymology 1===\n" in sections[i]:
-                            j = 2
-                            while ("\n===Etymology %s===\n" % j) in sections[i]:
-                                j += 1
-                            pagemsg('Found multiple etymologies, adding new section "Etymology %s"' % (j))
-                            comment = (
-                                "Append entry (Etymology %s) for %s %s of %s, pos=%s in existing Arabic section"
-                                % (
-                                    j,
-                                    infltype,
-                                    inflection,
-                                    lemma,
-                                    pos,
-                                )
-                            )
-                            sections[i] = ensure_two_trailing_nl(sections[i])
-                            sections[i] += "===Etymology %s===\n" % j + entrytextl4 + "\n"
-                        else:
-                            pagemsg('Wrapping existing text in "Etymology 1" and adding "Etymology 2"')
-                            comment = (
-                                "Wrap existing Arabic section in Etymology 1, append entry (Etymology 2) for %s %s of %s, pos=%s"
-                                % (infltype, inflection, lemma, pos)
-                            )
-                            # Wrap existing text in "Etymology 1" and increase the indent level
-                            # by one of all headers
-                            sections[i] = re.sub("^\n*==Arabic==\n+", "", sections[i])
-                            # Peel off stuff we expect before the first header; it will be
-                            # put back later
-                            wikilink_re = r"^((\{\{wikipedia\|.*?\}\}\n|\[\[File:.*?\]\]\n)+)\n*"
-                            mmm = re.match(wikilink_re, sections[i])
-                            wikilink = mmm.group(1) if mmm else ""
-                            if mmm:
-                                sections[i] = re.sub(wikilink_re, "", sections[i])
-                            # Check for any other stuff before the first header
-                            if not re.match("^=", sections[i]):
-                                mmm = re.match("^(.*?\n)=", sections[i], re.S)
-                                if not mmm:
-                                    pagemsg("WARNING: Strange section lacking headers: [[%s]]" % sections[i])
-                                else:
-                                    pagemsg("WARNING: Stuff before first header: [[%s]]" % mmm.group(1))
-                            # Stuff like "===Alternative forms===" that goes before the
-                            # etymology section should be moved after.
-                            newsectionsi = re.sub(
-                                r"^(.*?\n)(===Etymology===\n(\n|[^=\n].*?\n)*)", r"\2\1", sections[i], 0, re.S
-                            )
-                            if newsectionsi != sections[i]:
-                                pagemsg("Moved ===Alternative forms=== and such after Etymology")
-                                sections[i] = newsectionsi
-                            sections[i] = re.sub("^===Etymology===\n", "", sections[i])
-                            sections[i] = (
-                                "==Arabic==\n"
-                                + wikilink
-                                + "\n===Etymology 1===\n"
-                                + ("\n" if sections[i].startswith("==") else "")
-                                + ensure_two_trailing_nl(re.sub("^==(.*?)==$", r"===\1===", sections[i], 0, re.M))
-                                + "===Etymology 2===\n"
-                                + entrytextl4
-                                + "\n"
-                            )
-                        if is_verb_part:
-                            sort_verb_part_sections(etym_groups_only=True)
-                    break
-                elif m.group(1) > "Arabic":
-                    pagemsg("Exists; inserting before %s section" % (m.group(1)))
-                    comment = "Create Arabic section and entry for %s %s of %s, pos=%s; insert before %s section" % (
-                        infltype,
-                        inflection,
-                        lemma,
-                        pos,
-                        m.group(1),
-                    )
-                    sections[i:i] = [newsection, "\n----\n\n"]
-                    break
-
-            else:  # else of for loop over sections, i.e. no break out of loop
-                pagemsg("Exists; adding section to end")
-                comment = "Create Arabic section and entry for %s %s of %s, pos=%s; append at end" % (
-                    infltype,
-                    inflection,
-                    lemma,
-                    pos,
-                )
-
-                if sections:
-                    sections[-1] = ensure_two_trailing_nl(sections[-1])
-                    sections += ["----\n\n", newsection]
-                else:
-                    pagemsg("WARNING: No language sections in current page")
-                    notes.append("formerly empty")
-                    if pagehead.lower().startswith("#redirect"):
-                        pagemsg("WARNING: Page is redirect, overwriting")
-                        notes.append("overwriting redirect")
-                        pagehead = re.sub(
-                            r"#redirect *\[\[(.*?)\]\] *(<!--.*?--> *)*\n*", r"{{also|\1}}\n", pagehead, 0, re.I
-                        )
-                    sections += [newsection]
-
-            # End of loop over sections in existing page; rejoin sections
-            newtext = pagehead + "".join(sections)
-            if pagetail:
-                newtext = ensure_two_trailing_nl(newtext) + pagetail
-                if not comment and not notes:
-                    notes.append("fixed up spacing")
-
-            # If participle, remove [[Category:Arabic participles]]
-            if is_participle:
-                oldnewtext = newtext
-                newtext = re.sub(r"\n+\[\[Category:Arabic participles]]\n+", r"\n\n", newtext)
-                if newtext != oldnewtext:
-                    pagemsg("Removed [[Category:Arabic participles]]")
-
-        # Executed whether creating new page or modifying existing page.
-        # Check for changed text and save if so.
-        notestext = "; ".join(notes)
-        if notestext:
-            if comment:
-                comment += " (%s)" % notestext
+            # else of for loop over subsections, i.e. no break out of loop
             else:
-                comment = notestext
+                # Under certain circumstances with verb parts, we inserted a
+                # new defn in an existing section but didn't break. We break now,
+                # but first sort verb part sections if necessary.
+                if not need_new_entry:
+                    if is_verb_part:
+                        # This recomputes subsecs and subsections
+                        sort_verb_part_sections()
+                    break  # Break out of outer `while True` loop
 
-        return newtext, comment
+                # At this point we couldn't find an existing subsection with
+                # matching POS and appropriate headword template whose head matches
+                # the the inflected form.
+
+                # If verb part, try to find an existing verb section corresponding
+                # to the same verb or another verb of the same conjugation form
+                # (either the lemma of the verb or another non-lemma form) whose
+                # lemma has the same consonants as the lemma of the verb part in
+                # question. That way we do match up e.g. passive kutiba with active
+                # kataba (or kutiba passive of kataba with katiba, if necessary),
+                # but we don't match up non-past yasurru (from form I sarra) with
+                # lemma verb entry (ar-verb) form I yasara, or match up non-past
+                # yaruddu (from form I radda) with non-past verb part (ar-verb-form)
+                # yaridu (from form I warada).) When looking at ar-verb, do a
+                # template call to fetch the dictionary forms (lemma forms). When
+                # looking at ar-verb-form, only the conjugation class is in the
+                # template; the lemma is contained in a definition template, which
+                # we check for.
+                #
+                # Insert after the last such verb section.
+                #
+                # Similarly, if plural or feminine, try to find a section with an
+                # existing noun or noun form or adjective form with the same
+                # headword to insert after. Insert after the last such one.
+
+                if is_verb_part or is_plural_or_fem:
+                    def is_section_to_insert_after(t, defn_templates):
+                        if is_verb_part:
+                            # Check for ar-verb whose dictionary form matches the
+                            # verb part's lemma in its consonants. See above.
+                            if (
+                                tname(t) == "ar-verb"
+                                and re.sub("-.*$", "", getparam(t, "1")) == verb_part_form
+                                and remove_diacritics(lemma)
+                                in [remove_diacritics(dicform) for dicform in get_dicform_all(page, t)]
+                            ):
+                                return True
+                            # Similar check for ar-verb-form; in this case we need to
+                            # look at the associated defn templates.
+                            return (
+                                tname(t) == infltemp
+                                and compare_param(t, "2", verb_part_form)
+                                and [
+                                    d
+                                    for d in defn_templates
+                                    if remove_diacritics(lemma) == remove_diacritics(getparam(d, "1"))
+                                ]
+                            )
+                        else:
+                            assert is_plural_or_fem
+                            # For feminine nouns and adjectives, don't insert after section
+                            # for nouns that ends in -iyya, because they're probably
+                            # abstract nouns with different etymology -- unless there's
+                            # a defn, in which case it's probably a feminine noun
+                            # inflection.
+                            if (
+                                is_feminine
+                                and tname(t) == "ar-noun"
+                                and reorder_shadda(getparam(t, "1")).endswith(IYYAH)
+                                and not [
+                                    d
+                                    for d in defn_templates
+                                    # Unclear if we need this comparison.
+                                    if compare_param(d, "1", lemma)
+                                ]
+                            ):
+                                return False
+                            # Require that the head exactly matches the new inflection;
+                            # but that may not be enough.
+                            if not template_head_matches(t, inflection, require_exact_match=True):
+                                return False
+                            # FIXME: Rest of this logic is a bit questionable.
+                            # If the template is for a pl or fem inflected form, OK.
+                            if tname(t) in ["ar-noun-pl", "ar-adj-pl", "ar-noun-fem", "ar-adj-fem"]:
+                                return True
+                            # For feminines, also OK if template is for any noun.
+                            if is_feminine:
+                                return tname(t) in ["ar-noun", "ar-coll-noun", "ar-sing-noun"]
+                            # For plurals, OK to go next to collective nouns, but
+                            # otherwise we should only go next to nouns that are plural,
+                            # so we don't end up putting plural inflections next to
+                            # verbal nouns, e.g. plural صُلُوح of singular صَالِِح next to
+                            # verbal noun صُلُوح of verb صَلَحَ.
+                            assert is_plural
+                            if tname(t) == "ar-coll-noun":
+                                return True
+                            if tname(t) == "ar-noun" and re.match(r"\bp\b", getparam(t, "2")):
+                                return True
+                            return False
+
+                    def section_to_insert_after():
+                        insert_at = None
+                        for k, header in subsecs.header_list:
+                            if header in (["Verb"] if is_verb_part else ["Noun", "Adjective"]):
+                                parsed = blib.parse_text(subsections[k])
+                                defn_templates = [t for t in parsed.filter_templates() if tname(t) == deftemp]
+                                for t in parsed.filter_templates():
+                                    if is_section_to_insert_after(t, defn_templates):
+                                        insert_at = k + 1
+                        return insert_at
+
+                    insert_at = section_to_insert_after()
+                    if insert_at:
+                        pagemsg(
+                            "Found section to insert %s after: header %s, contents [[%s]]" % (
+                                infltype, subsections[insert_at - 2].strip(), subsections[insert_at - 1]
+                            )
+                        )
+
+                        # Determine indent level and skip past sections at higher indent
+                        indentlevel = subsecs.levels[insert_at - 1]
+                        while insert_at < len(subsections):
+                            newindent = subsecs.levels[insert_at + 1]
+                            if newindent <= indentlevel:
+                                break
+                            pagemsg("Skipped past higher-indented subsection: %s" % subsections[insert_at].strip())
+                            insert_at += 2
+
+                        if is_verb_part:
+                            secmsg = "verb section for same lemma"
+                        else:
+                            assert is_plural_or_fem
+                            secmsg = "noun/adjective section for same inflection"
+
+                        pagemsg("Inserting after %s" % secmsg)
+                        notes.append("insert entry for %s %s of %s after %s" % (
+                            infltype,
+                            inflection,
+                            lemma,
+                            secmsg,
+                        ))
+                        if indentlevel == 3:
+                            subsections[insert_at : insert_at] = [newposheader, newposbody + "\n"]
+                        else:
+                            assert indentlevel == 4
+                            subsections[insert_at : insert_at] = [newposheaderl4, newposbody + "\n"]
+                        secbody = "".join(subsections)
+                        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+                        subsections = subsecs.subsections
+
+                        if is_verb_part:
+                            # This recomputes subsecs and subsections
+                            sort_verb_part_sections()
+                        break  # Break out of outer `while True` loop
+
+                # If participle, try to find an existing noun or adjective with the
+                # same lemma to insert before. Insert before the first such one.
+                if is_participle:
+                    insert_at = None
+                    for k, header in subsecs.header_list:
+                        if header in ["Noun", "Adjective"]:
+                            parsed = blib.parse_text(subsections[k])
+                            for t in parsed.filter_templates():
+                                if (
+                                    tname(t) in ["ar-noun", "ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]
+                                    and template_head_matches(t, inflection)
+                                    and insert_at is None
+                                ):
+                                    insert_at = k - 1
+
+                    if insert_at is not None:
+                        pagemsg(
+                            "Found section to insert participle before: header %s, contents [[%s]]" % (
+                                subsections[insert_at].strip(), subsections[insert_at + 1]
+                            )
+                        )
+
+                        notes.append("insert entry for %s %s of %s before section for same lemma" % (
+                            infltype,
+                            inflection,
+                            lemma,
+                        ))
+                        # Determine indent level
+                        indentlevel = subsecs.levels[insert_at + 1]
+                        if indentlevel == 3:
+                            subsections[insert_at : insert_at] = [newpos + "\n"]
+                        else:
+                            assert indentlevel == 4
+                            subsections[insert_at : insert_at] = [newposl4 + "\n"]
+                        secbody = "".join(subsections)
+                        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+                        subsections = subsecs.subsections
+                        break  # Break out of outer `while True` loop
+
+                # FIXME: Got here 2026-05-31 1:28am during rewrite
+
+                # At this point, couldn't find an existing section to insert
+                # next to.
+                pagemsg("Exists and has Arabic section, appending to end of section")
+                # FIXME! Conceivably instead of inserting at end we should insert
+                # next to any existing ===Noun=== (or corresponding POS, whatever
+                # it is), in particular after the last one. However, this makes less
+                # sense when we create separate etymologies, as we do. Conceivably
+                # this would mean inserting after the last etymology section
+                # containing an entry of the same part of speech.
+                #
+                # (Perhaps for now we should just skip creating entries if we find
+                # an existing Arabic entry?)
+                if "\n===Etymology 1===\n" in secbody:
+                    k = 2
+                    while ("\n===Etymology %s===\n" % k) in secbody:
+                        k += 1
+                    pagemsg('Found multiple etymologies, adding new section "Etymology %s"' % (k))
+                    notes.append(
+                        "Append entry (Etymology %s) for %s %s of %s, pos=%s in existing Arabic section"
+                        % (
+                            k,
+                            infltype,
+                            inflection,
+                            lemma,
+                            pos,
+                        )
+                    )
+                    sections[i] += "===Etymology %s===\n" % k + entrytextl4 + "\n"
+                else:
+                    pagemsg('Wrapping existing text in "Etymology 1" and adding "Etymology 2"')
+                    notes.append(
+                        "Wrap existing Arabic section in Etymology 1, append entry (Etymology 2) for %s %s of %s, pos=%s"
+                        % (infltype, inflection, lemma, pos)
+                    )
+                    # Wrap existing text in "Etymology 1" and increase the indent level
+                    # by one of all headers
+                    sections[i] = re.sub("^\n*==Arabic==\n+", "", sections[i])
+                    # Peel off stuff we expect before the first header; it will be
+                    # put back later
+                    wikilink_re = r"^((\{\{wikipedia\|.*?\}\}\n|\[\[File:.*?\]\]\n)+)\n*"
+                    mmm = re.match(wikilink_re, sections[i])
+                    wikilink = mmm.group(1) if mmm else ""
+                    if mmm:
+                        sections[i] = re.sub(wikilink_re, "", sections[i])
+                    # Check for any other stuff before the first header
+                    if not re.match("^=", sections[i]):
+                        mmm = re.match("^(.*?\n)=", sections[i], re.S)
+                        if not mmm:
+                            pagemsg("WARNING: Strange section lacking headers: [[%s]]" % sections[i])
+                        else:
+                            pagemsg("WARNING: Stuff before first header: [[%s]]" % mmm.group(1))
+                    # Stuff like "===Alternative forms===" that goes before the
+                    # etymology section should be moved after.
+                    newsectionsi = re.sub(
+                        r"^(.*?\n)(===Etymology===\n(\n|[^=\n].*?\n)*)", r"\2\1", sections[i], 0, re.S
+                    )
+                    if newsectionsi != sections[i]:
+                        pagemsg("Moved ===Alternative forms=== and such after Etymology")
+                        sections[i] = newsectionsi
+                    sections[i] = re.sub("^===Etymology===\n", "", sections[i])
+                    sections[i] = (
+                        "==Arabic==\n"
+                        + wikilink
+                        + "\n===Etymology 1===\n"
+                        + ("\n" if sections[i].startswith("==") else "")
+                        + re.sub("^==(.*?)==$", r"===\1===", sections[i], 0, re.M)
+                        + "===Etymology 2===\n"
+                        + entrytextl4
+                        + "\n"
+                    )
+                if is_verb_part:
+                    sort_verb_part_sections(etym_groups_only=True)
+
+#            # If participle, remove [[Category:Arabic participles]]
+#            if is_participle:
+#                oldnewtext = newtext
+#                newtext = re.sub(r"\n+\[\[Category:Arabic participles]]\n+", r"\n\n", newtext)
+#                if newtext != oldnewtext:
+#                    pagemsg("Removed [[Category:Arabic participles]]")
+#                    notes.append("remove [[:Category:Arabic participles]]")
+#                    return newtext, notes
 
     blib.do_edit(index, page, create_inflection_entry_1, save=args.save, verbose=args.verbose, diff=args.diff)
 
@@ -2064,8 +1989,8 @@ def get_part_prop(page, template, prefix):
     return expand_template(page, re.sub(r"\{\{ar-(conj|verb)\|", "{{%s|" % prefix, str(template)))
 
 
-# def get_dicform(page, template):
-#  return get_part_prop(page, template, "ar-past3sm")
+#def get_dicform(page, template):
+#    return get_part_prop(page, template, "ar-past3sm")
 
 
 def get_dicform_all(page, template):
@@ -2263,9 +2188,10 @@ def create_verb_part(index, page, template, dicforms, passive, voice, person, te
     distinct_dicformsnv = list(set(dicformsnv))
     # This should be subsumed below.
     # Refuse to do the dictionary form.
-    # if person == "3sm" and tense == "perf" and (voice == "active" or
-    #    voice == "passive" and not has_active_form(passive)):
-    #  return
+    # if person == "3sm" and tense == "perf" and (
+    #     voice == "active" or voice == "passive" and not has_active_form(passive)
+    # ):
+    # return
     infl_person = persons_infl_entry[person]
     infl_tense = tenses_infl_entry[tense] % voices_infl_entry[voice]
     partid = voice == "active" and "%s-%s" % (person, tense) or "%s-ps-%s" % (person, tense)

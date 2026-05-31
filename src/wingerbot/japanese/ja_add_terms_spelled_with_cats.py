@@ -47,13 +47,11 @@ def process_text_on_page(index, pagetitle, text):
         pagemsg_with_spelling("Spelling page doesn't exist, skipping")
     else:
         spelling_page_text = blib.safe_page_text(spelling_page, pagemsg_with_spelling)
-        retval = blib.find_modifiable_lang_section(spelling_page_text, lang, pagemsg_with_spelling)
-        if retval is None:
+        modsec = blib.find_modifiable_lang_section(spelling_page_text, lang, pagemsg_with_spelling)
+        if modsec is None:
             pagemsg_with_spelling("WARNING: Couldn't find %s section" % lang)
         else:
-            sections, j, secbody, sectail, has_non_lang = retval.props()
-
-            parsed = blib.parse_text(secbody)
+            parsed = blib.parse_text(modsec.secbody)
             saw_readings_template = False
             for t in parsed.filter_templates():
                 tn = tname(t)
@@ -93,17 +91,15 @@ def process_text_on_page(index, pagetitle, text):
 
         def pagemsg_with_contents(txt):
             pagemsg("%s: %s" % (contents_title, txt))
-
         def errandpagemsg_with_contents(txt):
             pagemsg_with_contents(txt)
             errmsg("Page %s %s: %s: %s" % (index, pagetitle, contents_title, txt))
 
-        contents_page_text = blib.safe_page_text(contents_page, pagemsg_with_contents)
-        retval = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)
-        if retval is None:
+        contents_page_text = blib.safe_page_text(contents_page, errandpagemsg_with_contents)
+        modsec = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)
+        if modsec is None:
             pagemsg_with_contents("WARNING: Couldn't find %s section" % lang)
             continue
-        sections, j, secbody, sectail, has_non_lang = retval.props()
 
         saw_kanjitab = False
         must_continue = False
@@ -128,7 +124,7 @@ def process_text_on_page(index, pagetitle, text):
         kanji_in_contents_title = [
             x for x in chars_in_contents_title if unicodedata.name(x).startswith("CJK UNIFIED IDEOGRAPH")
         ]
-        parsed = blib.parse_text(secbody)
+        parsed = blib.parse_text(modsec.secbody)
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn == "%s-kanjitab" % langcode:

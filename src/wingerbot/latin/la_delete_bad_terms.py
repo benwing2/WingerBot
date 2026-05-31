@@ -17,7 +17,7 @@ def process_text_on_page(index, pagetitle, text):
     modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
@@ -68,7 +68,7 @@ def process_text_on_page(index, pagetitle, text):
             "WARNING: Whole Latin section deletable except that there's a category at the end: <%s>" % sectail.strip()
         )
         return
-    if not has_non_lang:
+    if not modsec.has_non_lang:
         # Can delete the whole page, but check for non-blank section 0
         cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
         if cleaned_sec0.strip():
@@ -82,6 +82,9 @@ def process_text_on_page(index, pagetitle, text):
     del sections[j]
     del sections[j - 1]
     notes.append("removed Latin section for bad term")
+    if j > len(sections):
+        # We deleted the last section; remove the final newlines.
+        sections[-1] = sections[-1].rstrip("\n")
     text = "".join(sections)
 
     return text, notes

@@ -28,7 +28,7 @@ def delete_participle_1(index, page, lemma, formind, formval):
     modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
@@ -120,7 +120,7 @@ def delete_participle_1(index, page, lemma, formind, formval):
             "WARNING: Whole Latin section deletable except that there's a category at the end: <%s>" % sectail.strip()
         )
         return
-    if not has_non_lang:
+    if not modsec.has_non_lang:
         # Can delete the whole page, but check for non-blank section 0
         cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
         if cleaned_sec0.strip():
@@ -136,9 +136,8 @@ def delete_participle_1(index, page, lemma, formind, formval):
     del sections[j - 1]
     notes.append("removed Latin section for bad participle")
     if j > len(sections):
-        # We deleted the last section, remove the separator at the end of the
-        # previous section.
-        sections[-1] = re.sub(r"\n+--+\n*\Z", "", sections[-1])
+        # We deleted the last section; remove the final newlines.
+        sections[-1] = sections[-1].rstrip("\n")
     text = "".join(sections)
 
     return text, notes
@@ -205,7 +204,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
     modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = modsec.props()
+    sections, j, secbody, sectail = modsec.props()
 
     # FIXME!
 
@@ -408,7 +407,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
                 % sectail.strip()
             )
             return
-        if not has_non_lang:
+        if not modsec.has_non_lang:
             # Can delete the whole page, but check for non-blank section 0
             cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
             if cleaned_sec0.strip():
@@ -428,9 +427,8 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
             % (len(subsections_to_delete), "" if len(subsections_to_delete) == 1 else "s")
         )
         if j > len(sections):
-            # We deleted the last section, remove the separator at the end of the
-            # previous section.
-            sections[-1] = re.sub(r"\n+--+\n*\Z", "", sections[-1])
+            # We deleted the last section; remove the final newlines.
+            sections[-1] = sections[-1].rstrip("\n")
         text = "".join(sections)
 
     else:

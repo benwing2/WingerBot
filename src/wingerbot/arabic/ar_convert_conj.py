@@ -108,12 +108,13 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     parsed_by_subsections = {}
     headts = None
@@ -121,13 +122,13 @@ def process_text_on_page(index, pagetitle, text):
     saw_headt = False
 
     def subsection_header_and_num(k):
-        return subsecs.subsections[k - 1].strip() if k > 0 else "FIRST SUBSECTION", k // 2
+        return subsections[k - 1].strip() if k > 0 else "FIRST SUBSECTION", k // 2
 
     def format_subsection_header_and_num(k):
         return "%s (#%s)" % subsection_header_and_num(k)
 
-    for k in range(0, len(subsecs.subsections), 2):
-        parsed = blib.parse_text(subsecs.subsections[k])
+    for k in range(0, len(subsections), 2):
+        parsed = blib.parse_text(subsections[k])
         parsed_by_subsections[k] = parsed
         this_headts = []
         this_conjts = []
@@ -530,15 +531,12 @@ def process_text_on_page(index, pagetitle, text):
             headts = None
 
     secbody_parts = []
-    for k in range(len(subsecs.subsections)):
+    for k in range(len(subsections)):
         if k % 2 == 0:
             secbody_parts.append(str(parsed_by_subsections[k]))
         else:
-            secbody_parts.append(subsecs.subsections[k])
-    secbody = "".join(secbody_parts)
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-    return text, notes
+            secbody_parts.append(subsections[k])
+    return modsec.rebuild(secbody="".join(secbody_parts)), notes
 
 
 parser = blib.create_argparser(

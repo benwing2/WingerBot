@@ -110,14 +110,13 @@ def process_text_on_page(index, pagetitle, text):
             return
         secbody = modsec.secbody
         saw_templates = False
-        if "Etymology 1" in secbody:
-            etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
-            etym_sections = etym_secs.subsections
-            for k, header in etym_secs.header_list:
-                this_saw_templates = check_secbody_for_readings(etym_sections[k])
-                saw_templates = saw_templates or this_saw_templates
-        else:
-            saw_templates = check_secbody_for_readings(secbody)
+        def do_process_etym_section(secnum, sectext):
+            this_saw_templates = check_secbody_for_readings(sectext)
+            nonlocal saw_templates
+            saw_templates = saw_templates or this_saw_templates
+            return sectext
+
+        secbody = blib.map_etym_sections(secbody, pagemsg, do_process_etym_section)
         if not saw_templates:
             pagemsg_with_contents("WARNING: Didn't see {{%s-daiyouji}} or {{%s-kanjitab}}" % (langcode, langcode))
 

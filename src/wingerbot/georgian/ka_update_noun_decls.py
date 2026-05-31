@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -14,11 +14,10 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    retval = blib.find_modifiable_lang_section(text, "Georgian", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Georgian section")
+    modsec = blib.find_modifiable_lang_section(text, "Georgian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     # newtext = re.sub(r"====[ ]?Declension[ ]?====\n\{\{ka-decl-adj-auto\}\}\n", "", secbody)
     # newtext = re.sub(r"====[ ]?Declension[ ]?====\n\{\{ka-adj-decl.*?\}\}\n", "", newtext)
@@ -67,8 +66,7 @@ def process_text_on_page(index, pagetitle, text):
     #    notes.append("==Declension== -> ==Inflection== in Georgian section")
     #    secbody = newtext
 
-    sections[j] = secbody + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser("Convert {{ka-noun-*}} to {{ka-infl-noun}}", include_pagefile=True, include_stdin=True)

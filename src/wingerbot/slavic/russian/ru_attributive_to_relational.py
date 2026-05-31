@@ -9,10 +9,10 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     def attributive_to_relational(m):
         labels = ["relational" if x == "attributive" else x for x in m.group(1).split("|")]
@@ -27,9 +27,7 @@ def process_text_on_page(index, pagetitle, text):
             pagemsg("Found bare attributive: %s" % line)
     secbody = secbody.replace("{{i|attributive}}", "{{i|relational}}")
 
-    sections[j] = secbody + sectail
-    text = "".join(sections)
-    return text, "attributive -> relational"
+    return modsec.rebuild(secbody=secbody), "attributive -> relational"
 
 
 parser = blib.create_argparser("Convert attributive labels to relational", include_pagefile=True, include_stdin=True)

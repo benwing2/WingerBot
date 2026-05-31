@@ -14,14 +14,21 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    sections = modsec.sections
+    sections, j, secbody, sectail = modsec.props()
 
-    if has_non_lang:
-        sections[j - 1] = ""
-        sections[j] = ""
+    if modsec.has_non_lang:
+        del sections[j]
+        del sections[j - 1]
+        # If we are not the last language on the page, removing the language will not cause newline issues
+        # at the end. However, if we *are* the last language on the page, we won't end in any newlines and removing the
+        # last language will result in the page ending in newlines, so we strip them. This isn't technically necessary
+        # as MediaWiki automatically strips final newlines when saving, but simplifies diffs and such.
+        if j > len(sections):
+            sections[-1] = sections[-1].rstrip("\n")
         pagemsg("Delete entry for %s on page with other languages" % args.langname)
         notes.append("delete %s entry%s" % (args.langname, ": %s" % args.comment if args.comment else ""))
         text = "".join(sections)

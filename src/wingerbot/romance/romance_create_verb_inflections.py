@@ -139,28 +139,10 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         marked_up_infl = "[[%s]]%s" % (infl_inf, infl_conj)
     note_part = "with %s %s entry of %s" % (normname, headword_pos, marked_up_infl)
 
-    if not pagetext:
-        pagemsg("Creating new page %s" % infl_part)
-        notes.append("create new page %s" % note_part)
-        return newsection, notes
-
     # Pass None for pagemsg to suppress warning on lang section not found.
     modsec = blib.find_modifiable_lang_section(pagetext, langname, None, force_final_nls=True)
     if modsec is None:
-        secs = blib.split_text_into_sections(pagetext, pagemsg)
-        sections = secs.sections
-        normalized_langname = lang_utils.langname_key(langname)
-        for j, seclangname in secs.lang_list:
-            normalized_seclangname = lang_utils.langname_key(seclangname)
-            if normalized_seclangname > normalized_langname:
-                sections[j - 1 : j - 1] = [newsection]
-                pagemsg("Inserting lang section %s before %s entry" % (infl_part, seclangname))
-                notes.append("insert lang section %s before %s entry" % (note_part, seclangname))
-                return "".join(sections), notes
-        sections.append("\n\n" + newsection)
-        pagemsg("Appending lang section %s at end of page" % infl_part)
-        notes.append("append lang section %s at end of page" % note_part)
-        return "".join(sections), notes
+        return blib.add_new_l2_section(pagetext, pagemsg, langname, newsection)
 
     subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
     subsections = subsecs.subsections

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
-
-from wingerbot.latin import lalib
+from wingerbot.blib import msg
 
 header_to_headword_form_template = {
     "Noun": "la-noun-form",
@@ -20,24 +18,23 @@ def process_text_on_page(index, pagename, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagename, txt))
 
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
     pagemsg("Processing")
 
     notes = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
     if len(subsections) < 3:
         pagemsg("Something wrong, only one subsection")
         pagemsg("------- begin text --------")
         msg(text.rstrip("\n"))
         msg("------- end text --------")
         return
-    for k in range(2, len(subsections), 2):
-        m = re.search("^=+(.*?)=+$", subsections[k - 1].strip())
-        header = m.group(1)
-
+    for k, header in subsecs.header_list:
         def replace_triple_quote_header(m):
             headword = m.group(1)
             if header not in header_to_headword_form_template:
@@ -56,7 +53,7 @@ def process_text_on_page(index, pagename, text):
             r"^'''(.*?)'''(?: \{\{g\|([^{}|\n]*?)\}\})?$", replace_triple_quote_header, subsections[k], 0, re.M
         )
 
-    return "".join(subsections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

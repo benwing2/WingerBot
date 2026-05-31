@@ -14,23 +14,24 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     notes = []
 
-    def process_etym_section(sectext, is_etym_section):
+    def process_etym_section(secnum, sectext):
         if "==Pronunciation 1==" not in sectext:
-            pagemsg("No ==Pronunciation 1== in %s" % ("etym section" if is_etym_section else "text"))
+            pagemsg("No ==Pronunciation 1== in %s" % ("etym section" if secnum is not None else "text"))
             return sectext
 
-        if is_etym_section:
+        if secnum is not None:
             equalsigns = "===="
         else:
             equalsigns = "==="
-        subsections = re.split("(^==.*==\n)", sectext, 0, re.M)
+        subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+        subsections = subsecs.subsections
 
         if len(subsections) > 2 and subsections[1] == "===Etymology===\n":
             # Allow for an Etymology section at the beginning (many examples have one,
@@ -56,7 +57,7 @@ def process_text_on_page(index, pagetitle, text):
             )
             return sectext
         if subsections[3 + offset] != subsections[7 + offset]:
-            if is_etym_section:
+            if secnum is not None:
                 pagemsg(
                     "WARNING: Already in etym section and saw different POS headers %s and %s, can't convert to etym sections"
                     % (subsections[3 + offset].strip(), subsections[7 + offset].strip())
@@ -106,13 +107,9 @@ def process_text_on_page(index, pagetitle, text):
             # For verbs with the infinitive in the second section, swap the
             # sections to put the infinitive first.
             if re.search(r"\|inf[|}]", subsections[8 + offset]):
-                # Preserve the newlines at the end of each section; only swap the text.
-                m = re.match(r"\A(.*?)(\n*)\Z", subsections[4 + offset], re.S)
-                text4, newlines4 = m.groups()
-                m = re.search(r"\A(.*?)(\n*)\Z", subsections[8 + offset], re.S)
-                text8, newlines8 = m.groups()
-                subsections[4 + offset] = text8 + newlines4
-                subsections[8 + offset] = text4 + newlines8
+                temptext = subsections[4 + offset]
+                subsections[4 + offset] = subsections[8 + offset]
+                subsections[8 + offset] = temptext
                 temptext = subsections[2 + offset]
                 subsections[2 + offset] = subsections[6 + offset]
                 subsections[6 + offset] = temptext
@@ -139,15 +136,7 @@ def process_text_on_page(index, pagetitle, text):
             )
             return "".join(subsections)
 
-    has_etym_1 = "==Etymology 1==" in secbody
-    if not has_etym_1:
-        secbody = process_etym_section(secbody, is_etym_section=False)
-    else:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
-            etym_sections[k] = process_etym_section(etym_sections[k], is_etym_section=True)
-        secbody = "".join(etym_sections)
-
+    secbody = blib.map_etym_sections(secbody, pagemsg, process_etym_section)
     return modsec.rebuild(secbody=secbody), notes
 
 

@@ -149,12 +149,12 @@ def process_page_for_deletion(index, page):
     if not text:
         return
 
-    retval = blib.find_modifiable_lang_section(text, "Italian", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg)
+    if modsec is None:
         return
 
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-    if not has_non_lang:
+    sections, j, secbody, sectail = modsec.props()
+    if not modsec.has_non_lang:
         # Can delete the whole page, but check for non-blank section 0
         cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
         if cleaned_sec0.strip():
@@ -170,9 +170,8 @@ def process_page_for_deletion(index, page):
     del sections[j - 1]
     notes.append("remove Italian section for bad (nonexistent or misspelled) form%s" % annotation)
     if j > len(sections):
-        # We deleted the last section, remove the separator at the end of the
-        # previous section.
-        sections[-1] = re.sub(r"\n+--+\n*\Z", "", sections[-1])
+        # We deleted the last section; remove the final newlines.
+        sections[-1] = sections[-1].rstrip("\n")
     text = "".join(sections)
 
     return text, notes

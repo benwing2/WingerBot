@@ -13,11 +13,10 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     pagemsg("Processing")
-    retval = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Hungarian section")
+    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
     if "==Alternative forms==" in secbody:
         pagemsg("WARNING: Skipping page with 'Alternative forms' section")
         return
@@ -31,9 +30,7 @@ def process_text_on_page(index, pagetitle, text):
         if origt != str(t):
             pagemsg("Replaced %s with %s" % (origt, str(t)))
             notes.append("add pos=noun to {{%s|hu}}" % tn)
-    sections[j] = str(parsed) + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody=str(parsed)), notes
 
 
 parser = blib.create_argparser("Add pos=noun to Hungarian compound words", include_pagefile=True, include_stdin=True)

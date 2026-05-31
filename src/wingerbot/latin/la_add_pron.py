@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass
 
-import pywikibot, re, sys, traceback
-from collections import Counter
+import pywikibot, re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
@@ -26,11 +25,6 @@ applied_manual_pronun_mappings = set()
 # "WARNING: Would save and unable to match mapping" and check whether the
 # pronunciation that is generated automatically is correct.
 manual_pronun_mapping = []
-
-
-# Make sure there are two trailing newlines
-def ensure_two_trailing_nl(text):
-    return re.sub(r"\n*$", r"\n\n", text)
 
 
 def remove_list_duplicates(l):
@@ -306,11 +300,9 @@ lemma_headword_to_pronun_mapping_cache = {}
 # of an etym section), and for each such lemma fetch a mapping from
 # headword-derived stems to pronunciations as found in the la-IPA templates.
 # Return PRONUNMAPPING, a map as described above.
-def lookup_pronun_mapping(parsed, pagemsg, errandpagemsg):
+def lookup_pronun_mapping(parsed, orig_pagemsg, orig_errandpagemsg):
     lemmas = get_lemmas_of_form_page(parsed)
     all_pronunmappings = {}
-    orig_pagemsg = pagemsg
-    orig_errandpagemsg = errandpagemsg
     for lemma in lemmas:
         # Create our own pagemsg() and errandpagemsg() that lists the lemma
         def pagemsg(txt):
@@ -397,7 +389,7 @@ def lookup_pronun_mapping(parsed, pagemsg, errandpagemsg):
     return all_pronunmappings
 
 
-def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pagemsg, errandpagemsg, expand_text):
+def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pagemsg, errandpagemsg):
     assert indentlevel in [3, 4]
     notes = []
 
@@ -592,17 +584,15 @@ def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pag
         # Otherwise, skip past any ===Etymology=== or ===Alternative forms===
         # sections at the beginning. This requires us to split up the subsections,
         # find the right subsection to insert before, and then rejoin.
-        subsections = re.split("(^===.*?===\n)", section, 0, re.M)
+        subsecs = blib.split_text_into_subsections(section, pagemsg)
+        subsections = subsecs.subsections
 
         insert_before = 1
         while True:
             if insert_before >= len(subsections):
                 pagemsg("WARNING: Malformatted headers, no level-3/4 POS header")
-                return None
-            if (
-                "===Alternative forms===" not in subsections[insert_before]
-                and "===Etymology===" not in subsections[insert_before]
-            ):
+                return
+            if subsecs.headers[insert_before + 1] not in ["Alternative forms", "Etymology"]:
                 break
             insert_before += 2
         subsections[insert_before] = re.sub(r"(^===)", r"%s\1" % pronunsection, subsections[insert_before], 1, re.M)
@@ -614,7 +604,7 @@ def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pag
 
     if section == origsection:
         pagemsg("WARNING: Something wrong, couldn't sub in pronunciation section")
-        return None
+        return
 
     if overrode_existing_pronun:
         notes.append("override pronunciation with %s" % ",".join(pronuns_for_comment))
@@ -627,10 +617,8 @@ def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pag
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -647,304 +635,256 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    foundlatin = False
     was_unable_to_match = False
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
-    orig_text = text
-    for j in range(2, len(sections), 2):
-        if sections[j - 1] == "==Latin==\n":
-            if foundlatin:
-                pagemsg("WARNING: Found multiple Latin sections")
-                return None
-            foundlatin = True
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+    need_l3_pronun = False
+    if "===Pronunciation 1===" in secbody:
+        pagemsg("WARNING: Found ===Pronunciation 1===, should convert page to multiple etymologies")
+        return
+    if "===Etymology 1===" in secbody:
+        # If multiple etymologies, things are more complicated. We may have to
+        # process each section individually. We fetch the headwords from each
+        # section to see whether the etymologies should be in split or
+        # combined form. If they should be in split form, we remove any
+        # combined pronunciation and add pronunciations to each section if
+        # not already present. If they should be in combined form, we
+        # remove pronunciations from individual sections (PARTLY IMPLEMENTED)
+        # and add a combined pronunciation at the top.
 
-            need_l3_pronun = False
-            if "===Pronunciation 1===" in sections[j]:
-                pagemsg("WARNING: Found ===Pronunciation 1===, should convert page to multiple etymologies")
-                return None
-            if "===Etymology 1===" in sections[j]:
+        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
+        etym_sections = etym_secs.subsections
+        # Make sure there are multiple etymologies, otherwise page is malformed
+        pagemsg("Found multiple etymologies (%s)" % (len(etym_sections) // 2))
+        if len(etym_sections) < 5:
+            pagemsg("WARNING: Misformatted page with multiple etymologies (too few etymologies, skipping)")
+            return
 
-                # If multiple etymologies, things are more complicated. We may have to
-                # process each section individually. We fetch the headwords from each
-                # section to see whether the etymologies should be in split or
-                # combined form. If they should be in split form, we remove any
-                # combined pronunciation and add pronunciations to each section if
-                # not already present. If they should be in combined form, we
-                # remove pronunciations from individual sections (PARTLY IMPLEMENTED)
-                # and add a combined pronunciation at the top.
+        # Check for misnumbered etymology sections
+        # FIXME, this should be a separate script
+        for k, header in etym_secs.header_list:
+            if header != "Etymology %s" % (k // 2):
+                pagemsg(
+                    "WARNING: Misformatted page with multiple etymologies, expected ===Etymology %s=== but found %s"
+                    % (k // 2, header)
+                )
+                break
 
-                etymsections = re.split("(^ *=== *Etymology +[0-9]+ *=== *\n)", sections[j], 0, re.M)
-                # Make sure there are multiple etymologies, otherwise page is malformed
-                pagemsg("Found multiple etymologies (%s)" % (len(etymsections) // 2))
-                if len(etymsections) < 5:
-                    pagemsg("WARNING: Misformatted page with multiple etymologies (too few etymologies, skipping)")
-                    return None
-
-                # Check for misnumbered etymology sections
-                # FIXME, this should be a separate script
-                expected_etym_num = 0
-                l3split = re.split(r"^(===[^=\n].*===\n)", sections[j], 0, re.M)
-                seen_etym_1 = False
-                for k in range(1, len(l3split), 2):
-                    if not seen_etym_1 and l3split[k] != "===Etymology 1===\n":
-                        continue
-                    seen_etym_1 = True
-                    expected_etym_num += 1
-                    if l3split[k] != "===Etymology %s===\n" % expected_etym_num:
-                        pagemsg(
-                            "WARNING: Misformatted page with multiple etymologies, expected ===Etymology %s=== but found %s"
-                            % (expected_etym_num, l3split[k].replace("\n", ""))
-                        )
-                        break
-
-                # Check if all per-etym-section headwords are the same
-                etymparsed2 = blib.parse_text(etymsections[2])
-                etym_headword_pronuns = {}
-                # Fetch the headword pronuns of the ===Etymology 1=== section.
-                # We don't check for None here so that an error in an individual
-                # section doesn't cause us to bow out entirely; instead, we treat
-                # any comparison with None as False so we will always end up with
-                # per-section pronunciations.
-                etym_headword_pronuns[2] = get_headword_pronuns(etymparsed2, pagetitle, pagemsg, expand_text)
-                need_per_section_pronuns = False
-                for k in range(4, len(etymsections), 2):
-                    etymparsed = blib.parse_text(etymsections[k])
-                    # Fetch the headword pronuns of the ===Etymology N=== section.
-                    # We don't check for None here; see above.
-                    etym_headword_pronuns[k] = get_headword_pronuns(etymparsed, pagetitle, pagemsg, expand_text)
-                    # Treat any comparison with None as False.
-                    if (
-                        not etym_headword_pronuns[2]
-                        or not etym_headword_pronuns[k]
-                        or set(etym_headword_pronuns[k]) != set(etym_headword_pronuns[2])
-                    ):
-                        pagemsg(
-                            "WARNING: Etym section %s pronuns %s different from etym section 1 pronuns %s"
-                            % (
-                                k // 2,
-                                ",".join(etym_headword_pronuns[k] or ["none"]),
-                                ",".join(etym_headword_pronuns[2] or ["none"]),
-                            )
-                        )
-                        need_per_section_pronuns = True
-                numpronunsecs = len(re.findall("^===Pronunciation===$", etymsections[0], re.M))
-                if numpronunsecs > 1:
-                    pagemsg(
-                        "WARNING: Multiple ===Pronunciation=== sections in preamble to multiple etymologies, needs to be fixed"
+        # Check if all per-etym-section headwords are the same
+        etymparsed2 = blib.parse_text(etym_sections[2])
+        etym_headword_pronuns = {}
+        # Fetch the headword pronuns of the ===Etymology 1=== section.
+        # We don't check for None here so that an error in an individual
+        # section doesn't cause us to bow out entirely; instead, we treat
+        # any comparison with None as False so we will always end up with
+        # per-section pronunciations.
+        etym_headword_pronuns[2] = get_headword_pronuns(etymparsed2, pagetitle, pagemsg, expand_text)
+        need_per_section_pronuns = False
+        for k in range(4, len(etym_sections), 2):
+            etymparsed = blib.parse_text(etym_sections[k])
+            # Fetch the headword pronuns of the ===Etymology N=== section.
+            # We don't check for None here; see above.
+            etym_headword_pronuns[k] = get_headword_pronuns(etymparsed, pagetitle, pagemsg, expand_text)
+            # Treat any comparison with None as False.
+            if (
+                not etym_headword_pronuns[2]
+                or not etym_headword_pronuns[k]
+                or set(etym_headword_pronuns[k]) != set(etym_headword_pronuns[2])
+            ):
+                pagemsg(
+                    "WARNING: Etym section %s pronuns %s different from etym section 1 pronuns %s"
+                    % (
+                        k // 2,
+                        ",".join(etym_headword_pronuns[k] or ["none"]),
+                        ",".join(etym_headword_pronuns[2] or ["none"]),
                     )
-                    return None
+                )
+                need_per_section_pronuns = True
+        numpronunsecs = len(re.findall("^===Pronunciation===$", etym_sections[0], re.M))
+        if numpronunsecs > 1:
+            pagemsg(
+                "WARNING: Multiple ===Pronunciation=== sections in preamble to multiple etymologies, needs to be fixed"
+            )
+            return
 
-                if need_per_section_pronuns:
-                    pagemsg("Multiple etymologies, split pronunciations needed")
+        if need_per_section_pronuns:
+            pagemsg("Multiple etymologies, split pronunciations needed")
+        else:
+            pagemsg("Multiple etymologies, combined pronunciation possible")
+
+        # If need split pronunciations and there's a combined pronunciation,
+        # delete it if possible.
+        if need_per_section_pronuns and numpronunsecs == 1:
+            pagemsg(
+                "Multiple etymologies, converting combined pronunciation to split pronunciation (deleting combined pronun)"
+            )
+            # Remove existing pronunciation section; but make sure it's safe
+            # to do so (must have nothing but la-IPA templates in it, and the
+            # pronunciations in them must match what's expected)
+            m = re.search(r"(^===Pronunciation===\n)(.*?)(^==|\Z)", etym_sections[0], re.M | re.S)
+            if not m:
+                pagemsg("WARNING: Can't find ===Pronunciation=== section when it should be there, logic error?")
+                return
+            if not re.search(r"^(\* \{\{la-IPA(?:\|([^}]*))?\}\}\n)*$", m.group(2)):
+                pagemsg(
+                    "WARNING: Pronunciation section to be removed contains extra stuff (e.g. manual IPA or audio), can't remove: <%s>\n"
+                    % (m.group(1) + m.group(2))
+                )
+                return
+            foundpronuns = []
+            for m in re.finditer(r"(\{\{la-IPA(?:\|([^}]*))?\}\})", m.group(2)):
+                # FIXME, not right, should do what we do above with foundpronuns
+                # where we work with the actual parsed template
+                foundpronuns.append(m.group(2) or pagetitle)
+            foundpronuns = remove_list_duplicates(foundpronuns)
+            if foundpronuns:
+                joined_foundpronuns = ",".join(foundpronuns)
+                # Combine headword pronuns while preserving order. To do this,
+                # we sort by numbered etymology sections and then flatten.
+                combined_headword_pronuns = remove_list_duplicates(
+                    [y for k, v in sorted(etym_headword_pronuns.items(), key=lambda x: x[0]) for y in (v or [])]
+                )
+                joined_headword_pronuns = ",".join(combined_headword_pronuns)
+                if not (set(foundpronuns) <= set(combined_headword_pronuns)):
+                    pagemsg(
+                        "WARNING: When trying to delete pronunciation section, existing pronunciation %s not subset of headword-derived pronunciation %s, unable to delete"
+                        % (joined_foundpronuns, joined_headword_pronuns)
+                    )
+                    return
+            etym_sections[0] = re.sub(
+                r"(^===Pronunciation===\n)(.*?)(\Z|^==|^\[\[)", r"\3", etym_sections[0], 1, re.M | re.S
+            )
+            secbody = "".join(etym_sections)
+            notes.append("remove combined pronun section")
+            pagemsg(
+                "Removed pronunciation section because combined pronunciation with multiple etymologies needs to be split"
+            )
+
+        # If need combined pronunciations, check for split pronunciations and
+        # remove them. As a special case, if there's only one split
+        # pronunciation, just move the whole section to the top. We do this
+        # so we move audio, homophones, etc. This situation will frequently
+        # happen when a script adds a non-lemma form to an existing page
+        # without split etymologies, because it wraps everything in an
+        # "Etymology 1" section.
+        # FIXME: When we move the whole section to the top, it could be
+        # incorrect to do so if the la-IPA isn't just the headword, e.g. if
+        # it has a strange spelling, or phon= or gem=, etc. We should probably
+        # check for this.
+        if not need_per_section_pronuns:
+            # Check for a single pronunciation section that we can move
+            num_secs_with_pronun = 0
+            first_sec_with_pronun = 0
+            for k in range(2, len(etym_sections), 2):
+                if "===Pronunciation===" in etym_sections[k]:
+                    num_secs_with_pronun += 1
+                    if not first_sec_with_pronun:
+                        first_sec_with_pronun = k
+            if num_secs_with_pronun == 1:
+                # Section ends with another section start, end of text, or a wikilink or category link. (Normally
+                # there should always be another section following.)
+                m = re.search(
+                    r"(^===+Pronunciation===+\n.*?)(\Z|^==|^\[\[)",
+                    etym_sections[first_sec_with_pronun],
+                    re.M | re.S,
+                )
+                if not m:
+                    pagemsg(
+                        "WARNING: Can't find ====Pronunciation==== section when it should be there, logic error?"
+                    )
                 else:
-                    pagemsg("Multiple etymologies, combined pronunciation possible")
-
-                # If need split pronunciations and there's a combined pronunciation,
-                # delete it if possible.
-                if need_per_section_pronuns and numpronunsecs == 1:
-                    pagemsg(
-                        "Multiple etymologies, converting combined pronunciation to split pronunciation (deleting combined pronun)"
+                    # Set indentation of Pronunciation to 3
+                    pronunsec = re.sub(r"===+Pronunciation===+", "===Pronunciation===", m.group(1))
+                    etym_sections[first_sec_with_pronun] = re.sub(
+                        r"^(===+Pronunciation===+\n.*?)(\Z|^==|^\[\[)",
+                        r"\2",
+                        etym_sections[first_sec_with_pronun],
+                        1,
+                        re.M | re.S,
                     )
-                    # Remove existing pronunciation section; but make sure it's safe
-                    # to do so (must have nothing but la-IPA templates in it, and the
-                    # pronunciations in them must match what's expected)
-                    m = re.search(r"(^===Pronunciation===\n)(.*?)(^==|\Z)", etymsections[0], re.M | re.S)
-                    if not m:
-                        pagemsg("WARNING: Can't find ===Pronunciation=== section when it should be there, logic error?")
-                        return None
-                    if not re.search(r"^(\* \{\{la-IPA(?:\|([^}]*))?\}\}\n)*$", m.group(2)):
-                        pagemsg(
-                            "WARNING: Pronunciation section to be removed contains extra stuff (e.g. manual IPA or audio), can't remove: <%s>\n"
-                            % (m.group(1) + m.group(2))
-                        )
-                        return None
-                    foundpronuns = []
-                    for m in re.finditer(r"(\{\{la-IPA(?:\|([^}]*))?\}\})", m.group(2)):
-                        # FIXME, not right, should do what we do above with foundpronuns
-                        # where we work with the actual parsed template
-                        foundpronuns.append(m.group(2) or pagetitle)
-                    foundpronuns = remove_list_duplicates(foundpronuns)
-                    if foundpronuns:
-                        joined_foundpronuns = ",".join(foundpronuns)
-                        # Combine headword pronuns while preserving order. To do this,
-                        # we sort by numbered etymology sections and then flatten.
-                        combined_headword_pronuns = remove_list_duplicates(
-                            [y for k, v in sorted(etym_headword_pronuns.items(), key=lambda x: x[0]) for y in (v or [])]
-                        )
-                        joined_headword_pronuns = ",".join(combined_headword_pronuns)
-                        if not (set(foundpronuns) <= set(combined_headword_pronuns)):
-                            pagemsg(
-                                "WARNING: When trying to delete pronunciation section, existing pronunciation %s not subset of headword-derived pronunciation %s, unable to delete"
-                                % (joined_foundpronuns, joined_headword_pronuns)
-                            )
-                            return None
-                    etymsections[0] = re.sub(
-                        r"(^===Pronunciation===\n)(.*?)(\Z|^==|^\[\[|^--)", r"\3", etymsections[0], 1, re.M | re.S
-                    )
-                    sections[j] = "".join(etymsections)
-                    text = "".join(sections)
-                    notes.append("remove combined pronun section")
-                    pagemsg(
-                        "Removed pronunciation section because combined pronunciation with multiple etymologies needs to be split"
-                    )
+                    etym_sections[0] += pronunsec
+                    secbody = "".join(etym_sections)
+                    notes.append("move split pronun section to top to make combined")
+                    pagemsg("Moved split pronun section for ===Etymology %s=== to top" % (k // 2))
+            elif num_secs_with_pronun > 1:
+                pagemsg(
+                    "WARNING: need combined pronunciation section, but there are multiple split pronunciation sections, code to delete them not implemented; delete manually)"
+                )
+                # FIXME: Implement me
 
-                # If need combined pronunciations, check for split pronunciations and
-                # remove them. As a special case, if there's only one split
-                # pronunciation, just move the whole section to the top. We do this
-                # so we move audio, homophones, etc. This situation will frequently
-                # happen when a script adds a non-lemma form to an existing page
-                # without split etymologies, because it wraps everything in an
-                # "Etymology 1" section.
-                # FIXME: When we move the whole section to the top, it could be
-                # incorrect to do so if the la-IPA isn't just the headword, e.g. if
-                # it has a strange spelling, or phon= or gem=, etc. We should probably
-                # check for this.
-                if not need_per_section_pronuns:
-                    # Check for a single pronunciation section that we can move
-                    num_secs_with_pronun = 0
-                    first_sec_with_pronun = 0
-                    for k in range(2, len(etymsections), 2):
-                        if "===Pronunciation===" in etymsections[k]:
-                            num_secs_with_pronun += 1
-                            if not first_sec_with_pronun:
-                                first_sec_with_pronun = k
-                    if num_secs_with_pronun == 1:
-                        # Section ends with another section start, end of text, a wikilink
-                        # or category link, or section divider. (Normally there should
-                        # always be another section following.)
-                        m = re.search(
-                            r"(^===+Pronunciation===+\n.*?)(\Z|^==|^\[\[|^--)",
-                            etymsections[first_sec_with_pronun],
-                            re.M | re.S,
-                        )
-                        if not m:
-                            pagemsg(
-                                "WARNING: Can't find ====Pronunciation==== section when it should be there, logic error?"
-                            )
-                        else:
-                            # Set indentation of Pronunciation to 3
-                            pronunsec = re.sub(r"===+Pronunciation===+", "===Pronunciation===", m.group(1))
-                            etymsections[first_sec_with_pronun] = re.sub(
-                                r"^(===+Pronunciation===+\n.*?)(\Z|^==|^\[\[|^--)",
-                                r"\2",
-                                etymsections[first_sec_with_pronun],
-                                1,
-                                re.M | re.S,
-                            )
-                            etymsections[0] = ensure_two_trailing_nl(etymsections[0])
-                            etymsections[0] += pronunsec
-                            sections[j] = "".join(etymsections)
-                            text = "".join(sections)
-                            notes.append("move split pronun section to top to make combined")
-                            pagemsg("Moved split pronun section for ===Etymology %s=== to top" % (k // 2))
-                    elif num_secs_with_pronun > 1:
-                        pagemsg(
-                            "WARNING: need combined pronunciation section, but there are multiple split pronunciation sections, code to delete them not implemented; delete manually)"
-                        )
-                        # FIXME: Implement me
-
-                # Now add the per-section or combined pronunciation
-                if need_per_section_pronuns:
-                    for k in range(2, len(etymsections), 2):
-                        # Skip processing if pronuns are None.
-                        if not etym_headword_pronuns[k]:
-                            continue
-                        result = process_section(
-                            etymsections[k],
-                            4,
-                            etym_headword_pronuns[k],
-                            args,
-                            pagetitle,
-                            pagemsg,
-                            errandpagemsg,
-                            expand_text,
-                        )
-                        if result is None:
-                            continue
-                        etymsections[k], etymsection_notes, etymsection_unable_to_match = result
-                        notes.extend(etymsection_notes)
-                        was_unable_to_match = was_unable_to_match or etymsection_unable_to_match
-                    sections[j] = "".join(etymsections)
-                    text = "".join(sections)
-                else:
-                    need_l3_pronun = True
-
-            else:
-                need_l3_pronun = True
-
-            if need_l3_pronun:
-                # Get the headword pronunciations for the whole page.
-                # NOTE: Perhaps when we've already computed per-section headword
-                # pronunciations, as with multiple etymologies, we should combine
-                # them rather than checking the whole page. This will make a
-                # difference if there are headwords outside of the etymology sections,
-                # but that shouldn't happen and is a malformed page if so.
-                # NOTE NOTE: If we combine headword pronunciations with multiple
-                # etymologies, we need to preserve the order as found on the page.
-                headword_pronuns = get_headword_pronuns(blib.parse_text(text), pagetitle, pagemsg, expand_text)
-                # If error, skip page.
-                if headword_pronuns is None:
-                    return None
-
-                # Process the section
+        # Now add the per-section or combined pronunciation
+        if need_per_section_pronuns:
+            for k in range(2, len(etym_sections), 2):
+                # Skip processing if pronuns are None.
+                if not etym_headword_pronuns[k]:
+                    continue
                 result = process_section(
-                    sections[j], 3, headword_pronuns, args, pagetitle, pagemsg, errandpagemsg, expand_text
+                    etym_sections[k],
+                    4,
+                    etym_headword_pronuns[k],
+                    args,
+                    pagetitle,
+                    pagemsg,
+                    errandpagemsg,
                 )
                 if result is None:
                     continue
-                sections[j], section_notes, section_unable_to_match = result
-                notes.extend(section_notes)
-                was_unable_to_match = was_unable_to_match or section_unable_to_match
-                text = "".join(sections)
+                etym_sections[k], etymsection_notes, etymsection_unable_to_match = result
+                notes.extend(etymsection_notes)
+                was_unable_to_match = was_unable_to_match or etymsection_unable_to_match
+            secbody = "".join(etym_sections)
+        else:
+            need_l3_pronun = True
 
-    if not foundlatin:
-        pagemsg("WARNING: Can't find Latin section")
-        return None
+    else:
+        need_l3_pronun = True
 
-    comment = None
-    if notes:
-        # Group identical notes together and append the number of such identical
-        # notes if > 1
-        # 1. Count items in notes[] and return a key-value list in descending order
-        notescount = Counter(notes).most_common()
+    if need_l3_pronun:
+        # Get the headword pronunciations for the whole page.
+        # NOTE: Perhaps when we've already computed per-section headword
+        # pronunciations, as with multiple etymologies, we should combine
+        # them rather than checking the whole page. This will make a
+        # difference if there are headwords outside of the etymology sections,
+        # but that shouldn't happen and is a malformed page if so.
+        # NOTE NOTE: If we combine headword pronunciations with multiple
+        # etymologies, we need to preserve the order as found on the page.
+        headword_pronuns = get_headword_pronuns(blib.parse_text(secbody), pagetitle, pagemsg, expand_text)
+        # If error, skip page.
+        if headword_pronuns is None:
+            return
 
-        # 2. Recreate notes
-        def fmt_key_val(key, val):
-            if val == 1:
-                return "%s" % key
-            else:
-                return "%s (%s)" % (key, val)
+        # Process the section
+        result = process_section(
+            secbody, 3, headword_pronuns, args, pagetitle, pagemsg, errandpagemsg,
+        )
+        if result is None:
+            return
+        secbody, section_notes, section_unable_to_match = result
+        notes.extend(section_notes)
+        was_unable_to_match = was_unable_to_match or section_unable_to_match
 
-        notes = [fmt_key_val(x, y) for x, y in notescount]
-        comment = "; ".join(notes)
-
-    if text != orig_text:
-        assert comment
-        if was_unable_to_match:
-            pagemsg("WARNING: Would save and unable to match mapping")
-
-    # Eliminate sequences of 3 or more newlines, which may come from
-    # ensure_two_trailing_nl(). Add comment if none, in case of existing page
+    text = modsec.rebuild(secbody=secbody)
+    # Eliminate sequences of 3 or more newlines, which may come from ensuring two trailing newlines in
+    # force_final_nls=True. (FIXME: Still true?). Add comment if none, in case of existing page
     # with extra newlines.
     newtext = re.sub(r"\n\n\n+", r"\n\n", text)
-    if newtext != text and not comment:
-        comment = "eliminate sequences of 3 or more newlines"
+    if newtext != text and not notes:
+        return newtext, "eliminate sequences of 3 or more newlines"
     text = newtext
-
-    return text, comment
+    return text, notes
 
 
 def process_lemma(index, pagetitle, slots, args):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+
+    pagemsg("Processing")
 
     page = pywikibot.Page(site, pagetitle)
     pagetext = blib.safe_page_text(page, errandpagemsg)
@@ -960,6 +900,9 @@ def process_lemma(index, pagetitle, slots, args):
             pos = "adj"
         if pos:
             inflargs = lalib.generate_infl_forms(pos, str(t), errandpagemsg, expand_text)
+            if inflargs is None:
+                # Error generating forms?
+                continue
             for slot in inflargs:
                 matches = False
                 for spec in slots:

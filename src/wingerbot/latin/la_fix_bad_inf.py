@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
-
-from wingerbot.latin import lalib
+from wingerbot.blib import getparam, tname, msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -19,7 +17,8 @@ def process_text_on_page(index, pagetitle, text):
         return
     secbody = modsec.secbody
 
-    subsections = re.split("(^==.*==\n)", secbody, 0, re.M)
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     if len(subsections) != 3:
         pagemsg(
@@ -28,7 +27,7 @@ def process_text_on_page(index, pagetitle, text):
         )
         return
 
-    if subsections[1] != "===Verb===\n":
+    if subsecs.headers[2] != "Verb":
         pagemsg("WARNING: Expected ===Verb=== in subsections[1] but saw %s" % subsections[1].strip())
         return
 

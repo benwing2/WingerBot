@@ -112,10 +112,10 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
         def remove_al_tr(txt):
             return sub_if(r"^a?([sšṣtṯṭdḏḍzžẓnrḷ])-\1", r"\1", txt) or sub_if("^a?l-", "", txt) or txt
 
-        retval = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
-        if retval is None:
+        modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
+        if modsec is None:
             return
-        sections, j, secbody, sectail, has_non_lang = retval.props()
+        secbody = modsec.secbody
 
         subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
@@ -641,11 +641,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 if note:
                     comment = "%s (%s)" % (comment, note)
                 comments.append(comment)
-                secbody = "".join(subsections)
-                sections[j] = secbody.rstrip("\n") + sectail
-        newtext = "".join(sections)
-        comment = "; ".join(comments)
-        return newtext, comment
+        return modsec.rebuild(secbody="".join(subsections)), comments
 
     blib.do_edit(index, page, create_declension_1, save=args.save, verbose=args.verbose, diff=args.diff)
 

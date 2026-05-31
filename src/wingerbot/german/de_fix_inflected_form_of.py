@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 positive_ending_tags = {
     "en": [
@@ -53,7 +53,12 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if not re.search("^(Adjective|Numeral|Participle)$", header):
@@ -223,9 +228,8 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("replace %s with %s" % (origt, str(t)))
             pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
         subsections[k] = str(parsed)
-    text = "".join(subsections)
 
-    return text, notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

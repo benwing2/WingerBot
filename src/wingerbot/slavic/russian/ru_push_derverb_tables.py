@@ -36,10 +36,10 @@ def process_text_on_page(index, pagetitle, text):
             pagemsg("WARNING: Page doesn't exist")
             return
         else:
-            retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
-            if retval is None:
+            modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
+            if modsec is None:
                 return
-            sections, j, secbody, sectail, has_non_lang = retval.props()
+            secbody = modsec.secbody
 
             outlines = []
             curtab_index = 0
@@ -117,9 +117,7 @@ def process_text_on_page(index, pagetitle, text):
                 )
                 return
 
-            secbody = "\n".join(outlines)
-            sections[j] = secbody.rstrip("\n") + sectail
-            return "".join(sections), comment
+            return modsec.rebuild(secbody="\n".join(outlines)), comment
 
     retval = do_process()
     if retval is None:

@@ -521,9 +521,9 @@ def do_headword_template(headt, declts, pagetitle, subsections, subsection_with_
     return notes
 
 
-def process_text_in_section(index, pagetitle, text):
+def process_text_in_section(index, secnum, pagetitle, text):
     def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+        msg("Page %s%s %s: %s" % (index, "." + secnum if secnum is not None else "", pagetitle, txt))
 
     notes = []
 
@@ -616,22 +616,17 @@ def process_text_on_page(index, pagetitle, text):
         return
     secbody = modsec.secbody
 
-    if "=Etymology 1=" in secbody:
-        notes = []
-        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
-        etym_sections = etym_secs.subsections
-        for k, header in etym_secs.header_list:
-            retval = process_text_in_section(index, pagetitle, etym_sections[k])
-            if retval:
-                newsectext, newnotes = retval
-                etym_sections[k] = newsectext
-                notes.extend(newnotes)
-        return modsec.rebuild(secbody="".join(etym_sections)), notes
-    else:
-        retval = process_text_in_section(index, pagetitle, secbody)
+    notes = []
+    def do_process_etym_section(secnum, sectext):
+        retval = process_text_in_section(index, secnum, pagetitle, sectext)
         if retval:
-            secbody, notes = retval
-            return modsec.rebuild(secbody=secbody), notes
+            newsectext, newnotes = retval
+            notes.extend(newnotes)
+            return newsectext
+        return sectext
+
+    secbody = blib.map_etym_sections(secbody, pagemsg, do_process_etym_section)
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

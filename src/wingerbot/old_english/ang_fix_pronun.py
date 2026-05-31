@@ -75,7 +75,7 @@ def process_text_on_page(index, pagetitle, text):
         return
     secbody = modsec.secbody
     if "Etymology 1" in secbody:
-        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9]+")
+        etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
         etym_sections = etym_secs.subsections
         if "=Pronunciation=" in etym_sections[0]:
             process_section(index, pagetitle, secbody)

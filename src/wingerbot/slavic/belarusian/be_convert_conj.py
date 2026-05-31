@@ -63,10 +63,9 @@ def compare_forms(autoconj, origforms, replforms, pagemsg):
     return True
 
 
-def process_section(index, pagetitle, sectext):
+def process_section(index, secnum, pagetitle, sectext):
     def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+        msg("Page %s%s %s: %s" % (index, "." + secnum if secnum is not None else "", pagetitle, txt))
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -144,20 +143,15 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     notes = []
-    retval = blib.find_modifiable_lang_section(text, "Belarusian", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Belarusian section")
+    modsec = blib.find_modifiable_lang_section(text, "Belarusian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-    if "Etymology 1" in secbody:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
-            etym_sections[k], this_notes = process_section(index, pagetitle, etym_sections[k])
-            notes.extend(this_notes)
-        secbody = "".join(etym_sections)
-    else:
-        secbody, this_notes = process_section(index, pagetitle, secbody)
+    sections, j, secbody, sectail = modsec.props()
+    def do_process_etym_section(secnum, sectext):
+        newsectext, this_notes = process_section(index, secnum, pagetitle, sectext)
         notes.extend(this_notes)
+        return newsectext
+    secbody = blib.map_etym_sections(secbody, pagemsg, do_process_etym_section)
     sections[j] = secbody + sectail
     if notes:
         sections[j] = re.sub(r"\{\{cln\|be\|(in)?transitive verbs\}\}\n?", "", sections[j])

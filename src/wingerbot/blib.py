@@ -3524,6 +3524,12 @@ class SplitTextIntoSubsectionsResult:
         return dict(self.header_list)
 
 
+def make_section_header(header: str, level: int) -> str:
+    """Make a section header named `header` with `level` equal signs. Ends in a newline."""
+    equal_signs = "=" * level
+    return "%s%s%s\n" % (equal_signs, header, equal_signs)
+
+
 def split_text_into_subsections(
     secbody: str, pagemsg: PagemsgCallback | None, only_level: int | None = None, header_re: str | None = None
 ) -> SplitTextIntoSubsectionsResult:
@@ -3580,15 +3586,19 @@ def split_text_into_subsections(
 
 @dataclass
 class ModifiableLangSection:
-    sections: list[str]
+    secs: SplitTextIntoSectionsResult
     j: int
     secbody: str
     sectail: str
     has_non_lang: bool
     force_final_nls: bool = False
 
+    @property
+    def sections(self):
+        return self.secs.sections
+
     def props(self):
-        return self.sections, self.j, self.secbody, self.sectail, self.has_non_lang
+        return self.sections, self.j, self.secbody, self.sectail
 
     def rebuild(self, secbody: str | None = None, sectail: str | None = None) -> str:
         """Rebuild the page text from the current state of the language section."""
@@ -3603,37 +3613,46 @@ class ModifiableLangSection:
 
 def find_modifiable_lang_section(
     text: str, langname: str | None, pagemsg: PagemsgCallback | None, force_final_nls: bool = False,
-    auto_partial_page: bool = True,
+    auto_partial_page: bool = True, allow_missing: bool = False,
 ) -> ModifiableLangSection | None:
     """Find the section for the language `lang` in `text` (the text of the page), returning values so that the
     language-specific text can be modified and then the page as a whole put back together in preparation for saving.
-    Return None if the language can't be found; otherwise, return a `ModifiableLangSection` named tuple of five values:
-    * `sections` contains the per-language sections.
-    * `j` points to the section containing the language in question.
+    Return None if the language can't be found; otherwise, return a `ModifiableLangSection` class containing properties
+    of the page as a whole and the section containing the language in `langname`, so that changes can be made to the
+    language's section and the page rebuilt. The following are the most relevant properties:
+    * `sections` contains the per-language sections, split by `split_text_into_sections()`. This means that
+      odd-numbered sections contain language headers (ending in a newline) and even-numbered sections contain
+      per-language content, except for section 0, which contains content at the top of the page before all languages.
+      Concatenating the text of `sections` together produces the original page.
+    * `j` points to the section containing the content of the language in question.
     * The text of this section has been split into `secbody` and `sectail`, where `sectail` contains any trailing
-      categories and separator, and `secbody` contains the remainder of the section text.
+      categories and separator, and `secbody` contains the remainder of the section text. Normally concatenating
+      `secbody` and sectail` produces the same as `sections[j]`, i.e. the content of the language in question. If this
+      content ends in one or more newlines, `secbody` will normally end in exactly one newline, with the remaining
+      newlines in `sectail`; otherwise `secbody` will not end in a newline. If you want to replace `secbody` in its
+      entirety, rearrange language sections or subsections, or generally work with `secbody` while not having to worry
+      about tracking or messing up final newlines, you should use `force_final_nls=True`; see below.
     * `has_non_lang` is True if any sections for other languages are encountered.
-
-    The code to call this function should look like this:
-
-    modsec = blib.find_modifiable_lang_section(text, langname, pagemsg)
-    if modsec is None:
-        return
-    [do changes to `modsec.secbody` as appropriate]
-    text = modsec.rebuild(secbody=<change secbody>)
 
     If `langname` is None, the passed-in `text` is assumed to already contain only the text of the appropriate language
     (as, for example, if find_regex.py is run with the '--lang LANGNAME' option set). The function won't look for
     a language-specific section but will still separate off trailing categories and separators.
 
-    If `force_final_nls` is given, `secbody` will be modified so that it always ends in two newlines, and the
-    actual newlines (if any) at the end of `secbody` will be included at the beginning of `sectail`. This
-    simplifies doing things like rearranging subsections or adding subsections to the end. In this case, to
-    reconstruct the page text, strip the final newlines off `secbody` before putting it back together. This is done
-    automatically by the `rebuild` method.
+    If `force_final_nls` is given, any newlines in `secbody` will be moved to `sectail`, and then exactly two newlines
+    will be appended to `secbody`. Since non-final sections and subsections normally end in two newlines, this makes
+    final and non-final sections and subsections have consistent whitespace so they can be freely rearranged. In such a
+    case, to reconstruct `sections[j]` (the content of the language), you have to do `secbody.rstrip("\n") + sectail`;
+    although rather than doing this yourself, it is recommended to use `rebuild`, which lets you pass in a modified
+    `secbody` and correctly reconstructs the entire page, stripping newline padding if needed.
 
-    modsec.sections[modsec.j] = modsec.secbody.rstrip("\n") + modsec.sectail
-    text = "".join(modsec.sections)
+    The code to call this function should normallly look like this:
+
+    # use force_final_nls=True if you are going to be rearranging or replacing `secbody`
+    modsec = blib.find_modifiable_lang_section(text, langname, pagemsg)
+    if modsec is None:
+        return
+    [do changes to `modsec.secbody` as appropriate]
+    text = modsec.rebuild(secbody=<change secbody>)
 
     A possible workflow for using this function in combination with split_text_into_subsections() to modify a particular
     subsection would be:
@@ -3660,7 +3679,12 @@ def find_modifiable_lang_section(
     If `auto_partial_page` is given (which by default it is), and a language name is specified in `langname`, the
     function will automatically behave as if None is specified for the language name if no level-2 sections are found
     on the page. This makes it possible to run a language-specific script on the output of `find_regex.py --lang LANG`,
-    which contains only the text of the language without any L2 language header."""
+    which contains only the text of the language without any L2 language header.
+    
+    Normally, if the language is not found on the page, `None` is returned. If `allow_missing` is given, however,
+    the same structure is returned as if the language were found, but `j` is negative; specifically, it is the negative
+    of the insertion point in `sections` where the a new language section for this language should be inserted. This
+    works because the insertion point is always an odd number."""
 
     if auto_partial_page and langname is not None and not re.search(r"^==[^=\n].*==[ \t]*\n", text, re.M):
         langname = None
@@ -3668,23 +3692,126 @@ def find_modifiable_lang_section(
         sections = [text]
         j = 0
         has_non_lang = False
+        secbody, sectail = split_trailing_separator_and_categories(sections[j])
     else:
         secs = split_text_into_sections(text, pagemsg)
         sections = secs.sections
         if langname not in secs.sections_by_lang:
-            if pagemsg:
-                pagemsg("WARNING: Can't find %s section, skipping" % langname)
-            return None
+            if allow_missing:
+                # Only import lang_utils now to avoid a circular import error
+                from .lang_utils import langname_key
+                normalized_langname = langname_key(langname)
+                for j, seclangname in secs.lang_list:
+                    normalized_seclangname = langname_key(seclangname)
+                    if normalized_seclangname > normalized_langname:
+                        # The j we iterate over is always >= 2, -(j - 1) is always negative.
+                        j = -(j - 1) # j - 1 is the insertion point
+                        secbody = ""
+                        sectail = ""
+                        has_non_lang = len(secs.sections_by_lang) > 0
+            else:
+                if pagemsg:
+                    pagemsg("WARNING: Can't find %s section, skipping" % langname)
+                return None
         else:
             j = secs.sections_by_lang[langname]
             has_non_lang = len(secs.sections_by_lang) > 1
-
-    secbody, sectail = split_trailing_separator_and_categories(sections[j])
+            secbody, sectail = split_trailing_separator_and_categories(sections[j])
 
     if force_final_nls:
         secbody, sectail = force_two_newlines_in_secbody(secbody, sectail)
 
-    return ModifiableLangSection(sections, j, secbody, sectail, has_non_lang)
+    return ModifiableLangSection(secs, j, secbody, sectail, has_non_lang)
+
+
+def map_etym_sections(secbody: str, pagemsg: PagemsgCallback, fn: Callable[[str | None, str], str]) -> str:
+    """Map a function over 'Etymology N' sections on a page.
+    The function is called with two arguments, the etymology section number (as a string) and the text of the etymology
+    section, and should return the new text. The resulting return values will be pasted together and returned as the
+    overall return value. If there are no separate 'Etymology N' sections, the function will be called only once with
+    None as the section number, along with the entire value of `secbody`."""
+    etym_secs = split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
+    etym_sections = etym_secs.subsections
+    if len(etym_sections) > 1:
+        for k, header in etym_secs.header_list:
+            m = re.search("^Etymology ([0-9.]+)$", header)
+            assert m is not None  # should always match due to header_re above
+            etym_sections[k] = fn(m.group(1), etym_sections[k])
+        return "".join(etym_sections)
+    else:
+        return fn(None, secbody)
+
+
+def add_new_l2_section(text: str, pagemsg: PagemsgCallback, langname: str, l2sec: str) -> tuple[str, list[str]]:
+    """Add a new L2 section to a page not containing the language in question.
+    
+    `langname` is the language of the L2 section in `l2sec`, which should begin with the appropriate language header.
+    An internal error will be thrown if the language in `langname` is already found in `text` (the text of the page).
+
+    Return a tuple of `(newtext, changelog_notes)` where `newtext` is the changed text of the page and `notes` is a
+    list of changelog notes to be used to construct the page's changelog.
+
+    A typical workflow looks like this:
+
+    header_pos = <appropriate capitalized part of speech header>
+    newposbody = <construct body of new entry>
+    newpos = "===%s===\n" % header_pos + newposbody
+    # This will be needed below when adding a new etym section to an existing entry in the language
+    newposl4 = "====%s====\n" % header_pos + newposbody
+    newl2sec = "==%s==\n\n" % langname + newpos
+
+    # Pass None for pagemsg to suppress warning on lang section not found.
+    modsec = blib.find_modifiable_lang_section(text, langname, None, force_final_nls=True)
+    if modsec is None:
+        return blib.add_new_l2_section(text, pagemsg, langname, newl2sec)
+
+    <handle an existing entry in the language; depending on what's present, you may need to do nothing; add a new
+     POS entry in an existing Etymology section; wrap the existing entry in Etymology 1 and add an Etymology 2 entry;
+     add an Etymology 3, 4, etc. entry when 2 or more Etymology N entries already exist; etc.>"""
+    notes = []
+
+    l2sec = l2sec.rstrip("\n")
+
+    if not text:
+        pagemsg("Creating new %s page" % langname)
+        notes.append("create new %s page" % langname)
+        return l2sec, notes
+
+    # Pass None for pagemsg to suppress warning on lang section not found.
+    modsec = find_modifiable_lang_section(text, langname, None, allow_missing=True)
+    assert modsec is not None  # should never return None when allow_missing is True
+    if modsec.j >= 0:
+        raise RuntimeError(
+            "Internal error: add_new_l2_section called for langname '%s' that exists on page" % langname
+        )
+
+    if not modsec.has_non_lang:
+        if text.lower().startswith("#redirect"):
+            pagemsg("WARNING: Overwriting hard redirect with new %s language section; converting redirect to {{also}}" %
+                    langname)
+            notes.append("overwrite hard redirect with new %s language section, converting redirect to {{also}}" %
+                         langname)
+            text = re.sub(
+                r"#redirect *\[\[(.*?)\]\] *(<!--.*?--> *)*\n*", r"{{also|\1}}\n", text, 0, re.I
+            )
+        else:
+            pagemsg("WARNING: Adding %s language section to non-empty page without existing language sections; page contents is <<%s>>" %
+                    (langname, text.replace("\n", r"\n")))
+            notes.append("add %s language section to non-empty page without existing language sections" % langname)
+            text += "\n"
+        return text + l2sec, notes
+
+    j = -modsec.j
+    modsec_langs = modsec.secs.langs
+    if j + 1 in modsec_langs:
+        pagemsg("Inserting %s lang section before %s entry" % (langname, modsec_langs[j + 1]))
+        notes.append("insert %s lang section before %s entry" % (langname, modsec_langs[j + 1]))
+        modsec.sections[j : j] = [l2sec + "\n\n"]
+        return "".join(modsec.sections), notes
+    else:
+        pagemsg("Appending %s lang section at end of page" % langname)
+        notes.append("append %s lang section at end of page" % langname)
+        return text + "\n\n" + l2sec, notes
 
 
 def replace_in_text(

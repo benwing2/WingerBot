@@ -294,17 +294,15 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", secbody, 0, re.M)
-
-    for k in range(2, len(subsections), 2):
-        m = re.search("^===*([^=]*)=*==\n$", subsections[k - 1])
-        subsectitle = m.group(1)
-        if not subsectitle.startswith("Etymology"):
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.header_list:
+        if not header.startswith("Etymology"):
             continue
 
         def replace_gen_sg(m):
@@ -794,10 +792,7 @@ def process_text_on_page(index, pagetitle, text):
 
         subsections[k] = str(parsed)
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser("Clean up Latin etyma in Romance etymologies", include_pagefile=True, include_stdin=True)

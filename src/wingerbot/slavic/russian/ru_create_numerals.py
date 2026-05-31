@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+"""WARNING: This script is out of date. We now use [[Module:number list/data/ru]] to contain all Russian number data
+rather than generate it manually per page like this. But the examples in the text are still useful."""
 
-import pywikibot, re, sys, argparse, time
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import msg, errandmsg
 from wingerbot.slavic.russian import rulib
 
 ordinals = {
@@ -84,11 +86,6 @@ english_cardinals = {
     80: "eighty",
     90: "ninety",
 }
-
-
-# Make sure there are two trailing newlines
-def ensure_two_trailing_nl(text):
-    return re.sub(r"\n*$", r"\n\n", text)
 
 
 def combine(tens, ones):
@@ -439,7 +436,8 @@ def generate_page(num):
 ====Coordinate terms====
 {{ru-cardinals}}
 
-[[Category:Russian cardinal numbers]]
+{{cln|ru|cardinal numbers}}
+
 """ % (
         prevnum,
         num,
@@ -461,7 +459,6 @@ def generate_page(num):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -475,109 +472,28 @@ def process_text_on_page(index, pagetitle, text):
     lemma = ru_num(num)
     newtext = generate_page(num)
 
-    if not text:
-        # Page doesn't exist. Create it.
-        pagemsg("Creating page")
-        return newtext, "Create page for Russian numeral %s (%s)" % (lemma, num)
-    else:  # Page does exist
-        # Split into sections
-        splitsections = re.split("(^==[^=\n]+==\n)", text, 0, re.M)
-        # Extract off pagehead and recombine section headers with following text
-        pagehead = splitsections[0]
-        sections = []
-        for i in range(1, len(splitsections)):
-            if (i % 2) == 1:
-                sections.append("")
-            sections[-1] += splitsections[i]
-
-        # Go through each section in turn, looking for existing Russian section
-        for i in range(len(sections)):
-            m = re.match("^==([^=\n]+)==$", sections[i], re.M)
-            if not m:
-                pagemsg("Can't find language name in text: [[%s]]" % (sections[i]))
-            elif m.group(1) == "Russian":
-                # Extract off trailing separator
-                mm = re.match(r"^(.*?\n)(\n*--+\n*)$", sections[i], re.S)
-                if mm:
-                    # Note that this changes the number of sections, which is seemingly
-                    # a problem because the for-loop above calculates the end point
-                    # at the beginning of the loop, but is not actually a problem
-                    # because we always break after processing the Russian section.
-                    sections[i : i + 1] = [mm.group(1), mm.group(2)]
-
-                if args.overwrite_page:
-                    if "==Etymology 1==" in sections[i] and not args.overwrite_etymologies:
-                        errandpagemsg("WARNING: Found ==Etymology 1== in page text, not overwriting, skipping form")
-                        return
-                    else:
-                        pagemsg("WARNING: Overwriting entire Russian section")
-                        comment = "Create Russian section for numeral %s (%s)" % (lemma, num)
-                        sections[i] = newtext
-                        notes.append("overwrite section")
-                        break
-                else:
-                    errandpagemsg("WARNING: Not overwriting existing Russian section")
-                    return
-            elif m.group(1) > "Russian":
-                pagemsg("Exists; inserting before %s section" % (m.group(1)))
-                comment = "Create Russian section and entry for numeral %s (%s); insert before %s section" % (
-                    lemma,
-                    num,
-                    m.group(1),
-                )
-                sections[i:i] = [newtext, "\n----\n\n"]
-                break
-
-        else:  # else of for loop over sections, i.e. no break out of loop
-            pagemsg("Exists; adding section to end")
-            comment = "Create Russian section and entry for numeral %s (%s); append at end" % (lemma, num)
-
-            if sections:
-                sections[-1] = ensure_two_trailing_nl(sections[-1])
-                sections += ["----\n\n", newtext]
-            else:
-                if not args.overwrite_page:
-                    notes.append("formerly empty")
-                if pagehead.lower().startswith("#redirect"):
-                    pagemsg("WARNING: Page is redirect, overwriting")
-                    notes.append("overwrite redirect")
-                    pagehead = re.sub(
-                        r"#redirect *\[\[(.*?)\]\] *(<!--.*?--> *)*\n*", r"{{also|\1}}\n", pagehead, 0, re.I
-                    )
-                elif not args.overwrite_page:
-                    pagemsg("WARNING: No language sections in current page")
-                sections += [newtext]
-
-        # End of loop over sections in existing page; rejoin sections
-        newtext = pagehead + "".join(sections)
-
-        if text != newtext:
-            assert comment or notes
-
-        # Eliminate sequences of 3 or more newlines, which may come from
-        # ensure_two_trailing_nl(). Add comment if none, in case of existing page
-        # with extra newlines.
-        newnewtext = re.sub(r"\n\n\n+", r"\n\n", newtext)
-        if newnewtext != newtext and not comment and not notes:
-            notes = ["eliminate sequences of 3 or more newlines"]
-        newtext = newnewtext
-
-        if text == newtext:
-            pagemsg("No change in text")
-        elif args.verbose:
-            pagemsg("Replacing <%s> with <%s>" % (text, newtext))
-
-    # Executed whether creating new page or modifying existing page.
-    # Check for changed text and save if so.
-    notestext = "; ".join(notes)
-    if notestext:
-        if comment:
-            comment += " (%s)" % notestext
+    # Pass None for pagemsg to suppress warning on lang section not found.
+    modsec = blib.find_modifiable_lang_section(text, "Russian", None, force_final_nls=True)
+    if modsec is None:
+        return blib.add_new_l2_section(text, pagemsg, "Russian", newtext)
+    secbody = modsec.secbody
+    if args.overwrite_page:
+        if "==Etymology 1==" in secbody and not args.overwrite_etymologies:
+            errandpagemsg("WARNING: Found ==Etymology 1== in page text, not overwriting, skipping form")
+            return
         else:
-            comment = notestext
-
-    return newtext, comment
-
+            pagemsg("WARNING: Overwriting entire Russian section")
+            notes.append("create Russian section for numeral %s (%s), overwriting section" % (lemma, num))
+            stripped_secbody = secbody.rstrip("\n")
+            stripped_newtext = newtext.rstrip("\n")
+            if stripped_secbody == stripped_newtext:
+                pagemsg("No change in text")
+            elif args.verbose:
+                pagemsg("Replacing <%s> with <%s>" % (stripped_secbody, stripped_newtext))
+            return modsec.rebuild(secbody=newtext), notes
+    else:
+        errandpagemsg("WARNING: Not overwriting existing Russian section")
+        return
 
 parser = blib.create_argparser("Save Russian numbers to Wiktionary", include_pagefile=True, include_stdin=True)
 parser.add_argument("--offline", help="Operate offline, outputting text of new pages", action="store_true")

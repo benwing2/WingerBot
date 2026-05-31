@@ -73,11 +73,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, "German", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find German section")
+    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     if re.search("== *Etymology 1 *==", secbody):
         pagemsg("WARNING: Multiple etymology sections, skipping")
@@ -254,13 +253,10 @@ def process_text_on_page(index, pagetitle, text):
             return
         notes.append("add {{superlative of|de|...}}")
 
-    sections[j] = secbody + sectail
-    text = "".join(sections)
-
     if not notes:
         pagemsg("WARNING: Couldn't convert page")
 
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(

@@ -12,10 +12,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
@@ -105,10 +105,7 @@ def process_text_on_page(index, pagetitle, text):
                         notes.append("clean Hindustani descendant template")
                 continue
 
-    secbody = "".join(subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
+    text = modsec.rebuild(secbody="".join(subsections))
     newtext = re.sub(r"\n\n\n+", "\n\n", text)
     if text != newtext:
         notes.append("convert 3+ newlines to 2 newlines")

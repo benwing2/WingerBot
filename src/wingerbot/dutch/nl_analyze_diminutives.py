@@ -161,11 +161,10 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    retval = blib.find_modifiable_lang_section(text, "Dutch", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Dutch", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     notes = []
 
@@ -214,12 +213,7 @@ def process_text_on_page(index, pagetitle, text):
                 if dims != newdims:
                     blib.set_param_chain(t, newdims, "3", "dim")
 
-    secbody = str(parsed)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    text = "".join(sections)
-
-    return text, notes
+    return modsec.rebuild(secbody=str(parsed)), notes
 
 
 parser = blib.create_argparser("Analyze {{nl-noun}} diminutive usage", include_pagefile=True, include_stdin=True)

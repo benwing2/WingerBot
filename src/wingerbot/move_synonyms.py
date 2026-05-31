@@ -16,12 +16,13 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
 
     lemma_defn_subsection = None
     non_lemma_defn_subsection = None
@@ -31,13 +32,13 @@ def process_text_on_page(pageindex, pagetitle, text):
             lemma_defn_subsection = None
             non_lemma_defn_subsection = None
             num_defn_subsections_seen = 0
-        if "\n#" in subsecs.subsections[k] and not re.search("^(Etymology|Pronunciation|Usage notes)", header):
-            lines = subsecs.subsections[k].strip().split("\n")
+        if "\n#" in subsections[k] and not re.search("^(Etymology|Pronunciation|Usage notes)", header):
+            lines = subsections[k].strip().split("\n")
             for lineind, line in enumerate(lines):
                 if re.search(r"\{\{(head\|[^{}]*|[a-z][a-z][a-z]?-[^{}|]*)forms?\b", line):
                     pagemsg(
                         "Saw potential lemma section #%s %s but appears to be a non-lemma form due to line #%s, not counting as lemma: %s"
-                        % (k // 2 + 1, subsecs.subsections[k - 1].strip(), lineind + 1, line)
+                        % (k // 2 + 1, subsections[k - 1].strip(), lineind + 1, line)
                     )
                     non_lemma_defn_subsection = k
                     break
@@ -325,7 +326,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 if defn_subsection is None:
                     pagemsg("WARNING: Couldn't find definition subsection for %s section #%s" % (syntype, k // 2 + 1))
                     return None
-                m = re.search(r"\A(.*?)((?:^#[^\n]*\n)+)(.*?)\Z", subsecs.subsections[defn_subsection], re.M | re.S)
+                m = re.search(r"\A(.*?)((?:^#[^\n]*\n)+)(.*?)\Z", subsections[defn_subsection], re.M | re.S)
                 if not m:
                     pagemsg(
                         "WARNING: Couldn't find definitions in definition subsection #%s" % (defn_subsection // 2 + 1)
@@ -429,16 +430,16 @@ def process_text_on_page(pageindex, pagetitle, text):
                     raise RuntimeError(
                         "Expected to have found a definition subsection and definition when calling put_back_new_defns"
                     )
-                subsecs.subsections[defn_subsection] = (
+                subsections[defn_subsection] = (
                     find_defns_result.before_defn_text + "".join(defns) + find_defns_result.after_defn_text
                 )
                 if skipped_a_line:
                     skipped_linenos = sorted(skipped_linenos)
                     skipped_lines = [lines[lineno] for lineno in skipped_linenos]
-                    subsecs.subsections[k] = "\n".join(skipped_lines)
+                    subsections[k] = "\n".join(skipped_lines)
                 else:
-                    subsecs.subsections[k - 1] = ""
-                    subsecs.subsections[k] = ""
+                    subsections[k - 1] = ""
+                    subsections[k] = ""
                 notes.append(
                     "convert %ss in %s subsection %s to inline %ss in subsection %s based on %s"
                     % (syntype, args.langname, k // 2 + 1, syntype, defn_subsection // 2 + 1, syndesc)
@@ -449,7 +450,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             syns_by_number: defaultdict[int, list[ParsedSyn]] = defaultdict(list)
             skipped_lines = []
             skipped_a_line = False
-            lines = subsecs.subsections[k].split("\n")
+            lines = subsections[k].split("\n")
             for lineno, line in enumerate(lines):
                 if not line.strip():
                     skipped_lines.append(lineno)
@@ -526,7 +527,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             skipped_lines = []
             skipped_a_line = False
             must_continue = False
-            lines = subsecs.subsections[k].split("\n")
+            lines = subsections[k].split("\n")
             for lineno, line in enumerate(lines):
                 if not line.strip():
                     skipped_lines.append(lineno)
@@ -680,7 +681,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 syns_by_tag = {}
                 skipped_lines = []
                 skipped_a_line = False
-                lines = subsecs.subsections[k].split("\n")
+                lines = subsections[k].split("\n")
                 total_syns = 0
                 for lineno, line in enumerate(lines):
                     if not line.strip():
@@ -769,10 +770,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                         )
                     continue
 
-    secbody = "".join(subsecs.subsections)
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    return "".join(sections), notes
+    return modsec.rebuild(secbody="".join(subsections)), notes
 
 
 parser = blib.create_argparser(

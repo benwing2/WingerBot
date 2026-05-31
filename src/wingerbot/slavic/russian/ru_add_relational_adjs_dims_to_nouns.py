@@ -4,7 +4,6 @@ import pywikibot, re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, msg, site
-
 from wingerbot.slavic.russian import rulib
 
 
@@ -16,11 +15,11 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     text = str(nounpage.text)
-    retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Russian", None)  # We print our own message
+    if modsec is None:
         pagemsg("WARNING: Couldn't find Russian section for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
     parsed = blib.parse_text(secbody)
     head = None
     for t in parsed.filter_templates():
@@ -51,12 +50,11 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
         pagemsg("Replaced %s with %s" % (orighead, str(head)))
         notes.append("add %s=%s to Russian noun" % (param, ",".join(added_adjs_or_dims)))
         secbody = str(parsed)
-    subsecs = re.split("(^==.*==\n)", secbody, 0, re.M)
-    for k in range(2, len(subsecs), 2):
-        if "==Derived terms==" in subsecs[k - 1] or "==Related terms==" in subsecs[k - 1]:
-            header = re.sub("=", "", subsecs[k - 1]).strip()
+    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsections = subsecs.subsections
+    for k, header in subsecs.header_list:
+        if header in ["Derived terms", "Related terms"]:
             for adj_or_dim in adjs_or_dims:
-
                 def note_removed_text(m):
                     if m.group(1):
                         pagemsg(
@@ -65,29 +63,27 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
                         )
                     return ""
 
-                newsubsecsk = re.sub(
-                    r"\{\{[lm]\|ru\|%s((?:\|[^{}\n]*)?)\}\}" % adj_or_dim, note_removed_text, subsecs[k]
+                newsubsectionsk = re.sub(
+                    r"\{\{[lm]\|ru\|%s((?:\|[^{}\n]*)?)\}\}" % adj_or_dim, note_removed_text, subsections[k]
                 )
-                if newsubsecsk != subsecs[k]:
+                if newsubsectionsk != subsections[k]:
                     notes.append("remove %s %s from %s" % (desc, adj_or_dim, header))
-                subsecs[k] = newsubsecsk
-                subsecs[k] = re.sub(", *,", ",", subsecs[k])
+                subsections[k] = newsubsectionsk
+                subsections[k] = re.sub(", *,", ",", subsections[k])
                 # Repeat in case adjacent terms removed (unlikely though).
-                subsecs[k] = re.sub(", *,", ",", subsecs[k])
-                subsecs[k] = re.sub(" *, *$", "", subsecs[k], 0, re.M)
-                subsecs[k] = re.sub(r"^\* *, *", "* ", subsecs[k], 0, re.M)
-                subsecs[k] = re.sub(r"^\* *(\n|$)", "", subsecs[k], 0, re.M)
-            if re.search(r"^\s*$", subsecs[k]):
-                subsecs[k] = ""
-                subsecs[k - 1] = ""
-    secbody = "".join(subsecs)
-    secj = secbody + sectail
-    newsecj = re.sub(r"\n\n\n+", "\n\n", secj)
-    if newsecj != secj and not notes:
+                subsections[k] = re.sub(", *,", ",", subsections[k])
+                subsections[k] = re.sub(" *, *$", "", subsections[k], 0, re.M)
+                subsections[k] = re.sub(r"^\* *, *", "* ", subsections[k], 0, re.M)
+                subsections[k] = re.sub(r"^\* *(\n|$)", "", subsections[k], 0, re.M)
+            if re.search(r"^\s*$", subsections[k]):
+                subsections[k] = ""
+                subsections[k - 1] = ""
+    text = modsec.rebuild(secbody="".join(subsections))
+    newtext = re.sub(r"\n\n\n+", "\n\n", text)
+    if newtext != text and not notes:
         notes.append("eliminate sequences of 3 or more newlines")
-    secj = newsecj
-    sections[j] = secj
-    return "".join(sections), notes
+    text = newtext
+    return text, notes
 
 
 def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
@@ -134,13 +130,14 @@ def process_section_for_relational_adj_snarf(index, pagetitle, text, is_multi_et
                 pagemsg("WARNING: Saw links in relational adjective %s, skipping: head=%s" % (newadj, str(t)))
                 return
             adj = newadj
-    subsecs = re.split("(^==.*==\n)", text, 0, re.M)
+    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsections = subsecs.subsections
     if is_multi_etym_section:
-        etymtext = subsecs[0]
+        etymtext = subsections[0]
     else:
-        for k in range(2, len(subsecs), 2):
-            if "==Etymology==" in subsecs[k - 1]:
-                etymtext = subsecs[k]
+        for k, header in subsecs.header_list:
+            if header == "Etymology":
+                etymtext = subsections[k]
                 break
         else:
             pagemsg("WARNING: Relational adjective %s but couldn't find etymology section" % adj)
@@ -193,8 +190,7 @@ def snarf_relational_adjs(index, pagetitle, text):
     modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
     if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
-    secbody = text
+    secbody = modsec.secbody
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
         for k in range(2, len(etym_sections), 2):
@@ -256,12 +252,10 @@ def snarf_diminutives(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    # retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
-    # if retval is None:
-    #  pagemsg("WARNING: Couldn't find Russian section")
-    #  return
-    # sections, j, secbody, sectail, has_non_lang = retval.props()
-    secbody = text
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
     if "Etymology 1" in secbody:
         etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
         for k in range(2, len(etym_sections), 2):

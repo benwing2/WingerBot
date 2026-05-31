@@ -14,11 +14,6 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-# Make sure there are two trailing newlines
-def ensure_two_trailing_nl(text):
-    return re.sub(r"\n*$", r"\n\n", text)
-
-
 def process_text_on_page(index, pagetitle, text, nowarn=False):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -33,10 +28,10 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
 
     found_participle = False
 
-    retval = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
-    if retval is None:
+    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
 
     subsecs = blib.split_text_into_subsections(secbody, pagemsg)
     subsections = subsecs.subsections
@@ -175,9 +170,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
         secbody = "".join(l3sections)
         if not rearranged:
             break
-    # Strip extra newlines added to secbody
-    sections[j] = secbody.rstrip("\n") + sectail
-    new_text = "".join(sections)
+    new_text = modsec.rebuild(secbody=secbody)
 
     if "Etymology 1" in new_text:
         pagemsg("WARNING: Multiple etymology sections, might need to manually fix up")

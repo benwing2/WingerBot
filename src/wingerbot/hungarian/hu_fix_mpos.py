@@ -14,11 +14,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    retval = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
-    if retval is None:
-        pagemsg("WARNING: Couldn't find Hungarian section")
+    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    if modsec is None:
         return
-    sections, j, secbody, sectail, has_non_lang = retval.props()
+    secbody = modsec.secbody
     parsed = blib.parse_text(secbody)
     saw_mpos_inflection_of = False
     for t in parsed.filter_templates():
@@ -53,9 +52,7 @@ def process_text_on_page(index, pagetitle, text):
     if notes and "==Etymology 1==" in secbody:
         pagemsg("WARNING: Would make a change, but saw ==Etymology 1==, skipping")
         return
-    sections[j] = secbody + sectail
-    text = "".join(sections)
-    return text, notes
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(
