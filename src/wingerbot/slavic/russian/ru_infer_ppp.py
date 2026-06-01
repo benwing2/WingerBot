@@ -95,14 +95,8 @@ def form_ppp(verbtype, pagetitle, conjargs):
         return None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     manual_ppp_forms = [
         "past_pasv_part",
@@ -114,7 +108,7 @@ def process_text_on_page(index, pagetitle, text):
         "ppp3",
         "ppp4",
     ]
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
@@ -129,11 +123,11 @@ def process_text_on_page(index, pagetitle, text):
             if not manual_ppps:
                 continue
             if [x for x in t.params if str(x.value) == "or"]:
-                pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+                p.msg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
             curvariant = getparam(t, "2")
             if "+p" in curvariant or "(7)" in curvariant or "(8)" in curvariant:
-                pagemsg("WARNING: Found both manual PPP and PPP variant, something wrong: %s" % str(t))
+                p.msg("WARNING: Found both manual PPP and PPP variant, something wrong: %s" % str(t))
                 continue
             t2 = blib.parse_text(str(t)).filter_templates()[0]
             for form in manual_ppp_forms:
@@ -147,13 +141,13 @@ def process_text_on_page(index, pagetitle, text):
             for variant in variants_to_try:
                 t2.add("2", curvariant + variant)
                 tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t2))
-                result = expand_text(tempcall)
+                result = p.expand_text(tempcall)
                 if not result:
-                    pagemsg("WARNING: Error generating forms, skipping")
+                    p.msg("WARNING: Error generating forms, skipping")
                     continue
                 conjargs = blib.split_generate_args(result)
                 if "past_pasv_part" not in conjargs:
-                    pagemsg("WARNING: Something wrong, no past passive participle generated: %s" % str(t))
+                    p.msg("WARNING: Something wrong, no past passive participle generated: %s" % str(t))
                     continue
                 auto_ppps = []
                 for form in manual_ppp_forms:
@@ -162,7 +156,7 @@ def process_text_on_page(index, pagetitle, text):
                             if ppp and ppp != "-":
                                 auto_ppps.append(ppp)
                 if manual_ppps == auto_ppps:
-                    pagemsg("Manual PPP's %s same as auto-generated PPP's, switching to auto" % ",".join(manual_ppps))
+                    p.msg("Manual PPP's %s same as auto-generated PPP's, switching to auto" % ",".join(manual_ppps))
                     for form in manual_ppp_forms:
                         rmparam(t, form)
                     t.add("2", curvariant + variant)
@@ -175,11 +169,11 @@ def process_text_on_page(index, pagetitle, text):
                     )
             else:  # no break in for loop
                 for m in notsamemsgs:
-                    pagemsg(m)
+                    p.msg(m)
 
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -191,5 +185,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

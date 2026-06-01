@@ -6,29 +6,26 @@ from wingerbot import blib
 from wingerbot.blib import rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    genders = pagetitle_to_genders.get(pagetitle, None)
+    genders = pagetitle_to_genders.get(p.title, None)
     if not genders:
-        pagemsg("WARNING: Can't locate genders for page")
+        p.msg("WARNING: Can't locate genders for page")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headword_template = None
 
     for t in parsed.filter_templates():
         if tname(t) in ["ru-noun+", "ru-proper noun+"]:
             if headword_template:
-                pagemsg("WARNING: Multiple headword templates, skipping")
+                p.msg("WARNING: Multiple headword templates, skipping")
                 return
             headword_template = t
     if not headword_template:
-        pagemsg("WARNING: No headword templates, skipping")
+        p.msg("WARNING: No headword templates, skipping")
         return
 
     orig_template = str(headword_template)
@@ -40,7 +37,7 @@ def process_text_on_page(index, pagetitle, text):
     for gnum, g in enumerate(genders):
         param = "g" if gnum == 0 else "g" + str(gnum + 1)
         headword_template.add(param, g)
-    pagemsg("Replacing %s with %s" % (orig_template, str(headword_template)))
+    p.msg("Replacing %s with %s" % (orig_template, str(headword_template)))
 
     return str(parsed), "Fix headword gender, substituting new value %s" % ",".join(genders)
 
@@ -65,5 +62,5 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
         pagetitle_to_genders[page] = re.split(",", genders)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_genders.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_genders.keys())
 )

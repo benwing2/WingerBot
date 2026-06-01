@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, tname
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 from wingerbot.slavic.russian import ruheadlib
@@ -47,16 +47,11 @@ def find_stress(term, pagemsg, errandpagemsg):
     return term, None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
     found_affix = False
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -81,7 +76,7 @@ def process_text_on_page(index, pagetitle, text):
                 for name, value, showkey in params:
                     t.add(name, value, showkey=showkey, preserve_spacing=False)
             t.name = "affix"
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
             notes.append("convert {{compound}} to {{affix}}")
             origt = str(t)
             tn = tname(t)
@@ -89,17 +84,17 @@ def process_text_on_page(index, pagetitle, text):
         if tn in ["affix", "af"]:
             if getparam(t, "1") != "ru":
                 continue
-            m = re.search(r"\n(.*?%s.*?)\n" % re.escape(origt), text)
+            m = re.search(r"\n(.*?%s.*?)\n" % re.escape(origt), p.text)
             if not m:
-                pagemsg("WARNING: Something wrong, can't find template in text: %s" % origt)
+                p.msg("WARNING: Something wrong, can't find template in p.text: %s" % origt)
                 continue
             line = m.group(1)
 
             def warning(textmsg):
                 if etym_change:
-                    pagemsg("WARNING: %s: /// %s /// %s" % (textmsg, line, line))
+                    p.msg("WARNING: %s: /// %s /// %s" % (textmsg, line, line))
                 else:
-                    pagemsg("WARNING: %s: %s" % (textmsg, origt))
+                    p.msg("WARNING: %s: %s" % (textmsg, origt))
 
             found_affix = True
             alt1 = getparam(t, "alt1")
@@ -109,7 +104,7 @@ def process_text_on_page(index, pagetitle, text):
                     warning("Found alt1= and tr1=, not sure what to do")
                     continue
                 term = getparam(t, "2")
-                term, termtr = find_stress(term, pagemsg, errandpagemsg)
+                term, termtr = find_stress(term, p.msg, p.errandmsg)
                 # Fetch all params, moving params > 1 over to the right by one.
                 params = []
                 for param in t.params:
@@ -135,7 +130,7 @@ def process_text_on_page(index, pagetitle, text):
                 # Put back parameters in order.
                 for name, value, showkey in params:
                     t.add(name, value, showkey=showkey, preserve_spacing=False)
-                pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+                p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
                 notes.append("convert use of alt1= in etyms to proper use of interfixes")
             else:
                 for param in t.params:
@@ -145,18 +140,18 @@ def process_text_on_page(index, pagetitle, text):
                                 warning("Has both interfix and alt1= in affix template")
                                 break
                         else:
-                            pagemsg("Already has interfix in affix template: %s" % origt)
+                            p.msg("Already has interfix in affix template: %s" % origt)
                         break
                 else:
-                    if "-" in pagetitle:
-                        pagemsg("No interfix but pagetitle '%s' has hyphen, probably OK: %s" % (pagetitle, origt))
-                    elif " " in pagetitle:
-                        pagemsg("No interfix but pagetitle '%s' has space, probably OK: %s" % (pagetitle, origt))
+                    if "-" in p.title:
+                        p.msg("No interfix but p.title '%s' has hyphen, probably OK: %s" % (p.title, origt))
+                    elif " " in p.title:
+                        p.msg("No interfix but p.title '%s' has space, probably OK: %s" % (p.title, origt))
                     else:
                         warning("No interfix and no alt1= alternative")
 
     if not found_affix:
-        pagemsg("WARNING: No affix template")
+        p.msg("WARNING: No affix template")
 
     return str(parsed), notes
 
@@ -174,5 +169,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 etym_change = args.etym_change
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian compound words"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian compound words"]
 )

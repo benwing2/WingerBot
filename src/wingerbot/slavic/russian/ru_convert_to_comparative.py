@@ -6,19 +6,16 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -36,9 +33,9 @@ def process_text_on_page(index, pagetitle, text):
             continue
 
         if found_adj_comp and not found_adv_comp:
-            pagemsg("WARNING: Found adjective but not adverb 'comparative of'")
+            p.msg("WARNING: Found adjective but not adverb 'comparative of'")
         if found_adv_comp and not found_adj_comp:
-            pagemsg("WARNING: Found adverb but not adjective 'comparative of'")
+            p.msg("WARNING: Found adverb but not adjective 'comparative of'")
 
         for t in parsed.filter_templates():
             origt = str(t)
@@ -64,7 +61,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("noadj", "1")
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
                 notes.append("convert headword to ru-comparative")
         subsections[k] = str(parsed)
     secbody = "".join(subsections)
@@ -83,7 +80,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian comparative adjectives", "Russian comparative adverbs"],
 )

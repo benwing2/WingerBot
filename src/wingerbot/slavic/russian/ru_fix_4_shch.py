@@ -4,14 +4,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     # FIXME: Script no longer applies and would need fixing up.
 
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
@@ -23,10 +20,10 @@ def process_text_on_page(index, pagetitle, text):
                 rmparam(t, "4")
                 notes.append("move param 4 (щ) to param 3")
             elif shch:
-                pagemsg("WARNING: Strange value %s for param 4" % shch)
+                p.msg("WARNING: Strange value %s for param 4" % shch)
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -36,5 +33,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:tracking/ru-verb/conj-4a"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:tracking/ru-verb/conj-4a"]
 )

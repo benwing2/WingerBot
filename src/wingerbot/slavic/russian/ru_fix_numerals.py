@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
     adjval = None
@@ -28,21 +25,21 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn == "ordinalbox" and getparam(t, "1") == "ru":
             if not adjval:
-                pagemsg("WARNING: Can't find accented ordinal form")
-            elif adjval != pagetitle:
+                p.msg("WARNING: Can't find accented ordinal form")
+            elif adjval != p.title:
                 t.add("alt", adjval)
                 notes.append("Add alt=%s to ordinalbox" % adjval)
         if tn == "cardinalbox" and getparam(t, "1") == "ru":
             if not numval:
-                pagemsg("WARNING: Can't find accented cardinal form")
-            elif numval != pagetitle:
+                p.msg("WARNING: Can't find accented cardinal form")
+            elif numval != p.title:
                 t.add("alt", numval)
                 notes.append("Add alt=%s to cardinalbox" % numval)
             if "[[Category:Russian cardinal numbers]]" not in str(parsed):
-                pagemsg("WARNING: Numeral not in [[Category:Russian cardinal numbers]]")
+                p.msg("WARNING: Numeral not in [[Category:Russian cardinal numbers]]")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -58,7 +55,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian ordinal numbers", "Russian numerals"],
 )

@@ -6,12 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     proper_noun_headword = None
     surname_template = None
@@ -21,22 +18,22 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn == "ru-proper noun":
             if proper_noun_headword:
-                pagemsg("WARNING: Multiple ru-proper noun headwords, skipping")
+                p.msg("WARNING: Multiple ru-proper noun headwords, skipping")
                 return
             proper_noun_headword = t
         if tn == "surname":
             if surname_template:
-                pagemsg("WARNING: Multiple surname templates, skipping")
+                p.msg("WARNING: Multiple surname templates, skipping")
                 return
             surname_template = t
         if tn == "ru-adj11":
             if ru_adj11_template:
-                pagemsg("WARNING: Multiple ru-adj11 templates, skipping")
+                p.msg("WARNING: Multiple ru-adj11 templates, skipping")
                 return
             ru_adj11_template = t
 
     if not ru_adj11_template:
-        pagemsg("WARNING: Something wrong, can't find ru-adj11 template, skipping")
+        p.msg("WARNING: Something wrong, can't find ru-adj11 template, skipping")
         return
     accented_name = getparam(ru_adj11_template, "3")
     orig_ru_adj11_template = str(ru_adj11_template)
@@ -49,18 +46,18 @@ def process_text_on_page(index, pagetitle, text):
     del ru_adj11_template.params[:]
     ru_adj11_template.add("1", accented_name)
     ru_adj11_template.params.extend(remaining_params)
-    pagemsg("Replacing %s with %s" % (orig_ru_adj11_template, str(ru_adj11_template)))
+    p.msg("Replacing %s with %s" % (orig_ru_adj11_template, str(ru_adj11_template)))
 
     if not surname_template:
-        pagemsg("WARNING: Can't find surname template")
+        p.msg("WARNING: Can't find surname template")
     else:
         orig_surname_template = str(surname_template)
         if not surname_template.has("dot"):
             surname_template.add("dot", ":")
-            pagemsg("Replacing %s with %s" % (orig_surname_template, str(surname_template)))
+            p.msg("Replacing %s with %s" % (orig_surname_template, str(surname_template)))
 
     if not proper_noun_headword:
-        pagemsg("WARNING: Can't find proper noun headword template")
+        p.msg("WARNING: Can't find proper noun headword template")
     else:
         orig_proper_noun_headword = str(proper_noun_headword)
         rmparam(proper_noun_headword, "4")
@@ -75,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
         proper_noun_headword.add("a", "an")
         proper_noun_headword.add("n", "both")
         proper_noun_headword.params.extend(remaining_params)
-        pagemsg("Replacing %s with %s" % (orig_proper_noun_headword, str(proper_noun_headword)))
+        p.msg("Replacing %s with %s" % (orig_proper_noun_headword, str(proper_noun_headword)))
 
     newtext = str(parsed)
 
@@ -91,5 +88,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:ru-adj11"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:ru-adj11"]
 )

@@ -9,15 +9,12 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -25,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
     def check_for_translation_italics(val, orig):
         val = val.replace("'', ''", ", ")
         if re.search("(?<!')''(?!')", val):
-            pagemsg("WARNING: Italics in translation <<%s>>: <<%s>>" % (val, orig))
+            p.msg("WARNING: Italics in translation <<%s>>: <<%s>>" % (val, orig))
         return val
 
     def fix_l_m_lang_links_in_ru(val):
@@ -37,7 +34,7 @@ def process_text_on_page(index, pagetitle, text):
         split_on_paired_brackets_braces = re.split(r"\[\[[^\[\]]*\]\]|\{\{[^{}]*\}\}", val)
         for outside_bracket_brace in split_on_paired_brackets_braces:
             if "|" in outside_bracket_brace:
-                pagemsg("WARNING: Stray vertical bar in Russian or English, can't handle: <<%s>>" % val)
+                p.msg("WARNING: Stray vertical bar in Russian or English, can't handle: <<%s>>" % val)
                 return True
         return False
 
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
         ):
             return m.group(0)
         retval = "#: {{ux|ru|%s|tr=%s|%s}}" % (ru, tr, en)
-        pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+        p.msg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
         notes.append("converted raw multi-line usex to 'ux|ru'")
         return retval
 
@@ -71,7 +68,7 @@ def process_text_on_page(index, pagetitle, text):
         ):
             return m.group(0)
         retval = "%s#*: {{ux|ru|%s|tr=%s|%s}}" % (prefix, ru, tr, en)
-        pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+        p.msg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
         notes.append("converted raw multi-line hidden usex to 'ux|ru'")
         return retval
 
@@ -97,14 +94,14 @@ def process_text_on_page(index, pagetitle, text):
                 retval = prefix + " {{uxi|ru|%s|%s}}" % (ru, en)
             else:
                 if "|tr=" in ru:
-                    pagemsg("WARNING: Found |tr= in link, can't handle: <<%s>>" % m.group(0))
+                    p.msg("WARNING: Found |tr= in link, can't handle: <<%s>>" % m.group(0))
                     return m.group(0)
                 # A single vertical bar in ru is allowed here; it will be handled
                 # correctly because we wrap it in a raw link
                 if check_for_stray_vertical_bar(en):
                     return m.group(0)
                 retval = prefix + " {{uxi|ru|[[%s]]|%s}}" % (ru, en)
-            pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+            p.msg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
             notes.append("converted raw single-line usex using {{%s}} to 'uxi|ru'" % tempname)
             return retval
 
@@ -154,7 +151,7 @@ def process_text_on_page(index, pagetitle, text):
             if dash == "≈":
                 en = "≈ " + en
             retval = prefix + " {{uxi|ru|%s|%s}}" % (ru, en)
-            pagemsg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
+            p.msg("Replaced <<%s>> with <<%s>>" % (m.group(0), retval))
             notes.append("converted pure raw single-line usex to 'uxi|ru'%s" % allow_braces_msg)
             return retval
 
@@ -206,8 +203,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     # default_cats=["Russian lemmas", "Russian non-lemma forms"]
     default_cats=["Russian lemmas"],
 )

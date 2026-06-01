@@ -4,12 +4,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     found_headword_template = False
     headword_templates = []
@@ -27,9 +24,9 @@ def process_text_on_page(index, pagetitle, text):
             found_decl_template = True
     if found_headword_template and not found_invariant_headword_template:
         if found_decl_template:
-            pagemsg("Found old-style headword template(s) %s with decl" % ", ".join(headword_templates))
+            p.msg("Found old-style headword template(s) %s with decl" % ", ".join(headword_templates))
         else:
-            pagemsg("Found old-style headword template(s) %s without decl" % ", ".join(headword_templates))
+            p.msg("Found old-style headword template(s) %s without decl" % ", ".join(headword_templates))
 
 
 parser = blib.create_argparser("Find Russian nouns without declension", include_pagefile=True, include_stdin=True)
@@ -41,8 +38,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:ru-noun", "Template:ru-proper noun"],
     # default_refs=["Template:tracking/ru-headword/space-in-headword/%s" % pos for pos in ["nouns", "proper nouns"]],
 )

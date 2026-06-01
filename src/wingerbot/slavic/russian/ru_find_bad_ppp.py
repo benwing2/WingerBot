@@ -115,33 +115,27 @@ def form_ppp(conjtype, pagetitle, conjargs):
         return None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     do_fix = not not args.pagefile
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     notes = []
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["ru-conj", "ru-conj-old"]:
             if [x for x in t.params if str(x.value) == "or"]:
-                pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+                p.msg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
             conjtype = getparam(t, "2")
             if tn == "ru-conj":
                 tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
             else:
                 tempcall = re.sub(r"\{\{ru-conj-old", "{{ru-generate-verb-forms|old=y", str(t))
-            result = expand_text(tempcall)
+            result = p.expand_text(tempcall)
             if not result:
-                pagemsg("WARNING: Error generating forms, skipping")
+                p.msg("WARNING: Error generating forms, skipping")
                 continue
             conjargs = blib.split_generate_args(result)
             for base in ["past_pasv_part", "ppp"]:
@@ -153,36 +147,36 @@ def process_text_on_page(index, pagetitle, text):
                     form = re.sub("//.*", "", form)
                     fix_form = False
                     if not re.search(r"([аяеё]́?нный|тый)$", form):
-                        pagemsg("WARNING: Past passive participle doesn't end correctly: %s" % form)
+                        p.msg("WARNING: Past passive participle doesn't end correctly: %s" % form)
                         fix_form = True
-                    unstressed_page = rulib.make_unstressed_ru(pagetitle)
+                    unstressed_page = rulib.make_unstressed_ru(p.title)
                     unstressed_form = rulib.make_unstressed_ru(form)
                     warned = False
                     if unstressed_form[0] != unstressed_page[0]:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Past passive participle doesn't begin with same letter, probably for wrong aspect: %s"
                             % form
                         )
                         warned = True
                         fix_form = True
                     if form.endswith("нный"):
-                        if pagetitle.endswith("ать"):
+                        if p.title.endswith("ать"):
                             good_ending = "анный"
-                        elif pagetitle.endswith("ять"):
+                        elif p.title.endswith("ять"):
                             good_ending = "янный"
                         else:
                             good_ending = "енный"
                         if not unstressed_form.endswith(good_ending):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Past passive participle doesn't end right, probably for wrong aspect: %s"
                                 % form
                             )
                             warned = True
                             fix_form = True
                     if not warned:
-                        correct_form = form_ppp(conjtype, pagetitle, conjargs)
+                        correct_form = form_ppp(conjtype, p.title, conjargs)
                         if correct_form and unstressed_form != correct_form:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Past passive participle not formed according to rule, probably wrong: found %s, expected %s"
                                 % (unstressed_form, correct_form)
                             )
@@ -197,7 +191,7 @@ def process_text_on_page(index, pagetitle, text):
                             curvals.append(val)
                     newvals = [x for x in curvals if x not in forms_to_remove]
                     if len(curvals) - len(newvals) != len(forms_to_remove):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Something wrong, couldn't remove all PPP forms %s" % ",".join(forms_to_remove)
                         )
                     curindex = 1
@@ -207,7 +201,7 @@ def process_text_on_page(index, pagetitle, text):
                         curindex += 1
                     for i in range(curindex, 10):
                         rmparam(t, base + ("" if i == 1 else str(i)))
-                    pagemsg("Replacing %s with %s" % (origt, str(t)))
+                    p.msg("Replacing %s with %s" % (origt, str(t)))
                     notes.append("removed bad past pasv part(s) %s" % ",".join(forms_to_remove))
 
     return str(parsed), notes
@@ -220,5 +214,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

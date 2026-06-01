@@ -3,28 +3,22 @@
 import pywikibot, re, sys, argparse, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     def process_line(line, aspect, output):
         if not line.startswith("* "):
-            pagemsg("WARNING: Unrecognized term line, doesn't start with '* ': %s" % line)
+            p.msg("WARNING: Unrecognized term line, doesn't start with '* ': %s" % line)
             return False
         line = line[2:]
         if line == "(no equivalent)":
             output.append("-")
             return True
         if line == "(various)":
-            pagemsg("WARNING: Saw '(various)', treating like '(no equivalent)': %s" % line)
+            p.msg("WARNING: Saw '(various)', treating like '(no equivalent)': %s" % line)
             output.append("-")
             return True
         terms = re.split(", *", line)
@@ -39,14 +33,14 @@ def process_text_on_page(index, pagetitle, pagetext):
                     term = words[-1]
                     notes = " ".join(words[:-1])
                 else:
-                    pagemsg("WARNING: Can't find {{l|...}} template: %s" % term)
+                    p.msg("WARNING: Can't find {{l|...}} template: %s" % term)
                     return False
             else:
                 notes = ""
             if notes:
                 m = re.search(r"^\{\{[qi]\|(.*)\}\}$", notes)
                 if not m:
-                    pagemsg("WARNING: Unrecognized format for notes: %s" % notes)
+                    p.msg("WARNING: Unrecognized format for notes: %s" % notes)
                     return False
                 notes = "<q:%s>" % m.group(1)
             brackets = False
@@ -55,23 +49,23 @@ def process_text_on_page(index, pagetitle, pagetext):
                 brackets = True
                 term = m.group(1)
             if not re.search(r"^\{\{l(-self)?\|.*\}\}$", term):
-                pagemsg("WARNING: Term isn't just {{l|...}}: %s" % term)
+                p.msg("WARNING: Term isn't just {{l|...}}: %s" % term)
                 return False
             wordts = list(blib.parse_text(term).filter_templates())
             if len(wordts) != 1:
-                pagemsg("WARNING: Not exactly one template in term: %s" % term)
+                p.msg("WARNING: Not exactly one template in term: %s" % term)
                 return False
             wordt = wordts[0]
             if tname(wordt) not in ["l", "l-self"]:
-                pagemsg("WARNING: Unrecognized template: %s" % term)
+                p.msg("WARNING: Unrecognized template: %s" % term)
                 return False
             for param in wordt.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "g", "g2"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s in template: %s" % (pn, str(param.value), term))
+                    p.msg("WARNING: Unrecognized param %s=%s in template: %s" % (pn, str(param.value), term))
                     return False
             if getparam(wordt, "1") != "ru":
-                pagemsg("WARNING: Wrong language for term template: %s" % term)
+                p.msg("WARNING: Wrong language for term template: %s" % term)
                 return False
             genders = blib.fetch_param_chain(wordt, "g")
             if genders and genders != [aspect]:
@@ -85,7 +79,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         output.append(",".join(processed_terms))
         return True
 
-    lines = pagetext.split("\n")
+    lines = p.text.split("\n")
     aspect = None
     pfs = []
     impfs = []
@@ -101,14 +95,14 @@ def process_text_on_page(index, pagetitle, pagetext):
             if header == "Conjugation":
                 continue
             if header != "Derived terms":
-                pagemsg("WARNING: Apparent derived-terms table in header '%s' rather than 'Derived terms'" % header)
+                p.msg("WARNING: Apparent derived-terms table in header '%s' rather than 'Derived terms'" % header)
             aspect = "impf"
             continue
         elif line == "''perfective''":
             if header == "Conjugation":
                 continue
             if header != "Derived terms":
-                pagemsg("WARNING: Apparent derived-terms table in header '%s' rather than 'Derived terms'" % header)
+                p.msg("WARNING: Apparent derived-terms table in header '%s' rather than 'Derived terms'" % header)
             aspect = "pf"
             continue
         elif aspect and line in ["{{mid2}}", "{{der-mid}}"]:
@@ -117,14 +111,14 @@ def process_text_on_page(index, pagetitle, pagetext):
             aspect = None
             if not saw_error:
                 if len(pfs) != len(impfs):
-                    pagemsg("WARNING: Saw %s imperfective(s) but %s perfective(s)" % (len(impfs), len(pfs)))
+                    p.msg("WARNING: Saw %s imperfective(s) but %s perfective(s)" % (len(impfs), len(pfs)))
                 else:
                     if preceding:
-                        msg("----")
+                        p.msg("----")
                     else:
-                        msg("Page %s %s: --------- begin text -----------" % (index, pagetitle))
+                        p.msg("--------- begin text -----------")
                     for pf, impf in zip(pfs, impfs):
-                        msg("%s %s" % (pf.replace(" ", "_"), impf.replace(" ", "_")))
+                        p.msg("%s %s" % (pf.replace(" ", "_"), impf.replace(" ", "_")))
                     preceding = True
             pfs = []
             impfs = []
@@ -133,16 +127,16 @@ def process_text_on_page(index, pagetitle, pagetext):
             if not ok:
                 saw_error = True
     if preceding:
-        msg("--------- end text -----------")
+        p.msg("--------- end text -----------")
     else:
-        if not pagetitle.startswith("-"):
-            hyphen_pagetitle = "-" + pagetitle
+        if not p.title.startswith("-"):
+            hyphen_pagetitle = "-" + p.title
             hyphen_page = pywikibot.Page(site, hyphen_pagetitle)
-            hyphen_text = blib.safe_page_text(hyphen_page, errandpagemsg)
+            hyphen_text = blib.safe_page_text(hyphen_page, p.errandmsg)
             if hyphen_text:
-                process_text_on_page(index, hyphen_pagetitle, hyphen_text)
+                process_text_on_page(blib.ProcessPageParams(args, p.index, hyphen_pagetitle, hyphen_text, None))
             else:
-                pagemsg("WARNING: Couldn't find derived terms on page")
+                p.msg("WARNING: Couldn't find derived terms on page")
 
 
 parser = blib.create_argparser(
@@ -153,4 +147,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

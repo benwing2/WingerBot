@@ -44,16 +44,10 @@ def output_heads_seen(overall=False):
         msg("  %s = %s" % (head, count))
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     found_page_head = False
     for t in parsed.filter_templates():
         found_this_head = False
@@ -62,22 +56,22 @@ def process_text_on_page(index, pagetitle, text):
             heads = blib.fetch_param_chain(t, "1", "head")
             for head in heads:
                 if has_secondary_stress(head):
-                    pagemsg("Found secondarily stressed head %s in %s" % (head, str(t)))
+                    p.msg("Found secondarily stressed head %s in %s" % (head, str(t)))
         elif tn == "head" and getparam(t, "1") == "ru":
             heads = blib.fetch_param_chain(t, "head", "head")
             for head in heads:
                 if has_secondary_stress(head):
-                    pagemsg("Found secondarily stressed head %s in %s" % (head, str(t)))
+                    p.msg("Found secondarily stressed head %s in %s" % (head, str(t)))
         elif tn in ["ru-noun+", "ru-proper noun+", "ru-noun-table", "ru-noun-old"]:
-            per_word_objs = runounlib.split_noun_decl_arg_sets(t, pagemsg)
+            per_word_objs = runounlib.split_noun_decl_arg_sets(t, p.msg)
             for per_word in per_word_objs:
                 for arg_set in per_word:
                     if has_secondary_stress(arg_set[1]):
-                        pagemsg("Found secondarily stressed head %s in %s" % (arg_set[1], str(t)))
+                        p.msg("Found secondarily stressed head %s in %s" % (arg_set[1], str(t)))
         elif tn == "ru-decl-adj":
             head = getparam(t, "1")
             if has_secondary_stress(head):
-                pagemsg("Found secondarily stressed head %s in %s" % (head, str(t)))
+                p.msg("Found secondarily stressed head %s in %s" % (head, str(t)))
 
 
 parser = blib.create_argparser(
@@ -91,7 +85,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian lemmas", "Russian non-lemma forms"],
 )

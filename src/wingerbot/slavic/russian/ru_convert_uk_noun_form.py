@@ -8,14 +8,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param):
@@ -36,7 +33,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             pv = str(param.value)
             if pn in ["1", "head"]:
                 if head is not None:
-                    pagemsg("WARNING: Saw both 1= and head=, skipping: %s" % str(t))
+                    p.msg("WARNING: Saw both 1= and head=, skipping: %s" % str(t))
                     must_continue = True
                     break
                 head = pv
@@ -45,7 +42,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             elif re.search("^(head|tr|g)[0-9]*$", pn):
                 named_params.append((pn, pv))
             else:
-                pagemsg("WARNING: Unrecognized param %s=%s, skipping; %s" % (pn, pv, str(t)))
+                p.msg("WARNING: Unrecognized param %s=%s, skipping; %s" % (pn, pv, str(t)))
                 must_continue = True
                 break
         if must_continue:
@@ -61,7 +58,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             t.add(k, v, preserve_spacing=False)
         newt = str(t)
         if origt != newt:
-            pagemsg("Replace %s with %s" % (origt, newt))
+            p.msg("Replace %s with %s" % (origt, newt))
             notes.append(
                 "convert {{%s}} to {{head|%s|noun form}} per [[WT:RFDO#Template:%s-noun form]]" % (tn, lang, lang)
             )
@@ -80,7 +77,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:uk-noun form", "Template:ru-noun form"],
 )

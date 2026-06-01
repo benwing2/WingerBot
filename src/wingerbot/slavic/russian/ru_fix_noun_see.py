@@ -6,16 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headword_template = None
     see_template = None
@@ -23,19 +17,19 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn in ["ru-noun+", "ru-proper noun+"]:
             if headword_template:
-                pagemsg("WARNING: Multiple headword templates, skipping")
+                p.msg("WARNING: Multiple headword templates, skipping")
                 return
             headword_template = t
         if tn in ["ru-decl-noun-see"]:
             if see_template:
-                pagemsg("WARNING: Multiple ru-decl-noun-see templates, skipping")
+                p.msg("WARNING: Multiple ru-decl-noun-see templates, skipping")
                 return
             see_template = t
     if not headword_template:
-        pagemsg("WARNING: No ru-noun+ or ru-proper noun+ templates, skipping")
+        p.msg("WARNING: No ru-noun+ or ru-proper noun+ templates, skipping")
         return
     if not see_template:
-        pagemsg("WARNING: No ru-decl-noun-see templates, skipping")
+        p.msg("WARNING: No ru-decl-noun-see templates, skipping")
         return
 
     del see_template.params[:]
@@ -53,9 +47,9 @@ def process_text_on_page(index, pagetitle, text):
         #    would otherwise default to both.
         headword_generate_template = re.sub(r"^\{\{ru-proper noun\+", "{{ru-generate-noun-args", str(headword_template))
         headword_generate_template = re.sub(r"\}\}$", "|ndef=sg}}", headword_generate_template)
-        headword_generate_result = expand_text(headword_generate_template)
+        headword_generate_result = p.expand_text(headword_generate_template)
         if not headword_generate_result:
-            pagemsg("WARNING: Error generating ru-proper noun+ args")
+            p.msg("WARNING: Error generating ru-proper noun+ args")
             return None
         # 2. Fetch actual value of n.
         headword_args = blib.split_generate_args(headword_generate_result)
@@ -75,9 +69,9 @@ def process_text_on_page(index, pagetitle, text):
             assert headword_n == "b"
             rmparam(see_template, "n")
             see_generate_template = re.sub(r"^\{\{ru-noun-table", "{{ru-generate-noun-args", str(see_template))
-            see_generate_result = expand_text(see_generate_template)
+            see_generate_result = p.expand_text(see_generate_template)
             if not see_generate_result:
-                pagemsg("WARNING: Error generating ru-noun-table args")
+                p.msg("WARNING: Error generating ru-noun-table args")
                 return None
             see_args = blib.split_generate_args(see_generate_result)
             if see_args["n"] != "b":
@@ -97,5 +91,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:ru-decl-noun-see"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:ru-decl-noun-see"]
 )

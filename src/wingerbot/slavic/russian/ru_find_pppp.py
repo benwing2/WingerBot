@@ -8,16 +8,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["ru-conj", "ru-conj-old"] and getparam(t, "1").startswith("pf"):
@@ -25,9 +19,9 @@ def process_text_on_page(index, pagetitle, text):
                 tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
             else:
                 tempcall = re.sub(r"\{\{ru-conj-old", "{{ru-generate-verb-forms|old=y", str(t))
-            result = expand_text(tempcall)
+            result = p.expand_text(tempcall)
             if not result:
-                pagemsg("WARNING: Error generating forms, skipping")
+                p.msg("WARNING: Error generating forms, skipping")
                 continue
             args = blib.split_generate_args(result)
             for base in ["past_pasv_part", "ppp"]:
@@ -35,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
                     val = getparam(t, base + i)
                     if val and val != "-":
                         val = re.sub("//.*", "", val)
-                        pagemsg("Found perfective past passive participle: %s" % val)
+                        p.msg("Found perfective past passive participle: %s" % val)
 
 
 parser = blib.create_argparser(
@@ -45,5 +39,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

@@ -9,7 +9,7 @@ import pywikibot, re, sys, argparse
 import traceback
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -24,25 +24,20 @@ nonexistent_lemmas_refs = {}
 lemmas = set()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     def check_lemma(lemma):
         if lemma in lemma_count:
             lemma_count[lemma] += 1
             if lemma in nonexistent_lemmas:
-                nonexistent_lemmas_refs[lemma].append(pagetitle)
+                nonexistent_lemmas_refs[lemma].append(p.title)
         else:
             lemma_count[lemma] = 1
             if lemma not in lemmas:
                 page = pywikibot.Page(site, lemma)
-                if blib.safe_page_exists(page, errandpagemsg):
-                    pagetext = blib.safe_page_text(page, errandpagemsg)
+                if blib.safe_page_exists(page, p.errandmsg):
+                    pagetext = blib.safe_page_text(page, p.errandmsg)
                     if re.search("#redirect", pagetext, re.I):
                         nonexistent_msg = "exists as redirect"
                     elif re.search(r"\{\{superlative of", pagetext):
@@ -51,9 +46,9 @@ def process_text_on_page(index, pagetitle, text):
                         nonexistent_msg = "exists as non-lemma"
                 else:
                     nonexistent_msg = "does not exist"
-                pagemsg("Referenced lemma %s: %s" % (lemma, nonexistent_msg))
+                p.msg("Referenced lemma %s: %s" % (lemma, nonexistent_msg))
                 nonexistent_lemmas[lemma] = nonexistent_msg
-                nonexistent_lemmas_refs[lemma] = [pagetitle]
+                nonexistent_lemmas_refs[lemma] = [p.title]
 
     def process_arg_set(arg_set):
         if not arg_set:
@@ -71,14 +66,14 @@ def process_text_on_page(index, pagetitle, text):
             return
         headwords_separators = re.split(r"(\[\[.*?\]\]|[^ \-]+)", lemma)
         if headwords_separators[0] != "" or headwords_separators[-1] != "":
-            pagemsg("WARNING: Found junk at beginning or end of headword, skipping: %s" % lemma)
+            p.msg("WARNING: Found junk at beginning or end of headword, skipping: %s" % lemma)
             return
         wordind = 0
         for i in range(1, len(headwords_separators), 2):
             hword = headwords_separators[i]
             separator = headwords_separators[i + 1]
             if i < len(headwords_separators) - 2 and separator != " " and separator != "-":
-                pagemsg(
+                p.msg(
                     "WARNING: Separator after word #%s isn't a space or hyphen, can't handle: word=<%s>, separator=<%s>"
                     % (wordind + 1, hword, separator)
                 )
@@ -120,22 +115,22 @@ def process_text_on_page(index, pagetitle, text):
             word = word.replace("#Russian", "")
             word = rulib.remove_accents(blib.remove_right_side_links(word))
             if "[" in word or "]" in word:
-                pagemsg("WARNING: Found stray bracket in word %s in %s" % (word, str(htemp)))
+                p.msg("WARNING: Found stray bracket in word %s in %s" % (word, str(htemp)))
             else:
                 check_lemma(word)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "ru-decl-noun-see":
-            pagemsg("WARNING: Skipping ru-decl-noun-see, can't handle yet: %s" % str(t))
+            p.msg("WARNING: Skipping ru-decl-noun-see, can't handle yet: %s" % str(t))
         elif tn in ["ru-noun+", "ru-proper noun+"]:
-            pagemsg("Found %s" % str(t))
+            p.msg("Found %s" % str(t))
             process_new_style_headword(t)
         elif tn in ["ru-verb"]:
-            pagemsg("Found %s" % str(t))
+            p.msg("Found %s" % str(t))
             process_verb_headword(t)
         elif tn in ["ru-noun", "ru-proper noun"]:
-            pagemsg("WARNING: Skipping ru-noun or ru-proper noun, can't handle yet: %s" % str(t))
+            p.msg("WARNING: Skipping ru-noun or ru-proper noun, can't handle yet: %s" % str(t))
 
 
 parser = blib.create_argparser("Find red links in multiword Russian lemmas", include_pagefile=True, include_stdin=True)
@@ -151,8 +146,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=[
         "Template:tracking/ru-headword/space-in-headword/" + pos for pos in ["nouns", "proper nouns", "verbs"]
     ],

@@ -6,12 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    origtext = text
+def process_text_on_page(p):
+    p.msg("Processing")
+    origtext = p.text
 
     notes = []
 
@@ -22,12 +19,12 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("fix %s indentation" % header)
         return newtext
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
     if "===Etymology 1===" in secbody:
-        pagemsg("WARNING: Skipping page because ===Etymology 1===")
+        p.msg("WARNING: Skipping page because ===Etymology 1===")
         return
 
     secbody = fix_indent(secbody, "Pronunciation", 3)
@@ -41,7 +38,7 @@ def process_text_on_page(index, pagetitle, text):
     if origtext != text:
         return text, notes
     elif warn_on_no_change:
-        pagemsg("WARNING: No changes")
+        p.msg("WARNING: No changes")
 
 
 parser = blib.create_argparser(
@@ -57,7 +54,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian lemmas", "Russian non-lemma forms"],
 )

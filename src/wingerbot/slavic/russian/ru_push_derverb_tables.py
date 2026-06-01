@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, msg, errmsg, site
 
 import pywikibot, re, sys, argparse
 from wingerbot.slavic.russian import rulib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    props = pagetitle_to_props.get(pagetitle, None)
+def process_text_on_page(p):
+    props = pagetitle_to_props.get(p.title, None)
     if not props:
-        pagemsg("WARNING: Can't locate properties for page")
+        p.msg("WARNING: Can't locate properties for page")
         return
     index, contents, comment = props
 
@@ -32,11 +29,11 @@ def process_text_on_page(index, pagetitle, text):
         return outlines
 
     def do_process():
-        if not text:
-            pagemsg("WARNING: Page doesn't exist")
+        if not p.text:
+            p.msg("WARNING: Page doesn't exist")
             return
         else:
-            modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
+            modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg, force_final_nls=True)
             if modsec is None:
                 return
             secbody = modsec.secbody
@@ -57,7 +54,7 @@ def process_text_on_page(index, pagetitle, text):
                     continue
                 if line in ["{{top2}}", "{{der-top}}"] and header == "Derived terms":
                     if saw_top:
-                        pagemsg("WARNING: Saw {{top2}}/{{der-top}} line twice")
+                        p.msg("WARNING: Saw {{top2}}/{{der-top}} line twice")
                         return
                     saw_top = True
                     continue
@@ -66,21 +63,21 @@ def process_text_on_page(index, pagetitle, text):
                         outlines.append(line)
                         continue
                     if header != "Derived terms":
-                        pagemsg(
+                        p.msg(
                             "WARNING: Apparent derived-terms table in header '%s' rather than 'Derived terms'" % header
                         )
                         return
                     if not saw_top:
-                        pagemsg("WARNING: Saw imperfective/perfective line without {{top2}}/{{der-top}} line")
+                        p.msg("WARNING: Saw imperfective/perfective line without {{top2}}/{{der-top}} line")
                         return
                     if line == "''imperfective''":
                         if saw_impf:
-                            pagemsg("WARNING: Saw imperfective table portion twice")
+                            p.msg("WARNING: Saw imperfective table portion twice")
                             return
                         saw_impf = True
                     else:
                         if saw_pf:
-                            pagemsg("WARNING: Saw perfective table portion twice")
+                            p.msg("WARNING: Saw perfective table portion twice")
                             return
                         saw_pf = True
                     in_table = True
@@ -88,13 +85,13 @@ def process_text_on_page(index, pagetitle, text):
                 elif line in ["{{bottom2}}", "{{bottom}}", "{{der-bottom}}"]:
                     if in_table:
                         if not saw_top or not saw_impf or not saw_pf:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Didn't see top, imperfective header or perfective header; saw_top=%s, saw_impf=%s, saw_pf=%s"
                                 % (saw_top, saw_impf, saw_pf)
                             )
                             return
                         if curtab_index >= len(tables):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Too many existing manually-formatted tables, saw %s existing table(s) but only %s replacement(s)"
                                 % (curtab_index + 1, len(tables))
                             )
@@ -111,7 +108,7 @@ def process_text_on_page(index, pagetitle, text):
                     outlines.append(line)
 
             if curtab_index != len(tables):
-                pagemsg(
+                p.msg(
                     "WARNING: Wrong number of existing manually-formatted tables, saw %s existing table(s) but %s replacement(s)"
                     % (curtab_index, len(tables))
                 )
@@ -166,5 +163,5 @@ if __name__ == "__main__":
             pagetitle_to_props[pagetitle] = (index, text, comment)
 
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_props.keys())
+        args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_props.keys())
     )

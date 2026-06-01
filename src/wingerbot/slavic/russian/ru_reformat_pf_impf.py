@@ -5,18 +5,13 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg
+from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -47,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
             if m:
                 newverbs.append(m.group(1) + qual)
                 continue
-            pagemsg("WARNING: Unable to parse verb spec %s, treating as raw" % verb)
+            p.msg("WARNING: Unable to parse verb spec %s, treating as raw" % verb)
             newverbs.append(verb + qual)
         return "\n#: {{%s|ru|%s}}\n" % (pfimpf, "|".join(newverbs))
 
@@ -61,9 +56,9 @@ def process_text_on_page(index, pagetitle, text):
             break
         secbody = replacement
     if "{{g|pf}}" in secbody or "{{g|impf}}" in secbody:
-        errpagemsg("WARNING: Found unconverted {{g|pf}} or {{g|impf}}")
+        p.errandmsg("WARNING: Found unconverted {{g|pf}} or {{g|impf}}")
     if " pf" in secbody or " impf" in secbody:
-        errpagemsg("WARNING: Found unconverted pf or impf following a space")
+        p.errandmsg("WARNING: Found unconverted pf or impf following a space")
 
     return modsec.rebuild(secbody=secbody), "Reformat Russian perfective/imperfective correspondences to use {{pf}}/{{impf}}"
 
@@ -75,5 +70,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

@@ -8,14 +8,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("WARNING: Script no longer applies and would need fixing up")
+def process_text_on_page(p):
+    p.msg("WARNING: Script no longer applies and would need fixing up")
     return
 
-    pagemsg("Processing")
+    p.msg("Processing")
     return "#REDIRECT [[Module:ru-verb/documentation]]", "redirect to [[Module:ru-verb/documentation]]"
 
 
@@ -75,7 +72,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_pages=["Template:ru-conj-%s/documentation" % ty for i, ty in blib.iter_items(types, start, end)],
 )

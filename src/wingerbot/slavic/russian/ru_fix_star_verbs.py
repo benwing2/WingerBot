@@ -6,23 +6,17 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
         if tname(t) in ["ru-conj", "ru-conj-old"]:
             if [x for x in t.params if str(x.value) == "or"]:
-                pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+                p.msg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
             param2 = getparam(t, "2")
             if "*" in param2:
@@ -45,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
                 new_tempcall = re.sub(r"^\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
             else:
                 new_tempcall = re.sub(r"^\{\{ru-conj-old", "{{ru-generate-verb-forms|old=1", str(t))
-            result = expand_text(new_tempcall)
+            result = p.expand_text(new_tempcall)
             if not result:
                 return
             new_forms = blib.split_generate_args(result)
@@ -53,7 +47,7 @@ def process_text_on_page(index, pagetitle, text):
                 orig_tempcall = re.sub(r"^\{\{ru-conj", "{{ru-generate-verb-forms", origt)
             else:
                 orig_tempcall = re.sub(r"^\{\{ru-conj-old", "{{ru-generate-verb-forms|old=1", origt)
-            result = expand_text(orig_tempcall)
+            result = p.expand_text(orig_tempcall)
             if not result:
                 return
             orig_forms = blib.split_generate_args(result)
@@ -78,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
             # If mismatches, output them and don't change anything.
 
             if mismatches:
-                pagemsg(
+                p.msg(
                     "WARNING: Mismatch comparing old %s to new %s: %s"
                     % (orig_tempcall, new_tempcall, " || ".join(mismatches))
                 )
@@ -86,7 +80,7 @@ def process_text_on_page(index, pagetitle, text):
 
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -100,7 +94,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian class 9b verbs", "Russian class 11b verbs"],
 )

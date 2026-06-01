@@ -6,12 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
@@ -23,10 +20,10 @@ def process_text_on_page(index, pagetitle, text):
                 if re.search("е́?й$", comp):
                     regcomp = re.sub("(е́?)й$", r"\1е", comp)
                     if regcomp in newcomps:
-                        pagemsg("Skipping informal form %s" % comp)
+                        p.msg("Skipping informal form %s" % comp)
                         notes.append("remove informal comparative %s" % comp)
                     else:
-                        pagemsg("WARNING: Found informal form %s without corresponding regular form")
+                        p.msg("WARNING: Found informal form %s without corresponding regular form")
                         newcomps.append(comp)
                 else:
                     newcomps.append(comp)
@@ -34,7 +31,7 @@ def process_text_on_page(index, pagetitle, text):
                 blib.set_param_chain(t, newcomps, "2", "comp")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -48,5 +45,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjectives"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian adjectives"]
 )

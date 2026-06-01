@@ -90,7 +90,6 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
 
 def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
     pagetitle = rulib.remove_accents(blib.remove_links(noun))
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -107,21 +106,21 @@ def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
     )
 
 
-def process_section_for_relational_adj_snarf(index, etymsec, pagetitle, text):
+def process_section_for_relational_adj_snarf(p, etymsec, sectext):
     def pagemsg(txt):
-        msg("Page %s%s %s: %s" % (index, "." + etymsec if etymsec is not None else "", pagetitle, txt))
+        msg("Page %s%s %s: %s" % (p.index, "." + etymsec if etymsec is not None else "", p.title, txt))
 
-    if not re.search(r"\{\{lb\|ru\|([^{}]*\|)*relational[|}]", text):
+    if not re.search(r"\{\{lb\|ru\|([^{}]*\|)*relational[|}]", sectext):
         pagemsg("Not a relational adjective")
         return
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(sectext)
     adj = None
     for t in parsed.filter_templates():
         if tname(t) == "ru-adj":
             if getparam(t, "head2"):
                 pagemsg("WARNING: Multihead relational adjective %s, skipping" % str(t))
                 return
-            newadj = getparam(t, "1") or pagetitle
+            newadj = getparam(t, "1") or p.title
             if adj and adj != newadj:
                 pagemsg(
                     "WARNING: Saw multiple adjectives %s and %s on relational page, skipping: head=%s"
@@ -132,7 +131,7 @@ def process_section_for_relational_adj_snarf(index, etymsec, pagetitle, text):
                 pagemsg("WARNING: Saw links in relational adjective %s, skipping: head=%s" % (newadj, str(t)))
                 return
             adj = newadj
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(sectext, pagemsg)
     subsections = subsecs.subsections
     if etymsec is not None:
         etymtext = subsections[0]
@@ -183,29 +182,25 @@ def process_section_for_relational_adj_snarf(index, etymsec, pagetitle, text):
         pagemsg("WARNING: Relational adjective %s, found etymology section but not affix template" % adj)
 
 
-def snarf_relational_adjs(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def snarf_relational_adjs(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
     def do_process_section_for_relational_adj_snarf(etymsec: str | None, etymtext: str) -> str | None:
-        return process_section_for_relational_adj_snarf(index, etymsec, pagetitle, etymtext)
-    blib.map_etym_sections(secbody, pagemsg, do_process_section_for_relational_adj_snarf)
+        return process_section_for_relational_adj_snarf(p, etymsec, etymtext)
+    blib.map_etym_sections(secbody, p.msg, do_process_section_for_relational_adj_snarf)
 
 
-def process_section_for_diminutive_snarf(index, etymsec, pagetitle, text):
+def process_section_for_diminutive_snarf(p, etymsec, sectext):
     def pagemsg(txt):
-        msg("Page %s%s %s: %s" % (index, "." + etymsec if etymsec is not None else "", pagetitle, txt))
-
+        msg("Page %s%s %s: %s" % (p.index, "." + etymsec if etymsec is not None else "", p.title, txt))
     def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+        return blib.expand_text(tempcall, p.title, pagemsg, args.verbose)
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(sectext)
 
     saw_dim = False
     for t in parsed.filter_templates():
@@ -245,19 +240,16 @@ def process_section_for_diminutive_snarf(index, etymsec, pagetitle, text):
                 msg("%s ||| %s" % (",".join(heads), dimof))
 
 
-def snarf_diminutives(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def snarf_diminutives(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
     def do_process_section_for_diminutive_snarf(etymsec: str | None, etymtext: str) -> str | None:
-        return process_section_for_relational_adj_snarf(index, etymsec, pagetitle, etymtext)
-    blib.map_etym_sections(secbody, pagemsg, do_process_section_for_diminutive_snarf)
+        return process_section_for_diminutive_snarf(p, etymsec, etymtext)
+    blib.map_etym_sections(secbody, p.msg, do_process_section_for_diminutive_snarf)
 
 
 parser = blib.create_argparser(
@@ -282,10 +274,10 @@ if args.direcfile:
         else:
             add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, "dim", "diminutive")
 else:
-    def process_text_on_page(index, pagetitle, text):
+    def process_text_on_page(p):
         if args.pos == "reladj":
-            snarf_relational_adjs(index, pagetitle, text)
+            snarf_relational_adjs(p)
         else:
-            snarf_diminutives(index, pagetitle, text)
+            snarf_diminutives(p)
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

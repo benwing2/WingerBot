@@ -16,7 +16,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import msg, rmparam, getparam, site, tname, Index, ProcessPageRetval
+from wingerbot.blib import msg, rmparam, getparam, site, tname, ProcessPageRetval
 from wingerbot.slavic.russian.rulib import (
     AC,
     is_unstressed,
@@ -116,11 +116,11 @@ def remove_duplicates(form):
     return ",".join(new_forms)
 
 
-def trymatch(forms, args, pagemsg, multiword=False):
+def trymatch(forms, tempargs, pagemsg, multiword=False):
     if args.mockup:
         ok = True
     else:
-        tempcall = "{{ru-generate-noun-forms|" + "|".join(args) + "}}"
+        tempcall = "{{ru-generate-noun-forms|" + "|".join(tempargs) + "}}"
         result = site.expand_text(tempcall)
         if args.verbose:
             pagemsg("%s = %s" % (tempcall, result))
@@ -167,7 +167,7 @@ def trymatch(forms, args, pagemsg, multiword=False):
                     pagemsg("For case %s, actual %s differs from predicted %s" % (case, real_form, pred_form))
                     ok = False
     if ok:
-        pagemsg("Found a %smatch: {{%s|%s}}" % (multiword and "multiword " or "", decl_template, "|".join(args)))
+        pagemsg("Found a %smatch: {{%s|%s}}" % (multiword and "multiword " or "", decl_template, "|".join(tempargs)))
     return ok
 
 
@@ -330,12 +330,12 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
                             ),
                         )
                     )
-                    args = infer_word(wordforms, noungender, linked_headwords, number, numonly, True, pagemsg)
-                    if not args:
+                    tempargs = infer_word(wordforms, noungender, linked_headwords, number, numonly, True, pagemsg)
+                    if not tempargs:
                         pagemsg("Unable to infer word #%s: %s" % (wordno, str(t)))
                         return None
                     # If we have a gen_pl override, it needs to be for a specific word
-                    numbered_args = [re.sub("^gen_pl=", "gen_pl%s=" % wordno, arg) for arg in args]
+                    numbered_args = [re.sub("^gen_pl=", "gen_pl%s=" % wordno, arg) for arg in tempargs]
                     argses.append(numbered_args)
                 animacies = [x for args in argses for x in args if x in ["a=in", "a=an"]]
                 if "a=in" in animacies and "a=an" in animacies:
@@ -350,8 +350,8 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
                 # number restriction for all words (same as passed in, based on the
                 # manual template name).
                 allargs = []
-                for args in argses:
-                    filterargs = [x for x in args if not re.search("^[an]=", x)]
+                for tempargs in argses:
+                    filterargs = [x for x in tempargs if not re.search("^[an]=", x)]
                     if allargs:
                         if ty == "dash":
                             allargs.append("-")
@@ -364,19 +364,19 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
                 else:
                     return None
         else:
-            args = infer_word(forms, noungender, {}, number, numonly, False, pagemsg)
-            if not args:
+            tempargs = infer_word(forms, noungender, {}, number, numonly, False, pagemsg)
+            if not tempargs:
                 pagemsg("Unable to infer word: %s" % str(t))
                 return None
-            return [x for x in args if x != "a=in"]
+            return [x for x in tempargs if x != "a=in"]
 
     for ty in ["space", "dash", "single"]:
-        args = try_multiword(ty)
-        if args:
-            return args
+        tempargs = try_multiword(ty)
+        if tempargs:
+            return tempargs
 
 
-def default_stress(lemma, stress, pagemsg):
+def default_stress(lemma, stress):
     if re.search("[ё́]$", lemma):
         defstress = "b"
     else:
@@ -387,8 +387,8 @@ def default_stress(lemma, stress, pagemsg):
     return stress
 
 
-def generate_template_args(stress, lemma, linked_lemma, declspec, plstem, pagemsg):
-    stress = default_stress(lemma, stress, pagemsg)
+def generate_template_args(stress, lemma, linked_lemma, declspec, plstem):
+    stress = default_stress(lemma, stress)
     if old_template:
         tempargs = [stress, linked_lemma, declspec, "", plstem]
         if not tempargs[0]:
@@ -467,9 +467,9 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
 
     # Special case:
     if numonly == "pl" and nompl in ["острова́", "Острова́"]:
-        args = generate_template_args("c", nompl, "[[о́стров|%s]]" % nompl, "m(1)", None, pagemsg) + number
-        if trymatch(forms, args, pagemsg):
-            return args
+        tempargs = generate_template_args("c", nompl, "[[о́стров|%s]]" % nompl, "m(1)", None) + number
+        if trymatch(forms, tempargs, pagemsg):
+            return tempargs
 
     if numonly == "pl":
         nomsgs = synthesize_singular(nompl, prepl, noungender, pagemsg)
@@ -796,7 +796,7 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
                         declspec += genplval
                     elif genplval:
                         genplargs.append("gen_pl=%s" % genplval)
-                    args = generate_template_args(stress, lemma, linked_lemma, declspec, plstem, pagemsg)
+                    args = generate_template_args(stress, lemma, linked_lemma, declspec, plstem)
                     args += genplargs
                     args += anim + number
                     if trymatch(forms, args, pagemsg):
@@ -805,11 +805,8 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
     return None
 
 
-def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def _process_text_on_page(p) -> ProcessPageRetval:
+    parsed = blib.parse_text(p.text)
     genders = set()
     headwords = set()
     # Extract the genders and the headwords
@@ -817,7 +814,7 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
         if tname(t) in ["ru-noun", "ru-proper noun"]:
             m = re.search("^([mfn])", getparam(t, "2"))
             if not m:
-                pagemsg("WARNING: Strange ru-noun template: %s" % str(t))
+                p.msg("WARNING: Strange ru-noun template: %s" % str(t))
             else:
                 genders.add(m.group(1))
             head = getparam(t, "1")
@@ -838,7 +835,7 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
     for linked_headword in split_headwords:
         linked_word = blib.remove_links(linked_headword)
         if linked_word in linked_headwords and linked_headwords[linked_word] != linked_headword:
-            pagemsg(
+            p.msg(
                 "WARNING: Found different links %s and %s for word %s in headword"
                 % (linked_headwords[linked_word], linked_headword, linked_word)
             )
@@ -851,16 +848,16 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
             if tn == "ru-decl-noun-pl":
                 genders = list(genders)
                 if len(genders) == 0:
-                    pagemsg("WARNING: Can't find gender for pl-only nominal")
+                    p.msg("WARNING: Can't find gender for pl-only nominal")
                     continue
                 elif len(genders) > 1:
-                    pagemsg("WARNING: Multiple genders found for pl-only nominal: %s" % genders)
+                    p.msg("WARNING: Multiple genders found for pl-only nominal: %s" % genders)
                     continue
                 else:
                     gender = genders[0]
             else:
                 gender = ""
-            args = infer_decl(t, gender, linked_headwords, pagemsg)
+            args = infer_decl(t, gender, linked_headwords, p.msg)
             if args:
                 inferred_decls.append("{{%s|%s}}" % (decl_template, "|".join(args)))
                 for i in range(15, 0, -1):
@@ -877,11 +874,11 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
     return str(parsed), "Infer declension for manual decl(s): %s" % ", ".join(inferred_decls)
 
 
-def process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
+def process_text_on_page(p) -> ProcessPageRetval:
     try:
-        return _process_text_on_page(index, pagetitle, text)
+        return _process_text_on_page(p)
     except Exception as e:
-        msg("%s %s: WARNING: Got an error: %s" % (index, pagetitle, repr(e)))
+        p.msg("WARNING: Got an error: %s" % repr(e))
         traceback.print_exc(file=sys.stdout)
 
 
@@ -1463,7 +1460,7 @@ test_templates = [
 
 def test_infer():
     for pagetext in test_templates:
-        retval = process_text_on_page(1, "test_infer", pagetext)
+        retval = process_text_on_page(blib.ProcessPageParams(args, 1, "test_infer", pagetext, None))
         if retval is not None:
             newtext, comment = retval
         msg("newtext = %s" % str(newtext))
@@ -1479,5 +1476,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 if args.mockup:
     test_infer()
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
                                default_refs=["Template:%s" % template for template in decl_templates])

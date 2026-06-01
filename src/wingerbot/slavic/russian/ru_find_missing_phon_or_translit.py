@@ -11,19 +11,16 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 from wingerbot.slavic.russian import runounlib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "э" in pagetitle:
-        pagemsg("Skipping because has э in page title")
+    if "э" in p.title:
+        p.msg("Skipping because has э in page title")
         return
 
-    words = re.split("[ -]", pagetitle)
+    words = re.split("[ -]", p.title)
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     found_ru_ipa = []
     prons = []
     saw_phon = False
@@ -40,14 +37,14 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 pron = getparam(t, "1")
                 if not pron:
-                    pron = pagetitle
+                    pron = p.title
                 found_ru_ipa.append(("nophon", pron))
                 prons.append(pron)
                 if "э" in pron:
-                    pagemsg("WARNING: Likely missing phon=: %s" % str(t))
+                    p.msg("WARNING: Likely missing phon=: %s" % str(t))
             pronwords = re.split("[ -]", pron)
             if len(words) != len(pronwords):
-                pagemsg(
+                p.msg(
                     "WARNING: Something wrong, %s words but %s pron words: pron is %s"
                     % (len(words), len(pronwords), pron)
                 )
@@ -63,9 +60,9 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["ru-noun+", "ru-proper noun+"]:
-            per_word_info = runounlib.split_noun_decl_arg_sets(t, pagemsg)
+            per_word_info = runounlib.split_noun_decl_arg_sets(t, p.msg)
             if len(per_word_info) != len(words):
-                pagemsg("WARNING: Something wrong, %s words but %s lemmas" % (len(words), len(per_word_info)))
+                p.msg("WARNING: Something wrong, %s words but %s lemmas" % (len(words), len(per_word_info)))
             else:
                 for index, (word, arg_sets) in enumerate(zip(words, per_word_info)):
                     lemmas = []
@@ -76,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
                     for arg_set in arg_sets:
                         lemma = arg_set[1]
                         if not lemma:
-                            lemma = pagetitle
+                            lemma = p.title
                         if "//" in lemma:
                             ru, tr = lemma.split("//")
                         else:
@@ -95,18 +92,18 @@ def process_text_on_page(index, pagetitle, text):
 
                     if saw_epsilon_pron[index] != saw_tr_with_epsilon:
                         if saw_epsilon_pron[index]:
-                            pagemsg("WARNING: Saw э in pron %s but not decl %s for word %s" % (pronstr, lemmastr, word))
+                            p.msg("WARNING: Saw э in pron %s but not decl %s for word %s" % (pronstr, lemmastr, word))
                         else:
-                            pagemsg("WARNING: Saw ɛ in decl %s but not pron %s for word %s" % (lemmastr, pronstr, word))
+                            p.msg("WARNING: Saw ɛ in decl %s but not pron %s for word %s" % (lemmastr, pronstr, word))
                     saw_non_tr_with_epsilon = saw_tr_without_epsilon or saw_no_tr
                     if saw_no_epsilon_pron[index] != saw_non_tr_with_epsilon:
                         if saw_no_epsilon_pron[index]:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw pron %s without э but not decl %s without ɛ for word %s"
                                 % (pronstr, lemmastr, word)
                             )
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw decl %s without ɛ but not pron %s without э for word %s"
                                 % (lemmastr, pronstr, word)
                             )
@@ -120,5 +117,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian lemmas"]
 )

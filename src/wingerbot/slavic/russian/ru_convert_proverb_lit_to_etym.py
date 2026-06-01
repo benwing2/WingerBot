@@ -8,15 +8,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -26,9 +23,9 @@ def process_text_on_page(index, pagetitle, text):
         re.M | re.S,
     )
     if m:
-        pagemsg("Found defn '%s', literally '%s'" % (m.group(2), m.group(3)))
+        p.msg("Found defn '%s', literally '%s'" % (m.group(2), m.group(3)))
         if "\n===Etymology===\n" in secbody:
-            pagemsg("WARNING: Found Etymology section already, not doing anything")
+            p.msg("WARNING: Found Etymology section already, not doing anything")
         else:
             secbody = '\n===Etymology===\nLiterally, "%s".\n%s%s%s' % (
                 m.group(3),
@@ -50,5 +47,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian proverbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian proverbs"]
 )

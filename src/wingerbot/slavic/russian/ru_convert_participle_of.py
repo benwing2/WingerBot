@@ -14,13 +14,10 @@ canonicalize_tags = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     headt = None
     last_headt = None
     last_partpos = None
@@ -33,7 +30,7 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn == "head" and getp("1") == "ru" and getp("2") == "participle":
             if headt:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two {{head|ru|participle}} templates %s and %s without intervening {{ru-participle of}}, using the second one"
                     % (str(headt), str(t))
                 )
@@ -42,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
             last_partpos = None
         elif tn == "ru-participle of":
             if not headt and not last_headt:
-                pagemsg("WARNING: Saw {{ru-participle of}} without preceding head template: %s" % str(t))
+                p.msg("WARNING: Saw {{ru-participle of}} without preceding head template: %s" % str(t))
                 return
             lemma = getp("1")
             altform = getp("2")
@@ -51,7 +48,7 @@ def process_text_on_page(index, pagetitle, text):
             gloss = getp("gloss") or getp("t")
             pos = getp("pos")
             if len(tags) < 2:
-                pagemsg("WARNING: Too few arguments (%s) to {{ru-participle of}}: %s" % (len(tags), str(t)))
+                p.msg("WARNING: Too few arguments (%s) to {{ru-participle of}}: %s" % (len(tags), str(t)))
                 return
             tags = [canonicalize_tags.get(tag, tag) for tag in tags]
 
@@ -64,7 +61,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif pn in ["tr", "gloss", "t", "pos"]:
                     ok = True
                 if not ok:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -77,7 +74,7 @@ def process_text_on_page(index, pagetitle, text):
             elif "past" in tags:
                 part_tense = "past"
             else:
-                pagemsg("WARNING: Can't extract participle tense from {{ru-participle of}}: %s" % str(t))
+                p.msg("WARNING: Can't extract participle tense from {{ru-participle of}}: %s" % str(t))
                 return
             if "act" in tags:
                 part_voice = "active"
@@ -86,7 +83,7 @@ def process_text_on_page(index, pagetitle, text):
             elif "adv" in tags:
                 part_voice = "adverbial"
             else:
-                pagemsg("WARNING: Can't extract participle voice from {{ru-participle of}}: %s" % str(t))
+                p.msg("WARNING: Can't extract participle voice from {{ru-participle of}}: %s" % str(t))
                 return
             partpos = "%s %s participle" % (part_tense, part_voice)
 
@@ -109,12 +106,12 @@ def process_text_on_page(index, pagetitle, text):
                 # We saw another {{ru-participle of}} after a preceding one without an intervening {{ru-articiple of}}.
                 # This is OK as long as the headword participle POS is the same.
                 if last_partpos == partpos:
-                    pagemsg(
+                    p.msg(
                         "Saw two {{ru-participle of}} without intervening {{head}}, OK since participle POS's are the same: %s and %s"
                         % (last_origt, origt)
                     )
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw two {{ru-participle of}} without intervening {{head}} and different participle POS's %s and %s: %s and %s"
                         % (last_partpos, partpos, last_origt, origt)
                     )
@@ -127,8 +124,7 @@ def process_text_on_page(index, pagetitle, text):
             last_partpos = partpos
             last_origt = origt
 
-    text = str(parsed)
-    return text, notes
+    text = str(parsed), notes
 
 
 parser = blib.create_argparser(
@@ -139,4 +135,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

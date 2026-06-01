@@ -6,12 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    newtext = text
+def process_text_on_page(p):
+    p.msg("Processing")
+    newtext = p.text
 
     newtext = re.sub(
         r"\{\{ru-noun form\|[^|=]*\|([^|=]*)\|tr=.*?\}\}\n\n# \{\{alternative (?:form|spelling) of\|(.*?)\|lang=ru\}\}\n\n\[\[Category:Russian spellings with е instead of ё\]\]",
@@ -24,8 +21,8 @@ def process_text_on_page(index, pagetitle, text):
         newtext,
     )
 
-    if newtext == text and "[[Category:Russian spellings with е instead of ё]]" in text:
-        pagemsg("WARNING: Unable to match manual alt-ё form")
+    if newtext == p.text and "[[Category:Russian spellings with е instead of ё]]" in p.text:
+        p.msg("WARNING: Unable to match manual alt-ё form")
 
     return newtext, "Replaced manual alt-ё specification with {{ru-pos-alt-ё}}"
 
@@ -41,7 +38,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian spellings with е instead of ё"],
 )

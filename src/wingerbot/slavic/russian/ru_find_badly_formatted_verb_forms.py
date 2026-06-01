@@ -8,13 +8,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     found_inflection_of = False
     found_head_verb_form = False
     for t in parsed.filter_templates():
@@ -25,15 +22,15 @@ def process_text_on_page(index, pagetitle, text):
 
     if not found_head_verb_form or not found_inflection_of:
         # Find definition line
-        modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+        modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
         if modsec is None:
             return
         deflines = r"\n".join(re.findall(r"^(# .*)$", modsec.secbody, re.M))
 
     if not found_head_verb_form:
-        pagemsg("WARNING: No {{head|ru|verb form}}: %s" % deflines)
+        p.msg("WARNING: No {{head|ru|verb form}}: %s" % deflines)
     if not found_inflection_of:
-        pagemsg("WARNING: No 'inflection of': %s" % deflines)
+        p.msg("WARNING: No 'inflection of': %s" % deflines)
 
 
 parser = blib.create_argparser("Find badly formatted Russian verb forms", include_pagefile=True, include_stdin=True)
@@ -41,5 +38,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verb forms"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verb forms"]
 )

@@ -3,29 +3,22 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot.slavic.russian import rulib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     # FIXME: Script no longer applies and would need fixing up
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    direc = pagetitle_to_direc.get(pagetitle, None)
+    direc = pagetitle_to_direc.get(p.title, None)
     if not direc:
-        pagemsg("WARNING: Can't locate directive for page")
+        p.msg("WARNING: Can't locate directive for page")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     notes = []
     direc = direc.replace("3oa", "3°a")
     for t in parsed.filter_templates():
@@ -35,12 +28,12 @@ def process_text_on_page(index, pagetitle, text):
             if not conjtype.startswith("3olda"):
                 continue
             if conjtype.startswith("3olda") and conjtype != "3olda":
-                pagemsg("WARNING: Found 3a-old with variant, can't process: %s" % str(t))
+                p.msg("WARNING: Found 3a-old with variant, can't process: %s" % str(t))
                 continue
             tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
-            result = expand_text(tempcall)
+            result = p.expand_text(tempcall)
             if not result:
-                pagemsg("WARNING: Error generating forms, skipping")
+                p.msg("WARNING: Error generating forms, skipping")
                 continue
             oldargs = blib.split_generate_args(result)
             rmparam(t, "6")
@@ -48,9 +41,9 @@ def process_text_on_page(index, pagetitle, text):
             rmparam(t, "4")
             t.add("1", direc)
             tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
-            result = expand_text(tempcall)
+            result = p.expand_text(tempcall)
             if not result:
-                pagemsg("WARNING: Error generating forms, skipping")
+                p.msg("WARNING: Error generating forms, skipping")
                 continue
             if args.delete_bad:
                 newargs = blib.split_generate_args(result)
@@ -71,41 +64,41 @@ def process_text_on_page(index, pagetitle, text):
                             formpagename = rulib.remove_accents(oldform)
                             formpage = pywikibot.Page(site, formpagename)
                             if not formpage.exists():
-                                pagemsg("WARNING: Form page %s doesn't exist, skipping" % formpagename)
-                            elif formpagename == pagetitle:
-                                pagemsg("WARNING: Attempt to delete dictionary form, skipping")
+                                p.msg("WARNING: Form page %s doesn't exist, skipping" % formpagename)
+                            elif formpagename == p.title:
+                                p.msg("WARNING: Attempt to delete dictionary form, skipping")
                             else:
-                                text = blib.safe_page_text(formpage, errandpagemsg)
-                                if "Etymology 1" in text:
-                                    pagemsg("WARNING: Found 'Etymology 1', skipping form %s" % formpagename)
-                                elif "----" in text:
-                                    pagemsg(
+                                text = blib.safe_page_text(formpage, p.errandmsg)
+                                if "Etymology 1" in p.text:
+                                    p.msg("WARNING: Found 'Etymology 1', skipping form %s" % formpagename)
+                                elif "----" in p.text:
+                                    p.msg(
                                         "WARNING: Multiple languages apparently in form, skippin form %s" % formpagename
                                     )
                                 else:
                                     numinfls = len(re.findall(r"\{\{inflection of\|", text))
                                     if numinfls < 1:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Something wrong, no 'inflection of' templates on page for form %s"
                                             % formpagename
                                         )
                                     elif numinfls > 1:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Multiple 'inflection of' templates on page for form %s, skipping"
                                             % formpagename
                                         )
                                     else:
-                                        comment = "Delete erroneously created long form of %s" % pagetitle
-                                        pagemsg("Existing text for form %s: [[%s]]" % (formpagename, text))
+                                        comment = "Delete erroneously created long form of %s" % p.title
+                                        p.msg("Existing text for form %s: [[%s]]" % (formpagename, text))
                                         if args.save:
                                             formpage.delete(comment)
                                         else:
-                                            pagemsg("Would delete page %s with comment=%s" % (formpagename, comment))
+                                            p.msg("Would delete page %s with comment=%s" % (formpagename, comment))
 
             notes.append("fix 3olda -> %s" % direc)
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -122,5 +115,5 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
     pagetitle_to_direc[page] = direc
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_direc.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_direc.keys())
 )

@@ -5,7 +5,7 @@ rather than generate it manually per page like this. But the examples in the tex
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg
+from wingerbot.blib import msg
 from wingerbot.slavic.russian import rulib
 
 ordinals = {
@@ -456,43 +456,38 @@ def generate_page(num):
     )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     comment = None
     notes = []
 
-    num = lemmas_to_numbers.get(pagetitle, None)
+    num = lemmas_to_numbers.get(p.title, None)
     if num is None:
-        pagemsg("WARNING: Page title doesn't look like a numeral, skipping")
+        p.msg("WARNING: Page title doesn't look like a numeral, skipping")
         return
     lemma = ru_num(num)
     newtext = generate_page(num)
 
-    # Pass None for pagemsg to suppress warning on lang section not found.
-    modsec = blib.find_modifiable_lang_section(text, "Russian", None, force_final_nls=True)
+    # Pass None for p.msg to suppress warning on lang section not found.
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", None, force_final_nls=True)
     if modsec is None:
-        return blib.add_new_l2_section(text, pagemsg, "Russian", newtext)
+        return blib.add_new_l2_section(p.text, p.msg, "Russian", newtext)
     secbody = modsec.secbody
     if args.overwrite_page:
         if "==Etymology 1==" in secbody and not args.overwrite_etymologies:
-            errandpagemsg("WARNING: Found ==Etymology 1== in page text, not overwriting, skipping form")
+            p.errandmsg("WARNING: Found ==Etymology 1== in page text, not overwriting, skipping form")
             return
         else:
-            pagemsg("WARNING: Overwriting entire Russian section")
+            p.msg("WARNING: Overwriting entire Russian section")
             notes.append("create Russian section for numeral %s (%s), overwriting section" % (lemma, num))
             stripped_secbody = secbody.rstrip("\n")
             stripped_newtext = newtext.rstrip("\n")
             if stripped_secbody == stripped_newtext:
-                pagemsg("No change in text")
+                p.msg("No change in p.text")
             elif args.verbose:
-                pagemsg("Replacing <%s> with <%s>" % (stripped_secbody, stripped_newtext))
+                p.msg("Replacing <%s> with <%s>" % (stripped_secbody, stripped_newtext))
             return modsec.rebuild(secbody=newtext), notes
     else:
-        errandpagemsg("WARNING: Not overwriting existing Russian section")
+        p.errandmsg("WARNING: Not overwriting existing Russian section")
         return
 
 parser = blib.create_argparser("Save Russian numbers to Wiktionary", include_pagefile=True, include_stdin=True)
@@ -545,5 +540,5 @@ if args.offline:
 else:
     lemmas_to_numbers = {rulib.remove_accents(ru_num(num)): num for num in iter_numerals()}
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(lemmas_to_numbers.values())
+        args, start, end, process_text_on_page, new=True, default_pages=list(lemmas_to_numbers.values())
     )

@@ -9,15 +9,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -29,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
             t.name = "inflection of"
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
                 notes.append("converted 'conjugation of' to 'inflection of'")
     secbody = str(parsed)
 
@@ -83,7 +80,7 @@ def process_text_on_page(index, pagetitle, text):
                         t.add(str(i), to)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
                     notes.append("converted '%s' form code to '%s'" % (frm, to))
     secbody = str(parsed)
 
@@ -124,7 +121,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add(name, value)
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
                 notes.append("removed any blank form codes and maybe rearranged lang=, tr=")
                 if nocat:
                     notes.append("removed nocat=")
@@ -188,10 +185,10 @@ def process_text_on_page(index, pagetitle, text):
                     t.add(str(i + 3), param)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
                     notes.append("canonicalized 'inflection of' for %s" % "/".join(canon_params))
                 else:
-                    pagemsg("Apparently already canonicalized: %s" % newt)
+                    p.msg("Apparently already canonicalized: %s" % newt)
     secbody = str(parsed)
 
     # Try to add 'inflection of' to raw-specified participial inflection
@@ -209,7 +206,7 @@ def process_text_on_page(index, pagetitle, text):
             voice = "adv"
         lemma = m.group(4)
         retval = prefix + "{{inflection of|lang=ru|%s||%s|%s|part}}" % (lemma, tense, voice)
-        pagemsg("Replaced <%s> with %s" % (m.group(0), retval))
+        p.msg("Replaced <%s> with %s" % (m.group(0), retval))
         notes.append("converted raw to 'inflection of' for %s/%s/part" % (tense, voice))
         return retval
 
@@ -247,7 +244,7 @@ def process_text_on_page(index, pagetitle, text):
             gender,
             gender != "p" and "|s" or "",
         )
-        pagemsg("Replaced <%s> with %s" % (m.group(0), retval))
+        p.msg("Replaced <%s> with %s" % (m.group(0), retval))
         notes.append(
             "converted raw to 'inflection of' for %s%s/past/ind" % (gender, gender != "p" and "/s" or "")
         )
@@ -275,7 +272,7 @@ def process_text_on_page(index, pagetitle, text):
         number = {"singular": "s", "plural": "p"}[m.group(2).lower()]
         lemma = m.group(3)
         retval = prefix + "{{inflection of|lang=ru|%s||2|%s|imp}}" % (lemma, number)
-        pagemsg("Replaced <%s> with %s" % (m.group(0), retval))
+        p.msg("Replaced <%s> with %s" % (m.group(0), retval))
         notes.append("converted raw to 'inflection of' for 2/%s/imp" % number)
         return retval
 
@@ -303,7 +300,7 @@ def process_text_on_page(index, pagetitle, text):
         tense = {"present": "pres", "future": "fut"}[m.group(4).lower()]
         lemma = m.group(5)
         retval = prefix + "{{inflection of|lang=ru|%s||%s|%s|%s|ind}}" % (lemma, person, number, tense)
-        pagemsg("Replaced <%s> with %s" % (m.group(0), retval))
+        p.msg("Replaced <%s> with %s" % (m.group(0), retval))
         notes.append("converted raw to 'inflection of' for %s/%s/%s/ind" % (person, number, tense))
         return retval
 
@@ -324,5 +321,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verb forms"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verb forms"]
 )

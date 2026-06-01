@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     verbtype = None
     num_conjs = 0
     conj_templates = []
@@ -24,7 +21,7 @@ def process_text_on_page(index, pagetitle, text):
             num_conjs += 1
             new_verbtype = getparam(t, "1")
             if verbtype and new_verbtype != verbtype:
-                pagemsg(
+                p.msg(
                     "Found page with multiple conjugations of different verb types: %s and %s"
                     % (verbtype, new_verbtype)
                 )
@@ -32,14 +29,14 @@ def process_text_on_page(index, pagetitle, text):
             verbtype = new_verbtype
             conj_templates.append(t)
     if not mixed_verb_types and num_conjs > 1:
-        pagemsg(
+        p.msg(
             "Found %s conjugations of the same type, can potentially combine: types %s"
             % (num_conjs, " ".join(getparam(t, "2") for t in conj_templates))
         )
     elif num_conjs == 1:
         return
     elif num_conjs == 0:
-        pagemsg("WARNING: No verb conjugations on page, skipping")
+        p.msg("WARNING: No verb conjugations on page, skipping")
         return
 
     def fetch_numbered_params(t):
@@ -58,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
         verb1 = m.group(1)
         verb2 = m.group(3)
         if m.group(2):
-            pagemsg(
+            p.msg(
                 "WARNING: Would combine verbs but found text '%s' needing to go into a note, skipping: %s and %s"
                 % (m.group(2), verb1, verb2)
             )
@@ -68,28 +65,28 @@ def process_text_on_page(index, pagetitle, text):
         for t in [t1, t2]:
             for param in t.params:
                 if not re.search("^[0-9]+$", str(param.name)):
-                    pagemsg("Verb conjugation has non-numeric args, skipping: %s" % str(t))
+                    p.msg("Verb conjugation has non-numeric args, skipping: %s" % str(t))
                     return m.group(0)
         params = fetch_numbered_params(t1)
         params.append("or")
         newparams = fetch_numbered_params(t2)
         if len(newparams) < 2:
-            pagemsg("WARNING: Something wrong, no verb type in ru-conj: %s" % str(t2))
+            p.msg("WARNING: Something wrong, no verb type in ru-conj: %s" % str(t2))
             return m.group(0)
         vt1 = getparam(t1, "1")
         vt2 = getparam(t2, "1")
         if vt1 != vt2:
-            pagemsg("WARNING: Can't combine verbs of different verb types: %s and %s" % (verb1, verb2))
+            p.msg("WARNING: Can't combine verbs of different verb types: %s and %s" % (verb1, verb2))
             return m.group(0)
         del newparams[0]
         params.extend(newparams)
         blib.set_param_chain(t1, params, "1", "")
-        pagemsg("Combining verb conjugations %s and %s" % (getparam(t1, "2"), getparam(t2, "2")))
-        pagemsg("Replaced %s with %s" % (m.group(0).replace("\n", r"\n"), str(t1)))
+        p.msg("Combining verb conjugations %s and %s" % (getparam(t1, "2"), getparam(t2, "2")))
+        p.msg("Replaced %s with %s" % (m.group(0).replace("\n", r"\n"), str(t1)))
         notes.append("combined verb conjugations %s and %s" % (getparam(t1, "2"), getparam(t2, "2")))
         return str(t1)
 
-    new_text = re.sub(r"(\{\{ru-conj\|[^{}]*\}\})\s*''or(.*?)''\s*(\{\{ru-conj\|[^{}]*\}\})", combine_verbs, text)
+    new_text = re.sub(r"(\{\{ru-conj\|[^{}]*\}\})\s*''or(.*?)''\s*(\{\{ru-conj\|[^{}]*\}\})", combine_verbs, p.text)
     return new_text, notes
 
 
@@ -102,5 +99,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

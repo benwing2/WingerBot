@@ -8,34 +8,31 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if not re.search(r"(ник|ок|ка)([ -]|$)", pagetitle):
+    if not re.search(r"(ник|ок|ка)([ -]|$)", p.title):
         return
 
     cons = "[бцдфгчйклмнпрствшхзжщ]"
     if (
-        pagetitle.endswith("ство")
-        or pagetitle.endswith("ёнок")
-        or re.search("[шжчщ]онок$", pagetitle)
+        p.title.endswith("ство")
+        or p.title.endswith("ёнок")
+        or re.search("[шжчщ]онок$", p.title)
         or (
-            not re.search(cons + "[кц][оаяеёыи]$", pagetitle)
-            and not re.search(cons + cons + "[оаяеёыи]$", pagetitle)
+            not re.search(cons + "[кц][оаяеёыи]$", p.title)
+            and not re.search(cons + cons + "[оаяеёыи]$", p.title)
             and
-            # not re.search("[оеё]" + cons + "$", pagetitle) and # but too many false positives
-            not re.search("[оеё][кц]$", pagetitle)
+            # not re.search("[оеё]" + cons + "$", p.title) and # but too many false positives
+            not re.search("[оеё][кц]$", p.title)
         )
     ):
         return
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "ru-noun-table" and "*" not in str(t):
-            pagemsg("WARNING: Likely incorrectly-declined reducible: %s" % str(t))
+            p.msg("WARNING: Likely incorrectly-declined reducible: %s" % str(t))
 
 
 parser = blib.create_argparser(
@@ -47,5 +44,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian nouns"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian nouns"]
 )

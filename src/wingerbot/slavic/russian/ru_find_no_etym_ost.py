@@ -3,50 +3,45 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 from wingerbot.slavic.russian import rulib
 
 nouns = []
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if not re.search("[иы]й$", pagetitle):
-        pagemsg("Skipping adjective not in -ый or -ий")
+def process_text_on_page(p):
+    if not re.search("[иы]й$", p.title):
+        p.msg("Skipping adjective not in -ый or -ий")
         return
 
-    noun = re.sub("[иы]й$", "ость", pagetitle)
+    noun = re.sub("[иы]й$", "ость", p.title)
     if noun not in nouns:
         return
 
-    if rulib.check_for_alt_yo_terms(text, pagemsg):
+    if rulib.check_for_alt_yo_terms(p.text, p.msg):
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "ru-adj":
-            heads = blib.fetch_param_chain(t, "1", "head", pagetitle)
+            heads = blib.fetch_param_chain(t, "1", "head", p.title)
             if len(heads) > 1:
-                pagemsg("Skipping adjective with multiple heads: %s" % ",".join(heads))
+                p.msg("Skipping adjective with multiple heads: %s" % ",".join(heads))
                 continue
             noun_page = pywikibot.Page(site, noun)
-            noun_text = blib.safe_page_text(noun_page, errandpagemsg)
+            noun_text = blib.safe_page_text(noun_page, p.errandmsg)
             if not noun_text:
-                pagemsg("Page %s doesn't exist or is empty" % noun)
+                p.msg("Page %s doesn't exist or is empty" % noun)
                 continue
-            modsec = blib.find_modifiable_lang_section(noun_text, "Russian", pagemsg)
+            modsec = blib.find_modifiable_lang_section(noun_text, "Russian", p.msg)
             if modsec is None:
                 continue
             nounsection = modsec.secbody
             if "==Etymology" in nounsection:
-                pagemsg("Noun %s already has etymology" % noun)
+                p.msg("Noun %s already has etymology" % noun)
                 continue
             tr = getparam(t, "tr")
             if tr:
@@ -68,6 +63,6 @@ for i, page in blib.cat_articles("Russian nouns"):
     nouns.append(page.title())
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjectives"],
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian adjectives"],
     canonicalize_pagename=rulib.remove_accents,
 )

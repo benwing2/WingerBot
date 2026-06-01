@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     # Go through each subsection in turn, looking for subsection
     # matching the POS with an appropriate headword template whose
@@ -25,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
             for t in parsed.filter_templates():
                 tn = tname(t)
                 if tn == "diminutive of":
-                    pagemsg("WARNING: Found diminutive-of in etymology: %s" % str(t))
+                    p.msg("WARNING: Found diminutive-of in etymology: %s" % str(t))
 
 
 parser = blib.create_argparser(
@@ -39,7 +36,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian diminutive nouns", "Russian diminutive adjectives"],
 )

@@ -6,19 +6,16 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    direc = pagetitle_to_direc.get(pagetitle, None)
+    direc = pagetitle_to_direc.get(p.title, None)
     if not direc:
-        pagemsg("WARNING: Can't find directive for page")
+        p.msg("WARNING: Can't find directive for page")
         return
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     def frob_gender_param(t, param):
         val = getparam(t, param)
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
             origt = str(t)
             for param in t.params:
                 if str(param.name) != "1":
-                    pagemsg("WARNING: Found other than a single param in template, skipping: %s" % str(t))
+                    p.msg("WARNING: Found other than a single param in template, skipping: %s" % str(t))
                     return
             FIXME
             if origt != str(t):
@@ -40,16 +37,16 @@ def process_text_on_page(index, pagetitle, text):
                 if param3 != "-":
                     if fix_indeclinable:
                         if param3:
-                            pagemsg("WARNING: Can't make indeclinable, has genitive singular given: %s" % origt)
+                            p.msg("WARNING: Can't make indeclinable, has genitive singular given: %s" % origt)
                             return
                         else:
                             t.add("3", "-")
                             notes.append("make indeclinable")
-                            pagemsg("Making indeclinable: %s" % str(t))
+                            p.msg("Making indeclinable: %s" % str(t))
                     else:
-                        pagemsg("WARNING: Would add inanimacy to neuter, but isn't marked as indeclinable: %s" % origt)
+                        p.msg("WARNING: Would add inanimacy to neuter, but isn't marked as indeclinable: %s" % origt)
                         return
-                pagemsg("Replacing %s with %s" % (origt, str(t)))
+                p.msg("Replacing %s with %s" % (origt, str(t)))
 
     if notes:
         comment = "Add inanimacy to neuters (%s)" % "; ".join(notes)
@@ -74,5 +71,5 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
         pagetitle_to_direc[page] = direc
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_direc.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_direc.keys())
 )

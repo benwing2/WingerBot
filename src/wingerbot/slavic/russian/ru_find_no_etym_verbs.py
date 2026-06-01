@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, tname
+from wingerbot.blib import getparam, msg, tname
 from wingerbot.slavic.russian import rulib
 
 lemmas = []
@@ -29,25 +29,20 @@ def is_transitive_verb(pagename, pagemsg, errandpagemsg):
     return False
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     if "==Etymology" in secbody:
         return
-    if rulib.check_for_alt_yo_terms(secbody, pagemsg):
+    if rulib.check_for_alt_yo_terms(secbody, p.msg):
         return
     parsed = blib.parse_text(secbody)
     for t in parsed.filter_templates():
         if tname(t) in ["ru-participle of"]:
-            pagemsg("Skipping participle")
+            p.msg("Skipping participle")
             return
     saw_verb = False
     saw_passive = False
@@ -63,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
             saw_verb = True
             saw_paired_verb = False
             printed_msg = False
-            heads = blib.fetch_param_chain(t, "1", "head") or [pagetitle]
+            heads = blib.fetch_param_chain(t, "1", "head") or [p.title]
             refl = heads[0].endswith("ся") or heads[0].endswith("сь")
             if refl:
                 m = re.search("^(.*)(с[яь])$", heads[0])
@@ -71,7 +66,7 @@ def process_text_on_page(index, pagetitle, text):
                 transverb_no_passive = (
                     False
                     if (saw_passive or saw_bad_passive)
-                    else is_transitive_verb(rulib.remove_accents(m.group(1)), pagemsg, errandpagemsg)
+                    else is_transitive_verb(rulib.remove_accents(m.group(1)), p.msg, p.errandmsg)
                 )
                 if saw_passive or saw_bad_passive or transverb_no_passive:
                     splits.append(
@@ -177,7 +172,7 @@ def process_text_on_page(index, pagetitle, text):
             if term not in base_terms_no_accent:
                 base_terms_no_accent.append(term)
         if len(base_terms_no_accent) > 1:
-            errandpagemsg(
+            p.errandmsg(
                 "WARNING: Multiple base pages %s for base lemmas %s"
                 % (",".join(base_terms_no_accent), ",".join(base_terms))
             )
@@ -186,18 +181,18 @@ def process_text_on_page(index, pagetitle, text):
             continue
         derived_defns = blib.find_defns(secbody, "ru")
         if not derived_defns:
-            errandpagemsg("WARNING: Couldn't find definitions for derived term %s" % ",".join(derived_terms))
+            p.errandmsg("WARNING: Couldn't find definitions for derived term %s" % ",".join(derived_terms))
             continue
-        base_term_text = blib.find_page_text(base_terms_no_accent[0], pagemsg, errandpagemsg)
+        base_term_text = blib.find_page_text(base_terms_no_accent[0], p.msg, p.errandmsg)
         if base_term_text is None:
             continue
-        modsec = blib.find_modifiable_lang_section(base_term_text, "Russian", pagemsg)
+        modsec = blib.find_modifiable_lang_section(base_term_text, "Russian", p.msg)
         if modsec is None:
             continue
         base_section = modsec.secbody
         base_defns = blib.find_defns(base_section, "ru")
         if not base_defns:
-            errandpagemsg("WARNING: Couldn't find definitions for base term %s" % ",".join(base_terms))
+            p.errandmsg("WARNING: Couldn't find definitions for base term %s" % ",".join(base_terms))
             continue
 
         def concat_defns(defns):
@@ -215,7 +210,7 @@ def process_text_on_page(index, pagetitle, text):
             )
         )
     if not saw_verb:
-        msg("%s no-etym misc" % pagetitle)
+        msg("%s no-etym misc" % p.title)
 
 
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
@@ -235,5 +230,5 @@ def scrape_pagetitle(index, page):
 
 blib.do_pagefile_cats_refs(args, start, end, scrape_pagetitle, default_cats=["Russian verbs"])
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

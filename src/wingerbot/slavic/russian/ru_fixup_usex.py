@@ -14,15 +14,9 @@ from wingerbot.blib import getparam, rmparam, msg, tname
 from wingerbot.slavic.russian import runounlib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
@@ -44,15 +38,15 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("canonicalize two-part links in %s|ru" % tn)
             pval = getparam(t, "tr")
             if pval:
-                auto_translit = expand_text("{{xlit|ru|%s}}" % getparam(t, "2"))
+                auto_translit = p.expand_text("{{xlit|ru|%s}}" % getparam(t, "2"))
                 if auto_translit == pval:
                     rmparam(t, "tr")
                     notes.append("remove redundant translit in %s|ru" % tn)
                 else:
-                    pagemsg("WARNING: Non-redundant translit in %s" % str(t))
+                    p.msg("WARNING: Non-redundant translit in %s" % str(t))
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -66,5 +60,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian lemmas"]
 )

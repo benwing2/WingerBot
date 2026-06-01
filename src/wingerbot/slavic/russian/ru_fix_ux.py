@@ -6,28 +6,25 @@ from wingerbot import blib
 from wingerbot.blib import rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
         if tname(t) == "ru-ux":
             origt = str(t)
             if t.has("adj"):
-                pagemsg("Removing adj=")
+                p.msg("Removing adj=")
                 notes.append("remove adj= from ru-ux")
                 rmparam(t, "adj")
             if t.has("shto"):
-                pagemsg("Removing shto=")
+                p.msg("Removing shto=")
                 notes.append("remove shto= from ru-ux")
                 rmparam(t, "shto")
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -37,5 +34,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:ru-ux"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:ru-ux"]
 )

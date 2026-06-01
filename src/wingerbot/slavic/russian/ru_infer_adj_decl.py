@@ -376,16 +376,13 @@ def infer_decl(t, pagemsg):
     return None
 
 
-def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def _process_text_on_page(p) -> ProcessPageRetval:
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in decl_templates:
             orig_template = str(t)
-            declargs = infer_decl(t, pagemsg)
+            declargs = infer_decl(t, p.msg)
             if not declargs:
                 # At least combine stem and declension, blanking decl when possible.
                 stem, decl = combine_stem(getparam(t, "1"), getparam(t, "2"))
@@ -399,7 +396,7 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
                         break
                 new_template = str(t)
                 if orig_template != new_template:
-                    if not compare_results(orig_template, new_template, pagemsg):
+                    if not compare_results(orig_template, new_template, p.msg):
                         return None, None
             else:
                 for i in range(15, 0, -1):
@@ -420,16 +417,16 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
                 new_template = str(t)
             if orig_template != new_template:
                 if args.verbose:
-                    pagemsg("Replacing %s with %s" % (orig_template, new_template))
+                    p.msg("Replacing %s with %s" % (orig_template, new_template))
 
     return str(parsed), "Convert adj decl to new form and infer short-accent pattern"
 
 
-def process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
+def process_text_on_page(p) -> ProcessPageRetval:
     try:
-        return _process_text_on_page(index, pagetitle, text)
+        return _process_text_on_page(p)
     except Exception as e:
-        msg("%s %s: WARNING: Got an error: %s" % (index, pagetitle, repr(e)))
+        p.msg("WARNING: Got an error: %s" % repr(e))
         traceback.print_exc(file=sys.stdout)
 
 
@@ -458,7 +455,7 @@ test_templates = [
 
 def test_infer():
     for pagetext in test_templates:
-        retval = process_text_on_page(1, "test_infer", pagetext)
+        retval = process_text_on_page(blib.ProcessPageParams(args, 1, "test_infer", pagetext, None))
         if retval is not None:
             newtext, comment = retval
         msg("newtext = %s" % str(newtext))
@@ -475,5 +472,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 if args.mockup:
     test_infer()
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
                                default_refs=["Template:%s" % template for template in decl_templates])

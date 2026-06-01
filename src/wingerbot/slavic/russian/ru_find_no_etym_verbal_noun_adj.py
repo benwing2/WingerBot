@@ -49,7 +49,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -179,45 +179,36 @@ def form_ppp(conjtype, pagetitle, inflargs):
         return None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    if re.search("с[яь]$", pagetitle):
-        pagemsg("Skipping reflexive verb")
+def process_text_on_page(p):
+    if re.search("с[яь]$", p.title):
+        p.msg("Skipping reflexive verb")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "ru-conj":
             if [x for x in t.params if str(x.value) == "or"]:
-                pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+                p.msg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
             conjtype = getparam(t, "2")
             tempcall = re.sub(r"\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
-            result = expand_text(tempcall)
+            result = p.expand_text(tempcall)
             if not result:
-                pagemsg("WARNING: Error generating forms, skipping")
+                p.msg("WARNING: Error generating forms, skipping")
                 continue
             inflargs = blib.split_generate_args(result)
             if "infinitive" not in inflargs:  # e.g. обнимать
-                pagemsg("WARNING: No infinitive")
+                p.msg("WARNING: No infinitive")
                 continue
             infinitive = inflargs["infinitive"]
             if "," in infinitive:
-                pagemsg("WARNING: Infinitive has multiple forms: %s" % infinitive)
+                p.msg("WARNING: Infinitive has multiple forms: %s" % infinitive)
                 continue
             if "//" in infinitive:
-                pagemsg("WARNING: Infinitive has translit: %s" % infinitive)
+                p.msg("WARNING: Infinitive has translit: %s" % infinitive)
                 continue
-            ppp = form_ppp(conjtype, pagetitle, inflargs)
+            ppp = form_ppp(conjtype, p.title, inflargs)
             if not ppp:
                 continue
             if ppp.endswith("тый"):
@@ -237,7 +228,7 @@ def process_text_on_page(index, pagetitle, text):
                 verbal_adj_suffix = "ительный"
             else:
                 if not ppp.endswith("анный") and not ppp.endswith("янный"):
-                    pagemsg("WARNING: Bad PPP %s, probably weird infinitive" % ppp)
+                    p.msg("WARNING: Bad PPP %s, probably weird infinitive" % ppp)
                     continue
                 verbal_noun = re.sub("нный$", "ние", ppp)
                 verbal_adj = re.sub("нный$", "тельный", ppp)
@@ -264,11 +255,11 @@ def process_text_on_page(index, pagetitle, text):
                 stem = rulib.remove_monosyllabic_accents(infinitive)
 
             if verbal_noun in nouns:
-                stressed_noun = find_noun(verbal_noun, pagemsg, errandpagemsg, expand_text)
+                stressed_noun = find_noun(verbal_noun, p.msg, p.errandmsg, p.expand_text)
                 if not stressed_noun:
                     msg("%s no-etym FIXME" % verbal_noun)
                 elif stressed_noun == -1:
-                    pagemsg("Would add etym for %s but already has one" % verbal_noun)
+                    p.msg("Would add etym for %s but already has one" % verbal_noun)
                 else:
                     if stressed_noun.endswith(stressed_verbal_noun_suffix):
                         suffix = stressed_verbal_noun_suffix
@@ -277,16 +268,16 @@ def process_text_on_page(index, pagetitle, text):
                     msg("%s %s+-%s no-etym verbal-noun" % (verbal_noun, stem, suffix))
 
             if agent_noun in nouns:
-                stressed_noun = find_noun(agent_noun, pagemsg, errandpagemsg, expand_text)
+                stressed_noun = find_noun(agent_noun, p.msg, p.errandmsg, p.expand_text)
                 if stressed_noun == -1:
-                    pagemsg("Would add etym for %s but already has one" % agent_noun)
+                    p.msg("Would add etym for %s but already has one" % agent_noun)
                 else:
                     msg("%s %s+-тель no-etym agent-noun" % (agent_noun, stem))
 
             if verbal_adj in adjectives:
-                stressed_adj = find_adj(verbal_adj, pagemsg, errandpagemsg)
+                stressed_adj = find_adj(verbal_adj, p.msg, p.errandmsg)
                 if stressed_adj == -1:
-                    pagemsg("Would add etym for %s but already has one" % verbal_adj)
+                    p.msg("Would add etym for %s but already has one" % verbal_adj)
                 else:
                     msg("%s %s+-тельный no-etym verbal-adj" % (verbal_adj, stem))
 
@@ -308,6 +299,6 @@ for i, page in blib.cat_articles("Russian adjectives"):
     adjectives.append(page.title())
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"],
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"],
     canonicalize_pagename=rulib.remove_accents,
 )

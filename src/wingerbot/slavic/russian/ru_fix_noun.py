@@ -250,23 +250,20 @@ def process_page_section(index, pagetitle, section):
     )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     num_ru_noun_subs = 0
     num_ru_proper_noun_subs = 0
     num_replace_bian = 0
     transferred_tr = []
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
-        retval = process_page_section(index, pagetitle, subsections[k])
+        retval = process_page_section(p.index, p.title, subsections[k])
         if retval:
             (
                 replaced,
@@ -283,8 +280,8 @@ def process_text_on_page(index, pagetitle, text):
     
     new_text = modsec.rebuild(secbody="".join(subsections))
 
-    if new_text == text:
-        pagemsg("WARNING: Can't find headword or decl template, skipping")
+    if new_text == p.text:
+        p.msg("WARNING: Can't find headword or decl template, skipping")
     else:
         notes = []
         if num_ru_noun_subs == 1:
@@ -316,8 +313,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     # default_refs=["Template:ru-noun", "Template:ru-proper noun"],
     default_refs=["Template:tracking/ru-headword/bad-ru-noun"],
 )

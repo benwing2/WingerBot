@@ -14,15 +14,12 @@ from wingerbot import blib
 from wingerbot.blib import tname, msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         if tname(t) == "ru-adj-table":
             blib.set_template_name(t, "ru-decl-adj-irreg")
@@ -59,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif t.has("nom_m"):
                     before = "nom_m"
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Don't know where to insert %s=%s, inserting at end: %s" % (newarg, newval, str(t))
                     )
                     before = None
@@ -82,8 +79,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=[
         "Template:%s" % template
         for template in [

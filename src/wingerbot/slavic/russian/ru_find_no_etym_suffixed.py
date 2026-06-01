@@ -6,7 +6,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, tname
+from wingerbot.blib import msg, tname
 
 from wingerbot.slavic.russian import rulib
 
@@ -47,16 +47,7 @@ def find_noun_lemmas(parsed, pagetitle, errandpagemsg, expand_text):
     return noun_lemmas
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
     # ending and whether final consonant is palatal
@@ -83,11 +74,11 @@ def process_text_on_page(index, pagetitle, text):
     ]
     stems = []
     for ending, is_palatal in endings:
-        if pagetitle.endswith(ending):
-            stem = re.sub(ending + "$", "", pagetitle)
+        if p.title.endswith(ending):
+            stem = re.sub(ending + "$", "", p.title)
             stems.append((stem, is_palatal))
     if not stems:
-        stems.append((pagetitle, False))
+        stems.append((p.title, False))
     possible = []
 
     def append_possible(stem_to_try, suffix):
@@ -169,34 +160,34 @@ def process_text_on_page(index, pagetitle, text):
     if not would_output:
         return
 
-    if rulib.check_for_alt_yo_terms(text, pagemsg):
+    if rulib.check_for_alt_yo_terms(p.text, p.msg):
         return
 
     base_lemmas = []
 
     for possible_derived, suffix in possible:
         if possible_derived in derived_lemmas:
-            possible_derived_text = blib.find_page_text(possible_derived, pagemsg, errandpagemsg)
+            possible_derived_text = blib.find_page_text(possible_derived, p.msg, p.errandmsg)
             if possible_derived_text is None:
                 continue
-            modsec = blib.find_modifiable_lang_section(possible_derived_text, "Russian", pagemsg)
+            modsec = blib.find_modifiable_lang_section(possible_derived_text, "Russian", p.msg)
             if modsec is None:
                 continue
             derived_section = modsec.secbody
             if "==Etymology" in derived_section:
-                pagemsg("Skipping derived term %s because it already has an etymology" % possible_derived)
+                p.msg("Skipping derived term %s because it already has an etymology" % possible_derived)
                 continue
             derived_defns = blib.find_defns(derived_section, "ru")
             if not derived_defns:
-                errandpagemsg("WARNING: Couldn't find definitions for derived term %s" % possible_derived)
+                p.errandmsg("WARNING: Couldn't find definitions for derived term %s" % possible_derived)
                 continue
 
             derived_parsed = blib.parse_text(derived_section)
             page_derived_lemmas = find_noun_lemmas(
                 derived_parsed,
                 possible_derived,
-                errandpagemsg,
-                lambda tempcall: blib.expand_text(tempcall, possible_derived, pagemsg, args.verbose),
+                p.errandmsg,
+                lambda tempcall: blib.expand_text(tempcall, possible_derived, p.msg, args.verbose),
             )
             for t in derived_parsed.filter_templates():
                 if tname(t) in ["ru-adj", "ru-adv"]:
@@ -208,16 +199,16 @@ def process_text_on_page(index, pagetitle, text):
                         add_if_not(derived_lemmas, lemma)
 
             if not page_derived_lemmas:
-                errandpagemsg("WARNING: No derived term lemmas for %s" % possible_derived)
+                p.errandmsg("WARNING: No derived term lemmas for %s" % possible_derived)
                 return
 
             if not base_lemmas:
-                base_parsed = blib.parse_text(text)
-                base_lemmas = find_noun_lemmas(base_parsed, pagetitle, errandpagemsg, expand_text)
+                base_parsed = blib.parse_text(p.text)
+                base_lemmas = find_noun_lemmas(base_parsed, p.title, p.errandmsg, p.expand_text)
 
                 for t in base_parsed.filter_templates():
                     if tname(t) in ["ru-verb", "ru-adj"]:
-                        lemmas = blib.fetch_param_chain(t, "1", "head", pagetitle)
+                        lemmas = blib.fetch_param_chain(t, "1", "head", p.title)
                         trs = blib.fetch_param_chain(t, "tr", "tr")
                         if trs:
                             lemmas = ["%s//%s" % (lemma, tr) for lemma, tr in zip(lemmas, trs)]
@@ -225,7 +216,7 @@ def process_text_on_page(index, pagetitle, text):
                             add_if_not(base_lemmas, lemma)
 
                 if not base_lemmas:
-                    errandpagemsg("WARNING: No base lemmas")
+                    p.errandmsg("WARNING: No base lemmas")
                     return
 
                 base_lemmas = [rulib.remove_monosyllabic_accents(x) for x in base_lemmas]
@@ -236,13 +227,13 @@ def process_text_on_page(index, pagetitle, text):
                 if any("//" in lemma for lemma in base_lemmas):
                     warnings.append("translit-in-lemma")
 
-                modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+                modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
                 if modsec is None:
                     return
                 base_section = modsec.secbody
                 base_defns = blib.find_defns(base_section, "ru")
                 if not base_defns:
-                    errandpagemsg("WARNING: Couldn't find definitions for base")
+                    p.errandmsg("WARNING: Couldn't find definitions for base")
                     return
 
             def concat_defns(defns):
@@ -292,8 +283,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian adjectives"] if args.adverbs else ["Russian proper nouns", "Russian nouns", "Russian verbs"],
     canonicalize_pagename=rulib.remove_accents,
 )

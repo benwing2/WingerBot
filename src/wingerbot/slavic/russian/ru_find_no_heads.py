@@ -74,13 +74,10 @@ def output_heads_seen():
         msg("  %s = %s" % (head, count))
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     found_page_head = False
     for t in parsed.filter_templates():
         found_this_head = False
@@ -92,14 +89,14 @@ def process_text_on_page(index, pagetitle, text):
             headtype = getparam(t, "2")
             headname = "head|ru|%s" % headtype
             if headtype in ru_heads_to_warn_about:
-                pagemsg("WARNING: Found %s" % headname)
+                p.msg("WARNING: Found %s" % headname)
             found_this_head = True
         if found_this_head:
             overall_head_count[headname] = overall_head_count.get(headname, 0) + 1
             found_page_head = True
     if not found_page_head:
-        pagemsg("WARNING: No head")
-    if index % 100 == 0:
+        p.msg("WARNING: No head")
+    if p.index % 100 == 0:
         output_heads_seen()
 
 
@@ -110,6 +107,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Russian %x" for x in poses], edit=True, stdin=True
+    args, start, end, process_text_on_page, default_cats=["Russian %x" for x in poses], new=True
 )
 output_heads_seen()

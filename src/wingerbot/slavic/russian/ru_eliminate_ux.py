@@ -11,22 +11,19 @@ from wingerbot import blib
 from wingerbot.blib import msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
         if tname(t) == "ru-ux":
             origt = str(t)
             if t.has("noadj") or t.has("noshto"):
-                pagemsg("WARNING: Can't convert %s, has noadj= or noshto=" % origt)
+                p.msg("WARNING: Can't convert %s, has noadj= or noshto=" % origt)
             elif t.has("adj") or t.has("shto"):
-                pagemsg("WARNING: Can't convert %s, has adj= or shto=" % origt)
+                p.msg("WARNING: Can't convert %s, has adj= or shto=" % origt)
             else:
                 tn = "ux"
                 new_params = []
@@ -51,7 +48,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("Replace {{ru-ux}} with {{%s|ru}}" % tn)
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -63,5 +60,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:ru-ux"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:ru-ux"]
 )

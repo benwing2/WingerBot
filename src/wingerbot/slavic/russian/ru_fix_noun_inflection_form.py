@@ -11,15 +11,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -60,7 +57,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add(name, value)
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
                 notes.append("removed any blank form codes and maybe rearranged lang=, tr=")
                 if nocat:
                     notes.append("removed nocat=")
@@ -95,7 +92,7 @@ def process_text_on_page(index, pagetitle, text):
                         t.add(str(i), to)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
                     notes.append("converted '%s' form code to '%s'" % (frm, to))
     secbody = str(parsed)
 
@@ -115,7 +112,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("4", number)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
                     notes.append("converted '%s|%s' to '%s|%s'" % (number, case, case, number))
     secbody = str(parsed)
 
@@ -127,5 +124,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian noun forms"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian noun forms"]
 )

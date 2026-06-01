@@ -11,25 +11,22 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 
-def process_text_on_page(index, pagetitle, text, nowarn=False):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p, nowarn=False):
+    p.msg("Processing")
 
     notes = []
 
     found_participle = False
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         found_subsec_participle = False
@@ -117,13 +114,13 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
                 for name, value in non_numbered_params:
                     t.add(name, value)
                 newt = str(t)
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
                 notes.append("replaced '%s' with 'ru-participle of/%s'" % (origtn, "/".join(canon_params)))
         if found_subsec_participle:
             if header == "Verb":
                 origsubsec = subsections[k - 1]
                 subsections[k - 1] = re.sub("Verb", "Participle", subsections[k - 1])
-                pagemsg(
+                p.msg(
                     "Replaced %s with %s" % (origsubsec.replace("\n", r"\n"), subsections[k - 1].replace("\n", r"\n"))
                 )
                 notes.append("set section header to Participle")
@@ -133,7 +130,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
                     t.add("2", "participle")
                     newt = str(t)
                     if origt != newt:
-                        pagemsg("Replaced %s with %s" % (origt, newt))
+                        p.msg("Replaced %s with %s" % (origt, newt))
                         notes.append("set headword part of speech to 'participle'")
         subsections[k] = str(parsed)
     secbody = "".join(subsections)
@@ -142,7 +139,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
     # both Noun and Adjective sections before the Participle.
     while True:
         rearranged = False
-        l3secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3)
+        l3secs = blib.split_text_into_subsections(secbody, p.msg, only_level=3)
         l3sections = l3secs.subsections
         l3section_headers = l3secs.header_list
         for k, header in l3section_headers:
@@ -158,7 +155,7 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
                 l3sections[k] = l3sections[k + 2]
                 l3sections[k + 2] = tmp
                 rearranged = True
-                pagemsg(
+                p.msg(
                     "Swapped %s with %s"
                     % (l3sections[k + 1].replace("\n", r"\n"), l3sections[k - 1].replace("\n", r"\n"))
                 )
@@ -169,16 +166,16 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
     new_text = modsec.rebuild(secbody=secbody)
 
     if "Etymology 1" in new_text:
-        pagemsg("WARNING: Multiple etymology sections, might need to manually fix up")
+        p.msg("WARNING: Multiple etymology sections, might need to manually fix up")
 
     new_new_text = re.sub(r"\[\[Category:Russian [a-z ]*participles]]", "", new_text)
     if new_text != new_new_text:
-        pagemsg("Removed manual participle categories")
+        p.msg("Removed manual participle categories")
         notes.append("remove manual participle categories")
         new_text = new_new_text
 
     if not notes and not found_participle and not nowarn:
-        pagemsg("WARNING: No participles found")
+        p.msg("WARNING: No participles found")
 
     new_new_text = re.sub(r"\n\n\n+", "\n\n", new_text)
     if new_new_text != new_text:
@@ -202,8 +199,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=[
         "Russian participles",
         "Russian present active participles",
@@ -214,10 +210,10 @@ blib.do_pagefile_cats_refs(
 )
 
 
-def process_text_on_page_nowarn(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, nowarn=True)
+def process_text_on_page_nowarn(p):
+    return process_text_on_page(p, nowarn=True)
 
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page_nowarn, edit=True, stdin=True, default_cats=["Russian non-lemma forms"]
+    args, start, end, process_text_on_page_nowarn, new=True, default_cats=["Russian non-lemma forms"]
 )

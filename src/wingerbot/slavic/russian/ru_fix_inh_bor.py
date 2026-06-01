@@ -8,11 +8,8 @@ from wingerbot.blib import getparam, rmparam, msg, tname
 borrowed_langs = {}
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     # re.sub() substitution function for replacing {{etyl|*|ru}} {{m|*|FOO}}
     # with either {{inh|ru|*|FOO}} or {{bor|ru|*|FOO}}, depending on the
@@ -23,10 +20,10 @@ def process_text_on_page(index, pagetitle, text):
             prefix_text = re.sub("^[Ff]rom +", "", prefix_text)
             prefix_text = re.sub(r"\. +From ", ". ", prefix_text)
             if langcode in ["orv", "sla-pro", "ine-bsl-pro", "ine-pro"]:
-                pagemsg("Not creating {{bor}} for inherited language %s: %s" % (langcode, text))
+                p.msg("Not creating {{bor}} for inherited language %s: %s" % (langcode, text))
                 return m.group(0)
             borrowed_langs[langcode] = borrowed_langs.get(langcode, 0) + 1
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             targs = ""
             tn = tname(t)
@@ -37,15 +34,15 @@ def process_text_on_page(index, pagetitle, text):
                 targs = re.sub(r"^\{\{\s*term\s*", "", str(t))
             if targs:
                 if targs.startswith("{{"):
-                    pagemsg("WARNING: Something went wrong in substitution with %s: %s" % (targs, text))
+                    p.msg("WARNING: Something went wrong in substitution with %s: %s" % (targs, text))
                     return m.group(0)
                 if do_bor:
                     new_text = prefix_text + "{{bor|ru|%s%s" % (langcode, targs)
                 else:
                     new_text = prefix_text + "{{inh|ru|%s%s" % (langcode, targs)
-                pagemsg("Replacing <%s> with <%s>" % (m.group(0), new_text))
+                p.msg("Replacing <%s> with <%s>" % (m.group(0), new_text))
                 return new_text
-        pagemsg(
+        p.msg(
             "WARNING: Something went wrong, can't find {{m|...}} or {{l|...}} or {{term|...}}, or wrong langcode: %s"
             % (text)
         )
@@ -56,12 +53,12 @@ def process_text_on_page(index, pagetitle, text):
     def do_bor_raw(m):
         langcode, term = m.groups()
         if langcode in ["orv", "sla-pro", "ine-bsl-pro", "ine-pro"]:
-            pagemsg("Not creating {{bor}} for inherited language %s: %s" % (langcode, m.group(0)))
+            p.msg("Not creating {{bor}} for inherited language %s: %s" % (langcode, m.group(0)))
             return m.group(0)
         borrowed_langs[langcode] = borrowed_langs.get(langcode, 0) + 1
         return "{{bor|ru|%s|%s}}" % (langcode, term)
 
-    orig_text = text
+    text = p.text
 
     # Do inherited cases. We look for a line beginning with either nothing or
     # some non-template text ending in [Ff]rom, followed by an inheritance chain
@@ -117,10 +114,10 @@ def process_text_on_page(index, pagetitle, text):
                     getparam(t, "lang") == "ru" or not getparam(t, "lang") and getparam(t, "1") == "ru"
                 ):
                     found_borrowing = True
-                    pagemsg("Already contains borrowing: %s" % m.group(0))
+                    p.msg("Already contains borrowing: %s" % m.group(0))
 
     if not found_borrowing:
-        pagemsg("WARNING: Can't find proper borrowing template")
+        p.msg("WARNING: Can't find proper borrowing template")
 
     return text, "Use {{inh}}/{{bor}} in Russian for terms inherited or borrowed"
 
@@ -136,8 +133,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian lemmas", "Russian non-lemma forms"],
 )
 

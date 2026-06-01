@@ -6,42 +6,36 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-
-    props = pagetitle_to_props.get(pagetitle, None)
+    props = pagetitle_to_props.get(p.title, None)
     if not props:
-        pagemsg("WARNING: Can't find properties for page")
+        p.msg("WARNING: Can't find properties for page")
         return
     phon, softphon, variant = props
-    if not text and not blib.safe_page_exists(pywikibot.Page(site, pagetitle), errandpagemsg):
-        pagemsg(
+    if not p.text and not blib.safe_page_exists(pywikibot.Page(site, p.title), p.errandmsg):
+        p.msg(
             "Page doesn't exist, should have pron phon=%s%s" % (phon, variant and " with variant %s" % variant or "")
         )
         return
-    if "==Russian==" not in text:
-        pagemsg(
+    if "==Russian==" not in p.text:
+        p.msg(
             "Page doesn't have Russian section, should have pron phon=%s%s"
             % (phon, variant and " with variant %s" % variant or "")
         )
         return
-    if lemmas and pagetitle not in lemmas:
-        pagemsg(
+    if lemmas and p.title not in lemmas:
+        p.msg(
             "Page doesn't have a lemma on it, should have pron phon=%s%s"
             % (phon, variant and " with variant %s" % variant or "")
         )
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     prons = []
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -50,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
             if tphon:
                 prons.append("phon=%s" % tphon)
             else:
-                prons.append(getparam(t, "1") or pagetitle)
+                prons.append(getparam(t, "1") or p.title)
     altexpected = None
     phon = "phon=%s" % phon
     if not variant:
@@ -63,24 +57,24 @@ def process_text_on_page(index, pagetitle, text):
     elif variant == "+э":
         expected = [phon, softphon]
     else:
-        pagemsg("WARNING: Bad variant %s, skipping" % variant)
+        p.msg("WARNING: Bad variant %s, skipping" % variant)
         return
     if altexpected:
         if prons == expected or prons == altexpected:
-            pagemsg(
+            p.msg(
                 "Found pronunciation %s matching expected pronunciation %s or %s"
                 % (",".join(prons), ",".join(expected), ",".join(altexpected))
             )
         else:
-            pagemsg(
+            p.msg(
                 "WARNING: Mismatched pronunciation, found %s, expected %s or %s"
                 % (",".join(prons), ",".join(expected), ",".join(altexpected))
             )
     else:
         if prons == expected:
-            pagemsg("Found pronunciation %s matching expected pronunciation %s" % (",".join(prons), ",".join(expected)))
+            p.msg("Found pronunciation %s matching expected pronunciation %s" % (",".join(prons), ",".join(expected)))
         else:
-            pagemsg("WARNING: Mismatched pronunciation, found %s, expected %s" % (",".join(prons), ",".join(expected)))
+            p.msg("WARNING: Mismatched pronunciation, found %s, expected %s" % (",".join(prons), ",".join(expected)))
 
 
 parser = blib.create_argparser(
@@ -119,5 +113,5 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
             pagetitle_to_props[m.group(1)] = (phon, softphon, m.group(4))
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_props.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_props.keys())
 )

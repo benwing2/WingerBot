@@ -6,12 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
 
     found_audio = False
     for t in parsed.filter_templates():
@@ -19,8 +16,8 @@ def process_text_on_page(index, pagetitle, text):
             found_audio = True
             break
     if found_audio:
-        new_text = re.sub(r"\n*\[\[Category:Russian terms with audio links]]\n*", "\n\n", text)
-        if new_text != text:
+        new_text = re.sub(r"\n*\[\[Category:Russian terms with audio links]]\n*", "\n\n", p.text)
+        if new_text != p.text:
             return new_text, "Remove redundant [[:Category:Russian terms with audio links]]"
 
 
@@ -29,5 +26,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian terms with audio links"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian terms with audio links"]
 )

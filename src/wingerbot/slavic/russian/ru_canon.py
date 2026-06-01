@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
+# FIXME: No longer works with removal of canon_foreign.canon_links(); see bg_canon.py for how to rewrite.
+
 import re
 
-from wingerbot import blib, msg
+from wingerbot import blib
+from wingerbot.blib import msg
 from wingerbot.canon_foreign import canon_links
 from wingerbot.slavic.russian import ru_translit
 

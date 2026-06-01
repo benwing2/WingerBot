@@ -8,16 +8,13 @@ from wingerbot.blib import getparam, msg, tname
 non_adjectival_names = ["Дарвин"]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    if pagetitle in non_adjectival_names:
-        pagemsg("Skipping explicitly-specified non-adjectival name")
+    if p.title in non_adjectival_names:
+        p.msg("Skipping explicitly-specified non-adjectival name")
         return
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
 
@@ -26,13 +23,15 @@ def process_text_on_page(index, pagetitle, text):
     ru_adj11_template = None
 
     for t in parsed.filter_templates():
+        def getp(param):
+            return getparam(t, param)
         tn = tname(t)
         if tn == "ru-proper noun":
-            pagemsg("WARNING: Found old ru-proper noun: %s" % str(t))
+            p.msg("WARNING: Found old ru-proper noun: %s" % str(t))
         elif tn == "ru-proper noun+":
-            name = getparam(t, "1")
-            if not (not getparam(t, 2) or getparam(t, "2") == "+" and not getparam(t, "3")):
-                pagemsg("WARNING: Complex proper noun header, not sure how to handle: %s" % str(t))
+            name = getp("1")
+            if not (not getp("2") or getp("2") == "+" and not getp("3")):
+                p.msg("WARNING: Complex proper noun header, not sure how to handle: %s" % str(t))
             else:
                 if re.search("([оеё]́?в|и́?н)$", name):
                     new_fem = name + "а"
@@ -45,18 +44,18 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     new_fem = None
                     if re.search("ий$", name):
-                        pagemsg("WARNING: Name ending in non-velar/hushing consonant + -ий: %s" % str(t))
+                        p.msg("WARNING: Name ending in non-velar/hushing consonant + -ий: %s" % str(t))
                 if new_fem:
-                    if getparam(t, "2") != "+":
-                        pagemsg("WARNING: Adjectival name not correctly conjugated in headword, fixing: %s" % str(t))
+                    if getp("2") != "+":
+                        p.msg("WARNING: Adjectival name not correctly conjugated in headword, fixing: %s" % str(t))
                         origt = str(t)
                         t.add("2", "+", before="a")
                         notes.append("add adjectival + to %s" % name)
-                        pagemsg("Replacing %s with %s" % (origt, str(t)))
-                    existing_fem = getparam(t, "f")
+                        p.msg("Replacing %s with %s" % (origt, str(t)))
+                    existing_fem = getp("f")
                     if existing_fem:
                         if new_fem != existing_fem:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: New feminine %s different from existing feminine %s, not changing: %s"
                                 % (new_fem, existing_fem, str(t))
                             )
@@ -64,7 +63,7 @@ def process_text_on_page(index, pagetitle, text):
                         origt = str(t)
                         t.add("f", new_fem)
                         notes.append("add feminine %s to %s" % (new_fem, name))
-                        pagemsg("Replacing %s with %s" % (origt, str(t)))
+                        p.msg("Replacing %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -74,5 +73,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian surnames"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian surnames"]
 )

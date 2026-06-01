@@ -10,13 +10,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headword_aspects = set()
     found_multiple_headwords = False
@@ -33,27 +30,27 @@ def process_text_on_page(index, pagetitle, text):
                 headword_aspects.add("pf")
                 headword_aspects.add("impf")
             elif aspect == "?":
-                pagemsg("WARNING: Found aspect '?'")
+                p.msg("WARNING: Found aspect '?'")
             else:
-                pagemsg("WARNING: Found bad aspect value '%s' in ru-verb" % aspect)
+                p.msg("WARNING: Found bad aspect value '%s' in ru-verb" % aspect)
         elif tn in ["ru-conj", "ru-conj-old"]:
             aspect = re.sub("-.*", "", getparam(t, "1"))
             if aspect not in ["pf", "impf"]:
-                pagemsg("WARNING: Found bad aspect value '%s' in ru-conj" % getparam(t, "1"))
+                p.msg("WARNING: Found bad aspect value '%s' in ru-conj" % getparam(t, "1"))
             else:
                 if not headword_aspects:
-                    pagemsg("WARNING: No ru-verb preceding ru-conj: %s" % str(t))
+                    p.msg("WARNING: No ru-verb preceding ru-conj: %s" % str(t))
                 elif aspect not in headword_aspects:
-                    pagemsg(
+                    p.msg(
                         "WARNING: ru-conj aspect %s not in ru-verb aspect %s" % (aspect, ",".join(headword_aspects))
                     )
     if args.fix:
         if found_multiple_headwords:
-            pagemsg("WARNING: Multiple ru-verb headwords, not fixing")
+            p.msg("WARNING: Multiple ru-verb headwords, not fixing")
         elif not headword_aspects:
-            pagemsg("WARNING: No ru-verb headwords, not fixing")
+            p.msg("WARNING: No ru-verb headwords, not fixing")
         elif len(headword_aspects) > 1:
-            pagemsg("WARNING: Multiple aspects in ru-verb, not fixing")
+            p.msg("WARNING: Multiple aspects in ru-verb, not fixing")
         else:
             for t in parsed.filter_templates():
                 origt = str(t)
@@ -64,7 +61,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("1", param1)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
                     notes.append("overrode conjugation aspect with %s" % list(headword_aspects)[0])
 
     return str(parsed), notes
@@ -76,5 +73,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
 )

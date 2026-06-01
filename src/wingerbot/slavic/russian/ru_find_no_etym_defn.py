@@ -8,24 +8,21 @@ from wingerbot.blib import getparam, rmparam, msg, site
 from wingerbot.slavic.russian import rulib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    if rulib.check_for_alt_yo_terms(secbody, pagemsg):
+    if rulib.check_for_alt_yo_terms(secbody, p.msg):
         return
 
     defns = blib.find_defns(secbody, "ru")
     if not defns:
-        pagemsg("Couldn't find definitions for %s" % pagetitle)
+        p.msg("Couldn't find definitions for %s" % p.title)
         return
 
-    msg("%s %s" % (pagetitle, ";".join(defns)))
+    msg("%s %s" % (p.title, ";".join(defns)))
 
 
 # Pages specified using --pages or --pagefile may have accents, which will be stripped.
@@ -38,6 +35,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian lemmas"],
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian lemmas"],
     canonicalize_pagename=rulib.remove_accents,
 )

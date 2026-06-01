@@ -9,18 +9,15 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
     already_canonicalized = False
     found_short_inflection_of = False
     warned_about_short = False
 
-    modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -61,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
                 if "short" in numbered_params or "short form" in numbered_params:
                     found_short_inflection_of = True
                     warned_about_short = True
-                    pagemsg("WARNING: Apparent short-form 'inflection of' but can't canonicalize: %s" % str(t))
+                    p.msg("WARNING: Apparent short-form 'inflection of' but can't canonicalize: %s" % str(t))
                 break
             if canon_params:
                 origt = str(t)
@@ -78,10 +75,10 @@ def process_text_on_page(index, pagetitle, text):
                     t.add(str(i + 3), param)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
                     notes.append("canonicalized 'inflection of' for %s" % "/".join(canon_params))
                 else:
-                    pagemsg("Apparently already canonicalized: %s" % newt)
+                    p.msg("Apparently already canonicalized: %s" % newt)
                     already_canonicalized = True
     secbody = str(parsed)
 
@@ -93,7 +90,7 @@ def process_text_on_page(index, pagetitle, text):
         ]
         lemma = m.group(3)
         retval = prefix + "{{inflection of|lang=ru|%s||short|%s|s}}" % (lemma, gender)
-        pagemsg("Replaced <%s> with %s" % (m.group(0), retval))
+        p.msg("Replaced <%s> with %s" % (m.group(0), retval))
         notes.append("converted raw to 'inflection of' for short/%s/s" % gender)
         return retval
 
@@ -111,13 +108,13 @@ def process_text_on_page(index, pagetitle, text):
     if "short" in secbody and not found_short_inflection_of:
         m = re.search("^(.*short.*)$", secbody, re.M)
         warned_about_short = True
-        pagemsg(
+        p.msg(
             "WARNING: Apparent raw-text short inflection, not converted: %s"
             % (m and m.group(1) or "Can't get line?")
         )
 
     if not notes and not already_canonicalized:
-        pagemsg("Skipping, no short form found%s" % (warned_about_short and " (warning issued)" or " (no warning)"))
+        p.msg("Skipping, no short form found%s" % (warned_about_short and " (warning issued)" or " (no warning)"))
 
     return modsec.rebuild(secbody=secbody), notes
 
@@ -131,5 +128,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjective forms"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian adjective forms"]
 )

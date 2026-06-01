@@ -6,23 +6,17 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
     for t in parsed.filter_templates():
         origt = str(t)
         if tname(t) in ["ru-conj", "ru-conj-old"]:
             if [x for x in t.params if str(x.value) == "or"]:
-                pagemsg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
+                p.msg("WARNING: Skipping multi-arg conjugation: %s" % str(t))
                 continue
             param2 = getparam(t, "2")
             if "+p" in param2:
@@ -40,7 +34,7 @@ def process_text_on_page(index, pagetitle, text):
                 tempcall = re.sub(r"^\{\{ru-conj", "{{ru-generate-verb-forms", str(t))
             else:
                 tempcall = re.sub(r"^\{\{ru-conj-old", "{{ru-generate-verb-forms|old=1", str(t))
-            result = expand_text(tempcall)
+            result = p.expand_text(tempcall)
             if not result:
                 continue
             forms = blib.split_generate_args(result)
@@ -49,21 +43,21 @@ def process_text_on_page(index, pagetitle, text):
                 auto_ppp, auto_ppp2 = pppform.split(",")
                 wrong = False
                 if ppp != auto_ppp:
-                    pagemsg("WARNING: ppp %s != auto_ppp %s" % (ppp, auto_ppp))
+                    p.msg("WARNING: ppp %s != auto_ppp %s" % (ppp, auto_ppp))
                     wrong = True
                 if ppp2 != auto_ppp2:
-                    pagemsg("WARNING: ppp2 %s != auto_ppp2 %s" % (ppp2, auto_ppp2))
+                    p.msg("WARNING: ppp2 %s != auto_ppp2 %s" % (ppp2, auto_ppp2))
                     wrong = True
                 if wrong:
                     continue
             else:
                 if ppp != pppform:
-                    pagemsg("WARNING: ppp %s != auto_ppp %s" % (ppp, pppform))
+                    p.msg("WARNING: ppp %s != auto_ppp %s" % (ppp, pppform))
                     continue
         newt = str(t)
         if origt != newt:
             notes.append("Replaced manual ppp= with irreg verb with +p")
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -75,5 +69,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian irregular verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Russian irregular verbs"]
 )

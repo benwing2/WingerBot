@@ -10,24 +10,21 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    for m in re.finditer(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", text, re.M):
+    for m in re.finditer(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", p.text, re.M):
         pretext = m.group(1)
         ruIPA = m.group(2)
         posttext = m.group(3)
         wholeline = m.group(0)
         if not pretext.startswith("* "):
-            pagemsg("WARNING: ru-IPA doesn't start with '* ': %s" % wholeline)
+            p.msg("WARNING: ru-IPA doesn't start with '* ': %s" % wholeline)
         pretext_no_star = re.sub(r"^\*?\s*", "", pretext)
         if pretext_no_star or posttext:
-            pagemsg("WARNING: pre-text or post-text with ru-IPA: %s" % wholeline)
+            p.msg("WARNING: pre-text or post-text with ru-IPA: %s" % wholeline)
     if args.fix_star:
 
         def fix_star(m):
@@ -37,11 +34,10 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 return wholeline
 
-        newtext = re.sub(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", fix_star, text, 0, re.M)
-        if newtext != text:
+        newtext = re.sub(r"^(.*)(\{\{ru-IPA(?:\|[^}]*)?\}\})(.*)$", fix_star, p.text, 0, re.M)
+        if newtext != p.text:
             notes.append("add missing * to ru-IPA lines")
-            text = newtext
-        return text, notes
+        return newtext, notes
 
 
 parser = blib.create_argparser("Find strange Russian pronun lines", include_pagefile=True)
@@ -54,7 +50,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Russian lemmas", "Russian non-lemma forms"],
 )
