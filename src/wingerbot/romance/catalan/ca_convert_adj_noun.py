@@ -218,10 +218,6 @@ def process_text_on_page(index, pagetitle, text):
     if "ca-adj" not in text and "ca-noun" not in text:
         return
 
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace title")
-        return
-
     if pagetitle in deny_list:
         pagemsg("Skipping because in deny_list")
         return

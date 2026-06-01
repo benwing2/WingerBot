@@ -181,10 +181,6 @@ def process_text_on_page(index, pagetitle, text):
     if "fr-noun" not in text and "fr-adj" not in text:
         return
 
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace title")
-        return
-
     pagemsg("Processing")
 
     parsed = blib.parse_text(text)

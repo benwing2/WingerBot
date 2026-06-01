@@ -3,10 +3,10 @@
 # Convert Russian usage examples that are manually formatted using {{lang}}
 # or links to use {{uxi|ru}} or {{ux|ru}}
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -14,10 +14,6 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
 
     notes = []
 

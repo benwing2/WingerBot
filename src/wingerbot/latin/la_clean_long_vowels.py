@@ -623,9 +623,9 @@ def frob_chain_exact(
     return changed
 
 
-def find_tag_sets_for_form(args, form):
+def find_tag_sets_for_form(inflargs, form):
     tag_sets = []
-    for slot, formspec in args.items():
+    for slot, formspec in inflargs.items():
         forms = formspec.split(",")
         if form in forms:
             tag_sets.append(lalib.slot_to_tag_set(slot))
@@ -885,7 +885,7 @@ def do_process_form(index, page, lemma, formind, formval, pos, tag_sets_to_proce
     return modsec.rebuild(secbody=secbody), group_notes(notes)
 
 
-def process_form(index, lemma, formind, formval, pos, tag_sets_to_process, progargs, comment_tag):
+def process_form(index, lemma, formind, formval, pos, tag_sets_to_process, comment_tag):
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
 
@@ -899,36 +899,36 @@ def process_form(index, lemma, formind, formval, pos, tag_sets_to_process, proga
             index,
             pywikibot.Page(site, remove_macrons(formval)),
             handler,
-            save=progargs.save,
-            verbose=progargs.verbose,
-            diff=progargs.diff,
+            save=args.save,
+            verbose=args.verbose,
+            diff=args.diff,
         )
 
 
-def process_all_forms(args, index, lemma, pos, progargs, comment_tag):
-    if progargs.skip_forms:
+def process_all_forms(inflargs, index, lemma, pos, comment_tag):
+    if args.skip_forms:
         return
 
     single_forms_to_process = []
-    for key, form in args.items():
+    for key, form in inflargs.items():
         for single_form in form.split(","):
             single_forms_to_process.append((key, single_form))
 
     for formind, (key, formval) in blib.iter_items(single_forms_to_process, get_name=lambda x: x[1]):
-        if not progargs.n_forms or formind <= progargs.n_forms:
+        if not inflargs.n_forms or formind <= inflargs.n_forms:
             process_form(
-                index, lemma, formind, formval, pos, find_tag_sets_for_form(args, formval), progargs, comment_tag
+                index, lemma, formind, formval, pos, find_tag_sets_for_form(inflargs, formval), comment_tag
             )
 
 
-def do_process_participle(index, page, lemma, formind, formval, explicit_stem, progargs, comment_tag):
+def do_process_participle(index, page, lemma, formind, formval, explicit_stem, comment_tag):
     pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
     def errandpagemsg(txt):
         errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
     def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, progargs.verbose)
+        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     if "[" in formval:
         pagemsg("Skipping form value %s with link in it" % formval)
@@ -1038,11 +1038,11 @@ def do_process_participle(index, page, lemma, formind, formval, explicit_stem, p
                 continue
             frob_exact(inflt, "1", expected_decl_arg, pagemsg, notes, comment_tag, lemma)
 
-            args = lalib.generate_adj_forms(str(inflt), errandpagemsg, expand_text)
-            if args is None:
+            adjargs = lalib.generate_adj_forms(str(inflt), errandpagemsg, expand_text)
+            if adjargs is None:
                 return
 
-            process_all_forms(args, "%s.%s" % (index, formind), formval, "partform", progargs, comment_tag)
+            process_all_forms(adjargs, "%s.%s" % (index, formind), formval, "partform", comment_tag)
 
         process_pronun_templates(headword.pronun_section, formval, pagemsg, notes, comment_tag, lemma)
 
@@ -1050,17 +1050,17 @@ def do_process_participle(index, page, lemma, formind, formval, explicit_stem, p
     return modsec.rebuild(secbody=secbody), group_notes(notes)
 
 
-def process_participle(index, lemma, formind, formval, explicit_stem, progargs, comment_tag):
+def process_participle(index, lemma, formind, formval, explicit_stem, comment_tag):
     def handler(index, page):
-        return do_process_participle(index, page, lemma, formind, formval, explicit_stem, progargs, comment_tag)
+        return do_process_participle(index, page, lemma, formind, formval, explicit_stem, comment_tag)
 
     blib.do_edit(
         index,
         pywikibot.Page(site, remove_macrons(formval)),
         handler,
-        save=progargs.save,
-        verbose=progargs.verbose,
-        diff=progargs.diff,
+        save=args.save,
+        verbose=args.verbose,
+        diff=args.diff,
     )
 
 
@@ -1117,20 +1117,20 @@ def frob_nominal_lemma_spec(ht, lemmaspec, stem, pagemsg, notes, comment_tag, le
             return "nochange"
 
 
-def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit_stem, progargs, comment_tag):
+def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit_stem, comment_tag):
     pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
     def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, progargs.verbose)
+        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     # If the participle's lemma is supplied, use do_process_participle(), which checks (and if necessary updates) the
     # lemma mention in the Etymology section.
     if pos == "part" and type(explicit_stem) is list:
         explicit_stem, paramlemma = explicit_stem
-        return do_process_participle(index, page, paramlemma, 1, lemma, explicit_stem, progargs, comment_tag)
+        return do_process_participle(index, page, paramlemma, 1, lemma, explicit_stem, comment_tag)
 
     pagemsg("Processing")
 
@@ -1235,12 +1235,12 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
                         inflt, override, stem, pagemsg, notes, comment_tag, lemma, split_slashes=True, no_warn=True
                     )
 
-                args = lalib.generate_noun_forms(str(inflt), errandpagemsg, expand_text)
-                if args is None:
+                nounargs = lalib.generate_noun_forms(str(inflt), errandpagemsg, expand_text)
+                if nounargs is None:
                     return
 
                 process_all_forms(
-                    args,
+                    nounargs,
                     index,
                     lemma,
                     pos == "propernoun"
@@ -1250,7 +1250,6 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
                     or pos == "sufnoun"
                     and "sufform"
                     or "nounform",
-                    progargs,
                     comment_tag,
                 )
 
@@ -1333,12 +1332,12 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
                         inflt, override, stem, pagemsg, notes, comment_tag, lemma, split_slashes=True, no_warn=True
                     )
 
-                args = lalib.generate_adj_forms(str(inflt), errandpagemsg, expand_text)
-                if args is None:
+                adjargs = lalib.generate_adj_forms(str(inflt), errandpagemsg, expand_text)
+                if adjargs is None:
                     return
 
                 process_all_forms(
-                    args,
+                    adjargs,
                     index,
                     lemma,
                     pos == "part"
@@ -1352,7 +1351,6 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
                     or pos == "sufadj"
                     and "sufform"
                     or "adjform",
-                    progargs,
                     comment_tag,
                 )
 
@@ -1423,12 +1421,12 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
                     if overval:
                         pagemsg("WARNING: Found override %s=%s: %s" % (override, overval, str(inflt)))
 
-                args = lalib.generate_verb_forms(str(inflt), errandpagemsg, expand_text)
-                if args is None:
+                verbargs = lalib.generate_verb_forms(str(inflt), errandpagemsg, expand_text)
+                if verbargs is None:
                     return
 
                 single_forms_to_process = []
-                for key, form in args.items():
+                for key, form in verbargs.items():
                     for single_form in form.split(","):
                         single_forms_to_process.append((key, single_form))
 
@@ -1445,16 +1443,15 @@ def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit
 
                     if partpos:
                         # FIXME! Supply correct explicit stem for compounds of eō
-                        process_participle(index, lemma, formind, formval, None, progargs, comment_tag)
-                    elif not progargs.skip_forms and (not progargs.n_forms or formind <= progargs.n_forms):
+                        process_participle(index, lemma, formind, formval, None, comment_tag)
+                    elif not args.skip_forms and (not args.n_forms or formind <= args.n_forms):
                         process_form(
                             index,
                             lemma,
                             formind,
                             formval,
                             "verbform",
-                            find_tag_sets_for_form(args, formval),
-                            progargs,
+                            find_tag_sets_for_form(verbargs, formval),
                             comment_tag,
                         )
 
@@ -1574,7 +1571,7 @@ if __name__ == "__main__":
             lemma = lalib.la_get_headword_from_template(fake_template, "foo", pagemsg)[0]
 
         def handler(index, page):
-            return do_process_lemma(index, page, pos, infl, lemmaspec, lemma, explicit_stem, args, comment_tag)
+            return do_process_lemma(index, page, pos, infl, lemmaspec, lemma, explicit_stem, comment_tag)
 
         blib.do_edit(
             index,

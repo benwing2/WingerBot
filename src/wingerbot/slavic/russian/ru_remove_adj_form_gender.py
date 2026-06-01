@@ -12,10 +12,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
-
     notes = []
 
     modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)

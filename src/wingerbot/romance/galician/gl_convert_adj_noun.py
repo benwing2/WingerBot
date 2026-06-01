@@ -246,10 +246,6 @@ def process_text_on_page(index, pagetitle, text):
     if "gl-adj-old" not in text and "gl-noun-old" not in text:
         return
 
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace title")
-        return
-
     if pagetitle in deny_list:
         pagemsg("Skipping because in deny_list")
         return

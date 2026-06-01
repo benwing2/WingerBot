@@ -24,7 +24,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, rsub_repeatedly
+from wingerbot.blib import getparam, msg, rsub_repeatedly
 from wingerbot import lang_utils
 
 lbracket_sub = "\ufff1"
@@ -57,10 +57,6 @@ sections_to_always_include = {
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if ":" in pagetitle and not pagetitle.startswith("Reconstruction:"):
-        return
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 

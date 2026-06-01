@@ -10,7 +10,7 @@ from wingerbot.blib import msg, errandmsg, getparam, addparam
 site = pywikibot.Site()
 
 
-def undo_greek_removal(save, verbose, direcfile, start, end):
+def undo_greek_removal(direcfile, start, end):
     template_removals = []
     for lineno, line in blib.iter_items_from_file(direcfile, start, end):
         m = re.match(r"\* \[\[(.*?)]]: Removed (.*?)=.*?: <nowiki>(.*?)</nowiki>$", line)
@@ -63,7 +63,7 @@ def undo_greek_removal(save, verbose, direcfile, start, end):
         if not page.exists():
             msg("Page %s %s: WARNING, something wrong, does not exist" % (index, pagename))
         else:
-            blib.do_edit(index, page, undo_one_page_greek_removal, save=save, verbose=verbose)
+            blib.do_edit(index, page, undo_one_page_greek_removal, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 params = blib.create_argparser("Undo Greek transliteration removal")
@@ -72,4 +72,4 @@ params.add_argument("--file", help="File containing templates and removal direct
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-undo_greek_removal(args.save, args.verbose, args.file, start, end)
+undo_greek_removal(args.file, start, end)

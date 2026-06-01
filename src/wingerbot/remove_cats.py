@@ -19,9 +19,6 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    # if ":" in pagetitle and not re.search("^(Appendix|Reconstruction|Citations):", pagetitle):
-    #  return
-
     origtext = text
     notes = []
     removed_cats = []

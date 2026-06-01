@@ -96,13 +96,13 @@ def process_page(index, pos, lemma, subs, infl):
 
     pagemsg("Processing")
 
-    args = lalib.generate_infl_forms(pos, infl, errandpagemsg, expand_text)
-    if args is None:
+    inflargs = lalib.generate_infl_forms(pos, infl, errandpagemsg, expand_text)
+    if inflargs is None:
         return
 
     forms_to_delete = []
 
-    for key, form in args.items():
+    for key, form in inflargs.items():
         forms_to_delete.extend(form.split(","))
 
     for formind, form in blib.iter_items(forms_to_delete):

@@ -1,31 +1,21 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, addparam, errandmsg, tname
+from wingerbot.blib import tname
 
+# FIXME: Trivially implementable now using rewrite_template.py.
 
-def rewrite_one_page_ar_plural(index, page):
-    pagetitle = page.title()
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    text = blib.safe_page_text(page, errandpagemsg)
+def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
     for t in parsed.filter_templates():
         if tname(t) == "ar-plural":
             t.name = "ar-noun-pl"
-
     return str(parsed), "rename {{temp|ar-plural}} to {{temp|ar-noun-pl}}"
 
 
-def rewrite_ar_plural(save, verbose, start, end):
-    for cat in ["Arabic plurals"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_ar_plural, save=save, verbose=verbose)
-
-
-parser = blib.create_argparser("Rewrite ar-plural to ar-noun-pl templates")
+parser = blib.create_argparser("Rewrite ar-plural to ar-noun-pl templates", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-rewrite_ar_plural(args.save, args.verbose, start, end)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+                           default_cats=["Arabic plurals"])

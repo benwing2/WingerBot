@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if ":" in pagetitle and not re.search("^(Appendix|Reconstruction|Citations):", pagetitle):
-        return
 
     origtext = text
     pagemsg("Processing")

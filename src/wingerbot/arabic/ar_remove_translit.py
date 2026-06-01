@@ -192,23 +192,21 @@ def process_one_page_headwords(index, page):
 
 # Remove translit params from headword templates when the auto-translit
 # returns the same thing, or canonicalizing, on pages from STARTFROM to
-# (but not including) UPTO, either page names or 0-based integers. Save
-# changes if SAVE is true. Show exact changes if VERBOSE is true.
-def process_headwords(save, verbose, start, end):
+# (but not including) UPTO, either page names or 0-based integers.
+def process_headwords(start, end):
     # for page in blib.references("Template:tracking/ar-head/head", start, end):
     # for page in blib.references("Template:ar-nisba", start, end):
     for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
         for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, process_one_page_headwords, save=save, verbose=verbose)
+            blib.do_edit(index, page, process_one_page_headwords, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 # Remove translit params from link-like templates when the auto-translit
 # returns the same thing, or canonicalizing, on pages from STARTFROM to
-# (but not including) UPTO, either page names or 0-based integers. Save
-# changes if SAVE is true. Show exact changes if VERBOSE is true.
+# (but not including) UPTO, either page names or 0-based integers.
 # CATTYPE should be 'vocab', 'borrowed' or 'translation', indicating which
 # categories to examine.
-def process_links(save, verbose, cattype, start, end):
+def process_links(cattype, start, end):
     def do_process_param(index, pagetitle, pagetext, template, templang, param, paramtr):
         result = process_param(index, pagetitle, template, param, paramtr, include_tempname_in_changelog=True)
         if getparam(template, "sc") == "Arab":
@@ -224,7 +222,7 @@ def process_links(save, verbose, cattype, start, end):
         return result
 
     return blib.process_links(
-        save, verbose, "ar", "Arabic", cattype, start, end, do_process_param, sort_group_changelogs
+        "ar", "Arabic", cattype, start, end, do_process_param, sort_group_changelogs
     )
 
 
@@ -236,6 +234,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.links:
-    process_links(args.save, args.verbose, args.cattype, start, end)
+    process_links(args.cattype, start, end)
 else:
-    process_headwords(args.save, args.verbose, start, end)
+    process_headwords(start, end)

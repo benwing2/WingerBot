@@ -15,10 +15,6 @@ def process_text_on_page(index, pagetitle, text):
     if "demonym-noun" not in text:
         return
 
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace title")
-        return
-
     if " " in pagetitle:
         pagemsg("WARNING: Can't handle space in pagetitle currently")
         return

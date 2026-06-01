@@ -10,10 +10,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping")
-        return
-
     parsed = blib.parse_text(text)
 
     for t in parsed.filter_templates():

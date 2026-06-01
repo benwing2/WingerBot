@@ -107,10 +107,6 @@ def process_text_on_page(index, pagetitle, text):
     if "en-verb" not in text:
         return
 
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace title")
-        return
-
     parsed = blib.parse_text(text)
 
     num_would_convert = 0
@@ -455,5 +451,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:en-verb"]
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:en-verb"],
+    skip_ignorable_pages=True,
 )

@@ -14,10 +14,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("Skipping page with colon in pagetitle")
-        return
-
     notes = []
 
     parsed = blib.parse_text(text)

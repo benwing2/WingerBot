@@ -377,7 +377,7 @@ def lookup_heads_and_inflections(pagename, pagemsg, errandpagemsg):
             else:
                 yoful_page = list(yo_pages)[0]
                 pagemsg("lookup_heads_and_inflections: Redirecting from %s to %s" % (pagename, yoful_page))
-                return lookup_heads_and_inflections(yoful_page, pagemsg)
+                return lookup_heads_and_inflections(yoful_page, pagemsg, errandpagemsg)
 
         cacheval = (heads, inflections_of, adj_forms)
         if not global_disable_cache:

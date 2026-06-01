@@ -4,24 +4,18 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import msg, tname
-
 from wingerbot.slavic.russian import runounlib
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub(".*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def expand_text(tempcall):
+        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping")
-        return
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+    subpagetitle = re.sub(".*:", "", pagetitle)
 
     parsed = blib.parse_text(text)
 

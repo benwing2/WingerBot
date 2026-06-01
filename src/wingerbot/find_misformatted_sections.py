@@ -80,15 +80,6 @@ def group_correction_notes(template, notes):
     return template % notetext
 
 
-def allowed_non_mainspace_pagetitle(pagetitle):
-    if pagetitle.startswith("Reconstruction:"):
-        return True
-    for lang in lang_utils.appendix_only_langnames:
-        if pagetitle.startswith("Appendix:%s/" % lang):
-            return True
-    return False
-
-
 def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
     notes = []
 
@@ -392,10 +383,6 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    if ":" in pagetitle and not allowed_non_mainspace_pagetitle(pagetitle):
-        pagemsg("WARNING: Not mainspace, not changing")
-        return
-
     modsec = blib.find_modifiable_lang_section(text, None, pagemsg, force_final_nls=True)
     if modsec is None:
         return
@@ -487,4 +474,4 @@ parser.add_argument("--correct", action="store_true", help="Correct errors as mu
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, edit=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, edit=True, skip_ignorable_pages=True)

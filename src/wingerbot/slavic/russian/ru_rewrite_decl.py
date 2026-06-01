@@ -393,16 +393,16 @@ def rewrite_one_page_ru_decl_noun(index, page):
     return text, comment
 
 
-def rewrite_ru_decl_noun(save, verbose, start, end):
+def rewrite_ru_decl_noun(start, end):
     for cat in ["Russian nouns"]:
         for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_ru_decl_noun, save=save, verbose=verbose)
+            blib.do_edit(index, page, rewrite_one_page_ru_decl_noun, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
-def rewrite_ru_decl_adj(save, verbose, start, end):
+def rewrite_ru_decl_adj(start, end):
     for cat in ["Russian adjectives"]:
         for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_ru_decl_adj, save=save, verbose=verbose)
+            blib.do_edit(index, page, rewrite_one_page_ru_decl_adj, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 parser = blib.create_argparser("Rewrite Russian old declension templates")
@@ -412,6 +412,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.adjectives:
-    rewrite_ru_decl_adj(args.save, args.verbose, start, end)
+    rewrite_ru_decl_adj(start, end)
 if args.nouns:
-    rewrite_ru_decl_noun(args.save, args.verbose, start, end)
+    rewrite_ru_decl_noun(start, end)

@@ -7,8 +7,6 @@ from wingerbot.blib import rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub(".*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 

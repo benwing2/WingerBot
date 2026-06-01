@@ -4,10 +4,10 @@
 # or a prefix as a term in {{prefixusex}} or a suffix as a term in {{suffixusex}}. We only fix lang=;
 # the other case is rare and we fix it manually.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -16,9 +16,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
     parsed = blib.parse_text(text)
 
     notes = []
@@ -116,4 +113,5 @@ blib.do_pagefile_cats_refs(
     edit=True,
     stdin=True,
     default_refs=["Template:prefixusex", "Template:suffixusex"],
+    skip_ignorable_pages=True,
 )

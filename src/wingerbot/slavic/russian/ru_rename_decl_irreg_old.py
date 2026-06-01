@@ -10,23 +10,15 @@
 # {{temp|ru-noun-old}} -> {{temp|ru-noun-table|old=1}}
 # {{temp|ru-adj-old}} -> {{temp|ru-decl-adj|old=1}}
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
+from wingerbot.blib import tname, msg
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
 
     notes = []
 

@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import errandmsg, getparam, addparam, rmparam, tname
+from wingerbot.blib import getparam, addparam, rmparam, tname
 
 
-def rewrite_one_page_arz_headword(index, page):
-    pagetitle = page.title()
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    text = blib.safe_page_text(page, errandpagemsg)
+def process_text_on_page(index, pagetitle, text):
     parsed = blib.parse_text(text)
 
     temps_changed = []
@@ -73,17 +68,12 @@ def rewrite_one_page_arz_headword(index, page):
             if sort:
                 addparam(t, "sort", sort)
             temps_changed.append("arz-adj")
-    return text, "rewrite %s to new style" % ", ".join(temps_changed)
+    return str(parsed), "rewrite %s to new style" % ", ".join(temps_changed)
 
 
-def rewrite_arz_headword(save, verbose, start, end):
-    for cat in ["Egyptian Arabic adjectives", "Egyptian Arabic nouns"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_arz_headword, save=save, verbose=verbose)
-
-
-parser = blib.create_argparser("Rewrite Egyptian Arabic headword templates")
+parser = blib.create_argparser("Rewrite Egyptian Arabic headword templates", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-rewrite_arz_headword(args.save, args.verbose, start, end)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+                           default_cats=["Egyptian Arabic adjectives", "Egyptian Arabic nouns"])

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
+from dataclasses import dataclass
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 cons_re = "[bcdfghjklmnprřqstvwxzčňšžďť]"
 
@@ -148,25 +149,18 @@ use_given_decl = {}
 use_given_page_decl = {}
 
 
-class Headword(object):
-    def __init__(self, lemma, infl, separator, could_be_noun, could_be_adj):
-        self.lemma = lemma
-        self.infl = infl
-        self.separator = separator
-        self.could_be_noun = could_be_noun
-        self.could_be_adj = could_be_adj
+@dataclass
+class Headword:
+    lemma: str
+    infl: str
+    separator: str
+    could_be_noun: bool
+    could_be_adj: bool
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
-    notes = []
 
     parsed = blib.parse_text(text)
 

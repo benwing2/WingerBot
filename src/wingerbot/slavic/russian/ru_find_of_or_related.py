@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 
-# Find pages that need definitions among a set list (e.g. most frequent words).
+# Find pages containing "Of or related" in the Russian section, which is a common error for adjectives that should
+# be marked as relational.
+#
+# FIXME: Trivially implementable using find_regex.py.:w
 
-import pywikibot, re, sys, argparse
+
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
 
     modsec = blib.find_modifiable_lang_section(text, "Russian", pagemsg)
     if modsec is None:

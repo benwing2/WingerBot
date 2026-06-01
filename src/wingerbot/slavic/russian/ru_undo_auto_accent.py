@@ -13,7 +13,7 @@ from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, getparam, addparam, site
 
 
-def undo_ru_auto_accent(save, verbose, direcfile, start, end):
+def undo_ru_auto_accent(direcfile, start, end):
     # FIXME: Script no longer applies and would need fixing up.
 
     template_removals = []
@@ -67,7 +67,7 @@ def undo_ru_auto_accent(save, verbose, direcfile, start, end):
         if not page.exists():
             msg("Page %s %s: WARNING, something wrong, does not exist" % (index, pagename))
         else:
-            blib.do_edit(index, page, undo_one_page_ru_auto_accent, save=save, verbose=verbose)
+            blib.do_edit(index, page, undo_one_page_ru_auto_accent, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 params = blib.create_argparser(
@@ -78,4 +78,4 @@ params.add_argument("--file", help="File containing log file from original auto-
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-undo_ru_auto_accent(args.save, args.verbose, args.file, start, end)
+undo_ru_auto_accent(args.file, start, end)

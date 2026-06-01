@@ -26,13 +26,12 @@ class ProcessPageSectionResult:
     this_transferred_tr: list[str]
 
 def process_page_section(index, pagetitle, section):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+
+    subpagetitle = re.sub("^.*:", "", pagetitle)
 
     parsed = blib.parse_text(section)
 
@@ -256,10 +255,6 @@ def process_text_on_page(index, pagetitle, text):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
-
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping")
-        return
 
     num_ru_noun_subs = 0
     num_ru_proper_noun_subs = 0

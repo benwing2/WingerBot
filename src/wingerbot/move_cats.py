@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, tname, pname
 
 topics_templates = ["topics", "topic", "top", "c", "C", "catlangcode"]
 catlangname_templates = ["catlangname", "cln"]
@@ -15,9 +15,6 @@ lang_data = lang_utils.get_lang_data()
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    # if ":" in pagetitle and not re.search("^(Appendix|Reconstruction|Citations):", pagetitle):
-    #  return
 
     origtext = text
     notes = []

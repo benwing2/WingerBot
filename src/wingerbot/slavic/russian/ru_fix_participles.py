@@ -20,10 +20,6 @@ def process_text_on_page(index, pagetitle, text, nowarn=False):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
-
     notes = []
 
     found_participle = False

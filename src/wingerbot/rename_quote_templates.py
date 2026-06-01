@@ -638,12 +638,6 @@ def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, blib.escape_newline(txt)))
 
-    if ":" in pagetitle and not re.search(
-        "^(Citations|Appendix|Reconstruction|Transwiki|Talk|Wiktionary|[A-Za-z]+ talk):", pagetitle
-    ):
-        pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
-        return
-
     notes = []
 
     templates_to_rename_numbered_params = (
@@ -2264,6 +2258,7 @@ blib.do_pagefile_cats_refs(
     edit=True,
     stdin=True,
     default_refs=["Template:%s" % template for template in quote_templates],
+    skip_ignorable_pages=True,
 )
 
 

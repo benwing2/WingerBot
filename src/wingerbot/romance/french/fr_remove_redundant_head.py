@@ -52,10 +52,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping")
-        return
-
     def check_bad_head(text, arg):
         canontext = re.sub("[׳’]", "'", blib.remove_links(text))
         canonpagetitle = re.sub("[׳’]", "'", pagetitle)

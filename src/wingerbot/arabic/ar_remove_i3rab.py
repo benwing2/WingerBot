@@ -17,8 +17,6 @@ from wingerbot.arabic.arlib import (
     reorder_shadda,
 )
 
-verbose = True
-
 
 def remove_i3rab(index, pagetitle, entry, word, nowarn=False):
     def mymsg(text):
@@ -43,95 +41,73 @@ def remove_i3rab(index, pagetitle, entry, word, nowarn=False):
     return word
 
 
-def do_nouns(poses, headtempls, save, start, end):
-    def do_one_page_noun(index, page):
-        pagetitle = page.title()
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page_for_noun(index, pagetitle, text):
+    parsed = blib.parse_text(text)
 
-        text = blib.safe_page_text(page, errandpagemsg)
-        parsed = blib.parse_text(text)
-        nouncount = 0
-        nounids = []
-        for t in parsed.filter_templates():
-            if tname(t) in headtempls:
-                nouncount += 1
-                params_done = []
-                entry = getparam(t, "1")
-                for param in t.params:
-                    value = param.value
-                    newvalue = remove_i3rab(index, pagetitle, entry, str(value))
-                    if newvalue != value:
-                        param.value = newvalue
-                        params_done.append(str(param.name))
-                if params_done:
-                    nounids.append("#%s %s %s (%s)" % (nouncount, tname(t), entry, ", ".join(params_done)))
-        return str(parsed), "Remove i3rab from params in %s" % ("; ".join(nounids))
-
-    for pos in poses:
-        for index, page in blib.cat_articles("Arabic %ss" % pos.lower(), start, end):
-            blib.do_edit(index, page, do_one_page_noun, save=save, verbose=verbose)
+    nouncount = 0
+    nounids = []
+    for t in parsed.filter_templates():
+        if tname(t) in ["ar-noun", "ar-coll-noun", "ar-sing-noun", "ar-nisba", "ar-noun-nisba", "ar-adj", "ar-numeral"]:
+            nouncount += 1
+            params_done = []
+            entry = getparam(t, "1")
+            for param in t.params:
+                value = param.value
+                newvalue = remove_i3rab(index, pagetitle, entry, str(value))
+                if newvalue != value:
+                    param.value = newvalue
+                    params_done.append(str(param.name))
+            if params_done:
+                nounids.append("#%s %s %s (%s)" % (nouncount, tname(t), entry, ", ".join(params_done)))
+    return str(parsed), "Remove i3rab from params in %s" % ("; ".join(nounids))
 
 
-def do_verbs(save, start, end):
-    def do_one_page_verb(index, page):
-        pagetitle = page.title()
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page_for_verb(index, pagetitle, text):
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-        text = blib.safe_page_text(page, errandpagemsg)
-        parsed = blib.parse_text(text)
+    parsed = blib.parse_text(text)
 
-        verbcount = 0
-        verbids = []
-        for t in parsed.filter_templates():
-            if tname(t) == "ar-conj":
-                verbcount += 1
-                vnvalue = getparam(t, "vn")
-                uncertain = False
-                if vnvalue.endswith("?"):
-                    vnvalue = vnvalue[:-1]
-                    pagemsg("Verbal noun(s) identified as uncertain")
-                    uncertain = True
-                if not vnvalue:
-                    continue
-                vns = re.split("[,،]", vnvalue)
-                form = getparam(t, "1")
-                verbid = "#%s form %s" % (verbcount, form)
-                if re.match("^[1I](-|$)", form):
-                    verbid += " (%s,%s)" % (getparam(t, "2"), getparam(t, "3"))
-                no_i3rab_vns = []
-                for vn in vns:
-                    no_i3rab_vns.append(remove_i3rab(index, pagetitle, verbid, vn))
-                newvn = ",".join(no_i3rab_vns)
-                if uncertain:
-                    newvn += "?"
-                if newvn != vnvalue:
-                    pagemsg("Verb %s, replacing %s with %s" % (verbid, vnvalue, newvn))
-                    addparam(t, "vn", newvn)
-                    verbids.append(verbid)
-        return str(parsed), "Remove i3rab from verbal nouns for verb(s) %s" % (", ".join(verbids))
-
-    for index, page in blib.cat_articles("Arabic verbs", start, end):
-        blib.do_edit(index, page, do_one_page_verb, save=save, verbose=verbose)
+    verbcount = 0
+    verbids = []
+    for t in parsed.filter_templates():
+        if tname(t) == "ar-conj":
+            verbcount += 1
+            vnvalue = getparam(t, "vn")
+            uncertain = False
+            if vnvalue.endswith("?"):
+                vnvalue = vnvalue[:-1]
+                pagemsg("Verbal noun(s) identified as uncertain")
+                uncertain = True
+            if not vnvalue:
+                continue
+            vns = re.split("[,،]", vnvalue)
+            form = getparam(t, "1")
+            verbid = "#%s form %s" % (verbcount, form)
+            if re.match("^[1I](-|$)", form):
+                verbid += " (%s,%s)" % (getparam(t, "2"), getparam(t, "3"))
+            no_i3rab_vns = []
+            for vn in vns:
+                no_i3rab_vns.append(remove_i3rab(index, pagetitle, verbid, vn))
+            newvn = ",".join(no_i3rab_vns)
+            if uncertain:
+                newvn += "?"
+            if newvn != vnvalue:
+                pagemsg("Verb %s, replacing %s with %s" % (verbid, vnvalue, newvn))
+                addparam(t, "vn", newvn)
+                verbids.append(verbid)
+    return str(parsed), "Remove i3rab from verbal nouns for verb(s) %s" % (", ".join(verbids))
 
 
-parser = blib.create_argparser("Remove i3rab")
+parser = blib.create_argparser("Remove i3rab", include_pagefile=True, include_stdin=True)
 parser.add_argument("--verb", action="store_true", help="Do verbal nouns in verbs")
 parser.add_argument("--noun", action="store_true", help="Do arguments in nouns")
-
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.noun:
-    do_nouns(
-        ["noun", "adjective"],
-        ["ar-noun", "ar-coll-noun", "ar-sing-noun", "ar-nisba", "ar-noun-nisba", "ar-adj", "ar-numeral"],
-        args.save,
-        start,
-        end,
-    )
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_noun, edit=True, stdin=True,
+                            default_cats=["Arabic nouns", "Arabic adjectives"])
 if args.verb:
-    do_verbs(args.save, start, end)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_verb, edit=True, stdin=True,
+                            default_cats=["Arabic verbs"])

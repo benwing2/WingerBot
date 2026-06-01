@@ -63,12 +63,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle and not re.search(
-        "^(Citations|Appendix|Reconstruction|Transwiki|Talk|Wiktionary|[A-Za-z]+ talk):", pagetitle
-    ):
-        pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
-        return
-
     notes = []
 
     subsecs = blib.split_text_into_subsections(text, pagemsg)
@@ -295,4 +289,5 @@ if __name__ == "__main__":
         stdin=True,
         # FIXME, had includelinks= for references, which we don't have a flag for now
         default_refs=["Template:%s" % template for template in replace_templates],
+        skip_ignorable_pages=True,
     )

@@ -16,10 +16,6 @@ def process_text_on_page(index, pagetitle, text):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle and not re.search("^(Citations|Appendix|Reconstruction|Transwiki|Wiktionary):", pagetitle):
-        pagemsg("WARNING: Colon in page title and not a recognized namespace to include, skipping page")
-        return
-
     notes = []
 
     newtext = text

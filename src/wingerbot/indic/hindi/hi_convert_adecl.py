@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import rmparam, tname, msg
 
 AA = "\u093e"
 M = "\u0901"
@@ -17,10 +15,6 @@ def process_text_on_page(index, pagetitle, text):
     notes = []
 
     pagemsg("Processing")
-
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace page")
-        return
 
     parsed = blib.parse_text(text)
 

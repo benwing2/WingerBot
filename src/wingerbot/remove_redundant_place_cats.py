@@ -74,9 +74,6 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    if ":" in pagetitle and not re.search("^(Appendix|Reconstruction|Citations):", pagetitle):
-        return
-
     origtext = text
     pagemsg("Processing")
 
@@ -216,5 +213,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_refs=["Template:place"], edit=True, stdin=True
+    args, start, end, process_text_on_page, default_refs=["Template:place"], edit=True, stdin=True,
+    skip_ignorable_pages=True,
 )

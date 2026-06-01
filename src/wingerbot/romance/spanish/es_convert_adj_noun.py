@@ -158,10 +158,6 @@ def process_text_on_page(index, pagetitle, text):
     if old_adj_template not in text and "es-noun" not in text:
         return
 
-    if ":" in pagetitle:
-        pagemsg("Skipping non-mainspace title")
-        return
-
     pagemsg("Processing")
 
     parsed = blib.parse_text(text)

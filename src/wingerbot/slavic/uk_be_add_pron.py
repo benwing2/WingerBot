@@ -986,10 +986,6 @@ def process_text_on_page(index, text, pagetitle):
 
     pagemsg("Processing")
 
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping")
-        return
-
     for skip_regex in skip_pages:
         if re.search(skip_regex, pagetitle):
             pagemsg("WARNING: Skipping because page in skip_pages matching %s" % skip_regex)

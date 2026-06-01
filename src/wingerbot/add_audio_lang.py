@@ -4,22 +4,13 @@
 # to 'inflection of'
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, msg, tname, ProcessPageParams
 
 langs_to_codes = {}
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p: ProcessPageParams):
     pagemsg("Processing")
-
-    if ":" in pagetitle:
-        pagemsg("WARNING: Colon in page title, skipping page")
-        return
 
     secs = blib.split_text_into_sections(text, pagemsg)
     sections = secs.sections
@@ -51,5 +42,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Language code missing/audio"]
+    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Language code missing/audio"],
 )

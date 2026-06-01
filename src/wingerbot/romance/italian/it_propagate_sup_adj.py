@@ -8,10 +8,8 @@ from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
 def process_lemma_page(index, page, form):
     pagetitle = page.title()
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

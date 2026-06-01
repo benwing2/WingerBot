@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam, tname
+from wingerbot.blib import msg, getparam, addparam, tname
 
 numeric_to_roman_form = {
     "1": "I",
@@ -27,22 +27,23 @@ numeric_to_roman_form = {
     "4q": "IVq",
 }
 
+verb_form_templates_to_args = {
+    "ar-conj": "1",
+    "ar-past3sm": "1",
+    "ar-verb-part": "2",
+}
 
 # convert numeric form to roman-numeral form
-def canonicalize_form(form):
+def canonicalize_form(form: str) -> str:
     return numeric_to_roman_form.get(form, form)
 
 
 # Clean the verb headword templates on a given page with the given text.
 # Returns the changed text along with a changelog message.
-def rewrite_one_page_verb_headword(index, page):
-    pagetitle = page.title()
+def rewrite_one_page_verb_headword(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)
 
     pagemsg("Processing")
@@ -61,7 +62,7 @@ def rewrite_one_page_verb_headword(index, page):
                         t.get(str(pno)).name = str(pno + 1)
                 # Make sure form= param is first ...
                 t.remove("form")
-                addparam(t, "form", canonicalize_form(form), before=t.params[0].name if len(t.params) > 0 else None)
+                addparam(t, "form", canonicalize_form(form), before=str(t.params[0].name) if len(t.params) > 0 else None)
                 # ... then forcibly change its name to 1=
                 t.get("form").name = "1"
                 t.get("1").showkey = False
@@ -78,52 +79,40 @@ def rewrite_one_page_verb_headword(index, page):
     return str(parsed), changelog
 
 
-def rewrite_verb_headword(save, start, end):
-    for cat in ["Arabic verbs"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_verb_headword, save=save)
+# Canonicalize the form in ar-conj.
+# Returns the changed text along with a changelog message.
+def canonicalize_one_page_verb_form(index, pagetitle, text):
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
+
+    notes = []
+
+    parsed = blib.parse_text(text)
+
+    pagemsg("Processing")
+
+    for t in parsed.filter_templates():
+        tn = tname(t)
+        if tn in verb_form_templates_to_args:
+            formarg = verb_form_templates_to_args[tn]
+            origtemp = str(t)
+            form = getparam(t, formarg)
+            if form:
+                addparam(t, formarg, canonicalize_form(form))
+            newtemp = str(t)
+            if origtemp != newtemp:
+                msg("Replacing %s with %s" % (origtemp, newtemp))
+            if re.match("^[1I](-|$)", form):
+                notes.append(
+                    "canonicalize form=%s in {{%s}} to Roman numerals (%s/%s)"
+                    % (form, tn, getparam(t, str(1 + int(formarg))), getparam(t, str(2 + int(formarg))))
+                )
+            else:
+                notes.append("canonicalize form=%s in {{%s}} to Roman numerals" % (form, tn))
+    return str(parsed), notes
 
 
-def canonicalize_verb_form(save, start, end, tempname, formarg):
-    # Canonicalize the form in ar-conj.
-    # Returns the changed text along with a changelog message.
-    def canonicalize_one_page_verb_form(index, page):
-        pagetitle = page.title()
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-        text = blib.safe_page_text(page, errandpagemsg)
-        parsed = blib.parse_text(text)
-
-        pagemsg("Processing")
-        actions_taken = []
-
-        for t in parsed.filter_templates():
-            if tname(t) == tempname:
-                origtemp = str(t)
-                form = getparam(t, formarg)
-                if form:
-                    addparam(t, formarg, canonicalize_form(form))
-                newtemp = str(t)
-                if origtemp != newtemp:
-                    msg("Replacing %s with %s" % (origtemp, newtemp))
-                if re.match("^[1I](-|$)", form):
-                    actions_taken.append(
-                        "form=%s (%s/%s)"
-                        % (form, getparam(t, str(1 + int(formarg))), getparam(t, str(2 + int(formarg))))
-                    )
-                else:
-                    actions_taken.append("form=%s" % form)
-        changelog = "%s: canonicalize form (%s=) to Roman numerals: %s" % (tempname, formarg, "; ".join(actions_taken))
-        return str(parsed), changelog
-
-    for index, page in blib.references("Template:%s" % tempname, start, end):
-        blib.do_edit(index, page, canonicalize_one_page_verb_form, save=save)
-
-
-parser = blib.create_argparser("Rewrite form= to 1= in verb headword templates")
+parser = blib.create_argparser("Rewrite form= to 1= in verb headword templates", include_pagefile=True, include_stdin=True)
 parser.add_argument("--headword", action="store_true", help="Rewrite form= to 1= in ar-verb and canonicalize")
 parser.add_argument(
     "--canonicalize", action="store_true", help="Canonicalize form in Arabic verb templates other than ar-verb"
@@ -132,8 +121,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.headword:
-    rewrite_verb_headword(args.save, start, end)
+    blib.do_pagefile_cats_refs(args, start, end, rewrite_one_page_verb_headword, edit=True, stdin=True,
+                            default_cats=["Arabic verbs"])
 if args.canonicalize:
-    canonicalize_verb_form(args.save, start, end, "ar-conj", "1")
-    canonicalize_verb_form(args.save, start, end, "ar-past3sm", "1")
-    canonicalize_verb_form(args.save, start, end, "ar-verb-part", "2")
+    blib.do_pagefile_cats_refs(args, start, end, canonicalize_one_page_verb_form, edit=True, stdin=True,
+                            default_refs=["Template:%s" % template for template in verb_form_templates_to_args])
