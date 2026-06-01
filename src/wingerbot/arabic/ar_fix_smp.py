@@ -13,11 +13,9 @@ def fix_smp(save, verbose, start, end):
     for template in arabic_decl_templates:
         # Fix the template refs. If cap= is present, remove it; else, add lc=.
         def fix_one_page_smp(index, page):
-            pagetitle = str(page.title())
-
+            pagetitle = page.title()
             def pagemsg(txt):
                 msg("Page %s %s: %s" % (index, pagetitle, txt))
-
             def errandpagemsg(txt):
                 errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

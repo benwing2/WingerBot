@@ -7,7 +7,7 @@ from wingerbot.blib import getparam, msg, errandmsg, tname
 
 
 def process_page_for_rename(index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))

@@ -355,12 +355,10 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
             str(linkt),
             txt,
         )
-
-    def errandpagemsg(txt):
-        errandmsg(make_msg_txt(txt))
-
     def pagemsg(txt):
         msg(make_msg_txt(txt))
+    def errandpagemsg(txt):
+        errandmsg(make_msg_txt(txt))
 
     canon_pagename = re.sub("//.*", "", blib.remove_links(linkpage))
     page = pywikibot.Page(site, canon_pagename)

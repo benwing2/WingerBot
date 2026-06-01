@@ -7,7 +7,7 @@ import unicodedata
 import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname
 
 
 punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P"))
@@ -35,7 +35,8 @@ def fast_remove_diacritics(text, langcode):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -50,7 +51,7 @@ def process_text_on_page(index, pagetitle, text):
                 pagenm = "Reconstruction:%s/%s" % (langname, pagenm[1:])
             page = pywikibot.Page(site, pagenm)
             if blib.safe_page_exists(page, pagemsg):
-                text = str(page.text)
+                text = blib.safe_page_text(page, errandpagemsg)
                 if re.search("#redirect", text, re.I):
                     outtext = "exists as redirect"
                 else:

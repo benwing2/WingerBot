@@ -3,18 +3,20 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, msg, site
+from wingerbot.blib import getparam, tname, msg, errandmsg, site
 from wingerbot.slavic.russian import rulib
 
 
 def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, desc):
-    notes = []
-    pagetitle = str(nounpage.title())
-
+    pagetitle = nounpage.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    text = str(nounpage.text)
+    notes = []
+
+    text = blib.safe_page_text(nounpage, errandpagemsg)
     modsec = blib.find_modifiable_lang_section(text, "Russian", None)  # We print our own message
     if modsec is None:
         pagemsg("WARNING: Couldn't find Russian section for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))

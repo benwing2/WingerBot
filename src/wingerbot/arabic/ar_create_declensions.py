@@ -79,10 +79,8 @@ adjectival_phrases = [
 def create_declension(index, page, pos, tempname, decltempname, sgnum, removeparams, is_proper=False):
     def create_declension_1(index, page):
         pagetitle = page.title()
-
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -46,7 +46,7 @@ def process_item(index, item):
 
 
 def process_page(index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     revisions = list(page.revisions(total=50))
     for rev in revisions:
         if rev["user"] == "WingerBot":

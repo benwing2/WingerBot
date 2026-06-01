@@ -9,19 +9,17 @@ from wingerbot.latin import lalib
 
 
 def process_lemma_page(index, page, is_comp, form):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
 
-    text = str(page.text)
-
     notes = []
+
+    text = blib.safe_page_text(page, errandpagemsg)
 
     parsed = blib.parse_text(text)
     la_adj_template = None

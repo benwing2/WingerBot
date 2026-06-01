@@ -7,7 +7,7 @@ import pywikibot
 
 
 def process_page(index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))

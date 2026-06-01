@@ -2,10 +2,10 @@
 
 # Find redlinks (non-existent pages).
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 parser = blib.create_argparser("Find Bulgarian red links")
 parser.add_argument("--pagefile", help="File containing pages to check")
@@ -15,17 +15,19 @@ start, end = blib.parse_start_end(args.start, args.end)
 lemmas = set()
 msg("Reading Bulgarian lemmas")
 for i, page in blib.cat_articles("Bulgarian lemmas", start, end):
-    lemmas.add(str(page.title()))
+    lemmas.add(page.title())
 
 for i, line in blib.iter_items_from_file(args.pagefile, start, end):
     pagename, freq = line.split("\t")
     m = re.search("[^-Ѐ-џҊ-ԧꚀ-ꚗ]", pagename)
 
-    def fmsg(txt):
+    def pagemsg(txt):
         msg("Page %s [[%s]]: %s (freq %s)" % (i, pagename, txt, freq))
+    def errandpagemsg(txt):
+        errandmsg("Page %s [[%s]]: %s (freq %s)" % (i, pagename, txt, freq))
 
     if m:
-        fmsg("skipped due to non-Cyrillic characters")
+        pagemsg("skipped due to non-Cyrillic characters")
     else:
         for pagenm, pagetype in [
             (pagename, ""),
@@ -33,20 +35,20 @@ for i, line in blib.iter_items_from_file(args.pagefile, start, end):
             (pagename.upper(), " (uppercased)"),
         ]:
             if pagenm in lemmas:
-                fmsg("exists%s" % pagetype)
+                pagemsg("exists%s" % pagetype)
                 break
             else:
                 page = pywikibot.Page(site, pagenm)
                 if page.exists():
-                    text = str(page.text)
+                    text = blib.safe_page_text(page, errandpagemsg)
                     if re.search("#redirect", text, re.I):
-                        fmsg("exists%s as redirect" % pagetype)
+                        pagemsg("exists%s as redirect" % pagetype)
                     elif re.search(r"\{\{superlative of\|bg\|", text):
-                        fmsg("exists%s as superlative" % pagetype)
+                        pagemsg("exists%s as superlative" % pagetype)
                     elif "==Bulgarian==" in text:
-                        fmsg("exists%s as non-lemma" % pagetype)
+                        pagemsg("exists%s as non-lemma" % pagetype)
                     else:
-                        fmsg("exists%s only in some other language" % pagetype)
+                        pagemsg("exists%s only in some other language" % pagetype)
                     break
         else:
-            fmsg("does not exist")
+            pagemsg("does not exist")

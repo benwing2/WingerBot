@@ -3,12 +3,14 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import  msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -32,17 +34,19 @@ def process_text_on_page(index, pagetitle, text):
         def check_trans(trans):
             def pagemsg_with_trans(txt):
                 pagemsg("%s: %s" % (trans, txt))
+            def errandpagemsg_with_trans(txt):
+                errandpagemsg("%s: %s" % (trans, txt))
 
             trans_page = pywikibot.Page(site, trans)
-            trans_text = blib.safe_page_text(trans_page, pagemsg_with_trans)
+            trans_text = blib.safe_page_text(trans_page, errandpagemsg_with_trans)
             if trans_text:
                 m = re.search(r"\A#redirect\s*\[\[(.*?)\]\]", trans_text, re.I)
                 if m:
                     redirect_target = m.group(1)
-                    msg("Page %s %s: Found existing translation (redirect) for %s" % (index, trans, pagetitle))
+                    pagemsg_with_trans("Found existing translation (redirect) for %s" % pagetitle)
                     check_trans(redirect_target)
                 else:
-                    msg("Page %s %s: Found existing translation for %s" % (index, trans, pagetitle))
+                    pagemsg_with_trans("Found existing translation for %s" % pagetitle)
 
         for trans in seen_trans:
             check_trans(trans)

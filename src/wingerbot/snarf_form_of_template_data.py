@@ -67,7 +67,7 @@ def process_text_on_page(index, pagetitle, text):
     for i, subpage in blib.references(
         pagetitle, namespaces=["Template"], only_template_inclusion=False, filter_redirects=True
     ):
-        alias = str(subpage.title())
+        alias = subpage.title()
         num_refs = len(list(blib.references(alias, namespaces=[0])))
         pagemsg("Found alias '%s', num_refs=%s" % (alias, num_refs))
         aliases.append(re.sub("^Template:", "", alias))

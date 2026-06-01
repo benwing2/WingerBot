@@ -94,7 +94,7 @@ def compare_forms(origforms, replforms, pagemsg):
 
 
 def replace_decl(index, page, decl, declforms):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))

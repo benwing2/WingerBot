@@ -2478,19 +2478,17 @@ def create_elatives(elfile, start, end):
         for arpositive in arpositives:
 
             def add_elative_param(index, page):
-                pagetitle = str(page.title())
-
+                pagetitle = page.title()
                 def pagemsg(txt):
                     msg("Page %s %s: %s" % (index, pagetitle, txt))
-
                 def errandpagemsg(txt):
                     errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-                text = blib.safe_page_text(page, errandpagemsg)
-                parsed = blib.parse_text(text)
                 if not page.exists():
                     pagemsg("WARNING, positive %s not found for elative %s (page nonexistent)" % (arpositive, elative))
                     return
+                text = blib.safe_page_text(page, errandpagemsg)
+                parsed = blib.parse_text(text)
                 found_positive = False
                 for t in parsed.filter_templates():
                     if tname(t) in ["ar-adj", "ar-adj-sound", "ar-adj-in", "ar-adj-an"]:

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-from pywikibot.data.api import APIError
+import pywikibot, re
+from pywikibot.exceptions import APIError
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
+from wingerbot.blib import msg, errandmsg, site
 
 parser = blib.create_argparser("Delete obsolete pages")
 parser.add_argument("--pagefile", help="Pages to delete", required=True)
@@ -30,15 +30,19 @@ def delete_page(page, comment):
             errandmsg("APIError, try #%s: %s" % (i + 1, e))
 
 
-for i, pagename in blib.iter_items(pages_to_delete, start, end):
+for index, pagename in blib.iter_items(pages_to_delete, start, end):
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagename, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagename, txt))
     page = pywikibot.Page(site, pagename)
     if page.exists():
         msg("Deleting %s (comment=%s)" % (page.title(), comment))
-        delete_page(page, '%s (content was "%s")' % (comment, str(page.text)))
+        delete_page(page, '%s (content was "%s")' % (comment, blib.safe_page_text(page, errandpagemsg)))
         errandmsg("Page [[%s]] deleted" % page.title())
     if args.delete_docs:
         doc_page = pywikibot.Page(site, "%s/documentation" % pagename)
         if doc_page.exists():
             msg("Deleting %s (comment=%s)" % (doc_page.title(), doc_comment))
-            delete_page(doc_page, '%s (content was "%s")' % (doc_comment, str(doc_page.text)))
+            delete_page(doc_page, '%s (content was "%s")' % (doc_comment, blib.safe_page_text(doc_page, errandpagemsg)))
             errandmsg("Page [[%s]] deleted" % doc_page.title())

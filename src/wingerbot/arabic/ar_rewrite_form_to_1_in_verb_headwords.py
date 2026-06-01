@@ -36,11 +36,9 @@ def canonicalize_form(form):
 # Clean the verb headword templates on a given page with the given text.
 # Returns the changed text along with a changelog message.
 def rewrite_one_page_verb_headword(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -90,11 +88,9 @@ def canonicalize_verb_form(save, start, end, tempname, formarg):
     # Canonicalize the form in ar-conj.
     # Returns the changed text along with a changelog message.
     def canonicalize_one_page_verb_form(index, page):
-        pagetitle = str(page.title())
-
+        pagetitle = page.title()
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

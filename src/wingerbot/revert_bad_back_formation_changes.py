@@ -9,7 +9,7 @@ from wingerbot.blib import errandmsg
 
 
 def process_page(index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))

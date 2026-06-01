@@ -10,20 +10,18 @@ from wingerbot.latin.lalib import remove_macrons
 
 
 def delete_participle_1(index, page, lemma, formind, formval):
-    notes = []
-
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, remove_macrons(formval, args.preserve_diaeresis), pagemsg, args.verbose)
 
+    notes = []
+
     expected_head_template = "la-part"
 
-    text = str(page.text)
+    text = blib.safe_page_text(page, errandpagemsg)
 
     modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
     if modsec is None:
@@ -128,7 +126,7 @@ def delete_participle_1(index, page, lemma, formind, formval):
                 "WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip()
             )
             return
-        pagetitle = str(page.title())
+        pagetitle = page.title()
         pagemsg("Page %s should be deleted" % pagetitle)
         pages_to_delete.append(pagetitle)
         return
@@ -199,7 +197,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
     else:
         raise ValueError("Unrecognized part of speech %s" % pos)
 
-    text = str(page.text)
+    text = blib.safe_page_text(page, errandpagemsg)
 
     modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
     if modsec is None:
@@ -416,7 +414,7 @@ def delete_form_1(index, page, lemma, formind, formval, pos, tag_sets_to_delete)
                     % cleaned_sec0.strip()
                 )
                 return
-            pagetitle = str(page.title())
+            pagetitle = page.title()
             pagemsg("Page %s should be deleted" % pagetitle)
             pages_to_delete.append(pagetitle)
             return

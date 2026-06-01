@@ -661,7 +661,7 @@ class EditParams(object):
     def __init__(self, index, page, save=False, verbose=False, diff=False):
         self.index = index
         self.page = page
-        self.title = str(page.title())
+        self.title = page.title()
         self.save = save
         self.verbose = verbose
         self.diff = diff
@@ -714,7 +714,7 @@ def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, d
 
 def do_edit(index: Index, page: Page, func: ProcessPageCallback, null: bool = False, save: bool = False,
             verbose: bool = False, diff: bool = False) -> None:
-    title = str(page.title())
+    title = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, title, txt))
@@ -859,7 +859,7 @@ def get_contributions(user, startprefix=None, endprefix=None, max=None, namespac
 
 def check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose=False):
     if filter_cats_regex:
-        this_cat = re.sub("^Category:", "", str(page.title()))
+        this_cat = re.sub("^Category:", "", page.title())
         if not re.search(filter_cats_regex, this_cat):
             if verbose:
                 msg(
@@ -868,7 +868,7 @@ def check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose=False):
                 )
             return False
     if prune_cats_regex:
-        this_cat = re.sub("^Category:", "", str(page.title()))
+        this_cat = re.sub("^Category:", "", page.title())
         if re.search(prune_cats_regex, this_cat):
             if verbose:
                 msg("Skipping category '%s' as it matches --prune-cats regex '%s'" % (this_cat, prune_cats_regex))
@@ -888,7 +888,7 @@ def yield_articles(
             if seen is None:
                 yield article
             else:
-                pagetitle = str(article.title())
+                pagetitle = article.title()
                 if pagetitle not in seen:
                     seen.add(pagetitle)
                     yield article
@@ -906,7 +906,7 @@ def yield_articles(
                 if seen is None:
                     yield article
                 else:
-                    pagetitle = str(article.title())
+                    pagetitle = article.title()
                     if pagetitle not in seen:
                         seen.add(pagetitle)
                         yield article
@@ -962,7 +962,7 @@ def yield_subcats(
     page, seen, filter_cats_regex=None, prune_cats_regex=None, do_this_page=False, recurse=False, verbose=False
 ):
     if seen is not None:
-        pagetitle = str(page.title())
+        pagetitle = page.title()
         if pagetitle in seen:
             return
         seen.add(pagetitle)
@@ -986,7 +986,7 @@ def yield_subcats(
             if seen is None:
                 yield subcat
             else:
-                pagetitle = str(subcat.title())
+                pagetitle = subcat.title()
                 if pagetitle not in seen:
                     seen.add(pagetitle)
                     yield subcat
@@ -1138,7 +1138,7 @@ def get_page_name(page):
     #    elif current.title(withNamespace=False) >= endprefix:
     # Should we add this flag or support an option to add it?
     # return str(page.title(withNamespace=False))
-    return str(page.title())
+    return page.title()
 
 
 class ProcessItems:
@@ -1655,7 +1655,7 @@ def do_pagefile_cats_refs(
         skip_cats = split_arg(args.skip_cats)
         for cat in skip_cats:
             errmsgn("Fetching pages in category '%s'..." % cat)
-            cat_pages_to_skip |= set(str(page.title()) for page in raw_cat_articles(cat, seen=None))
+            cat_pages_to_skip |= set(page.title() for page in raw_cat_articles(cat, seen=None))
             errmsg(" done.")
     if seen is None:
         seen = set() if not args.no_track_seen else None
@@ -1751,7 +1751,7 @@ def do_pagefile_cats_refs(
     # never process any pages.
     def process_pywikibot_page(index, page, no_check_seen=False):
         index = process_index(index)
-        pagetitle = str(page.title())
+        pagetitle = page.title()
         if not no_check_seen and seen is not None:
             if pagetitle in seen:
                 return
@@ -1971,7 +1971,7 @@ def do_pagefile_cats_refs(
                     prune_cats_regex=args_prune_cats,
                     verbose=args.verbose,
                 ):
-                    title = str(page.title())
+                    title = page.title()
                     if args.do_specials_cat_pages and title.startswith("Category:"):
                         for index2, subcat in cat_articles(
                             re.sub("^Category:", "", title),
@@ -3365,7 +3365,7 @@ def process_one_page_links(
 
 
 # def process_one_page_links_wrapper(index, page):
-#  return process_one_page_links(index, str(page.title()))
+#  return process_one_page_links(index, page.title())
 #
 # if "," in cattype:
 #  cattypes = cattype.split(",")

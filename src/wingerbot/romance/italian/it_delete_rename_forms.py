@@ -9,11 +9,9 @@ output_pages_to_delete = []
 
 
 def remove_anagram_from_page(index, page, pagetitle_to_remove):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -66,11 +64,9 @@ def remove_anagram_from_page(index, page, pagetitle_to_remove):
 
 
 def process_page_for_anagrams(index, page, modify_this_page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -131,11 +127,9 @@ def process_page_for_anagrams(index, page, modify_this_page):
 
 
 def process_page_for_deletion(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -207,10 +201,8 @@ for index, line in blib.iter_items_from_file(args.direcfile, start, end):
 
 for index, badpagetitle in input_pages_to_delete:
     badpage = pywikibot.Page(site, badpagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, badpagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, badpagetitle, txt))
 
@@ -219,14 +211,14 @@ for index, badpagetitle in input_pages_to_delete:
         continue
     process_page_for_anagrams(index, badpage, modify_this_page=False)
     blib.do_edit(index, badpage, process_page_for_deletion, save=args.save, verbose=args.verbose, diff=args.diff)
-    # this_comment = 'delete bad Italian non-lemma form'
-    # if args.save:
-    #  existing_text = blib.safe_page_text_or_none(badpage, errandpagemsg)
-    #  if existing_text is not None:
-    #    badpage.delete('%s (content was "%s")' % (this_comment, existing_text))
-    #    errandpagemsg("Deleted (comment=%s)" % this_comment)
-    # else:
-    #  pagemsg("Would delete (comment=%s)" % this_comment)
+    #this_comment = 'delete bad Italian non-lemma form'
+    #if args.save:
+    #    existing_text = blib.safe_page_text_or_none(badpage, errandpagemsg)
+    #    if existing_text is not None:
+    #        badpage.delete('%s (content was "%s")' % (this_comment, existing_text))
+    #        errandpagemsg("Deleted (comment=%s)" % this_comment)
+    #else:
+    #    pagemsg("Would delete (comment=%s)" % this_comment)
 
 for index, frompagetitle, topagetitle in pages_to_rename:
     frompage = pywikibot.Page(site, frompagetitle)

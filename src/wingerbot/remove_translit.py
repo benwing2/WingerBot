@@ -95,10 +95,8 @@ def remove_translit(params, start, end):
     # Remove redundant translits on one page.
     def remove_translit_one_page(index, page):
         pagetitle = page.title()
-
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

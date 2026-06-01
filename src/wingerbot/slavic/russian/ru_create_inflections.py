@@ -3381,7 +3381,7 @@ def create_forms(
         lemmas_to_process_set = set(lemmas_to_process)
         unaccented_lemmas = {}
         for index, page in blib.cat_articles("Russian %ss" % pos):
-            pagetitle = str(page.title())
+            pagetitle = page.title()
             unaccented_title = rulib.make_unstressed_ru(pagetitle)
             if unaccented_title in lemmas_to_process_set:
                 if unaccented_title in unaccented_lemmas:
@@ -3405,7 +3405,7 @@ def create_forms(
         pages_to_process = blib.cat_articles("Russian %ss" % pos, start, end)
 
     for index, page in pages_to_process:
-        pagetitle = str(page.title())
+        pagetitle = page.title()
 
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))

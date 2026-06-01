@@ -682,7 +682,7 @@ def process_pronun_templates(pronun_section: PronunSection | None, lemma: str, p
 
 
 def do_process_form(index, page, lemma, formind, formval, pos, tag_sets_to_process, comment_tag):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
     def errandpagemsg(txt):
@@ -922,7 +922,7 @@ def process_all_forms(args, index, lemma, pos, progargs, comment_tag):
 
 
 def do_process_participle(index, page, lemma, formind, formval, explicit_stem, progargs, comment_tag):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
     def errandpagemsg(txt):
@@ -1118,7 +1118,7 @@ def frob_nominal_lemma_spec(ht, lemmaspec, stem, pagemsg, notes, comment_tag, le
 
 
 def do_process_lemma(index, page, pos, explicit_infl, lemmaspec, lemma, explicit_stem, progargs, comment_tag):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
     def errandpagemsg(txt):

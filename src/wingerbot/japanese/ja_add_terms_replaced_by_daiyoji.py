@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, tname
 
 
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
 
@@ -96,13 +98,12 @@ def process_text_on_page(index, pagetitle, text):
         return saw_kanjitab
 
     for i, contents_page in blib.cat_articles(re.sub("^Category:", "", pagetitle)):
-        contents_title = str(contents_page.title())
+        contents_title = contents_page.title()
 
         def pagemsg_with_contents(txt):
             pagemsg("%s: %s" % (contents_title, txt))
         def errandpagemsg_with_contents(txt):
-            pagemsg_with_contents(txt)
-            errmsg("Page %s %s: %s: %s" % (index, pagetitle, contents_title, txt))
+            errandpagemsg("%s: %s" % (contents_title, txt))
 
         contents_page_text = blib.safe_page_text(contents_page, errandpagemsg_with_contents)
         modsec = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)

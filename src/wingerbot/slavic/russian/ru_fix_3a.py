@@ -75,7 +75,7 @@ def process_text_on_page(index, pagetitle, text):
                             elif formpagename == pagetitle:
                                 pagemsg("WARNING: Attempt to delete dictionary form, skipping")
                             else:
-                                text = str(formpage.text)
+                                text = blib.safe_page_text(formpage, errandpagemsg)
                                 if "Etymology 1" in text:
                                     pagemsg("WARNING: Found 'Etymology 1', skipping form %s" % formpagename)
                                 elif "----" in text:

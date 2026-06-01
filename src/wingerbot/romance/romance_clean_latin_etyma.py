@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
+import pywikibot, re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
 from wingerbot.latin import lalib
 from wingerbot.latin.lalib import remove_macrons, remove_non_macron_accents
 
@@ -56,11 +56,11 @@ def number_of_macrons(term):
     return len([x for x in term if x == MACRON])
 
 
-def verify_suffix(lemma, suffix, pagemsg):
+def verify_suffix(lemma, suffix, pagemsg, errandpagemsg):
     pagename = remove_macrons(lemma)
     lemma_page = pywikibot.Page(site, pagename)
     if lemma_page:
-        pagetext = blib.safe_page_text(lemma_page, pagemsg)
+        pagetext = blib.safe_page_text(lemma_page, errandpagemsg)
         parsed = blib.parse_text(pagetext)
         saw_long_suffix = None
         saw_short_suffix = None
@@ -291,6 +291,8 @@ def self_canonicalize_latin_term(term):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     notes = []
 
@@ -726,7 +728,7 @@ def process_text_on_page(index, pagetitle, text):
                                                 lemma[: -len(suffix.latin_lemma_suffix)] + suffix.latin_lemma_suffix
                                             )
                                             if newlemma != lemma:
-                                                if verify_suffix(lemma, suffix.latin_lemma_suffix, pagemsg):
+                                                if verify_suffix(lemma, suffix.latin_lemma_suffix, pagemsg, errandpagemsg):
                                                     notes.append(
                                                         "add missing long vowels in suffix -%s to Latin lemma %s in {{%s|%s}}"
                                                         % (suffix.latin_lemma_suffix, lemma, tn, args.langcode)

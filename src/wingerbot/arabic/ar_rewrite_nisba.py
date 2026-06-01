@@ -5,11 +5,9 @@ from wingerbot.blib import getparam, addparam, msg, errandmsg
 
 
 def rewrite_one_page_ar_nisba(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

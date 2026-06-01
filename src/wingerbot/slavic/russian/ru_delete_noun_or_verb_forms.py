@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 from wingerbot.slavic.russian import rulib
 
 
-def process_decl(index, pagetitle, decl, forms, save, verbose):
+def process_decl(index, pagetitle, decl, forms):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    def expand_text(tempcall):
+        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     pagemsg("Processing")
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
 
     if decl.startswith("{{ru-conj|"):
         tempcall = re.sub(r"^\{\{ru-conj", "{{ru-generate-verb-forms", decl)
@@ -42,7 +43,7 @@ def process_decl(index, pagetitle, decl, forms, save, verbose):
                 elif formpagename == pagetitle:
                     pagemsg("WARNING: Attempt to delete dictionary form, skipping")
                 else:
-                    text = str(formpage.text)
+                    text = blib.safe_page_text(formpage, errandpagemsg)
                     if "Etymology 1" in text:
                         pagemsg("WARNING: Found 'Etymology 1', skipping form %s" % formpagename)
                     else:
@@ -56,7 +57,7 @@ def process_decl(index, pagetitle, decl, forms, save, verbose):
                                 skip_form = True
                         if not skip_form:
                             comment = "Delete erroneously created form of %s" % pagetitle
-                            if save:
+                            if args.save:
                                 formpage.delete(comment)
                             else:
                                 pagemsg("Would delete page %s with comment=%s" % (formpagename, comment))
@@ -133,4 +134,4 @@ for i, line in blib.iter_items_from_file(args.declfile, start, end):
         pagetitle, decl = re.split("!!!", line)
     else:
         pagetitle, decl = re.split(" ", line, 1)
-    process_decl(i, pagetitle, decl, forms, args.save, args.verbose)
+    process_decl(i, pagetitle, decl, forms)

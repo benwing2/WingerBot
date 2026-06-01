@@ -8,17 +8,18 @@ from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg,
 
 def process_masc_page(index, page, fem):
     notes = []
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     orig_fem = fem
 
     def pagemsg(txt):
         msg("Page %s %s: %s: %s" % (index, orig_fem, pagetitle, txt))
-
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s: %s" % (index, orig_fem, pagetitle, txt))
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
     prev_fr_noun = False
-    parsed = blib.parse_text(str(page.text))
+    parsed = blib.parse_text(blib.safe_page_text(page, errandpagemsg))
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)

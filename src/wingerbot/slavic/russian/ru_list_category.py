@@ -13,10 +13,10 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 def list_category(cat):
     for i, page in blib.cat_articles(cat, start, end):
-        msg("Page %s %s: Processing page" % (i, str(page.title())))
+        msg("Page %s %s: Processing page" % (i, page.title()))
     for i, page in blib.cat_subcats(cat, start, end):
-        msg("Page %s %s: Processing subcategory" % (i, str(page.title())))
-        list_category(re.sub("^Category:", "", str(page.title())))
+        msg("Page %s %s: Processing subcategory" % (i, page.title()))
+        list_category(re.sub("^Category:", "", page.title()))
 
 
 for cat in re.split(",", args.cats):

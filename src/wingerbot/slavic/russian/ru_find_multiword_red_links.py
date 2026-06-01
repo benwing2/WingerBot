@@ -27,14 +27,8 @@ lemmas = set()
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    notes = []
 
     parsed = blib.parse_text(text)
 
@@ -150,7 +144,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 msg("Reading Russian lemmas")
 for i, page in blib.cat_articles("Russian lemmas", start, end):
-    lemmas.add(str(page.title()))
+    lemmas.add(page.title())
 
 blib.do_pagefile_cats_refs(
     args,

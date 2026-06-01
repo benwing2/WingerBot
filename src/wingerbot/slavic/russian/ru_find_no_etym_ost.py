@@ -13,7 +13,6 @@ nouns = []
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -37,6 +36,7 @@ def process_text_on_page(index, pagetitle, text):
             if len(heads) > 1:
                 pagemsg("Skipping adjective with multiple heads: %s" % ",".join(heads))
                 continue
+            noun_page = pywikibot.Page(site, noun)
             noun_text = blib.safe_page_text(noun_page, errandpagemsg)
             if not noun_text:
                 pagemsg("Page %s doesn't exist or is empty" % noun)
@@ -65,7 +65,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 for i, page in blib.cat_articles("Russian nouns"):
-    nouns.append(str(page.title()))
+    nouns.append(page.title())
 
 blib.do_pagefile_cats_refs(
     args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Russian adjectives"],

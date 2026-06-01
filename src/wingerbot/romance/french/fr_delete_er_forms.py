@@ -3,10 +3,10 @@
 # Delete erroneously created forms given the declensions that led to those
 # forms being created.
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 suffixes = [
     "e",
@@ -63,9 +63,11 @@ all_suffixes = [
 ]
 
 
-def process_er_verb(index, pagetitle, save, verbose, doall):
+def process_er_verb(index, pagetitle):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
 
@@ -74,7 +76,7 @@ def process_er_verb(index, pagetitle, save, verbose, doall):
         return
 
     stem = re.sub("er$", "", pagetitle)
-    for suffix in all_suffixes if doall else suffixes:
+    for suffix in all_suffixes if args.all_suffixes else suffixes:
         form = stem + suffix
         formpage = pywikibot.Page(site, form)
         if not formpage.exists():
@@ -82,7 +84,7 @@ def process_er_verb(index, pagetitle, save, verbose, doall):
         elif form == pagetitle:
             pagemsg("WARNING: Attempt to delete dictionary form, skipping")
         else:
-            text = str(formpage.text)
+            text = blib.safe_page_text(formpage, errandpagemsg)
             if "Etymology 1" in text:
                 pagemsg("WARNING: Found 'Etymology 1', skipping form %s" % form)
             else:
@@ -97,7 +99,7 @@ def process_er_verb(index, pagetitle, save, verbose, doall):
                     for m in re.finditer(r"\{\{also\|.*\}\}", text, re.M):
                         pagemsg("WARNING: Found %s in page '%s' to delete" % (m.group(0), form))
                     comment = "Delete erroneously created form of %s" % pagetitle
-                    if save:
+                    if args.save:
                         pagemsg(
                             "Page text for form '%s' follows:\n=============================\n%s\n============================="
                             % (form, text)
@@ -118,4 +120,4 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 for i, line in blib.iter_items_from_file(args.declfile, start, end):
-    process_er_verb(i, line, args.save, args.verbose, args.all_suffixes)
+    process_er_verb(i, line)

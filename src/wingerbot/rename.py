@@ -2,19 +2,17 @@
 
 import re
 from wingerbot import blib
-from wingerbot.blib import msg, errmsg, site
+from wingerbot.blib import msg, errandmsg, site
 import pywikibot
+import pywikibot.exceptions
 
 
 def rename_page(args, index, page, totitle, comment, refrom, reto):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-        errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     if refrom and reto:
         zipped_fromto = list(zip(refrom, reto))
@@ -51,7 +49,7 @@ def rename_page(args, index, page, totitle, comment, refrom, reto):
             try:
                 page.move(totitle, reason=this_comment, movetalk=True, noredirect=not args.with_redirect)
                 errandpagemsg("Renamed to %s" % totitle)
-            except pywikibot.PageRelatedError as error:
+            except pywikibot.exceptions.PageRelatedError as error:
                 errandpagemsg("Error moving to %s: %s" % (totitle, error))
                 return False
         else:
@@ -60,14 +58,11 @@ def rename_page(args, index, page, totitle, comment, refrom, reto):
 
 
 def delete_page(args, index, page, comment):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-        errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     if args.verbose:
         pagemsg("Processing")

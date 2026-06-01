@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname
 
 allowed_reading_types = ["goon", "kanon", "toon", "soon", "kanyoon", "on", "kun", "nanori"]
 
@@ -19,6 +19,8 @@ canonicalize_reading_types = {
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
 
@@ -38,15 +40,13 @@ def process_text_on_page(index, pagetitle, text):
 
     def pagemsg_with_spelling(txt):
         pagemsg("%s: %s" % (spelling, txt))
-
     def errandpagemsg_with_spelling(txt):
-        pagemsg_with_spelling(txt)
-        errmsg("Page %s %s: %s: %s" % (index, pagetitle, spelling, txt))
+        errandpagemsg("%s: %s" % (spelling, txt))
 
-    if not blib.safe_page_exists(spelling_page, pagemsg_with_spelling):
+    if not blib.safe_page_exists(spelling_page, errandpagemsg_with_spelling):
         pagemsg_with_spelling("Spelling page doesn't exist, skipping")
     else:
-        spelling_page_text = blib.safe_page_text(spelling_page, pagemsg_with_spelling)
+        spelling_page_text = blib.safe_page_text(spelling_page, errandpagemsg_with_spelling)
         modsec = blib.find_modifiable_lang_section(spelling_page_text, lang, pagemsg_with_spelling)
         if modsec is None:
             pagemsg_with_spelling("WARNING: Couldn't find %s section" % lang)
@@ -87,13 +87,11 @@ def process_text_on_page(index, pagetitle, text):
                 pagemsg_with_spelling("WARNING: Can't find reading %s on page" % reading)
 
     for i, contents_page in blib.cat_articles(re.sub("^Category:", "", pagetitle)):
-        contents_title = str(contents_page.title())
-
+        contents_title = contents_page.title()
         def pagemsg_with_contents(txt):
             pagemsg("%s: %s" % (contents_title, txt))
         def errandpagemsg_with_contents(txt):
-            pagemsg_with_contents(txt)
-            errmsg("Page %s %s: %s: %s" % (index, pagetitle, contents_title, txt))
+            errandpagemsg("%s: %s" % (contents_title, txt))
 
         contents_page_text = blib.safe_page_text(contents_page, errandpagemsg_with_contents)
         modsec = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)

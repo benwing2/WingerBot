@@ -276,10 +276,10 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         new_result = expand_text(new_generate_template)
         if not new_result:
             return None
-        args = blib.split_generate_args(new_result)
-        args = {k: v for k, v in args.items() if not k.startswith("neg_") and k != "infinitive_linked"}
-        args = {k: sort_multiple(v) for k, v in args.items()}
-        return args
+        verbargs = blib.split_generate_args(new_result)
+        verbargs = {k: v for k, v in verbargs.items() if not k.startswith("neg_") and k != "infinitive_linked"}
+        verbargs = {k: sort_multiple(v) for k, v in verbargs.items()}
+        return verbargs
 
     return blib.compare_new_and_old_template_forms(
         origt, newt, generate_old_forms, generate_new_forms, pagemsg, errandpagemsg, already_split=True, show_all=True

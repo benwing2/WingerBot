@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 
 def process_page(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing")
     notes = []
 
-    text = str(page.text)
+    text = blib.safe_page_text(page, errandpagemsg)
     text = re.sub(
         r"\n(===+)Adjective(===+)\n\{\{head\|de\|adjective form\}\}",
         "\n" + r"\1Numeral\2" + "\n{{head|de|numeral form}}",
@@ -25,14 +26,14 @@ def process_page(index, page):
     return text, notes
 
 
-parser = blib.create_argparser("Change ordinal numeral form headwords from adjective to numeral")
+parser = blib.create_argparser("Change German ordinal numeral form headwords from adjective to numeral")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 endings = ["en", "er", "em", "es"]
 
 for index, page in blib.cat_articles("German ordinal numbers", start, end):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     if not pagetitle.endswith("e"):
         continue
     for ending in endings:

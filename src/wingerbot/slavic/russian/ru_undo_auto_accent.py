@@ -14,8 +14,7 @@ from wingerbot.blib import msg, errandmsg, getparam, addparam, site
 
 
 def undo_ru_auto_accent(save, verbose, direcfile, start, end):
-    msg("WARNING: Script no longer applies and would need fixing up")
-    return
+    # FIXME: Script no longer applies and would need fixing up.
 
     template_removals = []
     for lineno, line in blib.iter_items_from_file(direcfile, start, end):
@@ -31,11 +30,9 @@ def undo_ru_auto_accent(save, verbose, direcfile, start, end):
             continue
 
         def undo_one_page_ru_auto_accent(index, page):
-            pagetitle = str(page.title())
-
+            pagetitle = page.title()
             def pagemsg(txt):
                 msg("Page %s %s: %s" % (index, pagetitle, txt))
-
             def errandpagemsg(txt):
                 errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -531,7 +531,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                 def process_page(index, page):
                     retval = process_text_on_inflection_page(
                         index,
-                        str(page.title()),
+                        page.title(),
                         blib.safe_page_text(page, errandpagemsg),
                         norm,
                         pos,

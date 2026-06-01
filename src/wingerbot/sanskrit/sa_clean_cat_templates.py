@@ -51,15 +51,15 @@ start, end = blib.parse_start_end(args.start, args.end)
 if args.remove_manual_cats:
     cats_to_do = []
     for i, catpage in blib.cat_subcats("Sanskrit verb forms", recurse=True):
-        cat = str(catpage.title())
+        cat = catpage.title()
         if cat not in cats_to_do:
             cats_to_do.append(cat)
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=cats_to_do)
 elif args.delete_verb_subcats:
     for i, catpage in blib.cat_subcats("Sanskrit verb forms", recurse=True):
-        msg("In category %s:" % str(catpage.title()))
+        msg("In category %s:" % catpage.title())
         if catpage.isEmptyCategory():
-            msg("Category %s is empty, deleting" % str(catpage.title()))
+            msg("Category %s is empty, deleting" % catpage.title())
             if args.save:
                 catpage.delete("Remove empty, unnecessary verb-form category")
 elif args.delete_templates:

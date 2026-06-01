@@ -9,7 +9,7 @@ from wingerbot.blib import msg, errandmsg, getparam, addparam, tname
 
 from wingerbot.arabic import arlib, ar_translit
 
-raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
+# FIXME: No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite.
 
 
 # Compare the auto-translit of PARAM with the corresponding transliteration
@@ -150,8 +150,7 @@ def process_head(index, pagetitle, template):
 # removing translit params when the auto-translit returns the same thing, or
 # canonicalizing. Returns the changed text along with a changelog message.
 def process_one_page_headwords(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

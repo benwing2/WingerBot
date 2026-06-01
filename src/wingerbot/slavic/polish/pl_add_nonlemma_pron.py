@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
 
 # Value is one of:
 # "pl-p-respelling": if page has any {{pl-p}} with respelling
@@ -20,11 +20,10 @@ def get_pl_p_property(index, pagetitle):
     if pagetitle in pages_with_pl_p:
         return pages_with_pl_p[pagetitle]
     page = pywikibot.Page(site, pagetitle)
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagetext = blib.safe_page_text(page, pagemsg)
+    pagetext = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(pagetext)
     saw_pl_p = False
     respellings = []

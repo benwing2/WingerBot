@@ -23,7 +23,7 @@ def delete_page(page, comment, errandpagemsg):
 
 
 def process_page(index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -45,7 +45,7 @@ def process_page(index, page):
     this_comment = args.comment or "delete empty category"
     if page.exists():
         if args.save:
-            delete_page(page, '%s (content was "%s")' % (this_comment, str(page.text)), errandpagemsg)
+            delete_page(page, '%s (content was "%s")' % (this_comment, blib.safe_page_text(page, errandpagemsg)), errandpagemsg)
             errandpagemsg("Deleted (comment=%s)" % this_comment)
         else:
             pagemsg("Would delete (comment=%s)" % this_comment)

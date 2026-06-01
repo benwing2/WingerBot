@@ -34,13 +34,12 @@ lang_inflection_of_templates = {
 
 
 def delete_form_1(index, page, lemma, formind, formval):
-    notes = []
-
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
+
+    notes = []
 
     text = blib.safe_page_text(page, errandpagemsg)
 
@@ -229,7 +228,7 @@ def delete_form_1(index, page, lemma, formind, formval):
                     % cleaned_sec0.strip()
                 )
                 return
-            pagetitle = str(page.title())
+            pagetitle = page.title()
             pagemsg("Page %s should be deleted" % pagetitle)
             pages_to_delete.append(pagetitle)
             return

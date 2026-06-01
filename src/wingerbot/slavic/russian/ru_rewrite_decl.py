@@ -94,14 +94,13 @@ def remove_diacritics(text):
 
 
 def rewrite_one_page_ru_decl_adj(index, page):
-    oldtemps = []
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+
+    oldtemps = []
 
     text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)
@@ -189,14 +188,13 @@ def rewrite_one_page_ru_decl_adj(index, page):
 
 
 def rewrite_one_page_ru_decl_noun(index, page):
-    oldtemps = []
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+
+    oldtemps = []
 
     text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 parser = blib.create_argparser("Delete obsolete form-of templates and documentation pages")
 args = parser.parse_args()
@@ -40,15 +40,19 @@ templates_to_delete = [
     "second-person singular of",
 ]
 
-for i, temp in blib.iter_items(templates_to_delete, start, end):
+for index, temp in blib.iter_items(templates_to_delete, start, end):
+    def pagemsg(txt):
+        msg("Template %s %s: %s" % (index, temp, txt))
+    def errandpagemsg(txt):
+        errandmsg("Template %s %s: %s" % (index, temp, txt))
     template_page = pywikibot.Page(site, "Template:%s" % temp)
     if template_page.exists():
         template_page.delete(
-            'Delete obsoleted and orphaned form-of template (content was "%s")' % str(template_page.text)
+            'Delete obsoleted and orphaned form-of template (content was "%s")' % blib.safe_page_text(template_page, errandpagemsg)
         )
     template_doc_page = pywikibot.Page(site, "Template:%s/documentation" % temp)
     if template_doc_page.exists():
         template_doc_page.delete(
             'Delete documentation page of obsoleted and orphaned form-of template (content was "%s")'
-            % str(template_doc_page.text)
+            % blib.safe_page_text(template_doc_page, errandpagemsg)
         )

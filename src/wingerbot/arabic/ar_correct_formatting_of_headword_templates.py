@@ -1,24 +1,32 @@
 #!/usr/bin/env python3
+"""Correct headword formatted raw or with {{head|ar|...}} to use the proper {{ar-*}} format, or (with --links)
+incorporate externally attached gender/translit into Arabic links.
+
+WARNING: This is out of date as the format of Arabic headword templates has since changed."""
 
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg
+from wingerbot.blib import msg
 
+form_pos_templates_list = [
+    ("plural", "noun", "ar-plural"),
+    ("noun", "noun", ["ar-noun", "ar-coll-noun", "ar-sing-noun"]),
+    ("proper noun", "proper noun", "ar-proper noun"),
+    ("adjective", "adjective", ["ar-adj", "ar-nisba"]),
+    ("collective noun", "collective noun", "ar-coll-noun"),
+    ("singulative noun", "singulative noun", "ar-sing-noun"),
+    ("adverb", "adverb", "ar-adv"),
+    ("conjunction", "conjunction", "ar-con"),
+    ("interjection", "interjection", "ar-interj"),
+    ("particle", "particle", "ar-particle"),
+    ("preposition", "preposition", "ar-prep"),
+    ("pronoun", "pronoun", "ar-pron"),
+]
 
-def search_category_for_missing_template(pos, templates, save, start, end):
-    return (search_category_for_missing_form(pos, pos, templates, save, start, end),)
-
-
-def search_category_for_missing_form(form, pos, templates, save, start, end):
-    if not isinstance(templates, list):
-        templates = [templates]
-    cat = "Arabic %ss" % form
-    repltemplate = templates[0]
-    msg(
-        "---Searching [[Category:%s|%s]] for %s:---"
-        % (cat, cat, " or ".join(["{{temp|%s}}" % temp for temp in templates]))
-    )
+def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, pos, templates):
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
     def parse_infls(infltext, tr):
         fs = []
@@ -83,138 +91,125 @@ def search_category_for_missing_form(form, pos, templates, save, start, end):
         templ = re.sub(r"\|\|+([A-Za-z0-9_]+=)", r"|\1", templ)
         return templ
 
-    def correct_one_page_headword_formatting(index, page):
-        pagetitle = str(page.title())
+    origtext = text
 
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
+    if not isinstance(templates, list):
+        templates = [templates]
+    repltemplate = templates[0]
 
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-        text = blib.safe_page_text(page, errandpagemsg)
-        sawtemp = False
-        for temp in templates:
-            if "{{%s" % temp in text:
-                sawtemp = True
-        if not sawtemp:
-            if "{{head|ar|" in text:
-                msg("* %s not in {{l|ar|%s}} but {{temp|head|ar}} is" % (" or ".join(templates), pagetitle))
+    sawtemp = False
+    for temp in templates:
+        if "{{%s" % temp in text:
+            sawtemp = True
+    if not sawtemp:
+        if "{{head|ar|" in text:
+            pagemsg("%s not found but {{temp|head|ar}} is" % " or ".join(templates))
+        else:
+            pagemsg("%s not found nor {{temp|head|ar}}" % " or ".join(templates))
+    replsfound = 0
+    for m in re.finditer(
+        r"(===+%s===+\s*)\{\{head\|ar\|(?:sc=Arab\|)?%s((?:\|[A-Za-z0-9_]+=(?:\[[^\]]*\]|[^|}])*)*)\}\} *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *((?:,[^,\n]*)*)(.*)"
+        % (pos, form),
+        text,
+        re.I,
+    ):
+        replsfound += 1
+        pagemsg("Found match: %s" % m.group(0))
+        if m.group(5):
+            pagemsg("WARNING: Trailing text %s" % m.group(5))
+        head = ""
+        g = ""
+        tr = None
+        for infl in re.finditer(r"\|([A-Za-z0-9_]+)=((?:\[[^\]]*\]|[^|}])*)", m.group(2)):
+            pagemsg("Found infl within head: %s" % infl.group(0))
+            if infl.group(1) == "head":
+                head = infl.group(2).replace("'", "")
+            elif infl.group(1) == "g":
+                g = infl.group(2).replace("'", "")
+            elif infl.group(1) == "tr":
+                tr = infl.group(2)
+            elif infl.group(1) == "sc":
+                pass
             else:
-                msg("* %s not in {{l|ar|%s}}, nor {{temp|head|ar}}" % (" or ".join(templates), pagetitle))
-        replsfound = 0
-        for m in re.finditer(
-            r"(===+%s===+\s*)\{\{head\|ar\|(?:sc=Arab\|)?%s((?:\|[A-Za-z0-9_]+=(?:\[[^\]]*\]|[^|}])*)*)\}\} *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *((?:,[^,\n]*)*)(.*)"
-            % (pos, form),
-            text,
-            re.I,
-        ):
-            replsfound += 1
-            msg("Found match: %s" % m.group(0))
-            if m.group(5):
-                msg("WARNING: Trailing text %s" % m.group(5))
-            head = ""
-            g = ""
-            tr = None
-            for infl in re.finditer(r"\|([A-Za-z0-9_]+)=((?:\[[^\]]*\]|[^|}])*)", m.group(2)):
-                msg("Found infl within head: %s" % infl.group(0))
-                if infl.group(1) == "head":
-                    head = infl.group(2).replace("'", "")
-                elif infl.group(1) == "g":
-                    g = infl.group(2).replace("'", "")
-                elif infl.group(1) == "tr":
-                    tr = infl.group(2)
-                elif infl.group(1) == "sc":
-                    pass
-                else:
-                    msg("WARNING: Unrecognized argument '%s'" % infl.group(1))
-            if m.group(3):
-                tr = m.group(3)
-            infls = parse_infls(m.group(4), tr)
-            repl = "{{%s|%s|%s%s}}" % (repltemplate, head, g, infls)
-            repl = remove_empty_args(repl)
-            repl = m.group(1) + repl + m.group(5)  # Include leading, trailing text
-            msg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
-            newtext = text.replace(m.group(0), repl, 1)
-            if newtext == text:
-                msg("WARNING: Unable to do replacement")
-            else:
-                text = newtext
-        for m in re.finditer(
-            r"(===+%s===+\s*)(?:'*\{\{(?:lang|l)\|ar\|(.*?)\}\}'*|'+([^{}']+)'+) *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *(?:\{\{g\|(.*?)\}\})? *((?:,[^,\n]*)*)(.*)"
-            % pos,
-            text,
-            re.I,
-        ):
-            replsfound += 1
-            msg("Found match: %s" % m.group(0))
-            if m.group(7):
-                msg("WARNING: Trailing text %s" % m.group(7))
-            head = m.group(2) or m.group(3)
-            g = m.group(5) or ""
-            tr = m.group(4)
-            infls = parse_infls(m.group(6), tr)
-            repl = "{{%s|%s|%s%s}}" % (repltemplate, head, g, infls)
-            repl = remove_empty_args(repl)
-            repl = m.group(1) + repl + m.group(7)  # Include leading, trailing text
-            msg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
-            newtext = text.replace(m.group(0), repl, 1)
-            if newtext == text:
-                msg("WARNING: Unable to do replacement")
-            else:
-                text = newtext
-            # If there's a blank line before and after the category, leave a single
-            # blank line
-            newtext, nsubs = re.subn(r"\n\n\[\[Category:%s\]\]\n\n" % cat, "\n\n", text, 1)
-            if nsubs == 0:
-                newtext = re.sub(r"\[\[Category:%s\]\]\n?" % cat, "", text, 1)
-            if newtext != text:
-                msg("Removed [[Category:%s]]" % cat)
-                text = newtext
-            else:
-                msg("WARNING: Unable to remove [[Category:%s]]" % cat)
-        if not sawtemp and replsfound == 0:
-            msg("WARNING: No replacements found for {{l|ar|%s}}" % pagetitle)
-        return text, "Correct headword formatting for [[:Category:%s]]" % cat
-
-    for index, page in blib.cat_articles(cat, start, end):
-        blib.do_edit(index, page, correct_one_page_headword_formatting, save=save)
+                pagemsg("WARNING: Unrecognized argument '%s'" % infl.group(1))
+        if m.group(3):
+            tr = m.group(3)
+        infls = parse_infls(m.group(4), tr)
+        repl = "{{%s|%s|%s%s}}" % (repltemplate, head, g, infls)
+        repl = remove_empty_args(repl)
+        repl = m.group(1) + repl + m.group(5)  # Include leading, trailing text
+        pagemsg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
+        newtext = text.replace(m.group(0), repl, 1)
+        if newtext == text:
+            pagemsg("WARNING: Unable to do replacement")
+        else:
+            text = newtext
+    for m in re.finditer(
+        r"(===+%s===+\s*)(?:'*\{\{(?:lang|l)\|ar\|(.*?)\}\}'*|'+([^{}']+)'+) *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *(?:\{\{g\|(.*?)\}\})? *((?:,[^,\n]*)*)(.*)"
+        % pos,
+        text,
+        re.I,
+    ):
+        replsfound += 1
+        pagemsg("Found match: %s" % m.group(0))
+        if m.group(7):
+            pagemsg("WARNING: Trailing text %s" % m.group(7))
+        head = m.group(2) or m.group(3)
+        g = m.group(5) or ""
+        tr = m.group(4)
+        infls = parse_infls(m.group(6), tr)
+        repl = "{{%s|%s|%s%s}}" % (repltemplate, head, g, infls)
+        repl = remove_empty_args(repl)
+        repl = m.group(1) + repl + m.group(7)  # Include leading, trailing text
+        pagemsg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
+        newtext = text.replace(m.group(0), repl, 1)
+        if newtext == text:
+            pagemsg("WARNING: Unable to do replacement")
+        else:
+            text = newtext
+        cat = "Arabic %ss" % form
+        # If there's a blank line before and after the category, leave a single
+        # blank line
+        newtext, nsubs = re.subn(r"\n\n\[\[Category:%s\]\]\n\n" % cat, "\n\n", text, 1)
+        if nsubs == 0:
+            newtext = re.sub(r"\[\[Category:%s\]\]\n?" % cat, "", text, 1)
+        if newtext != text:
+            pagemsg("Removed [[Category:%s]]" % cat)
+            text = newtext
+        else:
+            pagemsg("WARNING: Unable to remove [[Category:%s]]" % cat)
+    if not sawtemp and replsfound == 0:
+        pagemsg("WARNING: No replacements found")
+    if origtext == text:
+        return
+    else:
+        return text, ["correct headword formatting for Arabic %ss" % form]
 
 
-def correct_headword_formatting(save, start, end):
-    search_category_for_missing_form("plural", "noun", "ar-plural", save, start, end)
-    search_category_for_missing_template("noun", ["ar-noun", "ar-coll-noun", "ar-sing-noun"], save, start, end)
-    search_category_for_missing_template("proper noun", "ar-proper noun", save, start, end)
-    search_category_for_missing_template("adjective", ["ar-adj", "ar-nisba"], save, start, end)
-    search_category_for_missing_template("collective noun", "ar-coll-noun", save, start, end)
-    search_category_for_missing_template("singulative noun", "ar-sing-noun", save, start, end)
-    search_category_for_missing_template("adverb", "ar-adv", save, start, end)
-    search_category_for_missing_template("conjunction", "ar-con", save, start, end)
-    search_category_for_missing_template("interjection", "ar-interj", save, start, end)
-    search_category_for_missing_template("particle", "ar-particle", save, start, end)
-    search_category_for_missing_template("preposition", "ar-prep", save, start, end)
-    search_category_for_missing_template("pronoun", "ar-pron", save, start, end)
+def correct_one_page_headword_formatting(index, pagetitle, text):
+    notes = []
+    for form, pos, templates in form_pos_templates_list:
+        retval = correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, pos, templates)
+        if retval is not None:
+            newtext, this_notes = retval
+            text = newtext
+            notes.extend(this_notes)
+    return text, notes
 
 
-def correct_one_page_link_formatting(index, page):
-    pagetitle = str(page.title())
-
+def correct_one_page_link_formatting(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    text = blib.safe_page_text(page, errandpagemsg)
     linkschanged = []
     for m in re.finditer(
         r"\{\{l\|ar\|([^}]*?)\}\} *(?:'*(?:(?:\{\{IPAchar\|)?\(([^{})]*?)\)(?:\}\})?)'*)? *(?:\{\{g\|(.*?)\}\})?", text
     ):
         if not m.group(2) and not m.group(3):
             continue
-        msg("On page %s, found match: %s" % (pagetitle, m.group(0)))
+        pagemsg("Found match: %s" % m.group(0))
         if "|tr=" in m.group(1):
-            msg("Skipping because translit already present")
+            pagemsg("Skipping because translit already present")
             continue
         if m.group(3):
             if m.group(3) == "m|f":
@@ -228,29 +223,25 @@ def correct_one_page_link_formatting(index, page):
         else:
             tr = ""
         repl = "{{l|ar|%s%s%s}}" % (m.group(1), tr, gender)
-        msg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
+        pagemsg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
         newtext = text.replace(m.group(0), repl, 1)
         if newtext == text:
-            msg("WARNING: Unable to do replacement")
+            pagemsg("WARNING: Unable to do replacement")
         else:
             text = newtext
             linkschanged.append(m.group(1))
     return text, "incorporated translit/gender into links: %s" % ", ".join(linkschanged)
 
 
-def correct_link_formatting(save, start, end):
-    for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, correct_one_page_link_formatting, save=save)
-
-
-parser = blib.create_argparser("Correct formatting of headword templates")
-parser.add_argument("-l", "--links", action="store_true", help="Vocalize links")
+parser = blib.create_argparser("Correct formatting of headword templates or incorporate translit/gender into links", include_pagefile=True, include_stdin=True)
+parser.add_argument("--links", action="store_true", help="Incorporate translit/gender into Arabic links")
 
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.links:
-    correct_link_formatting(args.save, start, end)
+    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_link_formatting, edit=True, stdin=True,
+                               default_cats=["Arabic lemmas", "Arabic non-lemma forms"])
 else:
-    correct_headword_formatting(args.save, start, end)
+    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_headword_formatting, edit=True, stdin=True,
+                               default_cats=["Arabic %ss" % form for form, pos, templates in form_pos_templates_list])

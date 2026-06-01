@@ -26,7 +26,6 @@ def snarf_noun_accents_and_forms(noun, orig_pagemsg, orig_errandpagemsg):
 
     def pagemsg(txt):
         orig_pagemsg("Noun %s: %s" % (noun, txt))
-
     def errandpagemsg(txt):
         orig_errandpagemsg("Noun %s: %s" % (noun, txt))
 

@@ -7,9 +7,9 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
 def process_page(index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     for i, catpage in blib.cat_subcats(page, recurse=True):
-        cat = str(catpage.title())
+        cat = catpage.title()
 
         def pagemsg(txt):
             msg("Page %s,%s %s: %s" % (index, i, cat, txt))
@@ -32,7 +32,7 @@ def process_page(index, page):
         if reason:
             kanjis = []
             for j, kanjipage in blib.cat_articles(catpage):
-                kanji = str(kanjipage.title())
+                kanji = kanjipage.title()
                 kanjis.append(kanji)
             pagemsg("Bad category because %s: contents=%s" % (reason, ",".join(kanjis)))
 

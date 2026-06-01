@@ -45,11 +45,7 @@ def remove_i3rab(index, pagetitle, entry, word, nowarn=False):
 
 def do_nouns(poses, headtempls, save, start, end):
     def do_one_page_noun(index, page):
-        pagetitle = str(page.title())
-
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+        pagetitle = page.title()
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
@@ -57,7 +53,7 @@ def do_nouns(poses, headtempls, save, start, end):
         parsed = blib.parse_text(text)
         nouncount = 0
         nounids = []
-        for t in text.filter_templates():
+        for t in parsed.filter_templates():
             if tname(t) in headtempls:
                 nouncount += 1
                 params_done = []
@@ -79,11 +75,9 @@ def do_nouns(poses, headtempls, save, start, end):
 
 def do_verbs(save, start, end):
     def do_one_page_verb(index, page):
-        pagetitle = str(page.title())
-
+        pagetitle = page.title()
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

@@ -213,7 +213,7 @@ def output_stats(pagemsg):
 #     {{inflection of|...}} call. HEADS is a set exactly like (1) above.
 # (3) ADJ_FORMS is a set of all adjective forms of any adjective lemmas found
 #     on the page (each of which is (RU, TR)).
-def lookup_heads_and_inflections(pagename, pagemsg):
+def lookup_heads_and_inflections(pagename, pagemsg, errandpagemsg):
     if semi_verbose:
         pagemsg("lookup_heads_and_inflections: Finding heads on page %s" % pagename)
 
@@ -360,7 +360,7 @@ def lookup_heads_and_inflections(pagename, pagemsg):
             # If no lemmas or inflections found, check for alt-ё templates.
             # If the term is a non-ё variant of a single term with ё, look up
             # and return the heads and inflections on that page.
-            parsed = blib.parse_text(str(page.text))
+            parsed = blib.parse_text(blib.safe_page_text(page, errandpagemsg))
             yo_pages = set()
             for t in parsed.filter_templates():
                 if tname(t) in alt_yo_templates:

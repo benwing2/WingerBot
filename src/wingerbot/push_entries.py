@@ -7,7 +7,7 @@ import pywikibot, re, sys, argparse
 
 
 def process_page(index, page, contents, lang, verbose, comment):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))

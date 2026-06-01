@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
 
-import re
-
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam, rmparam, tname
+from wingerbot.blib import errandmsg, getparam, addparam, rmparam, tname
 
 
 def rewrite_one_page_arz_headword(index, page):
-    pagetitle = str(page.title())
-
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+    pagetitle = page.title()
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

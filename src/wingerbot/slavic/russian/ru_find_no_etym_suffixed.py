@@ -285,7 +285,7 @@ else:
     for i, page in blib.cat_articles(
         "Russian adverbs" if args.adverbs else "Russian nouns" if args.nouns else "Russian adjectives"
     ):
-        derived_lemmas.append(str(page.title()))
+        derived_lemmas.append(page.title())
 
 blib.do_pagefile_cats_refs(
     args,

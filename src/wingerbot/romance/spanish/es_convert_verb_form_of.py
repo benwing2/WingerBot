@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import pywikibot, re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname
 
 conj_table = {}
 

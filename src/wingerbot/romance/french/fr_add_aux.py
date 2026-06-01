@@ -6,7 +6,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
 
 # List of verbs are conjugated using 'être' in the passé composé.
 etre = [
@@ -419,7 +419,7 @@ all_verb_props = [
 cached_template_calls = {}
 
 
-def find_old_template_props(template, pagemsg):
+def find_old_template_props(template, pagemsg, errandpagemsg):
     name = str(template.name)
     if name in cached_template_calls:
         template_text = cached_template_calls[name]
@@ -428,7 +428,7 @@ def find_old_template_props(template, pagemsg):
         if not template_page.exists():
             pagemsg("WARNING: Can't locate template 'Template:%s'" % name)
             return None
-        template_text = str(template_page.text)
+        template_text = blib.safe_page_text(template_page, errandpagemsg)
         cached_template_calls[name] = template_text
     if args.verbose:
         pagemsg("Found template text: %s" % template_text)
@@ -469,24 +469,24 @@ def find_old_template_props(template, pagemsg):
     return None
 
 
-def compare_conjugation(index, template, refl, pagemsg, expand_text):
+def compare_conjugation(index, template, refl, pagemsg, errandpagemsg, expand_text):
     # Force reflexive templates to succeed since they don't use {{fr-conj}}
     if str(template.name) in refl_templates_to_change:
         return []
     generate_result = expand_text("{{fr-generate-verb-forms%s}}" % ("|refl=yes" if refl else ""))
     if not generate_result:
         return None
-    args = {}
+    conjargs = {}
     for arg in re.split(r"\|", generate_result):
         name, value = re.split("=", arg)
-        args[name] = re.sub("<!>", "|", value)
-    existing_args = find_old_template_props(template, pagemsg)
+        conjargs[name] = re.sub("<!>", "|", value)
+    existing_args = find_old_template_props(template, pagemsg, errandpagemsg)
     if existing_args is None:
         return None
     difvals = []
     for prop in all_verb_props:
         curval = existing_args.get(prop, "").strip()
-        newval = args.get("forms." + prop, "").strip()
+        newval = conjargs.get("forms." + prop, "").strip()
         if curval == newval:
             continue
         elif "," in curval and "," in newval:
@@ -499,11 +499,10 @@ def compare_conjugation(index, template, refl, pagemsg, expand_text):
 
 
 def process_text_on_page(index, pagetitle, text):
-    subpagetitle = re.sub("^.*:", "", pagetitle)
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -519,7 +518,7 @@ def process_text_on_page(index, pagetitle, text):
         name = tname(t)
         if name in templates_to_change or name in refl_templates_to_change:
             refl = name in refl_templates_to_change
-            difvals = compare_conjugation(index, t, refl, pagemsg, expand_text)
+            difvals = compare_conjugation(index, t, refl, pagemsg, errandpagemsg, expand_text)
             if difvals is None:
                 pass
             elif difvals:

@@ -8,11 +8,9 @@ templates = ["ar-tool noun", "ar-noun of place", "ar-instance noun"]
 
 # Fix the template refs. If cap= is present, remove it; else, add lc=.
 def fix_one_page_tool_place_noun(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

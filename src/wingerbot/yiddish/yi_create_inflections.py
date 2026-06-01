@@ -1648,7 +1648,7 @@ def create_forms(
         pages_to_process = blib.cat_articles("Yiddish %ss" % pos, start, end)
 
     for index, page in pages_to_process:
-        pagetitle = str(page.title())
+        pagetitle = page.title()
 
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))

@@ -230,7 +230,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 
 def scrape_pagetitle(index, page):
-    lemmas.append(str(page.title()))
+    lemmas.append(page.title())
 
 
 blib.do_pagefile_cats_refs(args, start, end, scrape_pagetitle, default_cats=["Russian verbs"])

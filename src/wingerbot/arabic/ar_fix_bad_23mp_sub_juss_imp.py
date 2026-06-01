@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
 
 recognized_tag_sets = [
     "2|m|p|non-past|actv|subj",
@@ -21,16 +21,17 @@ split_recognized_tag_sets = [tag_set.split("|") for tag_set in recognized_tag_se
 
 
 def fix_new_page(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     notes = []
 
     pagemsg("Fixing new page")
 
-    origtext = str(page.text)
+    origtext = blib.safe_page_text(page, errandpagemsg)
     text = origtext
     newtext = re.sub(r"^\{\{also\|.*?\}\}\n", "", text)
     if text != newtext:
@@ -78,9 +79,8 @@ def convert_etym_subsection_to_single_etymology_section(text):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errpagemsg(txt):
-        errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     notes = []
 
@@ -285,12 +285,11 @@ def process_text_on_page(index, pagetitle, text):
             pagemsg("Page should be deleted")
             return
         comment = "Rename misspelled 2nd/3rd masc pl subj/juss/impr non-lemma form"
-        pagemsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
-        errpagemsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
+        errandpagemsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
         if args.save:
             try:
                 page.move(new_pagetitle, reason=comment, movetalk=True, noredirect=True)
-            except pywikibot.PageRelatedError as error:
+            except pywikibot.exceptions.PageRelatedError as error:
                 pagemsg("Error moving to %s: %s" % (new_pagetitle, error))
                 return
         blib.do_edit(

@@ -8,8 +8,7 @@ from wingerbot.latin import lalib
 
 
 def correct_nom_sg_n_participle(index, page, participle, lemma):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
     def errandpagemsg(txt):

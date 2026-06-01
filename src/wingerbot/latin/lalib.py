@@ -726,11 +726,11 @@ def la_get_headword_from_template(t: Template, pagename: str, pagemsg: PagemsgCa
                     pagemsg("WARNING: Error generating forms, skipping")
                     retval = ""
                 else:
-                    args = blib.split_generate_args(result)
-                    if "linked_nom_sg_m" in args:
-                        retval = args["linked_nom_sg_m"]
-                    elif "linked_nom_pl_m" in args:
-                        retval = args["linked_nom_pl_m"]
+                    declargs = blib.split_generate_args(result)
+                    if "linked_nom_sg_m" in declargs:
+                        retval = declargs["linked_nom_sg_m"]
+                    elif "linked_nom_pl_m" in declargs:
+                        retval = declargs["linked_nom_pl_m"]
                     else:
                         pagemsg(
                             "WARNING: Can't locate lemma in {{la-generate-adj-forms}} result: generate_template=%s, result=%s"
@@ -759,11 +759,11 @@ def la_get_headword_from_template(t: Template, pagename: str, pagemsg: PagemsgCa
                 pagemsg("WARNING: Error generating forms, skipping")
                 retval = ""
             else:
-                args = blib.split_generate_args(result)
-                if "linked_nom_sg" in args:
-                    retval = args["linked_nom_sg"]
-                elif "linked_nom_pl" in args:
-                    retval = args["linked_nom_pl"]
+                declargs = blib.split_generate_args(result)
+                if "linked_nom_sg" in declargs:
+                    retval = declargs["linked_nom_sg"]
+                elif "linked_nom_pl" in declargs:
+                    retval = declargs["linked_nom_pl"]
                 else:
                     pagemsg(
                         "WARNING: Can't locate lemma in {{la-generate-noun-forms}} result: generate_template=%s, result=%s"
@@ -782,15 +782,15 @@ def la_get_headword_from_template(t: Template, pagename: str, pagemsg: PagemsgCa
                 pagemsg("WARNING: Error generating forms, skipping")
                 retval = ""
             else:
-                args = blib.split_generate_args(result)
+                declargs = blib.split_generate_args(result)
                 for slot in [
                     "linked_1s_pres_actv_indc",
                     "linked_3s_pres_actv_indc",
                     "linked_1s_perf_actv_indc",
                     "linked_3s_perf_actv_indc",
                 ]:
-                    if slot in args:
-                        retval = args[slot]
+                    if slot in declargs:
+                        retval = declargs[slot]
                         break
                 else:
                     # no break

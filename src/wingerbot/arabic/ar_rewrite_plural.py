@@ -5,8 +5,7 @@ from wingerbot.blib import getparam, addparam, errandmsg, tname
 
 
 def rewrite_one_page_ar_plural(index, page):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

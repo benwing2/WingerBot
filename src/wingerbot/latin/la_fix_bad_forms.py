@@ -10,11 +10,9 @@ from wingerbot.latin.lalib import remove_macrons
 
 
 def process_form(index, page, lemma, formind, formval, subs):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
 

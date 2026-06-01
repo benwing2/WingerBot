@@ -22,11 +22,9 @@ def undo_greek_removal(save, verbose, direcfile, start, end):
     for index, (pagename, removed_param, template_text) in blib.iter_items(template_removals, get_name=lambda x: x[0]):
 
         def undo_one_page_greek_removal(index, page):
-            pagetitle = str(page.title())
-
+            pagetitle = page.title()
             def pagemsg(txt):
                 msg("Page %s %s: %s" % (index, pagetitle, txt))
-
             def errandpagemsg(txt):
                 errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

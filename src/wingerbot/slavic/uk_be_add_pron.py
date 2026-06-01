@@ -1271,10 +1271,8 @@ def process_text_on_page(index, text, pagetitle):
 def process_lemma(index, pagetitle, forms):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 

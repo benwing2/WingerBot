@@ -7,7 +7,7 @@ from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 
 
 def process_lemma_page(index, page, form):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
@@ -17,7 +17,7 @@ def process_lemma_page(index, page, form):
 
     pagemsg("Processing")
 
-    text = str(page.text)
+    text = blib.safe_page_text(page, errandpagemsg)
 
     notes = []
 

@@ -7,7 +7,7 @@ from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
 
 
 def process_subpage(origindex, origpagetitle, index, page):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
 
     def pagemsg(txt):
         msg("Page %s %s: %s %s: %s" % (origindex, origpagetitle, index, pagetitle, txt))
@@ -33,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
     for i, subpage in blib.references(
         pagetitle, namespaces=[10], only_template_inclusion=False, filter_redirects=args.redirects_only
     ):
-        aliases.append(str(subpage.title()))
+        aliases.append(subpage.title())
         if not args.table_of_uses:
             process_subpage(index, pagetitle, i, subpage)
     if args.table_of_uses:

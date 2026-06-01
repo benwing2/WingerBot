@@ -12,11 +12,9 @@ adjs_to_accents = {}
 
 def snarf_adj_accents():
     for index, page in blib.cat_articles("Bulgarian adjectives"):
-        pagetitle = str(page.title())
-
+        pagetitle = page.title()
         def pagemsg(txt):
             msg("Page %s %s: %s" % (index, pagetitle, txt))
-
         def errandpagemsg(txt):
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

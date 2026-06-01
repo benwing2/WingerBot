@@ -5,10 +5,10 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, errandmsg, getparam, addparam
 from wingerbot.arabic import arlib, ar_translit
 
-raise RuntimeError("No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite")
+# FIXME: No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite.
 
 
 # Vocalize ARABIC based on LATIN. Return vocalized Arabic text if
@@ -183,24 +183,25 @@ def vocalize_one_page_headwords(index, pagetitle, text):
 
 
 # Vocalize headword templates on pages from STARTFROM to (but not including)
-# UPTO, either page names or 0-based integers. Save changes if SAVE is true.
-# Show exact changes if VERBOSE is true.
-def vocalize_headwords(save, verbose, start, end):
+# UPTO, either page names or 0-based integers.
+def vocalize_headwords(start, end):
     def process_page(index, page):
-        return vocalize_one_page_headwords(index, str(page.title()), str(page.text))
+        pagetitle = page.title()
+        def errandpagemsg(txt):
+            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+        return vocalize_one_page_headwords(index, pagetitle, blib.safe_page_text(page, errandpagemsg))
 
     # for page in blib.references("Template:tracking/ar-head/head", start, end):
     # for page in blib.references("Template:ar-nisba", start, end):
     for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
         for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, process_page, save=save, verbose=verbose)
+            blib.do_edit(index, page, process_page, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 # Vocalize link-like templates on pages from STARTFROM to (but not including)
-# UPTO, either page names or 0-based integers. Save changes if SAVE is true.
-# Show exact changes if VERBOSE is true. CATTYPE should be 'vocab', 'borrowed'
+# UPTO, either page names or 0-based integers. CATTYPE should be 'vocab', 'borrowed'
 # or 'translation', indicating which categories to examine.
-def vocalize_links(save, verbose, cattype, start, end):
+def vocalize_links(cattype, start, end):
     def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
         result = vocalize_param(index, pagetitle, template, param, paramtr)
         if isinstance(result, str):
@@ -210,7 +211,7 @@ def vocalize_links(save, verbose, cattype, start, end):
     def join_actions(actions):
         return "vocalize links: %s" % "; ".join(actions)
 
-    return blib.process_links(save, verbose, "ar", "Arabic", cattype, start, end, process_param, join_actions)
+    return blib.process_links("ar", "Arabic", cattype, start, end, process_param, join_actions)
 
 
 parser = blib.create_argparser("Correct vocalization and translit")
@@ -221,6 +222,6 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.links:
-    vocalize_links(args.save, args.verbose, args.cattype, start, end)
+    vocalize_links(args.cattype, start, end)
 else:
-    vocalize_headwords(args.save, args.verbose, start, end)
+    vocalize_headwords(start, end)

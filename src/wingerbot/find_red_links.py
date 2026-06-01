@@ -2,10 +2,10 @@
 
 # Find redlinks (non-existent pages).
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, errandmsg, site
 
 parser = blib.create_argparser("Find red links")
 parser.add_argument("--pagefile", help="File containing pages to check")
@@ -17,13 +17,17 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 lemmas = set()
 msg("Reading %s lemmas" % args.lang)
-for i, page in blib.cat_articles("%s lemmas" % args.lang, start, end):
-    lemmas.add(str(page.title()))
+for index, page in blib.cat_articles("%s lemmas" % args.lang, start, end):
+    lemmas.add(page.title())
 
 words_freq = {}
 
-for i, line in blib.iter_items_from_file(args.pagefile, start, end):
+for index, line in blib.iter_items_from_file(args.pagefile, start, end):
     pagename = re.split(r"\s", line)[args.field - 1]
+    def pagemsg(txt):
+        msg("Page %s %s: %s" % (index, pagename, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagename, txt))
     m = re.search("[^-'Ѐ-џҊ-ԧꚀ-ꚗ]", pagename)
     if m:
         outtext = "skipped due to non-Cyrillic characters"
@@ -39,7 +43,7 @@ for i, line in blib.iter_items_from_file(args.pagefile, start, end):
             else:
                 page = pywikibot.Page(site, pagenm)
                 if page.exists():
-                    text = str(page.text)
+                    text = blib.safe_page_text(page, errandpagemsg)
                     if re.search("#redirect", text, re.I):
                         outtext = "exists%s as redirect" % pagetype
                     elif re.search(r"\{\{superlative of", text):
@@ -52,7 +56,7 @@ for i, line in blib.iter_items_from_file(args.pagefile, start, end):
         else:
             outtext = "does not exist"
     if args.output_orig:
-        msg("| %s || %s || %s" % (i, " || ".join(line), outtext))
+        msg("| %s || %s || %s" % (index, " || ".join(line), outtext))
         msg("|-")
     else:
-        msg("Page %s [[%s]]: %s" % (i, pagename, outtext))
+        msg("Page %s [[%s]]: %s" % (index, pagename, outtext))

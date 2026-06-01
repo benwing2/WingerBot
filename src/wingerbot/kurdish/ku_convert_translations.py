@@ -7,10 +7,10 @@ from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, si
 
 northern_kurdish_lemmas = set()
 for i, art in blib.cat_articles("Northern Kurdish lemmas"):
-    northern_kurdish_lemmas.add(str(art.title()))
+    northern_kurdish_lemmas.add(art.title())
 central_kurdish_lemmas = set()
 for i, art in blib.cat_articles("Central Kurdish lemmas"):
-    central_kurdish_lemmas.add(str(art.title()))
+    central_kurdish_lemmas.add(art.title())
 
 trans_templates = blib.translation_templates
 

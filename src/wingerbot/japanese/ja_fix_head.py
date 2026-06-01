@@ -104,7 +104,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 romaji_to_keep = set()
 for i, page in blib.cat_articles("Japanese terms with romaji needing attention"):
-    pagetitle = str(page.title())
+    pagetitle = page.title()
     romaji_to_keep.add(pagetitle)
 
 blib.do_pagefile_cats_refs(

@@ -14,11 +14,9 @@ from wingerbot.arabic.arlib import (
 
 
 def split_one_page_etymologies(index, page, verbose):
-    pagetitle = str(page.title())
-
+    pagetitle = page.title()
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

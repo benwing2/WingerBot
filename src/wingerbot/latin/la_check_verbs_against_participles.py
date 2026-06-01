@@ -7,11 +7,11 @@ from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
 from wingerbot.latin import lalib
 
 
-def check_participle(form, pagemsg):
-    orig_pagemsg = pagemsg
-
+def check_participle(form, orig_pagemsg, orig_errandpagemsg):
     def pagemsg(txt):
         orig_pagemsg("%s: %s" % (form, txt))
+    def errandpagemsg(txt):
+        orig_errandpagemsg("%s: %s" % (form, txt))
 
     if "[" in form or "|" in form:
         pagemsg("Skipping form with brackets or vertical bar")
@@ -19,7 +19,7 @@ def check_participle(form, pagemsg):
     page = pywikibot.Page(site, lalib.remove_macrons(form))
     if not blib.safe_page_exists(page, pagemsg):
         pagemsg("Skipping nonexistent page")
-    parsed = blib.parse_text(str(page.text))
+    parsed = blib.parse_text(blib.safe_page_text(page, errandpagemsg))
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "la-part":
@@ -31,10 +31,8 @@ def check_participle(form, pagemsg):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
@@ -50,7 +48,7 @@ def process_text_on_page(index, pagetitle, text):
                 if partslot in vargs:
                     forms = vargs[partslot].split(",")
                     for form in forms:
-                        check_participle(form, pagemsg)
+                        check_participle(form, pagemsg, errandpagemsg)
 
 
 parser = blib.create_argparser(

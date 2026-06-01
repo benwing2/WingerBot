@@ -190,7 +190,7 @@ if __name__ == "__main__":
             else:
 
                 def do_process_page(index, page):
-                    return process_text_on_page(index, str(page.title()), page.text, newtext, comment, origcontents)
+                    return process_text_on_page(index, page.title(), page.text, newtext, comment, origcontents)
 
                 blib.do_edit(
                     index,

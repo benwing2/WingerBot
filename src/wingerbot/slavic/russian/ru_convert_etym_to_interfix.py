@@ -2,10 +2,10 @@
 
 # Convert expressions like {{affix|ru|кот|alt1=ко́то-|кафе́|tr2=kafɛ́}} to {{affix|ru|кот|-о-|кафе́|tr3=kafɛ́}}.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, errandmsg, tname
 
 from wingerbot.slavic.russian import rulib
 from wingerbot.slavic.russian import ruheadlib
@@ -19,7 +19,7 @@ def stringize_heads(heads):
     )
 
 
-def find_stress(term, pagemsg):
+def find_stress(term, pagemsg, errandpagemsg):
     # Look up a term to find its accented form. If it's monosyllabic or
     # already stressed, this isn't necessary. At the point we're called,
     # there's no tr1= param; we skipped that case.
@@ -27,7 +27,7 @@ def find_stress(term, pagemsg):
         return term, None
     if term.endswith("ый") and rulib.is_monosyllabic(term[:-2]):
         return rulib.make_beginning_stressed_ru(term), None
-    cached, info = ruheadlib.lookup_heads_and_inflections(term, pagemsg)
+    cached, info = ruheadlib.lookup_heads_and_inflections(term, pagemsg, errandpagemsg)
     if info is None:
         pagemsg("WARNING: Can't accent, page doesn't exist: %s" % term)
     elif info == "redirect":
@@ -50,6 +50,8 @@ def find_stress(term, pagemsg):
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     notes = []
     found_affix = False
@@ -70,9 +72,9 @@ def process_text_on_page(index, pagetitle, text):
                 for param in t.params:
                     pname = str(param.name)
                     if re.search("^[0-9]+$", pname):
-                        params.append((str(int(pname) + 1), param.value, param.showkey))
+                        params.append((str(int(pname) + 1), str(param.value), param.showkey))
                     elif pname != "lang":
-                        params.append((pname, param.value, param.showkey))
+                        params.append((pname, str(param.value), param.showkey))
                 # Erase all params.
                 del t.params[:]
                 # Put back parameters in order.
@@ -107,7 +109,7 @@ def process_text_on_page(index, pagetitle, text):
                     warning("Found alt1= and tr1=, not sure what to do")
                     continue
                 term = getparam(t, "2")
-                term, termtr = find_stress(term, pagemsg)
+                term, termtr = find_stress(term, pagemsg, errandpagemsg)
                 # Fetch all params, moving params > 1 over to the right by one.
                 params = []
                 for param in t.params:

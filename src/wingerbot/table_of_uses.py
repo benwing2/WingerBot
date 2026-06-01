@@ -52,7 +52,7 @@ for lineno, ref_and_aliases in blib.iter_items_from_file(args.tempfile):
                 "[[%s]]" % mainref if mainref else "'''[[%s]]'''" % alias,
                 num_refs,
                 (
-                    " || %s" % ", ".join("[[%s]]" % str(ref.title()) for i, ref in template_refs)
+                    " || %s" % ", ".join("[[%s]]" % ref.title() for i, ref in template_refs)
                     if args.include_refs
                     else ""
                 ),
