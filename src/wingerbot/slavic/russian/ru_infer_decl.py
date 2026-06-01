@@ -16,7 +16,7 @@ import re
 import traceback, sys
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, errandmsg, site, tname
+from wingerbot.blib import msg, rmparam, getparam, site, tname, Index, ProcessPageRetval
 from wingerbot.slavic.russian.rulib import (
     AC,
     is_unstressed,
@@ -29,10 +29,6 @@ from wingerbot.slavic.russian.rulib import (
     add_hard_neuter,
 )
 
-verbose = True
-mockup = False
-# Uncomment the following line to enable test mode
-# mockup = True
 # If true, use the old ru-noun-table template, instead of new
 # ru-decl-noun-new
 old_template = True
@@ -88,7 +84,7 @@ matching_stress_patterns["ending"]["none"] = {"by": "acc_sg", "ending": "b", "st
 matching_stress_patterns["none"]["stem"] = {"by": "pre_pl", "stem": "a", "ending": "e"}
 matching_stress_patterns["none"]["ending"] = ["b"]
 
-manual_templates = ["ru-decl-noun", "ru-decl-noun-unc", "ru-decl-noun-pl"]
+decl_templates = ["ru-decl-noun", "ru-decl-noun-unc", "ru-decl-noun-pl"]
 
 
 def compare_terms(case, real, pred, pagemsg):
@@ -121,12 +117,12 @@ def remove_duplicates(form):
 
 
 def trymatch(forms, args, pagemsg, multiword=False):
-    if mockup:
+    if args.mockup:
         ok = True
     else:
         tempcall = "{{ru-generate-noun-forms|" + "|".join(args) + "}}"
         result = site.expand_text(tempcall)
-        if verbose:
+        if args.verbose:
             pagemsg("%s = %s" % (tempcall, result))
         if result.startswith('<strong class="error">'):
             result = re.sub("<.*?>", "", result)
@@ -268,7 +264,7 @@ def arg1_is_stress(arg1):
 
 
 def infer_decl(t, noungender, linked_headwords, pagemsg):
-    if verbose:
+    if args.verbose:
         pagemsg("Processing %s" % str(t))
 
     tn = tname(t)
@@ -297,7 +293,7 @@ def infer_decl(t, noungender, linked_headwords, pagemsg):
     i = 1
     for case in getcases:
         if case:
-            form = getparam(t, i).strip()
+            form = getparam(t, str(i)).strip()
             form = blib.remove_links(form)
             if case == "pre_sg" or case == "pre_pl":
                 # eliminate leading preposition
@@ -394,26 +390,26 @@ def default_stress(lemma, stress, pagemsg):
 def generate_template_args(stress, lemma, linked_lemma, declspec, plstem, pagemsg):
     stress = default_stress(lemma, stress, pagemsg)
     if old_template:
-        args = [stress, linked_lemma, declspec, "", plstem]
-        if not args[0]:
-            del args[0]
-        if not args[-1]:
-            del args[-1]
-        if not args[-1]:
-            del args[-1]
-        if not args[-1]:
-            del args[-1]
+        tempargs = [stress, linked_lemma, declspec, "", plstem]
+        if not tempargs[0]:
+            del tempargs[0]
+        if not tempargs[-1]:
+            del tempargs[-1]
+        if not tempargs[-1]:
+            del tempargs[-1]
+        if not tempargs[-1]:
+            del tempargs[-1]
     else:
         declspec = declspec and "^" + declspec or ""
         linked_lemma = linked_lemma + declspec
         linked_lemma = re.sub(r"\^([;*(])", r"\1", linked_lemma)
-        args = [stress, linked_lemma, plstem]
-        if not args[0]:
-            del args[0]
-        if not args[-1]:
-            del args[-1]
-        args = [":".join(args)]
-    return args
+        tempargs = [stress, linked_lemma, plstem]
+        if not tempargs[0]:
+            del tempargs[0]
+        if not tempargs[-1]:
+            del tempargs[-1]
+        tempargs = [":".join(tempargs)]
+    return tempargs
 
 
 def get_lemma(linked_headwords, lemma, multiword, pagemsg):
@@ -809,17 +805,10 @@ def infer_word(forms, noungender, linked_headwords, number, numonly, multiword, 
     return None
 
 
-def infer_one_page_decls_1(index, page, text=None):
-    pagetitle = str(page.title())
-
+def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if text is None:
-        text = blib.safe_page_text(page, errandpagemsg)
     parsed = blib.parse_text(text)
     genders = set()
     headwords = set()
@@ -858,7 +847,7 @@ def infer_one_page_decls_1(index, page, text=None):
     inferred_decls = []
     for t in parsed.filter_templates():
         tn = tname(t)
-        if tn in manual_templates:
+        if tn in decl_templates:
             if tn == "ru-decl-noun-pl":
                 genders = list(genders)
                 if len(genders) == 0:
@@ -875,7 +864,7 @@ def infer_one_page_decls_1(index, page, text=None):
             if args:
                 inferred_decls.append("{{%s|%s}}" % (decl_template, "|".join(args)))
                 for i in range(15, 0, -1):
-                    rmparam(t, i)
+                    rmparam(t, str(i))
                 t.name = decl_template
                 i = 1
                 for arg in args:
@@ -888,13 +877,12 @@ def infer_one_page_decls_1(index, page, text=None):
     return str(parsed), "Infer declension for manual decl(s): %s" % ", ".join(inferred_decls)
 
 
-def infer_one_page_decls(index, page):
+def process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPageRetval:
     try:
-        return infer_one_page_decls_1(index, page)
+        return _process_text_on_page(index, pagetitle, text)
     except Exception as e:
-        msg("%s %s: WARNING: Got an error: %s" % (index, str(page.title()), repr(e)))
+        msg("%s %s: WARNING: Got an error: %s" % (index, pagetitle, repr(e)))
         traceback.print_exc(file=sys.stdout)
-        return
 
 
 test_templates = [
@@ -1474,37 +1462,22 @@ test_templates = [
 
 
 def test_infer():
-    class Page:
-        def title(self):
-            return "test_infer"
-
     for pagetext in test_templates:
-        page = Page()
-        msg("original text = [[%s]]" % pagetext)
-        newtext, comment = infer_one_page_decls(1, page, pagetext)
+        retval = process_text_on_page(1, "test_infer", pagetext)
+        if retval is not None:
+            newtext, comment = retval
         msg("newtext = %s" % str(newtext))
         msg("comment = %s" % comment)
 
 
 parser = blib.create_argparser("Add pronunciation sections to Russian Wiktionary entries")
+parser.add_argument("--mockup", action="store_true", help="Use mocked-up test code")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
-def ignore_page(page):
-    if not isinstance(page, str):
-        page = str(page.title())
-    if re.search(r"^(Appendix|Appendix talk|User|User talk|Talk):", page):
-        return True
-    return False
-
-
-if mockup:
+if args.mockup:
     test_infer()
 else:
-    for template in manual_templates:
-        for index, page in blib.references("Template:" + template, start, end):
-            if ignore_page(page):
-                msg("Page %s %s: Skipping due to namespace" % (index, str(page.title())))
-            else:
-                blib.do_edit(index, page, infer_one_page_decls, save=args.save)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+                               default_refs=["Template:%s" % template for template in decl_templates])

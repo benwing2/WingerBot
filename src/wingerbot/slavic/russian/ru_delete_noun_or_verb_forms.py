@@ -29,11 +29,11 @@ def process_decl(index, pagetitle, decl, forms, save, verbose):
     if not result:
         pagemsg("WARNING: Error generating forms, skipping")
         return
-    args = blib.split_generate_args(result)
+    inflargs = blib.split_generate_args(result)
 
     for form in forms:
-        if form in args:
-            for formpagename in re.split(",", args[form]):
+        if form in inflargs:
+            for formpagename in re.split(",", inflargs[form]):
                 formpagename = re.sub("//.*$", "", formpagename)
                 formpagename = rulib.remove_accents(formpagename)
                 formpage = pywikibot.Page(site, formpagename)

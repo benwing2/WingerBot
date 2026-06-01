@@ -76,8 +76,9 @@ def iotate(word):
 # Form the past passive participle from the verb type, infinitive and
 # other parts. For the moment we don't try to get the stress right,
 # and return a form without stress or ё.
-def form_ppp(conjtype, pagetitle, args):
-    def form_ppp_1(conjtype, pagetitle, args):
+def form_ppp(conjtype, pagetitle, conjargs):
+    def form_ppp_1():
+        nonlocal conjtype
         def first_entry(forms):
             forms = re.sub(",.*", "", forms)
             return re.sub("//.*", "", forms)
@@ -90,24 +91,24 @@ def form_ppp(conjtype, pagetitle, args):
         if pagetitle.endswith("еть") and conjtype == 1:
             return re.sub("ть$", "нный", pagetitle)
         if conjtype in [4, 5]:
-            sg1 = args["pres_1sg"] if "pres_1sg" in args else args["futr_1sg"]
+            sg1 = conjargs["pres_1sg"] if "pres_1sg" in conjargs else conjargs["futr_1sg"]
             if not sg1 or sg1 == "-":
                 return None
             sg1 = first_entry(sg1)
             assert re.search("[ую]́?$", sg1)
             return re.sub("[ую]́?$", "енный", sg1)
         if conjtype in [7, 8]:
-            sg3 = args["pres_3sg"] if "pres_3sg" in args else args["futr_3sg"]
+            sg3 = conjargs["pres_3sg"] if "pres_3sg" in conjargs else conjargs["futr_3sg"]
             sg3 = first_entry(sg3)
             assert re.search("[её]́?т$", sg3)
             return re.sub("[её]́?т$", "енный", sg3)
         if conjtype in [3, 10]:
             return re.sub("ть$", "тый", pagetitle)
         assert conjtype in [9, 11, 12, 14, 15, 16]
-        pastm = first_entry(args["past_m"])
+        pastm = first_entry(conjargs["past_m"])
         return re.sub("л?$", "тый", pastm)
 
-    retval = form_ppp_1(conjtype, pagetitle, args)
+    retval = form_ppp_1()
     if retval:
         return rulib.make_unstressed_ru(retval)
     else:
@@ -142,12 +143,12 @@ def process_text_on_page(index, pagetitle, text):
             if not result:
                 pagemsg("WARNING: Error generating forms, skipping")
                 continue
-            args = blib.split_generate_args(result)
+            conjargs = blib.split_generate_args(result)
             for base in ["past_pasv_part", "ppp"]:
                 forms_to_remove = []
-                if args[base] == "-":
+                if conjargs[base] == "-":
                     continue
-                for form in re.split(",", args[base]):
+                for form in re.split(",", conjargs[base]):
                     origform = form
                     form = re.sub("//.*", "", form)
                     fix_form = False
@@ -179,7 +180,7 @@ def process_text_on_page(index, pagetitle, text):
                             warned = True
                             fix_form = True
                     if not warned:
-                        correct_form = form_ppp(conjtype, pagetitle, args)
+                        correct_form = form_ppp(conjtype, pagetitle, conjargs)
                         if correct_form and unstressed_form != correct_form:
                             pagemsg(
                                 "WARNING: Past passive participle not formed according to rule, probably wrong: found %s, expected %s"

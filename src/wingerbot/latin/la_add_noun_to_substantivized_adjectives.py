@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, site
-
-from wingerbot.latin import lalib
+from wingerbot.blib import getparam, tname, msg
 
 
 def process_text_on_page(index, pagetitle, text):
@@ -16,10 +14,18 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    def fix_up_section(sectext, indent):
-        subsections = re.split("(^%s[^=\n]+=+\n)" % indent, sectext, 0, re.M)
+    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    if modsec is None:
+        return
+    secbody = modsec.secbody
+
+    def fix_up_section(etymsec, sectext):
+        indentlevel = 3 if etymsec is None else 4
+        indent = "=" * indentlevel
+        subsecs = blib.split_text_into_subsections(sectext, pagemsg, only_level=indentlevel)
+        subsections = subsecs.subsections
         saw_adecl = False
-        for k in range(2, len(subsections), 2):
+        for k, header in subsecs.header_list:
             parsed = blib.parse_text(subsections[k])
             la_adecl_template = None
             for t in parsed.filter_templates():
@@ -70,18 +76,8 @@ def process_text_on_page(index, pagetitle, text):
             pagemsg("WARNING: Saw no {{la-adecl}} in section")
         return "".join(subsections)
 
-    # If there are multiple Etymology sections, split on them, otherwise do
-    # whole section.
-    has_etym_1 = "==Etymology 1==" in text
-    if not has_etym_1:
-        text = fix_up_section(text, "===")
-    else:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", text, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
-            etym_sections[k] = fix_up_section(etym_sections[k], "====")
-        text = "".join(etym_sections)
-
-    return text, notes
+    secbody = blib.map_etym_sections(secbody, pagemsg, fix_up_section)
+    return modsec.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser("Add noun to substantivized Latin adjectives", include_pagefile=True, include_stdin=True)

@@ -6,7 +6,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, msg, site, tname, pname
 
 templates_to_change = [
     "fr-conj-er",
@@ -178,9 +178,8 @@ def find_old_template_props(template, pagemsg):
     for t in blib.parse_text(template_text).filter_templates():
         tn = tname(t)
         if tn == "fr-conj" or tn == "#invoke:fr-conj" and getparam(t, "1").strip() == "frconj":
-            args = {}
-            # Yuck. Template param names sometimes have spaces in them; must strip.
-            tparams = [(str(param.name.strip()), str(param.value.strip())) for param in t.params]
+            conjargs = {}
+            tparams = [(pname(param), str(param.value).strip()) for param in t.params]
             tparamdict = dict(tparams)
             debug_args = []
 
@@ -190,24 +189,24 @@ def find_old_template_props(template, pagemsg):
                 val = re.sub(r"\{\{\{pp\|(.*?)\}\}\}", lambda m: getparam(template, "pp") or m.group(1), val)
                 return val
 
-            for pname, pval in tparams:
-                canonpname = re.sub(r"\.", "_", pname)
+            for pn, pv in tparams:
+                canonpname = re.sub(r"\.", "_", pn)
                 if canonpname in all_verb_props:
-                    pval = sub_template(pval)
-                    pnamealt = pname + ".alt"
+                    pv = sub_template(pv)
+                    pnamealt = pn + ".alt"
                     pvalalt = tparamdict.get(pnamealt, "")
                     pvalalt = sub_template(pvalalt)
-                    if pval in ["N/A", "-"]:
-                        pval = ""
+                    if pv in ["N/A", "-"]:
+                        pv = ""
                     if pvalalt in ["N/A", "-"]:
                         pvalalt = ""
-                    vals = [x for x in [pval, pvalalt] if x]
-                    pval = ",".join(vals)
-                    if pval and not re.search(r"—", pval):
-                        debug_args.append("%s=%s" % (canonpname, pval))
-                        args[canonpname] = pval
+                    vals = [x for x in [pv, pvalalt] if x]
+                    pv = ",".join(vals)
+                    if pv and not re.search(r"—", pv):
+                        debug_args.append("%s=%s" % (canonpname, pv))
+                        conjargs[canonpname] = pv
             pagemsg("Found args: %s" % "|".join(debug_args))
-            return args
+            return conjargs
     pagemsg("WARNING: Can't find {{fr-conj}} in template definition for %s" % str(template))
     return None
 

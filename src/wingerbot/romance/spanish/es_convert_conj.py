@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname, pname, msg, errandmsg
 
 es_conv_verb = {
     "-ar": {
@@ -137,7 +137,7 @@ def generate_old_verb_forms(template, errandpagemsg, expand_text, include_combin
     if not result:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
-    args = {}
+    verbargs = {}
     forms = json.loads(result)
     for k, v in forms.items():
         for form_template in v:
@@ -203,10 +203,10 @@ def generate_old_verb_forms(template, errandpagemsg, expand_text, include_combin
             else:
                 key = pref
 
-            if key in args:
-                args[key] += "," + k
+            if key in verbargs:
+                verbargs[key] += "," + k
             else:
-                args[key] = k
+                verbargs[key] = k
 
     if include_combined:
         generate_combined_template = re.sub(r"\}\}$", "|json_combined=1}}", template)
@@ -241,12 +241,12 @@ def generate_old_verb_forms(template, errandpagemsg, expand_text, include_combin
                 return None
 
             slot += "_comb_" + clitic
-            if slot in args:
-                args[slot] += "," + k
+            if slot in verbargs:
+                verbargs[slot] += "," + k
             else:
-                args[slot] = k
+                verbargs[slot] = k
 
-    return args
+    return verbargs
 
 
 old_es_conj_templates = {
@@ -265,11 +265,11 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         return ",".join(sorted(v.split(",")))
 
     def generate_old_forms():
-        args = generate_old_verb_forms(origt, errandpagemsg, expand_text, include_combined)
-        if args:
-            args["infinitive"] = pagetitle
-        args = {k: sort_multiple(v) for k, v in args.items()}
-        return args
+        verbargs = generate_old_verb_forms(origt, errandpagemsg, expand_text, include_combined)
+        if verbargs:
+            verbargs["infinitive"] = pagetitle
+            verbargs = {k: sort_multiple(v) for k, v in verbargs.items()}
+        return verbargs
 
     def generate_new_forms():
         new_generate_template = re.sub(r"^\{\{es-conj", "{{User:Benwing2/es-generate-verb-forms", newt)

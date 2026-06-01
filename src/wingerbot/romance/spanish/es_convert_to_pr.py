@@ -203,7 +203,7 @@ def process_text_on_page(index, pagetitle, text):
     subsections = subsecs.subsections
     sect_for_wiki = 0
     for k, header in subsecs.header_list:
-        if re.search(r"^Etymology [0-9]+$", header):
+        if re.search(r"^Etymology [0-9.]+$", header):
             sect_for_wiki = k
         elif header == "Pronunciation":
             secheader = re.sub(r"\s*Pronunciation\s*", "Pronunciation", subsections[k - 1])

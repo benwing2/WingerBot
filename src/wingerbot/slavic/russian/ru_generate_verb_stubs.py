@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re, sys, argparse
+from typing import NoReturn
 
 from wingerbot.blib import msg, errmsg
 from wingerbot.slavic.russian import rulib
@@ -26,10 +27,10 @@ while True:
         break
     line = line.strip()
 
-    def error(text):
+    def error(text) -> NoReturn:
         errmsg("ERROR: Processing line: %s" % line)
         errmsg("ERROR: %s" % text)
-        assert False
+        raise RuntimeError("Error %s processing line: %s" % (text, line))
 
     def check_stress(word):
         word = re.sub(r"|.*", "", word)
@@ -211,6 +212,8 @@ while True:
                 sensetext = ""
                 if synantgroup.startswith("*(") or synantgroup.startswith("("):
                     m = re.search(r"^\*?\((.*?)\)(.*)$", synantgroup)
+                    if not m:
+                        error("Syn/ant group starts with %( but has unclosed right paren: %s" % synantgroup)
                     sensetext = "{{sense|%s}} " % m.group(1)
                     synantgroup = m.group(2)
                 elif synantgroup.startswith("*"):
@@ -247,7 +250,7 @@ while True:
                     lines.append("* {{l|ru|%s}}\n" % altform)
             alttext = "===Alternative forms===\n%s\n" % "".join(lines)
         elif sartype == "def":
-            defntext, _ = generate_pos.generate_defn(vals, "verb")
+            defntext, _ = generate_pos.generate_defn(vals, "verb", "ru")
         elif sartype == "note":
             vals = re.sub(r"\[\[(.*?)\]\]", r"{{m|ru|\1}}", vals)
             vals = re.sub(r"\(\((.*?)\)\)", r"{{m|ru|\1}}", vals)

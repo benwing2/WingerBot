@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
+import re
 import fileinput
 
-from wingerbot.blib import msg, errmsg
-from wingerbot.slavic.russian import rulib
+from wingerbot.blib import msg
 
 for line in fileinput.input():
     line = line.strip()

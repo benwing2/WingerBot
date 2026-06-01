@@ -49,7 +49,7 @@ def generate_old_verb_forms(template, errandpagemsg, expand_text):
     if not result:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
-    args = {}
+    verbargs = {}
 
     def process_nested_forms(key, values):
         if type(values) is dict:
@@ -65,14 +65,14 @@ def generate_old_verb_forms(template, errandpagemsg, expand_text):
             else:
                 assert isinstance(newval, str)
             if newkey is not None:
-                existing = args.get(newkey, "")
-                args[newkey] = existing + "," + newval if existing else newval
+                existing = verbargs.get(newkey, "")
+                verbargs[newkey] = existing + "," + newval if existing else newval
 
     forms = json.loads(result)
 
     process_nested_forms("", forms["forms"])
 
-    return args
+    return verbargs
 
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
@@ -83,11 +83,11 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         return ",".join(sorted(v.split(",")))
 
     def generate_old_forms():
-        args = generate_old_verb_forms(origt, errandpagemsg, expand_text)
-        if args:
-            args["infinitive"] = pagetitle
-        args = {k: sort_multiple(v).replace("&#32;", " ") for k, v in args.items()}
-        return args
+        verbargs = generate_old_verb_forms(origt, errandpagemsg, expand_text)
+        if verbargs is not None:
+            verbargs["infinitive"] = pagetitle
+            verbargs = {k: sort_multiple(v).replace("&#32;", " ") for k, v in verbargs.items()}
+        return verbargs
 
     def generate_new_forms():
         new_generate_template = re.sub(r"^\{\{pt-conj([|}])", r"{{User:Benwing2/pt-conj\1", newt)

@@ -18,11 +18,6 @@ from wingerbot.slavic.russian.rulib import (
     try_to_stress,
 )
 
-verbose = True
-mockup = False
-# Uncomment the following line to enable test mode
-# mockup = True
-
 decl_templates = ["ru-decl-adj", "ru-adj-old"]
 
 short_adj_cases = ["short_m", "short_f", "short_n", "short_p"]
@@ -45,7 +40,7 @@ def expand_text(tempcall, pagemsg):
         result = re.sub("<.*?>", "", result)
         pagemsg("ERROR: %s = %s" % (tempcall, result))
         return False
-    elif verbose:
+    elif args.verbose:
         pagemsg("Expanding %s" % tempcall)
     return result
 
@@ -166,7 +161,7 @@ def combine_stem(stem, decl):
 
 
 def infer_decl(t, pagemsg):
-    if verbose:
+    if args.verbose:
         pagemsg("Processing %s" % str(t))
 
     forms = {}
@@ -424,7 +419,7 @@ def _process_text_on_page(index: Index, pagetitle: str, text: str) -> ProcessPag
                         i += 1
                 new_template = str(t)
             if orig_template != new_template:
-                if verbose:
+                if args.verbose:
                     pagemsg("Replacing %s with %s" % (orig_template, new_template))
 
     return str(parsed), "Convert adj decl to new form and infer short-accent pattern"
@@ -475,10 +470,9 @@ parser = blib.create_argparser("Convert manual Russian adjective declensions to 
 parser.add_argument("--mockup", action="store_true", help="Use mocked-up test code")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
-mockup = args.mockup
 
 
-if mockup:
+if args.mockup:
     test_infer()
 else:
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,

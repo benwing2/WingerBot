@@ -92,8 +92,8 @@ def find_noun(pagename, pagemsg, errandpagemsg, expand_text):
             if not generate_result:
                 pagemsg("WARNING: Error generating noun forms")
                 return None
-            args = blib.split_generate_args(generate_result)
-            lemma = args["nom_sg"] if "nom_sg" in args else args["nom_pl"]
+            inflargs = blib.split_generate_args(generate_result)
+            lemma = inflargs["nom_sg"] if "nom_sg" in inflargs else inflargs["nom_pl"]
             if "," in lemma:
                 pagemsg("WARNING: Lemma has multiple forms: %s" % lemma)
                 return None
@@ -136,8 +136,9 @@ def find_adj(pagename, pagemsg, errandpagemsg):
 # Form the past passive participle from the verb type, infinitive and
 # other parts. For the moment we don't try to get the stress right,
 # and return a form without stress or ё.
-def form_ppp(conjtype, pagetitle, args):
-    def form_ppp_1(conjtype, pagetitle, args):
+def form_ppp(conjtype, pagetitle, inflargs):
+    def form_ppp_1():
+        nonlocal conjtype
         def first_entry(forms):
             forms = re.sub(",.*", "", forms)
             return re.sub("//.*", "", forms)
@@ -150,14 +151,14 @@ def form_ppp(conjtype, pagetitle, args):
         if pagetitle.endswith("еть") and conjtype == 1:
             return re.sub("ть$", "нный", pagetitle)
         if conjtype in [4, 5]:
-            sg1 = args["pres_1sg"] if "pres_1sg" in args else args["futr_1sg"] if "futr_1sg" in args else None
+            sg1 = inflargs["pres_1sg"] if "pres_1sg" in inflargs else inflargs["futr_1sg"] if "futr_1sg" in inflargs else None
             if not sg1 or sg1 == "-" or sg1.startswith("бу́ду "):
                 return None
             sg1 = first_entry(sg1)
             assert re.search("[ую]́?$", sg1)
             return re.sub("[ую]́?$", "енный", sg1)
         if conjtype in [7, 8]:
-            sg3 = args["pres_3sg"] if "pres_3sg" in args else args["futr_3sg"]
+            sg3 = inflargs["pres_3sg"] if "pres_3sg" in inflargs else inflargs["futr_3sg"]
             sg3 = first_entry(sg3)
             assert re.search("[её]́?т$", sg3)
             return re.sub("[её]́?т$", "енный", sg3)
@@ -166,12 +167,12 @@ def form_ppp(conjtype, pagetitle, args):
                 return re.sub("чь", "гнутый", pagetitle)
             return re.sub("ть$", "тый", pagetitle)
         assert conjtype in [9, 11, 12, 14, 15, 16]
-        if "past_m" not in args:  # occurs with e.g. impersonal verbs e.g. спереть
+        if "past_m" not in inflargs:  # occurs with e.g. impersonal verbs e.g. спереть
             return None
-        pastm = first_entry(args["past_m"])
+        pastm = first_entry(inflargs["past_m"])
         return re.sub("л?$", "тый", pastm)
 
-    retval = form_ppp_1(conjtype, pagetitle, args)
+    retval = form_ppp_1()
     if retval:
         return rulib.make_unstressed_ru(retval)
     else:
@@ -187,8 +188,6 @@ def process_text_on_page(index, pagetitle, text):
 
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    notes = []
 
     if re.search("с[яь]$", pagetitle):
         pagemsg("Skipping reflexive verb")
@@ -207,18 +206,18 @@ def process_text_on_page(index, pagetitle, text):
             if not result:
                 pagemsg("WARNING: Error generating forms, skipping")
                 continue
-            args = blib.split_generate_args(result)
-            if "infinitive" not in args:  # e.g. обнимать
+            inflargs = blib.split_generate_args(result)
+            if "infinitive" not in inflargs:  # e.g. обнимать
                 pagemsg("WARNING: No infinitive")
                 continue
-            infinitive = args["infinitive"]
+            infinitive = inflargs["infinitive"]
             if "," in infinitive:
                 pagemsg("WARNING: Infinitive has multiple forms: %s" % infinitive)
                 continue
             if "//" in infinitive:
                 pagemsg("WARNING: Infinitive has translit: %s" % infinitive)
                 continue
-            ppp = form_ppp(conjtype, pagetitle, args)
+            ppp = form_ppp(conjtype, pagetitle, inflargs)
             if not ppp:
                 continue
             if ppp.endswith("тый"):
@@ -237,10 +236,13 @@ def process_text_on_page(index, pagetitle, text):
                 verbal_adj = re.sub("енный$", "ительный", ppp)
                 verbal_adj_suffix = "ительный"
             else:
-                assert ppp.endswith("анный") or ppp.endswith("янный")
+                if not ppp.endswith("анный") and not ppp.endswith("янный"):
+                    pagemsg("WARNING: Bad PPP %s, probably weird infinitive" % ppp)
+                    continue
                 verbal_noun = re.sub("нный$", "ние", ppp)
                 verbal_adj = re.sub("нный$", "тельный", ppp)
                 m = re.search("(.)нный$", ppp)
+                assert m  # We must match because we continued above on a non-match
                 suffix_start = m.group(1)
                 verbal_noun_suffix = suffix_start + "ние"
                 verbal_adj_suffix = suffix_start + "тельный"

@@ -105,9 +105,9 @@ def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
     )
 
 
-def process_section_for_relational_adj_snarf(index, pagetitle, text, is_multi_etym_section):
+def process_section_for_relational_adj_snarf(index, etymsec, pagetitle, text):
     def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+        msg("Page %s%s %s: %s" % (index, "." + etymsec if etymsec is not None else "", pagetitle, txt))
 
     if not re.search(r"\{\{lb\|ru\|([^{}]*\|)*relational[|}]", text):
         pagemsg("Not a relational adjective")
@@ -132,7 +132,7 @@ def process_section_for_relational_adj_snarf(index, pagetitle, text, is_multi_et
             adj = newadj
     subsecs = blib.split_text_into_subsections(text, pagemsg)
     subsections = subsecs.subsections
-    if is_multi_etym_section:
+    if etymsec is not None:
         etymtext = subsections[0]
     else:
         for k, header in subsecs.header_list:
@@ -191,17 +191,14 @@ def snarf_relational_adjs(index, pagetitle, text):
     if modsec is None:
         return
     secbody = modsec.secbody
-    if "Etymology 1" in secbody:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
-            process_section_for_relational_adj_snarf(index, pagetitle, etym_sections[k], True)
-    else:
-        process_section_for_relational_adj_snarf(index, pagetitle, secbody, False)
+    def do_process_section_for_relational_adj_snarf(etymsec: str | None, etymtext: str) -> str | None:
+        return process_section_for_relational_adj_snarf(index, etymsec, pagetitle, etymtext)
+    blib.map_etym_sections(secbody, pagemsg, do_process_section_for_relational_adj_snarf)
 
 
-def process_section_for_diminutive_snarf(index, pagetitle, text, is_multi_etym_section):
+def process_section_for_diminutive_snarf(index, etymsec, pagetitle, text):
     def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+        msg("Page %s%s %s: %s" % (index, "." + etymsec if etymsec is not None else "", pagetitle, txt))
 
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
@@ -256,12 +253,9 @@ def snarf_diminutives(index, pagetitle, text):
     if modsec is None:
         return
     secbody = modsec.secbody
-    if "Etymology 1" in secbody:
-        etym_sections = re.split("(^===Etymology [0-9]+===\n)", secbody, 0, re.M)
-        for k in range(2, len(etym_sections), 2):
-            process_section_for_diminutive_snarf(index, pagetitle, etym_sections[k], True)
-    else:
-        process_section_for_diminutive_snarf(index, pagetitle, secbody, False)
+    def do_process_section_for_diminutive_snarf(etymsec: str | None, etymtext: str) -> str | None:
+        return process_section_for_relational_adj_snarf(index, etymsec, pagetitle, etymtext)
+    blib.map_etym_sections(secbody, pagemsg, do_process_section_for_diminutive_snarf)
 
 
 parser = blib.create_argparser(
@@ -286,7 +280,6 @@ if args.direcfile:
         else:
             add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, "dim", "diminutive")
 else:
-
     def process_text_on_page(index, pagetitle, text):
         if args.pos == "reladj":
             snarf_relational_adjs(index, pagetitle, text)

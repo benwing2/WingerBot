@@ -3724,22 +3724,29 @@ def find_modifiable_lang_section(
     return ModifiableLangSection(secs, j, secbody, sectail, has_non_lang)
 
 
-def map_etym_sections(secbody: str, pagemsg: PagemsgCallback, fn: Callable[[str | None, str], str]) -> str:
+def map_etym_sections(secbody: str, pagemsg: PagemsgCallback, fn: Callable[[str | None, str], str | None]) -> str:
     """Map a function over 'Etymology N' sections on a page.
     The function is called with two arguments, the etymology section number (as a string) and the text of the etymology
-    section, and should return the new text. The resulting return values will be pasted together and returned as the
-    overall return value. If there are no separate 'Etymology N' sections, the function will be called only once with
-    None as the section number, along with the entire value of `secbody`."""
+    section, and should return the new text (or None for no change). The resulting return values will be pasted together
+    and returned as the overall return value. If there are no separate 'Etymology N' sections, the function will be
+    called only once with None as the section number, along with the entire value of `secbody`."""
     etym_secs = split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
     etym_sections = etym_secs.subsections
     if len(etym_sections) > 1:
+        if len(etym_sections) < 5:
+            pagemsg("WARNING: Malformed 'Etymology N' sections on page; saw only one such section")
         for k, header in etym_secs.header_list:
             m = re.search("^Etymology ([0-9.]+)$", header)
             assert m is not None  # should always match due to header_re above
-            etym_sections[k] = fn(m.group(1), etym_sections[k])
+            fnret = fn(m.group(1), etym_sections[k])
+            if fnret is not None:
+                etym_sections[k] = fnret
         return "".join(etym_sections)
     else:
-        return fn(None, secbody)
+        fnret = fn(None, secbody)
+        if fnret is not None:
+            return fnret
+        return secbody
 
 
 def add_new_l2_section(text: str, pagemsg: PagemsgCallback, langname: str, l2sec: str) -> tuple[str, list[str]]:
@@ -3863,7 +3870,7 @@ def replace_in_text(
 
 
 def split_generate_args(tempresult: str) -> dict[str, str]:
-    args = {}
+    splitargs = {}
     for arg in re.split(r"\|", tempresult):
         values = arg.split("=")
         if len(values) != 2:
@@ -3874,8 +3881,8 @@ def split_generate_args(tempresult: str) -> dict[str, str]:
             # With manually specified declensions, we get back "-" for unspecified
             # forms, which need to be omitted; otherwise they're automatically omitted.
             if value != "-":
-                args[name] = value
-    return args
+                splitargs[name] = value
+    return splitargs
 
 
 def compare_new_and_old_template_forms(

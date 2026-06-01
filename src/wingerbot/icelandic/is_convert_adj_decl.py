@@ -62,7 +62,7 @@ def generate_old_adj_forms(template, errandpagemsg, expand_text):
     if not result:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
-    args = {}
+    adjargs = {}
 
     curdeg = None
     curstate = None
@@ -121,19 +121,22 @@ def generate_old_adj_forms(template, errandpagemsg, expand_text):
                 errandpagemsg("WARNING: Found unrecognized slot %s: %s" % (old_slot, line.strip()))
                 return None
             new_slot = slot_mapping[old_slot]
+            if curdeg is None:
+                errandpagemsg("WARNING: <span> with raw form outside of NavHeader: %s" % line)
+                return None
             key = curdeg + new_slot
             formtext = ",".join(forms)
-            if key not in args:
-                args[key] = formtext
-            elif args[key] != formtext:
+            if key not in adjargs:
+                adjargs[key] = formtext
+            elif adjargs[key] != formtext:
                 errandpagemsg(
                     "WARNING: Clash between supposedly syncretic values %s and %s for slot %s (old slot %s): %s"
-                    % (args[key], formtext, key, old_slot, line.strip())
+                    % (adjargs[key], formtext, key, old_slot, line.strip())
                 )
                 return None
             genderind += 1
-    msg("From %s, returning %s" % (template, args))
-    return args
+    msg("From %s, returning %s" % (template, adjargs))
+    return adjargs
 
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
@@ -144,11 +147,11 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         return ",".join(sorted(v.split(",")))
 
     def generate_old_forms():
-        args = generate_old_adj_forms(origt, errandpagemsg, expand_text)
-        if args is None:
-            return args
-        args = {k: sort_multiple(v) for k, v in args.items()}
-        return args
+        adjargs = generate_old_adj_forms(origt, errandpagemsg, expand_text)
+        if adjargs is None:
+            return adjargs
+        adjargs = {k: sort_multiple(v) for k, v in adjargs.items()}
+        return adjargs
 
     def generate_new_forms():
         new_generate_template = re.sub(r"^\{\{is-adecl([|}])", r"{{User:Benwing2/is-adecl\1", newt)
@@ -157,7 +160,7 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         if not new_result:
             return None
         raw_args = json.loads(new_result)
-        args = raw_args["forms"]
+        adjargs = raw_args["forms"]
 
         def flatten_values(values):
             retval = []
@@ -165,13 +168,13 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
                 retval.append(v["form"])
             return ",".join(retval)
 
-        args = {
+        adjargs = {
             k: blib.remove_links(unicodedata.normalize("NFC", flatten_values(v)))
-            for k, v in args.items()
+            for k, v in adjargs.items()
             if not k.endswith("_linked")
         }
-        args = {k: sort_multiple(v) for k, v in args.items()}
-        return args
+        adjargs = {k: sort_multiple(v) for k, v in adjargs.items()}
+        return adjargs
 
     retval = generate_new_forms()
     if retval is None:

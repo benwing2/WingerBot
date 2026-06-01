@@ -106,7 +106,7 @@ def fixup_link(f):
     return re.sub(r"\[\[([^\[\]|]*?)\|([^\[\]|]*?)\]\]", fixup_one_link, f)
 
 
-def check_old_noun_headword_forms(headword_template, args, subpagetitle, pagemsg, laxer_comparison=False):
+def check_old_noun_headword_forms(headword_template, nounargs, subpagetitle, pagemsg, laxer_comparison=False):
     # FORM1 is the forms from ru-noun (or ru-proper noun); FORM2 is the combined
     # set of forms from ru-noun-table, and needs to be split on commas.
     # FORM1_LEMMA is true if the FORM1 values come from the ru-noun lemma.
@@ -188,39 +188,39 @@ def check_old_noun_headword_forms(headword_template, args, subpagetitle, pagemsg
     plurals = blib.fetch_param_chain(headword_template, "4", "pl")
     genders = blib.fetch_param_chain(headword_template, "2", "g")
     cases_to_check = None
-    if args["n"] == "s":
-        if not compare_forms("nom_sg", headwords, args["nom_sg_linked"], True) or not compare_forms(
-            "gen_sg", genitives, args["gen_sg"]
+    if nounargs["n"] == "s":
+        if not compare_forms("nom_sg", headwords, nounargs["nom_sg_linked"], True) or not compare_forms(
+            "gen_sg", genitives, nounargs["gen_sg"]
         ):
             pagemsg("Existing and proposed forms not same, skipping")
             return None
         cases_to_check = ["nom_sg", "gen_sg"]
-    elif args["n"] == "p":
-        if not compare_forms("nom_pl", headwords, args["nom_pl_linked"], True) or not compare_forms(
-            "gen_pl", genitives, args["gen_pl"]
+    elif nounargs["n"] == "p":
+        if not compare_forms("nom_pl", headwords, nounargs["nom_pl_linked"], True) or not compare_forms(
+            "gen_pl", genitives, nounargs["gen_pl"]
         ):
             pagemsg("Existing and proposed forms not same, skipping")
             return None
         cases_to_check = ["nom_pl", "gen_pl"]
-    elif args["n"] == "b":
+    elif nounargs["n"] == "b":
         if (
-            not compare_forms("nom_sg", headwords, args["nom_sg_linked"], True)
-            or not compare_forms("gen_sg", genitives, args["gen_sg"])
-            or not compare_forms("nom_pl", plurals, args["nom_pl"])
+            not compare_forms("nom_sg", headwords, nounargs["nom_sg_linked"], True)
+            or not compare_forms("gen_sg", genitives, nounargs["gen_sg"])
+            or not compare_forms("nom_pl", plurals, nounargs["nom_pl"])
         ):
             pagemsg("Existing and proposed forms not same, skipping")
             return None
         cases_to_check = ["nom_sg", "gen_sg", "nom_pl"]
     else:
-        pagemsg("WARNING: Unrecognized number spec %s, skipping" % args["n"])
+        pagemsg("WARNING: Unrecognized number spec %s, skipping" % nounargs["n"])
         return None
 
     for case in cases_to_check:
-        raw_case = re.sub("△", "", blib.remove_links(args[case + "_raw"]))
-        if args[case] != raw_case:
-            pagemsg("WARNING: Raw case %s=%s contains footnote symbol" % (case, args[case + "_raw"]))
+        raw_case = re.sub("△", "", blib.remove_links(nounargs[case + "_raw"]))
+        if nounargs[case] != raw_case:
+            pagemsg("WARNING: Raw case %s=%s contains footnote symbol" % (case, nounargs[case + "_raw"]))
 
-    proposed_genders = re.split(",", args["g"])
+    proposed_genders = re.split(",", nounargs["g"])
     if compare_genders(genders, proposed_genders):
         genders = []
     else:
@@ -237,10 +237,10 @@ def check_old_noun_headword_forms(headword_template, args, subpagetitle, pagemsg
             return None
         # Check for number mismatch, punt if so
         cur_pl = [x for x in genders if re.search(r"\bp\b", x)]
-        if cur_pl and args["n"] != "p" or not cur_pl and args["n"] == "p":
+        if cur_pl and nounargs["n"] != "p" or not cur_pl and nounargs["n"] == "p":
             pagemsg(
                 "WARNING: Number mismatch, skipping: cur=%s, proposed=%s, n=%s"
-                % (",".join(genders), ",".join(proposed_genders), args["n"])
+                % (",".join(genders), ",".join(proposed_genders), nounargs["n"])
             )
             return None
         pagemsg("WARNING: Gender mismatch, existing=%s, new=%s" % (",".join(genders), ",".join(proposed_genders)))

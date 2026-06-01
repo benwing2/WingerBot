@@ -187,7 +187,7 @@ def generate_old_noun_forms(template, errandpagemsg, expand_text):
     if not result:
         errandpagemsg("WARNING: Error generating forms, skipping")
         return None
-    args = {}
+    nounargs = {}
 
     number = None
     definiteness = None
@@ -261,9 +261,9 @@ def generate_old_noun_forms(template, errandpagemsg, expand_text):
                     return None
                 key = "%s_%s_%s" % (definiteness, curcase, number)
                 caseind += 1
-            args[key] = ",".join(forms)
-    msg("From %s, returning %s" % (template, args))
-    return args
+            nounargs[key] = ",".join(forms)
+    msg("From %s, returning %s" % (template, nounargs))
+    return nounargs
 
 
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
@@ -287,7 +287,7 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
         if not new_result:
             return None
         raw_args = json.loads(new_result)
-        args = raw_args["forms"]
+        nounargs = raw_args["forms"]
 
         def flatten_values(values):
             retval = []
@@ -302,13 +302,13 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
                     retval.append(v["form"])
             return ",".join(retval)
 
-        args = {
+        nounargs = {
             k: blib.remove_links(unicodedata.normalize("NFC", flatten_values(v)))
-            for k, v in args.items()
+            for k, v in nounargs.items()
             if not k.endswith("_linked")
         }
-        args = {k: sort_multiple(v) for k, v in args.items()}
-        return args, raw_args["genders"], raw_args["number"]
+        nounargs = {k: sort_multiple(v) for k, v in nounargs.items()}
+        return nounargs, raw_args["genders"], raw_args["number"]
 
     retval = generate_new_forms()
     if retval is None:

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json
+import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg
 
 
 def snarf_inflections(json_output):
@@ -30,14 +30,14 @@ def snarf_inflections(json_output):
         elif label == "past participle":
             pp = forms
 
-    args = {}
+    verbargs = {}
     if pres:
-        args["pres_1s"] = pres
+        verbargs["pres_1s"] = pres
     if pret:
-        args["pret_1s"] = pret
+        verbargs["pret_1s"] = pret
     if pp:
-        args["pp_ms"] = pp
-    return args
+        verbargs["pp_ms"] = pp
+    return verbargs
 
 
 def generate_verb_forms(template, errandpagemsg, expand_text):
@@ -54,13 +54,8 @@ def generate_verb_forms(template, errandpagemsg, expand_text):
 def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg):
     def expand_text(tempcall):
         return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    def sort_multiple(v):
-        return ",".join(sorted(v.split(",")))
-
     def generate_old_forms():
         return generate_verb_forms(origt, errandpagemsg, expand_text)
-
     def generate_new_forms():
         return generate_verb_forms(newt, errandpagemsg, expand_text)
 
@@ -72,7 +67,6 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
 def process_text_on_page(index, pagetitle, text):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
