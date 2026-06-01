@@ -41,20 +41,14 @@ french_verb_head_pos = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
-    if "==French==" not in text or "{{IPA|" not in text:
+    if "==French==" not in p.text or "{{IPA|" not in p.text:
         return
 
-    retval = blib.find_modifiable_lang_section(text, "French", pagemsg)
+    retval = blib.find_modifiable_lang_section(p.text, "French", p.msg)
     if retval is None:
         return
 
@@ -79,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
                 verb_templates.append(t)
             elif tn == "head":
                 if getparam(t, "1").strip() != "fr":
-                    pagemsg("WARNING: Saw wrong-language {{head}} template: %s" % str(t))
+                    p.msg("WARNING: Saw wrong-language {{head}} template: %s" % str(t))
                 else:
                     pos = getparam(t, "2").strip()
                     if pos in french_verb_head_pos:
@@ -87,18 +81,18 @@ def process_text_on_page(index, pagetitle, text):
                     else:
                         nonverb_templates.append(t)
         if verb_templates and nonverb_templates:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw both verb template(s) %s and non-verb template(s) %s, using pos=vnv"
                 % (",".join(str(x) for x in verb_templates), ",".join(str(x) for x in nonverb_templates))
             )
         if not verb_templates and not nonverb_templates:
-            pagemsg("WARNING: Didn't see any French templates")
+            p.msg("WARNING: Didn't see any French templates")
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn == "IPA":
                 m = re.search("^.*?%s.*$" % re.escape(str(t)), sectext, re.M)
                 if not m:
-                    pagemsg("WARNING: Couldn't find template %s in section text" % str(t))
+                    p.msg("WARNING: Couldn't find template %s in section text" % str(t))
                     line = "(unknown)"
                 else:
                     line = m.group(0)
@@ -109,23 +103,23 @@ def process_text_on_page(index, pagetitle, text):
                     first_param = 2
                     lang = getparam(t, "1")
                 if lang != "fr":
-                    pagemsg("WARNING: Saw wrong-language {{IPA}} template: %s in line <%s>" % (str(t), line))
+                    p.msg("WARNING: Saw wrong-language {{IPA}} template: %s in line <%s>" % (str(t), line))
                     continue
                 pron = getparam(t, str(first_param))
                 if not pron:
-                    pagemsg("WARNING: No pronun in {{IPA}} template: %s in line <%s>" % (str(t), line))
+                    p.msg("WARNING: No pronun in {{IPA}} template: %s in line <%s>" % (str(t), line))
                     continue
                 if (
                     getparam(t, str(first_param + 1))
                     or getparam(t, str(first_param + 2))
                     or getparam(t, str(first_param + 3))
                 ):
-                    pagemsg("WARNING: Multiple pronuns in {{IPA}} template: %s in line <%s>" % (str(t), line))
+                    p.msg("WARNING: Multiple pronuns in {{IPA}} template: %s in line <%s>" % (str(t), line))
                     continue
                 pos_val = "vnv" if verb_templates and nonverb_templates else "v" if verb_templates else ""
                 pos_arg = "|pos=%s" % pos_val if pos_val else ""
-                # autopron = expand_text("{{#invoke:User:Benwing2/fr-pron|show|%s%s}}" % (
-                autopron = expand_text("{{#invoke:fr-pron|show|%s%s}}" % (pagetitle, pos_arg))
+                # autopron = p.expand_text("{{#invoke:User:Benwing2/fr-pron|show|%s%s}}" % (
+                autopron = p.expand_text("{{#invoke:fr-pron|show|%s%s}}" % (p.title, pos_arg))
                 if not autopron:
                     continue
                 pron = re.sub("^/(.*)/$", r"\1", pron)
@@ -134,13 +128,13 @@ def process_text_on_page(index, pagetitle, text):
                 pron = pron.replace("r", "ʁ")
                 # account for various common errors in Dawnraybot's generated pronunciations:
                 # #1
-                if pagetitle.endswith("rez") and pron.endswith("ʁɔe"):
+                if p.title.endswith("rez") and pron.endswith("ʁɔe"):
                     pron = re.sub("ʁɔe$", "ʁe", pron)
                 # #2
-                if re.search("ai(s|t|ent)$", pagetitle) and pron.endswith("e"):
+                if re.search("ai(s|t|ent)$", p.title) and pron.endswith("e"):
                     pron = re.sub("e$", "ɛ", pron)
                 # #3
-                if pos_val == "v" and pagetitle.endswith("ai") and pron.endswith("ɛ"):
+                if pos_val == "v" and p.title.endswith("ai") and pron.endswith("ɛ"):
                     pron = re.sub("ɛ$", "e", pron)
                 if "." not in pron:
                     autopron = autopron.replace(".", "")
@@ -163,28 +157,28 @@ def process_text_on_page(index, pagetitle, text):
                 if pron != autopron:
                     tempcall = "{{fr-IPA%s}}" % pos_arg
                     if pron.replace("ɑ", "a") == autopron.replace("ɑ", "a"):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Would replace %s with %s but auto-generated pron %s disagrees with %s in ɑ vs. a only: line <%s>"
                             % (str(t), tempcall, autopron, pron, line)
                         )
                     elif re.sub("ɛ(.)", r"e\1", pron) == re.sub("ɛ(.)", r"e\1", autopron):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Would replace %s with %s but auto-generated pron %s disagrees with %s in ɛ vs. e only: line <%s>"
                             % (str(t), tempcall, autopron, pron, line)
                         )
                     elif pron.replace(".", "") == autopron.replace(".", ""):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Would replace %s with %s but auto-generated pron %s disagrees with %s in syllable division only: line <%s>"
                             % (str(t), tempcall, autopron, pron, line)
                         )
                         allow_mismatch = True
                     elif pron.replace(".", "").replace(" ", "") == autopron.replace(".", "").replace(" ", ""):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Would replace %s with %s but auto-generated pron %s disagrees with %s in syllable/word division only: line <%s>"
                             % (str(t), tempcall, autopron, pron, line)
                         )
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Can't replace %s with %s because auto-generated pron %s doesn't match %s: line <%s>"
                             % (str(t), tempcall, autopron, pron, line)
                         )
@@ -198,9 +192,9 @@ def process_text_on_page(index, pagetitle, text):
                 if pos_val:
                     t.add("pos", pos_val)
                 notes.append("replace manually-specified {{IPA|fr}} pronun with {{fr-IPA}}")
-                pagemsg("Replaced %s with %s: line <%s>" % (origt, str(t), line))
+                p.msg("Replaced %s with %s: line <%s>" % (origt, str(t), line))
                 if "{{a|" in line:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Replaced %s with %s on a line with an accent spec: line <%s>" % (origt, str(t), line)
                     )
         return str(parsed)
@@ -230,4 +224,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

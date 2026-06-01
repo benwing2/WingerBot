@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Italian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -22,17 +19,17 @@ def process_text_on_page(index, pagetitle, text):
     def process_etym_section(etymsec, sectext):
         references_sec = None
         further_reading_sec = None
-        subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+        subsecs = blib.split_text_into_subsections(sectext, p.msg)
         subsections = subsecs.subsections
         for k, header in subsecs.header_list:
             if header == "References":
                 if references_sec:
-                    pagemsg("WARNING: Saw two ===References=== sections in a single etym section")
+                    p.msg("WARNING: Saw two ===References=== sections in a single etym section")
                     return sectext
                 references_sec = k
             if header == "Further reading":
                 if further_reading_sec:
-                    pagemsg("WARNING: Saw two ===Further reading=== sections in a single etym section")
+                    p.msg("WARNING: Saw two ===Further reading=== sections in a single etym section")
                     return sectext
                 further_reading_sec = k
 
@@ -49,7 +46,7 @@ def process_text_on_page(index, pagetitle, text):
         if should_be_further_reading:
             if further_reading_sec:
                 spl = "s" if len(should_be_further_reading) > 1 else ""
-                pagemsg(
+                p.msg(
                     "Moving %s line%s from ===References=== to existing ===Further reading=== section"
                     % (len(should_be_further_reading), spl)
                 )
@@ -62,7 +59,7 @@ def process_text_on_page(index, pagetitle, text):
                 )
             else:
                 spl = "s" if len(should_be_further_reading) > 1 else ""
-                pagemsg(
+                p.msg(
                     "Moving %s line%s from ===References=== to new ===Further reading=== section"
                     % (len(should_be_further_reading), spl)
                 )
@@ -75,17 +72,17 @@ def process_text_on_page(index, pagetitle, text):
                 subsections[references_sec + 1 : references_sec + 1] = [further_reading_header, further_reading_text]
         if should_be_references:
             spl = "s" if len(should_be_references) > 1 else ""
-            pagemsg("Retaining %s line%s in ===References=== section" % (len(should_be_references), spl))
+            p.msg("Retaining %s line%s in ===References=== section" % (len(should_be_references), spl))
             notes.append("retain %s line%s in Italian ===References=== section" % (len(should_be_references), spl))
             subsections[references_sec] = "\n".join(should_be_references) + "\n\n"
         else:
-            pagemsg("Removing now-blank ===References=== section")
+            p.msg("Removing now-blank ===References=== section")
             notes.append("remove now-blank Italian ===References=== section")
             subsections[references_sec - 1] = ""
             subsections[references_sec] = ""
         return "".join(subsections)
 
-    secbody = blib.map_etym_sections(secbody, pagemsg, process_etym_section)
+    secbody = blib.map_etym_sections(secbody, p.msg, process_etym_section)
     return modsec.rebuild(secbody=secbody), notes
 
 
@@ -97,4 +94,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 templates_to_rewrite = [
     ("pt-pre-1911", ("43", "11")),
@@ -35,16 +35,10 @@ templates_to_rewrite_set.add("pt-superseded-hyphen")
 templates_to_rewrite_dict = dict(templates_to_rewrite)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -76,7 +70,7 @@ def process_text_on_page(index, pagetitle, text):
             pn = pname(param)
             pv = str(param.value)
             if pn != "1" and pn != "lang" and not (allow_dialect_param and pn == "dialect"):
-                pagemsg("WARNING: Unrecognized param: %s=%s" % (pn, pv))
+                p.msg("WARNING: Unrecognized param: %s=%s" % (pn, pv))
                 must_continue = True
                 break
         if must_continue:
@@ -89,7 +83,7 @@ def process_text_on_page(index, pagetitle, text):
         t.add("br", br)
         t.add("pt", pt)
         blib.set_template_name(t, "pt-pre-reform")
-        pagemsg("Replace %s with %s" % (origt, str(t)))
+        p.msg("Replace %s with %s" % (origt, str(t)))
         notes.append("convert %s to %s" % (origt, str(t)))
 
     return str(parsed), notes
@@ -106,7 +100,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:%s" % x for x in templates_to_rewrite_set],
-    edit=True,
-    stdin=True,
 )

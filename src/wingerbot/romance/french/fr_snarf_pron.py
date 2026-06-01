@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 from collections import defaultdict
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "French", pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "French", p.msg, force_final_nls=True)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
 
     has_etym_sections = "==Etymology 1==" in modsec.secbody
@@ -54,14 +51,14 @@ def process_text_on_page(index, pagetitle, text):
 
         def check_missing_pronun(etymsection):
             if split_pronun_sections and not saw_existing_pron_this_etym_section:
-                pagemsg("WARNING: Missing pronunciations in etym section %s" % etymsection)
+                p.msg("WARNING: Missing pronunciations in etym section %s" % etymsection)
                 append_msg("MISSING_PRONUN")
                 append_msg("NEW_DEFAULTED")
                 if etymsections_to_raw_msgs[etymsection]:
                     append_msg("EXISTING_RAW: %s" % ",".join(etymsections_to_raw_msgs[etymsection]))
-                pagemsg("<respelling> %s: + <end> %s" % (etymsection, " ".join(msgs)))
+                p.msg("<respelling> %s: + <end> %s" % (etymsection, " ".join(msgs)))
 
-            # pagemsg("<respelling> %s: %s <end> %s" % ("top" if has_etym_sections else "all",
+            # p.msg("<respelling> %s: %s <end> %s" % ("top" if has_etym_sections else "all",
             #  " ".join(x.replace(" ", "_") for x in respellings), " ".join(msgs)))
 
         m = re.search("^Etymology ([0-9]*)$", header)
@@ -72,12 +69,12 @@ def process_text_on_page(index, pagetitle, text):
             saw_pronun_section_this_etym_section = False
             saw_existing_pron_this_etym_section = False
         if "Pronunciation " in header:
-            pagemsg("WARNING: Saw Pronunciation N section header: %s" % header)
+            p.msg("WARNING: Saw Pronunciation N section header: %s" % header)
         if header == "Pronunciation":
             if saw_pronun_section_this_etym_section:
-                pagemsg("WARNING: Saw two Pronunciation sections under etym section %s" % etymsection)
+                p.msg("WARNING: Saw two Pronunciation sections under etym section %s" % etymsection)
             if saw_pronun_section_at_top and etymsection != "top":
-                pagemsg("WARNING: Saw Pronunciation sections both at top and in etym section %s" % etymsection)
+                p.msg("WARNING: Saw Pronunciation sections both at top and in etym section %s" % etymsection)
             saw_pronun_section_this_etym_section = True
             parsed = blib.parse_text(subsections[k])
 
@@ -92,7 +89,7 @@ def process_text_on_page(index, pagetitle, text):
                     saw_existing_pron_this_etym_section = True
                     if prev_fr_IPA_t:
                         pronun_lines = re.findall(r"^.*\{\{fr-IPA.*$", subsections[k], re.M)
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw multiple {{fr-IPA}} templates in a single Pronunciation section: %s"
                             % " ||| ".join(pronun_lines)
                         )
@@ -122,14 +119,14 @@ def process_text_on_page(index, pagetitle, text):
                         this_respellings.append("+")
                     respellings.extend(this_respellings)
                 if tn == "IPA" and getparam(t, "1") == "fr":
-                    pagemsg("Saw raw: %s" % str(t))
+                    p.msg("Saw raw: %s" % str(t))
                     etymsections_to_raw_msgs[etymsection].append(str(t))
                 if tn == "fr-pr":
                     saw_existing_pron = True
                     saw_existing_pron_this_etym_section = True
                     if prev_fr_pr_t:
                         pronun_lines = re.findall(r"^.*\{\{fr-pr.*$", subsections[k], re.M)
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw multiple {{fr-pr}} templates in a single Pronunciation section: %s"
                             % " ||| ".join(pronun_lines)
                         )
@@ -159,7 +156,7 @@ def process_text_on_page(index, pagetitle, text):
                 first_etym_subsec = etymsections_to_first_subsection.get(int(etymsection), None)
                 next_etym_subsec = etymsections_to_first_subsection.get(1 + int(etymsection), None)
                 if first_etym_subsec is None:
-                    pagemsg("WARNING: Internal error: Unknown first etym section for =Etymology %s=" % etymsection)
+                    p.msg("WARNING: Internal error: Unknown first etym section for =Etymology %s=" % etymsection)
                 else:
                     if next_etym_subsec is None:
                         next_etym_subsec = len(subsections)
@@ -169,7 +166,7 @@ def process_text_on_page(index, pagetitle, text):
             if respellings:
                 if etymsections_to_raw_msgs[etymsection]:
                     append_msg("EXISTING_RAW: %s" % ",".join(etymsections_to_raw_msgs[etymsection]))
-                pagemsg("<respelling> %s: %s <end> %s" % (etymsection, " ".join(respellings), " ".join(msgs)))
+                p.msg("<respelling> %s: %s <end> %s" % (etymsection, " ".join(respellings), " ".join(msgs)))
 
     check_missing_pronun(etymsection)
     if not saw_existing_pron:
@@ -187,17 +184,17 @@ def process_text_on_page(index, pagetitle, text):
                 defns = blib.find_defns("".join(subsections[first_etym_subsec:next_etym_subsec]), "fr")
                 append_msg("defns: %s" % ";".join(defns))
                 respellings = ["+"]
-                pagemsg("<respelling> %s: %s <end> %s" % (etymsec, " ".join(respellings), " ".join(msgs)))
+                p.msg("<respelling> %s: %s <end> %s" % (etymsec, " ".join(respellings), " ".join(msgs)))
         else:
             if etymsections_to_raw_msgs:
-                pagemsg("etymsections_to_raw_msgs: %s" % etymsections_to_raw_msgs)
+                p.msg("etymsections_to_raw_msgs: %s" % etymsections_to_raw_msgs)
             etymsec = "top" if has_etym_sections else "all"
             msgs = []
             append_msg("NEW_DEFAULTED")
             if etymsections_to_raw_msgs[etymsec]:
                 append_msg("EXISTING_RAW: %s" % ",".join(etymsections_to_raw_msgs[etymsec]))
             respellings = ["+"]
-            pagemsg("<respelling> %s: %s <end> %s" % (etymsec, " ".join(respellings), " ".join(msgs)))
+            p.msg("<respelling> %s: %s <end> %s" % (etymsec, " ".join(respellings), " ".join(msgs)))
 
 
 if __name__ == "__main__":
@@ -208,4 +205,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

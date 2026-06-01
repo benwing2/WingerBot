@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -42,13 +39,13 @@ def process_text_on_page(index, pagetitle, text):
                 elif pname == "head":
                     head = pval
                 else:
-                    pagemsg("WARNING: Saw unrecognized param %s: %s" % (pname, str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s: %s" % (pname, str(t)))
                     must_continue = True
                     break
             if must_continue:
                 continue
             if not g:
-                pagemsg("WARNING: Didn't see gender: %s" % str(t))
+                p.msg("WARNING: Didn't see gender: %s" % str(t))
                 continue
             origt = str(t)
             del t.params[:]
@@ -62,7 +59,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("replace {{head|it|noun|...|invariable}} with {{it-noun|...|-}}")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -73,4 +70,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

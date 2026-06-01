@@ -46,54 +46,51 @@ def link_text(text):
     return "".join(linked_words)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     def check_bad_head(text, arg):
         canontext = re.sub("[׳’]", "'", blib.remove_links(text))
-        canonpagetitle = re.sub("[׳’]", "'", pagetitle)
+        canonpagetitle = re.sub("[׳’]", "'", p.title)
         if canontext != canonpagetitle:
-            pagemsg(
+            p.msg(
                 "WARNING: Canonicalized %s=%s not same as canonicalized page title %s (orig %s=%s)"
                 % (arg, canontext, canonpagetitle, arg, text)
             )
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn in fr_head_templates:
             head = getparam(t, "head")
             if head:
-                linked_pagetitle = link_text(pagetitle)
+                linked_pagetitle = link_text(p.title)
                 linked_head = link_text(head)
                 if linked_pagetitle == linked_head:
-                    pagemsg("Removing redundant head=%s" % head)
+                    p.msg("Removing redundant head=%s" % head)
                     rmparam(t, "head")
                     notes.append("remove redundant head= from {{%s}}" % tn)
                 else:
-                    pagemsg("Not removing non-redundant head=%s" % head)
+                    p.msg("Not removing non-redundant head=%s" % head)
                     check_bad_head(head, "head")
         if tn in fr_head_or_1_templates:
             head = getparam(t, "1")
             if head:
-                linked_pagetitle = link_text(pagetitle)
+                linked_pagetitle = link_text(p.title)
                 linked_head = link_text(head)
                 if linked_pagetitle == linked_head:
-                    pagemsg("Removing redundant 1=%s" % head)
+                    p.msg("Removing redundant 1=%s" % head)
                     rmparam(t, "1")
                     notes.append("remove redundant 1= from {{%s}}" % tn)
                 else:
-                    pagemsg("Not removing non-redundant 1=%s" % head)
+                    p.msg("Not removing non-redundant 1=%s" % head)
                     check_bad_head(head, "1")
 
         newt = str(t)
         if origt != newt:
-            pagemsg("Replacing %s with %s" % (origt, newt))
+            p.msg("Replacing %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -107,8 +104,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["French lemmas"],
     # default_cats=["French lemmas", "French non-lemma forms"],
 )

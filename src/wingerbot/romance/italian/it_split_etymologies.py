@@ -12,29 +12,26 @@ no_split_etym = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Italian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     notes = []
 
-    if pagetitle in no_split_etym:
-        pagemsg("Not splitting etymologies because page listed in no_split_etym")
+    if p.title in no_split_etym:
+        p.msg("Not splitting etymologies because page listed in no_split_etym")
         return
 
     if "{{head|it|verb form}}" not in secbody:
-        pagemsg("Didn't see verb form")
+        p.msg("Didn't see verb form")
         return
 
     if re.search(r"\{\{it-verb[|}]", secbody) or "{{it-conj" in secbody:
-        pagemsg("WARNING: Saw both verb and verb form in same term")
+        p.msg("WARNING: Saw both verb and verb form in same term")
         return
 
     # Anagrams and such go after all etym sections and remain as such even if we start with non-etym-split text
@@ -55,22 +52,22 @@ def process_text_on_page(index, pagetitle, text):
     for k in range(first_l3_sec, last_included_sec + 2, 2):
         if re.search(r"^===\s*Verb\s*=== *\n", l3_secs[k - 1]):
             if "{{head|it|verb form}}" not in l3_secs[k]:
-                pagemsg("WARNING: Saw ==Verb== without verb-form header in section %s" % (k // 2 + 1))
+                p.msg("WARNING: Saw ==Verb== without verb-form header in section %s" % (k // 2 + 1))
                 return
             # Skip e.g. [[affittasi]], [[affittansi]], where the noun is directly derived from the compound form.
             if "{{it-compound of" in l3_secs[k]:
-                pagemsg("WARNING: Saw verb-form section with {{it-compound of}} in section %s, skipping" % (k // 2 + 1))
+                p.msg("WARNING: Saw verb-form section with {{it-compound of}} in section %s, skipping" % (k // 2 + 1))
                 return
             if verb_form_sec is not None:
-                pagemsg("WARNING: Saw two verb-form sections %s and %s" % (verb_form_sec // 2 + 1, k // 2 + 1))
+                p.msg("WARNING: Saw two verb-form sections %s and %s" % (verb_form_sec // 2 + 1, k // 2 + 1))
                 return
             verb_form_sec = k
         elif not re.search(r"^===\s*(Noun|Adjective)\s*=== *\n", l3_secs[k - 1]):
             if re.search(r"^===\s*Etymology [0-9]+\s*=== *\n", l3_secs[k - 1]):
-                pagemsg("Already saw multiple Etymology sections, skipping")
+                p.msg("Already saw multiple Etymology sections, skipping")
                 return
             else:
-                pagemsg("WARNING: Saw unrecognized header %s in section %s" % (l3_secs[k - 1].strip(), k // 2 + 1))
+                p.msg("WARNING: Saw unrecognized header %s in section %s" % (l3_secs[k - 1].strip(), k // 2 + 1))
                 return
     if verb_form_sec == last_included_sec:
         pass
@@ -81,7 +78,7 @@ def process_text_on_page(index, pagetitle, text):
         )
         notes.append("move Italian verb-form section last")
     else:
-        pagemsg("WARNING: Saw verb form section not first or last among part-of-speech sections")
+        p.msg("WARNING: Saw verb form section not first or last among part-of-speech sections")
         return
 
     if re.search(r"^====\s*(Derived terms|Related terms)\s*==== *\n", l3_secs[last_included_sec], re.M):
@@ -107,14 +104,14 @@ def process_text_on_page(index, pagetitle, text):
     for k in range(2, last_included_sec + 2, 2):
         if "=Pronunciation=" in l3_secs[k - 1]:
             if saw_pronunciation:
-                pagemsg("WARNING: Saw two ===Pronunciation=== sections at L3")
+                p.msg("WARNING: Saw two ===Pronunciation=== sections at L3")
                 return
             saw_pronunciation = True
             text_before_etym_sections.append(l3_secs[k - 1])
             text_before_etym_sections.append(l3_secs[k])
         elif "=Etymology=" in l3_secs[k - 1]:
             if saw_etymology:
-                pagemsg("WARNING: Saw two ===Etymology=== sections at L3")
+                p.msg("WARNING: Saw two ===Etymology=== sections at L3")
                 return
             saw_etymology = True
             goes_at_top_of_first_etym_section = l3_secs[k]
@@ -143,4 +140,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

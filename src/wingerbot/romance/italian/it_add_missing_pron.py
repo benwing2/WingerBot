@@ -237,18 +237,15 @@ def hack_respelling(pagetitle, respelling):
     return respelling, warnings
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Italian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     need_ref_section = False
@@ -274,7 +271,7 @@ def process_text_on_page(index, pagetitle, text):
                         thist = str(t)
                         if thist != origt:
                             other_templates.append(thist)
-                    pagemsg(
+                    p.msg(
                         "%s: %s%s"
                         % (
                             txt,
@@ -304,7 +301,7 @@ def process_text_on_page(index, pagetitle, text):
                     unable = False
                     for pronun in pronuns:
                         respelling = ipa_to_respelling(pronun)
-                        respelling, this_hack_respelling_warnings = hack_respelling(pagetitle, respelling)
+                        respelling, this_hack_respelling_warnings = hack_respelling(p.title, respelling)
                         hack_respelling_warnings.extend(this_hack_respelling_warnings)
 
                         def set_unable(msg):
@@ -336,7 +333,7 @@ def process_text_on_page(index, pagetitle, text):
                                 lambda m: vowel_respelling_to_spelling[m.group(1)] + m.group(2),
                                 respelling,
                             )
-                            pagetitle_words = pagetitle.split(" ")
+                            pagetitle_words = p.title.split(" ")
                             putative_pagetitle_words = putative_pagetitle.split(" ")
                             if len(pagetitle_words) != len(putative_pagetitle_words):
                                 set_unable(
@@ -350,7 +347,7 @@ def process_text_on_page(index, pagetitle, text):
                                     split_puptw = re.split("([Tt]?[Tt]s|[Dd]?[Dd]z)", puptw)
                                     if len(split_ptw) != len(split_puptw):
                                         set_unable(
-                                            "WARNING: Different # of z's in pagetitle word %s vs. (t)ts/(d)dz's in putative pagetitle word %s"
+                                            "WARNING: Different # of z's in p.title word %s vs. (t)ts/(d)dz's in putative p.title word %s"
                                             % (ptw, puptw)
                                         )
                                         hacked_putative_pagetitle_words.append(puptw)
@@ -363,7 +360,7 @@ def process_text_on_page(index, pagetitle, text):
                                                 parts.append(split_ptw[i])
                                         hacked_putative_pagetitle_words.append("".join(parts))
                                 putative_pagetitle = " ".join(hacked_putative_pagetitle_words)
-                                if putative_pagetitle != pagetitle:
+                                if putative_pagetitle != p.title:
                                     # If respelling already seen, we already warned about it.
                                     if respelling in respellings:
                                         assert unable
@@ -449,8 +446,8 @@ def process_text_on_page(index, pagetitle, text):
                                 append_warnings("WARNING: Saw unrecognized param %s=%s" % (pn, str(param.value)))
                     manual_assist = ""
                     if unable:
-                        if pagetitle in ipa_directives:
-                            respellings = ipa_directives[pagetitle]
+                        if p.title in ipa_directives:
+                            respellings = ipa_directives[p.title]
                             unable = False
                             manual_assist = " (manually assisted)"
                             tmsg(
@@ -490,7 +487,7 @@ def process_text_on_page(index, pagetitle, text):
                         )
                     pronun_based_respellings.extend(respellings)
                 if str(t) != origt:
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
             subsections[k] = str(parsed)
 
             rhymes_template = None
@@ -498,7 +495,7 @@ def process_text_on_page(index, pagetitle, text):
                 tn = tname(t)
                 if tn in ["rhyme", "rhymes"] and getparam(t, "1") == "it":
                     if rhymes_template:
-                        pagemsg("WARNING: Saw two {{rhymes|it}} templates: %s and %s" % (str(rhymes_template), str(t)))
+                        p.msg("WARNING: Saw two {{rhymes|it}} templates: %s and %s" % (str(rhymes_template), str(t)))
                     rhymes_template = t
             if rhymes_template:
                 rhyme_based_respellings = []
@@ -518,8 +515,8 @@ def process_text_on_page(index, pagetitle, text):
                     matched = False
                     bad_rhyme_msgs = []
                     for ending, ending_respelling in spellings:
-                        if pagetitle.endswith(ending):
-                            prevpart = pagetitle[: -len(ending)]
+                        if p.title.endswith(ending):
+                            prevpart = p.title[: -len(ending)]
                             respelling = prevpart + ending_respelling
                             saw_oso_ese = False
                             if ending_respelling == "óso":
@@ -533,7 +530,7 @@ def process_text_on_page(index, pagetitle, text):
                             else:
                                 if respelling.endswith("zióne"):
                                     new_respelling = re.sub("zióne$", "tsióne", respelling)
-                                    pagemsg("Replaced respelling '%s' with '%s'" % (respelling, new_respelling))
+                                    p.msg("Replaced respelling '%s' with '%s'" % (respelling, new_respelling))
                                     respelling = new_respelling
                                     prevpart = respelling[: -len(ending)] + ending_respelling
                                 append_respelling(respelling)
@@ -577,14 +574,14 @@ def process_text_on_page(index, pagetitle, text):
                             )
                     if not matched and not unable and bad_rhyme_msgs:
                         for bad_rhyme_msg in bad_rhyme_msgs:
-                            pagemsg(bad_rhyme_msg)
+                            p.msg(bad_rhyme_msg)
                 if rhyme_based_respellings:
                     if not saw_it_pr:
                         manual_assist = ""
-                        if pagetitle in rhyme_directives:
-                            rhyme_based_respellings = rhyme_directives[pagetitle]
+                        if p.title in rhyme_directives:
+                            rhyme_based_respellings = rhyme_directives[p.title]
                             manual_assist = " (manually assisted)"
-                            pagemsg(
+                            p.msg(
                                 "Using manually-specified rhyme-based respelling%s %s; original warnings follow: %s: %s"
                                 % (
                                     "s" if len(rhyme_based_respellings) > 1 else "",
@@ -612,7 +609,7 @@ def process_text_on_page(index, pagetitle, text):
                             if "Etymology 1" in secbody:
                                 all_warnings[0:0] = ["WARNING: Multiple etymologies seen"]
 
-                            pagemsg(
+                            p.msg(
                                 "<respelling> all: %s <end>%s: <from> %s <to> %s <end>"
                                 % (
                                     " ".join(rhyme_based_respellings),
@@ -628,7 +625,7 @@ def process_text_on_page(index, pagetitle, text):
                                 and pronun_based_respellings
                                 and respelling not in pronun_based_respellings
                             ):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Rhyme-based respelling%s %s doesn't match it-pr respelling(s) %s%s"
                                     % (
                                         " (with problems)" if len(all_warnings) > 0 else "",
@@ -652,7 +649,7 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("add new ===References=== section for pronunciation refs")
                     break
             else:  # no break
-                pagemsg("WARNING: Something wrong, couldn't find location to insert ===References=== section")
+                p.msg("WARNING: Something wrong, couldn't find location to insert ===References=== section")
 
     return modsec.rebuild(secbody="".join(subsections)), notes
 
@@ -694,5 +691,5 @@ if args.rhyme_direcfile:
             rhyme_directives[page] = respellings
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:it-pr"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:it-pr"]
 )

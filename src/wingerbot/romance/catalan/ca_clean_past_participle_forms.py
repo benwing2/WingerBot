@@ -10,13 +10,10 @@ class BreakException(Exception):
     pass
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Catalan", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Catalan", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -24,7 +21,7 @@ def process_text_on_page(index, pagetitle, text):
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")
         if lang != "ca":
-            pagemsg("WARNING: Saw {{%s}} for non-Catalan language: %s" % (tname(t), str(t)))
+            p.msg("WARNING: Saw {{%s}} for non-Catalan language: %s" % (tname(t), str(t)))
             raise BreakException()
 
     def check_unrecognized_params(t, allowed_params, no_break=False):
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
             pn = pname(param)
             pv = str(param.value)
             if pn not in allowed_params:
-                pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
+                p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
                 if not no_break:
                     raise BreakException()
                 else:
@@ -41,7 +38,7 @@ def process_text_on_page(index, pagetitle, text):
 
     def verify_verb_lemma(t, term):
         if not re.search("([aeiïu]r(-se)?|re('s)?)$", term):
-            pagemsg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
+            p.msg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
             raise BreakException()
 
     try:
@@ -58,16 +55,16 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     check_unrecognized_params(t, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
                     verify_lang(t)
-                if pagetitle.endswith("a"):
+                if p.title.endswith("a"):
                     name = "feminine singular"
-                elif pagetitle.endswith("es"):
+                elif p.title.endswith("es"):
                     name = "feminine plural"
-                elif re.search("([ot]s)$", pagetitle):
+                elif re.search("([ot]s)$", p.title):
                     name = "masculine plural"
                 else:
-                    pagemsg("WARNING: Unrecognized ending, not -a, -es or -os/-ts: %s" % str(t))
+                    p.msg("WARNING: Unrecognized ending, not -a, -es or -os/-ts: %s" % str(t))
                     raise BreakException()
-                m = re.search("^(.*)(a|[eot]s)$", pagetitle)
+                m = re.search("^(.*)(a|[eot]s)$", p.title)
                 assert m
                 base, expected_ending = m.groups()
                 if expected_ending == "ts":
@@ -80,7 +77,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif re.search(".(f)os$", base):
                     base = base[:-2] + "ós"
                 elif base.endswith("s"):
-                    pagemsg("WARNING: Unhandled past participle ending in -s: %s" % str(t))
+                    p.msg("WARNING: Unhandled past participle ending in -s: %s" % str(t))
                     raise BreakException()
                 pp = re.sub("d$", "t", base)
                 if tn == "ca-verb form of":
@@ -108,4 +105,4 @@ parser = blib.create_argparser("Clean up Catalan past participle forms", include
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

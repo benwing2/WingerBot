@@ -225,18 +225,15 @@ def make_verb_form_full(form, clitic, refl, post, is_part, do_link):
     return form
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "es-verb" not in text:
+    if "es-verb" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
 
@@ -249,21 +246,21 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 pv = str(param.value)
-                pagemsg("WARNING: No 1= but saw param %s=%s: %s" % (pn, pv, str(t)))
+                p.msg("WARNING: No 1= but saw param %s=%s: %s" % (pn, pv, str(t)))
                 break
             t.add("attn", "1")
             notes.append("add attn=1 to verb with missing 1=")
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
             continue
 
         if tn == "es-verb":
             origt = str(t)
-            lemma = getparam(t, "head") or pagetitle
+            lemma = getparam(t, "head") or p.title
             if " " in lemma:
-                pagemsg("WARNING: Space in lemma")
+                p.msg("WARNING: Space in lemma")
             prep = getp("prep")
             shouldlemma = (
                 getp("1")
@@ -272,16 +269,16 @@ def process_text_on_page(index, pagetitle, text):
                 + (" " + blib.remove_links(prep) if prep else "")
             )
             if shouldlemma != blib.remove_links(lemma):
-                pagemsg(
-                    "WARNING: lemma=%s from 1/2/ref != lemma=%s from head or pagetitle: %s"
+                p.msg(
+                    "WARNING: lemma=%s from 1/2/ref != lemma=%s from head or p.title: %s"
                     % (shouldlemma, blib.remove_links(lemma), str(t))
                 )
                 continue
-            d = get_def_forms(lemma, prep, pagemsg)
+            d = get_def_forms(lemma, prep, p.msg)
             if not d:
                 continue
             if getp("part2") and not getp("part"):
-                pagemsg("WARNING: Saw part2= without part=: %s" % str(t))
+                p.msg("WARNING: Saw part2= without part=: %s" % str(t))
                 part = [d["part"], getp("part2")]
             else:
                 part = blib.fetch_param_chain(t, "part")
@@ -332,10 +329,10 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if pn == "1" and pv in ["m", "mf"]:
-                    pagemsg("WARNING: Extraneous param %s=%s in %s, ignoring" % (pn, pv, str(t)))
+                    p.msg("WARNING: Extraneous param %s=%s in %s, ignoring" % (pn, pv, str(t)))
                     continue
                 if pn not in ["head", "1", "2", "ref", "pres", "pret", "part", "part2", "prep"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -375,9 +372,9 @@ def process_text_on_page(index, pagetitle, text):
                 blib.set_param_chain(t, part, "part")
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
     return str(parsed), notes
 
@@ -390,5 +387,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Spanish verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Spanish verbs"]
 )

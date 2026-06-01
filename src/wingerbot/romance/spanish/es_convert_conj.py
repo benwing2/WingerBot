@@ -3,7 +3,7 @@
 import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname, msg, errandmsg
+from wingerbot.blib import getparam, tname, pname
 
 es_conv_verb = {
     "-ar": {
@@ -342,23 +342,17 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
     return t
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in old_es_conj_templates:
-            if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
+            if convert_template_to_new(t, p.title, p.msg, p.errandmsg, notes):
                 pass
             else:
                 return
@@ -378,5 +372,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Spanish verbs"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Spanish verbs"]
 )

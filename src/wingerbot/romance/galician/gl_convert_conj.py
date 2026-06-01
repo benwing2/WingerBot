@@ -3,22 +3,16 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "gl-verb-old" not in text:
+    if "gl-verb-old" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     saw_headt = False
@@ -31,15 +25,15 @@ def process_text_on_page(index, pagetitle, text):
             return getparam(t, param)
 
         if tn == "gl-verb-old":
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             saw_headt = True
             if headt:
-                pagemsg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
                 return
             headt = t
         elif tn == "gl-conj":
             if not headt:
-                pagemsg("WARNING: Saw conjugation template without {{gl-verb-old}} head template: %s" % str(t))
+                p.msg("WARNING: Saw conjugation template without {{gl-verb-old}} head template: %s" % str(t))
                 return
             orig_headt = str(headt)
             headtn = tname(headt)
@@ -53,7 +47,7 @@ def process_text_on_page(index, pagetitle, text):
             headt = None
 
     if not saw_headt:
-        pagemsg("WARNING: Didn't see {{gl-verb-old}} head template")
+        p.msg("WARNING: Didn't see {{gl-verb-old}} head template")
         return
 
     return str(parsed), notes
@@ -64,5 +58,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Galician verbs"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Galician verbs"]
 )

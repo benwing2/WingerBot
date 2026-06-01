@@ -6,14 +6,8 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -25,19 +19,19 @@ def process_text_on_page(index, pagetitle, text):
                 if getparam(t, str(pronarg)):
                     max_arg = pronarg
             for pronarg in range(1, max_arg + 1):
-                pronval = getparam(t, str(pronarg)) or pagetitle
-                pron = expand_text("{{#invoke:fr-pron|show|%s%s|check_new_module=1}}" % (pronval, pos_arg))
+                pronval = getparam(t, str(pronarg)) or p.title
+                pron = p.expand_text("{{#invoke:fr-pron|show|%s%s|check_new_module=1}}" % (pronval, pos_arg))
                 if " || " in pron:
                     pronold, pronnew = pron.split(" || ")
-                    pagemsg(
+                    p.msg(
                         "WARNING: {{fr-IPA|%s%s}} == %s in old but %s in new" % (pronval, pos_arg, pronold, pronnew)
                     )
                 else:
-                    pagemsg("{{fr-IPA|%s%s}} == %s in both old and new" % (pronval, pos_arg, pron))
+                    p.msg("{{fr-IPA|%s%s}} == %s in both old and new" % (pronval, pos_arg, pron))
 
 
 parser = blib.create_argparser("Check for change in {{fr-IPA}}", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, default_refs=["Template:fr-IPA"])
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=["Template:fr-IPA"])

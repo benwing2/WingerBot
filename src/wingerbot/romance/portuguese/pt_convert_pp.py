@@ -6,18 +6,15 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "pt-pp" not in text:
+    if "pt-pp" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -32,14 +29,14 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if pn not in ["1", "2"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
                 continue
             rmparam(t, "2")
             rmparam(t, "1")
-            if re.search("[as]$", pagetitle):
+            if re.search("[as]$", p.title):
                 blib.set_template_name(t, "head")
                 t.add("1", "pt")
                 t.add("2", "past participle form")
@@ -47,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 notes.append("convert {{pt-pp}} to new syntax")
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     text = str(parsed)
     newtext = re.sub(r"==Verb(==+\n\{\{(?:pt-pp[|}]|head\|pt\|(?:past )?participle))", r"==Participle\1", text)
@@ -67,5 +64,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:pt-pp"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:pt-pp"]
 )

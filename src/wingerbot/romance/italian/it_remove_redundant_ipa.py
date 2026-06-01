@@ -6,28 +6,22 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     def getpron(pron):
-        return expand_text("{{#invoke:it-pronunciation|to_phonemic_bot|%s}}" % pron)
+        return p.expand_text("{{#invoke:it-pronunciation|to_phonemic_bot|%s}}" % pron)
 
     notes = []
 
-    if "it-IPA" not in text:
+    if "it-IPA" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
         if tn in ["it-IPA"]:
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             default_pron_phonemic = None
             prons = []
             for i in range(1, 11):
@@ -43,14 +37,14 @@ def process_text_on_page(index, pagetitle, text):
                     if prn not in defaulted_prons:
                         defaulted_prons.append(prn)
 
-                if pron == "+" or pron == pagetitle:
+                if pron == "+" or pron == p.title:
                     add("+")
                 elif len(pron) == 1:  # vowel only
                     add(pron)
                 else:  # full pronun
                     pron_phonemic = None
                     if default_pron_phonemic is None:
-                        default_pron_phonemic = getpron(pagetitle)
+                        default_pron_phonemic = getpron(p.title)
                     if default_pron_phonemic:
                         pron_phonemic = getpron(pron)
                         if not pron_phonemic:
@@ -79,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
                 if str(t) != origt:
                     notes.append("replace default respelling(s) with single-vowel spec or '+' in {{it-IPA}}")
             if str(t) != origt:
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -89,5 +83,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:it-IPA"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:it-IPA"]
 )

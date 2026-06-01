@@ -31,13 +31,10 @@ pp_to_irregular = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Asturian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Asturian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -45,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")
         if lang != "ast":
-            pagemsg("WARNING: Saw {{%s}} for non-Asturian language: %s" % (tname(t), str(t)))
+            p.msg("WARNING: Saw {{%s}} for non-Asturian language: %s" % (tname(t), str(t)))
             raise BreakException()
 
     def check_unrecognized_params(t, allowed_params, no_break=False):
@@ -53,7 +50,7 @@ def process_text_on_page(index, pagetitle, text):
             pn = pname(param)
             pv = str(param.value)
             if pn not in allowed_params:
-                pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
+                p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
                 if not no_break:
                     raise BreakException()
                 else:
@@ -62,12 +59,12 @@ def process_text_on_page(index, pagetitle, text):
 
     def verify_verb_lemma(t, term):
         if not re.search("([aei]r)$", term):
-            pagemsg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
+            p.msg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
             raise BreakException()
 
     def verify_past_participle_inflection(t, name, ending):
-        if not re.search("%s$" % ending, pagetitle):
-            pagemsg(
+        if not re.search("%s$" % ending, p.title):
+            p.msg(
                 "WARNING: Found %s past participle form but page title doesn't have the correct form: %s"
                 % (name, str(t))
             )
@@ -100,7 +97,7 @@ def process_text_on_page(index, pagetitle, text):
                 verify_past_participle_inflection(t, name, expected_ending)
                 rmparam(t, "nocat")
                 blib.set_template_name(t, "%s of" % name)
-                pp = pagetitle[: -len(expected_ending)]
+                pp = p.title[: -len(expected_ending)]
                 if lemma.endswith("ar"):
                     pp += "áu"
                 else:
@@ -120,4 +117,4 @@ parser = blib.create_argparser("Clean up Asturian past participle forms", includ
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

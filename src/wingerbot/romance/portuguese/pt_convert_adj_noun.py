@@ -325,18 +325,15 @@ def make_augmentative(form, special=None):
     return munge_form_for_ending(form, "aug") + "ão"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "pt-adj" not in text and "pt-noun" not in text:
+    if "pt-adj" not in p.text and "pt-noun" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     def do_make_plural(form, special=None):
         retval = make_plural(form, "new algorithm", special)
@@ -360,7 +357,7 @@ def process_text_on_page(index, pagetitle, text):
             origt = str(t)
 
             head = getp("head")
-            lemma = blib.remove_links(head or pagetitle)
+            lemma = blib.remove_links(head or p.title)
 
             def replace_lemma_with_hash(term):
                 if term.startswith(lemma):
@@ -370,14 +367,14 @@ def process_text_on_page(index, pagetitle, text):
                 return term
 
             def warn_when_exiting(txt):
-                pagemsg("WARNING: %s: %s" % (txt, str(t)))
+                p.msg("WARNING: %s: %s" % (txt, str(t)))
                 if args.add_old:
                     notes.append("add old=1 to {{pt-noun}} where a warning will be issued")
                     t.add("old", "1")
 
             autohead = romance_utils.add_links_to_multiword_term(lemma, splithyph=False)
             if autohead == head:
-                pagemsg("Remove redundant head %s" % head)
+                p.msg("Remove redundant head %s" % head)
                 subnotes.append("remove redundant head '%s'" % head)
                 head = None
 
@@ -458,7 +455,7 @@ def process_text_on_page(index, pagetitle, text):
                     if special_pl is None:
                         continue
                     if pls == [special_pl]:
-                        pagemsg("Found special=%s with special_pl=%s" % (special, special_pl))
+                        p.msg("Found special=%s with special_pl=%s" % (special, special_pl))
                         actual_special = special
                         break
 
@@ -531,14 +528,14 @@ def process_text_on_page(index, pagetitle, text):
                         if special_mf is None:
                             continue
                         if mfs == [special_mf]:
-                            pagemsg("Found special=%s with special_mf=%s" % (special, special_mf))
+                            p.msg("Found special=%s with special_mf=%s" % (special, special_mf))
                             actual_special = special
                             break
                     if actual_special:
                         if is_plural:
                             pass
                         elif not mfpls:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Explicit %s=%s matches special=%s but no %s plural, allowing"
                                 % (g, ",".join(mfs), actual_special, g_full)
                             )
@@ -546,12 +543,12 @@ def process_text_on_page(index, pagetitle, text):
                             special_mfpl = make_plural(special_mf, True, actual_special)
                             if special_mfpl:
                                 if mfpls == [special_mfpl]:
-                                    pagemsg(
+                                    p.msg(
                                         "Found %s=%s and special=%s, %spls=%s matches special_%spl"
                                         % (g, ",".join(mfs), actual_special, g, ",".join(mfpls), g)
                                     )
                                 else:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: for %s=%s and special=%s, %spls=%s doesn't match special_%spl=%s, allowing"
                                         % (g, ",".join(mfs), actual_special, g, ",".join(mfpls), g, special_mfpl)
                                     )
@@ -575,13 +572,13 @@ def process_text_on_page(index, pagetitle, text):
                             if set(defpl) == set(mfpls):
                                 ok = True
                             elif len(defpl) > 1 and set(mfpls) < set(defpl):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: for %s=%s, %spl=%s subset of default pl %s, allowing"
                                     % (g, ",".join(mfs), g, ",".join(mfpls), ",".join(defpl))
                                 )
                                 ok = True
                             if ok:
-                                pagemsg(
+                                p.msg(
                                     "Found %s=%s, %spl=%s matches default pl" % (g, ",".join(mfs), g, ",".join(mfpls))
                                 )
                                 subnotes.append("remove redundant explicit %s plural '%s'" % (g_full, ",".join(mfpls)))
@@ -590,7 +587,7 @@ def process_text_on_page(index, pagetitle, text):
                                 for special in romance_utils.all_specials:
                                     defpl = [make_plural(x, True, special) for x in mfs]
                                     if set(defpl) == set(mfpls):
-                                        pagemsg(
+                                        p.msg(
                                             "Found %s=%s, %spl=%s matches special=%s"
                                             % (g, ",".join(mfs), g, ",".join(mfpls), special)
                                         )
@@ -693,19 +690,19 @@ def process_text_on_page(index, pagetitle, text):
 
             if args.add_old:
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("add old=1 to {{pt-noun}} that will change with new syntax")
                     realt.add("old", "1")
                 else:
-                    pagemsg("No changes to %s" % str(realt))
+                    p.msg("No changes to %s" % str(realt))
 
             elif origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append(
                     "replace {{pt-noun}} with new syntax%s" % (" (%s)" % ", ".join(subnotes) if subnotes else "")
                 )
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
         ############# Convert new-style noun headwords for hyphenated terms
 
@@ -714,7 +711,7 @@ def process_text_on_page(index, pagetitle, text):
             origt = str(t)
 
             head = getp("head")
-            lemma = blib.remove_links(head or pagetitle)
+            lemma = blib.remove_links(head or p.title)
             # Skip term if not hyphenated
             if not re.search(".-.", lemma):
                 continue
@@ -734,7 +731,7 @@ def process_text_on_page(index, pagetitle, text):
                         if special_pl is None:
                             continue
                         if pl == special_pl:
-                            pagemsg("Found special=%s with special_pl=%s" % (special, special_pl))
+                            p.msg("Found special=%s with special_pl=%s" % (special, special_pl))
                             actual_special = special
                             break
 
@@ -761,7 +758,7 @@ def process_text_on_page(index, pagetitle, text):
                             if special_mf is None:
                                 continue
                             if mf == special_mf:
-                                pagemsg("Found special=%s with special_mf=%s" % (special, special_mf))
+                                p.msg("Found special=%s with special_mf=%s" % (special, special_mf))
                                 actual_special = special
                                 break
                         if actual_special:
@@ -774,12 +771,12 @@ def process_text_on_page(index, pagetitle, text):
                         if is_plural:
                             pass
                         elif not mfpls:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Explicit %s=%s matches special=%s but no %s plural, allowing"
                                 % (g, ",".join(new_mfs), actual_special, g_full)
                             )
                         elif len(mfpls) > 1:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Explicit %s=%s matches special=%s and multiple %s plurals %s, allowing"
                                 % (g, ",".join(new_mfs), actual_special, g_full, ",".join(mfpls))
                             )
@@ -787,12 +784,12 @@ def process_text_on_page(index, pagetitle, text):
                             special_mfpl = make_plural(special_mf, True, actual_special)
                             if special_mfpl:
                                 if mfpls[0] == special_mfpl:
-                                    pagemsg(
+                                    p.msg(
                                         "Found %s=%s and special=%s, %spls=%s matches special_%spl"
                                         % (g, ",".join(new_mfs), actual_special, g, ",".join(mfpls), g)
                                     )
                                 else:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: for %s=%s and special=%s, %spls=%s doesn't match special_%spl=%s, allowing"
                                         % (g, ",".join(new_mfs), actual_special, g, ",".join(mfpls), g, special_mfpl)
                                     )
@@ -831,13 +828,13 @@ def process_text_on_page(index, pagetitle, text):
                 blib.set_param_chain(t, mpls, "mpl")
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append(
                     "replace hyphenated {{pt-noun}} with special indicator(s)%s"
                     % (" (%s)" % ", ".join(subnotes) if subnotes else "")
                 )
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
         ############# Convert old-style adjective headwords
 
@@ -851,7 +848,7 @@ def process_text_on_page(index, pagetitle, text):
                         "add old=1 to old-style Portuguese adjective template not automatically identifiable as such"
                     )
                     if origt != str(t):
-                        pagemsg("Replaced %s with %s" % (origt, str(t)))
+                        p.msg("Replaced %s with %s" % (origt, str(t)))
                 continue
 
             # if not getp("old") and not getp("1") and not getp("2"):
@@ -864,9 +861,9 @@ def process_text_on_page(index, pagetitle, text):
                 invariable = True
             else:
                 if not infl_type:
-                    lemma = pagetitle
+                    lemma = p.title
                     if not getp("f") and not getp("mpl") and not getp("pl") and not getp("fpl"):
-                        pagemsg("WARNING: Probable bad template invocation, no parameters: %s" % str(t))
+                        p.msg("WARNING: Probable bad template invocation, no parameters: %s" % str(t))
                         continue
                     f = getp("f") or lemma
                     mpl = (getp("mpl") if t.has("mpl") else getp("pl")) or lemma
@@ -877,11 +874,11 @@ def process_text_on_page(index, pagetitle, text):
                     mpl = base + mpl
                     fpl = base + fpl
                     if f is None:
-                        pagemsg("WARNING: Unrecognized inflection type %s: %s" % (infl_type, str(t)))
+                        p.msg("WARNING: Unrecognized inflection type %s: %s" % (infl_type, str(t)))
                         continue
                     lemma = base + infl_type
-                    if lemma != pagetitle:
-                        pagemsg("WARNING: Saw lemma '%s' not equal to page title: %s" % (lemma, str(t)))
+                    if lemma != p.title:
+                        p.msg("WARNING: Saw lemma '%s' not equal to page title: %s" % (lemma, str(t)))
 
                 deff = make_feminine(lemma)
                 defmpl = do_make_plural(lemma)
@@ -900,7 +897,7 @@ def process_text_on_page(index, pagetitle, text):
                 if set(mpls) == set(defmpl):
                     mpls = ["+"]
                 elif set(mpls) < set(defmpl):
-                    pagemsg(
+                    p.msg(
                         "WARNING: mpls=%s subset of defmpl=%s, replacing with default"
                         % (",".join(mpls), ",".join(defmpl))
                     )
@@ -914,7 +911,7 @@ def process_text_on_page(index, pagetitle, text):
                 if set(fpls) == set(deffpl):
                     fpls = ["+"]
                 elif set(fpls) < set(deffpl):
-                    pagemsg(
+                    p.msg(
                         "WARNING: fpls=%s subset of deffpl=%s, replacing with default"
                         % (",".join(fpls), ",".join(deffpl))
                     )
@@ -940,13 +937,13 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if pn not in ["head", "1", "2", "f", "mpl", "pl", "fpl", "comp", "old"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
                 continue
             if comp and comp not in ["yes", "no", "both"]:
-                pagemsg("WARNING: Saw unrecognized value '%s' for comp=: %s" % (comp, str(t)))
+                p.msg("WARNING: Saw unrecognized value '%s' for comp=: %s" % (comp, str(t)))
                 continue
 
             del t.params[:]
@@ -974,35 +971,35 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("hascomp", comp)
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert {{pt-adj}} to new syntax")
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
         ############# Convert new-style adjective headwords with inflections
 
         if args.do_new_adjs_with_inflections:
             if tn == "pt-adj":
                 if adj_headword:
-                    pagemsg(
+                    p.msg(
                         "Saw adjective headword without intervening inflection; first=%s, second=%s"
                         % (str(adj_headword), str(t))
                     )
                 adj_headword = t
             if tn == "pt-adj-infl":
                 if not adj_headword:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw adjective inflection template %s without previous adjective headword" % str(t)
                     )
                     continue
                 orig_adj_headword = str(adj_headword)
                 head = getparam(adj_headword, "head")
-                headword_lemma = blib.remove_links(head or pagetitle)
+                headword_lemma = blib.remove_links(head or p.title)
                 infl_base = getp("1")
                 infl_type = getp("2")
                 infl_lemma = infl_base + (infl_type[:-1] if infl_type in ["co2", "ático2"] else infl_type)
                 if infl_lemma != headword_lemma:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Inflection lemma %s not same as headword lemma %s: adj_headword=%s, infl=%s"
                         % (infl_lemma, headword_lemma, str(adj_headword), str(t))
                     )
@@ -1028,7 +1025,7 @@ def process_text_on_page(index, pagetitle, text):
                                 assert stem[0] == "mf"
                                 _, m_stem, f_stem = stem
                                 retval = infl_base + m_stem + ending
-                                pagemsg(
+                                p.msg(
                                     "WARNING: For %s, separate feminine %s" % (engtype, infl_base + f_stem + f_ending)
                                 )
                         else:
@@ -1061,9 +1058,9 @@ def process_text_on_page(index, pagetitle, text):
                     blib.set_param_chain(adj_headword, augvals, "aug")
 
                 if orig_adj_headword != str(adj_headword):
-                    pagemsg("Replaced %s with %s" % (orig_adj_headword, str(adj_headword)))
+                    p.msg("Replaced %s with %s" % (orig_adj_headword, str(adj_headword)))
                 else:
-                    pagemsg("No changes to %s" % str(adj_headword))
+                    p.msg("No changes to %s" % str(adj_headword))
                 adj_infl_templates_to_remove.append(str(t))
 
     text = str(parsed)
@@ -1072,11 +1069,11 @@ def process_text_on_page(index, pagetitle, text):
             text,
             "\n\n==+(Inflection|Declension|Conjugation)==+\n%s" % re.escape(template_to_remove),
             "",
-            pagemsg,
+            p.msg,
             is_re=True,
         )
         if not changed:
-            pagemsg("WARNING: Can't remove adjective inflection template %s" % template_to_remove)
+            p.msg("WARNING: Can't remove adjective inflection template %s" % template_to_remove)
         else:
             notes.append("remove old adjective inflection template %s" % template_to_remove)
 
@@ -1104,4 +1101,4 @@ if args.do_nouns or args.do_old_nouns or args.do_new_hyphenated_nouns:
 else:
     default_refs = ["Template:pt-adj"]
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=default_refs)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=default_refs)

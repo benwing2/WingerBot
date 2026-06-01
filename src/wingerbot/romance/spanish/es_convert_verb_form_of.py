@@ -3,7 +3,7 @@
 import pywikibot, re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 conj_table = {}
 
@@ -79,22 +79,13 @@ def escape_newlines(text):
     return text.replace("\n", r"\n")
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
+    if blib.page_should_be_ignored(p.title):
         return
 
-    modsec = blib.find_modifiable_lang_section(pagetext, None, pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, None, p.msg, force_final_nls=True)
     if modsec is None:
         return
 
@@ -105,13 +96,13 @@ def process_text_on_page(index, pagetitle, pagetext):
         if not re.search(r"\A((?:# \{\{es-verb form of\|.*\}\}\n)+)\Z", verb_form_chunk):
             m = re.search(r"\A# \{\{es-verb form of\|.*\}\}(.*)\n\Z", verb_form_chunk)
             if m:
-                pagemsg(
+                p.msg(
                     "WARNING: Extraneous text after {{es-verb form of}}, adding after new {{es-verb form of}}: <%s>"
                     % escape_newlines(verb_form_chunk)
                 )
                 extra_text = re.sub(r"\.$", "", m.group(1))
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple calls to {{es-verb form of}} with extraneous text, skipping: <%s>"
                     % escape_newlines(verb_form_chunk)
                 )
@@ -128,7 +119,7 @@ def process_text_on_page(index, pagetitle, pagetext):
 
             tn = tname(t)
             if tn != "es-verb form of":
-                pagemsg(
+                p.msg(
                     "WARNING: Saw non-{{es-verb form of}} template mixed in with {{es-verb form of}} templates, skipping: %s"
                     % origt
                 )
@@ -165,20 +156,20 @@ def process_text_on_page(index, pagetitle, pagetext):
                     is_old = True
                     break
             if not is_old:
-                pagemsg("Saw new-style {{es-verb form of}}, skipping: %s" % origt)
+                p.msg("Saw new-style {{es-verb form of}}, skipping: %s" % origt)
                 must_continue = True
                 break
             inf = getp("1") or getp("verb") or getp("inf") or getp("infinitive")
             if not inf:
-                pagemsg("WARNING: No infinitive in {{es-verb form of}}, skipping: %s" % origt)
+                p.msg("WARNING: No infinitive in {{es-verb form of}}, skipping: %s" % origt)
                 must_continue = True
                 break
             if inf in seen_infs:
                 continue
             seen_infs.add(inf)
-            conjs, bad_reason = lookup_conjugation(inf, pagemsg, errandpagemsg)
+            conjs, bad_reason = lookup_conjugation(inf, p.msg, p.errandmsg)
             if conjs is None:
-                pagemsg("WARNING: Can't find conjugation for infinitive '%s', skipping: %s" % (inf, origt))
+                p.msg("WARNING: Can't find conjugation for infinitive '%s', skipping: %s" % (inf, origt))
                 must_continue = True
                 break
             expansions = []
@@ -187,19 +178,19 @@ def process_text_on_page(index, pagetitle, pagetext):
                 del t.params[:]
                 t.add("1", conj)
                 newtemp = str(t)
-                expansion = expand_text(newtemp)
+                expansion = p.expand_text(newtemp)
                 if expansion is not False and expansion not in expansions:
                     expansions.append(expansion)
                     expansion_conjugations.append(conj)
             if len(expansions) == 0:
-                pagemsg(
+                p.msg(
                     "WARNING: No expansions, can't replace old-style {{es-verb form of}} with %s, skipping: %s"
                     % (newtemp, origt)
                 )
                 must_continue = True
                 break
             if len(expansions) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple conjugations with differing expansions, can't replace old-style {{es-verb form of}}, skipping: %s"
                     % ", ".join(
                         "%s=%s" % (expansion_conjugations[i], expansion) for i, expansion in enumerate(expansions)
@@ -216,11 +207,11 @@ def process_text_on_page(index, pagetitle, pagetext):
         if must_continue:
             continue
         chunks[k] = "".join(parts)
-        pagemsg("Replaced <%s> with <%s>" % (escape_newlines(verb_form_chunk), escape_newlines(chunks[k])))
+        p.msg("Replaced <%s> with <%s>" % (escape_newlines(verb_form_chunk), escape_newlines(chunks[k])))
 
     pagetext = modsec.rebuild(secbody="".join(chunks))
 
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
 
@@ -231,18 +222,18 @@ def process_text_on_page(index, pagetitle, pagetext):
         if tn == "es-compound of":
             inf = getp("1") + getp("2")
             if not re.search("(ar|er|ir|ír)(se)?$", inf):
-                pagemsg("WARNING: Strange infinitive in {{es-compound of}}, skipping: %s" % origt)
+                p.msg("WARNING: Strange infinitive in {{es-compound of}}, skipping: %s" % origt)
                 continue
-            conjs, bad_reason = lookup_conjugation(inf, pagemsg, errandpagemsg)
+            conjs, bad_reason = lookup_conjugation(inf, p.msg, p.errandmsg)
             if conjs is None:
-                pagemsg("WARNING: Can't find conjugation for infinitive '%s', skipping: %s" % (inf, origt))
+                p.msg("WARNING: Can't find conjugation for infinitive '%s', skipping: %s" % (inf, origt))
                 continue
             expansions = []
             expansion_conjugations = []
             full_expansions = []
             for conj in conjs:
                 newtemp = "{{es-verb form of|%s|json=1}}" % conj
-                expansion = expand_text(newtemp)
+                expansion = p.expand_text(newtemp)
                 if expansion is not False:
                     expansion = json.loads(expansion)
                     expansion_retval = expansion["retval"]
@@ -251,12 +242,12 @@ def process_text_on_page(index, pagetitle, pagetext):
                         expansion_conjugations.append(conj)
                         full_expansions.append(expansion)
             if len(expansions) == 0:
-                pagemsg(
+                p.msg(
                     "WARNING: No expansions, can't replace {{es-compound of}} with %s, skipping: %s" % (newtemp, origt)
                 )
                 continue
             if len(expansions) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple conjugations with differing expansions, can't replace {{es-compound of}}, skipping: %s"
                     % ", ".join(
                         "%s=%s" % (expansion_conjugations[i], expansion) for i, expansion in enumerate(expansions)
@@ -268,17 +259,17 @@ def process_text_on_page(index, pagetitle, pagetext):
                 saw_comb = any("comb" in tag for tag in full_expansions[0]["tags"])
                 all_comb = all("comb" in tag for tag in full_expansions[0]["tags"])
                 if saw_comb and not all_comb:
-                    pagemsg("WARNING: Mixture of combination and non-combination tags   ")
+                    p.msg("WARNING: Mixture of combination and non-combination tags   ")
                     # FIXME: Not finished
                     ...
             notes.append("replace {{es-compound of}} with {{es-verb form of|%s}} for infinitive [[%s]]" % (conj, inf))
             del t.params[:]
             t.add("1", conj)
             blib.set_template_name(t, "es-verb form of")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
     pagetext = str(parsed)
 
-    return pagetext, notes
+    return p.text, notes
 
 
 parser = blib.create_argparser(
@@ -292,8 +283,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:es-verb form of"],
     skip_ignorable_pages=True,
 )

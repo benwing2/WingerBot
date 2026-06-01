@@ -3,46 +3,41 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 verb_cache = {}
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     def verb_is_italian(inf):
         if inf in verb_cache:
             return verb_cache[inf]
         page = pywikibot.Page(site, inf)
-        pagetext = blib.safe_page_text(page, errandpagemsg)
+        pagetext = blib.safe_page_text(page, p.errandmsg)
         if re.search(r"\{\{it-verb(-rfc)?\|", pagetext):
-            pagemsg("[[%s]] is an Italian verb" % inf)
+            p.msg("[[%s]] is an Italian verb" % inf)
             retval = True
         elif pagetext and re.search(r"==\s*Italian\s*==", pagetext):
-            pagemsg("[[%s]] has an Italian section but is not a verb" % inf)
+            p.msg("[[%s]] has an Italian section but is not a verb" % inf)
             retval = False
         elif pagetext:
-            pagemsg("[[%s]] exists but does not have an Italian section" % inf)
+            p.msg("[[%s]] exists but does not have an Italian section" % inf)
             retval = False
         else:
-            pagemsg("[[%s]] does not exist" % inf)
+            p.msg("[[%s]] does not exist" % inf)
             retval = False
         verb_cache[inf] = retval
         return retval
 
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
-    m = re.search("^(.*(?:r|ndo))([mtsvc]i)$", pagetitle)
+    m = re.search("^(.*(?:r|ndo))([mtsvc]i)$", p.title)
     if not m:
-        pagemsg("Page isn't gerund or infinitive + clitic, can't handle")
+        p.msg("Page isn't gerund or infinitive + clitic, can't handle")
         return
     page_base, clitic = m.groups()
 
@@ -58,13 +53,13 @@ def process_text_on_page(index, pagetitle, text):
             alt = getp("3")
             forms = blib.fetch_param_chain(t, "4")
             if alt:
-                pagemsg("Has 3=, can't handle: %s" % str(t))
+                p.msg("Has 3=, can't handle: %s" % str(t))
                 continue
             if not inf.endswith("rsi"):
-                pagemsg("Infinitive %s in 2= doesn't end in -rsi, can't handle: %s" % (inf, str(t)))
+                p.msg("Infinitive %s in 2= doesn't end in -rsi, can't handle: %s" % (inf, str(t)))
                 continue
             if not re.search("^[12]/[sp]/(ger|gerund|inf)$", "/".join(forms)):
-                pagemsg("Forms not [12]/[sp]/(ger|gerund|inf), can't handle: %s" % str(t))
+                p.msg("Forms not [12]/[sp]/(ger|gerund|inf), can't handle: %s" % str(t))
                 continue
             doit = True
         elif tn in ["gerund of"] and getp("1") == "it":
@@ -78,12 +73,12 @@ def process_text_on_page(index, pagetitle, text):
                         origt = str(t)
                         del t.params[:]
                         blib.set_template_name(t, "it-compound of")
-                        pagemsg("Converting %s to %s" % (origt, str(t)))
+                        p.msg("Converting %s to %s" % (origt, str(t)))
                         notes.append(
                             "convert {{inflection of}} wrongly indicated as a reflexive gerund to {{it-compound of}}"
                         )
                     else:
-                        pagemsg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
+                        p.msg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
                     continue
                 if (
                     page_base.endswith("ducendo")
@@ -95,10 +90,10 @@ def process_text_on_page(index, pagetitle, text):
                 ):
                     inf = inf[:-2] + "rre"
                 if not page_base.endswith("ando") and not page_base.endswith("endo"):
-                    pagemsg("WARNING: Strange gerund %s, skipping: %s" % (page_base, str(t)))
+                    p.msg("WARNING: Strange gerund %s, skipping: %s" % (page_base, str(t)))
                     continue
                 if page_base[:-4] + "ere" != inf and page_base[:-4] + "ire" != inf:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Apparent irregular infinitive %s for gerund %s, verify: %s" % (inf, page_base, str(t))
                     )
                 if verb_is_italian(inf):
@@ -106,12 +101,12 @@ def process_text_on_page(index, pagetitle, text):
                     del t.params[:]
                     blib.set_template_name(t, "it-compound of")
                     t.add("inf", inf)
-                    pagemsg("Converting %s to %s" % (origt, str(t)))
+                    p.msg("Converting %s to %s" % (origt, str(t)))
                     notes.append(
                         "convert {{inflection of}} wrongly indicated as a reflexive gerund to {{it-compound of}}"
                     )
                 else:
-                    pagemsg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
+                    p.msg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
             else:
                 need_explicit_inf = False
                 if inf.endswith("trare"):
@@ -119,18 +114,18 @@ def process_text_on_page(index, pagetitle, text):
                     trarre_inf = inf[:-1] + "re"
                     trarre_exists = verb_is_italian(trarre_inf)
                     if trare_exists and not trarre_exists:
-                        pagemsg("Infinitive %s but not %s exists, no need for inf=: %s" % (inf, trarre_inf, str(t)))
+                        p.msg("Infinitive %s but not %s exists, no need for inf=: %s" % (inf, trarre_inf, str(t)))
                     elif trarre_exists and not trare_exists:
-                        pagemsg("Infinitive %s but not %s exists, need explicit inf=: %s" % (trarre_inf, inf, str(t)))
+                        p.msg("Infinitive %s but not %s exists, need explicit inf=: %s" % (trarre_inf, inf, str(t)))
                         need_explicit_inf = True
                         inf = trarre_inf
                     elif trare_exists and trarre_exists:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Both infinitive %s and %s exist, can't handle: %s" % (inf, trarre_inf, str(t))
                         )
                         continue
                     else:
-                        pagemsg("Neither infinitive %s nor %s exist, not converting: %s" % (inf, trarre_inf, str(t)))
+                        p.msg("Neither infinitive %s nor %s exist, not converting: %s" % (inf, trarre_inf, str(t)))
                         continue
                 if not need_explicit_inf and re.search("[aeiou]re$", inf) and inf[:-1] == page_base:
                     if re.search("[ou]re$", inf):
@@ -139,15 +134,15 @@ def process_text_on_page(index, pagetitle, text):
                         origt = str(t)
                         del t.params[:]
                         blib.set_template_name(t, "it-compound of")
-                        pagemsg("Converting %s to %s" % (origt, str(t)))
+                        p.msg("Converting %s to %s" % (origt, str(t)))
                         notes.append(
                             "convert {{inflection of}} wrongly indicated as a reflexive infinitive to {{it-compound of}}"
                         )
                     else:
-                        pagemsg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
+                        p.msg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
                     continue
                 if page_base + "e" != inf:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Apparent irregular infinitive %s for page base infinitive %s, verify: %s"
                         % (inf, page_base, str(t))
                     )
@@ -156,12 +151,12 @@ def process_text_on_page(index, pagetitle, text):
                     del t.params[:]
                     blib.set_template_name(t, "it-compound of")
                     t.add("inf", inf)
-                    pagemsg("Converting %s to %s" % (origt, str(t)))
+                    p.msg("Converting %s to %s" % (origt, str(t)))
                     notes.append(
                         "convert {{inflection of}} wrongly indicated as a reflexive gerund to {{it-compound of}}"
                     )
                 else:
-                    pagemsg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
+                    p.msg("Base infinitive %s doesn't exist, not converting: %s" % (inf, str(t)))
             continue
 
     return str(parsed), notes
@@ -175,4 +170,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

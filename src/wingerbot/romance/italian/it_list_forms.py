@@ -41,26 +41,20 @@ def list_forms(template, errandpagemsg, expand_text):
             msg("%s\t%s\t%s\t%s" % (infinitive, key, "".join(linktext), "".join(displaytext)))
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "it-conj":
-            pagename = getparam(t, "pagename") or pagetitle
+            pagename = getparam(t, "pagename") or p.title
 
             def expand_text(tempcall):
-                return blib.expand_text(tempcall, pagename, pagemsg, args.verbose)
+                return blib.expand_text(tempcall, pagename, p.msg, args.verbose)
 
-            list_forms(getparam(t, "1"), errandpagemsg, expand_text)
+            list_forms(getparam(t, "1"), p.errandmsg, expand_text)
 
 
 parser = blib.create_argparser("List all forms of a verb", include_pagefile=True, include_stdin=True)
@@ -84,4 +78,4 @@ if args.direcfile:
 
         list_forms(line, errandpagemsg, expand_text)
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

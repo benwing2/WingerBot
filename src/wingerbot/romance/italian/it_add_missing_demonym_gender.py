@@ -6,30 +6,27 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "demonym-noun" not in text:
+    if "demonym-noun" not in p.text:
         return
 
-    if " " in pagetitle:
-        pagemsg("WARNING: Can't handle space in pagetitle currently")
+    if " " in p.title:
+        p.msg("WARNING: Can't handle space in p.title currently")
         return
 
-    if pagetitle.endswith("o"):
+    if p.title.endswith("o"):
         expected_gender = "m"
-    elif pagetitle.endswith("a"):
+    elif p.title.endswith("a"):
         expected_gender = "f"
-    elif pagetitle.endswith("e"):
+    elif p.title.endswith("e"):
         expected_gender = "mfbysense"
     else:
-        pagemsg("WARNING: Not sure of expected gender, skipping")
+        p.msg("WARNING: Not sure of expected gender, skipping")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -40,20 +37,20 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "it-noun" and getp("2") != "-":  # Skip singular-only nouns, which may be languages or dialects
             g = getp("1")
             if g != expected_gender:
-                pagemsg("WARNING: Actual gender %s not same as expected gender %s: %s" % (g, expected_gender, str(t)))
+                p.msg("WARNING: Actual gender %s not same as expected gender %s: %s" % (g, expected_gender, str(t)))
                 return
         if tn == "demonym-noun":
             origt = str(t)
             demonym_g = getp("g")
             if expected_gender == "mfbysense":
                 if demonym_g:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw gender %s for expected mfbysense term in {{demonym-noun}}: %s"
                         % (demonym_g, str(t))
                     )
                     return
             if demonym_g and demonym_g != expected_gender:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw gender %s in {{demonym-noun}} but expected %s: %s"
                     % (demonym_g, expected_gender, str(t))
                 )
@@ -62,7 +59,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("g", expected_gender)
                 notes.append("add g=%s in {{demonym-noun|it}}" % expected_gender)
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -76,5 +73,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:demonym-noun"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:demonym-noun"]
 )

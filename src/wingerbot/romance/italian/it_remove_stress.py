@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 remove_stress_table = {
     "à": "a",
@@ -92,25 +92,19 @@ def synchronize(term, hyphenation, pagemsg):
     return "".join(secs).replace(" ", "").split("|")
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    if pagetitle.startswith("Rhymes:Italian/"):
-        modsec = blib.find_modifiable_lang_section(text, None, pagemsg)
+    if p.title.startswith("Rhymes:Italian/"):
+        modsec = blib.find_modifiable_lang_section(p.text, None, p.msg)
     else:
-        modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg)
+        modsec = blib.find_modifiable_lang_section(p.text, "Italian", p.msg)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -121,7 +115,7 @@ def process_text_on_page(index, pagetitle, text):
             tn = tname(t)
             if tn == "it-stress":
                 if it_stress_template:
-                    pagemsg("WARNING: Saw multiple it-stress templates: %s and %s" % (str(it_stress_template), str(t)))
+                    p.msg("WARNING: Saw multiple it-stress templates: %s and %s" % (str(it_stress_template), str(t)))
                     do_continue = True
                     break
                 else:
@@ -132,7 +126,7 @@ def process_text_on_page(index, pagetitle, text):
                     lang = getparam(t, "1")
                 if lang == "it":
                     if it_hyph_template:
-                        pagemsg("WARNING: Saw multiple hyph|it templates: %s and %s" % (str(it_hyph_template), str(t)))
+                        p.msg("WARNING: Saw multiple hyph|it templates: %s and %s" % (str(it_hyph_template), str(t)))
                         do_continue = True
                         break
                     else:
@@ -141,17 +135,17 @@ def process_text_on_page(index, pagetitle, text):
             continue
         if not it_stress_template:
             if header == "Pronunciation":
-                pagemsg("No it-stress template in Pronunciation section")
+                p.msg("No it-stress template in Pronunciation section")
             continue
         if not it_hyph_template:
-            title_with_syllable_divs = title_to_title_with_syllable_divs.get(pagetitle, None)
+            title_with_syllable_divs = title_to_title_with_syllable_divs.get(p.title, None)
             if not title_with_syllable_divs:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw it-stress template %s but no hyphenation template and --stressfile not given"
                     % str(it_stress_template)
                 )
                 continue
-            new_hyph = synchronize(getparam(it_stress_template, "1"), title_with_syllable_divs.split("."), pagemsg)
+            new_hyph = synchronize(getparam(it_stress_template, "1"), title_with_syllable_divs.split("."), p.msg)
             if new_hyph is None:
                 continue
             it_hyph_template = "{{hyph|it|%s}}" % "|".join(new_hyph)
@@ -160,7 +154,7 @@ def process_text_on_page(index, pagetitle, text):
                 subsec_k,
                 "* %s\n" % str(it_stress_template),
                 "* %s\n" % it_hyph_template,
-                pagemsg,
+                p.msg,
                 no_found_repl_check=True,
             )
             if not modified:
@@ -177,7 +171,7 @@ def process_text_on_page(index, pagetitle, text):
             while getparam(it_hyph_template, str(i)):
                 hyph_params.append(getparam(it_hyph_template, str(i)))
                 i += 1
-            new_hyph = synchronize(getparam(it_stress_template, "1"), hyph_params, pagemsg)
+            new_hyph = synchronize(getparam(it_stress_template, "1"), hyph_params, p.msg)
             if new_hyph is None:
                 continue
             assert len(hyph_params) == len(new_hyph)
@@ -187,12 +181,12 @@ def process_text_on_page(index, pagetitle, text):
                 it_hyph_template.add(str(i), param)
                 i += 1
             if orig_hyph_template != str(it_hyph_template):
-                pagemsg("Replaced %s with %s" % (orig_hyph_template, str(it_hyph_template)))
+                p.msg("Replaced %s with %s" % (orig_hyph_template, str(it_hyph_template)))
             else:
-                pagemsg("No changes to hyph template %s" % (orig_hyph_template))
+                p.msg("No changes to hyph template %s" % (orig_hyph_template))
             subsec_k = str(parsed)
             subsec_k, modified = blib.replace_in_text(
-                subsec_k, "* %s\n" % str(it_stress_template), "", pagemsg, no_found_repl_check=True
+                subsec_k, "* %s\n" % str(it_stress_template), "", p.msg, no_found_repl_check=True
             )
             if not modified:
                 continue
@@ -236,11 +230,10 @@ if args.stressfile:
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
+        new=True,
         default_pages=list(title_to_title_with_syllable_divs.keys()),
     )
 else:
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:it-stress"]
+        args, start, end, process_text_on_page, new=True, default_refs=["Template:it-stress"]
     )

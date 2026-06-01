@@ -115,10 +115,8 @@ def process_page_for_anagrams(index, page, modify_this_page):
     text = modsec.rebuild(secbody="".join(subsections))
 
     for anagram in anagrams:
-
         def do_process_page(index, page):
             return remove_anagram_from_page(index, page, pagetitle)
-
         blib.do_edit(
             index, pywikibot.Page(site, anagram), do_process_page, save=args.save, verbose=args.verbose, diff=args.diff
         )

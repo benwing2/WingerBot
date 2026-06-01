@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 lang_to_name = {
     "es": "Spanish",
@@ -12,17 +12,12 @@ lang_to_name = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     langname = lang_to_name[args.lang]
 
+    text = p.text
     newtext = re.sub(r"(gerund|verb form\}\}\n)#", r"\1" + "\n#", text)
     if newtext != text:
         notes.append("insert missing newline after %s verb form/gerund headword" % langname)
@@ -40,7 +35,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if tn == "head" and getp("1") == args.lang and getp("2") == "verb form":
             if headt:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two %s verb form head templates without {{%s-verb form of}}: %s and %s"
                     % (langname, args.lang, str(headt), str(t))
                 )
@@ -56,7 +51,7 @@ def process_text_on_page(index, pagetitle, text):
                 continue
             conj = getp("1")
             if "((" in conj:
-                pagemsg("WARNING: Unable to parse conjugation: %s" % conj)
+                p.msg("WARNING: Unable to parse conjugation: %s" % conj)
                 headt = None
                 continue
             m = re.search("^(.*?)(<.*>)$", conj)
@@ -65,9 +60,9 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 inf = conj
             inf = re.sub("(se)?(-?l[aeo]s?)?$", "", inf)
-            if len(inf) >= len(pagetitle):
+            if len(inf) >= len(p.title):
                 # mandar -> mando, hendir -> hiendo
-                pagemsg("Skipping conjugation %s, not a gerund" % conj)
+                p.msg("Skipping conjugation %s, not a gerund" % conj)
                 headt = None
                 continue
             headt.add("2", "gerund")
@@ -75,7 +70,7 @@ def process_text_on_page(index, pagetitle, text):
             headt = None
 
     if headt:
-        pagemsg(
+        p.msg(
             "WARNING: Saw %s verb form head template without {{%s-verb form of}}: %s"
             % (langname, args.lang, str(headt))
         )
@@ -97,8 +92,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["%s verb forms" % lang_to_name[args.lang]],
     skip_ignorable_pages=True,
 )

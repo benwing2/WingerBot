@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 
 def convert_old_slot_name(slot, values):
@@ -145,19 +145,13 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
     return t
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "pt-verb" not in text:
+    if "pt-verb" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     saw_headt = False
@@ -170,35 +164,35 @@ def process_text_on_page(index, pagetitle, text):
             return getparam(t, param)
 
         if tn == "pt-verb" and getp("2"):
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             saw_headt = True
             if headt:
-                pagemsg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
                 return
             headt = t
         elif tn == "pt-conj" and getp("2"):
             if not headt:
-                pagemsg("WARNING: Saw conjugation template without {{pt-verb}} head template: %s" % str(t))
+                p.msg("WARNING: Saw conjugation template without {{pt-verb}} head template: %s" % str(t))
                 return
             headt_as_conj_str = re.sub(r"^\{\{pt-verb\|", "{{pt-conj|", str(headt))
             if str(t) != headt_as_conj_str:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw head template %s with different params from conjugation template %s"
                     % (str(headt), str(t))
                 )
                 return
-            if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
+            if convert_template_to_new(t, p.title, p.msg, p.errandmsg, notes):
                 orig_headt = str(headt)
                 headtn = tname(headt)
                 # Erase all params
                 del headt.params[:]
-                if pagetitle in manual_conjs:
-                    headt.add("1", manual_conjs[pagetitle])
+                if p.title in manual_conjs:
+                    headt.add("1", manual_conjs[p.title])
                 notes.append("converted {{%s|...}} to %s" % (headtn, str(headt)))
             headt = None
 
     if not saw_headt:
-        pagemsg("WARNING: Didn't see {{pt-verb}} head template")
+        p.msg("WARNING: Didn't see {{pt-verb}} head template")
         return
 
     return str(parsed), notes
@@ -231,5 +225,5 @@ if args.direcfile:
             manual_conjs[verb] = conj
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Portuguese verbs"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Portuguese verbs"]
 )

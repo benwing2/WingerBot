@@ -6,19 +6,16 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Portuguese", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Portuguese", p.msg)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header not in ["Verb", "Participle"]:
@@ -35,24 +32,24 @@ def process_text_on_page(index, pagetitle, text):
             tn = tname(t)
             if tn == "head":
                 if getp("1") != "pt":
-                    pagemsg("WARNING: Wrong language in {{head}}: %s" % origt)
+                    p.msg("WARNING: Wrong language in {{head}}: %s" % origt)
                     must_continue = True
                     break
                 if headt:
-                    pagemsg("WARNING: Saw two head templates in section: %s and %s" % (str(headt), origt))
+                    p.msg("WARNING: Saw two head templates in section: %s and %s" % (str(headt), origt))
                     must_continue = True
                     break
                 headt = t
             elif tn == "pt-verb form of":
                 if form_of_t:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw two {{pt-verb form of}} templates in section: %s and %s" % (str(form_of_t), origt)
                     )
                     must_continue = True
                     break
                 form_of_t = t
                 if headt is None:
-                    pagemsg("WARNING: Saw {{pt-verb form of}} template without {{head|pt|...}} in section: %s" % origt)
+                    p.msg("WARNING: Saw {{pt-verb form of}} template without {{head|pt|...}} in section: %s" % origt)
                     must_continue = True
                     break
 
@@ -68,11 +65,11 @@ def process_text_on_page(index, pagetitle, text):
                 elif re.search("[oô]r$", lemma):
                     stem = lemma[:-2] + "ost"
                 else:
-                    pagemsg("WARNING: Unrecognized lemma: %s" % lemma)
+                    p.msg("WARNING: Unrecognized lemma: %s" % lemma)
                     must_continue = True
                     break
                 pp = stem + "o"
-                if pagetitle == pp:
+                if p.title == pp:
                     del headt.params[:]
                     blib.set_template_name(headt, "pt-pp")
                     del t.params[:]
@@ -81,27 +78,27 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("2", lemma)
                     subsections[k - 1] = subsections[k - 1].replace("Verb", "Participle")
                     notes.append("convert verb form for Portuguese lemma '%s' to past participle" % lemma)
-                elif re.search("(a|os|as)$", pagetitle):
-                    pp_lemma = re.sub("[ao]s?$", "", pagetitle) + "o"
+                elif re.search("(a|os|as)$", p.title):
+                    pp_lemma = re.sub("[ao]s?$", "", p.title) + "o"
                     if pp_lemma != pp:
-                        pagemsg(
+                        p.msg(
                             "WARNING: For verb infinitive %s, expected past participle lemma %s but saw %s, not same; skipping"
                             % (lemma, pp, pp_lemma)
                         )
                         continue
                     newtn, newg = (
                         ("feminine singular of", "f-s")
-                        if pagetitle.endswith("a")
+                        if p.title.endswith("a")
                         else (
                             ("masculine plural of", "m-p")
-                            if pagetitle.endswith("os")
-                            else ("feminine plural of", "f-p") if pagetitle.endswith("as") else (None, None)
+                            if p.title.endswith("os")
+                            else ("feminine plural of", "f-p") if p.title.endswith("as") else (None, None)
                         )
                     )
                     if newtn is None:
                         raise RuntimeError(
                             "Internal error: Something wrong, can't identify gender/number of page title '%s'"
-                            % pagetitle
+                            % p.title
                         )
                     del t.params[:]
                     blib.set_template_name(t, newtn)
@@ -115,7 +112,7 @@ def process_text_on_page(index, pagetitle, text):
                         % (lemma, pp_lemma)
                     )
                 else:
-                    pagemsg("WARNING: Can't identify non-lemma form as past participle (form) of lemma '%s'" % lemma)
+                    p.msg("WARNING: Can't identify non-lemma form as past participle (form) of lemma '%s'" % lemma)
             elif tn not in [
                 "pt-pp",
                 "past participle of",
@@ -131,7 +128,7 @@ def process_text_on_page(index, pagetitle, text):
                 "cln",
                 "catlangname",
             ]:
-                pagemsg("WARNING: Unrecognized template %s, skipping" % origt)
+                p.msg("WARNING: Unrecognized template %s, skipping" % origt)
                 must_continue = True
         if must_continue:
             continue
@@ -147,5 +144,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Portuguese verb forms"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Portuguese verb forms"]
 )

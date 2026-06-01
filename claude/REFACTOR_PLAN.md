@@ -34,7 +34,7 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `swedish/` | 4 | ✅ DONE | All files refactored manually |
 | `slavic/russian/` | 95 | ✅ DONE | 95 files auto-refactored; manual fixes in 18 files |
 | `slavic/` (non-russian) | 52 | ✅ DONE | 52 files auto-refactored; manual fixes in 10 files |
-| `romance/` | 63 | ⬜ TODO | |
+| `romance/` | 69 | ✅ DONE | 69 files auto-refactored; manual fixes in 9 files |
 | `arabic/` | 17 | ⬜ TODO | |
 | `chinese/` | 12 | ⬜ TODO | |
 | `sgconlaw/` | 11 | ⬜ TODO | |

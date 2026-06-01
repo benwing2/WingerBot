@@ -17,16 +17,13 @@ def split_with_footnotes(text):
     return retval
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "it-verb" not in text:
+    if "it-verb" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -36,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
             return getparam(t, param)
 
         if tn in ["it-verb"]:
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             if not getp("1"):
                 continue
             parts = []
@@ -65,7 +62,7 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "3", "aux", "impers", "only3sp"] and pn not in irregparams:
-                    pagemsg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
                     must_continue = True
                     break
             if must_continue:
@@ -74,7 +71,7 @@ def process_text_on_page(index, pagetitle, text):
             t.add("1", "".join(parts))
             notes.append("convert {{it-verb}} params to new form")
         if str(t) != origt:
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -84,5 +81,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:it-verb"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:it-verb"]
 )

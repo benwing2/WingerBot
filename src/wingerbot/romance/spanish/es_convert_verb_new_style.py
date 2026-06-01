@@ -3,7 +3,7 @@
 import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 
 def snarf_inflections(json_output):
@@ -64,20 +64,15 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
     )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "es-verb" not in text:
+    if "es-verb" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
 
@@ -86,22 +81,22 @@ def process_text_on_page(index, pagetitle, text):
 
         if tn == "es-verb":
             if headt:
-                pagemsg("WARNING: Saw two {{es-verb}} without {{es-conj}}: %s and %s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw two {{es-verb}} without {{es-conj}}: %s and %s" % (str(headt), str(t)))
             headt = t
             continue
 
         if tn == "es-conj":
             if not headt:
-                pagemsg("WARNING: Saw {{es-conj}} without {{es-verb}}: %s" % str(t))
+                p.msg("WARNING: Saw {{es-conj}} without {{es-verb}}: %s" % str(t))
                 continue
 
             if getparam(headt, "attn"):
-                pagemsg("WARNING: Saw attn=, skipping: %s" % str(headt))
+                p.msg("WARNING: Saw attn=, skipping: %s" % str(headt))
                 headt = None
                 continue
 
             if getparam(headt, "new"):
-                pagemsg("Saw new=, skipping: %s" % str(headt))
+                p.msg("Saw new=, skipping: %s" % str(headt))
                 headt = None
                 continue
 
@@ -111,7 +106,7 @@ def process_text_on_page(index, pagetitle, text):
             newt.add("new", "1")
             rmparam(newt, "nocomb")
 
-            if compare_new_and_old_templates(str(headt), str(newt), pagetitle, pagemsg, errandpagemsg):
+            if compare_new_and_old_templates(str(headt), str(newt), p.title, p.msg, p.errandmsg):
                 origt = str(headt)
                 del headt.params[:]
                 for param in newt.params:
@@ -123,14 +118,14 @@ def process_text_on_page(index, pagetitle, text):
 
                 if origt != str(headt):
                     headt.add("new", "1")
-                    pagemsg("Replaced %s with %s" % (origt, str(headt)))
+                    p.msg("Replaced %s with %s" % (origt, str(headt)))
                     notes.append("convert {{es-verb}} to new format compatible with {{es-conj}}")
                 else:
-                    pagemsg("No changes to %s" % str(headt))
+                    p.msg("No changes to %s" % str(headt))
             headt = None
 
     if headt:
-        pagemsg("WARNING: Saw {{es-verb}} without {{es-conj}}: %s" % str(headt))
+        p.msg("WARNING: Saw {{es-verb}} without {{es-conj}}: %s" % str(headt))
 
     return str(parsed), notes
 
@@ -142,5 +137,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Spanish verbs"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Spanish verbs"]
 )

@@ -6,21 +6,19 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
+    text = p.text
 
     if len(re.findall("^#", text, re.M)) >= 3:
-        pagemsg("WARNING: Page has 3 or more definition lines, skipping")
+        p.msg("WARNING: Page has 3 or more definition lines, skipping")
         return
-    if "===Adjective===" in text and "===Etymology===" not in text:
-        cento_split = re.split("(cento)", pagetitle)
+    if "===Adjective===" in p.text and "===Etymology===" not in p.text:
+        cento_split = re.split("(cento)", p.title)
         if len(cento_split) != 3:
-            pagemsg("WARNING: Can't split %s on -cento-" % pagetitle)
+            p.msg("WARNING: Can't split %s on -cento-" % p.title)
             return
         text = text.replace(
             "===Adjective===", "===Etymology===\n{{affix|it|%s%s|%s}}\n\n===Adjective===" % tuple(cento_split)
@@ -38,4 +36,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -4,7 +4,7 @@ import pywikibot, re, sys, argparse, json, unicodedata
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 lang_to_name = {
     "ca": "Catalan",
@@ -349,26 +349,23 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-def process_text_on_page(index, pagetitle, pagetext):
+def process_text_on_page(p):
     norm = args.norm
     normname = norm_to_name[norm]
 
     def pagemsg(txt, fn=msg, overriding_index=None):
-        fn("Page %s %s: %s" % (overriding_index or index, pagetitle, txt))
+        fn("Page %s %s: %s" % (overriding_index or p.index, p.title, txt))
 
     def errandpagemsg(txt):
         pagemsg(txt, fn=errandmsg)
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
     notes = []
 
-    if " " in pagetitle:
-        pagemsg("Space in pagetitle, not creating verb forms")
+    if " " in p.title:
+        pagemsg("Space in page title, not creating verb forms")
         return
 
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     conjs = []
     standard_gl_conj_forms = None
     skipped_reflexive = False
@@ -378,7 +375,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         if tn == "%s-conj" % norm or standard_conj_for_reinteg:
             conj_normname = "Galician" if standard_conj_for_reinteg else normname
             arg1 = getparam(t, "1")
-            inf = pagetitle
+            inf = p.title
             if arg1 == "":
                 newconj = inf
             elif re.search("^<[^<>]*>$", arg1):
@@ -399,7 +396,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                 skipped_reflexive = True
                 continue
             if arg1 not in conjs:
-                jsonconj = expand_text(
+                jsonconj = p.expand_text(
                     "{{%s-conj|%s|json=1%s}}"
                     % ("gl" if standard_conj_for_reinteg else norm, arg1, "|nocomb=1" if norm == "es" else "")
                 )
@@ -453,7 +450,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         for slot_index, (slot, slot_forms) in enumerate(sorted(list(forms.items()))):
 
             def get_combined_index():
-                return "%s.%s" % (index, slot_index + 1)
+                return "%s.%s" % (p.index, slot_index + 1)
 
             def indexed_pagemsg(txt):
                 pagemsg(txt, overriding_index=get_combined_index())
@@ -570,8 +567,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["%s verbs" % lang_to_name[norm_to_lang[args.norm]]],
     skip_ignorable_pages=True,
 )

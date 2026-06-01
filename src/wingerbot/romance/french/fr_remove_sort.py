@@ -30,14 +30,11 @@ fr_head_templates = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -45,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
             rmparam(t, "sort")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replacing %s with %s" % (origt, newt))
+            p.msg("Replacing %s with %s" % (origt, newt))
             notes.append("remove sort= from {{%s}}" % tn)
 
     return str(parsed), notes
@@ -60,7 +57,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["French lemmas", "French non-lemma forms"],
 )

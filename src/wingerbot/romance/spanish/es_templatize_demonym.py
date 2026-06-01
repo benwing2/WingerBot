@@ -21,19 +21,16 @@ placetypes = [
 placetype_re = "(?:%s)" % "|".join(placetypes)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
-    origtext = text
+    origtext = p.text
 
-    modsec = blib.find_modifiable_lang_section(text, "Spanish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Spanish", p.msg, force_final_nls=True)
     if modsec is None:
         return
     sections, j, secbody, sectail = modsec.props()
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     sectail_is_demonym = re.search(r"\{\{(C|c|top|topic|topics|catlangcode)\|es(\|[^{}=|]*)*\|Demonyms([|}])", sectail)
@@ -103,7 +100,7 @@ def process_text_on_page(index, pagetitle, text):
                     for param in linkt.params:
                         pn = pname(param)
                         if pn not in ["1", "2", "lang"]:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Can't parse Wikipedia link, unrecognized param %s=%s: %s"
                                 % str(pn, str(param.value), linkt)
                             )
@@ -167,13 +164,13 @@ def process_text_on_page(index, pagetitle, text):
                         marked_up = rawest_toponym_to_marked_up[rawest_toponym]
                         if marked_up != toponym:
                             if len(marked_up) < len(toponym):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw two different possible markups for raw toponym '%s': existing %s and new %s; using new because it's longer"
                                     % (rawest_toponym, marked_up, toponym)
                                 )
                                 rawest_toponym_to_marked_up[rawest_toponym] = toponym
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw two different possible markups for raw toponym '%s': existing %s and new %s; keeping existing because it's longer"
                                     % (rawest_toponym, marked_up, toponym)
                                 )
@@ -205,7 +202,7 @@ def process_text_on_page(index, pagetitle, text):
                     raw_demonym = "|t=%s" % raw_demonym
                 toponym = raw_toponym_to_toponym(raw_toponym)
                 if not toponym:
-                    pagemsg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
+                    p.msg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
                     return m.group(0)
                 notes.append("templatize raw demonym adjective definition for Spanish toponym '%s'" % raw_toponym)
                 need_to_remove_cat[0] = True
@@ -219,7 +216,7 @@ def process_text_on_page(index, pagetitle, text):
                 raw_demonym, raw_toponym = m.groups()
                 toponym = raw_toponym_to_toponym(raw_toponym)
                 if not toponym:
-                    pagemsg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
+                    p.msg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
                     return m.group(0)
                 notes.append(
                     "templatize raw demonym adjective definition for Spanish toponym '%s' with demonym gloss '%s'"
@@ -248,7 +245,7 @@ def process_text_on_page(index, pagetitle, text):
                     elif g in [["mf"], ["mfbysense"], ["m", "f"]]:
                         demonym_gender = ""
                     elif g not in [["m-p"], ["f-p"], ["mf-p"], ["mfbysense-p"], ["mfequiv"]]:
-                        pagemsg("WARNING: Unable to determine demonym gender from headword template: %s" % str(t))
+                        p.msg("WARNING: Unable to determine demonym gender from headword template: %s" % str(t))
                     break
             if demonym_gender is not None:
                 someone_from_re = (
@@ -259,7 +256,7 @@ def process_text_on_page(index, pagetitle, text):
                     raw_toponym = m.group(1)
                     toponym = raw_toponym_to_toponym(raw_toponym)
                     if not toponym:
-                        pagemsg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
+                        p.msg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
                         return m.group(0)
                     notes.append("templatize raw demonym noun definition for Spanish toponym '%s'" % raw_toponym)
                     if demonym_gender:
@@ -279,7 +276,7 @@ def process_text_on_page(index, pagetitle, text):
                     raw_demonym, raw_toponym = m.groups()
                     toponym = raw_toponym_to_toponym(raw_toponym)
                     if not toponym:
-                        pagemsg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
+                        p.msg("WARNING: Unable to parse raw toponym: %s" % raw_toponym)
                         return m.group(0)
                     notes.append(
                         "templatize raw demonym noun definition for Spanish toponym '%s' with demonym gloss '%s'"
@@ -331,4 +328,4 @@ parser = blib.create_argparser("Templatize Spanish demonyms", include_pagefile=T
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

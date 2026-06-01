@@ -10,13 +10,10 @@ class BreakException(Exception):
     pass
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Galician", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Galician", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -24,7 +21,7 @@ def process_text_on_page(index, pagetitle, text):
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")
         if lang != "gl":
-            pagemsg("WARNING: Saw {{%s}} for non-Galician language: %s" % (tname(t), str(t)))
+            p.msg("WARNING: Saw {{%s}} for non-Galician language: %s" % (tname(t), str(t)))
             raise BreakException()
 
     def check_unrecognized_params(t, allowed_params, no_break=False):
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
             pn = pname(param)
             pv = str(param.value)
             if pn not in allowed_params:
-                pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
+                p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
                 if not no_break:
                     raise BreakException()
                 else:
@@ -41,12 +38,12 @@ def process_text_on_page(index, pagetitle, text):
 
     def verify_verb_lemma(t, term):
         if not re.search("([aeiíoóô]r)$", term):
-            pagemsg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
+            p.msg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
             raise BreakException()
 
     def verify_past_participle_inflection(t, name, ending):
-        if not re.search("[dt]%s$" % ending, pagetitle):
-            pagemsg(
+        if not re.search("[dt]%s$" % ending, p.title):
+            p.msg(
                 "WARNING: Found %s past participle form but page title doesn't have the correct form: %s"
                 % (name, str(t))
             )
@@ -66,16 +63,16 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     check_unrecognized_params(t, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
                     verify_lang(t)
-                if pagetitle.endswith("a"):
+                if p.title.endswith("a"):
                     name = "feminine singular"
-                elif pagetitle.endswith("os"):
+                elif p.title.endswith("os"):
                     name = "masculine plural"
-                elif pagetitle.endswith("as"):
+                elif p.title.endswith("as"):
                     name = "feminine plural"
                 else:
-                    pagemsg("WARNING: Unrecognized ending, not -a, -os or -as: %s" % str(t))
+                    p.msg("WARNING: Unrecognized ending, not -a, -os or -as: %s" % str(t))
                     raise BreakException()
-                m = re.search("^(.*)([ao]s?)$", pagetitle)
+                m = re.search("^(.*)([ao]s?)$", p.title)
                 assert m
                 base, expected_ending = m.groups()
                 pp = base + "o"
@@ -108,7 +105,7 @@ def process_text_on_page(index, pagetitle, text):
                     expected_ending = "as"
                 else:
                     assert False
-                pp = re.sub("^([ao]s?)$", "", pagetitle) + "o"
+                pp = re.sub("^([ao]s?)$", "", p.title) + "o"
                 verify_past_participle_inflection(t, name, expected_ending)
                 verify_verb_lemma(t, getp("2"))
                 rmparam(t, "nocat")
@@ -128,4 +125,4 @@ parser = blib.create_argparser("Clean up Galician past participle forms", includ
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

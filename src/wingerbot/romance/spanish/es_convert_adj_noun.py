@@ -149,26 +149,23 @@ def make_masculine(form, special=None):
     return form
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if old_adj_template not in text and "es-noun" not in text:
+    if old_adj_template not in p.text and "es-noun" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "es-noun" and args.remove_redundant_noun_args:
             origt = str(t)
-            lemma = blib.remove_links(getparam(t, "head") or pagetitle)
+            lemma = blib.remove_links(getparam(t, "head") or p.title)
             if not getparam(t, "2") and (getparam(t, "pl2") or getparam(t, "pl3")):
-                pagemsg("WARNING: Saw pl2= or pl3= without 2=: %s" % str(t))
+                p.msg("WARNING: Saw pl2= or pl3= without 2=: %s" % str(t))
                 continue
             g = getparam(t, "1")
             ms = blib.fetch_param_chain(t, "m", "m")
@@ -178,7 +175,7 @@ def process_text_on_page(index, pagetitle, text):
                     space_in_m = True
             mpls = blib.fetch_param_chain(t, "mpl", "mpl")
             if space_in_m and not mpls and not g.endswith("-p"):
-                pagemsg("WARNING: Space in m=%s and old default noun algorithm applying" % ",".join(ms))
+                p.msg("WARNING: Space in m=%s and old default noun algorithm applying" % ",".join(ms))
             fs = blib.fetch_param_chain(t, "f", "f")
             space_in_f = False
             for f in fs:
@@ -186,11 +183,11 @@ def process_text_on_page(index, pagetitle, text):
                     space_in_f = True
             fpls = blib.fetch_param_chain(t, "fpl", "fpl")
             if space_in_f and not fpls and not g.endswith("-p"):
-                pagemsg("WARNING: Space in f=%s and old default noun algorithm applying" % ",".join(fs))
+                p.msg("WARNING: Space in f=%s and old default noun algorithm applying" % ",".join(fs))
             pls = blib.fetch_param_chain(t, "2", "pl")
             if not pls and not g.endswith("-p"):
                 if " " in lemma:
-                    pagemsg("WARNING: Space in headword and old default noun algorithm applying")
+                    p.msg("WARNING: Space in headword and old default noun algorithm applying")
                 continue
             pls_with_def = []
             defpl = make_plural(lemma)
@@ -200,7 +197,7 @@ def process_text_on_page(index, pagetitle, text):
                 if set(pls) == set(defpl):
                     pls_with_def = ["+"]
                 elif set(pls) < set(defpl):
-                    pagemsg(
+                    p.msg(
                         "WARNING: pls=%s subset of defpls=%s, replacing with default" % (",".join(pls), ",".join(defpl))
                     )
                     pls_with_def = ["+"]
@@ -219,14 +216,14 @@ def process_text_on_page(index, pagetitle, text):
                 if special_pl is None:
                     continue
                 if len(special_pl) > 1 and set(pls) < set(special_pl):
-                    pagemsg(
+                    p.msg(
                         "WARNING: for special=%s, pls=%s subset of special_pl=%s, allowing"
                         % (special, ",".join(pls), ",".join(special_pl))
                     )
                     actual_special = special
                     break
                 if set(pls) == set(special_pl):
-                    pagemsg("Found special=%s with special_pl=%s" % (special, ",".join(special_pl)))
+                    p.msg("Found special=%s with special_pl=%s" % (special, ",".join(special_pl)))
                     actual_special = special
                     break
 
@@ -256,7 +253,7 @@ def process_text_on_page(index, pagetitle, text):
                         if not mfpls or set(mfpls) == set(defpls):
                             ok = True
                         elif set(mfpls) < set(defpls):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: %pl=%s subset of default=%s, allowing"
                                 % (mf, ",".join(mfpls), ",".join(defpls))
                             )
@@ -272,12 +269,12 @@ def process_text_on_page(index, pagetitle, text):
                         if special_mf is None:
                             continue
                         if mfs == [special_mf]:
-                            pagemsg("Found special=%s with special_mf=%s" % (special, special_mf))
+                            p.msg("Found special=%s with special_mf=%s" % (special, special_mf))
                             actual_special = special
                             break
                     if actual_special:
                         if not mfpls:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Explicit %s=%s matches special=%s but no %s plural"
                                 % (mf, ",".join(mfs), actual_special, mf_full)
                             )
@@ -285,7 +282,7 @@ def process_text_on_page(index, pagetitle, text):
                             special_mfpl = make_plural(special_mf, actual_special)
                             if special_mfpl:
                                 if len(special_mfpl) > 1 and set(mfpls) < set(special_mfpl):
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: for %s=%s and special=%s, %spls=%s subset of special_%spl=%s, allowing"
                                         % (
                                             mf,
@@ -298,12 +295,12 @@ def process_text_on_page(index, pagetitle, text):
                                         )
                                     )
                                 elif set(mfpls) == set(special_mfpl):
-                                    pagemsg(
+                                    p.msg(
                                         "Found %s=%s and special=%s, %spls=%s matches special_%spl"
                                         % (mf, ",".join(mfs), actual_special, mf, ",".join(mfpls), mf)
                                     )
                                 else:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: for %s=%s and special=%s, %spls=%s doesn't match special_%spl=%s"
                                         % (
                                             mf,
@@ -335,13 +332,13 @@ def process_text_on_page(index, pagetitle, text):
                             if set(defpl) == set(mfpls):
                                 ok = True
                             elif len(defpl) > 1 and set(mfpls) < set(defpl):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: for %s=%s, %spl=%s subset of default pl %s, allowing"
                                     % (mf, ",".join(mfs), mf, ",".join(mfpls), ",".join(defpl))
                                 )
                                 ok = True
                             if ok:
-                                pagemsg(
+                                p.msg(
                                     "Found %s=%s, %spl=%s matches default pl" % (mf, ",".join(mfs), mf, ",".join(mfpls))
                                 )
                                 notes.append(
@@ -352,7 +349,7 @@ def process_text_on_page(index, pagetitle, text):
                                 for special in romance_utils.all_specials:
                                     defpl = [x for y in mfs for x in (make_plural(y, special) or [])]
                                     if set(defpl) == set(mfpls):
-                                        pagemsg(
+                                        p.msg(
                                             "Found %s=%s, %spl=%s matches special=%s"
                                             % (mf, ",".join(mfs), mf, ",".join(mfpls), special)
                                         )
@@ -366,23 +363,20 @@ def process_text_on_page(index, pagetitle, text):
             handle_mf("m", "masculine", make_masculine)
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
         if tn == "es-noun" and args.make_multiword_plural_explicit:
             origt = str(t)
-            lemma = blib.remove_links(getparam(t, "head") or pagetitle)
-
-            def expand_text(tempcall):
-                return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+            lemma = blib.remove_links(getparam(t, "head") or p.title)
 
             if " " in lemma and not getparam(t, "2"):
                 g = getparam(t, "1")
                 if not g.endswith("-p"):
-                    explicit_pl = expand_text("{{#invoke:es-headword|make_plural_noun|%s|%s|true}}" % (lemma, g))
+                    explicit_pl = p.expand_text("{{#invoke:es-headword|make_plural_noun|%s|%s|true}}" % (lemma, g))
                     if not explicit_pl:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unable to add explicit plural to multiword noun, make_plural_noun returned an empty string"
                         )
                         continue
@@ -398,11 +392,11 @@ def process_text_on_page(index, pagetitle, text):
             if space_in_m and not mpls:
                 mpls = []
                 for m in ms:
-                    explicit_pl = expand_text(
+                    explicit_pl = p.expand_text(
                         "{{#invoke:es-headword|make_plural_noun|%s|m|true}}" % (blib.remove_links(m))
                     )
                     if not explicit_pl:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unable to add explicit plural to m=%s, make_plural_noun returned an empty string"
                             % m
                         )
@@ -421,11 +415,11 @@ def process_text_on_page(index, pagetitle, text):
             if space_in_f and not fpls:
                 fpls = []
                 for f in fs:
-                    explicit_pl = expand_text(
+                    explicit_pl = p.expand_text(
                         "{{#invoke:es-headword|make_plural_noun|%s|f|true}}" % (blib.remove_links(f))
                     )
                     if not explicit_pl:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unable to add explicit plural to f=%s, make_plural_noun returned an empty string"
                             % f
                         )
@@ -435,16 +429,16 @@ def process_text_on_page(index, pagetitle, text):
                 blib.set_param_chain(t, fpls, "fpl", "fpl")
                 notes.append("add explicit plural to f=%s" % ",".join(fs))
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
         if tn == old_adj_template:
             origt = str(t)
-            lemma = blib.remove_links(getparam(t, "head") or pagetitle)
-            deff = make_feminine(pagetitle)
-            defmpl = make_plural(pagetitle)
+            lemma = blib.remove_links(getparam(t, "head") or p.title)
+            deff = make_feminine(p.title)
+            defmpl = make_plural(p.title)
             fs = []
             fullfs = []
-            f = getparam(t, "f") or pagetitle
+            f = getparam(t, "f") or p.title
             fullfs.append(f)
             if f == deff:
                 f = "+"
@@ -458,7 +452,7 @@ def process_text_on_page(index, pagetitle, text):
                     f2 == "+"
                 fs.append(f2)
             mpls = []
-            mpl = getparam(t, "mpl") or getparam(t, "pl") or pagetitle + "s"
+            mpl = getparam(t, "mpl") or getparam(t, "pl") or p.title + "s"
             mpls.append(mpl)
             mpl2 = getparam(t, "mpl2") or getparam(t, "pl2")
             if mpl2:
@@ -468,14 +462,14 @@ def process_text_on_page(index, pagetitle, text):
             if set(mpls) == set(defmpl):
                 mpls = ["+"]
             elif set(mpls) < set(defmpl):
-                pagemsg(
+                p.msg(
                     "WARNING: mpls=%s subset of defmpl=%s, replacing with default" % (",".join(mpls), ",".join(defmpl))
                 )
                 mpls = ["+"]
             mpls = ["#" if x == lemma else x for x in mpls]
             deffpl = [x for f in fullfs for x in make_plural(f)]
             fpls = []
-            fpl = getparam(t, "fpl") or getparam(t, "pl") or (getparam(t, "f") or pagetitle) + "s"
+            fpl = getparam(t, "fpl") or getparam(t, "pl") or (getparam(t, "f") or p.title) + "s"
             fpls.append(fpl)
             fpl2 = getparam(t, "fpl2") or getparam(t, "pl2")
             if fpl2:
@@ -485,17 +479,17 @@ def process_text_on_page(index, pagetitle, text):
             if set(fpls) == set(deffpl):
                 fpls = ["+"]
             elif set(fpls) < set(deffpl):
-                pagemsg(
+                p.msg(
                     "WARNING: fpls=%s subset of deffpl=%s, replacing with default" % (",".join(fpls), ",".join(deffpl))
                 )
                 fpls = ["+"]
             fpls = ["#" if x == lemma else x for x in fpls]
             actual_special = None
             for special in romance_utils.all_specials:
-                deff = make_feminine(pagetitle, special)
+                deff = make_feminine(p.title, special)
                 if deff is None:
                     continue
-                defmpl = make_plural(pagetitle, special)
+                defmpl = make_plural(p.title, special)
                 deffpl = make_plural(deff, special)
                 deff = [deff]
                 if fullfs == deff and fullmpls == defmpl and fullfpls == deffpl:
@@ -509,10 +503,10 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if pn == "1" and pv in ["m", "mf"]:
-                    pagemsg("WARNING: Extraneous param %s=%s in %s, ignoring" % (pn, pv, str(t)))
+                    p.msg("WARNING: Extraneous param %s=%s in %s, ignoring" % (pn, pv, str(t)))
                     continue
                 if pn not in ["head", "f", "f2", "pl", "pl2", "mpl", "mpl2", "fpl", "fpl2"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -521,7 +515,7 @@ def process_text_on_page(index, pagetitle, text):
             del t.params[:]
             if head:
                 t.add("head", head)
-            if fullfs == [pagetitle] and fullmpls == [pagetitle] and fullfpls == [pagetitle]:
+            if fullfs == [p.title] and fullmpls == [p.title] and fullfpls == [p.title]:
                 blib.set_template_name(t, "es-adj-inv")
             else:
                 blib.set_template_name(t, "es-adj")
@@ -542,10 +536,10 @@ def process_text_on_page(index, pagetitle, text):
                             blib.set_param_chain(t, fpls, "fpl", "fpl")
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert {{%s}} to new {{%s}} format" % (old_adj_template, tname(t)))
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
     return str(parsed), notes
 
@@ -565,4 +559,4 @@ if args.remove_redundant_noun_args:
 else:
     default_refs = ["Template:%s" % old_adj_template]
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=default_refs)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=default_refs)

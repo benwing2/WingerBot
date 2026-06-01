@@ -6,14 +6,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -36,10 +33,10 @@ def process_text_on_page(index, pagetitle, text):
                         unrecognized_params = True
                         break
                 if unrecognized_params:
-                    pagemsg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
+                    p.msg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
                     continue
                 if not g:
-                    pagemsg("WARNING: No gender given in %s, skipping" % str(t))
+                    p.msg("WARNING: No gender given in %s, skipping" % str(t))
                     continue
                 found_feminine_noun = False
                 if g == "f" and not g2 and not plural:
@@ -47,13 +44,13 @@ def process_text_on_page(index, pagetitle, text):
                         if str(tt.name) == "feminine noun of" and getparam(tt, "lang") == "fr":
                             found_feminine_noun = True
                 if found_feminine_noun:
-                    pagemsg("Found 'feminine noun of', assuming countable")
+                    p.msg("Found 'feminine noun of', assuming countable")
                 elif g not in ["m-p", "f-p"] and not plural:
                     if args.fix_missing_plurals:
-                        pagemsg("WARNING: No plural given in %s, assuming default plural, PLEASE REVIEW" % str(t))
+                        p.msg("WARNING: No plural given in %s, assuming default plural, PLEASE REVIEW" % str(t))
                         fixed_plural_warning = True
                     else:
-                        pagemsg("WARNING: No plural given in %s, skipping" % str(t))
+                        p.msg("WARNING: No plural given in %s, skipping" % str(t))
                         continue
                 rmparam(t, "4")
                 rmparam(t, "3")
@@ -88,10 +85,10 @@ def process_text_on_page(index, pagetitle, text):
                         unrecognized_params = True
                         break
                 if unrecognized_params:
-                    pagemsg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
+                    p.msg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
                     continue
                 if not g:
-                    pagemsg("WARNING: No gender given in %s, skipping" % str(t))
+                    p.msg("WARNING: No gender given in %s, skipping" % str(t))
                     continue
                 rmparam(t, "3")
                 rmparam(t, "2")
@@ -124,9 +121,9 @@ def process_text_on_page(index, pagetitle, text):
                         t.name = "fr-adj"
                         t.add("inv", "y")
                     else:
-                        pagemsg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
+                        p.msg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
                 else:
-                    pagemsg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
+                    p.msg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
             elif headtype in [
                 "adjective form",
                 "verb form",
@@ -149,7 +146,7 @@ def process_text_on_page(index, pagetitle, text):
                         unrecognized_params = True
                         break
                 if unrecognized_params:
-                    pagemsg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
+                    p.msg("WARNING: Unrecognized parameters in %s, skipping" % str(t))
                     continue
                 rmparam(t, "sort")
                 rmparam(t, "head")
@@ -177,7 +174,7 @@ def process_text_on_page(index, pagetitle, text):
 
             newt = str(t)
             if origt != newt:
-                pagemsg("Replacing %s with %s" % (origt, newt))
+                p.msg("Replacing %s with %s" % (origt, newt))
                 notes.append(
                     "replaced {{head|fr|%s}} with {{%s}}%s"
                     % (headtype, tname(t), " (NEEDS REVIEW)" if fixed_plural_warning else "")
@@ -200,8 +197,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=[
         "French nouns",
         "French proper nouns",

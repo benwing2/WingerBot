@@ -6,7 +6,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, site, tname, pname
 
 templates_to_change = [
     "fr-conj-er",
@@ -240,30 +240,23 @@ def compare_conjugation(template, refl, pagemsg, errandpagemsg, expand_text):
     return difvals
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in templates_to_change or tn in refl_templates_to_change:
             refl = tn in refl_templates_to_change
-            difvals = compare_conjugation(t, refl, pagemsg, errandpagemsg, expand_text)
+            difvals = compare_conjugation(t, refl, p.msg, p.errandmsg, p.expand_text)
             if difvals is None:
                 pass
             elif difvals:
                 difprops = []
                 for prop, (oldval, newval) in difvals:
                     difprops.append("%s=%s vs. %s" % (prop, oldval or "(missing)", newval or "(missing)"))
-                pagemsg(
+                p.msg(
                     "WARNING: Different conjugation when changing template %s to {{fr-conj-auto}}: %s"
                     % (str(t), "; ".join(difprops))
                 )
@@ -279,10 +272,10 @@ def process_text_on_page(index, pagetitle, text):
                         or pname == "3"
                         and pval not in ["avoir", "être", "avoir or être"]
                     ):
-                        pagemsg("WARNING: Found extra param %s=%s in %s" % (pname, pval, str(t)))
+                        p.msg("WARNING: Found extra param %s=%s in %s" % (pname, pval, str(t)))
                     if pname == "aux" and pval != "avoir":
                         aux = pval
-                        pagemsg("Found non-avoir auxiliary aux=%s in %s" % (pval, str(t)))
+                        p.msg("Found non-avoir auxiliary aux=%s in %s" % (pval, str(t)))
                     auxpname = (
                         "3"
                         if tn in ["fr-conj-e-er", "fr-conj-ir (s)"]
@@ -290,7 +283,7 @@ def process_text_on_page(index, pagetitle, text):
                     )
                     if pname == auxpname and pval != "avoir":
                         aux = pval
-                        pagemsg("Found non-avoir auxiliary %s=%s in %s" % (pname, pval, str(t)))
+                        p.msg("Found non-avoir auxiliary %s=%s in %s" % (pname, pval, str(t)))
                 oldt = str(t)
                 del t.params[:]
                 t.name = "fr-conj-auto"
@@ -299,7 +292,7 @@ def process_text_on_page(index, pagetitle, text):
                 if aux:
                     t.add("aux", aux)
                 newt = str(t)
-                pagemsg("Replacing %s with %s" % (oldt, newt))
+                p.msg("Replacing %s with %s" % (oldt, newt))
                 notes.append("replaced {{%s}} with %s" % (tn, newt))
 
     return str(parsed), notes
@@ -309,4 +302,4 @@ parser = blib.create_argparser("Convert old fr-conj-* to fr-conj-auto", include_
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["French verbs"])
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["French verbs"])

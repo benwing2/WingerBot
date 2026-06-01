@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 infinitive_fixes = [("pór$", "por")]
 
@@ -84,22 +84,13 @@ def escape_newlines(text):
     return text.replace("\n", r"\n")
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
+    if blib.page_should_be_ignored(p.title):
         return
 
-    modsec = blib.find_modifiable_lang_section(pagetext, None, pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, None, p.msg, force_final_nls=True)
     if modsec is None:
         return
 
@@ -124,7 +115,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                 for param in t.params:
                     pn = pname(param)
                     if pn not in ["1"]:
-                        pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
+                        p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
                         break
                 else:  # no break
                     blib.set_template_name(t, "head")
@@ -141,7 +132,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             if not re.search(r"\A((?:# \{\{%s\|.*\}\}\n)+)\Z" % tn_re, verb_form_chunk):
                 m = re.search(r"\A# \{\{(%s)\|.*\}\}(.*)\n\Z" % tn_re, verb_form_chunk)
                 if m:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Extraneous text after {{%s}}, adding after new {{gl-verb form of}}: <%s>"
                         % (m.group(1), escape_newlines(verb_form_chunk))
                     )
@@ -151,7 +142,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                         possible_templates = "{{inflection of}}/{{infl of}}"
                     else:
                         possible_templates = "{{gl-verb form of-old}}"
-                    pagemsg(
+                    p.msg(
                         "WARNING: Multiple calls to %s with extraneous text, skipping: <%s>"
                         % (possible_templates, escape_newlines(verb_form_chunk))
                     )
@@ -175,7 +166,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                     #    is_old = True
                     #    break
                     # if not is_old:
-                    #  pagemsg("Saw new-style {{gl-verb form of}}, skipping: %s" % origt)
+                    #  p.msg("Saw new-style {{gl-verb form of}}, skipping: %s" % origt)
                     #  must_continue = True
                     #  break
                     inf = getp("1")
@@ -183,7 +174,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                     misc_params = ["t", "gloss", "lit", "g", "g2", "g3", "g4", "g5", "tr", "ts", "pos", "id"]
                     for misc_param in misc_params:
                         if t.has(misc_param):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw misc param %s=%s in {{%s}}, skipping: %s"
                                 % (misc_param, getp(misc_param), tn, origt)
                             )
@@ -191,14 +182,14 @@ def process_text_on_page(index, pagetitle, pagetext):
                             break
                     inf = getp("2")
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw non-%s template mixed in with such templates, skipping: %s"
                         % (possible_templates, origt)
                     )
                     must_continue = True
                     break
                 if not inf:
-                    pagemsg("WARNING: No infinitive in {{%s}}, skipping: %s" % (tn, origt))
+                    p.msg("WARNING: No infinitive in {{%s}}, skipping: %s" % (tn, origt))
                     must_continue = True
                     break
                 for refrom, reto in infinitive_fixes:
@@ -206,9 +197,9 @@ def process_text_on_page(index, pagetitle, pagetext):
                 if inf in seen_infs:
                     continue
                 seen_infs.add(inf)
-                conjs, bad_reason = lookup_conjugation(inf, pagemsg, errandpagemsg)
+                conjs, bad_reason = lookup_conjugation(inf, p.msg, p.errandmsg)
                 if conjs is None:
-                    pagemsg("WARNING: Can't find conjugation for infinitive '%s', skipping: %s" % (inf, origt))
+                    p.msg("WARNING: Can't find conjugation for infinitive '%s', skipping: %s" % (inf, origt))
                     must_continue = True
                     break
                 expansions = []
@@ -218,20 +209,20 @@ def process_text_on_page(index, pagetitle, pagetext):
                     del t.params[:]
                     t.add("1", conj)
                     newtemp = str(t)
-                    expansion = expand_text(newtemp)
+                    expansion = p.expand_text(newtemp)
                     if expansion is not False and expansion not in expansions:
                         expansions.append(expansion)
                         expansion_conjugations.append(conj)
                 old_template_desc = "{{%s}}" % tn
                 if len(expansions) == 0:
-                    pagemsg(
+                    p.msg(
                         "WARNING: No expansions, can't replace %s with %s, skipping: %s"
                         % (old_template_desc, newtemp, origt)
                     )
                     must_continue = True
                     break
                 if len(expansions) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Multiple conjugations with differing expansions, can't replace %s, skipping: %s"
                         % (
                             old_template_desc,
@@ -255,7 +246,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             if must_continue:
                 continue
             chunks[k] = "".join(parts)
-            pagemsg("Replaced <%s> with <%s>" % (escape_newlines(verb_form_chunk), escape_newlines(chunks[k])))
+            p.msg("Replaced <%s> with <%s>" % (escape_newlines(verb_form_chunk), escape_newlines(chunks[k])))
         return "".join(chunks)
 
     # First do {{gl-verb form of}} and {{gl-verb-form-of}}.
@@ -263,7 +254,7 @@ def process_text_on_page(index, pagetitle, pagetext):
 
     # Then do {{inflection of}}. Do this second; if we do it first, the resulting new-style {{gl-verb form of}}
     # triggers a needless warning.
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header == "Verb" and re.search(
@@ -273,13 +264,13 @@ def process_text_on_page(index, pagetitle, pagetext):
             for t in parsed.filter_templates():
                 tn = tname(t)
                 if tn in ["gl-verb", "gl-conj"]:
-                    pagemsg("WARNING: Saw verb form along with verb, skipping: %s" % (str(t)))
+                    p.msg("WARNING: Saw verb form along with verb, skipping: %s" % (str(t)))
                     break
                 if tn == "head" and getparam(t, "1") != "gl":
-                    pagemsg("WARNING: Saw {{head}} for wrong language, skipping: %s" % (str(t)))
+                    p.msg("WARNING: Saw {{head}} for wrong language, skipping: %s" % (str(t)))
                     break
                 if tn == "head" and getparam(t, "2") not in ["verb form", "gerund", "participle form"]:
-                    pagemsg("WARNING: Saw {{head}} for wrong part of speech, skipping: %s" % (str(t)))
+                    p.msg("WARNING: Saw {{head}} for wrong part of speech, skipping: %s" % (str(t)))
                     break
                 subsections[k] = do_sectext(subsections[k], do_infl_of=True)
 
@@ -299,8 +290,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:gl-verb form of-old", "Template:gl-verb-form"],
     skip_ignorable_pages=True,
 )

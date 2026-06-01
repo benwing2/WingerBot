@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
 
 add_stress = {
     "a": "á",
@@ -34,15 +34,15 @@ def singularize(word):
     return "[[%s]]s" % word[:-1]
 
 
-def process_text_on_page_for_generate(index, pagetitle, text):
+def process_text_on_page_for_generate(p):
     def pagemsg(txt):
-        msg("# Page %s %s: %s" % (index, pagetitle, txt))
+        msg("# Page %s %s: %s" % (p.index, p.title, txt))
 
-    if " " not in pagetitle:
+    if " " not in p.title:
         pagemsg("WARNING: No space in page title")
         return
-    if pagetitle.startswith("no "):
-        prefix, verb_rest = pagetitle.split(" ", 1)
+    if p.title.startswith("no "):
+        prefix, verb_rest = p.title.split(" ", 1)
         if " " in verb_rest:
             verb, rest = verb_rest.split(" ", 1)
         else:
@@ -50,7 +50,7 @@ def process_text_on_page_for_generate(index, pagetitle, text):
             rest = ""
         prefix = prefix + " "
     else:
-        verb, rest = pagetitle.split(" ", 1)
+        verb, rest = p.title.split(" ", 1)
         prefix = ""
     if verb not in verbs_to_spec:
         pagemsg("WARNING: Unrecognized verb '%s'" % verb)
@@ -62,38 +62,35 @@ def process_text_on_page_for_generate(index, pagetitle, text):
     msg("%s%s%s %s" % (prefix, verb, spec, linked_rest))
 
 
-def process_text_on_page_for_full_conj(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page_for_full_conj(p):
+    p.msg("Processing")
 
     notes = []
 
-    if pagetitle not in verbs_to_spec:
-        pagemsg("WARNING: Can't find entry, skipping")
+    if p.title not in verbs_to_spec:
+        p.msg("WARNING: Can't find entry, skipping")
         return
 
-    entry = verbs_to_spec[pagetitle]
+    entry = verbs_to_spec[p.title]
     origentry = entry
-    first, rest = pagetitle.split(" ", 1)
+    first, rest = p.title.split(" ", 1)
     restwords = rest.split(" ")
     def_link = "%s<> %s" % (first, " ".join("[[%s]]" % word for word in restwords))
     if def_link == entry:
-        pagemsg("Replacing entry '%s' with a blank entry because it's the default" % entry)
+        p.msg("Replacing entry '%s' with a blank entry because it's the default" % entry)
         entry = ""
     elif re.sub("<.*?>", "<>", entry) == def_link:
         newentry = blib.remove_links(entry)
-        pagemsg("Replacing entry '%s' with entry without links '%s'" % (entry, newentry))
+        p.msg("Replacing entry '%s' with entry without links '%s'" % (entry, newentry))
         entry = newentry
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
         if tn == "es-verb":
             if not getparam(t, "attn"):
-                pagemsg("Didn't see attn=1: %s" % str(t))
+                p.msg("Didn't see attn=1: %s" % str(t))
                 continue
             rmparam(t, "attn")
             if entry:
@@ -104,7 +101,7 @@ def process_text_on_page_for_full_conj(index, pagetitle, text):
         if tn == "head" and getparam(t, "1") == "es" and getparam(t, "2") == "verb":
             head = getparam(t, "head")
             if head:
-                pagemsg(
+                p.msg(
                     "WARNING: Removing head=%s compared with entry '%s', original entry '%s': %s"
                     % (head, entry, origentry, str(t))
                 )
@@ -118,43 +115,40 @@ def process_text_on_page_for_full_conj(index, pagetitle, text):
             else:
                 notes.append("convert {{head|es|verb}} to {{es-verb}}")
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
 
-def process_text_on_page_for_single_word(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page_for_single_word(p):
+    p.msg("Processing")
 
     notes = []
 
-    if pagetitle not in verbs_to_spec:
-        pagemsg("WARNING: Can't find entry, skipping")
+    if p.title not in verbs_to_spec:
+        p.msg("WARNING: Can't find entry, skipping")
         return
-    spec = verbs_to_spec[pagetitle]
+    spec = verbs_to_spec[p.title]
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
         if tn == "es-verb":
             if not getparam(t, "attn"):
-                pagemsg("Didn't see attn=1: %s" % str(t))
+                p.msg("Didn't see attn=1: %s" % str(t))
                 continue
             rmparam(t, "attn")
             if "<" in spec:
-                t.add("1", "%s%s" % (pagetitle, spec))
-                notes.append("add conjugation %s%s to Spanish verb" % (pagetitle, spec))
+                t.add("1", "%s%s" % (p.title, spec))
+                notes.append("add conjugation %s%s to Spanish verb" % (p.title, spec))
             elif spec == "*":
                 notes.append("add conjugation (default) to Spanish verb")
             else:
                 t.add("pres", spec)
                 notes.append("add conjugation pres=%s to Spanish verb" % spec)
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -182,8 +176,7 @@ if args.mode == "full-conj":
         start,
         end,
         process_text_on_page_for_full_conj,
-        edit=True,
-        stdin=True,
+        new=True,
         default_pages=list(verbs_to_spec.keys()),
     )
 elif args.mode == "generate":
@@ -198,8 +191,7 @@ elif args.mode == "generate":
         start,
         end,
         process_text_on_page_for_generate,
-        edit=True,
-        stdin=True,
+        new=True,
         default_pages=list(verbs_to_spec.keys()),
     )
 else:
@@ -222,7 +214,6 @@ else:
         start,
         end,
         process_text_on_page_for_single_word,
-        edit=True,
-        stdin=True,
+        new=True,
         default_pages=list(verbs_to_spec.keys()),
     )

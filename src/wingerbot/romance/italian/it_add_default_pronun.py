@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 import unicodedata
 
 AC = "\u0301"
@@ -16,24 +16,15 @@ not_vowel_c = "[^" + vowel + "]"
 stress_c = "[" + AC + GR + "]"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    if "it-IPA" not in text:
+    if "it-IPA" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     saw_decl = False
@@ -43,12 +34,12 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
 
         if tn == "it-IPA":
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             if getparam(t, "voiced2"):
-                pagemsg("WARNING: Can't yet handle voiced2=%s" % getparam(t, "voiced2"))
+                p.msg("WARNING: Can't yet handle voiced2=%s" % getparam(t, "voiced2"))
                 continue
             specified_pronuns = blib.fetch_param_chain(t, "1", "")
-            pronuns = specified_pronuns or [pagetitle]
+            pronuns = specified_pronuns or [p.title]
             frobbed_pronuns = []
             must_continue = False
             for ipa in pronuns:
@@ -56,7 +47,7 @@ def process_text_on_page(index, pagetitle, text):
                 if AC not in ipa and GR not in ipa:
                     vowel_count = len([x for x in ipa if x in vowel])
                     if vowel_count == 1:
-                        pagemsg("WARNING: Single-vowel word")
+                        p.msg("WARNING: Single-vowel word")
                     if vowel_count > 1:
                         new_ipa = re.sub(
                             "(" + vowel_c + ")(" + not_vowel_c + "*[iyu]?" + vowel_c + not_vowel_c + "*)$",
@@ -64,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
                             ipa,
                         )
                         if new_ipa == ipa:
-                            pagemsg("WARNING: Unable to add stress: %s" % ipa)
+                            p.msg("WARNING: Unable to add stress: %s" % ipa)
                         else:
                             notes.append(
                                 unicodedata.normalize(
@@ -79,7 +70,7 @@ def process_text_on_page(index, pagetitle, text):
                     split_z = re.split("(z+)", ipa)
                     voiced = getparam(t, "voiced")
                     if voiced not in ["y", "yes", "1", ""]:
-                        pagemsg("WARNING: Unrecognized voiced=%s" % voiced)
+                        p.msg("WARNING: Unrecognized voiced=%s" % voiced)
                         must_continue = True
                         break
                     for i in range(1, len(split_z), 2):
@@ -134,7 +125,7 @@ def process_text_on_page(index, pagetitle, text):
                 frobbed_pronuns.append(ipa)
             if must_continue:
                 continue
-            if frobbed_pronuns == [pagetitle]:
+            if frobbed_pronuns == [p.title]:
                 frobbed_pronuns = []
                 if specified_pronuns:
                     notes.append("remove explicitly specified pronun in {{it-IPA}} because same as page title")
@@ -144,7 +135,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("remove voiced= in {{it-IPA}}")
 
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -156,5 +147,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:it-IPA"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:it-IPA"]
 )

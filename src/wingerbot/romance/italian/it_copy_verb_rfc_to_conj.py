@@ -6,16 +6,13 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "it-verb-rfc" not in text:
+    if "it-verb-rfc" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     it_verb_rfc_t = None
     for t in parsed.filter_templates():
@@ -23,18 +20,18 @@ def process_text_on_page(index, pagetitle, text):
         origt = str(t)
         if tn == "it-verb-rfc":
             if it_verb_rfc_t:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two headword templates %s and %s without intervening conjugation"
                     % (str(it_verb_rfc_t), str(t))
                 )
             it_verb_rfc_t = t
         elif tn == "it-conj" and it_verb_rfc_t:
-            pagemsg("WARNING: Saw {{it-conj}} following {{it-verb-rfc}}: %s" % str(t))
+            p.msg("WARNING: Saw {{it-conj}} following {{it-verb-rfc}}: %s" % str(t))
         elif tn == "it-conj-rfc":
             it_verb_rfc_t = None
         elif tn.startswith("it-conj-"):
             if not it_verb_rfc_t:
-                pagemsg("WARNING: Saw {{it-conj-*}} without preceding {{it-verb-rfc}}: %s" % str(t))
+                p.msg("WARNING: Saw {{it-conj-*}} without preceding {{it-verb-rfc}}: %s" % str(t))
             else:
                 conj = getparam(it_verb_rfc_t, "1")
                 newconj = None
@@ -49,7 +46,7 @@ def process_text_on_page(index, pagetitle, text):
                     elif aux == "essere or avere":
                         conjaux = "e:a"
                     else:
-                        pagemsg("WARNING: Can't parse auxiliary '%s': %s" % (aux, str(t)))
+                        p.msg("WARNING: Can't parse auxiliary '%s': %s" % (aux, str(t)))
                         conjaux = None
                     if conjaux:
                         newconj = conjaux + conj[1:]
@@ -58,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
                     pn = pname(param)
                     pv = str(param.value)
                     if pn not in ["1", "2"]:
-                        pagemsg("WARNING: Unrecognized param %s=%s in old conjugation: %s" % (pn, pv, str(t)))
+                        p.msg("WARNING: Unrecognized param %s=%s in old conjugation: %s" % (pn, pv, str(t)))
                         must_continue = True
                         break
                 if must_continue:
@@ -71,7 +68,7 @@ def process_text_on_page(index, pagetitle, text):
                 if conj:
                     trimmed_conj = re.sub(r"\[r:[^\[\]]*\]", "", conj)
                     if trimmed_conj != conj:
-                        pagemsg("Trimmed out references from conjugation '%s', producing '%s'" % (conj, trimmed_conj))
+                        p.msg("Trimmed out references from conjugation '%s', producing '%s'" % (conj, trimmed_conj))
                         conj = trimmed_conj
                     t.add("1", conj)
                 else:
@@ -90,5 +87,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:it-verb"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:it-verb"]
 )

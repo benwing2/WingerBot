@@ -20,13 +20,10 @@ class BreakException(Exception):
     pass
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Italian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -46,9 +43,9 @@ def process_text_on_page(index, pagetitle, text):
             prontext = pron1 + pron2
         else:
             prontext = pron2
-        m = re.search(r"^(.*)%s$" % prontext, pagetitle)
+        m = re.search(r"^(.*)%s$" % prontext, p.title)
         if not m:
-            pagemsg("WARNING: Page title should end in '%s' but doesn't" % prontext)
+            p.msg("WARNING: Page title should end in '%s' but doesn't" % prontext)
             return None
         return m.group(1)
 
@@ -56,7 +53,7 @@ def process_text_on_page(index, pagetitle, text):
         origtext = m.group(0)
         m = re.search(r"^# Compound of (.*?)\.*\n$", origtext)
         if not m:
-            pagemsg("WARNING: Internal error: Can't match line: %s" % origtext)
+            p.msg("WARNING: Internal error: Can't match line: %s" % origtext)
             return origtext
         text = m.group(1)
 
@@ -127,7 +124,7 @@ def process_text_on_page(index, pagetitle, text):
                     else:
                         return "|%s" % "|".join(prons)
                 if not inf.endswith("re") and not re.search("r[mtscv]i$", inf):
-                    pagemsg("WARNING: Unrecognized infinitive %s: %s" % (inf, origtext.strip()))
+                    p.msg("WARNING: Unrecognized infinitive %s: %s" % (inf, origtext.strip()))
                     return None
                 notes.append("templatize Italian infinitive compound-of expression")
                 if len(prons) == 1 and inf.endswith("re"):
@@ -136,7 +133,7 @@ def process_text_on_page(index, pagetitle, text):
                 if re.search("[mtcv]i$", inf):
                     pos = inf_pron_to_pos[inf[-2:]]
                     return "|%s|%s|pos=%s" % (inf, "|".join(prons), pos)
-                elif len(prons) == 1 and pagetitle.endswith(prons[0]):
+                elif len(prons) == 1 and p.title.endswith(prons[0]):
                     return "|pos=inf|inf=%s" % inf
                 elif inf.endswith("re"):
                     return "|%s" % "|".join(prons)
@@ -162,7 +159,7 @@ def process_text_on_page(index, pagetitle, text):
                     return "|pos=%s|inf=%s" % (pos, inf)
                 else:
                     return "|%s|pos=%s|inf=%s" % ("|".join(prons), pos, inf)
-            pagemsg("WARNING: Unrecognized raw compound-of expression: %s" % origtext.strip())
+            p.msg("WARNING: Unrecognized raw compound-of expression: %s" % origtext.strip())
             return None
 
         retval = do_fix_compound_of(text)
@@ -192,4 +189,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

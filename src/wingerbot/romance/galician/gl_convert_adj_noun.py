@@ -237,22 +237,19 @@ def make_plural(term, special=None):
     )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "gl-adj-old" not in text and "gl-noun-old" not in text:
+    if "gl-adj-old" not in p.text and "gl-noun-old" not in p.text:
         return
 
-    if pagetitle in deny_list:
-        pagemsg("Skipping because in deny_list")
+    if p.title in deny_list:
+        p.msg("Skipping because in deny_list")
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     def do_make_plural(form, special=None):
         retval = make_plural(form, special)
@@ -273,7 +270,7 @@ def process_text_on_page(index, pagetitle, text):
             for tt in parsed.filter_templates():
                 ttn = tname(tt)
                 if ttn == "gl-reinteg sp":
-                    pagemsg("WARNING: Saw reintegrationist noun, skipping: head=%s, defn=%s" % (str(t), str(tt)))
+                    p.msg("WARNING: Saw reintegrationist noun, skipping: head=%s, defn=%s" % (str(t), str(tt)))
                     must_continue = True
                     break
             if must_continue:
@@ -283,7 +280,7 @@ def process_text_on_page(index, pagetitle, text):
             origt = str(t)
 
             head = getp("sg") or getp("head")
-            lemma = blib.remove_links(head or pagetitle)
+            lemma = blib.remove_links(head or p.title)
 
             def replace_lemma_with_hash(term):
                 if term.startswith(lemma):
@@ -293,11 +290,11 @@ def process_text_on_page(index, pagetitle, text):
                 return term
 
             def warn_when_exiting(txt):
-                pagemsg("WARNING: %s: %s" % (txt, str(t)))
+                p.msg("WARNING: %s: %s" % (txt, str(t)))
 
             autohead = romance_utils.add_links_to_multiword_term(lemma, splithyph=False)
             if autohead == head:
-                pagemsg("Remove redundant head %s" % head)
+                p.msg("Remove redundant head %s" % head)
                 subnotes.append("remove redundant head '%s'" % head)
                 head = None
 
@@ -357,7 +354,7 @@ def process_text_on_page(index, pagetitle, text):
                     if special_pl is None:
                         continue
                     if pls == [special_pl]:
-                        pagemsg("Found special=%s with special_pl=%s" % (special, special_pl))
+                        p.msg("Found special=%s with special_pl=%s" % (special, special_pl))
                         actual_special = special
                         break
 
@@ -408,14 +405,14 @@ def process_text_on_page(index, pagetitle, text):
                         if special_mf is None:
                             continue
                         if mfs == [special_mf]:
-                            pagemsg("Found special=%s with special_mf=%s" % (special, special_mf))
+                            p.msg("Found special=%s with special_mf=%s" % (special, special_mf))
                             actual_special = special
                             break
                     if actual_special:
                         if is_plural:
                             pass
                         elif not mfpls:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Explicit %s=%s matches special=%s but no %s plural, allowing"
                                 % (g, ",".join(mfs), actual_special, g_full)
                             )
@@ -423,12 +420,12 @@ def process_text_on_page(index, pagetitle, text):
                             special_mfpl = make_plural(special_mf, actual_special)
                             if special_mfpl:
                                 if mfpls == [special_mfpl]:
-                                    pagemsg(
+                                    p.msg(
                                         "Found %s=%s and special=%s, %spls=%s matches special_%spl"
                                         % (g, ",".join(mfs), actual_special, g, ",".join(mfpls), g)
                                     )
                                 else:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: for %s=%s and special=%s, %spls=%s doesn't match special_%spl=%s, allowing"
                                         % (g, ",".join(mfs), actual_special, g, ",".join(mfpls), g, special_mfpl)
                                     )
@@ -452,13 +449,13 @@ def process_text_on_page(index, pagetitle, text):
                             if set(defpl) == set(mfpls):
                                 ok = True
                             elif len(defpl) > 1 and set(mfpls) < set(defpl):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: for %s=%s, %spl=%s subset of default pl %s, allowing"
                                     % (g, ",".join(mfs), g, ",".join(mfpls), ",".join(defpl))
                                 )
                                 ok = True
                             if ok:
-                                pagemsg(
+                                p.msg(
                                     "Found %s=%s, %spl=%s matches default pl" % (g, ",".join(mfs), g, ",".join(mfpls))
                                 )
                                 subnotes.append("remove redundant explicit %s plural '%s'" % (g_full, ",".join(mfpls)))
@@ -467,7 +464,7 @@ def process_text_on_page(index, pagetitle, text):
                                 for special in romance_utils.all_specials:
                                     defpl = [make_plural(x, special) for x in mfs]
                                     if set(defpl) == set(mfpls):
-                                        pagemsg(
+                                        p.msg(
                                             "Found %s=%s, %spl=%s matches special=%s"
                                             % (g, ",".join(mfs), g, ",".join(mfpls), special)
                                         )
@@ -530,32 +527,32 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("head", head)
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append(
                     "convert {{gl-noun-old}} to {{gl-noun}} with new syntax%s"
                     % (" (%s)" % ", ".join(subnotes) if subnotes else "")
                 )
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
         if tn == "gl-adj-old" and args.do_adjs:
             origt = str(t)
             subnotes = []
 
-            lemma = pagetitle
+            lemma = p.title
 
             def replace_lemma_with_hash(term):
                 if term.startswith(lemma):
                     replaced_term = "#" + term[len(lemma) :]
-                    pagemsg("Replacing lemma-containing term '%s' with '%s'" % (term, replaced_term))
+                    p.msg("Replacing lemma-containing term '%s' with '%s'" % (term, replaced_term))
                     subnotes.append("replace lemma-containing term '%s' with '%s'" % (term, replaced_term))
                     term = replaced_term
                 return term
 
-            lemma = pagetitle
+            lemma = p.title
             m = getp("masculine") or getp("m")
             if m:
-                pagemsg("WARNING: Saw m=%s, probable non-lemma form, skipping" % m)
+                p.msg("WARNING: Saw m=%s, probable non-lemma form, skipping" % m)
                 continue
 
             f = getp("feminine") or getp("f")
@@ -585,7 +582,7 @@ def process_text_on_page(index, pagetitle, text):
                 if f == deff:
                     if origf:
                         redundant_msg = "redundant feminine '%s'" % f
-                        pagemsg("Removing %s" % redundant_msg)
+                        p.msg("Removing %s" % redundant_msg)
                         subnotes.append("remove %s" % redundant_msg)
                     f = "+"
                 else:
@@ -599,7 +596,7 @@ def process_text_on_page(index, pagetitle, text):
                     else:
                         redundant_msg = None
                     if redundant_msg:
-                        pagemsg("Removing %s" % redundant_msg)
+                        p.msg("Removing %s" % redundant_msg)
                         subnotes.append("remove %s" % redundant_msg)
                     mpl = "+"
                 else:
@@ -607,7 +604,7 @@ def process_text_on_page(index, pagetitle, text):
                 if fpl == deffpl:
                     if origfpl:
                         redundant_msg = "redundant feminine plural '%s'" % fpl
-                        pagemsg("Removing %s" % redundant_msg)
+                        p.msg("Removing %s" % redundant_msg)
                         subnotes.append("remove %s" % redundant_msg)
                     fpl = "+"
                 else:
@@ -629,7 +626,7 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if pn not in ["sg", "1", "f", "mpl", "pl", "fpl"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -642,13 +639,13 @@ def process_text_on_page(index, pagetitle, text):
             sg = getp("sg")
             autohead = romance_utils.add_links_to_multiword_term(lemma, splithyph=False)
             if autohead == sg:
-                pagemsg("Remove redundant head %s" % sg)
+                p.msg("Remove redundant head %s" % sg)
                 subnotes.append("remove redundant head '%s'" % sg)
                 head = None
 
             if sg is None:
                 rmparam(t, "sg")
-            elif sg and sg == pagetitle:
+            elif sg and sg == p.title:
                 subnotes.append("convert sg= without brackets to nolinkhead=1")
                 rmparam(t, "sg")
                 t.add("nolinkhead", "1")
@@ -672,13 +669,13 @@ def process_text_on_page(index, pagetitle, text):
                         t.add("fpl", fpl)
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append(
                     "convert {{gl-adj-old}} to {{gl-adj}} with new syntax%s"
                     % (" (%s)" % "; ".join(blib.group_notes(subnotes)) if subnotes else "")
                 )
             else:
-                pagemsg("No changes to %s" % str(t))
+                p.msg("No changes to %s" % str(t))
 
     return str(parsed), notes
 
@@ -700,4 +697,4 @@ if __name__ == "__main__":
     elif args.do_adjs:
         default_refs.append("Template:gl-adj-old")
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=default_refs)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=default_refs)

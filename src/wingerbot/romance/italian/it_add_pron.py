@@ -14,23 +14,20 @@ refs_re = "(Olivetti|DiPI|Treccani|DOP|Internazionale|Garzanti)"
 seen_pages = set()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    spec = pagetitle_to_spec.get(pagetitle, None)
+def process_text_on_page(p):
+    spec = pagetitle_to_spec.get(p.title, None)
     if not spec:
-        pagemsg("WARNING: No spec found for pagetitle")
+        p.msg("WARNING: No spec found for p.title")
         return
     m = re.search("^([a-z0-9]*): (.*)$", spec)
     if not m:
-        pagemsg("WARNING: Unrecognized pronunciation spec: %s" % spec)
+        p.msg("WARNING: Unrecognized pronunciation spec: %s" % spec)
         return
     location, pronspecs = m.groups()
-    if (pagetitle, location) in seen_pages:
-        pagemsg("WARNING: Already saw page, skipping")
+    if (p.title, location) in seen_pages:
+        p.msg("WARNING: Already saw page, skipping")
         return
-    seen_pages.add((pagetitle, location))
+    seen_pages.add((p.title, location))
     pronspecs = [pronspec.replace("_", " ") for pronspec in pronspecs.split(" ")]
     if args.old_it_ipa:
         prons = []
@@ -44,16 +41,16 @@ def process_text_on_page(index, pagetitle, text):
             if pronspec.startswith("r:"):
                 ref = pronspec[2:]
                 if not re.search(r"^%s\b" % refs_re, ref):
-                    pagemsg("WARNING: Unrecognized reference %s: pronspec=%s" % (pronspec, spec))
+                    p.msg("WARNING: Unrecognized reference %s: pronspec=%s" % (pronspec, spec))
                     return
                 refs.append("{{R:it:%s}}" % ref)
             elif pronspec.startswith("n:"):
                 ref = pronspec[2:]
                 if not re.search(r"^%s\b" % refs_re, ref):
-                    pagemsg("WARNING: Unrecognized reference %s: pronspec=%s" % (pronspec, spec))
+                    p.msg("WARNING: Unrecognized reference %s: pronspec=%s" % (pronspec, spec))
                     return
                 if next_num_pron == 0:
-                    pagemsg("WARNING: No preceding pronunciations for footnote %s: %s" % (pronspec, spec))
+                    p.msg("WARNING: No preceding pronunciations for footnote %s: %s" % (pronspec, spec))
                     return
                 reftemp = "{{R:it:%s}}" % ref
                 if next_num_pron == last_num_pron:
@@ -69,10 +66,10 @@ def process_text_on_page(index, pagetitle, text):
                 if "=" not in pronspec:
                     respellings, msgs = apply_default_pronun(pronspec)
                     if "NEED_ACCENT" in msgs:
-                        pagemsg("WARNING: Missing accent for pronunciation %s" % pronspec)
+                        p.msg("WARNING: Missing accent for pronunciation %s" % pronspec)
                         return
                     if "Z" in msgs:
-                        pagemsg("WARNING: Unconverted z in pronunciation %s" % pronspec)
+                        p.msg("WARNING: Unconverted z in pronunciation %s" % pronspec)
                         return
                     next_num_pron += 1
                 prons.append(pronspec)
@@ -90,7 +87,7 @@ def process_text_on_page(index, pagetitle, text):
                         ref_template_text = pronspec_part[3:]
                         # If the argument to the reference template is the page title, remove it.
                         m = re.search(r"^([^:]*):(.*)$", ref_template_text)
-                        if m and m.group(2) == pagetitle:
+                        if m and m.group(2) == p.title:
                             ref_template_text = m.group(1)
                         pronspec_parts[i] = "<r:%s" % ref_template_text
             pronspec = "".join(pronspec_parts)
@@ -99,30 +96,30 @@ def process_text_on_page(index, pagetitle, text):
             # FIXME: Verify respellings checking for NEED_ACCENT and Z, as above.
             prons.append(pronspec)
     if not re.search("^[0-9]+$", location) and location not in ["top", "all"]:
-        pagemsg("WARNING: Unrecognized location %s: pronspec=%s" % (location, spec))
+        p.msg("WARNING: Unrecognized location %s: pronspec=%s" % (location, spec))
         return
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Italian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Italian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     has_etym_sections = "==Etymology 1==" in secbody
     if has_etym_sections and location == "all":
-        pagemsg("WARNING: With ==Etymology 1==, location cannot be 'all': %s" % spec)
+        p.msg("WARNING: With ==Etymology 1==, location cannot be 'all': %s" % spec)
         return
     if not has_etym_sections and location != "all":
-        pagemsg("WARNING: Without split etymology sections, location must be 'all': %s" % spec)
+        p.msg("WARNING: Without split etymology sections, location must be 'all': %s" % spec)
         return
 
     def construct_new_pron_template():
         pron_arg = "|".join(prons)
-        if pron_arg == pagetitle:
+        if pron_arg == p.title:
             pron_arg = ""
         else:
             pron_arg = "|" + pron_arg
@@ -162,7 +159,7 @@ def process_text_on_page(index, pagetitle, text):
 
                 # Make sure we're not removing references
                 if len(current_refs - new_refs) > 0 and not args.override_refs:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw existing refs not in new refs, not removing: existing=%s, new=%s"
                         % (origt, "{{it-IPA|%s}}" % "|".join(prons))
                     )
@@ -173,7 +170,7 @@ def process_text_on_page(index, pagetitle, text):
                 for pn, pv in params_to_add:
                     t.add(pn, pv)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("replace existing %s with %s (manually assisted)" % (origt, str(t)))
                     subsections[k] = str(parsed)
                 break
@@ -195,7 +192,7 @@ def process_text_on_page(index, pagetitle, text):
                             newrefs.add(m.group(0))
                         orig_refs_not_in_new = origrefs - newrefs
                         if len(orig_refs_not_in_new) > 0:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw existing refs %s not in new refs, not removing: existing=%s, new=%s"
                                 % ("".join(orig_refs_not_in_new), origt, str(t))
                             )
@@ -203,13 +200,13 @@ def process_text_on_page(index, pagetitle, text):
 
                     # Make sure we're not removing audio or other modifiers
                     if re.search("<(audio|hmp|rhyme|hyph|pre|post):", origt) and not args.override_refs:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw existing audio/hmp/rhyme/hyph/pre/post not in new refs, not removing: existing=%s, new=%s"
                             % (origt, str(t))
                         )
                         return False
 
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("replace existing %s with %s (manually assisted)" % (origt, str(t)))
                     subsections[k] = str(parsed)
                 break
@@ -222,7 +219,7 @@ def process_text_on_page(index, pagetitle, text):
                     regex = r"^([* ]*\{\{%s(?:\|[^{}]*)*\}\}\n)" % re_template
                     m = re.search(regex, subsections[k], re.M)
                     if m:
-                        pagemsg("Removed existing %s" % m.group(1).strip())
+                        p.msg("Removed existing %s" % m.group(1).strip())
                         notes.append("remove existing {{%s}}" % template)
                         subsections[k] = re.sub(regex, "", subsections[k], 0, re.M)
             subsections[k] = pron_prefix + new_pron_template + "\n" + subsections[k]
@@ -245,7 +242,7 @@ def process_text_on_page(index, pagetitle, text):
             while k < len(subsections) and subsecs.headers[k] in ["Alternative forms", "Etymology"]:
                 k += 2
             if k - 1 >= len(subsections):
-                pagemsg("WARNING: No lemma or non-lemma section at top level")
+                p.msg("WARNING: No lemma or non-lemma section at top level")
                 return
             insert_new_l3_pron_section(k - 1)
     elif location == "top":
@@ -260,7 +257,7 @@ def process_text_on_page(index, pagetitle, text):
                     insert_new_l3_pron_section(k - 1)
                     break
             else:  # no break
-                pagemsg("WARNING: Something wrong, location == 'top' but can't find Etymology 1 section")
+                p.msg("WARNING: Something wrong, location == 'top' but can't find Etymology 1 section")
                 return
     else:
         begin_etym_n_section = None
@@ -270,7 +267,7 @@ def process_text_on_page(index, pagetitle, text):
             while k < len(subsections) and subsecs.headers[k] == "Alternative forms":
                 k += 2
             if k - 1 >= len(subsections):
-                pagemsg(
+                p.msg(
                     "WARNING: No lemma or non-lemma section in Etymology N section: %s"
                     % subsections[begin_etym_n_section].strip()
                 )
@@ -298,7 +295,7 @@ def process_text_on_page(index, pagetitle, text):
                 # Insert a pronunciation section.
                 insert_pron_section_in_etym_section()
             else:
-                pagemsg("WARNING: Didn't find Etymology N section for location=%s: spec=%s" % (location, spec))
+                p.msg("WARNING: Didn't find Etymology N section for location=%s: spec=%s" % (location, spec))
                 return
 
         if refs or have_footnotes:
@@ -313,11 +310,11 @@ def process_text_on_page(index, pagetitle, text):
                 elif begin_etym_n_section:
                     if refs and subsecs.levels[k] == 4 and header in ["References", "Further reading"]:
                         # Found References or Further reading embedded in Etym section
-                        pagemsg("Found %s in Etymology %s section" % (subsections[k - 1].strip(), location))
+                        p.msg("Found %s in Etymology %s section" % (subsections[k - 1].strip(), location))
                         needed_refs = []
                         for ref in refs:
                             if ref in subsections[k]:
-                                pagemsg(
+                                p.msg(
                                     "Already found %s in %s section %s under Etymology %s"
                                     % (ref, subsections[k - 1].strip(), k // 2, location)
                                 )
@@ -327,7 +324,7 @@ def process_text_on_page(index, pagetitle, text):
                     if have_footnotes and subsecs.levels[k] == 4 and header == "References":
                         # Check for <references/> in References embedded in Etym section
                         if re.search(r"<references\s*/?\s*>", subsections[k]):
-                            pagemsg(
+                            p.msg(
                                 "Already found <references /> in ===References=== section %s under Etymology %s"
                                 % (k // 2, location)
                             )
@@ -340,7 +337,7 @@ def process_text_on_page(index, pagetitle, text):
                 needed_refs = []
                 for ref in refs:
                     if ref in subsections[k]:
-                        pagemsg("Already found %s in %s section %s" % (ref, subsections[k - 1].strip(), k // 2))
+                        p.msg("Already found %s in %s section %s" % (ref, subsections[k - 1].strip(), k // 2))
                     else:
                         needed_refs.append(ref)
                 refs = needed_refs
@@ -360,7 +357,7 @@ def process_text_on_page(index, pagetitle, text):
                 while k >= 2 and subsecs.headers[k] in ["Anagrams", "Further reading"]:
                     k -= 2
                 if k < 2:
-                    pagemsg("WARNING: No lemma or non-lemma section")
+                    p.msg("WARNING: No lemma or non-lemma section")
                     return
                 subsections[k + 1 : k + 1] = ["===References===\n", added_ref_text]
                 notes.append(
@@ -373,7 +370,7 @@ def process_text_on_page(index, pagetitle, text):
         for k in range(len(subsections) - 1, 2, -2):
             if subsecs.headers[k] == "References" and subsecs.levels[k] == 3:
                 if re.search(r"<references\s*/?\s*>", subsections[k]):
-                    pagemsg("Already found <references /> in ===References=== section %s" % (k // 2))
+                    p.msg("Already found <references /> in ===References=== section %s" % (k // 2))
                 else:
                     subsections[k] += "<references />\n"
                     notes.append("add <references /> to existing ===References=== section for pron footnotes")
@@ -383,7 +380,7 @@ def process_text_on_page(index, pagetitle, text):
             while k >= 2 and subsecs.headers[k] in ["Anagrams", "Further reading"]:
                 k -= 2
             if k < 2:
-                pagemsg("WARNING: No lemma or non-lemma section")
+                p.msg("WARNING: No lemma or non-lemma section")
                 return
             subsections[k + 1 : k + 1] = ["===References===\n", "<references />\n\n"]
             notes.append("add new ===References=== section for pron footnotes")
@@ -437,5 +434,5 @@ for _, (index, pagetitle, spec) in blib.iter_items(
         pagetitle_to_spec[pagetitle] = spec
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_spec.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_spec.keys())
 )

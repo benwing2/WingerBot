@@ -172,18 +172,15 @@ def make_masculine(form, special=None):
     return form
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "fr-noun" not in text and "fr-adj" not in text:
+    if "fr-noun" not in p.text and "fr-adj" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     def do_make_plural(form, special=None):
         retval = make_plural(form, special)
@@ -203,7 +200,7 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "fr-noun" and args.do_nouns:
             origt = str(t)
             from_to_end = "<from> %s <to> %s <end>" % (origt, origt)
-            lemma = pagetitle
+            lemma = p.title
 
             head = getp("head")
             use_nolinkhead = False
@@ -211,12 +208,12 @@ def process_text_on_page(index, pagetitle, text):
             headnotes = []
             if head == lemma:
                 if " " not in lemma and "-" not in lemma and "'" not in lemma:
-                    pagemsg("Unnecessary head=%s, removing" % head)
+                    p.msg("Unnecessary head=%s, removing" % head)
                     headnotes.append("remove redundant head= in {{fr-adj}}")
                     head = None
                     remove_head = True
                 else:
-                    pagemsg("Replacing head=%s with nolinkhead=1" % head)
+                    p.msg("Replacing head=%s with nolinkhead=1" % head)
                     headnotes.append("replace head=%s with nolinkhead=1 in {{fr-adj}}" % head)
                     head = None
                     use_nolinkhead = True
@@ -229,13 +226,13 @@ def process_text_on_page(index, pagetitle, text):
                     rmparam(t, "head")
                 notes.extend(headnotes)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
 
             g = getp("1")
             pls = blib.fetch_param_chain(t, "2")
             if g.endswith("-p"):
                 if pls:
-                    pagemsg("WARNING: Plural-only noun with explicit plurals: %s" % from_to_end)
+                    p.msg("WARNING: Plural-only noun with explicit plurals: %s" % from_to_end)
                 continue
 
             mode = []
@@ -248,12 +245,12 @@ def process_text_on_page(index, pagetitle, text):
                     old_algorithm_pl = do_make_plural(lemma, "last")
                     new_algorithm_pl = do_make_plural(lemma)
                     if old_algorithm_pl == new_algorithm_pl:
-                        pagemsg(
+                        p.msg(
                             "Space in headword and old default noun algorithm applying, leading to same results '%s' as new: %s"
                             % (",".join(old_algorithm_pl), str(t))
                         )
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Space in headword and old default noun algorithm applying, leading to '%s' which is not the same as new algorithm '%s': %s"
                             % (",".join(old_algorithm_pl), ",".join(new_algorithm_pl), from_to_end)
                         )
@@ -270,7 +267,7 @@ def process_text_on_page(index, pagetitle, text):
                     if set(pls) == set(defpl):
                         pls_with_def = ["+"]
                     elif set(pls) < set(defpl):
-                        pagemsg(
+                        p.msg(
                             "WARNING: pls=%s subset of defpls=%s, replacing with default: %s"
                             % (",".join(pls), ",".join(defpl), from_to_end)
                         )
@@ -307,14 +304,14 @@ def process_text_on_page(index, pagetitle, text):
                     if special_pl is None:
                         continue
                     if len(special_pl) > 1 and set(pls) < set(special_pl):
-                        pagemsg(
+                        p.msg(
                             "WARNING: for special=%s, pls=%s subset of special_pl=%s, allowing: %s"
                             % (special, ",".join(pls), ",".join(special_pl), from_to_end)
                         )
                         actual_special = special
                         break
                     if set(pls) == set(special_pl):
-                        pagemsg("Found special=%s with special_pl=%s" % (special, ",".join(special_pl)))
+                        p.msg("Found special=%s with special_pl=%s" % (special, ",".join(special_pl)))
                         actual_special = special
                         break
 
@@ -354,7 +351,7 @@ def process_text_on_page(index, pagetitle, text):
                         if special_mf is None:
                             continue
                         if mfs == [special_mf]:
-                            pagemsg("Found special=%s with special_mf=%s" % (special, special_mf))
+                            p.msg("Found special=%s with special_mf=%s" % (special, special_mf))
                             actual_special = special
                             break
                     if actual_special:
@@ -379,25 +376,25 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "fr-adj" and args.do_adjectives:
             origt = str(t)
             from_to_end = "<from> %s <to> %s <end>" % (origt, origt)
-            lemma = pagetitle
+            lemma = p.title
             head = getp("head")
             use_nolinkhead = False
             remove_head = False
             headnotes = []
             if head == lemma:
                 if " " not in lemma and "-" not in lemma and "'" not in lemma:
-                    pagemsg("Unnecessary head=%s, removing" % head)
+                    p.msg("Unnecessary head=%s, removing" % head)
                     headnotes.append("remove redundant head= in {{fr-adj}}")
                     head = None
                     remove_head = True
                 else:
-                    pagemsg("Replacing head=%s with nolinkhead=1" % head)
+                    p.msg("Replacing head=%s with nolinkhead=1" % head)
                     headnotes.append("replace head=%s with nolinkhead=1 in {{fr-adj}}" % head)
                     head = None
                     use_nolinkhead = True
 
             if getp("sp") or getp("inv"):
-                pagemsg("Already saw sp= or inv= in {{fr-adj}}, skipping other than maybe removing head=: %s" % str(t))
+                p.msg("Already saw sp= or inv= in {{fr-adj}}, skipping other than maybe removing head=: %s" % str(t))
                 if remove_head:
                     rmparam(t, "head")
                 elif use_nolinkhead:
@@ -405,7 +402,7 @@ def process_text_on_page(index, pagetitle, text):
                     rmparam(t, "head")
                 notes.extend(headnotes)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                 continue
 
             fs = blib.fetch_param_chain(t, "f")
@@ -415,11 +412,11 @@ def process_text_on_page(index, pagetitle, text):
             gender = getp("1")
             all_defaulted = not fs and not mpls and not fpls
             if len(fs) > 1 or len(mpls) > 1 or len(fpls) > 1:
-                pagemsg("WARNING: Saw multiple values for inflections, can't handle yet: %s" % from_to_end)
+                p.msg("WARNING: Saw multiple values for inflections, can't handle yet: %s" % from_to_end)
                 continue
 
             if " " in lemma and not fs and not fpls and lemma.endswith("e"):
-                pagemsg(
+                p.msg(
                     "WARNING: Multiword lemma ending in -e without f= or fpl=, would be mf= before, won't now, review manually: %s"
                     % from_to_end
                 )
@@ -458,24 +455,24 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("nolinkhead", "1")
                 notes.extend(headnotes)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     if not notes:
                         # This can happen e.g. if we end up just moving head= to the end, or we convert |1=mf to |mf
                         notes.append("clean up {{fr-adj}}")
 
             if gender and gender != "mf":
-                pagemsg("WARNING: Saw gender=%s not 'mf', can't handle: %s" % (gender, from_to_end))
+                p.msg("WARNING: Saw gender=%s not 'mf', can't handle: %s" % (gender, from_to_end))
                 continue
             automf = " " not in lemma and lemma.endswith("e")
             if gender != "mf" and not automf and pls:
-                pagemsg("WARNING: Saw pl= and not gender=mf, can't handle: %s" % from_to_end)
+                p.msg("WARNING: Saw pl= and not gender=mf, can't handle: %s" % from_to_end)
                 continue
             if len(pls) > 1:
-                pagemsg("WARNING: Saw multiple pl=, can't handle yet: %s" % from_to_end)
+                p.msg("WARNING: Saw multiple pl=, can't handle yet: %s" % from_to_end)
                 continue
             if gender == "mf" or automf:
                 if not all_defaulted:
-                    pagemsg("WARNING: Saw gendered inflections along with 1=mf, can't handle: %s" % from_to_end)
+                    p.msg("WARNING: Saw gendered inflections along with 1=mf, can't handle: %s" % from_to_end)
                     continue
                 gendernotes = []
 
@@ -494,7 +491,7 @@ def process_text_on_page(index, pagetitle, text):
                     pn = pname(param)
                     pv = str(param.value)
                     if pn not in ["head", "1", "p"]:
-                        pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, from_to_end))
+                        p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, from_to_end))
                         must_continue = True
                         break
                 if must_continue:
@@ -503,12 +500,12 @@ def process_text_on_page(index, pagetitle, text):
                 if not pls and " " in lemma:
                     old_algorithm_pl = make_plural(lemma, "last")
                     if old_algorithm_pl == pl:
-                        pagemsg(
+                        p.msg(
                             "Space in headword and old default noun algorithm applying, leading to same results as new: pl='%s': %s"
                             % (old_algorithm_pl, str(t))
                         )
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Space in headword and old default noun algorithm applying, leading to values not all same as new algorithm: oldpl='%s', newpl='%s': %s"
                             % (old_algorithm_pl, pl, from_to_end)
                         )
@@ -580,7 +577,7 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if pn not in ["head", "f", "mp", "fp"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, from_to_end))
+                    p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, from_to_end))
                     must_continue = True
                     break
             if must_continue:
@@ -596,12 +593,12 @@ def process_text_on_page(index, pagetitle, text):
                     and (mpls or old_algorithm_mpl == mpl)
                     and (fpls or old_algorithm_fpl == fpl)
                 ):
-                    pagemsg(
+                    p.msg(
                         "Space in headword and old default noun algorithm applying, leading to same results as new: f='%s', mpl='%s', fpl='%s': %s"
                         % (old_algorithm_f, old_algorithm_mpl, old_algorithm_fpl, str(t))
                     )
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Space in headword and old default noun algorithm applying, leading to values not all same as new algorithm: %s; %s; %s: %s"
                         % (
                             fs and "explicit-f=%s" % f or "oldf='%s', newf='%s'" % (old_algorithm_f, f),
@@ -677,5 +674,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:fr-noun", "Template:fr-adj"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:fr-noun", "Template:fr-adj"]
 )
