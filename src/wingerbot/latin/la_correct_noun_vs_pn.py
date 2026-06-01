@@ -69,13 +69,8 @@ def process_form(index, page, slot, form, pos):
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -87,31 +82,31 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn == "la-noun":
             if saw_noun:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple nouns %s and %s, not sure how to proceed, skipping" % (str(saw_noun), str(t))
                 )
                 return
             saw_noun = t
         elif tn == "la-proper noun":
             if saw_proper_noun:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple proper nouns %s and %s, not sure how to proceed, skipping"
                     % (str(saw_proper_noun), str(t))
                 )
                 return
             saw_proper_noun = t
     if saw_noun and saw_proper_noun:
-        pagemsg("WARNING: Saw both noun and proper noun, can't correct header/headword")
+        p.msg("WARNING: Saw both noun and proper noun, can't correct header/headword")
         return
     if not saw_noun and not saw_proper_noun:
-        pagemsg("WARNING: Saw neither noun nor proper noun, can't correct header/headword")
+        p.msg("WARNING: Saw neither noun nor proper noun, can't correct header/headword")
         return
     pos = "pn" if saw_proper_noun else "n"
     ht = saw_proper_noun or saw_noun
     # If both saw_proper_noun and saw_noun are None, we returned above.
     assert ht is not None
     if getparam(ht, "indecl"):
-        pagemsg("Noun is indeclinable, skipping: %s" % str(ht))
+        p.msg("Noun is indeclinable, skipping: %s" % str(ht))
         return
     generate_template = blib.parse_text(str(ht)).filter_templates()[0]
     blib.set_template_name(generate_template, "la-generate-noun-forms")
@@ -123,9 +118,9 @@ def process_text_on_page(index, pagetitle, text):
     rmparam(generate_template, "indecl")
     rmparam(generate_template, "id")
     rmparam(generate_template, "pos")
-    result = expand_text(str(generate_template))
+    result = p.expand_text(str(generate_template))
     if not result:
-        pagemsg("WARNING: Error generating forms, skipping")
+        p.msg("WARNING: Error generating forms, skipping")
         return
     tempargs = blib.split_generate_args(result)
     forms_seen = set()
@@ -136,7 +131,7 @@ def process_text_on_page(index, pagetitle, text):
             if "[" in form or "|" in form:
                 continue
             form_no_macrons = lalib.remove_macrons(form)
-            if form_no_macrons == pagetitle:
+            if form_no_macrons == p.title:
                 continue
             if form_no_macrons in forms_seen:
                 continue
@@ -167,4 +162,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

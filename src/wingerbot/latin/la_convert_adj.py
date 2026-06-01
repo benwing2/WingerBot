@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname, msg, errandmsg, ExpandTextCallback, PagemsgCallback
+from wingerbot.blib import getparam, getrmparam, tname, msg, ExpandTextCallback, PagemsgCallback
 from wingerbot.latin import lalib
 
 # FIXME: Out of date script, not needed any more, might not still work.
@@ -283,27 +283,21 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
         return None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "la-decl-multi":
-            pagemsg("Skipping la-decl-multi for now: %s" % str(t))
+            p.msg("Skipping la-decl-multi for now: %s" % str(t))
         elif tn == "la-decl-irreg" and getparam(t, "noun"):
-            pagemsg("Skipping noun la-decl-irreg: %s" % str(t))
+            p.msg("Skipping noun la-decl-irreg: %s" % str(t))
         elif tn in old_la_adj_decl_templates:
-            if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
+            if convert_template_to_new(t, p.title, p.msg, p.errandmsg):
                 notes.append("converted {{%s}} to {{la-adecl}}" % tn)
             else:
                 return
@@ -319,5 +313,5 @@ if __name__ == "__main__":
     start, end = blib.parse_start_end(args.start, args.end)
 
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, default_cats=["Latin adjectives"], edit=True, stdin=True
+        args, start, end, process_text_on_page, new=True, default_cats=["Latin adjectives"],
     )

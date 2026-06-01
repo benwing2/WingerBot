@@ -3,26 +3,17 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, msg, errandmsg
+from wingerbot.blib import getparam, tname
 
-from wingerbot.latin import lalib, convert_la_headword_noun
+from wingerbot.latin import lalib, la_convert_headword_noun
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -35,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
             return "headword template <from> %s <to> %s <end>" % (origt, origt)
 
         if getparam(t, "indecl"):
-            pagemsg("Skipping indeclinable noun: %s" % render_headword())
+            p.msg("Skipping indeclinable noun: %s" % render_headword())
             continue
         new_style_headword_template = (
             not getparam(t, "head2")
@@ -45,17 +36,17 @@ def process_text_on_page(index, pagetitle, text):
             and not getparam(t, "decl")
         )
         if new_style_headword_template:
-            pagemsg("Skipping new-style template: %s" % render_headword())
+            p.msg("Skipping new-style template: %s" % render_headword())
             continue
-        lemma = blib.fetch_param_chain(t, ["1", "head", "head1"], "head") or [pagetitle]
+        lemma = blib.fetch_param_chain(t, ["1", "head", "head1"], "head") or [p.title]
         genitive = blib.fetch_param_chain(t, ["2", "gen", "gen1"], "gen")
         noun_gender = blib.fetch_param_chain(t, ["3", "g", "g1"], "g")
         noun_decl = blib.fetch_param_chain(t, ["4", "decl", "decl1"], "decl")
         if " " in lemma[0]:
-            pagemsg("WARNING: Space in lemma %s, skipping: %s" % (lemma[0], render_headword()))
+            p.msg("WARNING: Space in lemma %s, skipping: %s" % (lemma[0], render_headword()))
             continue
         if len(lemma) > 1:
-            pagemsg("WARNING: Multiple lemmas %s, skipping: %s" % (",".join(lemma), render_headword()))
+            p.msg("WARNING: Multiple lemmas %s, skipping: %s" % (",".join(lemma), render_headword()))
             continue
         lemma = lemma[0]
         noun_decl_to_decl_type = {
@@ -67,24 +58,24 @@ def process_text_on_page(index, pagetitle, text):
             "irregular": "irreg",
         }
         if len(noun_decl) == 0:
-            pagemsg("WARNING: No declension, skipping: %s" % render_headword())
+            p.msg("WARNING: No declension, skipping: %s" % render_headword())
             continue
         if len(noun_decl) > 1:
-            pagemsg("WARNING: Multiple decls %s, skipping: %s" % (",".join(noun_decl), render_headword()))
+            p.msg("WARNING: Multiple decls %s, skipping: %s" % (",".join(noun_decl), render_headword()))
             continue
         noun_decl = noun_decl[0]
         if noun_decl not in noun_decl_to_decl_type:
-            pagemsg("WARNING: Unrecognized declension %s, skipping: %s" % (noun_decl, render_headword()))
+            p.msg("WARNING: Unrecognized declension %s, skipping: %s" % (noun_decl, render_headword()))
             continue
         decl_type = noun_decl_to_decl_type[noun_decl]
         if decl_type in ["1", "2", "4", "5"]:
             param1 = "%s<%s>" % (lemma, decl_type)
         elif decl_type == "3":
             if len(genitive) == 0:
-                pagemsg("WARNING: No genitives with decl 3 lemma %s, skipping: %s" % (lemma, render_headword()))
+                p.msg("WARNING: No genitives with decl 3 lemma %s, skipping: %s" % (lemma, render_headword()))
                 continue
             elif len(genitive) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple genitives %s with decl 3 lemma %s, skipping: %s"
                     % (",".join(genitive), lemma, render_headword())
                 )
@@ -103,7 +94,7 @@ def process_text_on_page(index, pagetitle, text):
                     elif lemma.endswith("ēs"):
                         param1 = "%s<3.I.pl>" % lemma
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unrecognized lemma %s with decl 3 genitive -ium, skipping: %s"
                             % (lemma, render_headword())
                         )
@@ -112,39 +103,39 @@ def process_text_on_page(index, pagetitle, text):
                     if lemma.endswith("a") or lemma.endswith("ēs"):
                         param1 = "%s<3.pl>" % lemma
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unrecognized lemma %s with decl 3 genitive -um, skipping: %s"
                             % (lemma, render_headword())
                         )
                         continue
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unrecognized genitive %s with decl 3 lemma %s, skipping: %s"
                         % (gen1, lemma, render_headword())
                     )
                     continue
         elif decl_type == "irreg":
-            pagemsg("WARNING: Can't handle irregular nouns, skipping: %s" % render_headword())
+            p.msg("WARNING: Can't handle irregular nouns, skipping: %s" % render_headword())
             continue
         else:
-            pagemsg(
+            p.msg(
                 "WARNING: Something wrong, unrecognized decl_type %s, skipping: %s" % (decl_type, render_headword())
             )
             continue
         la_ndecl = "{{la-ndecl|%s}}" % param1
-        noun_props = convert_la_headword_noun.new_generate_noun_forms(
-            la_ndecl, errandpagemsg, expand_text, include_props=True
+        noun_props = la_convert_headword_noun.new_generate_noun_forms(
+            la_ndecl, p.errandmsg, p.expand_text, include_props=True
         )
         if noun_props is None:
             continue
         decl_gender = noun_props.get("g", None)
-        if not convert_la_headword_noun.compare_headword_decl_forms(
+        if not la_convert_headword_noun.compare_headword_decl_forms(
             "genitive",
             genitive,
             ["gen_sg", "gen_pl"],
             noun_props,
             render_headword(),
-            pagemsg,
+            p.msg,
             adjust_for_missing_gen_forms=True,
             adjust_for_e_ae_gen=True,
             remove_headword_links=True,
@@ -155,12 +146,12 @@ def process_text_on_page(index, pagetitle, text):
         else:
             need_explicit_gender = True
             if len(noun_gender) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple headword genders %s, please verify: %s"
                     % (",".join(noun_gender), render_headword())
                 )
             elif noun_gender and noun_gender[0].startswith("n") != (decl_gender == "n"):
-                pagemsg(
+                p.msg(
                     "WARNING: Headword gender %s is neuter and decl gender %s isn't, or vice-versa, need to correct, skipping: %s"
                     % (noun_gender[0], decl_gender, render_headword())
                 )
@@ -188,7 +179,7 @@ def process_text_on_page(index, pagetitle, text):
         # Copy remaining params from headword template
         for name, value, showkey in headword_params:
             t.add(name, value, showkey=showkey, preserve_spacing=False)
-        pagemsg("Replaced %s with %s" % (origt, str(t)))
+        p.msg("Replaced %s with %s" % (origt, str(t)))
         notes.append("convert {{la-noun}}/{{la-proper noun}} params to new style")
 
     return str(parsed), notes
@@ -205,7 +196,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_cats=["Latin reconstructed nouns", "Latin reconstructed proper nouns"],
-    edit=True,
-    stdin=True,
 )

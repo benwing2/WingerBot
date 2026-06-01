@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         if tname(t) == "la-IPA":
@@ -25,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
             if newparam1 != param1:
                 origt = str(t)
                 t.add("1", newparam1)
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("remove unnecessary period in %s in {{la-IPA}}" % param1)
 
     return str(parsed), notes
@@ -42,8 +39,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:la-IPA"],
-    edit=True,
-    stdin=True,
     filter_pages=lambda pagetitle: re.search("^(a[bd]|ob|sub)[lr]", pagetitle),
 )

@@ -3,24 +3,21 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagename, text):
-    pagename = pagename[0].lower() + pagename[1:]
+def process_text_on_page(p):
+    p.title = p.title[0].lower() + p.title[1:]
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+    p.msg("Processing")
 
     notes = []
 
-    if "==Etymology 1==" in text:
-        pagemsg("WARNING: Saw Etymology 1, can't handle yet")
+    if "==Etymology 1==" in p.text:
+        p.msg("WARNING: Saw Etymology 1, can't handle yet")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     orig_headword = None
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -32,13 +29,13 @@ def process_text_on_page(index, pagename, text):
                 param1 = param1[0].lower() + param1[1:]
                 origt = str(t)
                 t.add("1", param1)
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
     text = str(parsed)
 
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(text, p.msg)
     subsections = subsecs.subsections
     if len(subsections) < 3:
-        pagemsg("Something wrong, only one subsection")
+        p.msg("Something wrong, only one subsection")
         return
     notes.append("lowercase Latin adjective")
     if orig_headword:
@@ -59,4 +56,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

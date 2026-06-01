@@ -8,18 +8,15 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if " " in pagetitle:
-        pagemsg("WARNING: Space in page title, skipping")
+    if " " in p.title:
+        p.msg("WARNING: Space in page title, skipping")
         return
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -28,7 +25,7 @@ def process_text_on_page(index, pagetitle, text):
             lemmaspec = getparam(t, "1")
             m = re.search("^(.*)<(.*)>$", lemmaspec)
             if not m:
-                pagemsg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (lemmaspec, origt))
+                p.msg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (lemmaspec, origt))
                 continue
             lemma, spec = m.groups()
             if "/" in lemma:
@@ -39,14 +36,14 @@ def process_text_on_page(index, pagetitle, text):
                 base = lemma
                 stem2 = base + "n"
             if not base.endswith("gō"):
-                pagemsg("WARNING: Base %s doesn't end in -gō, skipping: %s" % (base, origt))
+                p.msg("WARNING: Base %s doesn't end in -gō, skipping: %s" % (base, origt))
                 continue
             if stem2:
                 newlemma = "%s/%s" % (base, stem2)
             else:
                 newlemma = base
             t.add("1", "%s<%s>" % (newlemma, spec))
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert 3rd-declension -gō term according to new default stem -gin in {{la-ndecl}}")
 
     return str(parsed), notes
@@ -58,4 +55,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

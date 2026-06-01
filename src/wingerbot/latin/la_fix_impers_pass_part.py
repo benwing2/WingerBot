@@ -69,21 +69,14 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
     return modsec.rebuild(secbody=secbody), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         if tname(t) == "la-conj":
-            inflargs = lalib.generate_verb_forms(str(t), errandpagemsg, expand_text)
+            inflargs = lalib.generate_verb_forms(str(t), p.errandmsg, p.expand_text)
             if inflargs is None:
                 continue
             supforms = inflargs.get("sup_acc", "")
@@ -91,13 +84,13 @@ def process_text_on_page(index, pagetitle, text):
                 supforms = supforms.split(",")
                 for supform in supforms:
                     non_impers_part = re.sub("um$", "us", supform)
-                    pagemsg("Line to delete: part %s allbutnomsgn {{la-adecl|%s}}" % (non_impers_part, non_impers_part))
+                    p.msg("Line to delete: part %s allbutnomsgn {{la-adecl|%s}}" % (non_impers_part, non_impers_part))
 
                     def do_correct_nom_sg_n_participle(index, page):
                         return correct_nom_sg_n_participle(index, page, supform, inflargs["1s_pres_actv_indc"])
 
                     blib.do_edit(
-                        index,
+                        p.index,
                         pywikibot.Page(site, lalib.remove_macrons(supform)),
                         do_correct_nom_sg_n_participle,
                         save=args.save,
@@ -124,8 +117,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Latin verbs with impersonal passive"],
     filter_pages=lambda pagetitle: pagetitle not in ignore_pages,
 )

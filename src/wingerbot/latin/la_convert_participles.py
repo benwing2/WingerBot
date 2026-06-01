@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -32,20 +29,20 @@ def process_text_on_page(index, pagetitle, text):
                         allow_2 = True
                         base = param2
                     else:
-                        pagemsg("WARNING: Unrecognized param 2: %s" % origt)
+                        p.msg("WARNING: Unrecognized param 2: %s" % origt)
                         continue
             if not base:
-                pagemsg("WARNING: Empty param 1: %s" % origt)
+                p.msg("WARNING: Empty param 1: %s" % origt)
                 continue
             lemma = base + "us"
         elif tn == "la-present participle":
             base = getparam(t, "1")
             ending = getparam(t, "2")
             if not base:
-                pagemsg("WARNING: Empty param 1: %s" % origt)
+                p.msg("WARNING: Empty param 1: %s" % origt)
                 continue
             if not ending:
-                pagemsg("WARNING: Empty param 2: %s" % origt)
+                p.msg("WARNING: Empty param 2: %s" % origt)
                 continue
             if ending == "ans":
                 lemma = base + "āns"
@@ -54,7 +51,7 @@ def process_text_on_page(index, pagetitle, text):
             elif ending == "iens":
                 lemma = "%siēns/%seunt" % (base, base)
             else:
-                pagemsg("WARNING: Unrecognized param 2: %s" % origt)
+                p.msg("WARNING: Unrecognized param 2: %s" % origt)
                 continue
             allow_2 = True
         if lemma:
@@ -63,14 +60,14 @@ def process_text_on_page(index, pagetitle, text):
                 pname = str(param.name)
                 if pname.strip() == "1" or allow_2 and pname.strip() == "2":
                     continue
-                pagemsg("WARNING: Unrecognized param %s=%s: %s" % (pname, param.value, origt))
+                p.msg("WARNING: Unrecognized param %s=%s: %s" % (pname, param.value, origt))
                 bad_param = True
             if bad_param:
                 continue
             rmparam(t, "2")
             t.add("1", lemma)
             blib.set_template_name(t, "la-part")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert {{%s}} to {{la-part}}" % tn)
 
     return str(parsed), notes
@@ -83,5 +80,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Latin participles"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Latin participles"],
 )

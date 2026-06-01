@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, errandmsg, site, bool_param_is_true
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, site, bool_param_is_true
 from wingerbot.latin import lalib
 from wingerbot.latin.la_convert_adj import adj_decl_and_subtype_to_props
 
@@ -533,29 +533,23 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
         return None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "la-decl-multi":
-            t = convert_la_decl_multi_to_new(t, pagetitle, pagemsg, errandpagemsg)
+            t = convert_la_decl_multi_to_new(t, p.title, p.msg, p.errandmsg)
             if t:
                 notes.append("converted {{la-decl-multi}} to {{%s}}" % tname(t))
             else:
                 return
         elif tn in old_la_noun_decl_templates:
-            if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
+            if convert_template_to_new(t, p.title, p.msg, p.errandmsg):
                 notes.append("converted {{%s}} to {{la-ndecl}}" % tn)
             else:
                 return
@@ -570,5 +564,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Latin nouns", "Latin proper nouns"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Latin nouns", "Latin proper nouns"],
 )

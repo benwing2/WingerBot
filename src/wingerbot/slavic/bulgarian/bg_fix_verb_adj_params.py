@@ -85,7 +85,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add(pname, pval, showkey=showkey, preserve_spacing=False)
         if str(t) != origt:
             pagemsg("Replaced %s with %s" % (origt, str(t)))
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser(

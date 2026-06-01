@@ -8,18 +8,15 @@ from wingerbot.blib import msg, tname
 pages_to_delete = []
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     sections, j, secbody, sectail = modsec.props()
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     saw_head = False
     saw_bad_template = False
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
             elif tn in ["inflection of", "rfdef", "la-IPA"]:
                 pass
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw unrecognized template in subsection #%s %s: %s"
                     % (k // 2, subsections[k - 1].strip(), str(t))
                 )
@@ -41,7 +38,7 @@ def process_text_on_page(index, pagetitle, text):
     delete = False
     if saw_head:
         if saw_bad_template:
-            pagemsg("WARNING: Would delete but saw unrecognized template, not deleting")
+            p.msg("WARNING: Would delete but saw unrecognized template, not deleting")
         else:
             delete = True
 
@@ -49,22 +46,22 @@ def process_text_on_page(index, pagetitle, text):
         return
 
     if "==Etymology" in sections[j]:
-        pagemsg("WARNING: Found Etymology subsection, don't know how to handle")
+        p.msg("WARNING: Found Etymology subsection, don't know how to handle")
         return
     if "==Pronunciation " in sections[j]:
-        pagemsg("WARNING: Found Pronunciation N subsection, don't know how to handle")
+        p.msg("WARNING: Found Pronunciation N subsection, don't know how to handle")
         return
 
     #### Now, we can maybe delete the whole section or page
 
     if subsections[0].strip():
-        pagemsg(
+        p.msg(
             "WARNING: Whole Latin section deletable except that there's text above all subsections: <%s>"
             % subsections[0].strip()
         )
         return
     if "[[Category:" in sectail:
-        pagemsg(
+        p.msg(
             "WARNING: Whole Latin section deletable except that there's a category at the end: <%s>" % sectail.strip()
         )
         return
@@ -72,12 +69,12 @@ def process_text_on_page(index, pagetitle, text):
         # Can delete the whole page, but check for non-blank section 0
         cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
         if cleaned_sec0.strip():
-            pagemsg(
+            p.msg(
                 "WARNING: Whole page deletable except that there's text above all sections: <%s>" % cleaned_sec0.strip()
             )
             return
-        pagemsg("Page %s should be deleted" % pagetitle)
-        pages_to_delete.append(pagetitle)
+        p.msg("Page %s should be deleted" % p.title)
+        pages_to_delete.append(p.title)
         return
     del sections[j]
     del sections[j - 1]
@@ -98,7 +95,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 expected_head_templates = blib.split_arg(args.headtemp)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
 
 msg("The following pages need to be deleted:")
 for page in pages_to_delete:

@@ -6,7 +6,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot.latin import lalib
 
@@ -46,27 +46,18 @@ def new_generate_verb_forms(template, errandpagemsg, expand_text, include_props=
     return blib.split_generate_args(result)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
-    origtext = text
+def process_text_on_page(p):
+    p.msg("Processing")
+    origtext = p.text
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     saw_a_template = False
     for k, header in subsecs.header_list:
@@ -78,7 +69,7 @@ def process_text_on_page(index, pagetitle, text):
             tn = tname(t)
             if tn == "la-conj":
                 if la_conj_template:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple verb conjugation templates in subsection, %s and %s, skipping"
                         % (str(la_conj_template), str(t))
                     )
@@ -88,7 +79,7 @@ def process_text_on_page(index, pagetitle, text):
                 saw_a_template = True
             if tn == "la-verb":
                 if la_verb_template:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple verb headword templates in subsection, %s and %s, skipping"
                         % (str(la_verb_template), str(t))
                     )
@@ -101,15 +92,15 @@ def process_text_on_page(index, pagetitle, text):
         if not la_verb_template and not la_conj_template:
             continue
         if la_verb_template and not la_conj_template:
-            pagemsg("WARNING: Saw verb headword template but no conjugation template: %s" % str(la_verb_template))
+            p.msg("WARNING: Saw verb headword template but no conjugation template: %s" % str(la_verb_template))
             continue
         if la_conj_template and not la_verb_template:
-            pagemsg("WARNING: Saw verb conjugation template but no headword template: %s" % str(la_conj_template))
+            p.msg("WARNING: Saw verb conjugation template but no headword template: %s" % str(la_conj_template))
             continue
 
         orig_la_verb_template = str(la_verb_template)
         if re.search(r"^(irreg|[0-9]\+*)(\..*)?$", getparam(la_verb_template, "1")):
-            pagemsg("Found new-style verb headword template, skipping: %s" % orig_la_verb_template)
+            p.msg("Found new-style verb headword template, skipping: %s" % orig_la_verb_template)
             continue
 
         def render_headword_and_conj():
@@ -120,7 +111,7 @@ def process_text_on_page(index, pagetitle, text):
                 str(la_conj_template),
             )
 
-        verb_props = new_generate_verb_forms(str(la_conj_template), errandpagemsg, expand_text, include_props=True)
+        verb_props = new_generate_verb_forms(str(la_conj_template), p.errandmsg, p.expand_text, include_props=True)
         if verb_props is None:
             continue
         subtypes = [x.replace("-", "") for x in safe_split(verb_props["subtypes"], ".")]
@@ -153,12 +144,12 @@ def process_text_on_page(index, pagetitle, text):
                 macronless_headword_forms = set(lalib.remove_macrons(x) for x in corrected_headword_forms)
                 macronless_conj_forms = set(lalib.remove_macrons(x) for x in corrected_conj_forms)
                 if macronless_headword_forms == macronless_conj_forms:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Headword %s=%s different from conj %s=%s in macrons only, skipping: %s"
                         % (id_slot, ",".join(headword_forms), id_slot, ",".join(conj_forms), render_headword_and_conj())
                     )
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Headword %s=%s different from conj %s=%s in more than just macrons, skipping: %s"
                         % (id_slot, ",".join(headword_forms), id_slot, ",".join(conj_forms), render_headword_and_conj())
                     )
@@ -183,7 +174,7 @@ def process_text_on_page(index, pagetitle, text):
             continue
         if "depon" in subtypes or "semidepon" in subtypes:
             if sup:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw supine in conjunction with deponent verb, skipping: %s" % render_headword_and_conj()
                 )
                 continue
@@ -207,7 +198,7 @@ def process_text_on_page(index, pagetitle, text):
                 if len(lemma) > 0 and lemma[0].endswith("sum"):
                     pass
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Expected supfutractvonly in subtypes=%s, skipping: %s"
                         % (".".join(sorted(subtypes)), render_headword_and_conj())
                     )
@@ -216,7 +207,7 @@ def process_text_on_page(index, pagetitle, text):
             if not compare_headword_conj_forms("supine", sup, ["sup_acc"]):
                 continue
         if not verb_conj:
-            pagemsg("WARNING: No conj in headword template: %s" % render_headword_and_conj())
+            p.msg("WARNING: No conj in headword template: %s" % render_headword_and_conj())
         else:
             conj_type_to_verb_conj = {
                 "1st": "1",
@@ -227,7 +218,7 @@ def process_text_on_page(index, pagetitle, text):
                 "irreg": "irreg",
             }
             if conj_type not in conj_type_to_verb_conj:
-                pagemsg(
+                p.msg(
                     "WARNING: Something wrong, saw unrecognized conj_type=%s: %s"
                     % (conj_type, render_headword_and_conj())
                 )
@@ -235,14 +226,14 @@ def process_text_on_page(index, pagetitle, text):
             conj_type = conj_type_to_verb_conj[conj_type]
             if conj_subtype:
                 if conj_subtype not in conj_type_to_verb_conj:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Something wrong, saw unrecognized conj_subtype=%s"
                         % (conj_subtype, render_headword_and_conj())
                     )
                     continue
                 conj_subtype = conj_type_to_verb_conj[conj_subtype]
             if verb_conj != conj_type and verb_conj != conj_subtype:
-                pagemsg(
+                p.msg(
                     "WARNING: Conjugation template has conj=%s, subconj=%s but headword template has conj=%s, skipping: %s"
                     % (conj_type, conj_subtype, verb_conj, render_headword_and_conj())
                 )
@@ -266,7 +257,7 @@ def process_text_on_page(index, pagetitle, text):
             if set(subtypes) >= set(pattern) and (
                 set(subtypes) - set(pattern) <= {"nopass", "p3inf", "poetsyncperf", "optsyncperf", "alwayssyncperf"}
             ):
-                pagemsg(
+                p.msg(
                     "Subtypes=%s of conjugation template have extra, ignorable subtypes %s compared with pattern=%s of headword template: %s"
                     % (
                         ".".join(sorted(subtypes)),
@@ -276,7 +267,7 @@ def process_text_on_page(index, pagetitle, text):
                     )
                 )
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Conjugation template has subtypes=%s but headword template has pattern=%s, skipping: %s"
                     % (".".join(sorted(subtypes)), ".".join(sorted(pattern)), render_headword_and_conj())
                 )
@@ -300,12 +291,12 @@ def process_text_on_page(index, pagetitle, text):
         # Copy remaining params from headword template
         for name, value, showkey in headword_params:
             la_verb_template.add(name, value, showkey=showkey, preserve_spacing=False)
-        pagemsg("Replaced %s with %s" % (orig_la_verb_template, str(la_verb_template)))
+        p.msg("Replaced %s with %s" % (orig_la_verb_template, str(la_verb_template)))
         notes.append("convert {{la-verb}} params to new style")
         subsections[k] = str(parsed)
 
     if not saw_a_template:
-        pagemsg("WARNING: Saw no verb headword or conjugation templates")
+        p.msg("WARNING: Saw no verb headword or conjugation templates")
 
     return modsec.rebuild(secbody="".join(subsections)), notes
 
@@ -316,4 +307,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Latin verbs"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Latin verbs"],)

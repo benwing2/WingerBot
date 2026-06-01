@@ -3,32 +3,29 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     if "==Etymology 1==" in secbody:
-        pagemsg("Already saw multiple etym sections")
+        p.msg("Already saw multiple etym sections")
         return
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     if len(subsections) < 3:
-        pagemsg("WARNING: Something wrong, only one subsection")
+        p.msg("WARNING: Something wrong, only one subsection")
         return
 
     def increase_indent(subsecs):
@@ -73,4 +70,4 @@ parser = blib.create_argparser("Double latin etym sections", include_pagefile=Tr
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, site
 
 # FIXME: Out of date script, not needed any more, might not still work.
 
@@ -276,23 +276,17 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
         return None
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in old_la_verb_conj_templates:
-            if convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg):
+            if convert_template_to_new(t, p.title, p.msg, p.errandmsg):
                 notes.append("converted {{%s}} to {{la-conj}}" % tn)
             else:
                 return
@@ -306,4 +300,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Latin verbs"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Latin verbs"],)

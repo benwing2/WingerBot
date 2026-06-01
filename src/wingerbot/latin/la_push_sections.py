@@ -9,17 +9,14 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    newsectext = pagetitle_to_text.get(pagetitle, None)
+    newsectext = pagetitle_to_text.get(p.title, None)
     if newsectext is None:
-        pagemsg("WARNING: Can't find new text")
+        p.msg("WARNING: Can't find new text")
         return
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     sections, j, secbody, sectail = modsec.props()
@@ -61,5 +58,5 @@ for i, (pagetitle, pagetext) in blib.iter_items(title_and_text_pairs, start, end
     pagetitle_to_text[pagetitle] = pagetext
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_text.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_text.keys())
 )

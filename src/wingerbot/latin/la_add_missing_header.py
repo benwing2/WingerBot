@@ -18,19 +18,16 @@ tempname_to_header = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         newtext = re.sub(r"^\n*(\{\{la-.*?-form)", r"\1", subsections[k])
@@ -43,7 +40,7 @@ def process_text_on_page(index, pagetitle, text):
             if tempname in tempname_to_header:
                 header_pos = tempname_to_header[tempname]
             else:
-                pagemsg("WARNING: Unrecognized template name: %s" % tempname)
+                p.msg("WARNING: Unrecognized template name: %s" % tempname)
                 return m.group(0)
             header = "=" * indent + header_pos + "=" * indent
             preceding_newline = "\n" if lastchar != "\n" else ""
@@ -60,4 +57,4 @@ parser = blib.create_argparser("Add missing header to Latin non-lemma terms", in
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -6,16 +6,13 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -28,7 +25,7 @@ def process_text_on_page(index, pagetitle, text):
                 msg("|-")
                 msg(
                     "| %s || %s || %s ||  ?  || %s"
-                    % (pagetitle, param1, "yes" if has_no_short_gen else "no", ";".join(defns))
+                    % (p.title, param1, "yes" if has_no_short_gen else "no", ";".join(defns))
                 )
 
 
@@ -47,7 +44,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    stdin=True,
+    new=True,
     default_cats=["Latin nouns"],
     filter_pages=lambda pagetitle: re.search("iu[sm]$", pagetitle),
 )

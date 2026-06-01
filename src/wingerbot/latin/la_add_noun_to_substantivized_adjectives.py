@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, tname, msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -22,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
     def fix_up_section(etymsec, sectext):
         indentlevel = 3 if etymsec is None else 4
         indent = "=" * indentlevel
-        subsecs = blib.split_text_into_subsections(sectext, pagemsg, only_level=indentlevel)
+        subsecs = blib.split_text_into_subsections(sectext, p.msg, only_level=indentlevel)
         subsections = subsecs.subsections
         saw_adecl = False
         for k, header in subsecs.header_list:
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
                 tn = tname(t)
                 if tn == "la-adecl":
                     if la_adecl_template:
-                        pagemsg("WARNING: Saw multiple {{la-adecl}} templates: %s and %s" % (la_adecl_template, t))
+                        p.msg("WARNING: Saw multiple {{la-adecl}} templates: %s and %s" % (la_adecl_template, t))
                     else:
                         la_adecl_template = t
                         saw_adecl = True
@@ -42,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
             remaining_parts = []
             defn_parts = []
             if len(split_subsec) == 1:
-                pagemsg("WARNING: Didn't see substantive defn, skipping")
+                p.msg("WARNING: Didn't see substantive defn, skipping")
                 continue
             for i in range(len(split_subsec)):
                 if i % 2 == 0:
@@ -57,7 +54,7 @@ def process_text_on_page(index, pagetitle, text):
                 param1 += "<3>"
                 gspec = "|g=m"
             else:
-                pagemsg("WARNING: Unrecognized ending on param1: %s" % param1)
+                p.msg("WARNING: Unrecognized ending on param1: %s" % param1)
                 gspec = ""
             subsections[k] = "".join(remaining_parts).rstrip(
                 "\n"
@@ -73,10 +70,10 @@ def process_text_on_page(index, pagetitle, text):
             )
             notes.append("add noun section with {{la-noun|%s|%s}} to substantivized Latin adjective" % (param1, gspec))
         if not saw_adecl:
-            pagemsg("WARNING: Saw no {{la-adecl}} in section")
+            p.msg("WARNING: Saw no {{la-adecl}} in section")
         return "".join(subsections)
 
-    secbody = blib.map_etym_sections(secbody, pagemsg, fix_up_section)
+    secbody = blib.map_etym_sections(secbody, p.msg, fix_up_section)
     return modsec.rebuild(secbody=secbody), notes
 
 
@@ -84,4 +81,4 @@ parser = blib.create_argparser("Add noun to substantivized Latin adjectives", in
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

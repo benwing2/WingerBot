@@ -36,7 +36,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("Remove/rearrange params in {{R:Lexico}}")
                 pagemsg("Replaced %s with %s" % (origt, newt))
 
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser("Remove/rearrange params in {{R:Lexico}}", include_pagefile=True, include_stdin=True)

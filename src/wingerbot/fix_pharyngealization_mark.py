@@ -41,7 +41,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("Correct use of U+02C1 pharyngealization mark to U+02E4")
             pagemsg("Replaced %s with %s" % (origt, newt))
 
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser(

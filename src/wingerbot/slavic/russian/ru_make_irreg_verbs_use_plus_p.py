@@ -65,7 +65,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("Replaced manual ppp= with irreg verb with +p")
             pagemsg("Replaced %s with %s" % (origt, newt))
 
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser(

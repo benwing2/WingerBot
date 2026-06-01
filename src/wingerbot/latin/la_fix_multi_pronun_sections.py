@@ -8,13 +8,10 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -23,14 +20,14 @@ def process_text_on_page(index, pagetitle, text):
 
     def process_etym_section(secnum, sectext):
         if "==Pronunciation 1==" not in sectext:
-            pagemsg("No ==Pronunciation 1== in %s" % ("etym section" if secnum is not None else "text"))
+            p.msg("No ==Pronunciation 1== in %s" % ("etym section" if secnum is not None else "text"))
             return sectext
 
         if secnum is not None:
             equalsigns = "===="
         else:
             equalsigns = "==="
-        subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+        subsecs = blib.split_text_into_subsections(sectext, p.msg)
         subsections = subsecs.subsections
 
         if len(subsections) > 2 and subsections[1] == "===Etymology===\n":
@@ -43,7 +40,7 @@ def process_text_on_page(index, pagetitle, text):
             len(subsections) == 9 + offset
             or (len(subsections) == 11 + offset and subsections[9 + offset] == "===References===\n")
         ):
-            pagemsg(
+            p.msg(
                 "WARNING: Not right # of sections (normally four, potentially five or six with ===Etymology=== and/or ===References===): %s"
                 % (",".join(subsections[k].strip() for k in range(1, len(subsections), 2)))
             )
@@ -51,26 +48,26 @@ def process_text_on_page(index, pagetitle, text):
         if subsections[1 + offset] != "%sPronunciation 1%s\n" % (equalsigns, equalsigns) or subsections[
             5 + offset
         ] != "%sPronunciation 2%s\n" % (equalsigns, equalsigns):
-            pagemsg(
+            p.msg(
                 "WARNING: Expected %sPronunciation N%s headers but saw %s and %s"
                 % (equalsigns, equalsigns, subsections[1 + offset].strip(), subsections[5 + offset].strip())
             )
             return sectext
         if subsections[3 + offset] != subsections[7 + offset]:
             if secnum is not None:
-                pagemsg(
+                p.msg(
                     "WARNING: Already in etym section and saw different POS headers %s and %s, can't convert to etym sections"
                     % (subsections[3 + offset].strip(), subsections[7 + offset].strip())
                 )
                 return sectext
             elif offset > 0:
-                pagemsg(
+                p.msg(
                     "WARNING: Already have ===Etymology=== section and saw different POS headers %s and %s, can't convert to etym sections"
                     % (subsections[3 + offset].strip(), subsections[7 + offset].strip())
                 )
                 return sectext
             else:
-                pagemsg(
+                p.msg(
                     "Saw different POS headers %s and %s"
                     % (subsections[3 + offset].strip(), subsections[7 + offset].strip())
                 )
@@ -98,7 +95,7 @@ def process_text_on_page(index, pagetitle, text):
             first_lemmas = find_lemmas(subsections[4 + offset])
             second_lemmas = find_lemmas(subsections[8 + offset])
             if first_lemmas != second_lemmas:
-                pagemsg(
+                p.msg(
                     "WARNING: Different lemmas in two POS sections: %s and %s"
                     % (",".join(first_lemmas), ",".join(second_lemmas))
                 )
@@ -136,7 +133,7 @@ def process_text_on_page(index, pagetitle, text):
             )
             return "".join(subsections)
 
-    secbody = blib.map_etym_sections(secbody, pagemsg, process_etym_section)
+    secbody = blib.map_etym_sections(secbody, p.msg, process_etym_section)
     return modsec.rebuild(secbody=secbody), notes
 
 
@@ -148,4 +145,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

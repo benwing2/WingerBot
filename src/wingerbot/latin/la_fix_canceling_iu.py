@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -27,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("1", stem[:-1])
                 notes.append("Fix noun in -ius to use {{la-decl-2nd-ius}}")
             else:
-                pagemsg("WARNING: Found la-decl-2nd without stem in -i: %s" % str(t))
+                p.msg("WARNING: Found la-decl-2nd without stem in -i: %s" % str(t))
         elif tn == "la-decl-2nd-N":
             stem = getparam(t, "1")
             if stem.endswith("i"):
@@ -35,7 +32,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("1", stem[:-1])
                 notes.append("Fix noun in -ium to use {{la-decl-2nd-N-ium}}")
             else:
-                pagemsg("WARNING: Found la-decl-2nd-N without stem in -i: %s" % str(t))
+                p.msg("WARNING: Found la-decl-2nd-N without stem in -i: %s" % str(t))
 
     return str(parsed), notes
 
@@ -44,4 +41,4 @@ parser = blib.create_argparser("Fix Latin declensions of -ius/-ium nouns", inclu
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

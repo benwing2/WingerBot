@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -36,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
                 lang = getparam(t, "1")
                 termparam = 2
             if lang != "la":
-                # pagemsg("WARNING: Wrong language in template: %s" % str(t))
+                # p.msg("WARNING: Wrong language in template: %s" % str(t))
                 continue
             term = getparam(t, str(termparam))
             alt = getparam(t, str(termparam + 1))
@@ -48,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add(str(termparam + 1), "")
                 else:
                     rmparam(t, str(termparam + 1))
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("move alt param to link param in %s" % tn)
 
     return modsec.rebuild(secbody=str(parsed)), notes
@@ -62,4 +59,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

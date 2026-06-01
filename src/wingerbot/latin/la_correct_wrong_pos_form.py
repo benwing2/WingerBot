@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 from wingerbot.latin import lalib
 
 
@@ -67,15 +67,8 @@ def process_form(index, page, slot, form, pos, orig_pagemsg, orig_errandpagemsg)
     return modsec.rebuild(secbody="".join(subsections)), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    heads_and_defns = lalib.find_heads_and_defns(text, pagemsg)
+def process_text_on_page(p):
+    heads_and_defns = lalib.find_heads_and_defns(p.text, p.msg)
     if heads_and_defns is None:
         return
     headwords = heads_and_defns.headwords
@@ -128,12 +121,12 @@ def process_text_on_page(index, pagetitle, text):
         for inflt in headword.infl_templates:
             infltn = tname(inflt)
             if infltn != expected_inflt:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw bad declension template for %s, expected {{%s}}: %s"
                     % (pos, expected_inflt, str(inflt))
                 )
                 continue
-            inflargs = lalib.generate_infl_forms(pos, str(inflt), errandpagemsg, expand_text)
+            inflargs = lalib.generate_infl_forms(pos, str(inflt), p.errandmsg, p.expand_text)
             if inflargs is None:
                 continue
             forms_seen = set()
@@ -144,7 +137,7 @@ def process_text_on_page(index, pagetitle, text):
                     if "[" in form or "|" in form:
                         continue
                     form_no_macrons = lalib.remove_macrons(form)
-                    if form_no_macrons == pagetitle:
+                    if form_no_macrons == p.title:
                         continue
                     if form_no_macrons in forms_seen:
                         continue
@@ -155,10 +148,10 @@ def process_text_on_page(index, pagetitle, text):
             ):
 
                 def handler(formindex, page):
-                    return process_form(formindex, page, slot, form, pos, pagemsg, errandpagemsg)
+                    return process_form(formindex, page, slot, form, pos, p.msg, p.errandmsg)
 
                 blib.do_edit(
-                    "%s.%s" % (index, formindex),
+                    "%s.%s" % (p.index, formindex),
                     pywikibot.Page(site, lalib.remove_macrons(form)),
                     handler,
                     save=args.save,
@@ -176,5 +169,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, stdin=True, default_cats=["Latin participles", "Latin proper nouns"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Latin participles", "Latin proper nouns"]
 )

@@ -8,21 +8,18 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if " " in pagetitle:
-        pagemsg("WARNING: Space in page title, skipping")
+    if " " in p.title:
+        p.msg("WARNING: Space in page title, skipping")
         return
-    if not pagetitle.endswith("ium"):
-        pagemsg("Doesn't end in -ium, skipping")
+    if not p.title.endswith("ium"):
+        p.msg("Doesn't end in -ium, skipping")
         return
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     num_ndecl_templates = 0
     for t in parsed.filter_templates():
@@ -33,16 +30,16 @@ def process_text_on_page(index, pagetitle, text):
             lemmaspec = getparam(t, "1")
             m = re.search("^(.*)<(.*)>$", lemmaspec)
             if not m:
-                pagemsg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (lemmaspec, origt))
+                p.msg("WARNING: Unable to parse lemma+spec %s, skipping: %s" % (lemmaspec, origt))
                 continue
             lemma, spec = m.groups()
             if ".-ium" not in spec:
                 spec += ".-ium"
                 t.add("1", "%s<%s>" % (lemma, spec))
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("add .-ium to declension of Latin chemical element")
     if num_ndecl_templates > 1:
-        pagemsg("WARNING: Saw multiple {{la-ndecl}} templates, some may not be elements")
+        p.msg("WARNING: Saw multiple {{la-ndecl}} templates, some may not be elements")
         return
 
     return str(parsed), notes
@@ -53,5 +50,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["la:Chemical elements"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["la:Chemical elements"],
 )

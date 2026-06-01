@@ -14,31 +14,28 @@ header_to_headword_form_template = {
 }
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     if len(subsections) < 3:
-        pagemsg("Something wrong, only one subsection")
-        pagemsg("------- begin text --------")
-        msg(text.rstrip("\n"))
+        p.msg("Something wrong, only one subsection")
+        p.msg("------- begin text --------")
+        msg(p.text.rstrip("\n"))
         msg("------- end text --------")
         return
     for k, header in subsecs.header_list:
         def replace_triple_quote_header(m):
             headword = m.group(1)
             if header not in header_to_headword_form_template:
-                pagemsg(
+                p.msg(
                     "WARNING: Can't replace triple-quote headword, header %s not recognized: %s" % (header, m.group(0))
                 )
                 return m.group(0)
@@ -62,4 +59,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

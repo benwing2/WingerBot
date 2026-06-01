@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 from wingerbot.latin import lalib
 
@@ -27,34 +27,28 @@ pos_to_template = {
 }
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "head" and getparam(t, "1") == "la":
             pos = getparam(t, "2")
             if pos not in pos_to_template:
-                pagemsg("WARNING: Saw unrecognized part of speech %s: %s" % (pos, str(t)))
+                p.msg("WARNING: Saw unrecognized part of speech %s: %s" % (pos, str(t)))
                 continue
             if getparam(t, "3") or getparam(t, "head"):
-                pagemsg("WARNING: Saw 3= or head=: %s" % str(t))
+                p.msg("WARNING: Saw 3= or head=: %s" % str(t))
                 continue
             origt = str(t)
-            t.add("1", pagename)
+            t.add("1", p.title)
             blib.set_template_name(t, pos_to_template[pos])
             rmparam(t, "2")
             t.add("FIXME", "1")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("replace {{head|la|%s}} with {{%s}}" % (pos, tname(t)))
 
     return str(parsed), notes
@@ -66,4 +60,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

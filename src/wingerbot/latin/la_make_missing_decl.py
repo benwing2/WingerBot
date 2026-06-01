@@ -4,7 +4,7 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, errandmsg
-from wingerbot.latin import lalib, convert_la_headword_noun
+from wingerbot.latin import lalib, la_convert_headword_noun
 
 
 def process_line(index, line, online):
@@ -105,10 +105,10 @@ def process_line(index, line, online):
         return
     pagemsg("For noun %s, declension %s" % (str(t), la_ndecl))
     if online:
-        noun_props = convert_la_headword_noun.new_generate_noun_forms(la_ndecl, errandpagemsg, expand_text)
+        noun_props = la_convert_headword_noun.new_generate_noun_forms(la_ndecl, errandpagemsg, expand_text)
         if noun_props is None:
             return
-        convert_la_headword_noun.compare_headword_decl_forms(
+        la_convert_headword_noun.compare_headword_decl_forms(
             "genitive",
             genitive,
             ["gen_sg", "gen_pl"],

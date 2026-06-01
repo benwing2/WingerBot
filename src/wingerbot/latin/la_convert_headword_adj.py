@@ -5,7 +5,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot.latin import lalib
 
@@ -32,26 +32,17 @@ def lengthen_ns_nf(text):
     return text
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     saw_a_template = False
     for k, header in subsecs.header_list:
@@ -63,7 +54,7 @@ def process_text_on_page(index, pagetitle, text):
             tn = tname(t)
             if tn == "la-adecl":
                 if la_adecl_template:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple adjective declension templates in subsection, %s and %s, skipping"
                         % (str(la_adecl_template), str(t))
                     )
@@ -78,7 +69,7 @@ def process_text_on_page(index, pagetitle, text):
                 "la-gerundive",
             ]:
                 if la_adj_template:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple adjective headword templates in subsection, %s and %s, skipping"
                         % (str(la_adj_template), str(t))
                     )
@@ -91,12 +82,12 @@ def process_text_on_page(index, pagetitle, text):
         if not la_adj_template and not la_adecl_template:
             continue
         if la_adj_template and not la_adecl_template:
-            pagemsg("WARNING: Saw adjective headword template but no declension template: %s" % str(la_adj_template))
+            p.msg("WARNING: Saw adjective headword template but no declension template: %s" % str(la_adj_template))
             continue
         if la_adecl_template and not la_adj_template:
-            pagemsg("WARNING: Saw adjective declension template but no headword template: %s" % str(la_adecl_template))
+            p.msg("WARNING: Saw adjective declension template but no headword template: %s" % str(la_adecl_template))
             continue
-        adj_forms = lalib.generate_adj_forms(str(la_adecl_template), errandpagemsg, expand_text)
+        adj_forms = lalib.generate_adj_forms(str(la_adecl_template), p.errandmsg, p.expand_text)
         if adj_forms is None:
             continue
         orig_la_adj_template = str(la_adj_template)
@@ -115,12 +106,12 @@ def process_text_on_page(index, pagetitle, text):
                 macronless_headword_forms = set(lalib.remove_macrons(x) for x in corrected_headword_forms)
                 macronless_decl_forms = set(lalib.remove_macrons(x) for x in corrected_decl_forms)
                 if macronless_headword_forms == macronless_decl_forms:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Headword %s=%s different from decl %s=%s in macrons only, skipping"
                         % (id_slot, ",".join(headword_forms), id_slot, ",".join(decl_forms))
                     )
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Headword %s=%s different from decl %s=%s in more than just macrons, skipping"
                         % (id_slot, ",".join(headword_forms), id_slot, ",".join(decl_forms))
                     )
@@ -152,7 +143,7 @@ def process_text_on_page(index, pagetitle, text):
             if not compare_headword_decl_forms("neuter", nom_n, ["nom_sg_n", "nom_pl_n"]):
                 continue
         # elif tn_adj in ["la-adj-comp", "la-adj-sup"]:
-        #  nom_m = blib.fetch_param_chain(la_adj_template, ["1", "head", "head1"], "head", pagetitle)
+        #  nom_m = blib.fetch_param_chain(la_adj_template, ["1", "head", "head1"], "head", p.title)
         #  if not compare_headword_decl_forms("headword", nom_m, ["nom_sg_m", "nom_pl_m"]):
         #    continue
         #  # If 2= is specified (alias of comp=), move to comp= so it doesn't get lost.
@@ -161,13 +152,13 @@ def process_text_on_page(index, pagetitle, text):
         #  if comp2:
         #    compcomp = getparam(la_adj_template, compparam)
         #    if compcomp:
-        #      pagemsg("WARNING: Saw both 2=%s and %s=%s in {{%s}}" % (
+        #      p.msg("WARNING: Saw both 2=%s and %s=%s in {{%s}}" % (
         #        comp2, compparam, compcomp, tn_adj))
         #    else:
         #      la_adj_template.add(compparam, comp2, before="2")
         #  rmparam(t, "2")
         else:
-            pagemsg("Skipping {{%s}}, not among regular adjective templates" % tn_adj)
+            p.msg("Skipping {{%s}}, not among regular adjective templates" % tn_adj)
             continue
 
         # Fetch remaining params from headword template
@@ -187,12 +178,12 @@ def process_text_on_page(index, pagetitle, text):
         for name, value, showkey in headword_params:
             la_adj_template.add(name, value, showkey=showkey, preserve_spacing=False)
         blib.set_template_name(la_adj_template, "la-adj")
-        pagemsg("Replaced %s with %s" % (orig_la_adj_template, str(la_adj_template)))
+        p.msg("Replaced %s with %s" % (orig_la_adj_template, str(la_adj_template)))
         notes.append("convert {{%s}} to {{la-adj}} with new params" % tn_adj)
         subsections[k] = str(parsed)
 
     if not saw_a_template:
-        pagemsg("WARNING: Saw no adjective headword or declension templates")
+        p.msg("WARNING: Saw no adjective headword or declension templates")
 
     return modsec.rebuild(secbody="".join(subsections)), notes
 
@@ -204,5 +195,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Latin adjectives"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Latin adjectives"],
 )

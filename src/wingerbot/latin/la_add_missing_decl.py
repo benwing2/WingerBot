@@ -8,20 +8,17 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    props = pagetitle_to_props.get(pagetitle, None)
+    props = pagetitle_to_props.get(p.title, None)
     if props is None:
-        pagemsg("WARNING: Can't locate headword and decl templates for page")
+        p.msg("WARNING: Can't locate headword and decl templates for page")
         return
     headword_template, decl_template = props
-    origtext = text
+    origtext = p.text
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -42,24 +39,24 @@ def process_text_on_page(index, pagetitle, text):
             num_adecl_templates += 1
         # FIXME, also add something for manually-specified declensions (synaeresis?)
     if "\n===Declension===\n" in secbody:
-        pagemsg("WARNING: Saw misindented Declension header")
+        p.msg("WARNING: Saw misindented Declension header")
     if num_adecl_templates >= 1:
-        pagemsg("WARNING: Saw {{la-adecl}} in noun section")
+        p.msg("WARNING: Saw {{la-adecl}} in noun section")
     if num_ndecl_templates + num_adecl_templates >= num_noun_headword_templates:
-        pagemsg(
+        p.msg(
             "WARNING: Already seen %s decl template(s) >= %s headword template(s), skipping"
             % (num_ndecl_templates + num_adecl_templates, num_noun_headword_templates)
         )
         return
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     num_declension_headers = 0
     for k, header in subsecs.header_list:
         if header in ["Declension", "Inflection"]:
             num_declension_headers += 1
     if num_declension_headers >= num_noun_headword_templates:
-        pagemsg(
+        p.msg(
             "WARNING: Already seen %s Declension/Inflection header(s) >= %s headword template(s), skipping"
             % (num_declension_headers, num_noun_headword_templates)
         )
@@ -67,7 +64,7 @@ def process_text_on_page(index, pagetitle, text):
 
     for k, header in subsecs.header_list:
         if headword_template in subsections[k]:
-            pagemsg("Inserting declension section after subsection %s" % k)
+            p.msg("Inserting declension section after subsection %s" % k)
             subsections[k] = subsections[k].rstrip("\n") + "\n\n"
             num_equal_signs = len(re.sub("^(=+).*", r"\1", subsections[k - 1].strip()))
             subsections[k + 1 : k + 1] = [
@@ -76,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("add section for Latin declension %s" % decl_template)
             break
     else:
-        pagemsg("WARNING: Couldn't locate headword template, skipping: %s" % headword_template)
+        p.msg("WARNING: Couldn't locate headword template, skipping: %s" % headword_template)
         return
     text = modsec.rebuild(secbody="".join(subsections))
     text = re.sub("\n\n\n+", "\n\n", text)
@@ -101,5 +98,5 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         pagetitle_to_props[pagetitle] = (headword_template, decl_template)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=list(pagetitle_to_props.keys())
+    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_props.keys())
 )

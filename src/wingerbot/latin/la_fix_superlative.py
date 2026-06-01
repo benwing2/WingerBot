@@ -8,26 +8,23 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     lemma = None
     for t in parsed.filter_templates():
         if tname(t) == "la-adecl":
             if lemma:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw more than one declension table, first lemma=%s, second template=%s" % (lemma, str(t))
                 )
             lemma = getparam(t, "1")
     if not lemma:
-        pagemsg("WARNING: Couldn't find declension template")
+        p.msg("WARNING: Couldn't find declension template")
         return
     for t in parsed.filter_templates():
         if tname(t) == "head" and getparam(t, "1") == "la" and getparam(t, "2") == "adjective superlative form":
@@ -40,10 +37,10 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("1", lemma)
                 t.add("2", base_lemma)
                 blib.set_template_name(t, "la-adj-sup")
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("Use {{la-adj-sup}} instead of {{head|la|...}}")
             else:
-                pagemsg("WARNING: Head template doesn't include base form: %s" % str(t))
+                p.msg("WARNING: Head template doesn't include base form: %s" % str(t))
 
     return str(parsed), notes
 
@@ -55,5 +52,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Latin adjective superlative forms"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Latin adjective superlative forms"]
 )

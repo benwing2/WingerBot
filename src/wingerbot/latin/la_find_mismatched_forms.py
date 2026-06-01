@@ -130,26 +130,20 @@ def lookup_inflection(lemma_no_macrons, pos, expected_headtemps, expected_inflte
     return inflargs_sets
 
 
-def process_text_on_page(index, pagetitle, text):
-    if pagetitle.startswith("Reconstruction:Latin/"):
-        pagetitle = re.sub("^Reconstruction:Latin/", "*", pagetitle)
-
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    if p.title.startswith("Reconstruction:Latin/"):
+        p.title = re.sub("^Reconstruction:Latin/", "*", p.title)
 
     notes = []
 
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     # Greatly speed things up when --stdin by ignoring non-Latin pages
-    if "==Latin==" not in text:
+    if "==Latin==" not in p.text:
         return
 
-    heads_and_defns = lalib.find_heads_and_defns(text, pagemsg)
+    heads_and_defns = lalib.find_heads_and_defns(p.text, p.msg)
     if heads_and_defns is None:
         return
     modsec = heads_and_defns.modsec
@@ -298,25 +292,25 @@ def process_text_on_page(index, pagetitle, text):
         #    specified non-lemma forms in the non-lemma headword (and
         #    corresponding pronunciation template(s)) as in (6).
 
-        headword_forms = lalib.la_get_headword_from_template(ht, pagetitle, pagemsg)
+        headword_forms = lalib.la_get_headword_from_template(ht, p.title, p.msg)
         matching_headword_forms = []
         for headword_form in headword_forms:
             if "[" in headword_form or "|" in headword_form:
-                pagemsg("WARNING: Bracket or pipe symbol in non-lemma headword form, should not happen: %s" % str(ht))
+                p.msg("WARNING: Bracket or pipe symbol in non-lemma headword form, should not happen: %s" % str(ht))
                 headword_form = blib.remove_links(headword_form)
-            if lalib.remove_macrons(headword_form) != pagetitle:
-                pagemsg("WARNING: Bad headword form %s, doesn't match page title: %s" % (headword_form, str(ht)))
+            if lalib.remove_macrons(headword_form) != p.title:
+                p.msg("WARNING: Bad headword form %s, doesn't match page title: %s" % (headword_form, str(ht)))
             elif headword_form in matching_headword_forms:
-                pagemsg("WARNING: Duplicate headword form %s: %s" % (headword_form, str(ht)))
+                p.msg("WARNING: Duplicate headword form %s: %s" % (headword_form, str(ht)))
             else:
                 matching_headword_forms.append(headword_form)
         headword_forms = matching_headword_forms
 
         for stage in [1, 2, 3]:
             def stagemsg(txt):
-                pagemsg("Stage %s: %s" % (stage, txt))
+                p.msg("Stage %s: %s" % (stage, txt))
             def errandstagemsg(txt):
-                errandpagemsg("Stage %s: %s" % (stage, txt))
+                p.errandmsg("Stage %s: %s" % (stage, txt))
 
             @dataclass
             class InflOfTemplatesAndPropertiesResult:
@@ -406,9 +400,9 @@ def process_text_on_page(index, pagetitle, text):
                             syncopated_form = re.sub("^(.*)v[eiē]", r"\1", form)
                             if syncopated_form not in all_valid_forms_with_syncopated:
                                 all_valid_forms_with_syncopated.append(syncopated_form)
-                all_matchable_forms = [form for form in all_valid_forms if lalib.remove_macrons(form) == pagetitle]
+                all_matchable_forms = [form for form in all_valid_forms if lalib.remove_macrons(form) == p.title]
                 all_matchable_forms_with_syncopated = [
-                    form for form in all_valid_forms_with_syncopated if lalib.remove_macrons(form) == pagetitle
+                    form for form in all_valid_forms_with_syncopated if lalib.remove_macrons(form) == p.title
                 ]
                 return MergeFormsForSlotResult(
                     all_valid_forms,
@@ -662,8 +656,8 @@ def process_text_on_page(index, pagetitle, text):
                         break
                 if no_common_forms or common_forms is None:
                     stagemsg(
-                        "WARNING: No forms match pagetitle %s across all {{inflection of}} tags and tag sets, not changing headword form(s) but trying again allowing macron differences in lemmas: %s"
-                        % (pagetitle, str(ht))
+                        "WARNING: No forms match p.title %s across all {{inflection of}} tags and tag sets, not changing headword form(s) but trying again allowing macron differences in lemmas: %s"
+                        % (p.title, str(ht))
                     )
                 else:
                     notes.append(
@@ -776,8 +770,8 @@ def process_text_on_page(index, pagetitle, text):
                             cur_common_forms = common_forms
                 if cur_assignment is None:
                     stagemsg(
-                        "WARNING: No forms match pagetitle %s across all {{inflection of}} tags and tag sets when allowing macron differences in lemmas, not changing headword form(s): %s"
-                        % (pagetitle, str(ht))
+                        "WARNING: No forms match p.title %s across all {{inflection of}} tags and tag sets when allowing macron differences in lemmas, not changing headword form(s): %s"
+                        % (p.title, str(ht))
                     )
                 else:
                     # We set cur_assignment and cur_common_forms together
@@ -836,5 +830,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Latin non-lemma forms"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Latin non-lemma forms"],
 )

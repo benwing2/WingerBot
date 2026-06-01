@@ -30,15 +30,12 @@ prefixes = [
 vowel_re = "[aeiouyāēīōūȳăĕĭŏŭ]"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -47,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
 
     for t in parsed.filter_templates():
         if tname(t) == "la-IPA":
-            param1 = getparam(t, "1") or pagetitle
+            param1 = getparam(t, "1") or p.title
             for prefix in prefixes:
                 if type(prefix) is list:
                     prefix, macron_prefix = prefix
@@ -77,11 +74,11 @@ def process_text_on_page(index, pagetitle, text):
                         # Put remaining parameters in order.
                         for name, value, showkey in params:
                             t.add(name, value, showkey=showkey, preserve_spacing=False)
-                        pagemsg("Replaced %s with %s" % (origt, str(t)))
+                        p.msg("Replaced %s with %s" % (origt, str(t)))
                     break
             else:
                 # no break
-                pagemsg("WARNING: Unable to match pronun template against any prefixes: %s" % str(t))
+                p.msg("WARNING: Unable to match pronun template against any prefixes: %s" % str(t))
 
     return modsec.rebuild(secbody=str(parsed)), notes
 
@@ -111,8 +108,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:la-IPA"],
-    edit=True,
-    stdin=True,
     filter_pages=page_needs_investigating,
 )

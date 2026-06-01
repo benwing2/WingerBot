@@ -132,7 +132,7 @@ def process_text_on_page(index, pagetitle, text):
     if remove_redundant_notes:
         remove_redundant_notes = ["remove redundant " + ", ".join(remove_redundant_notes)]
     notes = remove_redundant_notes + other_notes
-    return parsed, notes
+    return str(parsed), notes
 
 
 if __name__ == "__main__":

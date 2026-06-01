@@ -74,16 +74,13 @@ def process_lemma_page(index, page, is_comp, form):
     return str(parsed), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["la-adj-comp", "la-adj-sup"]:
-            lemma = getparam(t, "1") or pagetitle
+            lemma = getparam(t, "1") or p.title
             pos = getparam(t, "pos")
             if pos:
 
@@ -91,7 +88,7 @@ def process_text_on_page(index, pagetitle, text):
                     return process_lemma_page(index, page, tn == "la-adj-comp", lemma)
 
                 blib.do_edit(
-                    index,
+                    p.index,
                     pywikibot.Page(site, lalib.remove_macrons(pos)),
                     do_process,
                     save=args.save,
@@ -99,7 +96,7 @@ def process_text_on_page(index, pagetitle, text):
                     diff=args.diff,
                 )
             else:
-                pagemsg("WARNING: Didn't see positive degree: %s" % str(t))
+                p.msg("WARNING: Didn't see positive degree: %s" % str(t))
 
 
 parser = blib.create_argparser(
@@ -115,6 +112,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    stdin=True,
+    new=True,
     default_cats=["Latin comparative adjectives", "Latin superlative adjectives"],
 )

@@ -8,13 +8,10 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("1", stem[:-5])
                 notes.append("Fix noun in -polis to use {{la-decl-3rd-polis}}")
             else:
-                pagemsg("WARNING: Found la-decl-3rd-I without stem in -polis: %s" % str(t))
+                p.msg("WARNING: Found la-decl-3rd-I without stem in -polis: %s" % str(t))
         elif tn == "la-noun":
             blib.set_template_name(t, "la-proper noun")
 
@@ -45,4 +42,4 @@ parser = blib.create_argparser("Fix Latin declensions of -polis nouns", include_
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -44,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
         if origt != newt:
             pagemsg("Replaced %s with %s" % (origt, newt))
 
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser(

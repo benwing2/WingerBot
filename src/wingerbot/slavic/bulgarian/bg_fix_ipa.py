@@ -44,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("convert {{bg-IPA}} pronunciation to new style (flip acute and grave) and remove old=1")
         if str(t) != origt:
             pagemsg("Replaced %s with %s" % (origt, str(t)))
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser("Fix {{bg-IPA}} to new format", include_pagefile=True, include_stdin=True)

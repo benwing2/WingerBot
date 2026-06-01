@@ -6,29 +6,26 @@ from wingerbot import blib
 from wingerbot.blib import getparam, tname, msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     if len(subsections) != 3:
-        pagemsg(
+        p.msg(
             "WARNING: Not right # of sections (expected 1): %s"
             % ",".join(subsections[k].strip() for k in range(1, len(subsections), 2))
         )
         return
 
     if subsecs.headers[2] != "Verb":
-        pagemsg("WARNING: Expected ===Verb=== in subsections[1] but saw %s" % subsections[1].strip())
+        p.msg("WARNING: Expected ===Verb=== in subsections[1] but saw %s" % subsections[1].strip())
         return
 
     parsed = blib.parse_text(subsections[2])
@@ -38,12 +35,12 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         if tname(t) == "la-verb-form":
             if infl:
-                pagemsg("WARNING: Saw more than one {{la-verb-form}} call: %s" % str(t))
+                p.msg("WARNING: Saw more than one {{la-verb-form}} call: %s" % str(t))
                 return
             infl = getparam(t, "1")
         elif tname(t) == "inflection of":
             if lemma:
-                pagemsg("WARNING: Saw more than one {{inflection of}} call: %s" % str(t))
+                p.msg("WARNING: Saw more than one {{inflection of}} call: %s" % str(t))
                 return
             if getparam(t, "lang"):
                 lemma = getparam(t, "1")
@@ -51,10 +48,10 @@ def process_text_on_page(index, pagetitle, text):
                 lemma = getparam(t, "2")
             infloft = t
         else:
-            pagemsg("WARNING: Saw unexpected template: %s" % str(t))
+            p.msg("WARNING: Saw unexpected template: %s" % str(t))
             return
     if not infl or not lemma:
-        pagemsg("WARNING: Didn't find both inflection %s and lemma %s" % (infl, lemma))
+        p.msg("WARNING: Didn't find both inflection %s and lemma %s" % (infl, lemma))
         return
     infl = re.sub(" (esse|īrī)$", "", infl)
     if infl.endswith("us"):
@@ -119,7 +116,7 @@ From {{m|la|%s}}.
         )
         comment = "correct Latin form to gerund/participle form"
     else:
-        pagemsg("WARNING: Unrecognized ending for participle/gerund %s" % infl)
+        p.msg("WARNING: Unrecognized ending for participle/gerund %s" % infl)
         return
 
     return modsec.rebuild(secbody=sectext), comment
@@ -133,4 +130,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

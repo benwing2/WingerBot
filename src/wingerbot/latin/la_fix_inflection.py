@@ -8,20 +8,17 @@ from wingerbot.blib import getparam, rmparam, tname, msg, site
 from wingerbot.latin import lalib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header == "Inflection":
@@ -33,9 +30,9 @@ def process_text_on_page(index, pagetitle, text):
                     poses.add(pos)
             poses = sorted(list(poses))
             if len(poses) > 1:
-                pagemsg("WARNING: Saw inflection templates for multiple parts of speech: %s" % ",".join(poses))
+                p.msg("WARNING: Saw inflection templates for multiple parts of speech: %s" % ",".join(poses))
             elif len(poses) == 0:
-                pagemsg("WARNING: Saw no inflection templates in ==Inflection== section")
+                p.msg("WARNING: Saw no inflection templates in ==Inflection== section")
             else:
                 if poses[0] == "verb":
                     subsections[k - 1] = subsections[k - 1].replace("Inflection", "Conjugation")
@@ -55,4 +52,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

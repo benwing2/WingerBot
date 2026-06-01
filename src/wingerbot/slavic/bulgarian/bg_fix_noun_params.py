@@ -163,7 +163,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("move head=/sg= to 1=, g= to 2= in {{%s}}" % tn)
         if str(t) != origt:
             pagemsg("Replaced %s with %s" % (origt, str(t)))
-    return parsed, notes
+    return str(parsed), notes
 
 
 parser = blib.create_argparser("Fix Bulgarian noun headwords to new format", include_pagefile=True, include_stdin=True)
