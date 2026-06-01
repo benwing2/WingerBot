@@ -32,19 +32,48 @@ type ProcessLinksParam = tuple[str, *tuple[Any, ...]]
 type ParamOrParamList = str | list[str]
 type PagePrefix = int | str
 
+class ProcessPageParams:
+    def __init__(self, args: argparse.Namespace, index: Index, pagetitle: str, pagetext: str, prev_comment: ChangelogComment | None):
+        self.args = args
+        self.index = index
+        self.title = pagetitle
+        self.text = pagetext
+        self.prev_comment = prev_comment
+
+    def _msg_contents(self, txt: str) -> str:
+        return "Page %s %s: %s" % (self.index, self.title, txt)
+
+    def msg(self, txt: str) -> None:
+        msg(self._msg_contents(txt))
+
+    def errmsg(self, txt: str) -> None:
+        errmsg(self._msg_contents(txt))
+
+    def errandmsg(self, txt: str) -> None:
+        errandmsg(self._msg_contents(txt))
+
+    def expand_text(self, tempcall: str):
+        return expand_text(tempcall, self.title, self.msg, self.args.verbose)
+    
+
 ############################ Implementation of do_pagefile_cats_refs callback to satisfy Pylance. Unbelievably fugly.
 ############################ Worked out with the help of Google AI.
 
-# 1. Define the three possible callback signatures.
+# 1. Define the four possible callback signatures.
+type NewProcessTextOnPageCallback = Callable[[ProcessPageParams], ProcessPageRetval]
 type ProcessPageCallback = Callable[[Index, Page], ProcessPageRetval]
 type ProcessTextOnPageCallback = Callable[[Index, str, str], ProcessPageRetval]
 type ProcessTextOnPageWithCommentCallback = Callable[[Index, str, str, ChangelogComment | None], ProcessPageRetval]
 
 # 2. Create the union of callback types.
-type DoPagefileCatsRefsCallback = ProcessPageCallback | ProcessTextOnPageCallback | ProcessTextOnPageWithCommentCallback
+type DoPagefileCatsRefsCallback = NewProcessTextOnPageCallback | ProcessPageCallback | ProcessTextOnPageCallback | ProcessTextOnPageWithCommentCallback
 
 
 # 3. Implement explicit runtime TypeIs predicates for Pylance narrowing.
+def is_new_process_text_on_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[NewProcessTextOnPageCallback]:
+    return len(inspect.signature(func).parameters) == 1
+
+
 def is_process_text_on_page_with_comment_callback(
     func: DoPagefileCatsRefsCallback,
 ) -> TypeIs[ProcessTextOnPageWithCommentCallback]:
@@ -62,14 +91,25 @@ def is_process_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[Process
 # 4. Implement the dispatcher function that calls the appropriate callback based on its signature.
 def execute_do_pagefile_cats_refs_callback(
     callback: DoPagefileCatsRefsCallback,
+    args: argparse.Namespace,
     index: Index,
     page: Page | None,
     pagetitle: str | None,
     text: str | None,
     prev_comment: ChangelogComment | None,
-) -> None:
+) -> ProcessPageRetval:
 
-    if is_process_text_on_page_with_comment_callback(callback):
+    if is_new_process_text_on_page_callback(callback):
+        if pagetitle is None or text is None:
+            raise RuntimeError(
+                "Internal error: Saw one-arg callback (new_process_text_on_page) but expected "
+                "two-arg callback (process_page)"
+            )
+        # Pylance narrows the type to ProcessTextOnPageWithCommentCallback here.
+        # Only 4 parameters are permitted.
+        return callback(ProcessPageParams(args, index, pagetitle, text, prev_comment))
+
+    elif is_process_text_on_page_with_comment_callback(callback):
         if pagetitle is None or text is None:
             raise RuntimeError(
                 "Internal error: Saw four-arg callback (process_text_on_page_with_comment) but expected "
@@ -77,7 +117,7 @@ def execute_do_pagefile_cats_refs_callback(
             )
         # Pylance narrows the type to ProcessTextOnPageWithCommentCallback here.
         # Only 4 parameters are permitted.
-        callback(index, pagetitle, text, prev_comment)
+        return callback(index, pagetitle, text, prev_comment)
 
     elif is_process_text_on_page_callback(callback):
         if pagetitle is None or text is None:
@@ -92,7 +132,7 @@ def execute_do_pagefile_cats_refs_callback(
             )
         # Pylance narrows the type to ProcessTextOnPageCallback here.
         # Only 3 parameters are permitted.
-        callback(index, pagetitle, text)
+        return callback(index, pagetitle, text)
 
     elif is_process_page_callback(callback):
         if pagetitle is not None or text is not None:
@@ -110,7 +150,7 @@ def execute_do_pagefile_cats_refs_callback(
             raise RuntimeError("Internal error: Bad call to execute_callback: pagetitle, text, page all None")
         # Pylance narrows the type to ProcessPageCallback here.
         # Only 2 parameters are permitted.
-        callback(index, page)
+        return callback(index, page)
 
     else:
         raise RuntimeError("Callback signature is invalid or unrecognized")
@@ -652,12 +692,7 @@ def expand_text(
     return result
 
 
-# For use inside of expand_text in EditParams below.
-def blib_expand_text(tempcall, pagetitle, pagemsg, verbose):
-    return expand_text(tempcall, pagetitle, pagemsg, verbose)
-
-
-class EditParams(object):
+class EditParams:
     def __init__(self, index, page, save=False, verbose=False, diff=False):
         self.index = index
         self.page = page
@@ -673,7 +708,7 @@ class EditParams(object):
         errandmsg("Page %s %s: %s" % (self.index, self.title, txt))
 
     def expand_text(self, tempcall):
-        return blib_expand_text(tempcall, self.title, self.pagemsg, self.verbose)
+        return expand_text(tempcall, self.title, self.pagemsg, self.verbose)
 
 
 def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, diff=False):
@@ -1630,6 +1665,7 @@ def do_pagefile_cats_refs(
     default_refs=[],
     edit=False,
     stdin=False,
+    new=False,
     only_lang: str | None = None,
     include_comment=False,
     filter_pages=None,
@@ -1719,10 +1755,10 @@ def do_pagefile_cats_refs(
         def call_process(text_to_call: str) -> ProcessPageRetval:
             if include_comment:
                 return execute_do_pagefile_cats_refs_callback(
-                    process, index, None, pagetitle, text_to_call, prev_comment
+                    process, args, index, None, pagetitle, text_to_call, prev_comment
                 )
             else:
-                return execute_do_pagefile_cats_refs_callback(process, index, None, pagetitle, text_to_call, None)
+                return execute_do_pagefile_cats_refs_callback(process, args, index, None, pagetitle, text_to_call, None)
 
         if page_should_be_filtered_out(pagetitle, errandpagemsg):
             return None
@@ -1767,7 +1803,7 @@ def do_pagefile_cats_refs(
             return
 
         def do_process_page(index: Index, page: Page) -> ProcessPageRetval:
-            if stdin:
+            if stdin or new:
                 pagetext = safe_page_text(page, errandpagemsg)
                 return do_process_text_on_page(index, pagetitle, pagetext, None, pagemsg)
             else:
@@ -1775,7 +1811,7 @@ def do_pagefile_cats_refs(
                     pagetext = safe_page_text(page, errandpagemsg)
                     if "==%s==" % only_lang not in pagetext:
                         return
-                return execute_do_pagefile_cats_refs_callback(process, index, page, None, None, None)
+                return execute_do_pagefile_cats_refs_callback(process, args, index, page, None, None, None)
 
         if args.find_regex_output:
             # We are reading from Wiktionary but asked to output in find_regex format.
@@ -1787,7 +1823,7 @@ def do_pagefile_cats_refs(
         else:
             do_process_page(index, page)
 
-    if stdin and (args.stdin or args.find_regex or args.begin_end):
+    if (stdin or new) and (args.stdin or args.find_regex or args.begin_end):
         pages_to_filter = None
         if args.pages:
             pages_to_filter = set(split_arg(args.pages, canonicalize=canonicalize_pagename))
