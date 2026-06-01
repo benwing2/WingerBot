@@ -143,56 +143,56 @@ quote_templates = [
 ]
 
 
-def remove_links(text):
+def remove_links(text: str) -> str:
     # eliminate [[FOO| in [[FOO|BAR]], and then remaining [[ and ]]
     text = re.sub(r"\[\[[^\[\]|]*\|", "", text)
     text = re.sub(r"\[\[|\]\]", "", text)
     return text
 
 
-def remove_right_side_links(text):
+def remove_right_side_links(text: str) -> str:
     # eliminate |BAR]] in [[FOO|BAR]], and then remaining [[ and ]]
     text = re.sub(r"\|[^\[\]|]*\]\]", "", text)
     text = re.sub(r"\[\[|\]\]", "", text)
     return text
 
 
-def remove_redundant_links(text):
+def remove_redundant_links(text: str) -> str:
     # remove redundant link surrounding entire text
     return re.sub(r"^\[\[([^\[\]|]*)\]\]$", r"\1", text)
 
 
-def escape_newline(text):
+def escape_newline(text: str) -> str:
     text = re.sub(r"\\([\\n])", lambda m: r"\\\\" if m.group(1) == "\\" else r"\\n", text)
     return text.replace("\n", r"\n")
 
 
-def undo_escape_newline(text):
+def undo_escape_newline(text: str) -> str:
     return re.sub(r"\\([\\n])", lambda m: "\\" if m.group(1) == "\\" else "\n", text)
 
 
-def msg(text):
+def msg(text: str) -> None:
     print(text)
 
 
-def msgn(text):
+def msgn(text: str) -> None:
     print(text, end="", flush=True)
 
 
-def errmsg(text):
+def errmsg(text: str) -> None:
     print(text, file=sys.stderr)
 
 
-def errmsgn(text):
+def errmsgn(text: str) -> None:
     print(text, end="", file=sys.stderr, flush=True)
 
 
-def errandmsg(text):
+def errandmsg(text: str) -> None:
     msg(text)
     errmsg(text)
 
 
-def errandmsgn(text):
+def errandmsgn(text: str) -> None:
     msgn(text)
     errmsgn(text)
 
@@ -275,7 +275,7 @@ def set_template_name(template: Template, name: str, origname: str | None = None
     template.name = before + name + after
 
 
-def do_assert(cond, msg=None):
+def do_assert(cond: Any, msg: str | None = None) -> Literal[True]:
     if msg:
         assert cond, msg
     else:
@@ -284,7 +284,7 @@ def do_assert(cond, msg=None):
 
 
 # Return the name of the first parameter in template T.
-def find_first_named_param(t):
+def find_first_named_param(t: Template) -> str | None:
     for param in t.params:
         pn = pname(param)
         if not re.search("^[0-9]+$", pn):
@@ -293,7 +293,7 @@ def find_first_named_param(t):
 
 
 # Return the name of the parameter following PARAM in template T.
-def find_following_param(t, param):
+def find_following_param(t: Template, param: str) -> str | None:
     for i, par in enumerate(t.params):
         if pname(par) == param:
             if i < len(t.params) - 1:
