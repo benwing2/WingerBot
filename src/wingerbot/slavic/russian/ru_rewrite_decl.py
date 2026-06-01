@@ -93,17 +93,10 @@ def remove_diacritics(text):
     return text
 
 
-def rewrite_one_page_ru_decl_adj(index, page):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page_adj(p):
     oldtemps = []
 
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         converted = True
 
@@ -147,16 +140,16 @@ def rewrite_one_page_ru_decl_adj(index, page):
                     addparam(t, "2", ending_for_ru_adj[tn])
                     mshort = clean(getparam(t, "3"))
                     if mshort and re.search("[аяоеыи]$", remove_diacritics(mshort)):
-                        pagemsg("WARNING: short masculine %s doesn't have right ending" % mshort)
+                        p.msg("WARNING: short masculine %s doesn't have right ending" % mshort)
                     fshort = clean(getparam(t, "4"))
                     if fshort and not re.search("[ая]$", remove_diacritics(fshort)):
-                        pagemsg("WARNING: short feminine %s doesn't have right ending" % fshort)
+                        p.msg("WARNING: short feminine %s doesn't have right ending" % fshort)
                     nshort = clean(getparam(t, "5"))
                     if nshort and not re.search("[ое]$", remove_diacritics(nshort)):
-                        pagemsg("WARNING: short neuter %s doesn't have right ending" % nshort)
+                        p.msg("WARNING: short neuter %s doesn't have right ending" % nshort)
                     pshort = clean(getparam(t, "6"))
                     if pshort and not re.search("[ыи]$", remove_diacritics(pshort)):
-                        pagemsg("WARNING: short plural %s doesn't have right ending" % pshort)
+                        p.msg("WARNING: short plural %s doesn't have right ending" % pshort)
                     rmparam(t, "8")
                     rmparam(t, "7")
                     rmparam(t, "6")
@@ -175,7 +168,7 @@ def rewrite_one_page_ru_decl_adj(index, page):
                 if suffix:
                     addparam(t, "suffix", suffix)
                 t.name = "ru-decl-adj"
-                pagemsg("Rewrote %s as %s" % (origtemplate, str(t)))
+                p.msg("Rewrote %s as %s" % (origtemplate, str(t)))
             else:
                 converted = False
         if converted:
@@ -187,22 +180,13 @@ def rewrite_one_page_ru_decl_adj(index, page):
     return str(parsed), comment
 
 
-def rewrite_one_page_ru_decl_noun(index, page):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page_noun(p):
     oldtemps = []
 
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     nochange = False
     change = False
     for t in parsed.filter_templates():
-        converted = True
-
         tn = tname(t)
         origname = tn
         origtemplate = str(t)
@@ -226,7 +210,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 accentclass = "1"
                 declclass = "-е"
             else:
-                pagemsg("WARNING: Can't locate accent class for template: %s" % origtemplate)
+                p.msg("WARNING: Can't locate accent class for template: %s" % origtemplate)
                 nochange = True
                 break
             change = True
@@ -245,15 +229,15 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 declclass = "онок"
                 stem = re.sub("о́$", "", stem)
             else:
-                pagemsg("WARNING: Template stem ends weirdly: %s" % origtemplate)
+                p.msg("WARNING: Template stem ends weirdly: %s" % origtemplate)
                 nochange = True
                 break
             if stem != re.sub("(я́|а́)$", "", plural):
-                pagemsg("WARNING: Strange plural: %s" % origtemplate)
+                p.msg("WARNING: Strange plural: %s" % origtemplate)
                 nochange = True
                 break
             if declclass == "ёнок" and not plural.endswith("я́") or declclass == "онок" and not plural.endswith("а́"):
-                pagemsg("WARNING: Unexpected plural ending for stem: %s" % origtemplate)
+                p.msg("WARNING: Unexpected plural ending for stem: %s" % origtemplate)
                 nochange = True
                 break
             change = True
@@ -263,11 +247,11 @@ def rewrite_one_page_ru_decl_noun(index, page):
             bare = getrmparam(t, "3")
             locsg = getrmparam(t, "13")
             locpl = getrmparam(t, "14")
-            stem = stem or ustem or bare or pagetitle
+            stem = stem or ustem or bare or p.title
             declclass = ""
             accentclass = "3"
             if locpl and locpl != remove_diacritics(stem) + "а́х":
-                pagemsg("WARNING: Unexpected locative plural %s: %s" % (locpl, origtemplate))
+                p.msg("WARNING: Unexpected locative plural %s: %s" % (locpl, origtemplate))
                 nochange = True
                 break
             change = True
@@ -304,12 +288,12 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 elif directive == "u-stem-pagetitle":
                     ustem = getrmparam(t, "1")
                     stem = getrmparam(t, "2")
-                    stem = stem or ustem or pagetitle
+                    stem = stem or ustem or p.title
                 elif directive == "u-stem-bare-pagetitle":
                     ustem = getrmparam(t, "1")
                     stem = getrmparam(t, "2")
                     bare = getrmparam(t, "3")
-                    stem = stem or ustem or bare or pagetitle
+                    stem = stem or ustem or bare or p.title
                 elif directive == "u-stem-u-bare":
                     ustem = getrmparam(t, "1")
                     stem = getrmparam(t, "2")
@@ -339,11 +323,11 @@ def rewrite_one_page_ru_decl_noun(index, page):
                     elif stem.endswith(stressedi):
                         stem = stem[0:-2]
                     else:
-                        pagemsg("WARNING: Stem %s doesn't end in и in %s, skipping" % (stem, str(t)))
+                        p.msg("WARNING: Stem %s doesn't end in и in %s, skipping" % (stem, str(t)))
                         nochange = True
                         break
                 else:
-                    pagemsg("WARNING: Unknown directive %s, skipping" % directive)
+                    p.msg("WARNING: Unknown directive %s, skipping" % directive)
                     nochange = True
                     break
 
@@ -351,10 +335,10 @@ def rewrite_one_page_ru_decl_noun(index, page):
                 break
             else:
                 if re.match("^ru-noun-", tn):
-                    pagemsg("Encountered unknown noun decl template %s" % str(t))
+                    p.msg("Encountered unknown noun decl template %s" % str(t))
         if change:
             if not stem:
-                pagemsg("WARNING: Can't locate stem in %s, skipping" % origtemplate)
+                p.msg("WARNING: Can't locate stem in %s, skipping" % origtemplate)
                 nochange = True
                 break
             anim = getrmparam(t, "anim")
@@ -363,7 +347,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
             n = getrmparam(t, "n")
             notes = getrmparam(t, "note")
             if len(t.params) > 0:
-                pagemsg("WARNING: Extraneous parameters in %s, skipping" % str(t))
+                p.msg("WARNING: Extraneous parameters in %s, skipping" % str(t))
                 nochange = True
                 break
             addparam(t, "1", accentclass)
@@ -382,7 +366,7 @@ def rewrite_one_page_ru_decl_noun(index, page):
             if notes:
                 addparam(t, "notes", notes)
             t.name = "ru-noun-table"
-            pagemsg("Rewrote %s as %s" % (origtemplate, str(t)))
+            p.msg("Rewrote %s as %s" % (origtemplate, str(t)))
             oldtemps.append(origname)
     if nochange:
         return None, ""
@@ -390,28 +374,30 @@ def rewrite_one_page_ru_decl_noun(index, page):
         comment = "convert %s -> ru-noun-table" % ", ".join(oldtemps)
     else:
         comment = None
-    return text, comment
+    return str(parsed), comment
 
 
-def rewrite_ru_decl_noun(start, end):
-    for cat in ["Russian nouns"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_ru_decl_noun, save=args.save, verbose=args.verbose, diff=args.diff)
-
-
-def rewrite_ru_decl_adj(start, end):
-    for cat in ["Russian adjectives"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, rewrite_one_page_ru_decl_adj, save=args.save, verbose=args.verbose, diff=args.diff)
-
-
-parser = blib.create_argparser("Rewrite Russian old declension templates")
+parser = blib.create_argparser("Rewrite Russian old declension templates", include_pagefile=True, include_stdin=True)
 parser.add_argument("--adjectives", action="store_true", help="Rewrite old adjective templates")
 parser.add_argument("--nouns", action="store_true", help="Rewrite old noun templates")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.adjectives:
-    rewrite_ru_decl_adj(start, end)
+    blib.do_pagefile_cats_refs(
+        args,
+        start,
+        end,
+        process_text_on_page_adj,
+        new=True,
+        default_cats=["Russian adjectives"],
+    )
 if args.nouns:
-    rewrite_ru_decl_noun(start, end)
+    blib.do_pagefile_cats_refs(
+        args,
+        start,
+        end,
+        process_text_on_page_noun,
+        new=True,
+        default_cats=["Russian nouns"],
+    )

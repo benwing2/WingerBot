@@ -55,8 +55,7 @@ def process_text_on_page(p):
             p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("rename {{%s-verb-old}} to {{%s-verb}} and standardize params" % (args.lang, args.lang))
 
-    text = str(parsed)
-    return text, notes
+    text = str(parsed), notes
 
 
 parser = blib.create_argparser(
