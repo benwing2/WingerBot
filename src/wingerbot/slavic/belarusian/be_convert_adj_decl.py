@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 from wingerbot.slavic.belarusian import belib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     head = None
     for t in parsed.filter_templates():
@@ -25,13 +22,13 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "be-adj":
             head = getparam(t, "1")
             if getparam(t, "head2"):
-                pagemsg("WARNING: Can't handle head2= yet in {{rfinfl}}")
+                p.msg("WARNING: Can't handle head2= yet in {{rfinfl}}")
                 head = None
         elif tn == "rfinfl" and getparam(t, "1") == "be" and getparam(t, "2") == "adjective":
             if not head:
-                pagemsg("WARNING: Found {{rfinfl}} and don't have head: %s" % origt)
+                p.msg("WARNING: Found {{rfinfl}} and don't have head: %s" % origt)
             elif " " in head:
-                pagemsg("Found {{rfinfl}} but head %s has space in it, skipping" % head)
+                p.msg("Found {{rfinfl}} but head %s has space in it, skipping" % head)
             else:
                 rmparam(t, "2")
                 t.add("1", head)
@@ -40,7 +37,7 @@ def process_text_on_page(index, pagetitle, text):
         elif tn == "be-decl-adj":
             word = getparam(t, "1") + getparam(t, "2")
             if belib.needs_accents(word):
-                pagemsg("WARNING: Word %s needs accent: %s" % (word, origt))
+                p.msg("WARNING: Word %s needs accent: %s" % (word, origt))
                 continue
             t.add("1", word)
             rmparam(t, "2")
@@ -57,7 +54,7 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "be-adecl-manual")
             notes.append("convert {{be-adj-table}} to {{be-adecl-manual}}")
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -73,7 +70,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_cats=["Belarusian adjectives", "Belarusian pronouns", "Belarusian determiners"],
-    edit=True,
-    stdin=True,
 )

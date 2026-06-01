@@ -38,22 +38,19 @@ def snarf_adj_accents():
                 adjs_to_accents[unaccented_adj] = adj
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         if tname(t) == "bg-adj-form":
             origt = str(t)
             must_continue = False
             for param in t.params:
                 if pname(param) not in ["1", "2", "3", "head"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pname(param), str(param.value), origt))
+                    p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pname(param), str(param.value), origt))
                     must_continue = True
                     break
             if must_continue:
@@ -70,16 +67,16 @@ def process_text_on_page(index, pagetitle, text):
             if head:
                 t.add("head", head)
             else:
-                if bglib.needs_accents(pagetitle):
-                    pagemsg(
-                        "WARNING: Can't add head= to {{bg-adj-form}} missing it because pagetitle is multisyllabic: %s"
+                if bglib.needs_accents(p.title):
+                    p.msg(
+                        "WARNING: Can't add head= to {{bg-adj-form}} missing it because p.title is multisyllabic: %s"
                         % str(t)
                     )
                 else:
-                    t.add("head", pagetitle)
+                    t.add("head", p.title)
             if g:
                 t.add("g", g)
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("replace {{bg-adj-form}} with {{head|bg|adjective form}}")
 
     headt = None
@@ -92,7 +89,7 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "head" and getparam(t, "1") == "bg" and getparam(t, "2") == "adjective form":
             saw_headt = True
             if headt and not saw_infl_after_head:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two head templates %s and %s without intervening inflection" % (str(headt), origt)
                 )
             saw_infl_after_head = False
@@ -100,12 +97,12 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "bg-adj form of":
             saw_inflt = True
             if not headt:
-                pagemsg("WARNING: Saw {{bg-adj form of}} without head template: %s" % origt)
+                p.msg("WARNING: Saw {{bg-adj form of}} without head template: %s" % origt)
                 continue
             must_continue = False
             for param in t.params:
                 if pname(param) not in ["1", "2", "3", "adj"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pname(param), str(param.value), origt))
+                    p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pname(param), str(param.value), origt))
                     must_continue = True
                     break
             if must_continue:
@@ -113,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
             saw_infl_after_head = True
             adj = getparam(t, "adj")
             if not adj:
-                pagemsg("WARNING: Didn't see adj=: %s" % origt)
+                p.msg("WARNING: Didn't see adj=: %s" % origt)
                 continue
             infls = []
             param2 = getparam(t, "2")
@@ -124,7 +121,7 @@ def process_text_on_page(index, pagetitle, text):
             elif param2 == "extended":
                 infls.append("voc")
             else:
-                pagemsg("WARNING: Saw unrecognized 2=%s: %s" % (param2, origt))
+                p.msg("WARNING: Saw unrecognized 2=%s: %s" % (param2, origt))
                 continue
             param3 = getparam(t, "3")
             if param3 == "subject":
@@ -132,7 +129,7 @@ def process_text_on_page(index, pagetitle, text):
             elif param3 == "object":
                 infls.append("objv")
             elif param3:
-                pagemsg("WARNING: Saw unrecognized 3=%s: %s" % (param3, origt))
+                p.msg("WARNING: Saw unrecognized 3=%s: %s" % (param3, origt))
                 continue
             param1 = getparam(t, "1")
             if param1 == "masculine":
@@ -144,7 +141,7 @@ def process_text_on_page(index, pagetitle, text):
             elif param1 == "plural":
                 infls.append("p")
             else:
-                pagemsg("WARNING: Saw unrecognized 1=%s: %s" % (param1, origt))
+                p.msg("WARNING: Saw unrecognized 1=%s: %s" % (param1, origt))
                 continue
             blib.set_template_name(t, "inflection of")
             del t.params[:]
@@ -152,19 +149,19 @@ def process_text_on_page(index, pagetitle, text):
             if adj in adjs_to_accents:
                 adj = adjs_to_accents[adj]
             else:
-                pagemsg("WARNING: Unable to find accented equivalent of %s: %s" % (adj, origt))
+                p.msg("WARNING: Unable to find accented equivalent of %s: %s" % (adj, origt))
             t.add("2", adj)
             t.add("3", "")
             for i, infl in enumerate(infls):
                 t.add(str(i + 4), infl)
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert {{bg-adj form of}} to {{inflection of}}")
             tn = tname(t)
         elif tn == "inflection of" and getparam(t, "1") == "bg":
             saw_inflt = True
 
     if saw_headt and not saw_inflt:
-        pagemsg("WARNING: Saw head template %s but no inflection template" % str(headt))
+        p.msg("WARNING: Saw head template %s but no inflection template" % str(headt))
 
     return str(parsed), notes
 
@@ -178,5 +175,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 snarf_adj_accents()
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Bulgarian adjective forms"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Bulgarian adjective forms"]
 )

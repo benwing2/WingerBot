@@ -49,18 +49,15 @@ def get_pl_p_property(index, pagetitle):
     return retval
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Polish", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     has_etym_sections = "==Etymology 1==" in secbody
@@ -80,10 +77,10 @@ def process_text_on_page(index, pagetitle, text):
                             saw_pron_in_etym = True
                             break
                         else:
-                            pagemsg("Already saw pronunciation template above ==Etymology 1==: %s" % str(t))
+                            p.msg("Already saw pronunciation template above ==Etymology 1==: %s" % str(t))
                             return
                 else:  # no break
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw ==Pronunciation== section without pronunciation template, along with ==Etymology 1==; can't handle, skipping"
                     )
                     return
@@ -93,7 +90,7 @@ def process_text_on_page(index, pagetitle, text):
                 cur_etym_header = header
             elif re.search("^Etymology [0-9]+$", header):
                 if not saw_pron_in_etym:
-                    pagemsg(
+                    p.msg(
                         "WARNING: No ==Pronunciation== section above ==Etymology N== headers and saw %s without pronunciation template; can't handle, skipping"
                         % cur_etym_header
                     )
@@ -102,7 +99,7 @@ def process_text_on_page(index, pagetitle, text):
                 cur_etym_header = header
         if not saw_pron_in_etym:
             # Last Etymology N section didn't have pronunciation template.
-            pagemsg(
+            p.msg(
                 "WARNING: No ==Pronunciation== section above ==Etymology N== headers and saw %s without pronunciation template; can't handle, skipping"
                 % cur_etym_header
             )
@@ -113,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in pronun_templates:
-            pagemsg("Already saw pronunciation template: %s" % str(t))
+            p.msg("Already saw pronunciation template: %s" % str(t))
             return
 
     if not args.ignore_lemma_respelling:
@@ -126,26 +123,26 @@ def process_text_on_page(index, pagetitle, text):
                     return getparam(t, param)
 
                 if getp("1") != "pl":
-                    pagemsg("WARNING: Wrong language in {{%s}}, skipping: %s" % (tn, str(t)))
+                    p.msg("WARNING: Wrong language in {{%s}}, skipping: %s" % (tn, str(t)))
                     return
                 lemma = getparam(t, "2")
                 lemmas.add(lemma)
         if len(lemmas) > 1:
-            pagemsg("WARNING: Saw inflection of multiple lemmas %s, skipping" % ",".join(lemmas))
+            p.msg("WARNING: Saw inflection of multiple lemmas %s, skipping" % ",".join(lemmas))
             return
         if not lemmas:
-            pagemsg("WARNING: Didn't see inflection template, skipping")
+            p.msg("WARNING: Didn't see inflection template, skipping")
             return
         lemma = list(lemmas)[0]
-        pl_p_prop, pl_p_respellings = get_pl_p_property(index, lemma)
+        pl_p_prop, pl_p_respellings = get_pl_p_property(p.index, lemma)
         if pl_p_prop == "no-pl-p":
-            pagemsg("WARNING: Lemma page %s has no {{pl-p}}, not sure what to do, skipping" % lemma)
+            p.msg("WARNING: Lemma page %s has no {{pl-p}}, not sure what to do, skipping" % lemma)
             return
         elif pl_p_prop == "pl-p-respelling":
-            pagemsg("WARNING: Lemma page %s has respelling(s) %s, skipping" % (lemma, ",".join(pl_p_respellings)))
+            p.msg("WARNING: Lemma page %s has respelling(s) %s, skipping" % (lemma, ",".join(pl_p_respellings)))
             return
         else:
-            pagemsg("Lemma page %s has {{pl-p}} without respelling, proceeding" % lemma)
+            p.msg("Lemma page %s has {{pl-p}} without respelling, proceeding" % lemma)
 
     def construct_new_pron_template():
         return "{{pl-p}}", ""
@@ -155,7 +152,7 @@ def process_text_on_page(index, pagetitle, text):
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn in pronun_templates:
-                pagemsg("Already saw pronunciation template: %s" % str(t))
+                p.msg("Already saw pronunciation template: %s" % str(t))
                 break
         else:  # no break
             new_pron_template, pron_prefix = construct_new_pron_template()
@@ -165,7 +162,7 @@ def process_text_on_page(index, pagetitle, text):
                 regex = r"^([* ]*\{\{%s(?:\|[^{}]*)*\}\}\n)" % re_template
                 m = re.search(regex, subsections[k], re.M)
                 if m:
-                    pagemsg("Removed existing %s" % m.group(1).strip())
+                    p.msg("Removed existing %s" % m.group(1).strip())
                     notes.append("remove existing {{%s}}" % template)
                     subsections[k] = re.sub(regex, "", subsections[k], 0, re.M)
             for template in ["audio|pl"]:
@@ -173,7 +170,7 @@ def process_text_on_page(index, pagetitle, text):
                 regex = r"^([* ]*\{\{%s(?:\|[^{}]*)*\}\}\n)" % re_template
                 all_audios = re.findall(regex, subsections[k], re.M)
                 if len(all_audios) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple {{audio}} templates, skipping: %s"
                         % ",".join(x.strip() for x in all_audios)
                     )
@@ -182,7 +179,7 @@ def process_text_on_page(index, pagetitle, text):
                     audiot = list(blib.parse_text(all_audios[0].strip()).filter_templates())[0]
                     assert tname(audiot) == "audio"
                     if getparam(audiot, "1") != "pl":
-                        pagemsg("WARNING: Wrong language in {{audio}}, skipping: %s" % all_audios[0].strip())
+                        p.msg("WARNING: Wrong language in {{audio}}, skipping: %s" % all_audios[0].strip())
                         return
                     audiofile = getparam(audiot, "2")
                     audiogloss = getparam(audiot, "3")
@@ -190,7 +187,7 @@ def process_text_on_page(index, pagetitle, text):
                         pn = pname(param)
                         pv = str(param.value)
                         if pn not in ["1", "2", "3"]:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unrecognized param %s=%s in {{audio}}, skipping: %s"
                                 % (pn, pv, all_audios[0].strip())
                             )
@@ -201,7 +198,7 @@ def process_text_on_page(index, pagetitle, text):
                     if audiogloss:
                         params += "|ac=%s" % audiogloss
                     new_pron_template = new_pron_template[:-2] + params + new_pron_template[-2:]
-                    pagemsg("Removed existing %s in order to incorporate into {{pl-p}}" % all_audios[0].strip())
+                    p.msg("Removed existing %s in order to incorporate into {{pl-p}}" % all_audios[0].strip())
                     notes.append("incorporate existing {{%s}} into {{pl-p}}" % template)
                     subsections[k] = re.sub(regex, "", subsections[k], 0, re.M)
             subsections[k] = pron_prefix + new_pron_template + "\n" + subsections[k]
@@ -223,7 +220,7 @@ def process_text_on_page(index, pagetitle, text):
         while k < len(subsections) and subsecs.headers[k] in ["Alternative forms", "Etymology"]:
             k += 2
         if k - 1 >= len(subsections):
-            pagemsg("WARNING: No lemma or non-lemma section at top level")
+            p.msg("WARNING: No lemma or non-lemma section at top level")
             return
         insert_new_l3_pron_section(k - 1)
 
@@ -238,7 +235,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Polish non-lemma forms"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Polish non-lemma forms"]
 )
 
 blib.elapsed_time()

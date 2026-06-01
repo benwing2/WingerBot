@@ -9,11 +9,8 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 from wingerbot.lang_utils import sh_remove_accents
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
@@ -21,7 +18,7 @@ def process_text_on_page(index, pagetitle, text):
         g = g.split(",")
         return any(x == "m" for x in g)
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     headt = None
     declt = None
     for t in parsed.filter_templates():
@@ -29,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
         if tn in ["sh-noun", "sh-propn", "sh-proper noun"]:
             if headt:
                 either_masc = is_masc(getparam(headt, "2")) or is_masc(getparam(t, "2"))
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two headword templates: %s and %s%s; not taking action"
                     % (str(headt), str(t), " (but neither is masculine)" if not either_masc else "")
                 )
@@ -45,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
             "sh-decl-noun-n-e",
         ]:
             if declt:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two declension templates: {{%s}} and {{%s}}; not taking action" % (tname(declt), tn)
                 )
                 return
@@ -65,7 +62,7 @@ def process_text_on_page(index, pagetitle, text):
                 gen_s = dgetp("3") if tname(declt) == "sh-decl-noun" else dgetp("2")
                 acc_s = dgetp("7") if tname(declt) == "sh-decl-noun" else dgetp("4")
                 if sh_remove_accents(acc_s) == sh_remove_accents(nom_s):
-                    pagemsg(
+                    p.msg(
                         "Accusative singular %s same as nominative singular %s, inferring inanimate" % (acc_s, nom_s)
                     )
                     headt.add("2", "m-in")
@@ -74,14 +71,14 @@ def process_text_on_page(index, pagetitle, text):
                         % (tname(headt), tname(declt))
                     )
                 elif sh_remove_accents(acc_s) == sh_remove_accents(gen_s):
-                    pagemsg("Accusative singular %s same as genitive singular %s, inferring animate" % (acc_s, gen_s))
+                    p.msg("Accusative singular %s same as genitive singular %s, inferring animate" % (acc_s, gen_s))
                     headt.add("2", "m-an")
                     notes.append(
                         "infer gender m-an in {{%s}} from declension template {{%s}}, acc == gen"
                         % (tname(headt), tname(declt))
                     )
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Accusative singular %s different from both nominative singular %s and genitive singular %s, can't infer gender: %s"
                         % (acc_s, nom_s, gen_s, str(headt))
                     )
@@ -91,7 +88,7 @@ def process_text_on_page(index, pagetitle, text):
                     "infer gender m-in in {{%s}} from declension template {{%s}}" % (tname(headt), tname(declt))
                 )
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Can't infer animacy for masculine noun, wrong declension template {{%s}}" % tname(declt)
                 )
 
@@ -104,4 +101,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

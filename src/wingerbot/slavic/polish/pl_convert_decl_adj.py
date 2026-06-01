@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -27,22 +24,22 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "pl-decl-adj-auto")
             rmparam(t, "2")
             rmparam(t, "1")
-            if ":" in pagetitle and pagetitle != param1 + "ki":
-                pagemsg("WARNING: Param 1=%s doesn't agree with pagetitle: %s" % (param1, origt))
+            if ":" in p.title and p.title != param1 + "ki":
+                p.msg("WARNING: Param 1=%s doesn't agree with p.title: %s" % (param1, origt))
                 t.add("1", param1 + "ki")
             if param2:
                 t.add("olddat", param2)
             notes.append("Convert {{pl-decl-adj-ki}} to {{pl-decl-adj-auto}}")
         elif tn in ["pl-decl-adj-y", "pl-adj-y"]:
             if getp("head"):
-                pagemsg("WARNING: Saw head=, not changing: %s" % origt)
+                p.msg("WARNING: Saw head=, not changing: %s" % origt)
             else:
                 param1 = getp("1")
                 blib.set_template_name(t, "pl-decl-adj-auto")
                 rmparam(t, "2")
                 rmparam(t, "1")
-                if ":" in pagetitle and pagetitle != param1 + "y":
-                    pagemsg("WARNING: Param 1=%s doesn't agree with pagetitle: %s" % (param1, origt))
+                if ":" in p.title and p.title != param1 + "y":
+                    p.msg("WARNING: Param 1=%s doesn't agree with p.title: %s" % (param1, origt))
                     t.add("1", param1 + "y")
                 notes.append("Convert {{%s}} to {{pl-decl-adj-auto}}" % tn)
         elif tn == "pl-decl-adj-i":
@@ -58,9 +55,9 @@ def process_text_on_page(index, pagetitle, text):
                     should_pagetitle = param1 + "li"
                 else:
                     should_pagetitle = param1 + "i"
-                if ":" in pagetitle and pagetitle != should_pagetitle:
-                    pagemsg(
-                        "WARNING: Param 1=%s doesn't agree with pagetitle (pagetitle should be %s): %s"
+                if ":" in p.title and p.title != should_pagetitle:
+                    p.msg(
+                        "WARNING: Param 1=%s doesn't agree with p.title (p.title should be %s): %s"
                         % (param1, should_pagetitle, origt)
                     )
                     t.add("1", should_pagetitle)
@@ -70,8 +67,8 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "pl-decl-adj-auto")
             rmparam(t, "2")
             rmparam(t, "1")
-            if ":" in pagetitle and pagetitle != param1 + "owy":
-                pagemsg("WARNING: Param 1=%s doesn't agree with pagetitle: %s" % (param1, origt))
+            if ":" in p.title and p.title != param1 + "owy":
+                p.msg("WARNING: Param 1=%s doesn't agree with p.title: %s" % (param1, origt))
                 t.add("1", param1 + "owy")
             notes.append("Convert {{pl-decl-adj-owy}} to {{pl-decl-adj-auto}}")
 
@@ -89,8 +86,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=[
         "Template:pl-decl-adj-ki",
         "Template:pl-decl-adj-y",

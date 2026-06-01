@@ -49,13 +49,10 @@ genitive_plural_endings = ["ей", "єй", "ів", "їв", "ь", ""]
 instrumental_plural_endings = ["ами", "ями", "ьми"]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     heads = None
     plurale_tantum = False
     animacy = "unknown"
@@ -83,7 +80,7 @@ def process_text_on_page(index, pagetitle, text):
             if not animacy:
                 animacy = "unknown"
             elif len(animacy) > 1:
-                pagemsg("WARNING: Multiple animacies: %s" % ",".join(animacy))
+                p.msg("WARNING: Multiple animacies: %s" % ",".join(animacy))
             animacy = animacy[0]
             if not gender:
                 gender = "unknown"
@@ -91,12 +88,12 @@ def process_text_on_page(index, pagetitle, text):
                 gender = "MF"
             else:
                 if len(gender) > 1:
-                    pagemsg("WARNING: Multiple genders: %s" % ",".join(gender))
+                    p.msg("WARNING: Multiple genders: %s" % ",".join(gender))
                 gender = gender[0]
                 if gender in ["m", "f", "n"]:
                     gender = gender.upper()
                 else:
-                    pagemsg("WARNING: Unknown gender: %s" % gender)
+                    p.msg("WARNING: Unknown gender: %s" % gender)
                     gender = "unknown"
 
         def fetch(param):
@@ -132,7 +129,7 @@ def process_text_on_page(index, pagetitle, text):
                         found_endings.append(ending)
                         break
                 else:  # no break
-                    pagemsg("WARNING: Couldn't recognize ending for %s=%s: %s" % (param, paramval, str(t)))
+                    p.msg("WARNING: Couldn't recognize ending for %s=%s: %s" % (param, paramval, str(t)))
             return ":".join(found_endings)
 
         def canon(val):
@@ -147,9 +144,9 @@ def process_text_on_page(index, pagetitle, text):
                 vals = re.split(r",\s*", val)
                 for v in vals:
                     if uk.is_multi_stressed(v):
-                        pagemsg("WARNING: Param %s=%s has multiple stresses: %s" % ((str(i), val, str(t))))
+                        p.msg("WARNING: Param %s=%s has multiple stresses: %s" % ((str(i), val, str(t))))
                     if uk.needs_accents(v):
-                        pagemsg("WARNING: Param %s=%s has missing stress: %s" % ((str(i), val, str(t))))
+                        p.msg("WARNING: Param %s=%s has missing stress: %s" % ((str(i), val, str(t))))
 
         def ins_sg_note(ins_sg):
             if re.search("[чшжщфвбмпь]$", heads[0]) and gender == "f":
@@ -171,7 +168,7 @@ def process_text_on_page(index, pagetitle, text):
             elif acc_pl_vals == nom_pl_vals | gen_pl_vals:
                 return "anml"
             else:
-                pagemsg("WARNING: Can't infer animacy: nom_pl=%s, gen_pl=%s, acc_pl=%s" % (nom_pl, gen_pl, acc_pl))
+                p.msg("WARNING: Can't infer animacy: nom_pl=%s, gen_pl=%s, acc_pl=%s" % (nom_pl, gen_pl, acc_pl))
                 return "unknown"
 
         def infer_gender(lemma):
@@ -186,7 +183,7 @@ def process_text_on_page(index, pagetitle, text):
             elif re.search(uk.cons_c + "$", lemma):
                 return "M"
             else:
-                pagemsg("WARNING: Unrecognized lemma ending: %s" % lemma)
+                p.msg("WARNING: Unrecognized lemma ending: %s" % lemma)
                 return None
 
         def default_stress(lemma, gender, reducible):
@@ -234,7 +231,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif apply_vowel_alternation(vowel_stem, "i") == nonvowel_stem:
                     return "i"
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unable to determine relationship between nom_sg %s and gen_pl %s" % (nom_sg, gen_pl)
                     )
                     return None
@@ -252,7 +249,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif apply_vowel_alternation(nonvowel_stem, "ie") == vowel_stem:
                     return "ie"
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unable to determine relationship between nom_sg %s and gen_sg %s" % (nom_sg, gen_sg)
                     )
                     return None
@@ -308,7 +305,7 @@ def process_text_on_page(index, pagetitle, text):
                 or nom_pl_end_stressed == "unknown"
                 or loc_pl_end_stressed == "unknown"
             ):
-                pagemsg("WARNING: Missing stresses, can't determine accent pattern: %s" % str(t))
+                p.msg("WARNING: Missing stresses, can't determine accent pattern: %s" % str(t))
                 continue
             seen_patterns = []
             for pattern, accents in stress_patterns:
@@ -340,9 +337,9 @@ def process_text_on_page(index, pagetitle, text):
             gen_pl_endings = fetch_endings("4", genitive_plural_endings)
 
             if not heads:
-                pagemsg("WARNING: No head found")
-                heads = [pagetitle]
-            pagemsg(
+                p.msg("WARNING: No head found")
+                heads = [p.title]
+            p.msg(
                 '%s\tgender:%s\tanimacy:%s\taccent:%s\tgen_sg:%s\tdat_sg:%s\tloc_sg:%s\tvoc_sg:%s\tgen_pl:%s\tnumber:both\tgen_sg:%s\tdat_sg:%s\tloc_sg:%s\tvoc_sg:%s\tnom_pl:%s\tgen_pl:%s\t| %s || "?" || %s || %s || %s || %s || %s || %s || %s|| '
                 % (
                     "/".join(heads),
@@ -371,14 +368,14 @@ def process_text_on_page(index, pagetitle, text):
                 )
             )
             if len(heads) > 1:
-                pagemsg("WARNING: Multiple heads, not inferring declension: %s" % ",".join(heads))
+                p.msg("WARNING: Multiple heads, not inferring declension: %s" % ",".join(heads))
                 continue
             if gender == "unknown" or animacy == "unknown":
-                pagemsg("WARNING: Unknown gender or animacy, not inferring declension")
+                p.msg("WARNING: Unknown gender or animacy, not inferring declension")
                 continue
             defan = infer_animacy(nom_pl, gen_pl, acc_pl)
             if defan != animacy:
-                pagemsg(
+                p.msg(
                     "WARNING: Inferred animacy %s != explicit animacy %s, not inferring declension" % (defan, animacy)
                 )
                 continue
@@ -401,7 +398,7 @@ def process_text_on_page(index, pagetitle, text):
                     parts.append("genu")
                 elif re.search("ю́?$", gen_sg):
                     parts.append("genju")
-            pagemsg("Inferred declension %s<%s>" % (lemma, ".".join(parts)))
+            p.msg("Inferred declension %s<%s>" % (lemma, ".".join(parts)))
 
         elif tn == "uk-decl-noun-unc":
             check_multi_stressed(7)
@@ -419,11 +416,11 @@ def process_text_on_page(index, pagetitle, text):
             voc_sg = fetch("7")
             voc_sg_end_stressed = param_is_end_stressed(voc_sg)
             if gen_sg_end_stressed == "unknown" or acc_sg_end_stressed == "unknown" or voc_sg_end_stressed == "unknown":
-                pagemsg("WARNING: Missing stresses, can't determine accent pattern: %s" % str(t))
+                p.msg("WARNING: Missing stresses, can't determine accent pattern: %s" % str(t))
                 continue
             if not heads:
-                pagemsg("WARNING: No head found")
-                heads = [pagetitle]
+                p.msg("WARNING: No head found")
+                heads = [p.title]
             lemma = heads[0]
             seen_patterns = []
             for pattern, accents in stress_patterns:
@@ -441,7 +438,7 @@ def process_text_on_page(index, pagetitle, text):
             loc_sg_endings = fetch_endings("6", locative_singular_endings)
             voc_sg_endings = fetch_endings("7", vocative_singular_endings)
 
-            pagemsg(
+            p.msg(
                 '%s\tgender:%s\tanimacy:%s\taccent:%s\tgen_sg:%s\tdat_sg:%s\tloc_sg:%s\tvoc_sg:%s\tgen_pl:-\tnumber:sg\tgen_sg:%s\tdat_sg:%s\tloc_sg:%s\tvoc_sg:%s\tnom_pl:-\tgen_pl:-\t| %s || "?" || %s || %s || %s || - || - || - || %s|| '
                 % (
                     "/".join(heads),
@@ -465,10 +462,10 @@ def process_text_on_page(index, pagetitle, text):
             )
 
             if len(heads) > 1:
-                pagemsg("WARNING: Multiple heads, not inferring declension: %s" % ",".join(heads))
+                p.msg("WARNING: Multiple heads, not inferring declension: %s" % ",".join(heads))
                 continue
             if gender == "unknown" or animacy == "unknown":
-                pagemsg("WARNING: Unknown gender or animacy, not inferring declension")
+                p.msg("WARNING: Unknown gender or animacy, not inferring declension")
                 continue
             parts = []
             defg = infer_gender(lemma)
@@ -489,7 +486,7 @@ def process_text_on_page(index, pagetitle, text):
                     parts.append("genu")
                 elif re.search("ю́?$", gen_sg):
                     parts.append("genju")
-            pagemsg("Inferred declension %s<%s>" % (lemma, ".".join(parts)))
+            p.msg("Inferred declension %s<%s>" % (lemma, ".".join(parts)))
 
         elif tn == "uk-decl-noun-pl":
             check_multi_stressed(7)
@@ -502,7 +499,7 @@ def process_text_on_page(index, pagetitle, text):
             loc_pl = fetch("6")
             loc_pl_end_stressed = param_is_end_stressed(loc_pl)
             if nom_pl_end_stressed == "unknown" or loc_pl_end_stressed == "unknown":
-                pagemsg("WARNING: Missing stresses, can't determine accent pattern: %s" % str(t))
+                p.msg("WARNING: Missing stresses, can't determine accent pattern: %s" % str(t))
                 continue
             seen_patterns = []
             for pattern, accents in stress_patterns:
@@ -516,9 +513,9 @@ def process_text_on_page(index, pagetitle, text):
             gen_pl_endings = fetch_endings("2", genitive_plural_endings)
 
             if not heads:
-                pagemsg("WARNING: No head found")
-                heads = [pagetitle]
-            pagemsg(
+                p.msg("WARNING: No head found")
+                heads = [p.title]
+            p.msg(
                 '%s\tgender:%s\tanimacy:%s\taccent:%s\tgen_sg:-\tdat_sg:-\tloc_sg:-\tvoc_sg:-\tgen_pl:%s\tnumber:pl\tgen_sg:-\tdat_sg:-\tloc_sg:-\tvoc_sg:-\tnom_pl:%s\tgen_pl:%s\t| %s || "?" || - || - || - || %s || %s || %s || || '
                 % (
                     "/".join(heads),
@@ -540,4 +537,4 @@ parser = blib.create_argparser("Analyze Ukrainian noun declensions", include_pag
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Ukrainian nouns"], stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Ukrainian nouns"],)

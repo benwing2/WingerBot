@@ -6,26 +6,23 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
     sections_by_lang = secs.sections_by_lang
     pl_sec = sections_by_lang.get("Polish", None)
     opl_sec = sections_by_lang.get("Old Polish", None)
     if pl_sec is None or opl_sec is None:
-        pagemsg("Skipping because didn't find both Polish and Old Polish")
+        p.msg("Skipping because didn't find both Polish and Old Polish")
         return
 
     if "{{etydate|" not in sections[pl_sec]:
-        pagemsg("Skipping because no {{etydate}} in Polish section")
+        p.msg("Skipping because no {{etydate}} in Polish section")
         return
 
     pl_secbody, pl_sectail = blib.split_trailing_separator_and_categories(sections[pl_sec])
@@ -34,29 +31,29 @@ def process_text_on_page(index, pagetitle, text):
     opl_secbody, opl_sectail = blib.split_trailing_separator_and_categories(sections[opl_sec])
     opl_secbody, opl_sectail = blib.force_two_newlines_in_secbody(opl_secbody, opl_sectail)
 
-    pl_subsecs = blib.split_text_into_subsections(pl_secbody, pagemsg)
+    pl_subsecs = blib.split_text_into_subsections(pl_secbody, p.msg)
     pl_subsections = pl_subsecs.subsections
     pl_subsections_by_header = pl_subsecs.subsections_by_header
-    opl_subsecs = blib.split_text_into_subsections(opl_secbody, pagemsg)
+    opl_subsecs = blib.split_text_into_subsections(opl_secbody, p.msg)
 
     if "Etymology 1" in pl_subsections_by_header:
-        pagemsg("WARNING: Skipping Polish section with {{etydate}} and ==Etymology 1==, can't handle yet")
+        p.msg("WARNING: Skipping Polish section with {{etydate}} and ==Etymology 1==, can't handle yet")
         return
 
     if "Etymology" not in pl_subsections_by_header:
-        pagemsg("WARNING: Something strange, saw {{etydate}} without ==Etymology==")
+        p.msg("WARNING: Something strange, saw {{etydate}} without ==Etymology==")
         return
 
     if len(pl_subsections_by_header["Etymology"]) > 1:
-        pagemsg("WARNING: Something strange, saw multiple ==Etymology== sections")
+        p.msg("WARNING: Something strange, saw multiple ==Etymology== sections")
         return
 
     pl_etym_sec = pl_subsections[pl_subsections_by_header["Etymology"][0]]
     if "{{etydate|" not in pl_etym_sec:
-        pagemsg("WARNING: Something strange, {{etydate}} not found ==Etymology== but found outside")
+        p.msg("WARNING: Something strange, {{etydate}} not found ==Etymology== but found outside")
         return
 
-    subsecs = blib.split_text_into_subsections(pl_secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(pl_secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header == "References":
@@ -88,8 +85,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Polish lemmas"],
     skip_ignorable_pages=True,
 )

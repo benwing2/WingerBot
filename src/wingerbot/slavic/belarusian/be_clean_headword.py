@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 from wingerbot.slavic.belarusian import belib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
-    if pagetitle.startswith("Template:"):
-        pagemsg("Skipping")
+    p.msg("Processing")
+    if p.title.startswith("Template:"):
+        p.msg("Skipping")
         return
 
     def process_noun_headt(t, declt=None):
@@ -59,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
                     # extra params to ignore
                     "sc",
                 ]:
-                    pagemsg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
+                    p.msg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
                     must_continue = True
                     break
             if must_continue:
@@ -113,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
                     # extra params to ignore
                     "sc",
                 ]:
-                    pagemsg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
+                    p.msg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
                     must_continue = True
                     break
             if must_continue:
@@ -132,33 +129,33 @@ def process_text_on_page(index, pagetitle, text):
                 elif part == "p":
                     realpl = part
                 elif part != "?":
-                    pagemsg("WARNING: Encountered unrecognized gender part '%s' in gender '%s': %s" % (part, g, origt))
+                    p.msg("WARNING: Encountered unrecognized gender part '%s' in gender '%s': %s" % (part, g, origt))
             an = anim
             if an in ["a", "an"]:
                 an = "an"
             elif an in ["i", "in"]:
                 an = "in"
             elif an:
-                pagemsg("WARNING: Unrecognized animacy a=%s: %s" % (an, origt))
+                p.msg("WARNING: Unrecognized animacy a=%s: %s" % (an, origt))
                 an = "?"
             if realan != "?" and an and an != "?" and an != realan:
-                pagemsg("WARNING: Animacy mismatch, anim %s in gender spec %s but a=%s: %s" % (realan, g, anim, origt))
+                p.msg("WARNING: Animacy mismatch, anim %s in gender spec %s but a=%s: %s" % (realan, g, anim, origt))
             if realan == "?" and an:
                 realan = an
             pl = ""
             if realpl:
                 pl = "-%s" % realpl
             if realg == "?":
-                pagemsg("WARNING: Unknown gender in gender spec %s: %s" % (g, origt))
+                p.msg("WARNING: Unknown gender in gender spec %s: %s" % (g, origt))
             if realan == "?":
-                pagemsg("WARNING: Unknown animacy in gender spec %s and a=%s: %s" % (g, anim, origt))
+                p.msg("WARNING: Unknown animacy in gender spec %s and a=%s: %s" % (g, anim, origt))
             if realg == "?" and realan == "?":
                 return "?%s" % pl
             else:
                 return "%s-%s%s" % (realg, realan, pl)
 
         if not g and not g2 and not g3:
-            pagemsg("WARNING: No gender specified: %s" % origt)
+            p.msg("WARNING: No gender specified: %s" % origt)
             g = "?"
         genders = []
         if g:
@@ -169,13 +166,13 @@ def process_text_on_page(index, pagetitle, text):
             genders.append(clean_gender(g3))
 
         if not head:
-            head = pagetitle
+            head = p.title
         if decl and decl not in ["off", "no", "indeclinable"]:
-            pagemsg("WARNING: Unrecognized value for decl=%s: %s" % (decl, origt))
+            p.msg("WARNING: Unrecognized value for decl=%s: %s" % (decl, origt))
             decl = ""
         if decl:
             if gen and gen != "-":
-                pagemsg("WARNING: Indeclinable but gen=%s specified: %s" % (gen, origt))
+                p.msg("WARNING: Indeclinable but gen=%s specified: %s" % (gen, origt))
             else:
                 gen = "-"
 
@@ -191,9 +188,9 @@ def process_text_on_page(index, pagetitle, text):
             forms = [belib.add_accent_to_o(f) for f in forms]
             for f in forms:
                 if "[[" in f:
-                    pagemsg("WARNING: Link in form %s: headword=%s, decl=%s" % (f, origt, origdeclt))
+                    p.msg("WARNING: Link in form %s: headword=%s, decl=%s" % (f, origt, origdeclt))
                 if belib.needs_accents(f):
-                    pagemsg("WARNING: Form %s missing accents: headword=%s, decl=%s" % (f, origt, origdeclt))
+                    p.msg("WARNING: Form %s missing accents: headword=%s, decl=%s" % (f, origt, origdeclt))
             forms = [f for f in forms if f != "-"]
             return forms
 
@@ -208,7 +205,7 @@ def process_text_on_page(index, pagetitle, text):
                 if not form:
                     form = declforms
                 elif set(form) != set(declforms):
-                    pagemsg(
+                    p.msg(
                         "WARNING: For %s=, headword form(s) %s disagree with decl form(s) %s: headword=%s, decl=%s"
                         % (restparam, ",".join(form), ",".join(declforms), origt, origdeclt)
                     )
@@ -217,9 +214,9 @@ def process_text_on_page(index, pagetitle, text):
             if formtr:
                 trparam = ("" if restparam == "head" else restparam) + "tr"
                 if not form:
-                    pagemsg("WARNING: Saw %s=%s but no %s=: %s" % ("trparam", formtr, restparam, origt))
+                    p.msg("WARNING: Saw %s=%s but no %s=: %s" % ("trparam", formtr, restparam, origt))
                 elif len(form) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw %s=%s and multiple %ss %s: %s"
                         % (trparam, formtr, restparam, ",".join(form), origt)
                     )
@@ -242,14 +239,14 @@ def process_text_on_page(index, pagetitle, text):
             if tn == "be-decl-noun-pl":
                 for g in genders:
                     if not g.endswith("-p"):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Mismatch between headword gender %s and decl template %s: %s"
                             % (g, str(declt), origt)
                         )
             else:
                 for g in genders:
                     if g.endswith("-p"):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Mismatch between headword gender %s and decl template %s: %s"
                             % (g, str(declt), origt)
                         )
@@ -266,7 +263,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if origt != str(t):
             notes.append("fix up {{%s}} to use new param convention" % tname(t))
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
         return True
 
     def process_verb_headt(t):
@@ -288,18 +285,18 @@ def process_text_on_page(index, pagetitle, text):
         for param in t.params:
             pn = pname(param)
             if pn not in ["head", "tr", "1", "a", "2", "pf", "pf2", "pf3", "impf", "impf2", "impf3"]:
-                pagemsg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
+                p.msg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
                 must_continue = True
                 break
         if must_continue:
             return False
         del t.params[:]
         if not head:
-            head = pagetitle
+            head = p.title
         if belib.needs_accents(head):
-            pagemsg("WARNING: Head %s missing accents: %s" % (head, origt))
+            p.msg("WARNING: Head %s missing accents: %s" % (head, origt))
         if not g:
-            pagemsg("WARNING: No aspect in verb headword: %s" % origt)
+            p.msg("WARNING: No aspect in verb headword: %s" % origt)
             g = "?"
         t.add("1", head)
         if tr:
@@ -310,7 +307,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if origt != str(t):
             notes.append("fix up {{be-verb}} to use new param convention")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
         return True
 
     def process_adj_headt(t):
@@ -322,32 +319,32 @@ def process_text_on_page(index, pagetitle, text):
         tr = getp("tr")
         head = getp("head")
         if getp("1"):
-            pagemsg("WARNING: Has 1=%s: %s" % (getp("1"), origt))
+            p.msg("WARNING: Has 1=%s: %s" % (getp("1"), origt))
             return
         must_continue = False
         for param in t.params:
             pn = pname(param)
             if pn not in ["head", "tr"]:
-                pagemsg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
+                p.msg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, str(param.value), origt))
                 must_continue = True
                 break
         if must_continue:
             return False
         del t.params[:]
         if not head:
-            head = pagetitle
+            head = p.title
         if belib.needs_accents(head):
-            pagemsg("WARNING: Head %s missing accents: %s" % (head, origt))
+            p.msg("WARNING: Head %s missing accents: %s" % (head, origt))
         t.add("1", head)
         if tr:
             t.add("tr", tr)
 
         if origt != str(t):
             notes.append("fix up {{be-adj}} to use new param convention")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
         return True
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     for t in parsed.filter_templates():
@@ -356,13 +353,13 @@ def process_text_on_page(index, pagetitle, text):
             tn == "head" and getparam(t, "1") == "be" and getparam(t, "2") in ["noun", "proper noun"]
         ):
             if headt:
-                pagemsg("WARNING: Encountered headword template without declension: %s" % str(headt))
+                p.msg("WARNING: Encountered headword template without declension: %s" % str(headt))
                 process_noun_headt(headt)
                 headt = None
             headt = t
         elif tn in ["be-decl-noun", "be-decl-noun-unc", "be-decl-noun-pl"]:
             if not headt:
-                pagemsg("WARNING: Encountered declension template without headword: %s" % str(t))
+                p.msg("WARNING: Encountered declension template without headword: %s" % str(t))
             else:
                 process_noun_headt(headt, t)
                 headt = None
@@ -375,7 +372,7 @@ def process_text_on_page(index, pagetitle, text):
         elif tn == "be-adj":
             process_adj_headt(t)
     if headt:
-        pagemsg("WARNING: Encountered headword template without declension: %s" % str(headt))
+        p.msg("WARNING: Encountered headword template without declension: %s" % str(headt))
         process_noun_headt(headt)
 
     return str(parsed), notes
@@ -390,8 +387,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    # default_refs=["Template:be-adj", "Template:be-verb", "Template:be-noun"], edit=True, stdin=True)
+    new=True,
     default_cats=["Belarusian proper nouns", "Belarusian nouns"],
-    edit=True,
-    stdin=True,
+    #default_refs=["Template:be-adj", "Template:be-verb", "Template:be-noun"],
 )

@@ -38,26 +38,24 @@ def snarf_verb_accents():
                 verbs_to_accents[unaccented_verb] = verb
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         if tname(t) == "bg-verb-form":
             if not getparam(t, "head"):
-                if bglib.needs_accents(pagetitle):
-                    pagemsg(
-                        "WARNING: Can't add head= to {{bg-verb-form}} missing it because pagetitle is multisyllabic: %s"
+                if bglib.needs_accents(p.title):
+                    p.msg(
+                        "WARNING: Can't add head= to {{bg-verb-form}} missing it because p.title is multisyllabic: %s"
                         % str(t)
                     )
                 elif t.has("g"):
-                    t.add("head", pagetitle, before="g")
+                    t.add("head", p.title, before="g")
                 else:
-                    t.add("head", pagetitle)
+                    t.add("head", p.title)
 
     text = str(parsed)
 
@@ -80,9 +78,9 @@ def process_text_on_page(index, pagetitle, text):
         text = newtext
     m = re.search("^.*?bg-verb-form.*?$", text, re.M)
     if m:
-        pagemsg("WARNING: Still saw bg-verb-form after attempted replacements: %s" % m.group(0).strip())
+        p.msg("WARNING: Still saw bg-verb-form after attempted replacements: %s" % m.group(0).strip())
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     headt = None
     saw_infl_after_head = False
     vn_forms_to_add_header = []
@@ -92,19 +90,19 @@ def process_text_on_page(index, pagetitle, text):
         origt = str(t)
         if tn == "head" and getparam(t, "1") == "bg" and getparam(t, "2") == "verb form":
             if headt and not saw_infl_after_head:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw two head templates %s and %s without intervening inflection" % (str(headt), origt)
                 )
             saw_infl_after_head = False
             headt = t
         if tn == "bg-verb form of":
             if not headt:
-                pagemsg("WARNING: Saw {{bg-verb form of}} without head template: %s" % origt)
+                p.msg("WARNING: Saw {{bg-verb form of}} without head template: %s" % origt)
                 continue
             must_continue = False
             for param in t.params:
                 if pname(param) not in ["verb", "part", "g", "f", "d", "person", "number", "tense", "mood"]:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pname(param), str(param.value), origt))
+                    p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pname(param), str(param.value), origt))
                     must_continue = True
                     break
             if must_continue:
@@ -113,7 +111,7 @@ def process_text_on_page(index, pagetitle, text):
             parttype = None
             verb = getparam(t, "verb")
             if not verb:
-                pagemsg("WARNING: Didn't see verb=: %s" % origt)
+                p.msg("WARNING: Didn't see verb=: %s" % origt)
                 continue
             infls = []
             part = getparam(t, "part")
@@ -127,7 +125,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif d == "definite":
                     infls.append("def")
                 else:
-                    pagemsg("WARNING: Saw unrecognized d=%s: %s" % (d, origt))
+                    p.msg("WARNING: Saw unrecognized d=%s: %s" % (d, origt))
                     continue
                 g = getparam(t, "g")
                 if g == "singular":
@@ -135,7 +133,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif g == "plural":
                     infls.append("p")
                 else:
-                    pagemsg("WARNING: Saw unrecognized g=%s: %s" % (g, origt))
+                    p.msg("WARNING: Saw unrecognized g=%s: %s" % (g, origt))
                     continue
                 infls.append("vnoun")
                 if g == "singular" and d == "indefinite":
@@ -151,7 +149,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif person == "third":
                     infls.append("3")
                 else:
-                    pagemsg("WARNING: Saw unrecognized person=%s: %s" % (person, origt))
+                    p.msg("WARNING: Saw unrecognized person=%s: %s" % (person, origt))
                     continue
                 number = getparam(t, "number")
                 if number == "singular":
@@ -159,7 +157,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif number == "plural":
                     infls.append("p")
                 else:
-                    pagemsg("WARNING: Saw unrecognized number=%s: %s" % (number, origt))
+                    p.msg("WARNING: Saw unrecognized number=%s: %s" % (number, origt))
                     continue
                 tense = getparam(t, "tense")
                 if tense == "present":
@@ -169,7 +167,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif tense == "imperfect":
                     infls.append("impf")
                 elif tense:  # can be missing when imperative
-                    pagemsg("WARNING: Saw unrecognized tense=%s: %s" % (tense, origt))
+                    p.msg("WARNING: Saw unrecognized tense=%s: %s" % (tense, origt))
                     continue
                 mood = getparam(t, "mood")
                 if mood == "indicative":
@@ -179,7 +177,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif mood == "renarrative":
                     infls.append("renarr")
                 else:
-                    pagemsg("WARNING: Saw unrecognized mood=%s: %s" % (mood, origt))
+                    p.msg("WARNING: Saw unrecognized mood=%s: %s" % (mood, origt))
                     continue
             else:  # participle
                 d = getparam(t, "d")
@@ -188,7 +186,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif d == "definite":
                     infls.append("def")
                 elif d:
-                    pagemsg("WARNING: Saw unrecognized d=%s: %s" % (d, origt))
+                    p.msg("WARNING: Saw unrecognized d=%s: %s" % (d, origt))
                     continue
                 f = getparam(t, "f")
                 if f == "subject form":
@@ -196,7 +194,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif f == "object form":
                     infls.append("objv")
                 elif f:
-                    pagemsg("WARNING: Saw unrecognized f=%s: %s" % (f, origt))
+                    p.msg("WARNING: Saw unrecognized f=%s: %s" % (f, origt))
                     continue
                 g = getparam(t, "g")
                 if g == "masculine":
@@ -208,7 +206,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif g == "plural":
                     infls.append("p")
                 else:
-                    pagemsg("WARNING: Saw unrecognized g=%s: %s" % (g, origt))
+                    p.msg("WARNING: Saw unrecognized g=%s: %s" % (g, origt))
                     continue
                 if part == "present active participle":
                     infls.extend(["pres", "act", "part"])
@@ -223,7 +221,7 @@ def process_text_on_page(index, pagetitle, text):
                     infls.extend(["past", "act", "impf", "part"])
                     parttype = "impf"
                 else:
-                    pagemsg("WARNING: Saw unrecognized part=%s: %s" % (part, origt))
+                    p.msg("WARNING: Saw unrecognized part=%s: %s" % (part, origt))
                     continue
                 if not (
                     g == "masculine" and (d == "indefinite" or not d and part == "past active imperfect participle")
@@ -234,7 +232,7 @@ def process_text_on_page(index, pagetitle, text):
                 if tname(headt) == "head":
                     heads = blib.fetch_param_chain(headt, "head", "head")
                     if not heads:
-                        pagemsg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
+                        p.msg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
                         continue
                     genders = blib.fetch_param_chain(headt, "g", "g")
                     origheadt = str(headt)
@@ -242,16 +240,16 @@ def process_text_on_page(index, pagetitle, text):
                     del headt.params[:]
                     blib.set_param_chain(headt, heads, "1", "head")
                     blib.set_param_chain(headt, genders, "g", "g")
-                    pagemsg("Replaced %s with %s" % (origheadt, str(headt)))
+                    p.msg("Replaced %s with %s" % (origheadt, str(headt)))
                     notes.append("convert {{head|bg|verb form}} to {{bg-verbal noun form}}")
                 elif tname(headt) == "bg-verbal noun":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Both verbal noun and verbal noun form under same head: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
                     continue
                 elif tname(headt) != "bg-verbal noun form":
-                    pagemsg(
+                    p.msg(
                         "Both verbal noun form and participle (or something else?) under same head, will split: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
@@ -260,7 +258,7 @@ def process_text_on_page(index, pagetitle, text):
                 if tname(headt) == "head":
                     heads = blib.fetch_param_chain(headt, "head", "head")
                     if not heads:
-                        pagemsg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
+                        p.msg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
                         continue
                     genders = blib.fetch_param_chain(headt, "g", "g")
                     origheadt = str(headt)
@@ -268,16 +266,16 @@ def process_text_on_page(index, pagetitle, text):
                     del headt.params[:]
                     blib.set_param_chain(headt, heads, "1", "head")
                     blib.set_param_chain(headt, genders, "g", "g")
-                    pagemsg("Replaced %s with %s" % (origheadt, str(headt)))
+                    p.msg("Replaced %s with %s" % (origheadt, str(headt)))
                     notes.append("convert {{head|bg|verb form}} to {{bg-verbal noun}}")
                 elif tname(headt) == "bg-verbal noun form":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Both verbal noun and verbal noun form under same head: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
                     continue
                 elif tname(headt) != "bg-verbal noun":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Both verbal noun and participle (or something else?) under same head: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
@@ -286,7 +284,7 @@ def process_text_on_page(index, pagetitle, text):
                 if tname(headt) == "head":
                     heads = blib.fetch_param_chain(headt, "head", "head")
                     if not heads:
-                        pagemsg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
+                        p.msg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
                         continue
                     genders = blib.fetch_param_chain(headt, "g", "g")
                     origheadt = str(headt)
@@ -294,16 +292,16 @@ def process_text_on_page(index, pagetitle, text):
                     del headt.params[:]
                     blib.set_param_chain(headt, heads, "1", "head")
                     blib.set_param_chain(headt, genders, "g", "g")
-                    pagemsg("Replaced %s with %s" % (origheadt, str(headt)))
+                    p.msg("Replaced %s with %s" % (origheadt, str(headt)))
                     notes.append("convert {{head|bg|verb form}} to {{bg-part form}}")
                 elif tname(headt) == "bg-part":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Both participle and participle form under same head: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
                     continue
                 elif tname(headt) != "bg-part form":
-                    pagemsg(
+                    p.msg(
                         "Both participle form and verbal noun (or something else?) under same head, will split: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
@@ -314,18 +312,18 @@ def process_text_on_page(index, pagetitle, text):
                 if tname(headt) == "head":
                     heads = blib.fetch_param_chain(headt, "head", "head")
                     if not heads:
-                        pagemsg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
+                        p.msg("WARNING: Something wrong, {{head|bg|verb form}} missing head=: %s" % str(headt))
                         continue
                     origheadt = str(headt)
                     blib.set_template_name(headt, "bg-part")
                     del headt.params[:]
                     blib.set_param_chain(headt, heads, "1", "head")
                     headt.add("2", parttype)
-                    pagemsg("Replaced %s with %s" % (origheadt, str(headt)))
+                    p.msg("Replaced %s with %s" % (origheadt, str(headt)))
                     notes.append("convert {{head|bg|verb form}} to {{bg-part}} for participle '%s'" % parttype)
                 elif tname(headt) == "bg-part":
                     if getparam(headt, "5"):
-                        pagemsg("WARNING: Too many participles attached to {{bg-part}}: %s" % str(headt))
+                        p.msg("WARNING: Too many participles attached to {{bg-part}}: %s" % str(headt))
                         continue
                     origheadt = str(headt)
                     if getparam(headt, "4"):
@@ -335,17 +333,17 @@ def process_text_on_page(index, pagetitle, text):
                     elif getparam(headt, "2"):
                         headt.add("3", parttype)
                     else:
-                        pagemsg("WARNING: Something wrong, no participle in {{bg-part}}: %s" % str(headt))
-                    pagemsg("Replaced %s with %s" % (origheadt, str(headt)))
+                        p.msg("WARNING: Something wrong, no participle in {{bg-part}}: %s" % str(headt))
+                    p.msg("Replaced %s with %s" % (origheadt, str(headt)))
                     notes.append("add participle '%s' to existing {{bg-part}}" % parttype)
                 elif tname(headt) == "bg-part form":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Both participle and participle form under same head: head=%s, infl=%s"
                         % (str(headt), origt)
                     )
                     continue
                 else:
-                    pagemsg("WARNING: Something wrong, unrecognized head template: %s" % str(headt))
+                    p.msg("WARNING: Something wrong, unrecognized head template: %s" % str(headt))
                     continue
             blib.set_template_name(t, "inflection of")
             del t.params[:]
@@ -353,12 +351,12 @@ def process_text_on_page(index, pagetitle, text):
             if verb in verbs_to_accents:
                 verb = verbs_to_accents[verb]
             else:
-                pagemsg("WARNING: Unable to find accented equivalent of %s: %s" % (verb, origt))
+                p.msg("WARNING: Unable to find accented equivalent of %s: %s" % (verb, origt))
             t.add("2", verb)
             t.add("3", "")
             for i, infl in enumerate(infls):
                 t.add(str(i + 4), infl)
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert {{bg-verb form of}} to {{inflection of}}")
 
     text = str(parsed)
@@ -367,7 +365,7 @@ def process_text_on_page(index, pagetitle, text):
         for headt, inflt, gender in vn_forms_to_add_header:
             m = re.search("(=+)\n%s" % re.escape(str(headt)), text)
             if not m:
-                pagemsg("WARNING: Something wrong, can't find head template %s in text" % str(headt))
+                p.msg("WARNING: Something wrong, can't find head template %s in p.text" % str(headt))
                 continue
             indents = m.group(1)
             headword = getparam(headt, "1")
@@ -381,10 +379,10 @@ def process_text_on_page(index, pagetitle, text):
             )
             newtext = text.replace(origtext, repltext)
             if len(newtext) - len(text) > len(repltext) - len(origtext):
-                pagemsg("WARNING: Something wrong, made more than one replacement of %s" % origtext)
+                p.msg("WARNING: Something wrong, made more than one replacement of %s" % origtext)
                 continue
             if len(newtext) - len(text) < len(repltext) - len(origtext):
-                pagemsg("WARNING: Something wrong, made less than one replacement of %s" % origtext)
+                p.msg("WARNING: Something wrong, made less than one replacement of %s" % origtext)
                 continue
             text = newtext
             notes.append("add ==Noun== header before verbal noun mixed with participle")
@@ -393,7 +391,7 @@ def process_text_on_page(index, pagetitle, text):
         for headt, inflt, gender in part_forms_to_add_header:
             m = re.search("(=+)\n%s" % re.escape(str(headt)), text)
             if not m:
-                pagemsg("WARNING: Something wrong, can't find head template %s in text" % str(headt))
+                p.msg("WARNING: Something wrong, can't find head template %s in p.text" % str(headt))
                 continue
             indents = m.group(1)
             headword = getparam(headt, "1")
@@ -407,10 +405,10 @@ def process_text_on_page(index, pagetitle, text):
             )
             newtext = text.replace(origtext, repltext)
             if len(newtext) - len(text) > len(repltext) - len(origtext):
-                pagemsg("WARNING: Something wrong, made more than one replacement of %s" % origtext)
+                p.msg("WARNING: Something wrong, made more than one replacement of %s" % origtext)
                 continue
             if len(newtext) - len(text) < len(repltext) - len(origtext):
-                pagemsg("WARNING: Something wrong, made less than one replacement of %s" % origtext)
+                p.msg("WARNING: Something wrong, made less than one replacement of %s" % origtext)
                 continue
             text = newtext
             notes.append("add ==Participle== header before participle mixed with verbal noun")
@@ -435,5 +433,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 snarf_verb_accents()
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Bulgarian verb forms"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Bulgarian verb forms"]
 )

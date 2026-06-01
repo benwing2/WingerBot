@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Polish", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -43,31 +40,31 @@ def process_text_on_page(index, pagetitle, text):
             if re.search(r"\{\{%s\|pl[|}]" % bad_template, secbody):
                 saw_bad_templates.append(bad_template)
         if saw_bad_templates:
-            pagemsg(
+            p.msg(
                 "Skipping page because saw no good definition lines, and saw %s"
                 % (" and ".join("{{%s|pl}}" % bad_template for bad_template in saw_bad_templates))
             )
         else:
-            pagemsg(
+            p.msg(
                 "WARNING: Skipping page because saw no good definition lines; didn't see any of %s"
                 % (", ".join("{{%s|pl}}" % bad_template for bad_template in bad_templates))
             )
         return
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     # Check for templates in sections outside of 'Further reading'
     for k, header in subsecs.header_list:
         if header != "Further reading":
             if "{{R:pl:WSJP}}" in subsections[k] or "{{R:pl:PWN}}" in subsections[k]:
                 if header == "References":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw {{R:pl:WSJP}} or {{R:pl:PWN}} in %s section, can't handle"
                         % header
                     )
                     return
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw {{R:pl:WSJP}} or {{R:pl:PWN}} in %s section, need to review manually"
                         % header
                     )
@@ -78,7 +75,7 @@ def process_text_on_page(index, pagetitle, text):
             if subsecs.levels[k] != 3:
                 for l in range(k + 2, len(subsections), 2):
                     if subsecs.headers[l] != "Anagrams":
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw level > 3 Further reading and a following non-Anagrams section %s, can't handle"
                             % subsecs.headers[l]
                         )
@@ -100,19 +97,19 @@ def process_text_on_page(index, pagetitle, text):
                 if has_wsjp and not has_pwn:
                     newsubseck = subsections[k].replace("* {{R:pl:WSJP}}\n", "* {{R:pl:WSJP}}\n* {{R:pl:PWN}}\n")
                     if newsubseck == subsections[k]:
-                        pagemsg("WARNING: Unable to add {{R:pl:PWN}} after {{R:pl:WSJP}}")
+                        p.msg("WARNING: Unable to add {{R:pl:PWN}} after {{R:pl:WSJP}}")
                     else:
                         subsections[k] = newsubseck
                         notes.append("add {{R:pl:PWN}} to Polish lemma in ===Further reading===")
                 elif has_pwn and not has_wsjp:
                     newsubseck = subsections[k].replace("* {{R:pl:PWN}}\n", "* {{R:pl:WSJP}}\n* {{R:pl:PWN}}\n")
                     if newsubseck == subsections[k]:
-                        pagemsg("WARNING: Unable to add {{R:pl:WSJP}} before {{R:pl:PWN}}")
+                        p.msg("WARNING: Unable to add {{R:pl:WSJP}} before {{R:pl:PWN}}")
                     else:
                         subsections[k] = newsubseck
                         notes.append("add {{R:pl:WSJP}} to Polish lemma in ===Further reading===")
                 elif has_wsjp and has_pwn:
-                    pagemsg("Already has {{R:pl:WSJP}} and {{R:pl:PWN}}")
+                    p.msg("Already has {{R:pl:WSJP}} and {{R:pl:PWN}}")
                 else:
                     subsections[k] = "* {{R:pl:WSJP}}\n* {{R:pl:PWN}}\n" + subsections[k]
                     notes.append("add {{R:pl:WSJP}} and {{R:pl:PWN}} to Polish lemma in ===Further reading===")
@@ -122,7 +119,7 @@ def process_text_on_page(index, pagetitle, text):
         while k >= 2 and subsecs.headers[k] == "Anagrams":
             k -= 2
         if k < 2:
-            pagemsg("WARNING: No lemma or non-lemma section")
+            p.msg("WARNING: No lemma or non-lemma section")
             return
         subsections[k + 1 : k + 1] = ["===Further reading===\n* {{R:pl:WSJP}}\n* {{R:pl:PWN}}\n\n"]
         notes.append("add new ===Further reading=== section to Polish lemma with {{R:pl:WSJP}} and {{R:pl:PWN}}")
@@ -137,7 +134,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Polish lemmas"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Polish lemmas"]
 )
 
 blib.elapsed_time()

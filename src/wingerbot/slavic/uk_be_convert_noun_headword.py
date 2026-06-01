@@ -11,15 +11,9 @@ from wingerbot.slavic.belarusian import belib as be
 AC = "\u0301"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
-    pagemsg("Processing")
+    p.msg("Processing")
 
     heads = None
     headt = None
@@ -28,13 +22,13 @@ def process_text_on_page(index, pagetitle, text):
     genitives = None
     plurals = None
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in [args.lang + "-noun", args.lang + "-proper noun"]:
             if heads:
-                pagemsg("WARNING: Encountered headword twice without declension: %s" % str(t))
+                p.msg("WARNING: Encountered headword twice without declension: %s" % str(t))
                 return
             headt = t
             headtn = tn
@@ -45,12 +39,12 @@ def process_text_on_page(index, pagetitle, text):
             genitive_plurals = blib.fetch_param_chain(t, "5", "genpl")
         if tn == args.lang + "-ndecl":
             if not heads:
-                pagemsg("WARNING: Encountered decl without headword: %s" % str(t))
+                p.msg("WARNING: Encountered decl without headword: %s" % str(t))
                 return
             generate_template = re.sub(
                 r"^\{\{%s-ndecl\|" % args.lang, "{{User:Benwing2/%s-generate-prod-noun-props|" % args.lang, str(t)
             )
-            result = expand_text(generate_template)
+            result = p.expand_text(generate_template)
             if not result:
                 return
             new_forms = blib.split_generate_args(result)
@@ -66,7 +60,7 @@ def process_text_on_page(index, pagetitle, text):
                     old = [remove_monosyllabic_accents(blib.remove_links(x)) for x in old]
                     new = [remove_monosyllabic_accents(x) for x in new]
                 if set(old) != set(new):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Old %ss %s disagree with new %ss %s: head=%s, decl=%s"
                         % (stuff, ",".join(old), stuff, ",".join(new), str(headt), str(t))
                     )
@@ -78,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
                 continue
             is_plural = [x.endswith("-p") for x in new_g]
             if any(is_plural) and not all(is_plural):
-                pagemsg("WARNING: Mixture of plural-only and non-plural-only genders, can't process: %s" % str(t))
+                p.msg("WARNING: Mixture of plural-only and non-plural-only genders, can't process: %s" % str(t))
                 return
             is_plural = any(is_plural)
             if is_plural:
@@ -127,7 +121,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_cats=[langname + " nouns", langname + " proper nouns"],
-    edit=True,
-    stdin=True,
 )

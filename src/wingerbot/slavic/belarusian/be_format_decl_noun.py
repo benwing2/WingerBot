@@ -8,15 +8,12 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 from wingerbot.slavic.belarusian import belib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     head = None
     for t in parsed.filter_templates():
@@ -29,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
                 if val:
                     t.add(str(i), val + "\n", preserve_spacing=False)
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("format {{be-decl-noun}} using newlines")
 
     return str(parsed), notes
@@ -40,5 +37,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_refs=["Template:be-decl-noun"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:be-decl-noun"]
 )

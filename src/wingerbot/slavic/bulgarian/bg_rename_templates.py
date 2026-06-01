@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 # col templates
 templates_to_rename = {
@@ -15,14 +15,11 @@ templates_to_rename = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -40,7 +37,7 @@ def process_text_on_page(index, pagetitle, text):
                 if pname.strip() in ["1", "lang", "sc"]:
                     continue
                 if pname.strip() in ["2", "3", "4"]:
-                    errandmsg("WARNING: Found %s= in %s" % (pname.strip(), origt))
+                    p.errandmsg("WARNING: Found %s= in %s" % (pname.strip(), origt))
                 params.append((pname, param.value, param.showkey))
             # Erase all params.
             del t.params[:]
@@ -48,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
             for param_index, paramval in enumerate(new_params):
                 t.add(str(param_index + 1), paramval)
             if not old_1:
-                errandmsg("WARNING: No 1= in %s" % origt)
+                p.errandmsg("WARNING: No 1= in %s" % origt)
             else:
                 t.add(main_entry_param, old_1)
             # Put remaining parameters in order.
@@ -59,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
             )
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -75,7 +72,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:%s" for template in templates_to_rename],
 )

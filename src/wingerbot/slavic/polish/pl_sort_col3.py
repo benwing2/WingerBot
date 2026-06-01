@@ -3,16 +3,13 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Polish", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -25,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
         for line in col3_split:
             m = re.search(r"\|title=([^{}|\n]*)[|}]", line)
             if not m:
-                pagemsg("WARNING: Saw {{col3|pl}} line but couldn't extract part of speech from title=: %s" % line)
+                p.msg("WARNING: Saw {{col3|pl}} line but couldn't extract part of speech from title=: %s" % line)
                 must_continue = True
                 break
             decorated_lines.append((m.group(1), line))
@@ -36,9 +33,9 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("sort {{col3|pl}} lines by title (part of speech)")
 
             def quote_nl(text):
-                return text.replace("\n", r"\n")
+                return p.text.replace("\n", r"\n")
 
-            pagemsg("Replaced <%s> with <%s>" % (quote_nl(col3_splits[k]), quote_nl(new_col3_splits)))
+            p.msg("Replaced <%s> with <%s>" % (quote_nl(col3_splits[k]), quote_nl(new_col3_splits)))
             col3_splits[k] = new_col3_splits
 
     return modsec.rebuild(secbody="".join(col3_splits)), notes
@@ -51,5 +48,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Polish lemmas"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Polish lemmas"]
 )

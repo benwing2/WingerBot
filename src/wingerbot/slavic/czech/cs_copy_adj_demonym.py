@@ -85,17 +85,14 @@ allow_list_items = [
 allow_list_items = dict(allow_list_items)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if pagetitle in deny_list_pages:
-        pagemsg("Skipping page because in deny_list_pages")
+    if p.title in deny_list_pages:
+        p.msg("Skipping page because in deny_list_pages")
         return
 
-    modsec = blib.find_modifiable_lang_section(text, "Czech", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Czech", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -114,7 +111,7 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn in ["cs-noun", "cs-proper noun"]:
             if headword_template:
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple cs-noun or cs-proper noun templates %s and %s" % (str(headword_template), str(t))
                 )
             headword_template = t
@@ -125,14 +122,14 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if re.search("^(adj|dem|fdem)[0-9]*_qual$", pn):
-                    pagemsg("WARNING: Saw qualifier for adj, dem or fdem: %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Saw qualifier for adj, dem or fdem: %s=%s" % (pn, str(param.value)))
                     return
         elif tn == "col-auto":
             if getparam(t, "1").strip() != "cs":
-                pagemsg("WARNING: Wrong language for {{col-auto}}: %s" % str(t))
+                p.msg("WARNING: Wrong language for {{col-auto}}: %s" % str(t))
                 continue
             if not headword_template:
-                pagemsg("WARNING: Encountered {{col-auto|cs}} without preceding headword template: %s" % str(t))
+                p.msg("WARNING: Encountered {{col-auto|cs}} without preceding headword template: %s" % str(t))
                 continue
             col_auto_items = blib.fetch_param_chain(t, "2")
             for item in col_auto_items:
@@ -141,10 +138,10 @@ def process_text_on_page(index, pagetitle, text):
 
                 def add_item(itemlist, listparam):
                     if item in deny_list_items:
-                        pagemsg("Not removing item %s because in deny_list_items" % item)
+                        p.msg("Not removing item %s because in deny_list_items" % item)
                         col_auto_items_to_keep.append(origitem)
-                    elif item[0:2].lower() != pagetitle[0:2].lower():
-                        pagemsg(
+                    elif item[0:2].lower() != p.title[0:2].lower():
+                        p.msg(
                             "WARNING: Saw apparent %s %s but first two chars %s don't agree with pagename: %s"
                             % (listparam, item, item[0:2], str(t))
                         )
@@ -155,7 +152,7 @@ def process_text_on_page(index, pagetitle, text):
 
                 if item in allow_list_items:
                     itemtype = allow_list_items[item]
-                    pagemsg("Moving item %s of type '%s' because in allow_list_items" % (item, itemtype))
+                    p.msg("Moving item %s of type '%s' because in allow_list_items" % (item, itemtype))
                     itemlist = (
                         adjs
                         if itemtype == "adj"
@@ -171,13 +168,13 @@ def process_text_on_page(index, pagetitle, text):
                 elif re.search("ka$", item) and item[0].isupper():
                     add_item(fdems, "fdem")
                 elif re.search("ko$", item):
-                    pagemsg("Skipping apparent region item %s: %s" % (item, str(t)))
+                    p.msg("Skipping apparent region item %s: %s" % (item, str(t)))
                     col_auto_items_to_keep.append(origitem)
                 elif re.search("tina$", item):
-                    pagemsg("Skipping apparent language item %s: %s" % (item, str(t)))
+                    p.msg("Skipping apparent language item %s: %s" % (item, str(t)))
                     col_auto_items_to_keep.append(origitem)
                 else:
-                    pagemsg("WARNING: Unrecognized item %s, needs manual handling: %s" % (item, str(t)))
+                    p.msg("WARNING: Unrecognized item %s, needs manual handling: %s" % (item, str(t)))
                     col_auto_items_to_keep.append(origitem)
             if len(col_auto_items) > len(col_auto_items_to_keep):
                 if adjs:
@@ -204,14 +201,14 @@ def process_text_on_page(index, pagetitle, text):
     if col_auto_templates_to_remove:
         for col_auto_template_to_remove, num_items in col_auto_templates_to_remove:
             newtext, changed = blib.replace_in_text(
-                secbody, col_auto_template_to_remove + "\n", "", pagemsg, abort_if_warning=True
+                secbody, col_auto_template_to_remove + "\n", "", p.msg, abort_if_warning=True
             )
             if not changed:
                 return
             notes.append("remove all %s item(s) from {{col-auto|cs}}" % num_items)
             secbody = newtext
             newtext, changed = blib.replace_in_text(
-                secbody, "===+(Derived|Related) terms===+\n\n", "", pagemsg, is_re=True
+                secbody, "===+(Derived|Related) terms===+\n\n", "", p.msg, is_re=True
             )
             if changed:
                 notes.append("remove now empty Czech 'Derived/Related terms' section")
@@ -228,4 +225,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

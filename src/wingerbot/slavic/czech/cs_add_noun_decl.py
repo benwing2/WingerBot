@@ -158,11 +158,8 @@ class Headword:
     could_be_adj: bool
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     # Find the declension arguments for LEMMA and inflected form INFL, the WORDINDth word in the expression. Return value
     # is a tuple (DECL, POS) where POS == "noun", "adj" or "indecl".
@@ -174,7 +171,7 @@ def process_text_on_page(index, pagetitle, text):
             wordlink = "[[%s|%s]]" % (lemma, infl)
 
         if not declpage.exists():
-            pagemsg(
+            p.msg(
                 "WARNING: Page doesn't exist, can't locate decl for word #%s, skipping: lemma=%s, infl=%s"
                 % (wordind, lemma, infl)
             )
@@ -185,17 +182,17 @@ def process_text_on_page(index, pagetitle, text):
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn in ["cs-ndecl", "cs-adecl"]:
-                pagemsg("find_decl_args: Found decl template: %s" % str(t))
+                p.msg("find_decl_args: Found decl template: %s" % str(t))
                 decl_templates.append(t)
             if tn in ["cs-noun", "cs-proper noun"]:
-                pagemsg("find_decl_args: Found headword template: %s" % str(t))
+                p.msg("find_decl_args: Found headword template: %s" % str(t))
                 headword_templates.append(t)
 
         if not decl_templates:
             for headt in headword_templates:
                 if getparam(headt, "indecl"):
                     return "", "indecl"
-            pagemsg(
+            p.msg(
                 "WARNING: No decl template during decl lookup for word #%s, skipping: lemma=%s, infl=%s"
                 % (wordind, lemma, infl)
             )
@@ -207,33 +204,33 @@ def process_text_on_page(index, pagetitle, text):
             # Multiple decl templates
             if lemma in use_given_decl:
                 overriding_decl = use_given_decl[lemma]
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple decl templates during decl lookup for word #%s and not adjectival, using overriding declension %s: lemma=%s, infl=%s"
                     % (wordind, overriding_decl, lemma, infl)
                 )
                 decl_template = blib.parse_text(overriding_decl).filter_templates()[0]
-            elif pagetitle in use_given_page_decl:
-                overriding_decl = use_given_page_decl[pagetitle].get(lemma, None)
+            elif p.title in use_given_page_decl:
+                overriding_decl = use_given_page_decl[p.title].get(lemma, None)
                 if not overriding_decl:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Missing entry for ambiguous-decl lemma for word #%s, skipping: lemma=%s, infl=%s"
                         % (wordind, lemma, infl)
                     )
                     return
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Multiple decl templates during decl lookup for word #%s and not adjectival, using overriding declension %s: lemma=%s, infl=%s"
                         % (wordind, overriding_decl, lemma, infl)
                     )
                     decl_template = blib.parse_text(overriding_decl).filter_templates()[0]
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Multiple decl templates during decl lookup for word #%s and not adjectival, skipping: lemma=%s, infl=%s"
                     % (wordind, lemma, infl)
                 )
                 return
 
-        pagemsg("find_decl_args: Using decl template: %s" % str(decl_template))
+        p.msg("find_decl_args: Using decl template: %s" % str(decl_template))
         if tname(decl_template) == "cs-adecl":
             return "+", "adj"
 
@@ -241,13 +238,13 @@ def process_text_on_page(index, pagetitle, text):
         assert tname(decl_template) == "cs-ndecl"
         decl = getparam(decl_template, "1")
         if "<" in decl:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw angle bracket in declension '%s' for word #%s, skipping: lemma=%s, infl=%s"
                 % (decl, wordind, lemma, infl)
             )
             return
         if "((" in decl:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw multiple alternants in declension '%s' for word #%s, skipping: lemma=%s, infl=%s"
                 % (decl, wordind, lemma, infl)
             )
@@ -258,30 +255,30 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["cs-ndecl"]:
-            pagemsg("Found %s, skipping" % tn)
+            p.msg("Found %s, skipping" % tn)
             return
         if tn in ["cs-noun", "cs-proper noun"]:
             if headword_template:
-                pagemsg("WARNING: Multiple cs-noun or cs-proper noun templates, skipping")
+                p.msg("WARNING: Multiple cs-noun or cs-proper noun templates, skipping")
                 return
             headword_template = t
 
     if not headword_template:
-        pagemsg("WARNING: Can't find headword template, skipping")
+        p.msg("WARNING: Can't find headword template, skipping")
         return
 
-    pagemsg("Found headword template: %s" % str(headword_template))
+    p.msg("Found headword template: %s" % str(headword_template))
 
     headword_is_proper = tname(headword_template) == "cs-proper noun"
 
-    if getparam(headword_template, "indecl") or "[[Category:Czech indeclinable nouns]]" in text:
-        pagemsg("WARNING: Indeclinable noun, skipping")
+    if getparam(headword_template, "indecl") or "[[Category:Czech indeclinable nouns]]" in p.text:
+        p.msg("WARNING: Indeclinable noun, skipping")
         return
 
     rfinfl = "{{rfinfl|cs|%s}}" % ("proper noun" if headword_is_proper else "noun")
 
     def print_from_to():
-        pagemsg(
+        p.msg(
             "<from> %s <to> %s <end> <from> %s <to> %s <end>"
             % (rfinfl, rfinfl, str(headword_template), str(headword_template))
         )
@@ -291,11 +288,11 @@ def process_text_on_page(index, pagetitle, text):
     for badparam in ["head2"]:
         val = getparam(headword_template, badparam)
         if val:
-            pagemsg("WARNING: Found extra param, can't handle, skipping: %s=%s" % (badparam, val))
+            p.msg("WARNING: Found extra param, can't handle, skipping: %s=%s" % (badparam, val))
             print_from_to()
             return
     if not headword:
-        headword = re.sub("([^ -]+)", r"[[\1]]", pagetitle)
+        headword = re.sub("([^ -]+)", r"[[\1]]", p.title)
 
     # Here we use a capturing split, and treat what we want to capture as
     # the splitting text, backwards from what you'd expect. The separators
@@ -303,7 +300,7 @@ def process_text_on_page(index, pagetitle, text):
     # an odd number of items, and the first and last should be empty.
     headwords_separators = re.split(r"(\[\[.*?\]\][^ -]*|[^ -]+)", headword)
     if headwords_separators[0] != "" or headwords_separators[-1] != "":
-        pagemsg("WARNING: Found junk at beginning or end of headword, skipping")
+        p.msg("WARNING: Found junk at beginning or end of headword, skipping")
         print_from_to()
         return
 
@@ -314,7 +311,7 @@ def process_text_on_page(index, pagetitle, text):
         hword = headwords_separators[i]
         separator = headwords_separators[i + 1]
         if i < len(headwords_separators) - 2 and separator != " " and separator != "-":
-            pagemsg(
+            p.msg(
                 "WARNING: Separator after word #%s isn't a space or hyphen, can't handle: word=<%s>, separator=<%s>"
                 % (wordind + 1, hword, separator)
             )
@@ -387,7 +384,7 @@ def process_text_on_page(index, pagetitle, text):
             lemmainfl = "[[%s|%s]]" % (headword.lemma, headword.infl)
         return "%s(could_be_noun=%s, could_be_adj=%s)" % (lemmainfl, headword.could_be_noun, headword.could_be_adj)
 
-    pagemsg("Found headwords: %s" % " @@ ".join(print_headword(h) for h in headwords))
+    p.msg("Found headwords: %s" % " @@ ".join(print_headword(h) for h in headwords))
 
     # Get headword genders (includes animacy and number)
     genders = blib.fetch_param_chain(headword_template, "1", "g")
@@ -401,7 +398,7 @@ def process_text_on_page(index, pagetitle, text):
         elif headword.could_be_noun and not headword.could_be_adj:
             possible_noun_inds.add(wordind)
     if len(possible_noun_inds) > 1:
-        pagemsg(
+        p.msg(
             "WARNING: Multiple possible nouns indexed %s among headwords, skipping"
             % (",".join(str(ind + 1) for ind in sorted(list(possible_noun_inds))))
         )
@@ -416,14 +413,14 @@ def process_text_on_page(index, pagetitle, text):
             elif headword.could_be_noun:
                 possible_noun_inds.add(wordind)
         if len(possible_noun_inds) > 1:
-            pagemsg(
+            p.msg(
                 "WARNING: Multiple possible nouns indexed %s among headwords, skipping"
                 % (",".join(str(ind + 1) for ind in sorted(list(possible_noun_inds))))
             )
             print_from_to()
             return
         if len(possible_noun_inds) == 0:
-            pagemsg("WARNING: No possible nouns among headwords, skipping")
+            p.msg("WARNING: No possible nouns among headwords, skipping")
             print_from_to()
             return
     noun_ind = list(possible_noun_inds)[0]
@@ -449,10 +446,10 @@ def process_text_on_page(index, pagetitle, text):
         headword_parts.append(headword_lemmainfl)
         headword_parts.append(headword.separator)
         if headword.pos == "noun":
-            pagemsg("Looking up declension for lemma %s, infl %s" % (headword.lemma, headword.infl))
+            p.msg("Looking up declension for lemma %s, infl %s" % (headword.lemma, headword.infl))
             retval = find_decl_args(headword.lemma, headword.infl, wordind)
             if not retval:
-                pagemsg("WARNING: Can't get declension for %s, skipping" % headword.lemma)
+                p.msg("WARNING: Can't get declension for %s, skipping" % headword.lemma)
                 print_from_to()
                 return
             decl, declpos = retval
@@ -472,22 +469,22 @@ def process_text_on_page(index, pagetitle, text):
         decl_parts.append(headword.separator)
 
     new_decl_template = "{{cs-ndecl|%s}}" % "".join(decl_parts)
-    pagemsg("Generated new declension template %s" % new_decl_template)
+    p.msg("Generated new declension template %s" % new_decl_template)
     new_headword_template = str(headword_template)
     if not saw_explicit_headword:
         new_headword = "".join(headword_parts)
         potential_new_headword_template = re.sub(r"\}\}$", "|head=%s}}" % "".join(new_headword), new_headword_template)
         if "|" not in new_headword:
-            pagemsg(
+            p.msg(
                 "Generated new headword template %s, no two-part links so not needed" % potential_new_headword_template
             )
         else:
-            pagemsg("Generated new headword template %s" % potential_new_headword_template)
+            p.msg("Generated new headword template %s" % potential_new_headword_template)
             new_headword_template = potential_new_headword_template
     gender = None
 
     def new_print_from_to():
-        pagemsg(
+        p.msg(
             "<from> %s <to> %s <end> <from> %s <to> %s <end>"
             % (rfinfl, new_decl_template, str(headword_template), new_headword_template)
         )
@@ -502,11 +499,11 @@ def process_text_on_page(index, pagetitle, text):
         elif noun_decl.startswith("n"):
             gender = "n"
         else:
-            pagemsg("WARNING: Unable to extract gender from noun declension '%s', skipping" % noun_decl)
+            p.msg("WARNING: Unable to extract gender from noun declension '%s', skipping" % noun_decl)
             new_print_from_to()
             return
     if set(genders) != set([gender]):
-        pagemsg("WARNING: Declension gender %s != headword gender(s) %s" % (gender, ",".join(genders)))
+        p.msg("WARNING: Declension gender %s != headword gender(s) %s" % (gender, ",".join(genders)))
         new_print_from_to()
         return
 
@@ -518,4 +515,4 @@ parser = blib.create_argparser("Infer declensions for multiword Czech nouns", in
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

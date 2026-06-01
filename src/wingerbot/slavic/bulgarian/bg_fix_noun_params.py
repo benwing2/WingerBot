@@ -8,14 +8,11 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 from wingerbot.slavic.bulgarian import bglib
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -37,7 +34,7 @@ def process_text_on_page(index, pagetitle, text):
                     or pname in ["5", "7", "9"]
                     and pval != "or"
                 ):
-                    pagemsg("WARNING: head|bg|%s with extra param %s=%s: %s" % (pos, pname, pval, origt))
+                    p.msg("WARNING: head|bg|%s with extra param %s=%s: %s" % (pos, pname, pval, origt))
                     break
             else:  # no break
                 rmparam(t, "1")
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
                     if g in ["m", "f", "n", "m-p", "f-p", "n-p", "p"]:
                         genders.append(g)
                     else:
-                        pagemsg("WARNING: Unrecognized gender '%s'" % g)
+                        p.msg("WARNING: Unrecognized gender '%s'" % g)
 
                 g = getparam(t, "g")
                 if g:
@@ -87,7 +84,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     newtn = "bg-proper noun"
                 blib.set_template_name(t, newtn)
-                t.add("1", head or pagetitle)
+                t.add("1", head or p.title)
                 blib.set_param_chain(t, genders, "2", "g")
                 if m:
                     blib.set_param_chain(t, m, "m", "m")
@@ -100,7 +97,7 @@ def process_text_on_page(index, pagetitle, text):
             if cur1 in ["m", "f"]:
                 g = cur1
             elif re.search("[a-zA-Z]", cur1):
-                pagemsg("WARNING: Saw Latin in 1=%s in %s" % (cur1, origt))
+                p.msg("WARNING: Saw Latin in 1=%s in %s" % (cur1, origt))
                 continue
             head = getparam(t, "head") or getparam(t, "sg")
             rmparam(t, "head")
@@ -124,7 +121,7 @@ def process_text_on_page(index, pagetitle, text):
                     genders.append("f")
                     genders.append("n")
                 else:
-                    pagemsg("WARNING: Unrecognized gender '%s'" % g)
+                    p.msg("WARNING: Unrecognized gender '%s'" % g)
 
             if g:
                 process_gender(g)
@@ -155,14 +152,14 @@ def process_text_on_page(index, pagetitle, text):
             # Erase all params.
             del t.params[:]
             # Put back new params.
-            t.add("1", bglib.remove_monosyllabic_accents(head or pagetitle))
+            t.add("1", bglib.remove_monosyllabic_accents(head or p.title))
             blib.set_param_chain(t, genders, "2", "g")
             for pname, pval, showkey in params:
                 t.add(pname, pval, showkey=showkey, preserve_spacing=False)
             if origt != str(t):
                 notes.append("move head=/sg= to 1=, g= to 2= in {{%s}}" % tn)
         if str(t) != origt:
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
     return str(parsed), notes
 
 
@@ -171,5 +168,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Bulgarian proper nouns"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Bulgarian proper nouns"]
 )

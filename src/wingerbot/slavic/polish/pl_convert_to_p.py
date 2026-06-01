@@ -22,10 +22,7 @@ separator = accent + ipa_stress + r"# \-." + SYLDIV
 separator_c = "[" + separator + "]"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     def verify_template_is_full_line(tn, line):
         line = line.strip()
         templates = list(blib.parse_text(line).filter_templates())
@@ -35,31 +32,31 @@ def process_text_on_page(index, pagetitle, text):
             tns = [tn]
         tntext = "/".join(tns)
         if len(templates) == 0:
-            pagemsg("WARNING: No templates on {{%s}} line?, skipping: %s" % (tntext, line))
+            p.msg("WARNING: No templates on {{%s}} line?, skipping: %s" % (tntext, line))
             return None
         t = templates[0]
         if tname(t) not in tns:
-            pagemsg(
+            p.msg(
                 "WARNING: Putative {{%s}} line doesn't have {{%s...}} as the first template, skipping: %s"
                 % (tntext, tntext, line)
             )
             return None
         if str(t) != line:
-            pagemsg("WARNING: {{%s}} line has text other than {{%s...}}, skipping: %s" % (tntext, tntext, line))
+            p.msg("WARNING: {{%s}} line has text other than {{%s...}}, skipping: %s" % (tntext, tntext, line))
             return None
         return t
 
     notes = []
 
-    if len(pagetitle) == 1 or pagetitle.endswith("-"):
-        pagemsg("Page title is a single letter or a prefix, skipping")
+    if len(p.title) == 1 or p.title.endswith("-"):
+        p.msg("Page title is a single letter or a prefix, skipping")
         return
 
-    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Polish", p.msg, force_final_nls=True)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header == "Pronunciation":
@@ -79,13 +76,13 @@ def process_text_on_page(index, pagetitle, text):
                 if tn in ["pl-IPA", "pl-IPA-auto"]:
                     num_pl_IPA += 1
             if saw_pl_p:
-                pagemsg("Already saw {{pl-p}}, skipping: %s" % str(t))
+                p.msg("Already saw {{pl-p}}, skipping: %s" % str(t))
                 continue
             if num_pl_IPA == 0:
-                pagemsg("WARNING: Didn't see {{pl-IPA}} in Pronunciation section, skipping")
+                p.msg("WARNING: Didn't see {{pl-IPA}} in Pronunciation section, skipping")
                 continue
             if num_pl_IPA > 1:
-                pagemsg("WARNING: Saw multiple {{pl-IPA}} in Pronunciation section, skipping")
+                p.msg("WARNING: Saw multiple {{pl-IPA}} in Pronunciation section, skipping")
                 continue
             lines = subsections[k].strip().split("\n")
             # Remove blank lines.
@@ -105,7 +102,7 @@ def process_text_on_page(index, pagetitle, text):
                 line = re.sub(r"^\*\s*(\{\{pl-IPA)", r"\1", line)
                 if line.startswith("{{pl-IPA"):
                     if newtemp:
-                        pagemsg("WARNING: Something wrong, already saw {{pl-IPA}}?: %s" % origline)
+                        p.msg("WARNING: Something wrong, already saw {{pl-IPA}}?: %s" % origline)
                         must_continue = True
                         break
                     ipat = verify_template_is_full_line(["pl-IPA", "pl-IPA-auto"], line)
@@ -123,18 +120,18 @@ def process_text_on_page(index, pagetitle, text):
                         elif re.search("^qual[0-9]*$", pn):
                             newtemp.add(pn.replace("qual", "q"), pv, preserve_spacing=False)
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unrecognized param %s=%s in {{pl-IPA}}, skipping: %s" % (pn, pv, origline)
                             )
                             must_continue = True
                             break
                     if has_respelling:
-                        pagemsg("WARNING: {{pl-IPA}} has respelling: %s" % str(ipat))
+                        p.msg("WARNING: {{pl-IPA}} has respelling: %s" % str(ipat))
                     if must_continue:
                         break
                     continue
                 if not line.startswith("* ") and not line.startswith("*{"):
-                    pagemsg("WARNING: Pronunciation section line doesn't start with '* ', skipping: %s" % origline)
+                    p.msg("WARNING: Pronunciation section line doesn't start with '* ', skipping: %s" % origline)
                     must_continue = True
                     break
                 if line.startswith("* "):
@@ -150,7 +147,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif line.startswith("{{rhyme"):
                     rhyme_lines.append(line)
                 else:
-                    pagemsg("WARNING: Unrecognized Pronunciation section line, skipping: %s" % origline)
+                    p.msg("WARNING: Unrecognized Pronunciation section line, skipping: %s" % origline)
                     must_continue = True
                     break
             if has_respelling and (rhyme_lines or hyph_lines):
@@ -160,7 +157,7 @@ def process_text_on_page(index, pagetitle, text):
                 if hyph_lines:
                     rhyme_hyph.append("hyphenation line(s) %s" % ",".join(hyph_lines))
                 # We formerly skipped these pages, but [[User:Vininn126]] requested running the bot on them.
-                pagemsg(
+                p.msg(
                     "WARNING: Has respelling %s along with %s"
                     % (ipat and str(ipat) or "UNKNOWN", " and ".join(rhyme_hyph))
                 )
@@ -176,7 +173,7 @@ def process_text_on_page(index, pagetitle, text):
                         must_continue = True
                         break
                     if getparam(audiot, "1") != "pl":
-                        pagemsg("WARNING: Wrong language in {{audio}}, skipping: %s" % audio_line)
+                        p.msg("WARNING: Wrong language in {{audio}}, skipping: %s" % audio_line)
                         must_continue = True
                         break
                     audiofile = getparam(audiot, "2")
@@ -185,7 +182,7 @@ def process_text_on_page(index, pagetitle, text):
                         pn = pname(param)
                         pv = str(param.value)
                         if pn not in ["1", "2", "3"]:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unrecognized param %s=%s in {{audio}}, skipping: %s" % (pn, pv, audio_line)
                             )
                             must_continue = True
@@ -195,7 +192,7 @@ def process_text_on_page(index, pagetitle, text):
                     if audiogloss in ["Audio", "audio"]:
                         audiogloss = ""
                     if not newtemp:
-                        pagemsg("WARNING: Saw %s without {{pl-IPA}}, skipping: %s" % (str(audiot), audio_line))
+                        p.msg("WARNING: Saw %s without {{pl-IPA}}, skipping: %s" % (str(audiot), audio_line))
                         must_continue = True
                         break
                     next_audio_param += 1
@@ -206,37 +203,37 @@ def process_text_on_page(index, pagetitle, text):
                     newtemp.add("a%s" % paramsuf, audiofile, preserve_spacing=False)
                     if audiogloss:
                         newtemp.add("ac%s" % paramsuf, audiogloss, preserve_spacing=False)
-                    pagemsg("Replacing %s with %s" % (str(audiot), str(newtemp)))
+                    p.msg("Replacing %s with %s" % (str(audiot), str(newtemp)))
                     extra_notes.append("incorporate %s into {{pl-p}}" % str(audiot))
                 if must_continue:
                     continue
 
             if rhyme_lines:
                 if len(rhyme_lines) > 1:
-                    pagemsg("WARNING: Multiple rhyme lines, not removing: %s" % ", ".join(rhyme_lines))
+                    p.msg("WARNING: Multiple rhyme lines, not removing: %s" % ", ".join(rhyme_lines))
                     continue
                 rhyme_line = rhyme_lines[0]
                 rhymet = verify_template_is_full_line(["rhyme", "rhymes"], rhyme_line)
                 if not rhymet:
                     continue
                 if getparam(rhymet, "1") != "pl":
-                    pagemsg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(rhymet), rhyme_line))
+                    p.msg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(rhymet), rhyme_line))
                     continue
-                pagemsg("Ignoring rhyme line: %s" % rhyme_line)
+                p.msg("Ignoring rhyme line: %s" % rhyme_line)
                 extra_notes.append("remove rhyme template %s" % str(rhymet))
 
             if hyph_lines:
                 if len(hyph_lines) > 1:
-                    pagemsg("WARNING: Multiple hyphenation lines, not removing: %s" % ", ".join(hyph_lines))
+                    p.msg("WARNING: Multiple hyphenation lines, not removing: %s" % ", ".join(hyph_lines))
                     continue
                 hyph_line = hyph_lines[0]
                 hypht = verify_template_is_full_line(["hyph", "hyphenation"], hyph_line)
                 if not hypht:
                     continue
                 if getparam(hypht, "1") != "pl":
-                    pagemsg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hypht), hyph_line))
+                    p.msg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hypht), hyph_line))
                     continue
-                pagemsg("Ignoring hyphenation line: %s" % hyph_line)
+                p.msg("Ignoring hyphenation line: %s" % hyph_line)
                 extra_notes.append("remove hyphenation template %s" % str(hypht))
 
             if homophone_lines:
@@ -250,14 +247,14 @@ def process_text_on_page(index, pagetitle, text):
                         must_continue = True
                         break
                     if getparam(hmpt, "1") != "pl":
-                        pagemsg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hmpt), homophone_line))
+                        p.msg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hmpt), homophone_line))
                         must_continue = True
                         break
                     for param in hmpt.params:
                         pn = pname(param)
                         pv = str(param.value)
                         if not re.search("^q?[0-9]+$", pn):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unrecognized param %s=%s in {{%s}}, not removing: %s"
                                 % (pn, pv, tname(hmpt), homophone_line)
                             )
@@ -270,7 +267,7 @@ def process_text_on_page(index, pagetitle, text):
                     if must_continue:
                         break
                     if not newtemp:
-                        pagemsg("WARNING: Something wrong, saw %s without {{pl-IPA}}, skipping" % str(hmpt))
+                        p.msg("WARNING: Something wrong, saw %s without {{pl-IPA}}, skipping" % str(hmpt))
                         must_continue = True
                         break
                     hhs = []
@@ -285,12 +282,12 @@ def process_text_on_page(index, pagetitle, text):
                         newtemp.add("hh", ",".join(hhs))
                         for pn, pv in hhp_args:
                             newtemp.add(pn, pv, preserve_spacing=False)
-                    pagemsg("Replacing %s with %s" % (str(hmpt), str(newtemp)))
+                    p.msg("Replacing %s with %s" % (str(hmpt), str(newtemp)))
                     extra_notes.append("incorporate homophones into {{pl-p}}")
                 if must_continue:
                     continue
 
-            pagemsg("Replaced %s with %s" % (str(ipat), str(newtemp)))
+            p.msg("Replaced %s with %s" % (str(ipat), str(newtemp)))
 
             all_lines = "\n".join([str(newtemp)])
             newsubsec = "%s\n\n" % all_lines
@@ -306,4 +303,4 @@ parser = blib.create_argparser("Convert {{pl-IPA}} to {{pl-p}}", include_pagefil
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

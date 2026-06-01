@@ -138,20 +138,17 @@ def process_section(index, secnum, pagetitle, sectext):
     return sectext, notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
-    modsec = blib.find_modifiable_lang_section(text, "Belarusian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Belarusian", p.msg)
     if modsec is None:
         return
     sections, j, secbody, sectail = modsec.props()
     def do_process_etym_section(secnum, sectext):
-        newsectext, this_notes = process_section(index, secnum, pagetitle, sectext)
+        newsectext, this_notes = process_section(p.index, secnum, p.title, sectext)
         notes.extend(this_notes)
         return newsectext
-    secbody = blib.map_etym_sections(secbody, pagemsg, do_process_etym_section)
+    secbody = blib.map_etym_sections(secbody, p.msg, do_process_etym_section)
     sections[j] = secbody + sectail
     if notes:
         sections[j] = re.sub(r"\{\{cln\|be\|(in)?transitive verbs\}\}\n?", "", sections[j])
@@ -165,5 +162,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_refs=["Template:be-conj-manual"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:be-conj-manual"]
 )

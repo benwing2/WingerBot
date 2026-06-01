@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
 def split_line(line):
@@ -28,17 +28,14 @@ def split_line(line):
     return beginning, labeltext, rest, gloss, line
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Polish", p.msg, force_final_nls=True)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -58,7 +55,7 @@ def process_text_on_page(index, pagetitle, text):
             if tn in ["pl-noun"] or tn == "head" and getp("1") == "pl" and getp("2") == "noun":
                 other_head = headt or headt_other_gender or headt_head
                 if other_head:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw two head templates %s and %s in subsection %s" % (str(other_head), str(t), k // 2)
                     )
                     return
@@ -75,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
             if re.search("^#[:*]", line):
                 continue
             if args.warn_on_woman and "woman" in line:
-                pagemsg("WARNING: Saw line with 'woman' in it: headt=%s, line=%s" % (str(headt), line))
+                p.msg("WARNING: Saw line with 'woman' in it: headt=%s, line=%s" % (str(headt), line))
                 continue
             if (
                 line.startswith("#")
@@ -84,39 +81,39 @@ def process_text_on_page(index, pagetitle, text):
             ):
                 if not headt:
                     if headt_other_gender:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw female line with {{pl-noun}} with other gender: headt=%s, line=%s"
                             % (str(headt_other_gender), line)
                         )
                         continue
                     if headt_head:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw female line with {{head|pl|noun}}: headt=%s, line=%s"
                             % (str(headt_head), line)
                         )
                         continue
-                    pagemsg("WARNING: Saw female line without {{pl-noun}}: line=%s" % line)
+                    p.msg("WARNING: Saw female line without {{pl-noun}}: line=%s" % line)
                     continue
                 if not ms:
-                    pagemsg("WARNING: Saw female line without m=: headt=%s, line=%s" % (str(headt), line))
+                    p.msg("WARNING: Saw female line without m=: headt=%s, line=%s" % (str(headt), line))
                     continue
                 beginning, labeltext, rest, gloss, line = split_line(line)
                 rest = re.sub(r"\[\[female\]\]\s+", "", rest)
                 rest = re.sub(r"female\s+", "", rest)
                 if "female" in rest:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw rest '%s' with 'female' after attempting to remove it, won't change: headt=%s, line=%s"
                         % (rest, str(headt), line)
                     )
                     continue
                 if "woman" in rest:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw rest '%s' with 'woman' after removing 'female', won't change: headt=%s, line=%s"
                         % (rest, str(headt), line)
                     )
                     continue
                 if "{{" in rest or "}}" in rest:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw template call in rest '%s', won't change: headt=%s, line=%s"
                         % (rest, str(headt), line)
                     )
@@ -129,7 +126,7 @@ def process_text_on_page(index, pagetitle, text):
                 if gloss:
                     gloss = " " + gloss
                 newline = "%s%s%s%s" % (beginning, labeltext, newrest, gloss)
-                pagemsg("Replacing <%s> with <%s>" % (line, newline))
+                p.msg("Replacing <%s> with <%s>" % (line, newline))
                 lines[i] = newline
         newsubseck = "\n".join(lines)
         if newsubseck != subsections[k]:
@@ -152,7 +149,7 @@ def process_text_on_page(index, pagetitle, text):
             if tn in ["pl-noun"] or tn == "head" and getp("1") == "pl" and getp("2") == "noun":
                 other_head = headt or headt_animate or headt_other_gender
                 if other_head:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Internal error: Saw two head templates %s and %s in subsection %s"
                         % (str(other_head), str(t), k // 2)
                     )
@@ -178,31 +175,31 @@ def process_text_on_page(index, pagetitle, text):
             ):
                 if not headt:
                     if headt_animate:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw male line with {{pl-noun|m-an}}: headt=%s, line=%s"
                             % (str(headt_animate), line)
                         )
                         continue
                     if headt_other_gender:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw male line with {{pl-noun}} with other gender: headt=%s, line=%s"
                             % (str(headt_other_gender), line)
                         )
                         continue
                     if headt_head:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw male line with {{head|pl|noun}}: headt=%s, line=%s" % (str(headt_head), line)
                         )
                         continue
-                    pagemsg("WARNING: Saw male line without {{pl-noun}}: line=%s" % line)
+                    p.msg("WARNING: Saw male line without {{pl-noun}}: line=%s" % line)
                     continue
                 if not fs:
-                    pagemsg("WARNING: Saw male line without f= (will continue): headt=%s, line=%s" % (str(headt), line))
+                    p.msg("WARNING: Saw male line without f= (will continue): headt=%s, line=%s" % (str(headt), line))
                 beginning, labeltext, rest, gloss, line = split_line(line)
                 rest = re.sub(r"\[\[male\]\]\s+", "", rest)
                 rest = re.sub(r"male\s+", "", rest)
                 if "male" in rest:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw rest '%s' with 'male' after attempting to remove it, won't change: headt=%s, line=%s"
                         % (rest, str(headt), line)
                     )
@@ -211,7 +208,7 @@ def process_text_on_page(index, pagetitle, text):
                     gloss = " " + gloss
                 newline = "%s%s%s%s" % (beginning, labeltext, rest, gloss)
                 if newline != lines[i]:
-                    pagemsg("Replacing <%s> with <%s>" % (line, newline))
+                    p.msg("Replacing <%s> with <%s>" % (line, newline))
                     lines[i] = newline
         newsubseck = "\n".join(lines)
         if newsubseck != subsections[k]:
@@ -231,5 +228,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Polish lemmas"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Polish lemmas"]
 )

@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, unicodedata, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
 
 langs = ["pl", "csb", "szl", "zlw-slv"]
 pl_lects = [
@@ -68,16 +68,10 @@ pl_lects = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     templates_to_check = ["%s-pr/old" % lang for lang in langs]
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -139,7 +133,7 @@ def process_text_on_page(index, pagetitle, text):
                         if caption in ["#", "~"]:
                             new_audio += "<text:%s>" % caption
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Not sure how to handle old-style caption %s, needs review: %s"
                                 % (audio, origt)
                             )
@@ -157,7 +151,7 @@ def process_text_on_page(index, pagetitle, text):
             homophones = getp("homophones") or getp("hh")
             if homophones:
                 if "<" in homophones:
-                    pagemsg("WARNING: Can't yet handle captions in homophones %s, skipping: %s" % (homophones, origt))
+                    p.msg("WARNING: Can't yet handle captions in homophones %s, skipping: %s" % (homophones, origt))
                 else:
                     homophones = homophones.replace(";", ",")
                     if t.has("homophones"):
@@ -168,7 +162,7 @@ def process_text_on_page(index, pagetitle, text):
             newt = str(t)
             blib.set_template_name(t, tn[:-4])  # chop off /old
             if newt != origt:
-                pagemsg("Replace %s with %s" % (origt, str(t)))
+                p.msg("Replace %s with %s" % (origt, str(t)))
                 notes.append("rename {{%s}} to {{%s}} and update arguments to new syntax" % (tn, tname(t)))
             else:
                 notes.append("rename {{%s}} to {{%s}}, syntax already new" % (tn, tname(t)))
@@ -184,4 +178,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

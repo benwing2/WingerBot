@@ -4,26 +4,23 @@ import pywikibot, re, sys, argparse
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
 def remove_comment_continuations(text):
     return text.replace("<!--\n-->", "").strip()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("WARNING: Page should be ignored")
+    if blib.page_should_be_ignored(p.title):
+        p.msg("WARNING: Page should be ignored")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     templates_to_replace = []
 
@@ -83,7 +80,7 @@ def process_text_on_page(index, pagetitle, text):
             for pname, pval, showkey in params:
                 t.add(pname, pval, showkey=showkey, preserve_spacing=False)
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -94,4 +91,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

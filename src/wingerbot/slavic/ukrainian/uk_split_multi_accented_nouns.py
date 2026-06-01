@@ -21,15 +21,12 @@ def split_multi_accented_word(word):
     return retval
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     head = None
     for t in parsed.filter_templates():
@@ -39,21 +36,21 @@ def process_text_on_page(index, pagetitle, text):
             head = getparam(t, "1")
             headvals = split_multi_accented_word(head)
             if len(headvals) > 2:
-                pagemsg("WARNING: Can't handle 3-way split: %s" % origt)
+                p.msg("WARNING: Can't handle 3-way split: %s" % origt)
             elif len(headvals) == 2:
                 t.add("1", headvals[0])
                 t.add("head2", headvals[1], before="2")
             gen = getparam(t, "3")
             genvals = split_multi_accented_word(gen)
             if len(genvals) > 2:
-                pagemsg("WARNING: Can't handle 3-way split: %s" % origt)
+                p.msg("WARNING: Can't handle 3-way split: %s" % origt)
             elif len(genvals) == 2:
                 t.add("3", genvals[0])
                 t.add("gen2", genvals[1], before="4")
             pl = getparam(t, "4")
             plvals = split_multi_accented_word(pl)
             if len(plvals) > 2:
-                pagemsg("WARNING: Can't handle 3-way split: %s" % origt)
+                p.msg("WARNING: Can't handle 3-way split: %s" % origt)
             elif len(plvals) == 2:
                 t.add("4", plvals[0])
                 t.add("pl2", plvals[1])
@@ -67,7 +64,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if origt != str(t):
             notes.append("split multi-stressed forms in {{%s}}" % tn)
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -76,4 +73,4 @@ parser = blib.create_argparser("Split multi-stressed Ukrainian noun forms", incl
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

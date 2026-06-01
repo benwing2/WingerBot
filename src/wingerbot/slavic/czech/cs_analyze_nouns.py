@@ -65,17 +65,14 @@ pl_tantum_slot_to_param = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    if " " in pagetitle:
-        pagemsg("Multiword lemma, skipping")
+    if " " in p.title:
+        p.msg("Multiword lemma, skipping")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     heads = None
     plurale_tantum = False
     animacy = "unknown"
@@ -104,16 +101,16 @@ def process_text_on_page(index, pagetitle, text):
                 animacy = "unknown"
             else:
                 if len(animacy) > 1:
-                    pagemsg("WARNING: Multiple animacies: %s" % ",".join(animacy))
+                    p.msg("WARNING: Multiple animacies: %s" % ",".join(animacy))
                 animacy = animacy[0]
             if not gender:
                 gender = "unknown"
             else:
                 if len(gender) > 1:
-                    pagemsg("WARNING: Multiple genders: %s" % ",".join(gender))
+                    p.msg("WARNING: Multiple genders: %s" % ",".join(gender))
                 gender = gender[0]
                 if gender not in ["m", "f", "n"]:
-                    pagemsg("WARNING: Unknown gender: %s" % gender)
+                    p.msg("WARNING: Unknown gender: %s" % gender)
                     gender = "unknown"
 
         def fetch(param, pl_tantum=False):
@@ -164,7 +161,7 @@ def process_text_on_page(index, pagetitle, text):
                             found_endings.append(ending)
                         break
                 else:  # no break
-                    pagemsg("WARNING: Couldn't recognize ending for %s=%s: %s" % (param, paramval, str(t)))
+                    p.msg("WARNING: Couldn't recognize ending for %s=%s: %s" % (param, paramval, str(t)))
             return join_endings(found_endings) if join else found_endings
 
         def canon(val):
@@ -302,7 +299,7 @@ def process_text_on_page(index, pagetitle, text):
                 return "mixed"
             m = re.search("^(.*)" + cs.vowel_c + "$", lemma)
             if not m:
-                pagemsg("WARNING: Something wrong, lemma '%s' doesn't end in consonant or vowel" % lemma)
+                p.msg("WARNING: Something wrong, lemma '%s' doesn't end in consonant or vowel" % lemma)
                 return False
             stem = m.group(1)
             # Substitute 'ch' with a single character to make the following code simpler.
@@ -388,7 +385,7 @@ def process_text_on_page(index, pagetitle, text):
                                         reducible = True
                                         break
                             else:  # no break
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Unable to determine relationship between nom_sg %s and gen_pl %s"
                                     % (nom_sg, gen_pl)
                                 )
@@ -397,7 +394,7 @@ def process_text_on_page(index, pagetitle, text):
 
                 gen_pls = orig_gen_pl.split(",")
                 if len(gen_pls) > 2:
-                    pagemsg("WARNING: More than two genitive plurals %s, can't handle" % orig_gen_pl)
+                    p.msg("WARNING: More than two genitive plurals %s, can't handle" % orig_gen_pl)
                     return None, None
                 if len(gen_pls) == 1:
                     reducible, altspec = get_reducible_and_altspec(gen_pls[0])
@@ -406,7 +403,7 @@ def process_text_on_page(index, pagetitle, text):
                     reducible1, altspec1 = get_reducible_and_altspec(gen_pls[0])
                     reducible2, altspec2 = get_reducible_and_altspec(gen_pls[1])
                     if altspec1 != altspec2:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Different altspecs: %s (gen_pl=%s) vs. %s (gen_pl=%s), can't handle"
                             % (altspec1, gen_pls[0], altspec2, gen_pls[1])
                         )
@@ -424,7 +421,7 @@ def process_text_on_page(index, pagetitle, text):
                     nonvowel_stem = re.sub("([ueo]s|um|on)$", "", nonvowel_stem)
                 m = re.search("^(.*)([aueěyií])$", gen_sg)
                 if not m:
-                    pagemsg("WARNING: Unrecognized genitive singular ending: %s" % gen_sg)
+                    p.msg("WARNING: Unrecognized genitive singular ending: %s" % gen_sg)
                     return None, None
                 vowel_stem, ending = m.groups()
                 vowel_stem = cs.convert_paired_plain_to_palatal(vowel_stem, ending)
@@ -444,7 +441,7 @@ def process_text_on_page(index, pagetitle, text):
                     reducible = False
                     altspec = "#ě"
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unable to determine relationship between nom_sg %s and gen_sg %s" % (nom_sg, gen_sg)
                     )
                     return None, None
@@ -561,7 +558,7 @@ def process_text_on_page(index, pagetitle, text):
                             compute_overrides = "m"
 
             if not decl:
-                pagemsg("WARNING: Unrecognized lemma ending: %s" % lemma)
+                p.msg("WARNING: Unrecognized lemma ending: %s" % lemma)
                 return None
             if sgonly:
                 decl += ".sg"
@@ -678,7 +675,7 @@ def process_text_on_page(index, pagetitle, text):
             loc_pl = fetch("loc_pl")
             ins_pl = fetch("ins_pl")
             if not nom_pl and not gen_pl and not dat_pl and not acc_pl and not voc_pl and not loc_pl and not ins_pl:
-                pagemsg(
+                p.msg(
                     "WARNING: {{cs-decl-noun}} wrongly used for singulare tantum, proceeding as if {{cs-decl-noun-sg}} specified: %s"
                     % str(t)
                 )
@@ -686,7 +683,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if tn == "cs-decl-noun":
             if not heads:
-                heads = [pagetitle]
+                heads = [p.title]
             lemma = heads[0]
             decl = infer_decl(lemma)
 
@@ -705,7 +702,7 @@ def process_text_on_page(index, pagetitle, text):
             cases = ["gen_sg", "dat_sg", "voc_sg", "loc_sg", "ins_sg", "nom_pl", "gen_pl", "dat_pl", "loc_pl", "ins_pl"]
             ending_header = "\t".join("%s:%%s" % case for case in cases)
             form_header = " || ".join("%s" for case in cases)
-            pagemsg(
+            p.msg(
                 ("%%s\tgender:%%s\tanimacy:%%s\tnumber:both\t%s\t| %s\t%%s" % (ending_header, form_header))
                 % (
                     "/".join(heads),
@@ -735,21 +732,21 @@ def process_text_on_page(index, pagetitle, text):
                 )
             )
             if len(heads) > 1:
-                pagemsg("WARNING: Multiple heads: %s" % ",".join(heads))
+                p.msg("WARNING: Multiple heads: %s" % ",".join(heads))
             if decl is None:
-                pagemsg("Unable to infer declension")
+                p.msg("Unable to infer declension")
                 continue
-            pagemsg("Inferred declension [[%s]] %s" % (lemma, decl))
+            p.msg("Inferred declension [[%s]] %s" % (lemma, decl))
             declgender = decl[0]
             declan = "an" if ".an" in decl else "in"
             if animacy != "unknown" and (gender == "m" or declgender == "m") and declan != animacy:
-                pagemsg("WARNING: Headword animacy %s differs from inferred declension animacy %s" % (animacy, declan))
+                p.msg("WARNING: Headword animacy %s differs from inferred declension animacy %s" % (animacy, declan))
             if gender != "unknown" and gender != declgender:
-                pagemsg("WARNING: Headword gender %s differs from inferred declension gender %s" % (gender, declgender))
+                p.msg("WARNING: Headword gender %s differs from inferred declension gender %s" % (gender, declgender))
 
         elif tn == "cs-decl-noun-sg":
             if not heads:
-                heads = [pagetitle]
+                heads = [p.title]
             lemma = heads[0]
             decl = infer_decl(lemma, sgonly=True)
 
@@ -776,7 +773,7 @@ def process_text_on_page(index, pagetitle, text):
             ]
             ending_header = "\t".join("%s:%%s" % case for case in cases)
             form_header = " || ".join("%s" for case in cases)
-            pagemsg(
+            p.msg(
                 ("%%s\tgender:%%s\tanimacy:%%s\tnumber:sg\t%s\t| %s\t%%s" % (ending_header, form_header))
                 % (
                     "/".join(heads),
@@ -796,21 +793,21 @@ def process_text_on_page(index, pagetitle, text):
                 )
             )
             if len(heads) > 1:
-                pagemsg("WARNING: Multiple heads: %s" % ",".join(heads))
+                p.msg("WARNING: Multiple heads: %s" % ",".join(heads))
             if decl is None:
-                pagemsg("Unable to infer declension")
+                p.msg("Unable to infer declension")
                 continue
-            pagemsg("Inferred declension [[%s]] %s" % (lemma, decl))
+            p.msg("Inferred declension [[%s]] %s" % (lemma, decl))
             declgender = decl[0]
             declan = "an" if ".an" in decl else "in"
             if animacy != "unknown" and (gender == "m" or declgender == "m") and declan != animacy:
-                pagemsg("WARNING: Headword animacy %s differs from inferred declension animacy %s" % (animacy, declan))
+                p.msg("WARNING: Headword animacy %s differs from inferred declension animacy %s" % (animacy, declan))
             if gender != "unknown" and gender != declgender:
-                pagemsg("WARNING: Headword gender %s differs from inferred declension gender %s" % (gender, declgender))
+                p.msg("WARNING: Headword gender %s differs from inferred declension gender %s" % (gender, declgender))
 
         elif tn == "cs-decl-noun-pl":
             if not heads:
-                heads = [pagetitle]
+                heads = [p.title]
             lemma = heads[0]
             decl = ""  # FIXME
 
@@ -821,7 +818,7 @@ def process_text_on_page(index, pagetitle, text):
             voc_pl = fetch("voc_pl", pl_tantum=True)
             loc_pl = fetch("loc_pl", pl_tantum=True)
             ins_pl = fetch("ins_pl", pl_tantum=True)
-            is_adj = decl and "+" in decl
+            is_adj = decl and "+" in decl or False
             nom_pl_endings = fetch_endings("nom_pl", is_adj, pl_tantum=True, uniquify=False)
             gen_pl_endings = fetch_endings("gen_pl", is_adj, pl_tantum=True, uniquify=False)
             dat_pl_endings = fetch_endings("dat_pl", is_adj, pl_tantum=True, uniquify=False)
@@ -831,7 +828,7 @@ def process_text_on_page(index, pagetitle, text):
             cases = ["nom_pl", "gen_pl", "dat_pl", "loc_pl", "ins_pl"]
             ending_header = "\t".join("%s:%%s" % case for case in cases)
             form_header = " || ".join("%s" for case in cases)
-            pagemsg(
+            p.msg(
                 ("%%s\tgender:%%s\tanimacy:%%s\tnumber:both\t%s\t| %s\t%%s" % (ending_header, form_header))
                 % (
                     "/".join(heads),
@@ -851,21 +848,21 @@ def process_text_on_page(index, pagetitle, text):
                 )
             )
             if len(heads) > 1:
-                pagemsg("WARNING: Multiple heads: %s" % ",".join(heads))
+                p.msg("WARNING: Multiple heads: %s" % ",".join(heads))
             # if decl is None:
-            #  pagemsg("Unable to infer declension")
+            #  p.msg("Unable to infer declension")
             #  continue
-            # pagemsg("Inferred declension [[%s]] %s" % (lemma, decl))
+            # p.msg("Inferred declension [[%s]] %s" % (lemma, decl))
             # declgender = decl[0]
             # declan = "an" if ".an" in decl else "in"
             # if animacy != "unknown" and (gender == "m" or declgender == "m") and declan != animacy:
-            #  pagemsg("WARNING: Headword animacy %s differs from inferred declension animacy %s" % (animacy, declan))
+            #  p.msg("WARNING: Headword animacy %s differs from inferred declension animacy %s" % (animacy, declan))
             # if gender != "unknown" and gender != declgender:
-            #  pagemsg("WARNING: Headword gender %s differs from inferred declension gender %s" % (gender, declgender))
+            #  p.msg("WARNING: Headword gender %s differs from inferred declension gender %s" % (gender, declgender))
 
 
 parser = blib.create_argparser("Analyze Czech noun declensions", include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Czech nouns"], stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Czech nouns"])

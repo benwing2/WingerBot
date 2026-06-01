@@ -8,10 +8,7 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 TEMPSEP = "\ufff0"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     def split_links(m):
@@ -21,16 +18,16 @@ def process_text_on_page(index, pagetitle, text):
         for i in range(len(parts)):
             mm = re.search(r"^\[\[([^\[\]]*)\]\]$", parts[i])
             if not mm:
-                pagemsg("WARNING: Saw unparsable part %s, not changing: %s" % (parts[i], m.group(0)))
+                p.msg("WARNING: Saw unparsable part %s, not changing: %s" % (parts[i], m.group(0)))
                 return m.group(0)
             if TEMPSEP in parts[i]:
-                pagemsg("WARNING: Internal error: Saw Unicode FFF0 in part %s, not changing: %s" % parts[i], m.group(0))
+                p.msg("WARNING: Internal error: Saw Unicode FFF0 in part %s, not changing: %s" % parts[i], m.group(0))
                 return m.group(0)
             parts[i] = "{{l|pl|%s}}" % mm.group(1)
         notes.append("replace multipart {{l|pl|...}} with separate links")
         return ", ".join(parts)
 
-    text = re.sub(r"\{\{l\|pl\|([^{}]*[\[\]][^{}]*)\}\}", split_links, text)
+    text = re.sub(r"\{\{l\|pl\|([^{}]*[\[\]][^{}]*)\}\}", split_links, p.text)
     return text, notes
 
 
@@ -40,4 +37,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

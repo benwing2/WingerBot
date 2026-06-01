@@ -8,13 +8,10 @@ from wingerbot.blib import getparam, msg, tname
 from wingerbot import infltags
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Bulgarian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Bulgarian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -23,16 +20,16 @@ def process_text_on_page(index, pagetitle, text):
         return
 
     if "==Etymology" in secbody:
-        pagemsg("WARNING: Saw both ==Pronunciation 1== and ==Etymology==/==Etymology 1==, can't handle")
+        p.msg("WARNING: Saw both ==Pronunciation 1== and ==Etymology==/==Etymology 1==, can't handle")
         return
 
     if "==Pronunciation==" in secbody:
-        pagemsg("WARNING: Saw both ==Pronunciation 1== and ==Pronunciation==, can't handle")
+        p.msg("WARNING: Saw both ==Pronunciation 1== and ==Pronunciation==, can't handle")
         return
 
     pronunciation_secs = []
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     pronsec_text_parts = []
     saw_pron_1 = False
@@ -45,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
                 above_pron_1 = above_pron_1_sec_0 + "".join(pronsec_text_parts)
             else:
                 if pronsec is None:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Something wrong, saw %s and don't have pronsec from previous Pronunciation"
                         % subsections[k - 1]
                     )
@@ -59,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
             pronsec_text_parts.append(subsections[k - 1])
             pronsec_text_parts.append(subsections[k])
     if pronsec is None:
-        pagemsg("WARNING: Something wrong, didn't see any Pronunciation sections")
+        p.msg("WARNING: Something wrong, didn't see any Pronunciation sections")
         return
     pronunciation_secs.append((pronsec, "".join(pronsec_text_parts)))
 
@@ -76,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
                 endschwa = not not getparam(t, "endschwa")
                 pronsec_prons.append((pron, endschwa))
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Unrecognized template in ==Pronunciation %s== section, skipping: %s"
                     % (pronsec_index + 1, str(t))
                 )
@@ -88,16 +85,16 @@ def process_text_on_page(index, pagetitle, text):
             if tn in ["inflection of", "infl of"]:
                 lang = getparam(t, "1")
                 if lang != "bg":
-                    pagemsg("WARNING: Saw invalid language %s, skipping: %s" % (lang, str(t)))
+                    p.msg("WARNING: Saw invalid language %s, skipping: %s" % (lang, str(t)))
                     return
                 lemma = getparam(t, "2")
                 if not observed_lemma:
                     observed_lemma = lemma
                 elif lemma != observed_lemma:
-                    pagemsg("WARNING: Saw two lemmas %s and %s, skipping: %s" % (observed_lemma, lemma, str(t)))
+                    p.msg("WARNING: Saw two lemmas %s and %s, skipping: %s" % (observed_lemma, lemma, str(t)))
                     return
                 if getparam(t, "3"):
-                    pagemsg("WARNING: Saw display/alt form of lemma, skipping: %s" % str(t))
+                    p.msg("WARNING: Saw display/alt form of lemma, skipping: %s" % str(t))
                     return
                 tags = blib.fetch_param_chain(t, "4")
                 tag_sets = infltags.split_tags_into_tag_sets(tags)
@@ -125,12 +122,12 @@ def process_text_on_page(index, pagetitle, text):
                     elif "voc" in tag_set and "s" in tag_set:
                         pronsec_type = "vocative singular"
                     else:
-                        pagemsg("WARNING: Unrecognized tag set %s, skipping: %s" % ("|".join(tag_set), str(t)))
+                        p.msg("WARNING: Unrecognized tag set %s, skipping: %s" % ("|".join(tag_set), str(t)))
                         return
                     if pronsec_type not in pronsec_types:
                         pronsec_types.append(pronsec_type)
         if not pronsec_types:
-            pagemsg(
+            p.msg(
                 "WARNING: Couldn't extract pronunciation section types in ==Pronunciation %s== section, skipping"
                 % (pronsec_index + 1)
             )
@@ -159,7 +156,7 @@ def process_text_on_page(index, pagetitle, text):
             "|ann=1" if len(distinct_prons) > 1 else "",
         )
         if len(prontypes) == 0:
-            pagemsg(
+            p.msg(
                 "WARNING: Something wrong, for pronunciation %s with endschwa=%s saw no pronunciation types"
                 % (pron, endschwa)
             )
@@ -204,7 +201,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_cats=["Bulgarian terms with IPA pronunciation"],
-    edit=True,
-    stdin=True,
 )

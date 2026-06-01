@@ -5,7 +5,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import errandmsg, getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 GRAVE = "\u0300"
 ACUTE = "\u0301"
@@ -72,21 +72,15 @@ def look_up_tonal_form(pagename, pagemsg, errandpagemsg):
     return tonal_forms
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle in skip_pages:
-        pagemsg("Skipping because in skip list")
+def process_text_on_page(p):
+    if p.title in skip_pages:
+        p.msg("Skipping because in skip list")
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     saw_sl_tonal = False
     saw_sl_plain = 0
     for t in parsed.filter_templates():
@@ -95,14 +89,14 @@ def process_text_on_page(index, pagetitle, text):
         # we have this check.
         tn = tname(t)
         if tn == "l/sl-tonal":
-            pagemsg("Already found %s, not replacing anything" % str(t))
+            p.msg("Already found %s, not replacing anything" % str(t))
             saw_sl_tonal = True
         if tn == "l" and getparam(t, "1") == "sl":
             saw_sl_plain += 1
     if saw_sl_plain and saw_sl_tonal:
-        pagemsg("WARNING: Saw both {{l|sl|...}} and {{l/sl-tonal|...}}, needs fixing")
+        p.msg("WARNING: Saw both {{l|sl|...}} and {{l/sl-tonal|...}}, needs fixing")
     if saw_sl_plain > 1:
-        pagemsg("WARNING: Saw multiple {{l|sl|...}}, check if substitution is correct")
+        p.msg("WARNING: Saw multiple {{l|sl|...}}, check if substitution is correct")
     if saw_sl_tonal:
         return
 
@@ -112,7 +106,7 @@ def process_text_on_page(index, pagetitle, text):
     # template processing so the substitution didn't disappear.
     repeat = True
     while repeat:
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             origt = str(t)
             if tname(t) in ["l"] and getparam(t, "1") == "sl":
@@ -124,7 +118,7 @@ def process_text_on_page(index, pagetitle, text):
                 gender = getparam(t, "g")
                 gender2 = getparam(t, "g2")
                 if (defn and 1 or 0) + (gloss and 1 or 0) + (tgloss and 1 or 0) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found more than one of defn=%s, gloss=%s, t=%s in %s, skipping"
                         % (defn, gloss, tgloss, str(t))
                     )
@@ -132,7 +126,7 @@ def process_text_on_page(index, pagetitle, text):
                 defn = defn or gloss or tgloss
                 if altlink:
                     if remove_slovene_accents(linkpage) != remove_slovene_accents(altlink):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Template %s has both link and altlink and they don't point to the same page skipping"
                             % str(t)
                         )
@@ -141,10 +135,10 @@ def process_text_on_page(index, pagetitle, text):
                 for param in t.params:
                     pname = str(param.name)
                     if pname not in ["1", "2", "3", "4", "gloss", "t", "g", "g2", "pos"]:
-                        pagemsg("WARNING: Found unexpected param %s in %s, skipping" % (pname, str(t)))
+                        p.msg("WARNING: Found unexpected param %s in %s, skipping" % (pname, str(t)))
                         break
                 else:
-                    tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage), pagemsg, errandpagemsg)
+                    tonal_forms = look_up_tonal_form(remove_slovene_accents(linkpage), p.msg, p.errandmsg)
                     if tonal_forms:
                         if False:  # len(tonal_forms) > 1:
                             pass
@@ -164,12 +158,12 @@ def process_text_on_page(index, pagetitle, text):
                             # fromtext = str(parsed)
                             # newtext = fromtext.replace(fromsub, newsub)
                             # if newtext == fromtext:
-                            #  pagemsg("WARNING: Something wrong, can't locate template %s in text"
+                            #  p.msg("WARNING: Something wrong, can't locate template %s in p.text"
                             #      % fromsub)
                             # else:
-                            #  pagemsg("Replaced %s with %s (multiple tonal variants)" % (fromsub, eventual_newsub))
+                            #  p.msg("Replaced %s with %s (multiple tonal variants)" % (fromsub, eventual_newsub))
                             #  if len(newtext) - len(fromtext) != len(newsub) - len(fromsub):
-                            #    pagemsg("WARNING: Length mismatch when replacing multiple tonal variants, may have matched multiple templates: from=%s, to=%s" % (
+                            #    p.msg("WARNING: Length mismatch when replacing multiple tonal variants, may have matched multiple templates: from=%s, to=%s" % (
                             #      fromsub, newsub))
                             #  notes.append("replaced Slovene %s with multi tonal variants %s" % (linkpage, ",".join(tonal_forms)))
                             #  text = newtext
@@ -189,7 +183,7 @@ def process_text_on_page(index, pagetitle, text):
                             notes.append("replaced Slovene %s with tonal %s" % (linkpage, ", ".join(tonal_forms)))
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
         else:
             repeat = False
 
@@ -203,5 +197,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Proto-Slavic lemmas"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Proto-Slavic lemmas"]
 )

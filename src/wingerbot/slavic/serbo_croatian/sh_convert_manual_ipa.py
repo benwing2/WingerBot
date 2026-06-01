@@ -441,17 +441,14 @@ def convert_bg_manual_ipa(ipa, pagetitle, pagemsg):
         return None, False
     return ipa, endschwa
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if pagetitle in deny_list:
-        pagemsg("WARNING: Skipping because in deny list")
+    if p.title in deny_list:
+        p.msg("WARNING: Skipping because in deny list")
         return
 
-    modsec = blib.find_modifiable_lang_section(text, "Serbo-Croatian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Serbo-Croatian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -478,23 +475,23 @@ def process_text_on_page(index, pagetitle, text):
             elif tn == "sh-IPA":
                 sh_IPA_templates.append(t)
         if len(head_templates) > 1:
-            pagemsg("WARNING: Found multiple headword templates in section %s, not modifying: %s" % (
+            p.msg("WARNING: Found multiple headword templates in section %s, not modifying: %s" % (
                 secnum, ",".join(str(ht) for ht in head_templates)))
             return None
         if not head_templates:
-            pagemsg("WARNING: Found no head templates in section %s, not modifying" % secnum)
+            p.msg("WARNING: Found no head templates in section %s, not modifying" % secnum)
             return None
         heads = blib.fetch_param_chain(head_templates[0], "1", "head")
         if not heads:
-            pagemsg("Found head template but no heads in section %s, not modifying: %s" % str(head_templates[0]))
+            p.msg("Found head template but no heads in section %s, not modifying: %s" % str(head_templates[0]))
             return None
         num_sh_IPA_templates = len(sh_IPA_templates)
         num_IPA_templates = len(IPA_templates)
         if not num_IPA_templates:
-            pagemsg("Found no {{IPA|sh|...}} templates in section %s, not modifying: %s" % str(head_templates[0]))
+            p.msg("Found no {{IPA|sh|...}} templates in section %s, not modifying: %s" % str(head_templates[0]))
             return None
         if num_sh_IPA_templates:
-            pagemsg("WARNING: Found %s {{sh-IPA}} template%s but %s {{IPA|sh}} template%s in section %s, not modifying: %s; %s" % (
+            p.msg("WARNING: Found %s {{sh-IPA}} template%s but %s {{IPA|sh}} template%s in section %s, not modifying: %s; %s" % (
                 secnum, num_sh_IPA_templates, "s" if len(num_sh_IPA_templates) > 1 else "", num_IPA_templates,
                 "s" if len(num_IPA_templates) > 1 else "", ",".join(str(t) for t in sh_IPA_templates),
                 ",".join(str(t) for t in IPA_templates)))
@@ -505,7 +502,7 @@ def process_text_on_page(index, pagetitle, text):
         num_IPA_vals = len(IPA_vals)
         num_heads = len(heads)
         if num_IPA_vals != num_heads:
-            pagemsg("WARNING: Found %s head%s but %s {{IPA|sh}} value%s in section %s, not modifying: head%s=%s; IPA%s=%s" % (
+            p.msg("WARNING: Found %s head%s but %s {{IPA|sh}} value%s in section %s, not modifying: head%s=%s; IPA%s=%s" % (
                 secnum, num_heads, "s" if len(num_heads) > 1 else "", num_IPA_vals, "s" if len(num_IPA_vals) > 1 else "",
                 "s" if len(num_heads) > 1 else "", ",".join(heads), "s" if len(num_IPA_vals) > 1 else "", ",".join(IPA_vals)))
             return None
@@ -516,7 +513,7 @@ def process_text_on_page(index, pagetitle, text):
 
             if 
             if lalib.la_template_is_head(t):
-                heads |= set(blib.remove_links(x) for x in lalib.la_get_headword_from_template(t, pagetitle, pagemsg))
+                heads |= set(blib.remove_links(x) for x in lalib.la_get_headword_from_template(t, p.title, p.msg))
             elif tn == "la-IPA":
                 pronun_templates.append(t)
         newsectext = re.sub(r"\{\{a\|Classical\}\} \{\{IPA(char)?\|.*?\}\}", "{{la-IPA|%s}}" % list(heads)[0], sectext)
@@ -533,18 +530,18 @@ def process_text_on_page(index, pagetitle, text):
                 pronun_templates.append(t)
         if "{{a|Ecclesiastical}} {{IPA" in sectext:
             if len(pronun_templates) == 0:
-                pagemsg("WARNING: Found manual Ecclesiastical pronunciation but not {{la-IPA}} template")
+                p.msg("WARNING: Found manual Ecclesiastical pronunciation but not {{la-IPA}} template")
             elif len(pronun_templates) > 1:
-                pagemsg("WARNING: Found manual Ecclesiastical pronunciation and multiple {{la-IPA}} templates: %s" %
+                p.msg("WARNING: Found manual Ecclesiastical pronunciation and multiple {{la-IPA}} templates: %s" %
                     ",".join(str(tt) for tt in pronun_templates))
             else:
                 origt = str(pronun_templates[0])
                 pronun_templates[0].add("eccl", "yes")
-                pagemsg("Replaced %s with %s" % (origt, str(pronun_templates[0])))
+                p.msg("Replaced %s with %s" % (origt, str(pronun_templates[0])))
                 newsectext = re.sub(r"^\* \{\{a\|Ecclesiastical\}\} \{\{IPA(char)?\|.*?\}\}\n", "",
                         sectext, 0, re.M)
                 if newsectext == sectext:
-                    pagemsg("WARNING: Unable to remove manual Ecclesiastical prounciation")
+                    p.msg("WARNING: Unable to remove manual Ecclesiastical prounciation")
                 else:
                     notes.append("removed manual Ecclesiastical pronunciation and added |eccl=yes to {{la-IPA}}")
                     sectext = newsectext
@@ -576,7 +573,7 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if not re.search("^[0-9]+$", pn):
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in raw IPA, skipping: %s" % (pn, pv, origt))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in raw IPA, skipping: %s" % (pn, pv, origt))
                     must_continue = True
                     break
             if must_continue:
@@ -587,7 +584,7 @@ def process_text_on_page(index, pagetitle, text):
             for ipa in ipas:
                 ipa = re.sub("^/(.*)/$", r"\1", ipa)
                 ipa = re.sub(r"^\[(.*)\]$", r"\1", ipa)
-                respelling, endschwa = convert_bg_manual_ipa(ipa, pagetitle, pagemsg)
+                respelling, endschwa = convert_bg_manual_ipa(ipa, p.title, p.msg)
                 if respelling is None:
                     must_continue = True
                     break
@@ -595,7 +592,7 @@ def process_text_on_page(index, pagetitle, text):
                 if new_respelling not in respellings:
                     respellings.append(new_respelling)
                     endschwa_note = " with endschwa=1" if endschwa else ""
-                    pagemsg("Converting IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
+                    p.msg("Converting IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
                     this_notes.append("convert Bulgarian manual IPA %s to respelling %s%s" % (ipa, respelling, endschwa_note))
             if must_continue:
                 continue
@@ -607,7 +604,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("1", respelling)
                 if endschwa:
                     t.add("endschwa", "1")
-                pagemsg("Replaced %s with %s directly" % (origt, str(t)))
+                p.msg("Replaced %s with %s directly" % (origt, str(t)))
             else:
                 replacement_parts = []
                 annparam = "|ann=1" if len(respellings) > 1 else ""
@@ -620,10 +617,10 @@ def process_text_on_page(index, pagetitle, text):
 
     secbody = str(parsed)
     for fromtext, totext in to_substitute:
-        secbody, replaced = blib.replace_in_text(secbody, fromtext, totext, pagemsg, abort_if_warning=True)
+        secbody, replaced = blib.replace_in_text(secbody, fromtext, totext, p.msg, abort_if_warning=True)
         if not replaced:
             return
-        pagemsg("Replaced %s with %s using textual substitution" % (fromtext, totext.replace("\n", r"\n")))
+        p.msg("Replaced %s with %s using textual substitution" % (fromtext, totext.replace("\n", r"\n")))
 
     # Strip extra newlines added to secbody
     sections[j] = secbody.rstrip("\n") + sectail
@@ -635,4 +632,4 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
-        default_cats=["Bulgarian terms with IPA pronunciation"], edit=True, stdin=True)
+        new=True, default_cats=["Bulgarian terms with IPA pronunciation"])

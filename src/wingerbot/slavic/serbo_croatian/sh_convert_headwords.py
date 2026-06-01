@@ -60,15 +60,12 @@ rename_sh_headwords = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in sh_headwords:
@@ -82,7 +79,7 @@ def process_text_on_page(index, pagetitle, text):
                 if pn in ["head", "head1"]:
                     if not pv:
                         notes.append("remove blank %s= in {{%s}}" % (pn, tn))
-                    elif pv == pagetitle and " " not in pagetitle:
+                    elif pv == p.title and " " not in p.title:
                         notes.append("remove %s= same as pagename in {{%s}}" % (pn, tn))
                     else:
                         head = pv
@@ -98,7 +95,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif re.search("^head[0-9]+$", pn):
                     remaining_params.append((pn, pv))
                     if not head:
-                        pagemsg("WARNING: Saw %s=%s without head=" % (pn, pv))
+                        p.msg("WARNING: Saw %s=%s without head=" % (pn, pv))
                 else:
                     remaining_params.append((pn, pv))
             del t.params[:]
@@ -127,4 +124,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

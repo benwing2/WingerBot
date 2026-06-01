@@ -48,15 +48,12 @@ def is_monosyllabic(word):
     return len(re.sub("[^аеиоуяюъ]", "", word)) <= 1
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     head = None
     headt = None
@@ -71,16 +68,16 @@ def process_text_on_page(index, pagetitle, text):
             newhead = getparam(t, "1")
             aspect = getparam(t, "2")
             if not newhead or not aspect:
-                pagemsg("WARNING: Missing head or aspect in {{bg-verb}}: %s" % origt)
+                p.msg("WARNING: Missing head or aspect in {{bg-verb}}: %s" % origt)
                 continue
             if aspect not in ["impf", "pf", "both"]:
-                pagemsg("WARNING: Unrecognized aspect in {{bg-verb}}: %s" % origt)
+                p.msg("WARNING: Unrecognized aspect in {{bg-verb}}: %s" % origt)
                 continue
             if not is_monosyllabic(newhead) and AC not in newhead:
-                pagemsg("WARNING: Head %s missing an accent: %s" % (newhead, origt))
+                p.msg("WARNING: Head %s missing an accent: %s" % (newhead, origt))
                 continue
             if head:
-                pagemsg("WARNING: Saw two heads, previous %s and new %s: %s" % (head, newhead, origt))
+                p.msg("WARNING: Saw two heads, previous %s and new %s: %s" % (head, newhead, origt))
                 head = newhead
                 headt = origt
                 continue
@@ -91,7 +88,7 @@ def process_text_on_page(index, pagetitle, text):
                 head = None
                 continue
             if not head:
-                pagemsg("WARNING: No {{bg-verb}} found preceding conjugation: %s" % origt)
+                p.msg("WARNING: No {{bg-verb}} found preceding conjugation: %s" % origt)
                 continue
             bg_conj_spec = old_bg_conj_to_conj[tn]
             need_vn = False
@@ -102,33 +99,33 @@ def process_text_on_page(index, pagetitle, text):
             active = re.sub(" с[еи]$", "", head)
             ends_in_accent = active.endswith(AC) or is_monosyllabic(active)
             if stress == "end-stressed" and not ends_in_accent or stress == "stem-stressed" and ends_in_accent:
-                pagemsg(
+                p.msg(
                     "WARNING: Stress appears wrongly placed in %s, expected %s: %s, %s" % (head, stress, headt, origt)
                 )
                 continue
             conj_aspect = getparam(t, "2")
             if conj_aspect not in ["imp", "perf"]:
-                pagemsg("WARNING: Bad conjugation aspect %s: %s, %s" % (conj_aspect, headt, origt))
+                p.msg("WARNING: Bad conjugation aspect %s: %s, %s" % (conj_aspect, headt, origt))
                 continue
             if conj_aspect == "imp" and aspect == "pf" or conj_aspect == "perf" and aspect == "impf":
-                pagemsg(
+                p.msg(
                     "WARNING: Conjugation aspect %s disagrees with head aspect %s: %s, %s"
                     % (conj_aspect, aspect, headt, origt)
                 )
                 continue
             if conj_aspect == "perf" and aspect == "both":
-                pagemsg(
+                p.msg(
                     "WARNING: Found conjugation aspect perf and head aspect both, probably need to delete the conjugation: %s, %s"
                     % (conj_aspect, aspect, headt, origt)
                 )
                 continue
             transitivity = getparam(t, "3")
             if transitivity not in ["intr", "tr", "се", "си"]:
-                pagemsg("WARNING: Bad transitivity %s: %s, %s" % (transitivity, headt, origt))
+                p.msg("WARNING: Bad transitivity %s: %s, %s" % (transitivity, headt, origt))
                 continue
             if transitivity in ["се", "си"]:
                 if not head.endswith(" " + transitivity):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Conjugation reflexive %s disagrees with head %s, converting to reflexive: %s, %s"
                         % (transitivity, head, headt, origt)
                     )
@@ -137,10 +134,10 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 transitivity = "." + transitivity
             if getparam(t, "4") or getparam(t, "5") or getparam(t, "6"):
-                pagemsg("WARNING: Stray param in conjugation template: %s, %s" % (headt, origt))
+                p.msg("WARNING: Stray param in conjugation template: %s, %s" % (headt, origt))
                 continue
             if need_vn and aspect != "pf":
-                pagemsg(
+                p.msg(
                     "WARNING: Not converting %s, needs manually-specified verbal noun, would convert to {{bg-conj|%s<%s%s%s>}}: %s, %s"
                     % (head, head, newconj, aspect, transitivity, headt, origt)
                 )
@@ -150,7 +147,7 @@ def process_text_on_page(index, pagetitle, text):
             rmparam(t, "2")
             rmparam(t, "1")
             t.add("1", "%s<%s%s%s>" % (head, newconj, aspect, transitivity))
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert %s to %s" % (origt, str(t)))
 
     return str(parsed), notes
@@ -163,5 +160,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Bulgarian verbs"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Bulgarian verbs"]
 )

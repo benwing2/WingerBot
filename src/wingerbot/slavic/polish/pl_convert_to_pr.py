@@ -40,18 +40,15 @@ T = "(?:%s)" % obstruent
 R = "[%s]" % liquid
 
 
-def process_text_on_page(index, pagetitle, text):
+def process_text_on_page(p):
     template_index = 0
 
     def pagemsg(txt):
-        msg("Page %s.%03d %s: %s" % (index, template_index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+        msg("Page %s.%03d %s: %s" % (p.index, template_index, p.title, txt))
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Polish", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Polish", pagemsg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -106,9 +103,9 @@ def process_text_on_page(index, pagetitle, text):
                             caption = m.group(1)
                             pagemsg("Stripping italics from caption %s in %s=: %s" % (caption, param, origt))
                             stripped_italics = True
-                        if caption == pagetitle:
+                        if caption == p.title:
                             audiomod = "<text:#>"
-                        elif caption == pagetitle + " się":
+                        elif caption == p.title + " się":
                             audiomod = "<text:~>"
                         elif caption == "colloquial":
                             audiomod = "<a:colloquial>"
@@ -165,7 +162,7 @@ def process_text_on_page(index, pagetitle, text):
             respellings_defaulted = False
             if not respellings:
                 respellings_defaulted = True
-                respellings = [pagetitle]
+                respellings = [p.title]
             respelling_mods = []
             saw_respelling_mods = False
 
@@ -190,14 +187,14 @@ def process_text_on_page(index, pagetitle, text):
                     pagemsg("WARNING: Saw respellings along with |fs=0, can't handle: %s" % origt)
                     stopping_warning.append("saw respellings along with |fs=0, can't handle")
                 else:
-                    respellings = [pagetitle]
+                    respellings = [p.title]
                     respellings_defaulted = False
                 new_respellings = ["+"]
                 respelling_mods = [""]
                 new_default_respellings = "+"
             else:
                 new_respellings = respellings
-                new_respellings = ["#" if nr == pagetitle else nr for nr in new_respellings]
+                new_respellings = ["#" if nr == p.title else nr for nr in new_respellings]
             new_respellings = ",".join(
                 "%s%s" % (respelling, mod) for respelling, mod in zip(new_respellings, respelling_mods)
             )
@@ -220,7 +217,7 @@ def process_text_on_page(index, pagetitle, text):
                 # pl_p_prons = []
                 # must_continue = False
                 # for respelling in respellings:
-                #     pl_p_pron = expand_text("{{#invoke:pl-IPA|convert_to_IPA_bot|%s}}" % respelling)
+                #     pl_p_pron = p.expand_text("{{#invoke:pl-IPA|convert_to_IPA_bot|%s}}" % respelling)
                 #     if not pl_p_pron:
                 #         must_continue = True
                 #         continue
@@ -236,7 +233,7 @@ def process_text_on_page(index, pagetitle, text):
                     )
                 pl_pr_args = "|" + new_default_respellings if new_default_respellings else ""
                 get_lect_pron_flags = "|match_pl_p_output=1"
-                pl_pr_json = expand_text(
+                pl_pr_json = p.expand_text(
                     "{{#invoke:%s|get_lect_pron_info_bot%s%s%s}}"
                     % (module_name, pl_pr_args, pl_p_args, get_lect_pron_flags)
                 )
@@ -250,9 +247,9 @@ def process_text_on_page(index, pagetitle, text):
                 # Words in clitic -śmy/-ście not in -by- have two outputs in {{pl-pr}} but only one in {{pl-p}}, so convert the
                 # {{pl-p}} pronun to have two outputs.
                 if (
-                    respellings == [pagetitle]
+                    respellings == [p.title]
                     and len(pl_p_prons) == 1
-                    and re.search("(ł[aoy]?|li)(śmy|ście)$", pagetitle)
+                    and re.search("(ł[aoy]?|li)(śmy|ście)$", p.title)
                 ):
                     pl_p_pron_no_slashes = re.sub("^/(.*)/$", r"\1", pl_p_prons[0])
                     antepenult_pl_p_pron = "/" + re.sub(r"(^|\.)([^.]+)ˈ", r"ˈ\2.", pl_p_pron_no_slashes) + "/"
@@ -260,15 +257,15 @@ def process_text_on_page(index, pagetitle, text):
                         pl_p_prons = [antepenult_pl_p_pron] + pl_p_prons
                 prefix_pl_pr_objs = [(None, pl_pr_obj)]
                 for prefix in prefixes:
-                    if re.search("(^| )%s" % prefix, pagetitle):
+                    if re.search("(^| )%s" % prefix, p.title):
                         prefix_respelling = "[%s.]" % prefix
-                        prefix_pl_pr_json = expand_text(
+                        prefix_pl_pr_json = p.expand_text(
                             "{{#invoke:%s|get_lect_pron_info_bot|%s%s}}"
                             % (module_name, prefix_respelling, get_lect_pron_flags)
                         )
                         if not prefix_pl_pr_json:
                             prefix_respelling = "[^%s.]" % prefix
-                            prefix_pl_pr_json = expand_text(
+                            prefix_pl_pr_json = p.expand_text(
                                 "{{#invoke:%s|get_lect_pron_info_bot|%s%s}}"
                                 % (module_name, prefix_respelling, get_lect_pron_flags)
                             )
@@ -624,20 +621,20 @@ def process_text_on_page(index, pagetitle, text):
                 pagemsg("OLD: <begin> %s <end>" % origt)
                 levenshtein_respellings = []
                 for respelling in respellings:
-                    if respelling == pagetitle:
+                    if respelling == p.title:
                         levenshtein_respellings.append("-")
                     else:
                         levenshtein_respellings.append(
-                            str(blib.levenshtein(re.sub("[ ,.-]", "", pagetitle), re.sub("[ ,'.-]", "", respelling)))
+                            str(blib.levenshtein(re.sub("[ ,.-]", "", p.title), re.sub("[ ,'.-]", "", respelling)))
                         )
                 levenshtein_respellings = ",".join(levenshtein_respellings)
                 msg(
                     "NEW Page\t%s.%03d\t%s\t%s\t%s\t%s\t%s\t{{pl-pr%s}}\t%s\t%s\t%s\t<begin> %s <end>"
                     % (
-                        index,
+                        p.index,
                         template_index,
-                        pagetitle,
-                        pagetitle[::-1],
+                        p.title,
+                        p.title[::-1],
                         origt,
                         levenshtein_respellings,
                         joined_pl_p_prons,
@@ -664,4 +661,4 @@ parser.add_argument(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
