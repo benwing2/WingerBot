@@ -4,19 +4,16 @@ import pywikibot, re, sys, argparse
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("WARNING: Page should be ignored")
+    if blib.page_should_be_ignored(p.title):
+        p.msg("WARNING: Page should be ignored")
         return
 
     def combine_doublets(m):
@@ -24,14 +21,14 @@ def process_text_on_page(index, pagetitle, text):
         rest = blib.parse_text(m.group(2))
         t1 = list(first.filter_templates())[0]
         if getparam(t1, "3") or getparam(t1, "4") or getparam(t1, "alt2") or getparam(t1, "alt3"):
-            pagemsg("WARNING: Can't combine %s, first template already has multiple terms" % m.group(0))
+            p.msg("WARNING: Can't combine %s, first template already has multiple terms" % m.group(0))
             return m.group(0)
         next_index = 2
         lang = getparam(t1, "1")
         for t in rest.filter_templates(recursive=False):
             tlang = getparam(t, "1")
             if lang != tlang:
-                pagemsg(
+                p.msg(
                     "WARNING: Lang %s in continuation template %s not same as lang %s in first template %s"
                     % (tlang, str(t), lang, str(t1))
                 )
@@ -54,7 +51,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif pname in ["1", "notext", "nocap", "nocat"]:
                     pass
                 else:
-                    pagemsg("WARNING: Unrecognized param %s=%s in %s, skipping" % (pname, pval, str(t)))
+                    p.msg("WARNING: Unrecognized param %s=%s in %s, skipping" % (pname, pval, str(t)))
                     return m.group(0)
             next_index += 1
         for param in ["notext", "nocap", "nocat"]:
@@ -63,15 +60,15 @@ def process_text_on_page(index, pagetitle, text):
             if val:
                 t1.add(param, val)
         newtext = str(t1)
-        pagemsg("Replaced %s with %s" % (m.group(0), newtext))
+        p.msg("Replaced %s with %s" % (m.group(0), newtext))
         return newtext
 
     newtext = re.sub(
         r"(\{\{doublet\|(?:[^{}\n]|\{\{[^{}\n]*\}\})*\}\})((?:(?:, *|,? *and *)\{\{(?:m|l|doublet)\|(?:[^{}\n]|\{\{[^{}\n]*\}\})*\}\})+)",
         combine_doublets,
-        text,
+        p.text,
     )
-    if newtext != text:
+    if newtext != p.text:
         notes.append("combine adjacent doublets")
     text = newtext
 

@@ -80,17 +80,14 @@ def has_non_western_chars(val):
 
 
 # Remove redundant translits on one page.
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     # Hack for grc pages where we don't want to remove the translit
-    if "Ͷ" in pagetitle or "ͷ" in pagetitle:
-        pagemsg("Page has Ͷ or ͷ in it, not doing")
+    if "Ͷ" in p.title or "ͷ" in p.title:
+        p.msg("Page has Ͷ or ͷ in it, not doing")
         return
 
     params_removed = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
 
@@ -107,30 +104,30 @@ def process_text_on_page(index, pagetitle, text):
                 is_grc = tn.startswith("grc-") or getp("lang") == "grc" or getp("1") == "grc"
                 has_nwc = has_non_western_chars(val)
                 if val == "-":
-                    pagemsg("Not removing %s=-: %s" % (param, str(t)))
+                    p.msg("Not removing %s=-: %s" % (param, str(t)))
                 elif has_nwc and not param.startswith("tr"):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Value %s=%s has non-Western chars in it, not removing: %s" % (param, val, str(t))
                     )
                 # We don't need to do accented chars because they are normalized into
                 # char with macron + combining accent; the only combined macro/accent
                 # single chars are ḗ and ṓ
                 elif is_grc and re.search(r"[āīūĀĪŪ]", val):
-                    pagemsg(
+                    p.msg(
                         "WARNING: grc and value %s=%s has long a/i/u in it, not removing: %s" % (param, val, str(t))
                     )
                 elif is_grc and re.search(r"[ăĭŭĂĬŬ]", val):
-                    pagemsg(
+                    p.msg(
                         "WARNING: grc and value %s=%s has a/i/u with breve in it, not removing: %s"
                         % (param, val, str(t))
                     )
                 else:
                     if has_nwc:
-                        pagemsg(
+                        p.msg(
                             "NOTE: Value %s=%s has non-Western chars but removing anyway because starts with 'tr': %s"
                             % (param, val, str(t))
                         )
-                    pagemsg("Removed %s=%s: %s" % (param, val, str(t)))
+                    p.msg("Removed %s=%s: %s" % (param, val, str(t)))
                     if value is None:
                         tempparam = "%s.%s" % (tn, param)
                     else:
@@ -281,7 +278,7 @@ def process_text_on_page(index, pagetitle, text):
             getp("1") in remove_tr_langs
         ):
             if tn == "head" and not args.do_head:
-                pagemsg("Not removing tr= from {{head|...}}: %s" % str(t))
+                p.msg("Not removing tr= from {{head|...}}: %s" % str(t))
             else:
                 doparam("tr")
         if getp("lang") in remove_tr_langs and tn != "borrowing":  # tn in ["term", "usex"] and
@@ -310,7 +307,7 @@ def process_text_on_page(index, pagetitle, text):
     changelog = ""
     if pr_msg:
         changelog = "Remove translit/sc (%s)" % pr_msg
-        pagemsg("Change log = %s" % changelog)
+        p.msg("Change log = %s" % changelog)
     return str(parsed), changelog
 
 

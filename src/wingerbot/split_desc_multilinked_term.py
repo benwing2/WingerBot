@@ -25,16 +25,13 @@ global_params_at_end = ["q", "alts"]
 item_params = ["alt", "g", "gloss", "t", "id", "lit", "pos", "tr", "ts", "sc"]
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -48,18 +45,18 @@ def process_text_on_page(index, pagetitle, pagetext):
                 pn = pname(param)
                 pv = str(param.value)
                 if re.search("[a-z][0-9]", pn):
-                    pagemsg(
+                    p.msg(
                         "WARNING: comma in terms but saw term-specific param %s=%s, skipping: %s" % (pn, pv, str(t))
                     )
                     must_continue = True
                     break
                 if "<" in pv:
-                    pagemsg("WARNING: Saw less-than in param %s=%s, skipping: %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw less-than in param %s=%s, skipping: %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
                 # g= is short enough and commonly occurs with nested params, so allow it to be split
                 if pn != "g" and pn in item_params:
-                    pagemsg("WARNING: Saw term-specific item param %s=%s, skipping: %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw term-specific item param %s=%s, skipping: %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -70,7 +67,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             for j, term in enumerate(terms):
                 if ", " in term:
                     if "[" not in term:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw multiple terms in a single param '%s' but no links, please verify it's OK to split: %s"
                             % (term, str(t))
                         )
@@ -99,12 +96,12 @@ def process_text_on_page(index, pagetitle, pagetext):
                             term_g = term_g.replace("|", ",")
                         new_term = blib.remove_redundant_links(new_term)
                         if "[" in new_term:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Still saw bracket in term '%s' after removing redundant ones: %s"
                                 % (new_term, str(t))
                             )
                         if "{" in new_term:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Still saw braces in term '%s' after removing qualifiers, not splitting: %s"
                                 % (new_term, str(t))
                             )
@@ -117,7 +114,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                             new_term += "<qq:%s>" % right_q
                         if g and j == 0:
                             if term_g:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw both overall g= and term-specific {{g|....}}, can't handle, not splitting: %s"
                                     % (new_term, str(t))
                                 )
@@ -160,7 +157,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                 else:
                     notes.append("remove redundant g= in {{%s}}" % tn)
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 

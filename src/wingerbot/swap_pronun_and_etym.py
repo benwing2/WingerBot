@@ -7,13 +7,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    newtext = re.sub("^(===Pronunciation===\n.*?\n)(===Etymology===\n.*?\n)==", r"\2\1==", text, 0, re.S | re.M)
+    newtext = re.sub("^(===Pronunciation===\n.*?\n)(===Etymology===\n.*?\n)==", r"\2\1==", p.text, 0, re.S | re.M)
     return newtext, "put Etymology before Pronunciation"
 
 

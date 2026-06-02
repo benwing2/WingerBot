@@ -3,26 +3,19 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
+from wingerbot.blib import msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    seen_trans = [pagetitle]
-    modsec = blib.find_modifiable_lang_section(text, "English", pagemsg)
+def process_text_on_page(p):
+    seen_trans = [p.title]
+    modsec = blib.find_modifiable_lang_section(p.text, "English", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     if "Translations" in subsecs.subsections_by_header:
         for k in subsecs.subsections_by_header["Translations"]:
-            expanded = expand_text(subsecs.subsections[k])
+            expanded = p.expand_text(subsecs.subsections[k])
             if expanded:
                 for m in re.finditer(
                     r'<span class="[A-Z].*?" lang=".*?">\[\[([^\[\]\|]*)\|([^\[\]\|]*)\]\]</span>', expanded
@@ -33,9 +26,9 @@ def process_text_on_page(index, pagetitle, text):
 
         def check_trans(trans):
             def pagemsg_with_trans(txt):
-                pagemsg("%s: %s" % (trans, txt))
+                p.msg("%s: %s" % (trans, txt))
             def errandpagemsg_with_trans(txt):
-                errandpagemsg("%s: %s" % (trans, txt))
+                p.errandmsg("%s: %s" % (trans, txt))
 
             trans_page = pywikibot.Page(site, trans)
             trans_text = blib.safe_page_text(trans_page, errandpagemsg_with_trans)
@@ -43,10 +36,10 @@ def process_text_on_page(index, pagetitle, text):
                 m = re.search(r"\A#redirect\s*\[\[(.*?)\]\]", trans_text, re.I)
                 if m:
                     redirect_target = m.group(1)
-                    pagemsg_with_trans("Found existing translation (redirect) for %s" % pagetitle)
+                    pagemsg_with_trans("Found existing translation (redirect) for %s" % p.title)
                     check_trans(redirect_target)
                 else:
-                    pagemsg_with_trans("Found existing translation for %s" % pagetitle)
+                    pagemsg_with_trans("Found existing translation for %s" % p.title)
 
         for trans in seen_trans:
             check_trans(trans)

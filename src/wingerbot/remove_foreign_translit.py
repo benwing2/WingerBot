@@ -96,8 +96,7 @@ def sort_group_changelogs(actions):
 
 
 # Canonicalize foreign and Latin in link-like templates on pages from STARTFROM
-# to (but not including) UPTO, either page names or 0-based integers. Save
-# changes if SAVE is true. Show exact changes if VERBOSE is true. CATTYPE
+# to (but not including) UPTO, either page names or 0-based integers. CATTYPE
 # should be 'vocab', 'borrowed', 'translation', 'links', 'pagetext', 'pages',
 # an arbitrary category or a list of such items, indicating which pages to
 # examine. If CATTYPE is 'pagetext', PAGES_TO_DO should be a list of
@@ -106,16 +105,10 @@ def sort_group_changelogs(actions):
 # to process templates of. LONGLANG is a canonical language name, as in
 # blib.process_links(); this is only used when CATTYPE is 'vocab' or
 # 'borrowed'.
-def canon_links(save, verbose, cattype, lang, longlang, start, end, pages_to_do=[]):
-    def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-        def expand_text(tempcall):
-            return blib.expand_text(tempcall, pagetitle, pagemsg, verbose)
-
+def canon_links(cattype, lang, longlang, start, end, pages_to_do=[]):
+    def process_param(p, template, tlang, param, paramtr):
         result = canon_param(
-            index, pagetitle, template, tlang, param, paramtr, pagemsg, expand_text, include_tempname_in_changelog=True
+            p.index, p.title, template, tlang, param, paramtr, p.msg, p.expand_text, include_tempname_in_changelog=True
         )
         scvalue = getparam(template, "sc")
         if scvalue:
@@ -123,16 +116,16 @@ def canon_links(save, verbose, cattype, lang, longlang, start, end, pages_to_do=
                 fromparam, toparam = param
             else:
                 fromparam, toparam = (param, param)
-            foreign = pagetitle if fromparam == "page title" else getparam(template, fromparam)
-            predicted_script = expand_text("{{#invoke:scripts/templates|findBestScript|%s|%s}}" % (foreign, tlang))
+            foreign = p.title if fromparam == "page title" else getparam(template, fromparam)
+            predicted_script = p.expand_text("{{#invoke:scripts/templates|findBestScript|%s|%s}}" % (foreign, tlang))
             if scvalue == predicted_script:
                 tn = str(template.name)
                 if show_template and result == False:
-                    pagemsg("%s.%s.%s: Processing %s" % (tn, tlang, "sc", str(template)))
-                pagemsg("%s.%s.%s: Removing sc=%s" % (tn, tlang, "sc", scvalue))
+                    p.msg("%s.%s.%s: Processing %s" % (tn, tlang, "sc", str(template)))
+                p.msg("%s.%s.%s: Removing sc=%s" % (tn, tlang, "sc", scvalue))
                 oldtempl = "%s" % str(template)
                 template.remove("sc")
-                pagemsg("Replaced %s with %s" % (oldtempl, str(template)))
+                p.msg("Replaced %s with %s" % (oldtempl, str(template)))
                 newresult = ["remove %s.%s.sc=%s" % (tn, tlang, scvalue)]
                 if result != False:
                     result = result + newresult
@@ -141,8 +134,6 @@ def canon_links(save, verbose, cattype, lang, longlang, start, end, pages_to_do=
         return result
 
     return blib.process_links(
-        save,
-        verbose,
         lang,
         longlang,
         cattype,
@@ -188,4 +179,4 @@ if args.lang:
         raise ValueError("Unrecognized language '%s'" % args.lang)
     longlang, this_ignore_manual_tr = languages[args.lang]
 
-canon_links(args.save, args.verbose, args.cattype, languages.keys(), longlang, start, end, pages_to_do=pages_to_do)
+canon_links(args.cattype, languages.keys(), longlang, start, end, pages_to_do=pages_to_do)

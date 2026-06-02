@@ -2103,15 +2103,12 @@ unrecognized_indented_lang_counts = defaultdict(lambda: defaultdict(int))
 header_with_unrecognized_lang_counts = defaultdict(int)
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    origtext = text
+    origtext = p.text
     new_lines = []
-    lines = text.split("\n")
+    lines = p.text.split("\n")
     in_translation_section = False
     langgroup_header = None
     langgroup_header_lineind = None
@@ -2137,7 +2134,7 @@ def process_text_on_page(index, pagename, text):
         # First check if we need to rename the top-level line (e.g. because it's using an outdated name).
         if lang in top_level_rename:
             new_lang = top_level_rename[lang]
-            pagemsg("Renaming top-level variety %s to %s" % (lang, new_lang))
+            p.msg("Renaming top-level variety %s to %s" % (lang, new_lang))
             notes.append(["rename top-level variety ", "%s->%s" % (lang, new_lang), ""])
             lang = new_lang
         # Now check if we need to indent (and possibly rename) the language.
@@ -2146,11 +2143,11 @@ def process_text_on_page(index, pagename, text):
             if boolean_function_matches(indentfun, lang):
                 new_indented_lang = rename_indented_lang(lang, group)
                 if new_indented_lang != lang:
-                    pagemsg("Indenting %s variety %s and renaming to %s" % (group, lang, new_indented_lang))
+                    p.msg("Indenting %s variety %s and renaming to %s" % (group, lang, new_indented_lang))
                     notes.append(["indent ", ["%s->" % group, "%s [rename to %s]" % (lang, new_indented_lang), ""], ""])
                     lang = new_indented_lang
                 else:
-                    pagemsg("Indenting %s variety %s" % (group, lang))
+                    p.msg("Indenting %s variety %s" % (group, lang))
                     notes.append(["indent ", ["%s->" % group, lang, ""], ""])
                 # We're indenting an unindented lang under a header. If the header doesn't already exist, it needs to be added.
                 # We may not know whether to add the header till after we've processed the whole translation section; at that
@@ -2170,18 +2167,18 @@ def process_text_on_page(index, pagename, text):
                 after_lang = " " + after_lang
             if lang in langgroup_header:
                 if not after_lang:
-                    pagemsg(
+                    p.msg(
                         "Already saw header for '%s' with remainder '%s', but new header remainder is empty; not adding"
                         % (lang, langgroup_header[lang])
                     )
                 elif langgroup_header[lang]:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Already saw header for '%s' with non-empty remainder '%s', and new remainder '%s' is also non-empty; duplicate lines will result"
                         % (lang, langgroup_header[lang], after_lang)
                     )
                     translation_lines.append((lang, [], lineind, line, True))
                 else:
-                    pagemsg(
+                    p.msg(
                         "Already saw header for '%s' with empty remainder, and new header remainder '%s' is non-empty; replacing"
                         % (lang, after_lang)
                     )
@@ -2197,7 +2194,7 @@ def process_text_on_page(index, pagename, text):
         origline = line
         if re.search(r"^\{\{(trans-top|checktrans-top|trans-top-see|trans-top-also)[|}]", line):
             if in_translation_section:
-                pagemsg("WARNING: Nested translation sections, skipping page, nested opening line follows: %s" % line)
+                p.msg("WARNING: Nested translation sections, skipping page, nested opening line follows: %s" % line)
                 return
             in_translation_section = True
             langgroup_header = {}
@@ -2242,10 +2239,10 @@ def process_text_on_page(index, pagename, text):
             is_indented_under_header = False
         elif re.search(r"^\}* *\{\{trans-bottom", line):  # allow for multitrans closing braces before {{trans-bottom}}
             if not in_translation_section:
-                pagemsg("WARNING: Found {{trans-bottom}} not in a translation section")
+                p.msg("WARNING: Found {{trans-bottom}} not in a translation section")
             else:
                 if saw_opening_html_comment:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw full-line HTML comment in section beginning %s, preserving unchanged"
                         % opening_trans_line
                     )
@@ -2271,7 +2268,7 @@ def process_text_on_page(index, pagename, text):
                     ]
                     new_translation_lines_for_sorting = sorted(translation_lines_for_sorting)
                     if translation_lines_for_sorting != new_translation_lines_for_sorting:
-                        pagemsg("Sorting lines under %s" % opening_trans_line)
+                        p.msg("Sorting lines under %s" % opening_trans_line)
                         notes.append(
                             [
                                 "sort lines under ",
@@ -2297,7 +2294,7 @@ def process_text_on_page(index, pagename, text):
                                 and "* %s:" % prev_lang == prev_transline
                                 and (next_transline is None or next_transline.startswith("* %s:" % next_lang))
                             ):
-                                pagemsg("Filtering out superfluous top-level line: %s" % prev_transline)
+                                p.msg("Filtering out superfluous top-level line: %s" % prev_transline)
                                 notes.append(["filter out superfluous header for ", prev_lang, ""])
                             else:
                                 filtered_lines.append(prev_line)
@@ -2323,10 +2320,10 @@ def process_text_on_page(index, pagename, text):
                 newline = line.replace("\u00a0", " ")
                 if newline != line:
                     line = newline
-                    pagemsg("Replacing NBSP with regular space")
+                    p.msg("Replacing NBSP with regular space")
                     notes.append(["replace NBSP with regular space", "", ""])
                 if not line.strip():
-                    pagemsg("Skipping blank line")
+                    p.msg("Skipping blank line")
                     notes.append(["skip blank line", "", ""])
                     continue
 
@@ -2334,10 +2331,10 @@ def process_text_on_page(index, pagename, text):
                     langcode = m.group(1)
                     if langcode in lang_data.languages_by_code:
                         langname = lang_data.languages_by_code[langcode]["canonicalName"]
-                        pagemsg("Replacing {{ttbc|%s}} with %s" % (langcode, langname))
+                        p.msg("Replacing {{ttbc|%s}} with %s" % (langcode, langname))
                         notes.append(["replace ", "{{ttbc|%s}}->%s" % (langcode, langname), ""])
                         return langname
-                    pagemsg("WARNING: Unrecognized langcode %s in {{ttbc}}: %s" % (langcode, line))
+                    p.msg("WARNING: Unrecognized langcode %s in {{ttbc}}: %s" % (langcode, line))
                     return m.group(0)
 
                 line = re.sub(r"\{\{ttbc\|([^{}|=]*)\}\}", replace_ttbc, line)
@@ -2350,9 +2347,9 @@ def process_text_on_page(index, pagename, text):
                         or potential_lang in etym_lang_data.etym_languages_by_canonical_name
                     ):
                         if semicolon:
-                            pagemsg("Replacing semicolon with colon after lang %s: %s" % (potential_lang, line))
+                            p.msg("Replacing semicolon with colon after lang %s: %s" % (potential_lang, line))
                         else:
-                            pagemsg("Adding missing colon after lang %s: %s" % (potential_lang, line))
+                            p.msg("Adding missing colon after lang %s: %s" % (potential_lang, line))
                         line = init + potential_lang + ":" + rest
                         if semicolon:
                             notes.append(["replace semicolon with colon after lang ", potential_lang, ""])
@@ -2362,7 +2359,7 @@ def process_text_on_page(index, pagename, text):
                 if m:
                     init_star, rest = m.groups()
                     line = "*:" + rest
-                    pagemsg("Replacing %s with *: %s" % (init_star, line))
+                    p.msg("Replacing %s with *: %s" % (init_star, line))
                     notes.append(["replace ", init_star, " with *:"])
                 m = re.search(r"^\* *(:*) *(%s) *:(.*)$" % langname_regex, line)
                 if m:
@@ -2373,7 +2370,7 @@ def process_text_on_page(index, pagename, text):
                     newline = "*%s %s:%s" % (colons, lang, rest)
                     if newline != line:
                         line = newline
-                        pagemsg("Fixing spacing issues for lang %s: %s" % (lang, line))
+                        p.msg("Fixing spacing issues for lang %s: %s" % (lang, line))
                         notes.append(["fix spacing issues for lang ", lang, ""])
                 m = re.search(r"^(\* *(:+) *)([^:]+)(:.*)$", line)
                 if m:
@@ -2397,9 +2394,9 @@ def process_text_on_page(index, pagename, text):
                             colons = ":" * new_indent
                             init_star = "*" + colons + " "
                             line = init_star + indented_lang + rest
-                            pagemsg("Reindenting line for lang %s: %s" % (indented_lang, line))
+                            p.msg("Reindenting line for lang %s: %s" % (indented_lang, line))
                             notes.append(["reindent line for lang ", indented_lang, ""])
-                        pagemsg(
+                        p.msg(
                             "Moving line under lang %s: %s"
                             % (" -> ".join([new_prev_top_level_lang] + new_prev_indented_langs), line)
                         )
@@ -2412,7 +2409,7 @@ def process_text_on_page(index, pagename, text):
                     old_indent = len(new_prev_indented_langs)
                     if new_indent > old_indent:
                         if new_indent - old_indent > 1:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw greater than one increase in nesting, from %s to %s: lineind %s, line: %s"
                                 % (old_indent, new_indent, lineind, line)
                             )
@@ -2434,7 +2431,7 @@ def process_text_on_page(index, pagename, text):
                         rename_map = group_props.get("rename", {})
                         new_indented_lang = rename_indented_lang(indented_lang, new_prev_top_level_lang)
                         if new_indented_lang != indented_lang:
-                            pagemsg(
+                            p.msg(
                                 "Renaming %s variety %s to %s"
                                 % (new_prev_top_level_lang, indented_lang, new_indented_lang)
                             )
@@ -2453,10 +2450,10 @@ def process_text_on_page(index, pagename, text):
                             new_prev_indented_langs[-1] = indented_lang
                             line = "%s%s%s" % (init_star, indented_lang, rest)
                         if boolean_function_matches(group_props.get("unindent", set()), indented_lang):
-                            pagemsg("Unindenting %s under %s" % (indented_lang, new_prev_top_level_lang))
+                            p.msg("Unindenting %s under %s" % (indented_lang, new_prev_top_level_lang))
                             notes.append(["unindent ", ["", indented_lang, " under %s" % new_prev_top_level_lang], ""])
                             if maintain_old_prev_langs:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: In the middle of moving indented languages under %s and trying to move %s to top level; resetting status, need to check manually"
                                     % ("->".join([new_prev_top_level_lang] + new_prev_indented_langs), indented_lang)
                                 )
@@ -2496,7 +2493,7 @@ def process_text_on_page(index, pagename, text):
                                 move_indented_indented_langs = new_prev_indented_langs[:]
                         else:
                             if args.rename_min and new_prev_top_level_lang == "Chinese" and indented_lang == "Min Nan":
-                                pagemsg("Replacing Min Nan with Hokkien and changing code nan->nan-hbl")
+                                p.msg("Replacing Min Nan with Hokkien and changing code nan->nan-hbl")
                                 notes.append(["replace Min Nan with Hokkien and change code nan->nan-hbl", "", ""])
                                 indented_lang = "Hokkien"
                                 new_prev_indented_langs[-1] = indented_lang
@@ -2527,7 +2524,7 @@ def process_text_on_page(index, pagename, text):
                                         add_lang, indented_lang[: -len(new_prev_top_level_lang) - 1]
                                     )
                                 if not recognized:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Unrecognized indented lang %s under %s"
                                         % (indented_lang, new_prev_top_level_lang)
                                     )
@@ -2546,7 +2543,7 @@ def process_text_on_page(index, pagename, text):
                 else:
                     m = re.search(r"^\* *((%s)(:.*))$" % langname_regex, line)
                     if not m:
-                        pagemsg("WARNING: Unrecognized line in translation section: %s" % line)
+                        p.msg("WARNING: Unrecognized line in translation section: %s" % line)
                         if re.search(r"^\s*<!--", line) and lineind > opening_lineind + 1:
                             saw_opening_html_comment = True
                         translation_lines.append((prev_top_level_lang, prev_indented_langs, lineind, line, True))
@@ -2594,7 +2591,7 @@ def process_text_on_page(index, pagename, text):
             new_lines.append(line)
 
     if in_translation_section:
-        pagemsg("WARNING: Page ended in a translation section, something wrong, skipping")
+        p.msg("WARNING: Page ended in a translation section, something wrong, skipping")
         return
 
     text = "\n".join(new_lines)
@@ -2602,7 +2599,7 @@ def process_text_on_page(index, pagename, text):
     if text != origtext and not notes:
         default_changelog = "misc reformatting (usually sorting)"
         notes.append([default_changelog, "", ""])
-        pagemsg("WARNING: Adding default changelog '%s'" % default_changelog)
+        p.msg("WARNING: Adding default changelog '%s'" % default_changelog)
 
     def group_notes(notes, joiner=", "):
         notes_middles = {}
@@ -2630,7 +2627,7 @@ def process_text_on_page(index, pagename, text):
     notes_str = "translations: " + "; ".join(blib.group_notes(notes))
     comment_len = len(notes_str.encode("utf-8"))
     if comment_len > 500:
-        pagemsg("WARNING: Comment length %s > 500: %s" % (comment_len, notes))
+        p.msg("WARNING: Comment length %s > 500: %s" % (comment_len, notes))
     return text, notes_str
 
 

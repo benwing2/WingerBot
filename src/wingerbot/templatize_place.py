@@ -2040,16 +2040,13 @@ def remove_links_from_topics(text):
     return re.sub(r"\{\{(topics|topic|top|C|c)\|.*?\}\}", remove_links, text)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p):
+    origtext = p.text
     notes = []
-    if index % 250000 == 0:
+    if p.index % 250000 == 0:
         output_stats(100)
-    if re.search("^[a-z]", pagetitle):
-        return text, notes
+    if re.search("^[a-z]", p.title):
+        return p.text, notes
 
     # Main function to templatize a given line. This is a regex function called from the regex at the bottom
     # that checks for any line containing any of the known place types.
@@ -2068,18 +2065,18 @@ def process_text_on_page(index, pagetitle, text):
             # Page 4967143 [[Module:User:IsomorphycSandbox/testmodule/reverse index]] is over 1,000,000 chars in length,
             # and the script gets stuck as the loop below that successively chops off endings is O(N^2) in the number
             # of segments.
-            pagemsg("Skipping overly long line (%s chars): %s..." % (linelen, origline[0:5000]))
+            p.msg("Skipping overly long line (%s chars): %s..." % (linelen, origline[0:5000]))
             return origline
         line = origline
         postline = ""
         status = None
         badlines = []
 
-        # Replacement for pagemsg() that stores the message instead of outputting it directly.
+        # Replacement for p.msg() that stores the message instead of outputting it directly.
         # The outputted message has <from> ORIGLINE <to> ORIGLINE <end> at the end (used by
         # push_manual_changes.py) in case we want to manually fix up some bad lines.
         def append_pagemsg(txt):
-            newline = "Page %s %s: %s: <from> %s <to> %s <end>" % (index, pagetitle, txt, origline, origline)
+            newline = "Page %s %s: %s: <from> %s <to> %s <end>" % (p.index, p.title, txt, origline, origline)
             if newline not in badlines:
                 badlines.append(newline)
 
@@ -2497,7 +2494,7 @@ def process_text_on_page(index, pagetitle, text):
                 # Construct entire line and return it.
                 retval = "%s%s%s%s%s" % (pretext, new_place_template, postq, final_period, postline)
                 notes.append("templatize %s place spec into {{place}}" % placetype)
-                pagemsg("Replaced <%s> with <%s>" % (origline, retval))
+                p.msg("Replaced <%s> with <%s>" % (origline, retval))
                 recognized_lines += 1
                 total_parsable_lines += 1
                 add_this_to_all()
@@ -2534,11 +2531,11 @@ def process_text_on_page(index, pagetitle, text):
                     msg(m)
                 return origline
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
     for j, langname in secs.lang_list:
         if langname not in lang_data.languages_by_canonical_name:
-            pagemsg("WARNING: Unrecognized language %s" % langname)
+            p.msg("WARNING: Unrecognized language %s" % langname)
         else:
             langcode = lang_data.languages_by_canonical_name[langname]["code"]
 

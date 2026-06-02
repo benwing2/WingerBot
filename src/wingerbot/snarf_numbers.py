@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname, msg, errandmsg, site
 
 numbers = defaultdict(lambda: defaultdict(dict))
 
@@ -111,12 +111,7 @@ def read_existing_number_data(langindex, lang):
                 numbers[lang][curnum][numtype] = parsed_numvals
 
 
-def process_text_on_page(index, pagetitle, text, langcodes):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    notes = []
-
+def process_text_on_page(p, langcodes):
     def putval(t, lang, num, typ, val, tr):
         num = re.sub(r"(st|nd|rd|th)$", "", num)
         m = re.search("^10<sup>([0-9]+)</sup>$", num)
@@ -125,17 +120,17 @@ def process_text_on_page(index, pagetitle, text, langcodes):
         else:
             m = re.search("^([0-9]+)[^0-9]+$", num)
             if m:
-                pagemsg("WARNING: Number %s has extraneous text after it, ignoring extraneous text: %s" % (num, str(t)))
+                p.msg("WARNING: Number %s has extraneous text after it, ignoring extraneous text: %s" % (num, str(t)))
                 num = m.group(1)
             elif not re.search("^[0-9]+$", num):
-                pagemsg("WARNING: Bad number %s, doesn't look numeric: %s" % (num, str(t)))
+                p.msg("WARNING: Bad number %s, doesn't look numeric: %s" % (num, str(t)))
                 return
 
         # Check for multiple values embedded in a single parameter.
         vals = re.split(r"\s*,\s*", val)
         if len(vals) > 1:
             if tr:
-                pagemsg(
+                p.msg(
                     "WARNING: For number %s, type %s, multiple values '%s' and tr=%s, can't handle: %s"
                     % (num, typ, vals, tr, str(t))
                 )
@@ -154,13 +149,13 @@ def process_text_on_page(index, pagetitle, text, langcodes):
         existing = numbers[lang][num].get(typ, None)
         if existing is not None:
             if type(existing) is list and valtr not in existing:
-                pagemsg(
+                p.msg(
                     "WARNING: For lang %s, number %s, type %s, new %s not in existing %s, appending"
                     % (lang, num, typ, print_valtr(valtr), ",".join(print_valtr(x) for x in existing))
                 )
                 existing.append(valtr)
             elif type(existing) is not list and valtr != existing:
-                pagemsg(
+                p.msg(
                     "WARNING: For lang %s, number %s, type %s, new %s not equal to %s, converting to list and appending"
                     % (lang, num, typ, print_valtr(val), print_valtr(existing))
                 )
@@ -168,7 +163,7 @@ def process_text_on_page(index, pagetitle, text, langcodes):
         else:
             numbers[lang][num][typ] = val
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param):
@@ -185,14 +180,14 @@ def process_text_on_page(index, pagetitle, text, langcodes):
 
                 num = getp("3")
                 if not num:
-                    pagemsg("WARNING: Blank current number for {{%s}}: %s" % (tn, str(t)))
+                    p.msg("WARNING: Blank current number for {{%s}}: %s" % (tn, str(t)))
                 else:
-                    put(num, boxtype, getp("alt") or pagetitle, getp("tr"))
+                    put(num, boxtype, getp("alt") or p.title, getp("tr"))
                 prevnum = getp("2")
                 if prevnum:
                     prevnumtext = getp("5")
                     if not prevnumtext:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Previous number %s but blank textual form in {{%s}}: %s" % (prevnum, tn, str(t))
                         )
                     else:
@@ -201,7 +196,7 @@ def process_text_on_page(index, pagetitle, text, langcodes):
                 if nextnum:
                     nextnumtext = getp("6")
                     if not nextnumtext:
-                        pagemsg("WARNING: Next number %s but blank textual form in {{%s}}: %s" % (nextnum, tn, str(t)))
+                        p.msg("WARNING: Next number %s but blank textual form in {{%s}}: %s" % (nextnum, tn, str(t)))
                     else:
                         put(nextnum, boxtype, nextnumtext, None)
                 for other, othertype in [
@@ -221,7 +216,7 @@ def process_text_on_page(index, pagetitle, text, langcodes):
                     if opttype:
                         optval = getp(opt + "xalt") or getp(opt + "x")
                         if not optval:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw optional type %s but no optional form in {{%s}}: %s"
                                 % (opttype, tn, str(t))
                             )
@@ -242,8 +237,8 @@ for langindex, langcode in enumerate(langcodes):
     read_existing_number_data(langindex + 1, langcode)
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, langcodes)
+def do_process_text_on_page(p):
+    return process_text_on_page(p, langcodes)
 
 
 blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)

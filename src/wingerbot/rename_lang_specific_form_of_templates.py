@@ -6663,7 +6663,7 @@ class TemplateData:
     index: int
     pagetitle: str
     t: Template
-    pagemsg: callable
+    pagemsg: Callable
 
     def getp(self, param):
         return getparam(self.t, param)
@@ -6915,34 +6915,31 @@ def expand_spec(spec, data):
     return newname, expanded_specs, comment
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
     # We do want to change user pages with these templates on them.
-    if blib.page_should_be_ignored(pagetitle, allow_user_pages=True):
-        pagemsg("WARNING: Page has a prefix or suffix indicating it should not be touched, skipping")
+    if blib.page_should_be_ignored(p.title, allow_user_pages=True):
+        p.msg("WARNING: Page has a prefix or suffix indicating it should not be touched, skipping")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn in templates_to_actually_do_set:
-            data = TemplateData(index, pagetitle, t, pagemsg)
+            data = TemplateData(p.index, p.title, t, p.msg)
             template_spec = templates_to_rename_map[tn]
             try:
                 new_name, new_params, comment = expand_spec(template_spec, data)
             except BadTemplateValue as e:
-                pagemsg("WARNING: %s: %s" % (str(e), origt))
+                p.msg("WARNING: %s: %s" % (str(e), origt))
                 continue
             except BadRewriteSpec as e:
-                errandmsg("INTERNAL ERROR: %s: Processing template %s" % (str(e), origt))
-                pagemsg("Spec being processed:")
+                p.errandmsg("INTERNAL ERROR: %s: Processing template %s" % (str(e), origt))
+                p.msg("Spec being processed:")
                 pprint.pprint(template_spec)
                 traceback.print_exc()
                 continue
@@ -6965,17 +6962,17 @@ def process_text_on_page(index, pagetitle, text):
             notes.append(comment)
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     text = str(parsed)
 
     if args.lang_for_combine_inflection_of:
-        modsec = blib.find_modifiable_lang_section(text, args.lang_for_combine_inflection_of, pagemsg)
+        modsec = blib.find_modifiable_lang_section(p.text, args.lang_for_combine_inflection_of, p.msg)
         if modsec is None:
             return text, notes
         secbody = modsec.secbody
         dont_combine_tags = args.dont_combine_tags.split(",") if args.dont_combine_tags else None
-        secbody = infltags.combine_adjacent_inflection_of_calls(secbody, notes, pagemsg, verbose=args.verbose)
+        secbody = infltags.combine_adjacent_inflection_of_calls(secbody, notes, p.msg, verbose=args.verbose)
         parsed = blib.parse_text(secbody)
         for t in parsed.filter_templates():
             tn = tname(t)
@@ -6985,7 +6982,7 @@ def process_text_on_page(index, pagetitle, text):
 
                 # Now combine adjacent tags into multipart tags.
                 def warn(text):
-                    pagemsg("WARNING: %s" % text)
+                    p.msg("WARNING: %s" % text)
 
                 tags, this_notes = infltags.combine_adjacent_tags_into_multipart(
                     tn,
@@ -6993,7 +6990,7 @@ def process_text_on_page(index, pagetitle, text):
                     term,
                     tags,
                     tag_to_dimension_table,
-                    pagemsg,
+                    p.msg,
                     warn,
                     tag_to_canonical_form_table=tag_to_canonical_form_table,
                     dont_combine_tags=dont_combine_tags,
@@ -7003,7 +7000,7 @@ def process_text_on_page(index, pagetitle, text):
                     t, notes, tags, params, lang, term, tr, alt, convert_to_more_specific_template=False
                 )
                 if str(t) != origt:
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
 
         text = modsec.rebuild(secbody=str(parsed))
 

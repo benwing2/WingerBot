@@ -4,7 +4,7 @@
 
 import pywikibot, re, sys, argparse
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg
+from wingerbot.blib import site, msg
 import logging
 
 
@@ -23,28 +23,23 @@ patch_ng_logger.handlers = []
 patch_ng_logger.addHandler(PatchLogHandler())
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle not in patches_by_file:
-        pagemsg("WARNING: Can't find diff for file")
+def process_text_on_page(p):
+    if p.title not in patches_by_file:
+        p.msg("WARNING: Can't find diff for file")
         return
 
-    pagemsg("Processing")
-    page = pywikibot.Page(site, pagetitle)
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("WARNING: Page doesn't exist any more")
+    p.msg("Processing")
+    page = pywikibot.Page(site, p.title)
+    if not blib.safe_page_exists(page, p.errandmsg):
+        p.msg("WARNING: Page doesn't exist any more")
     else:
-        curtext = blib.safe_page_text_or_none(page, errandpagemsg)
+        curtext = blib.safe_page_text_or_none(page, p.errandmsg)
         if curtext is not None:
             if args.input_format == "diff-match-patch":
                 from diff_match_patch import diff_match_patch
 
                 dmp = diff_match_patch()
-                diff = patches_by_file[pagetitle]
+                diff = patches_by_file[p.title]
                 # diff = re.sub(r"\A--- \n\+\+\+\n", "", diff)
                 # diff = re.sub(r"\\ No newline at end of file\n\Z", "", diff)
                 patches = dmp.patch_fromText(diff)
@@ -52,18 +47,18 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 from patch_ng import fromstring, fromfile
 
-                origfile = open("%s/%s" % (args.tmp_dir, pagetitle), "w")
+                origfile = open("%s/%s" % (args.tmp_dir, p.title), "w")
                 origfile.write(curtext)
                 origfile.close()
-                diff = patches_by_file[pagetitle]
-                patchfn = "%s/%s.patch" % (args.tmp_dir, pagetitle)
+                diff = patches_by_file[p.title]
+                patchfn = "%s/%s.patch" % (args.tmp_dir, p.title)
                 patchfile = open(patchfn, "w")
                 patchfile.write(diff)
                 patchfile.close()
                 # patch = fromstring(diff)
                 patch = fromfile(patchfn)
                 patch.apply(root=args.tmp_dir, strip=0, fuzz=False)
-                newfile = open("%s/%s" % (args.tmp_dir, pagetitle), "r")
+                newfile = open("%s/%s" % (args.tmp_dir, p.title), "r")
                 newtext = "".join(newfile.readlines())
                 newfile.close()
 

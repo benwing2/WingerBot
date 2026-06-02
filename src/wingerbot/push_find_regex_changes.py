@@ -12,40 +12,34 @@ import unicodedata
 # --lang-only or --subset-of-langs), and `origcontents` is the previous text of the page (or of the specific language
 # section) from which `contents` was derived. We need `origcontents` so we can check to see if the page (or specific
 # language section) was changed by someone else in the meantime; if so, we can't save.
-def process_text_on_page(index, pagetitle, curtext, contents, prev_comment, origcontents):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p, contents, prev_comment, origcontents):
     def normalize_text(text):
         if text is None:
             return text
         return blib.normalize_text_for_save(text).rstrip("\n")
 
     if normalize_text(contents) == normalize_text(origcontents):
-        pagemsg("Skipping contents because no change")
+        p.msg("Skipping contents because no change")
         return
     if args.verbose:
-        pagemsg("For [[%s]]:" % pagetitle)
-        pagemsg("------- begin text --------")
+        p.msg("For [[%s]]:" % p.title)
+        p.msg("------- begin text --------")
         # Strip final newline because msg() adds one.
         contents_minus_newline = contents
         if contents_minus_newline.endswith("\n"):
             contents_minus_newline = contents_minus_newline[-1]
         msg(contents_minus_newline)
         msg("------- end text --------")
-    page_exists = curtext and origcontents is not None
+    page_exists = p.text and origcontents is not None
     if not page_exists:
         if args.lang_only or args.subset_of_langs or not args.allow_page_creation:
-            errandpagemsg(
+            p.errandmsg(
                 "WARNING: Trying to create page when --lang-only, --subset-of-langs or not --allow-page-creation"
             )
             return
     else:
         if args.lang_only or args.subset_of_langs:
-            secs = blib.split_text_into_sections(curtext, pagemsg)
+            secs = blib.split_text_into_sections(p.text, p.msg)
             sections = secs.sections
             sections_by_lang = secs.sections_by_lang
 
@@ -53,7 +47,7 @@ def process_text_on_page(index, pagetitle, curtext, contents, prev_comment, orig
                 newsectext = unicodedata.normalize("NFC", newsectext)
                 supposed_cursectext = unicodedata.normalize("NFC", origsectext)
                 if lang not in sections_by_lang:
-                    errandpagemsg("WARNING: Couldn't find %s section, skipping page; showing our changes:" % lang)
+                    p.errandmsg("WARNING: Couldn't find %s section, skipping page; showing our changes:" % lang)
                     blib.show_diff(supposed_cursectext, newsectext)
                     return False
                 langsec = sections_by_lang[lang]
@@ -65,9 +59,9 @@ def process_text_on_page(index, pagetitle, curtext, contents, prev_comment, orig
                     cursectext += "\n"
                 if cursectext != supposed_cursectext:
                     if cursectext == newsectext:
-                        pagemsg("%s section has already been changed to new text, not saving" % lang)
+                        p.msg("%s section has already been changed to new text, not saving" % lang)
                     else:
-                        errandpagemsg(
+                        p.errandmsg(
                             "WARNING: %s text has changed from supposed original text, not saving; showing our changes:"
                             % lang
                         )
@@ -81,14 +75,14 @@ def process_text_on_page(index, pagetitle, curtext, contents, prev_comment, orig
                 if not changed:
                     return
             else:
-                origsec = blib.split_text_into_sections(origcontents, pagemsg)
+                origsec = blib.split_text_into_sections(origcontents, p.msg)
                 origcontents_sections = origsec.sections
                 origcontents_sections_by_lang = origsec.sections_by_lang
-                contentssec = blib.split_text_into_sections(contents, pagemsg)
+                contentssec = blib.split_text_into_sections(contents, p.msg)
                 contents_sections = contentssec.sections
                 contents_sections_by_lang = contentssec.sections_by_lang
                 if origcontents_sections_by_lang != contents_sections_by_lang:
-                    errandpagemsg(
+                    p.errandmsg(
                         "WARNING: Languages differ or have been rearranged between original and replacement text, not saving"
                     )
                     return
@@ -96,25 +90,25 @@ def process_text_on_page(index, pagetitle, curtext, contents, prev_comment, orig
                     lang_origcontents = origcontents_sections[langsec]
                     lang_contents = contents_sections[langsec]
                     if lang_origcontents == lang_contents:
-                        pagemsg("Skipping contents for %s because no change" % lang)
+                        p.msg("Skipping contents for %s because no change" % lang)
                     elif not replace_lang_section(lang, lang_contents, lang_origcontents):
                         return
             contents = "".join(sections)
         else:
-            nfc_curtext = normalize_text(curtext)
+            nfc_curtext = normalize_text(p.text)
             supposed_nfc_curtext = normalize_text(origcontents)
             contents = normalize_text(contents)
             if nfc_curtext != supposed_nfc_curtext:
                 if nfc_curtext == contents:
-                    pagemsg("Page has already been changed to new text, not saving")
+                    p.msg("Page has already been changed to new text, not saving")
                 else:
-                    errandpagemsg(
+                    p.errandmsg(
                         "WARNING: Text has changed from supposed original text, not saving; showing our changes:"
                     )
                     blib.show_diff(supposed_nfc_curtext, contents)
                 return
     if not prev_comment and not args.comment:
-        errandpagemsg("WARNING: Trying to save page and neither previous comment not --comment available")
+        p.errandmsg("WARNING: Trying to save page and neither previous comment not --comment available")
         return
     if not prev_comment:
         comment = args.comment
@@ -163,19 +157,16 @@ if __name__ == "__main__":
         for index, pagetitle, text, comment in blib.yield_text_from_find_regex(lines, args.verbose):
             newpages[pagetitle] = (text, comment)
 
-        def do_process_text_on_page(index, pagetitle, curtext):
-            def pagemsg(txt):
-                msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-            origcontents = origpages.get(pagetitle, None)
-            newtext, comment = newpages.get(pagetitle, (None, None))
+        def do_process_text_on_page(p):
+            origcontents = origpages.get(p.title, None)
+            newtext, comment = newpages.get(p.title, (None, None))
             if not newtext:
-                pagemsg("Skipping because not found in among new page contents")
+                p.msg("Skipping because not found in among new page contents")
                 return
             if origcontents == newtext:
-                pagemsg("Skipping contents because no change")
+                p.msg("Skipping contents because no change")
                 return
-            return process_text_on_page(index, pagetitle, curtext, newtext, comment, origcontents)
+            return process_text_on_page(p, newtext, comment, origcontents)
 
         blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)
 
@@ -190,7 +181,7 @@ if __name__ == "__main__":
             else:
 
                 def do_process_page(index, page):
-                    return process_text_on_page(index, page.title(), page.text, newtext, comment, origcontents)
+                    return process_text_on_page(blib.ProcessPageParams(args, index, page.title(), page.text, None), newtext, comment, origcontents)
 
                 blib.do_edit(
                     index,

@@ -6,16 +6,13 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    secbody, sectail = blib.force_two_newlines_in_secbody(text, "")
+    secbody, sectail = blib.force_two_newlines_in_secbody(p.text, "")
 
     while True:
-        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, p.msg)
         subsections = subsecs.subsections
         # Look for a Related terms section and move it up.
         for k, header in subsecs.header_list:

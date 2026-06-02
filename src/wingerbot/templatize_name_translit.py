@@ -8,16 +8,13 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
     for j, thislangname in secs.lang_list:
         if thislangname not in lang_data.languages_by_canonical_name:
-            pagemsg("WARNING: Unrecognized section lang %s" % thislangname)
+            p.msg("WARNING: Unrecognized section lang %s" % thislangname)
             continue
         thislangcode = lang_data.languages_by_canonical_name[thislangname]["code"]
 
@@ -25,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
             origline = m.group(0)
             source_lang, name_type, template, period = m.groups()
             if source_lang not in lang_data.languages_by_canonical_name:
-                pagemsg(
+                p.msg(
                     "WARNING: Unrecognized source lang %s, can't parse: <from> %s <to> %s <end>"
                     % (source_lang, origline, origline)
                 )
@@ -38,20 +35,20 @@ def process_text_on_page(index, pagetitle, text):
             alt = getparam(t, "3")
             eq = blib.remove_links(getparam(t, "4"))
             if source_lang_code != lang:
-                pagemsg(
+                p.msg(
                     "WARNING: Source lang code %s for %s != template lang code %s, can't parse: <from> %s <to> %s <end>"
                     % (source_lang_code, source_lang, lang, origline, origline)
                 )
                 return origline
             if alt:
-                pagemsg(
+                p.msg(
                     "WARNING: Can't handle alt=%s in %s: <from> %s <to> %s <end>" % (alt, str(t), origline, origline)
                 )
                 return origline
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "3", "4", "sc"]:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Can't handle %s=%s in %s: <from> %s <to> %s <end>"
                         % (pn, str(param.value), origline, origline)
                     )

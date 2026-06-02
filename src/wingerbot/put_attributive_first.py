@@ -2,16 +2,10 @@
 
 import pywikibot, re, sys, argparse
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg
+from wingerbot.blib import site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     def put_attributive_first(m):
@@ -21,9 +15,9 @@ def process_text_on_page(index, pagetitle, text):
             labels = ["attributive"] + labels_wo_attributive
         return "{{lb|ru|%s}}" % "|".join(labels)
 
-    newtext = re.sub(r"\{\{lb\|ru\|(.*?)\}\}", put_attributive_first, text)
+    newtext = re.sub(r"\{\{lb\|ru\|(.*?)\}\}", put_attributive_first, p.text)
 
-    if newtext != text:
+    if newtext != p.text:
         notes.append("put attributive label first")
     return newtext, notes
 

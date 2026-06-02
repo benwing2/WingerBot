@@ -4,13 +4,10 @@ from wingerbot import blib
 from wingerbot.blib import msg, tname, pname
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -19,24 +16,24 @@ def process_text_on_page(index, pagename, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if "{{{PAGENAME}}}" in pv or "{{{SUBPAGENAME}}}" in pv:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw triple-brace {{{PAGENAME}}} or {{{SUBPAGENAME}}}, not replacing: %s=%s" % (pn, pv)
                     )
                 else:
                     changed = False
                     if "{{PAGENAME}}" in pv:
-                        pv = pv.replace("{{PAGENAME}}", "{{pagename}}")
-                        notes.append("replace {{PAGENAME}} with {{pagename}} in {{%s}}" % tn)
+                        pv = pv.replace("{{PAGENAME}}", "{{p.title}}")
+                        notes.append("replace {{PAGENAME}} with {{p.title}} in {{%s}}" % tn)
                         changed = True
                     if "{{SUBPAGENAME}}" in pv:
-                        pv = pv.replace("{{SUBPAGENAME}}", "{{pagename}}")
-                        notes.append("replace {{SUBPAGENAME}} with {{pagename}} in {{%s}}" % tn)
+                        pv = pv.replace("{{SUBPAGENAME}}", "{{p.title}}")
+                        notes.append("replace {{SUBPAGENAME}} with {{p.title}} in {{%s}}" % tn)
                         changed = True
                     if changed:
                         param.value = pv
 
         if args.verbose and origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt.replace("\n", r"\n"), str(t).replace("\n", r"\n")))
+            p.msg("Replaced %s with %s" % (origt.replace("\n", r"\n"), str(t).replace("\n", r"\n")))
 
     return str(parsed), notes
 

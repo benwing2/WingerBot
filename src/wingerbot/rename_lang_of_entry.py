@@ -6,17 +6,14 @@ from wingerbot import blib, lang_utils
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
-    pagemsg("Processing")
+def process_text_on_page(p):
+    origtext = p.text
+    p.msg("Processing")
     notes = []
 
     # Split into sections
-    text, orig_secfinalnl = blib.force_two_newlines_in_secbody(text)
-    secs = blib.split_text_into_sections(text, pagemsg)
+    text, orig_secfinalnl = blib.force_two_newlines_in_secbody(p.text)
+    secs = blib.split_text_into_sections(text, p.msg)
     sections = secs.sections
     sections_by_lang = secs.sections_by_lang
     lang_list = secs.lang_list
@@ -24,11 +21,11 @@ def process_text_on_page(index, pagetitle, text):
 
     # Make sure new language section not already present.
     if args.tolang in sections_by_lang:
-        pagemsg("WARNING: Already saw %s section, skipping" % args.tolang)
+        p.msg("WARNING: Already saw %s section, skipping" % args.tolang)
         return
 
     if args.fromlang not in sections_by_lang:
-        pagemsg("Didn't see %s section for existing language, skipping" % args.fromlang)
+        p.msg("Didn't see %s section for existing language, skipping" % args.fromlang)
         return
 
     # Change language name. In case the old name appears twice, we iterate over lang_list.

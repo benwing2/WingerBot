@@ -8,11 +8,8 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p):
+    origtext = p.text
     notes = []
 
     def templatize_cognate_line(m):
@@ -23,12 +20,12 @@ def process_text_on_page(index, pagetitle, text):
             line_no_ng,
         )
         if not m:
-            pagemsg("WARNING: Unable to parse line: <from> %s <to> %s <end>" % (origline, origline))
+            p.msg("WARNING: Unable to parse line: <from> %s <to> %s <end>" % (origline, origline))
             return origline
         pre_text, template, usage, source_lang, cognate_term, cognate_text, period = m.groups()
         m = re.search(r"^given name\|(.*?)(\||$)", template)
         if not m:
-            pagemsg(
+            p.msg(
                 "WARNING: Something weird, can't parse lang out of template %s: <from> %s <to> %s <end>"
                 % (template, origline, origline)
             )
@@ -37,14 +34,14 @@ def process_text_on_page(index, pagetitle, text):
         if source_lang:
             source_lang = source_lang.strip()
             if source_lang not in lang_data.languages_by_canonical_name:
-                pagemsg(
+                p.msg(
                     "WARNING: Unrecognized source lang %s, can't parse: <from> %s <to> %s <end>"
                     % (source_lang, origline, origline)
                 )
                 return origline
             source_lang_code = lang_data.languages_by_canonical_name[source_lang]["code"]
             if source_lang_code != lang:
-                pagemsg(
+                p.msg(
                     "WARNING: Source lang code %s for %s != template lang code %s, can't parse: <from> %s <to> %s <end>"
                     % (source_lang_code, source_lang, lang, origline, origline)
                 )
@@ -59,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
                 coglang, cognate = m.groups()
                 if is_variant:
                     if coglang != lang:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Variant lang code %s != template lang code %s, can't parse: <from> %s <to> %s <end>"
                             % (coglang, lang, origline, origline)
                         )
@@ -79,7 +76,7 @@ def process_text_on_page(index, pagetitle, text):
             if m:
                 cognates.append(split_cognate)
                 continue
-            pagemsg(
+            p.msg(
                 "WARNING: Can't parse cognate/equivalent/variant text <%s> in line: <from> %s <to> %s <end>"
                 % (split_cognate, origline, origline)
             )
@@ -98,11 +95,11 @@ def process_text_on_page(index, pagetitle, text):
         usagetext = usage and "|usage=%s" % usage.strip() or ""
         notes.append("templatize English equivalent name(s) %s into {{given name}}" % ",".join(cognates))
         retval = "%s{{%s%s%s}}%s" % (pre_text, template, usagetext, "".join(eq_params), period)
-        pagemsg("Replaced <%s> with <%s>" % (origline, retval))
+        p.msg("Replaced <%s> with <%s>" % (origline, retval))
         return retval
 
     text = re.sub(
-        r"^.*\{\{given name\|.*?\}\}.*(cognate|equivalent|variant).*$", templatize_cognate_line, text, 0, re.M
+        r"^.*\{\{given name\|.*?\}\}.*(cognate|equivalent|variant).*$", templatize_cognate_line, p.text, 0, re.M
     )
     return text, notes
 

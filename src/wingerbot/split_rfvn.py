@@ -9,15 +9,12 @@ cjk_chars = "[\u1100-\u11ff\u2e80-\ua4ff\uac00-\ud7ff\uff00-\uffef]|[\ud840-\ud8
 cjk_regex = "(%s|-notice-(zh|ja|ko)-)" % cjk_chars
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    months = re.split("(^=[^=].*\n)", text, 0, re.M)
+    months = re.split("(^=[^=].*\n)", p.text, 0, re.M)
 
     extracted_parts = [months[0]]
 
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
             to_extract = re.search(regex, level2_secs[k - 1])
             if not args.invert and to_extract or args.invert and not to_extract:
                 this_header = re.sub(r"^\s*=+\s*(.*?)\s*=+\s*$", r"\1", level2_secs[k - 1])
-                pagemsg("Extracting %s: %s" % (month, this_header))
+                p.msg("Extracting %s: %s" % (month, this_header))
                 extracted_in_month.append(level2_secs[k - 1] + level2_secs[k])
         if extracted_in_month:
             extracted_parts.append(months[j - 1])

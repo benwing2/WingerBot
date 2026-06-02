@@ -6,13 +6,11 @@ from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text, langcode, langname, topicstemp):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p, langcode, langname, topicstemp):
     notes = []
 
-    pagemsg("Processing")
+    text = p.text
+    p.msg("Processing")
 
     escaped_langcode = re.escape(langcode)
     escaped_langname = re.escape(langname).replace(r"\ ", "[ _]")
@@ -164,8 +162,8 @@ if __name__ == "__main__":
 
     if langcode and langname:
 
-        def do_process_text_on_page(index, pagetitle, text):
-            return process_text_on_page(index, pagetitle, text, langcode, langname, args.topics_template)
+        def do_process_text_on_page(p):
+            return process_text_on_page(p, langcode, langname, args.topics_template)
 
         blib.do_pagefile_cats_refs(
             args, start, end, do_process_text_on_page, default_cats=[langname + " lemmas"], edit=True, stdin=True

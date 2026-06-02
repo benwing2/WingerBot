@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 from bidi.algorithm import get_display
 
 L2R = "\u200e"
@@ -73,28 +73,25 @@ def process_text_chunk(text, pagemsg, with_fallback=False):
     return text, notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle.startswith("Template:") or pagetitle.startswith("Module:"):
+def process_text_on_page(p):
+    if p.title.startswith("Template:") or p.title.startswith("Module:"):
         if args.verbose:
-            pagemsg("Skipping Template:/Module: page")
+            p.msg("Skipping Template:/Module: page")
         return
 
     notes = []
 
-    retval = process_text_chunk(text, pagemsg)
+    retval = process_text_chunk(p.text, p.msg)
     if retval is True:  # no bidi markers to begin with
         return
     newtext, new_notes = retval
     if not new_notes:  # Error running algorithm or can't remove
-        lines = text.split("\n")
+        lines = p.text.split("\n")
         changed = False
         for lineind, line in enumerate(lines):
 
             def linemsg(txt):
-                pagemsg("Line %s: %s: line=%s" % (lineind, txt, line))
+                p.msg("Line %s: %s: line=%s" % (lineind, txt, line))
 
             retval = process_text_chunk(line, linemsg, with_fallback=True)
             if retval is True:  # no bidi markers in line to begin with

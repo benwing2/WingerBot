@@ -634,16 +634,16 @@ def undo_html_entity_replacement(txt):
     return txt
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, blib.escape_newline(txt)))
-
+def process_text_on_page(p):
     notes = []
+
+    def pagemsg(txt):
+        p.msg(blib.escape_newline(txt))
 
     templates_to_rename_numbered_params = (
         set(args.templates_to_rename_numbered_params.split(",")) if args.templates_to_rename_numbered_params else None
     )
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         this_template_notes = []
@@ -1560,7 +1560,7 @@ def process_text_on_page(index, pagetitle, text):
                 params_not_yet_handled = [
                     "via",
                     "rfc",
-                    "pagetitle",
+                    "p.title",
                     "part",
                     "editor-first",  # combine into editor=
                     "editor-last",

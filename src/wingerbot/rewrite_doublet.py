@@ -4,24 +4,21 @@ import pywikibot, re, sys, argparse
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 # WARNING: Not idempotent.
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("WARNING: Page should be ignored")
+    if blib.page_should_be_ignored(p.title):
+        p.msg("WARNING: Page should be ignored")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -46,7 +43,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif pname in ["1", "2", "notext", "nocap", "nocat"]:
                     pass
                 else:
-                    pagemsg("WARNING: Unrecognized param %s=%s in %s, skipping" % (pname, pval, origt))
+                    p.msg("WARNING: Unrecognized param %s=%s in %s, skipping" % (pname, pval, origt))
                     break
                 params.append((pname, pval, showkey))
             else:  # No break
@@ -56,7 +53,7 @@ def process_text_on_page(index, pagetitle, text):
                 for pname, pval, showkey in params:
                     t.add(pname, pval, showkey=showkey, preserve_spacing=False)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("restructure {{doublet}} for new syntax")
 
     return str(parsed), notes

@@ -6,16 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     templates_to_expand = args.templates_to_expand.split(",") if args.templates_to_expand else []
     lang_templates_to_expand = args.lang_templates_to_expand.split(",") if args.lang_templates_to_expand else []
     if args.skip_langs:
@@ -40,11 +34,11 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 should_expand_template = True
         if should_expand_template:
-            expanded = expand_text(str(t))
+            expanded = p.expand_text(str(t))
             if not expanded:
                 continue
             for cattext in re.findall(args.category_regex, expanded):
-                pagemsg("Found snarfed category: %s" % cattext[2:-2])
+                p.msg("Found snarfed category: %s" % cattext[2:-2])
 
 
 if __name__ == "__main__":

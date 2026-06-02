@@ -9,18 +9,15 @@ from collections import defaultdict
 seen_projects = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if blib.page_should_be_ignored(pagetitle):
+def process_text_on_page(p):
+    if blib.page_should_be_ignored(p.title):
         return
 
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
 
@@ -31,10 +28,10 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "projectlink":
             project = getp("1")
             if "{" in project:
-                pagemsg("WARNING: Saw brace in 1=, not changing: %s" % str(t))
+                p.msg("WARNING: Saw brace in 1=, not changing: %s" % str(t))
                 continue
             elif not project:
-                pagemsg("WARNING: Saw blank 1=, not changing: %s" % str(t))
+                p.msg("WARNING: Saw blank 1=, not changing: %s" % str(t))
                 continue
             project = re.sub("^[Ww]iki", "", project)
             movelang = False
@@ -78,7 +75,7 @@ def process_text_on_page(index, pagetitle, text):
             elif project == "meta":
                 newname = "R:metawiki"
             else:
-                pagemsg("WARNING: Unknown project '%s', not changing: %s" % (project, str(t)))
+                p.msg("WARNING: Unknown project '%s', not changing: %s" % (project, str(t)))
                 continue
             # FIXME, eliminate disambig, dab manually
             if movelang:
@@ -130,7 +127,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("rename {{projectlink|%s}} -> {{%s}}" % (project, newname))
 
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 

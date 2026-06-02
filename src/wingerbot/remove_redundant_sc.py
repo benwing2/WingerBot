@@ -81,16 +81,10 @@ def check_script_agrees(value_to_check, lang, sc, pagemsg, expand_text, line_or_
     return True
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -111,15 +105,15 @@ def process_text_on_page(index, pagetitle, text):
                     if value_to_check:
                         break
                 if not value_to_check:
-                    pagemsg("WARNING: For lang=%s, no displayable value, not removing sc=%s: %s" % (lang, sc, str(t)))
+                    p.msg("WARNING: For lang=%s, no displayable value, not removing sc=%s: %s" % (lang, sc, str(t)))
                     continue
-                agrees = check_script_agrees(value_to_check, lang, sc, pagemsg, expand_text, str(t), "removing sc=")
+                agrees = check_script_agrees(value_to_check, lang, sc, p.msg, p.expand_text, str(t), "removing sc=")
                 if not agrees:
                     continue
                 rmparam(t, "sc")
                 notes.append("remove redundant sc=%s from {{%s}}" % (sc, tn))
         if str(t) != origt:
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
     notes = blib.group_notes(notes)
     remove_redundant_notes = []
     other_notes = []

@@ -14,21 +14,15 @@ lang_data = lang_utils.get_lang_data()
 existing_langs_seen = set()
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    lang_specific_label_data = clean_label_module.process_text_on_page_for_label_objects(index, pagename, text)
+    lang_specific_label_data = clean_label_module.process_text_on_page_for_label_objects(p)
     if lang_specific_label_data is None:
         return
     langcode = lang_specific_label_data.langcode
     if langcode is None:
-        errandpagemsg("Can't locate or parse language code from module name")
+        p.errandmsg("Can't locate or parse language code from module name")
         return
     existing_langs_seen.add(langcode)
 
@@ -37,7 +31,7 @@ def process_text_on_page(index, pagename, text):
     for labelobj in lang_specific_label_data.labels_seen:
         if isinstance(labelobj, LabelData):
             if labelobj.label in lang_specific_labels:
-                pagemsg(
+                p.msg(
                     "WARNING: Lang-specific label '%s' seen more than once as label or alias%s"
                     % (
                         labelobj.label,
@@ -53,7 +47,7 @@ def process_text_on_page(index, pagename, text):
             if hasattr(labelobj.fields, "aliases"):
                 for alias in labelobj.fields.aliases.value:
                     if alias in lang_specific_labels:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Lang-specific alias '%s' of label '%s' seen more than once as label or alias%s"
                             % (
                                 alias,
@@ -87,7 +81,7 @@ def process_text_on_page(index, pagename, text):
             )
 
         def comment_out(labelobj, dupmsg):
-            new_lines = clean_label_module.output_labels([labelobj], pagemsg)
+            new_lines = clean_label_module.output_labels([labelobj], p.msg)
             return ["", "-- %s" % dupmsg] + ["-- %s" % line for line in new_lines]
 
         dupmsgs = []
@@ -96,7 +90,7 @@ def process_text_on_page(index, pagename, text):
                 labelobj.label,
                 is_canonical(labelobj.label),
             )
-            pagemsg("WARNING: %s" % dupmsg)
+            p.msg("WARNING: %s" % dupmsg)
             dupmsgs.append(dupmsg)
         if hasattr(labelobj.fields, "aliases"):
             for alias in labelobj.fields.aliases.value:
@@ -105,7 +99,7 @@ def process_text_on_page(index, pagename, text):
                         "Regional alias '%s' of label '%s' duplicated in lang-specific data%s, adding commented-out"
                         % (alias, labelobj.label, is_canonical(alias))
                     )
-                    pagemsg("WARNING: %s" % dupmsg)
+                    p.msg("WARNING: %s" % dupmsg)
                     dupmsgs.append(dupmsg)
         if dupmsgs:
             commented_out_incorporated_regional_labels.append(labelobj.label)
@@ -118,7 +112,7 @@ def process_text_on_page(index, pagename, text):
 
     lang_specific_label_data.labels_seen.extend(extra_lines_at_end)
 
-    new_lines = clean_label_module.output_labels(lang_specific_label_data.labels_seen, pagemsg)
+    new_lines = clean_label_module.output_labels(lang_specific_label_data.labels_seen, p.msg)
     text = "\n".join(new_lines)
     text = text.replace("\n\n\n", "\n\n")
     text = re.sub("^    ", "\t", text, 0, re.M)
@@ -157,7 +151,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 regional_module_text = open(args.regional_data_module, "r", encoding="utf-8").read()
 regional_label_data = clean_label_module.process_text_on_page_for_label_objects(
-    1, args.regional_data_module, regional_module_text
+    blib.ProcessPageParams(args, 1, args.regional_data_module, regional_module_text, None)
 )
 if regional_label_data is None:
     errandmsg("WARNING: Error parsing regional label data module '%s', stopping" % args.regional_data_module)
@@ -323,8 +317,8 @@ else:
         regional_module_text,
         None,
         pagemsg,
-        is_find_regex=True,
-        edit=True,
+        "find-regex",
+        True,
     )
 
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
@@ -353,6 +347,6 @@ else:
                 "",
                 None,
                 pagemsg,
-                is_find_regex=True,
-                edit=True,
+                "find-regex",
+                True,
             )

@@ -51,13 +51,10 @@ def template_changelog_name(t):
 templates_messaged_about = set()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
 
@@ -120,20 +117,20 @@ def process_text_on_page(index, pagetitle, text):
             # These templates have their own multiword link adding algorithm that conflicts with the default one
             pass
         elif tn not in templates_messaged_about and any(tn.startswith("%s-" % langcode) for langcode in langcodes):
-            pagemsg("WARNING: Saw lang-specific template {{%s}}" % tn)
+            p.msg("WARNING: Saw lang-specific template {{%s}}" % tn)
             templates_messaged_about.add(tn)
         if params_to_check:
-            default_head = pagetitle
+            default_head = p.title
             if head_is_multiword(default_head):
                 default_head = add_multiword_links(default_head)
             for param in params_to_check:
                 if getp(param) == default_head:
                     changelog_name = template_changelog_name(t)
-                    pagemsg("Removing redundant %s=%s in {{%s}}" % (param, default_head, changelog_name))
+                    p.msg("Removing redundant %s=%s in {{%s}}" % (param, default_head, changelog_name))
                     rmparam(t, param)
                     notes.append("remove redundant %s=%s in {{%s}}" % (param, default_head, changelog_name))
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     text = str(parsed)
     return text, notes

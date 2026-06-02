@@ -8,13 +8,10 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 outlines = []
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     props = {}
     saw_invoke_form_of_templates = False
@@ -27,10 +24,10 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn == "#invoke:form of/templates":
             if saw_invoke_form_of_templates:
-                pagemsg("WARNING: Saw two module invocations of [[Module:form of/templates]]")
+                p.msg("WARNING: Saw two module invocations of [[Module:form of/templates]]")
                 return
             if getp("lang"):
-                pagemsg("WARNING: Saw lang-specific form of template: %s" % str(t))
+                p.msg("WARNING: Saw lang-specific form of template: %s" % str(t))
                 return
             if getp("withcap"):
                 props["withcap"] = True
@@ -61,18 +58,18 @@ def process_text_on_page(index, pagetitle, text):
             elif func == "tagged_form_of_t":
                 props["withPOS"] = True
     if not props:
-        pagemsg("WARNING: Didn't see [[Module:form of/templates]] invocation")
+        p.msg("WARNING: Didn't see [[Module:form of/templates]] invocation")
         return
     aliases = []
     for i, subpage in blib.references(
-        pagetitle, namespaces=["Template"], only_template_inclusion=False, filter_redirects=True
+        p.title, namespaces=["Template"], only_template_inclusion=False, filter_redirects=True
     ):
         alias = subpage.title()
         num_refs = len(list(blib.references(alias, namespaces=[0])))
-        pagemsg("Found alias '%s', num_refs=%s" % (alias, num_refs))
+        p.msg("Found alias '%s', num_refs=%s" % (alias, num_refs))
         aliases.append(re.sub("^Template:", "", alias))
     if aliases:
-        pagemsg("Found aliases: %s" % ",".join(aliases))
+        p.msg("Found aliases: %s" % ",".join(aliases))
         props["aliases"] = aliases
     props_key = {"aliases": 0, "withcap": 1, "withdot": 2, "withfrom": 3, "withPOS": 4, "withtags": 5, "cat": 6}
     propitems = sorted(props.items(), key=lambda x: props_key[x[0]])
@@ -86,7 +83,7 @@ def process_text_on_page(index, pagetitle, text):
             return "[%s]" % ", ".join(valuestr(x) for x in value)
 
     propstr = ", ".join("%s: %s" % ('"%s"' % key, valuestr(value)) for key, value in propitems)
-    outlines.append('  ("%s", {%s}),' % (re.sub("^Template:", "", pagetitle), propstr))
+    outlines.append('  ("%s", {%s}),' % (re.sub("^Template:", "", p.title), propstr))
 
 
 parser = blib.create_argparser("Generate input to make_form_of_table.py", include_pagefile=True, include_stdin=True)

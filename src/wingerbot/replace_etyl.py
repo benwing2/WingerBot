@@ -12,16 +12,13 @@ etym_lang_data = lang_utils.get_etym_lang_data()
 etym_language_to_parent = lang_utils.get_etym_language_to_parent()
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
 
-    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
 
     def m_und_uder(m):
@@ -33,7 +30,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         ):
             pass
         else:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw {{etyl|%s|%s}} {{m|und|...}} where destination is not a family, not changing"
                 % (destcode, sourcecode)
             )
@@ -42,7 +39,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         notes.append(
             "replace {{etyl|...}} for destination family (+ {{m|und|...}}) with {{uder|%s|%s}}" % (sourcecode, destcode)
         )
-        pagemsg("Replacing <%s> with <%s> for destination family with 'und' term code" % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s> for destination family with 'und' term code" % (origtext, newtext))
         return newtext
 
     def replace_with_uder(m):
@@ -50,7 +47,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         origtext = m.group(0)
         mm = re.search(r"^\{\{etyl\|(.*?)\|(.*?)\}\}$", etyltemp)
         if not mm:
-            pagemsg("WARNING: Something wrong, can't match template call %s" % etyltemp)
+            p.msg("WARNING: Something wrong, can't match template call %s" % etyltemp)
             return origtext
         etym_langcode, from_langcode = mm.groups()
         if etym_langcode != m_langcode:
@@ -61,18 +58,18 @@ def process_text_on_page(index, pagetitle, pagetext):
                 and etym_lang_data.etym_languages_by_code[etym_langcode]["canonicalName"]
                 == etym_lang_data.etym_languages_by_code[m_langcode]["canonicalName"]
             ):
-                pagemsg(
+                p.msg(
                     "Saw etym lang %s in {{etyl}} and etym lang %s in {{m}}, which are aliases of each other"
                     % (etym_langcode, m_langcode)
                 )
                 display_msg = True
             elif m_langcode == from_langcode:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw source language code %s as destination, assuming a mistake, using destination %s"
                     % (from_langcode, etym_langcode)
                 )
             elif etym_language_to_parent.get(etym_langcode, "NONE") != m_langcode:
-                pagemsg(
+                p.msg(
                     "WARNING: Mismatched language codes, saw %s vs. %s in %s {{m|%s|...}}"
                     % (etym_langcode, m_langcode, etyltemp, m_langcode)
                 )
@@ -80,10 +77,10 @@ def process_text_on_page(index, pagetitle, pagetext):
             else:
                 display_msg = True
             if display_msg:
-                pagemsg("Using etym language code %s in place of parent or alias %s" % (etym_langcode, m_langcode))
+                p.msg("Using etym language code %s in place of parent or alias %s" % (etym_langcode, m_langcode))
         newtext = "{{uder|%s|%s|" % (from_langcode, etym_langcode)
         notes.append("absorb {{etyl|...}} {{m|...}} into {{uder|%s|%s}}" % (from_langcode, etym_langcode))
-        pagemsg("Replacing <%s> with <%s>, absorbing {{m|..." % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s>, absorbing {{m|..." % (origtext, newtext))
         return newtext
 
     def swap_etyl_uder(m):
@@ -91,7 +88,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         origtext = m.group(0)
         newtext = "{{uder|%s|%s|-}}" % (sourcecode, destcode)
         notes.append("swap {{etyl|...}} into {{uder|%s|%s}}" % (sourcecode, destcode))
-        pagemsg("Replacing <%s> with <%s>, swapping langcodes" % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s>, swapping langcodes" % (origtext, newtext))
         return newtext
 
     # Go through each section in turn, looking for Etymology sections

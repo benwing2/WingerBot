@@ -32,29 +32,29 @@ def rename_page(args, index, page, totitle, comment, refrom, reto):
     )
     if not blib.safe_page_exists(page, errandpagemsg):
         pagemsg("Skipping because page doesn't exist")
-        return False
+        return
     if args.verbose:
         pagemsg("Processing")
     if not totitle:
         totitle = replace_text(pagetitle)
     if totitle == pagetitle:
         pagemsg("WARNING: Regex doesn't match, not renaming to same name")
-        return False
+        return
     else:
         new_page = pywikibot.Page(site, totitle)
         if blib.safe_page_exists(new_page, errandpagemsg):
             errandpagemsg("Destination page %s already exists, not moving" % totitle)
-            return False
+            return
         elif args.save:
             try:
                 page.move(totitle, reason=this_comment, movetalk=True, noredirect=not args.with_redirect)
                 errandpagemsg("Renamed to %s" % totitle)
             except pywikibot.exceptions.PageRelatedError as error:
                 errandpagemsg("Error moving to %s: %s" % (totitle, error))
-                return False
+                return
         else:
             pagemsg("Would rename to %s (comment=%s)" % (totitle, this_comment))
-    return True
+    return
 
 
 def delete_page(args, index, page, comment):

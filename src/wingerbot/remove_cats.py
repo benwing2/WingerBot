@@ -15,18 +15,15 @@ no_lang_templates = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p):
+    origtext = p.text
     notes = []
     removed_cats = []
 
     def should_remove_cat(cat):
         return re.match(args.regex + "$", cat.replace("_", " "))
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     text_to_remove = []
 
@@ -59,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
                     full_cat = cat
                 else:
                     if lang not in lang_data.languages_by_code:
-                        pagemsg("WARNING: Saw unrecognized language code '%s'" % lang)
+                        p.msg("WARNING: Saw unrecognized language code '%s'" % lang)
                         return
                     else:
                         full_cat = "%s %s" % (lang_data.languages_by_code[lang]["canonicalName"], cat)
@@ -89,7 +86,7 @@ def process_text_on_page(index, pagetitle, text):
                 for pname, pval, showkey in non_numbered_params:
                     t.add(pname, pval, showkey=showkey, preserve_spacing=False)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
             else:
                 text_to_remove.append(str(t))
 
@@ -104,10 +101,10 @@ def process_text_on_page(index, pagetitle, text):
                 removed_cats.append(m.group(1))
 
     for remove_it in text_to_remove:
-        text, did_replace = blib.replace_in_text(text, remove_it, "", pagemsg, no_found_repl_check=True)
+        text, did_replace = blib.replace_in_text(text, remove_it, "", p.msg, no_found_repl_check=True)
         if not did_replace:
             return
-        pagemsg("Removed %s" % remove_it.replace("\n", r"\n"))
+        p.msg("Removed %s" % remove_it.replace("\n", r"\n"))
 
     text = re.sub(r"\n\n+", "\n\n", text)
     if removed_cats:

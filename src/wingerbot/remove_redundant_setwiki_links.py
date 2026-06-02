@@ -6,16 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
 
@@ -28,17 +22,17 @@ def process_text_on_page(index, pagetitle, text):
             setwiki = getp("setwiki")
             hacked_t = list(blib.parse_text(origt).filter_templates())[0]
             rmparam(hacked_t, "setwiki")
-            auto_cat_text = expand_text(str(hacked_t))
+            auto_cat_text = p.expand_text(str(hacked_t))
             m = re.search(r"'''English Wikipedia''' has an article on:.*?'''\[\[w:(.*?)\|", auto_cat_text, re.S)
             if m:
                 default_wikipedia = m.group(1)
-                pagemsg("Found default Wikipedia article: %s" % default_wikipedia)
+                p.msg("Found default Wikipedia article: %s" % default_wikipedia)
                 if default_wikipedia == setwiki:
-                    pagemsg("Removing setwiki=%s, same as default Wikipedia article" % setwiki)
+                    p.msg("Removing setwiki=%s, same as default Wikipedia article" % setwiki)
                     rmparam(t, "setwiki")
                     notes.append("remove redundant setwiki= from {{%s}}" % tn)
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Not removing setwiki=%s, different from default Wikipedia article '%s'"
                         % (setwiki, default_wikipedia)
                     )

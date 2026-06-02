@@ -6,16 +6,13 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "en-noun" not in text:
+    if "en-noun" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -25,17 +22,17 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn != "1":
-                    pagemsg("Template has %s=, not touching: %s" % (pn, origt))
+                    p.msg("Template has %s=, not touching: %s" % (pn, origt))
                     must_continue = True
                     break
             if must_continue:
                 continue
             par1 = getparam(t, "1")
-            if par1 == pagetitle + "s" or par1 == "s":
+            if par1 == p.title + "s" or par1 == "s":
                 rmparam(t, "1")
                 notes.append("remove redundant 1=%s from {{%s}}" % (par1, tn))
             if str(t) != origt:
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 

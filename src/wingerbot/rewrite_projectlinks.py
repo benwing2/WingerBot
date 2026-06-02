@@ -9,19 +9,16 @@ from collections import defaultdict
 seen_projects = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if blib.page_should_be_ignored(pagetitle):
+def process_text_on_page(p):
+    if blib.page_should_be_ignored(p.title):
         return
 
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
     subs = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
 
@@ -51,8 +48,9 @@ def process_text_on_page(index, pagetitle, text):
             subs.append((str(t), "\n".join(textparts)))
             notes.append("replace {{projectlinks}} with multiple calls to {{projectlink}}")
 
+    text = p.text
     for subfrom, subto in subs:
-        text, replaced = blib.replace_in_text(text, subfrom, subto, pagemsg)
+        text, replaced = blib.replace_in_text(text, subfrom, subto, p.msg)
         if not replaced:
             return
 

@@ -17,22 +17,19 @@ langs_to_remove_sort = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn == "rfdef":
             if getparam(t, "lang"):
-                pagemsg("WARNING: has lang=, skipping: %s" % str(t))
+                p.msg("WARNING: has lang=, skipping: %s" % str(t))
                 continue
             lang = getparam(t, "1")
             if lang in langs_to_convert:
@@ -45,7 +42,7 @@ def process_text_on_page(index, pagetitle, text):
                     rmparam(t, "sort")
                     notes.append("remove sort= from {{rfdef|%s}}, now auto-computed" % lang)
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

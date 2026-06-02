@@ -65,19 +65,13 @@ auto_cat_to_manual = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    origtext = text
-    pagemsg("Processing")
+    origtext = p.text
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     removed_cats = []
 
@@ -120,13 +114,13 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["place", "tcl", "transclude sense", "transclude"]:
-            wikicode = expand_text(str(t))
+            wikicode = p.expand_text(str(t))
             if not wikicode:
                 continue
             for m in re.finditer(r"\[\[(?:[Cc]ategory|CAT):(.*?)\]\]", wikicode):
                 cat = m.group(1)
                 cat = re.sub(r"\|.*", "", cat)
-                pagemsg("Saw auto-added category: %s" % cat)
+                p.msg("Saw auto-added category: %s" % cat)
                 auto_added_categories.add(cat)
 
     text_to_remove = []
@@ -167,7 +161,7 @@ def process_text_on_page(index, pagetitle, text):
                 for pname, pval, showkey in non_numbered_params:
                     t.add(pname, pval, showkey=showkey, preserve_spacing=False)
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
             else:
                 text_to_remove.append(str(t))
     text = str(parsed)
@@ -190,10 +184,10 @@ def process_text_on_page(index, pagetitle, text):
             remove_it = "\n\n" + remove_it
         elif re.search("\n" + re.escape(remove_it) + "\n", normtext):
             remove_it = "\n" + remove_it
-        normtext, did_replace = blib.replace_in_text(normtext, remove_it, "", pagemsg, no_found_repl_check=True)
+        normtext, did_replace = blib.replace_in_text(normtext, remove_it, "", p.msg, no_found_repl_check=True)
         if not did_replace:
             return
-        pagemsg("Removed %s" % remove_it.replace("\n", r"\n"))
+        p.msg("Removed %s" % remove_it.replace("\n", r"\n"))
 
     text = normtext.rstrip("\n") + final_newlines
     text = re.sub(r"\n\n+", "\n\n", text)
