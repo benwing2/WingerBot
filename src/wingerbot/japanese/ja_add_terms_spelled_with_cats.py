@@ -4,7 +4,7 @@ import pywikibot, re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 allowed_reading_types = ["goon", "kanon", "toon", "soon", "kanyoon", "on", "kun", "nanori"]
 
@@ -16,19 +16,14 @@ canonicalize_reading_types = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     m = re.search(
-        "^Category:(Japanese|Okinawan|Miyako) terms (?:spelled|prefixed|suffixed) with (.*) read as (.*)$", pagetitle
+        "^Category:(Japanese|Okinawan|Miyako) terms (?:spelled|prefixed|suffixed) with (.*) read as (.*)$", p.title
     )
     if not m:
-        pagemsg("Skipped")
+        p.msg("Skipped")
         return
 
     notes = []
@@ -39,9 +34,9 @@ def process_text_on_page(index, pagetitle, text):
     spelling_page = pywikibot.Page(site, spelling)
 
     def pagemsg_with_spelling(txt):
-        pagemsg("%s: %s" % (spelling, txt))
+        p.msg("%s: %s" % (spelling, txt))
     def errandpagemsg_with_spelling(txt):
-        errandpagemsg("%s: %s" % (spelling, txt))
+        p.errandmsg("%s: %s" % (spelling, txt))
 
     if not blib.safe_page_exists(spelling_page, errandpagemsg_with_spelling):
         pagemsg_with_spelling("Spelling page doesn't exist, skipping")
@@ -86,12 +81,12 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 pagemsg_with_spelling("WARNING: Can't find reading %s on page" % reading)
 
-    for i, contents_page in blib.cat_articles(re.sub("^Category:", "", pagetitle)):
+    for i, contents_page in blib.cat_articles(re.sub("^Category:", "", p.title)):
         contents_title = contents_page.title()
         def pagemsg_with_contents(txt):
-            pagemsg("%s: %s" % (contents_title, txt))
+            p.msg("%s: %s" % (contents_title, txt))
         def errandpagemsg_with_contents(txt):
-            errandpagemsg("%s: %s" % (contents_title, txt))
+            p.errandmsg("%s: %s" % (contents_title, txt))
 
         contents_page_text = blib.safe_page_text(contents_page, errandpagemsg_with_contents)
         modsec = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)
@@ -242,4 +237,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Japanese", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Japanese", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -27,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
         secbody = newsecbody
 
     while True:
-        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, p.msg)
         subsections = subsecs.subsections
         for k, header in subsecs.header_list:
             if header == "Derived terms" and subsecs.levels[k] == 4:
@@ -53,4 +50,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

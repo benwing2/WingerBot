@@ -16,13 +16,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     notes = []
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -32,7 +29,7 @@ def process_text_on_page(index, pagetitle, text):
             # Remove old script code
             p1 = getparam(t, "1")
             if p1 in ["r", "h", "ka", "k", "s", "ky", "kk"]:
-                pagemsg("Removing 1=%s: %s" % (p1, str(t)))
+                p.msg("Removing 1=%s: %s" % (p1, str(t)))
                 notes.append("remove 1=%s from %s" % (p1, tn))
                 rmparam(t, "1")
                 for param in t.params:
@@ -60,12 +57,12 @@ def process_text_on_page(index, pagetitle, text):
                 hira = getparam(t, "hira")
                 if hira:
                     numbered_params.append(hira)
-                    pagemsg("Moving hira=%s to %s=: %s" % (hira, len(numbered_params), str(t)))
+                    p.msg("Moving hira=%s to %s=: %s" % (hira, len(numbered_params), str(t)))
                     notes.append("move hira= to %s= in %s" % (len(numbered_params), tn))
                 kata = getparam(t, "kata")
                 if kata:
                     numbered_params.append(kata)
-                    pagemsg("Moving kata=%s to %s=: %s" % (kata, len(numbered_params), str(t)))
+                    p.msg("Moving kata=%s to %s=: %s" % (kata, len(numbered_params), str(t)))
                     notes.append("move kata= to %s= in %s" % (len(numbered_params), tn))
                 del t.params[:]
                 # Put back numbered params, then non-numbered params.
@@ -76,22 +73,22 @@ def process_text_on_page(index, pagetitle, text):
 
             # Remove rom= if not in list of pages to keep rom=
             if t.has("rom"):
-                if pagetitle in romaji_to_keep:
-                    pagemsg("Keeping rom=%s because in romaji_to_keep: %s" % (getparam(t, "rom"), str(t)))
+                if p.title in romaji_to_keep:
+                    p.msg("Keeping rom=%s because in romaji_to_keep: %s" % (getparam(t, "rom"), str(t)))
                 else:
-                    pagemsg("Removing rom=%s: %s" % (getparam(t, "rom"), str(t)))
+                    p.msg("Removing rom=%s: %s" % (getparam(t, "rom"), str(t)))
                     rmparam(t, "rom")
                     notes.append("remove rom= from %s" % tn)
 
             # Remove hidx=
             if t.has("hidx"):
-                pagemsg("Removing hidx=%s: %s" % (getparam(t, "hidx"), str(t)))
+                p.msg("Removing hidx=%s: %s" % (getparam(t, "hidx"), str(t)))
                 rmparam(t, "hidx")
                 notes.append("remove hidx= from %s" % tn)
 
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -112,7 +109,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:%s" % ref for ref in ["ja-noun", "ja-adj", "ja-verb", "ja-pos"]],
 )

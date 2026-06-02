@@ -4,20 +4,15 @@ import re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, tname
+from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    m = re.search("^Category:(Japanese|Okinawan) terms with (.*) replaced by daiyōji (.*)$", pagetitle)
+    m = re.search("^Category:(Japanese|Okinawan) terms with (.*) replaced by daiyōji (.*)$", p.title)
     if not m:
-        pagemsg("Skipped")
+        p.msg("Skipped")
         return
 
     notes = []
@@ -97,13 +92,13 @@ def process_text_on_page(index, pagetitle, text):
                     continue
         return saw_kanjitab
 
-    for i, contents_page in blib.cat_articles(re.sub("^Category:", "", pagetitle)):
+    for i, contents_page in blib.cat_articles(re.sub("^Category:", "", p.title)):
         contents_title = contents_page.title()
 
         def pagemsg_with_contents(txt):
-            pagemsg("%s: %s" % (contents_title, txt))
+            p.msg("%s: %s" % (contents_title, txt))
         def errandpagemsg_with_contents(txt):
-            errandpagemsg("%s: %s" % (contents_title, txt))
+            p.errandmsg("%s: %s" % (contents_title, txt))
 
         contents_page_text = blib.safe_page_text(contents_page, errandpagemsg_with_contents)
         modsec = blib.find_modifiable_lang_section(contents_page_text, lang, pagemsg_with_contents)
@@ -117,18 +112,18 @@ def process_text_on_page(index, pagetitle, text):
             saw_templates = saw_templates or this_saw_templates
             return sectext
 
-        secbody = blib.map_etym_sections(secbody, pagemsg, do_process_etym_section)
+        secbody = blib.map_etym_sections(secbody, p.msg, do_process_etym_section)
         if not saw_templates:
             pagemsg_with_contents("WARNING: Didn't see {{%s-daiyouji}} or {{%s-kanjitab}}" % (langcode, langcode))
 
     if daiyoji_readings:
         if len(daiyoji_readings) > 1:
-            pagemsg("WARNING: Saw multiple daiyoji readings %s" % ",".join(daiyoji_readings))
+            p.msg("WARNING: Saw multiple daiyoji readings %s" % ",".join(daiyoji_readings))
         else:
             contents = "{{auto cat|sort=%s}}" % daiyoji_readings[0]
             return contents, notes
     else:
-        pagemsg("WARNING: Can't find reading for daiyoji %s by looking through category contents" % daiyoji)
+        p.msg("WARNING: Can't find reading for daiyoji %s by looking through category contents" % daiyoji)
 
 
 parser = blib.create_argparser(
@@ -137,4 +132,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

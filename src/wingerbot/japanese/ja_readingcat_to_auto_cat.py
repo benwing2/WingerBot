@@ -3,21 +3,15 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -25,9 +19,9 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "auto cat")
             notes.append("{{autocat}} -> {{auto cat}}")
         elif tn in ["ja-readingcat", "ryu-readingcat"]:
-            m = re.search("^Category:(Japanese|Okinawan) terms spelled with (.*?) read as (.*)$", pagetitle)
+            m = re.search("^Category:(Japanese|Okinawan) terms spelled with (.*?) read as (.*)$", p.title)
             if not m:
-                pagemsg("WARNING: Can't parse page title")
+                p.msg("WARNING: Can't parse page title")
                 continue
             langname, kanji, reading = m.groups()
             if langname == "Japanese":
@@ -36,7 +30,7 @@ def process_text_on_page(index, pagetitle, text):
                 auto_lang = "ryu"
             t_lang = re.sub("-.*", "", tn)
             if t_lang != auto_lang:
-                pagemsg(
+                p.msg(
                     "WARNING: Auto-determined lang code %s for language name %s != template specified %s: %s"
                     % (auto_lang, langname, t_lang, str(t))
                 )
@@ -44,10 +38,10 @@ def process_text_on_page(index, pagetitle, text):
             t_kanji = getparam(t, "1").strip()
             t_reading = getparam(t, "2").strip()
             if t_kanji != kanji:
-                pagemsg("WARNING: Auto-determined kanji %s != template specified %s: %s" % (kanji, t_kanji, str(t)))
+                p.msg("WARNING: Auto-determined kanji %s != template specified %s: %s" % (kanji, t_kanji, str(t)))
                 continue
             if t_reading != reading:
-                pagemsg(
+                p.msg(
                     "WARNING: Auto-determined reading %s != template specified %s: %s" % (reading, t_reading, str(t))
                 )
                 continue
@@ -61,13 +55,13 @@ def process_text_on_page(index, pagetitle, text):
                 elif re.search("^[0-9]+$", pn):
                     numbered_params.append(pv)
                 else:
-                    pagemsg("WARNING: Saw unknown non-numeric param %s=%s, skipping: %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unknown non-numeric param %s=%s, skipping: %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
             if must_continue:
                 continue
             if len(numbered_params) == 0:
-                pagemsg("WARNING: No reading types given, skipping: %s" % str(t))
+                p.msg("WARNING: No reading types given, skipping: %s" % str(t))
                 continue
             blib.set_template_name(t, "auto cat")
             del t.params[:]
@@ -76,7 +70,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("convert {{%s}} to {{auto cat}}" % tn)
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -92,7 +86,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:ja-readingcat", "Template:ryu-readingcat"],
-    edit=True,
-    stdin=True,
 )

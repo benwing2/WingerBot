@@ -42,7 +42,7 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `english/` | 9 | ✅ DONE | 9 files auto-refactored; manual fixes in 2 files (en_add_langcode_to_request_templates: bare text→p.text; en_convert_head_verb_to_en_verb: 4-arg signature → 1-arg, drop wrapper do_process_text_on_page) |
 | `indic/` | 9 | ✅ DONE | 9 files auto-refactored; no manual fixes needed (bare `text` in templatize file is local variable, correct) |
 | `old_english/` | 7 | ✅ DONE | 7 files auto-refactored; manual fixes in 2 files (ang_find_no_infl: 4-arg signature → 2-arg (p, pos) + wrapper; ang_fix_pronun: bare index→p.index in 3 process_section calls) |
-| `japanese/` | 6 | ⬜ TODO | |
+| `japanese/` | 6 | ✅ DONE | 6 files auto-refactored; manual fix in 1 file (ja_fix_usex_in_quotes: bare text→p.text) |
 | `hungarian/` | 5 | ⬜ TODO | |
 | `icelandic/` | 3 | ⬜ TODO | |
 | `bantu/` | 3 | ⬜ TODO | |
