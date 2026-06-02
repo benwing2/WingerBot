@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 slot_mapping = {
     "str_nom_m_s": "str_nom_m",
@@ -277,19 +277,13 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
     return t, new_forms
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "is-decl-adj-" not in text:
+    if "is-decl-adj-" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     saw_headt = False
@@ -302,22 +296,22 @@ def process_text_on_page(index, pagetitle, text):
             return getparam(t, param)
 
         if tn in ["is-adj", "is-adj/old"]:
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             saw_headt = True
             if headt:
-                pagemsg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
                 return
             headt = t
         elif tn.startswith("is-decl-adj-"):
             # if not headt:
-            #  pagemsg("WARNING: Saw declension template without {{is-adj}} head template: %s" % str(t))
+            #  p.msg("WARNING: Saw declension template without {{is-adj}} head template: %s" % str(t))
             #  return
             # headt_as_decl_str = re.sub(r"^\{\{is-adj\|", "{{is-ndecl|", str(headt))
             # if str(t) != headt_as_decl_str:
-            #  pagemsg("WARNING: Saw head template %s with different params from declension template %s" % (
+            #  p.msg("WARNING: Saw head template %s with different params from declension template %s" % (
             #    str(headt), str(t)))
             #  return
-            retval = convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes)
+            retval = convert_template_to_new(t, p.title, p.msg, p.errandmsg, notes)
             if retval is not None:
                 newt, new_forms = retval
                 if headt:
@@ -330,10 +324,10 @@ def process_text_on_page(index, pagetitle, text):
                     indec = getparam(headt, "indec")
                     head = getparam(headt, "head")
                     if indec:
-                        pagemsg("WARNING: Can't handle indec=%s: headt=%s, newdecl=%s" % (indec, str(headt), str(newt)))
+                        p.msg("WARNING: Can't handle indec=%s: headt=%s, newdecl=%s" % (indec, str(headt), str(newt)))
                         return
                     if head:
-                        pagemsg("WARNING: Can't handle head=%s: headt=%s, newdecl=%s" % (indec, str(headt), str(newt)))
+                        p.msg("WARNING: Can't handle head=%s: headt=%s, newdecl=%s" % (indec, str(headt), str(newt)))
                         return
                     headt_comps = blib.fetch_param_chain(headt, "1", "comp")
                     headt_sups = blib.fetch_param_chain(headt, "2", "sup")
@@ -343,13 +337,13 @@ def process_text_on_page(index, pagetitle, text):
                     new_comps = convert_empty_to_hyphen(new_forms.get("comp_wk_nom_m", ""))
                     new_sups = convert_empty_to_hyphen(new_forms.get("sup_str_nom_m", ""))
                     if headt_comps != "-" and headt_comps != new_comps:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Head comparative(s) %s don't match new decl comparative(s) %s: head=%s, newdecl=%s"
                             % (headt_comps, new_comps, str(headt), str(newt))
                         )
                         return
                     if headt_sups != "-" and headt_sups != new_sups:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Head superlative(s) %s don't match new decl superlative(s) %s: head=%s, newdecl=%s"
                             % (headt_sups, new_sups, str(headt), str(newt))
                         )
@@ -362,13 +356,13 @@ def process_text_on_page(index, pagetitle, text):
                     # Erase all params
                     del headt.params[:]
                     headt.add("1", "@@")
-                    # if pagetitle in manual_decls:
-                    #  headt.add("1", manual_decls[pagetitle])
+                    # if p.title in manual_decls:
+                    #  headt.add("1", manual_decls[p.title])
                     notes.append("convert %s to %s" % (orig_headt, str(headt)))
             headt = None
 
     # if not saw_headt:
-    #  pagemsg("WARNING: Didn't see {{is-adj}} head template")
+    #  p.msg("WARNING: Didn't see {{is-adj}} head template")
     #  return
 
     return str(parsed), notes

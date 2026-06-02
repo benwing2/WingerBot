@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "Icelandic", pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Icelandic", p.msg, force_final_nls=True)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
 
     defns = None
@@ -27,20 +24,20 @@ def process_text_on_page(index, pagetitle, text):
                 tn = tname(t)
                 if tn in ["is-noun/old", "is-proper noun/old"]:
                     if headt is not None:
-                        pagemsg("WARNING: Saw two headwords %s and %s" % (str(headt), str(t)))
+                        p.msg("WARNING: Saw two headwords %s and %s" % (str(headt), str(t)))
                     headt = t
                     headt_genders = ",".join(blib.fetch_param_chain(headt, ["1", "g", "gen"], "g")) or "?"
                     headt_pls = blib.fetch_param_chain(headt, ["3", "pl"], "pl")
                     defns = blib.find_defns(subsections[k], "is")
                     if tn == "is-proper noun/old":
                         new_decl = "{{is-ndecl|%s}}" % headt_genders
-                    elif pagetitle[0].isupper():
+                    elif p.title[0].isupper():
                         new_decl = "{{is-ndecl|%s.dem}}" % headt_genders
                     elif headt_pls == ["-"]:
                         new_decl = "{{is-ndecl|%s.sg}}" % headt_genders
                     else:
                         new_decl = "{{is-ndecl|%s}}" % headt_genders
-                    pagemsg("<begin> %s <end> <begin> %s <end> defn: %s" % (new_decl, origt, ";".join(defns)))
+                    p.msg("<begin> %s <end> <begin> %s <end> defn: %s" % (new_decl, origt, ";".join(defns)))
 
 
 parser = blib.create_argparser(

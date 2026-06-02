@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 # Rules for converting old declension templates to new ones:
 # 1. Masculines:
@@ -633,19 +633,13 @@ def convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes):
     return t, new_forms, new_genders, new_number
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "is-decl-noun-" not in text:
+    if "is-decl-noun-" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     saw_headt = False
@@ -658,22 +652,22 @@ def process_text_on_page(index, pagetitle, text):
             return getparam(t, param)
 
         if tn in ["is-noun", "is-proper noun", "is-noun/old", "is-proper noun/old"]:
-            pagemsg("Saw %s" % str(t))
+            p.msg("Saw %s" % str(t))
             saw_headt = True
             if headt:
-                pagemsg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw multiple head templates: %s and %s" % (str(headt), str(t)))
                 return
             headt = t
         elif tn.startswith("is-decl-noun-"):
             # if not headt:
-            #  pagemsg("WARNING: Saw declension template without {{is-noun}} head template: %s" % str(t))
+            #  p.msg("WARNING: Saw declension template without {{is-noun}} head template: %s" % str(t))
             #  return
             # headt_as_decl_str = re.sub(r"^\{\{is-noun\|", "{{is-ndecl|", str(headt))
             # if str(t) != headt_as_decl_str:
-            #  pagemsg("WARNING: Saw head template %s with different params from declension template %s" % (
+            #  p.msg("WARNING: Saw head template %s with different params from declension template %s" % (
             #    str(headt), str(t)))
             #  return
-            retval = convert_template_to_new(t, pagetitle, pagemsg, errandpagemsg, notes)
+            retval = convert_template_to_new(t, p.title, p.msg, p.errandmsg, notes)
             if retval is not None:
                 newt, new_forms, new_genders, new_number = retval
                 if headt:
@@ -694,19 +688,19 @@ def process_text_on_page(index, pagetitle, text):
                     new_gens = convert_empty_to_hyphen(new_forms.get("ind_gen_s", ""))
                     new_pls = convert_empty_to_hyphen(new_forms.get("ind_nom_p", ""))
                     if headt_genders != new_genders:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Head gender(s) %s don't match new decl gender(s) %s: head=%s, newdecl=%s"
                             % (",".join(headt_genders), ",".join(new_genders), str(headt), str(newt))
                         )
                         return
                     if headt_gens != "-" and headt_gens != new_gens:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Head genitive(s) %s don't match new decl genitive(s) %s: head=%s, newdecl=%s"
                             % (headt_gens, new_gens, str(headt), str(newt))
                         )
                         return
                     if headt_pls != "-" and headt_pls != new_pls:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Head plural(s) %s don't match new decl plural(s) %s: head=%s, newdecl=%s"
                             % (headt_pls, new_pls, str(headt), str(newt))
                         )
@@ -719,18 +713,18 @@ def process_text_on_page(index, pagetitle, text):
                     # Erase all params
                     del headt.params[:]
                     headt.add("1", getparam(t, "1"))
-                    words = re.split("[ -]", pagetitle)
+                    words = re.split("[ -]", p.title)
                     if headtn == "is-noun" and any(word.isupper() for word in words):
-                        pagemsg("WARNING: Uppercase term with {{is-noun}}, review manually: %s" % str(headt))
+                        p.msg("WARNING: Uppercase term with {{is-noun}}, review manually: %s" % str(headt))
                     elif headtn == "is-proper noun" and any(word.islower() for word in words):
-                        pagemsg("WARNING: Lowercase term with {{is-proper noun}}, review manually: %s" % str(headt))
-                    # if pagetitle in manual_decls:
-                    #  headt.add("1", manual_decls[pagetitle])
+                        p.msg("WARNING: Lowercase term with {{is-proper noun}}, review manually: %s" % str(headt))
+                    # if p.title in manual_decls:
+                    #  headt.add("1", manual_decls[p.title])
                     notes.append("convert %s to %s" % (orig_headt, str(headt)))
             headt = None
 
     # if not saw_headt:
-    #  pagemsg("WARNING: Didn't see {{is-noun}} head template")
+    #  p.msg("WARNING: Didn't see {{is-noun}} head template")
     #  return
 
     return str(parsed), notes
