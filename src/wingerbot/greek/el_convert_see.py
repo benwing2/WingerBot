@@ -3,16 +3,13 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -43,7 +40,7 @@ def process_text_on_page(index, pagetitle, text):
                 if pn in ["1", "g", "g2", "g3", "and", "compare", "noast"]:
                     continue
                 if re.search("^[0-9]+$", pn):
-                    pagemsg("WARNING: Saw unrecognized numbered param %s=%s, skipping: %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Saw unrecognized numbered param %s=%s, skipping: %s" % (pn, pv, str(t)))
                     must_continue = True
                     break
                 named_params.append((pn, pv))
@@ -72,7 +69,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add(pn, pv, preserve_spacing=False)
             blib.set_template_name(t, "see")
             notes.append("replace {{el-see}} with {{see|el}}")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
