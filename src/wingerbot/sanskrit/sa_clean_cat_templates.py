@@ -18,13 +18,11 @@ templates = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
+    text = p.text
     for t in templates:
         newtext = re.sub(r"\n*\{\{%s\}\}" % t, "", text)
         if newtext != text:

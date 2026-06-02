@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 import unicodedata
 
 AC = "\u0301"
@@ -31,24 +31,15 @@ old_template_to_gender = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    if "sa-noun" not in text and "sa-decl-noun" not in text:
+    if "sa-noun" not in p.text and "sa-decl-noun" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     headt = None
     saw_decl = False
@@ -58,38 +49,38 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
 
         if tn == "sa-noun":
-            pagemsg("Saw headt=%s" % str(t))
+            p.msg("Saw headt=%s" % str(t))
             if headt and not saw_decl:
-                pagemsg("WARNING: Saw two {{sa-noun}} without {{sa-decl-noun}}: %s and %s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw two {{sa-noun}} without {{sa-decl-noun}}: %s and %s" % (str(headt), str(t)))
             headt = t
             saw_decl = False
             continue
 
         if tn in ["sa-decl-noun", "sa-decl"]:
-            pagemsg("WARNING: Saw raw {{%s}}: %s, headt=%s" % (tn, str(t), headt and str(headt) or None))
+            p.msg("WARNING: Saw raw {{%s}}: %s, headt=%s" % (tn, str(t), headt and str(headt) or None))
             continue
 
         if tn.startswith("sa-decl-noun-"):
-            pagemsg("Saw declt=%s" % str(t))
+            p.msg("Saw declt=%s" % str(t))
             if not headt:
-                pagemsg("WARNING: Saw {{%s}} without {{sa-noun}}: %s" % (tn, str(t)))
+                p.msg("WARNING: Saw {{%s}} without {{sa-noun}}: %s" % (tn, str(t)))
                 continue
             saw_decl = True
 
             tr = getparam(headt, "tr")
             accented_tr = False
             if not tr:
-                tr = expand_text("{{xlit|sa|%s}}" % pagetitle)
-                pagemsg("WARNING: No translit in %s, using %s from pagetitle: declt=%s" % (str(headt), tr, str(t)))
+                tr = p.expand_text("{{xlit|sa|%s}}" % p.title)
+                p.msg("WARNING: No translit in %s, using %s from p.title: declt=%s" % (str(headt), tr, str(t)))
             else:
                 if "-" in tr:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw translit %s in head with hyphen: headt=%s, declt=%s" % (tr, str(headt), str(t))
                     )
                     tr = tr.replace("-", "")
                 decomptr = unicodedata.normalize("NFD", tr).replace("s" + AC, "ś")
                 if AC not in decomptr and GR not in decomptr:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw translit %s in head without accent: headt=%s, declt=%s" % (tr, str(headt), str(t))
                     )
                 else:
@@ -105,7 +96,7 @@ def process_text_on_page(index, pagetitle, text):
             if tn in ["sa-decl-noun-m", "sa-decl-noun-f", "sa-decl-noun-n"]:
                 tg = tn[-1]
                 if tg not in genders:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw decl gender %s that disagrees with headword gender(s) %s: headt=%s, declt=%s"
                         % (tg, ",".join(genders), str(headt), str(t))
                     )
@@ -114,14 +105,14 @@ def process_text_on_page(index, pagetitle, text):
                 decltr = getparam(t, "1")
                 if not decltr:
                     if not accented_tr:
-                        pagemsg(
+                        p.msg(
                             "WARNING: No param in {{%s}}, replacing with unaccented tr %s from head or pagename: headt=%s, declt=%s"
                             % (tn, tr, str(headt), str(t))
                         )
                         t.add("1", tr)
                         notes.append("add (unaccented) translit %s to {{%s}}" % (tr, tn))
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: No param in {{%s}}, replacing with accented tr %s from head: headt=%s, declt=%s"
                             % (tn, tr, str(headt), str(t))
                         )
@@ -129,14 +120,14 @@ def process_text_on_page(index, pagetitle, text):
                         notes.append("add accented translit %s to {{%s}}" % (tr, tn))
                 elif re.search("[\u0900-\u097f]", decltr):  # translit is actually Devanagari
                     if not accented_tr:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Devanagari in {{%s}}, replacing with unaccented tr %s from head or pagename: headt=%s, declt=%s"
                             % (tn, tr, str(headt), str(t))
                         )
                         t.add("1", tr)
                         notes.append("replace Devanagari in {{%s}} with (unaccented) translit %s" % (tr, tn))
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Devanagari in {{%s}}, replacing with accented tr %s from head: headt=%s, declt=%s"
                             % (tn, tr, str(headt), str(t))
                         )
@@ -147,7 +138,7 @@ def process_text_on_page(index, pagetitle, text):
                     subbed = False
                     if AC not in decompdecltr and GR not in decompdecltr:
                         if accented_tr:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw translit %s in decl without accent, subbing accented tr %s from head: headt=%s, declt=%s"
                                 % (decltr, tr, str(headt), str(t))
                             )
@@ -157,12 +148,12 @@ def process_text_on_page(index, pagetitle, text):
                             )
                             subbed = True
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw translit %s in decl without accent and unable to replace with accented tr from head: headt=%s, declt=%s"
                                 % (decltr, str(headt), str(t))
                             )
                     if not subbed and "-" in decltr:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw translit %s in decl with hyphen: headt=%s, declt=%s"
                             % (decltr, str(headt), str(t))
                         )
@@ -172,7 +163,7 @@ def process_text_on_page(index, pagetitle, text):
                         subbed = True
                     stripped_decltr = decltr.strip()
                     if "\n" not in decltr and stripped_decltr != decltr:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw translit '%s' in decl with extraneous space: headt=%s, declt=%s"
                             % (decltr, str(headt), str(t))
                         )
@@ -183,7 +174,7 @@ def process_text_on_page(index, pagetitle, text):
                 continue
 
             if tn in ["sa-decl-noun-ī", "sa-decl-noun-ī-f"] and getparam(t, "mono"):
-                pagemsg("WARNING: Saw mono=, skipping: headt=%s, declt=%s" % (str(headt), str(t)))
+                p.msg("WARNING: Saw mono=, skipping: headt=%s, declt=%s" % (str(headt), str(t)))
                 continue
 
             if tn in old_template_to_gender:
@@ -191,7 +182,7 @@ def process_text_on_page(index, pagetitle, text):
                 for param in t.params:
                     pn = pname(param)
                     if pn not in ["1", "2", "3", "4", "n"]:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw unknown param %s=%s in %s: headt=%s"
                             % (pn, str(param.value), str(t), str(headt))
                         )
@@ -202,7 +193,7 @@ def process_text_on_page(index, pagetitle, text):
 
                 g = old_template_to_gender[tn]
                 if g not in genders:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw decl gender %s that disagrees with headword gender(s) %s: headt=%s, declt=%s"
                         % (g, ",".join(genders), str(headt), str(t))
                     )
@@ -216,13 +207,13 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("1", tr)
                 notes.append("convert {{%s}} to {{sa-decl-noun-%s}}" % (tn, g))
             else:
-                pagemsg("WARNING: Saw unrecognized decl template: %s" % str(t))
+                p.msg("WARNING: Saw unrecognized decl template: %s" % str(t))
 
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     if headt:
-        pagemsg("WARNING: Saw {{sa-noun}} without {{sa-decl-noun-*}}: %s" % str(headt))
+        p.msg("WARNING: Saw {{sa-noun}} without {{sa-decl-noun-*}}: %s" % str(headt))
 
     return str(parsed), notes
 

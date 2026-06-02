@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 # Tuple of (ORIGTEMPLATE, NEWNAME, ADD_NOCAP). NEWNAME is special-cased
 # for he-verb form of and he-noun form of.
@@ -49,17 +49,15 @@ all_he_form_of_template_map = {x[0]: (x[1], x[2]) for x in all_he_form_of_templa
 all_he_form_of_templates = [x[0] for x in all_he_form_of_template_specs]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
+    text = p.text
     if args.move_dot:
         templates_to_replace = []
 
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             tn = tname(t)
             if tn in all_he_form_of_templates:
@@ -73,11 +71,11 @@ def process_text_on_page(index, pagetitle, text):
         for curr_template, repl_template in templates_to_replace:
             found_curr_template = curr_template in text
             if not found_curr_template:
-                pagemsg("WARNING: Unable to locate template: %s" % curr_template)
+                p.msg("WARNING: Unable to locate template: %s" % curr_template)
                 continue
             found_repl_template = repl_template in text
             if found_repl_template:
-                pagemsg("WARNING: Already found template with period: %s" % repl_template)
+                p.msg("WARNING: Already found template with period: %s" % repl_template)
                 continue
             newtext = text.replace(curr_template, repl_template)
             newtext_text_diff = len(newtext) - len(text)
@@ -85,12 +83,12 @@ def process_text_on_page(index, pagetitle, text):
             ratio = float(newtext_text_diff) / repl_curr_diff
             if ratio == int(ratio):
                 if int(ratio) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Replaced %s occurrences of curr=%s with repl=%s"
                         % (int(ratio), curr_template, repl_template)
                     )
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Something wrong, length mismatch during replacement: Expected length change=%s, actual=%s, ratio=%.2f, curr=%s, repl=%s"
                     % (repl_curr_diff, newtext_text_diff, ratio, curr_template, repl_template)
                 )
@@ -98,7 +96,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("move .= outside of {{he-*}} template")
 
     if args.rename:
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             origt = str(t)
             tn = tname(t)
@@ -117,7 +115,7 @@ def process_text_on_page(index, pagetitle, text):
                     if pname.strip() in ["1", "lang", "sc"]:
                         continue
                     if pname.strip() in (newname == "he-infinitive of" and ["3", "4"] or ["2", "3", "4"]):
-                        errandmsg("WARNING: Found %s= in %s" % (pname.strip(), origt))
+                        p.errandmsg("WARNING: Found %s= in %s" % (pname.strip(), origt))
                     params.append((pname, param.value, param.showkey))
                 # Erase all params.
                 del t.params[:]
@@ -147,7 +145,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("nocap", "1")
 
             if str(t) != origt:
-                pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+                p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
         text = str(parsed)
 
