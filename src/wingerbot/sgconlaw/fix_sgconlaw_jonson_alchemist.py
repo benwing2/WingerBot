@@ -8,15 +8,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "RQ:Jonson Alchemist":
@@ -27,7 +24,7 @@ def process_text_on_page(index, pagename, text):
                     t.add("page", str(newpage))
                     notes.append("reduce page by one in {{RQ:Jonson Alchemist}}")
                 else:
-                    pagemsg("WARNING: Bad value page=%s: %s" % (page, str(t)))
+                    p.msg("WARNING: Bad value page=%s: %s" % (page, str(t)))
 
     return str(parsed), notes
 
@@ -39,5 +36,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_refs=["Template:RQ:Jonson Alchemist"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:RQ:Jonson Alchemist"]
 )

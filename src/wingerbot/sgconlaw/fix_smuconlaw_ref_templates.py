@@ -11,15 +11,12 @@ from wingerbot.blib import getparam, msg, tname
 replace_templates = ["R:MED Online", "R:Reference-meta"]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -32,20 +29,20 @@ def process_text_on_page(index, pagetitle, text):
                 changed = True
             entry = getparam(t, "entry")
             if changed:
-                pagemsg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
+                p.msg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
     newtext = str(parsed)
     for tn in replace_templates:
         curtext = newtext
         newtext = re.sub(r"(\{\{%s\|[^{}]*\}\})\." % tn, r"\1", curtext)
         if curtext != newtext:
             notes.append("remove final period after {{%s}}" % tn)
-            pagemsg(("Replacing %s with %s" % (curtext, newtext)).replace("\n", r"\n"))
+            p.msg(("Replacing %s with %s" % (curtext, newtext)).replace("\n", r"\n"))
     return newtext, notes
 
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Fix title and entry in a couple reference templates", include_pagefile=True, include_stdin=True
+        "Fix title and entry in a couple of reference templates", include_pagefile=True, include_stdin=True
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
@@ -55,8 +52,7 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
+        new=True,
         default_refs=["Template:%s" % template for template in replace_templates],
         # FIXME: formerly had includelinks=True on call to blib.references();
         # doesn't exist any more

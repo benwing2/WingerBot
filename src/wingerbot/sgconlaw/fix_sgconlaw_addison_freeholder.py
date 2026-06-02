@@ -20,15 +20,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    curtext = text + "\n"
+    curtext = p.text + "\n"
 
     def replace_addison_freeholder(m):
         issue, date, text = m.groups()
@@ -62,7 +59,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:RQ:Addison Freeholder", "Template:RQ:Thackeray VF"],
-    edit=True,
-    stdin=True,
 )

@@ -15,15 +15,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errmsg, site
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    curtext = text + "\n"
+    curtext = p.text + "\n"
 
     def replace_bacon_the_advancement_of_learning(m):
         template, text = m.groups()
@@ -56,7 +53,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:RQ:Bacon The Advancement of Learning"],
-    edit=True,
-    stdin=True,
 )

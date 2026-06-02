@@ -15,15 +15,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, errmsg, site
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    curtext = text + "\n"
+    curtext = p.text + "\n"
 
     def replace_clarendon_rebellion(m):
         template, text = m.groups()
@@ -48,5 +45,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_refs=["Template:RQ:Clarendon Rebellion"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:RQ:Clarendon Rebellion"]
 )

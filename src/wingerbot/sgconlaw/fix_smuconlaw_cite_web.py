@@ -8,15 +8,12 @@ from wingerbot import blib
 from wingerbot.blib import msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -38,13 +35,13 @@ def process_text_on_page(index, pagetitle, text):
                 changed = True
                 notes.append("trans-title -> trans-work in {{%s}}" % tn)
             if changed:
-                pagemsg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
+                p.msg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
     return str(parsed), notes
 
 
 if __name__ == "__main__":
     parser = blib.create_argparser(
-        "Fix title and entry in a couple reference templates", include_pagefile=True, include_stdin=True
+        "Fix title and entry in a couple of reference templates", include_pagefile=True, include_stdin=True
     )
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
@@ -54,8 +51,7 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
+        new=True,
         default_refs=["Template:cite-web"],
         # FIXME: formerly had includelinks=True on call to blib.references();
         # doesn't exist any more

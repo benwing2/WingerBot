@@ -8,14 +8,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param, nostrip=False):
@@ -43,7 +40,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                 notes.append("move Roman or Arabic numeral in 1= to book= in {{RQ:Milton Paradise Lost}}")
             newt = str(t)
             if origt != newt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -57,8 +54,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:RQ:Milton Paradise Lost"],
-    ref_namespaces=[0],
+    skip_ignorable_pages=True,
 )

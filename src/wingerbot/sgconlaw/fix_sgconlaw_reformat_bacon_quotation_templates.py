@@ -18,15 +18,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    curtext = text + "\n"
+    curtext = p.text + "\n"
 
     for fromtemp, chapter in templates_to_rename:
 
@@ -38,7 +35,7 @@ def process_text_on_page(index, pagename, text):
                 return m.group(0)
             for existing_param in ["passage", "text"]:
                 if getparam(t, existing_param):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Can't incorporate raw passage text into {{%s}} because already has %s=: %s"
                         % (fromtemp, existing_param, str(t))
                     )
@@ -93,8 +90,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:%s" % fromtemp for fromtemp, chapter in templates_to_rename],
-    edit=True,
-    stdin=True,
-    filter_pages=lambda pagename: ":" not in pagename,
+    skip_ignorable_pages=True,
 )

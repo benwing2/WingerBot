@@ -231,21 +231,18 @@ arabic_to_roman_form = {
 roman_numerals = {y for x, y in arabic_to_roman_form.items()}
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    curtext = text + "\n"
+    curtext = p.text + "\n"
 
     def arabic_to_roman(num):
         if num in roman_numerals:
             return num
         if num not in arabic_to_roman_form:
-            pagemsg("WARNING: Couldn't convert Arabic numeral %s to Roman" % num)
+            p.msg("WARNING: Couldn't convert Arabic numeral %s to Roman" % num)
             return None
         return arabic_to_roman_form[num]
 
@@ -315,7 +312,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:RQ:Dryden Meta", "Template:RQ:Byron Harold"],
-    edit=True,
-    stdin=True,
 )

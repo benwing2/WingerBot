@@ -16,19 +16,16 @@ def rsub_repeatedly(fr, to, text):
         text = newtext
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
     newtext = rsub_repeatedly(
         r"\n(:?#+)\* \{\{RQ:Schuster Hepaticae V\|(.*)\}\}:?\n\1\*: (.*)(\n|$)",
         r"\n\1* {{RQ:Schuster Hepaticae|volume=V|page=\2|text=\3}}\4",
-        text,
+        p.text,
     )
-    if newtext != text:
+    if newtext != p.text:
         notes.append("rename {{RQ:Schuster Hepaticae V}} to {{RQ:Schuster Hepaticae|volume=V}}")
         text = newtext
 
@@ -64,7 +61,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:%s" % template for template in templates],
 )

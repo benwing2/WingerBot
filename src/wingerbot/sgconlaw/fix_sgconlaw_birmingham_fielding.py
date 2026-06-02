@@ -51,15 +51,12 @@ fielding_book_to_volume = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    newtext = text
+    newtext = p.text
     curtext = newtext
 
     newtext = re.sub(
@@ -101,8 +98,7 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
+        new=True,
         default_refs=["Template:%s" % template for template in replace_templates],
         # FIXME: formerly had includelinks=True on call to blib.references();
         # doesn't exist any more

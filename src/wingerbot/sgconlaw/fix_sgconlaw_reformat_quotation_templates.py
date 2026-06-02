@@ -42,15 +42,12 @@ def add_params_to_template(t, params, seen_from_params, pagemsg):
     return True
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    curtext = text + "\n"
+    curtext = p.text + "\n"
 
     def reformat_template(t, from_params, totemp, to_params, text_to_incorporate=None):
         # If from-template params given, make sure they all match.
@@ -60,19 +57,19 @@ def process_text_on_page(index, pagename, text):
             if re.search("^%[0-9]+$", value):  # %1, %2, ... for placeholder
                 curval = getparam(t, param).strip()
                 if not curval:
-                    pagemsg(
+                    p.msg(
                         "Skipping template because expected param %s=%s doesn't have a value: %s"
                         % (param, value, str(t))
                     )
                     return False
                 seen_from_params[value] = curval
             elif getparam(t, param).strip() != value.strip():
-                pagemsg("Skipping template because expected param %s=%s doesn't match: %s" % (param, value, str(t)))
+                p.msg("Skipping template because expected param %s=%s doesn't match: %s" % (param, value, str(t)))
                 return False
         if text_to_incorporate is not None:
             for existing_param in ["passage", "text"]:
                 if getparam(t, existing_param):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Can't incorporate raw passage text into {{%s}} because already has %s=: %s"
                         % (fromtemp, existing_param, str(t))
                     )
@@ -84,7 +81,7 @@ def process_text_on_page(index, pagename, text):
         for param, value in from_params:
             rmparam(t, param)
         if to_params:
-            if not add_params_to_template(t, to_params, seen_from_params, pagemsg):
+            if not add_params_to_template(t, to_params, seen_from_params, p.msg):
                 return False
         if str(t) == origt:
             return False
@@ -176,8 +173,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:%s" % fromtemp for (fromtemp, from_params), (totemp, to_params) in templates_to_rename],
-    edit=True,
-    stdin=True,
     skip_ignorable_pages=True,
 )

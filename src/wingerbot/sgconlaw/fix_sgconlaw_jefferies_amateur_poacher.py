@@ -17,15 +17,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    newtext = text
+    newtext = p.text
     curtext = newtext
 
     newtext = re.sub(
@@ -48,5 +45,5 @@ if __name__ == "__main__":
     start, end = blib.parse_start_end(args.start, args.end)
 
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, default_refs=["Template:RQ:RJfrs AmtrPqr"], edit=True, stdin=True
+        args, start, end, process_text_on_page, new=True, default_refs=["Template:RQ:RJfrs AmtrPqr"]
     )
