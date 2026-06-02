@@ -39,7 +39,7 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `chinese/` | 12 | ✅ DONE | 12 files auto-refactored; manual fixes in 2 files (nan_fix_min_qualifiers: 3 bare index→p.index; zh_remove_redundant_translations: 1 bare text→p.text + 2 bare index→p.index in inner closures) |
 | `sgconlaw/` | 11 | ⬜ TODO | |
 | `german/` | 10 | ✅ DONE | 10 files auto-refactored; manual fixes in 3 files (de_clean_adj_forms: bare text→p.text; de_convert_adj, de_convert_noun: bare index→p.index in inner closure) |
-| `english/` | 9 | ⬜ TODO | |
+| `english/` | 9 | ✅ DONE | 9 files auto-refactored; manual fixes in 2 files (en_add_langcode_to_request_templates: bare text→p.text; en_convert_head_verb_to_en_verb: 4-arg signature → 1-arg, drop wrapper do_process_text_on_page) |
 | `indic/` | 8 | ⬜ TODO | |
 | `old_english/` | 7 | ⬜ TODO | |
 | `japanese/` | 6 | ⬜ TODO | |

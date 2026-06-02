@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
 def singularize(text):
@@ -77,12 +77,7 @@ def canonicalize_existing_linked_head(head, pagemsg, link_the=True):
     return retval
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     # Default function to split a word on apostrophes. Don't split apostrophes at the beginning or end of a word (e.g.
@@ -287,7 +282,7 @@ def process_text_on_page(index, pagetitle, text):
 
             def is_english(term):
                 page = pywikibot.Page(site, term)
-                content = blib.safe_page_text(page, errandpagemsg)
+                content = blib.safe_page_text(page, p.errandmsg)
                 if content and "==English==\n" in content:
                     return True
                 return False
@@ -331,7 +326,7 @@ def process_text_on_page(index, pagetitle, text):
                 ),
             )
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
 
@@ -370,9 +365,9 @@ def process_text_on_page(index, pagetitle, text):
         ]:
             params_to_check = ["head"]
         if params_to_check:
-            default_head = pagetitle or getparam(t, "pagename")
+            default_head = p.title or getparam(t, "pagename")
             if default_head.startswith("Unsupported titles/"):
-                pagemsg("WARNING: Skipping unsupported title")
+                p.msg("WARNING: Skipping unsupported title")
                 continue
             default_head = get_autohead(default_head, t)
             for param in params_to_check:
@@ -380,14 +375,14 @@ def process_text_on_page(index, pagetitle, text):
                 m = re.search(r"^(?:the|\[\[the\]\]) (.*)$", paramval)
                 if m:
                     has_the = True
-                    pagemsg("Removing 'the' from %s=%s in {{%s}} and converting to def=1" % (param, paramval, tn))
+                    p.msg("Removing 'the' from %s=%s in {{%s}} and converting to def=1" % (param, paramval, tn))
                     t.add("def", "1")
                     notes.append("remove 'the' from %s=%s in {{%s}} and convert to def=1" % (param, paramval, tn))
                     paramval = m.group(1)
                 else:
                     has_the = False
-                if " " in paramval and paramval == pagetitle:
-                    pagemsg(
+                if " " in paramval and paramval == p.title:
+                    p.msg(
                         "Converting %s=%s in {{%s}} that's identical to pagename to nolinkhead=1"
                         % (param, paramval, tn)
                     )
@@ -398,17 +393,17 @@ def process_text_on_page(index, pagetitle, text):
                     )
                     continue
                 if paramval == default_head:
-                    pagemsg("Removing redundant %s=%s in {{%s}}" % (param, paramval, tn))
+                    p.msg("Removing redundant %s=%s in {{%s}}" % (param, paramval, tn))
                     rmparam(t, param)
                     notes.append("remove redundant %s=%s in {{%s}}" % (param, paramval, tn))
                     continue
                 canonval = None
                 if "[[" in paramval:
-                    canonval = canonicalize_existing_linked_head(paramval, pagemsg)
+                    canonval = canonicalize_existing_linked_head(paramval, p.msg)
                     if canonval == paramval:
                         canonval = None
                     elif canonval == default_head:
-                        pagemsg(
+                        p.msg(
                             "Removing redundant %s=%s (canonicalized to %s) in {{%s}}" % (param, paramval, canonval, tn)
                         )
                         rmparam(t, param)
@@ -418,7 +413,7 @@ def process_text_on_page(index, pagetitle, text):
                         continue
                 if paramval:
                     if canonval and canonval != paramval:
-                        pagemsg(
+                        p.msg(
                             "Canonicalizing %s=%s%s to %s in {{%s}}; not same as auto-generated head '%s'"
                             % (param, paramval, " (with 'the' removed)" if has_the else "", canonval, tn, default_head)
                         )
@@ -429,19 +424,19 @@ def process_text_on_page(index, pagetitle, text):
                         )
                         continue
                     if has_the:
-                        pagemsg(
+                        p.msg(
                             "Re-adding %s=%s in {{%s}} (same as canonicalization with 'the' removed, but different from auto-generated head '%s')"
                             % (param, paramval, tn, default_head)
                         )
                         t.add(param, paramval)
                         notes.append("re-add %s=%s in {{%s}}" % (param, paramval, tn))
                         continue
-                    pagemsg(
+                    p.msg(
                         "Not removing %s=%s (same as canonicalization) in {{%s}}; not same as auto-generated head '%s'"
                         % (param, paramval, tn, default_head)
                     )
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     text = str(parsed)
     return text, notes
@@ -454,5 +449,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["English lemmas"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["English lemmas"],
 )

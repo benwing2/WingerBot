@@ -14,16 +14,13 @@ def pluralize(noun):
     return noun + "s"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if "en-noun" not in text:
+    if "en-noun" not in p.text:
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     num_would_save_even_with_s_or_es = 0
     num_would_save_even_with_s = 0
@@ -32,12 +29,12 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "en-noun":
             origt = str(t)
             if getparam(t, "new"):
-                pagemsg("Template has new=%s, not touching: %s" % (getparam(t, "new"), str(t)))
+                p.msg("Template has new=%s, not touching: %s" % (getparam(t, "new"), str(t)))
                 continue
             saw_plural = False
             orig_plurals = []
             plurals = []
-            default_plural = pluralize(pagetitle)
+            default_plural = pluralize(p.title)
             no_default_plural = getparam(t, "1") in ["?", "!", "-"]
             has_plqual = False
             for i in range(1, 30):
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
                 saw_plural = True
                 orig_plurals.append(plparam)
                 if plparam in ["s", "es"]:
-                    plural = pagetitle + plparam
+                    plural = p.title + plparam
                 else:
                     plural = plparam
                 if default_plural == plural:
@@ -68,11 +65,11 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     newparam = "1"
                 plparam = "s"
-                plural = pagetitle + "s"
+                plural = p.title + "s"
                 if plural == default_plural:
                     plparam = "+"
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw {{en-noun}} without explicit plural and new default plural %s different from old default plural %s: %s"
                         % (default_plural, plural, str(t))
                     )
@@ -80,7 +77,7 @@ def process_text_on_page(index, pagetitle, text):
                 plurals.append(plparam)
             if not no_default_plural and plurals == ["+"]:
                 if has_plqual:
-                    pagemsg("WARNING: Plurals are only '+' but plqual= present, not removing: %s" % str(t))
+                    p.msg("WARNING: Plurals are only '+' but plqual= present, not removing: %s" % str(t))
                 else:
                     if getparam(t, "1") == "~":
                         firstparam = 2
@@ -91,20 +88,20 @@ def process_text_on_page(index, pagetitle, text):
                     plurals = []
             if args.prefer_s:
                 for i in range(1, 30):
-                    if default_plural == pagetitle + "s" and getparam(t, str(i)) == "+":
+                    if default_plural == p.title + "s" and getparam(t, str(i)) == "+":
                         t.add(str(i), "s")
             if str(t) != origt:
                 # t.add("new", "1")
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert {{en-noun}} to new form with smarter default plural algorithm")
                 plurals_with_s = []
                 plurals_with_s_and_es = []
                 for plural in plurals:
                     if plural == "+":
-                        if default_plural == pagetitle + "s":
+                        if default_plural == p.title + "s":
                             plurals_with_s.append("s")
                             plurals_with_s_and_es.append("s")
-                        elif default_plural == pagetitle + "es":
+                        elif default_plural == p.title + "es":
                             plurals_with_s.append("+")
                             plurals_with_s_and_es.append("es")
                         else:
@@ -114,25 +111,25 @@ def process_text_on_page(index, pagetitle, text):
                         plurals_with_s.append(plural)
                         plurals_with_s_and_es.append(plural)
                 if plurals_with_s_and_es == orig_plurals:
-                    pagemsg(
+                    p.msg(
                         "No changes if '+' is replaced with 's' or 'es' as appropriate: orig=%s, new=%s"
                         % (origt, str(t))
                     )
                 else:
                     num_would_save_even_with_s_or_es += 1
                 if plurals_with_s == orig_plurals:
-                    pagemsg("No changes if '+' is replaced with 's' as appropriate: orig=%s, new=%s" % (origt, str(t)))
+                    p.msg("No changes if '+' is replaced with 's' as appropriate: orig=%s, new=%s" % (origt, str(t)))
                 else:
                     num_would_save_even_with_s += 1
 
     if notes:
-        pagemsg("Would save if '+' is always kept")
+        p.msg("Would save if '+' is always kept")
     else:
-        pagemsg("Would not save")
+        p.msg("Would not save")
     if num_would_save_even_with_s > 0:
-        pagemsg("Would save even if '+' is replaced with 's' as appropriate")
+        p.msg("Would save even if '+' is replaced with 's' as appropriate")
     if num_would_save_even_with_s_or_es > 0:
-        pagemsg("Would save even if '+' is replaced with 's' or 'es' as appropriate")
+        p.msg("Would save even if '+' is replaced with 's' or 'es' as appropriate")
     return str(parsed), notes
 
 
@@ -142,5 +139,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:en-noun"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:en-noun"]
 )

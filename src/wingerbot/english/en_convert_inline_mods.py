@@ -281,13 +281,10 @@ def convert_qual_to_inline_modifier(qualtext):
     return "<q:%s>" % qualtext
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     if args.check_qual_canon:
         for t in parsed.filter_templates():
@@ -301,14 +298,14 @@ def process_text_on_page(index, pagetitle, text):
                     inline_mod = convert_qual_to_inline_modifier(pv)
                     m = re.search("^<(.*?):", inline_mod)
                     if not m:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Internal error: Didn't correctly convert qualifier to inline modifier but saw %s"
                             % inline_mod
                         )
                         continue
                     modtype = m.group(1)
                     stats_by_modifier_type[modtype] += 1
-                    pagemsg("Converted %s=%s to %s" % (pn, pv, inline_mod))
+                    p.msg("Converted %s=%s to %s" % (pn, pv, inline_mod))
         return
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -330,7 +327,7 @@ def process_text_on_page(index, pagetitle, text):
                     qualparam = "pl%squal" % i
                     plqual = getp(qualparam)
                 if not pl and plqual:
-                    pagemsg("WARNING: Missing param %s= with qualifier %s=%s" % (i, qualparam, plqual))
+                    p.msg("WARNING: Missing param %s= with qualifier %s=%s" % (i, qualparam, plqual))
                 elif plqual:
                     inline_mod = convert_qual_to_inline_modifier(plqual)
                     t.add(str(i), "%s%s" % (pl, inline_mod))
@@ -368,14 +365,14 @@ def process_text_on_page(index, pagetitle, text):
                 ("4", "past_ptc"),
             ]
             if "<" in getp("1"):
-                if " " in pagetitle:
+                if " " in p.title:
                     par1 = getp("1")
                     origpar1 = par1
-                    m = re.search("^(.*?)( .*)$", pagetitle)
+                    m = re.search("^(.*?)( .*)$", p.title)
                     first, rest = m.groups()
                     m = re.search("^%s(<.*?>)%s$" % (re.escape(first), re.escape(rest)), par1)
                     if m:
-                        pagemsg(
+                        p.msg(
                             "Converting multiword {{en-verb}} with angle brackets modifying first word to abbreviated format: 1=%s"
                             % par1
                         )
@@ -387,7 +384,7 @@ def process_text_on_page(index, pagetitle, text):
                     m = re.search("^%s(<.*?>)%s$" % (re.escape(first), re.escape(rest)), blib.remove_links(par1))
                     if m:
                         if getp("head"):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Space in page title and apparent angle-bracket format, has head=%s, skipping, convert manually: %s"
                                 % (getp("head"), origpar1)
                             )
@@ -400,14 +397,14 @@ def process_text_on_page(index, pagetitle, text):
                             link, linkafter = mlink.groups()
                             link = link[2:-2]
                             if "[" in link or "]" in link:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Space in page title and apparent angle-bracket format, embedded brackets in link, skipping, convert manually: %s"
                                     % origpar1
                                 )
                                 continue
                             linkparts = link.split("|")
                             if len(linkparts) > 2:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Space in page title and apparent angle-bracket format, too many parts in link, skipping, convert manually: %s"
                                     % origpar1
                                 )
@@ -421,7 +418,7 @@ def process_text_on_page(index, pagetitle, text):
                             if linkdest == linkdisp and " " not in linkdest and "-" not in linkdest:
                                 continue
                             if linkdest.endswith("'s"):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Space in page title and apparent angle-bracket format, link destination '%s' ends in apostrophe-s, may not match correctly, skipping, convert manually: 1=%s"
                                     % (linkdest, origpar1)
                                 )
@@ -455,7 +452,7 @@ def process_text_on_page(index, pagetitle, text):
                             t.add("1", angle_bracket, before="head")
                         else:
                             t.add("1", angle_bracket)
-                        pagemsg(
+                        p.msg(
                             "Replacing multiword verbal expression with single angle-bracket spec after first word %s with %s"
                             % (origt, str(t))
                         )
@@ -466,7 +463,7 @@ def process_text_on_page(index, pagetitle, text):
                             else ""
                         )
 
-                        pagemsg(
+                        p.msg(
                             "Converting multiword {{en-verb}} with angle brackets modifying first word to abbreviated format: 1=%s"
                             % par1
                         )
@@ -477,21 +474,21 @@ def process_text_on_page(index, pagetitle, text):
                         continue
 
                     if re.search("^<.*>$", par1):
-                        pagemsg("Space in page title and likely already-converted angle-bracket format: 1=%s" % par1)
+                        p.msg("Space in page title and likely already-converted angle-bracket format: 1=%s" % par1)
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Space in page title and apparent angle-bracket format not convertible automatically, may be manually convertible to abbreviated format: 1=%s"
                             % par1
                         )
                 else:
-                    pagemsg(
+                    p.msg(
                         "Skipping template already with inline modifier or angle-bracket format without space in title: %s"
                         % str(t)
                     )
                 for param in t.params:
                     pn = pname(param)
                     if pn not in ["1", "head", "nolink", "nolinkhead"]:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw existing inline modifier or angle-bracket format with other param: %s=%s"
                             % (pn, str(param.value))
                         )
@@ -526,8 +523,8 @@ def process_text_on_page(index, pagetitle, text):
                         qualparam = formcont + str(i) + "_qual"
                         qual = getp(qualparam)
                     form = val or "+"
-                    if form.startswith(pagetitle):
-                        form = "~" + form[len(pagetitle) :]
+                    if form.startswith(p.title):
+                        form = "~" + form[len(p.title) :]
                     if qual:
                         inline_mod = convert_qual_to_inline_modifier(qual)
                         form += inline_mod
@@ -568,7 +565,7 @@ parser.add_argument("--do-verbs", help="Convert verbs", action="store_true")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
 
 if args.check_qual_canon:
     msg("%5s: %s" % ("mod", "count"))

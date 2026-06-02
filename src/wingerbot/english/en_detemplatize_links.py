@@ -6,10 +6,7 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     def get_templated_self_link(link):
@@ -29,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
                     m1 = origm1
                     if "[[" not in m1:
                         m1 = "[[%s]]" % m1
-                    m1_new = m1.replace("[[%s]]" % pagetitle, get_templated_self_link(pagetitle))
+                    m1_new = m1.replace("[[%s]]" % p.title, get_templated_self_link(p.title))
                     saw_self_link = False
                     if m1_new != m1:
                         saw_self_link = True
@@ -48,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
                 # Now replace two-part templated English links with raw ones.
                 def replace_two_part_templated(m):
                     linktext, displaytext = m.groups()
-                    if linktext == pagetitle:
+                    if linktext == p.title:
                         # Don't change if link is to same page.
                         return m.group(0)
                     if displaytext.startswith(linktext):
@@ -71,17 +68,17 @@ def process_text_on_page(index, pagetitle, text):
 
                     def replace_raw_self_link(m):
                         notes.append("replace raw self link to English term with templated one")
-                        return get_templated_self_link(pagetitle)
+                        return get_templated_self_link(p.title)
 
                     split_templates[l] = re.sub(
-                        r"\[\[(?:#English\|)?%s\]\]" % re.escape(pagetitle), replace_raw_self_link, split_templates[l]
+                        r"\[\[(?:#English\|)?%s\]\]" % re.escape(p.title), replace_raw_self_link, split_templates[l]
                     )
 
                     def replace_raw_two_part_link(m):
                         link = m.group(1)
-                        if link == pagetitle:
+                        if link == p.title:
                             notes.append("replace two-part raw self link to English term with templated one")
-                            return get_templated_self_link(pagetitle)
+                            return get_templated_self_link(p.title)
                         notes.append("replace two-part link to English term with raw link")
                         return "[[%s]]" % link
 
@@ -93,13 +90,13 @@ def process_text_on_page(index, pagetitle, text):
             new_lines.append(line)
         return "\n".join(new_lines)
 
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
     secbody = fix_sec_links(secbody)
 
-    return text.rebuild(secbody=secbody), notes
+    return p.text.rebuild(secbody=secbody), notes
 
 
 parser = blib.create_argparser(
@@ -112,4 +109,4 @@ parser.add_argument(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

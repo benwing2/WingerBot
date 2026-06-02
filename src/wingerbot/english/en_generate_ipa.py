@@ -114,7 +114,7 @@ moby_pronun_mapping = {
     "Zh": "ʒ",
 }
 
-max_moby_length = max([len(x) for x in moby_pronun_mapping.iterkeys()])
+max_moby_length = max([len(x) for x in moby_pronun_mapping.keys()])
 
 # Onsets used for syllabification. This is not the full set of possible
 # onsets but omits uncommon ones that occur primarily in foreign words or

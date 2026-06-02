@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 dont_singularize = {
     "Browns",
@@ -134,54 +134,48 @@ def canonicalize_existing_linked_head(head, pagemsg, link_the=False):
     return retval
 
 
-def process_text_on_page(index, pagename, text, verbs):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
     if args.mode == "full-conj":
-        if pagename not in verbs:
-            pagemsg("WARNING: Couldn't find entry for pagename")
+        if p.title not in verbs:
+            p.msg("WARNING: Couldn't find entry for pagename")
             return
 
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             tn = tname(t)
             origt = str(t)
             if tn == "head" and getparam(t, "1") == "en" and getparam(t, "2") == "verb":
                 if getparam(t, "3"):
-                    pagemsg("WARNING: Already has 3=, not touching: %s" % str(t))
+                    p.msg("WARNING: Already has 3=, not touching: %s" % str(t))
                     continue
                 blib.set_template_name(t, "en-verb")
-                t.add("1", verbs[pagename])
+                t.add("1", verbs[p.title])
                 rmparam(t, "2")
                 notes.append("convert {{head|en|verb}} of multiword expression to {{en-verb}}")
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     else:
-        first, rest = pagename.split(" ", 1)
+        first, rest = p.title.split(" ", 1)
         if first not in verbs:
-            pagemsg("WARNING: Couldn't find entry for first=%s" % first)
+            p.msg("WARNING: Couldn't find entry for first=%s" % first)
             return
 
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             tn = tname(t)
             origt = str(t)
             if tn == "head" and getparam(t, "1") == "en" and getparam(t, "2") == "verb":
                 if getparam(t, "3"):
-                    pagemsg("WARNING: Already has 3=, not touching: %s" % str(t))
+                    p.msg("WARNING: Already has 3=, not touching: %s" % str(t))
                     continue
                 blib.set_template_name(t, "en-verb")
                 done = False
-                words = pagename.split(" ")
+                words = p.title.split(" ")
                 plural = False
                 for word in words:
                     if singularizable(word):
@@ -195,24 +189,24 @@ def process_text_on_page(index, pagename, text, verbs):
                         param1 = "[[%s]]%s %s" % (first, verbs[first], " ".join(restwords))
                         head_from_param = re.sub("<.*?>", "", param1)
                         existing_head = getparam(t, "head")
-                        canon_existing_head = canonicalize_existing_linked_head(existing_head, pagemsg)
+                        canon_existing_head = canonicalize_existing_linked_head(existing_head, p.msg)
                         if canon_existing_head == head_from_param:
-                            pagemsg("Removing existing head %s" % existing_head)
+                            p.msg("Removing existing head %s" % existing_head)
                             rmparam(t, "head")
                             t.add("1", param1)
                             done = True
                         elif canon_existing_head != existing_head:
-                            pagemsg(
+                            p.msg(
                                 "Replacing existing head %s with canonicalized %s"
                                 % (existing_head, canon_existing_head)
                             )
                             t.add("head", canon_existing_head)
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Existing head not removed (canonicalized to %s, different from head-from-param %s): %s"
                                 % (canon_existing_head, head_from_param, origt)
                             )
                         elif existing_head:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Existing head not removed (different from head-from-param %s): %s"
                                 % (head_from_param, origt)
                             )
@@ -229,22 +223,22 @@ def process_text_on_page(index, pagename, text, verbs):
                                 headwords.append(link(word))
                         head_from_param = " ".join(headwords)
                         existing_head = getparam(t, "head")
-                        canon_existing_head = canonicalize_existing_linked_head(existing_head, pagemsg)
+                        canon_existing_head = canonicalize_existing_linked_head(existing_head, p.msg)
                         if canon_existing_head == head_from_param:
-                            pagemsg("Removing existing head %s" % existing_head)
+                            p.msg("Removing existing head %s" % existing_head)
                             rmparam(t, "head")
                         elif canon_existing_head != existing_head:
-                            pagemsg(
+                            p.msg(
                                 "Replacing existing head %s with canonicalized %s"
                                 % (existing_head, canon_existing_head)
                             )
                             t.add("head", canon_existing_head)
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Existing head not removed (canonicalized to %s, different from head-from-param %s): %s"
                                 % (canon_existing_head, head_from_param, origt)
                             )
                         elif existing_head:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Existing head not removed (different from head-from-param %s): %s"
                                 % (head_from_param, origt)
                             )
@@ -255,24 +249,24 @@ def process_text_on_page(index, pagename, text, verbs):
                     existing_head = getparam(t, "head")
                     if existing_head:
                         head_from_param = " ".join(
-                            "[[%s]]" % word if word != "the" else word for word in pagename.split(" ")
+                            "[[%s]]" % word if word != "the" else word for word in p.title.split(" ")
                         )
-                        canon_existing_head = canonicalize_existing_linked_head(existing_head, pagemsg)
+                        canon_existing_head = canonicalize_existing_linked_head(existing_head, p.msg)
                         if canon_existing_head == head_from_param:
-                            pagemsg("Removing existing head %s" % existing_head)
+                            p.msg("Removing existing head %s" % existing_head)
                             rmparam(t, "head")
                         elif canon_existing_head != existing_head:
-                            pagemsg(
+                            p.msg(
                                 "Replacing existing head %s with canonicalized %s"
                                 % (existing_head, canon_existing_head)
                             )
                             t.add("head", canon_existing_head)
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Existing head not removed (canonicalized to %s, different from head-from-param %s): %s"
                                 % (canon_existing_head, head_from_param, origt)
                             )
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Existing head not removed (different from head-from-param %s): %s"
                                 % (head_from_param, origt)
                             )
@@ -284,7 +278,7 @@ def process_text_on_page(index, pagename, text, verbs):
 
                 notes.append("convert {{head|en|verb}} of multiword expression to {{en-verb}}")
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -302,20 +296,16 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 verbs = {}
-for line in blib.yield_items_from_file(args.direcfile):
+for index, line in blib.iter_items_from_file(args.direcfile):
     if args.mode == "full-conj":
         verb = re.sub("<.*?>", "", line)
         verbs[verb] = line
     else:
         if " " not in line:
-            msg("WARNING: No space in line: %s" % line)
+            msg("Line %s: WARNING: No space in line: %s" % (index, line))
             continue
         verb, spec = line.split(" ", 1)
         verbs[verb] = spec
 
 
-def do_process_text_on_page(index, pagename, text):
-    return process_text_on_page(index, pagename, text, verbs)
-
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
