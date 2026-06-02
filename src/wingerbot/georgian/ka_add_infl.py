@@ -28,24 +28,21 @@ def escape_newlines(txt):
     return txt.replace("\n", r"\n")
 
 
-def process_text_on_page(index, pagetitle, text, pos):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p, pos):
     cappos = pos.capitalize()
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    if pos == "adjective" and adj_indeclinable(pagetitle):
-        pagemsg("Skipping indeclinable adjective")
+    if pos == "adjective" and adj_indeclinable(p.title):
+        p.msg("Skipping indeclinable adjective")
         return
 
-    modsec = blib.find_modifiable_lang_section(text, "Georgian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Georgian", p.msg)
     if modsec is None:
-        pagemsg("WARNING: Couldn't find Georgian section")
+        p.msg("WARNING: Couldn't find Georgian section")
         return
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     headers = subsecs.headers
     levels = subsecs.levels
@@ -69,35 +66,35 @@ def process_text_on_page(index, pagetitle, text, pos):
                 if tn == pos_to_headword_template[pos] or (
                     tn == "head" and getparam(t, "1") == "ka" and getparam(t, "2") in [pos, "%ss" % pos]
                 ):
-                    newhead = getparam(t, "head").strip() or pagetitle
+                    newhead = getparam(t, "head").strip() or p.title
                     if head:
-                        pagemsg("WARNING: Found two heads under one POS section: %s and %s" % (head, newhead))
+                        p.msg("WARNING: Found two heads under one POS section: %s and %s" % (head, newhead))
                     head = newhead
                 if tn == pos_to_new_style_infl_template[pos]:
                     if inflt:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Found two inflection templates under one POS section: %s and %s"
                             % (str(inflt), str(t))
                         )
                     inflt = t
-                    pagemsg(
+                    p.msg(
                         "Found %s inflection for headword %s: <from> %s <to> {{%s|%s}} <end>"
                         % (
                             pos,
-                            head or pagetitle,
+                            head or p.title,
                             str(t),
                             pos_to_new_style_infl_template[pos],
-                            getparam(t, "1") if pos == "verb" else head or pagetitle,
+                            getparam(t, "1") if pos == "verb" else head or p.title,
                         )
                     )
             if not inflt:
-                pagemsg(
+                p.msg(
                     "Didn't find %s inflection for headword %s: <new> {{%s|%s%s}} <end>"
                     % (
                         pos,
-                        head or pagetitle,
+                        head or p.title,
                         pos_to_new_style_infl_template[pos],
-                        head or pagetitle,
+                        head or p.title,
                         "" if pos == "noun" else "<>",
                     )
                 )
@@ -108,7 +105,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                         for t in secparsed.filter_templates():
                             tn = tname(t)
                             if tname(t) not in ["rfinfl", "ka-infl-noun"]:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw unknown template %s in existing inflection section, skipping"
                                     % (str(t))
                                 )
@@ -122,7 +119,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                             else:
                                 newsectext = new_infl + "\n" + sectext
                             subsections[l] = newsectext + final_newlines
-                            pagemsg(
+                            p.msg(
                                 "Replaced existing decl text <%s> with <%s>"
                                 % (escape_newlines(sectext), escape_newlines(newsectext))
                             )
@@ -142,7 +139,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                         % ("=" * (level + 1), "Conjugation" if pos == "verb" else "Declension", "=" * (level + 1)),
                         new_infl + "\n\n",
                     ]
-                    pagemsg("Inserted level-%s inflection section with inflection <%s>" % (level + 1, new_infl))
+                    p.msg("Inserted level-%s inflection section with inflection <%s>" % (level + 1, new_infl))
                     notes.append("add decl <%s>" % new_infl)
                     endk += 2  # for the two subsections we inserted
 
@@ -156,22 +153,22 @@ def process_text_on_page(index, pagetitle, text, pos):
                 last_pos = m.group(1)
             if re.search(r"^(Declension|Inflection|Conjugation)$", headers[k]):
                 if not last_pos:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found inflection header before seeing any parts of speech: %s"
                         % (subsections[k - 1].strip())
                     )
                 elif last_pos == cappos:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found probably misindented inflection header after ==%s== header: %s"
                         % (cappos, subsections[k - 1].strip())
                     )
             k += 2
 
-    text = modsec.rebuild(secbody="".join(subsections))
-    text = re.sub("\n\n\n+", "\n\n", text)
+    newtext = modsec.rebuild(secbody="".join(subsections))
+    newtext = re.sub("\n\n\n+", "\n\n", newtext)
     if not notes:
         notes.append("convert 3+ newlines to 2")
-    return text, notes
+    return newtext, notes
 
 
 parser = blib.create_argparser(
@@ -182,8 +179,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, args.pos)
+def do_process_text_on_page(p):
+    return process_text_on_page(p, args.pos)
 
 
 blib.do_pagefile_cats_refs(

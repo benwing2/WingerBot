@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    modsec = blib.find_modifiable_lang_section(text, "Georgian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Georgian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
