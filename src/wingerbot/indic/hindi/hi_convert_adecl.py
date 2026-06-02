@@ -8,15 +8,12 @@ M = "\u0901"
 IND_AA = "आ"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -27,11 +24,11 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "hi-adecl")
             notes.append("convert {{%s}} to {{hi-ndecl}}" % tn)
         if tn in ["hi-adj-auto"]:
-            if " " not in pagetitle and "-" not in pagetitle and (pagetitle.endswith(AA) or pagetitle.endswith(IND_AA)):
+            if " " not in p.title and "-" not in p.title and (p.title.endswith(AA) or p.title.endswith(IND_AA)):
                 blib.set_template_name(t, "hi-adecl")
                 notes.append("convert {{%s}} to {{hi-ndecl}}" % tn)
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -47,7 +44,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_refs=["Template:hi-adj-1", "Template:hi-adj-auto"],
-    edit=True,
-    stdin=True,
 )

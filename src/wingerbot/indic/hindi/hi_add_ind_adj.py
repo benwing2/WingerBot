@@ -29,20 +29,17 @@ def hi_adj_is_indeclinable(t, pagetitle):
     return False
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     saw_potentially_declinable_adjective = False
     saw_hi_adecl = False
     saw_hi_adj_with_translit = False
     headt = None
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -51,21 +48,21 @@ def process_text_on_page(index, pagetitle, text):
             headt = t
             if getparam(t, "tr") or getparam(t, "tr2") or getparam(t, "tr3"):
                 saw_hi_adj_with_translit = True
-            if hi_adj_is_indeclinable(t, pagetitle):
+            if hi_adj_is_indeclinable(t, p.title):
                 if not getparam(t, "ind"):
                     t.add("ind", "1")
                     notes.append("add ind=1 to {{%s}}" % tn)
             else:
                 saw_potentially_declinable_adjective = True
-                pagemsg("Skipping potentially declinable adjective: %s" % str(t))
+                p.msg("Skipping potentially declinable adjective: %s" % str(t))
             if str(t) != origt:
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
         elif tn == "hi-adecl":
             saw_hi_adecl = True
     if saw_potentially_declinable_adjective and not saw_hi_adecl:
-        pagemsg("WARNING: Potentially declinable adjective and no declension template: %s" % str(headt))
+        p.msg("WARNING: Potentially declinable adjective and no declension template: %s" % str(headt))
     if saw_potentially_declinable_adjective and saw_hi_adecl and saw_hi_adj_with_translit:
-        pagemsg("WARNING: Declinable adjective with manual translit: %s" % str(headt))
+        p.msg("WARNING: Declinable adjective with manual translit: %s" % str(headt))
 
     return str(parsed), notes
 
@@ -75,5 +72,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Hindi adjectives"]
+    args, start, end, process_text_on_page, new=True, default_cats=["Hindi adjectives"]
 )

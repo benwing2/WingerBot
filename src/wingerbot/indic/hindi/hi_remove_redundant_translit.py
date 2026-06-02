@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, rmparam, tname
 
 hindi_head_templates = [
     "hi-adj form",
@@ -57,18 +57,12 @@ def canonicalize_tr(tr):
     return tr
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     head_template_tr = None
     head_auto_tr = None
@@ -79,7 +73,7 @@ def process_text_on_page(index, pagetitle, text):
         origt = str(t)
         if tn in hindi_head_templates:
             if noun_head_template and head_template_tr and not saw_ndecl:
-                pagemsg(
+                p.msg(
                     "WARNING: Missing declension for noun needing phonetic respelling, headtr=%s, autotr=%s: %s"
                     % (",".join(head_template_tr), ",".join(head_auto_tr), str(noun_head_template))
                 )
@@ -96,7 +90,7 @@ def process_text_on_page(index, pagetitle, text):
                     multi_trs = True
                     # We might have tr=some special translit and tr2=the default one, and in that case
                     # we don't want to remove tr2= even though it appears redundant.
-                    pagemsg("More than one translit, not removing any redundant ones: %s" % str(t))
+                    p.msg("More than one translit, not removing any redundant ones: %s" % str(t))
                     break
             for i in range(1, 10):
                 trparam = "tr" if i == 1 else "tr%s" % i
@@ -108,54 +102,54 @@ def process_text_on_page(index, pagetitle, text):
                     if head:
                         head = blib.remove_links(head)
                     else:
-                        head = pagetitle
-                    autotr = expand_text("{{xlit|hi|%s}}" % head)
+                        head = p.title
+                    autotr = p.expand_text("{{xlit|hi|%s}}" % head)
                     if autotr is not None:
                         if autotr == tr and not multi_trs:
                             assert i == 1
-                            pagemsg("WARNING: Removing redundant translit tr=%s for head %s" % (tr, head))
+                            p.msg("WARNING: Removing redundant translit tr=%s for head %s" % (tr, head))
                             rmparam(t, "tr")
                             notes.append("remove redundant tr=%s from {{%s}}" % (tr, tn))
                         else:
                             head_template_tr.append(tr)
                             head_auto_tr.append(autotr)
-                            pagemsg(
+                            p.msg(
                                 "Page has non-redundant translit %s=%s vs. auto tr=%s in {{%s}}"
                                 % (trparam, tr, autotr, tn)
                             )
                             if origtr != tr:
-                                pagemsg("Canonicalizing %s=%s to %s: %s" % (trparam, origtr, tn, str(t)))
+                                p.msg("Canonicalizing %s=%s to %s: %s" % (trparam, origtr, tn, str(t)))
                                 t.add(trparam, tr)
                                 notes.append("canonicalize %s=%s to %s in {{%s}}" % (trparam, origtr, tr, tn))
             if str(t) != origt:
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
         if tn == "hi-ndecl":
             saw_ndecl = True
             decl = getparam(t, "1")
             phon_respellings = re.findall("//([^<>, -]*)", decl)
             if head_template_tr is None:
-                pagemsg("WARNING: Saw {{hi-ndecl}} before any headwords: %s" % str(t))
+                p.msg("WARNING: Saw {{hi-ndecl}} before any headwords: %s" % str(t))
             else:
-                respelling_tr = [expand_text("{{xlit|hi|%s}}" % x) for x in phon_respellings]
+                respelling_tr = [p.expand_text("{{xlit|hi|%s}}" % x) for x in phon_respellings]
                 if None in respelling_tr:
-                    pagemsg("WARNING: Error during phonetic respelling translit, skipping")
+                    p.msg("WARNING: Error during phonetic respelling translit, skipping")
                     continue
                 respelling_tr = [x.replace(".", "") for x in respelling_tr]
                 for phon_respelling in phon_respellings:
                     if "॰" in phon_respelling:
-                        pagemsg("WARNING: Saw ॰ in phon_respelling %s in %s" % (phon_respelling, str(t)))
+                        p.msg("WARNING: Saw ॰ in phon_respelling %s in %s" % (phon_respelling, str(t)))
                 if head_template_tr and not phon_respellings:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Missing phonetic respelling in %s, headtr=%s, autotr=%s"
                         % (str(t), ",".join(head_template_tr), ",".join(head_auto_tr))
                     )
                 elif phon_respellings and not head_template_tr:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Extra phonetic respelling %s (translit %s) in %s, no head tr"
                         % (",".join(phon_respellings), ",".join(respelling_tr), str(t))
                     )
                 elif set(respelling_tr) != set(head_template_tr):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Phonetic respelling %s (translit %s) in %s differs from head translit %s, auto translit %s"
                         % (
                             ",".join(phon_respellings),
@@ -166,7 +160,7 @@ def process_text_on_page(index, pagetitle, text):
                         )
                     )
                 elif phon_respellings:
-                    pagemsg(
+                    p.msg(
                         "Phonetic respelling %s (translit %s) in %s agrees with head translit %s, auto translit %s"
                         % (
                             ",".join(phon_respellings),
@@ -178,7 +172,7 @@ def process_text_on_page(index, pagetitle, text):
                     )
 
     if noun_head_template and head_template_tr and not saw_ndecl:
-        pagemsg(
+        p.msg(
             "WARNING: Missing declension for noun needing phonetic respelling, headtr=%s, autotr=%s: %s"
             % (",".join(head_template_tr), ",".join(head_auto_tr), str(noun_head_template))
         )
@@ -194,4 +188,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Hindi lemmas"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Hindi lemmas"])

@@ -11,15 +11,12 @@ N = "\u0902"
 AA = "\u093e"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     noun_head_template = None
     noun_head_template_maybe_unmarked = False
@@ -35,7 +32,7 @@ def process_text_on_page(index, pagetitle, text):
             saw_place = False
         elif tn == "hi-proper noun":
             noun_head_template = t
-            head = getparam(t, "head") or pagetitle
+            head = getparam(t, "head") or p.title
             if "m" in getparam(t, "g") and re.search("[" + AA + "आ][" + M + N + "]?$", head):
                 noun_head_template_maybe_unmarked = True
             else:
@@ -45,14 +42,14 @@ def process_text_on_page(index, pagetitle, text):
         elif tn == "place":
             saw_place = True
             if not noun_head_template:
-                pagemsg("WARNING: Saw {{place}} without preceding {{hi-proper noun}}")
+                p.msg("WARNING: Saw {{place}} without preceding {{hi-proper noun}}")
         elif tn == "hi-ndecl":
             saw_ndecl = True
             decl = getparam(t, "1")
             if "unmarked" not in decl and noun_head_template_maybe_unmarked:
-                pagemsg("WARNING: Saw proper noun ending in -ā or -ā̃, probably needing 'unmarked': %s" % str(t))
+                p.msg("WARNING: Saw proper noun ending in -ā or -ā̃, probably needing 'unmarked': %s" % str(t))
             if saw_place and "sg" not in decl:
-                pagemsg("WARNING: Saw proper noun with {{place}} but without 'sg' in declension template: %s" % str(t))
+                p.msg("WARNING: Saw proper noun with {{place}} but without 'sg' in declension template: %s" % str(t))
 
 
 parser = blib.create_argparser(
@@ -61,4 +58,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Hindi lemmas"], stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Hindi lemmas"])
