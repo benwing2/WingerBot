@@ -6,19 +6,17 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle.startswith("Module:"):
+def process_text_on_page(p):
+    if p.title.startswith("Module:"):
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
     notes = []
+    text = p.text
 
     to_move_refs = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "etydate":
@@ -40,7 +38,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     punct = ""
                 if punct in [":", ";"]:
-                    pagemsg("WARNING: Previous change didn't move past colon or semicolon: %s" % origt)
+                    p.msg("WARNING: Previous change didn't move past colon or semicolon: %s" % origt)
                 origt_with_punct = origt + punct
                 refadds = []
 
@@ -66,11 +64,11 @@ def process_text_on_page(index, pagetitle, text):
                 process_ref("ref3", "ref3n")
                 newt = str(t) + punct + "".join(refadds)
                 if newt != origt_with_punct:
-                    pagemsg("Replacing <%s> with <%s>" % (origt_with_punct, newt))
+                    p.msg("Replacing <%s> with <%s>" % (origt_with_punct, newt))
                     to_move_refs.append((origt_with_punct, newt))
 
     for curr_template, repl_template in to_move_refs:
-        newtext, did_replace = blib.replace_in_text(text, curr_template, repl_template, pagemsg)
+        newtext, did_replace = blib.replace_in_text(text, curr_template, repl_template, p.msg)
         if did_replace:
             if newtext != text:
                 notes.append("move refs inside of {{etydate}} outside and after any period or comma")

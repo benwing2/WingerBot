@@ -6,17 +6,14 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, site, tname
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    if not re.search(re_to_search, text):
+def process_text_on_page(p):
+    if not re.search(re_to_search, p.text):
         return
-    # pagemsg("Processing")
+    # p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -58,7 +55,7 @@ def process_text_on_page(index, pagename, text):
                 notes.append("consolidate genders in {{%s}}" % tn)
 
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     if args.comment_annotation:
         notes = args.comment_annotation + ": " + "; ".join(blib.group_notes(notes))

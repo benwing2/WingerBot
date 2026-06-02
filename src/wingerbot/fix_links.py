@@ -54,12 +54,7 @@ sections_to_always_include = {
 # Further reading, Quotations, etc.
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
     subbed_links = []
 
@@ -73,7 +68,7 @@ def process_text_on_page(index, pagetitle, text):
                 lang_utils.language_names_to_properties[thislangname]
             )
 
-            subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+            subsecs = blib.split_text_into_subsections(sectext, p.msg)
             for k, subsectitle in subsecs.header_list:
                 if not (
                     subsectitle in sections_to_always_include
@@ -92,32 +87,32 @@ def process_text_on_page(index, pagetitle, text):
 
                 def sub_link(orig, text, translit, origtemplate):
                     if re.search(r"[\[\]]", text):
-                        pagemsg("WARNING: Stray brackets in %s, skipping: %s" % (linktext(), orig))
+                        p.msg("WARNING: Stray brackets in %s, skipping: %s" % (linktext(), orig))
                         return orig
                     if this_ignore_translit == "latin":
                         if not re.search("^[#|%s]+$" % this_charset, text):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: %s contains characters not in proper charset, skipping: %s"
                                 % (linktext(cap=True), orig)
                             )
                             return orig
                     else:
                         if not re.search("[^ -~]", text):
-                            pagemsg("No non-Latin characters in %s, skipping: %s" % (linktext(), orig))
+                            p.msg("No non-Latin characters in %s, skipping: %s" % (linktext(), orig))
                             return orig
                         if not re.search("^[ -~%s]*$" % this_charset, text):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: %s contains non-Latin characters not in proper charset, skipping: %s"
                                 % (linktext(cap=True), orig)
                             )
                             return orig
                     parts = re.split(r"\|", text)
                     if len(parts) > 2:
-                        pagemsg("WARNING: Too many parts in %s, skipping: %s" % (linktext(), orig))
+                        p.msg("WARNING: Too many parts in %s, skipping: %s" % (linktext(), orig))
                         return orig
                     template = origtemplate or subsectitle == "Usage notes" and "m" or "l"
                     if not origtemplate and thislangcode == "grc" and subsectitle == "Descendants":
-                        pagemsg("Using langcode=el instead of grc in Descendants section")
+                        p.msg("Using langcode=el instead of grc in Descendants section")
                         langcode = "el"
                     else:
                         langcode = thislangcode
@@ -131,17 +126,17 @@ def process_text_on_page(index, pagetitle, text):
                     if page and this_remove_accents(accented) == page:
                         page = None
                     if "#" in (page or accented):
-                        pagemsg("WARNING: Found special char # in %s, skipping: %s" % (linktext(), orig))
+                        p.msg("WARNING: Found special char # in %s, skipping: %s" % (linktext(), orig))
                         return orig
                     if page:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Page %s doesn't match accented %s in %s, converting to two-part link"
                             % (page, accented, linktext())
                         )
                     translit_arg = ""
                     post_translit_arg = ""
                     if translit and this_ignore_translit == "notranslit":
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unable to determine whether putative explicit translit %s is translit of %s in %s"
                             % (translit, accented, linktext())
                         )
@@ -150,9 +145,9 @@ def process_text_on_page(index, pagetitle, text):
                         orig_translit = translit
                         translit = re.sub(r"^\[\[(.*)\]\]$", r"\1", translit)
                         translit = re.sub(r"^''(.*)''$", r"\1", translit)
-                        accented_translit = expand_text("{{xlit|%s|%s}}" % (langcode, accented))
+                        accented_translit = p.expand_text("{{xlit|%s|%s}}" % (langcode, accented))
                         if accented_translit == "":
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unable to transliterate %s (putative explicit transit %s in %s)"
                                 % (accented, translit, linktext())
                             )
@@ -160,7 +155,7 @@ def process_text_on_page(index, pagetitle, text):
                             # Error occurred computing transliteration
                             post_translit_arg = " (%s)" % orig_translit
                         elif accented_translit == translit:
-                            pagemsg(
+                            p.msg(
                                 "No translit difference between explicit %s and auto %s (%s) in %s"
                                 % (translit, accented_translit, accented, linktext())
                             )
@@ -170,13 +165,13 @@ def process_text_on_page(index, pagetitle, text):
                             levdist = blib.levenshtein(accented_translit, translit)
                             tranlen = min(len(translit), len(accented_translit))
                             if accented_translit[0].isupper() != translit[0].isupper():
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Upper/lower mismatch between explicit %s and auto %s, not treating as translit (%s) in %s"
                                     % (translit, accented_translit, accented, linktext())
                                 )
                                 post_translit_arg = " (%s)" % orig_translit
                             elif thislangcode == "grc" and (translit.endswith("ic") or translit.endswith("an")):
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Explicit translit %s ends with -ic or -an, not treating as translit vs. auto-translit %s (Levenshtein distance %s, %s in %s)"
                                     % (translit, accented_translit, levdist, accented, linktext())
                                 )
@@ -193,14 +188,14 @@ def process_text_on_page(index, pagetitle, text):
                                 or levdist == 5
                                 and tranlen >= 9
                             ):
-                                pagemsg(
+                                p.msg(
                                     "Levenshtein distance %s and length %s, accept translit difference between explicit %s and auto %s (%s) in %s"
                                     % (levdist, tranlen, translit, accented_translit, accented, linktext())
                                 )
                                 if not this_ignore_translit:
                                     translit_arg = "|tr=%s" % translit
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Levenshtein distance %s too big for length %s, not treating %s as transliteration of %s (%s) in %s"
                                     % (levdist, tranlen, translit, accented_translit, accented, linktext())
                                 )
@@ -219,14 +214,14 @@ def process_text_on_page(index, pagetitle, text):
                         return "{{%s|%s|%s%s}}%s" % (template, langcode, accented, translit_arg, post_translit_arg)
 
                 def obfuscate_brackets(text):
-                    return text.replace("[", lbracket_sub).replace("]", rbracket_sub)
+                    return p.text.replace("[", lbracket_sub).replace("]", rbracket_sub)
 
                 def unobfuscate_brackets(text):
-                    return text.replace(lbracket_sub, "[").replace(rbracket_sub, "]")
+                    return p.text.replace(lbracket_sub, "[").replace(rbracket_sub, "]")
 
                 def sub_raw_latin_link(m):
                     if m.group(1).count("(") != m.group(1).count(")"):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unbalanced parens preceding raw %s: %s"
                             % (linktext(), unobfuscate_brackets(m.group(0)))
                         )
@@ -247,7 +242,7 @@ def process_text_on_page(index, pagetitle, text):
                 must_continue = False
                 for l in range(0, len(split_templates), 2):
                     if "{" in split_templates[l] or "}" in split_templates[l]:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Stray brace in split_templates[%s] in '%s' in %s: Skipping section: <<%s>>"
                             % (l, subsectitle, thislangname, split_templates[l].replace("\n", r"\n"))
                         )
@@ -267,7 +262,7 @@ def process_text_on_page(index, pagetitle, text):
                         split_text[-1] += split_templates[l] + split_templates[l + 1]
 
                 # if verbose:
-                #  pagemsg("Processing split_text: %s" % split_text)
+                #  p.msg("Processing split_text: %s" % split_text)
                 # Split on newlines and look for lines beginning with *. Then
                 # split on templates and look for links without Latin in them.
                 for kk in range(0, len(split_text), 2):
@@ -275,7 +270,7 @@ def process_text_on_page(index, pagetitle, text):
                     for l in range(0, len(lines), 2):
                         line = lines[l]
                         # if verbose:
-                        #  pagemsg("Processing line: %s" % line)
+                        #  p.msg("Processing line: %s" % line)
                         if line.startswith("*"):
                             split_line = re.split(template_table_split_re, line, 0, re.S)
                             for ll in range(0, len(split_line), 2):
@@ -291,7 +286,7 @@ def process_text_on_page(index, pagetitle, text):
                                         r"\[\[([^:A-Za-z]*?)\]\](?: \(([^()|]*?)\))?", sub_raw_link, subline
                                     )
                                 if new_subline != subline:
-                                    pagemsg(
+                                    p.msg(
                                         "Replacing %s with %s in %s section in %s"
                                         % (subline, new_subline, subsectitle, thislangname)
                                     )
@@ -306,7 +301,7 @@ def process_text_on_page(index, pagetitle, text):
                                         subline,
                                     )
                                     if new_subline != subline:
-                                        pagemsg(
+                                        p.msg(
                                             "Replacing %s with %s in %s section in %s"
                                             % (subline, new_subline, subsectitle, thislangname)
                                         )
@@ -332,7 +327,7 @@ def process_text_on_page(index, pagetitle, text):
                         main_template, gender = m.groups()
                         maint = list(blib.parse_text(main_template).filter_templates())[0]
                         if getparam(maint, "g"):
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Found postposed gender template after link template already containing gender: %s"
                                 % m.groups(0)
                             )
@@ -345,7 +340,7 @@ def process_text_on_page(index, pagetitle, text):
                         r"(\{\{[lm]\|%s\|[^{}]*\}\}) \{\{g\|([^{}|=]*)\}\}" % thislangcode, incorporate_gender, secline
                     )
                     if new_secline != secline:
-                        pagemsg(
+                        p.msg(
                             "Replacing %s with %s in %s section in %s"
                             % (secline, new_secline, subsectitle, thislangname)
                         )
@@ -358,9 +353,9 @@ def process_text_on_page(index, pagetitle, text):
         return sectext
 
     if args.single_lang:
-        newtext = do_section(text, args.single_lang)
+        newtext = do_section(p.text, args.single_lang)
     else:
-        secs = blib.split_text_into_sections(text, pagemsg)
+        secs = blib.split_text_into_sections(p.text, p.msg)
         for j, thislangname in secs.lang_list:
             secs.sections[j] = do_section(secs.sections[j], thislangname)
         newtext = "".join(secs.sections)

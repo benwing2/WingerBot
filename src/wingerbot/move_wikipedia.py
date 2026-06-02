@@ -7,18 +7,15 @@ from wingerbot.blib import msg
 from wingerbot import lang_utils
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     sect_for_wiki = 0
@@ -34,7 +31,7 @@ def process_text_on_page(index, pagetitle, text):
             for lineind, line in enumerate(lines):
                 if re.search(r"^\{\{(wp|wiki|wikipedia|Wikipedia)\|[^{}]*\}\}$", line):
                     if len(seen_lemma_headers) >= 1:
-                        pagemsg(
+                        p.msg(
                             "Already saw preceding lemma header(s) %s, not moving wikipedia line %s"
                             % (",".join(seen_lemma_headers), line)
                         )
@@ -60,7 +57,7 @@ def process_text_on_page(index, pagetitle, text):
                 lines = subsections[k].strip().split("\n")
                 for lineind, line in enumerate(lines):
                     if re.search(r"\{\{(head\|[^{}]*|[a-z][a-z][a-z]?-[^{}|]*)forms?\b", line):
-                        pagemsg(
+                        p.msg(
                             "Saw potential lemma section %s but appears to be a non-lemma form due to line #%s: %s"
                             % (header, lineind + 1, line)
                         )

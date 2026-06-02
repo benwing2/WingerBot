@@ -36,12 +36,9 @@ global_params_at_end = ["q", "alts"]
 item_params = ["alt", "g", "gloss", "t", "id", "lit", "pos", "tr", "ts", "sc"]
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
 
@@ -50,7 +47,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         link = m.group(1)
         parts = re.split(r"\|", link)
         if len(parts) > 2:
-            pagemsg("WARNING: Too many parts in %s, not converting raw link %s: %s" % (link, linktext, origtext))
+            p.msg("WARNING: Too many parts in %s, not converting raw link %s: %s" % (link, linktext, origtext))
             return linktext
         page = None
         if len(parts) == 1:
@@ -67,13 +64,13 @@ def process_text_on_page(index, pagetitle, pagetext):
             ):
                 page = None
             elif re.search("[#:]", page):
-                pagemsg(
+                p.msg(
                     "WARNING: Found special chars # or : in left side of %s, not converting raw link %s: %s"
                     % (link, linktext, origtext)
                 )
                 return origtext
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Page %s doesn't match accented %s in %s, converting to two-part link in raw link %s: %s"
                     % (page, accented, link, linktext, origtext)
                 )
@@ -120,7 +117,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         )
 
         newtext = "%s%s%s%s" % (bullets1, spacing1, langname, terms)
-        pagemsg("Replacing <%s> with <%s>" % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s>" % (origtext, newtext))
         return newtext
 
     def replace_with_desc(m):
@@ -130,7 +127,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         parsed_desc = blib.parse_text(desc)
         desct = list(parsed_desc.filter_templates())[0]
         if tname(desct) != "desc":
-            pagemsg(
+            p.msg(
                 "WARNING: Internal error: Putative {{desc}} template does not have 'desc' as template name: %s"
                 % str(desct)
             )
@@ -145,7 +142,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         for mm in re.finditer(r"\{\{[lm]\|([^{}|\n]*?)\|.*?\}\}", links):
             seen_langcodes.add(mm.group(1))
         if len(seen_langcodes) > 1:
-            pagemsg("WARNING: Saw multiple lang codes %s, skipping: %s" % (",".join(seen_langcodes), origtext))
+            p.msg("WARNING: Saw multiple lang codes %s, skipping: %s" % (",".join(seen_langcodes), origtext))
             return origtext
 
         # If there is one, use it to replace raw links, otherwise use language
@@ -156,7 +153,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             link_langcode = non_etym_langcode
 
         if link_langcode != langcode and link_langcode != non_etym_langcode:
-            pagemsg(
+            p.msg(
                 "WARNING: {{desc}} langcode %s is not same as or etymology language child of link langcode %s: %s"
                 % (langcode, link_langcode, origtext)
             )
@@ -174,7 +171,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             elif pn in global_params_at_end:
                 desc_params_at_end.append((pn, pv))
             else:
-                pagemsg("WARNING: Can't yet handle param %s=%s in {{desc}}: %s" % (pn, pv, origtext))
+                p.msg("WARNING: Can't yet handle param %s=%s in {{desc}}: %s" % (pn, pv, origtext))
                 return origtext
         for pn, pv in desc_params_at_beginning:
             rmparam(desct, pn)
@@ -191,12 +188,12 @@ def process_text_on_page(index, pagetitle, pagetext):
             if linktext.startswith("["):
                 mm = re.search(r"^\[\[([^\[\]\n]*?)\]\]$", linktext)
                 if not mm:
-                    pagemsg("WARNING: Internal error: Something wrong, not a raw link: %s: %s" % (linktext, origtext))
+                    p.msg("WARNING: Internal error: Something wrong, not a raw link: %s: %s" % (linktext, origtext))
                     return linktext
                 if non_etym_langcode in lang_data.languages_by_code:
                     langname = lang_data.languages_by_code[non_etym_langcode]["canonicalName"]
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: For langcode %s, non-etym parent %s isn't a language: %s"
                         % (langcode, non_etym_langcode, origtext)
                     )
@@ -211,13 +208,13 @@ def process_text_on_page(index, pagetitle, pagetext):
         # and raw links and don't change the templates.
         new_links = re.sub(r"\{\{[^{}\n]*?\}\}|\[\[[^\[\]\n]*?\]\]", replace_raw_link, links)
         if new_links != links:
-            pagemsg("Replacing raw link <%s> with <%s>" % (links, new_links))
+            p.msg("Replacing raw link <%s> with <%s>" % (links, new_links))
             links = new_links
 
         # Replace {{m|...}} links with {{l|...}} links.
         new_links = re.sub(r"\{\{m\|(.*?)\}\}", r"{{l|\1}}", links)
         if new_links != links:
-            pagemsg("Replacing m-type link <%s> with <%s>" % (links, new_links))
+            p.msg("Replacing m-type link <%s> with <%s>" % (links, new_links))
             links = new_links
             notes.append("replace {{m}} link(s) with {{l}} in {{desc}} line")
 
@@ -231,12 +228,12 @@ def process_text_on_page(index, pagetitle, pagetext):
 
             tn = tname(t)
             if tn != "l":
-                pagemsg("WARNING: Internal error: Saw non-{{l}} template %s in links: %s" % (str(t), origtext))
+                p.msg("WARNING: Internal error: Saw non-{{l}} template %s in links: %s" % (str(t), origtext))
                 return origtext
             term_index += 1
             tlang = getp("1")
             if tlang != link_langcode:
-                pagemsg(
+                p.msg(
                     "WARNING: Internal error: Langcode %s of template %s is not %s: %s"
                     % (tlang, str(t), link_langcode, origtext)
                 )
@@ -265,12 +262,12 @@ def process_text_on_page(index, pagetitle, pagetext):
                 elif pn == "4":
                     desct.add("t%s" % term_index, pv)
                 elif re.search("^[0-9]+$", pn):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw numbered param > 4 %s=%s in {{l}} template %s: %s" % (pn, pv, str(t), origtext)
                     )
                     return origtext
                 elif re.search("[0-9]", pn):
-                    pagemsg("WARNING: Saw indexed param %s=%s in {{l}} template %s: %s" % (pn, pv, str(t), origtext))
+                    p.msg("WARNING: Saw indexed param %s=%s in {{l}} template %s: %s" % (pn, pv, str(t), origtext))
                     return origtext
                 else:
                     desct.add("%s%s" % (pn, term_index), pv)
@@ -284,10 +281,10 @@ def process_text_on_page(index, pagetitle, pagetext):
                 desct.add(pn, pv, preserve_spacing=False)
 
         newtext = "%s%s" % (bullets, str(desct))
-        pagemsg("Replacing <%s> with <%s>" % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s>" % (origtext, newtext))
         return newtext
 
-    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
     # Go through each section in turn, looking for Descendants sections
     for k, header in subsecs.header_list:

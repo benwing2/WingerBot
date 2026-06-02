@@ -9,11 +9,8 @@ from collections import defaultdict
 all_quals = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         for param in t.params:

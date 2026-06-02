@@ -1,35 +1,29 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 from collections import defaultdict
+from dataclasses import dataclass
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text, templates, paramspecs, countparams, counted_param_values_by_template):
-    if not any(template in text for template in templates):
+def process_text_on_page(p):
+    if not any(template in p.text for template in templates):
         return
-    # if not re.search(r"\{\{\s*(%s)" % "|".join(templates), text):
-    #  return
-
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+    #if not re.search(r"\{\{\s*(%s)" % "|".join(templates), p.text):
+    #    return
 
     if args.verbose and not args.stdin:
-        pagemsg("Processing")
-    notes = []
+        p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     paramset = paramspecs and set(paramspecs) or set()
 
     lines_output = 0
-    template_occurrences = None
-    if args.single_line:
-        template_occurrences = []
-    elif args.single_line_grouped_tsv:
-        template_occurrences = defaultdict(list)
+    template_occurrences: list[tuple[str, str]] = []
+    template_occurrence_dict: dict[str, list[str]] = defaultdict(list)
     for t in parsed.filter_templates():
         if args.from_to:
             temptext = "<from> %s <to> %s <end>" % (str(t), str(t))
@@ -37,21 +31,20 @@ def process_text_on_page(index, pagetitle, text, templates, paramspecs, countpar
             temptext = str(t)
         tn = tname(t)
         if tn in templates:
-
             def output_found(gloss):
                 txt = "Found %s: %s" % (gloss, temptext)
                 nonlocal lines_output
                 if args.find_regex_output:
                     if lines_output == 0:
-                        pagemsg("-------- begin text --------")
+                        p.msg("-------- begin text --------")
                     msg(txt)
                     lines_output += 1
                 elif args.single_line:
                     template_occurrences.append((gloss, temptext))
                 elif args.single_line_grouped_tsv:
-                    template_occurrences[tn].append(temptext)
+                    template_occurrence_dict[tn].append(temptext)
                 else:
-                    pagemsg(txt)
+                    p.msg(txt)
                     lines_output += 1
 
             if not paramspecs and not countparams:
@@ -60,7 +53,7 @@ def process_text_on_page(index, pagetitle, text, templates, paramspecs, countpar
                 seen_params = set()
                 counted_param_values = counted_param_values_by_template[tn]
                 for tparam in t.params:
-                    pname = str(tparam.name).strip()
+                    pname = pname(tparam)
                     pvalue = str(tparam.value).strip()
                     seen_params.add(pname)
                     if pname in countparams or "*" in countparams:
@@ -70,32 +63,23 @@ def process_text_on_page(index, pagetitle, text, templates, paramspecs, countpar
                             output_found("new value %s=%s for %s template" % (pname, pvalue, tn))
                         counted_param_values[pname][pvalue] += 1
                     if args.negate:
-                        if pname not in paramset:
+                        if ParamSpec(cond="present", param=pname) not in paramset:
                             output_found("%s template with unrecognized param %s=%s" % (tn, pname, pvalue))
                     elif paramspecs:
                         for spec in paramspecs:
-                            found = False
-                            if type(spec) is tuple:
-                                cond = spec[0]
-                                if (
-                                    cond == "eq"
-                                    and pname == spec[1]
-                                    and pvalue == spec[2]
-                                    or cond == "neq"
-                                    and pname == spec[1]
-                                    and pvalue != spec[2]
-                                ):
-                                    found = True
-                            elif pname == spec:
-                                found = True
+                            found = (
+                                spec.cond == "eq" and spec.param == pname and spec.value == pvalue
+                                or spec.cond == "neq" and spec.param == pname and spec.value != pvalue
+                                or spec.cond == "present" and spec.param == pname
+                            )
                             if found:
                                 output_found("%s template with %s=%s" % (tn, pname, pvalue))
                 # Also output occurrences of missing params when !PARAM given
                 if paramspecs:
                     for spec in paramspecs:
-                        if type(spec) is tuple and spec[0] == "notpresent":
-                            if not getparam(t, spec[1]):
-                                output_found("%s template with param %s missing or blank" % (tn, spec[1]))
+                        if spec.cond == "notpresent":
+                            if not getparam(t, spec.param):
+                                output_found("%s template with param %s missing or blank" % (tn, spec.param))
                 # Also track occurrences of params in countparams not occurring
                 if countparams:
                     for countparam in countparams:
@@ -107,22 +91,22 @@ def process_text_on_page(index, pagetitle, text, templates, paramspecs, countpar
                             counted_param_values[countparam][None] += 1
     if args.single_line:
         if template_occurrences:
-            pagemsg("Found %s" % "; ".join("%s (%s)" % (temptext, gloss) for gloss, temptext in template_occurrences))
+            p.msg("Found %s" % "; ".join("%s (%s)" % (temptext, gloss) for gloss, temptext in template_occurrences))
             lines_output += 1
     elif args.single_line_grouped_tsv:
-        if template_occurrences:
+        if template_occurrence_dict:
             parts = []
-            parts.append(str(index))
-            parts.append(pagetitle)
+            parts.append(str(p.index))
+            parts.append(p.title)
             for tn in templates:
-                parts.append(", ".join(template_occurrences[tn]))
+                parts.append(", ".join(template_occurrence_dict[tn]))
             msg("\t".join(parts))
             lines_output += 1
     if lines_output > 0:
         if args.find_regex_output:
             msg("-------- end text --------")
         if args.verbose:
-            pagemsg("Output %s lines" % lines_output)
+            p.msg("Output %s lines" % lines_output)
 
 
 parser = blib.create_argparser("Find templates with specified params", include_pagefile=True, include_stdin=True)
@@ -158,20 +142,27 @@ start, end = blib.parse_start_end(args.start, args.end)
 templates = re.split(",", args.templates)
 
 
+@dataclass
+class ParamSpec:
+    cond: str
+    param: str
+    value: str | None = None
+
+
 def process_param(param):
     if "!=" in param:
         parts = param.split("!=")
         if len(parts) != 2:
             raise ValueError("Too many parts in PARAM!=VALUE spec: %s" % param)
-        return ("neq", parts[0], parts[1])
+        return ParamSpec(cond="neq", param=parts[0], value=parts[1])
     if "=" in param:
         parts = param.split("=")
         if len(parts) != 2:
             raise ValueError("Too many parts in PARAM=VALUE spec: %s" % param)
-        return ("eq", parts[0], parts[1])
+        return ParamSpec(cond="eq", param=parts[0], value=parts[1])
     if param.startswith("!"):
-        return ("notpresent", param[1:])
-    return param
+        return ParamSpec(cond="notpresent", param=param[1:])
+    return ParamSpec(cond="present", param=param)
 
 
 if args.params:
@@ -183,7 +174,7 @@ if args.negate:
     if not paramspecs:
         raise ValueError("When --negate is given, --params must be given")
     for paramspec in paramspecs:
-        if type(paramspec) is tuple:
+        if paramspec.cond != "present":
             raise ValueError("When --negate is given, PARAM=VALUE, PARAM!=VALUE, !PARAM specs not currently supported")
 
 countparams = re.split(",", args.count) if args.count else []
@@ -191,16 +182,12 @@ countparams = re.split(",", args.count) if args.count else []
 counted_param_values_by_template = {template: {} for template in templates}
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    process_text_on_page(index, pagetitle, text, templates, paramspecs, countparams, counted_param_values_by_template)
-
-
 blib.do_pagefile_cats_refs(
     args,
     start,
     end,
-    do_process_text_on_page,
-    stdin=True,
+    process_text_on_page,
+    new=True,
     default_refs=["Template:%s" % template for template in templates],
 )
 

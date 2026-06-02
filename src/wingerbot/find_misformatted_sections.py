@@ -379,23 +379,20 @@ def check_for_bad_subsections(secbody, pagetitle, pagemsg, langname):
     return "".join(subsections), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, None, pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, None, p.msg, force_final_nls=True)
     if modsec is None:
         return
     text = modsec.secbody
 
     notes = []
     # Correct extraneous spaces in L2 headers and prepare for sorting by language.
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, p.msg)
     sections = secs.sections
     if len(sections) == 1:
         # No L2 header; partial page.
-        check_for_bad_etym_sections(text, pagemsg)
-        newtext, notes = check_for_bad_subsections(text, pagetitle, pagemsg, None)
+        check_for_bad_etym_sections(text, p.msg)
+        newtext, notes = check_for_bad_subsections(text, p.title, p.msg, None)
         return modsec.rebuild(secbody=newtext), notes
 
     sections_for_sorting = []
@@ -404,13 +401,10 @@ def process_text_on_page(index, pagetitle, text):
         m = re.search("^==([ \t]*)(.*?)([ \t]*)==([ \t]*)\n$", sections[j - 1])
         space1, langname, space2, space3 = m.groups()
 
-        def pagemsg(txt):
-            msg("Page %s %s: %s: %s" % (index, pagetitle, langname, txt))
-
         if space3:
-            pagemsg("WARNING: Space at end of L2 header")
+            p.msg("%s: WARNING: Space at end of L2 header" % langname)
         if space1 or space2:
-            pagemsg("WARNING: Space surrounding section name in L2 header")
+            p.msg("%s: WARNING: Space surrounding section name in L2 header" % langname)
         if space1 or space2 or space3:
             if args.correct:
                 sections[j - 1] = "==%s==\n" % langname
@@ -420,7 +414,7 @@ def process_text_on_page(index, pagetitle, text):
     # Sort by language name if needed.
     sorted_sections = sorted(sections_for_sorting, key=lambda sec: lang_utils.langname_key(sec[0]))
     if sorted_sections != sections_for_sorting:
-        msg("Page %s %s: %s" % (index, pagetitle, "WARNING: Language sections misordered, reordering"))
+        p.msg("WARNING: Language sections misordered, reordering")
         if args.correct:
             newsections = [sections[0]]
             numlangs = len(sorted_sections)
@@ -446,24 +440,21 @@ def process_text_on_page(index, pagetitle, text):
         m = re.search("^==([ \t]*)(.*?)([ \t]*)==([ \t]*)\n$", sections[j - 1])
         space1, langname, space2, space3 = m.groups()
 
-        def pagemsg(txt):
-            msg("Page %s %s: %s: %s" % (index, pagetitle, langname, txt))
-
         if j < len(sections) - 2:  # no section divider at end of last L2 section
             m = re.search(r"\A(.*?)\s*\n--+\Z", sections[j].rstrip(), re.S)
             if not m:
                 newsecj = sections[j].rstrip() + "\n\n"
             else:
-                pagemsg("WARNING: Stray horizontal rule at end")
+                p.msg("%s: WARNING: Stray horizontal rule at end" % langname)
                 newsecj = m.group(1) + "\n\n"
             if sections[j] != newsecj:
-                pagemsg("WARNING: Misformatted language section divider at end")
+                p.msg("%s: WARNING: Misformatted language section divider at end" % langname)
                 if args.correct:
                     sections[j] = newsecj
                     notes.append("%s: correct misformatted language section divider at end" % langname)
 
-        check_for_bad_etym_sections(sections[j], pagemsg)
-        newsection, this_notes = check_for_bad_subsections(sections[j], pagetitle, pagemsg, langname)
+        check_for_bad_etym_sections(sections[j], p.msg)
+        newsection, this_notes = check_for_bad_subsections(sections[j], p.title, p.msg, langname)
         sections[j] = newsection
         notes.extend(this_notes)
     return modsec.rebuild(secbody="".join(sections)), notes

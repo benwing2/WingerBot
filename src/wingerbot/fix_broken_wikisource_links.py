@@ -86,8 +86,8 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
     subs.append((refrom, reto))
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, subs)
+def do_process_text_on_page(p):
+    return process_text_on_page(p.index, p.title, p.text, subs)
 
 
 blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)

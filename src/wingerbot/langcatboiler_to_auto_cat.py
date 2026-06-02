@@ -3,23 +3,17 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -27,20 +21,20 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "auto cat")
             notes.append("{{autocat}} -> {{auto cat}}")
         elif tn == "langcatboiler":
-            m = re.search("^Category:(.* Language)$", pagetitle)
+            m = re.search("^Category:(.* Language)$", p.title)
             if not m:
-                m = re.search("^Category:(.*) language$", pagetitle)
+                m = re.search("^Category:(.*) language$", p.title)
             if not m:
-                pagemsg("WARNING: Can't parse page title")
+                p.msg("WARNING: Can't parse page title")
                 continue
             langname = m.group(1)
             t_lang = getparam(t, "1")
             if langname not in lang_data.languages_by_canonical_name:
-                pagemsg("WARNING: Unrecognized language name: %s" % langname)
+                p.msg("WARNING: Unrecognized language name: %s" % langname)
                 continue
             langobj = lang_data.languages_by_canonical_name[langname]
             if langobj["code"] != t_lang:
-                pagemsg(
+                p.msg(
                     "WARNING: Auto-determined code %s for language name %s != manually specified %s"
                     % (langobj["code"], langname, t_lang)
                 )
@@ -55,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif re.search("^[0-9]+$", pn):
                     numbered_params.append(pv)
                 elif pn not in ["setwiki", "setwikt", "setsister", "entryname"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Unrecognized param %s=%s, skipping: %s" % (pn, pv, str(t)))
                     return
                 elif (
                     pn in ["setwiki", "setsister"]
@@ -65,14 +59,14 @@ def process_text_on_page(index, pagetitle, text):
                     or pn == "setwikt"
                     and pv == langobj["code"]
                 ):
-                    pagemsg("WARNING: Unnecessary param %s=%s, omitting: %s" % (pn, pv, str(t)))
+                    p.msg("WARNING: Unnecessary param %s=%s, omitting: %s" % (pn, pv, str(t)))
                 else:
                     non_numbered_params.append((pn, pv))
             if len(numbered_params) == 0:
                 if langobj["type"] == "reconstructed" or langobj["family"] == "art":
-                    pagemsg("Reconstructed or constructed language, allowing no countries")
+                    p.msg("Reconstructed or constructed language, allowing no countries")
                 else:
-                    pagemsg("WARNING: No countries and not reconstructed or constructed language, adding UNKNOWN")
+                    p.msg("WARNING: No countries and not reconstructed or constructed language, adding UNKNOWN")
                     numbered_params.append("UNKNOWN")
             blib.set_template_name(t, "auto cat")
             del t.params[:]
@@ -83,7 +77,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("convert {{%s}} to {{auto cat}}" % tn)
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

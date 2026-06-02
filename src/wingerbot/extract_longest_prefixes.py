@@ -11,11 +11,11 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 prefixes_by_length = defaultdict(lambda: defaultdict(list))
 
 
-def process_text_on_page(index, pagetitle, text):
+def process_text_on_page(p):
     for i in range(1, args.max_prefix_length + 1):
-        if len(pagetitle) >= i:
-            prefix = pagetitle[0:i]
-            prefixes_by_length[i][prefix].append(pagetitle)
+        if len(p.title) >= i:
+            prefix = p.title[0:i]
+            prefixes_by_length[i][prefix].append(p.title)
 
 
 parser = blib.create_argparser("Snarf Italian pronunciations for fixing", include_pagefile=True, include_stdin=True)

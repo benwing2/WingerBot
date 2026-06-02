@@ -6,17 +6,14 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if blib.page_should_be_ignored(pagetitle):
+def process_text_on_page(p):
+    if blib.page_should_be_ignored(p.title):
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     to_add_punct = []
 
@@ -31,23 +28,23 @@ def process_text_on_page(index, pagetitle, text):
             if t.has("nodot"):
                 nodot = getp("nodot")
                 if nodot == "2":
-                    pagemsg("nodot=2 means period, removing nodot= and dot=: %s" % str(t))
+                    p.msg("nodot=2 means period, removing nodot= and dot=: %s" % str(t))
                     rmparam(t, "nodot")
                     rmparam(t, "dot")
                     notes.append("remove nodot=2 and overridden dot= in {{%s}}" % tn)
                 elif nodot != "1":
-                    pagemsg("nodot=%s means nothing, removing it: %s" % (nodot, str(t)))
+                    p.msg("nodot=%s means nothing, removing it: %s" % (nodot, str(t)))
                     rmparam(t, "nodot")
                     notes.append("remove effectless nodot=%s in {{%s}}" % (nodot, tn))
             if t.has("dot") and (not getp("dot") or getp("dot") == "<nowiki/>"):
-                pagemsg("WARNING: empty dot= in {{surname}} template: %s" % str(t))
+                p.msg("WARNING: empty dot= in {{surname}} template: %s" % str(t))
                 rmparam(t, "dot")
                 t.add("nodot", "1")
                 notes.append("convert empty dot= to nodot=1 in {{%s}}" % tn)
             dot = getp("dot")
             nodot = getp("nodot")
             if dot and nodot:
-                pagemsg("WARNING: Something wrong: Saw both dot= and nodot=: %s" % str(t))
+                p.msg("WARNING: Something wrong: Saw both dot= and nodot=: %s" % str(t))
                 continue
             if dot:
                 rmparam(t, "dot")
@@ -57,7 +54,7 @@ def process_text_on_page(index, pagetitle, text):
                 )
                 to_add_punct.append((str(t), dot))
             elif nodot:
-                pagemsg("Template has nodot=1, leaving alone: %s" % str(t))
+                p.msg("Template has nodot=1, leaving alone: %s" % str(t))
             else:
                 t.add("nodot", "1")
                 notes.append(
@@ -66,20 +63,20 @@ def process_text_on_page(index, pagetitle, text):
                 )
                 to_add_punct.append((str(t), "."))
         if str(t) != origt:
-            pagemsg("Replace <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replace <%s> with <%s>" % (origt, str(t)))
 
     text = str(parsed)
 
     for curr_template, punct in to_add_punct:
         repl_template = curr_template + punct
-        newtext, did_replace = blib.replace_in_text(text, curr_template, repl_template, pagemsg)
+        newtext, did_replace = blib.replace_in_text(text, curr_template, repl_template, p.msg)
         if did_replace:
             newtext = re.sub(re.escape(curr_template) + r"\.([.,])", curr_template + r"\1", newtext)
             if newtext != text:
                 if punct == ".":
-                    pagemsg("Add period to <%s>" % curr_template)
+                    p.msg("Add period to <%s>" % curr_template)
                 else:
-                    pagemsg("Add punct '%s' to <%s>" % (punct, curr_template))
+                    p.msg("Add punct '%s' to <%s>" % (punct, curr_template))
                 text = newtext
 
     return text, notes

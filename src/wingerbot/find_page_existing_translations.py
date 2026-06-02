@@ -6,12 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    seen_trans = [pagetitle]
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    seen_trans = [p.title]
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in blib.translation_templates:
@@ -21,10 +18,10 @@ def process_text_on_page(index, pagetitle, text):
     for trans in seen_trans:
 
         def pagemsg_with_trans(txt):
-            pagemsg("%s: %s" % (trans, txt))
+            p.msg("%s: %s" % (trans, txt))
 
         if blib.safe_page_exists(pywikibot.Page(site, trans), pagemsg_with_trans):
-            msg("Page %s %s: Found existing translation for %s" % (index, trans, pagetitle))
+            msg("Page %s %s: Found existing translation for %s" % (p.index, trans, p.title))
 
 
 parser = blib.create_argparser("Find page-existing translations for terms", include_pagefile=True, include_stdin=True)

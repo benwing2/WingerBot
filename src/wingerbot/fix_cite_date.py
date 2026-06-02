@@ -54,15 +54,12 @@ months = [
 month_re = "(?:%s)" % "|".join(months)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -75,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
                     # it will appear in the value but t.add() will try to preserve the
                     # newline separately and you'll get two newlines.
                     t.get("date").value = newdate
-                    pagemsg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
+                    p.msg(("Replacing %s with %s" % (origt, str(t))).replace("\n", r"\n"))
                     notes.append("fix date in %s" % tn)
 
     return str(parsed), notes

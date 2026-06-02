@@ -19,28 +19,25 @@ def process_subpage(origindex, origpagetitle, index, page):
         pagemsg("Found reference")
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     def errpagemsg(txt):
-        errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+        errmsg("Page %s %s: %s" % (p.index, p.title, txt))
 
     errpagemsg("Processing references")
     if not args.table_of_uses:
-        pagemsg("Processing references")
+        p.msg("Processing references")
     aliases = []
     for i, subpage in blib.references(
-        pagetitle, namespaces=[10], only_template_inclusion=False, filter_redirects=args.redirects_only
+        p.title, namespaces=[10], only_template_inclusion=False, filter_redirects=args.redirects_only
     ):
         aliases.append(subpage.title())
         if not args.table_of_uses:
-            process_subpage(index, pagetitle, i, subpage)
+            process_subpage(p.index, p.title, i, subpage)
     if args.table_of_uses:
         msg(
             "%s%s"
             % (
-                pagetitle.replace("Template:", ""),
+                p.title.replace("Template:", ""),
                 aliases and "," + ",".join(x.replace("Template:", "") for x in aliases) or "",
             )
         )

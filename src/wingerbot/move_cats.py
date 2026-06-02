@@ -12,14 +12,11 @@ categorize_templates = ["categorize", "cat"]
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p):
+    origtext = p.text
     notes = []
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
 
     for j, seclangname in secs.lang_list:
@@ -82,7 +79,7 @@ def process_text_on_page(index, pagetitle, text):
                         for pn, pv in non_numbered_params:
                             t.add(pn, pv, preserve_spacing=False)
                         if origt != str(t):
-                            pagemsg("Replaced %s with %s" % (origt, str(t)))
+                            p.msg("Replaced %s with %s" % (origt, str(t)))
                     else:
                         text_to_remove.append(str(t))
 
@@ -110,7 +107,7 @@ def process_text_on_page(index, pagetitle, text):
             if m:
                 langcode, cat = m.groups()
                 if langcode not in lang_data.languages_by_code:
-                    pagemsg("WARNING: Unrecognized lang code %s for category '%s'" % (langcode, fullcat))
+                    p.msg("WARNING: Unrecognized lang code %s for category '%s'" % (langcode, fullcat))
                     continue
                 cat = cat.strip()
                 cattype = "topic"
@@ -129,7 +126,7 @@ def process_text_on_page(index, pagetitle, text):
                         break
                 if langcode is None:
                     if seclangname not in lang_data.languages_by_canonical_name:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Found raw category '%s' and unrecognized language '%s' in section header %s"
                             % (fullcat, seclangname, j // 2)
                         )
@@ -158,7 +155,7 @@ def process_text_on_page(index, pagetitle, text):
             # for the newline when we match the raw-coded category in finditer().
             if remove_it.startswith("{") and remove_it + "\n" in sectext:
                 remove_it += "\n"
-            sectext, did_replace = blib.replace_in_text(sectext, remove_it, "", pagemsg, no_found_repl_check=True)
+            sectext, did_replace = blib.replace_in_text(sectext, remove_it, "", p.msg, no_found_repl_check=True)
             if not did_replace:
                 # Something went wrong removing category; skip section
                 must_continue = True
@@ -166,7 +163,7 @@ def process_text_on_page(index, pagetitle, text):
             m = re.match(r"^(.*?)(\n*)$", sectext, re.S)
             stripped_sectext = m.group(1)
             sectext = stripped_sectext + trailing_newlines
-            pagemsg("Removed %s" % remove_it.replace("\n", r"\n"))
+            p.msg("Removed %s" % remove_it.replace("\n", r"\n"))
         if must_continue:
             continue
 
@@ -223,7 +220,7 @@ def process_text_on_page(index, pagetitle, text):
                             for pn, pv in non_numbered_params:
                                 t.add(pn, pv, preserve_spacing=False)
                             if origt != str(t):
-                                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                                p.msg("Replaced %s with %s" % (origt, str(t)))
                     cats_to_add = filtered_cats_to_add
 
                 if tn in topics_templates:

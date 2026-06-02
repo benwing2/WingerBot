@@ -10,13 +10,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     notes = []
 
@@ -24,13 +21,13 @@ def process_text_on_page(index, pagetitle, text):
         origt = str(t)
         if tname(t) == "prefixusex":
             if getparam(t, "1").endswith("-") or getparam(t, "2").endswith("-"):
-                pagemsg("WARNING: Has prefix as term: %s" % origt)
+                p.msg("WARNING: Has prefix as term: %s" % origt)
         if tname(t) == "suffixusex":
             if getparam(t, "1").startswith("-") or getparam(t, "2").startswith("-"):
-                pagemsg("WARNING: Has suffix as term: %s" % origt)
+                p.msg("WARNING: Has suffix as term: %s" % origt)
         if tname(t) in ["prefixusex", "suffixusex"]:
             if getparam(t, "lang"):
-                pagemsg("WARNING: Uses lang= param: %s" % origt)
+                p.msg("WARNING: Uses lang= param: %s" % origt)
                 lang = getparam(t, "lang")
                 term1 = getparam(t, "1")
                 term2 = getparam(t, "2")
@@ -92,7 +89,7 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("Remove inline= in prefixusex/suffixusex")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 

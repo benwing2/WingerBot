@@ -7,15 +7,12 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 from collections import defaultdict
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    months = re.split("(^=[^=].*\n)", text, 0, re.M)
+    months = re.split("(^=[^=].*\n)", p.text, 0, re.M)
 
     extracted_parts = [months[0]]
     by_month_header = {}
@@ -26,7 +23,7 @@ def process_text_on_page(index, pagetitle, text):
         month_header = months[j - 1].strip()
         m = re.match(r"^\A=+\s*(.*?)\s*=+\Z", month_header)
         if not m:
-            pagemsg("WARNING: Extraneous text after month header: %s" % month_header.replace("\n", r"\n"))
+            p.msg("WARNING: Extraneous text after month header: %s" % month_header.replace("\n", r"\n"))
             extracted_parts.append(months[j - 1])
             extracted_parts.append(months[j])
         else:

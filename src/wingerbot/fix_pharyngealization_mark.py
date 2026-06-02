@@ -8,15 +8,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     def frob(t, param):
         val = getparam(t, param)
@@ -39,7 +36,7 @@ def process_text_on_page(index, pagetitle, text):
         newt = str(t)
         if origt != newt:
             notes.append("Correct use of U+02C1 pharyngealization mark to U+02E4")
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 

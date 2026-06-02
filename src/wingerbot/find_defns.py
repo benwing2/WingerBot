@@ -4,20 +4,17 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg, force_final_nls=True)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     for k, header in subsecs.header_list:
         if header in poses:
             sectext = subsecs.subsections[k]
             defns = blib.find_defns(sectext, args.langcode)
-            pagemsg("%s: %s: %s" % (k, header, ";".join(defns)))
+            p.msg("%s: %s: %s" % (k, header, ";".join(defns)))
 
 
 parser = blib.create_argparser(

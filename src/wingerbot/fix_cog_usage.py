@@ -18,17 +18,14 @@ lang_letter = r"[\w,-]"
 lang_letter_or_space = r"[\w, -]"
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     # Split into (sub)sections
-    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
 
     def replace_with_cog(m):
@@ -40,22 +37,22 @@ def process_text_on_page(index, pagetitle, pagetext):
             warnings.append(txt)
 
         # {{etyl}} is obsolete
-        # if langname.startswith("{{etyl"):
-        #  mm = re.search(r"^\{\{etyl\|(.*?)\|-\}\}$", langname)
-        #  if not mm:
-        #    warning("Something wrong, can't match template call %s" % langname)
-        #    return origtext
-        #  etym_langcode = mm.group(1)
-        #  if etym_langcode != langcode and etym_language_to_parent.get(etym_langcode, "NONE") != langcode:
-        #    pagemsg("WARNING: Mismatched language codes, saw %s vs. %s in %s {{m|%s|...}}"
-        #      % (etym_langcode, langcode, langname, langcode))
-        #    return origtext
-        #  if langcode != etym_langcode:
-        #    pagemsg("Using etym language code %s in place of parent %s" % (
-        #      etym_langcode, langcode))
-        #  newtext = "%s%s%s{{cog|%s|" % (punct, cognate_with, cog, etym_langcode)
-        #  pagemsg("Replacing <%s> with <%s>" % (origtext, newtext))
-        #  return newtext
+        #if langname.startswith("{{etyl"):
+        #    mm = re.search(r"^\{\{etyl\|(.*?)\|-\}\}$", langname)
+        #    if not mm:
+        #        warning("Something wrong, can't match template call %s" % langname)
+        #        return origtext
+        #    etym_langcode = mm.group(1)
+        #    if etym_langcode != langcode and etym_language_to_parent.get(etym_langcode, "NONE") != langcode:
+        #        p.msg("WARNING: Mismatched language codes, saw %s vs. %s in %s {{m|%s|...}}"
+        #            % (etym_langcode, langcode, langname, langcode))
+        #        return origtext
+        #    if langcode != etym_langcode:
+        #        p.msg("Using etym language code %s in place of parent %s" % (
+        #            etym_langcode, langcode))
+        #    newtext = "%s%s%s{{cog|%s|" % (punct, cognate_with, cog, etym_langcode)
+        #    p.msg("Replacing <%s> with <%s>" % (origtext, newtext))
+        #    return newtext
 
         raw_cognates = re.split(
             r"([A-Z]%s+(?: %s+)*? +\{\{(?:[ml]|term)\|[A-Za-z0-9.-]+\|(?:[^{}]|\{\{[^{}]*?\}\})*\}\})"
@@ -127,7 +124,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                             elif iscanon or best_non_etym_code is None:
                                 best_non_etym_code = code
                         if etymcode and best_non_etym_code:
-                            pagemsg(
+                            p.msg(
                                 "NOTE: Language name could be both etym lang %s (canon=%s) and non-etym lang %s (canon=%s)"
                                 % (etymcode, isetymcanon, best_non_etym_code, is_non_etym_lang_canon)
                             )
@@ -141,7 +138,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                         elif is_etym_lang:
                             use_etym_code = not is_non_etym_lang or isetymcanon or not is_non_etym_lang_canon
                         if use_etym_code:
-                            pagemsg(
+                            p.msg(
                                 "Using etym language code %s for %s language name %s"
                                 % (etymcode, "canonical" if isetymcanon else "non-canonical", langname)
                             )
@@ -149,7 +146,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                         else:
                             assert is_non_etym_lang
                             langcode_to_use = best_non_etym_code
-                            pagemsg(
+                            p.msg(
                                 "Using full language code %s for %s language name %s"
                                 % (
                                     best_non_etym_code,
@@ -201,13 +198,13 @@ def process_text_on_page(index, pagetitle, pagetext):
                 processed_parts.append(process())
         newtext = "".join(processed_parts)
         if cogs != newtext:
-            pagemsg("Replacing <%s> with <%s>" % (cogs, newtext))
+            p.msg("Replacing <%s> with <%s>" % (cogs, newtext))
         if warnings:
             warntxt = "; ".join(warnings)
             if args.begin_end:
-                pagemsg("WARNING: %s; <begin> %s <end>" % (warntxt, origtext))
+                p.msg("WARNING: %s; <begin> %s <end>" % (warntxt, origtext))
             else:
-                pagemsg("WARNING: %s" % warntxt)
+                p.msg("WARNING: %s" % warntxt)
         return "%s%s%s" % (at_beg, newtext, at_end)
 
     # Go through each section in turn, looking for Etymology sections

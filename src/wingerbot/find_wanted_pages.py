@@ -2,7 +2,8 @@
 
 # Go through a dump finding links to nonexistent pages.
 
-import pywikibot, re, sys, argparse, codecs, gzip
+import re, gzip
+from io import TextIOWrapper
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, rmparam, msg, site
@@ -73,7 +74,7 @@ templates_to_check.update(
 
 def read_existing_pages(filename):
     pages_with_langs = {}
-    for line in codecs.getreader("utf-8")(gzip.open(filename, "rb"), errors="replace"):
+    for line in gzip.open(filename, "rt", encoding="utf-8", errors="replace"):
         line = line.rstrip("\n")
         if re.search("^Page [0-9]+ .*: WARNING: .*", line):
             msg("Skipping warning: %s" % line)
@@ -90,10 +91,7 @@ unrecognized_pages_by_lang_with_count = {}
 unrecognized_pages_by_lang_with_source_pages = {}
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     def note_unrecognized_link(lang, page):
         if lang not in unrecognized_pages_by_lang_with_count:
             unrecognized_pages_by_lang_with_count[lang] = defaultdict(int)
@@ -103,7 +101,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         if page not in unrecognized_pages_by_lang_with_source_pages[lang]:
             unrecognized_pages_by_lang_with_source_pages[lang][page] = set()
         else:
-            unrecognized_pages_by_lang_with_source_pages[lang][page].add(pagetitle)
+            unrecognized_pages_by_lang_with_source_pages[lang][page].add(p.title)
 
     def note_link(lang, page):
         if not page:
@@ -114,10 +112,10 @@ def process_text_on_page(index, pagetitle, pagetext):
             note_unrecognized_link(lang, page)
 
     # Look for raw links.
-    for m in re.finditer(r"\[\[(.*?)\]\]", pagetext):
+    for m in re.finditer(r"\[\[(.*?)\]\]", p.tex):
         linkparts = m.group(1).split("|")
-        if linkparts > 2:
-            pagemsg("WARNING: Link has more than two parts: %s" % m.group(0))
+        if len(linkparts) > 2:
+            p.msg("WARNING: Link has more than two parts: %s" % m.group(0))
         else:
             page = linkparts[0]
             if "#" in page:
@@ -130,7 +128,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                 note_link(None, page)
 
     # Look for templated links.
-    for t in blib.parse_text(pagetext).filter_templates():
+    for t in blib.parse_text(p.text).filter_templates():
         pass
 
 

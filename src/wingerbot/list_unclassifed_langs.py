@@ -11,19 +11,16 @@ lang_data = lang_utils.get_lang_data()
 languages = []
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    m = re.search("^Category:(.*) language$", pagename)
+    m = re.search("^Category:(.*) language$", p.title)
     if not m:
-        pagemsg("WARNING: Page is not a language category")
+        p.msg("WARNING: Page is not a language category")
     else:
         langname = m.group(1)
         if langname not in lang_data.languages_by_canonical_name:
-            pagemsg("WARNING: Unrecognized language name '%s'" % langname)
+            p.msg("WARNING: Unrecognized language name '%s'" % langname)
         else:
             languages.append((lang_data.languages_by_canonical_name[langname]["code"], langname))
 

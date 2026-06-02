@@ -57,24 +57,21 @@ simple_replace = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
-    newtext = text
+    newtext = p.text
 
     def move_param(t, fr, to, frob_from=None):
         if t.has(fr):
             oldval = getparam(t, fr)
             if not oldval.strip():
                 rmparam(t, fr)
-                pagemsg("Removing blank param %s" % fr)
+                p.msg("Removing blank param %s" % fr)
                 return
             if frob_from:
                 newval = frob_from(oldval)
@@ -84,7 +81,7 @@ def process_text_on_page(index, pagetitle, text):
                 newval = oldval
 
             if getparam(t, to).strip():
-                pagemsg("WARNING: Would replace %s= -> %s= but %s= is already present: %s" % (fr, to, to, str(t)))
+                p.msg("WARNING: Would replace %s= -> %s= but %s= is already present: %s" % (fr, to, to, str(t)))
             elif oldval != newval:
                 rmparam(t, to)  # in case of blank param
                 # If either old or new name is a number, use remove/add to automatically set the
@@ -97,7 +94,7 @@ def process_text_on_page(index, pagetitle, text):
                     tfr = t.get(fr)
                     tfr.name = to
                     tfr.value = newval
-                pagemsg("%s=%s -> %s=%s" % (fr, oldval.replace("\n", r"\n"), to, newval.replace("\n", r"\n")))
+                p.msg("%s=%s -> %s=%s" % (fr, oldval.replace("\n", r"\n"), to, newval.replace("\n", r"\n")))
             else:
                 rmparam(t, to)  # in case of blank param
                 # See comment above.
@@ -106,7 +103,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add(to, newval)
                 else:
                     t.get(fr).name = to
-                pagemsg("%s -> %s" % (fr, to))
+                p.msg("%s -> %s" % (fr, to))
 
     def fix_page_params(t):
         origt = str(t)
@@ -116,7 +113,7 @@ def process_text_on_page(index, pagetitle, text):
                 pageval = re.sub(r"^(\s*)pp?\.\s*", r"\1", pageval)
                 t.add(param, pageval)
                 notes.append("remove p(p). from %s=" % param)
-                pagemsg("remove p(p). from %s=" % param)
+                p.msg("remove p(p). from %s=" % param)
         if re.search(r"^[0-9]+$", getparam(t, "pages").strip()):
             move_param(t, "pages", "page")
         if re.search(r"^[0-9]+[-–—]$", getparam(t, "page").strip()):
@@ -127,12 +124,12 @@ def process_text_on_page(index, pagetitle, text):
         origt = str(t)
         if getparam(t, "origyear").strip() and getparam(t, "year").strip():
             if getparam(t, "year_published"):
-                pagemsg("WARNING: Would set year_published= but is already present: %s" % str(t))
+                p.msg("WARNING: Would set year_published= but is already present: %s" % str(t))
             else:
                 rmparam(t, "year_published")  # in case of blank param
                 t.get("year").name = "year_published"
                 t.get("origyear").name = "year"
-                pagemsg("year -> year_published, origyear -> year")
+                p.msg("year -> year_published, origyear -> year")
         move_param(t, "origdate", "date")
         move_param(t, "origmonth", "month")
 
@@ -143,7 +140,7 @@ def process_text_on_page(index, pagetitle, text):
             elif re.search(r"^[0-9]", idval.strip()):
                 return idval
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Would replace id= -> isbn= but id=%s doesn't begin with 'ISBN '"
                     % idval.replace("\n", r"\n")
                 )
@@ -165,7 +162,7 @@ def process_text_on_page(index, pagetitle, text):
         year = getparam(t, "year").strip()
         if monthday and year:
             if getparam(t, "date"):
-                pagemsg("WARNING: Would set date= but is already present: %s" % str(t))
+                p.msg("WARNING: Would set date= but is already present: %s" % str(t))
             else:
                 rmparam(t, "date")  # in case of blank param
                 param = t.get("monthday")
@@ -175,7 +172,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     param.value = "%s %s" % (monthday, year)
                 rmparam(t, "year")
-                pagemsg("monthday/year -> date")
+                p.msg("monthday/year -> date")
         move_param(t, "group", "newsgroup")
         move_param(t, "text", "passage")
         move_param(t, "6", "passage")
@@ -192,16 +189,16 @@ def process_text_on_page(index, pagetitle, text):
             origt = str(t)
             if tn in ["reference-journal", "reference-news"]:
                 set_template_name(t, "cite-journal", tn)
-                pagemsg("%s -> cite-journal" % tn)
+                p.msg("%s -> cite-journal" % tn)
                 notes.append("%s -> cite-journal" % tn)
                 fix_page_params(t)
-                pagemsg("Replacing %s with %s in %s" % (origt, str(t), in_what))
+                p.msg("Replacing %s with %s in %s" % (origt, str(t), in_what))
             if tn == "reference-book":
                 set_template_name(t, "cite-book", tn)
-                pagemsg("reference-book -> cite-book")
+                p.msg("reference-book -> cite-book")
                 fixed_params = fix_cite_book_params(t)
                 notes.append("reference-book -> cite-book%s" % (fixed_params and " and fix book cite params" or ""))
-                pagemsg("Replacing %s with %s in %s" % (origt, str(t), in_what))
+                p.msg("Replacing %s with %s in %s" % (origt, str(t), in_what))
 
     for k, header in [(0, "")] + subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -221,40 +218,40 @@ def process_text_on_page(index, pagetitle, text):
             for fr, to in simple_replace:
                 if tn == fr:
                     set_template_name(t, to, tn)
-                    pagemsg("%s -> %s" % (fr, to))
+                    p.msg("%s -> %s" % (fr, to))
                     notes.append("%s -> %s" % (fr, to))
                     fix_page_params(t)
-                    pagemsg("Replacing %s with %s" % (origt, str(t)))
+                    p.msg("Replacing %s with %s" % (origt, str(t)))
             if tn in ["reference-journal", "reference-news"]:
                 set_template_name(t, "quote-journal", tn)
-                pagemsg("%s -> quote-journal" % tn)
+                p.msg("%s -> quote-journal" % tn)
                 notes.append("%s -> quote-journal" % tn)
                 fix_page_params(t)
-                pagemsg("Replacing %s with %s outside of reference section" % (origt, str(t)))
+                p.msg("Replacing %s with %s outside of reference section" % (origt, str(t)))
             if tn == "reference-book":
                 set_template_name(t, "quote-book", tn)
-                pagemsg("reference-book -> cite-book")
+                p.msg("reference-book -> cite-book")
                 fixed_params = fix_cite_book_params(t)
                 notes.append("reference-book -> cite-book%s" % (fixed_params and " and fix book cite params" or ""))
-                pagemsg("Replacing %s with %s outside of reference section" % (origt, str(t)))
+                p.msg("Replacing %s with %s outside of reference section" % (origt, str(t)))
             if tn in ["cite-usenet", "quote-usenet"]:
                 if tn == "cite-usenet":
                     fixed_params = fix_cite_usenet_params(t)
                 else:
                     fixed_params = fix_quote_usenet_params(t)
                 set_template_name(t, "quote-newsgroup", tn)
-                pagemsg("%s -> quote-newsgroup" % tn)
+                p.msg("%s -> quote-newsgroup" % tn)
                 prefix = getparam(t, "prefix").strip()
                 removed_prefix = False
                 if prefix:
                     if prefix in ["#", "#*"]:
                         parsed.insert_before(t, "#* ")
                         rmparam(t, "prefix")
-                        pagemsg("remove prefix=%s, insert #* before template" % prefix)
+                        p.msg("remove prefix=%s, insert #* before template" % prefix)
                         need_to_replace_double_quote_prefixes = True
                         removed_prefix = True
                     else:
-                        pagemsg("WARNING: Found prefix=%s, not # or #*: %s" % (prefix, str(t)))
+                        p.msg("WARNING: Found prefix=%s, not # or #*: %s" % (prefix, str(t)))
                 notes.append(
                     "%s -> quote-newsgroup%s%s"
                     % (
@@ -263,13 +260,13 @@ def process_text_on_page(index, pagetitle, text):
                         fixed_params and ", fix params" or "",
                     )
                 )
-                pagemsg("Replacing %s with %s" % (origt, str(t)))
+                p.msg("Replacing %s with %s" % (origt, str(t)))
         subsections[k] = str(parsed)
         if need_to_replace_double_quote_prefixes:
             newval = re.sub(r"^#\* #\* ", "#* ", subsections[k], 0, re.M)
             if newval != subsections[k]:
                 notes.append("remove double #* prefix")
-                pagemsg("Removed double #* prefix")
+                p.msg("Removed double #* prefix")
             subsections[k] = newval
 
     return "".join(subsections), notes

@@ -4,24 +4,21 @@ import pywikibot, re, sys, argparse
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 inflection_of_templates = ["inflection of", "noun form of", "verb form of", "adj form of", "participle of"]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if all(x not in text for x in inflection_of_templates):
+def process_text_on_page(p):
+    if all(x not in p.text for x in inflection_of_templates):
         return
 
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         for template in inflection_of_templates:
             if re.search(r"^[#*]+ \{\{%s.*\n[#*]+ \{\{%s.*" % (template, template), subsections[k], re.M):
-                pagemsg("Found subsection with combinable %s:\n%s" % (template, subsections[k].strip()))
+                p.msg("Found subsection with combinable %s:\n%s" % (template, subsections[k].strip()))
 
 
 parser = blib.create_argparser(

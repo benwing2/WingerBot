@@ -4,7 +4,7 @@ import re
 
 
 class Peeker:
-    __slots__ = ["lineiter", "next_lines"]
+    __slots__ = ["lineiter", "next_lines", "lineno"]
 
     def __init__(self, lineiter):
         self.lineiter = lineiter

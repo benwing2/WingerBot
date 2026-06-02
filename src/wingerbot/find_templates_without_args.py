@@ -4,13 +4,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -19,7 +16,7 @@ def process_text_on_page(index, pagetitle, text):
                 if getparam(t, str(i)):
                     break
             else:
-                pagemsg("Found %s template without parts: %s" % (tn, str(t)))
+                p.msg("Found %s template without parts: %s" % (tn, str(t)))
 
 
 parser = blib.create_argparser("Find templates without any parts", include_pagefile=True, include_stdin=True)

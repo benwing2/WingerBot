@@ -9,19 +9,16 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site
 
 
-def process_text_on_page(index, pagetitle, text, prev_comment):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if args.verbose:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     if not args.lang:
-        text_to_search = text
+        text_to_search = p.text
     else:
         text_to_search_parts = []
         langs = set(re.split(",(?!= )", args.lang))
-        secs = blib.split_text_into_sections(text, pagemsg)
+        secs = blib.split_text_into_sections(p.text, p.msg)
         sections = secs.sections
         for secind, seclang in secs.lang_list:
             if seclang in langs:
@@ -36,11 +33,11 @@ def process_text_on_page(index, pagetitle, text, prev_comment):
 
     def output_match(m):
         if args.output_from_to:
-            pagemsg("Found match for regex: <from> %s <to> %s <end>" % (encode(m.group(0)), encode(m.group(0))))
+            p.msg("Found match for regex: <from> %s <to> %s <end>" % (encode(m.group(0)), encode(m.group(0))))
         elif args.output_begin_end:
-            pagemsg("Found match for regex: <begin> %s <end>" % encode(m.group(0)))
+            p.msg("Found match for regex: <begin> %s <end>" % encode(m.group(0)))
         else:
-            pagemsg("Found match for regex: %s" % encode(m.group(0)))
+            p.msg("Found match for regex: %s" % encode(m.group(0)))
 
     if text_to_search:
         found_match = False
@@ -57,14 +54,14 @@ def process_text_on_page(index, pagetitle, text, prev_comment):
                 if not args.not_:
                     output_match(m)
         if not found_match and args.not_:
-            pagemsg("Didn't find match for regex: %s" % args.regex)
+            p.msg("Didn't find match for regex: %s" % args.regex)
         if args.text:
             if not text_to_search.endswith("\n"):
                 text_to_search += "\n"
             if found_match == (not args.not_):
-                if prev_comment:
-                    pagemsg("Skipped, no changes; previous comment = %s" % prev_comment)
-                pagemsg("-------- begin text --------\n%s-------- end text --------" % text_to_search)
+                if p.prev_comment:
+                    p.msg("Skipped, no changes; previous comment = %s" % p.prev_comment)
+                p.msg("-------- begin text --------\n%s-------- end text --------" % text_to_search)
 
 
 def search_pages(start, end):
@@ -75,7 +72,7 @@ def search_pages(start, end):
         for _, (index, pagename, text) in blib.iter_items(
             index_pagename_and_text, start, end, get_name=lambda x: x[1], get_index=lambda x: x[0]
         ):
-            process_text_on_page(index, pagename, text, None)
+            process_text_on_page(blib.ProcessPageParams(args, index, pagename, text, None))
         return
 
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, include_comment=True)

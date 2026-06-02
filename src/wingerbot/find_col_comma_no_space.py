@@ -3,19 +3,16 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if not re.search(r"\{\{ *(col[0-9]*|col-auto|der[0-9]|rel[0-9])(-u)? *\|", text):
+    if not re.search(r"\{\{ *(col[0-9]*|col-auto|der[0-9]|rel[0-9])(-u)? *\|", p.text):
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if re.search("^(col[0-9]*|col-auto|der[0-9]|rel[0-9])(-u)?$", tn):
@@ -23,7 +20,7 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 pv = str(param.value)
                 if re.search(args.regex, pv):
-                    pagemsg("Found %s=%s: %s" % (pn, pv, str(t)))
+                    p.msg("Found %s=%s: %s" % (pn, pv, str(t)))
 
 
 parser = blib.create_argparser(

@@ -8,11 +8,8 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 all_pronuns = []
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     pronuns = []
     for t in parsed.filter_templates():
@@ -25,13 +22,13 @@ def process_text_on_page(index, pagetitle, text):
         if tn == "IPA":
             pronuns.extend(blib.fetch_param_chain(t, "2"))
     if pronuns:
-        text = "Page %s %s: %s" % (index, pagetitle, " ".join(pronuns))
+        text = "Page %s %s: %s" % (p.index, p.title, " ".join(pronuns))
         if args.sort_by == "index":
-            key = index
+            key = p.index
         elif args.sort_by == "rtl":
-            key = (pagetitle[::-1], index)
+            key = (p.title[::-1], p.index)
         else:
-            key = (-len(pagetitle), index)
+            key = (-len(p.title), p.index)
         all_pronuns.append((key, text))
 
 

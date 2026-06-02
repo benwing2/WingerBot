@@ -16,19 +16,16 @@ etym_language_to_parent = lang_utils.get_etym_language_to_parent()
 language_name_to_code = lang_utils.get_language_name_to_code()
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     def sub_link(m, langname, link_langcode, link_langcode_remove_accents, origtext, add_sclb):
         linktext = m.group(0)
         link = m.group(1)
         parts = re.split(r"\|", link)
         if len(parts) > 2:
-            pagemsg("WARNING: Too many parts in %s, not converting raw link %s: %s" % (link, linktext, origtext))
+            p.msg("WARNING: Too many parts in %s, not converting raw link %s: %s" % (link, linktext, origtext))
             return linktext
         page = None
         if len(parts) == 1:
@@ -45,13 +42,13 @@ def process_text_on_page(index, pagetitle, pagetext):
             ):
                 page = None
             elif re.search("[#:]", page):
-                pagemsg(
+                p.msg(
                     "WARNING: Found special chars # or : in left side of %s, not converting raw link %s: %s"
                     % (link, linktext, origtext)
                 )
                 return origtext
             else:
-                pagemsg(
+                p.msg(
                     "WARNING: Page %s doesn't match accented %s in %s, converting to two-part link in raw link %s: %s"
                     % (page, accented, link, linktext, origtext)
                 )
@@ -100,7 +97,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         )
 
         newtext = "%s%s%s%s" % (bullets1, spacing1, langname, terms)
-        pagemsg("Replacing <%s> with <%s>" % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s>" % (origtext, newtext))
         return newtext
 
     def replace_with_desc(m):
@@ -109,21 +106,21 @@ def process_text_on_page(index, pagetitle, pagetext):
 
         if langname in lang_utils.non_canonical_to_canonical_names:
             new_langname = lang_utils.non_canonical_to_canonical_names[langname]
-            pagemsg("Replacing non-canonical or unrecognized %s with %s: %s" % (langname, new_langname, origtext))
+            p.msg("Replacing non-canonical or unrecognized %s with %s: %s" % (langname, new_langname, origtext))
             langname = new_langname
 
         pretext = ""
         if langname in lang_utils.unrecognized_to_canonical_names:
             new_pretext, new_langname = lang_utils.unrecognized_to_canonical_names[langname]
             pretext = new_pretext + " " if new_pretext else ""
-            pagemsg(
+            p.msg(
                 "Replacing unrecognized %s with %s%s: %s"
                 % (langname, new_langname, ' (with pretext "%s")' % pretext if pretext else "", origtext)
             )
             langname = new_langname
 
         if langname not in language_name_to_code:
-            pagemsg("WARNING: Saw unrecognized lang name <%s>" % langname)
+            p.msg("WARNING: Saw unrecognized lang name <%s>" % langname)
             return origtext
         langcodes, etymcode, isetymcanon = language_name_to_code[langname]
 
@@ -133,13 +130,13 @@ def process_text_on_page(index, pagetitle, pagetext):
             if iscanon:
                 potential_langcodes.add(code)
         if len(potential_langcodes) > 1:
-            pagemsg(
+            p.msg(
                 "WARNING: Language name %s has multiple canonical codes %s, skipping: %s"
                 % (langname, ",".join(potential_langcodes), origtext)
             )
             return origtext
         if len(potential_langcodes) == 1 and isetymcanon:
-            pagemsg(
+            p.msg(
                 "WARNING: Language name %s has both regular canonical code %s and etym language canonical code %s, skipping: %s"
                 % (langname, list(potential_langcodes)[0], etymcode, origtext)
             )
@@ -149,7 +146,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         elif isetymcanon:
             langcode = etymcode
         else:
-            pagemsg(
+            p.msg(
                 "WARNING: Language name %s isn't a canonical name of any language, skipping: %s" % (langname, origtext)
             )
             return origtext
@@ -160,7 +157,7 @@ def process_text_on_page(index, pagetitle, pagetext):
         for mm in re.finditer(r"\{\{[lm]\|([^{}|\n]*?)\|.*?\}\}", links):
             seen_langcodes.add(mm.group(1))
         if len(seen_langcodes) > 1:
-            pagemsg("WARNING: Saw multiple lang codes %s, skipping: %s" % (",".join(seen_langcodes), origtext))
+            p.msg("WARNING: Saw multiple lang codes %s, skipping: %s" % (",".join(seen_langcodes), origtext))
             return origtext
 
         # If there is one, use it to replace raw links, otherwise use language
@@ -180,7 +177,7 @@ def process_text_on_page(index, pagetitle, pagetext):
             if linktext.startswith("["):
                 mm = re.search(r"^\[\[([^\[\]\n]*?)\]\]$", linktext)
                 if not mm:
-                    pagemsg("WARNING: Something wrong, not a raw link: %s: %s" % (linktext, origtext))
+                    p.msg("WARNING: Something wrong, not a raw link: %s: %s" % (linktext, origtext))
                     return linktext
                 return sub_link(m, langname, link_langcode, link_langcode_remove_accents, origtext, add_sclb=False)
             return linktext
@@ -189,13 +186,13 @@ def process_text_on_page(index, pagetitle, pagetext):
         # and raw links and don't change the templates.
         new_links = re.sub(r"\{\{[^{}\n]*?\}\}|\[\[[^\[\]\n]*?\]\]", replace_raw_link, links)
         if new_links != links:
-            pagemsg("Replacing raw link <%s> with <%s>" % (links, new_links))
+            p.msg("Replacing raw link <%s> with <%s>" % (links, new_links))
             links = new_links
 
         # Replace {{m|...}} links with {{l|...}} links.
         new_links = re.sub(r"\{\{m\|(.*?)\}\}", r"{{l|\1}}", links)
         if new_links != links:
-            pagemsg("Replacing m-type link <%s> with <%s>" % (links, new_links))
+            p.msg("Replacing m-type link <%s> with <%s>" % (links, new_links))
             links = new_links
 
         # Replace bad language codes in templated links with better ones, based on langname.
@@ -210,18 +207,18 @@ def process_text_on_page(index, pagetitle, pagetext):
                         if template_langcode in lang_data.languages_by_code:
                             new_langname = lang_data.languages_by_code[template_langcode]["canonicalName"]
                         elif template_langcode in etym_lang_data.etym_languages_by_code:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Encountered template langcode %s that's an etymology language: %s"
                                 % (template_langcode, origtext)
                             )
                             break
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Encountered unrecognized template langcode %s: %s"
                                 % (template_langcode, origtext)
                             )
                             break
-                        pagemsg(
+                        p.msg(
                             "Replacing language name %s with %s based on template langcode %s in %s: %s"
                             % (langname, new_langname, template_langcode, str(t), origtext)
                         )
@@ -229,7 +226,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                         langcode = template_langcode
                         break
                     if new_langcode != langcode:
-                        pagemsg(
+                        p.msg(
                             "Replacing language code %s with %s based on language name %s and template langcode %s in %s: %s"
                             % (langcode, new_langcode, langname, template_langcode, str(t), origtext)
                         )
@@ -238,12 +235,12 @@ def process_text_on_page(index, pagetitle, pagetext):
                     origt = str(t)
                     t.add("1", link_langcode)
                     if langcode == link_langcode:
-                        pagemsg(
+                        p.msg(
                             "Replacing langcode %s in template %s with %s based on language name %s, producing %s: %s"
                             % (template_langcode, origt, link_langcode, langname, str(t), origtext)
                         )
                     else:
-                        pagemsg(
+                        p.msg(
                             "Replacing langcode %s in template %s with %s based on etymology language name %s with langcode %s, producing %s: %s"
                             % (template_langcode, origt, link_langcode, langname, langcode, str(t), origtext)
                         )
@@ -256,12 +253,12 @@ def process_text_on_page(index, pagetitle, pagetext):
         # (1) Find lang code of leftmost templated link.
         mm = re.search(r"\{\{[lm]\|([^{}|\n]*?)\|.*?\}\}", links)
         if not mm:
-            pagemsg("WARNING: Something wrong, no links, skipping: %s" % origtext)
+            p.msg("WARNING: Something wrong, no links, skipping: %s" % origtext)
             return origtext
         # (2) Check that it's replaceable by language code of name.
         template_langcode = mm.group(1)
         if not (langcode == template_langcode or etym_language_to_parent.get(langcode, "NONE") == template_langcode):
-            pagemsg(
+            p.msg(
                 "WARNING: Language name %s inferred code %s not same as or (if etym lang a child of) template code %s, skipping: %s"
                 % (langname, langcode, template_langcode, origtext)
             )
@@ -274,10 +271,10 @@ def process_text_on_page(index, pagetitle, pagetext):
             bortext = ""
         links = re.sub(r"\{\{[lm]\|[^{}|\n]*?\|(.*?)\}\}", r"{{desc|%s|\1%s}}" % (langcode, bortext), links, 1)
         newtext = "%s%s%s" % (bullets, pretext, links.lstrip())
-        pagemsg("Replacing <%s> with <%s>" % (origtext, newtext))
+        p.msg("Replacing <%s> with <%s>" % (origtext, newtext))
         return newtext
 
-    subsecs = blib.split_text_into_subsections(pagetext, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
     # Go through each section in turn, looking for Descendants sections
     for k, header in subsecs.header_list:

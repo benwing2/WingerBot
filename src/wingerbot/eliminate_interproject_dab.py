@@ -10,16 +10,13 @@ interproject_templates_lang_in_1 = ["R:wbooks", "R:wnews", "R:wquote", "R:wsourc
 interproject_templates_lang_in_lang = ["pedia", "specieslite", "comcatlite", "R:commons", "R:metawiki", "R:wikidata"]
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param):
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                         alt = getp("3") or getp("2") or dab
                         if alt == term:
                             alt = ""
-                        if term == pagetitle or term == "{{PAGENAME}}":
+                        if term == p.title or term == "{{PAGENAME}}":
                             term = ""
                         lang = getp("1")
                         named_params = []
@@ -79,7 +76,7 @@ def process_text_on_page(index, pagetitle, pagetext):
                         alt = getp("2") or getp("1") or dab
                         if alt == term:
                             alt = ""
-                        if term == pagetitle or term == "{{PAGENAME}}":
+                        if term == p.title or term == "{{PAGENAME}}":
                             term = ""
                         named_params = []
                         for param in t.params:
@@ -98,7 +95,7 @@ def process_text_on_page(index, pagetitle, pagetext):
 
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 

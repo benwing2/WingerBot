@@ -8,24 +8,21 @@ from wingerbot.blib import getparam, rmparam, msg, site
 # List whether pages exist and if so, are redirects and/or contain a specific language.
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    exists = not not text or blib.safe_page_exists(pywikibot.Page(site, pagetitle), pagemsg)
+def process_text_on_page(p):
+    exists = not not p.text or blib.safe_page_exists(pywikibot.Page(site, p.title), p.msg)
     if not exists:
         outtext = "does not exist"
     else:
-        if re.search("#redirect", text, re.I):
+        if re.search("#redirect", p.text, re.I):
             outtext = "exists as redirect"
         elif args.lang:
-            if "==%s==" % args.lang in text:
+            if "==%s==" % args.lang in p.text:
                 outtext = "exists in %s" % args.lang
             else:
                 outtext = "exists but not in %s" % args.lang
         else:
             outtext = "exists"
-    pagemsg(outtext)
+    p.msg(outtext)
 
 
 parser = blib.create_argparser("List whether pages exist", include_pagefile=True, include_stdin=True)

@@ -6,11 +6,8 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    text_and_comments = re.split("(<!--|-->)", text)
+def process_text_on_page(p):
+    text_and_comments = re.split("(<!--|-->)", p.text)
     grouped_text_and_comments = []
     for i in range(1, len(text_and_comments), 2):
         preceding_text = text_and_comments[i - 1][-20:].replace("\n", r"\n")
@@ -36,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
             )
             break
     if warnings:
-        pagemsg("WARNING: %s" % "; ".join(warnings))
+        p.msg("WARNING: %s" % "; ".join(warnings))
 
 
 parser = blib.create_argparser("Find mismatched comments", include_pagefile=True, include_stdin=True)

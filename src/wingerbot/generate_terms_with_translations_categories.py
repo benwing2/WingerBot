@@ -9,12 +9,9 @@ lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     seen_cats = set()
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in blib.translation_templates:
@@ -24,7 +21,7 @@ def process_text_on_page(index, pagetitle, text):
             elif lang in etym_lang_data.etym_languages_by_code:
                 langname = etym_lang_data.etym_languages_by_code[lang]["canonicalName"]
             else:
-                pagemsg("WARNING: Unrecognized lang code %s" % lang)
+                p.msg("WARNING: Unrecognized lang code %s" % lang)
                 continue
             seen_cats.add("Category:Terms with %s translations" % langname)
     for cat in sorted(list(seen_cats)):
