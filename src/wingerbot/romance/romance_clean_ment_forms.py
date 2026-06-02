@@ -7,13 +7,10 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 from wingerbot.blib import ParseException
 
 
-def process_text_on_page(pageindex, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -22,7 +19,7 @@ def process_text_on_page(pageindex, pagetitle, text):
 
     def fix_up_section(secnum, secbody):
         def pagemsg(txt):
-            msg("Page %s%s %s: %s" % (pageindex, "." + secnum if secnum is not None else "", pagetitle, txt))
+            p.msg(txt, index=p.index + ("." + secnum if secnum is not None else ""))
         nonlocal saw_affix_template_with_ment
         subsecs = blib.split_text_into_subsections(secbody, pagemsg)
         subsections = subsecs.subsections
@@ -150,9 +147,9 @@ def process_text_on_page(pageindex, pagetitle, text):
         subsections[subsec_index] = str(parsed)
         return "".join(subsections)
 
-    secbody = blib.map_etym_sections(secbody, pagemsg, fix_up_section)
+    secbody = blib.map_etym_sections(secbody, p.msg, fix_up_section)
     if not saw_affix_template_with_ment:
-        pagemsg(
+        p.msg(
             "WARNING: Didn't see {{af}}/{{affix}} or {{suf}}/{{suffix}} template with -ment, category might be specified some other way"
         )
     return modsec.rebuild(secbody=secbody), notes

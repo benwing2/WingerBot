@@ -40,17 +40,19 @@ class ProcessPageParams:
         self.text = pagetext
         self.prev_comment = prev_comment
 
-    def _msg_contents(self, txt: str) -> str:
-        return "Page %s %s: %s" % (self.index, self.title, txt)
+    def _msg_contents(self, txt: str, index: Index | None = None, title: str | None = None) -> str:
+        idx = index if index is not None else self.index
+        ttl = title if title is not None else self.title
+        return "Page %s %s: %s" % (idx, ttl, txt)
 
-    def msg(self, txt: str) -> None:
-        msg(self._msg_contents(txt))
+    def msg(self, txt: str, index: Index | None = None, title: str | None = None) -> None:
+        msg(self._msg_contents(txt, index, title))
 
-    def errmsg(self, txt: str) -> None:
-        errmsg(self._msg_contents(txt))
+    def errmsg(self, txt: str, index: Index | None = None, title: str | None = None) -> None:
+        errmsg(self._msg_contents(txt, index, title))
 
-    def errandmsg(self, txt: str) -> None:
-        errandmsg(self._msg_contents(txt))
+    def errandmsg(self, txt: str, index: Index | None = None, title: str | None = None) -> None:
+        errandmsg(self._msg_contents(txt, index, title))
 
     def expand_text(self, tempcall: str):
         return expand_text(tempcall, self.title, self.msg, self.args.verbose)

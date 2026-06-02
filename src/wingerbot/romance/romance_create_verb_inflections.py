@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, json, unicodedata
+import pywikibot, re, json
 from collections import defaultdict
 
-from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot import blib
+from wingerbot.blib import getparam, msg, site, tname
 
 lang_to_name = {
     "ca": "Catalan",
@@ -353,16 +353,8 @@ def process_text_on_page(p):
     norm = args.norm
     normname = norm_to_name[norm]
 
-    def pagemsg(txt, fn=msg, overriding_index=None):
-        fn("Page %s %s: %s" % (overriding_index or p.index, p.title, txt))
-
-    def errandpagemsg(txt):
-        pagemsg(txt, fn=errandmsg)
-
-    notes = []
-
     if " " in p.title:
-        pagemsg("Space in page title, not creating verb forms")
+        p.msg("Space in page title, not creating verb forms")
         return
 
     parsed = blib.parse_text(p.text)
@@ -383,16 +375,16 @@ def process_text_on_page(p):
             else:
                 newconj = arg1
             if newconj == arg1:
-                pagemsg("%s conjugation already has infinitive in it: %s" % (conj_normname, arg1))
+                p.msg("%s conjugation already has infinitive in it: %s" % (conj_normname, arg1))
             else:
-                pagemsg("Converting %s conjugation '%s' to '%s'" % (conj_normname, arg1, newconj))
+                p.msg("Converting %s conjugation '%s' to '%s'" % (conj_normname, arg1, newconj))
                 arg1 = newconj
             conjinf, rawconj = parse_inf_and_conj(arg1)
             if conjinf is None:
-                pagemsg("WARNING: Can't parse out %s infinitive from conjugation '%s'" % (conj_normname, arg1))
+                p.msg("WARNING: Can't parse out %s infinitive from conjugation '%s'" % (conj_normname, arg1))
                 continue
             if re.search("se$", conjinf) or re.search("l[aoe]s?$", conjinf):
-                pagemsg("Skipping reflexive or pronominal conjugation '%s'" % arg1)
+                p.msg("Skipping reflexive or pronominal conjugation '%s'" % arg1)
                 skipped_reflexive = True
                 continue
             if arg1 not in conjs:
@@ -405,7 +397,7 @@ def process_text_on_page(p):
                 json_expansion = json.loads(jsonconj)
                 if norm == "es":
                     if "forms" not in json_expansion:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Didn't see 'forms' in %s JSON expansion for conjugation '%s': %s"
                             % (conj_normname, arg1, jsonconj)
                         )
@@ -423,10 +415,10 @@ def process_text_on_page(p):
                         standard_gl_conj_forms = None
     if len(conjs) == 0:
         if not skipped_reflexive:
-            pagemsg("WARNING: %s infinitive page exists but has no conjugations" % normname)
+            p.msg("WARNING: %s infinitive page exists but has no conjugations" % normname)
         return
     elif len(conjs) > 1:
-        pagemsg(
+        p.msg(
             "WARNING: Multiple %s conjugations %s"
             % (normname, ", ".join(conj for conjinf, conj, forms, standard_forms in conjs))
         )
@@ -447,26 +439,25 @@ def process_text_on_page(p):
 
         slots_for_forms = compute_slots_for_forms(forms)
         slots_for_standard_forms = compute_slots_for_forms(standard_forms) if standard_forms else None
-        for slot_index, (slot, slot_forms) in enumerate(sorted(list(forms.items()))):
-
+        for slot_index, (slot, slot_forms) in enumerate(sorted(forms.items())):
             def get_combined_index():
                 return "%s.%s" % (p.index, slot_index + 1)
 
-            def indexed_pagemsg(txt):
-                pagemsg(txt, overriding_index=get_combined_index())
+            def pagemsg(txt):
+                p.msg(txt, index=get_combined_index())
 
             if slot in ["infinitive", "infinitive_linked"]:
-                indexed_pagemsg("Skipping %s slot '%s'" % (normname, slot))
+                pagemsg("Skipping %s slot '%s'" % (normname, slot))
                 continue
             if slot in ["pp_fs", "pp_mp", "pp_fp", "short_pp_fs", "short_pp_mp", "short_pp_fp"]:
-                indexed_pagemsg(
+                pagemsg(
                     "Skipping %s participle form slot '%s', code not yet written to handle it (FIXME)"
                     % (normname, slot)
                 )
                 # FIXME, deal with these
                 continue
             if slot in ["short_pp_ms"]:
-                indexed_pagemsg(
+                pagemsg(
                     "Skipping %s short participle slot '%s', code not yet written to handle it (FIXME)"
                     % (normname, slot)
                 )
@@ -481,24 +472,24 @@ def process_text_on_page(p):
             for formobj in slot_forms:
                 form = formobj["form"]
                 if form in seen_forms:
-                    indexed_pagemsg("Skipping already-seen %s form %s for slot %s" % (normname, form, slot))
+                    pagemsg("Skipping already-seen %s form %s for slot %s" % (normname, form, slot))
                     continue
                 seen_forms.add(form)
                 if "[" in form:
-                    indexed_pagemsg("Skipping bracket-containing %s form %s for slot %s" % (normname, form, slot))
+                    pagemsg("Skipping bracket-containing %s form %s for slot %s" % (normname, form, slot))
                     continue
                 should_skip = form in forms_to_skip
                 if form == conjinf:
-                    indexed_pagemsg(
+                    pagemsg(
                         "Skipping %s form %s for slot %s that's identical to lemma" % (normname, form, slot)
                     )
                     continue
                 if "footnotes" in formobj and "[superseded]" in formobj["footnotes"]:
-                    indexed_pagemsg("Skipping %s form %s for slot %s that's superseded" % (normname, form, slot))
+                    pagemsg("Skipping %s form %s for slot %s that's superseded" % (normname, form, slot))
                     continue
                 if norm == "gl-reinteg" and slots_for_standard_forms:
                     if slots_for_forms[form] == slots_for_standard_forms[form]:
-                        indexed_pagemsg(
+                        pagemsg(
                             "Skipping %s form %s for slot %s that's identical to the corresponding standard Galician form"
                             % (normname, form, slot)
                         )
@@ -507,7 +498,7 @@ def process_text_on_page(p):
                         gl_reinteg_slots = sorted(list(slots_for_forms[form]))
                         gl_standard_slots = sorted(list(slots_for_standard_forms[form]))
                         if gl_standard_slots:
-                            indexed_pagemsg(
+                            pagemsg(
                                 "Not skipping %s form %s for slot %s; even though there's a corresponding standard Galician form, the standard Galician form fills slot%s %s while the reintegrated form fills slot%s %s"
                                 % (
                                     normname,
@@ -520,12 +511,16 @@ def process_text_on_page(p):
                                 )
                             )
                         else:
-                            indexed_pagemsg(
+                            pagemsg(
                                 "Not skipping %s form %s for slot %s; even though there's a corresponding standard Galician verb, the form is not part of it"
                                 % (normname, form, slot)
                             )
 
                 def process_page(index, page):
+                    def pagemsg(txt):
+                        p.msg(txt, index=index, title=p.title + ":" + page.title())
+                    def errandpagemsg(txt):
+                        p.errandmsg(txt, index=index, title=p.title + ":" + page.title())
                     retval = process_text_on_inflection_page(
                         index,
                         page.title(),
@@ -538,7 +533,7 @@ def process_text_on_page(p):
                     )
                     if retval and should_skip:
                         newtext, changelog = retval
-                        indexed_pagemsg(
+                        pagemsg(
                             "WARNING: Skipping %s form %s for slot %s that's the same as a short past participle form, handle manually; changelog msg=%s"
                             % (normname, form, slot, blib.changelog_to_string(changelog))
                         )
