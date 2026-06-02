@@ -43,32 +43,32 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `indic/` | 9 | ✅ DONE | 9 files auto-refactored; no manual fixes needed (bare `text` in templatize file is local variable, correct) |
 | `old_english/` | 7 | ✅ DONE | 7 files auto-refactored; manual fixes in 2 files (ang_find_no_infl: 4-arg signature → 2-arg (p, pos) + wrapper; ang_fix_pronun: bare index→p.index in 3 process_section calls) |
 | `japanese/` | 6 | ✅ DONE | 6 files auto-refactored; manual fix in 1 file (ja_fix_usex_in_quotes: bare text→p.text) |
-| `hungarian/` | 5 | ⬜ TODO | |
-| `icelandic/` | 3 | ⬜ TODO | |
-| `bantu/` | 3 | ⬜ TODO | |
-| `vietnamese/` | 2 | ⬜ TODO | |
-| `tagalog/` | 2 | ⬜ TODO | |
-| `sanskrit/` | 2 | ⬜ TODO | |
-| `hebrew/` | 2 | ⬜ TODO | |
-| `yiddish/` | 1 | ⬜ TODO | |
-| `veps/` | 1 | ⬜ TODO | |
-| `turkish/` | 1 | ⬜ TODO | |
-| `translingual/` | 1 | ⬜ TODO | |
-| `sicilian/` | 1 | ⬜ TODO | |
-| `sakizaya/` | 1 | ⬜ TODO | |
-| `proto_indo_european/` | 1 | ⬜ TODO | |
-| `proto_germanic/` | 1 | ⬜ TODO | |
-| `persian/` | 1 | ⬜ TODO | |
-| `mongolian/` | 1 | ⬜ TODO | |
-| `middle_english/` | 1 | ⬜ TODO | |
-| `luxembourgish/` | 1 | ⬜ TODO | |
-| `lojban/` | 1 | ⬜ TODO | |
-| `kurdish/` | 1 | ⬜ TODO | |
-| `greek/` | 1 | ⬜ TODO | |
-| `georgian/` | 1 | ⬜ TODO | |
-| `dutch/` | 1 | ⬜ TODO | |
-| `armenian/` | 1 | ⬜ TODO | |
-| `aromanian/` | 1 | ⬜ TODO | |
+| `hungarian/` | 5 | ✅ DONE | 5 files auto-refactored; no manual fixes needed |
+| `icelandic/` | 3 | ✅ DONE | 3 files auto-refactored; no manual fixes needed |
+| `bantu/` | 3 | ✅ DONE | 3 files auto-refactored; no manual fixes needed |
+| `vietnamese/` | 2 | ✅ DONE | 2 files auto-refactored; no manual fixes needed |
+| `tagalog/` | 2 | ✅ DONE | 2 files auto-refactored; no manual fixes needed |
+| `sanskrit/` | 2 | ✅ DONE | 2 files auto-refactored; manual fix in 1 (sa_clean_cat_templates: added text=p.text) |
+| `hebrew/` | 2 | ✅ DONE | 2 files auto-refactored; manual fix in 1 (he_clean_templates: text=p.text, in text, errandmsg->p.errandmsg) |
+| `yiddish/` | 1 | ✅ DONE | 1 file auto-refactored; manual fix (first text use -> p.text) |
+| `veps/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `turkish/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `translingual/` | 1 | ✅ DONE | 1 file auto-refactored; manual fix (text -> p.text in split_text_into_sections call) |
+| `sicilian/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `sakizaya/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `proto_indo_european/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `proto_germanic/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `persian/` | 1 | ✅ DONE | 1 file auto-refactored; manual fixes (bare index->p.index, text->p.text in inner scope; OLD-CALL wrapped with ProcessPageParams) |
+| `mongolian/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `middle_english/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `luxembourgish/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `lojban/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `kurdish/` | 4 | ✅ DONE | 4 files auto-refactored; manual fixes in 4 (text=p.text or first use->p.text; ku_find_correct_usages: index->p.index, text->p.text) |
+| `greek/` | 2 | ✅ DONE | 2 files auto-refactored; manual fix in el_convert_verb_categories (transformer cut short by multiline string literal; second branch: pagemsg->p.msg, pagename->p.title, text->p.text) |
+| `georgian/` | 1 | ✅ DONE | 1 file auto-refactored (skipped by transformer due to 4-arg signature); manual full refactor (4-arg->2-arg, pagemsg inner def removed, do_process_text_on_page wrapper updated) |
+| `dutch/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
+| `armenian/` | 1 | ✅ DONE | no Python files with process_text_on_page |
+| `aromanian/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
 | Top-level `*.py` | ~70 | ⬜ TODO | Do last; many small independent files |
 
 ## Workflow for each directory
