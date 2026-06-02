@@ -6,14 +6,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    origtext = text
-    parsed = blib.parse_text(text)
+    origtext = p.text
+    parsed = blib.parse_text(p.text)
     head = None
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -37,34 +34,34 @@ def process_text_on_page(index, pagetitle, text):
                 "ang-suffix",
             ]
         ):
-            newhead = getparam(t, "head") or pagetitle
+            newhead = getparam(t, "head") or p.title
         if newhead:
             if head:
-                pagemsg("WARNING: Saw head=%s and newhead=%s, skipping" % (head, newhead))
+                p.msg("WARNING: Saw head=%s and newhead=%s, skipping" % (head, newhead))
                 return
             head = newhead
     if "ƿ" not in head:
-        pagemsg("WARNING: Something wrong, didn't see wynn in head: %s" % head)
+        p.msg("WARNING: Something wrong, didn't see wynn in head: %s" % head)
     saw_altspell = None
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "alternative spelling of":
             if saw_altspell:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple {{alternative spelling of}}, skipping: %s and %s"
                     % (str(saw_altspell), str(t))
                 )
                 return
             saw_altspell = str(t)
             if getparam(t, "1") != "ang":
-                pagemsg("WARNING: {{alternative spelling of}} without language 'ang', skipping: %s" % str(t))
+                p.msg("WARNING: {{alternative spelling of}} without language 'ang', skipping: %s" % str(t))
                 return
             param2 = getparam(t, "2")
             should_param2 = blib.remove_links(head).replace("ƿ", "w")
             if param2 != should_param2:
                 origt = str(t)
                 t.add("2", should_param2)
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("fix 2= in {{alternative spelling of}} in wynn Old English entries")
     text = re.sub("\n\n+", "\n\n", str(parsed))
     if origtext != text and not notes:
@@ -78,4 +75,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

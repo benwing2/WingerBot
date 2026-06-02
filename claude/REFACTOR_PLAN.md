@@ -41,7 +41,7 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `german/` | 10 | ✅ DONE | 10 files auto-refactored; manual fixes in 3 files (de_clean_adj_forms: bare text→p.text; de_convert_adj, de_convert_noun: bare index→p.index in inner closure) |
 | `english/` | 9 | ✅ DONE | 9 files auto-refactored; manual fixes in 2 files (en_add_langcode_to_request_templates: bare text→p.text; en_convert_head_verb_to_en_verb: 4-arg signature → 1-arg, drop wrapper do_process_text_on_page) |
 | `indic/` | 9 | ✅ DONE | 9 files auto-refactored; no manual fixes needed (bare `text` in templatize file is local variable, correct) |
-| `old_english/` | 7 | ⬜ TODO | |
+| `old_english/` | 7 | ✅ DONE | 7 files auto-refactored; manual fixes in 2 files (ang_find_no_infl: 4-arg signature → 2-arg (p, pos) + wrapper; ang_fix_pronun: bare index→p.index in 3 process_section calls) |
 | `japanese/` | 6 | ⬜ TODO | |
 | `hungarian/` | 5 | ⬜ TODO | |
 | `icelandic/` | 3 | ⬜ TODO | |
