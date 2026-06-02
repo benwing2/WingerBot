@@ -6,21 +6,18 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn == "head" and getparam(t, "1") == "ny" and getparam(t, "2") == "noun plural form":
-            head = getparam(t, "head") or pagetitle
+            head = getparam(t, "head") or p.title
             rmparam(t, "head")
             g = getparam(t, "g")
             g = re.sub("^c", "", g)
@@ -31,7 +28,7 @@ def process_text_on_page(index, pagetitle, text):
             params = []
             unrecognized = False
             for param in t.params:
-                pagemsg("Saw unrecognized param %s=%s in %s" % (str(param.name), str(param.value), origt))
+                p.msg("Saw unrecognized param %s=%s in %s" % (str(param.name), str(param.value), origt))
                 unrecognized = True
             if unrecognized:
                 continue
@@ -43,7 +40,7 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "ny-plural noun")
             notes.append("convert {{head|ny|noun plural form}} to {{ny-plural noun}}")
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

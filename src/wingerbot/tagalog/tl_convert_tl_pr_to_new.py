@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
 
 recogized_poses = {
     "noun": "n",
@@ -15,15 +15,9 @@ recogized_poses = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "tl-pr":
@@ -50,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
                     for syl in raw_hyphs:
                         if not syl:
                             if not hyph_syls:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw blank hyphenation argument initially or after another blank argument: %s"
                                     % str(t)
                                 )
@@ -66,7 +60,7 @@ def process_text_on_page(index, pagetitle, text):
                     if hyph_syls:
                         hyphs.append(".".join(hyph_syls))
                     else:
-                        pagemsg("WARNING: Saw blank hyphenation argument finally: %s" % str(t))
+                        p.msg("WARNING: Saw blank hyphenation argument finally: %s" % str(t))
                         continue
                     prons = get_chain("IPA")
                 else:
@@ -78,7 +72,7 @@ def process_text_on_page(index, pagetitle, text):
                 a_s = get_chain("a", holes="allow")
                 qs = get_chain("q", holes="allow")
             except blib.ParameterError as e:
-                pagemsg("WARNING: %s" % e)
+                p.msg("WARNING: %s" % e)
                 continue
             expected_pron_len = max(len(prons), len(audios), len(a_s), len(qs))
             while len(prons) < expected_pron_len:
@@ -128,7 +122,7 @@ def process_text_on_page(index, pagetitle, text):
             t.add("new", "1")
             newt = str(t)
             if newt != origt:
-                pagemsg("Replaced %s with %s" % (origt, newt))
+                p.msg("Replaced %s with %s" % (origt, newt))
                 notes.append("convert {{tl-pr}} to new format")
 
     return str(parsed), notes

@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -26,14 +23,14 @@ def process_text_on_page(index, pagetitle, text):
             params = []
             unrecognized = False
             for param in t.params:
-                pagemsg("Saw unrecognized param %s=%s in %s" % (str(param.name), str(param.value), origt))
+                p.msg("Saw unrecognized param %s=%s in %s" % (str(param.name), str(param.value), origt))
                 unrecognized = True
             if unrecognized:
                 continue
             blib.set_template_name(t, "bnt-verb")
             notes.append("convert {{head|bnt-pro|verb}} to {{bnt-verb}}")
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

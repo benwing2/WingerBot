@@ -3,16 +3,10 @@
 import pywikibot, re, sys, argparse, unicodedata, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname, rsub_repeatedly
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     def verify_template_is_full_line(tn, line):
         templates = list(blib.parse_text(line).filter_templates())
         if type(tn) is list:
@@ -21,28 +15,28 @@ def process_text_on_page(index, pagetitle, text):
             tns = [tn]
         tntext = "/".join(tns)
         if len(templates) == 0:
-            pagemsg("WARNING: No templates on {{%s}} line?, skipping: %s" % (tntext, line))
+            p.msg("WARNING: No templates on {{%s}} line?, skipping: %s" % (tntext, line))
             return None
         t = templates[0]
         if tname(t) not in tns:
-            pagemsg(
+            p.msg(
                 "WARNING: Putative {{%s}} line doesn't have {{%s...}} as the first template, skipping: %s"
                 % (tntext, tntext, line)
             )
             return None
         if str(t) != line:
-            pagemsg("WARNING: {{%s}} line has text other than {{%s...}}, skipping: %s" % (tntext, tntext, line))
+            p.msg("WARNING: {{%s}} line has text other than {{%s...}}, skipping: %s" % (tntext, tntext, line))
             return None
         return t
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Tagalog", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Tagalog", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     sect_for_wiki = 0
     for k, header in subsecs.header_list:
@@ -65,10 +59,10 @@ def process_text_on_page(index, pagetitle, text):
                 if tn == "tl-IPA":
                     num_tl_IPA += 1
             if saw_tl_pr:
-                pagemsg("Already saw {{tl-pr}}, skipping: %s" % str(t))
+                p.msg("Already saw {{tl-pr}}, skipping: %s" % str(t))
                 continue
             if num_tl_IPA == 0:
-                pagemsg("WARNING: Didn't see {{tl-IPA}} in Pronunciation section, skipping")
+                p.msg("WARNING: Didn't see {{tl-IPA}} in Pronunciation section, skipping")
                 continue
             lines = subsections[k].strip().split("\n")
             # Remove blank lines.
@@ -89,7 +83,7 @@ def process_text_on_page(index, pagetitle, text):
                 if "{{wiki" in line:
                     m = re.search(r"^(.*?)(\{\{wiki[^{}]*\}\})(.*?)$", line)
                     if not m:
-                        pagemsg("WARNING: Can't match {{wikipedia}} template in supposed line containing it: %s" % line)
+                        p.msg("WARNING: Can't match {{wikipedia}} template in supposed line containing it: %s" % line)
                     else:
                         prevline, wikitemp, postline = m.groups()
                         subsections[sect_for_wiki] = wikitemp + "\n" + subsections[sect_for_wiki]
@@ -125,7 +119,7 @@ def process_text_on_page(index, pagetitle, text):
                         must_continue = True
                         break
                     if getparam(audiot, "1") != "tl":
-                        pagemsg("WARNING: Wrong language in {{audio}}, skipping: %s" % origline)
+                        p.msg("WARNING: Wrong language in {{audio}}, skipping: %s" % origline)
                         must_continue = True
                         break
                     audiofile = getparam(audiot, "2")
@@ -134,7 +128,7 @@ def process_text_on_page(index, pagetitle, text):
                         pn = pname(param)
                         pv = str(param.value)
                         if pn not in ["1", "2", "3"]:
-                            pagemsg("WARNING: Unrecognized param %s=%s in {{audio}}, skipping: %s" % (pn, pv, origline))
+                            p.msg("WARNING: Unrecognized param %s=%s in {{audio}}, skipping: %s" % (pn, pv, origline))
                             must_continue = True
                             break
                     if must_continue:
@@ -145,12 +139,12 @@ def process_text_on_page(index, pagetitle, text):
                         audiogloss = "#%s" % audiogloss
                     audiopart = "<audio:%s%s>" % (audiofile, audiogloss)
                     audioarg += audiopart
-                    pagemsg("Replacing %s with argument part %s" % (str(audiot), audiopart))
+                    p.msg("Replacing %s with argument part %s" % (str(audiot), audiopart))
                     extra_notes.append("incorporate %s into {{tl-pr}}" % str(audiot))
                 elif line.startswith("{{rhyme"):
                     rhyme_lines.append(line)
                 else:
-                    pagemsg("WARNING: Unrecognized Pronunciation section line, skipping: %s" % origline)
+                    p.msg("WARNING: Unrecognized Pronunciation section line, skipping: %s" % origline)
                     must_continue = True
                     break
             if must_continue:
@@ -175,7 +169,7 @@ def process_text_on_page(index, pagetitle, text):
                     pv = str(param.value)
                     if pn == "1":
                         continue
-                    pagemsg("WARNING: Unrecognized param %s=%s in {{tl-IPA}}, skipping: %s" % (pn, pv, origline))
+                    p.msg("WARNING: Unrecognized param %s=%s in {{tl-IPA}}, skipping: %s" % (pn, pv, origline))
                     must_continue = True
                     break
                 if must_continue:
@@ -188,9 +182,9 @@ def process_text_on_page(index, pagetitle, text):
                 continue
             pronun = None
             if rhyme_lines or hyph_lines:
-                pron_json_args = [respelling or pagetitle for respelling, qualifier in respellings]
-                pronuns = expand_text(
-                    "{{#invoke:tl-pronunciation|pron_json|%s|pagename=%s}}" % ("|".join(pron_json_args), pagetitle)
+                pron_json_args = [respelling or p.title for respelling, qualifier in respellings]
+                pronuns = p.expand_text(
+                    "{{#invoke:tl-pronunciation|pron_json|%s|pagename=%s}}" % ("|".join(pron_json_args), p.title)
                 )
                 if not pronuns:
                     continue
@@ -200,11 +194,11 @@ def process_text_on_page(index, pagetitle, text):
                 rhyme_pronuns = []
                 for pronun, (respelling, qualifier) in zip(pronuns["data"], respellings):
                     if qualifier and re.search(r"\b(colloquial|obsolete|relaxed)\b", qualifier):
-                        pagemsg("Skipping respelling '%s' with qualifier '%s'" % (respelling, qualifier))
+                        p.msg("Skipping respelling '%s' with qualifier '%s'" % (respelling, qualifier))
                         continue
                     syllabification_from_respelling = pronun.get("syllabification", "")
                     if not syllabification_from_respelling:
-                        pagemsg("Unable to syllabify respelling '%s'" % respelling)
+                        p.msg("Unable to syllabify respelling '%s'" % respelling)
                     else:
                         for existing_respelling, existing_syllab in syllabifications_from_respelling:
                             if existing_syllab == syllabification_from_respelling:
@@ -221,30 +215,30 @@ def process_text_on_page(index, pagetitle, text):
 
             if rhyme_lines:
                 if len(rhyme_lines) > 1:
-                    pagemsg("WARNING: Multiple rhyme lines, not removing: %s" % ", ".join(rhyme_lines))
+                    p.msg("WARNING: Multiple rhyme lines, not removing: %s" % ", ".join(rhyme_lines))
                     continue
                 rhyme_line = rhyme_lines[0]
                 rhymet = verify_template_is_full_line(["rhyme", "rhymes", "rhymes-lite"], rhyme_line)
                 if not rhymet:
                     continue
                 if getparam(rhymet, "1") != "tl":
-                    pagemsg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(rhymet), rhyme_line))
+                    p.msg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(rhymet), rhyme_line))
                     continue
                 rhymes = blib.fetch_param_chain(rhymet, "2")
                 if len(rhymes) > 1:
-                    pagemsg("WARNING: Saw more than one rhyme in {{%s}}: %s" % (tname(rhymet), rhyme_line))
+                    p.msg("WARNING: Saw more than one rhyme in {{%s}}: %s" % (tname(rhymet), rhyme_line))
                     continue
                 rhyme = rhymes[0]
                 nsyl = (getparam(rhymet, "s1") or getparam(rhymet, "s")).strip()
                 if nsyl:
                     if not re.search("^[0-9]+$", nsyl):
-                        pagemsg("WARNING: Bad syllable count in rhyme template: %s" % str(rhymet))
+                        p.msg("WARNING: Bad syllable count in rhyme template: %s" % str(rhymet))
                         continue
                     nsyl = int(nsyl)
                 else:
                     nsyl = None
                 if len(rhyme_pronuns) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple auto-generated rhymes, can't handle: %s"
                         % ",".join("%s/%s/%s" % (respelling, rhyme, nsyl) for respelling, rhyme, nsyl in rhyme_pronuns)
                     )
@@ -252,27 +246,27 @@ def process_text_on_page(index, pagetitle, text):
                 rhyme_respelling, rhyme_pronun, rhyme_nsyl = rhyme_pronuns[0]
                 if rhyme == rhyme_pronun:
                     if nsyl is None:
-                        pagemsg(
+                        p.msg(
                             "Removing rhyme %s, same as pronunciation-based rhyme for respelling '%s': %s"
                             % (rhyme, rhyme_respelling, str(rhymet))
                         )
                         extra_notes.append("remove {{%s}} same as auto-generated rhyme" % tname(rhymet))
                     elif nsyl == rhyme_nsyl:
-                        pagemsg(
+                        p.msg(
                             "Removing rhyme %s, same as pronunciation-based rhyme for respelling '%s' and syllable count %s matches: %s"
                             % (rhyme, rhyme_respelling, nsyl, str(rhymet))
                         )
                         extra_notes.append(
                             "remove {{%s}} same as auto-generated rhyme and syllable count" % tname(rhymet)
                         )
-                    elif pagetitle in allow_mismatching_nsyl:
-                        pagemsg(
+                    elif p.title in allow_mismatching_nsyl:
+                        p.msg(
                             "Removing rhyme %s, same as pronunciation-based rhyme for respelling '%s'; syllable count %s mismatches pronunciation syllable count %s but is known to be incorrect so is ignored: %s"
                             % (rhyme, rhyme_respelling, nsyl, rhyme_nsyl, str(rhymet))
                         )
                         extra_notes.append("ignore known-incorrect syllable count %s in {{%s}}" % (nsyl, tname(rhymet)))
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: For spelling '%s', rhyme %s%s not same as pronunciation-based rhyme %s: %s"
                         % (
                             rhyme_respelling,
@@ -286,7 +280,7 @@ def process_text_on_page(index, pagetitle, text):
 
             if audioarg:
                 if len(respelling_args) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw audio arg %s and multiple respellings %s, don't know where to add audio arg"
                         % (audioarg, "|".join(respelling_args))
                     )
@@ -296,7 +290,7 @@ def process_text_on_page(index, pagetitle, text):
             syll_arg = ""
             if hyph_lines:
                 if len(syllabifications_from_respelling) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw multiple auto-generated syllabifications, can't handle: %s"
                         % ",".join(
                             "%s/%s" % (respelling, syllab) for respelling, syllab in syllabifications_from_respelling
@@ -310,7 +304,7 @@ def process_text_on_page(index, pagetitle, text):
                     syllabification_from_respelling = None
                 syllab_respelling = "|".join(respelling_args)
                 if len(hyph_lines) > 1:
-                    pagemsg("WARNING: Multiple syllabification lines, not removing: %s" % ", ".join(hyph_lines))
+                    p.msg("WARNING: Multiple syllabification lines, not removing: %s" % ", ".join(hyph_lines))
                 else:
                     assert hyph_lines[0].startswith("* ")
                     hyph_line = hyph_lines[0][2:]
@@ -318,13 +312,13 @@ def process_text_on_page(index, pagetitle, text):
                     if hypht:
                         syls = []
                         if getparam(hypht, "1") != "tl":
-                            pagemsg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hypht), hyph_line))
+                            p.msg("WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hypht), hyph_line))
                         else:
                             for param in hypht.params:
                                 pn = pname(param)
                                 pv = str(param.value)
                                 if not re.search("^[0-9]+$", pn) and not (pn == "caption" and pv == "Syllabification"):
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Unrecognized param %s=%s in {{%s}}, not removing: %s"
                                         % (pn, pv, tname(hypht), hyph_line)
                                     )
@@ -332,7 +326,7 @@ def process_text_on_page(index, pagetitle, text):
                                 if pn == "caption":
                                     continue
                                 if not pv:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Multiple syllabifications in a single template, not removing: %s"
                                         % hyph_line
                                     )
@@ -342,7 +336,7 @@ def process_text_on_page(index, pagetitle, text):
                             else:  # no break
                                 specified_syllabification = ".".join(syls)
                                 if specified_syllabification == syllabification_from_respelling:
-                                    pagemsg(
+                                    p.msg(
                                         "Removing explicit syllabification same as auto-syllabification: %s" % hyph_line
                                     )
                                     extra_notes.append(
@@ -350,8 +344,8 @@ def process_text_on_page(index, pagetitle, text):
                                     )
                                 elif specified_syllabification == syllabification_from_pagetitle:
                                     if respelling_args == ["+"]:
-                                        pagemsg(
-                                            "WARNING: Something wrong, {{tl-IPA}} used with '+' or empty respelling but respelling auto-syllabification %s different from pagetitle auto-syllabification %s"
+                                        p.msg(
+                                            "WARNING: Something wrong, {{tl-IPA}} used with '+' or empty respelling but respelling auto-syllabification %s different from p.title auto-syllabification %s"
                                             % (
                                                 syllabification_from_respelling or "(nil)",
                                                 syllabification_from_pagetitle,
@@ -359,8 +353,8 @@ def process_text_on_page(index, pagetitle, text):
                                         )
                                         continue
                                     else:
-                                        pagemsg(
-                                            "Non-default respelling %s, explicit syllabification %s not same as syllabification from respelling %s but same as pagetitle auto-syllabification, replacing with <syll:+>: %s"
+                                        p.msg(
+                                            "Non-default respelling %s, explicit syllabification %s not same as syllabification from respelling %s but same as p.title auto-syllabification, replacing with <syll:+>: %s"
                                             % (
                                                 syllab_respelling,
                                                 specified_syllabification,
@@ -370,12 +364,12 @@ def process_text_on_page(index, pagetitle, text):
                                         )
                                         syll_arg = "+"
                                         extra_notes.append(
-                                            "remove/incorporate {{%s}} same as pagetitle auto-syllabification into {{tl-pr}}"
+                                            "remove/incorporate {{%s}} same as p.title auto-syllabification into {{tl-pr}}"
                                             % tname(hypht)
                                         )
-                                elif specified_syllabification == pagetitle:
-                                    pagemsg(
-                                        "Non-default respelling %s, explicit syllabification %s not same as syllabification from respelling %s or syllabification from pagetitle %s but same as pagetitle, replacing with <syll:#>: %s"
+                                elif specified_syllabification == p.title:
+                                    p.msg(
+                                        "Non-default respelling %s, explicit syllabification %s not same as syllabification from respelling %s or syllabification from p.title %s but same as p.title, replacing with <syll:#>: %s"
                                         % (
                                             syllab_respelling,
                                             specified_syllabification,
@@ -386,23 +380,23 @@ def process_text_on_page(index, pagetitle, text):
                                     )
                                     syll_arg = "#"
                                     extra_notes.append(
-                                        "remove/incorporate {{%s}} same as pagetitle into {{tl-pr}}" % tname(hypht)
+                                        "remove/incorporate {{%s}} same as p.title into {{tl-pr}}" % tname(hypht)
                                     )
                                 else:
                                     hyph_text = (
-                                        "respelling auto-syllabification %s or pagetitle auto-syllabification %s"
+                                        "respelling auto-syllabification %s or p.title auto-syllabification %s"
                                         % (syllabification_from_respelling or "(nil)", syllabification_from_pagetitle)
                                         if syllabification_from_respelling != syllabification_from_pagetitle
-                                        else "respelling/pagetitle auto-syllabification %s"
+                                        else "respelling/p.title auto-syllabification %s"
                                         % (syllabification_from_respelling or "(nil)")
                                     )
                                     if respelling_args == ["+"]:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: {{tl-IPA}} used with '+' or empty respelling but specified syllabification %s not equal to %s, adding explicitly: %s"
                                             % (specified_syllabification, hyph_text, hyph_line)
                                         )
                                     else:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Non-default pronunciation %s and specified syllabification %s not equal to %s, adding explicitly: %s"
                                             % (syllab_respelling, specified_syllabification, hyph_text, hyph_line)
                                         )
@@ -412,7 +406,7 @@ def process_text_on_page(index, pagetitle, text):
 
             if homophone_lines:
                 if len(homophone_lines) > 1:
-                    pagemsg("WARNING: Multiple homophone lines, not removing: %s" % ", ".join(homophone_lines))
+                    p.msg("WARNING: Multiple homophone lines, not removing: %s" % ", ".join(homophone_lines))
                 else:
                     assert homophone_lines[0].startswith("* ")
                     homophone_line = homophone_lines[0][2:]
@@ -439,7 +433,7 @@ def process_text_on_page(index, pagetitle, text):
                     hmpt = verify_template_is_full_line(["hmp", "homophone", "homophones"], homophone_line)
                     if hmpt:
                         if getparam(hmpt, "1") != "tl":
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Wrong language in {{%s}}, not removing: %s" % (tname(hmpt), homophone_line)
                             )
                         else:
@@ -449,7 +443,7 @@ def process_text_on_page(index, pagetitle, text):
                                 if pn == "q":
                                     pn = "q1"
                                 if not re.search("^q?[0-9]+$", pn):
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Unrecognized param %s=%s in {{%s}}, not removing: %s"
                                         % (pn, pv, tname(hmpt), homophone_line)
                                     )
@@ -468,7 +462,7 @@ def process_text_on_page(index, pagetitle, text):
                                     hmp_args[-1] += "<q:%s>" % homophone_qualifier_text
                                 hmp_arg = "<hmp:%s>" % ",".join(hmp_args)
                                 if len(respelling_args) > 1:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Saw homophone arg %s and multiple respellings %s, don't know where to add homophone arg"
                                         % (hmp_arg, "|".join(respelling_args))
                                     )
@@ -482,7 +476,7 @@ def process_text_on_page(index, pagetitle, text):
                 tl_pr = "{{tl-pr%s}}" % syll_arg
             else:
                 tl_pr = "{{tl-pr|%s%s}}" % ("|".join(respelling_args), syll_arg)
-            pagemsg("Replaced %s with %s" % (str(ipat), tl_pr))
+            p.msg("Replaced %s with %s" % (str(ipat), tl_pr))
 
             all_lines = "\n".join([tl_pr] + rfap_lines + hyph_lines + homophone_lines)
             newsubsec = "%s\n\n" % all_lines
