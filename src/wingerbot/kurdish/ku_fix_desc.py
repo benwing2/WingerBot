@@ -7,14 +7,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    lines = re.split("\n", text)
+    lines = re.split("\n", p.text)
     newlines = []
     langs_at_levels = {}
     kurdish_indent = None
@@ -34,13 +31,13 @@ def process_text_on_page(index, pagetitle, text):
                         thisline_lang = getparam(t, "1")
                         if thisline_lang == "ku":
                             if getparam(t, "2") != "-":
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw real 'Kurdish' descendant rather than anchoring line: %s" % str(t)
                                 )
                                 continue
                             kurdish_indent = thisline_indent
                             kurdish_borrowing = getparam(t, "bor")
-                            line, did_replace = blib.replace_in_text(line, str(t), "Kurdish:", pagemsg)
+                            line, did_replace = blib.replace_in_text(line, str(t), "Kurdish:", p.msg)
                             notes.append("replace {{desc|ku}} with raw 'Kurdish:'")
                         elif kurdish_indent and thisline_indent > kurdish_indent and kurdish_borrowing:
                             t.add("bor", "1")

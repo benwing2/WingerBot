@@ -17,22 +17,21 @@ trans_templates = blib.translation_templates
 arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
+
+    text = p.text
 
     def check_charset(t):
         langcode = getparam(t, "1")
         lemma = getparam(t, "2")
         is_arabic = re.search("^[%s]" % arabic_charset, lemma)
         if is_arabic and langcode == "kmr":
-            pagemsg("WARNING: Arabic script but Northern Kurdish: %s" % str(t))
+            p.msg("WARNING: Arabic script but Northern Kurdish: %s" % str(t))
         elif not is_arabic and langcode == "ckb":
-            pagemsg("WARNING: Latin script but Central Kurdish: %s" % str(t))
+            p.msg("WARNING: Latin script but Central Kurdish: %s" % str(t))
 
     def replace_trans(m, newlangcode, newlangname):
         prefix, transtext = m.groups()
@@ -44,18 +43,18 @@ def process_text_on_page(index, pagename, text):
                 if getparam(t, "1") == "ku":
                     t.add("1", newlangcode)
                     rmparam(t, "sc")
-                    pagemsg("Replaced %s with %s based on language prefix of translation entry" % (origt, str(t)))
+                    p.msg("Replaced %s with %s based on language prefix of translation entry" % (origt, str(t)))
                     notes.append(
                         "{{%s|ku}} -> {{%s|%s}} based on language prefix of translation entry" % (tn, tn, newlangcode)
                     )
             elif tn == "t-simple":
                 if getparam(t, "1") == "ku":
                     if getparam(t, "langname" != "Kurdish"):
-                        pagemsg("WARNING: Something wrong, t-simple|ku without langname=Kurdish: %s" % str(t))
+                        p.msg("WARNING: Something wrong, t-simple|ku without langname=Kurdish: %s" % str(t))
                     else:
                         t.add("1", newlangcode)
                         t.add("langname", newlangname)
-                        pagemsg("Replaced %s with %s based on prefix" % (origt, str(t)))
+                        p.msg("Replaced %s with %s based on prefix" % (origt, str(t)))
                         notes.append(
                             "{{t-simple|ku|langname=Kurdish}} -> {{t-simple|%s|langname=%s}} based on language prefix"
                             % (newlangcode, newlangname)
@@ -95,19 +94,19 @@ def process_text_on_page(index, pagename, text):
                     if newlangcode:
                         t.add("1", newlangcode)
                         rmparam(t, "sc")
-                        pagemsg("Replaced %s with %s based on %s" % (origt, str(t), source))
+                        p.msg("Replaced %s with %s based on %s" % (origt, str(t), source))
                         notes.append("{{%s|ku}} -> {{%s|%s}} based on %s" % (tn, tn, newlangcode, source))
             elif tn == "t-simple":
                 if getparam(t, "1") == "ku":
                     if getparam(t, "langname" != "Kurdish"):
-                        pagemsg("WARNING: Something wrong, t-simple|ku without langname=Kurdish: %s" % str(t))
+                        p.msg("WARNING: Something wrong, t-simple|ku without langname=Kurdish: %s" % str(t))
                     else:
                         lemma = getparam(t, "2")
                         newlangcode, newlangname, source = check_lemma(lemma)
                         if newlangcode:
                             t.add("1", newlangcode)
                             t.add("langname", newlangname)
-                            pagemsg("Replaced %s with %s based on %s" % (origt, str(t), source))
+                            p.msg("Replaced %s with %s based on %s" % (origt, str(t), source))
                             notes.append(
                                 "{{t-simple|ku|langname=Kurdish}} -> {{t-simple|%s|langname=%s}} based on %s"
                                 % (newlangcode, newlangname, source)
@@ -126,7 +125,7 @@ def process_text_on_page(index, pagename, text):
             if tn in trans_templates or tn == "t-simple":
                 if getparam(t, "1") == "ku":
                     lemma = getparam(t, "2")
-                    pagemsg("Unable to convert lemma %s for lang %s: %s" % (lemma, prefix, origt))
+                    p.msg("Unable to convert lemma %s for lang %s: %s" % (lemma, prefix, origt))
 
     for m in re.finditer("^(.*)$", text, re.M):
         (transtext,) = m.groups()
@@ -137,7 +136,7 @@ def process_text_on_page(index, pagename, text):
             if tn in trans_templates or tn == "t-simple":
                 if getparam(t, "1") == "ku":
                     lemma = getparam(t, "2")
-                    pagemsg("Unable to convert lemma %s: %s" % (lemma, transtext))
+                    p.msg("Unable to convert lemma %s: %s" % (lemma, transtext))
                 check_charset(t)
 
     return text, notes

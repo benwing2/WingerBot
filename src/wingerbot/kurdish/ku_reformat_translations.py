@@ -19,16 +19,13 @@ code_to_kurdish_lang = {
 }
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
     new_lines = []
-    lines = text.split("\n")
+    lines = p.text.split("\n")
     in_kurdish_section = False
     for line in lines:
         just_began_kurdish_section = False
@@ -44,7 +41,7 @@ def process_text_on_page(index, pagename, text):
                 if code in code_to_kurdish_lang:
                     translations_by_langname.append((code_to_kurdish_lang[code], translations))
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw unrecognized lang code %s, not touching section: %s"
                         % (code, ", ".join(translations))
                     )
@@ -98,7 +95,7 @@ def process_text_on_page(index, pagename, text):
                                 else:
                                     newtext = sub_links(newtext)
                                 if newtext != templates_and_separators[j]:
-                                    pagemsg(
+                                    p.msg(
                                         "NOTE: Converted raw link(s) '%s' to '%s'"
                                         % (templates_and_separators[j], newtext)
                                     )
@@ -114,13 +111,13 @@ def process_text_on_page(index, pagename, text):
                             if not translation_lang:
                                 translation_lang = lang
                             elif translation_lang != lang:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw multiple langs %s and %s in single translation entry: %s"
                                     % (translation_lang, lang, translation)
                                 )
                     if not translation_lang:
                         # FIXME, maybe check the script and/or the prefix
-                        pagemsg(
+                        p.msg(
                             "WARNING: Couldn't identify language of translation section, assuming kmr: %s" % translation
                         )
                         translation_lang = "kmr"
