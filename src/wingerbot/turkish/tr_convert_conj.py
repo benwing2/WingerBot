@@ -3,18 +3,15 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -30,10 +27,10 @@ def process_text_on_page(index, pagetitle, text):
             v2 = getp("4")
             td = getp("5")
             if not stem:
-                pagemsg("WARNING: No stem, skipping: %s" % origt)
+                p.msg("WARNING: No stem, skipping: %s" % origt)
                 continue
             if len(v1) != 1 or len(v2) != 1:
-                pagemsg("WARNING: Vowel v1=%s or v2=%s isn't the right length, skipping: %s" % (v1, v2, origt))
+                p.msg("WARNING: Vowel v1=%s or v2=%s isn't the right length, skipping: %s" % (v1, v2, origt))
                 continue
             num_vowels = len(re.sub("[^aeıioöuü]", "", stem))
             if num_vowels == 1 and v2 in "ıiuü":
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
             del t.params[:]
             blib.set_template_name(t, "tr-conj")
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
             notes.append("replace %s with new module-based %s" % (origt, str(t)))
 
     text = str(parsed)

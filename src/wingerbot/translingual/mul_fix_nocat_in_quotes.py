@@ -4,12 +4,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("Skipping ignored page")
+def process_text_on_page(p):
+    if blib.page_should_be_ignored(p.title):
+        p.msg("Skipping ignored page")
         return
 
     def hack_templates(parsed, subsectitle):
@@ -37,18 +34,18 @@ def process_text_on_page(index, pagetitle, text):
                 # Put remaining parameters in order.
                 for name, value, showkey in params:
                     t.add(name, value, showkey=showkey, preserve_spacing=False)
-                pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+                p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     notes = []
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
     for j, langname in secs.lang_list:
         if langname != "Translingual":
             continue
-        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
+        subsecs = blib.split_text_into_subsections(sections[j], p.msg)
         subsections = subsecs.subsections
         for k, subsectitle in subsecs.header_list:
             parsed = blib.parse_text(subsections[k])

@@ -10,19 +10,16 @@ from wingerbot import blib
 from wingerbot.blib import msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         if tname(t) == "R:vep:UVVV":
             refpages = blib.fetch_param_chain(t, "1", "")
             for refpage in refpages:
                 if not pywikibot.Page(site, refpage).exists():
-                    pagemsg("Page [[%s]] does not exist" % refpage)
+                    p.msg("Page [[%s]] does not exist" % refpage)
 
 
 parser = blib.create_argparser(

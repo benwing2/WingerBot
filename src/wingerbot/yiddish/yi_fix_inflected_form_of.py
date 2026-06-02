@@ -39,15 +39,12 @@ def make_non_final(term):
     return term[:-1] + reversed_finals.get(last_char, last_char)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    subsections = re.split("(^==+[^=\n]+==+\n)", text, 0, re.M)
+    subsections = re.split("(^==+[^=\n]+==+\n)", p.text, 0, re.M)
     for j in range(2, len(subsections), 2):
         if not re.search("==(Adjective|Numeral|Ordinal number|Participle)==", subsections[j - 1]):
             continue
@@ -82,18 +79,18 @@ def process_text_on_page(index, pagetitle, text):
             endings_to_try = []
             for ending_sets in ending_sets_to_try:
                 for ending, tag_sets in ending_sets.items():
-                    if pagetitle.endswith(ending):
+                    if p.title.endswith(ending):
                         endings_to_try.append((ending, tag_sets))
             if len(endings_to_try) == 0:
-                pagemsg("WARNING: Can't identify ending of non-lemma form, skipping")
+                p.msg("WARNING: Can't identify ending of non-lemma form, skipping")
                 continue
             found_combinations = []
             for ending_to_try, tag_sets in endings_to_try:
                 for lemma_to_try in lemmas_to_try:
-                    if lemma_to_try + ending_to_try == pagetitle:
+                    if lemma_to_try + ending_to_try == p.title:
                         found_combinations.append((lemma_to_try, ending_to_try, tag_sets))
             if len(found_combinations) == 0:
-                pagemsg(
+                p.msg(
                     "WARNING: Can't match lemma %s with page title (tried lemma variants %s and endings %s), skipping"
                     % (
                         lemma,
@@ -103,7 +100,7 @@ def process_text_on_page(index, pagetitle, text):
                 )
                 continue
             if len(found_combinations) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Found multiple possible matching endings for lemma %s (found possibilities %s), skipping"
                     % (
                         lemma,
@@ -125,7 +122,7 @@ def process_text_on_page(index, pagetitle, text):
             tr = getparam(t, "tr")
             rmparam(t, "tr")
             if len(t.params) > 0:
-                pagemsg("WARNING: Original template %s has extra params, skipping" % origt)
+                p.msg("WARNING: Original template %s has extra params, skipping" % origt)
                 return
             # Set new name
             blib.set_template_name(t, "inflection of")
@@ -140,7 +137,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add(str(nextparam), tag)
                 nextparam += 1
             notes.append("replace %s with %s" % (origt, str(t)))
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
         subsections[j] = str(parsed)
     text = "".join(subsections)
 
