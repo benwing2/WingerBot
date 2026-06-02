@@ -21,10 +21,7 @@ templates_changed = {}
 printed_succeeded_failed = False
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if args.convert_g_breve:
 
         def do_convert_g_breve(latin):
@@ -44,9 +41,9 @@ def process_text_on_page(index, pagetitle, text):
                 _, foreign, latin = obj.param
                 foreign = getp(foreign)
                 latin = getp(latin)
-            elif obj.param[0] == "separate-pagetitle":
+            elif obj.param[0] == "separate-p.title":
                 _, foreign_dest, latin = obj.param
-                foreign = pagetitle
+                foreign = p.title
                 latin = getp(latin)
             elif obj.param[0] == "inline":
                 _, foreign_param, foreign_mod, latin_mod, inline_mod = obj.param
@@ -55,11 +52,11 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 assert False, "Unrecognized value for obj.param[0]=%s" % obj.param[0]
             if not foreign or not latin or latin in ["-", "?"]:
-                pagemsg("Skipped: foreign=%s, latin=%s in %s" % (foreign, latin, str(obj.t)))
+                p.msg("Skipped: foreign=%s, latin=%s in %s" % (foreign, latin, str(obj.t)))
             else:
                 newlatin = do_convert_g_breve(latin)
                 if latin == newlatin:
-                    pagemsg("Skipped: foreign=%s, latin=%s in %s" % (foreign, latin, str(obj.t)))
+                    p.msg("Skipped: foreign=%s, latin=%s in %s" % (foreign, latin, str(obj.t)))
                 else:
 
                     def make_orig_template(foreignparam, foreign):
@@ -68,16 +65,16 @@ def process_text_on_page(index, pagetitle, text):
                         else:
                             return "{{%s|...|%s|...|%s=%s}}" % (tname(obj.t), obj.tlang, foreignparam, foreign)
 
-                    if obj.param[0] in ["separate", "separate-pagetitle"]:
+                    if obj.param[0] in ["separate", "separate-p.title"]:
                         _, foreignparam, latinparam = obj.param
                         origtemp = make_orig_template(foreignparam, foreign)
-                        pagemsg("In %s, replacing %s=%s with %s" % (origtemp, latinparam, latin, newlatin))
+                        p.msg("In %s, replacing %s=%s with %s" % (origtemp, latinparam, latin, newlatin))
                         notes.append("replace %s=%s with %s in %s" % (latinparam, latin, newlatin, origtemp))
                         addparam(obj.t, latinparam, newlatin)
                     elif obj.param[0] == "inline":
                         _, foreign_param, foreign_mod, latin_mod, inline_mod = obj.param
                         origtemp = make_orig_template(foreign_param, getp(foreign_param))
-                        pagemsg("In %s, replacing <%s:%s> with %s" % (origtemp, latin_mod, latin, newlatin))
+                        p.msg("In %s, replacing <%s:%s> with %s" % (origtemp, latin_mod, latin, newlatin))
                         notes.append("replace <%s:%s> with %s in %s" % (latin_mod, latin, newlatin, origtemp))
                         inline_mod.set_modifier(latin_mod, newlatin)
                         addparam(obj.t, foreign_param, inline_mod.reconstruct_param())
@@ -85,7 +82,7 @@ def process_text_on_page(index, pagetitle, text):
             return False
 
         newtext, actions = blib.process_one_page_links(
-            index, pagetitle, text, ["fa", "fa-cls", "fa-ira", "prs"], process_param, templates_seen, templates_changed
+            p.index, p.title, p.text, ["fa", "fa-cls", "fa-ira", "prs"], process_param, templates_seen, templates_changed
         )
         if args.overall_comment:
             overall_comment = "%s: %s" % (args.overall_comment, "; ".join(blib.group_notes(actions)))
@@ -100,13 +97,13 @@ def process_text_on_page(index, pagetitle, text):
 
             def test(obj, foreign, latin):
                 global printed_succeeded_failed
-                if int(index) % 100 == 0:
+                if int(p.index) % 100 == 0:
                     if not printed_succeeded_failed:
                         printed_succeeded_failed = True
-                        show_failure(pagemsg, fa_translit.num_succeeded, fa_translit.num_failed)
+                        show_failure(p.msg, fa_translit.num_succeeded, fa_translit.num_failed)
                 else:
                     printed_succeeded_failed = False
-                pagemsg("Processing %s" % str(obj.t))
+                p.msg("Processing %s" % str(obj.t))
                 return fa_translit.test_with_obj(obj, latin, foreign, "matched")
 
             foreign = None
@@ -115,9 +112,9 @@ def process_text_on_page(index, pagetitle, text):
                 _, foreign, latin = obj.param
                 foreign = getp(foreign)
                 latin = getp(latin)
-            elif obj.param[0] == "separate-pagetitle":
+            elif obj.param[0] == "separate-p.title":
                 _, foreign_dest, latin = obj.param
-                foreign = pagetitle
+                foreign = p.title
                 latin = getp(latin)
             elif obj.param[0] == "inline":
                 _, foreign_param, foreign_mod, latin_mod, inline_mod = obj.param
@@ -125,7 +122,7 @@ def process_text_on_page(index, pagetitle, text):
                 latin = inline_mod.get_modifier(latin_mod)
             obj.addl_params["no_vocalize"] = args.no_vocalize
             if not foreign or not latin or latin in ["-", "?"]:
-                pagemsg("Skipped: foreign=%s, latin=%s" % (foreign, latin))
+                p.msg("Skipped: foreign=%s, latin=%s" % (foreign, latin))
             else:
                 latins = fa_translit.split_multiple_translits(latin, foreign)
                 if latins is not None:
@@ -137,13 +134,13 @@ def process_text_on_page(index, pagetitle, text):
                     test(obj, foreign, latin)
 
         return blib.process_one_page_links(
-            index, pagetitle, text, ["fa"], process_param, templates_seen, templates_changed
+            p.index, p.title, p.text, ["fa"], process_param, templates_seen, templates_changed
         )
     else:
         return canon_one_page_links(
-            pagetitle,
-            index,
-            text,
+            p.title,
+            p.index,
+            p.text,
             "fa",
             "Persian",
             "fa-Arab",
@@ -166,7 +163,7 @@ if args.direcfile:
             linemsg("WARNING: Unrecognized line: %s" % line)
         else:
             index, pagetitle, text = m.groups()
-            process_text_on_page(index, pagetitle, text)
+            process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text, None))
 else:
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, skip_ignorable_pages=True)
 # If in --test mode, we need to use the num_succeeded/num_failed from fa_translit as the ones in canon_foreign aren't
