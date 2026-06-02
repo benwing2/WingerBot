@@ -6,20 +6,17 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Hungarian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if (
@@ -39,7 +36,7 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("reorder {{inflection of|hu|...}} before {{participle of|hu|...}}")
                     subsections[k] = newsubsec
                 elif re.search(r"\{\{participle of\|hu\|.*\{\{inflection of\|hu\|", subsections[k], re.S):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw {{participle of|hu|...}} before {{inflection of|hu|...}} with likely usage examples"
                     )
                     continue

@@ -91,28 +91,25 @@ def add_category(secbody, sectail, pagemsg, notes, cat):
     return secbody.rstrip("\n") + "\n", "\n" + sectail + "\n\n"
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    if pagetitle in hu_pages_seen:
-        pagemsg("Skipping because already seen")
+    if p.title in hu_pages_seen:
+        p.msg("Skipping because already seen")
         return
-    hu_pages_seen.add(pagetitle)
-    pagemsg("Processing")
+    hu_pages_seen.add(p.title)
+    p.msg("Processing")
 
-    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Hungarian", p.msg)
     if modsec is None:
         return
     sections, j, secbody, sectail = modsec.props()
     if "==Etymology 1==" not in secbody:
         return
-    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
+    etym_secs = blib.split_text_into_subsections(secbody, p.msg, only_level=3, header_re="Etymology [0-9.]+")
     etym_sections = etym_secs.subsections
     if len(etym_sections) < 5:
-        pagemsg("WARNING: Not enough etym sections, found %s, expected >= 5" % len(etym_sections))
+        p.msg("WARNING: Not enough etym sections, found %s, expected >= 5" % len(etym_sections))
         return
     num_lemmas = 0
     num_nonlemma_forms = 0
@@ -148,17 +145,17 @@ def process_text_on_page(index, pagetitle, text):
                     num_nonlemma_forms += 1
                     saw_nonlemma_form = True
         if not saw_lemma and not saw_nonlemma_form:
-            pagemsg("WARNING: In %s, didn't see lemma or non-lemma" % etym_sections[k - 1].strip())
-    pagemsg("Saw num_lemmas=%s, num_nonlemma_forms=%s" % (num_lemmas, num_nonlemma_forms))
+            p.msg("WARNING: In %s, didn't see lemma or non-lemma" % etym_sections[k - 1].strip())
+    p.msg("Saw num_lemmas=%s, num_nonlemma_forms=%s" % (num_lemmas, num_nonlemma_forms))
     if num_lemmas and num_nonlemma_forms:
         secbody, sectail = add_category(
-            secbody, sectail, pagemsg, notes, "terms with lemma and non-lemma form etymologies"
+            secbody, sectail, p.msg, notes, "terms with lemma and non-lemma form etymologies"
         )
     if num_lemmas > 1:
-        secbody, sectail = add_category(secbody, sectail, pagemsg, notes, "terms with multiple lemma etymologies")
+        secbody, sectail = add_category(secbody, sectail, p.msg, notes, "terms with multiple lemma etymologies")
     if num_nonlemma_forms > 1:
         secbody, sectail = add_category(
-            secbody, sectail, pagemsg, notes, "terms with multiple non-lemma form etymologies"
+            secbody, sectail, p.msg, notes, "terms with multiple non-lemma form etymologies"
         )
     pairs_seen = set()
     for k in range((len(etym_sections) - 1) // 2):
@@ -176,7 +173,7 @@ def process_text_on_page(index, pagetitle, text):
                         pairs_seen.add((posl, posk))
                     else:
                         pairs_seen.add((posk, posl))
-    pagemsg(
+    p.msg(
         "; ".join(
             "%s: %s" % (sec + 1, ",".join(poses))
             for sec, poses in sorted(poses_seen_per_section.items(), key=lambda x: x[0])
@@ -186,11 +183,11 @@ def process_text_on_page(index, pagetitle, text):
         hu_pos_pos_pairs[(posk, posl)] += 1
         if posk == posl:
             secbody, sectail = add_category(
-                secbody, sectail, pagemsg, notes, "terms with multiple %s etymologies" % posk
+                secbody, sectail, p.msg, notes, "terms with multiple %s etymologies" % posk
             )
         else:
             secbody, sectail = add_category(
-                secbody, sectail, pagemsg, notes, "terms with %s and %s etymologies" % (posk, posl)
+                secbody, sectail, p.msg, notes, "terms with %s and %s etymologies" % (posk, posl)
             )
     return modsec.rebuild(secbody=secbody, sectail=sectail), notes
 

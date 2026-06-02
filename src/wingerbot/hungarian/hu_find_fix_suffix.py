@@ -8,26 +8,23 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 pos_mapper = {"n": "noun", "v": "verb", "adj": "adjective", "adv": "adverb"}
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn == "hu-suffix":
             if getparam(t, "pos2"):
-                pagemsg("Has pos2: %s" % str(t))
+                p.msg("Has pos2: %s" % str(t))
                 continue
             if (getparam(t, "3") or getparam(t, "4") or getparam(t, "5") or getparam(t, "6")) and not getparam(
                 t, "nocat"
             ):
-                pagemsg("Has more than one suffix and not nocat=: %s" % str(t))
+                p.msg("Has more than one suffix and not nocat=: %s" % str(t))
                 continue
             for i in range(1, 11):
                 trnum = getparam(t, "tr%s" % i)
@@ -70,7 +67,7 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "affix")
             notes.append("convert {{hu-suffix}} to {{affix}}")
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

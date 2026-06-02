@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Hungarian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -25,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn == "inflection of":
             if getparam(t, "1") != "hu":
-                pagemsg("WARNING: Saw non-Hungarian {{inflection of}}, skipping")
+                p.msg("WARNING: Saw non-Hungarian {{inflection of}}, skipping")
                 return
             for i in range(4, 30):
                 if getparam(t, str(i)) == "(single possession)":
@@ -44,13 +41,13 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("n", "isg")
                 notes.append("n=sg -> n=isg in {{hu-infl-nom}} in the context of {{inflection of|hu|...|mpos|poss}}")
             else:
-                pagemsg("WARNING: Saw strange value n=%s in %s" % (n, str(t)))
+                p.msg("WARNING: Saw strange value n=%s in %s" % (n, str(t)))
         if str(t) != origt:
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     secbody = str(parsed)
     if notes and "==Etymology 1==" in secbody:
-        pagemsg("WARNING: Would make a change, but saw ==Etymology 1==, skipping")
+        p.msg("WARNING: Would make a change, but saw ==Etymology 1==, skipping")
         return
     return modsec.rebuild(secbody=secbody), notes
 

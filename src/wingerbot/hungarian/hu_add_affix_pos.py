@@ -6,19 +6,16 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
-    modsec = blib.find_modifiable_lang_section(text, "Hungarian", pagemsg)
+    p.msg("Processing")
+    modsec = blib.find_modifiable_lang_section(p.text, "Hungarian", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
     if "==Alternative forms==" in secbody:
-        pagemsg("WARNING: Skipping page with 'Alternative forms' section")
+        p.msg("WARNING: Skipping page with 'Alternative forms' section")
         return
 
     parsed = blib.parse_text(secbody)
@@ -28,7 +25,7 @@ def process_text_on_page(index, pagetitle, text):
         if tn in ["compound", "affix", "af"] and getparam(t, "1") == "hu" and not getparam(t, "pos"):
             t.add("pos", "noun")
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("add pos=noun to {{%s|hu}}" % tn)
     return modsec.rebuild(secbody=str(parsed)), notes
 
