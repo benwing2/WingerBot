@@ -6,24 +6,21 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "German", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     if "Etymology 1" in secbody:
-        pagemsg("WARNING: Can't handle Etymology 1")
+        p.msg("WARNING: Can't handle Etymology 1")
         return
 
     while True:
         did_move = False
-        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, p.msg)
         subsections = subsecs.subsections
         # Look for a participle and move it up.
         for k, header in subsecs.header_list:
@@ -44,7 +41,7 @@ def process_text_on_page(index, pagetitle, text):
                     break
         secbody = "".join(subsections)
 
-        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, p.msg)
         subsections = subsecs.subsections
         # Look for a verb form and move it down.
         for k, header in subsecs.header_list:
@@ -75,4 +72,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

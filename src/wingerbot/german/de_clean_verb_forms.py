@@ -539,38 +539,35 @@ class BreakException(Exception):
     pass
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "German", p.msg, force_final_nls=True)
     if modsec is None:
         return
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
 
     def verify_lang(t, lang=None):
         lang = lang or getparam(t, "1")
         if lang != "de":
-            pagemsg("WARNING: Saw {{%s}} for non-German language: %s" % (tname(t), str(t)))
+            p.msg("WARNING: Saw {{%s}} for non-German language: %s" % (tname(t), str(t)))
             raise BreakException()
 
     def verify_verb_lemma(t, term):
         if not re.search("(e[rl]*n|th?un|sein)$", term):
-            pagemsg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
+            p.msg("WARNING: Term %s doesn't look like an infinitive: %s" % (term, str(t)))
             raise BreakException()
 
     def verify_past_participle(t, term):
         if not re.search("(t|en|th?an)$", term):
-            pagemsg("WARNING: Term %s doesn't look like a past participle: %s" % (term, str(t)))
+            p.msg("WARNING: Term %s doesn't look like a past participle: %s" % (term, str(t)))
             raise BreakException()
 
     def verify_present_participle(t, term):
         if not re.search("e[rl]*nd$", term):
-            pagemsg("WARNING: Term %s doesn't look like a present participle: %s" % (term, str(t)))
+            p.msg("WARNING: Term %s doesn't look like a present participle: %s" % (term, str(t)))
             raise BreakException()
 
     def check_unrecognized_params(t, allowed_params, no_break=False):
@@ -578,7 +575,7 @@ def process_text_on_page(index, pagetitle, text):
             pn = pname(param)
             pv = str(param.value)
             if pn not in allowed_params:
-                pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
+                p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, pv, str(t)))
                 if not no_break:
                     raise BreakException()
                 else:
@@ -627,7 +624,7 @@ def process_text_on_page(index, pagetitle, text):
                     newsubseck = newnewsubseck
 
                 # Combine adjacent {{inflection of}}/{{verb form of}} calls.
-                newsubseck = infltags.combine_adjacent_inflection_of_calls(newsubseck, this_sec_notes, pagemsg)
+                newsubseck = infltags.combine_adjacent_inflection_of_calls(newsubseck, this_sec_notes, p.msg)
 
                 # Split out any participle forms from {{inflection of}}.
                 while True:
@@ -651,7 +648,7 @@ def process_text_on_page(index, pagetitle, text):
                             )
                             verify_lang(t, lang)
                             if params or tr or alt:
-                                pagemsg("WARNING: Saw extra parameters in {{%s}}, skipping: %s" % (tn, str(t)))
+                                p.msg("WARNING: Saw extra parameters in {{%s}}, skipping: %s" % (tn, str(t)))
                                 raise BreakException()
                             tag_sets = infltags.split_multipart_tag_sets(infltags.split_tags_into_tag_sets(tags))
 
@@ -683,7 +680,7 @@ def process_text_on_page(index, pagetitle, text):
                                     filtered_tag_sets.append(tag_set)
                                 if newtemp:
                                     if addltemp:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Saw more than one past participle form in {{%s}}: {{%s|de|%s}} and {{%s|de|%s}}"
                                             % (tn, addltemp, addltemp_arg, newtemp, term)
                                         )
@@ -697,7 +694,7 @@ def process_text_on_page(index, pagetitle, text):
 
                                 # Now combine adjacent tags into multipart tags.
                                 def warn(text):
-                                    pagemsg("WARNING: %s" % text)
+                                    p.msg("WARNING: %s" % text)
 
                                 new_tags, this_notes = infltags.combine_adjacent_tags_into_multipart(
                                     tn,
@@ -705,7 +702,7 @@ def process_text_on_page(index, pagetitle, text):
                                     term,
                                     new_tags,
                                     tag_to_dimension_table,
-                                    pagemsg,
+                                    p.msg,
                                     warn,
                                     tag_to_canonical_form_table=tag_to_canonical_form_table,
                                 )
@@ -714,7 +711,7 @@ def process_text_on_page(index, pagetitle, text):
                                 )
                                 if origt != str(t):
                                     this_sec_notes.extend(this_notes)
-                                    pagemsg("Replace %s with %s" % (origt, str(t)))
+                                    p.msg("Replace %s with %s" % (origt, str(t)))
                                     return True
                                 else:
                                     return False
@@ -727,7 +724,7 @@ def process_text_on_page(index, pagetitle, text):
                                 t.add("2", addltemp_arg)
                                 this_sec_notes.append("replace {{%s|de}} with {{%s|de}}" % (tn, addltemp))
                                 made_a_change = True
-                                pagemsg("Replace %s with %s" % (origt, str(t)))
+                                p.msg("Replace %s with %s" % (origt, str(t)))
                                 newsubseck = str(parsed)
                             elif filtered_tag_sets and not addltemp:
                                 new_tags = infltags.combine_tag_set_group(filtered_tag_sets)
@@ -743,7 +740,7 @@ def process_text_on_page(index, pagetitle, text):
                                     r"\A(.*)^([^\n]*)%s([^\n]*)\n(.*)\Z" % re.escape(str(t)), newsubseck, re.S | re.M
                                 )
                                 if not m:
-                                    pagemsg("WARNING: Something wrong, can't find %s in <<%s>>" % (str(t), newsubseck))
+                                    p.msg("WARNING: Something wrong, can't find %s in <<%s>>" % (str(t), newsubseck))
                                     raise BreakException()
                                 before_lines, before_on_line, after_on_line, after_lines = m.groups()
                                 put_back_tags(new_tags)
@@ -764,7 +761,7 @@ def process_text_on_page(index, pagetitle, text):
                                     after_lines,
                                 )
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Something wrong, no tag sets remain and no new templates added: %s"
                                     % str(t)
                                 )
@@ -793,17 +790,17 @@ def process_text_on_page(index, pagetitle, text):
                         verify_lang(t)
                         check_unrecognized_params(t, ["1", "2", "3", "4"])
                         if getp("3"):
-                            pagemsg("WARNING: {{participle of}} has 3=: %s" % str(t))
+                            p.msg("WARNING: {{participle of}} has 3=: %s" % str(t))
                             raise BreakException()
                         part_type = getp("4")
                         if part_type == "past":
                             name = "past participle of"
-                            verify_past_participle(t, pagetitle)
+                            verify_past_participle(t, p.title)
                         elif part_type == "pres":
                             name = "present participle of"
-                            verify_present_participle(t, pagetitle)
+                            verify_present_participle(t, p.title)
                         else:
-                            pagemsg("WARNING: Unrecognized 4= in {{participle of}}: %s" % str(t))
+                            p.msg("WARNING: Unrecognized 4= in {{participle of}}: %s" % str(t))
                             raise BreakException()
                         lemma = getp("2")
                         verify_verb_lemma(t, lemma)
@@ -816,9 +813,9 @@ def process_text_on_page(index, pagetitle, text):
                     elif tn in ["past participle of", "present participle of"]:
                         verify_lang(t)
                         if tn == "past participle of":
-                            verify_past_participle(t, pagetitle)
+                            verify_past_participle(t, p.title)
                         else:
-                            verify_present_participle(t, pagetitle)
+                            verify_present_participle(t, p.title)
                         verify_verb_lemma(t, getp("2"))
                         if getp("nocat"):
                             rmparam(t, "nocat")
@@ -861,7 +858,7 @@ def process_text_on_page(index, pagetitle, text):
                         else:
                             saw_presp_of = True
                         if part_template:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw two participle templates %s and %s in likely verb form subsection"
                                 % (str(part_template), str(t))
                             )
@@ -879,10 +876,10 @@ def process_text_on_page(index, pagetitle, text):
                             "past participle",
                             "present participle",
                         ]:
-                            pagemsg("WARNING: Saw strange headword POS in likely verb form subsection: %s" % str(t))
+                            p.msg("WARNING: Saw strange headword POS in likely verb form subsection: %s" % str(t))
                             raise BreakException()
                         if head_template:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw two head templates %s and %s in likely verb form subsection"
                                 % (str(head_template), str(t))
                             )
@@ -890,7 +887,7 @@ def process_text_on_page(index, pagetitle, text):
                         head_template = t
 
                 if not head_template:
-                    pagemsg("WARNING: Didn't see head template in likely verb form subsection: <<%s>>" % newsubseck)
+                    p.msg("WARNING: Didn't see head template in likely verb form subsection: <<%s>>" % newsubseck)
                     raise BreakException()
 
                 saw_it = 0
@@ -901,7 +898,7 @@ def process_text_on_page(index, pagetitle, text):
                 if saw_part_form_of:
                     saw_it += 1
                 if saw_it > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw more than one of {{past participle of}}, {{present participle of}}, {{de-adj form of}}: <<%s>>"
                         % newsubseck
                     )
@@ -916,7 +913,7 @@ def process_text_on_page(index, pagetitle, text):
                         this_sec_notes.append("convert {{head|de|verb form}} to {{head|de|%s}}" % should_pos)
                         newsubseck = str(parsed)
                     elif pos != should_pos:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Head template has strange POS for participle, should be '%s': %s"
                             % (should_pos, str(head_template))
                         )
@@ -938,10 +935,10 @@ def process_text_on_page(index, pagetitle, text):
                     for i, line in enumerate(lines):
                         is_headword_line = line.startswith("{")
                         if is_headword_line and i > 0:
-                            pagemsg("WARNING: Saw headword line not at beginning of subsection: %s" % line)
+                            p.msg("WARNING: Saw headword line not at beginning of subsection: %s" % line)
                             raise BreakException()
                         if not is_headword_line and i == 0:
-                            pagemsg("WARNING: Saw non-headword line at beginning of subsection: %s" % line)
+                            p.msg("WARNING: Saw non-headword line at beginning of subsection: %s" % line)
                             raise BreakException()
                         if is_headword_line:
                             headword_line = line
@@ -955,7 +952,7 @@ def process_text_on_page(index, pagetitle, text):
                             last_line_is_part = False
                             lines_for_verb_form_of.append(line)
                         elif not line.startswith("#"):
-                            pagemsg("WARNING: Saw non-definition line in definition subsection: %s" % line)
+                            p.msg("WARNING: Saw non-definition line in definition subsection: %s" % line)
                             last_line_is_part = False
                             lines_for_verb_form_of.append(line)
                         elif re.search(r"\{\{\s*verb form of\s*\|", line):
@@ -967,15 +964,15 @@ def process_text_on_page(index, pagetitle, text):
                             last_line_is_part = True
                             lines_for_part.append(line)
                         else:
-                            pagemsg("WARNING: Saw strange definition line in definition subsection: %s" % line)
+                            p.msg("WARNING: Saw strange definition line in definition subsection: %s" % line)
                             last_line_is_part = False
                             lines_for_verb_form_of.append(line)
 
                     if not headword_line:
-                        pagemsg("WARNING: Something wrong, didn't see headword line in subsection: <<%s>>" % newsubseck)
+                        p.msg("WARNING: Something wrong, didn't see headword line in subsection: <<%s>>" % newsubseck)
                         raise BreakException()
                     if headword_line != str(head_template):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Additional text on headword line besides headword template: %s" % headword_line
                         )
                         raise BreakException()
@@ -984,10 +981,10 @@ def process_text_on_page(index, pagetitle, text):
                         head_template_head = "|head=%s" % head_template_head
                     headword_line_1 = "{{head|de|verb form%s}}" % head_template_head
                     if saw_presp_of:
-                        verify_present_participle(part_template, pagetitle)
+                        verify_present_participle(part_template, p.title)
                         newpos = "present participle"
                     else:
-                        verify_past_participle(part_template, pagetitle)
+                        verify_past_participle(part_template, p.title)
                         newpos = "past participle"
                     headword_line_2 = "{{head|de|%s}}" % newpos
 
@@ -1003,14 +1000,14 @@ def process_text_on_page(index, pagetitle, text):
 
                 elif saw_part_form_of:
                     if saw_verb_form_of:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw both 'verb form of' and 'de-adj form of' in same section: <<%s>>" % newsubseck
                         )
                         raise BreakException()
                     check_unrecognized_params(head_template, ["1", "2", "head"])
                     pos = getparam(head_template, "2")
                     if pos in ["participle", "present participle", "past participle", "past participle form"]:
-                        pagemsg("WARNING: Head template has strange POS for participle form: %s" % str(head_template))
+                        p.msg("WARNING: Head template has strange POS for participle form: %s" % str(head_template))
                         raise BreakException()
                     if pos == "verb form":
                         head_template.add("2", "participle form")
@@ -1081,7 +1078,7 @@ def process_text_on_page(index, pagetitle, text):
     #        if tn == "head":
     #            verify_lang(t)
     #            if pos:
-    #                pagemsg("WARNING: Saw two headwords: <<%s>>" % subsectext)
+    #                p.msg("WARNING: Saw two headwords: <<%s>>" % subsectext)
     #                raise BreakException()
     #            pos = getp("2")
     #            if pos in head_lemma_poses:
@@ -1089,11 +1086,11 @@ def process_text_on_page(index, pagetitle, text):
     #            elif pos in head_nonlemma_poses:
     #                pass
     #            else:
-    #                pagemsg("WARNING: Strange pos=%s for %s: <<%s>" % (pos, lemma_pos, subsectext))
+    #                p.msg("WARNING: Strange pos=%s for %s: <<%s>" % (pos, lemma_pos, subsectext))
     #                raise BreakException()
     #        if tn in special_templates:
     #            if pos:
-    #                pagemsg("WARNING: Saw two headwords: <<%s>>" % subsectext)
+    #                p.msg("WARNING: Saw two headwords: <<%s>>" % subsectext)
     #                raise BreakException()
     #            pos = special_templates[tn]
     #            if not pos.endswith(" form"):
@@ -1101,21 +1098,21 @@ def process_text_on_page(index, pagetitle, text):
     #        if tn in allowable_form_of_templates or tn in infltags.generic_inflection_of_templates:
     #            verify_lang(t)
     #            if pos is None:
-    #                pagemsg("WARNING: Didn't see headword template in %s section: <<%s>>" % (lemma_pos, subsectext))
+    #                p.msg("WARNING: Didn't see headword template in %s section: <<%s>>" % (lemma_pos, subsectext))
     #                raise BreakException()
     #            if lemma is True:
-    #                pagemsg(
+    #                p.msg(
     #                    "WARNING: Saw form-of template %s in lemma %s section: <<%s>>" % (str(t), lemma_pos, subsectext)
     #                )
     #                raise BreakException()
     #            if lemma:
-    #                pagemsg(
+    #                p.msg(
     #                    "WARNING: Saw two form-of templates in lemma %s section, second is %s: <<%s>>"
     #                    % (lemma_pos, str(t), subsectext)
     #                )
     #            lemma = getp("2")
     #    if lemma is None:
-    #        pagemsg("WARNING: Unable to locate lemma in nonlemma %s section: <<%s>>" % (lemma_pos, subsectext))
+    #        p.msg("WARNING: Unable to locate lemma in nonlemma %s section: <<%s>>" % (lemma_pos, subsectext))
     #        raise BreakException()
     #    return pos, lemma
     #
@@ -1131,7 +1128,7 @@ def process_text_on_page(index, pagetitle, text):
     #    goes_in_all_at_top = []
     #    goes_at_top_of_first_etym_section = ""
     #    last_etym_section = None
-    #    subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+    #    subsecs = blib.split_text_into_subsections(sectext, p.msg)
     #    subsections = subsecs.subsections
     #    if not is_etym_section:
     #        text_before_etym_sections.append(subsections[0])
@@ -1148,7 +1145,7 @@ def process_text_on_page(index, pagetitle, text):
     #                text_before_etym_sections.append(subsections[k])
     #        elif header == "Etymology":
     #            if is_etym_section:
-    #                pagemsg("WARNING: Saw =Etymology= in etym section")
+    #                p.msg("WARNING: Saw =Etymology= in etym section")
     #                raise BreakException()
     #            goes_at_top_of_first_etym_section = subsections[k]
     #        elif header == "Alternative forms":
@@ -1208,7 +1205,7 @@ def process_text_on_page(index, pagetitle, text):
     #            header,
     #        ):
     #            if last_etym_section is None:
-    #                pagemsg(
+    #                p.msg(
     #                    "WARNING: Saw section header %s without preceding lemma or non-lemma form"
     #                    % header
     #                )
@@ -1216,7 +1213,7 @@ def process_text_on_page(index, pagetitle, text):
     #            existing_poses, existing_lemmas, existing_sections = split_etym_sections[last_etym_section]
     #            existing_sections.append((k, None))
     #        else:
-    #            pagemsg("WARNING: Unrecognized section header: %s" % header)
+    #            p.msg("WARNING: Unrecognized section header: %s" % header)
     #            raise BreakException()
     #
     #        if pos:
@@ -1224,7 +1221,7 @@ def process_text_on_page(index, pagetitle, text):
     #                split_etym_sections
     #            ):
     #                ok_to_group = False
-    #                if pos in ["participle form", "past participle form", "adjective form"] and pagetitle.endswith("a"):
+    #                if pos in ["participle form", "past participle form", "adjective form"] and p.title.endswith("a"):
     #                    if contains_any(existing_poses, ["noun"]):
     #                        for existing_section, existing_section_pos in existing_sections:
     #                            if existing_section_pos == "noun":
@@ -1236,7 +1233,7 @@ def process_text_on_page(index, pagetitle, text):
     #                                        return getparam(t, param)
     #
     #                                    if tn == "de-noun" and getp("m") or tn == "female equivalent of":
-    #                                        pagemsg(
+    #                                        p.msg(
     #                                            "Grouping %s in section %s with likely female equivalent noun in section %s; defn is %s"
     #                                            % (
     #                                                pos,
@@ -1250,7 +1247,7 @@ def process_text_on_page(index, pagetitle, text):
     #                                if ok_to_group:
     #                                    break
     #                                else:
-    #                                    pagemsg(
+    #                                    p.msg(
     #                                        "Not grouping %s in section %s with likely non-female-equivalent noun in section %s; defn is %s"
     #                                        % (
     #                                            pos,
@@ -1259,7 +1256,7 @@ def process_text_on_page(index, pagetitle, text):
     #                                            ";".join(blib.find_defns(subsections[existing_section], "de")),
     #                                        )
     #                                    )
-    #                if not ok_to_group and pos == "noun" and pagetitle.endswith("a"):
+    #                if not ok_to_group and pos == "noun" and p.title.endswith("a"):
     #                    if contains_any(existing_poses, ["participle form", "adjective form"]):
     #                        for existing_section, existing_section_pos in existing_sections:
     #                            if existing_section_pos in ["participle form", "adjective form"]:
@@ -1271,7 +1268,7 @@ def process_text_on_page(index, pagetitle, text):
     #                                        return getparam(t, param)
     #
     #                                    if tn == "de-noun" and getp("m") or tn == "female equivalent of":
-    #                                        pagemsg(
+    #                                        p.msg(
     #                                            "Likely female equivalent noun in section %s, grouping with %s in section %s; defn is %s"
     #                                            % (
     #                                                k,
@@ -1285,7 +1282,7 @@ def process_text_on_page(index, pagetitle, text):
     #                                if ok_to_group:
     #                                    break
     #                                else:
-    #                                    pagemsg(
+    #                                    p.msg(
     #                                        "Likely non-female-equivalent noun in section %s, not grouping with %s in section %s; defn is %s"
     #                                        % (
     #                                            k,
@@ -1336,7 +1333,7 @@ def process_text_on_page(index, pagetitle, text):
     #                        "%s:%s" % (existing_section, existing_section_pos)
     #                        for existing_section, existing_section_pos in existing_sections
     #                    )
-    #                    pagemsg(
+    #                    p.msg(
     #                        "Grouping %s section %s with %s section(s) %s"
     #                        % (pos, k, ",".join(existing_poses), existing_sections_text)
     #                    )
@@ -1350,7 +1347,7 @@ def process_text_on_page(index, pagetitle, text):
     #                    break
     #
     #            else:  # no break
-    #                pagemsg("Creating new %s etym section %s for lemma %s" % (pos, k, lemma))
+    #                p.msg("Creating new %s etym section %s for lemma %s" % (pos, k, lemma))
     #                split_etym_sections.append(([pos], [lemma], [(k, pos)]))
     #                last_etym_section = len(split_etym_sections) - 1
     #
@@ -1383,12 +1380,12 @@ def process_text_on_page(index, pagetitle, text):
     #        else:
     #            this_notes.append("split into %s Etymology sections" % len(split_etym_sections))
     #
-    #if pagetitle in no_split_etym:
-    #    pagemsg("Not splitting etymologies because page listed in no_split_etym")
+    #if p.title in no_split_etym:
+    #    p.msg("Not splitting etymologies because page listed in no_split_etym")
     #else:
     #    # Anagrams and such go after all etym sections and remain as such even if we start with non-etym-split text
     #    # and end with multiple etym sections.
-    #    l3subsecs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3)
+    #    l3subsecs = blib.split_text_into_subsections(secbody, p.msg, only_level=3)
     #    subsections_at_level_3 = l3subsecs.subsections
     #    for last_included_sec in range(len(subsections_at_level_3) - 1, 0, -2):
     #        if not re.search(
@@ -1416,12 +1413,12 @@ def process_text_on_page(index, pagetitle, text):
     #        else:
     #            etym_sections = re.split("(^===Etymology [0-9]+===\n)", text_to_split_into_etym_sections, 0, re.M)
     #            if len(etym_sections) < 5:
-    #                pagemsg("WARNING: Something wrong, saw 'Etymology 1' but didn't see two etym sections")
+    #                p.msg("WARNING: Something wrong, saw 'Etymology 1' but didn't see two etym sections")
     #            else:
     #                for k in range(2, len(etym_sections), 2):
     #                    process_etym_section(k // 2, etym_sections[k], is_etym_section=True)
     #                if text_before_etym_sections:
-    #                    pagemsg(
+    #                    p.msg(
     #                        "WARNING: Internal error: Should see empty text_before_etym_sections but saw: %s"
     #                        % text_before_etym_sections
     #                    )
@@ -1459,4 +1456,4 @@ parser = blib.create_argparser("Clean up German verb forms", include_pagefile=Tr
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -62,24 +62,21 @@ def check_if_lemma_and_ending_match_pagetitle(lemma, ending, pagetitle, allow_um
     return no_explicit
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if not re.search(r"\{\{head\|de\|(adjective (|comparative |superlative )|participle )form", text):
+def process_text_on_page(p):
+    if not re.search(r"\{\{head\|de\|(adjective (|comparative |superlative )|participle )form", p.text):
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "German", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     if re.search("== *Etymology 1 *==", secbody):
-        pagemsg("WARNING: Multiple etymology sections, skipping")
+        p.msg("WARNING: Multiple etymology sections, skipping")
         return
 
     parsed = blib.parse_text(secbody)
@@ -95,16 +92,16 @@ def process_text_on_page(index, pagetitle, text):
 
         def do_comparative_superlative_of(pos, existing_t, should_end):
             if getparam(t, "1") != "de":
-                pagemsg("WARNING: Saw wrong language in {{%s of}}, skipping: %s" % (pos, origt))
+                p.msg("WARNING: Saw wrong language in {{%s of}}, skipping: %s" % (pos, origt))
                 return False
             if existing_t:
-                pagemsg("WARNING: Saw two {{%s of}} templates, skipping: %s and %s" % (pos, str(existing_t), origt))
+                p.msg("WARNING: Saw two {{%s of}} templates, skipping: %s and %s" % (pos, str(existing_t), origt))
                 return False
             if not headt:
-                pagemsg("WARNING: Saw {{%s of}} without head template, skipping: %s" % (pos, origt))
+                p.msg("WARNING: Saw {{%s of}} without head template, skipping: %s" % (pos, origt))
                 return False
-            if not pagetitle.endswith(should_end):
-                pagemsg("WARNING: Incorrect ending for %s, should be -%s, skipping" % (pos, should_end))
+            if not p.title.endswith(should_end):
+                p.msg("WARNING: Incorrect ending for %s, should be -%s, skipping" % (pos, should_end))
                 return False
             param2 = getparam(headt, "2")
             if param2 != "%s adjective" % pos:
@@ -119,13 +116,13 @@ def process_text_on_page(index, pagetitle, text):
             in ["adjective form", "adjective comparative form", "adjective superlative form", "participle form"]
         ):
             if headt:
-                pagemsg("WARNING: Saw two head templates, skipping: %s and %s" % (str(headt), origt))
+                p.msg("WARNING: Saw two head templates, skipping: %s and %s" % (str(headt), origt))
                 return
             headt = t
         elif tn == "head" and getparam(t, "1") == "de" and getparam(t, "2") == "verb form":
-            pagemsg("Allowing and ignoring {{head|de|verb form}}: %s" % origt)
+            p.msg("Allowing and ignoring {{head|de|verb form}}: %s" % origt)
         elif tn == "head":
-            pagemsg("WARNING: Saw unrecognized head template, skipping: %s" % origt)
+            p.msg("WARNING: Saw unrecognized head template, skipping: %s" % origt)
             return
         elif tn == "comparative of":
             comparative_of_t = do_comparative_superlative_of("comparative", comparative_of_t, "er")
@@ -136,29 +133,29 @@ def process_text_on_page(index, pagetitle, text):
             if not superlative_of_t:
                 return
         elif tn == "de-adj form of":
-            pagemsg("Saw {{de-adj form of}}, assuming already converted: %s" % origt)
+            p.msg("Saw {{de-adj form of}}, assuming already converted: %s" % origt)
             return
         elif tn in ["inflection of", "infl of"]:
             if getparam(t, "1") != "de":
-                pagemsg("WARNING: Saw wrong language in {{inflection of}}, skipping: %s" % origt)
+                p.msg("WARNING: Saw wrong language in {{inflection of}}, skipping: %s" % origt)
                 return
             if not headt:
-                pagemsg("WARNING: Saw {{inflection of}} without head template, skipping: %s" % origt)
+                p.msg("WARNING: Saw {{inflection of}} without head template, skipping: %s" % origt)
                 return
             if inflection_of_t:
-                pagemsg("WARNING: Saw {{inflection of}} twice, skipping: %s and %s" % (str(inflection_of_t), origt))
+                p.msg("WARNING: Saw {{inflection of}} twice, skipping: %s and %s" % (str(inflection_of_t), origt))
                 return
             inflection_of_t = t
             lemma = getparam(t, "2")
             if getparam(t, "3"):
-                pagemsg("WARNING: Saw alt form in {{inflection of}}, skipping: %s" % origt)
+                p.msg("WARNING: Saw alt form in {{inflection of}}, skipping: %s" % origt)
                 return
             infl_tags = []
             for param in t.params:
                 pn = pname(param)
                 pv = str(param.value)
                 if not re.search("^[0-9]+$", pn):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw unrecognized param %s=%s in {{inflection of}}, skipping: %s" % (pn, pv, origt)
                     )
                     return
@@ -166,7 +163,7 @@ def process_text_on_page(index, pagetitle, text):
                     infl_tags.append(pv)
             tags = "|".join(infl_tags)
             if tags not in tags_to_ending:
-                pagemsg("WARNING: Saw unrecognized tags in {{inflection of}}, skipping: %s" % origt)
+                p.msg("WARNING: Saw unrecognized tags in {{inflection of}}, skipping: %s" % origt)
                 return
             del t.params[:]
             ending = tags_to_ending[tags]
@@ -175,9 +172,9 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "de-adj form of")
             t.add("1", lemma)
 
-            no_explicit = check_if_lemma_and_ending_match_pagetitle(lemma, ending, pagetitle, allow_umlaut=True)
+            no_explicit = check_if_lemma_and_ending_match_pagetitle(lemma, ending, p.title, allow_umlaut=True)
             if not no_explicit:
-                pagemsg("WARNING: Explicit ending %s required for lemma %s" % (ending, lemma))
+                p.msg("WARNING: Explicit ending %s required for lemma %s" % (ending, lemma))
                 t.add("2", ending)
             notes.append("convert {{inflection of|de|...}} to {{de-adj form of}}")
             if "comd" in tags:
@@ -195,7 +192,7 @@ def process_text_on_page(index, pagetitle, text):
 
     def add_adj_form_of(secbody, pos, comparative_superlative_t, ending):
         lemma = getparam(comparative_superlative_t, "2")
-        if check_if_lemma_and_ending_match_pagetitle(lemma, ending, pagetitle, allow_umlaut=False):
+        if check_if_lemma_and_ending_match_pagetitle(lemma, ending, p.title, allow_umlaut=False):
             form_pos = "superlative adjective form" if pos == "superlative" else "adjective form"
             newsec = """
 
@@ -210,15 +207,15 @@ def process_text_on_page(index, pagetitle, text):
                 secbody,
                 str(comparative_superlative_t),
                 str(comparative_superlative_t) + newsec,
-                pagemsg,
+                p.msg,
                 abort_if_warning=True,
             )
             if not replaced:
-                pagemsg("WARNING: Couldn't add -%s inflection, skipping: %s" % (ending, str(comparative_of_t)))
+                p.msg("WARNING: Couldn't add -%s inflection, skipping: %s" % (ending, str(comparative_of_t)))
                 return secbody, False
             notes.append("add {{de-adj form of}} for %s" % pos)
         else:
-            pagemsg("WARNING: Lemma %s + %s ending %s doesn't match pagetitle" % (lemma, pos, ending))
+            p.msg("WARNING: Lemma %s + %s ending %s doesn't match pagetitle" % (lemma, pos, ending))
         return secbody, True
 
     if comparative_of_t and not inflection_of_t:
@@ -247,14 +244,14 @@ def process_text_on_page(index, pagetitle, text):
 """
             % need_superlative_of_t_lemma
         )
-        secbody, replaced = blib.replace_in_text(secbody, cursec, newsec + cursec, pagemsg, abort_if_warning=True)
+        secbody, replaced = blib.replace_in_text(secbody, cursec, newsec + cursec, p.msg, abort_if_warning=True)
         if not replaced:
-            pagemsg("WARNING: Couldn't add {{superlative of}}, skipping: %s" % str(inflection_of_t))
+            p.msg("WARNING: Couldn't add {{superlative of}}, skipping: %s" % str(inflection_of_t))
             return
         notes.append("add {{superlative of|de|...}}")
 
     if not notes:
-        pagemsg("WARNING: Couldn't convert page")
+        p.msg("WARNING: Couldn't convert page")
 
     return modsec.rebuild(secbody=secbody), notes
 
@@ -272,7 +269,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_cats=["German adjective forms", "German adjective comparative forms", "German adjective superlative forms"],
-    edit=True,
-    stdin=True,
 )

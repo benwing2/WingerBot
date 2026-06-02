@@ -749,9 +749,9 @@ def _do_headword_template(headt, declts, pagetitle, subsections, subsection_with
     return notes
 
 
-def process_text_in_section(index, secnum, pagetitle, text):
+def process_text_in_section(p, secnum, sectext):
     def pagemsg(txt):
-        msg("Page %s%s %s: %s" % (index, "." + secnum if secnum is not None else "", pagetitle, txt))
+        p.msg(txt, index=p.index + ("." + secnum if secnum is not None else ""))
 
     notes = []
 
@@ -759,7 +759,7 @@ def process_text_in_section(index, secnum, pagetitle, text):
     subsection_with_head = None
     declts = []
     subsection_with_declts = None
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(sectext, pagemsg)
     subsections = subsecs.subsections
     for k, header in [(0, "Unknown")] + subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -774,7 +774,7 @@ def process_text_in_section(index, secnum, pagetitle, text):
             if tn in ["de-noun", "de-proper noun"]:
                 if declts:
                     this_notes = _do_headword_template(
-                        headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg
+                        headt, declts, p.title, subsections, subsection_with_head, subsection_with_declts, pagemsg
                     )
                     if this_notes is None:
                         return
@@ -790,7 +790,7 @@ def process_text_in_section(index, secnum, pagetitle, text):
                         % str(headt)
                     )
                     this_notes = _do_headword_template(
-                        headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg
+                        headt, declts, p.title, subsections, subsection_with_head, subsection_with_declts, pagemsg
                     )
                     if this_notes is None:
                         return
@@ -826,7 +826,7 @@ def process_text_in_section(index, secnum, pagetitle, text):
                 "NOTE: Saw head template without corresponding declension template, still processing: %s" % str(headt)
             )
         this_notes = _do_headword_template(
-            headt, declts, pagetitle, subsections, subsection_with_head, subsection_with_declts, pagemsg
+            headt, declts, p.title, subsections, subsection_with_head, subsection_with_declts, pagemsg
         )
         if this_notes is None:
             return
@@ -834,25 +834,22 @@ def process_text_in_section(index, secnum, pagetitle, text):
     return "".join(subsections), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "German", pagemsg)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "German", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     notes = []
     def do_process_etym_section(secnum, sectext):
-        retval = process_text_in_section(index, secnum, pagetitle, sectext)
+        retval = process_text_in_section(p, secnum, sectext)
         if retval:
             newsectext, newnotes = retval
             notes.extend(newnotes)
             return newsectext
         return sectext
 
-    secbody = blib.map_etym_sections(secbody, pagemsg, do_process_etym_section)
+    secbody = blib.map_etym_sections(secbody, p.msg, do_process_etym_section)
     return modsec.rebuild(secbody=secbody), notes
 
 
@@ -862,4 +859,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

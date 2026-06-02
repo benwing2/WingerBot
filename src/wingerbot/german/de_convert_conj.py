@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
 def parse_aux(aux):
@@ -118,18 +118,12 @@ def compare_new_and_old_templates(origt, newt, pagetitle, pagemsg, errandpagemsg
     return True
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -151,13 +145,13 @@ def process_text_on_page(index, pagetitle, text):
             impnotpres23 = getparam(t, "11")
             ends_in_sxz = getparam(t, "12")
             if pres23stem == presstem:
-                pagemsg("WARNING: Discarding redundant pres23stem=%s (orig 6=)" % pres23stem)
+                p.msg("WARNING: Discarding redundant pres23stem=%s (orig 6=)" % pres23stem)
                 pres23stem = ""
                 if args.correct:
                     t.add("6", "")
                     notes.append("discard redundant 6= in {{de-conj-strong}} (pres23stem)")
             if subiistem == paststem:
-                pagemsg("WARNING: Discarding redundant subiistem=%s (orig 7=)" % subiistem)
+                p.msg("WARNING: Discarding redundant subiistem=%s (orig 7=)" % subiistem)
                 subiistem = ""
                 if args.correct:
                     t.add("7", "")
@@ -165,7 +159,7 @@ def process_text_on_page(index, pagetitle, text):
             prestem_actually_ends_in_dt = re.search("[dt]$", presstem)
             prestem_actually_ends_in_sxz = re.search("[sxzß]$", presstem)
             if (not not prestem_actually_ends_in_dt) != (not not ends_in_dt):
-                pagemsg(
+                p.msg(
                     "WARNING: explicit ends_in_dt=%s (orig 5=) not same as prestem_actually_ends_in_dt=%s for presstem=%s (orig 1=)"
                     % (not not ends_in_dt, not not prestem_actually_ends_in_dt, presstem)
                 )
@@ -177,7 +171,7 @@ def process_text_on_page(index, pagetitle, text):
                         t.add("5", "")
                         notes.append("remove 5= in {{de-conj-strong}} because stem doesn't end in -d or -t")
             if (not not prestem_actually_ends_in_sxz) != (not not ends_in_sxz):
-                pagemsg(
+                p.msg(
                     "WARNING: explicit ends_in_sxz=%s (orig 12=) not same as prestem_actually_ends_in_sxz=%s for presstem=%s (orig 1=)"
                     % (not not ends_in_sxz, not not prestem_actually_ends_in_sxz, presstem)
                 )
@@ -199,22 +193,22 @@ def process_text_on_page(index, pagetitle, text):
             else:
                 lemma_with_dot = "%sen" % presstem
                 lemma = lemma_with_dot
-            if lemma != pagetitle:
-                pagemsg(
+            if lemma != p.title:
+                p.msg(
                     "WARNING: Pagetitle doesn't match lemma %s constructed from presstem=%s (orig 1=) and seppref=%s (orig 10=)"
                     % (lemma, presstem, seppref)
                 )
             pres23stem_ao_umlaut = not not re.search("[äö]", pres23stem)
             if impnotpres23:
                 if not pres23stem:
-                    pagemsg("WARNING: impnotpres23=%s (orig 11=) specified but not pres23stem (orig 6=)" % impnotpres23)
+                    p.msg("WARNING: impnotpres23=%s (orig 11=) specified but not pres23stem (orig 6=)" % impnotpres23)
                     if args.correct:
                         t.add("11", "")
                         notes.append(
                             "remove 11= (impnotpres23) in {{de-conj-strong}} because pres23stem (6=) not given"
                         )
                 elif not pres23stem_ao_umlaut:
-                    pagemsg(
+                    p.msg(
                         "WARNING: impnotpres23=%s (orig 11=) specified but pres23stem=%s (orig 6=) doesn't have ä or ö"
                         % (impnotpres23, pres23stem)
                     )
@@ -224,7 +218,7 @@ def process_text_on_page(index, pagetitle, text):
                             "remove 11= (impnotpres23) in {{de-conj-strong}} because pres23stem (6=) doesn't have ä or ö"
                         )
             elif pres23stem_ao_umlaut:
-                pagemsg(
+                p.msg(
                     "WARNING: impnotpres23 (orig 11=) not specified but pres23stem=%s (orig 6=) has ä or ö" % pres23stem
                 )
                 if args.correct:
@@ -232,12 +226,12 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("add 11=a (impnotpres23) in {{de-conj-strong}} because pres23stem (6=) has ä or ö")
             if shortimp:
                 if not pres23stem:
-                    pagemsg("WARNING: shortimp=%s (orig 9=) specified but not pres23stem (orig 6=)" % shortimp)
+                    p.msg("WARNING: shortimp=%s (orig 9=) specified but not pres23stem (orig 6=)" % shortimp)
                     if args.correct:
                         t.add("9", "")
                         notes.append("remove 9= (shortimp) in {{de-conj-strong}} because pres23stem (6=) not given")
             elif pres23stem and not pres23stem_ao_umlaut:
-                pagemsg(
+                p.msg(
                     "WARNING: shortimp (orig 9=) not specified but pres23stem=%s (orig 6=) given without ä or ö"
                     % pres23stem
                 )
@@ -258,7 +252,7 @@ def process_text_on_page(index, pagetitle, text):
                     else:
                         parts.append("%st#" % pres23stem)
                 if not strongpast:
-                    pagemsg("Saw weak past for strong verb %s" % lemma_with_dot)
+                    p.msg("Saw weak past for strong verb %s" % lemma_with_dot)
                 parts.append(paststem + ("" if strongpast else "te"))
                 if paststem2:
                     parts.append(":" + paststem2 + ("" if strongpast else "te"))
@@ -269,12 +263,12 @@ def process_text_on_page(index, pagetitle, text):
                     parts.append("," + subiistem + ("e" if strongpast else "te"))
                 if subiistem2:
                     if not subiistem:
-                        pagemsg("WARNING: Saw subiistem2=%s (orig 7b=) without subiistem (orig 7=)" % (subiistem2))
+                        p.msg("WARNING: Saw subiistem2=%s (orig 7b=) without subiistem (orig 7=)" % (subiistem2))
                     else:
                         parts.append(":" + subiistem2 + ("e" if strongpast else "te"))
                 auxval = parse_aux(aux)
                 if auxval is None:
-                    pagemsg("WARNING: Unrecognized aux=%s (orig 4=)" % aux)
+                    p.msg("WARNING: Unrecognized aux=%s (orig 4=)" % aux)
                     continue
                 if auxval:
                     parts.append("." + auxval)
@@ -286,13 +280,13 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "2b", "3", "3b", "4", "5", "6", "7", "7b", "8", "9", "10", "11", "12"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
                     must_continue = True
                     break
             if must_continue:
                 continue
             if args.correct:
-                pagemsg("Would replace %s with {{de-conj|%s}}" % (str(t), newarg1))
+                p.msg("Would replace %s with {{de-conj|%s}}" % (str(t), newarg1))
                 maxarg = 0
                 # Find maximum argument
                 for i in range(1, 13):
@@ -330,19 +324,19 @@ def process_text_on_page(index, pagetitle, text):
             lemma = "%s%sen" % (overall_seppref, presstem)
             auxval = parse_aux(aux or "h")
             if auxval is None:
-                pagemsg("WARNING: Unrecognized aux=%s (orig 3=)" % aux)
+                p.msg("WARNING: Unrecognized aux=%s (orig 3=)" % aux)
                 continue
             if auxval:
                 newarg1 = "<" + auxval + ">"
             else:
                 newarg1 = ""
-            if lemma_with_dot != pagetitle:
+            if lemma_with_dot != p.title:
                 newarg1 = lemma_with_dot + newarg1
             must_continue = False
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "3", "4", "5", "6", "7"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
                     must_continue = True
                     break
             if must_continue:
@@ -365,13 +359,13 @@ def process_text_on_page(index, pagetitle, text):
                 lemma = lemma_with_dot
             auxval = parse_aux(aux)
             if auxval is None:
-                pagemsg("WARNING: Unrecognized aux=%s (orig 3=)" % aux)
+                p.msg("WARNING: Unrecognized aux=%s (orig 3=)" % aux)
                 continue
             if auxval:
                 newarg1 = "<%s>" % auxval
             else:
                 newarg1 = ""
-            if lemma_with_dot != pagetitle:
+            if lemma_with_dot != p.title:
                 newarg1 = lemma_with_dot + newarg1
         elif tn == "de-conj-pp":
             infstem = getparam(t, "1")
@@ -404,7 +398,7 @@ def process_text_on_page(index, pagetitle, text):
                 parts.append("," + subiistem + "te")
             auxval = parse_aux(aux)
             if auxval is None:
-                pagemsg("WARNING: Unrecognized aux=%s (orig 6=)" % aux)
+                p.msg("WARNING: Unrecognized aux=%s (orig 6=)" % aux)
                 continue
             if auxval:
                 parts.append("." + auxval)
@@ -414,7 +408,7 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "3", "4", "5", "6", "7", "pref"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
                     must_continue = True
                     break
             if must_continue:
@@ -423,7 +417,7 @@ def process_text_on_page(index, pagetitle, text):
         if newarg1 is not None:
             newt = list(blib.parse_text("{{de-conj}}").filter_templates())[0]
             newt.add("1", newarg1)
-            if not args.compare or compare_new_and_old_templates(t, newt, pagetitle, pagemsg, errandpagemsg):
+            if not args.compare or compare_new_and_old_templates(t, newt, p.title, p.msg, p.errandmsg):
                 notes.append("convert {{%s}} to {{de-conj|%s}}" % (tn, newarg1))
                 del t.params[:]
                 blib.set_template_name(t, "de-conj")
@@ -431,7 +425,7 @@ def process_text_on_page(index, pagetitle, text):
                     t.add("1", newarg1)
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -443,5 +437,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_refs=["Template:de-conj-strong"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:de-conj-strong"],
 )

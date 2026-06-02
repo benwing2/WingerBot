@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg, site
 
 parser = blib.create_argparser("Delete obsolete pages")
 parser.add_argument("--pagefile", help="File of ///-separated pairs of base declensions to move", required=True)
@@ -32,5 +32,5 @@ for i, line in blib.iter_items_from_file(args.pagefile, start, end):
                 if args.save:
                     try:
                         page.move(topagename, reason=comment, movetalk=True, noredirect=True)
-                    except pywikibot.PageRelatedError as error:
+                    except pywikibot.exceptions.PageRelatedError as error:
                         pagemsg("Error moving: %s" % error)

@@ -6,18 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     headt = None
     for t in parsed.filter_templates():
         origt = str(t)
@@ -29,7 +23,7 @@ def process_text_on_page(index, pagetitle, text):
             and getparam(t, "2") == "verb"
         ):
             if headt:
-                pagemsg(
+                p.msg(
                     "WARNING: Encountered headword twice without declension: old %s, current %s" % (str(headt), str(t))
                 )
                 return
@@ -37,7 +31,7 @@ def process_text_on_page(index, pagetitle, text):
             headtn = tn
         if tn == "de-conj":
             if not headt:
-                pagemsg("WARNING: Encountered conj without headword: %s" % str(t))
+                p.msg("WARNING: Encountered conj without headword: %s" % str(t))
                 return
             param4_ignorable = False
             if getparam(headt, "4") in ["h", "haben", "s", "sein"]:
@@ -75,7 +69,7 @@ def process_text_on_page(index, pagetitle, text):
                 if param4_ignorable:
                     allowed_params.append("4")
                 if pn not in allowed_params:
-                    pagemsg("WARNING: Encountered unknown param %s=%s in %s" % (pn, pv, str(headt)))
+                    p.msg("WARNING: Encountered unknown param %s=%s in %s" % (pn, pv, str(headt)))
                     return
 
             def canonicalize_existing(forms):
@@ -87,7 +81,7 @@ def process_text_on_page(index, pagetitle, text):
                 if not old:
                     return True
                 if set(old) != set(new):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Old %s %s disagree with new %s %s: head=%s, decl=%s"
                         % (entities_compared, ",".join(old), entities_compared, ",".join(new), str(headt), str(t))
                     )
@@ -105,7 +99,7 @@ def process_text_on_page(index, pagetitle, text):
                 elif not aux:
                     aux = []
                 else:
-                    pagemsg("WARNING: Unrecognized auxiliary=%s, skipping: %s" % (aux, str(headt)))
+                    p.msg("WARNING: Unrecognized auxiliary=%s, skipping: %s" % (aux, str(headt)))
                     return None
                 if not aux:
                     param4 = getparam(headt, "4")
@@ -117,7 +111,7 @@ def process_text_on_page(index, pagetitle, text):
 
             if headtn == "de-verb-weak":
                 generate_template = re.sub(r"^\{\{de-conj(?=[|}])", "{{User:Benwing2/de-generate-verb-props", str(t))
-                result = expand_text(generate_template)
+                result = p.expand_text(generate_template)
                 if not result:
                     continue
                 forms = blib.split_generate_args(result)
@@ -137,7 +131,7 @@ def process_text_on_page(index, pagetitle, text):
                     continue
             if headtn == "de-verb-strong":
                 generate_template = re.sub(r"^\{\{de-conj(?=[|}])", "{{User:Benwing2/de-generate-verb-props", str(t))
-                result = expand_text(generate_template)
+                result = p.expand_text(generate_template)
                 if not result:
                     continue
                 forms = blib.split_generate_args(result)
@@ -174,7 +168,7 @@ def process_text_on_page(index, pagetitle, text):
             headt = None
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -185,4 +179,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["German verbs"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["German verbs"])
