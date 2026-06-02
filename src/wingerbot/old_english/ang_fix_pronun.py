@@ -220,5 +220,5 @@ else:
                 new_pronuns[pagename].append((headword, new_pronun))
 
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page_for_modification, default_cats=["Old English lemmas"], new=True,
+        args, start, end, process_text_on_page_for_modification, new=True, default_cats=["Old English lemmas"],
     )

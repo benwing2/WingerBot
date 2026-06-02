@@ -152,9 +152,7 @@ def process_text_on_page(p):
 
 
 if args.direcfile:
-    for lineindex, line in blib.iter_items_from_file(args.direcfile, start, end):
-        lineno = lineindex + 1
-
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         def linemsg(text):
             msg("Line %s: %s" % (lineno, text))
 
@@ -165,7 +163,7 @@ if args.direcfile:
             index, pagetitle, text = m.groups()
             process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text, None))
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, skip_ignorable_pages=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, skip_ignorable_pages=True)
 # If in --test mode, we need to use the num_succeeded/num_failed from fa_translit as the ones in canon_foreign aren't
 # set.
 if args.test:

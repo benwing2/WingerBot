@@ -7,7 +7,7 @@
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, site, tname
+from wingerbot.blib import site, tname
 
 
 def process_text_on_page(p):
@@ -29,5 +29,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, stdin=True, default_cats=["R:vep:UVVV with red link"]
+    args, start, end, process_text_on_page, new=True, default_cats=["R:vep:UVVV with red link"]
 )

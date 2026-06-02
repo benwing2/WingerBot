@@ -184,5 +184,5 @@ def do_process_text_on_page(p):
 
 
 blib.do_pagefile_cats_refs(
-    args, start, end, do_process_text_on_page, edit=True, stdin=True, default_cats=["Georgian %ss" % args.pos]
+    args, start, end, do_process_text_on_page, new=True, default_cats=["Georgian %ss" % args.pos]
 )

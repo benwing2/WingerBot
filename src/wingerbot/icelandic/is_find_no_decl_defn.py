@@ -52,6 +52,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    stdin=True,
+    new=True,
     default_refs=["Template:is-noun/old", "Template:is-proper noun/old"],
 )

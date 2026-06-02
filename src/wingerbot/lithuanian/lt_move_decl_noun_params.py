@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname, msg
 
 
-def process_text_on_page(pageindex, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Lithuanian", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Lithuanian", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -44,7 +41,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if not re.search("^[0-9]+$", pn) or int(pn) < 1 or int(pn) > 28:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unrecognized parameter %s=%s in {{lt-decl-noun-stress}}"
                         % (pn, str(param.value).strip())
                     )
@@ -68,7 +65,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             t.add("13", p26, preserve_spacing=False)
             t.add("14", p28, preserve_spacing=False)
             blib.set_template_name(t, "lt-decl-noun")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert {{lt-decl-noun-stress}} to {{lt-decl-noun}}")
 
         if tn == "lt-decl-noun-unc-stress":
@@ -84,7 +81,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if not re.search("^[0-9]+$", pn) or int(pn) < 1 or int(pn) > 14:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unrecognized parameter %s=%s in {{lt-decl-noun-stress}}"
                         % (pn, str(param.value).strip())
                     )
@@ -101,7 +98,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             t.add("6", p12, preserve_spacing=False)
             t.add("7", p14, preserve_spacing=False)
             blib.set_template_name(t, "lt-decl-noun-unc")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             notes.append("convert {{lt-decl-noun-unc-stress}} to {{lt-decl-noun-unc}}")
 
         if tn == "lt-decl-noun":
@@ -133,7 +130,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 for param in t.params:
                     pn = pname(param)
                     if not re.search("^[0-9]+$", pn) or int(pn) < 1 or int(pn) > 14:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unrecognized parameter %s=%s in {{lt-decl-noun-stress}}"
                             % (pn, str(param.value).strip())
                         )
@@ -151,12 +148,10 @@ def process_text_on_page(pageindex, pagetitle, text):
                 t.add("7", p14, preserve_spacing=False)
                 t.add("pl", "1")
                 blib.set_template_name(t, "lt-decl-noun-unc")
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert plural-only {{lt-decl-noun}} to {{lt-decl-noun-unc}}")
 
     return modsec.rebuild(secbody=str(parsed)), notes
-
-    return text, notes
 
 
 parser = blib.create_argparser(
@@ -170,7 +165,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_cats=["Lithuanian noun inflection-table templates"],
 )

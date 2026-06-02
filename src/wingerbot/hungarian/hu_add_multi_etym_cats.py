@@ -203,9 +203,8 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
+    new=True,
     default_cats=["Hungarian lemmas", "Hungarian non-lemma forms"],
-    edit=True,
-    stdin=True,
 )
 
 for pair, count in sorted(hu_pos_pos_pairs.items(), key=lambda x: -x[1]):

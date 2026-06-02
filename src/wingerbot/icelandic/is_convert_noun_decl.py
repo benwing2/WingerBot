@@ -757,5 +757,5 @@ if args.direcfile:
             manual_decls[noun] = decl
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["Icelandic nouns"], edit=True, stdin=True
+    args, start, end, process_text_on_page, new=True, default_cats=["Icelandic nouns"]
 )
