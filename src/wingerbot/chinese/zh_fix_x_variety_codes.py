@@ -76,13 +76,10 @@ old_to_std_code_mapping = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -92,7 +89,7 @@ def process_text_on_page(index, pagetitle, text):
                 if old_code in old_to_std_code_mapping:
                     std_code = old_to_std_code_mapping[old_code]
                     t.add("3", std_code)
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("replace bespoke {{zh-x}} code '%s' with '%s'" % (old_code, std_code))
 
     return str(parsed), notes
@@ -105,5 +102,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_refs=["Template:zh-x"]
+    args, start, end, process_text_on_page, new=True, default_refs=["Template:zh-x"]
 )

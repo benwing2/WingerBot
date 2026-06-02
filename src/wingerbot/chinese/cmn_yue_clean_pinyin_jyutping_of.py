@@ -6,15 +6,9 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     def convert_traditional_to_simplified(langcode, trad):
-        trad_simp = expand_text("{{#invoke:User:Benwing2/languages/utilities|generateForms|%s|%s}}" % (langcode, trad))
+        trad_simp = p.expand_text("{{#invoke:User:Benwing2/languages/utilities|generateForms|%s|%s}}" % (langcode, trad))
         if not trad_simp:
             return trad_simp
         if "||" in trad_simp:
@@ -25,7 +19,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     def dispchar(ch):
         # FIXME, might need fixing for Python 3
@@ -33,24 +27,24 @@ def process_text_on_page(index, pagetitle, text):
 
     def check_simplified_matches_traditional(trad, simp, langcode, langname, prefix):
         if simp == trad:
-            pagemsg("%s simplified form %s same as %s traditional %s, removing" % (prefix, simp, langname, trad))
+            p.msg("%s simplified form %s same as %s traditional %s, removing" % (prefix, simp, langname, trad))
             return trad
         trad_to_simp = convert_traditional_to_simplified(langcode, trad)
         if not trad_to_simp:
             return False
         if trad_to_simp == simp:
-            pagemsg("%s simplified form %s matches %s traditional %s, removing" % (prefix, simp, langname, trad))
+            p.msg("%s simplified form %s matches %s traditional %s, removing" % (prefix, simp, langname, trad))
             return trad
         rev_trad_to_simp = convert_traditional_to_simplified(langcode, simp)
         if not rev_trad_to_simp:
             return False
         if rev_trad_to_simp == trad:
-            pagemsg(
+            p.msg(
                 "%s simplified form %s and %s traditional %s given in reverse order from what's expected, still removing"
                 % (prefix, trad, langname, simp)
             )
             return simp
-        pagemsg(
+        p.msg(
             "WARNING: %s simplified form %s doesn't match auto-generated simplified %s from %s traditional %s%s: %s"
             % (
                 prefix,
@@ -119,7 +113,7 @@ def process_text_on_page(index, pagetitle, text):
                     "lang",
                     "def",  # ignored
                 ]:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unrecognized parameter %s=%s in {{pinyin reading of}} template %s" % (pn, pv, str(t))
                     )
                     break
@@ -130,7 +124,7 @@ def process_text_on_page(index, pagetitle, text):
                 blib.set_param_chain(t, all_numeric, "1")
                 blib.set_template_name(t, "cmn-pinyin of")
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append(
                         "convert {{pinyin reading of}} to {{cmn-pinyin of}}, standardize params and remove unnecessary simplified variants"
                     )
@@ -168,7 +162,7 @@ def process_text_on_page(index, pagetitle, text):
                     "4",
                     "5",
                 ]:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unrecognized parameter %s=%s in {{yue-jyutping of}} template %s" % (pn, pv, str(t))
                     )
                     break
@@ -178,7 +172,7 @@ def process_text_on_page(index, pagetitle, text):
                 del t.params[:]
                 blib.set_param_chain(t, all_numeric, "1")
                 if origt != str(t):
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("standardize params in {{yue-jyutping of}} and remove unnecessary simplified variants")
 
     text = str(parsed)
@@ -196,7 +190,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:pinyin reading of", "Template:yue-jyutping of"],
 )

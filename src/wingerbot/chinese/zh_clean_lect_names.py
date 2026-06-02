@@ -19,13 +19,10 @@ lect_replacements = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -63,7 +60,7 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("alt", newalt)
                 notes.append("rename Chinese lect '%s' to '%s' in {{%s}}" % (alt, newalt, tn))
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -74,4 +71,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -9,13 +9,10 @@ lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param):
@@ -31,26 +28,26 @@ def process_text_on_page(index, pagetitle, text):
                 origterm = term
                 note = None
                 if term.startswith("*") or term.endswith("*"):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw term beginning or ending with asterisk in %s=%s: %s" % (termind, origterm, str(t))
                     )
                     must_continue = True
                     break
                 if "<!--" in term or "-->" in term:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw term with comment, needs manual handling in %s=%s: %s"
                         % (termind, origterm, str(t))
                     )
                     must_continue = True
                     break
                 if "/" in term:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw term with slash, needs manual handling in %s=%s: %s" % (termind, origterm, str(t))
                     )
                     must_continue = True
                     break
                 if "^" in term:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw term with circumflex, needs manual handling in %s=%s: %s"
                         % (termind, origterm, str(t))
                     )
@@ -79,7 +76,7 @@ def process_text_on_page(index, pagetitle, text):
                     elif qual in lang_data.languages_by_alias:
                         alias_langs = lang_data.languages_by_alias[qual]
                         if len(alias_langs) > 1:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: For apparent language alias '%s', saw multiple possible language codes %s: %s"
                                 % (qual, ",".join(lang["code"] for lang in alias_langs), str(t))
                             )
@@ -88,7 +85,7 @@ def process_text_on_page(index, pagetitle, text):
                     elif qual in etym_lang_data.etym_languages_by_alias:
                         alias_langs = etym_lang_data.etym_languages_by_alias[qual]
                         if len(alias_langs) > 1:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: For apparent etymology language alias '%s', saw multiple possible language codes %s: %s"
                                 % (qual, ",".join(lang["code"] for lang in alias_langs), str(t))
                             )
@@ -117,7 +114,7 @@ def process_text_on_page(index, pagetitle, text):
                         if ind == "" or (int(ind) >= 1 and int(ind) <= len(terms)):
                             ok = True
                 if not ok:
-                    pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
                     must_continue = True
                     break
 
@@ -141,4 +138,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

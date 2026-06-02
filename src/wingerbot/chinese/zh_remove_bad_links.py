@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    modsec = blib.find_modifiable_lang_section(text, "Chinese", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Chinese", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -29,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
     if new_secbody != secbody:
         notes.append("remove bad Chinese links (see [[Wiktionary:Grease pit/2019/September#Requesting bot help]])")
         secbody = new_secbody
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     subsections_to_delete = []
     for k, header in subsecs.header_list:
@@ -49,4 +46,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -65,25 +65,22 @@ def process_lemma_page(index, page, form):
     return str(parsed), notes
 
 
-def process_text_on_non_lemma_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_non_lemma_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "superlative of" and getparam(t, "1") == "it":
             lemma = getparam(t, "2")
 
             def do_process(index, page):
-                return process_lemma_page(index, page, pagetitle)
+                return process_lemma_page(index, page, p.title)
 
             blib.do_edit(
-                index, pywikibot.Page(site, lemma), do_process, save=args.save, verbose=args.verbose, diff=args.diff
+                p.index, pywikibot.Page(site, lemma), do_process, save=args.save, verbose=args.verbose, diff=args.diff
             )
 
 

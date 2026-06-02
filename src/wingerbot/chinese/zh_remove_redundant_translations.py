@@ -31,15 +31,9 @@ lects_to_remove_redundant_translations = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     def convert_traditional_to_simplified(langcode, trad):
-        trad_simp = expand_text("{{#invoke:User:Benwing2/languages/utilities|generateForms|%s|%s}}" % (langcode, trad))
+        trad_simp = p.expand_text("{{#invoke:User:Benwing2/languages/utilities|generateForms|%s|%s}}" % (langcode, trad))
         if not trad_simp:
             return trad_simp
         if "||" in trad_simp:
@@ -50,10 +44,10 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    if not re.search(r"^\* *Chinese:*", text, re.M):
+    if not re.search(r"^\* *Chinese:*", p.text, re.M):
         return
 
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header == "Translations":
@@ -62,7 +56,7 @@ def process_text_on_page(index, pagetitle, text):
             for j, line in enumerate(lines):
 
                 def line_pagemsg(txt):
-                    msg("Page %s %s: %s: <from> %s <to> %s <end>" % (index, pagetitle, txt, line, line))
+                    msg("Page %s %s: %s: <from> %s <to> %s <end>" % (p.index, p.title, txt, line, line))
 
                 if re.search(r"^\* *Chinese:* *[^: ]", line):
                     line_pagemsg("WARNING: Chinese: line with junk after it")
@@ -119,7 +113,7 @@ def process_text_on_page(index, pagetitle, text):
 
                             def append_line_pagemsg(txt):
                                 warnings.append(
-                                    "Page %s %s: %s: <from> %s <to> %s <end>" % (index, pagetitle, txt, line, line)
+                                    "Page %s %s: %s: <from> %s <to> %s <end>" % (p.index, p.title, txt, line, line)
                                 )
 
                             get = getparam
@@ -329,4 +323,4 @@ parser = blib.create_argparser("Remove redundant Chinese translations", include_
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

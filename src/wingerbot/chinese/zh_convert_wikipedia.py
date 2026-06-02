@@ -6,11 +6,8 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     notes = []
 
@@ -46,7 +43,7 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if not re.search("^[0-9]+$", pn):
-                    pagemsg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
                     must_continue = True
                     break
             if must_continue:
@@ -67,4 +64,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

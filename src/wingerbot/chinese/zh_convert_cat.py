@@ -38,13 +38,10 @@ conventional_names = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     origtemps = []
     cat_zh_items = []
     cat_cmn_items = []
@@ -110,19 +107,19 @@ def process_text_on_page(index, pagetitle, text):
 
     if not newlines:
         if origtemps:
-            pagemsg(
+            p.msg(
                 "WARNING: Something wrong, no replacement text but saw original template(s) %s" % ",".join(origtemps)
             )
     else:
         if len(origtemps) > 1:
-            pagemsg("Saw %s original templates, removing all but last one" % len(origtemps))
+            p.msg("Saw %s original templates, removing all but last one" % len(origtemps))
             for origtemp in origtemps[:-1]:
-                if "\n" + origtemp + "\n" in text:
+                if "\n" + origtemp + "\n" in p.text:
                     text, did_replace = blib.replace_in_text(
-                        text, "\n" + origtemp + "\n", "\n", pagemsg, no_found_repl_check=True
+                        text, "\n" + origtemp + "\n", "\n", p.msg, no_found_repl_check=True
                     )
                 else:
-                    text, did_replace = blib.replace_in_text(text, origtemp, "", pagemsg, no_found_repl_check=True)
+                    text, did_replace = blib.replace_in_text(text, origtemp, "", p.msg, no_found_repl_check=True)
                 if not did_replace:
                     return
         origtemp = origtemps[-1]
@@ -132,7 +129,7 @@ def process_text_on_page(index, pagetitle, text):
             # If the {{zh-cat}} occurs along with something else (e.g. a defn) on the line, it might not be safe to replace
             # with multiple lines.
             repltext = "".join(newlines)
-        text, did_replace = blib.replace_in_text(text, origtemp, repltext, pagemsg)
+        text, did_replace = blib.replace_in_text(text, origtemp, repltext, p.msg)
         if not did_replace:
             return
         notes.append("convert {{zh-cat}} to generic template(s)")
@@ -152,4 +149,4 @@ parser = blib.create_argparser("Convert {{zh-cat}} to generic template(s)", incl
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

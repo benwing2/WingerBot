@@ -10,13 +10,10 @@ label_params_by_count = defaultdict(int)
 label_params_with_underscores_by_count = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Chinese", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Chinese", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -41,7 +38,7 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
 
 msg("%-50s %5s" % ("Label combination", "Count"))
 msg("-" * 56)

@@ -9,15 +9,9 @@ lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     def convert_traditional_to_simplified(langcode, trad):
-        trad_simp = expand_text("{{#invoke:User:Benwing2/languages/utilities|generateForms|%s|%s}}" % (langcode, trad))
+        trad_simp = p.expand_text("{{#invoke:User:Benwing2/languages/utilities|generateForms|%s|%s}}" % (langcode, trad))
         if not trad_simp:
             return trad_simp
         if "||" in trad_simp:
@@ -28,7 +22,7 @@ def process_text_on_page(index, pagetitle, text):
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param):
@@ -39,42 +33,42 @@ def process_text_on_page(index, pagetitle, text):
             out_items = []
             hide_pron = getp("hide_pron")
             if hide_pron:
-                pagemsg("WARNING: Found hide_pron=%s, need to handle manually: %s" % (hide_pron, str(t)))
+                p.msg("WARNING: Found hide_pron=%s, need to handle manually: %s" % (hide_pron, str(t)))
                 continue
             fold = getp("fold")
             if fold:
-                pagemsg("WARNING: Ignoring fold=%s: %s" % (fold, str(t)))
+                p.msg("WARNING: Ignoring fold=%s: %s" % (fold, str(t)))
             title = getp("title")
             if title:
-                pagemsg("WARNING: Found title=%s, need to handle manually: %s" % (hide_pron, str(t)))
+                p.msg("WARNING: Found title=%s, need to handle manually: %s" % (hide_pron, str(t)))
                 continue
             name = getp("name")
             if name:
-                pagemsg("WARNING: Ignoring name=%s (it doesn't seem to occur anyway): %s" % (fold, str(t)))
+                p.msg("WARNING: Ignoring name=%s (it doesn't seem to occur anyway): %s" % (fold, str(t)))
             terms = blib.fetch_param_chain(t, "1")
             must_continue = False
             for i, term in enumerate(terms):
                 origterm = term
                 note = None
                 if term.startswith("*"):
-                    pagemsg("WARNING: Saw term beginning with asterisk in %s=%s: %s" % (i + 1, origterm, str(t)))
+                    p.msg("WARNING: Saw term beginning with asterisk in %s=%s: %s" % (i + 1, origterm, str(t)))
                     must_continue = True
                     break
                 if "<!--" in term or "-->" in term:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw term with comment, needs manual handling in %s=%s: %s" % (i + 1, origterm, str(t))
                     )
                     must_continue = True
                     break
                 semicolon_parts = term.split(";")
                 if len(semicolon_parts) > 2:
-                    pagemsg("WARNING: Saw more than one semicolon in %s=%s: %s" % (i + 1, origterm, str(t)))
+                    p.msg("WARNING: Saw more than one semicolon in %s=%s: %s" % (i + 1, origterm, str(t)))
                     must_continue = True
                     break
                 if len(semicolon_parts) > 1:
                     term, note = semicolon_parts
                     if not term:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw empty term in %s=%s after stripping off note: %s" % (i + 1, origterm, str(t))
                         )
                         must_continue = True
@@ -82,13 +76,13 @@ def process_text_on_page(index, pagetitle, text):
                 after_colon = None
                 colon_parts = term.split(":")
                 if len(colon_parts) > 2:
-                    pagemsg("WARNING: Saw more than one colon in %s=%s: %s" % (i + 1, origterm, str(t)))
+                    p.msg("WARNING: Saw more than one colon in %s=%s: %s" % (i + 1, origterm, str(t)))
                     must_continue = True
                     break
                 if len(colon_parts) > 1:
                     term, after_colon = colon_parts
                     if not term:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw empty term in %s=%s after stripping off post-colon: %s"
                             % (i + 1, origterm, str(t))
                         )
@@ -100,7 +94,7 @@ def process_text_on_page(index, pagetitle, text):
                 gloss = None
                 slash_parts = term.split("/")
                 if len(slash_parts) > 2:
-                    pagemsg("WARNING: Saw more than one slash in %s=%s: %s" % (i + 1, origterm, str(t)))
+                    p.msg("WARNING: Saw more than one slash in %s=%s: %s" % (i + 1, origterm, str(t)))
                     must_continue = True
                     break
                 if len(slash_parts) > 1:
@@ -108,26 +102,26 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     trad = slash_parts[0]
                 if not trad:
-                    pagemsg("WARNING: Saw empty traditional in %s=%s: %s" % (i + 1, origterm, str(t)))
+                    p.msg("WARNING: Saw empty traditional in %s=%s: %s" % (i + 1, origterm, str(t)))
                     must_continue = True
                     break
                 if simp is not None and not simp:
-                    pagemsg("WARNING: Saw empty simplified in %s=%s after slash: %s" % (i + 1, origterm, str(t)))
+                    p.msg("WARNING: Saw empty simplified in %s=%s after slash: %s" % (i + 1, origterm, str(t)))
                     must_continue = True
                     break
-                if trad == pagetitle:
+                if trad == p.title:
                     # This is what the current code does.
                     continue
                 if after_colon:
                     if re.search("[一-龯㐀-䶵]", after_colon):
                         if simp:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw Chinese text after colon in %s=%s, but simplified already present: %s"
                                 % (i + 1, origterm, str(t))
                             )
                             must_continue = True
                             break
-                        pagemsg(
+                        p.msg(
                             "Saw Chinese text after colon in %s=%s, assuming simplified: %s" % (i + 1, origterm, str(t))
                         )
                         simp = after_colon
@@ -142,13 +136,13 @@ def process_text_on_page(index, pagetitle, text):
                 if simp:
                     trad_to_simp = convert_traditional_to_simplified("zh", trad)
                     if trad_to_simp == simp:
-                        pagemsg(
+                        p.msg(
                             "For traditional %s, explicit simplified %s matches auto-conversion in %s=%s, not specifying explicitly: %s"
                             % (trad, simp, i + 1, origterm, str(t))
                         )
                         simp = None
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: For traditional %s, explicit simplified %s doesn't match auto-conversion %s in %s=%s, specifying explicitly: %s"
                             % (trad, simp, trad_to_simp, i + 1, origterm, str(t))
                         )
@@ -187,7 +181,7 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "name"]:
-                    pagemsg("WARNING: Unhandlable param %s=%s in {{%s}}: %s" % (pn, str(param.value), tn, str(t)))
+                    p.msg("WARNING: Unhandlable param %s=%s in {{%s}}: %s" % (pn, str(param.value), tn, str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -209,4 +203,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

@@ -345,20 +345,18 @@ def get_params_from_zh_l(t):
     return text, tr, gloss
 
 
-def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_types=False):
+def find_southern_min_types(p, linkt, linkpage, linkglosses, all_types=False):
     def make_msg_txt(txt):
-        return "Page %s %s: Link page %s%s in %s: %s" % (
-            index,
-            pagetitle,
+        return "Link page %s%s in %s: %s" % (
             link_term(linkpage),
             linkglosses and " (glossed as '%s')" % "; ".join(linkglosses) or "",
             str(linkt),
             txt,
         )
     def pagemsg(txt):
-        msg(make_msg_txt(txt))
+        p.msg(make_msg_txt(txt))
     def errandpagemsg(txt):
-        errandmsg(make_msg_txt(txt))
+        p.errandmsg(make_msg_txt(txt))
 
     canon_pagename = re.sub("//.*", "", blib.remove_links(linkpage))
     page = pywikibot.Page(site, canon_pagename)
@@ -635,18 +633,15 @@ def find_southern_min_types(index, pagetitle, linkt, linkpage, linkglosses, all_
                     "WARNING (may be ignorable): Couldn't identify any Southern Min lect from scraping page (%s), but saw %s, redirecting"
                     % ("; ".join(saw_msgs), str(t))
                 )
-                return find_southern_min_types(index, pagetitle, linkt, canon, linkglosses, all_types=all_types)
+                return find_southern_min_types(p, linkt, canon, linkglosses, all_types=all_types)
         return "Couldn't identify any Southern Min lect from scraping page %s (%s)" % (linkmsg, "; ".join(saw_msgs))
     return section_min_types
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     linkglosses = None
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -690,7 +685,7 @@ def process_text_on_page(index, pagetitle, text):
                         if "nan-hbl" in langcodes:
                             has_specific_hokkien_variety = any(x in hokkien_varieties for x in langcodes)
                             if has_specific_hokkien_variety:
-                                pagemsg(
+                                p.msg(
                                     "Removing generic Hokkien code nan-hbl from derived langcodes %s because saw more specific Hokkien variety (term %s)"
                                     % (",".join(langcodes), linked_term)
                                 )
@@ -703,7 +698,7 @@ def process_text_on_page(index, pagetitle, text):
                             [x for x in new_lang_codes if x.startswith("nan-")]
                         )
                         if not nan_new_lang_codes:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unable to convert '%s' in {{%s}} to more specific lang code by looking up term %s because no matching lang codes found (found %s)"
                                 % (existing_code, tn, linked_term, ",".join(new_lang_codes))
                             )
@@ -717,16 +712,16 @@ def process_text_on_page(index, pagetitle, text):
                             )
                             for code in nan_new_lang_codes:
                                 add_code(code)
-                            pagemsg("Converting %s" % msg_body)
+                            p.msg("Converting %s" % msg_body)
                             notes.append("convert %s" % msg_body)
 
                     if langcodes_str:
                         langcodes = langcodes_str.split(",")
                         for langcode in langcodes:
                             if langcode == "nan":  # or langcode == "nan-hbl":
-                                lect_types = find_southern_min_types(index, pagetitle, t, actual_term, linkglosses)
+                                lect_types = find_southern_min_types(p, t, actual_term, linkglosses)
                                 if type(lect_types) is str:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Unable to convert '%s' to correct lang code (reason: %s)"
                                         % (langcode, lect_types)
                                     )
@@ -750,30 +745,28 @@ def process_text_on_page(index, pagetitle, text):
                                     # "Taiwan", "Taiwanese", "Hong Kong", "Singapore", "Malaysia", "Philippines"
                                 ]:
                                     if lect_types is None:
-                                        lect_types = find_southern_min_types(
-                                            index, pagetitle, t, actual_term, linkglosses
-                                        )
+                                        lect_types = find_southern_min_types(p, t, actual_term, linkglosses)
                                         if type(lect_types) is str:
-                                            pagemsg(
+                                            p.msg(
                                                 "WARNING: Unable to convert '%s' to correct lang code (reason: %s)"
                                                 % (qq_part, lect_types)
                                             )
                                     if type(lect_types) is list:
                                         append_nan_lang_codes(qq_part, lect_types)
                                     elif qq_part in ["Min Nan", "Southern Min"]:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Unable to convert '%s' to something more specific, converting to code 'nan' (term %s)"
                                             % (qq_part, linked_term)
                                         )
                                         add_code("nan")
                                     elif qq_part == "Hokkien":
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Unable to convert 'Hokkien' to something more specific, converting to code 'nan-hbl' (term %s)"
                                             % linked_term
                                         )
                                         add_code("nan-hbl")
                                     else:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Unable to convert '%s' to something more specific, leaving as-is (term %s)"
                                             % (qq_part, linked_term)
                                         )
@@ -781,21 +774,21 @@ def process_text_on_page(index, pagetitle, text):
                                 elif qq_part in lects_to_codes:
                                     code = lects_to_codes[qq_part]
                                     if type(code) is list:
-                                        pagemsg(
+                                        p.msg(
                                             "Converting qualifier '%s' to codes '%s' (term %s)"
                                             % (qq_part, ",".join(code), linked_term)
                                         )
                                         for cd in code:
                                             add_code(cd)
                                     else:
-                                        pagemsg(
+                                        p.msg(
                                             "Converting qualifier '%s' to code '%s' (term %s)"
                                             % (qq_part, code, linked_term)
                                         )
                                         add_code(code)
                                 else:
                                     if re.search("^[A-Z]", qq_part):
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Saw unhandled lect qualifier %s (term %s): <qq:%s>"
                                             % (qq_part, linked_term, qqs)
                                         )
@@ -821,7 +814,7 @@ def process_text_on_page(index, pagetitle, text):
                                     " and ".join(new_text),
                                     linked_term,
                                 )
-                                pagemsg("Converting %s" % msg_body)
+                                p.msg("Converting %s" % msg_body)
                                 notes.append("convert %s" % msg_body)
                         else:
                             new_modifiers = modifiers
@@ -836,7 +829,7 @@ def process_text_on_page(index, pagetitle, text):
                             )
                             modified_langcodes = cut_modified_langcodes
                         if len(modified_langcodes) > 3:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Generating %s > 3 prefixed language codes %s (term %s)"
                                 % (len(modified_langcodes), ",".join(modified_langcodes), linked_term)
                             )
@@ -860,7 +853,7 @@ def process_text_on_page(index, pagetitle, text):
                 line,
             )
             if len(line_parts) == 1:
-                pagemsg("WARNING: Couldn't parse apparent synonyms/antonyms line: %s" % line)
+                p.msg("WARNING: Couldn't parse apparent synonyms/antonyms line: %s" % line)
                 new_lines.append(line)
                 continue
             frobbed_parts = []
@@ -876,7 +869,7 @@ def process_text_on_page(index, pagetitle, text):
                         tn = tname(t)
                         if tn in blib.qualifier_templates:
                             if q_t is not None:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Found two qualifier templates %s and %s in synonyms/antonyms line part %s, can't parse: %s"
                                     % (str(q_t), str(t), line_part_no, line)
                                 )
@@ -887,12 +880,12 @@ def process_text_on_page(index, pagetitle, text):
                             zh_l_ts.append(t)
                     else:  # no break
                         if not q_t:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Couldn't find qualifier template in synonyms/antonyms line part %s, can't parse: %s"
                                 % (line_part_no, line)
                             )
                         elif not zh_l_ts:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Couldn't find {{zh-l}} link(s) in synonyms/antonyms line part %s, can't parse: %s"
                                 % (line_part_no, line)
                             )
@@ -907,11 +900,11 @@ def process_text_on_page(index, pagetitle, text):
                                 if "/" in linkpage:
                                     linkpage = re.sub("/.*", "", linkpage)
                                 all_linkpages.append((linkpage, linkgloss))
-                                min_types = find_southern_min_types(index, pagetitle, zh_l_t, linkpage, linkgloss)
+                                min_types = find_southern_min_types(p, zh_l_t, linkpage, linkgloss)
                                 if type(min_types) is str:
                                     min_warnings.append(min_types)
                                 elif min_types:
-                                    pagemsg(
+                                    p.msg(
                                         "For link page %s, found %s: %s"
                                         % (link_term(linkpage), ", ".join(min_types), line)
                                     )
@@ -923,13 +916,13 @@ def process_text_on_page(index, pagetitle, text):
                                 for page, gloss in all_linkpages
                             )
                             if not all_min_types:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Couldn't locate any Southern Min types among link page(s) %s (reason(s): %s): %s"
                                     % (all_linkpage_txt, "; ".join(min_warnings), line)
                                 )
                             else:
                                 if min_warnings:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING (may be ignorable): Was able to locate Southern Min type(s) %s among link page(s) %s, but with some warnings (%s): %s"
                                         % (", ".join(all_min_types), all_linkpage_txt, "; ".join(min_warnings), line)
                                     )
@@ -939,7 +932,7 @@ def process_text_on_page(index, pagetitle, text):
                                 for val in qualifier_vals:
                                     if val in ["Min Nan", "Southern Min", "Coastal Min"]:
                                         if saw_min_nan:
-                                            pagemsg(
+                                            p.msg(
                                                 "WARNING: Saw 'Min Nan/Southern Min/Coastal Min' multiple times in qualifier template %s, not changing: %s"
                                                 % (str(q_t), line)
                                             )
@@ -955,11 +948,11 @@ def process_text_on_page(index, pagetitle, text):
                                             "qualifier '%s' with '%s' in Synonyms/Antonyms section by examining associated term(s) %s"
                                             % (saw_min_nan, "|".join(all_min_types), all_linkpage_txt)
                                         )
-                                        pagemsg("Replacing %s: %s" % (note, line))
+                                        p.msg("Replacing %s: %s" % (note, line))
                                         notes.append("replace %s" % note)
                                         line_part = str(parsed)
                                     else:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Couldn't find 'Min Nan' or 'Southern Min' qualifier in template %s: %s"
                                             % (str(q_t), line)
                                         )
@@ -977,4 +970,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

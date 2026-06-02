@@ -6,14 +6,11 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     replacements = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
 
         def getp(param):
@@ -29,19 +26,19 @@ def process_text_on_page(index, pagetitle, text):
             term = getp("1")
             nosimp = False
             if term.startswith("*"):
-                pagemsg("Saw term '%s' starting with an asterisk: %s" % (term, str(t)))
+                p.msg("Saw term '%s' starting with an asterisk: %s" % (term, str(t)))
                 term = term[1:]
                 nosimp = True
             if term.endswith("*"):
-                pagemsg("Saw term '%s' ending with an asterisk: %s" % (term, str(t)))
+                p.msg("Saw term '%s' ending with an asterisk: %s" % (term, str(t)))
                 term = term[:-1]
                 nosimp = True
             if "<!--" in term or "-->" in term:
-                pagemsg("WARNING: Saw term '%s' with comment, needs manual handling: %s" % (term, str(t)))
+                p.msg("WARNING: Saw term '%s' with comment, needs manual handling: %s" % (term, str(t)))
             elif "/" in term:
-                pagemsg("WARNING: Saw term '%s' with slash, needs manual handling: %s" % (term, str(t)))
+                p.msg("WARNING: Saw term '%s' with slash, needs manual handling: %s" % (term, str(t)))
             elif "^" in term:
-                pagemsg("WARNING: Saw term '%s' with circumflex, needs manual handling: %s" % (term, str(t)))
+                p.msg("WARNING: Saw term '%s' with circumflex, needs manual handling: %s" % (term, str(t)))
             else:
                 tr = getp("tr")
                 gloss = getp("2") or getp("t") or getp("gloss")
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
                     ok = False
                     pn = pname(param)
                     if pn not in ["1", "2", "t", "gloss", "tr", "nocap", "dot"]:
-                        pagemsg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
+                        p.msg("WARNING: Saw unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
                         must_continue = True
                         break
                 if must_continue:
@@ -79,7 +76,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("convert {{%s}} to {{%s|zh}}" % (tn, tname(t)))
 
     for origt, replt in replacements:
-        text, did_replace = blib.replace_in_text(text, origt, replt, pagemsg)
+        text, did_replace = blib.replace_in_text(text, origt, replt, p.msg)
         if not did_replace:
             return
 
@@ -92,4 +89,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
