@@ -19,14 +19,11 @@ template_bottoms = ["der-bottom", "rel-bottom"]
 other_template_bottoms = ["col-bottom", "bottom"]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     top_t = None
     top_tn = None
     top_title = None
@@ -35,13 +32,13 @@ def process_text_on_page(index, pagetitle, text):
         tn = tname(t)
         if tn in templates_to_convert:
             if top_t:
-                pagemsg("WARNING: Saw {{%s}} nested within {{%s}}" % (tn, top_tn))
+                p.msg("WARNING: Saw {{%s}} nested within {{%s}}" % (tn, top_tn))
                 continue
             must_continue = False
             for param in t.params:
                 pn = pname(param)
                 if pn != "1":
-                    pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -56,7 +53,7 @@ def process_text_on_page(index, pagetitle, text):
             title = getp("1")
             m = re.search(
                 r"""^[Tt]erms (?:which are )?(derived from|derived using|related to|etymologically related to|coordinate to|coordinate with) (?:or featuring |the verbal noun )?['"]*%s['"]*\.*$"""
-                % re.escape(pagetitle),
+                % re.escape(p.title),
                 title,
             )
             if m:
@@ -70,15 +67,15 @@ def process_text_on_page(index, pagetitle, text):
                     "coordinate with": "cot",
                 }
                 top_title = title_typ_to_abbrev[title_typ]
-                pagemsg("Abbreviated '%s' to '%s'" % (title, top_title))
+                p.msg("Abbreviated '%s' to '%s'" % (title, top_title))
             if not m:
-                m = re.search(r"""^Compounds with ['"]*%s['"]*\.*$""" % re.escape(pagetitle), title)
+                m = re.search(r"""^Compounds with ['"]*%s['"]*\.*$""" % re.escape(p.title), title)
                 if m:
                     top_title = "com"
-                    pagemsg("Abbreviated '%s' to '%s'" % (title, top_title))
+                    p.msg("Abbreviated '%s' to '%s'" % (title, top_title))
             if not m:
                 if title:
-                    pagemsg("Unable to abbreviate '%s'" % title)
+                    p.msg("Unable to abbreviate '%s'" % title)
                     top_title = title
                 else:
                     top_title = tn[0:3]
@@ -86,23 +83,23 @@ def process_text_on_page(index, pagetitle, text):
             top_tn = tn
         elif tn in other_template_bottoms:
             if top_tn:
-                pagemsg("WARNING: Saw template bottom %s mismatched to template top %s" % (tn, top_tn))
+                p.msg("WARNING: Saw template bottom %s mismatched to template top %s" % (tn, top_tn))
                 top_t = None
                 top_tn = None
             continue
         elif tn in template_bottoms:
             if not top_tn:
-                pagemsg("WARNING: Saw stray template bottom %s" % tn)
+                p.msg("WARNING: Saw stray template bottom %s" % tn)
                 continue
             if top_tn[0:3] != tn[0:3]:
-                pagemsg("WARNING: Saw template bottom %s mismatched to template top %s" % (tn, top_tn))
+                p.msg("WARNING: Saw template bottom %s mismatched to template top %s" % (tn, top_tn))
                 top_t = None
                 top_tn = None
                 continue
             must_continue = False
             for param in t.params:
                 pn = pname(param)
-                pagemsg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
+                p.msg("WARNING: Saw unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
                 must_continue = True
                 break
             if must_continue:
@@ -113,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(top_t, "col-top")
             top_t.add("1", top_ncol)
             top_t.add("2", top_title)
-            pagemsg("Replaced <%s> with <%s> and <%s> with <%s>" % (orig_top_t, str(top_t), origt, str(t)))
+            p.msg("Replaced <%s> with <%s> and <%s> with <%s>" % (orig_top_t, str(top_t), origt, str(t)))
             notes.append(
                 "convert %s to %s per [[WT:RFDO#remove lesser-used column templates]]" % (orig_top_t, str(top_t))
             )

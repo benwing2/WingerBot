@@ -53,23 +53,20 @@ I = "\u093f"
 AA = "\u093e"
 
 
-def process_text_on_page(index, pagetitle, text, pos):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p, pos):
     cappos = pos.capitalize()
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    origtext = text
+    origtext = p.text
 
-    modsec = blib.find_modifiable_lang_section(text, None, pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, None, p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     k = 2
     last_pos = None
@@ -118,13 +115,13 @@ def process_text_on_page(index, pagetitle, text, pos):
                                         getparam(t, gparam),
                                     )
                                     break
-                        newhead = getparam(t, "head").strip() or pagetitle
+                        newhead = getparam(t, "head").strip() or p.title
                         if not found_hi_head_needing_manual:
                             if " " in newhead:
                                 found_hi_head_needing_manual = "Space in headword"
-                            elif newhead != pagetitle:
+                            elif newhead != p.title:
                                 found_hi_head_needing_manual = (
-                                    "Explicit headword %s doesn't agree with pagetitle %s" % (newhead, pagetitle)
+                                    "Explicit headword %s doesn't agree with pagetitle %s" % (newhead, p.title)
                                 )
                         hi_head_gender = getparam(t, "g")
                         if not hi_head_gender:
@@ -146,12 +143,12 @@ def process_text_on_page(index, pagetitle, text, pos):
                         newhead = getparam(t, "1")
                 elif tn == "head" and getparam(t, "1") == args.lang and getparam(t, "2") in [pos, "%ss" % pos]:
                     headt = t
-                    newhead = getparam(t, "head").strip() or pagetitle
+                    newhead = getparam(t, "head").strip() or p.title
                     if args.lang == "hi":
                         found_hi_head_needing_manual = "Can't currently support raw 'head|hi|%s' template" % pos
                 if newhead:
                     if head:
-                        pagemsg("WARNING: Found two heads under one POS section: %s and %s" % (head, newhead))
+                        p.msg("WARNING: Found two heads under one POS section: %s and %s" % (head, newhead))
                     head = newhead
                 if args.lang == "bg":
                     infl_template_prefix = bg_pos_to_old_style_infl_template_prefix
@@ -165,19 +162,19 @@ def process_text_on_page(index, pagetitle, text, pos):
                     infl_template_prefix[pos] and tn.startswith(infl_template_prefix[pos])
                 ):
                     if inflt:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Found two inflection templates under one POS section: %s and %s"
                             % (str(inflt), str(t))
                         )
                     inflt = t
-                    pagemsg("Found %s inflection for headword %s: %s" % (pos, head or pagetitle, str(t)))
+                    p.msg("Found %s inflection for headword %s: %s" % (pos, head or p.title, str(t)))
                 if tn == "bg-pre-reform":
-                    pagemsg("Found bg-pre-reform, won't add inflection: %s" % (str(t)))
+                    p.msg("Found bg-pre-reform, won't add inflection: %s" % (str(t)))
                     found_bg_pre_reform = True
             if headt and not inflt and not found_bg_pre_reform:
-                pagemsg("Didn't find %s inflection for headword %s" % (pos, head or pagetitle))
+                p.msg("Didn't find %s inflection for headword %s" % (pos, head or p.title))
                 if args.lang == "hi" and found_hi_head_needing_manual:
-                    pagemsg("WARNING: Won't add declension: %s: %s" % (found_hi_head_needing_manual, str(headt)))
+                    p.msg("WARNING: Won't add declension: %s: %s" % (found_hi_head_needing_manual, str(headt)))
                 else:
                     if args.lang == "hi":
                         if hi_head_gender == "m":
@@ -186,14 +183,14 @@ def process_text_on_page(index, pagetitle, text, pos):
                             assert hi_head_gender == "f", "Something wrong, unrecognized gender %s" % hi_head_gender
                             infl = "{{hi-ndecl|<F>}}"
                     else:
-                        infl = "{{%s|%s<>}}" % (pos_to_new_style_infl_template[pos] % args.lang, head or pagetitle)
+                        infl = "{{%s|%s<>}}" % (pos_to_new_style_infl_template[pos] % args.lang, head or p.title)
                     for l in range(k, endk, 2):
                         if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[l]):
                             secparsed = blib.parse_text(subsections[l])
                             for t in secparsed.filter_templates():
                                 tn = tname(t)
                                 if tname(t) != "rfinfl":
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Saw unknown template %s in existing inflection section, skipping"
                                         % (str(t))
                                     )
@@ -203,7 +200,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                                 assert m is not None  # should always match
                                 sectext, final_newlines = m.groups()
                                 subsections[l] = infl + final_newlines
-                                pagemsg("Replaced existing decl text <%s> with <%s>" % (sectext, infl))
+                                p.msg("Replaced existing decl text <%s> with <%s>" % (sectext, infl))
                                 notes.append(
                                     "replace %s decl text <%s> with <%s>"
                                     % (lang_to_langname[args.lang], sectext.strip(), infl)
@@ -220,7 +217,7 @@ def process_text_on_page(index, pagetitle, text, pos):
                             % ("=" * (level + 1), "Conjugation" if pos == "verb" else "Declension", "=" * (level + 1)),
                             infl + "\n\n",
                         ]
-                        pagemsg("Inserted level-%s inflection section with inflection <%s>" % (level + 1, infl))
+                        p.msg("Inserted level-%s inflection section with inflection <%s>" % (level + 1, infl))
                         notes.append(
                             "insert level-%s %s inflection <%s>" % (level + 1, lang_to_langname[args.lang], infl)
                         )
@@ -236,12 +233,12 @@ def process_text_on_page(index, pagetitle, text, pos):
                 last_pos = m.group(1)
             if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[k]):
                 if not last_pos:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found inflection header before seeing any parts of speech: %s"
                         % (subsections[k - 1].strip())
                     )
                 elif last_pos == cappos:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found probably misindented inflection header after ==%s== header: %s"
                         % (cappos, subsections[k - 1].strip())
                     )
@@ -266,8 +263,8 @@ if args.lang not in ["bg", "be", "hi"]:
     raise ValueError("Unrecognized language: %s" % args.lang)
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, args.pos)
+def do_process_text_on_page(p):
+    return process_text_on_page(p, args.pos)
 
 
 blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)

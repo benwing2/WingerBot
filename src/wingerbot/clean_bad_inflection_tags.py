@@ -4,7 +4,7 @@ import pywikibot, re, sys, argparse
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 from wingerbot import infltags
 
@@ -761,19 +761,16 @@ def canonicalize_raw_tag(tag, shorten, pagemsg, add_to_bad_tags_split_canon=Fals
     return canonicalize_tag(tag, shorten, pagemsg, add_to_bad_tags_split_canon)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
     # List of (LANG, LEMMA, TAG) triplets for tags that come from
     # {{form of}}. We shorten those to their canonical abbreviated
     # form but don't do the same to tags originally in {{inflection of}}.
     shortenable_tags = []
 
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("WARNING: Page should be ignored")
+    if blib.page_should_be_ignored(p.title):
+        p.msg("WARNING: Page should be ignored")
         return
 
     global tag_to_canonical_form_table
@@ -795,7 +792,7 @@ def process_text_on_page(index, pagetitle, text):
                 gloss = "|t=%s" % gloss
             if posttext.strip().startswith("in the"):
                 potential_tags = re.sub(r"^in the\s*(.*?)\.?$", r"\1", posttext.strip())
-                if canonicalize_raw_tag(potential_tags, True, pagemsg) is not None:
+                if canonicalize_raw_tag(potential_tags, True, p.msg) is not None:
                     return gloss, " " + potential_tags, ""
             return gloss, "", posttext
 
@@ -805,8 +802,8 @@ def process_text_on_page(index, pagetitle, text):
             pound_sign, pretext, tags, posttext = m.groups()
             pretext = pound_sign + pretext
             tags = re.sub(" *[Oo]f$", "", tags)
-            if only_canonicalize and canonicalize_raw_tag(tags, True, pagemsg) is None:
-                pagemsg('WARNING: Unable to canonicalize tags "%s": %s' % (tags, m.group(0)))
+            if only_canonicalize and canonicalize_raw_tag(tags, True, p.msg) is None:
+                p.msg('WARNING: Unable to canonicalize tags "%s": %s' % (tags, m.group(0)))
                 return m.group(0)
 
             # Check for template link
@@ -818,7 +815,7 @@ def process_text_on_page(index, pagetitle, text):
                 lemma = getparam(linkt, "2")
                 if link_langcode != langcode:
                     if not infer_langcode:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Lang code %s in link doesn't match section lang code %s: %s"
                             % (link_langcode, langcode, m.group(0))
                         )
@@ -848,13 +845,13 @@ def process_text_on_page(index, pagetitle, text):
                     elif pname in ["sc", "g", "g2", "g3", "g4", "g5", "pos", "id", "lit"]:
                         extraparams += "|%s=%s" % (pname, pval)
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unrecognized param %s=%s in link template %s: %s"
                             % (pname, pval, str(linkt), m.group(0))
                         )
                         return m.group(0)
                 if this_gloss and gloss:
-                    pagemsg("WARNING: Both gloss in link and after link: %s" % m.group(0))
+                    p.msg("WARNING: Both gloss in link and after link: %s" % m.group(0))
                     return m.group(0)
                 lemma = re.sub("#.*$", "", lemma)
                 alttext = re.sub(r"^('+)(.*?)\1$", r"\2", alttext)
@@ -916,7 +913,7 @@ def process_text_on_page(index, pagetitle, text):
                         )
                         shortenable_tags.append((langcode, alttext, tags))
                 else:
-                    pagemsg("WARNING: Too many arguments to raw link: %s" % m.group(0))
+                    p.msg("WARNING: Too many arguments to raw link: %s" % m.group(0))
                     return m.group(0)
 
             # Check for just bold, italic or bold-italic text
@@ -937,11 +934,11 @@ def process_text_on_page(index, pagetitle, text):
                 newtext = "%s{{inflection of|%s|%s||%s%s}}%s" % (pretext, langcode, lemma, tags, gloss, postposttext)
                 shortenable_tags.append((langcode, lemma, tags))
             if newtext is None:
-                pagemsg("WARNING: Unable to parse raw inflection-of defn: %s" % m.group(0))
+                p.msg("WARNING: Unable to parse raw inflection-of defn: %s" % m.group(0))
                 return m.group(0)
             if matching_textfile_lines and m.group(0) not in matching_textfile_lines:
-                pagemsg("WARNING: Modifying line not in --matching-textfile: %s" % m.group(0))
-            pagemsg("Replacing <%s> with <%s>" % (m.group(0), newtext))
+                p.msg("WARNING: Modifying line not in --matching-textfile: %s" % m.group(0))
+            p.msg("Replacing <%s> with <%s>" % (m.group(0), newtext))
             notes.append("replace raw inflection-of defn with {{inflection of|%s}}" % langcode)
             return newtext
 
@@ -1009,10 +1006,10 @@ def process_text_on_page(index, pagetitle, text):
     def convert_raw(text):
         if args.langcode:
             return convert_raw_section(text, args.langcode, infer_langcode=True)
-        secs = blib.split_text_into_sections(text, pagemsg)
+        secs = blib.split_text_into_sections(text, p.msg)
         for j, langname in secs.lang_list:
             if langname not in lang_data.languages_by_canonical_name:
-                pagemsg("WARNING: Unrecognized language %s" % langname)
+                p.msg("WARNING: Unrecognized language %s" % langname)
             else:
                 langcode = lang_data.languages_by_canonical_name[langname]["code"]
                 newsection = convert_raw_section(secs.sections[j], langcode, infer_langcode=False)
@@ -1020,13 +1017,13 @@ def process_text_on_page(index, pagetitle, text):
         return "".join(secs.sections)
 
     if args.convert_raw:
-        if pagetitle in skip_pages:
-            pagemsg("Page in skip_pages, not applying --convert-raw")
+        if p.title in skip_pages:
+            p.msg("Page in skip_pages, not applying --convert-raw")
         else:
-            text = convert_raw(text)
+            text = convert_raw(p.text)
 
     def convert_form_of(text):
-        parsed = blib.parse_text(text)
+        parsed = blib.parse_text(p.text)
         for t in parsed.filter_templates():
             origt = str(t)
             tn = tname(t)
@@ -1061,7 +1058,7 @@ def process_text_on_page(index, pagetitle, text):
                             and pname == "5"
                         ):
                             continue
-                        pagemsg(
+                        p.msg(
                             "WARNING: Unrecognized param %s=%s in otherwise convertible form-of: %s"
                             % (pname, pval, str(t))
                         )
@@ -1090,19 +1087,19 @@ def process_text_on_page(index, pagetitle, text):
                             "replace {{form of}} containing inflection tags with %s"
                             % infltags.construct_abbreviated_template("inflection of", lang, lemma)
                         )
-                        pagemsg("Replacing %s with %s" % (origt, str(t)))
+                        p.msg("Replacing %s with %s" % (origt, str(t)))
         return str(parsed)
 
     if args.convert_form_of:
-        if pagetitle in skip_pages:
-            pagemsg("Page in skip_pages, not applying --convert-form-of")
+        if p.title in skip_pages:
+            p.msg("Page in skip_pages, not applying --convert-form-of")
         else:
             text = convert_form_of(text)
 
     if args.combine_adjacent:
-        text = infltags.combine_adjacent_inflection_of_calls(text, notes, pagemsg, args.verbose)
+        text = infltags.combine_adjacent_inflection_of_calls(text, notes, p.msg, args.verbose)
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     templates_to_replace = []
 
@@ -1129,13 +1126,13 @@ def process_text_on_page(index, pagetitle, text):
                     # if the tag came from a raw or {{form of}} inflection originally.
                     # Note that we also abbreviate this way when splitting a tag
                     # on spaces.
-                    repl = canonicalize_tag(tag, (lang, term, tag) in shortenable_tags, pagemsg)
+                    repl = canonicalize_tag(tag, (lang, term, tag) in shortenable_tags, p.msg)
                 if repl is None:
                     if " " in tag:
-                        pagemsg("WARNING: Bad multiword tag '%s', can't canonicalize" % tag)
+                        p.msg("WARNING: Bad multiword tag '%s', can't canonicalize" % tag)
                         repl = tag
                     else:
-                        pagemsg("WARNING: Bad tag %s, can't canonicalize" % tag)
+                        p.msg("WARNING: Bad tag %s, can't canonicalize" % tag)
                         repl = tag
                 elif repl != tag:
                     notemsg = (
@@ -1328,7 +1325,7 @@ def process_text_on_page(index, pagetitle, text):
             #
             # {{inflection of|la|canus||dat//abl|m//f//n|p}}
             def warn(text):
-                pagemsg("WARNING: %s" % text)
+                p.msg("WARNING: %s" % text)
 
             tags, this_notes = infltags.combine_adjacent_tags_into_multipart(
                 tn,
@@ -1338,7 +1335,7 @@ def process_text_on_page(index, pagetitle, text):
                 # FIXME, consider using fetch_tag_to_dimension_table() to fetch the
                 # tag-to-dimension table instead of hardcoding it.
                 combinable_tags_by_dimension_table,
-                pagemsg,
+                p.msg,
                 warn,
                 tag_to_canonical_form_table=tag_to_canonical_form_table,
             )
@@ -1367,7 +1364,7 @@ def process_text_on_page(index, pagetitle, text):
                         if split_tag not in good_tags:
                             bad_tags[split_tag] += 1
                             has_bad_tags = True
-                            pagemsg("Saw bad tag: %s" % split_tag)
+                            p.msg("Saw bad tag: %s" % split_tag)
 
             # Maybe sort tags
             sorted_tags_info = ""
@@ -1386,7 +1383,7 @@ def process_text_on_page(index, pagetitle, text):
             if origt != str(t):
                 if not notes:
                     notes.append("canonicalize %s" % infltags.construct_abbreviated_template(tn, lang, term))
-                pagemsg("Replaced %s with %s%s" % (origt, str(t), sorted_tags_info))
+                p.msg("Replaced %s with %s%s" % (origt, str(t), sorted_tags_info))
 
             global num_total_templates
             num_total_templates += 1
@@ -1394,7 +1391,7 @@ def process_text_on_page(index, pagetitle, text):
             if has_bad_tags:
                 num_templates_with_bad_tags += 1
             if has_joiner:
-                pagemsg("WARNING: Template has unconverted joiner: %s" % str(t))
+                p.msg("WARNING: Template has unconverted joiner: %s" % str(t))
 
     return str(parsed), notes
 
@@ -1460,7 +1457,7 @@ if args.textfile:
     for index, (pagetitle, pagetext) in blib.iter_items(
         titles_and_text, start, end, get_name=lambda title_and_text: title_and_text[0]
     ):
-        newtext, notes = process_text_on_page(index, pagetitle, pagetext)
+        newtext, notes = process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, pagetext, None))
         if newtext and newtext != pagetext:
             msg("Page %s %s: Would save with comment = %s" % (index, pagetitle, "; ".join(blib.group_notes(notes))))
 

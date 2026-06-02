@@ -59,37 +59,31 @@ def process_masc_page(index, page, fem):
     return str(parsed), notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if "female equivalent of" not in text and "femeq" not in text:
+def process_text_on_page(p):
+    if "female equivalent of" not in p.text and "femeq" not in p.text:
         return
 
-    # pagemsg("Processing")
+    # p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn in ["female equivalent of", "femeq"]:
             lang = getparam(t, "1")
             if lang != "fr":
-                pagemsg("WARNING: Can't handle lang %s: %s" % (lang, str(t)))
+                p.msg("WARNING: Can't handle lang %s: %s" % (lang, str(t)))
                 continue
             masc = getparam(t, "2")
             mascpage = pywikibot.Page(site, masc)
-            if not blib.safe_page_exists(mascpage, errandpagemsg):
-                pagemsg("WARNING: Masculine %s doesn't exist: %s" % (masc, str(t)))
+            if not blib.safe_page_exists(mascpage, p.errandmsg):
+                p.msg("WARNING: Masculine %s doesn't exist: %s" % (masc, str(t)))
                 continue
 
             def do_process(index, page):
-                return process_masc_page(index, page, pagetitle)
+                return process_masc_page(index, page, p.title)
 
-            blib.do_edit(index, mascpage, do_process, save=args.save, verbose=args.verbose, diff=args.diff)
+            blib.do_edit(p.index, mascpage, do_process, save=args.save, verbose=args.verbose, diff=args.diff)
 
 
 parser = blib.create_argparser(

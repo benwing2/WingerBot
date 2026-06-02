@@ -9,15 +9,10 @@ from wingerbot.blib import getparam, msg, tname
 langs_to_codes = {}
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
 
     for j, lang in secs.lang_list:
@@ -28,15 +23,15 @@ def process_text_on_page(index, pagetitle, text):
                 if lang in langs_to_codes:
                     langcode = langs_to_codes[lang]
                 else:
-                    langcode = expand_text("{{#invoke:languages/templates|getByCanonicalName|%s|getCode}}" % lang)
+                    langcode = p.expand_text("{{#invoke:languages/templates|getByCanonicalName|%s|getCode}}" % lang)
                     if not langcode:
-                        pagemsg("WARNING: Unable to find code for lang %s" % lang)
+                        p.msg("WARNING: Unable to find code for lang %s" % lang)
                         continue
                     langs_to_codes[lang] = langcode
                 t.add("lang", langcode)
                 newt = str(t)
                 if origt != newt:
-                    pagemsg("Replaced %s with %s" % (origt, newt))
+                    p.msg("Replaced %s with %s" % (origt, newt))
         sections[j] = str(parsed)
 
     return "".join(sections), "add lang code to audio templates"

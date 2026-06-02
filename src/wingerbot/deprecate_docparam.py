@@ -6,15 +6,12 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -41,9 +38,9 @@ def process_text_on_page(index, pagetitle, text):
             if opt:
                 t.add("opt", "1")
             blib.set_template_name(t, "para")
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
             if para2:
-                pagemsg("Set additional info param 3=%s in %s" % (para2, str(t)))
+                p.msg("Set additional info param 3=%s in %s" % (para2, str(t)))
             notes.append("convert {{docparam}} to {{para}}")
 
     return str(parsed), notes

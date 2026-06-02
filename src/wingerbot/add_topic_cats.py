@@ -8,25 +8,23 @@ from wingerbot.blib import getparam, rmparam, msg, tname
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle not in cats_to_add:
+def process_text_on_page(p, cats_to_add, japanese_sort_keys):
+    if p.title not in cats_to_add:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     notes = []
 
-    sort_key = japanese_sort_keys.get(pagetitle, "")
+    sort_key = japanese_sort_keys.get(p.title, "")
 
-    for lang, cats in cats_to_add[pagetitle]:
+    text = p.text
+    for lang, cats in cats_to_add[p.title]:
         if lang not in lang_data.languages_by_code:
-            pagemsg("WARNING: Saw unrecognized language code '%s'" % lang)
+            p.msg("WARNING: Saw unrecognized language code '%s'" % lang)
             continue
         langname = lang_data.languages_by_code[lang]["canonicalName"]
-        modsec = blib.find_modifiable_lang_section(text, langname, pagemsg)
+        modsec = blib.find_modifiable_lang_section(text, langname, p.msg)
         if modsec is None:
             continue
         if lang == "zh":
@@ -38,7 +36,7 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
             topics_temp_lang = "1"
             topics_temp_cats = "2"
         langtext, this_notes = templatize_categories.process_text_on_page(
-            index, pagetitle, modsec.sections[modsec.j], lang, langname, topics_temp
+            p.index, p.title, modsec.sections[modsec.j], lang, langname, topics_temp
         )
         notes.extend(this_notes)
         parsed = blib.parse_text(langtext)
@@ -50,7 +48,7 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
                 if topics_temp_lang:
                     topics_lang = getparam(t, topics_temp_lang)
                     if topics_lang != lang:
-                        pagemsg("WARNING: Saw wrong-language topics template: %s" % str(t))
+                        p.msg("WARNING: Saw wrong-language topics template: %s" % str(t))
                         continue
                 last_topics_temp = t
                 existing_topics = blib.fetch_param_chain(t, topics_temp_cats)
@@ -74,7 +72,7 @@ def process_text_on_page(index, pagetitle, text, cats_to_add, japanese_sort_keys
                     % (",".join("%s:%s" % (lang, cat) for cat in cats), topics_temp)
                 )
                 if str(t) != origt:
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                 modsec.sections[modsec.j] = str(parsed)
             else:
                 secbody, sectail = blib.split_trailing_separator(langtext)
@@ -150,8 +148,8 @@ if args.japanese_sort_keys:
         japanese_sort_keys[pagetitle] = sort_key
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, deduped_cats_to_add, japanese_sort_keys)
+def do_process_text_on_page(p):
+    return process_text_on_page(p, deduped_cats_to_add, japanese_sort_keys)
 
 
 blib.do_pagefile_cats_refs(

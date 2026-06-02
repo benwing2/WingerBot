@@ -19,11 +19,8 @@ lang_category_namespaces = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     notes = []
 
@@ -65,14 +62,14 @@ def process_text_on_page(index, pagetitle, text):
                 origlink = link
 
                 def canonicalize_part(part, match_case_to_pagetitle=False):
-                    part = part.replace("_", " ").replace("{{PAGENAME}}", pagetitle)
-                    if match_case_to_pagetitle and pagetitle not in part:
-                        if pagetitle in blib.ucfirst(part):
+                    part = part.replace("_", " ").replace("{{PAGENAME}}", p.title)
+                    if match_case_to_pagetitle and p.title not in part:
+                        if p.title in blib.ucfirst(part):
                             part = blib.ucfirst(part)
-                        elif pagetitle in blib.lcfirst(part):
+                        elif p.title in blib.lcfirst(part):
                             part = blib.lcfirst(part)
-                    if len(pagetitle) >= 3:
-                        return part.replace(pagetitle, "\1").replace("+", r"\+").replace("\1", "+")
+                    if len(p.title) >= 3:
+                        return part.replace(p.title, "\1").replace("+", r"\+").replace("\1", "+")
                     else:
                         return part.replace("+", r"\+")
                     return part
@@ -91,7 +88,7 @@ def process_text_on_page(index, pagetitle, text):
                     link = blib.ucfirst(link)
                     label = None
                 if "#" in link and fragment:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw both # in link '%s' and section=%s, ignoring section: %s"
                         % (link, fragment, str(t))
                     )
@@ -117,13 +114,13 @@ def process_text_on_page(index, pagetitle, text):
                         dab = "<dab>"
                 if label:
                     if ":" in label:
-                        pagemsg("WARNING: Colon in label '%s', needs manual review: %s" % (label, str(t)))
+                        p.msg("WARNING: Colon in label '%s', needs manual review: %s" % (label, str(t)))
                     # Check for pipe trick reductions
                     if label != "+" and (
                         re.search("^" + re.escape(label) + r" \(.*\)$", link)
                         or ("," not in label and re.search("^" + re.escape(label) + ",.*$", link))
                     ):
-                        pagemsg("NOTE: Applying pipe trick to link '%s', label '%s': %s" % (link, label, str(t)))
+                        p.msg("NOTE: Applying pipe trick to link '%s', label '%s': %s" % (link, label, str(t)))
                         label = ""
                     return "[[%s%s|%s]]%s" % (link, "#" + fragment if fragment else "", label, dab)
                 if fragment:
@@ -131,9 +128,9 @@ def process_text_on_page(index, pagetitle, text):
                 if re.search(",[^ ]", link):
                     return "[[%s]]%s" % (link, dab)
                 if ":" in link:
-                    pagemsg("WARNING: Colon in link '%s', needs manual review: %s" % (link, str(t)))
+                    p.msg("WARNING: Colon in link '%s', needs manual review: %s" % (link, str(t)))
                     if re.search("^[a-z][a-z-]+:[^ ]", link):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Link '%s' looks to have Wikimedia lang prefix, needs manual review: %s"
                             % (link, str(t))
                         )
@@ -143,10 +140,10 @@ def process_text_on_page(index, pagetitle, text):
                 return link + dab
 
             if (cat or cat2) and link2:
-                pagemsg("WARNING: Both category and article specified, can't handle: %s" % str(t))
+                p.msg("WARNING: Both category and article specified, can't handle: %s" % str(t))
                 continue
             if portal and link2:
-                pagemsg("WARNING: Both portal and article specified, can't handle: %s" % str(t))
+                p.msg("WARNING: Both portal and article specified, can't handle: %s" % str(t))
                 continue
 
             catparam = None
@@ -190,7 +187,7 @@ def process_text_on_page(index, pagetitle, text):
                     "sc",
                     "section",
                 ]:
-                    pagemsg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
+                    p.msg("WARNING: Unrecognized param %s=%s" % (pn, str(param.value)))
                     must_continue = True
                     break
             if must_continue:

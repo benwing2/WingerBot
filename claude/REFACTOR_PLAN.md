@@ -69,7 +69,8 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `dutch/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
 | `armenian/` | 1 | ✅ DONE | no Python files with process_text_on_page |
 | `aromanian/` | 1 | ✅ DONE | 1 file auto-refactored; no manual fixes needed |
-| Top-level `*.py` | ~70 | ⬜ TODO | Do last; many small independent files |
+| Top-level `*.py` [a-d] | ~51 | ✅ DONE | 51 files auto-refactored; manual fixes: add_bg_be_hi_infl/add_rfinfl/add_topic_cats (extra-param sigs→(p,...)); add_dot_to_etydate/place/add_lang_to_accent_qualifier/add_reconstructed/analyze_accent_qualifier/clean_pos_templates/clean_form_of_data_module/convert_alt_forms_data_module/convert_topic_cat_data_module (text=p.text); blib.split_text_into_sections(text→p.text) in 6 files; clean_bad_inflection_tags/compute_form_of_freq (OLD-CALL); convert_translation_to_multi (invalid def p.msg removed; text=p.text); clean_label_module/convert_letter_headwords/copy_femeq_to_masc (bare index→p.index); clean_etym_text/add_bor_to_desc (first text→p.text); clean_lang_form_of (text=p.text before loop) |
+| Top-level `*.py` [e-z] | ~144 | ⬜ TODO | Do last; many small independent files |
 
 ## Workflow for each directory
 

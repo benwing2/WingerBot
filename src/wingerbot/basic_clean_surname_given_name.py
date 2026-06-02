@@ -9,17 +9,14 @@ name_templates = ["surname", "given name"]
 name_template_re = "(?:%s)" % "|".join(name_templates)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p):
+    origtext = p.text
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
+    if blib.page_should_be_ignored(p.title):
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -33,13 +30,13 @@ def process_text_on_page(index, pagetitle, text):
             aval = getp("A")
             if lang != "en":
                 if aval in ["A", "a", "An", "an"]:
-                    pagemsg("Remove redundant article A=%s in {{%s|%s}}: %s" % (aval, tn, lang, str(t)))
+                    p.msg("Remove redundant article A=%s in {{%s|%s}}: %s" % (aval, tn, lang, str(t)))
                     notes.append("remove redundant article A=%s in {{%s|%s}}" % (aval, tn, lang))
                     rmparam(t, "A")
                 else:
                     m = re.search("^(A|An) +(.*)$", aval)
                     if m:
-                        pagemsg(
+                        p.msg(
                             "Change explicit article A=%s to lowercase in non-English {{%s|%s}}: %s"
                             % (aval, tn, lang, str(t))
                         )
@@ -50,7 +47,7 @@ def process_text_on_page(index, pagetitle, text):
                         t.add("A", aval)
 
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     text = str(parsed)
     lines = text.split("\n")
@@ -68,7 +65,7 @@ def process_text_on_page(index, pagetitle, text):
                         return getparam(t, param).strip()
 
                     if lang is not None:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw more than one {{surname}}/{{given name}} template on line: <from> %s <to> %s <end>"
                             % (line, line)
                         )
@@ -79,14 +76,14 @@ def process_text_on_page(index, pagetitle, text):
             if must_continue:
                 continue
             if lang is None:
-                pagemsg("WARNING: No templates on line with {{surname}}/{{given name}}?: %s" % line)
+                p.msg("WARNING: No templates on line with {{surname}}/{{given name}}?: %s" % line)
                 continue
             if lang != "en":
                 origline = line
                 line = line.strip()
                 if line.endswith(".") and not line.endswith("etc."):
                     line = line[:-1]
-                    pagemsg("Replaced line #%s <%s> with <%s>" % (lineno + 1, origline, line))
+                    p.msg("Replaced line #%s <%s> with <%s>" % (lineno + 1, origline, line))
                     lines[lineno] = line
                     notes.append("remove final dot from non-English {{%s|%s}} line" % (tn, lang))
             m = re.search(
@@ -99,13 +96,13 @@ def process_text_on_page(index, pagetitle, text):
                 name_lang = name_lang.strip()
                 en_lang = en_lang.strip()
                 if name_lang == "en":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw English {{surname}}/{{given name}} line with English-equivalent name: <from> %s <to> %s <end>"
                         % (line, line)
                     )
                     continue
                 if name_lang == en_lang:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw non-English {{surname}}/{{given name}} line with English-equivalent name using the same language '%s', assuming should be English: %s"
                         % (en_lang, line)
                     )
@@ -117,14 +114,14 @@ def process_text_on_page(index, pagetitle, text):
                     xlit_param = "eq"
                     xlit = "%s:%s" % (en_lang, en_name)
                 if namet.has(xlit_param):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Would incorporate English or other-language borrowing '%s' as %s=%s but param already exists: %s"
                         % (en_name, xlit_param, xlit, line)
                     )
                     continue
                 origline = line
                 line = "%s%s|%s=%s}}%s" % (beginning, name_template, xlit_param, xlit, rest)
-                pagemsg("Replaced line #%s <%s> with <%s>" % (lineno + 1, origline, line))
+                p.msg("Replaced line #%s <%s> with <%s>" % (lineno + 1, origline, line))
                 lines[lineno] = line
                 notes.append(
                     "incorporate English or other-language borrowing '%s' of non-English {{%s|%s}} line"
@@ -137,7 +134,7 @@ def process_text_on_page(index, pagetitle, text):
                 # this is common enough and should remain
                 continue
             if len(templates) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple templates on line with {{surname}}/{{given name}}: <from> %s <to> %s <end>"
                     % (line, line)
                 )

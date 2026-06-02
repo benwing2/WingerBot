@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, site, tname
 
 sv_verb_templates_with_plural_of = [
     "sv-verb-form-imp",
@@ -49,13 +49,10 @@ def init_all_templates(move_dot):
     )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     templates_to_replace = []
 
@@ -142,8 +139,9 @@ def process_text_on_page(index, pagetitle, text):
                     )
                 )
 
+    text = p.text
     for curr_template, repl_template, note in templates_to_replace:
-        text, replaced = blib.replace_in_text(text, curr_template, repl_template, pagemsg)
+        text, replaced = blib.replace_in_text(text, curr_template, repl_template, p.msg)
         if replaced:
             notes.append(note)
     # end original process_page() code

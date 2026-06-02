@@ -1202,7 +1202,7 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                                             "",
                                             pv,
                                             pagemsg,
-                                            expand_text,
+                                            p.expand_text,
                                             in_multitrans,
                                         )
                                         pagemsg(
@@ -1231,26 +1231,26 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
         return line
 
 
-def process_text_on_page(index, pagename, text):
+def process_text_on_page(p):
     notes = []
 
-    origtext = text
+    origtext = p.text
     new_lines = []
-    lines = text.split("\n")
+    lines = p.text.split("\n")
     in_translation_section = False
     in_translation_box = False
     in_multitrans = False
     subsection_header = None
     translation_lines = None
 
-    for lineind, line in enumerate(lines):
+    for lineno, line in enumerate(lines, start=1):
         origline = line
 
         def pagemsg(txt):
-            msg("Page %s %s: Line %s: %s: line = <begin> %s <end>" % (index, pagename, lineind + 1, txt, origline))
+            p.msg("Line %s: %s: line = <begin> %s <end>" % (lineno, txt, origline))
 
         def expand_text(tempcall):
-            return blib.expand_text(tempcall, pagename, pagemsg, args.verbose)
+            return blib.expand_text(tempcall, p.title, pagemsg, args.verbose)
 
         m = re.search(r"^==+([^=\n]+)==+[ \t]*$", line)
         if m:
@@ -1308,15 +1308,9 @@ def process_text_on_page(index, pagename, text):
     return "\n".join(new_lines), notes
 
 
-#def process_text_on_page(index, pagetitle, text):
-#    def pagemsg(txt):
-#        msg("Page %s %s: %s" % (index, pagetitle, txt))
-#
-#    def expand_text(tempcall):
-#        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-#
+#def process_text_on_page(p):
 #    def make_inline_mod(key, val):
-#        return make_inline_modifier(key, val, pagemsg)
+#        return make_inline_modifier(key, val, p.msg)
 #
 #    def extract_left_and_right_qualifiers_and_genders(line):
 #        left_qual = []
@@ -1759,7 +1753,7 @@ def process_text_on_page(index, pagename, text):
 #            vals[-1] += convert_quals(right_qual, False, "<pos:" in vals[-1], "<g:" in vals[-1])
 #        if exterior_genders:
 #            if "<g:" in vals[-1]:
-#                pagemsg("WARNING: Saw both interior and exterior genders, trying to combine")
+#                p.msg("WARNING: Saw both interior and exterior genders, trying to combine")
 #                vals[-1] = re.sub(
 #                    "(<g:.*?)>",
 #                    r"\1,%s>" % escape_inline_val(",".join(exterior_genders)),
@@ -1769,7 +1763,7 @@ def process_text_on_page(index, pagename, text):
 #                vals[-1] += make_inline_mod("g", ",".join(exterior_genders))
 #        if right_gloss:
 #            if "<t:" in vals[-1]:
-#                pagemsg("WARNING: Saw both interior and exterior glosses, trying to combine")
+#                p.msg("WARNING: Saw both interior and exterior glosses, trying to combine")
 #                vals[-1] = re.sub(
 #                    "(<t:.*?)>",
 #                    r"\1; %s>" % escape_inline_val("; ".join(right_gloss)),
@@ -1781,14 +1775,14 @@ def process_text_on_page(index, pagename, text):
 #
 #    notes = []
 #
-#    secs = blib.split_text_into_sections(text, pagemsg)
+#    secs = blib.split_text_into_sections(p.text, p.msg)
 #    sections = secs.sections
 #    for j, langname in secs.lang_list:
 #        if langname not in lang_data.languages_by_canonical_name:
-#            pagemsg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
+#            p.msg("WARNING: Unknown language name %s, skipping section %s" % (langname, j // 2))
 #            continue
 #        langcode = lang_data.languages_by_canonical_name[langname]["code"]
-#        subsecs = blib.split_text_into_subsections(sections[j], pagemsg)
+#        subsecs = blib.split_text_into_subsections(sections[j], p.msg)
 #        for k, header in subsecs.header_list:
 #            if args.do_col and re.search(r"\{\{ *col[0-9]* *\|", subsecs.subsections[k]):
 #                parsed = blib.parse_text(subsecs.subsections[k])
@@ -1820,11 +1814,11 @@ def process_text_on_page(index, pagename, text):
 #                                    False,
 #                                    langcode,
 #                                    langname,
-#                                    pagemsg,
-#                                    expand_text,
+#                                    p.msg,
+#                                    p.expand_text,
 #                                )
 #                                if type(newparts) is str:
-#                                    pagemsg("WARNING: %s, not changing: %s" % (newparts, pv.strip()))
+#                                    p.msg("WARNING: %s, not changing: %s" % (newparts, pv.strip()))
 #                                elif newparts is not None:
 #                                    newmaintext = construct_line_with_quals(
 #                                        newparts,
@@ -1836,7 +1830,7 @@ def process_text_on_page(index, pagename, text):
 #                                    )
 #                                    newpv = beginspace + newmaintext + endspace
 #                                    numchangedrows += 1
-#                                    pagemsg(
+#                                    p.msg(
 #                                        "Replaced %s=<%s> with <%s> in {{%s|%s}} in ==%s=="
 #                                        % (
 #                                            pn,
@@ -1884,7 +1878,7 @@ def process_text_on_page(index, pagename, text):
 #                            break
 #                    total_processable_lines = len(raw_col_lines)
 #                    if total_processable_lines < args.min_derived_related_lines:
-#                        pagemsg(
+#                        p.msg(
 #                            "Saw only %s element%s in ==%s==, can't convert to {{col}}"
 #                            % (
 #                                total_processable_lines,
@@ -1908,7 +1902,7 @@ def process_text_on_page(index, pagename, text):
 #                    raw_col_lines.append(line)
 #                    if args.do_derived_related and not line.startswith("*"):
 #                        if len(col_elements) < args.min_derived_related_lines:
-#                            pagemsg(
+#                            p.msg(
 #                                "Processed %s element%s out of %s in ==%s== before getting to an unconvertible element"
 #                                % (
 #                                    len(col_elements),
@@ -1927,13 +1921,13 @@ def process_text_on_page(index, pagename, text):
 #                            continue
 #                        else:
 #                            no_sort_param = ""
-#                            if pagetitle in no_sort_lists:
-#                                for no_sort_lang, no_sort_firstel in no_sort_lists[pagetitle]:
+#                            if p.title in no_sort_lists:
+#                                for no_sort_lang, no_sort_firstel in no_sort_lists[p.title]:
 #                                    if no_sort_lang == langcode:
 #                                        if no_sort_firstel == col_elements[0][1:]:
 #                                            no_sort_param = "|sort=0"
 #                                        else:
-#                                            pagemsg(
+#                                            p.msg(
 #                                                "WARNING: Found no-sort directive matching langcode '%s' but specified first element '%s' didn't match actual first element '%s'"
 #                                                % (
 #                                                    langcode,
@@ -1962,7 +1956,7 @@ def process_text_on_page(index, pagename, text):
 #                    m = re.search("^\{\{ *((?:col-)?bottom) *\|", line.strip())
 #                    if m:
 #                        if not cant_convert:
-#                            pagemsg(
+#                            p.msg(
 #                                "WARNING: Saw {{%s}} with params, can't convert to {{col}}: %s" % (m.group(1), origline)
 #                            )
 #                        newlines.extend(raw_col_lines)
@@ -2005,26 +1999,26 @@ def process_text_on_page(index, pagename, text):
 #                    if cant_convert:
 #                        continue
 #                    if not line.startswith("*"):
-#                        pagemsg("WARNING: Non-bulleted line, can't convert to {{col}} (yet?): %s" % line)
+#                        p.msg("WARNING: Non-bulleted line, can't convert to {{col}} (yet?): %s" % line)
 #                        cant_convert = True
 #                        continue
 #                    if re.search(r"\{\{ *desc *\|", line):
-#                        pagemsg("WARNING: Line with {{desc}}, can't convert to {{col}}: %s" % line)
+#                        p.msg("WARNING: Line with {{desc}}, can't convert to {{col}}: %s" % line)
 #                        cant_convert = True
 #                        continue
 #                    if re.search(r"\{\{ *desctree *\|", line):
-#                        pagemsg("WARNING: Line with {{desctree}}, can't convert to {{col}}: %s" % line)
+#                        p.msg("WARNING: Line with {{desctree}}, can't convert to {{col}}: %s" % line)
 #                        cant_convert = True
 #                        continue
 #                    m = re.search(r"^(\*+)(.*)$", line)
 #                    if not m:
-#                        pagemsg("WARNING: INTERNAL ERROR: Line doesn't have a term after a single bullet: %s" % line)
+#                        p.msg("WARNING: INTERNAL ERROR: Line doesn't have a term after a single bullet: %s" % line)
 #                        cant_convert = True
 #                        continue
 #                    origline = line
 #                    number_of_bullets, line = m.groups()
 #                    if re.search("^[:#]", line):
-#                        pagemsg("WARNING: Saw *: or *# at beginning of line, can't convert to {{col}}: %s" % origline)
+#                        p.msg("WARNING: Saw *: or *# at beginning of line, can't convert to {{col}}: %s" % origline)
 #                        cant_convert = True
 #                        continue
 #                    if len(number_of_bullets) == 1:
@@ -2032,19 +2026,19 @@ def process_text_on_page(index, pagename, text):
 #                    else:
 #                        bullet_prefix = number_of_bullets[1:] + " "
 #                    line = line.strip()
-#                    bulleted_line = escape_template_delimiters(bullet_prefix + line, pagemsg)
+#                    bulleted_line = escape_template_delimiters(bullet_prefix + line, p.msg)
 #                    if re.search(
 #                        r"\{\{ *(ja-l|ja-r|ja-r/args|ryu-l|ryu-r|ryu-r/args|ko-l|zh-l|vi-l|he-l) *\|",
 #                        line,
 #                    ):
-#                        pagemsg(
+#                        p.msg(
 #                            "WARNING: Unable to convert specialized Asian linking template to {{col}} format, inserting raw: %s"
 #                            % origline
 #                        )
 #                        col_elements.append("|%s" % bulleted_line)
 #                        continue
 #                    if re.search(r"\{\{ *(vern|taxfmt|taxlink) *\|", line):
-#                        pagemsg(
+#                        p.msg(
 #                            "WARNING: Unable to convert specialized taxonomy linking template to {{col}} format, inserting raw: %s"
 #                            % origline
 #                        )
@@ -2054,10 +2048,10 @@ def process_text_on_page(index, pagename, text):
 #                    def handle_parse_error(reason):
 #                        nonlocal cant_convert
 #                        if re.search(match_link_template_re, line):
-#                            pagemsg("WARNING: %s and line has templated link, inserting raw: %s" % (reason, origline))
+#                            p.msg("WARNING: %s and line has templated link, inserting raw: %s" % (reason, origline))
 #                            col_elements.append("|%s" % bulleted_line)
 #                        else:
-#                            pagemsg(
+#                            p.msg(
 #                                "WARNING: %s and no templated link present, can't convert to {{col}}: %s"
 #                                % (reason, origline)
 #                            )
@@ -2071,7 +2065,7 @@ def process_text_on_page(index, pagename, text):
 #                        right_gloss,
 #                        line_comment,
 #                    ) = extract_left_and_right_qualifiers_and_genders(line)
-#                    els, this_new_notes = convert_one_line(line, True, langcode, langname, pagemsg, expand_text)
+#                    els, this_new_notes = convert_one_line(line, True, langcode, langname, p.msg, p.expand_text)
 #                    if type(els) is str:
 #                        handle_parse_error(els)
 #                    elif els is None:
@@ -2119,7 +2113,7 @@ def process_text_on_page(index, pagename, text):
 #                    else:
 #                        newlines.append(line)
 #            if in_col_top:
-#                pagemsg("WARNING: Saw {{col-top}} without closing {{col-bottom}}")
+#                p.msg("WARNING: Saw {{col-top}} without closing {{col-bottom}}")
 #                newlines.extend(raw_col_lines)
 #            subsecs.subsections[k] = "\n".join(x for x in newlines if x != "\ufff0")  # exclude sentinel
 #        sections[j] = "".join(subsecs.subsections)

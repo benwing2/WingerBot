@@ -3,17 +3,12 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     new_lines = []
+    text = p.text
     lines = text.split("\n")
     label = None
 
@@ -25,11 +20,11 @@ def process_text_on_page(index, pagename, text):
         origline = line
 
         def linemsg(txt):
-            pagemsg("Line %s: %s: %s" % (lineno, txt, origline.strip()))
+            p.msg("Line %s: %s: %s" % (lineno, txt, origline.strip()))
 
         if line.startswith("labels["):
             if label:
-                errandpagemsg("WARNING: Saw nested labels on line %s, can't handle file" % lineno)
+                p.errandmsg("WARNING: Saw nested labels on line %s, can't handle file" % lineno)
                 return
             label_lineno = lineno
             typ = None

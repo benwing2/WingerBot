@@ -77,11 +77,9 @@ lang_for_special_pages = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
+    text = p.text
 
     accent_template_re = r"\{\{ *(a|accent) *\|"
     if not re.search(accent_template_re, text):
@@ -110,7 +108,7 @@ def process_text_on_page(index, pagetitle, text):
                     accent_lang = getparam(accent_t, "1")
                     pron_lang = getparam(pron_t, "1")
                     if accent_lang != pron_lang:
-                        pagemsg(
+                        p.msg(
                             "WARNING: {{%s}} lang '%s' disagrees with {{%s}} lang '%s', not changing: %s"
                             % (tname(accent_t), accent_lang, tnpron, pron_lang, line)
                         )
@@ -122,7 +120,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     a_param_name = "aa"
                 if getparam(pron_t, a_param_name):
-                    pagemsg("WARNING: Already saw %s= in {{%s}}, not changing: %s" % (a_param_name, tnpron, line))
+                    p.msg("WARNING: Already saw %s= in {{%s}}, not changing: %s" % (a_param_name, tnpron, line))
                     return m.group(0)
                 a_param = ",".join(x.strip() for x in accents)
                 pron_t.add(a_param_name, a_param)
@@ -166,7 +164,7 @@ def process_text_on_page(index, pagetitle, text):
                     accents = blib.fetch_param_chain(accent_t, "2")
                     accent_lang = getparam(accent_t, "1")
                     if accent_lang != "en":
-                        pagemsg(
+                        p.msg(
                             "WARNING: {{%s}} lang '%s' not 'en', conflicting with {{enPR}}, not changing: %s"
                             % (tname(accent_t), accent_lang, line)
                         )
@@ -178,7 +176,7 @@ def process_text_on_page(index, pagetitle, text):
                 else:
                     a_param_name = "aa"
                 if getparam(enPR_t, a_param_name):
-                    pagemsg("WARNING: Already saw %s= in {{enPR}}, not changing: %s" % (a_param_name, line))
+                    p.msg("WARNING: Already saw %s= in {{enPR}}, not changing: %s" % (a_param_name, line))
                     return m.group(0)
                 a_param = ",".join(x.strip() for x in accents)
                 enPR_t.add(a_param_name, a_param)
@@ -196,7 +194,7 @@ def process_text_on_page(index, pagetitle, text):
                 newline,
             )
             if newline != line:
-                pagemsg("Replace <%s> with <%s>" % (line, newline))
+                p.msg("Replace <%s> with <%s>" % (line, newline))
                 lines[i] = newline
         sectext = "\n".join(lines)
 
@@ -204,7 +202,7 @@ def process_text_on_page(index, pagetitle, text):
         for i, line in enumerate(lines):
             if not re.search(accent_template_re, line):
                 continue
-            pagemsg("Accent template remains on section line %s: %s" % (i + 1, line))
+            p.msg("Accent template remains on section line %s: %s" % (i + 1, line))
             parsed = blib.parse_text(line)
             for t in parsed.filter_templates():
                 origt = str(t)
@@ -216,38 +214,38 @@ def process_text_on_page(index, pagetitle, text):
                 elif tn in accent_templates:
                     numbered_params = blib.fetch_param_chain(t, "1")
                     if not numbered_params:
-                        pagemsg("WARNING: No params: %s" % str(t))
+                        p.msg("WARNING: No params: %s" % str(t))
                         continue
                     param1 = numbered_params[0]
                     if args.skip_already_done and param1 in lang_data.languages_by_code and len(numbered_params) > 1:
-                        pagemsg("Skipping likely already-done template: %s" % str(t))
+                        p.msg("Skipping likely already-done template: %s" % str(t))
                         continue
                     must_continue = False
                     for param in t.params:
                         pn = pname(param)
                         if not re.search("^[0-9]+$", pn):
-                            pagemsg("WARNING: Unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
+                            p.msg("WARNING: Unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
                             must_continue = True
                             break
                     if not thislangcode:
-                        if "Todo/Westrobothnian" in pagetitle:
-                            pagemsg("Westrobothnian TODO, using 'und' as langcode")
+                        if "Todo/Westrobothnian" in p.title:
+                            p.msg("Westrobothnian TODO, using 'und' as langcode")
                             thislangcode = "und"
                             notes.append("use 1=%s for {{%s}} in Westrobothnian TODO page" % (thislangcode, tn))
-                        elif "Appendix:Kotava" in pagetitle:
-                            pagemsg("Kotava appendix, using 'en' as langcode")
+                        elif "Appendix:Kotava" in p.title:
+                            p.msg("Kotava appendix, using 'en' as langcode")
                             thislangcode = "en"
                             notes.append("use 1=%s for {{%s}} in Kotava appendix page" % (thislangcode, tn))
-                        elif pagetitle in lang_for_special_pages:
-                            thislangcode = lang_for_special_pages[pagetitle]
-                            pagemsg("Recognized special page, using '%s' as langcode" % thislangcode)
+                        elif p.title in lang_for_special_pages:
+                            thislangcode = lang_for_special_pages[p.title]
+                            p.msg("Recognized special page, using '%s' as langcode" % thislangcode)
                             notes.append("use 1=%s for {{%s}} in specially recognized page" % (thislangcode, tn))
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Unrecognized language %s, unable to add language: %s" % (langname, str(t))
                             )
                             continue
-                    elif pagetitle.startswith("Rhymes:"):
+                    elif p.title.startswith("Rhymes:"):
                         notes.append("infer 1=%s for {{%s}} based on page title" % (thislangcode, tn))
                     else:
                         notes.append("infer 1=%s for {{%s}} based on section it's in" % (thislangcode, tn))
@@ -255,32 +253,32 @@ def process_text_on_page(index, pagetitle, text):
                     del t.params[:]
                     t.add("1", thislangcode)
                     blib.set_param_chain(t, numbered_params, "2")
-                    pagemsg("Replace <%s> with <%s>" % (origt, str(t)))
+                    p.msg("Replace <%s> with <%s>" % (origt, str(t)))
             line = str(parsed)
         sectext = "\n".join(lines)
 
         return sectext, langnamecode
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    if pagetitle.startswith("Rhymes:"):
-        m = re.search("^Rhymes:(.*?)/.*$", pagetitle)
+    if p.title.startswith("Rhymes:"):
+        m = re.search("^Rhymes:(.*?)/.*$", p.title)
         if not m:
-            m = re.search("^Rhymes:(.*)$", pagetitle)
+            m = re.search("^Rhymes:(.*)$", p.title)
         assert m
         newtext, _ = hack_templates(text, m.group(1))
-    elif pagetitle.startswith("Appendix:"):
+    elif p.title.startswith("Appendix:"):
         newtext, _ = hack_templates(text, "Unknown")
     else:
-        secs = blib.split_text_into_sections(text, pagemsg)
+        secs = blib.split_text_into_sections(text, p.msg)
         sections = secs.sections
-        if not pagetitle.startswith("Citations"):
+        if not p.title.startswith("Citations"):
             for j, langname in secs.lang_list:
                 sections[j], _ = hack_templates(sections[j], langname)
             newtext = "".join(sections)
         else:
             # Citation section?
-            secs = blib.split_text_into_sections(text, pagemsg)
+            secs = blib.split_text_into_sections(text, p.msg)
             sections = secs.sections
             sections[0], langnamecode = hack_templates(sections[0], "Unknown", langnamecode=None, is_citation=True)
             for j, langname in secs.lang_list:

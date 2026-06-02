@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import tname
 
 
-def process_text_on_page(pageindex, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    subsecs = blib.split_text_into_subsections(text, pagemsg)
+    subsecs = blib.split_text_into_subsections(p.text, p.msg)
     if "Antonyms" in subsecs.subsections_by_header:
         for secno in subsecs.subsections_by_header["Antonyms"]:
             parsed = blib.parse_text(subsecs.subsections[secno])
@@ -22,12 +17,12 @@ def process_text_on_page(pageindex, pagetitle, text):
                 tn = tname(t)
                 if tn == "sense":
                     blib.set_template_name(t, "antsense")
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("{{sense}} -> {{antsense}} in Antonyms section")
                     changed = True
                 if tn == "s":
                     blib.set_template_name(t, "as")
-                    pagemsg("Replaced %s with %s" % (origt, str(t)))
+                    p.msg("Replaced %s with %s" % (origt, str(t)))
                     notes.append("{{s}} -> {{as}} in Antonyms section")
                     changed = True
             if changed:

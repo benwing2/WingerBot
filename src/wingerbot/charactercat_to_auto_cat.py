@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 lang_data = lang_utils.get_lang_data()
 
@@ -13,18 +13,12 @@ def one_char(t):
     return len(t) == 1
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
@@ -32,9 +26,9 @@ def process_text_on_page(index, pagetitle, text):
             blib.set_template_name(t, "auto cat")
             notes.append("{{autocat}} -> {{auto cat}}")
         elif tn == "charactercat":
-            m = re.search("^Category:(.*) terms spelled with (.*)$", pagetitle)
+            m = re.search("^Category:(.*) terms spelled with (.*)$", p.title)
             if not m:
-                pagemsg("WARNING: Can't parse page title")
+                p.msg("WARNING: Can't parse page title")
                 continue
             langname, char = m.groups()
             t_lang = getparam(t, "1")
@@ -44,12 +38,12 @@ def process_text_on_page(index, pagetitle, text):
             t_context = getparam(t, "context")
             t_context2 = getparam(t, "context2")
             if langname not in lang_data.languages_by_canonical_name:
-                pagemsg("WARNING: Unrecognized language name: %s" % langname)
+                p.msg("WARNING: Unrecognized language name: %s" % langname)
                 continue
             if not t_lang:
                 t_lang = lang_data.languages_by_canonical_name[langname]["code"]
             elif lang_data.languages_by_canonical_name[langname]["code"] != t_lang:
-                pagemsg(
+                p.msg(
                     "WARNING: Auto-determined code %s for language name %s != manually specified %s"
                     % (lang_data.languages_by_canonical_name[langname]["code"], langname, t_lang)
                 )
@@ -58,35 +52,35 @@ def process_text_on_page(index, pagetitle, text):
                 t_char = None
             if langname in ["Japanese", "Okinawan"]:
                 if not one_char(char):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Japanese/Okinawan category with multichar character (length %s), skipping: %s"
                         % (len(char), str(t))
                     )
                     continue
                 if t_char:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Japanese/Okinawan category with manual char %s != automatic char: %s"
                         % (t_char, str(t))
                     )
                 if not t_sort:
-                    pagemsg("WARNING: Japanese/Okinawan category without manual sort key: %s" % str(t))
+                    p.msg("WARNING: Japanese/Okinawan category without manual sort key: %s" % str(t))
                 else:
-                    autosort = expand_text("{{#invoke:zh-sortkey/templates|sortkey|%s|%s}}" % (t_char or char, t_lang))
+                    autosort = p.expand_text("{{#invoke:zh-sortkey/templates|sortkey|%s|%s}}" % (t_char or char, t_lang))
                     if autosort == t_sort:
                         t_sort = None
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Japanese/Okinawan category with manual sort key %s != automatic %s: %s"
                             % (t_sort, autosort, str(t))
                         )
             elif t_sort:
-                autosort = expand_text(
+                autosort = p.expand_text(
                     "{{#invoke:languages/templates|getByCode|%s|makeSortKey|%s}}" % (t_lang, t_char or char)
                 )
                 if autosort == t_sort:
                     t_sort = None
                 else:
-                    pagemsg(
+                    p.msg(
                         "%s category with manual sort key %s != automatic %s: %s" % (langname, t_sort, autosort, str(t))
                     )
 
@@ -95,7 +89,7 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn not in all_existing_params:
-                    pagemsg("WARNING: Unrecognized param %s=%s in charactercat: %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Unrecognized param %s=%s in charactercat: %s" % (pn, str(param.value), str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -116,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("convert {{%s}} to {{auto cat}}" % tn)
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

@@ -3,17 +3,12 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, site, tname
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     notes = []
+    text = p.text
 
     new_lines = []
     lines = text.split("\n")
@@ -26,11 +21,11 @@ def process_text_on_page(index, pagename, text):
         origline = line
 
         def linemsg(txt):
-            pagemsg("Line %s: %s: %s" % (lineno, txt, origline.strip()))
+            p.msg("Line %s: %s: %s" % (lineno, txt, origline.strip()))
 
         if line.startswith("tags["):
             if tag:
-                errandpagemsg("WARNING: Saw nested tags on line %s, can't handle file" % lineno)
+                p.errandmsg("WARNING: Saw nested tags on line %s, can't handle file" % lineno)
                 return
             tag_lineno = lineno
             tag_type = {}

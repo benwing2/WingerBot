@@ -39,13 +39,11 @@ lang_data = lang_utils.get_lang_data()
 etym_lang_data = lang_utils.get_etym_lang_data()
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
+    text = p.text
     if not re.search(r"\{\{ *(IPA|a(ccent)?) *\|", text):
         return
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, p.msg)
     sections = secs.sections
 
     def record_qual_and_lang(qual, lang):
@@ -53,9 +51,9 @@ def process_text_on_page(index, pagename, text):
         qualifiers_by_lang[qual][lang] += 1
         if not too_many_pages_for_qualifiers_by_lang[qual][lang]:
             pageset = pages_for_qualifiers_by_lang[qual][lang]
-            if pagename not in pageset:
+            if p.title not in pageset:
                 if len(pageset) < 10 or (qual, lang) in qualifiers_to_enumerate:
-                    pageset.add(pagename)
+                    pageset.add(p.title)
                 else:
                     too_many_pages_for_qualifiers_by_lang[qual][lang] = True
 
@@ -83,10 +81,10 @@ def process_text_on_page(index, pagename, text):
                         if pseudo_langtype:
                             pass
                             # if len(params) == 1:
-                            #  pagemsg("WARNING: Saw qualifier '%s' same as language code for %s language '%s' in lang section '%s' but only one qualifier: %s" % (
+                            #  p.msg("WARNING: Saw qualifier '%s' same as language code for %s language '%s' in lang section '%s' but only one qualifier: %s" % (
                             #    param, pseudo_langtype, pseudo_langname, lang, str(t)))
                             # else:
-                            #  pagemsg("WARNING: Saw qualifier '%s' same as language code for %s language '%s' in lang section '%s' and multiple qualifiers: %s" % (
+                            #  p.msg("WARNING: Saw qualifier '%s' same as language code for %s language '%s' in lang section '%s' and multiple qualifiers: %s" % (
                             #    param, pseudo_langtype, pseudo_langname, lang, str(t)))
                     record_qual_and_lang(param, lang)
             if tn == "IPA":

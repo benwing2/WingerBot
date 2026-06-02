@@ -8,10 +8,7 @@ borrowed_langs = {}
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
     def hack_templates(parsed, langname, subsectitle, langnamecode=None, is_citation=False):
@@ -34,16 +31,16 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("Convert language=%s to lang=%s in %s" % (lang, lang, tn))
                 else:
                     if subsectitle.startswith("Etymology") or subsectitle.startswith("Pronunciation"):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Found template in %s section for language %s, might be different language, skipping: %s"
                             % (subsectitle, langname, origt)
                         )
                         continue
                     if not langnamecode:
-                        pagemsg("WARNING: Unrecognized language %s, unable to add language to %s" % (langname, tn))
+                        p.msg("WARNING: Unrecognized language %s, unable to add language to %s" % (langname, tn))
                         continue
                     if langnamecode == "en" and (getparam(t, "translation") or getparam(t, "t")):
-                        pagemsg("WARNING: Translation section in putative English quote, skipping: %s" % origt)
+                        p.msg("WARNING: Translation section in putative English quote, skipping: %s" % origt)
                         continue
                     if langnamecode == "mul":
                         notes.append("infer lang=en for %s in Translingual section and add termlang=mul" % tn)
@@ -70,17 +67,17 @@ def process_text_on_page(index, pagetitle, text):
                 # Put remaining parameters in order.
                 for name, value, showkey in params:
                     t.add(name, value, showkey=showkey, preserve_spacing=False)
-                pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+                p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
         return langnamecode
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
 
-    if not pagetitle.startswith("Citations"):
+    if not p.title.startswith("Citations"):
         for j, langname in secs.lang_list:
-            subsecs = blib.split_text_into_subsections(secs.sections[j], pagemsg)
+            subsecs = blib.split_text_into_subsections(secs.sections[j], p.msg)
             for k, header in subsecs.header_list:
                 parsed = blib.parse_text(subsecs.subsections[k])
                 hack_templates(parsed, langname, header)

@@ -12,12 +12,11 @@ templates = ["pos a", "pos adj", "pos adv", "pos adverb", "pos n", "pos noun", "
 pos_to_pos = {"a": "a", "adj": "a", "adv": "adv", "adverb": "adv", "n": "n", "noun": "n", "v": "v", "verb": "v"}
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
+
+    text = p.text
 
     def replace_pos(m):
         return "%s|pos=%s}}" % (m.group(1), pos_to_pos[m.group(2)])
@@ -27,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
         notes.append("move {{pos *}} inside of link")
         text = newtext
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, p.msg)
 
     for j, langname in secs.lang_list:
         if langname not in lang_data.languages_by_canonical_name:

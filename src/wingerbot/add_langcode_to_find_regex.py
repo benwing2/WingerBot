@@ -9,20 +9,17 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
 
     for j, langname in secs.lang_list:
         if langname not in lang_data.languages_by_canonical_name:
-            pagemsg("WARNING: Can't find language %s" % langname)
+            p.msg("WARNING: Can't find language %s" % langname)
             continue
         langcode = lang_data.languages_by_canonical_name[langname]["code"]
         newsectext = re.sub(r"\b%s\b" % args.langcode_var, langcode, sections[j])

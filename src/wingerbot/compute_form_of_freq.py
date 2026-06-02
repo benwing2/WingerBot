@@ -4,22 +4,19 @@ import pywikibot, re, sys, argparse
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 form_of_forms = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("WARNING: Page should be ignored")
+    if blib.page_should_be_ignored(p.title):
+        p.msg("WARNING: Page should be ignored")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "form of":
@@ -49,7 +46,7 @@ if args.textfile:
             msg("Page %s: Skipping bad text: %s" % (index, page))
             continue
         pagetitle, pagetext = split_vals
-        process_text_on_page(index, pagetitle, pagetext)
+        process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, pagetext, None))
 
     for form, count in sorted(list(form_of_forms.items()), key=lambda x: -x[1]):
         msg("%-50s = %s" % (form, count))

@@ -116,30 +116,22 @@ def combine_comments(a, b):
 existing_label_module_langs_seen = set()
 
 
-def process_text_on_page_for_label_objects(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
-    notes = []
-
+def process_text_on_page_for_label_objects(p):
     langcode = None
     langname = None
-    m = re.search("^Module:labels/data/lang/(.*)$", pagename)
+    m = re.search("^Module:labels/data/lang/(.*)$", p.title)
     if m:
         existing_label_module_langs_seen.add(m.group(1))
     if not m:
-        m = re.search("^Module:(.*):Dialects$", pagename)
+        m = re.search("^Module:(.*):Dialects$", p.title)
     if m:
         langcode = m.group(1)
         if langcode in lang_data.languages_by_code:
             langname = lang_data.languages_by_code[langcode]["canonicalName"]
         else:
-            errandpagemsg("WARNING: Can't locate language %s" % langcode)
+            p.errandmsg("WARNING: Can't locate language %s" % langcode)
 
-    lines = text.split("\n")
+    lines = p.text.split("\n")
     labels_seen = []
     indexed_labels = {}
     first_label_line = None
@@ -154,11 +146,11 @@ def process_text_on_page_for_label_objects(index, pagename, text):
         lineno = lineind + 1
 
         def linemsg(txt):
-            pagemsg("Line %s: %s" % (lineno, txt))
+            p.msg("Line %s: %s" % (lineno, txt))
 
         if re.search(r"^labels *\[", line):
             if label:
-                errandpagemsg("WARNING: Saw nested labels on line %s, can't handle file: %s" % (lineno, line))
+                p.errandmsg("WARNING: Saw nested labels on line %s, can't handle file: %s" % (lineno, line))
                 return
             m = re.search(r"^labels *\[%s\] = %s$" % (either_quote_string_re, either_quote_string_re), line.rstrip())
             if m:
@@ -184,7 +176,7 @@ def process_text_on_page_for_label_objects(index, pagename, text):
                     label_lines = []
         elif line.strip() == "}":
             if not label:
-                errandpagemsg("WARNING: Saw non-label object on line %s, can't handle file: %s" % (lineno, line))
+                p.errandmsg("WARNING: Saw non-label object on line %s, can't handle file: %s" % (lineno, line))
                 return
 
             def get_category(fieldname):
@@ -399,16 +391,10 @@ def comment_out(labelobj, dupmsg, pagemsg):
 max_label_index_seen = 0
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     global max_label_index_seen
-    max_label_index_seen = max(max_label_index_seen, index)
-    retval = process_text_on_page_for_label_objects(index, pagename, text)
+    max_label_index_seen = max(max_label_index_seen, p.index)
+    retval = process_text_on_page_for_label_objects(p)
     if retval is None:
         return
 
@@ -419,20 +405,19 @@ def process_text_on_page(index, pagename, text):
     num_new_alt_labels = 0
     labelobjs_by_label = {}
     label_is_regional = set()
-    canonical_lang_specific_label_with_regional_aliases_bleeding_through = {}
 
     for labelobj in retval.labels_seen:
         if isinstance(labelobj, LabelData):
             if labelobj.label in labelobjs_by_label:
-                pagemsg("WARNING: Saw duplicate label '%s'" % labelobj.label)
+                p.msg("WARNING: Saw duplicate label '%s'" % labelobj.label)
             else:
                 labelobjs_by_label[labelobj.label] = labelobj
             for alias in labelobj.aliases.cats:
                 if alias in labelobjs_by_label:
                     if labelobjs_by_label[alias].label == alias:
-                        pagemsg("WARNING: Saw alias '%s' of label '%s' duplicating label" % (alias, labelobj.label))
+                        p.msg("WARNING: Saw alias '%s' of label '%s' duplicating label" % (alias, labelobj.label))
                     else:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw alias '%s' of label '%s' duplicating alias of label '%s'"
                             % (alias, labelobj.label, labelobjs_by_label[alias].label)
                         )
@@ -473,27 +458,27 @@ def process_text_on_page(index, pagename, text):
                                     ",".join(lang_specific_obj.aliases.cats),
                                 )
                             )
-                            pagemsg(dupmsg)
+                            p.msg(dupmsg)
                             lang_specific_obj.lines_after.extend(
-                                comment_out(labelobj, dupmsg + "; regional label definition follows:", pagemsg)
+                                comment_out(labelobj, dupmsg + "; regional label definition follows:", p.msg)
                             )
                 else:
                     not_completely_overridden = True
             if not_completely_overridden and not any_bleed_through:
                 if labelobj.label in labelobjs_by_label:
-                    pagemsg("WARNING: Saw duplicate regional label '%s'" % labelobj.label)
+                    p.msg("WARNING: Saw duplicate regional label '%s'" % labelobj.label)
                 else:
                     labelobjs_by_label[labelobj.label] = labelobj
                     label_is_regional.add(labelobj.label)
                 for alias in labelobj.aliases.cats:
                     if alias in labelobjs_by_label:
                         if labelobjs_by_label[alias].label == alias:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw alias '%s' of regional label '%s' duplicating regional label"
                                 % (alias, labelobj.label)
                             )
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw alias '%s' of regional label '%s' duplicating alias of regional label '%s'"
                                 % (alias, labelobj.label, labelobjs_by_label[alias].label)
                             )
@@ -531,22 +516,22 @@ def process_text_on_page(index, pagename, text):
                                     ),
                                 )
                             )
-                            pagemsg(dupmsg)
+                            p.msg(dupmsg)
                             canon_labels_duplicating[existing.label].add(labelobj.label)
                             if lines_before_label:
                                 retval.labels_seen.append(lines_before_label)
                             else:
                                 retval.labels_seen.append([""])
-                            retval.labels_seen.append(comment_out(labelobj, dupmsg, pagemsg))
+                            retval.labels_seen.append(comment_out(labelobj, dupmsg, p.msg))
                             retval.labels_seen.append(
-                                comment_out(existing, "corresponding regional label follows:", pagemsg)
+                                comment_out(existing, "corresponding regional label follows:", p.msg)
                             )
 
                     if existing is None:
                         match = ucfirst(labelobj.label)
                         existing = labelobjs_by_label.get(match, None)
                         if existing:
-                            pagemsg(
+                            p.msg(
                                 "Saw lowercase {{alt}} label '%s' and corresponding capitalized {{lb}} label '%s', adopting former"
                                 % (labelobj.label, existing.label)
                             )
@@ -555,7 +540,7 @@ def process_text_on_page(index, pagename, text):
                         match = lcfirst(labelobj.label)
                         existing = labelobjs_by_label.get(match, None)
                         if existing:
-                            pagemsg(
+                            p.msg(
                                 "Saw capitalized {{alt}} label '%s' and corresponding lowercase {{lb}} label '%s', retaining latter"
                                 % (labelobj.label, existing.label)
                             )
@@ -593,12 +578,12 @@ def process_text_on_page(index, pagename, text):
                                                 ),
                                             )
                                         )
-                                        pagemsg(dupmsg)
+                                        p.msg(dupmsg)
                                         canon_labels_duplicating[existing.label].add(labelobj.label)
-                                        existing.lines_after.extend(comment_out(labelobj, dupmsg, pagemsg))
+                                        existing.lines_after.extend(comment_out(labelobj, dupmsg, p.msg))
                         if not has_dup_alias:
                             num_new_alt_labels += 1
-                            pagemsg("Didn't see {{alt}} label '%s', appending" % labelobj.label)
+                            p.msg("Didn't see {{alt}} label '%s', appending" % labelobj.label)
                             if lines_before_label:
                                 retval.labels_seen.append(lines_before_label)
                             else:
@@ -627,9 +612,9 @@ def process_text_on_page(index, pagename, text):
                                     ),
                                 )
                             )
-                            pagemsg(dupmsg)
+                            p.msg(dupmsg)
                             canon_labels_duplicating[existing.label].add(match)
-                            existing.lines_after.extend(comment_out(labelobj, dupmsg, pagemsg))
+                            existing.lines_after.extend(comment_out(labelobj, dupmsg, p.msg))
                     else:
                         if labelobj.aliases.cats:
                             for alias in labelobj.aliases.cats:
@@ -655,7 +640,7 @@ def process_text_on_page(index, pagename, text):
                                         combine_comments(existing_comment, labelobj_comment),
                                     )
                                 else:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: {{alt}} label '%s' has %s value '%s' different from existing '%s'"
                                         % (
                                             labelobj.label,
@@ -678,14 +663,14 @@ def process_text_on_page(index, pagename, text):
                         check_and_combine_fields("Wikipedia")
                         check_and_combine_fields("display")
                         if [x for x in lines_before_label if x.strip()]:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: {{alt}} label '%s' has non-empty literal line(s) before it, inserting them raw"
                                 % labelobj.label
                             )
                             retval.labels_seen.append(lines_before_label)
                         lines_before_label = []
                         if labelobj.label_lines:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: {{alt}} label '%s' has %s unparsable line(s), inserting them raw"
                                 % (labelobj.label, len(labelobj.label_lines))
                             )
@@ -696,7 +681,7 @@ def process_text_on_page(index, pagename, text):
 
     retval.labels_seen.extend(extra_lines_at_end)
 
-    new_lines = output_labels(retval.labels_seen, pagemsg)
+    new_lines = output_labels(retval.labels_seen, p.msg)
     text = "\n".join(new_lines)
     text = text.replace("\n\n\n", "\n\n")
     text = re.sub("^    ", "\t", text, 0, re.M)
@@ -722,7 +707,7 @@ if __name__ == "__main__":
         if not args.regional_data_module:
             raise ValueError("If --alt-data-modules is given, so must --regional-data-module")
         regional_module_text = open(args.regional_data_module, "r", encoding="utf-8").read()
-        regional_label_data = process_text_on_page_for_label_objects(0, args.regional_data_module, regional_module_text)
+        regional_label_data = process_text_on_page_for_label_objects(blib.ProcessPageParams(args, 0, args.regional_data_module, regional_module_text, None))
         for index, module_name, modtext, comments in blib.yield_text_from_find_regex(
             open(args.alt_data_modules, "r", encoding="utf-8"), args.verbose
         ):
@@ -748,7 +733,7 @@ if __name__ == "__main__":
             if code in alt_data_modules:
                 errandpagemsg("WARNING: Saw code '%s' twice, skipping second instance" % code)
                 continue
-            alt_data_modules[code] = process_text_on_page_for_label_objects(index, module_name, modtext)
+            alt_data_modules[code] = process_text_on_page_for_label_objects(blib.ProcessPageParams(args, index, module_name, modtext, None))
 
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
 
@@ -780,6 +765,6 @@ if __name__ == "__main__":
                 "",
                 None,
                 pagemsg,
-                is_find_regex=True,
-                edit=True,
+                "find-regex",
+                True,
             )

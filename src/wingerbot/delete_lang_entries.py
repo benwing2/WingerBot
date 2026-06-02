@@ -3,18 +3,15 @@
 import pywikibot, re, sys, argparse
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 pages_to_delete = []
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg)
     if modsec is None:
         return
     sections = modsec.sections
@@ -29,13 +26,13 @@ def process_text_on_page(index, pagetitle, text):
         # as MediaWiki automatically strips final newlines when saving, but simplifies diffs and such.
         if j > len(sections):
             sections[-1] = sections[-1].rstrip("\n")
-        pagemsg("Delete entry for %s on page with other languages" % args.langname)
+        p.msg("Delete entry for %s on page with other languages" % args.langname)
         notes.append("delete %s entry%s" % (args.langname, ": %s" % args.comment if args.comment else ""))
         text = "".join(sections)
         return text, notes
 
-    pagemsg("Mark page for deletion")
-    pages_to_delete.append(pagetitle)
+    p.msg("Mark page for deletion")
+    pages_to_delete.append(p.title)
     return
 
 

@@ -197,26 +197,23 @@ lang_to_name = {
 }
 
 
-def process_text_on_page(index, pagetitle, text, lang, pos):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p, lang, pos):
+    origtext = p.text
     cappos = pos.capitalize()
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    modsec = blib.find_modifiable_lang_section(text, lang_to_name[lang], pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, lang_to_name[lang], p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     k = 2
     last_pos = None
     if "indeclinable %ss" % pos in secbody + modsec.sectail:
-        pagemsg("Saw 'indeclinable %ss' in text, skipping" % pos)
+        p.msg("Saw 'indeclinable %ss' in text, skipping" % pos)
         return
     while k < len(subsections):
         if subsecs.headers[k] == cappos:
@@ -226,7 +223,7 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
             while endk < len(subsections) and subsecs.levels[endk] > level:
                 endk += 2
             if endk < len(subsections) and re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[endk]):
-                pagemsg(
+                p.msg(
                     "WARNING: Found probably misindented inflection header after ==%s== header: %s"
                     % (cappos, subsections[endk - 1].strip())
                 )
@@ -246,44 +243,44 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                     tn == "head" and getparam(t, "1") == lang and getparam(t, "2") in [pos, "%ss" % pos]
                 ):
                     if saw_head:
-                        pagemsg("WARNING: Found two heads under one POS section: second is %s" % str(t))
+                        p.msg("WARNING: Found two heads under one POS section: second is %s" % str(t))
                     saw_head = True
-                    if tn != "head" and lemma_is_indeclinable[lang](t, pagetitle, pagemsg):
-                        pagemsg("Headword template is indeclinable: %s" % str(t))
+                    if tn != "head" and lemma_is_indeclinable[lang](t, p.title, p.msg):
+                        p.msg("Headword template is indeclinable: %s" % str(t))
                         head_is_indeclinable = True
                         break
                 if re.search("^" + pos_to_infl_template[lang][pos] + "$", tn):
                     exclude_re = pos_to_infl_template_exclude.get(lang, {}).get(pos, None)
                     if not exclude_re or not re.search("^" + exclude_re + "$", tn):
                         if inflt:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Found two inflection templates under one POS section: %s and %s"
                                 % (str(inflt), str(t))
                             )
                         inflt = t
-                        pagemsg("Found %s inflection: %s" % (pos, str(t)))
+                        p.msg("Found %s inflection: %s" % (pos, str(t)))
                 if tn in ["inflection of", "infl of"]:
-                    pagemsg("Saw 'inflection of': %s" % str(t))
+                    p.msg("Saw 'inflection of': %s" % str(t))
                     saw_inflection_of = True
                 if (
                     pos_to_nonlemma_template[lang]
                     and re.search("^" + pos_to_nonlemma_template[lang] + "$", tn)
                     or (tn == "head" and getparam(t, "1") == lang and re.search(" forms?$", getparam(t, "2")))
                 ):
-                    pagemsg("Saw non-lemma headword template: %s" % str(t))
+                    p.msg("Saw non-lemma headword template: %s" % str(t))
                     saw_head_form = True
             if not inflt:
-                pagemsg("Didn't find %s inflection" % pos)
+                p.msg("Didn't find %s inflection" % pos)
                 if saw_head_form:
-                    pagemsg("Saw non-lemma headword template, not adding {{rfinfl}}")
+                    p.msg("Saw non-lemma headword template, not adding {{rfinfl}}")
                 elif saw_inflection_of:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Didn't see non-lemma headword template but saw 'inflection of'; not adding {{rfinfl}}"
                     )
                 elif not saw_head:
-                    pagemsg("WARNING: Didn't see lemma or non-lemma headword template; not adding {{rfinfl}}")
+                    p.msg("WARNING: Didn't see lemma or non-lemma headword template; not adding {{rfinfl}}")
                 elif head_is_indeclinable:
-                    pagemsg("Headword template is indeclinable, not adding {{rfinfl}}")
+                    p.msg("Headword template is indeclinable, not adding {{rfinfl}}")
                 else:
                     for l in range(k, endk, 2):
                         if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[l]):
@@ -291,13 +288,13 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                             for t in secparsed.filter_templates():
                                 tn = tname(t)
                                 if tn != "rfinfl":
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Saw unknown template %s in existing inflection section, skipping"
                                         % (str(t))
                                     )
                                     break
                                 else:
-                                    pagemsg("Found %s" % str(t))
+                                    p.msg("Found %s" % str(t))
                             break
                     else:  # no break
                         insert_k = k + 2
@@ -310,7 +307,7 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                             % ("=" * (level + 1), "Conjugation" if pos == "verb" else "Declension", "=" * (level + 1)),
                             "{{rfinfl|%s|%s}}\n\n" % (lang, pos),
                         ]
-                        pagemsg("Inserted level-%s inflection section with {{rfinfl|%s|%s}}" % (level + 1, lang, pos))
+                        p.msg("Inserted level-%s inflection section with {{rfinfl|%s|%s}}" % (level + 1, lang, pos))
                         notes.append("add {{rfinfl|%s|%s}}" % (lang, pos))
                         endk += 2  # for the two subsections we inserted
 
@@ -324,12 +321,12 @@ def process_text_on_page(index, pagetitle, text, lang, pos):
                 last_pos = m.group(1)
             if re.search(r"^(Declension|Inflection|Conjugation)$", subsecs.headers[k]):
                 if not last_pos:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found inflection header before seeing any parts of speech: %s"
                         % (subsections[k - 1].strip())
                     )
                 elif last_pos == cappos:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found probably misindented inflection header after ==%s== header: %s"
                         % (cappos, subsections[k - 1].strip())
                     )
@@ -349,8 +346,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(index, pagetitle, text, args.lang, args.pos)
+def do_process_text_on_page(p):
+    return process_text_on_page(p, args.lang, args.pos)
 
 
 blib.do_pagefile_cats_refs(

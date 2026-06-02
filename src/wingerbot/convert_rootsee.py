@@ -8,13 +8,10 @@ from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
 
@@ -29,7 +26,7 @@ def process_text_on_page(index, pagetitle, text):
                 pn = pname(param)
                 if pn not in ["1", "2", "3", "t", "id", "sc"]:
                     # ignore sc=
-                    pagemsg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -58,14 +55,14 @@ def process_text_on_page(index, pagetitle, text):
                 t.add("id", id)
             blib.set_template_name(t, "rootsee")
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert {{rootsee-old}} to {{rootsee}} in new format")
         tn = tname(t)
         if tn == "PIE root see":
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "head", "id"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
                     break
             else:  # no break
                 root = getp("1") or getp("head")
@@ -78,7 +75,7 @@ def process_text_on_page(index, pagetitle, text):
                 if id:
                     t.add("id", id)
                 blib.set_template_name(t, "rootsee")
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("convert {{PIE root see}} to {{rootsee}}")
         tn = tname(t)
         if tn == "rootsee":
@@ -86,7 +83,7 @@ def process_text_on_page(index, pagetitle, text):
             for param in t.params:
                 pn = pname(param)
                 if pn not in ["1", "2", "3", "id"]:
-                    pagemsg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
+                    p.msg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), str(t)))
                     must_continue = True
                     break
             if must_continue:
@@ -96,18 +93,18 @@ def process_text_on_page(index, pagetitle, text):
             source = getp("2")
             root = getp("3")
             id = getp("id")
-            m = re.search("^(?:Reconstruction|Appendix):(.*)/(.*?)$", pagetitle)
+            m = re.search("^(?:Reconstruction|Appendix):(.*)/(.*?)$", p.title)
             if m:
                 default_lang, default_root = m.groups()
                 default_root = re.sub("-$", "", default_root)
                 if default_lang in lang_data.languages_by_canonical_name:
                     default_source = lang_data.languages_by_canonical_name[default_lang]["code"]
                 else:
-                    pagemsg("WARNING: Unable to find language %s" % default_lang)
+                    p.msg("WARNING: Unable to find language %s" % default_lang)
                     continue
             else:
                 default_source = ""
-                default_root = pagetitle
+                default_root = p.title
                 default_root = re.sub("^.*?:", "", default_root)
                 default_root = re.sub("^.*/", "", default_root)
                 default_root = re.sub("-$", "", default_root)
@@ -129,7 +126,7 @@ def process_text_on_page(index, pagetitle, text):
             if id:
                 t.add("id", id)
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
                 notes.append("remove defaulted params from {{rootsee}}")
 
     return str(parsed), notes

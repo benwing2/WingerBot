@@ -11,14 +11,11 @@ templates_to_rewrite = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -43,7 +40,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("rename {{%s}} to {{%s|%s}}" % (tn, new_template_name, lang))
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

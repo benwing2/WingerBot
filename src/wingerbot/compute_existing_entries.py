@@ -30,19 +30,16 @@ for code, lang in lang_data.languages_by_code.items():
         appendix_constructed_langnames.add(lang["canonicalName"])
 
 
-def process_text_on_page(index, pagetitle, pagetext):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     # We only check mainspace articles, Reconstruction articles, and
     # Appendix articles for appendix-only constructed languages.
-    m = re.search("^(.*?):", pagetitle)
+    m = re.search("^(.*?):", p.title)
     if m:
         namespace = m.group(1)
         if namespace == "Reconstruction":
             pass
         elif namespace == "Appendix":
-            m = re.search("^Appendix:(.*?)/", pagetitle)
+            m = re.search("^Appendix:(.*?)/", p.title)
             if m and m.group(1) in appendix_constructed_langnames:
                 pass
             else:
@@ -51,14 +48,14 @@ def process_text_on_page(index, pagetitle, pagetext):
             return
 
     # Split into sections
-    secs = blib.split_text_into_sections(pagetext, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     langs = []
     for j, langname in secs.lang_list:
         if langname not in lang_data.languages_by_canonical_name:
-            pagemsg("WARNING: Unrecognized language: %s" % langname)
+            p.msg("WARNING: Unrecognized language: %s" % langname)
         else:
             langs.append(lang_data.languages_by_canonical_name[langname]["code"])
-    pagemsg("Langs=%s" % ",".join(langs))
+    p.msg("Langs=%s" % ",".join(langs))
 
 
 parser = blib.create_argparser("Find red links", include_pagefile=True, include_stdin=True)

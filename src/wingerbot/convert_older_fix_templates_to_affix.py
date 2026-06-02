@@ -22,17 +22,14 @@ templates_to_convert = (
 )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     user_specified_templates_to_do = (
         set(templates_to_convert) if not args.templates_to_do else set(args.templates_to_do.split(","))
     )
     langcodes_to_do = None if not args.langcodes_to_do else set(args.langcodes_to_do.split(","))
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     saw_circumfix = False
 
@@ -48,21 +45,21 @@ def process_text_on_page(index, pagetitle, text):
 
         def get_display_hyphen(val, param):
             if re.search("[%s]" % arabic_charset, val):
-                pagemsg("Saw Arabic chars in %s=%s, assuming tatweel is correct hyphen: %s" % (param, val, str(t)))
+                p.msg("Saw Arabic chars in %s=%s, assuming tatweel is correct hyphen: %s" % (param, val, str(t)))
                 return tatweel
             if re.search("[%s]" % hebrew_charset, val):
-                pagemsg("Saw Hebrew chars in %s=%s, assuming maqqef is correct hyphen: %s" % (param, val, str(t)))
+                p.msg("Saw Hebrew chars in %s=%s, assuming maqqef is correct hyphen: %s" % (param, val, str(t)))
                 return maqqef
             return "-"
 
         def get_template_hyphens(val, param, nowarn=False):
             if re.search("[%s]" % arabic_charset, val):
                 if not nowarn:
-                    pagemsg("Saw Arabic chars in %s=%s, assuming tatweel is correct hyphen: %s" % (param, val, str(t)))
+                    p.msg("Saw Arabic chars in %s=%s, assuming tatweel is correct hyphen: %s" % (param, val, str(t)))
                 return "[" + tatweel + zwnj + "-]"
             if re.search("[%s]" % hebrew_charset, val):
                 if not nowarn:
-                    pagemsg("Saw Hebrew chars in %s=%s, assuming maqqef is correct hyphen: %s" % (param, val, str(t)))
+                    p.msg("Saw Hebrew chars in %s=%s, assuming maqqef is correct hyphen: %s" % (param, val, str(t)))
                 return "[" + maqqef + "]"
             return "[-]"
 
@@ -89,7 +86,7 @@ def process_text_on_page(index, pagetitle, text):
                         else:
                             return "[[%s|%s]]" % (link, display)
                 if "[[" in val:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Embedded link in %s=%s, can't convert to %s: %s"
                         % (param, val, "prefix" if is_prefix else "suffix", str(t))
                     )
@@ -121,7 +118,7 @@ def process_text_on_page(index, pagetitle, text):
                 try:
                     inline_mod = blib.parse_inline_modifier(val)
                     if not inline_mod.mainval:
-                        pagemsg(
+                        p.msg(
                             "WARNING: No main value associated with inline modifier: %s=%s: %s" % (param, val, str(t))
                         )
                     else:
@@ -145,7 +142,7 @@ def process_text_on_page(index, pagetitle, text):
                         if changed:
                             t.add(param, inline_mod.reconstruct_param())
                 except blib.ParseException as e:
-                    pagemsg("WARNING: Parse exception processing %s=%s: %s: %s" % (param, val, str(e), str(t)))
+                    p.msg("WARNING: Parse exception processing %s=%s: %s: %s" % (param, val, str(e), str(t)))
             else:
                 make_affix_1(param)
                 make_affix_1("alt%s" % (paramno - 1))
@@ -177,7 +174,7 @@ def process_text_on_page(index, pagetitle, text):
 
         if tn in user_specified_templates_to_do:
             if langcodes_to_do and lang.strip() not in langcodes_to_do:
-                pagemsg(
+                p.msg(
                     "Skipping template because lang code '%s' not among --langcodes-to-do: %s" % (lang.strip(), str(t))
                 )
                 continue
@@ -240,7 +237,7 @@ def process_text_on_page(index, pagetitle, text):
                         "lit",
                         "nocat",
                     ]:
-                        pagemsg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), origt))
+                        p.msg("WARNING: Unrecognized param %s=%s in %s" % (pn, str(param.value), origt))
                         must_continue = True
                         break
                 if must_continue:
@@ -249,27 +246,27 @@ def process_text_on_page(index, pagetitle, text):
                 p2 = getp("2")
                 p4 = getp("4")
                 if not p2 or not p4:
-                    pagemsg("WARNING: Circumfix template doesn't have both 2= and 4=: %s" % origt)
+                    p.msg("WARNING: Circumfix template doesn't have both 2= and 4=: %s" % origt)
                     continue
                 if "<" in p2 or "<" in p4:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Can't handle inline modifiers in circumfix portions of circumfix template yet: %s"
                         % origt
                     )
                     continue
                 if "[" in p2 or "[" in p4:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Can't handle brackets in circumfix portions of circumfix template yet: %s" % origt
                     )
                     continue
                 if getp("alt1") and not getp("alt3") or getp("alt3") and not getp("alt1"):
-                    pagemsg("WARNING: Circumfix template has alt1= but not alt3= or vice-versa: %s" % origt)
+                    p.msg("WARNING: Circumfix template has alt1= but not alt3= or vice-versa: %s" % origt)
                     continue
                 if getp("tr1") and not getp("tr3") or getp("tr3") and not getp("tr1"):
-                    pagemsg("WARNING: Circumfix template has trl= but not tr3= or vice-versa: %s" % origt)
+                    p.msg("WARNING: Circumfix template has trl= but not tr3= or vice-versa: %s" % origt)
                     continue
                 if getp("ts1") and not getp("ts3") or getp("ts3") and not getp("ts1"):
-                    pagemsg("WARNING: Circumfix template has tsl= but not ts3= or vice-versa: %s" % origt)
+                    p.msg("WARNING: Circumfix template has tsl= but not ts3= or vice-versa: %s" % origt)
                     continue
 
                 make_prefix(2)
@@ -334,12 +331,12 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("convert {{%s|%s}} to {{af|%s}}" % (tn, lang, lang))
 
             if str(t) != origt:
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     text = str(parsed)
     m = re.search(r"^.*\{\{af(fix)?\|.*\{\{af(fix)?\|.*$", text, re.M)
     if m:
-        pagemsg("WARNING: Saw two occurrences of {{affix}} on the same line: %s" % m.group(0))
+        p.msg("WARNING: Saw two occurrences of {{affix}} on the same line: %s" % m.group(0))
     return text, notes
 
 

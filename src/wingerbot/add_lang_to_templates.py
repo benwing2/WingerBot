@@ -8,12 +8,9 @@ from wingerbot.blib import getparam, msg, tname, pname
 lang_data = lang_utils.get_lang_data()
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if blib.page_should_be_ignored(pagetitle):
-        pagemsg("Skipping ignored page")
+def process_text_on_page(p):
+    if blib.page_should_be_ignored(p.title):
+        p.msg("Skipping ignored page")
         return
 
     notes = []
@@ -34,7 +31,7 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("move lang= to 1= in {{%s}}" % tn)
                     new_lang = existing_lang
                 elif langnamecode is None:
-                    pagemsg("WARNING: Unable to add infer language from section for template: %s" % origt)
+                    p.msg("WARNING: Unable to add infer language from section for template: %s" % origt)
                     continue
                 else:
                     notes.append("infer 1=%s for {{%s}} based on section it's in" % (langnamecode, tn))
@@ -59,16 +56,16 @@ def process_text_on_page(index, pagetitle, text):
                     notes.append("rename {{%s}} to {{%s}}" % (tn, templates_to_process[tn]))
             newt = str(t)
             if newt != origt:
-                pagemsg("Replaced <%s> with <%s>" % (origt, newt))
+                p.msg("Replaced <%s> with <%s>" % (origt, newt))
 
         return langnamecode
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(p.text, p.msg)
     sections = secs.sections
 
-    if not pagetitle.startswith("Citations"):
+    if not p.title.startswith("Citations"):
         for j, langname in secs.lang_list:
             parsed = blib.parse_text(sections[j])
             hack_templates(parsed, langname)

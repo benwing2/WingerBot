@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 change_alter_to_alt = True
 
@@ -318,14 +318,11 @@ def process_text_in_section(secbody, pagemsg):
     return secbody, notes
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg, force_final_nls=True)
     if modsec is None:
         return
-    newsecbody, notes = process_text_in_section(modsec.secbody, pagemsg)
+    newsecbody, notes = process_text_in_section(modsec.secbody, p.msg)
     return modsec.rebuild(secbody=newsecbody), notes
 
 

@@ -12,17 +12,14 @@ from collections import defaultdict
 lastcats_seen = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    origtext = text
+def process_text_on_page(p):
+    origtext = p.text
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
+    if blib.page_should_be_ignored(p.title):
         return
 
-    text, texttail = blib.force_two_newlines_in_secbody(text, "")
+    text, texttail = blib.force_two_newlines_in_secbody(p.text, "")
 
     newtext = re.sub("\n\n\n+", "\n\n", text)
     if newtext != text:

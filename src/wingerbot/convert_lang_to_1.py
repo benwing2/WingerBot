@@ -506,15 +506,12 @@ templates_to_check_for_empty_dot = []
 templates_to_remove_nodot = []
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -526,12 +523,12 @@ def process_text_on_page(index, pagetitle, text):
         if tn in templates_to_remove_empty_dot:
             if t.has("dot"):
                 if getparam(t, "dot") and getparam(t, "dot") != "<nowiki/>":
-                    pagemsg("WARNING: non-empty dot= in form_of_t template: %s" % str(t))
+                    p.msg("WARNING: non-empty dot= in form_of_t template: %s" % str(t))
                 rmparam(t, "dot")
                 notes.append("remove effectless empty dot= from {{%s}}" % tn)
         if tn in templates_to_check_for_empty_dot:
             if t.has("dot") and (not getparam(t, "dot") or getparam(t, "dot") == "<nowiki/>"):
-                pagemsg("WARNING: empty dot= in alt_form_of_t template: %s" % str(t))
+                p.msg("WARNING: empty dot= in alt_form_of_t template: %s" % str(t))
                 rmparam(t, "dot")
                 t.add("nodot", "1")
                 notes.append("convert empty dot= to nodot=1 in {{%s}}" % tn)
@@ -559,7 +556,7 @@ def process_text_on_page(index, pagetitle, text):
             notes.append("rename {{%s}} to {{%s}}" % (tn, template_renamings[tn]))
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

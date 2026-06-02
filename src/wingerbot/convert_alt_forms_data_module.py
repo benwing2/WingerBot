@@ -4,7 +4,7 @@ import pywikibot, re, sys, argparse
 from dataclasses import dataclass
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, msg, site, tname
 
 
 @dataclass
@@ -24,13 +24,7 @@ class LabelData:
 # lang_utils.get_language_data()
 
 
-def process_text_on_page(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
-
+def process_text_on_page(p):
     def ucfirst(txt):
         if not txt:
             return txt
@@ -38,16 +32,17 @@ def process_text_on_page(index, pagename, text):
 
     notes = []
 
-    # m = re.search("^Module:(.*):Dialects$", pagename)
+    # m = re.search("^Module:(.*):Dialects$", p.title)
     # langname = None
     # if m:
     #  code = m.group(1)
     #  if code in lang_data.languages_by_code:
     #    langname = lang_data.languages_by_code[code]["canonicalName"]
     #  else:
-    #    errandpagemsg("WARNING: Can't locate language %s" % code)
+    #    p.errandmsg("WARNING: Can't locate language %s" % code)
 
     new_lines = []
+    text = p.text
     lines = text.split("\n")
     labels_seen = []
     indexed_labels = {}
@@ -71,11 +66,11 @@ def process_text_on_page(index, pagename, text):
         lineno = lineind + 1
 
         def linemsg(txt):
-            pagemsg("Line %s: %s" % (lineno, txt))
+            p.msg("Line %s: %s" % (lineno, txt))
 
         if re.search(r"^labels *\[", line):
             if label or in_data or in_return:
-                errandpagemsg("WARNING: Saw nested labels on line %s, can't handle file: %s" % (lineno, line))
+                p.errandmsg("WARNING: Saw nested labels on line %s, can't handle file: %s" % (lineno, line))
                 return
             if label_lines:
                 labels_seen.append(label_lines)
@@ -132,7 +127,7 @@ def process_text_on_page(index, pagename, text):
                 saw_data = True
                 continue
             if not in_label:
-                errandpagemsg("WARNING: Saw non-label object on line %s, can't handle file: %s" % (lineno, line))
+                p.errandmsg("WARNING: Saw non-label object on line %s, can't handle file: %s" % (lineno, line))
                 return
             if label_lines and not label_lines[-1].endswith(","):
                 # FIXME: This could break if there are quotes around the comment sign
@@ -287,7 +282,7 @@ def process_text_on_page(index, pagename, text):
             pass
 
         elif line.startswith("return "):
-            errandpagemsg("WARNING: Unrecognized return statement, skipping file: %s" % line)
+            p.errandmsg("WARNING: Unrecognized return statement, skipping file: %s" % line)
             return
 
         else:

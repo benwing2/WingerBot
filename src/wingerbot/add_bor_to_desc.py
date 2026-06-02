@@ -21,14 +21,11 @@ bor_pairs = defaultdict(int)
 already_bor_would_bor_pairs = defaultdict(int)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
 
     notes = []
-    lines = re.split("\n", text)
+    lines = re.split("\n", p.text)
     newlines = []
     langs_at_levels = {}
     for line in lines:
@@ -45,35 +42,35 @@ def process_text_on_page(index, pagetitle, text):
                     tn = tname(t)
                     if tn in ["desc", "desctree"]:
                         thisline_lang = getparam(t, "1")
-                        pagemsg("Saw descendant template %s with lang %s" % (str(t), thisline_lang))
+                        p.msg("Saw descendant template %s with lang %s" % (str(t), thisline_lang))
                         prevline_lang = langs_at_levels.get(thisline_indent - 1, None)
                         if thisline_lang and prevline_lang:
                             thisline_main_lang = etym_language_to_parent.get(thisline_lang, thisline_lang)
                             prevline_main_lang = etym_language_to_parent.get(prevline_lang, prevline_lang)
                             if prevline_lang == thisline_lang:
-                                pagemsg("Something strange, saw same language %s indented under itself" % prevline_lang)
+                                p.msg("Something strange, saw same language %s indented under itself" % prevline_lang)
                             elif prevline_lang == thisline_main_lang:
-                                pagemsg(
+                                p.msg(
                                     "Saw etym language %s indented under its parent %s" % (thisline_lang, prevline_lang)
                                 )
                             elif prevline_main_lang == thisline_lang:
-                                pagemsg(
+                                p.msg(
                                     "Saw language %s indented under its etym language %s"
                                     % (thisline_lang, prevline_lang)
                                 )
                             elif prevline_main_lang == thisline_main_lang:
-                                pagemsg(
+                                p.msg(
                                     "Saw etym language %s indented under etym language %s, both with the same parent %s"
                                     % (thisline_lang, prevline_lang, prevline_main_lang)
                                 )
                             elif thisline_main_lang not in language_to_ancestors:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Something strange, saw unrecognized main lang %s for lang %s"
                                     % (thisline_main_lang, thisline_lang)
                                 )
                             elif prevline_main_lang in language_to_ancestors[thisline_main_lang]:
                                 if prevline_main_lang == prevline_lang:
-                                    pagemsg(
+                                    p.msg(
                                         "Saw language %s indented under parent %s"
                                         % (
                                             lang_desc(thisline_lang, thisline_main_lang),
@@ -81,7 +78,7 @@ def process_text_on_page(index, pagetitle, text):
                                         )
                                     )
                             elif getparam(t, "bor").lower() in ["1", "y", "yes", "true"]:
-                                pagemsg(
+                                p.msg(
                                     "Saw language %s indented under non-parent %s, would add |bor=1 but |bor=%s already present"
                                     % (
                                         lang_desc(thisline_lang, thisline_main_lang),
@@ -91,7 +88,7 @@ def process_text_on_page(index, pagetitle, text):
                                 )
                                 already_bor_would_bor_pairs[(thisline_lang, prevline_lang)] += 1
                             else:
-                                pagemsg(
+                                p.msg(
                                     "Saw language %s indented under non-parent %s, adding |bor=1"
                                     % (
                                         lang_desc(thisline_lang, thisline_main_lang),

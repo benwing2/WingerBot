@@ -47,16 +47,13 @@ rename_templates = {
 }
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_text_on_page(p):
+    p.msg("Processing")
     notes = []
 
     # WARNING: Not idempotent, already run.
 
-    # parsed = blib.parse_text(text)
+    # parsed = blib.parse_text(p.text)
 
     # to_add_period = []
 
@@ -68,13 +65,13 @@ def process_text_on_page(index, pagetitle, text):
 
     # for curr_template in to_add_period:
     #  repl_template = curr_template + "."
-    #  found_curr_template = curr_template in text
+    #  found_curr_template = curr_template in p.text
     #  if not found_curr_template:
-    #    pagemsg("WARNING: Unable to locate template: %s" % curr_template)
+    #    p.msg("WARNING: Unable to locate template: %s" % curr_template)
     #    continue
-    #  found_repl_template = repl_template in text
+    #  found_repl_template = repl_template in p.text
     #  if found_repl_template:
-    #    pagemsg("WARNING: Already found template with period: %s" % repl_template)
+    #    p.msg("WARNING: Already found template with period: %s" % repl_template)
     #    continue
     #  newtext = text.replace(curr_template, repl_template)
     #  newtext_text_diff = len(newtext) - len(text)
@@ -82,16 +79,16 @@ def process_text_on_page(index, pagetitle, text):
     #  ratio = float(newtext_text_diff) / repl_curr_diff
     #  if ratio == int(ratio):
     #    if int(ratio) > 1:
-    #      pagemsg("WARNING: Replaced %s occurrences of curr=%s with repl=%s"
+    #      p.msg("WARNING: Replaced %s occurrences of curr=%s with repl=%s"
     #          % (int(ratio), curr_template, repl_template))
     #  else:
-    #    pagemsg("WARNING: Something wrong, length mismatch during replacement: Expected length change=%s, actual=%s, ratio=%.2f, curr=%s, repl=%s"
+    #    p.msg("WARNING: Something wrong, length mismatch during replacement: Expected length change=%s, actual=%s, ratio=%.2f, curr=%s, repl=%s"
     #        % (repl_curr_diff, newtext_text_diff, ratio, curr_template,
     #          repl_template))
     #  text = newtext
     #  notes.append("add period to back-formation template without nodot=")
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -124,7 +121,7 @@ def process_text_on_page(index, pagetitle, text):
                 notes.append("move lang= to 1= in {{%s}}" % tn)
 
         if str(t) != origt:
-            pagemsg("Replaced <%s> with <%s>" % (origt, str(t)))
+            p.msg("Replaced <%s> with <%s>" % (origt, str(t)))
 
     return str(parsed), notes
 

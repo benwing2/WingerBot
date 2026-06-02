@@ -42,14 +42,8 @@ def convert_ordinal_to_cardinal(num):
     return ordinal_to_cardinal.get(num, None)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     notes = []
     notes_replace_head_letter_langs = []
@@ -64,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
             lang = getp("1")
 
             def langpagemsg(txt):
-                msg("Page %s %s, lang %s: %s" % (index, pagetitle, lang, txt))
+                msg("Page %s %s, lang %s: %s" % (p.index, p.title, lang, txt))
 
             manual_translit = None
             Cyrillic_equivalent = None
@@ -107,50 +101,50 @@ def process_text_on_page(index, pagetitle, text):
                         langpagemsg("WARNING: Saw value '%s' with blank key: %s" % (value, str(t)))
             for k, v in inflgroups:
                 # langpagemsg("k=%s, v=%s" % (k, v))
-                if len(pagetitle) == 1:
+                if len(p.title) == 1:
                     if k in ["upper case", "uppercase", "upper", "capital"]:
                         if not v:
-                            if not pagetitle.isupper():
+                            if not p.title.isupper():
                                 langpagemsg(
                                     "WARNING: Page title supposed to be uppercase but is not (uppercase is %s)"
-                                    % (pagetitle.upper())
+                                    % (p.title.upper())
                                 )
                                 break
-                        elif v != pagetitle.upper():
+                        elif v != p.title.upper():
                             langpagemsg(
                                 "WARNING: Page title's uppercase equivalent is supposed to be %s but is %s"
-                                % (v, pagetitle.upper())
+                                % (v, p.title.upper())
                             )
                             break
                     elif k in ["lower case", "lowercase", "lower"]:
                         if not v:
-                            if not pagetitle.islower():
+                            if not p.title.islower():
                                 langpagemsg(
                                     "WARNING: Page title supposed to be lowercase but is not (lowercase is %s)"
-                                    % (pagetitle.lower())
+                                    % (p.title.lower())
                                 )
                                 break
-                        elif v != pagetitle.lower():
+                        elif v != p.title.lower():
                             langpagemsg(
                                 "WARNING: Page title's lowercase equivalent is supposed to be %s but is %s"
-                                % (v, pagetitle.lower())
+                                % (v, p.title.lower())
                             )
                             break
                     else:
                         langpagemsg("WARNING: Unrecognized key-value pair '%s=%s'" % (k, v))
                         break
                 else:
-                    firstchar = pagetitle[0]
+                    firstchar = p.title[0]
                     if k in ["upper case", "uppercase", "upper", "capital"]:
                         if not v:
                             if not firstchar.isupper():
                                 langpagemsg(
                                     "WARNING: Page title (first char) supposed to be uppercase but is not (uppercase is %s)"
-                                    % (pagetitle.upper())
+                                    % (p.title.upper())
                                 )
                                 break
                         else:
-                            shouldbe_upper = firstchar.upper() + pagetitle[1:]
+                            shouldbe_upper = firstchar.upper() + p.title[1:]
                             if v not in shouldbe_upper:
                                 langpagemsg(
                                     "WARNING: Page title's uppercase equivalent is supposed to be %s but is %s"
@@ -162,13 +156,13 @@ def process_text_on_page(index, pagetitle, text):
                             if not firstchar.islower():
                                 langpagemsg(
                                     "WARNING: Page title supposed to be lowercase but is not (lowercase is %s)"
-                                    % (pagetitle.lower())
+                                    % (p.title.lower())
                                 )
                                 break
-                        elif v != pagetitle.lower():
+                        elif v != p.title.lower():
                             langpagemsg(
                                 "WARNING: Page title's lowercase equivalent is supposed to be %s but is %s"
-                                % (v, pagetitle.lower())
+                                % (v, p.title.lower())
                             )
                             break
                     else:
@@ -179,7 +173,7 @@ def process_text_on_page(index, pagetitle, text):
                     pn = pname(param)
                     pv = str(param.value).strip()
                     if pn in ["tr", "tr1"]:
-                        translit = expand_text("{{xlit|%s|%s}}" % (lang, pagetitle))
+                        translit = p.expand_text("{{xlit|%s|%s}}" % (lang, p.title))
                         if translit != pv:
                             langpagemsg(
                                 "WARNING: Automatic translit '%s' doesn't match specified manual translit '%s'"
@@ -227,12 +221,12 @@ def process_text_on_page(index, pagetitle, text):
             "replace {{head|LANG|letter}} with {{letter|LANG}} for %s" % ", ".join(notes_replace_head_letter_langs)
         )
     notes_replace_ordinal_def = []
-    secs = blib.split_text_into_sections(text, pagemsg)
+    secs = blib.split_text_into_sections(text, p.msg)
     sections = secs.sections
     for j, seclang in secs.lang_list:
         sectext = sections[j]
         if seclang not in lang_data.languages_by_canonical_name:
-            pagemsg("WARNING: Unrecognized language '%s' in section %s" % (seclang, j))
+            p.msg("WARNING: Unrecognized language '%s' in section %s" % (seclang, j))
             continue
         langcode = lang_data.languages_by_canonical_name[seclang]["code"]
 
@@ -240,7 +234,7 @@ def process_text_on_page(index, pagetitle, text):
             label, ordinal, letter_group, rest = m.groups()
             cardinal = convert_ordinal_to_cardinal(ordinal)
             if cardinal is None:
-                pagemsg(
+                p.msg(
                     "WARNING: Unrecognized ordinal '%s' in ordinal definition line for lang %s: %s"
                     % (ordinal, seclang, m.group(0))
                 )
@@ -278,7 +272,7 @@ def process_text_on_page(index, pagetitle, text):
                     # notes.append("replace ordinal definition for '%s' letter of '%s' alphabet with {{%s|...}}" % (
                     #  ordinal, alphabet, args.letter_def))
                     if alphabet != seclang:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Alphabet name '%s' not same as language '%s' in ordinal definition line: %s"
                             % (alphabet, seclang, m.group(0))
                         )
@@ -314,7 +308,7 @@ def process_text_on_page(index, pagetitle, text):
             tn = tname(t)
             if tn == args.letter_def:
                 if letter_def_template:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw two {{%s}} templates for lang %s, %s and %s, skipping"
                         % (args.letter_def, seclang, str(letter_def_template), str(t))
                     )
@@ -336,7 +330,7 @@ def process_text_on_page(index, pagetitle, text):
                         if m.group(2):
                             newprec += "<tr:%s>" % m.group(2)
                         if prec:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: For lang %s, saw two 'Previous letter' letters: %s and %s, skipping"
                                 % (seclang, prec, newprec)
                             )
@@ -351,7 +345,7 @@ def process_text_on_page(index, pagetitle, text):
                             if m.group(2):
                                 newfoll += "<tr:%s>" % m.group(2)
                             if foll:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: For lang %s, saw two 'Next letter' letters: %s and %s, skipping"
                                     % (seclang, foll, newfoll)
                                 )
@@ -366,7 +360,7 @@ def process_text_on_page(index, pagetitle, text):
                         new_letter_def_template = new_letter_def_template[0:-2] + precfollparam + "}}"
                         newsectext = "\n".join(newlines)
                         newsectext, replaced = blib.replace_in_text(
-                            newsectext, str(letter_def_template), new_letter_def_template, pagemsg
+                            newsectext, str(letter_def_template), new_letter_def_template, p.msg
                         )
                         if replaced:
                             notes.append("move %s into {{%s|%s}}" % (precfollparam, args.letter_def, langcode))
