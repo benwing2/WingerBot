@@ -6,13 +6,10 @@ from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, site, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     actions_taken = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         origt = str(t)
@@ -21,10 +18,10 @@ def process_text_on_page(index, pagetitle, text):
         if tn in ["ar-verb"]:
             form = getparam(t, "form")
             if form == "1" or form == "I":
-                pagemsg("skipped ar-verb because form I")
+                p.msg("skipped ar-verb because form I")
                 continue
             elif getparam(t, "useparam"):
-                pagemsg("skipped ar-verb because useparam")
+                p.msg("skipped ar-verb because useparam")
                 continue
 
             def remove_param(param):
@@ -43,18 +40,18 @@ def process_text_on_page(index, pagetitle, text):
                 remove_param("sc")
             I = getparam(t, "I")
             if I in ["ء", "و", "ي"] and form not in ["8", "VIII"]:
-                pagemsg("form=%s, removing I=%s" % (form, I))
+                p.msg("form=%s, removing I=%s" % (form, I))
                 remove_param("I")
             II = getparam(t, "II")
             if II == "ء" or II in ["و", "ي"] and form in ["2", "II", "3", "III", "5", "V", "6", "VI"]:
-                pagemsg("form=%s, removing II=%s" % (form, II))
+                p.msg("form=%s, removing II=%s" % (form, II))
                 remove_param("II")
             III = getparam(t, "III")
             if III == "ء":
-                pagemsg("form=%s, removing III=%s" % (form, III))
+                p.msg("form=%s, removing III=%s" % (form, III))
                 remove_param("III")
             if str(t) != origt:
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
             if len(paramschanged) > 0:
                 actions_taken.append("form=%s (%s)" % (form, ", ".join(paramschanged)))
     changelog = "ar-verb: remove params: %s" % "; ".join(actions_taken)
@@ -65,4 +62,4 @@ parser = blib.create_argparser("Clean up Arabic vevrb headword templates", inclu
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["Arabic verbs"])
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Arabic verbs"])

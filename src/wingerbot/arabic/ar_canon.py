@@ -422,8 +422,8 @@ def canon_one_page_links(index, pagetitle, text):
     )
 
 
-def process_text_on_page(index, pagetitle, text):
-    canon_one_page_headwords(index, pagetitle, text)
+def process_text_on_page(p):
+    canon_one_page_headwords(p.index, p.title, p.text)
 
 
 parser = blib.create_argparser("Clean up Arabic transliterations", include_pagefile=True, include_stdin=True)
@@ -444,6 +444,6 @@ if args.direcfile:
             linemsg("WARNING: Unrecognized line: %s" % line)
         else:
             index, pagetitle, text = m.groups()
-            process_text_on_page(index, pagetitle, text)
+            process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text, None))
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, skip_ignorable_pages=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, skip_ignorable_pages=True)

@@ -4,7 +4,7 @@ import pywikibot, re, sys, json
 from dataclasses import dataclass, field
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 vowel_to_diacritic = {
     "a": "\u064e",
@@ -96,24 +96,15 @@ def extract_ar_verb_conj_properties(t, pagemsg):
     return props
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Arabic", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     parsed_by_subsections = {}
@@ -144,14 +135,14 @@ def process_text_on_page(index, pagetitle, text):
             elif tn == ar_conj_template:
                 this_conjts.append(t)
         if this_headts and this_conjts:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw both {{%s}} and {{%s}} templates in the same subsection %s"
                 % (ar_verb_template, ar_conj_template, format_subsection_header_and_num(k))
             )
             continue
         if this_headts:
             if headts:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw successive {{%s}} templates without corresponding {{%s}} template(s) in subsection %s and %s"
                     % (
                         ar_verb_template,
@@ -164,13 +155,13 @@ def process_text_on_page(index, pagetitle, text):
             headts_formatted_subsection_header = format_subsection_header_and_num(k)
         elif this_conjts:
             if not headts:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw {{%s}} template(s) without corresponding {{%s}} template(s) in subsection %s"
                     % (ar_conj_template, ar_verb_template, format_subsection_header_and_num(k))
                 )
                 continue
             if len(headts) != len(this_conjts):
-                pagemsg(
+                p.msg(
                     "WARNING: Saw %s {{%s}} template(s) in subsection %s but %s corresponding {{%s}} template(s) in subsection %s, can't handle"
                     % (
                         len(headts),
@@ -184,8 +175,8 @@ def process_text_on_page(index, pagetitle, text):
                 heads = None
                 continue
             for headt, conjt in zip(headts, this_conjts):
-                headt_props = extract_ar_verb_conj_properties(headt, pagemsg)
-                conjt_props = extract_ar_verb_conj_properties(conjt, pagemsg)
+                headt_props = extract_ar_verb_conj_properties(headt, p.msg)
+                conjt_props = extract_ar_verb_conj_properties(conjt, p.msg)
                 if headt_props is None or conjt_props is None:
                     continue
                 if headt_props.passive is None:
@@ -220,7 +211,7 @@ def process_text_on_page(index, pagetitle, text):
                     headval = getattr(headt_props, propval)
                     conjval = getattr(conjt_props, propval)
                     if headval != conjval:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Headword template %s differs from conjugation template %s in property %s (headword %s, conjugation %s)"
                             % (str(headt), str(conjt), propval, headval, conjval)
                         )
@@ -240,7 +231,7 @@ def process_text_on_page(index, pagetitle, text):
                     tempspec = "headt=%s, conjt=%s" % (str(headt), str(conjt))
                     # Warn on intrans
                     if conjt_props.intrans:
-                        pagemsg("WARNING: Saw intrans=1, not carrying over: %s" % tempspec)
+                        p.msg("WARNING: Saw intrans=1, not carrying over: %s" % tempspec)
 
                     # Parse passive value
                     if conjt_props.passive:
@@ -259,31 +250,31 @@ def process_text_on_page(index, pagetitle, text):
                         elif passive.lower() in ["n", "no", "f", "false", "0", "off"]:
                             passive = "nopass"
                         else:
-                            pagemsg("WARNING: Unparsable value for passive '%s': %s" % (conjt_props.passive, tempspec))
+                            p.msg("WARNING: Unparsable value for passive '%s': %s" % (conjt_props.passive, tempspec))
                             continue
 
                     # Check whether past/non-past vowels are redundant.
                     if vform != "I":
                         if past_vowels != ["-"] or nonpast_vowels != ["-"]:
-                            pagemsg("WARNING: Past/non-vowel vowels specified for non-form I? Template: %s" % tempspec)
+                            p.msg("WARNING: Past/non-vowel vowels specified for non-form I? Template: %s" % tempspec)
                             continue
                     elif passive in ["onlypass", "onlypass-impers"]:
                         if past_vowels != ["-"] or nonpast_vowels != ["-"]:
-                            pagemsg("Past/non-vowel vowels specified but verb is passive-only, removing: %s" % tempspec)
+                            p.msg("Past/non-vowel vowels specified but verb is passive-only, removing: %s" % tempspec)
                             past_vowels = ["-"]
                             nonpast_vowels = ["-"]
-                    elif re.search("[اىي]$", pagetitle):
-                        if pagetitle.endswith("ا"):
+                    elif re.search("[اىي]$", p.title):
+                        if p.title.endswith("ا"):
                             expected_past = ["a"]
                             expected_nonpast = ["u"]
-                        elif pagetitle.endswith("ى"):
+                        elif p.title.endswith("ى"):
                             expected_past = ["a"]
                             expected_nonpast = ["i"]
                         else:
                             expected_past = ["i"]
                             expected_nonpast = ["a"]
                         if past_vowels == expected_past and nonpast_vowels == expected_nonpast:
-                            pagemsg(
+                            p.msg(
                                 "Past/non-vowel vowels specified but same as default for form-I final-weak verb, removing: %s"
                                 % tempspec
                             )
@@ -291,9 +282,9 @@ def process_text_on_page(index, pagetitle, text):
                             nonpast_vowels = ["-"]
 
                     # Sort out different defaults for assimilated vs. sound in form I
-                    if vform == "I" and pagetitle.startswith("و"):
+                    if vform == "I" and p.title.startswith("و"):
                         if len(past_vowels) > 1 or len(nonpast_vowels) > 1:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Multiple past or non-past vowels in form-I verb starting with و, need to sort out manually: %s"
                                 % tempspec
                             )
@@ -304,20 +295,20 @@ def process_text_on_page(index, pagetitle, text):
                             or past_vowels == ["u"]
                             and nonpast_vowels == ["u"]
                         ):
-                            final_weak = re.search("[اىي]$", pagetitle)
+                            final_weak = re.search("[اىي]$", p.title)
                             if (
                                 final_weak
                                 and explicit_weakness == "final-weak"
                                 or not final_weak
                                 and explicit_weakness == "sound"
                             ):
-                                pagemsg(
+                                p.msg(
                                     "Saw form-I و-initial verb with past~non-past vowels of i~a or u~u, removing explicit weakness '%s': %s"
                                     % (explicit_weakness, tempspec)
                                 )
                                 explicit_weakness = None
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw form-I و-initial verb with past~non-past vowels of i~a or u~u and without explicit weakness 'sound', need to check manually: %s"
                                     % tempspec
                                 )
@@ -333,20 +324,20 @@ def process_text_on_page(index, pagetitle, text):
                         for past_vowel in past_vowels:
                             for nonpast_vowel in nonpast_vowels:
                                 if past_vowel not in vowel_to_diacritic:
-                                    pagemsg("WARNING: Bad past vowel '%s': %s" % (past_vowel, tempspec))
+                                    p.msg("WARNING: Bad past vowel '%s': %s" % (past_vowel, tempspec))
                                     must_continue = True
                                     break
                                 past_vowel = vowel_to_diacritic[past_vowel]
                                 if nonpast_vowel not in vowel_to_diacritic:
-                                    pagemsg("WARNING: Bad non-past vowel '%s': %s" % (nonpast_vowel, tempspec))
+                                    p.msg("WARNING: Bad non-past vowel '%s': %s" % (nonpast_vowel, tempspec))
                                     must_continue = True
                                     break
                                 nonpast_vowel = vowel_to_diacritic[nonpast_vowel]
                                 tempcall = (
                                     "{{#invoke:User:Benwing2/ar-verb|infer_radicals_json|headword=%s|vform=%s|passive=%s|past_vowel=%s|nonpast_vowel=%s|is_reduced=%s}}"
-                                    % (pagetitle, conjt_props.vform, passive or "", past_vowel, nonpast_vowel, "")
+                                    % (p.title, conjt_props.vform, passive or "", past_vowel, nonpast_vowel, "")
                                 )
-                                ret = expand_text(tempcall)
+                                ret = p.expand_text(tempcall)
                                 if not ret:
                                     must_continue = True
                                     break
@@ -371,14 +362,14 @@ def process_text_on_page(index, pagetitle, text):
                                     if not rad:
                                         return rad_required
                                     if radprop not in ret:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Something wrong, radical property '%s' not in returned %s for template call %s for template %s"
                                             % (radprop, ret, tempcall, tempspec)
                                         )
                                         return None
                                     radlist = convert_radical(ret[radprop])
                                     if rad not in radlist:
-                                        pagemsg(
+                                        p.msg(
                                             "WARNING: Radical %s is %s but inferred as one of %s: %s"
                                             % (radprop, rad, radlist, tempspec)
                                         )
@@ -416,7 +407,7 @@ def process_text_on_page(index, pagetitle, text):
                         inferred_weakness = ret["weakness"]
                         if explicit_weakness:
                             if inferred_weakness == explicit_weakness:
-                                pagemsg("Removing redundant explicit weakness %s: %s" % (explicit_weakness, tempspec))
+                                p.msg("Removing redundant explicit weakness %s: %s" % (explicit_weakness, tempspec))
                                 explicit_weakness = None
                             elif vform == "I" and (
                                 explicit_weakness == "sound"
@@ -430,7 +421,7 @@ def process_text_on_page(index, pagetitle, text):
                             ):
                                 pass
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Explicit weakness %s incompatible with inferred weakness %s: %s"
                                     % (explicit_weakness, inferred_weakness, tempspec)
                                 )
@@ -458,27 +449,27 @@ def process_text_on_page(index, pagetitle, text):
                         indicators.append("noimp")
                     if conjt_props.vns:
                         if vform != "I":
-                            pagemsg("Explicit verbal noun for non-form-I, might need removing: %s" % tempspec)
+                            p.msg("Explicit verbal noun for non-form-I, might need removing: %s" % tempspec)
                             allspec = "%s%s%s%s" % (
                                 vform_spec,
                                 vowel_spec,
                                 "." if indicators else "",
                                 ".".join(indicators),
                             )
-                            formscall = "{{User:Benwing2/ar-conj|%s|json=1|pagename=%s}}" % (allspec, pagetitle)
-                            ret = expand_text(formscall)
+                            formscall = "{{User:Benwing2/ar-conj|%s|json=1|pagename=%s}}" % (allspec, p.title)
+                            ret = p.expand_text(formscall)
                             if not ret:
                                 continue
                             ret = json.loads(ret)
                             auto_vns = [x["form"] for x in ret["forms"]["vn"]]
                             if set(auto_vns) == set(conjt_props.vns):
                                 if vform == "III":
-                                    pagemsg(
+                                    p.msg(
                                         "Using <vn:+> for explicit but redundant form-III verbal nouns to signal that alternative verbal noun not present"
                                     )
                                     indicators.append("vn:+")
                                 else:
-                                    pagemsg(
+                                    p.msg(
                                         "Removing redundant non-form-I verbal noun(s) %s: %s"
                                         % (",".join(conjt_props.vns), tempspec)
                                     )
@@ -499,7 +490,7 @@ def process_text_on_page(index, pagetitle, text):
                                         vnspecs.append(vn)
                                 vn_indicator = "vn:%s" % ",".join(vnspecs)
                                 indicators.append(vn_indicator)
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Explicit non-redundant verbal noun(s) for non-form-I not same as auto-generated %s, needs checking, would use VN indicator <%s>: %s"
                                     % (",".join(auto_vns), vn_indicator, tempspec)
                                 )
@@ -520,7 +511,7 @@ def process_text_on_page(index, pagetitle, text):
                     headt.add("1", allspec)
                     blib.set_template_name(conjt, "ar-conj")
                     conjt.add("1", allspec)
-                    pagemsg(
+                    p.msg(
                         "Convert headword template %s to %s and conjugation template %s to %s"
                         % (origheadt, str(headt), origconjt, str(conjt))
                     )
@@ -545,4 +536,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Arabic verbs"], edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Arabic verbs"], new=True)

@@ -24,10 +24,7 @@ form_pos_templates_list = [
     ("pronoun", "pronoun", "ar-pron"),
 ]
 
-def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, pos, templates):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def correct_one_page_one_pos_headword_formatting(p, form, pos, templates):
     def parse_infls(infltext, tr):
         fs = []
         ftrs = []
@@ -91,7 +88,7 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
         templ = re.sub(r"\|\|+([A-Za-z0-9_]+=)", r"|\1", templ)
         return templ
 
-    origtext = text
+    origtext = p.text
 
     if not isinstance(templates, list):
         templates = [templates]
@@ -99,14 +96,15 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
 
     sawtemp = False
     for temp in templates:
-        if "{{%s" % temp in text:
+        if "{{%s" % temp in p.text:
             sawtemp = True
     if not sawtemp:
-        if "{{head|ar|" in text:
-            pagemsg("%s not found but {{temp|head|ar}} is" % " or ".join(templates))
+        if "{{head|ar|" in p.text:
+            p.msg("%s not found but {{temp|head|ar}} is" % " or ".join(templates))
         else:
-            pagemsg("%s not found nor {{temp|head|ar}}" % " or ".join(templates))
+            p.msg("%s not found nor {{temp|head|ar}}" % " or ".join(templates))
     replsfound = 0
+    text = p.text
     for m in re.finditer(
         r"(===+%s===+\s*)\{\{head\|ar\|(?:sc=Arab\|)?%s((?:\|[A-Za-z0-9_]+=(?:\[[^\]]*\]|[^|}])*)*)\}\} *(?:(?:\{\{IPAchar\|)?\((.*?)\)(?:\}\})?)? *((?:,[^,\n]*)*)(.*)"
         % (pos, form),
@@ -114,14 +112,14 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
         re.I,
     ):
         replsfound += 1
-        pagemsg("Found match: %s" % m.group(0))
+        p.msg("Found match: %s" % m.group(0))
         if m.group(5):
-            pagemsg("WARNING: Trailing text %s" % m.group(5))
+            p.msg("WARNING: Trailing text %s" % m.group(5))
         head = ""
         g = ""
         tr = None
         for infl in re.finditer(r"\|([A-Za-z0-9_]+)=((?:\[[^\]]*\]|[^|}])*)", m.group(2)):
-            pagemsg("Found infl within head: %s" % infl.group(0))
+            p.msg("Found infl within head: %s" % infl.group(0))
             if infl.group(1) == "head":
                 head = infl.group(2).replace("'", "")
             elif infl.group(1) == "g":
@@ -131,17 +129,17 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
             elif infl.group(1) == "sc":
                 pass
             else:
-                pagemsg("WARNING: Unrecognized argument '%s'" % infl.group(1))
+                p.msg("WARNING: Unrecognized argument '%s'" % infl.group(1))
         if m.group(3):
             tr = m.group(3)
         infls = parse_infls(m.group(4), tr)
         repl = "{{%s|%s|%s%s}}" % (repltemplate, head, g, infls)
         repl = remove_empty_args(repl)
         repl = m.group(1) + repl + m.group(5)  # Include leading, trailing text
-        pagemsg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
+        p.msg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
         newtext = text.replace(m.group(0), repl, 1)
         if newtext == text:
-            pagemsg("WARNING: Unable to do replacement")
+            p.msg("WARNING: Unable to do replacement")
         else:
             text = newtext
     for m in re.finditer(
@@ -151,9 +149,9 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
         re.I,
     ):
         replsfound += 1
-        pagemsg("Found match: %s" % m.group(0))
+        p.msg("Found match: %s" % m.group(0))
         if m.group(7):
-            pagemsg("WARNING: Trailing text %s" % m.group(7))
+            p.msg("WARNING: Trailing text %s" % m.group(7))
         head = m.group(2) or m.group(3)
         g = m.group(5) or ""
         tr = m.group(4)
@@ -161,10 +159,10 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
         repl = "{{%s|%s|%s%s}}" % (repltemplate, head, g, infls)
         repl = remove_empty_args(repl)
         repl = m.group(1) + repl + m.group(7)  # Include leading, trailing text
-        pagemsg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
+        p.msg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
         newtext = text.replace(m.group(0), repl, 1)
         if newtext == text:
-            pagemsg("WARNING: Unable to do replacement")
+            p.msg("WARNING: Unable to do replacement")
         else:
             text = newtext
         cat = "Arabic %ss" % form
@@ -174,22 +172,22 @@ def correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, p
         if nsubs == 0:
             newtext = re.sub(r"\[\[Category:%s\]\]\n?" % cat, "", text, 1)
         if newtext != text:
-            pagemsg("Removed [[Category:%s]]" % cat)
+            p.msg("Removed [[Category:%s]]" % cat)
             text = newtext
         else:
-            pagemsg("WARNING: Unable to remove [[Category:%s]]" % cat)
+            p.msg("WARNING: Unable to remove [[Category:%s]]" % cat)
     if not sawtemp and replsfound == 0:
-        pagemsg("WARNING: No replacements found")
+        p.msg("WARNING: No replacements found")
     if origtext == text:
         return
     else:
         return text, ["correct headword formatting for Arabic %ss" % form]
 
 
-def correct_one_page_headword_formatting(index, pagetitle, text):
+def correct_one_page_headword_formatting(p):
     notes = []
     for form, pos, templates in form_pos_templates_list:
-        retval = correct_one_page_one_pos_headword_formatting(index, pagetitle, text, form, pos, templates)
+        retval = correct_one_page_one_pos_headword_formatting(p, form, pos, templates)
         if retval is not None:
             newtext, this_notes = retval
             text = newtext
@@ -197,19 +195,17 @@ def correct_one_page_headword_formatting(index, pagetitle, text):
     return text, notes
 
 
-def correct_one_page_link_formatting(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def correct_one_page_link_formatting(p):
     linkschanged = []
+    text = p.text
     for m in re.finditer(
         r"\{\{l\|ar\|([^}]*?)\}\} *(?:'*(?:(?:\{\{IPAchar\|)?\(([^{})]*?)\)(?:\}\})?)'*)? *(?:\{\{g\|(.*?)\}\})?", text
     ):
         if not m.group(2) and not m.group(3):
             continue
-        pagemsg("Found match: %s" % m.group(0))
+        p.msg("Found match: %s" % m.group(0))
         if "|tr=" in m.group(1):
-            pagemsg("Skipping because translit already present")
+            p.msg("Skipping because translit already present")
             continue
         if m.group(3):
             if m.group(3) == "m|f":
@@ -223,10 +219,10 @@ def correct_one_page_link_formatting(index, pagetitle, text):
         else:
             tr = ""
         repl = "{{l|ar|%s%s%s}}" % (m.group(1), tr, gender)
-        pagemsg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
+        p.msg("Replacing\n%s\nwith\n%s" % (m.group(0), repl))
         newtext = text.replace(m.group(0), repl, 1)
         if newtext == text:
-            pagemsg("WARNING: Unable to do replacement")
+            p.msg("WARNING: Unable to do replacement")
         else:
             text = newtext
             linkschanged.append(m.group(1))
@@ -240,8 +236,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.links:
-    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_link_formatting, edit=True, stdin=True,
+    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_link_formatting, new=True,
                                default_cats=["Arabic lemmas", "Arabic non-lemma forms"])
 else:
-    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_headword_formatting, edit=True, stdin=True,
+    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_headword_formatting, new=True,
                                default_cats=["Arabic %ss" % form for form, pos, templates in form_pos_templates_list])

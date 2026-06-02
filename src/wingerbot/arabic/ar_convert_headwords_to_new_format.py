@@ -145,13 +145,10 @@ def convert_head_tr_gender(t, pagemsg):
     return outheads, genders
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(ar.reorder_shadda(text))
+    parsed = blib.parse_text(ar.reorder_shadda(p.text))
 
     noun_templates = {
         "ar-noun",
@@ -270,12 +267,12 @@ def process_text_on_page(index, pagetitle, text):
                 and not re.search("^tr[0-9]*$", pn)
                 and (not possible_inflection_pref_re or not re.search(possible_inflection_pref_re, pn))
             ):
-                pagemsg("WARNING: Unrecognized parameter %s=%s, skipping: %s" % (pn, str(param.value), str(t)))
+                p.msg("WARNING: Unrecognized parameter %s=%s, skipping: %s" % (pn, str(param.value), str(t)))
                 must_continue = True
                 break
         if must_continue:
             continue
-        heads, genders = convert_head_tr_gender(t, pagemsg)
+        heads, genders = convert_head_tr_gender(t, p.msg)
         if heads is None:
             continue
         outinfls = []
@@ -286,7 +283,7 @@ def process_text_on_page(index, pagetitle, text):
                 inflpref, desc = inflspec
                 nosubinfl = False
             converted_infl = convert_inflection(
-                t, inflpref, pagemsg, fetch_nominal_inflections=not nosubinfl, heads=heads
+                t, inflpref, p.msg, fetch_nominal_inflections=not nosubinfl, heads=heads
             )
             if converted_infl is None:
                 must_continue = True
@@ -315,4 +312,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

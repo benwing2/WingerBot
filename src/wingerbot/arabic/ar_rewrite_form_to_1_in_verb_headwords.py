@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam, tname
+from wingerbot.blib import getparam, addparam, tname
 
 numeric_to_roman_form = {
     "1": "I",
@@ -40,13 +40,10 @@ def canonicalize_form(form: str) -> str:
 
 # Clean the verb headword templates on a given page with the given text.
 # Returns the changed text along with a changelog message.
-def rewrite_one_page_verb_headword(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def rewrite_one_page_verb_headword(p):
+    parsed = blib.parse_text(p.text)
 
-    parsed = blib.parse_text(text)
-
-    pagemsg("Processing")
+    p.msg("Processing")
 
     actions_taken = []
 
@@ -68,7 +65,7 @@ def rewrite_one_page_verb_headword(index, pagetitle, text):
                 t.get("1").showkey = False
             newtemp = str(t)
             if origtemp != newtemp:
-                msg("Replacing %s with %s" % (origtemp, newtemp))
+                p.msg("Replacing %s with %s" % (origtemp, newtemp))
             if re.match("^[1I](-|$)", form):
                 actions_taken.append("form=%s (%s/%s)" % (form, getparam(t, "2"), getparam(t, "3")))
             else:
@@ -81,15 +78,12 @@ def rewrite_one_page_verb_headword(index, pagetitle, text):
 
 # Canonicalize the form in ar-conj.
 # Returns the changed text along with a changelog message.
-def canonicalize_one_page_verb_form(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def canonicalize_one_page_verb_form(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -101,7 +95,7 @@ def canonicalize_one_page_verb_form(index, pagetitle, text):
                 addparam(t, formarg, canonicalize_form(form))
             newtemp = str(t)
             if origtemp != newtemp:
-                msg("Replacing %s with %s" % (origtemp, newtemp))
+                p.msg("Replacing %s with %s" % (origtemp, newtemp))
             if re.match("^[1I](-|$)", form):
                 notes.append(
                     "canonicalize form=%s in {{%s}} to Roman numerals (%s/%s)"
@@ -121,8 +115,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.headword:
-    blib.do_pagefile_cats_refs(args, start, end, rewrite_one_page_verb_headword, edit=True, stdin=True,
-                            default_cats=["Arabic verbs"])
+    blib.do_pagefile_cats_refs(args, start, end, rewrite_one_page_verb_headword, new=True,
+                               default_cats=["Arabic verbs"])
 if args.canonicalize:
-    blib.do_pagefile_cats_refs(args, start, end, canonicalize_one_page_verb_form, edit=True, stdin=True,
-                            default_refs=["Template:%s" % template for template in verb_form_templates_to_args])
+    blib.do_pagefile_cats_refs(args, start, end, canonicalize_one_page_verb_form, new=True,
+                               default_refs=["Template:%s" % template for template in verb_form_templates_to_args])

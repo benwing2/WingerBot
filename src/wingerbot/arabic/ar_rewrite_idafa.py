@@ -9,17 +9,14 @@ from wingerbot.blib import msg, getparam, addparam
 from wingerbot.arabic.arlib import arabic_decl_templates
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     num_new_style = 0
     num_modhead_changed = 0
     num_state_ind_to_ind_def = 0
     num_basestate_ind_def = 0
     idafa_added = []
     has_proper_noun = False
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         if t.name == "ar-proper noun":
             has_proper_noun = True
@@ -31,14 +28,14 @@ def process_text_on_page(index, pagetitle, text):
             oldt = str(t)
             if getparam(t, "state") == "ind" and has_proper_noun:
                 addparam(t, "state", "ind-def")
-                pagemsg("Converting state=ind to state=ind-def for proper noun")
-                pagemsg("Replacing %s with %s" % (oldt, str(t)))
+                p.msg("Converting state=ind to state=ind-def for proper noun")
+                p.msg("Replacing %s with %s" % (oldt, str(t)))
                 num_state_ind_to_ind_def += 1
             elif getparam(t, "state") == "def" and getparam(t, "basestate") == "ind":
                 t.remove("basestate")
                 addparam(t, "state", "ind-def")
-                pagemsg("Converting state=def|basestate=ind to state=ind-def")
-                pagemsg("Replacing %s with %s" % (oldt, str(t)))
+                p.msg("Converting state=def|basestate=ind to state=ind-def")
+                p.msg("Replacing %s with %s" % (oldt, str(t)))
                 num_basestate_ind_def += 1
 
             # Change old-style ʾidāfa (state=con) to new-style (basestate=con)
@@ -52,7 +49,7 @@ def process_text_on_page(index, pagetitle, text):
             #    t.remove("state")
             #  else:
             #    addparam(t, "state", modstate)
-            #  pagemsg("Replacing %s with %s" % (oldt, str(t)))
+            #  p.msg("Replacing %s with %s" % (oldt, str(t)))
             #  changed = True
 
             # Remove manual ʾidāfa params when possible and substitute idafa=
@@ -61,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
             #  idafa = ""
             #  modnumber = getparam(t, "modnumber")
             #  if not modnumber:
-            #    pagemsg("WARNING: Missing modnumber= in idafa template, substituting sg: %s" %
+            #    p.msg("WARNING: Missing modnumber= in idafa template, substituting sg: %s" %
             #        str(t))
             #    modnumber = "sg"
             #    addparam(t, "modnumber", "sg")
@@ -69,11 +66,11 @@ def process_text_on_page(index, pagetitle, text):
             #  state = getparam(t, "state")
             #  if not modstate:
             #    if state:
-            #      pagemsg("WARNING: Extraneous state= in idafa template: %s" %
+            #      p.msg("WARNING: Extraneous state= in idafa template: %s" %
             #          str(t))
             #    idafa = modnumber
             #  elif state != modstate:
-            #    pagemsg("WARNING: modstate= in idafa template but state= doesn't match: %s"
+            #    p.msg("WARNING: modstate= in idafa template but state= doesn't match: %s"
             #        % str(t))
             #  else:
             #    idafa = "%s-%s" % (modstate, modnumber)
@@ -87,12 +84,12 @@ def process_text_on_page(index, pagetitle, text):
             #    m = re.match("^ind-(.*)$", idafa)
             #    if m:
             #      if has_proper_noun:
-            #        pagemsg("Not replacing idafa state 'ind' because proper noun: %s"
+            #        p.msg("Not replacing idafa state 'ind' because proper noun: %s"
             #            % str(t))
-            #      elif pagetitle in ["أقدم مهنة", "غير طبيعي"]:
-            #        pagemsg("Not replacing idafa state 'ind' because it's special-cased: %s" % str(t))
+            #      elif p.title in ["أقدم مهنة", "غير طبيعي"]:
+            #        p.msg("Not replacing idafa state 'ind' because it's special-cased: %s" % str(t))
             #      else:
-            #        pagemsg("NOTE: Replacing idafa state 'ind' with no state restriction: %s"
+            #        p.msg("NOTE: Replacing idafa state 'ind' with no state restriction: %s"
             #            % str(t))
             #        idafa = m.group(1)
             #    m = re.match("^(.*?)-sg$", idafa)
@@ -101,7 +98,7 @@ def process_text_on_page(index, pagetitle, text):
             #    if idafa == "sg":
             #      idafa = "yes"
             #    addparam(t, "idafa", idafa)
-            #    pagemsg("Replacing %s with %s" % (oldt, str(t)))
+            #    p.msg("Replacing %s with %s" % (oldt, str(t)))
             #    idafa_added.append(idafa)
             #  elif changed:
             #    num_new_style += 1
@@ -113,7 +110,7 @@ def process_text_on_page(index, pagetitle, text):
                 or getparam(t, "modnumber")
                 or getparam(t, "modidafa")
             ):
-                pagemsg("WARNING: idafa params remain after processing: %s" % str(t))
+                p.msg("WARNING: idafa params remain after processing: %s" % str(t))
 
             ## Change modN into modheadN
             # oldt = str(t)
@@ -125,13 +122,13 @@ def process_text_on_page(index, pagetitle, text):
             #    addparam(t, "modhead" + str(i), modn)
             #    changed = True
             # if changed:
-            #  pagemsg("Replacing %s with %s" % (oldt, str(t)))
+            #  p.msg("Replacing %s with %s" % (oldt, str(t)))
             #  num_modhead_changed += 1
 
             if getparam(t, "omitarticle"):
-                pagemsg("WARNING: omitarticle present: %s" % str(t))
+                p.msg("WARNING: omitarticle present: %s" % str(t))
             if getparam(t, "state") == "ind":
-                pagemsg("WARNING: state=ind still present: %s" % str(t))
+                p.msg("WARNING: state=ind still present: %s" % str(t))
 
     actions = []
     if idafa_added:
@@ -146,9 +143,9 @@ def process_text_on_page(index, pagetitle, text):
         actions.append("Converted state=def|basestate=ind to state=ind-def")
     if actions:
         changelog = "; ".join(actions)
-        pagemsg("Changelog = %s" % changelog)
+        p.msg("Changelog = %s" % changelog)
         return str(parsed), changelog
-    return text, ""
+    return p.text, ""
 
 
 parser = blib.create_argparser(
@@ -162,7 +159,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:%s" % template for template in arabic_decl_templates],
 )

@@ -4,8 +4,8 @@ from wingerbot import blib
 from wingerbot.blib import getparam, addparam, rmparam, tname
 
 
-def process_text_on_page(index, pagetitle, text):
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
 
     temps_changed = []
     for t in parsed.filter_templates():
@@ -75,5 +75,5 @@ parser = blib.create_argparser("Rewrite Egyptian Arabic headword templates", inc
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
                            default_cats=["Egyptian Arabic adjectives", "Egyptian Arabic nouns"])

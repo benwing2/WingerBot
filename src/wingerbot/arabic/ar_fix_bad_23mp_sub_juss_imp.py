@@ -76,24 +76,19 @@ def convert_etym_subsection_to_single_etymology_section(text):
     return "".join(subsections)
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    pagemsg("Processing")
-    if not pagetitle.endswith("و"):
-        pagemsg("Page title doesn't end with waw, skipping")
+    p.msg("Processing")
+    if not p.title.endswith("و"):
+        p.msg("Page title doesn't end with waw, skipping")
         return
-    page = pywikibot.Page(site, pagetitle)
-    if not text and not page.exists():
-        pagemsg("WARNING: Page doesn't exist, skipping")
+    page = pywikibot.Page(site, p.title)
+    if not p.text and not page.exists():
+        p.msg("WARNING: Page doesn't exist, skipping")
         return
-    origtext = text
-    sections = re.split("(^==[^=]*==\n)", text, 0, re.M)
+    origtext = p.text
+    sections = re.split("(^==[^=]*==\n)", p.text, 0, re.M)
 
     has_non_arabic = False
 
@@ -103,11 +98,11 @@ def process_text_on_page(index, pagetitle, text):
             has_non_arabic = True
         else:
             if arabic_j >= 0:
-                pagemsg("WARNING: Found two Arabic sections, skipping")
+                p.msg("WARNING: Found two Arabic sections, skipping")
                 return
             arabic_j = j
     if arabic_j < 0:
-        pagemsg("WARNING: Can't find Arabic section, skipping")
+        p.msg("WARNING: Can't find Arabic section, skipping")
         return
     j = arabic_j
 
@@ -144,7 +139,7 @@ def process_text_on_page(index, pagetitle, text):
                     lang = getparam(t, "1")
                     first_tag_param = 4
                 if lang != "ar":
-                    pagemsg(
+                    p.msg(
                         "WARNING: Non-Arabic language in Arabic {{inflection of}} in %s, skipping: %s"
                         % (header, str(t))
                     )
@@ -164,7 +159,7 @@ def process_text_on_page(index, pagetitle, text):
             return False
 
         if inflection_of_templates_with_unrecognized_tags:
-            pagemsg(
+            p.msg(
                 "WARNING: Unrecognized {{inflection of}} tag set mixed with recognized ones in %s, skipping: %s"
                 % (header, " / ".join(inflection_of_templates_with_unrecognized_tags))
             )
@@ -177,14 +172,14 @@ def process_text_on_page(index, pagetitle, text):
             if tn == "ar-verb-form":
                 form = getparam(t, "1")
                 if not form.endswith("و") and form.endswith("وْ"):
-                    pagemsg(
+                    p.msg(
                         "WARNING: ar-verb-form form doesn't end with waw in %s with recognized {{inflection of}} tags, skipping: %s"
                         % (header, str(t))
                     )
                     return False
                 continue
             if tn != "inflection of":
-                pagemsg(
+                p.msg(
                     "WARNING: Unrecognized template in %s with recognized {{inflection of}} tags, skipping: %s"
                     % (header, str(t))
                 )
@@ -231,7 +226,7 @@ def process_text_on_page(index, pagetitle, text):
                 has_non_movable_etym_sections = True
                 k += 2
         if not movable_sections:
-            pagemsg("Can't take action on page")
+            p.msg("Can't take action on page")
             return
         if len(etym_sections) > 3:
             # Two or more remaining etym sections, just renumber.
@@ -266,7 +261,7 @@ def process_text_on_page(index, pagetitle, text):
             # Arabic section as a whole needs to go.
             text = remove_arabic_section()
         else:
-            pagemsg("Can't take action on page")
+            p.msg("Can't take action on page")
             return
 
     # This frequently happens as a result of our cutting and pasting
@@ -278,22 +273,22 @@ def process_text_on_page(index, pagetitle, text):
 
     if not text:
         # We can move the whole page
-        new_pagetitle = pagetitle + "ا"
+        new_pagetitle = p.title + "ا"
         new_page = pywikibot.Page(site, new_pagetitle)
         if new_page.exists():
-            pagemsg("New page %s already exists, can't rename" % new_pagetitle)
-            pagemsg("Page should be deleted")
+            p.msg("New page %s already exists, can't rename" % new_pagetitle)
+            p.msg("Page should be deleted")
             return
         comment = "Rename misspelled 2nd/3rd masc pl subj/juss/impr non-lemma form"
-        errandpagemsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
+        p.errandmsg("Moving to %s (comment=%s)" % (new_pagetitle, comment))
         if args.save:
             try:
                 page.move(new_pagetitle, reason=comment, movetalk=True, noredirect=True)
             except pywikibot.exceptions.PageRelatedError as error:
-                pagemsg("Error moving to %s: %s" % (new_pagetitle, error))
+                p.msg("Error moving to %s: %s" % (new_pagetitle, error))
                 return
         blib.do_edit(
-            index,
+            p.index,
             pywikibot.Page(site, new_pagetitle),
             fix_new_page,
             save=args.save,
@@ -311,4 +306,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)

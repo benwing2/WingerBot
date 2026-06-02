@@ -9,11 +9,8 @@ from wingerbot.arabic.arlib import (
 )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    parsed = blib.parse_text(text)
+def process_text_on_page(p):
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         head = reorder_shadda(getparam(t, "1"))
         tn = tname(t)
@@ -24,12 +21,12 @@ def process_text_on_page(index, pagetitle, text):
             while pl:
                 if pl == "smp":
                     if head.endswith(TAM):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Found %s=smp with feminine ending head %s in %s: not changing"
                             % (param, head, tn)
                         )
                     else:
-                        pagemsg("Changing %s=smp to %s=sp in %s" % (param, param, tn))
+                        p.msg("Changing %s=smp to %s=sp in %s" % (param, param, tn))
                         addparam(t, param, "sp")
                 param = "pl%s" % i
                 pl = getparam(t, param)
@@ -42,5 +39,5 @@ parser = blib.create_argparser("Change |pl=smp to |pl=sp in declension templates
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
                            default_refs=["Template:%s" % template for template in arabic_decl_templates])

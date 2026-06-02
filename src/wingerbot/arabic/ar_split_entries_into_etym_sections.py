@@ -13,18 +13,15 @@ from wingerbot.arabic.arlib import (
 )
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Arabic", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     etymologies = []
     etymsections = []
@@ -33,7 +30,7 @@ def process_text_on_page(index, pagetitle, text):
         etyms_were_separate = True
         for j in range(1, len(subsections), 2):
             if not re.match("^===Etymology [0-9]+=", subsections[j]):
-                pagemsg(
+                p.msg(
                     "WARNING: Non-etymology level-3 header when split etymologies: %s" % subsections[j][0:-1]
                 )
         etymsections = [subsections[j] for j in range(2, len(subsections), 2)]
@@ -48,7 +45,7 @@ def process_text_on_page(index, pagetitle, text):
     for etymsection in etymsections:
         subsections = re.split("(^===[^=\n]+=+\n)", etymsection, 0, re.M)
         if len(subsections) < 2:
-            pagemsg("WARNING: Section missing any entries")
+            p.msg("WARNING: Section missing any entries")
         split_sections = []
         next_split_section = 0
 
@@ -61,7 +58,7 @@ def process_text_on_page(index, pagetitle, text):
         last_inflection_of_lemma = None
         for j in range(1, len(subsections), 2):
             if re.match("^===+(References|Related|See)", subsections[j]):
-                pagemsg("Found level-3 section that should maybe be at higher level: %s" % subsections[j][0:-1])
+                p.msg("Found level-3 section that should maybe be at higher level: %s" % subsections[j][0:-1])
                 append_section(j)
             elif re.match("^===+(Alternative|Etymology)", subsections[j]):
                 append_section(j)
@@ -73,7 +70,7 @@ def process_text_on_page(index, pagetitle, text):
                     if t.name in arabic_all_headword_templates:
                         if lemma:
                             if t.name not in ["ar-nisba", "ar-noun-nisba", "ar-verb", "ar-verb-form"]:
-                                pagemsg(
+                                p.msg(
                                     "Found multiple headword templates in section %s: %s"
                                     % (j, subsections[j][0:-1])
                                 )
@@ -81,13 +78,13 @@ def process_text_on_page(index, pagetitle, text):
                         lemma = reorder_shadda(remove_links(getparam(t, "1")))
                     if t.name == "inflection of":
                         if inflection_of_lemma:
-                            pagemsg(
+                            p.msg(
                                 "Found multiple 'inflection of' templates in section %s: %s"
                                 % (j, subsections[j][0:-1])
                             )
                         inflection_of_lemma = remove_diacritics(remove_links(getparam(t, "1")))
                 if not lemma:
-                    pagemsg("Warning: No headword template in section %s: %s" % (j, subsections[j][0:-1]))
+                    p.msg("Warning: No headword template in section %s: %s" % (j, subsections[j][0:-1]))
                     append_section(j)
                 else:
                     if lemma != last_lemma:
@@ -97,7 +94,7 @@ def process_text_on_page(index, pagetitle, text):
                         and last_inflection_of_lemma
                         and inflection_of_lemma != last_inflection_of_lemma
                     ):
-                        pagemsg(
+                        p.msg(
                             "Verb forms have different inflection-of lemmas %s and %s, splitting etym"
                             % (last_inflection_of_lemma, inflection_of_lemma)
                         )
@@ -119,7 +116,7 @@ def process_text_on_page(index, pagetitle, text):
                 if t.name in ["ar-verb", "ar-verb-form"]:
                     newformclass = getparam(t, "1")
                     if formclass and newformclass and formclass != newformclass:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Something wrong: Two different verb form classes in same etymology: %s != %s"
                             % (formclass, newformclass)
                         )
@@ -130,11 +127,11 @@ def process_text_on_page(index, pagetitle, text):
         formclassj1 = get_form_class(j + 1)
         if formclassj == "I" and formclassj1 == "I":
             if not etymologies[j + 1].startswith("="):
-                pagemsg(
+                p.msg(
                     "WARNING: Can't combine etymologies with same verb form class because second has etymology text"
                 )
             else:
-                pagemsg("Combining etymologies with same verb form class I")
+                p.msg("Combining etymologies with same verb form class I")
                 etymologies[j] = etymologies[j].rstrip() + "\n\n" + etymologies[j + 1]
                 # Cancel out effect of incrementing j below since we combined
                 # the following etymology into this one
@@ -147,7 +144,7 @@ def process_text_on_page(index, pagetitle, text):
             # etymology section should be moved after.
             newetymj = re.sub(r"^(.*?\n)(===Etymology===\n(\n|[^=\n].*?\n)*)", r"\2\1", etymologies[j], 0, re.S)
             if newetymj != etymologies[j]:
-                pagemsg("Moved ===Alternative forms=== and such after Etymology")
+                p.msg("Moved ===Alternative forms=== and such after Etymology")
                 etymologies[j] = newetymj
             # Remove ===Etymology=== from beginning
             etymologies[j] = re.sub("^===Etymology===\n", "", etymologies[j])
@@ -161,10 +158,10 @@ def process_text_on_page(index, pagetitle, text):
     elif len(etymologies) == 1:
         if etyms_were_separate:
             # We might need to add an Etymology header at the beginning.
-            pagemsg("Combined formerly separate etymologies")
+            p.msg("Combined formerly separate etymologies")
             if not re.match(r"^(=|\{\{wikipedia|\[\[File:)", etymologies[0].strip()):
                 etymologies[0] = "===Etymology===\n" + etymologies[0]
-                pagemsg("Added Etymology header when previously separate etymologies combined")
+                p.msg("Added Etymology header when previously separate etymologies combined")
             # Put Alternative forms section before Etymology.
             newetym0 = re.sub(
                 r"^((?:\n|[^=\n].*?\n)*)(===Etymology===\n(?:\n|[^=\n].*?\n)*)(===(Alternative.*?)===\n(?:\n|[^=\n].*?\n)*)",
@@ -174,7 +171,7 @@ def process_text_on_page(index, pagetitle, text):
                 re.S,
             )
             if newetym0 != etymologies[0]:
-                pagemsg("Moved ===Alternative forms=== and such before Etymology")
+                p.msg("Moved ===Alternative forms=== and such before Etymology")
                 etymologies[0] = newetym0
 
         secbody = sechead + etymologies[0]
@@ -188,5 +185,5 @@ parser = blib.create_argparser("Split Arabic etymology sections", include_pagefi
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
                            default_cats=["Arabic lemmas"])

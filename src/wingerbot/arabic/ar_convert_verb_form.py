@@ -3,7 +3,7 @@
 import pywikibot, re, sys, argparse, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 
 from wingerbot.arabic import arlib
 
@@ -87,19 +87,10 @@ def escape_newlines(text):
     return text.replace("\n", r"\n")
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_text_on_page(p):
     notes = []
 
-    if blib.page_should_be_ignored(pagetitle):
+    if blib.page_should_be_ignored(p.title):
         return
 
     def do_etymtext(
@@ -119,9 +110,9 @@ def process_text_on_page(index, pagetitle, text):
         )
         voclemma_msg = "vocalized lemma%s %s" % ("s" if len(vocalized_lemmas) > 1 else "", ",".join(vocalized_lemmas))
         for unvocalized_lemma in unvocalized_lemmas:
-            conjs = lookup_conjugation(verb_form, unvocalized_lemma, pagemsg, errandpagemsg)
+            conjs = lookup_conjugation(verb_form, unvocalized_lemma, p.msg, p.errandmsg)
             if not conjs:
-                pagemsg(
+                p.msg(
                     "WARNING: Can't replace %s for verb form %s, %s"
                     % (ar_verb_form_occurrences_msg, verb_form, voclemma_msg)
                 )
@@ -150,7 +141,7 @@ def process_text_on_page(index, pagetitle, text):
         stuff_at_beginning.append(ar_rootbox_calls)
         stuff_at_beginning = "".join(stuff_at_beginning)
         if not ar_verb_form_parts:
-            pagemsg("WARNING: Something wrong, would substitute empty parameter into {{ar-verb form}}")
+            p.msg("WARNING: Something wrong, would substitute empty parameter into {{ar-verb form}}")
             return etymtext
         ar_verb_form_call = "{{ar-verb form|%s}}" % "|".join(ar_verb_form_parts)
         equal_signs = "=" * verb_header_level
@@ -166,10 +157,10 @@ def process_text_on_page(index, pagetitle, text):
                 ar_verb_form_call,
             )
         )
-        # pagemsg("Replaced <%s> with <%s>" % (escape_newlines(etymtext), escape_newlines(newtext)))
+        # p.msg("Replaced <%s> with <%s>" % (escape_newlines(etymtext), escape_newlines(newtext)))
         return newtext
 
-    modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Arabic", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -190,7 +181,7 @@ def process_text_on_page(index, pagetitle, text):
             continue
         m = re.search(raw_category_re, etymtext)
         if m:
-            pagemsg("WARNING: Saw raw category in {{ar-verb-form}} section, skipping: %s" % m.group(0))
+            p.msg("WARNING: Saw raw category in {{ar-verb-form}} section, skipping: %s" % m.group(0))
             continue
         verb_form = None
         vocalized_lemmas = []
@@ -209,7 +200,7 @@ def process_text_on_page(index, pagetitle, text):
                 for param in t.params:
                     pn = pname(param)
                     if not allow_fn(pn):
-                        pagemsg("WARNING: Unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
+                        p.msg("WARNING: Unrecognized param %s=%s: %s" % (pn, str(param.value), str(t)))
                         return False
                 return True
 
@@ -220,11 +211,11 @@ def process_text_on_page(index, pagetitle, text):
                     break
                 vform = getp("2")
                 if "<" in vform:
-                    pagemsg("WARNING: Saw angle bracket in {{ar-verb-form}}, skipping: %s" % str(t))
+                    p.msg("WARNING: Saw angle bracket in {{ar-verb-form}}, skipping: %s" % str(t))
                     must_continue = True
                     break
                 if verb_form and verb_form != vform:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw two different verb forms %s and %s in same etym section for {{ar-verb-form}}, skipping: %s"
                         % (verb_form, vform, str(t))
                     )
@@ -235,7 +226,7 @@ def process_text_on_page(index, pagetitle, text):
             elif tn in ["infl of", "inflection of"]:
                 lang = getp("1")
                 if lang != "ar":
-                    pagemsg("WARNING: Saw wrong language code in {{%s}}, skipping: %s" % (tname(t), lang, str(t)))
+                    p.msg("WARNING: Saw wrong language code in {{%s}}, skipping: %s" % (tname(t), lang, str(t)))
                     must_continue = True
                     break
                 if not check_allowed_params(lambda pn: re.search("^[0-9]+$", pn)):
@@ -248,7 +239,7 @@ def process_text_on_page(index, pagetitle, text):
                 if unvocalized_lemmas and unvoc_lemma not in unvocalized_lemmas:
                     all_lemmas = unvocalized_lemmas + [unvoc_lemma]
                     if set(all_lemmas) in allowed_lemma_pairs:
-                        pagemsg("Saw lemma alternatives %s, allowing" % ",".join(all_lemmas))
+                        p.msg("Saw lemma alternatives %s, allowing" % ",".join(all_lemmas))
                         unvocalized_lemmas.append(unvoc_lemma)
                         continue
 
@@ -260,7 +251,7 @@ def process_text_on_page(index, pagetitle, text):
                                 if not re.search("^%s[ايى]$" % stem, current_unvoc_lemma):
                                     break
                             else:  # no break
-                                pagemsg(
+                                p.msg(
                                     "Saw form I final-weak with different final vowels: current %s, new %s; allowing"
                                     % (",".join(unvocalized_lemmas), unvoc_lemma)
                                 )
@@ -269,7 +260,7 @@ def process_text_on_page(index, pagetitle, text):
 
                     if verb_form in ["III", "VI"]:
                         if len(unvocalized_lemmas) > 1:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Form III/VI, already saw two or more unvocalized lemmas %s, can't process a third %s"
                                 % (",".join(unvocalized_lemmas), unvoc_lemma)
                             )
@@ -294,11 +285,11 @@ def process_text_on_page(index, pagetitle, text):
                                     )
                                     # form III/VI geminate, with both full and elided variants listed as inflections
                                     if re.search(
-                                        "[او]%s%s%s$" % (final_cons, final_cons, person_number_suffix), pagetitle
+                                        "[او]%s%s%s$" % (final_cons, final_cons, person_number_suffix), p.title
                                     ):
-                                        pagemsg(
-                                            "Saw form III/VI geminate with both full and elided variants %s and %s listed as inflections, pagetitle is full variant %s so picking that"
-                                            % (lemma1, lemma2, pagetitle)
+                                        p.msg(
+                                            "Saw form III/VI geminate with both full and elided variants %s and %s listed as inflections, p.title is full variant %s so picking that"
+                                            % (lemma1, lemma2, p.title)
                                         )
                                         if lemma1_is_current:
                                             # current lemma is already the full one, so do nothing
@@ -308,10 +299,10 @@ def process_text_on_page(index, pagetitle, text):
                                             unvocalized_lemmas = [lemma1]
                                             inner_continue = True
                                             continue
-                                    if re.search("[او]%s%s$" % (final_cons, person_number_suffix), pagetitle):
-                                        pagemsg(
-                                            "Saw form III/VI geminate with both full and elided variants %s and %s listed as inflections, pagetitle is elided variant %s so picking that"
-                                            % (lemma1, lemma2, pagetitle)
+                                    if re.search("[او]%s%s$" % (final_cons, person_number_suffix), p.title):
+                                        p.msg(
+                                            "Saw form III/VI geminate with both full and elided variants %s and %s listed as inflections, p.title is elided variant %s so picking that"
+                                            % (lemma1, lemma2, p.title)
                                         )
                                         if lemma1_is_current:
                                             unvocalized_lemmas = [lemma2]
@@ -323,7 +314,7 @@ def process_text_on_page(index, pagetitle, text):
                                             continue
                         if inner_continue:
                             continue
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw two or more different unvocalized lemmas %s and %s in same etym section for {{%s}} in conjunction with {{ar-verb-form}}, skipping: %s"
                         % (",".join(unvocalized_lemmas), unvoc_lemma, tname(t), str(t))
                     )
@@ -336,7 +327,7 @@ def process_text_on_page(index, pagetitle, text):
             elif tn == "nonlemma":
                 saw_nonlemma = True
             elif tn not in ["ar-IPA"]:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw unrecognized template in {{ar-verb-form}} section (form %s, vocalized lemma(s) %s)%s; skipping: %s"
                     % (
                         verb_form,
@@ -373,8 +364,7 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:ar-verb-form"],
     skip_ignorable_pages=True,
 )

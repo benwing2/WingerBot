@@ -38,7 +38,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     fix_one_page_tool_place_noun,
-    edit=True,
-    stdin=True,
+    new=True,
     default_refs=["Template:%s" % tn for tn in templates],
 )

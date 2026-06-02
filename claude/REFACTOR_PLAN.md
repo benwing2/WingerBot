@@ -35,7 +35,7 @@ All scripts live in `~/Documents/WingerBot/claude/`.
 | `slavic/russian/` | 95 | ✅ DONE | 95 files auto-refactored; manual fixes in 18 files |
 | `slavic/` (non-russian) | 52 | ✅ DONE | 52 files auto-refactored; manual fixes in 10 files |
 | `romance/` | 69 | ✅ DONE | 69 files auto-refactored; manual fixes in 9 files |
-| `arabic/` | 17 | ⬜ TODO | |
+| `arabic/` | 17 | ✅ DONE | 17 files auto-refactored; manual fixes in 5 files (ar_canon, ar_convert_headwords_to_default/new_format, ar_count_verb_form_of, ar_fix_bad_23mp); ar_create_inflections skipped (needs manual cleanup) |
 | `chinese/` | 12 | ⬜ TODO | |
 | `sgconlaw/` | 11 | ⬜ TODO | |
 | `german/` | 10 | ⬜ TODO | |

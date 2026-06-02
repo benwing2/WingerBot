@@ -199,13 +199,10 @@ def make_term_tr(term, tr, other_mods):
         return term + other_mods
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(ar.reorder_shadda(text))
+    parsed = blib.parse_text(ar.reorder_shadda(p.text))
 
     noun_templates = {
         "ar-noun",
@@ -267,7 +264,7 @@ def process_text_on_page(index, pagetitle, text):
                     elif tn == "ar-sing-noun":
                         genders = "f"
                 if genders not in ["f", "m"]:
-                    pagemsg("WARNING: Gender 2=%s not f or m, skipping: %s" % (genders, str(t)))
+                    p.msg("WARNING: Gender 2=%s not f or m, skipping: %s" % (genders, str(t)))
                     continue
             elif tn in adj_templates:
                 inflections = adj_inflections
@@ -286,7 +283,7 @@ def process_text_on_page(index, pagetitle, text):
                     if gender:
                         t.add("3", gender)
                     blib.set_template_name(t, "ar-head")
-                    pagemsg("Convert {{%s}} to {{ar-head|%s}}" % (tn, ar_head_pos))
+                    p.msg("Convert {{%s}} to {{ar-head|%s}}" % (tn, ar_head_pos))
                     notes.append("convert {{%s}} to {{ar-head|%s}}" % (tn, ar_head_pos))
                 continue
             origt = str(t)
@@ -299,7 +296,7 @@ def process_text_on_page(index, pagetitle, text):
             for head in heads:
                 headterm, headtr, headother = parse_term_with_tr(head)
                 if headterm is None:
-                    pagemsg("WARNING: Couldn't parse term and translit in head=%s: %s" % (head, str(t)))
+                    p.msg("WARNING: Couldn't parse term and translit in head=%s: %s" % (head, str(t)))
                     raise ContinueException()
                 parsed_heads.append((headterm, headtr, headother))
             for inflspec in inflections:
@@ -327,22 +324,22 @@ def process_text_on_page(index, pagetitle, text):
                             for seg in segs:
                                 segterm, segtr, segother = parse_term_with_tr(seg)
                                 if segterm is None:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Couldn't parse term and translit in %s=%s: %s" % (field, seg, str(t))
                                     )
                                     raise ContinueException()
                                 canon_segterm, canon_segtr = canonicalize_form(segterm, segtr)
                                 canonseg = make_term_tr(canon_segterm, canon_segtr, segother)
                                 if canon_segterm != segterm or canon_segtr != segtr:
-                                    pagemsg("Canonicalized %s=%s to %s: %s" % (field, seg, canonseg, str(t)))
+                                    p.msg("Canonicalized %s=%s to %s: %s" % (field, seg, canonseg, str(t)))
                                 if def_segterm == canon_segterm and def_segtr == canon_segtr:
-                                    pagemsg("Replaced %s=%s with %s: %s" % (field, canonseg, plus_symbol, str(t)))
+                                    p.msg("Replaced %s=%s with %s: %s" % (field, canonseg, plus_symbol, str(t)))
                                     newsegs.append(plus_symbol + segother)
                                     notes.append(
                                         "replace %s=%s with %s%s in {{%s}}" % (field, seg, plus_symbol, segother, tn)
                                     )
                                 elif seg == headspec:
-                                    pagemsg("Replaced %s=%s with ~, standing for the head: %s" % (field, seg, str(t)))
+                                    p.msg("Replaced %s=%s with ~, standing for the head: %s" % (field, seg, str(t)))
                                     newsegs.append("~")
                                     notes.append("replace %s=%s with ~ in {{%s}}" % (field, seg, tn))
                                 elif canon_segterm != segterm or canon_segtr != segtr:
@@ -356,7 +353,7 @@ def process_text_on_page(index, pagetitle, text):
                             for seg in segs:
                                 segterm, segtr, segother = parse_term_with_tr(seg)
                                 if segterm is None:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Couldn't parse term and translit in %s=%s: %s" % (field, seg, str(t))
                                     )
                                     raise ContinueException()
@@ -365,7 +362,7 @@ def process_text_on_page(index, pagetitle, text):
                                 orig_segs.append((segterm, segtr, segother))
                                 canonseg = make_term_tr(canon_segterm, canon_segtr, segother)
                                 if canon_segterm != segterm or canon_segtr != segtr:
-                                    pagemsg("Canonicalized %s=%s to %s: %s" % (field, seg, canonseg, str(t)))
+                                    p.msg("Canonicalized %s=%s to %s: %s" % (field, seg, canonseg, str(t)))
                             if set(defaults) <= set(canon_segs):
                                 saw_plus = False
                                 for (canon_segterm, canon_segtr), (segterm, segtr, segother) in zip(
@@ -375,7 +372,7 @@ def process_text_on_page(index, pagetitle, text):
                                     canonseg = make_term_tr(canon_segterm, canon_segtr, segother)
                                     if (canon_segterm, canon_segtr) in defaults:
                                         if not saw_plus:
-                                            pagemsg(
+                                            p.msg(
                                                 "Replaced %s=%s with %s: %s" % (field, canonseg, plus_symbol, str(t))
                                             )
                                             newsegs.append(plus_symbol + segother)
@@ -398,7 +395,7 @@ def process_text_on_page(index, pagetitle, text):
                                     canonseg = make_term_tr(canon_segterm, canon_segtr, segother)
                                     if (segterm, segtr, segother) in parsed_heads:
                                         if not saw_tilde:
-                                            pagemsg("Replaced %s=%s with ~: %s" % (field, seg, str(t)))
+                                            p.msg("Replaced %s=%s with ~: %s" % (field, seg, str(t)))
                                             newsegs.append("~")
                                             notes.append("replace %s=%s with ~ in {{%s}}" % (field, seg, tn))
                                             saw_tilde = True
@@ -434,16 +431,16 @@ def process_text_on_page(index, pagetitle, text):
                         if fpl == "+":
                             rmparam(t, "fpl")
                         blib.set_template_name(t, "ar-adj+")
-                        pagemsg("Replace %s with auto-defaulting %s" % (origt, str(t)))
+                        p.msg("Replace %s with auto-defaulting %s" % (origt, str(t)))
                         notes.append("replace {{ar-adj}} with auto-defaulting {{ar-adj+}}, removing defaulted values")
                     elif not fpl:
                         if pl:
-                            pagemsg(
+                            p.msg(
                                 "NOTE: Would replace {{ar-adj}} with auto-defaulting {{ar-adj+}} but feminine plural is missing: %s"
                                 % str(t)
                             )
                         else:
-                            pagemsg(
+                            p.msg(
                                 "NOTE: Would replace {{ar-adj}} with auto-defaulting {{ar-adj+}} but masculine and feminine plural are missing: %s"
                                 % str(t)
                             )
@@ -463,7 +460,7 @@ def process_text_on_page(index, pagetitle, text):
                     subnotes.append("remove redundant feminine")
                 blib.set_template_name(t, "ar-noun+")
                 subnote_text = "; " + ", ".join(subnotes) if subnotes else ""
-                pagemsg("Convert {{%s}} to {{ar-noun+}}%s" % (tn, subnote_text))
+                p.msg("Convert {{%s}} to {{ar-noun+}}%s" % (tn, subnote_text))
                 notes.append("convert {{%s}} to {{ar-noun+}}%s" % (tn, subnote_text))
 
             if (
@@ -483,20 +480,20 @@ def process_text_on_page(index, pagetitle, text):
                     subnotes.append("remove redundant masculine")
                 blib.set_template_name(t, "ar-noun+")
                 subnote_text = "; " + ", ".join(subnotes) if subnotes else ""
-                pagemsg("Convert {{ar-noun}} to {{ar-noun+}}%s" % subnote_text)
+                p.msg("Convert {{ar-noun}} to {{ar-noun+}}%s" % subnote_text)
                 notes.append("convert {{ar-noun}} to {{ar-noun+}}%s" % subnote_text)
 
             if getp("d") == "+":
-                pagemsg("Removing redundant d=+: %s" % str(t))
+                p.msg("Removing redundant d=+: %s" % str(t))
                 rmparam(t, "d")
                 notes.append("remove redundant d=+")
             if getp("fd") == "+":
-                pagemsg("Removing redundant fd=+: %s" % str(t))
+                p.msg("Removing redundant fd=+: %s" % str(t))
                 rmparam(t, "fd")
                 notes.append("remove redundant fd=+")
 
         except BadTranslitException as e:
-            pagemsg("%s: %s" % (str(e), str(t)))
+            p.msg("%s: %s" % (str(e), str(t)))
             continue
         except ContinueException as ce:
             continue
@@ -510,4 +507,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
