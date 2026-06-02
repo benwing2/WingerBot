@@ -8,18 +8,15 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
 pronun_templates = ["IPA", "szy-IPA"]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, "Sakizaya", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Sakizaya", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     parsed = blib.parse_text(secbody)
@@ -27,7 +24,7 @@ def process_text_on_page(index, pagetitle, text):
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in pronun_templates:
-            pagemsg("Already saw pronunciation template: %s" % str(t))
+            p.msg("Already saw pronunciation template: %s" % str(t))
             return
 
     def construct_new_pron_template():
@@ -42,7 +39,7 @@ def process_text_on_page(index, pagetitle, text):
     while k < len(subsections) and subsecs.headers[k] in ["Alternative forms", "Etymology"]:
         k += 2
     if k - 1 >= len(subsections):
-        pagemsg("WARNING: No lemma or non-lemma section at top level")
+        p.msg("WARNING: No lemma or non-lemma section at top level")
         return
     insert_new_l3_pron_section(k - 1)
 

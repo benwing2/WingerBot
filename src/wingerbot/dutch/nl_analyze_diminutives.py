@@ -157,11 +157,8 @@ def default_dim(lemma, final_multisyllable_stress=False, modifier_final_multisyl
     return retval
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    modsec = blib.find_modifiable_lang_section(text, "Dutch", pagemsg, force_final_nls=True)
+def process_text_on_page(p):
+    modsec = blib.find_modifiable_lang_section(p.text, "Dutch", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -171,9 +168,9 @@ def process_text_on_page(index, pagetitle, text):
     def add_dim(dim_ending):
         num_pages_by_dim_ending[dim_ending] += 1
         if len(pages_by_dim_ending_set[dim_ending]) < 1000:
-            if pagetitle not in pages_by_dim_ending_set[dim_ending]:
-                pages_by_dim_ending_set[dim_ending].add(pagetitle)
-                pages_by_dim_ending[dim_ending].append(pagetitle)
+            if p.title not in pages_by_dim_ending_set[dim_ending]:
+                pages_by_dim_ending_set[dim_ending].add(p.title)
+                pages_by_dim_ending[dim_ending].append(p.title)
 
     parsed = blib.parse_text(secbody)
 
@@ -186,23 +183,23 @@ def process_text_on_page(index, pagetitle, text):
                 if dim == "-":
                     newdims.append(dim)
                     continue
-                if dim == default_dim(pagetitle):
+                if dim == default_dim(p.title):
                     newdim = "+"
-                elif dim == default_dim(pagetitle, True):
+                elif dim == default_dim(p.title, True):
                     newdim = "++"
-                elif " " in pagetitle and dim == default_dim(pagetitle, False, True):
+                elif " " in p.title and dim == default_dim(p.title, False, True):
                     newdim = "++/+"
-                elif " " in pagetitle and dim == default_dim(pagetitle, True, True):
+                elif " " in p.title and dim == default_dim(p.title, True, True):
                     newdim = "++/++"
-                elif " " in pagetitle and dim == default_dim(pagetitle, False, False, True):
+                elif " " in p.title and dim == default_dim(p.title, False, False, True):
                     newdim = "+first"
-                elif " " in pagetitle and dim == default_dim(pagetitle, True, False, True):
+                elif " " in p.title and dim == default_dim(p.title, True, False, True):
                     newdim = "++first"
-                elif dim.startswith(pagetitle):
-                    dimending = dim[len(pagetitle) :]
+                elif dim.startswith(p.title):
+                    dimending = dim[len(p.title) :]
                     newdim = "-" + dimending
                 else:
-                    pagemsg("WARNING: Can't analyze diminutive %s" % dim)
+                    p.msg("WARNING: Can't analyze diminutive %s" % dim)
                     newdims.append(dim)
                     continue
                 add_dim(newdim)

@@ -8,13 +8,10 @@ from wingerbot.blib import getparam, rmparam, msg, site, tname
 from wingerbot import find_regex
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_text_on_page(p):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     non_wgem = False
     wgem = []
@@ -46,12 +43,12 @@ def process_text_on_page(index, pagetitle, text):
                 "gmq-gut",
                 "ovd",
             ]:
-                pagemsg("Saw non-West-Germanic descendant %s" % str(t))
+                p.msg("Saw non-West-Germanic descendant %s" % str(t))
                 non_wgem = True
             else:
                 wgem.append(desc)
     if not non_wgem:
-        pagemsg(
+        p.msg(
             "Saw no non-West-Germanic descendants but saw West-Germanic or non-Germanic descendants %s" % ",".join(wgem)
         )
 

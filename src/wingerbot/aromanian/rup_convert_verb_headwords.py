@@ -3,19 +3,13 @@
 import pywikibot, re, sys, argparse, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg, site
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -39,7 +33,7 @@ def process_text_on_page(index, pagetitle, text):
                 if i % 2 == 0:
                     if item == "or":
                         if lastlist is None:
-                            pagemsg("WARNING: Saw 'or' without preceding inflection: %s" % str(t))
+                            p.msg("WARNING: Saw 'or' without preceding inflection: %s" % str(t))
                             must_continue = True
                             break
                         to_append_list = lastlist
@@ -67,7 +61,7 @@ def process_text_on_page(index, pagetitle, text):
                         lastlist = pp
                         to_append_list = lastlist
                     else:
-                        pagemsg("WARNING: Unrecognized inflection '%s': %s" % (item, str(t)))
+                        p.msg("WARNING: Unrecognized inflection '%s': %s" % (item, str(t)))
                         must_continue = True
                         break
                 else:
@@ -88,7 +82,7 @@ def process_text_on_page(index, pagetitle, text):
                 blib.set_param_chain(t, sperf, "sperf")
             if pp:
                 blib.set_param_chain(t, pp, "pp")
-            pagemsg("Replace %s with %s" % (origt, str(t)))
+            p.msg("Replace %s with %s" % (origt, str(t)))
             notes.append("convert {{head|rup|verb}} to {{rup-verb}}")
 
     return str(parsed), notes

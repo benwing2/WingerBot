@@ -21,13 +21,10 @@ conversions = [
 ]
 
 
-def process_text_on_page(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
@@ -47,7 +44,7 @@ def process_text_on_page(index, pagetitle, text):
                         t.add(str(i), newpron)
                         notes.append("canonicalize Sicilian phonemic pronun %s to %s" % (pron, newpron))
             if origt != str(t):
-                pagemsg("Replaced %s with %s" % (origt, str(t)))
+                p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
