@@ -338,4 +338,4 @@ if num_moves != len(args.to_type):
     )
 moves_to_do = list(zip(args.from_, args.from_type, args.to, args.to_type))
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

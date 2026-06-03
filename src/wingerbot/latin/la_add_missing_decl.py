@@ -98,5 +98,5 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         pagetitle_to_props[pagetitle] = (headword_template, decl_template)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_props.keys())
+    args, start, end, process_text_on_page, default_pages=list(pagetitle_to_props.keys())
 )

@@ -328,4 +328,4 @@ parser = blib.create_argparser("Templatize Spanish demonyms", include_pagefile=T
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

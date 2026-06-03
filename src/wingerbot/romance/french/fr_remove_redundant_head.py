@@ -104,7 +104,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_cats=["French lemmas"],
     # default_cats=["French lemmas", "French non-lemma forms"],
 )

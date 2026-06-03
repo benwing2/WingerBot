@@ -218,17 +218,18 @@ parser = blib.create_argparser(
     "Find analyses for Russian verbs without declension",
     include_pagefile=True,
     include_stdin=True,
-    canonicalize_pagename=rulib.remove_accents,
 )
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
-def scrape_pagetitle(index, page):
-    lemmas.append(page.title())
+def scrape_pagetitle(p):
+    lemmas.append(p.title)
 
 
-blib.do_pagefile_cats_refs(args, start, end, scrape_pagetitle, default_cats=["Russian verbs"])
+blib.do_pagefile_cats_refs(args, start, end, scrape_pagetitle, default_cats=["Russian verbs"],
+                           canonicalize_pagename=rulib.remove_accents)
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
+    args, start, end, process_text_on_page, default_cats=["Russian verbs"],
+    canonicalize_pagename=rulib.remove_accents),
 )

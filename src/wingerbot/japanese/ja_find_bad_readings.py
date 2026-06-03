@@ -6,13 +6,15 @@ from wingerbot import blib
 from wingerbot.blib import msg
 
 
-def process_page(index, page):
-    pagetitle = page.title()
-    for i, catpage in blib.cat_subcats(page, recurse=True):
+def process_page(p):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
+
+    for catindex, catpage in blib.cat_subcats(p.page, recurse=True):
         cat = catpage.title()
 
         def pagemsg(txt):
-            msg("Page %s,%s %s: %s" % (index, i, cat, txt))
+            msg("Page %s,%s %s: %s" % (p.index, catindex, cat, txt))
 
         if (
             not re.search("with.* reading ", cat)
@@ -41,4 +43,4 @@ parser = blib.create_argparser("Find bad Japanese reading categories", include_p
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page)
+blib.do_pagefile_cats_refs(args, start, end, process_page, no_fetch_text=True)

@@ -4,7 +4,7 @@ import pywikibot, re, sys, argparse
 import traceback, pprint
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import PagemsgCallback, getparam, rmparam, msg, errandmsg, site, tname
 from mwparserfromhell.nodes import Template
 from dataclasses import dataclass
 
@@ -6663,7 +6663,7 @@ class TemplateData:
     index: int
     pagetitle: str
     t: Template
-    pagemsg: Callable
+    pagemsg: PagemsgCallback
 
     def getp(self, param):
         return getparam(self.t, param)
@@ -6967,7 +6967,7 @@ def process_text_on_page(p):
     text = str(parsed)
 
     if args.lang_for_combine_inflection_of:
-        modsec = blib.find_modifiable_lang_section(p.text, args.lang_for_combine_inflection_of, p.msg)
+        modsec = blib.find_modifiable_lang_section(text, args.lang_for_combine_inflection_of, p.msg)
         if modsec is None:
             return text, notes
         secbody = modsec.secbody
@@ -7007,45 +7007,38 @@ def process_text_on_page(p):
     return text, notes
 
 
-def process_text_on_page_for_check_ignore(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-    notes = []
+def process_text_on_page_for_check_ignore(p):
+    p.msg("Processing")
 
     # We do want to change user pages with these templates on them.
-    if blib.page_should_be_ignored(pagetitle, allow_user_pages=True):
-        pagemsg("WARNING: Page has a prefix or suffix indicating it should not be touched, skipping")
+    if blib.page_should_be_ignored(p.title, allow_user_pages=True):
+        p.msg("WARNING: Page has a prefix or suffix indicating it should not be touched, skipping")
         return
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
 
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in templates_to_process_for_check_ignore:
             foundit = False
-            for m in re.finditer(r"^(.*?)%s(.*?)$" % re.escape(str(t)), text, re.M):
+            for m in re.finditer(r"^(.*?)%s(.*?)$" % re.escape(str(t)), p.text, re.M):
                 foundit = True
                 pretext = m.group(1)
                 posttext = m.group(2)
                 if not pretext.startswith("#"):
-                    pagemsg("WARNING: Found form-of template not on definition line: %s" % m.group(0))
+                    p.msg("WARNING: Found form-of template not on definition line: %s" % m.group(0))
                 has_pretext = not re.search(
                     r"^[#:]*\s*(\{\{(?:lb|label|sense|senseid|tlb|q|qualifier|qf)\|[^}]*?\}\}\s*)?$", pretext
                 )
                 has_posttext = posttext != ""
                 if has_pretext and has_posttext:
-                    pagemsg("WARNING: Found form-of template with pre-text and post-text: %s" % m.group(0))
+                    p.msg("WARNING: Found form-of template with pre-text and post-text: %s" % m.group(0))
                 elif has_pretext:
-                    pagemsg("WARNING: Found form-of template with pre-text: %s" % m.group(0))
+                    p.msg("WARNING: Found form-of template with pre-text: %s" % m.group(0))
                 elif has_posttext:
-                    pagemsg("WARNING: Found form-of template with post-text: %s" % m.group(0))
+                    p.msg("WARNING: Found form-of template with post-text: %s" % m.group(0))
             if not foundit:
-                errandpagemsg("WARNING: Couldn't find form-of template on page: %s" % str(t))
+                p.errandmsg("WARNING: Couldn't find form-of template on page: %s" % str(t))
 
 
 parser = blib.create_argparser(
@@ -7090,8 +7083,6 @@ if args.check_ignores:
         start,
         end,
         process_text_on_page_for_check_ignore,
-        edit=True,
-        stdin=True,
         default_refs=["Template:%s" % template for template in templates_to_process_for_check_ignore],
     )
 
@@ -7101,7 +7092,5 @@ else:
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
         default_refs=["Template:%s" % template for template in templates_to_actually_do],
     )

@@ -236,8 +236,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.links:
-    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_link_formatting, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_link_formatting,
                                default_cats=["Arabic lemmas", "Arabic non-lemma forms"])
 else:
-    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_headword_formatting, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, correct_one_page_headword_formatting,
                                default_cats=["Arabic %ss" % form for form, pos, templates in form_pos_templates_list])

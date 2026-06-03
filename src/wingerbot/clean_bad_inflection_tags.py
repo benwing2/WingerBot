@@ -1457,12 +1457,14 @@ if args.textfile:
     for index, (pagetitle, pagetext) in blib.iter_items(
         titles_and_text, start, end, get_name=lambda title_and_text: title_and_text[0]
     ):
-        newtext, notes = process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, pagetext, None))
+        retval = process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, pagetext))
+        if retval is not None:
+            newtext, notes = retval
         if newtext and newtext != pagetext:
             msg("Page %s %s: Would save with comment = %s" % (index, pagetitle, "; ".join(blib.group_notes(notes))))
 
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 output_stats_on_tag_set()
 

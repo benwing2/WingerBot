@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
-from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, errandmsg, site
+import pywikibot
 
-import pywikibot, re, sys, argparse
+from wingerbot import blib
+from wingerbot.blib import msg, errandmsg, site
 
 
 def process_page(index, page, contents, lang, verbose, comment):
     pagetitle = page.title()
-
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
     def errandpagemsg(txt):
         errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 

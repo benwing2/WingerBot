@@ -134,7 +134,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_cats=["Polish lemmas"]
+    args, start, end, process_text_on_page, default_cats=["Polish lemmas"]
 )
 
 blib.elapsed_time()

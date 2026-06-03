@@ -917,7 +917,7 @@ def process_lemma(index, pagetitle, slots, args):
                                 def do_process_page(index, page):
                                     pagetitle = str(page.title)
                                     text = blib.safe_page_text(page, errandpagemsg)
-                                    return process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text, None))
+                                    return process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text))
 
                                 blib.do_edit(
                                     index,
@@ -957,7 +957,6 @@ else:
         start,
         end,
         process_text_on_page,
-        new=True,
         default_cats=["Latin lemmas", "Latin non-lemma forms"],
     )
 

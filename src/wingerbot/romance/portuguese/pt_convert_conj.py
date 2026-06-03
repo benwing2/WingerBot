@@ -225,5 +225,5 @@ if args.direcfile:
             manual_conjs[verb] = conj
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_cats=["Portuguese verbs"]
+    args, start, end, process_text_on_page, default_cats=["Portuguese verbs"]
 )

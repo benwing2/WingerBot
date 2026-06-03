@@ -1107,4 +1107,4 @@ for pos in ["nouns", "proper nouns"]:
     ]:
         refs.append(refpage)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=refs)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_refs=refs)

@@ -455,7 +455,7 @@ test_templates = [
 
 def test_infer():
     for pagetext in test_templates:
-        retval = process_text_on_page(blib.ProcessPageParams(args, 1, "test_infer", pagetext, None))
+        retval = process_text_on_page(blib.ProcessPageParams(args, 1, "test_infer", pagetext))
         if retval is not None:
             newtext, comment = retval
         msg("newtext = %s" % str(newtext))
@@ -472,5 +472,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 if args.mockup:
     test_infer()
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
                                default_refs=["Template:%s" % template for template in decl_templates])

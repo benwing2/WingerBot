@@ -85,6 +85,4 @@ blib.do_pagefile_cats_refs(
         "Template:place:Brazil/state capital",
         "Template:place:Brazil/municipality",
     ],
-    edit=True,
-    stdin=True,
 )

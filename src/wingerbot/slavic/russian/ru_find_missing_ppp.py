@@ -76,9 +76,9 @@ if args.fix_pagefile:
         verb, direc = re.split(" ", line)
         pagetitle_to_direcs[verb] = direc
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_direcs.keys())
+        args, start, end, process_text_on_page, default_pages=list(pagetitle_to_direcs.keys())
     )
 else:
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, new=True, default_cats=["Russian verbs"]
+        args, start, end, process_text_on_page, default_cats=["Russian verbs"]
     )

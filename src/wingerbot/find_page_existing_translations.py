@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, site, tname
 
 
 def process_text_on_page(p):
@@ -16,7 +16,6 @@ def process_text_on_page(p):
             if trans not in seen_trans:
                 seen_trans.append(trans)
     for trans in seen_trans:
-
         def pagemsg_with_trans(txt):
             p.msg("%s: %s" % (trans, txt))
 
@@ -28,4 +27,4 @@ parser = blib.create_argparser("Find page-existing translations for terms", incl
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

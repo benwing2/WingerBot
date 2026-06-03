@@ -707,7 +707,7 @@ if __name__ == "__main__":
         if not args.regional_data_module:
             raise ValueError("If --alt-data-modules is given, so must --regional-data-module")
         regional_module_text = open(args.regional_data_module, "r", encoding="utf-8").read()
-        regional_label_data = process_text_on_page_for_label_objects(blib.ProcessPageParams(args, 0, args.regional_data_module, regional_module_text, None))
+        regional_label_data = process_text_on_page_for_label_objects(blib.ProcessPageParams(args, 0, args.regional_data_module, regional_module_text))
         for index, module_name, modtext, comments in blib.yield_text_from_find_regex(
             open(args.alt_data_modules, "r", encoding="utf-8"), args.verbose
         ):
@@ -733,9 +733,9 @@ if __name__ == "__main__":
             if code in alt_data_modules:
                 errandpagemsg("WARNING: Saw code '%s' twice, skipping second instance" % code)
                 continue
-            alt_data_modules[code] = process_text_on_page_for_label_objects(blib.ProcessPageParams(args, index, module_name, modtext, None))
+            alt_data_modules[code] = process_text_on_page_for_label_objects(blib.ProcessPageParams(args, index, module_name, modtext))
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
     for index, alt_langcode in enumerate(sorted(list(alt_data_modules.keys()))):
         if alt_langcode not in existing_label_module_langs_seen:
@@ -766,5 +766,4 @@ if __name__ == "__main__":
                 None,
                 pagemsg,
                 "find-regex",
-                True,
             )

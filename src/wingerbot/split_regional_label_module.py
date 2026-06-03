@@ -151,7 +151,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 regional_module_text = open(args.regional_data_module, "r", encoding="utf-8").read()
 regional_label_data = clean_label_module.process_text_on_page_for_label_objects(
-    blib.ProcessPageParams(args, 1, args.regional_data_module, regional_module_text, None)
+    blib.ProcessPageParams(args, 1, args.regional_data_module, regional_module_text)
 )
 if regional_label_data is None:
     errandmsg("WARNING: Error parsing regional label data module '%s', stopping" % args.regional_data_module)
@@ -318,10 +318,9 @@ else:
         None,
         pagemsg,
         "find-regex",
-        True,
     )
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
     for index, (lang, labelobjs) in enumerate(sorted(list(regional_labelobjs_by_lang.items()), key=lambda x: x[0])):
         lang_specific_module = "Module:labels/data/lang/%s" % lang
@@ -348,5 +347,4 @@ else:
                 None,
                 pagemsg,
                 "find-regex",
-                True,
             )

@@ -2,26 +2,23 @@
 
 from dataclasses import dataclass
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site, rsub_repeatedly
+from wingerbot.blib import pname
 
 from collections import defaultdict
 
 
-def process_text_on_page(pageindex, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     lemma_defn_subsection = None
@@ -36,7 +33,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             lines = subsections[k].strip().split("\n")
             for lineind, line in enumerate(lines):
                 if re.search(r"\{\{(head\|[^{}]*|[a-z][a-z][a-z]?-[^{}|]*)forms?\b", line):
-                    pagemsg(
+                    p.msg(
                         "Saw potential lemma section #%s %s but appears to be a non-lemma form due to line #%s, not counting as lemma: %s"
                         % (k // 2 + 1, subsections[k - 1].strip(), lineind + 1, line)
                     )
@@ -50,19 +47,19 @@ def process_text_on_page(pageindex, pagetitle, text):
         if header in ["Synonyms", "Antonyms"]:
             syntype = header.lower()[:-1]
             if lemma_defn_subsection is None and non_lemma_defn_subsection is None:
-                pagemsg(
+                p.msg(
                     "WARNING: Encountered %ss section #%s without preceding definition section" % (syntype, k // 2 + 1)
                 )
                 continue
             synant_subsection_level = subsecs.levels[k]
             if num_defn_subsections_seen > 1 and synant_subsection_level <= defn_subsection_level:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw %s definition sections followed by %s section #%s at same level or higher, skipping section"
                     % (num_defn_subsections_seen, syntype, k // 2 + 1)
                 )
                 continue
             if syntype in saw_nyms_already:
-                pagemsg("WARNING: Encountered two %s sections without intervening definition section" % syntype)
+                p.msg("WARNING: Encountered two %s sections without intervening definition section" % syntype)
                 continue
             prev_num_defn_subsections_seen = num_defn_subsections_seen
             num_defn_subsections_seen = 0
@@ -162,7 +159,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 syns = ["".join(comma_separated_run) for comma_separated_run in comma_separated_runs]
 
                 if qualifier and len(syns) > 1:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw qualifier along with multiple synonyms, not sure how to proceed: <%s>"
                         % orig_syntext
                     )
@@ -195,7 +192,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                                 gender = pv
                             elif pn in ["g2", "g3", "g4"]:
                                 if not gender:
-                                    pagemsg(
+                                    p.msg(
                                         "WARNING: Saw %s=%s without g= in %s <%s> in line: %s"
                                         % (pn, pv, syntype, orig_syn, line)
                                     )
@@ -208,19 +205,19 @@ def process_text_on_page(pageindex, pagetitle, text):
                             elif pn == "pos":
                                 pos = pv
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Unrecognized param %s=%s in %s <%s> in line: %s"
                                     % (pn, pv, syntype, orig_syn, line)
                                 )
                                 return None
                         if not raw_syn:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Couldn't find raw synonym in %s <%s> in line: %s" % (syntype, orig_syn, line)
                             )
                             return None
                         if raw_syn and alt:
                             if "[[" in raw_syn or "[[" in alt:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw both synonym=%s and alt=%s with brackets in one or both in %s <%s> in line: %s"
                                     % (raw_syn, alt, syntype, orig_syn, line)
                                 )
@@ -232,7 +229,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                             else:
                                 syn = "[[%s]]" % raw_syn
                         elif alt:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw alt=%s but no link text in %s <%s> in line: %s"
                                 % (alt, syntype, orig_syn, line)
                             )
@@ -254,16 +251,16 @@ def process_text_on_page(pageindex, pagetitle, text):
                         lit = None
                         pos = None
                     if "{{" in syn or "}}" in syn:
-                        pagemsg("WARNING: Unmatched braces in %s <%s> in line: %s" % (syntype, orig_syn, line))
+                        p.msg("WARNING: Unmatched braces in %s <%s> in line: %s" % (syntype, orig_syn, line))
                         return None
                     if "''" in syn:
-                        pagemsg("WARNING: Italicized text in %s <%s> in line: %s" % (syntype, orig_syn, line))
+                        p.msg("WARNING: Italicized text in %s <%s> in line: %s" % (syntype, orig_syn, line))
                         return None
                     if "(" in syn or ")" in syn:
-                        pagemsg("WARNING: Unmatched parens in %s <%s> in line: %s" % (syntype, orig_syn, line))
+                        p.msg("WARNING: Unmatched parens in %s <%s> in line: %s" % (syntype, orig_syn, line))
                         return None
                     if ":" in syn:
-                        pagemsg("WARNING: Unmatched colon in %s <%s> in line: %s" % (syntype, orig_syn, line))
+                        p.msg("WARNING: Unmatched colon in %s <%s> in line: %s" % (syntype, orig_syn, line))
                         return None
                     # Strip brackets around entire synonym
                     syn = re.sub(r"^\[\[([^\[\]|{}]*)\]\]$", r"\1", syn)
@@ -274,13 +271,13 @@ def process_text_on_page(pageindex, pagetitle, text):
                         def maybe_add_brackets(m):
                             text = m.group(1)
                             if "[" in text or "]" in text:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Saw nested brackets in %s in %s <%s> in line: %s"
                                     % (text, syntype, orig_syn, line)
                                 )
                                 return text
                             if not re.search(r"\w", text, re.U):
-                                pagemsg(
+                                p.msg(
                                     "Not adding brackets around '%s', saw no letters in %s <%s> in line: %s"
                                     % (text, syntype, orig_syn, line)
                                 )
@@ -299,7 +296,7 @@ def process_text_on_page(pageindex, pagetitle, text):
 
                         new_syn = "".join(split_by_brackets)
                         if new_syn != syn:
-                            pagemsg("Add brackets to '%s', producing '%s'" % (syn, new_syn))
+                            p.msg("Add brackets to '%s', producing '%s'" % (syn, new_syn))
                             syn = new_syn
                     other_params_with_none = [
                         ("tr", translit),
@@ -324,23 +321,23 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             def find_defns() -> FindDefnsResult | None:
                 if defn_subsection is None:
-                    pagemsg("WARNING: Couldn't find definition subsection for %s section #%s" % (syntype, k // 2 + 1))
+                    p.msg("WARNING: Couldn't find definition subsection for %s section #%s" % (syntype, k // 2 + 1))
                     return None
                 m = re.search(r"\A(.*?)((?:^#[^\n]*\n)+)(.*?)\Z", subsections[defn_subsection], re.M | re.S)
                 if not m:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Couldn't find definitions in definition subsection #%s" % (defn_subsection // 2 + 1)
                     )
                     return None
                 before_defn_text, defn_text, after_defn_text = m.groups()
                 if re.search("^#", before_defn_text, re.M) or re.search("^#", after_defn_text, re.M):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw definitions in before or after text in definition subsection #%s, not sure what to do"
                         % (defn_subsection // 2 + 1)
                     )
                     return None
                 if re.search("^##", defn_text, re.M):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found ## definition in definition subsection #%s, not sure what to do"
                         % (defn_subsection // 2 + 1)
                     )
@@ -348,7 +345,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 defns = re.split("^(#[^*:].*\n(?:#[*:].*\n)*)", defn_text, 0, re.M)
                 for between_index in range(0, len(defns), 2):
                     if defns[between_index]:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Saw unknown text <%s> between definitions, not sure what to do"
                             % defns[between_index].strip()
                         )
@@ -363,7 +360,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 handle."""
                 for syn in syns:
                     if not syn.synonym and syn.joiner_after is not None:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Would remove last synonym from a group: %s"
                             % ",".join(syn.synonym for syn in syns)
                         )
@@ -398,14 +395,14 @@ def process_text_on_page(pageindex, pagetitle, text):
                 fixme_msg = " FIXME" if add_fixme else ""
                 if syntype == "synonym":
                     if re.search(r"\{\{(syn|synonyms)\|", defn):
-                        pagemsg("WARNING: Already saw inline synonyms in definition: <%s>" % defn)
+                        p.msg("WARNING: Already saw inline synonyms in definition: <%s>" % defn)
                         return None
                     return re.sub(
                         r"^(.*\n)", r"\1#: {{syn|%s|%s}}%s" % (args.langcode, joined_syns, fixme_msg) + "\n", defn
                     )
                 else:
                     if re.search(r"\{\{(ant|antonyms)\|", defn):
-                        pagemsg("WARNING: Already saw inline antonyms in definition: <%s>" % defn)
+                        p.msg("WARNING: Already saw inline antonyms in definition: <%s>" % defn)
                         return None
                     # Need to put antonyms after any inline synonyms
                     return re.sub(
@@ -471,7 +468,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                             defnum, syns = m.groups()
                         else:
                             # couldn't parse line
-                            pagemsg("Couldn't parse %s line for numbers: %s" % (syntype, line))
+                            p.msg("Couldn't parse %s line for numbers: %s" % (syntype, line))
                             unparsable = True
                             break
 
@@ -502,7 +499,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 max_syn = max(syns_by_number.keys())
                 max_defn = max(reindexed_defns.keys())
                 if max_syn > max_defn:
-                    pagemsg("WARNING: Numbered synonyms refer to maximum %s > maximum defn %s" % (max_syn, max_defn))
+                    p.msg("WARNING: Numbered synonyms refer to maximum %s > maximum defn %s" % (max_syn, max_defn))
                     continue
 
                 # Add inline synonyms
@@ -545,7 +542,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                             tag, syns = m.groups()
                         else:
                             # couldn't parse line
-                            pagemsg("Couldn't parse %s line for tags: %s" % (syntype, line))
+                            p.msg("Couldn't parse %s line for tags: %s" % (syntype, line))
                             unparsable = True
                             break
                 tag = re.sub(r",? +etc\.?$", "", tag)
@@ -555,7 +552,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                     skipped_lines.append(lineno)
                 else:
                     if tag in syns_by_number:
-                        pagemsg("WARNING: Saw the same tag '%s' twice" % tag)
+                        p.msg("WARNING: Saw the same tag '%s' twice" % tag)
                         must_continue = True
                         break
                     syns_by_tag[tag] = (parsed_syns, lineno)
@@ -569,7 +566,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                 for defn in defns:
                     m = re.search("^# *(.*)\n", defn)
                     if not m:
-                        pagemsg("WARNING: Something wrong, can't pull out definition from <%s>" % defn)
+                        p.msg("WARNING: Something wrong, can't pull out definition from <%s>" % defn)
                         must_continue = True
                         break
                     unlinked_defns.append(blib.remove_links(m.group(1)))
@@ -588,7 +585,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                         tag_re = r"\b" + re.sub(r"[ ,.*/{}:;()?!\[\]+]+", r"\\b.*\\b", tag) + r"\b"
                         if re.search(tag_re, unlinked_defn):
                             if matching_defn is not None:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Matched tag '%s' against both defn <%s> and <%s>"
                                     % (tag, unlinked_defns[matching_defn], unlinked_defn)
                                 )
@@ -603,7 +600,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                     if must_break:
                         break
                     if not bad and matching_defn is None:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Couldn't match tag '%s' against definitions %s"
                             % (tag, ", ".join("<%s>" % unlinked_defn for unlinked_defn in unlinked_defns))
                         )
@@ -613,7 +610,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                             must_continue = True
                             break
                     if not bad and matching_defn in defn_to_tag:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Matched two tags '%s' and '%s' against the same defn <%s>"
                             % (tag, defn_to_tag[matching_defn], unlinked_defns[matching_defn])
                         )
@@ -653,13 +650,13 @@ def process_text_on_page(pageindex, pagetitle, text):
 
             # Add synonyms if only one definition or --do-your-best
             if prev_num_defn_subsections_seen > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw %s definition sections followed by %s section #%s and didn't match by sense tags, can't add"
                     % (prev_num_defn_subsections_seen, syntype, k // 2 + 1)
                 )
                 continue
             if len(defns) > 1:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw %s subsection %s with %s definitions and don't know where to add, %s"
                     % (
                         syntype,
@@ -692,7 +689,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                         syns = m.group(1)
                     else:
                         # couldn't parse line
-                        pagemsg("WARNING: Couldn't parse %s line in last stage: %s" % (syntype, line))
+                        p.msg("WARNING: Couldn't parse %s line in last stage: %s" % (syntype, line))
                         unparsable = True
                         break
                     parsed_syns = parse_syns(syns)
@@ -707,7 +704,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                     changed = False
                     if total_syns > 1 and len(defns) == total_syns:
                         # only happens when --do-your-best
-                        pagemsg(
+                        p.msg(
                             "Saw %s definitions and %s synonym lines, matching definitions and synonym lines"
                             % (len(defns), total_syns)
                         )
@@ -715,7 +712,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                             # Add inline synonyms
                             new_defn = add_syns_to_defn(syn_by_line.parsed_syns, defns[syn_by_line.synno], True)
                             if new_defn is None:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Couldn't add %s line when matching definitions and synonym lines: %s"
                                     % (syntype, lines[syn_by_line.lineno])
                                 )
@@ -727,7 +724,7 @@ def process_text_on_page(pageindex, pagetitle, text):
                     else:
                         if len(defns) > 1:
                             # only happens when --do-your-best
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw %s definitions but %s synonym lines, adding to first definition"
                                 % (len(defns), total_syns)
                             )
@@ -782,4 +779,4 @@ parser.add_argument("--do-your-best", action="store_true", help="Try to take act
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

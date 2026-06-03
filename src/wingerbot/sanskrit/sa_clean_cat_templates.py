@@ -52,7 +52,7 @@ if args.remove_manual_cats:
         cat = catpage.title()
         if cat not in cats_to_do:
             cats_to_do.append(cat)
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=cats_to_do)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=cats_to_do)
 elif args.delete_verb_subcats:
     for i, catpage in blib.cat_subcats("Sanskrit verb forms", recurse=True):
         msg("In category %s:" % catpage.title())
@@ -72,6 +72,5 @@ else:
         start,
         end,
         process_text_on_page,
-        new=True,
         default_refs=["Template:%s" for template in templates],
     )

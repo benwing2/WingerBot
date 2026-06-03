@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site, tname
+from wingerbot.blib import msg, errmsg
 
 
 def process_subpage(origindex, origpagetitle, index, page):
     pagetitle = page.title()
-
     def pagemsg(txt):
         msg("Page %s %s: %s %s: %s" % (origindex, origpagetitle, index, pagetitle, txt))
 
@@ -49,4 +46,4 @@ parser.add_argument("--table-of-uses", action="store_true", help="""Output in ta
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

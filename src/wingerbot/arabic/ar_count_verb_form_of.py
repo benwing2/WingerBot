@@ -21,7 +21,7 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 for num_occur, pages in sorted(pages_by_num_ar_verb_forms.items(), reverse=True):
     msg("%2d = %s" % (num_occur, ",".join(pages)))

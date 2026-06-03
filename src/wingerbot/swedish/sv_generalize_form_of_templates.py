@@ -110,6 +110,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_pages=["Template:%s" % template for template in templates_to_process],
 )

@@ -72,6 +72,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_pages=["Template:ru-conj-%s/documentation" % ty for i, ty in blib.iter_items(types, start, end)],
 )

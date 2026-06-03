@@ -218,7 +218,7 @@ parser.add_argument("--fix", action="store_true", help="Modify diminutives to us
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 msg("%20s  %5s  %s" % ("Ending", "Count", "Examples"))
 msg("-" * 80)

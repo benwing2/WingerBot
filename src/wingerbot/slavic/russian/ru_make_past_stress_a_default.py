@@ -70,6 +70,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_cats=["Russian class 8b verbs", "Russian irregular verbs"],
 )

@@ -1,46 +1,38 @@
 #!/usr/bin/env python3
 
-from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
-
 from collections import defaultdict
+
+from wingerbot import blib
+from wingerbot.blib import getparam, rmparam, tname
 
 coiner_count = defaultdict(set)
 
 
-def count_coiners(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    if "coin" not in text:
+def count_coiners(p):
+    if "coin" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    notes = []
-
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in ["coin", "coinage"]:
             lang = getparam(t, "1")
             coiner = getparam(t, "2")
-            coiner_count[(lang, coiner)].add(pagename)
-            pagemsg("Count for (%s, %s) is now %s" % (lang, coiner, len(coiner_count[(lang, coiner)])))
+            coiner_count[(lang, coiner)].add(p.title)
+            p.msg("Count for (%s, %s) is now %s" % (lang, coiner, len(coiner_count[(lang, coiner)])))
 
 
-def add_remove_nobycat(index, pagename, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
-
-    if "coin" not in text:
+def add_remove_nobycat(p):
+    if "coin" not in p.text:
         return
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         origt = str(t)
@@ -53,7 +45,7 @@ def add_remove_nobycat(index, pagename, text):
                     notes.append("add nobycat=1 to {{coinage|%s|%s}}" % (lang, coiner))
             elif len(coiner_count[(lang, coiner)]) > 1:
                 if getparam(t, "nocat"):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Lang %s, coiner %s has %s total words coined but has nocat=1: %s"
                         % (lang, coiner, len(coiner_count[(lang, coiner)]), str(t))
                     )
@@ -61,7 +53,7 @@ def add_remove_nobycat(index, pagename, text):
                     rmparam(t, "nobycat")
                     notes.append("remove nobycat= from {{coinage|%s|%s}}" % (lang, coiner))
         if str(t) != origt:
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -72,5 +64,5 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, count_coiners, edit=True, stdin=True)
-blib.do_pagefile_cats_refs(args, start, end, add_remove_nobycat, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, count_coiners)
+blib.do_pagefile_cats_refs(args, start, end, add_remove_nobycat)

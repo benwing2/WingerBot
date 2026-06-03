@@ -280,4 +280,4 @@ else:
         else:
             snarf_diminutives(p)
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

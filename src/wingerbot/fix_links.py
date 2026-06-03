@@ -405,4 +405,4 @@ if __name__ == "__main__":
 
     thislangcodes = langs
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=default_cats)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=default_cats)

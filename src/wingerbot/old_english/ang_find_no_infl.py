@@ -34,5 +34,5 @@ for pos in ["nouns", "verbs", "adjectives"]:
         return process_text_on_page(p, pos)
 
     blib.do_pagefile_cats_refs(
-        args, start, end, do_process_text_on_page, new=True, default_cats=["Old English %s" % pos]
+        args, start, end, do_process_text_on_page, default_cats=["Old English %s" % pos]
     )

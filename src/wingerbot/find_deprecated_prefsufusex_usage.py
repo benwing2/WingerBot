@@ -107,8 +107,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
     default_refs=["Template:prefixusex", "Template:suffixusex"],
     skip_ignorable_pages=True,
 )

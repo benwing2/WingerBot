@@ -3,7 +3,7 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import msg, site
+from wingerbot.blib import site
 
 
 def process_text_on_page(p):
@@ -49,4 +49,4 @@ parser = blib.create_argparser("Find page-existing translations for terms", incl
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

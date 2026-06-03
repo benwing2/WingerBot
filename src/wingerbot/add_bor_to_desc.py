@@ -116,7 +116,7 @@ parser = blib.create_argparser("Add |bor=1 to {{desc}} where appropriate", inclu
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 msg("Pairs of langs (PARENT -> CHILD) with |bor=1 added:")
 for (thislang, prevlang), count in sorted(bor_pairs.items(), key=lambda x: -x[1]):

@@ -202,6 +202,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_cats=["Old English %ss" % args.pos],
 )

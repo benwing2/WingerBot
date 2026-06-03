@@ -53,6 +53,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_refs=["Template:RQ:Bacon The Advancement of Learning"],
 )

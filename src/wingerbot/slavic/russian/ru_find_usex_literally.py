@@ -23,4 +23,4 @@ def process_text_on_page(p):
             p.msg("Found ref=space with usex: %s" % line)
 
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

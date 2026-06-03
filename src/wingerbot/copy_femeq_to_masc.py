@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, errandmsg, site, tname
 
 
 def process_masc_page(index, page, fem):
@@ -95,5 +95,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, default_cats=["French female equivalent nouns"], edit=True, stdin=True
+    args, start, end, process_text_on_page, default_cats=["French female equivalent nouns"]
 )

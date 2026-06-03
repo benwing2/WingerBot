@@ -85,5 +85,5 @@ for i, line in blib.iter_items_from_file(args.direcfile, start, end):
     adj_to_adv[lalib.remove_macrons(adj)] = adv
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_pages=list(adj_to_adv.keys())
+    args, start, end, process_text_on_page, default_pages=list(adj_to_adv.keys())
 )

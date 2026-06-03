@@ -7,23 +7,16 @@ templates = ["ar-tool noun", "ar-noun of place", "ar-instance noun"]
 
 
 # Fix the template refs. If cap= is present, remove it; else, add lc=.
-def fix_one_page_tool_place_noun(index, page):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+def fix_one_page_tool_place_noun(p):
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in templates:
             if getparam(t, "cap"):
-                pagemsg("Template %s: Remove cap=" % tn)
+                p.msg("Template %s: Remove cap=" % tn)
                 t.remove("cap")
             else:
-                pagemsg("Template %s: Add lc=1" % tn)
+                p.msg("Template %s: Add lc=1" % tn)
                 addparam(t, "lc", "1")
     changelog = "%s: If cap= is present, remove it, else add lc=" % t
     return str(parsed), changelog
@@ -38,6 +31,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     fix_one_page_tool_place_noun,
-    new=True,
     default_refs=["Template:%s" % tn for tn in templates],
 )

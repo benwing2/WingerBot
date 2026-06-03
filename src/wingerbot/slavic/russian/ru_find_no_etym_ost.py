@@ -63,6 +63,6 @@ for i, page in blib.cat_articles("Russian nouns"):
     nouns.append(page.title())
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_cats=["Russian adjectives"],
+    args, start, end, process_text_on_page, default_cats=["Russian adjectives"],
     canonicalize_pagename=rulib.remove_accents,
 )

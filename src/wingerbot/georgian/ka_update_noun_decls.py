@@ -82,5 +82,4 @@ blib.do_pagefile_cats_refs(
         "Template:ka-noun-a",
         "Template:ka-noun-e",
     ],
-    new=True,
 )

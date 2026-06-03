@@ -392,7 +392,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_pages=["User:Benwing2/test-ru-verb", "User:Benwing2/test-ru-verb-2", "Module:ru-verb/documentation"],
     default_refs=["Template:ru-conj-old"],
     default_cats=["Russian irregular verbs", "Russian verbs"],

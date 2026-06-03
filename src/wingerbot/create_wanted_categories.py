@@ -2,8 +2,6 @@
 
 import re
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
-import pywikibot
 
 
 def blacklist(category):
@@ -14,29 +12,20 @@ def blacklist(category):
     # return False
 
 
-def process_page(index, page):
-    pagetitle = page.title()
-
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
+def process_page(p):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
     if args.verbose:
-        pagemsg("Processing")
-    if page.exists():
-        errandpagemsg("Page already exists, not overwriting")
+        p.msg("Processing")
+    if p.page.exists():
+        p.errandmsg("Page already exists, not overwriting")
         return
-    if not pagetitle.startswith("Category:"):
-        pagemsg("Page not a category, skipping")
+    if not p.title.startswith("Category:"):
+        p.msg("Page not a category, skipping")
         return
-    catname = re.sub("^Category:", "", pagetitle)
+    catname = re.sub("^Category:", "", p.title)
     if blacklist(catname):
-        pagemsg("Category is blacklisted, skipping")
+        p.msg("Category is blacklisted, skipping")
         return
     if not args.allow_empty:
         has_article_or_subcats = False
@@ -47,10 +36,10 @@ def process_page(index, page):
             for art in blib.cat_subcats(catname):
                 has_article_or_subcats = True
         if not has_article_or_subcats:
-            pagemsg("Skipping empty category")
+            p.msg("Skipping empty category")
             return
     contents = "{{auto cat}}"
-    result = expand_text(contents)
+    result = p.expand_text(contents)
     if not result:
         return
     if (
@@ -59,16 +48,16 @@ def process_page(index, page):
         or "The automatically-generated contents of this category has errors" in result
         or "Lua error in" in result
     ):
-        pagemsg("Won't create page, would lead to errors: <%s>" % result)
+        p.msg("Won't create page, would lead to errors: <%s>" % result)
     else:
-        pagemsg("Creating page, output is <%s>" % result)
+        p.msg("Creating page, output is <%s>" % result)
         comment = args.comment or 'Created page with "%s"' % contents
         if args.save:
-            page.text = contents
-            if blib.safe_page_save(page, comment, errandpagemsg):
-                errandpagemsg("Created page, comment = %s" % comment)
+            p.page.text = contents
+            if blib.safe_page_save(p.page, comment, p.errandmsg):
+                p.errandmsg("Created page, comment = %s" % comment)
         else:
-            pagemsg("Would create, comment = %s" % comment)
+            p.msg("Would create, comment = %s" % comment)
 
 
 params = blib.create_argparser("Create wanted categories with {{auto cat}}", include_pagefile=True)
@@ -78,4 +67,4 @@ params.add_argument("--comment", help="Comment in place of 'Created page with \"
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page)
+blib.do_pagefile_cats_refs(args, start, end, process_page, no_fetch_text=True)

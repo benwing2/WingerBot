@@ -7,7 +7,7 @@ import unicodedata
 import pywikibot, re, sys
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, site, tname
 
 
 punc_chars = "".join("\\" + chr(i) for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P"))
@@ -107,4 +107,4 @@ if args.templates:
 else:
     templates = []
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

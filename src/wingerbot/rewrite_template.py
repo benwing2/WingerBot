@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from collections.abc import Callable
+from typing import cast
+
 import pywikibot, re
 
 from wingerbot import blib
@@ -55,31 +58,18 @@ def rename_template_and_subpage(index, old_name, new_name, pagemsg, errandpagems
                 )
 
 
-def process_text_on_page(
-    index,
-    pagetitle,
-    text,
-    templates,
-    new_names,
-    params_to_add,
-    params_to_prepend,
-    params_to_insert,
-    params_to_remove,
-    params_to_rename,
-    from_to_regex,
-    filters,
-    recognized_params,
-):
+def process_text_on_page(p):
+    text = p.text
     if not any(template in text for template in templates):
         return
     if not re.search(r"\{\{\s*(%s)" % "|".join(re.escape(t) for t in templates), text):
         return
 
     def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
+        msg("Page %s %s: %s" % (index, p.title, txt))
 
     def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+        errandmsg("Page %s %s: %s" % (index, p.title, txt))
 
     pagemsg("Processing")
     notes = []
@@ -89,8 +79,8 @@ def process_text_on_page(
 
     parsed = blib.parse_text(text)
 
-    def substitute_in_value(value, is_regex=False):
-        repl_pagetitle = pagetitle
+    def substitute_in_value(value: str, is_regex=False) -> str:
+        repl_pagetitle = p.title
         if is_regex:
             repl_pagetitle = re.escape(repl_pagetitle)
         value = value.replace("{{PAGENAME}}", repl_pagetitle)
@@ -111,7 +101,6 @@ def process_text_on_page(
                     filt_for_message = filt
                     if negate_messages:
                         filt_for_message = re.sub("^!", "", filt_for_message)
-                    matches = False
                     if paramspec[0] == "~":  # regex spec for param
                         paramspec = paramspec[1:]
                         for param in t.params:
@@ -147,39 +136,44 @@ def process_text_on_page(
                     return False
 
                 m = re.search("^!(.+?)=(.*)$", filt)
-                if m:
+                if m is not None:
+                    param, value = m.groups()
                     if not filter_matches(
-                        m.group(1), lambda pv: pv == substitute_in_value(m.group(2)), negate_messages=True
+                        param, lambda pv: pv == substitute_in_value(value), negate_messages=True
                     ):
                         continue
                     must_continue = True
                     break
                 m = re.search("^!(.+?)~(.*)$", filt)
-                if m:
+                if m is not None:
+                    param, value = m.groups()
                     if not filter_matches(
-                        m.group(1),
-                        lambda pv: re.search(substitute_in_value(m.group(2), is_regex=True), pv),
+                        param,
+                        lambda pv: re.search(substitute_in_value(value, is_regex=True), pv),
                         negate_messages=True,
                     ):
                         continue
                     must_continue = True
                     break
                 m = re.search("^(.+?)!=(.*)$", filt)
-                if m:
-                    if filter_matches(m.group(1), lambda pv: pv != substitute_in_value(m.group(2))):
+                if m is not None:
+                    param, value = m.groups()
+                    if filter_matches(param, lambda pv: pv != substitute_in_value(value)):
                         continue
                     must_continue = True
                     break
                 m = re.search("^(.+?)=(.*)$", filt)
-                if m:
-                    if filter_matches(m.group(1), lambda pv: pv == substitute_in_value(m.group(2))):
+                if m is not None:
+                    param, value = m.groups()
+                    if filter_matches(param, lambda pv: pv == substitute_in_value(value)):
                         continue
                     must_continue = True
                     break
                 m = re.search("^(.+?)!~(.*)$", filt)
-                if m:
+                if m is not None:
+                    param, value = m.groups()
                     if filter_matches(
-                        m.group(1), lambda pv: not re.search(substitute_in_value(m.group(2), is_regex=True), pv)
+                        param, lambda pv: not re.search(substitute_in_value(value, is_regex=True), pv)
                     ):
                         continue
                     must_continue = True
@@ -187,15 +181,16 @@ def process_text_on_page(
                 # This must precede the next one so that a filter of the form !~REGEX (with parameter regex) doesn't get
                 # interpreted as having a parameter named `!`.
                 m = re.search("^!(.+)$", filt)
-                if m:
+                if m is not None:
                     if not filter_matches(m.group(1), lambda pv: pv, negate_messages=True):
                         continue
                     must_continue = True
                     break
                 m = re.search("^(.+)~(.*)$", filt)
-                if m:
+                if m is not None:
+                    param, value = m.groups()
                     if filter_matches(
-                        m.group(1), lambda pv: re.search(substitute_in_value(m.group(2), is_regex=True), pv)
+                        param, lambda pv: re.search(substitute_in_value(value, is_regex=True), pv)
                     ):
                         continue
                     must_continue = True
@@ -237,7 +232,7 @@ def process_text_on_page(
                 pagemsg("Skipping %s because template couldn't be renamed" % old_name)
                 continue
 
-            if from_to_regex:
+            if args.from_to_regex:
                 for param in t.params:
                     pn = pname(param)
                     for old_param, new_param in params_to_rename:
@@ -294,7 +289,7 @@ def process_text_on_page(
                         append_note("prepend %s=%s to {{%s}}" % (param, value, tn))
             if params_to_insert:
                 new_params = []
-                params_to_insert = sorted(params_to_insert, key=lambda x: x[0])
+                sorted_params_to_insert = sorted(params_to_insert, key=lambda x: x[0])
                 last_param_inserted = 0
                 param_offset = 0
                 max_existing_numeric_param = 0
@@ -308,7 +303,7 @@ def process_text_on_page(
                     local_last_param_inserted = last_param_inserted
                     local_param_offset = param_offset
                     # insert any new numeric params greater than those inserted so far
-                    for param_to_insert, values_to_insert in params_to_insert:
+                    for param_to_insert, values_to_insert in sorted_params_to_insert:
                         if param_to_insert > local_last_param_inserted:
                             # add blank params to avoid leading a gap between last param so far and new params
                             for i in range(
@@ -330,7 +325,7 @@ def process_text_on_page(
                     pv = str(param.value)
                     if re.search("^[0-9]+$", pn):
                         pnint = int(pn)
-                        for param_to_insert, values_to_insert in params_to_insert:
+                        for param_to_insert, values_to_insert in sorted_params_to_insert:
                             values_to_insert = [substitute_in_value(v) for v in values_to_insert]
                             if param_to_insert > last_param_inserted and param_to_insert <= pnint:
                                 for i, value_to_insert in enumerate(values_to_insert):
@@ -442,13 +437,10 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
-def handle_single_param(paramname, process=None):
+def split_single_param(paramname: str) -> list[str] | None:
     argval = getattr(args, paramname)
     if argval:
-        if process:
-            return process(argval)
-        else:
-            return argval
+        return blib.split_arg(argval)
     else:
         return None
 
@@ -462,10 +454,10 @@ def handle_list_param(paramname, split_on_comma=False):
         return rawvals
 
 
-def handle_params_to_add(paramname, process_parts=None):
+def handle_params_to_add[T](paramname: str, process_parts: Callable[[str, str], T] = lambda param, val: [param, val]) -> list[T]:
     argval = getattr(args, paramname)
-    params_to_add = []
-    addspecs = list(argval) if argval else []
+    params_to_add: list[T] = []
+    addspecs: list[str] = list(argval) if argval else []
     for spec in addspecs:
         specparts = spec.split("=")
         if len(specparts) != 2:
@@ -474,15 +466,15 @@ def handle_params_to_add(paramname, process_parts=None):
             parts_to_add = process_parts(*specparts)
         else:
             parts_to_add = specparts
-        params_to_add.append(parts_to_add)
+        params_to_add.append(cast(T, parts_to_add))
     return params_to_add
 
 
 output_pages_to_delete = []
 
 if args.direcfile:
-    templates = []
-    new_names = []
+    templates: list[str] = []
+    new_names: list[str] | None = []
     for index, line in blib.iter_items_from_file(args.direcfile):
         if " ||| " not in line:
             msg("Line %s: WARNING: Saw bad line in --direcfile: %s" % (index, line))
@@ -517,9 +509,12 @@ if args.direcfile:
                 msg("Line %s: WARNING: Unrecognized directive in --direcfile: %s" % (index, line))
                 break
 else:
-    templates = handle_single_param("template", blib.split_arg)
-    new_names = handle_single_param("new_name", blib.split_arg)
-    if new_names and len(new_names) != len(templates):
+    templates_arg = split_single_param("template")
+    if templates_arg is None:
+        raise ValueError("No templates specified to process")
+    templates = templates_arg
+    new_names = split_single_param("new_name")
+    if new_names is not None and len(new_names) != len(templates):
         if len(new_names) == 1:
             new_names = new_names * len(templates)
         else:
@@ -530,13 +525,11 @@ else:
     if args.rename_templates:
         templates_to_rename = set(templates)
 
-if not templates:
-    raise ValueError("No templates specified to process")
 if new_names:
     template_to_new_name_dict = dict(zip(templates, new_names))
-recognized_params = handle_single_param("recognized_params", blib.split_arg)
+recognized_params = split_single_param("recognized_params")
 
-ignore_rename_errors = handle_single_param("ignore_rename_errors", blib.split_arg)
+ignore_rename_errors = split_single_param("ignore_rename_errors")
 if ignore_rename_errors == ["all"]:
     ignore_rename_errors = True
 
@@ -547,7 +540,7 @@ params_to_add = handle_params_to_add("add")
 params_to_prepend = handle_params_to_add("prepend")
 
 
-def process_insert_parts(param, value):
+def process_insert_parts(param: str, value: str) -> tuple[int, list[str]]:
     if not re.search("^[0-9]+$", param):
         raise ValueError("Parameter %s to --insert must be numeric" % param)
     return (int(param), value.split("|"))
@@ -563,24 +556,6 @@ if len(from_) != len(to):
 params_to_rename = list(zip(from_, to))
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(
-        index,
-        pagetitle,
-        text,
-        templates,
-        new_names,
-        params_to_add,
-        params_to_prepend,
-        params_to_insert,
-        params_to_remove,
-        params_to_rename,
-        args.from_to_regex,
-        filters,
-        recognized_params,
-    )
-
-
 # We want to do template references first in case we rename a template that is included in other templates. For example,
 # if we rename {{alt-decl-noun}} to {{alt-ndecl-base}} followed by {{alt-noun-c}} to {{alt-ndecl-c}}, and
 # {{alt-ndecl-c}} is defined using {{alt-decl-noun}}, we want to rename the reference to {{alt-decl-noun}} in
@@ -590,9 +565,7 @@ blib.do_pagefile_cats_refs(
     args,
     start,
     end,
-    do_process_text_on_page,
-    edit=True,
-    stdin=True,
+    process_text_on_page,
     default_refs=["Template:%s" % template for template in templates],
     templates_first=True,
 )
@@ -603,13 +576,11 @@ if templates_to_rename:
     for tn in sorted_templates_to_rename:
         msg("Template:%s" % tn)
     msg("Renaming templates without any uses ...")
-    for index, old_name in enumerate(sorted_templates_to_rename):
-
+    for index, old_name in enumerate(sorted_templates_to_rename, start=1):
         def pagemsg(txt):
-            msg("Page %s Template:%s: %s" % (index + 1, old_name, txt))
-
+            msg("Page %s Template:%s: %s" % (index, old_name, txt))
         def errandpagemsg(txt):
-            errandmsg("Page %s Template:%s: %s" % (index + 1, old_name, txt))
+            errandmsg("Page %s Template:%s: %s" % (index, old_name, txt))
 
         new_name = template_to_new_name_dict[old_name]
         rename_template_and_subpage(index + 1, old_name, new_name, pagemsg, errandpagemsg)

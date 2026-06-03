@@ -21,5 +21,5 @@ parser = blib.create_argparser("Rewrite ar-nisba, changing head= to 1=", include
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
                            default_refs=["Template:ar-nisba"])

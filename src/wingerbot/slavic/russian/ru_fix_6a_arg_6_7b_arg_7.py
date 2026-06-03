@@ -53,6 +53,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_refs=["Template:tracking/ru-verb/conj-%s" % vclass for vclass in ["6a", "7b"]],
 )

@@ -187,7 +187,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if not args.new_pronuns:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Old English lemmas"])
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Old English lemmas"])
 else:
     new_pronuns = {}
     bad_pagename = None
@@ -220,5 +220,5 @@ else:
                 new_pronuns[pagename].append((headword, new_pronun))
 
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page_for_modification, new=True, default_cats=["Old English lemmas"],
+        args, start, end, process_text_on_page_for_modification, default_cats=["Old English lemmas"],
     )

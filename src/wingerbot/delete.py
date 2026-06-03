@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
 
-import re
-from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
 import pywikibot
 
+from wingerbot import blib
+from wingerbot.blib import site
 
-def process_page(index, page, args, comment):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
+def process_page(p, comment):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
     if args.verbose:
-        pagemsg("Processing")
+        p.msg("Processing")
     this_comment = comment or "delete page"
-    if blib.safe_page_exists(page, errandpagemsg):
+    if blib.safe_page_exists(page, p.errandmsg):
         if args.save:
-            existing_text = blib.safe_page_text_or_none(page, errandpagemsg)
+            existing_text = blib.safe_page_text_or_none(page, p.errandmsg)
             if existing_text is not None:
                 page.delete('%s (content was "%s")' % (this_comment, existing_text))
-                errandpagemsg("Deleted (comment=%s)" % this_comment)
+                p.errandmsg("Deleted (comment=%s)" % this_comment)
         else:
-            pagemsg("Would delete (comment=%s)" % this_comment)
+            p.msg("Would delete (comment=%s)" % this_comment)
     else:
-        pagemsg("Skipping, page doesn't exist")
+        p.msg("Skipping, page doesn't exist")
 
 
 params = blib.create_argparser("Delete pages", include_pagefile=True)
@@ -42,10 +38,10 @@ if args.direcfile:
             pagetitle = line
             page_comment = args.comment or "delete file"
         page = pywikibot.Page(site, pagetitle)
-        process_page(index, page, args, page_comment)
+        process_page(blib.ProcessPageParams(args, index, pagetitle, "", page=page), page_comment)
 else:
 
-    def do_process_page(index, page):
-        return process_page(index, page, args, args.comment)
+    def do_process_page(p):
+        return process_page(p, args.comment)
 
-    blib.do_pagefile_cats_refs(args, start, end, do_process_page)
+    blib.do_pagefile_cats_refs(args, start, end, do_process_page, no_fetch_text=True)

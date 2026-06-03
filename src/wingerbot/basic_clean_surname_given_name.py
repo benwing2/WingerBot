@@ -158,6 +158,4 @@ blib.do_pagefile_cats_refs(
     end,
     process_text_on_page,
     default_refs=["Template:surname", "Template:given name"],
-    edit=True,
-    stdin=True,
 )

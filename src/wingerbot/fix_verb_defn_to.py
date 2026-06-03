@@ -3,26 +3,19 @@
 # Add 'to' to verb defns when missing.
 
 import re
-import pywikibot
 
 from wingerbot import blib
 
-from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
 
-
-def process_text_on_page(pageindex, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (pageindex, pagetitle, txt))
-
+def process_text_on_page(p):
     notes = []
 
-    modsec = blib.find_modifiable_lang_section(text, args.langname, pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, args.langname, p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
 
     for k, subsectitle in subsecs.header_list:
@@ -119,7 +112,7 @@ def process_text_on_page(pageindex, pagetitle, text):
             )
 
             if newdefn != defn:
-                pagemsg("Replace defn <%s> with <%s>" % (defn, newdefn))
+                p.msg("Replace defn <%s> with <%s>" % (defn, newdefn))
                 notes.append("add missing 'to' in %s verb defn" % args.langname)
                 defn = newdefn
 
@@ -137,5 +130,5 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, edit=True, stdin=True, default_cats=["%s verbs" % args.langname]
+    args, start, end, process_text_on_page, default_cats=["%s verbs" % args.langname]
 )

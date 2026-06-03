@@ -105,7 +105,7 @@ def read_aliases():
 
 read_aliases()
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 msg("%-50s %5s: %s" % ("Qualifier", "Count", "Count-by-lang"))
 msg("----------------------------------------------------")

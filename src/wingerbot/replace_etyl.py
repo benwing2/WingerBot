@@ -133,8 +133,6 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
         default_refs=["Template:etyl"],
         ref_namespaces=[0],
     )

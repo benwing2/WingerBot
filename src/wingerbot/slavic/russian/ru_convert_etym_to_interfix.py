@@ -169,5 +169,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 etym_change = args.etym_change
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_cats=["Russian compound words"]
+    args, start, end, process_text_on_page, default_cats=["Russian compound words"]
 )

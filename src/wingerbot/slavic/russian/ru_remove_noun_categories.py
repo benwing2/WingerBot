@@ -37,7 +37,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page_noun,
-    new=True,
     default_refs=["Template:ru-noun", "Template:ru-noun+"],
 )
 blib.do_pagefile_cats_refs(
@@ -45,6 +44,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page_proper_noun,
-    new=True,
     default_refs=["Template:ru-proper noun", "Template:ru-proper noun+"],
 )

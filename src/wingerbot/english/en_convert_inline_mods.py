@@ -565,7 +565,7 @@ parser.add_argument("--do-verbs", help="Convert verbs", action="store_true")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 if args.check_qual_canon:
     msg("%5s: %s" % ("mod", "count"))

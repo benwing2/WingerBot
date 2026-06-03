@@ -166,5 +166,5 @@ if __name__ == "__main__":
             return process_text_on_page(p, langcode, langname, args.topics_template)
 
         blib.do_pagefile_cats_refs(
-            args, start, end, do_process_text_on_page, default_cats=[langname + " lemmas"], edit=True, stdin=True
+            args, start, end, do_process_text_on_page, default_cats=[langname + " lemmas"]
         )

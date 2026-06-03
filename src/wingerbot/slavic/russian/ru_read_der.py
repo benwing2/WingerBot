@@ -134,7 +134,7 @@ def process_text_on_page(p):
             hyphen_page = pywikibot.Page(site, hyphen_pagetitle)
             hyphen_text = blib.safe_page_text(hyphen_page, p.errandmsg)
             if hyphen_text:
-                process_text_on_page(blib.ProcessPageParams(args, p.index, hyphen_pagetitle, hyphen_text, None))
+                process_text_on_page(blib.ProcessPageParams(args, p.index, hyphen_pagetitle, hyphen_text))
             else:
                 p.msg("WARNING: Couldn't find derived terms on page")
 
@@ -147,4 +147,4 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

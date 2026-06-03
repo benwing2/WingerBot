@@ -2,11 +2,9 @@
 
 # Find pages that need definitions among a set list (e.g. most frequent words).
 
-import re, sys
-import pywikibot
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
 
 
 def process_text_on_page(p):
@@ -64,20 +62,6 @@ def process_text_on_page(p):
                 p.msg("-------- begin text --------\n%s-------- end text --------" % text_to_search)
 
 
-def search_pages(start, end):
-
-    if args.input_from_diff:
-        lines = open(args.input_from_diff, "r", encoding="utf-8")
-        index_pagename_and_text = blib.yield_text_from_diff(lines, args.verbose)
-        for _, (index, pagename, text) in blib.iter_items(
-            index_pagename_and_text, start, end, get_name=lambda x: x[1], get_index=lambda x: x[0]
-        ):
-            process_text_on_page(blib.ProcessPageParams(args, index, pagename, text, None))
-        return
-
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True, include_comment=True)
-
-
 if __name__ == "__main__":
     parser = blib.create_argparser("Search on pages", include_pagefile=True, include_stdin=True)
     parser.add_argument("-e", "--regex", help="Regular expression to search for.")
@@ -115,4 +99,12 @@ if __name__ == "__main__":
 
     if not args.regex and not args.text:
         raise ValueError("-e (--regex) must be given unless --text is given")
-    search_pages(start, end)
+    if args.input_from_diff:
+        lines = open(args.input_from_diff, "r", encoding="utf-8")
+        index_pagename_and_text = blib.yield_text_from_diff(lines, args.verbose)
+        for _, (index, pagename, text) in blib.iter_items(
+            index_pagename_and_text, start, end, get_name=lambda x: x[1], get_index=lambda x: x[0]
+        ):
+            process_text_on_page(blib.ProcessPageParams(args, index, pagename, text))
+    else:
+        blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

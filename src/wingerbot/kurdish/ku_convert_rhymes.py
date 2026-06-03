@@ -3,29 +3,25 @@
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, tname
+from wingerbot.blib import getparam, tname
 
 
-def process_page_for_rename(index, page):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def process_page_for_rename(p):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    totitle = pagetitle.replace(":Kurdish", ":Northern Kurdish")
+    totitle = p.title.replace(":Kurdish", ":Northern Kurdish")
     comment = "Rename Rhymes:Kurdish/... -> Rhymes:Northern Kurdish/..."
     if args.save:
         try:
-            page.move(totitle, reason=comment, movetalk=True, noredirect=True)
-            errandpagemsg("Renamed to %s" % totitle)
+            p.page.move(totitle, reason=comment, movetalk=True, noredirect=True)
+            p.errandmsg("Renamed to %s" % totitle)
         except pywikibot.exceptions.PageRelatedError as error:
-            errandpagemsg("Error moving to %s: %s" % (totitle, error))
+            p.errandmsg("Error moving to %s: %s" % (totitle, error))
             return
     else:
-        errandpagemsg("Would move '%s' to '%s': comment=%s" % (pagetitle, totitle, comment))
+        p.errandmsg("Would move '%s' to '%s': comment=%s" % (p.title, totitle, comment))
 
 
 def process_text_on_page_for_fix(p):
@@ -61,7 +57,8 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_page_for_rename, default_cats=["Kurdish rhymes"])
+blib.do_pagefile_cats_refs(args, start, end, process_page_for_rename, no_fetch_text=True,
+                           default_cats=["Kurdish rhymes"])
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page_for_fix, new=True, default_cats=["Kurdish rhymes"]
+    args, start, end, process_text_on_page_for_fix, default_cats=["Kurdish rhymes"]
 )

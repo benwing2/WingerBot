@@ -611,4 +611,4 @@ allow_mismatching_nsyl = set()
 if args.allow_mismatching_nsyl:
     allow_mismatching_nsyl = set(blib.split_arg(args.allow_mismatching_nsyl))
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

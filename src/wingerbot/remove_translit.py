@@ -318,7 +318,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 langs = args.langs.split(",") if args.langs != "all" else remove_tr_langs
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True,
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page,
                            default_cats=[cat for lang in langs for cat in [
                                 "Terms with redundant transliterations/" + lang,
                                 "Terms with manual transliterations different from the automated ones/" + lang,

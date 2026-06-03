@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, time
+import pywikibot, re
 from wingerbot import blib
-from wingerbot.blib import site, msg, errmsg, group_notes, iter_items
+from wingerbot.blib import site, msg, errandmsg
 
 # add_ru_etym.py had a bug in it that erased {{also|...}} and similar tags
 # at the top of a page, before any language sections. This script undoes the
@@ -12,10 +12,8 @@ from wingerbot.blib import site, msg, errmsg, group_notes, iter_items
 def restore_removed_pagehead(index, pagetitle, comment, oldrevid):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errpagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-        errmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    def errandpagemsg(txt):
+        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing page with comment = %s" % comment)
     if re.search("(add|replace).*Etymology section", comment):
@@ -26,7 +24,7 @@ def restore_removed_pagehead(index, pagetitle, comment, oldrevid):
             newtext_pagehead = re.split("(^==[^=\n]+==\n)", page.text, 0, re.M)[0]
             if newtext_pagehead != oldtext_pagehead:
                 if newtext_pagehead:
-                    errpagemsg(
+                    errandpagemsg(
                         "WARNING: Something weird, old page has pagehead <%s> and new page has different pagehead <%s>"
                         % (oldtext_pagehead, newtext_pagehead)
                     )
@@ -45,14 +43,15 @@ def process_item(index, item):
     restore_removed_pagehead(index, item["title"], item["comment"], item["parentid"])
 
 
-def process_page(index, page):
-    pagetitle = page.title()
-    revisions = list(page.revisions(total=50))
+def process_page(p):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
+    revisions = list(p.page.revisions(total=50))
     for rev in revisions:
         if rev["user"] == "WingerBot":
             oldrevid = rev["_parent_id"]
             if oldrevid:
-                restore_removed_pagehead(index, pagetitle, rev["comment"], oldrevid)
+                restore_removed_pagehead(p.index, p.pagetitle, rev["comment"], oldrevid)
 
 
 parser = blib.create_argparser("Undo wrongly-erased {{also|...}} tags from the top of a page", include_pagefile=True)
@@ -60,7 +59,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.pagefile or args.pages or args.cats or args.refs:
-    blib.do_pagefile_cats_refs(args, start, end, process_page)
+    blib.do_pagefile_cats_refs(args, start, end, process_page, no_fetch_text=True)
 else:
-    for i, item in blib.get_contributions("WingerBot", start, end):
-        process_item(i, item)
+    for index, item in blib.get_contributions("WingerBot", start, end):
+        process_item(index, item)

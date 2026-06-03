@@ -282,8 +282,6 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        edit=True,
-        stdin=True,
         # FIXME, had includelinks= for references, which we don't have a flag for now
         default_refs=["Template:%s" % template for template in replace_templates],
         skip_ignorable_pages=True,

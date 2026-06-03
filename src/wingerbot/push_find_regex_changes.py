@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 return
             return process_text_on_page(p, newtext, comment, origcontents)
 
-        blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)
+        blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page)
 
     else:
         index_pagetitle_text_comment = blib.yield_text_from_find_regex(lines, args.verbose)
@@ -181,7 +181,7 @@ if __name__ == "__main__":
             else:
 
                 def do_process_page(index, page):
-                    return process_text_on_page(blib.ProcessPageParams(args, index, page.title(), page.text, None), newtext, comment, origcontents)
+                    return process_text_on_page(blib.ProcessPageParams(args, index, page.title(), page.text), newtext, comment, origcontents)
 
                 blib.do_edit(
                     index,

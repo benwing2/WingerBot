@@ -3,10 +3,9 @@
 # Go through a dump finding links to nonexistent pages.
 
 import re, gzip
-from io import TextIOWrapper
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import getparam, msg
 from collections import defaultdict
 
 lang_data = lang_utils.get_lang_data()
@@ -139,4 +138,4 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 pages_with_langs = read_existing_pages(args.existing_pages)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

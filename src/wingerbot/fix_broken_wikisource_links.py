@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, tname
 
 
-def process_text_on_page(index, pagetitle, pagetext, subs):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def process_text_on_page(p):
     if not args.stdin:
-        pagemsg("Processing")
+        p.msg("Processing")
 
     notes = []
 
@@ -30,12 +27,8 @@ def process_text_on_page(index, pagetitle, pagetext, subs):
             if newvalue != value:
                 t.add(param, newvalue)
 
-    parsed = blib.parse_text(pagetext)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
-
-        def getp(param):
-            return getparam(t, param)
-
         origt = str(t)
         tn = tname(t)
         if tn in ["R:wsource"]:
@@ -47,32 +40,32 @@ def process_text_on_page(index, pagetitle, pagetext, subs):
             frobparam(t, "1")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
-    pagetext = str(parsed)
-    newpagetext = re.sub(
-        r"url=(\[(s|wikisource):.*?\])", lambda m: "urls=[%s]" % m.group(1).replace("{{!}}", "|"), pagetext
+    text = str(parsed)
+    newtext = re.sub(
+        r"url=(\[(s|wikisource):.*?\])", lambda m: "urls=[%s]" % m.group(1).replace("{{!}}", "|"), text
     )
-    if newpagetext != pagetext:
+    if newtext != text:
         notes.append("convert url=(hacked-up Wikisource link) to urls=(proper Wikisouce link)")
-        pagetext = newpagetext
-    newpagetext = pagetext
-    newpagetext = re.sub(
+        text = newtext
+    newtext = text
+    newtext = re.sub(
         r"\[\[(s|wikisource):([^][|]*?)\]\]",
         lambda m: "[[%s:%s]]" % (m.group(1), frob(m.group(2).replace("_", " "), "[[%s:...]]" % m.group(1))),
-        newpagetext,
+        newtext,
     )
-    newpagetext = re.sub(
+    newtext = re.sub(
         r"\[\[(s|wikisource):([^][|]*?)\|([^][|]*?)\]\]",
         lambda m: "[[%s:%s|%s]]"
         % (m.group(1), frob(m.group(2).replace("_", " "), "[[%s:...]]" % m.group(1)), m.group(3)),
-        newpagetext,
+        newtext,
     )
-    if newpagetext != pagetext and not notes:
+    if newtext != text and not notes:
         notes.append("convert _ to space in [[s:...]]/[[wikisource:...]]")
-    pagetext = newpagetext
+    text = newtext
 
-    return pagetext, notes
+    return text, notes
 
 
 parser = blib.create_argparser("Fix broken Wikisource links", include_pagefile=True, include_stdin=True)
@@ -86,8 +79,4 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
     subs.append((refrom, reto))
 
 
-def do_process_text_on_page(p):
-    return process_text_on_page(p.index, p.title, p.text, subs)
-
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

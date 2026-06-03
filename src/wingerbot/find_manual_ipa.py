@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import getparam, tname, msg
 
 all_pronuns = []
 
@@ -14,11 +12,6 @@ def process_text_on_page(p):
     pronuns = []
     for t in parsed.filter_templates():
         tn = tname(t)
-        origt = str(t)
-
-        def getp(param):
-            return getparam(t, param)
-
         if tn == "IPA":
             pronuns.extend(blib.fetch_param_chain(t, "2"))
     if pronuns:
@@ -44,7 +37,7 @@ parser.add_argument(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 all_pronuns = sorted(all_pronuns)
 for key, text in all_pronuns:
     msg(text)

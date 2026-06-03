@@ -5,7 +5,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg
 from collections import defaultdict
 
 site = pywikibot.Site()
@@ -81,7 +81,6 @@ def template_changes_to_dict(template_changes):
 
 
 def read_split_direcfile(direcfile, start, end, repl=False):
-    comment = None
     template_changes = []
     for lineno, line in blib.iter_items_from_file(direcfile, start, end):
 
@@ -135,23 +134,20 @@ def filter_split_changes_removing_no_effect_lines(direcfile_changes_dict, origfi
     return filtered_direcfile_changes_dict
 
 
-def push_one_set_of_manual_changes(index, pagetitle, text, repl_curr_changes, comment):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    # template = blib.parse_text(template_text).filter_templates()[0]
-    # orig_template = str(template)
-    # if getparam(template, "sc") == "polytonic":
-    #  template.remove("sc")
-    # to_template = str(template)
-    # param_value = getparam(template, removed_param)
-    # template.remove(removed_param)
-    # from_template = str(template)
-    text = str(text)
+def push_one_set_of_manual_changes(p, repl_curr_changes, comment):
+    #template = blib.parse_text(template_text).filter_templates()[0]
+    #orig_template = str(template)
+    #if getparam(template, "sc") == "polytonic":
+    #    template.remove("sc")
+    #to_template = str(template)
+    #param_value = getparam(template, removed_param)
+    #template.remove(removed_param)
+    #from_template = str(template)
+    text = p.text
     changelogs = []
     for repl_template, curr_template in repl_curr_changes:
         if curr_template == repl_template:
-            pagemsg("Skipping current template equal to replacement template: %s" % curr_template)
+            p.msg("Skipping current template equal to replacement template: %s" % curr_template)
             continue
         found_repl_template = repl_template in text
         if args.full_lines:
@@ -160,34 +156,34 @@ def push_one_set_of_manual_changes(index, pagetitle, text, repl_curr_changes, co
             newtext = text.replace(curr_template, repl_template)
         if newtext == text:
             if not found_repl_template:
-                pagemsg(
+                p.msg(
                     "WARNING: Unable to locate current template: %s (would replace with %s)"
                     % (curr_template, repl_template)
                 )
             else:
-                pagemsg("Replacement template already found, taking no action")
+                p.msg("Replacement template already found, taking no action")
         else:
             if found_repl_template:
-                pagemsg("WARNING: Made change, but replacement template %s already present!" % repl_template)
+                p.msg("WARNING: Made change, but replacement template %s already present!" % repl_template)
             repl_curr_diff = len(repl_template) - len(curr_template)
             newtext_text_diff = len(newtext) - len(text)
             if newtext_text_diff == repl_curr_diff:
                 pass
             elif repl_curr_diff == 0:
                 if newtext_text_diff != 0:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Something wrong, no change in text length during replacement but expected change: Expected length change=%s, actual=%s, curr=%s, repl=%s"
                         % (repl_curr_diff, newtext_text_diff, curr_template, repl_template)
                     )
             else:
                 ratio = float(newtext_text_diff) / repl_curr_diff
                 if ratio == int(ratio):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Replaced %s occurrences of curr=%s with repl=%s"
                         % (int(ratio), curr_template, repl_template)
                     )
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Something wrong, length mismatch during replacement: Expected length change=%s, actual=%s, ratio=%.2f, curr=%s, repl=%s"
                         % (repl_curr_diff, newtext_text_diff, ratio, curr_template, repl_template)
                     )
@@ -195,7 +191,7 @@ def push_one_set_of_manual_changes(index, pagetitle, text, repl_curr_changes, co
                 blib.truncate_string(curr_template),
                 blib.truncate_string(repl_template),
             )
-            pagemsg("Change log = %s" % changelog)
+            p.msg("Change log = %s" % changelog)
             if args.include_what_changed:
                 changelogs.append(changelog)
         text = newtext
@@ -218,33 +214,27 @@ def combine_notes_with_comment(notes):
         return args.comment or "push manual changes"
 
 
-def process_text_on_page_pushing_manual_changes(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle not in direcfile_changes_dict:
+def process_text_on_page_pushing_manual_changes(p):
+    if p.title not in direcfile_changes_dict:
         return
     notes = []
-    for repl_curr_changes, comment in direcfile_changes_dict[pagetitle]:
-        text, this_changelogs = push_one_set_of_manual_changes(index, pagetitle, text, repl_curr_changes, comment)
+    for repl_curr_changes, comment in direcfile_changes_dict[p.title]:
+        text, this_changelogs = push_one_set_of_manual_changes(p, repl_curr_changes, comment)
         notes.extend(this_changelogs)
 
     return text, combine_notes_with_comment(notes)
 
 
-def process_text_on_page_pushing_split_manual_changes(index, pagetitle, text):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if pagetitle not in direcfile_changes_dict:
+def process_text_on_page_pushing_split_manual_changes(p):
+    if p.title not in direcfile_changes_dict:
         return
-    if pagetitle not in origfile_changes_dict:
-        pagemsg("WARNING: Can't find page in original file")
+    if p.title not in origfile_changes_dict:
+        p.msg("WARNING: Can't find page in original file")
         return
-    from_changes = origfile_changes_dict[pagetitle]
-    to_changes = direcfile_changes_dict[pagetitle]
+    from_changes = origfile_changes_dict[p.title]
+    to_changes = direcfile_changes_dict[p.title]
     if len(from_changes) != len(to_changes):
-        pagemsg(
+        p.msg(
             "WARNING: Saw %s change%s in original but %s change%s in replacement, can't match"
             % (
                 len(from_changes),
@@ -255,10 +245,10 @@ def process_text_on_page_pushing_split_manual_changes(index, pagetitle, text):
         )
         return
     if from_changes == to_changes:
-        pagemsg("from-changes identical to to-changes, skipping")
+        p.msg("from-changes identical to to-changes, skipping")
         return
     # FIXME: Support per-change comments in replacement file
-    text, notes = push_one_set_of_manual_changes(index, pagetitle, text, zip(to_changes, from_changes), None)
+    text, notes = push_one_set_of_manual_changes(p, zip(to_changes, from_changes), None)
 
     return text, combine_notes_with_comment(notes)
 
@@ -302,8 +292,6 @@ if args.origfile:
         None,
         None,
         process_text_on_page_pushing_split_manual_changes,
-        edit=True,
-        stdin=True,
         default_pages=list(direcfile_changes_dict.keys()),
     )
 else:
@@ -314,7 +302,5 @@ else:
         None,
         None,
         process_text_on_page_pushing_manual_changes,
-        edit=True,
-        stdin=True,
         default_pages=list(direcfile_changes_dict.keys()),
     )

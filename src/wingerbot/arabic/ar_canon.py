@@ -433,9 +433,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.direcfile:
-    for lineindex, line in blib.iter_items_from_file(args.direcfile, start, end):
-        lineno = lineindex + 1
-
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         def linemsg(text):
             msg("Line %s: %s" % (lineno, text))
 
@@ -444,6 +442,6 @@ if args.direcfile:
             linemsg("WARNING: Unrecognized line: %s" % line)
         else:
             index, pagetitle, text = m.groups()
-            process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text, None))
+            process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text))
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, skip_ignorable_pages=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, skip_ignorable_pages=True)

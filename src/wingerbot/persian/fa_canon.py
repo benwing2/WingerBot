@@ -161,9 +161,9 @@ if args.direcfile:
             linemsg("WARNING: Unrecognized line: %s" % line)
         else:
             index, pagetitle, text = m.groups()
-            process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text, None))
+            process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text))
 else:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, skip_ignorable_pages=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, skip_ignorable_pages=True)
 # If in --test mode, we need to use the num_succeeded/num_failed from fa_translit as the ones in canon_foreign aren't
 # set.
 if args.test:

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import pname, msg
 from collections import defaultdict
 
 all_quals = defaultdict(int)
@@ -28,7 +28,7 @@ parser = blib.create_argparser(
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 for qual, count in sorted(all_quals.items(), key=lambda x: -x[1]):
     msg("%40s: %s" % (qual, count))

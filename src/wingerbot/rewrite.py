@@ -7,65 +7,51 @@ from wingerbot.blib import msg
 from wingerbot.arabic.arlib import reorder_shadda
 
 
-def process_text_on_page(
-    index,
-    pagetitle,
-    text,
-    refrom,
-    reto,
-    pagetitle_sub,
-    comment,
-    lang_only,
-    warn_on_no_replacement,
-    verbose,
-    do_reorder_shadda,
-):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if verbose:
-        msg("Processing %s" % pagetitle)
-    # blib.msg("From: [[%s]], To: [[%s]]" % (refrom, reto))
+def process_text_on_page(p):
+    if args.verbose:
+        msg("Processing %s" % p.title)
+    # blib.msg("From: [[%s]], To: [[%s]]" % (args.refrom, args.reto))
+    text = p.text
     origtext = text
-    if do_reorder_shadda:
+    if args.reorder_shadda:
         text = reorder_shadda(text)
-    zipped_fromto = list(zip(refrom, reto))
+    zipped_fromto = list(zip(args.refrom, args.reto))
 
     def replace_text(text):
         for fromval, toval in zipped_fromto:
-            if pagetitle_sub:
-                fromval = fromval.replace(pagetitle_sub, re.escape(pagetitle))
-                toval = toval.replace(pagetitle_sub, pagetitle)
+            if args.title:
+                fromval = fromval.replace(args.title, re.escape(p.title))
+                toval = toval.replace(args.title, p.title)
             text = re.sub(fromval, toval, text, 0, re.M)
         return text
 
-    if not lang_only:
+    if not args.lang_only:
         text = replace_text(text)
     else:
         sec_to_replace = None
         foundlang = False
-        secs = blib.split_text_into_sections(text, pagemsg)
+        secs = blib.split_text_into_sections(text, p.msg)
 
         for j, header in secs.lang_list:
-            if header == lang_only:
+            if header == args.lang_only:
                 if foundlang:
-                    pagemsg("WARNING: Found multiple %s sections, skipping page" % lang_only)
-                    if warn_on_no_replacement:
-                        pagemsg("WARNING: No replacements made")
+                    p.msg("WARNING: Found multiple %s sections, skipping page" % args.lang_only)
+                    if args.warn_on_no_replacement:
+                        p.msg("WARNING: No replacements made")
                     return
                 foundlang = True
                 sec_to_replace = j
                 break
 
         if sec_to_replace is None:
-            if warn_on_no_replacement:
-                pagemsg("WARNING: No replacements made")
+            if args.warn_on_no_replacement:
+                p.msg("WARNING: No replacements made")
             return
         secs.sections[sec_to_replace] = replace_text(secs.sections[sec_to_replace])
         text = "".join(secs.sections)
-    if warn_on_no_replacement and text == origtext:
-        pagemsg("WARNING: No replacements made")
-    return text, comment or "replace %s" % (", ".join("%s -> %s" % (f, t) for f, t in zipped_fromto))
+    if args.warn_on_no_replacement and text == origtext:
+        p.msg("WARNING: No replacements made")
+    return text, args.comment or "replace %s" % (", ".join("%s -> %s" % (f, t) for f, t in zipped_fromto))
 
 
 parser = blib.create_argparser("Search and replace on pages", include_pagefile=True, include_stdin=True)
@@ -87,27 +73,11 @@ parser.add_argument("--warn-on-no-replacement", action="store_true", help="Warn 
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-from_ = list(args.from_)
-to = list(args.to)
+refrom = list(args.from_)
+reto = list(args.to)
 
-if len(from_) != len(to):
+if len(refrom) != len(reto):
     raise ValueError("Same number of --from and --to arguments must be specified")
 
 
-def do_process_text_on_page(index, pagetitle, text):
-    return process_text_on_page(
-        index,
-        pagetitle,
-        text,
-        from_,
-        to,
-        args.pagetitle,
-        args.comment,
-        args.lang_only,
-        args.warn_on_no_replacement,
-        args.verbose,
-        args.reorder_shadda,
-    )
-
-
-blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

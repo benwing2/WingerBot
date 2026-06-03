@@ -58,5 +58,5 @@ for i, (pagetitle, pagetext) in blib.iter_items(title_and_text_pairs, start, end
     pagetitle_to_text[pagetitle] = pagetext
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_text.keys())
+    args, start, end, process_text_on_page, default_pages=list(pagetitle_to_text.keys())
 )

@@ -50,4 +50,4 @@ parser = blib.create_argparser("Deprecate {{docparam}} in favor of {{para}}", in
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

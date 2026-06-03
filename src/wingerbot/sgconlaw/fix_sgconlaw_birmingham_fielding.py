@@ -98,7 +98,6 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        new=True,
         default_refs=["Template:%s" % template for template in replace_templates],
         # FIXME: formerly had includelinks=True on call to blib.references();
         # doesn't exist any more

@@ -1259,7 +1259,7 @@ if __name__ == "__main__":
                     first_el = getparam(colt, "2")
                     no_sort_lists[pagename].append((lang, first_el))
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
     msg("")
     msg("%-50s | %s" % ("Qualifier", "Count"))

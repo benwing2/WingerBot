@@ -48,8 +48,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
     default_cats=["%s lemmas" % args.langname, "%s non-lemma forms" % args.langname],
 )
 

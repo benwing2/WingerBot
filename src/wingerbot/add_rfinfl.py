@@ -355,7 +355,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     do_process_text_on_page,
-    edit=True,
-    stdin=True,
     default_cats=["%s %ss" % (lang_to_name[args.lang], args.pos)],
 )

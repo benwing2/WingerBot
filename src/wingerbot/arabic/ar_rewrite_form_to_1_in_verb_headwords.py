@@ -115,8 +115,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.headword:
-    blib.do_pagefile_cats_refs(args, start, end, rewrite_one_page_verb_headword, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, rewrite_one_page_verb_headword,
                                default_cats=["Arabic verbs"])
 if args.canonicalize:
-    blib.do_pagefile_cats_refs(args, start, end, canonicalize_one_page_verb_form, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, canonicalize_one_page_verb_form,
                                default_refs=["Template:%s" % template for template in verb_form_templates_to_args])

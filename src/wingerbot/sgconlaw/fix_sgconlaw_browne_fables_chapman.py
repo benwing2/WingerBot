@@ -111,6 +111,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_refs=["Template:RQ:Browne Errors", "Template:RQ:L'Estrange Fables", "Template:RQ:Chapman Odyssey"],
 )

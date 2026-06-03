@@ -95,7 +95,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 
 expected_head_templates = blib.split_arg(args.headtemp)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 msg("The following pages need to be deleted:")
 for page in pages_to_delete:

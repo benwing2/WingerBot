@@ -170,6 +170,6 @@ parser = blib.create_argparser("Convert Greek verb categories to module", includ
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 msg("".join(outtext))

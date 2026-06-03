@@ -2,18 +2,14 @@
 
 import re
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
+from wingerbot.blib import msg, site
 import pywikibot
 import pywikibot.exceptions
 
 
-def rename_page(args, index, page, totitle, comment, refrom, reto):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def rename_page(p, totitle, comment, refrom, reto):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
     if refrom and reto:
         zipped_fromto = list(zip(refrom, reto))
     else:
@@ -30,53 +26,47 @@ def rename_page(args, index, page, totitle, comment, refrom, reto):
         and "rename based on regex %s" % (", ".join("%s -> %s" % (f, t) for f, t in zipped_fromto))
         or "rename page"
     )
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("Skipping because page doesn't exist")
+    if not blib.safe_page_exists(p.page, p.errandmsg):
+        p.msg("Skipping because page doesn't exist")
         return
     if args.verbose:
-        pagemsg("Processing")
+        p.msg("Processing")
     if not totitle:
-        totitle = replace_text(pagetitle)
-    if totitle == pagetitle:
-        pagemsg("WARNING: Regex doesn't match, not renaming to same name")
-        return
+        totitle = replace_text(p.title)
+    if totitle == p.title:
+        p.msg("WARNING: Regex doesn't match, not renaming to same name")
     else:
         new_page = pywikibot.Page(site, totitle)
-        if blib.safe_page_exists(new_page, errandpagemsg):
-            errandpagemsg("Destination page %s already exists, not moving" % totitle)
+        if blib.safe_page_exists(new_page, p.errandmsg):
+            p.errandmsg("Destination page %s already exists, not moving" % totitle)
             return
         elif args.save:
             try:
-                page.move(totitle, reason=this_comment, movetalk=True, noredirect=not args.with_redirect)
-                errandpagemsg("Renamed to %s" % totitle)
+                p.page.move(totitle, reason=this_comment, movetalk=True, noredirect=not args.with_redirect)
+                p.errandmsg("Renamed to %s" % totitle)
             except pywikibot.exceptions.PageRelatedError as error:
-                errandpagemsg("Error moving to %s: %s" % (totitle, error))
+                p.errandmsg("Error moving to %s: %s" % (totitle, error))
                 return
         else:
-            pagemsg("Would rename to %s (comment=%s)" % (totitle, this_comment))
-    return
+            p.msg("Would rename to %s (comment=%s)" % (totitle, this_comment))
 
 
-def delete_page(args, index, page, comment):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def delete_page(p, comment):
+    if p.page is None:
+        raise ValueError("Cannot run on text from stdin")
     if args.verbose:
-        pagemsg("Processing")
+        p.msg("Processing")
     this_comment = comment or "delete page"
-    if blib.safe_page_exists(page, errandpagemsg):
+    if blib.safe_page_exists(p.page, p.errandmsg):
         if args.save:
-            existing_text = blib.safe_page_text_or_none(page, errandpagemsg)
+            existing_text = blib.safe_page_text_or_none(p.page, p.errandmsg)
             if existing_text is not None:
-                page.delete('%s (content was "%s")' % (this_comment, existing_text))
-                errandpagemsg("Deleted (comment=%s)" % this_comment)
+                p.page.delete('%s (content was "%s")' % (this_comment, existing_text))
+                p.errandmsg("Deleted (comment=%s)" % this_comment)
         else:
-            pagemsg("Would delete (comment=%s)" % this_comment)
+            p.msg("Would delete (comment=%s)" % this_comment)
     else:
-        pagemsg("Skipping, page doesn't exist")
+        p.msg("Skipping, page doesn't exist")
 
 
 if __name__ == "__main__":
@@ -115,26 +105,29 @@ if __name__ == "__main__":
     if args.delete_from_direcfile:
         pages_to_delete = []
         pages_to_rename = []
-        for index, line in blib.iter_items_from_file(args.direcfile, start, end):
+        for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
             if " ||| " not in line:
-                pages_to_delete.append((index, line))
+                pages_to_delete.append((lineno, line))
             else:
                 frompage, topage = line.split(" ||| ")
-                pages_to_rename.append((index, frompage, topage))
-        for index, page in pages_to_delete:
-            delete_page(args, index, pywikibot.Page(blib.site, page), args.delete_comment)
+                pages_to_rename.append((lineno, frompage, topage))
+        for index, pagetitle in pages_to_delete:
+            delete_page(blib.ProcessPageParams(args, index, pagetitle, "", page=pywikibot.Page(site, pagetitle)),
+                        args.delete_comment)
         for index, frompage, topage in pages_to_rename:
-            rename_page(args, index, pywikibot.Page(blib.site, frompage), topage, args.rename_comment, from_, to)
+            rename_page(blib.ProcessPageParams(args, index, frompage, "", page=pywikibot.Page(site, frompage)),
+                        topage, args.rename_comment, from_, to)
     elif args.direcfile:
-        for index, line in blib.iter_items_from_file(args.direcfile, start, end):
+        for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
             if " ||| " not in line:
-                msg("Line %s: WARNING: Saw bad line in --from-to-pagefile: %s" % (index, line))
+                msg("Line %s: WARNING: Saw bad line in --from-to-pagefile: %s" % (lineno, line))
                 continue
             frompage, topage = line.split(" ||| ")
-            rename_page(args, index, pywikibot.Page(blib.site, frompage), topage, args.rename_comment, from_, to)
+            rename_page(blib.ProcessPageParams(args, lineno, frompage, "", page=pywikibot.Page(site, frompage)),
+                        topage, args.rename_comment, from_, to)
     else:
 
-        def do_process_page(index, page):
-            return rename_page(args, index, page, None, args.rename_comment, from_, to)
+        def do_process_page(p):
+            return rename_page(p, None, args.rename_comment, from_, to)
 
-        blib.do_pagefile_cats_refs(args, start, end, do_process_page)
+        blib.do_pagefile_cats_refs(args, start, end, do_process_page, no_fetch_text=True)

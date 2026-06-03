@@ -102,8 +102,8 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.noun:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_noun, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_noun,
                                default_cats=["Arabic nouns", "Arabic adjectives"])
 if args.verb:
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_verb, new=True,
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page_for_verb,
                                default_cats=["Arabic verbs"])

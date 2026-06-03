@@ -1101,4 +1101,4 @@ if args.do_nouns or args.do_old_nouns or args.do_new_hyphenated_nouns:
 else:
     default_refs = ["Template:pt-adj"]
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=default_refs)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_refs=default_refs)

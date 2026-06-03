@@ -16,10 +16,9 @@
 
 # Go through a dump finding all entries by language.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errmsg, site
 
 lang_data = lang_utils.get_lang_data()
 
@@ -62,4 +61,4 @@ parser = blib.create_argparser("Find red links", include_pagefile=True, include_
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

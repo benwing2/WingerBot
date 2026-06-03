@@ -149,4 +149,4 @@ for langcode in langcodes:
     else:
         cats.append("%s terms with redundant head parameter" % lang_data.languages_by_code[langcode]["canonicalName"])
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=cats, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=cats)

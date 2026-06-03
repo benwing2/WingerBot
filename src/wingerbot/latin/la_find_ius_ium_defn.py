@@ -44,7 +44,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_cats=["Latin nouns"],
     filter_pages=lambda pagetitle: re.search("iu[sm]$", pagetitle),
 )

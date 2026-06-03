@@ -108,7 +108,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_refs=["Template:la-IPA"],
     filter_pages=page_needs_investigating,
 )

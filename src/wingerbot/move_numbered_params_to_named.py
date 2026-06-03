@@ -83,6 +83,4 @@ blib.do_pagefile_cats_refs(
     end,
     process_text_on_page,
     default_refs=["Template:%s" % temp for temp in templates_to_do],
-    edit=True,
-    stdin=True,
 )

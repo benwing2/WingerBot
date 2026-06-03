@@ -241,7 +241,7 @@ def do_process_text_on_page(p):
     return process_text_on_page(p, langcodes)
 
 
-blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page, edit=True, stdin=True)
+blib.do_pagefile_cats_refs(args, start, end, do_process_text_on_page)
 
 number_properties = [
     "cardinal",

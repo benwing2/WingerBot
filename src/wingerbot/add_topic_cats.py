@@ -153,5 +153,5 @@ def do_process_text_on_page(p):
 
 
 blib.do_pagefile_cats_refs(
-    args, start, end, do_process_text_on_page, default_pages=pages_to_process, edit=True, stdin=True
+    args, start, end, do_process_text_on_page, default_pages=pages_to_process
 )

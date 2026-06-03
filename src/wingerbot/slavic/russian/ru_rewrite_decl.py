@@ -389,7 +389,6 @@ if args.adjectives:
         start,
         end,
         process_text_on_page_adj,
-        new=True,
         default_cats=["Russian adjectives"],
     )
 if args.nouns:
@@ -398,6 +397,5 @@ if args.nouns:
         start,
         end,
         process_text_on_page_noun,
-        new=True,
         default_cats=["Russian nouns"],
     )

@@ -3,7 +3,6 @@
 # Author: Benwing; bits and pieces taken from code written by CodeCat/Rua for MewBot
 
 from collections.abc import Generator, Iterable, Callable
-from importlib.metadata.diagnose import inspect
 
 import pywikibot, mwparserfromhell, re, sys, urllib, datetime, argparse, time, itertools
 from pywikibot import Page, Category
@@ -12,7 +11,7 @@ from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.wikicode import Wikicode
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Literal, TypeIs, cast
+from typing import Any, Literal, cast
 import xml.sax
 import difflib
 import traceback
@@ -33,11 +32,12 @@ type ParamOrParamList = str | list[str]
 type PagePrefix = int | str
 
 class ProcessPageParams:
-    def __init__(self, args: argparse.Namespace, index: Index, pagetitle: str, pagetext: str, prev_comment: ChangelogComment | None):
+    def __init__(self, args: argparse.Namespace, index: Index, pagetitle: str, pagetext: str, page: pywikibot.Page | None = None, prev_comment: ChangelogComment | None = None):
         self.args = args
         self.index = index
         self.title = pagetitle
         self.text = pagetext
+        self.page = page
         self.prev_comment = prev_comment
 
     def _msg_contents(self, txt: str, index: Index | None = None, title: str | None = None) -> str:
@@ -58,107 +58,9 @@ class ProcessPageParams:
         return expand_text(tempcall, self.title, self.msg, self.args.verbose)
     
 
-############################ Implementation of do_pagefile_cats_refs callback to satisfy Pylance. Unbelievably fugly.
-############################ Worked out with the help of Google AI.
-
-# 1. Define the four possible callback signatures.
 type NewProcessTextOnPageCallback = Callable[[ProcessPageParams], ProcessPageRetval]
 type ProcessPageCallback = Callable[[Index, Page], ProcessPageRetval]
-type ProcessTextOnPageCallback = Callable[[Index, str, str], ProcessPageRetval]
-type ProcessTextOnPageWithCommentCallback = Callable[[Index, str, str, ChangelogComment | None], ProcessPageRetval]
 
-# 2. Create the union of callback types.
-type DoPagefileCatsRefsCallback = NewProcessTextOnPageCallback | ProcessPageCallback | ProcessTextOnPageCallback | ProcessTextOnPageWithCommentCallback
-
-
-# 3. Implement explicit runtime TypeIs predicates for Pylance narrowing.
-def is_new_process_text_on_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[NewProcessTextOnPageCallback]:
-    return len(inspect.signature(func).parameters) == 1
-
-
-def is_process_text_on_page_with_comment_callback(
-    func: DoPagefileCatsRefsCallback,
-) -> TypeIs[ProcessTextOnPageWithCommentCallback]:
-    return len(inspect.signature(func).parameters) == 4
-
-
-def is_process_text_on_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[ProcessTextOnPageCallback]:
-    return len(inspect.signature(func).parameters) == 3
-
-
-def is_process_page_callback(func: DoPagefileCatsRefsCallback) -> TypeIs[ProcessPageCallback]:
-    return len(inspect.signature(func).parameters) == 2
-
-
-# 4. Implement the dispatcher function that calls the appropriate callback based on its signature.
-def execute_do_pagefile_cats_refs_callback(
-    callback: DoPagefileCatsRefsCallback,
-    args: argparse.Namespace,
-    index: Index,
-    page: Page | None,
-    pagetitle: str | None,
-    text: str | None,
-    prev_comment: ChangelogComment | None,
-) -> ProcessPageRetval:
-
-    if is_new_process_text_on_page_callback(callback):
-        if pagetitle is None or text is None:
-            raise RuntimeError(
-                "Internal error: Saw one-arg callback (new_process_text_on_page) but expected "
-                "two-arg callback (process_page)"
-            )
-        # Pylance narrows the type to ProcessTextOnPageWithCommentCallback here.
-        # Only 4 parameters are permitted.
-        return callback(ProcessPageParams(args, index, pagetitle, text, prev_comment))
-
-    elif is_process_text_on_page_with_comment_callback(callback):
-        if pagetitle is None or text is None:
-            raise RuntimeError(
-                "Internal error: Saw four-arg callback (process_text_on_page_with_comment) but expected "
-                "two-arg callback (process_page)"
-            )
-        # Pylance narrows the type to ProcessTextOnPageWithCommentCallback here.
-        # Only 4 parameters are permitted.
-        return callback(index, pagetitle, text, prev_comment)
-
-    elif is_process_text_on_page_callback(callback):
-        if pagetitle is None or text is None:
-            raise RuntimeError(
-                "Internal error: Saw three-arg callback (process_text_on_page) but expected "
-                "two-arg callback (process_page)"
-            )
-        if prev_comment is not None:
-            raise RuntimeError(
-                "Internal error: Saw three-arg callback (process_text_on_page) but expected "
-                "four-arg callback (process_text_on_page_with_comment)"
-            )
-        # Pylance narrows the type to ProcessTextOnPageCallback here.
-        # Only 3 parameters are permitted.
-        return callback(index, pagetitle, text)
-
-    elif is_process_page_callback(callback):
-        if pagetitle is not None or text is not None:
-            if prev_comment is not None:
-                raise RuntimeError(
-                    "Internal error: Saw two-arg callback (process_page) but expected "
-                    "four-arg callback (process_text_on_page_with_comment)"
-                )
-            else:
-                raise RuntimeError(
-                    "Internal error: Saw two-arg callback (process_page) but expected "
-                    "three-arg callback (process_text_on_page)"
-                )
-        if page is None:
-            raise RuntimeError("Internal error: Bad call to execute_callback: pagetitle, text, page all None")
-        # Pylance narrows the type to ProcessPageCallback here.
-        # Only 2 parameters are permitted.
-        return callback(index, page)
-
-    else:
-        raise RuntimeError("Callback signature is invalid or unrecognized")
-
-
-############################ End implementation of do_pagefile_cats_refs callback to satisfy Pylance.
 
 # Don't include t-simple here because it also has a langname= param that may need changing. (In any case, t-simple
 # has been deleted.)
@@ -1109,7 +1011,7 @@ def stream(st, startprefix=None, endprefix=None):
         yield i, Page(site, name)
 
 
-def split_arg(arg, canonicalize=None):
+def split_arg(arg: str, canonicalize: Callable[[str], str] | None = None) -> list[str]:
     def process(pagename):
         if canonicalize:
             pagename = canonicalize(pagename)
@@ -1552,43 +1454,40 @@ def args_has_non_default_pages(args):
     )
 
 
-def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_format, edit):
+def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_format):
     new, this_comment, has_changed = handle_process_page_retval(retval, text, pagemsg, args.verbose, args.diff)
     new = new or text
     if has_changed:
-        assert edit, "Changed text without edit=True given"
-    if edit:
-        if has_changed:
-            # Join previous and this comment. Either may be None, a list of individual notes, an empty string (equivalent to
-            # None), or a non-empty string specifying a single comment.
-            if not prev_comment and not this_comment:
-                comment = None
-            elif not prev_comment:
-                comment = this_comment
-            elif not this_comment:
-                comment = prev_comment
-            else:
-                if type(prev_comment) is not list:
-                    prev_comment = [prev_comment]
-                if type(this_comment) is not list:
-                    this_comment = [this_comment]
-                comment = prev_comment + this_comment
-            if type(comment) is list:
-                comment = "; ".join(group_notes(comment))
-            pagemsg("Would save with comment = %s" % comment)
-        elif prev_comment:
-            if type(prev_comment) is list:
-                prev_comment = "; ".join(group_notes(prev_comment))
-            pagemsg("Skipped, no changes; previous comment = %s" % prev_comment)
-        elif output_format in ["find-regex", "begin-end"] and not args.suppress_skipped_messages:
-            pagemsg("Skipped, no changes")
-        if output_format == "find-regex" and not args.no_output:
-            final_newline = ""
-            if not new.endswith("\n"):
-                final_newline = "\n"
-            pagemsg("-------- begin text --------\n%s%s-------- end text --------" % (new, final_newline))
-        if output_format == "begin-end" and not args.no_output:
-            pagemsg("<begin> %s <end>" % escape_newline(new))
+        # Join previous and this comment. Either may be None, a list of individual notes, an empty string (equivalent to
+        # None), or a non-empty string specifying a single comment.
+        if not prev_comment and not this_comment:
+            comment = None
+        elif not prev_comment:
+            comment = this_comment
+        elif not this_comment:
+            comment = prev_comment
+        else:
+            if type(prev_comment) is not list:
+                prev_comment = [prev_comment]
+            if type(this_comment) is not list:
+                this_comment = [this_comment]
+            comment = prev_comment + this_comment
+        if type(comment) is list:
+            comment = "; ".join(group_notes(comment))
+        pagemsg("Would save with comment = %s" % comment)
+    elif prev_comment:
+        if type(prev_comment) is list:
+            prev_comment = "; ".join(group_notes(prev_comment))
+        pagemsg("Skipped, no changes; previous comment = %s" % prev_comment)
+    elif output_format in ["find-regex", "begin-end"] and not args.suppress_skipped_messages:
+        pagemsg("Skipped, no changes")
+    if output_format == "find-regex" and not args.no_output:
+        final_newline = ""
+        if not new.endswith("\n"):
+            final_newline = "\n"
+        pagemsg("-------- begin text --------\n%s%s-------- end text --------" % (new, final_newline))
+    if output_format == "begin-end" and not args.no_output:
+        pagemsg("<begin> %s <end>" % escape_newline(new))
 
 
 # Process a run of pages, with the set of pages specified in various possible ways, e.g. from --pagefile, --cats,
@@ -1601,47 +1500,41 @@ def do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_for
 # args = parser.parse_args()
 # start, end = blib.parse_start_end(args.start, args.end)
 #
-# blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+# blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
 
-# As shown, `args`, `start` and `end` come from the user. `process` is called to process the page, and has different
-# calling conventions depending on the `edit`, `stdin` and `include_comment` flags:
+# As shown, `args`, `start` and `end` come from the user. `process` is called to process the page, and is called with
+# a single argument of type `ProcessPageParams`, which contains information on the page title, text, etc., and may be
+# defined as follows:
 #
-# If `stdin`=True and `include_comment`=True, `process` should be defined like this:
-#
-# def process_text_on_page(index, pagetitle, text, comment):
+# def process_text_on_page(p: ProcessPageParams) -> ProcessPageRetval:
 #   ...
 #
-# If `stdin`=True and `include_comment`=False, `process` should be defined like this:
+# or often simply as:
 #
-# def process_text_on_page(index, pagetitle, text):
+# def process_text_on_page(p):
 #   ...
 #
-# If `stdin`=False, `process` should be defined like this:
-#
-# def process_page(index, page):
-#   ...
-#
-# The return value of `process` is immaterial if edit=False; otherwise it should be NEWTEXT, NOTES where NEWTEXT is the
-# new text of the page, and NOTES is either a string (the comment to use when saving the page) or a list of strings
-# (which are grouped together using blib.group_notes() to form the comment to use when saving the page). To make no
-# change, return None or just use `return`.
+# The return value of `process` should be NEWTEXT, NOTES where NEWTEXT is the new text of the page, and NOTES is either
+# a string (the comment to use when saving the page) or a list of strings (which are grouped together using
+# blib.group_notes() to form the comment to use when saving the page). To make no change, return None or just use
+# `return`.
 #
 # The pages iterated over will be:
 #
-# 1. Those from find_regex.py output on stdin if stdin=True and --find-regex is given.
-# 2. Those from per-line <begin> ... <end> formatted output on stdin if stdin=True and --begin-end is given.
-# 3. Else, those from a Wiktionary dump on stdin if stdin=True and --stdin is given.
+# 1. Those from find_regex.py output on stdin if --find-regex is given.
+# 2. Those from per-line <begin> ... <end> formatted output on stdin if --begin-end is given.
+# 3. Else, those from a Wiktionary dump on stdin if --stdin is given.
 # 4. Else, the pages in --pages, --pagefile, --cats, --refs, --specials, --contribs and/or --prefix-pages if any of
 #    those arguments are given.
 # 5. Else, pages in the category/categories in default_cats[] and/or pages referring to the page(s) specified in
 #    default_refs[], if either argument is given.
 # 6. Else, an error is thrown.
 #
-# If `only_lang` is given, it should be a canonical name of a language (e.g. "Latin"), and pages not containing this
-# language will be skipped. (This is especially useful in conjunction with dumps on stdin, where it can greatly speed
-# up processing by avoiding the need to parse every page.) Not to be confused with the --only-lang user-specifiable
-# parameter, which causes processing over only the section of a given language.
+# If `no_fetch_text` is given, and the callback is being called on an actual Wiktionary page (rather than stdin text
+# from a Wiktionary dump, --find-regex or --begin-end), this suppresses fetching the page text. This hugely speeds up
+# processing if the page text is not needed (e.g. in list_pages.py). In such a case, `p.text` will return an empty
+# string.
 #
 # If `filter_pages` is given, it should be a function of one argument (a page title) that returns True to accept a page.
 #
@@ -1661,15 +1554,11 @@ def do_pagefile_cats_refs(
     args,
     start,
     end,
-    process: DoPagefileCatsRefsCallback,
+    process: NewProcessTextOnPageCallback,
     default_pages=[],
     default_cats=[],
     default_refs=[],
-    edit=False,
-    stdin=False,
-    new=False,
-    only_lang: str | None = None,
-    include_comment=False,
+    no_fetch_text=False,
     filter_pages=None,
     ref_namespaces=None,
     templates_first=False,
@@ -1749,18 +1638,14 @@ def do_pagefile_cats_refs(
         return sections, j, secbody, sectail
 
     def do_process_text_on_page(
-        index: Index, pagetitle: str, text: str, prev_comment: ChangelogComment | None, pagemsg: PagemsgCallback
+        index: Index, pagetitle: str, text: str, page: Page | None, prev_comment: ChangelogComment | None,
+        pagemsg: PagemsgCallback
     ) -> ProcessPageRetval:
         def errandpagemsg(txt: str) -> None:
             errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
         def call_process(text_to_call: str) -> ProcessPageRetval:
-            if include_comment:
-                return execute_do_pagefile_cats_refs_callback(
-                    process, args, index, None, pagetitle, text_to_call, prev_comment
-                )
-            else:
-                return execute_do_pagefile_cats_refs_callback(process, args, index, None, pagetitle, text_to_call, None)
+            return process(ProcessPageParams(args, index, pagetitle, text_to_call, page=page, prev_comment=prev_comment))
 
         if page_should_be_filtered_out(pagetitle, errandpagemsg):
             return None
@@ -1778,8 +1663,6 @@ def do_pagefile_cats_refs(
             sections[j] = newsecbody + sectail
             return "".join(sections), comment
         else:
-            if only_lang and "==%s==" % only_lang not in text:
-                return None
             return call_process(text)
 
     # Process a page read from Wiktionary using Pywikibot (as opposed to a page read from stdin, either from find_regex
@@ -1805,27 +1688,18 @@ def do_pagefile_cats_refs(
             return
 
         def do_process_page(index: Index, page: Page) -> ProcessPageRetval:
-            if stdin or new:
-                pagetext = safe_page_text(page, errandpagemsg)
-                return do_process_text_on_page(index, pagetitle, pagetext, None, pagemsg)
-            else:
-                if only_lang:
-                    pagetext = safe_page_text(page, errandpagemsg)
-                    if "==%s==" % only_lang not in pagetext:
-                        return
-                return execute_do_pagefile_cats_refs_callback(process, args, index, page, None, None, None)
+            pagetext = safe_page_text(page, errandpagemsg) if not no_fetch_text else ""
+            return do_process_text_on_page(index, pagetitle, pagetext, page, None, pagemsg)
 
         if args.find_regex_output:
             # We are reading from Wiktionary but asked to output in find_regex format.
             retval = do_process_page(index, page)
-            pagetext = safe_page_text(page, errandpagemsg)
-            do_handle_stdin_retval(args, retval, pagetext, None, pagemsg, output_format="find-regex", edit=edit)
-        elif edit:
-            do_edit(index, page, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
+            pagetext = safe_page_text(page, errandpagemsg) if not no_fetch_text else ""
+            do_handle_stdin_retval(args, retval, pagetext, None, pagemsg, output_format="find-regex")
         else:
-            do_process_page(index, page)
+            do_edit(index, page, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
 
-    if (stdin or new) and (args.stdin or args.find_regex or args.begin_end):
+    if args.stdin or args.find_regex or args.begin_end:
         pages_to_filter = None
         if args.pages:
             pages_to_filter = set(split_arg(args.pages, canonicalize=canonicalize_pagename))
@@ -1851,7 +1725,7 @@ def do_pagefile_cats_refs(
                 def pagemsg(txt):
                     msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-                return do_process_text_on_page(index, pagetitle, text, prev_comment, pagemsg)
+                return do_process_text_on_page(index, pagetitle, text, None, prev_comment, pagemsg)
 
         if args.find_regex:
             index_pagetitle_text_comment = yield_text_from_find_regex(sys.stdin, args.verbose)
@@ -1869,7 +1743,7 @@ def do_pagefile_cats_refs(
 
                 if prev_comment:
                     prev_comment = parse_grouped_notes(prev_comment)
-                do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_format="find-regex", edit=edit)
+                do_handle_stdin_retval(args, retval, text, prev_comment, pagemsg, output_format="find-regex")
         elif args.begin_end:
             index_pagetitle_text = yield_text_from_begin_end(sys.stdin, args.verbose)
             for index, (_, pagetitle, text) in iter_items(
@@ -1884,16 +1758,15 @@ def do_pagefile_cats_refs(
                 def pagemsg(txt):
                     msg("Page %s %s: %s" % (process_index(index), pagetitle, txt))
 
-                do_handle_stdin_retval(args, retval, text, None, pagemsg, output_format="begin-end", edit=edit)
+                do_handle_stdin_retval(args, retval, text, None, pagemsg, output_format="begin-end")
         else:
-
             def do_process_stdin_dump_text_on_page(index, pagetitle, text):
                 retval = do_process_stdin_text_on_page(index, pagetitle, text, None)
 
                 def pagemsg(txt):
                     msg("Page %s %s: %s" % (process_index(index), pagetitle, txt))
 
-                do_handle_stdin_retval(args, retval, text, None, pagemsg, output_format=None, edit=edit)
+                do_handle_stdin_retval(args, retval, text, None, pagemsg, output_format=None)
 
             parse_dump(sys.stdin, do_process_stdin_dump_text_on_page, start, end)
 

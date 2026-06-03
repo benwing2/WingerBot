@@ -434,5 +434,5 @@ for _, (index, pagetitle, spec) in blib.iter_items(
         pagetitle_to_spec[pagetitle] = spec
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_spec.keys())
+    args, start, end, process_text_on_page, default_pages=list(pagetitle_to_spec.keys())
 )

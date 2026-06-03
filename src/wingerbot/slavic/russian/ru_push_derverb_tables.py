@@ -163,5 +163,5 @@ if __name__ == "__main__":
             pagetitle_to_props[pagetitle] = (index, text, comment)
 
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, new=True, default_pages=list(pagetitle_to_props.keys())
+        args, start, end, process_text_on_page, default_pages=list(pagetitle_to_props.keys())
     )

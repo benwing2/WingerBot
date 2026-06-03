@@ -117,7 +117,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_cats=["Latin verbs with impersonal passive"],
     filter_pages=lambda pagetitle: pagetitle not in ignore_pages,
 )

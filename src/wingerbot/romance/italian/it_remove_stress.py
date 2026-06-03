@@ -230,10 +230,9 @@ if args.stressfile:
         start,
         end,
         process_text_on_page,
-        new=True,
         default_pages=list(title_to_title_with_syllable_divs.keys()),
     )
 else:
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, new=True, default_refs=["Template:it-stress"]
+        args, start, end, process_text_on_page, default_refs=["Template:it-stress"]
     )

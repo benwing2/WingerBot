@@ -46,7 +46,7 @@ if args.textfile:
             msg("Page %s: Skipping bad text: %s" % (index, page))
             continue
         pagetitle, pagetext = split_vals
-        process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, pagetext, None))
+        process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, pagetext))
 
     for form, count in sorted(list(form_of_forms.items()), key=lambda x: -x[1]):
         msg("%-50s = %s" % (form, count))

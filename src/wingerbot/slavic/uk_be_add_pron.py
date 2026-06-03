@@ -1486,7 +1486,6 @@ else:
         start,
         end,
         process_text_on_page,
-        new=True,
         default_cats=[langname + " lemmas", langname + " non-lemma forms"],
     )
 

@@ -18,5 +18,5 @@ def process_text_on_page(p):
     return canon_one_page_links(p.index, p.title, p.text, "bg", "Bulgarian", "Cyrl", bg_translit, templates_seen, templates_changed, None)
 
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 blib.output_process_links_template_counts(templates_seen, templates_changed)

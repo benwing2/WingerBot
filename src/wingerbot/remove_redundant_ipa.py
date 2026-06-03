@@ -45,7 +45,5 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
     default_refs=["Template:es-IPA", "Template:fr-IPA", "Template:it-IPA"],
 )

@@ -540,5 +540,5 @@ if args.offline:
 else:
     lemmas_to_numbers = {rulib.remove_accents(ru_num(num)): num for num in iter_numerals()}
     blib.do_pagefile_cats_refs(
-        args, start, end, process_text_on_page, new=True, default_pages=list(lemmas_to_numbers.values())
+        args, start, end, process_text_on_page, default_pages=list(lemmas_to_numbers.values())
     )

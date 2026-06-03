@@ -199,7 +199,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    new=True,
     default_cats=[
         "Russian participles",
         "Russian present active participles",
@@ -215,5 +214,5 @@ def process_text_on_page_nowarn(p):
 
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page_nowarn, new=True, default_cats=["Russian non-lemma forms"]
+    args, start, end, process_text_on_page_nowarn, default_cats=["Russian non-lemma forms"]
 )

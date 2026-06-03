@@ -570,8 +570,6 @@ blib.do_pagefile_cats_refs(
     start,
     end,
     process_text_on_page,
-    edit=True,
-    stdin=True,
     default_refs=["Template:%s" % template for template in templates_to_iterate_over],
     # ref_namespaces=[10]
     # default_refs=["Template:tracking/form-of/form-of-t/unused/nodot"]

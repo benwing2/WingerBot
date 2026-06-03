@@ -176,7 +176,6 @@ if args.mode == "full-conj":
         start,
         end,
         process_text_on_page_for_full_conj,
-        new=True,
         default_pages=list(verbs_to_spec.keys()),
     )
 elif args.mode == "generate":
@@ -191,7 +190,6 @@ elif args.mode == "generate":
         start,
         end,
         process_text_on_page_for_generate,
-        new=True,
         default_pages=list(verbs_to_spec.keys()),
     )
 else:
@@ -214,6 +212,5 @@ else:
         start,
         end,
         process_text_on_page_for_single_word,
-        new=True,
         default_pages=list(verbs_to_spec.keys()),
     )

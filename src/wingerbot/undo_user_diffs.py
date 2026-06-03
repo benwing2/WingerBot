@@ -82,4 +82,4 @@ for index, pagetitle, diff, comments in blib.yield_text_from_find_regex(
     pages_seen.append(pagetitle)
     patches_by_file[pagetitle] = diff
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True, default_pages=pages_seen)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_pages=pages_seen)

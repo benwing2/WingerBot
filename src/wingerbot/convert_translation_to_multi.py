@@ -2129,7 +2129,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, edit=True, stdin=True)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)
 
     msg("")
     header = "%-50s | %5s | %s" % ("Qualifier", "Count", "By lang")

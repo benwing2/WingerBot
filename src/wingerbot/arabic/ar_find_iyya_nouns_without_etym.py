@@ -22,4 +22,4 @@ parser = blib.create_argparser("Find Arabic -iyya nouns without etymology", incl
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_cats=["Arabic nouns"])
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Arabic nouns"])

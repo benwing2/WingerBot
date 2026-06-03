@@ -492,6 +492,5 @@ if __name__ == "__main__":
         start,
         end,
         process_text_on_page,
-        new=True,
         default_cats=["Latin nouns", "Latin proper nouns"],
     )

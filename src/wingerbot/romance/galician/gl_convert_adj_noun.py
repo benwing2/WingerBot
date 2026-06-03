@@ -697,4 +697,4 @@ if __name__ == "__main__":
     elif args.do_adjs:
         default_refs.append("Template:gl-adj-old")
 
-    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, new=True, default_refs=default_refs)
+    blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_refs=default_refs)

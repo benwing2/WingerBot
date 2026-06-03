@@ -691,5 +691,5 @@ if args.rhyme_direcfile:
             rhyme_directives[page] = respellings
 
 blib.do_pagefile_cats_refs(
-    args, start, end, process_text_on_page, new=True, default_refs=["Template:it-pr"]
+    args, start, end, process_text_on_page, default_refs=["Template:it-pr"]
 )
