@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-from collections import defaultdict
+import re, sys
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, tname
 
 
 def process_text_on_page(p):
@@ -42,8 +41,9 @@ def process_text_on_page(p):
     return
 
 
-parser = blib.create_argparser("Find 'inflection of' tags with |and|, |or|, |;|, comma or slash in them")
+parser = blib.create_argparser("Find 'inflection of' tags with |and|, |or|, |;|, comma or slash in them",
+                               include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-blib.parse_dump(sys.stdin, process_text_on_page, startprefix=start, endprefix=end)
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

@@ -29,7 +29,7 @@ type ExpandTextCallback = Callable[[str], str | Literal[False]]
 type Langparam = str | tuple[Literal["direct"], str]
 type ProcessLinksParam = tuple[str, *tuple[Any, ...]]
 type ParamOrParamList = str | list[str]
-type PagePrefix = int | str
+type PagePrefix = int | str | None
 
 class ProcessPageParams:
     def __init__(self, args: argparse.Namespace, index: Index, pagetitle: str, pagetext: str, page: pywikibot.Page | None = None, prev_comment: ChangelogComment | None = None):
@@ -751,8 +751,8 @@ def references_without_templates(page, namespaces=None, only_template_inclusion=
 
 def references(
     page,
-    startprefix=None,
-    endprefix=None,
+    start: PagePrefix = None,
+    end: PagePrefix = None,
     namespaces=None,
     only_template_inclusion=False,
     filter_redirects=False,
@@ -785,14 +785,14 @@ def references(
     if include_page:
         initial_items.append(page)
     pageiter = itertools.chain(initial_items, rest_pageiter)
-    for i, current in iter_items(pageiter, startprefix, endprefix):
+    for i, current in iter_items(pageiter, start, end):
         yield i, current
 
 
-def get_contributions(user, startprefix=None, endprefix=None, max=None, namespaces=None):
+def get_contributions(user, start: PagePrefix = None, end: PagePrefix = None, max=None, namespaces=None):
     """Get contributions for a given user."""
     itemiter = site.usercontribs(user=user, namespaces=namespaces, total=max)
-    for i, current in iter_items(itemiter, startprefix, endprefix, get_name=lambda item: item["title"]):
+    for i, current in iter_items(itemiter, start, end, get_name=lambda item: item["title"]):
         yield i, current
 
 
@@ -816,14 +816,14 @@ def check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose=False):
 
 
 def yield_articles(
-    page: Category, seen: set[str] | None, startprefix=None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
+    page: Category, seen: set[str] | None, start: PagePrefix = None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
 ):
     if not check_cat_filters(page, filter_cats_regex, prune_cats_regex, verbose):
         return
     if not recurse:
         # Only use when non-recursive. Has a recurse= flag but doesn't allow for prune_cats_regex, doesn't correctly
         # ignore subcats and pages that may be seen multiple times.
-        for article in page.articles(startprefix=startprefix):
+        for article in page.articles(start=start):
             if seen is None:
                 yield article
             else:
@@ -841,7 +841,7 @@ def yield_articles(
             recurse=True,
             verbose=verbose,
         ):
-            for article in subcat.articles(startprefix=startprefix):
+            for article in subcat.articles(start=start):
                 if seen is None:
                     yield article
                 else:
@@ -852,7 +852,7 @@ def yield_articles(
 
 
 def raw_cat_articles(
-    page: str | Category, seen, startprefix=None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
+    page: str | Category, seen, start: PagePrefix = None, filter_cats_regex=None, prune_cats_regex=None, recurse=False, verbose=False
 ):
     if isinstance(page, str):
         if not page.startswith("Category:"):
@@ -861,7 +861,7 @@ def raw_cat_articles(
     yield from yield_articles(
         page,
         seen,
-        startprefix=startprefix,
+        start=start,
         filter_cats_regex=filter_cats_regex,
         prune_cats_regex=prune_cats_regex,
         recurse=recurse,
@@ -871,8 +871,8 @@ def raw_cat_articles(
 
 def cat_articles(
     page: str | Category,
-    startprefix: PagePrefix | None = None,
-    endprefix: PagePrefix | None = None,
+    start: PagePrefix = None,
+    end: PagePrefix = None,
     seen: set[str] | None = None,
     filter_cats_regex=None,
     prune_cats_regex=None,
@@ -886,14 +886,14 @@ def cat_articles(
         raw_cat_articles(
             page,
             seen,
-            startprefix=startprefix if not isinstance(startprefix, int) else None,
+            start=start if not isinstance(start, int) else None,
             filter_cats_regex=filter_cats_regex,
             prune_cats_regex=prune_cats_regex,
             recurse=recurse,
             verbose=verbose,
         ),
-        startprefix,
-        endprefix,
+        start,
+        end,
     )
 
 
@@ -935,8 +935,8 @@ def yield_subcats(
 
 def cat_subcats(
     page,
-    startprefix=None,
-    endprefix=None,
+    start: PagePrefix = None,
+    end: PagePrefix = None,
     seen=None,
     filter_cats_regex=None,
     prune_cats_regex=None,
@@ -961,54 +961,38 @@ def cat_subcats(
     )
     # Recursive support is built into page.subcategories() but it isn't smart enough to skip pages
     # already seen, which can lead to infinite loops, e.g. ku:All topics -> ku:List of topics -> ku:All topics.
-    # pageiter = page.subcategories(recurse=recurse) #no startprefix; startprefix = startprefix if not isinstance(startprefix, int) else None)
-    for i, current in iter_items(pageiter, startprefix, endprefix):
+    # pageiter = page.subcategories(recurse=recurse) #no start; start = start if not isinstance(start, int) else None)
+    for i, current in iter_items(pageiter, start, end):
         yield i, current
 
 
-def prefix_pages(prefix, startprefix=None, endprefix=None, namespace=None, filter_redirects=None):
+def prefix_pages(prefix, start: PagePrefix = None, end: PagePrefix = None, namespace=None, filter_redirects=None):
     pageiter = site.allpages(
         prefix=None if prefix == "-" else prefix,
         namespace=namespace,
-        start=startprefix if isinstance(startprefix, str) else None,
+        start=start if isinstance(start, str) else None,
         filterredir=filter_redirects,
     )
-    for i, current in iter_items(pageiter, startprefix, endprefix):
+    for i, current in iter_items(pageiter, start, end):
         yield i, current
 
 
 def query_special_pages(
-    specialpage, startprefix=None, endprefix=None, filter_cats_regex=None, prune_cats_regex=None, verbose=False
+    specialpage, start: PagePrefix = None, end: PagePrefix = None, filter_cats_regex=None, prune_cats_regex=None, verbose=False
 ):
-    for i, current in iter_items(site.querypage(specialpage, total=None), startprefix, endprefix):
+    for i, current in iter_items(site.querypage(specialpage, total=None), start, end):
         if check_cat_filters(current, filter_cats_regex, prune_cats_regex, verbose):
             yield i, current
 
 
-def query_usercontribs(username, startprefix=None, endprefix=None, starttime=None, endtime=None):
+def query_usercontribs(username, start: PagePrefix = None, end: PagePrefix = None, starttime=None, endtime=None):
     for i, current in iter_items(
         site.usercontribs(user=username, start=starttime, end=endtime),
-        startprefix,
-        endprefix,
+        start,
+        end,
         get_name=lambda item: item["title"],
     ):
         yield i, current
-
-
-def stream(st, startprefix=None, endprefix=None):
-    i = 0
-
-    for name in st:
-        i += 1
-
-        if startprefix != None and i < startprefix:
-            continue
-        if endprefix != None and i > endprefix:
-            break
-
-        name = re.sub(r"^[#*] *\[\[(.+)]]$", r"\1", name)
-
-        yield i, Page(site, name)
 
 
 def split_arg(arg: str, canonicalize: Callable[[str], str] | None = None) -> list[str]:
@@ -1044,8 +1028,8 @@ def yield_items_from_file(
 
 def iter_items_from_file(
     filename,
-    startprefix=None,
-    endprefix=None,
+    start: PagePrefix = None,
+    end: PagePrefix = None,
     canonicalize=None,
     preserve_blank_lines=False,
     no_strip=False,
@@ -1060,8 +1044,8 @@ def iter_items_from_file(
     )
     for _, (index, line) in iter_items(
         file_items,
-        startprefix=startprefix,
-        endprefix=endprefix,
+        start=start,
+        end=end,
         get_name=lambda x: x[1],
         get_index=lambda x: x[0],
         skip_ignorable_pages=skip_ignorable_pages,
@@ -1074,16 +1058,16 @@ def get_page_name(page):
         return page
     # FIXME: withNamespace=False was used previously by cat_articles, in a
     # line like this:
-    #    elif current.title(withNamespace=False) >= endprefix:
+    #    elif current.title(withNamespace=False) >= end:
     # Should we add this flag or support an option to add it?
     # return str(page.title(withNamespace=False))
     return page.title()
 
 
 class ProcessItems:
-    def __init__(self, startprefix=None, endprefix=None, get_name=get_page_name, skip_ignorable_pages=False):
-        self.startprefix = startprefix
-        self.endprefix = endprefix
+    def __init__(self, start: PagePrefix = None, end: PagePrefix = None, get_name=get_page_name, skip_ignorable_pages=False):
+        self.start = start
+        self.end = end
         self.get_name = get_name
         self.skip_ignorable_pages = skip_ignorable_pages
         self.i = 0
@@ -1095,26 +1079,26 @@ class ProcessItems:
     def should_process(self, item):
         self.i += 1
 
-        if self.startprefix != None:
+        if self.start is not None:
             should_skip = False
-            if isinstance(self.startprefix, int):
-                if self.i < self.startprefix:
+            if isinstance(self.start, int):
+                if self.i < self.start:
                     should_skip = True
-            elif self.get_name(item) < self.startprefix:
+            elif self.get_name(item) < self.start:
                 should_skip = True
             if should_skip:
                 if self.i % self.skipsteps == 0:
                     pywikibot.output("skipping %s" % str(self.i))
                 return False
 
-        if self.endprefix != None:
-            if isinstance(self.endprefix, int):
-                if self.i > self.endprefix:
+        if self.end is not None:
+            if isinstance(self.end, int):
+                if self.i > self.end:
                     return None
-            elif self.get_name(item) > self.endprefix:
+            elif self.get_name(item) > self.end:
                 return None
 
-        if isinstance(self.endprefix, int) and not self.t:
+        if isinstance(self.end, int) and not self.t:
             self.t = datetime.datetime.now()
 
         if self.skip_ignorable_pages and page_should_be_ignored(self.get_name(item)):
@@ -1129,23 +1113,23 @@ class ProcessItems:
         if self.i % self.steps == 0:
             tdisp = ""
 
-            if isinstance(self.endprefix, int):
+            if isinstance(self.end, int):
                 told = self.t
-                assert told is not None, "Expected self.t to be set when endprefix is an int"
+                assert told is not None, "Expected self.t to be set when end is an int"
                 self.t = datetime.datetime.now()
-                pagesleft = (self.endprefix - self.i) / self.steps
+                pagesleft = (self.end - self.i) / self.steps
                 tfuture = self.t + (self.t - told) * pagesleft
                 tdisp = ", est. " + tfuture.strftime("%X")
 
-            pywikibot.output(str(self.i) + "/" + str(self.endprefix) + tdisp)
+            pywikibot.output(str(self.i) + "/" + str(self.end) + tdisp)
 
         return retval
 
 
 def iter_items[T](
     items: Iterable[T],
-    startprefix=None,
-    endprefix=None,
+    start: PagePrefix = None,
+    end: PagePrefix = None,
     get_name=get_page_name,
     get_index=None,
     skip_ignorable_pages=False,
@@ -1155,7 +1139,7 @@ def iter_items[T](
     t = None
     steps = 50
     skipsteps = 1000
-    actual_startprefix = None
+    actual_start = None
     tstart = datetime.datetime.now()
 
     for current in items:
@@ -1165,30 +1149,30 @@ def iter_items[T](
         else:
             index = i
 
-        if startprefix is not None:
+        if start is not None:
             should_skip = False
-            if isinstance(startprefix, int):
-                if index < startprefix:
+            if isinstance(start, int):
+                if index < start:
                     should_skip = True
-            elif get_name(current) < startprefix:
+            elif get_name(current) < start:
                 should_skip = True
             if should_skip:
                 if i % skipsteps == 0:
                     pywikibot.output("skipping %s" % str(i))
                 continue
 
-        if actual_startprefix is None:
-            actual_startprefix = i
-        actual_endprefix = None
+        if actual_start is None:
+            actual_start = i
+        actual_end = None
 
-        if endprefix != None:
-            if isinstance(endprefix, int):
-                if index > endprefix:
+        if end is not None:
+            if isinstance(end, int):
+                if index > end:
                     break
-            elif get_name(current) > endprefix:
+            elif get_name(current) > end:
                 break
 
-        if isinstance(endprefix, int) and not t:
+        if isinstance(end, int) and not t:
             t = datetime.datetime.now()
 
         if skip_ignorable_pages and page_should_be_ignored(get_name(current)):
@@ -1202,29 +1186,29 @@ def iter_items[T](
         if i % steps == 0:
             tdisp = ""
 
-            if isinstance(endprefix, int):
+            if isinstance(end, int):
                 t = datetime.datetime.now()
-                startprefix_as_int = startprefix if isinstance(startprefix, int) else 1
-                actual_endprefix = endprefix - (startprefix_as_int - actual_startprefix)
+                start_as_int = start if isinstance(start, int) else 1
+                actual_end = end - (start_as_int - actual_start)
                 # Logically:
                 #
                 # time_so_far = t - tstart
-                # pages_so_far = i - startprefix + 1
+                # pages_so_far = i - start + 1
                 # time_per_page = time_so_far / pages_so_far
-                # remaining_pages = endprefix - i
+                # remaining_pages = end - i
                 # remaining_time = time_per_page * remaining_pages
                 #
                 # We do the same but multiply before dividing, for increased precision and due to the inability
-                # to multiply or divide timedeltas by floats. We also use the actual startprefix (i.e. the actual
+                # to multiply or divide timedeltas by floats. We also use the actual `start` (i.e. the actual
                 # index of the first page relative to the pages seen in the input stream, in case get_index() is
                 # supplied and e.g. the indices supplied by get_index() are offset significantly compared with
-                # the ordering in the input stream), and adjust the supplied `endprefix` value by the difference
-                # between the supplied `startprefix` and observed actual first page. This way, for example, if the
-                # get_index() indices start at 80000 and `startprefix` = 82000 and `endprefix` = 85000, we will
+                # the ordering in the input stream), and adjust the supplied `end` value by the difference
+                # between the supplied `start` and observed actual first page. This way, for example, if the
+                # get_index() indices start at 80000 and `start` = 82000 and `end` = 85000, we will
                 # correctly account for there being 3000 pages to do. NOTE: If the indices supplied by get_index()
                 # have gaps in them or are completely out of order, our calculations will be incorrect.
-                remaining_pages = actual_endprefix - i
-                pages_so_far = i - actual_startprefix + 1
+                remaining_pages = actual_end - i
+                pages_so_far = i - actual_start + 1
                 remaining_time = (t - tstart) * remaining_pages / pages_so_far
                 seconds_left = remaining_time.seconds
                 hours_left_in_day = seconds_left // 3600
@@ -1242,7 +1226,7 @@ def iter_items[T](
                 time_left_str = ", ".join(x for x in [hours_left_str, minutes_left_str, seconds_left_str] if x)
                 tdisp = ", est. %s left" % time_left_str
 
-            pywikibot.output(str(i) + "/" + str(actual_endprefix) + tdisp)
+            pywikibot.output(str(i) + "/" + str(actual_end) + tdisp)
 
 
 # Parse the output of group_notes() back into individual notes. If a note is repeated, include that many copies
@@ -1413,29 +1397,29 @@ def create_argparser(
 
 
 def parse_args(args=sys.argv[1:]):
-    startprefix = None
-    endprefix = None
+    start = None
+    end = None
 
     if len(args) >= 1:
-        startprefix = args[0]
+        start = args[0]
     if len(args) >= 2:
-        endprefix = args[1]
-    return parse_start_end(startprefix, endprefix)
+        end = args[1]
+    return parse_start_end(start, end)
 
 
-def parse_start_end(startprefix, endprefix):
-    if startprefix != None:
+def parse_start_end(start: PagePrefix, end: PagePrefix):
+    if start is not None:
         try:
-            startprefix = int(startprefix)
+            start = int(start)
         except ValueError:
             pass
-    if endprefix != None:
+    if end is not None:
         try:
-            endprefix = int(endprefix)
+            end = int(end)
         except ValueError:
             pass
 
-    return (startprefix, endprefix)
+    return (start, end)
 
 
 def args_has_non_default_pages(args):
@@ -3917,8 +3901,8 @@ class DumpExitException(Exception):
     pass
 
 
-def parse_dump(fp, pagecallback, startprefix=None, endprefix=None, skip_ignorable_pages=False):
-    item_handler = ProcessItems(startprefix=startprefix, endprefix=endprefix, skip_ignorable_pages=skip_ignorable_pages)
+def parse_dump(fp, pagecallback, start: PagePrefix = None, end: PagePrefix = None, skip_ignorable_pages=False):
+    item_handler = ProcessItems(start=start, end=end, skip_ignorable_pages=skip_ignorable_pages)
 
     def mycallback(title, text):
         retval = item_handler.should_process(title)
