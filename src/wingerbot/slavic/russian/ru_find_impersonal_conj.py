@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+# FIXME: No longer needed. Use find_regex.py.
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
 
-parser = blib.create_argparser("Find verbs with impersonal conjugations")
-parser.add_argument("--verbfile", help="File listing verbs to check.")
+parser = blib.create_argparser("Find verbs with impersonal conjugations",
+                               include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for i, line in blib.iter_items_from_file(args.verbfile, start, end):
-    page = pywikibot.Page(site, line)
-    if "-impers|" in page.text:
-        msg("Page %s %s: Found impersonal conjugation" % (i, page.title()))
+def process_text_on_page(p):
+    if "-impers|" in p.text:
+        p.msg("Found impersonal conjugation")
     else:
-        msg("Page %s %s: No impersonal conjugation" % (i, page.title()))
+        p.msg("No impersonal conjugation")
+
+blib.do_pagefile_cats_refs(args, start, end, process_text_on_page, default_cats=["Russian verbs"])

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+# FIXME: Obsolete. Use list_pages.py.
+
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg
 
-parser = blib.create_argparser("List pages, lemmas and/or non-lemmas")
+parser = blib.create_argparser("List pages, lemmas and/or non-lemmas",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--cats", default="Russian lemmas", help="Categories to do (can be comma-separated list)")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
