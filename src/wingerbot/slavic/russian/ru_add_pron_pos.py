@@ -681,7 +681,7 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.posfile:
-    for lineno, line in blib.yield_items_from_file(args.posfile, include_original_lineno=True):
+    for lineno, line in blib.iter_items_from_file(args.posfile):
         m = re.search(r"^(.*?) (.*)$", line)
         if not m:
             msg("Line %s: WARNING: Can't parse line: %s" % (lineno, line))

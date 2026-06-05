@@ -18,7 +18,7 @@ for cat in cats:
     for index, page in blib.cat_articles(cat):
         cat_contents[cat].add(page.title())
 
-for index, line in blib.yield_items_from_file(args.direcfile, include_original_lineno=True):
+for index, line in blib.iter_items_from_file(args.direcfile):
     page, extra_info = line.split(": ", 1)
     cats_seen = []
     for cat in cats:

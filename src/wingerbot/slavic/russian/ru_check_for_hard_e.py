@@ -92,7 +92,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 if not args.lemmafile:
     lemmas = None
 else:
-    lemmas = set(blib.yield_items_from_file(args.lemmafile))
+    lemmas = set(blib.fetch_items_from_file(args.lemmafile))
 
 pagetitle_to_props = {}
 

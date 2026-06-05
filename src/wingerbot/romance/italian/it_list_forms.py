@@ -63,19 +63,10 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.direcfile:
-    for lineno, line in blib.yield_items_from_file(args.direcfile, include_original_lineno=True):
+    for lineno, line in blib.iter_items_from_file(args.direcfile):
         t = list(blib.parse_text(line).filter_templates())[0]
-        pagetitle = getparam(t, "pagename") or "NONE"
-
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (lineno, pagetitle, txt))
-
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (lineno, pagetitle, txt))
-
-        def expand_text(tempcall):
-            return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-        list_forms(line, errandpagemsg, expand_text)
+        def process_line(p):
+            list_forms(line, p.errandmsg, p.expand_text)
+        blib.do_edit(args, lineno, getparam(t, "pagename") or "NONE", process_line)
 else:
     blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

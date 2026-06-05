@@ -9,7 +9,7 @@ parser = blib.create_argparser("Find pages that need definitions", include_pagef
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-lines = set(blib.yield_items_from_file(args.pagefile))
+lines = set(blib.fetch_items_from_file(args.pagefile))
 for i, page in blib.cat_articles("Russian entries needing definition", start, end):
     pagetitle = page.title()
     if pagetitle in lines:

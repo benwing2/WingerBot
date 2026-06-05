@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import msg, tname, pname
 from wingerbot.romance.italian.it_snarf_pron import apply_default_pronun
 
 refs_re = "(Olivetti|DiPI|Treccani|DOP|Internazionale|Garzanti)"
@@ -403,11 +403,9 @@ parser.add_argument("--old-it-ipa", action="store_true", help="Store as {{it-IPA
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-lines = blib.yield_items_from_file(args.direcfile, include_original_lineno=True)
 
-
-def get_items(lines):
-    for lineno, line in lines:
+def get_items(line_iter):
+    for lineno, line in line_iter:
         m = re.search("^Page ([0-9]+) (.*): <respelling> *(.*?) *<end>", line)
         if not m:
             # Not a warning, there will be several of these from output of it_snarf_pron.py
@@ -417,21 +415,12 @@ def get_items(lines):
 
 
 pagetitle_to_spec = {}
-for _, (index, pagetitle, spec) in blib.iter_items(
-    get_items(lines), start, end, get_name=lambda x: x[1], get_index=lambda x: int(x[0])
+for _, (itemindex, pagetitle, spec) in blib.iter_items(
+    get_items(blib.iter_items_from_file(args.direcfile)), start, end, get_name=lambda x: x[1], get_index=lambda x: int(x[0])
 ):
-
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    page = pywikibot.Page(site, pagetitle)
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("WARNING: Page doesn't exist, skipping")
-    else:
-        pagetitle_to_spec[pagetitle] = spec
+    def process_line(p):
+        pagetitle_to_spec[p.title] = spec
+    blib.do_edit(args, itemindex, pagetitle, process_line, must_exist=True)
 
 blib.do_pagefile_cats_refs(
     args, start, end, process_text_on_page, default_pages=list(pagetitle_to_spec.keys())

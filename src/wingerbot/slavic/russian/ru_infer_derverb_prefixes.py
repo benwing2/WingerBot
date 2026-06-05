@@ -571,7 +571,7 @@ def add_newline(generator):
 
 if args.direcfile:
     for index, pagename, pagetext, comment in blib.yield_text_from_find_regex(
-        add_newline(blib.yield_items_from_file(args.direcfile)), verbose=False
+        add_newline(blib.fetch_items_from_file(args.direcfile)), verbose=False
     ):
         linenos_and_lines = []
         lines = pagetext.rstrip("\n").split("\n")

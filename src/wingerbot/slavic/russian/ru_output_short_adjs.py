@@ -17,9 +17,9 @@ Should be accented and with ё.""",
 args = parser.parse_args()
 
 short_adjs = OrderedDict(
-    (rulib.make_unstressed_ru(x), True) for x in blib.yield_items_from_file(args.wiktionary_short_adjs)
+    (rulib.make_unstressed_ru(x), True) for x in blib.fetch_items_from_file(args.wiktionary_short_adjs)
 )
-for line in blib.yield_items_from_file(args.freq_adjs):
+for line in blib.fetch_items_from_file(args.freq_adjs):
     if line in short_adjs:
         print(line)
         del short_adjs[line]

@@ -2399,7 +2399,7 @@ def parse_elative_defn(spec):
 
 def create_elatives(elfile, start, end):
     elative_defns = []
-    for line in blib.yield_items_from_file(elfile):
+    for line in blib.fetch_items_from_file(elfile):
         elative_defns.append(parse_elative_defn(line))
     for index, current in blib.iter_items(
         elative_defns,

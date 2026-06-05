@@ -146,7 +146,7 @@ if __name__ == "__main__":
     if args.files:
         files = args.files.split(",")
         for index, extfn in enumerate(files):
-            lines = list(blib.yield_items_from_file(extfn))
+            lines = list(blib.fetch_items_from_file(extfn))
             pagetitle = re.sub(r"\.der$", "", rulib.recompose(extfn))
             pagetitle_to_props[pagetitle] = (index, "\n".join(lines), args.comment)
 

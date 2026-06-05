@@ -669,7 +669,7 @@ start, end = blib.parse_start_end(args.start, args.end)
 ipa_directives = {}
 
 if args.ipa_direcfile:
-    for lineno, line in blib.yield_items_from_file(args.ipa_direcfile, include_original_lineno=True):
+    for lineno, line in blib.iter_items_from_file(args.ipa_direcfile):
         m = re.search("^Page [0-9]+ (.*?): <respelling> *(.*?) *<end>", line)
         if not m:
             msg("Line %s: WARNING: Unrecognized line: %s" % (lineno, line))
@@ -681,7 +681,7 @@ if args.ipa_direcfile:
 rhyme_directives = {}
 
 if args.rhyme_direcfile:
-    for lineno, line in blib.yield_items_from_file(args.rhyme_direcfile, include_original_lineno=True):
+    for lineno, line in blib.iter_items_from_file(args.rhyme_direcfile):
         m = re.search("^Page [0-9]+ (.*?): <rhyme-respelling> *(.*?) *<end>", line)
         if not m:
             msg("Line %s: WARNING: Unrecognized line: %s" % (lineno, line))

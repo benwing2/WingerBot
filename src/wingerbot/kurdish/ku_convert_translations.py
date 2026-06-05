@@ -153,11 +153,11 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.known_kmr:
-    known_northern_kurdish_terms = set(blib.yield_items_from_file(args.known_kmr))
+    known_northern_kurdish_terms = set(blib.fetch_items_from_file(args.known_kmr))
 else:
     known_northern_kurdish_terms = set()
 if args.known_ckb:
-    known_central_kurdish_terms = set(blib.yield_items_from_file(args.known_ckb))
+    known_central_kurdish_terms = set(blib.fetch_items_from_file(args.known_ckb))
 else:
     known_central_kurdish_terms = set()
 blib.do_pagefile_cats_refs(args, start, end, process_text_on_page)

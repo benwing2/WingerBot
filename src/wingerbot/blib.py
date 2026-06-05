@@ -963,9 +963,7 @@ def split_arg(arg: str, canonicalize: Callable[[str], str] | None = None) -> lis
     return [process(x) for x in re.split(r",(?=[^ ])", arg)]
 
 
-def yield_items_from_file(
-    filename, canonicalize=None, include_original_lineno=False, preserve_blank_lines=False, no_strip=False
-):
+def _yield_items_from_file(filename, canonicalize=None, preserve_blank_lines=False, no_strip=False) -> Generator[tuple[int, str], None, None]:
     lineno = 0
     for line in open(filename, "r", encoding="utf-8"):
         lineno += 1
@@ -979,10 +977,12 @@ def yield_items_from_file(
             continue
         if canonicalize:
             line = canonicalize(line)
-        if include_original_lineno:
-            yield lineno, line
-        else:
-            yield line
+        yield lineno, line
+
+
+def fetch_items_from_file(filename, canonicalize=None, preserve_blank_lines=False, no_strip=False) -> Generator[str, None, None]:
+    for _, line in _yield_items_from_file(filename, canonicalize=canonicalize, preserve_blank_lines=preserve_blank_lines, no_strip=no_strip):
+        yield line
 
 
 def iter_items_from_file(
@@ -993,11 +993,10 @@ def iter_items_from_file(
     preserve_blank_lines=False,
     no_strip=False,
     skip_ignorable_pages=False,
-):
-    file_items = yield_items_from_file(
+) -> Generator[tuple[int, str], None, None]:
+    file_items = _yield_items_from_file(
         filename,
         canonicalize=canonicalize,
-        include_original_lineno=True,
         preserve_blank_lines=preserve_blank_lines,
         no_strip=no_strip,
     )
@@ -1519,7 +1518,7 @@ def do_pagefile_cats_refs(
     # FIXME: Is it correct to use canonicalize_pagename here?
     pages_to_skip = set(split_arg(args.skip_pages, canonicalize=canonicalize_pagename)) if args.skip_pages else set()
     if args.skip_page_file:
-        pages_to_skip |= set(yield_items_from_file(args.skip_page_file, canonicalize=canonicalize_pagename))
+        pages_to_skip |= set(fetch_items_from_file(args.skip_page_file, canonicalize=canonicalize_pagename))
     cat_pages_to_skip = set()
     if args.skip_cats:
         skip_cats = split_arg(args.skip_cats)
@@ -1647,7 +1646,7 @@ def do_pagefile_cats_refs(
         if args.pages:
             pages_to_filter = set(split_arg(args.pages, canonicalize=canonicalize_pagename))
         if args.pagefile:
-            new_pages_to_filter = set(yield_items_from_file(args.pagefile, canonicalize=canonicalize_pagename))
+            new_pages_to_filter = set(fetch_items_from_file(args.pagefile, canonicalize=canonicalize_pagename))
             if pages_to_filter is None:
                 pages_to_filter = new_pages_to_filter
             else:

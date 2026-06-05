@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, rmparam, msg, errandmsg, tname
 
 add_stress = {
     "a": "á",
@@ -179,12 +179,13 @@ if args.mode == "full-conj":
         default_pages=list(verbs_to_spec.keys()),
     )
 elif args.mode == "generate":
-    for lineno, line in blib.yield_items_from_file(args.direcfile, include_original_lineno=True):
+    for lineno, line in blib.iter_items_from_file(args.direcfile):
         if " " not in line:
             errandmsg("Line %s: WARNING: No space in line: %s" % (lineno, line))
             continue
         verb, spec = line.split(" ", 1)
         verbs_to_spec[verb] = spec
+
     blib.do_pagefile_cats_refs(
         args,
         start,
@@ -198,15 +199,10 @@ else:
             errandmsg("Line %s: WARNING: No space in line: %s" % (lineno, line))
             continue
         verb, spec = line.split(" ", 1)
-        page = pywikibot.Page(site, verb)
-
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (lineno, verb, txt))
-
-        if not blib.safe_page_exists(page, errandpagemsg):
-            errandpagemsg("WARNING: Page doesn't exist")
-        else:
+        def process_line(p):
             verbs_to_spec[verb] = spec
+        blib.do_edit(args, lineno, verb, process_line, must_exist=True)
+
     blib.do_pagefile_cats_refs(
         args,
         start,

@@ -1872,17 +1872,17 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.lemmafile:
-    lemmas_to_process = list(blib.yield_items_from_file(args.lemmafile))
+    lemmas_to_process = list(blib.fetch_items_from_file(args.lemmafile))
 elif args.lemmas:
     lemmas_to_process = blib.split_arg(args.lemmas)
 else:
     lemmas_to_process = []
 if args.overwrite_lemmas:
-    lemmas_to_overwrite = list(blib.yield_items_from_file(args.overwrite_lemmas))
+    lemmas_to_overwrite = list(blib.fetch_items_from_file(args.overwrite_lemmas))
 else:
     lemmas_to_overwrite = []
 if args.lemmas_to_not_overwrite:
-    lemmas_to_not_overwrite = list(blib.yield_items_from_file(args.lemmas_to_not_overwrite))
+    lemmas_to_not_overwrite = list(blib.fetch_items_from_file(args.lemmas_to_not_overwrite))
 else:
     lemmas_to_not_overwrite = []
 if args.adj_form:
