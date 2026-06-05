@@ -3,7 +3,8 @@
 import argparse
 from wingerbot import blib
 
-parser = blib.create_argparser("Create input file for running find_misformatted_sections.py on multiple languages")
+parser = blib.create_argparser("Create input file for running find_misformatted_sections.py on multiple languages",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File listing languages", required=True)
 parser.add_argument("--tag", help="Tag identifying this run", default="jeff-doozan")
 args = parser.parse_args()

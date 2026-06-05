@@ -98,12 +98,13 @@ def process_page(p, lemma, pos, subs, infl):
         )
 
 
-parser = blib.create_argparser("Fix up bad Latin forms")
-parser.add_argument("--declfile", help="File containing pos lemma bad:good,... infl", required=True)
+parser = blib.create_argparser("Fix up bad Latin forms",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="File containing pos lemma bad:good,... infl", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-for lineindex, line in blib.iter_items_from_file(args.declfile, start, end):
+for lineindex, line in blib.iter_items_from_file(args.direcfile, start, end):
     if "!!!" in line:
         pos, lemma, subs, infl = re.split("!!!", line)
     else:

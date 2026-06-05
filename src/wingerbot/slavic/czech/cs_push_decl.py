@@ -140,14 +140,15 @@ def replace_decl(p, decl, declforms, tempcall, ignore_slots):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Replace manual declensions with given automatic ones")
-parser.add_argument("--declfile", help="File containing replacement declensions", required=True)
+parser = blib.create_argparser("Replace manual declensions with given automatic ones",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="File containing replacement declensions", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
 def yield_decls():
-    for lineno, line in blib.iter_items_from_file(args.declfile, start, end):
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         m = re.search(r'^\[\[(.*?)\]\] ".*?" (.*)$', line)
         if not m:
             m = re.search(r"^\[\[(.*?)\]\] (.*)$", line)

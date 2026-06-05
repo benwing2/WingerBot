@@ -680,7 +680,8 @@ return export"""
     )
 
 
-parser = blib.create_argparser("Save numbers to Wiktionary")
+parser = blib.create_argparser("Save numbers to Wiktionary",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--lemmas", action="store_true", help="Do lemmas from 21-99.")
 parser.add_argument("--non-lemmas", action="store_true", help="Do non-lemmas from 21-99.")
 parser.add_argument("--ordinal-lemmas", action="store_true", help="Do ordinal lemmas from 11-19.")

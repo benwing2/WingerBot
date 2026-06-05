@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+# FIXME: Rewrite following list_pages.py.
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg
 
-parser = blib.create_argparser("List pages in category or references in Zaliznyak order")
+parser = blib.create_argparser("List pages in category or references in Zaliznyak order",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--cat", help="Category to list")
 parser.add_argument("--ref", help="References to list")
 args = parser.parse_args()

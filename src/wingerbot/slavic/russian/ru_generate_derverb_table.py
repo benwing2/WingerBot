@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
+import re
 from functools import cmp_to_key
 
 from wingerbot.blib import msg
 from wingerbot import blib
 from wingerbot.slavic.russian import rulib
 
-parser = blib.create_argparser("Generate Russian derived-verb tables.")
+
+parser = blib.create_argparser("Generate Russian derived-verb tables.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing directives.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

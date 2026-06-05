@@ -103,8 +103,8 @@ def process_text_on_page(p):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Fix up class 3a")
-parser.add_argument("--direcfile", help="File containing pages to fix and directives.")
+parser = blib.create_argparser("Fix up class 3a", include_pagefile=True, include_stdin=True)
+parser.add_argument("--direcfile", help="File containing pages to fix and directives.", required=True)
 parser.add_argument("--delete-bad", action="store_true", help="Delete bad forms.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

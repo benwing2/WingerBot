@@ -9,7 +9,8 @@ import unicodedata
 from wingerbot import blib
 from wingerbot.blib import msg
 
-parser = blib.create_argparser("Analyze uses of {{alt form}} for English terms")
+parser = blib.create_argparser("Analyze uses of {{alt form}} for English terms",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="Output from 'find_regex.py --all' on a dump file.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

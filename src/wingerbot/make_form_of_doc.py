@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site
-import pywikibot, re, sys, argparse
+from wingerbot.blib import msg, errandmsg, site
+import pywikibot, re
 
-parser = blib.create_argparser("Generate form-of documentation pages.")
+parser = blib.create_argparser("Generate form-of documentation pages.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing directives.", required=True)
-parser.add_argument("--save", help="Save pages.", action="store_true")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

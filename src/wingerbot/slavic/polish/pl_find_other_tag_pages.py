@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-from collections import defaultdict
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
-parser = blib.create_argparser("Clean up bad inflection tags")
-parser.add_argument("--textfile", help="Pages and inflections to process.")
+parser = blib.create_argparser("Clean up bad Polish inflection tags",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="Pages and inflections to process.")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-with open(args.textfile, "r", encoding="utf-8") as fp:
+with open(args.direcfile, "r", encoding="utf-8") as fp:
     text = fp.read()
     pages = text.split("\001")
 for index, page in blib.iter_items(pages, start, end):

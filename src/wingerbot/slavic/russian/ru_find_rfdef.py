@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 
-# Find pages that need definitions among a set list (e.g. most frequent words).
+# Find pages among a list of pages (e.g. most frequent words).
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
+from wingerbot.blib import msg
 
-parser = blib.create_argparser("Find pages that need definitions", include_pagefile=True)
+parser = blib.create_argparser("Find pages among a list of pages", include_pagefile=True,
+                               include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 lines = set(blib.fetch_items_from_file(args.pagefile))
-for i, page in blib.cat_articles("Russian entries needing definition", start, end):
-    pagetitle = page.title()
+def check_one_page(p):
+    pagetitle = p.title
     if pagetitle in lines:
-        msg("* Page %s [[%s]]" % (i, pagetitle))
+        msg("* Page %s [[%s]]" % (p.index, pagetitle))
+
+blib.do_pagefile_cats_refs(args, start, end, check_one_page, no_fetch_text=True,
+                           default_cats=["Russian entries needing definition"])

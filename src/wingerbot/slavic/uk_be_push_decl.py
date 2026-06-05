@@ -70,7 +70,7 @@ def compare_forms(origforms, replforms, tempcall, pagemsg):
             )
             return False
         origform = origforms[slot]
-        if slot == "ins_s" and args.lang == "be":
+        if slot == "ins_s" and args.langcode == "be":
             # Add alternative feminine instrumental singular in -ю to original forms
             # if not already present.
             forms = origform.split(",")
@@ -99,15 +99,15 @@ def replace_decl(p, decl, declforms, tempcall):
         tn = tname(t)
         forms = {}
 
-        if tn == args.lang + "-decl-noun":
+        if tn == args.langcode + "-decl-noun":
             number = ""
-            getslots = uk_decl_noun_slots if args.lang == "uk" else be_decl_noun_slots
-        elif tn == args.lang + "-decl-noun-unc":
+            getslots = uk_decl_noun_slots if args.langcode == "uk" else be_decl_noun_slots
+        elif tn == args.langcode + "-decl-noun-unc":
             number = "sg"
-            getslots = uk_decl_noun_unc_slots if args.lang == "uk" else be_decl_noun_unc_slots
-        elif tn == args.lang + "-decl-noun-pl":
+            getslots = uk_decl_noun_unc_slots if args.langcode == "uk" else be_decl_noun_unc_slots
+        elif tn == args.langcode + "-decl-noun-pl":
             number = "pl"
-            getslots = uk_decl_noun_pl_slots if args.lang == "uk" else be_decl_noun_pl_slots
+            getslots = uk_decl_noun_pl_slots if args.langcode == "uk" else be_decl_noun_pl_slots
         else:
             continue
 
@@ -122,7 +122,7 @@ def replace_decl(p, decl, declforms, tempcall):
                 form = re.sub(r"\s*,\s*", ",", form)
                 slotforms = form.split(",")
                 slotforms = [
-                    (uk.add_monosyllabic_stress(f) if args.lang == "uk" else be.add_monosyllabic_accent(f))
+                    (uk.add_monosyllabic_stress(f) if args.langcode == "uk" else be.add_monosyllabic_accent(f))
                     for f in slotforms
                 ]
                 forms[slot] = ",".join(slotforms)
@@ -130,7 +130,7 @@ def replace_decl(p, decl, declforms, tempcall):
 
         if compare_forms(forms, declforms, tempcall, p.msg):
             origt = str(t)
-            t.name = args.lang + "-ndecl"
+            t.name = args.langcode + "-ndecl"
             del t.params[:]
             t.add("1", decl)
             newt = str(t)
@@ -140,17 +140,18 @@ def replace_decl(p, decl, declforms, tempcall):
     return str(parsed), notes
 
 
-parser = blib.create_argparser("Replace manual declensions with given automatic ones")
-parser.add_argument("--declfile", help="File containing replacement declensions", required=True)
-parser.add_argument("--lang", required=True, help="Language (uk or be)", choices=["uk", "be"])
+parser = blib.create_argparser("Replace manual declensions with given automatic ones",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="File containing replacement declensions", required=True)
+parser.add_argument("--langcode", required=True, help="Language (uk or be)", choices=["uk", "be"])
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 
 def yield_decls():
-    for lineno, line in blib.iter_items_from_file(args.declfile, start, end):
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         found_ndecl_style = False
-        for m in re.finditer(r"\{\{(?:User:Benwing2/)?" + args.lang + r"-ndecl\|(.*?)\}\}", line):
+        for m in re.finditer(r"\{\{(?:User:Benwing2/)?" + args.langcode + r"-ndecl\|(.*?)\}\}", line):
             found_ndecl_style = True
             yield lineno, m.group(1)
         if not found_ndecl_style:
@@ -159,7 +160,7 @@ def yield_decls():
 
 
 for declindex, decl in yield_decls():
-    module = uk if args.lang == "uk" else be
+    module = uk if args.langcode == "uk" else be
     if decl.startswith("(("):
         m = re.search(r"^\(\((.*)\)\)$", decl)
         if not m:
@@ -177,7 +178,7 @@ for declindex, decl in yield_decls():
         pagename = blib.remove_links(m.group(1))
 
     def process_page(p):
-        tempcall = "{{%s-generate-noun-forms|%s}}" % (args.lang, decl)
+        tempcall = "{{%s-generate-noun-forms|%s}}" % (args.langcode, decl)
         result = p.expand_text(tempcall)
         if not result:
             return

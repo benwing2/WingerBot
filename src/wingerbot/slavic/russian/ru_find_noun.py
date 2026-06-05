@@ -37,7 +37,8 @@ def process_text_on_page(p):
                     p.msg("WARNING: Found declinable non-pre-reform noun")
 
 
-parser = blib.create_argparser("Find cases of declined ru-noun uses")
+parser = blib.create_argparser("Find cases of declined ru-noun uses",
+                               include_pagefile=True, include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

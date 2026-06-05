@@ -305,7 +305,8 @@ def process_moby_line(index, word, pronun):
     pagemsg("Pronunciation: %s" % ipa)
 
 
-parser = blib.create_argparser("Generate English IPA")
+parser = blib.create_argparser("Generate English IPA",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--cmu", help="File containing CMU pronouncing dictionary.")
 parser.add_argument("--moby", help="File containing Moby Pronunciator.")
 args = parser.parse_args()

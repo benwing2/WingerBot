@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import errmsg
+from wingerbot.blib import errandmsg
 
-parser = blib.create_argparser("Filter inflection messages to those which would have forms saved.")
+parser = blib.create_argparser("Filter inflection messages to those which would have forms saved.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing inflection messages.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
@@ -19,7 +20,7 @@ for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
             line,
         )
         if not m:
-            errmsg("WARNING: Unable to parse line: %s" % line)
+            errandmsg("Line %s: WARNING: Unable to parse line: %s" % (lineno, line))
         else:
             pagenos.add(m.group(1))
 

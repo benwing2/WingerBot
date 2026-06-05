@@ -2,12 +2,11 @@
 
 # FIXME: Partly written, not working.
 
-import pywikibot, re, sys, argparse, time
-import traceback
+import pywikibot, re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname, pname, msg, errandmsg, site
 from collections import OrderedDict
 
 verbose = True
@@ -1829,7 +1828,8 @@ def create_adj_forms(start, end, formspec, lemmas_to_process, lemmas_to_overwrit
     )
 
 
-parser = blib.create_argparser("Create Yiddish inflection entries")
+parser = blib.create_argparser("Create Yiddish inflection entries",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument(
     "--adj-form",
     help="""Do specified adjective-form inflections, a comma-separated list.

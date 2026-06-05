@@ -50,7 +50,7 @@ def process_page(p):
                 restore_removed_pagehead(p.index, p.pagetitle, rev["comment"], oldrevid)
 
 
-parser = blib.create_argparser("Undo wrongly-erased {{also|...}} tags from the top of a page", include_pagefile=True)
+parser = blib.create_argparser("Undo wrongly-erased {{also|...}} tags from the top of a page", include_pagefile=True, no_include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

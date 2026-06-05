@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# FIXME: This script is no longer relevant now that we handle categories automatically in [[Module:category tree/lang/be]].
 import re
 import pywikibot
 
@@ -55,7 +56,8 @@ def create_cat(cat, catargs, extratext=None):
         blib.safe_page_save(page, changelog, errandmsg)
 
 
-parser = blib.create_argparser("Create Belarusian noun/verb/adjective categories")
+parser = blib.create_argparser("Create Belarusian noun/verb/adjective categories",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--overwrite", help="Overwrite categories", action="store_true")
 parser.add_argument(
     "--pos", help="Part of speech of categories to create", choices=["noun", "verb", "adj"], required=True

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname
+from wingerbot.blib import getparam, msg, tname
 
 form_of_forms = defaultdict(int)
 
@@ -28,13 +28,14 @@ def process_text_on_page(p):
             form_of_forms[form] += 1
 
 
-parser = blib.create_argparser("Clean up bad inflection tags")
-parser.add_argument("--textfile", help="File containing inflection templates to process.")
+parser = blib.create_argparser("Count the frequency of the type of form (2=) in {{form of}} uses.",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="File containing inflection templates to process.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.textfile:
-    with open(args.textfile, "r", encoding="utf-8") as fp:
+    with open(args.direcfile, "r", encoding="utf-8") as fp:
         text = fp.read()
     pages = re.split("\nPage [0-9]+ ", text)
     title_text_split = ": Found match for regex: "

@@ -6,7 +6,8 @@ from wingerbot import blib
 from wingerbot.blib import errmsg
 from wingerbot.slavic.russian import rulib
 
-parser = blib.create_argparser("Find lemmas which would have forms saved by create_ru_inflections.py.")
+parser = blib.create_argparser("Find lemmas which would have forms saved by create_ru_inflections.py.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing output from create_ru_inflections.py.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

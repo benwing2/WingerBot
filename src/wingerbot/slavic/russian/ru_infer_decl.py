@@ -1467,7 +1467,8 @@ def test_infer():
         msg("comment = %s" % comment)
 
 
-parser = blib.create_argparser("Add pronunciation sections to Russian Wiktionary entries")
+parser = blib.create_argparser("Infer the declension of Russian nouns with manually-specified declensions",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument("--mockup", action="store_true", help="Use mocked-up test code")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

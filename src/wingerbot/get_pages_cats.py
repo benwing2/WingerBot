@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import msg
 
-parser = blib.create_argparser("Get categories that a list of pages belongs to")
+parser = blib.create_argparser("Get categories that a list of pages belongs to",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File of pages and extra info", required=True)
 parser.add_argument("--cats", help="Categories to list for the pages in question", required=True)
 args = parser.parse_args()

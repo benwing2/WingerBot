@@ -56,10 +56,11 @@ def undo_greek_removal(direcfile, start, end):
         blib.do_edit(args, index, pagename, undo_one_page_greek_removal, must_exist=True)
 
 
-params = blib.create_argparser("Undo Greek transliteration removal")
-params.add_argument("--file", help="File containing templates and removal directives to undo", required=True)
+params = blib.create_argparser("Undo Greek transliteration removal",
+                               no_include_pagefile=True, no_include_stdin=True)
+params.add_argument("--direcfile", help="File containing templates and removal directives to undo", required=True)
 
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-undo_greek_removal(args.file, start, end)
+undo_greek_removal(args.direcfile, start, end)

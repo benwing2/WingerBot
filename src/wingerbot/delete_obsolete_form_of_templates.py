@@ -5,7 +5,8 @@ import pywikibot
 from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, site
 
-parser = blib.create_argparser("Delete obsolete form-of templates and documentation pages")
+parser = blib.create_argparser("Delete obsolete form-of templates and documentation pages",
+                               no_include_pagefile=True, no_include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

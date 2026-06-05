@@ -1232,7 +1232,8 @@ starttime = time.time()
 
 
 def create_argparser(
-    desc, include_pagefile=False, include_stdin=False, no_beginning_line=False, suppress_start_end=False
+    desc, include_pagefile=False, include_stdin=False, no_beginning_line=False, suppress_start_end=False,
+    no_include_pagefile=False, no_include_stdin=False,
 ):
     if not no_beginning_line:
         msg("Beginning at %s" % time.ctime(starttime))

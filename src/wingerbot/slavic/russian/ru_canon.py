@@ -9,7 +9,8 @@ from wingerbot.blib import msg
 from wingerbot.canon_foreign import canon_links
 from wingerbot.slavic.russian import ru_translit
 
-parser = blib.create_argparser("Canonicalize Russian and translit")
+parser = blib.create_argparser("Canonicalize Russian and translit",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument(
     "--cattype",
     default="borrowed",

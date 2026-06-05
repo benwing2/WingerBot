@@ -7,7 +7,8 @@ from wingerbot import blib
 from wingerbot.slavic.russian import rulib
 from wingerbot import generate_pos
 
-parser = blib.create_argparser("Generate Russian entries from a spec file.")
+parser = blib.create_argparser("Generate Russian entries from a spec file.",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing directives.", required=True)
 parser.add_argument(
     "--pos", action="store_true", help="First field is part of speech (n, adj, adv, pcl, pred, prep, conj, int)."

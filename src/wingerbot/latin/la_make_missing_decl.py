@@ -120,7 +120,8 @@ def process_line(index, line, online):
         )
 
 
-parser = blib.create_argparser("Add missing declension to Latin terms")
+parser = blib.create_argparser("Add missing declension to Latin terms",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="List of directives to process.", required=True)
 parser.add_argument(
     "--online", help="Compare generated declension against specified principal parts", action="store_true"

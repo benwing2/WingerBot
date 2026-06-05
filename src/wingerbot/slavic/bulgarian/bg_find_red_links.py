@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-# Find redlinks (non-existent pages).
+# Batch-find redlinks (non-existent pages).
+# FIXME: Merge this with the more general batch_find_red_links.py.
 
 import pywikibot, re
 
 from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, site
 
-parser = blib.create_argparser("Find Bulgarian red links")
-parser.add_argument("--pagefile", help="File containing pages to check")
+parser = blib.create_argparser("Find Bulgarian red links", include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="File containing pages to check and frequencies")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
@@ -17,22 +18,25 @@ msg("Reading Bulgarian lemmas")
 for i, page in blib.cat_articles("Bulgarian lemmas", start, end):
     lemmas.add(page.title())
 
-for i, line in blib.iter_items_from_file(args.pagefile, start, end):
-    pagename, freq = line.split("\t")
-    m = re.search("[^-Ѐ-џҊ-ԧꚀ-ꚗ]", pagename)
+def check_page(p, freq: str | None = None):
+    pagetitle = p.title
+
+    def _msg_contents(txt):
+        return "Page %s [[%s]]: %s%s" % (p.index, pagetitle, txt, " (freq %s)" % freq if freq is not None else "")
 
     def pagemsg(txt):
-        msg("Page %s [[%s]]: %s (freq %s)" % (i, pagename, txt, freq))
+        msg(_msg_contents(txt))
     def errandpagemsg(txt):
-        errandmsg("Page %s [[%s]]: %s (freq %s)" % (i, pagename, txt, freq))
+        errandmsg(_msg_contents(txt))
 
+    m = re.search("[^-Ѐ-џҊ-ԧꚀ-ꚗ]", pagetitle)
     if m:
         pagemsg("skipped due to non-Cyrillic characters")
     else:
         for pagenm, pagetype in [
-            (pagename, ""),
-            (pagename.capitalize(), " (capitalized)"),
-            (pagename.upper(), " (uppercased)"),
+            (pagetitle, ""),
+            (pagetitle.capitalize(), " (capitalized)"),
+            (pagetitle.upper(), " (uppercased)"),
         ]:
             if pagenm in lemmas:
                 pagemsg("exists%s" % pagetype)
@@ -52,3 +56,12 @@ for i, line in blib.iter_items_from_file(args.pagefile, start, end):
                     break
         else:
             pagemsg("does not exist")
+
+if args.direcfile:
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
+        pagetitle, freq = line.split("\t")
+        def do_check_page(p):
+            return check_page(p, freq)
+        blib.do_edit(args, lineno, pagetitle, check_page)
+else:
+    blib.do_pagefile_cats_refs(args, start, end, check_page)

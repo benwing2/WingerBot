@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, errmsg, site
+from wingerbot.blib import msg, errmsg
 
-from wingerbot.latin import lalib
-
-parser = blib.create_argparser("Fix old-style verb declarations in latin-macrons.txt")
+parser = blib.create_argparser("Fix old-style verb declarations in latin-macrons.txt",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="List of directives to process.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -136,7 +136,8 @@ def process_page_for_deletion(p):
     return text, notes
 
 
-parser = blib.create_argparser("Delete/rename Italian forms, fixing up anagrams")
+parser = blib.create_argparser("Delete/rename Italian forms, fixing up anagrams",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File listing forms to delete/rename.", required=True)
 parser.add_argument("--comment", help="Optional additional comment to use.")
 parser.add_argument("--output-pages-to-delete", help="Output file containing forms to delete.")

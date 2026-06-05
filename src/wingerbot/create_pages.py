@@ -20,7 +20,7 @@ def process_page(p):
         p.msg("Would create, comment = %s" % comment)
 
 
-params = blib.create_argparser("Create pages", include_pagefile=True)
+params = blib.create_argparser("Create pages", include_pagefile=True, no_include_stdin=True)
 params.add_argument("--contents", help="Contents of pages", required=True)
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

@@ -44,7 +44,7 @@ def process_page(p):
         p.msg("Skipping, page doesn't exist")
 
 
-params = blib.create_argparser("Delete empty category pages", include_pagefile=True)
+params = blib.create_argparser("Delete empty category pages", include_pagefile=True, no_include_stdin=True)
 params.add_argument("--comment", help="Specify the change comment to use")
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

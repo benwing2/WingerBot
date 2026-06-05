@@ -59,11 +59,12 @@ def undo_ru_auto_accent(direcfile, start, end):
 
 
 params = blib.create_argparser(
-    "Undo auto-accent changes involving ux, usex and lang templates that look like direct quotes"
+    "Undo auto-accent changes involving ux, usex and lang templates that look like direct quotes",
+    no_include_pagefile=True, no_include_stdin=True,
 )
-params.add_argument("--file", help="File containing log file from original auto-accent run", required=True)
+params.add_argument("--direcfile", help="File containing log file from original auto-accent run", required=True)
 
 args = params.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
-undo_ru_auto_accent(args.file, start, end)
+undo_ru_auto_accent(args.direcfile, start, end)

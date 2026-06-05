@@ -4093,7 +4093,8 @@ def create_numeral_noun_forms(
     )
 
 
-parser = blib.create_argparser("Create Russian inflection entries")
+parser = blib.create_argparser("Create Russian inflection entries",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument(
     "--adj-form",
     help="""Do specified adjective-form inflections, a comma-separated list.

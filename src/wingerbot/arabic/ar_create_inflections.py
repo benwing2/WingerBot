@@ -2470,7 +2470,7 @@ def create_elatives(elfile, start, end):
             blib.do_edit(args, index, page, add_elative_param)
 
 
-parser = blib.create_argparser("Create Arabic inflection entries")
+parser = blib.create_argparser("Create Arabic inflection entries", include_pagefile=True, include_stdin=True)
 parser.add_argument("-p", "--plural", action="store_true", help="Do plural inflections")
 parser.add_argument("-f", "--feminine", action="store_true", help="Do feminine inflections")
 parser.add_argument("--verbal-noun", action="store_true", help="Do verbal noun inflections")

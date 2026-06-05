@@ -4,10 +4,9 @@
 # pronunciation missing a * at the beginning or a pronunciation with
 # some additional text surrounding it.
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site
 
 
 def process_text_on_page(p):
@@ -40,7 +39,8 @@ def process_text_on_page(p):
         return newtext, notes
 
 
-parser = blib.create_argparser("Find strange Russian pronun lines", include_pagefile=True)
+parser = blib.create_argparser("Find strange Russian pronun lines", include_pagefile=True,
+                               include_stdin=True)
 parser.add_argument("--fix-star", action="store_true", help="Fix pronun lines missing * at beginning")
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

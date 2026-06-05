@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, errandmsg, site
+from wingerbot.blib import msg, errmsg, errandmsg, site
 
-parser = blib.create_argparser("List pages, lemmas and/or non-lemmas")
-parser.add_argument("--tempfile", help="Templates and aliases to do")
+parser = blib.create_argparser("List pages, lemmas and/or non-lemmas",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--tempfile", help="Templates and aliases to do", required=True)
 parser.add_argument("--include-refs", help="Include column for template references", action="store_true")
 parser.add_argument("--ref-namespaces", help="List of namespaces to restrict references to")
 parser.add_argument("--include-disposition", help="Include column for disposition", action="store_true")

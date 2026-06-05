@@ -73,7 +73,8 @@ def process_line(index, line):
                 pagemsg("WARNING: Don't recognize structure of place template: %s" % str(t))
 
 
-parser = blib.create_argparser("Remove redundant manually-added categories when {{place}} also adds them")
+parser = blib.create_argparser("Remove redundant manually-added categories when {{place}} also adds them",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="File containing lines from templatize_place.py", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

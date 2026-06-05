@@ -18,15 +18,19 @@ def process_page(p):
     return text, notes
 
 
-parser = blib.create_argparser("Change German ordinal numeral form headwords from adjective to numeral")
+parser = blib.create_argparser("Change German ordinal numeral form headwords from adjective to numeral",
+                               include_pagefile=True, include_stdin=True)
+
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 endings = ["en", "er", "em", "es"]
 
-for index, page in blib.cat_articles("German ordinal numbers", start, end):
-    pagetitle = page.title()
+def do_ordinal_number_page(p):
+    pagetitle = p.title
     if not pagetitle.endswith("e"):
-        continue
+        return
     for ending in endings:
-        blib.do_edit(args, index, pagetitle[:-1] + ending, process_page, must_exist=True)
+        blib.do_edit(args, p.index, pagetitle[:-1] + ending, process_page, must_exist=True)
+
+blib.do_pagefile_cats_refs(args, start, end, do_ordinal_number_page, default_cats=["German ordinal numbers"])

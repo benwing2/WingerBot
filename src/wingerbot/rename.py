@@ -70,7 +70,7 @@ def delete_page(p, comment):
 
 
 if __name__ == "__main__":
-    params = blib.create_argparser("Rename pages", include_pagefile=True)
+    params = blib.create_argparser("Rename pages", include_pagefile=True, no_include_stdin=True)
     params.add_argument(
         "-f",
         "--from",

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import pywikibot
 
 from wingerbot import blib
 
-parser = blib.create_argparser("Login to sysop or no-sysop")
-# parser.add_argument('--sysop', help="Login to sysop", action="store_true")
+parser = blib.create_argparser("Login to site", no_include_pagefile=True, no_include_stdin=True)
 args = parser.parse_args()
 
-# pywikibot.Site().login(sysop=args.sysop)
 pywikibot.Site().login()

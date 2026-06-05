@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# FIXME: No longer works. Needs to be rerwritten along the lines of fa_canon.py.
+
 import re
 
 from wingerbot import blib
@@ -7,7 +9,8 @@ from wingerbot.blib import msg
 from wingerbot.canon_foreign import canon_links
 from wingerbot.greek import grc_translit
 
-parser = blib.create_argparser("Canonicalize Greek and translit")
+parser = blib.create_argparser("Canonicalize Greek and translit",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument(
     "--cattype",
     default="borrowed",
@@ -38,8 +41,6 @@ if args.page_file:
                 pages_to_do.append(m.groups())
 
 canon_links(
-    args.save,
-    args.verbose,
     args.cattype,
     "grc",
     "Ancient Greek",

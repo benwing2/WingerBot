@@ -529,7 +529,8 @@ def process_page(index, lemma, pos, infl, slots):
     blib.do_edit(args, index, remove_macrons(lemma, args.preserve_diaeresis), process_page_1, no_fetch_text=True, msg_title=lemma)
 
 
-parser = blib.create_argparser("Delete bad Latin forms")
+parser = blib.create_argparser("Delete bad Latin forms",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--inflfile", help="File containing lemmas and inflection templates.")
 parser.add_argument("--slot-inflfile", help="File containing lemmas, slots to delete and infl templates.")
 parser.add_argument("--pos-slot-inflfile", help="File containing POSes, lemmas, slots to delete and infl templates.")
@@ -563,7 +564,7 @@ elif args.slot_inflfile:
         process_page(lineindex, lemma, args.pos, infl, slots)
 else:
     if not args.inflfile or not args.slots or not args.pos:
-        raise ValueError("If --slot-inflfile not given, --inflfile, --pos and --slots must be given")
+        raise ValueError("If --slot-inflfile and --pos-slot-inflfile not given, --inflfile, --pos and --slots must be given")
     for lineindex, line in blib.iter_items_from_file(args.inflfile, start, end):
         if "!!!" in line:
             lemma, infl = re.split("!!!", line)

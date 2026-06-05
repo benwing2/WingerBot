@@ -151,7 +151,7 @@ from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam, rmparam
 from wingerbot.slavic.russian import ruheadlib, rulib, ru_reverse_translit
 
-raise RuntimeError("No longer works with removal of process_links(); see fa_canon.py for how to rewrite")
+# FIXME: No longer works with removal of process_links(); see fa_canon.py for how to rewrite.
 
 semi_verbose = False  # Set by --semi-verbose or --verbose
 
@@ -1326,7 +1326,8 @@ def auto_accent_auto_bracket_russian(find_accents, accent_hidden, cattype, direc
         )
 
 
-parser = blib.create_argparser("Auto-accent and auto-bracket Russian terms")
+parser = blib.create_argparser("Auto-accent and auto-bracket Russian terms",
+                               include_pagefile=True, include_stdin=True)
 parser.add_argument("--cattype", default="vocab", help="Categories to examine ('vocab', 'borrowed', 'translation')")
 parser.add_argument("--file", help="File containing output from parse_log_file.py")
 parser.add_argument("--semi-verbose", action="store_true", help="More info but not as much as --verbose")

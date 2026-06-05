@@ -39,7 +39,7 @@ def process_page(p):
             pagemsg("Bad category because %s: contents=%s" % (reason, ",".join(kanjis)))
 
 
-parser = blib.create_argparser("Find bad Japanese reading categories", include_pagefile=True)
+parser = blib.create_argparser("Find bad Japanese reading categories", include_pagefile=True, no_include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

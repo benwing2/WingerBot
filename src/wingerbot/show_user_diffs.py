@@ -75,7 +75,8 @@ def process_item(index, item):
                 sys.stdout.write(diff)
 
 
-parser = blib.create_argparser("Show contributions of a user")
+parser = blib.create_argparser("Show contributions of a user",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--user", help="User to do.", required=True)
 parser.add_argument("--reverse", help="Reverse the patch.", action="store_true")
 parser.add_argument("--output-format", choices=["diff-match-patch", "difflib", "patch-ng", "full"])

@@ -24,7 +24,7 @@ def process_page(p, comment):
         p.msg("Skipping, page doesn't exist")
 
 
-params = blib.create_argparser("Delete pages", include_pagefile=True)
+params = blib.create_argparser("Delete pages", include_pagefile=True, no_include_stdin=True)
 params.add_argument("--comment", help="Specify the change comment to use")
 params.add_argument("--direcfile", help="File containing pages to delete, optionally with comments after ' ||| '.")
 args = params.parse_args()

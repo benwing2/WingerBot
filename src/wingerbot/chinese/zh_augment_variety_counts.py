@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import re, sys, argparse
-import fileinput
+import re
 
 from wingerbot import blib
 from wingerbot.blib import msg, errmsg
 
-parser = blib.create_argparser("Augment Chinese variety counts with locations and links")
+parser = blib.create_argparser("Augment Chinese variety counts with locations and links",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--counts")
 parser.add_argument("--zh-data-dial")
 args = parser.parse_args()

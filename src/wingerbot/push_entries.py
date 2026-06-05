@@ -18,10 +18,10 @@ def process_page(p, contents, comment):
         secs = blib.split_text_into_sections(curtext, p.msg)
         sections = secs.sections
         for j, langname in secs.lang_list:
-            if langname == args.lang:
-                p.errandmsg("WARNING: Already found %s section" % args.lang)
+            if langname == args.langname:
+                p.errandmsg("WARNING: Already found %s section" % args.langname)
                 return
-            if langname > args.lang:
+            if langname > args.langname:
                 insert_before = j - 1
                 break
         if insert_before == 0:
@@ -33,10 +33,11 @@ def process_page(p, contents, comment):
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Push new entries from generate_entries.py")
+    parser = blib.create_argparser("Push new entries from generate_entries.py",
+                                   no_include_pagefile=True, no_include_stdin=True)
     parser.add_argument("--direcfile", help="File containing entries.", required=True)
     parser.add_argument("--comment", help="Comment to use.", required=True)
-    parser.add_argument("--lang", help="Language of entries.", required=True)
+    parser.add_argument("--langname", help="Language of entries.", required=True)
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 

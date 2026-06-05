@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import re
+# FIXME: Completely obsolete, should be deleted. Use create_wanted_categories.py to create categories with
+# {{auto cat}} as the text.
+
 import pywikibot
 
 from wingerbot import blib
@@ -66,7 +68,8 @@ cats = [
     "होना",
 ]
 
-parser = blib.create_argparser("Create Hindi phrasal verb categories")
+parser = blib.create_argparser("Create Hindi phrasal verb categories",
+                               no_include_pagefile=True, no_include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

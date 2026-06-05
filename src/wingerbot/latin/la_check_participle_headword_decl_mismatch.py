@@ -7,7 +7,8 @@ from wingerbot.blib import getparam, rmparam, tname, msg, errmsg, site
 
 from wingerbot.latin import lalib
 
-parser = blib.create_argparser("Check for mismatch between participle headword and decl")
+parser = blib.create_argparser("Check for mismatch between Latin participle headword and decl",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--direcfile", help="Output from find_template.participles.*.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)

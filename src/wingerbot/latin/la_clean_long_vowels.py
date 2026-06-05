@@ -1421,7 +1421,8 @@ def do_process_lemma(p, pos, explicit_infl, lemmaspec, lemma, explicit_stem, com
 
 
 if __name__ == "__main__":
-    parser = blib.create_argparser("Clean up usage of macrons in Latin lemmas and non-lemma forms")
+    parser = blib.create_argparser("Clean up usage of macrons in Latin lemmas and non-lemma forms",
+                                   no_include_pagefile=True, no_include_stdin=True)
     parser.add_argument("--direcfile", help="File containing directives of lemmas to process.", required=True)
     parser.add_argument("--skip-forms", help="Skip processing non-lemma forms.", action="store_true")
     parser.add_argument("--n-slots", help="Do only first N slots when processing non non-lemma forms.", type=int)

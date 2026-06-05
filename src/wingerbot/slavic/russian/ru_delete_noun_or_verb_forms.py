@@ -64,10 +64,11 @@ def process_decl(index, pagetitle, decl, forms):
 
 
 parser = blib.create_argparser(
-    "Delete erroneously created Russian noun or verb forms given the inflection templates that led to those forms being created"
+    "Delete erroneously created Russian noun or verb forms given the inflection templates that led to those forms being created",
+    no_include_pagefile=True, no_include_stdin=True)
 )
-parser.add_argument("--templatefile", help="File containing inflection templates to expand to get forms.")
-parser.add_argument("--forms", help="Form codes of forms to delete.")
+parser.add_argument("--direcfile", help="File containing inflection templates to expand to get forms.", required=True)
+parser.add_argument("--forms", help="Form codes of forms to delete.", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
@@ -129,7 +130,7 @@ elif args.forms == "pl":
     forms = ["nom_pl", "gen_pl", "dat_pl", "acc_pl", "acc_pl_an", "acc_pl_in", "ins_pl", "pre_pl"]
 else:
     forms = blib.split_arg(args.forms)
-for i, line in blib.iter_items_from_file(args.declfile, start, end):
+for i, line in blib.iter_items_from_file(args.direcfile, start, end):
     if "!!!" in line:
         pagetitle, decl = re.split("!!!", line)
     else:

@@ -5,7 +5,8 @@ from wingerbot.blib import msg
 
 etym_lang_data = lang_utils.get_etym_lang_data()
 
-parser = blib.create_argparser("Create code-to-canonical-name and canonical-names tables for etymology languages")
+parser = blib.create_argparser("Create code-to-canonical-name and canonical-names tables for etymology languages",
+                               no_include_pagefile=True, no_include_stdin=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 

@@ -32,13 +32,14 @@
 # well as all the FROM templates (FOO, BAR and BAZ), since any of them may
 # occur as the FROM template in one of the lines to be processed.
 
-import re, argparse
+import re
 
 from wingerbot import blib
 from wingerbot.blib import msg
 
-parser = blib.create_argparser("Parse log files from canon_arabic etc.")
-parser.add_argument("-f", "--file", help="Log file", required=True)
+parser = blib.create_argparser("Parse log files from canon_arabic etc.",
+                               no_include_pagefile=True, no_include_stdin=True)
+parser.add_argument("--direcfile", help="Log file", required=True)
 args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
@@ -187,4 +188,4 @@ def parse_log_file(fn, start, end):
                 msg(line)
 
 
-parse_log_file(args.file, start, end)
+parse_log_file(args.direcfile, start, end)
