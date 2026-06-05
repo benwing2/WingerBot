@@ -313,7 +313,8 @@ def process_page(index, lemma, forms):
         delete_form(index, lemma, formind, form)
 
 
-parser = blib.create_argparser("Delete bad forms for inflected languages")
+parser = blib.create_argparser("Delete bad forms for inflected languages",
+                               no_include_pagefile=True, no_include_stdin=True)
 parser.add_argument("--formfile", help="File containing lemmas and forms to delete.", required=True)
 parser.add_argument("--lang", help="Language ('es' or 'it').", choices=["es", "it"], required=True)
 parser.add_argument("--output-pages-to-delete", help="File to write pages to delete.")
