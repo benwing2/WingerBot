@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, errandmsg, site
-
-import pywikibot, re, sys, argparse
-import unicodedata
+from wingerbot.blib import msg
 
 
 # process_text_on_page() callback. `index` is the index of the page whose title is `pagetitle`. `curtext` is the
@@ -44,14 +41,14 @@ def process_text_on_page(p, contents, prev_comment, origcontents):
             sections_by_lang = secs.sections_by_lang
 
             def replace_lang_section(lang, newsectext, origsectext):
-                newsectext = unicodedata.normalize("NFC", newsectext)
-                supposed_cursectext = unicodedata.normalize("NFC", origsectext)
+                newsectext = blib.normalize_text_for_save(newsectext)
+                supposed_cursectext = blib.normalize_text_for_save(origsectext)
                 if lang not in sections_by_lang:
                     p.errandmsg("WARNING: Couldn't find %s section, skipping page; showing our changes:" % lang)
                     blib.show_diff(supposed_cursectext, newsectext)
                     return False
                 langsec = sections_by_lang[lang]
-                cursectext = unicodedata.normalize("NFC", sections[langsec])
+                cursectext = blib.normalize_text_for_save(sections[langsec])
                 # If we're editing the last language of the page, there won't be a newline in the page text but there's always
                 # one in the find_regex content, so we have to add one to make the comparisons work. It won't matter if we add
                 # an extra newline at the end of the page because it will be stripped by MediaWiki.
@@ -180,15 +177,9 @@ if __name__ == "__main__":
                 msg("Page %s %s: Skipping contents because no change" % (index, pagetitle))
             else:
 
-                def do_process_page(index, page):
-                    return process_text_on_page(blib.ProcessPageParams(args, index, page.title(), page.text), newtext, comment, origcontents)
+                def do_process_page(p):
+                    return process_text_on_page(p, newtext, comment, origcontents)
 
-                blib.do_edit(
-                    index,
-                    pywikibot.Page(site, pagetitle),
-                    do_process_page,
-                    save=args.save,
-                    verbose=args.verbose,
-                    diff=args.diff,
-                )
+                blib.do_edit(args, index, pagetitle, do_process_page)
+
         blib.elapsed_time()

@@ -1246,11 +1246,8 @@ def process_text_on_page(p):
     for lineno, line in enumerate(lines, start=1):
         origline = line
 
-        def pagemsg(txt):
-            p.msg("Line %s: %s: line = <begin> %s <end>" % (lineno, txt, origline))
-
-        def expand_text(tempcall):
-            return blib.expand_text(tempcall, p.title, pagemsg, args.verbose)
+        p.text_prefix = "Line %s: " % lineno
+        p.text_suffix = ": line = <begin> %s <end>" % origline
 
         m = re.search(r"^==+([^=\n]+)==+[ \t]*$", line)
         if m:
@@ -1261,39 +1258,39 @@ def process_text_on_page(p):
                 in_translation_section = False
         if (in_translation_section or in_multitrans) and re.search(r"^\}\}", line):
             if not in_multitrans:
-                pagemsg("WARNING: Apparent end of multitrans section not in multitrans")
+                p.msg("WARNING: Apparent end of multitrans section not in multitrans")
             in_multitrans = False
         elif re.search(r"\{\{multitrans", line):  # don't get confused by {{multitrans}} in a closing comment
             if not in_translation_section:
-                pagemsg(
+                p.msg(
                     "WARNING: Apparent {{multitrans}} start outside of ==Translations==, in ==%s==" % subsection_header
                 )
             if in_multitrans:
-                pagemsg("WARNING: Apparent nested multitrans section")
+                p.msg("WARNING: Apparent nested multitrans section")
             in_multitrans = True
         if re.search(r"^\{\{(trans-top|checktrans-top|trans-top-see|trans-top-also)[|}]", line):
             if in_translation_box:
-                pagemsg("WARNING: Nested translation boxes, skipping page")
+                p.msg("WARNING: Nested translation boxes, skipping page")
                 return
             in_translation_box = True
             if not in_translation_section:
-                pagemsg("WARNING: Translation box not in ==Translations== section but in ==%s==" % subsection_header)
+                p.msg("WARNING: Translation box not in ==Translations== section but in ==%s==" % subsection_header)
             new_lines.append(line)
         elif re.search(r"^\}* *\{\{trans-bottom", line):  # allow for multitrans closing braces before {{trans-bottom}}
             if not in_translation_box:
-                pagemsg("WARNING: Found {{trans-bottom}} not in a translation box")
+                p.msg("WARNING: Found {{trans-bottom}} not in a translation box")
             in_translation_box = False
             new_lines.append(line)
         elif in_translation_box:
             m = re.search(r"^(\* *:* *)([^:]+)(:.*)$", line)
             if m:
                 init_star, langname, rest = m.groups()
-                newline = convert_one_line(init_star, langname, rest, pagemsg, expand_text, in_multitrans)
+                newline = convert_one_line(init_star, langname, rest, p.msg, p.expand_text, in_multitrans)
                 if newline != line:
                     notes.append("convert translation line to {{t}}")
                     line = newline
             elif text_has_translation_template(line):
-                newline = convert_one_line("", "", line, pagemsg, expand_text, in_multitrans)
+                newline = convert_one_line("", "", line, p.msg, p.expand_text, in_multitrans)
                 if newline != line:
                     notes.append("convert misformatted translation line to {{t}}")
                     line = newline
@@ -1302,7 +1299,7 @@ def process_text_on_page(p):
             new_lines.append(line)
 
     if in_translation_box:
-        pagemsg("WARNING: Page ended in a translation box, something wrong, skipping")
+        p.msg("WARNING: Page ended in a translation box, something wrong, skipping")
         return
 
     return "\n".join(new_lines), notes

@@ -1,25 +1,18 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname, msg
 from wingerbot.slavic.russian import rulib
 
 
-def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, desc):
-    pagetitle = nounpage.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def add_rel_adj_or_dim_to_noun_page(p, new_adj_or_dims, param, desc):
     notes = []
 
-    text = blib.safe_page_text(nounpage, errandpagemsg)
-    modsec = blib.find_modifiable_lang_section(text, "Russian", None)  # We print our own message
+    modsec = blib.find_modifiable_lang_section(p.text, "Russian", None)  # We print our own message
     if modsec is None:
-        pagemsg("WARNING: Couldn't find Russian section for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))
+        p.msg("WARNING: Couldn't find Russian section for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))
         return
     secbody = modsec.secbody
     parsed = blib.parse_text(secbody)
@@ -28,38 +21,38 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
         tn = tname(t)
         if tn in ["ru-noun+", "ru-proper noun+", "ru-noun", "ru-proper noun"]:
             if head:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple heads %s and %s for noun of %s %s, not modifying"
                     % (str(head), str(t), desc, ",".join(new_adj_or_dims))
                 )
                 return
             head = t
     if not head:
-        pagemsg("WARNING: Couldn't find head for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))
+        p.msg("WARNING: Couldn't find head for noun of %s %s" % (desc, ",".join(new_adj_or_dims)))
         return
     orig_adjs_or_dims = blib.fetch_param_chain(head, param, param)
     adjs_or_dims = blib.fetch_param_chain(head, param, param)
     added_adjs_or_dims = []
     for adj_or_dim in new_adj_or_dims:
         if adj_or_dim in adjs_or_dims:
-            pagemsg("Already saw %s %s in head %s" % (desc, adj_or_dim, str(head)))
+            p.msg("Already saw %s %s in head %s" % (desc, adj_or_dim, str(head)))
         else:
             adjs_or_dims.append(adj_or_dim)
             added_adjs_or_dims.append(adj_or_dim)
     if adjs_or_dims != orig_adjs_or_dims:
         orighead = str(head)
         blib.set_param_chain(head, adjs_or_dims, param, param)
-        pagemsg("Replaced %s with %s" % (orighead, str(head)))
+        p.msg("Replaced %s with %s" % (orighead, str(head)))
         notes.append("add %s=%s to Russian noun" % (param, ",".join(added_adjs_or_dims)))
         secbody = str(parsed)
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if header in ["Derived terms", "Related terms"]:
             for adj_or_dim in adjs_or_dims:
                 def note_removed_text(m):
                     if m.group(1):
-                        pagemsg(
+                        p.msg(
                             "Removed '%s' term with gloss for noun of %s %s: %s"
                             % (header, desc, adj_or_dim, m.group(0))
                         )
@@ -88,50 +81,31 @@ def add_rel_adj_or_dim_to_noun_page(index, nounpage, new_adj_or_dims, param, des
     return text, notes
 
 
-def add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, param, desc):
-    pagetitle = rulib.remove_accents(blib.remove_links(noun))
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    nounpage = pywikibot.Page(site, pagetitle)
-    if not blib.safe_page_exists(nounpage, pagemsg):
-        pagemsg("WARNING: Noun %s for %s %s doesn't exist" % (noun, desc, ",".join(adjs_or_dims)))
-        return
-
-    def do_add_rel_adj_or_dim_to_noun_page(index, page):
-        return add_rel_adj_or_dim_to_noun_page(index, page, adjs_or_dims, param, desc)
-
-    blib.do_edit(
-        index, nounpage, do_add_rel_adj_or_dim_to_noun_page, save=args.save, verbose=args.verbose, diff=args.diff
-    )
-
-
 def process_section_for_relational_adj_snarf(p, etymsec, sectext):
-    def pagemsg(txt):
-        msg("Page %s%s %s: %s" % (p.index, "." + etymsec if etymsec is not None else "", p.title, txt))
+    p.index_suffix = "." + etymsec if etymsec is not None else ""
 
     if not re.search(r"\{\{lb\|ru\|([^{}]*\|)*relational[|}]", sectext):
-        pagemsg("Not a relational adjective")
+        p.msg("Not a relational adjective")
         return
     parsed = blib.parse_text(sectext)
     adj = None
     for t in parsed.filter_templates():
         if tname(t) == "ru-adj":
             if getparam(t, "head2"):
-                pagemsg("WARNING: Multihead relational adjective %s, skipping" % str(t))
+                p.msg("WARNING: Multihead relational adjective %s, skipping" % str(t))
                 return
             newadj = getparam(t, "1") or p.title
             if adj and adj != newadj:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple adjectives %s and %s on relational page, skipping: head=%s"
                     % (adj, newadj, str(t))
                 )
                 return
             if "[[" in newadj:
-                pagemsg("WARNING: Saw links in relational adjective %s, skipping: head=%s" % (newadj, str(t)))
+                p.msg("WARNING: Saw links in relational adjective %s, skipping: head=%s" % (newadj, str(t)))
                 return
             adj = newadj
-    subsecs = blib.split_text_into_subsections(sectext, pagemsg)
+    subsecs = blib.split_text_into_subsections(sectext, p.msg)
     subsections = subsecs.subsections
     if etymsec is not None:
         etymtext = subsections[0]
@@ -141,7 +115,7 @@ def process_section_for_relational_adj_snarf(p, etymsec, sectext):
                 etymtext = subsections[k]
                 break
         else:
-            pagemsg("WARNING: Relational adjective %s but couldn't find etymology section" % adj)
+            p.msg("WARNING: Relational adjective %s but couldn't find etymology section" % adj)
             return
     parsed = blib.parse_text(etymtext)
     for t in parsed.filter_templates():
@@ -149,29 +123,29 @@ def process_section_for_relational_adj_snarf(p, etymsec, sectext):
         if tn in ["affix", "af", "suffix", "suf"] and getparam(t, "1") == "ru":
             noun = getparam(t, "2")
             if getparam(t, "lang1"):
-                pagemsg("WARNING: lang1= in affix template %s for relational adjective %s" % (str(t), adj))
+                p.msg("WARNING: lang1= in affix template %s for relational adjective %s" % (str(t), adj))
             elif noun.endswith("-"):
-                pagemsg(
+                p.msg(
                     "WARNING: Prefix %s found as putative source noun for relational adjective %s: affix template %s"
                     % (noun, adj, str(t))
                 )
             elif noun.startswith("-"):
-                pagemsg(
+                p.msg(
                     "WARNING: Suffix %s found as putative source noun for relational adjective %s: affix template %s"
                     % (noun, adj, str(t))
                 )
             elif not noun:
-                pagemsg(
+                p.msg(
                     "WARNING: Blank string found as putative source noun for relational adjective %s: affix template %s"
                     % (adj, str(t))
                 )
             elif tn in ["affix", "af"] and not getparam(t, "3").startswith("-"):
-                pagemsg(
+                p.msg(
                     "WARNING: Apparent compound etymology for relational adjective %s, skipping: affix template %s"
                     % (adj, str(t))
                 )
             elif tn in ["affix", "af"] and getparam(t, "3").endswith("-"):
-                pagemsg(
+                p.msg(
                     "WARNING: Infix %s, hence apparent compound etymology for relational adjective %s, skipping: affix template %s"
                     % (getparam(t, "3"), adj, str(t))
                 )
@@ -179,7 +153,7 @@ def process_section_for_relational_adj_snarf(p, etymsec, sectext):
                 msg("%s ||| %s" % (adj, noun))
                 break
     else:
-        pagemsg("WARNING: Relational adjective %s, found etymology section but not affix template" % adj)
+        p.msg("WARNING: Relational adjective %s, found etymology section but not affix template" % adj)
 
 
 def snarf_relational_adjs(p):
@@ -195,10 +169,7 @@ def snarf_relational_adjs(p):
 
 
 def process_section_for_diminutive_snarf(p, etymsec, sectext):
-    def pagemsg(txt):
-        msg("Page %s%s %s: %s" % (p.index, "." + etymsec if etymsec is not None else "", p.title, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, p.title, pagemsg, args.verbose)
+    p.index_suffix = "." + etymsec if etymsec is not None else ""
 
     parsed = blib.parse_text(sectext)
 
@@ -214,7 +185,7 @@ def process_section_for_diminutive_snarf(p, etymsec, sectext):
     for t in parsed.filter_templates():
         if tname(t) in ["ru-noun+", "ru-noun"]:
             if nount and not saw_dim:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple heads (first=%s, second=%s), the first of which may or may not be a diminutive"
                     % (str(nount), str(t))
                 )
@@ -222,12 +193,12 @@ def process_section_for_diminutive_snarf(p, etymsec, sectext):
             saw_dim = False
         if tname(t) in ["diminutive of", "dim of", "endearing diminutive of"]:
             if not nount:
-                pagemsg("WARNING: Didn't see head for diminutive noun, skipping")
+                p.msg("WARNING: Didn't see head for diminutive noun, skipping")
                 return
             if tname(nount) == "ru-noun":
                 heads = blib.fetch_param_chain(nount, "1", "head")
             else:
-                nounargs = rulib.fetch_noun_args(nount, expand_text, forms_only=True)
+                nounargs = rulib.fetch_noun_args(nount, p.expand_text, forms_only=True)
                 if not nounargs:
                     return
                 if "nom_sg" in nounargs:
@@ -263,16 +234,20 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.direcfile:
-    for index, line in blib.iter_items_from_file(args.direcfile, start, end):
+    for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
         if " ||| " in line:
             adj_or_dim, noun = re.split(r" \|\|\| ", line)
         else:
             adj_or_dim, noun = re.split(" ", line)
         adjs_or_dims = adj_or_dim.split(",")
-        if args.pos == "reladj":
-            add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, "adj", "relational adjective")
-        else:
-            add_rel_adj_or_dim_to_noun(index, adjs_or_dims, noun, "dim", "diminutive")
+        def do_add_rel_adj_or_dim_to_noun_page(p):
+            if args.pos == "reladj":
+                add_rel_adj_or_dim_to_noun_page(p, adjs_or_dims, "adj", "relational adjective")
+            else:
+                add_rel_adj_or_dim_to_noun_page(p, adjs_or_dims, "dim", "diminutive")
+        nounterm = blib.remove_links(noun)
+        blib.do_edit(args, lineno, rulib.remove_accents(nounterm), do_add_rel_adj_or_dim_to_noun_page, must_exist=True,
+                     msg_title=noun)
 else:
     def process_text_on_page(p):
         if args.pos == "reladj":

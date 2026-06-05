@@ -5,7 +5,7 @@ import re
 import pywikibot
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam
+from wingerbot.blib import msg, getparam, addparam, tname
 from wingerbot.arabic import arlib, ar_translit
 
 # FIXME: No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite.
@@ -16,10 +16,7 @@ from wingerbot.arabic import arlib, ar_translit
 # else False. TEMPLATE is the template being processed and PARAM is the
 # name of the parameter in this template being vocalized; both are used
 # only in status messages.
-def do_vocalize_param(index, pagetitle, template, param, arabic, latin):
-    def pagemsg(text):
-        msg("Page %s %s: %s.%s: %s" % (index, pagetitle, template.name, param, text))
-
+def do_vocalize_param(arabic, latin, pagemsg):
     try:
         vocalized, _ = ar_translit.tr_matching(arabic, latin, True, pagemsg)
     except Exception as e:
@@ -39,17 +36,18 @@ def do_vocalize_param(index, pagetitle, template, param, arabic, latin):
 # Attempt to vocalize parameter PARAM based on corresponding transliteration
 # parameter PARAMTR. If PARAM not found, return False. Else, return the
 # vocalized Arabic if different from unvocalized, else return True.
-def vocalize_param(index, pagetitle, template, param, paramtr):
+def vocalize_param(p, template, param, paramtr):
     arabic = getparam(template, param)
     latin = getparam(template, paramtr)
     if not arabic:
         return False
     if latin:
-        vocalized = do_vocalize_param(index, pagetitle, template, param, arabic, latin)
+        p.msg_title = "%s: %s.%s" % (p.title, tname(template), param)
+        vocalized = do_vocalize_param(arabic, latin, p.msg)
         if vocalized:
             oldtempl = "%s" % str(template)
             addparam(template, param, vocalized)
-            msg("Page %s %s: Replaced %s with %s" % (index, pagetitle, oldtempl, str(template)))
+            p.msg("Replaced %s with %s" % (oldtempl, str(template)))
             return vocalized
     return True
 
@@ -58,15 +56,15 @@ def vocalize_param(index, pagetitle, template, param, paramtr):
 # is "pl" then this will attempt to vocalize "pl", "pl2", "pl3", etc. based on
 # "pltr", "pl2tr", "pl3tr", etc., stopping when "plN" isn't found. Return
 # list of changed parameters, for use in the changelog message.
-def vocalize_param_chain(index, pagetitle, template, param):
+def vocalize_param_chain(p, template, param):
     paramschanged = []
-    result = vocalize_param(index, pagetitle, template, param, param + "tr")
+    result = vocalize_param(p, template, param, param + "tr")
     if isinstance(result, str):
         paramschanged.append(param)
     i = 2
     while result:
         thisparam = param + str(i)
-        result = vocalize_param(index, pagetitle, template, thisparam, thisparam + "tr")
+        result = vocalize_param(p, template, thisparam, thisparam + "tr")
         if isinstance(result, str):
             paramschanged.append(thisparam)
         i += 1
@@ -76,7 +74,7 @@ def vocalize_param_chain(index, pagetitle, template, param):
 # Vocalize the head param(s) for the given headword template on the given page.
 # Modifies the templates in place. Return list of changed parameters, for
 # use in the changelog message.
-def vocalize_head(index, pagetitle, template):
+def vocalize_head(p, template):
     paramschanged = []
     # pagetitle = str(page.title(withNamespace=False))
 
@@ -99,9 +97,9 @@ def vocalize_head(index, pagetitle, template):
                 # because many of the existing 1= values are vocalized according to the
                 # first transliterated entry in the list and won't work with the others
                 if not head.endswith("\u064c"):
-                    head = pagetitle
+                    head = p.title
             else:
-                head = pagetitle
+                head = p.title
             for tr in trs[1:]:
                 addparam(template, "head" + str(i), head)
                 addparam(template, "tr" + str(i), tr)
@@ -109,16 +107,17 @@ def vocalize_head(index, pagetitle, template):
             paramschanged.append("split translit into multiple heads")
 
         # Try to vocalize 1=
-        result = vocalize_param(index, pagetitle, template, "1", "tr")
+        result = vocalize_param(p, template, "1", "tr")
         if isinstance(result, str):
             paramschanged.append("1")
 
         # If 1= not found, try vocalizing the page title and make it the 1= value
         if not result:
-            arabic = str(pagetitle)
+            arabic = p.title
             latin = getparam(template, "tr")
             if arabic and latin:
-                vocalized = do_vocalize_param(index, pagetitle, template, "page title", arabic, latin)
+                p.msg_title = "%s: %s.pagetitle" % (p.title, tname(template))
+                vocalized = do_vocalize_param(arabic, latin, p.msg)
                 if vocalized:
                     oldtempl = "%s" % str(template)
                     if template.has("2"):
@@ -126,14 +125,14 @@ def vocalize_head(index, pagetitle, template):
                     else:
                         addparam(template, "1", vocalized, before="tr")
                     paramschanged.append("1")
-                    msg("Page %s %s: Replaced %s with %s" % (index, pagetitle, oldtempl, str(template)))
+                    p.msg("Replaced %s with %s" % (oldtempl, str(template)))
 
     # Check and try to vocalize extra heads
     i = 2
     result = True
     while result:
         thisparam = "head" + str(i)
-        result = vocalize_param(index, pagetitle, template, thisparam, "tr" + str(i))
+        result = vocalize_param(p, template, thisparam, "tr" + str(i))
         if isinstance(result, str):
             paramschanged.append(thisparam)
         i += 1
@@ -142,13 +141,13 @@ def vocalize_head(index, pagetitle, template):
 
 # Vocalize the headword templates on the given page with the given text.
 # Returns the changed text along with a changelog message.
-def vocalize_one_page_headwords(index, pagetitle, text):
+def vocalize_one_page_headwords(p):
     actions_taken = []
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for template in parsed.filter_templates():
         paramschanged = []
         if template.name in arlib.arabic_non_verbal_headword_templates:
-            paramschanged += vocalize_head(index, pagetitle, template)
+            paramschanged += vocalize_head(p, template)
             for param in [
                 "pl",
                 "plobl",
@@ -169,41 +168,24 @@ def vocalize_one_page_headwords(index, pagetitle, text):
                 "pauc",
                 "cons",
             ]:
-                paramschanged += vocalize_param_chain(index, pagetitle, template, param)
+                paramschanged += vocalize_param_chain(p, template, param)
             if len(paramschanged) > 0:
                 if template.has("tr"):
-                    tempname = "%s %s" % (template.name, getparam(template, "tr"))
+                    tempname = "%s %s" % (tname(template), getparam(template, "tr"))
                 else:
-                    tempname = template.name
+                    tempname = tname(template)
                 actions_taken.append("%s (%s)" % (", ".join(paramschanged), tempname))
     changelog = "vocalize parameters: %s" % "; ".join(actions_taken)
     # if len(actions_taken) > 0:
-    msg("Page %s %s: Change log = %s" % (index, pagetitle, changelog))
+    p.msg("Change log = %s" % changelog)
     return str(parsed), changelog
 
 
-# Vocalize headword templates on pages from STARTFROM to (but not including)
-# UPTO, either page names or 0-based integers.
-def vocalize_headwords(start, end):
-    def process_page(index, page):
-        pagetitle = page.title()
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-        return vocalize_one_page_headwords(index, pagetitle, blib.safe_page_text(page, errandpagemsg))
-
-    # for page in blib.references("Template:tracking/ar-head/head", start, end):
-    # for page in blib.references("Template:ar-nisba", start, end):
-    for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
-        for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, process_page, save=args.save, verbose=args.verbose, diff=args.diff)
-
-
-# Vocalize link-like templates on pages from STARTFROM to (but not including)
-# UPTO, either page names or 0-based integers. CATTYPE should be 'vocab', 'borrowed'
+# Vocalize link-like templates on pages from START through END. CATTYPE should be 'vocab', 'borrowed'
 # or 'translation', indicating which categories to examine.
 def vocalize_links(cattype, start, end):
-    def process_param(index, pagetitle, pagetext, template, tlang, param, paramtr):
-        result = vocalize_param(index, pagetitle, template, param, paramtr)
+    def process_param(p, template, tlang, param, paramtr):
+        result = vocalize_param(p, template, param, paramtr)
         if isinstance(result, str):
             result = ["%s (%s)" % (result, template.name)]
         return result
@@ -214,7 +196,7 @@ def vocalize_links(cattype, start, end):
     return blib.process_links("ar", "Arabic", cattype, start, end, process_param, join_actions)
 
 
-parser = blib.create_argparser("Correct vocalization and translit")
+parser = blib.create_argparser("Correct vocalization and translit", include_pagefile=True, include_stdin=True)
 parser.add_argument("-l", "--links", action="store_true", help="Vocalize links")
 parser.add_argument("--cattype", default="borrowed", help="Categories to examine ('vocab', 'borrowed', 'translation')")
 
@@ -224,4 +206,5 @@ start, end = blib.parse_start_end(args.start, args.end)
 if args.links:
     vocalize_links(args.cattype, start, end)
 else:
-    vocalize_headwords(start, end)
+    blib.do_pagefile_cats_refs(args, start, end, vocalize_one_page_headwords,
+                               default_cats=["Arabic lemmas", "Arabic non-lemma forms"])

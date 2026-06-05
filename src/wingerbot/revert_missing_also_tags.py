@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 from wingerbot import blib
-from wingerbot.blib import site, msg, errandmsg
+from wingerbot.blib import msg
 
 # add_ru_etym.py had a bug in it that erased {{also|...}} and similar tags
 # at the top of a page, before any language sections. This script undoes the
@@ -12,31 +12,27 @@ from wingerbot.blib import site, msg, errandmsg
 def restore_removed_pagehead(index, pagetitle, comment, oldrevid):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
 
     pagemsg("Processing page with comment = %s" % comment)
     if re.search("(add|replace).*Etymology section", comment):
-        page = pywikibot.Page(site, pagetitle)
-        oldtext = page.getOldVersion(oldrevid)
-        oldtext_pagehead = re.split("(^==[^=\n]+==\n)", oldtext, 0, re.M)[0]
-        if oldtext_pagehead:
-            newtext_pagehead = re.split("(^==[^=\n]+==\n)", page.text, 0, re.M)[0]
-            if newtext_pagehead != oldtext_pagehead:
-                if newtext_pagehead:
-                    errandpagemsg(
-                        "WARNING: Something weird, old page has pagehead <%s> and new page has different pagehead <%s>"
-                        % (oldtext_pagehead, newtext_pagehead)
-                    )
-                    return
-                pagemsg("Adding old pagehead <%s> to new page" % oldtext_pagehead)
-                pagetext = page.text
-                newtext = oldtext_pagehead + pagetext
-
-                def do_process_page(index, page):
+        def do_process_page(p):
+            oldtext = p.page.getOldVersion(oldrevid)
+            oldtext_pagehead = re.split("(^==[^=\n]+==\n)", oldtext, 0, re.M)[0]
+            if oldtext_pagehead:
+                newtext_pagehead = re.split("(^==[^=\n]+==\n)", p.text, 0, re.M)[0]
+                if newtext_pagehead != oldtext_pagehead:
+                    if newtext_pagehead:
+                        p.errandmsg(
+                            "WARNING: Something weird, old page has pagehead <%s> and new page has different pagehead <%s>"
+                            % (oldtext_pagehead, newtext_pagehead)
+                        )
+                        return
+                    p.msg("Adding old pagehead <%s> to new page" % oldtext_pagehead)
+                    pagetext = p.text
+                    newtext = oldtext_pagehead + pagetext
                     return newtext, ["Restore missing page head: %s" % oldtext_pagehead.strip()]
 
-                blib.do_edit(index, page, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
+        blib.do_edit(args, index, pagetitle, do_process_page)
 
 
 def process_item(index, item):

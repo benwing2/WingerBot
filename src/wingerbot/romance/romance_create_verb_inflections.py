@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, json
+import re, json
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, site, tname
+from wingerbot.blib import getparam, tname
 
 lang_to_name = {
     "ca": "Catalan",
@@ -44,7 +44,7 @@ def parse_inf_and_conj(arg1):
         return None, None
 
 
-def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma, infl, slot):
+def process_text_on_inflection_page(p, norm, pos, lemma, infl, slot):
     normname = norm_to_name[norm]
     lang = norm_to_lang[norm]
     langname = lang_to_name[lang]
@@ -100,8 +100,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
 
     notes = []
 
-    def pagemsg(txt, fn=msg):
-        fn("Page %s %s: %s %s %s of %s: %s" % (index, pagetitle, normname, headword_pos, slot, infl, txt))
+    p.msg_title = "%s: %s %s %s of %s: %s" % (p.title, normname, headword_pos, slot, infl)
 
     def match_template(t, specs):
         tn = tname(t)
@@ -133,18 +132,18 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
     infl_part = "with infl '%s'" % infl
     infl_inf, infl_conj = parse_inf_and_conj(infl)
     if infl_inf is None:
-        pagemsg("WARNING: Can't parse out infinitive from conjugation '%s'" % infl)
+        p.msg("WARNING: Can't parse out infinitive from conjugation '%s'" % infl)
         marked_up_infl = infl
     else:
         marked_up_infl = "[[%s]]%s" % (infl_inf, infl_conj)
     note_part = "with %s %s entry of %s" % (normname, headword_pos, marked_up_infl)
 
-    # Pass None for pagemsg to suppress warning on lang section not found.
-    modsec = blib.find_modifiable_lang_section(pagetext, langname, None, force_final_nls=True)
+    # Pass None for p.msg to suppress warning on lang section not found.
+    modsec = blib.find_modifiable_lang_section(p.text, langname, None, force_final_nls=True)
     if modsec is None:
-        return blib.add_new_l2_section(pagetext, pagemsg, langname, newsection)
+        return blib.add_new_l2_section(p.text, p.msg, langname, newsection)
 
-    subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     subsections_by_header = subsecs.subsections_by_header
     header_list = subsecs.header_list
@@ -161,7 +160,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
                 for t in parsed.filter_templates():
                     if match_template(t, expected_headword_templates):
                         if matching_headword_template:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Saw two headword templates in same section index %s: %s and %s"
                                 % (subsecind, str(matching_headword_template), str(t))
                             )
@@ -169,7 +168,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
                         matching_headword_template = t
                     if match_template(t, expected_defn_templates):
                         if matching_headword_template is None:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Something strange, in section index %s, saw matching definition template %s but no matching headword template"
                                 % (subsecind, str(t))
                             )
@@ -179,7 +178,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         # First see if the existing definition is already present exactly.
         for matching_defn_template, matching_headword_template, subsecind in matching_defn_templates:
             if str(matching_defn_template) == new_defn_template:
-                pagemsg("Already saw definition template %s" % new_defn_template)
+                p.msg("Already saw definition template %s" % new_defn_template)
                 return
         add_after = None
 
@@ -188,7 +187,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         for matching_defn_template, matching_headword_template, subsecind in matching_defn_templates:
 
             def saw_instead_of():
-                pagemsg("Saw %s instead of %s" % (str(matching_defn_template), new_defn_template))
+                p.msg("Saw %s instead of %s" % (str(matching_defn_template), new_defn_template))
 
             tn = tname(matching_defn_template)
             if tn in ["present participle of", "past participle of", "gerund of"]:
@@ -198,13 +197,13 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
                 arg1 = getparam(matching_defn_template, "1")
                 matching_lemma, rawconj = parse_inf_and_conj(arg1)
                 if matching_lemma is None:
-                    pagemsg("WARNING: Can't parse out infinitive from conjugation '%s'" % arg1)
+                    p.msg("WARNING: Can't parse out infinitive from conjugation '%s'" % arg1)
                     return
             both_template_names = {tn, new_defn_template_name}
             if len(both_template_names) == 2 and "past participle of" in both_template_names:
                 if matching_lemma == lemma:
                     # This must mean we saw {{*-verb form of}} instead of {{past participle of}}
-                    pagemsg(
+                    p.msg(
                         "WARNING: For past participle, saw %s instead of %s"
                         % (str(matching_defn_template), new_defn_template)
                     )
@@ -216,7 +215,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
                 if matching_lemma == lemma:
                     # This must mean we saw {{*-verb form of}} or {{present participle of}} instead of
                     # {{gerund of}}
-                    pagemsg(
+                    p.msg(
                         "WARNING: For gerund, saw %s instead of %s" % (str(matching_defn_template), new_defn_template)
                     )
                     return
@@ -229,7 +228,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
                 saw_instead_of()
             elif len(both_template_names) == 1:
                 if matching_lemma == lemma:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw %s instead of %s, can't handle" % (str(matching_defn_template), new_defn_template)
                     )
                     return
@@ -258,13 +257,13 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
             else:
                 newsubsec = re.sub(r"^#", "# %s\n#" % new_defn_template, subsections[subsecind], 1, re.M)
             if newsubsec == subsections[subsecind]:
-                pagemsg(
+                p.msg(
                     "WARNING: Couldn't insert new definition line %s in existing subsection %s"
                     % (new_defn_template, subsecind)
                 )
                 return
             subsections[subsecind] = newsubsec
-            pagemsg("Inserting new definition into existing subsection %s" % infl_part)
+            p.msg("Inserting new definition into existing subsection %s" % infl_part)
             notes.append("insert new definition into existing subsection %s" % note_part)
             return modsec.rebuild(secbody="".join(subsections)), notes
 
@@ -272,20 +271,20 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
     if pos == "participle" and "Adjective" in subsections_by_header:
         adj_sections = subsections_by_header["Adjective"]
         if len(adj_sections) > 1:
-            pagemsg(
+            p.msg(
                 "WARNING: Adding participle before adjective, saw %s Adjective sections, can't handle"
                 % len(adj_sections)
             )
             return
         adj_secind = adj_sections[0]
         if levels[adj_secind] not in [3, 4]:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw Adjective section %s at level %s != 3 or 4, can't handle"
                 % (subsections[adj_secind - 1].strip(), levels[adj_secind])
             )
             return
         subsections[adj_secind - 1 : adj_secind - 1] = [newposl4 if levels[adj_secind] == 4 else newpos]
-        pagemsg("Inserting participle subsection %s before adjective subsection" % infl_part)
+        p.msg("Inserting participle subsection %s before adjective subsection" % infl_part)
         notes.append("insert participle subsection %s before adjective subsection" % note_part)
         return modsec.rebuild(secbody="".join(subsections)), notes
 
@@ -305,7 +304,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
             "===Etymology %s===\n" % (highest_etym_section + 1),
             "\n" + newposl4,
         ]
-        pagemsg("Appending etym subsection %s" % infl_part)
+        p.msg("Appending etym subsection %s" % infl_part)
         notes.append("append etym subsection %s" % note_part)
         return modsec.rebuild(secbody="".join(subsections)), notes
 
@@ -315,17 +314,17 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
         # above it.
         etymology_sections = subsections_by_header["Etymology"]
         if len(etymology_sections) > 1:
-            pagemsg("WARNING: Saw %s Etymology sections, can't handle" % len(etymology_sections))
+            p.msg("WARNING: Saw %s Etymology sections, can't handle" % len(etymology_sections))
             return
         etymology_ind = etymology_sections[0]
         if levels[etymology_ind] != 3:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw Etymology section %s at level %s != 3, can't handle"
                 % (subsections[etymology_ind - 1].strip(), levels[etymology_ind])
             )
             return
         if etymology_ind > 2:
-            pagemsg("Found Etymology section at position %s, below other sections, moving up" % etymology_ind)
+            p.msg("Found Etymology section at position %s, below other sections, moving up" % etymology_ind)
             notes.append("move Etymology subsection up to top of %s lang section" % normname)
             etymtext = subsections[etymology_ind]
             del subsections[etymology_ind - 1 : etymology_ind + 1]
@@ -342,7 +341,7 @@ def process_text_on_inflection_page(index, pagetitle, pagetext, norm, pos, lemma
 
     subsections.append("===Etymology 2===\n")
     subsections.append("\n" + newposl4)
-    pagemsg("Wrapping existing lang section in Etymology 1, appending Etymology 2 subsection %s" % infl_part)
+    p.msg("Wrapping existing lang section in Etymology 1, appending Etymology 2 subsection %s" % infl_part)
     notes.append(
         "wrapping existing %s lang section in Etymology 1, append Etymology 2 subsection %s" % (normname, note_part)
     )
@@ -439,25 +438,21 @@ def process_text_on_page(p):
 
         slots_for_forms = compute_slots_for_forms(forms)
         slots_for_standard_forms = compute_slots_for_forms(standard_forms) if standard_forms else None
-        for slot_index, (slot, slot_forms) in enumerate(sorted(forms.items())):
-            def get_combined_index():
-                return "%s.%s" % (p.index, slot_index + 1)
-
-            def pagemsg(txt):
-                p.msg(txt, index=get_combined_index())
+        for slot_index, (slot, slot_forms) in enumerate(sorted(forms.items()), start=1):
+            p.msg_index = "%s.%s" % (p.index, slot_index)
 
             if slot in ["infinitive", "infinitive_linked"]:
-                pagemsg("Skipping %s slot '%s'" % (normname, slot))
+                p.msg("Skipping %s slot '%s'" % (normname, slot))
                 continue
             if slot in ["pp_fs", "pp_mp", "pp_fp", "short_pp_fs", "short_pp_mp", "short_pp_fp"]:
-                pagemsg(
+                p.msg(
                     "Skipping %s participle form slot '%s', code not yet written to handle it (FIXME)"
                     % (normname, slot)
                 )
                 # FIXME, deal with these
                 continue
             if slot in ["short_pp_ms"]:
-                pagemsg(
+                p.msg(
                     "Skipping %s short participle slot '%s', code not yet written to handle it (FIXME)"
                     % (normname, slot)
                 )
@@ -472,24 +467,24 @@ def process_text_on_page(p):
             for formobj in slot_forms:
                 form = formobj["form"]
                 if form in seen_forms:
-                    pagemsg("Skipping already-seen %s form %s for slot %s" % (normname, form, slot))
+                    p.msg("Skipping already-seen %s form %s for slot %s" % (normname, form, slot))
                     continue
                 seen_forms.add(form)
                 if "[" in form:
-                    pagemsg("Skipping bracket-containing %s form %s for slot %s" % (normname, form, slot))
+                    p.msg("Skipping bracket-containing %s form %s for slot %s" % (normname, form, slot))
                     continue
                 should_skip = form in forms_to_skip
                 if form == conjinf:
-                    pagemsg(
+                    p.msg(
                         "Skipping %s form %s for slot %s that's identical to lemma" % (normname, form, slot)
                     )
                     continue
                 if "footnotes" in formobj and "[superseded]" in formobj["footnotes"]:
-                    pagemsg("Skipping %s form %s for slot %s that's superseded" % (normname, form, slot))
+                    p.msg("Skipping %s form %s for slot %s that's superseded" % (normname, form, slot))
                     continue
                 if norm == "gl-reinteg" and slots_for_standard_forms:
                     if slots_for_forms[form] == slots_for_standard_forms[form]:
-                        pagemsg(
+                        p.msg(
                             "Skipping %s form %s for slot %s that's identical to the corresponding standard Galician form"
                             % (normname, form, slot)
                         )
@@ -498,7 +493,7 @@ def process_text_on_page(p):
                         gl_reinteg_slots = sorted(list(slots_for_forms[form]))
                         gl_standard_slots = sorted(list(slots_for_standard_forms[form]))
                         if gl_standard_slots:
-                            pagemsg(
+                            p.msg(
                                 "Not skipping %s form %s for slot %s; even though there's a corresponding standard Galician form, the standard Galician form fills slot%s %s while the reintegrated form fills slot%s %s"
                                 % (
                                     normname,
@@ -511,20 +506,14 @@ def process_text_on_page(p):
                                 )
                             )
                         else:
-                            pagemsg(
+                            p.msg(
                                 "Not skipping %s form %s for slot %s; even though there's a corresponding standard Galician verb, the form is not part of it"
                                 % (normname, form, slot)
                             )
 
-                def process_page(index, page):
-                    def pagemsg(txt):
-                        p.msg(txt, index=index, title=p.title + ":" + page.title())
-                    def errandpagemsg(txt):
-                        p.errandmsg(txt, index=index, title=p.title + ":" + page.title())
+                def process_page(p):
                     retval = process_text_on_inflection_page(
-                        index,
-                        page.title(),
-                        blib.safe_page_text(page, errandpagemsg),
+                        p,
                         norm,
                         pos,
                         conjinf,
@@ -533,7 +522,7 @@ def process_text_on_page(p):
                     )
                     if retval and should_skip:
                         newtext, changelog = retval
-                        pagemsg(
+                        p.msg(
                             "WARNING: Skipping %s form %s for slot %s that's the same as a short past participle form, handle manually; changelog msg=%s"
                             % (normname, form, slot, blib.changelog_to_string(changelog))
                         )
@@ -541,12 +530,11 @@ def process_text_on_page(p):
                     return retval
 
                 blib.do_edit(
-                    get_combined_index(),
-                    pywikibot.Page(site, form),
+                    args,
+                    p.msg_index,
+                    form,
                     process_page,
-                    save=args.save,
-                    verbose=args.verbose,
-                    diff=args.diff,
+                    msg_title="%s: %s" % (p.title, form),
                 )
 
 

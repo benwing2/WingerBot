@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from mwparserfromhell.nodes import Template
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, site, tname
 from wingerbot.latin import lalib, la_clean_long_vowels
 
 heads_and_defns_cache = {}

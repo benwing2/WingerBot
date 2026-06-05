@@ -955,7 +955,6 @@ def create_inflection_entry(
 
     # Prepare to create page
     pagemsg("Creating entry")
-    page = pywikibot.Page(site, pagetitle)
 
     # Warn on multi-stressed words
     if rulib.is_multi_stressed(lemma):
@@ -1237,16 +1236,14 @@ def create_inflection_entry(
             for warning in warnings:
                 pagemsg("WARNING: Would save and issued the following warnings: %s" % warning, simple=True)
 
-    def do_add_infl(index, page):
+    def do_add_infl(p):
         comment = None
         notes = []
 
-        existing_text = blib.safe_page_text_or_none(page, errandpagemsg)
-        if existing_text is None:
-            return None
-        if not blib.safe_page_exists(page, errandpagemsg):
+        existing_text = p.text
+        if not blib.safe_page_exists(p.page, p.errandmsg):
             # Page doesn't exist. Create it.
-            pagemsg("Creating page")
+            p.msg("Creating page")
             comment = "Create page for Russian %s %s of %s, pos=%s" % (infltype, joined_infls, lemma, pos)
             # if verbose:
             #  pagemsg("New text is [[%s]]" % newsection)
@@ -2778,7 +2775,7 @@ def create_inflection_entry(
         # End of loop over sections in existing page; rejoin sections
         newtext = pagehead + "".join(sections) + pagetail
 
-        if page.text != newtext:
+        if p.page.text != newtext:
             assert comment or notes
 
         # Eliminate newlines at the end of the text, because that is done
@@ -2792,7 +2789,7 @@ def create_inflection_entry(
             notes = ["eliminate sequences of 3 or more newlines"]
         newtext = newnewtext
 
-        if page.text == newtext:
+        if p.page.text == newtext:
             pagemsg("No change in text")
         # elif verbose:
         #  pagemsg("Replacing <%s> with <%s>" % (page.text, newtext),
@@ -2811,7 +2808,7 @@ def create_inflection_entry(
 
         return newtext, comment
 
-    blib.do_edit(index, page, do_add_infl, save=args.save, verbose=args.verbose, diff=args.diff)
+    blib.do_edit(args, index, pagetitle, do_add_infl)
 
     return warnings
 

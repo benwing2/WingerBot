@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import re, argparse, json
-import traceback, sys
-import pywikibot
+import re, json
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, errandmsg, site, tname
+from wingerbot.blib import msg, tname
 
 cs_decl_noun_slots = [
     "nom_s",
@@ -43,13 +41,13 @@ cs_decl_noun_pl_slots = [
 ]
 
 
-def compare_form(slot, orig, repl, pagemsg):
+def compare_form(slot, orig, repl):
     origforms = orig.split(",")
     replforms = repl.split(",")
     return set(origforms) == set(replforms)
 
 
-def compare_forms(origforms, replforms, ignore_slots, pagemsg):
+def compare_forms(origforms, replforms, ignore_slots, tempcall, pagemsg):
     displaycall = tempcall.replace("|json=1", "")
     for slot in set(replforms.keys() + origforms.keys()):
         if slot.endswith("_linked"):
@@ -72,7 +70,7 @@ def compare_forms(origforms, replforms, ignore_slots, pagemsg):
             )
             return False
         origform = origforms[slot]
-        if not compare_form(slot, origform, replforms[slot], pagemsg):
+        if not compare_form(slot, origform, replforms[slot]):
             pagemsg(
                 "WARNING: for predicted %s, form %s=%s in replacement forms but =%s in original forms"
                 % (displaycall, slot, replforms[slot], origform)
@@ -81,18 +79,11 @@ def compare_forms(origforms, replforms, ignore_slots, pagemsg):
     return True
 
 
-def replace_decl(index, page, decl, declforms, ignore_slots):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing decl {{cs-ndecl|%s}}" % decl)
+def replace_decl(p, decl, declforms, tempcall, ignore_slots):
+    p.msg("Processing decl {{cs-ndecl|%s}}" % decl)
     notes = []
     saw_decl = False
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         forms = {}
@@ -128,7 +119,7 @@ def replace_decl(index, page, decl, declforms, ignore_slots):
                 forms[slot] = form
             i += 1
 
-        if compare_forms(forms, declforms, ignore_slots, pagemsg):
+        if compare_forms(forms, declforms, ignore_slots, tempcall, p.msg):
             origt = str(t)
             t.name = "cs-ndecl"
             del t.params[:]
@@ -140,11 +131,11 @@ def replace_decl(index, page, decl, declforms, ignore_slots):
                     "s" if len(ignore_slots) > 1 else "",
                     ",".join(ignore_slots),
                 )
-            pagemsg("Replaced %s with %s%s" % (origt, newt, ignore_msg))
+            p.msg("Replaced %s with %s%s" % (origt, newt, ignore_msg))
             notes.append("replace {{%s|...}} with %s%s" % (tn, newt, ignore_msg))
 
     if not saw_decl:
-        pagemsg("WARNING: Didn't see declension")
+        p.msg("WARNING: Didn't see declension")
 
     return str(parsed), notes
 
@@ -173,38 +164,27 @@ def yield_decls():
         yield lineno, pagename, decl, ignore_slots
 
 
-for index, pagename, decl, ignore_slots in yield_decls():
+for declindex, pagename, decl, ignore_slots in yield_decls():
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
+    def process_page(p):
+        tempcall = "{{cs-ndecl|%s|json=1}}" % decl
+        result = p.expand_text(tempcall)
+        if not result:
+            return
+        result = json.loads(result)
 
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagename, txt))
+        def flatten_values(values):
+            retval = []
+            for v in values:
+                retval.append(v["form"])
+            return ",".join(retval)
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagename, pagemsg, args.verbose)
+        predforms = {k: blib.remove_links(flatten_values(v)) for k, v in result["forms"].items()}
+        lemma = predforms["nom_s"] if "nom_s" in predforms else predforms["nom_p"]
+        real_pagename = re.sub(",.*", "", blib.remove_links(lemma))
+        def do_replace_decl(pp):
+            return replace_decl(pp, decl, predforms, tempcall, ignore_slots)
 
-    tempcall = "{{cs-ndecl|%s|json=1}}" % decl
-    result = expand_text(tempcall)
-    if not result:
-        continue
-    result = json.loads(result)
+        blib.do_edit(args, p.index, real_pagename, do_replace_decl, must_exist=True, msg_title=decl)
 
-    def flatten_values(values):
-        retval = []
-        for v in values:
-            retval.append(v["form"])
-        return ",".join(retval)
-
-    predforms = {k: blib.remove_links(flatten_values(v)) for k, v in result["forms"].items()}
-    lemma = predforms["nom_s"] if "nom_s" in predforms else predforms["nom_p"]
-    real_pagename = re.sub(",.*", "", blib.remove_links(lemma))
-    page = pywikibot.Page(site, real_pagename)
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("WARNING: Didn't find page; declension is {{cs-ndecl|%s}}" % decl)
-        continue
-
-    def do_replace_decl(index, page):
-        return replace_decl(index, page, decl, predforms, ignore_slots)
-
-    blib.do_edit(index, page, do_replace_decl, save=args.save, verbose=args.verbose, diff=args.diff)
+    blib.do_edit(args, declindex, pagename, process_page)

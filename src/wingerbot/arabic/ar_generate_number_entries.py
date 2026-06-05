@@ -716,11 +716,9 @@ def do_pages(createfn, iterfn=iter_pages):
             if page.exists():
                 msg("Page %s %s: WARNING, page already exists, skipping" % (index, pagename))
             else:
-
-                def save_text(index, page):
+                def save_text(p):
                     return text, changelog
-
-                blib.do_edit(index, page, save_text, save=args.save, verbose=args.verbose)
+                blib.do_edit(args, index, page, save_text)
 
 
 if args.lemmas:

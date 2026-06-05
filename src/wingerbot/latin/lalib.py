@@ -6,7 +6,7 @@ from mwparserfromhell.nodes import Template
 from mwparserfromhell.wikicode import Wikicode
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, ExpandTextCallback, ModifiableLangSection, PagemsgCallback
+from wingerbot.blib import getparam, rmparam, tname, ExpandTextCallback, Index, ModifiableLangSection, PagemsgCallback
 
 
 la_infl_templates = {
@@ -240,7 +240,7 @@ def generate_noun_forms_raw(template: str, errandpagemsg: PagemsgCallback, expan
         return None
     result = expand_text(generate_template)
     return None if result is False else result
-    
+
 
 def generate_noun_forms(template: str, errandpagemsg: PagemsgCallback, expand_text: ExpandTextCallback,
                         include_linked: bool = False) -> dict[str, str] | None:
@@ -266,7 +266,7 @@ def generate_verb_forms_raw(template: str, errandpagemsg: PagemsgCallback, expan
         return None
     result = expand_text(generate_template)
     return None if result is False else result
-    
+
 
 def generate_verb_forms(
     template: str,
@@ -644,6 +644,30 @@ def tag_set_to_slot(tag_set, groups, pagemsg):
             pagemsg("WARNING: Unable to recognize tag_set[%s] = %s in %s" % (i, tag_set[i], "|".join(tag_set)))
             return None
     return "_".join(parts)
+
+
+def flatten_slot_formvals(outer_index: Index, lemma: str, inflargs: dict[str, str] | list[tuple[str, str]]) -> list[tuple[str, str, str, str]]:
+    """Convert a dictionary of comma-separated formvals, or a list of (slot, formvals), into a list of items to process.
+    The return value is a list of tuples `(slotformind, slotformtitle, slot, formval)` where:
+    * `slotformind` is a string describing the index of the lemma from which the forms were derived (coming from
+      `outer_index`), the index of the slot, and (if there is more than one form in the slot) the index of the form;
+    * `slotformtitle` is a string describing the lemma (coming from `lemma`), slot and form, to be used in the
+      `msg_title` parameter of do_edit();
+    * `slot` is the slot of the form; and
+    * `formval` is the form value itself to process."""
+    if type(inflargs) is dict:
+        items_iterable = inflargs.items()
+    else:
+        assert type(inflargs) is list
+        items_iterable = inflargs
+    single_forms_to_process = []
+    for slotind, (slot, formspec) in enumerate(items_iterable, start=1):
+        formlist = formspec.split(",")
+        for formind, formval in enumerate(formlist, start=1):
+            slotformind = "%s.%s" % (outer_index, "%s@%s" % (slotind, formind) if len(formlist) > 0 else slotind)
+            slotformtitle = "%s: %s=%s" % (lemma, slot, formval)
+            single_forms_to_process.append((slotformind, slotformtitle, slot, formval))
+    return single_forms_to_process
 
 
 cases = ["nom", "gen", "dat", "acc", "abl", "voc", "loc"]

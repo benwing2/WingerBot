@@ -1,32 +1,22 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
-
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg, errandmsg, site
+from wingerbot.blib import getparam, tname
 
 
-def process_lemma_page(index, page, form):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
-
-    text = blib.safe_page_text(page, errandpagemsg)
+def process_lemma_page(p, form):
+    p.msg("Processing")
 
     notes = []
 
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     it_adj_template = None
     it_part_template = None
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "it-adj":
             if it_adj_template:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple adjective headword templates in subsection, %s and %s, skipping"
                     % (str(it_adj_template), str(t))
                 )
@@ -34,18 +24,18 @@ def process_lemma_page(index, page, form):
             it_adj_template = t
         if tn == "it-pp":
             if it_part_template:
-                pagemsg(
+                p.msg(
                     "WARNING: Saw multiple adjective headword templates in subsection, %s and %s, skipping"
                     % (str(it_part_template), str(t))
                 )
                 return
             it_part_template = t
     if not it_adj_template and not it_part_template:
-        pagemsg("WARNING: Didn't see adjective or participle lemma template")
+        p.msg("WARNING: Didn't see adjective or participle lemma template")
         return
     if it_part_template:
         if it_adj_template:
-            pagemsg(
+            p.msg(
                 "WARNING: Saw both %s and %s, choosing adjective template"
                 % (str(it_adj_template), str(it_part_template))
             )
@@ -54,12 +44,13 @@ def process_lemma_page(index, page, form):
             template = it_part_template
     else:
         template = it_adj_template
+    assert template is not None  # must be it_adj_template or it_part_template, one of which must exist or we returned
     if getparam(template, "sup"):
-        pagemsg("Already saw sup=: %s" % str(template))
+        p.msg("Already saw sup=: %s" % str(template))
     else:
         origt = str(template)
         template.add("sup", form)
-        pagemsg("Replaced %s with %s" % (origt, str(template)))
+        p.msg("Replaced %s with %s" % (origt, str(template)))
         notes.append("add sup=%s to {{%s}}" % (form, tname(template)))
 
     return str(parsed), notes
@@ -68,20 +59,16 @@ def process_lemma_page(index, page, form):
 def process_text_on_non_lemma_page(p):
     p.msg("Processing")
 
-    notes = []
-
     parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn == "superlative of" and getparam(t, "1") == "it":
             lemma = getparam(t, "2")
 
-            def do_process(index, page):
-                return process_lemma_page(index, page, p.title)
+            def do_process(pp):
+                return process_lemma_page(pp, p.title)
 
-            blib.do_edit(
-                p.index, pywikibot.Page(site, lemma), do_process, save=args.save, verbose=args.verbose, diff=args.diff
-            )
+            blib.do_edit(args, p.index, lemma, do_process, must_exist=True)
 
 
 parser = blib.create_argparser(

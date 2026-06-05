@@ -1,26 +1,18 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
 
 
-def process_page(index, page):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing")
+def process_page(p):
+    p.msg("Processing")
     notes = []
 
-    text = blib.safe_page_text(page, errandpagemsg)
     text = re.sub(
         r"\n(===+)Adjective(===+)\n\{\{head\|de\|adjective form\}\}",
         "\n" + r"\1Numeral\2" + "\n{{head|de|numeral form}}",
-        text,
+        p.text,
     )
     notes.append("change headword from adjective form to numeral form")
     return text, notes
@@ -37,6 +29,4 @@ for index, page in blib.cat_articles("German ordinal numbers", start, end):
     if not pagetitle.endswith("e"):
         continue
     for ending in endings:
-        page = pywikibot.Page(site, pagetitle[:-1] + ending)
-        if page.exists():
-            blib.do_edit(index, page, process_page, save=args.save, verbose=args.verbose)
+        blib.do_edit(args, index, pagetitle[:-1] + ending, process_page, must_exist=True)

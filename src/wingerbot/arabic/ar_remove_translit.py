@@ -149,20 +149,15 @@ def process_head(index, pagetitle, template):
 # Process the headword templates on the given page,
 # removing translit params when the auto-translit returns the same thing, or
 # canonicalizing. Returns the changed text along with a changelog message.
-def process_one_page_headwords(index, page):
-    pagetitle = page.title()
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+def process_one_page_headwords(p):
+    parsed = blib.parse_text(p.text)
     actions = []
     for t in parsed.filter_templates():
         tn = tname(t)
         if tn in arlib.arabic_non_verbal_headword_templates:
             thisactions = []
             tr = getparam(t, "tr")
-            thisactions += process_head(index, pagetitle, t)
+            thisactions += process_head(p.index, p.title, t)
             for param in [
                 "pl",
                 "plobl",
@@ -183,7 +178,7 @@ def process_one_page_headwords(index, page):
                 "pauc",
                 "cons",
             ]:
-                thisactions += process_param_chain(index, pagetitle, t, param)
+                thisactions += process_param_chain(p.index, p.title, t, param)
             if len(thisactions) > 0:
                 actions.append("%s: %s" % (tn, ", ".join(thisactions)))
     changelog = "; ".join(actions)
@@ -198,7 +193,7 @@ def process_headwords(start, end):
     # for page in blib.references("Template:ar-nisba", start, end):
     for cat in ["Arabic lemmas", "Arabic non-lemma forms"]:
         for index, page in blib.cat_articles(cat, start, end):
-            blib.do_edit(index, page, process_one_page_headwords, save=args.save, verbose=args.verbose, diff=args.diff)
+            blib.do_edit(args, index, page, process_one_page_headwords)
 
 
 # Remove translit params from link-like templates when the auto-translit

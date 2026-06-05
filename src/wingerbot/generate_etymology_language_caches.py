@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse, unicodedata
-
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, site
+from wingerbot.blib import msg
 
 etym_lang_data = lang_utils.get_etym_lang_data()
 
@@ -31,7 +29,7 @@ for etyl in etym_lang_data.etym_languages:
 msg("--------------------- [[Module:etymology languages/code to canonical name]] -------------------")
 
 
-def do_code_to_canonical_name(index, page):
+def do_code_to_canonical_name(p):
     text = []
 
     def ins(txt):
@@ -45,18 +43,16 @@ def do_code_to_canonical_name(index, page):
 
 
 blib.do_edit(
+    args,
     1,
-    pywikibot.Page(site, "Module:etymology languages/code to canonical name"),
+    "Module:etymology languages/code to canonical name",
     do_code_to_canonical_name,
-    save=args.save,
-    verbose=args.verbose,
-    diff=args.diff,
 )
 
 msg("--------------------- [[Module:etymology languages/canonical names]] -------------------")
 
 
-def do_canonical_names(index, page):
+def do_canonical_names(p):
     text = []
 
     def ins(txt):
@@ -70,10 +66,8 @@ def do_canonical_names(index, page):
 
 
 blib.do_edit(
+    args,
     2,
-    pywikibot.Page(site, "Module:etymology languages/canonical names"),
+    "Module:etymology languages/canonical names",
     do_canonical_names,
-    save=args.save,
-    verbose=args.verbose,
-    diff=args.diff,
 )

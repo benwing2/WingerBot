@@ -47,7 +47,7 @@ def do_split(sep, text, maxsplit=0):
     return [re.sub(r"\\(%s)" % sep, r"\1", elem) for elem in elems]
 
 
-def process_line(index, line):
+def process_line(lineno, line):
     def error(text) -> NoReturn:
         errmsg("ERROR: Processing line: %s" % line)
         errmsg("ERROR: %s" % text)
@@ -80,15 +80,12 @@ def process_line(index, line):
     if len(els) != 2:
         error("Expected two fields, saw %s" % len(els))
     accented_term = els[0]
-    term = rulib.remove_accents(accented_term)
     etym = els[1]
 
-    pagetitle = term
+    pagetitle = rulib.remove_accents(accented_term)
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+    def linemsg(txt):
+        msg("Line %s %s: %s" % (lineno, pagetitle, txt))
 
     # Handle etymology
     adjformtext = ""
@@ -174,26 +171,17 @@ def process_line(index, line):
         etymtext = "===Etymology===\n" + etymbody
 
     if not etymtext:
-        pagemsg("No etymology text, skipping")
+        linemsg("No etymology text, skipping")
 
-    # Load page
-    page = pywikibot.Page(site, pagetitle)
-
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("Page doesn't exist, can't add etymology")
-        return
-
-    def process_page(index, page):
-        pagemsg("Adding etymology")
+    def process_page(p):
+        p.msg("Adding etymology")
         notes = []
 
-        pagetext = blib.safe_page_text(page, errandpagemsg)
-
-        modsec = blib.find_modifiable_lang_section(pagetext, "Russian", pagemsg)
+        modsec = blib.find_modifiable_lang_section(p.text, "Russian", p.msg)
         if modsec is None:
             return
 
-        subsecs = blib.split_text_into_subsections(modsec.secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
         subsections = subsecs.subsections
         replaced_etym = False
         for k, header in subsecs.header_list:
@@ -203,7 +191,7 @@ def process_line(index, line):
                     replaced_etym = True
                     break
                 else:
-                    errandpagemsg("WARNING: Already found etymology, skipping")
+                    p.errandmsg("WARNING: Already found etymology, skipping")
                     return
         if replaced_etym:
             return modsec.rebuild(secbody="".join(subsections)), notes
@@ -222,7 +210,7 @@ def process_line(index, line):
 
         return modsec.rebuild(secbody=secbody), notes
 
-    blib.do_edit(index, page, process_page, save=args.save, verbose=args.verbose, diff=args.diff)
+    blib.do_edit(args, lineno, pagetitle, process_page, must_exist=True, msg_title=accented_term)
 
 
 parser = blib.create_argparser(

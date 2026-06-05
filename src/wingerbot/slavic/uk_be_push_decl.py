@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import re, argparse
-import traceback, sys
-import pywikibot
+import re
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, msg, tname
 from wingerbot.slavic.ukrainian import uklib as uk
 from wingerbot.slavic.belarusian import belib as be
 
@@ -47,13 +45,13 @@ be_decl_noun_unc_slots = ["nom_s", "gen_s", "dat_s", "acc_s", "ins_s", "loc_s", 
 be_decl_noun_pl_slots = ["nom_p", "gen_p", "dat_p", "acc_p", "ins_p", "loc_p", "voc_p"]
 
 
-def compare_form(slot, orig, repl, pagemsg):
+def compare_form(slot, orig, repl):
     origforms = orig.split(",")
     replforms = repl.split(",")
     return set(origforms) == set(replforms)
 
 
-def compare_forms(origforms, replforms, pagemsg):
+def compare_forms(origforms, replforms, tempcall, pagemsg):
     for slot in set(replforms.keys() + origforms.keys()):
         if slot.endswith("_linked"):
             continue
@@ -84,7 +82,7 @@ def compare_forms(origforms, replforms, pagemsg):
                     if altform not in forms:
                         newforms.append(altform)
             origform = ",".join(newforms)
-        if not compare_form(slot, origform, replforms[slot], pagemsg):
+        if not compare_form(slot, origform, replforms[slot]):
             pagemsg(
                 "WARNING: for predicted %s, form %s=%s in replacement forms but =%s in original forms"
                 % (tempcall, slot, replforms[slot], origform)
@@ -93,17 +91,10 @@ def compare_forms(origforms, replforms, pagemsg):
     return True
 
 
-def replace_decl(index, page, decl, declforms):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    pagemsg("Processing decl %s" % decl)
+def replace_decl(p, decl, declforms, tempcall):
+    p.msg("Processing decl %s" % decl)
     notes = []
-    text = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(text)
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         forms = {}
@@ -123,7 +114,7 @@ def replace_decl(index, page, decl, declforms):
         i = 1
         for slot in getslots:
             if slot:
-                form = getparam(t, i).strip()
+                form = getparam(t, str(i)).strip()
                 if not form:
                     continue
                 form = blib.remove_links(form)
@@ -137,13 +128,13 @@ def replace_decl(index, page, decl, declforms):
                 forms[slot] = ",".join(slotforms)
             i += 1
 
-        if compare_forms(forms, declforms, pagemsg):
+        if compare_forms(forms, declforms, tempcall, p.msg):
             origt = str(t)
             t.name = args.lang + "-ndecl"
             del t.params[:]
             t.add("1", decl)
             newt = str(t)
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
             notes.append("replace {{%s|...}} with %s" % (tn, newt))
 
     return str(parsed), notes
@@ -167,10 +158,13 @@ def yield_decls():
                 yield lineno, m.group(0)
 
 
-for index, decl in yield_decls():
+for declindex, decl in yield_decls():
     module = uk if args.lang == "uk" else be
     if decl.startswith("(("):
         m = re.search(r"^\(\((.*)\)\)$", decl)
+        if not m:
+            msg("Line %s %s: Malformed alternant spec" % (declindex, decl))
+            continue
         subdecls = m.group(1).split(",")
         decl_for_page = subdecls[0]
     else:
@@ -180,24 +174,20 @@ for index, decl in yield_decls():
         msg("WARNING: Can't extract lemma from decl: %s" % decl)
         pagename = "UNKNOWN"
     else:
-        pagename = module.remove_accents(blib.remove_links(m.group(1)))
+        pagename = blib.remove_links(m.group(1))
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagename, txt))
+    def process_page(p):
+        tempcall = "{{%s-generate-noun-forms|%s}}" % (args.lang, decl)
+        result = p.expand_text(tempcall)
+        if not result:
+            return
+        predforms = blib.split_generate_args(result)
+        lemma = predforms["nom_s"] if "nom_s" in predforms else predforms["nom_p"]
+        real_pagename = re.sub(",.*", "", blib.remove_links(lemma))
 
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagename, pagemsg, args.verbose)
+        def do_replace_decl(pp):
+            return replace_decl(pp, decl, predforms, tempcall)
 
-    tempcall = "{{%s-generate-noun-forms|%s}}" % (args.lang, decl)
-    result = expand_text(tempcall)
-    if not result:
-        continue
-    predforms = blib.split_generate_args(result)
-    lemma = predforms["nom_s"] if "nom_s" in predforms else predforms["nom_p"]
-    real_pagename = re.sub(",.*", "", module.remove_accents(blib.remove_links(lemma)))
-    page = pywikibot.Page(site, real_pagename)
+        blib.do_edit(args, p.index, module.remove_accents(real_pagename), do_replace_decl, msg_title=real_pagename)
 
-    def do_replace_decl(index, page):
-        return replace_decl(index, page, decl, predforms)
-
-    blib.do_edit(index, page, do_replace_decl, save=args.save, verbose=args.verbose, diff=args.diff)
+    blib.do_edit(args, declindex, module.remove_accents(pagename), process_page, msg_title=pagename)

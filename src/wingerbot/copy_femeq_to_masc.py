@@ -1,48 +1,40 @@
 #!/usr/bin/env python3
 
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname
+from wingerbot.blib import getparam, tname
 
 
-def process_masc_page(index, page, fem):
+def process_masc_page(p, fem):
     notes = []
-    pagetitle = page.title()
     orig_fem = fem
 
-    def pagemsg(txt):
-        msg("Page %s %s: %s: %s" % (index, orig_fem, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s: %s" % (index, orig_fem, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
+    p.msg_title = "%s: %s" % (orig_fem, p.title)
 
     prev_fr_noun = False
-    parsed = blib.parse_text(blib.safe_page_text(page, errandpagemsg))
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         origt = str(t)
         tn = tname(t)
         if tn in ["fr-noun"]:
             if prev_fr_noun:
-                pagemsg("WARNING: Saw two {{fr-noun}} templates, not changing: %s and %s" % (prev_fr_noun, str(t)))
+                p.msg("WARNING: Saw two {{fr-noun}} templates, not changing: %s and %s" % (prev_fr_noun, str(t)))
                 return
             prev_fr_noun = str(t)
-            default_fem = expand_text("{{#invoke:fr-headword|make_feminine|%s}}" % pagetitle)
+            default_fem = p.expand_text("{{#invoke:fr-headword|make_feminine|%s}}" % p.title)
             if not default_fem:
                 return
             if fem == default_fem:
-                pagemsg("Substituting '+' for default feminine %s: %s" % (fem, str(t)))
+                p.msg("Substituting '+' for default feminine %s: %s" % (fem, str(t)))
                 fem = "+"
             else:
-                pagemsg(
+                p.msg(
                     "Feminine %s not equal to default feminine %s, not substituting: %s" % (fem, default_fem, str(t))
                 )
             fems = blib.fetch_param_chain(t, "f")
             if fem in fems:
-                pagemsg("Feminine %s already in feminine(s) %s: %s" % (fem, ",".join(fems), str(t)))
+                p.msg("Feminine %s already in feminine(s) %s: %s" % (fem, ",".join(fems), str(t)))
             elif orig_fem in fems:
-                pagemsg("Replacing default feminine %s with + in %s: %s" % (orig_fem, ",".join(fems), str(t)))
+                p.msg("Replacing default feminine %s with + in %s: %s" % (orig_fem, ",".join(fems), str(t)))
                 fems = [fem if f == orig_fem else f for f in fems]
                 blib.set_param_chain(t, fems, "f")
                 notes.append("replace default feminine %s with + in {{fr-noun}}" % orig_fem)
@@ -54,7 +46,7 @@ def process_masc_page(index, page, fem):
                 )
 
         if origt != str(t):
-            pagemsg("Replaced %s with %s" % (origt, str(t)))
+            p.msg("Replaced %s with %s" % (origt, str(t)))
 
     return str(parsed), notes
 
@@ -67,7 +59,6 @@ def process_text_on_page(p):
 
     parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
-        origt = str(t)
         tn = tname(t)
         if tn in ["female equivalent of", "femeq"]:
             lang = getparam(t, "1")
@@ -75,15 +66,11 @@ def process_text_on_page(p):
                 p.msg("WARNING: Can't handle lang %s: %s" % (lang, str(t)))
                 continue
             masc = getparam(t, "2")
-            mascpage = pywikibot.Page(site, masc)
-            if not blib.safe_page_exists(mascpage, p.errandmsg):
-                p.msg("WARNING: Masculine %s doesn't exist: %s" % (masc, str(t)))
-                continue
 
-            def do_process(index, page):
-                return process_masc_page(index, page, p.title)
+            def do_process(pp):
+                return process_masc_page(pp, p.title)
 
-            blib.do_edit(p.index, mascpage, do_process, save=args.save, verbose=args.verbose, diff=args.diff)
+            blib.do_edit(args, p.index, masc, do_process, must_exist=True)
 
 
 parser = blib.create_argparser(

@@ -1,30 +1,20 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, rmparam, tname
 from wingerbot.latin import lalib
 
 pages_to_delete = []
 
 
-def process_form(index, page, slot, form, pos):
-    def pagemsg(txt):
-        msg("Page %s %s %s: %s" % (index, slot, form, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s %s: %s" % (index, slot, form, txt))
-
+def process_form(p, pos):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    if not page.exists():
-        pagemsg("Skipping form value %s, page doesn't exist" % form)
-        return
-
-    text = blib.safe_page_text(page, errandpagemsg)
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -50,7 +40,7 @@ def process_form(index, page, slot, form, pos):
     else:
         raise ValueError("Unrecognized POS %s" % pos)
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if re.search(r"\{\{%s([|}])" % from_headword_template, subsections[k]) or re.search(
@@ -137,20 +127,20 @@ def process_text_on_page(p):
                 continue
             forms_seen.add(form_no_macrons)
             slots_and_forms_to_process.append((slot, form))
-    for index, (slot, form) in blib.iter_items(
+    for formindex, (slot, form) in blib.iter_items(
         sorted(slots_and_forms_to_process, key=lambda x: lalib.remove_macrons(x[1]))
     ):
 
-        def handler(index, page):
-            return process_form(index, page, slot, form, pos)
+        def handler(p):
+            return process_form(p, pos)
 
         blib.do_edit(
-            index,
-            pywikibot.Page(site, lalib.remove_macrons(form)),
+            args,
+            "%s.%s" % (p.index, formindex),
+            lalib.remove_macrons(form),
             handler,
-            save=args.save,
-            verbose=args.verbose,
-            diff=args.diff,
+            must_exist=True,
+            msg_title="%s: %s=%s" % (p.title, slot, form),
         )
 
 

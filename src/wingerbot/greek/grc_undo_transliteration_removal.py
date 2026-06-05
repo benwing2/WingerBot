@@ -21,13 +21,7 @@ def undo_greek_removal(direcfile, start, end):
 
     for index, (pagename, removed_param, template_text) in blib.iter_items(template_removals, get_name=lambda x: x[0]):
 
-        def undo_one_page_greek_removal(index, page):
-            pagetitle = page.title()
-            def pagemsg(txt):
-                msg("Page %s %s: %s" % (index, pagetitle, txt))
-            def errandpagemsg(txt):
-                errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+        def undo_one_page_greek_removal(p):
             template = blib.parse_text(template_text).filter_templates()[0]
             orig_template = str(template)
             if getparam(template, "sc") == "polytonic":
@@ -36,34 +30,30 @@ def undo_greek_removal(direcfile, start, end):
             param_value = getparam(template, removed_param)
             template.remove(removed_param)
             from_template = str(template)
-            text = blib.safe_page_text(page, errandpagemsg)
+            text = p.text
             found_orig_template = orig_template in text
             newtext = text.replace(from_template, to_template)
             changelog = ""
             if newtext == text:
                 if not found_orig_template:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Unable to locate 'from' template when undoing Greek param removal: %s" % from_template
                     )
                 else:
-                    pagemsg("Original template found, taking no action")
+                    p.msg("Original template found, taking no action")
             else:
                 if found_orig_template:
-                    pagemsg("WARNING: Undid removal, but original template %s already present!" % orig_template)
+                    p.msg("WARNING: Undid removal, but original template %s already present!" % orig_template)
                 if len(newtext) - len(text) != len(to_template) - len(from_template):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Length mismatch when undoing Greek param removal, may have matched multiple templates: from=%s, to=%s"
                         % (from_template, to_template)
                     )
                 changelog = "Undid removal of %s=%s in %s" % (removed_param, param_value, to_template)
-                pagemsg("Change log = %s" % changelog)
+                p.msg("Change log = %s" % changelog)
             return newtext, changelog
 
-        page = pywikibot.Page(site, pagename)
-        if not page.exists():
-            msg("Page %s %s: WARNING, something wrong, does not exist" % (index, pagename))
-        else:
-            blib.do_edit(index, page, undo_one_page_greek_removal, save=args.save, verbose=args.verbose, diff=args.diff)
+        blib.do_edit(args, index, pagename, undo_one_page_greek_removal, must_exist=True)
 
 
 params = blib.create_argparser("Undo Greek transliteration removal")

@@ -1,28 +1,18 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, site, tname, pname
+from wingerbot.blib import getparam, tname
 from wingerbot.latin import lalib
 
 
-def process_form(index, page, slot, form, pos, orig_pagemsg, orig_errandpagemsg):
-    def pagemsg(txt):
-        orig_pagemsg("%s %s %s: %s" % (index, slot, form, txt))
-    def errandpagemsg(txt):
-        orig_errandpagemsg("%s %s %s: %s" % (index, slot, form, txt))
-
+def process_form(p, pos):
     notes = []
 
-    pagemsg("Processing")
+    p.msg("Processing")
 
-    if not blib.safe_page_exists(page, errandpagemsg):
-        pagemsg("Skipping form value %s, page doesn't exist" % form)
-        return
-
-    text = blib.safe_page_text(page, errandpagemsg)
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg)
     if modsec is None:
         return
     secbody = modsec.secbody
@@ -48,7 +38,7 @@ def process_form(index, page, slot, form, pos, orig_pagemsg, orig_errandpagemsg)
     else:
         raise ValueError("Unrecognized POS %s" % pos)
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         if re.search(r"\{\{%s([|}])" % from_headword_template, subsections[k]) or re.search(
@@ -129,34 +119,31 @@ def process_text_on_page(p):
             inflargs = lalib.generate_infl_forms(pos, str(inflt), p.errandmsg, p.expand_text)
             if inflargs is None:
                 continue
-            forms_seen = set()
+            formvals_seen = set()
             slots_and_forms_to_process = []
-            for slot, formarg in inflargs.items():
-                forms = formarg.split(",")
-                for form in forms:
-                    if "[" in form or "|" in form:
-                        continue
-                    form_no_macrons = lalib.remove_macrons(form)
-                    if form_no_macrons == p.title:
-                        continue
-                    if form_no_macrons in forms_seen:
-                        continue
-                    forms_seen.add(form_no_macrons)
-                    slots_and_forms_to_process.append((slot, form))
-            for formindex, (slot, form) in blib.iter_items(
-                sorted(slots_and_forms_to_process, key=lambda x: lalib.remove_macrons(x[1]))
-            ):
+            for slotformind, slotformtitle, slot, formval in lalib.flatten_slot_formvals(p.index, p.title, inflargs):
+                if "[" in formval or "|" in formval:
+                    continue
+                formval_no_macrons = lalib.remove_macrons(formval)
+                if formval_no_macrons == p.title:
+                    continue
+                if formval_no_macrons in formvals_seen:
+                    continue
+                formvals_seen.add(formval_no_macrons)
+                slots_and_forms_to_process.append((slotformind, slotformtitle, slot, formval))
+            for _, (slotformind, slotformtitle, slot, formval) in blib.iter_items(
+                slots_and_forms_to_process, get_name=lambda x: x[3]):
 
-                def handler(formindex, page):
-                    return process_form(formindex, page, slot, form, pos, p.msg, p.errandmsg)
+                def handler(p):
+                    return process_form(p, pos)
 
                 blib.do_edit(
-                    "%s.%s" % (p.index, formindex),
-                    pywikibot.Page(site, lalib.remove_macrons(form)),
+                    args,
+                    slotformind,
+                    lalib.remove_macrons(formval),
                     handler,
-                    save=args.save,
-                    verbose=args.verbose,
-                    diff=args.diff,
+                    must_exist=True,
+                    msg_title=slotformtitle,
                 )
 
 

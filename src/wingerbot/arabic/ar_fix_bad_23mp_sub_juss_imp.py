@@ -20,19 +20,12 @@ recognized_tag_sets = [
 split_recognized_tag_sets = [tag_set.split("|") for tag_set in recognized_tag_sets]
 
 
-def fix_new_page(index, page):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
+def fix_new_page(p):
     notes = []
 
-    pagemsg("Fixing new page")
+    p.msg("Fixing new page")
 
-    origtext = blib.safe_page_text(page, errandpagemsg)
-    text = origtext
+    text = p.text
     newtext = re.sub(r"^\{\{also\|.*?\}\}\n", "", text)
     if text != newtext:
         notes.append("remove no-longer-relevant {{also}} hatnote")
@@ -47,14 +40,14 @@ def fix_new_page(index, page):
             if form.endswith("ا"):
                 continue
             elif not form.endswith("و") and not form.endswith("وْ"):
-                pagemsg("WARNING: Form doesn't end in waw or alif: %s" % origt)
+                p.msg("WARNING: Form doesn't end in waw or alif: %s" % origt)
                 continue
             form = form + "ا"
             t.add("1", form)
             notes.append("add missing final alif to form in {{ar-verb-form}}")
         newt = str(t)
         if origt != newt:
-            pagemsg("Replaced %s with %s" % (origt, newt))
+            p.msg("Replaced %s with %s" % (origt, newt))
 
     return str(parsed), notes
 
@@ -288,12 +281,10 @@ def process_text_on_page(p):
                 p.msg("Error moving to %s: %s" % (new_pagetitle, error))
                 return
         blib.do_edit(
+            args,
             p.index,
-            pywikibot.Page(site, new_pagetitle),
+            new_pagetitle,
             fix_new_page,
-            save=args.save,
-            verbose=args.verbose,
-            diff=args.diff,
         )
 
     else:

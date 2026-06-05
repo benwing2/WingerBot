@@ -32,18 +32,25 @@ type ParamOrParamList = str | list[str]
 type PagePrefix = int | str | None
 
 class ProcessPageParams:
-    def __init__(self, args: argparse.Namespace, index: Index, pagetitle: str, pagetext: str, page: pywikibot.Page | None = None, prev_comment: ChangelogComment | None = None):
+    def __init__(self, args: argparse.Namespace, index: Index, pagetitle: str, pagetext: str, page: pywikibot.Page | None = None, prev_comment: ChangelogComment | None = None,
+                 msg_index: str | None = None, msg_title: str | None = None):
         self.args = args
         self.index = index
         self.title = pagetitle
         self.text = pagetext
         self.page = page
         self.prev_comment = prev_comment
+        self.msg_index = msg_index
+        self.index_suffix = ""
+        self.msg_title = msg_title
+        self.title_suffix = ""
+        self.text_prefix = ""
+        self.text_suffix = ""
 
     def _msg_contents(self, txt: str, index: Index | None = None, title: str | None = None) -> str:
-        idx = index if index is not None else self.index
-        ttl = title if title is not None else self.title
-        return "Page %s %s: %s" % (idx, ttl, txt)
+        idx = index if index is not None else self.msg_index if self.msg_index is not None else self.index
+        ttl = title if title is not None else self.msg_title if self.msg_title is not None else self.title
+        return "Page %s%s %s%s: %s%s%s" % (idx, self.index_suffix, ttl, self.title_suffix, self.text_prefix, txt, self.text_suffix)
 
     def msg(self, txt: str, index: Index | None = None, title: str | None = None) -> None:
         msg(self._msg_contents(txt, index, title))
@@ -56,7 +63,7 @@ class ProcessPageParams:
 
     def expand_text(self, tempcall: str):
         return expand_text(tempcall, self.title, self.msg, self.args.verbose)
-    
+
 
 type NewProcessTextOnPageCallback = Callable[[ProcessPageParams], ProcessPageRetval]
 type ProcessPageCallback = Callable[[Index, Page], ProcessPageRetval]
@@ -596,104 +603,56 @@ def expand_text(
     return result
 
 
-class EditParams:
-    def __init__(self, index, page, save=False, verbose=False, diff=False):
-        self.index = index
-        self.page = page
-        self.title = page.title()
-        self.save = save
-        self.verbose = verbose
-        self.diff = diff
+def do_edit(args: argparse.Namespace, index: Index, page: Page | str, process: NewProcessTextOnPageCallback,
+            no_fetch_text: bool = False, must_exist: bool = False, msg_index: str | None = None,
+            msg_title: str | None = None) -> None:
 
-    def pagemsg(self, txt):
-        msg("Page %s %s: %s" % (self.index, self.title, txt))
+    if type(page) is str:
+        pagetitle = page
+        pwpage = pywikibot.Page(site, page)
+    else:
+        assert type(page) is Page
+        pwpage = page
+        # FUCKME, you can pass in an illegal page title when creating the Page without error, but all attempts
+        # to retrieve the title fail with an InvalidTitleError. This seems a design flaw. The only way I can
+        # see to avoid the error is through a private field.
+        pagetitle = pwpage._link._text  # type: ignore
+    p = ProcessPageParams(args, index, pagetitle, "", page=pwpage, prev_comment=None)
+    p.msg_index = msg_index
+    p.msg_title = msg_title
+    validated_pagetitle = safe_page_title(pwpage, p.errandmsg)
+    if validated_pagetitle is None:
+        return
+    p.title = validated_pagetitle
+    if must_exist and not safe_page_exists(pwpage, p.errandmsg):
+        p.msg("Skipping; page doesn't exist")
+        return
+    if not no_fetch_text:
+        p.text = safe_page_text(page, p.errandmsg)
 
-    def errandpagemsg(self, txt):
-        errandmsg("Page %s %s: %s" % (self.index, self.title, txt))
+    try:
+        if args.verbose:
+            p.msg("Begin processing")
+        retval = process(p)
+        new, comment, has_changed = handle_process_page_retval(retval, p.text, p.msg, args.verbose, args.diff)
+        if has_changed:
 
-    def expand_text(self, tempcall):
-        return expand_text(tempcall, self.title, self.pagemsg, self.verbose)
+            def assign_changed_page():
+                pwpage.text = new
 
-
-def new_do_edit(index, page, func=None, null=False, save=False, verbose=False, diff=False):
-    p = EditParams(index, page, save=save, verbose=verbose, diff=diff)
-    while True:
-        try:
-            if func:
-                if verbose:
-                    p.pagemsg("Begin processing")
-                retval = func(index, page)
-                new, comment, has_changed = handle_process_page_retval(retval, page.text, p.pagemsg, verbose, diff)
-                if has_changed:
-                    page.text = new
-                    if save:
-                        p.pagemsg("Saving with comment = %s" % comment)
-                        safe_page_save(page, comment, p.errandpagemsg)
-                    else:
-                        p.pagemsg("Would save with comment = %s" % comment)
-                elif null:
-                    p.pagemsg("Purged page cache")
-                    safe_page_purge(page, p.errandpagemsg)
-                elif comment:
-                    p.pagemsg("Skipped: %s" % comment)
-                else:
-                    p.pagemsg("Skipped, no changes")
+            try_repeatedly(assign_changed_page, p.errandmsg, "assign changed page to 'page.text'")
+            if args.save:
+                p.msg("Saving with comment = %s" % comment)
+                safe_page_save(pwpage, comment, p.errandmsg)
             else:
-                p.pagemsg("Purged page cache")
-                safe_page_purge(page, p.errandpagemsg)
-        except urllib.error.HTTPError as e:
-            if e.code != 503:  # Service unavailable
-                raise
-        except:
-            p.errandpagemsg("WARNING: Error")
-            raise
-
-        break
-
-
-def do_edit(index: Index, page: Page, func: ProcessPageCallback, null: bool = False, save: bool = False,
-            verbose: bool = False, diff: bool = False) -> None:
-    title = page.title()
-
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, title, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, title, txt))
-
-    while True:
-        try:
-            if verbose:
-                pagemsg("Begin processing")
-            retval = func(index, page)
-
-            new, comment, has_changed = handle_process_page_retval(retval, page.text, pagemsg, verbose, diff)
-            if has_changed:
-
-                def assign_changed_page():
-                    page.text = new
-
-                try_repeatedly(assign_changed_page, errandpagemsg, "assign changed page to 'page.text'")
-                if save:
-                    pagemsg("Saving with comment = %s" % comment)
-                    safe_page_save(page, comment, errandpagemsg)
-                else:
-                    pagemsg("Would save with comment = %s" % comment)
-            elif null:
-                pagemsg("Purged page cache")
-                safe_page_purge(page, errandpagemsg)
-            elif comment:
-                pagemsg("Skipped: %s" % comment)
-            else:
-                pagemsg("Skipped, no changes")
-        except urllib.error.HTTPError as e:
-            if e.code != 503:  # Service unavailable
-                raise
-        except:
-            errandpagemsg("WARNING: Error")
-            raise
-
-        break
+                p.msg("Would save with comment = %s" % comment)
+        elif comment:
+            p.msg("Skipped: %s" % comment)
+        else:
+            p.msg("Skipped, no changes")
+    except Exception as e:
+        p.errandmsg("WARNING: Error: %s" % e)
+        raise
 
 
 # we special-case anything with " talk:" in the title
@@ -1671,17 +1630,17 @@ def do_pagefile_cats_refs(
         if page_should_be_filtered_out(pagetitle, errandpagemsg):
             return
 
-        def do_process_page(index: Index, page: Page) -> ProcessPageRetval:
-            pagetext = safe_page_text(page, errandpagemsg) if not no_fetch_text else ""
-            return do_process_text_on_page(index, pagetitle, pagetext, page, None, pagemsg)
+        def do_process_page(p: ProcessPageParams) -> ProcessPageRetval:
+            pagetext = safe_page_text(p.page, p.errandmsg) if not no_fetch_text else ""
+            return do_process_text_on_page(p.index, p.title, pagetext, p.page, None, p.msg)
 
         if args.find_regex_output:
             # We are reading from Wiktionary but asked to output in find_regex format.
-            retval = do_process_page(index, page)
+            retval = do_process_page(ProcessPageParams(args, index, page, ""))
             pagetext = safe_page_text(page, errandpagemsg) if not no_fetch_text else ""
             do_handle_stdin_retval(args, retval, pagetext, None, pagemsg, output_format="find-regex")
         else:
-            do_edit(index, page, do_process_page, save=args.save, verbose=args.verbose, diff=args.diff)
+            do_edit(args, index, page, do_process_page, no_fetch_text=no_fetch_text)
 
     if args.stdin or args.find_regex or args.begin_end:
         pages_to_filter = None
@@ -1947,6 +1906,21 @@ def elapsed_time():
     msg("Ending at %s" % time.ctime(endtime))
 
 
+retryable_http_error_codes = {
+    # Core retryable errors per Google AI
+    408, # request timeout
+    429, # too many requests
+    502, # bad gateway
+    503, # service unavailable
+    504, # gateway timeout
+    # "Nonstandard or conditional retryable errors" per Google AI
+    500, # internal server error
+    401, # unauthorized (??? Google says: Typically, you should never retry a 4xx error because they imply client
+         #   errors. However, modern client interceptors frequently treat a 401 as retryable only after fetching a
+         #   fresh OAuth access token.)
+    449, # retry with
+}
+
 def try_repeatedly[T](
     fun: Callable[[], T],
     errandpagemsg: PagemsgCallback,
@@ -1982,6 +1956,10 @@ def try_repeatedly[T](
         except pywikibot.exceptions.AbuseFilterDisallowedError as e:
             log_exception("Abuse filter: Disallowed", e, skipping=True)
             return None
+        except urllib.error.HTTPError as e:
+            if e.code not in retryable_http_error_codes:
+                log_exception("Non-retryable HTTP error", e, skipping=False)
+                raise
         # Instead, retry, which will save the page.
         # except pywikibot.exceptions.PageSaveRelatedError as e:
         #  log_exception("Unable to save (abuse filter?)", e, skipping=True)
@@ -2044,6 +2022,14 @@ def safe_page_purge(page, errandpagemsg) -> bool:
         return True
 
     return try_repeatedly(do_purge, errandpagemsg, "purge page") or False
+
+
+def safe_page_title(page, errandpagemsg) -> str | None:
+    try:
+        return page.title()
+    except Exception as e:
+        errandpagemsg("Unable to fetch title: %s: %s" % (type(e).__name__, e))
+        return None
 
 
 class ParseException(Exception):
@@ -3217,90 +3203,87 @@ def process_one_page_links(
     # First split up any templates with commas in the Latin.
     if split_templates:
         assert False, "split_templates not currently supported"
-    #  def pagemsg(txt):
-    #    msg("Page %s %s: %s" % (index, pagetitle, txt))
+        #    def pagemsg(txt):
+        #        msg("Page %s %s: %s" % (index, pagetitle, txt))
 
-    #  def process_param_for_splitting(obj):
-    #    if isinstance(obj.param, list):
-    #      fromparam, toparam = obj.param
-    #    else:
-    #      fromparam = obj.param
-    #    if fromparam == "page title":
-    #      foreign = obj.pagetitle
-    #    else:
-    #      foreign = getparam(obj.t, fromparam)
-    #    latin = getparam(obj.t, obj.paramtr)
-    #    if (re.search(split_templates, latin) and not
-    #        re.search(split_templates, foreign)):
-    #      trs = re.split(r"\s*" + split_templates + r"\s*", latin)
-    #      oldtemp = str(obj.t)
-    #      newtemps = []
-    #      for tr in trs:
-    #        addparam(obj.t, obj.paramtr, tr)
-    #        newtemps.append(str(obj.t))
-    #      newtemp = ", ".join(newtemps)
-    #      old_newtext = newtext[0]
-    #      pagemsg("Splitting template %s into %s" % (oldtemp, newtemp))
-    #      new_newtext = old_newtext.replace(oldtemp, newtemp)
-    #      if old_newtext == new_newtext:
-    #        pagemsg("WARNING: Unable to locate old template when splitting trs on commas: %s"
-    #            % oldtemp)
-    #      elif len(new_newtext) - len(old_newtext) != len(newtemp) - len(oldtemp):
-    #        pagemsg("WARNING: Length mismatch when splitting template on tr commas, may have matched multiple templates: old=%s, new=%s" % (
-    #          oldtemp, newtemp))
-    #      newtext[0] = new_newtext
-    #      return ["split %s=%s" % (obj.paramtr, latin)]
-    #    return []
-    #
-    #  actions += do_process_one_page_links(index, pagetitle, parsed, process_param_for_splitting)
-    #  parsed = parse_text(newtext[0])
+        #    def process_param_for_splitting(obj):
+        #        if isinstance(obj.param, list):
+        #            fromparam, toparam = obj.param
+        #        else:
+        #            fromparam = obj.param
+        #        if fromparam == "page title":
+        #            foreign = obj.pagetitle
+        #        else:
+        #            foreign = getparam(obj.t, fromparam)
+        #        latin = getparam(obj.t, obj.paramtr)
+        #        if (re.search(split_templates, latin) and not
+        #                re.search(split_templates, foreign)):
+        #            trs = re.split(r"\s*" + split_templates + r"\s*", latin)
+        #            oldtemp = str(obj.t)
+        #            newtemps = []
+        #            for tr in trs:
+        #                addparam(obj.t, obj.paramtr, tr)
+        #                newtemps.append(str(obj.t))
+        #            newtemp = ", ".join(newtemps)
+        #            old_newtext = newtext[0]
+        #            pagemsg("Splitting template %s into %s" % (oldtemp, newtemp))
+        #            new_newtext = old_newtext.replace(oldtemp, newtemp)
+        #            if old_newtext == new_newtext:
+        #                pagemsg("WARNING: Unable to locate old template when splitting trs on commas: %s"
+        #                        % oldtemp)
+        #            elif len(new_newtext) - len(old_newtext) != len(newtemp) - len(oldtemp):
+        #                pagemsg("WARNING: Length mismatch when splitting template on tr commas, may have matched multiple templates: old=%s, new=%s" % (
+        #                    oldtemp, newtemp))
+        #            newtext[0] = new_newtext
+        #            return ["split %s=%s" % (obj.paramtr, latin)]
+        #        return []
+        #
+        #    actions += do_process_one_page_links(index, pagetitle, parsed, process_param_for_splitting)
+        #    parsed = parse_text(newtext[0])
 
     actions += do_process_one_page_links(index, pagetitle, parsed, process_param)
     return str(parsed), actions
 
 
-# def process_one_page_links_wrapper(index, page):
-#  return process_one_page_links(index, page.title())
+#def process_one_page_links_wrapper(p):
+#    return process_one_page_links(p.index, p.title)
 #
-# if "," in cattype:
-#  cattypes = cattype.split(",")
-# else:
-#  cattypes = [cattype]
-# for cattype in cattypes:
-#  if cattype in ["translation", "links"]:
-#    if cattype == "translation":
-#      templates = translation_templates
+#if "," in cattype:
+#    cattypes = cattype.split(",")
+#else:
+#    cattypes = [cattype]
+#for cattype in cattypes:
+#    if cattype in ["translation", "links"]:
+#        if cattype == "translation":
+#            templates = translation_templates
+#        else:
+#            templates = ["l", "m", "term", "link", "mention"]
+#        for template in templates:
+#            msg("Processing template %s" % template)
+#            errmsg("Processing template %s" % template)
+#            for index, page in references("Template:%s" % template, start, end):
+#                do_edit(args, index, page, process_one_page_links_wrapper)
+#    elif cattype == "pages":
+#        for index, pagename in iter_items(pages_to_do, start, end):
+#            page = Page(site, pagename)
+#            do_edit(args, index, page, process_one_page_links_wrapper)
+#    elif cattype == "pagetext":
+#        for index, current in iter_items(pages_to_do, start, end,
+#                get_name=lambda x:x[0]):
+#            pagetitle, pagetext = current
+#            do_process_text(index, pagetitle, pagetext, process_one_page_links,
+#                    verbose=verbose)
 #    else:
-#      templates = ["l", "m", "term", "link", "mention"]
-#    for template in templates:
-#      msg("Processing template %s" % template)
-#      errmsg("Processing template %s" % template)
-#      for index, page in references("Template:%s" % template, start, end):
-#        do_edit(index, page, process_one_page_links_wrapper, save=save,
-#            verbose=verbose)
-#  elif cattype == "pages":
-#    for index, pagename in iter_items(pages_to_do, start, end):
-#      page = Page(site, pagename)
-#      do_edit(index, page, process_one_page_links_wrapper, save=save,
-#          verbose=verbose)
-#  elif cattype == "pagetext":
-#    for index, current in iter_items(pages_to_do, start, end,
-#        get_name=lambda x:x[0]):
-#      pagetitle, pagetext = current
-#      do_process_text(index, pagetitle, pagetext, process_one_page_links,
-#          verbose=verbose)
-#  else:
-#    if cattype == "vocab":
-#      cats = ["%s lemmas" % longlang, "%s non-lemma forms" % longlang]
-#    elif cattype == "borrowed":
-#      cats = [subcat for subcat, index in
-#          cat_subcats("Terms derived from %s" % longlang)]
-#    else:
-#      cats = [cattype]
-#      #raise ValueError("Category type '%s' should be 'vocab', 'borrowed', 'translation', 'links', 'pages' or 'pagetext'")
-#    for index, page in cat_articles(cats, start, end):
-#      do_edit(index, page, process_one_page_links_wrapper, save=save,
-#          verbose=verbose)
+#        if cattype == "vocab":
+#            cats = ["%s lemmas" % longlang, "%s non-lemma forms" % longlang]
+#        elif cattype == "borrowed":
+#            cats = [subcat for subcat, index in
+#                    cat_subcats("Terms derived from %s" % longlang)]
+#        else:
+#            cats = [cattype]
+#            #raise ValueError("Category type '%s' should be 'vocab', 'borrowed', 'translation', 'links', 'pages' or 'pagetext'")
+#        for index, page in cat_articles(cats, start, end):
+#            do_edit(args, index, page, process_one_page_links_wrapper)
 
 
 def output_process_links_template_counts(templates_seen, templates_changed):
@@ -3575,7 +3558,7 @@ def find_modifiable_lang_section(
     function will automatically behave as if None is specified for the language name if no level-2 sections are found
     on the page. This makes it possible to run a language-specific script on the output of `find_regex.py --lang LANG`,
     which contains only the text of the language without any L2 language header.
-    
+
     Normally, if the language is not found on the page, `None` is returned. If `allow_missing` is given, however,
     the same structure is returned as if the language were found, but `j` is negative; specifically, it is the negative
     of the insertion point in `sections` where the a new language section for this language should be inserted. This
@@ -3646,7 +3629,7 @@ def map_etym_sections(secbody: str, pagemsg: PagemsgCallback, fn: Callable[[str 
 
 def add_new_l2_section(text: str, pagemsg: PagemsgCallback, langname: str, l2sec: str) -> tuple[str, list[str]]:
     """Add a new L2 section to a page not containing the language in question.
-    
+
     `langname` is the language of the L2 section in `l2sec`, which should begin with the appropriate language header.
     An internal error will be thrown if the language in `langname` is already found in `text` (the text of the page).
 

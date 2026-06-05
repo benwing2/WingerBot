@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, argparse
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, tname
 
 inflection_of_templates = ["inflection of", "past participle of", "present participle of", "feminine singular of"]
 
@@ -33,17 +33,14 @@ lang_inflection_of_templates = {
 }
 
 
-def delete_form_1(index, page, lemma, formind, formval):
-    def pagemsg(txt):
-        msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-
+def delete_form_1(p, lemma):
     notes = []
 
-    text = blib.safe_page_text(page, errandpagemsg)
+    if not blib.safe_page_exists(p.page, p.errandmsg):
+        p.msg("Skipping form value, page doesn't exist")
+        return
 
-    modsec = blib.find_modifiable_lang_section(text, lang_to_langname[args.lang], pagemsg)
+    modsec = blib.find_modifiable_lang_section(p.text, lang_to_langname[args.lang], p.msg)
     if modsec is None:
         return
 
@@ -52,7 +49,7 @@ def delete_form_1(index, page, lemma, formind, formval):
     # FIXME!
 
     #if "==Etymology 1==" in secbody:
-    #    etym_secs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3, header_re="Etymology [0-9.]+")
+    #    etym_secs = blib.split_text_into_subsections(secbody, p.msg, only_level=3, header_re="Etymology [0-9.]+")
     #    etym_sections = etym_secs.subsections
     #    for k, header in etym_secs.header_list:
     #        etym_sections[k] = fix_up_section(etym_sections[k], warn_on_multiple_heads=True)
@@ -61,7 +58,7 @@ def delete_form_1(index, page, lemma, formind, formval):
     subsections_to_delete = []
     subsections_to_remove_inflections_from = []
 
-    subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+    subsecs = blib.split_text_into_subsections(secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
         parsed = blib.parse_text(subsections[k])
@@ -79,7 +76,7 @@ def delete_form_1(index, page, lemma, formind, formval):
             elif tn in inflection_of_templates:
                 langcode = getparam(t, "1")
                 if langcode != args.lang:
-                    errandpagemsg(
+                    p.errandmsg(
                         "WARNING: In %s section, found {{%s}} for different language %s: %s"
                         % (lang_to_langname[args.lang], tn, langcode, str(t))
                     )
@@ -88,18 +85,18 @@ def delete_form_1(index, page, lemma, formind, formval):
                 if actual_lemma == lemma:
                     saw_infl = True
                 else:
-                    pagemsg("Found {{%s}} for different lemma %s: %s" % (tn, actual_lemma, str(t)))
+                    p.msg("Found {{%s}} for different lemma %s: %s" % (tn, actual_lemma, str(t)))
                     saw_other_infl = True
             elif tn in lang_inflection_of_templates[args.lang]:
                 actual_lemma = getparam(t, "1")
                 if actual_lemma == lemma:
                     saw_infl = True
                 else:
-                    pagemsg("Found {{%s}} for different lemma %s: %s" % (tn, actual_lemma, str(t)))
+                    p.msg("Found {{%s}} for different lemma %s: %s" % (tn, actual_lemma, str(t)))
                     saw_other_infl = True
         if saw_head and saw_infl:
             if saw_other_infl:
-                pagemsg(
+                p.msg(
                     "Found subsection #%s to delete but has inflection template for different lemma or nondeletable tag set, will remove only deletable tag sets"
                     % (k // 2)
                 )
@@ -111,7 +108,7 @@ def delete_form_1(index, page, lemma, formind, formval):
                 ] + inflection_of_templates and not (
                     tn == "head" and getparam(t, "1") == args.lang and getparam(t, "2") in form_poses
                 ):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Saw unrecognized template in otherwise deletable subsection #%s: %s"
                         % (k // 2, str(t))
                     )
@@ -135,7 +132,7 @@ def delete_form_1(index, page, lemma, formind, formval):
                             l += 2
                         else:
                             has_non_deletable_subsubsection = True
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Subsection #%s (header %s, indent %s) has subsubsection with header %s (indent %s), not deleting"
                                 % (l // 2 - 1, header, indent, nextheader, nextindent)
                             )
@@ -147,13 +144,13 @@ def delete_form_1(index, page, lemma, formind, formval):
                             subsections_to_delete.append(k)
                             subsections_to_delete.extend(extra_subsubsections_to_delete)
                 else:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Wrong header in otherwise deletable subsection #%s: %s"
                         % (k // 2, subsections[k - 1].strip())
                     )
 
     if not subsections_to_delete and not subsections_to_remove_inflections_from:
-        pagemsg("Found %s section but no deletable or excisable subsections" % lang_to_langname[args.lang])
+        p.msg("Found %s section but no deletable or excisable subsections" % lang_to_langname[args.lang])
         return
 
     #### Now, we can delete an inflection, a subsection or the whole section or page
@@ -208,13 +205,13 @@ def delete_form_1(index, page, lemma, formind, formval):
     if whole_section_deletable:
         # Whole section deletable
         if subsections[0].strip():
-            pagemsg(
+            p.msg(
                 "WARNING: Whole %s section deletable except that there's text above all subsections: <%s>"
                 % (lang_to_langname[args.lang], subsections[0].strip())
             )
             return
         if "[[Category:" in sectail:
-            pagemsg(
+            p.msg(
                 "WARNING: Whole %s section deletable except that there's a category at the end: <%s>"
                 % (lang_to_langname[args.lang], sectail.strip())
             )
@@ -223,13 +220,13 @@ def delete_form_1(index, page, lemma, formind, formval):
             # Can delete the whole page, but check for non-blank section 0
             cleaned_sec0 = re.sub(r"^\{\{also\|.*?\}\}\n", "", sections[0])
             if cleaned_sec0.strip():
-                pagemsg(
+                p.msg(
                     "WARNING: Whole page deletable except that there's text above all sections: <%s>"
                     % cleaned_sec0.strip()
                 )
                 return
             pagetitle = page.title()
-            pagemsg("Page %s should be deleted" % pagetitle)
+            p.msg("Page %s should be deleted" % pagetitle)
             pages_to_delete.append(pagetitle)
             return
         del sections[j]
@@ -284,10 +281,10 @@ def delete_form_1(index, page, lemma, formind, formval):
             )
 
         if "==Etymology" in sections[j]:
-            pagemsg("WARNING: %s but found Etymology subsection, don't know how to handle" % deletable_subsec_text)
+            p.msg("WARNING: %s but found Etymology subsection, don't know how to handle" % deletable_subsec_text)
             return
         if "==Pronunciation" in sections[j]:
-            pagemsg("WARNING: %s but found Pronunciation subsection, don't know how to handle" % deletable_subsec_text)
+            p.msg("WARNING: %s but found Pronunciation subsection, don't know how to handle" % deletable_subsec_text)
             return
 
         notes.append(
@@ -300,33 +297,15 @@ def delete_form_1(index, page, lemma, formind, formval):
 
 
 def delete_form(index, lemma, formind, formval):
-    def pagemsg(txt):
-        msg("Page %s %s: form %s %s: %s" % (index, lemma, formind, formval, txt))
-
-    if "[" in formval:
-        pagemsg("Skipping form value %s with link in it" % formval)
-        return
-
-    page = pywikibot.Page(site, formval)
-    if not page.exists():
-        pagemsg("Skipping form value %s, page doesn't exist" % formval)
-        return
-
-    def do_delete_form_1(index, page):
-        return delete_form_1(index, page, lemma, formind, formval)
-
-    blib.do_edit(index, page, do_delete_form_1, save=args.save, verbose=args.verbose, diff=args.diff)
+    def do_delete_form_1(p):
+        return delete_form_1(p, lemma)
+    blib.do_edit(args, index, formval, do_delete_form_1,
+                 must_exist=True, msg_title="%s: form %s %s" % (lemma, formind, formval))
 
 
-def process_page(index, lemma, forms, pages_to_delete):
+def process_page(index, lemma, forms):
     def pagemsg(txt):
         msg("Page %s %s: %s" % (index, lemma, txt))
-
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, lemma, txt))
-
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, lemma, pagemsg, args.verbose)
 
     pagemsg("Processing")
 
@@ -345,7 +324,7 @@ pages_to_delete = []
 for index, line in blib.iter_items_from_file(args.formfile, start, end):
     lemma, forms = re.split(": *", line)
     forms = re.split(", *", forms)
-    process_page(index, lemma, forms, pages_to_delete)
+    process_page(index, lemma, forms)
 
 msg("The following pages need to be deleted:")
 for page in pages_to_delete:

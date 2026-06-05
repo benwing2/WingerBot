@@ -1,35 +1,27 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
-from wingerbot.blib import tname, msg, errandmsg, site
+from wingerbot.blib import tname
 from wingerbot.latin import lalib
 
 
-def correct_nom_sg_n_participle(index, page, participle, lemma):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
+def correct_nom_sg_n_participle(p, participle, lemma):
+    p.msg("Processing")
 
-    pagemsg("Processing")
-
-    text = blib.safe_page_text(page, errandpagemsg)
-
-    modsec = blib.find_modifiable_lang_section(text, "Latin", pagemsg, force_final_nls=True)
+    modsec = blib.find_modifiable_lang_section(p.text, "Latin", p.msg, force_final_nls=True)
     if modsec is None:
         return
     secbody = modsec.secbody
 
     if "===Etymology 1===" in secbody:
-        pagemsg("WARNING: Multiple etymologies, don't know what to do")
+        p.msg("WARNING: Multiple etymologies, don't know what to do")
         return
 
     notes = []
 
-    l3subsecs = blib.split_text_into_subsections(secbody, pagemsg, only_level=3)
+    l3subsecs = blib.split_text_into_subsections(secbody, p.msg, only_level=3)
     subsections = l3subsecs.subsections
 
     participle_text = """{{head|la|participle|[[indeclinable]]|head=%s}}
@@ -42,7 +34,7 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
     for k, header in l3subsecs.header_list:
         if header == "Participle":
             if saw_participle:
-                pagemsg("WARNING: Saw multiple participles, skipping")
+                p.msg("WARNING: Saw multiple participles, skipping")
                 return
             saw_participle = True
             subsections[k] = participle_text
@@ -52,10 +44,10 @@ def correct_nom_sg_n_participle(index, page, participle, lemma):
         for k, header in l3subsecs.header_list:
             insert_before = False
             if header == "References":
-                pagemsg("Inserting new participle subsection before references subsection")
+                p.msg("Inserting new participle subsection before references subsection")
                 insert_before = True
             elif re.search(r"\{\{inflection of.*\|sup", subsections[k]):
-                pagemsg("Inserting new participle subsection before supine subsection")
+                p.msg("Inserting new participle subsection before supine subsection")
                 insert_before = True
             if insert_before:
                 subsections[k - 1 : k - 1] = ["===Participle===\n" + participle_text]
@@ -86,16 +78,16 @@ def process_text_on_page(p):
                     non_impers_part = re.sub("um$", "us", supform)
                     p.msg("Line to delete: part %s allbutnomsgn {{la-adecl|%s}}" % (non_impers_part, non_impers_part))
 
-                    def do_correct_nom_sg_n_participle(index, page):
-                        return correct_nom_sg_n_participle(index, page, supform, inflargs["1s_pres_actv_indc"])
+                    def do_correct_nom_sg_n_participle(p):
+                        assert inflargs is not None  # Grrr, Pylance not smart enough
+                        return correct_nom_sg_n_participle(p, supform, inflargs["1s_pres_actv_indc"])
 
                     blib.do_edit(
+                        args,
                         p.index,
-                        pywikibot.Page(site, lalib.remove_macrons(supform)),
+                        lalib.remove_macrons(supform),
                         do_correct_nom_sg_n_participle,
-                        save=args.save,
-                        verbose=args.verbose,
-                        diff=args.diff,
+                        msg_title="%s: sup=%s" % (p.title, supform),
                     )
 
 

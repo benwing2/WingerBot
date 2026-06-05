@@ -109,8 +109,7 @@ def process_er_verb(index, pagetitle):
                         pagemsg("Would delete page '%s' with comment=%s" % (form, comment))
 
 
-parser = blib.create_argparser("Delete erroneously created French -er verb forms")
-parser.add_argument("--declfile", help="File containing verbs to delete.")
+parser = blib.create_argparser("Delete erroneously created French -er verb forms", include_pagefile=True)
 parser.add_argument(
     "--all-suffixes",
     action="store_true",

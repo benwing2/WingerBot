@@ -1,35 +1,27 @@
 #!/usr/bin/env python3
 
-import pywikibot
-
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, site
+from wingerbot.blib import msg
 
 
-def process_page(index, page, contents, lang, verbose, comment):
-    pagetitle = page.title()
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-    if verbose:
-        pagemsg("For [[%s]]:" % pagename)
-        pagemsg("------- begin text --------")
+def process_page(p, contents, comment):
+    if args.verbose:
+        p.msg("For [[%s]]:" % pagename)
+        p.msg("------- begin text --------")
         msg(contents.rstrip("\n"))
         msg("------- end text --------")
-    if not page.exists():
+    if not blib.safe_page_exists(p.page, p.errandmsg):
         return contents, comment
     else:
         insert_before = 0
-        curtext = page.text
-        secs = blib.split_text_into_sections(curtext, pagemsg)
+        curtext = p.text
+        secs = blib.split_text_into_sections(curtext, p.msg)
         sections = secs.sections
         for j, langname in secs.lang_list:
-            if langname == lang:
-                errandpagemsg("WARNING: Already found %s section" % lang)
+            if langname == args.lang:
+                p.errandmsg("WARNING: Already found %s section" % args.lang)
                 return
-            if langname > lang:
+            if langname > args.lang:
                 insert_before = j - 1
                 break
         if insert_before == 0:
@@ -59,9 +51,7 @@ if __name__ == "__main__":
         else:
             comment = args.comment
 
-        def do_process_page(index, page):
-            return process_page(index, page, text, args.lang, args.verbose, comment)
+        def do_process_page(p):
+            return process_page(p, text, comment)
 
-        blib.do_edit(
-            index, pywikibot.Page(site, pagename), do_process_page, save=args.save, verbose=args.verbose, diff=args.diff
-        )
+        blib.do_edit(args, index, pagename, do_process_page)

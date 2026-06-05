@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam, remove_links
+from wingerbot.blib import getparam, addparam, remove_links
 from wingerbot.arabic import ar_translit
 from wingerbot.arabic.arlib import (
     ALIF,
@@ -77,15 +77,7 @@ adjectival_phrases = [
 # from the headword template when creating the declension template. Parameters that are all alphabetic are expanded
 # so that e.g. "f" will also remove parameters named "f2", "f3", "f4", etc. and "ftr", "f2tr", "f3tr", etc.
 def create_declension(index, page, pos, tempname, decltempname, sgnum, removeparams, is_proper=False):
-    def create_declension_1(index, page):
-        pagetitle = page.title()
-        def pagemsg(txt):
-            msg("Page %s %s: %s" % (index, pagetitle, txt))
-        def errandpagemsg(txt):
-            errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-
-        text = blib.safe_page_text(page, errandpagemsg)
-
+    def create_declension_1(p):
         comments = []
 
         # Starts with definite article al-
@@ -110,12 +102,12 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
         def remove_al_tr(txt):
             return sub_if(r"^a?([sšṣtṯṭdḏḍzžẓnrḷ])-\1", r"\1", txt) or sub_if("^a?l-", "", txt) or txt
 
-        modsec = blib.find_modifiable_lang_section(text, "Arabic", pagemsg, force_final_nls=True)
+        modsec = blib.find_modifiable_lang_section(p.text, "Arabic", p.msg, force_final_nls=True)
         if modsec is None:
             return
         secbody = modsec.secbody
 
-        subsecs = blib.split_text_into_subsections(secbody, pagemsg)
+        subsecs = blib.split_text_into_subsections(secbody, p.msg)
         subsections = subsecs.subsections
 
         # Go through each subsection
@@ -133,10 +125,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 # avoid unnecessary saving
                 parsed = blib.parse_text(reorder_shadda(subsections[k]))
 
-                orig_pagemsg = pagemsg
-
-                def pagemsg(txt):
-                    orig_pagemsg("%s: [[%s]]" % (txt, subsections[k]))
+                p.text_suffix = ": [[%s]]" % subsections[k]
 
                 # Check for various conditions causing us to skip this entry and
                 # not try to add a declension table
@@ -150,12 +139,12 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     temp for temp in parsed.filter_templates() if temp.name in ["alternative spelling of"]
                 ]
                 if len(altspelling_templates) > 0:
-                    pagemsg("Alternative spelling redirect found in text, skipping")
+                    p.msg("Alternative spelling redirect found in text, skipping")
                     continue
                 if pos == "Adjective":
                     feminine_of_templates = [temp for temp in parsed.filter_templates() if temp.name in ["feminine of"]]
                     if len(feminine_of_templates) > 0:
-                        pagemsg("feminine-of template found for adjective, skipping")
+                        p.msg("feminine-of template found for adjective, skipping")
                         continue
 
                 # Retrieve headword_template, make sure exactly one and it is the right type
@@ -184,14 +173,14 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     ]
                 ]
                 if len(headword_templates) == 0:
-                    pagemsg("WARNING: Can't find headword template in text, skipping")
+                    p.msg("WARNING: Can't find headword template in text, skipping")
                     continue
                 if len(headword_templates) > 1:
-                    pagemsg("WARNING: Found multiple headword templates in text, skipping")
+                    p.msg("WARNING: Found multiple headword templates in text, skipping")
                     continue
                 headword_template = headword_templates[0]
                 if headword_template.name != tempname:
-                    pagemsg(
+                    p.msg(
                         "Headword template should be '%s' but is '%s', skipping" % (tempname, headword_template.name)
                     )
                     continue
@@ -218,25 +207,25 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     and re.match("^===+Usage", subsections[k + 1])
                     and re.match("^===+Declension===+\n", subsections[k + 3])
                 ):
-                    pagemsg("Declension already found for head %s, skipping" % head)
+                    p.msg("Declension already found for head %s, skipping" % head)
                     continue
 
                 # Check for cpl
                 # FIXME: Convert cpl into pl and fpl
                 if getp("cpl"):
-                    pagemsg("WARNING: Headword template for head %s has cpl param in it, skipping" % (head))
+                    p.msg("WARNING: Headword template for head %s has cpl param in it, skipping" % (head))
                     continue
 
                 # Check for empty head. If w/o explicit translit, skip; else,
                 # fetch head from page title.
                 if not head:
                     if not getp("tr"):
-                        pagemsg("WARNING: Headword template head is empty and without explicit translit, skipping")
+                        p.msg("WARNING: Headword template head is empty and without explicit translit, skipping")
                         continue
                     else:
-                        pagemsg("Headword template head is empty but has explicit translit")
+                        p.msg("Headword template head is empty but has explicit translit")
                         add_note("empty head, using page name")
-                    head = pagetitle
+                    head = p.title
                     putp("1", head)
 
                 # Try to handle cases with a modifier; we can't handle all of them yet
@@ -246,7 +235,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     words = re.split(r"\s", remove_links(head))
                     head = words[0]
                     if len(words) > 2:
-                        pagemsg("WARNING: Headword template head %s has two or more spaces in it, skipping" % orighead)
+                        p.msg("WARNING: Headword template head %s has two or more spaces in it, skipping" % orighead)
                         continue
                     assert len(words) == 2
 
@@ -255,7 +244,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     for badparam in ["pl2", "pltr", "head2", "sing", "coll"]:
                         if getp(badparam):
                             # FIXME
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Headword template head %s has space in it and param %s, skipping"
                                 % (orighead, badparam)
                             )
@@ -269,17 +258,17 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
 
                     def remove_nom_gen_i3rab(word, nomgen, undia, undiatext, udia, udiatext):
                         if word.endswith(undia):
-                            pagemsg("Removing %s i3rab (%s) from %s" % (nomgen, undiatext, word))
+                            p.msg("Removing %s i3rab (%s) from %s" % (nomgen, undiatext, word))
                             add_note("removing %s i3rab (%s)" % (nomgen, undiatext))
                             return re.sub(undia + "$", "", word)
                         if word.endswith(udia):
-                            pagemsg("Removing %s i3rab (%s) from %s" % (nomgen, udiatext, word))
+                            p.msg("Removing %s i3rab (%s) from %s" % (nomgen, udiatext, word))
                             add_note("removing %s i3rab (%s)" % (nomgen, udiatext))
                             return re.sub(udia + "$", "", word)
                         if re.search(DIACRITIC_ANY_BUT_SH + "$", word):
-                            pagemsg("WARNING: Strange diacritic at end of %s %s" % (nomgen, word))
+                            p.msg("WARNING: Strange diacritic at end of %s %s" % (nomgen, word))
                         if word[0] == ALIF_WASLA:
-                            pagemsg("Changing %s alif wasla to plain alif for %s" % (nomgen, word))
+                            p.msg("Changing %s alif wasla to plain alif for %s" % (nomgen, word))
                             add_note("changing %s alif wasla to plain alif" % (nomgen))
                             word = ALIF + word[1:]
                         return word
@@ -304,21 +293,21 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     putp("1", words[0])
                     putp("mod", words[1])
                     if word0al and word1al:
-                        pagemsg(
+                        p.msg(
                             "Headword template head %s has space in it and found definite adjective construction"
                             % (orighead)
                         )
                         add_note("modifier definite adjective construction")
                         putp("state", "def")
                     elif word0al and not word1al:
-                        pagemsg(
+                        p.msg(
                             "WARNING: Headword template head %s has space in it and found al-X + Y construction, can't handle, skipping"
                             % (orighead)
                         )
                         continue
                     elif is_proper:
                         if words[0].endswith(ALIF) and word1al:
-                            pagemsg(
+                            p.msg(
                                 "Proper noun headword template head %s has space in it and found ind-def with definite adjectival modifier"
                                 % (orighead)
                             )
@@ -326,7 +315,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                             putp("state", "ind-def")
                         elif remove_diacritics(words[0]) == "جمهورية":
                             if word1al:
-                                pagemsg(
+                                p.msg(
                                     "Proper noun headword template head %s has space in it and found definite idafa"
                                     % (orighead)
                                 )
@@ -336,7 +325,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                                 idafaval = "def"
                                 putp("idafa", idafaval)
                             elif words[1].endswith(ALIF):
-                                pagemsg(
+                                p.msg(
                                     "Proper noun headword template head %s has space in it and found idafa with ind-def modifier"
                                     % (orighead)
                                 )
@@ -345,13 +334,13 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                                 idafaval = "ind-def"
                                 putp("idafa", idafaval)
                             else:
-                                pagemsg(
+                                p.msg(
                                     "WARNING: Proper noun headword template head %s has space in it and found idafa construction we can't handle, skipping"
                                     % (orighead)
                                 )
                                 continue
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Proper noun headword template head %s has space in it and can't determine whether idafa, skipping"
                                 % (orighead)
                             )
@@ -359,7 +348,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
 
                     elif not word0al and word1al:
                         # Found an ʾidāfa construction
-                        pagemsg("Headword template head %s has space in it and found definite idafa" % (orighead))
+                        p.msg("Headword template head %s has space in it and found definite idafa" % (orighead))
                         add_note("modifier definite idafa construction")
                         idafa = True
                         idafaval = "def-" + sgnum
@@ -367,25 +356,25 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                             idafaval = "def"
                         putp("idafa", idafaval)
                     elif words[1].endswith(I + Y):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Headword template head %s has space in it and appears to end in badly formatted nisba, FIXME, skipping"
                             % (orighead)
                         )
                         continue
                     elif words[1].endswith(I + Y + SH):
-                        pagemsg(
+                        p.msg(
                             "Headword template head %s has space in it and found indefinite adjective nisba construction"
                             % (orighead)
                         )
                         add_note("modifier indefinite nisba adjective construction")
-                    elif pagetitle in adjectival_phrases:
-                        pagemsg(
+                    elif p.title in adjectival_phrases:
+                        p.msg(
                             "Headword template head %s has space in it, indefinite, and manually specified to be adjectival"
                             % (orighead)
                         )
                         add_note("modifier indefinite adjective construction")
                     else:
-                        pagemsg(
+                        p.msg(
                             "Headword template head %s has space in it, indefinite, and not specified to be adjectival, assuming idafa"
                             % (orighead)
                         )
@@ -402,11 +391,11 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
 
                     # Now check if the lemma is plural
                     if re.match(r"\bp\b", getp("2")):
-                        pagemsg("Headword template head %s has space in it and is plural" % (orighead))
+                        p.msg("Headword template head %s has space in it and is plural" % (orighead))
                         add_note("plural lemma")
                         if getp("tr"):
                             # FIXME (doesn't occur though)
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Headword template head %s has space in it and manual translit and is plural, skipping"
                                 % (orighead)
                             )
@@ -428,7 +417,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                             putp("modpl", remove_nom_i3rab(pls[1]))
                         else:
                             if pls[1] != getp("mod"):
-                                pagemsg(
+                                p.msg(
                                     "FIXME: Headword template head %s, plural modifier %s not same as singular modifier %s in idafa construction"
                                     % (orighead, pls[1], getp("mod"))
                                 )
@@ -439,7 +428,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     # construct state, and check to see if manual translit is
                     # same as auto translit, in which case it's unnecessary.
                     if getp("tr"):
-                        pagemsg("Headword template head %s has space in it and manual translit" % (orighead))
+                        p.msg("Headword template head %s has space in it and manual translit" % (orighead))
                         trwords = re.split(r"\s", getp("tr"))
                         assert len(trwords) == 2
                         trwords[0] = remove_nom_i3rab_tr(remove_al_tr(trwords[0]))
@@ -455,27 +444,27 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                             if words[i].endswith(ALIF + TAM) and not trwords[i].endswith("h"):
                                 trwords[i] += "h"
                         if ar_translit.tr(words[0]) != trwords[0]:
-                            pagemsg(
+                            p.msg(
                                 "Headword template head %s has space in it and manual translit %s which is different from auto-translit of %s"
                                 % (orighead, trwords[0], words[0])
                             )
                             add_note("modified head w/manual translit")
                             putp("1", "%s/%s" % (getp("1"), trwords[0]))
                         else:
-                            pagemsg(
+                            p.msg(
                                 "Headword template head %s has space in it and manual translit %s which is same as auto-translit of %s"
                                 % (orighead, trwords[0], words[0])
                             )
                             add_note("modified head w/ignored manual translit")
                         if ar_translit.tr(words[1]) != trwords[1]:
-                            pagemsg(
+                            p.msg(
                                 "Headword template head %s has space in it and manual translit %s which is different from auto-translit of %s"
                                 % (orighead, trwords[1], words[1])
                             )
                             add_note("modifier w/manual translit")
                             putp("mod", "%s/%s" % (getp("mod"), trwords[1]))
                         else:
-                            pagemsg(
+                            p.msg(
                                 "Headword template head %s has space in it and manual translit %s which is same as auto-translit of %s"
                                 % (orighead, trwords[1], words[1])
                             )
@@ -486,7 +475,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
 
                     # If has link in it, just remove it
                     if "[" in head or "]" in head or "|" in head:
-                        pagemsg("Headword template head %s has link in it" % (head))
+                        p.msg("Headword template head %s has link in it" % (head))
                         add_note("removed links from head")
                         head = remove_links(head)
                         putp("1", head)
@@ -494,7 +483,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     # If starts with definite article, remove article from everything,
                     # including transliterations, and set state=def
                     if starts_with_al(head):
-                        pagemsg("Headword template head %s starts with definite article" % (head))
+                        p.msg("Headword template head %s starts with definite article" % (head))
                         add_note("definite lemma")
                         head = remove_al(head)
                         putp("1", head)
@@ -506,7 +495,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                             value = getparam(headword_template, param)
                             if value:
                                 if "[" in value or "]" in value or "|" in value:
-                                    pagemsg("Param %s value %s has link in it" % (param, value))
+                                    p.msg("Param %s value %s has link in it" % (param, value))
                                     add_note("removed links from %s" % param)
                                     value = remove_links(value)
                                 putp(param, remove_al(value))
@@ -534,31 +523,31 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                                 check_for_al_tr("%s%str" % (param, i))
                     elif is_proper:
                         if head.endswith(ALIF):
-                            pagemsg("Headword template head %s ends in -ā" % (head))
+                            p.msg("Headword template head %s ends in -ā" % (head))
                             putp("state", "ind-def")
                         else:
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Headword template head %s is indefinite proper noun, not ending in -ā, skipping"
                                 % (head)
                             )
                             continue
 
                     if head.endswith(UN):
-                        pagemsg("Headword template head %s ends with explicit i3rab (UN)" % (head))
+                        p.msg("Headword template head %s ends with explicit i3rab (UN)" % (head))
                         add_note("head has explicit i3rab (UN)")
                         # We don't continue here because we handle this case below
                     elif head.endswith(U):
-                        pagemsg("Headword template head %s ends with explicit i3rab (U)" % (head))
+                        p.msg("Headword template head %s ends with explicit i3rab (U)" % (head))
                         add_note("head has explicit i3rab (U)")
                         # We don't continue here because we don't need to handle this case
 
                     # Now check if the lemma is plural
                     if re.match(r"\bp\b", getp("2")):
-                        pagemsg("Headword template head %s is plural" % (head))
+                        p.msg("Headword template head %s is plural" % (head))
                         add_note("plural lemma")
                         if getp("tr"):
                             # FIXME (doesn't occur though)
-                            pagemsg(
+                            p.msg(
                                 "WARNING: Headword template head %s has manual translit and is plural, skipping"
                                 % (head)
                             )
@@ -586,7 +575,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 def remove_i3rab(param):
                     txt = str(param)
                     if txt.endswith(UN):
-                        pagemsg("Removing i3rab from %s: %s" % (txt, str(headword_template)))
+                        p.msg("Removing i3rab from %s: %s" % (txt, str(headword_template)))
                         add_note("removing i3rab")
                     return re.sub(UN + "$", "", txt)
 
@@ -604,13 +593,13 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                     # to signal the strong plural.
                     if arabic.endswith("=+"):
                         newarabic = re.sub(r"=\+$", "=sp", arabic)
-                        pagemsg("Converting %s to %s: %s" % (arabic, newarabic, str(headword_template)))
+                        p.msg("Converting %s to %s: %s" % (arabic, newarabic, str(headword_template)))
                         arabic = newarabic
                     # Value of - is used in ar-adj-in to signal an unknown
                     # feminine plural.
                     if arabic.endswith("=-"):
                         newarabic = re.sub(r"=-$", "=?", arabic)
-                        pagemsg("Converting %s to %s: %s" % (arabic, newarabic, str(headword_template)))
+                        p.msg("Converting %s to %s: %s" % (arabic, newarabic, str(headword_template)))
                         arabic = newarabic
                     # Don't process translit in modifier constructions, where the
                     # translit is also processed.
@@ -633,7 +622,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 subsections[k] = body
                 comment = "added declension for %s %s" % (
                     tempname,
-                    remove_links(orighead) or "%s/%s" % (pagetitle, getp("tr")),
+                    remove_links(orighead) or "%s/%s" % (p.title, getp("tr")),
                 )
                 note = ", ".join(notes)
                 if note:
@@ -641,7 +630,7 @@ def create_declension(index, page, pos, tempname, decltempname, sgnum, removepar
                 comments.append(comment)
         return modsec.rebuild(secbody="".join(subsections)), comments
 
-    blib.do_edit(index, page, create_declension_1, save=args.save, verbose=args.verbose, diff=args.diff)
+    blib.do_edit(args, index, page, create_declension_1)
 
 
 def create_declensions(pos, tempname, decltempname, sgnum, start, end, removeparams, is_proper=False):

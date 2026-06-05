@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pywikibot, re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errandmsg, site, tname, pname
+from wingerbot.blib import getparam, msg, site, tname, pname
 from wingerbot.latin import lalib
 
 skip_pages = []
@@ -614,8 +614,14 @@ def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pag
     return section, notes, was_unable_to_match
 
 
-def process_text_on_page(p):
+def process_text_on_page(p, lemma=None):
     p.msg("Processing")
+
+    if lemma is not None and p.title == lalib.remove_macrons(lemma):
+        # We're processing a non-lemma form; skip if the same as the lemma form. Do this check here instead of in the
+        # caller so we get consistent pagemsg() format with other non-lemma messages.
+        p.msg("Skipping dictionary form")
+        return
 
     for skip_regex in skip_pages:
         if re.search(skip_regex, p.title):
@@ -865,19 +871,9 @@ def process_text_on_page(p):
     return text, notes
 
 
-def process_lemma(index, pagetitle, slots, args):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def errandpagemsg(txt):
-        errandmsg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
-
-    pagemsg("Processing")
-
-    page = pywikibot.Page(site, pagetitle)
-    pagetext = blib.safe_page_text(page, errandpagemsg)
-    parsed = blib.parse_text(pagetext)
+def process_lemma(p, lemma):
+    p.msg("Processing")
+    parsed = blib.parse_text(p.text)
     for t in parsed.filter_templates():
         tn = tname(t)
         pos = None
@@ -888,13 +884,14 @@ def process_lemma(index, pagetitle, slots, args):
         elif tn == "la-adecl":
             pos = "adj"
         if pos:
-            inflargs = lalib.generate_infl_forms(pos, str(t), errandpagemsg, expand_text)
+            inflargs = lalib.generate_infl_forms(pos, str(t), p.errandmsg, p.expand_text)
             if inflargs is None:
                 # Error generating forms?
                 continue
-            for slot in inflargs:
+            for _, (slotformind, slotformtitle, slot, formval) in blib.iter_items(
+                lalib.flatten_slot_formvals(p.index, lemma, inflargs), get_name=lambda x: x[3]):
                 matches = False
-                for spec in slots:
+                for spec in args_slots:
                     if spec == slot:
                         matches = True
                         break
@@ -902,31 +899,10 @@ def process_lemma(index, pagetitle, slots, args):
                         matches = True
                         break
                 if matches:
-                    for formpagename in re.split(",", inflargs[slot]):
-                        if "[" in formpagename or "|" in formpagename:
-                            pagemsg("WARNING: Skipping page %s with links in it" % formpagename)
-                        else:
-                            formpagename = lalib.remove_macrons(formpagename)
-                            formpage = pywikibot.Page(site, formpagename)
-                            if not formpage.exists():
-                                pagemsg("WARNING: Form page %s doesn't exist, skipping" % formpagename)
-                            elif formpagename == pagetitle:
-                                pagemsg("WARNING: Skipping dictionary form")
-                            else:
-
-                                def do_process_page(index, page):
-                                    pagetitle = str(page.title)
-                                    text = blib.safe_page_text(page, errandpagemsg)
-                                    return process_text_on_page(blib.ProcessPageParams(args, index, pagetitle, text))
-
-                                blib.do_edit(
-                                    index,
-                                    formpage,
-                                    do_process_page,
-                                    save=args.save,
-                                    verbose=args.verbose,
-                                    diff=args.diff,
-                                )
+                    def do_process_text_on_page(pp):
+                        return process_text_on_page(pp, lemma)
+                    blib.do_edit(args, slotformind, lalib.remove_macrons(formval), do_process_text_on_page, must_exist=True,
+                                 msg_title=slotformtitle)
 
 
 parser = blib.create_argparser(
@@ -942,14 +918,16 @@ args = parser.parse_args()
 start, end = blib.parse_start_end(args.start, args.end)
 
 if args.lemma_file or args.lemmas:
-    slots = args.slots.split(",")
+    args_slots = args.slots.split(",")
 
     if args.lemma_file:
         lemmas = blib.iter_items_from_file(args.lemma_file, start, end)
     else:
         lemmas = blib.iter_items(re.split(",", args.lemmas), start, end)
     for i, lemma in lemmas:
-        process_lemma(i, lalib.remove_macrons(lemma), slots, args)
+        def do_process_lemma(p):
+            return process_lemma(p, lemma)
+        blib.do_edit(args, i, lalib.remove_macrons(lemma), do_process_lemma, msg_title=lemma)
 
 else:
     blib.do_pagefile_cats_refs(
