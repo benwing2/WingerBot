@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import re, unicodedata
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, rsub_repeatedly
+from wingerbot.blib import getparam, tname
 
 recogized_poses = {
     "noun": "n",

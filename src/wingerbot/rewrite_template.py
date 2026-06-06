@@ -23,7 +23,8 @@ def rename_template_and_subpage(index, old_name, new_name, pagemsg, errandpagems
         rename_comment = "rename template preparatory to renaming all uses"
     rename_comment = blib.changelog_to_string(rename_comment, args.comment_tag)
     templates_to_rename.remove(old_name)
-    if not rename_page(args, index, template_page, "Template:%s" % new_name, rename_comment, None, None):
+    renp = blib.create_process_page_params(args, index, template_page, no_fetch_text=True)
+    if not rename_page(renp, "Template:%s" % new_name, rename_comment):
         ignore_error = False
         if ignore_rename_errors is True:
             ignore_error = True  # ignore all rename errors
@@ -40,9 +41,8 @@ def rename_template_and_subpage(index, old_name, new_name, pagemsg, errandpagems
         docpage = pywikibot.Page(site, docpagename)
         new_docpagename = "Template:%s/documentation" % new_name
         if blib.safe_page_exists(docpage, errandpagemsg):
-            if not rename_page(
-                args, index, docpage, new_docpagename, "%s (rename doc page)" % rename_comment, None, None
-            ):
+            renp = blib.create_process_page_params(args, index, docpage, no_fetch_text=True)
+            if not rename_page(renp, new_docpagename, "%s (rename doc page)" % rename_comment):
                 pagemsg(
                     "WARNING: Ignoring rename error for doc page %s -> %s" % (old_name, docpagename, new_docpagename)
                 )
@@ -50,9 +50,8 @@ def rename_template_and_subpage(index, old_name, new_name, pagemsg, errandpagems
         talkpage = pywikibot.Page(site, talkpagename)
         new_talkpagename = "Template talk:%s" % new_name
         if blib.safe_page_exists(talkpage, errandpagemsg):
-            if not rename_page(
-                args, index, talkpage, new_talkpagename, "%s (rename talk page)" % rename_comment, None, None
-            ):
+            renp = blib.create_process_page_params(args, index, talkpage, no_fetch_text=True)
+            if not rename_page(renp, new_talkpagename, "%s (rename talk page)" % rename_comment):
                 pagemsg(
                     "WARNING: Ignoring rename error for talk page %s -> %s" % (old_name, talkpagename, new_talkpagename)
                 )

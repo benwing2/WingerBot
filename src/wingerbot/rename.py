@@ -7,7 +7,7 @@ import pywikibot
 import pywikibot.exceptions
 
 
-def rename_page(p, totitle, comment, refrom, reto):
+def rename_page(p, totitle, comment, refrom: list[str] | None = None, reto: list[str] | None = None) -> bool:
     if p.page is None:
         raise ValueError("Cannot run on text from stdin")
     if refrom and reto:
@@ -28,8 +28,8 @@ def rename_page(p, totitle, comment, refrom, reto):
     )
     if not blib.safe_page_exists(p.page, p.errandmsg):
         p.msg("Skipping because page doesn't exist")
-        return
-    if args.verbose:
+        return False
+    if p.args.verbose:
         p.msg("Processing")
     if not totitle:
         totitle = replace_text(p.title)
@@ -39,26 +39,28 @@ def rename_page(p, totitle, comment, refrom, reto):
         new_page = pywikibot.Page(site, totitle)
         if blib.safe_page_exists(new_page, p.errandmsg):
             p.errandmsg("Destination page %s already exists, not moving" % totitle)
-            return
-        elif args.save:
+            return False
+        elif p.args.save:
             try:
-                p.page.move(totitle, reason=this_comment, movetalk=True, noredirect=not args.with_redirect)
+                p.page.move(totitle, reason=this_comment, movetalk=True, noredirect=not p.args.with_redirect)
                 p.errandmsg("Renamed to %s" % totitle)
+                return True
             except pywikibot.exceptions.PageRelatedError as error:
                 p.errandmsg("Error moving to %s: %s" % (totitle, error))
-                return
+                return False
         else:
             p.msg("Would rename to %s (comment=%s)" % (totitle, this_comment))
+            return True
 
 
 def delete_page(p, comment):
     if p.page is None:
         raise ValueError("Cannot run on text from stdin")
-    if args.verbose:
+    if p.args.verbose:
         p.msg("Processing")
     this_comment = comment or "delete page"
     if blib.safe_page_exists(p.page, p.errandmsg):
-        if args.save:
+        if p.args.save:
             existing_text = blib.safe_page_text_or_none(p.page, p.errandmsg)
             if existing_text is not None:
                 p.page.delete('%s (content was "%s")' % (this_comment, existing_text))
@@ -111,20 +113,26 @@ if __name__ == "__main__":
             else:
                 frompage, topage = line.split(" ||| ")
                 pages_to_rename.append((lineno, frompage, topage))
-        for index, pagetitle in pages_to_delete:
-            delete_page(blib.ProcessPageParams(args, index, pagetitle, "", page=pywikibot.Page(site, pagetitle)),
-                        args.delete_comment)
-        for index, frompage, topage in pages_to_rename:
-            rename_page(blib.ProcessPageParams(args, index, frompage, "", page=pywikibot.Page(site, frompage)),
-                        topage, args.rename_comment, from_, to)
+        for delindex, pagetitle in pages_to_delete:
+            delp = blib.create_process_page_params(args, delindex, pagetitle, no_fetch_text=True)
+            if delp is None:
+                continue
+            delete_page(delp, args.delete_comment)
+        for renindex, frompage, topage in pages_to_rename:
+            renp = blib.create_process_page_params(args, renindex, frompage, no_fetch_text=True)
+            if renp is None:
+                continue
+            rename_page(renp, topage, args.rename_comment, from_, to)
     elif args.direcfile:
         for lineno, line in blib.iter_items_from_file(args.direcfile, start, end):
             if " ||| " not in line:
                 msg("Line %s: WARNING: Saw bad line in --from-to-pagefile: %s" % (lineno, line))
                 continue
             frompage, topage = line.split(" ||| ")
-            rename_page(blib.ProcessPageParams(args, lineno, frompage, "", page=pywikibot.Page(site, frompage)),
-                        topage, args.rename_comment, from_, to)
+            renp = blib.create_process_page_params(args, lineno, frompage, no_fetch_text=True)
+            if renp is None:
+                continue
+            rename_page(renp, topage, args.rename_comment, from_, to)
     else:
 
         def do_process_page(p):
