@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import tname, pname
+from wingerbot.blib import tname
 
 pronun_templates = ["IPA", "szy-IPA"]
 

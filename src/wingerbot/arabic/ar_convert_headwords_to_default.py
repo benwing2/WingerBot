@@ -4,7 +4,7 @@ import re
 
 from wingerbot import blib
 from wingerbot.arabic import arlib as ar
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, rmparam, tname
 
 
 class BadTranslitException(Exception):

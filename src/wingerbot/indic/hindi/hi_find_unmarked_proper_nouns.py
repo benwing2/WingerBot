@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 
 # Hindi vowel diacritics; don't display nicely on their own
 M = "\u0901"

@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, tname, pname
+from wingerbot.blib import rmparam, tname
 
 
 def process_text_on_page(p):

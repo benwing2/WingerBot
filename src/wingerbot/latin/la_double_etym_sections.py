@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import pname
 
 from wingerbot.latin import lalib
 

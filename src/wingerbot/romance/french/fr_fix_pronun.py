@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, rmparam, tname
 
 french_nonverb_head_templates = [
     "fr-abbr",

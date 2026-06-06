@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname
 
 dont_singularize = {
     "Browns",

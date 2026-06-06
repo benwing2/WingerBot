@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, rmparam, tname
 
 AC = "\u0301"
 GR = "\u0300"

@@ -3,7 +3,7 @@
 import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 
 lang_to_name = {
     "es": "Spanish",

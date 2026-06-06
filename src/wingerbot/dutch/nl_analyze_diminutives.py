@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import tname, pname, msg
+from wingerbot.blib import tname, msg
 from collections import defaultdict
 
 num_pages_by_dim_ending = defaultdict(int)

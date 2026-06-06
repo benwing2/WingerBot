@@ -3,7 +3,7 @@
 import re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 
 conventional_names = {
     "beginning": "Beginning Mandarin",

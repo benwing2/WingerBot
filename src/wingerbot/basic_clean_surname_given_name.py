@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, rmparam, tname
 
 name_templates = ["surname", "given name"]
 name_template_re = "(?:%s)" % "|".join(name_templates)

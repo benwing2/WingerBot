@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 from collections import defaultdict
 
 seen_projects = defaultdict(int)

@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 
 hindi_head_templates = [
     "hi-adj",

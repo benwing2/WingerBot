@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, rmparam, tname
 
 from wingerbot.slavic.bulgarian import bglib
 

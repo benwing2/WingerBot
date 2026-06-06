@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import msg, pname
+from wingerbot.blib import msg
 
 pages_to_delete = []
 

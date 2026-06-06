@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 
 old_to_std_code_mapping = {
     "MSC": "cmn",

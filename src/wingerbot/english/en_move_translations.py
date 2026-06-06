@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import pname
 
 headers_to_swap = [
     "Further reading",

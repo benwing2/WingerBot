@@ -4,7 +4,7 @@ from collections import defaultdict
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname, msg
+from wingerbot.blib import getparam, tname, msg
 
 hu_lemma_template_mapping = {
     "hu-noun": "noun",

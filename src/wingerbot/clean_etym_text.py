@@ -6,7 +6,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import pname, msg
+from wingerbot.blib import msg
 from collections import defaultdict
 
 lastcats_seen = defaultdict(int)

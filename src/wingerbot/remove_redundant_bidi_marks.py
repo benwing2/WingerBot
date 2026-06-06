@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import pname
 from bidi.algorithm import get_display
 
 L2R = "\u200e"

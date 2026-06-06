@@ -3,7 +3,7 @@
 import re, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname
+from wingerbot.blib import getparam, tname
 
 
 def split_line(line):
