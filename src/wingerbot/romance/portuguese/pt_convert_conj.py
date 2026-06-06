@@ -3,7 +3,7 @@
 import re, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname, msg
+from wingerbot.blib import getparam, tname, msg
 
 
 def convert_old_slot_name(slot, values):

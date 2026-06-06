@@ -295,15 +295,13 @@
 #     in the same set of defn lines; same with acc|s and {an,in}|acc|s
 # 99. Use {{participle of|ru}} instead of {{ru-participle of}}.
 
-import pywikibot, re
-import unicodedata
-
-from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+import pywikibot, re, unicodedata
 from collections import OrderedDict
 
+from wingerbot import blib, infltags
+from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg, site
+from wingerbot.lang_utils import AC, GR
 from wingerbot.slavic.russian import rulib
-from wingerbot import infltags
 
 verbose = True
 
@@ -342,9 +340,6 @@ preferred_tag_variants = {
 }
 
 tag_to_dimension_table, tag_to_canonical_form_table = infltags.fetch_tag_tables(preferred_tag_variants)
-
-AC = "\u0301"  # acute accent
-GR = "\u0300"  # grave accent
 
 # List of nouns where there are multiple headword genders and the gender
 # in the declension is acceptable

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
-from collections import defaultdict
 
 seen_projects = defaultdict(int)
 

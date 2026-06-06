@@ -2,10 +2,9 @@
 
 import re
 import unicodedata
-from wingerbot import blib
 
-AC = "\u0301"  # acute =  ́
-GR = "\u0300"  # grave =  ̀
+from wingerbot import blib
+from wingerbot.lang_utils import AC, GR
 
 # non-primary accents (i.e. excluding acute) that indicate pronunciation
 # (not counting diaeresis, which indicates a completely different vowel,

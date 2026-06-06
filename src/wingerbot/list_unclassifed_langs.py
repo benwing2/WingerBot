@@ -3,7 +3,6 @@
 import re
 from wingerbot import blib, lang_utils
 from wingerbot.blib import msg
-from collections import defaultdict
 
 # blib.init_fake_langdata()
 lang_data = lang_utils.get_lang_data()

@@ -148,10 +148,8 @@
 #    causes a difference and manually verify that they are OK.
 # 9. [DONE] Allow multiple qualifiers, e.g. "small unincorporated".
 
-
-from collections import defaultdict
-
 import re, sys
+from collections import defaultdict
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import msg

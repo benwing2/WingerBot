@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import re, unicodedata
+import re
+from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, msg, errmsg, tname
-from collections import defaultdict
+from wingerbot.blib import getparam, msg, tname
 
 lang_utils.init_fake_lang_data()
 lang_data = lang_utils.get_lang_data()

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import re, json
+from collections import defaultdict
+from typing import cast
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, msg, tname, pname
-from collections import defaultdict
-from typing import cast
 
 lang_utils.init_fake_lang_data()
 lang_data = lang_utils.get_lang_data()

@@ -4,8 +4,7 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname
-
-AC = "\u0301"
+from wingerbot.lang_utils import AC
 
 old_bg_conj_to_conj = {
     "bg-conj-1st (kapya)": ["1.3.", "stem-stressed", "need-vn"],

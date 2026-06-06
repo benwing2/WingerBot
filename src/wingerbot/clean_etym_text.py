@@ -4,16 +4,15 @@
 # From {{bor|en|es|Sra.}}
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import msg
-from collections import defaultdict
 
 lastcats_seen = defaultdict(int)
 
 
 def process_text_on_page(p):
-    origtext = p.text
     notes = []
 
     if blib.page_should_be_ignored(p.title):

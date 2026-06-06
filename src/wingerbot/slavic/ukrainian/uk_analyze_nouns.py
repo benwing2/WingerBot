@@ -4,10 +4,8 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
-
+from wingerbot.lang_utils import AC
 from wingerbot.slavic.ukrainian import uklib as uk
-
-AC = "\u0301"
 
 
 def param_is_end_stressed(param, possible_endings=[]):
@@ -123,7 +121,7 @@ def process_text_on_page(p):
             values = re.split(", *", paramval)
             found_endings = []
             for v in values:
-                v = v.replace(uk.AC, "")
+                v = v.replace(AC, "")
                 for ending in endings:
                     if v.endswith(ending):
                         found_endings.append(ending)

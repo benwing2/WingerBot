@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import json, unicodedata
-
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname
+from wingerbot.blib import getparam, tname
 
 
 def process_text_on_page(p):

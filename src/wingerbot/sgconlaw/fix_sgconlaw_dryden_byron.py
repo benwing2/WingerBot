@@ -20,10 +20,8 @@
 # #* {{RQ:Byron Childe Harold|canto=III|stanza=I|passage=When last I saw thy young blue eyes, they '''smiled'''.}}
 
 import re
-import mwparserfromhell as mw
 
 from wingerbot import blib
-from wingerbot.blib import set_template_name, errmsg
 
 arabic_to_roman_form = {
     "1": "I",

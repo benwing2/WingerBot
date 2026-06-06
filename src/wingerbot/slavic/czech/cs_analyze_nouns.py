@@ -5,6 +5,7 @@ import re
 from wingerbot import blib
 from wingerbot.blib import tname
 from wingerbot.slavic.czech import cslib as cs
+from wingerbot.slavic.czech.cslib import TEMP_CH
 
 
 def is_undefined(word):
@@ -303,7 +304,7 @@ def process_text_on_page(p):
                 return False
             stem = m.group(1)
             # Substitute 'ch' with a single character to make the following code simpler.
-            stem = stem.replace("ch", cs.TEMP_CH)
+            stem = stem.replace("ch", TEMP_CH)
             if re.search(cs.cons_c + "[lr]" + cs.cons_c + "$", stem):
                 # [[vrba]], [[slha]]; not reducible.
                 return False

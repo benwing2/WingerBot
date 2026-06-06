@@ -4,6 +4,7 @@
 # so we can generate phon= for ru-IPA calls from the transliteration.
 
 import re
+from wingerbot.lang_utils import AC
 from wingerbot.slavic.russian import rulib
 
 latin_to_russian_tab_1_char = {
@@ -92,9 +93,6 @@ latin_to_russian_tab_2_char = {
 # FIXME! Doesn't work with ɣ, which gets included in this character set
 non_consonants = "[" + rulib.vowel + rulib.tr_vowel + r"ЪЬъьʹʺ\W]"
 consonants = "[^" + rulib.vowel + rulib.tr_vowel + r"ЪЬъьʹʺ\W]"
-
-AC = "\u0301"
-GR = "\u0300"
 
 
 def rsub(text, fr, to):

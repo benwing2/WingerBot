@@ -61,7 +61,7 @@ from wingerbot.arabic.arlib import (
 # -- 'hundredtr': For numbers 1-10, translit form of number*100
 # -- 'thousand': For numbers 1-10, Arabic form of number*1000
 # -- 'thousandtr': For numgers 1-10, translit form of number*1000
-class Number(object):
+class Number:
     thousandpl = "آلَاف"
     thousandpltr = ar_translit.tr(thousandpl)
 

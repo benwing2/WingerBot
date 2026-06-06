@@ -20,6 +20,7 @@ from wingerbot.arabic.arlib import (
     SK,
     L,
 )
+from wingerbot.lang_utils import ZWNJ, ZWJ
 
 # FIXME!! To do:
 #
@@ -71,11 +72,6 @@ def nfc_form(txt):
     return unicodedata.normalize("NFC", str(txt))
 
 
-zwnj = "\u200c"  # zero-width non-joiner
-zwj = "\u200d"  # zero-width joiner
-# lrm = "\u200e" # left-to-right mark
-# rlm = "\u200f" # right-to-left mark
-
 tt = {
     # consonants
     "ب": "b",
@@ -108,8 +104,8 @@ tt = {
     # most instances of tāʾ marbūṭa before we get to this stage.
     "\u0629": "t",  # tāʾ marbūṭa = ة
     # control characters
-    zwnj: "-",  # ZWNJ (zero-width non-joiner)
-    zwj: "-",  # ZWJ (zero-width joiner)
+    ZWNJ: "-",  # ZWNJ (zero-width non-joiner)
+    ZWJ: "-",  # ZWJ (zero-width joiner)
     # rare letters
     "پ": "p",
     "چ": "č",
@@ -505,8 +501,8 @@ tt_to_arabic_matching = {
     # control characters
     # The following are unnecessary because we handle them specially in
     # check_against_hyphen() and other_arabic_chars.
-    # zwnj:["-"],#,""], # ZWNJ (zero-width non-joiner)
-    # zwj:["-"],#,""], # ZWJ (zero-width joiner)
+    # ZWNJ:["-"],#,""], # ZWNJ (zero-width non-joiner)
+    # ZWJ:["-"],#,""], # ZWJ (zero-width joiner)
     # rare letters
     "پ": "p",
     "چ": ["č", "ch"],
@@ -591,7 +587,7 @@ latin_consonants_no_double_after_cons_re = "[%s]" % (latin_consonants_no_double_
 # get_matches() about this so it doesn't throw an "Encountered non-Arabic"
 # error, but instead just returns an empty list of matches so match() will
 # properly fail.
-other_arabic_chars = [zwj, zwnj, "-", "–"]
+other_arabic_chars = [ZWJ, ZWNJ, "-", "–"]
 
 word_interrupting_chars = "ـ[]"
 
@@ -1266,14 +1262,14 @@ def tr_matching(arabic, latin, err=False, msgfun=msg):
             return True
         return False
 
-    # Check for Latin hyphen and match it against -, zwj, zwnj, Arabic space
+    # Check for Latin hyphen and match it against -, ZWJ, ZWNJ, Arabic space
     # or nothing. See the caller for some of the reasons we special-case
     # this.
     def check_against_hyphen():
         if lind[0] < llen and la[lind[0]] == "-":
             if aind[0] >= alen:
                 lres.append("-")
-            elif ar[aind[0]] in ["-", "–", zwj, zwnj]:
+            elif ar[aind[0]] in ["-", "–", ZWJ, ZWNJ]:
                 lres.append("-")
                 res.append(ar[aind[0]])
                 aind[0] += 1
@@ -1490,7 +1486,7 @@ tt_to_arabic_direct = {
     # an utterance, "t" in ʾiḍāfa or with pronounced tanwīn
     # \u0629 = tāʾ marbūṭa = ة
     # control characters
-    # zwj:"", # ZWJ (zero-width joiner)
+    # ZWJ:"", # ZWJ (zero-width joiner)
     # rare letters
     "p": "پ",
     "č": "چ",

@@ -3,7 +3,8 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, errmsg, tname
+from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.lang_utils import arabic_charset
 
 northern_kurdish_lemmas = set()
 for i, art in blib.cat_articles("Northern Kurdish lemmas"):
@@ -13,8 +14,6 @@ for i, art in blib.cat_articles("Central Kurdish lemmas"):
     central_kurdish_lemmas.add(art.title())
 
 trans_templates = blib.translation_templates
-
-arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
 
 
 def process_text_on_page(p):

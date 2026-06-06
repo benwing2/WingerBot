@@ -56,16 +56,8 @@ import re, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname, rsub_repeatedly
+from wingerbot.lang_utils import AC, GR, CFLEX, DIA, DOTOVER, DOTUNDER, LINEUNDER, TIE
 
-AC = "\u0301"  # acute =  ́
-GR = "\u0300"  # grave =  ̀
-CFLEX = "\u0302"  # circumflex =  ̂
-TILDE = "\u0303"  # tilde =  ̃
-DIA = "\u0308"  # diaeresis =  ̈
-TIE = "\u0361"  # tie =  ͡
-DOTOVER = "\u0307"  # dot over =  ̇ = signal unstressed word
-DOTUNDER = "\u0323"  # dot under =  ̣ = unstressed vowel with quality marker
-LINEUNDER = "\u0331"  # line under =  ̱ = secondary-stressed vowel with quality marker
 SYLDIV = "\ufff0"  # used to represent a user-specific syllable divider (.) so we won't change it
 WORDDIV = "\ufff1"  # used to represent a user-specific word divider (.) so we won't change it
 accent = AC + GR + CFLEX + DOTOVER + DOTUNDER + LINEUNDER

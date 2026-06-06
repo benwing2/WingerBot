@@ -2,6 +2,10 @@
 # Authors: Benwing
 
 import re, unicodedata
+from collections.abc import Callable
+from dataclasses import dataclass
+
+from wingerbot import blib
 from wingerbot.arabic import arlib
 from wingerbot.arabic.arlib import (
     ALIF,
@@ -16,8 +20,8 @@ from wingerbot.arabic.arlib import (
     SH,
     SK,
 )
-from wingerbot import blib
 from wingerbot.blib import msg, msgn, tname
+from wingerbot.lang_utils import AC, GR, ZWNJ, ZWJ
 
 # Some issues to take care of:
 #
@@ -150,13 +154,6 @@ def nfc_form(txt):
     return unicodedata.normalize("NFC", str(txt))
 
 
-ZWNJ = "\u200c"  # zero-width non-joiner
-ZWJ = "\u200d"  # zero-width joiner
-AC = "\u0301"  # acute accent
-GR = "\u0300"  # grave accent
-# LRM = "\u200e" # left-to-right mark
-# RLM = "\u200f" # right-to-left mark
-
 sun_letters = "تثدذرزسشصضطظلن"
 # Characters signifying the beginning of a word of part of a compound, meant to go inside [] in a regex.
 boc_chars = r" \[|" + ZWNJ
@@ -205,28 +202,28 @@ hamza_match_or_empty = hamza_match + [""]
 hamza_match_chars = [x[0] if isinstance(x, (list, tuple)) else x for x in hamza_match]
 
 
-class LatinMatch(object):
-    def __init__(self, match, canon_to=None, when=None, insert=None, append=None, handle_empty_match_early=False):
-        self.match = match
-        self.canon_to = canon_to
-        self.when = when
-        self.insert = insert
-        self.append = append
-        self.handle_empty_match_early = handle_empty_match_early
+@dataclass
+class LatinMatch:
+    match: str
+    canon_to: str | Callable[[State], str] | None = None
+    when: Callable[[State], bool] | None = None
+    insert: str | None = None
+    append: str | None = None
+    handle_empty_match_early: bool | Callable[[State], bool] = False
 
 
-class State(object):
-    def __init__(self, ar, aind, alen, la, lind, llen, res, lres, classical, no_vocalize):
-        self.ar = ar
-        self.aind = aind
-        self.alen = alen
-        self.la = la
-        self.lind = lind
-        self.llen = llen
-        self.res = res
-        self.lres = lres
-        self.classical = classical
-        self.no_vocalize = no_vocalize
+@dataclass
+class State:
+    ar: list[str]
+    aind: list[int]
+    alen: int
+    la: list[str]
+    lind: list[int]
+    llen: int
+    res: list[str]
+    lres: list[str]
+    classical: bool
+    no_vocalize: bool
 
     def nextar(self, howmany=1):
         if self.aind[0] + howmany >= self.alen:

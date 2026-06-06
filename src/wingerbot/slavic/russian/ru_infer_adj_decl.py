@@ -5,10 +5,10 @@ import traceback, sys
 
 from wingerbot import blib
 from wingerbot.blib import msg, rmparam, getparam, tname, ProcessPageRetval
+from wingerbot.lang_utils import AC
 from wingerbot.slavic.russian.rulib import (
     velar,
     sib,
-    AC,
     is_stressed,
     is_unstressed,
     is_ending_stressed,

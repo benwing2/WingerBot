@@ -18,9 +18,8 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname
-
-from wingerbot.slavic.russian import rulib
-from wingerbot.slavic.russian import runounlib
+from wingerbot.lang_utils import AC, GR, CFLEX, DOTOVER, DUBGR
+from wingerbot.slavic.russian import rulib, runounlib
 
 pages_pos = {}
 
@@ -231,14 +230,14 @@ def process_text_on_page(p):
                                     "Skipping title word %s (#%s) in section %s because doesn't end in -е"
                                     % (titleword, wordno, k // 2)
                                 )
-                            elif re.search("([еия]|цы|е̂|[кгхцшжщч]а)" + rulib.DOTABOVE + "?$", phonword):
+                            elif re.search("([еия]|цы|е̂|[кгхцшжщч]а)" + DOTOVER + "?$", phonword):
                                 p.msg(
                                     "Found template that will be modified due to phonword %s, titleword %s (#%s) in section %s: %s"
                                     % (phonword, titleword, wordno, k // 2, str(t))
                                 )
                                 subsections_with_ru_ipa_to_fix.add(k)
                             elif not re.search(
-                                "[еэѐ][" + rulib.AC + rulib.GR + rulib.CFLEX + rulib.DUBGR + "]?$", phonword
+                                "[еэѐ][" + AC + GR + CFLEX + DUBGR + "]?$", phonword
                             ):
                                 p.msg(
                                     "WARNING: ru-IPA pronunciation word %s (#%s) doesn't end in [еэия] or е̂ or hard sibilant + [ыа] when corresponding titleword %s ends in -е, something wrong in section %s: %s"
@@ -576,9 +575,9 @@ def process_text_on_page(p):
                             pass  # Can't canonicalize template
                         elif not titleword.endswith("е"):
                             pass  # Already output msg
-                        elif re.search("([еия]|цы|е̂|[кгхцшжщч]а)" + rulib.DOTABOVE + "?$", lphonword):
+                        elif re.search("([еия]|цы|е̂|[кгхцшжщч]а)" + DOTOVER + "?$", lphonword):
                             # Found a template to modify
-                            if re.search("е" + rulib.DOTABOVE + "?$", lphonword):
+                            if re.search("е" + DOTOVER + "?$", lphonword):
                                 pass  # No need to canonicalize
                             else:
                                 if saw_final_e.get(i, False):
@@ -587,7 +586,7 @@ def process_text_on_page(p):
                                         % (phonword, wordno)
                                     )
                                     continue
-                                if re.search("и" + rulib.DOTABOVE + "?$", lphonword):
+                                if re.search("и" + DOTOVER + "?$", lphonword):
                                     p.msg(
                                         "phon=%s (word #%s) ends in -и, will modify to -е in section %s: %s"
                                         % (phonword, wordno, k // 2, str(t))
@@ -600,19 +599,19 @@ def process_text_on_page(p):
                                         % (phonword, wordno, k // 2, str(t))
                                     )
                                     notes.append("-е̂ -> -е")
-                                elif re.search("я" + rulib.DOTABOVE + "?$", lphonword):
+                                elif re.search("я" + DOTOVER + "?$", lphonword):
                                     p.msg(
                                         "phon=%s (word #%s) ends in -я, will modify to -е in section %s: %s"
                                         % (phonword, wordno, k // 2, str(t))
                                     )
                                     notes.append("unstressed -я -> -е")
-                                elif re.search("цы" + rulib.DOTABOVE + "?$", lphonword):
+                                elif re.search("цы" + DOTOVER + "?$", lphonword):
                                     p.msg(
                                         "phon=%s (word #%s) ends in ц + -ы, will modify to -е in section %s: %s"
                                         % (phonword, wordno, k // 2, str(t))
                                     )
                                     notes.append("unstressed -ы after ц -> -е")
-                                elif re.search("[кгхцшжщч]а" + rulib.DOTABOVE + "?$", lphonword):
+                                elif re.search("[кгхцшжщч]а" + DOTOVER + "?$", lphonword):
                                     p.msg(
                                         "phon=%s (word #%s) ends in unpaired cons + -а, will modify to -е in section %s: %s"
                                         % (phonword, wordno, k // 2, str(t))
@@ -623,9 +622,9 @@ def process_text_on_page(p):
                                         "Something wrong, strange ending, logic not correct: section %s, phon=%s (word #%s)"
                                         % (k // 2, phonword, wordno)
                                     )
-                                newphonword = re.sub("(?:[ияыа]|е̂)(" + rulib.DOTABOVE + "?)$", r"е\1", phonword)
+                                newphonword = re.sub("(?:[ияыа]|е̂)(" + DOTOVER + "?)$", r"е\1", phonword)
                                 newphonword = re.sub(
-                                    "(?:[ИЯЫА]|Е̂)(" + rulib.DOTABOVE + "?)$", r"Е\1", newphonword
+                                    "(?:[ИЯЫА]|Е̂)(" + DOTOVER + "?)$", r"Е\1", newphonword
                                 )
                                 p.msg(
                                     "Modified phon=%s (word #%s) to %s in section %s: %s"

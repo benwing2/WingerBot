@@ -2,7 +2,6 @@
 
 import re, unicodedata
 
-
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam
 

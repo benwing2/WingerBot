@@ -3,11 +3,10 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, set_template_name, errmsg, tname
+from wingerbot.blib import getparam, tname
+from wingerbot.lang_utils import arabic_charset
 
 trans_templates = blib.translation_templates + ["t-simple"]
-
-arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
 
 code_to_kurdish_lang = {
     "kmr": "Northern Kurdish",

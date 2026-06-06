@@ -5,8 +5,6 @@ import re
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname
 
-AC = "\u0301"
-
 
 def is_monosyllabic(word):
     return len(re.sub("[^аеиоуяюъ]", "", word)) <= 1

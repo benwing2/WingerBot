@@ -3,9 +3,8 @@
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
-
+from wingerbot.lang_utils import AC, GR
 from wingerbot.slavic.bulgarian import bglib
-from wingerbot.slavic.bulgarian.bglib import AC, GR
 
 
 def process_text_on_page(p):

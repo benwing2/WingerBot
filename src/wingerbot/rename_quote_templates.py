@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname, pname
-from collections import defaultdict
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 TEMP_BOLDFACE = "\ufff0"
 TEMP_LT = "\ufff1"

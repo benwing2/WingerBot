@@ -4,9 +4,7 @@ import re, json, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, msg
-
-AC = "\u0301"
-GR = "\u0300"
+from wingerbot.lang_utils import AC, GR
 
 
 def list_forms(template, errandpagemsg, expand_text):

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import re, unicodedata, json
+import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, tname
 
 langs = ["pl", "csb", "szl", "zlw-slv"]
 pl_lects = [

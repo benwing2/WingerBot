@@ -3,7 +3,7 @@
 import re, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname, msg
+from wingerbot.blib import getparam, tname, msg
 
 # Rules for converting old declension templates to new ones:
 # 1. Masculines:

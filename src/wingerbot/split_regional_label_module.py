@@ -3,10 +3,8 @@
 import re
 from collections import defaultdict
 
-from wingerbot import blib, lang_utils
+from wingerbot import blib, clean_label_module, lang_utils
 from wingerbot.blib import msg, errandmsg
-
-from wingerbot import clean_label_module
 from wingerbot.clean_label_module import LabelData, Field, FieldReference
 
 lang_data = lang_utils.get_lang_data()

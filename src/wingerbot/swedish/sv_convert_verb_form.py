@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import unicodedata
-
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname
 

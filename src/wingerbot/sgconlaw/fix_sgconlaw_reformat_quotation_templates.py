@@ -15,7 +15,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname, pname
+from wingerbot.blib import getparam, rmparam, msg, tname, pname
 
 
 def add_params_to_template(t, params, seen_from_params, pagemsg):

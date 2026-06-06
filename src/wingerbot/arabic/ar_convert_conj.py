@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import re, json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 vowel_to_diacritic = {
     "a": "\u064e",

@@ -4,12 +4,7 @@ import re, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname, rsub_repeatedly
-
-AC = "\u0301"  # acute =  ́
-GR = "\u0300"  # grave =  ̀
-CFLEX = "\u0302"  # circumflex =  ̂
-TILDE = "\u0303"  # tilde =  ̃
-DIA = "\u0308"  # diaeresis =  ̈
+from wingerbot.lang_utils import AC, GR, CFLEX, TILDE, DIA
 
 SYLDIV = "\ufff0"  # used to represent a user-specific syllable divider (.) so we won't change it
 vowel = "aeiouüyAEIOUÜY"

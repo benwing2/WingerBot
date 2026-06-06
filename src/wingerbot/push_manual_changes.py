@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import msg
-from collections import defaultdict
 
 def form_repl_curr(repl, curr):
     return (undo_slash_newline(repl, repl=True), undo_slash_newline(curr))

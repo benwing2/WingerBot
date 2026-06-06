@@ -4,9 +4,7 @@ import re, json, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
-
-AC = "\u0301"
-GR = "\u0300"
+from wingerbot.lang_utils import AC, GR
 
 
 def old_it_conj_to_new_it_conj_key(key):

@@ -3,10 +3,7 @@
 import re
 
 from wingerbot.blib import rsub_repeatedly
-
-AC = "\u0301"
-GR = "\u0300"  # grave =  ̀
-DOTBELOW = "\u0323"  # dot below =  ̣
+from wingerbot.lang_utils import AC, GR, DOTUNDER
 
 # non-primary accents (i.e. excluding acute) that indicate pronunciation
 # (not counting diaeresis, which indicates a completely different vowel,
@@ -262,29 +259,29 @@ def mark_stressed_vowels_in_unstressed_syllables(word, pagemsg):
         else:
             pagemsg("WARNING: Multisyllabic word " + word + "missing an accent")
 
-    word = re.sub("([эоёЭОЁ])([^́]|$)", r"\1" + DOTBELOW + r"\2", word)
-    word = re.sub("([еЕ])(" + non_vowel_c + "*" + vowel_c + AC + ")", r"\1" + DOTBELOW + r"\2", word)
+    word = re.sub("([эоёЭОЁ])([^́]|$)", r"\1" + DOTUNDER + r"\2", word)
+    word = re.sub("([еЕ])(" + non_vowel_c + "*" + vowel_c + AC + ")", r"\1" + DOTUNDER + r"\2", word)
     return word
 
 
 # Undo extra diacritics added by `mark_stressed_vowels_in_unstressed_syllables`.
 def undo_mark_stressed_vowels_in_unstressed_syllables(word):
-    word = word.replace(DOTBELOW, "")
+    word = word.replace(DOTUNDER, "")
     word = re.sub("([ёЁ])́", r"\1", word)
     return word
 
 
-# Destress vowels in unstressed syllables. Vowels followed by DOTBELOW are unchanged;
+# Destress vowels in unstressed syllables. Vowels followed by DOTUNDER are unchanged;
 # otherwise, о -> а; э -> а; ё -> я directly before the stress, otherwise е;
 # е -> я directly before the stress. After that, remove extra diacritics added by
 # mark_stressed_vowels_in_unstressed_syllables().
 def destress_vowels_after_stress_movement(word):
     word = rsub_repeatedly(
-        "([эоёЭОЁ])([^" + AC + DOTBELOW + "]|$)", lambda m: destresser[m.group(1)] + m.group(2), word
+        "([эоёЭОЁ])([^" + AC + DOTUNDER + "]|$)", lambda m: destresser[m.group(1)] + m.group(2), word
     )
     word = re.sub(
         "([еЕ])(" + non_vowel_c + "*" + vowel_c + AC + ")",
-        lambda m: (pre_tonic_destresser[m.group(1)] if not m.group(2).startswith(DOTBELOW) else m.group(1))
+        lambda m: (pre_tonic_destresser[m.group(1)] if not m.group(2).startswith(DOTUNDER) else m.group(1))
         + m.group(2),
         word,
     )

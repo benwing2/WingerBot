@@ -365,6 +365,7 @@
 from dataclasses import dataclass
 
 import re
+from typing import NamedTuple
 from mwparserfromhell.nodes import Template
 
 from wingerbot import blib
@@ -1434,16 +1435,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start, end = blib.parse_start_end(args.start, args.end)
 
-    @dataclass
-    class LemmaInfo:
+
+    class LemmaInfo(NamedTuple):
         pos: str
         infl: str | None
         lemma: str
         explicit_stem: str | list[str] | None
         comment_tag: str
-
-        def props(self):
-            return self.pos, self.infl, self.lemma, self.explicit_stem, self.comment_tag
 
 
     lemmas: list[LemmaInfo] = []
@@ -1517,7 +1515,7 @@ if __name__ == "__main__":
     for lemma_index, lemma_info in blib.iter_items(
         lemmas, get_name=lambda lemma_info: remove_macrons(lemma_info.lemma)
     ):
-        pos, infl, lemma, explicit_stem, comment_tag = lemma_info.props()
+        pos, infl, lemma, explicit_stem, comment_tag = lemma_info
         def pagemsg(txt):
             msg("Page %s %s: %s" % (lemma_index, lemma, txt))
 

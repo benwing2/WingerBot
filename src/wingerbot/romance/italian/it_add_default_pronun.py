@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
-import re, json
+import re, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname
-import unicodedata
+from wingerbot.lang_utils import AC, GR, CFLEX
 
-AC = "\u0301"
-GR = "\u0300"
-CFLEX = "\0302"
 vowel = "AEIOUaeiouɛɔy"
 vowel_c = "[" + vowel + "]"
 vocalic_c = "[^" + vowel + "jw]"

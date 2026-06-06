@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import set_template_name
 
 
 def process_text_on_page(p):

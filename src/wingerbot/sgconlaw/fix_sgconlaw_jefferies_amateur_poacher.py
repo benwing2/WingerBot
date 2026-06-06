@@ -11,10 +11,8 @@
 # #* {{RQ:Jefferies Amateur Poacher|chapter=II|passage=Orion hit a rabbit once; [...]}}
 
 import re
-import mwparserfromhell as mw
 
 from wingerbot import blib
-from wingerbot.blib import set_template_name, errmsg
 
 
 def process_text_on_page(p):

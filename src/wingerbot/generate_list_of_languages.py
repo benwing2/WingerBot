@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-from wingerbot import blib, lang_utils
-from wingerbot.blib import msg
 from collections import defaultdict
+
+from wingerbot import lang_utils
+from wingerbot.blib import msg
 
 lang_utils.init_fake_lang_data()
 lang_data = lang_utils.get_lang_data()

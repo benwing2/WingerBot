@@ -4,12 +4,7 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname
-
-arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
-hebrew_charset = "\u0590-\u05ff\ufb1d-\ufb4f"
-tatweel = "ـ"
-maqqef = "־"
-zwnj = "\u200c"
+from wingerbot.lang_utils import arabic_charset, hebrew_charset, tatweel, maqqef, ZWNJ
 
 prefix_templates = ["pre", "prefix"]
 suffix_templates = ["suf", "suffix"]
@@ -56,7 +51,7 @@ def process_text_on_page(p):
             if re.search("[%s]" % arabic_charset, val):
                 if not nowarn:
                     p.msg("Saw Arabic chars in %s=%s, assuming tatweel is correct hyphen: %s" % (param, val, str(t)))
-                return "[" + tatweel + zwnj + "-]"
+                return "[" + tatweel + ZWNJ + "-]"
             if re.search("[%s]" % hebrew_charset, val):
                 if not nowarn:
                     p.msg("Saw Hebrew chars in %s=%s, assuming maqqef is correct hyphen: %s" % (param, val, str(t)))

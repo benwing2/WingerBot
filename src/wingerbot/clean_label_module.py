@@ -3,10 +3,10 @@
 import re
 from dataclasses import dataclass, field
 from collections import defaultdict
-from typing import Any, Callable
+from typing import Any
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import set_template_name, msg, errandmsg
+from wingerbot.blib import msg, errandmsg
 
 lang_data = lang_utils.get_lang_data()
 
@@ -18,7 +18,7 @@ class Fields:
 @dataclass
 class Field:
     value: Any
-    comment: str = None
+    comment: str | None = None
 
 
 @dataclass

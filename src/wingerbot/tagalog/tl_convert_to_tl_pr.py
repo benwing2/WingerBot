@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import re, unicodedata, json
+import re, json
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, tname, pname
 
 
 def process_text_on_page(p):

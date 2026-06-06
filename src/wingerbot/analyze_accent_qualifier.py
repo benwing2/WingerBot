@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import re, unicodedata
+import re
+from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import msg, errmsg, tname
-from collections import defaultdict
-import json
+from wingerbot.blib import msg, tname
 
 accent_qualifier_data = {"aliases": {}, "labels": {}}
 total_qualifiers = defaultdict(int)

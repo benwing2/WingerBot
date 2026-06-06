@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-import re, json
+import re
 from collections import defaultdict
+from dataclasses import dataclass, field
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, msg, tname, pname
 from wingerbot.remove_redundant_sc import check_script_agrees
-
-from dataclasses import dataclass, field
 
 ## FIXME:
 # 1. Handle non-canonical names esp. Bokmål and Nynorsk. [DONE]
@@ -1202,7 +1201,7 @@ def convert_one_line_old(init_star, init_langname, rest, pagemsg, expand_text, i
                                             "",
                                             pv,
                                             pagemsg,
-                                            p.expand_text,
+                                            expand_text,
                                             in_multitrans,
                                         )
                                         pagemsg(

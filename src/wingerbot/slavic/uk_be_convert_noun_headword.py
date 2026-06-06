@@ -8,8 +8,6 @@ from wingerbot.blib import getparam, tname
 from wingerbot.slavic.ukrainian import uklib as uk
 from wingerbot.slavic.belarusian import belib as be
 
-AC = "\u0301"
-
 
 def process_text_on_page(p):
     notes = []

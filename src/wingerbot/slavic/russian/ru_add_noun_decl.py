@@ -47,6 +47,7 @@ from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname
 from wingerbot.slavic.russian import rulib, runounlib
 
+
 class PluralInfo(NamedTuple):
     singular_ending: str
     plural_ending: str
@@ -208,6 +209,7 @@ class FindDeclArgsRetval(NamedTuple):
     is_adj: bool
     n: str | None
     a: str | None
+
 
 def process_text_on_page(p):
     subpagetitle = re.sub("^.*:", "", p.title)

@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
-from collections.abc import Callable
-import re, json, sys
+import re, json, sys, unicodedata
 from collections import defaultdict
-import unicodedata
+from collections.abc import Callable
 from json.decoder import JSONDecodeError
 from typing import Any
 from dataclasses import dataclass
+
+from wingerbot.blib import site, msg
+from wingerbot.slavic.russian import rulib
+
 type PropertyDict = dict[str, Any]
 type PropertyDictList = list[PropertyDict]
 type LanguagePropertyDict = dict[str, PropertyDict]
 type LanguageListDict = dict[str, list[PropertyDict]]
-
-from wingerbot.blib import site, msg
-from wingerbot.slavic.russian import rulib
 
 appendix_only_langnames = [
     "Adûni",
@@ -744,7 +744,7 @@ CFLEX = "\u0302"  # circumflex =  ̂
 TILDE = "\u0303"  # tilde =  ̃
 MACRON = "\u0304"  # macron =  ̄
 BREVE = "\u0306"  # breve =  ̆
-DOTABOVE = "\u0307"  # dot above =  ̇
+DOTOVER = "\u0307"  # dot above =  ̇
 DIAER = "\u0308"  # diaeresis =  ̈
 DOUBLEACUTE = "\u030b"
 CARON = "\u030c"  # caron =  ̌
@@ -767,7 +767,7 @@ zh_combining_accent_re = (
     + CFLEX
     + MACRON
     + BREVE
-    + DOTABOVE
+    + DOTOVER
     + DIAER
     + DOUBLEACUTE
     + CARON
@@ -904,6 +904,25 @@ assamese_charset = "\u0981-\u0983\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u
 newa_charset = "𑐀-𑑞"
 malayalam_charset = "\u0d02-\u0d7f"
 sinhalese_charset = "\u0d82-\u0df4"
+tatweel = "ـ"
+maqqef = "־"
+ZWNJ = "\u200c"  # zero-width non-joiner
+ZWJ = "\u200d"  # zero-width joiner
+AC = "\u0301"  # acute =  ́
+GR = "\u0300"  # grave =  ̀
+CFLEX = "\u0302"  # circumflex =  ̂
+TILDE = "\u0303"  # tilde =  ̃
+DIA = "\u0308"  # diaeresis =  ̈
+DUBGR = "\u030f"  # double grave =  ̏
+CARON = "\u030c"  # caron =  ̌
+TIE = "\u0361"  # tie =  ͡
+DOTOVER = "\u0307"  # dot over =  ̇ = signal unstressed word
+DOTUNDER = "\u0323"  # dot under =  ̣ = unstressed vowel with quality marker
+LINEUNDER = "\u0331"  # line under =  ̱ = secondary-stressed vowel with quality marker
+LRM = "\u200e" # left-to-right mark
+RLM = "\u200f" # right-to-left mark
+
+
 
 # Each element is full language name, function to remove accents to normalize
 # an entry, character set range(s), and whether to ignore translit (info

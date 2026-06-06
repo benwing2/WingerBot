@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import json, unicodedata
-
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 templates_to_rewrite = [
     ("pt-pre-1911", ("43", "11")),

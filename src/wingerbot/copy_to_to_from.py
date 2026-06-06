@@ -4,8 +4,7 @@ import re
 
 
 from wingerbot import blib
-from wingerbot.blib import msg, addparam
-from collections import defaultdict
+from wingerbot.blib import msg
 
 
 def process_direcfile(direcfile, start, end):

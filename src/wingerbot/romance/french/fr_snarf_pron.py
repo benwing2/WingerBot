@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 import re
-import unicodedata
+from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname
-from collections import defaultdict
 
 
 def process_text_on_page(p):

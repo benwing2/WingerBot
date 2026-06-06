@@ -2,8 +2,7 @@
 
 # FIXME: Partly written, not working.
 
-import pywikibot, re
-import unicodedata
+import pywikibot, re, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname, pname, msg, errandmsg, site

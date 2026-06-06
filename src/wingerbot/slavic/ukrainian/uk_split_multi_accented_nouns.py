@@ -4,10 +4,7 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
-
-from wingerbot.slavic.ukrainian import uklib
-
-AC = "\u0301"
+from wingerbot.lang_utils import AC
 
 
 def split_multi_accented_word(word):

@@ -10,28 +10,24 @@
 #    verify that nothing bad is happening.
 
 import re
-from dataclasses import dataclass
+from typing import NamedTuple
 from mwparserfromhell.nodes import Template
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 from wingerbot.slavic.russian import runounlib
 
-@dataclass
-class ProcessPageSectionResult:
+
+class ProcessPageSectionResult(NamedTuple):
     replaced: str
     this_num_ru_noun_subs: int
     this_num_ru_proper_noun_subs: int
     this_num_replace_bian: int
     this_transferred_tr: list[str]
 
-def process_page_section(index, pagetitle, section):
-    def pagemsg(txt):
-        msg("Page %s %s: %s" % (index, pagetitle, txt))
-    def expand_text(tempcall):
-        return blib.expand_text(tempcall, pagetitle, pagemsg, args.verbose)
 
-    subpagetitle = re.sub("^.*:", "", pagetitle)
+def process_page_section(p, section) -> ProcessPageSectionResult | None:
+    subpagetitle = re.sub("^.*:", "", p.title)
 
     parsed = blib.parse_text(section)
 
@@ -40,7 +36,7 @@ def process_page_section(index, pagetitle, section):
 
     for t in parsed.filter_templates():
         if tname(t) == "ru-decl-noun-see":
-            pagemsg("Found ru-decl-noun-see, skipping")
+            p.msg("Found ru-decl-noun-see, skipping")
             return
 
     for t in parsed.filter_templates():
@@ -50,17 +46,17 @@ def process_page_section(index, pagetitle, section):
             noun_old_templates.append(t)
 
     if len(noun_table_templates) > 1:
-        pagemsg("WARNING: Found multiple ru-noun-table templates, skipping")
+        p.msg("WARNING: Found multiple ru-noun-table templates, skipping")
         return
     if len(noun_old_templates) > 1:
-        pagemsg("WARNING: Found multiple ru-noun-old templates, skipping")
+        p.msg("WARNING: Found multiple ru-noun-old templates, skipping")
         return
     if not noun_table_templates and not noun_old_templates:
         return ProcessPageSectionResult(str(parsed), 0, 0, 0, [])
 
     for t in parsed.filter_templates():
         if tname(t) in ["ru-noun+", "ru-proper noun+"]:
-            pagemsg("Found ru-noun+ or ru-proper noun+, skipping")
+            p.msg("Found ru-noun+ or ru-proper noun+, skipping")
             return
 
     headword_templates = []
@@ -70,7 +66,7 @@ def process_page_section(index, pagetitle, section):
             headword_templates.append(t)
 
     if len(headword_templates) > 1:
-        pagemsg("WARNING: Found multiple headword templates, skipping")
+        p.msg("WARNING: Found multiple headword templates, skipping")
         return
     if len(headword_templates) < 1:
         return ProcessPageSectionResult(str(parsed), 0, 0, 0, [])
@@ -85,18 +81,18 @@ def process_page_section(index, pagetitle, section):
     decl_templates = [x for x in [noun_table_template, noun_old_template] if x]
 
     if args.verbose:
-        pagemsg("Found headword template: %s" % str(headword_template))
-        pagemsg("Found decl template: %s" % str(noun_table_template))
+        p.msg("Found headword template: %s" % str(headword_template))
+        p.msg("Found decl template: %s" % str(noun_table_template))
         if noun_old_template:
-            pagemsg("Found old decl template: %s" % str(noun_old_template))
+            p.msg("Found old decl template: %s" % str(noun_old_template))
 
     # Retrieve headword translit and maybe transfer to decl
     headword_tr = getparam(headword_template, "tr")
     if headword_tr:
         if args.verbose:
-            pagemsg("Found headword manual translit tr=%s" % headword_tr)
+            p.msg("Found headword manual translit tr=%s" % headword_tr)
         if "," in headword_tr:
-            pagemsg("WARNING: Comma in headword manual translit, skipping: %s" % headword_tr)
+            p.msg("WARNING: Comma in headword manual translit, skipping: %s" % headword_tr)
             return
         # Punt if multi-arg-set, can't handle yet
         for decl_template in decl_templates:
@@ -104,20 +100,20 @@ def process_page_section(index, pagetitle, section):
                 if not param.showkey:
                     val = str(param.value)
                     if val == "or":
-                        pagemsg(
+                        p.msg(
                             "WARNING: Manual translit and multi-decl templates, can't handle, skipping: %s"
                             % str(decl_template)
                         )
                         return
                     if val == "-" or val == "_" or val.startswith("join:"):
-                        pagemsg(
+                        p.msg(
                             "WARNING: Manual translit and multi-word templates, can't handle, skipping: %s"
                             % str(decl_template)
                         )
                         return
             for i in range(2, 10):
                 if getparam(headword_template, "tr%s" % i):
-                    pagemsg(
+                    p.msg(
                         "WARNING: Headword template has translit param tr%s, can't handle, skipping: %s"
                         % (i, str(headword_template))
                     )
@@ -132,21 +128,21 @@ def process_page_section(index, pagetitle, section):
             if "//" in lemmaval:
                 m = re.search("^(.*?)//(.*)$", lemmaval)
                 if not m:
-                    pagemsg("WARNING: Can't parse Russian and translit from lemmaval: %s" % lemmaval)
+                    p.msg("WARNING: Can't parse Russian and translit from lemmaval: %s" % lemmaval)
                     return
                 if m.group(2) != headword_tr:
-                    pagemsg(
+                    p.msg(
                         "WARNING: Found existing manual translit in decl template %s, but doesn't match headword translit %s; skipping"
                         % (lemmaval, headword_tr)
                     )
                     return
                 else:
-                    pagemsg("Already found manual translit in decl template %s" % lemmaval)
+                    p.msg("Already found manual translit in decl template %s" % lemmaval)
             else:
                 lemmaval += "//" + headword_tr
                 orig_decl_template = str(decl_template)
                 decl_template.add(lemma_arg, lemmaval)
-                pagemsg("Replacing decl %s with %s" % (orig_decl_template, str(decl_template)))
+                p.msg("Replacing decl %s with %s" % (orig_decl_template, str(decl_template)))
                 frobbed_manual_translit = [headword_tr]
 
     genders = blib.fetch_param_chain(headword_template, "2", "g")
@@ -167,27 +163,27 @@ def process_page_section(index, pagetitle, section):
             if saw_in >= 0 and saw_an >= 0:
                 orig_decl_template = str(decl_template)
                 if saw_in < saw_an:
-                    pagemsg("Replacing a=bi with a=ia in decl template")
+                    p.msg("Replacing a=bi with a=ia in decl template")
                     decl_template.add("a", "ia")
                     bian_replaced = 1
                 else:
-                    pagemsg("Replacing a=bi with a=ai in decl template")
+                    p.msg("Replacing a=bi with a=ai in decl template")
                     decl_template.add("a", "ai")
                     bian_replaced = 1
-                pagemsg("Replacing decl %s with %s" % (orig_decl_template, str(decl_template)))
+                p.msg("Replacing decl %s with %s" % (orig_decl_template, str(decl_template)))
 
     generate_template = re.sub(
         r"^\{\{ru-noun-old",
         "{{ru-generate-noun-args|old=1",
         re.sub(r"^\{\{ru-noun-table", "{{ru-generate-noun-args", str(noun_table_template)),
     )
-    generate_result = expand_text(generate_template)
+    generate_result = p.expand_text(generate_template)
     if not generate_result:
-        pagemsg("WARNING: Error generating noun args, skipping")
+        p.msg("WARNING: Error generating noun args, skipping")
         return
     nounargs = blib.split_generate_args(generate_result)
 
-    genders = runounlib.check_old_noun_headword_forms(headword_template, nounargs, subpagetitle, pagemsg)
+    genders = runounlib.check_old_noun_headword_forms(headword_template, nounargs, subpagetitle, p.msg)
     if genders == None:
         return
 
@@ -200,7 +196,7 @@ def process_page_section(index, pagetitle, section):
         new_params.append((param.name, param.value))
 
     orig_headword_template = str(headword_template)
-    params_to_preserve = runounlib.fix_old_headword_params(headword_template, new_params, genders, pagemsg)
+    params_to_preserve = runounlib.fix_old_headword_params(headword_template, new_params, genders, p.msg)
     if params_to_preserve == None:
         return
 
@@ -208,7 +204,7 @@ def process_page_section(index, pagetitle, section):
         # If proper noun and n is both then we need to add n=both because
         # proper noun+ defaults to n=sg
         if nounargs["n"] == "b" and not getparam(headword_template, "n"):
-            pagemsg("Adding n=both to headword tempate")
+            p.msg("Adding n=both to headword tempate")
             headword_template.add("n", "both")
         # Correspondingly, if n is sg then we can usually remove n=sg;
         # but we need to check that the number is actually sg with n=sg
@@ -216,20 +212,20 @@ def process_page_section(index, pagetitle, section):
         if nounargs["n"] == "s":
             generate_template_with_ndef = generate_template.replace("}}", "|ndef=sg}}")
             generate_template_with_ndef = re.sub(r"\|n=s[^=|{}]*", "", generate_template_with_ndef)
-            generate_result = expand_text(generate_template_with_ndef)
+            generate_result = p.expand_text(generate_template_with_ndef)
             if not generate_result:
-                pagemsg("WARNING: Error generating noun args, skipping")
+                p.msg("WARNING: Error generating noun args, skipping")
                 return
             ndef_args = blib.split_generate_args(generate_result)
             if ndef_args["n"] == "s":
                 existing_n = getparam(headword_template, "n")
                 if existing_n and not re.search(r"^s", existing_n):
-                    pagemsg("WARNING: Something wrong: Found n=%s, not singular" % existing_n)
+                    p.msg("WARNING: Something wrong: Found n=%s, not singular" % existing_n)
                 else:
-                    pagemsg("Removing n=sg from headword tempate")
+                    p.msg("Removing n=sg from headword tempate")
                     rmparam(headword_template, "n")
             else:
-                pagemsg("WARNING: Unable to remove n= from headword template because n=%s" % ndef_args["n"])
+                p.msg("WARNING: Unable to remove n= from headword template because n=%s" % ndef_args["n"])
 
     headword_template.params.extend(params_to_preserve)
     ru_noun_changed = 0
@@ -243,7 +239,7 @@ def process_page_section(index, pagetitle, section):
     if str(noun_table_template).startswith("{{ru-noun-old"):
         headword_template.add("old", "1")
 
-    pagemsg("Replacing headword %s with %s" % (orig_headword_template, str(headword_template)))
+    p.msg("Replacing headword %s with %s" % (orig_headword_template, str(headword_template)))
 
     return ProcessPageSectionResult(
         str(parsed), ru_noun_changed, ru_proper_noun_changed, bian_replaced, frobbed_manual_translit
@@ -263,7 +259,7 @@ def process_text_on_page(p):
     subsecs = blib.split_text_into_subsections(modsec.secbody, p.msg)
     subsections = subsecs.subsections
     for k, header in subsecs.header_list:
-        retval = process_page_section(p.index, p.title, subsections[k])
+        retval = process_page_section(p, subsections[k])
         if retval:
             (
                 replaced,

@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
-from collections import defaultdict
 
 
 def process_text_on_page(p):
-    notes = []
-
     p.msg("Processing")
 
     months = re.split("(^=[^=].*\n)", p.text, 0, re.M)

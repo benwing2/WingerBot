@@ -2,9 +2,9 @@
 # Authors: Benwing; Atitarev for tr() and tr_adj() functions, in Lua
 
 import re
-import unicodedata
 
 from wingerbot.blib import remove_links, msg
+from wingerbot.lang_utils import AC, GR
 
 # FIXME:
 #
@@ -27,8 +27,6 @@ from wingerbot.blib import remove_links, msg
 #    should be matched against regular space in the Latin and the Latin will
 #    be canonicalized to NBSP.
 
-AC = "\u0301"
-GR = "\u0300"
 ACGR = "[" + AC + GR + "]"
 ACGROPT = "[" + AC + GR + "]?"
 

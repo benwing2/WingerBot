@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import tname, msg
-from collections import defaultdict
 
 num_pages_by_dim_ending = defaultdict(int)
 pages_by_dim_ending = defaultdict(list)

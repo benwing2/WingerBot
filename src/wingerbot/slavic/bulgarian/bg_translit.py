@@ -2,16 +2,14 @@
 # Authors: Benwing; Atitarev for tr() and tr_adj() functions, in Lua
 
 import re
-import unicodedata
 
 from wingerbot.blib import remove_links, msg
+from wingerbot.lang_utils import AC, GR
 
 # FIXME:
 # 1. Converts grave-и to и with both acute and grave.
 # 2. Doesn't convert grave to acute when no transliteration.
 
-AC = "\u0301"
-GR = "\u0300"
 ACGR = "[" + AC + GR + "]"
 ACGROPT = "[" + AC + GR + "]?"
 

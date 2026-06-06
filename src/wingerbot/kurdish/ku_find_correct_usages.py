@@ -3,9 +3,8 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, set_template_name, errmsg, tname
-
-arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
+from wingerbot.blib import getparam, tname
+from wingerbot.lang_utils import arabic_charset
 
 templates_seen = {}
 templates_changed = {}

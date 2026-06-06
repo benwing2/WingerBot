@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from typing import NamedTuple
+
 import pywikibot, re, itertools
 from dataclasses import dataclass
 from mwparserfromhell.nodes import Template
@@ -14,13 +16,10 @@ get_headword_from_template_cache = {}
 expand_text_cache = {}
 
 
-@dataclass
-class LookupInflectionResult:
+class LookupInflectionResult(NamedTuple):
     found_heads: list[str]
     found_inflsets: list[dict[str, str]]
 
-    def props(self):
-        return self.found_heads, self.found_inflsets
 
 # Look up the inflection(s) of LEMMA (without macrons), of part of speech POS,
 # which uses a head template in EXPECTED_HEADTEMPS and an inflection template
@@ -312,16 +311,14 @@ def process_text_on_page(p):
             def errandstagemsg(txt):
                 p.errandmsg("Stage %s: %s" % (stage, txt))
 
-            @dataclass
-            class InflOfTemplatesAndPropertiesResult:
+
+            class InflOfTemplatesAndPropertiesResult(NamedTuple):
                 t: Template
                 lemma_param: str
                 lemma: str
                 inflargs_sets: list[LookupInflectionResult]
                 tag_sets: list[list[str]]
 
-                def props(self):
-                    return self.t, self.lemma_param, self.lemma, self.inflargs_sets, self.tag_sets
 
             def yield_infl_of_templates_and_properties():
                 for t in headword.infl_of_templates:
@@ -371,15 +368,13 @@ def process_text_on_page(p):
                     ]
                     yield InflOfTemplatesAndPropertiesResult(t, str(lemma_param), lemma, inflargs_sets, tag_sets)
 
-            @dataclass
-            class MergeFormsForSlotResult:
+
+            class MergeFormsForSlotResult(NamedTuple):
                 all_valid_forms: list[str]
                 all_valid_forms_with_syncopated: list[str]
                 all_matchable_forms: list[str]
                 all_matchable_forms_with_syncopated: list[str]
 
-                def props(self):
-                    return self.all_valid_forms, self.all_valid_forms_with_syncopated, self.all_matchable_forms, self.all_matchable_forms_with_syncopated
 
             def merge_forms_for_slot(slot: str, this_inflargs: list[dict[str, str]]) -> MergeFormsForSlotResult:
                 # Merge the forms of all inflection templates under the given
@@ -414,7 +409,7 @@ def process_text_on_page(p):
             if stage == 1:
                 matched_infl_of_templates = False
                 for infl_of_templates_result in yield_infl_of_templates_and_properties():
-                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
+                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result
 
                     def check_for_tag_set_match(tag_set, allow_lemma_mismatch):
                         slot = lalib.tag_set_to_slot(tag_set, tag_set_groups, stagemsg)
@@ -427,7 +422,7 @@ def process_text_on_page(p):
                         saw_slot_in_inflargs = False
                         matching_actual_lemmas = []
                         for lookup_inflection_result in inflargs_sets:
-                            actual_lemmas, this_inflargs = lookup_inflection_result.props()
+                            actual_lemmas, this_inflargs = lookup_inflection_result
                             saw_matching_lemma = False
                             for actual_lemma in actual_lemmas:
                                 actual_lemma = blib.remove_links(actual_lemma)
@@ -446,7 +441,7 @@ def process_text_on_page(p):
                                 all_valid_forms_with_syncopated,
                                 all_matchable_forms,
                                 all_matchable_forms_with_syncopated,
-                            ) = merge_result.props()
+                            ) = merge_result
 
                             matched_form = False
                             if set(headword_forms) == set(all_matchable_forms):
@@ -507,7 +502,7 @@ def process_text_on_page(p):
 
                     saw_matching_lemma = False
                     for lookup_inflection_result in inflargs_sets:
-                        actual_lemmas, this_inflargs = lookup_inflection_result.props()
+                        actual_lemmas, this_inflargs = lookup_inflection_result
                         if lemma in [blib.remove_links(x) for x in actual_lemmas]:
                             saw_matching_lemma = True
                             break
@@ -616,7 +611,7 @@ def process_text_on_page(p):
                 common_forms = None
                 no_common_forms = False
                 for infl_of_templates_result in yield_infl_of_templates_and_properties():
-                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
+                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result
                     for tag_set in tag_sets:
                         slot = lalib.tag_set_to_slot(tag_set, tag_set_groups, stagemsg)
                         if slot is None or slot not in possible_slots:
@@ -626,7 +621,7 @@ def process_text_on_page(p):
                         this_tag_set_matching_forms = []
                         combined_this_inflargs = []
                         for lookup_inflection_result in inflargs_sets:
-                            actual_lemmas, this_inflargs = lookup_inflection_result.props()
+                            actual_lemmas, this_inflargs = lookup_inflection_result
                             for actual_lemma in actual_lemmas:
                                 actual_lemma = blib.remove_links(actual_lemma)
                                 if lemma == actual_lemma:
@@ -693,10 +688,10 @@ def process_text_on_page(p):
                 multiple_assignments = False
                 infl_of_assignments = []
                 for infl_of_templates_result in yield_infl_of_templates_and_properties():
-                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
+                    t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result
                     matching_lemmas = []
                     for lookup_inflection_result in inflargs_sets:
-                        actual_lemmas, this_inflargs = lookup_inflection_result.props()
+                        actual_lemmas, this_inflargs = lookup_inflection_result
                         for actual_lemma in actual_lemmas:
                             actual_lemma = blib.remove_links(actual_lemma)
                             if lalib.remove_macrons(lemma) == lalib.remove_macrons(actual_lemma):
@@ -718,7 +713,7 @@ def process_text_on_page(p):
                     for actual_lemma, infl_of_templates_result in zip(
                         assignment, yield_infl_of_templates_and_properties()
                     ):
-                        t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
+                        t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result
                         for tag_set in tag_sets:
                             slot = lalib.tag_set_to_slot(tag_set, tag_set_groups, stagemsg)
                             if slot is None or slot not in possible_slots:
@@ -728,7 +723,7 @@ def process_text_on_page(p):
                             this_tag_set_matching_forms = []
                             combined_this_inflargs = []
                             for lookup_inflection_result in inflargs_sets:
-                                actual_lemmas, this_inflargs = lookup_inflection_result.props()
+                                actual_lemmas, this_inflargs = lookup_inflection_result
                                 if actual_lemma in actual_lemmas:
                                     combined_this_inflargs.extend(this_inflargs)
                                 merge_result = merge_forms_for_slot(slot, combined_this_inflargs)
@@ -779,7 +774,7 @@ def process_text_on_page(p):
                     for actual_lemma, infl_of_templates_result in zip(
                         cur_assignment, yield_infl_of_templates_and_properties()
                     ):
-                        t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result.props()
+                        t, lemma_param, lemma, inflargs_sets, tag_sets = infl_of_templates_result
                         notes.append(
                             "fix macrons in lemma of '%s' (stage 3): %s -> %s" % (tname(t), lemma, actual_lemma)
                         )

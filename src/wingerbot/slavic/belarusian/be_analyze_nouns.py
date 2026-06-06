@@ -4,9 +4,8 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
+from wingerbot.lang_utils import AC
 from wingerbot.slavic.belarusian import belib as be
-
-AC = "\u0301"
 
 possible_vowel_alternations = ["ae", "ao"]  # , "yo"
 
@@ -144,7 +143,7 @@ def process_text_on_page(p):
             values = re.split(", *", paramval)
             found_endings = []
             for v in values:
-                v = v.replace(be.AC, "")
+                v = v.replace(AC, "")
                 for ending in endings:
                     if v.endswith(ending):
                         found_endings.append(ending)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg
-from collections import defaultdict
 
 all_quals = defaultdict(int)
 stats_by_modifier_type = defaultdict(int)

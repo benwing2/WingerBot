@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
-from dataclasses import dataclass
-
 import re
+from collections import defaultdict
+from dataclasses import dataclass
 
 from wingerbot import blib
 from wingerbot.blib import pname
-
-from collections import defaultdict
 
 
 def process_text_on_page(p):

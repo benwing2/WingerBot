@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from wingerbot import lang_utils
 import json
+
+from wingerbot import lang_utils
 
 lang_outfile = "lang-data.json"
 etymlang_outfile = "etymlang-data.json"

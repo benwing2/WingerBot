@@ -13,12 +13,12 @@ CIRC = "\u0302"
 TILDE = "\u0303"
 MACRON = "\u0304"
 BREVE = "\u0306"
-DOTABOVE = "\u0307"
+DOTOVER = "\u0307"
 DIAER = "\u0308"
 CARON = "\u030c"
 DGRAVE = "\u030f"
 INVBREVE = "\u0311"
-DOTBELOW = "\u0323"
+DOTUNDER = "\u0323"
 RINGBELOW = "\u0325"
 CEDILLA = "\u0327"
 OGONEK = "\u0328"
@@ -45,7 +45,7 @@ def remove_slovene_accents(lemma):
     lemma = re.sub(DGRAVE, "", lemma)
     lemma = re.sub(INVBREVE, "", lemma)
     lemma = re.sub(CIRC, "", lemma)
-    lemma = re.sub(DOTBELOW, "", lemma)
+    lemma = re.sub(DOTUNDER, "", lemma)
     lemma = re.sub(OGONEK, "", lemma)
     return lemma
 

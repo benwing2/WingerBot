@@ -4,12 +4,12 @@ import re, copy
 
 from wingerbot import blib
 from wingerbot.blib import getparam, tname
-
+from wingerbot.lang_utils import AC, DIA
 from wingerbot.slavic.russian import rulib
 
 
 def is_vowel_stem(stem):
-    return re.search("[" + rulib.vowel + rulib.AC + rulib.DI + "]$", stem)
+    return re.search("[" + rulib.vowel + AC + DIA + "]$", stem)
 
 
 def split_ru_conj_args(t, is_temp):

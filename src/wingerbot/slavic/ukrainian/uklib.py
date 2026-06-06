@@ -2,8 +2,7 @@
 
 import re
 
-AC = "\u0301"
-GR = "\u0300"  # grave =  ̀
+from wingerbot.lang_utils import AC, GR
 
 # non-primary accents (i.e. excluding acute) that indicate pronunciation
 # (not counting diaeresis, which indicates a completely different vowel,

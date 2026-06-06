@@ -5,7 +5,6 @@ import re
 from wingerbot import blib
 from wingerbot.arabic import arlib as ar
 from wingerbot.blib import getparam, tname, pname
-from collections import defaultdict
 
 
 def default_construct_state(term):

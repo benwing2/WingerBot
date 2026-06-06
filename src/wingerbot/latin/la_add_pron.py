@@ -423,10 +423,10 @@ def process_section(section, indentlevel, headword_pronuns, args, pagetitle, pag
             if len(annotations_set) > 1:
                 # Need an annotation. Check to see whether |ann=y is possible: The
                 # original pronunciation is the same as the new one (but we allow
-                # possible differences in DOTBELOW, grave accents, etc. because they
+                # possible differences in DOTUNDER, grave accents, etc. because they
                 # will be stripped with |ann=y).
                 if canonicalize_annotation(orig_pronun) != canonicalize_annotation(pronun):
-                    # Don't include DOTBELOW, grave accents, etc. in the annotation param
+                    # Don't include DOTUNDER, grave accents, etc. in the annotation param
                     # or they will be shown to the user.
                     headword_annparam = "|ann=%s" % canonicalize_annotation(orig_pronun)
                 else:

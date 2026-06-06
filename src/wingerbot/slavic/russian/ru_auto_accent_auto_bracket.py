@@ -149,14 +149,12 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import msg, getparam, addparam, rmparam
+from wingerbot.lang_utils import AC, GR
 from wingerbot.slavic.russian import ruheadlib, rulib, ru_reverse_translit
 
 # FIXME: No longer works with removal of process_links(); see fa_canon.py for how to rewrite.
 
 semi_verbose = False  # Set by --semi-verbose or --verbose
-
-AC = "\u0301"  # acute =  ́
-GR = "\u0300"  # grave =  ̀
 
 # List of accentless multisyllabic words that are lemmas.
 accentless_multisyllable_lemma = ["надо", "обо", "ото", "перед", "передо", "подо", "предо", "через"]

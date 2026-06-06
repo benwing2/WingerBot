@@ -1,21 +1,14 @@
 #!/usr/bin/env python3
 
+import re, unicodedata
+
+from collections import OrderedDict
 from collections.abc import Callable
-import re
 from typing import Literal
-import unicodedata
+
 from wingerbot import blib
 from wingerbot.blib import PagemsgCallback, tname
-from collections import OrderedDict
-
-AC = "\u0301"  # acute =  ́
-GR = "\u0300"  # grave =  ̀
-CFLEX = "\u0302"  # circumflex =  ̂
-DOTABOVE = "\u0307"  # dot above =  ̇
-DOTBELOW = "\u0323"  # dot below =  ̣
-DI = "\u0308"  # diaeresis =  ̈
-DUBGR = "\u030f"  # double grave =  ̏
-CARON = "\u030c"  # caron =  ̌
+from wingerbot.lang_utils import AC, GR, CFLEX, DIA, DOTOVER, DOTUNDER, CARON, DUBGR
 
 PSEUDOVOWEL = "\ufff1"  # pseudovowel placeholder
 PSEUDOCONS = "\ufff2"  # pseudoconsonant placeholder
@@ -23,14 +16,14 @@ PSEUDOCONS = "\ufff2"  # pseudoconsonant placeholder
 # non-primary accents (i.e. excluding acute) that indicate pronunciation
 # (not counting diaeresis, which indicates a completely different vowel,
 # and caron, which is used in translit as ě to indicate the yat vowel)
-non_primary_pron_accents = GR + CFLEX + DOTABOVE + DOTBELOW + DUBGR
+non_primary_pron_accents = GR + CFLEX + DOTOVER + DOTUNDER + DUBGR
 # accents that indicate pronunciation (not counting diaresis, which indicates
 # a completely different vowel)
 pron_accents = AC + non_primary_pron_accents
 # all accents
-accents = pron_accents + DI + CARON
+accents = pron_accents + DIA + CARON
 # accents indicating stress (primary or otherwise)
-stress_accents = AC + GR + CFLEX + DI + DUBGR
+stress_accents = AC + GR + CFLEX + DIA + DUBGR
 
 # regex for any optional accent(s)
 opt_accent = "[" + accents + "]*"
@@ -146,7 +139,7 @@ def is_ending_stressed(word: str) -> bool:
 # True if any word in text has two or more stresses; don't count words like
 # платёжеспосо́бность or трёхле́тний, where the first ё isn't accented
 def is_multi_stressed(text: str) -> bool:
-    text = re.sub("[ёЁ]", "е" + DI, text)
+    text = re.sub("[ёЁ]", "е" + DIA, text)
     words = re.split(r"[\s-]", text)
     for word in words:
         # Look for true accent (not diaeresis) + any another accent, in the
@@ -181,7 +174,7 @@ def is_tr_monosyllabic(word: str) -> bool:
 
 
 def ends_with_vowel(word: str) -> bool:
-    return not not re.search("[" + vowel + "][" + AC + GR + DI + "]?$", word)
+    return not not re.search("[" + vowel + "][" + AC + GR + DIA + "]?$", word)
 
 
 grave_deaccenter = {
@@ -194,7 +187,7 @@ grave_deaccenter = {
 
 deaccenter = grave_deaccenter.copy()
 deaccenter[AC] = ""  # acute accent
-deaccenter[DI] = ""  # diaeresis
+deaccenter[DIA] = ""  # diaeresis
 
 
 def remove_grave_accents(word: str) -> str:

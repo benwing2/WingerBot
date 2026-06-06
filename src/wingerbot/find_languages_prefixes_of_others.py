@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import json
-from collections import defaultdict
-
-from wingerbot import blib, lang_utils
+from wingerbot import lang_utils
 from wingerbot.blib import msg
 
 lang_utils.init_fake_lang_data()

@@ -3,9 +3,8 @@
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.lang_utils import AC, GR
 
-AC = "\u0301"
-GR = "\u0300"
 SUB = "\ufffd"
 
 

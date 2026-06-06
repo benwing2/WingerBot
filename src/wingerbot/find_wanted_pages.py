@@ -3,10 +3,10 @@
 # Go through a dump finding links to nonexistent pages.
 
 import re, gzip
+from collections import defaultdict
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, msg
-from collections import defaultdict
 
 lang_data = lang_utils.get_lang_data()
 

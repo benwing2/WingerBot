@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from wingerbot import blib
 from wingerbot.blib import msg
+from wingerbot.lang_utils import AC
 from wingerbot.slavic.russian import rulib
 
 parser = blib.create_argparser("Infer prefixes from derived verb tables without them.",
@@ -15,8 +16,6 @@ parser.add_argument("--direcfile", help="File containing input in find_regex for
 parser.add_argument("--sort", action="store_true", help="Sort template suffix groups.")
 parser.add_argument("--output-files", action="store_true", help="Output results to *.new files instead of to stdout.")
 args = parser.parse_args()
-
-AC = "\u0301"
 
 
 def remove_stress(term):

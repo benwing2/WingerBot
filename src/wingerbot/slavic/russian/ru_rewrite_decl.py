@@ -4,6 +4,7 @@ import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, addparam, rmparam, getrmparam, remove_links, tname
+from wingerbot.lang_utils import AC, GR
 
 ru_noun_transl = [
     ["ru-noun-([12])", "", "stem-bare"],
@@ -81,10 +82,6 @@ def clean(value):
     if value == "-":
         value = ""
     return value
-
-
-AC = "\u0301"
-GR = "\u0300"
 
 
 def remove_diacritics(text):

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import re, unicodedata
-from wingerbot.romance import romance_utils
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg
+from wingerbot.romance import romance_utils
 
 unaccented_vowel = "aeiouüAEIOUÜ"
 accented_vowel = "áéíóúýÁÉÍÓÚÝ"

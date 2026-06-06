@@ -17,8 +17,8 @@ import traceback, sys
 
 from wingerbot import blib
 from wingerbot.blib import msg, rmparam, getparam, tname, ProcessPageRetval
+from wingerbot.lang_utils import AC
 from wingerbot.slavic.russian.rulib import (
-    AC,
     is_unstressed,
     make_unstressed_once_ru,
     is_monosyllabic,
