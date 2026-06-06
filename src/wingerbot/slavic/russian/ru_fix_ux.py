@@ -3,7 +3,7 @@
 # Remove adj= and shto= from ru-ux.
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, msg, tname
+from wingerbot.blib import rmparam, tname
 
 
 def process_text_on_page(p):

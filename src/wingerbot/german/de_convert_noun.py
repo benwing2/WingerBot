@@ -5,7 +5,7 @@ from typing import Literal
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname, msg
+from wingerbot.blib import getparam, tname, pname
 
 vowels = "aeiouyäöüAEIOUYÄÖÜ"
 capletters = "A-ZÄÖÜ"

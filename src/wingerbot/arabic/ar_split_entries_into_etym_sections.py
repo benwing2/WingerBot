@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, remove_links
+from wingerbot.blib import getparam, remove_links
 from wingerbot.arabic.arlib import (
     reorder_shadda,
     arabic_all_headword_templates,

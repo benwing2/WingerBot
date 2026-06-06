@@ -3,7 +3,7 @@
 import re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 canonicalize_tags = {
     "active": "act",

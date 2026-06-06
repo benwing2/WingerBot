@@ -4,7 +4,7 @@ import re
 
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam, tname
+from wingerbot.blib import getparam, addparam, tname
 from wingerbot.arabic import arlib, ar_translit
 
 # FIXME: No longer works with removal of blib.process_links(); see fa_canon.py for how to rewrite.

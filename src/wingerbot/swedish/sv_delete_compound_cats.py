@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg
+from wingerbot.blib import getparam, rmparam
 
 parser = blib.create_argparser("Delete subcats of [[Category:Swedish compound words]]",
                                no_include_pagefile=True, no_include_stdin=True)

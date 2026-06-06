@@ -4,7 +4,7 @@ import re
 import traceback, pprint
 
 from wingerbot import blib
-from wingerbot.blib import PagemsgCallback, getparam, rmparam, msg, errandmsg, tname
+from wingerbot.blib import PagemsgCallback, getparam, rmparam, errandmsg, tname
 from mwparserfromhell.nodes import Template
 from dataclasses import dataclass
 

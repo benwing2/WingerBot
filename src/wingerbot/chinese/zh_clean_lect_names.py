@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 lect_mappings = {
     "Min Bei": "Northern Min",

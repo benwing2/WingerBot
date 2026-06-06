@@ -11,7 +11,7 @@
 # {{temp|ru-adj-old}} -> {{temp|ru-decl-adj|old=1}}
 
 from wingerbot import blib
-from wingerbot.blib import tname, msg
+from wingerbot.blib import tname
 
 
 def process_text_on_page(p):

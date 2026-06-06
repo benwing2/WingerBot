@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg
+from wingerbot.blib import getparam, rmparam, getrmparam, tname
 
 # FIXME: Out of date script, not needed any more, might not still work.
 

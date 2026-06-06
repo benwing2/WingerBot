@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 from wingerbot.lang_utils import sh_remove_accents
 

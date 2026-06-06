@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 arabic_charset = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷽ﹰ-ﻼ"
 hebrew_charset = "\u0590-\u05ff\ufb1d-\ufb4f"

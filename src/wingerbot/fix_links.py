@@ -24,7 +24,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, rsub_repeatedly
+from wingerbot.blib import getparam, rsub_repeatedly
 from wingerbot import lang_utils
 
 lbracket_sub = "\ufff1"

@@ -3,7 +3,7 @@
 # Add accented forms to {{cardinalbox}} and {{ordinalbox}}.
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 
 def process_text_on_page(p):

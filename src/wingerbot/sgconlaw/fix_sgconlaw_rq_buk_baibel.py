@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg, tname
+from wingerbot.blib import getparam, rmparam, errmsg, tname
 
 book_map = {
     "Gen": "Jenesis",

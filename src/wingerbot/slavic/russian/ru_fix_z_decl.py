@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, tname
+from wingerbot.blib import tname
 from wingerbot.slavic.russian import runounlib
 
 

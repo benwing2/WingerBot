@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam, tname
+from wingerbot.blib import getparam, addparam, tname
 from wingerbot.arabic.arlib import (
     TAM,
     reorder_shadda,

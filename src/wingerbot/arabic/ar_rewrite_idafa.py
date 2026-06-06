@@ -4,7 +4,7 @@ import re
 
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import getparam, addparam
 from wingerbot.arabic.arlib import arabic_decl_templates
 
 

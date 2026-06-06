@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 borrowed_langs = {}
 

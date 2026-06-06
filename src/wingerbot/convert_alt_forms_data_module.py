@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, tname
 
 
 @dataclass

@@ -3,7 +3,7 @@
 import re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, rmparam, tname, pname, rsub_repeatedly
 
 recogized_poses = {
     "noun": "n",

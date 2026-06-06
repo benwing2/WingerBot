@@ -9,7 +9,7 @@
 # 3. Remove redundant transliteration.
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 from wingerbot.slavic.russian import runounlib
 

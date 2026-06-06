@@ -3,7 +3,7 @@
 # Fix up noun forms, using {{ru-noun form}} instead of {{head|ru|noun form}}
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 
 def getrmparam(t, param):

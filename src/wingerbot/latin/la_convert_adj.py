@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, getrmparam, tname, msg, ExpandTextCallback, PagemsgCallback
+from wingerbot.blib import getparam, getrmparam, tname, ExpandTextCallback, PagemsgCallback
 from wingerbot.latin import lalib
 
 # FIXME: Out of date script, not needed any more, might not still work.

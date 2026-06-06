@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, pname, msg
+from wingerbot.blib import getparam, tname, pname
 
 
 def process_text_on_page(p):

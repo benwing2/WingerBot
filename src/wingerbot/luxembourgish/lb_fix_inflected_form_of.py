@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 positive_ending_tags = {
     "en": ["str//wk|nom//acc|m|s", "wk|dat|m//n|s", "str//wk|dat|p"],

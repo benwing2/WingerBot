@@ -2,7 +2,6 @@
 
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import msg
 
 
 def process_text_on_page(p):

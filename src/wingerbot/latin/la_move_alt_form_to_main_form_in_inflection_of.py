@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 from wingerbot.latin import lalib
 

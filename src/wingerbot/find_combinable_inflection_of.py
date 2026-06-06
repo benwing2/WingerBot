@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 inflection_of_templates = ["inflection of", "noun form of", "verb form of", "adj form of", "participle of"]
 

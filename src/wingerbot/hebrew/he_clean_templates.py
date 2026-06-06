@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 # Tuple of (ORIGTEMPLATE, NEWNAME, ADD_NOCAP). NEWNAME is special-cased
 # for he-verb form of and he-noun form of.

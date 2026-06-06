@@ -4,7 +4,7 @@ import re, json
 from dataclasses import dataclass, field
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg
+from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname
 
 vowel_to_diacritic = {
     "a": "\u064e",

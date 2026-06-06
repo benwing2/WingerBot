@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 deny_list_pages = {
     "Charta 77",

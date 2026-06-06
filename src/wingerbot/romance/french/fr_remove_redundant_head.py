@@ -6,7 +6,7 @@ import re, sys
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 fr_head_or_1_templates = ["fr-verb", "fr-adv", "fr-phrase", "fr-intj", "fr-prep"]
 

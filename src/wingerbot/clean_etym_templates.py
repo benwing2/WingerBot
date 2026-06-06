@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 # back_formation_templates = ["back-formation", "back-form", "backform", "bac", "bf"]
 # templates_to_move_lang = back_formation_templates + [

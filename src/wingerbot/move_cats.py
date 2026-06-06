@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, msg, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 topics_templates = ["topics", "topic", "top", "c", "C", "catlangcode"]
 catlangname_templates = ["catlangname", "cln"]

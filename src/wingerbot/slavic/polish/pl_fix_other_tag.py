@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, rmparam, tname
 
 
 def remove_comment_continuations(text):

@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 templates = {
     #  "genitive singular definite of": ["def", "gen", "s"],

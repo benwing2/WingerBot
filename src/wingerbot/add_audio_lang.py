@@ -4,7 +4,7 @@
 # to 'inflection of'
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 langs_to_codes = {}
 

@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 from wingerbot.slavic.russian import rulib
 from wingerbot.slavic.russian import ruheadlib

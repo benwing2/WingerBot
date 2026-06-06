@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg
+from wingerbot.blib import getparam, rmparam, tname, pname
 from wingerbot.romance.catalan.ca_convert_adj_noun import make_feminine, make_plural
 
 old_template = "ca-pp-old"

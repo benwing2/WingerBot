@@ -5,7 +5,6 @@ rather than generate it manually per page like this. But the examples in the tex
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg
 from wingerbot.slavic.russian import rulib
 
 ordinals = {

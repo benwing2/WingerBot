@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname
+from wingerbot.blib import getparam, rmparam, set_template_name, errmsg, tname
 
 northern_kurdish_lemmas = set()
 for i, art in blib.cat_articles("Northern Kurdish lemmas"):

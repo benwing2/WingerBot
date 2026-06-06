@@ -3,7 +3,7 @@
 # Use past_adv_part_short=- instead of past_adv_part_short=
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 
 def process_text_on_page(p):

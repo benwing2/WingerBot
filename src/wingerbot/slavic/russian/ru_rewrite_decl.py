@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam, rmparam, getrmparam, remove_links, tname
+from wingerbot.blib import errandmsg, getparam, addparam, rmparam, getrmparam, remove_links, tname
 
 ru_noun_transl = [
     ["ru-noun-([12])", "", "stem-bare"],

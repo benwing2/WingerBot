@@ -15,7 +15,7 @@
 import re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 GRAVE = "\u0300"
 ACUTE = "\u0301"

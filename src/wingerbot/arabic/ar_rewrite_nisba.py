@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import addparam, msg
+from wingerbot.blib import addparam
 
 
 def process_text_on_page(p):

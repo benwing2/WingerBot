@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, errmsg, tname
+from wingerbot.blib import getparam, errmsg, tname
 
 from wingerbot.slavic.russian import rulib
 

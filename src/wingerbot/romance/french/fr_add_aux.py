@@ -6,7 +6,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 # List of verbs are conjugated using 'être' in the passé composé.
 etre = [

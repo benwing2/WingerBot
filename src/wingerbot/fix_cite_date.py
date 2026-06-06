@@ -6,7 +6,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname
+from wingerbot.blib import getparam, tname
 
 replace_templates = [
     "cite-book",

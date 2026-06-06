@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 wikipedia_box_templates = ["wikipedia", "wp", "slim-wikipedia", "swp"]
 interproject_templates_lang_in_1 = ["R:wbooks", "R:wnews", "R:wquote", "R:wsource", "R:wversity", "R:wvoyage"]

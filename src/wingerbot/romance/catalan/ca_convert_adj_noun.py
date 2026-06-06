@@ -4,7 +4,7 @@ import re, unicodedata
 from wingerbot.romance import romance_utils
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg
+from wingerbot.blib import getparam, rmparam, tname, pname
 
 prepositions = [
     # a + optional article (including salat)

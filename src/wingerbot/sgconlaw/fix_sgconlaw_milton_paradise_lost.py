@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg
+from wingerbot.blib import getparam, rmparam, tname
 
 
 def process_text_on_page(p):

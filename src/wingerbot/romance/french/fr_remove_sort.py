@@ -3,7 +3,7 @@
 # Go through all the French terms we can find and remove sort=.
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, msg, tname
+from wingerbot.blib import rmparam, tname
 
 fr_head_templates = [
     "fr-noun",

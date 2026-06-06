@@ -9,7 +9,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import msg
 
 
 def process_text_on_page(p):

@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg
+from wingerbot.blib import getparam, rmparam
 
 family_data = lang_utils.get_family_data()
 etym_lang_data = lang_utils.get_etym_lang_data()

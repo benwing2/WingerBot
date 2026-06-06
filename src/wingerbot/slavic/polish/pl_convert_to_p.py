@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, msg, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 AC = "\u0301"  # acute =  ́
 GR = "\u0300"  # grave =  ̀

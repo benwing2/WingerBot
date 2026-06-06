@@ -23,7 +23,7 @@ import re
 import mwparserfromhell as mw
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg
+from wingerbot.blib import getparam, rmparam, set_template_name, errmsg
 
 arabic_to_roman_form = {
     "1": "I",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, tname, msg
+from wingerbot.blib import rmparam, tname
 
 AA = "\u093e"
 M = "\u0901"
