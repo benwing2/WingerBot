@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, addparam, msg, errandmsg, remove_links, tname
+from wingerbot.blib import getparam, addparam, msg, remove_links, tname
 from wingerbot.arabic.arlib import (
     ALIF,
     ALIF_WASLA,

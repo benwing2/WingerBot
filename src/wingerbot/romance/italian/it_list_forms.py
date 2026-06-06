@@ -3,7 +3,7 @@
 import re, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg, errandmsg
+from wingerbot.blib import getparam, rmparam, tname, pname, msg
 
 AC = "\u0301"
 GR = "\u0300"

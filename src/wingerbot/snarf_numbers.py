@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, msg, errandmsg
+from wingerbot.blib import getparam, tname, msg
 
 numbers = defaultdict(lambda: defaultdict(dict))
 

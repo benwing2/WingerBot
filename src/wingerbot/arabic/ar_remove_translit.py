@@ -3,7 +3,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import msg, errandmsg, getparam, addparam, tname
+from wingerbot.blib import msg, getparam, addparam, tname
 
 from wingerbot.arabic import arlib, ar_translit
 

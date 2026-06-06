@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import errandmsg, getparam, addparam, tname
+from wingerbot.blib import getparam, addparam, tname
 
 templates = ["ar-tool noun", "ar-noun of place", "ar-instance noun"]
 
