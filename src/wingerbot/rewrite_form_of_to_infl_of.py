@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import re
 from collections import defaultdict
 
 from wingerbot import blib

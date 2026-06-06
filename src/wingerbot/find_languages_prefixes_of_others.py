@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import re, json
+import json
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils

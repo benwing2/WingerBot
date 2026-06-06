@@ -2,7 +2,6 @@
 
 # Correct use of U+02C1 pharyngealization mark to U+02E4.
 
-import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, msg

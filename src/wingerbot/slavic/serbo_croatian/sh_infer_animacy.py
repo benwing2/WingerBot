@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname, pname

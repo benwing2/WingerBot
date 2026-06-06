@@ -2,7 +2,6 @@
 
 # Replace title= with work= in cite-web, if work= doesn't already exist.
 
-import re
 
 from wingerbot import blib
 from wingerbot.blib import msg, tname
