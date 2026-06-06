@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, json
+import re, sys, json
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname, pname, msg

@@ -5,7 +5,7 @@
 # {{R:SO}} → {{R:svenska.se|so}}
 # {{R:SAOB online}} → {{R:svenska.se|saob}}
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, tname

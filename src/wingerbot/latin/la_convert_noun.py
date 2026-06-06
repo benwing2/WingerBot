@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, getrmparam, tname, msg, bool_param_is_true

@@ -3,7 +3,7 @@
 # Go through Russian lemmas looking for pages with missing phon= or missing translit.
 # Currently we just look for э in the ru-IPA call but not in the page title.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

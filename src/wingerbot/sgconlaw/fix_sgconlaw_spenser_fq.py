@@ -9,7 +9,7 @@
 #
 # * {{RQ:Spenser Faerie Queene|book=III|canto=II|stanza=8|passage=of which great worth and '''worship''' may be won}}
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errmsg

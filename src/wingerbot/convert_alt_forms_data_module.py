@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys
+import re, sys
 from dataclasses import dataclass
 
 from wingerbot import blib, lang_utils

@@ -10,7 +10,7 @@
 #
 # #* {{RQ:Jefferies Amateur Poacher|chapter=II|passage=Orion hit a rabbit once; [...]}}
 
-import pywikibot, re, sys
+import re, sys
 import mwparserfromhell as mw
 
 from wingerbot import blib

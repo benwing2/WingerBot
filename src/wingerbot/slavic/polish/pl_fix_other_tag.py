@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys
+import re, sys
 from collections import defaultdict
 
 from wingerbot import blib

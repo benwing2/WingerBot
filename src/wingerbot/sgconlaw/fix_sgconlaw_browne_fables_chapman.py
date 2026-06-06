@@ -29,7 +29,7 @@
 #
 # #* {{RQ:Homer Chapman Odysseys|passage=The doors of plank were; their '''close''' exquisite.}}
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname

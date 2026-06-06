@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys
+import re, sys
 from dataclasses import dataclass, field
 from collections import defaultdict
 from typing import Any, Callable

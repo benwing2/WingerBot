@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, unicodedata
+import re, sys, unicodedata
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname, pname, rsub_repeatedly

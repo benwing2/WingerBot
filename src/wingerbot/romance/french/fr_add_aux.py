@@ -3,7 +3,7 @@
 # Convert fr-conj-* templates to fr-conj-auto, checking in the process that
 # the conjugation doesn't change.
 
-import pywikibot, re
+import re
 
 from wingerbot import blib
 from wingerbot.blib import getparam, msg, tname, pname

@@ -2,7 +2,6 @@
 
 import re
 import traceback, sys
-import pywikibot
 
 from wingerbot import blib
 from wingerbot.blib import rmparam, getparam, msg, tname

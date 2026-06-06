@@ -14,7 +14,7 @@
 #
 ##* {{RQ:Thackeray Vanity Fair|chapter=37|passage=His jaw was '''underhung''', and when he laughed, two white buckteeth protruded themselves and glistened savagely in the midst of the grin.}}
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg

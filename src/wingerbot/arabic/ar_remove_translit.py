@@ -2,7 +2,6 @@
 
 import re
 
-import pywikibot
 
 from wingerbot import blib
 from wingerbot.blib import msg, errandmsg, getparam, addparam, tname

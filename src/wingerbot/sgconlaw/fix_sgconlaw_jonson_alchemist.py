@@ -2,7 +2,7 @@
 
 # Reduce page number by one for {{RQ:Jonson Alchemist}}.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, errmsg, tname

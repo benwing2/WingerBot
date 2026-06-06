@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import e
+import re
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, tname, pname

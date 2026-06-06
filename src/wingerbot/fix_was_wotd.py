@@ -2,7 +2,7 @@
 
 # Rearrange {{was wotd}} to go after ==English==.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg

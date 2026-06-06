@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re, sys, json
+import re, sys, json
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils

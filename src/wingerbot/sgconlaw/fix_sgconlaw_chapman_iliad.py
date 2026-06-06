@@ -10,7 +10,7 @@
 #
 # #* {{RQ:Homer Chapman Iliads|passage=Childish, unworthy '''dares''' / Are not enough to part our powers.}}
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname

@@ -3,7 +3,7 @@
 # Fix up short adjective forms when possible, canonicalizing existing
 # 'inflection of' and converting raw inflection to 'inflection of'
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

@@ -19,7 +19,7 @@
 #
 # #* {{RQ:Byron Childe Harold|canto=III|stanza=I|passage=When last I saw thy young blue eyes, they '''smiled'''.}}
 
-import pywikibot, re, sys
+import re, sys
 import mwparserfromhell as mw
 
 from wingerbot import blib

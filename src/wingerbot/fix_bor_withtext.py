@@ -4,7 +4,7 @@
 # at beginning of line or sentence, possibly after a bullet or number
 # sign.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg

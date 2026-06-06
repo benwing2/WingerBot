@@ -12,7 +12,7 @@
 #
 # If 'RQ:Browne Errors' occurs without raw passage text following, we just replace with 'RQ:Browne Pseudodoxia Epidemica'.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname, pname

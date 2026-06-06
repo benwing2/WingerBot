@@ -10,7 +10,7 @@
 #
 # #* {{RQ:Bacon Sylva Sylvarum|passage=The [[cion]] [[overrule]]th the '''stock''' quite.}}
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, set_template_name, msg, errmsg, tname

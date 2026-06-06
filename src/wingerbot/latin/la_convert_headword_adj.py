@@ -2,7 +2,7 @@
 
 # Convert la-adj-* to la-adj.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

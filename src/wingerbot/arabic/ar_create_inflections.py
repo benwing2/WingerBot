@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pywikibot, re
+import re
 
 from wingerbot import blib, lang_utils
 from wingerbot.blib import getparam, addparam, msg, errandmsg, remove_links, tname

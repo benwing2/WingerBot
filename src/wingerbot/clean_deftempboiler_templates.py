@@ -2,7 +2,7 @@
 
 # FIXME: Partly written, not working. No longer applies; {{deftempboiler}} was deleted in 2019.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname

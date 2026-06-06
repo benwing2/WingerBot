@@ -46,7 +46,7 @@
 # the masculine singular past (minus final -л if it's present). Stress is
 # as in the masculine singular past.
 
-import pywikibot, re, sys
+import re, sys
 
 from wingerbot import blib
 from wingerbot.blib import getparam, rmparam, msg, tname
