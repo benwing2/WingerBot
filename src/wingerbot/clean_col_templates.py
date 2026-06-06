@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.blib import getparam, tname
 
 # col templates
 templates_to_rename = {

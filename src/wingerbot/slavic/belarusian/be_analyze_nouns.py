@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.blib import getparam, tname
 from wingerbot.slavic.belarusian import belib as be
 
 AC = "\u0301"

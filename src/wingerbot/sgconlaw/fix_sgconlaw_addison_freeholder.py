@@ -17,7 +17,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, errmsg
+from wingerbot.blib import set_template_name, errmsg
 
 
 def process_text_on_page(p):

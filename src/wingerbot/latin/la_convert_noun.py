@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, bool_param_is_true
+from wingerbot.blib import getparam, getrmparam, tname, bool_param_is_true
 from wingerbot.latin import lalib
 from wingerbot.latin.la_convert_adj import adj_decl_and_subtype_to_props
 

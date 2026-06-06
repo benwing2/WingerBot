@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg
+from wingerbot.blib import msg
 
 cmu_pronun_mapping = {
     # consonants

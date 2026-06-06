@@ -5,7 +5,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, errmsg
+from wingerbot.blib import set_template_name, errmsg
 
 replace_templates = ["RQ:RBrtn AntmyMlncly", "RQ:Flr Mntgn Essays"]
 

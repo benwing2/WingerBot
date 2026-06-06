@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg
+from wingerbot.blib import msg
 
 from wingerbot.slavic.russian import rulib
 

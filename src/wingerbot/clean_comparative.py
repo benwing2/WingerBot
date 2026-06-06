@@ -2,7 +2,7 @@
 
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.blib import rmparam, tname
 
 is_lemma_templates = [
     "comparative of",

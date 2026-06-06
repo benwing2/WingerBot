@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, set_template_name, errmsg, tname
+from wingerbot.blib import getparam, set_template_name, errmsg, tname
 
 trans_templates = blib.translation_templates + ["t-simple"]
 

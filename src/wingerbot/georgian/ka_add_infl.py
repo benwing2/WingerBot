@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.blib import getparam, tname
 
 pos_to_headword_template = {
     "noun": "ka-noun",

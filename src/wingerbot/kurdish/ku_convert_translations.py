@@ -49,7 +49,7 @@ def process_text_on_page(p):
                     )
             elif tn == "t-simple":
                 if getparam(t, "1") == "ku":
-                    if getparam(t, "langname" != "Kurdish"):
+                    if getparam(t, "langname") != "Kurdish":
                         p.msg("WARNING: Something wrong, t-simple|ku without langname=Kurdish: %s" % str(t))
                     else:
                         t.add("1", newlangcode)
@@ -98,7 +98,7 @@ def process_text_on_page(p):
                         notes.append("{{%s|ku}} -> {{%s|%s}} based on %s" % (tn, tn, newlangcode, source))
             elif tn == "t-simple":
                 if getparam(t, "1") == "ku":
-                    if getparam(t, "langname" != "Kurdish"):
+                    if getparam(t, "langname") != "Kurdish":
                         p.msg("WARNING: Something wrong, t-simple|ku without langname=Kurdish: %s" % str(t))
                     else:
                         lemma = getparam(t, "2")

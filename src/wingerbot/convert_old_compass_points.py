@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, tname, pname
 from wingerbot.convert_col_top_topN_to_col import simplify_link, convert_one_line
 
 lang_data = lang_utils.get_lang_data()

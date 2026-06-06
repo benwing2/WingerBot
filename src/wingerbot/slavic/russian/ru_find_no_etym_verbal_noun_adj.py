@@ -49,7 +49,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot.slavic.russian import rulib
 

@@ -3,7 +3,7 @@
 import re, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, rsub_repeatedly
+from wingerbot.blib import getparam, tname, pname, rsub_repeatedly
 
 AC = "\u0301"  # acute =  ́
 GR = "\u0300"  # grave =  ̀

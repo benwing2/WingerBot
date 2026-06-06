@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot import infltags
 

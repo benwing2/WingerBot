@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, errmsg
+from wingerbot.blib import msg, errmsg
 
 import re
 from wingerbot.slavic.russian import rulib

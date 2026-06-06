@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam
 
 from wingerbot import lang_utils
 

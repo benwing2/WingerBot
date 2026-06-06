@@ -4,7 +4,7 @@ import json
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import msg, tname, pname
 
 lang_utils.init_fake_lang_data()
 #lang_utils.load_all_lang_data("langdata.json")

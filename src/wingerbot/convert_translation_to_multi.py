@@ -4,7 +4,7 @@ import re, json
 from collections import defaultdict
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, msg, tname, pname
 from wingerbot.remove_redundant_sc import check_script_agrees
 
 from dataclasses import dataclass, field

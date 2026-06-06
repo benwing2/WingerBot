@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import Any, Callable
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, set_template_name, msg, errandmsg, tname
+from wingerbot.blib import set_template_name, msg, errandmsg, tname
 
 lang_data = lang_utils.get_lang_data()
 

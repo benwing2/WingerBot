@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, msg, tname
+from wingerbot.blib import getparam, msg, tname
 
 pos_to_headword_template = {
     "noun": "ang-noun",

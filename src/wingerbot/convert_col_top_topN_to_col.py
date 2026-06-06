@@ -3,7 +3,7 @@
 import re, json
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, tname, pname
+from wingerbot.blib import getparam, msg, tname, pname
 from collections import defaultdict
 from typing import cast
 

@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.blib import tname
 
 
 def compare_new_and_old_templates(t, pagetitle, pagemsg, errandpagemsg):

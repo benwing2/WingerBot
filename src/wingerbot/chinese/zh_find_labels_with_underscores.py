@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname, msg
+from wingerbot.blib import getparam, tname, pname, msg
 
 label_params_by_count = defaultdict(int)
 label_params_with_underscores_by_count = defaultdict(int)

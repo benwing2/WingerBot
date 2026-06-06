@@ -3,7 +3,6 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam
 
 parser = blib.create_argparser("Find usexes with 'literally' in them")
 args = parser.parse_args()

@@ -3,7 +3,7 @@
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import getparam, tname, pname
 
 templates_to_tags = {
     "sv-verb-form-imp": ["imp"],

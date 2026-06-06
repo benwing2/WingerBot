@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname
+from wingerbot.blib import tname
 
 templates_to_generalize = {
     "ban-romanization of": "ban",

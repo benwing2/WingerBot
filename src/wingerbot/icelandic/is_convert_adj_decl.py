@@ -3,7 +3,7 @@
 import re, json, unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, getrmparam, tname, pname, msg
+from wingerbot.blib import getparam, getrmparam, tname, pname, msg
 
 slot_mapping = {
     "str_nom_m_s": "str_nom_m",

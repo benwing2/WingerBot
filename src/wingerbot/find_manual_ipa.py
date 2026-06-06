@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from wingerbot import blib
-from wingerbot.blib import getparam, tname, msg
+from wingerbot.blib import tname, msg
 
 all_pronuns = []
 

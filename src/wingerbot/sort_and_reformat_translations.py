@@ -3,7 +3,7 @@
 import re, unicodedata
 
 from wingerbot import blib, lang_utils
-from wingerbot.blib import getparam, rmparam, msg, errmsg, tname
+from wingerbot.blib import getparam, msg, errmsg, tname
 from collections import defaultdict
 
 lang_utils.init_fake_lang_data()

@@ -12,7 +12,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, errmsg
+from wingerbot.blib import errmsg
 
 
 def process_text_on_page(p):

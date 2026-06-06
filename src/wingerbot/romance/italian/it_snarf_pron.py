@@ -4,7 +4,7 @@ import re
 import unicodedata
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, pname
+from wingerbot.blib import tname, pname
 
 GR = "\u0300"
 unaccented_vowel = "aeiouöüy"

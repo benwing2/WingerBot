@@ -4,7 +4,7 @@ import re
 import traceback
 
 from wingerbot import blib
-from wingerbot.blib import rmparam, getparam, msg, tname
+from wingerbot.blib import getparam, msg, tname
 
 from wingerbot.slavic.belarusian import belib as be
 

@@ -4,7 +4,7 @@ import re
 
 
 from wingerbot import blib
-from wingerbot.blib import msg, getparam, addparam
+from wingerbot.blib import msg, addparam
 from collections import defaultdict
 
 

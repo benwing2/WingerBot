@@ -3,7 +3,7 @@
 import re
 
 from wingerbot import blib
-from wingerbot.blib import getparam, rmparam, tname, msg
+from wingerbot.blib import tname, msg
 
 from wingerbot.latin import lalib
 
